@@ -24,13 +24,11 @@ void gf_mul(gf_s * __restrict__ cs, const gf as, const gf bs)
 {
     const uint32_t *a = as->limb, *b = bs->limb;
     uint32_t *c = cs->limb;
-
     uint64_t accum0 = 0, accum1 = 0, accum2 = 0;
     uint32_t mask = (1 << 28) - 1;
-
     uint32_t aa[8], bb[8];
-
     int i, j;
+
     for (i = 0; i < 8; i++) {
         aa[i] = a[i] + a[i + 8];
         bb[i] = b[i] + b[i + 8];

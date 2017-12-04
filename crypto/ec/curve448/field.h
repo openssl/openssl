@@ -17,7 +17,7 @@
 # include "f_field.h"
 # include <string.h>
 
-/** Square x, n times. */
+/* Square x, n times. */
 static ossl_inline void gf_sqrn(gf_s * __restrict__ y, const gf x, int n)
 {
     gf tmp;
@@ -38,7 +38,7 @@ static ossl_inline void gf_sqrn(gf_s * __restrict__ y, const gf x, int n)
 
 # define gf_add_nr gf_add_RAW
 
-/** Subtract mod p.  Bias by 2 and don't reduce  */
+/* Subtract mod p.  Bias by 2 and don't reduce  */
 static ossl_inline void gf_sub_nr(gf c, const gf a, const gf b)
 {
     gf_sub_RAW(c, a, b);
@@ -47,7 +47,7 @@ static ossl_inline void gf_sub_nr(gf c, const gf a, const gf b)
         gf_weak_reduce(c);
 }
 
-/** Subtract mod p. Bias by amt but don't reduce.  */
+/* Subtract mod p. Bias by amt but don't reduce.  */
 static ossl_inline void gf_subx_nr(gf c, const gf a, const gf b, int amt)
 {
     gf_sub_RAW(c, a, b);
@@ -56,7 +56,7 @@ static ossl_inline void gf_subx_nr(gf c, const gf a, const gf b, int amt)
         gf_weak_reduce(c);
 }
 
-/** Mul by signed int.  Not constant-time WRT the sign of that int. */
+/* Mul by signed int.  Not constant-time WRT the sign of that int. */
 static ossl_inline void gf_mulw(gf c, const gf a, int32_t w)
 {
     if (w > 0) {
@@ -67,13 +67,13 @@ static ossl_inline void gf_mulw(gf c, const gf a, int32_t w)
     }
 }
 
-/** Constant time, x = is_z ? z : y */
+/* Constant time, x = is_z ? z : y */
 static ossl_inline void gf_cond_sel(gf x, const gf y, const gf z, mask_t is_z)
 {
     constant_time_select(x, y, z, sizeof(gf), is_z, 0);
 }
 
-/** Constant time, if (neg) x=-x; */
+/* Constant time, if (neg) x=-x; */
 static ossl_inline void gf_cond_neg(gf x, mask_t neg)
 {
     gf y;
@@ -81,7 +81,7 @@ static ossl_inline void gf_cond_neg(gf x, mask_t neg)
     gf_cond_sel(x, x, y, neg);
 }
 
-/** Constant time, if (swap) (x,y) = (y,x); */
+/* Constant time, if (swap) (x,y) = (y,x); */
 static ossl_inline void gf_cond_swap(gf x, gf_s * __restrict__ y, mask_t swap)
 {
     constant_time_cond_swap(x, y, sizeof(gf_s), swap);

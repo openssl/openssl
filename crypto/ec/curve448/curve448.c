@@ -28,16 +28,13 @@
 #define DECAF_WNAF_VAR_TABLE_BITS 3
 
 static const int EDWARDS_D = -39081;
-static const curve448_scalar_t precomputed_scalarmul_adjustment = { {{
-                                                                      SC_LIMB
-                                                                      (0xc873d6d54a7bb0cf),
-                                                                      SC_LIMB
-                                                                      (0xe933d8d723a70aad),
-                                                                      SC_LIMB
-                                                                      (0xbb124b65129c96fd),
-                                                                      SC_LIMB
-                                                                      (0x00000008335dc163)
-                                                                      }}
+static const curve448_scalar_t precomputed_scalarmul_adjustment = {
+    {
+        {
+            SC_LIMB(0xc873d6d54a7bb0cf), SC_LIMB(0xe933d8d723a70aad),
+            SC_LIMB(0xbb124b65129c96fd), SC_LIMB(0x00000008335dc163)
+        }
+    }
 };
 
 const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { 0x05 };
@@ -69,7 +66,7 @@ extern const gf curve448_precomputed_base_as_fe[];
 const curve448_precomputed_s *curve448_precomputed_base =
     (const curve448_precomputed_s *)&curve448_precomputed_base_as_fe;
 
-/** Inverse. */
+/* Inverse. */
 static void gf_invert(gf y, const gf x, int assert_nonzero)
 {
     mask_t ret;
@@ -89,11 +86,11 @@ static void gf_invert(gf y, const gf x, int assert_nonzero)
 const curve448_point_t curve448_point_identity =
     { {{{{0}}}, {{{1}}}, {{{1}}}, {{{0}}}} };
 
-static void
-point_double_internal(curve448_point_t p,
-                      const curve448_point_t q, int before_double)
+static void point_double_internal(curve448_point_t p, const curve448_point_t q,
+                                  int before_double)
 {
     gf a, b, c, d;
+
     gf_sqr(c, q->x);
     gf_sqr(a, q->y);
     gf_add_nr(d, c, a);         /* 2+e */
@@ -136,6 +133,7 @@ static void pt_to_pniels(pniels_t b, const curve448_point_t a)
 static void pniels_to_pt(curve448_point_t e, const pniels_t d)
 {
     gf eu;
+
     gf_add(eu, d->n->b, d->n->a);
     gf_sub(e->y, d->n->b, d->n->a);
     gf_mul(e->t, e->y, eu);
@@ -152,10 +150,11 @@ static void niels_to_pt(curve448_point_t e, const niels_t n)
     gf_copy(e->z, ONE);
 }
 
-static void
-add_niels_to_pt(curve448_point_t d, const niels_t e, int before_double)
+static void add_niels_to_pt(curve448_point_t d, const niels_t e,
+                            int before_double)
 {
     gf a, b, c;
+
     gf_sub_nr(b, d->y, d->x);   /* 3+e */
     gf_mul(a, e->a, b);
     gf_add_nr(b, d->x, d->y);   /* 2+e */
@@ -172,8 +171,8 @@ add_niels_to_pt(curve448_point_t d, const niels_t e, int before_double)
         gf_mul(d->t, b, c);
 }
 
-static void
-sub_niels_from_pt(curve448_point_t d, const niels_t e, int before_double)
+static void sub_niels_from_pt(curve448_point_t d, const niels_t e,
+                              int before_double)
 {
     gf a, b, c;
     gf_sub_nr(b, d->y, d->x);   /* 3+e */
@@ -192,19 +191,21 @@ sub_niels_from_pt(curve448_point_t d, const niels_t e, int before_double)
         gf_mul(d->t, b, c);
 }
 
-static void
-add_pniels_to_pt(curve448_point_t p, const pniels_t pn, int before_double)
+static void add_pniels_to_pt(curve448_point_t p, const pniels_t pn,
+                             int before_double)
 {
     gf L0;
+
     gf_mul(L0, p->z, pn->z);
     gf_copy(p->z, L0);
     add_niels_to_pt(p, pn->n, before_double);
 }
 
-static void
-sub_pniels_from_pt(curve448_point_t p, const pniels_t pn, int before_double)
+static void sub_pniels_from_pt(curve448_point_t p, const pniels_t pn,
+                               int before_double)
 {
     gf L0;
+
     gf_mul(L0, p->z, pn->z);
     gf_copy(p->z, L0);
     sub_niels_from_pt(p, pn->n, before_double);
@@ -244,9 +245,9 @@ decaf_bool_t curve448_point_valid(const curve448_point_t p)
     return mask_to_bool(out);
 }
 
-static ossl_inline void
-constant_time_lookup_niels(niels_s * __restrict__ ni,
-                           const niels_t * table, int nelts, int idx)
+static ossl_inline void constant_time_lookup_niels(niels_s * __restrict__ ni,
+                                                   const niels_t * table,
+                                                   int nelts, int idx)
 {
     constant_time_lookup(ni, table, sizeof(niels_s), nelts, idx);
 }
@@ -300,10 +301,9 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
     OPENSSL_cleanse(scalar1x, sizeof(scalar1x));
 }
 
-void curve448_point_mul_by_ratio_and_encode_like_eddsa(uint8_t
-                                                       enc
-                                                       [DECAF_EDDSA_448_PUBLIC_BYTES],
-                                                       const curve448_point_t p)
+void curve448_point_mul_by_ratio_and_encode_like_eddsa(
+                                    uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
+                                    const curve448_point_t p)
 {
 
     /* The point is now on the twisted curve.  Move it to untwisted. */
@@ -314,6 +314,7 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(uint8_t
     {
         /* 4-isogeny: 2xy/(y^+x^2), (y^2-x^2)/(2z^2-y^2+x^2) */
         gf u;
+
         gf_sqr(x, q->x);
         gf_sqr(t, q->y);
         gf_add(u, x, t);
@@ -347,12 +348,9 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(uint8_t
     curve448_point_destroy(q);
 }
 
-decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(curve448_point_t
-                                                                p,
-                                                                const uint8_t
-                                                                enc
-                                                                [DECAF_EDDSA_448_PUBLIC_BYTES]
-    )
+decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
+                                curve448_point_t p,
+                                const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES])
 {
     uint8_t enc2[DECAF_EDDSA_448_PUBLIC_BYTES];
     mask_t low;
@@ -411,8 +409,7 @@ decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(curve448_point_t
 
 decaf_error_t decaf_x448(uint8_t out[X_PUBLIC_BYTES],
                          const uint8_t base[X_PUBLIC_BYTES],
-                         const uint8_t scalar[X_PRIVATE_BYTES]
-    )
+                         const uint8_t scalar[X_PRIVATE_BYTES])
 {
     gf x1, x2, z2, x3, z3, t1, t2;
     int t;
@@ -487,8 +484,7 @@ decaf_error_t decaf_x448(uint8_t out[X_PUBLIC_BYTES],
 /* Thanks Johan Pascal */
 void decaf_ed448_convert_public_key_to_x448(uint8_t x[DECAF_X448_PUBLIC_BYTES],
                                             const uint8_t
-                                            ed[DECAF_EDDSA_448_PUBLIC_BYTES]
-    )
+                                            ed[DECAF_EDDSA_448_PUBLIC_BYTES])
 {
     gf y;
     const uint8_t mask = (uint8_t)(0xFE << (7));
@@ -527,8 +523,7 @@ void curve448_point_mul_by_ratio_and_encode_like_x448(uint8_t
 }
 
 void decaf_x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
-                                  const uint8_t scalar[X_PRIVATE_BYTES]
-    )
+                                  const uint8_t scalar[X_PRIVATE_BYTES])
 {
     /* Scalar conditioning */
     uint8_t scalar2[X_PRIVATE_BYTES];
@@ -553,17 +548,15 @@ void decaf_x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
     curve448_point_destroy(p);
 }
 
-/**
- * @cond internal
- * Control for variable-time scalar multiply algorithms.
- */
+/* Control for variable-time scalar multiply algorithms. */
 struct smvt_control {
     int power, addend;
 };
 
-static int recode_wnaf(struct smvt_control *control, /* [nbits/(table_bits+1) +
-                                                      * 3] */
-                       const curve448_scalar_t scalar, unsigned int table_bits)
+static int recode_wnaf(struct smvt_control *control,
+                       /* [nbits/(table_bits + 1) + 3] */
+                       const curve448_scalar_t scalar,
+                       unsigned int table_bits)
 {
     unsigned int table_size = DECAF_448_SCALAR_BITS / (table_bits + 1) + 3;
     int position = table_size - 1; /* at the end */
@@ -587,16 +580,13 @@ static int recode_wnaf(struct smvt_control *control, /* [nbits/(table_bits+1) +
     for (w = 1; w < (DECAF_448_SCALAR_BITS - 1) / 16 + 3; w++) {
         if (w < (DECAF_448_SCALAR_BITS - 1) / 16 + 1) {
             /* Refill the 16 high bits of current */
-            current +=
-                (uint32_t)((scalar->limb[w / B_OVER_16] >> (16 *
-                                                            (w %
-                                                             B_OVER_16))) <<
-                           16);
+            current += (uint32_t)((scalar->limb[w / B_OVER_16]
+                       >> (16 * (w %  B_OVER_16))) << 16);
         }
 
         while (current & 0xFFFF) {
-            uint32_t pos = __builtin_ctz((uint32_t)current), odd =
-                (uint32_t)current >> pos;
+            uint32_t pos = __builtin_ctz((uint32_t)current);
+            uint32_t odd = (uint32_t)current >> pos;
             int32_t delta = odd & mask;
 
             assert(position >= 0);
@@ -619,9 +609,9 @@ static int recode_wnaf(struct smvt_control *control, /* [nbits/(table_bits+1) +
     return n - 1;
 }
 
-static void
-prepare_wnaf_table(pniels_t * output,
-                   const curve448_point_t working, unsigned int tbits)
+static void prepare_wnaf_table(pniels_t * output,
+                               const curve448_point_t working,
+                               unsigned int tbits)
 {
     curve448_point_t tmp;
     int i;
@@ -698,12 +688,12 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
 
             if (control_var[contv].addend > 0) {
                 add_pniels_to_pt(combo,
-                                 precmp_var[control_var[contv].addend >> 1], i
-                                 && !cp);
+                                 precmp_var[control_var[contv].addend >> 1],
+                                 i && !cp);
             } else {
                 sub_pniels_from_pt(combo,
-                                   precmp_var[(-control_var[contv].addend) >>
-                                              1], i && !cp);
+                                   precmp_var[(-control_var[contv].addend)
+                                              >> 1], i && !cp);
             }
             contv++;
         }
@@ -713,8 +703,8 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
 
             if (control_pre[contp].addend > 0) {
                 add_niels_to_pt(combo,
-                                curve448_wnaf_base[control_pre[contp].addend >>
-                                                   1], i);
+                                curve448_wnaf_base[control_pre[contp].addend
+                                                   >> 1], i);
             } else {
                 sub_niels_from_pt(combo,
                                   curve448_wnaf_base[(-control_pre

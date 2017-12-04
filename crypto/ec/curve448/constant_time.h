@@ -36,32 +36,32 @@
  * Instead, we're putting our trust in the loop unroller and unswitcher.
  */
 
-/**
+/*
  * Unaligned big (vector?) register.
  */
 typedef struct {
     big_register_t unaligned;
 } __attribute__ ((packed)) unaligned_br_t;
 
-/**
+/*
  * Unaligned word register, for architectures where that matters.
  */
 typedef struct {
     word_t unaligned;
 } __attribute__ ((packed)) unaligned_word_t;
 
-/**
- * @brief Constant-time conditional swap.
+/*
+ * Constant-time conditional swap.
  *
  * If doswap, then swap elem_bytes between *a and *b.
  *
  * *a and *b must not alias.  Also, they must be at least as aligned
  * as their sizes, if the CPU cares about that sort of thing.
  */
-static __inline__ void
-    __attribute__ ((unused, always_inline))
-    constant_time_cond_swap(void *__restrict__ a_,
-                        void *__restrict__ b_, word_t elem_bytes, mask_t doswap)
+static ossl_inline void constant_time_cond_swap(void *__restrict__ a_,
+                                                void *__restrict__ b_,
+                                                word_t elem_bytes,
+                                                mask_t doswap)
 {
     word_t k;
     unsigned char *a = (unsigned char *)a_;
@@ -72,19 +72,19 @@ static __inline__ void
          k += sizeof(big_register_t)) {
         if (elem_bytes % sizeof(big_register_t)) {
             /* unaligned */
-            big_register_t xor =
-                ((unaligned_br_t *) (&a[k]))->unaligned
-                ^ ((unaligned_br_t *) (&b[k]))->unaligned;
+            big_register_t xor = ((unaligned_br_t *) (&a[k]))->unaligned
+                                 ^ ((unaligned_br_t *) (&b[k]))->unaligned;
+
             xor &= br_mask;
-            ((unaligned_br_t *) (&a[k]))->unaligned ^= xor;
-            ((unaligned_br_t *) (&b[k]))->unaligned ^= xor;
+            ((unaligned_br_t *)(&a[k]))->unaligned ^= xor;
+            ((unaligned_br_t *)(&b[k]))->unaligned ^= xor;
         } else {
             /* aligned */
             big_register_t xor = *((big_register_t *) (&a[k]))
-                ^ *((big_register_t *) (&b[k]));
+                                 ^ *((big_register_t *) (&b[k]));
             xor &= br_mask;
-            *((big_register_t *) (&a[k])) ^= xor;
-            *((big_register_t *) (&b[k])) ^= xor;
+            *((big_register_t *)(&a[k])) ^= xor;
+            *((big_register_t *)(&b[k])) ^= xor;
         }
     }
 
@@ -92,19 +92,18 @@ static __inline__ void
         for (; k <= elem_bytes - sizeof(word_t); k += sizeof(word_t)) {
             if (elem_bytes % sizeof(word_t)) {
                 /* unaligned */
-                word_t xor =
-                    ((unaligned_word_t *) (&a[k]))->unaligned
-                    ^ ((unaligned_word_t *) (&b[k]))->unaligned;
+                word_t xor = ((unaligned_word_t *)(&a[k]))->unaligned
+                             ^ ((unaligned_word_t *)(&b[k]))->unaligned;
+
                 xor &= doswap;
-                ((unaligned_word_t *) (&a[k]))->unaligned ^= xor;
-                ((unaligned_word_t *) (&b[k]))->unaligned ^= xor;
+                ((unaligned_word_t *)(&a[k]))->unaligned ^= xor;
+                ((unaligned_word_t *)(&b[k]))->unaligned ^= xor;
             } else {
                 /* aligned */
-                word_t xor = *((word_t *) (&a[k]))
-                    ^ *((word_t *) (&b[k]));
+                word_t xor = *((word_t *) (&a[k])) ^ *((word_t *) (&b[k]));
                 xor &= doswap;
-                *((word_t *) (&a[k])) ^= xor;
-                *((word_t *) (&b[k])) ^= xor;
+                *((word_t *)(&a[k])) ^= xor;
+                *((word_t *)(&b[k])) ^= xor;
             }
         }
     }
@@ -112,6 +111,7 @@ static __inline__ void
     if (elem_bytes % sizeof(word_t)) {
         for (; k < elem_bytes; k += 1) {
             unsigned char xor = a[k] ^ b[k];
+
             xor &= doswap;
             a[k] ^= xor;
             b[k] ^= xor;
@@ -119,23 +119,23 @@ static __inline__ void
     }
 }
 
-/**
- * @brief Constant-time equivalent of memcpy(out, table + elem_bytes*idx, elem_bytes);
+/*
+ * Constant-time equivalent of memcpy(out, table + elem_bytes*idx, elem_bytes);
  *
  * The table must be at least as aligned as elem_bytes.  The output must be word aligned,
  * and if the input size is vector aligned it must also be vector aligned.
  *
  * The table and output must not alias.
  */
-static __inline__ void
-    __attribute__ ((unused, always_inline))
-    constant_time_lookup(void *__restrict__ out_,
-                     const void *table_,
-                     word_t elem_bytes, word_t n_table, word_t idx)
+static ossl_inline void constant_time_lookup(void *__restrict__ out_,
+                                             const void *table_,
+                                             word_t elem_bytes,
+                                             word_t n_table,
+                                             word_t idx)
 {
     big_register_t big_one = br_set_to_mask(1), big_i = br_set_to_mask(idx);
 
-    /* Can't do pointer arithmetic on void* */
+    /* Can't do pointer arithmetic on void * */
     unsigned char *out = (unsigned char *)out_;
     const unsigned char *table = (const unsigned char *)table_;
     word_t j, k;
@@ -149,16 +149,15 @@ static __inline__ void
              k += sizeof(big_register_t)) {
             if (elem_bytes % sizeof(big_register_t)) {
                 /* unaligned */
-                ((unaligned_br_t *) (out + k))->unaligned
-                    |=
-                    br_mask &
-                    ((const unaligned_br_t
-                      *)(&table[k + j * elem_bytes]))->unaligned;
+                ((unaligned_br_t *)(out + k))->unaligned |=
+                        br_mask
+                        & ((const unaligned_br_t *)
+                           (&table[k + j * elem_bytes]))->unaligned;
             } else {
                 /* aligned */
-                *(big_register_t *) (out + k) |=
-                    br_mask & *(const big_register_t
-                                *)(&table[k + j * elem_bytes]);
+                *(big_register_t *)(out + k) |=
+                        br_mask
+                        & *(const big_register_t *)(&table[k + j * elem_bytes]);
             }
         }
 
@@ -167,14 +166,15 @@ static __inline__ void
             for (; k <= elem_bytes - sizeof(word_t); k += sizeof(word_t)) {
                 if (elem_bytes % sizeof(word_t)) {
                     /* input unaligned, output aligned */
-                    *(word_t *) (out + k) |=
-                        mask &
-                        ((const unaligned_word_t
-                          *)(&table[k + j * elem_bytes]))->unaligned;
+                    *(word_t *)(out + k) |=
+                            mask
+                            & ((const unaligned_word_t *)
+                               (&table[k + j * elem_bytes]))->unaligned;
                 } else {
                     /* aligned */
-                    *(word_t *) (out + k) |=
-                        mask & *(const word_t *)(&table[k + j * elem_bytes]);
+                    *(word_t *)(out + k) |=
+                            mask
+                            & *(const word_t *)(&table[k + j * elem_bytes]);
                 }
             }
         }
@@ -187,8 +187,8 @@ static __inline__ void
     }
 }
 
-/**
- * @brief Constant-time a = mask ? bTrue : bFalse.
+/*
+ * Constant-time a = mask ? bTrue : bFalse.
  *
  * The input and output must be at least as aligned as alignment_bytes
  * or their size, whichever is smaller.
@@ -196,12 +196,12 @@ static __inline__ void
  * Note that the output is not __restrict__, but if it overlaps either
  * input, it must be equal and not partially overlap.
  */
-static __inline__ void
-    __attribute__ ((unused, always_inline))
-    constant_time_select(void *a_,
-                     const void *bFalse_,
-                     const void *bTrue_,
-                     word_t elem_bytes, mask_t mask, size_t alignment_bytes)
+static ossl_inline void constant_time_select(void *a_,
+                                             const void *bFalse_,
+                                             const void *bTrue_,
+                                             word_t elem_bytes,
+                                             mask_t mask,
+                                             size_t alignment_bytes)
 {
     unsigned char *a = (unsigned char *)a_;
     const unsigned char *bTrue = (const unsigned char *)bTrue_;
@@ -215,15 +215,15 @@ static __inline__ void
          k += sizeof(big_register_t)) {
         if (alignment_bytes % sizeof(big_register_t)) {
             /* unaligned */
-            ((unaligned_br_t *) (&a[k]))->unaligned =
-                (br_mask & ((const unaligned_br_t *)(&bTrue[k]))->unaligned)
-                | (~br_mask &
-                   ((const unaligned_br_t *)(&bFalse[k]))->unaligned);
+            ((unaligned_br_t *)(&a[k]))->unaligned =
+                    (br_mask & ((const unaligned_br_t *)(&bTrue[k]))->unaligned)
+                    | (~br_mask
+                       & ((const unaligned_br_t *)(&bFalse[k]))->unaligned);
         } else {
             /* aligned */
             *(big_register_t *) (a + k) =
-                (br_mask & *(const big_register_t *)(&bTrue[k]))
-                | (~br_mask & *(const big_register_t *)(&bFalse[k]));
+                    (br_mask & *(const big_register_t *)(&bTrue[k]))
+                    | (~br_mask & *(const big_register_t *)(&bFalse[k]));
         }
     }
 

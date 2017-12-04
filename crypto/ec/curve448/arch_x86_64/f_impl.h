@@ -20,10 +20,6 @@ void gf_add_RAW(gf out, const gf a, const gf b)
         ((uint64xn_t *) out)[i] =
             ((const uint64xn_t *)a)[i] + ((const uint64xn_t *)b)[i];
     }
-    /*
-     * unsigned int i; for (i=0; i<sizeof(*out)/sizeof(out->limb[0]); i++) {
-     * out->limb[i] = a->limb[i] + b->limb[i]; }
-     */
 }
 
 void gf_sub_RAW(gf out, const gf a, const gf b)
@@ -32,10 +28,6 @@ void gf_sub_RAW(gf out, const gf a, const gf b)
         ((uint64xn_t *) out)[i] =
             ((const uint64xn_t *)a)[i] - ((const uint64xn_t *)b)[i];
     }
-    /*
-     * unsigned int i; for (i=0; i<sizeof(*out)/sizeof(out->limb[0]); i++) {
-     * out->limb[i] = a->limb[i] - b->limb[i]; }
-     */
 }
 
 void gf_bias(gf a, int amt)
@@ -68,6 +60,7 @@ void gf_weak_reduce(gf a)
     /* PERF: use pshufb/palignr if anyone cares about speed of this */
     uint64_t mask = (1ull << 56) - 1;
     uint64_t tmp = a->limb[7] >> 56;
+
     a->limb[4] += tmp;
     for (unsigned int i = 7; i > 0; i--) {
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 56);

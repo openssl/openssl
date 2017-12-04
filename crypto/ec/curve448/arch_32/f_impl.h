@@ -39,9 +39,8 @@ void gf_bias(gf a, int amt)
     unsigned int i;
     uint32_t co1 = ((1 << 28) - 1) * amt, co2 = co1 - amt;
 
-    for (i = 0; i < sizeof(*a) / sizeof(a->limb[0]); i++) {
+    for (i = 0; i < sizeof(*a) / sizeof(a->limb[0]); i++)
         a->limb[i] += (i == sizeof(*a) / sizeof(a->limb[0]) / 2) ? co2 : co1;
-    }
 }
 
 void gf_weak_reduce(gf a)
@@ -51,8 +50,7 @@ void gf_weak_reduce(gf a)
     unsigned int i;
 
     a->limb[8] += tmp;
-    for (i = 15; i > 0; i--) {
+    for (i = 15; i > 0; i--)
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 28);
-    }
     a->limb[0] = (a->limb[0] & mask) + tmp;
 }

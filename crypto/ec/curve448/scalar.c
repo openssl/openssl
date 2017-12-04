@@ -16,31 +16,36 @@
 #include "point_448.h"
 
 static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t) 0x3bd440fae918bc5;
-static const curve448_scalar_t sc_p = { {{
-                                          SC_LIMB(0x2378c292ab5844f3),
-                                          SC_LIMB(0x216cc2728dc58f55),
-                                          SC_LIMB(0xc44edb49aed63690),
-                                          SC_LIMB(0xffffffff7cca23e9),
-                                          SC_LIMB(0xffffffffffffffff),
-                                          SC_LIMB(0xffffffffffffffff),
-                                          SC_LIMB(0x3fffffffffffffff)
-                                          }}
-}, sc_r2 = { { {
+static const curve448_scalar_t sc_p = {
+    {
+        {
+            SC_LIMB(0x2378c292ab5844f3), SC_LIMB(0x216cc2728dc58f55),
+            SC_LIMB(0xc44edb49aed63690), SC_LIMB(0xffffffff7cca23e9),
+            SC_LIMB(0xffffffffffffffff), SC_LIMB(0xffffffffffffffff),
+            SC_LIMB(0x3fffffffffffffff)
+        }
+    }
+}, sc_r2 = {
+    {
+        {
 
             SC_LIMB(0xe3539257049b9b60), SC_LIMB(0x7af32c4bc1b195d9),
-                SC_LIMB(0x0d66de2388ea1859), SC_LIMB(0xae17cf725ee4d838),
-                SC_LIMB(0x1a9cc14ba3c47c44), SC_LIMB(0x2052bcb7e4d070af),
-                SC_LIMB(0x3402a939f823b729)
-}}};
+            SC_LIMB(0x0d66de2388ea1859), SC_LIMB(0xae17cf725ee4d838),
+            SC_LIMB(0x1a9cc14ba3c47c44), SC_LIMB(0x2052bcb7e4d070af),
+            SC_LIMB(0x3402a939f823b729)
+        }
+    }
+};
 
 /* End of template stuff */
 
 #define WBITS DECAF_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
-const curve448_scalar_t curve448_scalar_one = { {{1}} }, curve448_scalar_zero = { { {
-0}}};
+const curve448_scalar_t curve448_scalar_one = {{{1}}};
+const curve448_scalar_t  curve448_scalar_zero = {{{0}}};
 
-/** {extra,accum} - sub +? p
+/*
+ * {extra,accum} - sub +? p
  * Must have extra <= 1
  */
 static void sc_subx(curve448_scalar_t out,
@@ -67,8 +72,8 @@ static void sc_subx(curve448_scalar_t out,
     }
 }
 
-static void sc_montmul(curve448_scalar_t out,
-                       const curve448_scalar_t a, const curve448_scalar_t b)
+static void sc_montmul(curve448_scalar_t out, const curve448_scalar_t a,
+                       const curve448_scalar_t b)
 {
     unsigned int i, j;
     decaf_word_t accum[DECAF_448_SCALAR_LIMBS + 1] = { 0 };
@@ -104,24 +109,25 @@ static void sc_montmul(curve448_scalar_t out,
     sc_subx(out, accum, sc_p, sc_p, hi_carry);
 }
 
-void curve448_scalar_mul(curve448_scalar_t out,
-                         const curve448_scalar_t a, const curve448_scalar_t b)
+void curve448_scalar_mul(curve448_scalar_t out, const curve448_scalar_t a,
+                         const curve448_scalar_t b)
 {
     sc_montmul(out, a, b);
     sc_montmul(out, out, sc_r2);
 }
 
-void curve448_scalar_sub(curve448_scalar_t out,
-                         const curve448_scalar_t a, const curve448_scalar_t b)
+void curve448_scalar_sub(curve448_scalar_t out, const curve448_scalar_t a,
+                         const curve448_scalar_t b)
 {
     sc_subx(out, a->limb, b, sc_p, 0);
 }
 
-void curve448_scalar_add(curve448_scalar_t out,
-                         const curve448_scalar_t a, const curve448_scalar_t b)
+void curve448_scalar_add(curve448_scalar_t out, const curve448_scalar_t a,
+                         const curve448_scalar_t b)
 {
     decaf_dword_t chain = 0;
     unsigned int i;
+
     for (i = 0; i < DECAF_448_SCALAR_LIMBS; i++) {
         chain = (chain + a->limb[i]) + b->limb[i];
         out->limb[i] = chain;
@@ -135,27 +141,26 @@ static ossl_inline void scalar_decode_short(curve448_scalar_t s,
                                             unsigned int nbytes)
 {
     unsigned int i, j, k = 0;
+
     for (i = 0; i < DECAF_448_SCALAR_LIMBS; i++) {
         decaf_word_t out = 0;
-        for (j = 0; j < sizeof(decaf_word_t) && k < nbytes; j++, k++) {
+
+        for (j = 0; j < sizeof(decaf_word_t) && k < nbytes; j++, k++)
             out |= ((decaf_word_t) ser[k]) << (8 * j);
-        }
         s->limb[i] = out;
     }
 }
 
-decaf_error_t curve448_scalar_decode(curve448_scalar_t s,
-                                     const unsigned char
-                                     ser[DECAF_448_SCALAR_BYTES]
-    )
+decaf_error_t curve448_scalar_decode(
+                                curve448_scalar_t s,
+                                const unsigned char ser[DECAF_448_SCALAR_BYTES])
 {
     unsigned int i;
     decaf_dsword_t accum = 0;
 
     scalar_decode_short(s, ser, DECAF_448_SCALAR_BYTES);
-    for (i = 0; i < DECAF_448_SCALAR_LIMBS; i++) {
+    for (i = 0; i < DECAF_448_SCALAR_LIMBS; i++)
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
-    }
     /* Here accum == 0 or -1 */
 
     curve448_scalar_mul(s, s, curve448_scalar_one); /* ham-handed reduce */
@@ -209,10 +214,10 @@ void curve448_scalar_encode(unsigned char ser[DECAF_448_SCALAR_BYTES],
                             const curve448_scalar_t s)
 {
     unsigned int i, j, k = 0;
+
     for (i = 0; i < DECAF_448_SCALAR_LIMBS; i++) {
-        for (j = 0; j < sizeof(decaf_word_t); j++, k++) {
+        for (j = 0; j < sizeof(decaf_word_t); j++, k++)
             ser[k] = s->limb[i] >> (8 * j);
-        }
     }
 }
 
@@ -226,8 +231,7 @@ void curve448_scalar_halve(curve448_scalar_t out, const curve448_scalar_t a)
         out->limb[i] = chain;
         chain >>= DECAF_WORD_BITS;
     }
-    for (i = 0; i < DECAF_448_SCALAR_LIMBS - 1; i++) {
+    for (i = 0; i < DECAF_448_SCALAR_LIMBS - 1; i++)
         out->limb[i] = out->limb[i] >> 1 | out->limb[i + 1] << (WBITS - 1);
-    }
     out->limb[i] = out->limb[i] >> 1 | chain << (WBITS - 1);
 }
