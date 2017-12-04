@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -124,19 +124,13 @@ static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
 
 int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 {
-    int ctrl_exists, ref_exists;
+    int ctrl_exists;
+
     if (e == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_CTRL, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
-    ref_exists = ((e->struct_ref > 0) ? 1 : 0);
-    CRYPTO_THREAD_unlock(global_engine_lock);
-    ctrl_exists = ((e->ctrl == NULL) ? 0 : 1);
-    if (!ref_exists) {
-        ENGINEerr(ENGINE_F_ENGINE_CTRL, ENGINE_R_NO_REFERENCE);
-        return 0;
-    }
+    ctrl_exists = e->ctrl != NULL;
     /*
      * Intercept any "root-level" commands before trying to hand them on to
      * ctrl() handlers.

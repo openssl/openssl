@@ -132,7 +132,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
                 goto end;
             }
             if (fnd->funct)
-                engine_unlocked_finish(fnd->funct, 0);
+                engine_unlocked_finish(fnd->funct);
             fnd->funct = e;
             fnd->uptodate = 1;
         }
@@ -153,7 +153,7 @@ static void int_unregister_cb(ENGINE_PILE *pile, ENGINE *e)
         pile->uptodate = 0;
     }
     if (pile->funct == e) {
-        engine_unlocked_finish(e, 0);
+        engine_unlocked_finish(e);
         pile->funct = NULL;
     }
 }
@@ -174,7 +174,7 @@ static void int_cleanup_cb_doall(ENGINE_PILE *p)
         return;
     sk_ENGINE_free(p->sk);
     if (p->funct)
-        engine_unlocked_finish(p->funct, 0);
+        engine_unlocked_finish(p->funct);
     OPENSSL_free(p);
 }
 
@@ -195,7 +195,7 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
 {
     ENGINE *ret = NULL;
     ENGINE_PILE tmplate, *fnd = NULL;
-    int initres, loop = 0;
+    int initres, loop = 0, ref_cnt;
 
     if (!(*table)) {
         OSSL_TRACE3(ENGINE_TABLE,
@@ -236,7 +236,8 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
         goto end;
     }
     /* Try to initialise the ENGINE? */
-    if ((ret->funct_ref > 0) || !(table_flags & ENGINE_TABLE_FLAG_NOINIT))
+    ENGINE_FUNCT_REF(ret, &ref_cnt);
+    if (ref_cnt > 0 || !(table_flags & ENGINE_TABLE_FLAG_NOINIT))
         initres = engine_unlocked_init(ret);
     else
         initres = 0;
@@ -245,7 +246,7 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
         if ((fnd->funct != ret) && engine_unlocked_init(ret)) {
             /* If there was a previous default we release it. */
             if (fnd->funct)
-                engine_unlocked_finish(fnd->funct, 0);
+                engine_unlocked_finish(fnd->funct);
             fnd->funct = ret;
             OSSL_TRACE4(ENGINE_TABLE,
                         "%s:%d, nid=%d, setting default to '%s'\n",

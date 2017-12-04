@@ -1,6 +1,6 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
+ * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002,2019, Oracle and/or its affiliates. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,11 @@
 # include "internal/thread_once.h"
 # include "internal/refcount.h"
 
+
+/*
+ * This lock should be taken when accessing global state (e.g. the engine table)
+ * If both this lock and a per engine lock are required, take this one first.
+ */
 extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
@@ -35,6 +40,32 @@ extern CRYPTO_RWLOCK *global_engine_lock;
                ((isfunct) ? (e)->funct_ref : (e)->struct_ref),          \
                (OPENSSL_FILE), (OPENSSL_LINE))
 
+# define ENGINE_UP_STRUCT_REF(e, i)                             \
+    do {                                                        \
+        CRYPTO_UP_REF(&(e)->struct_ref, (i), (e)->lock);        \
+        engine_ref_debug((e), 0, 1);                            \
+    } while (0)
+
+# define ENGINE_DOWN_STRUCT_REF(e, i)                           \
+    do {                                                        \
+        CRYPTO_DOWN_REF(&(e)->struct_ref, (i), (e)->lock);      \
+        engine_ref_debug((e), 0, -1);                           \
+    } while (0)
+
+# define ENGINE_UP_FUNCT_REF(e, i)                              \
+    do {                                                        \
+        CRYPTO_atomic_add(&(e)->funct_ref, 1, (i), (e)->lock);  \
+        engine_ref_debug((e), 1, 1);                            \
+    } while (0)
+
+# define ENGINE_DOWN_FUNCT_REF(e, i)                            \
+    do {                                                        \
+        CRYPTO_atomic_add(&(e)->funct_ref, -1, (i), (e)->lock); \
+        engine_ref_debug((e), 1, -1);                           \
+    } while (0)
+
+# define ENGINE_FUNCT_REF(e, i)                                 \
+    CRYPTO_atomic_read(&(e)->funct_ref, (i), (e)->lock)
 /*
  * Any code that will need cleanup operations should use these functions to
  * register callbacks. engine_cleanup_int() will call all registered
@@ -77,7 +108,7 @@ void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
  * caller may already be controlling of the engine lock.
  */
 int engine_unlocked_init(ENGINE *e);
-int engine_unlocked_finish(ENGINE *e, int unlock_for_handlers);
+int engine_unlocked_finish(ENGINE *e);
 int engine_free_util(ENGINE *e, int not_locked);
 
 /*
@@ -130,6 +161,14 @@ struct engine_st {
     ENGINE_SSL_CLIENT_CERT_PTR load_ssl_client_cert;
     const ENGINE_CMD_DEFN *cmd_defns;
     int flags;
+    /*
+     * Access lock for this engine.
+     * This lock guards these fields:
+     *  struct_ref
+     *  funct_ref
+     *  ex_data
+     */
+    CRYPTO_RWLOCK *lock;
     /* reference count on the structure itself */
     CRYPTO_REF_COUNT struct_ref;
     /*
@@ -138,11 +177,17 @@ struct engine_st {
      * engine, whereas the previous count is simply to cope with
      * (de)allocation of this structure. Hence, running_ref <= struct_ref at
      * all times.
+     *
+     * This is not of type CRYPTO_REF_COUNT because read access is required
+     * and this is only available using the raw atomic operations.
      */
     int funct_ref;
     /* A place to store per-ENGINE data */
     CRYPTO_EX_DATA ex_data;
-    /* Used to maintain the linked-list of engines. */
+    /*
+     * Used to maintain the linked-list of engines.
+     * Because these are global in nature, they are guarded by the global lock.
+     */
     struct engine_st *prev;
     struct engine_st *next;
 };

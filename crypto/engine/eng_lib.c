@@ -35,6 +35,12 @@ ENGINE *ENGINE_new(void)
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL) {
+        ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_INIT_FAIL);
+        OPENSSL_free(ret);
+        return NULL;
+    }
     ret->struct_ref = 1;
     engine_ref_debug(ret, 0, 1);
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ENGINE, ret, &ret->ex_data)) {
@@ -71,18 +77,19 @@ void engine_set_all_null(ENGINE *e)
 
 int engine_free_util(ENGINE *e, int not_locked)
 {
-    int i;
+    int ref_cnt;
 
     if (e == NULL)
         return 1;
-    if (not_locked)
-        CRYPTO_DOWN_REF(&e->struct_ref, &i, global_engine_lock);
-    else
-        i = --e->struct_ref;
-    engine_ref_debug(e, 0, -1);
-    if (i > 0)
+    if (not_locked) {
+        ENGINE_DOWN_STRUCT_REF(e, &ref_cnt);
+    } else {
+        ref_cnt = --e->struct_ref;
+        engine_ref_debug(e, 0, -1);
+    }
+    if (ref_cnt > 0)
         return 1;
-    REF_ASSERT_ISNT(i < 0);
+    REF_ASSERT_ISNT(ref_cnt < 0);
     /* Free up any dynamically allocated public key methods */
     engine_pkey_meths_free(e);
     engine_pkey_asn1_meths_free(e);
@@ -93,6 +100,7 @@ int engine_free_util(ENGINE *e, int not_locked)
     if (e->destroy)
         e->destroy(e);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ENGINE, e, &e->ex_data);
+    CRYPTO_THREAD_lock_free(e->lock);
     OPENSSL_free(e);
     return 1;
 }

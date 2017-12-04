@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,19 +54,18 @@ EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data)
 {
     EVP_PKEY *pkey;
+    int ref_cnt;
 
     if (e == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
                   ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
-    if (e->funct_ref == 0) {
-        CRYPTO_THREAD_unlock(global_engine_lock);
+    ENGINE_FUNCT_REF(e, &ref_cnt);
+    if (ref_cnt == 0) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY, ENGINE_R_NOT_INITIALISED);
         return 0;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
     if (!e->load_privkey) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PRIVATE_KEY,
                   ENGINE_R_NO_LOAD_FUNCTION);
@@ -85,19 +84,18 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                                  UI_METHOD *ui_method, void *callback_data)
 {
     EVP_PKEY *pkey;
+    int ref_cnt;
 
     if (e == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY,
                   ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
-    if (e->funct_ref == 0) {
-        CRYPTO_THREAD_unlock(global_engine_lock);
+    ENGINE_FUNCT_REF(e, &ref_cnt);
+    if (ref_cnt == 0) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY, ENGINE_R_NOT_INITIALISED);
         return 0;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
     if (!e->load_pubkey) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_PUBLIC_KEY, ENGINE_R_NO_LOAD_FUNCTION);
         return 0;
@@ -116,20 +114,19 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
                                 EVP_PKEY **ppkey, STACK_OF(X509) **pother,
                                 UI_METHOD *ui_method, void *callback_data)
 {
+    int ref_cnt;
 
     if (e == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
                   ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    CRYPTO_THREAD_write_lock(global_engine_lock);
-    if (e->funct_ref == 0) {
-        CRYPTO_THREAD_unlock(global_engine_lock);
+    ENGINE_FUNCT_REF(e, &ref_cnt);
+    if (ref_cnt == 0) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
                   ENGINE_R_NOT_INITIALISED);
         return 0;
     }
-    CRYPTO_THREAD_unlock(global_engine_lock);
     if (!e->load_ssl_client_cert) {
         ENGINEerr(ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT,
                   ENGINE_R_NO_LOAD_FUNCTION);
