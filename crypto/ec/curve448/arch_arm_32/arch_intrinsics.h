@@ -19,7 +19,8 @@ static __inline__ __attribute((always_inline, unused))
 uint32_t word_is_zero(uint32_t a)
 {
     uint32_t ret;
- asm("subs %0, %1, #1;\n\tsbc %0, %0, %0": "=r"(ret): "r"(a):"cc");
+
+    asm("subs %0, %1, #1;\n\tsbc %0, %0, %0": "=r"(ret): "r"(a):"cc");
     return ret;
 }
 

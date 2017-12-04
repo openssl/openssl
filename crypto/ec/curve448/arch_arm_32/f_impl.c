@@ -19,9 +19,10 @@ static inline void __attribute__ ((gnu_inline, always_inline))
 #ifdef  __ARMEL__
     uint32_t lo = *acc, hi = (*acc) >> 32;
 
-    __asm__ __volatile__("smlal %[lo], %[hi], %[a], %[b]":[lo] "+&r"(lo),
-                         [hi] "+&r"(hi)
-                         :[a] "r"(a),[b] "r"(b));
+    __asm__ __volatile__ ("smlal %[lo], %[hi], %[a], %[b]"
+                          : [lo]"+&r"(lo), [hi]"+&r"(hi)
+                          : [a]"r"(a), [b]"r"(b));
+
 
     *acc = lo + (((uint64_t)hi) << 32);
 #else
@@ -35,9 +36,11 @@ static inline void __attribute__ ((gnu_inline, always_inline))
 #ifdef __ARMEL__
     uint32_t lo = *acc, hi = (*acc) >> 32;
 
-    __asm__ __volatile__("smlal %[lo], %[hi], %[a], %[b]":[lo] "+&r"(lo),
-                         [hi] "+&r"(hi)
-                         :[a] "r"(a),[b] "r"(2 * b));
+    __asm__ __volatile__ ("smlal %[lo], %[hi], %[a], %[b]"
+                          : [lo]"+&r"(lo), [hi]"+&r"(hi)
+                          : [a]"r"(a), [b]"r"(2 * b));
+
+
 
     *acc = lo + (((uint64_t)hi) << 32);
 #else
@@ -51,9 +54,9 @@ static inline void __attribute__ ((gnu_inline, always_inline))
 #ifdef __ARMEL__
     uint32_t lo, hi;
 
-    __asm__ __volatile__("smull %[lo], %[hi], %[a], %[b]":[lo] "=&r"(lo),
-                         [hi] "=&r"(hi)
-                         :[a] "r"(a),[b] "r"(b));
+    __asm__ __volatile__ ("smull %[lo], %[hi], %[a], %[b]"
+                          : [lo]"=&r"(lo), [hi]"=&r"(hi)
+                          : [a]"r"(a), [b]"r"(b));
 
     *acc = lo + (((uint64_t)hi) << 32);
 #else
@@ -68,8 +71,8 @@ static inline void __attribute__ ((gnu_inline, always_inline))
     uint32_t lo, hi;
 
     __asm__ /*__volatile__*/ ("smull %[lo], %[hi], %[a], %[b]"
- :                           [lo] "=&r"(lo),[hi] "=&r"(hi)
- :                           [a] "r"(a),[b] "r"(2 * b));
+                              : [lo]"=&r"(lo), [hi]"=&r"(hi)
+                              : [a]"r"(a), [b]"r"(2*b));
 
     *acc = lo + (((uint64_t)hi) << 32);
 #else
@@ -729,16 +732,14 @@ void gf_sqr(gf_s * __restrict__ cs, const gf as)
 void gf_mulw_unsigned(gf_s * __restrict__ cs, const gf as, uint32_t b)
 {
     uint32_t mask = (1ull << 28) - 1;
-    assert(b <= mask);
-
     const uint32_t *a = as->limb;
     uint32_t *c = cs->limb;
-
     uint64_t accum0, accum8;
-
     int i;
-
     uint32_t c0, c8, n0, n8;
+
+    assert(b <= mask);
+
     c0 = a[0];
     c8 = a[8];
     accum0 = widemul(b, c0);

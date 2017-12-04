@@ -11,10 +11,10 @@
  */
 #include "field.h"
 
-static const gf MODULUS =
-    { FIELD_LITERAL(0xffffffffffffff, 0xffffffffffffff, 0xffffffffffffff,
-                    0xffffffffffffff, 0xfffffffffffffe, 0xffffffffffffff,
-                    0xffffffffffffff, 0xffffffffffffff)
+static const gf MODULUS = {
+    FIELD_LITERAL(0xffffffffffffff, 0xffffffffffffff, 0xffffffffffffff,
+                  0xffffffffffffff, 0xfffffffffffffe, 0xffffffffffffff,
+                  0xffffffffffffff, 0xffffffffffffff)
 };
 
 /** Serialize to wire format. */
@@ -27,9 +27,8 @@ void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_hibit)
 
     gf_copy(red, x);
     gf_strong_reduce(red);
-    if (!with_hibit) {
+    if (!with_hibit)
         assert(gf_hibit(red) == 0);
-    }
 
     UNROLL for (i = 0; i < (with_hibit ? X_SER_BYTES : SER_BYTES); i++) {
         if (fill < 8 && j < NLIMBS) {
@@ -43,7 +42,7 @@ void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_hibit)
     }
 }
 
-/** Return high bit of x = low bit of 2x mod p */
+/* Return high bit of x = low bit of 2x mod p */
 mask_t gf_hibit(const gf x)
 {
     gf y;
@@ -52,7 +51,7 @@ mask_t gf_hibit(const gf x)
     return -(y->limb[0] & 1);
 }
 
-/** Return high bit of x = low bit of 2x mod p */
+/* Return high bit of x = low bit of 2x mod p */
 mask_t gf_lobit(const gf x)
 {
     gf y;
@@ -61,7 +60,7 @@ mask_t gf_lobit(const gf x)
     return -(y->limb[0] & 1);
 }
 
-/** Deserialize from wire format; return -1 on success and 0 on failure. */
+/* Deserialize from wire format; return -1 on success and 0 on failure. */
 mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
                       uint8_t hi_nmask)
 {
@@ -93,7 +92,7 @@ mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
     return succ & word_is_zero(buffer) & ~word_is_zero(scarry);
 }
 
-/** Reduce to canonical form. */
+/* Reduce to canonical form. */
 void gf_strong_reduce(gf a)
 {
     dsword_t scarry;
@@ -135,7 +134,7 @@ void gf_strong_reduce(gf a)
     assert(word_is_zero(carry + scarry_0));
 }
 
-/** Subtract two gf elements d=a-b */
+/* Subtract two gf elements d=a-b */
 void gf_sub(gf d, const gf a, const gf b)
 {
     gf_sub_RAW(d, a, b);
@@ -143,14 +142,14 @@ void gf_sub(gf d, const gf a, const gf b)
     gf_weak_reduce(d);
 }
 
-/** Add two field elements d = a+b */
+/* Add two field elements d = a+b */
 void gf_add(gf d, const gf a, const gf b)
 {
     gf_add_RAW(d, a, b);
     gf_weak_reduce(d);
 }
 
-/** Compare a==b */
+/* Compare a==b */
 mask_t gf_eq(const gf a, const gf b)
 {
     gf c;

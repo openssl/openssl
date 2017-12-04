@@ -55,8 +55,7 @@ static decaf_error_t oneshot_hash(uint8_t *out, size_t outlen,
     return DECAF_SUCCESS;
 }
 
-static void clamp(uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES]
-    )
+static void clamp(uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES])
 {
     uint8_t hibit = (1 << 0) >> 1;
 
@@ -106,13 +105,9 @@ static decaf_error_t hash_init_with_dom(EVP_MD_CTX *hashctx,
 }
 
 /* In this file because it uses the hash */
-decaf_error_t decaf_ed448_convert_private_key_to_x448(uint8_t
-                                                      x
-                                                      [DECAF_X448_PRIVATE_BYTES],
-                                                      const uint8_t
-                                                      ed
-                                                      [DECAF_EDDSA_448_PRIVATE_BYTES]
-    )
+decaf_error_t decaf_ed448_convert_private_key_to_x448(
+                            uint8_t x[DECAF_X448_PRIVATE_BYTES],
+                            const uint8_t ed [DECAF_EDDSA_448_PRIVATE_BYTES])
 {
     /* pass the private key through oneshot_hash function */
     /* and keep the first DECAF_X448_PRIVATE_BYTES bytes */
@@ -121,13 +116,9 @@ decaf_error_t decaf_ed448_convert_private_key_to_x448(uint8_t
                         ed, DECAF_EDDSA_448_PRIVATE_BYTES);
 }
 
-decaf_error_t decaf_ed448_derive_public_key(uint8_t
-                                            pubkey
-                                            [DECAF_EDDSA_448_PUBLIC_BYTES],
-                                            const uint8_t
-                                            privkey
-                                            [DECAF_EDDSA_448_PRIVATE_BYTES]
-    )
+decaf_error_t decaf_ed448_derive_public_key(
+                        uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                        const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES])
 {
     /* only this much used for keygen */
     uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES];
@@ -136,9 +127,9 @@ decaf_error_t decaf_ed448_derive_public_key(uint8_t
     curve448_point_t p;
 
     if (!oneshot_hash(secret_scalar_ser, sizeof(secret_scalar_ser), privkey,
-                      DECAF_EDDSA_448_PRIVATE_BYTES)) {
+                      DECAF_EDDSA_448_PRIVATE_BYTES))
         return DECAF_FAILURE;
-    }
+
     clamp(secret_scalar_ser);
 
     curve448_scalar_decode_long(secret_scalar, secret_scalar_ser,
@@ -152,9 +143,8 @@ decaf_error_t decaf_ed448_derive_public_key(uint8_t
      * converted it effectively picks up a factor of 2 from the isogenies.  So
      * we might start at 2 instead of 1.
      */
-    for (c = 1; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+    for (c = 1; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1)
         curve448_scalar_halve(secret_scalar, secret_scalar);
-    }
 
     curve448_precomputed_scalarmul(p, curve448_precomputed_base, secret_scalar);
 
@@ -168,15 +158,13 @@ decaf_error_t decaf_ed448_derive_public_key(uint8_t
     return DECAF_SUCCESS;
 }
 
-decaf_error_t decaf_ed448_sign(uint8_t
-                               signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-                               const uint8_t
-                               privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-                               const uint8_t
-                               pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-                               const uint8_t *message, size_t message_len,
-                               uint8_t prehashed, const uint8_t *context,
-                               size_t context_len)
+decaf_error_t decaf_ed448_sign(
+                        uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                        const uint8_t *message, size_t message_len,
+                        uint8_t prehashed, const uint8_t *context,
+                        size_t context_len)
 {
     curve448_scalar_t secret_scalar;
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
@@ -287,9 +275,6 @@ decaf_error_t decaf_ed448_sign_prehash(uint8_t
 {
     return decaf_ed448_sign(signature, privkey, pubkey, hash, 64, 1, context,
                             context_len);
-    /*
-     * OPENSSL_cleanse(hash,sizeof(hash));
-     */
 }
 
 decaf_error_t decaf_ed448_verify(const uint8_t
@@ -307,15 +292,13 @@ decaf_error_t decaf_ed448_verify(const uint8_t
     curve448_scalar_t response_scalar;
     unsigned int c;
 
-    if (DECAF_SUCCESS != error) {
+    if (DECAF_SUCCESS != error)
         return error;
-    }
 
     error =
         curve448_point_decode_like_eddsa_and_mul_by_ratio(r_point, signature);
-    if (DECAF_SUCCESS != error) {
+    if (DECAF_SUCCESS != error)
         return error;
-    }
 
     {
         /* Compute the challenge */
@@ -345,9 +328,8 @@ decaf_error_t decaf_ed448_verify(const uint8_t
                                 &signature[DECAF_EDDSA_448_PUBLIC_BYTES],
                                 DECAF_EDDSA_448_PRIVATE_BYTES);
 
-    for (c = 1; c < DECAF_448_EDDSA_DECODE_RATIO; c <<= 1) {
+    for (c = 1; c < DECAF_448_EDDSA_DECODE_RATIO; c <<= 1)
         curve448_scalar_add(response_scalar, response_scalar, response_scalar);
-    }
 
     /* pk_point = -c(x(P)) + (cx + k)G = kG */
     curve448_base_double_scalarmul_non_secret(pk_point,
@@ -356,20 +338,16 @@ decaf_error_t decaf_ed448_verify(const uint8_t
     return decaf_succeed_if(curve448_point_eq(pk_point, r_point));
 }
 
-decaf_error_t decaf_ed448_verify_prehash(const uint8_t
-                                         signature
-                                         [DECAF_EDDSA_448_SIGNATURE_BYTES],
-                                         const uint8_t
-                                         pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-                                         const uint8_t hash[64],
-                                         const uint8_t *context,
-                                         uint8_t context_len)
+decaf_error_t decaf_ed448_verify_prehash(
+                    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+                    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                    const uint8_t hash[64], const uint8_t *context,
+                    uint8_t context_len)
 {
     decaf_error_t ret;
 
-    ret =
-        decaf_ed448_verify(signature, pubkey, hash, 64, 1, context,
-                           context_len);
+    ret = decaf_ed448_verify(signature, pubkey, hash, 64, 1, context,
+                             context_len);
 
     return ret;
 }
