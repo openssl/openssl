@@ -869,7 +869,7 @@ EOF
   # last in the line.  We may therefore need to put back a line ending.
   sub src2obj {
       my %args = @_;
-      my $obj = $args{obj};
+      (my $obj = $args{obj}) =~ s|\.o$||;
       my @srcs = map { if ($unified_info{generate}->{$_}) {
                            (my $x = $_) =~ s/\.S$/.s/; $x
                        } else {
@@ -884,26 +884,30 @@ EOF
               $incs .= " -I".$withargs{zlib_include};
           }
       }
-      my $cc = '$(CC)';
-      my $cflags = '$(CFLAGS)';
-      if (grep /\.(cc|cpp)$/, @srcs) {
-          $cc = '$(CXX)';
-          $cflags = '$(CXXFLAGS)';
-          $cflags .= ' ' . { lib => '$(LIB_CXXFLAGS)',
-                             dso => '$(DSO_CXXFLAGS)',
-                             bin => '$(BIN_CXXFLAGS)' } -> {$args{intent}};
+      my $cmd = '$(CC)';
+      my $cmdflags = '$(CFLAGS) -c';
+      my $makedepprog = $disabled{makedepend} ? undef : $config{makedepprog};
+      if (grep /\.rc$/, @srcs) {
+          $cmd = '$(RC)';
+          $cmdflags = '$(RCFLAGS)';
+          $makedepprog = undef;
+      } elsif (grep /\.(cc|cpp)$/, @srcs) {
+          $cmd = '$(CXX)';
+          $cmdflags = '$(CXXFLAGS) -c';
+          $cmdflags .= ' ' . { lib => '$(LIB_CXXFLAGS)',
+                               dso => '$(DSO_CXXFLAGS)',
+                               bin => '$(BIN_CXXFLAGS)' } -> {$args{intent}};
       } else {
-          $cflags .= ' ' . { lib => '$(LIB_CFLAGS)',
-                             dso => '$(DSO_CFLAGS)',
-                             bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+          $cmdflags .= ' ' . { lib => '$(LIB_CFLAGS)',
+                               dso => '$(DSO_CFLAGS)',
+                               bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       }
-      my $makedepprog = $config{makedepprog};
       my $recipe = <<"EOF";
 $obj$objext: $deps
 EOF
-      if (!$disabled{makedepend} && $makedepprog !~ /\/makedepend/) {
+      if (defined $makedepprog && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
-	$cc $incs $cflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
+	$cmd $incs $cmdflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
@@ -913,11 +917,11 @@ EOF
 EOF
       } else {
           $recipe .= <<"EOF";
-	$cc $incs $cflags -c -o \$\@ $srcs
+	$cmd $incs $cmdflags -o \$\@ $srcs
 EOF
-          if (!$disabled{makedepend} && $makedepprog =~ /\/makedepend/) {
+          if (defined $makedepprog  && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
-	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cflags -- $srcs \\
+	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cmdflags -- $srcs \\
 	    >$obj$depext.tmp 2>/dev/null
 	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
@@ -944,71 +948,78 @@ EOF
                                     my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
                                     " -L$d -l$l" } @{$args{deps}});
-      my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
-      my $shlib_target = $target{shared_target};
-      my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
+      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+                 grep { $_ =~ m|\.o$| }
+                 @{$args{objs}};
+      my @defs = grep { $_ =~ /\.(def|map)$/ } @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      die "More than one exported symbol map" if scalar @defs > 1;
+      my $objs = join(" ", @objs);
+      my $deps = join(" ", @objs, @defs, @deps);
       my $target = shlib_simple($lib);
       my $target_full = shlib($lib);
-      return <<"EOF"
-# With a build on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
+      my $shared_soname = "";
+      $shared_soname .= ' '.$target{shared_sonameflag}.basename($target_full)
+          if defined $target{shared_sonameflag};
+      my $shared_imp = "";
+      $shared_imp .= ' '.$target{shared_impflag}.basename($target)
+          if defined $target{shared_impflag};
+      my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
+      my $recipe = <<"EOF";
+# When building on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
 # that two files get produced, {shlibname}.dll and {libname}.dll.a.
 # With all other Unix platforms, we often build a shared library with the
 # SO version built into the file name and a symlink without the SO version
 # It's not necessary to have both as targets.  The choice falls on the
 # simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
 # {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
-$target: $lib$libext $deps $ordinalsfile
-	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
-		ECHO=\$(ECHO) \\
-		PLATFORM=\$(PLATFORM) \\
-		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
-		INSTALLTOP='\$(INSTALLTOP)' LIBDIR='\$(LIBDIR)' \\
-		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		LIBNAME=$libname SHLIBVERSION=\$(SHLIB_VERSION_NUMBER) \\
-		STLIBNAME=$lib$libext \\
-		SHLIBNAME=$target SHLIBNAME_FULL=$target_full \\
-		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(LIB_CFLAGS)' \\
-		LDFLAGS='\$(LDFLAGS)' SHARED_LDFLAGS='\$(LIB_LDFLAGS)' \\
-		RC='\$(RC)' SHARED_RCFLAGS='\$(RCFLAGS)' \\
-		link_shlib.$shlib_target
+$target: $deps
+	\$(CC) \$(CFLAGS) \$(LIB_CFLAGS) \$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+		-o $target_full$shared_def $objs \\
+                \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
-	  . (windowsdll() ? <<"EOF" : "");
+      if (windowsdll()) {
+          $recipe .= <<"EOF";
 	rm -f apps/$shlib'\$(SHLIB_EXT)'
 	rm -f test/$shlib'\$(SHLIB_EXT)'
+	rm -f fuzz/$shlib'\$(SHLIB_EXT)'
 	cp -p $shlib'\$(SHLIB_EXT)' apps/
 	cp -p $shlib'\$(SHLIB_EXT)' test/
+	cp -p $shlib'\$(SHLIB_EXT)' fuzz/
 EOF
+      } else {
+          $recipe .= <<"EOF";
+	rm -f $target
+	ln -s $target_full $target
+EOF
+      }
   }
   sub obj2dso {
       my %args = @_;
       my $dso = $args{lib};
       my $dsod = dirname($dso);
       my $dson = basename($dso);
-      my $shlibdeps = join("", map { my $d = dirname($_);
-                                     my $f = basename($_);
-                                     (my $l = $f) =~ s/^lib//;
-                                     " -L$d -l$l" } @{$args{deps}});
-      my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
-      my $shlib_target = $target{shared_target};
-      my $objs = join(" ", map { $_.$objext } @{$args{objs}});
+      my $linklibs = join("", map { my $d = dirname($_);
+                                    my $f = basename($_);
+                                    (my $l = $f) =~ s/^lib//;
+                                    " -L$d -l$l" } @{$args{deps}});
+      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      my $objs = join(" ", @objs);
+      my $deps = join(" ", @deps);
       my $target = dso($dso);
       return <<"EOF";
 $target: $objs $deps
-	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
-		PLATFORM=\$(PLATFORM) \\
-		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$dsod" \\
-		LIBDEPS='\$(PLIB_LDFLAGS) '"$shlibdeps"' \$(EX_LIBS)' \\
-		SHLIBNAME_FULL=$target LDFLAGS='\$(LDFLAGS)' \\
-		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(DSO_CFLAGS)' \\
-		SHARED_LDFLAGS='\$(DSO_LDFLAGS)' \\
-		LIBEXTRAS="$objs" \\
-		link_dso.$shlib_target
+	\$(CC) \$(CFLAGS) \$(DSO_CFLAGS) \$(DSO_LDFLAGS) \\
+		-o $target $objs \\
+                \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
   }
   sub obj2lib {
       my %args = @_;
       (my $lib = $args{lib}) =~ s/\.a$//;
-      my $objs = join(" ", map { $_.$objext } @{$args{objs}});
+      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+      my $objs = join(" ", @objs);
       return <<"EOF";
 $lib$libext: $objs
 	\$(AR) \$\@ \$\?
@@ -1020,7 +1031,8 @@ EOF
       my $bin = $args{bin};
       my $bind = dirname($bin);
       my $binn = basename($bin);
-      my $objs = join(" ", map { $_.$objext } @{$args{objs}});
+      my $objs = join(" ", map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+                           @{$args{objs}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my $linklibs = join("", map { if ($_ =~ /\.a$/) {
                                         " $_";
@@ -1032,23 +1044,17 @@ EOF
                                         " -L$d -l$l"
                                     }
                                   } @{$args{deps}});
-      my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
-      my $cc = '$(CC)';
-      my $cflags = '$(CFLAGS) $(BIN_CFLAGS)';
-      if (grep /_cc$/, @{$args{objs}}) {
-          $cc = '$(CXX)';
-          $cflags = '$(CXXFLAGS) $(BIN_CXXFLAGS)';
+      my $cmd = '$(CC)';
+      my $cmdflags = '$(CFLAGS) $(BIN_CFLAGS)';
+      if (grep /_cc\.o$/, @{$args{objs}}) {
+          $cmd = '$(CXX)';
+          $cmdflags = '$(CXXFLAGS) $(BIN_CXXFLAGS)';
       }
       return <<"EOF";
 $bin$exeext: $objs $deps
-	\$(RM) $bin$exeext
-	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
-		PERL="\$(PERL)" SRCDIR=\$(SRCDIR) \\
-		APPNAME=$bin$exeext OBJECTS="$objs" \\
-		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		CC='$cc' CFLAGS='$cflags' \\
-		LDFLAGS='\$(LDFLAGS)' \\
-		link_app.$shlib_target
+	rm -f $bin$exeext
+	$cmd $cmdflags \$(LDFLAGS) \$(BIN_LDFLAGS) -o $bin$exeext $objs \\
+		\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
   }
   sub in2script {

@@ -4,6 +4,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
  our $objext = $target{obj_extension} || ".obj";
+ our $resext = $target{res_extension} || ".res";
  our $depext = $target{dep_extension} || ".d";
  our $exeext = $target{exe_extension} || ".exe";
  our $libext = $target{lib_extension} || ".lib";
@@ -445,7 +446,6 @@ EOF
 
  sub src2obj {
      my %args = @_;
-     my $obj = $args{obj};
      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
                     } ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
@@ -460,6 +460,13 @@ EOF
 		     dso => '$(DSO_CFLAGS)',
 		     bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
      my $makedepprog = $config{makedepprog};
+     if ($srcs[0] =~ /\.rc$/) {
+         return <<"EOF";
+$args{obj}: $deps
+	\$(RC) \$(RCOUTFLAG)\$\@ $srcs
+EOF
+     }
+     (my $obj = $args{obj}) =~ s|\.o$||;
      if ($srcs[0] =~ /\.asm$/) {
          return <<"EOF";
 $obj$objext: $deps
@@ -494,13 +501,15 @@ EOF
      my $lib = $args{lib};
      my $shlib = $args{shlib};
      (my $mkdef_key = $lib) =~ s/^lib//i;
-     my $objs = join("\n", map { $_.$objext } @{$args{objs}});
-     my $linklibs = join("",
-			 map { "\n$_" } compute_lib_depends(@{$args{deps}}));
-     my $deps = join(" ",
-		     (map { $_.$objext } @{$args{objs}}),
-		     compute_lib_depends(@{$args{deps}}));
-     my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
+     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+                grep { $_ =~ m|\.o$| }
+                @{$args{objs}};
+     my @defs = grep { $_ =~ /\.def$/ } @{$args{objs}};
+     my @deps = compute_lib_depends(@{$args{deps}});
+     die "More than one exported symbols list" if scalar @defs > 1;
+     my $linklibs = join("", map { "$_\n" } @deps);
+     my $objs = join("\n", @objs);
+     my $deps = join(" ", @objs, @defs, @deps);
      my $mkdef_pl = abs2rel(rel2abs(catfile($config{sourcedir},
 					    "util", "mkdef.pl")),
 			    rel2abs($config{builddir}));
@@ -508,17 +517,14 @@ EOF
 					   "util", "mkrc.pl")),
 			   rel2abs($config{builddir}));
      my $target = shlib_import($lib);
+     my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF"
-$target: $deps "$ordinalsfile" "$mkdef_pl"
-	"\$(PERL)" "$mkdef_pl" "$mkdef_key" 32 > $shlib.def
-	"\$(PERL)" -i.tmp -pe "s|^LIBRARY\\s+${mkdef_key}32|LIBRARY $shlib|;" $shlib.def
-	DEL $shlib.def.tmp
-	"\$(PERL)" "$mkrc_pl" $shlib$shlibext > $shlib.rc
-	\$(RC) \$(RCOUTFLAG)$shlib.res $shlib.rc
+$target: $deps
 	IF EXIST $shlib$shlibext.manifest DEL /F /Q $shlib$shlibext.manifest
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
-		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext /def:$shlib.def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
-$objs $shlib.res$linklibs \$(EX_LIBS)
+		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext$shared_def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
+$objs
+$linklibs\$(EX_LIBS)
 <<
 	IF EXIST $shlib$shlibext.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$shlib$shlibext.manifest \$(MTOUTFLAG)$shlib$shlibext
@@ -534,12 +540,11 @@ EOF
      my %args = @_;
      my $dso = $args{lib};
      my $dso_n = basename($dso);
-     my $objs = join("\n", map { $_.$objext } @{$args{objs}});
-     my $linklibs = join("",
-			 map { "\n$_" } compute_lib_depends(@{$args{deps}}));
-     my $deps = join(" ",
-		     (map { $_.$objext } @{$args{objs}}),
-		     compute_lib_depends(@{$args{deps}}));
+     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my @deps = compute_lib_depends(@{$args{deps}});
+     my $objs = join("\n", @objs);
+     my $linklibs = join("", map { "$_\n" } @deps);
+     my $deps = join(" ", @objs, @deps);
      return <<"EOF";
 $dso$dsoext: $deps
 	IF EXIST $dso$dsoext.manifest DEL /F /Q $dso$dsoext.manifest
@@ -549,7 +554,8 @@ EXPORTS
     bind_engine		@1
     v_check		@2
 <<
-$objs$linklibs \$(EX_LIBS)
+$objs
+$linklibs \$(EX_LIBS)
 <<
 	IF EXIST $dso$dsoext.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dso$dsoext.manifest \$(MTOUTFLAG)$dso$dsoext
@@ -565,29 +571,31 @@ EOF
      return "" unless $disabled{"shared"} || $lib =~ /\.a$/;
 
      $lib =~ s/\.a$//;
-     my $objs = join("\n", map { $_.$objext } @{$args{objs}});
-     my $deps = join(" ", map { $_.$objext } @{$args{objs}});
+     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my $objs = join("\n", @objs);
+     my $deps = join(" ", @objs);
      return <<"EOF";
 $lib$libext: $deps
 	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
-\$**
+$objs
 <<
 EOF
  }
  sub obj2bin {
      my %args = @_;
      my $bin = $args{bin};
-     my $objs = join("\n", map { $_.$objext } @{$args{objs}});
-     my $linklibs = join("",
-			 map { "\n$_" } compute_lib_depends(@{$args{deps}}));
-     my $deps = join(" ",
-		     (map { $_.$objext } @{$args{objs}}),
-		     compute_lib_depends(@{$args{deps}}));
+     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my @deps = compute_lib_depends(@{$args{deps}});
+     my $objs = join("\n", @objs);
+     my $linklibs = join("", map { "$_\n" } @deps);
+     my $deps = join(" ", @objs, @deps);
      return <<"EOF";
 $bin$exeext: $deps
 	IF EXIST $bin$exeext.manifest DEL /F /Q $bin$exeext.manifest
 	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin$exeext @<<
-$objs setargv.obj$linklibs \$(EX_LIBS)
+$objs
+setargv.obj
+$linklibs\$(EX_LIBS)
 <<
 	IF EXIST $bin$exeext.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin$exeext.manifest \$(MTOUTFLAG)$bin$exeext
