@@ -187,8 +187,10 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
 
     rb = &s->rlayer.rbuf;
     if (rb->buf == NULL)
-        if (!ssl3_setup_read_buffer(s))
+        if (!ssl3_setup_read_buffer(s)) {
+            /* SSLfatal() already called */
             return -1;
+        }
 
     left = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
@@ -259,8 +261,10 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
 
     /* else we need to read more data */
 
-    if (n > rb->len - rb->offset) { /* does not happen */
-        SSLerr(SSL_F_SSL3_READ_N, ERR_R_INTERNAL_ERROR);
+    if (n > rb->len - rb->offset) {
+        /* does not happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_READ_N,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
@@ -293,7 +297,8 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
             if (ret >= 0)
                 bioread = ret;
         } else {
-            SSLerr(SSL_F_SSL3_READ_N, SSL_R_READ_BIO_NOT_SET);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_READ_N,
+                     SSL_R_READ_BIO_NOT_SET);
             ret = -1;
         }
 
@@ -360,8 +365,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     }
 
     if (s->early_data_state == SSL_EARLY_DATA_WRITING
-            && !early_data_count_ok(s, len, 0, NULL))
+            && !early_data_count_ok(s, len, 0, 1)) {
+        /* SSLfatal() already called */
         return -1;
+    }
 
     s->rlayer.wnum = 0;
 
@@ -1155,8 +1162,10 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     if (!SSL3_BUFFER_is_initialised(rbuf)) {
         /* Not initialized yet */
-        if (!ssl3_setup_read_buffer(s))
+        if (!ssl3_setup_read_buffer(s)) {
+            /* SSLfatal() already called */
             return -1;
+        }
     }
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA)
@@ -1646,8 +1655,10 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * record.
              */
             if (!early_data_count_ok(s, rr->length,
-                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, &al))
+                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, 0)) {
+                /* SSLfatal() already called */
                 goto f_err;
+            }
             SSL3_RECORD_set_read(rr);
             goto start;
         } else {

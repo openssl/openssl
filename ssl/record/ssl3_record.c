@@ -101,7 +101,7 @@ static int ssl3_record_app_data_waiting(SSL *s)
     return 1;
 }
 
-int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
+int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
 {
     uint32_t max_early_data = s->max_early_data;
     SSL_SESSION *sess = s->session;
@@ -114,7 +114,8 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
     if (!s->server && sess->ext.max_early_data == 0) {
         if (!ossl_assert(s->psksession != NULL
                          && s->psksession->ext.max_early_data > 0)) {
-            SSLerr(SSL_F_EARLY_DATA_COUNT_OK, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_EARLY_DATA_COUNT_OK,
+                     ERR_R_INTERNAL_ERROR);
             return 0;
         }
         sess = s->psksession;
@@ -124,9 +125,8 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
         max_early_data = sess->ext.max_early_data;
 
     if (max_early_data == 0) {
-        if (al != NULL)
-            *al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
+        SSLfatal(s, send ? SSL_AD_INTERNAL_ERROR : SSL_AD_UNEXPECTED_MESSAGE,
+                 SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
         return 0;
     }
 
@@ -134,9 +134,8 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
     max_early_data += overhead;
 
     if (s->early_data_count + length > max_early_data) {
-        if (al != NULL)
-            *al = SSL_AD_UNEXPECTED_MESSAGE;
-        SSLerr(SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
+        SSLfatal(s, send ? SSL_AD_INTERNAL_ERROR : SSL_AD_UNEXPECTED_MESSAGE,
+                 SSL_F_EARLY_DATA_COUNT_OK, SSL_R_TOO_MUCH_EARLY_DATA);
         return 0;
     }
     s->early_data_count += length;
@@ -168,8 +167,7 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
 /* used only by ssl3_read_bytes */
 int ssl3_get_record(SSL *s)
 {
-    int al;
-    int enc_err, rret, ret = -1;
+    int enc_err, rret;
     int i;
     size_t more, n;
     SSL3_RECORD *rr, *thisrr;
@@ -211,16 +209,16 @@ int ssl3_get_record(SSL *s)
             p = RECORD_LAYER_get_packet(&s->rlayer);
             if (!PACKET_buf_init(&pkt, RECORD_LAYER_get_packet(&s->rlayer),
                                  RECORD_LAYER_get_packet_length(&s->rlayer))) {
-                al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-                goto f_err;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GET_RECORD,
+                         ERR_R_INTERNAL_ERROR);
+                return -1;
             }
             sslv2pkt = pkt;
             if (!PACKET_get_net_2_len(&sslv2pkt, &sslv2len)
                     || !PACKET_get_1(&sslv2pkt, &type)) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-                goto f_err;
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                         ERR_R_INTERNAL_ERROR);
+                return -1;
             }
             /*
              * The first record received by the server may be a V2ClientHello.
@@ -244,15 +242,15 @@ int ssl3_get_record(SSL *s)
 
                 if (thisrr->length > SSL3_BUFFER_get_len(rbuf)
                     - SSL2_RT_HEADER_LENGTH) {
-                    al = SSL_AD_RECORD_OVERFLOW;
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                             SSL_R_PACKET_LENGTH_TOO_LONG);
+                    return -1;
                 }
 
                 if (thisrr->length < MIN_SSL2_RECORD_LEN) {
-                    al = SSL_AD_DECODE_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                             SSL_R_LENGTH_TOO_SHORT);
+                    return -1;
                 }
             } else {
                 /* SSLv3+ style record */
@@ -264,9 +262,9 @@ int ssl3_get_record(SSL *s)
                 if (!PACKET_get_1(&pkt, &type)
                         || !PACKET_get_net_2(&pkt, &version)
                         || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
-                    al = SSL_AD_DECODE_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                             ERR_R_INTERNAL_ERROR);
+                    return -1;
                 }
                 thisrr->type = type;
                 thisrr->rec_version = version;
@@ -280,7 +278,6 @@ int ssl3_get_record(SSL *s)
                 if (!s->first_packet && !SSL_IS_TLS13(s)
                         && !s->hello_retry_request
                         && version != (unsigned int)s->version) {
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
                         && !s->enc_write_ctx && !s->write_hash) {
                         if (thisrr->type == SSL3_RT_ALERT) {
@@ -292,15 +289,18 @@ int ssl3_get_record(SSL *s)
                              * shouldn't send a fatal alert back. We'll just
                              * end.
                              */
-                            goto err;
+                            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_GET_RECORD,
+                                     SSL_R_WRONG_VERSION_NUMBER);
+                            return -1;
                         }
                         /*
                          * Send back error using their minor version number :-)
                          */
                         s->version = (unsigned short)version;
                     }
-                    al = SSL_AD_PROTOCOL_VERSION;
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_SSL3_GET_RECORD,
+                             SSL_R_WRONG_VERSION_NUMBER);
+                    return -1;
                 }
 
                 if ((version >> 8) != SSL3_VERSION_MAJOR) {
@@ -312,38 +312,39 @@ int ssl3_get_record(SSL *s)
                             strncmp((char *)p, "POST ", 5) == 0 ||
                             strncmp((char *)p, "HEAD ", 5) == 0 ||
                             strncmp((char *)p, "PUT ", 4) == 0) {
-                            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_HTTP_REQUEST);
-                            goto err;
+                            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_GET_RECORD,
+                                     SSL_R_HTTP_REQUEST);
+                            return -1;
                         } else if (strncmp((char *)p, "CONNE", 5) == 0) {
-                            SSLerr(SSL_F_SSL3_GET_RECORD,
-                                   SSL_R_HTTPS_PROXY_REQUEST);
-                            goto err;
+                            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_GET_RECORD,
+                                     SSL_R_HTTPS_PROXY_REQUEST);
+                            return -1;
                         }
 
                         /* Doesn't look like TLS - don't send an alert */
-                        SSLerr(SSL_F_SSL3_GET_RECORD,
-                               SSL_R_WRONG_VERSION_NUMBER);
-                        goto err;
+                        SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_GET_RECORD,
+                                 SSL_R_WRONG_VERSION_NUMBER);
+                        return -1;
                     } else {
-                        SSLerr(SSL_F_SSL3_GET_RECORD,
-                               SSL_R_WRONG_VERSION_NUMBER);
-                        al = SSL_AD_PROTOCOL_VERSION;
-                        goto f_err;
+                        SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                                 SSL_F_SSL3_GET_RECORD,
+                                 SSL_R_WRONG_VERSION_NUMBER);
+                        return -1;
                     }
                 }
 
                 if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL
                         && thisrr->type != SSL3_RT_APPLICATION_DATA) {
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
-                    al = SSL_AD_UNEXPECTED_MESSAGE;
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+                             SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
+                    return -1;
                 }
 
                 if (thisrr->length >
                     SSL3_BUFFER_get_len(rbuf) - SSL3_RT_HEADER_LENGTH) {
-                    al = SSL_AD_RECORD_OVERFLOW;
-                    SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_PACKET_LENGTH_TOO_LONG);
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                             SSL_R_PACKET_LENGTH_TOO_LONG);
+                    return -1;
                 }
             }
 
@@ -352,9 +353,9 @@ int ssl3_get_record(SSL *s)
 
         if (SSL_IS_TLS13(s)) {
             if (thisrr->length > SSL3_RT_MAX_TLS13_ENCRYPTED_LENGTH) {
-                al = SSL_AD_RECORD_OVERFLOW;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
-                goto f_err;
+                SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+                return -1;
             }
         } else {
             size_t len = SSL3_RT_MAX_ENCRYPTED_LENGTH;
@@ -369,9 +370,9 @@ int ssl3_get_record(SSL *s)
 #endif
 
             if (thisrr->length > len) {
-                al = SSL_AD_RECORD_OVERFLOW;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
-                goto f_err;
+                SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+                return -1;
             }
         }
 
@@ -452,27 +453,26 @@ int ssl3_get_record(SSL *s)
         /* TODO(size_t): convert this to do size_t properly */
         imac_size = EVP_MD_CTX_size(s->read_hash);
         if (!ossl_assert(imac_size >= 0 && imac_size <= EVP_MAX_MD_SIZE)) {
-                al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_SSL3_GET_RECORD, ERR_LIB_EVP);
-                goto f_err;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GET_RECORD,
+                         ERR_LIB_EVP);
+                return -1;
         }
         mac_size = (size_t)imac_size;
         for (j = 0; j < num_recs; j++) {
             thisrr = &rr[j];
 
             if (thisrr->length < mac_size) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
-                goto f_err;
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_LENGTH_TOO_SHORT);
+                return -1;
             }
             thisrr->length -= mac_size;
             mac = thisrr->data + thisrr->length;
             i = s->method->ssl3_enc->mac(s, thisrr, md, 0 /* not send */ );
             if (i == 0 || CRYPTO_memcmp(md, mac, mac_size) != 0) {
-                al = SSL_AD_BAD_RECORD_MAC;
-                SSLerr(SSL_F_SSL3_GET_RECORD,
+                SSLfatal(s, SSL_AD_BAD_RECORD_MAC, SSL_F_SSL3_GET_RECORD,
                        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
-                goto f_err;
+                return -1;
             }
         }
     }
@@ -497,8 +497,10 @@ int ssl3_get_record(SSL *s)
             thisrr = &rr[0];
 
             if (!early_data_count_ok(s, thisrr->length,
-                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, &al))
-                goto f_err;
+                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, 0)) {
+                /* SSLfatal() already called */
+                return -1;
+            }
 
             thisrr->length = 0;
             thisrr->read = 1;
@@ -506,9 +508,9 @@ int ssl3_get_record(SSL *s)
             RECORD_LAYER_reset_read_sequence(&s->rlayer);
             return 1;
         }
-        al = SSL_AD_DECRYPTION_FAILED;
-        SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
-        goto f_err;
+        SSLfatal(s, SSL_AD_DECRYPTION_FAILED, SSL_F_SSL3_GET_RECORD,
+                 SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
+        return -1;
     }
 #ifdef SSL_DEBUG
     printf("dec %"OSSLzu"\n", rr[0].length);
@@ -530,9 +532,9 @@ int ssl3_get_record(SSL *s)
 
         mac_size = EVP_MD_CTX_size(s->read_hash);
         if (!ossl_assert(mac_size <= EVP_MAX_MD_SIZE)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GET_RECORD,
+                     ERR_R_INTERNAL_ERROR);
+            return -1;
         }
 
         for (j = 0; j < num_recs; j++) {
@@ -547,9 +549,9 @@ int ssl3_get_record(SSL *s)
                 /* CBC records must have a padding length byte too. */
                 (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
                  thisrr->orig_len < mac_size + 1)) {
-                al = SSL_AD_DECODE_ERROR;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_LENGTH_TOO_SHORT);
-                goto f_err;
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_LENGTH_TOO_SHORT);
+                return -1;
             }
 
             if (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE) {
@@ -561,9 +563,9 @@ int ssl3_get_record(SSL *s)
                  */
                 mac = mac_tmp;
                 if (!ssl3_cbc_copy_mac(mac_tmp, thisrr, mac_size)) {
-                    al = SSL_AD_INTERNAL_ERROR;
-                    SSLerr(SSL_F_SSL3_GET_RECORD, ERR_R_INTERNAL_ERROR);
-                    goto f_err;
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GET_RECORD,
+                             ERR_R_INTERNAL_ERROR);
+                    return -1;
                 }
                 thisrr->length -= mac_size;
             } else {
@@ -597,8 +599,10 @@ int ssl3_get_record(SSL *s)
              * so we use the previously saved value
              */
             if (!early_data_count_ok(s, first_rec_len,
-                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, &al))
-                goto f_err;
+                                     EARLY_DATA_CIPHERTEXT_OVERHEAD, 0)) {
+                /* SSLfatal() already called */
+                return -1;
+            }
 
             thisrr = &rr[0];
             thisrr->length = 0;
@@ -614,10 +618,9 @@ int ssl3_get_record(SSL *s)
          * not reveal which kind of error occurred -- this might become
          * visible to an attacker (e.g. via a logfile)
          */
-        al = SSL_AD_BAD_RECORD_MAC;
-        SSLerr(SSL_F_SSL3_GET_RECORD,
-               SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
-        goto f_err;
+        SSLfatal(s, SSL_AD_BAD_RECORD_MAC, SSL_F_SSL3_GET_RECORD,
+                 SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+        return -1;
     }
 
     for (j = 0; j < num_recs; j++) {
@@ -626,14 +629,14 @@ int ssl3_get_record(SSL *s)
         /* thisrr->length is now just compressed */
         if (s->expand != NULL) {
             if (thisrr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
-                al = SSL_AD_RECORD_OVERFLOW;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_COMPRESSED_LENGTH_TOO_LONG);
-                goto f_err;
+                SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_COMPRESSED_LENGTH_TOO_LONG);
+                return -1;
             }
             if (!ssl3_do_uncompress(s, thisrr)) {
-                al = SSL_AD_DECOMPRESSION_FAILURE;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_DECOMPRESSION);
-                goto f_err;
+                SSLfatal(s, SSL_AD_DECOMPRESSION_FAILURE, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_BAD_DECOMPRESSION);
+                return -1;
             }
         }
 
@@ -642,9 +645,9 @@ int ssl3_get_record(SSL *s)
 
             if (thisrr->length == 0
                     || thisrr->type != SSL3_RT_APPLICATION_DATA) {
-                al = SSL_AD_UNEXPECTED_MESSAGE;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
-                goto f_err;
+                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_BAD_RECORD_TYPE);
+                return -1;
             }
 
             /* Strip trailing padding */
@@ -657,9 +660,9 @@ int ssl3_get_record(SSL *s)
             if (thisrr->type != SSL3_RT_APPLICATION_DATA
                     && thisrr->type != SSL3_RT_ALERT
                     && thisrr->type != SSL3_RT_HANDSHAKE) {
-                al = SSL_AD_UNEXPECTED_MESSAGE;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
-                goto f_err;
+                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_BAD_RECORD_TYPE);
+                return -1;
             }
             if (s->msg_callback)
                 s->msg_callback(0, s->version, SSL3_RT_INNER_CONTENT_TYPE,
@@ -674,23 +677,23 @@ int ssl3_get_record(SSL *s)
                 && (thisrr->type == SSL3_RT_HANDSHAKE
                     || thisrr->type == SSL3_RT_ALERT)
                 && thisrr->length == 0) {
-            al = SSL_AD_UNEXPECTED_MESSAGE;
-            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_BAD_LENGTH);
-            goto f_err;
+            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_SSL3_GET_RECORD,
+                     SSL_R_BAD_LENGTH);
+            return -1;
         }
 
         if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
-            al = SSL_AD_RECORD_OVERFLOW;
-            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
-            goto f_err;
+            SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                     SSL_R_DATA_LENGTH_TOO_LONG);
+            return -1;
         }
 
         /* If received packet overflows current Max Fragment Length setting */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
                 && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
-            al = SSL_AD_RECORD_OVERFLOW;
-            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
-            goto f_err;
+            SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
+                     SSL_R_DATA_LENGTH_TOO_LONG);
+            return -1;
         }
 
         thisrr->off = 0;
@@ -707,9 +710,9 @@ int ssl3_get_record(SSL *s)
             RECORD_LAYER_inc_empty_record_count(&s->rlayer);
             if (RECORD_LAYER_get_empty_record_count(&s->rlayer)
                 > MAX_EMPTY_RECORDS) {
-                al = SSL_AD_UNEXPECTED_MESSAGE;
-                SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_RECORD_TOO_SMALL);
-                goto f_err;
+                SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_SSL3_GET_RECORD,
+                         SSL_R_RECORD_TOO_SMALL);
+                return -1;
             }
         } else {
             RECORD_LAYER_reset_empty_record_count(&s->rlayer);
@@ -719,17 +722,14 @@ int ssl3_get_record(SSL *s)
     if (s->early_data_state == SSL_EARLY_DATA_READING) {
         thisrr = &rr[0];
         if (thisrr->type == SSL3_RT_APPLICATION_DATA
-                && !early_data_count_ok(s, thisrr->length, 0, &al))
-            goto f_err;
+                && !early_data_count_ok(s, thisrr->length, 0, 0)) {
+            /* SSLfatal already called */
+            return -1;
+        }
     }
 
     RECORD_LAYER_set_numrpipes(&s->rlayer, num_recs);
     return 1;
-
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
-    return ret;
 }
 
 int ssl3_do_uncompress(SSL *ssl, SSL3_RECORD *rr)
