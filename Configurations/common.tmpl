@@ -123,16 +123,12 @@
      my $lib = shift;
      return "" if $cache{$lib};
      unless ($disabled{shared} || $lib =~ /\.a$/) {
-         my %ordinals =
-             $unified_info{ordinals}->{$lib}
-             ? (ordinals => $unified_info{ordinals}->{$lib}) : ();
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
                               objs => [ @{$unified_info{shared_sources}->{$lib}},
                                         @{$unified_info{sources}->{$lib}} ],
                               deps => [ reducedepends(resolvedepends($lib)) ],
-                              installed => is_installed($lib),
-                              %ordinals);
+                              installed => is_installed($lib));
          foreach ((@{$unified_info{shared_sources}->{$lib}},
                    @{$unified_info{sources}->{$lib}})) {
              # If this is somehow a compiled object, take care of it that way
