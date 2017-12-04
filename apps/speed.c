@@ -2819,6 +2819,8 @@ int speed_main(int argc, char **argv)
             loopargs[i].ecdh_ctx[testnum] = ctx;
             loopargs[i].outlen[testnum] = outlen;
 
+            EVP_PKEY_free(key_A);
+            EVP_PKEY_free(key_B);
             EVP_PKEY_CTX_free(kctx);
             kctx = NULL;
             EVP_PKEY_CTX_free(test_ctx);
