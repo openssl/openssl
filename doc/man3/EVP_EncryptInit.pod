@@ -91,6 +91,7 @@ EVP_enc_null
  int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
  int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
+ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 
  const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
  const EVP_CIPHER *EVP_get_cipherbynid(int nid);
@@ -274,6 +275,11 @@ is not supported.
 EVP_CIPHER_CTX_ctrl() allows various cipher specific parameters to be determined
 and set.
 
+EVP_CIPHER_CTX_rand_key() generates a random key of the appropriate length
+based on the cipher context. The EVP_CIPHER can provide its own random key
+generation routine to support keys of a specific form. B<Key> must point to a
+buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
+
 =head1 RETURN VALUES
 
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
@@ -313,6 +319,8 @@ EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
 than zero for success and zero or a negative number.
+
+EVP_CIPHER_CTX_rand_key() returns 1 for success.
 
 =head1 CIPHER LISTING
 
