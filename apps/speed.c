@@ -141,6 +141,7 @@ typedef struct loopargs_st {
     unsigned char *buf2;
     unsigned char *buf_malloc;
     unsigned char *buf2_malloc;
+    unsigned char *key;
     unsigned int siglen;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
@@ -1266,6 +1267,7 @@ int speed_main(int argc, char **argv)
     int ret = 1, i, k, misalign = 0;
     long count = 0;
     int size_num = OSSL_NELEM(lengths_list);
+    int keylen;
 #ifndef NO_FORK
     int multi = 0;
 #endif
@@ -2407,13 +2409,17 @@ int speed_main(int argc, char **argv)
 
                 for (k = 0; k < loopargs_len; k++) {
                     loopargs[k].ctx = EVP_CIPHER_CTX_new();
-                    if (decrypt)
-                        EVP_DecryptInit_ex(loopargs[k].ctx, evp_cipher, NULL,
-                                           key32, iv);
-                    else
-                        EVP_EncryptInit_ex(loopargs[k].ctx, evp_cipher, NULL,
-                                           key32, iv);
+                    EVP_CipherInit_ex(loopargs[k].ctx, evp_cipher, NULL, NULL,
+                                      iv, decrypt ? 0 : 1);
+
                     EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
+
+                    keylen = EVP_CIPHER_CTX_key_length(loopargs[k].ctx);
+                    loopargs[k].key = app_malloc(keylen, "evp_cipher key");
+                    EVP_CIPHER_CTX_rand_key(loopargs[k].ctx, loopargs[k].key);
+                    EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
+                                      loopargs[k].key, NULL, -1);
+                    OPENSSL_clear_free(loopargs[k].key, keylen);
                 }
                 switch (EVP_CIPHER_mode(evp_cipher)) {
                 case EVP_CIPH_CCM_MODE:
@@ -3241,9 +3247,9 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
     static const int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
     const int *mblengths = mblengths_list;
-    int j, count, num = OSSL_NELEM(mblengths_list);
+    int j, count, keylen, num = OSSL_NELEM(mblengths_list);
     const char *alg_name;
-    unsigned char *inp, *out, no_key[32], no_iv[16];
+    unsigned char *inp, *out, *key, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx;
     double d = 0.0;
 
@@ -3255,7 +3261,14 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
     inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
     out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
     ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, evp_cipher, NULL, no_key, no_iv);
+    EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv);
+
+    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    key = app_malloc(keylen, "evp_cipher key");
+    EVP_CIPHER_CTX_rand_key(ctx, key);
+    EVP_EncryptInit_ex(ctx, NULL, NULL, key, NULL);
+    OPENSSL_clear_free(key, keylen);
+
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key), no_key);
     alg_name = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
 
