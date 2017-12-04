@@ -1576,7 +1576,7 @@ static int tls_early_post_process_client_hello(SSL *s)
     if (!ssl_cache_cipherlist(s, &clienthello->ciphersuites,
                               clienthello->isv2) ||
         !bytes_to_cipher_list(s, &clienthello->ciphersuites, &ciphers, &scsvs,
-                             clienthello->isv2, 1)) {
+                              clienthello->isv2, 1)) {
         /* SSLfatal() already called */
         goto err;
     }

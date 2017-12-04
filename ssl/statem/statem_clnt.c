@@ -1532,7 +1532,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
 #else
     if (s->hit && compression != s->session->compress_meth) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SERVER_HELLO,
-               SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED);
+                 SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED);
         goto err;
     }
     if (compression == 0)
@@ -2268,7 +2268,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         md_ctx = EVP_MD_CTX_new();
         if (md_ctx == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                   ERR_R_MALLOC_FAILURE);
+                     ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -2664,7 +2664,7 @@ int tls_process_initial_server_flight(SSL *s)
         if (ret < 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PROCESS_INITIAL_SERVER_FLIGHT,
-                    ERR_R_MALLOC_FAILURE);
+                     ERR_R_MALLOC_FAILURE);
             return 0;
         }
     }
@@ -3240,7 +3240,8 @@ int tls_client_key_exchange_post_work(SSL *s)
                                        sizeof(sctpauthkey), labelbuffer,
                                        sizeof(labelbuffer), NULL, 0, 0) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK, ERR_R_INTERNAL_ERROR);
+                     SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -3380,7 +3381,7 @@ int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
          * state and thus ssl3_send_alert may crash.
          */
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE,
-               SSL_R_CANNOT_CHANGE_CIPHER);
+                 SSL_R_CANNOT_CHANGE_CIPHER);
         return 0;
     }
 

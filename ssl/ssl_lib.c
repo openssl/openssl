@@ -4987,7 +4987,7 @@ int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format)
 
     if (PACKET_remaining(cipher_suites) % n != 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL_CACHE_CIPHERLIST,
-               SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
+                 SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST);
         return 0;
     }
 

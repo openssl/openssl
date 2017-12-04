@@ -147,7 +147,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
             if (s->expand == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_SSL3_CHANGE_CIPHER_STATE,
-                        SSL_R_COMPRESSION_LIBRARY_ERROR);
+                         SSL_R_COMPRESSION_LIBRARY_ERROR);
                 goto err;
             }
         }
