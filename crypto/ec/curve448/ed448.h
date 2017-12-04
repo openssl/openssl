@@ -11,31 +11,31 @@
  */
 
 #ifndef __DECAF_ED448_H__
-#define __DECAF_ED448_H__ 1
+# define __DECAF_ED448_H__ 1
 
-#include "point_448.h"
+# include "point_448.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /** Number of bytes in an EdDSA public key. */
-#define DECAF_EDDSA_448_PUBLIC_BYTES 57
+# define DECAF_EDDSA_448_PUBLIC_BYTES 57
 
 /** Number of bytes in an EdDSA private key. */
-#define DECAF_EDDSA_448_PRIVATE_BYTES DECAF_EDDSA_448_PUBLIC_BYTES
+# define DECAF_EDDSA_448_PRIVATE_BYTES DECAF_EDDSA_448_PUBLIC_BYTES
 
 /** Number of bytes in an EdDSA private key. */
-#define DECAF_EDDSA_448_SIGNATURE_BYTES (DECAF_EDDSA_448_PUBLIC_BYTES + DECAF_EDDSA_448_PRIVATE_BYTES)
+# define DECAF_EDDSA_448_SIGNATURE_BYTES (DECAF_EDDSA_448_PUBLIC_BYTES + DECAF_EDDSA_448_PRIVATE_BYTES)
 
 /** Does EdDSA support non-contextual signatures? */
-#define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
+# define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
 
 /** EdDSA encoding ratio. */
-#define DECAF_448_EDDSA_ENCODE_RATIO 4
+# define DECAF_448_EDDSA_ENCODE_RATIO 4
 
 /** EdDSA decoding ratio. */
-#define DECAF_448_EDDSA_DECODE_RATIO (4 / 4)
+# define DECAF_448_EDDSA_DECODE_RATIO (4 / 4)
 
 /**
  * @brief EdDSA key generation.  This function uses a different (non-Decaf)
@@ -43,11 +43,14 @@ extern "C" {
  *
  * @param [out] pubkey The public key.
  * @param [in] privkey The private key.
- */    
-decaf_error_t decaf_ed448_derive_public_key (
-    uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES]
-);
+ */
+decaf_error_t decaf_ed448_derive_public_key(uint8_t
+                                            pubkey
+                                            [DECAF_EDDSA_448_PUBLIC_BYTES],
+                                            const uint8_t
+                                            privkey
+                                            [DECAF_EDDSA_448_PRIVATE_BYTES]
+    );
 
 /**
  * @brief EdDSA signing.
@@ -65,17 +68,17 @@ decaf_error_t decaf_ed448_derive_public_key (
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
- */  
-decaf_error_t decaf_ed448_sign (
-    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const uint8_t *message,
-    size_t message_len,
-    uint8_t prehashed,
-    const uint8_t *context,
-    size_t context_len
-) __attribute__((nonnull(1,2,3)));
+ */
+decaf_error_t decaf_ed448_sign(uint8_t
+                               signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+                               const uint8_t
+                               privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+                               const uint8_t
+                               pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                               const uint8_t *message, size_t message_len,
+                               uint8_t prehashed, const uint8_t *context,
+                               size_t context_len)
+    __attribute__ ((nonnull(1, 2, 3)));
 
 /**
  * @brief EdDSA signing with prehash.
@@ -91,15 +94,18 @@ decaf_error_t decaf_ed448_sign (
  * messages, at least without some very careful protocol-level disambiguation.  For Ed448 it is
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
- */  
-decaf_error_t decaf_ed448_sign_prehash (
-    uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const uint8_t hash[64],
-    const uint8_t *context,
-    size_t context_len
-) __attribute__((nonnull(1,2,3,4)));
+ */
+decaf_error_t decaf_ed448_sign_prehash(uint8_t
+                                       signature
+                                       [DECAF_EDDSA_448_SIGNATURE_BYTES],
+                                       const uint8_t
+                                       privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
+                                       const uint8_t
+                                       pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                                       const uint8_t hash[64],
+                                       const uint8_t *context,
+                                       size_t context_len)
+    __attribute__ ((nonnull(1, 2, 3, 4)));
 
 /**
  * @brief EdDSA signature verification.
@@ -119,15 +125,14 @@ decaf_error_t decaf_ed448_sign_prehash (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-decaf_error_t decaf_ed448_verify (
-    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const uint8_t *message,
-    size_t message_len,
-    uint8_t prehashed,
-    const uint8_t *context,
-    uint8_t context_len
-) __attribute__((nonnull(1,2)));
+decaf_error_t decaf_ed448_verify(const uint8_t
+                                 signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+                                 const uint8_t
+                                 pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                                 const uint8_t *message, size_t message_len,
+                                 uint8_t prehashed, const uint8_t *context,
+                                 uint8_t context_len)
+    __attribute__ ((nonnull(1, 2)));
 
 /**
  * @brief EdDSA signature verification.
@@ -145,13 +150,15 @@ decaf_error_t decaf_ed448_verify (
  * safe.  The C++ wrapper is designed to make it harder to screw this up, but this C code gives
  * you no seat belt.
  */
-decaf_error_t decaf_ed448_verify_prehash (
-    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const uint8_t hash[64],
-    const uint8_t *context,
-    uint8_t context_len
-) __attribute__((nonnull(1,2)));
+decaf_error_t decaf_ed448_verify_prehash(const uint8_t
+                                         signature
+                                         [DECAF_EDDSA_448_SIGNATURE_BYTES],
+                                         const uint8_t
+                                         pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                                         const uint8_t hash[64],
+                                         const uint8_t *context,
+                                         uint8_t context_len)
+    __attribute__ ((nonnull(1, 2)));
 
 /**
  * @brief EdDSA point encoding.  Used internally, exposed externally.
@@ -176,11 +183,12 @@ decaf_error_t decaf_ed448_verify_prehash (
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- */       
-void curve448_point_mul_by_ratio_and_encode_like_eddsa (
-    uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES],
-    const curve448_point_t p
-);
+ */
+void curve448_point_mul_by_ratio_and_encode_like_eddsa(uint8_t
+                                                       enc
+                                                       [DECAF_EDDSA_448_PUBLIC_BYTES],
+                                                       const curve448_point_t
+                                                       p);
 
 /**
  * @brief EdDSA point decoding.  Multiplies by DECAF_448_EDDSA_DECODE_RATIO,
@@ -190,11 +198,13 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa (
  *
  * @param [out] enc The encoded point.
  * @param [in] p The point.
- */       
-decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
-    curve448_point_t p,
-    const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]
-);
+ */
+decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(curve448_point_t
+                                                                p,
+                                                                const uint8_t
+                                                                enc
+                                                                [DECAF_EDDSA_448_PUBLIC_BYTES]
+    );
 
 /**
  * @brief EdDSA to ECDH public key conversion
@@ -207,10 +217,10 @@ decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio (
  * @param[out] x The ECDH public key as in RFC7748(point on Montgomery curve)
  * @param[in] ed The EdDSA public key(point on Edwards curve)
  */
-void decaf_ed448_convert_public_key_to_x448 (
-    uint8_t x[DECAF_X448_PUBLIC_BYTES],
-    const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]
-);
+void decaf_ed448_convert_public_key_to_x448(uint8_t x[DECAF_X448_PUBLIC_BYTES],
+                                            const uint8_t
+                                            ed[DECAF_EDDSA_448_PUBLIC_BYTES]
+    );
 
 /**
  * @brief EdDSA to ECDH private key conversion
@@ -220,13 +230,16 @@ void decaf_ed448_convert_public_key_to_x448 (
  * @param[out] x The ECDH private key as in RFC7748
  * @param[in] ed The EdDSA private key
  */
-decaf_error_t decaf_ed448_convert_private_key_to_x448 (
-    uint8_t x[DECAF_X448_PRIVATE_BYTES],
-    const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]
-);
+decaf_error_t decaf_ed448_convert_private_key_to_x448(uint8_t
+                                                      x
+                                                      [DECAF_X448_PRIVATE_BYTES],
+                                                      const uint8_t
+                                                      ed
+                                                      [DECAF_EDDSA_448_PRIVATE_BYTES]
+    );
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif /* __DECAF_ED448_H__ */
+#endif                          /* __DECAF_ED448_H__ */
