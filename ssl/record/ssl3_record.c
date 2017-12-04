@@ -1518,7 +1518,7 @@ int ssl3_cbc_copy_mac(unsigned char *out,
 
 int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 {
-    int i, al;
+    int i;
     int enc_err;
     SSL_SESSION *sess;
     SSL3_RECORD *rr;
@@ -1549,9 +1549,9 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 
     /* check is not needed I believe */
     if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH) {
-        al = SSL_AD_RECORD_OVERFLOW;
-        SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
-        goto f_err;
+        SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
+                 SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
+        return 0;
     }
 
     /* decrypt in place in 'rr->input' */
@@ -1562,23 +1562,22 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         unsigned char *mac;
         mac_size = EVP_MD_CTX_size(s->read_hash);
         if (!ossl_assert(mac_size <= EVP_MAX_MD_SIZE)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS1_PROCESS_RECORD,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
         }
         if (rr->orig_len < mac_size) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_LENGTH_TOO_SHORT);
-            goto f_err;
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_DTLS1_PROCESS_RECORD,
+                     SSL_R_LENGTH_TOO_SHORT);
+            return 0;
         }
         rr->length -= mac_size;
         mac = rr->data + rr->length;
         i = s->method->ssl3_enc->mac(s, rr, md, 0 /* not send */ );
         if (i == 0 || CRYPTO_memcmp(md, mac, (size_t)mac_size) != 0) {
-            al = SSL_AD_BAD_RECORD_MAC;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD,
+            SSLfatal(s, SSL_AD_BAD_RECORD_MAC, SSL_F_DTLS1_PROCESS_RECORD,
                    SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
-            goto f_err;
+            return 0;
         }
     }
 
@@ -1593,7 +1592,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         /* For DTLS we simply ignore bad packets. */
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
-        goto err;
+        return 0;
     }
 #ifdef SSL_DEBUG
     printf("dec %ld\n", rr->length);
@@ -1615,15 +1614,15 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         /* TODO(size_t): Convert this to do size_t properly */
         imac_size = EVP_MD_CTX_size(s->read_hash);
         if (imac_size < 0) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, ERR_LIB_EVP);
-            goto f_err;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS1_PROCESS_RECORD,
+                     ERR_LIB_EVP);
+            return 0;
         }
         mac_size = (size_t)imac_size;
         if (!ossl_assert(mac_size <= EVP_MAX_MD_SIZE)) {
-            al = SSL_AD_INTERNAL_ERROR;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, ERR_R_INTERNAL_ERROR);
-            goto f_err;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS1_PROCESS_RECORD,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
         }
 
         /*
@@ -1636,9 +1635,9 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
             /* CBC records must have a padding length byte too. */
             (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
              rr->orig_len < mac_size + 1)) {
-            al = SSL_AD_DECODE_ERROR;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_LENGTH_TOO_SHORT);
-            goto f_err;
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_DTLS1_PROCESS_RECORD,
+                     SSL_R_LENGTH_TOO_SHORT);
+            return 0;
         }
 
         if (EVP_CIPHER_CTX_mode(s->enc_read_ctx) == EVP_CIPH_CBC_MODE) {
@@ -1650,9 +1649,9 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
              */
             mac = mac_tmp;
             if (!ssl3_cbc_copy_mac(mac_tmp, rr, mac_size)) {
-                al = SSL_AD_INTERNAL_ERROR;
-                SSLerr(SSL_F_DTLS1_PROCESS_RECORD, ERR_R_INTERNAL_ERROR);
-                goto f_err;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DTLS1_PROCESS_RECORD,
+                         ERR_R_INTERNAL_ERROR);
+                return 0;
             }
             rr->length -= mac_size;
         } else {
@@ -1677,28 +1676,27 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         /* decryption failed, silently discard message */
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
-        goto err;
+        return 0;
     }
 
     /* r->length is now just compressed */
     if (s->expand != NULL) {
         if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH) {
-            al = SSL_AD_RECORD_OVERFLOW;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD,
-                   SSL_R_COMPRESSED_LENGTH_TOO_LONG);
-            goto f_err;
+            SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
+                     SSL_R_COMPRESSED_LENGTH_TOO_LONG);
+            return 0;
         }
         if (!ssl3_do_uncompress(s, rr)) {
-            al = SSL_AD_DECOMPRESSION_FAILURE;
-            SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_BAD_DECOMPRESSION);
-            goto f_err;
+            SSLfatal(s, SSL_AD_DECOMPRESSION_FAILURE,
+                     SSL_F_DTLS1_PROCESS_RECORD, SSL_R_BAD_DECOMPRESSION);
+            return 0;
         }
     }
 
     if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
-        al = SSL_AD_RECORD_OVERFLOW;
-        SSLerr(SSL_F_DTLS1_PROCESS_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
-        goto f_err;
+        SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
+                 SSL_R_DATA_LENGTH_TOO_LONG);
+        return 0;
     }
 
     rr->off = 0;
@@ -1718,11 +1716,6 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     dtls1_record_bitmap_update(s, bitmap);
 
     return 1;
-
- f_err:
-    ssl3_send_alert(s, SSL3_AL_FATAL, al);
- err:
-    return 0;
 }
 
 /*
@@ -1760,8 +1753,10 @@ int dtls1_get_record(SSL *s)
      * The epoch may have changed.  If so, process all the pending records.
      * This is a non-blocking operation.
      */
-    if (!dtls1_process_buffered_records(s))
+    if (!dtls1_process_buffered_records(s)) {
+        /* SSLfatal() already called */
         return -1;
+    }
 
     /* if we're renegotiating, then there may be buffered records */
     if (dtls1_get_processed_record(s))
@@ -1775,8 +1770,10 @@ int dtls1_get_record(SSL *s)
         rret = ssl3_read_n(s, DTLS1_RT_HEADER_LENGTH,
                            SSL3_BUFFER_get_len(&s->rlayer.rbuf), 0, 1, &n);
         /* read timeout is handled by dtls1_read_bytes */
-        if (rret <= 0)
+        if (rret <= 0) {
+            /* SSLfatal() already called if appropriate */
             return rret;         /* error or non-blocking */
+        }
 
         /* this packet contained a partial record, dump it */
         if (RECORD_LAYER_get_packet_length(&s->rlayer) !=
@@ -1852,6 +1849,10 @@ int dtls1_get_record(SSL *s)
         rret = ssl3_read_n(s, more, more, 1, 1, &n);
         /* this packet contained a partial record, dump it */
         if (rret <= 0 || n != more) {
+            if (ossl_statem_in_error(s)) {
+                /* ssl3_read_n() called SSLfatal() */
+                return -1;
+            }
             rr->length = 0;
             RECORD_LAYER_reset_packet_length(&s->rlayer);
             goto again;
@@ -1901,10 +1902,12 @@ int dtls1_get_record(SSL *s)
      */
     if (is_next_epoch) {
         if ((SSL_in_init(s) || ossl_statem_get_in_handshake(s))) {
-            if (dtls1_buffer_record
-                (s, &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
-                 rr->seq_num) < 0)
+            if (dtls1_buffer_record (s,
+                    &(DTLS_RECORD_LAYER_get_unprocessed_rcds(&s->rlayer)),
+                    rr->seq_num) < 0) {
+                /* SSLfatal() already called */
                 return -1;
+            }
         }
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer);
@@ -1912,6 +1915,10 @@ int dtls1_get_record(SSL *s)
     }
 
     if (!dtls1_process_record(s, bitmap)) {
+        if (ossl_statem_in_error(s)) {
+            /* dtls1_process_record() called SSLfatal */
+            return -1;
+        }
         rr->length = 0;
         RECORD_LAYER_reset_packet_length(&s->rlayer); /* dump this record */
         goto again;             /* get another record */

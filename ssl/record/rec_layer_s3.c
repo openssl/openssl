@@ -360,7 +360,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
      */
     if ((len < s->rlayer.wnum)
         || ((wb->left != 0) && (len < (s->rlayer.wnum + s->rlayer.wpend_tot)))) {
-        SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_BAD_LENGTH);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_BYTES,
+                 SSL_R_BAD_LENGTH);
         return -1;
     }
 
@@ -380,10 +381,10 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
     if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)
             && s->early_data_state != SSL_EARLY_DATA_UNAUTH_WRITING) {
         i = s->handshake_func(s);
+        /* SSLfatal() already called */
         if (i < 0)
             return i;
         if (i == 0) {
-            SSLerr(SSL_F_SSL3_WRITE_BYTES, SSL_R_SSL_HANDSHAKE_FAILURE);
             return -1;
         }
     }
@@ -393,6 +394,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
      * will happen with non blocking IO
      */
     if (wb->left != 0) {
+        /* SSLfatal() already called if appropriate */
         i = ssl3_write_pending(s, type, &buf[tot], s->rlayer.wpend_tot,
                                &tmpwrit);
         if (i <= 0) {
@@ -437,7 +439,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
                 packlen *= 4;
 
             if (!ssl3_setup_write_buffer(s, 1, packlen)) {
-                SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_MALLOC_FAILURE);
+                /* SSLfatal() already called */
                 return -1;
             }
         } else if (tot == len) { /* done? */
@@ -458,6 +460,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
             if (s->s3->alert_dispatch) {
                 i = s->method->ssl_dispatch_alert(s);
                 if (i <= 0) {
+                    /* SSLfatal() already called if appropriate */
                     s->rlayer.wnum = tot;
                     return i;
                 }
@@ -513,6 +516,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
 
             i = ssl3_write_pending(s, type, &buf[tot], nw, &tmpwrit);
             if (i <= 0) {
+                /* SSLfatal() already called if appropriate */
                 if (i < 0 && (!s->wbio || !BIO_should_retry(s->wbio))) {
                     /* free jumbo buffer */
                     ssl3_release_write_buffer(s);
@@ -555,7 +559,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
          * We should have prevented this when we set max_pipelines so we
          * shouldn't get here
          */
-        SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_BYTES,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
     if (maxpipes == 0
@@ -570,7 +575,8 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
          * We should have prevented this when we set/get the split and max send
          * fragments so we shouldn't get here
          */
-        SSLerr(SSL_F_SSL3_WRITE_BYTES, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_BYTES,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
@@ -607,6 +613,7 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         i = do_ssl3_write(s, type, &(buf[tot]), pipelens, numpipes, 0,
                           &tmpwrit);
         if (i <= 0) {
+            /* SSLfatal() already called if appropriate */
             /* XXX should we ssl3_release_write_buffer if i<0? */
             s->rlayer.wnum = tot;
             return i;
@@ -658,20 +665,27 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
      * first check if there is a SSL3_BUFFER still being written out.  This
      * will happen with non blocking IO
      */
-    if (RECORD_LAYER_write_pending(&s->rlayer))
+    if (RECORD_LAYER_write_pending(&s->rlayer)) {
+        /* Calls SSLfatal() as required */
         return ssl3_write_pending(s, type, buf, totlen, written);
+    }
 
     /* If we have an alert to send, lets send it */
     if (s->s3->alert_dispatch) {
         i = s->method->ssl_dispatch_alert(s);
-        if (i <= 0)
+        if (i <= 0) {
+            /* SSLfatal() already called if appropriate */
             return i;
+        }
         /* if it went, fall through and send more stuff */
     }
 
-    if (s->rlayer.numwpipes < numpipes)
-        if (!ssl3_setup_write_buffer(s, numpipes, 0))
+    if (s->rlayer.numwpipes < numpipes) {
+        if (!ssl3_setup_write_buffer(s, numpipes, 0)) {
+            /* SSLfatal() already called */
             return -1;
+        }
+    }
 
     if (totlen == 0 && !create_empty_fragment)
         return 0;
@@ -685,8 +699,11 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     } else {
         /* TODO(siz_t): Convert me */
         mac_size = EVP_MD_CTX_size(s->write_hash);
-        if (mac_size < 0)
+        if (mac_size < 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
+        }
     }
 
     /*
@@ -709,13 +726,16 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             int ret;
 
             ret = do_ssl3_write(s, type, buf, &tmppipelen, 1, 1, &prefix_len);
-            if (ret <= 0)
+            if (ret <= 0) {
+                /* SSLfatal() already called if appropriate */
                 goto err;
+            }
 
             if (prefix_len >
                 (SSL3_RT_HEADER_LENGTH + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD)) {
                 /* insufficient space */
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
@@ -738,7 +758,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         if (!WPACKET_init_static_len(&pkt[0], SSL3_BUFFER_get_buf(wb),
                                      SSL3_BUFFER_get_len(wb), 0)
                 || !WPACKET_allocate_bytes(&pkt[0], align, NULL)) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
         wpinited = 1;
@@ -749,7 +770,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                                      SSL3_BUFFER_get_len(wb), 0)
                 || !WPACKET_allocate_bytes(&pkt[0], SSL3_BUFFER_get_offset(wb)
                                                     + prefix_len, NULL)) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
         wpinited = 1;
@@ -766,7 +788,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             if (!WPACKET_init_static_len(thispkt, SSL3_BUFFER_get_buf(wb),
                                          SSL3_BUFFER_get_len(wb), 0)
                     || !WPACKET_allocate_bytes(thispkt, align, NULL)) {
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             wpinited++;
@@ -831,7 +854,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 || (maxcomplen > 0
                     && !WPACKET_reserve_bytes(thispkt, maxcomplen,
                                               &compressdata))) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -850,12 +874,14 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         if (s->compress != NULL) {
             if (!ssl3_do_compress(s, thiswr)
                     || !WPACKET_allocate_bytes(thispkt, thiswr->length, NULL)) {
-                SSLerr(SSL_F_DO_SSL3_WRITE, SSL_R_COMPRESSION_FAILURE);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         SSL_R_COMPRESSION_FAILURE);
                 goto err;
             }
         } else {
             if (!WPACKET_memcpy(thispkt, thiswr->input, thiswr->length)) {
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_reset_input(&wr[j]);
@@ -865,7 +891,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             size_t rlen, max_send_fragment;
 
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_add_length(thiswr, 1);
@@ -898,7 +925,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                     if (padding > max_padding)
                         padding = max_padding;
                     if (!WPACKET_memset(thispkt, 0, padding)) {
-                        SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                                 ERR_R_INTERNAL_ERROR);
                         goto err;
                     }
                     SSL3_RECORD_add_length(thiswr, padding);
@@ -917,7 +945,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                     || !s->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         }
@@ -934,7 +963,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                     * sub-packet
                     */
                 || !WPACKET_get_length(thispkt, &len)) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -952,11 +982,17 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * We haven't actually negotiated the version yet, but we're trying to
          * send early data - so we need to use the tls13enc function.
          */
-        if (tls13_enc(s, wr, numpipes, 1) < 1)
+        if (tls13_enc(s, wr, numpipes, 1) < 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
+        }
     } else {
-        if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1)
+        if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
+        }
     }
 
     for (j = 0; j < numpipes; j++) {
@@ -972,7 +1008,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 || (thiswr->length > origlen
                     && !WPACKET_allocate_bytes(thispkt,
                                                thiswr->length - origlen, NULL))) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
         if (SSL_WRITE_ETM(s) && mac_size != 0) {
@@ -980,7 +1017,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
             if (!WPACKET_allocate_bytes(thispkt, mac_size, &mac)
                     || !s->method->ssl3_enc->mac(s, thiswr, mac, 1)) {
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             SSL3_RECORD_add_length(thiswr, mac_size);
@@ -988,7 +1026,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
         if (!WPACKET_get_length(thispkt, &len)
                 || !WPACKET_close(thispkt)) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -1008,7 +1047,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (!WPACKET_finish(thispkt)) {
-            SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
         }
 
@@ -1027,7 +1067,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
              */
             if (j > 0) {
                 /* We should never be pipelining an empty fragment!! */
-                SSLerr(SSL_F_DO_SSL3_WRITE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
+                         ERR_R_INTERNAL_ERROR);
                 goto err;
             }
             *written = SSL3_RECORD_get_length(thiswr);
@@ -1072,7 +1113,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
         || ((s->rlayer.wpend_buf != buf) &&
             !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
         || (s->rlayer.wpend_type != type)) {
-        SSLerr(SSL_F_SSL3_WRITE_PENDING, SSL_R_BAD_WRITE_RETRY);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_PENDING,
+                 SSL_R_BAD_WRITE_RETRY);
         return -1;
     }
 
@@ -1094,7 +1136,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
             if (i >= 0)
                 tmpwrit = i;
         } else {
-            SSLerr(SSL_F_SSL3_WRITE_PENDING, SSL_R_BIO_NOT_SET);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_PENDING,
+                     SSL_R_BIO_NOT_SET);
             i = -1;
         }
         if (i > 0 && tmpwrit == SSL3_BUFFER_get_left(&wb[currbuf])) {
