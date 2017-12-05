@@ -444,6 +444,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HANDSHAKE_STATE                        236
 # define SSL_R_BAD_HELLO_REQUEST                          105
+# define SSL_R_BAD_HRR_VERSION                            263
 # define SSL_R_BAD_KEY_SHARE                              108
 # define SSL_R_BAD_KEY_UPDATE                             122
 # define SSL_R_BAD_LENGTH                                 271

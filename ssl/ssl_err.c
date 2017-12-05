@@ -706,6 +706,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_HANDSHAKE_STATE),
     "bad handshake state"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_HELLO_REQUEST), "bad hello request"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_HRR_VERSION), "bad hrr version"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_KEY_SHARE), "bad key share"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_KEY_UPDATE), "bad key update"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_LENGTH), "bad length"},
