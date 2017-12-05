@@ -275,9 +275,10 @@ is not supported.
 EVP_CIPHER_CTX_ctrl() allows various cipher specific parameters to be determined
 and set.
 
-EVP_CIPHER_CTX_rand_key() generates a random key of the appropriate length based
-on the cipher context. The EVP_CIPHER can provide its own random key generation
-routine to support keys of a specific form.
+EVP_CIPHER_CTX_rand_key() generates a random key of size
+EVP_CIPHER_CTX_key_length() based on the cipher context. The EVP_CIPHER can
+provide its own random key generation routine to support keys of a specific
+form.
 
 =head1 RETURN VALUES
 
