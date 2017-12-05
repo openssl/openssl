@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef __DECAF_POINT_448_H__
-# define __DECAF_POINT_448_H__ 1
+#ifndef __C448_POINT_448_H__
+# define __C448_POINT_448_H__ 1
 
 # include "curve448utils.h"
 # include "field.h"
@@ -20,22 +20,22 @@
 extern "C" {
 #endif
 
-# define DECAF_448_SCALAR_LIMBS ((446-1)/DECAF_WORD_BITS+1)
+# define C448_448_SCALAR_LIMBS ((446-1)/C448_WORD_BITS+1)
 
 /* The number of bits in a scalar */
-# define DECAF_448_SCALAR_BITS 446
+# define C448_448_SCALAR_BITS 446
 
 /* Number of bytes in a serialized scalar. */
-# define DECAF_448_SCALAR_BYTES 56
+# define C448_448_SCALAR_BYTES 56
 
 /* X448 encoding ratio. */
-# define DECAF_X448_ENCODE_RATIO 2
+# define C448_X448_ENCODE_RATIO 2
 
 /* Number of bytes in an x448 public key */
-# define DECAF_X448_PUBLIC_BYTES 56
+# define C448_X448_PUBLIC_BYTES 56
 
 /* Number of bytes in an x448 private key */
-# define DECAF_X448_PRIVATE_BYTES 56
+# define C448_X448_PRIVATE_BYTES 56
 
 /* Twisted Edwards extended homogeneous coordinates */
 typedef struct curve448_point_s {
@@ -50,7 +50,7 @@ typedef struct curve448_precomputed_s curve448_precomputed_s;
 
 /* Scalar is stored packed, because we don't need the speed. */
 typedef struct curve448_scalar_s {
-    decaf_word_t limb[DECAF_448_SCALAR_LIMBS];
+    c448_word_t limb[C448_448_SCALAR_LIMBS];
 } curve448_scalar_t[1];
 
 /* A scalar equal to 1. */
@@ -72,13 +72,13 @@ extern const struct curve448_precomputed_s *curve448_precomputed_base;
  * out (out): Deserialized form.
  *
  * Returns:
- * DECAF_SUCCESS: The scalar was correctly encoded.
- * DECAF_FAILURE: The scalar was greater than the modulus, and has been reduced
+ * C448_SUCCESS: The scalar was correctly encoded.
+ * C448_FAILURE: The scalar was greater than the modulus, and has been reduced
  * modulo that modulus.
  */
-__owur decaf_error_t curve448_scalar_decode(
+__owur c448_error_t curve448_scalar_decode(
                             curve448_scalar_t out,
-                            const unsigned char ser[DECAF_448_SCALAR_BYTES]);
+                            const unsigned char ser[C448_448_SCALAR_BYTES]);
 
 /*
  * Read a scalar from wire format or from bytes.  Reduces mod scalar prime.
@@ -96,7 +96,7 @@ void curve448_scalar_decode_long(curve448_scalar_t out,
  * ser (out): Serialized form of a scalar.
  * s (in): Deserialized scalar.
  */
-void curve448_scalar_encode(unsigned char ser[DECAF_448_SCALAR_BYTES],
+void curve448_scalar_encode(unsigned char ser[C448_448_SCALAR_BYTES],
                             const curve448_scalar_t s);
 
 /*
@@ -163,18 +163,18 @@ static ossl_inline void curve448_point_copy(curve448_point_t a,
 }
 
 /*
- * Test whether two points are equal.  If yes, return DECAF_TRUE, else return
- * DECAF_FALSE.
+ * Test whether two points are equal.  If yes, return C448_TRUE, else return
+ * C448_FALSE.
  *
  * a (in): A point.
  * b (in): Another point.
  * 
  * Returns:
- * DECAF_TRUE: The points are equal.
- * DECAF_FALSE: The points are not equal.
+ * C448_TRUE: The points are equal.
+ * C448_FALSE: The points are not equal.
  */
-__owur decaf_bool_t curve448_point_eq(const curve448_point_t a,
-                                      const curve448_point_t b);
+__owur c448_bool_t curve448_point_eq(const curve448_point_t a,
+                                     const curve448_point_t b);
 
 /*
  * Double a point. Equivalent to curve448_point_add(two_a,a,a), but potentially
@@ -194,35 +194,35 @@ void curve448_point_double(curve448_point_t two_a, const curve448_point_t a);
  * scalar (in): The scalar to multiply by.
  *
  * Returns:
- * DECAF_SUCCESS: The scalarmul succeeded.
- * DECAF_FAILURE: The scalarmul didn't succeed, because the base point is in a
+ * C448_SUCCESS: The scalarmul succeeded.
+ * C448_FAILURE: The scalarmul didn't succeed, because the base point is in a
  * small subgroup.
  */
-__owur decaf_error_t decaf_x448(uint8_t out[DECAF_X448_PUBLIC_BYTES],
-                                const uint8_t base[DECAF_X448_PUBLIC_BYTES],
-                                const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]);
+__owur c448_error_t c448_x448(uint8_t out[C448_X448_PUBLIC_BYTES],
+                              const uint8_t base[C448_X448_PUBLIC_BYTES],
+                              const uint8_t scalar[C448_X448_PRIVATE_BYTES]);
 
 /*
- * Multiply a point by DECAF_X448_ENCODE_RATIO, then encode it like RFC 7748.
+ * Multiply a point by C448_X448_ENCODE_RATIO, then encode it like RFC 7748.
  *
  * This function is mainly used internally, but is exported in case
  * it will be useful.
  *
  * The ratio is necessary because the internal representation doesn't
  * track the cofactor information, so on output we must clear the cofactor.
- * This would multiply by the cofactor, but in fact internally libdecaf's
- * points are always even, so it multiplies by half the cofactor instead.
+ * This would multiply by the cofactor, but in fact internally points are always
+ * even, so it multiplies by half the cofactor instead.
  *
  * As it happens, this aligns with the base point definitions; that is,
  * if you pass the Decaf/Ristretto base point to this function, the result
- * will be DECAF_X448_ENCODE_RATIO times the X448
+ * will be C448_X448_ENCODE_RATIO times the X448
  * base point.
  *
  * out (out): The scaled and encoded point.
  * p (in): The point to be scaled and encoded.
  */
 void curve448_point_mul_by_ratio_and_encode_like_x448(
-                                        uint8_t out[DECAF_X448_PUBLIC_BYTES],
+                                        uint8_t out[C448_X448_PUBLIC_BYTES],
                                         const curve448_point_t p);
 
 /*
@@ -232,9 +232,9 @@ void curve448_point_mul_by_ratio_and_encode_like_x448(
  * out (out): The scaled point base*scalar
  * scalar (in): The scalar to multiply by.
  */
-void decaf_x448_derive_public_key(
-                                uint8_t out[DECAF_X448_PUBLIC_BYTES],
-                                const uint8_t scalar[DECAF_X448_PRIVATE_BYTES]);
+void c448_x448_derive_public_key(
+                                uint8_t out[C448_X448_PUBLIC_BYTES],
+                                const uint8_t scalar[C448_X448_PRIVATE_BYTES]);
 
 /*
  * Multiply a precomputed base point by a scalar: out = scalar*base.
@@ -273,10 +273,10 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
  * to_test (in): The point to test.
  *
  * Returns:
- * DECAF_TRUE The point is valid.
- * DECAF_FALSE The point is invalid.
+ * C448_TRUE The point is valid.
+ * C448_FALSE The point is invalid.
  */
-__owur decaf_bool_t curve448_point_valid(const curve448_point_t to_test);
+__owur c448_bool_t curve448_point_valid(const curve448_point_t to_test);
 
 /* Overwrite scalar with zeros. */
 void curve448_scalar_destroy(curve448_scalar_t scalar);
@@ -288,4 +288,4 @@ void curve448_point_destroy(curve448_point_t point);
 } /* extern "C" */
 #endif
 
-#endif                          /* __DECAF_POINT_448_H__ */
+#endif                          /* __C448_POINT_448_H__ */

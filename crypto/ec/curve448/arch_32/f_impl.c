@@ -13,7 +13,7 @@
 #include "f_field.h"
 
 #if (defined(__OPTIMIZE__) && !defined(__OPTIMIZE_SIZE__) && !I_HATE_UNROLLED_LOOPS) \
-     || defined(DECAF_FORCE_UNROLL)
+     || defined(C448_FORCE_UNROLL)
 # define REPEAT8(_x) _x _x _x _x _x _x _x _x
 # define FOR_LIMB(_i,_start,_end,_x) do { _i=_start; REPEAT8( if (_i<_end) { _x; } _i++;) } while (0)
 #else
