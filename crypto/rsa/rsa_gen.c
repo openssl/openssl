@@ -71,6 +71,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     STACK_OF(RSA_PRIME_INFO) *prime_infos = NULL;
     BN_CTX *ctx = NULL;
     BN_ULONG bitst = 0;
+    unsigned long error = 0;
 
     /*
      * When generating ridiculously small keys, we can get stuck
@@ -147,6 +148,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     if (BN_copy(rsa->e, e_value) == NULL)
         goto err;
 
+    BN_set_flags(rsa->e, BN_FLG_CONSTTIME);
     /* generate p, q and other primes (if any) */
     for (i = 0; i < primes; i++) {
         adj = 0;
@@ -190,10 +192,19 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
             }
             if (!BN_sub(r2, prime, BN_value_one()))
                 goto err;
-            if (!BN_gcd(r1, r2, rsa->e, ctx))
-                goto err;
-            if (BN_is_one(r1))
+            if (BN_mod_inverse(r1, r2, rsa->e, ctx)) {
+               /* GCD == 1 since inverse exists */
                 break;
+            } else {
+                error = ERR_peek_last_error();
+                if (ERR_GET_LIB(error) == ERR_LIB_BN &&
+                    ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
+                        /* GCD != 1 */
+                        ERR_clear_error();
+                } else {
+                    goto err;
+                }
+            }
             if (!BN_GENCB_call(cb, 2, n++))
                 goto err;
         }
