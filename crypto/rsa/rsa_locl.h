@@ -28,7 +28,7 @@ DEFINE_STACK_OF(RSA_PRIME_INFO)
 struct rsa_st {
     /*
      * The first parameter is used to pickup errors where this is passed
-     * instead of aEVP_PKEY, it is set to 0
+     * instead of an EVP_PKEY, it is set to 0
      */
     int pad;
     int32_t version;
