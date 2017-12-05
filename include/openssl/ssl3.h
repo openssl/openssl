@@ -289,7 +289,6 @@ extern "C" {
 # define SSL3_MT_SERVER_HELLO                    2
 # define SSL3_MT_NEWSESSION_TICKET               4
 # define SSL3_MT_END_OF_EARLY_DATA               5
-# define SSL3_MT_HELLO_RETRY_REQUEST             6
 # define SSL3_MT_ENCRYPTED_EXTENSIONS            8
 # define SSL3_MT_CERTIFICATE                     11
 # define SSL3_MT_SERVER_KEY_EXCHANGE             12

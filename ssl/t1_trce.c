@@ -87,7 +87,6 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {DTLS1_MT_HELLO_VERIFY_REQUEST, "HelloVerifyRequest"},
     {SSL3_MT_NEWSESSION_TICKET, "NewSessionTicket"},
     {SSL3_MT_END_OF_EARLY_DATA, "EndOfEarlyData"},
-    {SSL3_MT_HELLO_RETRY_REQUEST, "HelloRetryRequest"},
     {SSL3_MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions"},
     {SSL3_MT_CERTIFICATE, "Certificate"},
     {SSL3_MT_SERVER_KEY_EXCHANGE, "ServerKeyExchange"},
@@ -783,11 +782,10 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         break;
 
     case TLSEXT_TYPE_key_share:
-        if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
+        if (server && extlen == 2) {
             int group_id;
 
-            if (extlen != 2)
-                return 0;
+            /* We assume this is an HRR, otherwise this is an invalid key_share */
             group_id = (ext[0] << 8) | ext[1];
             BIO_indent(bio, indent + 4, 80);
             BIO_printf(bio, "NamedGroup: %s (%d)\n",
@@ -1012,29 +1010,6 @@ static int ssl_print_server_hello(BIO *bio, int indent,
     if (!ssl_print_extensions(bio, indent, 1, SSL3_MT_SERVER_HELLO, &msg,
                               &msglen))
         return 0;
-    return 1;
-}
-
-static int ssl_print_hello_retry_request(BIO *bio, int indent,
-                                         const unsigned char *msg,
-                                         size_t msglen)
-{
-    unsigned int cs;
-
-    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen, NULL))
-        return 0;
-
-    cs = (msg[0] << 8) | msg[1];
-    BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "cipher_suite {0x%02X, 0x%02X} %s\n",
-               msg[0], msg[1], ssl_trace_str(cs, ssl_ciphers_tbl));
-    msg += 2;
-    msglen -= 2;
-
-    if (!ssl_print_extensions(bio, indent, 1, SSL3_MT_HELLO_RETRY_REQUEST, &msg,
-                              &msglen))
-        return 0;
-
     return 1;
 }
 
@@ -1468,11 +1443,6 @@ static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
 
     case SSL3_MT_NEWSESSION_TICKET:
         if (!ssl_print_ticket(bio, indent + 2, ssl, msg, msglen))
-            return 0;
-        break;
-
-    case SSL3_MT_HELLO_RETRY_REQUEST:
-        if (!ssl_print_hello_retry_request(bio, indent + 2, msg, msglen))
             return 0;
         break;
 

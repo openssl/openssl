@@ -485,7 +485,8 @@ sub change_outer_record_type
     for ($i = 0; ${$proxy->record_list}[$i]->flight() < 1; $i++) {
         next;
     }
-    $i++;
+    #Skip CCS and ServerHello
+    $i += 2;
     ${$proxy->record_list}[$i]->outer_content_type(TLSProxy::Record::RT_HANDSHAKE);
 }
 

@@ -525,7 +525,6 @@ static STRINT_PAIR handshakes[] = {
     {", HelloVerifyRequest", DTLS1_MT_HELLO_VERIFY_REQUEST},
     {", NewSessionTicket", SSL3_MT_NEWSESSION_TICKET},
     {", EndOfEarlyData", SSL3_MT_END_OF_EARLY_DATA},
-    {", HelloRetryRequest", SSL3_MT_HELLO_RETRY_REQUEST},
     {", EncryptedExtensions", SSL3_MT_ENCRYPTED_EXTENSIONS},
     {", Certificate", SSL3_MT_CERTIFICATE},
     {", ServerKeyExchange", SSL3_MT_SERVER_KEY_EXCHANGE},

@@ -19,6 +19,13 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+/* Fixed value used in the ServerHello random field to identify an HRR */
+const unsigned char hrrrandom[] = {
+    0xcf, 0x21, 0xad, 0x74, 0xe5, 0x9a, 0x61, 0x11, 0xbe, 0x1d, 0x8c, 0x02,
+    0x1e, 0x65, 0xb8, 0x91, 0xc2, 0xa2, 0x11, 0x16, 0x7a, 0xbb, 0x8c, 0x5e,
+    0x07, 0x9e, 0x09, 0xe2, 0xc8, 0xa8, 0x33, 0x9c
+};
+
 /*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
@@ -1238,12 +1245,18 @@ int tls_get_message_body(SSL *s, size_t *len)
          * We defer feeding in the HRR until later. We'll do it as part of
          * processing the message
          */
-        if (s->s3->tmp.message_type != SSL3_MT_HELLO_RETRY_REQUEST
-                && !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->init_num + SSL3_HM_HEADER_LENGTH)) {
-            /* SSLfatal() already called */
-            *len = 0;
-            return 0;
+#define SERVER_HELLO_RANDOM_OFFSET  (SSL3_HM_HEADER_LENGTH + 2)
+        if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO
+                || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
+                || memcmp(hrrrandom,
+                          s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
+                          SSL3_RANDOM_SIZE) != 0) {
+            if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                 s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                /* SSLfatal() already called */
+                *len = 0;
+                return 0;
+            }
         }
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,

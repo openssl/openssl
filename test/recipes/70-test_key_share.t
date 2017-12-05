@@ -223,6 +223,7 @@ ok(TLSProxy::Message->success(), "Ignore key_share for TLS<=1.2 server");
 #Test 22: The server sending an HRR but not requesting a new key_share should
 #         fail
 $proxy->clear();
+$direction = SERVER_TO_CLIENT;
 $testtype = NO_KEY_SHARES_IN_HRR;
 $proxy->serverflags("-curves X25519");
 $proxy->start();
@@ -341,6 +342,12 @@ sub modify_key_shares_filter
             if ($testtype == LOOK_ONLY) {
                 return;
             }
+            if ($testtype == NO_KEY_SHARES_IN_HRR) {
+                $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
+                $message->set_extension(TLSProxy::Message::EXT_UNKNOWN, "");
+                $message->repack();
+                return;
+            }
             if ($testtype == SELECT_X25519) {
                 $ext = pack "C4H64",
                     0x00, 0x1d, #x25519
@@ -370,12 +377,7 @@ sub modify_key_shares_filter
             $message->set_extension(TLSProxy::Message::EXT_KEY_SHARE, $ext);
 
             $message->repack();
-        } elsif ($message->mt == TLSProxy::Message::MT_HELLO_RETRY_REQUEST
-                 && $testtype == NO_KEY_SHARES_IN_HRR) {
-            $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE);
-            $message->set_extension(TLSProxy::Message::EXT_UNKNOWN, "");
-            $message->repack();
-         }
+        }
     }
 }
 
