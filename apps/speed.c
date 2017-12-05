@@ -872,16 +872,23 @@ static int EVP_Update_loop(void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
-    int outl, count;
+    int outl, count, rc;
 #ifndef SIGALRM
     int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
 #endif
-    if (decrypt)
-        for (count = 0; COND(nb_iter); count++)
-            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-    else
-        for (count = 0; COND(nb_iter); count++)
-            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+    if (decrypt) {
+        for (count = 0; COND(nb_iter); count++) {
+            rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            if (rc != 1)
+                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+        }
+    } else {
+        for (count = 0; COND(nb_iter); count++) {
+            rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            if (rc != 1)
+                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+        }
+    }
     if (decrypt)
         EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
