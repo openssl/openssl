@@ -135,7 +135,7 @@ void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
 #define check_fatal(s, f) \
     do { \
         if (!ossl_assert((s)->statem.in_init \
-                         || (s)->statem.state != MSG_FLOW_ERROR)) \
+                         && (s)->statem.state == MSG_FLOW_ERROR)) \
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, (f), \
                      SSL_R_MISSING_FATAL); \
     } while (0)
