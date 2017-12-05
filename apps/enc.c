@@ -1,5 +1,6 @@
 /*
  * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 BaishanCloud. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,7 +43,7 @@ typedef enum OPTION_choice {
     OPT_LIST,
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
-    OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
+    OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_AAD, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
     OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER,
     OPT_R_ENUM
 } OPTION_CHOICE;
@@ -55,7 +56,7 @@ const OPTIONS enc_options[] = {
     {"pass", OPT_PASS, 's', "Passphrase source"},
     {"e", OPT_E, '-', "Encrypt"},
     {"d", OPT_D, '-', "Decrypt"},
-    {"p", OPT_P, '-', "Print the iv/key"},
+    {"p", OPT_P, '-', "Print the iv/key/aad/tag"},
     {"P", OPT_UPPER_P, '-', "Print the iv/key and exit"},
     {"v", OPT_V, '-', "Verbose output"},
     {"nopad", OPT_NOPAD, '-', "Disable standard block padding"},
@@ -68,6 +69,7 @@ const OPTIONS enc_options[] = {
      "Used with -[base64|a] to specify base64 buffer as a single line"},
     {"bufsize", OPT_BUFSIZE, 's', "Buffer size"},
     {"k", OPT_K, 's', "Passphrase"},
+    {"aad", OPT_AAD, 's', "Additional Authenticated Data for AEAD ciphers"},
     {"kfile", OPT_KFILE, '<', "Read passphrase from file"},
     {"K", OPT_UPPER_K, 's', "Raw key, in hex"},
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
@@ -89,6 +91,8 @@ int enc_main(int argc, char **argv)
 {
     static char buf[128];
     static const char magic[] = "Salted__";
+    static const char pretag[] = "Tag__";
+    unsigned char tag[16] = {0};
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
         NULL, *wbio = NULL;
@@ -98,9 +102,12 @@ int enc_main(int argc, char **argv)
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
+    char *aad = NULL, *aadbuf = NULL;
     char mbuf[sizeof magic - 1];
+    char tbuf[sizeof pretag - 1];
     OPTION_CHOICE o;
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
+    int outlen, offset = 0;
     int enc = 1, printkey = 0, i, k;
     int base64 = 0, informat = FORMAT_BINARY, outformat = FORMAT_BINARY;
     int ret = 1, inl, nopad = 0;
@@ -216,6 +223,9 @@ int enc_main(int argc, char **argv)
         case OPT_K:
             str = opt_arg();
             break;
+        case OPT_AAD:
+            aad = opt_arg();
+            break;
         case OPT_KFILE:
             in = bio_open_default(opt_arg(), 'r', FORMAT_TEXT);
             if (in == NULL)
@@ -264,9 +274,11 @@ int enc_main(int argc, char **argv)
         }
     }
 
-    if (cipher && EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) {
-        BIO_printf(bio_err, "%s: AEAD ciphers not supported\n", prog);
-        goto end;
+    if (cipher && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+        if ((EVP_CIPHER_mode(cipher) != EVP_CIPH_GCM_MODE)) {
+            BIO_printf(bio_err, "%s: ciphers not supported\n", prog);
+            goto end;
+        }
     }
 
     if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)) {
@@ -294,6 +306,7 @@ int enc_main(int argc, char **argv)
         }
 
     strbuf = app_malloc(SIZE, "strbuf");
+    aadbuf = app_malloc(SIZE, "aadbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
     if (infile == NULL) {
@@ -341,6 +354,31 @@ int enc_main(int argc, char **argv)
             BIO_printf(bio_err, "password required\n");
             goto end;
         }
+    }
+
+    if (cipher && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) && (aad == NULL)) {
+#ifndef OPENSSL_NO_UI
+        for (;;) {
+            char prompt[200];
+
+            BIO_snprintf(prompt, sizeof prompt, "enter %s %s aad:",
+                         OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
+                         (enc) ? "encryption" : "decryption");
+            aadbuf[0] = '\0';
+            i = EVP_read_aad_string((char *)aadbuf, SIZE, prompt);
+            if (i == 0) {
+                aad = aadbuf;
+                break;
+            }
+            if (i < 0) {
+                BIO_printf(bio_err, "bad aad read\n");
+                goto end;
+            }
+        }
+#else
+        aadbuf[0] = '\0';
+        aad = aadbuf;
+#endif
     }
 
     out = bio_open_default(outfile, 'w', outformat);
@@ -476,6 +514,30 @@ int enc_main(int argc, char **argv)
             BIO_printf(bio_err, "invalid hex key value\n");
             goto end;
         }
+        if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            if (enc) {
+                if ((printkey != 2)
+                    && (BIO_write(wbio, pretag,
+                                  sizeof pretag - 1) != sizeof pretag - 1
+                        || BIO_write(wbio,
+                                     (char *)tag,
+                                     sizeof tag) != sizeof tag)) {
+                    BIO_printf(bio_err, "error writing tag to output file\n");
+                    goto end;
+                }
+            } else {
+                if (BIO_read(rbio, tbuf, sizeof tbuf) != sizeof tbuf
+                           || BIO_read(rbio,
+                                       (unsigned char *)tag,
+                                       sizeof tag) != sizeof tag) {
+                    BIO_printf(bio_err, "error reading tag from input file\n");
+                    goto end;
+                } else if (memcmp(tbuf, pretag, sizeof pretag - 1)) {
+                    BIO_printf(bio_err, "bad tag number\n");
+                    goto end;
+                }
+            }
+        }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)
             goto end;
@@ -504,16 +566,43 @@ int enc_main(int argc, char **argv)
             goto end;
         }
 
+        if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            if (!EVP_CipherUpdate(ctx, NULL, &outlen, (unsigned char*)aad, strlen(aad))) {
+                BIO_printf(bio_err, "Error setting cipher %s\n",
+                           EVP_CIPHER_name(cipher));
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+            if (!enc) {
+                if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), (void *)tag)) {
+                    BIO_printf(bio_err, "Error setting tag ctrl %s\n",
+                               EVP_CIPHER_name(cipher));
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
+            }
+        }
+
         if (debug) {
             BIO_set_callback(benc, BIO_debug_callback);
             BIO_set_callback_arg(benc, (char *)bio_err);
         }
 
         if (printkey) {
+            if (!aad) {
+                printf("aad=%s", aad);
+                printf("\n");
+            }
             if (!nosalt) {
                 printf("salt=");
                 for (i = 0; i < (int)sizeof(salt); i++)
                     printf("%02X", salt[i]);
+                printf("\n");
+            }
+            if (tag[0]) {
+                printf("tag=");
+                for (i = 0; i < (int)sizeof(tag); i++)
+                    printf("%02X", tag[i]);
                 printf("\n");
             }
             if (EVP_CIPHER_key_length(cipher) > 0) {
@@ -552,6 +641,29 @@ int enc_main(int argc, char **argv)
         BIO_printf(bio_err, "bad decrypt\n");
         goto end;
     }
+    if (cipher && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) && enc) {
+        /* Get tag */
+        EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, 16, tag);
+
+        /* Insert tag to output file */
+        if (!nosalt && str != NULL)
+            offset += sizeof(magic) - 1 + sizeof(salt);
+
+        offset += sizeof(pretag) - 1;
+        (void)BIO_seek(out, offset);
+        if (BIO_write(out, (char *)tag, sizeof(tag)) != sizeof(tag)) {
+            BIO_printf(bio_err, "error writing tag to output file\n");
+            goto end;
+        }
+        if (printkey) {
+            if (!tag[0]) {
+                printf("tag=");
+                for (i = 0; i < (int)sizeof(tag); i++)
+                    printf("%02X", tag[i]);
+                printf("\n");
+            }
+        }
+    }
 
     ret = 0;
     if (verbose) {
@@ -562,6 +674,7 @@ int enc_main(int argc, char **argv)
     ERR_print_errors(bio_err);
     OPENSSL_free(strbuf);
     OPENSSL_free(buff);
+    OPENSSL_free(aadbuf);
     BIO_free(in);
     BIO_free_all(out);
     BIO_free(benc);
@@ -585,7 +698,8 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
     /* Filter out ciphers that we cannot use */
     cipher = EVP_get_cipherbyname(name->name);
     if (cipher == NULL ||
-            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
+            ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 &&
+            EVP_CIPHER_mode(cipher) != EVP_CIPH_GCM_MODE) ||
             EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 

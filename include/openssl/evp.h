@@ -1,5 +1,6 @@
 /*
  * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017 BaishanCloud. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -545,7 +546,9 @@ __owur int EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in);
 __owur int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);
 __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
                            unsigned int *s);
-
+int EVP_read_aad_string(char *buf, int length, const char *prompt);
+int EVP_read_aad_string_min(char *buf, int minlen, int maxlen,
+                            const char *prompt);
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,
                            const char *prompt, int verify);
