@@ -18,23 +18,7 @@
 #include <string.h>
 #include "internal/numbers.h"
 
-#define API_NAME "decaf_448"
-
-#define NO_CONTEXT DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS
-#define EDDSA_USE_SIGMA_ISOGENY 0
 #define COFACTOR 4
-#define EDDSA_PREHASH_BYTES 64
-
-#if NO_CONTEXT
-const uint8_t NO_CONTEXT_POINTS_HERE = 0;
-const uint8_t *const DECAF_ED448_NO_CONTEXT = &NO_CONTEXT_POINTS_HERE;
-#endif
-
-/*
- * EDDSA_BASE_POINT_RATIO = 1 or 2 Because EdDSA25519 is not on E_d but on the
- * isogenous E_sigma_d, its base point is twice ours.
- */
-#define EDDSA_BASE_POINT_RATIO (1+EDDSA_USE_SIGMA_ISOGENY) /* TODO: remove */
 
 static decaf_error_t oneshot_hash(uint8_t *out, size_t outlen,
                                   const uint8_t *in, size_t inlen)
@@ -84,16 +68,6 @@ static decaf_error_t hash_init_with_dom(EVP_MD_CTX *hashctx,
 
     if (context_len > UINT8_MAX)
         return DECAF_FAILURE;
-
-#if NO_CONTEXT
-    if (context_len == 0 && context == DECAF_ED448_NO_CONTEXT) {
-        (void)prehashed;
-        (void)for_prehash;
-        (void)context;
-        (void)context_len;
-        return DECAF_SUCCESS;
-    }
-#endif
 
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
         || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))

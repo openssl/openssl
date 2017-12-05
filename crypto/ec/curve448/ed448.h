@@ -29,9 +29,6 @@ extern "C" {
 # define DECAF_EDDSA_448_SIGNATURE_BYTES (DECAF_EDDSA_448_PUBLIC_BYTES + \
                                           DECAF_EDDSA_448_PRIVATE_BYTES)
 
-/* Does EdDSA support non-contextual signatures? */
-# define DECAF_EDDSA_448_SUPPORTS_CONTEXTLESS_SIGS 0
-
 /* EdDSA encoding ratio. */
 # define DECAF_448_EDDSA_ENCODE_RATIO 4
 
@@ -195,21 +192,6 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
 decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
                             curve448_point_t p,
                             const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]);
-
-/*
- * EdDSA to ECDH public key conversion
- * Deserialize the point to get y on Edwards curve,
- * Convert it to u coordinate on Montgomery curve.
- *
- * This function does not check that the public key being converted is a valid
- * EdDSA public key (FUTURE?)
- *
- * x (out): The ECDH public key as in RFC7748(point on Montgomery curve)
- * ed (in): The EdDSA public key(point on Edwards curve)
- */
-void decaf_ed448_convert_public_key_to_x448(
-                                uint8_t x[DECAF_X448_PUBLIC_BYTES],
-                                const uint8_t ed[DECAF_EDDSA_448_PUBLIC_BYTES]);
 
 /*
  * EdDSA to ECDH private key conversion
