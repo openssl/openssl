@@ -17,6 +17,7 @@ B<openssl enc -ciphername>
 [B<-a/-base64>]
 [B<-A>]
 [B<-k password>]
+[B<-aad arg>]
 [B<-kfile filename>]
 [B<-K key>]
 [B<-iv IV>]
@@ -93,6 +94,10 @@ If the B<-a> option is set then base64 process the data on one line.
 
 The password to derive the key from. This is for compatibility with previous
 versions of OpenSSL. Superseded by the B<-pass> argument.
+
+=item B<-aad arg>
+
+specify the additional authenticated data for AEAD ciphers.
 
 =item B<-kfile filename>
 
@@ -237,9 +242,7 @@ the B<-ciphers> option (that is B<openssl enc -ciphers>) produces a
 list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
-The B<enc> program does not support authenticated encryption modes
-like CCM and GCM. The utility does not store or retrieve the
-authentication tag.
+The B<enc> program supports authenticated encryption modes GCM.
 
 
  base64             Base 64
@@ -311,6 +314,7 @@ authentication tag.
  aes-[128|192|256]-ctr  128/192/256 bit AES in CTR mode
  aes-[128|192|256]-ecb  128/192/256 bit AES in ECB mode
  aes-[128|192|256]-ofb  128/192/256 bit AES in OFB mode
+ aes-[128|192|256]-ofb  128/192/256 bit AES in GCM mode
 
  camellia-[128|192|256]-cbc  128/192/256 bit Camellia in CBC mode
  camellia[128|192|256]       Alias for camellia-[128|192|256]-cbc
