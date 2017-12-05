@@ -79,13 +79,6 @@ static ossl_inline decaf_error_t decaf_succeed_if(decaf_bool_t x)
     return (decaf_error_t) x;
 }
 
-/* Return DECAF_TRUE iff x == DECAF_SUCCESS */
-static ossl_inline decaf_bool_t decaf_successful(decaf_error_t e)
-{
-    decaf_dword_t w = ((decaf_word_t) e) ^ ((decaf_word_t) DECAF_SUCCESS);
-    return (w - 1) >> DECAF_WORD_BITS;
-}
-
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -37,8 +37,6 @@ static const curve448_scalar_t sc_p = {
     }
 };
 
-/* End of template stuff */
-
 #define WBITS DECAF_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
 const curve448_scalar_t curve448_scalar_one = {{{1}}};

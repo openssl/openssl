@@ -25,23 +25,8 @@ extern "C" {
 /* The number of bits in a scalar */
 # define DECAF_448_SCALAR_BITS 446
 
-/* Number of bytes in a serialized point. */
-# define DECAF_448_SER_BYTES 56
-
-/*
- * Number of bytes in an elligated point.  For now set the same as SER_BYTES
- * but could be different for other curves.
- */
-# define DECAF_448_HASH_BYTES 56
-
 /* Number of bytes in a serialized scalar. */
 # define DECAF_448_SCALAR_BYTES 56
-
-/* Number of bits in the "which" field of an elligator inverse */
-# define DECAF_448_INVERT_ELLIGATOR_WHICH_BITS 3
-
-/* The cofactor the curve would have, if we hadn't removed it */
-# define DECAF_448_REMOVED_COFACTOR 4
 
 /* X448 encoding ratio. */
 # define DECAF_X448_ENCODE_RATIO 2
@@ -54,7 +39,7 @@ extern "C" {
 
 /* Twisted Edwards extended homogeneous coordinates */
 typedef struct curve448_point_s {
-    gf_448_t x, y, z, t;
+    gf x, y, z, t;
 } curve448_point_t[1];
 
 /* Precomputed table based on a point.  Can be trivial implementation. */
@@ -76,9 +61,6 @@ extern const curve448_scalar_t curve448_scalar_zero;
 
 /* The identity point on the curve. */
 extern const curve448_point_t curve448_point_identity;
-
-/* An arbitrarily chosen base point on the curve. */
-extern const curve448_point_t curve448_point_base;
 
 /* Precomputed table for the base point on the curve. */
 extern const struct curve448_precomputed_s *curve448_precomputed_base;
@@ -242,9 +224,6 @@ __owur decaf_error_t decaf_x448(uint8_t out[DECAF_X448_PUBLIC_BYTES],
 void curve448_point_mul_by_ratio_and_encode_like_x448(
                                         uint8_t out[DECAF_X448_PUBLIC_BYTES],
                                         const curve448_point_t p);
-
-/* The base point for X448 Diffie-Hellman */
-extern const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES];
 
 /*
  * RFC 7748 Diffie-Hellman base point scalarmul.  This function uses a different

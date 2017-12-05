@@ -17,7 +17,7 @@ static const gf MODULUS = {
                   0xffffffffffffff, 0xffffffffffffff)
 };
 
-/** Serialize to wire format. */
+/* Serialize to wire format. */
 void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_hibit)
 {
     unsigned int j = 0, fill = 0;

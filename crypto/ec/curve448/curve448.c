@@ -23,7 +23,6 @@
 #define COMBS_N 5
 #define COMBS_T 5
 #define COMBS_S 18
-#define DECAF_WINDOW_BITS 5
 #define DECAF_WNAF_FIXED_TABLE_BITS 5
 #define DECAF_WNAF_VAR_TABLE_BITS 3
 
@@ -37,14 +36,7 @@ static const curve448_scalar_t precomputed_scalarmul_adjustment = {
     }
 };
 
-const uint8_t decaf_x448_base_point[DECAF_X448_PUBLIC_BYTES] = { 0x05 };
-
 #define TWISTED_D ((EDWARDS_D)-1)
-
-#define EFF_D (-(TWISTED_D))
-#define NEG_D 1
-
-/* End of template stuff */
 
 #define WBITS DECAF_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
@@ -55,7 +47,7 @@ typedef struct {
 typedef struct {
     niels_t n;
     gf z;
-} VECTOR_ALIGNED pniels_s, pniels_t[1];
+} VECTOR_ALIGNED pniels_t[1];
 
 /* Precomputed base */
 struct curve448_precomputed_s {
@@ -479,34 +471,6 @@ decaf_error_t decaf_x448(uint8_t out[X_PUBLIC_BYTES],
     OPENSSL_cleanse(t2, sizeof(t2));
 
     return decaf_succeed_if(mask_to_bool(nz));
-}
-
-/* Thanks Johan Pascal */
-void decaf_ed448_convert_public_key_to_x448(uint8_t x[DECAF_X448_PUBLIC_BYTES],
-                                            const uint8_t
-                                            ed[DECAF_EDDSA_448_PUBLIC_BYTES])
-{
-    gf y;
-    const uint8_t mask = (uint8_t)(0xFE << (7));
-    ignore_result(gf_deserialize(y, ed, 1, mask));
-
-    {
-        gf n, d;
-
-        /* u = y^2 * (1-dy^2) / (1-y^2) */
-        gf_sqr(n, y);           /* y^2 */
-        gf_sub(d, ONE, n);      /* 1-y^2 */
-        gf_invert(d, d, 0);     /* 1/(1-y^2) */
-        gf_mul(y, n, d);        /* y^2 / (1-y^2) */
-        gf_mulw(d, n, EDWARDS_D); /* dy^2 */
-        gf_sub(d, ONE, d);      /* 1-dy^2 */
-        gf_mul(n, y, d);        /* y^2 * (1-dy^2) / (1-y^2) */
-        gf_serialize(x, n, 1);
-
-        OPENSSL_cleanse(y, sizeof(y));
-        OPENSSL_cleanse(n, sizeof(n));
-        OPENSSL_cleanse(d, sizeof(d));
-    }
 }
 
 void curve448_point_mul_by_ratio_and_encode_like_x448(uint8_t

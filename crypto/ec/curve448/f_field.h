@@ -19,38 +19,12 @@
 
 # include "word.h"
 
-# define __DECAF_448_GF_DEFINED__ 1
 # define NLIMBS (64/sizeof(word_t))
 # define X_SER_BYTES 56
 # define SER_BYTES 56
-typedef struct gf_448_s {
+typedef struct gf_s {
     word_t limb[NLIMBS];
-} __attribute__ ((aligned(32))) gf_448_s, gf_448_t[1];
-
-# define GF_LIT_LIMB_BITS  56
-# define GF_BITS           448
-# define ZERO              gf_448_ZERO
-# define ONE               gf_448_ONE
-# define MODULUS           gf_448_MODULUS
-# define gf                gf_448_t
-# define gf_s              gf_448_s
-# define gf_eq             gf_448_eq
-# define gf_hibit          gf_448_hibit
-# define gf_lobit          gf_448_lobit
-# define gf_copy           gf_448_copy
-# define gf_add            gf_448_add
-# define gf_sub            gf_448_sub
-# define gf_add_RAW        gf_448_add_RAW
-# define gf_sub_RAW        gf_448_sub_RAW
-# define gf_bias           gf_448_bias
-# define gf_weak_reduce    gf_448_weak_reduce
-# define gf_strong_reduce  gf_448_strong_reduce
-# define gf_mul            gf_448_mul
-# define gf_sqr            gf_448_sqr
-# define gf_mulw_unsigned  gf_448_mulw_unsigned
-# define gf_isr            gf_448_isr
-# define gf_serialize      gf_448_serialize
-# define gf_deserialize    gf_448_deserialize
+} __attribute__ ((aligned(32))) gf_s, gf[1];
 
 /* RFC 7748 support */
 # define X_PUBLIC_BYTES  X_SER_BYTES
@@ -101,7 +75,6 @@ mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
 # endif
 # define LIMB_MASK(i) (((1)<<LIMB_PLACE_VALUE(i))-1)
 
-static const gf ZERO = { {{0}} }, ONE = { { {
-1}}};
+static const gf ZERO = {{{0}}}, ONE = {{{1}}};
 
 #endif                          /* __P448_F_FIELD_H__ */
