@@ -299,8 +299,12 @@ $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
 $config{cross_compile_prefix}="";
-my $auto_threads=1;    # enable threads automatically? true by default
+
 my $default_ranlib;
+my $user_cflags="";
+my @user_defines=();
+my $libs="";
+my $target="";
 
 # Top level directories to build
 $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
@@ -461,6 +465,30 @@ our %disabled = ( # "what"         => "comment"
 		  "zlib-dynamic"        => "default",
 		);
 
+# %auto keys are configuration option that may or may not be disabled
+# value is a string to disable / enable automatically based on config settings,
+# the string is used as value in %disabled.
+# value is 0 when the option has been enabled/disabled on command line,
+# directly or indirectly
+my %auto = (
+    threads => 1,
+    shared => 1,
+    pic => 1,
+    'dynamic-engine' => 1,
+   );
+# %settingdata keys are config settings, the values are hashes of data
+# The keys are used to check these config settings early when resolving configs
+my %settingdata = (
+    thread_scheme => { unavailable =>
+                           sub { $_[0] eq "(unknown)"
+                                 && !@user_defines && !$user_cflags },
+                       options => [ 'threads' ],
+                       disablestr => "unavailable" },
+    shared_target => { unavailable => sub { $_[0] eq "" },
+                       options => [ 'shared', 'dynamic-engine' ],
+                       disablestr => "no-shared-target" },
+   );
+
 # Note: => pair form used for aesthetics, not to truly make a hash table
 my @disable_cascades = (
     # "what"		=> [ "cascade", ... ]
@@ -531,15 +559,11 @@ my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
 
-my $user_cflags="";
-my @user_defines=();
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
 $config{openssl_other_defines}=[];
-my $libs="";
-my $target="";
 $config{options}="";
 $config{build_type} = "release";
 
@@ -630,7 +654,7 @@ while (@argvcopy)
                         $disabled{$1} = "option";
                         }
 		# No longer an automatic choice
-		$auto_threads = 0 if ($1 eq "threads");
+		$auto{$1} = 0 if (defined($auto{$1}));
 		}
 	elsif (/^enable-(.+)$/)
 		{
@@ -650,7 +674,7 @@ while (@argvcopy)
 		delete $disabled{$algo};
 
 		# No longer an automatic choice
-		$auto_threads = 0 if ($1 eq "threads");
+		$auto{$1} = 0 if (defined($auto{$1}));
 		}
 	elsif (/^--strict-warnings$/)
 		{
@@ -1058,10 +1082,6 @@ if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
 }
 
-my $no_shared_warn=0;
-my $no_user_cflags=0;
-my $no_user_defines=0;
-
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
 # of view. However, the "method"s may return zero unless that platform
@@ -1087,30 +1107,6 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
 
-# If threads aren't disabled, check how possible they are
-unless ($disabled{threads}) {
-    if ($auto_threads) {
-        # Enabled by default, disable it forcibly if unavailable
-        if ($target{thread_scheme} eq "(unknown)") {
-            $disabled{threads} = "unavailable";
-        }
-    } else {
-        # The user chose to enable threads explicitly, let's see
-        # if there's a chance that's possible
-        if ($target{thread_scheme} eq "(unknown)") {
-            # If the user asked for "threads" and we don't have internal
-            # knowledge how to do it, [s]he is expected to provide any
-            # system-dependent compiler options that are necessary.  We
-            # can't truly check that the given options are correct, but
-            # we expect the user to know what [s]He is doing.
-            if ($no_user_cflags && $no_user_defines) {
-                die "You asked for multi-threading support, but didn't\n"
-                    ,"provide any system-specific compiler options\n";
-            }
-        }
-    }
-}
-
 # If threads still aren't disabled, add a C macro to ensure the source
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
@@ -1123,15 +1119,6 @@ unless($disabled{threads}) {
 if (defined($disabled{"deprecated"})) {
         $config{api} = $maxapi;
 }
-
-if ($target{shared_target} eq "")
-	{
-	$no_shared_warn = 1
-	    if (!$disabled{shared} || !$disabled{"dynamic-engine"});
-	$disabled{shared} = "no-shared-target";
-	$disabled{pic} = $disabled{shared} = $disabled{"dynamic-engine"} =
-	    "no-shared-target";
-	}
 
 if ($disabled{"dynamic-engine"}) {
         push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
@@ -1339,10 +1326,9 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 		}
 	}
 
-if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; $config{cxxflags}="$config{cxxflags}$user_cflags";}
-else                    { $no_user_cflags=1;  }
-if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
-else               { $no_user_defines=1;    }
+$config{cflags}="$config{cflags}$user_cflags";
+$config{cxxflags}="$config{cxxflags}$user_cflags";
+$config{defines}=[ @{$config{defines}}, @user_defines ];
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
@@ -2139,20 +2125,22 @@ my %builders = (
 
 $builders{$builder}->($builder_platform, @builder_opts);
 
-print <<"EOF" if ($disabled{threads} eq "unavailable");
+# Check if threads were disabled by force because they aren't available
+print <<"EOF" if (!$auto{threads} && $disabled{threads} eq "unavailable");
 
 The library could not be configured for supporting multi-threaded
 applications as the compiler options required on this system are not known.
 See file INSTALL for details if you need multi-threading.
 EOF
 
-print <<"EOF" if ($no_shared_warn);
+# Check if shared libraries were disabled by force
+print <<"EOF" if !$auto{shared} && $disabled{shared} eq "no-shared-target";
 
-The options 'shared', 'pic' and 'dynamic-engine' aren't supported on this
-platform, so we will pretend you gave the option 'no-pic', which also disables
-'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
-or position independent code, please let us know (but please first make sure
-you have tried with a current version of OpenSSL).
+The options 'shared' and 'dynamic-engine' aren't supported on this platform,
+so we disabled building shared libraries and dynamically loadable engines.
+If you know how to implement shared libraries and shared objects on this
+platform, please let us know (but please first make sure you have tried with
+a current version of OpenSSL).
 EOF
 
 print <<"EOF" if (-f catfile($srcdir, "configdata.pm") && $srcdir ne $blddir);
@@ -2336,113 +2324,129 @@ sub read_config {
 # recursively
 sub resolve_config {
     my $target = shift;
-    my @breadcrumbs = @_;
 
-#    my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
+    sub withcontext {
+        my $code = pop;
+        my @context = @_;
 
-    if (grep { $_ eq $target } @breadcrumbs) {
-	die "inherit_from loop!  target backtrace:\n  "
-	    ,$target,"\n  ",join("\n  ", @breadcrumbs),"\n";
+        return sub { $code->(combine(@context)->()); };
     }
 
-    if (!defined($table{$target})) {
-	warn "Warning! target $target doesn't exist!\n";
-	return ();
-    }
-    # Recurse through all inheritances.  They will be resolved on the
-    # fly, so when this operation is done, they will all just be a
-    # bunch of attributes with string values.
-    # What we get here, though, are keys with references to lists of
-    # the combined values of them all.  We will deal with lists after
-    # this stage is done.
-    my %combined_inheritance = ();
-    if ($table{$target}->{inherit_from}) {
-	my @inherit_from =
-	    map { ref($_) eq "CODE" ? $_->() : $_ } @{$table{$target}->{inherit_from}};
-	foreach (@inherit_from) {
-	    my %inherited_config = resolve_config($_, $target, @breadcrumbs);
+    sub resolve_inheritance {
+        my $target = shift;
+        my @breadcrumbs = @_;
 
-	    # 'template' is a marker that's considered private to
-	    # the config that had it.
-	    delete $inherited_config{template};
+#        my $extra_checks = defined($ENV{CONFIGURE_EXTRA_CHECKS});
 
-	    foreach (keys %inherited_config) {
-		if (!$combined_inheritance{$_}) {
-		    $combined_inheritance{$_} = [];
-		}
-		push @{$combined_inheritance{$_}}, $inherited_config{$_};
-	    }
-	}
-    }
-
-    # We won't need inherit_from in this target any more, since we've
-    # resolved all the inheritances that lead to this
-    delete $table{$target}->{inherit_from};
-
-    # Now is the time to deal with those lists.  Here's the place to
-    # decide what shall be done with those lists, all based on the
-    # values of the target we're currently dealing with.
-    # - If a value is a coderef, it will be executed with the list of
-    #   inherited values as arguments.
-    # - If the corresponding key doesn't have a value at all or is the
-    #   empty string, the inherited value list will be run through the
-    #   default combiner (below), and the result becomes this target's
-    #   value.
-    # - Otherwise, this target's value is assumed to be a string that
-    #   will simply override the inherited list of values.
-    my $default_combiner = add();
-
-    my %all_keys =
-	map { $_ => 1 } (keys %combined_inheritance,
-			 keys %{$table{$target}});
-
-    sub process_values {
-	my $object    = shift;
-	my $inherited = shift;  # Always a [ list ]
-	my $target    = shift;
-	my $entry     = shift;
-
-        $add_called = 0;
-
-        while(ref($object) eq "CODE") {
-            $object = $object->(@$inherited);
+        if (grep { $_ eq $target } @breadcrumbs) {
+            die "inherit_from loop!  target backtrace:\n  "
+                ,$target,"\n  ",join("\n  ", @breadcrumbs),"\n";
         }
-        if (!defined($object)) {
+
+        if (!defined($table{$target})) {
+            warn "Warning! target $target doesn't exist!\n";
             return ();
         }
-        elsif (ref($object) eq "ARRAY") {
-            local $add_called;  # To make sure recursive calls don't affect it
-            return [ map { process_values($_, $inherited, $target, $entry) }
-                     @$object ];
-        } elsif (ref($object) eq "") {
-            return $object;
-        } else {
-            die "cannot handle reference type ",ref($object)
-                ," found in target ",$target," -> ",$entry,"\n";
+        # Recurse through all inheritances.  They will be resolved on the
+        # fly, so when this operation is done, they will all just be a
+        # bunch of attributes with string values.
+        # What we get here, though, are keys with references to lists of
+        # the combined values of them all.  We will deal with lists after
+        # this stage is done.
+
+        my @values_stack = ();
+        my %new_values = ( %{$table{$target}} );
+        if ($new_values{inherit_from}) {
+            my @inherit_from =
+                map { ref($_) eq "CODE" ? $_->() : $_ }
+                @{$new_values{inherit_from}};
+            my %combined_inheritance = ();
+
+            foreach (@inherit_from) {
+                my %inherited_config = resolve_inheritance($_, $target,
+                                                           @breadcrumbs);
+
+                # 'template' is a marker that's considered private to
+                # the config that had it.
+                delete $inherited_config{template};
+
+                foreach (keys %inherited_config) {
+                    if (!$combined_inheritance{$_}) {
+                        $combined_inheritance{$_} = [];
+                    }
+                    push @{$combined_inheritance{$_}}, $inherited_config{$_};
+                }
+            }
+
+            foreach (keys %combined_inheritance) {
+                if (! defined $new_values{$_}) {
+                    $new_values{$_} = combine(@{$combined_inheritance{$_}});
+                } elsif (ref($new_values{$_}) eq 'CODE') {
+                    $new_values{$_} = withcontext(@{$combined_inheritance{$_}},
+                                                  $new_values{$_});
+                }
+                # If neither undefined or CODEref, $new_values{$_} is left alone
+            }
+
+            delete $new_values{inherit_from};
+        }
+
+        $table{$target} = { %new_values };
+        return %new_values;
+    }
+
+    my %combined_values = resolve_inheritance($target);
+
+    sub process_values {
+        my @object    = ( shift );
+        my $target    = shift;
+        my $entry     = shift;
+
+        while(ref($object[0]) eq "CODE") {
+            @object = $object[0]->();
+        }
+        if (ref($object[0]) eq "ARRAY") {
+            return [ map { my @x = process_values($_, $target, $entry); @x; }
+                     @{$object[0]} ];
+        }
+        if (ref($object[0]) eq "") {
+            return @object;
+        }
+        die "cannot handle reference type ",ref($object[0])
+            ," found in target ",$target," -> ",$entry,"\n";
+    }
+
+    # There are some keys we need to process early because CODEref
+    my @first_keys = ( sort keys %settingdata );
+    my @all_keys = ( @first_keys,
+                     grep { my $x = $_; ! grep { $x eq $_ } @first_keys }
+                         sort keys %combined_values );
+    foreach my $key (@all_keys) {
+        my @x = process_values($combined_values{$key}, $target, $key);
+        $combined_values{$key} = $x[0];
+        unless (defined $combined_values{$key}) {
+            delete $combined_values{$key};
+        }
+        if (defined $settingdata{$key}) {
+            foreach (@{$settingdata{$key}->{options}}) {
+                if ($auto{$_}
+                        && $disabled{$_} eq $settingdata{$key}->{disablestr}) {
+                    # This is needed when running any of the TABLE and
+                    # HASH targets, as the thread scheme changes for
+                    # every target displayed
+                    delete $disabled{$_};
+                }
+                if (!$disabled{$_}) {
+                    # Disable it forcibly if unavailable
+                    if ($settingdata{$key}->{unavailable}->($combined_values{$key})) {
+                        $disabled{$_} = $settingdata{$key}->{disablestr};
+                    }
+                }
+            }
         }
     }
 
-    foreach (sort keys %all_keys) {
-        my $previous = $combined_inheritance{$_};
-
-	# Current target doesn't have a value for the current key?
-	# Assign it the default combiner, the rest of this loop body
-	# will handle it just like any other coderef.
-	if (!exists $table{$target}->{$_}) {
-	    $table{$target}->{$_} = $default_combiner;
-	}
-
-	$table{$target}->{$_} = process_values($table{$target}->{$_},
-					       $combined_inheritance{$_},
-					       $target, $_);
-        unless(defined($table{$target}->{$_})) {
-            delete $table{$target}->{$_};
-        }
-#        if ($extra_checks &&
-#            $previous && !($add_called ||  $previous ~~ $table{$target}->{$_})) {
-#            warn "$_ got replaced in $target\n";
-#        }
-    }
+    %{$table{$target}} = %combined_values;
 
     # Finally done, return the result.
     return %{$table{$target}};
