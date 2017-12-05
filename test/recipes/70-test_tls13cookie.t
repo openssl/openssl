@@ -74,7 +74,7 @@ sub cookie_filter
         0x04, 0x05;
 
     foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_HELLO_RETRY_REQUEST
+        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO
                 && ${$message->records}[0]->flight == 1) {
             $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE)
                 if ($testtype == COOKIE_ONLY);

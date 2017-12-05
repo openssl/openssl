@@ -605,6 +605,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
      "tls_post_process_client_key_exchange"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE, 0),
      "tls_prepare_client_certificate"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_PROCESS_AS_HELLO_RETRY_REQUEST, 0),
+     "tls_process_as_hello_retry_request"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST, 0),
      "tls_process_certificate_request"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_PROCESS_CERT_STATUS, 0), ""},

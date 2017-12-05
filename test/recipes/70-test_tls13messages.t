@@ -35,7 +35,7 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
-    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST,
+    [TLSProxy::Message::MT_SERVER_HELLO,
         checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
@@ -90,7 +90,7 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
-    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST, TLSProxy::Message::EXT_KEY_SHARE,
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_HRR_EXTENSION],
 
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
@@ -324,6 +324,6 @@ $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
                | checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION,
-               "Default handshake test");
+               "Acceptable but non preferred key_share");
 
 unlink $session;

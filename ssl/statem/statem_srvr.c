@@ -24,7 +24,6 @@
 #include <openssl/md5.h>
 
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
-static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt);
 
 /*
  * ossl_statem_server13_read_transition() encapsulates the logic for the allowed
@@ -392,18 +391,13 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         return WRITE_TRAN_FINISHED;
 
     case TLS_ST_SR_CLNT_HELLO:
-        if (s->hello_retry_request)
-            st->hand_state = TLS_ST_SW_HELLO_RETRY_REQUEST;
-        else
-            st->hand_state = TLS_ST_SW_SRVR_HELLO;
-        return WRITE_TRAN_CONTINUE;
-
-    case TLS_ST_SW_HELLO_RETRY_REQUEST:
-        st->hand_state = TLS_ST_EARLY_DATA;
+        st->hand_state = TLS_ST_SW_SRVR_HELLO;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
-        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
+        if (s->hello_retry_request)
+            st->hand_state = TLS_ST_EARLY_DATA;
+        else if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0)
             st->hand_state = TLS_ST_SW_CHANGE;
         else
             st->hand_state = TLS_ST_SW_ENCRYPTED_EXTENSIONS;
@@ -714,11 +708,6 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         /* No post work to be done */
         break;
 
-    case TLS_ST_SW_HELLO_RETRY_REQUEST:
-        if (statem_flush(s) != 1)
-            return WORK_MORE_A;
-        break;
-
     case TLS_ST_SW_HELLO_REQ:
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
@@ -744,6 +733,11 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_SRVR_HELLO:
+        if (SSL_IS_TLS13(s) && s->hello_retry_request) {
+            if (statem_flush(s) != 1)
+                return WORK_MORE_A;
+            break;
+        }
 #ifndef OPENSSL_NO_SCTP
         if (SSL_IS_DTLS(s) && s->hit) {
             unsigned char sctpauthkey[64];
@@ -961,11 +955,6 @@ int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
         *confunc = tls_construct_encrypted_extensions;
         *mt = SSL3_MT_ENCRYPTED_EXTENSIONS;
-        break;
-
-    case TLS_ST_SW_HELLO_RETRY_REQUEST:
-        *confunc = tls_construct_hello_retry_request;
-        *mt = SSL3_MT_HELLO_RETRY_REQUEST;
         break;
 
     case TLS_ST_SW_KEY_UPDATE:
@@ -2211,14 +2200,18 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     size_t sl, len;
     int version;
     unsigned char *session_id;
+    int usetls13 = SSL_IS_TLS13(s) || s->hello_retry_request;
 
-    version = SSL_IS_TLS13(s) ? TLS1_2_VERSION : s->version;
+    version = usetls13 ? TLS1_2_VERSION : s->version;
     if (!WPACKET_put_bytes_u16(pkt, version)
                /*
                 * Random stuff. Filling of the server_random takes place in
                 * tls_process_client_hello()
                 */
-            || !WPACKET_memcpy(pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
+            || !WPACKET_memcpy(pkt,
+                               s->hello_retry_request
+                                   ? hrrrandom : s->s3->server_random,
+                               SSL3_RANDOM_SIZE)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_SERVER_HELLO,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -2247,7 +2240,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
          && !s->hit))
         s->session->session_id_length = 0;
 
-    if (SSL_IS_TLS13(s)) {
+    if (usetls13) {
         sl = s->tmp_session_id_len;
         session_id = s->tmp_session_id;
     } else {
@@ -2265,7 +2258,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 #ifdef OPENSSL_NO_COMP
     compm = 0;
 #else
-    if (SSL_IS_TLS13(s) || s->s3->tmp.new_compression == NULL)
+    if (usetls13 || s->s3->tmp.new_compression == NULL)
         compm = 0;
     else
         compm = s->s3->tmp.new_compression->id;
@@ -2275,16 +2268,32 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
             || !WPACKET_put_bytes_u8(pkt, compm)
             || !tls_construct_extensions(s, pkt,
-                                         SSL_IS_TLS13(s)
-                                            ? SSL_EXT_TLS1_3_SERVER_HELLO
-                                            : SSL_EXT_TLS1_2_SERVER_HELLO,
+                                         s->hello_retry_request
+                                            ? SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+                                            : (SSL_IS_TLS13(s)
+                                                ? SSL_EXT_TLS1_3_SERVER_HELLO
+                                                : SSL_EXT_TLS1_2_SERVER_HELLO),
                                          NULL, 0)) {
         /* SSLfatal() already called */
         return 0;
     }
 
-    if (!(s->verify_mode & SSL_VERIFY_PEER)
-            && !ssl3_digest_cached_records(s, 0)) {
+    if (s->hello_retry_request) {
+        /* Ditch the session. We'll create a new one next time around */
+        SSL_SESSION_free(s->session);
+        s->session = NULL;
+        s->hit = 0;
+
+        /*
+         * Re-initialise the Transcript Hash. We're going to prepopulate it with
+         * a synthetic message_hash in place of ClientHello1.
+         */
+        if (!create_synthetic_message_hash(s)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+    } else if (!(s->verify_mode & SSL_VERIFY_PEER)
+                && !ssl3_digest_cached_records(s, 0)) {
         /* SSLfatal() already called */;
         return 0;
     }
@@ -3849,45 +3858,6 @@ static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt)
 {
     if (!tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
                                   NULL, 0)) {
-        /* SSLfatal() already called */
-        return 0;
-    }
-
-    return 1;
-}
-
-static int tls_construct_hello_retry_request(SSL *s, WPACKET *pkt)
-{
-    size_t len = 0;
-
-    /*
-     * TODO(TLS1.3): Remove the DRAFT version before release
-     * (should be s->version)
-     */
-    if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
-            || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt,
-                                              &len)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_HELLO_RETRY_REQUEST, ERR_R_INTERNAL_ERROR);
-       return 0;
-    }
-
-    if (!tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
-                                  NULL, 0)) {
-        /* SSLfatal() already called */
-        return 0;
-    }
-
-    /* Ditch the session. We'll create a new one next time around */
-    SSL_SESSION_free(s->session);
-    s->session = NULL;
-    s->hit = 0;
-
-    /*
-     * Re-initialise the Transcript Hash. We're going to prepopulate it with
-     * a synthetic message_hash in place of ClientHello1.
-     */
-    if (!create_synthetic_message_hash(s)) {
         /* SSLfatal() already called */
         return 0;
     }

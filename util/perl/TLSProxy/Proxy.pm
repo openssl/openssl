@@ -16,7 +16,6 @@ use IO::Select;
 use TLSProxy::Record;
 use TLSProxy::Message;
 use TLSProxy::ClientHello;
-use TLSProxy::HelloRetryRequest;
 use TLSProxy::ServerHello;
 use TLSProxy::EncryptedExtensions;
 use TLSProxy::Certificate;

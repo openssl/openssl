@@ -17,7 +17,6 @@ use constant {
     MT_CLIENT_HELLO => 1,
     MT_SERVER_HELLO => 2,
     MT_NEW_SESSION_TICKET => 4,
-    MT_HELLO_RETRY_REQUEST => 6,
     MT_ENCRYPTED_EXTENSIONS => 8,
     MT_CERTIFICATE => 11,
     MT_SERVER_KEY_EXCHANGE => 12,
@@ -48,7 +47,6 @@ my %message_type = (
     MT_CLIENT_HELLO, "ClientHello",
     MT_SERVER_HELLO, "ServerHello",
     MT_NEW_SESSION_TICKET, "NewSessionTicket",
-    MT_HELLO_RETRY_REQUEST, "HelloRetryRequest",
     MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions",
     MT_CERTIFICATE, "Certificate",
     MT_SERVER_KEY_EXCHANGE, "ServerKeyExchange",
@@ -289,15 +287,6 @@ sub create_message
     #others
     if ($mt == MT_CLIENT_HELLO) {
         $message = TLSProxy::ClientHello->new(
-            $server,
-            $data,
-            [@message_rec_list],
-            $startoffset,
-            [@message_frag_lens]
-        );
-        $message->parse();
-    } elsif ($mt == MT_HELLO_RETRY_REQUEST) {
-        $message = TLSProxy::HelloRetryRequest->new(
             $server,
             $data,
             [@message_rec_list],
