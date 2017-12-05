@@ -2994,6 +2994,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      */
     ret->max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
 
+    ssl_ctx_system_config(ret);
+
     return ret;
  err:
     SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
