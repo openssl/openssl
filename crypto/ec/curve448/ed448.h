@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef __DECAF_ED448_H__
-# define __DECAF_ED448_H__ 1
+#ifndef __C448_ED448_H__
+# define __C448_ED448_H__ 1
 
 # include "point_448.h"
 
@@ -20,20 +20,20 @@ extern "C" {
 #endif
 
 /* Number of bytes in an EdDSA public key. */
-# define DECAF_EDDSA_448_PUBLIC_BYTES 57
+# define C448_EDDSA_448_PUBLIC_BYTES 57
 
 /* Number of bytes in an EdDSA private key. */
-# define DECAF_EDDSA_448_PRIVATE_BYTES DECAF_EDDSA_448_PUBLIC_BYTES
+# define C448_EDDSA_448_PRIVATE_BYTES C448_EDDSA_448_PUBLIC_BYTES
 
 /* Number of bytes in an EdDSA private key. */
-# define DECAF_EDDSA_448_SIGNATURE_BYTES (DECAF_EDDSA_448_PUBLIC_BYTES + \
-                                          DECAF_EDDSA_448_PRIVATE_BYTES)
+# define C448_EDDSA_448_SIGNATURE_BYTES (C448_EDDSA_448_PUBLIC_BYTES + \
+                                         C448_EDDSA_448_PRIVATE_BYTES)
 
 /* EdDSA encoding ratio. */
-# define DECAF_448_EDDSA_ENCODE_RATIO 4
+# define C448_448_EDDSA_ENCODE_RATIO 4
 
 /* EdDSA decoding ratio. */
-# define DECAF_448_EDDSA_DECODE_RATIO (4 / 4)
+# define C448_448_EDDSA_DECODE_RATIO (4 / 4)
 
 /*
  * EdDSA key generation.  This function uses a different (non-Decaf) encoding.
@@ -41,9 +41,9 @@ extern "C" {
  * pubkey (out): The public key.
  * privkey (in): The private key.
  */
-decaf_error_t decaf_ed448_derive_public_key(
-                        uint8_t pubkey [DECAF_EDDSA_448_PUBLIC_BYTES],
-                        const uint8_t privkey [DECAF_EDDSA_448_PRIVATE_BYTES]);
+c448_error_t c448_ed448_derive_public_key(
+                        uint8_t pubkey [C448_EDDSA_448_PUBLIC_BYTES],
+                        const uint8_t privkey [C448_EDDSA_448_PRIVATE_BYTES]);
 
 /*
  * EdDSA signing.
@@ -63,10 +63,10 @@ decaf_error_t decaf_ed448_derive_public_key(
  * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
  * it harder to screw this up, but this C code gives you no seat belt.
  */
-decaf_error_t decaf_ed448_sign(
-                        uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-                        const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-                        const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+c448_error_t c448_ed448_sign(
+                        uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
                         const uint8_t *message, size_t message_len,
                         uint8_t prehashed, const uint8_t *context,
                         size_t context_len)
@@ -89,10 +89,10 @@ decaf_error_t decaf_ed448_sign(
  * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
  * it harder to screw this up, but this C code gives you no seat belt.
  */
-decaf_error_t decaf_ed448_sign_prehash(
-                        uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-                        const uint8_t privkey[DECAF_EDDSA_448_PRIVATE_BYTES],
-                        const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+c448_error_t c448_ed448_sign_prehash(
+                        uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
                         const uint8_t hash[64],
                         const uint8_t *context,
                         size_t context_len)
@@ -117,10 +117,10 @@ decaf_error_t decaf_ed448_sign_prehash(
  * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
  * it harder to screw this up, but this C code gives you no seat belt.
  */
-decaf_error_t decaf_ed448_verify(const uint8_t
-                                 signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
+c448_error_t c448_ed448_verify(const uint8_t
+                                 signature[C448_EDDSA_448_SIGNATURE_BYTES],
                                  const uint8_t
-                                 pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+                                 pubkey[C448_EDDSA_448_PUBLIC_BYTES],
                                  const uint8_t *message, size_t message_len,
                                  uint8_t prehashed, const uint8_t *context,
                                  uint8_t context_len)
@@ -144,9 +144,9 @@ decaf_error_t decaf_ed448_verify(const uint8_t
  * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
  * it harder to screw this up, but this C code gives you no seat belt.
  */
-decaf_error_t decaf_ed448_verify_prehash(
-                    const uint8_t signature[DECAF_EDDSA_448_SIGNATURE_BYTES],
-                    const uint8_t pubkey[DECAF_EDDSA_448_PUBLIC_BYTES],
+c448_error_t c448_ed448_verify_prehash(
+                    const uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
+                    const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64],
                     const uint8_t *context,
                     uint8_t context_len)
@@ -154,7 +154,7 @@ decaf_error_t decaf_ed448_verify_prehash(
 
 /*
  * EdDSA point encoding.  Used internally, exposed externally.
- * Multiplies by DECAF_448_EDDSA_ENCODE_RATIO first.
+ * Multiplies by C448_448_EDDSA_ENCODE_RATIO first.
  *
  * The multiplication is required because the EdDSA encoding represents
  * the cofactor information, but the Decaf encoding ignores it (which
@@ -162,26 +162,25 @@ decaf_error_t decaf_ed448_verify_prehash(
  * EdDSA, the cofactor info must get cleared, because the intermediate
  * representation doesn't track it.
  *
- * The way libdecaf handles this is to multiply by
- * DECAF_448_EDDSA_DECODE_RATIO when decoding, and by
- * DECAF_448_EDDSA_ENCODE_RATIO when encoding.  The product of these
- * ratios is always exactly the cofactor 4, so the cofactor
- * ends up cleared one way or another.  But exactly how that shakes
- * out depends on the base points specified in RFC 8032.
+ * The way we handle this is to multiply by C448_448_EDDSA_DECODE_RATIO when
+ * decoding, and by C448_448_EDDSA_ENCODE_RATIO when encoding.  The product of
+ * these ratios is always exactly the cofactor 4, so the cofactor ends up
+ * cleared one way or another.  But exactly how that shakes out depends on the
+ * base points specified in RFC 8032.
  *
  * The upshot is that if you pass the Decaf/Ristretto base point to
- * this function, you will get DECAF_448_EDDSA_ENCODE_RATIO times the
+ * this function, you will get C448_448_EDDSA_ENCODE_RATIO times the
  * EdDSA base point.
  *
  * enc (out): The encoded point.
  * p (in): The point.
  */
 void curve448_point_mul_by_ratio_and_encode_like_eddsa(
-                                    uint8_t enc [DECAF_EDDSA_448_PUBLIC_BYTES],
+                                    uint8_t enc [C448_EDDSA_448_PUBLIC_BYTES],
                                     const curve448_point_t p);
 
 /*
- * EdDSA point decoding.  Multiplies by DECAF_448_EDDSA_DECODE_RATIO, and
+ * EdDSA point decoding.  Multiplies by C448_448_EDDSA_DECODE_RATIO, and
  * ignores cofactor information.
  *
  * See notes on curve448_point_mul_by_ratio_and_encode_like_eddsa
@@ -189,9 +188,9 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
  * enc (out): The encoded point.
  * p (in): The point.
  */
-decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
+c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
                             curve448_point_t p,
-                            const uint8_t enc[DECAF_EDDSA_448_PUBLIC_BYTES]);
+                            const uint8_t enc[C448_EDDSA_448_PUBLIC_BYTES]);
 
 /*
  * EdDSA to ECDH private key conversion
@@ -201,12 +200,12 @@ decaf_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
  * x (out): The ECDH private key as in RFC7748
  * ed (in): The EdDSA private key
  */
-decaf_error_t decaf_ed448_convert_private_key_to_x448(
-                            uint8_t x[DECAF_X448_PRIVATE_BYTES],
-                            const uint8_t ed[DECAF_EDDSA_448_PRIVATE_BYTES]);
+c448_error_t c448_ed448_convert_private_key_to_x448(
+                            uint8_t x[C448_X448_PRIVATE_BYTES],
+                            const uint8_t ed[C448_EDDSA_448_PRIVATE_BYTES]);
 
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
 
-#endif                          /* __DECAF_ED448_H__ */
+#endif                          /* __C448_ED448_H__ */

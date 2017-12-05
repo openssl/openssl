@@ -54,19 +54,19 @@ typedef int16_t hsword_t;
 typedef int32_t sword_t;
 typedef int64_t dsword_t;
 # else
-#  error "For now, libdecaf only supports 32- and 64-bit architectures."
+#  error "For now, we only support 32- and 64-bit architectures."
 # endif
 
 /*
  * Scalar limbs are keyed off of the API word size instead of the arch word
  * size.
  */
-# if DECAF_WORD_BITS == 64
+# if C448_WORD_BITS == 64
 #  define SC_LIMB(x) (x)
-# elif DECAF_WORD_BITS == 32
+# elif C448_WORD_BITS == 32
 #  define SC_LIMB(x) ((uint32_t)x),(x>>32)
 # else
-#  error "For now, libdecaf only supports 32- and 64-bit architectures."
+#  error "For now we only support 32- and 64-bit architectures."
 # endif
 
 # ifdef __ARM_NEON__
@@ -184,26 +184,26 @@ static ossl_inline big_register_t br_is_zero(big_register_t x)
 # endif
 
 /*
- * The plan on booleans: The external interface uses decaf_bool_t, but this
+ * The plan on booleans: The external interface uses c448_bool_t, but this
  * might be a different size than our particular arch's word_t (and thus
  * mask_t).  Also, the caller isn't guaranteed to pass it as nonzero.  So
  * bool_to_mask converts word sizes and checks nonzero. On the flip side,
  * mask_t is always -1 or 0, but it might be a different size than
- * decaf_bool_t. On the third hand, we have success vs boolean types, but
- * that's handled in common.h: it converts between decaf_bool_t and
- * decaf_error_t.
+ * c448_bool_t. On the third hand, we have success vs boolean types, but
+ * that's handled in common.h: it converts between c448_bool_t and
+ * c448_error_t.
  */
-static ossl_inline decaf_bool_t mask_to_bool(mask_t m)
+static ossl_inline c448_bool_t mask_to_bool(mask_t m)
 {
-    return (decaf_sword_t)(sword_t)m;
+    return (c448_sword_t)(sword_t)m;
 }
 
-static ossl_inline mask_t bool_to_mask(decaf_bool_t m)
+static ossl_inline mask_t bool_to_mask(c448_bool_t m)
 {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;
     unsigned int i;
-    unsigned int limit = sizeof(decaf_bool_t) / sizeof(mask_t);
+    unsigned int limit = sizeof(c448_bool_t) / sizeof(mask_t);
 
     if (limit < 1)
         limit = 1;
@@ -213,7 +213,7 @@ static ossl_inline mask_t bool_to_mask(decaf_bool_t m)
     return ret;
 }
 
-static ossl_inline void ignore_result(decaf_bool_t boo)
+static ossl_inline void ignore_result(c448_bool_t boo)
 {
     (void)boo;
 }
