@@ -50,6 +50,7 @@ sub parse
     my $self = shift;
     my $ptr = 2;
     my ($server_version) = unpack('n', $self->data);
+    my $neg_version = $server_version;
 
     my $random = substr($self->data, $ptr, 32);
     $ptr += 32;
@@ -94,15 +95,15 @@ sub parse
         $extension_data = substr($extension_data, 4 + $size);
         $extensions{$type} = $extdata;
         if ($type == TLSProxy::Message::EXT_SUPPORTED_VERSIONS) {
-            $server_version = unpack('n', $extdata);
+            $neg_version = unpack('n', $extdata);
         }
     }
 
     if ($random eq $hrrrandom) {
         TLSProxy::Proxy->is_tls13(1);
         # TODO(TLS1.3): Replace this reference to draft version before release
-    } elsif ($server_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
-        $server_version = TLSProxy::Record::VERS_TLS_1_3;
+    } elsif ($neg_version == TLSProxy::Record::VERS_TLS_1_3_DRAFT) {
+        $neg_version = TLSProxy::Record::VERS_TLS_1_3;
         TLSProxy::Proxy->is_tls13(1);
 
         TLSProxy::Record->server_encrypting(1);

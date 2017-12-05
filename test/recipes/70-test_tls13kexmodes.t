@@ -90,6 +90,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_HRR_EXTENSION],
 

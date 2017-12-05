@@ -2361,6 +2361,7 @@ SSL_R_BAD_EXTENSION:110:bad extension
 SSL_R_BAD_HANDSHAKE_LENGTH:332:bad handshake length
 SSL_R_BAD_HANDSHAKE_STATE:236:bad handshake state
 SSL_R_BAD_HELLO_REQUEST:105:bad hello request
+SSL_R_BAD_HRR_VERSION:263:bad hrr version
 SSL_R_BAD_KEY_SHARE:108:bad key share
 SSL_R_BAD_KEY_UPDATE:122:bad key update
 SSL_R_BAD_LENGTH:271:bad length
