@@ -14,8 +14,12 @@
 #include <string.h>
 #include <assert.h>
 
-#include "../../e_os.h"
+#include "internal/nelem.h"
 #include <openssl/bio.h>
+
+#ifdef _WIN32
+# define strdup _strdup
+#endif
 
 /*
  * Declares the structures needed to register each test case function.
@@ -40,7 +44,7 @@ static int seed = 0;
  */
 static int num_test_cases = 0;
 
-void add_test(const char *test_case_name, int (*test_fn) ())
+void add_test(const char *test_case_name, int (*test_fn) (void))
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
@@ -105,7 +109,7 @@ void setup_test_framework()
     if (test_seed != NULL) {
         seed = atoi(test_seed);
         if (seed <= 0)
-            seed = time(NULL);
+            seed = (int)time(NULL);
         test_printf_stdout("%*s# RAND SEED %d\n", subtest_level(), "", seed);
         test_flush_stdout();
         srand(seed);
@@ -121,6 +125,7 @@ void setup_test_framework()
 
 int pulldown_test_framework(int ret)
 {
+    set_test_title(NULL);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (should_report_leaks()
         && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
@@ -265,5 +270,30 @@ int run_tests(const char *test_prog_name)
     if (num_failed != 0)
         return EXIT_FAILURE;
     return EXIT_SUCCESS;
+}
+
+/*
+ * Glue an array of strings together and return it as an allocated string.
+ * Optionally return the whole length of this string in |out_len|
+ */
+char *glue_strings(const char *list[], size_t *out_len)
+{
+    size_t len = 0;
+    char *p, *ret;
+    int i;
+
+    for (i = 0; list[i] != NULL; i++)
+        len += strlen(list[i]);
+
+    if (out_len != NULL)
+        *out_len = len;
+
+    if (!TEST_ptr(ret = p = OPENSSL_malloc(len + 1)))
+        return NULL;
+
+    for (i = 0; list[i] != NULL; i++)
+        p += strlen(strcpy(p, list[i]));
+
+    return ret;
 }
 

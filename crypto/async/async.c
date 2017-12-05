@@ -19,7 +19,7 @@
 #include "async_locl.h"
 
 #include <openssl/err.h>
-#include <internal/cryptlib_int.h>
+#include "internal/cryptlib_int.h"
 #include <string.h>
 
 #define ASYNC_JOB_RUNNING   0
@@ -336,7 +336,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    pool->jobs = sk_ASYNC_JOB_new_null();
+    pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
     if (pool->jobs == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(pool);
@@ -358,7 +358,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
             break;
         }
         job->funcargs = NULL;
-        sk_ASYNC_JOB_push(pool->jobs, job);
+        sk_ASYNC_JOB_push(pool->jobs, job); /* Cannot fail due to reserve */
         curr_size++;
     }
     pool->curr_size = curr_size;

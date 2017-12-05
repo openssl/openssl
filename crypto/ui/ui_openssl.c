@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
@@ -52,7 +53,6 @@
 #  endif
 # endif
 
-/* 06-Apr-92 Luke Brennan    Support for VMS */
 # include "ui_locl.h"
 # include "internal/cryptlib.h"
 
@@ -408,8 +408,8 @@ static int open_console(UI *ui)
 #  endif
 #  ifdef EINVAL
             /*
-             * Ariel Glenn ariel@columbia.edu reports that solaris can return
-             * EINVAL instead.  This should be ok
+             * Ariel Glenn reports that solaris can return EINVAL instead.
+             * This should be ok
              */
         if (errno == EINVAL)
             is_a_tty = 0;
@@ -686,7 +686,7 @@ static int noecho_fgets(char *buf, int size, FILE *tty)
         FlushConsoleInputBuffer(inh);
     }
 #  endif
-    return (strlen(buf));
+    return strlen(buf);
 }
 # endif
 

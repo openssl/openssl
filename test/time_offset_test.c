@@ -16,7 +16,7 @@
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
 #include "testutil.h"
-#include "e_os.h"
+#include "internal/nelem.h"
 
 typedef struct {
     const char *data;
@@ -96,10 +96,7 @@ static int test_offset(int idx)
         return 0;
     }
 
-    if (at.type == V_ASN1_UTCTIME)
-        ret = ASN1_UTCTIME_cmp_time_t(&at, the_time);
-    else
-        return 1; /* no other cmp_time_t() functions available, yet */
+    ret = ASN1_TIME_cmp_time_t(&at, the_time);
 
     if (!TEST_int_eq(testdata->time_result, ret)) {
         TEST_info("ASN1_UTCTIME_cmp_time_t() test failed for %s\n", at.data);

@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-ocsp,
 ocsp - Online Certificate Status Protocol utility
 
 =head1 SYNOPSIS
@@ -74,6 +75,7 @@ B<openssl> B<ocsp>
 [B<-no_cert_checks>]
 [B<-no_explicit>]
 [B<-port num>]
+[B<-ignore_err>]
 [B<-index file>]
 [B<-CA file>]
 [B<-rsigner file>]
@@ -84,7 +86,7 @@ B<openssl> B<ocsp>
 [B<-ndays n>]
 [B<-resp_key_id>]
 [B<-nrequest n>]
-[B<-md5|-sha1|...>]
+[B<-I<digest>>]
 
 =head1 DESCRIPTION
 
@@ -285,7 +287,7 @@ status information is immediately available. In this case the age of the
 B<notBefore> field is checked to see it is not older than B<age> seconds old.
 By default this additional check is not performed.
 
-=item B<-[digest]>
+=item B<-I<digest>>
 
 This option sets digest algorithm to use for certificate identification in the
 OCSP request. Any digest supported by the OpenSSL B<dgst> command can be used.
@@ -342,6 +344,12 @@ specified in the B<rsigner> option is used.
 
 Port to listen for OCSP requests on. The port may also be specified
 using the B<url> option.
+
+=item B<-ignore_err>
+
+Ignore malformed requests or responses: When acting as an OCSP client, retry if
+a malformed response is received. When acting as an OCSP responder, continue
+running instead of terminating upon receiving a malformed request.
 
 =item B<-nrequest number>
 

@@ -13,7 +13,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "../../e_os.h"
+#include "internal/nelem.h"
 
 /* The size of memory buffers to display on failure */
 #define MEM_BUFFER_SIZE     (2000)
@@ -72,12 +72,12 @@ static void test_fail_string_common(const char *prefix, const char *file,
         if (l1 > 0) {
             b1[n1 = l1 > width ? width : l1] = 0;
             for (i = 0; i < n1; i++)
-                b1[i] = isprint(m1[i]) ? m1[i] : '.';
+                b1[i] = isprint((unsigned char)m1[i]) ? m1[i] : '.';
         }
         if (l2 > 0) {
             b2[n2 = l2 > width ? width : l2] = 0;
             for (i = 0; i < n2; i++)
-                b2[i] = isprint(m2[i]) ? m2[i] : '.';
+                b2[i] = isprint((unsigned char)m2[i]) ? m2[i] : '.';
         }
         diff = 0;
         i = 0;

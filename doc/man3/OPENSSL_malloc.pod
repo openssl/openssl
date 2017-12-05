@@ -14,6 +14,7 @@ OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
 CRYPTO_clear_realloc, CRYPTO_clear_free,
 CRYPTO_get_mem_functions, CRYPTO_set_mem_functions,
+CRYPTO_get_alloc_counts,
 CRYPTO_set_mem_debug, CRYPTO_mem_ctrl,
 CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp, CRYPTO_mem_leaks_cb,
 OPENSSL_MALLOC_FAILURES,
@@ -61,6 +62,8 @@ OPENSSL_MALLOC_FD
          void *(*m)(size_t, const char *, int),
          void *(*r)(void *, size_t, const char *, int),
          void (*f)(void *, const char *, int))
+
+ void CRYPTO_get_alloc_counts(int *m, int *r, int *f)
 
  int CRYPTO_set_mem_debug(int onoff)
 
@@ -148,31 +151,6 @@ CRYPTO_set_mem_debug() turns this tracking on and off.  In order to have
 any effect, is must be called before any of the allocation functions
 (e.g., CRYPTO_malloc()) are called, and is therefore normally one of the
 first lines of main() in an application.
-
-If the library is built with the C<crypto-mdebug> option, then two additional
-environment variables can be used for testing failure handling.  The variable
-B<OPENSSL_MALLOC_FAILURES> controls how often allocations should fail.
-It is a set of fields separated by semicolons, which each field is a count
-(defaulting to zero) and an optional atsign and percentage (defaulting
-to 100).  If the count is zero, then it lasts forever.  For example,
-C<100;@25> or C<100@0;0@25> means the first 100 allocations pass, then all
-other allocations (until the program exits or crashes) have a 25% chance of
-failing.
-
-If the variable B<OPENSSL_MALLOC_FD> is parsed as a positive integer, then
-it is taken as an open file descriptor, and a record of all allocations is
-written to that descriptor.  If an allocation will fail, and the platform
-supports it, then a backtrace will be written to the descriptor.  This can
-be useful because a malloc may fail but not be checked, and problems will
-only occur later.  The following example in classic shell syntax shows how
-to use this (will not work on all platforms):
-
-  OPENSSL_MALLOC_FAILURES='200;@10'
-  export OPENSSL_MALLOC_FAILURES
-  OPENSSL_MALLOC_FD=3
-  export OPENSSL_MALLOC_FD
-  ...app invocation... 3>/tmp/log$$
-
 CRYPTO_mem_ctrl() provides fine-grained control of memory leak tracking.
 To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
 the B<CRYPTO_MEM_CHECK_ON>.
@@ -197,6 +175,40 @@ CRYPTO_mem_leaks_cb() does the same as CRYPTO_mem_leaks(), but instead
 of writing to a given BIO, the callback function is called for each
 output string with the string, length, and userdata B<u> as the callback
 parameters.
+
+If the library is built with the C<crypto-mdebug> option, then one
+function, CRYPTO_get_alloc_counts(), and two additional environment
+variables, B<OPENSSL_MALLOC_FAILURES> and B<OPENSSL_MALLOC_FD>,
+are available.
+
+The function CRYPTO_get_alloc_counts() fills in the number of times
+each of CRYPTO_malloc(), CRYPTO_realloc(), and CRYPTO_free() have been
+called, into the values pointed to by B<mcount>, B<rcount>, and B<fcount>,
+respectively.  If a pointer is NULL, then the corresponding count is not stored.
+
+The variable
+B<OPENSSL_MALLOC_FAILURES> controls how often allocations should fail.
+It is a set of fields separated by semicolons, which each field is a count
+(defaulting to zero) and an optional atsign and percentage (defaulting
+to 100).  If the count is zero, then it lasts forever.  For example,
+C<100;@25> or C<100@0;0@25> means the first 100 allocations pass, then all
+other allocations (until the program exits or crashes) have a 25% chance of
+failing.
+
+If the variable B<OPENSSL_MALLOC_FD> is parsed as a positive integer, then
+it is taken as an open file descriptor, and a record of all allocations is
+written to that descriptor.  If an allocation will fail, and the platform
+supports it, then a backtrace will be written to the descriptor.  This can
+be useful because a malloc may fail but not be checked, and problems will
+only occur later.  The following example in classic shell syntax shows how
+to use this (will not work on all platforms):
+
+  OPENSSL_MALLOC_FAILURES='200;@10'
+  export OPENSSL_MALLOC_FAILURES
+  OPENSSL_MALLOC_FD=3
+  export OPENSSL_MALLOC_FD
+  ...app invocation... 3>/tmp/log$$
+
 
 =head1 RETURN VALUES
 

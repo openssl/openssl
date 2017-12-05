@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include "eng_int.h"
 #include <openssl/rand.h>
 #include "internal/refcount.h"
@@ -20,7 +21,7 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    global_engine_lock = CRYPTO_THREAD_lock_new();
+    global_engine_lock = CRYPTO_THREAD_glock_new("global_engine");
     return global_engine_lock != NULL;
 }
 
@@ -81,7 +82,7 @@ int engine_free_util(ENGINE *e, int not_locked)
     else
         i = --e->struct_ref;
 #endif
-    engine_ref_debug(e, 0, -1)
+    engine_ref_debug(e, 0, -1);
     if (i > 0)
         return 1;
     REF_ASSERT_ISNT(i < 0);
@@ -173,12 +174,12 @@ void engine_cleanup_int(void)
 
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&e->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&e->ex_data, idx, arg);
 }
 
 void *ENGINE_get_ex_data(const ENGINE *e, int idx)
 {
-    return (CRYPTO_get_ex_data(&e->ex_data, idx));
+    return CRYPTO_get_ex_data(&e->ex_data, idx);
 }
 
 /*

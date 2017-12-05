@@ -12,8 +12,8 @@
 # define HEADER_ENGINE_INT_H
 
 # include "internal/cryptlib.h"
-# include <internal/engine.h>
-# include <internal/thread_once.h>
+# include "internal/engine.h"
+# include "internal/thread_once.h"
 # include "internal/refcount.h"
 
 #ifdef  __cplusplus

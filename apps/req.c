@@ -333,6 +333,8 @@ int req_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (days && !x509)
+        BIO_printf(bio_err, "Ignoring -days; not generating a certificate");
     if (x509 && infile == NULL)
         newreq = 1;
 
@@ -1305,7 +1307,7 @@ static int check_end(const char *str, const char *end)
 
 /*
  * Merge the two strings together into the result buffer checking for
- * overflow and producing an error message is there is.
+ * overflow and producing an error message if there is.
  */
 static int join(char buf[], size_t buf_size, const char *name,
                 const char *tail, const char *desc)

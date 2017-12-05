@@ -10,6 +10,7 @@ use File::Spec;
 use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
+use OpenSSL::Test::Utils;
 
 my $test_name = "test_store";
 setup($test_name);
@@ -89,43 +90,67 @@ indir "store_$$" => sub {
 
         foreach (@noexist_files) {
             my $file = srctop_file($_);
+
             ok(!run(app(["openssl", "storeutl", $file])));
             ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
-            ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+
+                ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+            }
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
+
             ok(run(app(["openssl", "storeutl", $file])));
             ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
-                                                               "")])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
-                                                               "localhost")])));
-            ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file, 0,
-                                                                "dummy")])));
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+
+                ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+                ok(run(app(["openssl", "storeutl",
+                            to_abs_file_uri($file, 0, "")])));
+                ok(run(app(["openssl", "storeutl",
+                            to_abs_file_uri($file, 0, "localhost")])));
+                ok(!run(app(["openssl", "storeutl",
+                             to_abs_file_uri($file, 0, "dummy")])));
+            }
         }
         foreach (@generated_files) {
             ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                         $_])));
             ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
                         to_abs_file($_)])));
-            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        to_abs_file_uri($_)])));
-            ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
-                         to_file_uri($_)])));
+
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+
+                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
+                            to_abs_file_uri($_)])));
+                ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
+                             to_file_uri($_)])));
+            }
         }
         foreach (values %generated_file_files) {
+            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+
             ok(run(app(["openssl", "storeutl", $_])));
         }
         foreach (@noexist_file_files) {
+            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+
             ok(!run(app(["openssl", "storeutl", $_])));
         }
         {
             my $dir = srctop_dir("test", "certs");
+
             ok(run(app(["openssl", "storeutl", $dir])));
             ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
-            ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
+            {
+                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+
+                ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
+            }
         }
     }
 }, create => 1, cleanup => 1;

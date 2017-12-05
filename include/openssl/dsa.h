@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * The DSS routines are based on patches supplied by
- * Steven Schoch <schoch@sheba.arc.nasa.gov>.
- */
-
 #ifndef HEADER_DSA_H
 # define HEADER_DSA_H
 

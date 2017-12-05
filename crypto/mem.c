@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <openssl/crypto.h>
-#include "internal/cryptlib.h"
-#include "internal/cryptlib_int.h"
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # include <execinfo.h>
 #endif
@@ -30,6 +31,14 @@ static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static int malloc_count;
+static int realloc_count;
+static int free_count;
+static int dummy;
+
+# define INCREMENT(x) CRYPTO_atomic_add(&x, 1, &dummy, memdbg_lock)
+# define GET(ret, val) CRYPTO_atomic_read(&val, ret, memdbg_lock)
+
 static char *md_failstring;
 static long md_count;
 static int md_fail_percent = 0;
@@ -44,6 +53,7 @@ static int shouldfail(void);
 #else
 static int call_malloc_debug = 0;
 
+# define INCREMENT(x) /* empty */
 # define FAILTEST() /* empty */
 #endif
 
@@ -85,6 +95,16 @@ void CRYPTO_get_mem_functions(
 }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
+{
+    if (mcount != NULL)
+        GET(mcount, malloc_count);
+    if (rcount != NULL)
+        GET(rcount, realloc_count);
+    if (fcount != NULL)
+        GET(fcount, free_count);
+}
+
 /*
  * Parse a "malloc failure spec" string.  This likes like a set of fields
  * separated by semicolons.  Each field has a count and an optional failure
@@ -170,6 +190,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
 
+    INCREMENT(malloc_count);
     if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
         return malloc_impl(num, file, line);
 
@@ -187,7 +208,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         ret = malloc(num);
     }
 #else
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
     ret = malloc(num);
 #endif
 
@@ -206,6 +227,7 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
+    INCREMENT(realloc_count);
     if (realloc_impl != NULL && realloc_impl != &CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
 
@@ -228,7 +250,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return ret;
     }
 #else
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
 #endif
     return realloc(str, num);
 
@@ -263,6 +285,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
 void CRYPTO_free(void *str, const char *file, int line)
 {
+    INCREMENT(free_count);
     if (free_impl != NULL && free_impl != &CRYPTO_free) {
         free_impl(str, file, line);
         return;

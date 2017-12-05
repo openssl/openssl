@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 # The inner loop instruction sequence and the IP/FP modifications are from
-# Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>
+# Svend Olaf Mikkelsen.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -15,7 +15,7 @@ require "x86asm.pl";
 require "cbc.pl";
 require "desboth.pl";
 
-# base code is in microsft
+# base code is in Microsoft
 # op dest, source
 # format.
 #

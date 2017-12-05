@@ -979,7 +979,7 @@ static limb smallfelem_is_zero(const smallfelem small)
     return result;
 }
 
-static int smallfelem_is_zero_int(const smallfelem small)
+static int smallfelem_is_zero_int(const void *small)
 {
     return (int)(smallfelem_is_zero(small) & ((limb) 1));
 }
@@ -1984,7 +1984,6 @@ static void make_points_affine(size_t num, smallfelem points[][3],
                                              sizeof(smallfelem),
                                              tmp_smallfelems,
                                              (void (*)(void *))smallfelem_one,
-                                             (int (*)(const void *))
                                              smallfelem_is_zero_int,
                                              (void (*)(void *, const void *))
                                              smallfelem_assign,

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <internal/cryptlib.h>
+#include "internal/cryptlib.h"
 
 /* This file is not scanned by mkdef.pl, whereas cryptlib.h is */
 

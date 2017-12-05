@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <string.h>
 #include <sys/stat.h>
 #include <assert.h>
@@ -23,12 +24,11 @@
 #include <openssl/ui.h>
 #include <openssl/x509.h>        /* For the PKCS8 stuff o.O */
 #include "internal/asn1_int.h"
+#include "internal/ctype.h"
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
 #include "internal/store_int.h"
 #include "store_locl.h"
-
-#include "e_os.h"
 
 #ifdef _WIN32
 # define stat    _stat
@@ -783,7 +783,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 #ifdef _WIN32
         /* Windows file: URIs with a drive letter start with a / */
         if (p[0] == '/' && p[2] == ':' && p[3] == '/') {
-            char c = tolower(p[1]);
+            char c = ossl_tolower(p[1]);
 
             if (c >= 'a' && c <= 'z') {
                 p++;
@@ -855,7 +855,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         }
     } else {
         BIO *buff = NULL;
-        char peekbuf[4096];
+        char peekbuf[4096] = { 0, };
 
         if ((buff = BIO_new(BIO_f_buffer())) == NULL
             || (ctx->_.file.file = BIO_new_file(path, "rb")) == NULL) {

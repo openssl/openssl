@@ -168,7 +168,7 @@ $proxy->start();
 ok(TLSProxy::Message->success() && ($selectedgroupid == X25519),
    "Multiple acceptable key_shares (part 2)");
 
-#Test 15: Server sends key_share that wasn't offerred should fail
+#Test 15: Server sends key_share that wasn't offered should fail
 $proxy->clear();
 $testtype = SELECT_X25519;
 $proxy->clientflags("-curves P-256");

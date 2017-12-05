@@ -17,8 +17,6 @@ NON_EMPTY_TRANSLATION_UNIT
                                  * on OpenVMS */
 # endif
 
-# define USE_SOCKETS
-
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>
@@ -108,7 +106,7 @@ const OPTIONS ocsp_options[] = {
     {"host", OPT_HOST, 's', "TCP/IP hostname:port to connect to"},
     {"port", OPT_PORT, 'p', "Port to run responder on"},
     {"ignore_err", OPT_IGNORE_ERR, '-',
-     "Ignore Error response from OCSP responder, and retry "},
+     "Ignore error on OCSP request or response and continue running"},
     {"noverify", OPT_NOVERIFY, '-', "Don't verify response at all"},
     {"nonce", OPT_NONCE, '-', "Add OCSP nonce to request"},
     {"no_nonce", OPT_NO_NONCE, '-', "Don't add OCSP nonce to request"},
@@ -749,7 +747,7 @@ redo_accept:
     OPENSSL_free(tport);
     OPENSSL_free(tpath);
 
-    return (ret);
+    return ret;
 }
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
@@ -1108,7 +1106,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
             if (*q == ' ')
                 break;
         if (strncmp(q, " HTTP/1.", 8) != 0) {
-            BIO_printf(bio_err, "Invalid request -- bad HTTP vesion\n");
+            BIO_printf(bio_err, "Invalid request -- bad HTTP version\n");
             return 1;
         }
         *q = '\0';

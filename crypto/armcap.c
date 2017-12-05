@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <openssl/crypto.h>
+#include "internal/cryptlib.h"
 
 #include "arm_arch.h"
 
@@ -23,7 +24,7 @@ void OPENSSL_cpuid_setup(void)
 {
 }
 
-unsigned long OPENSSL_rdtsc(void)
+uint32_t OPENSSL_rdtsc(void)
 {
     return 0;
 }
@@ -45,9 +46,9 @@ void _armv8_aes_probe(void);
 void _armv8_sha1_probe(void);
 void _armv8_sha256_probe(void);
 void _armv8_pmull_probe(void);
-unsigned long _armv7_tick(void);
+uint32_t _armv7_tick(void);
 
-unsigned long OPENSSL_rdtsc(void)
+uint32_t OPENSSL_rdtsc(void)
 {
     if (OPENSSL_armcap_P & ARMV7_TICK)
         return _armv7_tick();
@@ -69,7 +70,7 @@ static unsigned long (*getauxval) (unsigned long) = NULL;
 # endif
 
 /*
- * ARM puts the the feature bits for Crypto Extensions in AT_HWCAP2, whereas
+ * ARM puts the feature bits for Crypto Extensions in AT_HWCAP2, whereas
  * AArch64 used AT_HWCAP.
  */
 # if defined(__arm__) || defined (__arm)

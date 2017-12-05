@@ -11,7 +11,7 @@
 # define HEADER_DSO_H
 
 # include <openssl/crypto.h>
-# include <internal/dsoerr.h>
+# include "internal/dsoerr.h"
 
 #ifdef __cplusplus
 extern "C" {

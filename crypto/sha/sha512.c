@@ -41,7 +41,6 @@
  * As this implementation relies on 64-bit integer type, it's totally
  * inappropriate for platforms which don't support it, most notably
  * 16-bit platforms.
- *                                      <appro@fy.chalmers.se>
  */
 #include <stdlib.h>
 #include <string.h>
@@ -258,7 +257,7 @@ unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
     SHA512_Update(&c, d, n);
     SHA512_Final(md, &c);
     OPENSSL_cleanse(&c, sizeof(c));
-    return (md);
+    return md;
 }
 
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
@@ -272,7 +271,7 @@ unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md)
     SHA512_Update(&c, d, n);
     SHA512_Final(md, &c);
     OPENSSL_cleanse(&c, sizeof(c));
-    return (md);
+    return md;
 }
 
 #ifndef SHA512_ASM
@@ -399,9 +398,6 @@ static SHA_LONG64 __fastcall __pull64be(const void *x)
 }
 #    endif
 #    define PULL64(x) __pull64be(&(x))
-#    if _MSC_VER<=1200
-#     pragma inline_depth(0)
-#    endif
 #   endif
 #  endif
 # endif

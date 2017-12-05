@@ -25,7 +25,7 @@
 # sha1-ppc.pl and 1.6x slower than aes-128-cbc. Another interesting
 # result is degree of computational resources' utilization. POWER8 is
 # "massively multi-threaded chip" and difference between single- and
-# maximum multi-process benchmark results tells that utlization is
+# maximum multi-process benchmark results tells that utilization is
 # whooping 94%. For sha512-ppc.pl we get [not unimpressive] 84% and
 # for sha1-ppc.pl - 73%. 100% means that multi-process result equals
 # to single-process one, given that all threads end up on the same

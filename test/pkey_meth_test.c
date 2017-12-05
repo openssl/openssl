@@ -48,7 +48,7 @@ static int test_asn1_meths(void)
 }
 
 /* Test of EVP_PKEY_METHOD ordering */
-static int test_pkey_meths()
+static int test_pkey_meths(void)
 {
     size_t i;
     int prev = -1;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,17 +10,14 @@
 #ifndef HEADER_APPS_H
 # define HEADER_APPS_H
 
-# include "e_os.h"
-# if defined(__unix) || defined(__unix__)
-#  include <sys/time.h> /* struct timeval for DTLS */
-# endif
+# include "e_os.h" /* struct timeval for DTLS */
+# include "internal/nelem.h"
 # include <assert.h>
 
 # include <openssl/e_os2.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
-# include <openssl/lhash.h>
 # include <openssl/conf.h>
 # include <openssl/txt_db.h>
 # include <openssl/engine.h>
@@ -207,8 +204,9 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
         OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
+        OPT_S_PRIORITIZE_CHACHA, \
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
-        OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_DHPARAM, \
+        OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_NO_RENEGOTIATION, OPT_S__LAST
 
@@ -236,6 +234,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             "Disallow initial connection to servers that don't support RI"}, \
         {"allow_no_dhe_kex", OPT_S_ALLOW_NO_DHE_KEX, '-', \
             "In TLSv1.3 allow non-(ec)dhe based key exchange on resumption"}, \
+        {"prioritize_chacha", OPT_S_PRIORITIZE_CHACHA, '-', \
+            "Prioritize ChaCha ciphers when preferred by clients"}, \
         {"strict", OPT_S_STRICT, '-', \
             "Enforce strict certificate checks as per TLS standard"}, \
         {"sigalgs", OPT_S_SIGALGS, 's', \
@@ -250,8 +250,6 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
         {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
-        {"dhparam", OPT_S_DHPARAM, '<', \
-            "DH parameter file to use, in cert file if not specified"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
@@ -275,6 +273,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_ONRESUMP: \
         case OPT_S_NOLEGACYCONN: \
         case OPT_S_ALLOW_NO_DHE_KEX: \
+        case OPT_S_PRIORITIZE_CHACHA: \
         case OPT_S_STRICT: \
         case OPT_S_SIGALGS: \
         case OPT_S_CLIENTSIGALGS: \
@@ -282,7 +281,6 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_CURVES: \
         case OPT_S_NAMEDCURVE: \
         case OPT_S_CIPHER: \
-        case OPT_S_DHPARAM: \
         case OPT_S_RECORD_PADDING: \
         case OPT_S_NO_RENEGOTIATION: \
         case OPT_S_DEBUGBROKE
@@ -568,7 +566,12 @@ void store_setup_crl_download(X509_STORE *st);
 
 # define APP_PASS_LEN    1024
 
-# define SERIAL_RAND_BITS        64
+/*
+ * IETF RFC 5280 says serial number must be <= 20 bytes. Use 159 bits
+ * so that the first bit will never be one, so that the DER encoding
+ * rules won't force a leading octet.
+ */
+# define SERIAL_RAND_BITS        159
 
 int app_isdir(const char *);
 int app_access(const char *, int flag);

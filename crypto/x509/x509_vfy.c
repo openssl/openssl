@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,23 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <ctype.h>
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
 #include <limits.h>
 
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/crypto.h>
-#include <openssl/lhash.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
-#include <internal/dane.h>
-#include <internal/x509_int.h>
+#include "internal/dane.h"
+#include "internal/x509_int.h"
 #include "x509_lcl.h"
 
 /* CRL score values */
@@ -217,7 +216,6 @@ static int verify_chain(X509_STORE_CTX *ctx)
     if ((ok = build_chain(ctx)) == 0 ||
         (ok = check_chain_extensions(ctx)) == 0 ||
         (ok = check_auth_level(ctx)) == 0 ||
-        (ok = check_name_constraints(ctx)) == 0 ||
         (ok = check_id(ctx)) == 0 || 1)
         X509_get_pubkey_parameters(NULL, ctx->chain);
     if (ok == 0 || (ok = ctx->check_revocation(ctx)) == 0)
@@ -233,6 +231,9 @@ static int verify_chain(X509_STORE_CTX *ctx)
     /* Verify chain signatures and expiration times */
     ok = (ctx->verify != NULL) ? ctx->verify(ctx) : internal_verify(ctx);
     if (!ok)
+        return ok;
+
+    if ((ok = check_name_constraints(ctx)) == 0)
         return ok;
 
 #ifndef OPENSSL_NO_RFC3779
@@ -1790,7 +1791,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
      * Digit and date ranges will be verified in the conversion methods.
      */
     for (i = 0; i < ctm->length - 1; i++) {
-        if (!isdigit(ctm->data[i]))
+        if (!ossl_isdigit(ctm->data[i]))
             return 0;
     }
     if (ctm->data[ctm->length - 1] != 'Z')
@@ -2843,7 +2844,11 @@ static int build_chain(X509_STORE_CTX *ctx)
     int i;
 
     /* Our chain starts with a single untrusted element. */
-    OPENSSL_assert(num == 1 && ctx->num_untrusted == num);
+    if (!ossl_assert(num == 1 && ctx->num_untrusted == num))  {
+        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
 
 #define S_DOUNTRUSTED      (1 << 0)     /* Search untrusted chain */
 #define S_DOTRUSTED        (1 << 1)     /* Search trusted store */
@@ -2980,7 +2985,14 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * certificate among the ones from the trust store.
                  */
                 if ((search & S_DOALTERNATE) != 0) {
-                    OPENSSL_assert(num > i && i > 0 && ss == 0);
+                    if (!ossl_assert(num > i && i > 0 && ss == 0)) {
+                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        X509_free(xtmp);
+                        trust = X509_TRUST_REJECTED;
+                        ctx->error = X509_V_ERR_UNSPECIFIED;
+                        search = 0;
+                        continue;
+                    }
                     search &= ~S_DOALTERNATE;
                     for (; num > i; --num)
                         X509_free(sk_X509_pop(ctx->chain));
@@ -3043,7 +3055,13 @@ static int build_chain(X509_STORE_CTX *ctx)
                  * certificate with ctx->num_untrusted <= num.
                  */
                 if (ok) {
-                    OPENSSL_assert(ctx->num_untrusted <= num);
+                    if (!ossl_assert(ctx->num_untrusted <= num)) {
+                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        trust = X509_TRUST_REJECTED;
+                        ctx->error = X509_V_ERR_UNSPECIFIED;
+                        search = 0;
+                        continue;
+                    }
                     search &= ~S_DOUNTRUSTED;
                     switch (trust = check_trust(ctx, num)) {
                     case X509_TRUST_TRUSTED:
@@ -3082,7 +3100,13 @@ static int build_chain(X509_STORE_CTX *ctx)
          */
         if ((search & S_DOUNTRUSTED) != 0) {
             num = sk_X509_num(ctx->chain);
-            OPENSSL_assert(num == ctx->num_untrusted);
+            if (!ossl_assert(num == ctx->num_untrusted)) {
+                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                trust = X509_TRUST_REJECTED;
+                ctx->error = X509_V_ERR_UNSPECIFIED;
+                search = 0;
+                continue;
+            }
             x = sk_X509_value(ctx->chain, num-1);
 
             /*

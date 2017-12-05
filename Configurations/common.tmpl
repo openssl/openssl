@@ -40,7 +40,7 @@
          my $extensionlessitem = extensionlesslib($item);
          if (grep { $extensionlessitem eq extensionlesslib($_) } @list) {
              if ($item ne $extensionlessitem) {
-                 # If this instance of the library is explicitely static, we
+                 # If this instance of the library is explicitly static, we
                  # prefer that to any shared library name, since it must have
                  # been done on purpose.
                  $replace{$extensionlessitem} = $item;

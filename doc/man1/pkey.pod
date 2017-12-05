@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-pkey,
 pkey - public or private key processing tool
 
 =head1 SYNOPSIS
@@ -15,13 +16,15 @@ B<openssl> B<pkey>
 [B<-out filename>]
 [B<-passout arg>]
 [B<-traditional>]
-[B<-cipher>]
+[B<-I<cipher>>]
 [B<-text>]
 [B<-text_pub>]
 [B<-noout>]
 [B<-pubin>]
 [B<-pubout>]
 [B<-engine id>]
+[B<-check>]
+[B<-pubcheck>]
 
 =head1 DESCRIPTION
 
@@ -38,12 +41,12 @@ Print out a usage message.
 
 =item B<-inform DER|PEM>
 
-This specifies the input format DER or PEM.
+This specifies the input format DER or PEM. The default format is PEM.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in filename>
 
@@ -74,7 +77,7 @@ Normally a private key is written using standard format: this is PKCS#8 form
 with the appropriate encryption algorithm (if any). If the B<-traditional>
 option is specified then the older "traditional" format is used instead.
 
-=item B<-cipher>
+=item B<-I<cipher>>
 
 These options encrypt the private key with the supplied cipher. Any algorithm
 name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
@@ -109,6 +112,16 @@ Specifying an engine (by its unique B<id> string) will cause B<pkey>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-check>
+
+This option checks the consistency of a key pair for both public and private
+components.
+
+=item B<-pubcheck>
+
+This option checks the correctness of either a public key or the public component
+of a key pair.
 
 =back
 

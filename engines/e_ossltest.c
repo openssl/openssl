@@ -23,6 +23,7 @@
 #include <openssl/evp.h>
 #include <openssl/modes.h>
 #include <openssl/aes.h>
+#include <openssl/rand.h>
 #include <openssl/crypto.h>
 
 #include "e_ossltest_err.c"
@@ -42,6 +43,7 @@ void ENGINE_load_ossltest(void);
 /* Set up digests */
 static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
                           const int **nids, int nid);
+static const RAND_METHOD *ossltest_rand_method(void);
 
 /* MD5 */
 static int digest_md5_init(EVP_MD_CTX *ctx);
@@ -309,6 +311,7 @@ static int bind_ossltest(ENGINE *e)
         || !ENGINE_set_name(e, engine_ossltest_name)
         || !ENGINE_set_digests(e, ossltest_digests)
         || !ENGINE_set_ciphers(e, ossltest_ciphers)
+        || !ENGINE_set_RAND(e, ossltest_rand_method())
         || !ENGINE_set_destroy_function(e, ossltest_destroy)
         || !ENGINE_set_init_function(e, ossltest_init)
         || !ENGINE_set_finish_function(e, ossltest_finish)) {
@@ -655,4 +658,33 @@ static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     }
 
     return 1;
+}
+
+static int ossltest_rand_bytes(unsigned char *buf, int num)
+{
+    unsigned char val = 1;
+
+    while (--num >= 0)
+        *buf++ = val++;
+    return 1;
+}
+
+static int ossltest_rand_status(void)
+{
+    return 1;
+}
+
+static const RAND_METHOD *ossltest_rand_method(void)
+{
+
+    static RAND_METHOD osslt_rand_meth = {
+        NULL,
+        ossltest_rand_bytes,
+        NULL,
+        NULL,
+        ossltest_rand_bytes,
+        ossltest_rand_status
+    };
+
+    return &osslt_rand_meth;
 }

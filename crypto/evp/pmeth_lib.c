@@ -21,6 +21,7 @@ typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
 static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 
+/* This array needs to be in order of NIDs */
 static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_RSA
     &rsa_pkey_meth,
@@ -43,6 +44,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #endif
 #ifndef OPENSSL_NO_DH
     &dhx_pkey_meth,
+#endif
+#ifndef OPENSSL_NO_SCRYPT
+    &scrypt_pkey_meth,
 #endif
     &tls1_prf_pkey_meth,
 #ifndef OPENSSL_NO_EC
@@ -101,16 +105,17 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         id = pkey->ameth->pkey_id;
     }
 #ifndef OPENSSL_NO_ENGINE
-    if (pkey && pkey->engine)
-        e = pkey->engine;
+    if (e == NULL && pkey != NULL)
+        e = pkey->pmeth_engine != NULL ? pkey->pmeth_engine : pkey->engine;
     /* Try to find an ENGINE which implements this method */
     if (e) {
         if (!ENGINE_init(e)) {
             EVPerr(EVP_F_INT_CTX_NEW, ERR_R_ENGINE_LIB);
             return NULL;
         }
-    } else
+    } else {
         e = ENGINE_get_pkey_meth_engine(id);
+    }
 
     /*
      * If an ENGINE handled this method look it up. Otherwise use internal
@@ -124,6 +129,9 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
         pmeth = EVP_PKEY_meth_find(id);
 
     if (pmeth == NULL) {
+#ifndef OPENSSL_NO_ENGINE
+        ENGINE_finish(e);
+#endif
         EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
         return NULL;
     }
@@ -215,6 +223,8 @@ void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
 
     dst->ctrl = src->ctrl;
     dst->ctrl_str = src->ctrl_str;
+
+    dst->check = src->check;
 }
 
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
@@ -290,6 +300,21 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
     return 1;
 }
 
+void evp_app_cleanup_int(void)
+{
+    if (app_pkey_methods != NULL)
+        sk_EVP_PKEY_METHOD_pop_free(app_pkey_methods, EVP_PKEY_meth_free);
+}
+
+int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth)
+{
+    const EVP_PKEY_METHOD *ret;
+
+    ret = sk_EVP_PKEY_METHOD_delete_ptr(app_pkey_methods, pmeth);
+
+    return ret == NULL ? 0 : 1;
+}
+
 size_t EVP_PKEY_meth_get_count(void)
 {
     size_t rv = OSSL_NELEM(standard_methods);
@@ -353,6 +378,12 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
     return ret;
 
+}
+
+int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
+                             int cmd, uint64_t value)
+{
+    return EVP_PKEY_CTX_ctrl(ctx, keytype, optype, cmd, 0, &value);
 }
 
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
@@ -593,6 +624,24 @@ void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
     pmeth->ctrl_str = ctrl_str;
 }
 
+void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
+                             int (*check) (EVP_PKEY *pkey))
+{
+    pmeth->check = check;
+}
+
+void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
+                                    int (*check) (EVP_PKEY *pkey))
+{
+    pmeth->public_check = check;
+}
+
+void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
+                                   int (*check) (EVP_PKEY *pkey))
+{
+    pmeth->param_check = check;
+}
+
 void EVP_PKEY_meth_get_init(EVP_PKEY_METHOD *pmeth,
                             int (**pinit) (EVP_PKEY_CTX *ctx))
 {
@@ -758,4 +807,25 @@ void EVP_PKEY_meth_get_ctrl(EVP_PKEY_METHOD *pmeth,
         *pctrl = pmeth->ctrl;
     if (pctrl_str)
         *pctrl_str = pmeth->ctrl_str;
+}
+
+void EVP_PKEY_meth_get_check(EVP_PKEY_METHOD *pmeth,
+                             int (**pcheck) (EVP_PKEY *pkey))
+{
+    if (*pcheck)
+        *pcheck = pmeth->check;
+}
+
+void EVP_PKEY_meth_get_public_check(EVP_PKEY_METHOD *pmeth,
+                                    int (**pcheck) (EVP_PKEY *pkey))
+{
+    if (*pcheck)
+        *pcheck = pmeth->public_check;
+}
+
+void EVP_PKEY_meth_get_param_check(EVP_PKEY_METHOD *pmeth,
+                                   int (**pcheck) (EVP_PKEY *pkey))
+{
+    if (*pcheck)
+        *pcheck = pmeth->param_check;
 }

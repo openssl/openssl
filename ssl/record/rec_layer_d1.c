@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,19 +9,19 @@
 
 #include <stdio.h>
 #include <errno.h>
-#define USE_SOCKETS
 #include "../ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include "record_locl.h"
 #include "../packet_locl.h"
+#include "internal/cryptlib.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
 
     if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
-        return (0);
+        return 0;
 
     rl->d = d;
 
@@ -36,7 +36,7 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
         pqueue_free(d->buffered_app_data.q);
         OPENSSL_free(d);
         rl->d = NULL;
-        return (0);
+        return 0;
     }
 
     return 1;
@@ -131,7 +131,7 @@ static int dtls1_copy_record(SSL *s, pitem *item)
     /* Set proper sequence number for mac calculation */
     memcpy(&(s->rlayer.read_sequence[2]), &(rdata->packet[5]), 6);
 
-    return (1);
+    return 1;
 }
 
 int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
@@ -179,7 +179,7 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
-        return (-1);
+        return -1;
     }
 
     /* insert should not fail, since duplicates are dropped */
@@ -188,10 +188,10 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(rdata);
         pitem_free(item);
-        return (-1);
+        return -1;
     }
 
-    return (1);
+    return 1;
 }
 
 int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
@@ -205,10 +205,10 @@ int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
         OPENSSL_free(item->data);
         pitem_free(item);
 
-        return (1);
+        return 1;
     }
 
-    return (0);
+    return 0;
 }
 
 /*
@@ -339,7 +339,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (!SSL3_BUFFER_is_initialised(&s->rlayer.rbuf)) {
         /* Not initialized yet */
         if (!ssl3_setup_buffers(s))
-            return (-1);
+            return -1;
     }
 
     if ((type && (type != SSL3_RT_APPLICATION_DATA) &&
@@ -397,8 +397,12 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     }
 
     /* Check for timeout */
-    if (dtls1_handle_timeout(s) > 0)
+    if (dtls1_handle_timeout(s) > 0) {
         goto start;
+    } else if (ossl_statem_in_error(s)) {
+        /* dtls1_handle_timeout() has failed with a fatal error */
+        return -1;
+    }
 
     /* get new packet if necessary */
     if ((SSL3_RECORD_get_length(rr) == 0)
@@ -633,7 +637,11 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (dtls1_check_timeout_num(s) < 0)
                 return -1;
 
-            dtls1_retransmit_buffered_messages(s);
+            if (dtls1_retransmit_buffered_messages(s) <= 0) {
+                /* Fail if we encountered a fatal error */
+                if (ossl_statem_in_error(s))
+                    return -1;
+            }
             SSL3_RECORD_set_length(rr, 0);
             goto start;
         }
@@ -774,7 +782,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     if (len == 0 && !create_empty_fragment)
         return 0;
 
-    if (len > s->max_send_fragment) {
+    if (len > ssl_get_max_send_fragment(s)) {
         SSLerr(SSL_F_DO_DTLS1_WRITE, SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE);
         return 0;
     }

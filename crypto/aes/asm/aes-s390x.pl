@@ -8,7 +8,7 @@
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -44,7 +44,7 @@
 # minimize/avoid Address Generation Interlock hazard and to favour
 # dual-issue z10 pipeline. This gave ~25% improvement on z10 and
 # almost 50% on z9. The gain is smaller on z10, because being dual-
-# issue z10 makes it improssible to eliminate the interlock condition:
+# issue z10 makes it impossible to eliminate the interlock condition:
 # critial path is not long enough. Yet it spends ~24 cycles per byte
 # processed with 128-bit key.
 #
@@ -129,6 +129,8 @@ sub _data_word()
 }
 
 $code=<<___;
+#include "s390x_arch.h"
+
 .text
 
 .type	AES_Te,\@object
@@ -813,7 +815,7 @@ _s390x_AES_set_encrypt_key:
 .Lproceed:
 ___
 $code.=<<___ if (!$softonly);
-	# convert bits to km code, [128,192,256]->[18,19,20]
+	# convert bits to km(c) code, [128,192,256]->[18,19,20]
 	lhi	%r5,-128
 	lhi	%r0,18
 	ar	%r5,$bits
@@ -821,13 +823,10 @@ $code.=<<___ if (!$softonly);
 	ar	%r5,%r0
 
 	larl	%r1,OPENSSL_s390xcap_P
-	lg	%r0,0(%r1)
-	tmhl	%r0,0x4000	# check for message-security assist
-	jz	.Lekey_internal
-
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,0(%r5)
-	ng	%r0,48(%r1)	# check kmc capability vector
+	ng	%r0,S390X_KM(%r1)  # check availability of both km...
+	ng	%r0,S390X_KMC(%r1) # ...and kmc support for given key length
 	jz	.Lekey_internal
 
 	lmg	%r0,%r1,0($inp)	# just copy 128 bits...
@@ -842,7 +841,7 @@ $code.=<<___ if (!$softonly);
 	stg	%r1,24($key)
 1:	st	$bits,236($key)	# save bits [for debugging purposes]
 	lgr	$t0,%r5
-	st	%r5,240($key)	# save km code
+	st	%r5,240($key)	# save km(c) code
 	lghi	%r2,0
 	br	%r14
 ___
@@ -1439,18 +1438,13 @@ $code.=<<___ if (!$softonly);
 
 .Lctr32_hw_switch:
 ___
-$code.=<<___ if (0);	######### kmctr code was measured to be ~12% slower
-	larl	$s0,OPENSSL_s390xcap_P
-	lg	$s0,8($s0)
-	tmhh	$s0,0x0004	# check for message_security-assist-4
-	jz	.Lctr32_km_loop
-
+$code.=<<___ if (!$softonly && 0);# kmctr code was measured to be ~12% slower
 	llgfr	$s0,%r0
 	lgr	$s1,%r1
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000	# check if kmctr supports the function code
 	srlg	%r0,%r0,0($s0)
-	ng	%r0,64(%r1)	# check kmctr capability vector
+	ng	%r0,S390X_KMCTR(%r1)	# check kmctr capability vector
 	lgr	%r0,$s0
 	lgr	%r1,$s1
 	jz	.Lctr32_km_loop
@@ -1488,7 +1482,7 @@ $code.=<<___ if (0);	######### kmctr code was measured to be ~12% slower
 	br	$ra
 .align	16
 ___
-$code.=<<___;
+$code.=<<___ if (!$softonly);
 .Lctr32_km_loop:
 	la	$s2,16($sp)
 	lgr	$s3,$fp
@@ -1600,7 +1594,7 @@ $code.=<<___ if(1);
 	larl	%r1,OPENSSL_s390xcap_P
 	llihh	%r0,0x8000
 	srlg	%r0,%r0,32($s1)		# check for 32+function code
-	ng	%r0,32(%r1)		# check km capability vector
+	ng	%r0,S390X_KM(%r1)	# check km capability vector
 	lgr	%r0,$s0			# restore the function code
 	la	%r1,0($key1)		# restore $key1
 	jz	.Lxts_km_vanilla
@@ -2227,7 +2221,6 @@ ___
 }
 $code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
-.comm	OPENSSL_s390xcap_P,80,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

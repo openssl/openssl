@@ -14,7 +14,7 @@
 
 /*
  * The basic I/O functions used internally by the test framework.  These
- * can be overriden when needed. Note that if one is, then all must be.
+ * can be overridden when needed. Note that if one is, then all must be.
  */
 void test_open_streams(void);
 void test_close_streams(void);

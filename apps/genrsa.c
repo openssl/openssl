@@ -27,13 +27,14 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/rand.h>
 
 # define DEFBITS 2048
+# define DEFPRIMES 2
 
 static int genrsa_cb(int p, int n, BN_GENCB *cb);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_3, OPT_F4, OPT_ENGINE,
-    OPT_OUT, OPT_PASSOUT, OPT_CIPHER,
+    OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -49,6 +50,7 @@ const OPTIONS genrsa_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 # endif
+    {"primes", OPT_PRIMES, 'p', "Specify number of primes"},
     {NULL}
 };
 
@@ -62,7 +64,7 @@ int genrsa_main(int argc, char **argv)
     const BIGNUM *e;
     RSA *rsa = NULL;
     const EVP_CIPHER *enc = NULL;
-    int ret = 1, num = DEFBITS, private = 0;
+    int ret = 1, num = DEFBITS, private = 0, primes = DEFPRIMES;
     unsigned long f4 = RSA_F4;
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *prog, *hexe, *dece;
@@ -78,6 +80,7 @@ int genrsa_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
+opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -107,15 +110,24 @@ int genrsa_main(int argc, char **argv)
             if (!opt_cipher(opt_unknown(), &enc))
                 goto end;
             break;
+        case OPT_PRIMES:
+            if (!opt_int(opt_arg(), &primes))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (argc == 1) {
+        if (!opt_int(argv[0], &num) || num <= 0)
+            goto end;
+    } else if (argc > 0) {
+        BIO_printf(bio_err, "Extra arguments given.\n");
+        goto opthelp;
+    }
+
     private = 1;
-
-    if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
-        goto end;
-
     if (!app_passwd(NULL, passoutarg, NULL, &passout)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
@@ -125,13 +137,14 @@ int genrsa_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus\n",
-               num);
+    BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus (%d primes)\n",
+               num, primes);
     rsa = eng ? RSA_new_method(eng) : RSA_new();
     if (rsa == NULL)
         goto end;
 
-    if (!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, cb))
+    if (!BN_set_word(bn, f4)
+        || !RSA_generate_multi_prime_key(rsa, num, primes, bn, cb))
         goto end;
 
     RSA_get0_key(rsa, NULL, &e, NULL);
@@ -160,7 +173,7 @@ int genrsa_main(int argc, char **argv)
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    return (ret);
+    return ret;
 }
 
 static int genrsa_cb(int p, int n, BN_GENCB *cb)

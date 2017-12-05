@@ -107,7 +107,7 @@ static const EVP_MD sha1_md = {
 
 const EVP_MD *EVP_sha1(void)
 {
-    return (&sha1_md);
+    return &sha1_md;
 }
 
 static int init224(EVP_MD_CTX *ctx)
@@ -151,7 +151,7 @@ static const EVP_MD sha224_md = {
 
 const EVP_MD *EVP_sha224(void)
 {
-    return (&sha224_md);
+    return &sha224_md;
 }
 
 static const EVP_MD sha256_md = {
@@ -170,7 +170,7 @@ static const EVP_MD sha256_md = {
 
 const EVP_MD *EVP_sha256(void)
 {
-    return (&sha256_md);
+    return &sha256_md;
 }
 
 static int init384(EVP_MD_CTX *ctx)
@@ -210,7 +210,7 @@ static const EVP_MD sha384_md = {
 
 const EVP_MD *EVP_sha384(void)
 {
-    return (&sha384_md);
+    return &sha384_md;
 }
 
 static const EVP_MD sha512_md = {
@@ -229,5 +229,5 @@ static const EVP_MD sha512_md = {
 
 const EVP_MD *EVP_sha512(void)
 {
-    return (&sha512_md);
+    return &sha512_md;
 }

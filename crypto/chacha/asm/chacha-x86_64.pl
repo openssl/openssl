@@ -2488,7 +2488,7 @@ $code.=<<___;
 	dec		$len
 	jnz		.Loop_tail_avx512
 
-	vmovdqa32	$a_,0x00(%rsp)
+	vmovdqu32	$a_,0x00(%rsp)
 
 .Ldone_avx512:
 	vzeroall

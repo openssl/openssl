@@ -23,12 +23,12 @@ int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         X509err(X509_F_X509_CRL_PRINT_FP, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = X509_CRL_print(b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -53,6 +53,7 @@ int X509_CRL_print_ex(BIO *out, X509_CRL *x, unsigned long nmflag)
     else
         BIO_printf(out, "%8sVersion unknown (%ld)\n", "", l);
     X509_CRL_get0_signature(x, &sig, &sig_alg);
+    BIO_puts(out, "    ");
     X509_signature_print(out, sig_alg, NULL);
     BIO_printf(out, "%8sIssuer: ", "");
     X509_NAME_print_ex(out, X509_CRL_get_issuer(x), 0, nmflag);

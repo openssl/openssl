@@ -419,7 +419,7 @@ $code.=<<___;
 	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]-np[i]
 	mov	8($ap,$i,8),%rax	# tp[i+1]
 	lea	1($i),$i		# i++
-	dec	$j			# doesnn't affect CF!
+	dec	$j			# doesn't affect CF!
 	jnz	.Lsub
 
 	sbb	\$0,%rax		# handle upmost overflow bit
@@ -2421,7 +2421,7 @@ my $N=$STRIDE/4;		# should match cache line size
 $code.=<<___;
 	movdqa	0(%rax),%xmm0		# 00000001000000010000000000000000
 	movdqa	16(%rax),%xmm1		# 00000002000000020000000200000002
-	lea	88-112(%rsp,%r10),%r10	# place the mask after tp[num+1] (+ICache optimizaton)
+	lea	88-112(%rsp,%r10),%r10	# place the mask after tp[num+1] (+ICache optimization)
 	lea	128($bp),$bptr		# size optimization
 
 	pshufd	\$0,%xmm5,%xmm5		# broadcast index
@@ -3206,11 +3206,19 @@ $code.=<<___;
 
 .align	32
 .Lsqrx8x_break:
-	sub	16+8(%rsp),%r8		# consume last carry
+	xor	$zero,$zero
+	sub	16+8(%rsp),%rbx		# mov 16(%rsp),%cf
+	adcx	$zero,%r8
 	mov	24+8(%rsp),$carry	# initial $tptr, borrow $carry
+	adcx	$zero,%r9
 	mov	0*8($aptr),%rdx		# a[8], modulo-scheduled
-	xor	%ebp,%ebp		# xor	$zero,$zero
+	adc	\$0,%r10
 	mov	%r8,0*8($tptr)
+	adc	\$0,%r11
+	adc	\$0,%r12
+	adc	\$0,%r13
+	adc	\$0,%r14
+	adc	\$0,%r15
 	cmp	$carry,$tptr		# cf=0, of=0
 	je	.Lsqrx8x_outer_loop
 

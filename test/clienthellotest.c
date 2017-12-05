@@ -40,14 +40,15 @@
  */
 #define TEST_ADD_PADDING_AND_PSK                3
 
-#define F5_WORKAROUND_MIN_MSG_LEN   0xff
+#define F5_WORKAROUND_MIN_MSG_LEN   0x7f
 #define F5_WORKAROUND_MAX_MSG_LEN   0x200
 
 static const char *sessionfile = NULL;
 /* Dummy ALPN protocols used to pad out the size of the ClientHello */
 static const char alpn_prots[] =
     "0123456789012345678901234567890123456789012345678901234567890123456789"
-    "0123456789012345678901234567890123456789012345678901234567890123456789";
+    "0123456789012345678901234567890123456789012345678901234567890123456789"
+    "01234567890123456789";
 
 static int test_client_hello(int currtest)
 {
@@ -90,16 +91,14 @@ static int test_client_hello(int currtest)
     case TEST_PADDING_NOT_NEEDED:
         SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
         /*
-         * Add lots of ciphersuites so that the ClientHello is at least
+         * Add some dummy ALPN protocols so that the ClientHello is at least
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
-         * needed. Also add some dummy ALPN protocols in case we still don't
-         * have enough.
+         * needed.
          */
         if (currtest == TEST_ADD_PADDING
-                && (!TEST_true(SSL_CTX_set_cipher_list(ctx, "ALL"))
-                    || !TEST_false(SSL_CTX_set_alpn_protos(ctx,
-                                               (unsigned char *)alpn_prots,
-                                               sizeof(alpn_prots) - 1))))
+                && (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
+                                    (unsigned char *)alpn_prots,
+                                    sizeof(alpn_prots) - 1))))
             goto end;
 
         break;
@@ -127,7 +126,7 @@ static int test_client_hello(int currtest)
          * We reset the creation time so that we don't discard the session as
          * too old.
          */
-        if (!TEST_true(SSL_SESSION_set_time(sess, time(NULL)))
+        if (!TEST_true(SSL_SESSION_set_time(sess, (long)time(NULL)))
                 || !TEST_true(SSL_set_session(con, sess)))
             goto end;
     }

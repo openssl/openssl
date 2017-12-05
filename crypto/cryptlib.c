@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -8,6 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include "internal/cryptlib_int.h"
 #include <openssl/safestack.h>
 
@@ -41,24 +42,49 @@ void OPENSSL_cpuid_setup(void)
         if (!sscanf(env + off, "%lli", (long long *)&vec))
             vec = strtoul(env + off, NULL, 0);
 #  endif
-        if (off)
-            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~vec;
-        else if (env[0] == ':')
+        if (off) {
+            IA32CAP mask = vec;
+            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~mask;
+            if (mask & (1<<24)) {
+                /*
+                 * User disables FXSR bit, mask even other capabilities
+                 * that operate exclusively on XMM, so we don't have to
+                 * double-check all the time. We mask PCLMULQDQ, AMD XOP,
+                 * AES-NI and AVX. Formally speaking we don't have to
+                 * do it in x86_64 case, but we can safely assume that
+                 * x86_64 users won't actually flip this flag.
+                 */
+                vec &= ~((IA32CAP)(1<<1|1<<11|1<<25|1<<28) << 32);
+            }
+        } else if (env[0] == ':') {
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+        }
 
-        OPENSSL_ia32cap_P[2] = 0;
         if ((env = strchr(env, ':'))) {
-            unsigned int vecx;
+            IA32CAP vecx;
             env++;
             off = (env[0] == '~') ? 1 : 0;
-            vecx = strtoul(env + off, NULL, 0);
-            if (off)
-                OPENSSL_ia32cap_P[2] &= ~vecx;
-            else
-                OPENSSL_ia32cap_P[2] = vecx;
+#  if defined(_WIN32)
+            if (!sscanf(env + off, "%I64i", &vecx))
+                vecx = strtoul(env + off, NULL, 0);
+#  else
+            if (!sscanf(env + off, "%lli", (long long *)&vecx))
+                vecx = strtoul(env + off, NULL, 0);
+#  endif
+            if (off) {
+                OPENSSL_ia32cap_P[2] &= ~(unsigned int)vecx;
+                OPENSSL_ia32cap_P[3] &= ~(unsigned int)(vecx >> 32);
+            } else {
+                OPENSSL_ia32cap_P[2] = (unsigned int)vecx;
+                OPENSSL_ia32cap_P[3] = (unsigned int)(vecx >> 32);
+            }
+        } else {
+            OPENSSL_ia32cap_P[2] = 0;
+            OPENSSL_ia32cap_P[3] = 0;
         }
-    } else
+    } else {
         vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+    }
 
     /*
      * |(1<<10) sets a reserved bit to signal that variable

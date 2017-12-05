@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-x509,
 x509 - Certificate display and signing utility
 
 =head1 SYNOPSIS
@@ -56,7 +57,7 @@ B<openssl> B<x509>
 [B<-ext extensions>]
 [B<-certopt option>]
 [B<-C>]
-[B<-[digest]>]
+[B<-I<digest>>]
 [B<-clrext>]
 [B<-extfile filename>]
 [B<-extensions section>]
@@ -92,12 +93,12 @@ certificate but this can change if other options such as B<-req> are
 present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
 added. The NET option is an obscure Netscape server format that is now
-obsolete.
+obsolete. The default format is PEM.
 
 =item B<-outform DER|PEM|NET>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in filename>
 
@@ -109,7 +110,7 @@ if this option is not specified.
 This specifies the output filename to write to or standard output by
 default.
 
-=item B<-[digest]>
+=item B<-I<digest>>
 
 The digest to use.
 This affects any signing or display option that uses a message
@@ -703,7 +704,7 @@ Display the "Subject Alternative Name" extension of a certificate:
 
  openssl x509 -in cert.pem -noout -ext subjectAltName
 
-Display the more extensions of a certificate:
+Display more extensions of a certificate:
 
  openssl x509 -in cert.pem -noout -ext subjectAltName,nsCertType
 

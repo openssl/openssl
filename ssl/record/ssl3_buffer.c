@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,7 +93,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
         align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
-        len = s->max_send_fragment
+        len = ssl_get_max_send_fragment(s)
             + SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD + headerlen + align;
 #ifndef OPENSSL_NO_COMP
         if (ssl_allow_compression(s))
@@ -107,11 +107,18 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     for (currpipe = 0; currpipe < numwpipes; currpipe++) {
         SSL3_BUFFER *thiswb = &wb[currpipe];
 
+        if (thiswb->buf != NULL && thiswb->len != len) {
+            OPENSSL_free(thiswb->buf);
+            thiswb->buf = NULL;         /* force reallocation */
+        }
+
         if (thiswb->buf == NULL) {
             p = OPENSSL_malloc(len);
             if (p == NULL) {
                 s->rlayer.numwpipes = currpipe;
-                goto err;
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
+                return 0;
             }
             memset(thiswb, 0, sizeof(SSL3_BUFFER));
             thiswb->buf = p;
@@ -120,18 +127,16 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
     }
 
     return 1;
-
- err:
-    SSLerr(SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
-    return 0;
 }
 
 int ssl3_setup_buffers(SSL *s)
 {
     if (!ssl3_setup_read_buffer(s))
         return 0;
-    if (!ssl3_setup_write_buffer(s, 1, 0))
+    if (!ssl3_setup_write_buffer(s, 1, 0)) {
+        /* SSLfatal() already called */
         return 0;
+    }
     return 1;
 }
 

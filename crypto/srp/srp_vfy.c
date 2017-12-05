@@ -19,126 +19,26 @@
 # define SRP_RANDOM_SALT_LEN 20
 # define MAX_LEN 2500
 
-static char b64table[] =
-    "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz./";
-
-/*
- * the following two conversion routines have been inspired by code from
- * Stanford
- */
-
 /*
  * Convert a base64 string into raw byte array representation.
  */
 static int t_fromb64(unsigned char *a, size_t alen, const char *src)
 {
-    char *loc;
-    int i, j;
-    int size;
+    size_t size = strlen(src);
 
-    if (alen == 0 || alen > INT_MAX)
+    /* Four bytes in src become three bytes output. */
+    if (size > INT_MAX || (size / 4) * 3 > alen)
         return -1;
 
-    while (*src && (*src == ' ' || *src == '\t' || *src == '\n'))
-        ++src;
-    size = strlen(src);
-    if (size < 0 || size >= (int)alen)
-        return -1;
-
-    i = 0;
-    while (i < size) {
-        loc = strchr(b64table, src[i]);
-        if (loc == (char *)0)
-            break;
-        else
-            a[i] = loc - b64table;
-        ++i;
-    }
-    /* if nothing valid to process we have a zero length response */
-    if (i == 0)
-        return 0;
-    size = i;
-    i = size - 1;
-    j = size;
-    while (1) {
-        a[j] = a[i];
-        if (--i < 0)
-            break;
-        a[j] |= (a[i] & 3) << 6;
-        --j;
-        a[j] = (unsigned char)((a[i] & 0x3c) >> 2);
-        if (--i < 0)
-            break;
-        a[j] |= (a[i] & 0xf) << 4;
-        --j;
-        a[j] = (unsigned char)((a[i] & 0x30) >> 4);
-        if (--i < 0)
-            break;
-        a[j] |= (a[i] << 2);
-
-        a[--j] = 0;
-        if (--i < 0)
-            break;
-    }
-    while (j <= size && a[j] == 0)
-        ++j;
-    i = 0;
-    while (j <= size)
-        a[i++] = a[j++];
-    return i;
+    return EVP_DecodeBlock(a, (unsigned char *)src, (int)size);
 }
 
 /*
  * Convert a raw byte string into a null-terminated base64 ASCII string.
  */
-static char *t_tob64(char *dst, const unsigned char *src, int size)
+static void t_tob64(char *dst, const unsigned char *src, int size)
 {
-    int c, pos = size % 3;
-    unsigned char b0 = 0, b1 = 0, b2 = 0, notleading = 0;
-    char *olddst = dst;
-
-    switch (pos) {
-    case 1:
-        b2 = src[0];
-        break;
-    case 2:
-        b1 = src[0];
-        b2 = src[1];
-        break;
-    }
-
-    while (1) {
-        c = (b0 & 0xfc) >> 2;
-        if (notleading || c != 0) {
-            *dst++ = b64table[c];
-            notleading = 1;
-        }
-        c = ((b0 & 3) << 4) | ((b1 & 0xf0) >> 4);
-        if (notleading || c != 0) {
-            *dst++ = b64table[c];
-            notleading = 1;
-        }
-        c = ((b1 & 0xf) << 2) | ((b2 & 0xc0) >> 6);
-        if (notleading || c != 0) {
-            *dst++ = b64table[c];
-            notleading = 1;
-        }
-        c = b2 & 0x3f;
-        if (notleading || c != 0) {
-            *dst++ = b64table[c];
-            notleading = 1;
-        }
-        if (pos >= size)
-            break;
-        else {
-            b0 = src[pos++];
-            b1 = src[pos++];
-            b2 = src[pos++];
-        }
-    }
-
-    *dst++ = '\0';
-    return olddst;
+    EVP_EncodeBlock((unsigned char *)dst, src, size);
 }
 
 void SRP_user_pwd_free(SRP_user_pwd *user_pwd)

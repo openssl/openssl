@@ -35,9 +35,7 @@
 typedef unsigned int u_int;
 #endif
 
-#include <openssl/lhash.h>
 #include <openssl/bn.h>
-#define USE_SOCKETS
 #include "apps.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -59,6 +57,7 @@ typedef unsigned int u_int;
 #ifdef CHARSET_EBCDIC
 #include <openssl/ebcdic.h>
 #endif
+#include "internal/sockets.h"
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(int s, int stype, int prot, unsigned char *context);
@@ -67,7 +66,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context);
 static void close_accept_socket(void);
 static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp, SSL_CTX *ctx);
-static int generate_session_id(const SSL *ssl, unsigned char *id,
+static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len);
 static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
@@ -209,7 +208,7 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
 
     if (key_len == EVP_MD_size(EVP_sha256()))
         cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
-    else if(key_len == EVP_MD_size(EVP_sha384()))
+    else if (key_len == EVP_MD_size(EVP_sha384()))
         cipher = SSL_CIPHER_find(ssl, tls13_aes256gcmsha384_id);
 
     if (cipher == NULL) {
@@ -256,7 +255,7 @@ static int ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
     if (p->login == NULL && p->user == NULL) {
         p->login = SSL_get_srp_username(s);
         BIO_printf(bio_err, "SRP username = \"%s\"\n", p->login);
-        return (-1);
+        return -1;
     }
 
     if (p->user == NULL) {
@@ -356,9 +355,9 @@ static int ebcdic_read(BIO *b, char *out, int outl)
     BIO *next = BIO_next(b);
 
     if (out == NULL || outl == 0)
-        return (0);
+        return 0;
     if (next == NULL)
-        return (0);
+        return 0;
 
     ret = BIO_read(next, out, outl);
     if (ret > 0)
@@ -374,7 +373,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
     int num;
 
     if ((in == NULL) || (inl <= 0))
-        return (0);
+        return 0;
     if (next == NULL)
         return 0;
 
@@ -397,7 +396,7 @@ static int ebcdic_write(BIO *b, const char *in, int inl)
 
     ret = BIO_write(next, wbuf->buff, inl);
 
-    return (ret);
+    return ret;
 }
 
 static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -406,7 +405,7 @@ static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
     BIO *next = BIO_next(b);
 
     if (next == NULL)
-        return (0);
+        return 0;
     switch (cmd) {
     case BIO_CTRL_DUP:
         ret = 0L;
@@ -415,7 +414,7 @@ static long ebcdic_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = BIO_ctrl(next, cmd, num, ptr);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int ebcdic_gets(BIO *bp, char *buf, int size)
@@ -459,9 +458,17 @@ static int ssl_servername_cb(SSL *s, int *ad, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-    if (servername != NULL && p->biodebug != NULL)
-        BIO_printf(p->biodebug, "Hostname in TLS extension: \"%s\"\n",
-                   servername);
+
+    if (servername != NULL && p->biodebug != NULL) {
+        const char *cp = servername;
+        unsigned char uc;
+
+        BIO_printf(p->biodebug, "Hostname in TLS extension: \"");
+        while ((uc = *cp++) != 0)
+            BIO_printf(p->biodebug,
+                       isascii(uc) && isprint(uc) ? "%c" : "\\x%02x", uc);
+        BIO_printf(p->biodebug, "\"\n");
+    }
 
     if (p->servername == NULL)
         return SSL_TLSEXT_ERR_NOACK;
@@ -780,13 +787,14 @@ const OPTIONS s_server_options[] = {
      "PEM serverinfo file for certificate"},
     {"certform", OPT_CERTFORM, 'F',
      "Certificate format (PEM or DER) PEM default"},
-    {"key", OPT_KEY, '<',
+    {"key", OPT_KEY, 's',
      "Private Key if not in -cert; default is " TEST_CERT},
     {"keyform", OPT_KEYFORM, 'f',
      "Key format (PEM, DER or ENGINE) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"dcert", OPT_DCERT, '<',
      "Second certificate file to use (usually for DSA)"},
+    {"dhparam", OPT_DHPARAM, '<', "DH parameters file to use"},
     {"dcertform", OPT_DCERTFORM, 'F',
      "Second certificate format (PEM or DER) PEM default"},
     {"dkey", OPT_DKEY, '<',
@@ -2132,7 +2140,7 @@ int s_server_main(int argc, char *argv[])
 #ifdef CHARSET_EBCDIC
     BIO_meth_free(methods_ebcdic);
 #endif
-    return (ret);
+    return ret;
 }
 
 static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
@@ -2194,22 +2202,25 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             BIO_printf(bio_err, "Turned on non blocking io\n");
     }
 
+    con = SSL_new(ctx);
     if (con == NULL) {
-        con = SSL_new(ctx);
-
-        if (s_tlsextdebug) {
-            SSL_set_tlsext_debug_callback(con, tlsext_cb);
-            SSL_set_tlsext_debug_arg(con, bio_s_out);
-        }
-
-        if (context
-            && !SSL_set_session_id_context(con,
-                                           context, strlen((char *)context))) {
-            BIO_printf(bio_err, "Error setting session id context\n");
-            ret = -1;
-            goto err;
-        }
+        ret = -1;
+        goto err;
     }
+
+    if (s_tlsextdebug) {
+        SSL_set_tlsext_debug_callback(con, tlsext_cb);
+        SSL_set_tlsext_debug_arg(con, bio_s_out);
+    }
+
+    if (context != NULL
+        && !SSL_set_session_id_context(con, context,
+                                       strlen((char *)context))) {
+        BIO_printf(bio_err, "Error setting session id context\n");
+        ret = -1;
+        goto err;
+    }
+
     if (!SSL_clear(con)) {
         BIO_printf(bio_err, "Error clearing SSL connection\n");
         ret = -1;
@@ -2254,11 +2265,10 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
             BIO_ctrl(sbio, BIO_CTRL_DGRAM_MTU_DISCOVER, 0, NULL);
 
 # ifndef OPENSSL_NO_SCTP
-        if (prot != IPPROTO_SCTP) {
+        if (prot != IPPROTO_SCTP)
+# endif
             /* Turn on cookie exchange. Not necessary for SCTP */
             SSL_set_options(con, SSL_OP_COOKIE_EXCHANGE);
-        }
-# endif
     } else
 #endif
         sbio = BIO_new_socket(s, BIO_NOCLOSE);
@@ -2330,10 +2340,14 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                 (void)BIO_flush(bio_s_out);
             }
         }
-        if (write_header)
-            BIO_printf(bio_s_out, "No early data received\n");
-        else
+        if (write_header) {
+            if (SSL_get_early_data_status(con) == SSL_EARLY_DATA_NOT_SENT)
+                BIO_printf(bio_s_out, "No early data received\n");
+            else
+                BIO_printf(bio_s_out, "Early data was rejected\n");
+        } else {
             BIO_printf(bio_s_out, "\nEnd of early data\n");
+        }
         if (SSL_is_init_finished(con))
             print_connection_info(con);
     }
@@ -2650,7 +2664,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     if (ret >= 0)
         BIO_printf(bio_s_out, "ACCEPT\n");
     (void)BIO_flush(bio_s_out);
-    return (ret);
+    return ret;
 }
 
 static void close_accept_socket(void)
@@ -2753,7 +2767,7 @@ static int init_ssl_connection(SSL *con)
         if ((dtlslisten && i == 0)
                 || (!dtlslisten && retry)) {
             BIO_printf(bio_s_out, "DELAY\n");
-            return (1);
+            return 1;
         }
 
         BIO_printf(bio_err, "ERROR\n");
@@ -2765,7 +2779,7 @@ static int init_ssl_connection(SSL *con)
         }
         /* Always print any error messages */
         ERR_print_errors(bio_err);
-        return (0);
+        return 0;
     }
 
     print_connection_info(con);
@@ -2868,7 +2882,7 @@ static DH *load_dh_param(const char *dhfile)
     ret = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
  err:
     BIO_free(bio);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -3113,9 +3127,10 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                 PEM_write_bio_X509(io, peer);
                 X509_free(peer);
                 peer = NULL;
-            } else
+            } else {
                 BIO_puts(io, "no client certificate available\n");
-            BIO_puts(io, "</BODY></HTML>\r\n\r\n");
+            }
+            BIO_puts(io, "</pre></BODY></HTML>\r\n\r\n");
             break;
         } else if ((www == 2 || www == 3)
                    && (strncmp("GET /", buf, 5) == 0)) {
@@ -3255,7 +3270,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
         BIO_printf(bio_s_out, "ACCEPT\n");
     OPENSSL_free(buf);
     BIO_free_all(io);
-    return (ret);
+    return ret;
 }
 
 static int rev_body(int s, int stype, int prot, unsigned char *context)
@@ -3408,11 +3423,11 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
 
     OPENSSL_free(buf);
     BIO_free_all(io);
-    return (ret);
+    return ret;
 }
 
 #define MAX_SESSION_ID_ATTEMPTS 10
-static int generate_session_id(const SSL *ssl, unsigned char *id,
+static int generate_session_id(SSL *ssl, unsigned char *id,
                                unsigned int *id_len)
 {
     unsigned int count = 0;

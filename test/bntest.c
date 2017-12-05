@@ -6,14 +6,15 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include "../e_os.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#include "e_os.h"
-#include <internal/numbers.h>
+#include "internal/nelem.h"
+#include "internal/numbers.h"
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -59,9 +60,10 @@ static BN_CTX *ctx;
 /*
  * Polynomial coefficients used in GFM tests.
  */
+#ifndef OPENSSL_NO_EC2M
 static int p0[] = { 163, 7, 6, 3, 0, -1 };
 static int p1[] = { 193, 15, 0, -1 };
-
+#endif
 
 /*
  * Look for |key| in the stanza and return it or NULL if not found.
@@ -75,6 +77,18 @@ static const char *findattr(STANZA *s, const char *key)
         if (strcasecmp(pp->key, key) == 0)
             return pp->value;
     return NULL;
+}
+
+/*
+ * Parse BIGNUM from sparse hex-strings, return |BN_hex2bn| result.
+ */
+static int parse_bigBN(BIGNUM **out, const char *bn_strings[])
+{
+    char *bigstring = glue_strings(bn_strings, NULL);
+    int ret = BN_hex2bn(out, bigstring);
+
+    OPENSSL_free(bigstring);
+    return ret;
 }
 
 /*
@@ -149,7 +163,7 @@ static int rand_neg(void)
 }
 
 
-static int test_sub()
+static int test_sub(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL;
     int i, st = 0;
@@ -186,7 +200,7 @@ err:
 }
 
 
-static int test_div_recip()
+static int test_div_recip(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
     BN_RECP_CTX *recp = NULL;
@@ -230,7 +244,7 @@ err:
 }
 
 
-static int test_mod()
+static int test_mod(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
     int st = 0, i;
@@ -303,31 +317,15 @@ static const char *bn2strings[] = {
     NULL
 };
 
-static char *glue(const char *list[])
-{
-    size_t len = 0;
-    char *p, *save;
-    int i;
-
-    for (i = 0; list[i] != NULL; i++)
-        len += strlen(list[i]);
-    if (!TEST_ptr(p = save = OPENSSL_malloc(len + 1)))
-            return NULL;
-    for (i = 0; list[i] != NULL; i++)
-        p += strlen(strcpy(p, list[i]));
-    return save;
-}
-
 /*
  * Test constant-time modular exponentiation with 1024-bit inputs, which on
  * x86_64 cause a different code branch to be taken.
  */
-static int test_modexp_mont5()
+static int test_modexp_mont5(void)
 {
     BIGNUM *a = NULL, *p = NULL, *m = NULL, *d = NULL, *e = NULL;
     BIGNUM *b = NULL, *n = NULL, *c = NULL;
     BN_MONT_CTX *mont = NULL;
-    char *bigstring;
     int st = 0;
 
     if (!TEST_ptr(a = BN_new())
@@ -373,12 +371,52 @@ static int test_modexp_mont5()
         goto err;
 
     /* Regression test for carry bug in sqr[x]8x_mont */
-    bigstring = glue(bn1strings);
-    BN_hex2bn(&n, bigstring);
-    OPENSSL_free(bigstring);
-    bigstring = glue(bn2strings);
-    BN_hex2bn(&a, bigstring);
-    OPENSSL_free(bigstring);
+    parse_bigBN(&n, bn1strings);
+    parse_bigBN(&a, bn2strings);
+    BN_free(b);
+    b = BN_dup(a);
+    BN_MONT_CTX_set(mont, n, ctx);
+    BN_mod_mul_montgomery(c, a, a, mont, ctx);
+    BN_mod_mul_montgomery(d, a, b, mont, ctx);
+    if (!TEST_BN_eq(c, d))
+        goto err;
+
+    /* Regression test for carry bug in bn_sqrx8x_internal */
+    {
+        static const char *ahex[] = {
+                      "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8FFEADBCFC4DAE7FFF908E92820306B",
+            "9544D954000000006C0000000000000000000000000000000000000000000000",
+            "00000000000000000000FF030202FFFFF8FFEBDBCFC4DAE7FFF908E92820306B",
+            "9544D954000000006C000000FF0302030000000000FFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF01FC00FF02FFFFFFFF",
+            "00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FCFD",
+            "FCFFFFFFFFFF000000000000000000FF0302030000000000FFFFFFFFFFFFFFFF",
+            "FF00FCFDFDFF030202FF00000000FFFFFFFFFFFFFFFFFF00FCFDFCFFFFFFFFFF",
+            NULL
+        };
+        static const char *nhex[] = {
+                      "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF8F8F8F8000000",
+            "00000010000000006C0000000000000000000000000000000000000000000000",
+            "00000000000000000000000000000000000000FFFFFFFFFFFFF8F8F8F8000000",
+            "00000010000000006C000000000000000000000000FFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "00FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFF000000000000000000000000000000000000FFFFFFFFFFFFFFFF",
+            "FFFFFFFFFFFFFFFFFFFF00000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+            NULL
+        };
+
+        parse_bigBN(&a, ahex);
+        parse_bigBN(&n, nhex);
+    }
     BN_free(b);
     b = BN_dup(a);
     BN_MONT_CTX_set(mont, n, ctx);
@@ -430,7 +468,7 @@ err:
 }
 
 #ifndef OPENSSL_NO_EC2M
-static int test_gf2m_add()
+static int test_gf2m_add(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL;
     int i, st = 0;
@@ -463,7 +501,7 @@ static int test_gf2m_add()
     return st;
 }
 
-static int test_gf2m_mod()
+static int test_gf2m_mod(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL, *e = NULL;
     int i, j, st = 0;
@@ -501,7 +539,7 @@ static int test_gf2m_mod()
     return st;
 }
 
-static int test_gf2m_mul()
+static int test_gf2m_mul(void)
 {
     BIGNUM *a, *b[2] = {NULL, NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL, *g = NULL, *h = NULL;
@@ -552,7 +590,7 @@ static int test_gf2m_mul()
     return st;
 }
 
-static int test_gf2m_sqr()
+static int test_gf2m_sqr(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
@@ -589,7 +627,7 @@ static int test_gf2m_sqr()
     return st;
 }
 
-static int test_gf2m_modinv()
+static int test_gf2m_modinv(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     int i, j, st = 0;
@@ -624,7 +662,7 @@ static int test_gf2m_modinv()
     return st;
 }
 
-static int test_gf2m_moddiv()
+static int test_gf2m_moddiv(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
@@ -666,7 +704,7 @@ static int test_gf2m_moddiv()
     return st;
 }
 
-static int test_gf2m_modexp()
+static int test_gf2m_modexp(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
@@ -712,7 +750,7 @@ static int test_gf2m_modexp()
     return st;
 }
 
-static int test_gf2m_modsqrt()
+static int test_gf2m_modsqrt(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL, *f = NULL;
@@ -754,7 +792,7 @@ static int test_gf2m_modsqrt()
     return st;
 }
 
-static int test_gf2m_modsolvequad()
+static int test_gf2m_modsolvequad(void)
 {
     BIGNUM *a = NULL, *b[2] = {NULL,NULL}, *c = NULL, *d = NULL;
     BIGNUM *e = NULL;
@@ -805,7 +843,7 @@ static int test_gf2m_modsolvequad()
 }
 #endif
 
-static int test_kronecker()
+static int test_kronecker(void)
 {
     BIGNUM *a = NULL, *b = NULL, *r = NULL, *t = NULL;
     int i, legendre, kronecker, st = 0;
@@ -1051,7 +1089,9 @@ static int file_lshift(STANZA *s)
 
     if (!TEST_ptr(a = getBN(s, "A"))
             || !TEST_ptr(lshift = getBN(s, "LShift"))
-            || !TEST_ptr(ret = BN_new()))
+            || !TEST_ptr(ret = BN_new())
+            || !getint(s, &n, "N"))
+        goto err;
 
     if (!TEST_true(BN_lshift(ret, a, n))
             || !equalBN("A << N", lshift, ret)
@@ -1441,7 +1481,7 @@ err:
     return st;
 }
 
-static int test_bn2padded()
+static int test_bn2padded(void)
 {
 #if HAVE_BN_PADDED
     uint8_t zeros[256], out[256], reference[128];
@@ -1502,7 +1542,7 @@ err:
 #endif
 }
 
-static int test_dec2bn()
+static int test_dec2bn(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1571,7 +1611,7 @@ err:
     return st;
 }
 
-static int test_hex2bn()
+static int test_hex2bn(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1637,7 +1677,7 @@ err:
     return st;
 }
 
-static int test_asc2bn()
+static int test_asc2bn(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1735,7 +1775,7 @@ err:
     return st;
 }
 
-static int test_rand()
+static int test_rand(void)
 {
     BIGNUM *bn = NULL;
     int st = 0;
@@ -1761,7 +1801,7 @@ err:
     return st;
 }
 
-static int test_negzero()
+static int test_negzero(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
     BIGNUM *numerator = NULL, *denominator = NULL;
@@ -1830,7 +1870,7 @@ err:
     return st;
 }
 
-static int test_badmod()
+static int test_badmod(void)
 {
     BIGNUM *a = NULL, *b = NULL, *zero = NULL;
     BN_MONT_CTX *mont = NULL;
@@ -1896,7 +1936,7 @@ err:
     return st;
 }
 
-static int test_expmodzero()
+static int test_expmodzero(void)
 {
     BIGNUM *a = NULL, *r = NULL, *zero = NULL;
     int st = 0;
@@ -1929,7 +1969,7 @@ err:
     return st;
 }
 
-static int test_smallprime()
+static int test_smallprime(void)
 {
     static const int kBits = 10;
     BIGNUM *r;
@@ -1947,7 +1987,7 @@ err:
     return st;
 }
 
-static int test_3_is_prime()
+static int test_3_is_prime(void)
 {
     int ret = 0;
     BIGNUM *r = NULL;
@@ -2035,11 +2075,8 @@ static int run_file_tests(int i)
 
 int setup_tests(void)
 {
-    static const char rnd_seed[] =
-        "If not seeded, BN_generate_prime might fail";
     int n = test_get_argument_count();
 
-    RAND_seed(rnd_seed, sizeof(rnd_seed));
     if (!TEST_ptr(ctx = BN_CTX_new()))
         return 0;
 

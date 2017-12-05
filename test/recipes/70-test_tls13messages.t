@@ -99,12 +99,20 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
         checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
         checkhandshake::ALPN_CLI_EXTENSION],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
         checkhandshake::SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
@@ -157,9 +165,9 @@ $proxy->clearClient();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->clientstart();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::PSK_CLI_EXTENSION
-               | checkhandshake::PSK_SRV_EXTENSION,
+               (checkhandshake::DEFAULT_EXTENSIONS
+                | checkhandshake::PSK_CLI_EXTENSION
+                | checkhandshake::PSK_SRV_EXTENSION),
                "Resumption handshake test");
 
 #Test 3: A status_request handshake (client request only)
@@ -300,10 +308,10 @@ $proxy->clientflags("-sess_in ".$session);
 $proxy->serverflags("-curves P-256");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::KEY_SHARE_HRR_EXTENSION
-               | checkhandshake::PSK_CLI_EXTENSION
-               | checkhandshake::PSK_SRV_EXTENSION,
+               (checkhandshake::DEFAULT_EXTENSIONS
+                | checkhandshake::KEY_SHARE_HRR_EXTENSION
+                | checkhandshake::PSK_CLI_EXTENSION
+                | checkhandshake::PSK_SRV_EXTENSION),
                "Resumption handshake with HRR test");
 
 #Test 16: Acceptable but non preferred key_share

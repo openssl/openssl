@@ -8,9 +8,8 @@
  */
 
 #include <string.h>
-#include <internal/numbers.h>
-
 #include "testutil.h"
+#include "internal/numbers.h"
 
 static int test_sanity_null_zero(void)
 {
@@ -66,12 +65,22 @@ static int test_sanity_sign(void)
     return 1;
 }
 
-static int test_sanity_unsigned_convertion(void)
+static int test_sanity_unsigned_conversion(void)
 {
     /* Check that unsigned-to-signed conversions preserve bit patterns */
     if (!TEST_int_eq((int)((unsigned int)INT_MAX + 1), INT_MIN)
         || !TEST_long_eq((long)((unsigned long)LONG_MAX + 1), LONG_MIN))
         return 0;
+    return 1;
+}
+
+static int test_sanity_range(void)
+{
+    /* This isn't possible to check using the framework functions */
+    if (SIZE_MAX < INT_MAX) {
+        TEST_error("int must not be wider than size_t");
+        return 0;
+    }
     return 1;
 }
 
@@ -81,7 +90,8 @@ int setup_tests(void)
     ADD_TEST(test_sanity_enum_size);
     ADD_TEST(test_sanity_twos_complement);
     ADD_TEST(test_sanity_sign);
-    ADD_TEST(test_sanity_unsigned_convertion);
+    ADD_TEST(test_sanity_unsigned_conversion);
+    ADD_TEST(test_sanity_range);
     return 1;
 }
 

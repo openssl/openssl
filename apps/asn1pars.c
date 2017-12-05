@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * A nice addition from Dr Stephen Henson <steve@openssl.org> to add the
- * -strparse option which parses nested binary structures
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -311,7 +306,7 @@ int asn1parse_main(int argc, char **argv)
         OPENSSL_free(str);
     ASN1_TYPE_free(at);
     sk_OPENSSL_STRING_free(osk);
-    return (ret);
+    return ret;
 }
 
 static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf)

@@ -15,8 +15,10 @@
 #include <openssl/comp.h>
 #include <openssl/engine.h>
 #include <openssl/crypto.h>
+#include "internal/nelem.h"
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
+#include "internal/cryptlib.h"
 
 #define SSL_ENC_DES_IDX         0
 #define SSL_ENC_3DES_IDX        1
@@ -38,7 +40,9 @@
 #define SSL_ENC_AES256CCM8_IDX  17
 #define SSL_ENC_GOST8912_IDX    18
 #define SSL_ENC_CHACHA_IDX      19
-#define SSL_ENC_NUM_IDX         20
+#define SSL_ENC_ARIA128GCM_IDX  20
+#define SSL_ENC_ARIA256GCM_IDX  21
+#define SSL_ENC_NUM_IDX         22
 
 /* NB: make sure indices in these tables match values above */
 
@@ -67,8 +71,10 @@ static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
     {SSL_AES256CCM, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM_IDX 15 */
     {SSL_AES128CCM8, NID_aes_128_ccm}, /* SSL_ENC_AES128CCM8_IDX 16 */
     {SSL_AES256CCM8, NID_aes_256_ccm}, /* SSL_ENC_AES256CCM8_IDX 17 */
-    {SSL_eGOST2814789CNT12, NID_gost89_cnt_12}, /* SSL_ENC_GOST8912_IDX */
-    {SSL_CHACHA20POLY1305, NID_chacha20_poly1305},
+    {SSL_eGOST2814789CNT12, NID_gost89_cnt_12}, /* SSL_ENC_GOST8912_IDX 18 */
+    {SSL_CHACHA20POLY1305, NID_chacha20_poly1305}, /* SSL_ENC_CHACHA_IDX 19 */
+    {SSL_ARIA128GCM, NID_aria_128_gcm}, /* SSL_ENC_ARIA128GCM_IDX 20 */
+    {SSL_ARIA256GCM, NID_aria_256_gcm}, /* SSL_ENC_ARIA256GCM_IDX 21 */
 };
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX];
@@ -266,6 +272,11 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_CAMELLIA256, NULL, 0, 0, 0, SSL_CAMELLIA256},
     {0, SSL_TXT_CAMELLIA, NULL, 0, 0, 0, SSL_CAMELLIA},
     {0, SSL_TXT_CHACHA20, NULL, 0, 0, 0, SSL_CHACHA20},
+
+    {0, SSL_TXT_ARIA, NULL, 0, 0, 0, SSL_ARIA},
+    {0, SSL_TXT_ARIA_GCM, NULL, 0, 0, 0, SSL_ARIA128GCM | SSL_ARIA256GCM},
+    {0, SSL_TXT_ARIA128, NULL, 0, 0, 0, SSL_ARIA128GCM},
+    {0, SSL_TXT_ARIA256, NULL, 0, 0, 0, SSL_ARIA256GCM},
 
     /* MAC aliases */
     {0, SSL_TXT_MD5, NULL, 0, 0, 0, 0, SSL_MD5},
@@ -1000,7 +1011,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                    ((ch >= 'a') && (ch <= 'z')) ||
                    (ch == '-') || (ch == '.') || (ch == '='))
 #else
-            while (isalnum(ch) || (ch == '-') || (ch == '.') || (ch == '='))
+            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '.')
+                   || (ch == '='))
 #endif
             {
                 ch = *(++l);
@@ -1636,6 +1648,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     case SSL_CAMELLIA256:
         enc = "Camellia(256)";
         break;
+    case SSL_ARIA128GCM:
+        enc = "ARIAGCM(128)";
+        break;
+    case SSL_ARIA256GCM:
+        enc = "ARIAGCM(256)";
+        break;
     case SSL_SEED:
         enc = "SEED(128)";
         break;
@@ -1747,13 +1765,18 @@ uint32_t SSL_CIPHER_get_id(const SSL_CIPHER *c)
     return c->id;
 }
 
+uint16_t SSL_CIPHER_get_protocol_id(const SSL_CIPHER *c)
+{
+    return c->id & 0xFFFF;
+}
+
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 {
     SSL_COMP *ctmp;
     int i, nn;
 
     if ((n == 0) || (sk == NULL))
-        return (NULL);
+        return NULL;
     nn = sk_SSL_COMP_num(sk);
     for (i = 0; i < nn; i++) {
         ctmp = sk_SSL_COMP_value(sk, i);
@@ -1959,7 +1982,7 @@ int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
 
     /* Some hard-coded numbers for the CCM/Poly1305 MAC overhead
      * because there are no handy #defines for those. */
-    if (c->algorithm_enc & SSL_AESGCM) {
+    if (c->algorithm_enc & (SSL_AESGCM | SSL_ARIAGCM)) {
         out = EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
     } else if (c->algorithm_enc & (SSL_AES128CCM | SSL_AES256CCM)) {
         out = EVP_CCM_TLS_EXPLICIT_IV_LEN + 16;

@@ -24,7 +24,7 @@
 #define K_MAJ   4
 #define K_MIN1  1
 #define K_MIN2  0
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2) || \
+#if LINUX_VERSION_CODE < KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2) || \
     !defined(AF_ALG)
 # ifndef PEDANTIC
 #  warning "AFALG ENGINE requires Kernel Headers >= 4.1.0"
@@ -105,7 +105,7 @@ static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
 
 static ossl_inline int eventfd(int n)
 {
-    return syscall(__NR_eventfd, n);
+    return syscall(__NR_eventfd2, n, 0);
 }
 
 static ossl_inline int io_destroy(aio_context_t ctx)
@@ -145,7 +145,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
             ALG_WARN("%s: ASYNC_get_wait_ctx error", __func__);
             return 0;
         }
-        /* Get waitfd from ASYNC_WAIT_CTX if it is alreday set */
+        /* Get waitfd from ASYNC_WAIT_CTX if it is already set */
         ret = ASYNC_WAIT_CTX_get_fd(waitctx, engine_afalg_id,
                                     &aio->efd, &custom);
         if (ret == 0) {

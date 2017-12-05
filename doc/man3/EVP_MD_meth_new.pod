@@ -11,7 +11,7 @@ EVP_MD_meth_set_ctrl, EVP_MD_meth_get_input_blocksize,
 EVP_MD_meth_get_result_size, EVP_MD_meth_get_app_datasize,
 EVP_MD_meth_get_flags, EVP_MD_meth_get_init, EVP_MD_meth_get_update,
 EVP_MD_meth_get_final, EVP_MD_meth_get_copy, EVP_MD_meth_get_cleanup,
-EVP_MD_meth_get_ctrl, EVP_MD_CTX_md_data
+EVP_MD_meth_get_ctrl
 - Routines to build up EVP_MD methods
 
 =head1 SYNOPSIS
@@ -34,7 +34,6 @@ EVP_MD_meth_get_ctrl, EVP_MD_CTX_md_data
                                                     unsigned char *md));
  int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to,
                                                   const EVP_MD_CTX *from));
- void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
  int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx));
  int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
                                                   int p1, void *p2));
@@ -140,7 +139,6 @@ EVP_MD_CTX_free().
 
 EVP_MD_meth_set_ctrl() sets the control function for B<md>.
 
-
 EVP_MD_meth_get_input_blocksize(), EVP_MD_meth_get_result_size(),
 EVP_MD_meth_get_app_datasize(), EVP_MD_meth_get_flags(),
 EVP_MD_meth_get_init(), EVP_MD_meth_get_update(),
@@ -148,6 +146,17 @@ EVP_MD_meth_get_final(), EVP_MD_meth_get_copy(),
 EVP_MD_meth_get_cleanup() and EVP_MD_meth_get_ctrl() are all used
 to retrieve the method data given with the EVP_MD_meth_set_*()
 functions above.
+
+=head1 RETURN VALUES
+
+EVP_MD_meth_new() and EVP_MD_meth_dup() return a pointer to a newly
+created B<EVP_MD>, or NULL on failure.
+All EVP_MD_meth_set_*() functions return 1.
+EVP_MD_get_input_blocksize(), EVP_MD_meth_get_result_size(),
+EVP_MD_meth_get_app_datasize() and EVP_MD_meth_get_flags() return the
+indicated sizes or flags.
+All other EVP_CIPHER_meth_get_*() functions return pointers to their
+respective B<md> function.
 
 =head1 SEE ALSO
 
@@ -160,7 +169,7 @@ The B<EVP_MD> structure was openly available in OpenSSL before version
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

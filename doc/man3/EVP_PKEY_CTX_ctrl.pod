@@ -8,6 +8,7 @@ EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_CTX_set_rsa_keygen_bits,
 EVP_PKEY_CTX_set_rsa_keygen_pubexp, EVP_PKEY_CTX_set_dsa_paramgen_bits,
 EVP_PKEY_CTX_set_dh_paramgen_prime_len,
 EVP_PKEY_CTX_set_dh_paramgen_generator,
+EVP_PKEY_CTX_set_dh_pad, EVP_PKEY_CTX_set_dh_nid,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
 EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
 
@@ -35,6 +36,8 @@ EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
  #include <openssl/dh.h>
  int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int len);
  int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen);
+ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
+ int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid);
 
  #include <openssl/ec.h>
  int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
@@ -110,6 +113,15 @@ then 1024 is used.
 
 The EVP_PKEY_CTX_set_dh_paramgen_generator() macro sets DH generator to B<gen>
 for DH parameter generation. If not specified 2 is used.
+
+The EVP_PKEY_CTX_set_dh_pad() macro sets the DH padding mode. If B<pad> is
+1 the shared secret is padded with zeroes up to the size of the DH prime B<p>.
+If B<pad> is zero (the default) then no padding is performed.
+
+EVP_PKEY_CTX_set_dh_nid() sets the DH parameters to values corresponding to
+B<nid>. The B<nid> parameter must be B<NID_ffdhe2048>, B<NID_ffdhe3072>,
+B<NID_ffdhe4096>, B<NID_ffdhe6144> or B<NID_ffdhe8192>.  This macro can be
+called during parameter or key generation.
 
 The EVP_PKEY_CTX_set_ec_paramgen_curve_nid() sets the EC curve for EC parameter
 generation to B<nid>. For EC parameter generation this macro must be called

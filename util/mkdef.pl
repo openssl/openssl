@@ -36,7 +36,7 @@
 #   The semantics for the platforms is that every item is checked against the
 #   environment.  For the negative items ("!FOO"), if any of them is false
 #   (i.e. "FOO" is true) in the environment, the corresponding symbol can't be
-#   used.  For the positive itms, if all of them are false in the environment,
+#   used.  For the positive items, if all of them are false in the environment,
 #   the corresponding symbol can't be used.  Any combination of positive and
 #   negative items are possible, and of course leave room for some redundancy.
 # - "kind" is "FUNCTION" or "VARIABLE".  The meaning of that is obvious.
@@ -49,7 +49,61 @@ use lib ".";
 use configdata;
 use File::Spec::Functions;
 use File::Basename;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use FindBin;
+use lib "$FindBin::Bin/perl";
+use OpenSSL::Glob;
+
+# When building a "variant" shared library, with a custom SONAME, also customize
+# all the symbol versions.  This produces a shared object that can coexist
+# without conflict in the same address space as a default build, or an object
+# with a different variant tag.
+#
+# For example, with a target definition that includes:
+#
+#         shlib_variant => "-opt",
+#
+# we build the following objects:
+#
+# $ perl -le '
+#     for (@ARGV) {
+#         if ($l = readlink) {
+#             printf "%s -> %s\n", $_, $l
+#         } else {
+#             print
+#         }
+#     }' *.so*
+# libcrypto-opt.so.1.1
+# libcrypto.so -> libcrypto-opt.so.1.1
+# libssl-opt.so.1.1
+# libssl.so -> libssl-opt.so.1.1
+#
+# whose SONAMEs and dependencies are:
+#
+# $ for l in *.so; do
+#     echo $l
+#     readelf -d $l | egrep 'SONAME|NEEDED.*(ssl|crypto)'
+#   done
+# libcrypto.so
+#  0x000000000000000e (SONAME)             Library soname: [libcrypto-opt.so.1.1]
+# libssl.so
+#  0x0000000000000001 (NEEDED)             Shared library: [libcrypto-opt.so.1.1]
+#  0x000000000000000e (SONAME)             Library soname: [libssl-opt.so.1.1]
+#
+# We case-fold the variant tag to upper case and replace all non-alnum
+# characters with "_".  This yields the following symbol versions:
+#
+# $ nm libcrypto.so | grep -w A
+# 0000000000000000 A OPENSSL_OPT_1_1_0
+# 0000000000000000 A OPENSSL_OPT_1_1_0a
+# 0000000000000000 A OPENSSL_OPT_1_1_0c
+# 0000000000000000 A OPENSSL_OPT_1_1_0d
+# 0000000000000000 A OPENSSL_OPT_1_1_0f
+# 0000000000000000 A OPENSSL_OPT_1_1_0g
+# $ nm libssl.so | grep -w A
+# 0000000000000000 A OPENSSL_OPT_1_1_0
+# 0000000000000000 A OPENSSL_OPT_1_1_0d
+#
+(my $SO_VARIANT = qq{\U$target{"shlib_variant"}}) =~ s/\W/_/g;
 
 my $debug=0;
 
@@ -81,9 +135,9 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "SHA256", "SHA512", "RMD160",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "EC2M",
-			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST", "ARIA",
+			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST", "ARIA", "SM4",
                          "SCRYPT", "CHACHA", "POLY1305", "BLAKE2",
-			 "SIPHASH",
+			 "SIPHASH", "SM3",
 			 # EC_NISTP_64_GCC_128
 			 "EC_NISTP_64_GCC_128",
 			 # Envelope "algorithms"
@@ -410,10 +464,10 @@ sub do_defs
 
 		print STDERR "DEBUG: parsing ----------\n" if $debug;
 		while(<IN>) {
+			s|\R$||; # Better chomp
 			if($parens > 0) {
 				#Inside a DEPRECATEDIN
 				$stored_multiline .= $_;
-				$stored_multiline =~ s|\R$||; # Better chomp
 				print STDERR "DEBUG: Continuing multiline DEPRECATEDIN: $stored_multiline\n" if $debug;
 				$parens = count_parens($stored_multiline);
 				if ($parens == 0) {
@@ -439,7 +493,7 @@ sub do_defs
 			}
 
 			if(/\/\*/) {
-				if (not /\*\//) {	# multiline comment...
+				if (not /\*\//) {	# multi-line comment...
 					$line = $_;	# ... just accumulate
 					next;
 				} else {
@@ -524,7 +578,7 @@ sub do_defs
 				while($tag[$tag_i] ne "-") {
 					if ($tag[$tag_i] eq "OPENSSL_NO_".$1) {
 						$tag{$tag[$tag_i]}=2;
-						print STDERR "DEBUG: $file: chaged tag $1 = 2\n" if $debug;
+						print STDERR "DEBUG: $file: changed tag $1 = 2\n" if $debug;
 					}
 					$tag_i--;
 				}
@@ -623,7 +677,7 @@ sub do_defs
 					$def .= "int d2i_$3(void);";
 					$def .= "int i2d_$3(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -635,7 +689,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -647,7 +701,7 @@ sub do_defs
 					$def .= "int $3_free(void);";
 					$def .= "int $3_new(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -659,7 +713,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -672,7 +726,7 @@ sub do_defs
 					$def .= "int $1_free(void);";
 					$def .= "int $1_new(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -684,7 +738,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$1_it","$1_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -694,7 +748,7 @@ sub do_defs
 					$def .= "int d2i_$2(void);";
 					$def .= "int i2d_$2(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -706,7 +760,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -722,7 +776,7 @@ sub do_defs
 					$def .= "int $2_free(void);";
 					$def .= "int $2_new(void);";
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -734,7 +788,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$2_it","$2_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -742,7 +796,7 @@ sub do_defs
 					next;
 				} elsif (/^\s*DECLARE_ASN1_ITEM\s*\(\s*(\w*)\s*\)/) {
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -754,7 +808,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("$1_it","$1_it",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -820,7 +874,7 @@ sub do_defs
 					next;
 				} elsif (/^OPENSSL_DECLARE_GLOBAL\s*\(\s*(\w*)\s*,\s*(\w*)\s*\)/) {
 					# Variant for platforms that do not
-					# have to access globale variables
+					# have to access global variables
 					# in shared libraries through functions
 					$def .=
 					    "#INFO:"
@@ -832,7 +886,7 @@ sub do_defs
 						.join(',',@current_platforms).":"
 						    .join(',',@current_algorithms).";";
 					# Variant for platforms that have to
-					# access globale variables in shared
+					# access global variables in shared
 					# libraries through functions
 					&$make_variant("_shadow_$2","_shadow_$2",
 						      "EXPORT_VAR_AS_FUNCTION",
@@ -845,7 +899,6 @@ sub do_defs
 							\@current_algorithms);
 					} else {
 						$stored_multiline = $_;
-						$stored_multiline =~ s|\R$||;
 						print STDERR "DEBUG: Found multiline DEPRECATEDIN starting with: $stored_multiline\n" if $debug;
 						next;
 					}
@@ -1230,13 +1283,13 @@ EOF
 						if ($symversion ne $prevsymversion) {
 							if ($prevsymversion ne "") {
 								if ($prevprevsymversion ne "") {
-									print OUT "} OPENSSL_"
+									print OUT "} OPENSSL${SO_VARIANT}_"
 												."$prevprevsymversion;\n\n";
 								} else {
 									print OUT "};\n\n";
 								}
 							}
-							print OUT "OPENSSL_$symversion {\n    global:\n";
+							print OUT "OPENSSL${SO_VARIANT}_$symversion {\n    global:\n";
 							$prevprevsymversion = $prevsymversion;
 							$prevsymversion = $symversion;
 						}
@@ -1285,7 +1338,7 @@ EOF
 	} while ($linux && $thisversion ne $currversion);
 	if ($linux) {
 		if ($prevprevsymversion ne "") {
-			print OUT "    local: *;\n} OPENSSL_$prevprevsymversion;\n\n";
+			print OUT "    local: *;\n} OPENSSL${SO_VARIANT}_$prevprevsymversion;\n\n";
 		} else {
 			print OUT "    local: *;\n};\n\n";
 		}
@@ -1631,7 +1684,7 @@ sub do_deprecated()
 {
 	my ($decl, $plats, $algs) = @_;
 	$decl =~ /^\s*(DEPRECATEDIN_\d+_\d+_\d+)\s*\((.*)\)\s*$/
-            or die "Bad DEPRECTEDIN: $decl\n";
+            or die "Bad DEPRECATEDIN: $decl\n";
 	my $info1 .= "#INFO:";
 	$info1 .= join(',', @{$plats}) . ":";
 	my $info2 = $info1;

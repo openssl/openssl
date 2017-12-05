@@ -140,22 +140,6 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
 
 #  define i2d_OCSP_REQUEST_bio(bp,o) ASN1_i2d_bio_of(OCSP_REQUEST,i2d_OCSP_REQUEST,bp,o)
 
-#  define OCSP_REQUEST_sign(o,pkey,md) \
-        ASN1_item_sign(ASN1_ITEM_rptr(OCSP_REQINFO),\
-                &(o)->optionalSignature->signatureAlgorithm,NULL,\
-                (o)->optionalSignature->signature,&(o)->tbsRequest,pkey,md)
-
-#  define OCSP_BASICRESP_sign(o,pkey,md,d) \
-        ASN1_item_sign(ASN1_ITEM_rptr(OCSP_RESPDATA),&(o)->signatureAlgorithm,\
-                NULL,(o)->signature,&(o)->tbsResponseData,pkey,md)
-
-#  define OCSP_REQUEST_verify(a,r) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_REQINFO),\
-        &(a)->optionalSignature->signatureAlgorithm,\
-        (a)->optionalSignature->signature,&(a)->tbsRequest,r)
-
-#  define OCSP_BASICRESP_verify(a,r,d) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA),\
-        &(a)->signatureAlgorithm,(a)->signature,&(a)->tbsResponseData,r)
-
 #  define ASN1_BIT_STRING_digest(data,type,md,len) \
         ASN1_item_digest(ASN1_ITEM_rptr(ASN1_BIT_STRING),type,data,md,len)
 
@@ -213,6 +197,8 @@ int OCSP_response_status(OCSP_RESPONSE *resp);
 OCSP_BASICRESP *OCSP_response_get1_basic(OCSP_RESPONSE *resp);
 
 const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs);
+int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
+                          STACK_OF(X509) *extra_certs);
 
 int OCSP_resp_count(OCSP_BASICRESP *bs);
 OCSP_SINGLERESP *OCSP_resp_get0(OCSP_BASICRESP *bs, int idx);

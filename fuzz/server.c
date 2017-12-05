@@ -22,6 +22,8 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
+#include "rand.inc"
+
 static const uint8_t kCertificateDER[] = {
     0x30, 0x82, 0x02, 0xff, 0x30, 0x82, 0x01, 0xe7, 0xa0, 0x03, 0x02, 0x01,
     0x02, 0x02, 0x11, 0x00, 0xb1, 0x84, 0xee, 0x34, 0x99, 0x98, 0x76, 0xfb,
@@ -494,7 +496,7 @@ int FuzzerInitialize(int *argc, char ***argv)
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
-    OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
+    sk_SSL_COMP_sort(comp_methods);
 
 
     return 1;
@@ -505,7 +507,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     SSL *server;
     BIO *in;
     BIO *out;
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)
     BIO *bio_buf;
+#endif
     SSL_CTX *ctx;
     int ret;
     RSA *privkey;

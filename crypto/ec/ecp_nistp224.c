@@ -79,7 +79,7 @@ typedef limb felem[4];
 typedef widelimb widefelem[7];
 
 /*
- * Field element represented as a byte arrary. 28*8 = 224 bits is also the
+ * Field element represented as a byte array. 28*8 = 224 bits is also the
  * group order size for the elliptic curve, and we also use this type for
  * scalars for point multiplication.
  */
@@ -700,7 +700,7 @@ static limb felem_is_zero(const felem in)
     return (zero | two224m96p1 | two225m97p2);
 }
 
-static limb felem_is_zero_int(const felem in)
+static int felem_is_zero_int(const void *in)
 {
     return (int)(felem_is_zero(in) & ((limb) 1));
 }
@@ -1366,7 +1366,6 @@ static void make_points_affine(size_t num, felem points[ /* num */ ][3],
                                              sizeof(felem),
                                              tmp_felems,
                                              (void (*)(void *))felem_one,
-                                             (int (*)(const void *))
                                              felem_is_zero_int,
                                              (void (*)(void *, const void *))
                                              felem_assign,

@@ -45,6 +45,12 @@ extern "C" {
 # define RSA_3   0x3L
 # define RSA_F4  0x10001L
 
+/* based on RFC 8017 appendix A.1.2 */
+# define RSA_ASN1_VERSION_DEFAULT        0
+# define RSA_ASN1_VERSION_MULTI          1
+
+# define RSA_DEFAULT_PRIME_NUM           2
+
 # define RSA_METHOD_FLAG_NO_CHECK        0x0001/* don't check pub/private
                                                 * match */
 
@@ -120,6 +126,10 @@ extern "C" {
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
                           EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
 
+# define EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, primes) \
+        RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_KEYGEN, \
+                          EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES, primes, NULL)
+
 # define  EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md) \
         RSA_pkey_ctx_ctrl(ctx, EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT, \
                           EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md))
@@ -170,6 +180,8 @@ extern "C" {
 # define EVP_PKEY_CTRL_GET_RSA_OAEP_MD   (EVP_PKEY_ALG_CTRL + 11)
 # define EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL (EVP_PKEY_ALG_CTRL + 12)
 
+# define EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES  (EVP_PKEY_ALG_CTRL + 13)
+
 # define RSA_PKCS1_PADDING       1
 # define RSA_SSLV23_PADDING      2
 # define RSA_NO_PADDING          3
@@ -192,15 +204,22 @@ int RSA_security_bits(const RSA *rsa);
 int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d);
 int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q);
 int RSA_set0_crt_params(RSA *r,BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp);
+int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
+                                BIGNUM *coeffs[], int pnum);
 void RSA_get0_key(const RSA *r,
                   const BIGNUM **n, const BIGNUM **e, const BIGNUM **d);
 void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q);
+int RSA_get_multi_prime_extra_count(const RSA *r);
+int RSA_get0_multi_prime_factors(const RSA *r, const BIGNUM *primes[]);
 void RSA_get0_crt_params(const RSA *r,
                          const BIGNUM **dmp1, const BIGNUM **dmq1,
                          const BIGNUM **iqmp);
+int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
+                                    const BIGNUM *coeffs[]);
 void RSA_clear_flags(RSA *r, int flags);
 int RSA_test_flags(const RSA *r, int flags);
 void RSA_set_flags(RSA *r, int flags);
+int RSA_get_version(RSA *r);
 ENGINE *RSA_get0_engine(const RSA *r);
 
 /* Deprecated version */
@@ -210,6 +229,9 @@ DEPRECATEDIN_0_9_8(RSA *RSA_generate_key(int bits, unsigned long e, void
 
 /* New version */
 int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+/* Multi-prime version */
+int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
+                                 BIGNUM *e, BN_GENCB *cb);
 
 int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
                        BIGNUM *q2, const BIGNUM *Xp1, const BIGNUM *Xp2,
@@ -468,6 +490,12 @@ int (*RSA_meth_get_keygen(const RSA_METHOD *meth))
 int RSA_meth_set_keygen(RSA_METHOD *rsa,
                         int (*keygen) (RSA *rsa, int bits, BIGNUM *e,
                                        BN_GENCB *cb));
+int (*RSA_meth_get_multi_prime_keygen(const RSA_METHOD *meth))
+    (RSA *rsa, int bits, int primes, BIGNUM *e, BN_GENCB *cb);
+int RSA_meth_set_multi_prime_keygen(RSA_METHOD *meth,
+                                    int (*keygen) (RSA *rsa, int bits,
+                                                   int primes, BIGNUM *e,
+                                                   BN_GENCB *cb));
 int ERR_load_RSA_strings(void);
 
 #  ifdef  __cplusplus

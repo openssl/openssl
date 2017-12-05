@@ -18,7 +18,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[libtestutil.a]=../libcrypto
 
   # Special hack for descrip.mms to include the MAIN object module
-  # explicitely.  This will only be done if there isn't a MAIN in the
+  # explicitly.  This will only be done if there isn't a MAIN in the
   # program's object modules already.
   BEGINRAW[descrip.mms]
 INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
@@ -32,7 +32,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           hmactest \
           rc2test rc4test rc5test \
           destest mdc2test \
-          randtest dhtest enginetest casttest \
+          dhtest enginetest casttest \
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test \
@@ -41,11 +41,12 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
-          pkey_meth_test uitest cipherbytes_test asn1_encode_test asn1_string_table_test \
+          pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
+          asn1_encode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          servername_test
+          servername_test ocspapitest rsa_mp_test
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
@@ -119,10 +120,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[mdc2test]=../include
   DEPEND[mdc2test]=../libcrypto libtestutil.a
 
-  SOURCE[randtest]=randtest.c
-  INCLUDE[randtest]=../include
-  DEPEND[randtest]=../libcrypto libtestutil.a
-
   SOURCE[dhtest]=dhtest.c
   INCLUDE[dhtest]=.. ../include
   DEPEND[dhtest]=../libcrypto libtestutil.a
@@ -155,12 +152,16 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[rsa_test]=.. ../include
   DEPEND[rsa_test]=../libcrypto libtestutil.a
 
+  SOURCE[rsa_mp_test]=rsa_mp_test.c
+  INCLUDE[rsa_mp_test]=.. ../include
+  DEPEND[rsa_mp_test]=../libcrypto libtestutil.a
+
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include
   DEPEND[evp_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_extra_test]=evp_extra_test.c
-  INCLUDE[evp_extra_test]=.. ../include
+  INCLUDE[evp_extra_test]=.. ../include ../crypto/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
 
   SOURCE[igetest]=igetest.c
@@ -280,6 +281,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[sslapitest]=../include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
 
+  SOURCE[ocspapitest]=ocspapitest.c
+  INCLUDE[ocspapitest]=../include ..
+  DEPEND[ocspapitest]=../libcrypto libtestutil.a
+
   SOURCE[dtlstest]=dtlstest.c ssltestlib.c
   INCLUDE[dtlstest]=../include .
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
@@ -295,6 +300,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[pkey_meth_test]=pkey_meth_test.c
   INCLUDE[pkey_meth_test]=../include
   DEPEND[pkey_meth_test]=../libcrypto libtestutil.a
+
+  SOURCE[pkey_meth_kdf_test]=pkey_meth_kdf_test.c
+  INCLUDE[pkey_meth_kdf_test]=../include
+  DEPEND[pkey_meth_kdf_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_time_test]=x509_time_test.c
   INCLUDE[x509_time_test]=.. ../include
@@ -384,7 +393,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   # names with the DLL import libraries.
   IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
     PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest wpackettest
+                     tls13encryptiontest wpackettest ctype_internal_test
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS_NO_INST=poly1305_internal_test
     ENDIF
@@ -393,6 +402,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     ENDIF
     IF[{- !$disabled{siphash} -}]
       PROGRAMS_NO_INST=siphash_internal_test
+    ENDIF
+    IF[{- !$disabled{sm4} -}]
+      PROGRAMS_NO_INST=sm4_internal_test
     ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
@@ -423,9 +435,17 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     INCLUDE[wpackettest]=../include
     DEPEND[wpackettest]=../libcrypto ../libssl.a libtestutil.a
 
+    SOURCE[ctype_internal_test]=ctype_internal_test.c
+    INCLUDE[ctype_internal_test]=.. ../crypto/include ../include
+    DEPEND[ctype_internal_test]=../libcrypto.a libtestutil.a
+
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
     DEPEND[siphash_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[sm4_internal_test]=sm4_internal_test.c
+    INCLUDE[sm4_internal_test]=.. ../include ../crypto/include
+    DEPEND[sm4_internal_test]=../libcrypto.a libtestutil.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]
@@ -435,6 +455,11 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[mdc2_internal_test]=mdc2_internal_test.c
   INCLUDE[mdc2_internal_test]=.. ../include
   DEPEND[mdc2_internal_test]=../libcrypto libtestutil.a
+
+  PROGRAMS_NO_INST=asn1_time_test
+  SOURCE[asn1_time_test]=asn1_time_test.c
+  INCLUDE[asn1_time_test]=.. ../include
+  DEPEND[asn1_time_test]=../libcrypto libtestutil.a
 
   # We disable this test completely in a shared build because it deliberately
   # redefines some internal libssl symbols. This doesn't work in a non-shared
@@ -455,7 +480,7 @@ ENDIF
 {-
    use File::Spec::Functions;
    use File::Basename;
-   use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+   use OpenSSL::Glob;
 
    my @nogo_headers = ( "asn1_mac.h",
                         "__decc_include_prologue.h",

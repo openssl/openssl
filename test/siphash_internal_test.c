@@ -16,7 +16,8 @@
 #include "testutil.h"
 #include "internal/siphash.h"
 #include "../crypto/siphash/siphash_local.h"
-#include "e_os.h"
+#include "internal/nelem.h"
+#include "internal/cryptlib.h"
 
 static BIO* b_stderr = NULL;
 static BIO* b_stdout = NULL;
@@ -43,8 +44,7 @@ static int benchmark_siphash(void)
     SIPHASH siphash;
     unsigned char key[SIPHASH_KEY_SIZE];
     unsigned char buf[8192];
-    unsigned long long stopwatch;
-    unsigned long long OPENSSL_rdtsc();
+    uint32_t stopwatch;
     unsigned int i;
 
     memset (buf,0x55,sizeof(buf));
@@ -235,10 +235,10 @@ static int test_siphash(int idx)
 
     /* key and in data are 00 01 02 ... */
     for (i = 0; i < sizeof(key); i++)
-        key[i] = i;
+        key[i] = (unsigned char)i;
 
     for (i = 0; i < inlen; i++)
-        in[i] = i;
+        in[i] = (unsigned char)i;
 
     if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
         return 0;

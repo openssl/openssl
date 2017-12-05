@@ -1,7 +1,7 @@
 .explicit
 .text
 .ident	"ia64.S, Version 2.1"
-.ident	"IA-64 ISA artwork by Andy Polyakov <appro@fy.chalmers.se>"
+.ident	"IA-64 ISA artwork by Andy Polyakov <appro@openssl.org>"
 
 // Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
 //
@@ -12,7 +12,7 @@
 
 //
 // ====================================================================
-// Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+// Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 // project.
 //
 // Rights for redistribution and usage in source and binary forms are
@@ -20,7 +20,7 @@
 // disclaimed.
 // ====================================================================
 //
-// Version 2.x is Itanium2 re-tune. Few words about how Itanum2 is
+// Version 2.x is Itanium2 re-tune. Few words about how Itanium2 is
 // different from Itanium to this module viewpoint. Most notably, is it
 // "wider" than Itanium? Can you experience loop scalability as
 // discussed in commentary sections? Not really:-( Itanium2 has 6
@@ -141,7 +141,7 @@
 //	User Mask I want to excuse the kernel from preserving upper
 //	(f32-f128) FP register bank over process context switch, thus
 //	minimizing bus bandwidth consumption during the switch (i.e.
-//	after PKI opration completes and the program is off doing
+//	after PKI operation completes and the program is off doing
 //	something else like bulk symmetric encryption). Having said
 //	this, I also want to point out that it might be good idea
 //	to compile the whole toolkit (as well as majority of the
@@ -162,7 +162,7 @@
 //
 // bn_[add|sub]_words routines.
 //
-// Loops are spinning in 2*(n+5) ticks on Itanuim (provided that the
+// Loops are spinning in 2*(n+5) ticks on Itanium (provided that the
 // data reside in L1 cache, i.e. 2 ticks away). It's possible to
 // compress the epilogue and get down to 2*n+6, but at the cost of
 // scalability (the neat feature of this implementation is that it
@@ -500,7 +500,7 @@ bn_sqr_words:
 // possible to compress the epilogue (I'm getting tired to write this
 // comment over and over) and get down to 2*n+16 at the cost of
 // scalability. The decision will very likely be reconsidered after the
-// benchmark program is profiled. I.e. if perfomance gain on Itanium
+// benchmark program is profiled. I.e. if performance gain on Itanium
 // will appear larger than loss on "wider" IA-64, then the loop should
 // be explicitly split and the epilogue compressed.
 .L_bn_sqr_words_ctop:
@@ -936,7 +936,7 @@ bn_mul_comba8:
 		xma.hu	f118=f39,f127,f117	}
 { .mfi;		xma.lu	f117=f39,f127,f117	};;//
 //-------------------------------------------------//
-// Leaving muliplier's heaven... Quite a ride, huh?
+// Leaving multiplier's heaven... Quite a ride, huh?
 
 { .mii;	getf.sig	r31=f47
 	add		r25=r25,r24

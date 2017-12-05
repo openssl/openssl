@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,6 @@
 # include <openssl/e_os2.h>
 # include <openssl/opensslconf.h>
 # include <openssl/bio.h>
-# include <openssl/stack.h>
 # include <openssl/safestack.h>
 # include <openssl/asn1err.h>
 # include <openssl/symhacks.h>
@@ -590,6 +589,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
                                                time_t t, int offset_day,
                                                long offset_sec);
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str);
+
 int ASN1_TIME_diff(int *pday, int *psec,
                    const ASN1_TIME *from, const ASN1_TIME *to);
 
@@ -632,6 +632,9 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(const ASN1_TIME *t,
 int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
 int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str);
 int ASN1_TIME_to_tm(const ASN1_TIME *s, struct tm *tm);
+int ASN1_TIME_normalize(ASN1_TIME *s);
+int ASN1_TIME_cmp_time_t(const ASN1_TIME *s, time_t t);
+int ASN1_TIME_compare(const ASN1_TIME *a, const ASN1_TIME *b);
 
 int i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a);
 int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size);

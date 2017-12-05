@@ -14,7 +14,7 @@
 
 #include <openssl/ssl.h>
 #include "testutil.h"
-#include "e_os.h"
+#include "internal/nelem.h"
 
 #ifdef __VMS
 # pragma names save
@@ -51,7 +51,7 @@ static int do_test_cert_table(int nid, uint32_t amask, size_t idx,
 
 /* Sanity check of ssl_cert_table */
 
-static int test_ssl_cert_table()
+static int test_ssl_cert_table(void)
 {
     TEST_size_t_eq(OSSL_NELEM(ssl_cert_info), SSL_PKEY_NUM);
     if (!test_cert_table(EVP_PKEY_RSA, SSL_aRSA, SSL_PKEY_RSA))

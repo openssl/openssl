@@ -17,7 +17,6 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#define USE_SOCKETS
 #include "apps.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>

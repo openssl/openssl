@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <string.h>
 
 #include "bio_lcl.h"
@@ -15,8 +16,7 @@
 #ifndef OPENSSL_NO_SOCK
 #include <openssl/err.h>
 #include <openssl/buffer.h>
-#include <internal/thread_once.h>
-#include <ctype.h>
+#include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_lookup_lock;
 static CRYPTO_ONCE bio_lookup_init = CRYPTO_ONCE_STATIC_INIT;
@@ -76,7 +76,7 @@ int BIO_ADDR_make(BIO_ADDR *ap, const struct sockaddr *sa)
     }
 #endif
 #ifdef AF_UNIX
-    if (ap->sa.sa_family == AF_UNIX) {
+    if (sa->sa_family == AF_UNIX) {
         ap->s_un = *(const struct sockaddr_un *)sa;
         return 1;
     }
@@ -565,8 +565,6 @@ static int addrinfo_wrap(int family, int socktype,
                          unsigned short port,
                          BIO_ADDRINFO **bai)
 {
-    OPENSSL_assert(bai != NULL);
-
     *bai = OPENSSL_zalloc(sizeof(**bai));
     if (*bai == NULL)
         return 0;
@@ -605,7 +603,7 @@ static int addrinfo_wrap(int family, int socktype,
 DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    bio_lookup_lock = CRYPTO_THREAD_lock_new();
+    bio_lookup_lock = CRYPTO_THREAD_glock_new("bio_lookup");
     return bio_lookup_lock != NULL;
 }
 
@@ -760,8 +758,11 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                 he_fallback_address = INADDR_ANY;
                 break;
             default:
-                OPENSSL_assert(("We forgot to handle a lookup type!" == 0));
-                break;
+                /* We forgot to handle a lookup type! */
+                assert("We forgot to handle a lookup type!" == NULL);
+                BIOerr(BIO_F_BIO_LOOKUP_EX, ERR_R_INTERNAL_ERROR);
+                ret = 0;
+                goto err;
             }
         } else {
             he = gethostbyname(host);
@@ -820,7 +821,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
 
             if (endp != service && *endp == '\0'
                     && portnum > 0 && portnum < 65536) {
-                se_fallback.s_port = htons(portnum);
+                se_fallback.s_port = htons((unsigned short)portnum);
                 se_fallback.s_proto = proto;
                 se = &se_fallback;
             } else if (endp == service) {

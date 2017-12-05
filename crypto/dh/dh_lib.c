@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/refcount.h"
 #include <openssl/bn.h>
 #include "dh_locl.h"
 #include <openssl/engine.h>
@@ -138,12 +139,12 @@ int DH_up_ref(DH *r)
 
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&d->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
 
 void *DH_get_ex_data(DH *d, int idx)
 {
-    return (CRYPTO_get_ex_data(&d->ex_data, idx));
+    return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
 
 int DH_bits(const DH *dh)
@@ -153,7 +154,7 @@ int DH_bits(const DH *dh)
 
 int DH_size(const DH *dh)
 {
-    return (BN_num_bytes(dh->p));
+    return BN_num_bytes(dh->p);
 }
 
 int DH_security_bits(const DH *dh)
@@ -230,13 +231,6 @@ void DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 {
-    /* If the field pub_key in dh is NULL, the corresponding input
-     * parameters MUST be non-NULL.  The priv_key field may
-     * be left NULL.
-     */
-    if (dh->pub_key == NULL && pub_key == NULL)
-        return 0;
-
     if (pub_key != NULL) {
         BN_free(dh->pub_key);
         dh->pub_key = pub_key;

@@ -14,8 +14,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 #
 # Specific modes and adaptation for Linux kernel by Ard Biesheuvel
-# <ard.biesheuvel@linaro.org>. Permission to use under GPL terms is
-# granted.
+# of Linaro. Permission to use under GPL terms is granted.
 # ====================================================================
 
 # Bit-sliced AES for ARM NEON
@@ -49,10 +48,7 @@
 #						<appro@openssl.org>
 
 # April-August 2013
-#
-# Add CBC, CTR and XTS subroutines, adapt for kernel use.
-#
-#					<ard.biesheuvel@linaro.org>
+# Add CBC, CTR and XTS subroutines and adapt for kernel use; courtesy of Ard.
 
 $flavour = shift;
 if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
@@ -744,7 +740,7 @@ $code.=<<___;
 .type	_bsaes_decrypt8,%function
 .align	4
 _bsaes_decrypt8:
-	adr	$const,_bsaes_decrypt8
+	adr	$const,.
 	vldmia	$key!, {@XMM[9]}		@ round 0 key
 #ifdef	__APPLE__
 	adr	$const,.LM0ISR
@@ -843,7 +839,7 @@ _bsaes_const:
 .type	_bsaes_encrypt8,%function
 .align	4
 _bsaes_encrypt8:
-	adr	$const,_bsaes_encrypt8
+	adr	$const,.
 	vldmia	$key!, {@XMM[9]}		@ round 0 key
 #ifdef	__APPLE__
 	adr	$const,.LM0SR
@@ -951,7 +947,7 @@ $code.=<<___;
 .type	_bsaes_key_convert,%function
 .align	4
 _bsaes_key_convert:
-	adr	$const,_bsaes_key_convert
+	adr	$const,.
 	vld1.8	{@XMM[7]},  [$inp]!		@ load round 0 key
 #ifdef	__APPLE__
 	adr	$const,.LM0

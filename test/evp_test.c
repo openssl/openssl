@@ -360,11 +360,16 @@ static int digest_test_run(EVP_TEST *t)
 {
     DIGEST_DATA *expected = t->data;
     EVP_MD_CTX *mctx;
-    unsigned char got[EVP_MAX_MD_SIZE];
+    unsigned char *got = NULL;
     unsigned int got_len;
 
     t->err = "TEST_FAILURE";
     if (!TEST_ptr(mctx = EVP_MD_CTX_new()))
+        goto err;
+
+    got = OPENSSL_malloc(expected->output_len > EVP_MAX_MD_SIZE ?
+                         expected->output_len : EVP_MAX_MD_SIZE);
+    if (!TEST_ptr(got))
         goto err;
 
     if (!EVP_DigestInit_ex(mctx, expected->digest, NULL)) {
@@ -376,9 +381,17 @@ static int digest_test_run(EVP_TEST *t)
         goto err;
     }
 
-    if (!EVP_DigestFinal(mctx, got, &got_len)) {
-        t->err = "DIGESTFINAL_ERROR";
-        goto err;
+    if (EVP_MD_flags(expected->digest) & EVP_MD_FLAG_XOF) {
+        got_len = expected->output_len;
+        if (!EVP_DigestFinalXOF(mctx, got, got_len)) {
+            t->err = "DIGESTFINALXOF_ERROR";
+            goto err;
+        }
+    } else {
+        if (!EVP_DigestFinal(mctx, got, &got_len)) {
+            t->err = "DIGESTFINAL_ERROR";
+            goto err;
+        }
     }
     if (!TEST_int_eq(expected->output_len, got_len)) {
         t->err = "DIGEST_LENGTH_MISMATCH";
@@ -391,6 +404,7 @@ static int digest_test_run(EVP_TEST *t)
     t->err = NULL;
 
  err:
+    OPENSSL_free(got);
     EVP_MD_CTX_free(mctx);
     return 1;
 }
@@ -1214,7 +1228,10 @@ static int pderive_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len;
 
-    got_len = expected->output_len;
+    if (EVP_PKEY_derive(expected->ctx, NULL, &got_len) <= 0) {
+        t->err = "DERIVE_ERROR";
+        goto err;
+    }
     if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
         t->err = "DERIVE_ERROR";
         goto err;
@@ -1288,7 +1305,7 @@ static int parse_uint64(const char *value, uint64_t *pr)
             return -1;
         }
         *pr *= 10;
-        if (!TEST_true(isdigit(*p))) {
+        if (!TEST_true(isdigit((unsigned char)*p))) {
             TEST_error("Invalid character in string %s", value);
             return -1;
         }
@@ -1624,6 +1641,13 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
     int kdf_nid = OBJ_sn2nid(name);
+
+#ifdef OPENSSL_NO_SCRYPT
+    if (strcmp(name, "scrypt") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif
 
     if (kdf_nid == NID_undef)
         kdf_nid = OBJ_ln2nid(name);

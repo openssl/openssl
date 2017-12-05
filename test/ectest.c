@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
@@ -22,11 +22,6 @@
 # include <openssl/rand.h>
 # include <openssl/bn.h>
 # include <openssl/opensslconf.h>
-
-# if defined(_MSC_VER) && defined(_MIPS_) && (_MSC_VER/100==12)
-/* suppress "too big too optimize" warning */
-#  pragma warning(disable:4959)
-# endif
 
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
@@ -1425,9 +1420,6 @@ static int parameter_test(void)
     ECPARAMETERS_free(ecparameters);
     return r;
 }
-
-static const char rnd_seed[] =
-    "string to make the random number generator think it has randomness";
 #endif
 
 int setup_tests(void)
@@ -1437,8 +1429,6 @@ int setup_tests(void)
     if (!TEST_ptr(curves = OPENSSL_malloc(sizeof(*curves) * crv_len))
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
-
-    RAND_seed(rnd_seed, sizeof rnd_seed); /* or BN_generate_prime may fail */
 
     ADD_TEST(parameter_test);
     ADD_TEST(prime_field_tests);
@@ -1457,5 +1447,7 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+#ifndef OPENSSL_NO_EC
     OPENSSL_free(curves);
+#endif
 }

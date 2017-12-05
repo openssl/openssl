@@ -12,6 +12,7 @@
  */
 static const SSL_CERT_LOOKUP ssl_cert_info [] = {
     {EVP_PKEY_RSA, SSL_aRSA}, /* SSL_PKEY_RSA */
+    {EVP_PKEY_RSA_PSS, SSL_aRSA}, /* SSL_PKEY_RSA_PSS_SIGN */
     {EVP_PKEY_DSA, SSL_aDSS}, /* SSL_PKEY_DSA_SIGN */
     {EVP_PKEY_EC, SSL_aECDSA}, /* SSL_PKEY_ECC */
     {NID_id_GostR3410_2001, SSL_aGOST01}, /* SSL_PKEY_GOST01 */

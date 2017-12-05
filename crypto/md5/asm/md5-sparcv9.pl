@@ -13,7 +13,7 @@
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
 #
-# Hardware SPARC T4 support by David S. Miller <davem@davemloft.net>.
+# Hardware SPARC T4 support by David S. Miller.
 # ====================================================================
 
 # MD5 for SPARCv9, 6.9 cycles per byte on UltraSPARC, >40% faster than

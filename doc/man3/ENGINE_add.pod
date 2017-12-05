@@ -321,29 +321,6 @@ consideration is whether any/all available ENGINE implementations should be
 made visible to OpenSSL - this is controlled by calling the various "load"
 functions.
 
-Having called any of these functions, ENGINE objects would have been
-dynamically allocated and populated with these implementations and linked
-into OpenSSL's internal linked list. At this point it is important to
-mention an important API function;
-
- void ENGINE_cleanup(void)
-
-If no ENGINE API functions are called at all in an application, then there
-are no inherent memory leaks to worry about from the ENGINE functionality.
-However, prior to OpenSSL 1.1.0 if any ENGINEs are loaded, even if they are
-never registered or used, it was necessary to use the ENGINE_cleanup() function
-to correspondingly cleanup before program exit, if the caller wishes to avoid
-memory leaks. This mechanism used an internal callback registration table
-so that any ENGINE API functionality that knows it requires cleanup can
-register its cleanup details to be called during ENGINE_cleanup(). This
-approach allowed ENGINE_cleanup() to clean up after any ENGINE functionality
-at all that your program uses, yet doesn't automatically create linker
-dependencies to all possible ENGINE functionality - only the cleanup
-callbacks required by the functionality you do use will be required by the
-linker. From OpenSSL 1.1.0 it is no longer necessary to explicitly call
-ENGINE_cleanup and this function is deprecated. Cleanup automatically takes
-place at program exit.
-
 The fact that ENGINEs are made visible to OpenSSL (and thus are linked into
 the program and loaded into memory at run-time) does not mean they are
 "registered" or called into use by OpenSSL automatically - that behaviour
@@ -357,6 +334,11 @@ probably numerous other ways in which applications may prefer to handle
 things, so we will simply illustrate the consequences as they apply to a
 couple of simple cases and leave developers to consider these and the
 source code to openssl's builtin utilities as guides.
+
+If no ENGINE API functions are called within an application, then OpenSSL
+will not allocate any internal resources.  Prior to OpenSSL 1.1.0, however,
+if any ENGINEs are loaded, even if not registered or used, it was necessary to
+call ENGINE_cleanup() before the program exits.
 
 I<Using a specific ENGINE implementation>
 
@@ -585,9 +567,9 @@ L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>, L<
 
 =head1 HISTORY
 
-ENGINE_cleanup(), ENGINE_load_openssl(), ENGINE_load_dynamic(), and
-ENGINE_load_cryptodev() were deprecated in OpenSSL 1.1.0 by
-OPENSSL_init_crypto().
+ENGINE_cleanup() was deprecated in OpenSSL 1.1.0 by the automatic cleanup
+done by OPENSSL_cleanup()
+and should not be used.
 
 =head1 COPYRIGHT
 

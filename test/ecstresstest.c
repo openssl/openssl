@@ -8,7 +8,7 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#include "e_os.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 #include <stdio.h>
@@ -64,7 +64,7 @@ err:
     return NULL;
 }
 
-static int test_curve()
+static int test_curve(void)
 {
     EC_GROUP *group = NULL;
     EC_POINT *point = NULL;
@@ -109,7 +109,7 @@ static int atoi64(const char *in, int64_t *result)
     for ( ; *in != '\0'; in++) {
         char c = *in;
 
-        if (!isdigit(c))
+        if (!isdigit((unsigned char)c))
             return 0;
         ret *= 10;
         ret += (c - '0');

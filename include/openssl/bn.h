@@ -154,7 +154,9 @@ void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
 void BN_CTX_end(BN_CTX *ctx);
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom);
+int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom);
 int BN_rand_range(BIGNUM *rnd, const BIGNUM *range);
+int BN_priv_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom);
 int BN_pseudo_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int BN_num_bits(const BIGNUM *a);
@@ -184,7 +186,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
  */
 void BN_set_negative(BIGNUM *b, int n);
 /** BN_is_negative returns 1 if the BIGNUM is negative
- * \param  a  pointer to the BIGNUM object
+ * \param  b  pointer to the BIGNUM object
  * \return 1 if a < 0 and 0 otherwise
  */
 int BN_is_negative(const BIGNUM *b);

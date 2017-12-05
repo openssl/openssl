@@ -16,11 +16,8 @@
 #include <openssl/srp.h>
 #endif
 
-#ifndef OPENSSL_NO_SOCK
-# define USE_SOCKETS
-# include "e_os.h"
-#endif
-
+#include "internal/sockets.h"
+#include "internal/nelem.h"
 #include "handshake_helper.h"
 #include "testutil.h"
 
@@ -42,6 +39,7 @@ void HANDSHAKE_RESULT_free(HANDSHAKE_RESULT *result)
     OPENSSL_free(result->server_alpn_negotiated);
     sk_X509_NAME_pop_free(result->server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(result->client_ca_names, X509_NAME_free);
+    OPENSSL_free(result->cipher);
     OPENSSL_free(result);
 }
 
@@ -140,7 +138,7 @@ static int select_server_ctx(SSL *s, void *arg, int ignore)
     }
 }
 
-static int early_select_server_ctx(SSL *s, void *arg, int ignore)
+static int client_hello_select_server_ctx(SSL *s, void *arg, int ignore)
 {
     const char *servername;
     const unsigned char *p;
@@ -152,11 +150,12 @@ static int early_select_server_ctx(SSL *s, void *arg, int ignore)
      * The server_name extension was given too much extensibility when it
      * was written, so parsing the normal case is a bit complex.
      */
-    if (!SSL_early_get0_ext(s, TLSEXT_TYPE_server_name, &p, &remaining) ||
+    if (!SSL_client_hello_get0_ext(s, TLSEXT_TYPE_server_name, &p,
+                                   &remaining) ||
         remaining <= 2)
         return 0;
     /* Extract the length of the supplied list of names. */
-    len = (*(p++) << 1);
+    len = (*(p++) << 8);
     len += *(p++);
     if (len + 2 != remaining)
         return 0;
@@ -171,7 +170,7 @@ static int early_select_server_ctx(SSL *s, void *arg, int ignore)
     /* Now we can finally pull out the byte array with the actual hostname. */
     if (remaining <= 2)
         return 0;
-    len = (*(p++) << 1);
+    len = (*(p++) << 8);
     len += *(p++);
     if (len + 2 > remaining)
         return 0;
@@ -222,48 +221,50 @@ static int servername_reject_cb(SSL *s, int *ad, void *arg)
     return select_server_ctx(s, arg, 0);
 }
 
-static int early_ignore_cb(SSL *s, int *al, void *arg)
+static int client_hello_ignore_cb(SSL *s, int *al, void *arg)
 {
-    if (!early_select_server_ctx(s, arg, 1)) {
+    if (!client_hello_select_server_ctx(s, arg, 1)) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
-    return 1;
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
-static int early_reject_cb(SSL *s, int *al, void *arg)
+static int client_hello_reject_cb(SSL *s, int *al, void *arg)
 {
-    if (!early_select_server_ctx(s, arg, 0)) {
+    if (!client_hello_select_server_ctx(s, arg, 0)) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
-    return 1;
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
-static int early_nov12_cb(SSL *s, int *al, void *arg)
+static int client_hello_nov12_cb(SSL *s, int *al, void *arg)
 {
     int ret;
     unsigned int v;
     const unsigned char *p;
 
-    v = SSL_early_get0_legacy_version(s);
+    v = SSL_client_hello_get0_legacy_version(s);
     if (v > TLS1_2_VERSION || v < SSL3_VERSION) {
         *al = SSL_AD_PROTOCOL_VERSION;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
-    (void)SSL_early_get0_session_id(s, &p);
+    (void)SSL_client_hello_get0_session_id(s, &p);
     if (p == NULL ||
-        SSL_early_get0_random(s, &p) == 0 ||
-        SSL_early_get0_ciphers(s, &p) == 0 ||
-        SSL_early_get0_compression_methods(s, &p) == 0) {
+        SSL_client_hello_get0_random(s, &p) == 0 ||
+        SSL_client_hello_get0_ciphers(s, &p) == 0 ||
+        SSL_client_hello_get0_compression_methods(s, &p) == 0) {
         *al = SSL_AD_INTERNAL_ERROR;
-        return 0;
+        return SSL_CLIENT_HELLO_ERROR;
     }
-    ret = early_select_server_ctx(s, arg, 0);
+    ret = client_hello_select_server_ctx(s, arg, 0);
     SSL_set_max_proto_version(s, TLS1_1_VERSION);
-    if (!ret)
+    if (!ret) {
         *al = SSL_AD_UNRECOGNIZED_NAME;
-    return ret;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+    return SSL_CLIENT_HELLO_SUCCESS;
 }
 
 static unsigned char dummy_ocsp_resp_good_val = 0xff;
@@ -350,14 +351,14 @@ static int parse_protos(const char *protos, unsigned char **out, size_t *outlen)
         if ((*out)[i] == ',') {
             if (!TEST_int_gt(i - 1, prefix))
                 goto err;
-            (*out)[prefix] = i - 1 - prefix;
+            (*out)[prefix] = (unsigned char)(i - 1 - prefix);
             prefix = i;
         }
         i++;
     }
     if (!TEST_int_gt(len, prefix))
         goto err;
-    (*out)[prefix] = len - prefix;
+    (*out)[prefix] = (unsigned char)(len - prefix);
     return 1;
 
 err:
@@ -490,9 +491,21 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     }
 
+    switch (extra->client.max_fragment_len_mode) {
+    case TLSEXT_max_fragment_length_512:
+    case TLSEXT_max_fragment_length_1024:
+    case TLSEXT_max_fragment_length_2048:
+    case TLSEXT_max_fragment_length_4096:
+    case TLSEXT_max_fragment_length_DISABLED:
+        TEST_true(SSL_CTX_set_tlsext_max_fragment_length(
+                        client_ctx, extra->client.max_fragment_len_mode));
+        break;
+    }
+
     /*
      * Link the two contexts for SNI purposes.
-     * Also do early callbacks here, as setting both early and SNI is bad.
+     * Also do ClientHello callbacks here, as setting both ClientHello and SNI
+     * is bad.
      */
     switch (extra->server.servername_callback) {
     case SSL_TEST_SERVERNAME_IGNORE_MISMATCH:
@@ -505,14 +518,14 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
         break;
     case SSL_TEST_SERVERNAME_CB_NONE:
         break;
-    case SSL_TEST_SERVERNAME_EARLY_IGNORE_MISMATCH:
-        SSL_CTX_set_early_cb(server_ctx, early_ignore_cb, server2_ctx);
+    case SSL_TEST_SERVERNAME_CLIENT_HELLO_IGNORE_MISMATCH:
+        SSL_CTX_set_client_hello_cb(server_ctx, client_hello_ignore_cb, server2_ctx);
         break;
-    case SSL_TEST_SERVERNAME_EARLY_REJECT_MISMATCH:
-        SSL_CTX_set_early_cb(server_ctx, early_reject_cb, server2_ctx);
+    case SSL_TEST_SERVERNAME_CLIENT_HELLO_REJECT_MISMATCH:
+        SSL_CTX_set_client_hello_cb(server_ctx, client_hello_reject_cb, server2_ctx);
         break;
-    case SSL_TEST_SERVERNAME_EARLY_NO_V12:
-        SSL_CTX_set_early_cb(server_ctx, early_nov12_cb, server2_ctx);
+    case SSL_TEST_SERVERNAME_CLIENT_HELLO_NO_V12:
+        SSL_CTX_set_client_hello_cb(server_ctx, client_hello_nov12_cb, server2_ctx);
     }
 
     if (extra->server.cert_status != SSL_TEST_CERT_STATUS_NONE) {
@@ -855,7 +868,7 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
         if (!SSL_renegotiate_pending(peer->ssl)) {
             /*
              * If we are the client we will always attempt to resume the
-             * session. The server may or may not resume dependant on the
+             * session. The server may or may not resume dependent on the
              * setting of SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
              */
             if (SSL_is_server(peer->ssl)) {
@@ -1303,6 +1316,8 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     handshake_status_t status = HANDSHAKE_RETRY;
     const unsigned char* tick = NULL;
     size_t tick_len = 0;
+    const unsigned char* sess_id = NULL;
+    unsigned int sess_id_len = 0;
     SSL_SESSION* sess = NULL;
     const unsigned char *proto = NULL;
     /* API dictates unsigned int rather than size_t. */
@@ -1310,6 +1325,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     EVP_PKEY *tmp_key;
     const STACK_OF(X509_NAME) *names;
     time_t start;
+    const char* cipher;
 
     if (ret == NULL)
         return NULL;
@@ -1495,8 +1511,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     ret->server_protocol = SSL_version(server.ssl);
     ret->client_protocol = SSL_version(client.ssl);
     ret->servername = server_ex_data.servername;
-    if ((sess = SSL_get0_session(client.ssl)) != NULL)
+    if ((sess = SSL_get0_session(client.ssl)) != NULL) {
         SSL_SESSION_get0_ticket(sess, &tick, &tick_len);
+        sess_id = SSL_SESSION_get_id(sess, &sess_id_len);
+    }
     if (tick == NULL || tick_len == 0)
         ret->session_ticket = SSL_TEST_SESSION_TICKET_NO;
     else
@@ -1504,6 +1522,10 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     ret->compression = (SSL_get_current_compression(client.ssl) == NULL)
                        ? SSL_TEST_COMPRESSION_NO
                        : SSL_TEST_COMPRESSION_YES;
+    if (sess_id == NULL || sess_id_len == 0)
+        ret->session_id = SSL_TEST_SESSION_ID_NO;
+    else
+        ret->session_id = SSL_TEST_SESSION_ID_YES;
     ret->session_ticket_do_not_call = server_ex_data.session_ticket_do_not_call;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1522,6 +1544,9 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     ret->client_resumed = SSL_session_reused(client.ssl);
     ret->server_resumed = SSL_session_reused(server.ssl);
+
+    cipher = SSL_CIPHER_get_name(SSL_get_current_cipher(client.ssl));
+    ret->cipher = dup_str((const unsigned char*)cipher, strlen(cipher));
 
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);

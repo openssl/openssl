@@ -18,6 +18,9 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
+/* 256 kB */
+#define MAX_LEN (256 * 1000)
+
 static BN_CTX *ctx;
 static BIGNUM *b1;
 static BIGNUM *b2;
@@ -46,6 +49,10 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     size_t l1 = 0, l2 = 0;
     /* s1 and s2 will be the signs for b1 and b2. */
     int s1 = 0, s2 = 0;
+
+    /* limit the size of the input to avoid timeout */
+    if (len > MAX_LEN)
+        len = MAX_LEN;
 
     /* We are going to split the buffer in two, sizes l1 and l2, giving b1 and
      * b2.

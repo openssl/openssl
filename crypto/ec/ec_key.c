@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -8,9 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <internal/cryptlib.h>
+#include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_lcl.h"
+#include "internal/refcount.h"
 #include <openssl/err.h>
 #include <openssl/engine.h>
 
@@ -191,7 +192,6 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 int ossl_ec_key_gen(EC_KEY *eckey)
 {
-    OPENSSL_assert(eckey->group->meth->keygen != NULL);
     return eckey->group->meth->keygen(eckey);
 }
 
@@ -218,7 +218,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
         goto err;
 
     do
-        if (!BN_rand_range(priv_key, order))
+        if (!BN_priv_rand_range(priv_key, order))
             goto err;
     while (BN_is_zero(priv_key)) ;
 

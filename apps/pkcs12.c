@@ -819,6 +819,7 @@ static int alg_print(const X509_ALGOR *alg)
             BIO_printf(bio_err, ", Iteration %ld, PRF %s",
                        ASN1_INTEGER_get(kdf->iter), OBJ_nid2sn(prfnid));
             PBKDF2PARAM_free(kdf);
+#ifndef OPENSSL_NO_SCRYPT
         } else if (pbenid == NID_id_scrypt) {
             SCRYPT_PARAMS *kdf = NULL;
 
@@ -835,6 +836,7 @@ static int alg_print(const X509_ALGOR *alg)
                        ASN1_INTEGER_get(kdf->blockSize),
                        ASN1_INTEGER_get(kdf->parallelizationParameter));
             SCRYPT_PARAMS_free(kdf);
+#endif
         }
         PBE2PARAM_free(pbe2);
     } else {

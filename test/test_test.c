@@ -16,7 +16,7 @@
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
 
-#include "e_os.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 #define TEST(expected, test) test_case((expected), #test, (test))
@@ -170,20 +170,43 @@ err:
 
 static int test_size_t(void)
 {
-    if (!TEST(1, TEST_int_eq((size_t)10, (size_t)10))
-        | !TEST(0, TEST_int_eq((size_t)10, (size_t)12))
-        | !TEST(1, TEST_int_ne((size_t)10, (size_t)12))
-        | !TEST(0, TEST_int_ne((size_t)24, (size_t)24))
-        | !TEST(1, TEST_int_lt((size_t)30, (size_t)88))
-        | !TEST(0, TEST_int_lt((size_t)88, (size_t)30))
-        | !TEST(1, TEST_int_le((size_t)30, (size_t)88))
-        | !TEST(1, TEST_int_le((size_t)33, (size_t)33))
-        | !TEST(0, TEST_int_le((size_t)88, (size_t)30))
-        | !TEST(1, TEST_int_gt((size_t)52, (size_t)33))
-        | !TEST(0, TEST_int_gt((size_t)33, (size_t)52))
-        | !TEST(1, TEST_int_ge((size_t)52, (size_t)33))
-        | !TEST(1, TEST_int_ge((size_t)38, (size_t)38))
-        | !TEST(0, TEST_int_ge((size_t)33, (size_t)52)))
+    if (!TEST(1, TEST_size_t_eq((size_t)10, (size_t)10))
+        | !TEST(0, TEST_size_t_eq((size_t)10, (size_t)12))
+        | !TEST(1, TEST_size_t_ne((size_t)10, (size_t)12))
+        | !TEST(0, TEST_size_t_ne((size_t)24, (size_t)24))
+        | !TEST(1, TEST_size_t_lt((size_t)30, (size_t)88))
+        | !TEST(0, TEST_size_t_lt((size_t)88, (size_t)30))
+        | !TEST(1, TEST_size_t_le((size_t)30, (size_t)88))
+        | !TEST(1, TEST_size_t_le((size_t)33, (size_t)33))
+        | !TEST(0, TEST_size_t_le((size_t)88, (size_t)30))
+        | !TEST(1, TEST_size_t_gt((size_t)52, (size_t)33))
+        | !TEST(0, TEST_size_t_gt((size_t)33, (size_t)52))
+        | !TEST(1, TEST_size_t_ge((size_t)52, (size_t)33))
+        | !TEST(1, TEST_size_t_ge((size_t)38, (size_t)38))
+        | !TEST(0, TEST_size_t_ge((size_t)33, (size_t)52)))
+        goto err;
+    return 1;
+
+err:
+    return 0;
+}
+
+static int test_time_t(void)
+{
+    if (!TEST(1, TEST_time_t_eq((time_t)10, (time_t)10))
+        | !TEST(0, TEST_time_t_eq((time_t)10, (time_t)12))
+        | !TEST(1, TEST_time_t_ne((time_t)10, (time_t)12))
+        | !TEST(0, TEST_time_t_ne((time_t)24, (time_t)24))
+        | !TEST(1, TEST_time_t_lt((time_t)30, (time_t)88))
+        | !TEST(0, TEST_time_t_lt((time_t)88, (time_t)30))
+        | !TEST(1, TEST_time_t_le((time_t)30, (time_t)88))
+        | !TEST(1, TEST_time_t_le((time_t)33, (time_t)33))
+        | !TEST(0, TEST_time_t_le((time_t)88, (time_t)30))
+        | !TEST(1, TEST_time_t_gt((time_t)52, (time_t)33))
+        | !TEST(0, TEST_time_t_gt((time_t)33, (time_t)52))
+        | !TEST(1, TEST_time_t_ge((time_t)52, (time_t)33))
+        | !TEST(1, TEST_time_t_ge((time_t)38, (time_t)38))
+        | !TEST(0, TEST_time_t_ge((time_t)33, (time_t)52)))
         goto err;
     return 1;
 
@@ -518,6 +541,7 @@ int setup_tests(void)
     ADD_TEST(test_long);
     ADD_TEST(test_ulong);
     ADD_TEST(test_size_t);
+    ADD_TEST(test_time_t);
     ADD_TEST(test_pointer);
     ADD_TEST(test_bool);
     ADD_TEST(test_string);

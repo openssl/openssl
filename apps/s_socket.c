@@ -28,10 +28,9 @@ typedef unsigned int u_int;
 
 #ifndef OPENSSL_NO_SOCK
 
-# define USE_SOCKETS
 # include "apps.h"
-# undef USE_SOCKETS
 # include "s_apps.h"
+# include "internal/sockets.h"
 
 # include <openssl/bio.h>
 # include <openssl/err.h>
@@ -222,6 +221,23 @@ int do_server(int *accept_sock, const char *host, const char *port,
                 break;
             }
             i = (*cb)(sock, type, protocol, context);
+            /*
+             * If we ended with an alert being sent, but still with data in the
+             * network buffer to be read, then calling BIO_closesocket() will
+             * result in a TCP-RST being sent. On some platforms (notably
+             * Windows) then this will result in the peer immediately abandoning
+             * the connection including any buffered alert data before it has
+             * had a chance to be read. Shutting down the sending side first,
+             * and then closing the socket sends TCP-FIN first followed by
+             * TCP-RST. This seems to allow the peer to read the alert data.
+             */
+#ifdef _WIN32
+# ifdef SD_SEND
+            shutdown(sock, SD_SEND);
+# endif
+#elif defined(SHUT_WR)
+            shutdown(sock, SHUT_WR);
+#endif
             BIO_closesocket(sock);
         } else {
             i = (*cb)(asock, type, protocol, context);

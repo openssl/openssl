@@ -12,10 +12,12 @@
 use 5.10.0;
 use strict;
 use Config;
+use FindBin;
+use lib "$FindBin::Bin/util/perl";
 use File::Basename;
 use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
 use File::Path qw/mkpath/;
-use if $^O ne "VMS", 'File::Glob' => qw/:bsd_glob/;
+use OpenSSL::Glob;
 
 # see INSTALL for instructions.
 
@@ -115,12 +117,12 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # but 'long long' type.
 
 my $gcc_devteam_warn = "-DDEBUG_UNUSED"
-        . " -Wswitch"
         . " -DPEDANTIC -pedantic -Wno-long-long"
         . " -Wall"
         . " -Wextra"
         . " -Wno-unused-parameter"
         . " -Wno-missing-field-initializers"
+        . " -Wswitch"
         . " -Wsign-compare"
         . " -Wmissing-prototypes"
         . " -Wshadow"
@@ -139,7 +141,6 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
 my $clang_devteam_warn = ""
-        . " -Qunused-arguments"
         . " -Wswitch-default"
         . " -Wno-parentheses-equality"
         . " -Wno-language-extension-token"
@@ -147,6 +148,7 @@ my $clang_devteam_warn = ""
         . " -Wconditional-uninitialized"
         . " -Wincompatible-pointer-types-discards-qualifiers"
         . " -Wmissing-variable-declarations"
+        . " -Wno-unknown-warning-option"
         ;
 
 # This adds backtrace information to the memory leak info.  Is only used
@@ -305,8 +307,8 @@ $config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
-    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash",
-    "des", "aes", "rc2", "rc4", "rc5", "idea", "aria", "bf", "cast", "camellia", "seed", "chacha", "modes",
+    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash", "sm3",
+    "des", "aes", "rc2", "rc4", "rc5", "idea", "aria", "bf", "cast", "camellia", "seed", "sm4", "chacha", "modes",
     "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
@@ -392,6 +394,8 @@ my @disablables = (
     "seed",
     "shared",
     "siphash",
+    "sm3",
+    "sm4",
     "sock",
     "srp",
     "srtp",
@@ -474,30 +478,9 @@ my @disable_cascades = (
     sub { 0 == scalar grep { !$disabled{$_} } @dtls }
 			=> [ "dtls" ],
 
-    # SSL 3.0, (D)TLS 1.0 and TLS 1.1 require MD5 and SHA
-    "md5"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
-    "sha"		=> [ "ssl", "tls1", "tls1_1", "dtls1" ],
-
-    # Additionally, SSL 3.0 requires either RSA or DSA+DH
-    sub { $disabled{rsa}
-	  && ($disabled{dsa} || $disabled{dh}); }
-			=> [ "ssl" ],
-
-    # (D)TLS 1.0 and TLS 1.1 also require either RSA or DSA+DH
-    # or ECDSA + ECDH.  (D)TLS 1.2 has this requirement as well.
-    # (XXX: We don't support PSK-only builds).
-    sub { $disabled{rsa}
-	  && ($disabled{dsa} || $disabled{dh})
-	  && ($disabled{ecdsa} || $disabled{ecdh}); }
-			=> [ "tls1", "tls1_1", "tls1_2", "tls1_3",
-			     "dtls1", "dtls1_2" ],
-
     "tls"		=> [ @tls ],
     sub { 0 == scalar grep { !$disabled{$_} } @tls }
 			=> [ "tls" ],
-
-    # SRP and HEARTBEATS require TLSEXT
-    "tlsext"		=> [ "srp", "heartbeats" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
 
@@ -512,8 +495,9 @@ my @disable_cascades = (
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
 
-    "stdio"             => [ "apps", "capieng" ],
+    "stdio"             => [ "apps", "capieng", "egd" ],
     "apps"              => [ "tests" ],
+    "tests"             => [ "external-tests" ],
     "comp"              => [ "zlib" ],
     "ec"                => [ "tls1_3" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
@@ -790,7 +774,7 @@ while (@argvcopy)
 		}
 	unless ($_ eq $target || /^no-/ || /^disable-/)
 		{
-		# "no-..." follows later after implied disactivations
+		# "no-..." follows later after implied deactivations
 		# have been derived.  (Don't take this too seriously,
 		# we really only write OPTIONS to the Makefile out of
 		# nostalgia.)
@@ -1254,29 +1238,29 @@ unless ($disabled{asm}) {
     }
 }
 
-my $ecc = $target{cc};
-if ($^O ne "VMS" && !$disabled{makedepend}) {
-    # Is the compiler gcc or clang?  $ecc is used below to see if
-    # error-checking can be turned on.
-    my $ccpcc = "$config{cross_compile_prefix}$target{cc}";
-    open(PIPE, "$ccpcc --version 2>&1 |");
-    my $lines = 2;
-    while ( <PIPE> ) {
-        # Find the version number and save the major.
-        m|(?:.*)\b(\d+)\.\d+\.\d+\b(?:.*)|;
-        my $compiler_major = $1;
-        # We know that GNU C version 3 and up as well as all clang
-        # versions support dependency generation
-        $config{makedepprog} = $ccpcc
-            if (/clang/ || (/gcc/ && $compiler_major >= 3));
-        $ecc = "clang" if /clang/;
-        $ecc = "gcc" if /gcc/;
-        last if ($config{makedepprog} || !$lines--);
+my %predefined;
+
+if ($^O ne "VMS") {
+    my $cc = "$config{cross_compile_prefix}$target{cc}";
+
+    # collect compiler pre-defines from gcc or gcc-alike...
+    open(PIPE, "$cc -dM -E -x c /dev/null 2>&1 |");
+    while (<PIPE>) {
+	m/^#define\s+(\w+(?:\(\w+\))?)(?:\s+(.+))?/ or last;
+	$predefined{$1} = $2 // "";
     }
     close(PIPE);
 
-    $config{makedepprog} = which('makedepend') unless $config{makedepprog};
-    $disabled{makedepend} = "unavailable" unless $config{makedepprog};
+    if (!$disabled{makedepend}) {
+	# We know that GNU C version 3 and up as well as all clang
+	# versions support dependency generation
+	if ($predefined{__GNUC__} >= 3) {
+	    $config{makedepprog} = $cc;
+	} else {
+	    $config{makedepprog} = which('makedepend');
+	    $disabled{makedepend} = "unavailable" unless $config{makedepprog};
+	}
+    }
 }
 
 
@@ -1318,16 +1302,23 @@ if (defined($config{api})) {
     push @{$config{defines}}, $apiflag;
 }
 
+if (defined($predefined{__clang__}) && !$disabled{asm}) {
+    $config{cflags} .= " -Qunused-arguments";
+}
+
 if ($strict_warnings)
 	{
 	my $wopt;
-	die "ERROR --strict-warnings requires gcc or clang"
-            unless $ecc eq 'gcc' || $ecc eq 'clang';
+	my $gccver = $predefined{__GNUC__} // -1;
+
+	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
+            unless $gccver >= 4;
+	$gcc_devteam_warn .= " -Wmisleading-indentation" if $gccver >= 6;
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
 		}
-	if ($ecc eq "clang")
+	if (defined($predefined{__clang__}))
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
@@ -1384,7 +1375,6 @@ my %unified_info = ();
 
 my $buildinfo_debug = defined($ENV{CONFIGURE_DEBUG_BUILDINFO});
 if ($builder eq "unified") {
-    use lib catdir(dirname(__FILE__),"util");
     use with_fallback qw(Text::Template);
 
     sub cleandir {
@@ -1512,8 +1502,10 @@ if ($builder eq "unified") {
         my %generate = ();
 
         push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
-        my $template = Text::Template->new(TYPE => 'FILE',
-                                           SOURCE => catfile($sourced, $f));
+        my $template =
+            Text::Template->new(TYPE => 'FILE',
+                                SOURCE => catfile($sourced, $f),
+                                PREPEND => qq{use lib "$FindBin::Bin/util/perl";});
         die "Something went wrong with $sourced/$f: $!\n" unless $template;
         my @text =
             split /^/m,
@@ -1775,7 +1767,7 @@ EOF
 
             # Additionally, we set up sharednames for libraries that don't
             # have any, as themselves.  Only for libraries that aren't
-            # explicitely static.
+            # explicitly static.
             foreach (grep !/\.a$/, keys %{$unified_info{libraries}}) {
                 if (!defined $unified_info{sharednames}->{$_}) {
                     $unified_info{sharednames}->{$_} = $_
@@ -1783,13 +1775,13 @@ EOF
             }
 
             # Check that we haven't defined any library as both shared and
-            # explicitely static.  That is forbidden.
+            # explicitly static.  That is forbidden.
             my @doubles = ();
             foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
                 (my $l = $_) =~ s/\.a$//;
                 push @doubles, $l if defined $unified_info{sharednames}->{$l};
             }
-            die "these libraries are both explicitely static and shared:\n  ",
+            die "these libraries are both explicitly static and shared:\n  ",
                 join(" ", @doubles), "\n"
                 if @doubles;
         }

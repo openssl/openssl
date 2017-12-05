@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-speed,
 speed - test library performance
 
 =head1 SYNOPSIS
@@ -14,13 +15,15 @@ B<openssl speed>
 [B<-decrypt>]
 [B<-rand file...>]
 [B<-writerand file>]
+[B<-primes num>]
 [B<algorithm...>]
 
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.
 To see the list of supported algorithms, use the I<list --digest-commands>
-or I<list --cipher-commands> command.
+or I<list --cipher-commands> command. The global CSPRNG is denoted by
+the I<rand> algorithm name.
 
 =head1 OPTIONS
 
@@ -62,6 +65,19 @@ all others.
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
+
+=item B<-primes num>
+
+Generate a B<num>-prime RSA key and use it to run the benchmarks. This option
+is only effective if RSA algorithm is specified to test.
+
+=item B<-seconds num>
+
+Run bechmarks for B<num> seconds.
+
+=item B<-bytes num>
+
+Run bechmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
 
 =item B<[zero or more test algorithms]>
 

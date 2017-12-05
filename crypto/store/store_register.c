@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include <assert.h>
 
 #include <openssl/err.h>
@@ -20,7 +20,7 @@ static CRYPTO_ONCE registry_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_registry_init)
 {
-    registry_lock = CRYPTO_THREAD_lock_new();
+    registry_lock = CRYPTO_THREAD_glock_new("registry");
     return registry_lock != NULL;
 }
 
@@ -140,10 +140,10 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
      *
      * scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
      */
-    if (isalpha(*scheme))
+    if (ossl_isalpha(*scheme))
         while (*scheme != '\0'
-               && (isalpha(*scheme)
-                   || isdigit(*scheme)
+               && (ossl_isalpha(*scheme)
+                   || ossl_isdigit(*scheme)
                    || strchr("+-.", *scheme) != NULL))
             scheme++;
     if (*scheme != '\0') {

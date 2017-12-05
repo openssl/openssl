@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include "internal/constant_time_locl.h"
 #include <openssl/rand.h>
 #include "record_locl.h"
+#include "internal/cryptlib.h"
 
 static const unsigned char ssl3_pad_1[48] = {
     0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36, 0x36,
@@ -103,15 +104,24 @@ static int ssl3_record_app_data_waiting(SSL *s)
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al)
 {
     uint32_t max_early_data = s->max_early_data;
+    SSL_SESSION *sess = s->session;
 
     /*
      * If we are a client then we always use the max_early_data from the
-     * session. Otherwise we go with the lowest out of the max early data set in
-     * the session and the configured max_early_data.
+     * session/psksession. Otherwise we go with the lowest out of the max early
+     * data set in the session and the configured max_early_data.
      */
-    if (!s->server || (s->hit
-                       && s->session->ext.max_early_data < s->max_early_data))
-        max_early_data = s->session->ext.max_early_data;
+    if (!s->server && sess->ext.max_early_data == 0) {
+        if (!ossl_assert(s->psksession != NULL
+                         && s->psksession->ext.max_early_data > 0)) {
+            SSLerr(SSL_F_EARLY_DATA_COUNT_OK, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        sess = s->psksession;
+    }
+    if (!s->server
+            || (s->hit && sess->ext.max_early_data < s->max_early_data))
+        max_early_data = sess->ext.max_early_data;
 
     if (max_early_data == 0) {
         if (al != NULL)
@@ -261,8 +271,14 @@ int ssl3_get_record(SSL *s)
                 thisrr->type = type;
                 thisrr->rec_version = version;
 
-                /* Lets check version. In TLSv1.3 we ignore this field */
+                /*
+                 * Lets check version. In TLSv1.3 we ignore this field. For the
+                 * ServerHello after an HRR we haven't actually selected TLSv1.3
+                 * yet, but we still treat it as TLSv1.3, so we must check for
+                 * that explicitly
+                 */
                 if (!s->first_packet && !SSL_IS_TLS13(s)
+                        && !s->hello_retry_request
                         && version != (unsigned int)s->version) {
                     SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER);
                     if ((s->version & 0xFF00) == (version & 0xFF00)
@@ -669,6 +685,14 @@ int ssl3_get_record(SSL *s)
             goto f_err;
         }
 
+        /* If received packet overflows current Max Fragment Length setting */
+        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+            al = SSL_AD_RECORD_OVERFLOW;
+            SSLerr(SSL_F_SSL3_GET_RECORD, SSL_R_DATA_LENGTH_TOO_LONG);
+            goto f_err;
+        }
+
         thisrr->off = 0;
         /*-
          * So at this point the following is true
@@ -742,13 +766,13 @@ int ssl3_do_compress(SSL *ssl, SSL3_RECORD *wr)
                             (int)(wr->length + SSL3_RT_MAX_COMPRESSED_OVERHEAD),
                             wr->input, (int)wr->length);
     if (i < 0)
-        return (0);
+        return 0;
     else
         wr->length = i;
 
     wr->input = wr->data;
 #endif
-    return (1);
+    return 1;
 }
 
 /*-
@@ -834,7 +858,7 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
         if ((bs != 1) && !sending)
             return ssl3_cbc_remove_padding(rec, bs, mac_size);
     }
-    return (1);
+    return 1;
 }
 
 #define MAX_PADDING 256
@@ -891,7 +915,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                          */
                         SSLerr(SSL_F_TLS1_ENC, ERR_R_INTERNAL_ERROR);
                         return -1;
-                    } else if (RAND_bytes(recs[ctr].input, ivlen) <= 0) {
+                    } else if (ssl_randbytes(s, recs[ctr].input, ivlen) <= 0) {
                         SSLerr(SSL_F_TLS1_ENC, ERR_R_INTERNAL_ERROR);
                         return -1;
                     }
@@ -1693,12 +1717,12 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     /* Mark receipt of record. */
     dtls1_record_bitmap_update(s, bitmap);
 
-    return (1);
+    return 1;
 
  f_err:
     ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-    return (0);
+    return 0;
 }
 
 /*
@@ -1807,6 +1831,15 @@ int dtls1_get_record(SSL *s)
             goto again;
         }
 
+        /* If received packet overflows own-client Max Fragment Length setting */
+        if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
+                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+            /* record too long, silently discard it */
+            rr->length = 0;
+            RECORD_LAYER_reset_packet_length(&s->rlayer);
+            goto again;
+        }
+
         /* now s->rlayer.rstate == SSL_ST_READ_BODY */
     }
 
@@ -1884,6 +1917,6 @@ int dtls1_get_record(SSL *s)
         goto again;             /* get another record */
     }
 
-    return (1);
+    return 1;
 
 }

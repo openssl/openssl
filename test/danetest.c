@@ -24,7 +24,7 @@
 #endif
 #include "testutil.h"
 
-#include "e_os.h"
+#include "internal/nelem.h"
 
 #define _UC(c) ((unsigned char)(c))
 
@@ -384,7 +384,7 @@ static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
     return ret;
 }
 
-static int run_tlsatest()
+static int run_tlsatest(void)
 {
     SSL_CTX *ctx = NULL;
     BIO *f = NULL;
@@ -422,7 +422,7 @@ int setup_tests(void)
     return 1;
 }
 
-#include <internal/dane.h>
+#include "internal/dane.h"
 
 static void store_ctx_dane_init(X509_STORE_CTX *store_ctx, SSL *ssl)
 {

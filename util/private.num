@@ -18,7 +18,10 @@ BIO_lookup_type                         datatype
 CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
+DTLS_timer_cb                           datatype
 EVP_PKEY_gen_cb                         datatype
+EVP_PKEY_METHOD                         datatype
+EVP_PKEY_ASN1_METHOD                    datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OSSL_STORE_CTX                          datatype
@@ -32,8 +35,9 @@ OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
+RAND_poll_cb                            datatype
 SSL_CTX_keylog_cb_func                  datatype
-SSL_early_cb_fn                         datatype
+SSL_client_hello_cb_fn                  datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
 SSL_psk_server_cb_func                  datatype
@@ -166,6 +170,8 @@ EVP_PKEY_CTX_set1_hkdf_salt             define
 EVP_PKEY_CTX_set1_tls1_prf_secret       define
 EVP_PKEY_CTX_set_dh_paramgen_generator  define
 EVP_PKEY_CTX_set_dh_paramgen_prime_len  define
+EVP_PKEY_CTX_set_dh_pad                 define
+EVP_PKEY_CTX_set_dh_nid                 define
 EVP_PKEY_CTX_set_dsa_paramgen_bits      define
 EVP_PKEY_CTX_set_ec_param_enc           define
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid  define
@@ -186,9 +192,16 @@ EVP_SignUpdate                          define
 EVP_VerifyInit                          define
 EVP_VerifyInit_ex                       define
 EVP_VerifyUpdate                        define
+EVP_bf_cfb                              define
+EVP_cast5_cfb                           define
 EVP_cleanup                             define deprecated 1.1.0
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
+EVP_idea_cfb                            define
+EVP_rc2_cfb                             define
+EVP_rc5_32_12_16_cfb                    define
+EVP_seed_cfb                            define
+EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
 OPENSSL_VERSION_NUMBER                  define
 OPENSSL_clear_free                      define
@@ -230,6 +243,8 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get_default_read_ahead          define
 SSL_CTX_get_max_cert_list               define
+SSL_CTX_get_max_proto_version           define
+SSL_CTX_get_min_proto_version           define
 SSL_CTX_get_mode                        define
 SSL_CTX_get_read_ahead                  define
 SSL_CTX_get_session_cache_mode          define
@@ -299,6 +314,8 @@ SSL_get_cipher_name                     define
 SSL_get_cipher_version                  define
 SSL_get_extms_support                   define
 SSL_get_max_cert_list                   define
+SSL_get_max_proto_version               define
+SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_signature_nid              define
 SSL_get_secure_renegotiation_support    define
@@ -346,7 +363,7 @@ SSL_set_tlsext_status_type              define
 SSL_set_tmp_dh                          define
 SSL_want_async                          define
 SSL_want_async_job                      define
-SSL_want_early                          define
+SSL_want_client_hello_cb                define
 SSL_want_nothing                        define
 SSL_want_read                           define
 SSL_want_write                          define

@@ -30,7 +30,7 @@
 #define SIZE    (512)
 #define BSIZE   (8*1024)
 
-static int set_hex(char *in, unsigned char *out, int size);
+static int set_hex(const char *in, unsigned char *out, int size);
 static void show_ciphers(const OBJ_NAME *name, void *bio_);
 
 struct doall_enc_ciphers {
@@ -273,6 +273,10 @@ int enc_main(int argc, char **argv)
             break;
         }
     }
+    if (opt_num_rest() != 0) {
+        BIO_printf(bio_err, "Extra arguments given.\n");
+        goto opthelp;
+    }
 
     if (cipher && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
         if ((EVP_CIPHER_mode(cipher) != EVP_CIPH_GCM_MODE)) {
@@ -484,7 +488,7 @@ int enc_main(int argc, char **argv)
             }
             /*
              * zero the complete buffer or the string passed from the command
-             * line bug picked up by Larry J. Hughes Jr. <hughes@indiana.edu>
+             * line.
              */
             if (str == strbuf)
                 OPENSSL_cleanse(str, SIZE);
@@ -495,7 +499,7 @@ int enc_main(int argc, char **argv)
             int siz = EVP_CIPHER_iv_length(cipher);
             if (siz == 0) {
                 BIO_printf(bio_err, "warning: iv not use by this cipher\n");
-            } else if (!set_hex(hiv, iv, sizeof iv)) {
+            } else if (!set_hex(hiv, iv, siz)) {
                 BIO_printf(bio_err, "invalid hex iv value\n");
                 goto end;
             }
@@ -510,9 +514,13 @@ int enc_main(int argc, char **argv)
             BIO_printf(bio_err, "iv undefined\n");
             goto end;
         }
-        if ((hkey != NULL) && !set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
-            BIO_printf(bio_err, "invalid hex key value\n");
-            goto end;
+        if (hkey != NULL) {
+            if (!set_hex(hkey, key, EVP_CIPHER_key_length(cipher))) {
+                BIO_printf(bio_err, "invalid hex key value\n");
+                goto end;
+            }
+            /* wiping secret data as we no longer need it */
+            OPENSSL_cleanse(hkey, strlen(hkey));
         }
         if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
             if (enc) {
@@ -711,22 +719,23 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
         BIO_printf(dec->bio, " ");
 }
 
-static int set_hex(char *in, unsigned char *out, int size)
+static int set_hex(const char *in, unsigned char *out, int size)
 {
     int i, n;
     unsigned char j;
 
+    i = size * 2;
     n = strlen(in);
-    if (n > (size * 2)) {
-        BIO_printf(bio_err, "hex string is too long\n");
-        return 0;
+    if (n > i) {
+        BIO_printf(bio_err, "hex string is too long, ignoring excess\n");
+        n = i; /* ignore exceeding part */
+    } else if (n < i) {
+        BIO_printf(bio_err, "hex string is too short, padding with zero bytes to length\n");
     }
+
     memset(out, 0, size);
     for (i = 0; i < n; i++) {
-        j = (unsigned char)*in;
-        *(in++) = '\0';
-        if (j == 0)
-            break;
+        j = (unsigned char)*in++;
         if (!isxdigit(j)) {
             BIO_printf(bio_err, "non-hex digit\n");
             return 0;

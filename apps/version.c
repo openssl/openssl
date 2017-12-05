@@ -49,6 +49,16 @@ const OPTIONS version_options[] = {
     {NULL}
 };
 
+#if defined(OPENSSL_RAND_SEED_DEVRANDOM) || defined(OPENSSL_RAND_SEED_EGD)
+static void printlist(const char *prefix, const char **dev)
+{
+    printf("%s (", prefix);
+    for ( ; *dev != NULL; dev++)
+        printf(" \"%s\"", *dev);
+    printf(" )");
+}
+#endif
+
 int version_main(int argc, char **argv)
 {
     int ret = 1, dirty = 0, seed = 0;
@@ -62,6 +72,7 @@ int version_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:
         case OPT_ERR:
+opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             goto end;
         case OPT_HELP:
@@ -96,6 +107,10 @@ int version_main(int argc, char **argv)
             seed = cflags = version = date = platform = dir = engdir = 1;
             break;
         }
+    }
+    if (opt_num_rest() != 0) {
+        BIO_printf(bio_err, "Extra parameters given.\n");
+        goto opthelp;
     }
     if (!dirty)
         version = 1;
@@ -143,7 +158,7 @@ int version_main(int argc, char **argv)
         printf(" rtdsc");
 #endif
 #ifdef OPENSSL_RAND_SEED_RDCPU
-        printf(" rdrand-hardware");
+        printf(" rdrand ( rdseed rdrand )");
 #endif
 #ifdef OPENSSL_RAND_SEED_LIBRANDOM
         printf(" C-library-random");
@@ -152,10 +167,16 @@ int version_main(int argc, char **argv)
         printf(" getrandom-syscall");
 #endif
 #ifdef OPENSSL_RAND_SEED_DEVRANDOM
-        printf(" random-device");
+        {
+            static const char *dev[] = { DEVRANDOM, NULL };
+            printlist(" random-device", dev);
+        }
 #endif
 #ifdef OPENSSL_RAND_SEED_EGD
-        printf(" EGD");
+        {
+            static const char *dev[] = { DEVRANDOM_EGD, NULL };
+            printlist(" EGD", dev);
+        }
 #endif
 #ifdef OPENSSL_RAND_SEED_NONE
         printf(" none");
@@ -167,5 +188,5 @@ int version_main(int argc, char **argv)
     }
     ret = 0;
  end:
-    return (ret);
+    return ret;
 }

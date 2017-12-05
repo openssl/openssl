@@ -63,6 +63,7 @@ int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
                   const ASN1_ITEM *it);
 
+void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
 void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed);
 void asn1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 
@@ -78,3 +79,5 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 /* Internal functions used by x_int64.c */
 int c2i_uint64_int(uint64_t *ret, int *neg, const unsigned char **pp, long len);
 int i2c_uint64_int(unsigned char *p, uint64_t r, int neg);
+
+ASN1_TIME *asn1_time_from_tm(ASN1_TIME *s, struct tm *ts, int type);

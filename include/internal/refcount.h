@@ -9,6 +9,13 @@
 #ifndef HEADER_INTERNAL_REFCOUNT_H
 # define HEADER_INTERNAL_REFCOUNT_H
 
+/* Used to checking reference counts, most while doing perl5 stuff :-) */
+# if defined(OPENSSL_NO_STDIO)
+#  if defined(REF_PRINT)
+#   error "REF_PRINT requires stdio"
+#  endif
+# endif
+
 # if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
      && !defined(__STDC_NO_ATOMICS__)
 # include <stdatomic.h>
@@ -64,4 +71,19 @@ typedef int CRYPTO_REF_COUNT;
 # define CRYPTO_DOWN_REF(val, ret, lock) CRYPTO_atomic_add(val, -1, ret, lock)
 
 # endif
+
+# if !defined(NDEBUG) && !defined(OPENSSL_NO_STDIO)
+#  define REF_ASSERT_ISNT(test) \
+    (void)((test) ? (OPENSSL_die("refcount error", __FILE__, __LINE__), 1) : 0)
+# else
+#  define REF_ASSERT_ISNT(i)
+# endif
+
+# ifdef REF_PRINT
+#  define REF_PRINT_COUNT(a, b) \
+        fprintf(stderr, "%p:%4d:%s\n", b, b->references, a)
+# else
+#  define REF_PRINT_COUNT(a, b)
+# endif
+
 #endif

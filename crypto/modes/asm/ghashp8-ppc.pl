@@ -23,7 +23,7 @@
 # Relative comparison is therefore more informative. This initial
 # version is ~2.1x slower than hardware-assisted AES-128-CTR, ~12x
 # faster than "4-bit" integer-only compiler-generated 64-bit code.
-# "Initial version" means that there is room for futher improvement.
+# "Initial version" means that there is room for further improvement.
 
 # May 2016
 #

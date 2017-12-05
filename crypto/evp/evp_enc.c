@@ -50,7 +50,8 @@ void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                    const unsigned char *key, const unsigned char *iv, int enc)
 {
-    EVP_CIPHER_CTX_reset(ctx);
+    if (cipher != NULL)
+        EVP_CIPHER_CTX_reset(ctx);
     return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc);
 }
 
@@ -522,7 +523,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     if (b > 1) {
         if (ctx->buf_len || !ctx->final_used) {
             EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_WRONG_FINAL_BLOCK_LENGTH);
-            return (0);
+            return 0;
         }
         OPENSSL_assert(b <= sizeof ctx->final);
 
@@ -533,12 +534,12 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         n = ctx->final[b - 1];
         if (n == 0 || n > (int)b) {
             EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_BAD_DECRYPT);
-            return (0);
+            return 0;
         }
         for (i = 0; i < n; i++) {
             if (ctx->final[--b] != n) {
                 EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_BAD_DECRYPT);
-                return (0);
+                return 0;
             }
         }
         n = ctx->cipher->block_size - n;
@@ -547,7 +548,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
         *outl = n;
     } else
         *outl = 0;
-    return (1);
+    return 1;
 }
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)

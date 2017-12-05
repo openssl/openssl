@@ -25,7 +25,7 @@ int UI_UTIL_read_pw_string(char *buf, int length, const char *prompt,
         UI_UTIL_read_pw(buf, buff, (length > BUFSIZ) ? BUFSIZ : length,
                         prompt, verify);
     OPENSSL_cleanse(buff, BUFSIZ);
-    return (ret);
+    return ret;
 }
 
 int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
@@ -48,7 +48,7 @@ int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
     }
     if (ok > 0)
         ok = 0;
-    return (ok);
+    return ok;
 }
 
 /*
@@ -116,7 +116,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
                 result[len] = '\0';
             if (len <= 0)
                 return len;
-            if (UI_set_result(ui, uis, result) >= 0)
+            if (UI_set_result_ex(ui, uis, result, len) >= 0)
                 return 1;
             return 0;
         }

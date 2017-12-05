@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "../e_os.h"
 #include <string.h>
 
 #include <openssl/e_os2.h>
 #include <openssl/crypto.h>
 
-#include "e_os.h"
+#include "internal/nelem.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 
@@ -237,9 +238,11 @@ static const test_enum ssl_servername_callbacks[] = {
     {"None", SSL_TEST_SERVERNAME_CB_NONE},
     {"IgnoreMismatch", SSL_TEST_SERVERNAME_IGNORE_MISMATCH},
     {"RejectMismatch", SSL_TEST_SERVERNAME_REJECT_MISMATCH},
-    {"EarlyIgnoreMismatch", SSL_TEST_SERVERNAME_EARLY_IGNORE_MISMATCH},
-    {"EarlyRejectMismatch", SSL_TEST_SERVERNAME_EARLY_REJECT_MISMATCH},
-    {"EarlyNoV12", SSL_TEST_SERVERNAME_EARLY_NO_V12},
+    {"ClientHelloIgnoreMismatch",
+     SSL_TEST_SERVERNAME_CLIENT_HELLO_IGNORE_MISMATCH},
+    {"ClientHelloRejectMismatch",
+     SSL_TEST_SERVERNAME_CLIENT_HELLO_REJECT_MISMATCH},
+    {"ClientHelloNoV12", SSL_TEST_SERVERNAME_CLIENT_HELLO_NO_V12},
 };
 
 __owur static int parse_servername_callback(SSL_TEST_SERVER_CONF *server_conf,
@@ -289,6 +292,32 @@ const char *ssl_session_ticket_name(ssl_session_ticket_t server)
 /* CompressionExpected */
 
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CTX, test, compression_expected)
+
+/* SessionIdExpected */
+
+static const test_enum ssl_session_id[] = {
+    {"Ignore", SSL_TEST_SESSION_ID_IGNORE},
+    {"Yes", SSL_TEST_SESSION_ID_YES},
+    {"No", SSL_TEST_SESSION_ID_NO},
+};
+
+__owur static int parse_session_id(SSL_TEST_CTX *test_ctx, const char *value)
+{
+    int ret_value;
+    if (!parse_enum(ssl_session_id, OSSL_NELEM(ssl_session_id),
+                    &ret_value, value)) {
+        return 0;
+    }
+    test_ctx->session_id_expected = ret_value;
+    return 1;
+}
+
+const char *ssl_session_id_name(ssl_session_id_t server)
+{
+    return enum_name(ssl_session_id,
+                     OSSL_NELEM(ssl_session_id),
+                     server);
+}
 
 /* Method */
 
@@ -443,6 +472,34 @@ IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, app_data_size)
 
 IMPLEMENT_SSL_TEST_INT_OPTION(SSL_TEST_CTX, test, max_fragment_size)
 
+/* Maximum-Fragment-Length TLS extension mode */
+static const test_enum ssl_max_fragment_len_mode[] = {
+    {"None", TLSEXT_max_fragment_length_DISABLED},
+    { "512", TLSEXT_max_fragment_length_512},
+    {"1024", TLSEXT_max_fragment_length_1024},
+    {"2048", TLSEXT_max_fragment_length_2048},
+    {"4096", TLSEXT_max_fragment_length_4096}
+};
+
+__owur static int parse_max_fragment_len_mode(SSL_TEST_CLIENT_CONF *client_conf,
+                                              const char *value)
+{
+    int ret_value;
+
+    if (!parse_enum(ssl_max_fragment_len_mode,
+                    OSSL_NELEM(ssl_max_fragment_len_mode), &ret_value, value)) {
+        return 0;
+    }
+    client_conf->max_fragment_len_mode = ret_value;
+    return 1;
+}
+
+const char *ssl_max_fragment_len_name(int MFL_mode)
+{
+    return enum_name(ssl_max_fragment_len_mode,
+                     OSSL_NELEM(ssl_max_fragment_len_mode), MFL_mode);
+}
+
 
 /* Expected key and signature types */
 
@@ -558,6 +615,10 @@ __owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
     return parse_expected_ca_names(&test_ctx->expected_client_ca_names, value);
 }
 
+/* ExpectedCipher */
+
+IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_cipher)
+
 /* Known test options and their corresponding parse methods. */
 
 /* Top-level options. */
@@ -574,6 +635,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedServerName", &parse_expected_servername },
     { "SessionTicketExpected", &parse_session_ticket },
     { "CompressionExpected", &parse_test_compression_expected },
+    { "SessionIdExpected", &parse_session_id },
     { "Method", &parse_test_method },
     { "ExpectedNPNProtocol", &parse_test_expected_npn_protocol },
     { "ExpectedALPNProtocol", &parse_test_expected_alpn_protocol },
@@ -592,6 +654,7 @@ static const ssl_test_ctx_option ssl_test_ctx_options[] = {
     { "ExpectedClientSignType", &parse_expected_client_sign_type },
     { "ExpectedClientCANames", &parse_expected_client_ca_names },
     { "UseSCTP", &parse_test_use_sctp },
+    { "ExpectedCipher", &parse_test_expected_cipher },
 };
 
 /* Nested client options. */
@@ -609,6 +672,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "RenegotiateCiphers", &parse_client_reneg_ciphers},
     { "SRPUser", &parse_client_srp_user },
     { "SRPPassword", &parse_client_srp_password },
+    { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
 };
 
 /* Nested server options. */
@@ -669,6 +733,7 @@ void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
     OPENSSL_free(ctx->expected_alpn_protocol);
     sk_X509_NAME_pop_free(ctx->expected_server_ca_names, X509_NAME_free);
     sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
+    OPENSSL_free(ctx->expected_cipher);
     OPENSSL_free(ctx);
 }
 
@@ -755,30 +820,26 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
 
         /* Subsections */
         if (strcmp(option->name, "client") == 0) {
-            if (!parse_client_options(&ctx->extra.client, conf,
-                                      option->value))
+            if (!parse_client_options(&ctx->extra.client, conf, option->value))
                 goto err;
         } else if (strcmp(option->name, "server") == 0) {
-            if (!TEST_true(parse_server_options(&ctx->extra.server, conf,
-                                                option->value)))
+            if (!parse_server_options(&ctx->extra.server, conf, option->value))
                 goto err;
         } else if (strcmp(option->name, "server2") == 0) {
-            if (!TEST_true(parse_server_options(&ctx->extra.server2, conf,
-                                                option->value)))
+            if (!parse_server_options(&ctx->extra.server2, conf, option->value))
                 goto err;
         } else if (strcmp(option->name, "resume-client") == 0) {
-            if (!TEST_true(parse_client_options(&ctx->resume_extra.client, conf,
-                                                option->value)))
+            if (!parse_client_options(&ctx->resume_extra.client, conf,
+                                      option->value))
                 goto err;
         } else if (strcmp(option->name, "resume-server") == 0) {
-            if (!TEST_true(parse_server_options(&ctx->resume_extra.server, conf,
-                                                option->value)))
+            if (!parse_server_options(&ctx->resume_extra.server, conf,
+                                      option->value))
                 goto err;
         } else if (strcmp(option->name, "resume-server2") == 0) {
             if (!parse_server_options(&ctx->resume_extra.server2, conf,
                                       option->value))
                 goto err;
-
         } else {
             for (j = 0; j < OSSL_NELEM(ssl_test_ctx_options); j++) {
                 if (strcmp(option->name, ssl_test_ctx_options[j].name) == 0) {

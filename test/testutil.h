@@ -41,7 +41,7 @@
  * int global_init(void);
  *
  * This function should return zero if there is an unrecoverable error and
- * non-zero if the intialization was successful.
+ * non-zero if the initialization was successful.
  */
 
 /* Adds a simple test case. */
@@ -65,12 +65,13 @@
  * SETUP_TEST_FIXTURE will call set_up() to create a new TEST_FIXTURE_TYPE
  * object called "fixture". It will also allocate the "result" variable used
  * by EXECUTE_TEST. set_up() should take a const char* specifying the test
- * case name and return a TEST_FIXTURE_TYPE by value.
+ * case name and return a TEST_FIXTURE_TYPE by reference.
  *
- * EXECUTE_TEST will pass fixture to execute_func() by value, call
+ * EXECUTE_TEST will pass fixture to execute_func() by reference, call
  * tear_down(), and return the result of execute_func(). execute_func() should
- * take a TEST_FIXTURE_TYPE by value and return 1 on success and 0 on
- * failure.
+ * take a TEST_FIXTURE_TYPE by reference and return 1 on success and 0 on
+ * failure.  The tear_down function is responsible for deallocation of the
+ * result variable, if required.
  *
  * Unit tests can define their own SETUP_TEST_FIXTURE and EXECUTE_TEST
  * variations like so:
@@ -91,13 +92,14 @@
  *      }
  */
 # define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
-    TEST_FIXTURE_TYPE fixture = set_up(TEST_CASE_NAME); \
+    TEST_FIXTURE_TYPE *fixture = set_up(TEST_CASE_NAME); \
     int result = 0
 
 # define EXECUTE_TEST(execute_func, tear_down)\
+    if (fixture != NULL) {\
         result = execute_func(fixture);\
         tear_down(fixture);\
-        return result
+    }
 
 /*
  * TEST_CASE_NAME is defined as the name of the test case function where
@@ -184,6 +186,7 @@ DECLARE_COMPARISONS(char, char)
 DECLARE_COMPARISONS(unsigned char, uchar)
 DECLARE_COMPARISONS(long, long)
 DECLARE_COMPARISONS(unsigned long, ulong)
+DECLARE_COMPARISONS(time_t, time_t)
 /*
  * Because this comparison uses a printf format specifier that's not
  * universally known (yet), we provide an option to not have it declared.
@@ -233,8 +236,8 @@ int test_mem_ne(const char *, int, const char *, const char *,
 
 /*
  * Check a boolean result for being true or false.
- * They return 1 if the condition is true (i.e. the value is non-zro).
- * Otherwise, they return 0 and pretty-prints diagnostics using |desc|.
+ * They return 1 if the condition is true (i.e. the value is non-zero).
+ * Otherwise, they return 0 and pretty-prints diagnostics using |s|.
  * These should not be called directly, use the TEST_xxx macros below instead.
  */
 int test_true(const char *file, int line, const char *s, int b);
@@ -280,18 +283,11 @@ void test_perror(const char *s);
  * a default description that indicates the file and line number of the error.
  *
  * The following macros guarantee to evaluate each argument exactly once.
- * This allows constructs such as: if(!TEST_ptr(ptr = OPENSSL_malloc(..)))
+ * This allows constructs such as: if (!TEST_ptr(ptr = OPENSSL_malloc(..)))
  * to produce better contextual output than:
  *      ptr = OPENSSL_malloc(..);
  *      if (!TEST_ptr(ptr))
  */
-# define TEST_int_eq(a, b)    test_int_eq(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_int_ne(a, b)    test_int_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_int_lt(a, b)    test_int_lt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_int_le(a, b)    test_int_le(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_int_gt(a, b)    test_int_gt(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_int_ge(a, b)    test_int_ge(__FILE__, __LINE__, #a, #b, a, b)
-
 # define TEST_int_eq(a, b)    test_int_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_int_ne(a, b)    test_int_ne(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_int_lt(a, b)    test_int_lt(__FILE__, __LINE__, #a, #b, a, b)
@@ -340,6 +336,13 @@ void test_perror(const char *s);
 # define TEST_size_t_le(a, b) test_size_t_le(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_size_t_gt(a, b) test_size_t_gt(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_size_t_ge(a, b) test_size_t_ge(__FILE__, __LINE__, #a, #b, a, b)
+
+# define TEST_time_t_eq(a, b) test_time_t_eq(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_time_t_ne(a, b) test_time_t_ne(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_time_t_lt(a, b) test_time_t_lt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_time_t_le(a, b) test_time_t_le(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_time_t_gt(a, b) test_time_t_gt(__FILE__, __LINE__, #a, #b, a, b)
+# define TEST_time_t_ge(a, b) test_time_t_ge(__FILE__, __LINE__, #a, #b, a, b)
 
 # define TEST_ptr_eq(a, b)    test_ptr_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_ptr_ne(a, b)    test_ptr_ne(__FILE__, __LINE__, #a, #b, a, b)
@@ -444,5 +447,11 @@ int test_readstanza(STANZA *s);
  * Clear a stanza, release all allocated memory.
  */
 void test_clearstanza(STANZA *s);
+
+/*
+ * Glue an array of strings together and return it as an allocated string.
+ * Optionally return the whole length of this string in |out_len|
+ */
+char *glue_strings(const char *list[], size_t *out_len);
 
 #endif                          /* HEADER_TESTUTIL_H */

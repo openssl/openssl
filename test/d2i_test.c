@@ -20,7 +20,7 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "e_os.h"
+#include "internal/nelem.h"
 
 static const ASN1_ITEM *item_type;
 static const char *test_file;
@@ -41,7 +41,7 @@ typedef struct {
 
 static expected_error_t expected_error = ASN1_UNKNOWN;
 
-static int test_bad_asn1()
+static int test_bad_asn1(void)
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;

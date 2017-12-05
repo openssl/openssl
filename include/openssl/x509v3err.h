@@ -26,6 +26,7 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_F_ADDR_VALIDATE_PATH_INTERNAL             166
 # define X509V3_F_ASIDENTIFIERCHOICE_CANONIZE             161
 # define X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL         162
+# define X509V3_F_BIGNUM_TO_STRING                        167
 # define X509V3_F_COPY_EMAIL                              122
 # define X509V3_F_COPY_ISSUER                             123
 # define X509V3_F_DO_DIRNAME                              144

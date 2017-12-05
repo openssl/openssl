@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -17,7 +17,6 @@
 # include <openssl/buffer.h>
 # include <openssl/evp.h>
 # include <openssl/bio.h>
-# include <openssl/stack.h>
 # include <openssl/asn1.h>
 # include <openssl/safestack.h>
 # include <openssl/ec.h>
@@ -255,9 +254,8 @@ typedef struct X509_info_st {
 DEFINE_STACK_OF(X509_INFO)
 
 /*
- * The next 2 structures and their 8 routines were sent to me by Pat Richard
- * <patr@x509.com> and are used to manipulate Netscapes spki structures -
- * useful if you are writing a CA web page
+ * The next 2 structures and their 8 routines are used to manipulate Netscape's
+ * spki structures - useful if you are writing a CA web page
  */
 typedef struct Netscape_spkac_st {
     X509_PUBKEY *pubkey;

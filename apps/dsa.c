@@ -217,6 +217,9 @@ int dsa_main(int argc, char **argv)
     } else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
         EVP_PKEY *pk;
         pk = EVP_PKEY_new();
+        if (pk == NULL)
+           goto end;
+
         EVP_PKEY_set1_DSA(pk, dsa);
         if (outformat == FORMAT_PVK) {
             if (pubin) {
@@ -256,6 +259,6 @@ int dsa_main(int argc, char **argv)
     release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    return (ret);
+    return ret;
 }
 #endif

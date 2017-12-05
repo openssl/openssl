@@ -14,6 +14,7 @@
 use strict;
 use warnings;
 
+use FindBin;
 use Getopt::Std;
 
 # We actually expect to get the following hash tables from configdata:
@@ -38,7 +39,7 @@ package OpenSSL::Template;
 # a fallback in case it's not installed on the system
 use File::Basename;
 use File::Spec::Functions;
-use lib catdir(dirname(__FILE__));
+use lib "$FindBin::Bin/perl";
 use with_fallback qw(Text::Template);
 
 #use parent qw/Text::Template/;
@@ -91,7 +92,7 @@ package main;
 # Helper functions for the templates #################################
 
 # It might be practical to quotify some strings and have them protected
-# from possible harm.  These functions primarly quote things that might
+# from possible harm.  These functions primarily quote things that might
 # be interpreted wrongly by a perl eval.
 
 # quotify1 STRING
@@ -105,7 +106,7 @@ sub quotify1 {
 
 # quotify_l LIST
 # For each defined element in LIST (i.e. elements that aren't undef), have
-# it quotified with 'quotofy1'
+# it quotified with 'quotify1'
 sub quotify_l {
     map {
         if (!defined($_)) {
@@ -175,7 +176,10 @@ my $text =
 # Load the full template (combination of files) into Text::Template
 # and fill it up with our data.  Output goes directly to STDOUT
 
-my $template = OpenSSL::Template->new(TYPE => 'STRING', SOURCE => $text );
+my $template =
+    OpenSSL::Template->new(TYPE => 'STRING',
+                           SOURCE => $text,
+                           PREPEND => qq{use lib "$FindBin::Bin/perl";});
 
 sub output_reset_on {
     $template->output_reset_on();

@@ -39,9 +39,9 @@ typedef enum {
     SSL_TEST_SERVERNAME_CB_NONE = 0,  /* Default */
     SSL_TEST_SERVERNAME_IGNORE_MISMATCH,
     SSL_TEST_SERVERNAME_REJECT_MISMATCH,
-    SSL_TEST_SERVERNAME_EARLY_IGNORE_MISMATCH,
-    SSL_TEST_SERVERNAME_EARLY_REJECT_MISMATCH,
-    SSL_TEST_SERVERNAME_EARLY_NO_V12
+    SSL_TEST_SERVERNAME_CLIENT_HELLO_IGNORE_MISMATCH,
+    SSL_TEST_SERVERNAME_CLIENT_HELLO_REJECT_MISMATCH,
+    SSL_TEST_SERVERNAME_CLIENT_HELLO_NO_V12
 } ssl_servername_callback_t;
 
 typedef enum {
@@ -55,6 +55,12 @@ typedef enum {
     SSL_TEST_COMPRESSION_NO = 0, /* Default */
     SSL_TEST_COMPRESSION_YES
 } ssl_compression_t;
+
+typedef enum {
+    SSL_TEST_SESSION_ID_IGNORE = 0, /* Default */
+    SSL_TEST_SESSION_ID_YES,
+    SSL_TEST_SESSION_ID_NO
+} ssl_session_id_t;
 
 typedef enum {
     SSL_TEST_METHOD_TLS = 0, /* Default */
@@ -91,6 +97,8 @@ typedef struct {
     ssl_verify_callback_t verify_callback;
     /* One of a number of predefined server names use by the client */
     ssl_servername_t servername;
+    /* Maximum Fragment Length extension mode */
+    int max_fragment_len_mode;
     /* Supported NPN and ALPN protocols. A comma-separated list. */
     char *npn_protocols;
     char *alpn_protocols;
@@ -200,6 +208,9 @@ typedef struct {
     STACK_OF(X509_NAME) *expected_client_ca_names;
     /* Whether to use SCTP for the transport */
     int use_sctp;
+    /* Whether to expect a session id from the server */
+    ssl_session_id_t session_id_expected;
+    char *expected_cipher;
 } SSL_TEST_CTX;
 
 const char *ssl_test_result_name(ssl_test_result_t result);
@@ -210,10 +221,12 @@ const char *ssl_servername_name(ssl_servername_t server);
 const char *ssl_servername_callback_name(ssl_servername_callback_t
                                          servername_callback);
 const char *ssl_session_ticket_name(ssl_session_ticket_t server);
+const char *ssl_session_id_name(ssl_session_id_t server);
 const char *ssl_test_method_name(ssl_test_method_t method);
 const char *ssl_handshake_mode_name(ssl_handshake_mode_t mode);
 const char *ssl_ct_validation_name(ssl_ct_validation_t mode);
 const char *ssl_certstatus_name(ssl_cert_status_t cert_status);
+const char *ssl_max_fragment_len_name(int MFL_mode);
 
 /*
  * Load the test case context from |conf|.

@@ -27,7 +27,7 @@ https://github.com/llvm-mirror/llvm/tree/master/lib/Fuzzer if you prefer):
     $ sudo apt-get install subversion
     $ mkdir svn-work
     $ cd svn-work
-    $ svn co http://llvm.org/svn/llvm-project/llvm/trunk/lib/Fuzzer
+    $ svn co https://llvm.org/svn/llvm-project/compiler-rt/trunk/lib/fuzzer Fuzzer
     $ cd Fuzzer
     $ clang++ -c -g -O2 -std=c++11 *.cpp
     $ ar r libFuzzer.a *.o

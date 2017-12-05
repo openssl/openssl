@@ -9,6 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+
 /* Or gethostname won't be declared properly on Linux and GNU platforms. */
 #ifndef _BSD_SOURCE
 # define _BSD_SOURCE 1
@@ -25,8 +27,7 @@
 #include <string.h>
 #include <time.h>
 
-#define USE_SOCKETS
-#include "e_os.h"
+#include "internal/nelem.h"
 
 #ifdef OPENSSL_SYS_VMS
 /*
@@ -280,7 +281,7 @@ static unsigned char *next_protos_parse(size_t *outlen,
                 OPENSSL_free(out);
                 return NULL;
             }
-            out[start] = i - start;
+            out[start] = (unsigned char)(i - start);
             start = i + 1;
         } else
             out[i + 1] = in[i];
@@ -613,8 +614,6 @@ static int custom_ext_3_srv_add_cb(SSL *s, unsigned int ext_type,
 static char *cipher = NULL;
 static int verbose = 0;
 static int debug = 0;
-static const char rnd_seed[] =
-    "string to make the random number generator think it has randomness";
 
 int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family,
                    long bytes, clock_t *s_time, clock_t *c_time);
@@ -927,8 +926,6 @@ int main(int argc, char *argv[])
     if (p != NULL && strcmp(p, "on") == 0)
         CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    RAND_seed(rnd_seed, sizeof rnd_seed);
 
     bio_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 
@@ -2148,7 +2145,7 @@ int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
          * Useful functions for querying the state of BIO pair endpoints:
          *
          * BIO_ctrl_pending(bio)              number of bytes we can read now
-         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfil
+         * BIO_ctrl_get_read_request(bio)     number of bytes needed to fulfill
          *                                      other side's read attempt
          * BIO_ctrl_get_write_guarantee(bio)   number of bytes we can write now
          *

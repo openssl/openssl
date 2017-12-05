@@ -325,7 +325,7 @@ static int test_asyncio(int test)
             goto end;
 
         /*
-         * Now read the test data. It may take more attemps here because
+         * Now read the test data. It may take more attempts here because
          * it could fail once for each byte read, including all overhead
          * bytes from the record header/padding etc.
          */

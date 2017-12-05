@@ -265,7 +265,7 @@ int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
         return (ASN1_STRING_length(respid->value.byKey) == SHA_DIGEST_LENGTH)
             && (memcmp(ASN1_STRING_get0_data(respid->value.byKey), md,
                        SHA_DIGEST_LENGTH) == 0);
-    } else if(respid->type == V_OCSP_RESPID_NAME) {
+    } else if (respid->type == V_OCSP_RESPID_NAME) {
         if (respid->value.byName == NULL)
             return 0;
 

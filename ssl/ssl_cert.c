@@ -9,20 +9,17 @@
  */
 
 #include <stdio.h>
+#include <sys/types.h>
 
-#include "e_os.h"
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
-
+#include "internal/nelem.h"
 #include "internal/o_dir.h"
-#include <openssl/lhash.h>
 #include <openssl/bio.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include "internal/refcount.h"
 #include "ssl_locl.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
@@ -462,23 +459,25 @@ static void set0_CA_list(STACK_OF(X509_NAME) **ca_list,
 STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk)
 {
     int i;
+    const int num = sk_X509_NAME_num(sk);
     STACK_OF(X509_NAME) *ret;
     X509_NAME *name;
 
-    ret = sk_X509_NAME_new_null();
+    ret = sk_X509_NAME_new_reserve(NULL, num);
     if (ret == NULL) {
         SSLerr(SSL_F_SSL_DUP_CA_LIST, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    for (i = 0; i < sk_X509_NAME_num(sk); i++) {
+    for (i = 0; i < num; i++) {
         name = X509_NAME_dup(sk_X509_NAME_value(sk, i));
-        if (name == NULL || !sk_X509_NAME_push(ret, name)) {
+        if (name == NULL) {
+            SSLerr(SSL_F_SSL_DUP_CA_LIST, ERR_R_MALLOC_FAILURE);
             sk_X509_NAME_pop_free(ret, X509_NAME_free);
-            X509_NAME_free(name);
             return NULL;
         }
+        sk_X509_NAME_push(ret, name);   /* Cannot fail after reserve call */
     }
-    return (ret);
+    return ret;
 }
 
 void SSL_set0_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
@@ -569,7 +568,7 @@ int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 
 static int xname_sk_cmp(const X509_NAME *const *a, const X509_NAME *const *b)
 {
-    return (X509_NAME_cmp(*a, *b));
+    return X509_NAME_cmp(*a, *b);
 }
 
 static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
@@ -644,7 +643,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     lh_X509_NAME_free(name_hash);
     if (ret != NULL)
         ERR_clear_error();
-    return (ret);
+    return ret;
 }
 
 /**
@@ -999,6 +998,6 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx)
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx)
 {
     if (idx >= OSSL_NELEM(ssl_cert_info))
-        return 0;
+        return NULL;
     return &ssl_cert_info[idx];
 }

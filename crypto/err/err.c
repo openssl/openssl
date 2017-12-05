@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,16 +10,15 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <internal/cryptlib_int.h>
-#include <internal/err.h>
-#include <internal/err_int.h>
-#include <openssl/lhash.h>
+#include "internal/cryptlib_int.h"
+#include "internal/err.h"
+#include "internal/err_int.h"
 #include <openssl/err.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
-#include <internal/thread_once.h>
+#include "internal/thread_once.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -267,7 +266,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    err_string_lock = CRYPTO_THREAD_lock_new();
+    err_string_lock = CRYPTO_THREAD_glock_new("err_string");
     int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
                                             err_string_data_cmp);
     return err_string_lock != NULL && int_error_hash != NULL;
@@ -419,50 +418,50 @@ void ERR_clear_error(void)
 
 unsigned long ERR_get_error(void)
 {
-    return (get_error_values(1, 0, NULL, NULL, NULL, NULL));
+    return get_error_values(1, 0, NULL, NULL, NULL, NULL);
 }
 
 unsigned long ERR_get_error_line(const char **file, int *line)
 {
-    return (get_error_values(1, 0, file, line, NULL, NULL));
+    return get_error_values(1, 0, file, line, NULL, NULL);
 }
 
 unsigned long ERR_get_error_line_data(const char **file, int *line,
                                       const char **data, int *flags)
 {
-    return (get_error_values(1, 0, file, line, data, flags));
+    return get_error_values(1, 0, file, line, data, flags);
 }
 
 unsigned long ERR_peek_error(void)
 {
-    return (get_error_values(0, 0, NULL, NULL, NULL, NULL));
+    return get_error_values(0, 0, NULL, NULL, NULL, NULL);
 }
 
 unsigned long ERR_peek_error_line(const char **file, int *line)
 {
-    return (get_error_values(0, 0, file, line, NULL, NULL));
+    return get_error_values(0, 0, file, line, NULL, NULL);
 }
 
 unsigned long ERR_peek_error_line_data(const char **file, int *line,
                                        const char **data, int *flags)
 {
-    return (get_error_values(0, 0, file, line, data, flags));
+    return get_error_values(0, 0, file, line, data, flags);
 }
 
 unsigned long ERR_peek_last_error(void)
 {
-    return (get_error_values(0, 1, NULL, NULL, NULL, NULL));
+    return get_error_values(0, 1, NULL, NULL, NULL, NULL);
 }
 
 unsigned long ERR_peek_last_error_line(const char **file, int *line)
 {
-    return (get_error_values(0, 1, file, line, NULL, NULL));
+    return get_error_values(0, 1, file, line, NULL, NULL);
 }
 
 unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
                                             const char **data, int *flags)
 {
-    return (get_error_values(0, 1, file, line, data, flags));
+    return get_error_values(0, 1, file, line, data, flags);
 }
 
 static unsigned long get_error_values(int inc, int top, const char **file,
@@ -543,45 +542,30 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         return;
 
     l = ERR_GET_LIB(e);
-    f = ERR_GET_FUNC(e);
-    r = ERR_GET_REASON(e);
-
     ls = ERR_lib_error_string(e);
-    fs = ERR_func_error_string(e);
-    rs = ERR_reason_error_string(e);
-
-    if (ls == NULL)
+    if (ls == NULL) {
         BIO_snprintf(lsbuf, sizeof(lsbuf), "lib(%lu)", l);
-    if (fs == NULL)
+        ls = lsbuf;
+    }
+
+    fs = ERR_func_error_string(e);
+    f = ERR_GET_FUNC(e);
+    if (fs == NULL) {
         BIO_snprintf(fsbuf, sizeof(fsbuf), "func(%lu)", f);
-    if (rs == NULL)
+        fs = fsbuf;
+    }
+
+    rs = ERR_reason_error_string(e);
+    r = ERR_GET_REASON(e);
+    if (rs == NULL) {
         BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
+        rs = rsbuf;
+    }
 
-    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls ? ls : lsbuf,
-                 fs ? fs : fsbuf, rs ? rs : rsbuf);
+    BIO_snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, fs, rs);
     if (strlen(buf) == len - 1) {
-        /*
-         * output may be truncated; make sure we always have 5
-         * colon-separated fields, i.e. 4 colons ...
-         */
-#define NUM_COLONS 4
-        if (len > NUM_COLONS) { /* ... if possible */
-            int i;
-            char *s = buf;
-
-            for (i = 0; i < NUM_COLONS; i++) {
-                char *colon = strchr(s, ':');
-                if (colon == NULL || colon > &buf[len - 1] - NUM_COLONS + i) {
-                    /*
-                     * set colon no. i at last possible position (buf[len-1]
-                     * is the terminating 0)
-                     */
-                    colon = &buf[len - 1] - NUM_COLONS + i;
-                    *colon = ':';
-                }
-                s = colon + 1;
-            }
-        }
+        /* Didn't fit; use a minimal format. */
+        BIO_snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, f, r);
     }
 }
 
@@ -595,8 +579,7 @@ char *ERR_error_string(unsigned long e, char *ret)
 
     if (ret == NULL)
         ret = buf;
-    ERR_error_string_n(e, ret, 256);
-
+    ERR_error_string_n(e, ret, (int)sizeof(buf));
     return ret;
 }
 
@@ -730,8 +713,6 @@ void ERR_set_error_data(char *data, int flags)
         return;
 
     i = es->top;
-    if (i == 0)
-        i = ERR_NUM_ERRORS - 1;
 
     err_clear_data(es, i);
     es->err_data[i] = data;
@@ -802,13 +783,32 @@ int ERR_pop_to_mark(void)
     while (es->bottom != es->top
            && (es->err_flags[es->top] & ERR_FLAG_MARK) == 0) {
         err_clear(es, es->top);
-        es->top -= 1;
-        if (es->top == -1)
-            es->top = ERR_NUM_ERRORS - 1;
+        es->top = es->top > 0 ? es->top - 1 : ERR_NUM_ERRORS - 1;
     }
 
     if (es->bottom == es->top)
         return 0;
     es->err_flags[es->top] &= ~ERR_FLAG_MARK;
+    return 1;
+}
+
+int ERR_clear_last_mark(void)
+{
+    ERR_STATE *es;
+    int top;
+
+    es = ERR_get_state();
+    if (es == NULL)
+        return 0;
+
+    top = es->top;
+    while (es->bottom != top
+           && (es->err_flags[top] & ERR_FLAG_MARK) == 0) {
+        top = top > 0 ? top - 1 : ERR_NUM_ERRORS - 1;
+    }
+
+    if (es->bottom == top)
+        return 0;
+    es->err_flags[top] &= ~ERR_FLAG_MARK;
     return 1;
 }

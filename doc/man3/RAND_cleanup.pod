@@ -23,13 +23,10 @@ L<OPENSSL_init_crypto(3)>.
 
 RAND_cleanup() returns no value.
 
-=head1 SEE ALSO
-
-L<RAND_bytes(3)>
-
 =head1 HISTORY
 
-RAND_cleanup() was deprecated in OpenSSL 1.1.0.
+RAND_cleanup() was deprecated in OpenSSL 1.1.0; do not use it.
+See L<OPENSSL_init_crypto(3)>
 
 =head1 COPYRIGHT
 

@@ -75,6 +75,9 @@ struct evp_pkey_method_st {
     int (*digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
                          size_t siglen, const unsigned char *tbs,
                          size_t tbslen);
+    int (*check) (EVP_PKEY *pkey);
+    int (*public_check) (EVP_PKEY *pkey);
+    int (*param_check) (EVP_PKEY *pkey);
 } /* EVP_PKEY_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
@@ -91,6 +94,7 @@ extern const EVP_PKEY_METHOD ed25519_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
+extern const EVP_PKEY_METHOD scrypt_pkey_meth;
 extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
@@ -367,6 +371,7 @@ struct evp_pkey_st {
     CRYPTO_REF_COUNT references;
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
+    ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
     union {
         void *ptr;
 # ifndef OPENSSL_NO_RSA
@@ -391,8 +396,9 @@ struct evp_pkey_st {
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
+void evp_app_cleanup_int(void);
 
-/* Pulling defines out of C soure files */
+/* Pulling defines out of C source files */
 
 #define EVP_RC4_KEY_SIZE 16
 #ifndef TLS1_1_VERSION

@@ -1132,6 +1132,16 @@
 #define NID_hmacWithSHA1                163
 #define OBJ_hmacWithSHA1                OBJ_rsadsi,2L,7L
 
+#define SN_sm3          "SM3"
+#define LN_sm3          "sm3"
+#define NID_sm3         1143
+#define OBJ_sm3         OBJ_member_body,156L,10197L,1L,401L
+
+#define SN_sm3WithRSAEncryption         "RSA-SM3"
+#define LN_sm3WithRSAEncryption         "sm3WithRSAEncryption"
+#define NID_sm3WithRSAEncryption                1144
+#define OBJ_sm3WithRSAEncryption                OBJ_member_body,156L,10197L,1L,504L
+
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
 #define OBJ_hmacWithSHA224              OBJ_rsadsi,2L,8L
@@ -1571,6 +1581,16 @@
 #define LN_sendProxiedOwner             "Send Proxied Owner"
 #define NID_sendProxiedOwner            1030
 #define OBJ_sendProxiedOwner            OBJ_id_kp,26L
+
+#define SN_cmcCA                "cmcCA"
+#define LN_cmcCA                "CMC Certificate Authority"
+#define NID_cmcCA               1131
+#define OBJ_cmcCA               OBJ_id_kp,27L
+
+#define SN_cmcRA                "cmcRA"
+#define LN_cmcRA                "CMC Registration Authority"
+#define NID_cmcRA               1132
+#define OBJ_cmcRA               OBJ_id_kp,28L
 
 #define SN_id_it_caProtEncCert          "id-it-caProtEncCert"
 #define NID_id_it_caProtEncCert         298
@@ -2976,10 +2996,10 @@
 #define NID_RSA_SHA3_256                1117
 #define OBJ_RSA_SHA3_256                OBJ_sigAlgs,14L
 
-#define SN_RSA_SHA3_284         "id-rsassa-pkcs1-v1_5-with-sha3-384"
-#define LN_RSA_SHA3_284         "RSA-SHA3-284"
-#define NID_RSA_SHA3_284                1118
-#define OBJ_RSA_SHA3_284                OBJ_sigAlgs,15L
+#define SN_RSA_SHA3_384         "id-rsassa-pkcs1-v1_5-with-sha3-384"
+#define LN_RSA_SHA3_384         "RSA-SHA3-384"
+#define NID_RSA_SHA3_384                1118
+#define OBJ_RSA_SHA3_384                OBJ_sigAlgs,15L
 
 #define SN_RSA_SHA3_512         "id-rsassa-pkcs1-v1_5-with-sha3-512"
 #define LN_RSA_SHA3_512         "RSA-SHA3-512"
@@ -4519,6 +4539,36 @@
 #define LN_aria_256_cfb8                "aria-256-cfb8"
 #define NID_aria_256_cfb8               1085
 
+#define SN_aria_128_ccm         "ARIA-128-CCM"
+#define LN_aria_128_ccm         "aria-128-ccm"
+#define NID_aria_128_ccm                1120
+#define OBJ_aria_128_ccm                OBJ_aria,37L
+
+#define SN_aria_192_ccm         "ARIA-192-CCM"
+#define LN_aria_192_ccm         "aria-192-ccm"
+#define NID_aria_192_ccm                1121
+#define OBJ_aria_192_ccm                OBJ_aria,38L
+
+#define SN_aria_256_ccm         "ARIA-256-CCM"
+#define LN_aria_256_ccm         "aria-256-ccm"
+#define NID_aria_256_ccm                1122
+#define OBJ_aria_256_ccm                OBJ_aria,39L
+
+#define SN_aria_128_gcm         "ARIA-128-GCM"
+#define LN_aria_128_gcm         "aria-128-gcm"
+#define NID_aria_128_gcm                1123
+#define OBJ_aria_128_gcm                OBJ_aria,34L
+
+#define SN_aria_192_gcm         "ARIA-192-GCM"
+#define LN_aria_192_gcm         "aria-192-gcm"
+#define NID_aria_192_gcm                1124
+#define OBJ_aria_192_gcm                OBJ_aria,35L
+
+#define SN_aria_256_gcm         "ARIA-256-GCM"
+#define LN_aria_256_gcm         "aria-256-gcm"
+#define NID_aria_256_gcm                1125
+#define OBJ_aria_256_gcm                OBJ_aria,36L
+
 #define SN_kisa         "KISA"
 #define LN_kisa         "kisa"
 #define NID_kisa                773
@@ -4543,6 +4593,54 @@
 #define LN_seed_ofb128          "seed-ofb"
 #define NID_seed_ofb128         778
 #define OBJ_seed_ofb128         OBJ_kisa,1L,6L
+
+#define SN_ISO_CN               "ISO-CN"
+#define LN_ISO_CN               "ISO CN Member Body"
+#define NID_ISO_CN              1140
+#define OBJ_ISO_CN              OBJ_member_body,156L
+
+#define SN_oscca                "oscca"
+#define NID_oscca               1141
+#define OBJ_oscca               OBJ_ISO_CN,10197L
+
+#define SN_sm_scheme            "sm-scheme"
+#define NID_sm_scheme           1142
+#define OBJ_sm_scheme           OBJ_oscca,1L
+
+#define SN_sm4_ecb              "SM4-ECB"
+#define LN_sm4_ecb              "sm4-ecb"
+#define NID_sm4_ecb             1133
+#define OBJ_sm4_ecb             OBJ_sm_scheme,104L,1L
+
+#define SN_sm4_cbc              "SM4-CBC"
+#define LN_sm4_cbc              "sm4-cbc"
+#define NID_sm4_cbc             1134
+#define OBJ_sm4_cbc             OBJ_sm_scheme,104L,2L
+
+#define SN_sm4_ofb128           "SM4-OFB"
+#define LN_sm4_ofb128           "sm4-ofb"
+#define NID_sm4_ofb128          1135
+#define OBJ_sm4_ofb128          OBJ_sm_scheme,104L,3L
+
+#define SN_sm4_cfb128           "SM4-CFB"
+#define LN_sm4_cfb128           "sm4-cfb"
+#define NID_sm4_cfb128          1137
+#define OBJ_sm4_cfb128          OBJ_sm_scheme,104L,4L
+
+#define SN_sm4_cfb1             "SM4-CFB1"
+#define LN_sm4_cfb1             "sm4-cfb1"
+#define NID_sm4_cfb1            1136
+#define OBJ_sm4_cfb1            OBJ_sm_scheme,104L,5L
+
+#define SN_sm4_cfb8             "SM4-CFB8"
+#define LN_sm4_cfb8             "sm4-cfb8"
+#define NID_sm4_cfb8            1138
+#define OBJ_sm4_cfb8            OBJ_sm_scheme,104L,6L
+
+#define SN_sm4_ctr              "SM4-CTR"
+#define LN_sm4_ctr              "sm4-ctr"
+#define NID_sm4_ctr             1139
+#define OBJ_sm4_ctr             OBJ_sm_scheme,104L,7L
 
 #define SN_hmac         "HMAC"
 #define LN_hmac         "hmac"
@@ -4735,6 +4833,7 @@
 #define OBJ_jurisdictionCountryName             1L,3L,6L,1L,4L,1L,311L,60L,2L,1L,3L
 
 #define SN_id_scrypt            "id-scrypt"
+#define LN_id_scrypt            "scrypt"
 #define NID_id_scrypt           973
 #define OBJ_id_scrypt           1L,3L,6L,1L,4L,1L,11591L,4L,11L
 
@@ -4859,3 +4958,18 @@
 #define SN_siphash              "SipHash"
 #define LN_siphash              "siphash"
 #define NID_siphash             1062
+
+#define SN_ffdhe2048            "ffdhe2048"
+#define NID_ffdhe2048           1126
+
+#define SN_ffdhe3072            "ffdhe3072"
+#define NID_ffdhe3072           1127
+
+#define SN_ffdhe4096            "ffdhe4096"
+#define NID_ffdhe4096           1128
+
+#define SN_ffdhe6144            "ffdhe6144"
+#define NID_ffdhe6144           1129
+
+#define SN_ffdhe8192            "ffdhe8192"
+#define NID_ffdhe8192           1130

@@ -51,7 +51,7 @@ foreach (@files) {
     # read IMAGE_FILE_HEADER
     sysread(FD,$coff,20)==20 || die "$file is too short";
     ($Machine,$NumberOfSections,$TimeDateStamp,
-     $PointerToSymbolTable,$NumberOfSysmbols,
+     $PointerToSymbolTable,$NumberOfSymbols,
      $SizeOfOptionalHeader,$Characteristics)=unpack("SSIIISS",$coff);
 
     # skip over IMAGE_OPTIONAL_HEADER

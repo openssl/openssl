@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/buffer.h>
@@ -324,7 +324,14 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
     if (enc != NULL) {
         objstr = OBJ_nid2sn(EVP_CIPHER_nid(enc));
-        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0) {
+        if (objstr == NULL || EVP_CIPHER_iv_length(enc) == 0
+                || EVP_CIPHER_iv_length(enc) > (int)sizeof(iv)
+                   /*
+                    * Check "Proc-Type: 4,Encrypted\nDEK-Info: objstr,hex-iv\n"
+                    * fits into buf
+                    */
+                || (strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13)
+                   > sizeof(buf)) {
             PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, PEM_R_UNSUPPORTED_CIPHER);
             goto err;
         }
@@ -361,8 +368,6 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 #endif
             kstr = (unsigned char *)buf;
         }
-        RAND_add(data, i, 0);   /* put in the RSA key. */
-        OPENSSL_assert(EVP_CIPHER_iv_length(enc) <= (int)sizeof(iv));
         if (RAND_bytes(iv, EVP_CIPHER_iv_length(enc)) <= 0) /* Generate a salt */
             goto err;
         /*
@@ -374,9 +379,6 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
 
         if (kstr == (unsigned char *)buf)
             OPENSSL_cleanse(buf, PEM_BUFSIZE);
-
-        OPENSSL_assert(strlen(objstr) + 23 + 2 * EVP_CIPHER_iv_length(enc) + 13
-                       <= sizeof buf);
 
         buf[0] = '\0';
         PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
@@ -681,9 +683,6 @@ int PEM_read(FILE *fp, char **name, char **header, unsigned char **data,
 #endif
 
 /* Some helpers for PEM_read_bio_ex(). */
-
-#define isb64(c) (isalnum(c) || (c) == '+' || (c) == '/' || (c) == '=')
-
 static int sanitize_line(char *linebuf, int len, unsigned int flags)
 {
     int i;
@@ -696,7 +695,8 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags)
         len++;
     } else if (flags & PEM_FLAG_ONLY_B64) {
         for (i = 0; i < len; ++i) {
-            if (!isb64(linebuf[i]) || linebuf[i] == '\n' || linebuf[i] == '\r')
+            if (!ossl_isbase64(linebuf[i]) || linebuf[i] == '\n'
+                || linebuf[i] == '\r')
                 break;
         }
         len = i;
@@ -706,7 +706,7 @@ static int sanitize_line(char *linebuf, int len, unsigned int flags)
         for (i = 0; i < len; ++i) {
             if (linebuf[i] == '\n' || linebuf[i] == '\r')
                 break;
-            if (iscntrl(linebuf[i]))
+            if (ossl_iscntrl(linebuf[i]))
                 linebuf[i] = ' ';
         }
         len = i;

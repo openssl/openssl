@@ -18,7 +18,7 @@
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
 
-#include "e_os.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 typedef struct cipherlist_test_fixture {
@@ -34,21 +34,23 @@ static void tear_down(CIPHERLIST_TEST_FIXTURE *fixture)
         SSL_CTX_free(fixture->server);
         SSL_CTX_free(fixture->client);
         fixture->server = fixture->client = NULL;
+        OPENSSL_free(fixture);
     }
 }
 
 static CIPHERLIST_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
-    static CIPHERLIST_TEST_FIXTURE fixture;
+    CIPHERLIST_TEST_FIXTURE *fixture;
 
-    memset(&fixture, 0, sizeof(fixture));
-    fixture.test_case_name = test_case_name;
-    if (!TEST_ptr(fixture.server = SSL_CTX_new(TLS_server_method()))
-            || !TEST_ptr(fixture.client = SSL_CTX_new(TLS_client_method()))) {
-        tear_down(&fixture);
+    if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
+        return NULL;
+    fixture->test_case_name = test_case_name;
+    if (!TEST_ptr(fixture->server = SSL_CTX_new(TLS_server_method()))
+            || !TEST_ptr(fixture->client = SSL_CTX_new(TLS_client_method()))) {
+        tear_down(fixture);
         return NULL;
     }
-    return &fixture;
+    return fixture;
 }
 
 /*
@@ -179,18 +181,21 @@ static int execute_test(CIPHERLIST_TEST_FIXTURE *fixture)
 }
 
 #define SETUP_CIPHERLIST_TEST_FIXTURE() \
-    SETUP_TEST_FIXTURE(CIPHERLIST_TEST_FIXTURE *, set_up)
+    SETUP_TEST_FIXTURE(CIPHERLIST_TEST_FIXTURE, set_up)
 
 #define EXECUTE_CIPHERLIST_TEST() \
     EXECUTE_TEST(execute_test, tear_down)
 
-static int test_default_cipherlist_implicit()
+static int test_default_cipherlist_implicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
+    if (fixture == NULL)
+        return 0;
     EXECUTE_CIPHERLIST_TEST();
+    return result;
 }
 
-static int test_default_cipherlist_explicit()
+static int test_default_cipherlist_explicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
     if (fixture == NULL)
@@ -199,6 +204,7 @@ static int test_default_cipherlist_explicit()
             || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT")))
         tear_down(fixture);
     EXECUTE_CIPHERLIST_TEST();
+    return result;
 }
 
 int setup_tests()

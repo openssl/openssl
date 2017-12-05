@@ -730,7 +730,7 @@ my $extra = shift;
 
 	&movdqa		($T0,$T1);			# -> base 2^26 ...
 	&pand		($T1,$MASK);
-	&paddd		($D0,$T1);			# ... and accumuate
+	&paddd		($D0,$T1);			# ... and accumulate
 
 	&movdqa		($T1,$T0);
 	&psrlq		($T0,26);

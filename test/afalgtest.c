@@ -29,7 +29,7 @@ static ENGINE *e;
 # define K_MAJ   4
 # define K_MIN1  1
 # define K_MIN2  0
-# if LINUX_VERSION_CODE <= KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
+# if LINUX_VERSION_CODE < KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
 /*
  * If we get here then it looks like there is a mismatch between the linux
  * headers and the actual kernel version, so we have tried to compile with

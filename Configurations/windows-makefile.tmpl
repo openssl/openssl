@@ -114,11 +114,12 @@ APPS_OPENSSL={- use File::Spec::Functions;
 INSTALLTOP_dev={- # $prefix is used in the OPENSSLDIR perl snippet
                   #
                   use File::Spec::Functions qw(:DEFAULT splitpath);
-                  our $prefix = $config{prefix} || "$win_installroot\\OpenSSL";
+                  our $prefix = canonpath($config{prefix}
+                                          || "$win_installroot\\OpenSSL");
                   our ($prefix_dev, $prefix_dir, $prefix_file) =
                       splitpath($prefix, 1);
                   $prefix_dev -}
-INSTALLTOP_dir={- $prefix_dir -}
+INSTALLTOP_dir={- canonpath($prefix_dir) -}
 OPENSSLDIR_dev={- #
                   # The logic here is that if no --openssldir was given,
                   # OPENSSLDIR will get the value "$win_commonroot\\SSL".
@@ -132,13 +133,13 @@ OPENSSLDIR_dev={- #
                   our $openssldir =
                       $config{openssldir} ?
                           (file_name_is_absolute($config{openssldir}) ?
-                               $config{openssldir}
+                               canonpath($config{openssldir})
                                : catdir($prefix, $config{openssldir}))
-                          : "$win_commonroot\\SSL";
+                          : canonpath("$win_commonroot\\SSL");
                   our ($openssldir_dev, $openssldir_dir, $openssldir_file) =
                       splitpath($openssldir, 1);
                   $openssldir_dev -}
-OPENSSLDIR_dir={- $openssldir_dir -}
+OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           $libdir -}
 ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
@@ -146,7 +147,7 @@ ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
                   our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
                       splitpath($enginesdir, 1);
                   $enginesdir_dev -}
-ENGINESDIR_dir={- $enginesdir_dir -}
+ENGINESDIR_dir={- canonpath($enginesdir_dir) -}
 !IF "$(DESTDIR)" != ""
 INSTALLTOP=$(DESTDIR)$(INSTALLTOP_dir)
 OPENSSLDIR=$(DESTDIR)$(OPENSSLDIR_dir)
@@ -213,8 +214,10 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
 	@rem {- output_off() if $disabled{tests}; "" -}
+	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
+	set RESULT_D=$(BLDDIR)\test\test-runs
 	set PERL=$(PERL)
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
@@ -238,6 +241,7 @@ libclean:
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """apps/$$1.*"""; } @ARGV" $(SHLIBS)
 	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """test/$$1.*"""; } @ARGV" $(SHLIBS)
+	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """fuzz/$$1.*"""; } @ARGV" $(SHLIBS)
 	-del /Q /F $(LIBS)
 	-del /Q ossl_static.pdb
 
@@ -249,7 +253,9 @@ clean: libclean
 	-del /Q /S /F *.d
 	-del /Q /S /F *.obj
 	-del /Q /S /F *.pdb
-	-del /Q /S /F *.exp
+	-del /Q /F *.exp
+	-del /Q /F apps\*.exp
+	-del /Q /F engines\*.exp
 	-del /Q /S /F engines\*.ilk
 	-del /Q /S /F engines\*.lib
 	-del /Q /S /F apps\*.lib
@@ -518,8 +524,10 @@ $objs $shlib.res$linklibs \$(EX_LIBS)
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$shlib$shlibext.manifest \$(MTOUTFLAG)$shlib$shlibext
 	IF EXIST apps\\$shlib$shlibext DEL /Q /F apps\\$shlib$shlibext
 	IF EXIST test\\$shlib$shlibext DEL /Q /F test\\$shlib$shlibext
+	IF EXIST fuzz\\$shlib$shlibext DEL /Q /F fuzz\\$shlib$shlibext
 	COPY $shlib$shlibext apps
 	COPY $shlib$shlibext test
+	COPY $shlib$shlibext fuzz
 EOF
  }
  sub obj2dso {

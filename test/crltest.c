@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../e_os.h"
+#include "internal/nelem.h"
 #include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
@@ -187,20 +187,11 @@ static X509 *test_leaf = NULL;
  * Glue an array of strings together.  Return a BIO and put the string
  * into |*out| so we can free it.
  */
-static BIO *glue(const char **pem, char **out)
+static BIO *glue2bio(const char **pem, char **out)
 {
-    char *dest;
-    int i;
     size_t s = 0;
 
-    /* Glue the strings together. */
-    for (i = 0; pem[i] != NULL; ++i)
-        s += strlen(pem[i]);
-    dest = *out = OPENSSL_malloc(s + 1);
-    if (dest == NULL)
-        return NULL;
-    for (i = 0; pem[i] != NULL; ++i)
-        dest += strlen(strcpy(dest, pem[i]));
+    *out = glue_strings(pem, &s);
     return BIO_new_mem_buf(*out, s);
 }
 
@@ -210,7 +201,7 @@ static BIO *glue(const char **pem, char **out)
 static X509_CRL *CRL_from_strings(const char **pem)
 {
     char *p;
-    BIO *b = glue(pem, &p);
+    BIO *b = glue2bio(pem, &p);
     X509_CRL *crl = PEM_read_bio_X509_CRL(b, NULL, NULL, NULL);
 
     OPENSSL_free(p);
@@ -224,7 +215,7 @@ static X509_CRL *CRL_from_strings(const char **pem)
 static X509 *X509_from_strings(const char **pem)
 {
     char *p;
-    BIO *b = glue(pem, &p);
+    BIO *b = glue2bio(pem, &p);
     X509 *x = PEM_read_bio_X509(b, NULL, NULL, NULL);
 
     OPENSSL_free(p);
@@ -261,12 +252,13 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
     X509_STORE_CTX_set0_trusted_stack(ctx, roots);
     X509_STORE_CTX_set0_crls(ctx, crls);
     X509_VERIFY_PARAM_set_time(param, PARAM_TIME);
-    if (!TEST_long_eq(X509_VERIFY_PARAM_get_time(param), PARAM_TIME))
+    if (!TEST_long_eq((long)X509_VERIFY_PARAM_get_time(param), PARAM_TIME))
         goto err;
     X509_VERIFY_PARAM_set_depth(param, 16);
     if (flags)
         X509_VERIFY_PARAM_set_flags(param, flags);
     X509_STORE_CTX_set0_param(ctx, param);
+    param = NULL;
 
     ERR_clear_error();
     status = X509_verify_cert(ctx) == 1 ? X509_V_OK
@@ -274,6 +266,7 @@ static int verify(X509 *leaf, X509 *root, STACK_OF(X509_CRL) *crls,
 err:
     sk_X509_pop_free(roots, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    X509_VERIFY_PARAM_free(param);
     X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
     return status;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,6 +25,7 @@ typedef struct {
     /* Key gen parameters */
     int nbits;
     BIGNUM *pub_exp;
+    int primes;
     /* Keygen callback info */
     int gentmp[2];
     /* RSA padding mode */
@@ -54,6 +55,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
     if (rctx == NULL)
         return 0;
     rctx->nbits = 1024;
+    rctx->primes = RSA_DEFAULT_PRIME_NUM;
     if (pkey_ctx_is_pss(ctx))
         rctx->pad_mode = RSA_PKCS1_PSS_PADDING;
     else
@@ -170,11 +172,13 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                 return -1;
             ret = RSA_private_encrypt(RSA_size(rsa), rctx->tbuf,
                                       sig, rsa, RSA_NO_PADDING);
-        } else
+        } else {
             return -1;
-    } else
+        }
+    } else {
         ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
                                   rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *siglen = ret;
@@ -218,11 +222,13 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
             if (ret <= 0)
                 return 0;
             ret = sltmp;
-        } else
+        } else {
             return -1;
-    } else
+        }
+    } else {
         ret = RSA_public_decrypt(siglen, sig, rout, ctx->pkey->pkey.rsa,
                                  rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *routlen = ret;
@@ -262,8 +268,9 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
             if (ret <= 0)
                 return 0;
             return 1;
-        } else
+        } else {
             return -1;
+        }
     } else {
         if (!setup_tbuf(rctx, ctx))
             return -1;
@@ -299,9 +306,10 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx,
             return -1;
         ret = RSA_public_encrypt(klen, rctx->tbuf, out,
                                  ctx->pkey->pkey.rsa, RSA_NO_PADDING);
-    } else
+    } else {
         ret = RSA_public_encrypt(inlen, in, out, ctx->pkey->pkey.rsa,
                                  rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *outlen = ret;
@@ -327,9 +335,10 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx,
                                                 rctx->oaep_label,
                                                 rctx->oaep_labellen,
                                                 rctx->md, rctx->mgf1md);
-    } else
+    } else {
         ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
                                   rctx->pad_mode);
+    }
     if (ret < 0)
         return ret;
     *outlen = ret;
@@ -369,6 +378,10 @@ static int check_padding_md(const EVP_MD *md, int padding)
         case NID_md4:
         case NID_mdc2:
         case NID_ripemd160:
+        case NID_sha3_224:
+        case NID_sha3_256:
+        case NID_sha3_384:
+        case NID_sha3_512:
             return 1;
 
         default:
@@ -460,6 +473,14 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         }
         BN_free(rctx->pub_exp);
         rctx->pub_exp = p2;
+        return 1;
+
+    case EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES:
+        if (p1 < RSA_DEFAULT_PRIME_NUM || p1 > RSA_MAX_PRIME_NUM) {
+            RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_KEY_PRIME_NUM_INVALID);
+            return -2;
+        }
+        rctx->primes = p1;
         return 1;
 
     case EVP_PKEY_CTRL_RSA_OAEP_MD:
@@ -572,21 +593,22 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
     }
     if (strcmp(type, "rsa_padding_mode") == 0) {
         int pm;
-        if (strcmp(value, "pkcs1") == 0)
+
+        if (strcmp(value, "pkcs1") == 0) {
             pm = RSA_PKCS1_PADDING;
-        else if (strcmp(value, "sslv23") == 0)
+        } else if (strcmp(value, "sslv23") == 0) {
             pm = RSA_SSLV23_PADDING;
-        else if (strcmp(value, "none") == 0)
+        } else if (strcmp(value, "none") == 0) {
             pm = RSA_NO_PADDING;
-        else if (strcmp(value, "oeap") == 0)
+        } else if (strcmp(value, "oeap") == 0) {
             pm = RSA_PKCS1_OAEP_PADDING;
-        else if (strcmp(value, "oaep") == 0)
+        } else if (strcmp(value, "oaep") == 0) {
             pm = RSA_PKCS1_OAEP_PADDING;
-        else if (strcmp(value, "x931") == 0)
+        } else if (strcmp(value, "x931") == 0) {
             pm = RSA_X931_PADDING;
-        else if (strcmp(value, "pss") == 0)
+        } else if (strcmp(value, "pss") == 0) {
             pm = RSA_PKCS1_PSS_PADDING;
-        else {
+        } else {
             RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_UNKNOWN_PADDING_TYPE);
             return -2;
         }
@@ -595,6 +617,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 
     if (strcmp(type, "rsa_pss_saltlen") == 0) {
         int saltlen;
+
         if (!strcmp(value, "digest"))
             saltlen = RSA_PSS_SALTLEN_DIGEST;
         else if (!strcmp(value, "max"))
@@ -607,13 +630,14 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
     }
 
     if (strcmp(type, "rsa_keygen_bits") == 0) {
-        int nbits;
-        nbits = atoi(value);
+        int nbits = atoi(value);
+
         return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, nbits);
     }
 
     if (strcmp(type, "rsa_keygen_pubexp") == 0) {
         int ret;
+
         BIGNUM *pubexp = NULL;
         if (!BN_asc2bn(&pubexp, value))
             return 0;
@@ -621,6 +645,12 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         if (ret <= 0)
             BN_free(pubexp);
         return ret;
+    }
+
+    if (strcmp(type, "rsa_keygen_primes") == 0) {
+        int nprimes = atoi(value);
+
+        return EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, nprimes);
     }
 
     if (strcmp(type, "rsa_mgf1_md") == 0)
@@ -653,6 +683,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         unsigned char *lab;
         long lablen;
         int ret;
+
         lab = OPENSSL_hexstr2buf(value, &lablen);
         if (!lab)
             return 0;
@@ -704,9 +735,11 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
             return 0;
         }
         evp_pkey_set_cb_translate(pcb, ctx);
-    } else
+    } else {
         pcb = NULL;
-    ret = RSA_generate_key_ex(rsa, rctx->nbits, rctx->pub_exp, pcb);
+    }
+    ret = RSA_generate_multi_prime_key(rsa, rctx->nbits, rctx->primes,
+                                       rctx->pub_exp, pcb);
     BN_GENCB_free(pcb);
     if (ret > 0 && !rsa_set_pss_param(rsa, ctx)) {
         RSA_free(rsa);
@@ -778,7 +811,7 @@ static int pkey_pss_init(EVP_PKEY_CTX *ctx)
     if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &min_saltlen))
         return 0;
 
-    /* See if minumum salt length exceeds maximum possible */
+    /* See if minimum salt length exceeds maximum possible */
     max_saltlen = RSA_size(rsa) - EVP_MD_size(md);
     if ((RSA_bits(rsa) & 0x7) == 1)
         max_saltlen--;

@@ -14,8 +14,9 @@
  */
 
 #include <string.h>
-#include <internal/bio.h>
+#include "internal/bio.h"
 #include <openssl/asn1.h>
+#include "internal/cryptlib.h"
 
 /* Must be large enough for biggest tag+length */
 #define DEFAULT_ASN1_BUF_SIZE 20
@@ -94,7 +95,7 @@ static const BIO_METHOD methods_asn1 = {
 
 const BIO_METHOD *BIO_f_asn1(void)
 {
-    return (&methods_asn1);
+    return &methods_asn1;
 }
 
 static int asn1_bio_new(BIO *b)
@@ -181,7 +182,8 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
 
         case ASN1_STATE_HEADER:
             ctx->buflen = ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
-            OPENSSL_assert(ctx->buflen <= ctx->bufsize);
+            if (!ossl_assert(ctx->buflen <= ctx->bufsize))
+                return 0;
             p = ctx->buf;
             ASN1_put_object(&p, 0, inl, ctx->asn1_tag, ctx->asn1_class);
             ctx->copylen = inl;
