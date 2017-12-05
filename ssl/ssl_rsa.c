@@ -18,6 +18,7 @@
 
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
+static int ssl_is_external_pkey(EVP_PKEY *pkey);
 
 #define  SYNTHV1CONTEXT     (SSL_EXT_TLS1_2_AND_BELOW_ONLY \
                              | SSL_EXT_CLIENT_HELLO \
@@ -125,6 +126,23 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 }
 #endif
 
+static int ssl_is_external_pkey(EVP_PKEY *pkey) 
+{
+    int ret = 0;
+#ifndef OPENSSL_NO_RSA
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA && 
+            RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK) 
+        ret = 1; 
+#endif
+#ifndef OPENSSL_NO_EC
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_EC && 
+            EC_KEY_get_flags(EVP_PKEY_get0_EC_KEY(pkey)) & EC_FLAG_EXT_PKEY)
+        ret = 1;
+#endif
+    return ret;
+}
+
+
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 {
     size_t i;
@@ -148,16 +166,12 @@ static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
         EVP_PKEY_copy_parameters(pktmp, pkey);
         ERR_clear_error();
 
-#ifndef OPENSSL_NO_RSA
         /*
          * Don't check the public/private key, this is mostly for smart
          * cards.
          */
-        if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA
-            && RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK) ;
-        else
-#endif
-        if (!X509_check_private_key(c->pkeys[i].x509, pkey)) {
+        if(!ssl_is_external_pkey(pkey) &&
+                !X509_check_private_key(c->pkeys[i].x509, pkey)) {
             X509_free(c->pkeys[i].x509);
             c->pkeys[i].x509 = NULL;
             return 0;
@@ -342,17 +356,12 @@ static int ssl_set_cert(CERT *c, X509 *x)
         EVP_PKEY_copy_parameters(pkey, c->pkeys[i].privatekey);
         ERR_clear_error();
 
-#ifndef OPENSSL_NO_RSA
         /*
          * Don't check the public/private key, this is mostly for smart
          * cards.
          */
-        if (EVP_PKEY_id(c->pkeys[i].privatekey) == EVP_PKEY_RSA
-            && RSA_flags(EVP_PKEY_get0_RSA(c->pkeys[i].privatekey)) &
-            RSA_METHOD_FLAG_NO_CHECK) ;
-        else
-#endif                          /* OPENSSL_NO_RSA */
-        if (!X509_check_private_key(x, c->pkeys[i].privatekey)) {
+        if (!ssl_is_external_pkey(c->pkeys[i].privatekey) &&
+                !X509_check_private_key(x, c->pkeys[i].privatekey)) {
             /*
              * don't fail for a cert/key mismatch, just free current private
              * key (when switching to a different cert & key, first this
