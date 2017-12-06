@@ -42,7 +42,7 @@ B<primes> depends on modulus bit length:
    ------+--------+--------+-------
      2   |   3    |   4    |   5
 
-A flag B<RSA_FLAG_INSECURE_PRIMES> can be used to switch off the above policy
+The flag B<RSA_FLAG_INSECURE_PRIMES> can be used to disable the above policy
 for multi-prime RSA private keys.
 
 A callback function may be used to provide feedback about the

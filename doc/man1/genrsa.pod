@@ -99,11 +99,11 @@ specified. The default is 2048.
 
 =item B<-insecure>
 
-By default OpenSSL will force users to generate secure multi-prime keys only.
+By default OpenSSL will force users to generate secure multi-prime keys.
 That is to say, the number of primes is limited for a given length of modulus
-based on a security policy, see L<RSA_generate_multi_prime_key(3)> for details
-of that security policy. But sometimes users may need to generate more primes
-for a private key, this option can turn off the default security policy.
+based on the security policy, see L<RSA_generate_multi_prime_key(3)> for details
+of that security policy. However sometimes users may need to generate more primes
+for a private key, this option disables the default security policy.
 
 =back
 
@@ -122,12 +122,12 @@ may vary somewhat. But in general, more primes lead to less generation time
 of a key.
 
 For multi-prime RSA, which is defined in RFC 8017, unlike normal 2-prime RSA,
-it's security depends on both how many primes are used and how long the RSA
+its security depends on both how many primes are used and how long the RSA
 modulus is. But it's still estimated by the difficulty of factoring the modulus.
-In simple terms, the more primes a multi-prime RSA key has, the easier for it
-being factored. Here is a link describing the security of multi-prime RSA
-generally: https://www.imperialviolet.org/2011/04/09/multiprime.html. And if
-you want to understand the very details, here is the right place to go to:
+In simple terms, the more primes a multi-prime RSA key has, the easier it is for
+it to be factored. This link describs the security of multi-prime RSA:
+https://www.imperialviolet.org/2011/04/09/multiprime.html. And if you want to
+know more, this link provides the requisite details:
 http://cacr.uwaterloo.ca/techreports/2006/cacr2006-16.pdf.
 
 =head1 BUGS
