@@ -36,7 +36,7 @@
 # Sandy Bridge	8.31/+42%	5.45/6.76	2.72
 # Ivy Bridge	6.71/+46%	5.40/6.49	2.41
 # Haswell	5.92/+43%	5.20/6.45	2.42	    1.23
-# Skylake[-X]	5.87/+39%	4.70/-		2.31	    1.19[??(vi)]
+# Skylake[-X]	5.87/+39%	4.70/-		2.31	    1.19[0.80(vi)]
 # Silvermont	12.0/+33%	7.75/7.40	7.03(iii)
 # Knights L	11.7/-		-		9.60(iii)   0.80
 # Goldmont	10.6/+17%	5.10/-		3.28
@@ -57,7 +57,7 @@
 # (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20;
 # (v)	8xAVX2, 8xAVX512VL or 16xAVX512F, whichever best applicable;
 # (vi)	even though Skylake-X can execute AVX512F code and deliver 0.57
-#	cpb the corresponding capability is suppressed;
+#	cpb in single thread, the corresponding capability is suppressed;
 
 $flavour = shift;
 $output  = shift;
