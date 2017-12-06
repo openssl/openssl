@@ -875,9 +875,39 @@ if ($d) {
     }
 }
 $config{target} = $target;
-my %target = resolve_config($target);
+&usage if (!$table{$target} || $table{$target}->{template});
 
-&usage if (!%target || $target{template});
+{
+    my %overrides;
+
+    # This is hackery, should really be in the config files.
+    $overrides{exe_extension}="";
+    $overrides{exe_extension}=".exe"
+        if $config{target} eq "DJGPP" || $config{target} =~ /^(?:Cygwin|mingw)/;
+    $overrides{exe_extension}=".pm"
+        if ($config{target} =~ /vos/);
+
+    # Allow overriding certain values through the environment
+    $overrides{cc} =      env('CC')             if env('CC');
+    $overrides{cxx} =     env('CXX')            if env('CXX');
+    $overrides{ranlib} =  env('RANLIB')         if env('RANLIB');
+    $overrides{ar} =      env('AR')             if env('AR');
+    $overrides{nm} =      env('NM')             if env('NM');
+    $overrides{rc} =      env('RC')  || env('WINDRES')
+        if env('RC')  || env('WINDRES');
+    $overrides{build_file} = env('BUILDFILE')   if env('BUILDFILE');
+
+    # Overrides for thread_scheme and shared_target in case they are disabled
+    $overrides{thread_scheme} = "(unknown)"     if $disabled{threads};
+    $overrides{shared_target} = ""              if $disabled{shared};
+
+    $table{$target} = {
+        %{$table{$target}},
+        %overrides,
+    };
+}
+
+%target = ( %{$table{DEFAULTS}}, resolve_config($target) );
 
 %target = ( %{$table{DEFAULTS}}, %target );
 
@@ -1005,19 +1035,20 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
+# Some late overrides that can't be done within the config stuff
 $target{cxxflags}=$target{cflags} unless defined $target{cxxflags};
-$target{exe_extension}="";
-$target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
-                                  || $config{target} =~ /^(?:Cygwin|mingw)/);
-$target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
-
 ($target{shared_extension_simple}=$target{shared_extension})
     =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||;
 $target{dso_extension}=$target{shared_extension_simple};
 ($target{shared_import_extension}=$target{shared_extension_simple}.".a")
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
+# ranlib gets a special treatment...  if it doesn't exist, it's not required
+$target{ranlib} = which("$config{cross_compile_prefix}$target{ranlib}")
+    ? "\$(CROSS_COMPILE)$target{ranlib}" : "true"
+    if defined $target{ranlib};
 
+# Now, some initial configuration parameters
 $config{cross_compile_prefix} = env('CROSS_COMPILE')
     if $config{cross_compile_prefix} eq "";
 
@@ -1027,18 +1058,6 @@ $config{cross_compile_prefix} = env('CROSS_COMPILE')
 $config{perl} =    ($^O ne "VMS" ? $^X : "perl");
 $config{hashbangperl} =
     env('HASHBANGPERL')           || env('PERL')      || "/usr/bin/env perl";
-$target{cc} =      env('CC')      || $target{cc}      || "cc";
-$target{cxx} =     env('CXX')     || $target{cxx}     || "c++";
-$target{ranlib} =  env('RANLIB')  || $target{ranlib}  ||
-                   (which("$config{cross_compile_prefix}ranlib") ?
-                          "\$(CROSS_COMPILE)ranlib" : "true");
-$target{ar} =      env('AR')      || $target{ar}      || "ar";
-$target{nm} =      env('NM')      || $target{nm}      || "nm";
-$target{rc} =
-    env('RC')  || env('WINDRES')  || $target{rc}      || "windres";
-
-# Allow overriding the build file name
-$target{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
 # Cache information necessary for reconfiguration
 $config{cc} = $target{cc};
