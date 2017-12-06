@@ -11,6 +11,10 @@
       o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
 
+  Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.0h [under development]
+
+      o rsaz_1024_mul_avx2 overflow bug on x86_64 (CVE-2017-3738)
+
   Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.0g [2 Nov 2017]
 
       o bn_sqrx8x_internal carry bug on x86_64 (CVE-2017-3736)

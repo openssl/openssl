@@ -190,6 +190,28 @@
      issues, has been replaced to always returns NULL.
      [Rich Salz]
 
+ Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
+
+  *) rsaz_1024_mul_avx2 overflow bug on x86_64
+
+     There is an overflow bug in the AVX2 Montgomery multiplication procedure
+     used in exponentiation with 1024-bit moduli. No EC algorithms are affected.
+     Analysis suggests that attacks against RSA and DSA as a result of this
+     defect would be very difficult to perform and are not believed likely.
+     Attacks against DH1024 are considered just feasible, because most of the
+     work necessary to deduce information about a private key may be performed
+     offline. The amount of resources required for such an attack would be
+     significant. However, for an attack on TLS to be meaningful, the server
+     would have to share the DH1024 private key among multiple clients, which is
+     no longer an option since CVE-2016-0701.
+
+     This only affects processors that support the AVX2 but not ADX extensions
+     like Intel Haswell (4th generation).
+
+     This issue was reported to OpenSSL by David Benjamin (Google). The issue
+     was originally found via the OSS-Fuzz project.
+     (CVE-2017-3738)
+     [Andy Polyakov]
 
  Changes between 1.1.0f and 1.1.0g [2 Nov 2017]
 
