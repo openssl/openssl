@@ -267,7 +267,7 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
 
             for (k = 0; k < t; k++) {
                 unsigned int bit = i + s * (k + j * t);
-                if (bit < C448_448_SCALAR_BITS) {
+                if (bit < C448_SCALAR_BITS) {
                     tab |=
                         (scalar1x->limb[bit / WBITS] >> (bit % WBITS) & 1) << k;
                 }
@@ -294,7 +294,7 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
 }
 
 void curve448_point_mul_by_ratio_and_encode_like_eddsa(
-                                    uint8_t enc[C448_EDDSA_448_PUBLIC_BYTES],
+                                    uint8_t enc[EDDSA_448_PUBLIC_BYTES],
                                     const curve448_point_t p)
 {
 
@@ -329,9 +329,9 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
     gf_mul(x, y, z);
 
     /* Encode */
-    enc[C448_EDDSA_448_PRIVATE_BYTES - 1] = 0;
+    enc[EDDSA_448_PRIVATE_BYTES - 1] = 0;
     gf_serialize(enc, x, 1);
-    enc[C448_EDDSA_448_PRIVATE_BYTES - 1] |= 0x80 & gf_lobit(t);
+    enc[EDDSA_448_PRIVATE_BYTES - 1] |= 0x80 & gf_lobit(t);
 
     OPENSSL_cleanse(x, sizeof(x));
     OPENSSL_cleanse(y, sizeof(y));
@@ -342,20 +342,20 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
 
 c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
                                 curve448_point_t p,
-                                const uint8_t enc[C448_EDDSA_448_PUBLIC_BYTES])
+                                const uint8_t enc[EDDSA_448_PUBLIC_BYTES])
 {
-    uint8_t enc2[C448_EDDSA_448_PUBLIC_BYTES];
+    uint8_t enc2[EDDSA_448_PUBLIC_BYTES];
     mask_t low;
     mask_t succ;
 
     memcpy(enc2, enc, sizeof(enc2));
 
-    low = ~word_is_zero(enc2[C448_EDDSA_448_PRIVATE_BYTES - 1] & 0x80);
-    enc2[C448_EDDSA_448_PRIVATE_BYTES - 1] &= ~0x80;
+    low = ~word_is_zero(enc2[EDDSA_448_PRIVATE_BYTES - 1] & 0x80);
+    enc2[EDDSA_448_PRIVATE_BYTES - 1] &= ~0x80;
 
     succ = gf_deserialize(p->y, enc2, 1, 0);
 #if 0 == 0
-    succ &= word_is_zero(enc2[C448_EDDSA_448_PRIVATE_BYTES - 1]);
+    succ &= word_is_zero(enc2[EDDSA_448_PRIVATE_BYTES - 1]);
 #endif
 
     gf_sqr(p->x, p->y);
@@ -399,9 +399,9 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
     return c448_succeed_if(mask_to_bool(succ));
 }
 
-c448_error_t c448_x448(uint8_t out[X_PUBLIC_BYTES],
-                       const uint8_t base[X_PUBLIC_BYTES],
-                       const uint8_t scalar[X_PRIVATE_BYTES])
+c448_error_t x448_int(uint8_t out[X_PUBLIC_BYTES],
+                      const uint8_t base[X_PUBLIC_BYTES],
+                      const uint8_t scalar[X_PRIVATE_BYTES])
 {
     gf x1, x2, z2, x3, z3, t1, t2;
     int t;
@@ -486,8 +486,8 @@ void curve448_point_mul_by_ratio_and_encode_like_x448(uint8_t
     curve448_point_destroy(q);
 }
 
-void c448_x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
-                                 const uint8_t scalar[X_PRIVATE_BYTES])
+void x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
+                            const uint8_t scalar[X_PRIVATE_BYTES])
 {
     /* Scalar conditioning */
     uint8_t scalar2[X_PRIVATE_BYTES];
@@ -504,7 +504,7 @@ void c448_x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
     curve448_scalar_decode_long(the_scalar, scalar2, sizeof(scalar2));
 
     /* Compensate for the encoding ratio */
-    for (i = 1; i < C448_X448_ENCODE_RATIO; i <<= 1) {
+    for (i = 1; i < X448_ENCODE_RATIO; i <<= 1) {
         curve448_scalar_halve(the_scalar, the_scalar);
     }
     curve448_precomputed_scalarmul(p, curve448_precomputed_base, the_scalar);
@@ -522,7 +522,7 @@ static int recode_wnaf(struct smvt_control *control,
                        const curve448_scalar_t scalar,
                        unsigned int table_bits)
 {
-    unsigned int table_size = C448_448_SCALAR_BITS / (table_bits + 1) + 3;
+    unsigned int table_size = C448_SCALAR_BITS / (table_bits + 1) + 3;
     int position = table_size - 1; /* at the end */
     uint64_t current = scalar->limb[0] & 0xFFFF;
     uint32_t mask = (1 << (table_bits + 1)) - 1;
@@ -541,8 +541,8 @@ static int recode_wnaf(struct smvt_control *control,
      * 1/5 op. Probably not worth it.
      */
 
-    for (w = 1; w < (C448_448_SCALAR_BITS - 1) / 16 + 3; w++) {
-        if (w < (C448_448_SCALAR_BITS - 1) / 16 + 1) {
+    for (w = 1; w < (C448_SCALAR_BITS - 1) / 16 + 3; w++) {
+        if (w < (C448_SCALAR_BITS - 1) / 16 + 1) {
             /* Refill the 16 high bits of current */
             current += (uint32_t)((scalar->limb[w / B_OVER_16]
                        >> (16 * (w %  B_OVER_16))) << 16);
@@ -612,9 +612,9 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
 {
     const int table_bits_var = C448_WNAF_VAR_TABLE_BITS,
         table_bits_pre = C448_WNAF_FIXED_TABLE_BITS;
-    struct smvt_control control_var[C448_448_SCALAR_BITS /
+    struct smvt_control control_var[C448_SCALAR_BITS /
                                     (C448_WNAF_VAR_TABLE_BITS + 1) + 3];
-    struct smvt_control control_pre[C448_448_SCALAR_BITS /
+    struct smvt_control control_pre[C448_SCALAR_BITS /
                                     (C448_WNAF_FIXED_TABLE_BITS + 1) + 3];
     int ncb_pre = recode_wnaf(control_pre, scalar1, table_bits_pre);
     int ncb_var = recode_wnaf(control_var, scalar2, table_bits_var);
@@ -697,12 +697,12 @@ void curve448_point_destroy(curve448_point_t point)
 int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
          const uint8_t peer_public_value[56])
 {
-    return c448_x448(out_shared_key, peer_public_value, private_key)
-        == C448_SUCCESS;
+    return x448_int(out_shared_key, peer_public_value, private_key)
+           == C448_SUCCESS;
 }
 
 void X448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56])
 {
-    c448_x448_derive_public_key(out_public_value, private_key);
+    x448_derive_public_key(out_public_value, private_key);
 }

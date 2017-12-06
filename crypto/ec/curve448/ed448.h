@@ -20,20 +20,20 @@ extern "C" {
 #endif
 
 /* Number of bytes in an EdDSA public key. */
-# define C448_EDDSA_448_PUBLIC_BYTES 57
+# define EDDSA_448_PUBLIC_BYTES 57
 
 /* Number of bytes in an EdDSA private key. */
-# define C448_EDDSA_448_PRIVATE_BYTES C448_EDDSA_448_PUBLIC_BYTES
+# define EDDSA_448_PRIVATE_BYTES EDDSA_448_PUBLIC_BYTES
 
 /* Number of bytes in an EdDSA private key. */
-# define C448_EDDSA_448_SIGNATURE_BYTES (C448_EDDSA_448_PUBLIC_BYTES + \
-                                         C448_EDDSA_448_PRIVATE_BYTES)
+# define EDDSA_448_SIGNATURE_BYTES (EDDSA_448_PUBLIC_BYTES + \
+                                    EDDSA_448_PRIVATE_BYTES)
 
 /* EdDSA encoding ratio. */
-# define C448_448_EDDSA_ENCODE_RATIO 4
+# define C448_EDDSA_ENCODE_RATIO 4
 
 /* EdDSA decoding ratio. */
-# define C448_448_EDDSA_DECODE_RATIO (4 / 4)
+# define C448_EDDSA_DECODE_RATIO (4 / 4)
 
 /*
  * EdDSA key generation.  This function uses a different (non-Decaf) encoding.
@@ -42,8 +42,8 @@ extern "C" {
  * privkey (in): The private key.
  */
 c448_error_t c448_ed448_derive_public_key(
-                        uint8_t pubkey [C448_EDDSA_448_PUBLIC_BYTES],
-                        const uint8_t privkey [C448_EDDSA_448_PRIVATE_BYTES]);
+                        uint8_t pubkey [EDDSA_448_PUBLIC_BYTES],
+                        const uint8_t privkey [EDDSA_448_PRIVATE_BYTES]);
 
 /*
  * EdDSA signing.
@@ -64,9 +64,9 @@ c448_error_t c448_ed448_derive_public_key(
  * it harder to screw this up, but this C code gives you no seat belt.
  */
 c448_error_t c448_ed448_sign(
-                        uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES],
-                        const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                        uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t *message, size_t message_len,
                         uint8_t prehashed, const uint8_t *context,
                         size_t context_len)
@@ -90,9 +90,9 @@ c448_error_t c448_ed448_sign(
  * it harder to screw this up, but this C code gives you no seat belt.
  */
 c448_error_t c448_ed448_sign_prehash(
-                        uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES],
-                        const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                        uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t hash[64],
                         const uint8_t *context,
                         size_t context_len)
@@ -118,9 +118,9 @@ c448_error_t c448_ed448_sign_prehash(
  * it harder to screw this up, but this C code gives you no seat belt.
  */
 c448_error_t c448_ed448_verify(const uint8_t
-                                 signature[C448_EDDSA_448_SIGNATURE_BYTES],
+                                 signature[EDDSA_448_SIGNATURE_BYTES],
                                  const uint8_t
-                                 pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                                 pubkey[EDDSA_448_PUBLIC_BYTES],
                                  const uint8_t *message, size_t message_len,
                                  uint8_t prehashed, const uint8_t *context,
                                  uint8_t context_len)
@@ -145,8 +145,8 @@ c448_error_t c448_ed448_verify(const uint8_t
  * it harder to screw this up, but this C code gives you no seat belt.
  */
 c448_error_t c448_ed448_verify_prehash(
-                    const uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                    const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                    const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                    const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64],
                     const uint8_t *context,
                     uint8_t context_len)
@@ -154,7 +154,7 @@ c448_error_t c448_ed448_verify_prehash(
 
 /*
  * EdDSA point encoding.  Used internally, exposed externally.
- * Multiplies by C448_448_EDDSA_ENCODE_RATIO first.
+ * Multiplies by C448_EDDSA_ENCODE_RATIO first.
  *
  * The multiplication is required because the EdDSA encoding represents
  * the cofactor information, but the Decaf encoding ignores it (which
@@ -162,25 +162,25 @@ c448_error_t c448_ed448_verify_prehash(
  * EdDSA, the cofactor info must get cleared, because the intermediate
  * representation doesn't track it.
  *
- * The way we handle this is to multiply by C448_448_EDDSA_DECODE_RATIO when
- * decoding, and by C448_448_EDDSA_ENCODE_RATIO when encoding.  The product of
+ * The way we handle this is to multiply by C448_EDDSA_DECODE_RATIO when
+ * decoding, and by C448_EDDSA_ENCODE_RATIO when encoding.  The product of
  * these ratios is always exactly the cofactor 4, so the cofactor ends up
  * cleared one way or another.  But exactly how that shakes out depends on the
  * base points specified in RFC 8032.
  *
  * The upshot is that if you pass the Decaf/Ristretto base point to
- * this function, you will get C448_448_EDDSA_ENCODE_RATIO times the
+ * this function, you will get C448_EDDSA_ENCODE_RATIO times the
  * EdDSA base point.
  *
  * enc (out): The encoded point.
  * p (in): The point.
  */
 void curve448_point_mul_by_ratio_and_encode_like_eddsa(
-                                    uint8_t enc [C448_EDDSA_448_PUBLIC_BYTES],
+                                    uint8_t enc [EDDSA_448_PUBLIC_BYTES],
                                     const curve448_point_t p);
 
 /*
- * EdDSA point decoding.  Multiplies by C448_448_EDDSA_DECODE_RATIO, and
+ * EdDSA point decoding.  Multiplies by C448_EDDSA_DECODE_RATIO, and
  * ignores cofactor information.
  *
  * See notes on curve448_point_mul_by_ratio_and_encode_like_eddsa
@@ -190,7 +190,7 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
  */
 c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
                             curve448_point_t p,
-                            const uint8_t enc[C448_EDDSA_448_PUBLIC_BYTES]);
+                            const uint8_t enc[EDDSA_448_PUBLIC_BYTES]);
 
 /*
  * EdDSA to ECDH private key conversion
@@ -201,8 +201,8 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
  * ed (in): The EdDSA private key
  */
 c448_error_t c448_ed448_convert_private_key_to_x448(
-                            uint8_t x[C448_X448_PRIVATE_BYTES],
-                            const uint8_t ed[C448_EDDSA_448_PRIVATE_BYTES]);
+                            uint8_t x[X448_PRIVATE_BYTES],
+                            const uint8_t ed[EDDSA_448_PRIVATE_BYTES]);
 
 #ifdef __cplusplus
 } /* extern "C" */

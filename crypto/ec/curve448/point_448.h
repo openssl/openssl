@@ -20,22 +20,22 @@
 extern "C" {
 #endif
 
-# define C448_448_SCALAR_LIMBS ((446-1)/C448_WORD_BITS+1)
+# define C448_SCALAR_LIMBS ((446-1)/C448_WORD_BITS+1)
 
 /* The number of bits in a scalar */
-# define C448_448_SCALAR_BITS 446
+# define C448_SCALAR_BITS 446
 
 /* Number of bytes in a serialized scalar. */
-# define C448_448_SCALAR_BYTES 56
+# define C448_SCALAR_BYTES 56
 
 /* X448 encoding ratio. */
-# define C448_X448_ENCODE_RATIO 2
+# define X448_ENCODE_RATIO 2
 
 /* Number of bytes in an x448 public key */
-# define C448_X448_PUBLIC_BYTES 56
+# define X448_PUBLIC_BYTES 56
 
 /* Number of bytes in an x448 private key */
-# define C448_X448_PRIVATE_BYTES 56
+# define X448_PRIVATE_BYTES 56
 
 /* Twisted Edwards extended homogeneous coordinates */
 typedef struct curve448_point_s {
@@ -50,7 +50,7 @@ typedef struct curve448_precomputed_s curve448_precomputed_s;
 
 /* Scalar is stored packed, because we don't need the speed. */
 typedef struct curve448_scalar_s {
-    c448_word_t limb[C448_448_SCALAR_LIMBS];
+    c448_word_t limb[C448_SCALAR_LIMBS];
 } curve448_scalar_t[1];
 
 /* A scalar equal to 1. */
@@ -78,7 +78,7 @@ extern const struct curve448_precomputed_s *curve448_precomputed_base;
  */
 __owur c448_error_t curve448_scalar_decode(
                             curve448_scalar_t out,
-                            const unsigned char ser[C448_448_SCALAR_BYTES]);
+                            const unsigned char ser[C448_SCALAR_BYTES]);
 
 /*
  * Read a scalar from wire format or from bytes.  Reduces mod scalar prime.
@@ -96,7 +96,7 @@ void curve448_scalar_decode_long(curve448_scalar_t out,
  * ser (out): Serialized form of a scalar.
  * s (in): Deserialized scalar.
  */
-void curve448_scalar_encode(unsigned char ser[C448_448_SCALAR_BYTES],
+void curve448_scalar_encode(unsigned char ser[C448_SCALAR_BYTES],
                             const curve448_scalar_t s);
 
 /*
@@ -198,12 +198,12 @@ void curve448_point_double(curve448_point_t two_a, const curve448_point_t a);
  * C448_FAILURE: The scalarmul didn't succeed, because the base point is in a
  * small subgroup.
  */
-__owur c448_error_t c448_x448(uint8_t out[C448_X448_PUBLIC_BYTES],
-                              const uint8_t base[C448_X448_PUBLIC_BYTES],
-                              const uint8_t scalar[C448_X448_PRIVATE_BYTES]);
+__owur c448_error_t x448_int(uint8_t out[X448_PUBLIC_BYTES],
+                             const uint8_t base[X448_PUBLIC_BYTES],
+                             const uint8_t scalar[X448_PRIVATE_BYTES]);
 
 /*
- * Multiply a point by C448_X448_ENCODE_RATIO, then encode it like RFC 7748.
+ * Multiply a point by X448_ENCODE_RATIO, then encode it like RFC 7748.
  *
  * This function is mainly used internally, but is exported in case
  * it will be useful.
@@ -215,14 +215,14 @@ __owur c448_error_t c448_x448(uint8_t out[C448_X448_PUBLIC_BYTES],
  *
  * As it happens, this aligns with the base point definitions; that is,
  * if you pass the Decaf/Ristretto base point to this function, the result
- * will be C448_X448_ENCODE_RATIO times the X448
+ * will be X448_ENCODE_RATIO times the X448
  * base point.
  *
  * out (out): The scaled and encoded point.
  * p (in): The point to be scaled and encoded.
  */
 void curve448_point_mul_by_ratio_and_encode_like_x448(
-                                        uint8_t out[C448_X448_PUBLIC_BYTES],
+                                        uint8_t out[X448_PUBLIC_BYTES],
                                         const curve448_point_t p);
 
 /*
@@ -232,9 +232,8 @@ void curve448_point_mul_by_ratio_and_encode_like_x448(
  * out (out): The scaled point base*scalar
  * scalar (in): The scalar to multiply by.
  */
-void c448_x448_derive_public_key(
-                                uint8_t out[C448_X448_PUBLIC_BYTES],
-                                const uint8_t scalar[C448_X448_PRIVATE_BYTES]);
+void x448_derive_public_key(uint8_t out[X448_PUBLIC_BYTES],
+                            const uint8_t scalar[X448_PRIVATE_BYTES]);
 
 /*
  * Multiply a precomputed base point by a scalar: out = scalar*base.

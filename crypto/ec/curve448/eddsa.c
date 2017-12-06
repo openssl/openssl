@@ -39,18 +39,18 @@ static c448_error_t oneshot_hash(uint8_t *out, size_t outlen,
     return C448_SUCCESS;
 }
 
-static void clamp(uint8_t secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES])
+static void clamp(uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES])
 {
     uint8_t hibit = (1 << 0) >> 1;
 
     /* Blarg */
     secret_scalar_ser[0] &= -COFACTOR;
     if (hibit == 0) {
-        secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES - 1] = 0;
-        secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
+        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] = 0;
+        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
     } else {
-        secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES - 1] &= hibit - 1;
-        secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES - 1] |= hibit;
+        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] &= hibit - 1;
+        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] |= hibit;
     }
 }
 
@@ -79,27 +79,27 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
 
 /* In this file because it uses the hash */
 c448_error_t c448_ed448_convert_private_key_to_x448(
-                            uint8_t x[C448_X448_PRIVATE_BYTES],
-                            const uint8_t ed [C448_EDDSA_448_PRIVATE_BYTES])
+                            uint8_t x[X448_PRIVATE_BYTES],
+                            const uint8_t ed [EDDSA_448_PRIVATE_BYTES])
 {
     /* pass the private key through oneshot_hash function */
-    /* and keep the first C448_X448_PRIVATE_BYTES bytes */
-    return oneshot_hash(x, C448_X448_PRIVATE_BYTES, ed,
-                        C448_EDDSA_448_PRIVATE_BYTES);
+    /* and keep the first X448_PRIVATE_BYTES bytes */
+    return oneshot_hash(x, X448_PRIVATE_BYTES, ed,
+                        EDDSA_448_PRIVATE_BYTES);
 }
 
 c448_error_t c448_ed448_derive_public_key(
-                        uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
-                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES])
+                        uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
+                        const uint8_t privkey[EDDSA_448_PRIVATE_BYTES])
 {
     /* only this much used for keygen */
-    uint8_t secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES];
+    uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES];
     curve448_scalar_t secret_scalar;
     unsigned int c;
     curve448_point_t p;
 
     if (!oneshot_hash(secret_scalar_ser, sizeof(secret_scalar_ser), privkey,
-                      C448_EDDSA_448_PRIVATE_BYTES))
+                      EDDSA_448_PRIVATE_BYTES))
         return C448_FAILURE;
 
     clamp(secret_scalar_ser);
@@ -115,7 +115,7 @@ c448_error_t c448_ed448_derive_public_key(
      * converted it effectively picks up a factor of 2 from the isogenies.  So
      * we might start at 2 instead of 1.
      */
-    for (c = 1; c < C448_448_EDDSA_ENCODE_RATIO; c <<= 1)
+    for (c = 1; c < C448_EDDSA_ENCODE_RATIO; c <<= 1)
         curve448_scalar_halve(secret_scalar, secret_scalar);
 
     curve448_precomputed_scalarmul(p, curve448_precomputed_base, secret_scalar);
@@ -131,9 +131,9 @@ c448_error_t c448_ed448_derive_public_key(
 }
 
 c448_error_t c448_ed448_sign(
-                        uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES],
-                        const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                        uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t *message, size_t message_len,
                         uint8_t prehashed, const uint8_t *context,
                         size_t context_len)
@@ -142,7 +142,7 @@ c448_error_t c448_ed448_sign(
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
     c448_error_t ret = C448_FAILURE;
     curve448_scalar_t nonce_scalar;
-    uint8_t nonce_point[C448_EDDSA_448_PUBLIC_BYTES] = { 0 };
+    uint8_t nonce_point[EDDSA_448_PUBLIC_BYTES] = { 0 };
     unsigned int c;
     curve448_scalar_t challenge_scalar;
 
@@ -152,12 +152,12 @@ c448_error_t c448_ed448_sign(
     {
         /* Schedule the secret key */
         struct {
-            uint8_t secret_scalar_ser[C448_EDDSA_448_PRIVATE_BYTES];
-            uint8_t seed[C448_EDDSA_448_PRIVATE_BYTES];
+            uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES];
+            uint8_t seed[EDDSA_448_PRIVATE_BYTES];
         } __attribute__ ((packed)) expanded;
 
         if (!oneshot_hash((uint8_t *)&expanded, sizeof(expanded), privkey,
-                          C448_EDDSA_448_PRIVATE_BYTES))
+                          EDDSA_448_PRIVATE_BYTES))
             goto err;
         clamp(expanded.secret_scalar_ser);
         curve448_scalar_decode_long(secret_scalar, expanded.secret_scalar_ser,
@@ -175,7 +175,7 @@ c448_error_t c448_ed448_sign(
 
     /* Decode the nonce */
     {
-        uint8_t nonce[2 * C448_EDDSA_448_PRIVATE_BYTES];
+        uint8_t nonce[2 * EDDSA_448_PRIVATE_BYTES];
 
         if (!EVP_DigestFinalXOF(hashctx, nonce, sizeof(nonce)))
             goto err;
@@ -189,7 +189,7 @@ c448_error_t c448_ed448_sign(
         curve448_point_t p;
 
         curve448_scalar_halve(nonce_scalar_2, nonce_scalar);
-        for (c = 2; c < C448_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+        for (c = 2; c < C448_EDDSA_ENCODE_RATIO; c <<= 1) {
             curve448_scalar_halve(nonce_scalar_2, nonce_scalar_2);
         }
 
@@ -201,12 +201,12 @@ c448_error_t c448_ed448_sign(
     }
 
     {
-        uint8_t challenge[2 * C448_EDDSA_448_PRIVATE_BYTES];
+        uint8_t challenge[2 * EDDSA_448_PRIVATE_BYTES];
 
         /* Compute the challenge */
         if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
             || !EVP_DigestUpdate(hashctx, nonce_point, sizeof(nonce_point))
-            || !EVP_DigestUpdate(hashctx, pubkey, C448_EDDSA_448_PUBLIC_BYTES)
+            || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
             || !EVP_DigestUpdate(hashctx, message, message_len)
             || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge)))
             goto err;
@@ -219,9 +219,9 @@ c448_error_t c448_ed448_sign(
     curve448_scalar_mul(challenge_scalar, challenge_scalar, secret_scalar);
     curve448_scalar_add(challenge_scalar, challenge_scalar, nonce_scalar);
 
-    OPENSSL_cleanse(signature, C448_EDDSA_448_SIGNATURE_BYTES);
+    OPENSSL_cleanse(signature, EDDSA_448_SIGNATURE_BYTES);
     memcpy(signature, nonce_point, sizeof(nonce_point));
-    curve448_scalar_encode(&signature[C448_EDDSA_448_PUBLIC_BYTES],
+    curve448_scalar_encode(&signature[EDDSA_448_PUBLIC_BYTES],
                            challenge_scalar);
 
     curve448_scalar_destroy(secret_scalar);
@@ -235,9 +235,9 @@ c448_error_t c448_ed448_sign(
 }
 
 c448_error_t c448_ed448_sign_prehash(
-                        uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                        const uint8_t privkey[C448_EDDSA_448_PRIVATE_BYTES],
-                        const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                        uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                        const uint8_t privkey[EDDSA_448_PRIVATE_BYTES],
+                        const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t hash[64], const uint8_t *context,
                         size_t context_len)
 {
@@ -246,8 +246,8 @@ c448_error_t c448_ed448_sign_prehash(
 }
 
 c448_error_t c448_ed448_verify(
-                    const uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                    const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                    const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                    const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t *message, size_t message_len,
                     uint8_t prehashed, const uint8_t *context,
                     uint8_t context_len)
@@ -270,13 +270,13 @@ c448_error_t c448_ed448_verify(
     {
         /* Compute the challenge */
         EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
-        uint8_t challenge[2 * C448_EDDSA_448_PRIVATE_BYTES];
+        uint8_t challenge[2 * EDDSA_448_PRIVATE_BYTES];
 
         if (hashctx == NULL
             || !hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
             || !EVP_DigestUpdate(hashctx, signature,
-                                 C448_EDDSA_448_PUBLIC_BYTES)
-            || !EVP_DigestUpdate(hashctx, pubkey, C448_EDDSA_448_PUBLIC_BYTES)
+                                 EDDSA_448_PUBLIC_BYTES)
+            || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
             || !EVP_DigestUpdate(hashctx, message, message_len)
             || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge))) {
             EVP_MD_CTX_free(hashctx);
@@ -292,10 +292,10 @@ c448_error_t c448_ed448_verify(
                         challenge_scalar);
 
     curve448_scalar_decode_long(response_scalar,
-                                &signature[C448_EDDSA_448_PUBLIC_BYTES],
-                                C448_EDDSA_448_PRIVATE_BYTES);
+                                &signature[EDDSA_448_PUBLIC_BYTES],
+                                EDDSA_448_PRIVATE_BYTES);
 
-    for (c = 1; c < C448_448_EDDSA_DECODE_RATIO; c <<= 1)
+    for (c = 1; c < C448_EDDSA_DECODE_RATIO; c <<= 1)
         curve448_scalar_add(response_scalar, response_scalar, response_scalar);
 
     /* pk_point = -c(x(P)) + (cx + k)G = kG */
@@ -306,8 +306,8 @@ c448_error_t c448_ed448_verify(
 }
 
 c448_error_t c448_ed448_verify_prehash(
-                    const uint8_t signature[C448_EDDSA_448_SIGNATURE_BYTES],
-                    const uint8_t pubkey[C448_EDDSA_448_PUBLIC_BYTES],
+                    const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
+                    const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64], const uint8_t *context,
                     uint8_t context_len)
 {
