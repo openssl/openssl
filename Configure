@@ -225,8 +225,7 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    @{$configdata::config{perlargv}} : ();
 	die "Incorrect data to reconfigure, please do a normal configuration\n"
 	    if (grep(/^reconf/,@argvcopy));
-	$config{perlenv} = { defined($configdata::config{perlenv}) ?
-	    %{$configdata::config{perlenv}} : () };
+	$config{perlenv} = $configdata::config{perlenv} // {};
 
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
 	foreach (sort keys %{$config{perlenv}}) {
