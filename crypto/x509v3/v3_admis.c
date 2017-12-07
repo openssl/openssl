@@ -92,7 +92,7 @@ static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
         if (BIO_printf(bp, "%*s  admissionAuthorityId: ", ind, "") <= 0)
             goto err;
 
-        OBJ_obj2txt(objbuf, sizeof objbuf, namingAuthority->namingAuthorityId, 1);
+        OBJ_obj2txt(objbuf, sizeof(objbuf), namingAuthority->namingAuthorityId, 1);
 
         if (BIO_printf(bp, "%s%s%s%s\n", ln ? ln : "",
                        ln ? " (" : "", objbuf, ln ? ")" : "") <= 0)

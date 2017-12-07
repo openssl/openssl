@@ -67,7 +67,7 @@ static int test_bad_asn1(void)
      * performs sanity checks on the input and can reject it before the
      * decoder is called.
      */
-    len = BIO_read(bio, buf, sizeof buf);
+    len = BIO_read(bio, buf, sizeof(buf));
     if (!TEST_int_ge(len, 0))
         goto err;
 

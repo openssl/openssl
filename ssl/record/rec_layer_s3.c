@@ -784,7 +784,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
     totlen = 0;
     /* Clear our SSL3_RECORD structures */
-    memset(wr, 0, sizeof wr);
+    memset(wr, 0, sizeof(wr));
     for (j = 0; j < numpipes; j++) {
         unsigned int version = SSL_TREAT_AS_TLS13(s) ? TLS1_VERSION : s->version;
         unsigned char *compressdata = NULL;
@@ -1403,7 +1403,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         size_t *dest_len = NULL;
 
         if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
-            dest_maxlen = sizeof s->rlayer.handshake_fragment;
+            dest_maxlen = sizeof(s->rlayer.handshake_fragment);
             dest = s->rlayer.handshake_fragment;
             dest_len = &s->rlayer.handshake_fragment_len;
         }
@@ -1525,7 +1525,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             s->rwstate = SSL_NOTHING;
             s->s3->fatal_alert = alert_descr;
             SSLerr(SSL_F_SSL3_READ_BYTES, SSL_AD_REASON_OFFSET + alert_descr);
-            BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
+            BIO_snprintf(tmp, sizeof(tmp), "%d", alert_descr);
             ERR_add_error_data(2, "SSL alert number ", tmp);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
             SSL3_RECORD_set_read(rr);

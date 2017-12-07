@@ -1168,7 +1168,7 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
     } else {
         buf[0] = '\0';
         if (!batch) {
-            if (!fgets(buf, sizeof buf, stdin))
+            if (!fgets(buf, sizeof(buf), stdin))
                 return 0;
         } else {
             buf[0] = '\n';
@@ -1228,7 +1228,7 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
     } else {
         buf[0] = '\0';
         if (!batch) {
-            if (!fgets(buf, sizeof buf, stdin))
+            if (!fgets(buf, sizeof(buf), stdin))
                 return 0;
         } else {
             buf[0] = '\n';
