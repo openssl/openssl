@@ -35,7 +35,8 @@ See INSTALL for instructions.
 
 EOF
 ;;
-*) options=$options" $i" ;;
+*)  i=`echo "$i" | sed -e "s|'|'\\\\\\''|g"`
+    options="$options '$i'" ;;
 esac
 done
 
@@ -902,7 +903,9 @@ if [ $? = "0" ]; then
     echo $PERL $THERE/Configure $OUT $options
   fi  
   if [ "$DRYRUN" = "false" ]; then
-    $PERL $THERE/Configure $OUT $options
+    # eval to make sure quoted options, possibly with spaces inside,
+    # are treated right
+    eval $PERL $THERE/Configure $OUT $options
   fi
 else
   echo "This system ($OUT) is not supported. See file INSTALL for details."
