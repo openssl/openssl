@@ -77,7 +77,7 @@ char *DES_crypt(const char *buf, const char *salt)
 
     /* Convert password to ASCII. */
     OPENSSL_strlcpy(e_buf, buf, sizeof(e_buf));
-    ebcdic2ascii(e_buf, e_buf, sizeof e_buf);
+    ebcdic2ascii(e_buf, e_buf, sizeof(e_buf));
 
     /* Encrypt it (from/to ASCII); if it worked, convert back. */
     ret = DES_fcrypt(e_buf, e_salt, buff);

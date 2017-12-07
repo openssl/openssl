@@ -2019,7 +2019,7 @@ int s_server_main(int argc, char *argv[])
     SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
     if (!SSL_CTX_set_session_id_context(ctx,
                                         (void *)&s_server_session_id_context,
-                                        sizeof s_server_session_id_context)) {
+                                        sizeof(s_server_session_id_context))) {
         BIO_printf(bio_err, "error setting session id context\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -2033,7 +2033,7 @@ int s_server_main(int argc, char *argv[])
         SSL_CTX_set_verify(ctx2, s_server_verify, verify_callback);
         if (!SSL_CTX_set_session_id_context(ctx2,
                     (void *)&s_server_session_id_context,
-                    sizeof s_server_session_id_context)) {
+                    sizeof(s_server_session_id_context))) {
             BIO_printf(bio_err, "error setting session id context\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -2812,7 +2812,7 @@ static void print_connection_info(SSL *con)
         peer = NULL;
     }
 
-    if (SSL_get_shared_ciphers(con, buf, sizeof buf) != NULL)
+    if (SSL_get_shared_ciphers(con, buf, sizeof(buf)) != NULL)
         BIO_printf(bio_s_out, "Shared ciphers:%s\n", buf);
     str = SSL_CIPHER_get_name(SSL_get_current_cipher(con));
     ssl_print_sigalgs(bio_s_out, con);

@@ -236,7 +236,7 @@ int ciphers_main(int argc, char **argv)
                     nm = "UNKNOWN";
                 BIO_printf(bio_out, "%s - ", nm);
             }
-            BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof buf));
+            BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof(buf)));
         }
     }
 

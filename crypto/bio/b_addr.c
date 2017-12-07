@@ -676,7 +676,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         int gai_ret = 0;
         struct addrinfo hints;
 
-        memset(&hints, 0, sizeof hints);
+        memset(&hints, 0, sizeof(hints));
 
         hints.ai_family = family;
         hints.ai_socktype = socktype;

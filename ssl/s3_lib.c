@@ -3241,9 +3241,9 @@ static int cipher_compare(const void *a, const void *b)
 
 void ssl_sort_cipher_list(void)
 {
-    qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof ssl3_ciphers[0],
+    qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof(ssl3_ciphers[0]),
           cipher_compare);
-    qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof ssl3_scsvs[0], cipher_compare);
+    qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
 }
 
 const SSL3_ENC_METHOD SSLv3_enc_data = {

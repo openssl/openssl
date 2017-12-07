@@ -677,7 +677,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->record_padding_arg = ctx->record_padding_arg;
     s->block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
-    if (!ossl_assert(s->sid_ctx_length <= sizeof s->sid_ctx))
+    if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
     s->verify_callback = ctx->default_verify_callback;
@@ -806,7 +806,7 @@ int SSL_up_ref(SSL *s)
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
                                    unsigned int sid_ctx_len)
 {
-    if (sid_ctx_len > sizeof ctx->sid_ctx) {
+    if (sid_ctx_len > sizeof(ctx->sid_ctx)) {
         SSLerr(SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT,
                SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
@@ -859,7 +859,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      */
     SSL_SESSION r, *p;
 
-    if (id_len > sizeof r.session_id)
+    if (id_len > sizeof(r.session_id))
         return 0;
 
     r.ssl_version = ssl->version;

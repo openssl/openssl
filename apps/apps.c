@@ -1425,9 +1425,9 @@ int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial
         OPENSSL_strlcpy(buf[0], serialfile, BSIZE);
     else {
 #ifndef OPENSSL_SYS_VMS
-        j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, suffix);
+        j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, suffix);
 #else
-        j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, suffix);
+        j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, suffix);
 #endif
     }
     out = BIO_new_file(buf[0], "w");
@@ -1468,11 +1468,11 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", serialfile, new_suffix);
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s", serialfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.%s", serialfile, old_suffix);
 #else
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", serialfile, new_suffix);
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s", serialfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-%s", serialfile, old_suffix);
 #endif
     if (rename(serialfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
@@ -1537,9 +1537,9 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
         goto err;
 
 #ifndef OPENSSL_SYS_VMS
-    BIO_snprintf(buf, sizeof buf, "%s.attr", dbfile);
+    BIO_snprintf(buf, sizeof(buf), "%s.attr", dbfile);
 #else
-    BIO_snprintf(buf, sizeof buf, "%s-attr", dbfile);
+    BIO_snprintf(buf, sizeof(buf), "%s-attr", dbfile);
 #endif
     dbattr_conf = app_load_config(buf);
 
@@ -1600,13 +1600,13 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
-    j = BIO_snprintf(buf[2], sizeof buf[2], "%s.attr", dbfile);
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s.attr.%s", dbfile, suffix);
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, suffix);
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s.attr", dbfile);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.attr.%s", dbfile, suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, suffix);
 #else
-    j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr", dbfile);
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-attr-%s", dbfile, suffix);
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, suffix);
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s-attr", dbfile);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-attr-%s", dbfile, suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, suffix);
 #endif
     out = BIO_new_file(buf[0], "w");
     if (out == NULL) {
@@ -1649,17 +1649,17 @@ int rotate_index(const char *dbfile, const char *new_suffix,
         goto err;
     }
 #ifndef OPENSSL_SYS_VMS
-    j = BIO_snprintf(buf[4], sizeof buf[4], "%s.attr", dbfile);
-    j = BIO_snprintf(buf[3], sizeof buf[3], "%s.attr.%s", dbfile, old_suffix);
-    j = BIO_snprintf(buf[2], sizeof buf[2], "%s.attr.%s", dbfile, new_suffix);
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s.%s", dbfile, old_suffix);
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s.%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[4], sizeof(buf[4]), "%s.attr", dbfile);
+    j = BIO_snprintf(buf[3], sizeof(buf[3]), "%s.attr.%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s.attr.%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s.%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, new_suffix);
 #else
-    j = BIO_snprintf(buf[4], sizeof buf[4], "%s-attr", dbfile);
-    j = BIO_snprintf(buf[3], sizeof buf[3], "%s-attr-%s", dbfile, old_suffix);
-    j = BIO_snprintf(buf[2], sizeof buf[2], "%s-attr-%s", dbfile, new_suffix);
-    j = BIO_snprintf(buf[1], sizeof buf[1], "%s-%s", dbfile, old_suffix);
-    j = BIO_snprintf(buf[0], sizeof buf[0], "%s-%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[4], sizeof(buf[4]), "%s-attr", dbfile);
+    j = BIO_snprintf(buf[3], sizeof(buf[3]), "%s-attr-%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[2], sizeof(buf[2]), "%s-attr-%s", dbfile, new_suffix);
+    j = BIO_snprintf(buf[1], sizeof(buf[1]), "%s-%s", dbfile, old_suffix);
+    j = BIO_snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, new_suffix);
 #endif
     if (rename(dbfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
