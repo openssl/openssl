@@ -60,7 +60,7 @@ Verify signature using PKCS#1 and SHA256 digest:
   * NB: assumes verify_key, sig, siglen md and mdlen are already set up
   * and that verify_key is an RSA public key
   */
- ctx = EVP_PKEY_CTX_new(verify_key);
+ ctx = EVP_PKEY_CTX_new(verify_key, NULL /* no engine */);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_verify_init(ctx) <= 0)
