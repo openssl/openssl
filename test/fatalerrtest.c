@@ -69,7 +69,7 @@ static int test_fatalerr(void)
     }
 
     /* SSL_read()/SSL_write should fail because of a previous fatal error */
-    if ((len = SSL_read(sssl, buf, sizeof(buf - 1))) > 0) {
+    if ((len = SSL_read(sssl, buf, sizeof(buf) - 1)) > 0) {
         buf[len] = '\0';
         printf("Unexpected success reading data: %s\n", buf);
         goto err;
