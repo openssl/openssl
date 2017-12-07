@@ -553,6 +553,9 @@ __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
 __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
                               size_t len);
 
+int EVP_read_aad_string(char *buf, int length, const char *prompt);
+int EVP_read_aad_string_min(char *buf, int minlen, int maxlen,
+                            const char *prompt);
 int EVP_read_pw_string(char *buf, int length, const char *prompt, int verify);
 int EVP_read_pw_string_min(char *buf, int minlen, int maxlen,
                            const char *prompt, int verify);

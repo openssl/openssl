@@ -47,7 +47,7 @@ SKIP: {
         my $ciphername = substr $cipher, 1;
         my $cipherfile = "$plaintext.$ciphername.cipher";
         my $clearfile = "$plaintext.$ciphername.clear";
-        my @common = ( $cmd, "enc", "$cipher", "-k", "test" );
+        my @common = ( $cmd, "enc", "$cipher", "-k", "test", "-aad", "test");
 
         ok(run(app([@common, "-e", "-in", $plaintext, "-out", $cipherfile]))
            && compare_text($plaintext, $cipherfile) != 0
