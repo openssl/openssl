@@ -13,8 +13,8 @@
 
 int main(int argc, char *argv[])
 {
-    SSL_CTX *sctx, *cctx;
-    SSL *sssl, *cssl;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
     const char *msg = "Dummy";
     BIO *err = NULL, *wbio = NULL;
     int ret = 1, len;
