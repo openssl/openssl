@@ -498,7 +498,9 @@ static int test_EVP_PKEY_check(int i)
     int ret = 0;
     const unsigned char *p;
     EVP_PKEY *pkey = NULL;
+#ifndef OPENSSL_NO_EC
     EC_KEY *eckey = NULL;
+#endif
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY_CTX *ctx2 = NULL;
     const APK_DATA *ak = &keycheckdata[i];
@@ -519,6 +521,7 @@ static int test_EVP_PKEY_check(int i)
              || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id)))
         goto done;
 
+#ifndef OPENSSL_NO_EC
     if (type == 1 &&
             (!TEST_ptr(pubkey = BIO_new_mem_buf(input, input_len))
              || !TEST_ptr(eckey = d2i_EC_PUBKEY_bio(pubkey, NULL))
@@ -532,6 +535,7 @@ static int test_EVP_PKEY_check(int i)
              || !TEST_ptr(pkey = EVP_PKEY_new())
              || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey))))
         goto done;
+#endif
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
