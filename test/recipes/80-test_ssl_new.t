@@ -94,6 +94,7 @@ my %skip = (
   "23-srp.conf" => (disabled("tls1") && disabled ("tls1_1")
                     && disabled("tls1_2")) || disabled("srp"),
   "24-padding.conf" => disabled("tls1_3"),
+  "25-cipher.conf" => disabled("ec"),
 );
 
 foreach my $conf (@conf_files) {
