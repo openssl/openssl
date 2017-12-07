@@ -170,38 +170,39 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
                 | checkhandshake::PSK_SRV_EXTENSION),
                "Resumption handshake test");
 
-#Test 3: A status_request handshake (client request only)
-$proxy->clear();
-$proxy->clientflags("-status");
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION,
-               "status_request handshake test (client)");
+SKIP: {
+    skip "No OCSP support in this OpenSSL build", 3
+        if disabled("ct") || disabled("ec") || disabled("ocsp");
+    #Test 3: A status_request handshake (client request only)
+    $proxy->clear();
+    $proxy->clientflags("-status");
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION,
+                   "status_request handshake test (client)");
 
-#Test 4: A status_request handshake (server support only)
-$proxy->clear();
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
-               "status_request handshake test (server)");
+    #Test 4: A status_request handshake (server support only)
+    $proxy->clear();
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS,
+                   "status_request handshake test (server)");
 
-#Test 5: A status_request handshake (client and server)
-#TODO(TLS1.3): TLS1.3 doesn't actually have CertificateStatus messages. This is
-#a temporary test until such time as we do proper TLS1.3 style certificate
-#status
-$proxy->clear();
-$proxy->clientflags("-status");
-$proxy->serverflags("-status_file "
-                    .srctop_file("test", "recipes", "ocsp-response.der"));
-$proxy->start();
-checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS
-               | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
-               | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
-               "status_request handshake test");
+    #Test 5: A status_request handshake (client and server)
+    $proxy->clear();
+    $proxy->clientflags("-status");
+    $proxy->serverflags("-status_file "
+                        .srctop_file("test", "recipes", "ocsp-response.der"));
+    $proxy->start();
+    checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
+                   checkhandshake::DEFAULT_EXTENSIONS
+                   | checkhandshake::STATUS_REQUEST_CLI_EXTENSION
+                   | checkhandshake::STATUS_REQUEST_SRV_EXTENSION,
+                   "status_request handshake test");
+}
 
 #Test 6: A client auth handshake
 $proxy->clear();
