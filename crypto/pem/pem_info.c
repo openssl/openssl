@@ -294,7 +294,7 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
             /* create the right magic header stuff */
             OPENSSL_assert(strlen(objstr) + 23
                            + 2 * EVP_CIPHER_iv_length(enc) + 13 <=
-                           sizeof buf);
+                           sizeof(buf));
             buf[0] = '\0';
             PEM_proc_type(buf, PEM_TYPE_ENCRYPTED);
             PEM_dek_info(buf, objstr, EVP_CIPHER_iv_length(enc),

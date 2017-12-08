@@ -169,7 +169,7 @@ static int rand_add(const void *buf, int num, double add)
     md_c[0] = md_count[0];
     md_c[1] = md_count[1];
 
-    memcpy(local_md, md, sizeof md);
+    memcpy(local_md, md, sizeof(md));
 
     /* state_index <= state_num <= STATE_SIZE */
     state_index += num;
@@ -416,7 +416,7 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
     st_num = state_num;
     md_c[0] = md_count[0];
     md_c[1] = md_count[1];
-    memcpy(local_md, md, sizeof md);
+    memcpy(local_md, md, sizeof(md));
 
     state_index += num_ceil;
     if (state_index > state_num)
@@ -442,15 +442,15 @@ static int rand_bytes(unsigned char *buf, int num, int pseudo)
             goto err;
 #ifndef GETPID_IS_MEANINGLESS
         if (curr_pid) {         /* just in the first iteration to save time */
-            if (!MD_Update(m, (unsigned char *)&curr_pid, sizeof curr_pid))
+            if (!MD_Update(m, (unsigned char *)&curr_pid, sizeof(curr_pid)))
                 goto err;
             curr_pid = 0;
         }
 #endif
         if (curr_time) {        /* just in the first iteration to save time */
-            if (!MD_Update(m, (unsigned char *)&curr_time, sizeof curr_time))
+            if (!MD_Update(m, (unsigned char *)&curr_time, sizeof(curr_time)))
                 goto err;
-            if (!MD_Update(m, (unsigned char *)&tv, sizeof tv))
+            if (!MD_Update(m, (unsigned char *)&tv, sizeof(tv)))
                 goto err;
             curr_time = 0;
             if (!rand_hw_seed(m))

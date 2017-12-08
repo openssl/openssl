@@ -60,8 +60,8 @@ char *opt_progname(const char *argv0)
         n -= 4;
 
     /* Copy over the name, in lowercase. */
-    if (n > sizeof prog - 1)
-        n = sizeof prog - 1;
+    if (n > sizeof(prog) - 1)
+        n = sizeof(prog) - 1;
     for (q = prog, i = 0; i < n; i++, p++)
         *q++ = tolower((unsigned char)*p);
     *q = '\0';
@@ -82,9 +82,9 @@ char *opt_progname(const char *argv0)
         }
 
     q = strrchr(p, '.');
-    strncpy(prog, p, sizeof prog - 1);
-    prog[sizeof prog - 1] = '\0';
-    if (q != NULL && q - p < sizeof prog)
+    strncpy(prog, p, sizeof(prog) - 1);
+    prog[sizeof(prog) - 1] = '\0';
+    if (q != NULL && q - p < sizeof(prog))
         prog[q - p] = '\0';
     return prog;
 }
@@ -101,8 +101,8 @@ char *opt_progname(const char *argv0)
             p++;
             break;
         }
-    strncpy(prog, p, sizeof prog - 1);
-    prog[sizeof prog - 1] = '\0';
+    strncpy(prog, p, sizeof(prog) - 1);
+    prog[sizeof(prog) - 1] = '\0';
     return prog;
 }
 #endif
@@ -840,7 +840,7 @@ void opt_help(const OPTIONS *list)
             i += 1 + strlen(valtype2param(o));
         if (i < MAX_OPT_HELP_WIDTH && i > width)
             width = i;
-        assert(i < (int)sizeof start);
+        assert(i < (int)sizeof(start));
     }
 
     if (standard_prolog)
@@ -857,7 +857,7 @@ void opt_help(const OPTIONS *list)
 
         /* Pad out prefix */
         memset(start, ' ', sizeof(start) - 1);
-        start[sizeof start - 1] = '\0';
+        start[sizeof(start) - 1] = '\0';
 
         if (o->name == OPT_MORE_STR) {
             /* Continuation of previous line; pad and print. */

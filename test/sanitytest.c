@@ -44,7 +44,7 @@ int main()
 
     /* Is NULL equivalent to all-bytes-zero? */
     p = NULL;
-    memset(bytes, 0, sizeof bytes);
+    memset(bytes, 0, sizeof(bytes));
     TEST(memcmp(&p, bytes, sizeof(bytes)) == 0);
 
     /* Enum size */

@@ -81,7 +81,7 @@ static int execute_test(D2I_TEST_FIXTURE fixture)
      * performs sanity checks on the input and can reject it before the
      * decoder is called.
      */
-    len = BIO_read(bio, buf, sizeof buf);
+    len = BIO_read(bio, buf, sizeof(buf));
     if (len < 0)
         goto err;
 

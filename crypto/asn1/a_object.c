@@ -42,7 +42,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 {
     int i, first, len = 0, c, use_bn;
     char ftmp[24], *tmp = ftmp;
-    int tmpsize = sizeof ftmp;
+    int tmpsize = sizeof(ftmp);
     const char *p;
     unsigned long l;
     BIGNUM *bl = NULL;
@@ -177,7 +177,7 @@ int i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *a)
 
     if ((a == NULL) || (a->data == NULL))
         return (BIO_write(bp, "NULL", 4));
-    i = i2t_ASN1_OBJECT(buf, sizeof buf, a);
+    i = i2t_ASN1_OBJECT(buf, sizeof(buf), a);
     if (i > (int)(sizeof(buf) - 1)) {
         p = OPENSSL_malloc(i + 1);
         if (p == NULL)

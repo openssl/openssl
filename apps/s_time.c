@@ -225,7 +225,7 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            buf_len = BIO_snprintf(buf, sizeof buf,
+            buf_len = BIO_snprintf(buf, sizeof(buf),
                                    fmt_http_get_cmd, www_path);
             if (SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
@@ -285,7 +285,7 @@ int s_time_main(int argc, char **argv)
     }
 
     if (www_path != NULL) {
-        buf_len = BIO_snprintf(buf, sizeof buf,
+        buf_len = BIO_snprintf(buf, sizeof(buf),
                                fmt_http_get_cmd, www_path);
         if (SSL_write(scon, buf, buf_len) <= 0)
             goto end;
@@ -318,7 +318,7 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path) {
-            BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
+            BIO_snprintf(buf, sizeof(buf), "GET %s HTTP/1.0\r\n\r\n",
                          www_path);
             if (SSL_write(scon, buf, strlen(buf)) <= 0)
                 goto end;

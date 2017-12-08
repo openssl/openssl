@@ -238,7 +238,7 @@ int pkcs8_main(int argc, char **argv)
 #ifndef OPENSSL_NO_UI
                 p8pass = pass;
                 if (EVP_read_pw_string
-                    (pass, sizeof pass, "Enter Encryption Password:", 1)) {
+                    (pass, sizeof(pass), "Enter Encryption Password:", 1)) {
                     X509_ALGOR_free(pbe);
                     goto end;
                 }
@@ -300,7 +300,7 @@ int pkcs8_main(int argc, char **argv)
         else if (1) {
 #ifndef OPENSSL_NO_UI
             p8pass = pass;
-            if (EVP_read_pw_string(pass, sizeof pass, "Enter Password:", 0)) {
+            if (EVP_read_pw_string(pass, sizeof(pass), "Enter Password:", 0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
             }
