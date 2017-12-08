@@ -616,7 +616,7 @@ struct ssl_ctx_st {
     /*
      * This can have one of 2 values, ored together, SSL_SESS_CACHE_CLIENT,
      * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
-     * means only SSL_accept which cache SSL_SESSIONS.
+     * means only SSL_accept will cache SSL_SESSIONS.
      */
     uint32_t session_cache_mode;
     /*
