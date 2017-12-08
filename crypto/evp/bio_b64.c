@@ -52,7 +52,7 @@ static const BIO_METHOD methods_b64 = {
     bread_conv,
     b64_read,
     b64_puts,
-    NULL,                       /* b64_gets, */
+    NULL,                       /* no b64_gets, */
     b64_ctrl,
     b64_new,
     b64_free,

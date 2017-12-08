@@ -36,11 +36,11 @@ typedef struct bio_ssl_st {
 static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL, "ssl",
     ssl_write,
-    NULL,
+    NULL,                       /* no ssl_write_old, */
     ssl_read,
-    NULL,
+    NULL,                       /* no ssl_read_old,  */
     ssl_puts,
-    NULL,                       /* ssl_gets, */
+    NULL,                       /* no ssl_gets,      */
     ssl_ctrl,
     ssl_new,
     ssl_free,

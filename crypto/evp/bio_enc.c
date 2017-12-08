@@ -47,8 +47,8 @@ static const BIO_METHOD methods_enc = {
     /* TODO: Convert to new style read function */
     bread_conv,
     enc_read,
-    NULL,                       /* enc_puts, */
-    NULL,                       /* enc_gets, */
+    NULL,                       /* no enc_puts, */
+    NULL,                       /* no enc_gets, */
     enc_ctrl,
     enc_new,
     enc_free,

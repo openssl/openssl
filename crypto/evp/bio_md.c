@@ -36,7 +36,7 @@ static const BIO_METHOD methods_md = {
     /* TODO: Convert to new style read function */
     bread_conv,
     md_read,
-    NULL,                       /* md_puts, */
+    NULL,                       /* no md_puts, */
     md_gets,
     md_ctrl,
     md_new,
