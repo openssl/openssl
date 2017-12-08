@@ -962,8 +962,8 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                                     ui_method, ui_data);
 
             if (try_matchcount > 0) {
-                if (matching_handlers)
-                    matching_handlers[*matchcount] = handler;
+
+                matching_handlers[*matchcount] = handler;
 
                 if (handler_ctx)
                     handler->destroy_ctx(&handler_ctx);

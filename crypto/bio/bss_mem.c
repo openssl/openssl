@@ -147,23 +147,19 @@ static int mem_buf_free(BIO *a, int free_all)
 {
     if (a == NULL)
         return 0;
-    if (a->shutdown) {
-        if ((a->init) && (a->ptr != NULL)) {
-            BUF_MEM *b;
-            BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
 
-            if (bb != NULL) {
-                b = bb->buf;
-                if (a->flags & BIO_FLAGS_MEM_RDONLY)
-                    b->data = NULL;
-                BUF_MEM_free(b);
-                if (free_all) {
-                    OPENSSL_free(bb->readp);
-                    OPENSSL_free(bb);
-                }
-            }
-            a->ptr = NULL;
+    if (a->shutdown && a->init && a->ptr != NULL) {
+        BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
+        BUF_MEM *b = bb->buf;
+
+        if (a->flags & BIO_FLAGS_MEM_RDONLY)
+            b->data = NULL;
+        BUF_MEM_free(b);
+        if (free_all) {
+            OPENSSL_free(bb->readp);
+            OPENSSL_free(bb);
         }
+        a->ptr = NULL;
     }
     return 1;
 }

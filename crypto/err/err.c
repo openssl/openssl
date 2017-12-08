@@ -502,15 +502,13 @@ static unsigned long get_error_values(int inc, int top, const char **file,
         es->err_buffer[i] = 0;
     }
 
-    if ((file != NULL) && (line != NULL)) {
+    if (file != NULL && line != NULL) {
         if (es->err_file[i] == NULL) {
             *file = "NA";
-            if (line != NULL)
-                *line = 0;
+            *line = 0;
         } else {
             *file = es->err_file[i];
-            if (line != NULL)
-                *line = es->err_line[i];
+            *line = es->err_line[i];
         }
     }
 

@@ -450,7 +450,6 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
             data->accepted_mode &= ~BIO_SOCK_NONBLOCK;
         break;
     case BIO_C_SET_FD:
-        b->init = 1;
         b->num = *((int *)ptr);
         data->accept_sock = b->num;
         data->state = ACPT_S_ACCEPT;
