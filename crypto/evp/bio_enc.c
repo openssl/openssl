@@ -40,7 +40,8 @@ typedef struct enc_struct {
 } BIO_ENC_CTX;
 
 static const BIO_METHOD methods_enc = {
-    BIO_TYPE_CIPHER, "cipher",
+    BIO_TYPE_CIPHER,
+    "cipher",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     enc_write,

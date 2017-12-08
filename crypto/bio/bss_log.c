@@ -85,7 +85,8 @@ static void xsyslog(BIO *bp, int priority, const char *string);
 static void xcloselog(BIO *bp);
 
 static const BIO_METHOD methods_slg = {
-    BIO_TYPE_MEM, "syslog",
+    BIO_TYPE_MEM,
+    "syslog",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     slg_write,
