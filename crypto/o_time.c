@@ -141,14 +141,14 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
         pitem->ileb_64$w_mbo = 1;
         pitem->ileb_64$w_code = LNM$_STRING;
         pitem->ileb_64$l_mbmo = -1;
-        pitem->ileb_64$q_length = sizeof (logvalue);
+        pitem->ileb_64$q_length = sizeof(logvalue);
         pitem->ileb_64$pq_bufaddr = logvalue;
         pitem->ileb_64$pq_retlen_addr = (unsigned __int64 *) &reslen;
         pitem++;
         /* Last item of the item list is null terminated */
         pitem->ileb_64$q_length = pitem->ileb_64$w_code = 0;
 # else
-        pitem->ile3$w_length = sizeof (logvalue);
+        pitem->ile3$w_length = sizeof(logvalue);
         pitem->ile3$w_code = LNM$_STRING;
         pitem->ile3$ps_bufaddr = logvalue;
         pitem->ile3$ps_retlen_addr = (unsigned short int *) &reslen;

@@ -2082,7 +2082,7 @@ krb5_error_code kssl_check_authent(
     }
 # endif
     enc = kssl_map_enc(enctype);
-    memset(iv, 0, sizeof iv);   /* per RFC 1510 */
+    memset(iv, 0, sizeof(iv));   /* per RFC 1510 */
 
     if (enc == NULL) {
         /*

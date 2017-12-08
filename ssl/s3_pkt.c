@@ -1314,11 +1314,11 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         unsigned int *dest_len = NULL;
 
         if (rr->type == SSL3_RT_HANDSHAKE) {
-            dest_maxlen = sizeof s->s3->handshake_fragment;
+            dest_maxlen = sizeof(s->s3->handshake_fragment);
             dest = s->s3->handshake_fragment;
             dest_len = &s->s3->handshake_fragment_len;
         } else if (rr->type == SSL3_RT_ALERT) {
-            dest_maxlen = sizeof s->s3->alert_fragment;
+            dest_maxlen = sizeof(s->s3->alert_fragment);
             dest = s->s3->alert_fragment;
             dest_len = &s->s3->alert_fragment_len;
         }
@@ -1498,7 +1498,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
             s->rwstate = SSL_NOTHING;
             s->s3->fatal_alert = alert_descr;
             SSLerr(SSL_F_SSL3_READ_BYTES, SSL_AD_REASON_OFFSET + alert_descr);
-            BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
+            BIO_snprintf(tmp, sizeof(tmp), "%d", alert_descr);
             ERR_add_error_data(2, "SSL alert number ", tmp);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
             SSL_CTX_remove_session(s->session_ctx, s->session);
