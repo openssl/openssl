@@ -97,6 +97,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL3_CTX_CTRL                              133
 # define SSL_F_SSL3_DIGEST_CACHED_RECORDS                 293
 # define SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC                 292
+# define SSL_F_SSL3_ENC                                   608
 # define SSL_F_SSL3_FINAL_FINISH_MAC                      285
 # define SSL_F_SSL3_FINISH_MAC                            587
 # define SSL_F_SSL3_GENERATE_KEY_BLOCK                    238
@@ -249,6 +250,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS12_CHECK_PEER_SIGALG                    333
 # define SSL_F_TLS12_COPY_SIGALGS                         533
 # define SSL_F_TLS13_CHANGE_CIPHER_STATE                  440
+# define SSL_F_TLS13_ENC                                  609
 # define SSL_F_TLS13_FINAL_FINISH_MAC                     605
 # define SSL_F_TLS13_GENERATE_SECRET                      591
 # define SSL_F_TLS13_HKDF_EXPAND                          561
