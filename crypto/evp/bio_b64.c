@@ -44,7 +44,8 @@ typedef struct b64_struct {
 } BIO_B64_CTX;
 
 static const BIO_METHOD methods_b64 = {
-    BIO_TYPE_BASE64, "base64 encoding",
+    BIO_TYPE_BASE64,
+    "base64 encoding",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     b64_write,

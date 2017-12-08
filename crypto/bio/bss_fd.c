@@ -58,7 +58,8 @@ static int fd_free(BIO *data);
 int BIO_fd_should_retry(int s);
 
 static const BIO_METHOD methods_fdp = {
-    BIO_TYPE_FD, "file descriptor",
+    BIO_TYPE_FD,
+    "file descriptor",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     fd_write,
