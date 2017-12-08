@@ -267,15 +267,15 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num & BIO_CLOSE;
         if (num & BIO_FP_APPEND) {
             if (num & BIO_FP_READ)
-                OPENSSL_strlcpy(p, "a+", sizeof p);
+                OPENSSL_strlcpy(p, "a+", sizeof(p));
             else
-                OPENSSL_strlcpy(p, "a", sizeof p);
+                OPENSSL_strlcpy(p, "a", sizeof(p));
         } else if ((num & BIO_FP_READ) && (num & BIO_FP_WRITE))
-            OPENSSL_strlcpy(p, "r+", sizeof p);
+            OPENSSL_strlcpy(p, "r+", sizeof(p));
         else if (num & BIO_FP_WRITE)
-            OPENSSL_strlcpy(p, "w", sizeof p);
+            OPENSSL_strlcpy(p, "w", sizeof(p));
         else if (num & BIO_FP_READ)
-            OPENSSL_strlcpy(p, "r", sizeof p);
+            OPENSSL_strlcpy(p, "r", sizeof(p));
         else {
             BIOerr(BIO_F_FILE_CTRL, BIO_R_BAD_FOPEN_MODE);
             ret = 0;

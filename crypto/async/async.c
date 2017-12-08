@@ -36,7 +36,7 @@ static async_ctx *async_ctx_new(void)
 {
     async_ctx *nctx = NULL;
 
-    nctx = OPENSSL_malloc(sizeof (async_ctx));
+    nctx = OPENSSL_malloc(sizeof(async_ctx));
     if (nctx == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -81,7 +81,7 @@ static ASYNC_JOB *async_job_new(void)
 {
     ASYNC_JOB *job = NULL;
 
-    job = OPENSSL_zalloc(sizeof (ASYNC_JOB));
+    job = OPENSSL_zalloc(sizeof(ASYNC_JOB));
     if (job == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -330,7 +330,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    pool = OPENSSL_zalloc(sizeof *pool);
+    pool = OPENSSL_zalloc(sizeof(*pool));
     if (pool == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         return 0;

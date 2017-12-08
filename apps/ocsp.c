@@ -1074,7 +1074,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
     *pcbio = cbio;
 
     /* Read the request line. */
-    len = BIO_gets(cbio, reqbuf, sizeof reqbuf);
+    len = BIO_gets(cbio, reqbuf, sizeof(reqbuf));
     if (len <= 0)
         return 1;
     if (strncmp(reqbuf, "GET ", 4) == 0) {
@@ -1116,7 +1116,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
 
     /* Read and skip past the headers. */
     for (;;) {
-        len = BIO_gets(cbio, inbuf, sizeof inbuf);
+        len = BIO_gets(cbio, inbuf, sizeof(inbuf));
         if (len <= 0)
             return 1;
         if ((inbuf[0] == '\r') || (inbuf[0] == '\n'))

@@ -24,7 +24,7 @@ const char *DES_options(void)
             size = "int";
         else
             size = "long";
-        BIO_snprintf(buf, sizeof buf, "des(%s)", size);
+        BIO_snprintf(buf, sizeof(buf), "des(%s)", size);
         init = 0;
     }
     return (buf);

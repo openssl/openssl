@@ -323,7 +323,7 @@ int pkcs12_main(int argc, char **argv)
         if (1) {
 #ifndef OPENSSL_NO_UI
             if (EVP_read_pw_string
-                (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
+                (macpass, sizeof(macpass), "Enter MAC Password:", export_cert)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
             }
@@ -440,7 +440,7 @@ int pkcs12_main(int argc, char **argv)
         if (!noprompt) {
             if (1) {
 #ifndef OPENSSL_NO_UI
-                if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
+                if (EVP_read_pw_string(pass, sizeof(pass), "Enter Export Password:",
                                        1)) {
                     BIO_printf(bio_err, "Can't read Password\n");
                     goto export_end;
@@ -453,7 +453,7 @@ int pkcs12_main(int argc, char **argv)
         }
 
         if (!twopass)
-            OPENSSL_strlcpy(macpass, pass, sizeof macpass);
+            OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
@@ -506,7 +506,7 @@ int pkcs12_main(int argc, char **argv)
     if (!noprompt) {
         if (1) {
 #ifndef OPENSSL_NO_UI
-            if (EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
+            if (EVP_read_pw_string(pass, sizeof(pass), "Enter Import Password:",
                                    0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
@@ -519,7 +519,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (!twopass)
-        OPENSSL_strlcpy(macpass, pass, sizeof macpass);
+        OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
         const ASN1_INTEGER *tmaciter;

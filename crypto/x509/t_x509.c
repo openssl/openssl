@@ -340,7 +340,7 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
                 BIO_puts(out, ", ");
             else
                 first = 0;
-            OBJ_obj2txt(oidstr, sizeof oidstr,
+            OBJ_obj2txt(oidstr, sizeof(oidstr),
                         sk_ASN1_OBJECT_value(trust, i), 0);
             BIO_puts(out, oidstr);
         }
@@ -355,7 +355,7 @@ int X509_aux_print(BIO *out, X509 *x, int indent)
                 BIO_puts(out, ", ");
             else
                 first = 0;
-            OBJ_obj2txt(oidstr, sizeof oidstr,
+            OBJ_obj2txt(oidstr, sizeof(oidstr),
                         sk_ASN1_OBJECT_value(reject, i), 0);
             BIO_puts(out, oidstr);
         }

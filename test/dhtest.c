@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     CRYPTO_set_mem_debug(1);
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-    RAND_seed(rnd_seed, sizeof rnd_seed);
+    RAND_seed(rnd_seed, sizeof(rnd_seed));
 
     out = BIO_new(BIO_s_file());
     if (out == NULL)

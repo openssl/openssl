@@ -58,7 +58,7 @@ int errstr_main(int argc, char **argv)
              */
             OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS
                              | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-            ERR_error_string_n(l, buf, sizeof buf);
+            ERR_error_string_n(l, buf, sizeof(buf));
             BIO_printf(bio_out, "%s\n", buf);
         }
     }

@@ -20,7 +20,7 @@ int app_RAND_load_file(const char *file, int dont_warn)
     char buffer[200];
 
     if (file == NULL)
-        file = RAND_file_name(buffer, sizeof buffer);
+        file = RAND_file_name(buffer, sizeof(buffer));
 #ifndef OPENSSL_NO_EGD
     else if (RAND_egd(file) > 0) {
         /*
@@ -101,7 +101,7 @@ int app_RAND_write_file(const char *file)
         return 0;
 
     if (file == NULL)
-        file = RAND_file_name(buffer, sizeof buffer);
+        file = RAND_file_name(buffer, sizeof(buffer));
     if (file == NULL || !RAND_write_file(file)) {
         BIO_printf(bio_err, "unable to write 'random state'\n");
         return 0;

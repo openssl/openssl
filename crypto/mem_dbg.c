@@ -466,7 +466,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
     } tid;
     CRYPTO_THREAD_ID ti;
 
-#define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
+#define BUF_REMAIN (sizeof(buf) - (size_t)(bufp - buf))
 
     lcl = localtime(&m->time);
     BIO_snprintf(bufp, BUF_REMAIN, "[%02d:%02d:%02d] ",
@@ -505,7 +505,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
             memset(buf, '>', ami_cnt);
             tid.ltid = 0;
             tid.tid = amip->threadid;
-            BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
+            BIO_snprintf(buf + ami_cnt, sizeof(buf) - ami_cnt,
                          " thread=%lu, file=%s, line=%d, info=\"",
                          tid.ltid, amip->file,
                          amip->line);
@@ -515,10 +515,10 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
                 memcpy(buf + buf_len, amip->info, 128 - buf_len - 3);
                 buf_len = 128 - 3;
             } else {
-                OPENSSL_strlcpy(buf + buf_len, amip->info, sizeof buf - buf_len);
+                OPENSSL_strlcpy(buf + buf_len, amip->info, sizeof(buf) - buf_len);
                 buf_len = strlen(buf);
             }
-            BIO_snprintf(buf + buf_len, sizeof buf - buf_len, "\"\n");
+            BIO_snprintf(buf + buf_len, sizeof(buf) - buf_len, "\"\n");
 
             BIO_puts(l->bio, buf);
 

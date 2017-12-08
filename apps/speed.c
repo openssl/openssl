@@ -2401,7 +2401,7 @@ int speed_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_DSA
     if (RAND_status() != 1) {
-        RAND_seed(rnd_seed, sizeof rnd_seed);
+        RAND_seed(rnd_seed, sizeof(rnd_seed));
     }
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
         int st = 0;
@@ -2469,7 +2469,7 @@ int speed_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_EC
     if (RAND_status() != 1) {
-        RAND_seed(rnd_seed, sizeof rnd_seed);
+        RAND_seed(rnd_seed, sizeof(rnd_seed));
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int st = 1;
@@ -2553,7 +2553,7 @@ int speed_main(int argc, char **argv)
     }
 
     if (RAND_status() != 1) {
-        RAND_seed(rnd_seed, sizeof rnd_seed);
+        RAND_seed(rnd_seed, sizeof(rnd_seed));
     }
     for (testnum = 0; testnum < EC_NUM; testnum++) {
         int ecdh_checks = 1;
@@ -2876,7 +2876,7 @@ static char *sstrsep(char **string, const char *delim)
     if (**string == 0)
         return NULL;
 
-    memset(isdelim, 0, sizeof isdelim);
+    memset(isdelim, 0, sizeof(isdelim));
     isdelim[0] = 1;
 
     while (*delim) {
@@ -2937,7 +2937,7 @@ static int do_multi(int multi)
         char *p;
 
         f = fdopen(fds[n], "r");
-        while (fgets(buf, sizeof buf, f)) {
+        while (fgets(buf, sizeof(buf), f)) {
             p = strchr(buf, '\n');
             if (p)
                 *p = '\0';

@@ -249,7 +249,7 @@ int passwd_main(int argc, char **argv)
                     /* ignore rest of line */
                     char trash[BUFSIZ];
                     do
-                        r = BIO_gets(in, trash, sizeof trash);
+                        r = BIO_gets(in, trash, sizeof(trash));
                     while ((r > 0) && (!strchr(trash, '\n')));
                 }
 
@@ -300,9 +300,9 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
     if (magic_len > 4)    /* assert it's  "1" or "apr1" */
         return NULL;
 
-    OPENSSL_strlcat(out_buf, magic, sizeof out_buf);
-    OPENSSL_strlcat(out_buf, "$", sizeof out_buf);
-    OPENSSL_strlcat(out_buf, salt, sizeof out_buf);
+    OPENSSL_strlcat(out_buf, magic, sizeof(out_buf));
+    OPENSSL_strlcat(out_buf, "$", sizeof(out_buf));
+    OPENSSL_strlcat(out_buf, salt, sizeof(out_buf));
 
     if (strlen(out_buf) > 6 + 8) /* assert "$apr1$..salt.." */
         return NULL;
@@ -332,8 +332,8 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         || !EVP_DigestFinal_ex(md2, buf, NULL))
         goto err;
 
-    for (i = passwd_len; i > sizeof buf; i -= sizeof buf) {
-        if (!EVP_DigestUpdate(md, buf, sizeof buf))
+    for (i = passwd_len; i > sizeof(buf); i -= sizeof(buf)) {
+        if (!EVP_DigestUpdate(md, buf, sizeof(buf)))
             goto err;
     }
     if (!EVP_DigestUpdate(md, buf, i))
@@ -353,7 +353,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
             goto err;
         if (!EVP_DigestUpdate(md2,
                               (i & 1) ? (unsigned const char *)passwd : buf,
-                              (i & 1) ? passwd_len : sizeof buf))
+                              (i & 1) ? passwd_len : sizeof(buf)))
             goto err;
         if (i % 3) {
             if (!EVP_DigestUpdate(md2, salt_out, salt_len))
@@ -365,7 +365,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         }
         if (!EVP_DigestUpdate(md2,
                               (i & 1) ? buf : (unsigned const char *)passwd,
-                              (i & 1) ? sizeof buf : passwd_len))
+                              (i & 1) ? sizeof(buf) : passwd_len))
                 goto err;
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
                 goto err;
@@ -377,7 +377,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 
     {
         /* transform buf into output string */
-        unsigned char buf_perm[sizeof buf];
+        unsigned char buf_perm[sizeof(buf)];
         int dest, source;
         char *output;
 
@@ -389,7 +389,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         buf_perm[15] = buf[11];
 #  ifndef PEDANTIC              /* Unfortunately, this generates a "no
                                  * effect" warning */
-        assert(16 == sizeof buf_perm);
+        assert(16 == sizeof(buf_perm));
 #  endif
 
         output = salt_out + salt_len;
