@@ -141,7 +141,7 @@ Generate a key from a set of parameters:
  ENGINE *eng;
  EVP_PKEY *pkey = NULL, *param;
 
- /* Assumed eng, param are set up already */
+ /* Assumed param, eng are set up already */
  ctx = EVP_PKEY_CTX_new(param, eng);
  if (!ctx)
      /* Error occurred */
