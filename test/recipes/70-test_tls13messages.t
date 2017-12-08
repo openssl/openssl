@@ -192,9 +192,6 @@ SKIP: {
                    "status_request handshake test (server)");
 
     #Test 5: A status_request handshake (client and server)
-    #TODO(TLS1.3): TLS1.3 doesn't actually have CertificateStatus messages. This is
-    #a temporary test until such time as we do proper TLS1.3 style certificate
-    #status
     $proxy->clear();
     $proxy->clientflags("-status");
     $proxy->serverflags("-status_file "
