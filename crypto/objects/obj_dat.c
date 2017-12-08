@@ -725,6 +725,10 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base_, int num,
     return (p);
 }
 
+/*
+ * Parse a BIO sink to create some extra oid's objects.
+ * Line format:<OID:isdigit or '.']><isspace><SN><isspace><LN>
+ */
 int OBJ_create_objects(BIO *in)
 {
     MS_STATIC char buf[512];
@@ -746,9 +750,9 @@ int OBJ_create_objects(BIO *in)
             *(s++) = '\0';
             while (isspace((unsigned char)*s))
                 s++;
-            if (*s == '\0')
+            if (*s == '\0') {
                 s = NULL;
-            else {
+            } else {
                 l = s;
                 while ((*l != '\0') && !isspace((unsigned char)*l))
                     l++;
@@ -756,15 +760,18 @@ int OBJ_create_objects(BIO *in)
                     *(l++) = '\0';
                     while (isspace((unsigned char)*l))
                         l++;
-                    if (*l == '\0')
+                    if (*l == '\0') {
                         l = NULL;
-                } else
+                    }
+                } else {
                     l = NULL;
+                }
             }
-        } else
+        } else {
             s = NULL;
-        if ((o == NULL) || (*o == '\0'))
-            return (num);
+        }
+        if (*o == '\0')
+            return num;
         if (!OBJ_create(o, s, l))
             return (num);
         num++;
