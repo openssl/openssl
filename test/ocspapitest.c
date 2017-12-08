@@ -82,6 +82,7 @@ static OCSP_BASICRESP *make_dummy_resp(void)
     ASN1_BIT_STRING_free(key);
     ASN1_INTEGER_free(serial);
     OCSP_CERTID_free(cid);
+    OCSP_BASICRESP_free(bs);
     X509_NAME_free(name);
     return bs_out;
 }
