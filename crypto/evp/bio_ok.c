@@ -108,7 +108,8 @@ typedef struct ok_struct {
 } BIO_OK_CTX;
 
 static const BIO_METHOD methods_ok = {
-    BIO_TYPE_CIPHER, "reliable",
+    BIO_TYPE_CIPHER,
+    "reliable",
     ok_write,
     ok_read,
     NULL,                       /* ok_puts, */
