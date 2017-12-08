@@ -105,7 +105,7 @@ void OPENSSL_cpuid_setup(void)
 }
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(OPENSSL_SYSTEM_WIN_CORE)
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(OPENSSL_SYS_WIN_CORE)
 # include <tchar.h>
 # include <signal.h>
 # ifdef __WATCOMC__
@@ -326,7 +326,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
     /*
      * Win32 abort() customarily shows a dialog, but we just did that...
      */
-# if !defined(_WIN32_WCE)
+# if !defined(_WIN32_WCE) && !defined(OPENSSL_SYS_WIN_CORE)
     raise(SIGABRT);
 # endif
     _exit(3);

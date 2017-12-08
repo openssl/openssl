@@ -2082,7 +2082,7 @@ static int WIN32_rename(const char *from, const char *to)
                 tto[i] = (TCHAR)to[i];
     }
 
-#if defined(OPENSSL_SYSNAME_WIN_CORE)
+#if defined(OPENSSL_SYS_WIN_CORE)
     if (MoveFileEx(tfrom, tto, 0))
 #else
     if (MoveFile(tfrom, tto))
@@ -2090,7 +2090,7 @@ static int WIN32_rename(const char *from, const char *to)
         goto ok;
     err = GetLastError();
     if (err == ERROR_ALREADY_EXISTS || err == ERROR_FILE_EXISTS) {
-#if defined(OPENSSL_SYSNAME_WIN_CORE)
+#if defined(OPENSSL_SYS_WIN_CORE)
         if (DeleteFile(tto) && MoveFileEx(tfrom, tto, 0))
 #else
         if (DeleteFile(tto) && MoveFile(tfrom, tto))

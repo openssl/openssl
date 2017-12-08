@@ -51,7 +51,7 @@ static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
         for (i = 0; i < len_0; i++)
             fnamw[i] = (WCHAR)lpLibFileName[i];
 
-#if defined(OPENSSL_SYSNAME_WIN_CORE)
+#if defined(OPENSSL_SYS_WIN_CORE)
     return LoadLibraryExW(fnamw, NULL, 0);
 #else
 	return LoadLibraryW(fnamw);
@@ -517,7 +517,7 @@ static void *win32_globallookup(const char *name)
         FARPROC f;
     } ret = { NULL };
 
-#if defined(OPENSSL_SYSNAME_WIN_CORE)
+#if defined(OPENSSL_SYS_WIN_CORE)
     dll = LoadLibraryEx(TEXT(DLLNAME), NULL, 0);
 #else
  	dll = LoadLibrary(TEXT(DLLNAME));

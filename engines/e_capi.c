@@ -462,7 +462,7 @@ static int capi_init(ENGINE *e)
 
 # ifdef OPENSSL_CAPIENG_DIALOG
     {
-#if defined(OPENSSL_SYSNAME_WIN_CORE)
+#if defined(OPENSSL_SYS_WIN_CORE)
         HMODULE cryptui = LoadLibraryEx(TEXT("CRYPTUI.DLL"), NULL, 0);
 #else
 		HMODULE cryptui = LoadLibrary(TEXT("CRYPTUI.DLL"));
