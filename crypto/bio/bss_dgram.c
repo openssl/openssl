@@ -10,6 +10,16 @@
 #include <stdio.h>
 #include <errno.h>
 
+#define __USE_GNU
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <errno.h>
+#include <signal.h>
+#include <arpa/inet.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
+#include <netinet/in.h>
+
 #include "bio_lcl.h"
 #ifndef OPENSSL_NO_DGRAM
 
@@ -101,6 +111,7 @@ static const BIO_METHOD methods_dgramp_sctp = {
 
 typedef struct bio_dgram_data_st {
     BIO_ADDR peer;
+    BIO_ADDR addr;
     unsigned int connected;
     unsigned int _errno;
     unsigned int mtu;
@@ -328,24 +339,116 @@ static int dgram_read(BIO *b, char *out, int outl)
     return ret;
 }
 
+static int dgram_write_unconnected_v4(BIO *b, const char *in, int inl)
+{
+    struct sockaddr_in addr;
+    struct sockaddr_in *srcaddr;
+    struct in_pktinfo *pkt_info;
+    struct msghdr mhdr;
+    struct cmsghdr *cmsg;
+    struct iovec iov;
+    char __attribute__((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in_pktinfo))];
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+
+    memset((void *)&addr, 0, sizeof(addr));
+    addr = *(struct sockaddr_in *)BIO_ADDR_sockaddr(&data->peer);
+
+    iov.iov_len  = inl;
+    iov.iov_base = (caddr_t) in;
+
+    memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.msg_name = (caddr_t)&addr;
+    mhdr.msg_namelen = sizeof(struct sockaddr_in);
+    mhdr.msg_iov = &iov;
+    mhdr.msg_iovlen = 1;
+
+    srcaddr = (struct sockaddr_in *)BIO_ADDR_sockaddr(&data->addr);
+    if(srcaddr) {
+      memset(chdr, 0, sizeof(chdr));
+      cmsg = (struct cmsghdr *) chdr;
+
+      cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in6_pktinfo));
+      cmsg->cmsg_level = IPPROTO_IP;
+      cmsg->cmsg_type  = IP_PKTINFO;
+
+      pkt_info = (struct in_pktinfo *)CMSG_DATA(cmsg);
+      pkt_info->ipi_addr    = srcaddr->sin_addr;
+      mhdr.msg_control = (void *) cmsg;
+      mhdr.msg_controllen = sizeof(chdr);
+    }
+
+    return sendmsg(b->num, &mhdr, 0);
+}
+
+#ifdef AF_INET6
+static int dgram_write_unconnected_v6(BIO *b, const char *in, int inl)
+{
+    struct sockaddr_in6 addr;
+    struct sockaddr_in6 *srcaddr;
+    struct in6_pktinfo *pkt_info;
+    struct msghdr mhdr;
+    struct cmsghdr *cmsg;
+    struct iovec iov;
+    char __attribute__((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+
+    memset((void *)&addr, 0, sizeof(addr));
+    addr = *(struct sockaddr_in6 *)BIO_ADDR_sockaddr(&data->peer);
+
+    iov.iov_len  = inl;
+    iov.iov_base = (caddr_t) in;
+
+    memset(&mhdr, 0, sizeof(mhdr));
+    mhdr.msg_name = (caddr_t)&addr;
+    mhdr.msg_namelen = sizeof(struct sockaddr_in6);
+    mhdr.msg_iov = &iov;
+    mhdr.msg_iovlen = 1;
+
+    srcaddr = (struct sockaddr_in6 *)BIO_ADDR_sockaddr(&data->addr);
+    if(srcaddr) {
+      memset(chdr, 0, sizeof(chdr));
+      cmsg = (struct cmsghdr *) chdr;
+
+      cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in6_pktinfo));
+      cmsg->cmsg_level = IPPROTO_IPV6;
+      cmsg->cmsg_type  = IPV6_PKTINFO;
+
+      pkt_info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+      pkt_info->ipi6_addr    = srcaddr->sin6_addr;
+      mhdr.msg_control = (void *) cmsg;
+      mhdr.msg_controllen = sizeof(chdr);
+    }
+
+    return sendmsg(b->num, &mhdr, 0);
+}
+#endif /* AF_INET6 */
+
 static int dgram_write(BIO *b, const char *in, int inl)
 {
     int ret;
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+
     clear_socket_error();
 
     if (data->connected)
         ret = writesocket(b->num, in, inl);
     else {
-        int peerlen = BIO_ADDR_sockaddr_size(&data->peer);
+        struct sockaddr *sa = (struct sockaddr *)BIO_ADDR_sockaddr(&data->peer);
 
-# if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret = sendto(b->num, (char *)in, inl, 0,
-                     BIO_ADDR_sockaddr(&data->peer), peerlen);
-# else
-        ret = sendto(b->num, in, inl, 0,
-                     BIO_ADDR_sockaddr(&data->peer), peerlen);
-# endif
+        switch(sa->sa_family) {
+        case AF_INET:
+          ret = dgram_write_unconnected_v4(b, in, inl);
+          break;
+
+#ifdef AF_INET6
+        case AF_INET6:
+          ret = dgram_write_unconnected_v6(b, in, inl);
+          break;
+#endif /* AF_INET6 */
+
+        default:
+          ret = -1;
+        }
     }
 
     BIO_clear_retry_flags(b);
@@ -357,6 +460,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
     }
     return ret;
 }
+
 
 static long dgram_get_mtu_overhead(bio_dgram_data *data)
 {
