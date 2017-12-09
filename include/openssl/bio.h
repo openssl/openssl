@@ -144,6 +144,8 @@ extern "C" {
 # endif
 
 # define BIO_CTRL_DGRAM_SET_PEEK_MODE      71
+# define BIO_CTRL_DGRAM_GET_ADDR           72 /* address data sent to/from */
+# define BIO_CTRL_DGRAM_SET_ADDR           73 /* address data sent to/from */
 
 /* modifiers */
 # define BIO_FP_READ             0x02

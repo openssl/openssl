@@ -689,6 +689,19 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_PEER:
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
+
+    case BIO_CTRL_DGRAM_GET_ADDR:
+        ret = BIO_ADDR_sockaddr_size(&data->addr);
+        /* FIXME: if num < ret, we will only return part of an address.
+           That should bee an error, no? */
+        if (num == 0 || num > ret)
+            num = ret;
+        memcpy(ptr, &data->addr, (ret = num));
+        break;
+    case BIO_CTRL_DGRAM_SET_ADDR:
+        BIO_ADDR_make(&data->addr, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
+        break;
+
     case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
         memcpy(&(data->next_timeout), ptr, sizeof(struct timeval));
         break;
