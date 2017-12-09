@@ -443,38 +443,18 @@ static void get_current_time(struct timeval *t)
 #define LISTEN_SEND_VERIFY_REQUEST  1
 
 #ifndef OPENSSL_NO_SOCK
-int DTLSv1_listen(SSL *s, BIO_ADDR *client)
+int DTLSv1_answerHello(SSL *s, BIO *rbio, BIO *wbio)
 {
-    int next, n, ret = 0, clearpkt = 0;
+    int next, n, clearpkt = 0;
+    BUF_MEM *bufm;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
-    const unsigned char *data;
     unsigned char *buf;
+    BIO_ADDR *tmpclient = NULL;
+    const unsigned char *data;
     size_t fragoff, fraglen, msglen;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
-    BIO *rbio, *wbio;
-    BUF_MEM *bufm;
-    BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
-
-    if (s->handshake_func == NULL) {
-        /* Not properly initialized yet */
-        SSL_set_accept_state(s);
-    }
-
-    /* Ensure there is no state left over from a previous invocation */
-    if (!SSL_clear(s))
-        return -1;
-
-    ERR_clear_error();
-
-    rbio = SSL_get_rbio(s);
-    wbio = SSL_get_wbio(s);
-
-    if (!rbio || !wbio) {
-        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
-        return -1;
-    }
 
     /*
      * We only peek at incoming ClientHello's until we're sure we are going to
@@ -532,9 +512,8 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             return -1;
         }
 
-        /* If we hit any problems we need to clear this packet from the BIO */
+        /* after this point, if we hit any problems we need to clear this packet from the BIO */
         clearpkt = 1;
-
         if (!PACKET_buf_init(&pkt, buf, n)) {
             SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
             return -1;
@@ -839,6 +818,45 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         }
     } while (next != LISTEN_SUCCESS);
 
+    return 1;
+
+ end:
+    if (clearpkt) {
+        /* Dump this packet. Ignore return value */
+        BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
+    }
+    return 0;
+}
+
+int DTLSv1_listen(SSL *s, BIO_ADDR *client)
+{
+    int ret = 0;
+    unsigned char seq[SEQ_NUM_SIZE];
+    BIO *rbio, *wbio;
+
+    if (s->handshake_func == NULL) {
+        /* Not properly initialized yet */
+        SSL_set_accept_state(s);
+    }
+
+    /* Ensure there is no state left over from a previous invocation */
+    if (!SSL_clear(s))
+        return -1;
+
+    ERR_clear_error();
+
+    rbio = SSL_get_rbio(s);
+    wbio = SSL_get_wbio(s);
+
+    if (!rbio || !wbio) {
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
+        return -1;
+    }
+
+    if((ret = DTLSv1_answerHello(s, rbio, wbio)) != 1) {
+      goto end;
+    }
+
     /*
      * Set expected sequence numbers to continue the handshake.
      */
@@ -866,14 +884,9 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         BIO_ADDR_clear(client);
 
     ret = 1;
-    clearpkt = 0;
+
  end:
-    BIO_ADDR_free(tmpclient);
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
-    if (clearpkt) {
-        /* Dump this packet. Ignore return value */
-        BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
-    }
     return ret;
 }
 #endif
