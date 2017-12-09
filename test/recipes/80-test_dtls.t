@@ -16,5 +16,9 @@ plan skip_all => "No DTLS protocols are supported by this OpenSSL build"
 
 plan tests => 1;
 
+# this runs test/dtlstest.c, which creates an ssl_ctx_pair to connect
+# the DTLS_server_method to DTLS_client_method and see how it interacts with
+# itself.
+
 ok(run(test(["dtlstest", srctop_file("apps", "server.pem"),
              srctop_file("apps", "server.pem")])), "running dtlstest");

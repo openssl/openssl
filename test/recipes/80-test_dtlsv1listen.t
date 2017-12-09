@@ -9,4 +9,7 @@
 
 use OpenSSL::Test::Simple;
 
+# this runs test/test/dtlsv1listentest.c, with a set of testpackets which
+# are contained in C code inside of the test case.
+
 simple_test("test_dtlsv1listen", "dtlsv1listentest", "dh");
