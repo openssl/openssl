@@ -442,29 +442,22 @@ end_of_options:
         && (section = lookup_conf(conf, BASE_SECTION, ENV_DEFAULT_CA)) == NULL)
         goto end;
 
-    if (conf != NULL) {
-        p = NCONF_get_string(conf, NULL, "oid_file");
-        if (p == NULL)
-            ERR_clear_error();
-        if (p != NULL) {
-            BIO *oid_bio;
+    p = NCONF_get_string(conf, NULL, "oid_file");
+    if (p == NULL)
+        ERR_clear_error();
+    if (p != NULL) {
+        BIO *oid_bio = BIO_new_file(p, "r");
 
-            oid_bio = BIO_new_file(p, "r");
-            if (oid_bio == NULL) {
-                /*-
-                BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
-                ERR_print_errors(bio_err);
-                */
-                ERR_clear_error();
-            } else {
-                OBJ_create_objects(oid_bio);
-                BIO_free(oid_bio);
-            }
+        if (oid_bio == NULL) {
+            ERR_clear_error();
+        } else {
+            OBJ_create_objects(oid_bio);
+            BIO_free(oid_bio);
         }
-        if (!add_oid_section(conf)) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
+    }
+    if (!add_oid_section(conf)) {
+        ERR_print_errors(bio_err);
+        goto end;
     }
 
     app_RAND_load_conf(conf, BASE_SECTION);
