@@ -61,11 +61,11 @@ static const BIO_METHOD methods_acceptp = {
     bread_conv,
     acpt_read,
     acpt_puts,
-    NULL,                       /* no connect_gets,         */
+    NULL,                       /* connect_gets,         */
     acpt_ctrl,
     acpt_new,
     acpt_free,
-    NULL,                       /* no connect_callback_ctrl */
+    NULL,                       /* connect_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_accept(void)

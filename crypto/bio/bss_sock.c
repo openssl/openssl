@@ -44,11 +44,11 @@ static const BIO_METHOD methods_sockp = {
     bread_conv,
     sock_read,
     sock_puts,
-    NULL,                       /* no sock_gets,         */
+    NULL,                       /* sock_gets,         */
     sock_ctrl,
     sock_new,
     sock_free,
-    NULL,                       /* no sock_callback_ctrl */
+    NULL,                       /* sock_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_socket(void)

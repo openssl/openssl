@@ -115,8 +115,8 @@ static const BIO_METHOD methods_ok = {
     /* TODO: Convert to new style read function */
     bread_conv,
     ok_read,
-    NULL,                       /* no ok_puts, */
-    NULL,                       /* no ok_gets, */
+    NULL,                       /* ok_puts, */
+    NULL,                       /* ok_gets, */
     ok_ctrl,
     ok_new,
     ok_free,
