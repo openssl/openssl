@@ -19,12 +19,12 @@ our @tests = (
     {
         name => "cipher-server-1",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
+    },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384"
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384"
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
@@ -33,12 +33,12 @@ our @tests = (
     {
         name => "cipher-server-2",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES128-SHA256"
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES128-SHA256"
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES128-SHA256",
@@ -47,12 +47,12 @@ our @tests = (
     {
         name => "cipher-server-client-list",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES128-SHA256",
@@ -61,13 +61,13 @@ our @tests = (
     {
         name => "cipher-server-pref-1",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
-	    "Options" => "ServerPreference",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
+            "Options" => "ServerPreference",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384"
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384"
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
@@ -76,13 +76,13 @@ our @tests = (
     {
         name => "cipher-server-pref-2",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
-	    "Options" => "ServerPreference",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
+            "Options" => "ServerPreference",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES128-SHA256"
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES128-SHA256"
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES128-SHA256",
@@ -91,13 +91,13 @@ our @tests = (
     {
         name => "cipher-server-pref-client-list",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
-	    "Options" => "ServerPreference",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256",
+            "Options" => "ServerPreference",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
@@ -106,13 +106,13 @@ our @tests = (
     {
         name => "cipher-server-pref-not-mobile",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305",
-	    "Options" => "ServerPreference",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305",
+            "Options" => "ServerPreference",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
@@ -121,13 +121,13 @@ our @tests = (
     {
         name => "cipher-server-pref-mobile",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305",
-	    "Options" => "ServerPreference,PrioritizeChaCha",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305",
+            "Options" => "ServerPreference,PrioritizeChaCha",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-CHACHA20-POLY1305",
@@ -136,13 +136,13 @@ our @tests = (
     {
         name => "cipher-server-pref-mobile2",
         server => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305",
-	    "Options" => "ServerPreference,PrioritizeChaCha",
-	},
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES256-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-CHACHA20-POLY1305",
+            "Options" => "ServerPreference,PrioritizeChaCha",
+        },
         client => {
-	    "MaxProtocol" => "TLSv1.2",
-	    "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305",
+            "MaxProtocol" => "TLSv1.2",
+            "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305",
         },
         test => {
             "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
