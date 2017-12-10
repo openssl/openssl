@@ -74,16 +74,7 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 {
     int ret;
     unsigned int sltmp;
-    DSA_PKEY_CTX *dctx = ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
-
-    if (dctx->md) {
-        if (tbslen != (size_t)EVP_MD_size(dctx->md))
-            return 0;
-    } else {
-        if (tbslen != SHA_DIGEST_LENGTH)
-            return 0;
-    }
 
     ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, dsa);
 
@@ -98,16 +89,7 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
                            const unsigned char *tbs, size_t tbslen)
 {
     int ret;
-    DSA_PKEY_CTX *dctx = ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
-
-    if (dctx->md) {
-        if (tbslen != (size_t)EVP_MD_size(dctx->md))
-            return 0;
-    } else {
-        if (tbslen != SHA_DIGEST_LENGTH)
-            return 0;
-    }
 
     ret = DSA_verify(0, tbs, tbslen, sig, siglen, dsa);
 
