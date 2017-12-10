@@ -13,7 +13,7 @@ use strict;
 use warnings;
 
 package ssltests;
-
+use OpenSSL::Test::Utils;
 
 our @tests = (
     {
@@ -127,12 +127,15 @@ our @tests = (
         },
         client => {
             "MaxProtocol" => "TLSv1.2",
-            "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
+            "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305",
         },
         test => {
-            "ExpectedCipher" => "ECDHE-RSA-CHACHA20-POLY1305",
+            "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
         },
     },
+);
+
+my @tests_poly1305 = (
     {
         name => "cipher-server-pref-mobile2",
         server => {
@@ -142,10 +145,12 @@ our @tests = (
         },
         client => {
             "MaxProtocol" => "TLSv1.2",
-            "CipherString" => "ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:ECDHE-RSA-CHACHA20-POLY1305",
+            "CipherString" => "ECDHE-RSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384",
         },
         test => {
-            "ExpectedCipher" => "ECDHE-RSA-AES256-SHA384",
+            "ExpectedCipher" => "ECDHE-RSA-CHACHA20-POLY1305",
         },
     },
 );
+
+push @tests, @tests_poly1305 unless disabled("poly1305");
