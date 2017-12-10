@@ -988,8 +988,10 @@ struct ssl_ctx_st {
     /* Shared DANE context */
     struct dane_ctx_st dane;
 
+# ifndef OPENSSL_NO_SRTP
     /* SRTP profiles we are willing to do from RFC 5764 */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
+# endif
     /*
      * Callback for disabling session caching and ticket support on a session
      * basis, depending on the chosen cipher.
@@ -1316,10 +1318,12 @@ struct ssl_st {
     int scts_parsed;
 # endif
     SSL_CTX *session_ctx;       /* initial ctx, used to store sessions */
+# ifndef OPENSSL_NO_SRTP
     /* What we'll do */
     STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;
     /* What's been chosen */
     SRTP_PROTECTION_PROFILE *srtp_profile;
+# endif
     /*-
      * 1 if we are renegotiating.
      * 2 if we are a server and are inside a handshake
