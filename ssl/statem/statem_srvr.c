@@ -2615,11 +2615,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        /*
-         * n is the length of the params, they start at &(d[4]) and p
-         * points to the space at the end.
-         */
-
         /* Get length of the parameters we have written above */
         if (!WPACKET_get_length(pkt, &paramlen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
