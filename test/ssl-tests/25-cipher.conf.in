@@ -153,4 +153,4 @@ my @tests_poly1305 = (
     },
 );
 
-push @tests, @tests_poly1305 unless disabled("poly1305");
+push @tests, @tests_poly1305 unless disabled("poly1305") || disabled("chacha");
