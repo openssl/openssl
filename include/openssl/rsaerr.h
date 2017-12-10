@@ -150,6 +150,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 116
 # define RSA_R_UNKNOWN_ALGORITHM_TYPE                     117
 # define RSA_R_UNKNOWN_DIGEST                             166
+# define RSA_R_UNKNOWN_KEYGEN_MODE                        171
 # define RSA_R_UNKNOWN_MASK_DIGEST                        151
 # define RSA_R_UNKNOWN_PADDING_TYPE                       118
 # define RSA_R_UNSUPPORTED_ENCRYPTION_TYPE                162

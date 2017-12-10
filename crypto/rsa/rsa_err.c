@@ -209,6 +209,8 @@ static const ERR_STRING_DATA RSA_str_reasons[] = {
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_UNKNOWN_ALGORITHM_TYPE),
     "unknown algorithm type"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_UNKNOWN_DIGEST), "unknown digest"},
+    {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_UNKNOWN_KEYGEN_MODE),
+    "unknown keygen mode"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_UNKNOWN_MASK_DIGEST),
     "unknown mask digest"},
     {ERR_PACK(ERR_LIB_RSA, 0, RSA_R_UNKNOWN_PADDING_TYPE),

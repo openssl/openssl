@@ -2478,6 +2478,13 @@ int speed_main(int argc, char **argv)
                     goto end;
                 }
 
+                /*
+                 * we should allow users to test whatever number of primes
+                 * in this speed application, so set the RSA to inscure.
+                 */
+                RSA_set_flags(loopargs[i].rsa_key[testnum],
+                              RSA_FLAG_INSECURE_PRIMES);
+
                 if (!RSA_generate_multi_prime_key(loopargs[i].rsa_key[testnum],
                                                   rsa_bits[testnum],
                                                   primes, bn, NULL)) {

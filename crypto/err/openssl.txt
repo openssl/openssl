@@ -2327,6 +2327,7 @@ RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD:116:\
 	the asn1 object identifier is not known for this md
 RSA_R_UNKNOWN_ALGORITHM_TYPE:117:unknown algorithm type
 RSA_R_UNKNOWN_DIGEST:166:unknown digest
+RSA_R_UNKNOWN_KEYGEN_MODE:171:unknown keygen mode
 RSA_R_UNKNOWN_MASK_DIGEST:151:unknown mask digest
 RSA_R_UNKNOWN_PADDING_TYPE:118:unknown padding type
 RSA_R_UNSUPPORTED_ENCRYPTION_TYPE:162:unsupported encryption type

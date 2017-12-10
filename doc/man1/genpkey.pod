@@ -109,6 +109,11 @@ The number of bits in the generated key. If not specified 1024 is used.
 
 The number of primes in the generated key. If not specified 2 is used.
 
+=item B<rsa_keygen_mode:mode>
+
+The mode in use when generating a key, either 'insecure' or 'secure', is
+availiable at the current stage. If not specified 'secure' is used.
+
 =item B<rsa_keygen_pubexp:value>
 
 The RSA public exponent value. This can be a large decimal or

@@ -29,6 +29,7 @@ B<openssl> B<genrsa>
 [B<-writerand file>]
 [B<-engine id>]
 [B<-primes num>]
+[B<-insecure>]
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -96,6 +97,14 @@ RSA key, which is defined in RFC 8017.
 The size of the private key to generate in bits. This must be the last option
 specified. The default is 2048.
 
+=item B<-insecure>
+
+By default OpenSSL will force users to generate secure multi-prime keys.
+That is to say, the number of primes is limited for a given length of modulus
+based on the security policy, see L<RSA_generate_multi_prime_key(3)> for details
+of that security policy. However, sometimes users may need to generate more primes
+for a private key, this option disables the default security policy.
+
 =back
 
 =head1 NOTES
@@ -111,6 +120,15 @@ has passed all the prime tests (the actual number depends on the key size).
 Because key generation is a random process the time taken to generate a key
 may vary somewhat. But in general, more primes lead to less generation time
 of a key.
+
+For multi-prime RSA, which is defined in RFC 8017, unlike normal 2-prime RSA,
+its security depends on both how many primes are used and how long the RSA
+modulus is. The security is still related to the difficulty of factoring the
+modulus -- in simple terms, the more primes a multi-prime RSA key has, the
+easier it is for it to be factored. This link describs the security of multi-prime
+RSA: https://www.imperialviolet.org/2011/04/09/multiprime.html. And if you want
+to know more, this link provides the requisite details:
+http://cacr.uwaterloo.ca/techreports/2006/cacr2006-16.pdf.
 
 =head1 BUGS
 

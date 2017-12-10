@@ -26,6 +26,7 @@ typedef struct {
     int nbits;
     BIGNUM *pub_exp;
     int primes;
+    int mode;
     /* Keygen callback info */
     int gentmp[2];
     /* RSA padding mode */
@@ -483,6 +484,10 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         rctx->primes = p1;
         return 1;
 
+    case EVP_PKEY_CTRL_RSA_KEYGEN_MODE:
+        rctx->mode = p1;
+        return 1;
+
     case EVP_PKEY_CTRL_RSA_OAEP_MD:
     case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
         if (rctx->pad_mode != RSA_PKCS1_OAEP_PADDING) {
@@ -653,6 +658,21 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         return EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, nprimes);
     }
 
+    if (strcmp(type, "rsa_keygen_mode") == 0) {
+        int mode;
+
+        if (!strcmp(value, "insecure")) {
+            mode = RSA_FLAG_INSECURE_PRIMES;
+        }else if (!strcmp(value, "secure")) {
+            mode = 0;
+        } else {
+            RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_UNKNOWN_KEYGEN_MODE);
+            return -2;
+        }
+
+        return EVP_PKEY_CTX_set_rsa_keygen_mode(ctx, mode);
+    }
+
     if (strcmp(type, "rsa_mgf1_md") == 0)
         return EVP_PKEY_CTX_md(ctx,
                                EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
@@ -738,6 +758,9 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     } else {
         pcb = NULL;
     }
+
+    RSA_set_flags(rsa, rctx->mode);
+
     ret = RSA_generate_multi_prime_key(rsa, rctx->nbits, rctx->primes,
                                        rctx->pub_exp, pcb);
     BN_GENCB_free(pcb);
