@@ -143,7 +143,7 @@ int main(int argc, char *argv[])
     BIGNUM *r_mont, *r_mont_const, *r_recp, *r_simple, *a, *b, *m;
 
     /*
-     * See or BN_rand may fail, and we don't even check its return
+     * Seed or BN_rand may fail, and we don't even check its return
      * value (which we should)
      */
     RAND_seed(rnd_seed, sizeof(rnd_seed));
