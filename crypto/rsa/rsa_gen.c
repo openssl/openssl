@@ -72,11 +72,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     BN_CTX *ctx = NULL;
     BN_ULONG bitst = 0;
 
-    /*
-     * When generating ridiculously small keys, we can get stuck
-     * continually regenerating the same prime values.
-     */
-    if (bits < 16) {
+    if (bits < RSA_MIN_MODULUS_BITS) {
         ok = 0;             /* we set our own err */
         RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_SIZE_TOO_SMALL);
         goto err;
