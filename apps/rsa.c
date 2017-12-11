@@ -230,7 +230,7 @@ int rsa_main(int argc, char **argv)
                    ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE) {
                 BIO_printf(out, "RSA key error: %s\n",
                            ERR_reason_error_string(err));
-                ERR_get_error(); /* remove e from error stack */
+                ERR_get_error(); /* remove err from error stack */
             }
         } else if (r == -1) {
             ERR_print_errors(bio_err);
