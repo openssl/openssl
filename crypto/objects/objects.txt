@@ -675,8 +675,8 @@ algorithm 17		: DES-EDE		: des-ede
 			: DES-EDE3-OFB		: des-ede3-ofb
 			: DESX-CBC		: desx-cbc
 algorithm 18		: SHA			: sha
+!Cname sha-1
 algorithm 26		: SHA1			: sha1
-			: SHA-1			: sha-1
 !Cname dsaWithSHA1-2
 algorithm 27		: DSA-SHA1-old		: dsaWithSHA1-old
 algorithm 29		: RSA-SHA1-2		: sha1WithRSA
