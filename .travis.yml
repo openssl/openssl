@@ -22,6 +22,7 @@ addons:
 
 os:
     - linux
+    - osx
 
 compiler:
     - clang
@@ -117,6 +118,9 @@ matrix:
           compiler: gcc
 
 before_script:
+    - if [ "$TRAVIS_OS_NAME" == osx ]; then
+          export CONFIG_OPTS_EXTRA=-Wno-format;
+      fi
     - env
     - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
           (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
@@ -149,7 +153,7 @@ before_script:
           elif which ccache >/dev/null; then
               CC="ccache $CC";
           fi;
-          $srcdir/config -v $CONFIG_OPTS;
+          $srcdir/config -v $CONFIG_OPTS $CONFIG_OPTS_EXTRA;
       fi
     - cd $top
 
