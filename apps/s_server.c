@@ -238,6 +238,7 @@ typedef struct srpsrvparm_st {
     SRP_VBASE *vb;
     SRP_user_pwd *user;
 } srpsrvparm;
+static srpsrvparm srp_callback_parm;
 
 /*
  * This callback pretends to require some asynchronous logic in order to
@@ -724,9 +725,6 @@ static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
     return is_forward_secure;
 }
 
-#ifndef OPENSSL_NO_SRP
-static srpsrvparm srp_callback_parm;
-#endif
 #ifndef OPENSSL_NO_SRTP
 static char *srtp_profiles = NULL;
 #endif
