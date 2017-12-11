@@ -10,9 +10,8 @@
 #include <openssl/rsa.h>
 #include "internal/refcount.h"
 
-#define RSA_MAX_PRIME_NUM 16
-#define RSA_MIN_PRIME_SIZE 64
-#define RSA_MIN_MODULUS_BITS	512
+#define RSA_MAX_PRIME_NUM       5
+#define RSA_MIN_MODULUS_BITS    512
 
 typedef struct rsa_prime_info_st {
     BIGNUM *r;
