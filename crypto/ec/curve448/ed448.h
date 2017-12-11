@@ -69,8 +69,7 @@ c448_error_t c448_ed448_sign(
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t *message, size_t message_len,
                         uint8_t prehashed, const uint8_t *context,
-                        size_t context_len)
-                        __attribute__ ((nonnull(1, 2, 3)));
+                        size_t context_len);
 
 /*
  * EdDSA signing with prehash.
@@ -95,8 +94,7 @@ c448_error_t c448_ed448_sign_prehash(
                         const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                         const uint8_t hash[64],
                         const uint8_t *context,
-                        size_t context_len)
-                        __attribute__ ((nonnull(1, 2, 3, 4)));
+                        size_t context_len);
 
 /*
  * EdDSA signature verification.
@@ -123,8 +121,7 @@ c448_error_t c448_ed448_verify(const uint8_t
                                  pubkey[EDDSA_448_PUBLIC_BYTES],
                                  const uint8_t *message, size_t message_len,
                                  uint8_t prehashed, const uint8_t *context,
-                                 uint8_t context_len)
-                                 __attribute__ ((nonnull(1, 2)));
+                                 uint8_t context_len);
 
 /*
  * EdDSA signature verification.
@@ -149,8 +146,7 @@ c448_error_t c448_ed448_verify_prehash(
                     const uint8_t pubkey[EDDSA_448_PUBLIC_BYTES],
                     const uint8_t hash[64],
                     const uint8_t *context,
-                    uint8_t context_len)
-                    __attribute__ ((nonnull(1, 2)));
+                    uint8_t context_len);
 
 /*
  * EdDSA point encoding.  Used internally, exposed externally.
