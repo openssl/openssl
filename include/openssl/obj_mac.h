@@ -2043,14 +2043,10 @@
 #define NID_sha         41
 #define OBJ_sha         OBJ_algorithm,18L
 
-#define SN_sha1         "SHA1"
-#define LN_sha1         "sha1"
-#define NID_sha1                64
-#define OBJ_sha1                OBJ_algorithm,26L
-
-#define SN_sha_1                "SHA-1"
-#define LN_sha_1                "sha-1"
+#define SN_sha_1                "SHA1"
+#define LN_sha_1                "sha1"
 #define NID_sha_1               1145
+#define OBJ_sha_1               OBJ_algorithm,26L
 
 #define SN_dsaWithSHA1_2                "DSA-SHA1-old"
 #define LN_dsaWithSHA1_2                "dsaWithSHA1-old"
