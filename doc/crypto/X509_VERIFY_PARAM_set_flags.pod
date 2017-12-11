@@ -248,10 +248,14 @@ check the signature anyway. A side effect of not checking the root CA
 signature is that disabled or unsupported message digests on the root CA
 are not treated as fatal errors.
 
-If B<X509_V_FLAG_TRUSTED_FIRST> is set, when constructing the certificate chain,
-L<X509_verify_cert(3)> will search the trust store for issuer certificates before
-searching the provided untrusted certificates.
-As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+When B<X509_V_FLAG_TRUSTED_FIRST> is set, construction of the certificate chain
+in L<X509_verify_cert(3)> will search the trust store for issuer certificates
+before searching the provided untrusted certificates.
+Local issuer certificates are often more likely to satisfy local security
+requirements and lead to a locally trusted root.
+This is especially important when some certificates in the trust store have
+explicit trust settings (see "TRUST SETTINGS" in L<x509(1)>).
+As of OpenSSL 1.1.0 this option is on by default.
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag suppresses checking for alternative
 chains.
@@ -262,6 +266,19 @@ with certificates from the trust store to see if an alternative chain can be
 found that is trusted.
 As of OpenSSL 1.1.0, with B<X509_V_FLAG_TRUSTED_FIRST> always set, this option
 has no effect.
+
+The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes intermediate certificates in the
+trust store to be treated as trust-anchors, in the same way as the self-signed
+root CA certificates.
+This makes it possible to trust certificates issued by an intermediate CA
+without having to trust its ancestor root CA.
+With OpenSSL 1.1.0 and later and <X509_V_FLAG_PARTIAL_CHAIN> set, chain
+construction stops as soon as the first certificate from the trust store is
+added to the chain, whether that certificate is a self-signed "root"
+certificate or a not self-signed intermediate certificate.
+Thus, when an intermediate certificate is found in the trust store, the
+verified chain passed to callbacks may be shorter than it otherwise would
+be without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
 
 The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
 of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
