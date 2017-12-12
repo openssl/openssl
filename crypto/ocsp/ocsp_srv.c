@@ -175,8 +175,9 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
     int i;
     OCSP_RESPID *rid;
 
-    if (!ctx || !EVP_MD_CTX_pkey_ctx(ctx) || !EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)) ||
-        !X509_check_private_key(signer, EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)))) {
+    if (ctx == NULL || EVP_MD_CTX_pkey_ctx(ctx) == NULL
+        || EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)) == NULL
+        || !X509_check_private_key(signer, EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)))) {
         OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX,
                 OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
