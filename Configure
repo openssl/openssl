@@ -1237,15 +1237,19 @@ unless ($disabled{asm}) {
 
 my %predefined = compiler_predefined($target{cc});
 
-# Check for makedepend capabilities.  Note that for VC- and vms- targets,
-# this should not be done, as it's likely to turn off a functionality that
-# actually exists, currently hard coded for cl (Windows) and CC/DECC (VMS).
-if ($config{target} !~ /^(VC|vms)-/ && !$disabled{makedepend}) {
-    # We know that GNU C version 3 and up as well as all clang
-    # versions support dependency generation
-    if ($predefined{__GNUC__} >= 3) {
+# Check for makedepend capabilities.
+if (!$disabled{makedepend}) {
+    if ($config{target} =~ /^(VC|vms)-/) {
+        # For VC- and vms- targets, there's nothing more to do here.  The
+        # functionality is hard coded in the corresponding build files for
+        # cl (Windows) and CC/DECC (VMS).
+    } elsif ($predefined{__GNUC__} >= 3) {
+        # We know that GNU C version 3 and up as well as all clang
+        # versions support dependency generation
         $config{makedepprog} = "\$(CROSS_COMPILE)$target{cc}";
     } else {
+        # In all other cases, we look for 'makedepend', and disable the
+        # capability if not found.
         $config{makedepprog} = which('makedepend');
         $disabled{makedepend} = "unavailable" unless $config{makedepprog};
     }
