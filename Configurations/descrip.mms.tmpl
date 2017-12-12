@@ -640,7 +640,7 @@ EOF
       my $depbuild = $disabled{makedepend} ? ""
           : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
 
-      return <<"EOF";
+      return <<"EOF"
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
@@ -649,11 +649,14 @@ $obj.OBJ : $deps
         $incs_off
         SET DEFAULT $backward
         ${after}
+        - PURGE $obj.OBJ
+EOF
+      . ($disabled{makedepend} ? "" : <<"EOF"
         \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.D"",""$obj.tmp-D""); exit(0x10000000 + (\$x == 0));" || -
                  RENAME $obj.tmp-D $obj.d )
         \@ IF F\$SEARCH("$obj.tmp-D") .NES. "" THEN DELETE $obj.tmp-D;*
-        - PURGE $obj.OBJ
 EOF
+        );
   }
   sub libobj2shlib {
       my %args = @_;
