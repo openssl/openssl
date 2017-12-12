@@ -228,16 +228,9 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$zlib = 1;
 	}
 
-	$do_ssl=1 if $_ eq "libssl";
-	if ($_ eq "ssl") {
-		$do_ssl=1;
-		$libname=$_
-	}
-	$do_crypto=1 if $_ eq "libcrypto";
-	if ($_ eq "crypto") {
-		$do_crypto=1;
-		$libname=$_;
-	}
+	$do_crypto=1 if $_ eq "libcrypto" || $_ eq "crypto";
+	$do_ssl=1 if $_ eq "libssl" || $_ eq "ssl";
+
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
@@ -252,6 +245,8 @@ foreach (@ARGV, split(/ /, $config{options}))
 	}
 
 	}
+$libname = $unified_info{sharednames}->{libcrypto} if $do_crypto;
+$libname = $unified_info{sharednames}->{libssl} if $do_ssl;
 
 if (!$libname) {
 	if ($do_ssl) {
@@ -1210,9 +1205,6 @@ sub print_def_file
         my $prevnum = 0;
         my $symvtextcount = 0;
 
-	if ($W32)
-		{ $libname.="32"; }
-
         if ($W32)
                 {
                 print OUT <<"EOF";
@@ -1229,6 +1221,7 @@ EOF
         elsif ($VMS)
                 {
                 print OUT <<"EOF";
+IDENTIFICATION=$version
 CASE_SENSITIVE=YES
 SYMBOL_VECTOR=(-
 EOF

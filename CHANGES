@@ -9,6 +9,12 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Get rid of Makefile.shared, and in the process, make the processing
+     of certain files (rc.obj, or the .def/.map/.opt files produced from
+     the ordinal files) more visible and hopefully easier to trace and
+     debug (or make silent).
+     [Richard Levitte]
+
   *) Make it possible to have environment variable assignments as
      arguments to config / Configure.
      [Richard Levitte]

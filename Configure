@@ -879,9 +879,48 @@ my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
 
+%target = ( %{$table{DEFAULTS}}, %target );
+
+# Make the flags to build DSOs the same as for shared libraries unless they
+# are already defined
+$target{dso_cflags} = $target{shared_cflag} unless defined $target{dso_cflags};
+$target{dso_cxxflags} = $target{shared_cxxflag} unless defined $target{dso_cxxflags};
+$target{dso_lflags} = $target{shared_ldflag} unless defined $target{dso_lflags};
+{
+    my $shared_info_pl =
+        catfile(dirname($0), "Configurations", "shared-info.pl");
+    my %shared_info = read_eval_file($shared_info_pl);
+    push @{$target{_conf_fname_int}}, $shared_info_pl;
+    my $si = $target{shared_target};
+    while (ref $si ne "HASH") {
+        last if ! defined $si;
+        if (ref $si eq "CODE") {
+            $si = $si->();
+        } else {
+            $si = $shared_info{$si};
+        }
+    }
+
+    # Some of the 'shared_target' values don't have any entried in
+    # %shared_info.  That's perfectly fine, AS LONG AS the build file
+    # template knows how to handle this.  That is currently the case for
+    # Windows and VMS.
+    if (defined $si) {
+        # Just as above, copy certain shared_* attributes to the corresponding
+        # dso_ attribute unless the latter is already defined
+        $si->{dso_cflags} = $si->{shared_cflag} unless defined $si->{dso_cflags};
+        $si->{dso_cxxflags} = $si->{shared_cxxflag} unless defined $si->{dso_cxxflags};
+        $si->{dso_lflags} = $si->{shared_ldflag} unless defined $si->{dso_lflags};
+        foreach (sort keys %$si) {
+            $target{$_} = defined $target{$_}
+                ? add($si->{$_})->($target{$_})
+                : $si->{$_};
+        }
+    }
+}
+
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
-%target = ( %{$table{DEFAULTS}}, %target );
 
 foreach my $feature (@{$target{disable}}) {
     if (exists $deprecated_disablables{$feature}) {
@@ -1163,8 +1202,11 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
 # This saves the build files from having to check
 if ($disabled{pic})
 	{
-	$target{shared_cflag} = $target{shared_ldflag} =
-		$target{shared_rcflag} = "";
+	foreach (qw(shared_cflag shared_cxxflag shared_ldflag
+		    dso_cflags dso_cxxflags dso_lflags))
+		{
+		$target{$_} = "";
+		}
 	}
 else
 	{
@@ -1833,14 +1875,27 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C++, C and asm files
+
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                    # We recognise C++, C and asm files
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.rc$/) {
+                    # We also recognise resource files
+                    my $o = $_;
+                    $o =~ s/\.rc$/.res/; # Resource configuration
+                    my $o = cleanfile($buildd, $o, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.(def|map|opt)$/) {
+                    # We also recognise .def / .map / .opt files
+                    # We know they are generated files
+                    my $def = cleanfile($buildd, $s, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$def} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";
                 }
@@ -2292,25 +2347,38 @@ sub add {
     sub { _add($separator, @_, @x) };
 }
 
+sub read_eval_file {
+    my $fname = shift;
+    my $content;
+    my @result;
+
+    open F, "< $fname" or die "Can't open '$fname': $!\n";
+    {
+        undef local $/;
+        $content = <F>;
+    }
+    close F;
+    {
+        local $@;
+
+        @result = ( eval $content );
+        warn $@ if $@;
+    }
+    return wantarray ? @result : $result[0];
+}
+
 # configuration reader, evaluates the input file as a perl script and expects
 # it to fill %targets with target configurations.  Those are then added to
 # %table.
 sub read_config {
     my $fname = shift;
-    open(CONFFILE, "< $fname")
-	or die "Can't open configuration file '$fname'!\n";
-    my $x = $/;
-    undef $/;
-    my $content = <CONFFILE>;
-    $/ = $x;
-    close(CONFFILE);
-    my %targets = ();
+    my %targets;
+
     {
 	# Protect certain tables from tampering
-	local %table = %::table;
+	local %table = ();
 
-	eval $content;
-	warn $@ if $@;
+	%targets = read_eval_file($fname);
     }
 
     # For each target, check that it's configured with a hash table.
