@@ -203,6 +203,19 @@ chain found is not trusted, then OpenSSL will continue to check to see if an
 alternative chain can be found that is trusted. With this flag set the behaviour
 will match that of OpenSSL versions prior to 1.0.2b.
 
+The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes intermediate certificates in the
+trust store to be treated as trust-anchors, in the same way as the self-signed
+root CA certificates.
+This makes it possible to trust certificates issued by an intermediate CA
+without having to trust its ancestor root CA.
+With OpenSSL 1.1.0 and later and <X509_V_FLAG_PARTIAL_CHAIN> set, chain
+construction stops as soon as the first certificate from the trust store is
+added to the chain, whether that certificate is a self-signed "root"
+certificate or a not self-signed intermediate certificate.
+With OpenSSL 1.0.2, chain construction continues as long as there are
+additional trusted issuers in the trust store, but the first trusted issuer
+found is still sufficient.
+
 =head1 NOTES
 
 The above functions should be used to manipulate verification parameters
