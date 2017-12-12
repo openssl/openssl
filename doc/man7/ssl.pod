@@ -14,7 +14,7 @@ The OpenSSL B<ssl> library implements the Secure Sockets Layer (SSL v2/v3) and
 Transport Layer Security (TLS v1) protocols. It provides a rich API which is
 documented here.
 
-Then an B<SSL_CTX> object is created as a framework to establish
+An B<SSL_CTX> object is created as a framework to establish
 TLS/SSL enabled connections (see L<SSL_CTX_new(3)>).
 Various options regarding certificates, algorithms etc. can be set
 in this object.
@@ -25,7 +25,7 @@ L<SSL_new(3)>, L<SSL_set_fd(3)> or
 L<SSL_set_bio(3)> can be used to associate the network
 connection with the object.
 
-Then the TLS/SSL handshake is performed using
+When the TLS/SSL handshake is performed using
 L<SSL_accept(3)> or L<SSL_connect(3)>
 respectively.
 L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_write_ex(3)> and L<SSL_write(3)> are
@@ -42,7 +42,7 @@ structures:
 
 =item B<SSL_METHOD> (SSL Method)
 
-That's a dispatch structure describing the internal B<ssl> library
+This is a dispatch structure describing the internal B<ssl> library
 methods/functions which implement the various protocol versions (SSLv3
 TLSv1, ...). It's needed to create an B<SSL_CTX>.
 
@@ -50,12 +50,12 @@ TLSv1, ...). It's needed to create an B<SSL_CTX>.
 
 This structure holds the algorithm information for a particular cipher which
 are a core part of the SSL/TLS protocol. The available ciphers are configured
-on a B<SSL_CTX> basis and the actually used ones are then part of the
+on a B<SSL_CTX> basis and the actual ones used are then part of the
 B<SSL_SESSION>.
 
 =item B<SSL_CTX> (SSL Context)
 
-That's the global context structure which is created by a server or client
+This is the global context structure which is created by a server or client
 once per program life-time and which holds mainly default values for the
 B<SSL> structures which are later created for the connections.
 
@@ -66,9 +66,9 @@ connection: B<SSL_CIPHER>s, client and server certificates, keys, etc.
 
 =item B<SSL> (SSL Connection)
 
-That's the main SSL/TLS structure which is created by a server or client per
+This is the main SSL/TLS structure which is created by a server or client per
 established connection. This actually is the core structure in the SSL API.
-Under run-time the application usually deals with this structure which has
+At run-time the application usually deals with this structure which has
 links to mostly all other structures.
 
 =back
@@ -83,7 +83,7 @@ containing the prototypes for the data structures and functions:
 
 =item B<ssl.h>
 
-That's the common header file for the SSL/TLS API.  Include it into your
+This is the common header file for the SSL/TLS API.  Include it into your
 program to make the API of the B<ssl> library available. It internally
 includes both more private SSL headers and headers from the B<crypto> library.
 Whenever you need hard-core details on the internals of the SSL API, look
@@ -95,13 +95,13 @@ Unused. Present for backwards compatibility only.
 
 =item B<ssl3.h>
 
-That's the sub header file dealing with the SSLv3 protocol only.
+This is the sub header file dealing with the SSLv3 protocol only.
 I<Usually you don't have to include it explicitly because
 it's already included by ssl.h>.
 
 =item B<tls1.h>
 
-That's the sub header file dealing with the TLSv1 protocol only.
+This is the sub header file dealing with the TLSv1 protocol only.
 I<Usually you don't have to include it explicitly because
 it's already included by ssl.h>.
 
