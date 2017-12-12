@@ -658,6 +658,14 @@ ERR_STATE *ERR_get_state(void)
     if (!RUN_ONCE(&err_init, err_do_init))
         return NULL;
 
+    /*
+     * If base OPENSSL_init_crypto() hasn't been called yet, be sure to call
+     * it now to avoid state to be doubly allocated and thereby leak memory.
+     * Needed on any platform that doesn't define OPENSSL_USE_NODELETE.
+     */
+    if (!OPENSSL_init_crypto(0, NULL))
+        return NULL;
+
     state = CRYPTO_THREAD_get_local(&err_thread_local);
 
     if (state == NULL) {
