@@ -4232,3 +4232,4 @@ ZINT64_it                               4215	1_1_0f	EXIST:!EXPORT_VAR_AS_FUNCTIO
 ZINT64_it                               4215	1_1_0f	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 CRYPTO_secure_clear_free                4315	1_1_0g	EXIST::FUNCTION:
 EVP_PKEY_set1_engine                    4347	1_1_0g	EXIST::FUNCTION:ENGINE
+OCSP_resp_get0_signer                   4374	1_1_0h	EXIST::FUNCTION:OCSP
