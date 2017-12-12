@@ -719,8 +719,7 @@ redo_accept:
     X509_free(signer);
     X509_STORE_free(store);
     X509_VERIFY_PARAM_free(vpm);
-    if (rsign_sigopts != NULL)
-        sk_OPENSSL_STRING_free(rsign_sigopts);
+    sk_OPENSSL_STRING_free(rsign_sigopts);
     EVP_PKEY_free(key);
     EVP_PKEY_free(rkey);
     X509_free(cert);
@@ -971,6 +970,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     }
     for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++) {
         char *sigopt = sk_OPENSSL_STRING_value(sigopts, i);
+
         if (pkey_ctrl_string(pkctx, sigopt) <= 0) {
             BIO_printf(err, "parameter error \"%s\"\n", sigopt);
             ERR_print_errors(bio_err);
@@ -989,8 +989,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
     *resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
 
  end:
-    if (mctx != NULL)
-        EVP_MD_CTX_free(mctx);
+    EVP_MD_CTX_free(mctx);
     ASN1_TIME_free(thisupd);
     ASN1_TIME_free(nextupd);
     OCSP_BASICRESP_free(bs);
