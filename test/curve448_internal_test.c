@@ -11,6 +11,10 @@
 #include <openssl/e_os2.h>
 #include <openssl/evp.h>
 #include "curve448_lcl.h"
+#include "testutil.h"
+
+static unsigned int max = 1000;
+static unsigned int verbose = 0;
 
 /* Test vectors from RFC7748 for X448 */
 
@@ -72,31 +76,24 @@ const uint8_t in_u3[56] = {
 
 const uint8_t out_u3[3][56] = {
     {
-     0x3f, 0x48, 0x2c, 0x8a, 0x9f, 0x19, 0xb0, 0x1e, 0x6c, 0x46, 0xee, 0x97,
-     0x11, 0xd9, 0xdc, 0x14, 0xfd, 0x4b, 0xf6, 0x7a, 0xf3, 0x07, 0x65, 0xc2,
-     0xae, 0x2b, 0x84, 0x6a, 0x4d, 0x23, 0xa8, 0xcd, 0x0d, 0xb8, 0x97, 0x08,
-     0x62, 0x39, 0x49, 0x2c, 0xaf, 0x35, 0x0b, 0x51, 0xf8, 0x33, 0x86, 0x8b,
-     0x9b, 0xc2, 0xb3, 0xbc, 0xa9, 0xcf, 0x41, 0x13}, {
-                                                       0xaa, 0x3b, 0x47, 0x49,
-                                                       0xd5, 0x5b, 0x9d, 0xaf,
-                                                       0x1e, 0x5b, 0x00, 0x28,
-                                                       0x88, 0x26, 0xc4, 0x67,
-                                                       0x27, 0x4c, 0xe3, 0xeb,
-                                                       0xbd, 0xd5, 0xc1, 0x7b,
-                                                       0x97, 0x5e, 0x09, 0xd4,
-                                                       0xaf, 0x6c, 0x67, 0xcf,
-                                                       0x10, 0xd0, 0x87, 0x20,
-                                                       0x2d, 0xb8, 0x82, 0x86,
-                                                       0xe2, 0xb7, 0x9f, 0xce,
-                                                       0xea, 0x3e, 0xc3, 0x53,
-                                                       0xef, 0x54, 0xfa, 0xa2,
-                                                       0x6e, 0x21, 0x9f, 0x38},
-    {
-     0x07, 0x7f, 0x45, 0x36, 0x81, 0xca, 0xca, 0x36, 0x93, 0x19, 0x84, 0x20,
-     0xbb, 0xe5, 0x15, 0xca, 0xe0, 0x00, 0x24, 0x72, 0x51, 0x9b, 0x3e, 0x67,
-     0x66, 0x1a, 0x7e, 0x89, 0xca, 0xb9, 0x46, 0x95, 0xc8, 0xf4, 0xbc, 0xd6,
-     0x6e, 0x61, 0xb9, 0xb9, 0xc9, 0x46, 0xda, 0x8d, 0x52, 0x4d, 0xe3, 0xd6,
-     0x9b, 0xd9, 0xd9, 0xd6, 0x6b, 0x99, 0x7e, 0x37}
+        0x3f, 0x48, 0x2c, 0x8a, 0x9f, 0x19, 0xb0, 0x1e, 0x6c, 0x46, 0xee, 0x97,
+        0x11, 0xd9, 0xdc, 0x14, 0xfd, 0x4b, 0xf6, 0x7a, 0xf3, 0x07, 0x65, 0xc2,
+        0xae, 0x2b, 0x84, 0x6a, 0x4d, 0x23, 0xa8, 0xcd, 0x0d, 0xb8, 0x97, 0x08,
+        0x62, 0x39, 0x49, 0x2c, 0xaf, 0x35, 0x0b, 0x51, 0xf8, 0x33, 0x86, 0x8b,
+        0x9b, 0xc2, 0xb3, 0xbc, 0xa9, 0xcf, 0x41, 0x13
+    }, {
+        0xaa, 0x3b, 0x47, 0x49, 0xd5, 0x5b, 0x9d, 0xaf, 0x1e, 0x5b, 0x00, 0x28,
+        0x88, 0x26, 0xc4, 0x67, 0x27, 0x4c, 0xe3, 0xeb, 0xbd, 0xd5, 0xc1, 0x7b,
+        0x97, 0x5e, 0x09, 0xd4, 0xaf, 0x6c, 0x67, 0xcf, 0x10, 0xd0, 0x87, 0x20,
+        0x2d, 0xb8, 0x82, 0x86, 0xe2, 0xb7, 0x9f, 0xce, 0xea, 0x3e, 0xc3, 0x53,
+        0xef, 0x54, 0xfa, 0xa2, 0x6e, 0x21, 0x9f, 0x38
+    }, {
+        0x07, 0x7f, 0x45, 0x36, 0x81, 0xca, 0xca, 0x36, 0x93, 0x19, 0x84, 0x20,
+        0xbb, 0xe5, 0x15, 0xca, 0xe0, 0x00, 0x24, 0x72, 0x51, 0x9b, 0x3e, 0x67,
+        0x66, 0x1a, 0x7e, 0x89, 0xca, 0xb9, 0x46, 0x95, 0xc8, 0xf4, 0xbc, 0xd6,
+        0x6e, 0x61, 0xb9, 0xb9, 0xc9, 0x46, 0xda, 0x8d, 0x52, 0x4d, 0xe3, 0xd6,
+        0x9b, 0xd9, 0xd9, 0xd6, 0x6b, 0x99, 0x7e, 0x37
+    }
 };
 
 /* Test vectors from RFC8032 for Ed448 */
@@ -597,155 +594,109 @@ static const uint8_t *dohash(EVP_MD_CTX *hashctx, const uint8_t *msg,
     return hashout;
 }
 
-static int test_eddsa(void)
+static int test_ed448(void)
 {
     uint8_t outsig[114];
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
-    int ret = 0;
 
-    if (hashctx == NULL) {
-        printf("Failed to allocate EVP_MD_CTX\n");
+    if (!TEST_ptr(hashctx)
+            || !TEST_true(ED448_sign(outsig, NULL, 0, pubkey1, privkey1, NULL,
+                                     0))
+            || !TEST_int_eq(memcmp(sig1, outsig, sizeof(sig1)), 0)
+            || !TEST_true(ED448_sign(outsig, msg2, sizeof(msg2), pubkey2,
+                                     privkey2, NULL, 0))
+            || !TEST_int_eq(memcmp(sig2, outsig, sizeof(sig2)), 0)
+            || !TEST_true(ED448_sign(outsig, msg3, sizeof(msg3), pubkey3,
+                                     privkey3, context3, sizeof(context3)))
+            || !TEST_int_eq(memcmp(sig3, outsig, sizeof(sig3)), 0)
+            || !TEST_true(ED448_sign(outsig, msg4, sizeof(msg4), pubkey4,
+                                     privkey4, NULL, 0))
+            || !TEST_int_eq(memcmp(sig4, outsig, sizeof(sig4)), 0)
+            || !TEST_true(ED448_sign(outsig, msg5, sizeof(msg5), pubkey5,
+                                     privkey5, NULL, 0))
+            || !TEST_int_eq(memcmp(sig5, outsig, sizeof(sig5)), 0)
+            || !TEST_true(ED448_sign(outsig, msg6, sizeof(msg6), pubkey6,
+                                     privkey6, NULL, 0))
+            || !TEST_int_eq(memcmp(sig6, outsig, sizeof(sig6)), 0)
+            || !TEST_true(ED448_sign(outsig, msg7, sizeof(msg7), pubkey7,
+                                     privkey7, NULL, 0))
+            || !TEST_int_eq(memcmp(sig7, outsig, sizeof(sig7)), 0)
+            || !TEST_true(ED448_sign(outsig, msg8, sizeof(msg8), pubkey8,
+                                     privkey8, NULL, 0))
+            || !TEST_int_eq(memcmp(sig8, outsig, sizeof(sig8)), 0)
+            || !TEST_true(ED448_sign(outsig, msg9, sizeof(msg9), pubkey9,
+                                     privkey9, NULL, 0))
+            || !TEST_int_eq(memcmp(sig9, outsig, sizeof(sig9)), 0)
+            || !TEST_true(ED448ph_sign(outsig, dohash(hashctx, phmsg1,
+                                       sizeof(phmsg1)), phpubkey1, phprivkey1,
+                                       NULL, 0))
+            || !TEST_int_eq(memcmp(phsig1, outsig, sizeof(phsig1)), 0)
+            || !TEST_true(ED448ph_sign(outsig, dohash(hashctx, phmsg2,
+                                       sizeof(phmsg2)), phpubkey2, phprivkey2,
+                                       phcontext2, sizeof(phcontext2)))
+            || !TEST_int_eq(memcmp(phsig2, outsig, sizeof(phsig2)), 0)) {
+        EVP_MD_CTX_free(hashctx);
         return 0;
     }
 
-    ED448_sign(outsig, NULL, 0, pubkey1, privkey1, NULL, 0);
-    if (memcmp(sig1, outsig, sizeof(sig1)) != 0) {
-        printf("Calculated sig and expected sig differ (1)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg2, sizeof(msg2), pubkey2, privkey2, NULL, 0);
-    if (memcmp(sig2, outsig, sizeof(sig2)) != 0) {
-        printf("Calculated sig and expected sig differ (2)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg3, sizeof(msg3), pubkey3, privkey3, context3,
-               sizeof(context3));
-    if (memcmp(sig3, outsig, sizeof(sig3)) != 0) {
-        printf("Calculated sig and expected sig differ (3)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg4, sizeof(msg4), pubkey4, privkey4, NULL, 0);
-    if (memcmp(sig4, outsig, sizeof(sig4)) != 0) {
-        printf("Calculated sig and expected sig differ (4)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg5, sizeof(msg5), pubkey5, privkey5, NULL, 0);
-    if (memcmp(sig5, outsig, sizeof(sig5)) != 0) {
-        printf("Calculated sig and expected sig differ (5)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg6, sizeof(msg6), pubkey6, privkey6, NULL, 0);
-    if (memcmp(sig6, outsig, sizeof(sig6)) != 0) {
-        printf("Calculated sig and expected sig differ (6)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg7, sizeof(msg7), pubkey7, privkey7, NULL, 0);
-    if (memcmp(sig7, outsig, sizeof(sig7)) != 0) {
-        printf("Calculated sig and expected sig differ (7)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg8, sizeof(msg8), pubkey8, privkey8, NULL, 0);
-    if (memcmp(sig8, outsig, sizeof(sig8)) != 0) {
-        printf("Calculated sig and expected sig differ (8)\n");
-        goto err;
-    }
-
-    ED448_sign(outsig, msg9, sizeof(msg9), pubkey9, privkey9, NULL, 0);
-    if (memcmp(sig9, outsig, sizeof(sig9)) != 0) {
-        printf("Calculated sig and expected sig differ (9)\n");
-        goto err;
-    }
-
-    ED448ph_sign(outsig, dohash(hashctx, phmsg1, sizeof(phmsg1)), phpubkey1,
-                 phprivkey1, NULL, 0);
-    if (memcmp(phsig1, outsig, sizeof(phsig1)) != 0) {
-        printf("Calculated sig and expected sig differ (ph 1)\n");
-        goto err;
-    }
-
-    ED448ph_sign(outsig, dohash(hashctx, phmsg2, sizeof(phmsg2)), phpubkey2,
-                 phprivkey2, phcontext2, sizeof(phcontext2));
-    if (memcmp(phsig2, outsig, sizeof(phsig2)) != 0) {
-        printf("Calculated sig and expected sig differ (ph 2)\n");
-        goto err;
-    }
-
-    ret = 1;
- err:
     EVP_MD_CTX_free(hashctx);
-    return ret;
+    return 1;
 }
 
-int main(int argc, char *argv[])
+static int test_x448(void)
 {
     uint8_t u[56], k[56], out[56];
-    unsigned int i, max = 1000;
+    unsigned int i;
     int j = -1;
-
-    if (argc != 1 && (argc != 2 || strcmp(argv[1], "-f") != 0)) {
-        printf("Usage: curve448_test [-f]\n");
-        return 1;
-    }
-
-    if (argc == 2)
-        max = 1000000;
 
     /* Curve448 tests */
 
-    if (!X448(out, in_scalar1, in_u1)) {
-        printf("Failed in X448 call (1)\n");
-        return 1;
-    }
-    if (memcmp(out, out_u1, sizeof(out)) != 0) {
-        printf("Calculated output and expected output differ (1)\n");
-        return 1;
-    }
-
-    if (!X448(out, in_scalar2, in_u2)) {
-        printf("Failed in X448 call (2)\n");
-        return 1;
-    }
-    if (memcmp(out, out_u2, sizeof(out)) != 0) {
-        printf("Calculated output and expected output differ (2)\n");
-        return 1;
-    }
+    if (!TEST_true(X448(out, in_scalar1, in_u1))
+          || !TEST_int_eq(memcmp(out, out_u1, sizeof(out)), 0)
+          || !TEST_true(X448(out, in_scalar2, in_u2))
+          || !TEST_int_eq(memcmp(out, out_u2, sizeof(out)), 0))
+        return 0;
 
     memcpy(u, in_u3, sizeof(u));
     memcpy(k, in_u3, sizeof(k));
     for (i = 1; i <= max; i++) {
-        if (i % 10000 == 0) {
+        if (verbose && i % 10000 == 0) {
             printf(".");
             fflush(stdout);
         }
 
-        if (!X448(out, k, u)) {
-            printf("Failed in X448 call (3, %ud)\n", i);
-            return 1;
-        }
+        if (!TEST_true(X448(out, k, u)))
+            return 0;
+
         if (i == 1 || i == 1000 || i == 1000000) {
             j++;
-            if (memcmp(out, out_u3[j], sizeof(out)) != 0) {
-                printf
-                    ("Calculated output and expected output differ (3, %ud)\n",
-                     i);
-                return 1;
+            if (!TEST_int_eq(memcmp(out, out_u3[j], sizeof(out)), 0)) {
+                TEST_info("Failed at iteration %d", i);
+                return 0;
             }
         }
         memcpy(u, k, sizeof(u));
         memcpy(k, out, sizeof(k));
     }
 
-    if (!test_eddsa())
-        return 1;
+    return 1;
+}
 
-    printf("\nSuccess!\n");
+int setup_tests(void)
+{
+    /*
+     * The test vectors contain one test which takes a very long time to run,
+     * so we don't do that be default. Using the -f option will cause it to be
+     * run.
+     */
+    if (test_has_option("-f"))
+        max = 1000000;
 
-    return 0;
+    /* Print progress dots */
+    if (test_has_option("-v"))
+        verbose = 1;
+
+    ADD_TEST(test_x448);
+    ADD_TEST(test_ed448);
+    return 1;
 }
