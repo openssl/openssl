@@ -237,7 +237,7 @@ c448_bool_t curve448_point_valid(const curve448_point_t p)
     return mask_to_bool(out);
 }
 
-static ossl_inline void constant_time_lookup_niels(niels_s * __restrict__ ni,
+static ossl_inline void constant_time_lookup_niels(niels_s * RESTRICT ni,
                                                    const niels_t * table,
                                                    int nelts, int idx)
 {
@@ -425,7 +425,7 @@ c448_error_t x448_int(uint8_t out[X_PUBLIC_BYTES],
             sb = -1;
 
         k_t = (sb >> (t % 8)) & 1;
-        k_t = -k_t;             /* set to all 0s or all 1s */
+        k_t = 0 - k_t;             /* set to all 0s or all 1s */
 
         swap ^= k_t;
         gf_cond_swap(x2, x3, swap);
@@ -498,7 +498,7 @@ void x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
     memcpy(scalar2, scalar, sizeof(scalar2));
     scalar2[0] &= -(uint8_t)COFACTOR;
 
-    scalar2[X_PRIVATE_BYTES - 1] &= ~(-1u << ((X_PRIVATE_BITS + 7) % 8));
+    scalar2[X_PRIVATE_BYTES - 1] &= ~((0u - 1u) << ((X_PRIVATE_BITS + 7) % 8));
     scalar2[X_PRIVATE_BYTES - 1] |= 1 << ((X_PRIVATE_BITS + 7) % 8);
 
     curve448_scalar_decode_long(the_scalar, scalar2, sizeof(scalar2));
@@ -516,6 +516,45 @@ void x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
 struct smvt_control {
     int power, addend;
 };
+
+#if defined(__GNUC__) || defined(__clang__)
+# define NUMTRAILINGZEROS	__builtin_ctz
+#else
+# define NUMTRAILINGZEROS	numtrailingzeros
+static uint32_t numtrailingzeros(uint32_t i)
+{
+    unsigned int tmp;
+    uint32_t num = 31;
+
+    if (i == 0)
+        return 32;
+
+    tmp = i << 16;
+    if (tmp != 0) {
+        i = tmp;
+        num -= 16;
+    }
+    tmp = i << 8;
+    if (tmp != 0) {
+        i = tmp;
+        num -= 8;
+    }
+    tmp = i << 4;
+    if (tmp != 0) {
+        i = tmp;
+        num -= 4;
+    }
+    tmp = i << 2;
+    if (tmp != 0) {
+        i = tmp;
+        num -= 2;
+    }
+    if ((i << 1) != 0)
+        num--;
+
+    return num;
+}
+#endif
 
 static int recode_wnaf(struct smvt_control *control,
                        /* [nbits/(table_bits + 1) + 3] */
@@ -549,7 +588,7 @@ static int recode_wnaf(struct smvt_control *control,
         }
 
         while (current & 0xFFFF) {
-            uint32_t pos = __builtin_ctz((uint32_t)current);
+            uint32_t pos = NUMTRAILINGZEROS((uint32_t)current);
             uint32_t odd = (uint32_t)current >> pos;
             int32_t delta = odd & mask;
 

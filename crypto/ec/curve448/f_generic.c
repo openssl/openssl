@@ -22,7 +22,7 @@ void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_hibit)
 {
     unsigned int j = 0, fill = 0;
     dword_t buffer = 0;
-    unsigned int i;
+    int i;
     gf red;
 
     gf_copy(red, x);
@@ -36,7 +36,7 @@ void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_hibit)
             fill += LIMB_PLACE_VALUE(LIMBPERM(j));
             j++;
         }
-        serial[i] = buffer;
+        serial[i] = (uint8_t)buffer;
         fill -= 8;
         buffer >>= 8;
     }
@@ -48,7 +48,7 @@ mask_t gf_hibit(const gf x)
     gf y;
     gf_add(y, x, x);
     gf_strong_reduce(y);
-    return -(y->limb[0] & 1);
+    return 0 - (y->limb[0] & 1);
 }
 
 /* Return high bit of x = low bit of 2x mod p */
@@ -57,7 +57,7 @@ mask_t gf_lobit(const gf x)
     gf y;
     gf_copy(y, x);
     gf_strong_reduce(y);
-    return -(y->limb[0] & 1);
+    return 0 - (y->limb[0] & 1);
 }
 
 /* Deserialize from wire format; return -1 on success and 0 on failure. */
@@ -80,16 +80,16 @@ mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
             fill += 8;
             j++;
         }
-        x->limb[LIMBPERM(i)] =
-            (i < NLIMBS - 1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer;
+        x->limb[LIMBPERM(i)] = (word_t)
+            ((i < NLIMBS - 1) ? buffer & LIMB_MASK(LIMBPERM(i)) : buffer);
         fill -= LIMB_PLACE_VALUE(LIMBPERM(i));
         buffer >>= LIMB_PLACE_VALUE(LIMBPERM(i));
         scarry =
             (scarry + x->limb[LIMBPERM(i)] -
              MODULUS->limb[LIMBPERM(i)]) >> (8 * sizeof(word_t));
     }
-    succ = with_hibit ? -(mask_t) 1 : ~gf_hibit(x);
-    return succ & word_is_zero(buffer) & ~word_is_zero(scarry);
+    succ = with_hibit ? 0 - (mask_t) 1 : ~gf_hibit(x);
+    return succ & word_is_zero((word_t)buffer) & ~word_is_zero((word_t)scarry);
 }
 
 /* Reduce to canonical form. */
@@ -120,7 +120,7 @@ void gf_strong_reduce(gf a)
      */
     assert(word_is_zero(scarry) | word_is_zero(scarry + 1));
 
-    scarry_0 = scarry;
+    scarry_0 = (word_t)scarry;
 
     /* add it back */
     for (i = 0; i < NLIMBS; i++) {

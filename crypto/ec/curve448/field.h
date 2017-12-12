@@ -21,16 +21,25 @@
 # define NLIMBS (64/sizeof(word_t))
 # define X_SER_BYTES 56
 # define SER_BYTES 56
+
+# if defined(__GNUC__) || defined(__clang__)
+#  define INLINE_UNUSED __inline__ __attribute__((unused,always_inline))
+#  define RESTRICT __restrict__
+#  define ALIGNED __attribute__((aligned(32)))
+# else
+#  define INLINE_UNUSED ossl_inline
+#  define RESTRICT
+#  define ALIGNED
+# endif
+
 typedef struct gf_s {
     word_t limb[NLIMBS];
-} __attribute__ ((aligned(32))) gf_s, gf[1];
+} ALIGNED gf_s, gf[1];
 
 /* RFC 7748 support */
 # define X_PUBLIC_BYTES  X_SER_BYTES
 # define X_PRIVATE_BYTES X_PUBLIC_BYTES
 # define X_PRIVATE_BITS  448
-
-# define INLINE_UNUSED __inline__ __attribute__((unused,always_inline))
 
 static INLINE_UNUSED void gf_copy(gf out, const gf a)
 {
@@ -45,9 +54,9 @@ static INLINE_UNUSED void gf_weak_reduce(gf inout);
 void gf_strong_reduce(gf inout);
 void gf_add(gf out, const gf a, const gf b);
 void gf_sub(gf out, const gf a, const gf b);
-void gf_mul(gf_s * __restrict__ out, const gf a, const gf b);
-void gf_mulw_unsigned(gf_s * __restrict__ out, const gf a, uint32_t b);
-void gf_sqr(gf_s * __restrict__ out, const gf a);
+void gf_mul(gf_s * RESTRICT out, const gf a, const gf b);
+void gf_mulw_unsigned(gf_s * RESTRICT out, const gf a, uint32_t b);
+void gf_sqr(gf_s * RESTRICT out, const gf a);
 mask_t gf_isr(gf a, const gf x); /** a^2 x = 1, QNR, or 0 if x=0.  Return true if successful */
 mask_t gf_eq(const gf x, const gf y);
 mask_t gf_lobit(const gf x);
@@ -67,7 +76,7 @@ mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
 static const gf ZERO = {{{0}}}, ONE = {{{1}}};
 
 /* Square x, n times. */
-static ossl_inline void gf_sqrn(gf_s * __restrict__ y, const gf x, int n)
+static ossl_inline void gf_sqrn(gf_s * RESTRICT y, const gf x, int n)
 {
     gf tmp;
     assert(n > 0);
@@ -131,7 +140,7 @@ static ossl_inline void gf_cond_neg(gf x, mask_t neg)
 }
 
 /* Constant time, if (swap) (x,y) = (y,x); */
-static ossl_inline void gf_cond_swap(gf x, gf_s * __restrict__ y, mask_t swap)
+static ossl_inline void gf_cond_swap(gf x, gf_s * RESTRICT y, mask_t swap)
 {
     constant_time_cond_swap(x, y, sizeof(gf_s), swap);
 }

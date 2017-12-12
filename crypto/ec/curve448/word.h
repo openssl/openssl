@@ -34,7 +34,8 @@
 # if defined(__ARM_NEON__)
 #  include <arm_neon.h>
 # elif defined(__SSE2__)
-#  if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5 || (__GNUC__==4 && __GNUC_MINOR__ >= 4)
+#  if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5 \
+      || (__GNUC__==4 && __GNUC_MINOR__ >= 4)
 #   include <immintrin.h>
 #  else
 #   include <emmintrin.h>
@@ -83,7 +84,8 @@ typedef int32_t int32x2_t __attribute__ ((ext_vector_type(2)));
 typedef uint32_t uint32x8_t __attribute__ ((ext_vector_type(8)));
 typedef int32_t int32x8_t __attribute__ ((ext_vector_type(8)));
 typedef word_t vecmask_t __attribute__ ((ext_vector_type(4)));
-# else                          /* GCC, hopefully? */
+# elif defined(__GNUC__) \
+       && (__GNUC__ >= 4 || (__GNUC__== 3 && __GNUC_MINOR__ >= 1))
 typedef uint64_t uint64x2_t __attribute__ ((vector_size(16)));
 typedef int64_t int64x2_t __attribute__ ((vector_size(16)));
 typedef uint64_t uint64x4_t __attribute__ ((vector_size(32)));
@@ -131,8 +133,9 @@ static ossl_inline big_register_t br_set_to_mask(mask_t x)
 {
     return vdupq_n_u32(x);
 }
-# elif defined(_WIN64) || defined(__amd64__) || defined(__X86_64__) \
-      || defined(__aarch64__)
+# elif !defined(_MSC_VER) \
+       && (defined(_WIN64) || defined(__amd64__) || defined(__X86_64__) \
+           || defined(__aarch64__))
 #  define VECTOR_ALIGNED __attribute__((aligned(8)))
 typedef uint64_t big_register_t, uint64xn_t;
 
@@ -142,7 +145,15 @@ static ossl_inline big_register_t br_set_to_mask(mask_t x)
     return (big_register_t) x;
 }
 # else
-#  define VECTOR_ALIGNED __attribute__((aligned(4)))
+#  ifdef __GNUC__
+#   define VECTOR_ALIGNED __attribute__((aligned(4)))
+#  else
+/*
+ * This shouldn't be a problem because a big_register_t isn't actually a vector
+ * type anyway in this case.
+ */
+#   define VECTOR_ALIGNED
+#  endif
 typedef uint64_t uint64xn_t;
 typedef uint32_t uint32xn_t;
 typedef uint32_t big_register_t;
