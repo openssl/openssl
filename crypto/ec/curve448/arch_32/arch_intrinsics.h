@@ -15,15 +15,13 @@
 
 # define ARCH_WORD_BITS 32
 
-static __inline__ __attribute((always_inline, unused))
-uint32_t word_is_zero(uint32_t a)
+static ossl_inline uint32_t word_is_zero(uint32_t a)
 {
     /* let's hope the compiler isn't clever enough to optimize this. */
     return (((uint64_t)a) - 1) >> 32;
 }
 
-static __inline__ __attribute((always_inline, unused))
-uint64_t widemul(uint32_t a, uint32_t b)
+static ossl_inline uint64_t widemul(uint32_t a, uint32_t b)
 {
     return ((uint64_t)a) * b;
 }

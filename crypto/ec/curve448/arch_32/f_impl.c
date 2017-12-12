@@ -20,7 +20,7 @@
 # define FOR_LIMB(_i,_start,_end,_x) do { for (_i=_start; _i<_end; _i++) _x; } while (0)
 #endif
 
-void gf_mul(gf_s * __restrict__ cs, const gf as, const gf bs)
+void gf_mul(gf_s * RESTRICT cs, const gf as, const gf bs)
 {
     const uint32_t *a = as->limb, *b = bs->limb;
     uint32_t *c = cs->limb;
@@ -71,7 +71,7 @@ void gf_mul(gf_s * __restrict__ cs, const gf as, const gf bs)
     c[1] += ((uint32_t)(accum1));
 }
 
-void gf_mulw_unsigned(gf_s * __restrict__ cs, const gf as, uint32_t b)
+void gf_mulw_unsigned(gf_s * RESTRICT cs, const gf as, uint32_t b)
 {
     const uint32_t *a = as->limb;
     uint32_t *c = cs->limb;
@@ -88,15 +88,15 @@ void gf_mulw_unsigned(gf_s * __restrict__ cs, const gf as, uint32_t b)
              });
 
     accum0 += accum8 + c[8];
-    c[8] = accum0 & mask;
-    c[9] += accum0 >> 28;
+    c[8] = ((uint32_t)accum0) & mask;
+    c[9] += (uint32_t)(accum0 >> 28);
 
     accum8 += c[0];
-    c[0] = accum8 & mask;
-    c[1] += accum8 >> 28;
+    c[0] = ((uint32_t)accum8) & mask;
+    c[1] += (uint32_t)(accum8 >> 28);
 }
 
-void gf_sqr(gf_s * __restrict__ cs, const gf as)
+void gf_sqr(gf_s * RESTRICT cs, const gf as)
 {
     gf_mul(cs, as, as);         /* Performs better with a dedicated square */
 }

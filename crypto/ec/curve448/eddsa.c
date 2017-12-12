@@ -150,27 +150,28 @@ c448_error_t c448_ed448_sign(
         return C448_FAILURE;
 
     {
-        /* Schedule the secret key */
-        struct {
-            uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES];
-            uint8_t seed[EDDSA_448_PRIVATE_BYTES];
-        } __attribute__ ((packed)) expanded;
+        /*
+         * Schedule the secret key, First EDDSA_448_PRIVATE_BYTES is serialised
+         * secret scalar,next EDDSA_448_PRIVATE_BYTES bytes is the seed.
+         */
+        uint8_t expanded[EDDSA_448_PRIVATE_BYTES * 2];
 
-        if (!oneshot_hash((uint8_t *)&expanded, sizeof(expanded), privkey,
+        if (!oneshot_hash(expanded, sizeof(expanded), privkey,
                           EDDSA_448_PRIVATE_BYTES))
             goto err;
-        clamp(expanded.secret_scalar_ser);
-        curve448_scalar_decode_long(secret_scalar, expanded.secret_scalar_ser,
-                                    sizeof(expanded.secret_scalar_ser));
+        clamp(expanded);
+        curve448_scalar_decode_long(secret_scalar, expanded,
+                                    EDDSA_448_PRIVATE_BYTES);
 
         /* Hash to create the nonce */
         if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
-            || !EVP_DigestUpdate(hashctx, expanded.seed, sizeof(expanded.seed))
+            || !EVP_DigestUpdate(hashctx, expanded + EDDSA_448_PRIVATE_BYTES,
+                                 EDDSA_448_PRIVATE_BYTES)
             || !EVP_DigestUpdate(hashctx, message, message_len)) {
-            OPENSSL_cleanse(&expanded, sizeof(expanded));
+            OPENSSL_cleanse(expanded, sizeof(expanded));
             goto err;
         }
-        OPENSSL_cleanse(&expanded, sizeof(expanded));
+        OPENSSL_cleanse(expanded, sizeof(expanded));
     }
 
     /* Decode the nonce */

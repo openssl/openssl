@@ -62,7 +62,7 @@ typedef int64_t c448_dsword_t;
 # endif
 
 /* C448_TRUE = -1 so that C448_TRUE & x = x */
-static const c448_bool_t C448_TRUE = -(c448_bool_t) 1;
+static const c448_bool_t C448_TRUE = 0 - (c448_bool_t)1;
 
 /* C448_FALSE = 0 so that C448_FALSE & x = 0 */
 static const c448_bool_t C448_FALSE = 0;
