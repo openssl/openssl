@@ -1463,6 +1463,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
          * we need to deactivate an old key
          */
         data->ccs_sent = 1;
+        /* fall-through */
 
     case BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD:
         /* Returns 0 on success, -1 otherwise. */
