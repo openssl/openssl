@@ -44,8 +44,8 @@ and frequently a utility function exists to create and initialize such BIOs.
 If BIO_free() is called on a BIO chain it will only free one BIO resulting
 in a memory leak.
 
-Calling BIO_free_all() a single BIO has the same effect as calling BIO_free()
-on it other than the discarded return value.
+Calling BIO_free_all() on a single BIO has the same effect as calling
+BIO_free() on it other than the discarded return value.
 
 Normally the B<type> argument is supplied by a function which returns a
 pointer to a BIO_METHOD. There is a naming convention for such functions:
