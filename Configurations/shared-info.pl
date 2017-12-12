@@ -47,7 +47,7 @@ my %shared_info;
         shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
     },
     'cygwin-shared' => {
-        shared_ldflag         => '-shared -Wl,--enable-auto-image-base -Wl,-Bsymbolic',
+        shared_ldflag         => '-shared -Wl,--enable-auto-image-base',
         shared_impflag        => '-Wl,--out-implib=',
     },
     'mingw-shared' => sub {
