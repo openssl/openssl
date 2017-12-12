@@ -17,9 +17,8 @@ sub detect_gnu_ld {
     return grep /^GNU ld/, @lines;
 }
 sub detect_gnu_cc {
-    my @lines =
-        `$config{cross_compile_prefix}$target{cc} -v 2>&1`;
-    return grep /gcc/, @lines;
+    my %predefined = compiler_predefined($target{cc});
+    return defined %predefined{__GNUC__};
 }
 
 my %shared_info;
