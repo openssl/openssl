@@ -340,6 +340,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_STOC_SESSION_TICKET          460
 # define SSL_F_TLS_CONSTRUCT_STOC_STATUS_REQUEST          461
 # define SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_GROUPS        544
+# define SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_VERSIONS      608
 # define SSL_F_TLS_CONSTRUCT_STOC_USE_SRTP                462
 # define SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO        521
 # define SSL_F_TLS_FINISH_HANDSHAKE                       597
@@ -379,10 +380,12 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_STOC_SERVER_NAME                 583
 # define SSL_F_TLS_PARSE_STOC_SESSION_TICKET              584
 # define SSL_F_TLS_PARSE_STOC_STATUS_REQUEST              585
+# define SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS          609
 # define SSL_F_TLS_PARSE_STOC_USE_SRTP                    446
 # define SSL_F_TLS_POST_PROCESS_CLIENT_HELLO              378
 # define SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE       384
 # define SSL_F_TLS_PREPARE_CLIENT_CERTIFICATE             360
+# define SSL_F_TLS_PROCESS_AS_HELLO_RETRY_REQUEST         610
 # define SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST            361
 # define SSL_F_TLS_PROCESS_CERT_STATUS                    362
 # define SSL_F_TLS_PROCESS_CERT_STATUS_BODY               495
@@ -441,6 +444,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_HANDSHAKE_LENGTH                       332
 # define SSL_R_BAD_HANDSHAKE_STATE                        236
 # define SSL_R_BAD_HELLO_REQUEST                          105
+# define SSL_R_BAD_HRR_VERSION                            263
 # define SSL_R_BAD_KEY_SHARE                              108
 # define SSL_R_BAD_KEY_UPDATE                             122
 # define SSL_R_BAD_LENGTH                                 271
@@ -531,6 +535,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INCONSISTENT_EXTMS                         104
 # define SSL_R_INSUFFICIENT_SECURITY                      241
 # define SSL_R_INVALID_ALERT                              205
+# define SSL_R_INVALID_CCS_MESSAGE                        260
 # define SSL_R_INVALID_CERTIFICATE_OR_ALG                 238
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
@@ -541,6 +546,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_NULL_CMD_NAME                      385
 # define SSL_R_INVALID_SEQUENCE_NUMBER                    402
 # define SSL_R_INVALID_SERVERINFO_DATA                    388
+# define SSL_R_INVALID_SESSION_ID                         999
 # define SSL_R_INVALID_SRP_USERNAME                       357
 # define SSL_R_INVALID_STATUS_RESPONSE                    328
 # define SSL_R_INVALID_TICKET_KEYS_LENGTH                 325
@@ -682,6 +688,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_UNABLE_TO_FIND_PUBLIC_KEY_PARAMETERS       239
 # define SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES           242
 # define SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES          243
+# define SSL_R_UNEXPECTED_CCS_MESSAGE                     262
 # define SSL_R_UNEXPECTED_END_OF_EARLY_DATA               178
 # define SSL_R_UNEXPECTED_MESSAGE                         244
 # define SSL_R_UNEXPECTED_RECORD                          245

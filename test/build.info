@@ -46,7 +46,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          servername_test ocspapitest rsa_mp_test fatalerrtest
+          servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
@@ -159,6 +159,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[fatalerrtest]=fatalerrtest.c ssltestlib.c
   INCLUDE[fatalerrtest]=../include ..
   DEPEND[fatalerrtest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[tls13ccstest]=tls13ccstest.c ssltestlib.c
+  INCLUDE[tls13ccstest]=../include
+  DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[evp_test]=evp_test.c
   INCLUDE[evp_test]=../include

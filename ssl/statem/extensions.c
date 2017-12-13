@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "internal/nelem.h"
+#include "internal/cryptlib.h"
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 
@@ -261,11 +262,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_supported_versions,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS_IMPLEMENTATION_ONLY
-        | SSL_EXT_TLS1_3_ONLY,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_3_SERVER_HELLO | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+        | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
         NULL,
         /* Processed inline as part of version selection */
-        NULL, NULL, NULL, tls_construct_ctos_supported_versions, NULL
+        NULL, tls_parse_stoc_supported_versions,
+        tls_construct_stoc_supported_versions,
+        tls_construct_ctos_supported_versions, NULL
     },
     {
         TLSEXT_TYPE_psk_kex_modes,
@@ -352,6 +356,44 @@ static int validate_context(SSL *s, unsigned int extctx, unsigned int thisctx)
             return 0;
     } else if ((extctx & SSL_EXT_DTLS_ONLY) != 0) {
         return 0;
+    }
+
+    return 1;
+}
+
+int tls_validate_all_contexts(SSL *s, unsigned int thisctx, RAW_EXTENSION *exts)
+{
+    size_t i, num_exts, builtin_num = OSSL_NELEM(ext_defs), offset;
+    RAW_EXTENSION *thisext;
+    unsigned int context;
+    ENDPOINT role = ENDPOINT_BOTH;
+
+    if ((thisctx & SSL_EXT_CLIENT_HELLO) != 0)
+        role = ENDPOINT_SERVER;
+    else if ((thisctx & SSL_EXT_TLS1_2_SERVER_HELLO) != 0)
+        role = ENDPOINT_CLIENT;
+
+    /* Calculate the number of extensions in the extensions list */
+    num_exts = builtin_num + s->cert->custext.meths_count;
+
+    for (thisext = exts, i = 0; i < num_exts; i++, thisext++) {
+        if (!thisext->present)
+            continue;
+
+        if (i < builtin_num) {
+            context = ext_defs[i].context;
+        } else {
+            custom_ext_method *meth = NULL;
+
+            meth = custom_ext_find(&s->cert->custext, role, thisext->type,
+                                   &offset);
+            if (!ossl_assert(meth != NULL))
+                return 0;
+            context = meth->context;
+        }
+
+        if (!validate_context(s, context, thisctx))
+            return 0;
     }
 
     return 1;
@@ -1194,7 +1236,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
      */
     if (s->server && s->s3->peer_tmp == NULL) {
         /* No suitable share */
-        if (s->hello_retry_request == 0 && sent
+        if (s->hello_retry_request == SSL_HRR_NONE && sent
                 && (!s->hit
                     || (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE)
                        != 0)) {
@@ -1219,7 +1261,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
             if (i < num_groups) {
                 /* A shared group exists so send a HelloRetryRequest */
                 s->s3->group_id = group_id;
-                s->hello_retry_request = 1;
+                s->hello_retry_request = SSL_HRR_PENDING;
                 return 1;
             }
         }
@@ -1234,8 +1276,8 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
     }
 
     /* We have a key_share so don't send any more HelloRetryRequest messages */
-    if (s->server)
-        s->hello_retry_request = 0;
+    if (s->server && s->hello_retry_request == SSL_HRR_PENDING)
+        s->hello_retry_request = SSL_HRR_COMPLETE;
 
     /*
      * For a client side resumption with no key_share we need to generate
@@ -1364,7 +1406,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
      * following a HelloRetryRequest then this includes the hash of the first
      * ClientHello and the HelloRetryRequest itself.
      */
-    if (s->hello_retry_request) {
+    if (s->hello_retry_request == SSL_HRR_PENDING) {
         size_t hdatalen;
         void *hdata;
 
@@ -1475,7 +1517,7 @@ static int final_early_data(SSL *s, unsigned int context, int sent)
             || s->session->ext.tick_identity != 0
             || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
             || !s->ext.early_data_ok
-            || s->hello_retry_request) {
+            || s->hello_retry_request != SSL_HRR_NONE) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;
