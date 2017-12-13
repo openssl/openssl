@@ -92,7 +92,7 @@
 
   on Windows (only pick one of the targets for configuration):
 
-    $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-CE }
+    $ perl Configure { VC-WIN32 | VC-WIN64A | VC-WIN64I | VC-WIN32-ARM | VC-WIN64-ARM | VC-CE }
     $ nmake
     $ nmake test
     $ nmake install

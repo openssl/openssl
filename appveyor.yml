@@ -1,6 +1,8 @@
 platform:
     - x86
     - x64
+    - arm
+    - arm64
 
 environment:
     matrix:
@@ -15,9 +17,15 @@ before_build:
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
             $env:TARGET="VC-WIN32"
-        } Else {
+        } Else If ($env:Platform -Match "x64") {
             $env:VCVARS_PLATFORM="amd64"
             $env:TARGET="VC-WIN64A"
+        } Else If ($env:Platform -Match "arm") {
+            $env:VCVARS_PLATFORM="amd64_arm"
+            $env:TARGET="VC-WIN32-ARM"
+        } Else {
+            $env:VCVARS_PLATFORM="amd64_arm64"
+            $env:TARGET="VC-WIN64-ARM"
         }
     - ps: >-
         If ($env:Configuration -Match "shared") {
