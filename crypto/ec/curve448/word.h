@@ -20,15 +20,6 @@
 # include "arch_intrinsics.h"
 
 # include "curve448utils.h"
-
-# ifndef _BSD_SOURCE
-#  define _BSD_SOURCE 1
-# endif
-
-# ifndef _DEFAULT_SOURCE
-#  define _DEFAULT_SOURCE 1
-# endif
-
 # include <stdlib.h>
 
 # if defined(__ARM_NEON__)
