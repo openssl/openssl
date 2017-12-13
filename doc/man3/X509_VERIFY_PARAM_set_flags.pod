@@ -340,7 +340,8 @@ connections associated with an B<SSL_CTX> structure B<ctx>:
 L<X509_verify_cert(3)>,
 L<X509_check_host(3)>,
 L<X509_check_email(3)>,
-L<X509_check_ip(3)>
+L<X509_check_ip(3)>,
+L<x509(1)>
 
 =head1 HISTORY
 
