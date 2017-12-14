@@ -517,10 +517,8 @@ end_of_options:
             BIO_free(oid_bio);
         }
     }
-    if (!add_oid_section(conf)) {
-        ERR_print_errors(bio_err);
+    if (!add_oid_section(conf))
         goto end;
-    }
 
     app_RAND_load_conf(conf, BASE_SECTION);
 
@@ -1347,38 +1345,32 @@ static int certify(X509 **xret, const char *infile, int informat,
     req = load_csr(infile, informat, "certificate request");
     if (req == NULL)
         goto end;
+    if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
+        BIO_printf(bio_err, "Error unpacking public key\n");
+        goto end;
+    }
     if (verbose)
         X509_REQ_print_ex(bio_err, req, nameopt, X509_FLAG_COMPAT);
 
     BIO_printf(bio_err, "Check that the request matches the signature\n");
+    ok = 0;
 
     if (selfsign && !X509_REQ_check_private_key(req, pkey)) {
         BIO_printf(bio_err,
                    "Certificate request and CA private key do not match\n");
-        ok = 0;
-        goto end;
-    }
-    if ((pktmp = X509_REQ_get0_pubkey(req)) == NULL) {
-        BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
     }
     i = do_X509_REQ_verify(req, pktmp, vfyopts);
-    pktmp = NULL;
     if (i < 0) {
-        ok = 0;
-        BIO_printf(bio_err, "Signature verification problems....\n");
-        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "Signature verification problems...\n");
         goto end;
     }
     if (i == 0) {
-        ok = 0;
         BIO_printf(bio_err,
                    "Signature did not match the certificate request\n");
-        ERR_print_errors(bio_err);
         goto end;
-    } else {
-        BIO_printf(bio_err, "Signature ok\n");
     }
+    BIO_printf(bio_err, "Signature ok\n");
 
     ok = do_body(xret, pkey, x509, dgst, sigopts, policy, db, serial, subj,
                  chtype, multirdn, email_dn, startdate, enddate, days, batch,
@@ -1386,6 +1378,7 @@ static int certify(X509 **xret, const char *infile, int informat,
                  ext_copy, selfsign);
 
  end:
+    ERR_print_errors(bio_err);
     X509_REQ_free(req);
     return ok;
 }
@@ -1478,10 +1471,8 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     if (subj) {
         X509_NAME *n = parse_name(subj, chtype, multirdn, "subject");
 
-        if (!n) {
-            ERR_print_errors(bio_err);
+        if (!n)
             goto end;
-        }
         X509_REQ_set_subject_name(req, n);
         X509_NAME_free(n);
     }
@@ -1719,7 +1710,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 BIO_printf(bio_err,
                            "ERROR: adding extensions in section %s\n",
                            ext_sect);
-                ERR_print_errors(bio_err);
                 goto end;
             }
             if (verbose)
@@ -1733,7 +1723,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 BIO_printf(bio_err,
                            "ERROR: adding extensions in section %s\n",
                            ext_sect);
-                ERR_print_errors(bio_err);
                 goto end;
             }
 
@@ -1747,7 +1736,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (!copy_extensions(ret, req, ext_copy)) {
         BIO_printf(bio_err, "ERROR: adding extensions from request\n");
-        ERR_print_errors(bio_err);
         goto end;
     }
 
@@ -2005,7 +1993,6 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
     parms = CONF_load(NULL, infile, &errline);
     if (parms == NULL) {
         BIO_printf(bio_err, "error on line %ld of %s\n", errline, infile);
-        ERR_print_errors(bio_err);
         goto end;
     }
 
@@ -2023,10 +2010,8 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
      * and we can use the same code as if you had a real X509 request.
      */
     req = X509_REQ_new();
-    if (req == NULL) {
-        ERR_print_errors(bio_err);
+    if (req == NULL)
         goto end;
-    }
 
     /*
      * Build up the subject name set.
@@ -2057,7 +2042,6 @@ static int certify_spkac(X509 **xret, const char *infile, EVP_PKEY *pkey,
                 if (spki == NULL) {
                     BIO_printf(bio_err,
                                "unable to load Netscape SPKAC structure\n");
-                    ERR_print_errors(bio_err);
                     goto end;
                 }
             }

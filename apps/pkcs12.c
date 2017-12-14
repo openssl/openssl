@@ -596,7 +596,8 @@ int pkcs12_main(int argc, char **argv)
                             key_pbe, cert_pbe, iter, -1, keytype);
 
         if (p12 == NULL) {
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error creating PKCS12 structure for %s\n",
+                       outfile);
             goto export_end;
         }
 
@@ -625,6 +626,7 @@ int pkcs12_main(int argc, char **argv)
         sk_X509_pop_free(untrusted_certs, X509_free);
         X509_free(ee_cert);
 
+        ERR_print_errors(bio_err);
         goto end;
 
     }
