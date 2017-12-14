@@ -100,7 +100,7 @@ static int certify(X509 **xret, const char *infile, int informat,
                    long days, int batch, const char *ext_sect, CONF *conf,
                    int verbose, unsigned long certopt, unsigned long nameopt,
                    int default_op, int ext_copy, int selfsign);
-static int certify_cert(X509 **xret, const char *infile, int informat,
+static int certify_cert(X509 **xret, const char *infile, int certformat,
                         const char *passin, EVP_PKEY *pkey, X509 *x509,
                         const EVP_MD *dgst,
                         STACK_OF(OPENSSL_STRING) *sigopts,
@@ -211,9 +211,11 @@ const OPTIONS ca_options[] = {
     OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
     {"keyfile", OPT_KEYFILE, 's', "The CA private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format (ENGINE, other values ignored)"},
+    {"keyform", OPT_KEYFORM, 'f',
+     "Private key file format (ENGINE, other values ignored)"},
     {"passin", OPT_PASSIN, 's', "Key and cert input file pass phrase source"},
-    {"key", OPT_KEY, 's', "Key to decrypt key or cert files. Better use -passin"},
+    {"key", OPT_KEY, 's',
+     "Key to decrypt the private key or cert files if encrypted. Better use -passin"},
     {"cert", OPT_CERT, '<', "The CA cert"},
     {"certform", OPT_CERTFORM, 'F',
      "Certificate input format (DER/PEM/P12); has no effect"},
@@ -580,6 +582,7 @@ end_of_options:
         }
     }
     pkey = load_key(keyfile, keyformat, 0, passin, e, "CA private key");
+    cleanse(passin);
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
         goto end;

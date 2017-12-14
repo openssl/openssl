@@ -198,7 +198,7 @@ self-signed certificate.
 
 =item B<-passin> I<arg>
 
-The key and certificate password source.
+The password source for key files and certificate PKCS#12 files.
 For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
