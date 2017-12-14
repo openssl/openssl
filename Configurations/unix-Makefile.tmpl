@@ -311,7 +311,7 @@ clean: libclean
 	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
-	$(RM) test/.rnd
+	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-$(RM) `find . -type l -a \! -path "./.git/*"`
 	$(RM) $(TARFILE)
