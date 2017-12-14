@@ -66,17 +66,19 @@ ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
 ok(run(app(["openssl", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
-   "test_pkcs12");
+   "test_load_cert_pkcs12");
 
 my @path = qw(test certs);
-my $tmpfile = "tmp.p12";
+my $outfile1 = "out1.p12";
+my $outfile2 = "out2.p12";
+my $outfile3 = "out3.p12";
 
 # Test the -chain option with -untrusted
 ok(run(app(["openssl", "pkcs12", "-export", "-chain",
             "-CAfile",  srctop_file(@path,  "sroot-cert.pem"),
             "-untrusted", srctop_file(@path, "ca-cert.pem"),
             "-in", srctop_file(@path, "ee-cert.pem"),
-            "-nokeys", "-passout", "pass:", "-out", $tmpfile])),
+            "-nokeys", "-passout", "pass:", "-out", $outfile1])),
    "test_pkcs12_chain_untrusted");
 
 # Test the -passcerts option
@@ -85,9 +87,8 @@ ok(run(app(["openssl", "pkcs12", "-export",
             "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
             "-passcerts", "pass:v3-certs",
             "-nokeys", "-passout", "pass:v3-certs", "-descert",
-            "-out", $tmpfile])),
-   "test_pkcs12_passcert");
-unlink $tmpfile;
+            "-out", $outfile2])),
+   "test_pkcs12_passcerts");
 
 # Test reading legacy PKCS#12 file
 ok(run(app(["openssl", "pkcs12", "-export",
@@ -95,8 +96,7 @@ ok(run(app(["openssl", "pkcs12", "-export",
             "-passin", "pass:v3-certs",
             "-provider", "default", "-provider", "legacy",
             "-nokeys", "-passout", "pass:v3-certs", "-descert",
-            "-out", $tmpfile])),
-   "test_pkcs12_passcert");
-unlink $tmpfile;
+            "-out", $outfile3])),
+   "test_pkcs12_passcerts_legacy");
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
