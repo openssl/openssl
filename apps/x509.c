@@ -568,14 +568,8 @@ int x509_main(int argc, char **argv)
 
     if (reqfile) {
         EVP_PKEY *pkey;
-        BIO *in;
 
-        in = bio_open_default(infile, 'r', informat);
-        if (in == NULL)
-            goto end;
-        req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);
-        BIO_free(in);
-
+        req = load_csr(infile, informat, "certificate request input");
         if (req == NULL) {
             ERR_print_errors(bio_err);
             goto end;

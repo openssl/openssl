@@ -228,7 +228,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
-    BIO *in = NULL, *out = NULL;
+    BIO *out = NULL;
     ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
@@ -467,7 +467,7 @@ int req_main(int argc, char **argv)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
     if ((req_conf = app_load_config(template)) == NULL)
         goto end;
-    if (addext_bio) {
+    if (addext_bio != NULL) {
         if (verbose)
             BIO_printf(bio_err,
                        "Using additional configuration from command line\n");
@@ -713,18 +713,9 @@ int req_main(int argc, char **argv)
     }
 
     if (!newreq) {
-        in = bio_open_default(infile, 'r', informat);
-        if (in == NULL)
+        req = load_csr(infile, informat, "X509 request");
+        if (req == NULL)
             goto end;
-
-        if (informat == FORMAT_ASN1)
-            req = d2i_X509_REQ_bio(in, NULL);
-        else
-            req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);
-        if (req == NULL) {
-            BIO_printf(bio_err, "unable to load X509 request\n");
-            goto end;
-        }
     }
 
     if (newreq || x509) {
@@ -990,7 +981,6 @@ int req_main(int argc, char **argv)
     NCONF_free(req_conf);
     NCONF_free(addext_conf);
     BIO_free(addext_bio);
-    BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(genctx);
