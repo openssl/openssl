@@ -1081,7 +1081,7 @@ EXT_RETURN tls_construct_stoc_status_request(SSL *s, WPACKET *pkt,
      */
     if (SSL_IS_TLS13(s) && !tls_construct_cert_status_body(s, pkt)) {
        /* SSLfatal() already called */
-       return EXT_RETURN_FAIL; 
+       return EXT_RETURN_FAIL;
     }
     if (!WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,

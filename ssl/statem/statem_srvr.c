@@ -654,7 +654,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
              * Actually this is the end of the handshake, but we're going
              * straight into writing the session ticket out. So we finish off
              * the handshake, but keep the various buffers active.
-             * 
+             *
              * Calls SSLfatal as required.
              */
             return tls_finish_handshake(s, wst, 0);
