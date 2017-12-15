@@ -36,8 +36,10 @@ B<openssl> B<ca>
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
 [B<-cert> I<file>]
+[B<-certform> B<DER>|<PEM>]
 [B<-selfsign>]
 [B<-in> I<file>]
+[B<-inform> B<DER>|<PEM>]
 [B<-out> I<file>]
 [B<-notext>]
 [B<-outdir> I<dir>]
@@ -104,6 +106,11 @@ B<default_ca> in the B<ca> section).
 An input filename containing a single certificate request to be
 signed by the CA.
 
+=item B<-inform> B<DER>|B<PEM>
+
+The format of the data in CSR input files.
+The default is PEM.
+
 =item B<-ss_cert> I<filename>
 
 A single self-signed certificate to be signed by the CA.
@@ -134,6 +141,11 @@ F<.pem> appended.
 =item B<-cert>
 
 The CA certificate file.
+
+=item B<-certform> B<DER>|B<PEM>
+
+The format of the data in certificate input files.
+The default is PEM.
 
 =item B<-keyfile> I<filename>
 
