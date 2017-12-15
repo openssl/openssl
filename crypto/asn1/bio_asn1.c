@@ -66,7 +66,7 @@ static int asn1_bio_gets(BIO *h, char *str, int size);
 static long asn1_bio_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int asn1_bio_new(BIO *h);
 static int asn1_bio_free(BIO *data);
-static long asn1_bio_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long asn1_bio_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size);
 static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
@@ -307,7 +307,7 @@ static int asn1_bio_gets(BIO *b, char *str, int size)
     return BIO_gets(next, str, size);
 }
 
-static long asn1_bio_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long asn1_bio_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     BIO *next = BIO_next(b);
     if (next == NULL)

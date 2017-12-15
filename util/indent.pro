@@ -474,6 +474,7 @@
 -T asn1_ps_func
 -T bio_dgram_data
 -T bio_info_cb
+-T BIO_info_cb
 -T BIO_callback_fn
 -T char_io
 -T conf_finish_func

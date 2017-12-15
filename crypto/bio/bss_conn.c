@@ -32,7 +32,7 @@ typedef struct bio_connect_st {
      * The callback should return 'ret'.  state is for compatibility with the
      * ssl info_callback
      */
-    int (*info_callback) (const BIO *bio, int state, int ret);
+    BIO_info_cb *info_callback;
 } BIO_CONNECT;
 
 static int conn_write(BIO *h, const char *buf, int num);
@@ -41,7 +41,7 @@ static int conn_puts(BIO *h, const char *str);
 static long conn_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int conn_new(BIO *h);
 static int conn_free(BIO *data);
-static long conn_callback_ctrl(BIO *h, int cmd, bio_info_cb *);
+static long conn_callback_ctrl(BIO *h, int cmd, BIO_info_cb *);
 
 static int conn_state(BIO *b, BIO_CONNECT *c);
 static void conn_close_socket(BIO *data);
@@ -75,7 +75,7 @@ static const BIO_METHOD methods_connectp = {
 static int conn_state(BIO *b, BIO_CONNECT *c)
 {
     int ret = -1, i;
-    int (*cb) (const BIO *, int, int) = NULL;
+    BIO_info_cb *cb = NULL;
 
     if (c->info_callback != NULL)
         cb = c->info_callback;
@@ -473,8 +473,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
              * FIXME: the cast of the function seems unlikely to be a good
              * idea
              */
-            (void)BIO_set_info_callback(dbio,
-                                        (bio_info_cb *)data->info_callback);
+            (void)BIO_set_info_callback(dbio, data->info_callback);
         }
         break;
     case BIO_CTRL_SET_CALLBACK:
@@ -482,9 +481,9 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_GET_CALLBACK:
         {
-            int (**fptr) (const BIO *bio, int state, int xret);
+            BIO_info_cb **fptr;
 
-            fptr = (int (**)(const BIO *bio, int state, int xret))ptr;
+            fptr = (BIO_info_cb **)ptr;
             *fptr = data->info_callback;
         }
         break;
@@ -495,7 +494,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long conn_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long conn_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
     BIO_CONNECT *data;
@@ -505,8 +504,7 @@ static long conn_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
     switch (cmd) {
     case BIO_CTRL_SET_CALLBACK:
         {
-            data->info_callback =
-                (int (*)(const struct bio_st *, int, int))fp;
+            data->info_callback = fp;
         }
         break;
     default:
