@@ -65,7 +65,7 @@ static const BIO_METHOD methods_connectp = {
     bread_conv,
     conn_read,
     conn_puts,
-    NULL,                       /* connect_gets, */
+    NULL,                       /* conn_gets, */
     conn_ctrl,
     conn_new,
     conn_free,

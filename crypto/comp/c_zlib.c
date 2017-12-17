@@ -302,8 +302,8 @@ static const BIO_METHOD bio_meth_zlib = {
     /* TODO: Convert to new style read function */
     bread_conv,
     bio_zlib_read,
-    NULL,
-    NULL,
+    NULL,                      /* bio_zlib_puts, */
+    NULL,                      /* bio_zlib_gets, */
     bio_zlib_ctrl,
     bio_zlib_new,
     bio_zlib_free,

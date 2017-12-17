@@ -37,11 +37,11 @@ static const BIO_METHOD methods_sslp = {
     BIO_TYPE_SSL,
     "ssl",
     ssl_write,
-    NULL,
+    NULL,                       /* ssl_write_old, */
     ssl_read,
-    NULL,
+    NULL,                       /* ssl_read_old,  */
     ssl_puts,
-    NULL,                       /* ssl_gets, */
+    NULL,                       /* ssl_gets,      */
     ssl_ctrl,
     ssl_new,
     ssl_free,

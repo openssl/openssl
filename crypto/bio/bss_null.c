@@ -33,7 +33,7 @@ static const BIO_METHOD null_method = {
     null_ctrl,
     null_new,
     null_free,
-    NULL,
+    NULL,                     /* null_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_null(void)

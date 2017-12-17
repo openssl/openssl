@@ -90,14 +90,14 @@ static const BIO_METHOD methods_slg = {
     /* TODO: Convert to new style write function */
     bwrite_conv,
     slg_write,
-    NULL,
-    NULL,
+    NULL,                      /* slg_write_old,    */
+    NULL,                      /* slg_read,         */
     slg_puts,
     NULL,
     slg_ctrl,
     slg_new,
     slg_free,
-    NULL,
+    NULL,                      /* slg_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_log(void)
