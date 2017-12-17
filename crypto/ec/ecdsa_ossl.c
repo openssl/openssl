@@ -298,7 +298,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         }
         if (BN_is_zero(s)) {
             /*
-             * if kinv and r have been supplied by the caller don't to
+             * if kinv and r have been supplied by the caller, don't
              * generate new kinv and r values
              */
             if (in_kinv != NULL && in_r != NULL) {
