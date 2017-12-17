@@ -33,7 +33,7 @@ static const BIO_METHOD mem_method = {
     mem_ctrl,
     mem_new,
     mem_free,
-    NULL,
+    NULL,                      /* mem_callback_ctrl */
 };
 
 static const BIO_METHOD secmem_method = {
@@ -46,7 +46,7 @@ static const BIO_METHOD secmem_method = {
     mem_ctrl,
     secmem_new,
     mem_free,
-    NULL,
+    NULL,                      /* mem_callback_ctrl */
 };
 
 /* BIO memory stores buffer and read pointer  */

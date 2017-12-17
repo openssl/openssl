@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -88,13 +88,13 @@ static const BIO_METHOD methods_slg = {
     BIO_TYPE_MEM,
     "syslog",
     slg_write,
-    NULL,
+    NULL,                      /* slg_read,         */
     slg_puts,
-    NULL,
+    NULL,                      /* slg_gets,         */
     slg_ctrl,
     slg_new,
     slg_free,
-    NULL,
+    NULL,                      /* slg_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_log(void)

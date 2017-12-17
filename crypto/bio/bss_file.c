@@ -58,7 +58,7 @@ static const BIO_METHOD methods_filep = {
     file_ctrl,
     file_new,
     file_free,
-    NULL,
+    NULL,                      /* file_callback_ctrl */
 };
 
 BIO *BIO_new_file(const char *filename, const char *mode)
@@ -406,7 +406,7 @@ static const BIO_METHOD methods_filep = {
     file_ctrl,
     file_new,
     file_free,
-    NULL,
+    NULL,                      /* file_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_file(void)

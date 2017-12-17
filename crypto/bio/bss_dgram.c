@@ -76,11 +76,11 @@ static const BIO_METHOD methods_dgramp = {
     dgram_write,
     dgram_read,
     dgram_puts,
-    NULL,                       /* dgram_gets, */
+    NULL,                       /* dgram_gets,         */
     dgram_ctrl,
     dgram_new,
     dgram_free,
-    NULL,
+    NULL,                       /* dgram_callback_ctrl */
 };
 
 # ifndef OPENSSL_NO_SCTP
@@ -90,11 +90,11 @@ static const BIO_METHOD methods_dgramp_sctp = {
     dgram_sctp_write,
     dgram_sctp_read,
     dgram_sctp_puts,
-    NULL,                       /* dgram_gets, */
+    NULL,                       /* dgram_gets,         */
     dgram_sctp_ctrl,
     dgram_sctp_new,
     dgram_sctp_free,
-    NULL,
+    NULL,                       /* dgram_callback_ctrl */
 };
 # endif
 
