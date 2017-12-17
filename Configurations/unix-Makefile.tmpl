@@ -1053,7 +1053,7 @@ EOF
       return <<"EOF";
 $bin$exeext: $objs $deps
 	rm -f $bin$exeext
-	$cmd $cmdflags \$(LDFLAGS) \$(BIN_LDFLAGS) -o $bin$exeext $objs \\
+	\$\${LDCMD:-$cmd} $cmdflags \$(LDFLAGS) \$(BIN_LDFLAGS) -o $bin$exeext $objs \\
 		\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
   }
