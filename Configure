@@ -422,7 +422,6 @@ my %deprecated_disablables = (
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 our %disabled = ( # "what"         => "comment"
-                  "aria"                => "default",
                   "asan"		=> "default",
 		  "crypto-mdebug"       => "default",
 		  "crypto-mdebug-backtrace" => "default",
