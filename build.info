@@ -54,9 +54,9 @@ IF[{- $config{target} =~ /^VC-/ -}]
   SHARED_SOURCE[libcrypto]=libcrypto.def
   SHARED_SOURCE[libssl]=libssl.def
 ELSIF[{- $config{target} =~ /^vms/ -}]
-  GENERATE[libcrypto.opt]=util/mkdef.pl crypto VMS
+  GENERATE[libcrypto.opt]=util/mkdef.pl crypto "VMS"
   DEPEND[libcrypto.opt]=util/libcrypto.num
-  GENERATE[libssl.opt]=util/mkdef.pl ssl VMS
+  GENERATE[libssl.opt]=util/mkdef.pl ssl "VMS"
   DEPEND[libssl.opt]=util/libssl.num
 
   SHARED_SOURCE[libcrypto]=libcrypto.opt
