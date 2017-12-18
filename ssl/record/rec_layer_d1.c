@@ -196,6 +196,58 @@ int dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
     return 1;
 }
 
+/*
+ * take the record in s->init_buf (length: s->init_num), and
+ * inserts into the incoming queue as if it was read from the network.
+ */
+int dtls1_buffer_unshift(SSL *s,
+                         unsigned char *buf, size_t buflen)
+{
+    DTLS1_RECORD_DATA *rdata;
+    pitem *item;
+    record_pqueue *queue = &(s->rlayer.d->unprocessed_rcds);
+    unsigned char *priority = SSL3_RECORD_get_seq_num(s->rlayer.rrec);
+
+    /* Limit the size of the queue to prevent DOS attacks */
+    if (pqueue_size(queue->q) >= 100)
+        return 0;
+
+    rdata = OPENSSL_malloc(sizeof(*rdata));
+    item = pitem_new(priority, rdata);
+    if (rdata == NULL || item == NULL) {
+        OPENSSL_free(rdata);
+        pitem_free(item);
+        SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
+        return -1;
+    }
+
+    rdata->packet        = buf;
+    rdata->packet_length = buflen;
+    item->data = rdata;
+
+    s->init_buf->data = NULL;
+    s->init_num       = 0;
+
+    if (!ssl3_setup_buffers(s)) {
+        SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
+        OPENSSL_free(rdata->rbuf.buf);
+        OPENSSL_free(rdata);
+        pitem_free(item);
+        return -1;
+    }
+
+    /* insert should not fail, since duplicates are dropped */
+    if (pqueue_insert(queue->q, item) == NULL) {
+        SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
+        OPENSSL_free(rdata->rbuf.buf);
+        OPENSSL_free(rdata);
+        pitem_free(item);
+        return -1;
+    }
+
+    return 1;
+}
+
 int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue)
 {
     pitem *item;

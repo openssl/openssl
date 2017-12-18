@@ -9,9 +9,11 @@
 
 #include "e_os.h"
 #include <stdio.h>
+#include <sys/socket.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include "ssl_locl.h"
+#include "ssl/record/record_locl.h"
 
 static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL *s);
@@ -920,74 +922,131 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client)
 {
     int ret = 0;
     unsigned char seq[SEQ_NUM_SIZE];
-    BIO *rbio, *wbio;
+    BIO_ADDR     *ouraddr;
+    BIO *rbio,   *wbio;
+    BIO *rbio_c, *wbio_c;
+    SSL3_BUFFER *rb;
+    int  rfd, wfd;
+    unsigned char *addrbuf, *sockname;
+    size_t addrlen;
 
-    if (s->handshake_func == NULL) {
+    ouraddr = BIO_ADDR_new();
+    if(ouraddr == NULL) goto end;
+
+    if (serv->handshake_func == NULL) {
         /* Not properly initialized yet */
-        SSL_set_accept_state(s);
+        SSL_set_accept_state(serv);
     }
 
     /* Ensure there is no state left over from a previous invocation */
-    if (!SSL_clear(s))
+    if (!SSL_clear(serv))
         return -1;
 
     ERR_clear_error();
 
-    rbio = SSL_get_rbio(s);
-    wbio = SSL_get_wbio(s);
+    rbio = SSL_get_rbio(serv);
+    wbio = SSL_get_wbio(serv);
 
     if (!rbio || !wbio) {
         SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
         return -1;
     }
 
-    if((ret = DTLSv1_answerHello(s, rbio, wbio)) != 1) {
+    if((ret = DTLSv1_answerHello(serv, rbio, wbio)) != 1) {
       goto end;
     }
 
     /* At this point, there is a real ClientHello in s->init_buf */
 
-    /* We need to move the init_buf over to connection, set up
+    /*
+     * We need to move the init_buf over to connection, set up
      * a new socket, and then call SSL_accept() on the new SSL
      */
-    connection->init_buf = s->init_buf;
-    connection->init_num = s->init_num;
-    s->init_buf = NULL;
-    s->init_num = 0;
+    rb = &connection->rlayer.rbuf;
+    if (rb->buf == NULL) {
+      if (!ssl3_setup_read_buffer(connection)) {
+          goto end;
+      }
+    }
 
-    /* dump the data out of the old socket: reads it in again actually */
-    BIO_read(rbio, connection->init_buf->data, SSL3_RT_MAX_PLAIN_LENGTH);
+    memcpy(rb->buf, serv->init_buf, serv->init_num);
+    rb->offset = 0;
+    rb->left   = serv->init_num;
+
+    BIO_ctrl(SSL_get_rbio(serv), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+
+    /* dump the data out of the old socket */
+    BIO_read(rbio, serv->init_buf->data, SSL3_RT_MAX_PLAIN_LENGTH);
 
     /*
      * Set expected sequence numbers to continue the handshake.
      */
-    s->d1->handshake_read_seq = 1;
-    s->d1->handshake_write_seq = 1;
-    s->d1->next_handshake_write_seq = 1;
-    DTLS_RECORD_LAYER_set_write_sequence(&s->rlayer, seq);
+    connection->d1->handshake_read_seq = 1;
+    connection->d1->handshake_write_seq = 1;
+    connection->d1->next_handshake_write_seq = 1;
+    DTLS_RECORD_LAYER_set_write_sequence(&connection->rlayer, seq);
 
     /*
      * We are doing cookie exchange, so make sure we set that option in the
      * SSL object
      */
-    SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
+    SSL_set_options(connection, SSL_OP_COOKIE_EXCHANGE);
 
     /*
      * Tell the state machine that we've done the initial hello verify
      * exchange
      */
-    ossl_statem_set_hello_verify_done(s);
+    ossl_statem_set_hello_verify_done(connection);
 
     /*
-     * Some BIOs may not support this. If we fail we clear the client address
+     * now set up a socket based upon the original rbio's peer/addr
      */
+    /* see if there an FD burried in the rbio */
+    rbio_c = SSL_get_rbio(connection);
+    wbio_c = SSL_get_wbio(connection);
+    rfd    = BIO_get_fd(rbio_c, NULL);
+    wfd    = BIO_get_fd(wbio_c, NULL);
+
+    /* dig the address peers out of s */
     if (BIO_dgram_get_peer(rbio, client) <= 0)
-        BIO_ADDR_clear(client);
+      goto end;
+
+    if (BIO_dgram_get_addr(rbio, ouraddr) <= 0)
+      goto end;
+
+    if(rfd == -1 || wfd == -1) {
+      int socket_type = SOCK_DGRAM;
+      int family      = BIO_ADDR_family(client);
+      int protocol    = 0;  /* UDP has nothing here */
+
+      rfd = socket(family, socket_type, protocol);
+      BIO_set_fd(rbio_c, rfd, 0);
+      BIO_set_fd(wbio_c, rfd, 0);
+      wfd = rfd;
+    }
+
+    /* find out size of addrbuf needed */
+    if(BIO_ADDR_rawaddress(client,   &addrbuf,  &addrlen)==0) {
+      goto end;
+    }
+    if(BIO_ADDR_rawaddress(ouraddr,  &sockname, &addrlen)==0) {
+      goto end;
+    }
+
+    if(connect(rfd, (struct sockaddr *)addrbuf, addrlen) != 0) {
+      goto end;
+    }
+    if(bind(rfd, (struct sockaddr *)sockname, addrlen) != 0) {
+      goto end;
+    }
 
     ret = 1;
 
  end:
-    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+    if(ouraddr) {
+      BIO_ADDR_free(ouraddr);
+    }
+    BIO_ctrl(SSL_get_rbio(serv), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
     return ret;
 }
 #endif

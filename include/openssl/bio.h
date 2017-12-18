@@ -526,6 +526,10 @@ int BIO_ctrl_reset_read_request(BIO *b);
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_PEER, 0, (char *)(peer))
 # define BIO_dgram_set_peer(b,peer) \
          (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, (char *)(peer))
+# define BIO_dgram_get_addr(b,addr) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_GET_ADDR, 0, (char *)(addr))
+# define BIO_dgram_set_addr(b,addr) \
+         (int)BIO_ctrl(b, BIO_CTRL_DGRAM_SET_ADDR, 0, (char *)(addr))
 # define BIO_dgram_get_mtu_overhead(b) \
          (unsigned int)BIO_ctrl((b), BIO_CTRL_DGRAM_GET_MTU_OVERHEAD, 0, NULL)
 

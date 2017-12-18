@@ -2082,6 +2082,7 @@ void SSL_trace(int write_p, int version, int content_type,
 
 # ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *s, BIO_ADDR *client);
+int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client);
 # endif
 
 # ifndef OPENSSL_NO_CT
