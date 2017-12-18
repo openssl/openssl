@@ -481,7 +481,8 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
-    {TLSEXT_TYPE_early_data, "early_data"}
+    {TLSEXT_TYPE_early_data, "early_data"},
+    {TLSEXT_TYPE_post_handshake_auth, "post_handshake_auth"}
 };
 
 static const ssl_trace_tbl ssl_groups_tbl[] = {

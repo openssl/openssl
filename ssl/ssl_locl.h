@@ -402,6 +402,15 @@
 #define CERT_PRIVATE_KEY        2
 */
 
+/* Post-Handshake Authentication state */
+typedef enum {
+    SSL_PHA_NONE = 0,
+    SSL_PHA_EXT_SENT,        /* client-side only: extension sent */
+    SSL_PHA_EXT_RECEIVED,    /* server-side only: extension received */
+    SSL_PHA_REQUEST_PENDING, /* server-side only: request pending */
+    SSL_PHA_REQUESTED        /* request received by client, or sent by server */
+} SSL_PHA_STATE;
+
 /* CipherSuite length. SSLv3 and all TLS versions. */
 # define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
@@ -702,6 +711,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_signed_certificate_timestamp,
     TLSEXT_IDX_extended_master_secret,
     TLSEXT_IDX_signature_algorithms_cert,
+    TLSEXT_IDX_post_handshake_auth,
     TLSEXT_IDX_signature_algorithms,
     TLSEXT_IDX_supported_versions,
     TLSEXT_IDX_psk_kex_modes,
@@ -1334,6 +1344,14 @@ struct ssl_st {
     int renegotiate;
     /* If sending a KeyUpdate is pending */
     int key_update;
+    /* Post-handshake authentication state */
+    SSL_PHA_STATE post_handshake_auth;
+    int pha_forced;
+    uint8_t* pha_context;
+    size_t pha_context_len;
+    int certreqs_sent;
+    EVP_MD_CTX *pha_dgst; /* this is just the digest through ClientFinished */
+
 # ifndef OPENSSL_NO_SRP
     /* ctx for SRP authentication */
     SRP_CTX srp_ctx;
@@ -2534,6 +2552,10 @@ __owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
 __owur int srp_generate_server_master_secret(SSL *s);
 __owur int srp_generate_client_master_secret(SSL *s);
 __owur int srp_verify_server_param(SSL *s);
+
+/* statem/statem_srvr.c */
+
+__owur int send_certificate_request(SSL *s);
 
 /* statem/extensions_cust.c */
 

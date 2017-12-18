@@ -386,7 +386,12 @@ static int cmd_VerifyMode(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_VFY_SRV("Request", SSL_VERIFY_PEER),
         SSL_FLAG_VFY_SRV("Require",
                          SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT),
-        SSL_FLAG_VFY_SRV("Once", SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE)
+        SSL_FLAG_VFY_SRV("Once", SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE),
+        SSL_FLAG_VFY_SRV("RequestPostHandshake",
+                         SSL_VERIFY_PEER | SSL_VERIFY_POST_HANDSHAKE),
+        SSL_FLAG_VFY_SRV("RequirePostHandshake",
+                         SSL_VERIFY_PEER | SSL_VERIFY_POST_HANDSHAKE |
+                         SSL_VERIFY_FAIL_IF_NO_PEER_CERT),
     };
     if (value == NULL)
         return -3;

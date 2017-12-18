@@ -5,7 +5,9 @@
 SSL_get_ex_data_X509_STORE_CTX_idx,
 SSL_CTX_set_verify, SSL_set_verify,
 SSL_CTX_set_verify_depth, SSL_set_verify_depth,
-SSL_verify_cb
+SSL_verify_cb,
+SSL_verify_client_post_handshake,
+SSL_force_post_handshake_auth
 - set peer certificate verification parameters
 
 =head1 SYNOPSIS
@@ -15,11 +17,14 @@ SSL_verify_cb
  typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 
  void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb verify_callback);
- void SSL_set_verify(SSL *s, int mode, SSL_verify_cb verify_callback);
+ void SSL_set_verify(SSL *ssl, int mode, SSL_verify_cb verify_callback);
  SSL_get_ex_data_X509_STORE_CTX_idx(void);
 
  void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
- void SSL_set_verify_depth(SSL *s, int depth);
+ void SSL_set_verify_depth(SSL *ssl, int depth);
+
+ int SSL_verify_client_post_handshake(SSL *ssl);
+ void SSL_force_post_handshake_auth(SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -42,6 +47,16 @@ verification that shall be allowed for B<ctx>.
 
 SSL_set_verify_depth() sets the maximum B<depth> for the certificate chain
 verification that shall be allowed for B<ssl>.
+
+SSL_force_post_handshake_auth() forces the Post-Handshake Authentication
+extension to be added to the ClientHello regardless of certificate configuration
+at the time of the initial handshake, such that post-handshake authentication
+can be requested by the server. A certificate callback will need to be set via
+SSL_CTX_set_client_cert_cb() if no certificate is provided at initialization.
+
+SSL_verify_client_post_handshake() causes a Certificate Request message to be
+sent by a server on the given B<ssl> connection. The SSL_VERIFY_PEER flag must
+be set, the SSL_VERIFY_POST_HANDSHAKE flag is optional.
 
 =head1 NOTES
 
@@ -69,7 +84,8 @@ fails, the TLS/SSL handshake is
 immediately terminated with an alert message containing the reason for
 the verification failure.
 The behaviour can be controlled by the additional
-SSL_VERIFY_FAIL_IF_NO_PEER_CERT and SSL_VERIFY_CLIENT_ONCE flags.
+SSL_VERIFY_FAIL_IF_NO_PEER_CERT, SSL_VERIFY_CLIENT_ONCE and
+SSL_VERIFY_POST_HANDSHAKE flags.
 
 B<Client mode:> the server certificate is verified. If the verification process
 fails, the TLS/SSL handshake is
@@ -87,9 +103,22 @@ B<Client mode:> ignored
 
 =item SSL_VERIFY_CLIENT_ONCE
 
-B<Server mode:> only request a client certificate on the initial TLS/SSL
-handshake. Do not ask for a client certificate again in case of a
-renegotiation. This flag must be used together with SSL_VERIFY_PEER.
+B<Server mode:> only request a client certificate once during the
+connection. Do not ask for a client certificate again during
+renegotiation or post-authentication if a certificate was requested
+during the initial handshake. This flag must be used together with
+SSL_VERIFY_PEER.
+
+B<Client mode:> ignored
+
+=item SSL_VERIFY_POST_HANDSHAKE
+
+B<Server mode:> the server will not send a client certificate request
+during the initial handshake, but will send the request via
+SSL_verify_client_post_handshake(). This allows the SSL_CTX or SSL
+to be configured for post-handshake peer verification before the
+handshake occurs. This flag must be used together with
+SSL_VERIFY_PEER. TLSv1.3 only; no effect on pre-TLSv1.3 connections.
 
 B<Client mode:> ignored
 
@@ -154,6 +183,20 @@ Its return value is identical to B<preverify_ok>, so that any verification
 failure will lead to a termination of the TLS/SSL handshake with an
 alert message, if SSL_VERIFY_PEER is set.
 
+After calling SSL_force_post_handshake_auth(), the client will need to add a
+certificate to its configuration before it can successfully authenticate. This
+must be called before SSL_connect().
+
+SSL_verify_client_post_handshake() requires that verify flags have been
+previously set, and that a client sent the post-handshake authentication
+extension. When the client returns a certificate the verify callback will be
+invoked. A write operation must take place for the Certificate Request to be
+sent to the client, this can be done with SSL_do_handshake() or SSL_write_ex().
+Only one certificate request may be outstanding at any time.
+
+When post-handshake authentication occurs, a refreshed B<NewSessionTicket>
+message is sent to the client.
+
 =head1 BUGS
 
 In client mode, it is not checked whether the SSL_VERIFY_PEER flag
@@ -164,6 +207,10 @@ required.
 =head1 RETURN VALUES
 
 The SSL*_set_verify*() functions do not provide diagnostic information.
+
+The SSL_verify_client_post_handshake() function returns 1 if the request
+succeeded, and 0 if the request failed. The error stack can be examined
+to determine the failure reason.
 
 =head1 EXAMPLES
 
@@ -288,7 +335,13 @@ L<SSL_CTX_load_verify_locations(3)>,
 L<SSL_get_peer_certificate(3)>,
 L<SSL_CTX_set_cert_verify_callback(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
+L<SSL_CTX_set_client_cert_cb(3)>,
 L<CRYPTO_get_ex_new_index(3)>
+
+=head1 HISTORY
+
+The SSL_VERIFY_POST_HANDSHAKE option, and the SSL_verify_client_post_handshake()
+and SSL_force_post_handshake_auth() functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

@@ -474,3 +474,5 @@ SSL_CTX_set_tlsext_max_fragment_length  474	1_1_1	EXIST::FUNCTION:
 SSL_set_tlsext_max_fragment_length      475	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_get_max_fragment_length     476	1_1_1	EXIST::FUNCTION:
 SSL_stateless                           477	1_1_1	EXIST::FUNCTION:
+SSL_verify_client_post_handshake        478	1_1_1	EXIST::FUNCTION:
+SSL_force_post_handshake_auth           479	1_1_1	EXIST::FUNCTION:

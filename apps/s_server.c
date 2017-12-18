@@ -2501,6 +2501,19 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     i = 0;
                     continue;
                 }
+                if (buf[0] == 'c' && ((buf[1] == '\n') || (buf[1] == '\r'))) {
+                    SSL_set_verify(con, SSL_VERIFY_PEER, NULL);
+                    i = SSL_verify_client_post_handshake(con);
+                    if (i == 0) {
+                        printf("Failed to initiate request\n");
+                        ERR_print_errors(bio_err);
+                    } else {
+                        i = SSL_do_handshake(con);
+                        printf("SSL_do_handshake -> %d\n", i);
+                        i = 0;
+                    }
+                    continue;
+                }
                 if (buf[0] == 'P') {
                     static const char *str = "Lets print some clear text\n";
                     BIO_write(SSL_get_wbio(con), str, strlen(str));
