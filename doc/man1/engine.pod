@@ -27,6 +27,8 @@ The B<engine> command is used to query the status and capabilities
 of the specified B<engine>'s.
 Engines may be specified before and after all other command-line flags.
 Only those specified are queried.
+The environment variable B<OPENSSL_ENGINES> or a configuration file's
+engine section can be used to specify a non-default engines directory.
 
 =head1 OPTIONS
 
@@ -92,6 +94,10 @@ To list the capabilities of the I<rsax> engine:
  (rsax) RSAX engine support
   [RSA]
  (dynamic) Dynamic engine loading support
+
+=head1 SEE ALSO
+
+L<config(5)>
 
 =head1 COPYRIGHT
 
