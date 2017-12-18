@@ -435,6 +435,18 @@ occurs if the client does not present a certificate. Servers only.
 B<Once> requests a certificate from a client only on the initial connection:
 not when renegotiating. Servers only.
 
+B<RequestPostHandshake> configures the connection to support requests but does
+not require a certificate from the client post-handshake. A certificate will
+not be requested during the initial handshake. The server application must
+provide a mechanism to request a certificate post-handshake. Servers only.
+TLSv1.3 only.
+
+B<RequiresPostHandshake> configures the connection to support requests and
+requires a certificate from the client post-handshake: an error occurs if the
+client does not present a certificate. A certificate will not be requested
+during the initial handshake. The server application must provide a mechanism
+to request a certificate post-handshake. Servers only. TLSv1.3 only.
+
 =item B<ClientCAFile>, B<ClientCAPath>
 
 A file or directory of certificates in PEM format whose names are used as the

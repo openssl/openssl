@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -159,6 +159,26 @@ static int ossl_statem_client13_read_transition(SSL *s, int mt)
         if (mt == SSL3_MT_KEY_UPDATE) {
             st->hand_state = TLS_ST_CR_KEY_UPDATE;
             return 1;
+        }
+        if (mt == SSL3_MT_CERTIFICATE_REQUEST) {
+#if DTLS_MAX_VERSION != DTLS1_2_VERSION
+# error TODO(DTLS1.3): Restore digest for PHA before adding message.
+#endif
+            if (!SSL_IS_DTLS(s) && s->post_handshake_auth == SSL_PHA_EXT_SENT) {
+                s->post_handshake_auth = SSL_PHA_REQUESTED;
+                /*
+                 * In TLS, this is called before the message is added to the
+                 * digest. In DTLS, this is expected to be called after adding
+                 * to the digest. Either move the digest restore, or add the
+                 * message here after the swap, or do it after the clientFinished?
+                 */
+                if (!tls13_restore_handshake_digest_for_pha(s)) {
+                    /* SSLfatal() already called */
+                    return 0;
+                }
+                st->hand_state = TLS_ST_CR_CERT_REQ;
+                return 1;
+            }
         }
         break;
     }
@@ -375,6 +395,13 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
      * ossl_statem_client_write_transition().
      */
     switch (st->hand_state) {
+    case TLS_ST_CR_CERT_REQ:
+        if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+            st->hand_state = TLS_ST_CW_CERT;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
+
     default:
         /* Shouldn't happen */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -798,10 +825,16 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
             return WORK_MORE_B;
 
         if (SSL_IS_TLS13(s)) {
-            if (!s->method->ssl3_enc->change_cipher_state(s,
-                        SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
+            if (!tls13_save_handshake_digest_for_pha(s)) {
                 /* SSLfatal() already called */
                 return WORK_ERROR;
+            }
+            if (s->post_handshake_auth != SSL_PHA_REQUESTED) {
+                if (!s->method->ssl3_enc->change_cipher_state(s,
+                        SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_CLIENT_WRITE)) {
+                    /* SSLfatal() already called */
+                    return WORK_ERROR;
+                }
             }
         }
         break;
@@ -2399,9 +2432,11 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
         OPENSSL_free(s->s3->tmp.ctype);
         s->s3->tmp.ctype = NULL;
         s->s3->tmp.ctype_len = 0;
+        OPENSSL_free(s->pha_context);
+        s->pha_context = NULL;
 
-        /* TODO(TLS1.3) need to process request context, for now ignore */
-        if (!PACKET_get_length_prefixed_1(pkt, &reqctx)) {
+        if (!PACKET_get_length_prefixed_1(pkt, &reqctx) ||
+            !PACKET_memdup(&reqctx, &s->pha_context, &s->pha_context_len)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                      SSL_R_LENGTH_MISMATCH);
@@ -3332,6 +3367,7 @@ static int ssl3_check_client_certificate(SSL *s)
     if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT &&
         !tls1_check_chain(s, NULL, NULL, NULL, -2))
         return 0;
+
     return 1;
 }
 
@@ -3357,8 +3393,12 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
             }
             s->rwstate = SSL_NOTHING;
         }
-        if (ssl3_check_client_certificate(s))
+        if (ssl3_check_client_certificate(s)) {
+            if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
+                return WORK_FINISHED_STOP;
+            }
             return WORK_FINISHED_CONTINUE;
+        }
 
         /* Fall through to WORK_MORE_B */
         wst = WORK_MORE_B;
@@ -3403,6 +3443,8 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
             }
         }
 
+        if (s->post_handshake_auth == SSL_PHA_REQUESTED)
+            return WORK_FINISHED_STOP;
         return WORK_FINISHED_CONTINUE;
     }
 
@@ -3414,14 +3456,19 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
 
 int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
 {
-    /*
-     * TODO(TLS1.3): For now we must put an empty context. Needs to be filled in
-     * later
-     */
-    if (SSL_IS_TLS13(s) && !WPACKET_put_bytes_u8(pkt, 0)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
-        return 0;
+    if (SSL_IS_TLS13(s)) {
+        if (s->pha_context == NULL) {
+            /* no context available, add 0-length context */
+            if (!WPACKET_put_bytes_u8(pkt, 0)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        } else if (!WPACKET_sub_memcpy_u8(pkt, s->pha_context, s->pha_context_len)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_CLIENT_CERTIFICATE, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
     }
     if (!ssl3_output_cert_chain(s, pkt,
                                 (s->s3->tmp.cert_req == 2) ? NULL

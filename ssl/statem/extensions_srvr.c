@@ -1161,6 +1161,20 @@ err:
     return 0;
 }
 
+int tls_parse_ctos_post_handshake_auth(SSL *s, PACKET *pkt, unsigned int context,
+                                       X509 *x, size_t chainidx)
+{
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_POST_HANDSHAKE_AUTH,
+                 SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR);
+        return 0;
+    }
+
+    s->post_handshake_auth = SSL_PHA_EXT_RECEIVED;
+
+    return 1;
+}
+
 /*
  * Add the server's renegotiation binding
  */

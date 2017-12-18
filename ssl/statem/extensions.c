@@ -56,6 +56,8 @@ static int final_sig_algs(SSL *s, unsigned int context, int sent);
 static int final_early_data(SSL *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL *s, unsigned int context, int sent);
 
+static int init_post_handshake_auth(SSL *s, unsigned int context);
+
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
     /* The defined type for the extension */
@@ -288,6 +290,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_parse_ctos_sig_algs_cert,
         /* We do not generate signature_algorithms_cert at present. */
         NULL, NULL, NULL
+    },
+    {
+        TLSEXT_TYPE_post_handshake_auth,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY,
+        init_post_handshake_auth,
+        tls_parse_ctos_post_handshake_auth, NULL,
+        NULL, tls_construct_ctos_post_handshake_auth,
+        NULL,
     },
     {
         TLSEXT_TYPE_signature_algorithms,
@@ -1650,6 +1660,13 @@ static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
             /* SSLfatal() already called */
             return 0;
         }
+
+    return 1;
+}
+
+static int init_post_handshake_auth(SSL *s, unsigned int context)
+{
+    s->post_handshake_auth = SSL_PHA_NONE;
 
     return 1;
 }

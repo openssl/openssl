@@ -16,6 +16,7 @@
 #include <openssl/srp.h>
 #endif
 
+#include "../ssl/ssl_locl.h"
 #include "internal/sockets.h"
 #include "internal/nelem.h"
 #include "handshake_helper.h"
@@ -674,6 +675,8 @@ static void configure_handshake_ssl(SSL *server, SSL *client,
     if (extra->client.servername != SSL_TEST_SERVERNAME_NONE)
         SSL_set_tlsext_host_name(client,
                                  ssl_servername_name(extra->client.servername));
+    if (extra->client.force_pha)
+        SSL_force_post_handshake_auth(client);
 }
 
 /* The status for each connection phase. */
@@ -848,7 +851,9 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
                           || test_ctx->handshake_mode
                               == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER
                           || test_ctx->handshake_mode
-                              == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT)) {
+                              == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT
+                          || test_ctx->handshake_mode
+                              == SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH)) {
         peer->status = PEER_TEST_FAILURE;
         return;
     }
@@ -920,6 +925,25 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
         if (!ret) {
             peer->status = PEER_ERROR;
             return;
+        }
+        do_handshake_step(peer);
+        /*
+         * This is a one step handshake. We shouldn't get anything other than
+         * PEER_SUCCESS
+         */
+        if (peer->status != PEER_SUCCESS)
+            peer->status = PEER_ERROR;
+        return;
+    } else if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH) {
+        if (SSL_is_server(peer->ssl)) {
+            /* Make the server believe it's received the extension */
+            if (test_ctx->extra.server.force_pha)
+                peer->ssl->post_handshake_auth = SSL_PHA_EXT_RECEIVED;
+            ret = SSL_verify_client_post_handshake(peer->ssl);
+            if (!ret) {
+                peer->status = PEER_ERROR;
+                return;
+            }
         }
         do_handshake_step(peer);
         /*
@@ -1004,25 +1028,41 @@ typedef enum {
     CONNECTION_DONE
 } connect_phase_t;
 
+
+static int renegotiate_op(const SSL_TEST_CTX *test_ctx)
+{
+    switch (test_ctx->handshake_mode) {
+    case SSL_TEST_HANDSHAKE_RENEG_SERVER:
+    case SSL_TEST_HANDSHAKE_RENEG_CLIENT:
+        return 1;
+    default:
+        return 0;
+    }
+}
+static int post_handshake_op(const SSL_TEST_CTX *test_ctx)
+{
+    switch (test_ctx->handshake_mode) {
+    case SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT:
+    case SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER:
+    case SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static connect_phase_t next_phase(const SSL_TEST_CTX *test_ctx,
                                   connect_phase_t phase)
 {
     switch (phase) {
     case HANDSHAKE:
-        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_SERVER
-                || test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RENEG_CLIENT
-                || test_ctx->handshake_mode
-                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT
-                || test_ctx->handshake_mode
-                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER)
+        if (renegotiate_op(test_ctx) || post_handshake_op(test_ctx))
             return RENEG_APPLICATION_DATA;
         return APPLICATION_DATA;
     case RENEG_APPLICATION_DATA:
         return RENEG_SETUP;
     case RENEG_SETUP:
-        if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER
-                || test_ctx->handshake_mode
-                   == SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT)
+        if (post_handshake_op(test_ctx))
             return APPLICATION_DATA;
         return RENEG_HANDSHAKE;
     case RENEG_HANDSHAKE:

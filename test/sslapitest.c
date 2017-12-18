@@ -3306,6 +3306,65 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+static int test_pha_key_update(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_max_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_3_VERSION)))
+        goto end;
+
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    SSL_force_post_handshake_auth(clientssl);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+
+    SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(serverssl)))
+        goto end;
+
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED)))
+        goto end;
+
+    /* Start handshake on the server */
+    if (!TEST_int_eq(SSL_do_handshake(serverssl), 1))
+        goto end;
+
+    /* Starts with SSL_connect(), but it's really just SSL_do_handshake() */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -3352,6 +3411,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_psk);
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
+    ADD_TEST(test_pha_key_update);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif

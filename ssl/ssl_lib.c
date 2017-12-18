@@ -1186,6 +1186,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.alpn);
     OPENSSL_free(s->ext.tls13_cookie);
     OPENSSL_free(s->clienthello);
+    OPENSSL_free(s->pha_context);
+    EVP_MD_CTX_free(s->pha_dgst);
 
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
 
@@ -5317,4 +5319,56 @@ int SSL_stateless(SSL *s)
         return 1;
 
     return 0;
+}
+
+void SSL_force_post_handshake_auth(SSL *ssl)
+{
+    ssl->pha_forced = 1;
+}
+
+int SSL_verify_client_post_handshake(SSL *ssl)
+{
+    if (!SSL_IS_TLS13(ssl)) {
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+    if (!ssl->server) {
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_NOT_SERVER);
+        return 0;
+    }
+
+    if (!SSL_is_init_finished(ssl)) {
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_STILL_IN_INIT);
+        return 0;
+    }
+
+    switch (ssl->post_handshake_auth) {
+    case SSL_PHA_NONE:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_EXTENSION_NOT_RECEIVED);
+        return 0;
+    default:
+    case SSL_PHA_EXT_SENT:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    case SSL_PHA_EXT_RECEIVED:
+        break;
+    case SSL_PHA_REQUEST_PENDING:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_REQUEST_PENDING);
+        return 0;
+    case SSL_PHA_REQUESTED:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_REQUEST_SENT);
+        return 0;
+    }
+
+    ssl->post_handshake_auth = SSL_PHA_REQUEST_PENDING;
+
+    /* checks verify_mode and algorithm_auth */
+    if (!send_certificate_request(ssl)) {
+        ssl->post_handshake_auth = SSL_PHA_EXT_RECEIVED; /* restore on error */
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_INVALID_CONFIG);
+        return 0;
+    }
+
+    ossl_statem_set_in_init(ssl, 1);
+    return 1;
 }
