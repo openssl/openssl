@@ -1865,10 +1865,11 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
             return 1;
     }
     i = strcmp(buff1, buff2);
-    if (i == 0)                 /* wait a second then return younger :-) */
-        return -1;
-    else
-        return i;
+    /*
+     * X509_cmp_time comparison is <=.
+     * The return value 0 is reserved for errors.
+     */
+    return i > 0 ? 1 : -1;
 }
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
