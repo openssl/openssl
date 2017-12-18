@@ -168,6 +168,10 @@ implementations of cryptographic algorithms, and support a
 reference-counted mechanism to allow them to be dynamically loaded in and
 out of the running application.
 
+The environment variable B<OPENSSL_ENGINES> or the application's
+configuration file's engine section can be used to specify a non-default
+engines directory.
+
 The cryptographic functionality that can be provided by an B<ENGINE>
 implementation includes the following abstractions;
 
