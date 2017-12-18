@@ -512,7 +512,14 @@ int DTLSv1_answerHello(SSL *s, BIO *rbio, BIO *wbio)
             return -1;
         }
 
-        /* after this point, if we hit any problems we need to clear this packet from the BIO */
+        /* tell caller size of data in s->init_buf->data */
+        s->init_num = n;
+
+        /*
+         * after this point, if we hit any problems we need to clear this packet
+         * from the BIO, because it was PEEK'ed at the socket level.
+         * if there are no problems, it is left in the socket for SSL_accept().
+         */
         clearpkt = 1;
         if (!PACKET_buf_init(&pkt, buf, n)) {
             SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
@@ -856,6 +863,100 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     if((ret = DTLSv1_answerHello(s, rbio, wbio)) != 1) {
       goto end;
     }
+
+    /*
+     * Set expected sequence numbers to continue the handshake.
+     */
+    s->d1->handshake_read_seq = 1;
+    s->d1->handshake_write_seq = 1;
+    s->d1->next_handshake_write_seq = 1;
+    DTLS_RECORD_LAYER_set_write_sequence(&s->rlayer, seq);
+
+    /*
+     * We are doing cookie exchange, so make sure we set that option in the
+     * SSL object
+     */
+    SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
+
+    /*
+     * Tell the state machine that we've done the initial hello verify
+     * exchange
+     */
+    ossl_statem_set_hello_verify_done(s);
+
+    /*
+     * Some BIOs may not support this. If we fail we clear the client address
+     */
+    if (BIO_dgram_get_peer(rbio, client) <= 0)
+        BIO_ADDR_clear(client);
+
+    ret = 1;
+
+ end:
+    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
+    return ret;
+}
+
+/*
+ * this function should be called by an application expecting a number
+ * of DTLS connections (such as a COAPS server).
+ *
+ * The "serv" SSL structure should contain a BIO with an unconnected socket
+ * which MAY be bound to a specific address (or may be IPv6 with mapped IPv4
+ * address).  Connections will be accepted on this socket, and will checked
+ * for the helloVerify cookie. Ones without will be sent a HelloVerifyRequest.
+ *
+ * All packets in the socket will be processed until one is found with a valid
+ * cookie.  Once that is found, it will be processed into the "connection"
+ * SSL context, but no reply will be generated until SSL_accept() is called
+ * on the next context.
+ *
+ * This should be done *after* creating the application creates a
+ * new socket on which to reply, which should be bind(2)ed and connect(2)ed
+ * to the client based upon BIO_dgram_get_peer/BIO_dgram_get_addr.
+ *
+ */
+int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client)
+{
+    int ret = 0;
+    unsigned char seq[SEQ_NUM_SIZE];
+    BIO *rbio, *wbio;
+
+    if (s->handshake_func == NULL) {
+        /* Not properly initialized yet */
+        SSL_set_accept_state(s);
+    }
+
+    /* Ensure there is no state left over from a previous invocation */
+    if (!SSL_clear(s))
+        return -1;
+
+    ERR_clear_error();
+
+    rbio = SSL_get_rbio(s);
+    wbio = SSL_get_wbio(s);
+
+    if (!rbio || !wbio) {
+        SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_BIO_NOT_SET);
+        return -1;
+    }
+
+    if((ret = DTLSv1_answerHello(s, rbio, wbio)) != 1) {
+      goto end;
+    }
+
+    /* At this point, there is a real ClientHello in s->init_buf */
+
+    /* We need to move the init_buf over to connection, set up
+     * a new socket, and then call SSL_accept() on the new SSL
+     */
+    connection->init_buf = s->init_buf;
+    connection->init_num = s->init_num;
+    s->init_buf = NULL;
+    s->init_num = 0;
+
+    /* dump the data out of the old socket: reads it in again actually */
+    BIO_read(rbio, connection->init_buf->data, SSL3_RT_MAX_PLAIN_LENGTH);
 
     /*
      * Set expected sequence numbers to continue the handshake.
