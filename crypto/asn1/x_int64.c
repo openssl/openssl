@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <inttypes.h>
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
@@ -102,8 +103,8 @@ static int uint64_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
-        return BIO_printf(out, "%jd\n", **(int64_t **)pval);
-    return BIO_printf(out, "%ju\n", **(uint64_t **)pval);
+        return BIO_printf(out, "%" PRId64 "d\n", **(int64_t **)pval);
+    return BIO_printf(out, "%" PRIu64 "\n", **(uint64_t **)pval);
 }
 
 /* 32-bit variants */

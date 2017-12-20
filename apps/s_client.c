@@ -10,6 +10,7 @@
 
 #include "e_os.h"
 #include <ctype.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -3160,8 +3161,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
         BIO_printf(bio,
-                   "---\nSSL handshake has read %ju bytes "
-                   "and written %ju bytes\n",
+                   "---\nSSL handshake has read %" PRIu64 " bytes "
+                   "and written %" PRIu64" bytes\n",
                    BIO_number_read(SSL_get_rbio(s)),
                    BIO_number_written(SSL_get_wbio(s)));
     }
