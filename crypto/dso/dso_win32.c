@@ -32,7 +32,7 @@ static FARPROC GetProcAddressA(HMODULE hModule, LPCSTR lpProcName)
 #  endif
 
 
-static HINSTANCE A(LPCSTR lpLibFileName)
+static HINSTANCE LoadLibraryInternalA(LPCSTR lpLibFileName)
 {
     WCHAR *fnamw;
     size_t len_0 = strlen(lpLibFileName) + 1, i;
@@ -107,7 +107,12 @@ static int win32_load(DSO *dso)
         DSOerr(DSO_F_WIN32_LOAD, DSO_R_NO_FILENAME);
         goto err;
     }
-    h = A(filename);
+
+#ifdef OPENSSL_SYS_WIN_CORE
+	h = LoadLibraryInternalA(filename);
+#else
+	h = LoadLibraryA(filename);
+#endif 
     if (h == NULL) {
         DSOerr(DSO_F_WIN32_LOAD, DSO_R_LOAD_FAILED);
         ERR_add_error_data(3, "filename(", filename, ")");
