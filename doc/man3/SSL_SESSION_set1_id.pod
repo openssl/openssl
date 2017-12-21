@@ -21,7 +21,7 @@ SSL_SESSION_get_id() returns a pointer to the internal session id value for the
 session B<s>. The length of the id in bytes is stored in B<*len>. The length may
 be 0. The caller should not free the returned pointer directly.
 
-SSL_SESSION_set1_id() sets the the session ID for the B<ssl> SSL/TLS session
+SSL_SESSION_set1_id() sets the session ID for the B<ssl> SSL/TLS session
 to B<sid> of length B<sid_len>.
 
 =head1 RETURN VALUES
