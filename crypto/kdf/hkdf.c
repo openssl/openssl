@@ -174,6 +174,13 @@ static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     return -2;
 }
 
+static int pkey_hkdf_derive_init(EVP_PKEY_CTX *ctx)
+{
+    HKDF_PKEY_CTX *kctx = ctx->data;
+    memset(kctx, 0, sizeof(*kctx));
+    return 1;
+}
+
 static int pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                             size_t *keylen)
 {
@@ -235,7 +242,7 @@ const EVP_PKEY_METHOD hkdf_pkey_meth = {
 
     0, 0,
 
-    0,
+    pkey_hkdf_derive_init,
     pkey_hkdf_derive,
     pkey_hkdf_ctrl,
     pkey_hkdf_ctrl_str
