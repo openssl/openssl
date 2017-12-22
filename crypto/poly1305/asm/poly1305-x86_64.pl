@@ -2162,17 +2162,17 @@ $code.=<<___;
 	vmovdqa		96(%rcx),%y#$T2		# .Lpermd_avx2
 
 	# expand pre-calculated table
-	vmovdqu		`16*0-64`($ctx),%x#$D0	# ${R0}{%k2}{z}
+	vmovdqu		`16*0-64`($ctx),%x#$D0	# will become expanded ${R0}
 	and		\$-512,%rsp
-	vmovdqu		`16*1-64`($ctx),%x#$D1	# ${R1}{%k2}{z}
+	vmovdqu		`16*1-64`($ctx),%x#$D1	# will become ... ${R1}
 	mov		\$0x20,%rax
-	vmovdqu		`16*2-64`($ctx),%x#$T0	# ${S1}{%k2}{z}
-	vmovdqu		`16*3-64`($ctx),%x#$D2	# ${R2}{%k2}{z}
-	vmovdqu		`16*4-64`($ctx),%x#$T1	# ${S2}{%k2}{z}
-	vmovdqu		`16*5-64`($ctx),%x#$D3	# ${R3}{%k2}{z}
-	vmovdqu		`16*6-64`($ctx),%x#$T3	# ${S3}{%k2}{z}
-	vmovdqu		`16*7-64`($ctx),%x#$D4	# ${R4}{%k2}{z}
-	vmovdqu		`16*8-64`($ctx),%x#$T4	# ${S4}{%k2}{z}
+	vmovdqu		`16*2-64`($ctx),%x#$T0	# ... ${S1}
+	vmovdqu		`16*3-64`($ctx),%x#$D2	# ... ${R2}
+	vmovdqu		`16*4-64`($ctx),%x#$T1	# ... ${S2}
+	vmovdqu		`16*5-64`($ctx),%x#$D3	# ... ${R3}
+	vmovdqu		`16*6-64`($ctx),%x#$T3	# ... ${S3}
+	vmovdqu		`16*7-64`($ctx),%x#$D4	# ... ${R4}
+	vmovdqu		`16*8-64`($ctx),%x#$T4	# ... ${S4}
 	vpermd		$D0,$T2,$R0		# 00003412 -> 14243444
 	vpbroadcastq	64(%rcx),$MASK		# .Lmask26
 	vpermd		$D1,$T2,$R1
