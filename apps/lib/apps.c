@@ -483,9 +483,14 @@ X509 *load_cert(const char *file, int format, const char *desc)
         if (!load_pkcs12(cert, desc, NULL, NULL, NULL, &x, NULL))
             goto end;
     } else {
-        BIO_printf(bio_err, "bad input format specified for %s\n", cert_descrip);
+        print_format_error(format,
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
+                                   OPT_FMT_HTTP |
+#endif
+                                   OPT_FMT_PEMDER | OPT_FMT_PKCS12);
         goto end;
     }
+
  end:
     if (x == NULL && desc != NULL) {
         BIO_printf(bio_err, "unable to load %s\n", desc);
@@ -515,7 +520,7 @@ X509_CRL *load_crl(const char *infile, int format, const char *desc)
     } else if (format == FORMAT_PEM) {
         x = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
     } else {
-        BIO_printf(bio_err, "bad input format specified for input crl\n");
+        print_format_error(format, OPT_FMT_PEMDER);
         goto end;
     }
 
@@ -542,8 +547,10 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
         req = d2i_X509_REQ_bio(in, NULL);
     else if (format == FORMAT_PEM)
         req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);
-    else if (desc)
-        BIO_printf(bio_err, "unsupported format for loading %s\n", desc);
+    else {
+        print_format_error(format, OPT_FMT_PEMDER);
+        goto end;
+    }
 
  end:
     if (req == NULL && desc != NULL) {
@@ -613,7 +620,14 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         pkey = b2i_PVK_bio(key, wrap_password_callback, &cb_data);
 #endif
     } else {
-        BIO_printf(bio_err, "bad input format specified for key file\n");
+        print_format_error(format, OPT_FMT_PEMDER | OPT_FMT_PKCS12
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
+                                 | OPT_FMT_MSBLOB | FORMAT_PVK
+#endif
+#ifndef OPENSSL_NO_ENGINE
+                                 | OPT_FMT_ENGINE
+#endif
+                           );
         goto end;
     }
  end:
@@ -704,6 +718,12 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
     } else if (format == FORMAT_MSBLOB) {
         pkey = b2i_PublicKey_bio(key);
 #endif
+    } else {
+        print_format_error(format, OPT_FMT_PEMDER
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
+                                 | OPT_FMT_MSBLOB
+#endif
+                           );
     }
  end:
     BIO_free(key);
