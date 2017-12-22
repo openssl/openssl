@@ -342,6 +342,7 @@ char *opt_init(int ac, char **av, const OPTIONS * o);
 int opt_next(void);
 void opt_begin(void);
 int opt_format(const char *s, unsigned long flags, int *result);
+const char *format2str(int format);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
@@ -370,6 +371,7 @@ int opt_provider(int i);
 void opt_help(const OPTIONS * list);
 void opt_print(const OPTIONS * opt, int doingparams, int width);
 int opt_format_error(const char *s, unsigned long flags);
+void print_format_error(int format, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
 
