@@ -278,7 +278,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     *cipherp = EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unknown cipher %s\n", prog, name);
+    BIO_printf(bio_err, "%s: Unrecognized flag %s\n", prog, name);
     return 0;
 }
 
@@ -290,7 +290,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unknown digest %s\n", prog, name);
+    BIO_printf(bio_err, "%s: Unrecognized flag %s\n", prog, name);
     return 0;
 }
 
