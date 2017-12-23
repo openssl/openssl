@@ -50,7 +50,6 @@ typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
 
 typedef uint8_t u8;
 typedef uint64_t u64;
-typedef int64_t s64;
 
 /******************************************************************************/
 /*-
