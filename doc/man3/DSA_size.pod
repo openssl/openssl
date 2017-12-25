@@ -26,7 +26,7 @@ of bits in the B<p> parameter.
 DSA_security_bits() returns the number of security bits of the given B<dsa>
 key. See L<BN_security_bits(3)>.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 DSA_size() returns the signature size in bytes.
 

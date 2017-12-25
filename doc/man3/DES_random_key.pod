@@ -243,6 +243,9 @@ third parameter.  This mostly emulates the normal non-thread-safe semantics
 of crypt(3).
 The B<salt> must be two ASCII characters.
 
+The values returned by DES_fcrypt() and DES_crypt() are terminated by NUL
+character.
+
 DES_enc_write() writes I<len> bytes to file descriptor I<fd> from
 buffer I<buf>. The data is encrypted via I<pcbc_encrypt> (default)
 using I<sched> for the key and I<iv> as a starting vector.  The actual
@@ -282,6 +285,17 @@ functions directly.
 Single-key DES is insecure due to its short key size.  ECB mode is
 not suitable for most applications; see L<des_modes(7)>.
 
+=head1 RETURN VALUES
+
+DES_set_key(), DES_key_sched(), DES_set_key_checked() and DES_is_weak_key()
+return 0 on success or negative values on error.
+
+DES_cbc_cksum() and DES_quad_cksum() return 4-byte integer representing the
+last 4 bytes of the checksum of the input.
+
+DES_fcrypt() returns a pointer to the caller-provided buffer and DES_crypt() -
+to a static buffer on success; otherwise they return NULL.
+
 =head1 HISTORY
 
 The requirement that the B<salt> parameter to DES_crypt() and DES_fcrypt()
@@ -297,7 +311,7 @@ L<EVP_EncryptInit(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

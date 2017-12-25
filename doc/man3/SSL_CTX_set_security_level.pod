@@ -158,13 +158,29 @@ key using SSL_CTX_use_certificate() at level 1. Applications which do not
 check the return values for errors will misbehave: for example it might
 appear that a certificate is not set at all because it had been rejected.
 
+=head1 RETURN VALUES
+
+SSL_CTX_set_security_level() and SSL_set_security_level() do not return values.
+
+SSL_CTX_get_security_level() and SSL_get_security_level() return a integer that
+represents the security level with B<SSL_CTX> or B<SSL>, respectively.
+
+SSL_CTX_set_security_callback() and SSL_set_security_callback() do not return
+values.
+
+SSL_CTX_get_security_callback() and SSL_get_security_callback() return the pointer
+to the security callback or NULL if the callback is not set.
+
+SSL_CTX_get0_security_ex_data() and SSL_get0_security_ex_data() return the extra
+data pointer or NULL if the ex data is not set.
+
 =head1 HISTORY
 
 These functions were first added to OpenSSL 1.1.0
 
 =head1 COPYRIGHT
 
-Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

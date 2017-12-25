@@ -22,7 +22,7 @@ BIO_get_mem_ptr, BIO_new_mem_buf - memory BIO
 
 =head1 DESCRIPTION
 
-BIO_s_mem() return the memory BIO method function.
+BIO_s_mem() returns the memory BIO method function.
 
 A memory BIO is a source/sink BIO which uses memory for its I/O. Data
 written to a memory BIO is stored in a BUF_MEM structure which is extended
@@ -113,9 +113,18 @@ Extract the BUF_MEM structure from a memory BIO and then free up the BIO:
  BIO_set_close(mem, BIO_NOCLOSE); /* So BIO_free() leaves BUF_MEM alone */
  BIO_free(mem);
 
+=head1 RETURN VALUES
+
+BIO_s_mem() and BIO_s_secmem() return a valid memory B<BIO_METHOD> structure.
+
+BIO_set_mem_eof_return(), BIO_get_mem_data(), BIO_set_mem_buf() and BIO_get_mem_ptr()
+return 1 on success or a value which is less than or equal to 0 if an error occurred.
+
+BIO_new_mem_buf() returns a valid B<BIO> structure on success or NULL on error.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

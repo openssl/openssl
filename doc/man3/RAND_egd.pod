@@ -34,7 +34,7 @@ RAND_add() is not called.
 OpenSSL can be configured at build time to try to use the EGD for seeding
 automatically.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 RAND_egd() and RAND_egd_bytes() return the number of bytes read from the
 daemon on success, or -1 if the connection failed or the daemon did not

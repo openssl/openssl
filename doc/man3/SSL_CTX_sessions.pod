@@ -25,6 +25,10 @@ L<LHASH(3)> operations, so that the database must not be
 modified directly but by using the
 L<SSL_CTX_add_session(3)> family of functions.
 
+=head1 RETURN VALUES
+
+SSL_CTX_sessions() returns a pointer to the lhash of B<SSL_SESSION>.
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<LHASH(3)>,
@@ -33,7 +37,7 @@ L<SSL_CTX_set_session_cache_mode(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

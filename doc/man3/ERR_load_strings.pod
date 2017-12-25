@@ -36,7 +36,7 @@ The last entry in the array is {0,0}.
 ERR_get_next_error_library() can be used to assign library numbers
 to user libraries at runtime.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 ERR_load_strings() returns no value. ERR_PACK() return the error code.
 ERR_get_next_error_library() returns zero on failure, otherwise a new

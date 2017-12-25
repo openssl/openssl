@@ -67,6 +67,21 @@ X509_NAME_add_entry_by_txt(). So for example B<type> can be set to
 B<MBSTRING_ASC> but in the case of X509_set_data() the field name must be
 set first so the relevant field information can be looked up internally.
 
+=head1 RETURN VALUES
+
+X509_NAME_ENTRY_get_object() returns a valid B<ASN1_OBJECT> structure if it is
+set or NULL if an error occurred.
+
+X509_NAME_ENTRY_get_data() returns a valid B<ASN1_STRING> structure if it is set
+or NULL if an error occurred.
+
+X509_NAME_ENTRY_set_object() and X509_NAME_ENTRY_set_data() return 1 on success
+or 0 on error.
+
+X509_NAME_ENTRY_create_by_txt(), X509_NAME_ENTRY_create_by_NID() and
+X509_NAME_ENTRY_create_by_OBJ() return a valid B<X509_NAME_ENTRY> on success or
+NULL if an error occurred.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<d2i_X509_NAME(3)>,
@@ -74,7 +89,7 @@ L<OBJ_nid2obj(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

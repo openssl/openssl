@@ -19,7 +19,7 @@ the PRNG.  As of version 1.1.0, it does nothing and should not be called,
 since no explicit initialisation or de-initialisation is necessary. See
 L<OPENSSL_init_crypto(3)>.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 RAND_cleanup() returns no value.
 

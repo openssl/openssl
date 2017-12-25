@@ -73,7 +73,7 @@ it is called as B<BN_GENCB_call(cb, 3, 0)>.
 The process is then repeated for prime q and other primes (if any)
 with B<BN_GENCB_call(cb, 3, i)> where B<i> indicates the i-th prime.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 RSA_generate_multi_prime_key() returns 1 on success or 0 on error.
 RSA_generate_key_ex() returns 1 on success or 0 on error.

@@ -38,6 +38,11 @@ be called before a fork() is done.  After the fork() returns, the parent
 process should call OPENSSL_fork_parent() and the child process should
 call OPENSSL_fork_child().
 
+=head1 RETURN VALUES
+
+OPENSSL_fork_prepare(), OPENSSL_fork_parent() and OPENSSL_fork_child() do not
+return values.
+
 =head1 SEE ALSO
 
 L<OPENSSL_init_crypto(3)>

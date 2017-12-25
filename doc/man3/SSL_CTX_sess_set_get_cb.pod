@@ -89,6 +89,11 @@ Normally the reference count is not incremented and therefore the
 session must not be explicitly freed with
 L<SSL_SESSION_free(3)>.
 
+=head1 RETURN VALUES
+
+SSL_CTX_sess_get_new_cb(), SSL_CTX_sess_get_remove_cb() and SSL_CTX_sess_get_get_cb()
+return different callback function pointers respectively.
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<d2i_SSL_SESSION(3)>,

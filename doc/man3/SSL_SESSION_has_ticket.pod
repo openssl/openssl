@@ -29,6 +29,12 @@ NULL then a pointer to the ticket is written to B<*tick>. The pointer is only
 valid while the connection is in use. The session (and hence the ticket pointer)
 may also become invalid as a result of a call to SSL_CTX_flush_sessions().
 
+=head1 RETURN VALUES
+
+SSL_SESSION_has_ticket() returns 1 if session ticket exists or 0 otherwise.
+
+SSL_SESSION_get_ticket_lifetime_hint() returns the number of seconds.
+
 =head1 SEE ALSO
 
 L<ssl(7)>,
@@ -43,7 +49,7 @@ SSL_SESSION_get0_ticket were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -48,6 +48,14 @@ an offset into the opaque exdata part of the TYPE object.
 TYPE_get_ex_data() is a function that calls CRYPTO_get_ex_data() with
 an offset into the opaque exdata part of the TYPE object.
 
+=head1 RETURN VALUES
+
+TYPE_get_new_ex_index() returns a new index on success or -1 on error.
+
+TYPE_set_ex_data() returns 1 on success or 0 on error.
+
+TYPE_get_ex_data() returns the application data or NULL if an error occurred.
+
 =head1 SEE ALSO
 
 L<CRYPTO_get_ex_new_index(3)>.

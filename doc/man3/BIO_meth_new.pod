@@ -133,6 +133,17 @@ the L<BIO_callback_ctrl(3)> page for more information. This function will be cal
 in response to the application calling BIO_callback_ctrl(). The parameters for
 the function have the same meaning as for BIO_callback_ctrl().
 
+=head1 RETURN VALUES
+
+BIO_get_new_index() returns the new BIO type value or -1 if an error occurred.
+
+BIO_meth_new(int type, const char *name) returns a valid B<BIO_METHOD> or NULL
+if an error occurred.
+
+The B<BIO_meth_set> functions return 1 on success or 0 on error.
+
+The B<BIO_meth_get> functions return the corresponding function pointers.
+
 =head1 SEE ALSO
 
 L<bio>, L<BIO_find_type>, L<BIO_ctrl>, L<BIO_read_ex>, L<BIO_new>

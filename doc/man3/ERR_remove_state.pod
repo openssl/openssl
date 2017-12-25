@@ -23,7 +23,7 @@ thread, identified by B<tid>.
 ERR_remove_thread_state() does the same thing, except the identifier is
 an opaque pointer.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 ERR_remove_state() and ERR_remove_thread_state() return no value.
 
