@@ -14,6 +14,10 @@ BN_swap - exchange BIGNUMs
 
 BN_swap() exchanges the values of I<a> and I<b>.
 
+=head1 RETURN VALUES
+
+BN_swap() does not return a value.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.

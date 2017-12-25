@@ -63,6 +63,11 @@ object. It will not be reset by calling L<SSL_clear(3)>.
 If the callback returns no certificate, the OpenSSL library will not send
 a certificate.
 
+=head1 RETURN VALUES
+
+SSL_CTX_get_client_cert_cb() returns function pointer of client_cert_cb() or
+NULL if the callback is not set.
+
 =head1 BUGS
 
 The client_cert_cb() cannot return a complete certificate chain, it can
@@ -96,7 +101,7 @@ L<SSL_clear(3)>, L<SSL_free(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

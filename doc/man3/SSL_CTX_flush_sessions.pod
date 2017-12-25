@@ -34,6 +34,10 @@ cache. When a session is found and removed, the remove_session_cb is however
 called to synchronize with the external cache (see
 L<SSL_CTX_sess_set_get_cb(3)>).
 
+=head1 RETURN VALUES
+
+SSL_CTX_flush_sessions() does not return a value.
+
 =head1 SEE ALSO
 
 L<ssl(7)>,
@@ -43,7 +47,7 @@ L<SSL_CTX_sess_set_get_cb(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

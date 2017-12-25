@@ -41,6 +41,15 @@ value in B<alpn> which should be of length B<len> bytes. A copy of the input
 value is made, and the caller retains ownership of the memory pointed to by
 B<alpn>.
 
+=head1 RETURN VALUES
+
+SSL_SESSION_get0_hostname() returns either a string or NULL based on if there
+is the SNI value sent by client.
+
+SSL_SESSION_set1_hostname() returns 1 on success or 0 on error.
+
+SSL_SESSION_set1_alpn_selected() returns 1 on success or 0 on error.
+
 =head1 SEE ALSO
 
 L<ssl(7)>,

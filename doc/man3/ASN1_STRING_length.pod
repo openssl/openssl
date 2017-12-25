@@ -77,13 +77,33 @@ character in big endian format, UTF8String will be in UTF8 format.
 Similar care should be take to ensure the data is in the correct format
 when calling ASN1_STRING_set().
 
+=head1 RETURN VALUES
+
+ASN1_STRING_length() returns the length of the content of B<x>.
+
+ASN1_STRING_get0_data() and ASN1_STRING_data() return an internal pointer to
+the data of B<x>.
+
+ASN1_STRING_dup() returns a valid B<ASN1_STRING> structure or B<NULL> if an
+error occurred.
+
+ASN1_STRING_cmp() returns an integer greater than, equal to, or less than 0,
+according to whether B<a> is greater than, equal to, or less than B<b>.
+
+ASN1_STRING_set() returns 1 on success or 0 on error.
+
+ASN1_STRING_type() returns the type of B<x>.
+
+ASN1_STRING_to_UTF8() returns the number of bytes in output string B<out> or a
+negative value if an error occurred.
+
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

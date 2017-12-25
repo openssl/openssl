@@ -10,7 +10,7 @@ OPENSSL_load_builtin_modules, ASN1_add_oid_module, ENGINE_add_conf_module - add 
 
  void OPENSSL_load_builtin_modules(void);
  void ASN1_add_oid_module(void);
- ENGINE_add_conf_module();
+ void ENGINE_add_conf_module(void);
 
 =head1 DESCRIPTION
 
@@ -36,7 +36,7 @@ configuration modules instead of adding modules selectively: otherwise
 functionality may be missing from the application if an when new
 modules are added.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 None of the functions return a value.
 
@@ -46,7 +46,7 @@ L<config(5)>, L<OPENSSL_config(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

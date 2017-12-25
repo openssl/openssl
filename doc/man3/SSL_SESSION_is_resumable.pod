@@ -18,6 +18,10 @@ to resume a session or not. Returns 1 if it can or 0 if not. Note that
 attempting to resume with a non-resumable session will result in a full
 handshake.
 
+=head1 RETURN VALUES
+
+SSL_SESSION_is_resumable() returns 1 if the session is resumable or 0 otherwise.
+
 =head1 SEE ALSO
 
 L<ssl(7)>,

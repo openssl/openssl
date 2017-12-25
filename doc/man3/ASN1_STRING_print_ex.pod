@@ -89,6 +89,15 @@ equivalent to:
  ASN1_STRFLGS_ESC_2253 | ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB |
  ASN1_STRFLGS_UTF8_CONVERT | ASN1_STRFLGS_DUMP_UNKNOWN ASN1_STRFLGS_DUMP_DER
 
+=head1 RETURN VALUES
+
+ASN1_STRING_print_ex() and ASN1_STRING_print_ex_fp() return the number of
+characters written or -1 if an error occurred.
+
+ASN1_STRING_print() returns 1 on success or 0 on error.
+
+ASN1_tag2str() returns a human-readable name of the specified ASN.1 B<tag>.
+
 =head1 SEE ALSO
 
 L<X509_NAME_print_ex(3)>,

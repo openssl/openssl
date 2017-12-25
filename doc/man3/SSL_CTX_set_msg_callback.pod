@@ -117,6 +117,11 @@ an "inner" content type. B<buf> contains the encoded "inner" content type byte.
 
 =back
 
+=head1 RETURN VALUES
+
+SSL_CTX_set_msg_callback(), SSL_CTX_set_msg_callback_arg(), SSL_set_msg_callback()
+and SSL_set_msg_callback_arg() do not return values.
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<SSL_new(3)>

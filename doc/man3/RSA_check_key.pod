@@ -33,7 +33,7 @@ manner as L<BN_is_prime_ex(3)>.
 
 RSA_check_key() is equivalent to RSA_check_key_ex() with a NULL B<cb>.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 RSA_check_key_ex() and RSA_check_key()
 return 1 if B<rsa> is a valid RSA key, and 0 otherwise.
@@ -74,7 +74,7 @@ RSA_check_key_ex() appeared after OpenSSL 1.0.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

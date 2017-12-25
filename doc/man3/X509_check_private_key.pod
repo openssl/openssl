@@ -22,7 +22,7 @@ key B<k> with the public key in B<x>.
 X509_REQ_check_private_key() is equivalent to X509_check_private_key()
 except that B<x> represents a certificate request of structure B<X509_REQ>.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 X509_check_private_key() and X509_REQ_check_private_key() return 1 if
 the keys match each other, and 0 if not.

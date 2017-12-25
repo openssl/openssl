@@ -571,6 +571,78 @@ The path to the engines directory.
 
 =back
 
+=head1 RETURN VALUES
+
+ENGINE_get_first(), ENGINE_get_last(), ENGINE_get_next() and ENGINE_get_prev()
+return a valid B<ENGINE> structure or NULL if an error occurred.
+
+ENGINE_add() and ENGINE_remove() return 1 on success or 0 on error.
+
+ENGINE_by_id() returns a valid B<ENGINE> structure or NULL if an error occurred.
+
+ENGINE_init() and ENGINE_finish() return 1 on success or 0 on error.
+
+All ENGINE_get_default_TYPE() functions, ENGINE_get_cipher_engine() and
+ENGINE_get_digest_engine() return a valid B<ENGINE> structure on success or NULL
+if an error occurred.
+
+All ENGINE_set_default_TYPE() functions return 1 on success or 0 on error.
+
+ENGINE_set_default() returns 1 on success or 0 on error.
+
+ENGINE_get_table_flags() returns an unsigned integer value representing the
+global table flags which are used to control the registration behaviour of
+B<ENGINE> implementations.
+
+All ENGINE_register_TYPE() functions return 1 on success or 0 on error.
+
+ENGINE_register_complete() and ENGINE_register_all_complete() return 1 on success
+or 0 on error.
+
+ENGINE_ctrl() returns a positive value on success or others on error.
+
+ENGINE_cmd_is_executable() returns 1 if B<cmd> is executable or 0 otherwise.
+
+ENGINE_ctrl_cmd() and ENGINE_ctrl_cmd_string() return 1 on success or 0 on error.
+
+ENGINE_new() returns a valid B<ENGINE> structure on success or NULL if an error
+occurred.
+
+ENGINE_free() returns 1 on success or 0 on error.
+
+ENGINE_up_ref() returns 1 on success or 0 on error.
+
+ENGINE_set_id() and ENGINE_set_name() return 1 on success or 0 on error.
+
+All other B<ENGINE_set_*> functions return 1 on success or 0 on error.
+
+ENGINE_get_id() and ENGINE_get_name() return a string representing the identifier
+and the name of the ENGINE B<e> respectively.
+
+ENGINE_get_RSA(), ENGINE_get_DSA(), ENGINE_get_DH() and ENGINE_get_RAND()
+return corresponding method structures for each algorithms.
+
+ENGINE_get_destroy_function(), ENGINE_get_init_function(),
+ENGINE_get_finish_function(), ENGINE_get_ctrl_function(),
+ENGINE_get_load_privkey_function(), ENGINE_get_load_pubkey_function(),
+ENGINE_get_ciphers() and ENGINE_get_digests() return corresponding function
+pointers of the callbacks.
+
+ENGINE_get_cipher() returns a valid B<EVP_CIPHER> structure on success or NULL
+if an error occurred.
+
+ENGINE_get_digest() returns a valid B<EVP_MD> structure on success or NULL if an
+error occurred.
+
+ENGINE_get_flags() returns an integer representing the ENGINE flags which are
+used to control various behaviours of an ENGINE.
+
+ENGINE_get_cmd_defns() returns an B<ENGINE_CMD_DEFN> structure or NULL if it's
+not set.
+
+ENGINE_load_private_key() and ENGINE_load_public_key() return a valid B<EVP_PKEY>
+structure on success or NULL if an error occurred.
+
 =head1 SEE ALSO
 
 L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>,

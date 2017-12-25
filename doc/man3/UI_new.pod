@@ -209,6 +209,34 @@ For Windows, if the OPENSSL_WIN32_UTF8 environment variable is set,
 the built-in method UI_OpenSSL() will produce UTF-8 encoded strings
 instead.
 
+=head1 RETURN VALUES
+
+UI_new() and UI_new_method() return a valid B<UI> structure or NULL if an error
+occurred.
+
+UI_add_input_string(), UI_dup_input_string(), UI_add_verify_string(),
+UI_dup_verify_string(), UI_add_input_boolean(), UI_dup_input_boolean(),
+UI_add_info_string(), UI_dup_info_string(), UI_add_error_string()
+and UI_dup_error_string() return a positive number on success or a value which
+is less than or equal to 0 otherwise.
+
+UI_construct_prompt() returns a string or NULL if an error occurred.
+
+UI_dup_user_data() returns 0 on success or -1 on error.
+
+UI_get0_result() returns a string or NULL on error.
+
+UI_get_result_length() returns a positive integer or 0 on success; otherwise it
+returns -1 on error.
+
+UI_process() returns 0 on success or a negative value on error.
+
+UI_ctrl() returns a mask on success or -1 on error.
+
+UI_get_default_method(), UI_get_method(), UI_Openssl(), UI_null() and
+UI_set_method() return either a valid B<UI_METHOD> structure or NULL
+respectively.
+
 =head1 HISTORY
 
 UI_dup_user_data()

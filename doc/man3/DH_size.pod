@@ -28,7 +28,7 @@ B<dh> and B<dh-E<gt>p> must not be B<NULL>.
 DH_security_bits() returns the number of security bits of the given B<dh>
 key. See L<BN_security_bits(3)>.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 DH_size() returns the prime size of Diffie-Hellman in bytes.
 

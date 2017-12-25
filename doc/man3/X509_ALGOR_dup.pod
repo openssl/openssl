@@ -36,9 +36,21 @@ values for the message digest B<md>.
 X509_ALGOR_cmp() compares B<a> and B<b> and returns 0 if they have identical
 encodings and non-zero otherwise.
 
+=head1 RETURN VALUES
+
+X509_ALGOR_dup() returns a valid B<X509_ALGOR> structure or NULL if an error
+occurred.
+
+X509_ALGOR_set0() returns 1 on success or 0 on error.
+
+X509_ALGOR_get0() and X509_ALGOR_set_md() return no values.
+
+X509_ALGOR_cmp() returns 0 if the two parameters have identical encodings and
+non-zero otherwise.
+
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
