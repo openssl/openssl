@@ -444,7 +444,7 @@ static int dgram_read(BIO *b, char *out, int outl)
     BIO_ADDR addr;
 
     if (out != NULL) {
-        struct sockaddr *sa = (struct sockaddr *)BIO_ADDR_sockaddr(&data->peer);
+      int family = BIO_get_accept_ip_family(b);
 
         clear_socket_error();
         memset(&peer, 0, sizeof(peer));
@@ -452,7 +452,7 @@ static int dgram_read(BIO *b, char *out, int outl)
         if (data->peekmode)
             flags = MSG_PEEK;
 
-        switch(sa->sa_family) {
+        switch(family) {
         case AF_INET:
           ret = dgram_read_unconnected_v4(b, out, outl, flags, &addr, &peer);
           break;
@@ -579,9 +579,9 @@ static int dgram_write(BIO *b, const char *in, int inl)
     if (data->connected)
         ret = writesocket(b->num, in, inl);
     else {
-        struct sockaddr *sa = (struct sockaddr *)BIO_ADDR_sockaddr(&data->peer);
+        int family = BIO_get_accept_ip_family(b);
 
-        switch(sa->sa_family) {
+        switch(family) {
         case AF_INET:
           ret = dgram_write_unconnected_v4(b, in, inl);
           break;
@@ -1058,6 +1058,16 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DGRAM_SET_PEEK_MODE:
         data->peekmode = (unsigned int)num;
         break;
+
+    case BIO_C_GET_ACCEPT:
+        addr_len = (socklen_t) sizeof(addr);
+        memset(&addr, 0, sizeof(addr));
+        if (getsockname(b->num, &addr.sa, &addr_len) < 0) {
+            ret = 0;
+            break;
+        }
+        return addr.sa.sa_family;
+
     default:
         ret = 0;
         break;
