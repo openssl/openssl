@@ -290,9 +290,21 @@ X.509 Certificate Data Management.
 
 =over 4
 
+=item B<blake2b512>
+
+BLAKE2b-512 Digest
+
+=item B<blake2s256>
+
+BLAKE2s-256 Digest
+
 =item B<md2>
 
 MD2 Digest
+
+=item B<md4>
+
+MD4 Digest
 
 =item B<md5>
 
@@ -306,29 +318,53 @@ MDC2 Digest
 
 RMD-160 Digest
 
-=item B<sha>
-
-SHA Digest
-
 =item B<sha1>
 
 SHA-1 Digest
 
 =item B<sha224>
 
-SHA-224 Digest
+SHA-2 224 Digest
 
 =item B<sha256>
 
-SHA-256 Digest
+SHA-2 256 Digest
 
 =item B<sha384>
 
-SHA-384 Digest
+SHA-2 384 Digest
 
 =item B<sha512>
 
-SHA-512 Digest
+SHA-2 512 Digest
+
+=item B<sha3-224>
+
+SHA-3 224 Digest
+
+=item B<sha3-256>
+
+SHA-3 256 Digest
+
+=item B<sha3-384>
+
+SHA-3 384 Digest
+
+=item B<sha3-512>
+
+SHA-3 512 Digest
+
+=item B<shake128>
+
+SHA-3 SHAKE128 Digest
+
+=item B<shake256>
+
+SHA-3 SHAKE256 Digest
+
+=item B<sm3>
+
+SM3 Digest
 
 =back
 
