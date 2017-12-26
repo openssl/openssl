@@ -19,7 +19,6 @@
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "../crypto/include/internal/x509_int.h"
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
@@ -140,9 +139,12 @@ const OPTIONS req_options[] = {
     {NULL}
 };
 
-// Add a subjectAltName extension to the given X509_REQ, with the provided
-// value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
-static int req_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509_REQ *req) {
+/*
+ * Add a subjectAltName extension to the given X509_REQ, with the provided
+ * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
+ */
+static int req_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509_REQ *req)
+{
   STACK_OF(X509_EXTENSION) *extlist = sk_X509_EXTENSION_new_null();
   X509_EXTENSION *ext;
   ext = X509V3_EXT_nconf_nid(req_conf, ctx, NID_subject_alt_name, value);
@@ -153,15 +155,18 @@ static int req_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509_REQ *
   return X509_REQ_add_extensions(req, extlist);
 }
 
-// Add a subjectAltName extension to the given certificate, with the provided
-// value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
-static int x509_add_subjectaltname(CONF *req_conf, X509V3_CTX *ctx, const char *value, X509 *cert) {
+/*
+ * Add a subjectAltName extension to the given certificate, with the provided
+ * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
+ */
+static int x509_add_subjectaltname(CONF *req_conf, X509V3_CTX *ctx, const char *value, X509 *cert)
+{
   X509_EXTENSION *ext;
   ext = X509V3_EXT_nconf_nid(req_conf, ctx, NID_subject_alt_name, value);
   if (ext == NULL) {
     return 0;
   }
-  X509v3_add_ext(&cert->cert_info.extensions, ext, -1);
+  X509_add_ext(&cert, ext, -1);
   X509_EXTENSION_free(ext);
   return 1;
 }
