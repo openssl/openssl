@@ -488,7 +488,6 @@ X509 *load_cert(const char *file, int format, const char *desc)
                                    OPT_FMT_HTTP |
 #endif
                                    OPT_FMT_PEMDER | OPT_FMT_PKCS12);
-        goto end;
     }
 
  end:
@@ -519,16 +518,13 @@ X509_CRL *load_crl(const char *infile, int format, const char *desc)
         x = d2i_X509_CRL_bio(in, NULL);
     } else if (format == FORMAT_PEM) {
         x = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
-    } else {
+    } else
         print_format_error(format, OPT_FMT_PEMDER);
-        goto end;
-    }
 
  end:
     if (x == NULL && desc != NULL) {
         BIO_printf(bio_err, "unable to load %s\n", desc);
         ERR_print_errors(bio_err);
-        goto end;
     }
     BIO_free(in);
     return x;
@@ -547,10 +543,8 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
         req = d2i_X509_REQ_bio(in, NULL);
     else if (format == FORMAT_PEM)
         req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);
-    else {
+    else
         print_format_error(format, OPT_FMT_PEMDER);
-        goto end;
-    }
 
  end:
     if (req == NULL && desc != NULL) {
@@ -628,8 +622,8 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
                                  | OPT_FMT_ENGINE
 #endif
                            );
-        goto end;
     }
+
  end:
     BIO_free(key);
     if (pkey == NULL && desc != NULL) {
