@@ -159,7 +159,7 @@ static int req_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509_REQ *
  * Add a subjectAltName extension to the given certificate, with the provided
  * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
  */
-static int x509_add_subjectaltname(CONF *req_conf, X509V3_CTX *ctx, const char *value, X509 *cert)
+static int x509_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509 *cert)
 {
   X509_EXTENSION *ext;
   ext = X509V3_EXT_nconf_nid(req_conf, ctx, NID_subject_alt_name, value);
@@ -680,7 +680,7 @@ int req_main(int argc, char **argv)
                 goto end;
             }
 
-            if (x509_add_subjectaltname(req_conf, &ext_ctx, subjectaltname, x509ss) != 1) {
+            if (x509_add_subjectaltname(&ext_ctx, subjectaltname, x509ss) != 1) {
                 BIO_printf(bio_err, "Error adding subjectaltname %s\n", subjectaltname);
                 goto end;
             }
