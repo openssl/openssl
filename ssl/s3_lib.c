@@ -941,7 +941,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-#ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_NULL_SHA,
@@ -1268,9 +1267,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* OPENSSL_NO_EC */
 
-#ifndef OPENSSL_NO_PSK
     {
      1,
      TLS1_TXT_PSK_WITH_NULL_SHA,
@@ -1757,7 +1754,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
-# ifndef OPENSSL_NO_EC
 #  ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1888,10 +1884,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
-# endif                         /* OPENSSL_NO_EC */
-#endif                          /* OPENSSL_NO_PSK */
 
-#ifndef OPENSSL_NO_SRP
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -2038,10 +2031,8 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* OPENSSL_NO_SRP */
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-# ifndef OPENSSL_NO_RSA
     {
      1,
      TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305,
@@ -2058,9 +2049,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_RSA */
 
-# ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -2093,9 +2082,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_EC */
 
-# ifndef OPENSSL_NO_PSK
     {
      1,
      TLS1_TXT_PSK_WITH_CHACHA20_POLY1305,
@@ -2160,7 +2147,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_PSK */
 #endif                          /* !defined(OPENSSL_NO_CHACHA) &&
                                  * !defined(OPENSSL_NO_POLY1305) */
 
@@ -2422,7 +2408,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-# ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256,
@@ -2487,7 +2472,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_EC */
 
 # ifndef OPENSSL_NO_PSK
     {
@@ -2825,7 +2809,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      },
 
-# ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_PSK_WITH_RC4_128_SHA,
@@ -2890,7 +2873,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-# endif                         /* OPENSSL_NO_EC */
 
 # ifndef OPENSSL_NO_PSK
     {

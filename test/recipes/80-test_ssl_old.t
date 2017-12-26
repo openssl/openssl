@@ -398,21 +398,11 @@ sub testssl {
         my @exkeys = ();
         my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
 
-        if ($no_dh) {
-            note "skipping DHE tests\n";
-            $ciphers .= ":-kDHE";
-        }
-        if ($no_dsa) {
-            note "skipping DSA tests\n";
-            $ciphers .= ":-aDSA";
-        } else {
+        if (!$no_dsa) {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
         }
 
-        if ($no_ec) {
-            note "skipping EC tests\n";
-            $ciphers .= ":!aECDSA:!kECDH";
-        } else {
+        if (!$no_ec) {
             push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
         }
 
