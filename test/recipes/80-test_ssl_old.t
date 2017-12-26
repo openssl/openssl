@@ -456,7 +456,7 @@ sub testssl {
             # the default choice if TLSv1.3 enabled
             my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             foreach my $cipher (@{$ciphersuites{$protocol}}) {
-                if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
+                if (($protocol eq "-ssl3" || $no_ec) && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {
