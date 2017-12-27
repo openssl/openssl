@@ -1970,6 +1970,7 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret, early_data_state;
     size_t writtmp;
+    uint32_t partialwrite;
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
@@ -1995,7 +1996,15 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     case SSL_EARLY_DATA_WRITE_RETRY:
         s->early_data_state = SSL_EARLY_DATA_WRITING;
+        /*
+         * We disable partial write for early data because we don't keep track
+         * of how many bytes we've written between the SSL_write_ex() call and
+         * the flush if the flush needs to be retried)
+         */
+        partialwrite = s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
+        s->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
         ret = SSL_write_ex(s, buf, num, &writtmp);
+        s->mode |= partialwrite;
         if (!ret) {
             s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
             return ret;
@@ -2007,10 +2016,6 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         /* The buffering BIO is still in place so we need to flush it */
         if (statem_flush(s) != 1)
             return 0;
-        /*
-         * TODO(TLS1.3): Technically this may not be correct in the event of
-         * SSL_MODE_ENABLE_PARTIAL_WRITE. What should we do about this?
-         */
         *written = num;
         s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
         return 1;
