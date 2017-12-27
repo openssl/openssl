@@ -106,6 +106,7 @@ use OpenSSL::Glob;
 (my $SO_VARIANT = qq{\U$target{"shlib_variant"}}) =~ s/\W/_/g;
 
 my $debug=0;
+my $warn_simp=0;
 
 my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
 my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
@@ -212,6 +213,7 @@ my $zlib;
 foreach (@ARGV, split(/ /, $config{options}))
 	{
 	$debug=1 if $_ eq "debug";
+	$warn_simp=1 if $_ eq "warn_simp";
 	$W32=1 if $_ eq "32";
 	die "win16 not supported" if $_ eq "16";
 	if($_ eq "NT") {
@@ -529,19 +531,19 @@ sub do_defs
 				push(@tag,$1);
 				$tag{$1}=-1;
 				print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
-			} elsif (/^\#\s*if\s+!defined\(([^\)]+)\)/) {
+			} elsif (/^\#\s*if\s+!defined\s*\(([^\)]+)\)/) {
 				push(@tag,"-");
-				if (/^\#\s*if\s+(!defined\(([^\)]+)\)(\s+\&\&\s+!defined\(([^\)]+)\))*)$/) {
+				if (/^\#\s*if\s+(!defined\s*\(([^\)]+)\)(\s+\&\&\s+!defined\s*\(([^\)]+)\))*)$/) {
 					my $tmp_1 = $1;
 					my $tmp_;
 					foreach $tmp_ (split '\&\&',$tmp_1) {
-						$tmp_ =~ /!defined\(([^\)]+)\)/;
+						$tmp_ =~ /!defined\s*\(([^\)]+)\)/;
 						print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
 						push(@tag,$1);
 						$tag{$1}=-1;
 					}
 				} else {
-					print STDERR "Warning: $file: complicated expression: $_" if $debug; # because it is O...
+					print STDERR "Warning: $file: taking only '!defined($1)' of complicated expression: $_" if $warn_simp; # because it is O...
 					print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
 					push(@tag,$1);
 					$tag{$1}=-1;
@@ -551,19 +553,19 @@ sub do_defs
 				push(@tag,$1);
 				$tag{$1}=1;
 				print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
-			} elsif (/^\#\s*if\s+defined\(([^\)]+)\)/) {
+			} elsif (/^\#\s*if\s+defined\s*\(([^\)]+)\)/) {
 				push(@tag,"-");
-				if (/^\#\s*if\s+(defined\(([^\)]+)\)(\s+\|\|\s+defined\(([^\)]+)\))*)$/) {
+				if (/^\#\s*if\s+(defined\s*\(([^\)]+)\)(\s+\|\|\s+defined\s*\(([^\)]+)\))*)$/) {
 					my $tmp_1 = $1;
 					my $tmp_;
 					foreach $tmp_ (split '\|\|',$tmp_1) {
-						$tmp_ =~ /defined\(([^\)]+)\)/;
+						$tmp_ =~ /defined\s*\(([^\)]+)\)/;
 						print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
 						push(@tag,$1);
 						$tag{$1}=1;
 					}
 				} else {
-					print STDERR "Warning: $file: complicated expression: $_\n" if $debug; # because it is O...
+					print STDERR "Warning: $file: taking only 'defined($1)' of complicated expression: $_\n" if $warn_simp; # because it is O...
 					print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
 					push(@tag,$1);
 					$tag{$1}=1;
@@ -628,6 +630,7 @@ sub do_defs
 			} elsif (/^\#\s*if\s+/) {
 				#Some other unrecognized "if" style
 				push(@tag,"-");
+				print STDERR "Warning: $file: ignoring unrecognized expression: $_\n" if $warn_simp; # because it is O...
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking && $tag{'TRUE'} != -1) {
 				# This is for aliasing.  When we find an alias,
