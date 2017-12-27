@@ -81,7 +81,7 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSIONS,
-    OPT_REQEXTS, OPT_PRECERT, OPT_MD,
+    OPT_REQEXTS, OPT_PRECERT, OPT_MD, OPT_SUBJECTALTNAME,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -119,6 +119,7 @@ const OPTIONS req_options[] = {
      "Output a x509 structure instead of a cert request"},
     {OPT_MORE_STR, 1, 1, "(Required by some CA's)"},
     {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
+    {"subjectaltname", OPT_SUBJECTALTNAME, 's', "Set subjectAltName in request or cert"},
     {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
      "Enable support for multivalued RDNs"},
@@ -138,6 +139,38 @@ const OPTIONS req_options[] = {
     {NULL}
 };
 
+/*
+ * Add a subjectAltName extension to the given X509_REQ, with the provided
+ * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
+ */
+static int req_add_subjectaltname(X509V3_CTX *ctx, X509_REQ *req, const char *value)
+{
+  STACK_OF(X509_EXTENSION) *extlist = sk_X509_EXTENSION_new_null();
+  X509_EXTENSION *ext;
+  ext = X509V3_EXT_nconf_nid(req_conf, ctx, NID_subject_alt_name, value);
+  if (ext == NULL) {
+    return 0;
+  }
+  sk_X509_EXTENSION_push(extlist, ext);
+  return X509_REQ_add_extensions(req, extlist);
+}
+
+/*
+ * Add a subjectAltName extension to the given certificate, with the provided
+ * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
+ */
+static int x509_add_subjectaltname(X509V3_CTX *ctx, X509 *cert, const char *value)
+{
+  X509_EXTENSION *ext;
+  ext = X509V3_EXT_nconf_nid(req_conf, ctx, NID_subject_alt_name, value);
+  if (ext == NULL) {
+    return 0;
+  }
+  X509_add_ext(cert, ext, -1);
+  X509_EXTENSION_free(ext);
+  return 1;
+}
+
 int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
@@ -155,7 +188,7 @@ int req_main(int argc, char **argv)
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
     char *passin = NULL, *passout = NULL;
     char *nofree_passin = NULL, *nofree_passout = NULL;
-    char *req_exts = NULL, *subj = NULL;
+    char *req_exts = NULL, *subj = NULL, *subjectaltname = NULL;
     char *template = default_config_file, *keyout = NULL;
     const char *keyalg = NULL;
     OPTION_CHOICE o;
@@ -309,6 +342,9 @@ int req_main(int argc, char **argv)
             break;
         case OPT_SUBJ:
             subj = opt_arg();
+            break;
+        case OPT_SUBJECTALTNAME:
+            subjectaltname = opt_arg();
             break;
         case OPT_MULTIVALUE_RDN:
             multirdn = 1;
@@ -644,6 +680,11 @@ int req_main(int argc, char **argv)
                 goto end;
             }
 
+            if (x509_add_subjectaltname(&ext_ctx, x509ss, subjectaltname) != 1) {
+                BIO_printf(bio_err, "Error adding subjectaltname %s\n", subjectaltname);
+                goto end;
+            }
+
             /* If a pre-cert was requested, we need to add a poison extension */
             if (precert) {
                 if (X509_add1_ext_i2d(x509ss, NID_ct_precert_poison, NULL, 1, 0)
@@ -658,7 +699,7 @@ int req_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
-        } else {
+        } else { // !x509
             X509V3_CTX ext_ctx;
 
             /* Set up V3 context struct */
@@ -674,6 +715,12 @@ int req_main(int argc, char **argv)
                            req_exts);
                 goto end;
             }
+
+            if (req_add_subjectaltname(&ext_ctx, req, subjectaltname) != 1) {
+                BIO_printf(bio_err, "Error adding subjectaltname %s\n", subjectaltname);
+                goto end;
+            }
+
             i = do_X509_REQ_sign(req, pkey, digest, sigopts);
             if (!i) {
                 ERR_print_errors(bio_err);
