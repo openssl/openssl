@@ -37,6 +37,7 @@ B<openssl> B<req>
 [B<-days n>]
 [B<-set_serial n>]
 [B<-newhdr>]
+[B<-extension ext>]
 [B<-extensions section>]
 [B<-reqexts section>]
 [B<-precert>]
@@ -254,6 +255,12 @@ be a positive integer. The default is 30 days.
 
 Serial number to use when outputting a self signed certificate. This
 may be specified as a decimal value or a hex value if preceded by B<0x>.
+
+=item B<-extension ext>
+
+Add a specific extension to the certificate (if the B<-x509> option is
+present) or certificate request.  The argument must have the form of
+config value lines.
 
 =item B<-extensions section>
 
