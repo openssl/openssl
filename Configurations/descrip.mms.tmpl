@@ -664,12 +664,14 @@ EOF
       my $shlib = $args{shlib};
       my $libd = dirname($lib);
       my $libn = basename($lib);
+      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
+                 grep { $_ =~ m|\.o$| }
+                 @{$args{objs}};
       my @defs = grep { $_ =~ /\.opt$/ } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
       my $deps = join(", -\n\t\t", @defs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
-      my $shared_def = join(",", map { "$_/OPT" } @defs);
       my $translatesyms_pl = abs2rel(rel2abs(catfile($config{sourcedir},
                                                      "VMS", "translatesyms.pl")),
                                      rel2abs($config{builddir}));
@@ -677,7 +679,11 @@ EOF
       # previous line's file spec as default, so if no directory spec
       # is present in the current line and the previous line has one that
       # doesn't apply, you're in for a surprise.
-      my $write_opt =
+      my $write_opt1 =
+          join(",-\"\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+                                 "WRITE OPT_FILE \"$x" } @objs).
+          "\"";
+      my $write_opt2 =
           join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
                              $x =~ s|(\.EXE)|$1/SHARE|;
                              $x =~ s|(\.OLB)|$1/LIB|;
@@ -686,9 +692,13 @@ EOF
       return <<"EOF"
 $shlib.EXE : $lib.OLB $deps
         \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $defs[0] > $defs[0]-translated
-        LINK \$(LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,$lib.OLB/LIBRARY
-             \$(EX_LIBS)
-        DELETE $defs[0]-translated;*
+        OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
+        $write_opt1
+        $write_opt2
+        CLOSE OPT_FILE
+        LINK \$(LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
+                $lib-components.OPT/OPT \$(EX_LIBS)
+        DELETE $defs[0]-translated;*,$lib-components.OPT;*
         PURGE $shlib.EXE,$shlib.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"
