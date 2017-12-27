@@ -143,7 +143,7 @@ const OPTIONS req_options[] = {
  * Add a subjectAltName extension to the given X509_REQ, with the provided
  * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
  */
-static int req_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509_REQ *req)
+static int req_add_subjectaltname(X509V3_CTX *ctx, X509_REQ *req, const char *value)
 {
   STACK_OF(X509_EXTENSION) *extlist = sk_X509_EXTENSION_new_null();
   X509_EXTENSION *ext;
@@ -159,14 +159,14 @@ static int req_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509_REQ *
  * Add a subjectAltName extension to the given certificate, with the provided
  * value, e.g. "DNS:example.com". Returns 1 on success, 0 on failure.
  */
-static int x509_add_subjectaltname(X509V3_CTX *ctx, const char *value, X509 *cert)
+static int x509_add_subjectaltname(X509V3_CTX *ctx, X509 *cert, const char *value)
 {
   X509_EXTENSION *ext;
   ext = X509V3_EXT_nconf_nid(req_conf, ctx, NID_subject_alt_name, value);
   if (ext == NULL) {
     return 0;
   }
-  X509_add_ext(&cert, ext, -1);
+  X509_add_ext(cert, ext, -1);
   X509_EXTENSION_free(ext);
   return 1;
 }
@@ -680,7 +680,7 @@ int req_main(int argc, char **argv)
                 goto end;
             }
 
-            if (x509_add_subjectaltname(&ext_ctx, subjectaltname, x509ss) != 1) {
+            if (x509_add_subjectaltname(&ext_ctx, x509ss, subjectaltname) != 1) {
                 BIO_printf(bio_err, "Error adding subjectaltname %s\n", subjectaltname);
                 goto end;
             }
@@ -716,7 +716,7 @@ int req_main(int argc, char **argv)
                 goto end;
             }
 
-            if (req_add_subjectaltname(&ext_ctx, subjectaltname, req) != 1) {
+            if (req_add_subjectaltname(&ext_ctx, req, subjectaltname) != 1) {
                 BIO_printf(bio_err, "Error adding subjectaltname %s\n", subjectaltname);
                 goto end;
             }
