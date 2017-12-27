@@ -52,6 +52,7 @@ BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
+CONF *app_load_config_bio(BIO *in, const char *filename);
 CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
