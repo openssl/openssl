@@ -401,7 +401,7 @@ int ssl_load_ciphers(void)
     disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHEPSK;
+    disabled_mkey_mask |= SSL_kECDHE | SSL_kECDHEPSK;
     disabled_auth_mask |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_PSK
