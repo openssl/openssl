@@ -154,9 +154,9 @@ extern "C" {
  * Care needs to be taken when a header file is used both to declare and
  * define symbols.  Basically, for any library that exports some global
  * variables, the following code must be present in the header file that
- * declares them, before OPENSSL_EXTERN is used:
+ * declares them, before OPENSSL_EXTERN is used (adapt SOME_BUILD_FLAG):
  *
- * #ifdef SOME_BUILD_FLAG_MACRO
+ * #ifdef SOME_BUILD_FLAG
  * # undef OPENSSL_EXTERN
  * # define OPENSSL_EXTERN OPENSSL_EXPORT
  * #endif
@@ -165,7 +165,7 @@ extern "C" {
  * have some generally sensible values.
  */
 
-# if defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
+# if defined(OPENSSL_SYS_WINDOWS) /* goes wrong: && defined(OPENSSL_OPT_WINDLL) */
 #  define OPENSSL_EXPORT extern __declspec(dllexport)
 #  define OPENSSL_EXTERN extern __declspec(dllimport)
 # else
