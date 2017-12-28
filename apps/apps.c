@@ -442,7 +442,7 @@ static char *app_get_pass(const char *arg, int keepbio)
     return OPENSSL_strdup(tpass);
 }
 
-static CONF *app_load_config_(BIO *in, const char *filename)
+CONF *app_load_config_bio(BIO *in, const char *filename)
 {
     long errorline = -1;
     CONF *conf;
@@ -453,12 +453,17 @@ static CONF *app_load_config_(BIO *in, const char *filename)
     if (i > 0)
         return conf;
 
-    if (errorline <= 0)
-        BIO_printf(bio_err, "%s: Can't load config file \"%s\"\n",
-                   opt_getprog(), filename);
+    if (errorline <= 0) {
+        BIO_printf(bio_err, "%s: Can't load ", opt_getprog());
+    } else {
+        BIO_printf(bio_err, "%s: Error on line %ld of ", opt_getprog(),
+                   errorline);
+    }
+    if (filename != NULL)
+        BIO_printf(bio_err, "config file \"%s\"\n", filename);
     else
-        BIO_printf(bio_err, "%s: Error on line %ld of config file \"%s\"\n",
-                   opt_getprog(), errorline, filename);
+        BIO_printf(bio_err, "config input");
+
     NCONF_free(conf);
     return NULL;
 }
@@ -472,7 +477,7 @@ CONF *app_load_config(const char *filename)
     if (in == NULL)
         return NULL;
 
-    conf = app_load_config_(in, filename);
+    conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
 }
@@ -486,7 +491,7 @@ CONF *app_load_config_quiet(const char *filename)
     if (in == NULL)
         return NULL;
 
-    conf = app_load_config_(in, filename);
+    conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
 }
