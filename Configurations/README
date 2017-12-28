@@ -399,15 +399,6 @@ support build static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
 'no-shared'.
 
-For some libraries, we maintain files with public symbols and their
-slot in a transfer vector (important on some platforms).  It can be
-declared like this:
-
-    ORDINALS[libcrypto]=crypto
-
-The value is not the name of the file in question, but rather the
-argument to util/mkdef.pl that indicates which file to use.
-
 One some platforms, shared libraries come with a name that's different
 from their static counterpart.  That's declared as follows:
 
@@ -645,8 +636,7 @@ They are all expected to return a string with the lines they produce.
                         libobj2shlib(shlib => "PATH/TO/shlibfile",
                                      lib => "PATH/TO/libfile",
                                      objs => [ "PATH/TO/objectfile", ... ],
-                                     deps => [ "PATH/TO/otherlibfile", ... ],
-                                     ordinals => [ "word", "/PATH/TO/ordfile" ]);
+                                     deps => [ "PATH/TO/otherlibfile", ... ]);
 
                   'lib' has the intended library file name *without*
                   extension, libobj2shlib is expected to add that.
@@ -655,11 +645,7 @@ They are all expected to return a string with the lines they produce.
                   libraries (also *without* extension) this library
                   needs to be linked with.  'objs' has the list of
                   object files (also *without* extension) to build
-                  this library.  'ordinals' MAY be present, and when
-                  it is, its value is an array where the word is
-                  "crypto" or "ssl" and the file is one of the ordinal
-                  files util/libeay.num or util/ssleay.num in the
-                  source directory.
+                  this library.
 
                   This function has a choice; it can use the
                   corresponding static library as input to make the
