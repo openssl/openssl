@@ -126,7 +126,7 @@ const OPTIONS req_options[] = {
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"extension", OPT_EXTENSION, 's',
-     "Additional cert extension key/value pair (may be given more than once)"},
+     "Additional cert extension key=value pair (may be given more than once)"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Cert extension section (override value in config file)"},
     {"reqexts", OPT_REQEXTS, 's',

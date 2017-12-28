@@ -260,10 +260,9 @@ may be specified as a decimal value or a hex value if preceded by B<0x>.
 
 Add a specific extension to the certificate (if the B<-x509> option is
 present) or certificate request.  The argument must have the form of
-config key/value pairs (i.e. the lines you commonly find in the config
-file).
+a key=value pair as they would appear in a config file.
 
-This option can be given multiple times, it's values will be accumulated.
+This option can be given multiple times, its values will be accumulated.
 
 =item B<-extensions section>
 
