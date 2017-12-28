@@ -124,7 +124,7 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
     case NID_aes_128_ctr:
     case NID_aes_192_ctr:
     case NID_aes_256_ctr:
-        ret = ctr_init(drbg);
+        ret = drbg_ctr_init(drbg);
         break;
     }
 
@@ -172,7 +172,8 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
     if (drbg == NULL)
         return;
 
-    ctr_uninstantiate(drbg);
+    if (drbg->meth != NULL)
+        drbg->meth->uninstantiate(drbg);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
     OPENSSL_clear_free(drbg, sizeof(*drbg));
 }
@@ -196,6 +197,14 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                 RAND_R_PERSONALISATION_STRING_TOO_LONG);
         goto end;
     }
+
+    if (drbg->meth == NULL)
+    {
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
+        goto end;
+    }
+
     if (drbg->state != DRBG_UNINITIALISED) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
                 drbg->state == DRBG_ERROR ? RAND_R_IN_ERROR_STATE
@@ -223,7 +232,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         }
     }
 
-    if (!ctr_instantiate(drbg, entropy, entropylen,
+    if (!drbg->meth->instantiate(drbg, entropy, entropylen,
                          nonce, noncelen, pers, perslen)) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_INSTANTIATING_DRBG);
         goto end;
@@ -267,11 +276,18 @@ end:
  */
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
+    if (drbg->meth == NULL)
+    {
+        RANDerr(RAND_F_RAND_DRBG_UNINSTANTIATE,
+                RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
+        return 0;
+    }
+
     /* Clear the entire drbg->ctr struct, then reset some important
      * members of the drbg->ctr struct (e.g. keysize, df_ks) to their
      * initial values.
      */
-    ctr_uninstantiate(drbg);
+    drbg->meth->uninstantiate(drbg);
     return RAND_DRBG_set(drbg, drbg->nid, drbg->flags);
 }
 
@@ -314,7 +330,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
         goto end;
     }
 
-    if (!ctr_reseed(drbg, entropy, entropylen, adin, adinlen))
+    if (!drbg->meth->reseed(drbg, entropy, entropylen, adin, adinlen))
         goto end;
 
     drbg->state = DRBG_READY;
@@ -420,7 +436,7 @@ int rand_drbg_restart(RAND_DRBG *drbg,
              * entropy from the trusted entropy source using get_entropy().
              * This is not a reseeding in the strict sense of NIST SP 800-90A.
              */
-            ctr_reseed(drbg, adin, adinlen, NULL, 0);
+            drbg->meth->reseed(drbg, adin, adinlen, NULL, 0);
         } else if (reseeded == 0) {
             /* do a full reseeding if it has not been done yet above */
             RAND_DRBG_reseed(drbg, NULL, 0);
@@ -507,7 +523,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         adinlen = 0;
     }
 
-    if (!ctr_generate(drbg, out, outlen, adin, adinlen)) {
+    if (!drbg->meth->generate(drbg, out, outlen, adin, adinlen)) {
         drbg->state = DRBG_ERROR;
         RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_GENERATE_ERROR);
         return 0;

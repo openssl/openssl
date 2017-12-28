@@ -438,7 +438,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Standard says we have to check uninstantiate really zeroes */
-    if (!TEST_mem_eq(zero, sizeof(drbg->ctr), &drbg->ctr, sizeof(drbg->ctr)))
+    if (!TEST_mem_eq(zero, sizeof(drbg->data), &drbg->data, sizeof(drbg->data)))
         goto err;
 
     ret = 1;

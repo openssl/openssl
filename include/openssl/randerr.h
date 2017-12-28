@@ -33,6 +33,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_F_RAND_DRBG_RESEED                          110
 # define RAND_F_RAND_DRBG_RESTART                         102
 # define RAND_F_RAND_DRBG_SET                             104
+# define RAND_F_RAND_DRBG_UNINSTANTIATE                   118
 # define RAND_F_RAND_LOAD_FILE                            111
 # define RAND_F_RAND_POOL_ADD                             103
 # define RAND_F_RAND_POOL_ADD_BEGIN                       113
@@ -65,6 +66,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_IN_ERROR_STATE                            114
 # define RAND_R_NOT_A_REGULAR_FILE                        122
 # define RAND_R_NOT_INSTANTIATED                          115
+# define RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED           128
 # define RAND_R_PERSONALISATION_STRING_TOO_LONG           116
 # define RAND_R_PRNG_NOT_SEEDED                           100
 # define RAND_R_RANDOM_POOL_OVERFLOW                      125
