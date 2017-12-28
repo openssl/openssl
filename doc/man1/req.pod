@@ -262,7 +262,7 @@ Add a specific extension to the certificate (if the B<-x509> option is
 present) or certificate request.  The argument must have the form of
 a key=value pair as it would appear in a config file.
 
-This option can be given multiple times, its values will be accumulated.
+This option can be given multiple times.
 
 =item B<-extensions section>
 
