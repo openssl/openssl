@@ -260,7 +260,10 @@ may be specified as a decimal value or a hex value if preceded by B<0x>.
 
 Add a specific extension to the certificate (if the B<-x509> option is
 present) or certificate request.  The argument must have the form of
-config value lines.
+config key/value pairs (i.e. the lines you commonly find in the config
+file).
+
+This option can be given multiple times, it's values will be accumulated.
 
 =item B<-extensions section>
 
@@ -597,6 +600,14 @@ Sample configuration containing all field values:
 
  [ req_attributes ]
  challengePassword              = A challenge password
+
+Example of giving the most common attributes (subject and extensions)
+on the command line:
+
+ openssl req -new -subj "/C=GB/CN=foo" \
+                  -extension "subjectAltName = DNS:foo.co.uk" \
+                  -extension "certificatePolicies = 1.2.3.4" \
+                  -newkey rsa:2048 -keyout key.pem -out req.pem
 
 
 =head1 NOTES
