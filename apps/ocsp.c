@@ -24,7 +24,8 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <ctype.h>
 
 /* Needs to be included before the openssl headers */
-# include "apps.h"
+# include <openssl/apps.h>
+# include "apps_locl.h"
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
 # include <openssl/err.h>

@@ -25,7 +25,7 @@
 # include <stdlib.h>
 # include <unixlib.h>
 
-# include "apps.h"
+# include <openssl/apps.h>
 
 /* Global storage. */
 

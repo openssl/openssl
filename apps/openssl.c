@@ -28,7 +28,8 @@
 # include <unixio.h>
 #endif
 #define INCLUDE_FUNCTION_TABLE
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 
 /* Structure to hold the number of columns to be displayed and the
  * field width used to display them.
@@ -134,6 +135,7 @@ int main(int argc, char *argv[])
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
     bio_err = dup_bio_err(FORMAT_TEXT);
+    app_set_bio_err(bio_err);
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
     copied_argv = argv = copy_argv(&argc, argv);
@@ -163,7 +165,7 @@ int main(int argc, char *argv[])
     }
 
     prog = prog_init();
-    pname = opt_progname(argv[0]);
+    pname = app_progname(argv[0]);
 
     /* first check the program name */
     f.name = pname;

@@ -21,7 +21,8 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/txt_db.h>
 # include <openssl/buffer.h>
 # include <openssl/srp.h>
-# include "apps.h"
+# include <openssl/apps.h>
+# include "apps_locl.h"
 
 # define BASE_SECTION    "srp"
 # define CONFIG_FILE "openssl.cnf"

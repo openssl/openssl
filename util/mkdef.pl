@@ -12,8 +12,8 @@
 # It does this by parsing the header files and looking for the
 # prototyped functions: it then prunes the output.
 #
-# Intermediary files are created, call libcrypto.num and libssl.num,
-# The format of these files is:
+# Intermediary files are created, called libcrypto.num, libssl.num,
+# and libsecapp.num. The format of these files is:
 #
 #	routine-name	nnnn	vers	info
 #
@@ -109,14 +109,17 @@ my $debug=0;
 my $trace=0;
 my $warn_simp=0;
 
+# TODO make this configurable via build.info
 my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
+my $do_crypto = 0;
 my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
+my $do_ssl = 0;
+my $secapp_num= catfile($config{sourcedir},"util","libsecapp.num");
+my $do_secapp = 0;
 my $libname;
 
 my $do_update = 0;
 my $do_rewrite = 1;
-my $do_crypto = 0;
-my $do_ssl = 0;
 my $do_ctest = 0;
 my $do_ctestall = 0;
 my $do_checkexist = 0;
@@ -232,8 +235,10 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$zlib = 1;
 	}
 
+	# TODO make this configurable via build.info
 	$do_crypto=1 if $_ eq "libcrypto" || $_ eq "crypto";
 	$do_ssl=1 if $_ eq "libssl" || $_ eq "ssl";
+	$do_secapp=1 if $_ eq "libsecapp" || $_ eq "secapp";
 
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
@@ -249,10 +254,16 @@ foreach (@ARGV, split(/ /, $config{options}))
 	}
 
 	}
+# TODO make this configurable via build.info
 $libname = $unified_info{sharednames}->{libcrypto} if $do_crypto;
 $libname = $unified_info{sharednames}->{libssl} if $do_ssl;
+$libname = $unified_info{sharednames}->{libsecapp} if $do_secapp;
 
 if (!$libname) {
+	# TODO make this configurable via build.info
+	if ($do_secapp) {
+		$libname="LIBSECAPP";
+	}
 	if ($do_ssl) {
 		$libname="LIBSSL";
 	}
@@ -268,25 +279,35 @@ if ($W32 + $VMS + $linux == 0) {
 die "Please, only one platform at a time"
     if ($W32 + $VMS + $linux > 1);
 
-if (!$do_ssl && !$do_crypto)
+# TODO make this configurable via build.info
+if (!$do_secapp && !$do_ssl && !$do_crypto)
 	{
-	print STDERR "usage: $0 ( ssl | crypto ) [ 16 | 32 | NT | OS2 | linux | VMS ]\n";
+	print STDERR "usage: $0 ( secapp | ssl | crypto ) [ 16 | 32 | NT | OS2 | linux | VMS ]\n";
 	exit(1);
 	}
 
+# TODO make this configurable via build.info
+%secapp_list=&load_numbers($secapp_num);
+$max_secapp = $max_num;
 %ssl_list=&load_numbers($ssl_num);
 $max_ssl = $max_num;
 %crypto_list=&load_numbers($crypto_num);
 $max_crypto = $max_num;
 
+# TODO make this configurable via build.info
+my $secapp="include/openssl/apps.h";
 my $ssl="include/openssl/ssl.h";
 $ssl.=" include/openssl/sslerr.h";
 $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
-# When scanning include/openssl, skip all SSL files and some internal ones.
+# TODO make this configurable via build.info
+# When scanning include/openssl, skip all SSL and secapp files and some internal ones.
 my %skipthese;
 foreach my $f ( split(/\s+/, $ssl) ) {
+    $skipthese{$f} = 1;
+}
+foreach my $f ( split(/\s+/, $secapp) ) {
     $skipthese{$f} = 1;
 }
 $skipthese{'include/openssl/conf_api.h'} = 1;
@@ -307,11 +328,28 @@ foreach my $f ( glob(catfile($config{sourcedir},'include/openssl/*.h')) ) {
 
 my $symhacks="include/openssl/symhacks.h";
 
+# TODO make this configurable via build.info
+my @secapp_symbols = &do_defs("LIBSECAPP", $secapp, $symhacks);
 my @ssl_symbols = &do_defs("LIBSSL", $ssl, $symhacks);
 my @crypto_symbols = &do_defs("LIBCRYPTO", $crypto, $symhacks);
 
 if ($do_update) {
 
+# TODO make this configurable via build.info
+if ($do_secapp == 1) {
+
+	&maybe_add_info("LIBSECAPP",*secapp_list,@secapp_symbols);
+	if ($do_rewrite == 1) {
+		open(OUT, ">$secapp_num");
+		&rewrite_numbers(*OUT,"LIBSECAPP",*secapp_list,@secapp_symbols);
+	} else {
+		open(OUT, ">>$secapp_num");
+	}
+	&update_numbers(*OUT,"LIBSECAPP",*secapp_list,$max_secapp,@secapp_symbols);
+	close OUT;
+}
+
+# TODO make this configurable via build.info
 if ($do_ssl == 1) {
 
 	&maybe_add_info("LIBSSL",*ssl_list,@ssl_symbols);
@@ -325,6 +363,7 @@ if ($do_ssl == 1) {
 	close OUT;
 }
 
+# TODO make this configurable via build.info
 if($do_crypto == 1) {
 
 	&maybe_add_info("LIBCRYPTO",*crypto_list,@crypto_symbols);
@@ -339,6 +378,9 @@ if($do_crypto == 1) {
 }
 
 } elsif ($do_checkexist) {
+	# TODO make this configurable via build.info
+	&check_existing(*secapp_list, @secapp_symbols)
+		if $do_secapp == 1;
 	&check_existing(*ssl_list, @ssl_symbols)
 		if $do_ssl == 1;
 	&check_existing(*crypto_list, @crypto_symbols)
@@ -354,6 +396,10 @@ if($do_crypto == 1) {
 int main()
 {
 EOF
+	# TODO make this configurable via build.info
+	&print_test_file(*STDOUT,"LIBSECAPP",*secapp_list,$do_ctestall,@secapp_symbols)
+		if $do_secapp == 1;
+
 	&print_test_file(*STDOUT,"LIBSSL",*ssl_list,$do_ctestall,@ssl_symbols)
 		if $do_ssl == 1;
 
@@ -363,6 +409,10 @@ EOF
 	print "}\n";
 
 } else {
+
+	# TODO make this configurable via build.info
+	&print_def_file(*STDOUT,$libname,*secapp_list,@secapp_symbols)
+		if $do_secapp == 1;
 
 	&print_def_file(*STDOUT,$libname,*ssl_list,@ssl_symbols)
 		if $do_ssl == 1;

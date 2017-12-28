@@ -36,7 +36,8 @@ typedef unsigned int u_int;
 #endif
 
 #include <openssl/bn.h>
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>

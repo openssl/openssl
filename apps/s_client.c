@@ -29,7 +29,8 @@
 typedef unsigned int u_int;
 #endif
 
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -968,7 +969,7 @@ int s_client_main(int argc, char **argv)
 # endif
 #endif
 
-    prog = opt_progname(argv[0]);
+    prog = app_progname(argv[0]);
     c_quiet = 0;
     c_debug = 0;
     c_showcerts = 0;

@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
+#include "e_os.h" /* for LIST_SEPARATOR_CHAR */
+#include <openssl/apps.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/conf.h>
+
+extern BIO *bio_err;
 
 static char *save_rand_file;
 
@@ -32,7 +35,7 @@ void app_RAND_load_conf(CONF *c, const char *section)
         save_rand_file = OPENSSL_strdup(randfile);
 }
 
-static int loadfiles(char *name)
+int app_RAND_loadfiles(char *name)
 {
     char *p;
     int last, ret = 1;
@@ -70,25 +73,8 @@ void app_RAND_write(void)
     save_rand_file =  NULL;
 }
 
-
-/*
- * See comments in opt_verify for explanation of this.
- */
-enum r_range { OPT_R_ENUM };
-
-int opt_rand(int opt)
+void app_RAND_set_file(const char *name)
 {
-    switch ((enum r_range)opt) {
-    case OPT_R__FIRST:
-    case OPT_R__LAST:
-        break;
-    case OPT_R_RAND:
-        return loadfiles(opt_arg());
-        break;
-    case OPT_R_WRITERAND:
-        OPENSSL_free(save_rand_file);
-        save_rand_file = OPENSSL_strdup(opt_arg());
-        break;
-    }
-    return 1;
+    OPENSSL_free(save_rand_file);
+    save_rand_file = OPENSSL_strdup(name);
 }

@@ -292,7 +292,8 @@ my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
 # Top level directories to build
-$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
+# TODO better make this directory list configurable via build.info?
+$config{dirs} = [ "crypto", "ssl", "secapp", "engines", "apps", "test", "util", "tools", "fuzz" ];
 # crypto/ subdirectories to build
 $config{sdirs} = [
     "objects",
@@ -1825,10 +1826,12 @@ EOF
                 $ddest = $unified_info{rename}->{$ddest};
             }
             foreach (@{$ordinals{$dest}}) {
-                my %known_ordinals =
+                my %known_ordinals = # TODO this should be configurable in build.info using ORDINALS
                     (
                      crypto =>
                      cleanfile($sourced, catfile("util", "libcrypto.num"), $blddir),
+                     secapp =>
+                     cleanfile($sourced, catfile("util", "libsecapp.num"), $blddir),
                      ssl =>
                      cleanfile($sourced, catfile("util", "libssl.num"), $blddir)
                     );

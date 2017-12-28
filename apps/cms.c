@@ -11,7 +11,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 
 #ifndef OPENSSL_NO_CMS
 

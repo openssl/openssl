@@ -10,7 +10,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -91,7 +92,7 @@ int dgst_main(int argc, char **argv)
     unsigned char *buf = NULL, *sigbuf = NULL;
     int engine_impl = 0;
 
-    prog = opt_progname(argv[0]);
+    prog = app_progname(argv[0]);
     buf = app_malloc(BUFSIZE, "I/O buffer");
     md = EVP_get_digestbyname(prog);
 

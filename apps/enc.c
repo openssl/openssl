@@ -11,7 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -114,7 +115,7 @@ int enc_main(int argc, char **argv)
 #endif
 
     /* first check the program name */
-    prog = opt_progname(argv[0]);
+    prog = app_progname(argv[0]);
     if (strcmp(prog, "base64") == 0) {
         base64 = 1;
 #ifdef ZLIB

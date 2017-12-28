@@ -12,7 +12,8 @@
 NON_EMPTY_TRANSLATION_UNIT
 #else
 
-# include "apps.h"
+# include <openssl/apps.h>
+# include "apps_locl.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>

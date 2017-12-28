@@ -9,7 +9,8 @@
 
 #include <openssl/opensslconf.h>
 
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/store.h>

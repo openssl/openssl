@@ -9,7 +9,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>

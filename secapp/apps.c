@@ -40,13 +40,17 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
-#include "s_apps.h"
-#include "apps.h"
+
+#define OPENSSL_BUILD_SHLIBSECAPP
+#include <openssl/apps.h>
+
+BIO *bio_err = NULL;
 
 #ifdef _WIN32
 static int WIN32_rename(const char *from, const char *to);
 # define rename(from,to) WIN32_rename((from),(to))
 #endif
+
 
 typedef struct {
     const char *name;
@@ -63,6 +67,94 @@ static int set_multi_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 
 int app_init(long mesgwin);
+
+void app_set_bio_err(BIO *bio)
+{
+    bio_err = bio;
+}
+
+BIO *app_get_bio_err(void)
+{
+    return bio_err;
+}
+
+static char prog[40];
+
+/*
+ * Return the simple name of the program; removing various platform gunk.
+ */
+#if defined(OPENSSL_SYS_WIN32)
+char *app_progname(const char *argv0)
+{
+    size_t i, n;
+    const char *p;
+    char *q;
+
+    /* find the last '/', '\' or ':' */
+    for (p = argv0 + strlen(argv0); --p > argv0;)
+        if (*p == '/' || *p == '\\' || *p == ':') {
+            p++;
+            break;
+        }
+
+    /* Strip off trailing nonsense. */
+    n = strlen(p);
+    if (n > 4 &&
+        (strcmp(&p[n - 4], ".exe") == 0 || strcmp(&p[n - 4], ".EXE") == 0))
+        n -= 4;
+
+    /* Copy over the name, in lowercase. */
+    if (n > sizeof(prog) - 1)
+        n = sizeof(prog) - 1;
+    for (q = prog, i = 0; i < n; i++, p++)
+        *q++ = tolower((unsigned char)*p);
+    *q = '\0';
+    return prog;
+}
+
+#elif defined(OPENSSL_SYS_VMS)
+
+char *app_progname(const char *argv0)
+{
+    const char *p, *q;
+
+    /* Find last special character sys:[foo.bar]openssl */
+    for (p = argv0 + strlen(argv0); --p > argv0;)
+        if (*p == ':' || *p == ']' || *p == '>') {
+            p++;
+            break;
+        }
+
+    q = strrchr(p, '.');
+    strncpy(prog, p, sizeof(prog) - 1);
+    prog[sizeof(prog) - 1] = '\0';
+    if (q != NULL && q - p < sizeof(prog))
+        prog[q - p] = '\0';
+    return prog;
+}
+
+#else
+
+char *app_progname(const char *argv0)
+{
+    const char *p;
+
+    /* Could use strchr, but this is like the ones above. */
+    for (p = argv0 + strlen(argv0); --p > argv0;)
+        if (*p == '/') {
+            p++;
+            break;
+        }
+    strncpy(prog, p, sizeof(prog) - 1);
+    prog[sizeof(prog) - 1] = '\0';
+    return prog;
+}
+#endif
+
+char *app_getprog(void)
+{
+    return prog;
+}
 
 int chopup_args(ARGS *arg, char *buf)
 {
@@ -455,10 +547,10 @@ static CONF *app_load_config_(BIO *in, const char *filename)
 
     if (errorline <= 0)
         BIO_printf(bio_err, "%s: Can't load config file \"%s\"\n",
-                   opt_getprog(), filename);
+                   app_getprog(), filename);
     else
         BIO_printf(bio_err, "%s: Error on line %ld of config file \"%s\"\n",
-                   opt_getprog(), errorline, filename);
+                   app_getprog(), errorline, filename);
     NCONF_free(conf);
     return NULL;
 }
@@ -491,7 +583,7 @@ CONF *app_load_config_quiet(const char *filename)
     return conf;
 }
 
-int app_load_modules(const CONF *config)
+int app_load_modules_(const CONF *config, const char *default_config_file)
 {
     CONF *to_free = NULL;
 
@@ -946,7 +1038,7 @@ void* app_malloc(int sz, const char *what)
 
     if (vp == NULL) {
         BIO_printf(bio_err, "%s: Could not allocate %d bytes for %s\n",
-                opt_getprog(), sz, what);
+                app_getprog(), sz, what);
         ERR_print_errors(bio_err);
         exit(1);
     }
@@ -1763,7 +1855,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         if (*cp == '\0') {
             BIO_printf(bio_err,
                     "%s: Hit end of string before finding the equals.\n",
-                    opt_getprog());
+                    app_getprog());
             goto err;
         }
         *bp++ = '\0';
@@ -1779,7 +1871,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
             if (*cp == '\\' && *++cp == '\0') {
                 BIO_printf(bio_err,
                         "%s: escape character at end of string\n",
-                        opt_getprog());
+                        app_getprog());
                 goto err;
             }
         }
@@ -1793,7 +1885,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         nid = OBJ_txt2nid(typestr);
         if (nid == NID_undef) {
             BIO_printf(bio_err, "%s: Skipping unknown attribute \"%s\"\n",
-                      opt_getprog(), typestr);
+                      app_getprog(), typestr);
             continue;
         }
         if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
@@ -2546,7 +2638,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 
  err:
     BIO_printf(bio_err, "%s: Can't open \"%s\" for writing, %s\n",
-               opt_getprog(), filename, strerror(errno));
+               app_getprog(), filename, strerror(errno));
     ERR_print_errors(bio_err);
     /* If we have fp, then fdopen took over fd, so don't close both. */
     if (fp)

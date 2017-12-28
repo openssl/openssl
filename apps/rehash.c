@@ -8,7 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
     (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)

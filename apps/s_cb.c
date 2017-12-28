@@ -11,7 +11,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -949,7 +950,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
     if (exc == NULL) {
         if (!ssl_excert_prepend(&exc)) {
             BIO_printf(bio_err, " %s: Error initialising xcert\n",
-                       opt_getprog());
+                       app_getprog());
             goto err;
         }
         *pexc = exc;
@@ -961,7 +962,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         return 0;
     case OPT_X_CERT:
         if (exc->certfile != NULL && !ssl_excert_prepend(&exc)) {
-            BIO_printf(bio_err, "%s: Error adding xcert\n", opt_getprog());
+            BIO_printf(bio_err, "%s: Error adding xcert\n", app_getprog());
             goto err;
         }
         *pexc = exc;
@@ -969,7 +970,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         break;
     case OPT_X_KEY:
         if (exc->keyfile != NULL) {
-            BIO_printf(bio_err, "%s: Key already specified\n", opt_getprog());
+            BIO_printf(bio_err, "%s: Key already specified\n", app_getprog());
             goto err;
         }
         exc->keyfile = opt_arg();
@@ -977,7 +978,7 @@ int args_excert(int opt, SSL_EXCERT **pexc)
     case OPT_X_CHAIN:
         if (exc->chainfile != NULL) {
             BIO_printf(bio_err, "%s: Chain already specified\n",
-                       opt_getprog());
+                       app_getprog());
             goto err;
         }
         exc->chainfile = opt_arg();
@@ -1045,7 +1046,7 @@ static char *hexencode(const unsigned char *data, size_t len)
 
     if (outlen < len || ilen < 0 || outlen != (size_t)ilen) {
         BIO_printf(bio_err, "%s: %zu-byte buffer too large to hexencode\n",
-                   opt_getprog(), len);
+                   app_getprog(), len);
         exit(1);
     }
     cp = out = app_malloc(ilen, "TLSA hex data buffer");

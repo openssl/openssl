@@ -370,10 +370,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
-  SOURCE[uitest]=uitest.c ../apps/apps.c ../apps/opt.c
+  SOURCE[uitest]=uitest.c ../apps/opt.c
   DEPEND[uitest.o]=../apps/progs.h
   INCLUDE[uitest]=.. ../include ../apps
-  DEPEND[uitest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[uitest]=../libcrypto ../libssl ../libsecapp libtestutil.a
 
   SOURCE[cipherbytes_test]=cipherbytes_test.c
   INCLUDE[cipherbytes_test]=.. ../include

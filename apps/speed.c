@@ -19,7 +19,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>

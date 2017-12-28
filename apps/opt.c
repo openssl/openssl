@@ -6,7 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "apps.h"
+#include <openssl/apps.h>
+#include "apps_locl.h"
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
@@ -19,7 +20,6 @@
 #include <openssl/bio.h>
 #include <openssl/x509v3.h>
 
-#define MAX_OPT_HELP_WIDTH 30
 const char OPT_HELP_STR[] = "--";
 const char OPT_MORE_STR[] = "---";
 
@@ -32,83 +32,6 @@ static char *flag;
 static char *dunno;
 static const OPTIONS *unknown;
 static const OPTIONS *opts;
-static char prog[40];
-
-/*
- * Return the simple name of the program; removing various platform gunk.
- */
-#if defined(OPENSSL_SYS_WIN32)
-char *opt_progname(const char *argv0)
-{
-    size_t i, n;
-    const char *p;
-    char *q;
-
-    /* find the last '/', '\' or ':' */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == '/' || *p == '\\' || *p == ':') {
-            p++;
-            break;
-        }
-
-    /* Strip off trailing nonsense. */
-    n = strlen(p);
-    if (n > 4 &&
-        (strcmp(&p[n - 4], ".exe") == 0 || strcmp(&p[n - 4], ".EXE") == 0))
-        n -= 4;
-
-    /* Copy over the name, in lowercase. */
-    if (n > sizeof(prog) - 1)
-        n = sizeof(prog) - 1;
-    for (q = prog, i = 0; i < n; i++, p++)
-        *q++ = tolower((unsigned char)*p);
-    *q = '\0';
-    return prog;
-}
-
-#elif defined(OPENSSL_SYS_VMS)
-
-char *opt_progname(const char *argv0)
-{
-    const char *p, *q;
-
-    /* Find last special character sys:[foo.bar]openssl */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == ':' || *p == ']' || *p == '>') {
-            p++;
-            break;
-        }
-
-    q = strrchr(p, '.');
-    strncpy(prog, p, sizeof(prog) - 1);
-    prog[sizeof(prog) - 1] = '\0';
-    if (q != NULL && q - p < sizeof(prog))
-        prog[q - p] = '\0';
-    return prog;
-}
-
-#else
-
-char *opt_progname(const char *argv0)
-{
-    const char *p;
-
-    /* Could use strchr, but this is like the ones above. */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == '/') {
-            p++;
-            break;
-        }
-    strncpy(prog, p, sizeof(prog) - 1);
-    prog[sizeof(prog) - 1] = '\0';
-    return prog;
-}
-#endif
-
-char *opt_getprog(void)
-{
-    return prog;
-}
 
 /* Set up the arg parsing. */
 char *opt_init(int ac, char **av, const OPTIONS *o)
@@ -118,7 +41,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
     argv = av;
     opt_index = 1;
     opts = o;
-    opt_progname(av[0]);
+    app_progname(av[0]);
     unknown = NULL;
 
     for (; o->name; ++o) {
@@ -159,7 +82,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
             assert(unknown->valtype == 0 || unknown->valtype == '-');
         }
     }
-    return prog;
+    return app_getprog();
 }
 
 static OPT_PAIR formats[] = {
@@ -183,10 +106,10 @@ int opt_format_error(const char *s, unsigned long flags)
 
     if (flags == OPT_FMT_PEMDER) {
         BIO_printf(bio_err, "%s: Bad format \"%s\"; must be pem or der\n",
-                   prog, s);
+                   app_getprog(), s);
     } else {
         BIO_printf(bio_err, "%s: Bad format \"%s\"; must be one of:\n",
-                   prog, s);
+                   app_getprog(), s);
         for (ap = formats; ap->name; ap++)
             if (flags & ap->retval)
                 BIO_printf(bio_err, "   %s\n", ap->name);
@@ -278,7 +201,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     *cipherp = EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unknown cipher %s\n", prog, name);
+    BIO_printf(bio_err, "%s: Unknown cipher %s\n", app_getprog(), name);
     return 0;
 }
 
@@ -290,7 +213,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unknown digest %s\n", prog, name);
+    BIO_printf(bio_err, "%s: Unknown digest %s\n", app_getprog(), name);
     return 0;
 }
 
@@ -304,7 +227,7 @@ int opt_pair(const char *name, const OPT_PAIR* pairs, int *result)
             *result = pp->retval;
             return 1;
         }
-    BIO_printf(bio_err, "%s: Value must be one of:\n", prog);
+    BIO_printf(bio_err, "%s: Value must be one of:\n", app_getprog());
     for (pp = pairs; pp->name; pp++)
         BIO_printf(bio_err, "\t%s\n", pp->name);
     return 0;
@@ -320,7 +243,7 @@ int opt_int(const char *value, int *result)
     *result = (int)l;
     if (*result != l) {
         BIO_printf(bio_err, "%s: Value \"%s\" outside integer range\n",
-                   prog, value);
+                   app_getprog(), value);
         return 0;
     }
     return 1;
@@ -342,11 +265,11 @@ static void opt_number_error(const char *v)
         if (strncmp(v, b[i].prefix, strlen(b[i].prefix)) == 0) {
             BIO_printf(bio_err,
                        "%s: Can't parse \"%s\" as %s number\n",
-                       prog, v, b[i].name);
+                       app_getprog(), v, b[i].name);
             return;
         }
     }
-    BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n", prog, v);
+    BIO_printf(bio_err, "%s: Can't parse \"%s\" as a number\n", app_getprog(), v);
     return;
 }
 
@@ -470,7 +393,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_POLICY:
         otmp = OBJ_txt2obj(opt_arg(), 0);
         if (otmp == NULL) {
-            BIO_printf(bio_err, "%s: Invalid Policy %s\n", prog, opt_arg());
+            BIO_printf(bio_err, "%s: Invalid Policy %s\n", app_getprog(), opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_add0_policy(vpm, otmp);
@@ -479,7 +402,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         /* purpose name -> purpose index */
         i = X509_PURPOSE_get_by_sname(opt_arg());
         if (i < 0) {
-            BIO_printf(bio_err, "%s: Invalid purpose %s\n", prog, opt_arg());
+            BIO_printf(bio_err, "%s: Invalid purpose %s\n", app_getprog(), opt_arg());
             return 0;
         }
 
@@ -492,7 +415,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         if (!X509_VERIFY_PARAM_set_purpose(vpm, i)) {
             BIO_printf(bio_err,
                        "%s: Internal error setting purpose %s\n",
-                       prog, opt_arg());
+                       app_getprog(), opt_arg());
             return 0;
         }
         break;
@@ -500,7 +423,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
         if (vtmp == NULL) {
             BIO_printf(bio_err, "%s: Invalid verify name %s\n",
-                       prog, opt_arg());
+                       app_getprog(), opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_set1(vpm, vtmp);
@@ -520,7 +443,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
             return 0;
         if (t != (time_t)t) {
             BIO_printf(bio_err, "%s: epoch time out of range %s\n",
-                       prog, opt_arg());
+                       app_getprog(), opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_set_time(vpm, (time_t)t);
@@ -653,7 +576,7 @@ int opt_next(void)
         if (o->valtype == 0 || o->valtype == '-') {
             if (arg) {
                 BIO_printf(bio_err,
-                           "%s: Option -%s does not take a value\n", prog, p);
+                           "%s: Option -%s does not take a value\n", app_getprog(), p);
                 return -1;
             }
             return o->retval;
@@ -663,7 +586,7 @@ int opt_next(void)
         if (arg == NULL) {
             if (argv[opt_index] == NULL) {
                 BIO_printf(bio_err,
-                           "%s: Option -%s needs a value\n", prog, o->name);
+                           "%s: Option -%s needs a value\n", app_getprog(), o->name);
                 return -1;
             }
             arg = argv[opt_index++];
@@ -678,7 +601,7 @@ int opt_next(void)
         case '/':
             if (app_isdir(arg) >= 0)
                 break;
-            BIO_printf(bio_err, "%s: Not a directory: %s\n", prog, arg);
+            BIO_printf(bio_err, "%s: Not a directory: %s\n", app_getprog(), arg);
             return -1;
         case '<':
             /* Input file. */
@@ -686,7 +609,7 @@ int opt_next(void)
                 break;
             BIO_printf(bio_err,
                        "%s: Cannot open input file %s, %s\n",
-                       prog, arg, strerror(errno));
+                       app_getprog(), arg, strerror(errno));
             return -1;
         case '>':
             /* Output file. */
@@ -694,7 +617,7 @@ int opt_next(void)
                 break;
             BIO_printf(bio_err,
                        "%s: Cannot open output file %s, %s\n",
-                       prog, arg, strerror(errno));
+                       app_getprog(), arg, strerror(errno));
             return -1;
         case 'p':
         case 'n':
@@ -702,7 +625,7 @@ int opt_next(void)
                     || (o->valtype == 'p' && ival <= 0)) {
                 BIO_printf(bio_err,
                            "%s: Non-positive number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                           app_getprog(), arg, o->name);
                 return -1;
             }
             break;
@@ -710,7 +633,7 @@ int opt_next(void)
             if (!opt_imax(arg, &imval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                           app_getprog(), arg, o->name);
                 return -1;
             }
             break;
@@ -718,7 +641,7 @@ int opt_next(void)
             if (!opt_umax(arg, &umval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                           app_getprog(), arg, o->name);
                 return -1;
             }
             break;
@@ -726,7 +649,7 @@ int opt_next(void)
             if (!opt_long(arg, &lval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                           app_getprog(), arg, o->name);
                 return -1;
             }
             break;
@@ -734,7 +657,7 @@ int opt_next(void)
             if (!opt_ulong(arg, &ulval)) {
                 BIO_printf(bio_err,
                            "%s: Invalid number \"%s\" for -%s\n",
-                           prog, arg, o->name);
+                           app_getprog(), arg, o->name);
                 return -1;
             }
             break;
@@ -750,7 +673,7 @@ int opt_next(void)
                 break;
             BIO_printf(bio_err,
                        "%s: Invalid format \"%s\" for -%s\n",
-                       prog, arg, o->name);
+                       app_getprog(), arg, o->name);
             return -1;
         }
 
@@ -761,7 +684,7 @@ int opt_next(void)
         dunno = p;
         return unknown->retval;
     }
-    BIO_printf(bio_err, "%s: Option unknown option -%s\n", prog, p);
+    BIO_printf(bio_err, "%s: Option unknown option -%s\n", app_getprog(), p);
     return -1;
 }
 
@@ -864,13 +787,13 @@ void opt_help(const OPTIONS *list)
 
     if (standard_prolog)
         BIO_printf(bio_err, "Usage: %s [options]\nValid options are:\n",
-                   prog);
+                   app_getprog());
 
     /* Now let's print. */
     for (o = list; o->name; o++) {
         help = o->helpstr ? o->helpstr : "(No additional info)";
         if (o->name == OPT_HELP_STR) {
-            BIO_printf(bio_err, help, prog);
+            BIO_printf(bio_err, help, app_getprog());
             continue;
         }
 
@@ -906,4 +829,26 @@ void opt_help(const OPTIONS *list)
         start[width] = '\0';
         BIO_printf(bio_err, "%s  %s\n", start, help);
     }
+}
+
+
+/*
+ * See comments in opt_verify for explanation of this.
+ */
+enum r_range { OPT_R_ENUM };
+
+int opt_rand(int opt)
+{
+    switch ((enum r_range)opt) {
+    case OPT_R__FIRST:
+    case OPT_R__LAST:
+        break;
+    case OPT_R_RAND:
+        return app_RAND_loadfiles(opt_arg());
+        break;
+    case OPT_R_WRITERAND:
+        app_RAND_set_file(opt_arg());
+        break;
+    }
+    return 1;
 }

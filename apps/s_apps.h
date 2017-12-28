@@ -7,16 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-# include <conio.h>
-#endif
-
-#if defined(OPENSSL_SYS_MSDOS) && !defined(_WIN32)
-# define _kbhit kbhit
-#endif
-
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
