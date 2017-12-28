@@ -70,7 +70,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
                                     int *pkey_type, long *pkeylen,
                                     char **palgnam, ENGINE *keygen_engine);
 static CONF *req_conf = NULL;
-static CONF *cmd_conf = NULL;
+static CONF *rawext_conf = NULL;
 static int batch = 0;
 
 typedef enum OPTION_choice {
@@ -81,7 +81,7 @@ typedef enum OPTION_choice {
     OPT_PKEYOPT, OPT_SIGOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
     OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
-    OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_EXTENSION, OPT_EXTENSIONS,
+    OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_RAWEXT, OPT_EXTENSIONS,
     OPT_REQEXTS, OPT_PRECERT, OPT_MD,
     OPT_R_ENUM
 } OPTION_CHOICE;
@@ -125,7 +125,7 @@ const OPTIONS req_options[] = {
      "Enable support for multivalued RDNs"},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
-    {"extension", OPT_EXTENSION, 's',
+    {"extension", OPT_RAWEXT, 's',
      "Additional cert extension key=value pair (may be given more than once)"},
     {"extensions", OPT_EXTENSIONS, 's',
      "Cert extension section (override value in config file)"},
@@ -153,7 +153,7 @@ int req_main(int argc, char **argv)
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *md_alg = NULL, *digest = NULL;
-    BIO *extension_bio = NULL;
+    BIO *rawext_bio = NULL;
     char *extensions = NULL, *infile = NULL;
     char *outfile = NULL, *keyfile = NULL;
     char *keyalgstr = NULL, *p, *prog, *passargin = NULL, *passargout = NULL;
@@ -317,11 +317,11 @@ int req_main(int argc, char **argv)
         case OPT_MULTIVALUE_RDN:
             multirdn = 1;
             break;
-        case OPT_EXTENSION:
-            if (extension_bio == NULL) {
-                extension_bio = BIO_new(BIO_s_mem());
+        case OPT_RAWEXT:
+            if (rawext_bio == NULL) {
+                rawext_bio = BIO_new(BIO_s_mem());
             }
-            BIO_printf(extension_bio, "%s\n", opt_arg());
+            BIO_printf(rawext_bio, "%s\n", opt_arg());
             break;
         case OPT_EXTENSIONS:
             extensions = opt_arg();
@@ -359,11 +359,11 @@ int req_main(int argc, char **argv)
     if (verbose)
         BIO_printf(bio_err, "Using configuration from %s\n", template);
     req_conf = app_load_config(template);
-    if (extension_bio) {
+    if (rawext_bio) {
         if (verbose)
             BIO_printf(bio_err,
                        "Using additional configuraton from command line\n");
-        cmd_conf = app_load_config_bio(extension_bio, NULL);
+        rawext_conf = app_load_config_bio(rawext_bio, NULL);
     }
     if (template != default_config_file && !app_load_modules(req_conf))
         goto end;
@@ -417,12 +417,12 @@ int req_main(int argc, char **argv)
             goto end;
         }
     }
-    if (cmd_conf != NULL) {
+    if (rawext_conf != NULL) {
         /* Check syntax of command line extensions */
         X509V3_CTX ctx;
         X509V3_set_ctx_test(&ctx);
-        X509V3_set_nconf(&ctx, cmd_conf);
-        if (!X509V3_EXT_add_nconf(cmd_conf, &ctx, "default", NULL)) {
+        X509V3_set_nconf(&ctx, rawext_conf);
+        if (!X509V3_EXT_add_nconf(rawext_conf, &ctx, "default", NULL)) {
             BIO_printf(bio_err, "Error Loading command line extensions\n");
             goto end;
         }
@@ -631,7 +631,7 @@ int req_main(int argc, char **argv)
                 goto end;
 
             /* Set version to V3 */
-            if ((extensions != NULL || cmd_conf != NULL)
+            if ((extensions != NULL || rawext_conf != NULL)
                 && !X509_set_version(x509ss, 2))
                 goto end;
             if (serial != NULL) {
@@ -670,8 +670,8 @@ int req_main(int argc, char **argv)
                            extensions);
                 goto end;
             }
-            if (cmd_conf != NULL
-                && !X509V3_EXT_add_nconf(cmd_conf, &ext_ctx, "default",
+            if (rawext_conf != NULL
+                && !X509V3_EXT_add_nconf(rawext_conf, &ext_ctx, "default",
                                          x509ss)) {
                 BIO_printf(bio_err, "Error Loading command line extensions\n");
                 goto end;
@@ -707,8 +707,8 @@ int req_main(int argc, char **argv)
                            req_exts);
                 goto end;
             }
-            if (cmd_conf != NULL
-                && !X509V3_EXT_REQ_add_nconf(cmd_conf, &ext_ctx, "default",
+            if (rawext_conf != NULL
+                && !X509V3_EXT_REQ_add_nconf(rawext_conf, &ext_ctx, "default",
                                              req)) {
                 BIO_printf(bio_err, "Error Loading command line extensions\n");
                 goto end;
