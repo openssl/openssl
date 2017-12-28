@@ -126,7 +126,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
     for (ep = bp->first_entry; ep; ep = ep->next) {
         if (digest && memcmp(digest, ep->digest, evpmdsize) == 0) {
             BIO_printf(bio_err,
-                       "%s: skipping duplicate %s in %s\n", opt_getprog(),
+                       "%s: skipping duplicate %s in %s\n", app_getprog(),
                        type == TYPE_CERT ? "certificate" : "CRL", filename);
             return 1;
         }
@@ -141,7 +141,7 @@ static int add_entry(enum Type type, unsigned int hash, const char *filename,
         if (bp->num_needed >= MAX_COLLISIONS) {
             BIO_printf(bio_err,
                        "%s: hash table overflow for %s\n",
-                       opt_getprog(), filename);
+                       app_getprog(), filename);
             return 1;
         }
         ep = app_malloc(sizeof(*ep), "collision bucket");
@@ -232,7 +232,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
     /* Does it have X.509 data in it? */
     if ((b = BIO_new_file(fullpath, "r")) == NULL) {
         BIO_printf(bio_err, "%s: skipping %s, cannot open file\n",
-                   opt_getprog(), filename);
+                   app_getprog(), filename);
         errs++;
         goto end;
     }
@@ -245,7 +245,7 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         BIO_printf(bio_err,
                    "%s: skipping %s,"
                    "it does not contain exactly one certificate or CRL\n",
-                   opt_getprog(), filename);
+                   app_getprog(), filename);
         /* This is not an error. */
         goto end;
     }
@@ -401,13 +401,13 @@ static int do_dir(const char *dirname, enum Hash h)
                     if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
-                                   opt_getprog(), buf, strerror(errno));
+                                   app_getprog(), buf, strerror(errno));
                         errs++;
                     }
                     if (symlink(ep->filename, buf) < 0) {
                         BIO_printf(bio_err,
                                    "%s: Can't symlink %s, %s\n",
-                                   opt_getprog(), ep->filename,
+                                   app_getprog(), ep->filename,
                                    strerror(errno));
                         errs++;
                     }
@@ -423,7 +423,7 @@ static int do_dir(const char *dirname, enum Hash h)
                     if (unlink(buf) < 0 && errno != ENOENT) {
                         BIO_printf(bio_err,
                                    "%s: Can't unlink %s, %s\n",
-                                   opt_getprog(), buf, strerror(errno));
+                                   app_getprog(), buf, strerror(errno));
                         errs++;
                     }
                 }
