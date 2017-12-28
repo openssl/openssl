@@ -931,11 +931,15 @@ int cms_main(int argc, char **argv)
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
             signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
-            if (!signer)
+            if (!signer) {
+                ret = 2;
                 goto end;
+            }
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
-            if (!key)
+            if (!key) {
+                ret = 2;
                 goto end;
+            }
             for (kparam = key_first; kparam; kparam = kparam->next) {
                 if (kparam->idx == i) {
                     tflags |= CMS_KEY_PARAM;
