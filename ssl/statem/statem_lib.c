@@ -1004,7 +1004,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
  * in NBIO events. If |clearbufs| is set then init_buf and the wbio buffer is
  * freed up as well.
  */
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
 {
     int discard;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -1083,11 +1083,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
         }
     }
 
-    /*
-     * If we've not cleared the buffers its because we've got more work to do,
-     * so continue.
-     */
-    if (!clearbufs)
+    if (!stop)
         return WORK_FINISHED_CONTINUE;
 
     ossl_statem_set_in_init(s, 0);
