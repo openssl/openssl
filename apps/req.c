@@ -321,7 +321,9 @@ int req_main(int argc, char **argv)
             if (rawext_bio == NULL) {
                 rawext_bio = BIO_new(BIO_s_mem());
             }
-            BIO_printf(rawext_bio, "%s\n", opt_arg());
+            if (rawext_bio == NULL
+                || BIO_printf(rawext_bio, "%s\n", opt_arg()) < 0)
+                goto end;
             break;
         case OPT_EXTENSIONS:
             extensions = opt_arg();
@@ -856,6 +858,7 @@ int req_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     }
     NCONF_free(req_conf);
+    BIO_free(rawext_bio);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
