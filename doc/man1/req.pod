@@ -37,7 +37,7 @@ B<openssl> B<req>
 [B<-days n>]
 [B<-set_serial n>]
 [B<-newhdr>]
-[B<-rawext ext>]
+[B<-addext ext>]
 [B<-extensions section>]
 [B<-reqexts section>]
 [B<-precert>]
@@ -256,7 +256,7 @@ be a positive integer. The default is 30 days.
 Serial number to use when outputting a self signed certificate. This
 may be specified as a decimal value or a hex value if preceded by B<0x>.
 
-=item B<-rawext ext>
+=item B<-addext ext>
 
 Add a specific extension to the certificate (if the B<-x509> option is
 present) or certificate request.  The argument must have the form of
@@ -604,8 +604,8 @@ Example of giving the most common attributes (subject and extensions)
 on the command line:
 
  openssl req -new -subj "/C=GB/CN=foo" \
-                  -rawext "subjectAltName = DNS:foo.co.uk" \
-                  -rawext "certificatePolicies = 1.2.3.4" \
+                  -addext "subjectAltName = DNS:foo.co.uk" \
+                  -addext "certificatePolicies = 1.2.3.4" \
                   -newkey rsa:2048 -keyout key.pem -out req.pem
 
 
