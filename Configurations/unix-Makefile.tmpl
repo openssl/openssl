@@ -788,7 +788,6 @@ libsecapp.pc:
 	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libsecapp.pc
 
-
 openssl.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -798,8 +797,8 @@ openssl.pc:
 	    echo 'Name: OpenSSL'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
-	@# TODO make this configurable via build.info:
 	    echo 'Requires: libsecapp libssl libcrypto' ) > openssl.pc
+	@# TODO make the above configurable via build.info
 
 configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
