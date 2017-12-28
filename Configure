@@ -1503,6 +1503,7 @@ if ($builder eq "unified") {
 
     $config{build_infos} = [ ];
 
+    my %ordinals = ();
     foreach (@build_infos) {
         my $sourced = catdir($srcdir, $_->[0]);
         my $buildd = catdir($blddir, $_->[0]);
@@ -1524,7 +1525,6 @@ if ($builder eq "unified") {
         my @intermediates = ();
         my @rawlines = ();
 
-        my %ordinals = ();
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
@@ -1818,27 +1818,6 @@ EOF
                 if @doubles;
         }
 
-        foreach (keys %ordinals) {
-            my $dest = $_;
-            my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
-            foreach (@{$ordinals{$dest}}) {
-                my %known_ordinals =
-                    (
-                     crypto =>
-                     cleanfile($sourced, catfile("util", "libcrypto.num"), $blddir),
-                     ssl =>
-                     cleanfile($sourced, catfile("util", "libssl.num"), $blddir)
-                    );
-                my $o = $known_ordinals{$_};
-                die "Ordinals for $ddest defined more than once\n"
-                    if $unified_info{ordinals}->{$ddest};
-                $unified_info{ordinals}->{$ddest} = [ $_, $o ];
-            }
-        }
-
         foreach (keys %sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
@@ -1992,6 +1971,14 @@ EOF
             }
         }
     }
+
+    my $ordinals_text = join(', ', sort keys %ordinals);
+    warn <<"EOF" if $ordinals_text;
+
+WARNING: ORDINALS were specified for $ordinals_text
+They are ignored and should be replaced with a combination of GENERATE,
+DEPEND and SHARED_SOURCE.
+EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
