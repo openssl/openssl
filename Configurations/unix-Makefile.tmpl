@@ -250,7 +250,8 @@ LANG=C
 {- dependmagic('build_programs'); -}: build_programs_nodep
 
 build_generated: $(GENERATED_MANDATORY)
-build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
+# TODO make this configurable via build.info:
+build_libs_nodep: libcrypto.pc libssl.pc libsecapp.pc openssl.pc
 build_engines_nodep: $(ENGINES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
@@ -312,7 +313,8 @@ clean: libclean
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
-	$(RM) openssl.pc libcrypto.pc libssl.pc
+	@# TODO make this configurable via build.info:
+	$(RM) openssl.pc libcrypto.pc libssl.pc libsecapp.pc
 	-$(RM) `find . -type l -a \! -path "./.git/*"`
 	$(RM) $(TARFILE)
 
@@ -434,12 +436,16 @@ install_dev:
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	@# TODO make this configurable via build.info:
 	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
 	@cp libcrypto.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
 	@cp libssl.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	@$(ECHO) "install libsecapp.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libsecapp.pc"
+	@cp libsecapp.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libsecapp.pc
 	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc"
 	@cp openssl.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
@@ -482,8 +488,10 @@ uninstall_dev:
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
+	@# TODO make this configurable via build.info:
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libsecapp.pc
 	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
@@ -672,8 +680,10 @@ errors:
           done )
 
 ordinals:
+	@# TODO make this configurable via build.info:
 	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl crypto update )
 	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl ssl update )
+	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl secapp update )
 
 test_ordinals:
 	( cd test; \
@@ -734,7 +744,9 @@ FORCE:
 
 # Building targets ###################################################
 
-libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { shlib_simple($_) } @{$unified_info{libraries}}) -}
+# TODO make this configurable via build.info:
+libcrypto.pc libssl.pc libsecapp.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { shlib_simple($_) } @{$unified_info{libraries}}) -}
+# TODO make this configurable via build.info:
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
@@ -762,6 +774,20 @@ libssl.pc:
 	    echo 'Libs: -L$${libdir} -lssl'; \
 	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
+libsecapp.pc:
+	@ ( echo 'prefix=$(INSTALLTOP)'; \
+	    echo 'exec_prefix=$${prefix}'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    echo 'includedir=$${prefix}/include'; \
+	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
+	    echo ''; \
+	    echo 'Name: OpenSSL-libsecapp'; \
+	    echo 'Description: OpenSSL application library'; \
+	    echo 'Version: '$(VERSION); \
+	    echo 'Libs: -L$${libdir} -lsecapp'; \
+	    echo 'Libs.private: $(EX_LIBS)'; \
+	    echo 'Cflags: -I$${includedir}' ) > libsecapp.pc
+
 
 openssl.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
@@ -772,7 +798,8 @@ openssl.pc:
 	    echo 'Name: OpenSSL'; \
 	    echo 'Description: Secure Sockets Layer and cryptography libraries and tools'; \
 	    echo 'Version: '$(VERSION); \
-	    echo 'Requires: libssl libcrypto' ) > openssl.pc
+	@# TODO make this configurable via build.info:
+	    echo 'Requires: libsecapp libssl libcrypto' ) > openssl.pc
 
 configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
