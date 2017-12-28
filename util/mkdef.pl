@@ -106,6 +106,7 @@ use OpenSSL::Glob;
 (my $SO_VARIANT = qq{\U$target{"shlib_variant"}}) =~ s/\W/_/g;
 
 my $debug=0;
+my $trace=0;
 my $warn_simp=0;
 
 my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
@@ -213,6 +214,7 @@ my $zlib;
 foreach (@ARGV, split(/ /, $config{options}))
 	{
 	$debug=1 if $_ eq "debug";
+	$trace=1 if $_ eq "trace";
 	$warn_simp=1 if $_ eq "warn_simp";
 	$W32=1 if $_ eq "32";
 	die "win16 not supported" if $_ eq "16";
@@ -391,6 +393,7 @@ sub do_defs
 		{
 		my $fn = catfile($config{sourcedir},$file);
 		print STDERR "DEBUG: starting on $fn:\n" if $debug;
+		print STDERR "TRACE: start reading $fn\n" if $trace;
 		open(IN,"<$fn") || die "Can't open $fn, $!,";
 		my $line = "", my $def= "";
 		my %tag = (
@@ -924,11 +927,13 @@ sub do_defs
 			next if(/typedef\W/);
 			next if(/\#define/);
 
+			print STDERR "TRACE: processing $_\n" if $trace && !/^\#INFO:/;
 			# Reduce argument lists to empty ()
 			# fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
-			while(/\(.*\)/s) {
-				s/\([^\(\)]+\)/\{\}/gs;
-				s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
+			my $nsubst = 1; # prevent infinite loop, e.g., on  int fn()
+			while($nsubst && /\(.*\)/s) {
+				$nsubst = s/\([^\(\)]+\)/\{\}/gs;
+				$nsubst+= s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
 			}
 			# pretend as we didn't use curly braces: {} -> ()
 			s/\{\}/\(\)/gs;
