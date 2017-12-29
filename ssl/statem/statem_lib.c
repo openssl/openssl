@@ -1120,6 +1120,17 @@ int tls_get_message_header(SSL *s, int *mt)
                              SSL_R_BAD_CHANGE_CIPHER_SPEC);
                     return 0;
                 }
+                if (s->statem.hand_state == TLS_ST_BEFORE
+                        && (s->s3->flags & TLS1_FLAGS_STATELESS) != 0) {
+                    /*
+                     * We are stateless and we received a CCS. Probably this is
+                     * from a client between the first and second ClientHellos.
+                     * We should ignore this, but return an error because we do
+                     * not return success until we see the second ClientHello
+                     * with a valid cookie.
+                     */
+                    return 0;
+                }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
                 s->init_num = readbytes - 1;
                 s->init_msg = s->init_buf->data;
