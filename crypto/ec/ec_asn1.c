@@ -572,7 +572,7 @@ ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
 
     if (EC_GROUP_get_asn1_flag(group)) {
         /*
-         * use the asn1 OID to describe the the elliptic curve parameters
+         * use the asn1 OID to describe the elliptic curve parameters
          */
         tmp = EC_GROUP_get_curve_name(group);
         if (tmp) {

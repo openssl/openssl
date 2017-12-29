@@ -433,8 +433,8 @@ others, that's done as follows:
     GENERATE[bar.s]=asm/bar.S
 
 The value of each GENERATE line is a command line or part of it.
-Configure places no rules on the command line, except the the first
-item muct be the generator file.  It is, however, entirely up to the
+Configure places no rules on the command line, except that the first
+item must be the generator file.  It is, however, entirely up to the
 build file template to define exactly how those command lines should
 be handled, how the output is captured and so on.
 
