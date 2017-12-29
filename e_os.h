@@ -226,7 +226,6 @@ extern FILE *_imp___iob;
 #  else
 #   define DEFAULT_HOME  "C:"
 #  endif
-#  define write _write
 
 /* Avoid Visual Studio 13 GetVersion deprecated problems */
 #  if defined(_MSC_VER) && _MSC_VER>=1800
