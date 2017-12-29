@@ -104,7 +104,7 @@ our @tests = (
     # When the buffer / fragment size ratio is sufficiently large,
     # multi-buffer code kicks in on some platforms for AES-SHA.  The
     # exact minimum ratio depends on the platform, and is usually
-    # around 4. Since the the test buffer is 64kB, a 4kB fragment is
+    # around 4. Since the test buffer is 64kB, a 4kB fragment is
     # easily sufficient.
     #
     # (We run this test on all platforms though it's only true multibuffer

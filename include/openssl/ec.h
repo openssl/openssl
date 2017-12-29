@@ -338,7 +338,7 @@ EC_GROUP *EC_GROUP_new_by_curve_name(int nid);
  */
 EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params);
 
-/** Creates an ECPARAMETERS object for the the given EC_GROUP object.
+/** Creates an ECPARAMETERS object for the given EC_GROUP object.
  *  \param  group   pointer to the EC_GROUP object
  *  \param  params  pointer to an existing ECPARAMETERS object or NULL
  *  \return pointer to the new ECPARAMETERS object or NULL
@@ -354,7 +354,7 @@ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
  */
 EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params);
 
-/** Creates an ECPKPARAMETERS object for the the given EC_GROUP object.
+/** Creates an ECPKPARAMETERS object for the given EC_GROUP object.
  *  \param  group   pointer to the EC_GROUP object
  *  \param  params  pointer to an existing ECPKPARAMETERS object or NULL
  *  \return pointer to the new ECPKPARAMETERS object or NULL
