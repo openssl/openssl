@@ -107,7 +107,7 @@ use OpenSSL::Glob;
 
 my $debug=0;
 my $trace=0;
-my $warn_simp=0;
+my $verbose=0;
 
 # TODO make this configurable via build.info
 my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
@@ -218,7 +218,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 	{
 	$debug=1 if $_ eq "debug";
 	$trace=1 if $_ eq "trace";
-	$warn_simp=1 if $_ eq "warn_simp";
+	$verbose=1 if $_ eq "verbose";
 	$W32=1 if $_ eq "32";
 	die "win16 not supported" if $_ eq "16";
 	if($_ eq "NT") {
@@ -596,7 +596,7 @@ sub do_defs
 						$tag{$1}=-1;
 					}
 				} else {
-					print STDERR "Warning: $file: taking only '!defined($1)' of complicated expression: $_" if $warn_simp; # because it is O...
+					print STDERR "Warning: $file: taking only '!defined($1)' of complicated expression: $_" if $verbose; # because it is O...
 					print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
 					push(@tag,$1);
 					$tag{$1}=-1;
@@ -618,7 +618,7 @@ sub do_defs
 						$tag{$1}=1;
 					}
 				} else {
-					print STDERR "Warning: $file: taking only 'defined($1)' of complicated expression: $_\n" if $warn_simp; # because it is O...
+					print STDERR "Warning: $file: taking only 'defined($1)' of complicated expression: $_\n" if $verbose; # because it is O...
 					print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
 					push(@tag,$1);
 					$tag{$1}=1;
@@ -683,7 +683,7 @@ sub do_defs
 			} elsif (/^\#\s*if\s+/) {
 				#Some other unrecognized "if" style
 				push(@tag,"-");
-				print STDERR "Warning: $file: ignoring unrecognized expression: $_\n" if $warn_simp; # because it is O...
+				print STDERR "Warning: $file: ignoring unrecognized expression: $_\n" if $verbose; # because it is O...
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking && $tag{'TRUE'} != -1) {
 				# This is for aliasing.  When we find an alias,
@@ -1458,9 +1458,9 @@ sub load_numbers
 		$prev=$a[0];
 	}
 	if ($num_noinfo) {
-		print STDERR "Warning: $num_noinfo symbols were without info.";
+		print STDERR "Warning: $num_noinfo symbols were without info." if $verbose || !$do_rewrite;
 		if ($do_rewrite) {
-			printf STDERR "  The rewrite will fix this.\n";
+			printf STDERR "  The rewrite will fix this.\n" if $verbose;
 		} else {
 			printf STDERR "  You should do a rewrite to fix this.\n";
 		}
