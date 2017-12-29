@@ -112,7 +112,7 @@ changequote({,})
 !
 ! Loads key first round from address in parameter 5 to out0, out1.
 !
-! After the the original LibDES initial permutation, the resulting left
+! After the original LibDES initial permutation, the resulting left
 ! is in the variable initially used for right and vice versa. The macro
 ! implements the possibility to keep the halfs in the original registers.
 !
@@ -529,7 +529,7 @@ $4:
 !  parameter 4   1 for load input/output address to local5/7
 !
 !  The final permutation logic switches the halves, meaning that
-!  left and right ends up the the registers originally used.
+!  left and right ends up the registers originally used.
 
 define(fp_macro, {
 

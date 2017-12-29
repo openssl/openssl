@@ -9436,7 +9436,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Added BIO_vprintf() and BIO_vsnprintf().
      [Richard Levitte]
 
-  *) Added more prefixes to parse for in the the strings written
+  *) Added more prefixes to parse for in the strings written
      through a logging bio, to cover all the levels that are available
      through syslog.  The prefixes are now:
 
@@ -11181,7 +11181,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      delete an unused file.
      [Ulf Möller]
 
-  *) Add support for the the free Netwide assembler (NASM) under Win32,
+  *) Add support for the free Netwide assembler (NASM) under Win32,
      since not many people have MASM (ml) and it can be hard to obtain.
      This is currently experimental but it seems to work OK and pass all
      the tests. Check out INSTALL.W32 for info.
