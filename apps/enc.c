@@ -429,50 +429,69 @@ int enc_main(int argc, char **argv)
     }
 
     if (cipher != NULL) {
-        /*
-         * Note that str is NULL if a key was passed on the command line, so
-         * we get no salt in that case. Is this a bug?
-         */
-        if (str != NULL) {
-            /*
-             * Salt handling: if encrypting generate a salt and write to
-             * output BIO. If decrypting read salt from input BIO.
-             */
+
+        memset(salt, 0, sizeof(salt));
+        /* if decrypting, try to extract or skip any heading salt */
+        if(enc == 0) {
+            inl = BIO_read(rbio, mbuf, sizeof(mbuf));
+            if(inl < 1) {
+                BIO_printf(bio_err, "error reading input file\n");
+                goto end;
+            }
+            if (inl == sizeof(mbuf) /* Is file salted ? */
+                && memcmp(mbuf, magic, sizeof(mbuf)) == 0) {
+                if (BIO_read(rbio, salt, sizeof(salt)) != sizeof(salt)) {
+                    BIO_printf(bio_err, "error reading input file\n");
+                    goto end;
+                }
+            }
+            else { /* file is NOT salted */
+                if (hsalt == NULL && str != NULL) { /* NO salt at all */
+                    BIO_printf(bio_err, "bad magic number\n");
+                    goto end;
+                }
+                else { /* need to rewind */
+                    if (BIO_reset(rbio)) {
+                        BIO_printf(bio_err, "BIO_reset failed\n");
+                        goto end;
+                    };
+                }
+            }
+        }
+
+        if (str != NULL) { /* a passphrase is available */
+
             unsigned char *sptr;
             size_t str_len = strlen(str);
 
             if (nosalt) {
                 sptr = NULL;
             } else {
-                if (enc) {
-                    if (hsalt) {
-                        if (!set_hex(hsalt, salt, sizeof(salt))) {
-                            BIO_printf(bio_err, "invalid hex salt value\n");
+                if (enc) {  /* encryption */
+                    if (hsalt == NULL) {
+                        if (RAND_bytes(salt, sizeof(salt)) <= 0) {
+                            BIO_printf(bio_err, "RAND_bytes failed\n");
                             goto end;
                         }
-                    } else if (RAND_bytes(salt, sizeof(salt)) <= 0) {
-                        goto end;
+                        /*
+                         * If -P option then don't bother writing.
+                         * (and only write the salt when it was generated, i.e.
+                         * not [necessarily] known by the user)
+                         */
+                        if ((printkey != 2)
+                            && (BIO_write(wbio, magic,
+                                          sizeof(magic) - 1) != sizeof(magic) - 1
+                                || BIO_write(wbio,
+                                             (char *)salt,
+                                             sizeof(salt)) != sizeof(salt))) {
+                            BIO_printf(bio_err, "error writing output file\n");
+                            goto end;
+                        }
                     }
-                    /*
-                     * If -P option then don't bother writing
-                     */
-                    if ((printkey != 2)
-                        && (BIO_write(wbio, magic,
-                                      sizeof(magic) - 1) != sizeof(magic) - 1
-                            || BIO_write(wbio,
-                                         (char *)salt,
-                                         sizeof(salt)) != sizeof(salt))) {
-                        BIO_printf(bio_err, "error writing output file\n");
-                        goto end;
-                    }
-                } else if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf)
-                           || BIO_read(rbio,
-                                       (unsigned char *)salt,
-                                       sizeof(salt)) != sizeof(salt)) {
-                    BIO_printf(bio_err, "error reading input file\n");
-                    goto end;
-                } else if (memcmp(mbuf, magic, sizeof(magic) - 1)) {
-                    BIO_printf(bio_err, "bad magic number\n");
+                }
+
+                if (hsalt != NULL && !set_hex(hsalt, salt, sizeof(salt))) {
+                    BIO_printf(bio_err, "invalid hex salt value\n");
                     goto end;
                 }
                 sptr = salt;
