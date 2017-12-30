@@ -1515,19 +1515,14 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
                                     BIGNUM *x, BN_CTX *ctx)
 {
     /* RR = 2^512 mod ord(p256) */
-    static const BN_ULONG RR[P256_LIMBS]  = { TOBN(0x83244c95,0xbe79eea2),
-                                              TOBN(0x4699799c,0x49bd6fa6),
-                                              TOBN(0x2845b239,0x2b6bec59),
-                                              TOBN(0x66e12d94,0xf3d95620) };
+    static const BN_ULONG RR[P256_LIMBS]  = {
+        TOBN(0x83244c95,0xbe79eea2), TOBN(0x4699799c,0x49bd6fa6),
+        TOBN(0x2845b239,0x2b6bec59), TOBN(0x66e12d94,0xf3d95620)
+    };
     /* The constant 1 (unlike ONE that is one in Montgomery representation) */
-    static const BN_ULONG one[P256_LIMBS] = { TOBN(0,1),TOBN(0,0),
-                                              TOBN(0,0),TOBN(0,0) };
-    /* expLo - the low 128bit of the exponent we use (ord(p256) - 2),
-     * split into 4bit windows */
-    static const unsigned char expLo[32]  = { 0xb,0xc,0xe,0x6,0xf,0xa,0xa,0xd,
-                                              0xa,0x7,0x1,0x7,0x9,0xe,0x8,0x4,
-                                              0xf,0x3,0xb,0x9,0xc,0xa,0xc,0x2,
-                                              0xf,0xc,0x6,0x3,0x2,0x5,0x4,0xf };
+    static const BN_ULONG one[P256_LIMBS] = {
+        TOBN(0,1), TOBN(0,0), TOBN(0,0), TOBN(0,0)
+    };
     /*
      * We don't use entry 0 in the table, so we omit it and address
      * with -1 offset.
@@ -1561,6 +1556,10 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     }
 
     ecp_nistz256_ord_mul_mont(table[0], t, RR);
+#if 0
+    /*
+     * Original sparse-then-fixed-window algorithm, retained for reference.
+     */
     for (i = 2; i < 16; i += 2) {
         ecp_nistz256_ord_sqr_mont(table[i-1], table[i/2-1], 1);
         ecp_nistz256_ord_mul_mont(table[i], table[i-1], table[0]);
@@ -1586,13 +1585,85 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     ecp_nistz256_ord_mul_mont(out, out, t);         /* ffffffff00000000ffffffffffffffff */
 
     /*
-     * The bottom 128 bit of the exponent are easier done with a table
+     * The bottom 128 bit of the exponent are processed with fixed 4-bit window
      */
     for(i = 0; i < 32; i++) {
+        /* expLo - the low 128 bits of the exponent we use (ord(p256) - 2),
+         * split into nibbles */
+        static const unsigned char expLo[32]  = {
+            0xb,0xc,0xe,0x6,0xf,0xa,0xa,0xd,0xa,0x7,0x1,0x7,0x9,0xe,0x8,0x4,
+            0xf,0x3,0xb,0x9,0xc,0xa,0xc,0x2,0xf,0xc,0x6,0x3,0x2,0x5,0x4,0xf
+        };
+
         ecp_nistz256_ord_sqr_mont(out, out, 4);
         /* The exponent is public, no need in constant-time access */
         ecp_nistz256_ord_mul_mont(out, out, table[expLo[i]-1]);
     }
+#else
+    /*
+     * https://briansmith.org/ecc-inversion-addition-chains-01#p256_scalar_inversion
+     *
+     * Even though this code path spares 12 squarings, 4.5%, and 13
+     * multiplications, 25%, on grand scale sign operation is not that
+     * much faster, not more that 2%...
+     */
+    enum {
+        i_1 = 0, i_10,     i_11,     i_101, i_111, i_1010, i_1111,
+        i_10101, i_101010, i_101111, i_x6,  i_x8,  i_x16,  i_x32
+    };
+
+    /* pre-calculate powers */
+    ecp_nistz256_ord_sqr_mont(table[i_10], table[i_1], 1);
+
+    ecp_nistz256_ord_mul_mont(table[i_11], table[i_1], table[i_10]);
+
+    ecp_nistz256_ord_mul_mont(table[i_101], table[i_11], table[i_10]);
+
+    ecp_nistz256_ord_mul_mont(table[i_111], table[i_101], table[i_10]);
+
+    ecp_nistz256_ord_sqr_mont(table[i_1010], table[i_101], 1);
+
+    ecp_nistz256_ord_mul_mont(table[i_1111], table[i_1010], table[i_101]);
+
+    ecp_nistz256_ord_sqr_mont(table[i_10101], table[i_1010], 1);
+    ecp_nistz256_ord_mul_mont(table[i_10101], table[i_10101], table[i_1]);
+
+    ecp_nistz256_ord_sqr_mont(table[i_101010], table[i_10101], 1);
+
+    ecp_nistz256_ord_mul_mont(table[i_101111], table[i_101010], table[i_101]);
+
+    ecp_nistz256_ord_mul_mont(table[i_x6], table[i_101010], table[i_10101]);
+
+    ecp_nistz256_ord_sqr_mont(table[i_x8], table[i_x6], 2);
+    ecp_nistz256_ord_mul_mont(table[i_x8], table[i_x8], table[i_11]);
+
+    ecp_nistz256_ord_sqr_mont(table[i_x16], table[i_x8], 8);
+    ecp_nistz256_ord_mul_mont(table[i_x16], table[i_x16], table[i_x8]);
+
+    ecp_nistz256_ord_sqr_mont(table[i_x32], table[i_x16], 16);
+    ecp_nistz256_ord_mul_mont(table[i_x32], table[i_x32], table[i_x16]);
+
+    /* calculations */
+    ecp_nistz256_ord_sqr_mont(out, table[i_x32], 64);
+    ecp_nistz256_ord_mul_mont(out, out, table[i_x32]);
+
+    for (i = 0; i < 27; i++) {
+        static const struct { unsigned char p, i; } chain[27] = {
+            { 32, i_x32 }, { 6,  i_101111 }, { 5,  i_111    },
+            { 4,  i_11  }, { 5,  i_1111   }, { 5,  i_10101  },
+            { 4,  i_101 }, { 3,  i_101    }, { 3,  i_101    },
+            { 5,  i_111 }, { 9,  i_101111 }, { 6,  i_1111   },
+            { 2,  i_1   }, { 5,  i_1      }, { 6,  i_1111   },
+            { 5,  i_111 }, { 4,  i_111    }, { 5,  i_111    },
+            { 5,  i_101 }, { 3,  i_11     }, { 10, i_101111 },
+            { 2,  i_11  }, { 5,  i_11     }, { 5,  i_11     },
+            { 3,  i_1   }, { 7,  i_10101  }, { 6,  i_1111   }
+        };
+
+        ecp_nistz256_ord_sqr_mont(out, out, chain[i].p);
+        ecp_nistz256_ord_mul_mont(out, out, table[chain[i].i]);
+    }
+#endif
     ecp_nistz256_ord_mul_mont(out, out, one);
 
     /*
@@ -1659,7 +1730,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
-        ecp_nistz256_inv_mod_ord                    /* can be #defined-ed NULL */
+        ecp_nistz256_inv_mod_ord                    /* can be #define-d NULL */
     };
 
     return &ret;
