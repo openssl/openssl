@@ -73,6 +73,7 @@ typedef unsigned char u8;
 #  endif
 # elif defined(_MSC_VER)
 #  if _MSC_VER>=1300
+#   include <stdlib.h>
 #   pragma intrinsic(_byteswap_uint64,_byteswap_ulong)
 #   define BSWAP8(x)    _byteswap_uint64((u64)(x))
 #   define BSWAP4(x)    _byteswap_ulong((u32)(x))
