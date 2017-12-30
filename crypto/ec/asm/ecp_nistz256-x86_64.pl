@@ -502,6 +502,7 @@ $code.=<<___;
 .type	ecp_nistz256_ord_mul_mont,\@function,3
 .align	32
 ecp_nistz256_ord_mul_mont:
+.cfi_startproc
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -511,11 +512,18 @@ $code.=<<___	if ($addx);
 ___
 $code.=<<___;
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
+.Lord_mul_body:
 
 	mov	8*0($b_org), %rax
 	mov	$b_org, $b_ptr
@@ -795,13 +803,23 @@ $code.=<<___;
 	mov	$acc0, 8*2($r_ptr)
 	mov	$acc1, 8*3($r_ptr)
 
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbx
-	pop	%rbp
+	mov	0(%rsp),%r15
+.cfi_restore	%r15
+	mov	8(%rsp),%r14
+.cfi_restore	%r14
+	mov	16(%rsp),%r13
+.cfi_restore	%r13
+	mov	24(%rsp),%r12
+.cfi_restore	%r12
+	mov	32(%rsp),%rbx
+.cfi_restore	%rbx
+	mov	40(%rsp),%rbp
+.cfi_restore	%rbp
+	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
+.Lord_mul_epilogue:
 	ret
+.cfi_endproc
 .size	ecp_nistz256_ord_mul_mont,.-ecp_nistz256_ord_mul_mont
 
 ################################################################################
@@ -814,6 +832,7 @@ $code.=<<___;
 .type	ecp_nistz256_ord_sqr_mont,\@function,3
 .align	32
 ecp_nistz256_ord_sqr_mont:
+.cfi_startproc
 ___
 $code.=<<___	if ($addx);
 	mov	\$0x80100, %ecx
@@ -823,11 +842,18 @@ $code.=<<___	if ($addx);
 ___
 $code.=<<___;
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
+.Lord_sqr_body:
 
 	mov	8*0($a_ptr), $acc0
 	mov	8*1($a_ptr), %rax
@@ -1077,13 +1103,23 @@ $code.=<<___;
 	mov	$acc7, 8*3($r_ptr)
 	pxor	%xmm3, %xmm3
 
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbx
-	pop	%rbp
+	mov	0(%rsp),%r15
+.cfi_restore	%r15
+	mov	8(%rsp),%r14
+.cfi_restore	%r14
+	mov	16(%rsp),%r13
+.cfi_restore	%r13
+	mov	24(%rsp),%r12
+.cfi_restore	%r12
+	mov	32(%rsp),%rbx
+.cfi_restore	%rbx
+	mov	40(%rsp),%rbp
+.cfi_restore	%rbp
+	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
+.Lord_sqr_epilogue:
 	ret
+.cfi_endproc
 .size	ecp_nistz256_ord_sqr_mont,.-ecp_nistz256_ord_sqr_mont
 ___
 
@@ -1092,13 +1128,21 @@ $code.=<<___	if ($addx);
 .type	ecp_nistz256_ord_mul_montx,\@function,3
 .align	32
 ecp_nistz256_ord_mul_montx:
+.cfi_startproc
 .Lecp_nistz256_ord_mul_montx:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
+.Lord_mulx_body:
 
 	mov	$b_org, $b_ptr
 	mov	8*0($b_org), %rdx
@@ -1298,25 +1342,43 @@ ecp_nistz256_ord_mul_montx:
 	mov	$acc0, 8*2($r_ptr)
 	mov	$acc1, 8*3($r_ptr)
 
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbx
-	pop	%rbp
+	mov	0(%rsp),%r15
+.cfi_restore	%r15
+	mov	8(%rsp),%r14
+.cfi_restore	%r14
+	mov	16(%rsp),%r13
+.cfi_restore	%r13
+	mov	24(%rsp),%r12
+.cfi_restore	%r12
+	mov	32(%rsp),%rbx
+.cfi_restore	%rbx
+	mov	40(%rsp),%rbp
+.cfi_restore	%rbp
+	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
+.Lord_mulx_epilogue:
 	ret
+.cfi_endproc
 .size	ecp_nistz256_ord_mul_montx,.-ecp_nistz256_ord_mul_montx
 
 .type	ecp_nistz256_ord_sqr_montx,\@function,3
 .align	32
 ecp_nistz256_ord_sqr_montx:
+.cfi_startproc
 .Lecp_nistz256_ord_sqr_montx:
 	push	%rbp
+.cfi_push	%rbp
 	push	%rbx
+.cfi_push	%rbx
 	push	%r12
+.cfi_push	%r12
 	push	%r13
+.cfi_push	%r13
 	push	%r14
+.cfi_push	%r14
 	push	%r15
+.cfi_push	%r15
+.Lord_sqrx_body:
 
 	mov	$b_org, $b_ptr
 	mov	8*0($a_ptr), %rdx
@@ -1488,14 +1550,23 @@ ecp_nistz256_ord_sqr_montx:
 	mov	$acc0, 8*3($r_ptr)
 	pxor	%xmm3, %xmm3
 
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbx
-	pop	%rbp
+	mov	0(%rsp),%r15
+.cfi_restore	%r15
+	mov	8(%rsp),%r14
+.cfi_restore	%r14
+	mov	16(%rsp),%r13
+.cfi_restore	%r13
+	mov	24(%rsp),%r12
+.cfi_restore	%r12
+	mov	32(%rsp),%rbx
+.cfi_restore	%rbx
+	mov	40(%rsp),%rbp
+.cfi_restore	%rbp
+	lea	48(%rsp),%rsp
+.cfi_adjust_cfa_offset	-48
+.Lord_sqrx_epilogue:
 	ret
-
+.cfi_endproc
 .size	ecp_nistz256_ord_sqr_montx,.-ecp_nistz256_ord_sqr_montx
 ___
 
@@ -4384,6 +4455,24 @@ full_handler:
 	.rva	.LSEH_end_ecp_nistz256_neg
 	.rva	.LSEH_info_ecp_nistz256_neg
 
+	.rva	.LSEH_begin_ecp_nistz256_ord_mul_mont
+	.rva	.LSEH_end_ecp_nistz256_ord_mul_mont
+	.rva	.LSEH_info_ecp_nistz256_ord_mul_mont
+
+	.rva	.LSEH_begin_ecp_nistz256_ord_sqr_mont
+	.rva	.LSEH_end_ecp_nistz256_ord_sqr_mont
+	.rva	.LSEH_info_ecp_nistz256_ord_sqr_mont
+___
+$code.=<<___	if ($addx);
+	.rva	.LSEH_begin_ecp_nistz256_ord_mul_montx
+	.rva	.LSEH_end_ecp_nistz256_ord_mul_montx
+	.rva	.LSEH_info_ecp_nistz256_ord_mul_montx
+
+	.rva	.LSEH_begin_ecp_nistz256_ord_sqr_montx
+	.rva	.LSEH_end_ecp_nistz256_ord_sqr_montx
+	.rva	.LSEH_info_ecp_nistz256_ord_sqr_montx
+___
+$code.=<<___;
 	.rva	.LSEH_begin_ecp_nistz256_to_mont
 	.rva	.LSEH_end_ecp_nistz256_to_mont
 	.rva	.LSEH_info_ecp_nistz256_to_mont
@@ -4471,6 +4560,30 @@ $code.=<<___;
 	.byte	9,0,0,0
 	.rva	short_handler
 	.rva	.Lneg_body,.Lneg_epilogue		# HandlerData[]
+.LSEH_info_ecp_nistz256_ord_mul_mont:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.Lord_mul_body,.Lord_mul_epilogue	# HandlerData[]
+	.long	48,0
+.LSEH_info_ecp_nistz256_ord_sqr_mont:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.Lord_sqr_body,.Lord_sqr_epilogue	# HandlerData[]
+	.long	48,0
+___
+$code.=<<___ if ($addx);
+.LSEH_info_ecp_nistz256_ord_mul_montx:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.Lord_mulx_body,.Lord_mulx_epilogue	# HandlerData[]
+	.long	48,0
+.LSEH_info_ecp_nistz256_ord_sqr_montx:
+	.byte	9,0,0,0
+	.rva	full_handler
+	.rva	.Lord_sqrx_body,.Lord_sqrx_epilogue	# HandlerData[]
+	.long	48,0
+___
+$code.=<<___;
 .LSEH_info_ecp_nistz256_to_mont:
 	.byte	9,0,0,0
 	.rva	full_handler
