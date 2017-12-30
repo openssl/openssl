@@ -50,6 +50,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_ECPKPARAMETERS_PRINT                        149
 # define EC_F_ECPKPARAMETERS_PRINT_FP                     150
 # define EC_F_ECP_NISTZ256_GET_AFFINE                     240
+# define EC_F_ECP_NISTZ256_INV_MOD_ORD                    275
 # define EC_F_ECP_NISTZ256_MULT_PRECOMPUTE                243
 # define EC_F_ECP_NISTZ256_POINTS_MUL                     241
 # define EC_F_ECP_NISTZ256_PRE_COMP_NEW                   244
