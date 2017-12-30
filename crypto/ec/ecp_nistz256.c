@@ -1,15 +1,17 @@
 /*
  * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2014, Intel Corporation. All Rights Reserved.
+ * Copyright (c) 2015, CloudFlare, Inc.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  *
- * Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
+ * Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1, 3)
  * (1) Intel Corporation, Israel Development Center, Haifa, Israel
  * (2) University of Haifa, Israel
+ * (3) CloudFlare, Inc.
  *
  * Reference:
  * S.Gueron and V.Krasnov, "Fast Prime Field Elliptic Curve Cryptography with
@@ -908,7 +910,7 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
  */
 #if defined(ECP_NISTZ256_AVX2)
 # if !(defined(__x86_64) || defined(__x86_64__) || \
-       defined(_M_AMD64) || defined(_MX64)) || \
+       defined(_M_AMD64) || defined(_M_X64)) || \
      !(defined(__GNUC__) || defined(_MSC_VER)) /* this is for ALIGN32 */
 #  undef ECP_NISTZ256_AVX2
 # else
@@ -1495,6 +1497,117 @@ static int ecp_nistz256_window_have_precompute_mult(const EC_GROUP *group)
     return HAVEPRECOMP(group, nistz256);
 }
 
+#if defined(__x86_64) || defined(__x86_64__) || \
+    defined(_M_AMD64) || defined(_M_X64) || \
+    defined(__powerpc64__) || defined(_ARCH_PP64)
+/*
+ * Montgomery mul modulo Order(P): res = a*b*2^-256 mod Order(P)
+ */
+void ecp_nistz256_ord_mul_mont(BN_ULONG res[P256_LIMBS],
+                               const BN_ULONG a[P256_LIMBS],
+                               const BN_ULONG b[P256_LIMBS]);
+void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
+                               const BN_ULONG a[P256_LIMBS],
+                               int rep);
+
+static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
+                                    BIGNUM *x, BN_CTX *ctx)
+{
+    /* RR = 2^512 mod ord(p256) */
+    static const BN_ULONG RR[P256_LIMBS]  = { TOBN(0x83244c95,0xbe79eea2),
+                                              TOBN(0x4699799c,0x49bd6fa6),
+                                              TOBN(0x2845b239,0x2b6bec59),
+                                              TOBN(0x66e12d94,0xf3d95620) };
+    /* The constant 1 (unlike ONE that is one in Montgomery representation) */
+    static const BN_ULONG one[P256_LIMBS] = { TOBN(0,1),TOBN(0,0),
+                                              TOBN(0,0),TOBN(0,0) };
+    /* expLo - the low 128bit of the exponent we use (ord(p256) - 2),
+     * split into 4bit windows */
+    static const unsigned char expLo[32]  = { 0xb,0xc,0xe,0x6,0xf,0xa,0xa,0xd,
+                                              0xa,0x7,0x1,0x7,0x9,0xe,0x8,0x4,
+                                              0xf,0x3,0xb,0x9,0xc,0xa,0xc,0x2,
+                                              0xf,0xc,0x6,0x3,0x2,0x5,0x4,0xf };
+    /*
+     * We don't use entry 0 in the table, so we omit it and address
+     * with -1 offset.
+     */
+    BN_ULONG table[15][P256_LIMBS];
+    BN_ULONG out[P256_LIMBS], t[P256_LIMBS];
+    int i, ret = 0;
+
+    /*
+     * Catch allocation failure early.
+     */
+    if (bn_wexpand(r, P256_LIMBS) == NULL) {
+        ECerr(EC_F_ECP_NISTZ256_INV_MOD_ORD, ERR_R_BN_LIB);
+        goto err;
+    }
+
+    if ((BN_num_bits(x) > 256) || BN_is_negative(x)) {
+        BIGNUM *tmp;
+
+        if ((tmp = BN_CTX_get(ctx)) == NULL
+            || !BN_nnmod(tmp, x, group->order, ctx)) {
+            ECerr(EC_F_ECP_NISTZ256_INV_MOD_ORD, ERR_R_BN_LIB);
+            goto err;
+        }
+        x = tmp;
+    }
+
+    if (!ecp_nistz256_bignum_to_field_elem(t, x)) {
+        ECerr(EC_F_ECP_NISTZ256_INV_MOD_ORD, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_nistz256_ord_mul_mont(table[0], t, RR);
+    for (i = 2; i < 16; i += 2) {
+        ecp_nistz256_ord_sqr_mont(table[i-1], table[i/2-1], 1);
+        ecp_nistz256_ord_mul_mont(table[i], table[i-1], table[0]);
+    }
+
+    /*
+     * The top 128bit of the exponent are highly redudndant, so we
+     * perform an optimized flow
+     */
+    ecp_nistz256_ord_sqr_mont(t, table[15-1], 4);   /* f0 */
+    ecp_nistz256_ord_mul_mont(t, t, table[15-1]);   /* ff */
+
+    ecp_nistz256_ord_sqr_mont(out, t, 8);           /* ff00 */
+    ecp_nistz256_ord_mul_mont(out, out, t);         /* ffff */
+
+    ecp_nistz256_ord_sqr_mont(t, out, 16);          /* ffff0000 */
+    ecp_nistz256_ord_mul_mont(t, t, out);           /* ffffffff */
+
+    ecp_nistz256_ord_sqr_mont(out, t, 64);          /* ffffffff0000000000000000 */
+    ecp_nistz256_ord_mul_mont(out, out, t);         /* ffffffff00000000ffffffff */
+
+    ecp_nistz256_ord_sqr_mont(out, out, 32);        /* ffffffff00000000ffffffff00000000 */
+    ecp_nistz256_ord_mul_mont(out, out, t);         /* ffffffff00000000ffffffffffffffff */
+
+    /*
+     * The bottom 128 bit of the exponent are easier done with a table
+     */
+    for(i = 0; i < 32; i++) {
+        ecp_nistz256_ord_sqr_mont(out, out, 4);
+        /* The exponent is public, no need in constant-time access */
+        ecp_nistz256_ord_mul_mont(out, out, table[expLo[i]-1]);
+    }
+    ecp_nistz256_ord_mul_mont(out, out, one);
+
+    /*
+     * Can't fail, but check return code to be consistent anyway.
+     */
+    if (!bn_set_words(r, out, P256_LIMBS))
+        goto err;
+
+    ret = 1;
+err:
+    return ret;
+}
+#else
+# define ecp_nistz256_inv_mod_ord NULL
+#endif
+
 const EC_METHOD *EC_GFp_nistz256_method(void)
 {
     static const EC_METHOD ret = {
@@ -1544,7 +1657,8 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
-        ecdh_simple_compute_key
+        ecdh_simple_compute_key,
+        ecp_nistz256_inv_mod_ord                    /* can be #defined-ed NULL */
     };
 
     return &ret;

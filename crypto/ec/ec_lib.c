@@ -261,6 +261,8 @@ int EC_METHOD_get_field_type(const EC_METHOD *meth)
     return meth->field_type;
 }
 
+static int ec_precompute_mont_data(EC_GROUP *);
+
 int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
                            const BIGNUM *order, const BIGNUM *cofactor)
 {
@@ -961,7 +963,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
  * ec_precompute_mont_data sets |group->mont_data| from |group->order| and
  * returns one on success. On error it returns zero.
  */
-int ec_precompute_mont_data(EC_GROUP *group)
+static int ec_precompute_mont_data(EC_GROUP *group)
 {
     BN_CTX *ctx = BN_CTX_new();
     int ret = 0;
@@ -1005,4 +1007,13 @@ int ec_group_simple_order_bits(const EC_GROUP *group)
     if (group->order == NULL)
         return 0;
     return BN_num_bits(group->order);
+}
+
+int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            BIGNUM *x, BN_CTX *ctx)
+{
+    if (group->meth->field_inverse_mod_ord != NULL)
+        return group->meth->field_inverse_mod_ord(group, res, x, ctx);
+    else
+        return 0;
 }

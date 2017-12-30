@@ -48,6 +48,8 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "ECPKParameters_print_fp"},
     {ERR_PACK(ERR_LIB_EC, EC_F_ECP_NISTZ256_GET_AFFINE, 0),
      "ecp_nistz256_get_affine"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_ECP_NISTZ256_INV_MOD_ORD, 0),
+     "ecp_nistz256_inv_mod_ord"},
     {ERR_PACK(ERR_LIB_EC, EC_F_ECP_NISTZ256_MULT_PRECOMPUTE, 0),
      "ecp_nistz256_mult_precompute"},
     {ERR_PACK(ERR_LIB_EC, EC_F_ECP_NISTZ256_POINTS_MUL, 0),
