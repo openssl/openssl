@@ -442,6 +442,8 @@ typedef enum HELP_CHOICE {
 } HELP_CHOICE;
 
 const OPTIONS help_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: help [options]\n"},
+    {OPT_HELP_STR, 1, '-', "       help [command]\n"},
     {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };
@@ -469,6 +471,14 @@ int help_main(int argc, char **argv)
         }
     }
 
+    if (opt_num_rest() == 1) {
+        char *new_argv[3];
+
+        new_argv[0] = opt_rest()[0];
+        new_argv[1] = "--help";
+        new_argv[2] = NULL;
+        return do_cmd(prog_init(), 2, new_argv);
+    }
     if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
