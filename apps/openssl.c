@@ -787,18 +787,23 @@ static void list_disabled(void)
 
 static LHASH_OF(FUNCTION) *prog_init(void)
 {
-    LHASH_OF(FUNCTION) *ret;
+    static LHASH_OF(FUNCTION) *ret = NULL;
+    static int prog_inited = 0;
     FUNCTION *f;
     size_t i;
 
-    /* Sort alphabetically within category. For nicer help displays. */
-    for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
-    qsort(functions, i, sizeof(*functions), SortFnByName);
+    if (!prog_inited) {
+        prog_inited = 1;
 
-    if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
-        return NULL;
+        /* Sort alphabetically within category. For nicer help displays. */
+        for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
+        qsort(functions, i, sizeof(*functions), SortFnByName);
 
-    for (f = functions; f->name != NULL; f++)
-        (void)lh_FUNCTION_insert(ret, f);
+        if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
+            return NULL;
+
+        for (f = functions; f->name != NULL; f++)
+            (void)lh_FUNCTION_insert(ret, f);
+    }
     return ret;
 }
