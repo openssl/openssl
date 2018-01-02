@@ -151,6 +151,10 @@ the problem by making build procedure use following script:
 instead of real clang. In which case it doesn't matter which clang
 version is used, as it is GNU assembler version that will be checked.
 
+=head1 RETURN VALUES
+
+Not available.
+
 =head1 COPYRIGHT
 
 Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
