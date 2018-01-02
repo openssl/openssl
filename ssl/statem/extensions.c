@@ -160,8 +160,34 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         final_ec_pt_formats
     },
     {
+        /*
+         * "supported_groups" is spread across several specifications.
+         * It was originally specified as "elliptic_curves" in RFC 4492,
+         * and broadened to include named FFDH groups by RFC 7919.
+         * Both RFCs 4492 and 7919 do not include a provision for the server
+         * to indicate to the client the complete list of groups supported
+         * by the server, with the server instead just indicating the
+         * selected group for this connection in the ServerKeyExchange
+         * message.  TLS 1.3 adds a scheme for the server to indicate
+         * to the client its list of supported groups in the
+         * EncryptedExtensions message, but none of the relevant
+         * specifications permit sending supported_groups in the ServerHello.
+         * Nonetheless (possibly due to the close proximity to the
+         * "ec_point_formats" extension, which is allowed in the ServerHello),
+         * there are several servers that send this extension in the
+         * ServerHello anyway.  Up to and including the 1.1.0 release,
+         * we did not check for the presence of nonpermitted extensions,
+         * so to avoid a regression, we must permit this extension in the
+         * TLS 1.2 ServerHello as well.
+         *
+         * Note that there is no tls_parse_stoc_supported_groups function,
+         * so we do not perform any additional parsing, validation, or
+         * processing on the server's group list -- this is just a minimal
+         * change to preserve compatibility with these misbehaving servers.
+         */
         TLSEXT_TYPE_supported_groups,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+        | SSL_EXT_TLS1_2_SERVER_HELLO,
         NULL, tls_parse_ctos_supported_groups, NULL,
         tls_construct_stoc_supported_groups,
         tls_construct_ctos_supported_groups, NULL
