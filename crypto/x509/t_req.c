@@ -135,16 +135,19 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                         goto err;
                 if (BIO_puts(bp, ":") <= 0)
                     goto err;
-                if ((type == V_ASN1_PRINTABLESTRING) ||
-                    (type == V_ASN1_T61STRING) ||
-                    (type == V_ASN1_UTF8STRING) ||
-                    (type == V_ASN1_IA5STRING)) {
+                switch (type) {
+                case V_ASN1_PRINTABLESTRING:
+                case V_ASN1_T61STRING:
+                case V_ASN1_UTF8STRING:
+                case V_ASN1_IA5STRING:
                     if (BIO_write(bp, (char *)bs->data, bs->length)
-                        != bs->length)
+                            != bs->length)
                         goto err;
                     BIO_puts(bp, "\n");
-                } else {
+                    break;
+                default:
                     BIO_puts(bp, "unable to print attribute\n");
+                    break;
                 }
                 if (++ii < count)
                     goto get_next;
