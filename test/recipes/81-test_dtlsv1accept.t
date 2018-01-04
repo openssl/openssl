@@ -17,4 +17,5 @@ plan skip_all => "DTLSv1 is not supported by this OpenSSL build"
 
 plan tests => 1;
 
-simple_test("test_dtls_accept", "dtlsv1accepttest", "dh")
+ok(run(test(["dtlsv1accepttest", srctop_file("apps", "server.pem"),
+             srctop_file("apps", "server.pem")])), "running dtlsv1accepttest");

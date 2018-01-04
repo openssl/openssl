@@ -14,10 +14,14 @@
 #include <openssl/conf.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include "internal/nelem.h"
 #include "testutil/output.h"
 #include "testutil.h"
+
+static char *cert = NULL;
+static char *privkey = NULL;
 
 #ifndef OPENSSL_NO_SOCK
 
@@ -66,6 +70,7 @@ static int dtls_accept_test(int unused)
     int family      = AF_INET6;
     int protocol    = 0;  /* UDP has nothing here */
     int portnum;
+    int one         = 1;
     struct sockaddr_in6 loopback;
     socklen_t           loopback_len;
     int listen_fd   = -1;
@@ -74,11 +79,23 @@ static int dtls_accept_test(int unused)
     memset(&loopback, 0, sizeof(loopback));
     loopback.sin6_addr = in6addr_loopback;
     loopback.sin6_family= AF_INET6;
+    loopback.sin6_port  = htons(40000);
 
     stage = "ctx_new";
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
             || !TEST_ptr(peer = BIO_ADDR_new()))
         goto err;
+
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(ctx, cert,
+                                                  SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(ctx, privkey,
+                                                        SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_check_private_key(ctx), 1))
+        goto err;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(ctx, "AES128-SHA")))
+        goto err;
+
     SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
     SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
 
@@ -90,6 +107,8 @@ static int dtls_accept_test(int unused)
     stage = "socket";
     listen_fd = socket(family, socket_type, protocol);
     if(listen_fd < 0) goto err;
+
+    if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) goto err;
 
     stage = "ssl";
     if (!TEST_ptr(ssl = SSL_new(ctx)))
@@ -132,27 +151,133 @@ static int dtls_accept_test(int unused)
       /* new connection found! */
       host = BIO_ADDR_hostname_string(peer, 0);
       port = BIO_ADDR_rawport(peer);
-      test_printf_stdout("connection from %s:%u\n", host, port);
+      test_printf_stdout("\nconnection from %s:%u\n", host, ntohs(port));
 
       /* process this connection in a sub-process */
-      pid = fork();
+      pid = 0;
+      //pid = fork();
       switch(pid) {
       case 0:
         /* child process */
         {
+          int need_accept = 1;
+
           char buf[256];
           unsigned int bufsize = sizeof(buf);
-
-          BIO *rbio = SSL_get_rbio(connection);
-          BIO *wbio = SSL_get_wbio(connection);
+          int count = 0;
+          fd_set fds;
+          struct timeval timeout;
 
           i = 1;
           while(i > 0) {
-            i = BIO_read(rbio, buf, bufsize - 1);
-            test_printf_stdout("read: %s[%d]", buf, i);
-            BIO_write(wbio, buf, i);
+            if(need_accept) {
+              i = SSL_accept(connection);
+              if(i == 1) {
+                need_accept = 0;
+                continue;
+              }
+            } else {
+              i = SSL_read(connection, buf, bufsize - 1);
+              if (i > 0) {
+                  test_printf_stdout("packet len: %d", i);
+                  BIO_dump_fp(stdout, (char *)buf, i);
+                  SSL_write(connection, buf, i);
+                }
+            }
+
+            if(i == -1) {
+                count++;
+                int err = SSL_get_error(connection, i);
+                test_printf_stdout("get_error %i:%i\n", i, err);
+                switch (err)
+                {
+                    case SSL_ERROR_NONE:
+                    {
+                        // no real error, just try again...
+                        test_printf_stdout("SSL_ERROR_NONE %i\n", count);
+                        continue;
+                    }
+
+                    case SSL_ERROR_ZERO_RETURN:
+                    {
+                        // peer disconnected...
+                        test_printf_stdout("SSL_ERROR_ZERO_RETURN %i\n", count);
+                        break;
+                    }
+
+                    case SSL_ERROR_WANT_READ:
+                    {
+                        // no data available right now, wait a few seconds in case new data arrives...
+                        test_printf_stdout("SSL_ERROR_WANT_READ %i\n", count);
+
+                        int sock = SSL_get_rfd(connection);
+                        FD_ZERO(&fds);
+                        FD_SET(sock, &fds);
+
+                        timeout.tv_sec = 5;
+                        timeout.tv_usec = 0;
+
+                        err = select(sock+1, &fds, NULL, NULL, &timeout);
+                        if (err > 0)
+                            continue; // more data to read...
+
+                        if (err == 0) {
+                            // timeout...
+                        } else {
+                            // error...
+                        }
+
+                        break;
+                    }
+
+                    case SSL_ERROR_WANT_WRITE:
+                    {
+                        // socket not writable right now, wait a few seconds and try again...
+                        test_printf_stdout("SSL_ERROR_WANT_WRITE %i\n", count);
+
+                        int sock = SSL_get_wfd(connection);
+                        FD_ZERO(&fds);
+                        FD_SET(sock, &fds);
+
+                        timeout.tv_sec = 5;
+                        timeout.tv_usec = 0;
+
+                        err = select(sock+1, NULL, &fds, NULL, &timeout);
+                        if (err > 0)
+                            continue; // can write more data now...
+
+                        if (err == 0) {
+                            // timeout...
+                        } else {
+                            // error...
+                        }
+
+                        break;
+                    }
+
+                case SSL_ERROR_WANT_CONNECT:
+                  test_printf_stdout("want_connect %i:%i\n", i, err);
+                  break;
+                case SSL_ERROR_WANT_ACCEPT:
+                  test_printf_stdout("want_accept %i:%i\n", i, err);
+                  break;
+                case SSL_ERROR_WANT_X509_LOOKUP:
+                  test_printf_stdout("want_x509_lookup %i:%i\n", i, err);
+                  break;
+                case SSL_ERROR_SYSCALL:
+                  test_printf_stdout("syscall %i:%i\n", i, err);
+                  exit(12);
+                case SSL_ERROR_SSL:
+                  test_printf_stdout("ssl error %i:%i\n", i, err);
+                  exit(11);
+                default:
+                  test_printf_stdout("error %i:%i\n", i, err);
+                  exit(10);
+                }
+            }
           }
         }
+        test_printf_stdout("\nterminated connection from %s:%u\n", host, port);
 
         exit(0);
         break;
@@ -188,6 +313,10 @@ static int dtls_accept_test(int unused)
 
 int setup_tests()
 {
+  if (!TEST_ptr(cert = test_get_argument(0))
+      || !TEST_ptr(privkey = test_get_argument(1)))
+    return 0;
+
   ADD_ALL_TESTS(dtls_accept_test, 1);
   return 1;
 }
