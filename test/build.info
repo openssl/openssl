@@ -38,7 +38,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           crltest danetest bad_dtls_test lhash_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
-          dtlsv1listentest ct_test threadstest afalgtest d2i_test \
+          dtlsv1listentest dtlsv1accepttest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
@@ -239,6 +239,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[dtlsv1listentest]=dtlsv1listentest.c
   INCLUDE[dtlsv1listentest]=.. ../include
   DEPEND[dtlsv1listentest]=../libssl libtestutil.a
+
+  SOURCE[dtlsv1accepttest]=dtlsv1accepttest.c
+  INCLUDE[dtlsv1accepttest]=.. ../include
+  DEPEND[dtlsv1accepttest]=../libssl libtestutil.a
 
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../crypto/include ../include
