@@ -15,6 +15,8 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include "internal/nelem.h"
 #include "testutil/output.h"
@@ -26,6 +28,8 @@ static char *privkey = NULL;
 #ifndef OPENSSL_NO_SOCK
 
 # define COOKIE_LEN  20
+
+#define CLIENT_TEST_COUNT 5
 
 static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
 {
@@ -54,6 +58,33 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
     return 1;
 }
 
+static void do_clients(int portnum)
+{
+  int i, pid;
+  char b[512];
+  /* apps/openssl s_client -dtls -connect localhost:40000  */
+
+  snprintf(b, 512, "echo hello | apps/openssl s_client -dtls -connect localhost:%u >/dev/null 2>&1", portnum);
+
+  for(i=0; i<CLIENT_TEST_COUNT; i++) {
+    pid = fork();
+    switch(pid) {
+    case 0:
+      /* child process */
+      {
+        sleep(3+(i*2));
+        test_printf_stdout("starting client %u: %s\n", getpid(), b);
+        system(b);
+        exit(0);
+      }
+    default:
+      test_printf_stdout("client pid=%d\n", pid);
+      break;
+    }
+  }
+}
+
+
 static int dtls_accept_test(int unused)
 {
     SSL_CTX *ctx = NULL;
@@ -74,6 +105,7 @@ static int dtls_accept_test(int unused)
     struct sockaddr_in6 loopback;
     socklen_t           loopback_len;
     int listen_fd   = -1;
+    int client_count = 0;
 
     /* initialize loopback socket addr */
     memset(&loopback, 0, sizeof(loopback));
@@ -140,7 +172,14 @@ static int dtls_accept_test(int unused)
     portnum = loopback.sin6_port;
     test_printf_stdout("listening on port: %u\n", ntohs(portnum));
 
-    while((ret = DTLSv1_accept(ssl, connection, peer)) != -1) {
+    /* spawn off some clients to connect to us */
+    do_clients(ntohs(portnum));
+
+    /* kill self in 60s */
+    alarm(60);
+
+    while(client_count < CLIENT_TEST_COUNT &&
+          (ret = DTLSv1_accept(ssl, connection, peer)) != -1) {
       pid_t          pid;
       int            i;
       unsigned short port;
@@ -151,11 +190,11 @@ static int dtls_accept_test(int unused)
       /* new connection found! */
       host = BIO_ADDR_hostname_string(peer, 0);
       port = BIO_ADDR_rawport(peer);
-      test_printf_stdout("\nconnection from %s:%u\n", host, ntohs(port));
+      test_printf_stdout("\n%u: connection from %s:%u\n",
+                         client_count, host, ntohs(port));
 
       /* process this connection in a sub-process */
-      pid = 0;
-      //pid = fork();
+      pid = fork();
       switch(pid) {
       case 0:
         /* child process */
@@ -288,6 +327,7 @@ static int dtls_accept_test(int unused)
 
       default:
         test_printf_stderr("created child pid=%d\n", pid);
+        client_count++;
         /* parent process */
       }
 
@@ -298,6 +338,15 @@ static int dtls_accept_test(int unused)
         goto err;
     }
 
+    {
+      int i;
+      for(i=0; i<CLIENT_TEST_COUNT; i++) {
+        int wstatus;
+        pid_t pid;
+        pid = wait(&wstatus);
+        test_printf_stdout("pid: %u finished: %d\n", pid, wstatus);
+      }
+    }
 
     success = 1;
 
