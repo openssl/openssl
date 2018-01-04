@@ -49,6 +49,7 @@
          ((a)->s6_addr32[2] == htonl(0x0000ffff)))
 # endif
 
+static int dgram_get_sockname(BIO *b);
 static int dgram_write(BIO *h, const char *buf, int num);
 static int dgram_read(BIO *h, char *buf, int size);
 static int dgram_puts(BIO *h, const char *str);
@@ -424,8 +425,9 @@ static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
         /* see if we found something */
         if(pkt_info != NULL && dstaddr != NULL) {
           unsigned int dst_len = BIO_ADDR_sockaddr_size(dstaddr);
+          struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)BIO_ADDR_sockaddr_noconst(dstaddr);
           if(dst_len > sizeof(pkt_info->ipi6_addr)) dst_len = sizeof(pkt_info->ipi6_addr);
-          memcpy(BIO_ADDR_sockaddr_noconst(dstaddr), &pkt_info->ipi6_addr, dst_len);
+          memcpy(&sin6->sin6_addr, &pkt_info->ipi6_addr, dst_len);
         }
     }
 
@@ -443,11 +445,16 @@ static int dgram_read(BIO *b, char *out, int outl)
     BIO_ADDR peer;
     BIO_ADDR addr;
 
+    memset(&peer, 0, sizeof(peer));
+    memset(&addr, 0, sizeof(addr));
+    dgram_get_sockname(b);  /* make sure data->addr is filled in */
+    addr = data->addr;      /* initialize sin_family and sin_port */
+
     if (out != NULL) {
       int family = BIO_get_accept_ip_family(b);
 
         clear_socket_error();
-        memset(&peer, 0, sizeof(peer));
+
         dgram_adjust_rcv_timeout(b);
         if (data->peekmode)
             flags = MSG_PEEK;
@@ -647,6 +654,21 @@ static long dgram_get_mtu_overhead(bio_dgram_data *data)
     return ret;
 }
 
+static int dgram_get_sockname(BIO *b)
+{
+    bio_dgram_data *data = NULL;
+    data = (bio_dgram_data *)b->ptr;
+
+    if(data->addr.sa.sa_family == 0) {
+      socklen_t addr_len = sizeof(data->addr.sa);
+
+      if (getsockname(b->num, &data->addr.sa, &addr_len) < 0) {
+        return -1;
+      }
+    }
+    return 0;
+}
+
 static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 1;
@@ -825,6 +847,14 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_CTRL_DGRAM_GET_PEER:
+        if(data->peer.sa.sa_family == 0) {
+          socklen_t addr_len = sizeof(data->peer.sa);
+
+          if (getpeername(b->num, &data->peer.sa, &addr_len) < 0) {
+            ret = 0;
+            break;
+          }
+        }
         ret = BIO_ADDR_sockaddr_size(&data->peer);
         /* FIXME: if num < ret, we will only return part of an address.
            That should bee an error, no? */
@@ -837,9 +867,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_CTRL_DGRAM_GET_ADDR:
+        if(dgram_get_sockname(b) != 0) break;
         ret = BIO_ADDR_sockaddr_size(&data->addr);
-        /* FIXME: if num < ret, we will only return part of an address.
-           That should bee an error, no? */
+        /* if num < ret, we will only return part of an address,
+           but we return how much space there should have been */
         if (num == 0 || num > ret)
             num = ret;
         memcpy(ptr, &data->addr, (ret = num));
