@@ -16,6 +16,7 @@
 #  include <stdio.h>
 # endif
 # include <stdarg.h>
+#include <sys/socket.h>
 
 # include <openssl/crypto.h>
 # include <openssl/bioerr.h>
@@ -657,6 +658,8 @@ void BIO_ADDR_free(BIO_ADDR *);
 void BIO_ADDR_clear(BIO_ADDR *ap);
 int BIO_ADDR_family(const BIO_ADDR *ap);
 int BIO_ADDR_rawaddress(const BIO_ADDR *ap, void *p, size_t *l);
+const struct sockaddr *BIO_ADDR_sockaddr(const BIO_ADDR *ap);
+socklen_t BIO_ADDR_sockaddr_size(const BIO_ADDR *ap);
 unsigned short BIO_ADDR_rawport(const BIO_ADDR *ap);
 char *BIO_ADDR_hostname_string(const BIO_ADDR *ap, int numeric);
 char *BIO_ADDR_service_string(const BIO_ADDR *ap, int numeric);
