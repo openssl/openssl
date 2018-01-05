@@ -1730,7 +1730,7 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
-        ecp_nistz256_inv_mod_ord                    /* can be #defined-ed NULL */
+        ecp_nistz256_inv_mod_ord                    /* can be #define-d NULL */
     };
 
     return &ret;
