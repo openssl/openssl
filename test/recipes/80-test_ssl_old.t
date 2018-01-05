@@ -396,7 +396,7 @@ sub testssl {
     subtest "Testing ciphersuites" => sub {
 
         my @exkeys = ();
-        my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
+        my $ciphers = "-PSK:-SRP";
 
         if (!$no_dsa) {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
