@@ -12,8 +12,8 @@
 
 #if defined(DSO_WIN32)
 
-# if defined(_WIN32_WCE) || defined(OPENSSL_SYS_WIN_CORE)
-#  if _WIN32_WCE < 300 && !defined(OPENSSL_SYS_WIN_CORE)
+# ifdef _WIN32_WCE
+#  if _WIN32_WCE < 300
 static FARPROC GetProcAddressA(HMODULE hModule, LPCSTR lpProcName)
 {
     WCHAR lpProcNameW[64];
@@ -27,12 +27,11 @@ static FARPROC GetProcAddressA(HMODULE hModule, LPCSTR lpProcName)
 
     return GetProcAddressW(hModule, lpProcNameW);
 }
+#  endif
 #  undef GetProcAddress
 #  define GetProcAddress GetProcAddressA
-#  endif
 
-
-static HINSTANCE LoadLibraryInternalA(LPCSTR lpLibFileName)
+static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
 {
     WCHAR *fnamw;
     size_t len_0 = strlen(lpLibFileName) + 1, i;
@@ -52,11 +51,7 @@ static HINSTANCE LoadLibraryInternalA(LPCSTR lpLibFileName)
         for (i = 0; i < len_0; i++)
             fnamw[i] = (WCHAR)lpLibFileName[i];
 
-#if defined(OPENSSL_SYS_WIN_CORE)
-    return LoadLibraryExW(fnamw, NULL, 0);
-#else
-	return LoadLibraryW(fnamw);
-#endif
+    return LoadLibraryW(fnamw);
 }
 # endif
 
@@ -107,12 +102,7 @@ static int win32_load(DSO *dso)
         DSOerr(DSO_F_WIN32_LOAD, DSO_R_NO_FILENAME);
         goto err;
     }
-
-#ifdef OPENSSL_SYS_WIN_CORE
-	h = LoadLibraryInternalA(filename);
-#else
-	h = LoadLibraryA(filename);
-#endif 
+    h = LoadLibraryA(filename);
     if (h == NULL) {
         DSOerr(DSO_F_WIN32_LOAD, DSO_R_LOAD_FAILED);
         ERR_add_error_data(3, "filename(", filename, ")");
@@ -523,11 +513,7 @@ static void *win32_globallookup(const char *name)
         FARPROC f;
     } ret = { NULL };
 
-#if defined(OPENSSL_SYS_WIN_CORE)
-    dll = LoadLibraryEx(TEXT(DLLNAME), NULL, 0);
-#else
- 	dll = LoadLibrary(TEXT(DLLNAME));
-#endif
+    dll = LoadLibrary(TEXT(DLLNAME));
     if (dll == NULL) {
         DSOerr(DSO_F_WIN32_GLOBALLOOKUP, DSO_R_UNSUPPORTED);
         return NULL;
