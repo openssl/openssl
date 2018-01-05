@@ -424,7 +424,7 @@ sub testssl {
     subtest "Testing ciphersuites" => sub {
 
         my @exkeys = ();
-        my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
+        my $ciphers = "-PSK:-SRP";
 
         if ($no_dh) {
             note "skipping DHE tests\n";
