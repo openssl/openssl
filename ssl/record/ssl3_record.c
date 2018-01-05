@@ -1875,8 +1875,11 @@ int dtls1_get_record(SSL *s)
 
         n2s(p, rr->length);
 
-        /* Lets check version */
-        if (!s->first_packet) {
+        /*
+         * Lets check the version. We tolerate alerts that don't have the exact
+         * version number (e.g. because of protocol version errors)
+         */
+        if (!s->first_packet && rr->type != SSL3_RT_ALERT) {
             if (version != s->version) {
                 /* unexpected version, silently discard */
                 rr->length = 0;
