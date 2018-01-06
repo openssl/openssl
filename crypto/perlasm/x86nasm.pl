@@ -12,7 +12,7 @@ package x86nasm;
 *out=\@::out;
 
 $::lbdecor="L\$";		# local label decoration
-$nmdecor=$::netware?"":"_";	# external name decoration
+$nmdecor="_";			# external name decoration
 $drdecor=$::mwerks?".":"";	# directive decoration
 
 $initseg="";

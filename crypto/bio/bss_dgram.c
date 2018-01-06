@@ -339,13 +339,8 @@ static int dgram_write(BIO *b, const char *in, int inl)
     else {
         int peerlen = BIO_ADDR_sockaddr_size(&data->peer);
 
-# if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret = sendto(b->num, (char *)in, inl, 0,
-                     BIO_ADDR_sockaddr(&data->peer), peerlen);
-# else
         ret = sendto(b->num, in, inl, 0,
                      BIO_ADDR_sockaddr(&data->peer), peerlen);
-# endif
     }
 
     BIO_clear_retry_flags(b);

@@ -116,14 +116,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 # endif
 
 /*
- * Some IPv6 implementations are broken, disable them in known bad versions.
+ * Some IPv6 implementations are broken, you can disable them in known
+ * bad versions.
  */
 # if !defined(OPENSSL_USE_IPV6)
-#  if defined(AF_INET6) && !defined(NETWARE_CLIB)
-#   define OPENSSL_USE_IPV6 1
-#  else
-#   define OPENSSL_USE_IPV6 0
-#  endif
+#  define OPENSSL_USE_IPV6 1
 # endif
 
 # define get_last_socket_error() errno
