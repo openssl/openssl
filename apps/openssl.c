@@ -798,18 +798,21 @@ static LHASH_OF(FUNCTION) *prog_init(void)
     FUNCTION *f;
     size_t i;
 
-    if (!prog_inited) {
-        prog_inited = 1;
+    if (prog_inited)
+        return ret;
 
-        /* Sort alphabetically within category. For nicer help displays. */
-        for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
-        qsort(functions, i, sizeof(*functions), SortFnByName);
+    prog_inited = 1;
 
-        if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
-            return NULL;
+    /* Sort alphabetically within category. For nicer help displays. */
+    for (i = 0, f = functions; f->name != NULL; ++f, ++i)
+        ;
+    qsort(functions, i, sizeof(*functions), SortFnByName);
 
-        for (f = functions; f->name != NULL; f++)
-            (void)lh_FUNCTION_insert(ret, f);
-    }
+    if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
+        return NULL;
+
+    for (f = functions; f->name != NULL; f++)
+        (void)lh_FUNCTION_insert(ret, f);
+
     return ret;
 }
