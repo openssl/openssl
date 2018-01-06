@@ -93,10 +93,12 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 
         pkey = X509_REQ_get0_pubkey(x);
         if (pkey == NULL) {
-            BIO_printf(bp, "%12sUnable to load Public Key\n", "");
+            if (BIO_printf(bp, "%12sUnable to load Public Key\n", "") <= 0)
+                goto err;
             ERR_print_errors(bp);
         } else {
-            EVP_PKEY_print_public(bp, pkey, 16, NULL);
+            if (EVP_PKEY_print_public(bp, pkey, 16, NULL) <= 0)
+                goto err;
         }
     }
 
@@ -143,10 +145,12 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                     if (BIO_write(bp, (char *)bs->data, bs->length)
                             != bs->length)
                         goto err;
-                    BIO_puts(bp, "\n");
+                    if (BIO_puts(bp, "\n") <= 0)
+                        goto err;
                     break;
                 default:
-                    BIO_puts(bp, "unable to print attribute\n");
+                    if (BIO_puts(bp, "unable to print attribute\n") <= 0)
+                        goto err;
                     break;
                 }
                 if (++ii < count)
@@ -157,7 +161,8 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
     if (!(cflag & X509_FLAG_NO_EXTENSIONS)) {
         exts = X509_REQ_get_extensions(x);
         if (exts) {
-            BIO_printf(bp, "%8sRequested Extensions:\n", "");
+            if (BIO_printf(bp, "%8sRequested Extensions:\n", "") <= 0)
+                goto err;
             for (i = 0; i < sk_X509_EXTENSION_num(exts); i++) {
                 ASN1_OBJECT *obj;
                 X509_EXTENSION *ex;
@@ -166,13 +171,16 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 if (BIO_printf(bp, "%12s", "") <= 0)
                     goto err;
                 obj = X509_EXTENSION_get_object(ex);
-                i2a_ASN1_OBJECT(bp, obj);
+                if (i2a_ASN1_OBJECT(bp, obj) <= 0)
+                    goto err;
                 critical = X509_EXTENSION_get_critical(ex);
                 if (BIO_printf(bp, ": %s\n", critical ? "critical" : "") <= 0)
                     goto err;
                 if (!X509V3_EXT_print(bp, ex, cflag, 16)) {
-                    BIO_printf(bp, "%16s", "");
-                    ASN1_STRING_print(bp, X509_EXTENSION_get_data(ex));
+                    if (BIO_printf(bp, "%16s", "") <= 0
+                        || ASN1_STRING_print(bp,
+                                             X509_EXTENSION_get_data(ex)) <= 0)
+                        goto err;
                 }
                 if (BIO_write(bp, "\n", 1) <= 0)
                     goto err;
