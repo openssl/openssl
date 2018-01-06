@@ -33,21 +33,6 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/bn.h>
 # include <openssl/x509v3.h>
 
-# if defined(NETWARE_CLIB)
-#  ifdef NETWARE_BSDSOCK
-#   include <sys/socket.h>
-#   include <sys/bsdskt.h>
-#  else
-#   include <novsock2.h>
-#  endif
-# elif defined(NETWARE_LIBC)
-#  ifdef NETWARE_BSDSOCK
-#   include <sys/select.h>
-#  else
-#   include <novsock2.h>
-#  endif
-# endif
-
 /* Maximum leeway in validity period: default 5 minutes */
 # define MAX_VALIDITY_PERIOD    (5 * 60)
 

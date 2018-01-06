@@ -11,10 +11,6 @@
 #include <stdlib.h>
 #include <errno.h>
 #include "bio_lcl.h"
-#if defined(NETWARE_CLIB)
-# include <sys/ioctl.h>
-NETDB_DEFINE_CONTEXT
-#endif
 #ifndef OPENSSL_NO_SOCK
 # define SOCKET_PROTOCOL IPPROTO_TCP
 # ifdef SO_MAXCONN
@@ -114,11 +110,7 @@ struct hostent *BIO_gethostbyname(const char *name)
      * Caching gethostbyname() results forever is wrong, so we have to let
      * the true gethostbyname() worry about this
      */
-#  if (defined(NETWARE_BSDSOCK) && !defined(__NOVELL_LIBC__))
-    return gethostbyname((char *)name);
-#  else
     return gethostbyname(name);
-#  endif
 }
 # endif
 

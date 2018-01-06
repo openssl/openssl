@@ -9,6 +9,10 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) The last traces of Netware support, first removed in 1.1.0, have
+     now been removed.
+     [Rich Salz]
+
   *) Get rid of Makefile.shared, and in the process, make the processing
      of certain files (rc.obj, or the .def/.map/.opt files produced from
      the ordinal files) more visible and hopefully easier to trace and
