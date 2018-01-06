@@ -442,6 +442,8 @@ typedef enum HELP_CHOICE {
 } HELP_CHOICE;
 
 const OPTIONS help_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: help [options]\n"},
+    {OPT_HELP_STR, 1, '-', "       help [command]\n"},
     {"help", OPT_hHELP, '-', "Display this summary"},
     {NULL}
 };
@@ -469,6 +471,14 @@ int help_main(int argc, char **argv)
         }
     }
 
+    if (opt_num_rest() == 1) {
+        char *new_argv[3];
+
+        new_argv[0] = opt_rest()[0];
+        new_argv[1] = "--help";
+        new_argv[2] = NULL;
+        return do_cmd(prog_init(), 2, new_argv);
+    }
     if (opt_num_rest() != 0) {
         BIO_printf(bio_err, "Usage: %s\n", prog);
         return 1;
@@ -787,12 +797,19 @@ static void list_disabled(void)
 
 static LHASH_OF(FUNCTION) *prog_init(void)
 {
-    LHASH_OF(FUNCTION) *ret;
+    static LHASH_OF(FUNCTION) *ret = NULL;
+    static int prog_inited = 0;
     FUNCTION *f;
     size_t i;
 
+    if (prog_inited)
+        return ret;
+
+    prog_inited = 1;
+
     /* Sort alphabetically within category. For nicer help displays. */
-    for (i = 0, f = functions; f->name != NULL; ++f, ++i) ;
+    for (i = 0, f = functions; f->name != NULL; ++f, ++i)
+        ;
     qsort(functions, i, sizeof(*functions), SortFnByName);
 
     if ((ret = lh_FUNCTION_new(function_hash, function_cmp)) == NULL)
