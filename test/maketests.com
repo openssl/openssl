@@ -152,7 +152,6 @@ $ TEST_FILES = "BNTEST,ECTEST,ECDSATEST,ECDHTEST,IDEATEST,"+ -
 	       "CONSTANT_TIME_TEST,VERIFY_EXTRA_TEST,"+ -
                "CLIENTHELLOTEST,SSLV2CONFTEST,DTLSTEST,"+ -
                "BAD_DTLS_TEST,FATALERRTEST"
-$! Should we add MTTEST,PQ_TEST,LH_TEST,DIVTEST,TABTEST as well?
 $!
 $! Additional directory information.
 $ T_D_BNTEST     := [-.crypto.bn]
