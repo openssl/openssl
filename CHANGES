@@ -206,6 +206,10 @@
 
  Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
 
+  *) Removed the OS390-Unix config target.  It relied on a script that doesn't
+     exist.
+     [Rich Salz]
+
   *) rsaz_1024_mul_avx2 overflow bug on x86_64
 
      There is an overflow bug in the AVX2 Montgomery multiplication procedure
