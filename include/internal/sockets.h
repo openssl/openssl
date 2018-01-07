@@ -120,7 +120,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
  * bad versions.
  */
 # if !defined(OPENSSL_USE_IPV6)
-#  define OPENSSL_USE_IPV6 1
+#  if defined(AF_INET6)
+#   define OPENSSL_USE_IPV6 1
+#  else
+#   define OPENSSL_USE_IPV6 0
+#  endif
 # endif
 
 # define get_last_socket_error() errno
