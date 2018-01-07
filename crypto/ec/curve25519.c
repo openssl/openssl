@@ -12,6 +12,7 @@
 #include <openssl/sha.h>
 
 #if !defined(PEDANTIC) && \
+    !defined(__sparc__) && \
     (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16)
 /*
  * Base 2^51 implementation.
