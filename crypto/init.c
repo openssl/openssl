@@ -73,7 +73,6 @@ struct ossl_init_stop_st {
 };
 
 static CRYPTO_RWLOCK *glock_lock = NULL;
-static CRYPTO_ONCE glock_once = CRYPTO_ONCE_STATIC_INIT;
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
@@ -726,6 +725,7 @@ DEFINE_RUN_ONCE_STATIC(glock_init)
  */
 CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
 {
+    static CRYPTO_ONCE glock_once = CRYPTO_ONCE_STATIC_INIT;
     GLOBAL_LOCK *newlock;
 
     if (glock_lock == NULL && !RUN_ONCE(&glock_once, glock_init))
