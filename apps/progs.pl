@@ -26,7 +26,7 @@ my @openssl_source =
         @{$unified_info{sources}->{$apps_openssl}};
 
 foreach my $filename (@openssl_source) {
-    open F, $filename or die "Couldn't open $_: $!\n";
+    open F, $filename or die "Couldn't open $filename: $!\n";
     foreach ( grep /$cmdre/, <F> ) {
         my @foo = /$cmdre/;
         $commands{$1} = 1;
