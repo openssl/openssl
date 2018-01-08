@@ -189,7 +189,7 @@ CFLAGS={- our $cflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config
 CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 CXX= $(CROSS_COMPILE){- $target{cxx} -}
 CXXFLAGS={- our $cxxflags2 = join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}}),"-DOPENSSLDIR=\"\\\"\$(OPENSSLDIR)\\\"\"","-DENGINESDIR=\"\\\"\$(ENGINESDIR)\\\"\"") -} {- $target{cxxflags} -} {- $config{cxxflags} -} -std=c++11
-LDFLAGS= {- $target{lflags} -}
+LDFLAGS= {- $config{lflags} -} {- $target{lflags} -}
 PLIB_LDFLAGS= {- $target{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
 LIB_CFLAGS={- $target{shared_cflag} || "" -}
@@ -944,10 +944,15 @@ EOF
       my $libd = dirname($lib);
       my $libn = basename($lib);
       (my $libname = $libn) =~ s/^lib//;
-      my $linklibs = join("", map { my $d = dirname($_);
-                                    my $f = basename($_);
+      my @linkdirs = ();
+      foreach (@{args{deps}}) {
+          my $d = dirname($_);
+          push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+      }
+      my $linkflags = join("", map { "-L$_ " } @linkdirs);
+      my $linklibs = join("", map { my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
-                                    " -L$d -l$l" } @{$args{deps}});
+                                    " -l$l" } @{$args{deps}});
       my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
                  grep { $_ =~ m|\.o$| }
                  @{$args{objs}};
@@ -974,7 +979,7 @@ EOF
 # simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
 # {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
 $target: $deps
-	\$(CC) \$(CFLAGS) \$(LIB_CFLAGS) \$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(CFLAGS) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $target_full$shared_def $objs \\
                 \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
@@ -999,10 +1004,15 @@ EOF
       my $dso = $args{lib};
       my $dsod = dirname($dso);
       my $dson = basename($dso);
-      my $linklibs = join("", map { my $d = dirname($_);
-                                    my $f = basename($_);
+      my @linkdirs = ();
+      foreach (@{args{deps}}) {
+          my $d = dirname($_);
+          push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+      }
+      my $linkflags = join("", map { "-L$_ " } @linkdirs);
+      my $linklibs = join("", map { my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
-                                    " -L$d -l$l" } @{$args{deps}});
+                                    " -l$l" } @{$args{deps}});
       my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $objs = join(" ", @objs);
@@ -1010,7 +1020,7 @@ EOF
       my $target = dso($dso);
       return <<"EOF";
 $target: $objs $deps
-	\$(CC) \$(CFLAGS) \$(DSO_CFLAGS) \$(DSO_LDFLAGS) \\
+	\$(CC) \$(CFLAGS) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $target $objs \\
                 \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
@@ -1034,14 +1044,19 @@ EOF
       my $objs = join(" ", map { (my $x = $_) =~ s|\.o$|$objext|; $x }
                            @{$args{objs}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
+      my @linkdirs = ();
+      foreach (@{args{deps}}) {
+          next if $_ =~ /\.a$/;
+          my $d = dirname($_);
+          push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
+      }
+      my $linkflags = join("", map { "-L$_ " } @linkdirs);
       my $linklibs = join("", map { if ($_ =~ /\.a$/) {
                                         " $_";
                                     } else {
-                                        my $d = dirname($_);
                                         my $f = basename($_);
-                                        $d = "." if $d eq $f;
                                         (my $l = $f) =~ s/^lib//;
-                                        " -L$d -l$l"
+                                        " -l$l"
                                     }
                                   } @{$args{deps}});
       my $cmd = '$(CC)';
@@ -1053,7 +1068,8 @@ EOF
       return <<"EOF";
 $bin$exeext: $objs $deps
 	rm -f $bin$exeext
-	\$\${LDCMD:-$cmd} $cmdflags \$(LDFLAGS) \$(BIN_LDFLAGS) -o $bin$exeext $objs \\
+	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(LDFLAGS) \$(BIN_LDFLAGS) \\
+		-o $bin$exeext $objs \\
 		\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
   }

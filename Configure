@@ -526,6 +526,7 @@ $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
 $config{openssl_other_defines}=[];
+my $ldflags="";
 my $libs="";
 my $target="";
 $config{options}="";
@@ -729,7 +730,11 @@ while (@argvcopy)
 			{
 			read_config $1;
 			}
-		elsif (/^-[lL](.*)$/ or /^-Wl,/)
+		elsif (/^-L(.*)$/)
+			{
+			$ldflags.=$_." ";
+			}
+		elsif (/^-l(.*)$/ or /^-Wl,/)
 			{
 			$libs.=$_." ";
 			}
@@ -1050,6 +1055,7 @@ $config{build_file} = $target{build_file};
 $config{defines} = [];
 $config{cflags} = "";
 $config{cxxflags} = "";
+$config{lflags} = "";
 $config{ex_libs} = "";
 $config{shared_ldflag} = "";
 
@@ -1121,6 +1127,7 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 	}
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
+$config{lflags}="$config{lflags}$ldflags" if ($ldflags ne "");
 
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
@@ -2176,6 +2183,7 @@ print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n"
 #print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
 #                             "$config{cross_compile_prefix}ranlib" :
 #                             "$target{ranlib}", "\n";
+print "LDFLAGS       =$config{lflags} $target{lflags}\n";
 print "EX_LIBS       =$target{ex_libs} $config{ex_libs}\n";
 
 my %builders = (
