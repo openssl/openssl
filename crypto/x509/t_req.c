@@ -140,6 +140,7 @@ int X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
                 switch (type) {
                 case V_ASN1_PRINTABLESTRING:
                 case V_ASN1_T61STRING:
+                case V_ASN1_NUMERICSTRING:
                 case V_ASN1_UTF8STRING:
                 case V_ASN1_IA5STRING:
                     if (BIO_write(bp, (char *)bs->data, bs->length)
