@@ -561,9 +561,20 @@ might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific
 extension).
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_ENGINES>
+
+The path to the engines directory.
+
+=back
+
 =head1 SEE ALSO
 
-L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>, L<RAND_bytes(3)>
+L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>,
+L<RAND_bytes(3)>, L<config(5)>
 
 =head1 HISTORY
 
