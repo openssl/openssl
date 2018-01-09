@@ -2381,6 +2381,17 @@ sub read_config {
 
 	%targets = read_eval_file($fname);
     }
+    my %preexisting = ();
+    foreach (sort keys %targets) {
+        $preexisting{$_} = 1 if $table{$_};
+    }
+    die <<"EOF",
+The following config targets from $fname
+shadow pre-existing config targets with the same name:
+EOF
+        map { "  $_\n" } sort keys %preexisting
+        if %preexisting;
+
 
     # For each target, check that it's configured with a hash table.
     foreach (keys %targets) {
