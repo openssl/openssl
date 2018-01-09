@@ -18,9 +18,13 @@ configuration in diverse ways:
 Configurations of OpenSSL target platforms
 ==========================================
 
-Target configurations are a collection of facts that we know about
+Configuration targets are a collection of facts that we know about
 different platforms and their capabilities.  We organise them in a
 hash table, where each entry represent a specific target.
+
+Note that configuration target names must be unique across all config
+files.  The Configure script does check that a config file doesn't
+have config targets that shadow config targets from other files.
 
 In each table entry, the following keys are significant:
 
