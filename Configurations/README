@@ -15,6 +15,37 @@ configuration in diverse ways:
                 information.
 
 
+Naming conventions for config files
+===================================
+
+Config files (*.conf) are named {nn}-{name}.conf, where {nn} is a two
+digit number and {name} is an indicator of what kind of configuration
+can be expected in the file.  The numbers have no significance other
+than grouping.  The convention for {name} may be refined for some
+number groups.
+
+The number {nn} is somewhat loosely grouped as follows:
+
+00-09  Templates
+10-19  Primary platforms (*)
+20-49  Secondary platforms (*)
+50-69  Community provided platforms (*)
+70-79  Reserved for externaly provided config targets (!)
+80-88  Unknown platforms (*)
+89     Deprecated platforms (*)
+90-99  Personal configs (**)
+
+(*) See https://www.openssl.org/policies/platformpolicy.html
+(**) There may be some configs that team members use personally and
+     wish to share.  This also leaves space for those who want to
+     maintain their own configs inside their OpenSSL source checkout
+
+(!) We provide this as a safe space for others to add their own config
+    targets for their own distribution.
+    The OpenSSL project will not touch these numbers, and will not add
+    any file in this group to the main source dist.
+
+
 Configurations of OpenSSL target platforms
 ==========================================
 
