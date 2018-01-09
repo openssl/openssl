@@ -86,6 +86,7 @@ BIO_get_close                           define
 BIO_get_conn_address                    define
 BIO_get_conn_hostname                   define
 BIO_get_conn_port                       define
+BIO_get_conn_ip_family                  define
 BIO_get_fd                              define
 BIO_get_fp                              define
 BIO_get_info_callback                   define
@@ -115,6 +116,7 @@ BIO_set_close                           define
 BIO_set_conn_address                    define
 BIO_set_conn_hostname                   define
 BIO_set_conn_port                       define
+BIO_set_conn_ip_family                  define
 BIO_set_fd                              define
 BIO_set_fp                              define
 BIO_set_info_callback                   define
