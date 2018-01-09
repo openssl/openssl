@@ -78,6 +78,9 @@ BIO_eof                                 define
 BIO_flush                               define
 BIO_get_accept_name                     define
 BIO_get_accept_port                     define
+BIO_get_accept_ip_family                define
+BIO_get_peer_name                       define
+BIO_get_peer_port                       define
 BIO_get_bind_mode                       define
 BIO_get_buffer_num_lines                define
 BIO_get_cipher_ctx                      define
@@ -109,6 +112,7 @@ BIO_seek                                define
 BIO_set_accept_bios                     define
 BIO_set_accept_name                     define
 BIO_set_accept_port                     define
+BIO_set_accept_ip_family                define
 BIO_set_bind_mode                       define
 BIO_set_buffer_read_data                define
 BIO_set_buffer_size                     define
