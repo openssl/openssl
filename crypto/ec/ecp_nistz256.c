@@ -1530,6 +1530,10 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
     BN_ULONG table[15][P256_LIMBS];
     BN_ULONG out[P256_LIMBS], t[P256_LIMBS];
     int i, ret = 0;
+    enum {
+        i_1 = 0, i_10,     i_11,     i_101, i_111, i_1010, i_1111,
+        i_10101, i_101010, i_101111, i_x6,  i_x8,  i_x16,  i_x32
+    };
 
     /*
      * Catch allocation failure early.
@@ -1607,10 +1611,6 @@ static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
      * multiplications, 25%, on grand scale sign operation is not that
      * much faster, not more that 2%...
      */
-    enum {
-        i_1 = 0, i_10,     i_11,     i_101, i_111, i_1010, i_1111,
-        i_10101, i_101010, i_101111, i_x6,  i_x8,  i_x16,  i_x32
-    };
 
     /* pre-calculate powers */
     ecp_nistz256_ord_sqr_mont(table[i_10], table[i_1], 1);
