@@ -243,8 +243,13 @@ list of ciphers, supported by your version of OpenSSL, including
 ones provided by configured engines.
 
 The B<enc> program does not support authenticated encryption modes
-like CCM and GCM. The utility does not store or retrieve the
-authentication tag.
+like CCM and GCM, and will not support such modes in the future.
+The B<enc> interface by necessity must begin streaming output (e.g.,
+to standard output when B<-out> is not used before the authentication
+tag could be validated, leading to the usage of B<enc> in pipelines
+that begin processing untrusted data and are not capable of rolling
+back upon authentication failure.  For bulk encryption of data using
+authenticated encryption modes, use L<cms(1)> instead.
 
 
  base64             Base 64
