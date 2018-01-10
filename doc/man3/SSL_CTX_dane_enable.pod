@@ -18,7 +18,7 @@ TLS client
                             uint8_t mtype, uint8_t ord);
  int SSL_dane_enable(SSL *s, const char *basedomain);
  int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
-                       uint8_t mtype, unsigned char *data, size_t dlen);
+                       uint8_t mtype, unsigned const char *data, size_t dlen);
  int SSL_get0_dane_authority(SSL *s, X509 **mcert, EVP_PKEY **mspki);
  int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                         uint8_t *mtype, unsigned const char **data,
@@ -76,6 +76,8 @@ TLSA records that apply to the remote TLS peer.
 The arguments specify the fields of the TLSA record.
 The B<data> field is provided in binary (wire RDATA) form, not the hexadecimal
 ASCII presentation form, with an explicit length passed via B<dlen>.
+The library takes a copy of the B<data> buffer contents and the caller may
+free the original B<data> buffer when convenient.
 A return value of 0 indicates that "unusable" TLSA records (with invalid or
 unsupported parameters) were provided.
 A negative return value indicates an internal error in processing the record.
