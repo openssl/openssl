@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 #
@@ -12,12 +12,17 @@ myname="$(basename $0)"
 
 this_year="$(date '+%Y')"
 some_year="[12][0-9][0-9][0-9]"
+year_range="(${some_year})(-${some_year})?"
 
 copyright_owner="The OpenSSL Project"
+copyright="Copyright .*${year_range} .*${copyright_owner}"
 
-search="Copyright \(([cC]) \)\?\(${some_year}\)\(-${some_year}\)\? ${copyright_owner}"
-replace="Copyright \1\2-${this_year} ${copyright_owner}"
-
+# sed_script:
+#   for all lines that contain ${copyright} : {
+#     replace years yyyy-zzzz (or year yyyy) by yyyy-${this_year}
+#     replace repeated years yyyy-yyyy by yyyy
+#   }
+sed_script="/${copyright}/{ s/${year_range}/\1-${this_year}/ ; s/(${some_year})-\1/\1/ }"
 
 function usage() {
 	cat >&2 <<EOF
@@ -47,9 +52,9 @@ for arg in "$@"; do
 			;;
 		*)
 			if [ -f "$arg" ]; then
-				sed -i "s/${search}/${replace}/g" "$arg"
+				sed -E -i "${sed_script}" "$arg"
 			elif [ -d "$arg" ]; then
-				find "$arg" -name '.[a-z]*' -prune -o -type f -exec sed -i "s/${search}/${replace}/g" {} +
+				find "$arg" -name '.[a-z]*' -prune -o -type f -exec sed -E -i "${sed_script}" {} +
 			else
 				echo "$arg: no such file or directory" >&2
 			fi
