@@ -247,7 +247,7 @@ sub sigalgs_filter
                     #No PSS sig algs - just send rsa_pkcs1_sha256
                     $sigalg = pack "C4", 0x00, 0x02, 0x04, 0x01;
                 } else {
-                    #PSS sig algs only - just send rsa_pss_sha256
+                    #PSS sig algs only - just send rsa_pss_rsae_sha256
                     $sigalg = pack "C4", 0x00, 0x02, 0x08, 0x04;
                 }
                 $message->set_extension(TLSProxy::Message::EXT_SIG_ALGS, $sigalg);
