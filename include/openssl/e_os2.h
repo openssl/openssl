@@ -49,7 +49,6 @@ extern "C" {
 #  define OPENSSL_SYS_WIN32_UWIN
 # else
 #  if defined(__CYGWIN__) || defined(OPENSSL_SYS_CYGWIN)
-#   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WIN32_CYGWIN
 #  else
 #   if defined(_WIN32) || defined(OPENSSL_SYS_WIN32)
