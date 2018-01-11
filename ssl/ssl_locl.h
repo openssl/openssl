@@ -1918,9 +1918,12 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ecdsa_secp521r1_sha512                    0x0603
 #define TLSEXT_SIGALG_ecdsa_sha224                              0x0303
 #define TLSEXT_SIGALG_ecdsa_sha1                                0x0203
-#define TLSEXT_SIGALG_rsa_pss_sha256                            0x0804
-#define TLSEXT_SIGALG_rsa_pss_sha384                            0x0805
-#define TLSEXT_SIGALG_rsa_pss_sha512                            0x0806
+#define TLSEXT_SIGALG_rsa_pss_rsae_sha256                       0x0804
+#define TLSEXT_SIGALG_rsa_pss_rsae_sha384                       0x0805
+#define TLSEXT_SIGALG_rsa_pss_rsae_sha512                       0x0806
+#define TLSEXT_SIGALG_rsa_pss_pss_sha256                        0x0809
+#define TLSEXT_SIGALG_rsa_pss_pss_sha384                        0x080a
+#define TLSEXT_SIGALG_rsa_pss_pss_sha512                        0x080b
 #define TLSEXT_SIGALG_rsa_pkcs1_sha256                          0x0401
 #define TLSEXT_SIGALG_rsa_pkcs1_sha384                          0x0501
 #define TLSEXT_SIGALG_rsa_pkcs1_sha512                          0x0601

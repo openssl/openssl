@@ -232,10 +232,23 @@ our @tests = (
         },
     },
     {
-        name => "RSA-PSS Certificate Signature Algorithm Selection",
+        name => "RSA-PSS Certificate Legacy Signature Algorithm Selection",
         server => $server_pss,
         client => {
             "SignatureAlgorithms" => "RSA-PSS+SHA256",
+        },
+        test   => {
+            "ExpectedServerCertType" => "RSA",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "RSA-PSS",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA-PSS Certificate Unified Signature Algorithm Selection",
+        server => $server_pss,
+        client => {
+            "SignatureAlgorithms" => "rsa_pss_pss_sha256",
         },
         test   => {
             "ExpectedServerCertType" => "RSA-PSS",
