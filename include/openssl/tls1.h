@@ -140,13 +140,13 @@ extern "C" {
 # define TLSEXT_TYPE_session_ticket              35
 
 /* As defined for TLS1.3 */
-# define TLSEXT_TYPE_key_share                   40
 # define TLSEXT_TYPE_psk                         41
 # define TLSEXT_TYPE_early_data                  42
 # define TLSEXT_TYPE_supported_versions          43
 # define TLSEXT_TYPE_cookie                      44
 # define TLSEXT_TYPE_psk_kex_modes               45
 # define TLSEXT_TYPE_certificate_authorities     47
+# define TLSEXT_TYPE_key_share                   51
 
 /* Temporary extension type */
 # define TLSEXT_TYPE_renegotiate                 0xff01
