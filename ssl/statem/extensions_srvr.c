@@ -276,6 +276,27 @@ int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+int tls_parse_ctos_sig_algs_cert(SSL *s, PACKET *pkt, unsigned int context,
+                                 X509 *x, size_t chainidx)
+{
+    PACKET supported_sig_algs;
+
+    if (!PACKET_as_length_prefixed_2(pkt, &supported_sig_algs)
+            || PACKET_remaining(&supported_sig_algs) == 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR,
+                 SSL_F_TLS_PARSE_CTOS_SIG_ALGS_CERT, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 1)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR,
+                 SSL_F_TLS_PARSE_CTOS_SIG_ALGS_CERT, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                             size_t chainidx)
 {
@@ -288,7 +309,7 @@ int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs)) {
+    if (!s->hit && !tls1_save_sigalgs(s, &supported_sig_algs, 0)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR,
                  SSL_F_TLS_PARSE_CTOS_SIG_ALGS, SSL_R_BAD_EXTENSION);
         return 0;

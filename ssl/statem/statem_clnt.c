@@ -2458,7 +2458,11 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
                 return MSG_PROCESS_ERROR;
             }
 
-            if (!tls1_save_sigalgs(s, &sigalgs)) {
+            /*
+             * Despite this being for certificates, preserve compatibility
+             * with pre-TLS 1.3 and use the regular sigalgs field.
+             */
+            if (!tls1_save_sigalgs(s, &sigalgs, 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                          SSL_R_SIGNATURE_ALGORITHMS_ERROR);

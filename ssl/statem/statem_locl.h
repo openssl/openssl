@@ -205,6 +205,8 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
 #endif
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
+int tls_parse_ctos_sig_algs_cert(SSL *s, PACKET *pkt, unsigned int context,
+                                 X509 *x, size_t chainidx);
 int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                             size_t chainidx);
 #ifndef OPENSSL_NO_OCSP

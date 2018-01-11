@@ -146,6 +146,7 @@ extern "C" {
 # define TLSEXT_TYPE_cookie                      44
 # define TLSEXT_TYPE_psk_kex_modes               45
 # define TLSEXT_TYPE_certificate_authorities     47
+# define TLSEXT_TYPE_signature_algorithms_cert   50
 # define TLSEXT_TYPE_key_share                   51
 
 /* Temporary extension type */

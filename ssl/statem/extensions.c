@@ -29,6 +29,7 @@ static int init_npn(SSL *s, unsigned int context);
 #endif
 static int init_alpn(SSL *s, unsigned int context);
 static int final_alpn(SSL *s, unsigned int context, int sent);
+static int init_sig_algs_cert(SSL *s, unsigned int context);
 static int init_sig_algs(SSL *s, unsigned int context);
 static int init_certificate_authorities(SSL *s, unsigned int context);
 static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
@@ -279,6 +280,14 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
         init_ems, tls_parse_ctos_ems, tls_parse_stoc_ems,
         tls_construct_stoc_ems, tls_construct_ctos_ems, final_ems
+    },
+    {
+        TLSEXT_TYPE_signature_algorithms_cert,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
+        init_sig_algs_cert, tls_parse_ctos_sig_algs_cert,
+        tls_parse_ctos_sig_algs_cert,
+        /* We do not generate signature_algorithms_cert at present. */
+        NULL, NULL, NULL
     },
     {
         TLSEXT_TYPE_signature_algorithms,
@@ -1086,6 +1095,15 @@ static int init_sig_algs(SSL *s, unsigned int context)
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
     s->s3->tmp.peer_sigalgs = NULL;
+
+    return 1;
+}
+
+static int init_sig_algs_cert(SSL *s, unsigned int context)
+{
+    /* Clear any signature algorithms extension received */
+    OPENSSL_free(s->s3->tmp.peer_cert_sigalgs);
+    s->s3->tmp.peer_cert_sigalgs = NULL;
 
     return 1;
 }
