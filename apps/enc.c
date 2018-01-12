@@ -92,7 +92,7 @@ int enc_main(int argc, char **argv)
     static const char magic[] = "Salted__";
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL, *b64 = NULL, *benc = NULL, *rbio =
-        NULL, *wbio = NULL;
+        NULL, *wbio = NULL, *rbufbio = NULL, *wbufbio = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL, *c;
     const EVP_MD *dgst = NULL;
@@ -104,7 +104,7 @@ int enc_main(int argc, char **argv)
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
     int enc = 1, printkey = 0, i, k;
     int base64 = 0, informat = FORMAT_BINARY, outformat = FORMAT_BINARY;
-    int ret = 1, inl, nopad = 0, aeadtaglen = 0;
+    int ret = 1, inl, nopad = 0, len = 0, aeadtaglen = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH], aeadtag[EVP_MAX_AEAD_TAG_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
     long n;
@@ -306,7 +306,7 @@ int enc_main(int argc, char **argv)
         }
 
     strbuf = app_malloc(SIZE, "strbuf");
-    buff = app_malloc(EVP_ENCODE_LENGTH(bsize + aeadtaglen), "evp buffer"); /* It must be large enough for buffer and potential AEAD tag */
+    buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
     if (infile == NULL) {
         in = dup_bio_in(informat);
@@ -524,6 +524,14 @@ int enc_main(int argc, char **argv)
         if (nopad)
             EVP_CIPHER_CTX_set_padding(ctx, 0);
 
+        /* CCM mode needs to know AEAD tag length before setting key/IV */
+        if (EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE && aeadtaglen > 0) {
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, aeadtaglen, NULL) != 1) {
+                BIO_printf(bio_err, "error setting AEAD tag length\n");
+                goto end;
+            }
+        }
+
         if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc)) {
             BIO_printf(bio_err, "Error setting cipher %s\n",
                        EVP_CIPHER_name(cipher));
@@ -562,52 +570,65 @@ int enc_main(int argc, char **argv)
         }
     }
 
-    /* Only encrypt/decrypt as we write the file */
-    if (benc != NULL)
-        wbio = BIO_push(benc, wbio);
+    /* Read input to buffer BIO, because some ciphers can't be streamed into (usually AEAD) */
+    if ((rbufbio = BIO_new(BIO_s_mem())) == NULL) {
+        BIO_printf(bio_err, "error creating read buffer\n");
+        goto end;
+    }
+    for (;;) {
+        inl = BIO_read(rbio, (char *)buff, bsize);
+        if (inl <= 0)
+            break;
+        if (BIO_write(rbufbio, (char *)buff, inl) != inl) {
+            BIO_printf(bio_err, "error writing to read buffer\n");
+            goto end;
+        }
+    }
+    len = BIO_get_mem_data(rbufbio, &p);
+    if (len <= 0) {
+        BIO_printf(bio_err, "error reading input file\n");
+        goto end;
+    }
 
-    /* When decrypting, first read aeadtaglen bytes as potential AEAD tag. */
+    /* When decrypting, extract and set final AEAD tag */
     if (!enc && aeadtaglen > 0) {
-        if (BIO_read(rbio, buff, aeadtaglen) != aeadtaglen) {
+        len -= aeadtaglen;
+        if (len <= 0) {
             BIO_printf(bio_err, "error reading input file\n");
             goto end;
         }
-    }
 
-    for (;;) {
-        /* When decrypting, read to buffer after aeadtaglen offset. */
-        inl = BIO_read(rbio, (char *)(buff + (!enc ? aeadtaglen : 0)), bsize);
-        if (inl <= 0)
-            break;
-        if (BIO_write(wbio, (char *)buff, inl) != inl) {
-            BIO_printf(bio_err, "error writing output file\n");
-            goto end;
-        }
+        memcpy(aeadtag, p + len, aeadtaglen);
 
-        /* When decrypting, extract last read aeadtaglen bytes as potential AEAD tag. */
-        if (!enc && aeadtaglen > 0) {
-            memcpy(aeadtag, buff + inl, aeadtaglen);
-            memcpy(buff, aeadtag, aeadtaglen);
-        }
-    }
-
-    /* When decrypting, set final AEAD tag */
-    if (!enc && aeadtaglen > 0) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, aeadtaglen, aeadtag) != 1) {
             BIO_printf(bio_err, "error setting AEAD tag\n");
             goto end;
         }
     }
 
-    /* Flush encrypted/decrypted data, check AEAD tag */
-    if (!BIO_flush(wbio)) {
+    /* Encrypt/decrypt to another buffer BIO, so that output is written only if operation succeeds */
+    if ((wbufbio = BIO_new(BIO_s_mem())) == NULL) {
+        BIO_printf(bio_err, "error creating write buffer\n");
+        goto end;
+    }
+    if (benc != NULL) {
+        wbufbio = BIO_push(benc, wbufbio);
+    }
+    if (BIO_write(wbufbio, (char *)p, len) != len) {
+        BIO_printf(bio_err, "bad decrypt\n");
+        goto end;
+    }
+    if (!BIO_flush(wbufbio)) {
         BIO_printf(bio_err, "bad decrypt\n");
         goto end;
     }
 
-    /* Encryption/decryption finished */
-    if (benc != NULL)
-        wbio = BIO_pop(benc);
+    /* Write output */
+    len = BIO_get_mem_data(wbufbio, &p);
+    if (BIO_write(wbio, p, len) != len) {
+        BIO_printf(bio_err, "error writing output file\n");
+        goto end;
+    }
 
     /* When encrypting, write AEAD tag */
     if (enc && aeadtaglen > 0) {
