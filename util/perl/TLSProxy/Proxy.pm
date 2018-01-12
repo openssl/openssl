@@ -295,24 +295,49 @@ sub clientstart
     my @ready;
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
-    while(     (!(TLSProxy::Message->end)
-                || (defined $self->sessionfile()
-                    && (-s $self->sessionfile()) == 0))
-            && $ctr < 10) {
+    while($sel->count() > 0
+              && (!(TLSProxy::Message->end)
+                  || (defined $self->sessionfile()
+                      && (-s $self->sessionfile()) == 0))
+              && $ctr < 10) {
         if (!(@ready = $sel->can_read(1))) {
             $ctr++;
             next;
         }
         foreach my $hand (@ready) {
             if ($hand == $server_sock) {
-                $server_sock->sysread($indata, 16384) or goto END;
+                unless (my $cnt = $server_sock->sysread($indata, 16384)) {
+                    if ($self->debug) {
+                        if (defined $cnt) {
+                            print STDERR "Server connection closed\n";
+                        } else {
+                            print STDERR "Error on server end: $!\n";
+                        }
+                    }
+                    $sel->remove($server_sock);
+                    next;
+                }
                 $indata = $self->process_packet(1, $indata);
-                $client_sock->syswrite($indata);
+                if ($sel->exists($client_sock)) {
+                    $client_sock->syswrite($indata);
+                }
                 $ctr = 0;
             } elsif ($hand == $client_sock) {
-                $client_sock->sysread($indata, 16384) or goto END;
+                unless (my $cnt = $client_sock->sysread($indata, 16384)) {
+                    if ($self->debug) {
+                        if (defined $cnt) {
+                            print STDERR "Client connection closed\n";
+                        } else {
+                            print STDERR "Error on client end: $!\n";
+                        }
+                    }
+                    $sel->remove($client_sock);
+                    next;
+                }
                 $indata = $self->process_packet(0, $indata);
-                $server_sock->syswrite($indata);
+                if ($sel->exists($server_sock)) {
+                    $server_sock->syswrite($indata);
+                }
                 $ctr = 0;
             } else {
                 die "Unexpected handle";
@@ -322,7 +347,6 @@ sub clientstart
 
     die "No progress made" if $ctr >= 10;
 
-    END:
     print "Connection closed\n";
     if($server_sock) {
         $server_sock->close();
