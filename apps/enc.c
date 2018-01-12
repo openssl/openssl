@@ -273,6 +273,14 @@ int enc_main(int argc, char **argv)
         goto opthelp;
     }
 
+    /* composite AEADs (rc4_hmac_md5, aes_cbc_hmac_sha1, aes_cbc_hmac_sha256) don't have get/set tag actions */
+    if (cipher && (
+        (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 &&
+        (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_CIPHER) == 0)) {
+        BIO_printf(bio_err, "%s: composite AEAD ciphers not supported\n", prog);
+        goto end;
+    }
+
     if (cipher && (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)) {
         BIO_printf(bio_err, "%s XTS ciphers not supported\n", prog);
         goto end;
@@ -652,6 +660,8 @@ static void show_ciphers(const OBJ_NAME *name, void *arg)
     /* Filter out ciphers that we cannot use */
     cipher = EVP_get_cipherbyname(name->name);
     if (cipher == NULL ||
+            ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 &&
+            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_CIPHER) == 0) ||
             EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
         return;
 
