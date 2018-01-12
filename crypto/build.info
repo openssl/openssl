@@ -34,6 +34,6 @@ INCLUDE[armv4cpuid.o]=.
 GENERATE[s390xcpuid.S]=s390xcpuid.pl $(PERLASM_SCHEME)
 INCLUDE[s390xcpuid.o]=.
 
-IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|\w+-WIN(?:32|64))/ -}]
   SHARED_SOURCE[../libcrypto]=dllmain.c
 ENDIF
