@@ -121,13 +121,13 @@
 #define MAX_ECDH_SIZE   256
 #define MISALIGN        64
 
-typedef struct sec_st {
+typedef struct openssl_speed_sec_st {
     int sym;
     int rsa;
     int dsa;
     int ecdsa;
     int ecdh;
-} SEC;
+} openssl_speed_sec_t;
 
 static volatile int run = 0;
 
@@ -334,7 +334,7 @@ static double Time_F(int s)
 #endif
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher,
-                             const SEC *seconds);
+                             const openssl_speed_sec_t *seconds);
 
 static int found(const char *name, const OPT_PAIR *pairs, int *result)
 {
@@ -1400,8 +1400,8 @@ int speed_main(int argc, char **argv)
     int ecdh_doit[EC_NUM] = { 0 };
 #endif                          /* ndef OPENSSL_NO_EC */
 
-    SEC seconds = {SECONDS, RSA_SECONDS, DSA_SECONDS, ECDSA_SECONDS,
-                   ECDH_SECONDS};
+    openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
+                                    ECDSA_SECONDS, ECDH_SECONDS };
 
     prog = opt_init(argc, argv, speed_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -3243,7 +3243,8 @@ static int do_multi(int multi, int size_num)
 }
 #endif
 
-static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
+static void multiblock_speed(const EVP_CIPHER *evp_cipher,
+                             const openssl_speed_sec_t *seconds)
 {
     static const int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
