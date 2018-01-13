@@ -294,6 +294,7 @@ sub clientstart
     #Wait for either the server socket or the client socket to become readable
     my @ready;
     my $ctr = 0;
+    local $SIG{PIPE} = "IGNORE";
     while(     (!(TLSProxy::Message->end)
                 || (defined $self->sessionfile()
                     && (-s $self->sessionfile()) == 0))
