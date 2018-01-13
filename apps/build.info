@@ -1,4 +1,5 @@
-{- our $tsget_name = $config{target} =~ /^(VC|vms)-/ ? "tsget.pl" : "tsget";
+{- our $tsget_name =
+       $config{target} =~ /^(\w+-WIN(?:32|64)|vms)-/ ? "tsget.pl" : "tsget";
    our @apps_openssl_src =
        ( qw(openssl.c
             asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
