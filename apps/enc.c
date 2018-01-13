@@ -642,6 +642,11 @@ int enc_main(int argc, char **argv)
         }
     }
 
+    if (!BIO_flush(wbio)) {
+        BIO_printf(bio_err, "error writing output file\n");
+        goto end;
+    }
+
     ret = 0;
     if (verbose) {
         if (aeadtaglen > 0) {
