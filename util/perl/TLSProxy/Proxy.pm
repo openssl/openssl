@@ -279,6 +279,7 @@ sub clientstart
 
     #Wait for either the server socket or the client socket to become readable
     my @ready;
+    local $SIG{PIPE} = "IGNORE";
     while(!(TLSProxy::Message->end) && (@ready = $sel->can_read)) {
         foreach my $hand (@ready) {
             if ($hand == $server_sock) {
