@@ -231,13 +231,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
              * and then closing the socket sends TCP-FIN first followed by
              * TCP-RST. This seems to allow the peer to read the alert data.
              */
-#ifdef _WIN32
-# ifdef SD_SEND
-            shutdown(sock, SD_SEND);
-# endif
-#elif defined(SHUT_WR)
-            shutdown(sock, SHUT_WR);
-#endif
+            shutdown(sock, 1); /* SHUT_WR */
             BIO_closesocket(sock);
         } else {
             i = (*cb)(asock, type, protocol, context);
