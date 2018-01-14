@@ -501,7 +501,7 @@ EOF
      my $lib = $args{lib};
      my $shlib = $args{shlib};
      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
-                grep { $_ =~ m|\.o$| }
+                grep { $_ =~ m/\.(?:o|res)$/ }
                 @{$args{objs}};
      my @defs = grep { $_ =~ /\.def$/ } @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
