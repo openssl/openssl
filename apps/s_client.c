@@ -3025,7 +3025,7 @@ int s_client_main(int argc, char **argv)
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
-#if defined(OPENSSL_SYS_WINDOWS)
+
     /*
      * Give the socket time to send its last data before we close it.
      * No amount of setting SO_LINGER etc on the socket seems to persuade
@@ -3033,8 +3033,12 @@ int s_client_main(int argc, char **argv)
      * for a short time seems to do it (units in ms)
      * TODO: Find a better way to do this
      */
+#if defined(OPENSSL_SYS_WINDOWS)
     Sleep(50);
+#elif defined(OPENSSL_SYS_CYGWIN)
+    usleep(50000);
 #endif
+
     /*
      * If we ended with an alert being sent, but still with data in the
      * network buffer to be read, then calling BIO_closesocket() will
