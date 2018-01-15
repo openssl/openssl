@@ -707,13 +707,6 @@ int OPENSSL_atexit(void (*handler)(void))
     return 1;
 }
 
-#ifndef OPENSSL_SYS_UNIX
-CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
-{
-    return CRYPTO_THREAD_lock_new();
-}
-
-#else
 DEFINE_RUN_ONCE_STATIC(glock_init)
 {
     glock_lock = CRYPTO_THREAD_lock_new();
@@ -744,6 +737,7 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
     return newlock->lock;
 }
 
+#ifdef OPENSSL_SYS_UNIX
 /*
  * Unlock all global locks.
  */
