@@ -105,7 +105,7 @@ void OPENSSL_cpuid_setup(void)
 }
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
+#if defined(_WIN32)
 # include <tchar.h>
 # include <signal.h>
 # ifdef __WATCOMC__
@@ -320,7 +320,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 {
     OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
                       file, line, message);
-#if !defined(_WIN32) || defined(__CYGWIN__)
+#if !defined(_WIN32)
     abort();
 #else
     /*
