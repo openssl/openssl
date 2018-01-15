@@ -315,6 +315,7 @@ sub clientstart
                         }
                     }
                     $sel->remove($server_sock);
+                    $client_sock->shutdown(1);
                     next;
                 }
                 $indata = $self->process_packet(1, $indata);
@@ -332,6 +333,7 @@ sub clientstart
                         }
                     }
                     $sel->remove($client_sock);
+                    $server_sock->shutdown(1);
                     next;
                 }
                 $indata = $self->process_packet(0, $indata);
