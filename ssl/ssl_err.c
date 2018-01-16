@@ -48,6 +48,7 @@ static ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_FUNC(SSL_F_DTLS_GET_REASSEMBLED_MESSAGE),
      "dtls_get_reassembled_message"},
     {ERR_FUNC(SSL_F_DTLS_PROCESS_HELLO_VERIFY), "dtls_process_hello_verify"},
+    {ERR_FUNC(SSL_F_DTLS_WAIT_FOR_DRY), "dtls_wait_for_dry"},
     {ERR_FUNC(SSL_F_OPENSSL_INIT_SSL), "OPENSSL_init_ssl"},
     {ERR_FUNC(SSL_F_OSSL_STATEM_CLIENT_READ_TRANSITION),
      "ossl_statem_client_read_transition"},
