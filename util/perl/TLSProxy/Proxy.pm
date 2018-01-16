@@ -156,6 +156,9 @@ sub start
             ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
             ." -cert ".$self->cert." -naccept ".$self->serverconnects;
+        unless ($self->supports_IPv6) {
+            $execcmd .= " -4";
+        }
         if ($self->ciphers ne "") {
             $execcmd .= " -cipher ".$self->ciphers;
         }
@@ -217,6 +220,9 @@ sub clientstart
             my $execcmd = "echo ".$echostr." | ".$self->execute
                  ." s_client -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
+            unless ($self->supports_IPv6) {
+                $execcmd .= " -4";
+            }
             if ($self->cipherc ne "") {
                 $execcmd .= " -cipher ".$self->cipherc;
             }
