@@ -98,7 +98,7 @@ static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
-static RAND_DRBG *drbg_setup(const char *name, RAND_DRBG *parent);
+static RAND_DRBG *drbg_setup(RAND_DRBG *parent);
 static void drbg_cleanup(RAND_DRBG *drbg);
 
 /*
@@ -666,24 +666,18 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
 /*
  * Allocates a new global DRBG on the secure heap (if enabled) and
  * initializes it with default settings.
- * A global lock for the DRBG is created with the given name.
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-static RAND_DRBG *drbg_setup(const char *name, RAND_DRBG *parent)
+static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
 {
     RAND_DRBG *drbg;
-
-    if (name == NULL) {
-        RANDerr(RAND_F_DRBG_SETUP, ERR_R_INTERNAL_ERROR);
-        return NULL;
-    }
 
     drbg = OPENSSL_secure_zalloc(sizeof(RAND_DRBG));
     if (drbg == NULL)
         return NULL;
 
-    drbg->lock = CRYPTO_THREAD_glock_new(name);
+    drbg->lock = CRYPTO_THREAD_lock_new();
     if (drbg->lock == NULL) {
         RANDerr(RAND_F_DRBG_SETUP, RAND_R_FAILED_TO_CREATE_LOCK);
         goto err;
@@ -737,9 +731,9 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
     if (!OPENSSL_init_crypto(0, NULL))
         return 0;
 
-    drbg_master = drbg_setup("drbg_master", NULL);
-    drbg_public = drbg_setup("drbg_public", drbg_master);
-    drbg_private = drbg_setup("drbg_private", drbg_master);
+    drbg_master = drbg_setup(NULL);
+    drbg_public = drbg_setup(drbg_master);
+    drbg_private = drbg_setup(drbg_master);
 
     if (drbg_master == NULL || drbg_public == NULL || drbg_private == NULL)
         return 0;

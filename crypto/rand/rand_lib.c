@@ -282,10 +282,10 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     int ret = 1;
 
 #ifndef OPENSSL_NO_ENGINE
-    rand_engine_lock = CRYPTO_THREAD_glock_new("rand_engine");
+    rand_engine_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_engine_lock != NULL;
 #endif
-    rand_meth_lock = CRYPTO_THREAD_glock_new("rand_meth");
+    rand_meth_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_meth_lock != NULL;
 
     return ret;
