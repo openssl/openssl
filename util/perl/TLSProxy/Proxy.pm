@@ -255,7 +255,7 @@ sub clientstart
     print "Connection opened\n";
 
     # Now connect to the server
-    my $retry = 10;
+    my $retry = 50;
     my $server_sock;
     #We loop over this a few times because sometimes s_server can take a while
     #to start up
