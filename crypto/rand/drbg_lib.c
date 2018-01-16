@@ -708,6 +708,13 @@ err:
  */
 DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 {
+    /*
+     * ensure that libcrypto is initialized, otherwise the
+     * DRBG locks are not cleaned up properly
+     */
+    if (!OPENSSL_init_crypto(0, NULL))
+        return 0;
+
     drbg_master = drbg_setup("drbg_master", NULL);
     drbg_public = drbg_setup("drbg_public", drbg_master);
     drbg_private = drbg_setup("drbg_private", drbg_master);
