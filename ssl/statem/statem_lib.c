@@ -273,15 +273,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
-#ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-        WORK_STATE ret;
-        ret = dtls_wait_for_dry(s);
-        if (ret != WORK_FINISHED_CONTINUE)
-            return ret;
-    }
-#endif
-
     /* clean a few things up */
     ssl3_cleanup_key_block(s);
 
