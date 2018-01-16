@@ -20,7 +20,7 @@ static CRYPTO_ONCE registry_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(do_registry_init)
 {
-    registry_lock = CRYPTO_THREAD_glock_new("registry");
+    registry_lock = CRYPTO_THREAD_lock_new();
     return registry_lock != NULL;
 }
 
