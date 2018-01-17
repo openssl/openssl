@@ -1697,7 +1697,8 @@ int SSL_get_shared_sigalgs(SSL *s, int idx,
 
 typedef struct {
     size_t sigalgcnt;
-    int sigalgs[TLS_MAX_SIGALGCNT];
+    /* TLSEXT_SIGALG_XXX values */
+    uint16_t sigalgs[TLS_MAX_SIGALGCNT];
 } sig_cb_st;
 
 static void get_sigorhash(int *psig, int *phash, const char *str)
@@ -1723,6 +1724,7 @@ static int sig_cb(const char *elem, int len, void *arg)
 {
     sig_cb_st *sarg = arg;
     size_t i;
+    const SIGALG_LOOKUP *s;
     char etmp[TLS_MAX_SIGSTRING_LEN], *p;
     int sig_alg = NID_undef, hash_alg = NID_undef;
     if (elem == NULL)
@@ -1734,18 +1736,25 @@ static int sig_cb(const char *elem, int len, void *arg)
     memcpy(etmp, elem, len);
     etmp[len] = 0;
     p = strchr(etmp, '+');
-    /* See if we have a match for TLS 1.3 names */
+    /*
+     * We only allow SignatureSchemes listed in the sigalg_lookup_tbl;
+     * if there's no '+' in the provided name, look for the new-style combined
+     * name.  If not, match both sig+hash to find the needed SIGALG_LOOKUP.
+     * Just sig+hash is not unique since TLS 1.3 adds rsa_pss_pss_* and
+     * rsa_pss_rsae_* that differ only by public key OID; in such cases
+     * we will pick the _rsae_ variant, by virtue of them appearing earlier
+     * in the table.
+     */
     if (p == NULL) {
-        const SIGALG_LOOKUP *s;
-
         for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
              i++, s++) {
             if (s->name != NULL && strcmp(etmp, s->name) == 0) {
-                sig_alg = s->sig;
-                hash_alg = s->hash;
+                sarg->sigalgs[sarg->sigalgcnt++] = s->sigalg;
                 break;
             }
         }
+        if (i == OSSL_NELEM(sigalg_lookup_tbl))
+            return 0;
     } else {
         *p = 0;
         p++;
@@ -1753,17 +1762,26 @@ static int sig_cb(const char *elem, int len, void *arg)
             return 0;
         get_sigorhash(&sig_alg, &hash_alg, etmp);
         get_sigorhash(&sig_alg, &hash_alg, p);
-    }
-
-    if (sig_alg == NID_undef || (p != NULL && hash_alg == NID_undef))
-        return 0;
-
-    for (i = 0; i < sarg->sigalgcnt; i += 2) {
-        if (sarg->sigalgs[i] == sig_alg && sarg->sigalgs[i + 1] == hash_alg)
+        if (sig_alg == NID_undef || hash_alg == NID_undef)
+            return 0;
+        for (i = 0, s = sigalg_lookup_tbl; i < OSSL_NELEM(sigalg_lookup_tbl);
+             i++, s++) {
+            if (s->hash == hash_alg && s->sig == sig_alg) {
+                sarg->sigalgs[sarg->sigalgcnt++] = s->sigalg;
+                break;
+            }
+        }
+        if (i == OSSL_NELEM(sigalg_lookup_tbl))
             return 0;
     }
-    sarg->sigalgs[sarg->sigalgcnt++] = hash_alg;
-    sarg->sigalgs[sarg->sigalgcnt++] = sig_alg;
+
+    /* Reject duplicates */
+    for (i = 0; i < sarg->sigalgcnt - 1; i++) {
+        if (sarg->sigalgs[i] == sarg->sigalgs[sarg->sigalgcnt]) {
+            sarg->sigalgcnt--;
+            return 0;
+        }
+    }
     return 1;
 }
 
@@ -1779,7 +1797,30 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
         return 0;
     if (c == NULL)
         return 1;
-    return tls1_set_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
+    return tls1_set_raw_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
+}
+
+int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
+                     int client)
+{
+    uint16_t *sigalgs;
+
+    sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs));
+    if (sigalgs == NULL)
+        return 0;
+    memcpy(sigalgs, psigs, salglen * sizeof(*sigalgs));
+
+    if (client) {
+        OPENSSL_free(c->client_sigalgs);
+        c->client_sigalgs = sigalgs;
+        c->client_sigalgslen = salglen;
+    } else {
+        OPENSSL_free(c->conf_sigalgs);
+        c->conf_sigalgs = sigalgs;
+        c->conf_sigalgslen = salglen;
+    }
+
+    return 1;
 }
 
 int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
