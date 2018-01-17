@@ -1175,8 +1175,8 @@ int SSL_set_fd(SSL *s, int fd)
             if (ret)
                 printf("setsockopt failed %d\n", errno);
 #endif
-#endif
     }
+#endif
 
     ret = 1;
  err:
