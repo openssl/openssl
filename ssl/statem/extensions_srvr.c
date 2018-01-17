@@ -17,11 +17,11 @@
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
  * protocol version, 2 bytes for group id, 2 bytes for cipher id, 1 byte for
- * key_share present flag, 2 bytes for the hashlen, EVP_MAX_MD_SIZE for
- * transcript hash, 1 byte for app cookie length, app cookie length bytes,
- * SHA256_DIGEST_LENGTH bytes for the HMAC of the whole thing.
+ * key_share present flag, 4 bytes for timestamp, 2 bytes for the hashlen,
+ * EVP_MAX_MD_SIZE for transcript hash, 1 byte for app cookie length, app cookie
+ * length bytes, SHA256_DIGEST_LENGTH bytes for the HMAC of the whole thing.
  */
-#define MAX_COOKIE_SIZE (2 + 2 + 2 + 2 + 2 + 1 + 2 + EVP_MAX_MD_SIZE + 1 \
+#define MAX_COOKIE_SIZE (2 + 2 + 2 + 2 + 2 + 1 + 4 + 2 + EVP_MAX_MD_SIZE + 1 \
                          + SSL_COOKIE_LENGTH + SHA256_DIGEST_LENGTH)
 
 /*
@@ -705,6 +705,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned char hmac[SHA256_DIGEST_LENGTH];
     unsigned char hrr[MAX_HRR_SIZE];
     size_t rawlen, hmaclen, hrrlen, ciphlen;
+    unsigned long tm, now;
 
     /* Ignore any cookie if we're not set up to verify it */
     if (s->ctx->app_verify_cookie_cb == NULL
@@ -814,12 +815,20 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     if (!PACKET_get_1(&cookie, &key_share)
+            || !PACKET_get_net_4(&cookie, &tm)
             || !PACKET_get_length_prefixed_2(&cookie, &chhash)
             || !PACKET_get_length_prefixed_1(&cookie, &appcookie)
             || PACKET_remaining(&cookie) != SHA256_DIGEST_LENGTH) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
                  SSL_R_LENGTH_MISMATCH);
         return 0;
+    }
+
+    /* We tolerate a cookie age of up to 10 minutes (= 60 * 10 seconds) */
+    now = (unsigned long)time(NULL);
+    if (tm > now || (now - tm) > 600) {
+        /* Cookie is stale. Ignore it */
+        return 1;
     }
 
     /* Verify the app cookie */
@@ -1603,6 +1612,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
                                               &ciphlen)
                /* Is there a key_share extension present in this HRR? */
             || !WPACKET_put_bytes_u8(pkt, s->s3->peer_tmp == NULL)
+            || !WPACKET_put_bytes_u32(pkt, (unsigned int)time(NULL))
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
