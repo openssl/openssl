@@ -222,7 +222,7 @@ sub clientstart
             }
             my $execcmd = "echo ".$echostr." | ".$self->execute
                  ." s_client -engine ossltest -connect "
-                 .($self->{proxy_addr}).":".($self->{proxy_port});
+                 .($self->proxy_addr).":".($self->proxy_port);
             unless ($self->supports_IPv6) {
                 $execcmd .= " -4";
             }
@@ -438,24 +438,18 @@ sub supports_IPv6
     my $self = shift;
     return $have_IPv6;
 }
+sub proxy_addr
+{
+    my $self = shift;
+    return $self->{proxy_addr};
+}
+sub proxy_port
+{
+    my $self = shift;
+    return $self->{proxy_port};
+}
 
-##Read/write accessors
-#sub proxy_addr
-#{
-#    my $self = shift;
-#    if (@_) {
-#        $self->{proxy_addr} = shift;
-#    }
-#    return $self->{proxy_addr};
-#}
-#sub proxy_port
-#{
-#    my $self = shift;
-#    if (@_) {
-#        $self->{proxy_port} = shift;
-#    }
-#    return $self->{proxy_port};
-#}
+#Read/write accessors
 sub server_addr
 {
     my $self = shift;
