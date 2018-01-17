@@ -1406,9 +1406,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTX_set_max_proto_version(ctx, version) \
         SSL_CTX_ctrl(ctx, SSL_CTRL_SET_MAX_PROTO_VERSION, version, NULL)
 #define SSL_CTX_get_min_proto_version(ctx) \
-        SSL_CTX_ctrl(ctx, SSL_CTRL_GET_MIN_PROTO_VERSION, NULL, NULL)
+        SSL_CTX_ctrl(ctx, SSL_CTRL_GET_MIN_PROTO_VERSION, 0, NULL)
 #define SSL_CTX_get_max_proto_version(ctx) \
-        SSL_CTX_ctrl(ctx, SSL_CTRL_GET_MAX_PROTO_VERSION, NULL, NULL)
+        SSL_CTX_ctrl(ctx, SSL_CTRL_GET_MAX_PROTO_VERSION, 0, NULL)
 #define SSL_set_min_proto_version(s, version) \
         SSL_ctrl(s, SSL_CTRL_SET_MIN_PROTO_VERSION, version, NULL)
 #define SSL_set_max_proto_version(s, version) \
