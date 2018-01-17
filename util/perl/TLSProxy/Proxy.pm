@@ -147,11 +147,6 @@ sub start
 
     $pid = fork();
     if ($pid == 0) {
-        if (!$self->debug) {
-            open(STDOUT, ">", File::Spec->devnull())
-                or die "Failed to redirect stdout: $!";
-            open(STDERR, ">&STDOUT");
-        }
         my $execcmd = $self->execute
             ." s_server -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
@@ -180,11 +175,6 @@ sub clientstart
     my ($self) = shift;
     my $oldstdout;
 
-    if(!$self->debug) {
-        open DEVNULL, ">", File::Spec->devnull();
-        $oldstdout = select(DEVNULL);
-    }
-
     # Create the Proxy socket
     my $proxaddr = $self->proxy_addr;
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
@@ -206,11 +196,6 @@ sub clientstart
     if ($self->execute) {
         my $pid = fork();
         if ($pid == 0) {
-            if (!$self->debug) {
-                open(STDOUT, ">", File::Spec->devnull())
-                    or die "Failed to redirect stdout: $!";
-                open(STDERR, ">&STDOUT");
-            }
             my $echostr;
             if ($self->reneg()) {
                 $echostr = "R";
