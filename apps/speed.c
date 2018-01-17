@@ -1241,6 +1241,7 @@ int speed_main(int argc, char **argv)
     || !defined(OPENSSL_NO_EC)
     long rsa_count = 1;
 #endif
+    size_t loop;
 
     /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
@@ -1506,8 +1507,8 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_EC
         if (strcmp(*argv, "ecdsa") == 0) {
-            for (i = 0; i < EC_NUM; i++)
-                ecdsa_doit[i] = 1;
+            for (loop = 0; loop < OSSL_NELEM(ecdsa_choices); loop++)
+                ecdsa_doit[ecdsa_choices[loop].retval] = 1;
             continue;
         }
         if (found(*argv, ecdsa_choices, &i)) {
@@ -1515,8 +1516,8 @@ int speed_main(int argc, char **argv)
             continue;
         }
         if (strcmp(*argv, "ecdh") == 0) {
-            for (i = 0; i < EC_NUM; i++)
-                ecdh_doit[i] = 1;
+            for (loop = 0; loop < OSSL_NELEM(ecdh_choices); loop++)
+                ecdh_doit[ecdh_choices[loop].retval] = 1;
             continue;
         }
         if (found(*argv, ecdh_choices, &i)) {
@@ -1583,10 +1584,10 @@ int speed_main(int argc, char **argv)
             dsa_doit[i] = 1;
 #endif
 #ifndef OPENSSL_NO_EC
-        for (i = 0; i < EC_NUM; i++)
-            ecdsa_doit[i] = 1;
-        for (i = 0; i < EC_NUM; i++)
-            ecdh_doit[i] = 1;
+        for (loop = 0; loop < OSSL_NELEM(ecdsa_choices); loop++)
+            ecdsa_doit[ecdsa_choices[loop].retval] = 1;
+        for (loop = 0; loop < OSSL_NELEM(ecdh_choices); loop++)
+            ecdh_doit[ecdh_choices[loop].retval] = 1;
 #endif
     }
     for (i = 0; i < ALGOR_NUM; i++)
