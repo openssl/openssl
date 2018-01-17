@@ -101,7 +101,33 @@ sub new
         }
     }
 
+    # Create the Proxy socket
+    my $proxaddr = $self->{proxy_addr};
+    $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
+    my @proxyargs = (
+        LocalHost   => $proxaddr,
+        LocalPort   => $self->{proxy_port},
+        Proto       => "tcp",
+        Listen      => SOMAXCONN,
+       );
+    push @proxyargs, ReuseAddr => 1
+        unless $^O eq "MSWin32";
+    $self->{proxy_sock} = $IP_factory->(@proxyargs);
+
+    if ($self->{proxy_sock}) {
+        print "Proxy started on port ".$self->{proxy_port}."\n";
+    } else {
+        warn "Failed creating proxy socket (".$proxaddr.",".$self->{proxy_port}."): $!\n";
+    }
+
     return bless $self, $class;
+}
+
+sub DESTROY
+{
+    my $self = shift;
+
+    $self->{proxy_sock}->close() if $self->{proxy_sock};
 }
 
 sub clearClient
@@ -155,6 +181,10 @@ sub start
     my ($self) = shift;
     my $pid;
 
+    if ($self->{proxy_sock} == 0) {
+        return 0;
+    }
+
     $pid = fork();
     if ($pid == 0) {
         my $execcmd = $self->execute
@@ -185,26 +215,6 @@ sub clientstart
 {
     my ($self) = shift;
     my $oldstdout;
-
-    # Create the Proxy socket
-    my $proxaddr = $self->proxy_addr;
-    $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
-    my @proxyargs = (
-        LocalHost   => $proxaddr,
-        LocalPort   => $self->proxy_port,
-        Proto       => "tcp",
-        Listen      => SOMAXCONN,
-       );
-    push @proxyargs, ReuseAddr => 1
-        unless $^O eq "MSWin32";
-    my $proxy_sock = $IP_factory->(@proxyargs);
-
-    if ($proxy_sock) {
-        print "Proxy started on port ".$self->proxy_port."\n";
-    } else {
-        warn "Failed creating proxy socket (".$proxaddr.",".$self->proxy_port."): $!\n";
-        return 0;
-    }
 
     if ($self->execute) {
         my $pid = fork();
@@ -240,7 +250,7 @@ sub clientstart
 
     # Wait for incoming connection from client
     my $client_sock;
-    if(!($client_sock = $proxy_sock->accept())) {
+    if(!($client_sock = $self->{proxy_sock}->accept())) {
         warn "Failed accepting incoming connection: $!\n";
         return 0;
     }
@@ -323,9 +333,6 @@ sub clientstart
     if($client_sock) {
         #Closing this also kills the child process
         $client_sock->close();
-    }
-    if($proxy_sock) {
-        $proxy_sock->close();
     }
     if(!$self->debug) {
         select($oldstdout);
@@ -436,24 +443,18 @@ sub supports_IPv6
     my $self = shift;
     return $have_IPv6;
 }
-
-#Read/write accessors
 sub proxy_addr
 {
     my $self = shift;
-    if (@_) {
-        $self->{proxy_addr} = shift;
-    }
     return $self->{proxy_addr};
 }
 sub proxy_port
 {
     my $self = shift;
-    if (@_) {
-        $self->{proxy_port} = shift;
-    }
     return $self->{proxy_port};
 }
+
+#Read/write accessors
 sub server_addr
 {
     my $self = shift;
