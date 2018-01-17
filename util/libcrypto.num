@@ -4498,3 +4498,5 @@ NAMING_AUTHORITY_set0_authorityText     4438	1_1_1	EXIST::FUNCTION:
 ADMISSIONS_set0_namingAuthority         4439	1_1_1	EXIST::FUNCTION:
 ADMISSIONS_get0_professionInfos         4440	1_1_1	EXIST::FUNCTION:
 ADMISSION_SYNTAX_new                    4441	1_1_1	EXIST::FUNCTION:
+EVP_sha512_256                          4442	1_1_1	EXIST::FUNCTION:
+EVP_sha512_224                          4443	1_1_1	EXIST::FUNCTION:

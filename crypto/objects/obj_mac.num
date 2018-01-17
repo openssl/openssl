@@ -1142,3 +1142,5 @@ oscca		1141
 sm_scheme		1142
 sm3		1143
 sm3WithRSAEncryption		1144
+sha512_224WithRSAEncryption		1145
+sha512_256WithRSAEncryption		1146

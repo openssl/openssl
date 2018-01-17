@@ -9,6 +9,9 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Added SHA512/224 and SHA512/256 algorithm support.
+     [Paul Dale]
+
   *) The last traces of Netware support, first removed in 1.1.0, have
      now been removed.
      [Rich Salz]
