@@ -8,6 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifdef OPENSSL_SYS_WIN_CORE
+#include <windows.h>
+#include <TraceLoggingProvider.h>
+#endif
 #include "e_os.h"
 #include "internal/cryptlib_int.h"
 #include <openssl/safestack.h>
@@ -105,7 +109,7 @@ void OPENSSL_cpuid_setup(void)
 }
 #endif
 
-#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(OPENSSL_SYS_WIN_CORE)
+#if defined(_WIN32) && !defined(__CYGWIN__)
 # include <tchar.h>
 # include <signal.h>
 # ifdef __WATCOMC__
@@ -120,6 +124,18 @@ void OPENSSL_cpuid_setup(void)
 # endif
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+#ifdef OPENSSL_SYS_WIN_CORE
+TRACELOGGING_DEFINE_PROVIDER(
+    g_hProvider,
+    "OpenSSL",
+	// {5ee02bf4-33cf-53cf-ddc9-f18679e677dd}
+	(0x5ee02bf4, 0x33cf, 0x53cf, 0xdd, 0xc9, 0xf1, 0x86, 0x79, 0xe6, 0x77, 0xdd));
+int OPENSSL_isservice(void)
+{
+    /*Core API cannot interact with GUI*/
+    return 1;
+}
+#else
 int OPENSSL_isservice(void)
 {
     HWINSTA h;
@@ -176,6 +192,7 @@ int OPENSSL_isservice(void)
     else
         return 0;
 }
+#endif
 # else
 int OPENSSL_isservice(void)
 {
@@ -272,8 +289,19 @@ void OPENSSL_showfatal(const char *fmta, ...)
     va_end(ap);
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-    /* this -------------v--- guards NT-specific calls */
-    if (check_winnt() && OPENSSL_isservice() > 0) {
+#ifdef OPENSSL_SYS_WIN_CORE
+	/* CORE is always NONGUI and NT >= 0x0601*/
+		HRESULT tEventLog = TraceLoggingRegister(g_hProvider);
+		if (SUCCEEDED(tEventLog)) {
+			const TCHAR *pmsg = buf;
+			TraceLoggingWrite(g_hProvider, "ErrorLog",
+				TraceLoggingLevel(EVENTLOG_ERROR_TYPE),
+				TraceLoggingWideString(pmsg, "Message"));
+		}
+		TraceLoggingUnregister(g_hProvider);
+#else
+	/* this -------------v--- guards NT-specific calls */
+	if (check_winnt() && OPENSSL_isservice() > 0) {
         HANDLE hEventLog = RegisterEventSource(NULL, _T("OpenSSL"));
 
         if (hEventLog != NULL) {
@@ -294,9 +322,13 @@ void OPENSSL_showfatal(const char *fmta, ...)
 
             (void)DeregisterEventSource(hEventLog);
         }
-    } else
-# endif
-        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+	}
+	else
+		MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+#endif
+# else
+	MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+# endif     
 }
 #else
 void OPENSSL_showfatal(const char *fmta, ...)
