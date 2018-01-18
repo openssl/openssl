@@ -14,6 +14,8 @@
 
 void s390x_km(const unsigned char *in, size_t len, unsigned char *out,
               unsigned int fc, void *param);
+void s390x_kmac(const unsigned char *in, size_t len, unsigned int fc,
+                void *param);
 void s390x_kma(const unsigned char *aad, size_t alen, const unsigned char *in,
                size_t len, unsigned char *out, unsigned int fc, void *param);
 

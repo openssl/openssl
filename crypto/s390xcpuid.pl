@@ -276,6 +276,27 @@ ___
 }
 
 ################
+# void s390x_kmac(const unsigned char *in, size_t len, unsigned int fc,
+#                 void *param)
+{
+my ($in,$len,$fc,$param) = map("%r$_",(2..5));
+$code.=<<___;
+.globl	s390x_kmac
+.type	s390x_kmac,\@function
+.align	16
+s390x_kmac:
+	lr	%r0,$fc
+	l${g}r	%r1,$param
+
+	.long	0xb91e0002	# kmac %r0,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_kmac,.-s390x_kmac
+___
+}
+
+################
 # void s390x_kma(const unsigned char *aad, size_t alen,
 #                const unsigned char *in, size_t len,
 #                unsigned char *out, unsigned int fc, void *param)
