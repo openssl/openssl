@@ -562,16 +562,6 @@ int tls13_change_cipher_state(SSL *s, int which)
             goto err;
         }
         s->session->master_key_length = hashlen;
-
-        /* Now we create the exporter master secret */
-        if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
-                               exporter_master_secret,
-                               sizeof(exporter_master_secret) - 1,
-                               hash, hashlen, s->exporter_master_secret,
-                               hashlen)) {
-            /* SSLfatal() already called */
-            goto err;
-        }
     }
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
