@@ -50,12 +50,13 @@ Derive shared secret (for example DH or EC keys):
  #include <openssl/rsa.h>
 
  EVP_PKEY_CTX *ctx;
+ ENGINE *eng;
  unsigned char *skey;
  size_t skeylen;
  EVP_PKEY *pkey, *peerkey;
- /* NB: assumes pkey, peerkey have been already set up */
+ /* NB: assumes pkey, eng, peerkey have been already set up */
 
- ctx = EVP_PKEY_CTX_new(pkey);
+ ctx = EVP_PKEY_CTX_new(pkey, eng);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_derive_init(ctx) <= 0)

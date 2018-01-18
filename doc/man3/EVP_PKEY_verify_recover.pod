@@ -65,7 +65,7 @@ Recover digest originally signed using PKCS#1 and SHA256 digest:
   * NB: assumes verify_key, sig and siglen are already set up
   * and that verify_key is an RSA public key
   */
- ctx = EVP_PKEY_CTX_new(verify_key);
+ ctx = EVP_PKEY_CTX_new(verify_key, NULL /* no engine */);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_verify_recover_init(ctx) <= 0)

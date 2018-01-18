@@ -49,15 +49,16 @@ Decrypt data using OAEP (for RSA keys):
  #include <openssl/rsa.h>
 
  EVP_PKEY_CTX *ctx;
+ ENGINE *eng;
  unsigned char *out, *in;
  size_t outlen, inlen;
  EVP_PKEY *key;
 
  /*
-  * NB: assumes key in, inlen are already set up
+  * NB: assumes key, eng, in, inlen are already set up
   * and that key is an RSA private key
   */
- ctx = EVP_PKEY_CTX_new(key);
+ ctx = EVP_PKEY_CTX_new(key, eng);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_decrypt_init(ctx) <= 0)
