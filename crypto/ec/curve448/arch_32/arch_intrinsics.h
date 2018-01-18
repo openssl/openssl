@@ -26,4 +26,4 @@ static ossl_inline uint64_t widemul(uint32_t a, uint32_t b)
     return ((uint64_t)a) * b;
 }
 
-#endif                          /* __ARCH_ARM_32_ARCH_INTRINSICS_H__ */
+#endif                          /* __ARCH_ARCH_32_ARCH_INTRINSICS_H__ */
