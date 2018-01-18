@@ -17,7 +17,7 @@
 #include "constant_time.h"
 #include "point_448.h"
 
-static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x3bd440fae918bc5ull;
+static const decaf_word_t MONTGOMERY_FACTOR = (decaf_word_t)0x3bd440fae918bc5;
 static const curve448_scalar_t sc_p = {{{
     SC_LIMB(0x2378c292ab5844f3), SC_LIMB(0x216cc2728dc58f55), SC_LIMB(0xc44edb49aed63690), SC_LIMB(0xffffffff7cca23e9), SC_LIMB(0xffffffffffffffff), SC_LIMB(0xffffffffffffffff), SC_LIMB(0x3fffffffffffffff)
 }}}, sc_r2 = {{{
@@ -41,12 +41,14 @@ static void sc_subx(
 ) {
     decaf_dsword_t chain = 0;
     unsigned int i;
+    decaf_word_t borrow;
+
     for (i=0; i<DECAF_448_SCALAR_LIMBS; i++) {
         chain = (chain + accum[i]) - sub->limb[i];
         out->limb[i] = chain;
         chain >>= WBITS;
     }
-    decaf_word_t borrow = chain+extra; /* = 0 or -1 */
+    borrow = chain+extra; /* = 0 or -1 */
     
     chain = 0;
     for (i=0; i<DECAF_448_SCALAR_LIMBS; i++) {
@@ -146,8 +148,9 @@ decaf_error_t curve448_scalar_decode(
     const unsigned char ser[DECAF_448_SCALAR_BYTES]
 ) {
     unsigned int i;
-    scalar_decode_short(s, ser, DECAF_448_SCALAR_BYTES);
     decaf_dsword_t accum = 0;
+
+    scalar_decode_short(s, ser, DECAF_448_SCALAR_BYTES);
     for (i=0; i<DECAF_448_SCALAR_LIMBS; i++) {
         accum = (accum + s->limb[i] - sc_p->limb[i]) >> WBITS;
     }
@@ -169,13 +172,13 @@ void curve448_scalar_decode_long(
     const unsigned char *ser,
     size_t ser_len
 ) {
+    size_t i;
+    curve448_scalar_t t1, t2;
+
     if (ser_len == 0) {
         curve448_scalar_copy(s, curve448_scalar_zero);
         return;
     }
-    
-    size_t i;
-    curve448_scalar_t t1, t2;
 
     i = ser_len - (ser_len%DECAF_448_SCALAR_BYTES);
     if (i==ser_len) i -= DECAF_448_SCALAR_BYTES;

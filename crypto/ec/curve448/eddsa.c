@@ -62,9 +62,10 @@ static decaf_error_t oneshot_hash(uint8_t *out, size_t outlen,
 static void clamp (
     uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES]
 ) {
+    uint8_t hibit = (1<<0)>>1;
+
     /* Blarg */
     secret_scalar_ser[0] &= -COFACTOR;
-    uint8_t hibit = (1<<0)>>1;
     if (hibit == 0) {
         secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES - 1] = 0;
         secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
@@ -82,10 +83,10 @@ static decaf_error_t hash_init_with_dom(
     size_t context_len
 ) {
     const char *dom_s = "SigEd448";
-    const uint8_t dom[2] = {
-        2 + word_is_zero(prehashed) + word_is_zero(for_prehash),
-        (uint8_t)context_len
-    };
+    uint8_t dom[2];
+
+    dom[0] = 2 + word_is_zero(prehashed) + word_is_zero(for_prehash);
+    dom[1] = (uint8_t)context_len;
 
     if (context_len > UINT8_MAX)
         return DECAF_FAILURE;
@@ -130,14 +131,16 @@ decaf_error_t decaf_ed448_derive_public_key (
 ) {
     /* only this much used for keygen */
     uint8_t secret_scalar_ser[DECAF_EDDSA_448_PRIVATE_BYTES];
-    
+    curve448_scalar_t secret_scalar;
+    unsigned int c;
+    curve448_point_t p;
+
     if (!oneshot_hash(secret_scalar_ser, sizeof(secret_scalar_ser), privkey,
                       DECAF_EDDSA_448_PRIVATE_BYTES)) {
         return DECAF_FAILURE;
     }
     clamp(secret_scalar_ser);
-        
-    curve448_scalar_t secret_scalar;
+
     curve448_scalar_decode_long(secret_scalar, secret_scalar_ser, sizeof(secret_scalar_ser));
     
     /* Since we are going to mul_by_cofactor during encoding, divide by it here.
@@ -146,11 +149,10 @@ decaf_error_t decaf_ed448_derive_public_key (
      * the decaf base point is on Etwist_d, and when converted it effectively
      * picks up a factor of 2 from the isogenies.  So we might start at 2 instead of 1. 
      */
-    for (unsigned int c=1; c<DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+    for (c=1; c<DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
         curve448_scalar_halve(secret_scalar,secret_scalar);
     }
     
-    curve448_point_t p;
     curve448_precomputed_scalarmul(p,curve448_precomputed_base,secret_scalar);
     
     curve448_point_mul_by_ratio_and_encode_like_eddsa(pubkey, p);
@@ -176,6 +178,10 @@ decaf_error_t decaf_ed448_sign (
     curve448_scalar_t secret_scalar;
     EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
     decaf_error_t ret = DECAF_FAILURE;
+    curve448_scalar_t nonce_scalar;
+    uint8_t nonce_point[DECAF_EDDSA_448_PUBLIC_BYTES] = {0};
+    unsigned int c;
+    curve448_scalar_t challenge_scalar;
 
     if (hashctx == NULL)
         return DECAF_FAILURE;
@@ -205,7 +211,6 @@ decaf_error_t decaf_ed448_sign (
     }
     
     /* Decode the nonce */
-    curve448_scalar_t nonce_scalar;
     {
         uint8_t nonce[2*DECAF_EDDSA_448_PRIVATE_BYTES];
 
@@ -214,24 +219,23 @@ decaf_error_t decaf_ed448_sign (
         curve448_scalar_decode_long(nonce_scalar, nonce, sizeof(nonce));
         OPENSSL_cleanse(nonce, sizeof(nonce));
     }
-    
-    uint8_t nonce_point[DECAF_EDDSA_448_PUBLIC_BYTES] = {0};
+
     {
         /* Scalarmul to create the nonce-point */
         curve448_scalar_t nonce_scalar_2;
+        curve448_point_t p;
+
         curve448_scalar_halve(nonce_scalar_2,nonce_scalar);
-        for (unsigned int c = 2; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
+        for (c = 2; c < DECAF_448_EDDSA_ENCODE_RATIO; c <<= 1) {
             curve448_scalar_halve(nonce_scalar_2,nonce_scalar_2);
         }
-        
-        curve448_point_t p;
+
         curve448_precomputed_scalarmul(p,curve448_precomputed_base,nonce_scalar_2);
         curve448_point_mul_by_ratio_and_encode_like_eddsa(nonce_point, p);
         curve448_point_destroy(p);
         curve448_scalar_destroy(nonce_scalar_2);
     }
-    
-    curve448_scalar_t challenge_scalar;
+
     {
         uint8_t challenge[2*DECAF_EDDSA_448_PRIVATE_BYTES];
 
@@ -290,12 +294,15 @@ decaf_error_t decaf_ed448_verify (
 ) { 
     curve448_point_t pk_point, r_point;
     decaf_error_t error = curve448_point_decode_like_eddsa_and_mul_by_ratio(pk_point,pubkey);
+    curve448_scalar_t challenge_scalar;
+    curve448_scalar_t response_scalar;
+    unsigned int c;
+
     if (DECAF_SUCCESS != error) { return error; }
     
     error = curve448_point_decode_like_eddsa_and_mul_by_ratio(r_point,signature);
     if (DECAF_SUCCESS != error) { return error; }
     
-    curve448_scalar_t challenge_scalar;
     {
         /* Compute the challenge */
         EVP_MD_CTX *hashctx = EVP_MD_CTX_new();
@@ -319,15 +326,14 @@ decaf_error_t decaf_ed448_verify (
         OPENSSL_cleanse(challenge,sizeof(challenge));
     }
     curve448_scalar_sub(challenge_scalar, curve448_scalar_zero, challenge_scalar);
-    
-    curve448_scalar_t response_scalar;
+
     curve448_scalar_decode_long(
         response_scalar,
         &signature[DECAF_EDDSA_448_PUBLIC_BYTES],
         DECAF_EDDSA_448_PRIVATE_BYTES
     );
     
-    for (unsigned c=1; c<DECAF_448_EDDSA_DECODE_RATIO; c<<=1) {
+    for (c=1; c<DECAF_448_EDDSA_DECODE_RATIO; c<<=1) {
         curve448_scalar_add(response_scalar,response_scalar,response_scalar);
     }
     

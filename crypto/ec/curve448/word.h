@@ -51,9 +51,9 @@
     
 /* Scalar limbs are keyed off of the API word size instead of the arch word size. */
 #if DECAF_WORD_BITS == 64
-    #define SC_LIMB(x) (x##ull)
+    #define SC_LIMB(x) (x)
 #elif DECAF_WORD_BITS == 32
-    #define SC_LIMB(x) ((uint32_t)x##ull),(x##ull>>32)
+    #define SC_LIMB(x) ((uint32_t)x),(x>>32)
 #else
     #error "For now, libdecaf only supports 32- and 64-bit architectures."
 #endif
@@ -192,9 +192,11 @@ static ossl_inline decaf_bool_t mask_to_bool (mask_t m) {
 static ossl_inline mask_t bool_to_mask (decaf_bool_t m) {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;
+    unsigned int i;
+
     unsigned int limit = sizeof(decaf_bool_t)/sizeof(mask_t);
     if (limit < 1) limit = 1;
-    for (unsigned int i=0; i<limit; i++) {
+    for (i=0; i<limit; i++) {
         ret |= ~ word_is_zero(m >> (i*8*sizeof(word_t)));
     }
     return ret;
