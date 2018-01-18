@@ -69,15 +69,14 @@ void gf_mul (gf_s *__restrict__ cs, const gf as, const gf bs) {
 }
 
 void gf_mulw_unsigned (gf_s *__restrict__ cs, const gf as, uint32_t b) {
-    assert(b<1<<28);
-    
     const uint32_t *a = as->limb;
     uint32_t *c = cs->limb;
-
     uint64_t accum0 = 0, accum8 = 0;
-    uint32_t mask = (1ull<<28)-1;  
-
+    uint32_t mask = (1<<28)-1;  
     int i;
+
+    assert(b<1<<28);
+
     FOR_LIMB(i,0,8,{
         accum0 += widemul(b, a[i]);
         accum8 += widemul(b, a[i+8]);
