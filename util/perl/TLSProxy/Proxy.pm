@@ -104,13 +104,15 @@ sub new
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
-    $self->{proxy_sock} = $IP_factory->(
+    my @proxyargs = (
         LocalHost   => $proxaddr,
         LocalPort   => $self->{proxy_port},
         Proto       => "tcp",
         Listen      => SOMAXCONN,
-        ReuseAddr   => 1
-    );
+       );
+    push @proxyargs, ReuseAddr => 1
+        unless $^O eq "MSWin32";
+    $self->{proxy_sock} = $IP_factory->(@proxyargs);
 
     if ($self->{proxy_sock}) {
         print "Proxy started on port ".$self->{proxy_port}."\n";
