@@ -20,7 +20,9 @@
 
 #include <string.h>
 
-#if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
+/* e_os.h includes unistd.h, which defines _POSIX_VERSION */
+#if defined(OPENSSL_SYS_UNIX) \
+    && defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 # define IMPLEMENTED
 # include <stdlib.h>
 # include <assert.h>
