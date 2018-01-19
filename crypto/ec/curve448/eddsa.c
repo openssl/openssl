@@ -335,7 +335,7 @@ int ED448_verify(const uint8_t *message, size_t message_len,
                  const uint8_t *context, size_t context_len)
 {
     return c448_ed448_verify(signature, public_key, message, message_len, 0,
-                             context, context_len) == C448_SUCCESS;
+                             context, (uint8_t)context_len) == C448_SUCCESS;
 }
 
 int ED448ph_sign(uint8_t *out_sig, const uint8_t hash[64],
@@ -352,7 +352,7 @@ int ED448ph_verify(const uint8_t hash[64], const uint8_t signature[114],
                    size_t context_len)
 {
     return c448_ed448_verify_prehash(signature, public_key, hash, context,
-                                     context_len) == C448_SUCCESS;
+                                     (uint8_t)context_len) == C448_SUCCESS;
 }
 
 int ED448_public_from_private(uint8_t out_public_key[57],
