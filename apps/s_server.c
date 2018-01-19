@@ -2479,9 +2479,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     printf("SSL_do_handshake -> %d\n", i);
                     i = 0;      /* 13; */
                     continue;
-                    /*
-                     * strcpy(buf,"server side RE-NEGOTIATE\n");
-                     */
                 }
                 if ((buf[0] == 'R') && ((buf[1] == '\n') || (buf[1] == '\r'))) {
                     SSL_set_verify(con,
@@ -2492,10 +2489,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     printf("SSL_do_handshake -> %d\n", i);
                     i = 0;      /* 13; */
                     continue;
-                    /*
-                     * strcpy(buf,"server side RE-NEGOTIATE asking for client
-                     * cert\n");
-                     */
                 }
                 if ((buf[0] == 'K' || buf[0] == 'k')
                         && ((buf[1] == '\n') || (buf[1] == '\r'))) {
@@ -2506,10 +2499,6 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                     printf("SSL_do_handshake -> %d\n", i);
                     i = 0;
                     continue;
-                    /*
-                     * strcpy(buf,"server side RE-NEGOTIATE asking for client
-                     * cert\n");
-                     */
                 }
                 if (buf[0] == 'P') {
                     static const char *str = "Lets print some clear text\n";
