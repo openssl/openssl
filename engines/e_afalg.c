@@ -661,6 +661,10 @@ static cbc_handles *get_cipher_handle(int nid)
 const EVP_CIPHER *afalg_aes_cbc(int nid)
 {
     cbc_handles *cipher_handle = get_cipher_handle(nid);
+    if (cipher_handle == NULL) {
+        return NULL;
+    }
+
     if (cipher_handle->_hidden == NULL
         && ((cipher_handle->_hidden =
          EVP_CIPHER_meth_new(nid,

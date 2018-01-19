@@ -34,6 +34,10 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
     long ret;
     int bareoper;
 
+    if (processed == NULL) {
+        return -1;
+    }
+
     if (b->callback_ex != NULL) {
         return b->callback_ex(b, oper, argp, len, argi, argl, inret, processed);
     }

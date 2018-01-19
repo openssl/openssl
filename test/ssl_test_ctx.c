@@ -728,13 +728,17 @@ static void ssl_test_ctx_free_extra_data(SSL_TEST_CTX *ctx)
 
 void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
 {
-    ssl_test_ctx_free_extra_data(ctx);
-    OPENSSL_free(ctx->expected_npn_protocol);
-    OPENSSL_free(ctx->expected_alpn_protocol);
-    sk_X509_NAME_pop_free(ctx->expected_server_ca_names, X509_NAME_free);
-    sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
-    OPENSSL_free(ctx->expected_cipher);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        ssl_test_ctx_free_extra_data(ctx);
+        OPENSSL_free(ctx->expected_npn_protocol);
+        OPENSSL_free(ctx->expected_alpn_protocol);
+        sk_X509_NAME_pop_free(ctx->expected_server_ca_names, X509_NAME_free);
+        sk_X509_NAME_pop_free(ctx->expected_client_ca_names, X509_NAME_free);
+        OPENSSL_free(ctx->expected_cipher);
+        OPENSSL_free(ctx);
+    } else {
+        TEST_error("ctx is NULL");
+    }
 }
 
 static int parse_client_options(SSL_TEST_CLIENT_CONF *client, const CONF *conf,
