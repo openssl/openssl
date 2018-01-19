@@ -880,6 +880,10 @@ int MAIN(int argc, char **argv)
             }
             p++;
         }
+        if (pp[DB_name][0] == '\0') {
+            BIO_printf(bio_err, "entry %d: bad Subject\n", i + 1);
+            goto err;
+        }
     }
     if (verbose) {
         BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT); /* cannot fail */
