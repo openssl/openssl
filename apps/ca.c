@@ -663,6 +663,10 @@ end_of_options:
                 goto end;
             }
         }
+        if (pp[DB_name][0] == '\0') {
+            BIO_printf(bio_err, "entry %d: bad Subject\n", i + 1);
+            goto end;
+        }
     }
     if (verbose) {
         TXT_DB_write(bio_out, db->db);
