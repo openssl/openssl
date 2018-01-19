@@ -118,7 +118,6 @@ sub new
         print "Proxy started on port ".$self->{proxy_port}."\n";
     } else {
         warn "Failed creating proxy socket (".$proxaddr.",".$self->{proxy_port}."): $!\n";
-        return undef;
     }
 
     return bless $self, $class;
@@ -181,6 +180,10 @@ sub start
 {
     my ($self) = shift;
     my $pid;
+
+    if ($self->{proxy_sock} == 0) {
+        return 0;
+    }
 
     $pid = fork();
     if ($pid == 0) {
