@@ -21,7 +21,7 @@
 #include <string.h>
 
 /* e_os.h includes unistd.h, which defines _POSIX_VERSION */
-#if defined(OPENSSL_SYS_UNIX) \
+#if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
     && defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 # define IMPLEMENTED
 # include <stdlib.h>
