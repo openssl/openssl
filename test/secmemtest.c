@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "../e_os.h"  /* pull in unistd.h for _POSIX_VERSION */
 #include <stdio.h>
 #include <openssl/crypto.h>
 
@@ -16,7 +17,8 @@
 
 int main(int argc, char **argv)
 {
-#if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
+#if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
+    && defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
     char *p = NULL, *q = NULL, *r = NULL, *s = NULL;
 
     s = OPENSSL_secure_malloc(20);
