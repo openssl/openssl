@@ -51,7 +51,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest gosttest
+          sysdefaulttest errtest ssl_ctx_test gosttest
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -559,6 +559,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[gosttest]=../include ..
   DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
 ENDIF
+
+  SOURCE[ssl_ctx_test]=ssl_ctx_test.c
+  INCLUDE[ssl_ctx_test]=../include
+  DEPEND[ssl_ctx_test]=../libcrypto ../libssl libtestutil.a
 
 {-
    use File::Spec::Functions;
