@@ -544,7 +544,7 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             min_version = TLS1_3_VERSION;
 #endif
         /* Done massaging versions; do the check. */
-        if (0
+        if (min_version > max_version
 #ifdef OPENSSL_NO_SSL3
             || (min_version <= SSL3_VERSION && SSL3_VERSION <= max_version)
 #endif
