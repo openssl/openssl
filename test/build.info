@@ -55,7 +55,7 @@ IF[{- !$disabled{tests} -}]
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest gosttest \
+          sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test
 
@@ -688,6 +688,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[namemap_internal_test]=.. ../include ../apps/include
   DEPEND[namemap_internal_test]=../libcrypto.a libtestutil.a
 ENDIF
+
+  SOURCE[ssl_ctx_test]=ssl_ctx_test.c
+  INCLUDE[ssl_ctx_test]=../include
+  DEPEND[ssl_ctx_test]=../libcrypto ../libssl libtestutil.a
 
 {-
    use File::Spec::Functions;
