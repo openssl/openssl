@@ -941,3 +941,13 @@ int ossl_statem_app_data_allowed(SSL *s)
 
     return 0;
 }
+
+/*
+ * This function returns 1 if TLS exporter is ready to export keying
+ * material, or 0 if otherwise.
+ */
+int ossl_statem_export_allowed(SSL *s)
+{
+    return s->s3->previous_server_finished_len != 0
+           && s->statem.hand_state != TLS_ST_SW_FINISHED;
+}
