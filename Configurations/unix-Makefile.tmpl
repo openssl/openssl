@@ -760,7 +760,6 @@ libssl.pc:
 	    echo 'Version: '$(VERSION); \
 	    echo 'Requires.private: libcrypto'; \
 	    echo 'Libs: -L$${libdir} -lssl'; \
-	    echo 'Libs.private: $(EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libssl.pc
 
 openssl.pc:
