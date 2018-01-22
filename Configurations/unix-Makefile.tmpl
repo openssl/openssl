@@ -994,8 +994,10 @@ EOF
 EOF
       } else {
           $recipe .= <<"EOF";
-	rm -f $target
-	ln -s $target_full $target
+	if [ '$target' != '$target_full' ]; then \\
+		rm -f $target; \\
+		ln -s $target_full $target; \\
+	fi
 EOF
       }
   }
