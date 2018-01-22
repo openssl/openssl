@@ -138,11 +138,21 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 
 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
+    EVP_PKEY_ASN1_METHOD tmp = { 0, };
+
     if (app_methods == NULL) {
         app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
         if (app_methods == NULL)
             return 0;
     }
+
+    tmp.pkey_id = ameth->pkey_id;
+    if (sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp) >= 0) {
+        EVPerr(EVP_F_EVP_PKEY_ASN1_ADD0,
+               EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED);
+        return 0;
+    }
+
     if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
         return 0;
     sk_EVP_PKEY_ASN1_METHOD_sort(app_methods);
