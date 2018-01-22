@@ -206,7 +206,10 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
     }
 
 # ifdef IPV6_V6ONLY
-    if ((options & BIO_SOCK_V6_ONLY) && BIO_ADDR_family(addr) == AF_INET6) {
+    if (BIO_ADDR_family(addr) == AF_INET6) {
+        /* Note: Windows default of IPV6_V6ONLY is ON, and Linux is OFF.
+         * Therefore we always have to use setsockopt here. */
+        on = options & BIO_SOCK_V6_ONLY ? 1 : 0;
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
                        (const void *)&on, sizeof(on)) != 0) {
             SYSerr(SYS_F_SETSOCKOPT, get_last_socket_error());
