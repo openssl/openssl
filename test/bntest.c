@@ -6,35 +6,23 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "../e_os.h"
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 
-#include "internal/nelem.h"
-#include "internal/numbers.h"
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "internal/nelem.h"
+#include "internal/numbers.h"
 #include "testutil.h"
 
-/*
- * In bn_lcl.h, bn_expand() is defined as a static ossl_inline function.
- * This is fine in itself, it will end up as an unused static function in
- * the worst case.  However, it references bn_expand2(), which is a private
- * function in libcrypto and therefore unavailable on some systems.  This
- * may result in a linker error because of unresolved symbols.
- *
- * To avoid this, we define a dummy variant of bn_expand2() here, and to
- * avoid possible clashes with libcrypto, we rename it first, using a macro.
- */
-#define bn_expand2 dummy_bn_expand2
-BIGNUM *bn_expand2(BIGNUM *b, int words);
-BIGNUM *bn_expand2(BIGNUM *b, int words) { return NULL; }
-#include "../crypto/bn/bn_lcl.h"
+#ifdef OPENSSL_SYS_WINDOWS
+# define strcasecmp _stricmp
+#endif
 
 /*
  * Things in boring, not in openssl.  TODO we should add them.
@@ -182,8 +170,8 @@ static int test_sub(void)
             BN_add_word(b, i);
         } else {
             BN_bntest_rand(b, 400 + i - NUM1, 0, 0);
-            a->neg = rand_neg();
-            b->neg = rand_neg();
+            BN_set_negative(a, rand_neg());
+            BN_set_negative(b, rand_neg());
         }
         BN_sub(c, a, b);
         BN_add(c, c, b);
@@ -222,8 +210,8 @@ static int test_div_recip(void)
             BN_add_word(a, i);
         } else
             BN_bntest_rand(b, 50 + 3 * (i - NUM1), 0, 0);
-        a->neg = rand_neg();
-        b->neg = rand_neg();
+        BN_set_negative(a, rand_neg());
+        BN_set_negative(b, rand_neg());
         BN_RECP_CTX_set(recp, b, ctx);
         BN_div_recp(d, c, a, recp, ctx);
         BN_mul(e, d, b, ctx);
@@ -259,8 +247,8 @@ static int test_mod(void)
     BN_bntest_rand(a, 1024, 0, 0);
     for (i = 0; i < NUM0; i++) {
         BN_bntest_rand(b, 450 + i * 10, 0, 0);
-        a->neg = rand_neg();
-        b->neg = rand_neg();
+        BN_set_negative(a, rand_neg());
+        BN_set_negative(b, rand_neg());
         BN_mod(c, a, b, ctx);
         BN_div(d, e, a, b, ctx);
         BN_sub(e, e, c);
@@ -503,8 +491,8 @@ static int test_gf2m_add(void)
     for (i = 0; i < NUM0; i++) {
         BN_rand(a, 512, 0, 0);
         BN_copy(b, BN_value_one());
-        a->neg = rand_neg();
-        b->neg = rand_neg();
+        BN_set_negative(a, rand_neg());
+        BN_set_negative(b, rand_neg());
         BN_GF2m_add(c, a, b);
         /* Test that two added values have the correct parity. */
         if (!TEST_false((BN_is_odd(a) && BN_is_odd(c))
@@ -888,27 +876,27 @@ static int test_kronecker(void)
 
     if (!TEST_true(BN_generate_prime_ex(b, 512, 0, NULL, NULL, NULL)))
         goto err;
-    b->neg = rand_neg();
+    BN_set_negative(b, rand_neg());
 
     for (i = 0; i < NUM0; i++) {
         if (!TEST_true(BN_bntest_rand(a, 512, 0, 0)))
             goto err;
-        a->neg = rand_neg();
+        BN_set_negative(a, rand_neg());
 
         /* t := (|b|-1)/2  (note that b is odd) */
         if (!TEST_true(BN_copy(t, b)))
             goto err;
-        t->neg = 0;
+        BN_set_negative(t, 0);
         if (!TEST_true(BN_sub_word(t, 1)))
             goto err;
         if (!TEST_true(BN_rshift1(t, t)))
             goto err;
         /* r := a^t mod b */
-        b->neg = 0;
+        BN_set_negative(b, 0);
 
         if (!TEST_true(BN_mod_exp_recp(r, a, t, b, ctx)))
             goto err;
-        b->neg = 1;
+        BN_set_negative(b, 1);
 
         if (BN_is_word(r, 1))
             legendre = 1;
@@ -927,7 +915,7 @@ static int test_kronecker(void)
         if (!TEST_int_ge(kronecker = BN_kronecker(a, b, ctx), -1))
             goto err;
         /* we actually need BN_kronecker(a, |b|) */
-        if (a->neg && b->neg)
+        if (BN_is_negative(a) && BN_is_negative(b))
             kronecker = -kronecker;
 
         if (!TEST_int_eq(legendre, kronecker))

@@ -7,12 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../e_os.h"
 #include <string.h>
-#include "internal/nelem.h"
+
+#include <openssl/e_os2.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "internal/nelem.h"
 #include "testutil.h"
+
+#ifdef OPENSSL_SYS_WINDOWS
+# define strcasecmp _stricmp
+#endif
 
 static const char *const names[] = {
     "a", "b", ".", "*", "@",
