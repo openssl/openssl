@@ -12,13 +12,17 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "internal/nelem.h"
-#include "internal/numbers.h"
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "internal/nelem.h"
+#include "internal/numbers.h"
 #include "testutil.h"
+
+#ifdef OPENSSL_SYS_WINDOWS
+# defined strcasecmp _stricmp
+#endif
 
 /*
  * Things in boring, not in openssl.  TODO we should add them.
