@@ -16,6 +16,10 @@
 #include "ssl_test_ctx.h"
 #include "testutil.h"
 
+#ifdef OPENSSL_SYS_WINDOWS
+# define strcasecmp _stricmp
+#endif
+
 static const int default_app_data_size = 256;
 /* Default set to be as small as possible to exercise fragmentation. */
 static const int default_max_fragment_size = 512;
