@@ -21,7 +21,7 @@
 #include "testutil.h"
 
 #ifdef OPENSSL_SYS_WINDOWS
-# defined strcasecmp _stricmp
+# define strcasecmp _stricmp
 #endif
 
 /*
