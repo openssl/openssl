@@ -127,17 +127,17 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
     }
     for (i = EVP_PKEY_asn1_get_count(); i-- > 0; ) {
         ameth = EVP_PKEY_asn1_get0(i);
-        if (((int)strlen(ameth->pem_str) == len)
-            && (strncasecmp(ameth->pem_str, str, len) == 0))
+        if ((int)strlen(ameth->pem_str) == len
+            && strncasecmp(ameth->pem_str, str, len) == 0)
             break;
     }
-    if (ameth != NULL) {
-        for (;;) {
-            int type = ameth->pkey_base_id;
 
+    if (ameth != NULL) {
+        /* Chase down aliases */
+        for (;;) {
             if (!(ameth->pkey_flags & ASN1_PKEY_ALIAS))
                 break;
-            ameth = pkey_asn1_find(type);
+            ameth = pkey_asn1_find(ameth->pkey_base_id);
         }
     }
     return ameth;
