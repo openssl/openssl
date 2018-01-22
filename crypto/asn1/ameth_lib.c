@@ -104,7 +104,8 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
                                                    const char *str, int len)
 {
     int i;
-    const EVP_PKEY_ASN1_METHOD *ameth;
+    const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+
     if (len == -1)
         len = strlen(str);
     if (pe) {
@@ -124,15 +125,22 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 #endif
         *pe = NULL;
     }
-    for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
+    for (i = EVP_PKEY_asn1_get_count(); i-- > 0; ) {
         ameth = EVP_PKEY_asn1_get0(i);
-        if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
-            continue;
         if (((int)strlen(ameth->pem_str) == len)
             && (strncasecmp(ameth->pem_str, str, len) == 0))
-            return ameth;
+            break;
     }
-    return NULL;
+    if (ameth != NULL) {
+        for (;;) {
+            int type = ameth->pkey_base_id;
+
+            if (!(ameth->pkey_flags & ASN1_PKEY_ALIAS))
+                break;
+            ameth = pkey_asn1_find(type);
+        }
+    }
+    return ameth;
 }
 
 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
