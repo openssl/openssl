@@ -366,7 +366,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=cipher_overhead_test
     SOURCE[cipher_overhead_test]=cipher_overhead_test.c
-    INCLUDE[cipher_overhead_test]=../include
+    INCLUDE[cipher_overhead_test]=.. ../include
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
