@@ -137,11 +137,6 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 
 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 {
-    if (pkey_asn1_find(ameth->pkey_id) != NULL) {
-        EVPerr(EVP_F_EVP_PKEY_ASN1_ADD0,
-               EVP_R_PKEY_ASN1_METHOD_ALREADY_REGISTERED);
-        return 0;
-    }
     if (app_methods == NULL) {
         app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
         if (app_methods == NULL)
