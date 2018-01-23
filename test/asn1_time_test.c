@@ -89,7 +89,7 @@ static struct testdata tbl_testdata_pos_64bit[] = {
     { "20380119031408Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,  (time_t)0x80000000,  1, 1, },
     { "20380119031409Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,  (time_t)0x80000001,  1, 1, },
     { "380119031408Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,  (time_t)0x80000000,  1, 1, },
-    { "20500101120000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1,  (time_t)2524651200,  1, 0, },
+    { "20500101120000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 1,  (time_t)0x967b1ec0,  1, 0, },
 };
 
 /* ASSUMES SIGNED TIME_T */
