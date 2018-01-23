@@ -224,7 +224,6 @@ int DSA_meth_set_paramgen(DSA_METHOD *dsam,
 int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *);
 int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
 
-int ERR_load_DSA_strings(void);
 
 #  ifdef  __cplusplus
 }

@@ -372,7 +372,6 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 #  endif
 # endif
 
-int ERR_load_PEM_strings(void);
 # ifdef  __cplusplus
 }
 # endif

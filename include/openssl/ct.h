@@ -469,7 +469,6 @@ __owur int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
  */
 __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);
 
-int ERR_load_CT_strings(void);
 #  ifdef  __cplusplus
 }
 #  endif

@@ -551,7 +551,6 @@ int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
                                   TS_RESP_CTX *ctx);
 int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
                                       TS_RESP_CTX *ctx);
-int ERR_load_TS_strings(void);
 
 #  ifdef  __cplusplus
 }

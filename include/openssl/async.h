@@ -69,7 +69,6 @@ ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job);
 void ASYNC_block_pause(void);
 void ASYNC_unblock_pause(void);
 
-int ERR_load_ASYNC_strings(void);
 
 # ifdef  __cplusplus
 }

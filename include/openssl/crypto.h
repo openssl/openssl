@@ -439,7 +439,6 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
-int ERR_load_CRYPTO_strings(void);
 
 # ifdef  __cplusplus
 }

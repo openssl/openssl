@@ -327,7 +327,6 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_DH_KDF_X9_42                           2
 # endif
 
-int ERR_load_DH_strings(void);
 
 #  ifdef  __cplusplus
 }

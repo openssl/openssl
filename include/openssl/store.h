@@ -203,12 +203,6 @@ int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
                                                    *loader, void *do_arg),
                               void *do_arg);
 
-
-/*
- * Error strings
- */
-int ERR_load_OSSL_STORE_strings(void);
-
 # ifdef  __cplusplus
 }
 # endif

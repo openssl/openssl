@@ -743,7 +743,6 @@ void *ENGINE_get_static_state(void);
 DEPRECATEDIN_1_1_0(void ENGINE_setup_bsd_cryptodev(void))
 # endif
 
-int ERR_load_ENGINE_strings(void);
 
 #  ifdef  __cplusplus
 }

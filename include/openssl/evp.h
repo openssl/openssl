@@ -1587,7 +1587,6 @@ void EVP_PKEY_meth_get_param_check(EVP_PKEY_METHOD *pmeth,
 
 void EVP_add_alg_module(void);
 
-int ERR_load_EVP_strings(void);
 
 # ifdef  __cplusplus
 }
