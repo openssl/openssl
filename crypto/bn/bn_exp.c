@@ -623,7 +623,11 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     top = m->top;
 
-    bits = BN_num_bits(p);
+    /*
+     * Use all bits stored in |p|, rather than |BN_num_bits|, so we do not leak
+     * whether the top bits are zero.
+     */
+    bits = p->top * BN_BITS2;
     if (bits == 0) {
         /* x**0 mod 1 is still zero. */
         if (BN_is_one(m)) {
