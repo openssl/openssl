@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -168,16 +168,27 @@ int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
     return 1;
 }
 
+/*
+ * Sign an OCSP response using the parameters contained in the digest context,
+ * set the responderID to the subject name in the signer's certificate, and
+ * include one or more optional certificates in the response.
+ */
+
 int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
                     X509 *signer, EVP_MD_CTX *ctx,
                     STACK_OF(X509) *certs, unsigned long flags)
 {
     int i;
     OCSP_RESPID *rid;
+    EVP_PKEY *pkey;
 
-    if (ctx == NULL || EVP_MD_CTX_pkey_ctx(ctx) == NULL
-        || EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)) == NULL
-        || !X509_check_private_key(signer, EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx)))) {
+    if (ctx == NULL || EVP_MD_CTX_pkey_ctx(ctx) == NULL) {
+        OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX, OCSP_R_NO_SIGNER_KEY);
+        goto err;
+    }
+
+    pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
+    if (pkey == NULL || !X509_check_private_key(signer, pkey)) {
         OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX,
                 OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
         goto err;
