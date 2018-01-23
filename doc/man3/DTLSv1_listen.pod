@@ -39,7 +39,7 @@ If TCP is being used then there is no need to use SSL_stateless(). However some
 stream-based transport protocols (e.g. QUIC) may not validate the source
 address. In this case a TLSv1.3 application would be susceptible to this attack.
 
-As a counter measure to this issue TLSv1.3 and DTLS include a stateless cookie
+As a countermeasure to this issue TLSv1.3 and DTLS include a stateless cookie
 mechanism. The idea is that when a client attempts to connect to a server it
 sends a ClientHello message. The server responds with a HelloRetryRequest (in
 TLSv1.3) or a HelloVerifyRequest (in DTLS) which contains a unique cookie. The
