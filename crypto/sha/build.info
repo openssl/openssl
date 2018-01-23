@@ -3,16 +3,25 @@ SOURCE[../../libcrypto]=\
         sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -} \
         keccak1600.c
 
-GENERATE[sha1-586.s]=asm/sha1-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+GENERATE[sha1-586.s]=asm/sha1-586.pl \
+        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
+        $(PROCESSOR)
 DEPEND[sha1-586.s]=../perlasm/x86asm.pl
-GENERATE[sha256-586.s]=asm/sha256-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+GENERATE[sha256-586.s]=asm/sha256-586.pl \
+        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
+        $(PROCESSOR)
 DEPEND[sha256-586.s]=../perlasm/x86asm.pl
-GENERATE[sha512-586.s]=asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+GENERATE[sha512-586.s]=asm/sha512-586.pl \
+        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
+        $(PROCESSOR)
 DEPEND[sha512-586.s]=../perlasm/x86asm.pl
 
-GENERATE[sha1-ia64.s]=asm/sha1-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
-GENERATE[sha256-ia64.s]=asm/sha512-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
-GENERATE[sha512-ia64.s]=asm/sha512-ia64.pl $(CFLAGS) $(LIB_CFLAGS)
+GENERATE[sha1-ia64.s]=asm/sha1-ia64.pl \
+        $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS)
+GENERATE[sha256-ia64.s]=asm/sha512-ia64.pl \
+        $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS)
+GENERATE[sha512-ia64.s]=asm/sha512-ia64.pl \
+        $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS)
 
 GENERATE[sha1-alpha.S]=asm/sha1-alpha.pl $(PERLASM_SCHEME)
 

@@ -520,7 +520,9 @@ my $no_sse2=0;
 &usage if ($#ARGV < 0);
 
 my $user_cflags="";
+my $user_cppflags=();
 my @user_defines=();
+my @user_includes=();
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
@@ -761,6 +763,14 @@ while (@argvcopy)
 		elsif (/^-D(.*)$/)
 			{
 			push @user_defines, $1;
+			}
+		elsif (/^-I(.*)$/)
+			{
+			push @user_includes, $1;
+			}
+		elsif (/^-Wp,$/)
+			{
+			$user_cppflags.=" ".$_;
 			}
 		else	# common if (/^[-+]/), just pass down...
 			{
@@ -1053,6 +1063,8 @@ $config{build_file} = $target{build_file};
 # or release_ attributes.
 # Do it in such a way that no spurious space is appended (hence the grep).
 $config{defines} = [];
+$config{includes} = [];
+$config{cppflags} = "";
 $config{cflags} = "";
 $config{cxxflags} = "";
 $config{lflags} = "";
@@ -1099,10 +1111,6 @@ if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch
 	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
 }
 
-my $no_shared_warn=0;
-my $no_user_cflags=0;
-my $no_user_defines=0;
-
 # The DSO code currently always implements all functions so that no
 # applications will have to worry about that from a compilation point
 # of view. However, the "method"s may return zero unless that platform
@@ -1145,7 +1153,7 @@ unless ($disabled{threads}) {
             # system-dependent compiler options that are necessary.  We
             # can't truly check that the given options are correct, but
             # we expect the user to know what [s]He is doing.
-            if ($no_user_cflags && $no_user_defines) {
+            if (!$user_cflags && !@user_defines) {
                 die "You asked for multi-threading support, but didn't\n"
                     ,"provide any system-specific compiler options\n";
             }
@@ -1166,6 +1174,7 @@ if (defined($disabled{"deprecated"})) {
         $config{api} = $maxapi;
 }
 
+my $no_shared_warn=0;
 if ($target{shared_target} eq "")
 	{
 	$no_shared_warn = 1
@@ -1208,8 +1217,10 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
 # This saves the build files from having to check
 if ($disabled{pic})
 	{
-	foreach (qw(shared_cflag shared_cxxflag shared_ldflag
-		    dso_cflags dso_cxxflags dso_lflags))
+	foreach (qw(shared_cflag shared_cxxflag shared_cppflag
+                    shared_defines shared_includes shared_ldflag
+		    dso_cflags dso_cxxflags dso_cppflags
+                    dso_defines dso_includes dso_lflags))
 		{
 		$target{$_} = "";
 		}
@@ -1378,10 +1389,11 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 		}
 	}
 
-if ($user_cflags ne "") { $config{cflags}="$config{cflags}$user_cflags"; $config{cxxflags}="$config{cxxflags}$user_cflags";}
-else                    { $no_user_cflags=1;  }
-if (@user_defines) { $config{defines}=[ @{$config{defines}}, @user_defines ]; }
-else               { $no_user_defines=1;    }
+$config{cppflags}.=$user_cppflags;
+push @{$config{defines}}, @user_defines;
+push @{$config{includes}}, @user_includes;
+$config{cflags}.=$user_cflags;
+$config{cxxflags}.=$user_cflags;
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
@@ -2689,9 +2701,12 @@ sub print_table_entry
 
     my @sequence = (
 	"sys_id",
+	"cpp",
+	"cppflags",
+	"defines",
+	"includes",
 	"cc",
 	"cflags",
-	"defines",
 	"unistd",
 	"ld",
 	"lflags",
