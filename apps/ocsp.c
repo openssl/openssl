@@ -78,7 +78,7 @@ typedef enum OPTION_choice {
     OPT_VALIDITY_PERIOD, OPT_STATUS_AGE, OPT_SIGNKEY, OPT_REQOUT,
     OPT_RESPOUT, OPT_PATH, OPT_ISSUER, OPT_CERT, OPT_SERIAL,
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
-    OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_SIGOPT, OPT_HEADER,
+    OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_RSIGOPT, OPT_HEADER,
     OPT_V_ENUM,
     OPT_MD
 } OPTION_CHOICE;
@@ -155,7 +155,7 @@ const OPTIONS ocsp_options[] = {
     {"rkey", OPT_RKEY, '<', "Responder key to sign responses with"},
     {"rother", OPT_ROTHER, '<', "Other certificates to include in response"},
     {"rmd", OPT_RMD, 's', "Digest Algorithm to use in signature of OCSP response"},
-    {"rsigopt", OPT_SIGOPT, 's', "OCSP response signature parameter in n:v form"},
+    {"rsigopt", OPT_RSIGOPT, 's', "OCSP response signature parameter in n:v form"},
     {"header", OPT_HEADER, 's', "key=value header to add"},
     {"", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )"},
     OPT_V_OPTIONS,
@@ -422,7 +422,7 @@ int ocsp_main(int argc, char **argv)
             if (!opt_md(opt_arg(), &rsign_md))
                 goto end;
             break;
-        case OPT_SIGOPT:
+        case OPT_RSIGOPT:
             if (rsign_sigopts == NULL)
                 rsign_sigopts = sk_OPENSSL_STRING_new_null();
             if (rsign_sigopts == NULL || !sk_OPENSSL_STRING_push(rsign_sigopts, opt_arg()))

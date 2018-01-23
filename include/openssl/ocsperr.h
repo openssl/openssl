@@ -25,7 +25,7 @@ int ERR_load_OCSP_strings(void);
 # define OCSP_F_D2I_OCSP_NONCE                            102
 # define OCSP_F_OCSP_BASIC_ADD1_STATUS                    103
 # define OCSP_F_OCSP_BASIC_SIGN                           104
-# define OCSP_F_OCSP_BASIC_SIGN_CTX                       131
+# define OCSP_F_OCSP_BASIC_SIGN_CTX                       119
 # define OCSP_F_OCSP_BASIC_VERIFY                         105
 # define OCSP_F_OCSP_CERT_ID_NEW                          101
 # define OCSP_F_OCSP_CHECK_DELEGATED                      106
