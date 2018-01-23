@@ -1946,13 +1946,6 @@ EOF
                 }
                 $d .= $e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
-                # If we depend on a header file or a perl module, let's make
-                # sure it can get included
-                if ($dest ne "" && $d =~ /\.(h|pm)$/) {
-                    my $i = dirname($d);
-                    push @{$unified_info{includes}->{$ddest}->{source}}, $i
-                        unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}->{source}};
-                }
             }
         }
 
@@ -1989,6 +1982,25 @@ EOF
 
     # Massage the result
 
+    # If we depend on a header file or a perl module, add an inclusion of
+    # its directory to allow smoothe inclusion
+    foreach my $dest (keys %{$unified_info{depends}}) {
+        next if $dest eq "";
+        foreach my $d (keys %{$unified_info{depends}->{$dest}}) {
+            next unless $d =~ /\.(h|pm)$/;
+            if ($d eq "configdata.pm"
+                    || defined($unified_info{generate}->{$d})) {
+                my $i = cleandir($blddir, dirname($d));
+                push @{$unified_info{includes}->{$dest}->{build}}, $i
+                    unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{build}};
+            } else {
+                my $i = cleandir($srcdir, dirname($d));
+                push @{$unified_info{includes}->{$dest}->{source}}, $i
+                    unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{source}};
+            }
+        }
+    }
+
     # Trickle down includes placed on libraries, engines and programs to
     # their sources (i.e. object files)
     foreach my $dest (keys %{$unified_info{engines}},
@@ -2024,8 +2036,9 @@ EOF
     # Includes
     foreach my $dest (sort keys %{$unified_info{includes}}) {
         if (defined($unified_info{includes}->{$dest}->{build})) {
-            my @source_includes =
-                ( @{$unified_info{includes}->{$dest}->{source}} );
+            my @source_includes = ();
+            @source_includes = ( @{$unified_info{includes}->{$dest}->{source}} )
+                if defined($unified_info{includes}->{$dest}->{source});
             $unified_info{includes}->{$dest} =
                 [ @{$unified_info{includes}->{$dest}->{build}} ];
             foreach my $inc (@source_includes) {
