@@ -268,7 +268,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[cipherlist_test]=../include
   DEPEND[cipherlist_test]=../libcrypto ../libssl libtestutil.a
 
-  INCLUDE[testutil.o]=..
   INCLUDE[ssl_test_ctx.o]=../include
   INCLUDE[handshake_helper.o]=../include
   INCLUDE[ssltestlib.o]=.. ../include
@@ -371,7 +370,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   ENDIF
 
   SOURCE[uitest]=uitest.c ../apps/apps.c ../apps/opt.c
-  DEPEND[uitest.o]=../apps/progs.h
   INCLUDE[uitest]=.. ../include ../apps
   DEPEND[uitest]=../libcrypto ../libssl libtestutil.a
 
