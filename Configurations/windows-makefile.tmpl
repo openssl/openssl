@@ -160,7 +160,14 @@ ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 !ENDIF
 
 CC={- $target{cc} -}
-CFLAGS={- join(" ",(map { "-D".$_} @{$target{defines}}, @{$config{defines}})) -} {- join(" ", quotify_l("-DENGINESDIR=\"$enginesdir\"", "-DOPENSSLDIR=\"$openssldir\"")) -} {- $target{cflags} -} {- $config{cflags} -}
+CPPFLAGS={- our $cppflags = join(" ",
+                                 (map { "-D".$_}
+                                  @{$target{defines}}, @{$config{defines}}),
+                                 (map { " /I ".$_}
+                                  @{$target{includes}}, @{$config{includes}}),
+                                 $target{cppflags}, $config{cppflags}) -}
+CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
+CFLAGS={- $target{cflags} -} {- $config{cflags} -}
 COUTFLAG={- $target{coutflag} || "/Fo" -}$(OSSL_EMPTY)
 RC={- $target{rc} || "rc" -}
 RCOUTFLAG={- $target{rcoutflag} || "/fo" -}$(OSSL_EMPTY)
@@ -168,10 +175,17 @@ LD={- $target{ld} || "link" -}
 LDFLAGS={- $target{lflags} -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
 EX_LIBS={- $target{ex_libs} -}
+LIB_CPPFLAGS={- join(" ",
+                     $target{shared_cppflag} || "",
+                     (map { quotiry_l("-D".$_) }
+                      'OPENSSLDIR="$(OPENSSLDIR)"',
+                      'ENGINESDIR="$(ENGINESDIR)"')) -}
 LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag} || "" -}
+DSO_CPPFLAGS={- $target{dso_cppflags} || "" -}
 DSO_CFLAGS={- $target{dso_cflags} || "" -}
 DSO_LDFLAGS={- $target{dso_ldflag} || "" -}
+BIN_CPPFLAGS={- $target{dso_cppflags} || "" -}
 BIN_CFLAGS={- $target{bin_cflags} -}
 BIN_LDFLAGS={- $target{bin_lflags} -}
 
@@ -427,7 +441,7 @@ EOF
 $target: "$args{generator}->[0]" $deps
 	set ASM=\$(AS)
 	$generator \$@.S
-	\$(CC) $incs \$(CFLAGS) /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
+	\$(CC) $incs \$(CFLAGS) \$(CPPFLAGS) /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
@@ -440,7 +454,7 @@ EOF
           }
           return <<"EOF";
 $target: "$args{generator}->[0]" $deps
-	\$(CC) $incs \$(CFLAGS) /EP /C "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
+	\$(CC) $incs \$(CFLAGS) \$(CPPFLAGS) /EP /C "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
 EOF
       }
   }
@@ -457,9 +471,15 @@ EOF
              $incs .= ' /I "'.$withargs{zlib_include}.'"';
          }
      }
-     my $ecflags = { lib => '$(LIB_CFLAGS)',
-		     dso => '$(DSO_CFLAGS)',
-		     bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+     my $cflags = '$(CFLAGS)';
+     $cflags .= { lib => ' $(LIB_CFLAGS)',
+		  dso => ' $(DSO_CFLAGS)',
+		  bin => ' $(BIN_CFLAGS)' } -> {$args{intent}};
+     $cflags .= $incs;
+     $cflags .= ' $(CPPFLAGS)';
+     $cflags .= { lib => ' $(LIB_CPPFLAGS)',
+		  dso => ' $(DSO_CPPFLAGS)',
+		  bin => ' $(BIN_CPPFLAGS)' } -> {$args{intent}};
      my $makedepprog = $config{makedepprog};
      if ($srcs[0] =~ /\.rc$/) {
          return <<"EOF";
@@ -476,7 +496,7 @@ EOF
      }
      return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
-	\$(CC) \$(CFLAGS) $ecflags$inc /Zs /showIncludes $srcs 2>&1 | \\
+	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 | \\
 	    "\$(PERL)" -n << > $obj$depext
 chomp;
 s/^Note: including file: *//;
@@ -484,13 +504,13 @@ s/^Note: including file: *//;
 END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
 <<
 $obj$objext: $obj$depext
-	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ @<<
+	\$(CC) $cflags -c \$(COUTFLAG)\$\@ @<<
 $srcs
 <<
 EOF
     return <<"EOF"	if ($disabled{makedepend});
 $obj$objext: $deps
-	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ $srcs
+	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
 EOF
  }
 

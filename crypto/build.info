@@ -11,14 +11,16 @@ EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
         ppccpuid.pl pariscid.pl alphacpuid.pl arm64cpuid.pl armv4cpuid.pl
 
 DEPEND[cversion.o]=buildinf.h
-GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(CFLAGS_Q)" "$(PLATFORM)"
+GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(CFLAGS) $(CPPFLAGS_Q)" "$(PLATFORM)"
 DEPEND[buildinf.h]=../configdata.pm
 
 GENERATE[uplink-x86.s]=../ms/uplink-x86.pl $(PERLASM_SCHEME)
 GENERATE[uplink-x86_64.s]=../ms/uplink-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[uplink-ia64.s]=../ms/uplink-ia64.pl $(PERLASM_SCHEME)
 
-GENERATE[x86cpuid.s]=x86cpuid.pl $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(PROCESSOR)
+GENERATE[x86cpuid.s]=x86cpuid.pl \
+        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
+        $(PROCESSOR)
 DEPEND[x86cpuid.s]=perlasm/x86asm.pl
 
 GENERATE[x86_64cpuid.s]=x86_64cpuid.pl $(PERLASM_SCHEME)
