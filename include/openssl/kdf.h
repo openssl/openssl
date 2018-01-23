@@ -90,7 +90,6 @@ extern "C" {
             EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
                             EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES, maxmem_bytes)
 
-int ERR_load_KDF_strings(void);
 
 # ifdef  __cplusplus
 }

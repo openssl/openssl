@@ -335,7 +335,6 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
 # define CMS_R_UNSUPPORTED_RECPIENTINFO_TYPE \
     CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE
 
-int ERR_load_CMS_strings(void);
 #  ifdef  __cplusplus
 }
 #  endif

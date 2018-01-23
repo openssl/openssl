@@ -345,7 +345,6 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags);
 int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                       X509_STORE *st, unsigned long flags);
 
-int ERR_load_OCSP_strings(void);
 
 #  ifdef  __cplusplus
 }

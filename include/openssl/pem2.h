@@ -11,10 +11,6 @@
 extern "C" {
 #endif
 
-#ifndef HEADER_PEM_H
-int ERR_load_PEM_strings(void);
-#endif
-
 #ifdef __cplusplus
 }
 #endif
