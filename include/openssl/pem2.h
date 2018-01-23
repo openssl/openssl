@@ -7,10 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#ifdef __cplusplus
-}
+#ifndef HEADER_PEM2_H
+# define HEADER_PEM2_H
+# include <openssl/pemerr.h>
 #endif

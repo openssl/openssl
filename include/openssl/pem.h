@@ -15,7 +15,6 @@
 # include <openssl/safestack.h>
 # include <openssl/evp.h>
 # include <openssl/x509.h>
-# include <openssl/pem2.h>
 # include <openssl/pemerr.h>
 
 #ifdef  __cplusplus
