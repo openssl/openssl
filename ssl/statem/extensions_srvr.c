@@ -26,12 +26,12 @@
 
 /*
  * Message header + 2 bytes for protocol version + number of random bytes +
- * + number of bytes in legacy session id + 2 bytes for ciphersuite
- * + 1 byte for legacy compression + 2 bytes for extension block length
- * + 6 bytes for key_share extension + 4 bytes for cookie extension header
- * + the number of bytes in the cookie
+ * + 1 byte for legacy session id length + number of bytes in legacy session id
+ * + 2 bytes for ciphersuite + 1 byte for legacy compression
+ * + 2 bytes for extension block length + 6 bytes for key_share extension
+ * + 4 bytes for cookie extension header + the number of bytes in the cookie
  */
-#define MAX_HRR_SIZE    (SSL3_HM_HEADER_LENGTH + 2 + SSL3_RANDOM_SIZE \
+#define MAX_HRR_SIZE    (SSL3_HM_HEADER_LENGTH + 2 + SSL3_RANDOM_SIZE + 1 \
                          + SSL_MAX_SSL_SESSION_ID_LENGTH + 2 + 1 + 2 + 6 + 4 \
                          + MAX_COOKIE_SIZE)
 
@@ -742,11 +742,10 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    hmaclen = sizeof(s->session_ctx->ext.cookie_hmac_key);
+    hmaclen = SHA256_DIGEST_LENGTH;
     if (EVP_DigestSignInit(hctx, NULL, EVP_sha256(), NULL, pkey) <= 0
-            || EVP_DigestSignUpdate(hctx, data,
-                                    rawlen - SHA256_DIGEST_LENGTH) <= 0
-            || EVP_DigestSignFinal(hctx, hmac, &hmaclen) <= 0
+            || EVP_DigestSign(hctx, hmac, &hmaclen, data,
+                              rawlen - SHA256_DIGEST_LENGTH) <= 0
             || hmaclen != SHA256_DIGEST_LENGTH) {
         EVP_MD_CTX_free(hctx);
         EVP_PKEY_free(pkey);

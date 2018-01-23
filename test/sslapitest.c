@@ -2561,8 +2561,8 @@ static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
      * Not suitable as a real cookie generation function but good enough for
      * testing!
      */
-    memcpy(cookie, cookie_magic_value, sizeof(cookie_magic_value));
-    *cookie_len = sizeof(cookie_magic_value);
+    memcpy(cookie, cookie_magic_value, sizeof(cookie_magic_value) - 1);
+    *cookie_len = sizeof(cookie_magic_value) - 1;
 
     return 1;
 }
@@ -2570,7 +2570,7 @@ static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 static int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                                   unsigned int cookie_len)
 {
-    if (cookie_len == sizeof(cookie_magic_value)
+    if (cookie_len == sizeof(cookie_magic_value) - 1
         && memcmp(cookie, cookie_magic_value, cookie_len) == 0)
         return 1;
 
@@ -2601,7 +2601,7 @@ static int test_stateless(void)
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ))
                /* This should fail because there is no cookie */
-            || !TEST_int_le(SSL_stateless(serverssl), 0))
+            || !TEST_false(SSL_stateless(serverssl)))
         goto end;
 
     /* Abandon the connection from this client */
@@ -2618,12 +2618,12 @@ static int test_stateless(void)
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ))
                /* This should fail because there is no cookie */
-            || !TEST_int_le(SSL_stateless(serverssl), 0)
+            || !TEST_false(SSL_stateless(serverssl))
                /* Send the second ClientHello */
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ))
                /* This should succeed because a cookie is now present */
-            || !TEST_int_gt(SSL_stateless(serverssl), 0)
+            || !TEST_true(SSL_stateless(serverssl))
                /* Complete the connection */
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
