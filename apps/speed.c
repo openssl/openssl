@@ -1277,7 +1277,9 @@ int speed_main(int argc, char **argv)
     || !defined(OPENSSL_NO_EC)
     long rsa_count = 1;
 #endif
+#ifndef OPENSSL_NO_EC
     size_t loop;
+#endif
 
     /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
