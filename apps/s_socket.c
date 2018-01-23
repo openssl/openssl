@@ -161,6 +161,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
     int sock;
     int i;
     BIO_ADDRINFO *res = NULL;
+    const BIO_ADDRINFO *next;
+    int sock_family, sock_type, sock_protocol;
+    const BIO_ADDR *sock_address;
+    int sock_options = BIO_SOCK_REUSEADDR;
     int ret = 0;
 
     if (BIO_sock_init() != 1)
@@ -178,10 +182,27 @@ int do_server(int *accept_sock, const char *host, const char *port,
                    && (type == 0 || type == BIO_ADDRINFO_socktype(res))
                    && (protocol == 0 || protocol == BIO_ADDRINFO_protocol(res)));
 
-    asock = BIO_socket(BIO_ADDRINFO_family(res), BIO_ADDRINFO_socktype(res),
-                       BIO_ADDRINFO_protocol(res), 0);
+    sock_family = BIO_ADDRINFO_family(res);
+    sock_type = BIO_ADDRINFO_socktype(res);
+    sock_protocol = BIO_ADDRINFO_protocol(res);
+    sock_address = BIO_ADDRINFO_address(res);
+    next = BIO_ADDRINFO_next(res);
+    if(sock_family == AF_INET6)
+        sock_options |= BIO_SOCK_V6_ONLY;
+    if (next != NULL
+        && BIO_ADDRINFO_socktype(next) == sock_type
+        && BIO_ADDRINFO_protocol(next) == sock_protocol) {
+        if (sock_family == AF_INET && BIO_ADDRINFO_family(next) == AF_INET6) {
+            sock_family = AF_INET6;
+            sock_address = BIO_ADDRINFO_address(next);
+        }
+        else if (sock_family == AF_INET6 && BIO_ADDRINFO_family(next) == AF_INET)
+            sock_options &= ~BIO_SOCK_V6_ONLY;
+    }
+
+    asock = BIO_socket(sock_family, sock_type, sock_protocol, 0);
     if (asock == INVALID_SOCKET
-        || !BIO_listen(asock, BIO_ADDRINFO_address(res), BIO_SOCK_REUSEADDR)) {
+        || !BIO_listen(asock, sock_address, sock_options)) {
         BIO_ADDRINFO_free(res);
         ERR_print_errors(bio_err);
         if (asock != INVALID_SOCKET)
