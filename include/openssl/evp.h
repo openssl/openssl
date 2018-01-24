@@ -50,6 +50,7 @@
 # define EVP_PKEY_DH     NID_dhKeyAgreement
 # define EVP_PKEY_DHX    NID_dhpublicnumber
 # define EVP_PKEY_EC     NID_X9_62_id_ecPublicKey
+# define EVP_PKEY_SM2    NID_sm2
 # define EVP_PKEY_HMAC   NID_hmac
 # define EVP_PKEY_CMAC   NID_cmac
 # define EVP_PKEY_SCRYPT NID_id_scrypt

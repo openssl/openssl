@@ -36,6 +36,10 @@ member-body 840		: ISO-US		: ISO US Member Body
 ISO-US 10040		: X9-57			: X9.57
 X9-57 4			: X9cm			: X9.57 CM ?
 
+member-body 156         : ISO-CN        : ISO CN Member Body
+ISO-CN 10197            : oscca
+oscca 1                 : sm-scheme
+
 !Cname dsa
 X9cm 1			: DSA			: dsaEncryption
 X9cm 3			: DSA-SHA1		: dsaWithSHA1
@@ -376,8 +380,10 @@ rsadsi 2 5		: MD5			: md5
 rsadsi 2 6		:			: hmacWithMD5
 rsadsi 2 7		:			: hmacWithSHA1
 
-member-body 156 10197 1 401 : SM3               : sm3
-member-body 156 10197 1 504 : RSA-SM3		: sm3WithRSAEncryption
+sm-scheme 301           : SM2                   : sm2
+
+sm-scheme 401           : SM3                   : sm3
+sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
 
 # From RFC4231
 rsadsi 2 8		:			: hmacWithSHA224
@@ -1475,10 +1481,6 @@ kisa 1 6                : SEED-OFB      : seed-ofb
 
 
 # Definitions for SM4 cipher
-
-member-body 156         : ISO-CN        : ISO CN Member Body
-ISO-CN 10197            : oscca
-oscca 1                 : sm-scheme
 
 sm-scheme 104 1         : SM4-ECB             : sm4-ecb
 sm-scheme 104 2         : SM4-CBC             : sm4-cbc

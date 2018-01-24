@@ -16,6 +16,10 @@
 #include <openssl/evp.h>
 #include "internal/evp_int.h"
 
+#if !defined(OPENSSL_NO_SM2)
+  #include <openssl/sm2.h>
+#endif
+
 /* EC pkey context structure */
 
 typedef struct {
@@ -102,6 +106,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     unsigned int sltmp;
     EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
+    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
     if (!sig) {
         *siglen = ECDSA_size(ec);
@@ -116,7 +121,16 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     else
         type = NID_sha1;
 
-    ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
+    if (ec_nid == NID_sm2) {
+#if defined(OPENSSL_NO_SM2)
+       ret = -1;
+#else
+       ret = SM2_sign(type, tbs, tbslen, sig, &sltmp, ec);
+#endif
+    }
+    else {
+       ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
+    }
 
     if (ret <= 0)
         return ret;
@@ -131,13 +145,24 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
     int ret, type;
     EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
+    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
     if (dctx->md)
         type = EVP_MD_type(dctx->md);
     else
         type = NID_sha1;
 
-    ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
+    if (ec_nid == NID_sm2) {
+#if defined(OPENSSL_NO_SM2)
+       ret = -1;
+#else
+       ret = SM2_verify(type, tbs, tbslen, sig, siglen, ec);
+#endif
+    }
+    else {
+       ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
+    }
+
 
     return ret;
 }
@@ -318,7 +343,8 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha256 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha384 &&
-            EVP_MD_type((const EVP_MD *)p2) != NID_sha512) {
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha512 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sm3) {
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }
