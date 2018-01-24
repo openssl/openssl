@@ -41,7 +41,10 @@ use constant {
     NO_PSS_SIG_ALGS => 3,
     PSS_ONLY_SIG_ALGS => 4,
     PURE_SIGALGS => 5,
-    COMPAT_SIGALGS => 6
+    COMPAT_SIGALGS => 6,
+    SIGALGS_CERT_ALL => 7,
+    SIGALGS_CERT_PKCS => 8,
+    SIGALGS_CERT_INVALID => 9
 };
 
 #Note: Throughout this test we override the default ciphersuites where TLSv1.2
@@ -50,7 +53,7 @@ use constant {
 
 #Test 1: Default sig algs should succeed
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 18;
+plan tests => 21;
 ok(TLSProxy::Message->success, "Default sigalgs");
 my $testtype;
 
@@ -222,6 +225,30 @@ SKIP: {
        "DSA sigalg not sent for compat ClientHello");
 }
 
+SKIP: {
+    skip "TLSv1.3 disabled", 3 if disabled("tls1_3");
+    #Test 19: Insert signature_algorithms_cert that match normal sigalgs
+    $testtype = SIGALGS_CERT_ALL;
+    $proxy->clear();
+    $proxy->filter(\&modify_sigalgs_cert_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->success, "sigalgs_cert in TLSv1.3");
+
+    #Test 19: Insert signature_algorithms_cert that forces PKCS#1 cert
+    $testtype = SIGALGS_CERT_PKCS;
+    $proxy->clear();
+    $proxy->filter(\&modify_sigalgs_cert_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->success, "sigalgs_cert in TLSv1.3 with PKCS#1 cert");
+
+    #Test 19: Insert signature_algorithms_cert that fails
+    $testtype = SIGALGS_CERT_INVALID;
+    $proxy->clear();
+    $proxy->filter(\&modify_sigalgs_cert_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->fail, "No matching certificate for sigalgs_cert");
+}
+
 
 
 sub sigalgs_filter
@@ -311,6 +338,42 @@ sub modify_sigalgs_filter
                     }
                 }
             }
+        }
+    }
+}
+
+sub modify_sigalgs_cert_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight != 0) {
+        return;
+    }
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+            my $sigs;
+            # two byte length at front of sigs, then two-byte sigschemes
+            if ($testtype == SIGALGS_CERT_ALL) {
+                $sigs = pack "C26", 0x00, 0x18,
+                             # rsa_pkcs_sha{256,512}  rsa_pss_rsae_sha{256,512}
+                             0x04, 0x01,  0x06, 0x01,  0x08, 0x04,  0x08, 0x06,
+                             # ed25518    ed448        rsa_pss_pss_sha{256,512}
+                             0x08, 0x07,  0x08, 0x08,  0x08, 0x09,  0x08, 0x0b,
+                             # ecdsa_secp{256,512}     rsa+sha1     ecdsa+sha1
+                             0x04, 0x03,  0x06, 0x03,  0x02, 0x01,  0x02, 0x03;
+            } elsif ($testtype == SIGALGS_CERT_PKCS) {
+                $sigs = pack "C10", 0x00, 0x08,
+                             # rsa_pkcs_sha{256,384,512,1}
+                             0x04, 0x01,  0x05, 0x01,  0x06, 0x01,  0x02, 0x01;
+            } elsif ($testtype == SIGALGS_CERT_INVALID) {
+                $sigs = pack "C4", 0x00, 0x02,
+                             # unregistered codepoint
+                             0xb2, 0x6f;
+            }
+            $message->set_extension(TLSProxy::Message::EXT_SIG_ALGS_CERT, $sigs);
+            $message->repack();
         }
     }
 }
