@@ -149,7 +149,7 @@ my @known_algorithms = ( # These are algorithms we know are guarded in relevant
 
 # %disabled comes from configdata.pm
 my %disabled_algorithms =
-    map { (my $x = uc $_) =~ s|-|_|g; $x; } keys %disabled;
+    map { (my $x = uc $_) =~ s|-|_|g; $x => 1; } keys %disabled;
 
 my $apiv = sprintf "%x%02x%02x", split(/\./, $config{api});
 foreach (keys %disabled_algorithms) {
@@ -1080,7 +1080,7 @@ sub is_valid
 			return 0;
 		} else {
 			# algorithms
-			if ($disabled_algorithms{$keyword} == 1) { return 0;}
+			if ($disabled_algorithms{$keyword}) { return 0;}
 
 			# Nothing recognise as true
 			return 1;
