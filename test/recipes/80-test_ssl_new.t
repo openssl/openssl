@@ -66,6 +66,7 @@ my %conf_dependent_tests = (
   "19-mac-then-encrypt.conf" => !$is_default_tls,
   "20-cert-select.conf" => !$is_default_tls || $no_dh || $no_dsa,
   "22-compression.conf" => !$is_default_tls,
+  "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -94,6 +95,7 @@ my %skip = (
   "23-srp.conf" => (disabled("tls1") && disabled ("tls1_1")
                     && disabled("tls1_2")) || disabled("srp"),
   "24-padding.conf" => disabled("tls1_3"),
+  "25-cipher.conf" => disabled("ec") || disabled("tls1_2"),
 );
 
 foreach my $conf (@conf_files) {

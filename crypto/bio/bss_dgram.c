@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,11 +73,11 @@ static const BIO_METHOD methods_dgramp = {
     bread_conv,
     dgram_read,
     dgram_puts,
-    NULL,                       /* dgram_gets, */
+    NULL,                       /* dgram_gets,         */
     dgram_ctrl,
     dgram_new,
     dgram_free,
-    NULL,
+    NULL,                       /* dgram_callback_ctrl */
 };
 
 # ifndef OPENSSL_NO_SCTP
@@ -91,11 +91,11 @@ static const BIO_METHOD methods_dgramp_sctp = {
     bread_conv,
     dgram_sctp_read,
     dgram_sctp_puts,
-    NULL,                       /* dgram_gets, */
+    NULL,                       /* dgram_gets,         */
     dgram_sctp_ctrl,
     dgram_sctp_new,
     dgram_sctp_free,
-    NULL,
+    NULL,                       /* dgram_callback_ctrl */
 };
 # endif
 
@@ -339,13 +339,8 @@ static int dgram_write(BIO *b, const char *in, int inl)
     else {
         int peerlen = BIO_ADDR_sockaddr_size(&data->peer);
 
-# if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret = sendto(b->num, (char *)in, inl, 0,
-                     BIO_ADDR_sockaddr(&data->peer), peerlen);
-# else
         ret = sendto(b->num, in, inl, 0,
                      BIO_ADDR_sockaddr(&data->peer), peerlen);
-# endif
     }
 
     BIO_clear_retry_flags(b);
@@ -1463,6 +1458,7 @@ static long dgram_sctp_ctrl(BIO *b, int cmd, long num, void *ptr)
          * we need to deactivate an old key
          */
         data->ccs_sent = 1;
+        /* fall-through */
 
     case BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD:
         /* Returns 0 on success, -1 otherwise. */

@@ -392,7 +392,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     }
 
     b = ctx->cipher->block_size;
-    OPENSSL_assert(b <= sizeof ctx->buf);
+    OPENSSL_assert(b <= sizeof(ctx->buf));
     if (b == 1) {
         *outl = 0;
         return 1;
@@ -453,7 +453,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     if (ctx->flags & EVP_CIPH_NO_PADDING)
         return EVP_EncryptUpdate(ctx, out, outl, in, inl);
 
-    OPENSSL_assert(b <= sizeof ctx->final);
+    OPENSSL_assert(b <= sizeof(ctx->final));
 
     if (ctx->final_used) {
         /* see comment about PTRDIFF_T comparison above */
@@ -525,7 +525,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
             EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_WRONG_FINAL_BLOCK_LENGTH);
             return 0;
         }
-        OPENSSL_assert(b <= sizeof ctx->final);
+        OPENSSL_assert(b <= sizeof(ctx->final));
 
         /*
          * The following assumes that the ciphertext has been authenticated.

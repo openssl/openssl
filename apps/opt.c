@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,8 +58,8 @@ char *opt_progname(const char *argv0)
         n -= 4;
 
     /* Copy over the name, in lowercase. */
-    if (n > sizeof prog - 1)
-        n = sizeof prog - 1;
+    if (n > sizeof(prog) - 1)
+        n = sizeof(prog) - 1;
     for (q = prog, i = 0; i < n; i++, p++)
         *q++ = tolower((unsigned char)*p);
     *q = '\0';
@@ -80,9 +80,9 @@ char *opt_progname(const char *argv0)
         }
 
     q = strrchr(p, '.');
-    strncpy(prog, p, sizeof prog - 1);
-    prog[sizeof prog - 1] = '\0';
-    if (q != NULL && q - p < sizeof prog)
+    strncpy(prog, p, sizeof(prog) - 1);
+    prog[sizeof(prog) - 1] = '\0';
+    if (q != NULL && q - p < sizeof(prog))
         prog[q - p] = '\0';
     return prog;
 }
@@ -99,8 +99,8 @@ char *opt_progname(const char *argv0)
             p++;
             break;
         }
-    strncpy(prog, p, sizeof prog - 1);
-    prog[sizeof prog - 1] = '\0';
+    strncpy(prog, p, sizeof(prog) - 1);
+    prog[sizeof(prog) - 1] = '\0';
     return prog;
 }
 #endif
@@ -278,7 +278,7 @@ int opt_cipher(const char *name, const EVP_CIPHER **cipherp)
     *cipherp = EVP_get_cipherbyname(name);
     if (*cipherp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unknown cipher %s\n", prog, name);
+    BIO_printf(bio_err, "%s: Unrecognized flag %s\n", prog, name);
     return 0;
 }
 
@@ -290,7 +290,7 @@ int opt_md(const char *name, const EVP_MD **mdp)
     *mdp = EVP_get_digestbyname(name);
     if (*mdp != NULL)
         return 1;
-    BIO_printf(bio_err, "%s: Unknown digest %s\n", prog, name);
+    BIO_printf(bio_err, "%s: Unrecognized flag %s\n", prog, name);
     return 0;
 }
 
@@ -859,7 +859,7 @@ void opt_help(const OPTIONS *list)
             i += 1 + strlen(valtype2param(o));
         if (i < MAX_OPT_HELP_WIDTH && i > width)
             width = i;
-        assert(i < (int)sizeof start);
+        assert(i < (int)sizeof(start));
     }
 
     if (standard_prolog)
@@ -876,7 +876,7 @@ void opt_help(const OPTIONS *list)
 
         /* Pad out prefix */
         memset(start, ' ', sizeof(start) - 1);
-        start[sizeof start - 1] = '\0';
+        start[sizeof(start) - 1] = '\0';
 
         if (o->name == OPT_MORE_STR) {
             /* Continuation of previous line; pad and print. */

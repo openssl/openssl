@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -106,6 +106,8 @@ use OpenSSL::Glob;
 (my $SO_VARIANT = qq{\U$target{"shlib_variant"}}) =~ s/\W/_/g;
 
 my $debug=0;
+my $trace=0;
+my $verbose=0;
 
 my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
 my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
@@ -212,6 +214,8 @@ my $zlib;
 foreach (@ARGV, split(/ /, $config{options}))
 	{
 	$debug=1 if $_ eq "debug";
+	$trace=1 if $_ eq "trace";
+	$verbose=1 if $_ eq "verbose";
 	$W32=1 if $_ eq "32";
 	die "win16 not supported" if $_ eq "16";
 	if($_ eq "NT") {
@@ -228,16 +232,9 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$zlib = 1;
 	}
 
-	$do_ssl=1 if $_ eq "libssl";
-	if ($_ eq "ssl") {
-		$do_ssl=1;
-		$libname=$_
-	}
-	$do_crypto=1 if $_ eq "libcrypto";
-	if ($_ eq "crypto") {
-		$do_crypto=1;
-		$libname=$_;
-	}
+	$do_crypto=1 if $_ eq "libcrypto" || $_ eq "crypto";
+	$do_ssl=1 if $_ eq "libssl" || $_ eq "ssl";
+
 	$do_update=1 if $_ eq "update";
 	$do_rewrite=1 if $_ eq "rewrite";
 	$do_ctest=1 if $_ eq "ctest";
@@ -252,6 +249,8 @@ foreach (@ARGV, split(/ /, $config{options}))
 	}
 
 	}
+$libname = $unified_info{sharednames}->{libcrypto} if $do_crypto;
+$libname = $unified_info{sharednames}->{libssl} if $do_ssl;
 
 if (!$libname) {
 	if ($do_ssl) {
@@ -394,6 +393,7 @@ sub do_defs
 		{
 		my $fn = catfile($config{sourcedir},$file);
 		print STDERR "DEBUG: starting on $fn:\n" if $debug;
+		print STDERR "TRACE: start reading $fn\n" if $trace;
 		open(IN,"<$fn") || die "Can't open $fn, $!,";
 		my $line = "", my $def= "";
 		my %tag = (
@@ -534,19 +534,19 @@ sub do_defs
 				push(@tag,$1);
 				$tag{$1}=-1;
 				print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
-			} elsif (/^\#\s*if\s+!defined\(([^\)]+)\)/) {
+			} elsif (/^\#\s*if\s+!defined\s*\(([^\)]+)\)/) {
 				push(@tag,"-");
-				if (/^\#\s*if\s+(!defined\(([^\)]+)\)(\s+\&\&\s+!defined\(([^\)]+)\))*)$/) {
+				if (/^\#\s*if\s+(!defined\s*\(([^\)]+)\)(\s+\&\&\s+!defined\s*\(([^\)]+)\))*)$/) {
 					my $tmp_1 = $1;
 					my $tmp_;
 					foreach $tmp_ (split '\&\&',$tmp_1) {
-						$tmp_ =~ /!defined\(([^\)]+)\)/;
+						$tmp_ =~ /!defined\s*\(([^\)]+)\)/;
 						print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
 						push(@tag,$1);
 						$tag{$1}=-1;
 					}
 				} else {
-					print STDERR "Warning: $file: complicated expression: $_" if $debug; # because it is O...
+					print STDERR "Warning: $file: taking only '!defined($1)' of complicated expression: $_" if $verbose; # because it is O...
 					print STDERR "DEBUG: $file: found tag $1 = -1\n" if $debug;
 					push(@tag,$1);
 					$tag{$1}=-1;
@@ -556,19 +556,19 @@ sub do_defs
 				push(@tag,$1);
 				$tag{$1}=1;
 				print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
-			} elsif (/^\#\s*if\s+defined\(([^\)]+)\)/) {
+			} elsif (/^\#\s*if\s+defined\s*\(([^\)]+)\)/) {
 				push(@tag,"-");
-				if (/^\#\s*if\s+(defined\(([^\)]+)\)(\s+\|\|\s+defined\(([^\)]+)\))*)$/) {
+				if (/^\#\s*if\s+(defined\s*\(([^\)]+)\)(\s+\|\|\s+defined\s*\(([^\)]+)\))*)$/) {
 					my $tmp_1 = $1;
 					my $tmp_;
 					foreach $tmp_ (split '\|\|',$tmp_1) {
-						$tmp_ =~ /defined\(([^\)]+)\)/;
+						$tmp_ =~ /defined\s*\(([^\)]+)\)/;
 						print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
 						push(@tag,$1);
 						$tag{$1}=1;
 					}
 				} else {
-					print STDERR "Warning: $file: complicated expression: $_\n" if $debug; # because it is O...
+					print STDERR "Warning: $file: taking only 'defined($1)' of complicated expression: $_\n" if $verbose; # because it is O...
 					print STDERR "DEBUG: $file: found tag $1 = 1\n" if $debug;
 					push(@tag,$1);
 					$tag{$1}=1;
@@ -633,6 +633,7 @@ sub do_defs
 			} elsif (/^\#\s*if\s+/) {
 				#Some other unrecognized "if" style
 				push(@tag,"-");
+				print STDERR "Warning: $file: ignoring unrecognized expression: $_\n" if $verbose; # because it is O...
 			} elsif (/^\#\s*define\s+(\w+)\s+(\w+)/
 				 && $symhacking && $tag{'TRUE'} != -1) {
 				# This is for aliasing.  When we find an alias,
@@ -926,11 +927,13 @@ sub do_defs
 			next if(/typedef\W/);
 			next if(/\#define/);
 
+			print STDERR "TRACE: processing $_\n" if $trace && !/^\#INFO:/;
 			# Reduce argument lists to empty ()
 			# fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
-			while(/\(.*\)/s) {
-				s/\([^\(\)]+\)/\{\}/gs;
-				s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
+			my $nsubst = 1; # prevent infinite loop, e.g., on  int fn()
+			while($nsubst && /\(.*\)/s) {
+				$nsubst = s/\([^\(\)]+\)/\{\}/gs;
+				$nsubst+= s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
 			}
 			# pretend as we didn't use curly braces: {} -> ()
 			s/\{\}/\(\)/gs;
@@ -1210,9 +1213,6 @@ sub print_def_file
         my $prevnum = 0;
         my $symvtextcount = 0;
 
-	if ($W32)
-		{ $libname.="32"; }
-
         if ($W32)
                 {
                 print OUT <<"EOF";
@@ -1229,6 +1229,7 @@ EOF
         elsif ($VMS)
                 {
                 print OUT <<"EOF";
+IDENTIFICATION=$version
 CASE_SENSITIVE=YES
 SYMBOL_VECTOR=(-
 EOF
@@ -1407,9 +1408,9 @@ sub load_numbers
 		$prev=$a[0];
 	}
 	if ($num_noinfo) {
-		print STDERR "Warning: $num_noinfo symbols were without info.";
+		print STDERR "Warning: $num_noinfo symbols were without info." if $verbose || !$do_rewrite;
 		if ($do_rewrite) {
-			printf STDERR "  The rewrite will fix this.\n";
+			printf STDERR "  The rewrite will fix this.\n" if $verbose;
 		} else {
 			printf STDERR "  You should do a rewrite to fix this.\n";
 		}

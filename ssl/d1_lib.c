@@ -378,7 +378,8 @@ int dtls1_check_timeout_num(SSL *s)
 
     if (s->d1->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
         /* fail the connection, enough alerts have been sent */
-        SSLerr(SSL_F_DTLS1_CHECK_TIMEOUT_NUM, SSL_R_READ_TIMEOUT_EXPIRED);
+        SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS1_CHECK_TIMEOUT_NUM,
+                 SSL_R_READ_TIMEOUT_EXPIRED);
         return -1;
     }
 
@@ -397,8 +398,10 @@ int dtls1_handle_timeout(SSL *s)
     else
         dtls1_double_timeout(s);
 
-    if (dtls1_check_timeout_num(s) < 0)
+    if (dtls1_check_timeout_num(s) < 0) {
+        /* SSLfatal() already called */
         return -1;
+    }
 
     s->d1->timeout.read_timeouts++;
     if (s->d1->timeout.read_timeouts > DTLS1_TMO_READ_COUNT) {
@@ -406,6 +409,7 @@ int dtls1_handle_timeout(SSL *s)
     }
 
     dtls1_start_timer(s);
+    /* Calls SSLfatal() if required */
     return dtls1_retransmit_buffered_messages(s);
 }
 

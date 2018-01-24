@@ -139,6 +139,7 @@ OPENSSL_ia32_cpuid:
 .Lnocacheinfo:
 	mov	\$1,%eax
 	cpuid
+	movd	%eax,%xmm0		# put aside processor id
 	and	\$0xbfefffff,%edx	# force reserved bits to 0
 	cmp	\$0,%r9d
 	jne	.Lnotintel
@@ -186,6 +187,13 @@ OPENSSL_ia32_cpuid:
 	jc	.Lnotknights
 	and	\$0xfff7ffff,%ebx	# clear ADCX/ADOX flag
 .Lnotknights:
+	movd	%xmm0,%eax		# restore processor id
+	and	\$0x0fff0ff0,%eax
+	cmp	\$0x00050650,%eax	# Skylake-X
+	jne	.Lnotskylakex
+	and	\$0xfffeffff,%ebx	# ~(1<<16)
+					# suppress AVX512F flag on Skylake-X
+.Lnotskylakex:
 	mov	%ebx,8(%rdi)		# save extended feature flags
 	mov	%ecx,12(%rdi)
 .Lno_extended_info:

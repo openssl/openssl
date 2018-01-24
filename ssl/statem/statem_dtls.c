@@ -944,7 +944,7 @@ int dtls1_read_failed(SSL *s, int code)
         return 0;
     }
 
-    if (!dtls1_is_timer_expired(s)) {
+    if (!dtls1_is_timer_expired(s) || ossl_statem_in_error(s)) {
         /*
          * not a timeout, none of our business, let higher layers handle
          * this.  in fact it's probably an error

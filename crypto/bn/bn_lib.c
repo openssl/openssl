@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -320,9 +320,6 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 
     if (b->top > 0)
         memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
-
-    if (BN_get_flags(b, BN_FLG_CONSTTIME) != 0)
-        BN_set_flags(a, BN_FLG_CONSTTIME);
 
     a->top = b->top;
     a->neg = b->neg;

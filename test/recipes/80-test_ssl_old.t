@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -396,23 +396,13 @@ sub testssl {
     subtest "Testing ciphersuites" => sub {
 
         my @exkeys = ();
-        my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
+        my $ciphers = "-PSK:-SRP";
 
-        if ($no_dh) {
-            note "skipping DHE tests\n";
-            $ciphers .= ":-kDHE";
-        }
-        if ($no_dsa) {
-            note "skipping DSA tests\n";
-            $ciphers .= ":-aDSA";
-        } else {
+        if (!$no_dsa) {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
         }
 
-        if ($no_ec) {
-            note "skipping EC tests\n";
-            $ciphers .= ":!aECDSA:!kECDH";
-        } else {
+        if (!$no_ec) {
             push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
         }
 

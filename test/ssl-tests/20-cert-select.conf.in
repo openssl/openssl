@@ -266,16 +266,6 @@ our @tests = (
         },
     },
     {
-        name => "Only RSA-PSS Certificate, TLS v1.1",
-        server => $server_pss_only,
-        client => {
-            "MaxProtocol" => "TLSv1.1",
-        },
-        test   => {
-            "ExpectedResult" => "ServerFail"
-        },
-    },
-    {
         name => "Suite B P-256 Hash Algorithm Selection",
         server =>  {
             "ECDSA.Certificate" => test_pem("p256-server-cert.pem"),
@@ -332,6 +322,21 @@ our @tests = (
         },
     },
 );
+
+my @tests_tls_1_1 = (
+    {
+        name => "Only RSA-PSS Certificate, TLS v1.1",
+        server => $server_pss_only,
+        client => {
+            "MaxProtocol" => "TLSv1.1",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+);
+
+push @tests, @tests_tls_1_1 unless disabled("tls1_1");
 
 my $server_tls_1_3 = {
     "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),

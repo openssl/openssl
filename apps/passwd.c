@@ -274,7 +274,7 @@ int passwd_main(int argc, char **argv)
                     /* ignore rest of line */
                     char trash[BUFSIZ];
                     do
-                        r = BIO_gets(in, trash, sizeof trash);
+                        r = BIO_gets(in, trash, sizeof(trash));
                     while ((r > 0) && (!strchr(trash, '\n')));
                 }
 
@@ -325,14 +325,14 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 
     out_buf[0] = 0;
     magic_len = strlen(magic);
-    OPENSSL_strlcpy(ascii_magic, magic, sizeof ascii_magic);
+    OPENSSL_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
 #ifdef CHARSET_EBCDIC
     if ((magic[0] & 0x80) != 0)    /* High bit is 1 in EBCDIC alnums */
         ebcdic2ascii(ascii_magic, ascii_magic, magic_len);
 #endif
 
     /* The salt gets truncated to 8 chars */
-    OPENSSL_strlcpy(ascii_salt, salt, sizeof ascii_salt);
+    OPENSSL_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
     salt_len = strlen(ascii_salt);
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(ascii_salt, ascii_salt, salt_len);
@@ -347,16 +347,16 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 #endif
 
     if (magic_len > 0) {
-        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof out_buf);
+        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
 
         if (magic_len > 4)    /* assert it's  "1" or "apr1" */
             goto err;
 
-        OPENSSL_strlcat(out_buf, ascii_magic, sizeof out_buf);
-        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof out_buf);
+        OPENSSL_strlcat(out_buf, ascii_magic, sizeof(out_buf));
+        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
     }
 
-    OPENSSL_strlcat(out_buf, ascii_salt, sizeof out_buf);
+    OPENSSL_strlcat(out_buf, ascii_salt, sizeof(out_buf));
 
     if (strlen(out_buf) > 6 + 8) /* assert "$apr1$..salt.." */
         goto err;
@@ -392,8 +392,8 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         || !EVP_DigestFinal_ex(md2, buf, NULL))
         goto err;
 
-    for (i = passwd_len; i > sizeof buf; i -= sizeof buf) {
-        if (!EVP_DigestUpdate(md, buf, sizeof buf))
+    for (i = passwd_len; i > sizeof(buf); i -= sizeof(buf)) {
+        if (!EVP_DigestUpdate(md, buf, sizeof(buf)))
             goto err;
     }
     if (!EVP_DigestUpdate(md, buf, i))
@@ -413,7 +413,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
             goto err;
         if (!EVP_DigestUpdate(md2,
                               (i & 1) ? (unsigned const char *)passwd : buf,
-                              (i & 1) ? passwd_len : sizeof buf))
+                              (i & 1) ? passwd_len : sizeof(buf)))
             goto err;
         if (i % 3) {
             if (!EVP_DigestUpdate(md2, ascii_salt, salt_len))
@@ -425,7 +425,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         }
         if (!EVP_DigestUpdate(md2,
                               (i & 1) ? buf : (unsigned const char *)passwd,
-                              (i & 1) ? sizeof buf : passwd_len))
+                              (i & 1) ? sizeof(buf) : passwd_len))
                 goto err;
         if (!EVP_DigestFinal_ex(md2, buf, NULL))
                 goto err;
@@ -437,7 +437,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
 
     {
         /* transform buf into output string */
-        unsigned char buf_perm[sizeof buf];
+        unsigned char buf_perm[sizeof(buf)];
         int dest, source;
         char *output;
 
@@ -449,7 +449,7 @@ static char *md5crypt(const char *passwd, const char *magic, const char *salt)
         buf_perm[15] = buf[11];
 # ifndef PEDANTIC              /* Unfortunately, this generates a "no
                                  * effect" warning */
-        assert(16 == sizeof buf_perm);
+        assert(16 == sizeof(buf_perm));
 # endif
 
         output = salt_out + salt_len;
@@ -558,14 +558,14 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         }
     }
 
-    OPENSSL_strlcpy(ascii_magic, magic, sizeof ascii_magic);
+    OPENSSL_strlcpy(ascii_magic, magic, sizeof(ascii_magic));
 #ifdef CHARSET_EBCDIC
     if ((magic[0] & 0x80) != 0)    /* High bit is 1 in EBCDIC alnums */
         ebcdic2ascii(ascii_magic, ascii_magic, magic_len);
 #endif
 
     /* The salt gets truncated to 16 chars */
-    OPENSSL_strlcpy(ascii_salt, salt, sizeof ascii_salt);
+    OPENSSL_strlcpy(ascii_salt, salt, sizeof(ascii_salt));
     salt_len = strlen(ascii_salt);
 #ifdef CHARSET_EBCDIC
     ebcdic2ascii(ascii_salt, ascii_salt, salt_len);
@@ -580,9 +580,9 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
 #endif
 
     out_buf[0] = 0;
-    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof out_buf);
-    OPENSSL_strlcat(out_buf, ascii_magic, sizeof out_buf);
-    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof out_buf);
+    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
+    OPENSSL_strlcat(out_buf, ascii_magic, sizeof(out_buf));
+    OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
     if (rounds_custom) {
         char tmp_buf[80]; /* "rounds=999999999" */
         sprintf(tmp_buf, "rounds=%u", rounds);
@@ -591,10 +591,10 @@ static char *shacrypt(const char *passwd, const char *magic, const char *salt)
         if (tmp_buf[0] != 0x72)  /* ASCII 'r' */
             ebcdic2ascii(tmp_buf, tmp_buf, strlen(tmp_buf));
 #endif
-        OPENSSL_strlcat(out_buf, tmp_buf, sizeof out_buf);
-        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof out_buf);
+        OPENSSL_strlcat(out_buf, tmp_buf, sizeof(out_buf));
+        OPENSSL_strlcat(out_buf, ascii_dollar, sizeof(out_buf));
     }
-    OPENSSL_strlcat(out_buf, ascii_salt, sizeof out_buf);
+    OPENSSL_strlcat(out_buf, ascii_salt, sizeof(out_buf));
 
     /* assert "$5$rounds=999999999$......salt......" */
     if (strlen(out_buf) > 3 + 17 * rounds_custom + salt_len )

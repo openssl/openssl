@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 # -*- mode: perl; -*-
-# Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -211,6 +211,8 @@ $config{builddir} = abs2rel($blddir);
 my @argvcopy=@ARGV;
 
 if (grep /^reconf(igure)?$/, @argvcopy) {
+    die "reconfiguring with other arguments present isn't supported"
+        if scalar @argvcopy > 1;
     if (-f "./configdata.pm") {
 	my $file = "./configdata.pm";
 	unless (my $return = do $file) {
@@ -223,25 +225,12 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	    @{$configdata::config{perlargv}} : ();
 	die "Incorrect data to reconfigure, please do a normal configuration\n"
 	    if (grep(/^reconf/,@argvcopy));
-	$ENV{CROSS_COMPILE} = $configdata::config{cross_compile_prefix}
-	    if defined($configdata::config{cross_compile_prefix});
-	$ENV{CC} = $configdata::config{cc}
-	    if defined($configdata::config{cc});
-	$ENV{CXX} = $configdata::config{cxx}
-	    if defined($configdata::config{cxx});
-	$ENV{BUILDFILE} = $configdata::config{build_file}
-	    if defined($configdata::config{build_file});
-	$ENV{$local_config_envname} = $configdata::config{local_config_dir}
-	    if defined($configdata::config{local_config_dir});
+	$config{perlenv} = $configdata::config{perlenv} // {};
 
 	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
-	print "    CROSS_COMPILE = ",$ENV{CROSS_COMPILE},"\n"
-	    if $ENV{CROSS_COMPILE};
-	print "    CC = ",$ENV{CC},"\n" if $ENV{CC};
-	print "    CXX = ",$ENV{CXX},"\n" if $ENV{CXX};
-	print "    BUILDFILE = ",$ENV{BUILDFILE},"\n" if $ENV{BUILDFILE};
-	print "    $local_config_envname = ",$ENV{$local_config_envname},"\n"
-	    if $ENV{$local_config_envname};
+	foreach (sort keys %{$config{perlenv}}) {
+	    print "    $_ = $config{perlenv}->{$_}\n";
+	}
     } else {
 	die "Insufficient data to reconfigure, please do a normal configuration\n";
     }
@@ -280,13 +269,13 @@ foreach (sort glob($pattern)) {
     &read_config($_);
 }
 
-if (defined $ENV{$local_config_envname}) {
+if (defined env($local_config_envname)) {
     if ($^O eq 'VMS') {
         # VMS environment variables are logical names,
         # which can be used as is
         $pattern = $local_config_envname . ':' . '*.conf';
     } else {
-        $pattern = catfile($ENV{$local_config_envname}, '*.conf');
+        $pattern = catfile(env($local_config_envname), '*.conf');
     }
 
     foreach (sort glob($pattern)) {
@@ -433,7 +422,6 @@ my %deprecated_disablables = (
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 our %disabled = ( # "what"         => "comment"
-                  "aria"                => "default",
                   "asan"		=> "default",
 		  "crypto-mdebug"       => "default",
 		  "crypto-mdebug-backtrace" => "default",
@@ -538,6 +526,7 @@ $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
 $config{openssl_other_defines}=[];
+my $ldflags="";
 my $libs="";
 my $target="";
 $config{options}="";
@@ -551,6 +540,14 @@ my @seed_sources = ();
 while (@argvcopy)
 	{
 	$_ = shift @argvcopy;
+
+	# Support env variable assignments among the options
+	if (m|^(\w+)=(.+)?$|)
+		{
+		$config{perlenv}->{$1} = $2;
+		next;
+		}
+
 	# VMS is a case insensitive environment, and depending on settings
 	# out of our control, we may receive options uppercased.  Let's
 	# downcase at least the part before any equal sign.
@@ -733,7 +730,11 @@ while (@argvcopy)
 			{
 			read_config $1;
 			}
-		elsif (/^-[lL](.*)$/ or /^-Wl,/)
+		elsif (/^-L(.*)$/)
+			{
+			$ldflags.=$_." ";
+			}
+		elsif (/^-l(.*)$/ or /^-Wl,/)
 			{
 			$libs.=$_." ";
 			}
@@ -882,9 +883,48 @@ my %target = resolve_config($target);
 
 &usage if (!%target || $target{template});
 
+%target = ( %{$table{DEFAULTS}}, %target );
+
+# Make the flags to build DSOs the same as for shared libraries unless they
+# are already defined
+$target{dso_cflags} = $target{shared_cflag} unless defined $target{dso_cflags};
+$target{dso_cxxflags} = $target{shared_cxxflag} unless defined $target{dso_cxxflags};
+$target{dso_lflags} = $target{shared_ldflag} unless defined $target{dso_lflags};
+{
+    my $shared_info_pl =
+        catfile(dirname($0), "Configurations", "shared-info.pl");
+    my %shared_info = read_eval_file($shared_info_pl);
+    push @{$target{_conf_fname_int}}, $shared_info_pl;
+    my $si = $target{shared_target};
+    while (ref $si ne "HASH") {
+        last if ! defined $si;
+        if (ref $si eq "CODE") {
+            $si = $si->();
+        } else {
+            $si = $shared_info{$si};
+        }
+    }
+
+    # Some of the 'shared_target' values don't have any entried in
+    # %shared_info.  That's perfectly fine, AS LONG AS the build file
+    # template knows how to handle this.  That is currently the case for
+    # Windows and VMS.
+    if (defined $si) {
+        # Just as above, copy certain shared_* attributes to the corresponding
+        # dso_ attribute unless the latter is already defined
+        $si->{dso_cflags} = $si->{shared_cflag} unless defined $si->{dso_cflags};
+        $si->{dso_cxxflags} = $si->{shared_cxxflag} unless defined $si->{dso_cxxflags};
+        $si->{dso_lflags} = $si->{shared_ldflag} unless defined $si->{dso_lflags};
+        foreach (sort keys %$si) {
+            $target{$_} = defined $target{$_}
+                ? add($si->{$_})->($target{$_})
+                : $si->{$_};
+        }
+    }
+}
+
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
-%target = ( %{$table{DEFAULTS}}, %target );
 
 foreach my $feature (@{$target{disable}}) {
     if (exists $deprecated_disablables{$feature}) {
@@ -982,7 +1022,7 @@ $target{dso_extension}=$target{shared_extension_simple};
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
 
-$config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
+$config{cross_compile_prefix} = env('CROSS_COMPILE')
     if $config{cross_compile_prefix} eq "";
 
 # Allow overriding the names of some tools.  USE WITH CARE
@@ -990,19 +1030,19 @@ $config{cross_compile_prefix} = $ENV{'CROSS_COMPILE'}
 # the default string.
 $config{perl} =    ($^O ne "VMS" ? $^X : "perl");
 $config{hashbangperl} =
-    $ENV{'HASHBANGPERL'}           || $ENV{'PERL'}     || "/usr/bin/env perl";
-$target{cc} =      $ENV{'CC'}      || $target{cc}      || "cc";
-$target{cxx} =     $ENV{'CXX'}     || $target{cxx}     || "c++";
-$target{ranlib} =  $ENV{'RANLIB'}  || $target{ranlib}  ||
+    env('HASHBANGPERL')           || env('PERL')      || "/usr/bin/env perl";
+$target{cc} =      env('CC')      || $target{cc}      || "cc";
+$target{cxx} =     env('CXX')     || $target{cxx}     || "c++";
+$target{ranlib} =  env('RANLIB')  || $target{ranlib}  ||
                    (which("$config{cross_compile_prefix}ranlib") ?
                           "\$(CROSS_COMPILE)ranlib" : "true");
-$target{ar} =      $ENV{'AR'}      || $target{ar}      || "ar";
-$target{nm} =      $ENV{'NM'}      || $target{nm}      || "nm";
+$target{ar} =      env('AR')      || $target{ar}      || "ar";
+$target{nm} =      env('NM')      || $target{nm}      || "nm";
 $target{rc} =
-    $ENV{'RC'}  || $ENV{'WINDRES'} || $target{rc}      || "windres";
+    env('RC')  || env('WINDRES')  || $target{rc}      || "windres";
 
 # Allow overriding the build file name
-$target{build_file} = $ENV{BUILDFILE} || $target{build_file} || "Makefile";
+$target{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
 # Cache information necessary for reconfiguration
 $config{cc} = $target{cc};
@@ -1015,6 +1055,7 @@ $config{build_file} = $target{build_file};
 $config{defines} = [];
 $config{cflags} = "";
 $config{cxxflags} = "";
+$config{lflags} = "";
 $config{ex_libs} = "";
 $config{shared_ldflag} = "";
 
@@ -1086,6 +1127,7 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 	}
 
 $config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
+$config{lflags}="$config{lflags}$ldflags" if ($ldflags ne "");
 
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
@@ -1166,8 +1208,11 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
 # This saves the build files from having to check
 if ($disabled{pic})
 	{
-	$target{shared_cflag} = $target{shared_ldflag} =
-		$target{shared_rcflag} = "";
+	foreach (qw(shared_cflag shared_cxxflag shared_ldflag
+		    dso_cflags dso_cxxflags dso_lflags))
+		{
+		$target{$_} = "";
+		}
 	}
 else
 	{
@@ -1238,31 +1283,25 @@ unless ($disabled{asm}) {
     }
 }
 
-my %predefined;
+my %predefined = compiler_predefined($target{cc});
 
-if ($^O ne "VMS") {
-    my $cc = "$config{cross_compile_prefix}$target{cc}";
-
-    # collect compiler pre-defines from gcc or gcc-alike...
-    open(PIPE, "$cc -dM -E -x c /dev/null 2>&1 |");
-    while (<PIPE>) {
-	m/^#define\s+(\w+(?:\(\w+\))?)(?:\s+(.+))?/ or last;
-	$predefined{$1} = $2 // "";
-    }
-    close(PIPE);
-
-    if (!$disabled{makedepend}) {
-	# We know that GNU C version 3 and up as well as all clang
-	# versions support dependency generation
-	if ($predefined{__GNUC__} >= 3) {
-	    $config{makedepprog} = $cc;
-	} else {
-	    $config{makedepprog} = which('makedepend');
-	    $disabled{makedepend} = "unavailable" unless $config{makedepprog};
-	}
+# Check for makedepend capabilities.
+if (!$disabled{makedepend}) {
+    if ($config{target} =~ /^(VC|vms)-/) {
+        # For VC- and vms- targets, there's nothing more to do here.  The
+        # functionality is hard coded in the corresponding build files for
+        # cl (Windows) and CC/DECC (VMS).
+    } elsif ($predefined{__GNUC__} >= 3) {
+        # We know that GNU C version 3 and up as well as all clang
+        # versions support dependency generation
+        $config{makedepprog} = "\$(CROSS_COMPILE)$target{cc}";
+    } else {
+        # In all other cases, we look for 'makedepend', and disable the
+        # capability if not found.
+        $config{makedepprog} = which('makedepend');
+        $disabled{makedepend} = "unavailable" unless $config{makedepprog};
     }
 }
-
 
 
 # Deal with bn_ops ###################################################
@@ -1418,7 +1457,7 @@ if ($builder eq "unified") {
     my @build_file_templates = ();
 
     # First, look in the user provided directory, if given
-    if (defined $ENV{$local_config_envname}) {
+    if (defined env($local_config_envname)) {
 	@build_file_templates =
 	    map {
 		if ($^O eq 'VMS') {
@@ -1426,7 +1465,7 @@ if ($builder eq "unified") {
 		    # which can be used as is
 		    $local_config_envname . ':' . $_;
 		} else {
-		    catfile($ENV{$local_config_envname}, $_);
+		    catfile(env($local_config_envname), $_);
 		}
 	    }
 	    @build_file_template_names;
@@ -1471,6 +1510,7 @@ if ($builder eq "unified") {
 
     $config{build_infos} = [ ];
 
+    my %ordinals = ();
     foreach (@build_infos) {
         my $sourced = catdir($srcdir, $_->[0]);
         my $buildd = catdir($blddir, $_->[0]);
@@ -1492,7 +1532,6 @@ if ($builder eq "unified") {
         my @intermediates = ();
         my @rawlines = ();
 
-        my %ordinals = ();
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
@@ -1786,27 +1825,6 @@ EOF
                 if @doubles;
         }
 
-        foreach (keys %ordinals) {
-            my $dest = $_;
-            my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
-            foreach (@{$ordinals{$dest}}) {
-                my %known_ordinals =
-                    (
-                     crypto =>
-                     cleanfile($sourced, catfile("util", "libcrypto.num"), $blddir),
-                     ssl =>
-                     cleanfile($sourced, catfile("util", "libssl.num"), $blddir)
-                    );
-                my $o = $known_ordinals{$_};
-                die "Ordinals for $ddest defined more than once\n"
-                    if $unified_info{ordinals}->{$ddest};
-                $unified_info{ordinals}->{$ddest} = [ $_, $o ];
-            }
-        }
-
         foreach (keys %sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
@@ -1849,14 +1867,27 @@ EOF
                 if (! -f $s) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
-                # We recognise C++, C and asm files
+
                 if ($s =~ /\.(cc|cpp|c|s|S)$/) {
+                    # We recognise C++, C and asm files
                     my $o = $_;
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.rc$/) {
+                    # We also recognise resource files
+                    my $o = $_;
+                    $o =~ s/\.rc$/.res/; # Resource configuration
+                    my $o = cleanfile($buildd, $o, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.(def|map|opt)$/) {
+                    # We also recognise .def / .map / .opt files
+                    # We know they are generated files
+                    my $def = cleanfile($buildd, $s, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$def} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";
                 }
@@ -1915,13 +1946,6 @@ EOF
                 }
                 $d .= $e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
-                # If we depend on a header file or a perl module, let's make
-                # sure it can get included
-                if ($dest ne "" && $d =~ /\.(h|pm)$/) {
-                    my $i = dirname($d);
-                    push @{$unified_info{includes}->{$ddest}->{source}}, $i
-                        unless grep { $_ eq $i } @{$unified_info{includes}->{$ddest}->{source}};
-                }
             }
         }
 
@@ -1948,6 +1972,55 @@ EOF
         }
     }
 
+    my $ordinals_text = join(', ', sort keys %ordinals);
+    warn <<"EOF" if $ordinals_text;
+
+WARNING: ORDINALS were specified for $ordinals_text
+They are ignored and should be replaced with a combination of GENERATE,
+DEPEND and SHARED_SOURCE.
+EOF
+
+    # Massage the result
+
+    # If we depend on a header file or a perl module, add an inclusion of
+    # its directory to allow smoothe inclusion
+    foreach my $dest (keys %{$unified_info{depends}}) {
+        next if $dest eq "";
+        foreach my $d (keys %{$unified_info{depends}->{$dest}}) {
+            next unless $d =~ /\.(h|pm)$/;
+            if ($d eq "configdata.pm"
+                    || defined($unified_info{generate}->{$d})) {
+                my $i = cleandir($blddir, dirname($d));
+                push @{$unified_info{includes}->{$dest}->{build}}, $i
+                    unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{build}};
+            } else {
+                my $i = cleandir($srcdir, dirname($d));
+                push @{$unified_info{includes}->{$dest}->{source}}, $i
+                    unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{source}};
+            }
+        }
+    }
+
+    # Trickle down includes placed on libraries, engines and programs to
+    # their sources (i.e. object files)
+    foreach my $dest (keys %{$unified_info{engines}},
+                      keys %{$unified_info{libraries}},
+                      keys %{$unified_info{programs}}) {
+        foreach my $k (("source", "build")) {
+            next unless defined($unified_info{includes}->{$dest}->{$k});
+            my @incs = reverse @{$unified_info{includes}->{$dest}->{$k}};
+            foreach my $obj (grep /\.o$/,
+                             (keys %{$unified_info{sources}->{$dest}},
+                              keys %{$unified_info{shared_sources}->{$dest}})) {
+                foreach my $inc (@incs) {
+                    unshift @{$unified_info{includes}->{$obj}->{$k}}, $inc
+                        unless grep { $_ eq $inc } @{$unified_info{includes}->{$obj}->{$k}};
+                }
+            }
+        }
+        delete $unified_info{includes}->{$dest};
+    }
+
     ### Make unified_info a bit more efficient
     # One level structures
     foreach (("programs", "libraries", "engines", "scripts", "extra", "overrides")) {
@@ -1963,8 +2036,9 @@ EOF
     # Includes
     foreach my $dest (sort keys %{$unified_info{includes}}) {
         if (defined($unified_info{includes}->{$dest}->{build})) {
-            my @source_includes =
-                ( @{$unified_info{includes}->{$dest}->{source}} );
+            my @source_includes = ();
+            @source_includes = ( @{$unified_info{includes}->{$dest}->{source}} )
+                if defined($unified_info{includes}->{$dest}->{source});
             $unified_info{includes}->{$dest} =
                 [ @{$unified_info{includes}->{$dest}->{build}} ];
             foreach my $inc (@source_includes) {
@@ -2009,6 +2083,22 @@ foreach (sort keys %config) {
 	print OUT "  ", $_, " => [ ", join(", ",
 					   map { quotify("perl", $_) }
 					   @{$config{$_}}), " ],\n";
+    } elsif (ref($config{$_}) eq "HASH") {
+	print OUT "  ", $_, " => {";
+        if (scalar keys %{$config{$_}} > 0) {
+            print OUT "\n";
+            foreach my $key (sort keys %{$config{$_}}) {
+                print OUT "      ",
+                    join(" => ",
+                         quotify("perl", $key),
+                         defined $config{$_}->{$key}
+                             ? quotify("perl", $config{$_}->{$key})
+                             : "undef");
+                print OUT ",\n";
+            }
+            print OUT "  ";
+        }
+        print OUT "},\n";
     } else {
 	print OUT "  ", $_, " => ", quotify("perl", $config{$_}), ",\n"
     }
@@ -2128,6 +2218,7 @@ print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n"
 #print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
 #                             "$config{cross_compile_prefix}ranlib" :
 #                             "$target{ranlib}", "\n";
+print "LDFLAGS       =$config{lflags} $target{lflags}\n";
 print "EX_LIBS       =$target{ex_libs} $config{ex_libs}\n";
 
 my %builders = (
@@ -2292,26 +2383,50 @@ sub add {
     sub { _add($separator, @_, @x) };
 }
 
+sub read_eval_file {
+    my $fname = shift;
+    my $content;
+    my @result;
+
+    open F, "< $fname" or die "Can't open '$fname': $!\n";
+    {
+        undef local $/;
+        $content = <F>;
+    }
+    close F;
+    {
+        local $@;
+
+        @result = ( eval $content );
+        warn $@ if $@;
+    }
+    return wantarray ? @result : $result[0];
+}
+
 # configuration reader, evaluates the input file as a perl script and expects
 # it to fill %targets with target configurations.  Those are then added to
 # %table.
 sub read_config {
     my $fname = shift;
-    open(CONFFILE, "< $fname")
-	or die "Can't open configuration file '$fname'!\n";
-    my $x = $/;
-    undef $/;
-    my $content = <CONFFILE>;
-    $/ = $x;
-    close(CONFFILE);
-    my %targets = ();
+    my %targets;
+
     {
 	# Protect certain tables from tampering
-	local %table = %::table;
+	local %table = ();
 
-	eval $content;
-	warn $@ if $@;
+	%targets = read_eval_file($fname);
     }
+    my %preexisting = ();
+    foreach (sort keys %targets) {
+        $preexisting{$_} = 1 if $table{$_};
+    }
+    die <<"EOF",
+The following config targets from $fname
+shadow pre-existing config targets with the same name:
+EOF
+        map { "  $_\n" } sort keys %preexisting
+        if %preexisting;
+
 
     # For each target, check that it's configured with a hash table.
     foreach (keys %targets) {
@@ -2501,6 +2616,32 @@ sub run_dofile
     rename("$out.new", $out) || die "Can't rename $out.new, $!";
 }
 
+sub compiler_predefined {
+    state %predefined;
+    my $default_compiler = shift;
+
+    return () if $^O eq 'VMS';
+
+    die 'compiler_predefines called without a default compiler'
+        unless $default_compiler;
+
+    if (! $predefined{$default_compiler}) {
+        my $cc = "$config{cross_compile_prefix}$default_compiler";
+
+        $predefined{$default_compiler} = {};
+
+        # collect compiler pre-defines from gcc or gcc-alike...
+        open(PIPE, "$cc -dM -E -x c /dev/null 2>&1 |");
+        while (my $l = <PIPE>) {
+            $l =~ m/^#define\s+(\w+(?:\(\w+\))?)(?:\s+(.+))?/ or last;
+            $predefined{$default_compiler}->{$1} = $2 // '';
+        }
+        close(PIPE);
+    }
+
+    return %{$predefined{$default_compiler}};
+}
+
 sub which
 {
     my ($name)=@_;
@@ -2520,6 +2661,19 @@ sub which
             }
         }
     }
+}
+
+sub env
+{
+    my $name = shift;
+
+    # Note that if $ENV{$name} doesn't exist or is undefined,
+    # $config{perlenv}->{$name} will be created with the value
+    # undef.  This is intentional.
+
+    $config{perlenv}->{$name} = $ENV{$name}
+        if ! exists $config{perlenv}->{$name};
+    return $config{perlenv}->{$name};
 }
 
 # Configuration printer ##############################################

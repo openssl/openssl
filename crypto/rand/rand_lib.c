@@ -246,8 +246,8 @@ int RAND_poll(void)
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth == RAND_OpenSSL()) {
-        /* fill random pool and seed the default DRBG */
-        RAND_DRBG *drbg = RAND_DRBG_get0_global();
+        /* fill random pool and seed the master DRBG */
+        RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
         if (drbg == NULL)
             return 0;
@@ -639,7 +639,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     if (meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
 
-    drbg = RAND_DRBG_get0_priv_global();
+    drbg = RAND_DRBG_get0_private();
     if (drbg == NULL)
         return 0;
 

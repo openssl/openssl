@@ -114,4 +114,4 @@ __owur int tls1_cbc_remove_padding(const SSL *s,
                                    size_t block_size, size_t mac_size);
 int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap);
 __owur int dtls1_get_record(SSL *s);
-int early_data_count_ok(SSL *s, size_t length, size_t overhead, int *al);
+int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send);

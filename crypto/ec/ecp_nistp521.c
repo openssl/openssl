@@ -50,7 +50,6 @@ typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
 
 typedef uint8_t u8;
 typedef uint64_t u64;
-typedef int64_t s64;
 
 /*
  * The underlying field. P521 operates over GF(2^521-1). We can serialise an
@@ -188,7 +187,7 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     /* BN_bn2bin eats leading zeroes */
     memset(b_out, 0, sizeof(b_out));
     num_bytes = BN_num_bytes(bn);
-    if (num_bytes > sizeof b_out) {
+    if (num_bytes > sizeof(b_out)) {
         ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
@@ -207,8 +206,8 @@ static BIGNUM *felem_to_BN(BIGNUM *out, const felem in)
 {
     felem_bytearray b_in, b_out;
     felem_to_bin66(b_in, in);
-    flip_endian(b_out, b_in, sizeof b_out);
-    return BN_bin2bn(b_out, sizeof b_out, out);
+    flip_endian(b_out, b_in, sizeof(b_out));
+    return BN_bin2bn(b_out, sizeof(b_out), out);
 }
 
 /*-
@@ -867,7 +866,7 @@ static limb felem_is_zero(const felem in)
      * We know that ftmp[i] < 2^63, therefore the only way that the top bit
      * can be set is if is_zero was 0 before the decrement.
      */
-    is_zero = ((s64) is_zero) >> 63;
+    is_zero = 0 - (is_zero >> 63);
 
     is_p = ftmp[0] ^ kPrime[0];
     is_p |= ftmp[1] ^ kPrime[1];
@@ -880,7 +879,7 @@ static limb felem_is_zero(const felem in)
     is_p |= ftmp[8] ^ kPrime[8];
 
     is_p--;
-    is_p = ((s64) is_p) >> 63;
+    is_p = 0 - (is_p >> 63);
 
     is_zero |= is_p;
     return is_zero;
@@ -951,7 +950,7 @@ static void felem_contract(felem out, const felem in)
     is_p &= is_p << 4;
     is_p &= is_p << 2;
     is_p &= is_p << 1;
-    is_p = ((s64) is_p) >> 63;
+    is_p = 0 - (is_p >> 63);
     is_p = ~is_p;
 
     /* is_p is 0 iff |out| == 2^521-1 and all ones otherwise */
@@ -977,7 +976,7 @@ static void felem_contract(felem out, const felem in)
     is_greater |= is_greater << 4;
     is_greater |= is_greater << 2;
     is_greater |= is_greater << 1;
-    is_greater = ((s64) is_greater) >> 63;
+    is_greater = 0 - (is_greater >> 63);
 
     out[0] -= kPrime[0] & is_greater;
     out[1] -= kPrime[1] & is_greater;

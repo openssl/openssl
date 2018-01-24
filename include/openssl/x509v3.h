@@ -863,6 +863,71 @@ int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
 
 #endif                         /* OPENSSL_NO_RFC3779 */
 
+DEFINE_STACK_OF(ASN1_STRING)
+
+/*
+ * Admission Syntax
+ */
+typedef struct NamingAuthority_st NAMING_AUTHORITY;
+typedef struct ProfessionInfo_st PROFESSION_INFO;
+typedef struct Admissions_st ADMISSIONS;
+typedef struct AdmissionSyntax_st ADMISSION_SYNTAX;
+DECLARE_ASN1_FUNCTIONS(NAMING_AUTHORITY)
+DECLARE_ASN1_FUNCTIONS(PROFESSION_INFO)
+DECLARE_ASN1_FUNCTIONS(ADMISSIONS)
+DECLARE_ASN1_FUNCTIONS(ADMISSION_SYNTAX)
+DEFINE_STACK_OF(ADMISSIONS)
+DEFINE_STACK_OF(PROFESSION_INFO)
+typedef STACK_OF(PROFESSION_INFO) PROFESSION_INFOS;
+
+const ASN1_OBJECT *NAMING_AUTHORITY_get0_authorityId(
+    const NAMING_AUTHORITY *n);
+const ASN1_IA5STRING *NAMING_AUTHORITY_get0_authorityURL(
+    const NAMING_AUTHORITY *n);
+const ASN1_STRING *NAMING_AUTHORITY_get0_authorityText(
+    const NAMING_AUTHORITY *n);
+void NAMING_AUTHORITY_set0_authorityId(NAMING_AUTHORITY *n,
+    ASN1_OBJECT* namingAuthorityId);
+void NAMING_AUTHORITY_set0_authorityURL(NAMING_AUTHORITY *n,
+    ASN1_IA5STRING* namingAuthorityUrl);
+void NAMING_AUTHORITY_set0_authorityText(NAMING_AUTHORITY *n,
+    ASN1_STRING* namingAuthorityText);
+
+const GENERAL_NAME *ADMISSION_SYNTAX_get0_admissionAuthority(
+    const ADMISSION_SYNTAX *as);
+void ADMISSION_SYNTAX_set0_admissionAuthority(
+    ADMISSION_SYNTAX *as, GENERAL_NAME *aa);
+const STACK_OF(ADMISSIONS) *ADMISSION_SYNTAX_get0_contentsOfAdmissions(
+    const ADMISSION_SYNTAX *as);
+void ADMISSION_SYNTAX_set0_contentsOfAdmissions(
+    ADMISSION_SYNTAX *as, STACK_OF(ADMISSIONS) *a);
+const GENERAL_NAME *ADMISSIONS_get0_admissionAuthority(const ADMISSIONS *a);
+void ADMISSIONS_set0_admissionAuthority(ADMISSIONS *a, GENERAL_NAME *aa);
+const NAMING_AUTHORITY *ADMISSIONS_get0_namingAuthority(const ADMISSIONS *a);
+void ADMISSIONS_set0_namingAuthority(ADMISSIONS *a, NAMING_AUTHORITY *na);
+const PROFESSION_INFOS *ADMISSIONS_get0_professionInfos(const ADMISSIONS *a);
+void ADMISSIONS_set0_professionInfos(ADMISSIONS *a, PROFESSION_INFOS *pi);
+const ASN1_OCTET_STRING *PROFESSION_INFO_get0_addProfessionInfo(
+    const PROFESSION_INFO *pi);
+void PROFESSION_INFO_set0_addProfessionInfo(
+    PROFESSION_INFO *pi, ASN1_OCTET_STRING *aos);
+const NAMING_AUTHORITY *PROFESSION_INFO_get0_namingAuthority(
+    const PROFESSION_INFO *pi);
+void PROFESSION_INFO_set0_namingAuthority(
+    PROFESSION_INFO *pi, NAMING_AUTHORITY *na);
+const STACK_OF(ASN1_STRING) *PROFESSION_INFO_get0_professionItems(
+    const PROFESSION_INFO *pi);
+void PROFESSION_INFO_set0_professionItems(
+    PROFESSION_INFO *pi, STACK_OF(ASN1_STRING) *as);
+const STACK_OF(ASN1_OBJECT) *PROFESSION_INFO_get0_professionOIDs(
+    const PROFESSION_INFO *pi);
+void PROFESSION_INFO_set0_professionOIDs(
+    PROFESSION_INFO *pi, STACK_OF(ASN1_OBJECT) *po);
+const ASN1_PRINTABLESTRING *PROFESSION_INFO_get0_registrationNumber(
+    const PROFESSION_INFO *pi);
+void PROFESSION_INFO_set0_registrationNumber(
+    PROFESSION_INFO *pi, ASN1_PRINTABLESTRING *rn);
+
 # ifdef  __cplusplus
 }
 # endif

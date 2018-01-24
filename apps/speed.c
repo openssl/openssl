@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -121,13 +121,13 @@
 #define MAX_ECDH_SIZE   256
 #define MISALIGN        64
 
-typedef struct sec_st {
+typedef struct openssl_speed_sec_st {
     int sym;
     int rsa;
     int dsa;
     int ecdsa;
     int ecdh;
-} SEC;
+} openssl_speed_sec_t;
 
 static volatile int run = 0;
 
@@ -141,6 +141,7 @@ typedef struct loopargs_st {
     unsigned char *buf2;
     unsigned char *buf_malloc;
     unsigned char *buf2_malloc;
+    unsigned char *key;
     unsigned int siglen;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
@@ -333,7 +334,7 @@ static double Time_F(int s)
 #endif
 
 static void multiblock_speed(const EVP_CIPHER *evp_cipher,
-                             const SEC *seconds);
+                             const openssl_speed_sec_t *seconds);
 
 static int found(const char *name, const OPT_PAIR *pairs, int *result)
 {
@@ -872,16 +873,23 @@ static int EVP_Update_loop(void *args)
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
-    int outl, count;
+    int outl, count, rc;
 #ifndef SIGALRM
     int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
 #endif
-    if (decrypt)
-        for (count = 0; COND(nb_iter); count++)
-            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-    else
-        for (count = 0; COND(nb_iter); count++)
-            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+    if (decrypt) {
+        for (count = 0; COND(nb_iter); count++) {
+            rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            if (rc != 1)
+                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+        }
+    } else {
+        for (count = 0; COND(nb_iter); count++) {
+            rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            if (rc != 1)
+                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+        }
+    }
     if (decrypt)
         EVP_DecryptFinal_ex(ctx, buf, &outl);
     else
@@ -1259,6 +1267,8 @@ int speed_main(int argc, char **argv)
     int ret = 1, i, k, misalign = 0;
     long count = 0;
     int size_num = OSSL_NELEM(lengths_list);
+    int keylen;
+    int buflen;
 #ifndef NO_FORK
     int multi = 0;
 #endif
@@ -1266,6 +1276,9 @@ int speed_main(int argc, char **argv)
 #if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) \
     || !defined(OPENSSL_NO_EC)
     long rsa_count = 1;
+#endif
+#ifndef OPENSSL_NO_EC
+    size_t loop;
 #endif
 
     /* What follows are the buffers and key material. */
@@ -1390,8 +1403,8 @@ int speed_main(int argc, char **argv)
     int ecdh_doit[EC_NUM] = { 0 };
 #endif                          /* ndef OPENSSL_NO_EC */
 
-    SEC seconds = {SECONDS, RSA_SECONDS, DSA_SECONDS, ECDSA_SECONDS,
-                   ECDH_SECONDS};
+    openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
+                                    ECDSA_SECONDS, ECDH_SECONDS };
 
     prog = opt_init(argc, argv, speed_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -1551,8 +1564,8 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_EC
         if (strcmp(*argv, "ecdsa") == 0) {
-            for (i = 0; i < EC_NUM; i++)
-                ecdsa_doit[i] = 1;
+            for (loop = 0; loop < OSSL_NELEM(ecdsa_choices); loop++)
+                ecdsa_doit[ecdsa_choices[loop].retval] = 1;
             continue;
         }
         if (found(*argv, ecdsa_choices, &i)) {
@@ -1560,8 +1573,8 @@ int speed_main(int argc, char **argv)
             continue;
         }
         if (strcmp(*argv, "ecdh") == 0) {
-            for (i = 0; i < EC_NUM; i++)
-                ecdh_doit[i] = 1;
+            for (loop = 0; loop < OSSL_NELEM(ecdh_choices); loop++)
+                ecdh_doit[ecdh_choices[loop].retval] = 1;
             continue;
         }
         if (found(*argv, ecdh_choices, &i)) {
@@ -1596,12 +1609,12 @@ int speed_main(int argc, char **argv)
             }
         }
 
-        loopargs[i].buf_malloc =
-            app_malloc(lengths[size_num - 1] + MAX_MISALIGNMENT + 1,
-                       "input buffer");
-        loopargs[i].buf2_malloc =
-            app_malloc(lengths[size_num - 1] + MAX_MISALIGNMENT + 1,
-                       "input buffer");
+        buflen = lengths[size_num - 1] + MAX_MISALIGNMENT + 1;
+        loopargs[i].buf_malloc = app_malloc(buflen, "input buffer");
+        loopargs[i].buf2_malloc = app_malloc(buflen, "input buffer");
+        memset(loopargs[i].buf_malloc, 0, buflen);
+        memset(loopargs[i].buf2_malloc, 0, buflen);
+
         /* Align the start of buffers on a 64 byte boundary */
         loopargs[i].buf = loopargs[i].buf_malloc + misalign;
         loopargs[i].buf2 = loopargs[i].buf2_malloc + misalign;
@@ -1633,10 +1646,10 @@ int speed_main(int argc, char **argv)
             dsa_doit[i] = 1;
 #endif
 #ifndef OPENSSL_NO_EC
-        for (i = 0; i < EC_NUM; i++)
-            ecdsa_doit[i] = 1;
-        for (i = 0; i < EC_NUM; i++)
-            ecdh_doit[i] = 1;
+        for (loop = 0; loop < OSSL_NELEM(ecdsa_choices); loop++)
+            ecdsa_doit[ecdsa_choices[loop].retval] = 1;
+        for (loop = 0; loop < OSSL_NELEM(ecdh_choices); loop++)
+            ecdh_doit[ecdh_choices[loop].retval] = 1;
 #endif
     }
     for (i = 0; i < ALGOR_NUM; i++)
@@ -2400,13 +2413,17 @@ int speed_main(int argc, char **argv)
 
                 for (k = 0; k < loopargs_len; k++) {
                     loopargs[k].ctx = EVP_CIPHER_CTX_new();
-                    if (decrypt)
-                        EVP_DecryptInit_ex(loopargs[k].ctx, evp_cipher, NULL,
-                                           key32, iv);
-                    else
-                        EVP_EncryptInit_ex(loopargs[k].ctx, evp_cipher, NULL,
-                                           key32, iv);
+                    EVP_CipherInit_ex(loopargs[k].ctx, evp_cipher, NULL, NULL,
+                                      iv, decrypt ? 0 : 1);
+
                     EVP_CIPHER_CTX_set_padding(loopargs[k].ctx, 0);
+
+                    keylen = EVP_CIPHER_CTX_key_length(loopargs[k].ctx);
+                    loopargs[k].key = app_malloc(keylen, "evp_cipher key");
+                    EVP_CIPHER_CTX_rand_key(loopargs[k].ctx, loopargs[k].key);
+                    EVP_CipherInit_ex(loopargs[k].ctx, NULL, NULL,
+                                      loopargs[k].key, NULL, -1);
+                    OPENSSL_clear_free(loopargs[k].key, keylen);
                 }
                 switch (EVP_CIPHER_mode(evp_cipher)) {
                 case EVP_CIPH_CCM_MODE:
@@ -3077,7 +3094,7 @@ static char *sstrsep(char **string, const char *delim)
     if (**string == 0)
         return NULL;
 
-    memset(isdelim, 0, sizeof isdelim);
+    memset(isdelim, 0, sizeof(isdelim));
     isdelim[0] = 1;
 
     while (*delim) {
@@ -3138,7 +3155,7 @@ static int do_multi(int multi, int size_num)
         char *p;
 
         f = fdopen(fds[n], "r");
-        while (fgets(buf, sizeof buf, f)) {
+        while (fgets(buf, sizeof(buf), f)) {
             p = strchr(buf, '\n');
             if (p)
                 *p = '\0';
@@ -3229,14 +3246,15 @@ static int do_multi(int multi, int size_num)
 }
 #endif
 
-static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
+static void multiblock_speed(const EVP_CIPHER *evp_cipher,
+                             const openssl_speed_sec_t *seconds)
 {
     static const int mblengths_list[] =
         { 8 * 1024, 2 * 8 * 1024, 4 * 8 * 1024, 8 * 8 * 1024, 8 * 16 * 1024 };
     const int *mblengths = mblengths_list;
-    int j, count, num = OSSL_NELEM(mblengths_list);
+    int j, count, keylen, num = OSSL_NELEM(mblengths_list);
     const char *alg_name;
-    unsigned char *inp, *out, no_key[32], no_iv[16];
+    unsigned char *inp, *out, *key, no_key[32], no_iv[16];
     EVP_CIPHER_CTX *ctx;
     double d = 0.0;
 
@@ -3248,7 +3266,14 @@ static void multiblock_speed(const EVP_CIPHER *evp_cipher, const SEC *seconds)
     inp = app_malloc(mblengths[num - 1], "multiblock input buffer");
     out = app_malloc(mblengths[num - 1] + 1024, "multiblock output buffer");
     ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, evp_cipher, NULL, no_key, no_iv);
+    EVP_EncryptInit_ex(ctx, evp_cipher, NULL, NULL, no_iv);
+
+    keylen = EVP_CIPHER_CTX_key_length(ctx);
+    key = app_malloc(keylen, "evp_cipher key");
+    EVP_CIPHER_CTX_rand_key(ctx, key);
+    EVP_EncryptInit_ex(ctx, NULL, NULL, key, NULL);
+    OPENSSL_clear_free(key, keylen);
+
     EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_MAC_KEY, sizeof(no_key), no_key);
     alg_name = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
 

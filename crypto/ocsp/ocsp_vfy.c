@@ -139,7 +139,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 }
 
 int OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
-                     STACK_OF(X509) *extra_certs)
+                          STACK_OF(X509) *extra_certs)
 {
     int ret;
 

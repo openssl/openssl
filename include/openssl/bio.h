@@ -255,7 +255,8 @@ typedef struct bio_method_st BIO_METHOD;
 const char *BIO_method_name(const BIO *b);
 int BIO_method_type(const BIO *b);
 
-typedef void bio_info_cb(BIO *, int, const char *, int, long, long);
+typedef int BIO_info_cb(BIO *, int, int);
+typedef BIO_info_cb bio_info_cb;  /* backward compatibility */
 
 DEFINE_STACK_OF(BIO)
 
@@ -566,8 +567,7 @@ int BIO_write_ex(BIO *b, const void *data, size_t dlen, size_t *written);
 int BIO_puts(BIO *bp, const char *buf);
 int BIO_indent(BIO *b, int indent, int max);
 long BIO_ctrl(BIO *bp, int cmd, long larg, void *parg);
-long BIO_callback_ctrl(BIO *b, int cmd,
-                       void (*fp) (BIO *, int, const char *, int, long, long));
+long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 void *BIO_ptr_ctrl(BIO *bp, int cmd, long larg);
 long BIO_int_ctrl(BIO *bp, int cmd, long larg, int iarg);
 BIO *BIO_push(BIO *b, BIO *append);
@@ -785,10 +785,10 @@ int BIO_meth_set_create(BIO_METHOD *biom, int (*create) (BIO *));
 int (*BIO_meth_get_destroy(BIO_METHOD *biom)) (BIO *);
 int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy) (BIO *));
 long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))
-                                 (BIO *, int, bio_info_cb *);
+                                 (BIO *, int, BIO_info_cb *);
 int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                long (*callback_ctrl) (BIO *, int,
-                                                      bio_info_cb *));
+                                                      BIO_info_cb *));
 int ERR_load_BIO_strings(void);
 
 # ifdef  __cplusplus

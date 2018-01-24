@@ -473,3 +473,4 @@ DTLS_set_timer_cb                       473	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_tlsext_max_fragment_length  474	1_1_1	EXIST::FUNCTION:
 SSL_set_tlsext_max_fragment_length      475	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_get_max_fragment_length     476	1_1_1	EXIST::FUNCTION:
+SSL_stateless                           477	1_1_1	EXIST::FUNCTION:

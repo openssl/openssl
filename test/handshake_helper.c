@@ -497,8 +497,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     case TLSEXT_max_fragment_length_2048:
     case TLSEXT_max_fragment_length_4096:
     case TLSEXT_max_fragment_length_DISABLED:
-        TEST_true(SSL_CTX_set_tlsext_max_fragment_length(
-                        client_ctx, extra->client.max_fragment_len_mode));
+        SSL_CTX_set_tlsext_max_fragment_length(
+              client_ctx, extra->client.max_fragment_len_mode);
         break;
     }
 

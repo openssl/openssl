@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -401,7 +401,7 @@ int ssl_load_ciphers(void)
     disabled_mkey_mask |= SSL_kDHE | SSL_kDHEPSK;
 #endif
 #ifdef OPENSSL_NO_EC
-    disabled_mkey_mask |= SSL_kECDHEPSK;
+    disabled_mkey_mask |= SSL_kECDHE | SSL_kECDHEPSK;
     disabled_auth_mask |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_PSK
@@ -1368,10 +1368,6 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
 
-    /*
-     * ssl_cipher_apply_rule(0, 0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1,
-     * &head, &tail);
-     */
     ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,
                           &tail);
     ssl_cipher_apply_rule(0, SSL_kPSK, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head,

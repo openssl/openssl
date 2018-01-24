@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -3025,7 +3025,7 @@ int s_client_main(int argc, char **argv)
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
-#if defined(OPENSSL_SYS_WINDOWS)
+
     /*
      * Give the socket time to send its last data before we close it.
      * No amount of setting SO_LINGER etc on the socket seems to persuade
@@ -3033,8 +3033,23 @@ int s_client_main(int argc, char **argv)
      * for a short time seems to do it (units in ms)
      * TODO: Find a better way to do this
      */
+#if defined(OPENSSL_SYS_WINDOWS)
     Sleep(50);
+#elif defined(OPENSSL_SYS_CYGWIN)
+    usleep(50000);
 #endif
+
+    /*
+     * If we ended with an alert being sent, but still with data in the
+     * network buffer to be read, then calling BIO_closesocket() will
+     * result in a TCP-RST being sent. On some platforms (notably
+     * Windows) then this will result in the peer immediately abandoning
+     * the connection including any buffered alert data before it has
+     * had a chance to be read. Shutting down the sending side first,
+     * and then closing the socket sends TCP-FIN first followed by
+     * TCP-RST. This seems to allow the peer to read the alert data.
+     */
+    shutdown(SSL_get_fd(con), 1); /* SHUT_WR */
     BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {

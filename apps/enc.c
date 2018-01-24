@@ -98,7 +98,7 @@ int enc_main(int argc, char **argv)
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
-    char mbuf[sizeof magic - 1];
+    char mbuf[sizeof(magic) - 1];
     OPTION_CHOICE o;
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
     int enc = 1, printkey = 0, i, k;
@@ -220,7 +220,7 @@ int enc_main(int argc, char **argv)
             in = bio_open_default(opt_arg(), 'r', FORMAT_TEXT);
             if (in == NULL)
                 goto opthelp;
-            i = BIO_gets(in, buf, sizeof buf);
+            i = BIO_gets(in, buf, sizeof(buf));
             BIO_free(in);
             in = NULL;
             if (i <= 0) {
@@ -409,11 +409,11 @@ int enc_main(int argc, char **argv)
             } else {
                 if (enc) {
                     if (hsalt) {
-                        if (!set_hex(hsalt, salt, sizeof salt)) {
+                        if (!set_hex(hsalt, salt, sizeof(salt))) {
                             BIO_printf(bio_err, "invalid hex salt value\n");
                             goto end;
                         }
-                    } else if (RAND_bytes(salt, sizeof salt) <= 0) {
+                    } else if (RAND_bytes(salt, sizeof(salt)) <= 0) {
                         goto end;
                     }
                     /*
@@ -421,20 +421,20 @@ int enc_main(int argc, char **argv)
                      */
                     if ((printkey != 2)
                         && (BIO_write(wbio, magic,
-                                      sizeof magic - 1) != sizeof magic - 1
+                                      sizeof(magic) - 1) != sizeof(magic) - 1
                             || BIO_write(wbio,
                                          (char *)salt,
-                                         sizeof salt) != sizeof salt)) {
+                                         sizeof(salt)) != sizeof(salt))) {
                         BIO_printf(bio_err, "error writing output file\n");
                         goto end;
                     }
-                } else if (BIO_read(rbio, mbuf, sizeof mbuf) != sizeof mbuf
+                } else if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf)
                            || BIO_read(rbio,
                                        (unsigned char *)salt,
-                                       sizeof salt) != sizeof salt) {
+                                       sizeof(salt)) != sizeof(salt)) {
                     BIO_printf(bio_err, "error reading input file\n");
                     goto end;
-                } else if (memcmp(mbuf, magic, sizeof magic - 1)) {
+                } else if (memcmp(mbuf, magic, sizeof(magic) - 1)) {
                     BIO_printf(bio_err, "bad magic number\n");
                     goto end;
                 }

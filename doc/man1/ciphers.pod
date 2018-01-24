@@ -153,7 +153,8 @@ The cipher string B<@STRENGTH> can be used at any point to sort the current
 cipher list in order of encryption algorithm key length.
 
 The cipher string B<@SECLEVEL=n> can be used at any point to set the security
-level to B<n>.
+level to B<n>, which should be a number between zero and five, inclusive.
+See L<SSL_CTX_set_security_level> for a description of what each level means.
 
 =head1 CIPHER STRINGS
 

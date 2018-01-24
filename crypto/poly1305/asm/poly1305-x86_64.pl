@@ -45,7 +45,7 @@
 # Haswell	1.14/+175%	1.11		0.65
 # Skylake[-X]	1.13/+120%	0.96		0.51	[0.35]
 # Silvermont	2.83/+95%	-
-# Knights L	3.60/?		1.65		1.10	?
+# Knights L	3.60/?		1.65		1.10	0.41(***)
 # Goldmont	1.70/+180%	-
 # VIA Nano	1.82/+150%	-
 # Sledgehammer	1.38/+160%	-
@@ -60,6 +60,8 @@
 #	Core processors, 50-30%, less newer processor is, but slower on
 #	contemporary ones, for example almost 2x slower on Atom, and as
 #	former are naturally disappearing, SSE2 is deemed unnecessary;
+# (***)	strangely enough performance seems to vary from core to core,
+#	listed result is best case;
 
 $flavour = shift;
 $output  = shift;
@@ -2160,33 +2162,33 @@ $code.=<<___;
 	vmovdqa		96(%rcx),%y#$T2		# .Lpermd_avx2
 
 	# expand pre-calculated table
-	vmovdqu32	`16*0-64`($ctx),${R0}{%k2}{z}
+	vmovdqu		`16*0-64`($ctx),%x#$D0	# will become expanded ${R0}
 	and		\$-512,%rsp
-	vmovdqu32	`16*1-64`($ctx),${R1}{%k2}{z}
+	vmovdqu		`16*1-64`($ctx),%x#$D1	# will become ... ${R1}
 	mov		\$0x20,%rax
-	vmovdqu32	`16*2-64`($ctx),${S1}{%k2}{z}
-	vmovdqu32	`16*3-64`($ctx),${R2}{%k2}{z}
-	vmovdqu32	`16*4-64`($ctx),${S2}{%k2}{z}
-	vmovdqu32	`16*5-64`($ctx),${R3}{%k2}{z}
-	vmovdqu32	`16*6-64`($ctx),${S3}{%k2}{z}
-	vmovdqu32	`16*7-64`($ctx),${R4}{%k2}{z}
-	vmovdqu32	`16*8-64`($ctx),${S4}{%k2}{z}
-	vpermd		$R0,$T2,$R0		# 00003412 -> 14243444
+	vmovdqu		`16*2-64`($ctx),%x#$T0	# ... ${S1}
+	vmovdqu		`16*3-64`($ctx),%x#$D2	# ... ${R2}
+	vmovdqu		`16*4-64`($ctx),%x#$T1	# ... ${S2}
+	vmovdqu		`16*5-64`($ctx),%x#$D3	# ... ${R3}
+	vmovdqu		`16*6-64`($ctx),%x#$T3	# ... ${S3}
+	vmovdqu		`16*7-64`($ctx),%x#$D4	# ... ${R4}
+	vmovdqu		`16*8-64`($ctx),%x#$T4	# ... ${S4}
+	vpermd		$D0,$T2,$R0		# 00003412 -> 14243444
 	vpbroadcastq	64(%rcx),$MASK		# .Lmask26
-	vpermd		$R1,$T2,$R1
-	vpermd		$S1,$T2,$S1
-	vpermd		$R2,$T2,$R2
+	vpermd		$D1,$T2,$R1
+	vpermd		$T0,$T2,$S1
+	vpermd		$D2,$T2,$R2
 	vmovdqa64	$R0,0x00(%rsp){%k2}	# save in case $len%128 != 0
 	 vpsrlq		\$32,$R0,$T0		# 14243444 -> 01020304
-	vpermd		$S2,$T2,$S2
+	vpermd		$T1,$T2,$S2
 	vmovdqu64	$R1,0x00(%rsp,%rax){%k2}
 	 vpsrlq		\$32,$R1,$T1
-	vpermd		$R3,$T2,$R3
+	vpermd		$D3,$T2,$R3
 	vmovdqa64	$S1,0x40(%rsp){%k2}
-	vpermd		$S3,$T2,$S3
-	vpermd		$R4,$T2,$R4
+	vpermd		$T3,$T2,$S3
+	vpermd		$D4,$T2,$R4
 	vmovdqu64	$R2,0x40(%rsp,%rax){%k2}
-	vpermd		$S4,$T2,$S4
+	vpermd		$T4,$T2,$S4
 	vmovdqa64	$S2,0x80(%rsp){%k2}
 	vmovdqu64	$R3,0x80(%rsp,%rax){%k2}
 	vmovdqa64	$S3,0xc0(%rsp){%k2}

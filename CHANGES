@@ -9,6 +9,23 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Added SHA512/224 and SHA512/256 algorithm support.
+     [Paul Dale]
+
+  *) The last traces of Netware support, first removed in 1.1.0, have
+     now been removed.
+     [Rich Salz]
+
+  *) Get rid of Makefile.shared, and in the process, make the processing
+     of certain files (rc.obj, or the .def/.map/.opt files produced from
+     the ordinal files) more visible and hopefully easier to trace and
+     debug (or make silent).
+     [Richard Levitte]
+
+  *) Make it possible to have environment variable assignments as
+     arguments to config / Configure.
+     [Richard Levitte]
+
   *) Add multi-prime RSA (RFC 8017) support.
      [Paul Yang]
 
@@ -190,6 +207,32 @@
      issues, has been replaced to always returns NULL.
      [Rich Salz]
 
+ Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
+
+  *) Removed the OS390-Unix config target.  It relied on a script that doesn't
+     exist.
+     [Rich Salz]
+
+  *) rsaz_1024_mul_avx2 overflow bug on x86_64
+
+     There is an overflow bug in the AVX2 Montgomery multiplication procedure
+     used in exponentiation with 1024-bit moduli. No EC algorithms are affected.
+     Analysis suggests that attacks against RSA and DSA as a result of this
+     defect would be very difficult to perform and are not believed likely.
+     Attacks against DH1024 are considered just feasible, because most of the
+     work necessary to deduce information about a private key may be performed
+     offline. The amount of resources required for such an attack would be
+     significant. However, for an attack on TLS to be meaningful, the server
+     would have to share the DH1024 private key among multiple clients, which is
+     no longer an option since CVE-2016-0701.
+
+     This only affects processors that support the AVX2 but not ADX extensions
+     like Intel Haswell (4th generation).
+
+     This issue was reported to OpenSSL by David Benjamin (Google). The issue
+     was originally found via the OSS-Fuzz project.
+     (CVE-2017-3738)
+     [Andy Polyakov]
 
  Changes between 1.1.0f and 1.1.0g [2 Nov 2017]
 
@@ -9404,7 +9447,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Added BIO_vprintf() and BIO_vsnprintf().
      [Richard Levitte]
 
-  *) Added more prefixes to parse for in the the strings written
+  *) Added more prefixes to parse for in the strings written
      through a logging bio, to cover all the levels that are available
      through syslog.  The prefixes are now:
 
@@ -11149,7 +11192,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      delete an unused file.
      [Ulf Möller]
 
-  *) Add support for the the free Netwide assembler (NASM) under Win32,
+  *) Add support for the free Netwide assembler (NASM) under Win32,
      since not many people have MASM (ml) and it can be hard to obtain.
      This is currently experimental but it seems to work OK and pass all
      the tests. Check out INSTALL.W32 for info.

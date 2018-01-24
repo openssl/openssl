@@ -29,7 +29,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install" TESTS="-test_fuzz"
-    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-aria" TESTS="-test_fuzz"
+    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
     - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
 
 matrix:
@@ -64,7 +64,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-aria enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
           addons:
               apt:
@@ -80,10 +80,10 @@ matrix:
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.9
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-aria enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: clang-3.9
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 enable-aria no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           addons:
               apt:
@@ -93,7 +93,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 enable-aria -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:

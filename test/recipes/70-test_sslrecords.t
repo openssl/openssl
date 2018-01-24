@@ -15,7 +15,7 @@ my $test_name = "test_sslrecords";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -485,7 +485,8 @@ sub change_outer_record_type
     for ($i = 0; ${$proxy->record_list}[$i]->flight() < 1; $i++) {
         next;
     }
-    $i++;
+    #Skip CCS and ServerHello
+    $i += 2;
     ${$proxy->record_list}[$i]->outer_content_type(TLSProxy::Record::RT_HANDSHAKE);
 }
 

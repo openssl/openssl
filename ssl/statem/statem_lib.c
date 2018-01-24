@@ -19,6 +19,13 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+/* Fixed value used in the ServerHello random field to identify an HRR */
+const unsigned char hrrrandom[] = {
+    0xcf, 0x21, 0xad, 0x74, 0xe5, 0x9a, 0x61, 0x11, 0xbe, 0x1d, 0x8c, 0x02,
+    0x1e, 0x65, 0xb8, 0x91, 0xc2, 0xa2, 0x11, 0x16, 0x7a, 0xbb, 0x8c, 0x5e,
+    0x07, 0x9e, 0x09, 0xe2, 0xc8, 0xa8, 0x33, 0x9c
+};
+
 /*
  * send s->init_buf in records of type 'type' (SSL3_RT_HANDSHAKE or
  * SSL3_RT_CHANGE_CIPHER_SPEC)
@@ -997,7 +1004,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
  * in NBIO events. If |clearbufs| is set then init_buf and the wbio buffer is
  * freed up as well.
  */
-WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
+WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
 {
     int discard;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
@@ -1076,11 +1083,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs)
         }
     }
 
-    /*
-     * If we've not cleared the buffers its because we've got more work to do,
-     * so continue.
-     */
-    if (!clearbufs)
+    if (!stop)
         return WORK_FINISHED_CONTINUE;
 
     ossl_statem_set_in_init(s, 0);
@@ -1115,6 +1118,17 @@ int tls_get_message_header(SSL *s, int *mt)
                     SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
                              SSL_F_TLS_GET_MESSAGE_HEADER,
                              SSL_R_BAD_CHANGE_CIPHER_SPEC);
+                    return 0;
+                }
+                if (s->statem.hand_state == TLS_ST_BEFORE
+                        && (s->s3->flags & TLS1_FLAGS_STATELESS) != 0) {
+                    /*
+                     * We are stateless and we received a CCS. Probably this is
+                     * from a client between the first and second ClientHellos.
+                     * We should ignore this, but return an error because we do
+                     * not return success until we see the second ClientHello
+                     * with a valid cookie.
+                     */
                     return 0;
                 }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
@@ -1238,12 +1252,18 @@ int tls_get_message_body(SSL *s, size_t *len)
          * We defer feeding in the HRR until later. We'll do it as part of
          * processing the message
          */
-        if (s->s3->tmp.message_type != SSL3_MT_HELLO_RETRY_REQUEST
-                && !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->init_num + SSL3_HM_HEADER_LENGTH)) {
-            /* SSLfatal() already called */
-            *len = 0;
-            return 0;
+#define SERVER_HELLO_RANDOM_OFFSET  (SSL3_HM_HEADER_LENGTH + 2)
+        if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO
+                || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
+                || memcmp(hrrrandom,
+                          s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
+                          SSL3_RANDOM_SIZE) != 0) {
+            if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                 s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                /* SSLfatal() already called */
+                *len = 0;
+                return 0;
+            }
         }
         if (s->msg_callback)
             s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE, s->init_buf->data,
@@ -1642,6 +1662,10 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
 
     suppversions = &hello->pre_proc_exts[TLSEXT_IDX_supported_versions];
 
+    /* If we did an HRR then supported versions is mandatory */
+    if (!suppversions->present && s->hello_retry_request != SSL_HRR_NONE)
+        return SSL_R_UNSUPPORTED_PROTOCOL;
+
     if (suppversions->present && !SSL_IS_DTLS(s)) {
         unsigned int candidate_vers = 0;
         unsigned int best_vers = 0;
@@ -1686,10 +1710,10 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
         }
 
         if (best_vers > 0) {
-            if (SSL_IS_TLS13(s)) {
+            if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
-                 * We get here if this is after a HelloRetryRequest. In this
-                 * case we just check that we still negotiated TLSv1.3
+                 * This is after a HelloRetryRequest so we better check that we
+                 * negotiated TLSv1.3
                  */
                 if (best_vers != TLS1_3_VERSION)
                     return SSL_R_UNSUPPORTED_PROTOCOL;
@@ -1739,21 +1763,32 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
  *
  * @s: client SSL handle.
  * @version: The proposed version from the server's HELLO.
- * @checkdgrd: Whether to check the downgrade sentinels in the server_random
+ * @extensions: The extensions received
  *
  * Returns 1 on success or 0 on error.
  */
-int ssl_choose_client_version(SSL *s, int version, int checkdgrd)
+int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
 {
     const version_info *vent;
     const version_info *table;
     int highver = 0;
+    int origv;
 
-    /* TODO(TLS1.3): Remove this before release */
-    if (version == TLS1_3_VERSION_DRAFT)
-        version = TLS1_3_VERSION;
+    origv = s->version;
+    s->version = version;
 
-    if (s->hello_retry_request && version != TLS1_3_VERSION) {
+    /* This will overwrite s->version if the extension is present */
+    if (!tls_parse_extension(s, TLSEXT_IDX_supported_versions,
+                             SSL_EXT_TLS1_2_SERVER_HELLO
+                             | SSL_EXT_TLS1_3_SERVER_HELLO, extensions,
+                             NULL, 0)) {
+        s->version = origv;
+        return 0;
+    }
+
+    if (s->hello_retry_request != SSL_HRR_NONE
+            && s->version != TLS1_3_VERSION) {
+        s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_SSL_CHOOSE_CLIENT_VERSION,
                  SSL_R_WRONG_SSL_VERSION);
         return 0;
@@ -1761,7 +1796,8 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd)
 
     switch (s->method->version) {
     default:
-        if (version != s->version) {
+        if (s->version != s->method->version) {
+            s->version = origv;
             SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
                      SSL_F_SSL_CHOOSE_CLIENT_VERSION,
                      SSL_R_WRONG_SSL_VERSION);
@@ -1790,13 +1826,14 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd)
         if (vent->cmeth == NULL)
             continue;
 
-        if (highver != 0 && version != vent->version)
+        if (highver != 0 && s->version != vent->version)
             continue;
 
         method = vent->cmeth();
         err = ssl_method_error(s, method);
         if (err != 0) {
-            if (version == vent->version) {
+            if (s->version == vent->version) {
+                s->version = origv;
                 SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
                          SSL_F_SSL_CHOOSE_CLIENT_VERSION, err);
                 return 0;
@@ -1807,43 +1844,43 @@ int ssl_choose_client_version(SSL *s, int version, int checkdgrd)
         if (highver == 0)
             highver = vent->version;
 
-        if (version != vent->version)
+        if (s->version != vent->version)
             continue;
 
 #ifndef OPENSSL_NO_TLS13DOWNGRADE
         /* Check for downgrades */
-        if (checkdgrd) {
-            if (version == TLS1_2_VERSION && highver > version) {
-                if (memcmp(tls12downgrade,
-                           s->s3->server_random + SSL3_RANDOM_SIZE
-                                                - sizeof(tls12downgrade),
-                           sizeof(tls12downgrade)) == 0) {
-                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                             SSL_F_SSL_CHOOSE_CLIENT_VERSION,
-                             SSL_R_INAPPROPRIATE_FALLBACK);
-                    return 0;
-                }
-            } else if (!SSL_IS_DTLS(s)
-                       && version < TLS1_2_VERSION
-                       && highver > version) {
-                if (memcmp(tls11downgrade,
-                           s->s3->server_random + SSL3_RANDOM_SIZE
-                                                - sizeof(tls11downgrade),
-                           sizeof(tls11downgrade)) == 0) {
-                    SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                             SSL_F_SSL_CHOOSE_CLIENT_VERSION,
-                             SSL_R_INAPPROPRIATE_FALLBACK);
-                    return 0;
-                }
+        if (s->version == TLS1_2_VERSION && highver > s->version) {
+            if (memcmp(tls12downgrade,
+                       s->s3->server_random + SSL3_RANDOM_SIZE
+                                            - sizeof(tls12downgrade),
+                       sizeof(tls12downgrade)) == 0) {
+                s->version = origv;
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                         SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                         SSL_R_INAPPROPRIATE_FALLBACK);
+                return 0;
+            }
+        } else if (!SSL_IS_DTLS(s)
+                   && s->version < TLS1_2_VERSION
+                   && highver > s->version) {
+            if (memcmp(tls11downgrade,
+                       s->s3->server_random + SSL3_RANDOM_SIZE
+                                            - sizeof(tls11downgrade),
+                       sizeof(tls11downgrade)) == 0) {
+                s->version = origv;
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                         SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                         SSL_R_INAPPROPRIATE_FALLBACK);
+                return 0;
             }
         }
 #endif
 
         s->method = method;
-        s->version = version;
         return 1;
     }
 
+    s->version = origv;
     SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_F_SSL_CHOOSE_CLIENT_VERSION,
              SSL_R_UNSUPPORTED_PROTOCOL);
     return 0;
@@ -2007,19 +2044,25 @@ int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
 #endif
 
 /* Replace ClientHello1 in the transcript hash with a synthetic message */
-int create_synthetic_message_hash(SSL *s)
+int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
+                                  size_t hashlen, const unsigned char *hrr,
+                                  size_t hrrlen)
 {
-    unsigned char hashval[EVP_MAX_MD_SIZE];
-    size_t hashlen = 0;
+    unsigned char hashvaltmp[EVP_MAX_MD_SIZE];
     unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
 
     memset(msghdr, 0, sizeof(msghdr));
 
-    /* Get the hash of the initial ClientHello */
-    if (!ssl3_digest_cached_records(s, 0)
-            || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
-        /* SSLfatal() already called */
-        return 0;
+    if (hashval == NULL) {
+        hashval = hashvaltmp;
+        hashlen = 0;
+        /* Get the hash of the initial ClientHello */
+        if (!ssl3_digest_cached_records(s, 0)
+                || !ssl_handshake_hash(s, hashvaltmp, sizeof(hashvaltmp),
+                                       &hashlen)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
     }
 
     /* Reinitialise the transcript hash */
@@ -2033,6 +2076,20 @@ int create_synthetic_message_hash(SSL *s)
     msghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
     if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
             || !ssl3_finish_mac(s, hashval, hashlen)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    /*
+     * Now re-inject the HRR and current message if appropriate (we just deleted
+     * it when we reinitialised the transcript hash above). Only necessary after
+     * receiving a ClientHello2 with a cookie.
+     */
+    if (hrr != NULL
+            && (!ssl3_finish_mac(s, hrr, hrrlen)
+                || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                    s->s3->tmp.message_size
+                                    + SSL3_HM_HEADER_LENGTH))) {
         /* SSLfatal() already called */
         return 0;
     }

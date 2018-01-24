@@ -604,7 +604,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
 
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
-    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM];
+    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2];
     int ret = 0, i, ex_primes = 0;
     RSA_PRIME_INFO *pinfo;
 
@@ -618,7 +618,8 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         goto err;
 
     if (rsa->version == RSA_ASN1_VERSION_MULTI
-        && (ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0)
+        && ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0
+             || ex_primes > RSA_MAX_PRIME_NUM - 2))
         goto err;
 
     {

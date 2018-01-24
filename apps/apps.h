@@ -46,12 +46,15 @@ extern BIO *bio_out;
 extern BIO *bio_err;
 extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
+extern BIO_ADDR *ourpeer;
+
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
+CONF *app_load_config_bio(BIO *in, const char *filename);
 CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
@@ -208,7 +211,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S_NO_RENEGOTIATION, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
@@ -253,7 +256,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
-            "Perform all sorts of protocol violations for testing purposes"}
+            "Perform all sorts of protocol violations for testing purposes"}, \
+        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', "Disable TLSv1.3 middlebox compat mode" }
 
 
 # define OPT_S_CASES \
@@ -283,7 +287,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_CIPHER: \
         case OPT_S_RECORD_PADDING: \
         case OPT_S_NO_RENEGOTIATION: \
-        case OPT_S_DEBUGBROKE
+        case OPT_S_DEBUGBROKE: \
+        case OPT_S_NO_MIDDLEBOX
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \

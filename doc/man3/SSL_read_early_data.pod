@@ -188,10 +188,13 @@ early data solution as implemented in OpenSSL. In Nagle's algorithm the OS will
 buffer outgoing TCP data if a TCP packet has already been sent which we have not
 yet received an ACK for from the peer. The buffered data will only be
 transmitted if enough data to fill an entire TCP packet is accumulated, or if
-the ACK is received from the peer. The initial ClientHello will be sent as the
-first TCP packet, causing the early application data from calls to
-SSL_write_early_data() to be buffered by the OS and not sent until an ACK is
-received for the ClientHello packet. This means the early data is not actually
+the ACK is received from the peer. The initial ClientHello will be sent in the
+first TCP packet along with any data from the first call to
+SSL_write_early_data(). If the amount of data written will exceed the size of a
+single TCP packet, or if there are more calls to SSL_write_early_data() then
+that additional data will be sent in subsequent TCP packets which will be
+buffered by the OS and not sent until an ACK is received for the first packet
+containing the ClientHello. This means the early data is not actually
 sent until a complete round trip with the server has occurred which defeats the
 objective of early data.
 

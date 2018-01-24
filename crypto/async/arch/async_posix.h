@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,7 +11,7 @@
 #define OPENSSL_ASYNC_ARCH_ASYNC_POSIX_H
 #include <openssl/e_os2.h>
 
-#if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_CYGWIN)) \
+#if defined(OPENSSL_SYS_UNIX) \
     && defined(OPENSSL_THREADS) && !defined(OPENSSL_NO_ASYNC) \
     && !defined(__ANDROID__) && !defined(__OpenBSD__)
 

@@ -442,29 +442,22 @@ end_of_options:
         && (section = lookup_conf(conf, BASE_SECTION, ENV_DEFAULT_CA)) == NULL)
         goto end;
 
-    if (conf != NULL) {
-        p = NCONF_get_string(conf, NULL, "oid_file");
-        if (p == NULL)
-            ERR_clear_error();
-        if (p != NULL) {
-            BIO *oid_bio;
+    p = NCONF_get_string(conf, NULL, "oid_file");
+    if (p == NULL)
+        ERR_clear_error();
+    if (p != NULL) {
+        BIO *oid_bio = BIO_new_file(p, "r");
 
-            oid_bio = BIO_new_file(p, "r");
-            if (oid_bio == NULL) {
-                /*-
-                BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
-                ERR_print_errors(bio_err);
-                */
-                ERR_clear_error();
-            } else {
-                OBJ_create_objects(oid_bio);
-                BIO_free(oid_bio);
-            }
+        if (oid_bio == NULL) {
+            ERR_clear_error();
+        } else {
+            OBJ_create_objects(oid_bio);
+            BIO_free(oid_bio);
         }
-        if (!add_oid_section(conf)) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
+    }
+    if (!add_oid_section(conf)) {
+        ERR_print_errors(bio_err);
+        goto end;
     }
 
     app_RAND_load_conf(conf, BASE_SECTION);
@@ -669,6 +662,10 @@ end_of_options:
                            i + 1, *p, *p);
                 goto end;
             }
+        }
+        if (pp[DB_name][0] == '\0') {
+            BIO_printf(bio_err, "entry %d: bad Subject\n", i + 1);
+            goto end;
         }
     }
     if (verbose) {
@@ -1410,6 +1407,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "The Subject's Distinguished Name is as follows\n");
 
     name = X509_REQ_get_subject_name(req);
+    if (X509_NAME_entry_count(name) == 0) {
+        BIO_printf(bio_err, "Error: The supplied Subject is empty\n");
+        goto end;
+    }
     for (i = 0; i < X509_NAME_entry_count(name); i++) {
         ne = X509_NAME_get_entry(name, i);
         str = X509_NAME_ENTRY_get_data(ne);
@@ -1570,6 +1571,12 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         subject = X509_NAME_dup(name);
         if (subject == NULL)
             goto end;
+    }
+
+    if (X509_NAME_entry_count(subject) == 0) {
+        BIO_printf(bio_err,
+                   "Error: After applying policy the Subject is empty\n");
+        goto end;
     }
 
     if (verbose)

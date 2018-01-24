@@ -10,8 +10,8 @@
 #include <openssl/rsa.h>
 #include "internal/refcount.h"
 
-#define RSA_MAX_PRIME_NUM 16
-#define RSA_MIN_PRIME_SIZE 64
+#define RSA_MAX_PRIME_NUM       5
+#define RSA_MIN_MODULUS_BITS    512
 
 typedef struct rsa_prime_info_st {
     BIGNUM *r;
@@ -28,7 +28,7 @@ DEFINE_STACK_OF(RSA_PRIME_INFO)
 struct rsa_st {
     /*
      * The first parameter is used to pickup errors where this is passed
-     * instead of aEVP_PKEY, it is set to 0
+     * instead of an EVP_PKEY, it is set to 0
      */
     int pad;
     int32_t version;

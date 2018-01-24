@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -53,7 +53,7 @@ static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
         CRYPTO_THREAD_get_local(&threadstopkey);
 
     if (local == NULL && alloc) {
-        local = OPENSSL_zalloc(sizeof *local);
+        local = OPENSSL_zalloc(sizeof(*local));
         if (local != NULL && !CRYPTO_THREAD_set_local(&threadstopkey, local)) {
             OPENSSL_free(local);
             return NULL;
@@ -73,7 +73,6 @@ struct ossl_init_stop_st {
 };
 
 static CRYPTO_RWLOCK *glock_lock = NULL;
-static CRYPTO_ONCE glock_once = CRYPTO_ONCE_STATIC_INIT;
 
 static OPENSSL_INIT_STOP *stop_handlers = NULL;
 static CRYPTO_RWLOCK *init_lock = NULL;
@@ -726,6 +725,7 @@ DEFINE_RUN_ONCE_STATIC(glock_init)
  */
 CRYPTO_RWLOCK *CRYPTO_THREAD_glock_new(const char *name)
 {
+    static CRYPTO_ONCE glock_once = CRYPTO_ONCE_STATIC_INIT;
     GLOBAL_LOCK *newlock;
 
     if (glock_lock == NULL && !RUN_ONCE(&glock_once, glock_init))

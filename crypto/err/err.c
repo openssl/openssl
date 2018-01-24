@@ -502,15 +502,13 @@ static unsigned long get_error_values(int inc, int top, const char **file,
         es->err_buffer[i] = 0;
     }
 
-    if ((file != NULL) && (line != NULL)) {
+    if (file != NULL && line != NULL) {
         if (es->err_file[i] == NULL) {
             *file = "NA";
-            if (line != NULL)
-                *line = 0;
+            *line = 0;
         } else {
             *file = es->err_file[i];
-            if (line != NULL)
-                *line = es->err_line[i];
+            *line = es->err_line[i];
         }
     }
 
@@ -667,6 +665,14 @@ ERR_STATE *ERR_get_state(void)
     ERR_STATE *state = NULL;
 
     if (!RUN_ONCE(&err_init, err_do_init))
+        return NULL;
+
+    /*
+     * If base OPENSSL_init_crypto() hasn't been called yet, be sure to call
+     * it now to avoid state to be doubly allocated and thereby leak memory.
+     * Needed on any platform that doesn't define OPENSSL_USE_NODELETE.
+     */
+    if (!OPENSSL_init_crypto(0, NULL))
         return NULL;
 
     state = CRYPTO_THREAD_get_local(&err_thread_local);

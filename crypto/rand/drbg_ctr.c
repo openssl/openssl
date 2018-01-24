@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -201,7 +201,7 @@ static void ctr_update(RAND_DRBG *drbg,
                        const unsigned char *in2, size_t in2len,
                        const unsigned char *nonce, size_t noncelen)
 {
-    RAND_DRBG_CTR *ctr = &drbg->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
 
     /* ks is already setup for correct key */
     inc_128(ctr);
@@ -236,12 +236,12 @@ static void ctr_update(RAND_DRBG *drbg,
     AES_set_encrypt_key(ctr->K, drbg->strength, &ctr->ks);
 }
 
-int ctr_instantiate(RAND_DRBG *drbg,
-                    const unsigned char *entropy, size_t entropylen,
-                    const unsigned char *nonce, size_t noncelen,
-                    const unsigned char *pers, size_t perslen)
+static int drbg_ctr_instantiate(RAND_DRBG *drbg,
+                                const unsigned char *entropy, size_t entropylen,
+                                const unsigned char *nonce, size_t noncelen,
+                                const unsigned char *pers, size_t perslen)
 {
-    RAND_DRBG_CTR *ctr = &drbg->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
 
     if (entropy == NULL)
         return 0;
@@ -253,9 +253,9 @@ int ctr_instantiate(RAND_DRBG *drbg,
     return 1;
 }
 
-int ctr_reseed(RAND_DRBG *drbg,
-               const unsigned char *entropy, size_t entropylen,
-               const unsigned char *adin, size_t adinlen)
+static int drbg_ctr_reseed(RAND_DRBG *drbg,
+                           const unsigned char *entropy, size_t entropylen,
+                           const unsigned char *adin, size_t adinlen)
 {
     if (entropy == NULL)
         return 0;
@@ -263,11 +263,11 @@ int ctr_reseed(RAND_DRBG *drbg,
     return 1;
 }
 
-int ctr_generate(RAND_DRBG *drbg,
-                 unsigned char *out, size_t outlen,
-                 const unsigned char *adin, size_t adinlen)
+static int drbg_ctr_generate(RAND_DRBG *drbg,
+                             unsigned char *out, size_t outlen,
+                             const unsigned char *adin, size_t adinlen)
 {
-    RAND_DRBG_CTR *ctr = &drbg->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
 
     if (adin != NULL && adinlen != 0) {
         ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0);
@@ -299,21 +299,28 @@ int ctr_generate(RAND_DRBG *drbg,
     return 1;
 }
 
-int ctr_uninstantiate(RAND_DRBG *drbg)
+static int drbg_ctr_uninstantiate(RAND_DRBG *drbg)
 {
-    memset(&drbg->ctr, 0, sizeof(drbg->ctr));
+    OPENSSL_cleanse(&drbg->data.ctr, sizeof(drbg->data.ctr));
     return 1;
 }
 
-int ctr_init(RAND_DRBG *drbg)
+static RAND_DRBG_METHOD drbg_ctr_meth = {
+    drbg_ctr_instantiate,
+    drbg_ctr_reseed,
+    drbg_ctr_generate,
+    drbg_ctr_uninstantiate
+};
+
+int drbg_ctr_init(RAND_DRBG *drbg)
 {
-    RAND_DRBG_CTR *ctr = &drbg->ctr;
+    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
     size_t keylen;
 
     switch (drbg->nid) {
     default:
         /* This can't happen, but silence the compiler warning. */
-        return -1;
+        return 0;
     case NID_aes_128_ctr:
         keylen = 16;
         break;
@@ -324,6 +331,8 @@ int ctr_init(RAND_DRBG *drbg)
         keylen = 32;
         break;
     }
+
+    drbg->meth = &drbg_ctr_meth;
 
     ctr->keylen = keylen;
     drbg->strength = keylen * 8;
@@ -357,6 +366,6 @@ int ctr_init(RAND_DRBG *drbg)
     }
 
     drbg->max_request = 1 << 16;
-    drbg->reseed_interval = MAX_RESEED;
+    drbg->reseed_interval = MAX_RESEED_INTERVAL;
     return 1;
 }

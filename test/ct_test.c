@@ -19,7 +19,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
-#include "openssl/crypto.h"
+#include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_CT
 /* Used when declaring buffers to read text files into */

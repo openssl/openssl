@@ -47,7 +47,7 @@ int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
 {
     struct fd_lookup_st *fdlookup;
 
-    fdlookup = OPENSSL_zalloc(sizeof *fdlookup);
+    fdlookup = OPENSSL_zalloc(sizeof(*fdlookup));
     if (fdlookup == NULL)
         return 0;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,11 @@
 # define S390X_ARCH_H
 
 # ifndef __ASSEMBLER__
+
+void s390x_km(const unsigned char *in, size_t len, unsigned char *out,
+              unsigned int fc, void *param);
+void s390x_kma(const unsigned char *aad, size_t alen, const unsigned char *in,
+               size_t len, unsigned char *out, unsigned int fc, void *param);
 
 /*
  * The field elements of OPENSSL_s390xcap_P are the 64-bit words returned by
@@ -78,5 +83,11 @@ extern struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 
 /* prno */
 # define S390X_TRNG		114
+
+/* Register 0 Flags */
+# define S390X_DECRYPT		0x80
+# define S390X_KMA_LPC		0x100
+# define S390X_KMA_LAAD		0x200
+# define S390X_KMA_HS		0x400
 
 #endif

@@ -337,7 +337,7 @@ uninstall : uninstall_docs uninstall_sw
 # use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
 libclean :
         {- join("\n\t", map { "- DELETE $_.OLB;*" } @libs) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*,$_.OPT;*" } @shlibs) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*" } @shlibs) || "@ !" -}
 
 clean : libclean
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
@@ -589,7 +589,7 @@ EOF
 
   sub src2obj {
       my %args = @_;
-      my $obj = $args{obj};
+      (my $obj = $args{obj}) =~ s|\.o$||;
       my $deps = join(", -\n\t\t", @{$args{srcs}}, @{$args{deps}});
 
       # Because VMS C isn't very good at combining a /INCLUDE path with
@@ -640,7 +640,7 @@ EOF
       my $depbuild = $disabled{makedepend} ? ""
           : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
 
-      return <<"EOF";
+      return <<"EOF"
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
@@ -649,11 +649,14 @@ $obj.OBJ : $deps
         $incs_off
         SET DEFAULT $backward
         ${after}
+        - PURGE $obj.OBJ
+EOF
+      . ($disabled{makedepend} ? "" : <<"EOF"
         \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.D"",""$obj.tmp-D""); exit(0x10000000 + (\$x == 0));" || -
                  RENAME $obj.tmp-D $obj.d )
         \@ IF F\$SEARCH("$obj.tmp-D") .NES. "" THEN DELETE $obj.tmp-D;*
-        - PURGE $obj.OBJ
 EOF
+        );
   }
   sub libobj2shlib {
       my %args = @_;
@@ -661,17 +664,14 @@ EOF
       my $shlib = $args{shlib};
       my $libd = dirname($lib);
       my $libn = basename($lib);
-      (my $mkdef_key = $libn) =~ s/^${osslprefix_q}lib([^0-9]*)\d*/$1/i;
+      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
+                 grep { $_ =~ m|\.o$| }
+                 @{$args{objs}};
+      my @defs = grep { $_ =~ /\.opt$/ } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
-      my $deps = join(", -\n\t\t", @deps);
+      die "More than one symbol vector" if scalar @defs > 1;
+      my $deps = join(", -\n\t\t", @defs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
-      my $ordinalsfile = defined($args{ordinals}) ? $args{ordinals}->[1] : "";
-      my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
-                                               "VMS", "engine.opt")),
-                               rel2abs($config{builddir}));
-      my $mkdef_pl = abs2rel(rel2abs(catfile($config{sourcedir},
-                                             "util", "mkdef.pl")),
-                             rel2abs($config{builddir}));
       my $translatesyms_pl = abs2rel(rel2abs(catfile($config{sourcedir},
                                                      "VMS", "translatesyms.pl")),
                                      rel2abs($config{builddir}));
@@ -679,26 +679,27 @@ EOF
       # previous line's file spec as default, so if no directory spec
       # is present in the current line and the previous line has one that
       # doesn't apply, you're in for a surprise.
-      my $write_opt =
+      my $write_opt1 =
+          join(",-\"\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+                                 "WRITE OPT_FILE \"$x" } @objs).
+          "\"";
+      my $write_opt2 =
           join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
                              $x =~ s|(\.EXE)|$1/SHARE|;
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
       return <<"EOF"
-$shlib.EXE : $lib.OLB $deps $ordinalsfile
-        \$(PERL) $mkdef_pl "$mkdef_key" "VMS" > $shlib.SYMVEC-tmp
-        \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $shlib.SYMVEC-tmp > $shlib.SYMVEC
-        DELETE $shlib.SYMVEC-tmp;*
-        OPEN/WRITE/SHARE=READ OPT_FILE $shlib.OPT
-        WRITE OPT_FILE "IDENTIFICATION=""V$config{version}"""
-        TYPE $shlib.SYMVEC /OUTPUT=OPT_FILE:
-        WRITE OPT_FILE "$lib.OLB/LIBRARY"
-        $write_opt
+$shlib.EXE : $lib.OLB $deps
+        \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $defs[0] > $defs[0]-translated
+        OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
+        $write_opt1
+        $write_opt2
         CLOSE OPT_FILE
-        LINK \$(LDFLAGS)/SHARE=\$\@ $shlib.OPT/OPT \$(EX_LIBS)
-        DELETE $shlib.SYMVEC;*
-        PURGE $shlib.EXE,$shlib.OPT,$shlib.MAP
+        LINK \$(LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
+                $lib-components.OPT/OPT \$(EX_LIBS)
+        DELETE $defs[0]-translated;*,$lib-components.OPT;*
+        PURGE $shlib.EXE,$shlib.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"
         SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
@@ -711,7 +712,7 @@ EOF
       my $libd = dirname($lib);
       my $libn = basename($lib);
       (my $libn_nolib = $libn) =~ s/^lib//;
-      my @objs = map { "$_.OBJ" } @{$args{objs}};
+      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
@@ -750,9 +751,10 @@ EOF
   sub obj2lib {
       my %args = @_;
       (my $lib = $args{lib}) =~ s/\.a$//;
-      my $objs = join(", -\n\t\t", map { $_.".OBJ" } (@{$args{objs}}));
-      my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib.OLB $_.OBJ" }
-                                    @{$args{objs}}));
+      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
+      my $objs = join(", -\n\t\t", @objs);
+      my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib.OLB $_" }
+                                   @objs));
       return <<"EOF";
 $lib.OLB : $objs
         LIBRARY/CREATE/OBJECT $lib.OLB
@@ -765,7 +767,7 @@ EOF
       my $bin = $args{bin};
       my $bind = dirname($bin);
       my $binn = basename($bin);
-      my @objs = map { "$_.OBJ" } @{$args{objs}};
+      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
       my $objs = join(",", @objs);
       my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);

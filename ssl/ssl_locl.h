@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -323,10 +323,14 @@
                           && (s)->method->version != TLS_ANY_VERSION)
 
 # define SSL_TREAT_AS_TLS13(s) \
-    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
-     || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
+    (SSL_IS_TLS13(s) || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING \
+     || (s)->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY \
+     || (s)->early_data_state == SSL_EARLY_DATA_WRITING \
+     || (s)->early_data_state == SSL_EARLY_DATA_WRITE_RETRY \
+     || (s)->hello_retry_request == SSL_HRR_PENDING)
 
-# define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0)
+# define SSL_IS_FIRST_HANDSHAKE(S) ((s)->s3->tmp.finish_md_len == 0 \
+                                    || (s)->s3->tmp.peer_finish_md_len == 0)
 
 /* See if we need explicit IV */
 # define SSL_USE_EXPLICIT_IV(s)  \
@@ -611,6 +615,7 @@ typedef enum {
     SSL_EARLY_DATA_CONNECTING,
     SSL_EARLY_DATA_WRITE_RETRY,
     SSL_EARLY_DATA_WRITING,
+    SSL_EARLY_DATA_WRITE_FLUSH,
     SSL_EARLY_DATA_UNAUTH_WRITING,
     SSL_EARLY_DATA_FINISHED_WRITING,
     SSL_EARLY_DATA_ACCEPT_RETRY,
@@ -733,7 +738,7 @@ struct ssl_ctx_st {
     /*
      * This can have one of 2 values, ored together, SSL_SESS_CACHE_CLIENT,
      * SSL_SESS_CACHE_SERVER, Default is SSL_SESSION_CACHE_SERVER, which
-     * means only SSL_accept which cache SSL_SESSIONS.
+     * means only SSL_accept will cache SSL_SESSIONS.
      */
     uint32_t session_cache_mode;
     /*
@@ -967,6 +972,8 @@ struct ssl_ctx_st {
         SSL_CTX_npn_select_cb_func npn_select_cb;
         void *npn_select_cb_arg;
 # endif
+
+        unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
     } ext;
 
 # ifndef OPENSSL_NO_PSK
@@ -1116,7 +1123,8 @@ struct ssl_st {
     size_t cert_verify_hash_len;
 
     /* Flag to indicate whether we should send a HelloRetryRequest or not */
-    int hello_retry_request;
+    enum {SSL_HRR_NONE = 0, SSL_HRR_PENDING, SSL_HRR_COMPLETE}
+        hello_retry_request;
 
     /*
      * the session_id_context is used to ensure sessions are only reused in
@@ -1132,6 +1140,12 @@ struct ssl_st {
     size_t psksession_id_len;
     /* Default generate session ID callback. */
     GEN_SESSION_CB generate_session_id;
+    /*
+     * The temporary TLSv1.3 session id. This isn't really a session id at all
+     * but is a random value sent in the legacy session id field.
+     */
+    unsigned char tmp_session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
+    size_t tmp_session_id_len;
     /* Used in SSL3 */
     /*
      * 0 don't care about verify failure.
@@ -1262,6 +1276,9 @@ struct ssl_st {
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;
         size_t tls13_cookie_len;
+        /* Have we received a cookie from the client? */
+        int cookieok;
+
         /*
          * Maximum Fragment Length as per RFC 4366.
          * If this member contains one of the allowed values (1-4)
@@ -1579,7 +1596,7 @@ typedef struct ssl3_state_st {
 
 /*
  * Flag used in message reuse to indicate the buffer contains the record
- * header as well as the the handshake message header.
+ * header as well as the handshake message header.
  */
 # define DTLS1_SKIP_RECORD_HEADER                 2
 
@@ -2266,7 +2283,8 @@ __owur int ssl_check_version_downgrade(SSL *s);
 __owur int ssl_set_version_bound(int method_version, int version, int *bound);
 __owur int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello,
                                      DOWNGRADE *dgrd);
-__owur int ssl_choose_client_version(SSL *s, int version, int checkdgrd);
+__owur int ssl_choose_client_version(SSL *s, int version,
+                                     RAW_EXTENSION *extensions);
 int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version);
 
 __owur long tls1_default_timeout(void);

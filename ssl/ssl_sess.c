@@ -428,7 +428,7 @@ int ssl_get_new_session(SSL *s, int session)
         ss->session_id_length = 0;
     }
 
-    if (s->sid_ctx_length > sizeof ss->sid_ctx) {
+    if (s->sid_ctx_length > sizeof(ss->sid_ctx)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
                  ERR_R_INTERNAL_ERROR);
         SSL_SESSION_free(ss);
@@ -782,8 +782,8 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 
-    OPENSSL_cleanse(ss->master_key, sizeof ss->master_key);
-    OPENSSL_cleanse(ss->session_id, sizeof ss->session_id);
+    OPENSSL_cleanse(ss->master_key, sizeof(ss->master_key));
+    OPENSSL_cleanse(ss->session_id, sizeof(ss->session_id));
     X509_free(ss->peer);
     sk_X509_pop_free(ss->peer_chain, X509_free);
     sk_SSL_CIPHER_free(ss->ciphers);

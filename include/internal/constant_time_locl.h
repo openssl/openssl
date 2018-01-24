@@ -31,12 +31,7 @@ extern "C" {
  *      c = constant_time_select(lt, a, b);
  */
 
-/*
- * Returns the given value with the MSB copied to all the other
- * bits. Uses the fact that arithmetic shift shifts-in the sign bit.
- * However, this is not ensured by the C standard so you may need to
- * replace this with something else on odd CPUs.
- */
+/* Returns the given value with the MSB copied to all the other bits. */
 static ossl_inline unsigned int constant_time_msb(unsigned int a);
 /* Convenience method for uint64_t. */
 static ossl_inline uint64_t constant_time_msb_64(uint64_t a);

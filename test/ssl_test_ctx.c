@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../e_os.h"
 #include <string.h>
 
 #include <openssl/e_os2.h>
@@ -16,6 +15,10 @@
 #include "internal/nelem.h"
 #include "ssl_test_ctx.h"
 #include "testutil.h"
+
+#ifdef OPENSSL_SYS_WINDOWS
+# define strcasecmp _stricmp
+#endif
 
 static const int default_app_data_size = 256;
 /* Default set to be as small as possible to exercise fragmentation. */

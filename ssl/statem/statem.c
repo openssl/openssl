@@ -135,7 +135,7 @@ void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
 #define check_fatal(s, f) \
     do { \
         if (!ossl_assert((s)->statem.in_init \
-                         || (s)->statem.state != MSG_FLOW_ERROR)) \
+                         && (s)->statem.state == MSG_FLOW_ERROR)) \
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, (f), \
                      SSL_R_MISSING_FATAL); \
     } while (0)
@@ -311,7 +311,11 @@ static int state_machine(SSL *s, int server)
 
     st->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
-        if (!SSL_clear(s))
+        /*
+         * If we are stateless then we already called SSL_clear() - don't do
+         * it again and clear the STATELESS flag itself.
+         */
+        if ((s->s3->flags & TLS1_FLAGS_STATELESS) == 0 && !SSL_clear(s))
             return -1;
     }
 #ifndef OPENSSL_NO_SCTP

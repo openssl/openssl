@@ -60,18 +60,22 @@ int ssl3_setup_read_buffer(SSL *s)
 #endif
         if (b->default_len > len)
             len = b->default_len;
-        if ((p = OPENSSL_malloc(len)) == NULL)
-            goto err;
+        if ((p = OPENSSL_malloc(len)) == NULL) {
+            /*
+             * We've got a malloc failure, and we're still initialising buffers.
+             * We assume we're so doomed that we won't even be able to send an
+             * alert.
+             */
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_SETUP_READ_BUFFER,
+                     ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
         b->buf = p;
         b->len = len;
     }
 
     RECORD_LAYER_set_packet(&s->rlayer, &(b->buf[0]));
     return 1;
-
- err:
-    SSLerr(SSL_F_SSL3_SETUP_READ_BUFFER, ERR_R_MALLOC_FAILURE);
-    return 0;
 }
 
 int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
@@ -116,7 +120,12 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
             p = OPENSSL_malloc(len);
             if (p == NULL) {
                 s->rlayer.numwpipes = currpipe;
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                /*
+                 * We've got a malloc failure, and we're still initialising
+                 * buffers. We assume we're so doomed that we won't even be able
+                 * to send an alert.
+                 */
+                SSLfatal(s, SSL_AD_NO_ALERT,
                          SSL_F_SSL3_SETUP_WRITE_BUFFER, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -131,8 +140,10 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
 
 int ssl3_setup_buffers(SSL *s)
 {
-    if (!ssl3_setup_read_buffer(s))
+    if (!ssl3_setup_read_buffer(s)) {
+        /* SSLfatal() already called */
         return 0;
+    }
     if (!ssl3_setup_write_buffer(s, 1, 0)) {
         /* SSLfatal() already called */
         return 0;

@@ -284,12 +284,13 @@ extern "C" {
 
 # define TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE       0x0400
 
+# define TLS1_FLAGS_STATELESS                    0x0800
+
 # define SSL3_MT_HELLO_REQUEST                   0
 # define SSL3_MT_CLIENT_HELLO                    1
 # define SSL3_MT_SERVER_HELLO                    2
 # define SSL3_MT_NEWSESSION_TICKET               4
 # define SSL3_MT_END_OF_EARLY_DATA               5
-# define SSL3_MT_HELLO_RETRY_REQUEST             6
 # define SSL3_MT_ENCRYPTED_EXTENSIONS            8
 # define SSL3_MT_CERTIFICATE                     11
 # define SSL3_MT_SERVER_KEY_EXCHANGE             12

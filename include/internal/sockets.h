@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -116,10 +116,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 # endif
 
 /*
- * Some IPv6 implementations are broken, disable them in known bad versions.
+ * Some IPv6 implementations are broken, you can disable them in known
+ * bad versions.
  */
 # if !defined(OPENSSL_USE_IPV6)
-#  if defined(AF_INET6) && !defined(NETWARE_CLIB)
+#  if defined(AF_INET6)
 #   define OPENSSL_USE_IPV6 1
 #  else
 #   define OPENSSL_USE_IPV6 0

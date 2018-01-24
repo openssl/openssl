@@ -61,11 +61,11 @@ static const BIO_METHOD methods_acceptp = {
     bread_conv,
     acpt_read,
     acpt_puts,
-    NULL,                       /* connect_gets, */
+    NULL,                       /* connect_gets,         */
     acpt_ctrl,
     acpt_new,
     acpt_free,
-    NULL,
+    NULL,                       /* connect_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_accept(void)
@@ -450,7 +450,6 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
             data->accepted_mode &= ~BIO_SOCK_NONBLOCK;
         break;
     case BIO_C_SET_FD:
-        b->init = 1;
         b->num = *((int *)ptr);
         data->accept_sock = b->num;
         data->state = ACPT_S_ACCEPT;

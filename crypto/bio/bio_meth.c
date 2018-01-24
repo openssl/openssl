@@ -200,14 +200,14 @@ int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy) (BIO *))
     return 1;
 }
 
-long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom)) (BIO *, int, bio_info_cb *)
+long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom)) (BIO *, int, BIO_info_cb *)
 {
     return biom->callback_ctrl;
 }
 
 int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                long (*callback_ctrl) (BIO *, int,
-                                                      bio_info_cb *))
+                                                      BIO_info_cb *))
 {
     biom->callback_ctrl = callback_ctrl;
     return 1;

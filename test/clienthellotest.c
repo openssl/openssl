@@ -90,6 +90,8 @@ static int test_client_hello(int currtest)
     case TEST_ADD_PADDING:
     case TEST_PADDING_NOT_NEEDED:
         SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
+        /* Make sure we get a consistent size across TLS versions */
+        SSL_CTX_clear_options(ctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
         /*
          * Add some dummy ALPN protocols so that the ClientHello is at least
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
