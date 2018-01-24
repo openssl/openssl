@@ -251,6 +251,9 @@ int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
 int OCSP_basic_sign(OCSP_BASICRESP *brsp,
                     X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
                     STACK_OF(X509) *certs, unsigned long flags);
+int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
+                        X509 *signer, EVP_MD_CTX *ctx,
+                        STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);

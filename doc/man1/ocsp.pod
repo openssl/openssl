@@ -81,6 +81,7 @@ B<openssl> B<ocsp>
 [B<-rsigner file>]
 [B<-rkey file>]
 [B<-rother file>]
+[B<-rsigopt nm:v>]
 [B<-resp_no_certs>]
 [B<-nmin n>]
 [B<-ndays n>]
@@ -339,6 +340,11 @@ subject name.
 
 The private key to sign OCSP responses with: if not present the file
 specified in the B<rsigner> option is used.
+
+=item B<-rsigopt nm:v>
+
+Pass options to the signature algorithm when signing OCSP responses.
+Names and values of these options are algorithm-specific.
 
 =item B<-port portnum>
 
