@@ -293,11 +293,12 @@ int srp_main(int argc, char **argv)
                    "Exactly one of the options -add, -delete, -modify -list must be specified.\n");
         goto opthelp;
     }
-    if ((mode == OPT_DELETE || mode == OPT_MODIFY || mode == OPT_ADD)
-        && argc < 1) {
-        BIO_printf(bio_err,
-                   "Need at least one user for options -add, -delete, -modify. \n");
-        goto opthelp;
+    if (mode == OPT_DELETE || mode == OPT_MODIFY || mode == OPT_ADD) {
+        if (argc == 0) {
+            BIO_printf(bio_err, "Need at least one user.\n");
+            goto opthelp;
+        }
+        user = *argv++;
     }
     if ((passinarg || passoutarg) && argc != 1) {
         BIO_printf(bio_err,
@@ -391,10 +392,7 @@ int srp_main(int argc, char **argv)
     if (verbose > 1)
         BIO_printf(bio_err, "Starting user processing\n");
 
-    if (argc > 0)
-        user = *(argv++);
-
-    while (mode == OPT_LIST || user) {
+    while (mode == OPT_LIST || user != NULL) {
         int userindex = -1;
 
         if (user != NULL && verbose > 1)
@@ -557,9 +555,8 @@ int srp_main(int argc, char **argv)
                 doupdatedb = 1;
             }
         }
-        if (--argc > 0) {
-            user = *(argv++);
-        } else {
+        user = *argv++;
+        if (user == NULL) {
             /* no more processing in any mode if no users left */
             break;
         }
