@@ -35,6 +35,9 @@ typedef unsigned int u_int;
 # include <openssl/bio.h>
 # include <openssl/err.h>
 
+/* Keep track of our peer's address for the cookie callback */
+BIO_ADDR *ourpeer = NULL;
+
 /*
  * init_client - helper routine to set up socket communication
  * @sock: pointer to storage of resulting socket.
@@ -212,8 +215,15 @@ int do_server(int *accept_sock, const char *host, const char *port,
         *accept_sock = asock;
     for (;;) {
         if (type == SOCK_STREAM) {
+            BIO_ADDR_free(ourpeer);
+            ourpeer = BIO_ADDR_new();
+            if (ourpeer == NULL) {
+                BIO_closesocket(asock);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
             do {
-                sock = BIO_accept_ex(asock, NULL, 0);
+                sock = BIO_accept_ex(asock, ourpeer, 0);
             } while (sock < 0 && BIO_sock_should_retry(sock));
             if (sock < 0) {
                 ERR_print_errors(bio_err);
@@ -264,6 +274,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
     if (family == AF_UNIX)
         unlink(host);
 # endif
+    BIO_ADDR_free(ourpeer);
+    ourpeer = NULL;
     return ret;
 }
 

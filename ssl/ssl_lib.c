@@ -590,6 +590,7 @@ int SSL_clear(SSL *s)
     OPENSSL_free(s->psksession_id);
     s->psksession_id = NULL;
     s->psksession_id_len = 0;
+    s->hello_retry_request = 0;
 
     s->error = 0;
     s->hit = 0;
@@ -2938,6 +2939,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         || (RAND_bytes(ret->ext.tick_aes_key,
                        sizeof(ret->ext.tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
+
+    if (RAND_bytes(ret->ext.cookie_hmac_key,
+                   sizeof(ret->ext.cookie_hmac_key)) <= 0)
+        goto err;
 
 #ifndef OPENSSL_NO_SRP
     if (!SSL_CTX_SRP_CTX_init(ret))
@@ -5290,4 +5295,24 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl)
 
     /* return current SSL connection setting */
     return ssl->split_send_fragment;
+}
+
+int SSL_stateless(SSL *s)
+{
+    int ret;
+
+    /* Ensure there is no state left over from a previous invocation */
+    if (!SSL_clear(s))
+        return 0;
+
+    ERR_clear_error();
+
+    s->s3->flags |= TLS1_FLAGS_STATELESS;
+    ret = SSL_accept(s);
+    s->s3->flags &= ~TLS1_FLAGS_STATELESS;
+
+    if (ret > 0 && s->ext.cookieok)
+        return 1;
+
+    return 0;
 }

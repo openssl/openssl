@@ -687,7 +687,8 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
-        if (s->early_data_state != SSL_EARLY_DATA_ACCEPTING)
+        if (s->early_data_state != SSL_EARLY_DATA_ACCEPTING
+                && (s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
             return WORK_FINISHED_CONTINUE;
         /* Fall through */
 
@@ -2303,7 +2304,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
          * Re-initialise the Transcript Hash. We're going to prepopulate it with
          * a synthetic message_hash in place of ClientHello1.
          */
-        if (!create_synthetic_message_hash(s)) {
+        if (!create_synthetic_message_hash(s, NULL, 0, NULL, 0)) {
             /* SSLfatal() already called */
             return 0;
         }

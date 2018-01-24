@@ -114,6 +114,7 @@ static long socket_mtu;
  * code.
  */
 static int dtlslisten = 0;
+static int stateless = 0;
 
 static int early_data = 0;
 static SSL_SESSION *psksess = NULL;
@@ -751,7 +752,7 @@ typedef enum OPTION_choice {
     OPT_UPPER_WWW, OPT_HTTP, OPT_ASYNC, OPT_SSL_CONFIG,
     OPT_MAX_SEND_FRAG, OPT_SPLIT_SEND_FRAG, OPT_MAX_PIPELINES, OPT_READ_BUF,
     OPT_SSL3, OPT_TLS1_3, OPT_TLS1_2, OPT_TLS1_1, OPT_TLS1, OPT_DTLS, OPT_DTLS1,
-    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN,
+    OPT_DTLS1_2, OPT_SCTP, OPT_TIMEOUT, OPT_MTU, OPT_LISTEN, OPT_STATELESS,
     OPT_ID_PREFIX, OPT_SERVERNAME, OPT_SERVERNAME_FATAL,
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
@@ -933,6 +934,7 @@ const OPTIONS s_server_options[] = {
     {"listen", OPT_LISTEN, '-',
      "Listen for a DTLS ClientHello with a cookie and then connect"},
 #endif
+    {"stateless", OPT_STATELESS, '-', "Require TLSv1.3 cookies"},
 #ifndef OPENSSL_NO_DTLS1
     {"dtls1", OPT_DTLS1, '-', "Just talk DTLSv1"},
 #endif
@@ -1496,6 +1498,9 @@ int s_server_main(int argc, char *argv[])
             dtlslisten = 1;
 #endif
             break;
+        case OPT_STATELESS:
+            stateless = 1;
+            break;
         case OPT_ID_PREFIX:
             session_id_prefix = opt_arg();
             break;
@@ -1587,6 +1592,11 @@ int s_server_main(int argc, char *argv[])
         goto end;
     }
 #endif
+
+    if (stateless && socket_type != SOCK_STREAM) {
+        BIO_printf(bio_err, "Can only use --stateless with TLS\n");
+        goto end;
+    }
 
 #ifdef AF_UNIX
     if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
@@ -2691,81 +2701,87 @@ static int init_ssl_connection(SSL *con)
     long verify_err;
     int retry = 0;
 
-#ifndef OPENSSL_NO_DTLS
-    if (dtlslisten) {
+    if (dtlslisten || stateless) {
         BIO_ADDR *client = NULL;
 
-        if ((client = BIO_ADDR_new()) == NULL) {
-            BIO_printf(bio_err, "ERROR - memory\n");
-            return 0;
+        if (dtlslisten) {
+            if ((client = BIO_ADDR_new()) == NULL) {
+                BIO_printf(bio_err, "ERROR - memory\n");
+                return 0;
+            }
+            i = DTLSv1_listen(con, client);
+        } else {
+            i = SSL_stateless(con);
         }
-        i = DTLSv1_listen(con, client);
         if (i > 0) {
             BIO *wbio;
             int fd = -1;
 
-            wbio = SSL_get_wbio(con);
-            if (wbio) {
-                BIO_get_fd(wbio, &fd);
-            }
+            if (dtlslisten) {
+                wbio = SSL_get_wbio(con);
+                if (wbio) {
+                    BIO_get_fd(wbio, &fd);
+                }
 
-            if (!wbio || BIO_connect(fd, client, 0) == 0) {
-                BIO_printf(bio_err, "ERROR - unable to connect\n");
+                if (!wbio || BIO_connect(fd, client, 0) == 0) {
+                    BIO_printf(bio_err, "ERROR - unable to connect\n");
+                    BIO_ADDR_free(client);
+                    return 0;
+                }
                 BIO_ADDR_free(client);
-                return 0;
+                dtlslisten = 0;
+            } else {
+                stateless = 0;
             }
-            BIO_ADDR_free(client);
-            dtlslisten = 0;
             i = SSL_accept(con);
         } else {
             BIO_ADDR_free(client);
         }
-    } else
+    } else {
+        do {
+            i = SSL_accept(con);
+
+            if (i <= 0)
+                retry = is_retryable(con, i);
+#ifdef CERT_CB_TEST_RETRY
+            {
+                while (i <= 0
+                        && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP
+                        && SSL_get_state(con) == TLS_ST_SR_CLNT_HELLO) {
+                    BIO_printf(bio_err,
+                               "LOOKUP from certificate callback during accept\n");
+                    i = SSL_accept(con);
+                    if (i <= 0)
+                        retry = is_retryable(con, i);
+                }
+            }
 #endif
 
-    do {
-        i = SSL_accept(con);
-
-        if (i <= 0)
-            retry = is_retryable(con, i);
-#ifdef CERT_CB_TEST_RETRY
-        {
+#ifndef OPENSSL_NO_SRP
             while (i <= 0
-                    && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP
-                    && SSL_get_state(con) == TLS_ST_SR_CLNT_HELLO) {
-                BIO_printf(bio_err,
-                           "LOOKUP from certificate callback during accept\n");
+                   && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP) {
+                BIO_printf(bio_s_out, "LOOKUP during accept %s\n",
+                           srp_callback_parm.login);
+                SRP_user_pwd_free(srp_callback_parm.user);
+                srp_callback_parm.user =
+                    SRP_VBASE_get1_by_user(srp_callback_parm.vb,
+                                           srp_callback_parm.login);
+                if (srp_callback_parm.user)
+                    BIO_printf(bio_s_out, "LOOKUP done %s\n",
+                               srp_callback_parm.user->info);
+                else
+                    BIO_printf(bio_s_out, "LOOKUP not successful\n");
                 i = SSL_accept(con);
                 if (i <= 0)
                     retry = is_retryable(con, i);
             }
-        }
 #endif
-
-#ifndef OPENSSL_NO_SRP
-        while (i <= 0
-               && SSL_get_error(con, i) == SSL_ERROR_WANT_X509_LOOKUP) {
-            BIO_printf(bio_s_out, "LOOKUP during accept %s\n",
-                       srp_callback_parm.login);
-            SRP_user_pwd_free(srp_callback_parm.user);
-            srp_callback_parm.user =
-                SRP_VBASE_get1_by_user(srp_callback_parm.vb,
-                                       srp_callback_parm.login);
-            if (srp_callback_parm.user)
-                BIO_printf(bio_s_out, "LOOKUP done %s\n",
-                           srp_callback_parm.user->info);
-            else
-                BIO_printf(bio_s_out, "LOOKUP not successful\n");
-            i = SSL_accept(con);
-            if (i <= 0)
-                retry = is_retryable(con, i);
-        }
-#endif
-    } while (i < 0 && SSL_waiting_for_async(con));
+        } while (i < 0 && SSL_waiting_for_async(con));
+    }
 
     if (i <= 0) {
-        if ((dtlslisten && i == 0)
-                || (!dtlslisten && retry)) {
+        if (((dtlslisten || stateless) && i == 0)
+                || (!dtlslisten && !stateless && retry)) {
             BIO_printf(bio_s_out, "DELAY\n");
             return 1;
         }

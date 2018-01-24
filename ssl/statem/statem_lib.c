@@ -1120,6 +1120,17 @@ int tls_get_message_header(SSL *s, int *mt)
                              SSL_R_BAD_CHANGE_CIPHER_SPEC);
                     return 0;
                 }
+                if (s->statem.hand_state == TLS_ST_BEFORE
+                        && (s->s3->flags & TLS1_FLAGS_STATELESS) != 0) {
+                    /*
+                     * We are stateless and we received a CCS. Probably this is
+                     * from a client between the first and second ClientHellos.
+                     * We should ignore this, but return an error because we do
+                     * not return success until we see the second ClientHello
+                     * with a valid cookie.
+                     */
+                    return 0;
+                }
                 s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
                 s->init_num = readbytes - 1;
                 s->init_msg = s->init_buf->data;
@@ -2033,19 +2044,25 @@ int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
 #endif
 
 /* Replace ClientHello1 in the transcript hash with a synthetic message */
-int create_synthetic_message_hash(SSL *s)
+int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
+                                  size_t hashlen, const unsigned char *hrr,
+                                  size_t hrrlen)
 {
-    unsigned char hashval[EVP_MAX_MD_SIZE];
-    size_t hashlen = 0;
+    unsigned char hashvaltmp[EVP_MAX_MD_SIZE];
     unsigned char msghdr[SSL3_HM_HEADER_LENGTH];
 
     memset(msghdr, 0, sizeof(msghdr));
 
-    /* Get the hash of the initial ClientHello */
-    if (!ssl3_digest_cached_records(s, 0)
-            || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
-        /* SSLfatal() already called */
-        return 0;
+    if (hashval == NULL) {
+        hashval = hashvaltmp;
+        hashlen = 0;
+        /* Get the hash of the initial ClientHello */
+        if (!ssl3_digest_cached_records(s, 0)
+                || !ssl_handshake_hash(s, hashvaltmp, sizeof(hashvaltmp),
+                                       &hashlen)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
     }
 
     /* Reinitialise the transcript hash */
@@ -2059,6 +2076,20 @@ int create_synthetic_message_hash(SSL *s)
     msghdr[SSL3_HM_HEADER_LENGTH - 1] = (unsigned char)hashlen;
     if (!ssl3_finish_mac(s, msghdr, SSL3_HM_HEADER_LENGTH)
             || !ssl3_finish_mac(s, hashval, hashlen)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    /*
+     * Now re-inject the HRR and current message if appropriate (we just deleted
+     * it when we reinitialised the transcript hash above). Only necessary after
+     * receiving a ClientHello2 with a cookie.
+     */
+    if (hrr != NULL
+            && (!ssl3_finish_mac(s, hrr, hrrlen)
+                || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                    s->s3->tmp.message_size
+                                    + SSL3_HM_HEADER_LENGTH))) {
         /* SSLfatal() already called */
         return 0;
     }
