@@ -133,71 +133,22 @@ my @known_platforms = ( "__FreeBSD__", "PERL5",
 			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "_WIN32"
 			);
 my @known_ossl_platforms = ( "UNIX", "VMS", "WIN32", "WINNT", "OS2" );
-my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
-			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
-			 "SHA256", "SHA512", "RMD160",
-			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "EC2M",
-			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST",
-                         "SCRYPT", "CHACHA", "POLY1305", "BLAKE2",
-			 # EC_NISTP_64_GCC_128
-			 "EC_NISTP_64_GCC_128",
-			 # Envelope "algorithms"
-			 "EVP", "X509", "ASN1_TYPEDEFS",
-			 # Helper "algorithms"
-			 "BIO", "COMP", "BUFFER", "LHASH", "STACK", "ERR",
-			 "LOCKING",
-			 # External "algorithms"
-			 "FP_API", "STDIO", "SOCK", "DGRAM",
-                         "CRYPTO_MDEBUG",
-			 # Engines
-                         "STATIC_ENGINE", "ENGINE", "HW", "GMP",
-			 # Entropy Gathering
-			 "EGD",
-			 # Certificate Transparency
-			 "CT",
-			 # RFC3779
-			 "RFC3779",
-			 # TLS
-			 "PSK", "SRP", "HEARTBEATS",
-			 # CMS
-			 "CMS",
-                         "OCSP",
-			 # CryptoAPI Engine
-			 "CAPIENG",
-			 # SSL methods
-			 "SSL3_METHOD", "TLS1_METHOD", "TLS1_1_METHOD", "TLS1_2_METHOD", "DTLS1_METHOD", "DTLS1_2_METHOD",
-			 # NEXTPROTONEG
-			 "NEXTPROTONEG",
-			 # Deprecated functions
+my @known_algorithms = ( # These are algorithms we know are guarded in relevant
+			 # header files, but aren't actually disablable.
+			 # Without these, this script will warn a lot.
+			 "RSA", "MD5",
+			 # @disablables comes from configdata.pm
+			 map { (my $x = uc $_) =~ s|-|_|g; $x; } @disablables,
+			 # Deprecated functions.  Not really algorithmss, but
+			 # treated as such here for the sake of simplicity
 			 "DEPRECATEDIN_0_9_8",
 			 "DEPRECATEDIN_1_0_0",
 			 "DEPRECATEDIN_1_1_0",
-			 # SCTP
-		 	 "SCTP",
-			 # SRTP
-			 "SRTP",
-			 # SSL TRACE
-		 	 "SSL_TRACE",
-			 # Unit testing
-		 	 "UNIT_TEST",
-			 # User Interface
-			 "UI",
-			 #
-			 "TS",
-			 # OCB mode
-			 "OCB",
-			 "CMAC",
-                         # APPLINK (win build feature?)
-                         "APPLINK"
                      );
 
-my %disabled_algorithms;
-
-foreach (@known_algorithms) {
-    $disabled_algorithms{$_} = 0;
-}
-# disabled by default
-$disabled_algorithms{"STATIC_ENGINE"} = 1;
+# %disabled comes from configdata.pm
+my %disabled_algorithms =
+    map { (my $x = uc $_) =~ s|-|_|g; $x => 1; } keys %disabled;
 
 my $zlib;
 
