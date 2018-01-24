@@ -762,6 +762,9 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_SEED
     BIO_puts(bio_out, "SEED\n");
 #endif
+#ifdef OPENSSL_NO_SM2
+    BIO_puts(bio_out, "SM2\n");
+#endif
 #ifdef OPENSSL_NO_SM3
     BIO_puts(bio_out, "SM3\n");
 #endif
