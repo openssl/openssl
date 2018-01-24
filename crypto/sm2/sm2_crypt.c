@@ -303,6 +303,7 @@ int SM2_decrypt(const EC_KEY *key,
         goto done;
 
     rc = 1;
+    *ptext_len = msg_len;
 
  done:
 

@@ -17,7 +17,7 @@
 #include "internal/evp_int.h"
 
 #if !defined(OPENSSL_NO_SM2)
-  #include <openssl/sm2.h>
+# include <openssl/sm2.h>
 #endif
 
 /* EC pkey context structure */
@@ -123,13 +123,12 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
     if (ec_nid == NID_sm2) {
 #if defined(OPENSSL_NO_SM2)
-       ret = -1;
+        ret = -1;
 #else
-       ret = SM2_sign(type, tbs, tbslen, sig, &sltmp, ec);
+        ret = SM2_sign(type, tbs, tbslen, sig, &sltmp, ec);
 #endif
-    }
-    else {
-       ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
+    } else {
+        ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
     }
 
     if (ret <= 0)
@@ -154,22 +153,19 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
 
     if (ec_nid == NID_sm2) {
 #if defined(OPENSSL_NO_SM2)
-       ret = -1;
+        ret = -1;
 #else
-       ret = SM2_verify(type, tbs, tbslen, sig, siglen, ec);
+        ret = SM2_verify(type, tbs, tbslen, sig, siglen, ec);
 #endif
+    } else {
+        ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
     }
-    else {
-       ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
-    }
-
 
     return ret;
 }
 
 #ifndef OPENSSL_NO_EC
-static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-                          size_t *keylen)
+static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 {
     int ret;
     size_t outlen;
@@ -203,6 +199,68 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         return 0;
     *keylen = ret;
     return 1;
+}
+
+static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
+                              unsigned char *out, size_t *outlen,
+                              const unsigned char *in, size_t inlen)
+{
+    int ret, md_type;
+    EC_PKEY_CTX *dctx = ctx->data;
+    EC_KEY *ec = ctx->pkey->pkey.ec;
+    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+
+    if (dctx->md)
+        md_type = EVP_MD_type(dctx->md);
+    else if (ec_nid == NID_sm2)
+        md_type = NID_sm3;
+    else
+        md_type = NID_sha256;
+
+    if (ec_nid == NID_sm2) {
+# if defined(OPENSSL_NO_SM2)
+        ret = -1;
+# else
+        ret = SM2_encrypt(ec, EVP_get_digestbynid(md_type),
+                          in, inlen, out, outlen);
+# endif
+    } else {
+        /* standard ECIES not implemented */
+        ret = -1;
+    }
+
+    return ret;
+}
+
+static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
+                              unsigned char *out, size_t *outlen,
+                              const unsigned char *in, size_t inlen)
+{
+    int ret, md_type;
+    EC_PKEY_CTX *dctx = ctx->data;
+    EC_KEY *ec = ctx->pkey->pkey.ec;
+    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+
+    if (dctx->md)
+        md_type = EVP_MD_type(dctx->md);
+    else if (ec_nid == NID_sm2)
+        md_type = NID_sm3;
+    else
+        md_type = NID_sha256;
+
+    if (ec_nid == NID_sm2) {
+# if defined(OPENSSL_NO_SM2)
+        ret = -1;
+# else
+        ret = SM2_decrypt(ec, EVP_get_digestbynid(md_type),
+                          in, inlen, out, outlen);
+# endif
+    } else {
+        /* standard ECIES not implemented */
+        ret = -1;
+    }
+
+    return ret;
 }
 
 static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
@@ -269,8 +327,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 return dctx->cofactor_mode;
             else {
                 EC_KEY *ec_key = ctx->pkey->pkey.ec;
-                return EC_KEY_get_flags(ec_key) & EC_FLAG_COFACTOR_ECDH ? 1 :
-                    0;
+                return EC_KEY_get_flags(ec_key) & EC_FLAG_COFACTOR_ECDH ? 1 : 0;
             }
         } else if (p1 < -1 || p1 > 1)
             return -2;
@@ -453,7 +510,7 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 const EVP_PKEY_METHOD ec_pkey_meth = {
     EVP_PKEY_EC,
-    0,
+    EVP_PKEY_FLAG_AUTOARGLEN,
     pkey_ec_init,
     pkey_ec_copy,
     pkey_ec_cleanup,
@@ -474,9 +531,11 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
 
     0, 0, 0, 0,
 
-    0, 0,
+    0,
+    pkey_ecies_encrypt,
 
-    0, 0,
+    0,
+    pkey_ecies_decrypt,
 
     0,
 #ifndef OPENSSL_NO_EC
