@@ -334,6 +334,7 @@ int list_main(int argc, char **argv)
         switch (o) {
         case OPT_EOF:  /* Never hit, but suppresses warning */
         case OPT_ERR:
+opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
             return 1;
         case OPT_HELP:
@@ -363,11 +364,13 @@ int list_main(int argc, char **argv)
         }
         done = 1;
     }
-
-    if (!done) {
-        BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-        return 1;
+    if (opt_num_rest() != 0) {
+        BIO_printf(bio_err, "Extra arguments given.\n");
+        goto opthelp;
     }
+
+    if (!done)
+        goto opthelp;
 
     return 0;
 }
