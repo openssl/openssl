@@ -239,7 +239,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 
     if (!EVP_DigestSignInit(ctx, &pkctx, dgst, NULL, key)) {
         EVP_MD_CTX_free(ctx);
-        return 1;
+        return 0;
     }
     i = OCSP_basic_sign_ctx(brsp, signer, ctx, certs, flags);
     EVP_MD_CTX_free(ctx);

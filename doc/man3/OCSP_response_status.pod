@@ -4,7 +4,8 @@
 
 OCSP_response_status, OCSP_response_get1_basic, OCSP_response_create,
 OCSP_RESPONSE_free, OCSP_RESPID_set_by_name,
-OCSP_RESPID_set_by_key, OCSP_RESPID_match - OCSP response functions
+OCSP_RESPID_set_by_key, OCSP_RESPID_match,
+OCSP_basic_sign, OCSP_basic_sign_ctx - OCSP response functions
 
 =head1 SYNOPSIS
 
@@ -18,6 +19,12 @@ OCSP_RESPID_set_by_key, OCSP_RESPID_match - OCSP response functions
  int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
  int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
  int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
+
+ int OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
+                     const EVP_MD *dgst, STACK_OF(X509) *certs,
+                     unsigned long flags);
+ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp, X509 *signer, EVP_MD_CTX *ctx,
+                         STACK_OF(X509) *certs, unsigned long flags);
 
 =head1 DESCRIPTION
 
@@ -49,6 +56,13 @@ setting.
 OCSP_RESPID_match() tests whether the OCSP_RESPID given in B<respid> matches
 with the X509 certificate B<cert>.
 
+OCSP_basic_sign() signs OCSP response brsp using certificate signer, private key
+key, digest dgst and additional certificates certs. If the flags option
+OCSP_NOCERTS is set then no certificates will be included in the request. If the
+flags option OCSP_RESPID_KEY is set then the responder is identified by key ID
+rather than by name. OCSP_basic_sign_ctx() also signs OCSP response brsp but
+uses the parameters contained in digest context ctx.
+
 =head1 RETURN VALUES
 
 OCSP_RESPONSE_status() returns a status value.
@@ -61,7 +75,8 @@ if an error occurred.
 
 OCSP_RESPONSE_free() does not return a value.
 
-OCSP_RESPID_set_by_name() and OCSP_RESPID_set_by_key() return 1 on success or 0
+OCSP_RESPID_set_by_name(), OCSP_RESPID_set_by_key(), OCSP_basic_sign(), and
+OCSP_basic_sign_ctx() return 1 on success or 0
 on failure.
 
 OCSP_RESPID_match() returns 1 if the OCSP_RESPID and the X509 certificate match
@@ -87,6 +102,8 @@ L<OCSP_RESPID_free(3)>
 
 The OCSP_RESPID_set_by_name(), OCSP_RESPID_set_by_key() and OCSP_RESPID_match()
 functions were added in OpenSSL 1.1.0a.
+
+The OCSP_basic_sign_ctx() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
