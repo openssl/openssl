@@ -265,8 +265,8 @@ int enc_main(int argc, char **argv)
             break;
         case OPT_PBKDF2:
             pbkdf2 = 1;
-            if (iter == 0)    /* do not overwrite a choosen value */
-                iter = 10000; /* update to a better default value ? */
+            if (iter == 0)    /* do not overwrite a chosen value */
+                iter = 10000;
             break;
         case OPT_NONE:
             cipher = NULL;
@@ -459,8 +459,10 @@ int enc_main(int argc, char **argv)
             }
 
             if (pbkdf2 == 1) {
-                /* generate key and default iv
-                concatenated into a temporary buffer */
+                /*
+                * generate key and default iv
+                * concatenated into a temporary buffer
+                */
                 unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
                 int iklen = EVP_CIPHER_key_length(cipher);
                 int ivlen = EVP_CIPHER_iv_length(cipher);
@@ -475,7 +477,8 @@ int enc_main(int argc, char **argv)
                 memcpy(key, tmpkeyiv, iklen);
                 memcpy(iv, tmpkeyiv+iklen, ivlen);
             } else {
-                BIO_printf(bio_err, "*** WARNING : legacy KDF used. "
+                BIO_printf(bio_err, "*** WARNING : "
+                                    "deprecated key generation used.\n"
                                     "Using -iter or -pbkdf2 would be better.\n");
                 if (!EVP_BytesToKey(cipher, dgst, sptr,
                                     (unsigned char *)str, str_len,
