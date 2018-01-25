@@ -926,7 +926,7 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client, int nfd)
     unsigned char seq[SEQ_NUM_SIZE];
     BIO_ADDR     *ouraddr;
     BIO *rbio,   *wbio;
-    BIO *rbio_c, *wbio_c;
+    BIO *rbio_c;
     SSL3_BUFFER *rb;
 
     ouraddr = BIO_ADDR_new();
@@ -989,11 +989,20 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client, int nfd)
      */
     SSL_set_options(connection, SSL_OP_COOKIE_EXCHANGE);
 
+    ret = -1;
+
     /*
      * Tell the state machine that we've done the initial hello verify
      * exchange
      */
     ossl_statem_set_hello_verify_done(connection);
+
+    /* dig the address pairs out of s */
+    if (BIO_dgram_get_peer(rbio, client) <= 0)
+      goto end;
+
+    if (BIO_dgram_get_addr(rbio, ouraddr) <= 0)
+      goto end;
 
     /*
      * now set up a socket based upon the original rbio's peer/addr
@@ -1005,11 +1014,8 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client, int nfd)
       goto end;
     }
 
-    if(!rbio_c) {
-      rbio_c   = BIO_new_dgram(nfd, 0);
-      wbio_c   = rbio_c;
-    }
-    SSL_set_bio(connection, rbio_c, wbio_c);
+    rbio_c   = BIO_new_dgram(nfd, 0);
+    SSL_set_bio(connection, rbio_c, rbio_c);
 
     ret = 1;
 
