@@ -920,7 +920,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
  * to the client based upon BIO_dgram_get_peer/BIO_dgram_get_addr.
  *
  */
-int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client)
+int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client, int nfd)
 {
     int ret = 0;
     unsigned char seq[SEQ_NUM_SIZE];
@@ -928,7 +928,6 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client)
     BIO *rbio,   *wbio;
     BIO *rbio_c, *wbio_c;
     SSL3_BUFFER *rb;
-    int  rfd = -1, wfd = -1;
 
     ouraddr = BIO_ADDR_new();
     if(ouraddr == NULL) goto end;
@@ -999,44 +998,18 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client)
     /*
      * now set up a socket based upon the original rbio's peer/addr
      */
-    /* see if there an FD burried in the rbio */
-    rbio_c = SSL_get_rbio(connection);
-    wbio_c = SSL_get_wbio(connection);
-    if(rbio_c) {
-      rfd    = BIO_get_fd(rbio_c, NULL);
-    }
-    if(wbio_c) {
-      wfd    = BIO_get_fd(wbio_c, NULL);
-    }
-
-    /* dig the address peers out of s */
-    if (BIO_dgram_get_peer(rbio, client) <= 0)
-      goto end;
-
-    if (BIO_dgram_get_addr(rbio, ouraddr) <= 0)
-      goto end;
-
-    if(rfd == -1 || wfd == -1) {
-      int socket_type = SOCK_DGRAM;
-      int family      = BIO_ADDR_family(client);
-      int protocol    = 0;  /* UDP has nothing here */
-      int one         = 1;
-
-      rfd = socket(family, socket_type, protocol);
-      if(setsockopt(rfd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) {
-        goto end;
-      }
-      wfd = rfd;
-    }
-
-    if(bind(rfd,BIO_ADDR_sockaddr(ouraddr),BIO_ADDR_sockaddr_size(ouraddr)) != 0){
+    if(bind(nfd,BIO_ADDR_sockaddr(ouraddr),BIO_ADDR_sockaddr_size(ouraddr)) != 0){
       goto end;
     }
-    if(connect(rfd,BIO_ADDR_sockaddr(client),BIO_ADDR_sockaddr_size(client)) != 0) {
+    if(connect(nfd,BIO_ADDR_sockaddr(client),BIO_ADDR_sockaddr_size(client)) != 0) {
       goto end;
     }
 
-    SSL_set_fd(connection, rfd);
+    if(!rbio_c) {
+      rbio_c   = BIO_new_dgram(nfd, 0);
+      wbio_c   = rbio_c;
+    }
+    SSL_set_bio(connection, rbio_c, wbio_c);
 
     ret = 1;
 

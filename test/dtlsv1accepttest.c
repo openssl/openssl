@@ -105,6 +105,7 @@ static int dtls_accept_test(int unused)
     struct sockaddr_in6 loopback;
     socklen_t           loopback_len;
     int listen_fd   = -1;
+    int conn_fd     = -1;
     int client_count = 0;
 
     /* initialize loopback socket addr */
@@ -140,7 +141,11 @@ static int dtls_accept_test(int unused)
     listen_fd = socket(family, socket_type, protocol);
     if(listen_fd < 0) goto err;
 
+    conn_fd   = socket(family, socket_type, protocol);
+    if(conn_fd < 0) goto err;
+
     if(setsockopt(listen_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) goto err;
+    if(setsockopt(conn_fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) != 0) goto err;
 
     stage = "ssl";
     if (!TEST_ptr(ssl = SSL_new(ctx)))
@@ -179,7 +184,7 @@ static int dtls_accept_test(int unused)
     alarm(60);
 
     while(client_count < CLIENT_TEST_COUNT &&
-          (ret = DTLSv1_accept(ssl, connection, peer)) != -1) {
+          (ret = DTLSv1_accept(ssl, connection, peer, conn_fd)) != -1) {
       pid_t          pid;
       int            i;
       unsigned short port;
