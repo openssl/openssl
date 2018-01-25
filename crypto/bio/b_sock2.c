@@ -175,8 +175,10 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
         return 0;
 
 # ifndef OPENSSL_SYS_WINDOWS
-    /* SO_REUSEADDR has different behavior on Windows than on
-     * other operating systems, don't set it there. */
+    /*
+     * SO_REUSEADDR has different behavior on Windows than on
+     * other operating systems, don't set it there.
+     */
     if (options & BIO_SOCK_REUSEADDR) {
         if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
                        (const void *)&on, sizeof(on)) != 0) {
@@ -206,7 +208,12 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
     }
 
 # ifdef IPV6_V6ONLY
-    if ((options & BIO_SOCK_V6_ONLY) && BIO_ADDR_family(addr) == AF_INET6) {
+    if (BIO_ADDR_family(addr) == AF_INET6) {
+        /*
+         * Note: Windows default of IPV6_V6ONLY is ON, and Linux is OFF.
+         * Therefore we always have to use setsockopt here.
+         */
+        on = options & BIO_SOCK_V6_ONLY ? 1 : 0;
         if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY,
                        (const void *)&on, sizeof(on)) != 0) {
             SYSerr(SYS_F_SETSOCKOPT, get_last_socket_error());
