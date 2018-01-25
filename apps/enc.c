@@ -460,7 +460,7 @@ int enc_main(int argc, char **argv)
 
             if (pbkdf2 == 1) {
                 /*
-                * generate key and default iv
+                * derive key and default iv
                 * concatenated into a temporary buffer
                 */
                 unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
@@ -478,7 +478,7 @@ int enc_main(int argc, char **argv)
                 memcpy(iv, tmpkeyiv+iklen, ivlen);
             } else {
                 BIO_printf(bio_err, "*** WARNING : "
-                                    "deprecated key generation used.\n"
+                                    "deprecated key derivation used.\n"
                                     "Using -iter or -pbkdf2 would be better.\n");
                 if (!EVP_BytesToKey(cipher, dgst, sptr,
                                     (unsigned char *)str, str_len,
