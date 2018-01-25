@@ -955,7 +955,7 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client, int nfd)
       goto end;
     }
 
-    /* At this point, there is a real ClientHello in s->init_buf */
+    /* At this point, there is a real ClientHello in serv->init_buf */
 
     /*
      * We need to move the init_buf over to connection, set up
@@ -968,7 +968,7 @@ int DTLSv1_accept(SSL *serv, SSL *connection, BIO_ADDR *client, int nfd)
       }
     }
 
-    memcpy(rb->buf, serv->init_buf, serv->init_num);
+    memcpy(rb->buf, serv->init_buf->data, serv->init_num);
     rb->offset = 0;
     rb->left   = serv->init_num;
 
