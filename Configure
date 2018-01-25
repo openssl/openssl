@@ -1387,7 +1387,7 @@ else               { $no_user_defines=1;    }
 
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
-    if ($target =~ m/^linux/) {
+    if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
         my $minver = 4*10000 + 1*100 + 0;
         if ($config{cross_compile_prefix} eq "") {
             my $verstr = `uname -r`;
