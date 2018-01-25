@@ -660,7 +660,7 @@ static int dgram_get_sockname(BIO *b)
     data = (bio_dgram_data *)b->ptr;
 
     if(data->addr.sa.sa_family == 0) {
-      socklen_t addr_len = sizeof(data->addr.sa);
+      socklen_t addr_len = sizeof(data->addr);
 
       if (getsockname(b->num, &data->addr.sa, &addr_len) < 0) {
         return -1;
@@ -848,7 +848,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_CTRL_DGRAM_GET_PEER:
         if(data->peer.sa.sa_family == 0) {
-          socklen_t addr_len = sizeof(data->peer.sa);
+          socklen_t addr_len = sizeof(data->peer);
 
           if (getpeername(b->num, &data->peer.sa, &addr_len) < 0) {
             ret = 0;
@@ -862,6 +862,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
             num = ret;
         memcpy(ptr, &data->peer, (ret = num));
         break;
+
     case BIO_CTRL_DGRAM_SET_PEER:
         BIO_ADDR_make(&data->peer, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
@@ -875,6 +876,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
             num = ret;
         memcpy(ptr, &data->addr, (ret = num));
         break;
+
     case BIO_CTRL_DGRAM_SET_ADDR:
         BIO_ADDR_make(&data->addr, BIO_ADDR_sockaddr((BIO_ADDR *)ptr));
         break;
