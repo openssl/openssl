@@ -78,7 +78,7 @@ The short or long name values for digests can be used in a string (for
 example "MD5", "SHA1", "SHA224", "SHA256", "SHA384", "SHA512") and
 the public key algorithm strings "RSA", "RSA-PSS", "DSA" or "ECDSA".
 
-The TLS 1.3 signature scheme names (such as "rsa_pss_sha256") can also
+The TLS 1.3 signature scheme names (such as "rsa_pss_pss_sha256") can also
 be used with the B<_list> forms of the API.
 
 The use of MD5 as a digest is strongly discouraged due to security weaknesses.
