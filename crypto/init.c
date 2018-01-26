@@ -421,6 +421,7 @@ void OPENSSL_cleanup(void)
     stop_handlers = NULL;
 
     CRYPTO_THREAD_lock_free(init_lock);
+    init_lock = NULL;
 
     /*
      * We assume we are single-threaded for this function, i.e. no race
