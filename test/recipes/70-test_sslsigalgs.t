@@ -169,7 +169,7 @@ SKIP: {
     ok(TLSProxy::Message->success, "PSS only sigalgs in TLSv1.2");
 
     #Test 14: Responding with a sig alg we did not send in TLSv1.2 should fail
-    #         We send rsa_pkcs1_sha256 and respond with rsa_pss_sha256
+    #         We send rsa_pkcs1_sha256 and respond with rsa_pss_rsae_sha256
     #         TODO(TLS1.3): Add a similar test to the TLSv1.3 section above
     #         when we have an API capable of configuring the TLSv1.3 sig algs
     $proxy->clear();
