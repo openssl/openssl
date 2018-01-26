@@ -187,17 +187,19 @@ int do_server(int *accept_sock, const char *host, const char *port,
     sock_protocol = BIO_ADDRINFO_protocol(res);
     sock_address = BIO_ADDRINFO_address(res);
     next = BIO_ADDRINFO_next(res);
-    if(sock_family == AF_INET6)
+    if (sock_family == AF_INET6)
         sock_options |= BIO_SOCK_V6_ONLY;
     if (next != NULL
-        && BIO_ADDRINFO_socktype(next) == sock_type
-        && BIO_ADDRINFO_protocol(next) == sock_protocol) {
-        if (sock_family == AF_INET && BIO_ADDRINFO_family(next) == AF_INET6) {
+            && BIO_ADDRINFO_socktype(next) == sock_type
+            && BIO_ADDRINFO_protocol(next) == sock_protocol) {
+        if (sock_family == AF_INET
+                && BIO_ADDRINFO_family(next) == AF_INET6) {
             sock_family = AF_INET6;
             sock_address = BIO_ADDRINFO_address(next);
-        }
-        else if (sock_family == AF_INET6 && BIO_ADDRINFO_family(next) == AF_INET)
+        } else if (sock_family == AF_INET6
+                   && BIO_ADDRINFO_family(next) == AF_INET) {
             sock_options &= ~BIO_SOCK_V6_ONLY;
+        }
     }
 
     asock = BIO_socket(sock_family, sock_type, sock_protocol, 0);
