@@ -185,24 +185,22 @@ ECHO = echo
 
 CROSS_COMPILE= {- $config{cross_compile_prefix} -}
 CPPFLAGS={- our $cppflags = join(" ",
-                                 (map { "-D".$_}
-                                  @{$target{defines}}, @{$config{defines}}),
-                                 (map { "-I".$_}
-                                  @{$target{includes}}, @{$config{includes}}),
-                                 $target{cppflags}, $config{cppflags}) -}
+                                 (map { "-D".$_} @{$config{defines}}),
+                                 (map { "-I".$_} @{$config{includes}}),
+                                 @{$config{cppflags}}) -}
 CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
-CC= $(CROSS_COMPILE){- $target{cc} -}
-CFLAGS={- $target{cflags} -} {- $config{cflags} -}
-CXX= $(CROSS_COMPILE){- $target{cxx} -}
-CXXFLAGS={- $target{cxxflags} -} {- $config{cxxflags} -} -std=c++11
-LDFLAGS= {- $config{lflags} -} {- $target{lflags} -}
-PLIB_LDFLAGS= {- $target{plib_lflags} -}
-EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
-LIB_CPPFLAGS={- join(" ",
-                     (map { "-D".$_}
-                      'OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                      'ENGINESDIR="\"$(ENGINESDIR)\""'),
-                     $target{shared_cppflag} || "") -}
+CC= $(CROSS_COMPILE){- $config{cc} -}
+CFLAGS={- join(' ', @{$config{cflags}}) -}
+CXX= $(CROSS_COMPILE){- $config{cxx} -}
+CXXFLAGS={- join(' ', @{$config{cxxflags}}) -} -std=c++11
+LDFLAGS= {- join(' ', @{$config{lflags}}) -}
+PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
+EX_LIBS= {- join(' ', @{$config{ex_libs}}) -}
+LIB_CPPFLAGS={- join(' ',
+                     (map { '-D'.$_ }
+                          ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
+                           'ENGINESDIR="\"$(ENGINESDIR)\""')),
+                     $target{shared_cppflag}) || "" -}
 LIB_CFLAGS={- $target{shared_cflag} || "" -}
 LIB_CXXFLAGS={- $target{shared_cxxflag} || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag} -}
@@ -217,12 +215,11 @@ BIN_LDFLAGS={- $target{bin_lflags} || "" -}
 
 PERL={- $config{perl} -}
 
-ARFLAGS= {- $target{arflags} -}
-AR=$(CROSS_COMPILE){- $target{ar} || "ar" -} $(ARFLAGS) r
-RANLIB= {- $target{ranlib} -}
-NM= $(CROSS_COMPILE){- $target{nm} || "nm" -}
-RCFLAGS={- $target{shared_rcflag} -}
+AR=$(CROSS_COMPILE){- $config{ar} -}
+ARFLAGS= {- join(' ', @{$config{arflags}}) -}
+RANLIB= {- $config{ranlib} -}
 RC= $(CROSS_COMPILE){- $target{rc} || "windres" -}
+RCFLAGS={- join(' ', @{$config{rcflags}}) -} {- $target{shared_rcflag} -}
 RM= rm -f
 RMDIR= rmdir
 TAR= {- $target{tar} || "tar" -}
@@ -238,8 +235,8 @@ TARFILE=        ../$(NAME).tar
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-AS=$(CC) -c
-ASFLAG=$(CFLAGS)
+AS={- $config{as} || '$(CC) -c' -}
+ASFLAGS={- join(' ', @{$config{asflags}}) || '$(CFLAGS)' -}
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
 # For x86 assembler: Set PROCESSOR to 386 if you want to support
@@ -1057,7 +1054,7 @@ EOF
       my $objs = join(" ", @objs);
       return <<"EOF";
 $lib$libext: $objs
-	\$(AR) \$\@ \$\?
+	\$(AR) \$(ARFLAGS) \$\@ \$\?
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
   }

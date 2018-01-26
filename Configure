@@ -519,20 +519,82 @@ my $no_sse2=0;
 
 &usage if ($#ARGV < 0);
 
-my $user_cflags="";
-my $user_cppflags=();
-my @user_defines=();
-my @user_includes=();
+# For the "make variables" CINCLUDES and CDEFINES, we support lists with
+# platform specific list separators.  Users from those platforms should
+# recognise those separators from how you set up the PATH to find executables.
+# The default is the Unix like separator, :, but as an exception, we also
+# support the space as separator.
+my $list_separator_re =
+    { VMS           => qr/(?<!\^),/,
+      MSWin32       => qr/(?<!\\);/ } -> {$^O} // qr/(?<!\\)[:\s]/;
+# All the "make variables" we support
+my %user = (
+    AR          => undef,
+    ARFLAGS     => [],
+    AS          => undef,
+    ASFLAGS     => [],
+    CC          => undef,
+    CFLAGS      => [],
+    CXX         => undef,
+    CXXFLAGS    => [],
+    CPP         => undef,
+    CPPFLAGS    => [],  # -D, -I, -Wp,
+    CPPDEFINES  => [],  # Alternative for -D
+    CPPINCLUDES => [],  # Alternative for -I
+    HASHBANGPERL=> undef,
+    LD          => undef,
+    LDFLAGS     => [],  # -L, -Wl,
+    LDLIBS      => [],  # -l
+    MT          => undef,
+    MTFLAGS     => [],
+    RANLIB      => undef,
+    RC          => undef,
+    RCFLAGS     => [],
+    RM          => undef,
+   );
+# The same but for flags given as Configure options.  These are *additional*
+# input, as opposed to the VAR=string option that override the corresponding
+# config target attributes
+my %useradd = (
+    CPPDEFINES  => [],
+    CPPINCLUDES => [],
+    CPPFLAGS    => [],
+    CFLAGS      => [],
+    CXXFLAGS    => [],
+    LDFLAGS     => [],
+    LDLIBS      => [],
+   );
+
+my %user_synonyms = (
+    HASHBANGPERL=> 'PERL',
+    RC          => 'WINDRES',
+   );
+my %user_to_target = (
+    # If not given here, the value is the lc of the key
+    CPPDEFINES  => 'defines',
+    CPPINCLUDES => 'includes',
+    LDFLAGS     => 'lflags',
+    LDLIBS      => 'ex_libs',
+   );
+my %user_defaults = (
+    AR          => 'ar',
+    ARFLAGS     => [ 'r' ],
+    CC          => 'cc',
+    CXX         => 'c++',
+    HASHBANGPERL=> '/usr/bin/env perl', # Only Unix actually cares
+    RANLIB      => sub { which("$config{cross_compile_prefix}ranlib") ?
+                             "\$(CROSS_COMPILE)ranlib" : "true"; },
+    RC          => 'windres',
+   );
+
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
 $config{openssl_other_defines}=[];
-my $ldflags="";
-my $libs="";
-my $target="";
 $config{options}="";
 $config{build_type} = "release";
+my $target="";
 
 my %unsupported_options = ();
 my %deprecated_options = ();
@@ -547,6 +609,16 @@ while (@argvcopy)
 	if (m|^(\w+)=(.+)?$|)
 		{
 		$config{perlenv}->{$1} = $2;
+		# Every time a variable is given as a configuration argument,
+		# it acts as a reset if the variable.
+		if (exists $user{$1})
+			{
+			$user{$1} = ref $user{$1} eq "ARRAY" ? [] : undef;
+			}
+		if (exists $useradd{$1})
+			{
+			$useradd{$1} = [];
+			}
 		next;
 		}
 
@@ -734,15 +806,15 @@ while (@argvcopy)
 			}
 		elsif (/^-L(.*)$/)
 			{
-			$ldflags.=$_." ";
+			push @{$useradd{LDFLAGS}}, $_;
 			}
 		elsif (/^-l(.*)$/ or /^-Wl,/)
 			{
-			$libs.=$_." ";
+			push @{$useradd{LDLIBS}}, $_;
 			}
 		elsif (/^-framework$/)
 			{
-			$libs.=$_." ".shift(@argvcopy)." ";
+			push @{$useradd{LDLIBS}}, $_, shift(@argvcopy);
 			}
 		elsif (/^-rpath$/ or /^-R$/)
 			# -rpath is the OSF1 rpath flag
@@ -750,11 +822,11 @@ while (@argvcopy)
 			{
 			my $rpath = shift(@argvcopy) || "";
 			$rpath .= " " if $rpath ne "";
-			$libs.=$_." ".$rpath;
+			push @{$useradd{LDFLAGS}}, $_, $rpath;
 			}
 		elsif (/^-static$/)
 			{
-			$libs.=$_." ";
+			push @{$useradd{LDFLAGS}}, $_;
 			$disabled{"dso"} = "forced";
 			$disabled{"pic"} = "forced";
 			$disabled{"shared"} = "forced";
@@ -762,20 +834,21 @@ while (@argvcopy)
 			}
 		elsif (/^-D(.*)$/)
 			{
-			push @user_defines, $1;
+			push @{$useradd{CPPDEFINES}}, $1;
 			}
 		elsif (/^-I(.*)$/)
 			{
-			push @user_includes, $1;
+			push @{$useradd{CPPINCLUDES}}, $1;
 			}
 		elsif (/^-Wp,$/)
 			{
-			$user_cppflags.=" ".$_;
+			push @{$useradd{CPPFLAGS}}, $1;
 			}
 		else	# common if (/^[-+]/), just pass down...
 			{
 			$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
-			$user_cflags.=" ".$_;
+			push @{$useradd{CFLAGS}}, $_;
+			push @{$useradd{CXXFLAGS}}, $_;
 			}
 		}
 	else
@@ -812,7 +885,20 @@ while (@argvcopy)
 		}
 	}
 
-if ($libs =~ /(^|\s)-Wl,-rpath,/
+foreach (keys %user) {
+    my $value = env($_);
+    $value //= defined $user_synonyms{$_} ? env($user_synonyms{$_}) : undef;
+
+    if (defined $value) {
+        if (ref $user{$_} eq 'ARRAY') {
+            $user{$_} = [ split /$list_separator_re/, $value ];
+        } elsif (!defined $user{$_}) {
+            $user{$_} = $value;
+        }
+    }
+}
+
+if (grep { $_ =~ /(^|\s)-Wl,-rpath,/ } ($user{LDLIBS} ? @{$user{LDLIBS}} : ())
     && !$disabled{shared}
     && !($disabled{asan} && $disabled{msan} && $disabled{ubsan})) {
     die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
@@ -1012,7 +1098,10 @@ foreach (sort (keys %disabled))
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$WHAT";
 			print " OPENSSL_NO_$WHAT";
 
-			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
+			if (/^err$/)
+				{
+				push @{$useradd{CPPDEFINES}}, "OPENSSL_NO_ERR";
+				}
 			}
 		}
 
@@ -1039,37 +1128,51 @@ $config{cross_compile_prefix} = env('CROSS_COMPILE')
 # Note: only Unix cares about HASHBANGPERL...  that explains
 # the default string.
 $config{perl} =    ($^O ne "VMS" ? $^X : "perl");
-$config{hashbangperl} =
-    env('HASHBANGPERL')           || env('PERL')      || "/usr/bin/env perl";
-$target{cc} =      env('CC')      || $target{cc}      || "cc";
-$target{cxx} =     env('CXX')     || $target{cxx}     || "c++";
-$target{ranlib} =  env('RANLIB')  || $target{ranlib}  ||
-                   (which("$config{cross_compile_prefix}ranlib") ?
-                          "\$(CROSS_COMPILE)ranlib" : "true");
-$target{ar} =      env('AR')      || $target{ar}      || "ar";
-$target{nm} =      env('NM')      || $target{nm}      || "nm";
-$target{rc} =
-    env('RC')  || env('WINDRES')  || $target{rc}      || "windres";
+foreach (keys %user) {
+    my $target_key = $user_to_target{$_} // lc $_;
+    my $ref_type = ref $user{$_};
+
+    # Temporary function.  Takes an intended ref type (empty string or "ARRAY")
+    # and a value that's to be coerced into that type.
+    my $mkvalue = sub {
+        my $type = shift;
+        my $value = shift;
+        my $undef_p = shift;
+
+        die "Too many arguments for \$mkvalue" if @_;
+
+        while (ref $value eq 'CODE') {
+            $value = $value->();
+        }
+
+        if ($type eq 'ARRAY') {
+            return undef unless defined $value;
+            return undef if ref $value ne 'ARRAY' && !$value;
+            return undef if ref $value eq 'ARRAY' && !@$value;
+            return [ $value ] unless ref $value eq 'ARRAY';
+        }
+        return undef unless $value;
+        return $value;
+    };
+
+    $config{$target_key} =
+        $mkvalue->($ref_type, $user{$_})
+        || $mkvalue->($ref_type, $target{$target_key});
+    $config{$target_key} ||=$mkvalue->($ref_type, $user_defaults{$_})
+        if exists $user_defaults{$_};
+    if (defined $useradd{$_} && @{$useradd{$_}}) {
+        if (defined $config{$target_key}) {
+            push @{$config{$target_key}}, @{$useradd{$_}};
+        } else {
+            $config{$target_key} = [ @{$useradd{$_}} ];
+        }
+    }
+    delete $config{$target_key} unless defined $config{$target_key};
+}
+$config{plib_lflags} = [ $target{plib_lflags} ];
 
 # Allow overriding the build file name
-$target{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
-
-# Cache information necessary for reconfiguration
-$config{cc} = $target{cc};
-$config{cxx} = $target{cxx};
-$config{build_file} = $target{build_file};
-
-# For cflags, lflags, plib_lflags, ex_libs and defines, add the debug_
-# or release_ attributes.
-# Do it in such a way that no spurious space is appended (hence the grep).
-$config{defines} = [];
-$config{includes} = [];
-$config{cppflags} = "";
-$config{cflags} = "";
-$config{cxxflags} = "";
-$config{lflags} = "";
-$config{ex_libs} = "";
-$config{shared_ldflag} = "";
+$config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
@@ -1099,16 +1202,17 @@ foreach my $checker (($builder_platform."-".$target{build_file}."-checker.pm",
 
 push @{$config{defines}}, "NDEBUG"    if $config{build_type} eq "release";
 
-if ($target =~ /^mingw/ && `$target{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
+if ($target =~ /^mingw/ && `$config{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
-	$config{cflags} .= " -mno-cygwin";
-	$config{shared_ldflag} .= " -mno-cygwin";
+	push @{$config{cflags}}, "-mno-cygwin";
+	push @{$config{shared_ldflag}}, "-mno-cygwin";
 	}
 
-if ($target =~ /linux.*-mips/ && !$disabled{asm} && $user_cflags !~ /-m(ips|arch=)/) {
+if ($target =~ /linux.*-mips/ && !$disabled{asm}
+        && !grep { $_ !~ /-m(ips|arch=)/ } @{$user{CFLAGS}}) {
 	# minimally required architecture flags for assembly modules
-	$config{cflags}="-mips2 $config{cflags}" if ($target =~ /mips32/);
-	$config{cflags}="-mips3 $config{cflags}" if ($target =~ /mips64/);
+	unshift @{$config{cflags}}, '-mips2' if ($target =~ /mips32/);
+	unshift @{$config{cflags}}, '-mips3' if ($target =~ /mips64/);
 }
 
 # The DSO code currently always implements all functions so that no
@@ -1134,9 +1238,6 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 		}
 	}
 
-$config{ex_libs}="$libs$config{ex_libs}" if ($libs ne "");
-$config{lflags}="$config{lflags}$ldflags" if ($ldflags ne "");
-
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
     if ($auto_threads) {
@@ -1153,7 +1254,7 @@ unless ($disabled{threads}) {
             # system-dependent compiler options that are necessary.  We
             # can't truly check that the given options are correct, but
             # we expect the user to know what [s]He is doing.
-            if (!$user_cflags && !@user_defines) {
+            if (!@{$user{CFLAGS}} && !@{$user{CPPDEFINES}}) {
                 die "You asked for multi-threading support, but didn't\n"
                     ,"provide any system-specific compiler options\n";
             }
@@ -1164,9 +1265,7 @@ unless ($disabled{threads}) {
 # If threads still aren't disabled, add a C macro to ensure the source
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
-    foreach (("defines", "openssl_thread_defines")) {
-        push @{$config{$_}}, "OPENSSL_THREADS";
-    }
+    push @{$config{openssl_thread_defines}}, "OPENSSL_THREADS";
 }
 
 # With "deprecated" disable all deprecated features.
@@ -1193,22 +1292,22 @@ if ($disabled{"dynamic-engine"}) {
 }
 
 unless ($disabled{asan}) {
-    $config{cflags} .= "-fsanitize=address ";
+    push @{$config{cflags}}, "-fsanitize=address";
 }
 
 unless ($disabled{ubsan}) {
     # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
-    $config{cflags} .= "-fsanitize=undefined -fno-sanitize-recover=all ";
+    push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
 }
 
 unless ($disabled{msan}) {
-  $config{cflags} .= "-fsanitize=memory ";
+  push @{$config{cflags}}, "-fsanitize=memory";
 }
 
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
         && $disabled{asan} && $disabled{ubsan} && $disabled{msan}) {
-    $config{cflags} .= "-fno-omit-frame-pointer -g ";
+    push @{$config{cflags}}, "-fno-omit-frame-pointer", "-g";
 }
 #
 # Platform fix-ups
@@ -1222,6 +1321,7 @@ if ($disabled{pic})
 		    dso_cflags dso_cxxflags dso_cppflags
                     dso_defines dso_includes dso_lflags))
 		{
+		delete $config{$_};
 		$target{$_} = "";
 		}
 	}
@@ -1294,7 +1394,7 @@ unless ($disabled{asm}) {
     }
 }
 
-my %predefined = compiler_predefined($target{cc});
+my %predefined = compiler_predefined($config{cc});
 
 # Check for makedepend capabilities.
 if (!$disabled{makedepend}) {
@@ -1305,7 +1405,7 @@ if (!$disabled{makedepend}) {
     } elsif ($predefined{__GNUC__} >= 3) {
         # We know that GNU C version 3 and up as well as all clang
         # versions support dependency generation
-        $config{makedepprog} = "\$(CROSS_COMPILE)$target{cc}";
+        $config{makedepprog} = "\$(CROSS_COMPILE)$config{cc}";
     } else {
         # In all other cases, we look for 'makedepend', and disable the
         # capability if not found.
@@ -1344,7 +1444,8 @@ die "Exactly one of SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT can be set
 
 # "Stringify" the C flags string.  This permits it to be made part of a string
 # and works as well on command lines.
-$config{cflags} =~ s/([\\\"])/\\$1/g;
+$config{cflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
+                        @{$config{cflags}} ];
 
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
@@ -1353,7 +1454,7 @@ if (defined($config{api})) {
 }
 
 if (defined($predefined{__clang__}) && !$disabled{asm}) {
-    $config{cflags} .= " -Qunused-arguments";
+    push @{$config{cflags}}, "-Qunused-arguments";
 }
 
 if ($strict_warnings)
@@ -1366,13 +1467,15 @@ if ($strict_warnings)
 	$gcc_devteam_warn .= " -Wmisleading-indentation" if $gccver >= 6;
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
-		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+		push @{$config{cflags}}, $wopt
+			unless grep { $_ eq $wopt } @{$config{cflags}};
 		}
 	if (defined($predefined{__clang__}))
 		{
 		foreach $wopt (split /\s+/, $clang_devteam_warn)
 			{
-			$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+			push @{$config{cflags}}, $wopt
+				unless grep { $_ eq $wopt } @{$config{cflags}};
 			}
 		}
 	}
@@ -1381,21 +1484,14 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 	{
 	foreach my $wopt (split /\s+/, $memleak_devteam_backtrace)
 		{
-		$config{cflags} .= " $wopt" unless ($config{cflags} =~ /(?:^|\s)$wopt(?:\s|$)/)
+		push @{$config{cflags}}, $wopt
+			unless grep { $_ eq $wopt } @{$config{cflags}};
 		}
 	if ($target =~ /^BSD-/)
 		{
-		$config{ex_libs} .= " -lexecinfo";
+		push @{$config{ex_libs}}, "-lexecinfo";
 		}
 	}
-
-$config{cppflags}.=$user_cppflags;
-push @{$config{defines}}, @user_defines;
-push @{$config{includes}}, @user_includes;
-$config{cflags}.=$user_cflags;
-$config{cxxflags}.=$user_cflags;
-
-# ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
@@ -1420,6 +1516,8 @@ unless ($disabled{afalgeng}) {
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+
+# ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
 # If we use the unified build, collect information from build.info files
 my %unified_info = ();
@@ -2220,18 +2318,25 @@ print "PROCESSOR     =$config{processor}\n" if $config{processor};
 print "PERL          =$config{perl}\n";
 print "PERLVERSION   =$Config{version} for $Config{archname}\n";
 print "HASHBANGPERL  =$config{hashbangperl}\n";
-print "CC            =$config{cross_compile_prefix}$target{cc}\n";
-print "CFLAG         =$target{cflags} $config{cflags}\n";
-print "CXX           =$config{cross_compile_prefix}$target{cxx}\n"
-    if defined $target{cxx};
-print "CXXFLAG       =$target{cxxflags} $config{cxxflags}\n"
-    if defined $target{cxx};
-print "DEFINES       =",join(" ", @{$target{defines}}, @{$config{defines}}),"\n";
-#print "RANLIB        =", $target{ranlib} eq '$(CROSS_COMPILE)ranlib' ?
-#                             "$config{cross_compile_prefix}ranlib" :
-#                             "$target{ranlib}", "\n";
-print "LDFLAGS       =$config{lflags} $target{lflags}\n";
-print "EX_LIBS       =$target{ex_libs} $config{ex_libs}\n";
+print "DEFINES       =",join(" ", @{$config{defines}}),"\n"
+    if defined $config{defines};
+print "INCLUDES      =",join(" ", @{$config{includes}}),"\n"
+    if defined $config{includes};
+print "CPPFLAGS      =",join(" ", @{$config{cppflags}}),"\n"
+    if defined $config{cppflags};
+print "CC            =$config{cross_compile_prefix}$config{cc}\n";
+print "CFLAGS        =",join(" ", @{$config{cflags}}),"\n"
+    if defined $config{cflags};
+print "CXX           =$config{cross_compile_prefix}$config{cxx}\n"
+    if defined $config{cxx};
+print "CXXFLAGS      =",join(" ", @{$config{cxxflags}}),"\n"
+    if defined $config{cxxflags};
+print "LD            =$config{cross_compile_prefix}$config{ld}\n"
+    if defined $config{ld};
+print "LDFLAGS       =",join(" ", @{$config{lflags}}),"\n"
+    if defined $config{lflags};
+print "EX_LIBS       =",join(" ", @{$config{ex_libs}}),"\n"
+    if defined $config{ex_libs};
 
 my %builders = (
     unified => sub {
