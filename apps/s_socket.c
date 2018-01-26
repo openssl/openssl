@@ -196,9 +196,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
             && BIO_ADDRINFO_family(next) == AF_INET6) {
             sock_family = AF_INET6;
             sock_address = BIO_ADDRINFO_address(next);
-        }
-        else if (sock_family == AF_INET6
-                 && BIO_ADDRINFO_family(next) == AF_INET) {
+        } else if (sock_family == AF_INET6
+                   && BIO_ADDRINFO_family(next) == AF_INET) {
             sock_options &= ~BIO_SOCK_V6_ONLY;
         }
     }
