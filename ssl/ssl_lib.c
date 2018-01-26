@@ -3427,6 +3427,18 @@ void ssl_update_cache(SSL *s, int mode)
     if (s->session->session_id_length == 0)
         return;
 
+    /*
+     * If sid_ctx_length is 0 there is no specific application context
+     * associated with this session, so when we try to resume it and
+     * SSL_VERIFY_PEER is requested, we have no indication that this is
+     * actually a session for the proper application context, and the
+     * *handshake* will fail, not just the resumption attempt.
+     * Do not cache these sessions that are not resumable.
+     */
+    if (s->session->sid_ctx_length == 0
+            && (s->verify_mode & SSL_VERIFY_PEER) != 0)
+        return;
+
     i = s->session_ctx->session_cache_mode;
     if ((i & mode) != 0
         && (!s->hit || SSL_IS_TLS13(s))
