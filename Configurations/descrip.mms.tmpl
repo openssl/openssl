@@ -171,16 +171,16 @@ OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 # Where installed engines reside, for C
 ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
-CC= {- $target{cc} -}
+CC= {- $config{cc} -}
 DEFINES={- our $defines = join(",",
                                '__dummy', # To make comma processing easier
-                               @{$target{defines}}, @{$config{defines}}) -}
-CPPFLAGS={- our $cppflags = join('', $target{cppflags}, $config{cppflags}) -}
+                               @{$config{defines}}) -}
+CPPFLAGS={- our $cppflags = join('', @{$config{cppflags}}) -}
 CPPFLAGS_Q={- $cppflags =~ s|"|""|g; $defines =~ s|"|""|g;
               $cppflags."/DEFINE($defines)" -}
-CFLAGS={- $target{cflags} -} {- $config{cflags} -}
-LDFLAGS= {- $target{lflags} -}
-EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
+CFLAGS={- join('', @{$config{cflags}}) -}
+LDFLAGS= {- join('', @{$config{lflags}}) -}
+EX_LIBS= {- join('', map { ','.$_ } @{$config{ex_libs}}) -}
 LIB_DEFINES={- join("",
                     (map { ",$_" }
                      @{$target{shared_defines}},
@@ -200,8 +200,8 @@ PERL={- $config{perl} -}
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-AS={- $target{as} -}
-ASFLAG={- $target{asflags} -}
+AS={- $config{as} -}
+ASFLAGS={- join('', @{$config{asflags}}) -}
 
 # .FIRST and .LAST are special targets with MMS and MMK.
 # The defines in there are for C.  includes that look like

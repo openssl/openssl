@@ -159,29 +159,27 @@ OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
 ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 !ENDIF
 
-CC={- $target{cc} -}
+CC={- $config{cc} -}
 CPPFLAGS={- our $cppflags = join(" ",
-                                 (map { "-D".$_}
-                                  @{$target{defines}}, @{$config{defines}}),
-                                 (map { " /I ".$_}
-                                  @{$target{includes}}, @{$config{includes}}),
-                                 $target{cppflags}, $config{cppflags}) -}
+                                 (map { "-D".$_} @{$config{defines}}),
+                                 (map { " /I ".$_} @{$config{includes}}),
+                                 @{$config{cppflags}}) -}
 CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
-CFLAGS={- $target{cflags} -} {- $config{cflags} -}
+CFLAGS={- join(' ', @{$config{cflags}}) -}
 COUTFLAG={- $target{coutflag} || "/Fo" -}$(OSSL_EMPTY)
-RC={- $target{rc} || "rc" -}
+RC={- $config{rc} -}
 RCOUTFLAG={- $target{rcoutflag} || "/fo" -}$(OSSL_EMPTY)
-LD={- $target{ld} || "link" -}
-LDFLAGS={- $target{lflags} -}
+LD={- $config{ld} -}
+LDFLAGS={- join(' ', @{$config{lflags}}) -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
-EX_LIBS={- $target{ex_libs} -}
+EX_LIBS={- join(' ', @{$config{ex_libs}}) -}
 LIB_CPPFLAGS={- join(" ",
                      $target{shared_cppflag} || "",
                      (map { quotiry_l("-D".$_) }
                       'OPENSSLDIR="$(OPENSSLDIR)"',
                       'ENGINESDIR="$(ENGINESDIR)"')) -}
-LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) || "" -}
-LIB_LDFLAGS={- $target{shared_ldflag} || "" -}
+LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) -}
+LIB_LDFLAGS={- join(' ', $target{shared_ldflag}, $config{shared_ldflag}) -}
 DSO_CPPFLAGS={- $target{dso_cppflags} || "" -}
 DSO_CFLAGS={- $target{dso_cflags} || "" -}
 DSO_LDFLAGS={- $target{dso_ldflag} || "" -}
@@ -191,17 +189,17 @@ BIN_LDFLAGS={- $target{bin_lflags} -}
 
 PERL={- $config{perl} -}
 
-AR={- $target{ar} -}
-ARFLAGS= {- $target{arflags} -}
+AR={- $config{ar} -}
+ARFLAGS= {- join(' ', @{$config{arflags}}) -}
 AROUTFLAG={- $target{aroutflag} || "/out:" -}$(OSSL_EMPTY)
 
-MT={- $target{mt} -}
-MTFLAGS= {- $target{mtflags} -}
+MT={- $config{mt} -}
+MTFLAGS= {- join(' ', @{$config{mtflags}}) -}
 MTINFLAG={- $target{mtinflag} || "-manifest " -}$(OSSL_EMPTY)
 MTOUTFLAG={- $target{mtoutflag} || "-outputresource:" -}$(OSSL_EMPTY)
 
-AS={- $target{as} -}
-ASFLAGS={- $target{asflags} -}
+AS={- $config{as} -}
+ASFLAGS={- join(' ', @{$config{asflags}}) -}
 ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
@@ -316,10 +314,10 @@ install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
 	@echo *** Installing development files
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
-	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
 				       "$(INSTALLTOP)\include\openssl"
-	@rem {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@rem {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\include\openssl\*.h \
