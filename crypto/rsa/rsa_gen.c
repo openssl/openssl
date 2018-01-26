@@ -195,8 +195,8 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
             error = ERR_peek_last_error();
             if (ERR_GET_LIB(error) == ERR_LIB_BN
                 && ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
-                    /* GCD != 1 */
-                    ERR_clear_error();
+                /* GCD != 1 */
+                ERR_clear_error();
             } else {
                 goto err;
             }
