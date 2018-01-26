@@ -1781,7 +1781,7 @@ static int sig_cb(const char *elem, int len, void *arg)
 
     /* Reject duplicates */
     for (i = 0; i < sarg->sigalgcnt - 1; i++) {
-        if (sarg->sigalgs[i] == sarg->sigalgs[sarg->sigalgcnt]) {
+        if (sarg->sigalgs[i] == sarg->sigalgs[sarg->sigalgcnt - 1]) {
             sarg->sigalgcnt--;
             return 0;
         }
