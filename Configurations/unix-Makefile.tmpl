@@ -192,7 +192,7 @@ CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
 CC= $(CROSS_COMPILE){- $config{cc} -}
 CFLAGS={- join(' ', @{$config{cflags}}) -}
 CXX= $(CROSS_COMPILE){- $config{cxx} -}
-CXXFLAGS={- join(' ', @{$config{cxxflags}}) -} -std=c++11
+CXXFLAGS={- join(' ', @{$config{cxxflags}}) -}
 LDFLAGS= {- join(' ', @{$config{lflags}}) -}
 PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
 EX_LIBS= {- join(' ', @{$config{ex_libs}}) -}
