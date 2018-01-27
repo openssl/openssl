@@ -576,16 +576,6 @@ my %user_to_target = (
     LDFLAGS     => 'lflags',
     LDLIBS      => 'ex_libs',
    );
-my %user_defaults = (
-    AR          => 'ar',
-    ARFLAGS     => [ 'r' ],
-    CC          => 'cc',
-    CXX         => 'c++',
-    HASHBANGPERL=> '/usr/bin/env perl', # Only Unix actually cares
-    RANLIB      => sub { which("$config{cross_compile_prefix}ranlib") ?
-                             "\$(CROSS_COMPILE)ranlib" : "true"; },
-    RC          => 'windres',
-   );
 
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
@@ -1158,8 +1148,6 @@ foreach (keys %user) {
     $config{$target_key} =
         $mkvalue->($ref_type, $user{$_})
         || $mkvalue->($ref_type, $target{$target_key});
-    $config{$target_key} ||=$mkvalue->($ref_type, $user_defaults{$_})
-        if exists $user_defaults{$_};
     if (defined $useradd{$_} && @{$useradd{$_}}) {
         if (defined $config{$target_key}) {
             push @{$config{$target_key}}, @{$useradd{$_}};
