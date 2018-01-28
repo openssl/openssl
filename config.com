@@ -73,7 +73,7 @@ $               collected_args = collected_args + " --debug"
 $		P = ""
 $	    ENDIF
 $	    IF P .NES. "" THEN -
-	       collected_args = collected_args + " " + P1
+	       collected_args = collected_args + " """ + P1 + """"
 $	    P1 = P2
 $	    P2 = P3
 $	    P3 = P4
@@ -87,7 +87,7 @@ $	ENDLOOP1:
 $
 $	target = "vms-''arch'''pointer_size'"
 $       IF verbose THEN -
-           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""''collected_args'"
+           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""",collected_args
 $       IF .not. dryrun THEN -
-           PERL 'here'Configure "''target'" 'debug' 'collected_args'
+           PERL 'here'Configure "''target'"'collected_args'
 $       EXIT $STATUS
