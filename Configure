@@ -1098,7 +1098,7 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
-$target{cxxflags}=$target{cflags} unless defined $target{cxxflags};
+$target{cxxflags}//=$target{cflags} if $target{cxx};
 $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
                                   || $config{target} =~ /^(?:Cygwin|mingw)/);
@@ -1193,14 +1193,18 @@ push @{$config{defines}}, "NDEBUG"    if $config{build_type} eq "release";
 if ($target =~ /^mingw/ && `$config{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	{
 	push @{$config{cflags}}, "-mno-cygwin";
+	push @{$config{cxxflags}}, "-mno-cygwin" if $config{cxx};
 	push @{$config{shared_ldflag}}, "-mno-cygwin";
 	}
 
 if ($target =~ /linux.*-mips/ && !$disabled{asm}
         && !grep { $_ !~ /-m(ips|arch=)/ } @{$user{CFLAGS}}) {
 	# minimally required architecture flags for assembly modules
-	unshift @{$config{cflags}}, '-mips2' if ($target =~ /mips32/);
-	unshift @{$config{cflags}}, '-mips3' if ($target =~ /mips64/);
+	my $value;
+	$value = '-mips2' if ($target =~ /mips32/);
+	$value = '-mips3' if ($target =~ /mips64/);
+	unshift @{$config{cflags}}, $value;
+	unshift @{$config{cxxflags}}, $value if $config{cxx};
 }
 
 # The DSO code currently always implements all functions so that no
@@ -1281,21 +1285,26 @@ if ($disabled{"dynamic-engine"}) {
 
 unless ($disabled{asan}) {
     push @{$config{cflags}}, "-fsanitize=address";
+    push @{$config{cxxflags}}, "-fsanitize=address" if $config{cxx};
 }
 
 unless ($disabled{ubsan}) {
     # -DPEDANTIC or -fnosanitize=alignment may also be required on some
     # platforms.
     push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all";
+    push @{$config{cxxflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all"
+        if $config{cxx};
 }
 
 unless ($disabled{msan}) {
   push @{$config{cflags}}, "-fsanitize=memory";
+  push @{$config{cxxflags}}, "-fsanitize=memory" if $config{cxx};
 }
 
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
         && $disabled{asan} && $disabled{ubsan} && $disabled{msan}) {
     push @{$config{cflags}}, "-fno-omit-frame-pointer", "-g";
+    push @{$config{cxxflags}}, "-fno-omit-frame-pointer", "-g" if $config{cxx};
 }
 #
 # Platform fix-ups
@@ -1430,10 +1439,12 @@ die "Exactly one of SIXTY_FOUR_BIT|SIXTY_FOUR_BIT_LONG|THIRTY_TWO_BIT can be set
 
 # Hack cflags for better warnings (dev option) #######################
 
-# "Stringify" the C flags string.  This permits it to be made part of a string
-# and works as well on command lines.
+# "Stringify" the C and C++ flags string.  This permits it to be made part of
+# a string and works as well on command lines.
 $config{cflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                         @{$config{cflags}} ];
+$config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
+                          @{$config{cxxflags}} ] if $config{cxx};
 
 if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
@@ -1443,6 +1454,7 @@ if (defined($config{api})) {
 
 if (defined($predefined{__clang__}) && !$disabled{asm}) {
     push @{$config{cflags}}, "-Qunused-arguments";
+    push @{$config{cxxflags}}, "-Qunused-arguments" if $config{cxx};
 }
 
 if ($strict_warnings)
@@ -1457,6 +1469,9 @@ if ($strict_warnings)
 		{
 		push @{$config{cflags}}, $wopt
 			unless grep { $_ eq $wopt } @{$config{cflags}};
+		push @{$config{cxxflags}}, $wopt
+			if ($config{cxx}
+			    && !grep { $_ eq $wopt } @{$config{cxxflags}});
 		}
 	if (defined($predefined{__clang__}))
 		{
@@ -1464,6 +1479,9 @@ if ($strict_warnings)
 			{
 			push @{$config{cflags}}, $wopt
 				unless grep { $_ eq $wopt } @{$config{cflags}};
+			push @{$config{cxxflags}}, $wopt
+				if ($config{cxx}
+				    && !grep { $_ eq $wopt } @{$config{cxxflags}});
 			}
 		}
 	}
@@ -1474,6 +1492,9 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 		{
 		push @{$config{cflags}}, $wopt
 			unless grep { $_ eq $wopt } @{$config{cflags}};
+		push @{$config{cxxflags}}, $wopt
+			if ($config{cxx}
+			    && !grep { $_ eq $wopt } @{$config{cxxflags}});
 		}
 	if ($target =~ /^BSD-/)
 		{

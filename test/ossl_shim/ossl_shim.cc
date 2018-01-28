@@ -634,9 +634,10 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
     SSL_CTX_set_client_CA_list(ssl_ctx.get(), nullptr);
   }
 
-  SSL_CTX_set_session_id_context(ssl_ctx.get(),
-                                 (const unsigned char *)sess_id_ctx,
-                                 sizeof(sess_id_ctx) - 1);
+  if (!SSL_CTX_set_session_id_context(ssl_ctx.get(),
+                                      (const unsigned char *)sess_id_ctx,
+                                      sizeof(sess_id_ctx) - 1))
+    return nullptr;
 
   return ssl_ctx;
 }
