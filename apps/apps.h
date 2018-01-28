@@ -55,6 +55,12 @@ BIO_METHOD *apps_bf_prefix(void);
  * remains unlikely for the foreseeable future and beyond.
  */
 #define PREFIX_CTRL_SET_PREFIX  (1 << 15)
+/*
+ * apps_bf_prefix() returns a dynamically created BIO_METHOD, which we
+ * need to destroy at some point.  When created internally, it's stored
+ * in an internal pointer which can be freed with the following function
+ */
+void destroy_prefix_method(void);
 
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);

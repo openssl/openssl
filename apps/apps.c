@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -2428,14 +2428,26 @@ BIO *dup_bio_in(int format)
                       BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
 }
 
+static BIO_METHOD *prefix_method = NULL;
+
 BIO *dup_bio_out(int format)
 {
     BIO *b = BIO_new_fp(stdout,
                         BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+    void *prefix = NULL;
+
 #ifdef OPENSSL_SYS_VMS
     if (istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
+
+    if (istext(format) && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
+        if (prefix_method == NULL)
+            prefix_method = apps_bf_prefix();
+        b = BIO_push(BIO_new(prefix_method), b);
+        BIO_ctrl(b, PREFIX_CTRL_SET_PREFIX, 0, prefix);
+    }
+
     return b;
 }
 
@@ -2448,6 +2460,12 @@ BIO *dup_bio_err(int format)
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
     return b;
+}
+
+void destroy_prefix_method()
+{
+    BIO_meth_free(prefix_method);
+    prefix_method = NULL;
 }
 
 void unbuffer(FILE *fp)
