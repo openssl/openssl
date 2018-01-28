@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -702,7 +702,7 @@ if ( $newstate )  {
     open(OUT, ">$statefile.new")
         || die "Can't write $statefile.new, $!";
     print OUT <<"EOF";
-# Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-$YEAR The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
