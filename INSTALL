@@ -516,7 +516,7 @@
                    whirlpool.  The "ripemd" algorithm is deprecated and if used
                    is synonymous with rmd160.
 
-  -Dxxx, lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
+  -Dxxx, -Ixxx, -Wp, -lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
                    These system specific options will be recognised and
                    passed through to the compiler to allow you to define
                    preprocessor symbols, specify additional libraries, library
@@ -527,10 +527,16 @@
                    unsuitable for execution on other, typically older,
                    processor. Consult your compiler documentation.
 
+                   Take note of the VAR=value documentation below and how
+                   these flags interact with those variables.
+
   -xxx, +xxx
                    Additional options that are not otherwise recognised are
                    passed through as they are to the compiler as well.  Again,
                    consult your compiler documentation.
+
+                   Take note of the VAR=value documentation below and how
+                   these flags interact with those variables.
 
   VAR=value
                    Assignment if environment variable for Configure.  These
@@ -539,6 +545,68 @@
                    the configuration scripts only.  These assignments override
                    the corresponding value in the inherited environment, if
                    there is one.
+
+                   The following variables are used as "make variables" and
+                   can be used as an alternative to giving preprocessor,
+                   compiler and linker options directly as configuration.
+                   The following variables are supported:
+
+                   AR              The static library archiver.
+                   ARFLAGS         Flags for the static library archiver.
+                   AS              The assembler compiler.
+                   ASFLAGS         Flags for the assembler compiler.
+                   CC              The C compiler.
+                   CFLAGS          Flags for the C compiler.
+                   CXX             The C++ compiler.
+                   CXXFLAGS        Flags for the C++ compiler.
+                   CPP             The C/C++ preprocessor.
+                   CPPFLAGS        Flags for the C/C++ preprocessor.
+                   CPPDEFINES      List of CPP macro definitions, separated
+                                   by a platform specific character (':' or
+                                   space for Unix, ';' for Windows, ',' for
+                                   VMS).  This can be used in place of -D.
+                   CPPINCLUDES     List of CPP inclusion directories, separated
+                                   the same way as for CPPDEFINES.  This can
+                                   be used in place of -I.
+                   HASHBANGPERL    Perl invocation to be inserted after '#!'
+                                   in public perl scripts.
+                   LD              The program linker (not used on Unix, $(CC)
+                                   is used there).
+                   LDFLAGS         Flags for the shared library, DSO and
+                                   program linker.
+                   LDLIBS          Extra libraries to use when linking.
+                                   Takes the form of a space separated list
+                                   of library specifications on Unix and
+                                   Windows, and as a comma separated list of
+                                   libraries on VMS.
+                   RANLIB          The library archive indexer.
+                   RC              The Windows resources manipulator.
+                   RCFLAGS         Flags for the Windows reources manipulator.
+                   RM              The command to remove files and directories.
+
+                   These can be mixed with flags given on the command line.
+                   Any variable assignment resets any corresponding flags
+                   given before it, so for example:
+
+                       ./config -DFOO CPPFLAGS=-DBAR -DCOOKIE
+
+                   Will end up having 'CPPFLAGS=-DBAR -DCOOKIE'.
+
+                   Here is how the flags documented above are collected as
+                   augmentation of these variables:
+
+                   -Dxxx           xxx is collected in CPPDEFINES
+                   -Ixxx           xxx is collected in CPPINCLUDES
+                   -Wp,xxx         collected in CPPFLAGS
+                   -Lxxx           collected in LDFLAGS
+                   -lxxx           collected in LDLIBS
+                   -Wp,xxx         collected in LDLIBS
+                   -rpath xxx      collected in LDLIBS
+                   -R xxx          collected in LDLIBS
+                   -framework xxx  collected in LDLIBS
+                   -static         collected in LDLIBS
+                   -xxx            collected in CFLAGS
+                   +xxx            collected in CFLAGS
 
   reconf
   reconfigure

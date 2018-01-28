@@ -171,12 +171,21 @@ OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 # Where installed engines reside, for C
 ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
-CC= {- $target{cc} -}
-CFLAGS= /DEFINE=({- join(",", @{$target{defines}}, @{$config{defines}},"OPENSSLDIR=\"\"\"\$(OPENSSLDIR_C)\"\"\"","ENGINESDIR=\"\"\"\$(ENGINESDIR_C)\"\"\"") -}) {- $target{cflags} -} {- $config{cflags} -}
-CFLAGS_Q=$(CFLAGS)
-DEPFLAG= /DEFINE=({- join(",", @{$config{depdefines}}) -})
-LDFLAGS= {- $target{lflags} -}
-EX_LIBS= {- $target{ex_libs} ? ",".$target{ex_libs} : "" -}{- $config{ex_libs} ? ",".$config{ex_libs} : "" -}
+CC= {- $config{cc} -}
+DEFINES={- our $defines = join(",",
+                               '__dummy', # To make comma processing easier
+                               @{$config{defines}}) -}
+CPPFLAGS={- our $cppflags = join('', @{$config{cppflags}}) -}
+CPPFLAGS_Q={- $cppflags =~ s|"|""|g; $defines =~ s|"|""|g;
+              $cppflags."/DEFINE($defines)" -}
+CFLAGS={- join('', @{$config{cflags}}) -}
+LDFLAGS= {- join('', @{$config{lflags}}) -}
+EX_LIBS= {- join('', map { ','.$_ } @{$config{ex_libs}}) -}
+LIB_DEFINES={- join("",
+                    (map { ",$_" }
+                     @{$target{shared_defines}},
+                     'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                     'ENGINESDIR="""$(ENGINESDIR_C)"""')) -}
 LIB_CFLAGS={- $target{lib_cflags} // "" -}
 DSO_CFLAGS={- $target{dso_cflags} // "" -}
 BIN_CFLAGS={- $target{bin_cflags} // "" -}
@@ -191,8 +200,8 @@ PERL={- $config{perl} -}
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-AS={- $target{as} -}
-ASFLAG={- $target{asflags} -}
+AS={- $config{as} -}
+ASFLAGS={- join('', @{$config{asflags}}) -}
 
 # .FIRST and .LAST are special targets with MMS and MMK.
 # The defines in there are for C.  includes that look like
@@ -605,16 +614,26 @@ EOF
       my $srcs =
           join(", ",
                map { abs2rel(rel2abs($_), rel2abs($forward)) } @{$args{srcs}});
-      my $ecflags;
+      my $cflags = '$(CFLAGS)';
       if ($args{installed}) {
-          $ecflags = { lib => '$(LIB_CFLAGS)',
+          $cflags .= { lib => '$(LIB_CFLAGS)',
                        dso => '$(DSO_CFLAGS)',
                        bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       } else {
-          $ecflags = { lib => '$(NO_INST_LIB_CFLAGS)',
+          $cflags .= { lib => '$(NO_INST_LIB_CFLAGS)',
                        dso => '$(NO_INST_DSO_CFLAGS)',
                        bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
       }
+      $cflags .= '$(CPPFLAGS)';
+      $cflags .= { lib => '$(LIB_CPPFLAGS)',
+		   dso => '$(DSO_CPPFLAGS)',
+		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+      my $defines = '$(DEFINES)';
+      $defines .= { lib => '$(LIB_DEFINES)',
+		    dso => '$(DSO_DEFINES)',
+		    bin => '$(BIN_DEFINES)' } -> {$args{intent}};
+      $cflags .= '/DEFINE=('.$defines.')';
+      
       my $incs_on = "\@ !";
       my $incs_off = "\@ !";
       my $incs = "";
@@ -645,7 +664,7 @@ $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
         $incs_on
-        \$(CC) \$(CFLAGS)${ecflags}${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        \$(CC) ${cflags}${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         $incs_off
         SET DEFAULT $backward
         ${after}

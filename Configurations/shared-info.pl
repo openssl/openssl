@@ -13,12 +13,12 @@
 
 sub detect_gnu_ld {
     my @lines =
-        `$config{cross_compile_prefix}$target{cc} -Wl,-V /dev/null 2>&1`;
+        `$config{cross_compile_prefix}$config{cc} -Wl,-V /dev/null 2>&1`;
     return grep /^GNU ld/, @lines;
 }
 sub detect_gnu_cc {
     my @lines =
-        `$config{cross_compile_prefix}$target{cc} -v 2>&1`;
+        `$config{cross_compile_prefix}$config{cc} -v 2>&1`;
     return grep /gcc/, @lines;
 }
 

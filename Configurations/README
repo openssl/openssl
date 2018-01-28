@@ -45,6 +45,19 @@ In each table entry, the following keys are significant:
                            Note: if the same feature is both enabled
                            and disabled, disable wins.
 
+        cpp             => The C preprocessor command, normally not
+                           given, as the build file defaults are
+                           usually good enough.
+        cppflags        => The C preprocessor flags.
+        defines         => As an alternative, macro definitions may be
+                           given here instead of in `cppflags'.  If
+                           given here, they MUST be as an array of the
+                           string such as "MACRO=value", or just
+                           "MACRO" for definitions without value.
+        includes        => As an alternative, inclusion directories
+                           may be given here instead of in `cppflags'.
+                           If given here, the MUST be an array of
+                           strings, one directory specification each.
         cc              => The C compiler command, usually one of "cc",
                            "gcc" or "clang".  This command is normally
                            also used to link object files and
@@ -59,11 +72,6 @@ In each table entry, the following keys are significant:
         cxxflags        => Flags that are used at all times when
                            compiling C++ object files.  If unset, it
                            gets the same value as cflags.
-        defines         => As an alternative, macro definitions may be
-                           present here instead of in `cflags'.  If
-                           given here, they MUST be as an array of the
-                           string such as "MACRO=value", or just
-                           "MACRO" for definitions without value.
         shared_cflag    => Extra compilation flags used when
                            compiling for shared libraries, typically
                            something like "-fPIC".

@@ -9,6 +9,9 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Added processing of "make variables" to Configure.
+     [Richard Levitte]
+
   *) Added SHA512/224 and SHA512/256 algorithm support.
      [Paul Dale]
 
