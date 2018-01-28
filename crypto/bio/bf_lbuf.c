@@ -82,6 +82,7 @@ static int linebuffer_free(BIO *a)
 
     if (a == NULL)
         return 0;
+    BIO_ctrl(a, BIO_CTRL_FLUSH, 0, 0);
     b = (BIO_LINEBUFFER_CTX *)a->ptr;
     OPENSSL_free(b->obuf);
     OPENSSL_free(a->ptr);
@@ -188,7 +189,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
     while (foundnl && inl > 0);
     /*
      * We've written as much as we can.  The rest of the input buffer, if
-     * any, is text that doesn't and with a NL and therefore needs to be
+     * any, is text that doesn't end with a NL and therefore needs to be
      * saved for the next trip.
      */
     if (inl > 0) {
