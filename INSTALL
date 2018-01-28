@@ -736,21 +736,33 @@
      ("openssl"). The libraries will be built in the top-level directory,
      and the binary will be in the "apps" subdirectory.
 
+     Troubleshooting:
+
      If the build fails, look at the output.  There may be reasons
      for the failure that aren't problems in OpenSSL itself (like
-     missing standard headers).  If you are having problems you can
-     get help by sending an email to the openssl-users email list (see
+     missing standard headers).
+
+     If the build succeeded previously, but fails after a source or
+     configuration change, it might be helpful to clean the build tree
+     before attempting another build. Use this command:
+
+       $ make clean                                     # Unix
+       $ mms clean                                      ! (or mmk) OpenVMS
+       $ nmake clean                                    # Windows
+
+     Assembler error messages can sometimes be sidestepped by using the
+     "no-asm" configuration option.
+
+     Compiling parts of OpenSSL with gcc and others with the system
+     compiler will result in unresolved symbols on some systems.
+
+     If you are still having problems you can get help by sending an email
+     to the openssl-users email list (see
      https://www.openssl.org/community/mailinglists.html for details). If
      it is a bug with OpenSSL itself, please open an issue on GitHub, at
      https://github.com/openssl/openssl/issues. Please review the existing
      ones first; maybe the bug was already reported or has already been
      fixed.
-
-     (If you encounter assembler error messages, try the "no-asm"
-     configuration option as an immediate fix.)
-
-     Compiling parts of OpenSSL with gcc and others with the system
-     compiler will result in unresolved symbols on some systems.
 
   3. After a successful build, the libraries should be tested. Run:
 
