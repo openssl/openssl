@@ -93,6 +93,7 @@ static int apps_startup()
 static void apps_shutdown()
 {
     destroy_ui_method();
+    destroy_prefix_method();
 }
 
 static char *make_config_name()
