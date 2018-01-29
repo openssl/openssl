@@ -625,6 +625,22 @@
                    precedence over environment variables that are defined
                    when reconfiguring.
 
+ Displaying configuration data
+ -----------------------------
+
+ The configuration script itself will say very little, and finishes by
+ creating "configdata.pm".  This perl module can be loaded by other scripts
+ to find all the configuration data, and it can also be used as a script to
+ display all sorts of configuration data in a human readable form.
+
+ For more information, please do:
+
+       $ ./configdata.pm --help                         # Unix
+
+       or
+
+       $ perl configdata.pm --help                      # Windows and VMS
+
  Installation in Detail
  ----------------------
 
