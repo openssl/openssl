@@ -23,7 +23,7 @@ setup("test_rehash");
 plan skip_all => "test_rehash is not available on this platform"
     unless run(app(["openssl", "rehash", "-help"]));
 
-plan tests => 5;
+plan tests => 4;
 
 indir "rehash.$$" => sub {
     prepare();
@@ -46,8 +46,7 @@ indir "rehash.$$" => sub {
     prepare();
     chmod 0500, curdir();
   SKIP: {
-      if (!ok(!open(FOO, ">unwritable.txt"),
-              "Testing that we aren't running as a privileged user, such as root")) {
+      if (open(FOO, ">unwritable.txt")) {
           close FOO;
           skip "It's pointless to run the next test as root", 1;
       }
