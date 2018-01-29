@@ -2444,7 +2444,7 @@ _____
         }
 
         chdir $here;
-        exec $config{perl},catfile($config{sourcedir}, 'Configure'),'reconf';
+        exec $^X,catfile($config{sourcedir}, 'Configure'),'reconf';
     }
 }
 
