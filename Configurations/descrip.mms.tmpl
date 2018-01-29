@@ -545,8 +545,7 @@ debug_logicals :
 # Building targets ###################################################
 
 configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
-        @ WRITE SYS$OUTPUT "Reconfiguring..."
-        perl $(SRCDIR)Configure reconf
+        perl configdata.pm -r -v
         @ WRITE SYS$OUTPUT "*************************************************"
         @ WRITE SYS$OUTPUT "***                                           ***"
         @ WRITE SYS$OUTPUT "***   Please run the same mms command again   ***"
