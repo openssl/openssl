@@ -1098,7 +1098,7 @@ foreach my $what (sort keys %disabled) {
     if (!grep { $what eq $_ } ( 'dso', 'threads', 'shared', 'pic',
                                 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
-        my $WHAT = uc $what;
+        (my $WHAT = uc $what) =~ s|-|_|g;
 
         # Fix up C macro end names
         $WHAT = "RMD160" if $what eq "ripemd";
