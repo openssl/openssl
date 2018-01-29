@@ -2347,10 +2347,14 @@ unless (caller) {
                'man'                    => \$man)
         or die "Errors in command line arguments\n";
 
-    pod2usage(-exitval => 2,
-              -verbose => 0)
-        unless ($dump || $cmdline || $envvars || $makevars || $buildparams
-                || $reconf || $verbose || $help || $man);
+    unless ($dump || $cmdline || $envvars || $makevars || $buildparams
+            || $reconf || $verbose || $help || $man) {
+        print STDERR <<"_____";
+You must give at least one option.
+For more information, do '$0 --help'
+_____
+        exit(2);
+    }
 
     if ($help) {
         pod2usage(-exitval => 0,
