@@ -284,7 +284,7 @@ int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
     s = sig->data;
     for (i = 0; i < n; i++) {
         if ((i % 18) == 0) {
-            if (BIO_write(bp, "\n", 1) <= 0)
+            if (i > 0 && BIO_write(bp, "\n", 1) <= 0)
                 return 0;
             if (BIO_indent(bp, indent, indent) <= 0)
                 return 0;
@@ -317,10 +317,10 @@ int X509_signature_print(BIO *bp, const X509_ALGOR *sigalg,
                 return ameth->sig_print(bp, sigalg, sig, 9, 0);
         }
     }
+    if (BIO_write(bp, "\n", 1) != 1)
+        return 0;
     if (sig)
         return X509_signature_dump(bp, sig, 9);
-    else if (BIO_puts(bp, "\n") <= 0)
-        return 0;
     return 1;
 }
 
