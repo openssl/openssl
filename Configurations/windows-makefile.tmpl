@@ -176,8 +176,8 @@ EX_LIBS={- join(' ', @{$config{ex_libs}}) -}
 LIB_CPPFLAGS={- join(" ",
                      $target{shared_cppflag} || "",
                      (map { quotify_l("-D".$_) }
-                      'OPENSSLDIR="$(OPENSSLDIR)"',
-                      'ENGINESDIR="$(ENGINESDIR)"')) -}
+                      "OPENSSLDIR=\"$openssldir\"",
+                      "ENGINESDIR=\"$enginesdir\"")) -}
 LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) -}
 LIB_LDFLAGS={- join(' ', $target{shared_ldflag}, $config{shared_ldflag}) -}
 DSO_CPPFLAGS={- $target{dso_cppflags} || "" -}
