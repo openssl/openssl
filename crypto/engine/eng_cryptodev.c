@@ -44,10 +44,13 @@
 #if (defined(__unix__) || defined(unix)) && !defined(USG) && \
         (defined(OpenBSD) || defined(__FreeBSD__))
 # include <sys/param.h>
-# if (OpenBSD >= 200112) || ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || __FreeBSD_version >= 500041)
+# if (defined(OpenBSD) && (OpenBSD >= 200112)) || \
+     (defined(__FreeBSD_version) && \
+      ((__FreeBSD_version >= 470101 && __FreeBSD_version < 500000) || \
+       __FreeBSD_version >= 500041))
 #  define HAVE_CRYPTODEV
 # endif
-# if (OpenBSD >= 200110)
+# if defined(OpenBSD) && (OpenBSD >= 200110)
 #  define HAVE_SYSLOG_R
 # endif
 #endif
