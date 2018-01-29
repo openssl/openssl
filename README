@@ -68,8 +68,7 @@
  and create an issue on GitHub:
 
     - OpenSSL version: output of 'openssl version -a'
-    - Any "Configure" options that you selected during compilation of the
-      library if applicable (see INSTALL)
+    - Configuration data: output of 'perl configdata.pm --dump'
     - OS Name, Version, Hardware platform
     - Compiler Details (name, version)
     - Application Details (name, version)
