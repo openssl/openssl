@@ -620,7 +620,7 @@ int opt_next(void)
     unsigned long ulval;
     ossl_intmax_t imval;
     ossl_uintmax_t umval;
-#if !defined(_WIN32) && !defined(__VMS)
+#if !defined(_WIN32)
     char *c;
     int oerrno;
 #endif
@@ -694,7 +694,7 @@ int opt_next(void)
             return -1;
         case '>':
             /* Output file. */
-#if !defined(_WIN32) && !defined(__VMS)
+#if !defined(_WIN32)
             c = OPENSSL_strdup(arg);
             if (c == NULL) {
                 BIO_printf(bio_err,
