@@ -2442,7 +2442,7 @@ BIO *dup_bio_out(int format)
         if ((prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
             if (lbuf == NULL)
                 lbuf = BIO_new(BIO_f_linebuffer());
-            BIO_set_linebuffer_prefix(lbuf, "# ");
+            BIO_set_linebuffer_prefix(lbuf, prefix);
         }
     }
 
