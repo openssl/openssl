@@ -515,8 +515,6 @@ while ((my $first, my $second) = (shift @list, shift @list)) {
 # To remove something from %disabled, use "enable-foo".
 # For symmetry, "disable-foo" is a synonym for "no-foo".
 
-my $no_sse2=0;
-
 &usage if ($#ARGV < 0);
 
 # For the "make variables" CINCLUDES and CDEFINES, we support lists with
@@ -1054,7 +1052,7 @@ foreach (sort (keys %disabled))
 	elsif (/^zlib-dynamic$/)
 		{ }
 	elsif (/^sse2$/)
-		{ $no_sse2 = 1; }
+		{ }
 	elsif (/^engine$/)
 		{
 		@{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
@@ -1338,7 +1336,7 @@ unless ($disabled{asm}) {
 
     # bn-586 is the only one implementing bn_*_part_words
     push @{$config{defines}}, "OPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
-    push @{$config{defines}}, "OPENSSL_IA32_SSE2" if (!$no_sse2 && $target{bn_asm_src} =~ /86/);
+    push @{$config{defines}}, "OPENSSL_IA32_SSE2" if (!$disabled{sse2} && $target{bn_asm_src} =~ /86/);
 
     push @{$config{defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
     push @{$config{defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
@@ -1366,7 +1364,7 @@ unless ($disabled{asm}) {
 	push @{$config{defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
 	# aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
 	push @{$config{defines}}, "AES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
-	$target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($no_sse2);
+	$target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($disabled{sse2});
 	push @{$config{defines}}, "VPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
 	push @{$config{defines}}, "BSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
     }
