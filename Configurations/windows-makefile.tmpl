@@ -175,7 +175,7 @@ LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
 EX_LIBS={- join(' ', @{$config{ex_libs}}) -}
 LIB_CPPFLAGS={- join(" ",
                      $target{shared_cppflag} || "",
-                     (map { quotiry_l("-D".$_) }
+                     (map { quotify_l("-D".$_) }
                       'OPENSSLDIR="$(OPENSSLDIR)"',
                       'ENGINESDIR="$(ENGINESDIR)"')) -}
 LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) -}
