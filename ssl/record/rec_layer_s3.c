@@ -1491,27 +1491,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
      */
 
-    /*
-     * If we are a server and get a client hello when renegotiation isn't
-     * allowed send back a no renegotiation alert and carry on. WARNING:
-     * experimental code, needs reviewing (steve)
-     */
-    if (s->server &&
-        SSL_is_init_finished(s) &&
-        (s->version > SSL3_VERSION) &&
-        !SSL_IS_TLS13(s) &&
-        (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) &&
-        (s->rlayer.handshake_fragment_len >= 4) &&
-        (s->rlayer.handshake_fragment[0] == SSL3_MT_CLIENT_HELLO) &&
-        (s->session != NULL) && (s->session->cipher != NULL) &&
-        ((!s->s3->send_connection_binding &&
-          !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) ||
-         (s->options & SSL_OP_NO_RENEGOTIATION))) {
-        SSL3_RECORD_set_length(rr, 0);
-        SSL3_RECORD_set_read(rr);
-        ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
-        goto start;
-    }
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
         unsigned int alert_level, alert_descr;
         unsigned char *alert_bytes = SSL3_RECORD_get_data(rr)
