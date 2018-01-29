@@ -890,8 +890,6 @@ foreach (sort (keys %disabled))
 			{
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$WHAT";
 			print " OPENSSL_NO_$WHAT";
-
-			if (/^err$/)	{ push @user_defines, "OPENSSL_NO_ERR"; }
 			}
 		}
 
