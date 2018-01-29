@@ -2401,10 +2401,10 @@ _____
         my @buildfile = ($config{builddir}, $config{build_file});
         unshift @buildfile, $here
             unless file_name_is_absolute($config{builddir});
-        print "\nbuild file:\n";
-        print "\n    ", canonpath(catfile(@buildfile));
+        print "\nbuild file:\n\n";
+        print "    ", canonpath(catfile(@buildfile)),"\n";
 
-        print "\nbuild file templates:\n";
+        print "\nbuild file templates:\n\n";
         foreach (@{$config{build_file_templates}}) {
             my @tmpl = ($_);
             unshift @tmpl, $here
