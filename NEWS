@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.1 [under development]
 
+      o Move the display of configuration data to configdata.pm.
       o Allow GNU style "make variables" to be used with Configure.
       o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes

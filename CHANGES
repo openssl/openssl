@@ -9,6 +9,11 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Changed Configure so it only says what it does and doesn't dump
+     so much data.  Instead, ./configdata.pm should be used as a script
+     to display all sorts of configuration data.
+     [Richard Levitte]
+
   *) Added processing of "make variables" to Configure.
      [Richard Levitte]
 
