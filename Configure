@@ -1085,11 +1085,6 @@ foreach (sort (keys %disabled))
 			{
 			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$WHAT";
 			print " OPENSSL_NO_$WHAT";
-
-			if (/^err$/)
-				{
-				push @{$useradd{CPPDEFINES}}, "OPENSSL_NO_ERR";
-				}
 			}
 		}
 
