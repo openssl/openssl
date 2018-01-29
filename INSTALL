@@ -635,11 +635,11 @@
 
  For more information, please do:
 
-       $ ./configdata.pm -help                          # Unix
+       $ ./configdata.pm --help                         # Unix
 
        or
 
-       $ perl configdata.pm -help                       # Windows and VMS
+       $ perl configdata.pm --help                      # Windows and VMS
 
  Installation in Detail
  ----------------------
