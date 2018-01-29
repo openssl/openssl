@@ -1039,6 +1039,11 @@
  uninstall
                 Uninstall all OpenSSL components.
 
+ reconfigure
+ reconf
+                Re-run the configuration process, as exactly as the last time
+                as possible.
+
  update
                 This is a developer option. If you are developing a patch for
                 OpenSSL you may need to use this if you want to update

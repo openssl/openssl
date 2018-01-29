@@ -378,6 +378,9 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
 	@echo "**************************************************"
 	@exit 1
 
+reconfigure reconf:
+	"$(PERL)" configdata.pm -r -v
+
 {-
  use File::Basename;
  use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
