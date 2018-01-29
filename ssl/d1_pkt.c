@@ -1205,6 +1205,24 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
         goto start;
     }
 
+    /*
+     * If we are a server and get a client hello when renegotiation isn't
+     * allowed send back a no renegotiation alert and carry on.
+     */
+    if (s->server
+            && SSL_is_init_finished(s)
+            && !s->s3->send_connection_binding
+            && s->d1->handshake_fragment_len >= DTLS1_HM_HEADER_LENGTH
+            && s->d1->handshake_fragment[0] == SSL3_MT_CLIENT_HELLO
+            && s->s3->previous_client_finished_len != 0
+            && (s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION) == 0) {
+        s->d1->handshake_fragment_len = 0;
+        rr->length = 0;
+        ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+        goto start;
+    }
+
+
     if (s->d1->alert_fragment_len >= DTLS1_AL_HEADER_LENGTH) {
         int alert_level = s->d1->alert_fragment[0];
         int alert_descr = s->d1->alert_fragment[1];
