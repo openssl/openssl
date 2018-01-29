@@ -447,7 +447,7 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         RSA_PSS_PARAMS_free(pss);
         if (!rv)
             return 0;
-    } else if (!sig && BIO_puts(bp, "\n") <= 0) {
+    } else if (BIO_puts(bp, "\n") <= 0) {
         return 0;
     }
     if (sig)
