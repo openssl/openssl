@@ -31,6 +31,7 @@ before_build:
     - mkdir _build
     - cd _build
     - perl ..\Configure %TARGET% %SHARED%
+    - perl configdata.pm --dump
     - cd ..
     - ps: >-
         if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
