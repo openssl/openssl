@@ -1024,68 +1024,6 @@ foreach my $feature (@{$target{enable}}) {
     }
 }
 
-foreach (sort (keys %disabled))
-	{
-	$config{options} .= " no-$_";
-
-	printf "    no-%-12s %-10s", $_, "[$disabled{$_}]";
-
-	if (/^dso$/)
-		{ }
-	elsif (/^threads$/)
-		{ }
-	elsif (/^shared$/)
-		{ }
-	elsif (/^pic$/)
-		{ }
-	elsif (/^zlib$/)
-		{ }
-	elsif (/^dynamic-engine$/)
-		{ }
-	elsif (/^makedepend$/)
-		{ }
-	elsif (/^zlib-dynamic$/)
-		{ }
-	elsif (/^sse2$/)
-		{ }
-	elsif (/^engine$/)
-		{
-		@{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
-		@{$config{sdirs}} = grep !/^engine$/, @{$config{sdirs}};
-		push @{$config{openssl_other_defines}}, "OPENSSL_NO_ENGINE";
-		print " OPENSSL_NO_ENGINE (skip engines)";
-		}
-	else
-		{
-		my ($WHAT, $what);
-
-		($WHAT = $what = $_) =~ tr/[\-a-z]/[_A-Z]/;
-
-		# Fix up C macro end names
-		$WHAT = "RMD160" if $what eq "ripemd";
-
-		# fix-up crypto/directory name(s)
-		$what = "ripemd" if $what eq "rmd160";
-		$what = "whrlpool" if $what eq "whirlpool";
-
-		if ($what ne "async" && $what ne "err"
-		    && grep { $_ eq $what } @{$config{sdirs}})
-			{
-			push @{$config{openssl_algorithm_defines}}, "OPENSSL_NO_$WHAT";
-			@{$config{sdirs}} = grep { $_ ne $what} @{$config{sdirs}};
-
-			print " OPENSSL_NO_$WHAT (skip dir)";
-			}
-		else
-			{
-			push @{$config{openssl_other_defines}}, "OPENSSL_NO_$WHAT";
-			print " OPENSSL_NO_$WHAT";
-			}
-		}
-
-	print "\n";
-	}
-
 $target{cxxflags}//=$target{cflags} if $target{cxx};
 $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
@@ -1149,6 +1087,46 @@ $config{plib_lflags} = [ $target{plib_lflags} ];
 
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
+
+# ALL USE OF %useradd MUST BE DONE FROM HERE ON
+%useradd = undef;
+
+my %disabled_info = ();         # For configdata.pm
+foreach my $what (sort keys %disabled) {
+    $config{options} .= " no-$what";
+
+    if (!grep { $what eq $_ } ( 'dso', 'threads', 'shared', 'pic',
+                                'dynamic-engine', 'makedepend',
+                                'zlib-dynamic', 'zlib', 'sse2' )) {
+        (my $WHAT = uc $what) =~ s|-|_|g;
+
+        # Fix up C macro end names
+        $WHAT = "RMD160" if $what eq "ripemd";
+
+        # fix-up crypto/directory name(s)
+        $what = "ripemd" if $what eq "rmd160";
+        $what = "whrlpool" if $what eq "whirlpool";
+
+        my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
+
+        if ((grep { $what eq $_ } @{$config{sdirs}})
+                && $what ne 'async' && $what ne 'err') {
+            @{$config{sdirs}} = grep { $what ne $_} @{$config{sdirs}};
+            $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
+
+            if ($what ne 'engine') {
+                push @{$config{openssl_algorithm_defines}}, $macro;
+            } else {
+                @{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
+                push @{$disabled_info{engine}->{skipped}}, catdir('engines');
+                push @{$config{openssl_other_defines}}, $macro;
+            }
+        } else {
+            push @{$config{openssl_other_defines}}, $macro;
+        }
+
+    }
+}
 
 # Make sure build_scheme is consistent.
 $target{build_scheme} = [ $target{build_scheme} ]
@@ -2316,8 +2294,23 @@ foreach (sort keys %user) {
         "'",$user_to_target{$_} || lc $_,"',\n";
 }
 print OUT ");\n";
+print OUT "my \%disabled_info = (\n";
+foreach my $what (sort keys %disabled_info) {
+    print OUT "    '$what' => {\n";
+    foreach my $info (sort keys %{$disabled_info{$what}}) {
+        if (ref $disabled_info{$what}->{$info} eq 'ARRAY') {
+            print OUT "        $info => [ ",
+                join(', ', map { "'$_'" } @{$disabled_info{$what}->{$info}}),
+                " ],\n";
+        } else {
+            print OUT "        $info => '", $disabled_info{$what}->{$info},
+                "',\n";
+        }
+    }
+    print OUT "    },\n";
+}
+print OUT ");\n";
 print OUT << 'EOF';
-
 # If run directly, we can give some answers, and even reconfigure
 unless (caller) {
     use Getopt::Long;
@@ -2329,6 +2322,7 @@ unless (caller) {
 
     my $dump = undef;
     my $cmdline = undef;
+    my $options = undef;
     my $envvars = undef;
     my $makevars = undef;
     my $buildparams = undef;
@@ -2338,6 +2332,7 @@ unless (caller) {
     my $man = undef;
     GetOptions('dump|d'                 => \$dump,
                'command-line|c'         => \$cmdline,
+               'options|o'              => \$options,
                'environment|e'          => \$envvars,
                'make-variables|m'       => \$makevars,
                'build-parameters|b'     => \$buildparams,
@@ -2347,8 +2342,8 @@ unless (caller) {
                'man'                    => \$man)
         or die "Errors in command line arguments\n";
 
-    unless ($dump || $cmdline || $envvars || $makevars || $buildparams
-            || $reconf || $verbose || $help || $man) {
+    unless ($dump || $cmdline || $options || $envvars || $makevars
+            || $buildparams || $reconf || $verbose || $help || $man) {
         print STDERR <<"_____";
 You must give at least one option.
 For more information, do '$0 --help'
@@ -2371,6 +2366,30 @@ _____
                           $config{perl},
                           catfile($config{sourcedir}, 'Configure'),
                           @{$config{perlargv}}), "\n";
+    }
+    if ($dump || $options) {
+        my $longest = 0;
+        foreach my $what (@disablables) {
+            $longest = length($what) if $longest < length($what);
+        }
+        print "\nEnabled features:\n\n";
+        foreach my $what (@disablables) {
+            print "    $what\n" unless $disabled{$what};
+        }
+        print "\nDisabled features:\n\n";
+        foreach my $what (@disablables) {
+            if ($disabled{$what}) {
+                print "    $what", ' ' x ($longest - length($what) + 1),
+                    "[$disabled{$what}]", ' ' x (10 - length($disabled{$what}));
+                print $disabled_info{$what}->{macro}
+                    if $disabled_info{$what}->{macro};
+                print ' (skip ',
+                    join(', ', @{$disabled_info{$what}->{skipped}}),
+                    ')'
+                    if $disabled_info{$what}->{skipped};
+                print "\n";
+            }
+        }
     }
     if ($dump || $envvars) {
         print "\nRecorded environment:\n\n";
@@ -2482,11 +2501,16 @@ Print the manual page and exit.
 =item B<--dump> | B<-c>
 
 Print all relevant configuration data.  This is equivalent to B<--command-line>
-B<--environment> B<--make-variables> B<--build-parameters>.
+B<--options> B<--environment> B<--make-variables> B<--build-parameters>.
 
 =item B<--command-line> | B<-c>
 
 Print the current configuration command line.
+
+=item B<--options> | B<-o>
+
+Print the features, both enabled and disabled, and display defined macro and
+skipped directories where applicable.
 
 =item B<--environment> | B<-e>
 
