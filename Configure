@@ -2327,6 +2327,7 @@ unless (caller) {
 
     my $here = dirname($0);
 
+    my $dump = undef;
     my $cmdline = undef;
     my $envvars = undef;
     my $makevars = undef;
