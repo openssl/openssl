@@ -13,6 +13,7 @@
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include "internal/constant_time_locl.h"
+#include "internal/cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -514,10 +515,15 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL *s)
 
     case TLS_ST_SR_CLNT_HELLO:
         if (SSL_IS_DTLS(s) && !s->d1->cookie_verified
-            && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
+            && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE)) {
             st->hand_state = DTLS_ST_SW_HELLO_VERIFY_REQUEST;
-        else
+        } else if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
+            /* We must have rejected the renegotiation */
+            st->hand_state = TLS_ST_OK;
+            return WRITE_TRAN_CONTINUE;
+        } else {
             st->hand_state = TLS_ST_SW_SRVR_HELLO;
+        }
         return WRITE_TRAN_CONTINUE;
 
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
@@ -1254,22 +1260,31 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
     /* |cookie| will only be initialized for DTLS. */
     PACKET session_id, compression, extensions, cookie;
     static const unsigned char null_compression = 0;
-    CLIENTHELLO_MSG *clienthello;
+    CLIENTHELLO_MSG *clienthello = NULL;
+
+    /* Check if this is actually an unexpected renegotiation ClientHello */
+    if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
+        if (!ossl_assert(!SSL_IS_TLS13(s))) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CLIENT_HELLO,
+                     ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        if ((s->options & SSL_OP_NO_RENEGOTIATION) != 0
+                || (!s->s3->send_connection_binding
+                    && (s->options
+                        & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION) == 0)) {
+            ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
+            return MSG_PROCESS_FINISHED_READING;
+        }
+        s->renegotiate = 1;
+        s->new_session = 1;
+    }
 
     clienthello = OPENSSL_zalloc(sizeof(*clienthello));
     if (clienthello == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CLIENT_HELLO,
                  ERR_R_INTERNAL_ERROR);
         goto err;
-    }
-    /* Check if this is actually an unexpected renegotiation ClientHello */
-    if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
-        if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
-            ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
-            goto err;
-        }
-        s->renegotiate = 1;
-        s->new_session = 1;
     }
 
     /*
