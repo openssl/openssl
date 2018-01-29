@@ -226,11 +226,6 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 	die "Incorrect data to reconfigure, please do a normal configuration\n"
 	    if (grep(/^reconf/,@argvcopy));
 	$config{perlenv} = $configdata::config{perlenv} // {};
-
-	print "Reconfiguring with: ", join(" ",@argvcopy), "\n";
-	foreach (sort keys %{$config{perlenv}}) {
-	    print "    $_ = $config{perlenv}->{$_}\n";
-	}
     } else {
 	die "Insufficient data to reconfigure, please do a normal configuration\n";
     }
@@ -2176,8 +2171,11 @@ foreach (grep /_(asm|aux)_src$/, keys %target) {
 
 # Write down our configuration where it fits #########################
 
+print "Creating configdata.pm\n";
 open(OUT,">configdata.pm") || die "unable to create configdata.pm: $!\n";
 print OUT <<"EOF";
+#! $config{hashbangperl}
+
 package configdata;
 
 use strict;
@@ -2312,36 +2310,219 @@ if ($builder eq "unified") {
 
 EOF
 }
-print OUT "1;\n";
-close(OUT);
+print OUT "my \%makevars = (\n";
+foreach (sort keys %user) {
+    print OUT '    ',$_,' ' x (20 - length $_),'=> ',
+        "'",$user_to_target{$_} || lc $_,"',\n";
+}
+print OUT ");\n";
+print OUT << 'EOF';
 
-print "\n";
-print "PROCESSOR     =$config{processor}\n" if $config{processor};
-print "PERL          =$config{perl}\n";
-print "PERLVERSION   =$Config{version} for $Config{archname}\n";
-print "HASHBANGPERL  =$config{hashbangperl}\n";
-print "DEFINES       =",join(" ", @{$config{defines}}),"\n"
-    if defined $config{defines};
-print "INCLUDES      =",join(" ", @{$config{includes}}),"\n"
-    if defined $config{includes};
-print "CPPFLAGS      =",join(" ", @{$config{cppflags}}),"\n"
-    if defined $config{cppflags};
-print "CC            =$config{cross_compile_prefix}$config{cc}\n";
-print "CFLAGS        =",join(" ", @{$config{cflags}}),"\n"
-    if defined $config{cflags};
-print "CXX           =$config{cross_compile_prefix}$config{cxx}\n"
-    if defined $config{cxx};
-print "CXXFLAGS      =",join(" ", @{$config{cxxflags}}),"\n"
-    if defined $config{cxxflags};
-print "LD            =$config{cross_compile_prefix}$config{ld}\n"
-    if defined $config{ld};
-print "LDFLAGS       =",join(" ", @{$config{lflags}}),"\n"
-    if defined $config{lflags};
-print "EX_LIBS       =",join(" ", @{$config{ex_libs}}),"\n"
-    if defined $config{ex_libs};
+# If run directly, we can give some answers, and even reconfigure
+unless (caller) {
+    use Getopt::Long;
+    use File::Spec::Functions;
+    use File::Basename;
+    use Pod::Usage;
+
+    my $here = dirname($0);
+
+    my $dump = undef;
+    my $cmdline = undef;
+    my $envvars = undef;
+    my $makevars = undef;
+    my $buildparams = undef;
+    my $reconf = undef;
+    my $verbose = undef;
+    my $help = undef;
+    my $man = undef;
+    GetOptions('dump|d'                 => \$dump,
+               'command-line|c'         => \$cmdline,
+               'environment|e'          => \$envvars,
+               'make-variables|m'       => \$makevars,
+               'build-parameters|b'     => \$buildparams,
+               'reconfigure|reconf|r'   => \$reconf,
+               'verbose|v'              => \$verbose,
+               'help'                   => \$help,
+               'man'                    => \$man)
+        or die "Errors in command line arguments\n";
+
+    unless ($dump || $cmdline || $envvars || $makevars || $buildparams
+            || $reconf || $verbose || $help || $man) {
+        print STDERR <<"_____";
+You must give at least one option.
+For more information, do '$0 --help'
+_____
+        exit(2);
+    }
+
+    if ($help) {
+        pod2usage(-exitval => 0,
+                  -verbose => 1);
+    }
+    if ($man) {
+        pod2usage(-exitval => 0,
+                  -verbose => 2);
+    }
+    if ($dump || $cmdline) {
+        print "\n(with current working directory = $here)";
+        print "\nCommand line:\n\n";
+        print '    ',join(' ',
+                          $config{perl},
+                          catfile($config{sourcedir}, 'Configure'),
+                          @{$config{perlargv}}), "\n";
+    }
+    if ($dump || $envvars) {
+        print "\nRecorded environment:\n\n";
+        foreach (sort keys %{$config{perlenv}}) {
+            print '    ',$_,' = ',($config{perlenv}->{$_} || ''),"\n";
+        }
+    }
+    if ($dump || $makevars) {
+        print "\nMakevars:\n\n";
+        foreach (sort keys %makevars) {
+            print '    ',$_,' ' x (16 - length $_),'= ',
+                (ref $config{$makevars{$_}} eq 'ARRAY'
+                 ? join(' ', @{$config{$makevars{$_}}})
+                 : $config{$makevars{$_}}),
+                "\n"
+                if defined $config{$makevars{$_}};
+        }
+
+        my @buildfile = ($config{builddir}, $config{build_file});
+        unshift @buildfile, $here
+            unless file_name_is_absolute($config{builddir});
+        my $buildfile = canonpath(catdir(@buildfile));
+        print <<"_____";
+
+NOTE: These variables only represent the configuration view.  The build file
+template may have processed these variables further, please have a look at the
+build file for more exact data:
+    $buildfile
+_____
+    }
+    if ($dump || $buildparams) {
+        my @buildfile = ($config{builddir}, $config{build_file});
+        unshift @buildfile, $here
+            unless file_name_is_absolute($config{builddir});
+        print "\nbuild file:\n\n";
+        print "    ", canonpath(catfile(@buildfile)),"\n";
+
+        print "\nbuild file templates:\n\n";
+        foreach (@{$config{build_file_templates}}) {
+            my @tmpl = ($_);
+            unshift @tmpl, $here
+                unless file_name_is_absolute($config{sourcedir});
+            print '    ',canonpath(catfile(@tmpl)),"\n";
+        }
+    }
+    if ($reconf) {
+        if ($verbose) {
+            print 'Reconfiguring with: ', join(' ',@{$config{perlargv}}), "\n";
+	    foreach (sort keys %{$config{perlenv}}) {
+	        print '    ',$_,' = ',($config{perlenv}->{$_} || ""),"\n";
+	    }
+        }
+
+        chdir $here;
+        exec $^X,catfile($config{sourcedir}, 'Configure'),'reconf';
+    }
+}
+
+1;
+
+__END__
+
+=head1 NAME
+
+configdata.pm - configuration data for OpenSSL builds
+
+=head1 SYNOPSIS
+
+Interactive:
+
+  perl configdata.pm [options]
+
+As data bank module:
+
+  use configdata;
+
+=head1 DESCRIPTION
+
+This module can be used in two modes, interactively and as a module containing
+all the data recorded by OpenSSL's Configure script.
+
+When used interactively, simply run it as any perl script, with at least one
+option, and you will get the information you ask for.  See L</OPTIONS> below.
+
+When loaded as a module, you get a few databanks with useful information to
+perform build related tasks.  The databanks are:
+
+    %config             Configured things.
+    %target             The OpenSSL config target with all inheritances
+                        resolved.
+    %disabled           The features that are disabled.
+    @disablables        The list of features that can be disabled.
+    %withargs           All data given through --with-THING options.
+    %unified_info       All information that was computed from the build.info
+                        files.
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<--help>
+
+Print a brief help message and exit.
+
+=item B<--man>
+
+Print the manual page and exit.
+
+=item B<--dump> | B<-c>
+
+Print all relevant configuration data.  This is equivalent to B<--command-line>
+B<--environment> B<--make-variables> B<--build-parameters>.
+
+=item B<--command-line> | B<-c>
+
+Print the current configuration command line.
+
+=item B<--environment> | B<-e>
+
+Print the environment variables and their values at the time of configuration.
+
+=item B<--make-variables> | B<-m>
+
+Print the main make variables generated in the current configuration
+
+=item B<--build-parameters> | B<-b>
+
+Print the build parameters, i.e. build file and build file templates.
+
+=item B<--reconfigure> | B<--reconf> | B<-r>
+
+Redo the configuration.
+
+=item B<--verbose> | B<-v>
+
+Verbose output.
+
+=back
+
+=cut
+
+EOF
+close(OUT);
+if ($builder_platform eq 'unix') {
+    my $mode = (0755 & ~umask);
+    chmod $mode, 'configdata.pm'
+        or warn sprintf("WARNING: Couldn't change mode for 'configdata.pm' to 0%03o: %s\n",$mode,$!);
+}
 
 my %builders = (
     unified => sub {
+        print 'Creating ',$target{build_file},"\n";
         run_dofile(catfile($blddir, $target{build_file}),
                    @{$config{build_file_templates}});
     },
