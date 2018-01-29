@@ -2554,6 +2554,17 @@ my %builders = (
 
 $builders{$builder}->($builder_platform, @builder_opts);
 
+# Show a note on the use of configdata.pm, but ONLY for release 1.1.1
+# (i.e. this message disappears with the following update, 1.1.1a)
+print <<"EOF" if ($config{version_num} =~ m|^0x1010100.L$|);
+
+NOTE: Starting with OpenSSL 1.1.1, 'Configure' doesn't display all the disabled
+options or the "make variables" with their values.  Instead, you must use
+'configdata.pm' as a script to get a display of the configuration data.  For
+help, please do this:
+
+        perl configdata.pm --help
+EOF
 print <<"EOF" if ($disabled{threads} eq "unavailable");
 
 The library could not be configured for supporting multi-threaded
