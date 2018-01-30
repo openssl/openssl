@@ -793,6 +793,9 @@ configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build
 	@echo "**************************************************"
 	@false
 
+reconfigure reconf:
+	$(PERL) configdata.pm -r -v
+
 {-
   use File::Basename;
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;

@@ -553,6 +553,9 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
         @ WRITE SYS$OUTPUT "*************************************************"
         @ PIPE ( EXIT %X10000000 )
 
+reconfigure reconf:
+	perl configdata.pm -r -v
+
 {-
   use File::Basename;
   use File::Spec::Functions qw/abs2rel rel2abs catfile catdir/;
