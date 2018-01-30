@@ -729,7 +729,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
 {
     char *linebuf;
     int ret = 0;
-    size_t len;
+    int len;
 
     /*
      * Need to hold trailing NUL (accounted for by BIO_gets() and the newline
