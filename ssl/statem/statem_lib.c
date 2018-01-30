@@ -123,20 +123,6 @@ int tls_setup_handshake(SSL *s)
             /* N.B. s->session_ctx == s->ctx here */
             CRYPTO_atomic_add(&s->session_ctx->stats.sess_accept, 1, &i,
                               s->session_ctx->lock);
-        } else if ((s->options & SSL_OP_NO_RENEGOTIATION)) {
-            /* Renegotiation is disabled */
-            ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
-            return 0;
-        } else if (!s->s3->send_connection_binding &&
-                   !(s->options &
-                     SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION)) {
-            /*
-             * Server attempting to renegotiate with client that doesn't
-             * support secure renegotiation.
-             */
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_SETUP_HANDSHAKE,
-                     SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-            return 0;
         } else {
             /* N.B. s->ctx may not equal s->session_ctx */
             CRYPTO_atomic_add(&s->ctx->stats.sess_accept_renegotiate, 1, &i,
