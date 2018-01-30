@@ -2506,7 +2506,7 @@ Print a brief help message and exit.
 
 Print the manual page and exit.
 
-=item B<--dump> | B<-c>
+=item B<--dump> | B<-d>
 
 Print all relevant configuration data.  This is equivalent to B<--command-line>
 B<--options> B<--environment> B<--make-variables> B<--build-parameters>.
