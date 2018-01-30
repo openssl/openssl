@@ -1074,22 +1074,12 @@ foreach (keys %user) {
     $config{$target_key} =
         $mkvalue->($ref_type, $user{$_})
         || $mkvalue->($ref_type, $target{$target_key});
-    if (defined $useradd{$_} && @{$useradd{$_}}) {
-        if (defined $config{$target_key}) {
-            push @{$config{$target_key}}, @{$useradd{$_}};
-        } else {
-            $config{$target_key} = [ @{$useradd{$_}} ];
-        }
-    }
     delete $config{$target_key} unless defined $config{$target_key};
 }
 $config{plib_lflags} = [ $target{plib_lflags} ];
 
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
-
-# ALL USE OF %useradd MUST BE DONE FROM HERE ON
-%useradd = undef;
 
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
@@ -1491,6 +1481,22 @@ unless ($disabled{afalgeng}) {
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+
+# Finish up %config by appending things the user gave us on the command line
+# apart from "make variables"
+foreach (keys %useradd) {
+    # The must all be lists, so we assert that here
+    die "internal error: \$useradd{$_} isn't an ARRAY\n"
+        unless ref $useradd{$_} eq 'ARRAY';
+
+    my $target_key = $user_to_target{$_} // lc $_;
+
+    if (defined $config{$target_key}) {
+        push @{$config{$target_key}}, @{$useradd{$_}};
+    } else {
+        $config{$target_key} = [ @{$useradd{$_}} ];
+    }
+}
 
 # ALL MODIFICATIONS TO %config and %target MUST BE DONE FROM HERE ON
 
