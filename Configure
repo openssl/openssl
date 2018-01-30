@@ -1154,7 +1154,8 @@ if ($target =~ /^mingw/ && `$config{cc} --target-help 2>&1` =~ m/-mno-cygwin/m)
 	}
 
 if ($target =~ /linux.*-mips/ && !$disabled{asm}
-        && !grep { $_ !~ /-m(ips|arch=)/ } @{$user{CFLAGS}}) {
+        && !grep { $_ !~ /-m(ips|arch=)/ } (@{$user{CFLAGS}},
+                                            @{$useradd{CFLAGS}}) {
 	# minimally required architecture flags for assembly modules
 	my $value;
 	$value = '-mips2' if ($target =~ /mips32/);
@@ -1202,7 +1203,8 @@ unless ($disabled{threads}) {
             # system-dependent compiler options that are necessary.  We
             # can't truly check that the given options are correct, but
             # we expect the user to know what [s]He is doing.
-            if (!@{$user{CFLAGS}} && !@{$user{CPPDEFINES}}) {
+            if (!@{$user{CFLAGS}} && !@{$useradd{CFLAGS}}
+                    && !@{$user{CPPDEFINES}} && !@{$useradd{CPPDEFINES}}) {
                 die "You asked for multi-threading support, but didn't\n"
                     ,"provide any system-specific compiler options\n";
             }
