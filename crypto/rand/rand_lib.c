@@ -210,7 +210,7 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     size_t len;
 #ifdef OPENSSL_SYS_UNIX
     pid_t pid;
-    struct timespec ts;
+    struct timeval tv;
 #elif defined(OPENSSL_SYS_WIN32)
     DWORD pid;
     FILETIME ft;
@@ -241,10 +241,8 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
 #endif
 
 #ifdef OPENSSL_SYS_UNIX
-    if (tsc == 0 && clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
-        RAND_POOL_add(pool, (unsigned char *)&ts, sizeof(ts), 0);
-    if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
-        RAND_POOL_add(pool, (unsigned char *)&ts, sizeof(ts), 0);
+    if (gettimeofday(&tv, NULL) == 0)
+        RAND_POOL_add(pool, (unsigned char *)&tv, sizeof(tv), 0);
 #elif defined(OPENSSL_SYS_WIN32)
     if (tsc == 0 && QueryPerformanceCounter(&pc) != 0)
         RAND_POOL_add(pool, (unsigned char *)&pc, sizeof(pc), 0);
