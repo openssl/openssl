@@ -98,6 +98,8 @@ BIO *BIO_new(const BIO_METHOD *method)
         CRYPTO_THREAD_lock_free(bio->lock);
         goto err;
     }
+    if (method->create == NULL)
+        bio->init = 1;
 
     return bio;
 
