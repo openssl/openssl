@@ -570,6 +570,21 @@ static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
     return rv;
 }
 
+
+static int cmd_NumTickets(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    int num_tickets = atoi(value);
+
+    if (num_tickets >= 0) {
+        if (cctx->ctx)
+            rv = SSL_CTX_set_num_tickets(cctx->ctx, num_tickets);
+        if (cctx->ssl)
+            rv = SSL_set_num_tickets(cctx->ssl, num_tickets);
+    }
+    return rv;
+}
+
 typedef struct {
     int (*cmd) (SSL_CONF_CTX *cctx, const char *value);
     const char *str_file;
@@ -655,7 +670,8 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
 #endif
-    SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0)
+    SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0),
+    SSL_CONF_CMD_STRING(NumTickets, "num_tickets", SSL_CONF_FLAG_SERVER)
 };
 
 /* Supported switches: must match order of switches in ssl_conf_cmds */
