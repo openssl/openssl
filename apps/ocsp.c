@@ -730,7 +730,7 @@ redo_accept:
     free_index(rdb);
     BIO_free_all(cbio);
     BIO_free_all(acbio);
-    BIO_free(out);
+    BIO_free_all(out);
     OCSP_REQUEST_free(req);
     OCSP_RESPONSE_free(resp);
     OCSP_BASICRESP_free(bs);
