@@ -54,9 +54,9 @@ at the time of the initial handshake, such that post-handshake authentication
 can be requested by the server. A certificate callback will need to be set via
 SSL_CTX_set_client_cert_cb() if no certificate is provided at initialization.
 
-SSL_verify_client_post_handshake() causes a Certificate Request message to be
+SSL_verify_client_post_handshake() causes a CertificateRequest message to be
 sent by a server on the given B<ssl> connection. The SSL_VERIFY_PEER flag must
-be set, the SSL_VERIFY_POST_HANDSHAKE flag is optional.
+be set; the SSL_VERIFY_POST_HANDSHAKE flag is optional.
 
 =head1 NOTES
 
@@ -184,8 +184,8 @@ failure will lead to a termination of the TLS/SSL handshake with an
 alert message, if SSL_VERIFY_PEER is set.
 
 After calling SSL_force_post_handshake_auth(), the client will need to add a
-certificate to its configuration before it can successfully authenticate. This
-must be called before SSL_connect().
+certificate or certificate callback to its configuration before it can
+successfully authenticate. This must be called before SSL_connect().
 
 SSL_verify_client_post_handshake() requires that verify flags have been
 previously set, and that a client sent the post-handshake authentication
@@ -194,7 +194,7 @@ invoked. A write operation must take place for the Certificate Request to be
 sent to the client, this can be done with SSL_do_handshake() or SSL_write_ex().
 Only one certificate request may be outstanding at any time.
 
-When post-handshake authentication occurs, a refreshed B<NewSessionTicket>
+When post-handshake authentication occurs, a refreshed NewSessionTicket
 message is sent to the client.
 
 =head1 BUGS
