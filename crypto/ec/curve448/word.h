@@ -59,18 +59,6 @@ typedef int64_t dsword_t;
 #  error "For now we only support 32- and 64-bit architectures."
 # endif
 
-
-/* PERF: vectorize vs unroll */
-# ifdef __clang__
-#  if 100*__clang_major__ + __clang_minor__ > 305
-#   define UNROLL _Pragma("clang loop unroll(full)")
-#  endif
-# endif
-
-# ifndef UNROLL
-#  define UNROLL
-# endif
-
 /*
  * The plan on booleans: The external interface uses c448_bool_t, but this
  * might be a different size than our particular arch's word_t (and thus
