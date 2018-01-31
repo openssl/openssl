@@ -188,6 +188,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
             }
             if (!BN_sub(r2, prime, BN_value_one()))
                 goto err;
+            ERR_set_mark();
             if (BN_mod_inverse(r1, r2, rsa->e, ctx) != NULL) {
                /* GCD == 1 since inverse exists */
                 break;
@@ -196,7 +197,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
             if (ERR_GET_LIB(error) == ERR_LIB_BN
                 && ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
                 /* GCD != 1 */
-                ERR_clear_error();
+                ERR_pop_to_mark();
             } else {
                 goto err;
             }
