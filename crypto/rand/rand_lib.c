@@ -216,7 +216,9 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     FILETIME ft;
     LARGE_INTEGER pc;
 #endif
+#ifdef OPENSSL_CPUID_OBJ
     uint32_t tsc = 0;
+#endif
 
     pool = RAND_POOL_new(0, 0, max_len);
     if (pool == NULL)
@@ -244,7 +246,7 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     if (gettimeofday(&tv, NULL) == 0)
         RAND_POOL_add(pool, (unsigned char *)&tv, sizeof(tv), 0);
 #elif defined(OPENSSL_SYS_WIN32)
-    if (tsc == 0 && QueryPerformanceCounter(&pc) != 0)
+    if (QueryPerformanceCounter(&pc) != 0)
         RAND_POOL_add(pool, (unsigned char *)&pc, sizeof(pc), 0);
     GetSystemTimeAsFileTime(&ft);
     RAND_POOL_add(pool, (unsigned char *)&ft, sizeof(ft), 0);
