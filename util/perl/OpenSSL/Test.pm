@@ -476,7 +476,9 @@ sub run {
 	}
 	close $pipe;
     } else {
+	$ENV{HARNESS_OSSL_PREFIX} = "# ";
 	system("$prefix$cmd");
+	delete $ENV{HARNESS_OSSL_PREFIX};
     }
     $e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     $r = $hooks{exit_checker}->($e);

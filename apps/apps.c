@@ -2432,10 +2432,22 @@ BIO *dup_bio_out(int format)
 {
     BIO *b = BIO_new_fp(stdout,
                         BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+    BIO *lbuf = NULL;
+    const char *prefix = NULL;
+
+    if (istext(format)) {
 #ifdef OPENSSL_SYS_VMS
-    if (istext(format))
-        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+        lbuf = BIO_new(BIO_f_linebuffer());
 #endif
+        if ((prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
+            if (lbuf == NULL)
+                lbuf = BIO_new(BIO_f_linebuffer());
+            BIO_set_linebuffer_prefix(lbuf, prefix);
+        }
+    }
+
+    if (lbuf != NULL)
+        b = BIO_push(lbuf, b);
     return b;
 }
 

@@ -24,6 +24,8 @@ static long linebuffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 /* A 10k maximum should be enough for most purposes */
 #define DEFAULT_LINEBUFFER_SIZE 1024*10
+/* Allow up to 40 character prefix */
+#define LINEBUFFER_PREFIX_MAXSIZE 40
 
 /* #define DEBUG */
 
@@ -53,6 +55,7 @@ typedef struct bio_linebuffer_ctx_struct {
     char *obuf;                 /* the output char array */
     int obuf_size;              /* how big is the output buffer */
     int obuf_len;               /* how many bytes are in it */
+    int prefix_len;             /* how many bytes the prefix occupy */
 } BIO_LINEBUFFER_CTX;
 
 static int linebuffer_new(BIO *bi)
@@ -62,13 +65,15 @@ static int linebuffer_new(BIO *bi)
     ctx = OPENSSL_malloc(sizeof(*ctx));
     if (ctx == NULL)
         return 0;
-    ctx->obuf = OPENSSL_malloc(DEFAULT_LINEBUFFER_SIZE);
+    ctx->obuf = OPENSSL_malloc(DEFAULT_LINEBUFFER_SIZE
+                               + LINEBUFFER_PREFIX_MAXSIZE);
     if (ctx->obuf == NULL) {
         OPENSSL_free(ctx);
         return 0;
     }
     ctx->obuf_size = DEFAULT_LINEBUFFER_SIZE;
     ctx->obuf_len = 0;
+    ctx->prefix_len = 0;
 
     bi->init = 1;
     bi->ptr = (char *)ctx;
@@ -82,6 +87,7 @@ static int linebuffer_free(BIO *a)
 
     if (a == NULL)
         return 0;
+    BIO_ctrl(a, BIO_CTRL_FLUSH, 0, 0);
     b = (BIO_LINEBUFFER_CTX *)a->ptr;
     OPENSSL_free(b->obuf);
     OPENSSL_free(a->ptr);
@@ -130,10 +136,11 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
 
         /*
          * If a NL was found and we already have text in the save buffer,
-         * concatenate them and write
+         * concatenate them and write.  Note that if we have a prefix in
+         * place, there is always text in the save buffer.
          */
         while ((foundnl || p - in > ctx->obuf_size - ctx->obuf_len)
-               && ctx->obuf_len > 0) {
+               && p - in > 0 && ctx->obuf_len > 0) {
             int orig_olen = ctx->obuf_len;
 
             i = ctx->obuf_size - ctx->obuf_len;
@@ -162,16 +169,20 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
                 if (i == 0)
                     return num;
             }
-            if (i < ctx->obuf_len)
-                memmove(ctx->obuf, ctx->obuf + i, ctx->obuf_len - i);
-            ctx->obuf_len -= i;
+            if (i < ctx->obuf_len && i > ctx->prefix_len)
+                memmove(ctx->obuf + ctx->prefix_len, ctx->obuf + i,
+                        ctx->obuf_len + ctx->prefix_len - i);
+            ctx->obuf_len -= i - ctx->prefix_len;
         }
 
         /*
-         * Now that the save buffer is emptied, let's write the input buffer
-         * if a NL was found and there is anything to write.
+         * Now that the save buffer is emptied supposedly, let's write the
+         * input buffer if a NL was found and there is anything to write.
+         * Note that when a prefix is in place, the save buffer is never
+         * empty.
          */
-        if ((foundnl || p - in > ctx->obuf_size) && p - in > 0) {
+        if ((foundnl || p - in > ctx->obuf_size) && p - in > 0
+            && ctx->obuf_len == 0) {
             i = BIO_write(b->next_bio, in, p - in);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
@@ -188,7 +199,7 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
     while (foundnl && inl > 0);
     /*
      * We've written as much as we can.  The rest of the input buffer, if
-     * any, is text that doesn't and with a NL and therefore needs to be
+     * any, is text that doesn't end with a NL and therefore needs to be
      * saved for the next trip.
      */
     if (inl > 0) {
@@ -228,6 +239,25 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         }
         break;
+    case BIO_C_SET_PREFIX:
+        {
+            size_t strl = strlen((const char *)ptr);
+            size_t saved = ctx->obuf_len - ctx->prefix_len;
+
+            if (saved > LINEBUFFER_PREFIX_MAXSIZE) {
+                ret = 0;
+                break;
+            }
+
+            if (saved > 0)
+                memmove(ctx->obuf + strl, ctx->obuf + ctx->prefix_len, saved);
+            memcpy(ctx->obuf, ptr, strl);
+            ctx->obuf_len += strl - ctx->prefix_len;
+            ctx->obuf_size += strl - ctx->prefix_len;
+            ctx->prefix_len = strl;
+        }
+        ret = 1;
+        break;
     case BIO_C_SET_BUFF_SIZE:
         obs = (int)num;
         p = ctx->obuf;
@@ -264,16 +294,17 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         for (;;) {
             BIO_clear_retry_flags(b);
-            if (ctx->obuf_len > 0) {
+            if (ctx->obuf_len > ctx->prefix_len) {
                 r = BIO_write(b->next_bio, ctx->obuf, ctx->obuf_len);
                 BIO_copy_next_retry(b);
                 if (r <= 0)
                     return (long)r;
-                if (r < ctx->obuf_len)
-                    memmove(ctx->obuf, ctx->obuf + r, ctx->obuf_len - r);
-                ctx->obuf_len -= r;
+                if (r < ctx->obuf_len && r > ctx->prefix_len)
+                    memmove(ctx->obuf + ctx->prefix_len, ctx->obuf + r,
+                            ctx->obuf_len - r - ctx->prefix_len);
+                ctx->obuf_len -= r - ctx->prefix_len;
             } else {
-                ctx->obuf_len = 0;
+                ctx->obuf_len = ctx->prefix_len;
                 break;
             }
         }
@@ -282,6 +313,9 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
         if (!BIO_set_write_buffer_size(dbio, ctx->obuf_size))
+            ret = 0;
+        if (ctx->prefix_len && !BIO_ctrl(dbio, BIO_C_SET_PREFIX,
+                                         ctx->prefix_len, ctx->obuf))
             ret = 0;
         break;
     default:
