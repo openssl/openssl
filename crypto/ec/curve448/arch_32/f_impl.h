@@ -20,7 +20,7 @@ void gf_add_RAW(gf out, const gf a, const gf b)
 {
     unsigned int i;
 
-    for (i = 0; i < sizeof(*out) / sizeof(out->limb[0]); i++) {
+    for (i = 0; i < NLIMBS; i++) {
         out->limb[i] = a->limb[i] + b->limb[i];
     }
 }
