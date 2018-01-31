@@ -395,15 +395,19 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
      * ossl_statem_client_write_transition().
      */
     switch (st->hand_state) {
+    default:
+        /* Shouldn't happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_OSSL_STATEM_CLIENT13_WRITE_TRANSITION,
+                 ERR_R_INTERNAL_ERROR);
+        return WRITE_TRAN_ERROR;
+
     case TLS_ST_CR_CERT_REQ:
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
             st->hand_state = TLS_ST_CW_CERT;
             return WRITE_TRAN_CONTINUE;
         }
-        /* Fall through */
-
-    default:
-        /* Shouldn't happen */
+        /* Shouldn't happen - same as default case */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_OSSL_STATEM_CLIENT13_WRITE_TRANSITION,
                  ERR_R_INTERNAL_ERROR);
@@ -3367,7 +3371,6 @@ static int ssl3_check_client_certificate(SSL *s)
     if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT &&
         !tls1_check_chain(s, NULL, NULL, NULL, -2))
         return 0;
-
     return 1;
 }
 

@@ -55,7 +55,6 @@ static int init_srtp(SSL *s, unsigned int context);
 static int final_sig_algs(SSL *s, unsigned int context, int sent);
 static int final_early_data(SSL *s, unsigned int context, int sent);
 static int final_maxfragmentlen(SSL *s, unsigned int context, int sent);
-
 static int init_post_handshake_auth(SSL *s, unsigned int context);
 
 /* Structure to define a built-in extension */
