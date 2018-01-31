@@ -128,7 +128,7 @@ static ossl_inline void gf_mulw(gf c, const gf a, int32_t w)
 /* Constant time, x = is_z ? z : y */
 static ossl_inline void gf_cond_sel(gf x, const gf y, const gf z, mask_t is_z)
 {
-    constant_time_select(x, y, z, sizeof(gf), is_z, 0);
+    constant_time_select_c448(x, y, z, sizeof(gf), is_z, 0);
 }
 
 /* Constant time, if (neg) x=-x; */

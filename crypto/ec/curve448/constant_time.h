@@ -258,12 +258,12 @@ static ossl_inline void constant_time_lookup(void *RESTRICT out_,
  * Note that the output is not __restrict__, but if it overlaps either
  * input, it must be equal and not partially overlap.
  */
-static ossl_inline void constant_time_select(void *a_,
-                                             const void *bFalse_,
-                                             const void *bTrue_,
-                                             word_t elem_bytes,
-                                             mask_t mask,
-                                             size_t alignment_bytes)
+static ossl_inline void constant_time_select_c448(void *a_,
+                                                  const void *bFalse_,
+                                                  const void *bTrue_,
+                                                  word_t elem_bytes,
+                                                  mask_t mask,
+                                                  size_t alignment_bytes)
 {
     unsigned char *a = (unsigned char *)a_;
     const unsigned char *bTrue = (const unsigned char *)bTrue_;
