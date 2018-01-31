@@ -232,7 +232,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
         OPT_S_MINPROTO, OPT_S_MAXPROTO, \
-        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S_NUM_TICKETS, \
+        OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
@@ -281,7 +282,11 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}, \
-        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', "Disable TLSv1.3 middlebox compat mode" }
+        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', \
+            "Disable TLSv1.3 middlebox compat mode" }, \
+        {"num_tickets", OPT_S_NUM_TICKETS, 'n', \
+            "The number of TLSv1.3 session tickets that a server will " \
+            "automatically issue" }
 
 
 # define OPT_S_CASES \
@@ -315,7 +320,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_MINPROTO: \
         case OPT_S_MAXPROTO: \
         case OPT_S_DEBUGBROKE: \
-        case OPT_S_NO_MIDDLEBOX
+        case OPT_S_NO_MIDDLEBOX: \
+        case OPT_S_NUM_TICKETS
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
