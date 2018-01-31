@@ -614,6 +614,9 @@ int SSL_clear(SSL *s)
 
     s->key_update = SSL_KEY_UPDATE_NONE;
 
+    EVP_MD_CTX_free(s->pha_dgst);
+    s->pha_dgst = NULL;
+
     /* Reset DANE verification result state */
     s->dane.mdpth = -1;
     s->dane.pdpth = -1;
