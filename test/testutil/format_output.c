@@ -299,7 +299,7 @@ static void test_fail_bignum_common(const char *prefix, const char *file,
     if (len > MEM_BUFFER_SIZE && (bufp = OPENSSL_malloc(len * 2)) == NULL) {
         bufp = buffer;
         len = MEM_BUFFER_SIZE;
-        test_printf_stderr("WARNING: these BIGNUMs have been truncated");
+        test_printf_stderr("WARNING: these BIGNUMs have been truncated\n");
     }
 
     if (bn1 != NULL) {
@@ -382,7 +382,7 @@ void test_fail_bignum_mono_message(const char *prefix, const char *file,
 void test_output_bignum(const char *name, const BIGNUM *bn)
 {
     if (bn == NULL || BN_is_zero(bn)) {
-        test_printf_stderr("bignum: '%s' = %s", name,
+        test_printf_stderr("bignum: '%s' = %s\n", name,
                            test_bignum_zero_null(bn));
     } else if (BN_num_bytes(bn) <= BN_OUTPUT_SIZE) {
         unsigned char buf[BN_OUTPUT_SIZE];
