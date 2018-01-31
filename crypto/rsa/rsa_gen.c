@@ -96,6 +96,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
             goto err;
         if (!BN_sub(r2, rsa->p, BN_value_one()))
             goto err;
+        ERR_set_mark();
         if (BN_mod_inverse(r1, r2, rsa->e, ctx) != NULL) {
             /* GCD == 1 since inverse exists */
             break;
@@ -104,7 +105,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
         if (ERR_GET_LIB(error) == ERR_LIB_BN
             && ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
             /* GCD != 1 */
-            ERR_clear_error();
+            ERR_pop_to_mark();
         } else {
             goto err;
         }
@@ -120,6 +121,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
         } while (BN_cmp(rsa->p, rsa->q) == 0);
         if (!BN_sub(r2, rsa->q, BN_value_one()))
             goto err;
+        ERR_set_mark();
         if (BN_mod_inverse(r1, r2, rsa->e, ctx) != NULL) {
             /* GCD == 1 since inverse exists */
             break;
@@ -128,7 +130,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value,
         if (ERR_GET_LIB(error) == ERR_LIB_BN
             && ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
             /* GCD != 1 */
-            ERR_clear_error();
+            ERR_pop_to_mark();
         } else {
             goto err;
         }
