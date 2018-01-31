@@ -600,6 +600,4 @@ typedef struct verify_options_st {
 
 extern VERIFY_CB_ARGS verify_args;
 
-# include "progs.h"
-
 #endif

@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "apps.h"
+#include "progs.h"
 
 #include <openssl/bio.h>
 #include <openssl/err.h>

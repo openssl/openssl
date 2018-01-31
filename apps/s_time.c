@@ -18,6 +18,7 @@
 #ifndef OPENSSL_NO_SOCK
 
 #include "apps.h"
+#include "progs.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
