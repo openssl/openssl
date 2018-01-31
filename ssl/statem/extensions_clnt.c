@@ -1273,7 +1273,7 @@ int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx)
 {
-    unsigned int ecpointformats_len;
+    size_t ecpointformats_len;
     PACKET ecptformatlist;
 
     if (!PACKET_as_length_prefixed_1(pkt, &ecptformatlist)) {
@@ -1283,8 +1283,13 @@ int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
     }
     if (!s->hit) {
         ecpointformats_len = PACKET_remaining(&ecptformatlist);
-        s->session->ext.ecpointformats_len = 0;
+        if (ecpointformats_len == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PARSE_STOC_EC_PT_FORMATS, SSL_R_BAD_LENGTH);
+            return 0;
+        }
 
+        s->session->ext.ecpointformats_len = 0;
         OPENSSL_free(s->session->ext.ecpointformats);
         s->session->ext.ecpointformats = OPENSSL_malloc(ecpointformats_len);
         if (s->session->ext.ecpointformats == NULL) {

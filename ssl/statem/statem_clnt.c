@@ -2452,7 +2452,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             PACKET sigalgs;
 
             if (!PACKET_get_length_prefixed_2(pkt, &sigalgs)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                SSLfatal(s, SSL_AD_DECODE_ERROR,
                          SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                          SSL_R_LENGTH_MISMATCH);
                 return MSG_PROCESS_ERROR;
@@ -2484,7 +2484,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     }
 
     if (PACKET_remaining(pkt) != 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+        SSLfatal(s, SSL_AD_DECODE_ERROR,
                  SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                  SSL_R_LENGTH_MISMATCH);
         return MSG_PROCESS_ERROR;
