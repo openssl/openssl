@@ -9,6 +9,7 @@
  */
 
 #include "apps.h"
+#include "progs.h"
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
     (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)

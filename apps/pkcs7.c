@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
