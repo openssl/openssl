@@ -20,6 +20,7 @@
 #include <string.h>
 #include <math.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>

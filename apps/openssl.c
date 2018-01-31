@@ -27,8 +27,9 @@
 #ifdef OPENSSL_SYS_VMS
 # include <unixio.h>
 #endif
-#define INCLUDE_FUNCTION_TABLE
 #include "apps.h"
+#define INCLUDE_FUNCTION_TABLE
+#include "progs.h"
 
 /* Structure to hold the number of columns to be displayed and the
  * field width used to display them.

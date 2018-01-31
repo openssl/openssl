@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <sys/types.h>
 # include <sys/stat.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/bn.h>

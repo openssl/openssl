@@ -12,7 +12,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
           testutil/format_output.c testutil/tap_bio.c \
-          {- rebase_files("../apps", $target{apps_aux_src}) -} \
           testutil/test_cleanup.c testutil/main.c testutil/init.c
   INCLUDE[libtestutil.a]=../include
   DEPEND[libtestutil.a]=../libcrypto
@@ -369,9 +368,11 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
-  SOURCE[uitest]=uitest.c ../apps/apps.c ../apps/opt.c
+  SOURCE[uitest]=uitest.c \
+                 {- rebase_files("../apps",
+                                 split(/\s+/, $target{apps_init_src})) -}
   INCLUDE[uitest]=.. ../include ../apps
-  DEPEND[uitest]=../libcrypto ../libssl libtestutil.a
+  DEPEND[uitest]=../apps/libapps.a ../libcrypto ../libssl libtestutil.a
 
   SOURCE[cipherbytes_test]=cipherbytes_test.c
   INCLUDE[cipherbytes_test]=../include

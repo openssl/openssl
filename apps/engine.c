@@ -13,6 +13,7 @@ NON_EMPTY_TRANSLATION_UNIT
 #else
 
 # include "apps.h"
+# include "progs.h"
 # include <stdio.h>
 # include <stdlib.h>
 # include <string.h>

@@ -22,6 +22,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/buffer.h>
 # include <openssl/srp.h>
 # include "apps.h"
+# include "progs.h"
 
 # define BASE_SECTION    "srp"
 # define CONFIG_FILE "openssl.cnf"

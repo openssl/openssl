@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include <time.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/rsa.h>

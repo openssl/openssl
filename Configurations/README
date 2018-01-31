@@ -212,8 +212,14 @@ In each table entry, the following keys are significant:
                                                 export vars as
                                                 accessor functions.
 
-        apps_extra_src  => Extra source to build apps/openssl, as
-                           needed by the target.
+        apps_aux_src    => Extra source to build apps/openssl and other
+                           apps, as needed by the target and that can be
+                           collected in a library.
+        apps_init_src   => Init source to build apps/openssl and other
+                           apps, as needed by the target.  This code
+                           cannot be placed in a library, as the rest
+                           of the code isn't expected to link to it
+                           explicitely.
         cpuid_asm_src   => assembler implementation of cpuid code as
                            well as OPENSSL_cleanse().
                            Default to mem_clr.c
