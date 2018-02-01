@@ -15,10 +15,6 @@
 
 # include "point_448.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Number of bytes in an EdDSA public key. */
 # define EDDSA_448_PUBLIC_BYTES 57
 
@@ -199,9 +195,5 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
 c448_error_t c448_ed448_convert_private_key_to_x448(
                             uint8_t x[X448_PRIVATE_BYTES],
                             const uint8_t ed[EDDSA_448_PRIVATE_BYTES]);
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif                          /* __C448_ED448_H__ */

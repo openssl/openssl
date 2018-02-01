@@ -16,9 +16,6 @@
 # include "curve448utils.h"
 # include "field.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 # define C448_SCALAR_LIMBS ((446-1)/C448_WORD_BITS+1)
 
@@ -282,9 +279,5 @@ void curve448_scalar_destroy(curve448_scalar_t scalar);
 
 /* Overwrite point with zeros. */
 void curve448_point_destroy(curve448_point_t point);
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif                          /* __C448_POINT_448_H__ */
