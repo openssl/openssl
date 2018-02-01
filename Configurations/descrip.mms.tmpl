@@ -553,7 +553,7 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
         @ WRITE SYS$OUTPUT "*************************************************"
         @ PIPE ( EXIT %X10000000 )
 
-reconfigure reconf:
+reconfigure reconf :
 	perl configdata.pm -r -v
 
 {-
