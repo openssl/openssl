@@ -307,6 +307,7 @@ my @dtls = qw(dtls1 dtls1_2);
 # For developers: keep it sorted alphabetically
 
 my @disablables = (
+    "ktls",
     "afalgeng",
     "aria",
     "asan",
@@ -437,6 +438,7 @@ our %disabled = ( # "what"         => "comment"
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
 		  "zlib-dynamic"        => "default",
+		  "ktls"                => "default",
 		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
@@ -1559,6 +1561,27 @@ unless ($disabled{afalgeng}) {
 }
 
 push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+
+unless ($disabled{ktls}) {
+    $config{ktls}="";
+    if ($target =~ m/^linux/) {
+        my $usr = "/usr/$config{cross_compile_prefix}";
+        chop($usr);
+        if ($config{cross_compile_prefix} eq "") {
+            $usr = "/usr";
+        }
+        my $minver = (4 << 16) + (13 << 8) + 0;
+        my @verstr = split(" ",`cat $usr/include/linux/version.h | grep LINUX_VERSION_CODE`);
+
+        if ($verstr[2] < $minver) {
+            $disabled{ktls} = "too-old-kernel";
+        }
+    } else {
+        $disabled{ktls}  = "not-linux";
+    }
+}
+
+push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
 # Finish up %config by appending things the user gave us on the command line
 # apart from "make variables"
