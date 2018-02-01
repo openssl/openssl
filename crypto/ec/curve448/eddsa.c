@@ -274,12 +274,12 @@ c448_error_t c448_ed448_verify(
         uint8_t challenge[2 * EDDSA_448_PRIVATE_BYTES];
 
         if (hashctx == NULL
-            || !hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
-            || !EVP_DigestUpdate(hashctx, signature,
-                                 EDDSA_448_PUBLIC_BYTES)
-            || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
-            || !EVP_DigestUpdate(hashctx, message, message_len)
-            || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge))) {
+                || !hash_init_with_dom(hashctx, prehashed, 0, context,
+                                       context_len)
+                || !EVP_DigestUpdate(hashctx, signature, EDDSA_448_PUBLIC_BYTES)
+                || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
+                || !EVP_DigestUpdate(hashctx, message, message_len)
+                || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge))) {
             EVP_MD_CTX_free(hashctx);
             return C448_FAILURE;
         }
