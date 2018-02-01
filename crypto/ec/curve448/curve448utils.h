@@ -15,10 +15,6 @@
 
 # include <openssl/e_os2.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * Internal word types. Somewhat tricky.  This could be decided separately per
  * platform.  However, the structs do need to be all the same size and
@@ -78,9 +74,5 @@ static ossl_inline c448_error_t c448_succeed_if(c448_bool_t x)
 {
     return (c448_error_t) x;
 }
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif                          /* __C448_COMMON_H__ */
