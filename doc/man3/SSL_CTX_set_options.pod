@@ -189,6 +189,15 @@ those clients (e.g. mobile) use ChaCha20-Poly1305 if that cipher is anywhere
 in the server cipher list; but still allows other clients to use AES and other
 ciphers. Requires B<SSL_OP_CIPHER_SERVER_PREFERENCE>.
 
+=item SSL_OP_ENABLE_MIDDLEBOX_COMPAT
+
+If set then dummy Change Cipher Spec (CCS) messages are sent in TLSv1.3. This
+has the effect of making TLSv1.3 look more like TLSv1.2 so that middleboxes that
+do not understand TLSv1.3 will not drop the connection. Regardless of whether
+this option is set or not CCS messages received from the peer will always be
+ignored in TLSv1.3. This option is set by default. To switch it off use
+SSL_clear_options(). A future version of OpenSSL may not set this by default.
+
 =back
 
 The following options no longer have any effect but their identifiers are
