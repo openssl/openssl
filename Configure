@@ -939,7 +939,7 @@ if ($target eq "HASH") {
     exit 0;
 }
 
-print "Configuring OpenSSL version $config{version} ($config{version_num})\n";
+print "Configuring OpenSSL version $config{version} ($config{version_num}) ";
 print "for $target\n";
 
 # Backward compatibility?
