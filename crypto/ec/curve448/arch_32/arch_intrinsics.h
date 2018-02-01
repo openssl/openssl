@@ -10,16 +10,14 @@
  * Originally written by Mike Hamburg
  */
 
+#include "internal/constant_time_locl.h"
+
 #ifndef __ARCH_ARCH_32_ARCH_INTRINSICS_H__
 # define __ARCH_ARCH_32_ARCH_INTRINSICS_H__
 
 # define ARCH_WORD_BITS 32
 
-static ossl_inline uint32_t word_is_zero(uint32_t a)
-{
-    /* let's hope the compiler isn't clever enough to optimize this. */
-    return (((uint64_t)a) - 1) >> 32;
-}
+#define word_is_zero(a)     constant_time_is_zero_32(a)
 
 static ossl_inline uint64_t widemul(uint32_t a, uint32_t b)
 {

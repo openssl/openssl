@@ -12,7 +12,6 @@
 #include <openssl/crypto.h>
 
 #include "word.h"
-#include "constant_time.h"
 #include "point_448.h"
 
 static const c448_word_t MONTGOMERY_FACTOR = (c448_word_t) 0x3bd440fae918bc5;

@@ -13,7 +13,7 @@
 #ifndef __GF_H__
 # define __GF_H__
 
-# include "constant_time.h"
+# include "internal/constant_time_locl.h"
 # include <string.h>
 # include <assert.h>
 # include "word.h"
@@ -128,7 +128,20 @@ static ossl_inline void gf_mulw(gf c, const gf a, int32_t w)
 /* Constant time, x = is_z ? z : y */
 static ossl_inline void gf_cond_sel(gf x, const gf y, const gf z, mask_t is_z)
 {
-    constant_time_select_c448(x, y, z, sizeof(gf), is_z, 0);
+    size_t i;
+
+    for (i = 0; i < NLIMBS; i++) {
+#if ARCH_WORD_BITS == 32
+        x[0].limb[i] = constant_time_select_32((uint32_t)is_z,
+                                               (uint32_t)(z[0].limb[i]),
+                                               (uint32_t)(y[0].limb[i]));
+#else
+        /* Must be 64 bit */
+        x[0].limb[i] = constant_time_select_64((uint64_t)is_z,
+                                               (uint64_t)(z[0].limb[i]),
+                                               (uint64_t)(y[0].limb[i]));
+#endif
+    }
 }
 
 /* Constant time, if (neg) x=-x; */
@@ -142,7 +155,18 @@ static ossl_inline void gf_cond_neg(gf x, mask_t neg)
 /* Constant time, if (swap) (x,y) = (y,x); */
 static ossl_inline void gf_cond_swap(gf x, gf_s * RESTRICT y, mask_t swap)
 {
-    constant_time_cond_swap(x, y, sizeof(gf_s), swap);
+    size_t i;
+
+    for (i = 0; i < NLIMBS; i++) {
+#if ARCH_WORD_BITS == 32
+        constant_time_cond_swap_32((uint32_t)swap, (uint32_t *)&(x[0].limb[i]),
+                                   (uint32_t *)&(y->limb[i]));
+#else
+        /* Must be 64 bit */
+        constant_time_cond_swap_64((uint64_t)swap, (uint64_t *)&(x[0].limb[i]),
+                                   (uint64_t *)&(y->limb[i]));
+#endif
+    }
 }
 
 #endif                          /* __GF_H__ */

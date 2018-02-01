@@ -92,49 +92,21 @@ typedef word_t vecmask_t __attribute__ ((vector_size(32)));
 
 # if defined(__AVX2__)
 #  define VECTOR_ALIGNED __attribute__((aligned(32)))
-typedef uint32x8_t big_register_t;
 typedef uint64x4_t uint64xn_t;
 typedef uint32x8_t uint32xn_t;
-
-static ossl_inline big_register_t br_set_to_mask(mask_t x)
-{
-    uint32_t y = (uint32_t)x;
-    big_register_t ret = { y, y, y, y, y, y, y, y };
-    return ret;
-}
 # elif defined(__SSE2__)
 #  define VECTOR_ALIGNED __attribute__((aligned(16)))
-typedef uint32x4_t big_register_t;
 typedef uint64x2_t uint64xn_t;
 typedef uint32x4_t uint32xn_t;
-
-static ossl_inline big_register_t br_set_to_mask(mask_t x)
-{
-    uint32_t y = x;
-    big_register_t ret = { y, y, y, y };
-    return ret;
-}
 # elif defined(__ARM_NEON__)
 #  define VECTOR_ALIGNED __attribute__((aligned(16)))
-typedef uint32x4_t big_register_t;
 typedef uint64x2_t uint64xn_t;
 typedef uint32x4_t uint32xn_t;
-
-static ossl_inline big_register_t br_set_to_mask(mask_t x)
-{
-    return vdupq_n_u32(x);
-}
 # elif !defined(_MSC_VER) \
        && (defined(_WIN64) || defined(__amd64__) || defined(__X86_64__) \
            || defined(__aarch64__))
 #  define VECTOR_ALIGNED __attribute__((aligned(8)))
-typedef uint64_t big_register_t, uint64xn_t;
-
 typedef uint32_t uint32xn_t;
-static ossl_inline big_register_t br_set_to_mask(mask_t x)
-{
-    return (big_register_t) x;
-}
 # else
 #  ifdef __GNUC__
 #   define VECTOR_ALIGNED __attribute__((aligned(4)))
@@ -147,32 +119,8 @@ static ossl_inline big_register_t br_set_to_mask(mask_t x)
 #  endif
 typedef uint64_t uint64xn_t;
 typedef uint32_t uint32xn_t;
-typedef uint32_t big_register_t;
-
-static ossl_inline big_register_t br_set_to_mask(mask_t x)
-{
-    return (big_register_t) x;
-}
 # endif
 
-# if defined(__AVX2__)
-static ossl_inline big_register_t br_is_zero(big_register_t x)
-{
-    return (big_register_t) (x == br_set_to_mask(0));
-}
-# elif defined(__SSE2__)
-static ossl_inline big_register_t br_is_zero(big_register_t x)
-{
-    return (big_register_t) _mm_cmpeq_epi32((__m128i) x, _mm_setzero_si128());
-}
-# elif defined(__ARM_NEON__)
-static ossl_inline big_register_t br_is_zero(big_register_t x)
-{
-    return vceqq_u32(x, x ^ x);
-}
-# else
-#  define br_is_zero word_is_zero
-# endif
 
 /* PERF: vectorize vs unroll */
 # ifdef __clang__
