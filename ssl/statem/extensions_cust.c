@@ -525,6 +525,7 @@ int SSL_extension_supported(unsigned int ext_type)
     case TLSEXT_TYPE_early_data:
     case TLSEXT_TYPE_certificate_authorities:
     case TLSEXT_TYPE_psk:
+    case TLSEXT_TYPE_post_handshake_auth:
         return 1;
     default:
         return 0;

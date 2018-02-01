@@ -1133,6 +1133,48 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 #endif
 }
 
+EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL *s, WPACKET *pkt,
+                                                  unsigned int context,
+                                                  X509 *x, size_t chainidx)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    if (!s->pha_forced) {
+        int i, n = 0;
+
+        /* check for cert, if present, we can do post-handshake auth */
+        if (s->cert == NULL)
+            return EXT_RETURN_NOT_SENT;
+
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            if (s->cert->pkeys[i].x509 != NULL
+                    && s->cert->pkeys[i].privatekey != NULL)
+                n++;
+        }
+
+        /* no identity certificates, so no extension */
+        if (n == 0)
+            return EXT_RETURN_NOT_SENT;
+    }
+
+    /* construct extension - 0 length, no contents */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_post_handshake_auth)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_POST_HANDSHAKE_AUTH,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    s->post_handshake_auth = SSL_PHA_EXT_SENT;
+
+    return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
+}
+
+
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */

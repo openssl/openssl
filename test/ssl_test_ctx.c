@@ -369,6 +369,7 @@ static const test_enum ssl_handshake_modes[] = {
     {"RenegotiateClient", SSL_TEST_HANDSHAKE_RENEG_CLIENT},
     {"KeyUpdateServer", SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER},
     {"KeyUpdateClient", SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT},
+    {"PostHandshakeAuth", SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH},
 };
 
 __owur static int parse_handshake_mode(SSL_TEST_CTX *test_ctx, const char *value)
@@ -622,6 +623,11 @@ __owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
 
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_cipher)
 
+/* Client and Server ForcePHA */
+
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, force_pha)
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, force_pha)
+
 /* Known test options and their corresponding parse methods. */
 
 /* Top-level options. */
@@ -676,6 +682,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "SRPUser", &parse_client_srp_user },
     { "SRPPassword", &parse_client_srp_password },
     { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
+    { "ForcePHA", &parse_client_force_pha },
 };
 
 /* Nested server options. */
@@ -692,6 +699,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "CertStatus", &parse_certstatus },
     { "SRPUser", &parse_server_srp_user },
     { "SRPPassword", &parse_server_srp_password },
+    { "ForcePHA", &parse_server_force_pha },
 };
 
 SSL_TEST_CTX *SSL_TEST_CTX_new()

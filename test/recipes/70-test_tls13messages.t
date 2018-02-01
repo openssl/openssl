@@ -89,6 +89,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
+        checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
 
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
         checkhandshake::DEFAULT_EXTENSIONS],
@@ -123,6 +125,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
+        checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
 
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
         checkhandshake::DEFAULT_EXTENSIONS],
@@ -214,7 +218,8 @@ $proxy->clientflags("-cert ".srctop_file("apps", "server.pem"));
 $proxy->serverflags("-Verify 5");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,
-               checkhandshake::DEFAULT_EXTENSIONS,
+               checkhandshake::DEFAULT_EXTENSIONS |
+               checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION,
                "Client auth handshake test");
 
 #Test 7: Server name handshake (no client request)

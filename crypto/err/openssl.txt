@@ -1,4 +1,4 @@
-# Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1192,6 +1192,7 @@ SSL_F_SSL_USE_RSAPRIVATEKEY_ASN1:205:SSL_use_RSAPrivateKey_ASN1
 SSL_F_SSL_USE_RSAPRIVATEKEY_FILE:206:SSL_use_RSAPrivateKey_file
 SSL_F_SSL_VALIDATE_CT:400:ssl_validate_ct
 SSL_F_SSL_VERIFY_CERT_CHAIN:207:ssl_verify_cert_chain
+SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE:616:SSL_verify_client_post_handshake
 SSL_F_SSL_WRITE:208:SSL_write
 SSL_F_SSL_WRITE_EARLY_DATA:526:SSL_write_early_data
 SSL_F_SSL_WRITE_EARLY_FINISH:527:*
@@ -1205,6 +1206,10 @@ SSL_F_TLS13_ENC:609:tls13_enc
 SSL_F_TLS13_FINAL_FINISH_MAC:605:tls13_final_finish_mac
 SSL_F_TLS13_GENERATE_SECRET:591:tls13_generate_secret
 SSL_F_TLS13_HKDF_EXPAND:561:tls13_hkdf_expand
+SSL_F_TLS13_RESTORE_HANDSHAKE_DIGEST_FOR_PHA:617:\
+	tls13_restore_handshake_digest_for_pha
+SSL_F_TLS13_SAVE_HANDSHAKE_DIGEST_FOR_PHA:618:\
+	tls13_save_handshake_digest_for_pha
 SSL_F_TLS13_SETUP_KEY_BLOCK:441:tls13_setup_key_block
 SSL_F_TLS1_CHANGE_CIPHER_STATE:209:tls1_change_cipher_state
 SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS:341:*
@@ -1247,6 +1252,8 @@ SSL_F_TLS_CONSTRUCT_CTOS_KEY_SHARE:470:tls_construct_ctos_key_share
 SSL_F_TLS_CONSTRUCT_CTOS_MAXFRAGMENTLEN:549:tls_construct_ctos_maxfragmentlen
 SSL_F_TLS_CONSTRUCT_CTOS_NPN:471:tls_construct_ctos_npn
 SSL_F_TLS_CONSTRUCT_CTOS_PADDING:472:tls_construct_ctos_padding
+SSL_F_TLS_CONSTRUCT_CTOS_POST_HANDSHAKE_AUTH:619:\
+	tls_construct_ctos_post_handshake_auth
 SSL_F_TLS_CONSTRUCT_CTOS_PSK:501:tls_construct_ctos_psk
 SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES:509:tls_construct_ctos_psk_kex_modes
 SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE:473:tls_construct_ctos_renegotiate
@@ -1315,6 +1322,7 @@ SSL_F_TLS_PARSE_CTOS_EC_PT_FORMATS:569:tls_parse_ctos_ec_pt_formats
 SSL_F_TLS_PARSE_CTOS_EMS:570:tls_parse_ctos_ems
 SSL_F_TLS_PARSE_CTOS_KEY_SHARE:463:tls_parse_ctos_key_share
 SSL_F_TLS_PARSE_CTOS_MAXFRAGMENTLEN:571:tls_parse_ctos_maxfragmentlen
+SSL_F_TLS_PARSE_CTOS_POST_HANDSHAKE_AUTH:620:tls_parse_ctos_post_handshake_auth
 SSL_F_TLS_PARSE_CTOS_PSK:505:tls_parse_ctos_psk
 SSL_F_TLS_PARSE_CTOS_PSK_KEX_MODES:572:tls_parse_ctos_psk_kex_modes
 SSL_F_TLS_PARSE_CTOS_RENEGOTIATE:464:tls_parse_ctos_renegotiate
@@ -2446,6 +2454,7 @@ SSL_R_ERROR_IN_RECEIVED_CIPHER_LIST:151:error in received cipher list
 SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN:204:error setting tlsa base domain
 SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE:194:exceeds max fragment size
 SSL_R_EXCESSIVE_MESSAGE_SIZE:152:excessive message size
+SSL_R_EXTENSION_NOT_RECEIVED:279:extension not received
 SSL_R_EXTRA_DATA_IN_MESSAGE:153:extra data in message
 SSL_R_EXT_LENGTH_MISMATCH:163:ext length mismatch
 SSL_R_FAILED_TO_INIT_ASYNC:405:failed to init async
@@ -2466,7 +2475,9 @@ SSL_R_INVALID_CCS_MESSAGE:260:invalid ccs message
 SSL_R_INVALID_CERTIFICATE_OR_ALG:238:invalid certificate or alg
 SSL_R_INVALID_COMMAND:280:invalid command
 SSL_R_INVALID_COMPRESSION_ALGORITHM:341:invalid compression algorithm
+SSL_R_INVALID_CONFIG:283:invalid config
 SSL_R_INVALID_CONFIGURATION_NAME:113:invalid configuration name
+SSL_R_INVALID_CONTEXT:282:invalid context
 SSL_R_INVALID_CT_VALIDATION_TYPE:212:invalid ct validation type
 SSL_R_INVALID_KEY_UPDATE_TYPE:120:invalid key update type
 SSL_R_INVALID_MAX_EARLY_DATA:174:invalid max early data
@@ -2495,6 +2506,7 @@ SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:209:missing supported groups extension
 SSL_R_MISSING_TMP_DH_KEY:171:missing tmp dh key
 SSL_R_MISSING_TMP_ECDH_KEY:311:missing tmp ecdh key
 SSL_R_NOT_ON_RECORD_BOUNDARY:182:not on record boundary
+SSL_R_NOT_SERVER:284:not server
 SSL_R_NO_APPLICATION_PROTOCOL:235:no application protocol
 SSL_R_NO_CERTIFICATES_RETURNED:176:no certificates returned
 SSL_R_NO_CERTIFICATE_ASSIGNED:177:no certificate assigned
@@ -2534,6 +2546,7 @@ SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE:199:peer did not return a certificate
 SSL_R_PEM_NAME_BAD_PREFIX:391:pem name bad prefix
 SSL_R_PEM_NAME_TOO_SHORT:392:pem name too short
 SSL_R_PIPELINE_FAILURE:406:pipeline failure
+SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR:278:post handshake auth encoding err
 SSL_R_PROTOCOL_IS_SHUTDOWN:207:protocol is shutdown
 SSL_R_PSK_IDENTITY_NOT_FOUND:223:psk identity not found
 SSL_R_PSK_NO_CLIENT_CB:224:psk no client cb
@@ -2545,6 +2558,8 @@ SSL_R_RECORD_TOO_SMALL:298:record too small
 SSL_R_RENEGOTIATE_EXT_TOO_LONG:335:renegotiate ext too long
 SSL_R_RENEGOTIATION_ENCODING_ERR:336:renegotiation encoding err
 SSL_R_RENEGOTIATION_MISMATCH:337:renegotiation mismatch
+SSL_R_REQUEST_PENDING:285:request pending
+SSL_R_REQUEST_SENT:286:request sent
 SSL_R_REQUIRED_CIPHER_MISSING:215:required cipher missing
 SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING:342:\
 	required compression algorithm missing

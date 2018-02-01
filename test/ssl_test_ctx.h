@@ -73,7 +73,8 @@ typedef enum {
     SSL_TEST_HANDSHAKE_RENEG_SERVER,
     SSL_TEST_HANDSHAKE_RENEG_CLIENT,
     SSL_TEST_HANDSHAKE_KEY_UPDATE_SERVER,
-    SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT
+    SSL_TEST_HANDSHAKE_KEY_UPDATE_CLIENT,
+    SSL_TEST_HANDSHAKE_POST_HANDSHAKE_AUTH
 } ssl_handshake_mode_t;
 
 typedef enum {
@@ -107,6 +108,8 @@ typedef struct {
     char *reneg_ciphers;
     char *srp_user;
     char *srp_password;
+    /* Forced PHA */
+    int force_pha;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
@@ -122,6 +125,8 @@ typedef struct {
     /* An SRP user known to the server. */
     char *srp_user;
     char *srp_password;
+    /* Forced PHA */
+    int force_pha;
 } SSL_TEST_SERVER_CONF;
 
 typedef struct {

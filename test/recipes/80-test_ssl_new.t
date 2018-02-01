@@ -28,7 +28,7 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 25;  # = scalar @conf_srcs
+plan tests => 26;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -96,6 +96,7 @@ my %skip = (
                     && disabled("tls1_2")) || disabled("srp"),
   "24-padding.conf" => disabled("tls1_3"),
   "25-cipher.conf" => disabled("ec") || disabled("tls1_2"),
+  "26-tls13_client_auth.conf" => disabled("tls1_3"),
 );
 
 foreach my $conf (@conf_files) {

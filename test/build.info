@@ -268,7 +268,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   DEPEND[cipherlist_test]=../libcrypto ../libssl libtestutil.a
 
   INCLUDE[ssl_test_ctx.o]=../include
-  INCLUDE[handshake_helper.o]=../include
+  INCLUDE[handshake_helper.o]=.. ../include
   INCLUDE[ssltestlib.o]=.. ../include
 
   SOURCE[x509aux]=x509aux.c

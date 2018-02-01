@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -43,12 +43,15 @@ int ssl3_do_write(SSL *s, int type)
         /*
          * should not be done for 'Hello Request's, but in that case we'll
          * ignore the result anyway
+         * TLS1.3 KeyUpdate and NewSessionTicket do not need to be added
          */
-        if (!ssl3_finish_mac(s,
-                             (unsigned char *)&s->init_buf->data[s->init_off],
-                             written))
-            return -1;
-
+        if (!SSL_IS_TLS13(s) || (s->statem.hand_state != TLS_ST_SW_SESSION_TICKET
+                                 && s->statem.hand_state != TLS_ST_CW_KEY_UPDATE
+                                 && s->statem.hand_state != TLS_ST_SW_KEY_UPDATE))
+            if (!ssl3_finish_mac(s,
+                                 (unsigned char *)&s->init_buf->data[s->init_off],
+                                 written))
+                return -1;
     if (written == s->init_num) {
         if (s->msg_callback)
             s->msg_callback(1, s->version, type, s->init_buf->data,
@@ -504,7 +507,7 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
     size_t slen;
 
     /* This is a real handshake so make sure we clean it up at the end */
-    if (!s->server)
+    if (!s->server && s->post_handshake_auth != SSL_PHA_REQUESTED)
         s->statem.cleanuphand = 1;
 
     /*
@@ -741,8 +744,14 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 
 
     /* This is a real handshake so make sure we clean it up at the end */
-    if (s->server)
-        s->statem.cleanuphand = 1;
+    if (s->server) {
+        if (s->post_handshake_auth != SSL_PHA_REQUESTED)
+            s->statem.cleanuphand = 1;
+        if (SSL_IS_TLS13(s) && !tls13_save_handshake_digest_for_pha(s)) {
+                /* SSLfatal() already called */
+                return MSG_PROCESS_ERROR;
+        }
+    }
 
     /*
      * In TLSv1.3 a Finished message signals a key change so the end of the
@@ -801,7 +810,8 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
      */
     if (SSL_IS_TLS13(s)) {
         if (s->server) {
-            if (!s->method->ssl3_enc->change_cipher_state(s,
+            if (s->post_handshake_auth != SSL_PHA_REQUESTED &&
+                    !s->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_APPLICATION | SSL3_CHANGE_CIPHER_SERVER_READ)) {
                 /* SSLfatal() already called */
                 return MSG_PROCESS_ERROR;
@@ -1021,6 +1031,10 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
         s->init_num = 0;
     }
 
+    if (SSL_IS_TLS13(s) && !s->server
+            && s->post_handshake_auth == SSL_PHA_REQUESTED)
+        s->post_handshake_auth = SSL_PHA_EXT_SENT;
+
     if (s->statem.cleanuphand) {
         /* skipped if we just sent a HelloRequest */
         s->renegotiate = 0;
@@ -1237,18 +1251,24 @@ int tls_get_message_body(SSL *s, size_t *len)
         /*
          * We defer feeding in the HRR until later. We'll do it as part of
          * processing the message
+         * The TLsv1.3 handshake transcript stops at the ClientFinished
+         * message.
          */
 #define SERVER_HELLO_RANDOM_OFFSET  (SSL3_HM_HEADER_LENGTH + 2)
-        if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO
-                || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
-                || memcmp(hrrrandom,
-                          s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
-                          SSL3_RANDOM_SIZE) != 0) {
-            if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                 s->init_num + SSL3_HM_HEADER_LENGTH)) {
-                /* SSLfatal() already called */
-                *len = 0;
-                return 0;
+        /* KeyUpdate and NewSessionTicket do not need to be added */
+        if (!SSL_IS_TLS13(s) || (s->s3->tmp.message_type != SSL3_MT_NEWSESSION_TICKET
+                                 && s->s3->tmp.message_type != SSL3_MT_KEY_UPDATE)) {
+            if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO
+                    || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
+                    || memcmp(hrrrandom,
+                              s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
+                              SSL3_RANDOM_SIZE) != 0) {
+                if (!ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
+                                     s->init_num + SSL3_HM_HEADER_LENGTH)) {
+                    /* SSLfatal() already called */
+                    *len = 0;
+                    return 0;
+                }
             }
         }
         if (s->msg_callback)
@@ -2207,4 +2227,55 @@ size_t construct_key_exchange_tbs(SSL *s, unsigned char **ptbs,
 
     *ptbs = tbs;
     return tbslen;
+}
+
+/*
+ * Saves the current handshake digest for Post-Handshake Auth,
+ * Done after ClientFinished is processed, done exactly once
+ */
+int tls13_save_handshake_digest_for_pha(SSL *s)
+{
+    if (s->pha_dgst == NULL) {
+        if (!ssl3_digest_cached_records(s, 1))
+            /* SSLfatal() already called */
+            return 0;
+
+        s->pha_dgst = EVP_MD_CTX_new();
+        if (s->pha_dgst == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS13_SAVE_HANDSHAKE_DIGEST_FOR_PHA,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!EVP_MD_CTX_copy_ex(s->pha_dgst,
+                                s->s3->handshake_dgst)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS13_SAVE_HANDSHAKE_DIGEST_FOR_PHA,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/*
+ * Restores the Post-Handshake Auth handshake digest
+ * Done just before sending/processing the Cert Request
+ */
+int tls13_restore_handshake_digest_for_pha(SSL *s)
+{
+    if (s->pha_dgst == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS13_RESTORE_HANDSHAKE_DIGEST_FOR_PHA,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (!EVP_MD_CTX_copy_ex(s->s3->handshake_dgst,
+                            s->pha_dgst)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS13_RESTORE_HANDSHAKE_DIGEST_FOR_PHA,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    return 1;
 }

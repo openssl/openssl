@@ -241,6 +241,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_USE_RSAPRIVATEKEY_FILE                 206
 # define SSL_F_SSL_VALIDATE_CT                            400
 # define SSL_F_SSL_VERIFY_CERT_CHAIN                      207
+# define SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE           616
 # define SSL_F_SSL_WRITE                                  208
 # define SSL_F_SSL_WRITE_EARLY_DATA                       526
 # define SSL_F_SSL_WRITE_EARLY_FINISH                     527
@@ -254,6 +255,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS13_FINAL_FINISH_MAC                     605
 # define SSL_F_TLS13_GENERATE_SECRET                      591
 # define SSL_F_TLS13_HKDF_EXPAND                          561
+# define SSL_F_TLS13_RESTORE_HANDSHAKE_DIGEST_FOR_PHA     617
+# define SSL_F_TLS13_SAVE_HANDSHAKE_DIGEST_FOR_PHA        618
 # define SSL_F_TLS13_SETUP_KEY_BLOCK                      441
 # define SSL_F_TLS1_CHANGE_CIPHER_STATE                   209
 # define SSL_F_TLS1_CHECK_DUPLICATE_EXTENSIONS            341
@@ -295,6 +298,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_CONSTRUCT_CTOS_MAXFRAGMENTLEN          549
 # define SSL_F_TLS_CONSTRUCT_CTOS_NPN                     471
 # define SSL_F_TLS_CONSTRUCT_CTOS_PADDING                 472
+# define SSL_F_TLS_CONSTRUCT_CTOS_POST_HANDSHAKE_AUTH     619
 # define SSL_F_TLS_CONSTRUCT_CTOS_PSK                     501
 # define SSL_F_TLS_CONSTRUCT_CTOS_PSK_KEX_MODES           509
 # define SSL_F_TLS_CONSTRUCT_CTOS_RENEGOTIATE             473
@@ -358,6 +362,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_TLS_PARSE_CTOS_EMS                         570
 # define SSL_F_TLS_PARSE_CTOS_KEY_SHARE                   463
 # define SSL_F_TLS_PARSE_CTOS_MAXFRAGMENTLEN              571
+# define SSL_F_TLS_PARSE_CTOS_POST_HANDSHAKE_AUTH         620
 # define SSL_F_TLS_PARSE_CTOS_PSK                         505
 # define SSL_F_TLS_PARSE_CTOS_PSK_KEX_MODES               572
 # define SSL_F_TLS_PARSE_CTOS_RENEGOTIATE                 464
@@ -522,6 +527,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_ERROR_SETTING_TLSA_BASE_DOMAIN             204
 # define SSL_R_EXCEEDS_MAX_FRAGMENT_SIZE                  194
 # define SSL_R_EXCESSIVE_MESSAGE_SIZE                     152
+# define SSL_R_EXTENSION_NOT_RECEIVED                     279
 # define SSL_R_EXTRA_DATA_IN_MESSAGE                      153
 # define SSL_R_EXT_LENGTH_MISMATCH                        163
 # define SSL_R_FAILED_TO_INIT_ASYNC                       405
@@ -542,7 +548,9 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_INVALID_CERTIFICATE_OR_ALG                 238
 # define SSL_R_INVALID_COMMAND                            280
 # define SSL_R_INVALID_COMPRESSION_ALGORITHM              341
+# define SSL_R_INVALID_CONFIG                             283
 # define SSL_R_INVALID_CONFIGURATION_NAME                 113
+# define SSL_R_INVALID_CONTEXT                            282
 # define SSL_R_INVALID_CT_VALIDATION_TYPE                 212
 # define SSL_R_INVALID_KEY_UPDATE_TYPE                    120
 # define SSL_R_INVALID_MAX_EARLY_DATA                     174
@@ -571,6 +579,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
 # define SSL_R_NOT_ON_RECORD_BOUNDARY                     182
+# define SSL_R_NOT_SERVER                                 284
 # define SSL_R_NO_APPLICATION_PROTOCOL                    235
 # define SSL_R_NO_CERTIFICATES_RETURNED                   176
 # define SSL_R_NO_CERTIFICATE_ASSIGNED                    177
@@ -608,6 +617,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_PEM_NAME_BAD_PREFIX                        391
 # define SSL_R_PEM_NAME_TOO_SHORT                         392
 # define SSL_R_PIPELINE_FAILURE                           406
+# define SSL_R_POST_HANDSHAKE_AUTH_ENCODING_ERR           278
 # define SSL_R_PROTOCOL_IS_SHUTDOWN                       207
 # define SSL_R_PSK_IDENTITY_NOT_FOUND                     223
 # define SSL_R_PSK_NO_CLIENT_CB                           224
@@ -619,6 +629,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_RENEGOTIATE_EXT_TOO_LONG                   335
 # define SSL_R_RENEGOTIATION_ENCODING_ERR                 336
 # define SSL_R_RENEGOTIATION_MISMATCH                     337
+# define SSL_R_REQUEST_PENDING                            285
+# define SSL_R_REQUEST_SENT                               286
 # define SSL_R_REQUIRED_CIPHER_MISSING                    215
 # define SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING     342
 # define SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING           345
