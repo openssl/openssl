@@ -96,7 +96,7 @@ static int prefix_write(BIO *b, const char *out, size_t outl,
 
     *numwritten = 0;
 
-    while (*out != '\0') {
+    while (outl > 0) {
         size_t i;
         char c;
 
@@ -111,7 +111,7 @@ static int prefix_write(BIO *b, const char *out, size_t outl,
         }
 
         /* Now, go look for the next LF, or the end of the string */
-        for (i = 0; (c = out[i]) != '\n' && c != '\0'; i++)
+        for (i = 0, c = '\0'; i < outl && (c = out[i]) != '\n'; i++)
             continue;
         if (c == '\n')
             i++;
@@ -123,6 +123,7 @@ static int prefix_write(BIO *b, const char *out, size_t outl,
             if (!BIO_write_ex(BIO_next(b), out, i, &num))
                 return 0;
             out += num;
+            outl -= num;
             *numwritten += num;
             i -= num;
         }
