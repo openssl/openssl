@@ -22,6 +22,14 @@
 #endif
 #include "e_os.h"
 
+#if defined(OPENSSL_SYS_UNIX) && !defined(HAVE_CLOCK_GETTIME)
+# if defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 199309L
+#   define HAVE_CLOCK_GETTIME 1
+# else
+#   define HAVE_CLOCK_GETTIME 0
+# endif
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
@@ -210,7 +218,11 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     size_t len;
 #ifdef OPENSSL_SYS_UNIX
     pid_t pid;
+# if HAVE_CLOCK_GETTIME
+    struct timespec ts;
+# else
     struct timeval tv;
+# endif
 #elif defined(OPENSSL_SYS_WIN32)
     DWORD pid;
     FILETIME ft;
@@ -243,8 +255,15 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
 #endif
 
 #ifdef OPENSSL_SYS_UNIX
+# if HAVE_CLOCK_GETTIME
+    if (clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+        RAND_POOL_add(pool, (unsigned char *)&ts, sizeof(ts), 0);
+    if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
+        RAND_POOL_add(pool, (unsigned char *)&ts, sizeof(ts), 0);
+# else
     if (gettimeofday(&tv, NULL) == 0)
         RAND_POOL_add(pool, (unsigned char *)&tv, sizeof(tv), 0);
+# endif
 #elif defined(OPENSSL_SYS_WIN32)
     if (QueryPerformanceCounter(&pc) != 0)
         RAND_POOL_add(pool, (unsigned char *)&pc, sizeof(pc), 0);
