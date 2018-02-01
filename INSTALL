@@ -250,6 +250,15 @@
                    Don't build the AFALG engine. This option will be forced if
                    on a platform that does not support AFALG.
 
+  enable-ktls
+                   Build with Kernel TLS support. This option will enable the
+                   use of the Kernel TLS data-path, which can improve
+                   performance and allow for the use of sendfile and splice
+                   system calls on TLS sockets. The Kernel may use TLS
+                   accelerators if any are available on the system.
+                   This option will be forced off on systems that do not support
+                   the Kernel TLS data-path.
+
   enable-asan
                    Build with the Address sanitiser. This is a developer option
                    only. It may not work on all platforms and should never be
