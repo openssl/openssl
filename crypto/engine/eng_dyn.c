@@ -446,6 +446,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
          */
         if (vcheck_res < OSSL_DYNAMIC_OLDEST) {
             /* Fail */
+            ERR_clear_error();
             ctx->bind_engine = NULL;
             ctx->v_check = NULL;
             DSO_free(ctx->dynamic_dso);
@@ -478,6 +479,7 @@ static int dynamic_load(ENGINE *e, dynamic_data_ctx *ctx)
 
     /* Try to bind the ENGINE onto our own ENGINE structure */
     if (!ctx->bind_engine(e, ctx->engine_id, &fns)) {
+        ERR_clear_error();
         ctx->bind_engine = NULL;
         ctx->v_check = NULL;
         DSO_free(ctx->dynamic_dso);
