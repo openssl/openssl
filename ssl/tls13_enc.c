@@ -562,16 +562,6 @@ int tls13_change_cipher_state(SSL *s, int which)
             goto err;
         }
         s->session->master_key_length = hashlen;
-
-        /* Now we create the exporter master secret */
-        if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
-                               exporter_master_secret,
-                               sizeof(exporter_master_secret) - 1,
-                               hash, hashlen, s->exporter_master_secret,
-                               hashlen)) {
-            /* SSLfatal() already called */
-            goto err;
-        }
     }
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
@@ -581,9 +571,18 @@ int tls13_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-    if (label == server_application_traffic)
+    if (label == server_application_traffic) {
         memcpy(s->server_app_traffic_secret, secret, hashlen);
-    else if (label == client_application_traffic)
+        /* Now we create the exporter master secret */
+        if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
+                               exporter_master_secret,
+                               sizeof(exporter_master_secret) - 1,
+                               hash, hashlen, s->exporter_master_secret,
+                               hashlen)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    } else if (label == client_application_traffic)
         memcpy(s->client_app_traffic_secret, secret, hashlen);
 
     if (!ssl_log_secret(s, log_label, secret, hashlen)) {
@@ -667,7 +666,7 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     unsigned int hashsize, datalen;
     int ret = 0;
 
-    if (ctx == NULL || !SSL_is_init_finished(s))
+    if (ctx == NULL || !ossl_statem_export_allowed(s))
         goto err;
 
     if (!use_context)
