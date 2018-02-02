@@ -558,7 +558,7 @@ debug_logicals :
 # Building targets ###################################################
 
 configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
-        perl configdata.pm -r -v
+        perl configdata.pm -r
         @ WRITE SYS$OUTPUT "*************************************************"
         @ WRITE SYS$OUTPUT "***                                           ***"
         @ WRITE SYS$OUTPUT "***   Please run the same mms command again   ***"
@@ -567,7 +567,7 @@ configdata.pm : $(SRCDIR)Configure $(SRCDIR)config.com {- join(" ", @{$config{bu
         @ PIPE ( EXIT %X10000000 )
 
 reconfigure reconf :
-	perl configdata.pm -r -v
+	perl configdata.pm -r
 
 {-
   use File::Basename;
