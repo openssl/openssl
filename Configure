@@ -278,6 +278,11 @@ if (defined env($local_config_envname)) {
     }
 }
 
+# Save away perl command information
+$config{perl_cmd} = $^X;
+$config{perl_version} = $Config{version};
+$config{perl_archname} = $Config{archname};
+
 $config{prefix}="";
 $config{openssldir}="";
 $config{processor}="";
@@ -2373,12 +2378,14 @@ _____
                   -verbose => 2);
     }
     if ($dump || $cmdline) {
-        print "\n(with current working directory = $here)";
-        print "\nCommand line:\n\n";
+        print "\nCommand line (with current working directory = $here):\n\n";
         print '    ',join(' ',
                           $config{perl},
                           catfile($config{sourcedir}, 'Configure'),
                           @{$config{perlargv}}), "\n";
+        print "\nPerl information:\n\n";
+        print '    ',$config{perl_cmd},"\n";
+        print '    ',$config{perl_version},' for ',$config{perl_archname},"\n";
     }
     if ($dump || $options) {
         my $longest = 0;
