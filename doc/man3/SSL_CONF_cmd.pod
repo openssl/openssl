@@ -420,6 +420,12 @@ B<AllowNoDHEKEX>: In TLSv1.3 allow a non-(ec)dhe based key exchange mode on
 resumption. This means that there will be no forward secrecy for the resumed
 session. Equivalent to B<SSL_OP_ALLOW_NO_DHE_KEX>.
 
+B<MiddleboxCompat>: If set then dummy Change Cipher Spec (CCS) messages are sent
+in TLSv1.3. This has the effect of making TLSv1.3 look more like TLSv1.2 so that
+middleboxes that do not understand TLSv1.3 will not drop the connection. This
+option is set by default. A future version of OpenSSL may not set this by
+default. Equivalent to B<SSL_OP_ENABLE_MIDDLEBOX_COMPAT>.
+
 =item B<VerifyMode>
 
 The B<value> argument is a comma separated list of flags to set.
