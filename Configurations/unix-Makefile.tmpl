@@ -218,7 +218,7 @@ PERL={- $config{perl} -}
 
 AR=$(CROSS_COMPILE){- $config{ar} -}
 ARFLAGS= {- join(' ', @{$config{arflags}}) -}
-RANLIB= {- $config{ranlib} -}
+RANLIB={- $config{ranlib} ? "\$(CROSS_COMPILE)$config{ranlib}" : "true"; -}
 RC= $(CROSS_COMPILE){- $target{rc} || "windres" -}
 RCFLAGS={- join(' ', @{$config{rcflags}}) -} {- $target{shared_rcflag} -}
 RM= rm -f
