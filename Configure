@@ -2566,10 +2566,10 @@ $builders{$builder}->($builder_platform, @builder_opts);
 # (i.e. this message disappears with the following update, 1.1.1a)
 print <<"EOF" if ($config{version_num} =~ m|^0x1010100.L$|);
 
-NOTE: Starting with OpenSSL 1.1.1, 'Configure' doesn't display all the disabled
-options or the "make variables" with their values.  Instead, you must use
-'configdata.pm' as a script to get a display of the configuration data.  For
-help, please do this:
+NOTE: Starting with OpenSSL 1.1.1, 'Configure' doesn't automatically display
+all the disabled options or the "make variables" with their values any more.
+Please run 'perl configdata.pm --dump' for a full configuration data display,
+or use another option for a more selective display.  For help, please do:
 
         perl configdata.pm --help
 EOF
