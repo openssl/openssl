@@ -191,7 +191,7 @@ CPPFLAGS={- our $cppflags = join(" ",
 CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
 CC= $(CROSS_COMPILE){- $config{cc} -}
 CFLAGS={- join(' ', @{$config{cflags}}) -}
-CXX= $(CROSS_COMPILE){- $config{cxx} -}
+CXX={- $config{cxx} ? "\$(CROSS_COMPILE)$config{cxx}" : '' -}
 CXXFLAGS={- join(' ', @{$config{cxxflags}}) -}
 LDFLAGS= {- join(' ', @{$config{lflags}}) -}
 PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
@@ -236,7 +236,7 @@ TARFILE=        ../$(NAME).tar
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-AS={- $config{as} || '$(CC) -c' -}
+AS={- $config{as} ? "\$(CROSS_COMPILE)$config{as}" : '$(CC) -c' -}
 ASFLAGS={- join(' ', @{$config{asflags}}) || '$(CFLAGS)' -}
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
