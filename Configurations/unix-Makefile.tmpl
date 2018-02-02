@@ -787,7 +787,7 @@ openssl.pc:
 
 configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
-	$(PERL) configdata.pm -r -v
+	$(PERL) configdata.pm -r
 	@echo "**************************************************"
 	@echo "***                                            ***"
 	@echo "***   Please run the same make command again   ***"
@@ -796,7 +796,7 @@ configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build
 	@false
 
 reconfigure reconf:
-	$(PERL) configdata.pm -r -v
+	$(PERL) configdata.pm -r
 
 {-
   use File::Basename;

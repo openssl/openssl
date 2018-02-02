@@ -372,7 +372,7 @@ uninstall_html_docs:
 
 configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
-	"$(PERL)" configdata.pm -r -v
+	"$(PERL)" configdata.pm -r
 	@echo "**************************************************"
 	@echo "***                                            ***"
 	@echo "***   Please run the same make command again   ***"
@@ -381,7 +381,7 @@ configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{b
 	@exit 1
 
 reconfigure reconf:
-	"$(PERL)" configdata.pm -r -v
+	"$(PERL)" configdata.pm -r
 
 {-
  use File::Basename;
