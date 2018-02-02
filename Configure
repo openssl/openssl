@@ -2331,6 +2331,7 @@ unless (caller) {
     my $dump = undef;
     my $cmdline = undef;
     my $options = undef;
+    my $target = undef;
     my $envvars = undef;
     my $makevars = undef;
     my $buildparams = undef;
@@ -2341,6 +2342,7 @@ unless (caller) {
     GetOptions('dump|d'                 => \$dump,
                'command-line|c'         => \$cmdline,
                'options|o'              => \$options,
+               'target|t'               => \$target,
                'environment|e'          => \$envvars,
                'make-variables|m'       => \$makevars,
                'build-parameters|b'     => \$buildparams,
@@ -2350,7 +2352,7 @@ unless (caller) {
                'man'                    => \$man)
         or die "Errors in command line arguments\n";
 
-    unless ($dump || $cmdline || $options || $envvars || $makevars
+    unless ($dump || $cmdline || $options || $target || $envvars || $makevars
             || $buildparams || $reconf || $verbose || $help || $man) {
         print STDERR <<"_____";
 You must give at least one option.
@@ -2396,6 +2398,21 @@ _____
                     ')'
                     if $disabled_info{$what}->{skipped};
                 print "\n";
+            }
+        }
+    }
+    if ($dump || $target) {
+        print "\nConfig target attributes:\n\n";
+        foreach (sort keys %target) {
+            next if $_ =~ m|^_| || $_ eq 'template';
+            my $quotify = sub {
+                map { (my $x = $_) =~ s|([\\\$\@"])|\\$1|g; "\"$x\""} @_;
+            };
+            print '    ', $_, ' => ';
+            if (ref($target{$_}) eq "ARRAY") {
+                print '[ ', join(', ', $quotify->(@{$target{$_}})), " ],\n";
+            } else {
+                print $quotify->($target{$_}), ",\n"
             }
         }
     }
@@ -2509,7 +2526,8 @@ Print the manual page and exit.
 =item B<--dump> | B<-d>
 
 Print all relevant configuration data.  This is equivalent to B<--command-line>
-B<--options> B<--environment> B<--make-variables> B<--build-parameters>.
+B<--options> B<--target> B<--environment> B<--make-variables>
+B<--build-parameters>.
 
 =item B<--command-line> | B<-c>
 
@@ -2519,6 +2537,10 @@ Print the current configuration command line.
 
 Print the features, both enabled and disabled, and display defined macro and
 skipped directories where applicable.
+
+=item B<--target> | B<-t>
+
+Print the config attributes for this config target.
 
 =item B<--environment> | B<-e>
 
