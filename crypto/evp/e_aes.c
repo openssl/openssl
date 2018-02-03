@@ -960,8 +960,8 @@ typedef struct {
     union {
         double align;
         /*-
-         * KMA-GCM-AES parameter block
-         * (see z/Architecture Principles of Operation SA22-7832-11)
+         * KMA-GCM-AES parameter block - begin
+         * (see z/Architecture Principles of Operation >= SA22-7832-11)
          */
         struct {
             unsigned char reserved[12];
@@ -982,6 +982,7 @@ typedef struct {
             } j0;
             unsigned char k[32];
         } param;
+        /* KMA-GCM-AES parameter block - end */
     } kma;
     unsigned int fc;
     int key_set;
@@ -1141,6 +1142,10 @@ static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 /* iv + padding length for iv lenghts != 12 */
 # define S390X_gcm_ivpadlen(i)	((((i) + 15) >> 4 << 4) + 16)
 
+/*-
+ * Process additional authenticated data. Returns 0 on success. Code is
+ * big-endian.
+ */
 static int s390x_aes_gcm_aad(S390X_AES_GCM_CTX *ctx, const unsigned char *aad,
                              size_t len)
 {
@@ -1191,6 +1196,10 @@ static int s390x_aes_gcm_aad(S390X_AES_GCM_CTX *ctx, const unsigned char *aad,
     return 0;
 }
 
+/*-
+ * En/de-crypt plain/cipher-text and authenticate ciphertext. Returns 0 for
+ * success. Code is big-endian.
+ */
 static int s390x_aes_gcm(S390X_AES_GCM_CTX *ctx, const unsigned char *in,
                          unsigned char *out, size_t len)
 {
@@ -1276,6 +1285,9 @@ static int s390x_aes_gcm(S390X_AES_GCM_CTX *ctx, const unsigned char *in,
     return 0;
 }
 
+/*-
+ * Initialize context structure. Code is big-endian.
+ */
 static void s390x_aes_gcm_setiv(S390X_AES_GCM_CTX *ctx,
                                 const unsigned char *iv)
 {
@@ -1306,6 +1318,11 @@ static void s390x_aes_gcm_setiv(S390X_AES_GCM_CTX *ctx,
     }
 }
 
+/*-
+ * Performs various operations on the context structure depending on control
+ * type. Returns 1 for success, 0 for failure and -1 for unknown control type.
+ * Code is big-endian.
+ */
 static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 {
     S390X_AES_GCM_CTX *gctx = EVP_C_DATA(S390X_AES_GCM_CTX, c);
@@ -1471,6 +1488,9 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     }
 }
 
+/*-
+ * Set key and/or iv. Returns 1 on success. Otherwise 0 is returned.
+ */
 static int s390x_aes_gcm_init_key(EVP_CIPHER_CTX *ctx,
                                   const unsigned char *key,
                                   const unsigned char *iv, int enc)
@@ -1510,6 +1530,10 @@ static int s390x_aes_gcm_init_key(EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
+/*-
+ * En/de-crypt and authenticate TLS packet. Returns the number of bytes written
+ * if successful. Otherwise -1 is returned. Code is big-endian.
+ */
 static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     const unsigned char *in, size_t len)
 {
@@ -1552,6 +1576,12 @@ err:
     return rv;
 }
 
+/*-
+ * Called from EVP layer to initialize context, process additional
+ * authenticated data, en/de-crypt plain/cipher-text and authenticate
+ * ciphertext or process a TLS packet, depending on context. Returns bytes
+ * written on success. Otherwise -1 is returned. Code is big-endian.
+ */
 static int s390x_aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t len)
 {
