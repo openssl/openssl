@@ -772,9 +772,6 @@ static int drbg_bytes(unsigned char *out, int count)
         return 0;
 
     CRYPTO_THREAD_write_lock(drbg->lock);
-    if (drbg->state == DRBG_UNINITIALISED)
-        goto err;
-
     for ( ; count > 0; count -= chunk, out += chunk) {
         chunk = count;
         if (chunk > drbg->max_request)
