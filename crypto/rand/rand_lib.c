@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -719,7 +719,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 
     /* We have to lock the DRBG before generating bits from it. */
     CRYPTO_THREAD_write_lock(drbg->lock);
-    ret = RAND_DRBG_generate(drbg, buf, num, 0, NULL, 0);
+    ret = RAND_DRBG_bytes(drbg, buf, num);
     CRYPTO_THREAD_unlock(drbg->lock);
     return ret;
 }
