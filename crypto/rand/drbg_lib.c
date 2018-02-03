@@ -776,26 +776,16 @@ void rand_drbg_cleanup_int(void)
 /* Implements the default OpenSSL RAND_bytes() method */
 static int drbg_bytes(unsigned char *out, int count)
 {
-    int ret = 0;
-    size_t chunk;
+    int ret;
     RAND_DRBG *drbg = RAND_DRBG_get0_public();
 
     if (drbg == NULL)
         return 0;
 
     CRYPTO_THREAD_write_lock(drbg->lock);
-    for ( ; count > 0; count -= chunk, out += chunk) {
-        chunk = count;
-        if (chunk > drbg->max_request)
-            chunk = drbg->max_request;
-        ret = RAND_DRBG_generate(drbg, out, chunk, 0, NULL, 0);
-        if (!ret)
-            goto err;
-    }
-    ret = 1;
-
-err:
+    ret = RAND_DRBG_bytes(drbg, out, count);
     CRYPTO_THREAD_unlock(drbg->lock);
+
     return ret;
 }
 
