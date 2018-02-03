@@ -55,6 +55,7 @@ static int write_packets(BIO *bio, int count, BIO_ADDR *dst1, BIO_ADDR *dst2)
 {
   const char hello[]="hellohellohello";
   int toggle = 0;
+  int ret;
 
   while(--count > 0) {
     const int sizeofhello = sizeof(hello);
