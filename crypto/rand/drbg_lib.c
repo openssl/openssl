@@ -546,10 +546,22 @@ int RAND_DRBG_bytes(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
     unsigned char *additional = NULL;
     size_t additional_len;
+    size_t chunk;
     size_t ret;
 
     additional_len = rand_drbg_get_additional_data(&additional, drbg->max_adinlen);
-    ret = RAND_DRBG_generate(drbg, out, outlen, 0, additional, additional_len);
+
+    for ( ; outlen > 0; outlen -= chunk, out += chunk) {
+        chunk = outlen;
+        if (chunk > drbg->max_request)
+            chunk = drbg->max_request;
+        ret = RAND_DRBG_generate(drbg, out, chunk, 0, additional, additional_len);
+        if (!ret)
+            goto err;
+    }
+    ret = 1;
+
+err:
     if (additional_len != 0)
         OPENSSL_secure_clear_free(additional, additional_len);
 
