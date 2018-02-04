@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_export_keying_material - obtain keying material for application use
+SSL_export_keying_material,
+SSL_export_keying_material_early
+- obtain keying material for application use
 
 =head1 SYNOPSIS
 
@@ -13,13 +15,28 @@ SSL_export_keying_material - obtain keying material for application use
                                 const unsigned char *context,
                                 size_t contextlen, int use_context);
 
+ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
+                                      const char *label, size_t llen,
+                                      const unsigned char *context,
+                                      size_t contextlen);
+
 =head1 DESCRIPTION
 
 During the creation of a TLS or DTLS connection shared keying material is
-established between the two endpoints. The function SSL_export_keying_material()
-enables an application to use some of this keying material for its own purposes
-in accordance with RFC5705 (for TLSv1.2 and below) or RFCXXXX (for TLSv1.3).
+established between the two endpoints. The functions
+SSL_export_keying_material() and SSL_export_keying_material_early() enable an
+application to use some of this keying material for its own purposes in
+accordance with RFC5705 (for TLSv1.2 and below) or RFCXXXX (for TLSv1.3).
 TODO(TLS1.3): Update the RFC number when the RFC is published.
+
+SSL_export_keying_material() derives keying material using
+the F<exporter_master_secret> established in the handshake.
+
+SSL_export_keying_material_early() is only usable with TLSv1.3, and derives
+keying material using the F<early_exporter_master_secret> (as defined in the
+TLS 1.3 RFC). For the client, the F<early_exporter_master_secret> is only
+available when the client attempts to send 0-RTT data. For the server, it is
+only available when the server accepts 0-RTT data.
 
 An application may need to securely establish the context within which this
 keying material will be used. For example this may include identifiers for the
@@ -51,6 +68,12 @@ above. Attempting to use it in SSLv3 will result in an error.
 =head1 RETURN VALUES
 
 SSL_export_keying_material() returns 0 or -1 on failure or 1 on success.
+
+SSL_export_keying_material_early() returns 0 on failure or 1 on success.
+
+=head1 HISTORY
+
+SSL_export_keying_material_early() was first added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

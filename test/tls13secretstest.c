@@ -217,6 +217,11 @@ int ossl_statem_export_allowed(SSL *s)
     return 1;
 }
 
+int ossl_statem_export_early_allowed(SSL *s)
+{
+    return 1;
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,
