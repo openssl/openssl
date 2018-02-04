@@ -2809,6 +2809,19 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                                        contextlen, use_context);
 }
 
+int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
+                                     const char *label, size_t llen,
+                                     const unsigned char *context,
+                                     size_t contextlen, int use_context)
+{
+    if (s->version != TLS1_3_VERSION) {
+        return -1;
+    }
+
+    return tls13_export_keying_material_early(s, out, olen, label, llen,
+                                              context, contextlen, use_context);
+}
+
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
     const unsigned char *session_id = a->session_id;

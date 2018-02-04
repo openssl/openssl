@@ -951,3 +951,12 @@ int ossl_statem_export_allowed(SSL *s)
     return s->s3->previous_server_finished_len != 0
            && s->statem.hand_state != TLS_ST_SW_FINISHED;
 }
+
+/*
+ * This function returns 1 if early TLS exporter is ready to export
+ * keying material, or 0 if otherwise.
+ */
+int ossl_statem_export_early_allowed(SSL *s)
+{
+    return s->statem.hand_state == TLS_ST_EARLY_DATA;
+}
