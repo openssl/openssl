@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 #include <openssl/opensslconf.h>
+#include "internal/constant_time_locl.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
 #if OPENSSL_API_COMPAT < 0x00908000L
@@ -497,24 +498,30 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 /* ignore negative */
 static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-    int i;
+    int i, j, top;
     BN_ULONG l;
 
-    bn_check_top(a);
     i = BN_num_bytes(a);
     if (tolen == -1)
         tolen = i;
     else if (tolen < i)
         return -1;
-    /* Add leading zeroes if necessary */
-    if (tolen > i) {
-        memset(to, 0, tolen - i);
-        to += tolen - i;
+
+    if (i == 0) {
+        OPENSSL_cleanse(to, tolen);
+        return tolen;
     }
-    while (i--) {
+
+    top = a->top * BN_BYTES;
+    for (i = 0, j = tolen; j > 0; i++) {
+        unsigned int mask;
+
+        mask = constant_time_lt(i, top);
+        i -= 1 & ~mask; /* stay on top limb */
         l = a->d[i / BN_BYTES];
-        *(to++) = (unsigned char)(l >> (8 * (i % BN_BYTES))) & 0xff;
+        to[--j] = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
     }
+
     return tolen;
 }
 
