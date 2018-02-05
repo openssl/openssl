@@ -194,15 +194,19 @@ static int test_bio_write_v6(int idx)
   BIO_ADDR   *dsthost2;
   int ret = 0;
 
-  dsthost1 = BIO_ADDR_new();
-  dsthost2 = BIO_ADDR_new();
+  if(getenv("TRAVISCI_NO_IPV6")==NULL) {
+    dsthost1 = BIO_ADDR_new();
+    dsthost2 = BIO_ADDR_new();
 
-  bind_v6_socket(infd1, dsthost1);
-  bind_v6_socket(infd2, dsthost2);
+    bind_v6_socket(infd1, dsthost1);
+    bind_v6_socket(infd2, dsthost2);
 
-  ret = fork_and_read_write_packets(infd1, outfd, dsthost1, dsthost2);
-  BIO_ADDR_free(dsthost1);
-  BIO_ADDR_free(dsthost2);
+    ret = fork_and_read_write_packets(infd1, outfd, dsthost1, dsthost2);
+    BIO_ADDR_free(dsthost1);
+    BIO_ADDR_free(dsthost2);
+  } else {
+    ret = 1;
+  }
   return ret;
 }
 

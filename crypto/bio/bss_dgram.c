@@ -353,15 +353,15 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
     if((len = recvmsg(b->num, &mhdr, 0)) >= 0) {
         for (cmsg = CMSG_FIRSTHDR(&mhdr);
              cmsg != NULL;
-             cmsg = CMSG_NXTHDR(&mhdr, cmsg))
-	{
-            if (cmsg->cmsg_level != IPPROTO_IP)
+             cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
+            if(cmsg->cmsg_level != IPPROTO_IP)
           	continue;
-            switch(cmsg->cmsg_type) {
-            case IP_PKTINFO:
-              pkt_info = (struct in_pktinfo *)CMSG_DATA(cmsg);
-              break;
-            }
+
+            if(cmsg->cmsg_type != IP_PKTINFO)
+                continue;
+
+            pkt_info = (struct in_pktinfo *)CMSG_DATA(cmsg);
+            break;
 	}
 
         /* see if we found something */
