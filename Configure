@@ -1292,6 +1292,8 @@ if ($target{sys_id} ne "")
 
 unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{DEFAULTS}->{cpuid_asm_src} if ($config{processor} eq "386");
+    push @{$config{defines}}, "OPENSSL_CPUID_OBJ" if ($target{cpuid_asm_src} ne "mem_clr.o");
+
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words

@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -118,8 +118,6 @@ extern "C" {
 #else
 # define DEPRECATEDIN_0_9_8(f)
 #endif
-
-{- $target{cpuid_obj} ne "mem_clr.o" ? "#define OPENSSL_CPUID_OBJ" : "" -}
 
 /* Generate 80386 code? */
 {- $config{processor} eq "386" ? "#define" : "#undef" -} I386_ONLY
