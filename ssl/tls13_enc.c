@@ -488,7 +488,7 @@ int tls13_change_cipher_state(SSL *s, int which)
                                    sizeof(early_exporter_master_secret) - 1,
                                    hashval, hashlen,
                                    s->early_exporter_master_secret, hashlen)) {
-                SSLerr(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
         } else if (which & SSL3_CC_HANDSHAKE) {
