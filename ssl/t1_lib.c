@@ -1802,6 +1802,31 @@ static int tls1_alpn_handle_client_hello_late(SSL *s, int *al)
     const unsigned char *selected = NULL;
     unsigned char selected_len = 0;
 
+	if (s->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
+        int r = s->alpn_select_cb(s, &selected, &selected_len,
+            s->s3->alpn_proposed, s->s3->alpn_proposed_len, s->alpn_select_cb_arg);
+
+        if (r == SSL_TLSEXT_ERR_OK) {
+            OPENSSL_free(s->s3->alpn_selected);
+            s->s3->alpn_selected = OPENSSL_memdup(selected, selected_len);
+            if (s->s3->alpn_selected == NULL) {
+                *al = SSL_AD_INTERNAL_ERROR;
+                return 0;
+            }
+            s->s3->alpn_selected_len = selected_len;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+            /* ALPN takes precedence over NPN. */
+            s->s3->next_proto_neg_seen = 0;
+#endif
+            return 1;
+        } else if (r == SSL_TLSEXT_ERR_NOACK) {
+            return 1;
+        } else {
+            *al = SSL_AD_NO_APPLICATION_PROTOCOL;
+            return 0;
+        }
+    }
+
     if (s->ctx->alpn_select_cb != NULL && s->s3->alpn_proposed != NULL) {
         int r = s->ctx->alpn_select_cb(s, &selected, &selected_len,
                                        s->s3->alpn_proposed,

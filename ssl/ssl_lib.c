@@ -2447,6 +2447,18 @@ void SSL_CTX_set_alpn_select_cb(SSL_CTX *ctx,
     ctx->alpn_select_cb_arg = arg;
 }
 
+void SSL_set_alpn_select_cb(SSL *ssl,
+                            int (*cb) (SSL *ssl,
+                                       const unsigned char **out,
+                                       unsigned char *outlen,
+                                       const unsigned char *in,
+                                       unsigned int inlen,
+                                       void *arg),
+							void *arg)
+{
+    ssl->alpn_select_cb = cb;
+    ssl->alpn_select_cb_arg = arg;
+}
 /*
  * SSL_get0_alpn_selected gets the selected ALPN protocol (if any) from |ssl|.
  * On return it sets |*data| to point to |*len| bytes of protocol name

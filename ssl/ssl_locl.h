@@ -937,6 +937,15 @@ struct ssl_st {
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
+
+
+    int (*alpn_select_cb) (SSL *s,
+                           const unsigned char **out,
+                           unsigned char *outlen,
+                           const unsigned char *in,
+                           unsigned int inlen, void *arg);
+    void *alpn_select_cb_arg;
+
     /*
      * These are the ones being used, the ones in SSL_SESSION are the ones to
      * be 'copied' into these ones
