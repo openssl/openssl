@@ -22,6 +22,9 @@
 #endif
 #include "e_os.h"
 
+/* Macro to convert two thirty two bit values into a sixty four bit one */
+#define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
+
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
@@ -194,6 +197,71 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 }
 
 /*
+ * Find a suitable system time.  Start with the highest resolution source
+ * and work down to the slower ones.  This is added as additional data and
+ * isn't counted as randomness, so any result is acceptable.
+ */
+static uint64_t get_timer_bits(void)
+{
+    uint64_t res = OPENSSL_rdtsc();
+
+    if (res != 0)
+        return res;
+#if defined(_WIN32)
+    {
+        LARGE_INTEGER t;
+        FILETIME ft;
+
+        if (QueryPerformanceCounter(&t) != 0)
+            return t.QuadPart;
+        GetSystemTimeAsFileTime(&ft);
+        return TWO32TO64(ft.dwHighDateTime, ft.dwLowDateTime);
+    }
+#elif defined(__sun) || defined(__hpux)
+    return gethrtime();
+#elif defined(_AIX)
+    {
+        timebasestruct_t t;
+
+        read_wall_time(&t, TIMEBASE_SZ);
+        return TWO32TO64(t.tb_high, t.tb_low);
+    }
+#else
+
+# if defined(_POSIX_C_SOURCE) \
+     && defined(_POSIX_TIMERS) \
+     && _POSIX_C_SOURCE >= 199309L \
+     && (!defined(__GLIBC__) || __GLIBC_PREREQ(2, 17))
+    {
+        struct timespec ts;
+        clockid_t cid;
+
+#  ifdef CLOCK_BOOTTIME
+        cid = CLOCK_BOOTTIME;
+#  elif defined(_POSIX_MONOTONIC_CLOCK)
+        cid = CLOCK_MONOTONIC;
+#  else
+        cid = CLOCK_REALTIME;
+#  endif
+
+        if (clock_gettime(cid, &ts) == 0)
+            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
+    }
+# endif
+# if defined(__unix__) \
+     || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+    {
+        struct timeval tv;
+
+        if (gettimeofday(&tv, NULL) == 0)
+            return TWO32TO64(tv.tv_sec, tv.tv_usec);
+    }
+# endif
+    return time(NULL);
+#endif
+}
+
+/*
  * Generate additional data that can be used for the drbg. The data does
  * not need to contain entropy, but it's useful if it contains at least
  * some bits that are unpredictable.
@@ -210,15 +278,10 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     size_t len;
 #ifdef OPENSSL_SYS_UNIX
     pid_t pid;
-    struct timeval tv;
 #elif defined(OPENSSL_SYS_WIN32)
     DWORD pid;
-    FILETIME ft;
-    LARGE_INTEGER pc;
 #endif
-#ifdef OPENSSL_CPUID_OBJ
-    uint32_t tsc = 0;
-#endif
+    uint64_t tbits;
 
     pool = RAND_POOL_new(0, 0, max_len);
     if (pool == NULL)
@@ -236,21 +299,8 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     if (thread_id != 0)
         RAND_POOL_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0);
 
-#ifdef OPENSSL_CPUID_OBJ
-    tsc = OPENSSL_rdtsc();
-    if (tsc != 0)
-        RAND_POOL_add(pool, (unsigned char *)&tsc, sizeof(tsc), 0);
-#endif
-
-#ifdef OPENSSL_SYS_UNIX
-    if (gettimeofday(&tv, NULL) == 0)
-        RAND_POOL_add(pool, (unsigned char *)&tv, sizeof(tv), 0);
-#elif defined(OPENSSL_SYS_WIN32)
-    if (QueryPerformanceCounter(&pc) != 0)
-        RAND_POOL_add(pool, (unsigned char *)&pc, sizeof(pc), 0);
-    GetSystemTimeAsFileTime(&ft);
-    RAND_POOL_add(pool, (unsigned char *)&ft, sizeof(ft), 0);
-#endif
+    tbits = get_timer_bits();
+    RAND_POOL_add(pool, (unsigned char *)&tbits, sizeof(tbits), 0);
 
     /* TODO: Use RDSEED? */
 
