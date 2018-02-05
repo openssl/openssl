@@ -23,6 +23,7 @@
 # define AFALG_F_AFALG_SETUP_ASYNC_EVENT_NOTIFICATION     103
 # define AFALG_F_AFALG_SET_KEY                            104
 # define AFALG_F_BIND_AFALG                               105
+# define AFALG_F_AFALG_SET_AAD                            106
 
 /*
  * AFALG reason codes.
@@ -39,5 +40,6 @@
 # define AFALG_R_SOCKET_CREATE_FAILED                     109
 # define AFALG_R_SOCKET_OPERATION_FAILED                  104
 # define AFALG_R_SOCKET_SET_KEY_FAILED                    106
+# define AFALG_R_SOCKET_SET_AAD_FAILED                    112
 
 #endif

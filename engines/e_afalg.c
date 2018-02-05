@@ -80,12 +80,17 @@ static int afalg_destroy(ENGINE *e);
 static int afalg_init(ENGINE *e);
 static int afalg_finish(ENGINE *e);
 const EVP_CIPHER *afalg_aes_cbc(int nid);
-static cbc_handles *get_cipher_handle(int nid);
+const EVP_CIPHER *afalg_aes_gcm(int nid);
+static aes_handles *get_cipher_handle(int nid);
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid);
 static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);
 static int afalg_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                           const unsigned char *in, size_t inl);
+static int afalg_gcm_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                             const unsigned char *iv, int enc);
+static int afalg_do_gcm(EVP_CIPHER_CTX *ctx, unsigned char *out,
                            const unsigned char *in, size_t inl);
 static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx);
 static int afalg_chk_platform(void);
@@ -98,11 +103,17 @@ static int afalg_cipher_nids[] = {
     NID_aes_128_cbc,
     NID_aes_192_cbc,
     NID_aes_256_cbc,
+    NID_aes_128_gcm,
+    NID_aes_192_gcm,
+    NID_aes_256_gcm,
 };
 
-static cbc_handles cbc_handle[] = {{AES_KEY_SIZE_128, NULL},
-                                    {AES_KEY_SIZE_192, NULL},
-                                    {AES_KEY_SIZE_256, NULL}};
+static aes_handles cipher_handle[] = {{AES_KEY_SIZE_128, NULL},
+                                      {AES_KEY_SIZE_192, NULL},
+                                      {AES_KEY_SIZE_256, NULL},
+                                      {AES_KEY_SIZE_128, NULL},
+                                      {AES_KEY_SIZE_192, NULL},
+                                      {AES_KEY_SIZE_256, NULL}};
 
 static ossl_inline int io_setup(unsigned n, aio_context_t *ctx)
 {
@@ -324,6 +335,129 @@ int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     return 1;
 }
 
+int afalg_fin_gcm_aio(EVP_CIPHER_CTX *ctx, int sfd, unsigned char *buf,
+                       size_t len)
+{
+    afalg_gcm_ctx *gctx;
+    afalg_ctx *actx;
+    afalg_aio *aio;
+    int retry = 0;
+    unsigned int done = 0;
+    struct iocb *cb;
+    struct timespec timeout;
+    struct io_event events[MAX_INFLIGHTS];
+    struct iovec iov[2];
+    u_int64_t eval = 0;
+    int r;
+
+    timeout.tv_sec = 0;
+    timeout.tv_nsec = 0;
+    gctx = (afalg_gcm_ctx *) EVP_CIPHER_CTX_get_cipher_data(ctx);
+    actx = (afalg_ctx *)&gctx->ctx;
+    aio = &actx->aio;
+
+    /* if efd has not been initialised yet do it here */
+    if (aio->mode == MODE_UNINIT) {
+        r = afalg_setup_async_event_notification(aio);
+        if (r == 0)
+            return 0;
+    }
+
+    cb = &(aio->cbt[0 % MAX_INFLIGHTS]);
+    memset(cb, '\0', sizeof(*cb));
+
+    /* iov that describes input data */
+    iov[0].iov_base = (void *)EVP_CIPHER_CTX_buf_noconst(ctx);
+    iov[0].iov_len = gctx->aad_len;
+    iov[1].iov_base = (unsigned char *)buf;
+    iov[1].iov_len = len;
+
+    cb->aio_fildes = sfd;
+    cb->aio_lio_opcode = IOCB_CMD_PREADV;
+    /*
+     * The pointer has to be converted to unsigned value first to avoid
+     * sign extension on cast to 64 bit value in 32-bit builds
+     */
+    cb->aio_buf = (size_t)iov;
+    cb->aio_offset = 0;
+    cb->aio_data = 0;
+    cb->aio_nbytes = 2;
+    cb->aio_flags = IOCB_FLAG_RESFD;
+    cb->aio_resfd = aio->efd;
+
+    /*
+     * Perform AIO read on AFALG socket, this in turn performs an async
+     * crypto operation in kernel space
+     */
+    r = io_read(aio->aio_ctx, 1, &cb);
+    if (r < 0) {
+        ALG_PWARN("%s: io_read failed : ", __func__);
+        return 0;
+    }
+
+    do {
+        /* While AIO read is being performed pause job */
+        ASYNC_pause_job();
+
+        /* Check for completion of AIO read */
+        r = read(aio->efd, &eval, sizeof(eval));
+        if (r < 0) {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                continue;
+            ALG_PERR("%s: read failed for event fd : ", __func__);
+            return 0;
+        } else if (r == 0 || eval <= 0) {
+            ALG_WARN("%s: eventfd read %d bytes, eval = %lu\n", __func__, r,
+                     eval);
+        }
+        if (eval > 0) {
+
+            /* Get results of AIO read */
+            r = io_getevents(aio->aio_ctx, 1, MAX_INFLIGHTS,
+                             events, &timeout);
+            if (r > 0) {
+                /*
+                 * events.res indicates the actual status of the operation.
+                 * Handle the error condition first.
+                 */
+                if (events[0].res < 0) {
+                    /*
+                     * Underlying operation cannot be completed at the time
+                     * of previous submission. Resubmit for the operation.
+                     */
+                    if (events[0].res == -EBUSY && retry++ < 3) {
+                        r = io_read(aio->aio_ctx, 1, &cb);
+                        if (r < 0) {
+                            ALG_PERR("%s: retry %d for io_read failed : ",
+                                     __func__, retry);
+                            return 0;
+                        }
+                        continue;
+                    } else {
+                        /*
+                         * Retries exceed for -EBUSY or unrecoverable error
+                         * condition for this instance of operation.
+                         */
+                        ALG_WARN
+                            ("%s: Crypto Operation failed with code %lld\n",
+                             __func__, events[0].res);
+                        return 0;
+                    }
+                }
+                /* Operation successful. */
+                done = 1;
+            } else if (r < 0) {
+                ALG_PERR("%s: io_getevents failed : ", __func__);
+                return 0;
+            } else {
+                ALG_WARN("%s: io_geteventd read 0 bytes\n", __func__);
+            }
+        }
+    } while (!done);
+
+    return 1;
+}
+ 
 static ossl_inline void afalg_set_op_sk(struct cmsghdr *cmsg,
                                    const ALG_OP_TYPE op)
 {
@@ -346,6 +480,14 @@ static void afalg_set_iv_sk(struct cmsghdr *cmsg, const unsigned char *iv,
     memcpy(aiv->iv, iv, len);
 }
 
+static void afalg_set_aad_sk(struct cmsghdr *cmsg, const unsigned int len)
+{
+    cmsg->cmsg_level = SOL_ALG;
+    cmsg->cmsg_type = ALG_SET_AEAD_ASSOCLEN;
+    cmsg->cmsg_len = CMSG_LEN(sizeof(unsigned int));
+    memcpy(CMSG_DATA(cmsg), &len, sizeof(unsigned int));
+}
+
 static ossl_inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
                                 const int klen)
 {
@@ -356,6 +498,22 @@ static ossl_inline int afalg_set_key(afalg_ctx *actx, const unsigned char *key,
         AFALGerr(AFALG_F_AFALG_SET_KEY, AFALG_R_SOCKET_SET_KEY_FAILED);
         return 0;
     }
+    return 1;
+}
+
+static ossl_inline int afalg_set_aad(EVP_CIPHER_CTX *ctx)
+{
+    afalg_ctx *actx = (afalg_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    int ret;
+
+    ret = setsockopt(actx->bfd, SOL_ALG, ALG_SET_AEAD_AUTHSIZE, NULL,
+                     EVP_GCM_TLS_TAG_LEN);
+    if (ret < 0) {
+        ALG_PERR("%s: Failed to set socket option : ", __func__);
+        AFALGerr(AFALG_F_AFALG_SET_AAD, AFALG_R_SOCKET_SET_AAD_FAILED);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -498,8 +656,10 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
     int ciphertype;
     int ret;
+    int ivlen = 0;
     afalg_ctx *actx;
     char ciphername[ALG_MAX_SALG_NAME];
+    char algtype[ALG_MAX_SALG_NAME];
 
     if (ctx == NULL || key == NULL) {
         ALG_WARN("%s: Null Parameter\n", __func__);
@@ -523,21 +683,31 @@ static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     case NID_aes_192_cbc:
     case NID_aes_256_cbc:
         strncpy(ciphername, "cbc(aes)", ALG_MAX_SALG_NAME);
+        strncpy(algtype, "skcipher", ALG_MAX_SALG_NAME);
+        ivlen = ALG_AES_IV_LEN;
+        break;
+    case NID_aes_128_gcm:
+    case NID_aes_192_gcm:
+    case NID_aes_256_gcm:
+        strncpy(ciphername, "gcm(aes)", ALG_MAX_SALG_NAME);
+        strncpy(algtype, "aead", ALG_MAX_SALG_NAME);
+        ivlen = AES_GCM_IV_LEN;
         break;
     default:
         ALG_WARN("%s: Unsupported Cipher type %d\n", __func__, ciphertype);
         return 0;
     }
     ciphername[ALG_MAX_SALG_NAME-1]='\0';
+    algtype[ALG_MAX_SALG_NAME-1]='\0';
 
-    if (ALG_AES_IV_LEN != EVP_CIPHER_CTX_iv_length(ctx)) {
+    if (ivlen != EVP_CIPHER_CTX_iv_length(ctx)) {
         ALG_WARN("%s: Unsupported IV length :%d\n", __func__,
                 EVP_CIPHER_CTX_iv_length(ctx));
         return 0;
     }
 
     /* Setup AFALG socket for crypto processing */
-    ret = afalg_create_sk(actx, "skcipher", ciphername);
+    ret = afalg_create_sk(actx, algtype, ciphername);
     if (ret < 1)
         return 0;
 
@@ -644,15 +814,21 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
     return 1;
 }
 
-static cbc_handles *get_cipher_handle(int nid)
+static aes_handles *get_cipher_handle(int nid)
 {
     switch (nid) {
     case NID_aes_128_cbc:
-        return &cbc_handle[AES_CBC_128];
+        return &cipher_handle[AES_CBC_128];
     case NID_aes_192_cbc:
-        return &cbc_handle[AES_CBC_192];
+        return &cipher_handle[AES_CBC_192];
     case NID_aes_256_cbc:
-        return &cbc_handle[AES_CBC_256];
+        return &cipher_handle[AES_CBC_256];
+    case NID_aes_128_gcm:
+        return &cipher_handle[AES_GCM_128];
+    case NID_aes_192_gcm:
+        return &cipher_handle[AES_GCM_192];
+    case NID_aes_256_gcm:
+        return &cipher_handle[AES_GCM_256];
     default:
         return NULL;
     }
@@ -660,7 +836,7 @@ static cbc_handles *get_cipher_handle(int nid)
 
 const EVP_CIPHER *afalg_aes_cbc(int nid)
 {
-    cbc_handles *cipher_handle = get_cipher_handle(nid);
+    aes_handles *cipher_handle = get_cipher_handle(nid);
     if (cipher_handle->_hidden == NULL
         && ((cipher_handle->_hidden =
          EVP_CIPHER_meth_new(nid,
@@ -685,6 +861,361 @@ const EVP_CIPHER *afalg_aes_cbc(int nid)
     return cipher_handle->_hidden;
 }
 
+static int afalg_gcm_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                           const unsigned char *iv, int enc)
+{
+    afalg_gcm_ctx *gctx = (afalg_gcm_ctx *)
+                            EVP_CIPHER_CTX_get_cipher_data(ctx);
+
+    if (!iv && !key)
+        return 1;
+
+    if (key) {
+        afalg_cipher_init(ctx, key, iv, enc);
+        if (iv == NULL && gctx->iv_set)
+            iv = gctx->iv;
+        if (iv) {
+            memcpy(gctx->iv, iv, gctx->ivlen);
+            gctx->iv_set = 1;
+        }
+        if (afalg_set_aad(ctx) < 1)
+            return 0;
+        gctx->key_set = 1;
+    } else {
+        memcpy(gctx->iv, iv, gctx->ivlen);
+        gctx->iv_set = 1;
+        gctx->iv_gen = 0;
+    }
+    return 1;
+}
+
+static int afalg_start_gcm_sk(EVP_CIPHER_CTX *ctx, const unsigned char *in,
+                               size_t inl, const unsigned char *iv,
+                               unsigned int enc)
+{
+    afalg_gcm_ctx *gctx = (afalg_gcm_ctx *)
+                           EVP_CIPHER_CTX_get_cipher_data(ctx);
+    afalg_ctx *actx = (afalg_ctx *)&gctx->ctx;
+    struct msghdr msg = { 0 };
+    struct cmsghdr *cmsg;
+    struct iovec iov[2];
+    ssize_t sbytes;
+# ifdef ALG_ZERO_COPY
+    int ret;
+# endif
+    char cbuf[CMSG_SPACE(ALG_IV_LEN(AES_GCM_IV_LEN)) + CMSG_SPACE(ALG_OP_LEN) +
+             CMSG_SPACE(AES_GCM_IV_LEN)];
+
+    memset(cbuf, 0, sizeof(cbuf));
+    msg.msg_control = cbuf;
+    msg.msg_controllen = sizeof(cbuf);
+
+    /*
+     * cipher direction (i.e. encrypt or decrypt) and iv are sent to the
+     * kernel as part of sendmsg()'s ancillary data
+     */
+    cmsg = CMSG_FIRSTHDR(&msg);
+    afalg_set_op_sk(cmsg, enc);
+    cmsg = CMSG_NXTHDR(&msg, cmsg);
+    afalg_set_iv_sk(cmsg, iv, gctx->ivlen);
+    cmsg = CMSG_NXTHDR(&msg, cmsg);
+    afalg_set_aad_sk(cmsg, gctx->aad_len);
+
+    /* iov that describes input data */
+    iov[0].iov_base = (void *)EVP_CIPHER_CTX_buf_noconst(ctx);
+    iov[0].iov_len = gctx->aad_len;
+    iov[1].iov_base = (unsigned char *)in;
+    if (enc)
+        iov[1].iov_len = inl;
+    else
+        iov[1].iov_len = inl + EVP_GCM_TLS_TAG_LEN;
+
+    msg.msg_flags = MSG_MORE;
+
+# ifdef ALG_ZERO_COPY
+    /*
+     * ZERO_COPY mode
+     * Works best when buffer is 4k aligned
+     * OPENS: out of place processing (i.e. out != in)
+     */
+
+     /* Input data is not sent as part of call to sendmsg() */
+    msg.msg_iovlen = 1;
+    msg.msg_iov = iov;
+
+    /* Sendmsg() sends iv and cipher direction to the kernel */
+    sbytes = sendmsg(actx->sfd, &msg, 0);
+    if (sbytes < 0) {
+        ALG_PERR("%s: sendmsg failed for zero copy cipher operation : ",
+                 __func__);
+        return 0;
+    }
+
+    /*
+     * vmsplice and splice are used to pin the user space input buffer for
+     * kernel space processing avoiding copys from user to kernel space
+     */
+    ret = vmsplice(actx->zc_pipe[1], &iov[1], 1, SPLICE_F_GIFT);
+    if (ret < 0) {
+        ALG_PERR("%s: vmsplice failed : ", __func__);
+        return 0;
+    }
+
+    ret = splice(actx->zc_pipe[0], NULL, actx->sfd, NULL, inl ,SPLICE_F_MOVE);
+    if (ret < 0) {
+        ALG_PERR("%s: splice failed : ", __func__);
+        return 0;
+    }
+#else
+    msg.msg_iovlen = 2;
+    msg.msg_iov = iov;
+
+    /* Sendmsg() sends iv, cipher direction, aad len and input
+     * data to the kernel
+     */
+    sbytes = sendmsg(actx->sfd, &msg, 0);
+    if (sbytes < 0) {
+        ALG_PERR("%s: sendmsg failed for cipher operation : ", __func__);
+        return 0;
+    }
+
+    if (sbytes != (ssize_t)(inl + gctx->aad_len + (!enc ?
+                    EVP_GCM_TLS_TAG_LEN : 0))) {
+        ALG_WARN("Cipher operation send bytes %zd != inlen %zd\n", sbytes,
+                inl);
+        return 0;
+    }
+# endif
+
+    return 1;
+}
+
+static int afalg_do_gcm(EVP_CIPHER_CTX *ctx, unsigned char *out,
+                         const unsigned char *in, size_t inl)
+{
+    afalg_gcm_ctx *gctx;
+    afalg_ctx *actx;
+    int ret;
+
+    if (ctx == NULL || out == NULL || in == NULL) {
+        ALG_WARN("NULL parameter passed to function %s\n", __func__);
+        return 0;
+    }
+
+    gctx = (afalg_gcm_ctx *) EVP_CIPHER_CTX_get_cipher_data(ctx);
+    actx = (afalg_ctx *)&gctx->ctx;
+    if (actx == NULL || actx->init_done != MAGIC_INIT_NUM) {
+        ALG_WARN("%s afalg ctx passed\n",
+                 ctx == NULL ? "NULL" : "Uninitialised");
+        return 0;
+    }
+
+    if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IV_INV,
+                            EVP_GCM_TLS_EXPLICIT_IV_LEN, out))
+            ret = -1;
+    }
+
+    in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+    out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+    inl -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+
+    /* Send input data to kernel space */
+    ret = afalg_start_gcm_sk(ctx, (unsigned char *)in, inl,
+                              EVP_CIPHER_CTX_iv(ctx),
+                              EVP_CIPHER_CTX_encrypting(ctx));
+    if (ret < 1) {
+        return 0;
+    }
+
+    inl += EVP_GCM_TLS_TAG_LEN;
+    /* Perform async crypto operation in kernel space */
+    ret = afalg_fin_gcm_aio(ctx, actx->sfd, out, inl);
+    if (ret < 1)
+        return 0;
+
+    if (EVP_CIPHER_CTX_encrypting(ctx)) {
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_IV_GEN,
+                                EVP_GCM_TLS_EXPLICIT_IV_LEN, out -
+                                EVP_GCM_TLS_EXPLICIT_IV_LEN) <= 0)
+        ret = inl + EVP_GCM_TLS_EXPLICIT_IV_LEN;
+    } else {
+        ret = inl;
+    }
+
+    return ret;
+}
+
+/* increment counter (64-bit int) by 1 */
+static void ctr64_inc(unsigned char *counter)
+{
+    int n = 8;
+    unsigned char c;
+
+    do {
+        --n;
+        c = counter[n];
+        ++c;
+        counter[n] = c;
+        if (c)
+            return;
+    } while (n);
+}
+
+static int afalg_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+{
+    afalg_gcm_ctx *gctx = (afalg_gcm_ctx *)
+                            EVP_CIPHER_CTX_get_cipher_data(ctx);
+    unsigned int len;
+    int ret = 1;
+
+    switch (type) {
+    case EVP_CTRL_INIT:
+        gctx->ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+        gctx->iv = EVP_CIPHER_CTX_iv_noconst(ctx);
+        gctx->aad_len = -1;
+        break;
+    case EVP_CTRL_GCM_SET_TAG:
+        if (arg <= 0 || arg > 16 || EVP_CIPHER_CTX_encrypting(ctx)) {
+            ret = 0;
+            break;
+        }
+        memcpy(EVP_CIPHER_CTX_buf_noconst(ctx), ptr, arg);
+        gctx->taglen = arg;
+        break;
+    case EVP_CTRL_GCM_GET_TAG:
+        if (arg <= 0 || arg > 16 || EVP_CIPHER_CTX_encrypting(ctx)) {
+            ret = 0;
+            break;
+        }
+        memcpy(ptr, EVP_CIPHER_CTX_buf_noconst(ctx), arg);
+        break;
+     case EVP_CTRL_GCM_SET_IV_FIXED:
+        if (arg == -1) {
+            memcpy(gctx->iv, ptr, gctx->ivlen);
+            gctx->iv_gen = 1;
+            ret = 1;
+            break;
+        }
+        if ((arg < 4) || (gctx->ivlen - arg) < 8) {
+            ret = 1;
+            break;
+        }
+        if ((arg < 4) || (gctx->ivlen - arg) < 8) {
+            ret = 1;
+            break;
+        }
+        if (arg)
+            memcpy(gctx->iv, ptr, arg);
+        if (EVP_CIPHER_CTX_encrypting(ctx) &&
+            RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0) {
+            ret = 0;
+            break;
+        }
+        gctx->iv_gen = 1;
+        break;
+     case EVP_CTRL_GCM_IV_GEN:
+        if (gctx->iv_gen == 0 || gctx->key_set == 0) {
+            ret = 1;
+            break;
+        }
+        if (arg <= 0 || arg > gctx->ivlen)
+            arg = gctx->ivlen;
+        memcpy(ptr, gctx->iv + gctx->ivlen - arg, arg);
+        ctr64_inc(gctx->iv + gctx->ivlen - 8);
+        gctx->iv_set = 1;
+        break;
+     case EVP_CTRL_GCM_SET_IV_INV:
+        if (gctx->iv_gen == 0 || gctx->key_set == 0 ||
+            EVP_CIPHER_CTX_encrypting(ctx)) {
+            ret = 1;
+            break;
+        }
+        memcpy(gctx->iv + gctx->ivlen - arg, ptr, arg);
+        gctx->iv_set = 1;
+        break;
+     case EVP_CTRL_AEAD_TLS1_AAD:
+        if (arg != EVP_AEAD_TLS1_AAD_LEN) {
+            ret = 0;
+            break;
+        }
+        memcpy(EVP_CIPHER_CTX_buf_noconst(ctx), ptr, arg);
+        gctx->aad_len = arg;
+        len = EVP_CIPHER_CTX_buf_noconst(ctx)[arg - 2] << 8 |
+              EVP_CIPHER_CTX_buf_noconst(ctx)[arg - 1];
+        len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        if (!EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (len < EVP_GCM_TLS_TAG_LEN) {
+                ret = 0;
+                break;
+            }
+            len -= EVP_GCM_TLS_TAG_LEN;
+        }
+        EVP_CIPHER_CTX_buf_noconst(ctx)[arg - 2] = len >> 8;
+        EVP_CIPHER_CTX_buf_noconst(ctx)[arg - 1] = len & 0xff;
+        ret = EVP_GCM_TLS_TAG_LEN;
+        break;
+      default:
+            ret = -1;
+            break;
+   }
+   return ret;
+}
+
+const EVP_CIPHER *afalg_aes_gcm(int nid)
+{
+    aes_handles *cipher_handle = get_cipher_handle(nid);
+    if (cipher_handle->_hidden == NULL
+        && ((cipher_handle->_hidden =
+         EVP_CIPHER_meth_new(nid,
+                             1,
+                             cipher_handle->key_size)) == NULL
+        || !EVP_CIPHER_meth_set_iv_length(cipher_handle->_hidden,
+                                          AES_GCM_IV_LEN)
+        || !EVP_CIPHER_meth_set_flags(cipher_handle->_hidden,
+                                      EVP_CIPH_GCM_MODE |
+                                      CUSTOM_FLAGS |
+                                      EVP_CIPH_FLAG_AEAD_CIPHER)
+        || !EVP_CIPHER_meth_set_init(cipher_handle->_hidden,
+                                     afalg_gcm_init)
+        || !EVP_CIPHER_meth_set_ctrl(cipher_handle->_hidden,
+                                     afalg_gcm_ctrl)     
+        || !EVP_CIPHER_meth_set_do_cipher(cipher_handle->_hidden,
+                                          afalg_do_gcm)
+        || !EVP_CIPHER_meth_set_cleanup(cipher_handle->_hidden,
+                                        afalg_cipher_cleanup)
+        || !EVP_CIPHER_meth_set_impl_ctx_size(cipher_handle->_hidden,
+                                              sizeof(afalg_gcm_ctx)))) {
+        EVP_CIPHER_meth_free(cipher_handle->_hidden);
+        cipher_handle->_hidden= NULL;
+    }
+    return cipher_handle->_hidden;
+}
+
+static int afalg_init_ciphers(int nid)
+{
+    int r = 1;
+
+    switch (nid) {
+    case NID_aes_128_cbc:
+    case NID_aes_192_cbc:
+    case NID_aes_256_cbc:
+        if (afalg_aes_cbc(nid) == NULL)
+            r = 0;     
+        break;
+    case NID_aes_128_gcm:
+    case NID_aes_192_gcm:
+    case NID_aes_256_gcm:
+        if (afalg_aes_gcm(nid) == NULL)
+            r = 0;
+        break;
+    default:
+        r = 0;
+        break;
+    }
+    return r;
+}
+
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid)
 {
@@ -700,6 +1231,11 @@ static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     case NID_aes_192_cbc:
     case NID_aes_256_cbc:
         *cipher = afalg_aes_cbc(nid);
+        break;
+    case NID_aes_128_gcm:
+    case NID_aes_192_gcm:
+    case NID_aes_256_gcm:
+        *cipher = afalg_aes_gcm(nid);
         break;
     default:
         *cipher = NULL;
@@ -729,7 +1265,7 @@ static int bind_afalg(ENGINE *e)
      * time.
      */
     for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
-        if (afalg_aes_cbc(afalg_cipher_nids[i]) == NULL) {
+        if (!afalg_init_ciphers(afalg_cipher_nids[i])) {
             AFALGerr(AFALG_F_BIND_AFALG, AFALG_R_INIT_FAILED);
             return 0;
         }
@@ -844,12 +1380,12 @@ static int afalg_finish(ENGINE *e)
     return 1;
 }
 
-static int free_cbc(void)
+static int free_cipher(void)
 {
     short unsigned int i;
     for(i = 0; i < OSSL_NELEM(afalg_cipher_nids); i++) {
-        EVP_CIPHER_meth_free(cbc_handle[i]._hidden);
-        cbc_handle[i]._hidden = NULL;
+        EVP_CIPHER_meth_free(cipher_handle[i]._hidden);
+        cipher_handle[i]._hidden = NULL;
     }
     return 1;
 }
@@ -857,7 +1393,7 @@ static int free_cbc(void)
 static int afalg_destroy(ENGINE *e)
 {
     ERR_unload_AFALG_strings();
-    free_cbc();
+    free_cipher();
     return 1;
 }
 
