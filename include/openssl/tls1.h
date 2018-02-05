@@ -238,7 +238,7 @@ __owur int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
  * https://tools.ietf.org/html/draft-ietf-tls-tls13-23. It writes
  * |olen| bytes to |out| given a label and optional context. (Since a
  * zero length context is allowed, the |use_context| flag controls
- * whether a context is included.) It returns 1 on success and 0 or -1
+ * whether a context is included.) It returns 1 on success and 0
  * otherwise.
  */
 __owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
