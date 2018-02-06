@@ -482,27 +482,24 @@
                    likely to complement configuration command line with
                    suitable compiler-specific option.
 
-  enable-tls1_3
-                   TODO(TLS1.3): Make this enabled by default
-                   Build support for TLS1.3. Note: This is a WIP feature and
-                   only a single draft version is supported.  Implementations
-                   of different draft versions will negotiate TLS 1.2 instead
-                   of (draft) TLS 1.3.  Use with caution!!
-
   no-<prot>
                    Don't build support for negotiating the specified SSL/TLS
-                   protocol (one of ssl, ssl3, tls, tls1, tls1_1, tls1_2, dtls,
-                   dtls1 or dtls1_2). If "no-tls" is selected then all of tls1,
-                   tls1_1 and tls1_2 are disabled. Similarly "no-dtls" will
-                   disable dtls1 and dtls1_2. The "no-ssl" option is synonymous
-                   with "no-ssl3". Note this only affects version negotiation.
-                   OpenSSL will still provide the methods for applications to
-                   explicitly select the individual protocol versions.
+                   protocol (one of ssl, ssl3, tls, tls1, tls1_1, tls1_2,
+                   tls1_3, dtls, dtls1 or dtls1_2). If "no-tls" is selected then
+                   all of tls1, tls1_1, tls1_2 and tls1_3 are disabled.
+                   Similarly "no-dtls" will disable dtls1 and dtls1_2. The
+                   "no-ssl" option is synonymous with "no-ssl3". Note this only
+                   affects version negotiation. OpenSSL will still provide the
+                   methods for applications to explicitly select the individual
+                   protocol versions.
 
   no-<prot>-method
                    As for no-<prot> but in addition do not build the methods for
                    applications to explicitly select individual protocol
-                   versions.
+                   versions. Note that there is no "no-tls1_3-method" option
+                   because there is no application method for TLSv1.3. Using
+                   invidivial protocol methods directly is deprecated.
+                   Applications should use TLS_method() instead.
 
   enable-<alg>
                    Build with support for the specified algorithm, where <alg>

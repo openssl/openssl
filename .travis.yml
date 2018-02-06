@@ -43,7 +43,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: CONFIG_OPTS="--strict-warnings enable-tls1_3" TESTS="-test_fuzz" COMMENT="Move to the BORINGTEST build when interoperable"
+          env: CONFIG_OPTS="--strict-warnings" TESTS="-test_fuzz" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
