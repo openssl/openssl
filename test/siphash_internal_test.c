@@ -17,10 +17,6 @@
 #include "internal/siphash.h"
 #include "../crypto/siphash/siphash_local.h"
 #include "internal/nelem.h"
-#include "internal/cryptlib.h"
-
-static BIO* b_stderr = NULL;
-static BIO* b_stdout = NULL;
 
 typedef struct {
     size_t size;
@@ -37,46 +33,6 @@ typedef struct {
  * Test of siphash internal functions
  *
  ***/
-
-static int benchmark_siphash(void)
-{
-# ifdef OPENSSL_CPUID_OBJ
-    SIPHASH siphash;
-    unsigned char key[SIPHASH_KEY_SIZE];
-    unsigned char buf[8192];
-    uint32_t stopwatch;
-    unsigned int i;
-
-    memset (buf,0x55,sizeof(buf));
-    memset (key,0xAA,sizeof(key));
-
-    (void)SipHash_Init(&siphash, key, 0, 0, 0);
-
-    for (i=0;i<100000;i++)
-        SipHash_Update(&siphash, buf, sizeof(buf));
-
-    stopwatch = OPENSSL_rdtsc();
-    for (i=0;i<10000;i++)
-        SipHash_Update(&siphash, buf, sizeof(buf));
-    stopwatch = OPENSSL_rdtsc() - stopwatch;
-
-    BIO_printf(b_stdout, "%g\n",stopwatch/(double)(i*sizeof(buf)));
-
-    stopwatch = OPENSSL_rdtsc();
-    for (i=0;i<10000;i++) {
-        (void)SipHash_Init(&siphash, key, 0, 0, 0);
-        SipHash_Update(&siphash, buf, 16);
-        (void)SipHash_Final(&siphash, buf, SIPHASH_MAX_DIGEST_SIZE);
-    }
-    stopwatch = OPENSSL_rdtsc() - stopwatch;
-
-    BIO_printf(b_stdout, "%g\n",stopwatch/(double)(i));
-# else
-    BIO_printf(b_stderr,
-               "Benchmarking of siphash isn't available on this platform\n");
-# endif
-    return 1;
-}
 
 /* From C reference: https://131002.net/siphash/ */
 
@@ -321,28 +277,7 @@ static int test_siphash_basic(void)
 
 int setup_tests(void)
 {
-    if (test_has_option("-h")) {
-        BIO_printf(bio_out, "-h\tThis help\n");
-        BIO_printf(bio_out, "-b\tBenchmark in addition to the tests\n");
-        return 1;
-    }
-
-    b_stderr = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-    b_stdout = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
-#ifdef OPENSSL_SYS_VMS
-    b_stderr = BIO_push(BIO_new(BIO_f_linebuffer()), b_stderr);
-    b_stdout = BIO_push(BIO_new(BIO_f_linebuffer()), b_stdout);
-#endif
-
     ADD_TEST(test_siphash_basic);
     ADD_ALL_TESTS(test_siphash, OSSL_NELEM(tests));
-    if (test_has_option("-b"))
-        ADD_TEST(benchmark_siphash);
     return 1;
-}
-
-void cleanup_tests(void)
-{
-    BIO_free(b_stdout);
-    BIO_free(b_stderr);
 }
