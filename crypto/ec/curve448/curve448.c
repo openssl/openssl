@@ -19,10 +19,6 @@
 
 #define COFACTOR 4
 
-/* Comb config: number of combs, n, t, s. */
-#define COMBS_N 5
-#define COMBS_T 5
-#define COMBS_S 18
 #define C448_WNAF_FIXED_TABLE_BITS 5
 #define C448_WNAF_VAR_TABLE_BITS 3
 
@@ -40,23 +36,7 @@ static const curve448_scalar_t precomputed_scalarmul_adjustment = {
 
 #define WBITS C448_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
-/* Projective Niels coordinates */
-typedef struct {
-    gf a, b, c;
-} niels_s, niels_t[1];
-typedef struct {
-    niels_t n;
-    gf z;
-} VECTOR_ALIGNED pniels_t[1];
-
-/* Precomputed base */
-struct curve448_precomputed_s {
-    niels_t table[COMBS_N << (COMBS_T - 1)];
-};
-
-extern const gf curve448_precomputed_base_as_fe[];
-const curve448_precomputed_s *curve448_precomputed_base =
-    (const curve448_precomputed_s *)&curve448_precomputed_base_as_fe;
+extern const struct curve448_precomputed_s *curve448_precomputed_base;
 
 /* Inverse. */
 static void gf_invert(gf y, const gf x, int assert_nonzero)
@@ -642,9 +622,7 @@ static void prepare_wnaf_table(pniels_t * output,
     OPENSSL_cleanse(twop, sizeof(twop));
 }
 
-extern const gf curve448_precomputed_wnaf_as_fe[];
-static const niels_t *curve448_wnaf_base =
-    (const niels_t *)curve448_precomputed_wnaf_as_fe;
+extern const niels_t *curve448_wnaf_base;
 
 void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
                                                const curve448_scalar_t scalar1,

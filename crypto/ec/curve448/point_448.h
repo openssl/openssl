@@ -16,6 +16,24 @@
 # include "curve448utils.h"
 # include "field.h"
 
+/* Comb config: number of combs, n, t, s. */
+#define COMBS_N 5
+#define COMBS_T 5
+#define COMBS_S 18
+
+/* Projective Niels coordinates */
+typedef struct {
+    gf a, b, c;
+} niels_s, niels_t[1];
+typedef struct {
+    niels_t n;
+    gf z;
+} VECTOR_ALIGNED pniels_t[1];
+
+/* Precomputed base */
+struct curve448_precomputed_s {
+    niels_t table[COMBS_N << (COMBS_T - 1)];
+};
 
 # define C448_SCALAR_LIMBS ((446-1)/C448_WORD_BITS+1)
 
