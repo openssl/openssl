@@ -16,7 +16,6 @@
 #include "internal/poly1305.h"
 #include "../crypto/poly1305/poly1305_local.h"
 #include "internal/nelem.h"
-#include "internal/cryptlib.h"
 
 typedef struct {
     size_t size;
@@ -34,45 +33,6 @@ typedef struct {
  * Test of poly1305 internal functions
  *
  ***/
-
-static void benchmark_poly1305()
-{
-# ifdef OPENSSL_CPUID_OBJ
-    POLY1305 poly1305;
-    unsigned char key[32];
-    unsigned char buf[8192];
-    uint32_t stopwatch;
-    unsigned int i;
-
-    memset (buf,0x55,sizeof(buf));
-    memset (key,0xAA,sizeof(key));
-
-    Poly1305_Init(&poly1305, key);
-
-    for (i=0;i<100000;i++)
-        Poly1305_Update(&poly1305,buf,sizeof(buf));
-
-    stopwatch = OPENSSL_rdtsc();
-    for (i=0;i<10000;i++)
-        Poly1305_Update(&poly1305,buf,sizeof(buf));
-    stopwatch = OPENSSL_rdtsc() - stopwatch;
-
-    printf("%g\n",stopwatch/(double)(i*sizeof(buf)));
-
-    stopwatch = OPENSSL_rdtsc();
-    for (i=0;i<10000;i++) {
-        Poly1305_Init(&poly1305, key);
-        Poly1305_Update(&poly1305,buf,16);
-        Poly1305_Final(&poly1305,buf);
-    }
-    stopwatch = OPENSSL_rdtsc() - stopwatch;
-
-    printf("%g\n",stopwatch/(double)(i));
-# else
-    fprintf(stderr,
-            "Benchmarking of poly1305 isn't available on this platform\n");
-# endif
-}
 
 static TESTDATA tests[] = {
     /*
@@ -1611,18 +1571,6 @@ static int test_poly1305(int idx)
 
 int setup_tests(void)
 {
-    if (test_has_option("-h")) {
-        printf("-h\tThis help\n");
-        printf("-b\tBenchmark in addition to the tests\n");
-        return 1;
-    }
-
     ADD_ALL_TESTS(test_poly1305, OSSL_NELEM(tests));
     return 1;
-}
-
-void cleanup_tests(void)
-{
-    if (test_has_option("-b"))
-        benchmark_poly1305();
 }
