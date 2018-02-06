@@ -958,5 +958,11 @@ int ossl_statem_export_allowed(SSL *s)
  */
 int ossl_statem_export_early_allowed(SSL *s)
 {
-    return s->statem.hand_state == TLS_ST_EARLY_DATA;
+    /*
+     * The early exporter secret is only present on the server if we
+     * have accepted early_data. It is present on the client as long
+     * as we have sent early_data.
+     */
+    return s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+           || (!s->server && s->ext.early_data != SSL_EARLY_DATA_NOT_SENT);
 }
