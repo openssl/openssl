@@ -725,19 +725,21 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
     if (!use_context)
         contextlen = 0;
 
-    /* In the following code, it calculates hash value of empty
-       string, and stores it in data.  This is because the definition
-       of TLS-Exporter is defined like so:
-
-       TLS-Exporter(label, context_value, key_length) =
-           HKDF-Expand-Label(Derive-Secret(Secret, label, ""),
-                             "exporter", Hash(context_value), key_length)
-
-       Derive-Secret(Secret, Label, Messages) =
-             HKDF-Expand-Label(Secret, Label,
-                               Transcript-Hash(Messages), Hash.length)
-
-       Here Transcript-Hash is the cipher suite hash algorithm. */
+    /*
+     * In the following code, it calculates hash value of empty
+     * string, and stores it in data.  This is because the definition
+     * of TLS-Exporter is defined like so:
+     *
+     * TLS-Exporter(label, context_value, key_length) =
+     *     HKDF-Expand-Label(Derive-Secret(Secret, label, ""),
+     *                       "exporter", Hash(context_value), key_length)
+     *
+     * Derive-Secret(Secret, Label, Messages) =
+     *       HKDF-Expand-Label(Secret, Label,
+     *                         Transcript-Hash(Messages), Hash.length)
+     *
+     * Here Transcript-Hash is the cipher suite hash algorithm.
+     */
     if (EVP_DigestInit_ex(ctx, md, NULL) <= 0
             || EVP_DigestUpdate(ctx, context, contextlen) <= 0
             || EVP_DigestFinal_ex(ctx, hash, &hashsize) <= 0
