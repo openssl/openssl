@@ -9,6 +9,26 @@
 
  Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
 
+  *) Support for TLSv1.3 added. Note that users upgrading from an earlier
+     version of OpenSSL should review their configuration settings to ensure
+     that they are still appropriate for TLSv1.3. In particular if no TLSv1.3
+     ciphersuites are enabled then OpenSSL will refuse to make a connection
+     unless (1) TLSv1.3 is explicitly disabled or (2) the ciphersuite
+     configuration is updated to include suitable ciphersuites. The DEFAULT
+     ciphersuite configuration does include TLSv1.3 ciphersuites. For further
+     information on this and other related issues please see:
+     https://www.openssl.org/blog/blog/2017/05/04/tlsv1.3/
+
+     NOTE: In this pre-release of OpenSSL a draft version of the
+     TLSv1.3 standard has been implemented. Implementations of different draft
+     versions of the standard do not inter-operate, and this version will not
+     inter-operate with an implementation of the final standard when it is
+     eventually published. Different pre-release versions may implement
+     different versions of the draft. The final version of OpenSSL 1.1.1 will
+     implement the final version of the standard.
+     TODO(TLS1.3): Remove the above note before final release
+     [Matt Caswell]
+
   *) Changed Configure so it only says what it does and doesn't dump
      so much data.  Instead, ./configdata.pm should be used as a script
      to display all sorts of configuration data.

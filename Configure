@@ -435,8 +435,6 @@ our %disabled = ( # "what"         => "comment"
 		  "ssl3"                => "default",
 		  "ssl3-method"         => "default",
                   "ubsan"		=> "default",
-          #TODO(TLS1.3): Temporarily disabled while this is a WIP
-		  "tls1_3"              => "default",
 		  "tls13downgrade"      => "default",
 		  "unit-test"           => "default",
 		  "weak-ssl-ciphers"    => "default",
