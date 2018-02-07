@@ -33,7 +33,7 @@ static const curve448_scalar_t precomputed_scalarmul_adjustment = {
     }
 };
 
-#define TWISTED_D ((EDWARDS_D)-1)
+#define TWISTED_D (EDWARDS_D - 1)
 
 #define WBITS C448_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
@@ -385,7 +385,7 @@ c448_error_t x448_int(uint8_t out[X_PUBLIC_BYTES],
     mask_t swap = 0;
     mask_t nz;
 
-    ignore_result(gf_deserialize(x1, base, 1, 0));
+    (void)gf_deserialize(x1, base, 1, 0);
     gf_copy(x2, ONE);
     gf_copy(z2, ZERO);
     gf_copy(x3, x1);
@@ -409,25 +409,30 @@ c448_error_t x448_int(uint8_t out[X_PUBLIC_BYTES],
         gf_cond_swap(z2, z3, swap);
         swap = k_t;
 
-        gf_add_nr(t1, x2, z2);  /* A = x2 + z2 *//* 2+e */
-        gf_sub_nr(t2, x2, z2);  /* B = x2 - z2 *//* 3+e */
-        gf_sub_nr(z2, x3, z3);  /* D = x3 - z3 *//* 3+e */
+        /*
+         * The "_nr" below skips coefficient reduction. In the following
+         * comments, "2+e" is saying that the coefficients are at most 2+epsilon
+         * times the reduction limit.
+         */
+        gf_add_nr(t1, x2, z2);  /* A = x2 + z2 */ /* 2+e */
+        gf_sub_nr(t2, x2, z2);  /* B = x2 - z2 */ /* 3+e */
+        gf_sub_nr(z2, x3, z3);  /* D = x3 - z3 */ /* 3+e */
         gf_mul(x2, t1, z2);     /* DA */
-        gf_add_nr(z2, z3, x3);  /* C = x3 + z3 *//* 2+e */
+        gf_add_nr(z2, z3, x3);  /* C = x3 + z3 */ /* 2+e */
         gf_mul(x3, t2, z2);     /* CB */
-        gf_sub_nr(z3, x2, x3);  /* DA-CB *//* 3+e */
+        gf_sub_nr(z3, x2, x3);  /* DA-CB */ /* 3+e */
         gf_sqr(z2, z3);         /* (DA-CB)^2 */
         gf_mul(z3, x1, z2);     /* z3 = x1(DA-CB)^2 */
-        gf_add_nr(z2, x2, x3);  /* (DA+CB) *//* 2+e */
+        gf_add_nr(z2, x2, x3);  /* (DA+CB) */ /* 2+e */
         gf_sqr(x3, z2);         /* x3 = (DA+CB)^2 */
 
         gf_sqr(z2, t1);         /* AA = A^2 */
         gf_sqr(t1, t2);         /* BB = B^2 */
         gf_mul(x2, z2, t1);     /* x2 = AA*BB */
-        gf_sub_nr(t2, z2, t1);  /* E = AA-BB *//* 3+e */
+        gf_sub_nr(t2, z2, t1);  /* E = AA-BB */ /* 3+e */
 
         gf_mulw(t1, t2, -EDWARDS_D); /* E*-d = a24*E */
-        gf_add_nr(t1, t1, z2);  /* AA + a24*E *//* 2+e */
+        gf_add_nr(t1, t1, z2);  /* AA + a24*E */ /* 2+e */
         gf_mul(z2, t2, t1);     /* z2 = E(AA+a24*E) */
     }
 

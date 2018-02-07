@@ -92,9 +92,8 @@ extern const niels_t *curve448_wnaf_base;
  * C448_FAILURE: The scalar was greater than the modulus, and has been reduced
  * modulo that modulus.
  */
-__owur c448_error_t curve448_scalar_decode(
-                            curve448_scalar_t out,
-                            const unsigned char ser[C448_SCALAR_BYTES]);
+c448_error_t curve448_scalar_decode(curve448_scalar_t out,
+                                    const unsigned char ser[C448_SCALAR_BYTES]);
 
 /*
  * Read a scalar from wire format or from bytes.  Reduces mod scalar prime.
