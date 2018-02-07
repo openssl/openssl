@@ -36,8 +36,6 @@ static const curve448_scalar_t precomputed_scalarmul_adjustment = {
 
 #define WBITS C448_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
-extern const struct curve448_precomputed_s *curve448_precomputed_base;
-
 /* Inverse. */
 static void gf_invert(gf y, const gf x, int assert_nonzero)
 {
@@ -619,8 +617,6 @@ static void prepare_wnaf_table(pniels_t * output,
     curve448_point_destroy(tmp);
     OPENSSL_cleanse(twop, sizeof(twop));
 }
-
-extern const niels_t *curve448_wnaf_base;
 
 void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
                                                const curve448_scalar_t scalar1,

@@ -79,6 +79,7 @@ extern const curve448_point_t curve448_point_identity;
 
 /* Precomputed table for the base point on the curve. */
 extern const struct curve448_precomputed_s *curve448_precomputed_base;
+extern const niels_t *curve448_wnaf_base;
 
 /*
  * Read a scalar from wire format or from bytes.
