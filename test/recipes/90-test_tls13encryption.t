@@ -15,6 +15,9 @@ setup($test_name);
 plan skip_all => "$test_name is not supported in this build"
     if disabled("tls1_3");
 
+plan skip_all => "This test is unsupported in a shared library build on Windows"
+    if $^O eq 'MSWin32' && !disabled("shared");
+
 plan tests => 1;
 
 ok(run(test(["tls13encryptiontest"])), "running tls13encryptiontest");
