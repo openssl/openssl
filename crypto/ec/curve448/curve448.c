@@ -42,8 +42,8 @@ extern const struct curve448_precomputed_s *curve448_precomputed_base;
 static void gf_invert(gf y, const gf x, int assert_nonzero)
 {
     mask_t ret;
-
     gf t1, t2;
+
     gf_sqr(t1, x);              /* o^2 */
     ret = gf_isr(t2, t1);       /* +-1/sqrt(o^2) = +-1/o */
     (void)ret;
@@ -248,10 +248,9 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
             for (k = 0; k < t; k++) {
                 unsigned int bit = (i - 1) + s * (k + j * t);
 
-                if (bit < C448_SCALAR_BITS) {
+                if (bit < C448_SCALAR_BITS)
                     tab |=
                         (scalar1x->limb[bit / WBITS] >> (bit % WBITS) & 1) << k;
-                }
             }
 
             invert = (tab >> (t - 1)) - 1;
@@ -262,11 +261,10 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
                                        1 << (t - 1), tab);
 
             cond_neg_niels(ni, invert);
-            if ((i != s) || j != 0) {
+            if ((i != s) || j != 0)
                 add_niels_to_pt(out, ni, j == n - 1 && i != 1);
-            } else {
+            else
                 niels_to_pt(out, ni);
-            }
         }
     }
 
@@ -485,9 +483,9 @@ void x448_derive_public_key(uint8_t out[X_PUBLIC_BYTES],
     curve448_scalar_decode_long(the_scalar, scalar2, sizeof(scalar2));
 
     /* Compensate for the encoding ratio */
-    for (i = 1; i < X448_ENCODE_RATIO; i <<= 1) {
+    for (i = 1; i < X448_ENCODE_RATIO; i <<= 1)
         curve448_scalar_halve(the_scalar, the_scalar);
-    }
+
     curve448_precomputed_scalarmul(p, curve448_precomputed_base, the_scalar);
     curve448_point_mul_by_ratio_and_encode_like_x448(out, p);
     curve448_point_destroy(p);
@@ -566,7 +564,7 @@ static int recode_wnaf(struct smvt_control *control,
         if (w < (C448_SCALAR_BITS - 1) / 16 + 1) {
             /* Refill the 16 high bits of current */
             current += (uint32_t)((scalar->limb[w / B_OVER_16]
-                       >> (16 * (w %  B_OVER_16))) << 16);
+                       >> (16 * (w % B_OVER_16))) << 16);
         }
 
         while (current & 0xFFFF) {
@@ -646,7 +644,8 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
     if (i < 0) {
         curve448_point_copy(combo, curve448_point_identity);
         return;
-    } else if (i > control_pre[0].power) {
+    }
+    if (i > control_pre[0].power) {
         pniels_to_pt(combo, precmp_var[control_var[0].addend >> 1]);
         contv++;
     } else if (i == control_pre[0].power && i >= 0) {

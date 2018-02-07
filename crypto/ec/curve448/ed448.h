@@ -56,8 +56,7 @@ c448_error_t c448_ed448_derive_public_key(
  *
  * For Ed25519, it is unsafe to use the same key for both prehashed and
  * non-prehashed messages, at least without some very careful protocol-level
- * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
- * it harder to screw this up, but this C code gives you no seat belt.
+ * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_sign(
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
@@ -81,8 +80,7 @@ c448_error_t c448_ed448_sign(
  *
  * For Ed25519, it is unsafe to use the same key for both prehashed and
  * non-prehashed messages, at least without some very careful protocol-level
- * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
- * it harder to screw this up, but this C code gives you no seat belt.
+ * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_sign_prehash(
                         uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
@@ -133,8 +131,7 @@ c448_error_t c448_ed448_verify(const uint8_t
  *
  * For Ed25519, it is unsafe to use the same key for both prehashed and
  * non-prehashed messages, at least without some very careful protocol-level
- * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
- * it harder to screw this up, but this C code gives you no seat belt.
+ * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_verify_prehash(
                     const uint8_t signature[EDDSA_448_SIGNATURE_BYTES],
