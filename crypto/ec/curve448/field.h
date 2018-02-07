@@ -25,7 +25,7 @@
 # if defined(__GNUC__) || defined(__clang__)
 #  define INLINE_UNUSED __inline__ __attribute__((__unused__,__always_inline__))
 #  define RESTRICT __restrict__
-#  define ALIGNED __attribute__((aligned(32)))
+#  define ALIGNED __attribute__((__aligned__(32)))
 # else
 #  define INLINE_UNUSED ossl_inline
 #  define RESTRICT
@@ -68,9 +68,7 @@ mask_t gf_deserialize(gf x, const uint8_t serial[SER_BYTES], int with_hibit,
 
 # include "f_impl.h"            /* Bring in the inline implementations */
 
-# ifndef LIMBPERM
-#  define LIMBPERM(i) (i)
-# endif
+# define LIMBPERM(i) (i)
 # define LIMB_MASK(i) (((1)<<LIMB_PLACE_VALUE(i))-1)
 
 static const gf ZERO = {{{0}}}, ONE = {{{1}}};
@@ -79,6 +77,7 @@ static const gf ZERO = {{{0}}}, ONE = {{{1}}};
 static ossl_inline void gf_sqrn(gf_s * RESTRICT y, const gf x, int n)
 {
     gf tmp;
+
     assert(n > 0);
     if (n & 1) {
         gf_sqr(y, x);
@@ -132,14 +131,12 @@ static ossl_inline void gf_cond_sel(gf x, const gf y, const gf z, mask_t is_z)
 
     for (i = 0; i < NLIMBS; i++) {
 #if ARCH_WORD_BITS == 32
-        x[0].limb[i] = constant_time_select_32((uint32_t)is_z,
-                                               (uint32_t)(z[0].limb[i]),
-                                               (uint32_t)(y[0].limb[i]));
+        x[0].limb[i] = constant_time_select_32(is_z, z[0].limb[i],
+                                               y[0].limb[i]);
 #else
         /* Must be 64 bit */
-        x[0].limb[i] = constant_time_select_64((uint64_t)is_z,
-                                               (uint64_t)(z[0].limb[i]),
-                                               (uint64_t)(y[0].limb[i]));
+        x[0].limb[i] = constant_time_select_64(is_z, z[0].limb[i],
+                                               y[0].limb[i]);
 #endif
     }
 }
@@ -148,6 +145,7 @@ static ossl_inline void gf_cond_sel(gf x, const gf y, const gf z, mask_t is_z)
 static ossl_inline void gf_cond_neg(gf x, mask_t neg)
 {
     gf y;
+
     gf_sub(y, ZERO, x);
     gf_cond_sel(x, x, y, neg);
 }
@@ -159,12 +157,10 @@ static ossl_inline void gf_cond_swap(gf x, gf_s * RESTRICT y, mask_t swap)
 
     for (i = 0; i < NLIMBS; i++) {
 #if ARCH_WORD_BITS == 32
-        constant_time_cond_swap_32((uint32_t)swap, (uint32_t *)&(x[0].limb[i]),
-                                   (uint32_t *)&(y->limb[i]));
+        constant_time_cond_swap_32(swap, &(x[0].limb[i]), &(y->limb[i]));
 #else
         /* Must be 64 bit */
-        constant_time_cond_swap_64((uint64_t)swap, (uint64_t *)&(x[0].limb[i]),
-                                   (uint64_t *)&(y->limb[i]));
+        constant_time_cond_swap_64(swap, &(x[0].limb[i]), &(y->limb[i]));
 #endif
     }
 }

@@ -115,7 +115,7 @@ void curve448_scalar_encode(unsigned char ser[C448_SCALAR_BYTES],
                             const curve448_scalar_t s);
 
 /*
- * Add two scalars. The scalars may use the same memory.
+ * Add two scalars. |a|, |b| and |out| may alias each other.
  * 
  * a (in): One scalar.
  * b (in): Another scalar.
@@ -125,7 +125,7 @@ void curve448_scalar_add(curve448_scalar_t out,
                          const curve448_scalar_t a, const curve448_scalar_t b);
 
 /*
- * Subtract two scalars.  The scalars may use the same memory.
+ * Subtract two scalars.  |a|, |b| and |out| may alias each other.
  * a (in): One scalar.
  * b (in): Another scalar.
  * out (out): a-b.
@@ -134,7 +134,7 @@ void curve448_scalar_sub(curve448_scalar_t out,
                          const curve448_scalar_t a, const curve448_scalar_t b);
 
 /*
- * Multiply two scalars. The scalars may use the same memory.
+ * Multiply two scalars. |a|, |b| and |out| may alias each other.
  * 
  * a (in): One scalar.
  * b (in): Another scalar.
@@ -144,7 +144,7 @@ void curve448_scalar_mul(curve448_scalar_t out,
                          const curve448_scalar_t a, const curve448_scalar_t b);
 
 /*
-* Halve a scalar.  The scalars may use the same memory.
+* Halve a scalar.  |a| and |out| may alias each other.
 * 
 * a (in): A scalar.
 * out (out): a/2.

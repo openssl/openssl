@@ -9,13 +9,12 @@
  *
  * Originally written by Mike Hamburg
  */
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-
 #include "curve448_lcl.h"
 #include "word.h"
 #include "ed448.h"
-#include <string.h>
 #include "internal/numbers.h"
 
 #define COFACTOR 4
@@ -62,11 +61,11 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
     const char *dom_s = "SigEd448";
     uint8_t dom[2];
 
-    dom[0] = 2 + word_is_zero(prehashed) + word_is_zero(for_prehash);
-    dom[1] = (uint8_t)context_len;
-
     if (context_len > UINT8_MAX)
         return C448_FAILURE;
+
+    dom[0] = 2 + word_is_zero(prehashed) + word_is_zero(for_prehash);
+    dom[1] = (uint8_t)context_len;
 
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
             || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
@@ -320,7 +319,6 @@ int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                const uint8_t public_key[57], const uint8_t private_key[57],
                const uint8_t *context, size_t context_len)
 {
-
     return c448_ed448_sign(out_sig, private_key, public_key, message,
                            message_len, 0, context, context_len)
         == C448_SUCCESS;

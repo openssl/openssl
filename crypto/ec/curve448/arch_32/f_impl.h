@@ -14,9 +14,9 @@
 # define HEADER_ARCH_32_F_IMPL_H
 
 # define GF_HEADROOM 2
-# define LIMB(x) (x)&((1<<28)-1), (x)>>28
-# define FIELD_LITERAL(a,b,c,d,e,f,g,h) \
-    {{LIMB(a),LIMB(b),LIMB(c),LIMB(d),LIMB(e),LIMB(f),LIMB(g),LIMB(h)}}
+# define LIMB(x) ((x) & ((1 << 28) - 1)), ((x) >> 28)
+# define FIELD_LITERAL(a, b, c, d, e, f, g, h) \
+    {{LIMB(a), LIMB(b), LIMB(c), LIMB(d), LIMB(e), LIMB(f), LIMB(g), LIMB(h)}}
 
 # define LIMB_PLACE_VALUE(i) 28
 
@@ -24,18 +24,16 @@ void gf_add_RAW(gf out, const gf a, const gf b)
 {
     unsigned int i;
 
-    for (i = 0; i < NLIMBS; i++) {
+    for (i = 0; i < NLIMBS; i++)
         out->limb[i] = a->limb[i] + b->limb[i];
-    }
 }
 
 void gf_sub_RAW(gf out, const gf a, const gf b)
 {
     unsigned int i;
 
-    for (i = 0; i < NLIMBS; i++) {
+    for (i = 0; i < NLIMBS; i++)
         out->limb[i] = a->limb[i] - b->limb[i];
-    }
 }
 
 void gf_bias(gf a, int amt)
