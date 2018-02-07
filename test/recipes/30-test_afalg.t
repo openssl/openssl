@@ -18,6 +18,6 @@ plan skip_all => "$test_name not supported for this build"
 
 plan tests => 1;
 
-$ENV{OPENSSL_ENGINES} = bldtop_dir("engines/afalg");
+$ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
 
 ok(run(test(["afalgtest"])), "running afalgtest");

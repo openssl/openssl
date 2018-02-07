@@ -206,7 +206,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
     return 1;
 }
 
-int afalg_init_aio(afalg_aio *aio)
+static int afalg_init_aio(afalg_aio *aio)
 {
     int r = -1;
 
@@ -226,8 +226,8 @@ int afalg_init_aio(afalg_aio *aio)
     return 1;
 }
 
-int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
-                         size_t len)
+static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
+                                size_t len)
 {
     int r;
     int retry = 0;

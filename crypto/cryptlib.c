@@ -355,4 +355,12 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len)
 
     return x;
 }
+
+/*
+ * For systems that don't provide an instruction counter register or equivalent.
+ */
+uint32_t OPENSSL_rdtsc(void)
+{
+    return 0;
+}
 #endif
