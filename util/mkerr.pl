@@ -9,6 +9,9 @@
 use strict;
 use warnings;
 
+use lib ".";
+use configdata;
+
 my $config       = "crypto/err/openssl.ec";
 my $debug        = 0;
 my $internal     = 0;
@@ -430,6 +433,9 @@ foreach my $lib ( keys %errorfile ) {
     my @function = sort grep( /^${lib}_/, keys %fcodes );
     my @reasons  = sort grep( /^${lib}_/, keys %rcodes );
 
+    # indent level for innermost preprocessor lines
+    my $indent = " ";
+
     # Rewrite the header file
 
     my $hfile = $hinc{$lib};
@@ -453,14 +459,24 @@ EOF
     if ( $internal ) {
         # Declare the load function because the generate C file
         # includes "fooerr.h" not "foo.h"
+        if ($lib ne "SSL" && $lib ne "ASYNC"
+                && grep { $lib eq uc $_ } @disablables) {
+            print OUT <<"EOF";
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_${lib}
+
+EOF
+            $indent = "  ";
+        }
         print OUT <<"EOF";
-# ifdef  __cplusplus
+#${indent}ifdef  __cplusplus
 extern \"C\" {
-# endif
+#${indent}endif
 int ERR_load_${lib}_strings(void);
-# ifdef  __cplusplus
+#${indent}ifdef  __cplusplus
 }
-# endif
+#${indent}endif
 EOF
     } else {
         print OUT <<"EOF";
@@ -498,7 +514,7 @@ EOF
             $fassigned{$lib} .= "$findcode:";
             print STDERR "New Function code $i\n" if $debug;
         }
-        printf OUT "# define $i%s $fcodes{$i}\n", " " x $z;
+        printf OUT "#${indent}define $i%s $fcodes{$i}\n", " " x $z;
     }
 
     print OUT "\n/*\n * $lib reason codes.\n */\n";
@@ -516,11 +532,14 @@ EOF
             $rassigned{$lib} .= "$findcode:";
             print STDERR "New Reason code $i\n" if $debug;
         }
-        printf OUT "# define $i%s $rcodes{$i}\n", " " x $z;
+        printf OUT "#${indent}define $i%s $rcodes{$i}\n", " " x $z;
     }
     print OUT "\n";
 
-    print OUT "#endif\n";
+    while (length($indent) > 0) {
+        $indent = substr $indent, 0, -1;
+        print OUT "#${indent}endif\n";
+    }
 
     # Rewrite the C source file containing the error details.
 

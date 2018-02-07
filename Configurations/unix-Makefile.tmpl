@@ -674,10 +674,11 @@ generate_fuzz_oids:
 ERROR_REBUILD=
 errors:
 	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
-	( cd $(SRCDIR); $(PERL) util/mkerr.pl $(ERROR_REBUILD) -internal )
-	( cd $(SRCDIR)/engines; \
+	( b=`pwd`; cd $(SRCDIR); \
+          $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal )
+	( b=`pwd`; cd $(SRCDIR)/engines; \
           for E in *.ec ; do \
-              $(PERL) ../util/mkerr.pl $(ERROR_REBUILD) -static \
+              $(PERL) -I$$b ../util/mkerr.pl $(ERROR_REBUILD) -static \
                 -conf $$E `basename $$E .ec`.c ; \
           done )
 
