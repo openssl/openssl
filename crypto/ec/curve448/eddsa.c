@@ -40,17 +40,9 @@ static c448_error_t oneshot_hash(uint8_t *out, size_t outlen,
 
 static void clamp(uint8_t secret_scalar_ser[EDDSA_448_PRIVATE_BYTES])
 {
-    uint8_t hibit = (1 << 0) >> 1;
-
-    /* Blarg */
     secret_scalar_ser[0] &= -COFACTOR;
-    if (hibit == 0) {
-        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] = 0;
-        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
-    } else {
-        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] &= hibit - 1;
-        secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] |= hibit;
-    }
+    secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 1] = 0;
+    secret_scalar_ser[EDDSA_448_PRIVATE_BYTES - 2] |= 0x80;
 }
 
 static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
