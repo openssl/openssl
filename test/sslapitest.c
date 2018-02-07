@@ -3145,6 +3145,7 @@ static int test_export_key_mat(int tst)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
 /*
  * Test that SSL_export_keying_material_early() produces expected
  * results. There are no test vectors so all we do is test that both
@@ -3164,10 +3165,6 @@ static int test_export_key_mat_early(int idx)
     unsigned char skeymat1[80], skeymat2[80], skeymat3[80];
     unsigned char buf[1];
     size_t readbytes, written;
-
-#ifdef OPENSSL_NO_TLS1_3
-    return 1;
-#endif
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl,
                                         &sess, idx)))
@@ -3260,6 +3257,7 @@ static int test_export_key_mat_early(int idx)
 
     return testresult;
 }
+#endif /* OPENSSL_NO_TLS1_3 */
 
 static int test_ssl_clear(int idx)
 {
@@ -3533,7 +3531,9 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_serverinfo, 8);
     ADD_ALL_TESTS(test_export_key_mat, 4);
+#ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
+#endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
     return 1;
