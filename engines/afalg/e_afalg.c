@@ -80,7 +80,7 @@ static int afalg_create_sk(afalg_ctx *actx, const char *ciphertype,
 static int afalg_destroy(ENGINE *e);
 static int afalg_init(ENGINE *e);
 static int afalg_finish(ENGINE *e);
-const EVP_CIPHER *afalg_aes_128_cbc(void);
+static const EVP_CIPHER *afalg_aes_128_cbc(void);
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid);
 static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -191,7 +191,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
     return 1;
 }
 
-int afalg_init_aio(afalg_aio *aio)
+static int afalg_init_aio(afalg_aio *aio)
 {
     int r = -1;
 
@@ -211,8 +211,8 @@ int afalg_init_aio(afalg_aio *aio)
     return 1;
 }
 
-int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
-                         size_t len)
+static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
+                                size_t len)
 {
     int r;
     int retry = 0;
@@ -639,7 +639,7 @@ static int afalg_cipher_cleanup(EVP_CIPHER_CTX *ctx)
     return 1;
 }
 
-const EVP_CIPHER *afalg_aes_128_cbc(void)
+static const EVP_CIPHER *afalg_aes_128_cbc(void)
 {
     if (_hidden_aes_128_cbc == NULL
         && ((_hidden_aes_128_cbc =
