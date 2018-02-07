@@ -101,9 +101,4 @@ static ossl_inline mask_t bool_to_mask(c448_bool_t m)
     return ret;
 }
 
-static ossl_inline void ignore_result(c448_bool_t boo)
-{
-    (void)boo;
-}
-
 #endif                          /* HEADER_WORD_H */

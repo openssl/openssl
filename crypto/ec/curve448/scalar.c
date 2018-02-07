@@ -39,7 +39,7 @@ static const curve448_scalar_t sc_p = {
 #define WBITS C448_WORD_BITS   /* NB this may be different from ARCH_WORD_BITS */
 
 const curve448_scalar_t curve448_scalar_one = {{{1}}};
-const curve448_scalar_t  curve448_scalar_zero = {{{0}}};
+const curve448_scalar_t curve448_scalar_zero = {{{0}}};
 
 /*
  * {extra,accum} - sub +? p
@@ -198,7 +198,7 @@ void curve448_scalar_decode_long(curve448_scalar_t s,
     while (i) {
         i -= C448_SCALAR_BYTES;
         sc_montmul(t1, t1, sc_r2);
-        ignore_result(curve448_scalar_decode(t2, ser + i));
+        (void)curve448_scalar_decode(t2, ser + i);
         curve448_scalar_add(t1, t1, t2);
     }
 
