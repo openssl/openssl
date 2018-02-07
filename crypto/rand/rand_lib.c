@@ -231,7 +231,8 @@ static uint64_t get_timer_bits(void)
 # if defined(_POSIX_C_SOURCE) \
      && defined(_POSIX_TIMERS) \
      && _POSIX_C_SOURCE >= 199309L \
-     && (!defined(__GLIBC__) || __GLIBC_PREREQ(2, 17))
+     && (!defined(__GLIBC__) \
+         || (defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 17)))
     {
         struct timespec ts;
         clockid_t cid;
