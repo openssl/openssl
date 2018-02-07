@@ -59,7 +59,7 @@
  sub dependmagic {
      my $target = shift;
 
-     return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+     return "$target: build_generated\n\t\$(MAKE) /\$(MAKEFLAGS) depend && \$(MAKE) /\$(MAKEFLAGS) _$target\n_$target";
  }
  '';
 -}
