@@ -129,6 +129,14 @@ OPENSSL_s390x_facilities:
 .type	OPENSSL_rdtsc,\@function
 .align	16
 OPENSSL_rdtsc:
+	larl	%r4,OPENSSL_s390xcap_P
+	tm	S390X_STFLE+3(%r4),0x40	# check for store-clock-fast facility
+	jz	.Lstck
+
+	.long	0xb27cf010	# stckf 16($sp)
+	lg	%r2,16($sp)
+	br	$ra
+.Lstck:
 	stck	16($sp)
 	lg	%r2,16($sp)
 	br	$ra
