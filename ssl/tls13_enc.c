@@ -719,7 +719,12 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
     if (ctx == NULL || !ossl_statem_export_early_allowed(s))
         goto err;
 
-    sslcipher = SSL_SESSION_get0_cipher(s->session);
+    if (!s->server && s->max_early_data > 0
+        && s->session->ext.max_early_data == 0) {
+        sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+    } else {
+        sslcipher = SSL_SESSION_get0_cipher(s->session);
+    }
     md = ssl_md(sslcipher->algorithm2);
 
     if (!use_context)
