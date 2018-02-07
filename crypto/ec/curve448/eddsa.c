@@ -64,7 +64,8 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
     if (context_len > UINT8_MAX)
         return C448_FAILURE;
 
-    dom[0] = 2 + word_is_zero(prehashed) + word_is_zero(for_prehash);
+    dom[0] = (uint8_t)(2 - (prehashed == 0 ? 1 : 0)
+                       - (for_prehash == 0 ? 1 : 0));
     dom[1] = (uint8_t)context_len;
 
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
