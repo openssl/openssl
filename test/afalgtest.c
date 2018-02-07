@@ -128,14 +128,14 @@ int global_init(void)
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_ENGINE
-    if ((e = ENGINE_by_id("afalg")) == NULL) {
+    if (!TEST_ptr(e = ENGINE_by_id("afalg"))) {
         /* Probably a platform env issue, not a test failure. */
-        TEST_info("Can't load AFALG engine");
-    } else {
-# ifndef OPENSSL_NO_AFALGENG
-        ADD_ALL_TESTS(test_afalg_aes_cbc, 3);
-# endif
+        TEST_info("Can't load AFALG engine, you might want to check $OPENSSL_ENGINES");
+        return 0;
     }
+# ifndef OPENSSL_NO_AFALGENG
+    ADD_ALL_TESTS(test_afalg_aes_cbc, 3);
+# endif
 #endif
 
     return 1;
