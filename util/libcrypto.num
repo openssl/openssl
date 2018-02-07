@@ -895,7 +895,7 @@ EVP_CIPHER_CTX_get_app_data             892	1_1_0	EXIST::FUNCTION:
 CRL_DIST_POINTS_it                      893	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 CRL_DIST_POINTS_it                      893	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 DIRECTORYSTRING_new                     894	1_1_0	EXIST::FUNCTION:
-ERR_load_ASYNC_strings                  895	1_1_0	EXIST::FUNCTION:ASYNC
+ERR_load_ASYNC_strings                  895	1_1_0	EXIST::FUNCTION:
 EVP_bf_cfb64                            896	1_1_0	EXIST::FUNCTION:BF
 PKCS7_sign_add_signer                   897	1_1_0	EXIST::FUNCTION:
 X509_print_ex                           898	1_1_0	EXIST::FUNCTION:
