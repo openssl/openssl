@@ -79,8 +79,8 @@ static int afalg_create_sk(afalg_ctx *actx, const char *ciphertype,
 static int afalg_destroy(ENGINE *e);
 static int afalg_init(ENGINE *e);
 static int afalg_finish(ENGINE *e);
-const EVP_CIPHER *afalg_aes_cbc(int nid);
-const EVP_CIPHER *afalg_aes_gcm(int nid);
+static const EVP_CIPHER *afalg_aes_cbc(int nid);
+static const EVP_CIPHER *afalg_aes_gcm(int nid);
 static aes_handles *get_cipher_handle(int nid);
 static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
                          const int **nids, int nid);
@@ -834,7 +834,7 @@ static aes_handles *get_cipher_handle(int nid)
     }
 }
 
-const EVP_CIPHER *afalg_aes_cbc(int nid)
+static const EVP_CIPHER *afalg_aes_cbc(int nid)
 {
     aes_handles *cipher_handle = get_cipher_handle(nid);
     if (cipher_handle->_hidden == NULL
@@ -1162,7 +1162,7 @@ static int afalg_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
    return ret;
 }
 
-const EVP_CIPHER *afalg_aes_gcm(int nid)
+static const EVP_CIPHER *afalg_aes_gcm(int nid)
 {
     aes_handles *cipher_handle = get_cipher_handle(nid);
     if (cipher_handle->_hidden == NULL
