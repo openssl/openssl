@@ -87,6 +87,15 @@ static int test_client_hello(int currtest)
         break;
 
     case TEST_ADD_PADDING_AND_PSK:
+        /*
+         * In this case we're doing TLSv1.3 and we're sending a PSK so the
+         * ClientHello is already going to be quite long. To avoid getting one
+         * that is too long for this test we use a restricted ciphersuite list
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
+                                               "TLS13-AES-128-GCM-SHA256")))
+            goto end;
+         /* Fall through */
     case TEST_ADD_PADDING:
     case TEST_PADDING_NOT_NEEDED:
         SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
