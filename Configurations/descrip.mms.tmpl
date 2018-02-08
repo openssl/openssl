@@ -640,13 +640,6 @@ EOF
       $cflags .= '/DEFINE=('.$defines.')';
       $cflags .= "/INCLUDE=('tmp_includes')";
       
-      my @incs = ();
-      push @incs, @{$args{incs}} if @{$args{incs}};
-      unless ($disabled{zlib}) {
-          # GNV$ZLIB_INCLUDE is the standard logical name for later zlib
-          # incarnations.
-          push @incs, ($withargs{zlib_include} || 'GNV$ZLIB_INCLUDE:');
-      }
       # We create a logical name TMP_INCLUDES: to hold the list of internal
       # includes.  However, we cannot use it directly, as logical names can't
       # hold zero entries, so we also create a symbol with the same name and
@@ -666,13 +659,13 @@ EOF
           ."\n\t".$incs_add;
       my $incs_off = 'DELETE/SYMBOL/LOCAL tmp_includes'
           ."\n\t".'DELETE/SYMBOL/LOCAL tmp_add';
-      if (@incs) {
+      if (@{$args{incs}}) {
           $incs_on =
               'DEFINE tmp_includes '
               .join(",-\n\t\t\t", map {
                                       file_name_is_absolute($_)
                                       ? $_ : catdir($backward,$_)
-                                  } @incs)
+                                  } @{$args{incs}})
               ."\n\t".$incs_on
               ."\n\t".'IF tmp_includes .NES. "" THEN tmp_includes = "," + tmp_includes'
               ."\n\t".'tmp_includes = "tmp_includes:" + tmp_includes';
