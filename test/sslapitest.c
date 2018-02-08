@@ -2332,6 +2332,7 @@ static int test_ciphersuite_change(void)
     SSL_free(clientssl);
     serverssl = clientssl = NULL;
 
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     /* Check we can resume a session with a different SHA-256 ciphersuite */
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
                                            "TLS13-CHACHA20-POLY1305-SHA256"))
@@ -2350,6 +2351,7 @@ static int test_ciphersuite_change(void)
     SSL_free(serverssl);
     SSL_free(clientssl);
     serverssl = clientssl = NULL;
+# endif
 
     /*
      * Check attempting to resume a SHA-256 session with no SHA-256 ciphersuites

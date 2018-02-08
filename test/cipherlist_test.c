@@ -72,7 +72,7 @@ static const uint32_t default_ciphers_in_order[] = {
     TLS1_CK_DHE_RSA_WITH_AES_256_GCM_SHA384,
 # endif
 
-# if !defined OPENSSL_NO_CHACHA && !defined OPENSSL_NO_POLY1305
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 #  ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
     TLS1_CK_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -126,7 +126,9 @@ static const uint32_t default_ciphers_in_order[] = {
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     TLS1_3_CK_AES_256_GCM_SHA384,
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+# endif
     TLS1_3_CK_AES_128_GCM_SHA256,
 #endif
 #ifndef OPENSSL_NO_TLS1_2
