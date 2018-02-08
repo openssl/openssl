@@ -10,8 +10,8 @@
 #ifndef HEADER_DRBG_RAND_H
 # define HEADER_DRBG_RAND_H
 
-/* In CTR mode, use derivation function ctr_df */
-#define RAND_DRBG_FLAG_CTR_USE_DF            0x2
+/* In CTR mode, disable derivation function ctr_df */
+#define RAND_DRBG_FLAG_CTR_NO_DF            0x1
 
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])

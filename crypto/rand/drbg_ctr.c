@@ -221,7 +221,7 @@ static void ctr_update(RAND_DRBG *drbg,
         memcpy(ctr->V, ctr->K + 24, 8);
     }
 
-    if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
+    if ((drbg->flags & RAND_DRBG_FLAG_CTR_NO_DF) == 0) {
         /* If no input reuse existing derived value */
         if (in1 != NULL || nonce != NULL || in2 != NULL)
             ctr_df(ctr, in1, in1len, nonce, noncelen, in2, in2len);
@@ -272,7 +272,7 @@ static int drbg_ctr_generate(RAND_DRBG *drbg,
     if (adin != NULL && adinlen != 0) {
         ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0);
         /* This means we reuse derived value */
-        if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
+        if ((drbg->flags & RAND_DRBG_FLAG_CTR_NO_DF) == 0) {
             adin = NULL;
             adinlen = 1;
         }
@@ -338,7 +338,7 @@ int drbg_ctr_init(RAND_DRBG *drbg)
     drbg->strength = keylen * 8;
     drbg->seedlen = keylen + 16;
 
-    if (drbg->flags & RAND_DRBG_FLAG_CTR_USE_DF) {
+    if ((drbg->flags & RAND_DRBG_FLAG_CTR_NO_DF) == 0) {
         /* df initialisation */
         static unsigned char df_key[32] = {
             0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,

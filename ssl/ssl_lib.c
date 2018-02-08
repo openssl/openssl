@@ -694,8 +694,7 @@ SSL *SSL_new(SSL_CTX *ctx)
      */
     if (RAND_get_rand_method() == RAND_OpenSSL()) {
         s->drbg =
-            RAND_DRBG_new(RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF,
-                          RAND_DRBG_get0_public());
+            RAND_DRBG_new(RAND_DRBG_NID, 0, RAND_DRBG_get0_public());
         if (s->drbg == NULL
             || RAND_DRBG_instantiate(s->drbg,
                                      (const unsigned char *) SSL_version_str,
