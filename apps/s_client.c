@@ -570,7 +570,7 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_LOCAL, OPT_UNIX,
+    OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_BIND, OPT_UNIX,
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
@@ -612,7 +612,7 @@ const OPTIONS s_client_options[] = {
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
      "TCP/IP where to connect (default is :" PORT ")"},
-    {"local", OPT_LOCAL, 's', "local address for connection"},
+    {"bind", OPT_BIND, 's', "bind local address for connection"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
 #ifdef AF_UNIX
@@ -885,7 +885,7 @@ int s_client_main(int argc, char **argv)
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL;
     char *cbuf = NULL, *sbuf = NULL;
-    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL, *localstr = NULL;
+    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
@@ -1054,8 +1054,8 @@ int s_client_main(int argc, char **argv)
             connect_type = use_inet;
             freeandcopy(&connectstr, opt_arg());
             break;
-        case OPT_LOCAL:
-            freeandcopy(&localstr, opt_arg());
+        case OPT_BIND:
+            freeandcopy(&bindstr, opt_arg());
             break;
         case OPT_PROXY:
             proxystr = opt_arg();
@@ -1980,7 +1980,7 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-    if (init_client(&s, host, port, localstr, socket_family, socket_type,
+    if (init_client(&s, host, port, bindstr, socket_family, socket_type,
                     protocol) == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(s);
@@ -3086,7 +3086,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(srp_arg.srppassin);
 #endif
     OPENSSL_free(connectstr);
-    OPENSSL_free(localstr);
+    OPENSSL_free(bindstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);
