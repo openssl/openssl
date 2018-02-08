@@ -793,7 +793,7 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
 {
     RAND_DRBG *drbg;
 
-    drbg = RAND_DRBG_secure_new(RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF, parent);
+    drbg = RAND_DRBG_secure_new(RAND_DRBG_NID, 0, parent);
     if (drbg == NULL)
         return NULL;
 
