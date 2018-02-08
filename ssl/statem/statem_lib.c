@@ -646,12 +646,11 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     return MSG_PROCESS_FINISHED_READING;
 }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
 /*
  * ssl3_take_mac calculates the Finished MAC for the handshakes messages seen
  * to far.
  */
-static void ssl3_take_mac(SSL *s)
+void ssl3_take_mac(SSL *s)
 {
     const char *sender;
     size_t slen;
@@ -674,7 +673,6 @@ static void ssl3_take_mac(SSL *s)
                                                                           slen,
                                                                           s->s3->tmp.peer_finish_md);
 }
-#endif
 
 MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
 {
@@ -1227,14 +1225,12 @@ int tls_get_message_body(SSL *s, size_t *len)
         n -= readbytes;
     }
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
     /*
      * If receiving Finished, record MAC of prior handshake messages for
      * Finished verification.
      */
     if (*s->init_buf->data == SSL3_MT_FINISHED)
         ssl3_take_mac(s);
-#endif
 
     /* Feed this message into MAC computation. */
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
