@@ -198,7 +198,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 		}
 	}
 	if (/^no-deprecated$/) {
-		foreach (keys %disabled_algorithms) {
+		foreach (@known_algorithms) {
 			if (/^DEPRECATEDIN_/) {
 				$disabled_algorithms{$_} = 1;
 			}
