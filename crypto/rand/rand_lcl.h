@@ -115,6 +115,7 @@ typedef struct rand_drbg_ctr_st {
 struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
     RAND_DRBG *parent;
+    int secure; /* 1: allocated on the secure heap, 0: otherwise */
     int nid; /* the underlying algorithm */
     int fork_count;
     unsigned short flags; /* various external flags */

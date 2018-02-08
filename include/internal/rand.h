@@ -28,6 +28,7 @@
  * Object lifetime functions.
  */
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
+RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
 int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags);
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen);
