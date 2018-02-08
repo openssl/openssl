@@ -471,12 +471,9 @@ EOF
         }
         print OUT <<"EOF";
 #${indent}ifdef  __cplusplus
-extern \"C\" {
+extern \"C\"
 #${indent}endif
 int ERR_load_${lib}_strings(void);
-#${indent}ifdef  __cplusplus
-}
-#${indent}endif
 EOF
     } else {
         print OUT <<"EOF";
