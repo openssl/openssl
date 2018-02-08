@@ -376,6 +376,15 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
         msg_len += DTLS1_HM_HEADER_LENGTH;
     }
 
+    /*
+     * If receiving Finished, record MAC of prior handshake messages for
+     * Finished verification.
+     */
+    if (*mt == SSL3_MT_FINISHED && !ssl3_take_mac(s)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
     if (!ssl3_finish_mac(s, p, msg_len))
         return 0;
     if (s->msg_callback)
