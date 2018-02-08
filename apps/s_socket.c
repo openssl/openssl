@@ -43,6 +43,7 @@ BIO_ADDR *ourpeer = NULL;
  * @sock: pointer to storage of resulting socket.
  * @host: the host name or path (for AF_UNIX) to connect to.
  * @port: the port to connect to (ignored for AF_UNIX).
+ * @local: the local adress to bind to.
  * @family: desired socket family, may be AF_INET, AF_INET6, AF_UNIX or
  *  AF_UNSPEC
  * @type: socket type, must be SOCK_STREAM or SOCK_DGRAM
@@ -58,9 +59,10 @@ BIO_ADDR *ourpeer = NULL;
  * Returns 1 on success, 0 on failure.
  */
 int init_client(int *sock, const char *host, const char *port,
-                int family, int type, int protocol)
+                const char *local, int family, int type, int protocol)
 {
     BIO_ADDRINFO *res = NULL;
+    BIO_ADDRINFO *localaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
     int ret;
 
@@ -72,6 +74,15 @@ int init_client(int *sock, const char *host, const char *port,
     if (ret == 0) {
         ERR_print_errors(bio_err);
         return 0;
+    }
+
+    if (local != NULL) {
+        ret = BIO_lookup (local, NULL, BIO_LOOKUP_CLIENT, family, type,
+                          &localaddr);
+        if (ret == 0) {
+            ERR_print_errors (bio_err);
+            return 0;
+        }
     }
 
     ret = 0;
@@ -92,6 +103,14 @@ int init_client(int *sock, const char *host, const char *port,
              * BIO_lookup() added it in the returned result...
              */
             continue;
+        }
+
+        if (localaddr != NULL) {
+            if (!BIO_bind(*sock, BIO_ADDRINFO_address(localaddr), 0)) {
+                BIO_closesocket(*sock);
+                *sock = INVALID_SOCKET;
+                break;
+            }
         }
 
 #ifndef OPENSSL_NO_SCTP

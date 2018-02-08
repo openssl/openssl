@@ -19,6 +19,7 @@ static const ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT, 0), "BIO_accept"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT_EX, 0), "BIO_accept_ex"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ADDR_NEW, 0), "BIO_ADDR_new"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_BIND, 0), "BIO_bind"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CALLBACK_CTRL, 0), "BIO_callback_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CONNECT, 0), "BIO_connect"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CTRL, 0), "BIO_ctrl"},
