@@ -12,12 +12,9 @@
 # define HEADER_RANDERR_H
 
 # ifdef  __cplusplus
-extern "C" {
+extern "C"
 # endif
 int ERR_load_RAND_strings(void);
-# ifdef  __cplusplus
-}
-# endif
 
 /*
  * RAND function codes.

@@ -12,12 +12,9 @@
 # define HEADER_EVPERR_H
 
 # ifdef  __cplusplus
-extern "C" {
+extern "C"
 # endif
 int ERR_load_EVP_strings(void);
-# ifdef  __cplusplus
-}
-# endif
 
 /*
  * EVP function codes.

@@ -16,12 +16,9 @@
 # ifndef OPENSSL_NO_DSO
 
 #  ifdef  __cplusplus
-extern "C" {
+extern "C"
 #  endif
 int ERR_load_DSO_strings(void);
-#  ifdef  __cplusplus
-}
-#  endif
 
 /*
  * DSO function codes.
