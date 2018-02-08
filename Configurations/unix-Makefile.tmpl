@@ -891,11 +891,6 @@ EOF
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
-      unless ($disabled{zlib}) {
-          if ($withargs{zlib_include}) {
-              $incs .= " -I".$withargs{zlib_include};
-          }
-      }
       my $cmd = '$(CC)';
       my $cmdflags = '$(CFLAGS)';
       my $cmdcompile = ' -c';
