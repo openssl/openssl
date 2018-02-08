@@ -94,10 +94,10 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_SERVER_DONE, "ServerHelloDone"},
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
-    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
-    {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
+    {21, "CertificateUrl"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
+    {23, "SupplementalData"},
     {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {SSL3_MT_NEXT_PROTO, "NextProto"},
