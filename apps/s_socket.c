@@ -59,10 +59,11 @@ BIO_ADDR *ourpeer = NULL;
  * Returns 1 on success, 0 on failure.
  */
 int init_client(int *sock, const char *host, const char *port,
-                const char *local, int family, int type, int protocol)
+                const char *bindhost, const char *bindport,
+                int family, int type, int protocol)
 {
     BIO_ADDRINFO *res = NULL;
-    BIO_ADDRINFO *localaddr = NULL;
+    BIO_ADDRINFO *bindaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
     int ret;
 
@@ -76,9 +77,9 @@ int init_client(int *sock, const char *host, const char *port,
         return 0;
     }
 
-    if (local != NULL) {
-        ret = BIO_lookup (local, NULL, BIO_LOOKUP_CLIENT, family, type,
-                          &localaddr);
+    if (bindhost != NULL || bindport != NULL) {
+        ret = BIO_lookup_ex(bindhost, bindport, BIO_LOOKUP_CLIENT,
+                            family, type, protocol, &bindaddr);
         if (ret == 0) {
             ERR_print_errors (bio_err);
             return 0;
@@ -105,8 +106,9 @@ int init_client(int *sock, const char *host, const char *port,
             continue;
         }
 
-        if (localaddr != NULL) {
-            if (!BIO_bind(*sock, BIO_ADDRINFO_address(localaddr), 0)) {
+        if (bindaddr != NULL) {
+            if (!BIO_bind(*sock, BIO_ADDRINFO_address(bindaddr),
+                          BIO_SOCK_REUSEADDR)) {
                 BIO_closesocket(*sock);
                 *sock = INVALID_SOCKET;
                 break;

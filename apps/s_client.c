@@ -889,6 +889,7 @@ int s_client_main(int argc, char **argv)
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
+    char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
@@ -1558,6 +1559,18 @@ int s_client_main(int argc, char **argv)
         }
     }
 
+    if (bindstr != NULL) {
+        int res;
+        res = BIO_parse_hostserv(bindstr, &bindhost, &bindport,
+                                 BIO_PARSE_PRIO_HOST);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -bind argument parameter malformed or ambiguous\n",
+                       prog);
+            goto end;
+        }
+    }
+
 #ifdef AF_UNIX
     if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
@@ -1980,8 +1993,8 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-    if (init_client(&s, host, port, bindstr, socket_family, socket_type,
-                    protocol) == 0) {
+    if (init_client(&s, host, port, bindhost, bindport, socket_family,
+                    socket_type, protocol) == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(s);
         goto end;
