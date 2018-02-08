@@ -43,7 +43,8 @@ BIO_ADDR *ourpeer = NULL;
  * @sock: pointer to storage of resulting socket.
  * @host: the host name or path (for AF_UNIX) to connect to.
  * @port: the port to connect to (ignored for AF_UNIX).
- * @local: the local adress to bind to.
+ * @bindhost: source host or path (for AF_UNIX).
+ * @bindport: source port (ignored for AF_UNIX).
  * @family: desired socket family, may be AF_INET, AF_INET6, AF_UNIX or
  *  AF_UNSPEC
  * @type: socket type, must be SOCK_STREAM or SOCK_DGRAM
