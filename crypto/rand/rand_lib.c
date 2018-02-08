@@ -200,17 +200,16 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             /*
              * Get random from parent, include our state as additional input.
              * Our lock is already held, but we need to lock our parent before
-             * generating bits from it.
+             * generating bits from it. (Note: taking the lock will be a no-op
+             * if locking if drbg->parent->lock == NULL.)
              */
-            if (drbg->parent->lock)
-                CRYPTO_THREAD_write_lock(drbg->parent->lock);
+            RAND_DRBG_lock(drbg->parent);
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
                                    0,
                                    (unsigned char *)drbg, sizeof(*drbg)) != 0)
                 bytes = bytes_needed;
-            if (drbg->parent->lock)
-                CRYPTO_THREAD_unlock(drbg->parent->lock);
+            RAND_DRBG_unlock(drbg->parent);
 
             entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
         }
@@ -406,9 +405,9 @@ int RAND_poll(void)
         if (drbg == NULL)
             return 0;
 
-        CRYPTO_THREAD_write_lock(drbg->lock);
+        RAND_DRBG_lock(drbg);
         ret = rand_drbg_restart(drbg, NULL, 0, 0);
-        CRYPTO_THREAD_unlock(drbg->lock);
+        RAND_DRBG_unlock(drbg);
 
         return ret;
 
@@ -798,9 +797,9 @@ int RAND_priv_bytes(unsigned char *buf, int num)
         return 0;
 
     /* We have to lock the DRBG before generating bits from it. */
-    CRYPTO_THREAD_write_lock(drbg->lock);
+    RAND_DRBG_lock(drbg);
     ret = RAND_DRBG_bytes(drbg, buf, num);
-    CRYPTO_THREAD_unlock(drbg->lock);
+    RAND_DRBG_unlock(drbg);
     return ret;
 }
 
