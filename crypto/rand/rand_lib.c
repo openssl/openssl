@@ -25,6 +25,39 @@
 /* Macro to convert two thirty two bit values into a sixty four bit one */
 #define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
 
+/*
+ * Check for the existence and support of POSIX timers.  The standard
+ * says that the _POSIX_TIMERS macro will have a positive value if they
+ * are available.
+ *
+ * However, we want an additional constraint: that the timer support does
+ * not require an extra library dependency.  Early versions of glibc
+ * require -lrt to be specified on the link line to access the timers,
+ * so this needs to be checked for.
+ *
+ * It is worse because some libraries define __GLIBC__ but don't
+ * support the version testing macro (e.g. uClibc).  This means
+ * an extra check is needed.
+ *
+ * The final condition is:
+ *      "have posix timers and either not glibc or glibc without -lrt"
+ *
+ * The nested #if sequences are required to avoid using a parameterised
+ * macro that might be undefined.
+ */
+#undef OSSL_POSIX_TIMER_OKAY
+#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
+# if defined(__GLIBC__)
+#  if defined(__GLIBC_PREREQ)
+#   if __GLIBC_PREREQ(2, 17)
+#    define OSSL_POSIX_TIMER_OKAY
+#   endif
+#  endif
+# else
+#  define OSSL_POSIX_TIMER_OKAY
+# endif
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
@@ -228,11 +261,7 @@ static uint64_t get_timer_bits(void)
     }
 #else
 
-# if defined(_POSIX_C_SOURCE) \
-     && defined(_POSIX_TIMERS) \
-     && _POSIX_C_SOURCE >= 199309L \
-     && (!defined(__GLIBC__) \
-         || (defined(__GLIBC_PREREQ) && __GLIBC_PREREQ(2, 17)))
+#if defined(OSSL_POSIX_TIMER_OKAY)
     {
         struct timespec ts;
         clockid_t cid;
