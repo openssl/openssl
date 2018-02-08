@@ -1558,15 +1558,6 @@ int s_client_main(int argc, char **argv)
         }
     }
 
-    if (localstr != NULL) {
-        if (connectstr == NULL && ! (host != NULL && port != NULL)) {
-           BIO_printf(bio_err,
-                      "%s: -local requires -connect or -host and -port\n",
-                      prog);
-           goto end;
-        }
-    }
-
 #ifdef AF_UNIX
     if (socket_family == AF_UNIX && socket_type != SOCK_STREAM) {
         BIO_printf(bio_err,
