@@ -16,12 +16,9 @@
 # ifndef OPENSSL_NO_OCSP
 
 #  ifdef  __cplusplus
-extern "C" {
+extern "C"
 #  endif
 int ERR_load_OCSP_strings(void);
-#  ifdef  __cplusplus
-}
-#  endif
 
 /*
  * OCSP function codes.

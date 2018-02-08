@@ -12,12 +12,9 @@
 # define HEADER_SSLERR_H
 
 # ifdef  __cplusplus
-extern "C" {
+extern "C"
 # endif
 int ERR_load_SSL_strings(void);
-# ifdef  __cplusplus
-}
-# endif
 
 /*
  * SSL function codes.

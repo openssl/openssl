@@ -16,12 +16,9 @@
 # ifndef OPENSSL_NO_DH
 
 #  ifdef  __cplusplus
-extern "C" {
+extern "C"
 #  endif
 int ERR_load_DH_strings(void);
-#  ifdef  __cplusplus
-}
-#  endif
 
 /*
  * DH function codes.

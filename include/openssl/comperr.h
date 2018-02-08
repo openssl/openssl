@@ -16,12 +16,9 @@
 # ifndef OPENSSL_NO_COMP
 
 #  ifdef  __cplusplus
-extern "C" {
+extern "C"
 #  endif
 int ERR_load_COMP_strings(void);
-#  ifdef  __cplusplus
-}
-#  endif
 
 /*
  * COMP function codes.

@@ -16,12 +16,9 @@
 # ifndef OPENSSL_NO_CMS
 
 #  ifdef  __cplusplus
-extern "C" {
+extern "C"
 #  endif
 int ERR_load_CMS_strings(void);
-#  ifdef  __cplusplus
-}
-#  endif
 
 /*
  * CMS function codes.

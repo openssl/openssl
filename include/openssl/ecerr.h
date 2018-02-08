@@ -16,12 +16,9 @@
 # ifndef OPENSSL_NO_EC
 
 #  ifdef  __cplusplus
-extern "C" {
+extern "C"
 #  endif
 int ERR_load_EC_strings(void);
-#  ifdef  __cplusplus
-}
-#  endif
 
 /*
  * EC function codes.
