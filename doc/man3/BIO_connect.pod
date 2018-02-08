@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BIO_socket, BIO_connect, BIO_listen, BIO_accept_ex, BIO_closesocket - BIO
+BIO_socket, BIO_bind, BIO_connect, BIO_listen, BIO_accept_ex, BIO_closesocket - BIO
 socket communication setup routines
 
 =head1 SYNOPSIS
@@ -10,6 +10,7 @@ socket communication setup routines
  #include <openssl/bio.h>
 
  int BIO_socket(int domain, int socktype, int protocol, int options);
+ int BIO_bind(int sock, const BIO_ADDR *addr, int options);
  int BIO_connect(int sock, const BIO_ADDR *addr, int options);
  int BIO_listen(int sock, const BIO_ADDR *addr, int options);
  int BIO_accept_ex(int accept_sock, BIO_ADDR *peer, int options);
@@ -20,6 +21,10 @@ socket communication setup routines
 BIO_socket() creates a socket in the domain B<domain>, of type
 B<socktype> and B<protocol>.  Socket B<options> are currently unused,
 but is present for future use.
+
+BIO_bind() binds the source address and service to a socket and
+may be useful before calling BIO_connect().  The options may include
+B<BIO_SOCK_REUSADDR>, which is described in L</FLAGS> below.
 
 BIO_connect() connects B<sock> to the address and service given by
 B<addr>.  Connection B<options> may be zero or any combination of
@@ -81,7 +86,7 @@ BIO_socket() returns the socket number on success or B<INVALID_SOCKET>
 (-1) on error.  When an error has occurred, the OpenSSL error stack
 will hold the error data and errno has the system error.
 
-BIO_connect() and BIO_listen() return 1 on success or 0 on error.
+BIO_bind(), BIO_connect() and BIO_listen() return 1 on success or 0 on error.
 When an error has occurred, the OpenSSL error stack will hold the error
 data and errno has the system error.
 
@@ -102,7 +107,7 @@ L<BIO_ADDR(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
