@@ -43,6 +43,8 @@ BIO_ADDR *ourpeer = NULL;
  * @sock: pointer to storage of resulting socket.
  * @host: the host name or path (for AF_UNIX) to connect to.
  * @port: the port to connect to (ignored for AF_UNIX).
+ * @bindhost: source host or path (for AF_UNIX).
+ * @bindport: source port (ignored for AF_UNIX).
  * @family: desired socket family, may be AF_INET, AF_INET6, AF_UNIX or
  *  AF_UNSPEC
  * @type: socket type, must be SOCK_STREAM or SOCK_DGRAM
@@ -58,10 +60,14 @@ BIO_ADDR *ourpeer = NULL;
  * Returns 1 on success, 0 on failure.
  */
 int init_client(int *sock, const char *host, const char *port,
+                const char *bindhost, const char *bindport,
                 int family, int type, int protocol)
 {
     BIO_ADDRINFO *res = NULL;
+    BIO_ADDRINFO *bindaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
+    const BIO_ADDRINFO *bi = NULL;
+    int found = 0;
     int ret;
 
     if (BIO_sock_init() != 1)
@@ -72,6 +78,15 @@ int init_client(int *sock, const char *host, const char *port,
     if (ret == 0) {
         ERR_print_errors(bio_err);
         return 0;
+    }
+
+    if (bindhost != NULL || bindport != NULL) {
+        ret = BIO_lookup_ex(bindhost, bindport, BIO_LOOKUP_CLIENT,
+                            family, type, protocol, &bindaddr);
+        if (ret == 0) {
+            ERR_print_errors (bio_err);
+            goto out;
+        }
     }
 
     ret = 0;
@@ -85,6 +100,16 @@ int init_client(int *sock, const char *host, const char *port,
                        && (protocol == 0
                            || protocol == BIO_ADDRINFO_protocol(ai)));
 
+        if (bindaddr != NULL) {
+            for (bi = bindaddr; bi != NULL; bi = BIO_ADDRINFO_next(bi)) {
+                if (BIO_ADDRINFO_family(bi) == BIO_ADDRINFO_family(ai))
+                    break;
+            }
+            if (bi == NULL)
+                continue;
+            ++found;
+        }
+
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
                            BIO_ADDRINFO_protocol(ai), 0);
         if (*sock == INVALID_SOCKET) {
@@ -92,6 +117,15 @@ int init_client(int *sock, const char *host, const char *port,
              * BIO_lookup() added it in the returned result...
              */
             continue;
+        }
+
+        if (bi != NULL) {
+            if (!BIO_bind(*sock, BIO_ADDRINFO_address(bi),
+                          BIO_SOCK_REUSEADDR)) {
+                BIO_closesocket(*sock);
+                *sock = INVALID_SOCKET;
+                break;
+            }
         }
 
 #ifndef OPENSSL_NO_SCTP
@@ -123,11 +157,26 @@ int init_client(int *sock, const char *host, const char *port,
     }
 
     if (*sock == INVALID_SOCKET) {
+        if (bindaddr != NULL && !found) {
+            BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
+                       BIO_ADDRINFO_family(res) == AF_INET6 ? "IPv6 " :
+                       BIO_ADDRINFO_family(res) == AF_INET ? "IPv4 " :
+                       BIO_ADDRINFO_family(res) == AF_UNIX ? "unix " : "",
+                       bindhost != NULL ? bindhost : "",
+                       bindport != NULL ? ":" : "",
+                       bindport != NULL ? bindport : "");
+            ERR_clear_error();
+            ret = 0;
+        }
         ERR_print_errors(bio_err);
     } else {
         /* Remove any stale errors from previous connection attempts */
         ERR_clear_error();
         ret = 1;
+    }
+out:
+    if (bindaddr != NULL) {
+        BIO_ADDRINFO_free (bindaddr);
     }
     BIO_ADDRINFO_free(res);
     return ret;

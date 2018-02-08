@@ -10,6 +10,7 @@ s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-help>]
 [B<-connect host:port>]
+[B<-bind host:port>]
 [B<-proxy host:port>]
 [B<-unix path>]
 [B<-4>]
@@ -146,6 +147,12 @@ This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
 If neither this nor the target positonal argument are specified then an attempt
 is made to connect to the local host on port 4433.
+
+=item B<-bind host:port>]
+
+This specifies the host address and or port to bind as the source for the
+connection.  For Unix-domain sockets the port is ignored and the host is
+used as the source socket address.
 
 =item B<-proxy host:port>
 
@@ -685,6 +692,9 @@ accept any certificate chain (trusted or not) sent by the peer. None test
 applications should B<not> do this as it makes them vulnerable to a MITM
 attack. This behaviour can be changed by with the B<-verify_return_error>
 option: any verify errors are then returned aborting the handshake.
+
+The B<-bind> option may be useful if the server or a firewall requires
+connections to come from some particular address and or port.
 
 =head1 BUGS
 
