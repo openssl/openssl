@@ -190,7 +190,7 @@ foreach (@ARGV, split(/ /, $config{options}))
 	$do_checkexist=1 if $_ eq "exist";
 	if (/^--api=(\d+)\.(\d+)\.(\d+)$/) {
 		my $apiv = sprintf "%x%02x%02x", $1, $2, $3;
-		foreach (keys %disabled_algorithms) {
+		foreach (@known_algorithms) {
 			if (/^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/) {
 				my $depv = sprintf "%x%02x%02x", $1, $2, $3;
 				$disabled_algorithms{$_} = 1 if $apiv ge $depv;
