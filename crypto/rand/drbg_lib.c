@@ -90,6 +90,21 @@ static RAND_DRBG *drbg_private;
  * |randomness| argument). This will immediately reseed the <master> DRBG.
  * The <public> and <private> DRBG will detect this on their next generate
  * call and reseed, pulling randomness from <master>.
+ *
+ * LOCKING
+ *
+ * The three shared DRBGs are intended to be used concurrently, so they
+ * support locking by default. It is the callers responsibility to wrap
+ * calls to functions like RAND_DRBG_generate() which modify the DRBGs
+ * internal state with calls to RAND_DRBG_lock() and RAND_DRBG_unlock().
+ * The functions RAND_bytes() and RAND_priv_bytes() take the locks
+ * automatically, so using the RAND api is thread safe as before.
+ *
+ * All other DRBG instances don't have locking enabled by default, because
+ * they are intendended to be used by a single thread. If it is desired,
+ * locking can be enabled using RAND_DRBG_enable_locking(). However, instead
+ * of accessing a single DRBG instance concurrently from different threads,
+ * it is recommended to instantiate a separate DRBG instance per thread.
  */
 
 
@@ -656,6 +671,69 @@ int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval)
     return 1;
 }
 
+
+/*
+ * Locks the given drbg. Locking a drbg which does not have locking
+ * enabled is considered a successful no-op.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_lock(RAND_DRBG *drbg)
+{
+    if (drbg->lock != NULL)
+        return CRYPTO_THREAD_write_lock(drbg->lock);
+
+    return 1;
+}
+
+/*
+ * Unlocks the given drbg. Unlocking a drbg which does not have locking
+ * enabled is considered a successful no-op.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_unlock(RAND_DRBG *drbg)
+{
+    if (drbg->lock != NULL)
+        return CRYPTO_THREAD_unlock(drbg->lock);
+
+    return 1;
+}
+
+/*
+ * Enables locking for the given drbg
+ *
+ * Locking can only be enabled if the random generator
+ * is in the uninitialized state.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_enable_locking(RAND_DRBG *drbg)
+{
+    if (drbg->state != DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_ENABLE_LOCKING,
+                RAND_R_DRBG_ALREADY_INITIALIZED);
+        return 0;
+    }
+
+    if (drbg->lock == NULL) {
+        if (drbg->parent != NULL && drbg->lock == NULL) {
+            RANDerr(RAND_F_RAND_DRBG_ENABLE_LOCKING,
+                    RAND_R_PARENT_LOCKING_NOT_ENABLED);
+            return 0;
+        }
+
+        drbg->lock = CRYPTO_THREAD_lock_new();
+        if (drbg->lock == NULL) {
+            RANDerr(RAND_F_RAND_DRBG_ENABLE_LOCKING,
+                    RAND_R_FAILED_TO_CREATE_LOCK);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 /*
  * Get and set the EXDATA
  */
@@ -782,9 +860,9 @@ static int drbg_bytes(unsigned char *out, int count)
     if (drbg == NULL)
         return 0;
 
-    CRYPTO_THREAD_write_lock(drbg->lock);
+    RAND_DRBG_lock(drbg);
     ret = RAND_DRBG_bytes(drbg, out, count);
-    CRYPTO_THREAD_unlock(drbg->lock);
+    RAND_DRBG_unlock(drbg);
 
     return ret;
 }
@@ -811,11 +889,11 @@ static int drbg_add(const void *buf, int num, double randomness)
         return 0;
     }
 
-    CRYPTO_THREAD_write_lock(drbg->lock);
+    RAND_DRBG_lock(drbg);
     ret = rand_drbg_restart(drbg, buf,
                             (size_t)(unsigned int)num,
                             (size_t)(8*randomness));
-    CRYPTO_THREAD_unlock(drbg->lock);
+    RAND_DRBG_unlock(drbg);
 
     return ret;
 }
@@ -835,9 +913,9 @@ static int drbg_status(void)
     if (drbg == NULL)
         return 0;
 
-    CRYPTO_THREAD_write_lock(drbg->lock);
+    RAND_DRBG_lock(drbg);
     ret = drbg->state == DRBG_READY ? 1 : 0;
-    CRYPTO_THREAD_unlock(drbg->lock);
+    RAND_DRBG_unlock(drbg);
     return ret;
 }
 
