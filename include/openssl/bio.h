@@ -790,7 +790,6 @@ long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom))
 int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                long (*callback_ctrl) (BIO *, int,
                                                       BIO_info_cb *));
-int ERR_load_BIO_strings(void);
 
 # ifdef  __cplusplus
 }

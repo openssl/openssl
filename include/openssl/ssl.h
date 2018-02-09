@@ -2292,7 +2292,6 @@ __owur int SSL_alloc_buffers(SSL *ssl);
 
 extern const char SSL_version_str[];
 
-int ERR_load_SSL_strings(void);
 
 
 typedef unsigned int (*DTLS_timer_cb)(SSL *s, unsigned int timer_us);

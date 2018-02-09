@@ -496,7 +496,6 @@ int RSA_meth_set_multi_prime_keygen(RSA_METHOD *meth,
                                     int (*keygen) (RSA *rsa, int bits,
                                                    int primes, BIGNUM *e,
                                                    BN_GENCB *cb));
-int ERR_load_RSA_strings(void);
 
 #  ifdef  __cplusplus
 }

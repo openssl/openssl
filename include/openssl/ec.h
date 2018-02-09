@@ -1346,7 +1346,6 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_ECDH_KDF_NONE                          1
 # define EVP_PKEY_ECDH_KDF_X9_62                         2
 
-int ERR_load_EC_strings(void);
 
 #  ifdef  __cplusplus
 }

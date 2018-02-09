@@ -51,7 +51,6 @@ size_t BUF_MEM_grow(BUF_MEM *str, size_t len);
 size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
 void BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
 
-int ERR_load_BUF_strings(void);
 
 # ifdef  __cplusplus
 }

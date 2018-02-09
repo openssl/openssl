@@ -481,7 +481,6 @@ BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
-int ERR_load_BN_strings(void);
 
 # ifdef  __cplusplus
 }

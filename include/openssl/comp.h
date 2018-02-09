@@ -45,7 +45,6 @@ const BIO_METHOD *BIO_f_zlib(void);
 #  endif
 # endif
 
-int ERR_load_COMP_strings(void);
 
 #  ifdef  __cplusplus
 }

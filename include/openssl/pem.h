@@ -15,7 +15,6 @@
 # include <openssl/safestack.h>
 # include <openssl/evp.h>
 # include <openssl/x509.h>
-# include <openssl/pem2.h>
 # include <openssl/pemerr.h>
 
 #ifdef  __cplusplus
@@ -372,7 +371,6 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 #  endif
 # endif
 
-int ERR_load_PEM_strings(void);
 # ifdef  __cplusplus
 }
 # endif

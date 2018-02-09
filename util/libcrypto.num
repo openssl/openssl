@@ -621,7 +621,7 @@ DES_ede3_ofb64_encrypt                  620	1_1_0	EXIST::FUNCTION:DES
 EC_KEY_METHOD_get_compute_key           621	1_1_0	EXIST::FUNCTION:EC
 RC2_cfb64_encrypt                       622	1_1_0	EXIST::FUNCTION:RC2
 EVP_EncryptFinal_ex                     623	1_1_0	EXIST::FUNCTION:
-ERR_load_RSA_strings                    624	1_1_0	EXIST::FUNCTION:RSA
+ERR_load_RSA_strings                    624	1_1_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_done               625	1_1_0	EXIST::FUNCTION:
 RSA_OAEP_PARAMS_new                     626	1_1_0	EXIST::FUNCTION:RSA
 X509_NAME_free                          627	1_1_0	EXIST::FUNCTION:

@@ -161,7 +161,6 @@ int CONF_parse_list(const char *list, int sep, int nospc,
 
 void OPENSSL_load_builtin_modules(void);
 
-int ERR_load_CONF_strings(void);
 
 # ifdef  __cplusplus
 }
