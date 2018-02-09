@@ -67,6 +67,7 @@ int init_client(int *sock, const char *host, const char *port,
     BIO_ADDRINFO *bindaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
     const BIO_ADDRINFO *bi = NULL;
+    int found = 0;
     int ret;
 
     if (BIO_sock_init() != 1)
@@ -106,6 +107,7 @@ int init_client(int *sock, const char *host, const char *port,
             }
             if (bi == NULL)
                 continue;
+            ++found;
         }
 
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
@@ -155,6 +157,17 @@ int init_client(int *sock, const char *host, const char *port,
     }
 
     if (*sock == INVALID_SOCKET) {
+        if (!found) {
+            BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
+                       BIO_ADDRINFO_family(res) == AF_INET6 ? "IPv6 " :
+                       BIO_ADDRINFO_family(res) == AF_INET ? "IPv4 " :
+                       BIO_ADDRINFO_family(res) == AF_UNIX ? "unix " : "",
+                       bindhost != NULL ? bindhost : "",
+                       bindport != NULL ? ":" : "",
+                       bindport != NULL ? bindport : "");
+            ERR_clear_error();
+            ret = 0;
+        }
         ERR_print_errors(bio_err);
     } else {
         /* Remove any stale errors from previous connection attempts */
