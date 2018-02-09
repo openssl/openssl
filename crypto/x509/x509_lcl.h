@@ -67,7 +67,7 @@ struct x509_crl_method_st {
 };
 
 struct x509_lookup_method_st {
-    const char *name;
+    char *name;
     int (*new_item) (X509_LOOKUP *ctx);
     void (*free) (X509_LOOKUP *ctx);
     int (*init) (X509_LOOKUP *ctx);
@@ -91,7 +91,7 @@ struct x509_lookup_st {
     int init;                   /* have we been started */
     int skip;                   /* don't use us. */
     X509_LOOKUP_METHOD *method; /* the functions */
-    char *method_data;          /* method data */
+    void *method_data;          /* method data */
     X509_STORE *store_ctx;      /* who owns us */
 };
 

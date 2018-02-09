@@ -111,7 +111,7 @@ static int new_dir(X509_LOOKUP *lu)
         OPENSSL_free(a);
         return 0;
     }
-    lu->method_data = (char *)a;
+    lu->method_data = a;
     return 1;
 }
 

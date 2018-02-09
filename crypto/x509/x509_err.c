@@ -51,6 +51,7 @@ static ERR_STRING_DATA X509_str_functs[] = {
     {ERR_FUNC(X509_F_X509_LOAD_CERT_CRL_FILE), "X509_load_cert_crl_file"},
     {ERR_FUNC(X509_F_X509_LOAD_CERT_FILE), "X509_load_cert_file"},
     {ERR_FUNC(X509_F_X509_LOAD_CRL_FILE), "X509_load_crl_file"},
+    {ERR_FUNC(X509_F_X509_LOOKUP_METH_NEW), "X509_LOOKUP_meth_new"},
     {ERR_FUNC(X509_F_X509_NAME_ADD_ENTRY), "X509_NAME_add_entry"},
     {ERR_FUNC(X509_F_X509_NAME_ENTRY_CREATE_BY_NID),
      "X509_NAME_ENTRY_create_by_NID"},
