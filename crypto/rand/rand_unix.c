@@ -14,10 +14,6 @@
 #include "rand_lcl.h"
 #include <stdio.h>
 
-#ifdef OPENSSL_RAND_SEED_GETRANDOM
-# include <linux/random.h>
-#endif
-
 #if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
         !defined(OPENSSL_RAND_SEED_NONE)
 # error "UEFI and VXWorks only support seeding NONE"
@@ -123,11 +119,19 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 #  endif
 
 #  if defined(OPENSSL_RAND_SEED_OS)
-#   if defined(DEVRANDOM)
-#    define OPENSSL_RAND_SEED_DEVRANDOM
-#   else
+#   if !defined(DEVRANDOM)
 #    error "OS seeding requires DEVRANDOM to be configured"
 #   endif
+#   define OPENSSL_RAND_SEED_DEVRANDOM
+#   if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#    if __GLIBC_PREREQ(2, 25)
+#     define OPENSSL_RAND_SEED_GETRANDOM
+#    endif
+#   endif
+#  endif
+
+#  ifdef OPENSSL_RAND_SEED_GETRANDOM
+#   include <sys/random.h>
 #  endif
 
 #  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
