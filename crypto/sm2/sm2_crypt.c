@@ -57,10 +57,23 @@ static size_t EC_field_size(const EC_GROUP *group)
     return field_size;
 }
 
+size_t SM2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len)
+{
+    const size_t field_size = EC_field_size(EC_KEY_get0_group(key));
+    const size_t md_size = EVP_MD_size(digest);
+
+    const size_t overhead = 10 + 2 * field_size + md_size;
+    if(msg_len <= overhead)
+       return 0;
+
+    return msg_len - overhead;
+}
+
 size_t SM2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len)
 {
-    return 10 + 2 * EC_field_size(EC_KEY_get0_group(key)) +
-        EVP_MD_size(digest) + msg_len;
+    const size_t field_size = EC_field_size(EC_KEY_get0_group(key));
+    const size_t md_size = EVP_MD_size(digest);
+    return 10 + 2 * field_size + md_size + msg_len;
 }
 
 int SM2_encrypt(const EC_KEY *key,

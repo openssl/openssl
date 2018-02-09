@@ -139,6 +139,7 @@ static int test_sm2(const EC_GROUP *group,
     unsigned char *expected = OPENSSL_hexstr2buf(ctext_hex, NULL);
 
     size_t ctext_len = 0;
+    size_t ptext_len = 0;
     uint8_t *ctext = NULL;
     uint8_t *recovered = NULL;
     size_t recovered_len = msg_len;
@@ -172,7 +173,11 @@ static int test_sm2(const EC_GROUP *group,
     if (rc == 0)
         goto done;
 
-    recovered = OPENSSL_zalloc(msg_len);
+    ptext_len = SM2_plaintext_size(key, digest, ctext_len);
+
+    TEST_int_eq(ptext_len, msg_len);
+
+    recovered = OPENSSL_zalloc(ptext_len);
     if (recovered == NULL)
         goto done;
     rc = SM2_decrypt(key, digest, ctext, ctext_len, recovered, &recovered_len);

@@ -4523,3 +4523,4 @@ SM2_verify                              4464	1_1_1	EXIST::FUNCTION:
 SM2_do_verify                           4465	1_1_1	EXIST::FUNCTION:
 SM2_sign                                4466	1_1_1	EXIST::FUNCTION:
 ERR_load_SM2_strings                    4467	1_1_1	EXIST::FUNCTION:
+SM2_plaintext_size                      4468	1_1_1	EXIST::FUNCTION:
