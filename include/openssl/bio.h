@@ -735,7 +735,8 @@ void BIO_copy_next_retry(BIO *b);
  */
 
 # define __bio_h__attr__(x)
-# if defined(__GNUC__) && defined(__STDC_VERSION__)
+# if defined(__GNUC__) && defined(__STDC_VERSION__) \
+    && !defined(__APPLE__)
     /*
      * Because we support the 'z' modifier, which made its appearance in C99,
      * we can't use __attribute__ with pre C99 dialects.
