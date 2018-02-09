@@ -67,7 +67,7 @@ CRYPTO_THREAD_unlock() unlocks the previously locked B<lock>.
 
 =item *
 
-CRYPTO_THREAD_lock_frees() frees the provided B<lock>.
+CRYPTO_THREAD_lock_free() frees the provided B<lock>.
 
 =item *
 
@@ -96,9 +96,9 @@ CRYPTO_THREAD_run_once() returns 1 on success, or 0 on error.
 
 CRYPTO_THREAD_lock_new() returns the allocated lock, or NULL on error.
 
-CRYPTO_THREAD_lock_frees() returns no value.
+CRYPTO_THREAD_lock_free() returns no value.
 
-The other functions return 1 on success or 0 on error.
+The other functions return 1 on success, or 0 on error.
 
 =head1 NOTES
 
