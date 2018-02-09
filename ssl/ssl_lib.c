@@ -2454,10 +2454,12 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
 {
     STACK_OF(SSL_CIPHER) *sk = NULL, *ciphers;
     int i;
+
     ciphers = SSL_get_ciphers(s);
     if (!ciphers)
         return NULL;
-    ssl_set_client_disabled(s);
+    if (!ssl_set_client_disabled(s))
+        return NULL;
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
         if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0)) {

@@ -1051,12 +1051,14 @@ int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
  *
  * Call ssl_cipher_disabled() to check that it's enabled or not.
  */
-void ssl_set_client_disabled(SSL *s)
+int ssl_set_client_disabled(SSL *s)
 {
     s->s3->tmp.mask_a = 0;
     s->s3->tmp.mask_k = 0;
     ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
-    ssl_get_min_max_version(s, &s->s3->tmp.min_ver, &s->s3->tmp.max_ver);
+    if (ssl_get_min_max_version(s, &s->s3->tmp.min_ver,
+                                &s->s3->tmp.max_ver) != 0)
+        return 0;
 #ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
@@ -1070,6 +1072,7 @@ void ssl_set_client_disabled(SSL *s)
         s->s3->tmp.mask_k |= SSL_kSRP;
     }
 #endif
+    return 1;
 }
 
 /*

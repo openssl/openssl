@@ -3650,8 +3650,13 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
     int i;
     size_t totlen = 0, len, maxlen, maxverok = 0;
     int empty_reneg_info_scsv = !s->renegotiate;
+
     /* Set disabled masks for this session */
-    ssl_set_client_disabled(s);
+    if (!ssl_set_client_disabled(s)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_CIPHER_LIST_TO_BYTES,
+                 SSL_R_NO_PROTOCOLS_AVAILABLE);
+        return 0;
+    }
 
     if (sk == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_CIPHER_LIST_TO_BYTES,
