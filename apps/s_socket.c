@@ -157,7 +157,7 @@ int init_client(int *sock, const char *host, const char *port,
     }
 
     if (*sock == INVALID_SOCKET) {
-        if (!found) {
+        if (bindaddr != NULL && !found) {
             BIO_printf(bio_err, "Can't bind %saddress for %s%s%s\n",
                        BIO_ADDRINFO_family(res) == AF_INET6 ? "IPv6 " :
                        BIO_ADDRINFO_family(res) == AF_INET ? "IPv4 " :
