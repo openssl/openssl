@@ -133,6 +133,9 @@ before_script:
           srcdir=.;
           top=.;
       fi
+    - if [ "$TRAVIS_OS_NAME" == "osx" ]; then
+          CONFIG_OPTS="$CONFIG_OPTS -Wno-format";
+      fi
     - if [ "$CC" == i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
