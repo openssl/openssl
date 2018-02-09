@@ -54,6 +54,7 @@ typedef enum {
 
 typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
+int ssl3_take_mac(SSL *s);
 int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
                   size_t num_groups, int checkallow);
 int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
