@@ -26,7 +26,8 @@ plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
 plan skip_all => "$test_name needs TLS enabled"
-    if alldisabled(available_protocols("tls"));
+    if alldisabled(available_protocols("tls"))
+       || (!disabled("tls1_3") && disabled("tls1_2"));
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");

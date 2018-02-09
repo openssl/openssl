@@ -40,6 +40,7 @@ my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
 my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
+my $no_tls_below1_3 = $no_tls || (disabled("tls1_2") && !disabled("tls1_3"));
 my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
@@ -73,6 +74,7 @@ my %conf_dependent_tests = (
 # configurations. Default is $no_tls but some tests have different skip
 # conditions.
 my %skip = (
+  "06-sni-ticket.conf" => $no_tls_below1_3,
   "07-dtls-protocol-version.conf" => $no_dtls,
   "08-npn.conf" => (disabled("tls1") && disabled("tls1_1")
                     && disabled("tls1_2")) || $no_npn,
@@ -87,6 +89,7 @@ my %skip = (
   "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
   "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
+  "17-renegotiate.conf" => $no_tls_below1_3,
   "18-dtls-renegotiate.conf" => $no_dtls,
   "19-mac-then-encrypt.conf" => $no_pre_tls1_3,
   "20-cert-select.conf" => disabled("tls1_2") || $no_ec,

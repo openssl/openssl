@@ -26,6 +26,9 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS enabled"
     if alldisabled(available_protocols("tls"));
 
+my $no_below_tls13 = alldisabled(("tls1", "tls1_1", "tls1_2"))
+                     || (!disabled("tls1_3") && disabled("tls1_2"));
+
 use constant {
     UNSOLICITED_SERVER_NAME => 0,
     UNSOLICITED_SERVER_NAME_TLS13 => 1,
@@ -37,16 +40,12 @@ my $testtype;
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
-    \&extension_filter,
+    \&inject_duplicate_extension_clienthello,
     cmdstr(app(["openssl"]), display => 1),
     srctop_file("apps", "server.pem"),
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-# Test 1: Sending a zero length extension block should pass
-$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 7;
-ok(TLSProxy::Message->success, "Zero extension length test");
 
 sub extension_filter
 {
@@ -79,7 +78,6 @@ sub extension_filter
     }
 }
 
-# Test 2-3: Sending a duplicate extension should fail.
 sub inject_duplicate_extension
 {
   my ($proxy, $message_type) = @_;
@@ -119,16 +117,6 @@ sub inject_duplicate_extension_serverhello
     inject_duplicate_extension($proxy, TLSProxy::Message::MT_SERVER_HELLO);
 }
 
-$proxy->clear();
-$proxy->filter(\&inject_duplicate_extension_clienthello);
-$proxy->start();
-ok(TLSProxy::Message->fail(), "Duplicate ClientHello extension");
-
-$proxy->clear();
-$proxy->filter(\&inject_duplicate_extension_serverhello);
-$proxy->start();
-ok(TLSProxy::Message->fail(), "Duplicate ServerHello extension");
-
 sub inject_unsolicited_extension
 {
     my $proxy = shift;
@@ -162,8 +150,25 @@ sub inject_unsolicited_extension
     $message->repack();
 }
 
+# Test 1-2: Sending a duplicate extension should fail.
+$proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
+plan tests => 7;
+ok(TLSProxy::Message->fail(), "Duplicate ClientHello extension");
+
+$proxy->clear();
+$proxy->filter(\&inject_duplicate_extension_serverhello);
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Duplicate ServerHello extension");
+
 SKIP: {
-    skip "TLS <= 1.2 disabled", 2 if alldisabled(("tls1", "tls1_1", "tls1_2"));
+    skip "TLS <= 1.2 disabled", 3 if $no_below_tls13;
+
+    #Test 3: Sending a zero length extension block should pass
+    $proxy->clear();
+    $proxy->filter(\&extension_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->success, "Zero extension length test");
+
     #Test 4: Inject an unsolicited extension (<= TLSv1.2)
     $proxy->clear();
     $proxy->filter(\&inject_unsolicited_extension);
@@ -183,7 +188,7 @@ SKIP: {
 
 SKIP: {
     skip "TLS <= 1.2 or CT disabled", 1
-        if alldisabled(("tls1", "tls1_1", "tls1_2")) || disabled("ct");
+        if $no_below_tls13 || disabled("ct");
     #Test 6: Same as above for the SCT extension which has special handling
     $proxy->clear();
     $testtype = UNSOLICITED_SCT;
