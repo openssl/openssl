@@ -894,10 +894,9 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
     SSL3_BUFFER *wb = s->rlayer.wbuf;
     unsigned int currbuf = 0;
 
-/* XXXX */
     if ((s->rlayer.wpend_tot > (int)len)
-        || ((s->rlayer.wpend_buf != buf) &&
-            !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
+        || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
+            && (s->rlayer.wpend_buf != buf))
         || (s->rlayer.wpend_type != type)) {
         SSLerr(SSL_F_SSL3_WRITE_PENDING, SSL_R_BAD_WRITE_RETRY);
         return (-1);
