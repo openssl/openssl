@@ -42,6 +42,7 @@ typedef enum {
 
 /* Flush the write BIO */
 int statem_flush(SSL *s);
+int ssl3_take_mac(SSL *s);
 
 /*
  * TLS/DTLS client state machine functions
