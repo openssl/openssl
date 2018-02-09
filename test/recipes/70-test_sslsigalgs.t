@@ -216,13 +216,16 @@ SKIP: {
        "DSA/SHA2 sigalg sent for 1.3-only ClientHello");
 
     #Test 18: signature_algorithms with backwards compatible ClientHello
-    $testtype = COMPAT_SIGALGS;
-    $dsa_status = $sha1_status = $sha224_status = 0;
-    $proxy->clear();
-    $proxy->filter(\&modify_sigalgs_filter);
-    $proxy->start();
-    ok($dsa_status && $sha1_status && $sha224_status,
-       "DSA sigalg not sent for compat ClientHello");
+    SKIP: {
+        skip "TLSv1.2 disabled", 1 if disabled("tls1_2");
+        $testtype = COMPAT_SIGALGS;
+        $dsa_status = $sha1_status = $sha224_status = 0;
+        $proxy->clear();
+        $proxy->filter(\&modify_sigalgs_filter);
+        $proxy->start();
+        ok($dsa_status && $sha1_status && $sha224_status,
+           "DSA sigalg not sent for compat ClientHello");
+   }
 }
 
 SKIP: {

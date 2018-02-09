@@ -254,6 +254,7 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
     return 1;
 }
 
+#if !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3)
 static int test_keylog(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -330,6 +331,7 @@ end:
 
     return testresult;
 }
+#endif
 
 #ifndef OPENSSL_NO_TLS1_3
 static int test_keylog_no_master_key(void)
@@ -1273,6 +1275,7 @@ static int test_ssl_bio_change_wbio(void)
     return execute_test_ssl_bio(0, CHANGE_WBIO);
 }
 
+#if !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3)
 typedef struct {
     /* The list of sig algs */
     const int *list;
@@ -1287,25 +1290,25 @@ typedef struct {
 } sigalgs_list;
 
 static const int validlist1[] = {NID_sha256, EVP_PKEY_RSA};
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
 static const int validlist2[] = {NID_sha256, EVP_PKEY_RSA, NID_sha512, EVP_PKEY_EC};
 static const int validlist3[] = {NID_sha512, EVP_PKEY_EC};
-#endif
+# endif
 static const int invalidlist1[] = {NID_undef, EVP_PKEY_RSA};
 static const int invalidlist2[] = {NID_sha256, NID_undef};
 static const int invalidlist3[] = {NID_sha256, EVP_PKEY_RSA, NID_sha256};
 static const int invalidlist4[] = {NID_sha256};
 static const sigalgs_list testsigalgs[] = {
     {validlist1, OSSL_NELEM(validlist1), NULL, 1, 1},
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     {validlist2, OSSL_NELEM(validlist2), NULL, 1, 1},
     {validlist3, OSSL_NELEM(validlist3), NULL, 1, 0},
-#endif
+# endif
     {NULL, 0, "RSA+SHA256", 1, 1},
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
     {NULL, 0, "RSA+SHA256:ECDSA+SHA512", 1, 1},
     {NULL, 0, "ECDSA+SHA512", 1, 0},
-#endif
+# endif
     {invalidlist1, OSSL_NELEM(invalidlist1), NULL, 0, 0},
     {invalidlist2, OSSL_NELEM(invalidlist2), NULL, 0, 0},
     {invalidlist3, OSSL_NELEM(invalidlist3), NULL, 0, 0},
@@ -1401,6 +1404,7 @@ static int test_set_sigalgs(int idx)
 
     return testresult;
 }
+#endif
 
 #ifndef OPENSSL_NO_TLS1_3
 
@@ -2778,6 +2782,12 @@ static int test_custom_exts(int tst)
     SSL_SESSION *sess = NULL;
     unsigned int context;
 
+#if defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_TLS1_3)
+    /* Skip tests for TLSv1.2 and below in this case */
+    if (tst < 3)
+        return 1;
+#endif
+
     /* Reset callback counters */
     clntaddoldcb = clntparseoldcb = srvaddoldcb = srvparseoldcb = 0;
     clntaddnewcb = clntparsenewcb = srvaddnewcb = srvparsenewcb = 0;
@@ -3389,8 +3399,10 @@ int setup_tests(void)
     ADD_TEST(test_ssl_bio_pop_ssl_bio);
     ADD_TEST(test_ssl_bio_change_rbio);
     ADD_TEST(test_ssl_bio_change_wbio);
+#if !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3)
     ADD_ALL_TESTS(test_set_sigalgs, OSSL_NELEM(testsigalgs) * 2);
     ADD_TEST(test_keylog);
+#endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_TEST(test_keylog_no_master_key);
 #endif

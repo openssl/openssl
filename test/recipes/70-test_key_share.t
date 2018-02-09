@@ -199,26 +199,30 @@ $testtype = TRAILING_DATA;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "key_share trailing data in ServerHello");
 
-#Test 20: key_share should not be sent if the client is not capable of
-#         negotiating TLSv1.3
-$proxy->clear();
-$proxy->filter(undef);
-$proxy->clientflags("-no_tls1_3");
-$proxy->start();
-my $clienthello = $proxy->message_list->[0];
-ok(TLSProxy::Message->success()
-   && !defined $clienthello->extension_data->{TLSProxy::Message::EXT_KEY_SHARE},
-   "No key_share for TLS<=1.2 client");
-$proxy->filter(\&modify_key_shares_filter);
+SKIP: {
+    skip "No TLSv1.2 support in this OpenSSL build", 2 if disabled("tls1_2");
 
-#Test 21: A server not capable of negotiating TLSv1.3 should not attempt to
-#         process a key_share
-$proxy->clear();
-$direction = CLIENT_TO_SERVER;
-$testtype = NO_ACCEPTABLE_KEY_SHARES;
-$proxy->serverflags("-no_tls1_3");
-$proxy->start();
-ok(TLSProxy::Message->success(), "Ignore key_share for TLS<=1.2 server");
+    #Test 20: key_share should not be sent if the client is not capable of
+    #         negotiating TLSv1.3
+    $proxy->clear();
+    $proxy->filter(undef);
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->start();
+    my $clienthello = $proxy->message_list->[0];
+    ok(TLSProxy::Message->success()
+       && !defined $clienthello->extension_data->{TLSProxy::Message::EXT_KEY_SHARE},
+       "No key_share for TLS<=1.2 client");
+    $proxy->filter(\&modify_key_shares_filter);
+
+    #Test 21: A server not capable of negotiating TLSv1.3 should not attempt to
+    #         process a key_share
+    $proxy->clear();
+    $direction = CLIENT_TO_SERVER;
+    $testtype = NO_ACCEPTABLE_KEY_SHARES;
+    $proxy->serverflags("-no_tls1_3");
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Ignore key_share for TLS<=1.2 server");
+}
 
 #Test 22: The server sending an HRR but not requesting a new key_share should
 #         fail
