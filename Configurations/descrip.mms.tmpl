@@ -175,9 +175,12 @@ CC= {- $config{cc} -}
 DEFINES={- our $defines = join(",",
                                '__dummy', # To make comma processing easier
                                @{$config{defines}}) -}
+INCLUDES={- our $includes = join(',', @{$config{includes}}) -}
 CPPFLAGS={- our $cppflags = join('', @{$config{cppflags}}) -}
-CPPFLAGS_Q={- $cppflags =~ s|"|""|g; $defines =~ s|"|""|g;
-              $cppflags."/DEFINE($defines)" -}
+CPPFLAGS_Q={- (my $x = $cppflags) =~ s|"|""|g; $defines =~ s|"|""|g;
+              $x .= "/DEFINE=($defines)";
+              $x .= "/INCLUDE=($includes)" if $includes;
+              $x; -}
 CFLAGS={- join('', @{$config{cflags}}) -}
 LDFLAGS= {- join('', @{$config{lflags}}) -}
 EX_LIBS= {- join('', map { ','.$_ } @{$config{ex_libs}}) -}
@@ -635,10 +638,8 @@ EOF
 		    dso => '$(DSO_DEFINES)',
 		    bin => '$(BIN_DEFINES)' } -> {$args{intent}};
       $cflags .= '/DEFINE=('.$defines.')';
+      $cflags .= "/INCLUDE=('tmp_includes')";
       
-      my $incs_on = "\@ !";
-      my $incs_off = "\@ !";
-      my $incs = "";
       my @incs = ();
       push @incs, @{$args{incs}} if @{$args{incs}};
       unless ($disabled{zlib}) {
@@ -646,15 +647,37 @@ EOF
           # incarnations.
           push @incs, ($withargs{zlib_include} || 'GNV$ZLIB_INCLUDE:');
       }
+      # We create a logical name TMP_INCLUDES: to hold the list of internal
+      # includes.  However, we cannot use it directly, as logical names can't
+      # hold zero entries, so we also create a symbol with the same name and
+      # use that instead, see the '/INCLUDE=' assignment above.  If there are
+      # no internal include directories, it will simply be the empty string,
+      # but if there are, it will be assigned "TMP_DEFINES:,"
+      my $xtraincludes = { lib => '$(LIB_INCLUDES)',
+                           dso => '$(DSO_INCLUDES)',
+                           bin => '$(BIN_INCLUDES)' } -> {$args{intent}};
+      my $incs_add =
+          'IF tmp_add .NES. "" .AND. tmp_includes .NES. "" THEN tmp_includes = "," + tmp_includes'
+          ."\n\t".'tmp_includes = tmp_add + tmp_includes';
+      my $incs_on = 'tmp_includes := '
+          ."\n\t"."tmp_add := $xtraincludes"
+          ."\n\t".$incs_add
+          ."\n\t".'tmp_add := $(INCLUDES)'
+          ."\n\t".$incs_add;
+      my $incs_off = 'DELETE/SYMBOL/LOCAL tmp_includes'
+          ."\n\t".'DELETE/SYMBOL/LOCAL tmp_add';
       if (@incs) {
           $incs_on =
-              "DEFINE tmp_includes "
+              'DEFINE tmp_includes '
               .join(",-\n\t\t\t", map {
                                       file_name_is_absolute($_)
                                       ? $_ : catdir($backward,$_)
-                                  } @incs);
-          $incs_off = "DEASSIGN tmp_includes";
-          $incs = " /INCLUDE=(tmp_includes:)";
+                                  } @incs)
+              ."\n\t".$incs_on
+              ."\n\t".'IF tmp_includes .NES. "" THEN tmp_includes = "," + tmp_includes'
+              ."\n\t".'tmp_includes = "tmp_includes:" + tmp_includes';
+          $incs_off .=
+              "\n\t".'DEASSIGN tmp_includes';
       }
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
@@ -666,7 +689,7 @@ $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
         $incs_on
-        \$(CC) ${cflags}${incs}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
+        \$(CC) ${cflags}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
         $incs_off
         SET DEFAULT $backward
         ${after}
