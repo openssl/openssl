@@ -1115,8 +1115,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf, size_t len,
     size_t tmpwrit = 0;
 
     if ((s->rlayer.wpend_tot > len)
-        || ((s->rlayer.wpend_buf != buf) &&
-            !(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER))
+        || (!(s->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER)
+            && (s->rlayer.wpend_buf != buf))
         || (s->rlayer.wpend_type != type)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_WRITE_PENDING,
                  SSL_R_BAD_WRITE_RETRY);
