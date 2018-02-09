@@ -998,6 +998,16 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
          */
         now = (uint32_t)time(NULL);
         agesec = now - (uint32_t)s->session->time;
+        /*
+         * We calculate the age in seconds but the server may work in ms. Due to
+         * rounding errors we could overestimate the age by up to 1s. It is
+         * better to underestimate it. Otherwise, if the RTT is very short, when
+         * the server calculates the age reported by the client it could be
+         * bigger than the age calculated on the server - which should never
+         * happen.
+         */
+        if (agesec > 0)
+            agesec--;
 
         if (s->session->ext.tick_lifetime_hint < agesec) {
             /* Ticket is too old. Ignore it. */
