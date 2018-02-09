@@ -221,8 +221,14 @@ static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
 # if defined(OPENSSL_NO_SM2)
         ret = -1;
 # else
-        ret = SM2_encrypt(ec, EVP_get_digestbynid(md_type),
-                          in, inlen, out, outlen);
+        if (out == NULL) {
+            *outlen = SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen);
+            ret = 1;
+        }
+        else {
+            ret = SM2_encrypt(ec, EVP_get_digestbynid(md_type),
+                              in, inlen, out, outlen);
+        }
 # endif
     } else {
         /* standard ECIES not implemented */
@@ -252,8 +258,14 @@ static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
 # if defined(OPENSSL_NO_SM2)
         ret = -1;
 # else
-        ret = SM2_decrypt(ec, EVP_get_digestbynid(md_type),
-                          in, inlen, out, outlen);
+        if (out == NULL) {
+            *outlen = SM2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen);
+            ret = 1;
+        }
+        else {
+            ret = SM2_decrypt(ec, EVP_get_digestbynid(md_type),
+                              in, inlen, out, outlen);
+        }
 # endif
     } else {
         /* standard ECIES not implemented */
@@ -510,7 +522,7 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 const EVP_PKEY_METHOD ec_pkey_meth = {
     EVP_PKEY_EC,
-    EVP_PKEY_FLAG_AUTOARGLEN,
+    0,
     pkey_ec_init,
     pkey_ec_copy,
     pkey_ec_cleanup,

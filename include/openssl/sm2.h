@@ -54,6 +54,10 @@ size_t SM2_ciphertext_size(const EC_KEY *key,
                            const EVP_MD *digest,
                            size_t msg_len);
 
+size_t SM2_plaintext_size(const EC_KEY *key,
+                          const EVP_MD *digest,
+                          size_t msg_len);
+
 int SM2_encrypt(const EC_KEY *key,
                 const EVP_MD *digest,
                 const uint8_t *msg,
