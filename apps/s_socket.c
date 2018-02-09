@@ -66,6 +66,7 @@ int init_client(int *sock, const char *host, const char *port,
     BIO_ADDRINFO *res = NULL;
     BIO_ADDRINFO *bindaddr = NULL;
     const BIO_ADDRINFO *ai = NULL;
+    const BIO_ADDRINFO *bi = NULL;
     int ret;
 
     if (BIO_sock_init() != 1)
@@ -83,7 +84,7 @@ int init_client(int *sock, const char *host, const char *port,
                             family, type, protocol, &bindaddr);
         if (ret == 0) {
             ERR_print_errors (bio_err);
-            return 0;
+            goto out;
         }
     }
 
@@ -98,6 +99,15 @@ int init_client(int *sock, const char *host, const char *port,
                        && (protocol == 0
                            || protocol == BIO_ADDRINFO_protocol(ai)));
 
+        if (bindaddr != NULL) {
+            for (bi = bindaddr; bi != NULL; bi = BIO_ADDRINFO_next(bi)) {
+                if (BIO_ADDRINFO_family(bi) == BIO_ADDRINFO_family(ai))
+                    break;
+            }
+            if (bi == NULL)
+                continue;
+        }
+
         *sock = BIO_socket(BIO_ADDRINFO_family(ai), BIO_ADDRINFO_socktype(ai),
                            BIO_ADDRINFO_protocol(ai), 0);
         if (*sock == INVALID_SOCKET) {
@@ -107,8 +117,8 @@ int init_client(int *sock, const char *host, const char *port,
             continue;
         }
 
-        if (bindaddr != NULL) {
-            if (!BIO_bind(*sock, BIO_ADDRINFO_address(bindaddr),
+        if (bi != NULL) {
+            if (!BIO_bind(*sock, BIO_ADDRINFO_address(bi),
                           BIO_SOCK_REUSEADDR)) {
                 BIO_closesocket(*sock);
                 *sock = INVALID_SOCKET;
@@ -150,6 +160,10 @@ int init_client(int *sock, const char *host, const char *port,
         /* Remove any stale errors from previous connection attempts */
         ERR_clear_error();
         ret = 1;
+    }
+out:
+    if (bindaddr != NULL) {
+        BIO_ADDRINFO_free (bindaddr);
     }
     BIO_ADDRINFO_free(res);
     return ret;
