@@ -275,6 +275,11 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             BIO_clear_retry_flags(b);
             b->retry_reason = 0;
 
+            OPENSSL_free(c->cache_peer_name);
+            c->cache_peer_name = NULL;
+            OPENSSL_free(c->cache_peer_serv);
+            c->cache_peer_serv = NULL;
+
             s = BIO_accept_ex(c->accept_sock, &c->cache_peer_addr,
                               c->accepted_mode);
 
