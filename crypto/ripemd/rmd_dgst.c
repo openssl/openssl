@@ -11,12 +11,7 @@
 #include "rmd_locl.h"
 #include <openssl/opensslv.h>
 
-#ifdef RMD160_ASM
-void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p, size_t num);
-# define ripemd160_block ripemd160_block_x86
-#else
 void ripemd160_block(RIPEMD160_CTX *c, unsigned long *p, size_t num);
-#endif
 
 int RIPEMD160_Init(RIPEMD160_CTX *c)
 {
