@@ -3184,7 +3184,6 @@ sub print_table_entry
 	"ec_asm_src",
 	"des_asm_src",
 	"aes_asm_src",
-	"bf_asm_src",
 	"cast_asm_src",
 	"sha1_asm_src",
 	"rc4_asm_src",
