@@ -547,7 +547,7 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 # define SSL_CONF_TYPE_NONE              0x4
 
 /* Length of a TLSv1.3 cookie */
-# define SSL_COOKIE_LENGTH                       255
+# define SSL_COOKIE_LENGTH                       65535
 
 /*
  * Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value, they
