@@ -11,7 +11,7 @@
 
 struct bio_method_st {
     int type;
-    const char *name;
+    char *name;
     int (*bwrite) (BIO *, const char *, int);
     int (*bread) (BIO *, char *, int);
     int (*bputs) (BIO *, const char *);
