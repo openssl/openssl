@@ -879,4 +879,7 @@ iotas:
 	.align	4
 ___
 
+$output=pop;
+open STDOUT,">$output";
 print $code;
+close STDOUT;
