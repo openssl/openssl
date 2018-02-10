@@ -256,9 +256,6 @@ In each table entry, the following keys are significant:
                            Defaults to 'rc4_enc.c rc4_skey.c'
         rmd160_asm_src  => Assembler implementation of core RMD160
                            functions.
-        rc5_asm_src     => Assembler implementation of core RC5
-                           functions.
-                           Defaults to 'rc5_enc.c'
         cmll_asm_src    => Assembler implementation of core CAMELLIA
                            functions.
                            Defaults to 'camellia.c cmll_misc.c cmll_cbc.c'

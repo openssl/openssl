@@ -3179,7 +3179,6 @@ sub print_table_entry
 	"sha1_asm_src",
 	"rc4_asm_src",
 	"rmd160_asm_src",
-	"rc5_asm_src",
 	"cmll_asm_src",
 	"modes_asm_src",
 	"padlock_asm_src",
