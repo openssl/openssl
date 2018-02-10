@@ -37,16 +37,22 @@ BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
     BIO_METHOD *biom = OPENSSL_zalloc(sizeof(BIO_METHOD));
 
-    if (biom != NULL) {
-        biom->type = type;
-        biom->name = name;
+    if (biom == NULL
+            || (biom->name = OPENSSL_strdup(name)) == NULL) {
+        OPENSSL_free(biom);
+        BIOerr(BIO_F_BIO_METH_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
     }
+    biom->type = type;
     return biom;
 }
 
 void BIO_meth_free(BIO_METHOD *biom)
 {
-    OPENSSL_free(biom);
+    if (biom != NULL) {
+        OPENSSL_free(biom->name);
+        OPENSSL_free(biom);
+    }
 }
 
 int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int)
