@@ -96,7 +96,6 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # RC4_CHAR	use 'char' instead of 'int' for RC4_INT in crypto/rc4/rc4.h
 # Following are set automatically by this script
 #
-# MD5_ASM	use some extra md5 assembler,
 # SHA1_ASM	use some extra sha1 assembler, must define L_ENDIAN for x86
 # RMD160_ASM	use some extra ripemd160 assembler,
 # SHA256_ASM	sha256_block is implemented in assembler
@@ -1367,9 +1366,6 @@ unless ($disabled{asm}) {
     }
     if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
 	push @{$config{lib_defines}}, "RC4_ASM";
-    }
-    if ($target{md5_asm_src}) {
-	push @{$config{lib_defines}}, "MD5_ASM";
     }
     $target{cast_asm_src}=$table{DEFAULTS}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
@@ -3189,7 +3185,6 @@ sub print_table_entry
 	"des_asm_src",
 	"aes_asm_src",
 	"bf_asm_src",
-	"md5_asm_src",
 	"cast_asm_src",
 	"sha1_asm_src",
 	"rc4_asm_src",
