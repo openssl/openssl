@@ -35,6 +35,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_LOOKUP                                 135
 # define BIO_F_BIO_LOOKUP_EX                              143
 # define BIO_F_BIO_MAKE_PAIR                              121
+# define BIO_F_BIO_METH_NEW                               146
 # define BIO_F_BIO_NEW                                    108
 # define BIO_F_BIO_NEW_DGRAM_SCTP                         145
 # define BIO_F_BIO_NEW_FILE                               109
