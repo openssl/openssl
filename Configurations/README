@@ -259,8 +259,6 @@ In each table entry, the following keys are significant:
         rc5_asm_src     => Assembler implementation of core RC5
                            functions.
                            Defaults to 'rc5_enc.c'
-        wp_asm_src      => Assembler implementation of core WHIRLPOOL
-                           functions.
         cmll_asm_src    => Assembler implementation of core CAMELLIA
                            functions.
                            Defaults to 'camellia.c cmll_misc.c cmll_cbc.c'
