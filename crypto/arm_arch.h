@@ -79,5 +79,6 @@ extern unsigned int OPENSSL_armcap_P;
 # define ARMV8_SHA1      (1<<3)
 # define ARMV8_SHA256    (1<<4)
 # define ARMV8_PMULL     (1<<5)
+# define ARMV8_SHA512    (1<<6)
 
 #endif
