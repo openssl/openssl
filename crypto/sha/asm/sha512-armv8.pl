@@ -197,8 +197,6 @@ $code.=<<___;
 .type	$func,%function
 .align	6
 $func:
-___
-$code.=<<___	if ($SZ==4);
 #ifndef	__KERNEL__
 # ifdef	__ILP32__
 	ldrsw	x16,.LOPENSSL_armcap_P
@@ -208,13 +206,19 @@ $code.=<<___	if ($SZ==4);
 	adr	x17,.LOPENSSL_armcap_P
 	add	x16,x16,x17
 	ldr	w16,[x16]
+___
+$code.=<<___	if ($SZ==4);
 	tst	w16,#ARMV8_SHA256
 	b.ne	.Lv8_entry
 	tst	w16,#ARMV7_NEON
 	b.ne	.Lneon_entry
-#endif
+___
+$code.=<<___	if ($SZ==8);
+	tst	w16,#ARMV8_SHA512
+	b.ne	.Lv8_entry
 ___
 $code.=<<___;
+#endif
 	stp	x29,x30,[sp,#-128]!
 	add	x29,sp,#0
 
@@ -732,6 +736,108 @@ $code.=<<___;
 ___
 }
 
+if ($SZ==8) {
+my $Ktbl="x3";
+
+my @H = map("v$_.16b",(0..4));
+my ($fg,$de,$m9_10)=map("v$_.16b",(5..7));
+my @MSG=map("v$_.16b",(16..23));
+my ($W0,$W1)=("v24.2d","v25.2d");
+my ($AB,$CD,$EF,$GH)=map("v$_.16b",(26..29));
+
+$code.=<<___;
+#ifndef	__KERNEL__
+.type	sha512_block_armv8,%function
+.align	6
+sha512_block_armv8:
+.Lv8_entry:
+	stp		x29,x30,[sp,#-16]!
+	add		x29,sp,#0
+
+	ld1		{@MSG[0]-@MSG[3]},[$inp],#64	// load input
+	ld1		{@MSG[4]-@MSG[7]},[$inp],#64
+
+	ld1.64		{@H[0]-@H[3]},[$ctx]		// load context
+	adr		$Ktbl,.LK512
+
+	rev64		@MSG[0],@MSG[0]
+	rev64		@MSG[1],@MSG[1]
+	rev64		@MSG[2],@MSG[2]
+	rev64		@MSG[3],@MSG[3]
+	rev64		@MSG[4],@MSG[4]
+	rev64		@MSG[5],@MSG[5]
+	rev64		@MSG[6],@MSG[6]
+	rev64		@MSG[7],@MSG[7]
+	b		.Loop_hw
+
+.align	4
+.Loop_hw:
+	ld1.64		{$W0},[$Ktbl],#16
+	subs		$num,$num,#1
+	sub		x4,$inp,#128
+	orr		$AB,@H[0],@H[0]			// offload
+	orr		$CD,@H[1],@H[1]
+	orr		$EF,@H[2],@H[2]
+	orr		$GH,@H[3],@H[3]
+	csel		$inp,$inp,x4,ne			// conditional rewind
+___
+for($i=0;$i<32;$i++) {
+$code.=<<___;
+	add.i64		$W0,$W0,@MSG[0]
+	ld1.64		{$W1},[$Ktbl],#16
+	ext		$W0,$W0,$W0,#8
+	ext		$fg,@H[2],@H[3],#8
+	ext		$de,@H[1],@H[2],#8
+	add.i64		@H[3],@H[3],$W0			// "T1 + H + K512[i]"
+	 sha512su0	@MSG[0],@MSG[1]
+	 ext		$m9_10,@MSG[4],@MSG[5],#8
+	sha512h		@H[3],$fg,$de
+	 sha512su1	@MSG[0],@MSG[7],$m9_10
+	add.i64		@H[4],@H[1],@H[3]		// "D + T1"
+	sha512h2	@H[3],$H[1],@H[0]
+___
+	($W0,$W1)=($W1,$W0);	push(@MSG,shift(@MSG));
+	@H = (@H[3],@H[0],@H[4],@H[2],@H[1]);
+}
+for(;$i<40;$i++) {
+$code.=<<___	if ($i<39);
+	ld1.64		{$W1},[$Ktbl],#16
+___
+$code.=<<___	if ($i==39);
+	sub		$Ktbl,$Ktbl,#$rounds*$SZ	// rewind
+___
+$code.=<<___;
+	add.i64		$W0,$W0,@MSG[0]
+	 ld1		{@MSG[0]},[$inp],#16		// load next input
+	ext		$W0,$W0,$W0,#8
+	ext		$fg,@H[2],@H[3],#8
+	ext		$de,@H[1],@H[2],#8
+	add.i64		@H[3],@H[3],$W0			// "T1 + H + K512[i]"
+	sha512h		@H[3],$fg,$de
+	 rev64		@MSG[0],@MSG[0]
+	add.i64		@H[4],@H[1],@H[3]		// "D + T1"
+	sha512h2	@H[3],$H[1],@H[0]
+___
+	($W0,$W1)=($W1,$W0);	push(@MSG,shift(@MSG));
+	@H = (@H[3],@H[0],@H[4],@H[2],@H[1]);
+}
+$code.=<<___;
+	add.i64		@H[0],@H[0],$AB			// accumulate
+	add.i64		@H[1],@H[1],$CD
+	add.i64		@H[2],@H[2],$EF
+	add.i64		@H[3],@H[3],$GH
+
+	cbnz		$num,.Loop_hw
+
+	st1.64		{@H[0]-@H[3]},[$ctx]		// store context
+
+	ldr		x29,[sp],#16
+	ret
+.size	sha512_block_armv8,.-sha512_block_armv8
+#endif
+___
+}
+
 $code.=<<___;
 #ifndef	__KERNEL__
 .comm	OPENSSL_armcap_P,4,4
@@ -743,6 +849,21 @@ ___
 	"sha256su0"	=> 0x5e282800,	"sha256su1"	=> 0x5e006000	);
 
     sub unsha256 {
+	my ($mnemonic,$arg)=@_;
+
+	$arg =~ m/[qv]([0-9]+)[^,]*,\s*[qv]([0-9]+)[^,]*(?:,\s*[qv]([0-9]+))?/o
+	&&
+	sprintf ".inst\t0x%08x\t//%s %s",
+			$opcode{$mnemonic}|$1|($2<<5)|($3<<16),
+			$mnemonic,$arg;
+    }
+}
+
+{   my  %opcode = (
+	"sha512h"	=> 0xce608000,	"sha512h2"	=> 0xce608400,
+	"sha512su0"	=> 0xcec08000,	"sha512su1"	=> 0xce608800	);
+
+    sub unsha512 {
 	my ($mnemonic,$arg)=@_;
 
 	$arg =~ m/[qv]([0-9]+)[^,]*,\s*[qv]([0-9]+)[^,]*(?:,\s*[qv]([0-9]+))?/o
@@ -765,12 +886,15 @@ foreach(split("\n",$code)) {
 
 	s/\`([^\`]*)\`/eval($1)/ge;
 
+	s/\b(sha512\w+)\s+([qv].*)/unsha512($1,$2)/ge	or
 	s/\b(sha256\w+)\s+([qv].*)/unsha256($1,$2)/ge;
 
 	s/\bq([0-9]+)\b/v$1.16b/g;		# old->new registers
 
 	s/\.[ui]?8(\s)/$1/;
+	s/\.\w?64\b//		and s/\.16b/\.2d/g	or
 	s/\.\w?32\b//		and s/\.16b/\.4s/g;
+	m/\bext\b/		and s/\.2d/\.16b/g	or
 	m/(ld|st)1[^\[]+\[0\]/	and s/\.4s/\.s/g;
 
 	print $_,"\n";
