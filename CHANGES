@@ -247,6 +247,11 @@
         operation
      [Paul Dale, Benjamin Kaduk, Kurt Roeckx, Rich Salz, Matthias St. Pierre]
 
+  *) Assembler versions of old, insecure, or not commonly-used crypto
+     algorithms has been removed: Blowfish, CAST, DES, RC4, RC5, RMD160,
+     and Whirlpool. The C implementations are still present.
+     [Rich Salz]
+
   *) Changed Configure so it only says what it does and doesn't dump
      so much data.  Instead, ./configdata.pm should be used as a script
      to display all sorts of configuration data.
