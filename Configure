@@ -3170,7 +3170,6 @@ sub print_table_entry
 	"uplink_aux_src",
 	"bn_asm_src",
 	"ec_asm_src",
-	"des_asm_src",
 	"aes_asm_src",
 	"sha1_asm_src",
 	"rc4_asm_src",
