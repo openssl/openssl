@@ -22,7 +22,8 @@
 #define C448_WNAF_FIXED_TABLE_BITS 5
 #define C448_WNAF_VAR_TABLE_BITS 3
 
-static const int EDWARDS_D = -39081;
+#define EDWARDS_D       (-39081)
+
 static const curve448_scalar_t precomputed_scalarmul_adjustment = {
     {
         {
