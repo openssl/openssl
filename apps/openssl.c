@@ -520,7 +520,7 @@ static void list_type(FUNC_TYPE ft, int one)
 {
     FUNCTION *fp;
     int i = 0;
-    DISPLAY_COLUMNS dc;
+    DISPLAY_COLUMNS dc = {0};
 
     if (!one)
         calculate_columns(&dc);
