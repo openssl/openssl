@@ -587,8 +587,8 @@ static const uint8_t *dohash(EVP_MD_CTX *hashctx, const uint8_t *msg,
     static uint8_t hashout[64];
 
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
-        || !EVP_DigestUpdate(hashctx, msg, msglen)
-        || !EVP_DigestFinalXOF(hashctx, hashout, sizeof(hashout)))
+            || !EVP_DigestUpdate(hashctx, msg, msglen)
+            || !EVP_DigestFinalXOF(hashctx, hashout, sizeof(hashout)))
         return NULL;
 
     return hashout;

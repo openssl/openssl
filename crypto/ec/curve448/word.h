@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef __WORD_H__
-# define __WORD_H__
+#ifndef HEADER_WORD_H
+# define HEADER_WORD_H
 
 # include <string.h>
 
@@ -168,4 +168,4 @@ static ossl_inline void ignore_result(c448_bool_t boo)
     (void)boo;
 }
 
-#endif                          /* __WORD_H__ */
+#endif                          /* HEADER_WORD_H */

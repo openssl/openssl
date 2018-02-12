@@ -10,10 +10,10 @@
  * Originally written by Mike Hamburg
  */
 
-#include "internal/constant_time_locl.h"
+#ifndef HEADER_ARCH_32_ARCH_INTRINSICS_H
+# define HEADER_ARCH_32_ARCH_INTRINSICS_H
 
-#ifndef __ARCH_ARCH_32_ARCH_INTRINSICS_H__
-# define __ARCH_ARCH_32_ARCH_INTRINSICS_H__
+#include "internal/constant_time_locl.h"
 
 # define ARCH_WORD_BITS 32
 
@@ -24,4 +24,4 @@ static ossl_inline uint64_t widemul(uint32_t a, uint32_t b)
     return ((uint64_t)a) * b;
 }
 
-#endif                          /* __ARCH_ARCH_32_ARCH_INTRINSICS_H__ */
+#endif                          /* HEADER_ARCH_32_ARCH_INTRINSICS_H */

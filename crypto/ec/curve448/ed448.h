@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef __C448_ED448_H__
-# define __C448_ED448_H__ 1
+#ifndef HEADER_ED448_H
+# define HEADER_ED448_H
 
 # include "point_448.h"
 
@@ -108,8 +108,7 @@ c448_error_t c448_ed448_sign_prehash(
  *
  * For Ed25519, it is unsafe to use the same key for both prehashed and
  * non-prehashed messages, at least without some very careful protocol-level
- * disambiguation.  For Ed448 it is safe.  The C++ wrapper is designed to make
- * it harder to screw this up, but this C code gives you no seat belt.
+ * disambiguation.  For Ed448 it is safe.
  */
 c448_error_t c448_ed448_verify(const uint8_t
                                  signature[EDDSA_448_SIGNATURE_BYTES],
@@ -196,4 +195,4 @@ c448_error_t c448_ed448_convert_private_key_to_x448(
                             uint8_t x[X448_PRIVATE_BYTES],
                             const uint8_t ed[EDDSA_448_PRIVATE_BYTES]);
 
-#endif                          /* __C448_ED448_H__ */
+#endif                          /* HEADER_ED448_H */

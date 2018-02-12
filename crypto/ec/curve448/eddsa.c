@@ -169,7 +169,7 @@ c448_error_t c448_ed448_sign(
                                      expanded + EDDSA_448_PRIVATE_BYTES,
                                      EDDSA_448_PRIVATE_BYTES)
                 || !EVP_DigestUpdate(hashctx, message, message_len)) {
-                OPENSSL_cleanse(expanded, sizeof(expanded));
+            OPENSSL_cleanse(expanded, sizeof(expanded));
             goto err;
         }
         OPENSSL_cleanse(expanded, sizeof(expanded));
@@ -191,9 +191,8 @@ c448_error_t c448_ed448_sign(
         curve448_point_t p;
 
         curve448_scalar_halve(nonce_scalar_2, nonce_scalar);
-        for (c = 2; c < C448_EDDSA_ENCODE_RATIO; c <<= 1) {
+        for (c = 2; c < C448_EDDSA_ENCODE_RATIO; c <<= 1)
             curve448_scalar_halve(nonce_scalar_2, nonce_scalar_2);
-        }
 
         curve448_precomputed_scalarmul(p, curve448_precomputed_base,
                                        nonce_scalar_2);
@@ -207,10 +206,10 @@ c448_error_t c448_ed448_sign(
 
         /* Compute the challenge */
         if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
-            || !EVP_DigestUpdate(hashctx, nonce_point, sizeof(nonce_point))
-            || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
-            || !EVP_DigestUpdate(hashctx, message, message_len)
-            || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge)))
+                || !EVP_DigestUpdate(hashctx, nonce_point, sizeof(nonce_point))
+                || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
+                || !EVP_DigestUpdate(hashctx, message, message_len)
+                || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge)))
             goto err;
 
         curve448_scalar_decode_long(challenge_scalar, challenge,
@@ -313,12 +312,8 @@ c448_error_t c448_ed448_verify_prehash(
                     const uint8_t hash[64], const uint8_t *context,
                     uint8_t context_len)
 {
-    c448_error_t ret;
-
-    ret = c448_ed448_verify(signature, pubkey, hash, 64, 1, context,
-                            context_len);
-
-    return ret;
+    return c448_ed448_verify(signature, pubkey, hash, 64, 1, context,
+                             context_len);
 }
 
 int ED448_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,

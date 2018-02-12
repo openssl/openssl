@@ -167,6 +167,7 @@ static void sub_niels_from_pt(curve448_point_t d, const niels_t e,
                               int before_double)
 {
     gf a, b, c;
+
     gf_sub_nr(b, d->y, d->x);   /* 3+e */
     gf_mul(a, e->b, b);
     gf_add_nr(b, d->x, d->y);   /* 2+e */
@@ -207,9 +208,9 @@ c448_bool_t curve448_point_eq(const curve448_point_t p,
                               const curve448_point_t q)
 {
     mask_t succ;
+    gf a, b;
 
     /* equality mod 2-torsion compares x/y */
-    gf a, b;
     gf_mul(a, p->y, q->x);
     gf_mul(b, q->y, p->x);
     succ = gf_eq(a, b);
@@ -220,8 +221,8 @@ c448_bool_t curve448_point_eq(const curve448_point_t p,
 c448_bool_t curve448_point_valid(const curve448_point_t p)
 {
     mask_t out;
-
     gf a, b, c;
+
     gf_mul(a, p->x, p->y);
     gf_mul(b, p->z, p->t);
     out = gf_eq(a, b);
@@ -248,17 +249,16 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
                                     const curve448_precomputed_s * table,
                                     const curve448_scalar_t scalar)
 {
-    int i;
-    unsigned j, k;
+    unsigned int i, j, k;
     const unsigned int n = COMBS_N, t = COMBS_T, s = COMBS_S;
     niels_t ni;
-
     curve448_scalar_t scalar1x;
+
     curve448_scalar_add(scalar1x, scalar, precomputed_scalarmul_adjustment);
     curve448_scalar_halve(scalar1x, scalar1x);
 
-    for (i = s - 1; i >= 0; i--) {
-        if (i != (int)s - 1)
+    for (i = s; i > 0; i--) {
+        if (i != s)
             point_double_internal(out, out, 0);
 
         for (j = 0; j < n; j++) {
@@ -266,7 +266,8 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
             mask_t invert;
 
             for (k = 0; k < t; k++) {
-                unsigned int bit = i + s * (k + j * t);
+                unsigned int bit = (i - 1) + s * (k + j * t);
+
                 if (bit < C448_SCALAR_BITS) {
                     tab |=
                         (scalar1x->limb[bit / WBITS] >> (bit % WBITS) & 1) << k;
@@ -281,8 +282,8 @@ void curve448_precomputed_scalarmul(curve448_point_t out,
                                        1 << (t - 1), tab);
 
             cond_neg_niels(ni, invert);
-            if ((i != (int)s - 1) || j) {
-                add_niels_to_pt(out, ni, j == n - 1 && i);
+            if ((i != s) || j != 0) {
+                add_niels_to_pt(out, ni, j == n - 1 && i != 1);
             } else {
                 niels_to_pt(out, ni);
             }
@@ -297,10 +298,10 @@ void curve448_point_mul_by_ratio_and_encode_like_eddsa(
                                     uint8_t enc[EDDSA_448_PUBLIC_BYTES],
                                     const curve448_point_t p)
 {
-
-    /* The point is now on the twisted curve.  Move it to untwisted. */
     gf x, y, z, t;
     curve448_point_t q;
+
+    /* The point is now on the twisted curve.  Move it to untwisted. */
     curve448_point_copy(q, p);
 
     {
@@ -354,9 +355,7 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
     enc2[EDDSA_448_PRIVATE_BYTES - 1] &= ~0x80;
 
     succ = gf_deserialize(p->y, enc2, 1, 0);
-#if 0 == 0
     succ &= word_is_zero(enc2[EDDSA_448_PRIVATE_BYTES - 1]);
-#endif
 
     gf_sqr(p->x, p->y);
     gf_sub(p->z, ONE, p->x);    /* num = 1-y^2 */
@@ -371,8 +370,9 @@ c448_error_t curve448_point_decode_like_eddsa_and_mul_by_ratio(
     gf_copy(p->z, ONE);
 
     {
-        /* 4-isogeny 2xy/(y^2-ax^2), (y^2+ax^2)/(2-y^2-ax^2) */
         gf a, b, c, d;
+
+        /* 4-isogeny 2xy/(y^2-ax^2), (y^2+ax^2)/(2-y^2-ax^2) */
         gf_sqr(c, p->x);
         gf_sqr(a, p->y);
         gf_add(d, c, a);
@@ -478,6 +478,7 @@ void curve448_point_mul_by_ratio_and_encode_like_x448(uint8_t
                                                       const curve448_point_t p)
 {
     curve448_point_t q;
+
     curve448_point_copy(q, p);
     gf_invert(q->t, q->x, 0);   /* 1/x */
     gf_mul(q->z, q->t, q->y);   /* y/x */
@@ -523,7 +524,7 @@ struct smvt_control {
 # define NUMTRAILINGZEROS	numtrailingzeros
 static uint32_t numtrailingzeros(uint32_t i)
 {
-    unsigned int tmp;
+    uint32_t tmp;
     uint32_t num = 31;
 
     if (i == 0)
@@ -549,7 +550,8 @@ static uint32_t numtrailingzeros(uint32_t i)
         i = tmp;
         num -= 2;
     }
-    if ((i << 1) != 0)
+    tmp = i << 1;
+    if (tmp != 0)
         num--;
 
     return num;
@@ -593,7 +595,7 @@ static int recode_wnaf(struct smvt_control *control,
             int32_t delta = odd & mask;
 
             assert(position >= 0);
-            if (odd & 1 << (table_bits + 1))
+            if (odd & (1 << (table_bits + 1)))
                 delta -= (1 << (table_bits + 1));
             current -= delta << pos;
             control[position].power = pos + 16 * (w - 1);
@@ -606,9 +608,9 @@ static int recode_wnaf(struct smvt_control *control,
 
     position++;
     n = table_size - position;
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < n; i++)
         control[i] = control[i + position];
-    }
+
     return n - 1;
 }
 
@@ -649,8 +651,8 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
                                                const curve448_point_t base2,
                                                const curve448_scalar_t scalar2)
 {
-    const int table_bits_var = C448_WNAF_VAR_TABLE_BITS,
-        table_bits_pre = C448_WNAF_FIXED_TABLE_BITS;
+    const int table_bits_var = C448_WNAF_VAR_TABLE_BITS;
+    const int table_bits_pre = C448_WNAF_FIXED_TABLE_BITS;
     struct smvt_control control_var[C448_SCALAR_BITS /
                                     (C448_WNAF_VAR_TABLE_BITS + 1) + 3];
     struct smvt_control control_pre[C448_SCALAR_BITS /
@@ -682,37 +684,36 @@ void curve448_base_double_scalarmul_non_secret(curve448_point_t combo,
     }
 
     for (i--; i >= 0; i--) {
-        int cv = (i == control_var[contv].power), cp =
-            (i == control_pre[contp].power);
+        int cv = (i == control_var[contv].power);
+        int cp = (i == control_pre[contp].power);
+
         point_double_internal(combo, combo, i && !(cv || cp));
 
         if (cv) {
             assert(control_var[contv].addend);
 
-            if (control_var[contv].addend > 0) {
+            if (control_var[contv].addend > 0)
                 add_pniels_to_pt(combo,
                                  precmp_var[control_var[contv].addend >> 1],
                                  i && !cp);
-            } else {
+            else
                 sub_pniels_from_pt(combo,
                                    precmp_var[(-control_var[contv].addend)
                                               >> 1], i && !cp);
-            }
             contv++;
         }
 
         if (cp) {
             assert(control_pre[contp].addend);
 
-            if (control_pre[contp].addend > 0) {
+            if (control_pre[contp].addend > 0)
                 add_niels_to_pt(combo,
                                 curve448_wnaf_base[control_pre[contp].addend
                                                    >> 1], i);
-            } else {
+            else
                 sub_niels_from_pt(combo,
                                   curve448_wnaf_base[(-control_pre
                                                       [contp].addend) >> 1], i);
-            }
             contp++;
         }
     }

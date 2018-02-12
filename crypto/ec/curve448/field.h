@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef __GF_H__
-# define __GF_H__
+#ifndef HEADER_FIELD_H
+# define HEADER_FIELD_H
 
 # include "internal/constant_time_locl.h"
 # include <string.h>
@@ -23,7 +23,7 @@
 # define SER_BYTES 56
 
 # if defined(__GNUC__) || defined(__clang__)
-#  define INLINE_UNUSED __inline__ __attribute__((unused,always_inline))
+#  define INLINE_UNUSED __inline__ __attribute__((__unused__,__always_inline__))
 #  define RESTRICT __restrict__
 #  define ALIGNED __attribute__((aligned(32)))
 # else
@@ -169,4 +169,4 @@ static ossl_inline void gf_cond_swap(gf x, gf_s * RESTRICT y, mask_t swap)
     }
 }
 
-#endif                          /* __GF_H__ */
+#endif                          /* HEADER_FIELD_H */
