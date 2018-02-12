@@ -28,7 +28,7 @@ typedef struct {
 typedef struct {
     niels_t n;
     gf z;
-} VECTOR_ALIGNED pniels_t[1];
+} pniels_t[1];
 
 /* Precomputed base */
 struct curve448_precomputed_s {
