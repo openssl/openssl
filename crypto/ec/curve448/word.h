@@ -61,66 +61,6 @@ typedef int64_t dsword_t;
 #  error "For now we only support 32- and 64-bit architectures."
 # endif
 
-# ifdef __ARM_NEON__
-typedef uint32x4_t vecmask_t;
-# elif defined(__clang__)
-typedef uint64_t uint64x2_t __attribute__ ((ext_vector_type(2)));
-typedef int64_t int64x2_t __attribute__ ((ext_vector_type(2)));
-typedef uint64_t uint64x4_t __attribute__ ((ext_vector_type(4)));
-typedef int64_t int64x4_t __attribute__ ((ext_vector_type(4)));
-typedef uint32_t uint32x4_t __attribute__ ((ext_vector_type(4)));
-typedef int32_t int32x4_t __attribute__ ((ext_vector_type(4)));
-typedef uint32_t uint32x2_t __attribute__ ((ext_vector_type(2)));
-typedef int32_t int32x2_t __attribute__ ((ext_vector_type(2)));
-typedef uint32_t uint32x8_t __attribute__ ((ext_vector_type(8)));
-typedef int32_t int32x8_t __attribute__ ((ext_vector_type(8)));
-typedef word_t vecmask_t __attribute__ ((ext_vector_type(4)));
-# elif defined(__GNUC__) \
-       && (__GNUC__ >= 4 || (__GNUC__== 3 && __GNUC_MINOR__ >= 1))
-typedef uint64_t uint64x2_t __attribute__ ((vector_size(16)));
-typedef int64_t int64x2_t __attribute__ ((vector_size(16)));
-typedef uint64_t uint64x4_t __attribute__ ((vector_size(32)));
-typedef int64_t int64x4_t __attribute__ ((vector_size(32)));
-typedef uint32_t uint32x4_t __attribute__ ((vector_size(16)));
-typedef int32_t int32x4_t __attribute__ ((vector_size(16)));
-typedef uint32_t uint32x2_t __attribute__ ((vector_size(8)));
-typedef int32_t int32x2_t __attribute__ ((vector_size(8)));
-typedef uint32_t uint32x8_t __attribute__ ((vector_size(32)));
-typedef int32_t int32x8_t __attribute__ ((vector_size(32)));
-typedef word_t vecmask_t __attribute__ ((vector_size(32)));
-# endif
-
-# if defined(__AVX2__)
-#  define VECTOR_ALIGNED __attribute__((aligned(32)))
-typedef uint64x4_t uint64xn_t;
-typedef uint32x8_t uint32xn_t;
-# elif defined(__SSE2__)
-#  define VECTOR_ALIGNED __attribute__((aligned(16)))
-typedef uint64x2_t uint64xn_t;
-typedef uint32x4_t uint32xn_t;
-# elif defined(__ARM_NEON__)
-#  define VECTOR_ALIGNED __attribute__((aligned(16)))
-typedef uint64x2_t uint64xn_t;
-typedef uint32x4_t uint32xn_t;
-# elif !defined(_MSC_VER) \
-       && (defined(_WIN64) || defined(__amd64__) || defined(__X86_64__) \
-           || defined(__aarch64__))
-#  define VECTOR_ALIGNED __attribute__((aligned(8)))
-typedef uint32_t uint32xn_t;
-# else
-#  ifdef __GNUC__
-#   define VECTOR_ALIGNED __attribute__((aligned(4)))
-#  else
-/*
- * This shouldn't be a problem because a big_register_t isn't actually a vector
- * type anyway in this case.
- */
-#   define VECTOR_ALIGNED
-#  endif
-typedef uint64_t uint64xn_t;
-typedef uint32_t uint32xn_t;
-# endif
-
 
 /* PERF: vectorize vs unroll */
 # ifdef __clang__

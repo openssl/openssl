@@ -13,7 +13,7 @@
 
 #include "point_448.h"
 
-const curve448_precomputed_s curve448_precomputed_base_table VECTOR_ALIGNED = {
+const curve448_precomputed_s curve448_precomputed_base_table = {
     {
         {{
             {FIELD_LITERAL(0x00cc3b062366f4cc,0x003d6e34e314aa3c,0x00d51c0a7521774d,0x0094e060eec6ab8b,0x00d21291b4d80082,0x00befed12b55ef1e,0x00c3dd2df5c94518,0x00e0a7b112b8d4e6)},
@@ -341,7 +341,7 @@ const curve448_precomputed_s curve448_precomputed_base_table VECTOR_ALIGNED = {
 const struct curve448_precomputed_s *curve448_precomputed_base
     = &curve448_precomputed_base_table;
 
-const niels_t curve448_wnaf_base_table[32] VECTOR_ALIGNED = {
+const niels_t curve448_wnaf_base_table[32] = {
     {{
         {FIELD_LITERAL(0x00303cda6feea532,0x00860f1d5a3850e4,0x00226b9fa4728ccd,0x00e822938a0a0c0c,0x00263a61c9ea9216,0x001204029321b828,0x006a468360983c65,0x0002846f0a782143)},
         {FIELD_LITERAL(0x00303cda6feea532,0x00860f1d5a3850e4,0x00226b9fa4728ccd,0x006822938a0a0c0c,0x00263a61c9ea9215,0x001204029321b828,0x006a468360983c65,0x0082846f0a782143)},
