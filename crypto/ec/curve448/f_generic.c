@@ -159,9 +159,8 @@ mask_t gf_eq(const gf a, const gf b)
     gf_sub(c, a, b);
     gf_strong_reduce(c);
 
-    for (i = 0; i < NLIMBS; i++) {
+    for (i = 0; i < NLIMBS; i++)
         ret |= c->limb[LIMBPERM(i)];
-    }
 
     return word_is_zero(ret);
 }
