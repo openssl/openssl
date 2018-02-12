@@ -915,11 +915,16 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     int was_ticket = (SSL_get_options(s) & SSL_OP_NO_TICKET) == 0;
 
-    if (s->ctx != NULL && s->ctx->ext.servername_cb != 0)
+    if (!ossl_assert(s->ctx != NULL) || !ossl_assert(s->session_ctx != NULL)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_FINAL_SERVER_NAME,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (s->ctx->ext.servername_cb != NULL)
         ret = s->ctx->ext.servername_cb(s, &altmp,
                                         s->ctx->ext.servername_arg);
-    else if (s->session_ctx != NULL
-             && s->session_ctx->ext.servername_cb != 0)
+    else if (s->session_ctx->ext.servername_cb != NULL)
         ret = s->session_ctx->ext.servername_cb(s, &altmp,
                                        s->session_ctx->ext.servername_arg);
 
