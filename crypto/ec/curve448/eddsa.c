@@ -29,8 +29,8 @@ static c448_error_t oneshot_hash(uint8_t *out, size_t outlen,
         return C448_FAILURE;
 
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
-        || !EVP_DigestUpdate(hashctx, in, inlen)
-        || !EVP_DigestFinalXOF(hashctx, out, outlen)) {
+            || !EVP_DigestUpdate(hashctx, in, inlen)
+            || !EVP_DigestFinalXOF(hashctx, out, outlen)) {
         EVP_MD_CTX_free(hashctx);
         return C448_FAILURE;
     }
@@ -69,9 +69,9 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
         return C448_FAILURE;
 
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
-        || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
-        || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
-        || !EVP_DigestUpdate(hashctx, context, context_len))
+            || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
+            || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
+            || !EVP_DigestUpdate(hashctx, context, context_len))
         return C448_FAILURE;
 
     return C448_SUCCESS;
@@ -165,10 +165,11 @@ c448_error_t c448_ed448_sign(
 
         /* Hash to create the nonce */
         if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
-            || !EVP_DigestUpdate(hashctx, expanded + EDDSA_448_PRIVATE_BYTES,
-                                 EDDSA_448_PRIVATE_BYTES)
-            || !EVP_DigestUpdate(hashctx, message, message_len)) {
-            OPENSSL_cleanse(expanded, sizeof(expanded));
+                || !EVP_DigestUpdate(hashctx,
+                                     expanded + EDDSA_448_PRIVATE_BYTES,
+                                     EDDSA_448_PRIVATE_BYTES)
+                || !EVP_DigestUpdate(hashctx, message, message_len)) {
+                OPENSSL_cleanse(expanded, sizeof(expanded));
             goto err;
         }
         OPENSSL_cleanse(expanded, sizeof(expanded));
