@@ -51,6 +51,7 @@ RSA_PRIME_INFO *rsa_multip_info_new(void)
     BN_free(pinfo->d);
     BN_free(pinfo->t);
     BN_free(pinfo->pp);
+    OPENSSL_free(pinfo);
     return NULL;
 }
 
