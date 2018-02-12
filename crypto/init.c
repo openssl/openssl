@@ -502,6 +502,8 @@ void OPENSSL_cleanup(void)
     obj_cleanup_int();
     err_cleanup();
 
+    CRYPTO_secure_malloc_done();
+
     base_inited = 0;
 }
 
