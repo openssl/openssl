@@ -14,7 +14,6 @@
 #include <stdio.h>
 #include "bio_lcl.h"
 
-#define TRUNCATE
 #define DUMP_WIDTH      16
 #define DUMP_WIDTH_LESS_INDENT(i) (DUMP_WIDTH-((i-(i>6?6:i)+3)/4))
 
@@ -29,16 +28,9 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
 {
     int ret = 0;
     char buf[288 + 1], tmp[20], str[128 + 1];
-    int i, j, rows, trc;
+    int i, j, rows;
     unsigned char ch;
     int dump_width;
-
-    trc = 0;
-
-#ifdef TRUNCATE
-    for (; (len > 0) && ((s[len - 1] == ' ') || (s[len - 1] == '\0')); len--)
-        trc++;
-#endif
 
     if (indent < 0)
         indent = 0;
@@ -90,14 +82,7 @@ int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
          */
         ret += cb((void *)buf, strlen(buf), u);
     }
-#ifdef TRUNCATE
-    if (trc > 0) {
-        BIO_snprintf(buf, sizeof(buf), "%s%04x - <SPACES/NULS>\n", str,
-                     len + trc);
-        ret += cb((void *)buf, strlen(buf), u);
-    }
-#endif
-    return (ret);
+    return ret;
 }
 
 #ifndef OPENSSL_NO_STDIO
