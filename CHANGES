@@ -17,7 +17,7 @@
      configuration is updated to include suitable ciphersuites. The DEFAULT
      ciphersuite configuration does include TLSv1.3 ciphersuites. For further
      information on this and other related issues please see:
-     https://www.openssl.org/blog/blog/2017/05/04/tlsv1.3/
+     https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
 
      NOTE: In this pre-release of OpenSSL a draft version of the
      TLSv1.3 standard has been implemented. Implementations of different draft
