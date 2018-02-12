@@ -498,7 +498,7 @@
                    applications to explicitly select individual protocol
                    versions. Note that there is no "no-tls1_3-method" option
                    because there is no application method for TLSv1.3. Using
-                   invidivial protocol methods directly is deprecated.
+                   individual protocol methods directly is deprecated.
                    Applications should use TLS_method() instead.
 
   enable-<alg>
