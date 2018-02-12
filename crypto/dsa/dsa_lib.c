@@ -65,7 +65,7 @@ DSA *DSA_new_method(ENGINE *engine)
 
     ret->meth = DSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
-    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
+    ret->flags = ret->meth->flags; /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
             DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
@@ -83,7 +83,7 @@ DSA *DSA_new_method(ENGINE *engine)
     }
 #endif
 
-    ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
+    ret->flags = ret->meth->flags;
 
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
         goto err;

@@ -34,7 +34,6 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
                  ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    EVP_MD_CTX_set_flags(m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
     for (i = 0; (int)i < num; i += MD5_DIGEST_LENGTH) {
         k++;
         if (k > sizeof(buf)) {

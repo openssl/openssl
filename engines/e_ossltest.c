@@ -62,7 +62,6 @@ static const EVP_MD *digest_md5(void)
             || !EVP_MD_meth_set_input_blocksize(md, MD5_CBLOCK)
             || !EVP_MD_meth_set_app_datasize(md,
                                              sizeof(EVP_MD *) + sizeof(MD5_CTX))
-            || !EVP_MD_meth_set_flags(md, 0)
             || !EVP_MD_meth_set_init(md, digest_md5_init)
             || !EVP_MD_meth_set_update(md, digest_md5_update)
             || !EVP_MD_meth_set_final(md, digest_md5_final)) {

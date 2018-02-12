@@ -51,7 +51,7 @@ static DH_METHOD dh_ossl = {
     dh_bn_mod_exp,
     dh_init,
     dh_finish,
-    DH_FLAG_FIPS_METHOD,
+    0,
     NULL,
     NULL
 };

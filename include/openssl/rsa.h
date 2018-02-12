@@ -388,22 +388,8 @@ void *RSA_get_ex_data(const RSA *r, int idx);
 RSA *RSAPublicKey_dup(RSA *rsa);
 RSA *RSAPrivateKey_dup(RSA *rsa);
 
-/*
- * If this flag is set the RSA method is FIPS compliant and can be used in
- * FIPS mode. This is set in the validated module method. If an application
- * sets this flag in its own methods it is its responsibility to ensure the
- * result is compliant.
- */
-
-# define RSA_FLAG_FIPS_METHOD                    0x0400
-
-/*
- * If this flag is set the operations normally disabled in FIPS mode are
- * permitted it is then the applications responsibility to ensure that the
- * usage is compliant.
- */
-
-# define RSA_FLAG_NON_FIPS_ALLOW                 0x0400
+# define RSA_FLAG_FIPS_METHOD                    0x0
+# define RSA_FLAG_NON_FIPS_ALLOW                 0x0
 /*
  * Application has decided PRNG is good enough to generate a key: don't
  * check.
