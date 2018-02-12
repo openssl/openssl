@@ -128,8 +128,8 @@ void OPENSSL_cpuid_setup(void)
 TRACELOGGING_DEFINE_PROVIDER(
     g_hProvider,
     "OpenSSL",
-	/*{5ee02bf4-33cf-53cf-ddc9-f18679e677dd}*/
-	(0x5ee02bf4, 0x33cf, 0x53cf, 0xdd, 0xc9, 0xf1, 0x86, 0x79, 0xe6, 0x77, 0xdd));
+    /*{5ee02bf4-33cf-53cf-ddc9-f18679e677dd}*/
+    (0x5ee02bf4, 0x33cf, 0x53cf, 0xdd, 0xc9, 0xf1, 0x86, 0x79, 0xe6, 0x77, 0xdd));
 int OPENSSL_isservice(void)
 {
     /*Core API cannot interact with GUI*/
@@ -290,18 +290,18 @@ void OPENSSL_showfatal(const char *fmta, ...)
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
 #ifdef OPENSSL_SYS_WIN_CORE
-	/* CORE is always NONGUI and NT >= 0x0601*/
-		HRESULT tEventLog = TraceLoggingRegister(g_hProvider);
-		if (SUCCEEDED(tEventLog)) {
-			const TCHAR *pmsg = buf;
-			TraceLoggingWrite(g_hProvider, "ErrorLog",
-				TraceLoggingLevel(EVENTLOG_ERROR_TYPE),
-				TraceLoggingWideString(pmsg, "Message"));
-		}
-		TraceLoggingUnregister(g_hProvider);
+    /* ONECORE is always NONGUI and NT >= 0x0601*/
+        HRESULT tEventLog = TraceLoggingRegister(g_hProvider);
+        if (SUCCEEDED(tEventLog)) {
+            const TCHAR *pmsg = buf;
+            TraceLoggingWrite(g_hProvider, "ErrorLog",
+                TraceLoggingLevel(EVENTLOG_ERROR_TYPE),
+                TraceLoggingWideString(pmsg, "Message"));
+        }
+        TraceLoggingUnregister(g_hProvider);
 #else
-	/* this -------------v--- guards NT-specific calls */
-	if (check_winnt() && OPENSSL_isservice() > 0) {
+    /* this -------------v--- guards NT-specific calls */
+    if (check_winnt() && OPENSSL_isservice() > 0) {
         HANDLE hEventLog = RegisterEventSource(NULL, _T("OpenSSL"));
 
         if (hEventLog != NULL) {
@@ -322,12 +322,12 @@ void OPENSSL_showfatal(const char *fmta, ...)
 
             (void)DeregisterEventSource(hEventLog);
         }
-	}
-	else
-		MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    }
+    else
+        MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
 #endif
 # else
-	MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
 # endif     
 }
 #else
