@@ -2209,7 +2209,10 @@ static int do_updatedb(CA_DB *db)
         return -1;
 
     /* get actual time and make a string */
-    a_tm = X509_gmtime_adj(a_tm, 0);
+    if (X509_gmtime_adj(a_tm, 0) == NULL) {
+        ASN1_UTCTIME_free(a_tm);
+        return -1;
+    }
     a_tm_s = app_malloc(a_tm->length + 1, "time string");
 
     memcpy(a_tm_s, a_tm->data, a_tm->length);
