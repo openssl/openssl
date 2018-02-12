@@ -12,6 +12,14 @@
       o Allow GNU style "make variables" to be used with Configure.
       o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
+      o Add multi-prime RSA (RFC 8017) support
+      o Add SM3 implemented according to GB/T 32905-2016
+      o Add SM4 implemented according to GB/T 32907-2016.
+      o Add 'Maximum Fragment Length' TLS extension negotiation and support
+      o Add ARIA support
+      o Add SHA3
+      o Rewrite of devcrypto engine
+      o Add support for SipHash
 
   Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.0h [under development]
 
