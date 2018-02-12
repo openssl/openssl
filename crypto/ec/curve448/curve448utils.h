@@ -10,8 +10,8 @@
  * Originally written by Mike Hamburg
  */
 
-#ifndef __C448_COMMON_H__
-# define __C448_COMMON_H__ 1
+#ifndef HEADER_CURVE448UTILS_H
+# define HEADER_CURVE448UTILS_H
 
 # include <openssl/e_os2.h>
 
@@ -58,10 +58,10 @@ typedef int64_t c448_dsword_t;
 # endif
 
 /* C448_TRUE = -1 so that C448_TRUE & x = x */
-static const c448_bool_t C448_TRUE = 0 - (c448_bool_t)1;
+# define C448_TRUE      (0 - (c448_bool_t)1)
 
 /* C448_FALSE = 0 so that C448_FALSE & x = 0 */
-static const c448_bool_t C448_FALSE = 0;
+# define C448_FALSE     0
 
 /* Another boolean type used to indicate success or failure. */
 typedef enum {

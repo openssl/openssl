@@ -46,6 +46,7 @@ void gf_serialize(uint8_t serial[SER_BYTES], const gf x, int with_hibit)
 mask_t gf_hibit(const gf x)
 {
     gf y;
+
     gf_add(y, x, x);
     gf_strong_reduce(y);
     return 0 - (y->limb[0] & 1);
@@ -55,6 +56,7 @@ mask_t gf_hibit(const gf x)
 mask_t gf_lobit(const gf x)
 {
     gf y;
+
     gf_copy(y, x);
     gf_strong_reduce(y);
     return 0 - (y->limb[0] & 1);
@@ -168,6 +170,7 @@ mask_t gf_eq(const gf a, const gf b)
 mask_t gf_isr(gf a, const gf x)
 {
     gf L0, L1, L2;
+
     gf_sqr(L1, x);
     gf_mul(L2, x, L1);
     gf_sqr(L1, L2);
