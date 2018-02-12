@@ -14,13 +14,11 @@
 # define HEADER_WORD_H
 
 # include <string.h>
-
 # include <assert.h>
+# include <stdlib.h>
 # include <openssl/e_os2.h>
 # include "arch_intrinsics.h"
-
 # include "curve448utils.h"
-# include <stdlib.h>
 
 # if defined(__ARM_NEON__)
 #  include <arm_neon.h>
@@ -56,7 +54,7 @@ typedef int64_t dsword_t;
 # if C448_WORD_BITS == 64
 #  define SC_LIMB(x) (x)
 # elif C448_WORD_BITS == 32
-#  define SC_LIMB(x) ((uint32_t)x),(x >> 32)
+#  define SC_LIMB(x) ((uint32_t)(x)),((x) >> 32)
 # else
 #  error "For now we only support 32- and 64-bit architectures."
 # endif
