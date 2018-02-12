@@ -667,7 +667,9 @@ static int asid_contains(ASIdOrRanges *parent, ASIdOrRanges *child)
         for (;; p++) {
             if (p >= sk_ASIdOrRange_num(parent))
                 return 0;
-            extract_min_max(sk_ASIdOrRange_value(parent, p), &p_min, &p_max);
+            if (!extract_min_max(sk_ASIdOrRange_value(parent, p), &p_min,
+                                 &p_max))
+                return 0;
             if (ASN1_INTEGER_cmp(p_max, c_max) < 0)
                 continue;
             if (ASN1_INTEGER_cmp(p_min, c_min) > 0)
