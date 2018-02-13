@@ -1,0 +1,73 @@
+<DRAFT!>
+			CÓMO claves
+
+1. Introducción
+
+Las claves son la base de los algoritmos de clave pública y PKI. Las claves usualmente vienen en pares, con la mitad de la clave pública y la otra mitad siendo la clave privada. Con OpenSSL, la clave privada contiene la información de clave pública también, por lo que una clave pública no necesita ser generada por separado.
+
+Las claves públicas vienen en varios sabores, utilizando diferentes algoritmos criptográficos. Los más populares asociados con los certificados son RSA y DSA, y este CÓMO mostrará cómo generar cada uno de ellos.
+
+
+2. Generar una clave RSA
+
+Una clave RSA se puede usar tanto para el cifrado como para la firma.
+
+Generar una clave para el algoritmo RSA es bastante fácil, todo lo que tiene que hacer es lo siguiente:
+
+  openssl genrsa -des3 -out privkey.pem 2048
+
+Con esta variante, se le pedirá una contraseña de protección. Si no desea que su clave esté protegida por una contraseña, elimine la marca '-des3' de la línea de comando de arriba.
+
+El número 2048 es el tamaño de la clave, en bits. Hoy, se recomienda 2048 o más para las claves RSA, ya que una cantidad menor de bits se considera insegura o a ser insegura muy pronto.
+
+3. Generar una clave DSA
+
+Una clave DSA se puede usar solo para la firma. Es importante saber para qué se puede utilizar realmente una solicitud de certificado con una clave DSA.
+
+Generar una clave para el algoritmo DSA es un proceso de dos pasos. En primer lugar, debe generar parámetros para generar la clave:
+
+  openssl dsaparam -out dsaparam.pem 2048
+
+El número 2048 es el tamaño de la clave, en bits. Hoy, se recomienda 2048 o superior para las claves DSA, ya que una cantidad menor de bits se considera insegura o a ser insegura muy pronto.
+
+Cuando se hace eso, puede generar una clave usando los parámetros en cuestión (en realidad, se pueden generar varias claves desde los mismos parámetros):
+
+  openssl gendsa -des3 -out privkey.pem dsaparam.pem
+
+Con esta variante, se le pedirá una contraseña de protección. Si no desea que su clave esté protegida por una contraseña, elimine la marca '-des3' de la línea de comando de arriba.
+
+
+4. Generar una clave EC
+
+Una clave EC se puede usar tanto para el acuerdo clave (ECDH) como para la firma (ECDSA).
+
+Generar una clave para ECC es similar a generar una clave DSA. Estos son procesos de dos pasos. Primero, debe obtener los parámetros de EC a partir de los cuales se generará la clave:
+
+  openssl ecparam -name prime256v1 -out prime256v1.pem
+
+El prime256v1, o NIST P-256, que significa "curva X9.62/SECG sobre un campo principal de 256 bits", es el nombre de una curva elíptica que genera los parámetros. Puede usar el siguiente comando para listar todas las curvas admitidas:
+
+  openssl ecparam -list_curves
+
+Una vez hecho esto, puede generar una clave utilizando los parámetros creados (se pueden producir varias claves a partir de los mismos parámetros):
+
+  openssl genpkey -des3 -paramfile prime256v1.pem -out private.key
+
+Con esta variante, se le pedirá una contraseña para proteger su clave. Si no desea que su clave esté protegida por una contraseña, quite la flag '-des3' de la línea de comando de arriba.
+
+También puede generar directamente la clave en un solo paso:
+
+  openssl ecparam -genkey -name prime256v1 -out private.key
+
+o
+
+  openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-256
+
+
+5. NOTA
+
+Si tiene la intención de utilizar la clave junto con un certificado de servidor, puede ser razonable evitar protegerla con una contraseña, ya que de lo contrario, alguien debería ingresar la contraseña cada vez que el servidor necesite acceder a la clave.
+
+Para X25519, se trata como un algoritmo distinto, pero no como una de las curvas enumeradas con la opción 'ecparam -list_curves'. Puede usar el siguiente comando para generar una clave X25519:
+
+  openssl genpkey -algorithm X25519 -out xkey.pem
