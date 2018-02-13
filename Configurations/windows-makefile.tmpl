@@ -160,6 +160,7 @@ ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 !ENDIF
 
 CC={- $config{cc} -}
+CPP={- $config{cpp} -}
 CPPFLAGS={- our $cppflags = join(" ",
                                  (map { "-D".$_} @{$config{defines}}),
                                  (map { " /I ".$_} @{$config{includes}}),
@@ -441,7 +442,7 @@ EOF
 $target: "$args{generator}->[0]" $deps
 	set ASM=\$(AS)
 	$generator \$@.S
-	\$(CC) $incs \$(CFLAGS) \$(CPPFLAGS) /EP /C \$@.S > \$@.i && move /Y \$@.i \$@
+	\$(CPP) $cppflags \$@.S > \$@.i && move /Y \$@.i \$@
         del /Q \$@.S
 EOF
               }
@@ -454,7 +455,7 @@ EOF
           }
           return <<"EOF";
 $target: "$args{generator}->[0]" $deps
-	\$(CC) $incs \$(CFLAGS) \$(CPPFLAGS) /EP /C "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
+	\$(CPP) $incs $cppflags "$args{generator}->[0]" > \$@.i && move /Y \$@.i \$@
 EOF
       }
   }

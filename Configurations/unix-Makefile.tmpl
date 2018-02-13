@@ -857,7 +857,7 @@ EOF
 $target: $args{generator}->[0] $deps
 	( trap "rm -f \$@.*" INT 0; \\
 	  $generator \$@.S; \\
-	  \$(CC) $incs \$(CFLAGS) \$(CPPFLAGS) -E \$@.S | \\
+	  \$(CPP) $incs $cppflags \$@.S | \\
 	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.i && \\
 	  mv -f \$@.i \$@ )
 EOF
@@ -870,7 +870,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(CC) $incs \$(CFLAGS) \$(CPPFLAGS) -E $args{generator}->[0] | \\
+	\$(CPP) $incs $cppflags $args{generator}->[0] | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
