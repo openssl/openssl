@@ -16,6 +16,14 @@
 
 #ifdef OPENSSL_SYS_UNIX
 # include <unistd.h>
+#ifndef OPENSSL_NO_KTLS
+# include <netinet/in.h>
+# include <netinet/in.h>
+# include <arpa/inet.h>
+# include <sys/socket.h>
+# include <unistd.h>
+# include <fcntl.h>
+#endif
 
 static ossl_inline void ossl_sleep(unsigned int millis) {
     usleep(millis * 1000);
@@ -654,6 +662,119 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
 }
 
 #define MAXLOOPS    1000000
+
+#ifndef OPENSSL_NO_KTLS
+static int set_nb(int fd)
+{
+    int flags;
+
+    flags = fcntl(fd,F_GETFL,0);
+    if (flags == -1)
+        return flags;
+    flags = fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    return flags;
+}
+
+int create_test_sockets(int *cfd, int *sfd)
+{
+    struct sockaddr_in sin;
+    const char *host = "127.0.0.1";
+    int cfd_connected = 0, ret = 0;
+    socklen_t slen = sizeof(sin);
+    int afd = -1;
+
+    *cfd = -1;
+    *sfd = -1;
+
+    memset ((char *) &sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+    sin.sin_addr.s_addr = inet_addr(host);
+
+    afd = socket(AF_INET, SOCK_STREAM, 0);
+    if (afd < 0)
+        return 0;
+
+    if (bind(afd, (struct sockaddr*)&sin, sizeof(sin)) < 0)
+        goto out;
+
+    if (getsockname(afd, (struct sockaddr*)&sin, &slen) < 0)
+        goto out;
+
+    if (listen(afd, 1) < 0)
+        goto out;
+
+    *cfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (*cfd < 0)
+        goto out;
+
+    if (set_nb(afd) == -1)
+        goto out;
+
+    while (*sfd == -1 || !cfd_connected ) {
+        *sfd = accept(afd, NULL, 0);
+        if (*sfd == -1 && errno != EAGAIN)
+            goto out;
+
+        if (!cfd_connected && connect(*cfd, (struct sockaddr*)&sin, sizeof(sin)) < 0)
+            goto out;
+        else
+            cfd_connected = 1;
+    }
+
+    if (set_nb(*cfd) == -1 || set_nb(*sfd) == -1)
+        goto out;
+    ret = 1;
+    goto success;
+
+out:
+        if (*cfd != -1)
+            close(*cfd);
+        if (*sfd != -1)
+            close(*sfd);
+success:
+        if (afd != -1)
+            close(afd);
+    return ret;
+}
+#else
+int create_test_sockets(int *cfd, int *sfd)
+{
+    return 0;
+}
+#endif
+
+int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
+                          SSL **cssl, int sfd, int cfd)
+{
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
+
+    if (*sssl != NULL)
+        serverssl = *sssl;
+    else if (!TEST_ptr(serverssl = SSL_new(serverctx)))
+        goto error;
+    if (*cssl != NULL)
+        clientssl = *cssl;
+    else if (!TEST_ptr(clientssl = SSL_new(clientctx)))
+        goto error;
+
+    if (!TEST_ptr(s_to_c_bio = BIO_new_socket(sfd, BIO_NOCLOSE))
+            || !TEST_ptr(c_to_s_bio = BIO_new_socket(cfd, BIO_NOCLOSE)))
+        goto error;
+
+    SSL_set_bio(clientssl, c_to_s_bio, c_to_s_bio);
+    SSL_set_bio(serverssl, s_to_c_bio, s_to_c_bio);
+    *sssl = serverssl;
+    *cssl = clientssl;
+    return 1;
+
+ error:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    BIO_free(s_to_c_bio);
+    BIO_free(c_to_s_bio);
+    return 0;
+}
 
 /*
  * NOTE: Transfers control of the BIOs - this function will free them on error

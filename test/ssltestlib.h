@@ -19,6 +19,9 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
 int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio);
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want);
+int create_ssl_objects2(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
+                       SSL **cssl, int sfd, int cfd);
+int create_test_sockets(int *cfd, int *sfd);
 int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want);
 void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl);
 
