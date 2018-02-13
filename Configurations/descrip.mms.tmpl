@@ -177,25 +177,37 @@ DEFINES={- our $defines = join(",",
                                '__dummy', # To make comma processing easier
                                @{$config{defines}}) -}
 INCLUDES={- our $includes = join(',', @{$config{includes}}) -}
-CPPFLAGS={- our $cppflags = join('', @{$config{cppflags}}) -}
-CPPFLAGS_Q={- (my $x = $cppflags) =~ s|"|""|g; $defines =~ s|"|""|g;
-              $x .= "/DEFINE=($defines)";
+CPPFLAGS='qual_includes'{- our $cppflags = join('', @{$config{cppflags}}) -}
+CPPFLAGS_Q={- (my $x = $cppflags) =~ s|"|""|g;
+              (my $d = $defines) =~ s|"|""|g;
               $x .= "/INCLUDE=($includes)" if $includes;
+              $x .= "/DEFINE=($d)";
               $x; -}
 CFLAGS={- join('', @{$config{cflags}}) -}
 LDFLAGS= {- join('', @{$config{lflags}}) -}
 EX_LIBS= {- join('', map { ','.$_ } @{$config{ex_libs}}) -}
-LIB_DEFINES={- join("",
-                    (map { ",$_" }
-                     @{$target{shared_defines}},
-                     'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
-                     'ENGINESDIR="""$(ENGINESDIR_C)"""')) -}
-LIB_CFLAGS={- $target{lib_cflags} // "" -}
-DSO_CFLAGS={- $target{dso_cflags} // "" -}
-BIN_CFLAGS={- $target{bin_cflags} // "" -}
-NO_INST_LIB_CFLAGS={- $target{no_inst_lib_cflags} // '$(LIB_CFLAGS)' -}
-NO_INST_DSO_CFLAGS={- $target{no_inst_dso_cflags} // '$(DSO_CFLAGS)' -}
-NO_INST_BIN_CFLAGS={- $target{no_inst_bin_cflags} // '$(BIN_CFLAGS)' -}
+
+LIB_DEFINES=$(DEFINES){- join("", (map { ",$_" }
+                                   @{$target{shared_defines}},
+                                   'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                                   'ENGINESDIR="""$(ENGINESDIR_C)"""')) -}
+LIB_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(LIB_DEFINES))
+LIB_CFLAGS=$(CFLAGS){- $target{lib_cflags} // "" -}
+DSO_DEFINES=$(DEFINES){- join("", (map { ",$_" } @{$target{dso_defines}})) -}
+DSO_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(DSO_DEFINES))
+DSO_CFLAGS=$(CFLAGS){- $target{dso_cflags} // "" -}
+BIN_DEFINES=$(DEFINES){- join("", (map { ",$_" } @{$target{bin_defines}})) -}
+BIN_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(BIN_DEFINES))
+BIN_CFLAGS=$(CFLAGS){- $target{bin_cflags} // "" -}
+NO_INST_LIB_CFLAGS=$(CFLAGS){- $target{no_inst_lib_cflags}
+                               // $target{lib_cflags}
+                               // "" -}
+NO_INST_DSO_CFLAGS=$(CFLAGS){- $target{no_inst_dso_cflags}
+                               // $target{dso_cflags}
+                               // "" -}
+NO_INST_BIN_CFLAGS=$(CFLAGS){- $target{no_inst_bin_cflags}
+                               // $target{bin_cflags}
+                               // "" -}
 
 PERL={- $config{perl} -}
 
@@ -622,24 +634,17 @@ EOF
                map { abs2rel(rel2abs($_), rel2abs($forward)) } @{$args{srcs}});
       my $cflags = '$(CFLAGS)';
       if ($args{installed}) {
-          $cflags .= { lib => '$(LIB_CFLAGS)',
-                       dso => '$(DSO_CFLAGS)',
-                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
+          $cflags = { lib => '$(LIB_CFLAGS)',
+                      dso => '$(DSO_CFLAGS)',
+                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       } else {
-          $cflags .= { lib => '$(NO_INST_LIB_CFLAGS)',
-                       dso => '$(NO_INST_DSO_CFLAGS)',
-                       bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
+          $cflags = { lib => '$(NO_INST_LIB_CFLAGS)',
+                      dso => '$(NO_INST_DSO_CFLAGS)',
+                      bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
       }
-      $cflags .= '$(CPPFLAGS)';
       $cflags .= { lib => '$(LIB_CPPFLAGS)',
 		   dso => '$(DSO_CPPFLAGS)',
 		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
-      my $defines = '$(DEFINES)';
-      $defines .= { lib => '$(LIB_DEFINES)',
-		    dso => '$(DSO_DEFINES)',
-		    bin => '$(BIN_DEFINES)' } -> {$args{intent}};
-      $cflags .= '/DEFINE=('.$defines.')';
-      $cflags .= "/INCLUDE=('tmp_includes')";
       
       # We create a logical name TMP_INCLUDES: to hold the list of internal
       # includes.  However, we cannot use it directly, as logical names can't
@@ -682,9 +687,9 @@ EOF
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
-        $incs_on
+        \@ $incs_on
         \$(CC) ${cflags}${depbuild} /OBJECT=${objd}${objn}.OBJ /REPOSITORY=$backward $srcs
-        $incs_off
+        \@ $incs_off
         SET DEFAULT $backward
         ${after}
         - PURGE $obj.OBJ

@@ -6,16 +6,13 @@ SOURCE[../../libcrypto]=\
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 
 GENERATE[aes-586.s]=asm/aes-586.pl \
-        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
-        $(PROCESSOR)
+        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
 DEPEND[aes-586.s]=../perlasm/x86asm.pl
 GENERATE[vpaes-x86.s]=asm/vpaes-x86.pl \
-        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
-        $(PROCESSOR)
+        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
 DEPEND[vpaes-586.s]=../perlasm/x86asm.pl
 GENERATE[aesni-x86.s]=asm/aesni-x86.pl \
-        $(PERLASM_SCHEME) $(CFLAGS) $(LIB_CFLAGS) $(CPPFLAGS) $(LIB_CPPFLAGS) \
-        $(PROCESSOR)
+        $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
 DEPEND[aesni-586.s]=../perlasm/x86asm.pl
 
 GENERATE[aes-x86_64.s]=asm/aes-x86_64.pl $(PERLASM_SCHEME)

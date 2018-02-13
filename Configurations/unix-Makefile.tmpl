@@ -196,22 +196,23 @@ CXXFLAGS={- join(' ', @{$config{cxxflags}}) -}
 LDFLAGS= {- join(' ', @{$config{lflags}}) -}
 PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
 EX_LIBS= {- join(' ', @{$config{ex_libs}}) -}
-LIB_CPPFLAGS={- join(' ',
-                     (map { '-D'.$_ }
-                          ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                           'ENGINESDIR="\"$(ENGINESDIR)\""')),
-                     $target{shared_cppflag}) || "" -}
-LIB_CFLAGS={- $target{shared_cflag} || "" -}
-LIB_CXXFLAGS={- $target{shared_cxxflag} || "" -}
-LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag} -}
-DSO_CPPFLAGS={- $target{dso_cppflags} || "" -}
-DSO_CFLAGS={- $target{dso_cflags} || "" -}
-DSO_CXXFLAGS={- $target{dso_cxxflags} || "" -}
-DSO_LDFLAGS={- $target{dso_lflags} || "" -}
-BIN_CPPFLAGS={- $target{bin_cppflags} || "" -}
-BIN_CFLAGS={- $target{bin_cflags} || "" -}
-BIN_CXXFLAGS={- $target{bin_cxxflags} || "" -}
-BIN_LDFLAGS={- $target{bin_lflags} || "" -}
+
+LIB_CPPFLAGS={- join(' ', '$(CPPFLAGS)',
+                          $target{shared_cppflag} || (),
+                          (map { '-D'.$_ }
+                               ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
+                                'ENGINESDIR="\"$(ENGINESDIR)\""'))) -}
+LIB_CFLAGS={- join(' ', '$(CFLAGS)', $target{shared_cflag} || ()) -}
+LIB_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{shared_cxxflag} || ()) -}
+LIB_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{shared_ldflag} || (), $config{shared_ldflag} || ()) -}
+DSO_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
+DSO_CFLAGS={- join(' ', '$(CFLAGS)', $target{dso_cflags} || ()) -}
+DSO_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{dso_cxxflags} || ()) -}
+DSO_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{dso_lflags} || ()) -}
+BIN_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{bin_cppflags} || ()) -}
+BIN_CFLAGS={- join(' ', '$(CFLAGS)', $target{bin_cflags} || ()) -}
+BIN_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{bin_cxxflags} || ()) -}
+BIN_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{bin_lflags} || ()) -}
 
 PERL={- $config{perl} -}
 
@@ -848,6 +849,11 @@ EOF
               die "Generator type for $args{src} unknown: $generator\n";
           }
 
+          my $cppflags = {
+              lib => '$(LIB_CPPFLAGS)',
+              dso => '$(DSO_CPPFLAGS)',
+              bin => '$(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
@@ -891,9 +897,9 @@ EOF
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
-      my $cmd = '$(CC)';
-      my $cmdflags = '$(CFLAGS)';
-      my $cmdcompile = ' -c';
+      my $cmd;
+      my $cmdflags;
+      my $cmdcompile;
       my $makedepprog = $disabled{makedepend} ? undef : $config{makedepprog};
       if (grep /\.rc$/, @srcs) {
           $cmd = '$(RC)';
@@ -902,22 +908,20 @@ EOF
           $makedepprog = undef;
       } elsif (grep /\.(cc|cpp)$/, @srcs) {
           $cmd = '$(CXX)';
-          $cmdflags = '$(CXXFLAGS)';
-          $cmdflags .= ' ' . { lib => '$(LIB_CXXFLAGS)',
-                               dso => '$(DSO_CXXFLAGS)',
-                               bin => '$(BIN_CXXFLAGS)' } -> {$args{intent}};
-          $cmdflags .= ' $(CPPFLAGS)';
-          $cmdflags .= ' ' . { lib => '$(LIB_CPPFLAGS)',
-                               dso => '$(DSO_CPPFLAGS)',
-                               bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+          $cmdcompile = ' -c';
+          $cmdflags = {
+              lib => '$(LIB_CXXFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CXXFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CXXFLAGS) $(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
       } else {
-          $cmdflags .= ' ' . { lib => '$(LIB_CFLAGS)',
-                               dso => '$(DSO_CFLAGS)',
-                               bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
-          $cmdflags .= ' $(CPPFLAGS)';
-          $cmdflags .= ' ' . { lib => '$(LIB_CPPFLAGS)',
-                               dso => '$(DSO_CPPFLAGS)',
-                               bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+          $cmd = '$(CC)';
+          $cmdcompile = ' -c';
+          $cmdflags = {
+              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
       }
       $cmdflags .= $cmdcompile;
       my $recipe = <<"EOF";
@@ -997,7 +1001,7 @@ EOF
 # simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
 # {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
 $target: $deps
-	\$(CC) \$(CFLAGS) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $target_full$shared_def $objs \\
                 \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
@@ -1040,7 +1044,7 @@ EOF
       my $target = dso($dso);
       return <<"EOF";
 $target: $objs $deps
-	\$(CC) \$(CFLAGS) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
+	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $target $objs \\
                 \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
@@ -1080,15 +1084,15 @@ EOF
                                     }
                                   } @{$args{deps}});
       my $cmd = '$(CC)';
-      my $cmdflags = '$(CFLAGS) $(BIN_CFLAGS)';
+      my $cmdflags = '$(BIN_CFLAGS)';
       if (grep /_cc\.o$/, @{$args{objs}}) {
           $cmd = '$(CXX)';
-          $cmdflags = '$(CXXFLAGS) $(BIN_CXXFLAGS)';
+          $cmdflags = '$(BIN_CXXFLAGS)';
       }
       return <<"EOF";
 $bin$exeext: $objs $deps
 	rm -f $bin$exeext
-	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(LDFLAGS) \$(BIN_LDFLAGS) \\
+	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
 		-o $bin$exeext $objs \\
 		\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
 EOF
