@@ -54,7 +54,7 @@
   our @install_shlibs =
       map { $unified_info{sharednames}->{$_} || () }
       grep(!/\.a$/, @{$unified_info{install}->{libraries}});
-  our @generated = ( ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
+  our @generated = ( ( map { (my $x = $_) =~ s|\.[sS]$|\.asm|; $x }
                        grep { defined $unified_info{generate}->{$_} }
                        map { @{$unified_info{sources}->{$_}} }
                        grep { /\.o$/ } keys %{$unified_info{sources}} ),
@@ -211,13 +211,10 @@ NO_INST_BIN_CFLAGS=$(CFLAGS){- $target{no_inst_bin_cflags}
 
 PERL={- $config{perl} -}
 
-# We let the C compiler driver to take care of .s files. This is done in
-# order to be excused from maintaining a separate set of architecture
-# dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
-# gcc, then the driver will automatically translate it to -xarch=v8plus
-# and pass it down to assembler.
 AS={- $config{as} -}
-ASFLAGS={- join('', @{$config{asflags}}) -}
+ASFLAGS={- join(' ', @{$config{asflags}}) -}
+ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
+PERLASM_SCHEME={- $target{perlasm_scheme} -}
 
 # .FIRST and .LAST are special targets with MMS and MMK.
 # The defines in there are for C.  includes that look like
@@ -587,37 +584,128 @@ reconfigure reconf :
                    : $unified_info{sharednames}->{$_}.".EXE" } @_;
   }
 
+  # Helper function to deal with inclusion directory specs.
+  # We have to deal with two things:
+  # 1. comma separation and no possibility of trailing comma
+  # 2. no inclusion directories given at all
+  # 3. long compiler command lines
+  # To resolve 1, we need to iterate through the sources of inclusion
+  # directories, and only add a comma when needed.
+  # To resolve 2, we need to have a variable that will hold the whole
+  # inclusion qualifier, or be the empty string if there are no inclusion
+  # directories.  That's the symbol 'qual_includes' that's used in CPPFLAGS
+  # To resolve 3, we creata a logical name TMP_INCLUDES: to hold the list
+  # of inclusion directories.
+  #
+  # This function returns a list of two lists, one being the collection of
+  # commands to execute before the compiler is called, and the other being
+  # the collection of commands to execute after.  It takes as arguments the
+  # collection of strings to include as directory specs.
+  sub includes {
+      my @stuff = ( @_ );
+      my @before = (
+          'qual_includes :=',
+      );
+      my @after = (
+          'DELETE/SYMBOL/LOCAL qual_includes',
+      );
+
+      if (scalar @stuff > 0) {
+          push @before, 'tmp_includes := '.shift(@stuff);
+          while (@stuff) {
+              push @before, 'tmp_add := '.shift(@stuff);
+              push @before, 'IF tmp_includes .NES. "" .AND. tmp_add .NES. "" THEN tmp_includes = tmp_includes + ","';
+              push @before, 'tmp_includes = tmp_includes + tmp_add';
+          }
+          push @before, "IF tmp_includes .NES. \"\" THEN DEFINE tmp_includes 'tmp_includes'";
+          push @before, 'IF tmp_includes .NES. "" THEN qual_includes := /INCLUDE=(tmp_includes:)';
+          push @before, 'DELETE/SYMBOL/LOCAL tmp_includes';
+          push @before, 'DELETE/SYMBOL/LOCAL tmp_add';
+          push @after, 'DEASSIGN tmp_includes:'
+      }
+      return ([ @before ], [ @after ]);
+  }
+
   sub generatesrc {
       my %args = @_;
+      (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
       my $generator = join(" ", @{$args{generator}});
       my $generator_incs = join("", map { ' "-I'.$_.'"' } @{$args{generator_incs}});
       my $deps = join(", -\n\t\t", @{$args{generator_deps}}, @{$args{deps}});
 
-      if ($args{src} !~ /\.[sS]$/) {
+      if ($target !~ /\.asm$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
 	      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
                                    rel2abs($config{builddir}));
               return <<"EOF";
-$args{src} : $args{generator}->[0] $deps
+$target : $args{generator}->[0] $deps
 	\$(PERL) "-I\$(BLDDIR)" "-Mconfigdata" $dofile \\
-	    "-o$target{build_file}" $generator > \$@
+	    "-o$target{build_file}" $generator > \$\@
 EOF
 	  } else {
               return <<"EOF";
-$args{src} : $args{generator}->[0] $deps
-	\$(PERL)$generator_incs $generator > \$@
+$target : $args{generator}->[0] $deps
+	\$(PERL)$generator_incs $generator > \$\@
 EOF
 	  }
       } else {
-          die "No method to generate assembler source present.\n";
+          if ($args{generator}->[0] =~ /\.pl$/) {
+              $generator = '$(PERL)'.$generator_incs.' '.$generator;
+          } elsif ($args{generator}->[0] =~ /\.S$/) {
+              $generator = undef;
+          } else {
+              die "Generator type for $src unknown: $generator\n";
+          }
+
+          my $cppflags = { lib => '$(LIB_CPPFLAGS)',
+                           dso => '$(DSO_CPPFLAGS)',
+                           bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+          my @incs_cmds = includes({ lib => '$(LIB_INCLUDES)',
+                                     dso => '$(DSO_INCLUDES)',
+                                     bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
+                                   '$(INCLUDES)',
+                                   @{$args{incs}});
+          my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
+          my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
+          if (defined($generator)) {
+              # If the target is named foo.S in build.info, we want to
+              # end up generating foo.s in two steps.
+              if ($args{src} =~ /\.S$/) {
+                   return <<"EOF";
+$target : $args{generator}->[0] $deps
+	$generator \$\@-S
+        \@ $incs_on
+	PIPE \$(CPP) $cppflags \$\@-S | -
+        \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@-i
+        \@ $incs_off
+        RENAME \$\@-i \$\@
+        DELETE \$\@-S
+EOF
+              }
+              # Otherwise....
+              return <<"EOF";
+$target : $args{generator}->[0] $deps
+	$generator \$\@
+EOF
+          }
+          return <<"EOF";
+$target : $args{generator}->[0] $deps
+        \@ $incs_on
+        SHOW SYMBOL qual_includes
+        PIPE \$(CPP) $cppflags $args{generator}->[0] | -
+        \$(PERL) "-ne" "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@
+        \@ $incs_off
+EOF
       }
   }
 
   sub src2obj {
       my %args = @_;
+      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
+                     } ( @{$args{srcs}} );
       (my $obj = $args{obj}) =~ s|\.o$||;
-      my $deps = join(", -\n\t\t", @{$args{srcs}}, @{$args{deps}});
+      my $deps = join(", -\n\t\t", @srcs, @{$args{deps}});
 
       # Because VMS C isn't very good at combining a /INCLUDE path with
       # #includes having a relative directory (like '#include "../foo.h"),
@@ -630,9 +718,21 @@ EOF
       my $objd = abs2rel(rel2abs(dirname($obj)), rel2abs($forward));
       my $objn = basename($obj);
       my $srcs =
-          join(", ",
-               map { abs2rel(rel2abs($_), rel2abs($forward)) } @{$args{srcs}});
-      my $cflags = '$(CFLAGS)';
+          join(", ", map { abs2rel(rel2abs($_), rel2abs($forward)) } @srcs);
+      my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
+      my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
+
+      if ($srcs[0] =~ /\.asm$/) {
+          return <<"EOF";
+$obj.OBJ : $deps
+        ${before}
+        SET DEFAULT $forward
+        \$(AS) \$(ASFLAGS) \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
+        SET DEFAULT $backward
+EOF
+      }
+
+      my $cflags;
       if ($args{installed}) {
           $cflags = { lib => '$(LIB_CFLAGS)',
                       dso => '$(DSO_CFLAGS)',
@@ -645,41 +745,17 @@ EOF
       $cflags .= { lib => '$(LIB_CPPFLAGS)',
 		   dso => '$(DSO_CPPFLAGS)',
 		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
-      
-      # We create a logical name TMP_INCLUDES: to hold the list of internal
-      # includes.  However, we cannot use it directly, as logical names can't
-      # hold zero entries, so we also create a symbol with the same name and
-      # use that instead, see the '/INCLUDE=' assignment above.  If there are
-      # no internal include directories, it will simply be the empty string,
-      # but if there are, it will be assigned "TMP_DEFINES:,"
-      my $xtraincludes = { lib => '$(LIB_INCLUDES)',
-                           dso => '$(DSO_INCLUDES)',
-                           bin => '$(BIN_INCLUDES)' } -> {$args{intent}};
-      my $incs_add =
-          'IF tmp_add .NES. "" .AND. tmp_includes .NES. "" THEN tmp_includes = "," + tmp_includes'
-          ."\n\t".'tmp_includes = tmp_add + tmp_includes';
-      my $incs_on = 'tmp_includes := '
-          ."\n\t"."tmp_add := $xtraincludes"
-          ."\n\t".$incs_add
-          ."\n\t".'tmp_add := $(INCLUDES)'
-          ."\n\t".$incs_add;
-      my $incs_off = 'DELETE/SYMBOL/LOCAL tmp_includes'
-          ."\n\t".'DELETE/SYMBOL/LOCAL tmp_add';
-      if (@{$args{incs}}) {
-          $incs_on =
-              'DEFINE tmp_includes '
-              .join(",-\n\t\t\t", map {
-                                      file_name_is_absolute($_)
-                                      ? $_ : catdir($backward,$_)
-                                  } @{$args{incs}})
-              ."\n\t".$incs_on
-              ."\n\t".'IF tmp_includes .NES. "" THEN tmp_includes = "," + tmp_includes'
-              ."\n\t".'tmp_includes = "tmp_includes:" + tmp_includes';
-          $incs_off .=
-              "\n\t".'DEASSIGN tmp_includes';
-      }
-      my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
-      my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
+
+      my @incs_cmds = includes({ lib => '$(LIB_INCLUDES)',
+                                 dso => '$(DSO_INCLUDES)',
+                                 bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
+                               '$(INCLUDES)',
+                               map {
+                                   file_name_is_absolute($_)
+                                   ? $_ : catdir($backward,$_)
+                               } @{$args{incs}});
+      my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
+      my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
       my $depbuild = $disabled{makedepend} ? ""
           : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
 
