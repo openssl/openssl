@@ -22,6 +22,7 @@
 #include "testutil.h"
 #include "testutil/output.h"
 #include "internal/nelem.h"
+#include "internal/ktls.h"
 #include "../ssl/ssl_locl.h"
 
 #ifndef OPENSSL_NO_TLS1_3
@@ -655,6 +656,192 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 
     return testresult;
 }
+
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS)
+
+/* sock must be connected */
+static int ktls_chk_platform(int sock)
+{
+    if (!ktls_enable(sock))
+        return 0;
+    return 1;
+}
+
+static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd)
+{
+    static char count = 1;
+    unsigned char cbuf[16000] = {0};
+    unsigned char sbuf[16000];
+    size_t err = 0;
+    char crec_wseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char crec_wseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_wseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_wseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_rseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_rseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+
+    cbuf[0] = count++;
+    memcpy(crec_wseq_before, &clientssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_wseq_before, &serverssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_rseq_before, &serverssl->rlayer.read_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+
+    if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
+        goto end;
+
+    while ((err = SSL_read(serverssl, &sbuf, sizeof(sbuf))) != sizeof(sbuf)) {
+        if (SSL_get_error(serverssl, err) != SSL_ERROR_WANT_READ) {
+            goto end;
+        }
+    }
+
+    if (!TEST_true(SSL_write(serverssl, sbuf, sizeof(sbuf)) == sizeof(sbuf)))
+        goto end;
+
+    while ((err = SSL_read(clientssl, &cbuf, sizeof(cbuf))) != sizeof(cbuf)) {
+        if (SSL_get_error(clientssl, err) != SSL_ERROR_WANT_READ) {
+            goto end;
+        }
+    }
+
+    memcpy(crec_wseq_after, &clientssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_wseq_after, &serverssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_rseq_after, &serverssl->rlayer.read_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+
+    /* verify the payload */
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
+        goto end;
+
+    /* ktls is used then kernel sequences are used instead of OpenSSL sequences */
+    if (clientssl->mode & SSL_MODE_NO_KTLS_TX) {
+        if (!TEST_mem_ne(crec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         crec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(crec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         crec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    }
+
+    if (serverssl->mode & SSL_MODE_NO_KTLS_TX) {
+        if (!TEST_mem_ne(srec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         srec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(srec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         srec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    }
+
+    if (!TEST_mem_ne(srec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                     srec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+        goto end;
+
+    return 1;
+end:
+    return 0;
+}
+
+static int execute_test_ktls(int cis_ktls_tx, int sis_ktls_tx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    int cfd, sfd;
+
+    if (!TEST_true(create_test_sockets(&cfd, &sfd)))
+        goto end;
+
+    /* Skip this test if the platform does not support ktls */
+    if (!ktls_chk_platform(cfd))
+        return 1;
+
+    /* Create a session based on SHA-256 */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_2_VERSION, TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "AES128-GCM-SHA256"))
+            || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+                                          &clientssl, sfd, cfd)))
+        goto end;
+
+    if (!cis_ktls_tx) {
+        if (!TEST_true(SSL_set_mode(clientssl, SSL_MODE_NO_KTLS_TX)))
+            goto end;
+    }
+
+    if (!sis_ktls_tx) {
+        if (!TEST_true(SSL_set_mode(serverssl, SSL_MODE_NO_KTLS_TX)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!cis_ktls_tx) {
+        if (!TEST_false(BIO_get_ktls_send(clientssl->wbio)))
+            goto end;
+    } else {
+        if (!TEST_true(BIO_get_ktls_send(clientssl->wbio)))
+            goto end;
+    }
+
+    if (!sis_ktls_tx) {
+        if (!TEST_false(BIO_get_ktls_send(serverssl->wbio)))
+            goto end;
+    } else {
+        if (!TEST_true(BIO_get_ktls_send(serverssl->wbio)))
+            goto end;
+    }
+
+    if (!TEST_true(ping_pong_query(clientssl, serverssl, cfd, sfd)))
+        goto end;
+
+    testresult = 1;
+end:
+    if (clientssl) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    serverssl = clientssl = NULL;
+    return testresult;
+}
+
+static int test_ktls_client_server(void)
+{
+    return execute_test_ktls(1, 1);
+}
+
+static int test_ktls_no_client_server(void)
+{
+    return execute_test_ktls(0, 1);
+}
+
+static int test_ktls_client_no_server(void)
+{
+    return execute_test_ktls(1, 0);
+}
+
+static int test_ktls_no_client_no_server(void)
+{
+    return execute_test_ktls(0, 0);
+}
+
+#endif
 
 static int test_large_message_tls(void)
 {
@@ -5845,6 +6032,12 @@ int setup_tests(void)
 #endif
     }
 
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS)
+    ADD_TEST(test_ktls_client_server);
+    ADD_TEST(test_ktls_no_client_server);
+    ADD_TEST(test_ktls_client_no_server);
+    ADD_TEST(test_ktls_no_client_no_server);
+#endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
 #ifndef OPENSSL_NO_DTLS
