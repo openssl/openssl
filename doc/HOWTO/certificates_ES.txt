@@ -1,0 +1,61 @@
+<DRAFT!>
+			CÓMO certificados
+
+1. Introducción
+
+La forma en que maneje los certificados depende en gran medida de cuál es su función.
+Tu rol puede ser uno o varios de:
+
+  - Usuario de alguna aplicación de cliente
+  - Usuario de alguna aplicación de servidor
+  - Autoridad certificada
+
+Este archivo es para usuarios que desean obtener un certificado propio.
+Las autoridades certificadoras deben leer https://www.openssl.org/docs/apps/ca.html.
+
+En todos los casos que se muestran a continuación, el archivo de configuración estándar, como compilado en openssl, será utilizado. Puede encontrarlo en /etc/, /usr/local/ssl/ o en otro lugar. Por defecto, el archivo es nombrado openssl.cnf y se describe en https://www.openssl.org/docs/apps/config.html.Puede especificar un archivo de configuración diferente usando el argumento '-config {file}' con los comandos que se muestran a continuación.
+
+
+2. Relación con las llaves
+
+Los certificados están relacionados con la criptografía de llave pública al contener una llave pública. Para ser útil, debe haber una llave privada correspondiente a algún lado. Con OpenSSL, las llaves públicas se derivan fácilmente de llaves privadas, entonces antes de crear un certificado o una solicitud de certificado, necesita de crear una llave privada.
+
+Las llaves privadas se generan con 'openssl genrsa -out privkey.pem' si desea una llave privada RSA, o si desea una llave privada DSA:'openssl dsaparam -out dsaparam.pem 2048; openssl gendsa -out privkey.pem dsaparam.pem '.
+
+Las llaves privadas creadas por estos comandos no están protegidas por contraseña; podría o no ser lo deseable. Más información sobre cómo crear llaves privadas se puede encontrar en https://www.openssl.org/docs/HOWTO/keys.txt. El resto de este texto asume que tiene una llave privada en el archivo privkey.pem.
+
+
+3. Creando una solicitud de certificado
+
+Para crear un certificado, debe comenzar con una solicitud de certificado (o, como algunas autoridades de certificación les gusta ponerlo, "solicitud de firma de certificado ", ya que eso es exactamente lo que hacen, lo firman y le devuelven el resultado, haciéndolo auténtico según sus políticas). Una solicitud de certificado se envía a una autoridad de certificación para que sea firmada en un certificado. También puede firmar el certificado usted mismo si tiene su propia autoridad de certificación o cree un certificado autofirmado (generalmente para fines de prueba).
+
+La solicitud de certificado se crea así:
+
+  openssl req -new -key privkey.pem -out cert.csr
+
+Ahora, cert.csr se puede enviar a la autoridad de certificación, si pueden manejar archivos en formato PEM. Si no, usa el argumento adicional '-outform' seguido de la palabra clave para el formato a usar (ver otro CÓMO <formats.txt?>). En algunos casos, -outform no le permite generar la solicitud de certificado en el formato correcto y tendrá que usar uno de los otros comandos que están expuestos por openssl (o ser creativo y usa una combinación de herramientas).
+
+La autoridad de certificación realiza varios controles (de acuerdo con supolíticas) y generalmente espera el pago de usted. Una vez que eso esté completo, le envían su nuevo certificado.
+
+La Sección 5 le informará más sobre cómo manejar el certificado que usted
+recibió.
+
+
+4. Crear un certificado de prueba autofirmado
+
+Puede crear un certificado autofirmado si no desea tratar con una autoridad de certificación, o si solo desea crear un certificado de prueba para usted. Esto es similar a crear una solicitud de certificado, pero crea un certificado en lugar de una solicitud de certificado. Esta NO es la forma recomendada de crear un certificado de CA, consulte https://www.openssl.org/docs/apps/ca.html.
+
+  openssl req -new -x509 -key privkey.pem -out cacert.pem -days 1095
+
+
+5. Qué hacer con el certificado
+
+Si creó todo usted mismo, o si la autoridad certificadora fué lo suficientemente amable, su certificado es un DER sin procesar en formato PEM. Su clave definitivamente es si ha seguido los ejemplos anteriores. Sin embargo, algunas (¿la mayoría?) autoridades de certificación las codificarán con cosas como PKCS7 o PKCS12, o algo más. Depende de tus aplicaciones, esto puede estar perfectamente BIEN, todo depende de lo que saben sobre decodificar. Si no, hay una serie de herramientas OpenSSL para convertir entre algunos (¿la mayoría?) formatos.
+
+Entonces, dependiendo de su aplicación, es posible que tenga que convertir su certificado y su clave a varios formatos, la mayoría de las veces también juntarlos en un archivo. Las formas de hacer esto se describen en otro CÓMO <formatos.txt?>, solo mencionaré el caso más simple. En el caso de un DER sin procesar en formato PEM, y suponiendo que eso es todo adecuado para sus aplicaciones, simplemente concatenando el certificado y la clave en un nuevo archivo y usándolo debería ser suficiente. Con algunas aplicaciones, ni siquiera tiene que hacer eso.
+
+
+Por ahora, tiene su certificado y su clave privada y puede comenzar usando aplicaciones que dependen de ello.
+
+-- 
+Richard Levitte
