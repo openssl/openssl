@@ -29,6 +29,25 @@
      TODO(TLS1.3): Remove the above note before final release
      [Matt Caswell]
 
+  *) Grand redesign of the OpenSSL random generator
+
+     The default RAND method now utilizes an AES-CTR DRBG according to
+     NIST standard SP 800-90Ar1. The new random generator is essentially
+     a port of the default random generator from the OpenSSL FIPS 2.0
+     object module. It is a hybrid deterministic random bit generator
+     using an AES-CTR bit stream and which seeds and reseeds itself
+     automatically using trusted system entropy sources.
+
+     Some of its new features are:
+      o Support for multiple DRBG instances with seed chaining.
+      o Add a public DRBG instance for the default RAND method.
+      o Add a dedicated DRBG instance for generating long term private keys.
+      o Make the DRBG instances fork-safe.
+      o Keep all global DRBG instances on the secure heap if it is enabled.
+      o Add a DRBG instance to every SSL instance for lock free operation
+        and to increase unpredictability.
+     [Paul Dale, Benjamin Kaduk, Kurt Roeckx, Rich Salz, Matthias St. Pierre]
+
   *) Changed Configure so it only says what it does and doesn't dump
      so much data.  Instead, ./configdata.pm should be used as a script
      to display all sorts of configuration data.

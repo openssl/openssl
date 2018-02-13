@@ -20,6 +20,7 @@
       o Add SHA3
       o Rewrite of devcrypto engine
       o Add support for SipHash
+      o Grand redesign of the OpenSSL random generator
 
   Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.0h [under development]
 
