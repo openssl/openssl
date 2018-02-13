@@ -29,14 +29,15 @@
 # February 2018.
 #
 # Add hardware-assisted ARMv8.2 implementation. It's KECCAK_1X_ALT
-# variant with register permination/rotation twist that allows to
+# variant with register permutation/rotation twist that allows to
 # eliminate copies to temporary registers. If you look closely you'll
 # notice that it uses only one lane of vector registers. The new
-# instructions effectively faciliate parallel hashing, which we don't
-# support [yet?]. But lowest-level core procedure can be used with it.
-# The inner round is 67 instructions, so it's not actually obvious
-# that it will deliver performance improvement [in serial hash] as
-# long as vector instructions issue rate is limited to 1 per cycle...
+# instructions effectively facilitate parallel hashing, which we don't
+# support [yet?]. But lowest-level core procedure is prepared for it.
+# The inner round is 67 [vector] instructions, so it's not actually
+# obvious that it will provide performance improvement [in serial
+# hash] as long as vector instructions issue rate is limited to 1 per
+# cycle...
 #
 ######################################################################
 # Numbers are cycles per processed byte.
