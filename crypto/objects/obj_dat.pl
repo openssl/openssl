@@ -149,8 +149,7 @@ for (my $i = 0; $i < $n; $i++) {
 
 # Finally ready to generate the output.
 open(OUT, ">$ARGV[1]") || die "Can't open output file $ARGV[1], $!";
-my @lt = localtime;
-my $YEAR = $lt[5] + 1900;
+my $YEAR = [localtime()]->[5] + 1900;
 print OUT <<"EOF";
 /*
  * WARNING: do not edit!

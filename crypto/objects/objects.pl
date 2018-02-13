@@ -124,8 +124,7 @@ foreach (sort { $a <=> $b } keys %nidn)
 close NUMOUT;
 
 open (OUT,">$ARGV[2]") || die "Can't open output file $ARGV[2]";
-my @lt = localtime;
-my $YEAR = $lt[5] + 1900;
+my $YEAR = [localtime()]->[5] + 1900;
 print OUT <<"EOF";
 /*
  * WARNING: do not edit!

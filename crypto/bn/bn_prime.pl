@@ -6,8 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-my @lt = localtime;
-my $YEAR = $lt[5] + 1900;
+my $YEAR = [localtime()]->[5] + 1900;
 print <<"EOF";
 /*
  * WARNING: do not edit!

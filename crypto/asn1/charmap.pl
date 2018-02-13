@@ -82,8 +82,7 @@ $arr[ord("?")] |= $PSTRING_CHAR;
 
 # Now generate the C code
 
-my @lt = localtime;
-my $YEAR = $lt[5] + 1900;
+my $YEAR = [localtime()]->[5] + 1900;
 print <<EOF;
 /*
  * WARNING: do not edit!

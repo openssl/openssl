@@ -66,8 +66,7 @@ my @srt2 = sort
 my $pname = $0;
 $pname =~ s|.*/||;
 
-my @lt = localtime;
-my $YEAR = $lt[5] + 1900;
+my $YEAR = [localtime()]->[5] + 1900;
 print <<EOF;
 /*
  * WARNING: do not edit!

@@ -57,8 +57,7 @@ foreach (0 .. 255)
 	push(@V_w32,$v);
 	}
 
-my @lt = localtime;
-my $YEAR = $lt[5] + 1900;
+my $YEAR = [localtime()]->[5] + 1900;
 print <<"EOF";
 /*
  * WARNING: do not edit!
