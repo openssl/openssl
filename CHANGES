@@ -2984,12 +2984,12 @@
      1. Do not use record version number > TLS 1.0 in initial client
         hello: some (but not all) hanging servers will now work.
      2. If we set OPENSSL_MAX_TLS1_2_CIPHER_LENGTH this will truncate
-	the number of ciphers sent in the client hello. This should be
+        the number of ciphers sent in the client hello. This should be
         set to an even number, such as 50, for example by passing:
         -DOPENSSL_MAX_TLS1_2_CIPHER_LENGTH=50 to config or Configure.
         Most broken servers should now work.
      3. If all else fails setting OPENSSL_NO_TLS1_2_CLIENT will disable
-	TLS 1.2 client support entirely.
+        TLS 1.2 client support entirely.
      [Steve Henson]
 
   *) Fix SEGV in Vector Permutation AES module observed in OpenSSH.
@@ -3026,12 +3026,12 @@
 
   *) Extensive assembler packs updates, most notably:
 
-	- x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
-	- x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
-	- x86_64:       bit-sliced AES implementation;
-	- ARM:          NEON support, contemporary platforms optimizations;
-	- s390x:        z196 support;
-	- *:            GHASH and GF(2^m) multiplication implementations;
+        - x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
+        - x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
+        - x86_64:       bit-sliced AES implementation;
+        - ARM:          NEON support, contemporary platforms optimizations;
+        - s390x:        z196 support;
+        - *:            GHASH and GF(2^m) multiplication implementations;
 
      [Andy Polyakov]
 
@@ -3384,7 +3384,7 @@
   *) Add protection against ECDSA timing attacks as mentioned in the paper
      by Billy Bob Brumley and Nicola Tuveri, see:
 
-	http://eprint.iacr.org/2011/232.pdf
+        http://eprint.iacr.org/2011/232.pdf
 
      [Billy Bob Brumley and Nicola Tuveri]
 
@@ -5457,16 +5457,16 @@
      takes an extra flags argument for optional functionality.  Currently,
      the following flags are defined:
 
-	OBJ_BSEARCH_VALUE_ON_NOMATCH
-	This one gets OBJ_bsearch_ex() to return a pointer to the first
-	element where the comparing function returns a negative or zero
-	number.
+        OBJ_BSEARCH_VALUE_ON_NOMATCH
+        This one gets OBJ_bsearch_ex() to return a pointer to the first
+        element where the comparing function returns a negative or zero
+        number.
 
-	OBJ_BSEARCH_FIRST_VALUE_ON_MATCH
-	This one gets OBJ_bsearch_ex() to return a pointer to the first
-	element where the comparing function returns zero.  This is useful
-	if there are more than one element where the comparing function
-	returns zero.
+        OBJ_BSEARCH_FIRST_VALUE_ON_MATCH
+        This one gets OBJ_bsearch_ex() to return a pointer to the first
+        element where the comparing function returns zero.  This is useful
+        if there are more than one element where the comparing function
+        returns zero.
      [Richard Levitte]
 
   *) Make it possible to create self-signed certificates with 'openssl ca'
@@ -5613,8 +5613,8 @@
      is defined as follows (according to X.509_4thEditionDraftV6.pdf):
 
      CertificatePair ::= SEQUENCE {
-        forward		[0]	Certificate OPTIONAL,
-        reverse		[1]	Certificate OPTIONAL,
+        forward         [0]     Certificate OPTIONAL,
+        reverse         [1]     Certificate OPTIONAL,
         -- at least one of the pair shall be present -- }
 
      Also implement the PEM functions to read and write certificate
@@ -6616,15 +6616,15 @@
      build directory is the following (tested on Linux), maybe with
      some local tweaks:
 
-	# Place yourself outside of the OpenSSL source tree.  In
-	# this example, the environment variable OPENSSL_SOURCE
-	# is assumed to contain the absolute OpenSSL source directory.
-	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
-	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
-	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
-		mkdir -p `dirname $F`
-		ln -s $OPENSSL_SOURCE/$F $F
-	done
+        # Place yourself outside of the OpenSSL source tree.  In
+        # this example, the environment variable OPENSSL_SOURCE
+        # is assumed to contain the absolute OpenSSL source directory.
+        mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+        cd objtree/"`uname -s`-`uname -r`-`uname -m`"
+        (cd $OPENSSL_SOURCE; find . -type f) | while read F; do
+                mkdir -p `dirname $F`
+                ln -s $OPENSSL_SOURCE/$F $F
+        done
 
      To be absolutely sure not to disturb the source tree, a "make clean"
      is a good thing.  If it isn't successful, don't worry about it,
@@ -7119,8 +7119,8 @@
 
          des_key_schedule ks;
 
-	 des_set_key_checked(..., &ks);
-	 des_ncbc_encrypt(..., &ks, ...);
+         des_set_key_checked(..., &ks);
+         des_ncbc_encrypt(..., &ks, ...);
 
      (Note that a later change renames 'des_...' into 'DES_...'.)
      [Ben Laurie]
@@ -7326,7 +7326,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        '-pre' and '-post' switches. '-post' is only used if '-t' is
        specified and the ENGINE is successfully initialised. The syntax for
        the individual commands are colon-separated, for example;
-	 openssl engine chil -pre FORK_CHECK:0 -pre SO_PATH:/lib/test.so
+         openssl engine chil -pre FORK_CHECK:0 -pre SO_PATH:/lib/test.so
      [Geoff]
 
   *) New dynamic control command support for ENGINEs. ENGINEs can now
@@ -7514,16 +7514,16 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      To implement a global variable, use the macro OPENSSL_IMPLEMENT_GLOBAL
      in the source file (foo.c) like this:
 
-	OPENSSL_IMPLEMENT_GLOBAL(int,foo)=1;
-	OPENSSL_IMPLEMENT_GLOBAL(double,bar);
+        OPENSSL_IMPLEMENT_GLOBAL(int,foo)=1;
+        OPENSSL_IMPLEMENT_GLOBAL(double,bar);
 
      To declare a global variable, use the macros OPENSSL_DECLARE_GLOBAL
      and OPENSSL_GLOBAL_REF in the header file (foo.h) like this:
 
-	OPENSSL_DECLARE_GLOBAL(int,foo);
-	#define foo OPENSSL_GLOBAL_REF(foo)
-	OPENSSL_DECLARE_GLOBAL(double,bar);
-	#define bar OPENSSL_GLOBAL_REF(bar)
+        OPENSSL_DECLARE_GLOBAL(int,foo);
+        #define foo OPENSSL_GLOBAL_REF(foo)
+        OPENSSL_DECLARE_GLOBAL(double,bar);
+        #define bar OPENSSL_GLOBAL_REF(bar)
 
      The #defines are very important, and therefore so is including the
      header file everywhere where the defined globals are used.
@@ -7727,7 +7727,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to data. This was previously part of the PKCS7 ASN1 code. This
      was causing problems with OpenSSL created PKCS#12 and PKCS#7 structures.
      [Steve Henson, reported by Kenneth R. Robinette
-				<support@securenetterm.com>]
+                                <support@securenetterm.com>]
 
   *) Add CRYPTO_push_info() and CRYPTO_pop_info() calls to new ASN1
      routines: without these tracing memory leaks is very painful.
@@ -7741,7 +7741,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      and use ASN1_TIME_set() if the value is not V_ASN1_UTCTIME or
      V_ASN1_GENERALIZEDTIME, without this it always uses GeneralizedTime.
      [Steve Henson, reported by Kenneth R. Robinette
-				<support@securenetterm.com>]
+                                <support@securenetterm.com>]
 
   *) Fixes to BN_to_ASN1_INTEGER when bn is zero. This would previously
      result in a zero length in the ASN1_INTEGER structure which was
@@ -7826,10 +7826,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      settings for extended allocation functions, the following
      functions are provided:
 
-	CRYPTO_set_mem_ex_functions
-	CRYPTO_set_locked_mem_ex_functions
-	CRYPTO_get_mem_ex_functions
-	CRYPTO_get_locked_mem_ex_functions
+        CRYPTO_set_mem_ex_functions
+        CRYPTO_set_locked_mem_ex_functions
+        CRYPTO_get_mem_ex_functions
+        CRYPTO_get_locked_mem_ex_functions
 
      These work the same way as CRYPTO_set_mem_functions and friends.
      CRYPTO_get_[locked_]mem_functions now writes 0 where such an
@@ -8170,11 +8170,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Add the following functions:
 
-	ENGINE_load_cswift()
-	ENGINE_load_chil()
-	ENGINE_load_atalla()
-	ENGINE_load_nuron()
-	ENGINE_load_builtin_engines()
+        ENGINE_load_cswift()
+        ENGINE_load_chil()
+        ENGINE_load_atalla()
+        ENGINE_load_nuron()
+        ENGINE_load_builtin_engines()
 
      That way, an application can itself choose if external engines that
      are built-in in OpenSSL shall ever be used or not.  The benefit is
@@ -8423,8 +8423,8 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Fix ASN1 checks. Check for overflow by comparing with LONG_MAX
      and get fix the header length calculation.
      [Florian Weimer <Weimer@CERT.Uni-Stuttgart.DE>,
-	Alon Kantor <alonk@checkpoint.com> (and others),
-	Steve Henson]
+        Alon Kantor <alonk@checkpoint.com> (and others),
+        Steve Henson]
 
   *) Use proper error handling instead of 'assertions' in buffer
      overflow checks added in 0.9.6e.  This prevents DoS (the
@@ -9498,23 +9498,23 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      through a logging bio, to cover all the levels that are available
      through syslog.  The prefixes are now:
 
-	PANIC, EMERG, EMR	=>	LOG_EMERG
-	ALERT, ALR		=>	LOG_ALERT
-	CRIT, CRI		=>	LOG_CRIT
-	ERROR, ERR		=>	LOG_ERR
-	WARNING, WARN, WAR	=>	LOG_WARNING
-	NOTICE, NOTE, NOT	=>	LOG_NOTICE
-	INFO, INF		=>	LOG_INFO
-	DEBUG, DBG		=>	LOG_DEBUG
+        PANIC, EMERG, EMR       =>      LOG_EMERG
+        ALERT, ALR              =>      LOG_ALERT
+        CRIT, CRI               =>      LOG_CRIT
+        ERROR, ERR              =>      LOG_ERR
+        WARNING, WARN, WAR      =>      LOG_WARNING
+        NOTICE, NOTE, NOT       =>      LOG_NOTICE
+        INFO, INF               =>      LOG_INFO
+        DEBUG, DBG              =>      LOG_DEBUG
 
      and as before, if none of those prefixes are present at the
      beginning of the string, LOG_ERR is chosen.
 
      On Win32, the LOG_* levels are mapped according to this:
 
-	LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR	=> EVENTLOG_ERROR_TYPE
-	LOG_WARNING				=> EVENTLOG_WARNING_TYPE
-	LOG_NOTICE, LOG_INFO, LOG_DEBUG		=> EVENTLOG_INFORMATION_TYPE
+        LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR => EVENTLOG_ERROR_TYPE
+        LOG_WARNING                             => EVENTLOG_WARNING_TYPE
+        LOG_NOTICE, LOG_INFO, LOG_DEBUG         => EVENTLOG_INFORMATION_TYPE
 
      [Richard Levitte]
 
@@ -10559,9 +10559,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
      With these changes, a new set of functions and macros have appeared:
 
-       CRYPTO_set_mem_debug_functions()	        [F]
+       CRYPTO_set_mem_debug_functions()         [F]
        CRYPTO_get_mem_debug_functions()         [F]
-       CRYPTO_dbg_set_options()	                [F]
+       CRYPTO_dbg_set_options()                 [F]
        CRYPTO_dbg_get_options()                 [F]
        CRYPTO_malloc_debug_init()               [M]
 
