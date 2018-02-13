@@ -21,6 +21,10 @@ void test_open_streams(void)
 {
     bio_out = BIO_new_fp(stdout, BIO_NOCLOSE | BIO_FP_TEXT);
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
+#ifdef __VMS
+    bio_out = BIO_push(BIO_new(BIO_f_linebuffer()), bio_out);
+    bio_err = BIO_push(BIO_new(BIO_f_linebuffer()), bio_err);
+#endif
     bio_err = BIO_push(BIO_new(BIO_f_tap()), bio_err);
 
     OPENSSL_assert(bio_out != NULL);
@@ -29,7 +33,7 @@ void test_open_streams(void)
 
 void test_close_streams(void)
 {
-    BIO_free(bio_out);
+    BIO_free_all(bio_out);
     BIO_free_all(bio_err);
 }
 
