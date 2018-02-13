@@ -16,13 +16,13 @@ Las autoridades certificadoras deben leer https://www.openssl.org/docs/apps/ca.h
 En todos los casos que se muestran a continuación, el archivo de configuración estándar, como compilado en openssl, será utilizado. Puede encontrarlo en /etc/, /usr/local/ssl/ o en otro lugar. Por defecto, el archivo es nombrado openssl.cnf y se describe en https://www.openssl.org/docs/apps/config.html.Puede especificar un archivo de configuración diferente usando el argumento '-config {file}' con los comandos que se muestran a continuación.
 
 
-2. Relación con las llaves
+2. Relación con las claves
 
-Los certificados están relacionados con la criptografía de llave pública al contener una llave pública. Para ser útil, debe haber una llave privada correspondiente a algún lado. Con OpenSSL, las llaves públicas se derivan fácilmente de llaves privadas, entonces antes de crear un certificado o una solicitud de certificado, necesita de crear una llave privada.
+Los certificados están relacionados con la criptografía de clave pública al contener una clave pública. Para ser útil, debe haber una clave privada correspondiente a algún lado. Con OpenSSL, las claves públicas se derivan fácilmente de claves privadas, entonces antes de crear un certificado o una solicitud de certificado, necesita de crear una clave privada.
 
-Las llaves privadas se generan con 'openssl genrsa -out privkey.pem' si desea una llave privada RSA, o si desea una llave privada DSA:'openssl dsaparam -out dsaparam.pem 2048; openssl gendsa -out privkey.pem dsaparam.pem '.
+Las claves privadas se generan con 'openssl genrsa -out privkey.pem' si desea una clave privada RSA, o si desea una clave privada DSA:'openssl dsaparam -out dsaparam.pem 2048; openssl gendsa -out privkey.pem dsaparam.pem '.
 
-Las llaves privadas creadas por estos comandos no están protegidas por contraseña; podría o no ser lo deseable. Más información sobre cómo crear llaves privadas se puede encontrar en https://www.openssl.org/docs/HOWTO/keys.txt. El resto de este texto asume que tiene una llave privada en el archivo privkey.pem.
+Las claves privadas creadas por estos comandos no están protegidas por contraseña; podría o no ser lo deseable. Más información sobre cómo crear claves privadas se puede encontrar en https://www.openssl.org/docs/HOWTO/keys.txt. El resto de este texto asume que tiene una clave privada en el archivo privkey.pem.
 
 
 3. Creando una solicitud de certificado
