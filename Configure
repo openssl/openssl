@@ -1929,7 +1929,7 @@ EOF
 
                 # If it isn't in the source tree, we assume it's generated
                 # in the build tree
-                if (! -f $s) {
+                if (! -f $s || $generate{$_}) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C++, C and asm files
@@ -1957,7 +1957,7 @@ EOF
 
                 # If it isn't in the source tree, we assume it's generated
                 # in the build tree
-                if (! -f $s) {
+                if (! -f $s || $generate{$_}) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
