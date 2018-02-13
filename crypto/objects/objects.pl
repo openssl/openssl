@@ -6,6 +6,13 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# Output year depends on the year of the script and the input files.
+my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
+my $iYEAR = [localtime([stat($ARGV[0])]->[9])]->[5] + 1900;
+$YEAR = $iYEAR if $iYEAR > $YEAR;
+$iYEAR = [localtime([stat($ARGV[1])]->[9])]->[5] + 1900;
+$YEAR = $iYEAR if $iYEAR > $YEAR;
+
 open (NUMIN,"$ARGV[1]") || die "Can't open number file $ARGV[1]";
 $max_nid=0;
 $o=0;
@@ -124,7 +131,6 @@ foreach (sort { $a <=> $b } keys %nidn)
 close NUMOUT;
 
 open (OUT,">$ARGV[2]") || die "Can't open output file $ARGV[2]";
-my $YEAR = [localtime()]->[5] + 1900;
 print OUT <<"EOF";
 /*
  * WARNING: do not edit!

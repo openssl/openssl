@@ -36,6 +36,10 @@ sub der_it
     return $ret;
 }
 
+# Output year depends on the year of the script and the input file.
+my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
+my $iYEAR = [localtime([stat($ARGV[0])]->[9])]->[5] + 1900;
+$YEAR = $iYEAR if $iYEAR > $YEAR;
 
 # Read input, parse all #define's into OID name and value.
 # Populate %ln and %sn with long and short names (%dupln and %dupsn)
@@ -149,7 +153,6 @@ for (my $i = 0; $i < $n; $i++) {
 
 # Finally ready to generate the output.
 open(OUT, ">$ARGV[1]") || die "Can't open output file $ARGV[1], $!";
-my $YEAR = [localtime()]->[5] + 1900;
 print OUT <<"EOF";
 /*
  * WARNING: do not edit!
