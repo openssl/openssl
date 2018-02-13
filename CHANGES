@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
   *) Support for TLSv1.3 added. Note that users upgrading from an earlier
      version of OpenSSL should review their configuration settings to ensure
