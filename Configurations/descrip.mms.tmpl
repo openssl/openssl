@@ -172,6 +172,7 @@ OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
 CC= {- $config{cc} -}
+CPP= {- $config{cpp} -}
 DEFINES={- our $defines = join(",",
                                '__dummy', # To make comma processing easier
                                @{$config{defines}}) -}
