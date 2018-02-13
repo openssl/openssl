@@ -82,7 +82,8 @@ $arr[ord("?")] |= $PSTRING_CHAR;
 
 # Now generate the C code
 
-my $YEAR = [localtime()]->[5] + 1900;
+# Output year only depends on the date on the input file.
+my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
 print <<EOF;
 /*
  * WARNING: do not edit!
