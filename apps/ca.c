@@ -1095,13 +1095,13 @@ end_of_options:
             goto end;
 
         tmptm = ASN1_TIME_new();
-        if (tmptm == NULL)
-            goto end;
-        X509_gmtime_adj(tmptm, 0);
-        X509_CRL_set1_lastUpdate(crl, tmptm);
-        if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
-                              NULL)) {
+        if (tmptm == NULL
+                || X509_gmtime_adj(tmptm, 0) == NULL
+                || !X509_CRL_set1_lastUpdate(crl, tmptm)
+                || X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
+                                    NULL) == NULL) {
             BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+            ASN1_TIME_free(tmptm);
             goto end;
         }
         X509_CRL_set1_nextUpdate(crl, tmptm);
