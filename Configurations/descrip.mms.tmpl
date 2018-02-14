@@ -187,17 +187,16 @@ CFLAGS={- join('', @{$config{cflags}}) -}
 LDFLAGS= {- join('', @{$config{lflags}}) -}
 EX_LIBS= {- join('', map { ','.$_ } @{$config{ex_libs}}) -}
 
-LIB_DEFINES=$(DEFINES){- join("",
-                              (map { ",$_" }
-                               @{$target{shared_defines}},
-                               'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
-                               'ENGINESDIR="""$(ENGINESDIR_C)"""')) -}
+LIB_DEFINES=$(DEFINES){- join("", (map { ",$_" }
+                                   @{$target{shared_defines}},
+                                   'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                                   'ENGINESDIR="""$(ENGINESDIR_C)"""')) -}
 LIB_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(LIB_DEFINES))
 LIB_CFLAGS=$(CFLAGS){- $target{lib_cflags} // "" -}
-DSO_DEFINES=$(DEFINES)
+DSO_DEFINES=$(DEFINES){- join("", (map { ",$_" } @{$target{dso_defines}})) -}
 DSO_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(DSO_DEFINES))
 DSO_CFLAGS=$(CFLAGS){- $target{dso_cflags} // "" -}
-BIN_DEFINES=$(DEFINES)
+BIN_DEFINES=$(DEFINES){- join("", (map { ",$_" } @{$target{bin_defines}})) -}
 BIN_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(BIN_DEFINES))
 BIN_CFLAGS=$(CFLAGS){- $target{bin_cflags} // "" -}
 NO_INST_LIB_CFLAGS=$(CFLAGS){- $target{no_inst_lib_cflags}
