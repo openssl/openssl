@@ -116,16 +116,21 @@ static int init224(EVP_MD_CTX *ctx)
     return SHA224_Init(EVP_MD_CTX_md_data(ctx));
 }
 
+static int update224(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    return SHA224_Update(EVP_MD_CTX_md_data(ctx), data, count);
+}
+
+static int final224(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return SHA224_Final(md, EVP_MD_CTX_md_data(ctx));
+}
+
 static int init256(EVP_MD_CTX *ctx)
 {
     return SHA256_Init(EVP_MD_CTX_md_data(ctx));
 }
 
-/*
- * Even though there're separate SHA224_[Update|Final], we call
- * SHA256 functions even in SHA224 context. This is what happens
- * there anyway, so we can spare few CPU cycles:-)
- */
 static int update256(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     return SHA256_Update(EVP_MD_CTX_md_data(ctx), data, count);
@@ -142,8 +147,8 @@ static const EVP_MD sha224_md = {
     SHA224_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     init224,
-    update256,
-    final256,
+    update224,
+    final224,
     NULL,
     NULL,
     SHA256_CBLOCK,
@@ -187,6 +192,16 @@ static int init512_256(EVP_MD_CTX *ctx)
 static int init384(EVP_MD_CTX *ctx)
 {
     return SHA384_Init(EVP_MD_CTX_md_data(ctx));
+}
+
+static int update384(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+    return SHA384_Update(EVP_MD_CTX_md_data(ctx), data, count);
+}
+
+static int final384(EVP_MD_CTX *ctx, unsigned char *md)
+{
+    return SHA384_Final(md, EVP_MD_CTX_md_data(ctx));
 }
 
 static int init512(EVP_MD_CTX *ctx)
@@ -249,8 +264,8 @@ static const EVP_MD sha384_md = {
     SHA384_DIGEST_LENGTH,
     EVP_MD_FLAG_DIGALGID_ABSENT,
     init384,
-    update512,
-    final512,
+    update384,
+    final384,
     NULL,
     NULL,
     SHA512_CBLOCK,
