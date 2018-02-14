@@ -4505,3 +4505,4 @@ RAND_DRBG_lock                          4446	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_unlock                        4447	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_enable_locking                4448	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_secure_new                    4449	1_1_1	EXIST::FUNCTION:
+OSSL_STORE_vctrl                        4450	1_1_1	EXIST::FUNCTION:

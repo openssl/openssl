@@ -109,14 +109,20 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
 int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
 {
     va_list args;
-    int ret = 0;
+    int ret;
 
     va_start(args, cmd);
-    if (ctx->loader->ctrl != NULL)
-        ret = ctx->loader->ctrl(ctx->loader_ctx, cmd, args);
+    ret = OSSL_STORE_vctrl(ctx, cmd, args);
     va_end(args);
 
     return ret;
+}
+
+int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args)
+{
+    if (ctx->loader->ctrl != NULL)
+        return ctx->loader->ctrl(ctx->loader_ctx, cmd, args);
+    return 0;
 }
 
 OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
