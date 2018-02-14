@@ -164,7 +164,7 @@ EC_POINT_set_compressed_coordinates_GF2m() and EC_POINT_oct2point().
 
 EC_POINT_method_of returns the EC_METHOD associated with the supplied EC_POINT.
 
-EC_POINT_point2oct() and EC_point2buf() return the length of the required
+EC_POINT_point2oct() and EC_POINT_point2buf() return the length of the required
 buffer or 0 on error.
 
 EC_POINT_point2bn() returns the pointer to the BIGNUM supplied, or NULL on
