@@ -175,19 +175,19 @@ LDFLAGS={- join(' ', @{$config{lflags}}) -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
 EX_LIBS={- join(' ', @{$config{ex_libs}}) -}
 
-LIB_CPPFLAGS=$(CPPFLAGS){- join(" ",
-                                $target{shared_cppflag} || "",
-                                (map { quotify_l("-D".$_) }
-                                 "OPENSSLDIR=\"$openssldir\"",
-                                 "ENGINESDIR=\"$enginesdir\"")) -}
-LIB_CFLAGS=$(CFLAGS){- join(" ", $target{lib_cflags}, $target{shared_cflag}) -}
-LIB_LDFLAGS=$(LDFLAGS){- join(' ', $target{shared_ldflag}, $config{shared_ldflag}) -}
-DSO_CPPFLAGS=$(CPPFLAGS){- $target{dso_cppflags} || "" -}
-DSO_CFLAGS=$(CFLAGS){- $target{dso_cflags} || "" -}
-DSO_LDFLAGS=$(LDFLAGS){- $target{dso_ldflag} || "" -}
-BIN_CPPFLAGS=$(CPPFLAGS){- $target{dso_cppflags} || "" -}
-BIN_CFLAGS=$(CFLAGS){- $target{bin_cflags} || "" -}
-BIN_LDFLAGS=$(LDFLAGS){- $target{bin_lflags} || "" -}
+LIB_CPPFLAGS={- join(' ', '$(CPPFLAGS)',
+                          $target{shared_cppflag} || (),
+                          (map { quotify_l("-D".$_) }
+                           "OPENSSLDIR=\"$openssldir\"",
+                           "ENGINESDIR=\"$enginesdir\"")) -}
+LIB_CFLAGS={- join(' ', '$(CFLAGS)', $target{lib_cflags} || (), $target{shared_cflag} || ()) -}
+LIB_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{shared_ldflag} || (), $config{shared_ldflag} || ()) -}
+DSO_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
+DSO_CFLAGS={- join(' ', '$(CFLAGS)', $target{dso_cflags} || ()) -}
+DSO_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{dso_ldflag} || ()) -}
+BIN_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
+BIN_CFLAGS={- join(' ', '$(CFLAGS)', $target{bin_cflags} || ()) -}
+BIN_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{bin_lflags} || ()) -}
 
 PERL={- $config{perl} -}
 

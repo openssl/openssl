@@ -197,22 +197,22 @@ LDFLAGS= {- join(' ', @{$config{lflags}}) -}
 PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
 EX_LIBS= {- join(' ', @{$config{ex_libs}}) -}
 
-LIB_CPPFLAGS=$(CPPFLAGS){- join(' ',
-                                $target{shared_cppflag},
-                                (map { '-D'.$_ }
-                                     ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                                      'ENGINESDIR="\"$(ENGINESDIR)\""'))) -}
-LIB_CFLAGS=$(CFLAGS) {- $target{shared_cflag} || "" -}
-LIB_CXXFLAGS=$(CXXFLAGS) {- $target{shared_cxxflag} || "" -}
-LIB_LDFLAGS=$(LDFLAGS) {- $target{shared_ldflag}." ".$config{shared_ldflag} -}
-DSO_CPPFLAGS=$(CPPFLAGS) {- $target{dso_cppflags} || "" -}
-DSO_CFLAGS=$(CFLAGS) {- $target{dso_cflags} || "" -}
-DSO_CXXFLAGS=$(CXXFLAGS) {- $target{dso_cxxflags} || "" -}
-DSO_LDFLAGS=$(LDFLAGS) {- $target{dso_lflags} || "" -}
-BIN_CPPFLAGS=$(CPPFLAGS) {- $target{bin_cppflags} || "" -}
-BIN_CFLAGS=$(CFLAGS) {- $target{bin_cflags} || "" -}
-BIN_CXXFLAGS=$(CXXFLAGS) {- $target{bin_cxxflags} || "" -}
-BIN_LDFLAGS=$(LDFLAGS) {- $target{bin_lflags} || "" -}
+LIB_CPPFLAGS={- join(' ', '$(CPPFLAGS)',
+                          $target{shared_cppflag},
+                          (map { '-D'.$_ }
+                               ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
+                                'ENGINESDIR="\"$(ENGINESDIR)\""'))) -}
+LIB_CFLAGS={- join(' ', '$(CFLAGS)', $target{shared_cflag} || ()) -}
+LIB_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{shared_cxxflag} || ()) -}
+LIB_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{shared_ldflag} || (), $config{shared_ldflag} || ()) -}
+DSO_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
+DSO_CFLAGS={- join(' ', '$(CFLAGS)', $target{dso_cflags} || ()) -}
+DSO_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{dso_cxxflags} || ()) -}
+DSO_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{dso_lflags} || ()) -}
+BIN_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{bin_cppflags} || ()) -}
+BIN_CFLAGS={- join(' ', '$(CFLAGS)', $target{bin_cflags} || ()) -}
+BIN_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{bin_cxxflags} || ()) -}
+BIN_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{bin_lflags} || ()) -}
 
 PERL={- $config{perl} -}
 
