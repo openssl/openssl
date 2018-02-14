@@ -198,7 +198,7 @@ PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
 EX_LIBS= {- join(' ', @{$config{ex_libs}}) -}
 
 LIB_CPPFLAGS={- join(' ', '$(CPPFLAGS)',
-                          $target{shared_cppflag},
+                          $target{shared_cppflag} || (),
                           (map { '-D'.$_ }
                                ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
                                 'ENGINESDIR="\"$(ENGINESDIR)\""'))) -}
