@@ -33,10 +33,14 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
 {
     long ret;
     int bareoper;
+    size_t int_processed = 0;
 
     if (b->callback_ex != NULL) {
         return b->callback_ex(b, oper, argp, len, argi, argl, inret, processed);
     }
+
+    if (processed != NULL)
+        int_processed = *processed;
 
     /* Strip off any BIO_CB_RETURN flag */
     bareoper = oper & ~BIO_CB_RETURN;
@@ -47,24 +51,32 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
      */
     if (HAS_LEN_OPER(bareoper)) {
         /* In this case |len| is set, and should be used instead of |argi| */
-        if (len > INT_MAX)
-            return -1;
+        if (len > INT_MAX) {
+            ret = -1;
+            goto end;
+        }
 
         argi = (int)len;
 
         if (inret && (oper & BIO_CB_RETURN)) {
-            if (*processed > INT_MAX)
-                return -1;
-            inret = *processed;
+            if (int_processed > INT_MAX) {
+                ret = -1;
+                goto end;
+            }
+            inret = int_processed;
         }
     }
 
     ret = b->callback(b, oper, argp, argi, argl, inret);
 
     if (ret >= 0 && (HAS_LEN_OPER(bareoper) || bareoper == BIO_CB_PUTS)) {
-        *processed = (size_t)ret;
+        int_processed = (size_t)ret;
         ret = 1;
     }
+
+ end:
+    if (processed != NULL)
+        *processed = int_processed;
 
     return ret;
 }
