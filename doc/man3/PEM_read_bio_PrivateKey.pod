@@ -161,9 +161,9 @@ For more details about the meaning of arguments see the
 B<PEM FUNCTION ARGUMENTS> section.
 
 Each operation has four functions associated with it. For
-clarity the term "B<foobar> functions" will be used to collectively
-refer to the PEM_read_bio_foobar(), PEM_read_foobar(),
-PEM_write_bio_foobar() and PEM_write_foobar() functions.
+brevity the term "B<TYPE> functions" will be used below to collectively
+refer to the PEM_read_bio_TYPE(), PEM_read_TYPE(),
+PEM_write_bio_TYPE(), and PEM_write_TYPE() functions.
 
 The B<PrivateKey> functions read or write a private key in PEM format using an
 EVP_PKEY structure. The write routines use PKCS#8 private key format and are
