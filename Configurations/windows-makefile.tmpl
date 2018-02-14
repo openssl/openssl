@@ -174,19 +174,20 @@ LD={- $config{ld} -}
 LDFLAGS={- join(' ', @{$config{lflags}}) -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
 EX_LIBS={- join(' ', @{$config{ex_libs}}) -}
-LIB_CPPFLAGS={- join(" ",
-                     $target{shared_cppflag} || "",
-                     (map { quotify_l("-D".$_) }
-                      "OPENSSLDIR=\"$openssldir\"",
-                      "ENGINESDIR=\"$enginesdir\"")) -}
-LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) -}
-LIB_LDFLAGS={- join(' ', $target{shared_ldflag}, $config{shared_ldflag}) -}
-DSO_CPPFLAGS={- $target{dso_cppflags} || "" -}
-DSO_CFLAGS={- $target{dso_cflags} || "" -}
-DSO_LDFLAGS={- $target{dso_ldflag} || "" -}
-BIN_CPPFLAGS={- $target{dso_cppflags} || "" -}
-BIN_CFLAGS={- $target{bin_cflags} -}
-BIN_LDFLAGS={- $target{bin_lflags} -}
+
+LIB_CPPFLAGS={- join(' ', '$(CPPFLAGS)',
+                          $target{shared_cppflag} || (),
+                          (map { quotify_l("-D".$_) }
+                           "OPENSSLDIR=\"$openssldir\"",
+                           "ENGINESDIR=\"$enginesdir\"")) -}
+LIB_CFLAGS={- join(' ', '$(CFLAGS)', $target{lib_cflags} || (), $target{shared_cflag} || ()) -}
+LIB_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{shared_ldflag} || (), $config{shared_ldflag} || ()) -}
+DSO_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
+DSO_CFLAGS={- join(' ', '$(CFLAGS)', $target{dso_cflags} || ()) -}
+DSO_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{dso_ldflag} || ()) -}
+BIN_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
+BIN_CFLAGS={- join(' ', '$(CFLAGS)', $target{bin_cflags} || ()) -}
+BIN_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{bin_lflags} || ()) -}
 
 PERL={- $config{perl} -}
 
@@ -434,6 +435,10 @@ EOF
               die "Generator type for $src unknown: $generator\n";
           }
 
+          my $cppflags = $incs;
+          $cppflags .= { lib => '$(LIB_CPPFLAGS)',
+                         dso => '$(DSO_CPPFLAGS)',
+                         bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to
               # end up generating foo.s in two steps.
@@ -467,12 +472,10 @@ EOF
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
-     my $cflags = '$(CFLAGS)';
-     $cflags .= { lib => ' $(LIB_CFLAGS)',
-		  dso => ' $(DSO_CFLAGS)',
-		  bin => ' $(BIN_CFLAGS)' } -> {$args{intent}};
+     my $cflags = { lib => ' $(LIB_CFLAGS)',
+		    dso => ' $(DSO_CFLAGS)',
+		    bin => ' $(BIN_CFLAGS)' } -> {$args{intent}};
      $cflags .= $incs;
-     $cflags .= ' $(CPPFLAGS)';
      $cflags .= { lib => ' $(LIB_CPPFLAGS)',
 		  dso => ' $(DSO_CPPFLAGS)',
 		  bin => ' $(BIN_CPPFLAGS)' } -> {$args{intent}};
