@@ -112,7 +112,7 @@ int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
     int ret;
 
     va_start(args, cmd);
-    ret = OSSL_STORE_vctrl(ctx->loader_ctx, cmd, args);
+    ret = OSSL_STORE_vctrl(ctx, cmd, args);
     va_end(args);
 
     return ret;
@@ -121,7 +121,7 @@ int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
 int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args)
 {
     if (ctx->loader->ctrl != NULL)
-        return ctx->loader->ctrl(ctx, cmd, args);
+        return ctx->loader->ctrl(ctx->loader_ctx, cmd, args);
     return 0;
 }
 
