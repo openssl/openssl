@@ -236,16 +236,14 @@ __owur int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
  * SSL_export_keying_material_early exports a value derived from the
  * early exporter master secret, as specified in
  * https://tools.ietf.org/html/draft-ietf-tls-tls13-23. It writes
- * |olen| bytes to |out| given a label and optional context. (Since a
- * zero length context is allowed, the |use_context| flag controls
- * whether a context is included.) It returns 1 on success and 0
- * otherwise.
+ * |olen| bytes to |out| given a label and optional context. It
+ * returns 1 on success and 0 otherwise.
  */
 __owur int SSL_export_keying_material_early(SSL *s, unsigned char *out,
                                             size_t olen, const char *label,
                                             size_t llen,
                                             const unsigned char *context,
-                                            size_t contextlen, int use_context);
+                                            size_t contextlen);
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid);
 

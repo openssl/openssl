@@ -705,7 +705,7 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                        const char *label, size_t llen,
                                        const unsigned char *context,
-                                       size_t contextlen, int use_context)
+                                       size_t contextlen)
 {
     unsigned char exportsecret[EVP_MAX_MD_SIZE];
     static const unsigned char exporterlabel[] = "exporter";
@@ -726,9 +726,6 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
         sslcipher = SSL_SESSION_get0_cipher(s->session);
     }
     md = ssl_md(sslcipher->algorithm2);
-
-    if (!use_context)
-        contextlen = 0;
 
     /*
      * In the following code, it calculates hash value of empty

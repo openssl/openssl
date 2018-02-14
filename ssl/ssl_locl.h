@@ -2410,8 +2410,7 @@ __owur int tls13_export_keying_material_early(SSL *s, unsigned char *out,
                                               size_t olen, const char *label,
                                               size_t llen,
                                               const unsigned char *context,
-                                              size_t contextlen,
-                                              int use_context);
+                                              size_t contextlen);
 __owur int tls1_alert_code(int code);
 __owur int tls13_alert_code(int code);
 __owur int ssl3_alert_code(int code);

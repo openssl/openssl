@@ -3161,8 +3161,8 @@ static int test_export_key_mat_early(int idx)
     const char label[] = "test label";
     const unsigned char context[] = "context";
     const unsigned char *emptycontext = NULL;
-    unsigned char ckeymat1[80], ckeymat2[80], ckeymat3[80];
-    unsigned char skeymat1[80], skeymat2[80], skeymat3[80];
+    unsigned char ckeymat1[80], ckeymat2[80];
+    unsigned char skeymat1[80], skeymat2[80];
     unsigned char buf[1];
     size_t readbytes, written;
 
@@ -3183,7 +3183,7 @@ static int test_export_key_mat_early(int idx)
                                                       sizeof(ckeymat1), label,
                                                       sizeof(label) - 1,
                                                       context,
-                                                      sizeof(context) - 1, 1),
+                                                      sizeof(context) - 1),
                      1)
             || !TEST_int_eq(SSL_export_keying_material_early(clientssl,
                                                              ckeymat2,
@@ -3191,35 +3191,23 @@ static int test_export_key_mat_early(int idx)
                                                              label,
                                                              sizeof(label) - 1,
                                                              emptycontext,
-                                                             0, 1), 1)
-            || !TEST_int_eq(SSL_export_keying_material_early(clientssl,
-                                                             ckeymat3,
-                                                             sizeof(ckeymat3),
-                                                             label,
-                                                             sizeof(label) - 1,
-                                                             NULL, 0, 0), 1)
+                                                             0), 1)
             || !TEST_int_eq(SSL_export_keying_material_early(serverssl,
                                                              skeymat1,
                                                              sizeof(skeymat1),
                                                              label,
                                                              sizeof(label) - 1,
                                                              context,
-                                                             sizeof(context) -1,
-                                                             1),
+                                                             sizeof(context) - 1
+                                                             ),
                             1)
             || !TEST_int_eq(SSL_export_keying_material_early(serverssl,
                                                              skeymat2,
                                                              sizeof(skeymat2),
                                                              label,
                                                              sizeof(label) - 1,
-                                                             emptycontext, 0,
-                                                             1), 1)
-            || !TEST_int_eq(SSL_export_keying_material_early(serverssl,
-                                                             skeymat3,
-                                                             sizeof(skeymat3),
-                                                             label,
-                                                             sizeof(label) - 1,
-                                                             NULL, 0, 0), 1)
+                                                             emptycontext, 0),
+                            1)
                /*
                 * Check that both sides created the same key material with the
                 * same context.
@@ -3232,12 +3220,6 @@ static int test_export_key_mat_early(int idx)
                 */
             || !TEST_mem_eq(ckeymat2, sizeof(ckeymat2), skeymat2,
                             sizeof(skeymat2))
-               /*
-                * Check that both sides created the same key material without a
-                * context.
-                */
-            || !TEST_mem_eq(ckeymat3, sizeof(ckeymat3), skeymat3,
-                            sizeof(skeymat3))
                /* Different contexts should produce different results */
             || !TEST_mem_ne(ckeymat1, sizeof(ckeymat1), ckeymat2,
                             sizeof(ckeymat2)))
