@@ -69,7 +69,7 @@ void gf_mulw_unsigned(gf_s * RESTRICT cs, const gf as, uint32_t b)
     uint32_t mask = (1 << 28) - 1;
     int i;
 
-    assert(b < 1 << 28);
+    assert(b <= mask);
 
     for (i = 0; i < 8; i++) {
         accum0 += widemul(b, a[i]);
