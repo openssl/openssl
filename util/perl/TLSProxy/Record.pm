@@ -286,15 +286,13 @@ sub reconstruct_record
     my $self = shift;
     my $server = shift;
     my $data;
-    my $tls13_enc = 0;
 
     if ($self->sslv2) {
         $data = pack('n', $self->len | 0x8000);
     } else {
         if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
             $data = pack('Cnn', $self->outer_content_type, $self->version,
-                         $self->len + 1);
-            $tls13_enc = 1;
+                         $self->len);
         } else {
             $data = pack('Cnn', $self->content_type, $self->version,
                          $self->len);
@@ -302,10 +300,6 @@ sub reconstruct_record
 
     }
     $data .= $self->data;
-
-    if ($tls13_enc) {
-        $data .= pack('C', $self->content_type);
-    }
 
     return $data;
 }
