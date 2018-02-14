@@ -376,8 +376,8 @@ i2d_X509_VAL,
 
 In the description here, I<TYPE> is used a placeholder
 for any of the OpenSSL datatypes, such as I<X509_CRL>.
-The function parameters I<ppin> and I<ppout> are actually
-both named I<pp> in the headers, but distinguished here for clarity.
+The function parameters I<ppin> and I<ppout> are generally
+either both named I<pp> in the headers, or I<in> and I<out>.
 
 These functions convert OpenSSL objects to and from their ASN.1/DER
 encoding.  Unlike the C structures which can have pointers to sub-objects
