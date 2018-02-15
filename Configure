@@ -886,17 +886,6 @@ if (grep { $_ =~ /(^|\s)-Wl,-rpath,/ } ($user{LDLIBS} ? @{$user{LDLIBS}} : ())
 	"***** any of asan, msan or ubsan\n";
 }
 
-if (scalar(@seed_sources) == 0) {
-    print "Using implicit seed configuration\n";
-    push @seed_sources, 'os';
-}
-die "Cannot seed with none and anything else"
-    if scalar(grep { $_ eq 'none' } @seed_sources) > 0
-        && scalar(@seed_sources) > 1;
-push @{$config{openssl_other_defines}},
-     map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
-	@seed_sources;
-
 my @tocheckfor = (keys %disabled);
 while (@tocheckfor) {
     my %new_tocheckfor = ();
@@ -939,6 +928,17 @@ if ($target eq "HASH") {
 
 print "Configuring OpenSSL version $config{version} ($config{version_num}) ";
 print "for $target\n";
+
+if (scalar(@seed_sources) == 0) {
+    print "Using os-specific seed configuration\n";
+    push @seed_sources, 'os';
+}
+die "Cannot seed with none and anything else"
+    if scalar(grep { $_ eq 'none' } @seed_sources) > 0
+        && scalar(@seed_sources) > 1;
+push @{$config{openssl_other_defines}},
+     map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
+	@seed_sources;
 
 # Backward compatibility?
 if ($target =~ m/^CygWin32(-.*)$/) {
