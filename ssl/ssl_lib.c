@@ -2814,9 +2814,8 @@ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                      const unsigned char *context,
                                      size_t contextlen)
 {
-    if (s->version != TLS1_3_VERSION) {
+    if (s->version != TLS1_3_VERSION)
         return 0;
-    }
 
     return tls13_export_keying_material_early(s, out, olen, label, llen,
                                               context, contextlen);

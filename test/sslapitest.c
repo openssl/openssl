@@ -3154,12 +3154,12 @@ static int test_export_key_mat(int tst)
  */
 static int test_export_key_mat_early(int idx)
 {
+    static const char label[] = "test label";
+    static const unsigned char context[] = "context";
     int testresult = 0;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     SSL_SESSION *sess = NULL;
-    const char label[] = "test label";
-    const unsigned char context[] = "context";
     const unsigned char *emptycontext = NULL;
     unsigned char ckeymat1[80], ckeymat2[80];
     unsigned char skeymat1[80], skeymat2[80];
@@ -3179,35 +3179,18 @@ static int test_export_key_mat_early(int idx)
                             SSL_EARLY_DATA_ACCEPTED))
         goto end;
 
-    if (!TEST_int_eq(SSL_export_keying_material_early(clientssl, ckeymat1,
-                                                      sizeof(ckeymat1), label,
-                                                      sizeof(label) - 1,
-                                                      context,
-                                                      sizeof(context) - 1),
-                     1)
-            || !TEST_int_eq(SSL_export_keying_material_early(clientssl,
-                                                             ckeymat2,
-                                                             sizeof(ckeymat2),
-                                                             label,
-                                                             sizeof(label) - 1,
-                                                             emptycontext,
-                                                             0), 1)
-            || !TEST_int_eq(SSL_export_keying_material_early(serverssl,
-                                                             skeymat1,
-                                                             sizeof(skeymat1),
-                                                             label,
-                                                             sizeof(label) - 1,
-                                                             context,
-                                                             sizeof(context) - 1
-                                                             ),
-                            1)
-            || !TEST_int_eq(SSL_export_keying_material_early(serverssl,
-                                                             skeymat2,
-                                                             sizeof(skeymat2),
-                                                             label,
-                                                             sizeof(label) - 1,
-                                                             emptycontext, 0),
-                            1)
+    if (!TEST_int_eq(SSL_export_keying_material_early(
+                     clientssl, ckeymat1, sizeof(ckeymat1), label,
+                     sizeof(label) - 1, context, sizeof(context) - 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material_early(
+                            clientssl, ckeymat2, sizeof(ckeymat2), label,
+                            sizeof(label) - 1, emptycontext, 0), 1)
+            || !TEST_int_eq(SSL_export_keying_material_early(
+                            serverssl, skeymat1, sizeof(skeymat1), label,
+                            sizeof(label) - 1, context, sizeof(context) - 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material_early(
+                            serverssl, skeymat2, sizeof(skeymat2), label,
+                            sizeof(label) - 1, emptycontext, 0), 1)
                /*
                 * Check that both sides created the same key material with the
                 * same context.

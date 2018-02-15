@@ -953,8 +953,8 @@ int ossl_statem_export_allowed(SSL *s)
 }
 
 /*
- * This function returns 1 if early TLS exporter is ready to export
- * keying material, or 0 if otherwise.
+ * Return 1 if early TLS exporter is ready to export keying material,
+ * or 0 if otherwise.
  */
 int ossl_statem_export_early_allowed(SSL *s)
 {

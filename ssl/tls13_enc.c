@@ -707,8 +707,8 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
                                        const unsigned char *context,
                                        size_t contextlen)
 {
-    unsigned char exportsecret[EVP_MAX_MD_SIZE];
     static const unsigned char exporterlabel[] = "exporter";
+    unsigned char exportsecret[EVP_MAX_MD_SIZE];
     unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
     const EVP_MD *md;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
@@ -720,17 +720,17 @@ int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
         goto err;
 
     if (!s->server && s->max_early_data > 0
-        && s->session->ext.max_early_data == 0) {
+            && s->session->ext.max_early_data == 0)
         sslcipher = SSL_SESSION_get0_cipher(s->psksession);
-    } else {
+    else
         sslcipher = SSL_SESSION_get0_cipher(s->session);
-    }
+
     md = ssl_md(sslcipher->algorithm2);
 
     /*
-     * In the following code, it calculates hash value of empty
-     * string, and stores it in data.  This is because the definition
-     * of TLS-Exporter is defined like so:
+     * Calculate the hash value and store it in |data|. The reason why
+     * the empty string is used is that the definition of TLS-Exporter
+     * is like so:
      *
      * TLS-Exporter(label, context_value, key_length) =
      *     HKDF-Expand-Label(Derive-Secret(Secret, label, ""),
