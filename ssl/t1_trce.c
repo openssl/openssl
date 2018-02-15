@@ -79,7 +79,7 @@ static const ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
 };
 
-/* Handshake types */
+/* Handshake types, sorted by ascending id  */
 static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_HELLO_REQUEST, "HelloRequest"},
     {SSL3_MT_CLIENT_HELLO, "ClientHello"},
@@ -95,9 +95,9 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
-    {21, "CertificateUrl"},
+    {SSL3_MT_CERTIFICATE_URL, "CertificateUrl"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
-    {23, "SupplementalData"},
+    {SSL3_MT_SUPPLEMENTAL_DATA, "SupplementalData"},
     {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {SSL3_MT_NEXT_PROTO, "NextProto"},
@@ -449,7 +449,7 @@ static const ssl_trace_tbl ssl_comp_tbl[] = {
     {0x0001, "Zlib Compression"}
 };
 
-/* Extensions */
+/* Extensions sorted by ascending id */
 static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_server_name, "server_name"},
     {TLSEXT_TYPE_max_fragment_length, "max_fragment_length"},
