@@ -222,6 +222,12 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len);
 int rand_drbg_restart(RAND_DRBG *drbg,
                       const unsigned char *buffer, size_t len, size_t entropy);
 
+/* locking api */
+int rand_drbg_lock(RAND_DRBG *drbg);
+int rand_drbg_unlock(RAND_DRBG *drbg);
+int rand_drbg_enable_locking(RAND_DRBG *drbg);
+
+
 /* initializes the AES-CTR DRBG implementation */
 int drbg_ctr_init(RAND_DRBG *drbg);
 
