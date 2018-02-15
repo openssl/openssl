@@ -22,6 +22,10 @@ Configuration targets are a collection of facts that we know about
 different platforms and their capabilities.  We organise them in a
 hash table, where each entry represent a specific target.
 
+Each configuration file is evaluated as a perl file, and the last
+expression in each file must be a hash table of config targets.  The
+config target "DEFAULTS" is a reserved template.
+
 Note that configuration target names must be unique across all config
 files.  The Configure script does check that a config file doesn't
 have config targets that shadow config targets from other files.
@@ -34,6 +38,53 @@ In each table entry, the following keys are significant:
                            target.  Instead, this target is a template
                            upon which other targets can be built.
                            Explained further below.  [1]
+
+        policy          => The policy for the config target.  Can be
+                           one of: 
+
+                           "primary"    This is a config target
+                                        directly supported by the
+                                        OpenSSL project.
+                           "secondary"  This is a config target
+                                        supported by at least one
+                                        named OpenSSL team member.
+                           "community"  This is a config target
+                                        supported by at least one
+                                        named (self defined) member of
+                                        the OpenSSL community.
+                           "unknown"    This is a config target that
+                                        does not have a named
+                                        supporter.
+                           "deprecated" This is a config target that
+                                        has been deemed legacy and is
+                                        subject for future removal.
+
+                           That a config target is "supported" means
+                           that at least one person has decided to
+                           take responsibility for maintaining that
+                           config target, which means testing it
+                           regularly, making changes / sending patches
+                           when appropriate, responding to related bug
+                           reports.  For "primary" config targets, the
+                           OpenSSL team as a whole must support them
+                           and do not need to be mentioned otherwise.
+                           For "secondary" and "community" config
+                           targets, the responsible persons are
+                           enumerated with the "supporters" attribute
+                           (see below).  For "unknown" config targets,
+                           there is no responsible person, but that
+                           doesn't mean they can't be updated if
+                           someone finds an issue.
+
+                           Note template configs are usually
+                           unclassified, as well as some very generic
+                           ones.
+
+        supporters      => A list of email addresses, perferably but
+                           not necessarily with a real name.  The
+                           presence of this attribute is required for
+                           config targets classified as "secondary" or
+                           "community".
 
         sys_id          => System identity for systems where that
                            is difficult to determine automatically.

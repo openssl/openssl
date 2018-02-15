@@ -926,6 +926,40 @@ if ($target eq "LIST") {
     exit 0;
 }
 
+if ($target eq "SUPPORT") {
+    my $longest = 0;
+    foreach (keys %table) {
+        $longest = length($_) if (length($_) > $longest);
+    }
+    $longest += 2;              # Two space separation
+    foreach (sort keys %table) {
+        unless ($table{$_}->{template}) {
+            my $policy = $table{$_}->{policy} // 'unclassified';
+
+            print $_, ' ' x ($longest - length($_));
+            print $policy;
+            if ($policy eq 'primary') {
+                print ' ' x (16 - length($policy)), "The OpenSSL Team\n";
+            } elsif ($policy eq 'secondary' || $policy eq 'community') {
+                print ' ' x (16 - length($policy));
+                my $first = 1;
+                my @names = ( '[[ NO SUPPORTERS ]]' );
+                @names = ( @{$table{$_}->{supporters}} ) # shallow copy
+                    if $table{$_}->{supporters};
+
+                while (@names) {
+                    print ' ' x ($longest + 16) unless $first;
+                    $first = 0;
+                    print shift @names, "\n";
+                }
+            } else {
+                print "\n";
+            }
+        }
+    }
+    exit 0;
+}
+
 if ($target eq "HASH") {
     local $die = sub { warn @_; };
     print "%table = (\n";
