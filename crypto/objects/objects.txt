@@ -1337,10 +1337,13 @@ id-tc26-agreement 2	: id-tc26-agreement-gost-3410-2012-512
 id-tc26 2 		: id-tc26-constants
 
 id-tc26-constants 1	: id-tc26-sign-constants
+id-tc26-sign-constants 1: id-tc26-gost-3410-2012-256-constants
+id-tc26-gost-3410-2012-256-constants 1	: id-tc26-gost-3410-2012-256-paramSetA: GOST R 34.10-2012 (256 bit) ParamSet A
 id-tc26-sign-constants 2: id-tc26-gost-3410-2012-512-constants
 id-tc26-gost-3410-2012-512-constants 0	: id-tc26-gost-3410-2012-512-paramSetTest: GOST R 34.10-2012 (512 bit) testing parameter set
 id-tc26-gost-3410-2012-512-constants 1	: id-tc26-gost-3410-2012-512-paramSetA: GOST R 34.10-2012 (512 bit) ParamSet A
 id-tc26-gost-3410-2012-512-constants 2	: id-tc26-gost-3410-2012-512-paramSetB: GOST R 34.10-2012 (512 bit) ParamSet B
+id-tc26-gost-3410-2012-512-constants 3	: id-tc26-gost-3410-2012-512-paramSetC: GOST R 34.10-2012 (512 bit) ParamSet C
 
 id-tc26-constants 2     : id-tc26-digest-constants
 id-tc26-constants 5     : id-tc26-cipher-constants
