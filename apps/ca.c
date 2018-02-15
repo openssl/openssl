@@ -1095,13 +1095,13 @@ end_of_options:
             goto end;
 
         tmptm = ASN1_TIME_new();
-        if (tmptm == NULL)
-            goto end;
-        X509_gmtime_adj(tmptm, 0);
-        X509_CRL_set1_lastUpdate(crl, tmptm);
-        if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
-                              NULL)) {
+        if (tmptm == NULL
+                || X509_gmtime_adj(tmptm, 0) == NULL
+                || !X509_CRL_set1_lastUpdate(crl, tmptm)
+                || X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
+                                    NULL) == NULL) {
             BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+            ASN1_TIME_free(tmptm);
             goto end;
         }
         X509_CRL_set1_nextUpdate(crl, tmptm);
@@ -1706,7 +1706,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (enddate != NULL) {
         int tdays;
-        ASN1_TIME_diff(&tdays, NULL, NULL, X509_get0_notAfter(ret));
+
+        if (!ASN1_TIME_diff(&tdays, NULL, NULL, X509_get0_notAfter(ret)))
+            goto end;
         days = tdays;
     }
 
@@ -2209,7 +2211,10 @@ static int do_updatedb(CA_DB *db)
         return -1;
 
     /* get actual time and make a string */
-    a_tm = X509_gmtime_adj(a_tm, 0);
+    if (X509_gmtime_adj(a_tm, 0) == NULL) {
+        ASN1_UTCTIME_free(a_tm);
+        return -1;
+    }
     a_tm_s = app_malloc(a_tm->length + 1, "time string");
 
     memcpy(a_tm_s, a_tm->data, a_tm->length);
