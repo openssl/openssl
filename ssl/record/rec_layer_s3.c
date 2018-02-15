@@ -839,7 +839,9 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * and record version number > TLS 1.0
          */
         if (SSL_get_state(s) == TLS_ST_CW_CLNT_HELLO
-            && !s->renegotiate && TLS1_get_version(s) > TLS1_VERSION)
+                && !s->renegotiate
+                && TLS1_get_version(s) > TLS1_VERSION
+                && s->hello_retry_request == SSL_HRR_NONE)
             version = TLS1_VERSION;
 
         maxcomplen = pipelens[j];

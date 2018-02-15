@@ -118,7 +118,7 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
                 return 0;
             if (msgtype == SSL3_MT_CLIENT_HELLO) {
                 chseen++;
-                expectedrecvers = TLS1_VERSION;
+
                 /*
                  * Skip legacy_version (2 bytes) and Random (32 bytes) to read
                  * session_id.
@@ -128,6 +128,8 @@ static int watchccs_write(BIO *bio, const char *in, int inl)
                     return 0;
 
                 if (chseen == 1) {
+                    expectedrecvers = TLS1_VERSION;
+
                     /* Save the session id for later */
                     chsessidlen = PACKET_remaining(&sessionid);
                     if (!PACKET_copy_bytes(&sessionid, chsessid, chsessidlen))
