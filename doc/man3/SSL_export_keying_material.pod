@@ -30,13 +30,13 @@ accordance with RFC5705 (for TLSv1.2 and below) or RFCXXXX (for TLSv1.3).
 TODO(TLS1.3): Update the RFC number when the RFC is published.
 
 SSL_export_keying_material() derives keying material using
-the exporter_master_secret established in the handshake.
+the F<exporter_master_secret> established in the handshake.
 
 SSL_export_keying_material_early() is only usable with TLSv1.3, and derives
-keying material using the early_exporter_master_secret. For the client, the
-early_exporter_master_secret is only available when the client attempts to send
-0-RTT data. For the server, it is only available when the server accepts 0-RTT
-data.
+keying material using the F<early_exporter_master_secret> (as defined in the
+TLS 1.3 RFC). For the client, the F<early_exporter_master_secret> is only
+available when the client attempts to send 0-RTT data. For the server, it is
+only available when the server accepts 0-RTT data.
 
 An application may need to securely establish the context within which this
 keying material will be used. For example this may include identifiers for the
