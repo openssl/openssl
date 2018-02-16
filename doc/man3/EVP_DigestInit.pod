@@ -57,7 +57,7 @@ and should be used instead of the cipher-specific functions.
 
 =item EVP_MD_CTX_new()
 
-Allocates, initializes and returns a digest context.
+Allocates and returns a digest context.
 
 =item EVP_MD_CTX_reset()
 
@@ -75,9 +75,8 @@ Performs digest-specific control actions on context B<ctx>.
 =item EVP_DigestInit_ex()
 
 Sets up digest context B<ctx> to use a digest B<type> from ENGINE B<impl>.
-B<ctx> must be initialized before calling this function. B<type> will typically
-be supplied by a function such as EVP_sha1().  If B<impl> is NULL then the
-default implementation of digest B<type> is used.
+B<type> will typically be supplied by a function such as EVP_sha1().  If
+B<impl> is NULL then the default implementation of digest B<type> is used.
 
 =item EVP_DigestUpdate()
 
@@ -105,13 +104,12 @@ made, but EVP_DigestInit_ex() can be called to initialize a new operation.
 
 Can be used to copy the message digest state from B<in> to B<out>. This is
 useful if large amounts of data are to be hashed which only differ in the last
-few bytes. B<out> must be initialized before calling this function.
+few bytes.
 
 =item EVP_DigestInit()
 
-Behaves in the same way as EVP_DigestInit_ex() except the passed context B<ctx>
-does not have to be initialized, and it always uses the default digest
-implementation.
+Behaves in the same way as EVP_DigestInit_ex() except it always uses the
+default digest implementation.
 
 =item EVP_DigestFinal()
 
