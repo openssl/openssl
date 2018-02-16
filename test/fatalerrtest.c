@@ -38,6 +38,10 @@ static int test_fatalerr(void)
      */
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA"))
             || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES256-SHA"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                                   "TLS_AES_128_GCM_SHA256"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                   "TLS_AES_256_GCM_SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL,
                           NULL)))
         goto err;

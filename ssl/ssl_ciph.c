@@ -1274,12 +1274,14 @@ static int check_suiteb_cipher_list(const SSL_METHOD *meth, CERT *c,
 }
 #endif
 
-STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK_OF(SSL_CIPHER)
-                                             **cipher_list, STACK_OF(SSL_CIPHER)
-                                             **cipher_list_by_id,
-                                             const char *rule_str, CERT *c)
+STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+                                             STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
+                                             STACK_OF(SSL_CIPHER) **cipher_list,
+                                             STACK_OF(SSL_CIPHER) **cipher_list_by_id,
+                                             const char *rule_str,
+                                             CERT *c)
 {
-    int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
+    int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases, i;
     uint32_t disabled_mkey, disabled_auth, disabled_enc, disabled_mac;
     STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
     const char *rule_p;
@@ -1467,6 +1469,15 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method, STACK
     if ((cipherstack = sk_SSL_CIPHER_new_null()) == NULL) {
         OPENSSL_free(co_list);
         return NULL;
+    }
+
+    /* Add TLSv1.3 ciphers first - we always prefer those if possible */
+    for (i = 0; i < sk_SSL_CIPHER_num(tls13_ciphersuites); i++) {
+        if (!sk_SSL_CIPHER_push(cipherstack,
+                                sk_SSL_CIPHER_value(tls13_ciphersuites, i))) {
+            sk_SSL_CIPHER_free(cipherstack);
+            return NULL;
+        }
     }
 
     /*

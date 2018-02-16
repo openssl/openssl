@@ -740,6 +740,8 @@ struct ssl_ctx_st {
     STACK_OF(SSL_CIPHER) *cipher_list;
     /* same as above but sorted for lookup */
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
+    /* TLSv1.3 specific ciphersuites */
+    STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
     struct x509_store_st /* X509_STORE */ *cert_store;
     LHASH_OF(SSL_SESSION) *sessions;
     /*
@@ -1108,6 +1110,8 @@ struct ssl_st {
     /* crypto */
     STACK_OF(SSL_CIPHER) *cipher_list;
     STACK_OF(SSL_CIPHER) *cipher_list_by_id;
+    /* TLSv1.3 specific ciphersuites */
+    STACK_OF(SSL_CIPHER) *tls13_ciphersuites;
     /*
      * These are the ones being used, the ones in SSL_SESSION are the ones to
      * be 'copied' into these ones
@@ -2198,10 +2202,10 @@ __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
-__owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
-                                                    STACK_OF(SSL_CIPHER) **pref,
-                                                    STACK_OF(SSL_CIPHER)
-                                                    **sorted,
+__owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
+                                                    STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
+                                                    STACK_OF(SSL_CIPHER) **cipher_list,
+                                                    STACK_OF(SSL_CIPHER) **cipher_list_by_id,
                                                     const char *rule_str,
                                                     CERT *c);
 __owur int ssl_cache_cipherlist(SSL *s, PACKET *cipher_suites, int sslv2format);
