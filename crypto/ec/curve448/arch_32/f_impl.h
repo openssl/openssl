@@ -52,7 +52,7 @@ void gf_weak_reduce(gf a)
     unsigned int i;
 
     a->limb[NLIMBS / 2] += tmp;
-    for (i = 15; i > 0; i--)
+    for (i = NLIMBS - 1; i > 0; i--)
         a->limb[i] = (a->limb[i] & mask) + (a->limb[i - 1] >> 28);
     a->limb[0] = (a->limb[0] & mask) + tmp;
 }
