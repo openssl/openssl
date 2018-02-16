@@ -152,7 +152,7 @@ void curve448_scalar_mul(curve448_scalar_t out,
 void curve448_scalar_halve(curve448_scalar_t out, const curve448_scalar_t a);
 
 /*
- * Copy a scalar.  The scalars may use the same memory, in which case this
+ * Copy a scalar.  The scalars may alias each other, in which case this
  * function does nothing.
  * 
  * a (in): A scalar.
