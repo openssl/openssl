@@ -20,17 +20,6 @@
 # include "arch_intrinsics.h"
 # include "curve448utils.h"
 
-# if defined(__ARM_NEON__)
-#  include <arm_neon.h>
-# elif defined(__SSE2__)
-#  if !defined(__GNUC__) || defined(__clang__) || __GNUC__ >= 5 \
-      || (__GNUC__==4 && __GNUC_MINOR__ >= 4)
-#   include <immintrin.h>
-#  else
-#   include <emmintrin.h>
-#  endif
-# endif
-
 # if (ARCH_WORD_BITS == 64)
 typedef uint64_t word_t, mask_t;
 typedef __uint128_t dword_t;
