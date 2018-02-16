@@ -1086,10 +1086,10 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
     case SSL_kRSAPSK:
         if (TLS1_get_version(ssl) == SSL3_VERSION) {
             ssl_print_hex(bio, indent + 2,
-                          "EncyptedPreMasterSecret", msg, msglen);
+                          "EncryptedPreMasterSecret", msg, msglen);
         } else {
             if (!ssl_print_hexbuf(bio, indent + 2,
-                                  "EncyptedPreMasterSecret", 2, &msg, &msglen))
+                                  "EncryptedPreMasterSecret", 2, &msg, &msglen))
                 return 0;
         }
         break;

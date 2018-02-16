@@ -63,7 +63,7 @@ $proxy->start();
 ok(TLSProxy::Message->fail(), "PSK not last");
 
 #Test 3: Attempt a resume after an HRR where PSK hash matches selected
-#        ciperhsuite. Should see PSK on second ClientHello
+#        ciphersuite. Should see PSK on second ClientHello
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->serverflags("-curves P-256");
