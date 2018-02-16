@@ -20,6 +20,7 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
      "bytes_to_cipher_list"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CHECK_SUITEB_CIPHER_LIST, 0),
      "check_suiteb_cipher_list"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_CIPHERSUITE_CB, 0), "ciphersuite_cb"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CONSTRUCT_CA_NAMES, 0), "construct_ca_names"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CONSTRUCT_KEY_EXCHANGE_TBS, 0),
      "construct_key_exchange_tbs"},

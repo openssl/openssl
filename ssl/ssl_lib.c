@@ -653,7 +653,9 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 
     ctx->method = meth;
 
-    sk = ssl_create_cipher_list(ctx->method, &(ctx->cipher_list),
+    sk = ssl_create_cipher_list(ctx->method,
+                                ctx->tls13_ciphersuites,
+                                &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
                                 SSL_DEFAULT_CIPHER_LIST, ctx->cert);
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
@@ -711,6 +713,11 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->max_early_data = ctx->max_early_data;
+
+    /* Shallow copy of the ciphersuites stack */
+    s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->tls13_ciphersuites);
+    if (s->tls13_ciphersuites == NULL)
+        goto err;
 
     /*
      * Earlier library versions used to copy the pointer to the CERT, not
@@ -1156,6 +1163,7 @@ void SSL_free(SSL *s)
     /* add extra stuff */
     sk_SSL_CIPHER_free(s->cipher_list);
     sk_SSL_CIPHER_free(s->cipher_list_by_id);
+    sk_SSL_CIPHER_free(s->tls13_ciphersuites);
 
     /* Make the next call work :-) */
     if (s->session != NULL) {
@@ -2520,8 +2528,9 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-                                &ctx->cipher_list_by_id, str, ctx->cert);
+    sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
+                                &ctx->cipher_list, &ctx->cipher_list_by_id, str,
+                                ctx->cert);
     /*
      * ssl_create_cipher_list may return an empty stack if it was unable to
      * find a cipher matching the given rule string (for example if the rule
@@ -2543,8 +2552,9 @@ int SSL_set_cipher_list(SSL *s, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
-                                &s->cipher_list_by_id, str, s->cert);
+    sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
+                                &s->cipher_list, &s->cipher_list_by_id, str,
+                                s->cert);
     /* see comment in SSL_CTX_set_cipher_list */
     if (sk == NULL)
         return 0;
@@ -2553,6 +2563,99 @@ int SSL_set_cipher_list(SSL *s, const char *str)
         return 0;
     }
     return 1;
+}
+
+static int ciphersuite_cb(const char *elem, int len, void *arg)
+{
+    STACK_OF(SSL_CIPHER) *ciphersuites = (STACK_OF(SSL_CIPHER) *)arg;
+    const SSL_CIPHER *cipher;
+    /* Arbitrary sized temp buffer for the cipher name. Should be big enough */
+    char name[80];
+
+    if (len > (int)(sizeof(name) - 1)) {
+        SSLerr(SSL_F_CIPHERSUITE_CB, SSL_R_NO_CIPHER_MATCH);
+        return 0;
+    }
+
+    memcpy(name, elem, len);
+    name[len] = '\0';
+
+    cipher = ssl3_get_cipher_by_std_name(name);
+    if (cipher == NULL) {
+        SSLerr(SSL_F_CIPHERSUITE_CB, SSL_R_NO_CIPHER_MATCH);
+        return 0;
+    }
+
+    if (!sk_SSL_CIPHER_push(ciphersuites, cipher)) {
+        SSLerr(SSL_F_CIPHERSUITE_CB, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+static int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const char *str)
+{
+    STACK_OF(SSL_CIPHER) *newciphers = sk_SSL_CIPHER_new_null();
+
+    if (newciphers == NULL)
+        return 0;
+
+    /* Parse the list. We explicitly allow an empty list */
+    if (*str != '\0'
+            && !CONF_parse_list(str, ':', 1, ciphersuite_cb, newciphers)) {
+        sk_SSL_CIPHER_free(newciphers);
+        return 0;
+    }
+    sk_SSL_CIPHER_free(*currciphers);
+    *currciphers = newciphers;
+
+    return 1;
+}
+
+static int update_cipher_list(STACK_OF(SSL_CIPHER) *cipher_list,
+                              STACK_OF(SSL_CIPHER) *tls13_ciphersuites)
+{
+    int i;
+
+    /*
+     * Delete any existing TLSv1.3 ciphersuites. These are always first in the
+     * list.
+     */
+    while (sk_SSL_CIPHER_num(cipher_list) > 0
+           && sk_SSL_CIPHER_value(cipher_list, 0)->min_tls == TLS1_3_VERSION)
+        sk_SSL_CIPHER_delete(cipher_list, 0);
+
+    /* Insert the new TLSv1.3 ciphersuites */
+    for (i = 0; i < sk_SSL_CIPHER_num(tls13_ciphersuites); i++)
+        sk_SSL_CIPHER_insert(cipher_list,
+                             sk_SSL_CIPHER_value(tls13_ciphersuites, i), i);
+
+    return 1;
+}
+
+int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str)
+{
+    int ret = set_ciphersuites(&(ctx->tls13_ciphersuites), str);
+
+    if (ret && ctx->cipher_list != NULL) {
+        /* We already have a cipher_list, so we need to update it */
+        return update_cipher_list(ctx->cipher_list, ctx->tls13_ciphersuites);
+    }
+
+    return ret;
+}
+
+int SSL_set_ciphersuites(SSL *s, const char *str)
+{
+    int ret = set_ciphersuites(&(s->tls13_ciphersuites), str);
+
+    if (ret && s->cipher_list != NULL) {
+        /* We already have a cipher_list, so we need to update it */
+        return update_cipher_list(s->cipher_list, s->tls13_ciphersuites);
+    }
+
+    return ret;
 }
 
 char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
@@ -2915,7 +3018,15 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (ret->ctlog_store == NULL)
         goto err;
 #endif
+
+    if (!SSL_CTX_set_ciphersuites(ret,
+            "TLS_AES_256_GCM_SHA384:"
+            "TLS_CHACHA20_POLY1305_SHA256:"
+            "TLS_AES_128_GCM_SHA256"))
+        goto err;
+
     if (!ssl_create_cipher_list(ret->method,
+                                ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 SSL_DEFAULT_CIPHER_LIST, ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
@@ -3075,6 +3186,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
     sk_SSL_CIPHER_free(a->cipher_list);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);
+    sk_SSL_CIPHER_free(a->tls13_ciphersuites);
     ssl_cert_free(a->cert);
     sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
     sk_X509_pop_free(a->extra_certs, X509_free);

@@ -53,7 +53,7 @@ ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 #        we end up selecting a different ciphersuite between HRR and the SH
 $proxy->clear();
 $proxy->serverflags("-curves P-256");
-$proxy->ciphers("TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384");
+$proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
 $testtype = CHANGE_CH1_CIPHERSUITE;
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Client ciphersuite changes");
@@ -85,8 +85,7 @@ sub hrr_filter
 
     my $ch1 = ${$proxy->message_list}[0];
 
-    # The server prefers TLS13-AES-256-GCM-SHA384 so it will pick that next
-    # time around
+    # The server will always pick TLS_AES_256_GCM_SHA384
     my @ciphersuites = (TLSProxy::Message::CIPHER_TLS13_AES_128_GCM_SHA256);
     $ch1->ciphersuite_len(2 * scalar @ciphersuites);
     $ch1->ciphersuites(\@ciphersuites);

@@ -1131,18 +1131,6 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define TLS1_TXT_RSA_PSK_WITH_ARIA_128_GCM_SHA256         "RSA-PSK-ARIA128-GCM-SHA256"
 # define TLS1_TXT_RSA_PSK_WITH_ARIA_256_GCM_SHA384         "RSA-PSK-ARIA256-GCM-SHA384"
 
-
-/* TLSv1.3 ciphersuites */
-/*
- * TODO(TLS1.3): Review the naming scheme for TLSv1.3 ciphers and also the
- * cipherstring selection process for these ciphers
- */
-# define TLS1_3_TXT_AES_128_GCM_SHA256                     "TLS13-AES-128-GCM-SHA256"
-# define TLS1_3_TXT_AES_256_GCM_SHA384                     "TLS13-AES-256-GCM-SHA384"
-# define TLS1_3_TXT_CHACHA20_POLY1305_SHA256               "TLS13-CHACHA20-POLY1305-SHA256"
-# define TLS1_3_TXT_AES_128_CCM_SHA256                     "TLS13-AES-128-CCM-SHA256"
-# define TLS1_3_TXT_AES_128_CCM_8_SHA256                   "TLS13-AES-128-CCM-8-SHA256"
-
 # define TLS_CT_RSA_SIGN                 1
 # define TLS_CT_DSS_SIGN                 2
 # define TLS_CT_RSA_FIXED_DH             3

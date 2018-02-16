@@ -23,6 +23,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_ADD_KEY_SHARE                              512
 # define SSL_F_BYTES_TO_CIPHER_LIST                       519
 # define SSL_F_CHECK_SUITEB_CIPHER_LIST                   331
+# define SSL_F_CIPHERSUITE_CB                             621
 # define SSL_F_CONSTRUCT_CA_NAMES                         552
 # define SSL_F_CONSTRUCT_KEY_EXCHANGE_TBS                 553
 # define SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH              539

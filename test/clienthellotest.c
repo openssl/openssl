@@ -97,8 +97,7 @@ static int test_client_hello(int currtest)
          * ClientHello is already going to be quite long. To avoid getting one
          * that is too long for this test we use a restricted ciphersuite list
          */
-        if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
-                                               "TLS13-AES-128-GCM-SHA256")))
+        if (!TEST_true(SSL_CTX_set_cipher_list(ctx, "")))
             goto end;
          /* Fall through */
     case TEST_ADD_PADDING:

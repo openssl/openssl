@@ -18,6 +18,7 @@
 #include <openssl/rand.h>
 #include "internal/cryptlib.h"
 
+#define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
 
@@ -27,6 +28,90 @@ const unsigned char tls11downgrade[] = {
 };
 const unsigned char tls12downgrade[] = {
     0x44, 0x4f, 0x57, 0x4e, 0x47, 0x52, 0x44, 0x01
+};
+
+/* The list of available TLSv1.3 ciphers */
+static SSL_CIPHER tls13_ciphers[] = {
+    {
+        1,
+        TLS1_3_RFC_AES_128_GCM_SHA256,
+        TLS1_3_RFC_AES_128_GCM_SHA256,
+        TLS1_3_CK_AES_128_GCM_SHA256,
+        0, 0,
+        SSL_AES128GCM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA256,
+        128,
+        128,
+    }, {
+        1,
+        TLS1_3_RFC_AES_256_GCM_SHA384,
+        TLS1_3_RFC_AES_256_GCM_SHA384,
+        TLS1_3_CK_AES_256_GCM_SHA384,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_AES256GCM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA384,
+        256,
+        256,
+    },
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    {
+        1,
+        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
+        TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_CHACHA20POLY1305,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA256,
+        256,
+        256,
+    },
+#endif
+    {
+        1,
+        TLS1_3_RFC_AES_128_CCM_SHA256,
+        TLS1_3_RFC_AES_128_CCM_SHA256,
+        TLS1_3_CK_AES_128_CCM_SHA256,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_AES128CCM,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_NOT_DEFAULT | SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA256,
+        128,
+        128,
+    }, {
+        1,
+        TLS1_3_RFC_AES_128_CCM_8_SHA256,
+        TLS1_3_RFC_AES_128_CCM_8_SHA256,
+        TLS1_3_CK_AES_128_CCM_8_SHA256,
+        SSL_kANY,
+        SSL_aANY,
+        SSL_AES128CCM8,
+        SSL_AEAD,
+        TLS1_3_VERSION, TLS1_3_VERSION,
+        0, 0,
+        SSL_NOT_DEFAULT | SSL_HIGH,
+        SSL_HANDSHAKE_MAC_SHA256,
+        128,
+        128,
+    }
 };
 
 /*
@@ -857,88 +942,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256,
      256,
      256,
-     },
-    {
-     1,
-     TLS1_3_TXT_AES_128_GCM_SHA256,
-     TLS1_3_RFC_AES_128_GCM_SHA256,
-     TLS1_3_CK_AES_128_GCM_SHA256,
-     0, 0,
-     SSL_AES128GCM,
-     SSL_AEAD,
-     TLS1_3_VERSION, TLS1_3_VERSION,
-     SSL_kANY,
-     SSL_aANY,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256,
-     128,
-     128,
-     },
-    {
-     1,
-     TLS1_3_TXT_AES_256_GCM_SHA384,
-     TLS1_3_RFC_AES_256_GCM_SHA384,
-     TLS1_3_CK_AES_256_GCM_SHA384,
-     SSL_kANY,
-     SSL_aANY,
-     SSL_AES256GCM,
-     SSL_AEAD,
-     TLS1_3_VERSION, TLS1_3_VERSION,
-     0, 0,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA384,
-     256,
-     256,
-     },
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-    {
-     1,
-     TLS1_3_TXT_CHACHA20_POLY1305_SHA256,
-     TLS1_3_RFC_CHACHA20_POLY1305_SHA256,
-     TLS1_3_CK_CHACHA20_POLY1305_SHA256,
-     SSL_kANY,
-     SSL_aANY,
-     SSL_CHACHA20POLY1305,
-     SSL_AEAD,
-     TLS1_3_VERSION, TLS1_3_VERSION,
-     0, 0,
-     SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256,
-     256,
-     256,
-     },
-#endif
-    {
-     1,
-     TLS1_3_TXT_AES_128_CCM_SHA256,
-     TLS1_3_RFC_AES_128_CCM_SHA256,
-     TLS1_3_CK_AES_128_CCM_SHA256,
-     SSL_kANY,
-     SSL_aANY,
-     SSL_AES128CCM,
-     SSL_AEAD,
-     TLS1_3_VERSION, TLS1_3_VERSION,
-     0, 0,
-     SSL_NOT_DEFAULT | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256,
-     128,
-     128,
-     },
-    {
-     1,
-     TLS1_3_TXT_AES_128_CCM_8_SHA256,
-     TLS1_3_RFC_AES_128_CCM_8_SHA256,
-     TLS1_3_CK_AES_128_CCM_8_SHA256,
-     SSL_kANY,
-     SSL_aANY,
-     SSL_AES128CCM8,
-     SSL_AEAD,
-     TLS1_3_VERSION, TLS1_3_VERSION,
-     0, 0,
-     SSL_NOT_DEFAULT | SSL_HIGH,
-     SSL_HANDSHAKE_MAC_SHA256,
-     128,
-     128,
      },
     {
      1,
@@ -3207,6 +3210,8 @@ static int cipher_compare(const void *a, const void *b)
 
 void ssl_sort_cipher_list(void)
 {
+    qsort(tls13_ciphers, TLS13_NUM_CIPHERS, sizeof(tls13_ciphers[0]),
+          cipher_compare);
     qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof(ssl3_ciphers[0]),
           cipher_compare);
     qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
@@ -4027,6 +4032,9 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
     const SSL_CIPHER *cp;
 
     c.id = id;
+    cp = OBJ_bsearch_ssl_cipher_id(&c, tls13_ciphers, TLS13_NUM_CIPHERS);
+    if (cp != NULL)
+        return cp;
     cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
     if (cp != NULL)
         return cp;
@@ -4035,17 +4043,19 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
 
 const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname)
 {
-    SSL_CIPHER *c = NULL;
-    SSL_CIPHER *tbl = ssl3_ciphers;
-    size_t i;
+    SSL_CIPHER *c = NULL, *tbl;
+    SSL_CIPHER *alltabs[] = {tls13_ciphers, ssl3_ciphers};
+    size_t i, j, tblsize[] = {TLS13_NUM_CIPHERS, SSL3_NUM_CIPHERS};
 
     /* this is not efficient, necessary to optimize this? */
-    for (i = 0; i < SSL3_NUM_CIPHERS; i++, tbl++) {
-        if (tbl->stdname == NULL)
-            continue;
-        if (strcmp(stdname, tbl->stdname) == 0) {
-            c = tbl;
-            break;
+    for (j = 0; j < OSSL_NELEM(alltabs); j++) {
+        for (i = 0, tbl = alltabs[j]; i < tblsize[j]; i++, tbl++) {
+            if (tbl->stdname == NULL)
+                continue;
+            if (strcmp(stdname, tbl->stdname) == 0) {
+                c = tbl;
+                break;
+            }
         }
     }
     if (c == NULL) {

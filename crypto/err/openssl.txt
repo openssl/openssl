@@ -986,6 +986,7 @@ SSL_F_ADD_CLIENT_KEY_SHARE_EXT:438:*
 SSL_F_ADD_KEY_SHARE:512:add_key_share
 SSL_F_BYTES_TO_CIPHER_LIST:519:bytes_to_cipher_list
 SSL_F_CHECK_SUITEB_CIPHER_LIST:331:check_suiteb_cipher_list
+SSL_F_CIPHERSUITE_CB:621:ciphersuite_cb
 SSL_F_CONSTRUCT_CA_NAMES:552:construct_ca_names
 SSL_F_CONSTRUCT_KEY_EXCHANGE_TBS:553:construct_key_exchange_tbs
 SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH:539:create_synthetic_message_hash

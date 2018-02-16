@@ -2381,8 +2381,8 @@ static int test_ciphersuite_change(void)
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(), &sctx,
                                        &cctx, cert, privkey))
-            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
-                                                  "TLS13-AES-128-GCM-SHA256"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                   "TLS_AES_128_GCM_SHA256"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -2400,8 +2400,8 @@ static int test_ciphersuite_change(void)
 
 # if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     /* Check we can resume a session with a different SHA-256 ciphersuite */
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
-                                           "TLS13-CHACHA20-POLY1305-SHA256"))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                            "TLS_CHACHA20_POLY1305_SHA256"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
@@ -2423,7 +2423,7 @@ static int test_ciphersuite_change(void)
      * Check attempting to resume a SHA-256 session with no SHA-256 ciphersuites
      * succeeds but does not resume.
      */
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "TLS13-AES-256-GCM-SHA384"))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_256_GCM_SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
@@ -2441,7 +2441,7 @@ static int test_ciphersuite_change(void)
     serverssl = clientssl = NULL;
 
     /* Create a session based on SHA384 */
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "TLS13-AES-256-GCM-SHA384"))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_256_GCM_SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -2455,10 +2455,10 @@ static int test_ciphersuite_change(void)
     SSL_free(clientssl);
     serverssl = clientssl = NULL;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
-                   "TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384"))
-            || !TEST_true(SSL_CTX_set_cipher_list(sctx,
-                                                  "TLS13-AES-256-GCM-SHA384"))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                   "TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384"))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                                   "TLS_AES_256_GCM_SHA384"))
             || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
             || !TEST_true(SSL_set_session(clientssl, clntsess))
@@ -2520,7 +2520,7 @@ static int test_tls13_psk(int idx)
      * We use a ciphersuite with SHA256 to ease testing old style PSK callbacks
      * which will always default to SHA256
      */
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "TLS13-AES-128-GCM-SHA256")))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256")))
         goto end;
 
     /*
