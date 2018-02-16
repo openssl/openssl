@@ -450,7 +450,8 @@ sub testssl {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {
-                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher, $flag])),
+                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
+                                 $flag || ()])),
                     "Testing $cipher");
                 }
             }
