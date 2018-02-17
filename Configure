@@ -2382,7 +2382,8 @@ _____
         my $longest2 = 0;
         foreach my $what (@disablables) {
             $longest = length($what) if $longest < length($what);
-            $longest2 = length($disabled{$what}) if $longest2 < length($disabled{$what});
+            $longest2 = length($disabled{$what})
+                if $disabled{$what} && $longest2 < length($disabled{$what});
         }
         print "\nEnabled features:\n\n";
         foreach my $what (@disablables) {
