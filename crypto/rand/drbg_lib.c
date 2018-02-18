@@ -327,7 +327,8 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     drbg->state = DRBG_ERROR;
     if (drbg->get_entropy != NULL)
         entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                   drbg->min_entropylen, drbg->max_entropylen);
+                                       drbg->min_entropylen,
+                                       drbg->max_entropylen, 0);
     if (entropylen < drbg->min_entropylen
         || entropylen > drbg->max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
@@ -411,7 +412,8 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
  * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_reseed(RAND_DRBG *drbg,
-                     const unsigned char *adin, size_t adinlen)
+                     const unsigned char *adin, size_t adinlen,
+                     int prediction_resistance)
 {
     unsigned char *entropy = NULL;
     size_t entropylen = 0;
@@ -435,7 +437,9 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
     drbg->state = DRBG_ERROR;
     if (drbg->get_entropy != NULL)
         entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                   drbg->min_entropylen, drbg->max_entropylen);
+                                       drbg->min_entropylen,
+                                       drbg->max_entropylen,
+                                       prediction_resistance);
     if (entropylen < drbg->min_entropylen
         || entropylen > drbg->max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ERROR_RETRIEVING_ENTROPY);
@@ -551,7 +555,7 @@ int rand_drbg_restart(RAND_DRBG *drbg,
             drbg->meth->reseed(drbg, adin, adinlen, NULL, 0);
         } else if (reseeded == 0) {
             /* do a full reseeding if it has not been done yet above */
-            RAND_DRBG_reseed(drbg, NULL, 0);
+            RAND_DRBG_reseed(drbg, NULL, 0, 0);
         }
     }
 
@@ -627,7 +631,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
     }
 
     if (reseed_required || prediction_resistance) {
-        if (!RAND_DRBG_reseed(drbg, adin, adinlen)) {
+        if (!RAND_DRBG_reseed(drbg, adin, adinlen, prediction_resistance)) {
             RANDerr(RAND_F_RAND_DRBG_GENERATE, RAND_R_RESEED_ERROR);
             return 0;
         }

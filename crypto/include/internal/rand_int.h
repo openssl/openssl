@@ -34,7 +34,8 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool);
 /* DRBG entropy callbacks. */
 size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                              unsigned char **pout,
-                             int entropy, size_t min_len, size_t max_len);
+                             int entropy, size_t min_len, size_t max_len,
+                             int prediction_resistance);
 void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
                                unsigned char *out, size_t outlen);
 size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len);

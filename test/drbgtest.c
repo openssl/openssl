@@ -118,7 +118,8 @@ typedef struct test_ctx_st {
 } TEST_CTX;
 
 static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
-                          int entropy, size_t min_len, size_t max_len)
+                          int entropy, size_t min_len, size_t max_len,
+                          int prediction_resistance)
 {
     TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
 
@@ -182,7 +183,7 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
     /* Reseed DRBG with test entropy and additional input */
     t.entropy = td->entropyreseed;
     t.entropylen = td->entropyreseedlen;
-    if (!TEST_true(RAND_DRBG_reseed(drbg, td->adinreseed, td->adinreseedlen)
+    if (!TEST_true(RAND_DRBG_reseed(drbg, td->adinreseed, td->adinreseedlen, 0)
             || !TEST_true(RAND_DRBG_generate(drbg, buff, td->kat2len, 0,
                                              td->adin2, td->adin2len))
             || !TEST_mem_eq(td->kat2, td->kat2len, buff, td->kat2len)))
@@ -415,12 +416,12 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test explicit reseed with too large additional input */
     if (!init(drbg, td, &t)
-            || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1) > 0)
+            || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1, 0) > 0)
         goto err;
 
     /* Test explicit reseed with entropy source failure */
     t.entropylen = 0;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
+    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
             || !uninstantiate(drbg))
         goto err;
 
@@ -428,7 +429,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!init(drbg, td, &t))
         goto err;
     t.entropylen = drbg->max_entropylen + 1;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
+    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
             || !uninstantiate(drbg))
         goto err;
 
@@ -436,7 +437,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!init(drbg, td, &t))
         goto err;
     t.entropylen = drbg->min_entropylen - 1;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
+    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
             || !uninstantiate(drbg))
         goto err;
 
@@ -504,7 +505,8 @@ static HOOK_CTX *get_hook_ctx(RAND_DRBG *drbg)
 
 /* Intercepts and counts calls to the get_entropy() callback */
 static size_t get_entropy_hook(RAND_DRBG *drbg, unsigned char **pout,
-                          int entropy, size_t min_len, size_t max_len)
+                              int entropy, size_t min_len, size_t max_len,
+                              int prediction_resistance)
 {
     size_t ret;
     HOOK_CTX *ctx = get_hook_ctx(drbg);
@@ -512,8 +514,8 @@ static size_t get_entropy_hook(RAND_DRBG *drbg, unsigned char **pout,
     if (ctx->fail != 0)
         return 0;
 
-    ret = ctx->get_entropy(
-        drbg, pout, entropy, min_len, max_len);
+    ret = ctx->get_entropy(drbg, pout, entropy, min_len, max_len,
+                           prediction_resistance);
 
     if (ret != 0)
         ctx->reseed_count++;

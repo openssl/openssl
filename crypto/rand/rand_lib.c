@@ -171,8 +171,9 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
  * its entropy will be used up first.
  */
 size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
-                        unsigned char **pout,
-                        int entropy, size_t min_len, size_t max_len)
+                             unsigned char **pout,
+                             int entropy, size_t min_len, size_t max_len,
+                             int prediction_resistance)
 {
     size_t ret = 0;
     size_t entropy_available = 0;
