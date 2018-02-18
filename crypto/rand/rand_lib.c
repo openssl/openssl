@@ -172,7 +172,8 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
  */
 size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                         unsigned char **pout,
-                        int entropy, size_t min_len, size_t max_len)
+                        int entropy, size_t min_len, size_t max_len,
+                        int prediction_resistance)
 {
     size_t ret = 0;
     size_t entropy_available = 0;
@@ -231,6 +232,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
              * standard to provide prediction resistance (see NIST SP 800-90C,
              * Section 5.4).
              */
+            RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY,
+                RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED);
             return 0;
         }
 
