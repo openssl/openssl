@@ -94,6 +94,8 @@ static const ERR_STRING_DATA RAND_str_reasons[] = {
     "parent strength too weak"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PERSONALISATION_STRING_TOO_LONG),
     "personalisation string too long"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED),
+    "prediction resistance not supported"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_PRNG_NOT_SEEDED), "PRNG not seeded"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_RANDOM_POOL_OVERFLOW),
     "random pool overflow"},

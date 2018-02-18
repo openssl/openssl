@@ -217,7 +217,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             rand_drbg_lock(drbg->parent);
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
-                                   0,
+                                   prediction_resistance,
                                    (unsigned char *)drbg, sizeof(*drbg)) != 0)
                 bytes = bytes_needed;
             rand_drbg_unlock(drbg->parent);
@@ -226,6 +226,17 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         }
 
     } else {
+        if (prediction_resistance) {
+            /*
+             * We don't have any entropy sources that comply with the NIST
+             * standard to provide prediction resistance (see NIST SP 800-90C,
+             * Section 5.4).
+             */
+            RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY,
+                    RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED);
+            return 0;
+        }
+
         /* Get entropy by polling system entropy sources. */
         entropy_available = rand_pool_acquire_entropy(pool);
     }
