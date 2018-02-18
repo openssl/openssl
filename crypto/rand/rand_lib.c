@@ -229,9 +229,11 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 }
 
 /*
- * Find a suitable system time.  Start with the highest resolution source
+ * Find a suitable source of time.  Start with the highest resolution source
  * and work down to the slower ones.  This is added as additional data and
  * isn't counted as randomness, so any result is acceptable.
+ *
+ * Returns 0 when we weren't able to find any time source
  */
 static uint64_t get_timer_bits(void)
 {
@@ -260,7 +262,7 @@ static uint64_t get_timer_bits(void)
     }
 #else
 
-#if defined(OSSL_POSIX_TIMER_OKAY)
+# if defined(OSSL_POSIX_TIMER_OKAY)
     {
         struct timespec ts;
         clockid_t cid;
@@ -286,7 +288,12 @@ static uint64_t get_timer_bits(void)
             return TWO32TO64(tv.tv_sec, tv.tv_usec);
     }
 # endif
-    return time(NULL);
+    {
+        time_t t = time(NULL);
+        if (t == (time_t)-1)
+            return 0;
+        return t;
+    }
 #endif
 }
 
@@ -329,7 +336,8 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
         RAND_POOL_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0);
 
     tbits = get_timer_bits();
-    RAND_POOL_add(pool, (unsigned char *)&tbits, sizeof(tbits), 0);
+    if (tbits != 0)
+        RAND_POOL_add(pool, (unsigned char *)&tbits, sizeof(tbits), 0);
 
     /* TODO: Use RDSEED? */
 
