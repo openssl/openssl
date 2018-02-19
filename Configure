@@ -1341,6 +1341,9 @@ unless ($disabled{asm}) {
     if ($target{ec_asm_src} =~ /ecp_nistz256/) {
 	push @{$config{defines}}, "ECP_NISTZ256_ASM";
     }
+    if ($target{ec_asm_src} =~ /x25519/) {
+	push @{$config{defines}}, "X25519_ASM";
+    }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
 	push @{$config{defines}}, "PADLOCK_ASM";
     }
