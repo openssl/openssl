@@ -1155,6 +1155,7 @@ static handshake_status_t handshake_status(peer_status_t last_status,
              */
             return INTERNAL_ERROR;
         }
+        break;
 
     case PEER_RETRY:
         return HANDSHAKE_RETRY;

@@ -18,8 +18,8 @@ B<openssl> B<pkeyparam>
 
 =head1 DESCRIPTION
 
-The B<pkey> command processes public or private keys. They can be converted
-between various forms and their components printed out.
+The B<pkeyparam> command processes public key algorithm parameters.
+They can be checked for correctness and their components printed out.
 
 =head1 OPTIONS
 

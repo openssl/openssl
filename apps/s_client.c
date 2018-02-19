@@ -208,7 +208,7 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
             *id = NULL;
             *idlen = 0;
             *sess = NULL;
-            return 0;
+            return 1;
         }
         usesess = SSL_SESSION_new();
         if (usesess == NULL

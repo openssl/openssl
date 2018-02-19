@@ -28,3 +28,15 @@
 
     $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         -Wl,-rpath,'$(LIBRPATH)'
+
+ On modern systems using GNU ld.so, a better choice may be to use the
+ new dtags, like this:
+
+    $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
+        -Wl,--enable-new-dtags,-rpath,'$(LIBRPATH)'
+
+ This sets DT_RUNPATH instead of DT_RPATH.  DT_RUNPATH is considered after
+ the environment variable LD_LIBRARY_PATH, while DT_RPATH is considered
+ before that environment variable (which means that the values in that
+ environment variable won't matter if the library is found in the
+ paths given by DT_RPATH).

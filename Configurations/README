@@ -95,7 +95,8 @@ In each table entry, the following keys are significant:
                            (NOTE: this is here for future use, it's
                            not implemented yet)
         arflags         => Flags to be used with the library archive
-                           command.
+                           command.  On Unix, this includes the
+                           command letter, 'r' by default.
 
         ranlib          => The library archive indexing command, the
                            default is 'ranlib' it it exists.

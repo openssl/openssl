@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -25,6 +25,19 @@
 # same processor. Even though it takes more scalar xor's and andn's,
 # it gets compensated by availability of rotate. Not to forget that
 # most processors achieve higher issue rate with scalar instructions.
+#
+# February 2018.
+#
+# Add hardware-assisted ARMv8.2 implementation. It's KECCAK_1X_ALT
+# variant with register permutation/rotation twist that allows to
+# eliminate copies to temporary registers. If you look closely you'll
+# notice that it uses only one lane of vector registers. The new
+# instructions effectively facilitate parallel hashing, which we don't
+# support [yet?]. But lowest-level core procedure is prepared for it.
+# The inner round is 67 [vector] instructions, so it's not actually
+# obvious that it will provide performance improvement [in serial
+# hash] as long as vector instructions issue rate is limited to 1 per
+# cycle...
 #
 ######################################################################
 # Numbers are cycles per processed byte.
@@ -55,12 +68,6 @@ die "can't locate arm-xlate.pl";
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
 *STDOUT=*OUT;
-
-my @A = map([ "x$_", "x".($_+1), "x".($_+2), "x".($_+3), "x".($_+4) ],
-            (0, 5, 10, 15, 20));
-   $A[3][3] = "x25"; # x18 is reserved
-
-my @C = map("x$_", (26,27,28,30));
 
 my @rhotates = ([  0,  1, 62, 28, 27 ],
                 [ 36, 44,  6, 55, 20 ],
@@ -101,7 +108,15 @@ iotas:
 	.quad	0x0000000080000001
 	.quad	0x8000000080008008
 .size	iotas,.-iotas
+___
+								{{{
+my @A = map([ "x$_", "x".($_+1), "x".($_+2), "x".($_+3), "x".($_+4) ],
+            (0, 5, 10, 15, 20));
+   $A[3][3] = "x25"; # x18 is reserved
 
+my @C = map("x$_", (26,27,28,30));
+
+$code.=<<___;
 .type	KeccakF1600_int,%function
 .align	5
 KeccakF1600_int:
@@ -510,9 +525,342 @@ SHA3_squeeze:
 	ldp	x29,x30,[sp],#48
 	ret
 .size	SHA3_squeeze,.-SHA3_squeeze
-.asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+___
+}								}}}
+								{{{
+my @A = map([ "v".$_.".16b", "v".($_+1).".16b", "v".($_+2).".16b",
+                             "v".($_+3).".16b", "v".($_+4).".16b" ],
+            (0, 5, 10, 15, 20));
+
+my @C = map("v$_.16b", (25..31));
+
+$code.=<<___;
+.type	KeccakF1600_ce,%function
+.align	5
+KeccakF1600_ce:
+	mov	x9,#6
+	adr	x10,iotas
+	b	.Loop_ce
+.align	4
+.Loop_ce:
+___
+for($i=0; $i<4; $i++) {
+$code.=<<___;
+	////////////////////////////////////////////////// Theta
+	eor3	$C[0],$A[0][0],$A[1][0],$A[2][0]
+	eor3	$C[1],$A[0][1],$A[1][1],$A[2][1]
+	eor3	$C[2],$A[0][2],$A[1][2],$A[2][2]
+	eor3	$C[3],$A[0][3],$A[1][3],$A[2][3]
+	eor3	$C[4],$A[0][4],$A[1][4],$A[2][4]
+	eor3	$C[0],$C[0],   $A[3][0],$A[4][0]
+	eor3	$C[1],$C[1],   $A[3][1],$A[4][1]
+	eor3	$C[2],$C[2],   $A[3][2],$A[4][2]
+	eor3	$C[3],$C[3],   $A[3][3],$A[4][3]
+	eor3	$C[4],$C[4],   $A[3][4],$A[4][4]
+
+	rax1	$C[5],$C[0],$C[2]			// D[1]
+	rax1	$C[6],$C[1],$C[3]			// D[2]
+	rax1	$C[2],$C[2],$C[4]			// D[3]
+	rax1	$C[3],$C[3],$C[0]			// D[4]
+	rax1	$C[4],$C[4],$C[1]			// D[0]
+
+	////////////////////////////////////////////////// Theta+Rho+Pi
+	xar	$C[0],   $A[1][1],$C[5],#64-$rhotates[1][1]	// C[0]=A[0][1]
+	xar	$A[1][1],$A[1][4],$C[3],#64-$rhotates[1][4]
+	xar	$A[1][4],$A[4][2],$C[6],#64-$rhotates[4][2]
+	xar	$A[4][2],$A[2][4],$C[3],#64-$rhotates[2][4]
+	xar	$A[2][4],$A[4][0],$C[4],#64-$rhotates[4][0]
+
+	xar	$A[4][0],$A[0][2],$C[6],#64-$rhotates[0][2]
+
+	xar	$A[0][2],$A[2][2],$C[6],#64-$rhotates[2][2]
+	xar	$A[2][2],$A[2][3],$C[2],#64-$rhotates[2][3]
+	xar	$A[2][3],$A[3][4],$C[3],#64-$rhotates[3][4]
+	xar	$A[3][4],$A[4][3],$C[2],#64-$rhotates[4][3]
+	xar	$A[4][3],$A[3][0],$C[4],#64-$rhotates[3][0]
+
+	xar	$A[3][0],$A[0][4],$C[3],#64-$rhotates[0][4]
+
+	eor	$A[0][0],$A[0][0],$C[4]
+	ldr	x11,[x10],#8
+
+	xar	$C[1]   ,$A[3][3],$C[2],#64-$rhotates[3][3]	// C[1]=A[0][3]
+	xar	$A[3][3],$A[3][2],$C[6],#64-$rhotates[3][2]
+	xar	$A[3][2],$A[2][1],$C[5],#64-$rhotates[2][1]
+	xar	$A[2][1],$A[1][2],$C[6],#64-$rhotates[1][2]
+	xar	$A[1][2],$A[2][0],$C[4],#64-$rhotates[2][0]
+
+	xar	$A[2][0],$A[0][1],$C[5],#64-$rhotates[0][1]	// *
+
+	xar	$A[0][4],$A[4][4],$C[3],#64-$rhotates[4][4]
+	xar	$A[4][4],$A[4][1],$C[5],#64-$rhotates[4][1]
+	xar	$A[4][1],$A[1][3],$C[2],#64-$rhotates[1][3]
+	xar	$A[1][3],$A[3][1],$C[5],#64-$rhotates[3][1]
+	xar	$A[3][1],$A[1][0],$C[4],#64-$rhotates[1][0]
+
+	xar	$A[1][0],$A[0][3],$C[2],#64-$rhotates[0][3]	// *
+
+	////////////////////////////////////////////////// Chi+Iota
+	dup	$C[6],x11				// borrow C[6]
+	bcax	$C[3],   $A[0][0],$A[0][2],$C[0]	// *
+	bcax	$A[0][1],$C[0],   $C[1],   $A[0][2]	// *
+	bcax	$A[0][2],$A[0][2],$A[0][4],$C[1]
+	bcax	$A[0][3],$C[1],   $A[0][0],$A[0][4]
+	bcax	$A[0][4],$A[0][4],$C[0],   $A[0][0]
+
+	bcax	$C[0],   $A[1][0],$A[1][2],$A[1][1]	// *
+	bcax	$C[1],   $A[1][1],$A[1][3],$A[1][2]	// *
+	bcax	$A[1][2],$A[1][2],$A[1][4],$A[1][3]
+	bcax	$A[1][3],$A[1][3],$A[1][0],$A[1][4]
+	bcax	$A[1][4],$A[1][4],$A[1][1],$A[1][0]
+
+	eor	$A[0][0],$C[3],$C[6]			// Iota
+
+	bcax	$C[2],   $A[2][0],$A[2][2],$A[2][1]	// *
+	bcax	$C[3],   $A[2][1],$A[2][3],$A[2][2]	// *
+	bcax	$A[2][2],$A[2][2],$A[2][4],$A[2][3]
+	bcax	$A[2][3],$A[2][3],$A[2][0],$A[2][4]
+	bcax	$A[2][4],$A[2][4],$A[2][1],$A[2][0]
+
+	bcax	$A[2][0],$A[3][0],$A[3][2],$A[3][1]	// *
+	bcax	$A[2][1],$A[3][1],$A[3][3],$A[3][2]	// *
+	bcax	$A[3][2],$A[3][2],$A[3][4],$A[3][3]
+	bcax	$A[3][3],$A[3][3],$A[3][0],$A[3][4]
+	bcax	$A[3][4],$A[3][4],$A[3][1],$A[3][0]
+
+	bcax	$A[3][0],$A[4][0],$A[4][2],$A[4][1]	// *
+	bcax	$A[3][1],$A[4][1],$A[4][3],$A[4][2]	// *
+	bcax	$A[4][2],$A[4][2],$A[4][4],$A[4][3]
+	bcax	$A[4][3],$A[4][3],$A[4][0],$A[4][4]
+	bcax	$A[4][4],$A[4][4],$A[4][1],$A[4][0]
+___
+	($A[1][0],$A[1][1], $C[0],$C[1])
+	=  ($C[0],$C[1],    $A[1][0],$A[1][1]);
+	($A[2][0],$A[2][1], $A[3][0],$A[3][1], $A[4][0],$A[4][1], $C[2],$C[3])
+	=  ($C[2],$C[3],    $A[2][0],$A[2][1], $A[3][0],$A[3][1], $A[4][0],$A[4][1]);
+}
+$code.=<<___;
+	subs	x9,x9,#1
+	bne	.Loop_ce
+
+	ret
+.size	KeccakF1600_ce,.-KeccakF1600_ce
+
+.type	KeccakF1600_cext,%function
+.align	5
+KeccakF1600_cext:
+	stp	x29,x30,[sp,#-80]!
+	add	x29,sp,#0
+	stp	d8,d9,[sp,#16]		// per ABI requirement
+	stp	d10,d11,[sp,#32]
+	stp	d12,d13,[sp,#48]
+	stp	d14,d15,[sp,#64]
+___
+for($i=0; $i<24; $i+=2) {		# load A[5][5]
+my $j=$i+1;
+$code.=<<___;
+	ldp	d$i,d$j,[x0,#8*$i]
 ___
 }
+$code.=<<___;
+	ldr	d24,[x0,#8*$i]
+	bl	KeccakF1600_ce
+	ldr	x30,[sp,#8]
+___
+for($i=0; $i<24; $i+=2) {		# store A[5][5]
+my $j=$i+1;
+$code.=<<___;
+	stp	d$i,d$j,[x0,#8*$i]
+___
+}
+$code.=<<___;
+	str	d24,[x0,#8*$i]
 
-print $code;
+	ldp	d8,d9,[sp,#16]
+	ldp	d10,d11,[sp,#32]
+	ldp	d12,d13,[sp,#48]
+	ldp	d14,d15,[sp,#64]
+	ldr	x29,[sp],#80
+	ret
+.size	KeccakF1600_cext,.-KeccakF1600_cext
+___
+
+{
+my ($ctx,$inp,$len,$bsz) = map("x$_",(0..3));
+
+$code.=<<___;
+.globl	SHA3_absorb_cext
+.type	SHA3_absorb_cext,%function
+.align	5
+SHA3_absorb_cext:
+	stp	x29,x30,[sp,#-80]!
+	add	x29,sp,#0
+	stp	d8,d9,[sp,#16]		// per ABI requirement
+	stp	d10,d11,[sp,#32]
+	stp	d12,d13,[sp,#48]
+	stp	d14,d15,[sp,#64]
+___
+for($i=0; $i<24; $i+=2) {		# load A[5][5]
+my $j=$i+1;
+$code.=<<___;
+	ldp	d$i,d$j,[x0,#8*$i]
+___
+}
+$code.=<<___;
+	ldr	d24,[x0,#8*$i]
+	b	.Loop_absorb_ce
+
+.align	4
+.Loop_absorb_ce:
+	subs	$len,$len,$bsz		// len - bsz
+	blo	.Labsorbed_ce
+___
+for (my $i=0; $i<24; $i+=2) {
+my $j = $i+1;
+$code.=<<___;
+	ldr	d31,[$inp],#8		// *inp++
+#ifdef	__AARCH64EB__
+	rev64	v31.16b,v31.16b
+#endif
+	eor	$A[$i/5][$i%5],$A[$i/5][$i%5],v31.16b
+	cmp	$bsz,#8*($i+2)
+	blo	.Lprocess_block_ce
+	ldr	d31,[$inp],#8		// *inp++
+#ifdef	__AARCH64EB__
+	rev	v31.16b,v31.16b
+#endif
+	eor	$A[$j/5][$j%5],$A[$j/5][$j%5],v31.16b
+	beq	.Lprocess_block_ce
+___
+}
+$code.=<<___;
+	ldr	d31,[$inp],#8		// *inp++
+#ifdef	__AARCH64EB__
+	rev	v31.16b,v31.16b
+#endif
+	eor	$A[4][4],$A[4][4],v31.16b
+
+.Lprocess_block_ce:
+
+	bl	KeccakF1600_ce
+
+	b	.Loop_absorb_ce
+
+.align	4
+.Labsorbed_ce:
+___
+for($i=0; $i<24; $i+=2) {		# store A[5][5]
+my $j=$i+1;
+$code.=<<___;
+	stp	d$i,d$j,[x0,#8*$i]
+___
+}
+$code.=<<___;
+	str	d24,[x0,#8*$i]
+	add	x0,$len,$bsz		// return value
+
+	ldp	d8,d9,[sp,#16]
+	ldp	d10,d11,[sp,#32]
+	ldp	d12,d13,[sp,#48]
+	ldp	d14,d15,[sp,#64]
+	ldp	x29,x30,[sp],#80
+	ret
+.size	SHA3_absorb_cext,.-SHA3_absorb_cext
+___
+}
+{
+my ($ctx,$out,$len,$bsz) = map("x$_",(0..3));
+$code.=<<___;
+.globl	SHA3_squeeze_cext
+.type	SHA3_squeeze_cext,%function
+.align	5
+SHA3_squeeze_cext:
+	stp	x29,x30,[sp,#-16]!
+	add	x29,sp,#0
+	mov	x9,$ctx
+	mov	x10,$bsz
+
+.Loop_squeeze_ce:
+	ldr	x4,[x9],#8
+	cmp	$len,#8
+	blo	.Lsqueeze_tail_ce
+#ifdef	__AARCH64EB__
+	rev	x4,x4
+#endif
+	str	x4,[$out],#8
+	beq	.Lsqueeze_done_ce
+
+	sub	$len,$len,#8
+	subs	x10,x10,#8
+	bhi	.Loop_squeeze_ce
+
+	bl	KeccakF1600_cext
+	ldr	x30,[sp,#8]
+	mov	x9,$ctx
+	mov	x10,$bsz
+	b	.Loop_squeeze_ce
+
+.align	4
+.Lsqueeze_tail_ce:
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_ce
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_ce
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_ce
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_ce
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_ce
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_ce
+	strb	w4,[$out],#1
+
+.Lsqueeze_done_ce:
+	ldr	x29,[sp],#16
+	ret
+.size	SHA3_squeeze_cext,.-SHA3_squeeze_cext
+___
+}								}}}
+$code.=<<___;
+.asciz	"Keccak-1600 absorb and squeeze for ARMv8, CRYPTOGAMS by <appro\@openssl.org>"
+___
+
+{   my  %opcode = (
+	"rax1"	=> 0xce608c00,	"eor3"	=> 0xce000000,
+	"bcax"	=> 0xce200000,	"xar"	=> 0xce800000	);
+
+    sub unsha3 {
+	my ($mnemonic,$arg)=@_;
+
+	$arg =~ m/[qv]([0-9]+)[^,]*,\s*[qv]([0-9]+)[^,]*(?:,\s*[qv]([0-9]+)[^,]*(?:,\s*[qv#]([0-9\-]+))?)?/
+	&&
+	sprintf ".inst\t0x%08x\t//%s %s",
+			$opcode{$mnemonic}|$1|($2<<5)|($3<<16)|(eval($4)<<10),
+			$mnemonic,$arg;
+    }
+}
+
+foreach(split("\n",$code)) {
+
+	s/\`([^\`]*)\`/eval($1)/ge;
+
+	m/\bdup\b/ and s/\.16b/.2d/g	or
+	s/\b(eor3|rax1|xar|bcax)\s+(v.*)/unsha3($1,$2)/ge;
+
+	print $_,"\n";
+}
+
 close STDOUT;

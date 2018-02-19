@@ -58,6 +58,7 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
  * Each command takes different arguments.
  */
 int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
+int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args);
 
 /*
  * Common ctrl commands that different loaders may choose to support.
