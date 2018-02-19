@@ -116,6 +116,55 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
 }
 
 /*-
+ * BIO_bind - bind socket to address
+ * @sock: the socket to set
+ * @addr: local address to bind to
+ * @options: BIO socket options
+ *
+ * Binds to the address using the given socket and options.
+ *
+ * Options can be a combination of the following:
+ * - BIO_SOCK_REUSEADDR: Try to reuse the address and port combination
+ *   for a recently closed port.
+ *
+ * When restarting the program it could be that the port is still in use.  If
+ * you set to BIO_SOCK_REUSEADDR option it will try to reuse the port anyway.
+ * It's recommended that you use this.
+ */
+int BIO_bind(int sock, const BIO_ADDR *addr, int options)
+{
+    int on = 1;
+
+    if (sock == -1) {
+        BIOerr(BIO_F_BIO_BIND, BIO_R_INVALID_SOCKET);
+        return 0;
+    }
+
+# ifndef OPENSSL_SYS_WINDOWS
+    /*
+     * SO_REUSEADDR has different behavior on Windows than on
+     * other operating systems, don't set it there.
+     */
+    if (options & BIO_SOCK_REUSEADDR) {
+        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
+                       (const void *)&on, sizeof(on)) != 0) {
+            SYSerr(SYS_F_SETSOCKOPT, get_last_socket_error());
+            BIOerr(BIO_F_BIO_BIND, BIO_R_UNABLE_TO_REUSEADDR);
+            return 0;
+        }
+    }
+# endif
+
+    if (bind(sock, BIO_ADDR_sockaddr(addr), BIO_ADDR_sockaddr_size(addr)) != 0) {
+        SYSerr(SYS_F_BIND, get_last_socket_error());
+        BIOerr(BIO_F_BIO_BIND, BIO_R_UNABLE_TO_BIND_SOCKET);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*-
  * BIO_listen - Creates a listen socket
  * @sock: the socket to listen with
  * @addr: local address to bind to
@@ -174,21 +223,6 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
     if (!BIO_socket_nbio(sock, (options & BIO_SOCK_NONBLOCK) != 0))
         return 0;
 
-# ifndef OPENSSL_SYS_WINDOWS
-    /*
-     * SO_REUSEADDR has different behavior on Windows than on
-     * other operating systems, don't set it there.
-     */
-    if (options & BIO_SOCK_REUSEADDR) {
-        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR,
-                       (const void *)&on, sizeof(on)) != 0) {
-            SYSerr(SYS_F_SETSOCKOPT, get_last_socket_error());
-            BIOerr(BIO_F_BIO_LISTEN, BIO_R_UNABLE_TO_REUSEADDR);
-            return 0;
-        }
-    }
-# endif
-
     if (options & BIO_SOCK_KEEPALIVE) {
         if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE,
                        (const void *)&on, sizeof(on)) != 0) {
@@ -223,11 +257,8 @@ int BIO_listen(int sock, const BIO_ADDR *addr, int options)
     }
 # endif
 
-    if (bind(sock, BIO_ADDR_sockaddr(addr), BIO_ADDR_sockaddr_size(addr)) != 0) {
-        SYSerr(SYS_F_BIND, get_last_socket_error());
-        BIOerr(BIO_F_BIO_LISTEN, BIO_R_UNABLE_TO_BIND_SOCKET);
+    if (!BIO_bind(sock, addr, options))
         return 0;
-    }
 
     if (socktype != SOCK_DGRAM && listen(sock, MAX_LISTEN) == -1) {
         SYSerr(SYS_F_LISTEN, get_last_socket_error());

@@ -24,6 +24,7 @@ int ERR_load_BIO_strings(void);
 # define BIO_F_BIO_ACCEPT                                 101
 # define BIO_F_BIO_ACCEPT_EX                              137
 # define BIO_F_BIO_ADDR_NEW                               144
+# define BIO_F_BIO_BIND                                   147
 # define BIO_F_BIO_CALLBACK_CTRL                          131
 # define BIO_F_BIO_CONNECT                                138
 # define BIO_F_BIO_CTRL                                   103

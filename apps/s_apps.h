@@ -38,6 +38,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
+                const char *bindhost, const char *bindport,
                 int family, int type, int protocol);
 int should_retry(int i);
 
