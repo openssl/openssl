@@ -59,9 +59,9 @@ static const size_t fmt_http_get_cmd_size = sizeof(fmt_http_get_cmd) - 2;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_CONNECT, OPT_CIPHER, OPT_CERT, OPT_NAMEOPT, OPT_KEY, OPT_CAPATH,
-    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE, OPT_BUGS,
-    OPT_VERIFY, OPT_TIME, OPT_SSL3,
+    OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
+    OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE,
+    OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
     OPT_WWW
 } OPTION_CHOICE;
 
@@ -69,7 +69,9 @@ const OPTIONS s_time_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"connect", OPT_CONNECT, 's',
      "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},
-    {"cipher", OPT_CIPHER, 's', "Cipher to use, see 'openssl ciphers'"},
+    {"cipher", OPT_CIPHER, 's', "TLSv1.2 and below cipher list to be used"},
+    {"ciphersuites", OPT_CIPHERSUITES, 's',
+     "Specify TLSv1.3 ciphersuites to be used"},
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
     {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
@@ -106,7 +108,8 @@ int s_time_main(int argc, char **argv)
     SSL *scon = NULL;
     SSL_CTX *ctx = NULL;
     const SSL_METHOD *meth = NULL;
-    char *CApath = NULL, *CAfile = NULL, *cipher = NULL, *www_path = NULL;
+    char *CApath = NULL, *CAfile = NULL, *cipher = NULL, *ciphersuites = NULL;
+    char *www_path = NULL;
     char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0;
@@ -170,6 +173,9 @@ int s_time_main(int argc, char **argv)
         case OPT_CIPHER:
             cipher = opt_arg();
             break;
+        case OPT_CIPHERSUITES:
+            ciphersuites = opt_arg();
+            break;
         case OPT_BUGS:
             st_bugs = 1;
             break;
@@ -196,10 +202,6 @@ int s_time_main(int argc, char **argv)
 
     if (cipher == NULL)
         cipher = getenv("SSL_CIPHER");
-    if (cipher == NULL) {
-        BIO_printf(bio_err, "No CIPHER specified\n");
-        goto end;
-    }
 
     if ((ctx = SSL_CTX_new(meth)) == NULL)
         goto end;
@@ -210,7 +212,9 @@ int s_time_main(int argc, char **argv)
 
     if (st_bugs)
         SSL_CTX_set_options(ctx, SSL_OP_ALL);
-    if (!SSL_CTX_set_cipher_list(ctx, cipher))
+    if (cipher != NULL && !SSL_CTX_set_cipher_list(ctx, cipher))
+        goto end;
+    if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites))
         goto end;
     if (!set_cert_stuff(ctx, certfile, keyfile))
         goto end;
