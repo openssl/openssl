@@ -760,12 +760,13 @@ I<This must never ever be done on VMS.>
 sub quotify {
     # Unix setup (default if nothing else is mentioned)
     my $arg_formatter =
-	sub { $_ = shift; /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/ ? "'$_'" : $_ };
+	sub { $_ = shift;
+	      ($_ eq '' || /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/) ? "'$_'" : $_ };
 
     if ( $^O eq "VMS") {	# VMS setup
 	$arg_formatter = sub {
 	    $_ = shift;
-	    if (/\s|["[:upper:]]/) {
+	    if ($_ eq '' || /\s|["[:upper:]]/) {
 		s/"/""/g;
 		'"'.$_.'"';
 	    } else {
@@ -775,7 +776,7 @@ sub quotify {
     } elsif ( $^O eq "MSWin32") { # MSWin setup
 	$arg_formatter = sub {
 	    $_ = shift;
-	    if (/\s|["\|\&\*\;<>]/) {
+	    if ($_ eq '' || /\s|["\|\&\*\;<>]/) {
 		s/(["\\])/\\$1/g;
 		'"'.$_.'"';
 	    } else {
