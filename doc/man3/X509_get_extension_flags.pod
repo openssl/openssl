@@ -3,6 +3,7 @@
 =head1 NAME
 
 X509_get0_subject_key_id,
+X509_get0_authority_key_id,
 X509_get_pathlen,
 X509_get_extension_flags,
 X509_get_key_usage,
@@ -20,6 +21,7 @@ X509_get_proxy_pathlen - retrieve certificate extension data
  uint32_t X509_get_key_usage(X509 *x);
  uint32_t X509_get_extended_key_usage(X509 *x);
  const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x);
+ const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x);
  void X509_set_proxy_flag(X509 *x);
  void X509_set_proxy_pathlen(int l);
  long X509_get_proxy_pathlen(X509 *x);
@@ -106,6 +108,10 @@ Additionally B<XKU_SGC> is set if either Netscape or Microsoft SGC OIDs are
 present.
 
 X509_get0_subject_key_id() returns an internal pointer to the subject key
+identifier of B<x> as an B<ASN1_OCTET_STRING> or B<NULL> if the extension
+is not present or cannot be parsed.
+
+X509_get0_authority_key_id() returns an internal pointer to the authority key
 identifier of B<x> as an B<ASN1_OCTET_STRING> or B<NULL> if the extension
 is not present or cannot be parsed.
 
