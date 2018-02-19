@@ -471,8 +471,6 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
         fe51_mul(z3, x1, z2);
         fe51_mul(z2, tmp1, tmp0);
     }
-    fe51_cswap(x2, x3, swap);
-    fe51_cswap(z2, z3, swap);
 
     fe51_invert(z2, z2);
     fe51_mul(x2, x2, z2);
@@ -4050,8 +4048,6 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
     fe_mul(z3, x1, z2);
     fe_mul(z2, tmp1, tmp0);
   }
-  fe_cswap(x2, x3, swap);
-  fe_cswap(z2, z3, swap);
 
   fe_invert(z2, z2);
   fe_mul(x2, x2, z2);
