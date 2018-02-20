@@ -167,7 +167,8 @@ The following is a list of all permitted cipher strings and their meanings.
 The default cipher list.
 This is determined at compile time and is normally
 B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
-When used, this must be the first cipherstring specified.
+When used, this must be the first cipherstring specified and it does not have
+to be separated by B<:> from the rest of the cipherstring.
 
 =item B<COMPLEMENTOFDEFAULT>
 
