@@ -173,8 +173,11 @@ static int ecx_key_op(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey, int id,
             }
             if (id == EVP_PKEY_X25519) {
                 (*privkey)[0] &= 248;
-                (*privkey)[31] &= 127;
-                (*privkey)[31] |= 64;
+                (*privkey)[X25519_KEYLEN - 1] &= 127;
+                (*privkey)[X25519_KEYLEN - 1] |= 64;
+            } else if (id == EVP_PKEY_X448) {
+                (*privkey)[0] &= 252;
+                (*privkey)[X448_KEYLEN - 1] |= 128;
             }
         } else {
             memcpy(*privkey, p, KEYLENID(id));
