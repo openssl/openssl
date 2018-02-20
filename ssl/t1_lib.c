@@ -1280,8 +1280,14 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
+
+    /* Need at least keyname + iv */
+    if (eticklen < TLSEXT_KEYNAME_LENGTH + EVP_MAX_IV_LENGTH) {
+        ret = TICKET_NO_DECRYPT;
+        goto err;
+    }
 
     /* Initialize session ticket encryption and HMAC contexts */
     hctx = HMAC_CTX_new();
@@ -1294,8 +1300,9 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     if (tctx->ext.ticket_key_cb) {
         unsigned char *nctick = (unsigned char *)etick;
-        int rv = tctx->ext.ticket_key_cb(s, nctick, nctick + 16,
-                                            ctx, hctx, 0);
+        int rv = tctx->ext.ticket_key_cb(s, nctick,
+                                         nctick + TLSEXT_KEYNAME_LENGTH,
+                                         ctx, hctx, 0);
         if (rv < 0)
             goto err;
         if (rv == 0) {
@@ -1307,7 +1314,7 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     } else {
         /* Check key name matches */
         if (memcmp(etick, tctx->ext.tick_key_name,
-                   sizeof(tctx->ext.tick_key_name)) != 0) {
+                   TLSEXT_KEYNAME_LENGTH) != 0) {
             ret = TICKET_NO_DECRYPT;
             goto err;
         }
@@ -1316,8 +1323,7 @@ TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
                          EVP_sha256(), NULL) <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
                                   tctx->ext.tick_aes_key,
-                                  etick
-                                  + sizeof(tctx->ext.tick_key_name)) <= 0) {
+                                  etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
             goto err;
         }
     }
