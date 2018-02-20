@@ -22,7 +22,7 @@ static const unsigned char CONSTTIME_FALSE_8 = 0;
 static const size_t CONSTTIME_TRUE_S = ~((size_t)0);
 static const size_t CONSTTIME_FALSE_S = 0;
 static uint32_t CONSTTIME_TRUE_32 = (uint32_t)(~(uint32_t)0);
-static uint64_t CONSTTIME_FALSE_32 = 0;
+static uint32_t CONSTTIME_FALSE_32 = 0;
 static uint64_t CONSTTIME_TRUE_64 = (uint64_t)(~(uint64_t)0);
 static uint64_t CONSTTIME_FALSE_64 = 0;
 
@@ -99,10 +99,9 @@ static int test_is_zero_8(unsigned int a)
 
 static int test_is_zero_32(uint32_t a)
 {
-    if (a == 0 && !TEST_uint_eq(constant_time_is_zero_32(a), CONSTTIME_TRUE_32))
+    if (a == 0 && !TEST_true(constant_time_is_zero_32(a) ==  CONSTTIME_TRUE_32))
         return 0;
-    if (a != 0 && !TEST_uint_eq(constant_time_is_zero_32(a),
-                                CONSTTIME_FALSE_32))
+    if (a != 0 && !TEST_true(constant_time_is_zero_32(a) == CONSTTIME_FALSE_32))
         return 0;
     return 1;
 }
@@ -136,9 +135,9 @@ static int test_select_8(unsigned char a, unsigned char b)
 
 static int test_select_32(uint32_t a, uint32_t b)
 {
-    if (!TEST_uint_eq(constant_time_select_32(CONSTTIME_TRUE_32, a, b), a))
+    if (!TEST_true(constant_time_select_32(CONSTTIME_TRUE_32, a, b) == a))
         return 0;
-    if (!TEST_uint_eq(constant_time_select_32(CONSTTIME_FALSE_32, a, b), b))
+    if (!TEST_true(constant_time_select_32(CONSTTIME_FALSE_32, a, b) == b))
         return 0;
     return 1;
 }
@@ -345,7 +344,7 @@ static int test_32values(int i)
     size_t j;
     int ret = 1;
 
-    for (j = 0; j < sizeof(test_values_32); ++j) {
+    for (j = 0; j < OSSL_NELEM(test_values_32); j++) {
         uint32_t f = test_values_32[j];
 
         if (!test_select_32(e, f))
