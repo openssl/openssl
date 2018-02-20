@@ -3505,6 +3505,10 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     EVP_CIPHER_CTX ctx;
     SSL_CTX *tctx = s->initial_ctx;
 
+    /* Need at least keyname + iv */
+    if (eticklen < 16 + EVP_MAX_IV_LENGTH)
+        return 2;
+
     /* Initialize session ticket encryption and HMAC contexts */
     HMAC_CTX_init(&hctx);
     EVP_CIPHER_CTX_init(&ctx);
