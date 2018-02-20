@@ -251,7 +251,7 @@ static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     if (pubkeya == NULL || pubkeyb == NULL)
         return -2;
 
-    return !CRYPTO_memcmp(pubkeya, pubkeyb, KEYLEN(a));
+    return CRYPTO_memcmp(pubkeya, pubkeyb, KEYLEN(a)) == 0;
 }
 
 static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
@@ -516,9 +516,9 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     int ptype;
     int nid;
 
+    /* Sanity check: make sure it is ED25519/ED448 with absent parameters */
     X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
     nid = OBJ_obj2nid(obj);
-    /* Sanity check: make sure it is ED25519/ED448 with absent parameters */
     if ((nid != NID_ED25519 && nid != NID_ED448) || ptype != V_ASN1_UNDEF) {
         ECerr(EC_F_ECD_ITEM_VERIFY, EC_R_INVALID_ENCODING);
         return 0;
@@ -557,7 +557,7 @@ static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 {
     /* Set algorithms identifiers */
     X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
-    if (alg2)
+    if (alg2 != NULL)
         X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
     /* Algorithm idetifiers set: carry on as normal */
     return 3;
