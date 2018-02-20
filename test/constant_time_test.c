@@ -262,28 +262,16 @@ static int test_binops(int i)
         if (!test_select(a, b)
                 || !test_binary_op(&constant_time_lt, "ct_lt",
                                    a, b, a < b)
-                || !test_binary_op_8(&constant_time_lt_8, "constant_time_lt_8",
-                                     a, b, a < b)
                 || !test_binary_op(&constant_time_lt, "constant_time_lt",
                                    b, a, b < a)
-                || !test_binary_op_8(&constant_time_lt_8, "constant_time_lt_8",
-                                     b, a, b < a)
                 || !test_binary_op(&constant_time_ge, "constant_time_ge",
                                    a, b, a >= b)
-                || !test_binary_op_8(&constant_time_ge_8, "constant_time_ge_8",
-                                     a, b, a >= b)
                 || !test_binary_op(&constant_time_ge, "constant_time_ge",
                                    b, a, b >= a)
-                || !test_binary_op_8(&constant_time_ge_8, "constant_time_ge_8",
-                                     b, a, b >= a)
                 || !test_binary_op(&constant_time_eq, "constant_time_eq",
                                    a, b, a == b)
-                || !test_binary_op_8(&constant_time_eq_8, "constant_time_eq_8",
-                                     a, b, a == b)
                 || !test_binary_op(&constant_time_eq, "constant_time_eq",
-                                   b, a, b == a)
-                || !test_binary_op_8(&constant_time_eq_8, "constant_time_eq_8",
-                                     b, a, b == a))
+                                   b, a, b == a))
             ret = 0;
     }
     return ret;
