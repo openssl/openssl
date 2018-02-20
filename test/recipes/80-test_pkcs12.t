@@ -41,6 +41,8 @@ if (eval { require Win32::API; 1; }) {
         SetConsoleOutputCP(1253);
         $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
     }
+} elsif ($^O eq "MSWin32") {
+    plan skip_all => "Win32::API unavailable";
 } else {
     # Running MinGW tests transparently under Wine apparently requires
     # UTF-8 locale...
