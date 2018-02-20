@@ -45,7 +45,7 @@
 # Silvermont		+20%		+26%
 # Goldmont		+40%		+50%
 # Bulldozer		+20%		+9%
-# Ryzen(***)		???
+# Ryzen(***)		+35%		+32%
 # VIA			+170%		+120%
 #
 # (*)	amd64-51 is popular assembly implementation with 2^51 radix,
