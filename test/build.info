@@ -400,8 +400,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   # names with the DLL import libraries.
   IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
     PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest wpackettest ctype_internal_test \
-                     curve448_internal_test
+                     tls13encryptiontest wpackettest ctype_internal_test
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS_NO_INST=poly1305_internal_test
     ENDIF
@@ -413,6 +412,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     ENDIF
     IF[{- !$disabled{sm4} -}]
       PROGRAMS_NO_INST=sm4_internal_test
+    ENDIF
+    IF[{- !$disabled{ec} -}]
+      PROGRAMS_NO_INST=curve448_internal_test
     ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
