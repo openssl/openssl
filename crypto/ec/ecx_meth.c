@@ -16,14 +16,11 @@
 #include "internal/evp_int.h"
 #include "ec_lcl.h"
 
-#define X25519_KEYLEN        32
 #define X25519_BITS          253
 #define X25519_SECURITY_BITS 128
 
 #define ED25519_SIGSIZE      64
 
-#define X448_KEYLEN          56
-#define ED448_KEYLEN         57
 #define X448_BITS            448
 #define ED448_BITS           456
 #define X448_SECURITY_BITS   224
@@ -43,39 +40,36 @@
 #define GETPRIVKEY(priv, pk) \
     do { \
         if (IS25519((pk)->ameth->pkey_id)) { \
-            (priv) = ((X25519_KEY *)((pk)->pkey.ptr))->privkey; \
+            if ((pk)->pkey.curve25519 == NULL) \
+                break; \
+            (priv) = (pk)->pkey.curve25519->privkey; \
         } else if(ISX448((pk)->ameth->pkey_id)) { \
-            (priv) = ((X448_KEY *)((pk)->pkey.ptr))->privkey; \
+            if ((pk)->pkey.x448 == NULL) \
+                break; \
+            (priv) = (pk)->pkey.x448->privkey; \
         } else { \
-            (priv) = ((ED448_KEY *)((pk)->pkey.ptr))->privkey; \
+            if ((pk)->pkey.ed448 == NULL) \
+                break; \
+            (priv) = (pk)->pkey.ed448->privkey; \
         } \
     } while(0)
 
 #define GETPUBKEY(pub, pk) \
     do { \
         if (IS25519((pk)->ameth->pkey_id)) { \
-            (pub) = ((X25519_KEY *)((pk)->pkey.ptr))->pubkey; \
+            if ((pk)->pkey.curve25519 == NULL) \
+                break; \
+            (pub) = (pk)->pkey.curve25519->pubkey; \
         } else if(ISX448((pk)->ameth->pkey_id)) { \
-            (pub) = ((X448_KEY *)((pk)->pkey.ptr))->pubkey; \
+            if ((pk)->pkey.x448 == NULL) \
+                break; \
+            (pub) = (pk)->pkey.x448->pubkey; \
         } else { \
-            (pub) = ((ED448_KEY *)((pk)->pkey.ptr))->pubkey; \
+            if ((pk)->pkey.ed448 == NULL) \
+                break; \
+            (pub) = (pk)->pkey.ed448->pubkey; \
         } \
     } while(0)
-
-typedef struct {
-    unsigned char pubkey[X25519_KEYLEN];
-    unsigned char *privkey;
-} X25519_KEY;
-
-typedef struct {
-    unsigned char pubkey[X448_KEYLEN];
-    unsigned char *privkey;
-} X448_KEY;
-
-typedef struct {
-    unsigned char pubkey[ED448_KEYLEN];
-    unsigned char *privkey;
-} ED448_KEY;
 
 typedef enum {
     KEY_OP_PUBLIC,
@@ -95,7 +89,7 @@ static int ecx_key_op(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey, int id,
                       const X509_ALGOR *palg, const unsigned char *p, int plen,
                       ecx_key_op_t op)
 {
-    X25519_KEY *key25519 = NULL;
+    CURVE25519_KEY *key25519 = NULL;
     X448_KEY *keyx448 = NULL;
     ED448_KEY *keyed448 = NULL;
     unsigned char **privkey;
@@ -210,14 +204,13 @@ static int ecx_key_op(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey, int id,
 
 static int ecx_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-    unsigned char *penc, *pubkey;
+    unsigned char *penc, *pubkey = NULL;
 
-    if (pkey->pkey.ptr == NULL) {
+    GETPUBKEY(pubkey, pkey);
+    if (pubkey == NULL) {
         ECerr(EC_F_ECX_PUB_ENCODE, EC_R_INVALID_KEY);
         return 0;
     }
-
-    GETPUBKEY(pubkey, pkey);
 
     penc = OPENSSL_memdup(pubkey, KEYLEN(pkey));
     if (penc == NULL) {
@@ -248,13 +241,12 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
 static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    unsigned char *pubkeya, *pubkeyb;
-
-    if (a->pkey.ptr == NULL || b->pkey.ptr == NULL)
-        return -2;
+    unsigned char *pubkeya = NULL, *pubkeyb = NULL;
 
     GETPUBKEY(pubkeya, a);
     GETPUBKEY(pubkeyb, b);
+    if (pubkeya == NULL || pubkeyb == NULL)
+        return -2;
 
     return !CRYPTO_memcmp(pubkeya, pubkeyb, KEYLEN(a));
 }
@@ -287,18 +279,12 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 
 static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
-    unsigned char *privkey;
+    unsigned char *privkey = NULL;
     ASN1_OCTET_STRING oct;
     unsigned char *penc = NULL;
     int penclen;
 
-    if (pkey->pkey.ptr == NULL) {
-        ECerr(EC_F_ECX_PRIV_ENCODE, EC_R_INVALID_PRIVATE_KEY);
-        return 0;
-    }
-
     GETPRIVKEY(privkey, pkey);
-
     if (privkey == NULL) {
         ECerr(EC_F_ECX_PRIV_ENCODE, EC_R_INVALID_PRIVATE_KEY);
         return 0;
@@ -351,13 +337,18 @@ static int ecx_security_bits(const EVP_PKEY *pkey)
 
 static void ecx_free(EVP_PKEY *pkey)
 {
-    if (pkey->pkey.ptr != NULL) {
-        unsigned char *privkey;
+    unsigned char *privkey = NULL;
 
-        GETPRIVKEY(privkey, pkey);
-        OPENSSL_secure_clear_free(privkey, KEYLEN(pkey));
+    GETPRIVKEY(privkey, pkey);
+    OPENSSL_secure_clear_free(privkey, KEYLEN(pkey));
+
+    if (IS25519(pkey->ameth->pkey_id)) {
+        OPENSSL_free(pkey->pkey.curve25519);
+    } else if(ISX448(pkey->ameth->pkey_id)) {
+        OPENSSL_free(pkey->pkey.x448);
+    } else {
+        OPENSSL_free(pkey->pkey.ed448);
     }
-    OPENSSL_free(pkey->pkey.ptr);
 }
 
 /* "parameters" are always equal */
@@ -369,16 +360,16 @@ static int ecx_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx, ecx_key_op_t op)
 {
-    unsigned char *pubkey;
-
+    unsigned char *pubkey = NULL;
     const char *nm = OBJ_nid2ln(pkey->ameth->pkey_id);
+
+    GETPUBKEY(pubkey, pkey);
 
     if (op == KEY_OP_PRIVATE) {
         unsigned char *privkey = NULL;
 
-        if (pkey->pkey.ptr != NULL)
-            GETPRIVKEY(privkey, pkey);
-        if (pkey->pkey.ptr == NULL || privkey == NULL) {
+        GETPRIVKEY(privkey, pkey);
+        if (privkey == NULL) {
             if (BIO_printf(bp, "%*s<INVALID PRIVATE KEY>\n", indent, "") <= 0)
                 return 0;
             return 1;
@@ -390,7 +381,7 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
         if (ASN1_buf_print(bp, privkey, KEYLEN(pkey), indent + 4) == 0)
             return 0;
     } else {
-        if (pkey->pkey.ptr == NULL) {
+        if (pubkey == NULL) {
             if (BIO_printf(bp, "%*s<INVALID PUBLIC KEY>\n", indent, "") <= 0)
                 return 0;
             return 1;
@@ -400,7 +391,9 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
     }
     if (BIO_printf(bp, "%*spub:\n", indent, "") <= 0)
         return 0;
-    GETPUBKEY(pubkey, pkey);
+
+    if (pubkey == NULL)
+        return 0;
     if (ASN1_buf_print(bp, pubkey, KEYLEN(pkey), indent + 4) == 0)
         return 0;
     return 1;
@@ -427,9 +420,10 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
                           KEY_OP_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        if (pkey->pkey.ptr != NULL) {
-            const X25519_KEY *xkey = pkey->pkey.ptr;
+        if (pkey->pkey.curve25519 != NULL) {
+            const CURVE25519_KEY *xkey = pkey->pkey.curve25519;
             unsigned char **ppt = arg2;
+
             *ppt = OPENSSL_memdup(xkey->pubkey, X25519_KEYLEN);
             if (*ppt != NULL)
                 return X25519_KEYLEN;
@@ -681,14 +675,14 @@ static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int pkey_ecx_derive25519(EVP_PKEY_CTX *ctx, unsigned char *key,
                                 size_t *keylen)
 {
-    const X25519_KEY *pkey, *peerkey;
+    const CURVE25519_KEY *pkey, *peerkey;
 
     if (ctx->pkey == NULL || ctx->peerkey == NULL) {
         ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_KEYS_NOT_SET);
         return 0;
     }
-    pkey = ctx->pkey->pkey.ptr;
-    peerkey = ctx->peerkey->pkey.ptr;
+    pkey = ctx->pkey->pkey.curve25519;
+    peerkey = ctx->peerkey->pkey.curve25519;
     if (pkey == NULL || pkey->privkey == NULL) {
         ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_INVALID_PRIVATE_KEY);
         return 0;
@@ -712,8 +706,8 @@ static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
         ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_KEYS_NOT_SET);
         return 0;
     }
-    pkey = ctx->pkey->pkey.ptr;
-    peerkey = ctx->peerkey->pkey.ptr;
+    pkey = ctx->pkey->pkey.x448;
+    peerkey = ctx->peerkey->pkey.x448;
     if (pkey == NULL || pkey->privkey == NULL) {
         ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_INVALID_PRIVATE_KEY);
         return 0;
@@ -785,7 +779,7 @@ static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
                                     size_t *siglen, const unsigned char *tbs,
                                     size_t tbslen)
 {
-    const X25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+    const CURVE25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.curve25519;
 
     if (sig == NULL) {
         *siglen = ED25519_SIGSIZE;
@@ -806,7 +800,7 @@ static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
                                   size_t *siglen, const unsigned char *tbs,
                                   size_t tbslen)
 {
-    const ED448_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+    const ED448_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ed448;
 
     if (sig == NULL) {
         *siglen = ED448_SIGSIZE;
@@ -828,7 +822,7 @@ static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
                                       size_t siglen, const unsigned char *tbs,
                                       size_t tbslen)
 {
-    const X25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+    const CURVE25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.curve25519;
 
     if (siglen != ED25519_SIGSIZE)
         return 0;
@@ -840,7 +834,7 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
                                     size_t siglen, const unsigned char *tbs,
                                     size_t tbslen)
 {
-    const ED448_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+    const ED448_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ed448;
 
     if (siglen != ED448_SIGSIZE)
         return 0;
