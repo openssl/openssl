@@ -89,9 +89,17 @@ can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
 
 =item B<-cipher>
 
-Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
-currently not performed unless a B<SSL> or B<SSL_CTX> structure is
+Sets the TLSv1.2 and below ciphersuite list to B<value>. This list will be
+combined with any configured TLSv1.3 ciphersuites. Note: syntax checking
+of B<value> is currently not performed unless a B<SSL> or B<SSL_CTX> structure is
 associated with B<cctx>.
+
+=item B<-ciphersuites>
+
+Sets the available ciphersuites for TLSv1.3 to value. This is a simple colon
+(":") separated list of TLSv1.3 ciphersuite names in order of preference. This
+list will be combined any configured TLSv1.2 and below ciphersuites.
+
 
 =item B<-cert>
 
@@ -219,9 +227,16 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 
 =item B<CipherString>
 
-Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
-currently not performed unless an B<SSL> or B<SSL_CTX> structure is
-associated with B<cctx>.
+Sets the ciphersuite list for TLSv1.2 and below to B<value>. This list will be
+combined with any configured TLSv1.3 ciphersuites. Note: syntax
+checking of B<value> is currently not performed unless an B<SSL> or B<SSL_CTX>
+structure is associated with B<cctx>.
+
+=item B<Ciphersuites>
+
+Sets the available ciphersuites for TLSv1.3 to B<value>. This is a simple colon
+(":") separated list of TLSv1.3 ciphersuite names in order of preference. This
+list will be combined any configured TLSv1.2 and below ciphersuites.
 
 =item B<Certificate>
 

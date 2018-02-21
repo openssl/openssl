@@ -22,6 +22,7 @@ B<openssl> B<ciphers>
 [B<-srp>]
 [B<-stdname>]
 [B<-convert name>]
+[B<-ciphersuites val>]
 [B<cipherlist>]
 
 =head1 DESCRIPTION
@@ -105,10 +106,21 @@ Precede each cipher suite by its standard name.
 
 Convert a standard cipher B<name> to its OpenSSL name.
 
+=item B<-ciphersuites val>
+
+Sets the list of TLSv1.3 ciphersuites. This list will be combined with any
+TLSv1.2 and below ciphersuites that have been configured. The format for this
+list is a simple colon (":") separated list of TLSv1.3 ciphersuite names. By
+default this value is:
+
+"TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
+
 =item B<cipherlist>
 
-A cipher list to convert to a cipher preference list. If it is not included
-then the default cipher list will be used. The format is described below.
+A cipher list of TLSv1.2 and below ciphersuites to convert to a cipher
+preference list. This list will be combined with any TLSv1.3 ciphersuites that
+have been configured. If it is not included then the default cipher list will be
+used. The format is described below.
 
 =back
 
@@ -705,11 +717,11 @@ Note: the CBC modes mentioned in this RFC are not supported.
 
 =head2 TLS v1.3 cipher suites
 
- TLS_AES_128_GCM_SHA256                     TLS13-AES-128-GCM-SHA256
- TLS_AES_256_GCM_SHA384                     TLS13-AES-256-GCM-SHA384
- TLS_CHACHA20_POLY1305_SHA256               TLS13-CHACHA20-POLY1305-SHA256
- TLS_AES_128_CCM_SHA256                     TLS13-AES-128-CCM-SHA256
- TLS_AES_128_CCM_8_SHA256                   TLS13-AES-128-CCM-8-SHA256
+ TLS_AES_128_GCM_SHA256                     TLS_AES_128_GCM_SHA256
+ TLS_AES_256_GCM_SHA384                     TLS_AES_256_GCM_SHA384
+ TLS_CHACHA20_POLY1305_SHA256               TLS_CHACHA20_POLY1305_SHA256
+ TLS_AES_128_CCM_SHA256                     TLS_AES_128_CCM_SHA256
+ TLS_AES_128_CCM_8_SHA256                   TLS_AES_128_CCM_8_SHA256
 
 =head2 Older names used by OpenSSL
 

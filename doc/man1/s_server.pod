@@ -113,6 +113,7 @@ B<openssl> B<s_server>
 [B<-curves val>]
 [B<-named_curve val>]
 [B<-cipher val>]
+[B<-ciphersuites val>]
 [B<-dhparam infile>]
 [B<-record_padding val>]
 [B<-debug_broken_protocol>]
@@ -533,11 +534,22 @@ For a list of all possible curves, use:
 
 =item B<-cipher val>
 
-This allows the cipher list used by the server to be modified.  When
-the client sends a list of supported ciphers the first client cipher
-also included in the server list is used. Because the client specifies
-the preference order, the order of the server cipherlist irrelevant. See
+This allows the list of TLSv1.2 and below ciphersuites used by the server to be
+modified. This list is combined with any TLSv1.3 ciphersuites that have been
+configured. When the client sends a list of supported ciphers the first client
+cipher also included in the server list is used. Because the client specifies
+the preference order, the order of the server cipherlist is irrelevant. See
 the B<ciphers> command for more information.
+
+=item B<-ciphersuites val>
+
+This allows the list of TLSv1.3 ciphersuites used by the server to be modified.
+This list is combined with any TLSv1.2 and below ciphersuites that have been
+configured. When the client sends a list of supported ciphers the first client
+cipher also included in the server list is used. Because the client specifies
+the preference order, the order of the server cipherlist is irrelevant. See
+the B<ciphers> command for more information. The format for this list is a
+simple colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-dhparam infile>
 
