@@ -463,6 +463,7 @@ typedef struct cipher_data_st {
     size_t aad_len[AAD_NUM];
     unsigned char *tag;
     size_t tag_len;
+    int bit_len;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -536,6 +537,10 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
     }
+    if (strcmp(keyword, "BitLen") == 0) {
+        cdat->bit_len = atoi(value);
+        return 1;
+    }
 
     if (strcmp(keyword, "Operation") == 0) {
         if (strcmp(value, "ENCRYPT") == 0)
@@ -580,7 +585,9 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
         tmp = OPENSSL_malloc(out_misalign + in_len + 2 * EVP_MAX_BLOCK_LENGTH);
         if (!tmp)
             goto err;
-        in = memcpy(tmp + out_misalign, in, in_len);
+        in = memcpy(tmp + out_misalign + (frag == 2 ? 32 : 0), in, in_len);
+        if (frag == 2)
+            frag = 1;
     } else {
         inp_misalign += 16 - ((out_misalign + in_len) & 15);
         /*
@@ -692,10 +699,61 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
-    if (!frag) {
+    if (expected->bit_len != 0) {
+        EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
+        if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in,
+                              expected->bit_len))
+            goto err;
+        if (tmplen != expected->bit_len)
+            goto err;
+        tmplen = (tmplen + 7) / 8;
+        if (expected->bit_len & 7)
+            tmp[out_misalign + tmplen - 1] &= ~0xFF >> (expected->bit_len & 7);
+    } else if (frag == 0) {
         /* We supply the data all in one go */
         if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &tmplen, in, in_len))
             goto err;
+    } else if (frag == 2) {
+        size_t block_size = EVP_CIPHER_CTX_block_size(ctx);
+        int expect_to_fail = 0;
+
+        if (block_size > 1 && in_len >= block_size) {
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign, &chunklen, in,
+                                  block_size - 1))
+                goto err;
+            tmplen += chunklen;
+            in += block_size - 1;
+            in_len -= block_size - 1;
+            expect_to_fail = 1;
+        }
+        if (in_len > 1) {
+            /* this is expected to fail */
+            memcpy(tmp + out_misalign + tmplen + 1, in, 2);
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
+                                  tmp + out_misalign + tmplen + 1, 2)) {
+                if (expect_to_fail
+                        && ERR_GET_LIB(ERR_peek_error()) == ERR_R_EVP_LIB
+                        && ERR_GET_REASON(ERR_peek_error())
+                           == EVP_R_PARTIALLY_OVERLAPPING) {
+                    ERR_clear_error();
+                    t->err = NULL;
+                    ok = 1;
+                }
+                goto err;
+            }
+            else if (expect_to_fail) {
+                goto err;
+            }
+            tmplen += chunklen;
+            in += 2;
+            in_len -= 2;
+        }
+        if (in_len > 0) {
+            if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
+                                  in, in_len))
+                goto err;
+            tmplen += chunklen;
+        }
     } else {
         /* Supply the data in chunks less than the block size where possible */
         if (in_len > 0) {
@@ -713,7 +771,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             in += in_len - 1;
             in_len = 1;
         }
-        if (in_len > 0 ) {
+        if (in_len > 0) {
             if (!EVP_CipherUpdate(ctx, tmp + out_misalign + tmplen, &chunklen,
                                   in, 1))
                 goto err;
@@ -782,12 +840,14 @@ static int cipher_test_run(EVP_TEST *t)
                 BIO_snprintf(aux_err, sizeof(aux_err),
                              "%s in-place, %sfragmented",
                              out_misalign ? "misaligned" : "aligned",
+                             frag == 2 ? "overlapping " :
                              frag ? "" : "not ");
             } else {
                 BIO_snprintf(aux_err, sizeof(aux_err),
                              "%s output and %s input, %sfragmented",
                              out_misalign ? "misaligned" : "aligned",
                              inp_misalign ? "misaligned" : "aligned",
+                             frag == 2 ? "overlapping " :
                              frag ? "" : "not ");
             }
             if (cdat->enc) {
@@ -810,7 +870,7 @@ static int cipher_test_run(EVP_TEST *t)
             }
         }
 
-        if (out_misalign == 1 && frag == 0) {
+        if (out_misalign == 1 && frag < 2) {
             /*
              * XTS, SIV, CCM and Wrap modes have special requirements about input
              * lengths so we don't fragment for those

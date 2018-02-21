@@ -70,4 +70,85 @@ struct evp_Encode_Ctx_st {
 typedef struct evp_pbe_st EVP_PBE_CTL;
 DEFINE_STACK_OF(EVP_PBE_CTL)
 
-int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
+/*
+ * According to the letter of standard difference between pointers
+ * is specified to be valid only within same object. This makes
+ * it formally challenging to determine if input and output buffers
+ * are not partially overlapping with standard pointer arithmetic.
+ */
+#ifdef PTRDIFF_T
+# undef PTRDIFF_T
+#endif
+#if defined(OPENSSL_SYS_VMS) && __INITIAL_POINTER_SIZE==64
+/*
+ * Then we have VMS that distinguishes itself by adhering to
+ * sizeof(size_t)==4 even in 64-bit builds, which means that
+ * difference between two pointers might be truncated to 32 bits.
+ * In the context one can even wonder how comparison for
+ * equality is implemented. To be on the safe side we adhere to
+ * PTRDIFF_T even for comparison for equality.
+ */
+# define PTRDIFF_T uint64_t
+#else
+# define PTRDIFF_T size_t
+#endif
+
+static ossl_inline
+int is_any_overlapping(const void *ptr1, int len1, const void *ptr2, int len2)
+{
+    PTRDIFF_T diff = (PTRDIFF_T)ptr1 - (PTRDIFF_T)ptr2;
+    /*
+     * Check for any overlapping between
+     * [ptr1..ptr1+len1[ and [ptr2..ptr2+len2[.
+     * Binary logical operations are used instead of boolean
+     * to minimize number of conditional branches.
+     */
+    int overlapped = (len1 > 0) & (len2 > 0)
+                     & ((diff < (PTRDIFF_T)len2)
+                        | (diff > (0 - (PTRDIFF_T)len1)));
+
+    return overlapped;
+}
+
+static ossl_inline
+int is_pointer_offset(const void *ptr1, const void *ptr2, int offset)
+{
+    PTRDIFF_T diff = (PTRDIFF_T)ptr1 - (PTRDIFF_T)ptr2;
+
+    return diff == (PTRDIFF_T)offset;
+}
+
+static ossl_inline
+int is_partially_overlapping(const void *out, const void *in, int inl,
+                             int i, int bl)
+{
+    /*
+     * inl is input length, bl is block size and i partial data length.
+     * If inl < bl - i, there will be no output at all, thus no overlap.
+     * If inl < 2*bl - i, the output will be exactly one cipher block.
+     * If inl < 3*bl - i, the output will be exactly two cipher blocks.
+     * If inl is larger than that, the output will be three or more
+     * cipher blocks.
+     *
+     * If bl == 1 an overlap will be safe if in >= out
+     * otherwise an overlap will be safe if in == out + i
+     * _or_ if in >= out + 2*bl + i.
+     *
+     * This is for CBC decrypt mode which accesses IN
+     * a second time as IV for the next cipher block.
+     * When IN is less than two blocks ahead of OUT
+     * the IV can get overwritten.
+     */
+    int outl;
+
+    if (inl < 2*bl - i)
+        outl = bl;
+    else if (inl < 3*bl - i)
+        outl = 2*bl;
+    else
+        outl = 2*bl + i;
+
+    return is_any_overlapping(in, inl, out, bl == 1 ? 1 : outl)
+           & !is_pointer_offset(in, out, i)
+           & (inl >= bl - i);
+}
