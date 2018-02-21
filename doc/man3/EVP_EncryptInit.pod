@@ -151,7 +151,17 @@ as a result the amount of data written may be anything from zero bytes
 to (inl + cipher_block_size - 1) so B<out> should contain sufficient
 room. The actual number of bytes written is placed in B<outl>. It also
 checks if B<in> and B<out> are partially overlapping, and if they are
-0 is returned to indicate failure.
+0 is returned to indicate failure. EVP_EncryptUpdate() is guaranteed to
+be able to encrypt in place when the B<ctx> has not been used before.
+Note: the above statement about the necessary output buffer size is not
+true for WRAP mode ciphers. These ciphers may write up to (inl + 16)
+bytes into B<out>.
+
+Partially overlapping is any kind of overlapping that is known to be
+not working in the evp cipher update function. It is dependent on the
+cipher mode, and dependent on the internal state of the cipher context.
+It is often the case that partially overlapping means overlapping
+with in != out.
 
 If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
 the "final" data, that is any data that remains in a partial block.
