@@ -168,18 +168,19 @@ The cipher string B<@SECLEVEL=n> can be used at any point to set the security
 level to B<n>, which should be a number between zero and five, inclusive.
 See L<SSL_CTX_set_security_level> for a description of what each level means.
 
+The cipher list can be prefixed with the B<DEFAULT> keyword, which enables
+the default cipher list as defined below.  Unlike cipher strings,
+this prefix may not be combined with other strings using B<+> character.
+For example, B<DEFAULT+DES> is not valid.
+
+The content of the default list is determined at compile time and normally
+corresponds to B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
+
 =head1 CIPHER STRINGS
 
 The following is a list of all permitted cipher strings and their meanings.
 
 =over 4
-
-=item B<DEFAULT>
-
-The default cipher list.
-This is determined at compile time and is normally
-B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
-When used, this must be the first cipherstring specified.
 
 =item B<COMPLEMENTOFDEFAULT>
 
