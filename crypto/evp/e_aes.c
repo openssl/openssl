@@ -2510,6 +2510,8 @@ static int aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 EVP_CIPHER_CTX_encrypting(ctx), dat->block);
         EVP_CIPHER_CTX_set_num(ctx, num);
         len -= MAXBITCHUNK;
+        out += MAXBITCHUNK;
+        in  += MAXBITCHUNK;
     }
     if (len) {
         int num = EVP_CIPHER_CTX_num(ctx);
