@@ -27,6 +27,8 @@ B<openssl enc -I<cipher>>
 [B<-nosalt>]
 [B<-z>]
 [B<-md digest>]
+[B<-iter count>]
+[B<-pbkdf2>]
 [B<-p>]
 [B<-P>]
 [B<-bufsize number>]
@@ -108,6 +110,16 @@ the B<-pass> argument.
 
 Use the specified digest to create the key from the passphrase.
 The default algorithm is sha-256.
+
+=item B<-iter count>
+
+Use a given number of iterations on the password in deriving the encryption key.
+High values increase the time required to brute-force the resulting file.
+This option enables the use of PBKDF2 algorithm to derive the key.
+
+=item B<-pbkdf2>
+
+Use PBKDF2 algorithm with default iteration count unless otherwise specified.
 
 =item B<-nosalt>
 
@@ -374,8 +386,6 @@ Decrypt some data using a supplied 40 bit RC4 key:
 =head1 BUGS
 
 The B<-A> option when used with large files doesn't work properly.
-
-There should be an option to allow an iteration count to be included.
 
 The B<enc> program only supports a fixed number of algorithms with
 certain parameters. So if, for example, you want to use RC2 with a
