@@ -10,7 +10,18 @@
 #include <string.h>
 #include <openssl/e_os2.h>
 #include <openssl/evp.h>
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "curve448_lcl.h"
+
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "testutil.h"
 
 static unsigned int max = 1000;
