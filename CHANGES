@@ -9,6 +9,15 @@
 
  Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
+  *) Separated TLSv1.3 ciphersuite configuration out from TLSv1.2 ciphersuite
+     configuration. TLSv1.3 ciphersuites are not compatible with TLSv1.2 and
+     below. Similarly TLSv1.2 ciphersuites are not compatible with TLSv1.3.
+     In order to avoid issues where legacy TLSv1.2 ciphersuite configuration
+     would otherwise inadvertently disable all TLSv1.3 ciphersuites the
+     configuraton has been separated out. See the ciphers man page or the
+     SSL_CTX_set_ciphersuites() man page for more information.
+     [Matt Caswell]
+
   *) On POSIX (BSD, Linux, ...) systems the ocsp(1) command running
      in responder mode now supports the new "-multi" option, which
      spawns the specified number of child processes to handle OCSP
@@ -35,12 +44,7 @@
 
   *) Support for TLSv1.3 added. Note that users upgrading from an earlier
      version of OpenSSL should review their configuration settings to ensure
-     that they are still appropriate for TLSv1.3. In particular if no TLSv1.3
-     ciphersuites are enabled then OpenSSL will refuse to make a connection
-     unless (1) TLSv1.3 is explicitly disabled or (2) the ciphersuite
-     configuration is updated to include suitable ciphersuites. The DEFAULT
-     ciphersuite configuration does include TLSv1.3 ciphersuites. For further
-     information on this and other related issues please see:
+     that they are still appropriate for TLSv1.3. For further information see:
      https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
 
      NOTE: In this pre-release of OpenSSL a draft version of the
