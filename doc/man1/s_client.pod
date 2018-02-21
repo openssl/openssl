@@ -99,6 +99,7 @@ B<openssl> B<s_client>
 [B<-sigalgs sigalglist>]
 [B<-curves curvelist>]
 [B<-cipher cipherlist>]
+[B<-ciphersuites val>]
 [B<-serverpref>]
 [B<-starttls protocol>]
 [B<-xmpphost hostname>]
@@ -505,10 +506,20 @@ ultimately selected by the server. For a list of all curves, use:
 
 =item B<-cipher cipherlist>
 
-This allows the cipher list sent by the client to be modified. Although
-the server determines which cipher suite is used it should take the first
-supported cipher in the list sent by the client. See the B<ciphers>
-command for more information.
+This allows the TLSv1.2 and below cipher list sent by the client to be modified.
+This list will be combined with any TLSv1.3 ciphersuites that have been
+configured. Although the server determines which ciphersuite is used it should
+take the first supported cipher in the list sent by the client. See the
+B<ciphers> command for more information.
+
+=item B<-ciphersuites val>
+
+This allows the TLSv1.3 ciphersuites sent by the client to be modified. This
+list will be combined with any TLSv1.2 and below ciphersuites that have been
+configured. Although the server determines which cipher suite is used it should
+take the first supported cipher in the list sent by the client. See the
+B<ciphers> command for more information. The format for this list is a simple
+colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-starttls protocol>
 
