@@ -214,7 +214,7 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
         cprefix##_cfb##cbits##_encrypt(in, out, (long) \
             ((cbits == 1) \
                 && !EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS) \
-                ? inl*8 : inl), \
+                ? chunk*8 : chunk), \
             &EVP_C_DATA(kstruct, ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx),\
             &num, EVP_CIPHER_CTX_encrypting(ctx));\
         EVP_CIPHER_CTX_set_num(ctx, num);\
