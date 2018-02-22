@@ -850,9 +850,9 @@ EOF
           }
 
           my $cppflags = {
-              lib => '$(LIB_CPPFLAGS)',
-              dso => '$(DSO_CPPFLAGS)',
-              bin => '$(BIN_CPPFLAGS)'
+              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
           } -> {$args{intent}};
           if (defined($generator)) {
               # If the target is named foo.S in build.info, we want to

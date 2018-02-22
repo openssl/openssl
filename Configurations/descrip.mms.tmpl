@@ -658,9 +658,11 @@ EOF
               die "Generator type for $src unknown: $generator\n";
           }
 
-          my $cppflags = { lib => '$(LIB_CPPFLAGS)',
-                           dso => '$(DSO_CPPFLAGS)',
-                           bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
+          my $cppflags = {
+              lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
+              dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
+              bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
+          } -> {$args{intent}};
           my @incs_cmds = includes({ lib => '$(LIB_INCLUDES)',
                                      dso => '$(DSO_INCLUDES)',
                                      bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
