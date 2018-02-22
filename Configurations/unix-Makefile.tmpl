@@ -649,12 +649,12 @@ generate_crypto_objects:
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl -n \
 				crypto/objects/objects.txt \
 				crypto/objects/obj_mac.num \
-				>crypto/objects/obj_mac.new && \
+				> crypto/objects/obj_mac.new && \
 	    mv crypto/objects/obj_mac.new crypto/objects/obj_mac.num )
 	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
 				crypto/objects/objects.txt \
 				crypto/objects/obj_mac.num \
-				>include/openssl/obj_mac.h )
+				> include/openssl/obj_mac.h )
 	( cd $(SRCDIR); $(PERL) crypto/objects/obj_dat.pl \
 				include/openssl/obj_mac.h \
 				> crypto/objects/obj_dat.h )
