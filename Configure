@@ -278,11 +278,15 @@ if (defined env($local_config_envname)) {
     }
 }
 
+# Save away perl command information
+$config{perl_cmd} = $^X;
+$config{perl_version} = $Config{version};
+$config{perl_archname} = $Config{archname};
+
 $config{prefix}="";
 $config{openssldir}="";
 $config{processor}="";
 $config{libdir}="";
-$config{cross_compile_prefix}="";
 my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
@@ -532,6 +536,7 @@ my %user = (
     CPPFLAGS    => [],  # -D, -I, -Wp,
     CPPDEFINES  => [],  # Alternative for -D
     CPPINCLUDES => [],  # Alternative for -I
+    CROSS_COMPILE => undef,
     HASHBANGPERL=> undef,
     LD          => undef,
     LDFLAGS     => [],  # -L, -Wl,
@@ -543,6 +548,9 @@ my %user = (
     RCFLAGS     => [],
     RM          => undef,
    );
+# Info about what "make variables" may be prefixed with the cross compiler
+# prefix.  This should NEVER mention any such variable with a list for value.
+my @user_crossable = qw ( AR AS CC CXX CPP LD MT RANLIB RC );
 # The same but for flags given as Configure options.  These are *additional*
 # input, as opposed to the VAR=string option that override the corresponding
 # config target attributes
@@ -564,6 +572,7 @@ my %user_to_target = (
     # If not given here, the value is the lc of the key
     CPPDEFINES  => 'defines',
     CPPINCLUDES => 'includes',
+    CROSS_COMPILE => 'cross_compile_prefix',
     LDFLAGS     => 'lflags',
     LDLIBS      => 'ex_libs',
    );
@@ -779,7 +788,7 @@ while (@argvcopy)
                         }
 		elsif (/^--cross-compile-prefix=(.*)$/)
 			{
-			$config{cross_compile_prefix}=$1;
+			$user{CROSS_COMPILE}=$1;
 			}
 		elsif (/^--config=(.*)$/)
 			{
@@ -1033,10 +1042,6 @@ $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
 $target{dso_extension}=$target{shared_extension_simple};
 ($target{shared_import_extension}=$target{shared_extension_simple}.".a")
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
-
-
-$config{cross_compile_prefix} = env('CROSS_COMPILE')
-    if $config{cross_compile_prefix} eq "";
 
 # Allow overriding the names of some tools.  USE WITH CARE
 # Note: only Unix cares about HASHBANGPERL...  that explains
@@ -2299,6 +2304,8 @@ if ($builder eq "unified") {
 
 EOF
 }
+print OUT
+    "# The following data is only used when this files is use as a script\n";
 print OUT "my \%makevars = (\n";
 foreach (sort keys %user) {
     print OUT '    ',$_,' ' x (20 - length $_),'=> ',
@@ -2321,6 +2328,7 @@ foreach my $what (sort keys %disabled_info) {
     print OUT "    },\n";
 }
 print OUT ");\n";
+print OUT 'my @user_crossable = qw( ', join (' ', @user_crossable), " );\n";
 print OUT << 'EOF';
 # If run directly, we can give some answers, and even reconfigure
 unless (caller) {
@@ -2373,12 +2381,14 @@ _____
                   -verbose => 2);
     }
     if ($dump || $cmdline) {
-        print "\n(with current working directory = $here)";
-        print "\nCommand line:\n\n";
+        print "\nCommand line (with current working directory = $here):\n\n";
         print '    ',join(' ',
                           $config{perl},
                           catfile($config{sourcedir}, 'Configure'),
                           @{$config{perlargv}}), "\n";
+        print "\nPerl information:\n\n";
+        print '    ',$config{perl_cmd},"\n";
+        print '    ',$config{perl_version},' for ',$config{perl_archname},"\n";
     }
     if ($dump || $options) {
         my $longest = 0;
@@ -2430,13 +2440,16 @@ _____
     }
     if ($dump || $makevars) {
         print "\nMakevars:\n\n";
-        foreach (sort keys %makevars) {
-            print '    ',$_,' ' x (16 - length $_),'= ',
-                (ref $config{$makevars{$_}} eq 'ARRAY'
-                 ? join(' ', @{$config{$makevars{$_}}})
-                 : $config{$makevars{$_}}),
+        foreach my $var (sort keys %makevars) {
+            my $prefix = '';
+            $prefix = $config{cross_compile_prefix}
+                if grep { $var eq $_ } @user_crossable;
+            print '    ',$var,' ' x (16 - length $var),'= ',
+                (ref $config{$makevars{$var}} eq 'ARRAY'
+                 ? join(' ', @{$config{$makevars{$var}}})
+                 : $prefix.$config{$makevars{$var}}),
                 "\n"
-                if defined $config{$makevars{$_}};
+                if defined $config{$makevars{$var}};
         }
 
         my @buildfile = ($config{builddir}, $config{build_file});
@@ -2590,17 +2603,6 @@ my %builders = (
 
 $builders{$builder}->($builder_platform, @builder_opts);
 
-# Show a note on the use of configdata.pm, but ONLY for release 1.1.1
-# (i.e. this message disappears with the following update, 1.1.1a)
-print <<"EOF" if ($config{version_num} =~ m|^0x1010100.L$|);
-
-NOTE: Starting with OpenSSL 1.1.1, 'Configure' doesn't display all the disabled
-options or the "make variables" with their values.  Instead, you must use
-'configdata.pm' as a script to get a display of the configuration data.  For
-help, please do this:
-
-        perl configdata.pm --help
-EOF
 print <<"EOF" if ($disabled{threads} eq "unavailable");
 
 The library could not be configured for supporting multi-threaded
@@ -2623,6 +2625,18 @@ WARNING: there are indications that another build was made in the source
 directory.  This build may have picked up artifacts from that build, the
 safest course of action is to clean the source directory and redo this
 configuration.
+EOF
+
+print <<"EOF";
+
+**********************************************************************
+***                                                                ***
+***   If you want to report a building issue, please include the   ***
+***   output from this command:                                    ***
+***                                                                ***
+***     perl configdata.pm --dump                                  ***
+***                                                                ***
+**********************************************************************
 EOF
 
 exit(0);

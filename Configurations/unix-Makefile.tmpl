@@ -191,7 +191,7 @@ CPPFLAGS={- our $cppflags = join(" ",
 CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
 CC= $(CROSS_COMPILE){- $config{cc} -}
 CFLAGS={- join(' ', @{$config{cflags}}) -}
-CXX= $(CROSS_COMPILE){- $config{cxx} -}
+CXX={- $config{cxx} ? "\$(CROSS_COMPILE)$config{cxx}" : '' -}
 CXXFLAGS={- join(' ', @{$config{cxxflags}}) -}
 LDFLAGS= {- join(' ', @{$config{lflags}}) -}
 PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
@@ -218,7 +218,7 @@ PERL={- $config{perl} -}
 
 AR=$(CROSS_COMPILE){- $config{ar} -}
 ARFLAGS= {- join(' ', @{$config{arflags}}) -}
-RANLIB= {- $config{ranlib} -}
+RANLIB={- $config{ranlib} ? "\$(CROSS_COMPILE)$config{ranlib}" : "true"; -}
 RC= $(CROSS_COMPILE){- $target{rc} || "windres" -}
 RCFLAGS={- join(' ', @{$config{rcflags}}) -} {- $target{shared_rcflag} -}
 RM= rm -f
@@ -236,7 +236,7 @@ TARFILE=        ../$(NAME).tar
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-AS={- $config{as} || '$(CC) -c' -}
+AS={- $config{as} ? "\$(CROSS_COMPILE)$config{as}" : '$(CC) -c' -}
 ASFLAGS={- join(' ', @{$config{asflags}}) || '$(CFLAGS)' -}
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
@@ -787,7 +787,7 @@ openssl.pc:
 
 configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
 	@echo "Detected changed: $?"
-	$(PERL) configdata.pm -r -v
+	$(PERL) configdata.pm -r
 	@echo "**************************************************"
 	@echo "***                                            ***"
 	@echo "***   Please run the same make command again   ***"
@@ -796,7 +796,7 @@ configdata.pm: $(SRCDIR)/Configure $(SRCDIR)/config {- join(" ", @{$config{build
 	@false
 
 reconfigure reconf:
-	$(PERL) configdata.pm -r -v
+	$(PERL) configdata.pm -r
 
 {-
   use File::Basename;
