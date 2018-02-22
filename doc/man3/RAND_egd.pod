@@ -15,37 +15,29 @@ RAND_egd, RAND_egd_bytes, RAND_query_egd_bytes - query entropy gathering daemon
 
 =head1 DESCRIPTION
 
-On older platforms without a good source of randomness such as C</dev/urandom>,
-it is possible to query an Entropy Gathering Daemon (EGD) over a local
+Prior to OpenSSL 1.1.1, these functions could be used to query
+an Entropy Gathering Daemon (EGD) over a local
 socket to obtain randomness and seed the OpenSSL RNG.
 The protocol used is defined by the EGDs available at
 L<http://egd.sourceforge.net/> or L<http://prngd.sourceforge.net>.
 
-RAND_egd_bytes() requests B<num> bytes of randomness from an EGD at the
-specified socket B<path>, and passes the data it receives into RAND_add().
-RAND_egd() is equivalent to RAND_egd_bytes() with B<num> set to 255.
-
-RAND_query_egd_bytes() requests B<num> bytes of randomness from an EGD at
-the specified socket B<path>, where B<num> must be less than 256.
-If B<buf> is B<NULL>, it is equivalent to RAND_egd_bytes().
-If B<buf> is not B<NULL>, then the data is copied to the buffer and
-RAND_add() is not called.
-
 OpenSSL can be configured at build time to try to use the EGD for seeding
-automatically.
+automatically and this capability is no longer needed.
+
+RAND_egd_bytes() and RAND_egd() return an error.
+
+RAND_query_egd_bytes() is equivalent to calling RAND_bytes() if B<buf>
+is not NULL.  If B<buf> is NULL, it returns an error.
 
 =head1 RETURN VALUES
 
-RAND_egd() and RAND_egd_bytes() return the number of bytes read from the
-daemon on success, or -1 if the connection failed or the daemon did not
-return enough data to fully seed the PRNG.
+RAND_egd() and RAND_egd_bytes() return -1.
 
-RAND_query_egd_bytes() returns the number of bytes read from the daemon on
-success, or -1 if the connection failed.
+RAND_query_egd_bytes() returns what RAND_bytes() returns.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<RAND_add(3)>
+L<RAND_bytes(3)>
 
 =head1 COPYRIGHT
 

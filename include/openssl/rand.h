@@ -55,11 +55,10 @@ int RAND_write_file(const char *file);
 const char *RAND_file_name(char *file, size_t num);
 int RAND_status(void);
 
-# ifndef OPENSSL_NO_EGD
+/* Obsolete; do not use. */
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);
-# endif
 
 typedef void (*RAND_poll_cb)(void *arg,
                              const void *buf, int num, double randomness);

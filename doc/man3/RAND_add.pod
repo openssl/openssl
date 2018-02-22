@@ -142,7 +142,7 @@ not be used.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<RAND_egd(3)>,
+L<RAND_bytes(3)>,
 L<RAND_load_file(3)>
 
 =head1 COPYRIGHT

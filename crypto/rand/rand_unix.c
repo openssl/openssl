@@ -109,8 +109,7 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 
 # else
 
-#  if defined(OPENSSL_RAND_SEED_EGD) && \
-        (defined(OPENSSL_NO_EGD) || !defined(DEVRANDOM_EGD))
+#  if defined(OPENSSL_RAND_SEED_EGD) && !defined(DEVRANDOM_EGD)
 #   error "Seeding uses EGD but EGD is turned off or no device given"
 #  endif
 

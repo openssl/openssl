@@ -67,8 +67,7 @@ extern "C" {
 # if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
 /*
  * set this to a comma-separated list of 'egd' sockets to try out. These
- * sockets will be tried in the order listed in case accessing the device
- * files listed in DEVRANDOM did not return enough randomness.
+ * sockets will be tried in the order listed if used as a seed.
  */
 #  define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
 # endif

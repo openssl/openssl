@@ -1163,6 +1163,6 @@
  to deliver random bytes and a "PRNG not seeded error" will occur.
  On systems without /dev/urandom (or similar) device, it may be necessary
  to install additional support software to obtain a random seed.
- Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
+ Please check out the manual pages for RAND_add(), RAND_bytes(),
  and the FAQ for more information.
 

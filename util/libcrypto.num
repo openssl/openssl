@@ -591,7 +591,7 @@ ASN1_TYPE_set                           592	1_1_0	EXIST::FUNCTION:
 i2d_PKCS8_PRIV_KEY_INFO                 593	1_1_0	EXIST::FUNCTION:
 i2d_PKCS7_bio                           594	1_1_0	EXIST::FUNCTION:
 EVP_MD_meth_get_copy                    595	1_1_0	EXIST::FUNCTION:
-RAND_query_egd_bytes                    596	1_1_0	EXIST::FUNCTION:EGD
+RAND_query_egd_bytes                    596	1_1_0	EXIST::FUNCTION:
 i2d_ASN1_PRINTABLE                      597	1_1_0	EXIST::FUNCTION:
 ENGINE_cmd_is_executable                598	1_1_0	EXIST::FUNCTION:ENGINE
 BIO_puts                                599	1_1_0	EXIST::FUNCTION:
@@ -2558,7 +2558,7 @@ d2i_NETSCAPE_SPKI                       2524	1_1_0	EXIST::FUNCTION:
 CRYPTO_mem_leaks                        2525	1_1_0	EXIST::FUNCTION:CRYPTO_MDEBUG
 BN_get_rfc3526_prime_1536               2526	1_1_0	EXIST::FUNCTION:
 DSA_sign                                2527	1_1_0	EXIST::FUNCTION:DSA
-RAND_egd                                2528	1_1_0	EXIST::FUNCTION:EGD
+RAND_egd                                2528	1_1_0	EXIST::FUNCTION:
 ASN1_d2i_bio                            2529	1_1_0	EXIST::FUNCTION:
 X509_REQ_digest                         2531	1_1_0	EXIST::FUNCTION:
 X509_set1_notAfter                      2532	1_1_0	EXIST::FUNCTION:
@@ -3478,7 +3478,7 @@ X509_ALGOR_free                         3429	1_1_0	EXIST::FUNCTION:
 OCSP_SINGLERESP_get_ext_count           3430	1_1_0	EXIST::FUNCTION:OCSP
 EC_POINT_free                           3431	1_1_0	EXIST::FUNCTION:EC
 EVP_OpenFinal                           3432	1_1_0	EXIST::FUNCTION:RSA
-RAND_egd_bytes                          3433	1_1_0	EXIST::FUNCTION:EGD
+RAND_egd_bytes                          3433	1_1_0	EXIST::FUNCTION:
 UI_method_get_writer                    3434	1_1_0	EXIST::FUNCTION:
 BN_secure_new                           3435	1_1_0	EXIST::FUNCTION:
 SHA1_Update                             3437	1_1_0	EXIST::FUNCTION:
