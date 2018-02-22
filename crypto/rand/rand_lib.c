@@ -840,3 +840,20 @@ int RAND_status(void)
         return meth->status();
     return 0;
 }
+
+int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
+{
+    if (buf != NULL)
+        return RAND_bytes(buf, bytes);
+    return -1;
+}
+
+int RAND_egd(const char *path)
+{
+    return RAND_egd_bytes(path, 255);
+}
+
+int RAND_egd_bytes(const char *unused_path, int unused_bytes)
+{
+    return -1;
+}
