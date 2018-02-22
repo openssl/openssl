@@ -26,33 +26,6 @@
 extern "C" {
 #endif
 
-/*
- * Format specifier for printing size_t. Original conundrum was to
- * get it working with -Wformat [-Werror], which can be considered
- * overzealous, especially in multi-platform context, but it's
- * conscious choice...
- */
-# if defined(_WIN64)
-#  define OSSLzu  "I64u"    /* One would expect _WIN{64|32} cases after
-                             * __STDC_VERSION__, but there are corner
-                             * cases of MinGW compilers that link with
-                             * non-compliant MSVCRT.DLL... */
-# elif defined(_WIN32)
-#  define OSSLzu  "u"
-# elif defined(__VMS)
-#  define OSSLzu  "u"       /* VMS suffers from similar problem as MinGW,
-                             * i.e. C RTL falling behind compiler. Recall
-                             * that sizeof(size_t)==4 even in LP64 case. */
-# elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
-#  define OSSLzu  "zu"
-# elif defined(__SIZEOF_SIZE_T__) && __SIZEOF_SIZE_T__==4
-#  define OSSLzu  "u"       /* 'lu' should have worked, but when generating
-                             * 32-bit code gcc still complains :-( */
-# else
-#  define OSSLzu  "lu"      /* To see that is works recall what does L
-                             * stand for in ILP32 and LP64 */
-# endif
-
 # ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. By
