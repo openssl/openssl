@@ -16,8 +16,8 @@ use OpenSSL::Test::Utils;
 
 setup("test_out_option");
 
-plan skip_all => "'-out' option tests are not available on Windows or VMS"
-    if $^O =~ /^(VMS|MSWin32)$/;
+plan skip_all => "'-out' option tests are not available on Windows"
+    if $^O eq 'MSWin32';
 
 plan tests => 11;
 
