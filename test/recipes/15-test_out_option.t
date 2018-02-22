@@ -31,8 +31,8 @@ plan tests => 11;
 
 test_illegal_path('/usr/');
 test_illegal_path('/');
-test_illegal_path('.');
-test_illegal_path('..');
+test_illegal_path('./');
+test_illegal_path('../');
 
 # Test for trying to create a file in a non-exist directory
 my @chars = ("A".."Z", "a".."z", "0".."9");
@@ -44,7 +44,7 @@ test_legal_path('test.pem');
 unlink 'test.pem';
 
 sub test_illegal_path {
-    my ($path) = @_;
+    my $path = File::Spec->canonpath($_[0]);
 
     my $start = time();
     ok(!run(app([ 'openssl', 'genrsa', '-out', $path, '16384'])), "invalid output path: $path");
@@ -54,7 +54,7 @@ sub test_illegal_path {
 }
 
 sub test_legal_path {
-    my ($path) = @_;
+    my $path = File::Spec->canonpath($_[0]);
 
     ok(run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])), "valid output path: $path");
 }
