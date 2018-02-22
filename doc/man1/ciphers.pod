@@ -167,7 +167,8 @@ The following is a list of all permitted cipher strings and their meanings.
 The default cipher list.
 This is determined at compile time and is normally
 B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
-When used, this must be the first cipherstring specified.
+When used, this must be the first at the start of the string and it cannot be
+prefixed by any of the special characters described above.
 
 =item B<COMPLEMENTOFDEFAULT>
 
@@ -755,6 +756,15 @@ encryption.
 Set security level to 2 and display all ciphers consistent with level 2:
 
  openssl ciphers -s -v 'ALL:@SECLEVEL=2'
+
+=head1 BUGS
+
+If there are extra characters after the word B<DEFAULT> before the separating
+colon, they are taken to be a cipher string.
+This will often be a non-existent cipher, which has no effect, but the results
+can be misleading if you are not careful.
+
+There is no check to see if B<DEFAULT> appears other than as the first word.
 
 =head1 SEE ALSO
 
