@@ -62,7 +62,7 @@ extern "C" {
 # endif
 
 # if defined(WIN32) || defined(WINDOWS) || defined(MSDOS)
-#  include "include/internal/plat-msft.h"
+#  include "os-dep/microsoft.h"
 
 # else
 
