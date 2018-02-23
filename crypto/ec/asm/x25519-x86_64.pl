@@ -802,7 +802,6 @@ x25519_fe64_sqr:
 x25519_fe64_mul121666:
 x25519_fe64_add:
 x25519_fe64_sub:
-x25519_fe64_sub:
 x25519_fe64_tobytes:
 	.byte	0x0f,0x0b	# ud2
 ___
