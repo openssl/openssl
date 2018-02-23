@@ -22,9 +22,9 @@ before_build:
         }
     - ps: >-
         If ($env:Configuration -Match "shared") {
-            $env:SHARED=""
+            $env:SHARED="no-makedepend"
         } Else {
-            $env:SHARED="no-shared"
+            $env:SHARED="no-shared no-makedepend"
         }
     - ps: $env:VSCOMNTOOLS=(Get-Content ("env:VS" + "$env:VSVER" + "0COMNTOOLS"))
     - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
