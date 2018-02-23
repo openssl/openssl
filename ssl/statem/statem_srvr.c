@@ -1150,7 +1150,6 @@ WORK_STATE ossl_statem_server_post_process_message(SSL *s, WORK_STATE wst)
     case TLS_ST_SR_KEY_EXCH:
         return tls_post_process_client_key_exchange(s, wst);
     }
-    return WORK_FINISHED_CONTINUE;
 }
 
 #ifndef OPENSSL_NO_SRP
