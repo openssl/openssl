@@ -23,7 +23,8 @@
  * with arch_arm32.
  */
 # ifndef C448_WORD_BITS
-#  if defined(__SIZEOF_INT128__) && (__SIZEOF_INT128__ == 16)
+#  if (defined(__SIZEOF_INT128__) && (__SIZEOF_INT128__ == 16)) \
+      && !defined(__sparc__)
 #   define C448_WORD_BITS 64      /* The number of bits in a word */
 #  else
 #   define C448_WORD_BITS 32      /* The number of bits in a word */
