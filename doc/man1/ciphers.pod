@@ -166,8 +166,7 @@ The following is a list of all permitted cipher strings and their meanings.
 
 The default cipher list.
 This is determined at compile time and is normally
-B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.
-When used, this must be the first cipherstring specified.
+B<ALL:!COMPLEMENTOFDEFAULT:!eNULL>.  See BUGS section, though.
 
 =item B<COMPLEMENTOFDEFAULT>
 
@@ -722,6 +721,27 @@ The following names are accepted by older releases:
 
 Some compiled versions of OpenSSL may not include all the ciphers
 listed here because some ciphers were excluded at compile time.
+
+=head1 BUGS
+
+The B<DEFAULT> string does not actually follow described syntax as
+descibed in CIPHER LIST FORMAT section.  In particular, instead of
+behaving as I<cipher string>, it works as prefix of the cipherlist
+which enables default ciphers.  This means that it may only
+appear at start of the cipherlist, it may not be combined with other
+cipherstrings using the B<+> character and any characters following
+the prefix will be treated as separate cipherstring (regardless of
+delimiters).
+
+For example, according to rules, B<DEFAULT+ECDH> should be interpreted as
+intersection of the default list and ciphers that contain ECDH algorithm.
+However, it will be actually interpreted as cipherstring B<DEFAULT>,
+followed by B<+ECDH>, i. e. it will enable default ciphers and move all
+ECDH ciphers to the end of the list (just as B<DEFAULT:+ECDH> would).
+
+Another example is B<!3DES:DEFAULT>, where the "DEFAULT" name will
+not be recognized as the default list but as "unknown" cipherstring,
+i. e. no cipher will be enabled.
 
 =head1 EXAMPLES
 
