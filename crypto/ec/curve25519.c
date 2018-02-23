@@ -22,7 +22,7 @@
 typedef uint64_t fe51[5];
 # if !defined(X25519_ASM)
 typedef __uint128_t u128;
-#endif
+# endif
 
 static const uint64_t MASK51 = 0x7ffffffffffff;
 
