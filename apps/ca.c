@@ -1721,6 +1721,20 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         goto end;
     }
 
+    if (row[DB_name][0] == '\0') {
+        /*
+         * An empty subject! We'll use the serial number instead. If
+         * unique_subject is in use then we don't want different entries with
+         * empty subjects matching each other.
+         */
+        OPENSSL_free(row[DB_name]);
+        row[DB_name] = OPENSSL_strdup(row[DB_serial]);
+        if (row[DB_name] == NULL) {
+            BIO_printf(bio_err, "Memory allocation failure\n");
+            goto end;
+        }
+    }
+
     if (db->attributes.unique_subject) {
         OPENSSL_STRING *crow = row;
 
@@ -2034,6 +2048,11 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
     else
         row[DB_serial] = BN_bn2hex(bn);
     BN_free(bn);
+    if (row[DB_name] != NULL && row[DB_name][0] == '\0') {
+        /* Entries with empty Subjects actually use the serial number instead */
+        OPENSSL_free(row[DB_name]);
+        row[DB_name] = OPENSSL_strdup(row[DB_serial]);
+    }
     if ((row[DB_name] == NULL) || (row[DB_serial] == NULL)) {
         BIO_printf(bio_err, "Memory allocation failure\n");
         goto end;
