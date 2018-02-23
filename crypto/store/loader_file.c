@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include "e_os.h"
 #include <string.h>
 #include <sys/stat.h>
+#include <ctype.h>
 #include <assert.h>
 
 #include <openssl/bio.h>
@@ -713,6 +714,13 @@ struct ossl_store_loader_ctx_st {
             char *uri;
 
             /*
+             * When a search expression is given, these are filled in.
+             * |search_name| contains the file basename to look for.
+             * The string is exactly 8 characters long.
+             */
+            char search_name[9];
+
+            /*
              * The directory reading utility we have combines opening with
              * reading the first name.  To make sure we can detect the end
              * at the right time, we read early and cache the name.
@@ -721,6 +729,9 @@ struct ossl_store_loader_ctx_st {
             int last_errno;
         } dir;
     } _;
+
+    /* Expected object type.  May be unspecified */
+    int expected_type;
 };
 
 static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX *ctx)
@@ -906,6 +917,43 @@ static int file_ctrl(OSSL_STORE_LOADER_CTX *ctx, int cmd, va_list args)
     }
 
     return ret;
+}
+
+static int file_expect(OSSL_STORE_LOADER_CTX *ctx, int expected)
+{
+    ctx->expected_type = expected;
+    return 1;
+}
+
+static int file_find(OSSL_STORE_LOADER_CTX *ctx, OSSL_STORE_SEARCH *search)
+{
+    /*
+     * If ctx == NULL, the library is looking to know if this loader supports
+     * the given search type.
+     */
+
+    if (OSSL_STORE_SEARCH_get_type(search) == OSSL_STORE_SEARCH_BY_NAME) {
+        unsigned long hash = 0;
+
+        if (ctx == NULL)
+            return 1;
+
+        if (ctx->type != is_dir) {
+            OSSL_STOREerr(OSSL_STORE_F_FILE_FIND,
+                          OSSL_STORE_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES);
+            return 0;
+        }
+
+        hash = X509_NAME_hash(OSSL_STORE_SEARCH_get0_name(search));
+        BIO_snprintf(ctx->_.dir.search_name, sizeof(ctx->_.dir.search_name),
+                     "%08lx", hash);
+        return 1;
+    }
+
+    if (ctx != NULL)
+        OSSL_STOREerr(OSSL_STORE_F_FILE_FIND,
+                      OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE);
+    return 0;
 }
 
 /* Internal function to decode an already opened PEM file */
@@ -1128,6 +1176,68 @@ static int file_name_to_uri(OSSL_STORE_LOADER_CTX *ctx, const char *name,
     return 1;
 }
 
+static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
+{
+    const char *p = NULL;
+
+    /* If there are no search criteria, all names are accepted */
+    if (ctx->_.dir.search_name[0] == '\0')
+        return 1;
+
+    /* If the expected type isn't supported, no name is accepted */
+    if (ctx->expected_type != 0
+        && ctx->expected_type != OSSL_STORE_INFO_CERT
+        && ctx->expected_type != OSSL_STORE_INFO_CRL)
+        return 0;
+
+    /*
+     * First, check the basename
+     */
+    if (strncasecmp(name, ctx->_.dir.search_name,
+                    sizeof(ctx->_.dir.search_name) - 1) != 0
+        || name[sizeof(ctx->_.dir.search_name) - 1] != '.')
+        return 0;
+    p = &name[sizeof(ctx->_.dir.search_name)];
+
+    /*
+     * Then, if the expected type is a CRL, check that the extension starts
+     * with 'r'
+     */
+    if (*p == 'r') {
+        p++;
+        if (ctx->expected_type != 0
+            && ctx->expected_type != OSSL_STORE_INFO_CRL)
+            return 0;
+    } else if (ctx->expected_type == OSSL_STORE_INFO_CRL) {
+        return 0;
+    }
+
+    /*
+     * Last, check that the rest of the extension is a decimal number, at
+     * least one digit long.
+     */
+    if (!isdigit(*p))
+        return 0;
+    while (isdigit(*p))
+        p++;
+
+# ifdef __VMS
+    /*
+     * One extra step here, check for a possible generation number.
+     */
+    if (*p == ';')
+        for (p++; *p != '\0'; p++)
+            if (!isdigit(*p))
+                break;
+# endif
+
+    /*
+     * If we've reached the end of the string at this point, we've successfully
+     * found a fitting file name.
+     */
+    return *p == '\0';
+}
+
 static int file_eof(OSSL_STORE_LOADER_CTX *ctx);
 static int file_error(OSSL_STORE_LOADER_CTX *ctx);
 static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
@@ -1156,6 +1266,7 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
             }
 
             if (ctx->_.dir.last_entry[0] != '.'
+                && file_name_check(ctx, ctx->_.dir.last_entry)
                 && !file_name_to_uri(ctx, ctx->_.dir.last_entry, &newname))
                 return NULL;
 
@@ -1181,6 +1292,7 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
     } else {
         int matchcount = -1;
 
+     again:
         result = file_load_try_repeat(ctx, ui_method, ui_data);
         if (result != NULL)
             return result;
@@ -1251,6 +1363,13 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
         /* We bail out on ambiguity */
         if (matchcount > 1)
             return NULL;
+
+        if (result != NULL
+            && ctx->expected_type != 0
+            && ctx->expected_type != OSSL_STORE_INFO_get_type(result)) {
+            OSSL_STORE_INFO_free(result);
+            goto again;
+        }
     }
 
     return result;
@@ -1295,6 +1414,8 @@ static OSSL_STORE_LOADER file_loader =
         NULL,
         file_open,
         file_ctrl,
+        file_expect,
+        file_find,
         file_load,
         file_eof,
         file_error,
