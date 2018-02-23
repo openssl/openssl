@@ -784,7 +784,7 @@ ___
 } else {
 $code.=<<___;
 .globl	x25519_fe64_eligible
-.type	x25519_fe64_eligible,\@function
+.type	x25519_fe64_eligible,\@abi-omnipotent
 .align	32
 x25519_fe64_eligible:
 	xor	%eax,%eax
@@ -792,6 +792,7 @@ x25519_fe64_eligible:
 .size	x25519_fe64_eligible,.-x25519_fe64_eligible
 
 .globl	x25519_fe64_mul
+.type	x25519_fe64_mul,\@abi-omnipotent
 .globl	x25519_fe64_sqr
 .globl	x25519_fe64_mul121666
 .globl	x25519_fe64_add
@@ -802,9 +803,10 @@ x25519_fe64_sqr:
 x25519_fe64_mul121666:
 x25519_fe64_add:
 x25519_fe64_sub:
-x25519_fe64_sub:
 x25519_fe64_tobytes:
 	.byte	0x0f,0x0b	# ud2
+	ret
+.size	x25519_fe64_mul,.-x25519_fe64_mul
 ___
 }
 $code.=<<___;
