@@ -12,18 +12,15 @@
 #include <openssl/sha.h>
 
 #if defined(X25519_ASM) \
-    || ( !defined(PEDANTIC) && \
-         !defined(__sparc__) && \
-         (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16) )
+    || ( (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16) \
+         && !defined(__sparc__) )
 /*
  * Base 2^51 implementation.
  */
 # define BASE_2_51_IMPLEMENTED
 
 typedef uint64_t fe51[5];
-# if !defined(X25519_ASM)
-typedef unsigned __int128 u128;
-# endif
+typedef __uint128_t u128;
 
 static const uint64_t MASK51 = 0x7ffffffffffff;
 
