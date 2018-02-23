@@ -142,7 +142,7 @@ OPENSSLDIR_dev={- #
                   $openssldir_dev -}
 OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
-          $libdir -}
+          file_name_is_absolute($libdir) ? "" : $libdir -}
 ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
                   our $enginesdir = catdir($prefix,$libdir,"engines-$sover_dirname");
                   our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
@@ -158,6 +158,10 @@ INSTALLTOP=$(INSTALLTOP_dev)$(INSTALLTOP_dir)
 OPENSSLDIR=$(OPENSSLDIR_dev)$(OPENSSLDIR_dir)
 ENGINESDIR=$(ENGINESDIR_dev)$(ENGINESDIR_dir)
 !ENDIF
+
+# $(libdir) is chosen to be compatible with the GNU coding standards
+libdir={- file_name_is_absolute($libdir)
+          ? $libdir : '$(INSTALLTOP)\$(LIBDIR)' -}
 
 CC={- $config{cc} -}
 CPP={- $config{cpp} -}
@@ -324,12 +328,10 @@ install_dev:
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\include\openssl\*.h \
 				       "$(INSTALLTOP)\include\openssl"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\$(LIBDIR)"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) \
-				       "$(INSTALLTOP)\$(LIBDIR)"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@if "$(SHLIBS)"=="" \
-	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb \
-                                       "$(INSTALLTOP)\$(LIBDIR)"
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb "$(libdir)"
 
 uninstall_dev:
 

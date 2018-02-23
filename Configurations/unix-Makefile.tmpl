@@ -154,21 +154,26 @@ OPENSSLDIR={- #
                            : catdir($prefix, $config{openssldir}))
                       : catdir($prefix, "ssl");
               $openssldir -}
-LIBDIR={- #
-          # if $prefix/lib$target{multilib} is not an existing
-          # directory, then assume that it's not searched by linker
-          # automatically, in which case adding $target{multilib} suffix
-          # causes more grief than we're ready to tolerate, so don't...
-          our $multilib =
-              -d "$prefix/lib$target{multilib}" ? $target{multilib} : "";
-          our $libdir = $config{libdir} || "lib$multilib";
-          $libdir -}
-ENGINESDIR={- use File::Spec::Functions;
-              catdir($prefix,$libdir,"engines-$sover_dirname") -}
+LIBDIR={- our $libdir = $config{libdir};
+          unless ($libdir) {
+              #
+              # if $prefix/lib$target{multilib} is not an existing
+              # directory, then assume that it's not searched by linker
+              # automatically, in which case adding $target{multilib} suffix
+              # causes more grief than we're ready to tolerate, so don't...
+              our $multilib =
+                  -d "$prefix/lib$target{multilib}" ? $target{multilib} : "";
+              $libdir = "lib$multilib";
+          }
+          file_name_is_absolute($libdir) ? "" : $libdir -}
+# $(libdir) is chosen to be compatible with the GNU coding standards
+libdir={- file_name_is_absolute($libdir)
+          ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
+ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
-LIBRPATH=$(INSTALLTOP)/$(LIBDIR)
+LIBRPATH=$(libdir)
 
 MANDIR=$(INSTALLTOP)/share/man
 DOCDIR=$(INSTALLTOP)/share/doc/$(BASENAME)
@@ -409,15 +414,15 @@ install_dev:
 		cp $$i $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
 		chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn; \
 	done
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
-		$(ECHO) "install $$l -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
-		cp $$l $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		$(RANLIB) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new \
-		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
+		$(ECHO) "install $$l -> $(DESTDIR)$(libdir)/$$fn"; \
+		cp $$l $(DESTDIR)$(libdir)/$$fn.new; \
+		$(RANLIB) $(DESTDIR)$(libdir)/$$fn.new; \
+		chmod 644 $(DESTDIR)$(libdir)/$$fn.new; \
+		mv -f $(DESTDIR)$(libdir)/$$fn.new \
+		      $(DESTDIR)$(libdir)/$$fn; \
 	done
 	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
@@ -426,34 +431,34 @@ install_dev:
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
 		: {- output_off() if windowsdll(); "" -}; \
-		$(ECHO) "install $$s1 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
-		cp $$s1 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
-		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1.new \
-		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1; \
+		$(ECHO) "install $$s1 -> $(DESTDIR)$(libdir)/$$fn1"; \
+		cp $$s1 $(DESTDIR)$(libdir)/$$fn1.new; \
+		chmod 755 $(DESTDIR)$(libdir)/$$fn1.new; \
+		mv -f $(DESTDIR)$(libdir)/$$fn1.new \
+		      $(DESTDIR)$(libdir)/$$fn1; \
 		if [ "$$fn1" != "$$fn2" ]; then \
-			$(ECHO) "link $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
-			ln -sf $$fn1 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
+			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
+			ln -sf $$fn1 $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
-		$(ECHO) "install $$s2 -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2"; \
-		cp $$s2 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new; \
-		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2.new \
-		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
+		$(ECHO) "install $$s2 -> $(DESTDIR)$(libdir)/$$fn2"; \
+		cp $$s2 $(DESTDIR)$(libdir)/$$fn2.new; \
+		chmod 755 $(DESTDIR)$(libdir)/$$fn2.new; \
+		mv -f $(DESTDIR)$(libdir)/$$fn2.new \
+		      $(DESTDIR)$(libdir)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc"
-	@cp libcrypto.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
-	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc"
-	@cp libssl.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
-	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc"
-	@cp openssl.pc $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	@chmod 644 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)/pkgconfig
+	@$(ECHO) "install libcrypto.pc -> $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc"
+	@cp libcrypto.pc $(DESTDIR)$(libdir)/pkgconfig
+	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
+	@$(ECHO) "install libssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/libssl.pc"
+	@cp libssl.pc $(DESTDIR)$(libdir)/pkgconfig
+	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
+	@$(ECHO) "install openssl.pc -> $(DESTDIR)$(libdir)/pkgconfig/openssl.pc"
+	@cp openssl.pc $(DESTDIR)$(libdir)/pkgconfig
+	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
 
 uninstall_dev:
 	@$(ECHO) "*** Uninstalling development files"
@@ -471,8 +476,8 @@ uninstall_dev:
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/include
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
+		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn"; \
+		$(RM) $(DESTDIR)$(libdir)/$$fn; \
 	done
 	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
@@ -481,23 +486,23 @@ uninstall_dev:
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
 		: {- output_off() if windowsdll(); "" -}; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn1; \
+		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn1"; \
+		$(RM) $(DESTDIR)$(libdir)/$$fn1; \
 		if [ "$$fn1" != "$$fn2" ]; then \
-			$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2"; \
-			$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
+			$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
+			$(RM) $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
-		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2"; \
-		$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn2; \
+		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
+		$(RM) $(DESTDIR)$(libdir)/$$fn2; \
 		: {- output_on() unless windowsdll(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
-	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
-	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
-	$(RM) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
-	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
-	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libcrypto.pc
+	$(RM) $(DESTDIR)$(libdir)/pkgconfig/libssl.pc
+	$(RM) $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
+	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig
+	-$(RMDIR) $(DESTDIR)$(libdir)
 
 install_engines:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
@@ -530,7 +535,7 @@ install_runtime:
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
 	@ : {- output_off() if windowsdll(); "" -}
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)
 	@ : {- output_on() if windowsdll(); "" -}
 	@$(ECHO) "*** Installing runtime files"
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
@@ -543,11 +548,11 @@ install_runtime:
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
-		$(ECHO) "install $$s -> $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn"; \
-		cp $$s $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		chmod 755 $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new; \
-		mv -f $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn.new \
-		      $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/$$fn; \
+		$(ECHO) "install $$s -> $(DESTDIR)$(libdir)/$$fn"; \
+		cp $$s $(DESTDIR)$(libdir)/$$fn.new; \
+		chmod 755 $(DESTDIR)$(libdir)/$$fn.new; \
+		mv -f $(DESTDIR)$(libdir)/$$fn.new \
+		      $(DESTDIR)$(libdir)/$$fn; \
 		: {- output_on() if windowsdll(); "" -}; \
 	done
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); do \
@@ -750,7 +755,11 @@ libcrypto.pc libssl.pc openssl.pc: configdata.pm $(LIBS) {- join(" ",map { shlib
 libcrypto.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    if [ -n "$(LIBDIR)" ]; then \
+	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    else \
+	        echo 'libdir=$(libdir)'; \
+	    fi; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
 	    echo ''; \
@@ -764,7 +773,11 @@ libcrypto.pc:
 libssl.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    if [ -n "$(LIBDIR)" ]; then \
+	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    else \
+	        echo 'libdir=$(libdir)'; \
+	    fi; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libssl'; \
@@ -777,7 +790,11 @@ libssl.pc:
 openssl.pc:
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    if [ -n "$(LIBDIR)" ]; then \
+	        echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
+	    else \
+	        echo 'libdir=$(libdir)'; \
+	    fi; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL'; \
