@@ -504,7 +504,7 @@ static int test_default_ct_policy_eval_ctx_time_is_now(void)
                                 1000;
     const time_t time_tolerance = 600;  /* 10 minutes */
 
-    if (!TEST_time_t_le(abs(difftime(time(NULL), default_time)),
+    if (!TEST_time_t_le(abs((int)difftime(time(NULL), default_time)),
                         time_tolerance))
         goto end;
 
