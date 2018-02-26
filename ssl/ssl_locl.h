@@ -820,6 +820,14 @@ struct ssl_ctx_st {
     int (*app_verify_cookie_cb) (SSL *ssl, const unsigned char *cookie,
                                  unsigned int cookie_len);
 
+    /* TLS1.3 app-controlled cookie generate callback */
+    int (*gen_stateless_cookie_cb) (SSL *ssl, unsigned char *cookie,
+                                    size_t *cookie_len);
+
+    /* TLS1.3 verify app-controlled cookie callback */
+    int (*verify_stateless_cookie_cb) (SSL *ssl, const unsigned char *cookie,
+                                       size_t cookie_len);
+
     CRYPTO_EX_DATA ex_data;
 
     const EVP_MD *md5;          /* For SSLv3/TLSv1 'ssl3-md5' */

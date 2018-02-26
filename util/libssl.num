@@ -482,3 +482,5 @@ SSL_use_cert_and_key                    482	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_get0_ticket_appdata         483	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_set1_ticket_appdata         484	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_session_ticket_cb           485	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_stateless_cookie_generate_cb 486	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_stateless_cookie_verify_cb  487	1_1_1	EXIST::FUNCTION:

@@ -1301,4 +1301,22 @@ int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len)
     return 1;
 }
 
+void SSL_CTX_set_stateless_cookie_generate_cb(
+    SSL_CTX *ctx,
+    int (*cb) (SSL *ssl,
+               unsigned char *cookie,
+               size_t *cookie_len))
+{
+    ctx->gen_stateless_cookie_cb = cb;
+}
+
+void SSL_CTX_set_stateless_cookie_verify_cb(
+    SSL_CTX *ctx,
+    int (*cb) (SSL *ssl,
+               const unsigned char *cookie,
+               size_t cookie_len))
+{
+    ctx->verify_stateless_cookie_cb = cb;
+}
+
 IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)

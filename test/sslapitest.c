@@ -2723,6 +2723,21 @@ static int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
     return 0;
 }
 
+static int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
+                                        size_t *cookie_len)
+{
+    unsigned int temp;
+    int res = generate_cookie_callback(ssl, cookie, &temp);
+    *cookie_len = temp;
+    return res;
+}
+
+static int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                                      size_t cookie_len)
+{
+    return verify_cookie_callback(ssl, cookie, cookie_len);
+}
+
 static int test_stateless(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -2754,8 +2769,8 @@ static int test_stateless(void)
     clientssl = NULL;
 
     /* Set up the cookie generation and verification callbacks */
-    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_callback);
-    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_callback);
+    SSL_CTX_set_stateless_cookie_generate_cb(sctx, generate_stateless_cookie_callback);
+    SSL_CTX_set_stateless_cookie_verify_cb(sctx, verify_stateless_cookie_callback);
 
     /*
      * Create a new connection from the client (we can reuse the server SSL

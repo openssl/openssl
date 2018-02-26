@@ -58,6 +58,11 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
 int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len);
 
+int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
+                                       size_t *cookie_len);
+int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                                     size_t cookie_len);
+
 typedef struct ssl_excert_st SSL_EXCERT;
 
 void ssl_ctx_set_excert(SSL_CTX *ctx, SSL_EXCERT *exc);

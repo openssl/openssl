@@ -64,10 +64,11 @@ does not support this), then B<*peer> will be cleared and the family set to
 AF_UNSPEC. Typically user code is expected to "connect" the underlying socket to
 the peer and continue the handshake in a connected state.
 
-Prior to calling these functions user code must ensure that cookie generation
+Prior to calling DTLSv1_listen() user code must ensure that cookie generation
 and verification callbacks have been set up using
 SSL_CTX_set_cookie_generate_cb() and SSL_CTX_set_cookie_verify_cb()
-respectively.
+respectively. For SSL_stateless(), SSL_CTX_set_stateless_cookie_generate_cb()
+and SSL_CTX_set_stateless_cookie_verify_cb() must be used instead.
 
 Since DTLSv1_listen() operates entirely statelessly whilst processing incoming
 ClientHellos it is unable to process fragmented messages (since this would
