@@ -365,6 +365,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     static const unsigned char server_application_traffic[] = "s ap traffic";
     static const unsigned char exporter_master_secret[] = "exp master";
     static const unsigned char resumption_master_secret[] = "res master";
+    static const unsigned char early_exporter_master_secret[] = "e exp master";
     unsigned char *iv;
     unsigned char secret[EVP_MAX_MD_SIZE];
     unsigned char hashval[EVP_MAX_MD_SIZE];
@@ -481,6 +482,16 @@ int tls13_change_cipher_state(SSL *s, int which)
             }
             hashlen = hashlenui;
             EVP_MD_CTX_free(mdctx);
+
+            if (!tls13_hkdf_expand(s, md, insecret,
+                                   early_exporter_master_secret,
+                                   sizeof(early_exporter_master_secret) - 1,
+                                   hashval, hashlen,
+                                   s->early_exporter_master_secret, hashlen)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
         } else if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
@@ -678,6 +689,65 @@ int tls13_export_keying_material(SSL *s, unsigned char *out, size_t olen,
             || EVP_DigestInit_ex(ctx, md, NULL) <= 0
             || EVP_DigestFinal_ex(ctx, data, &datalen) <= 0
             || !tls13_hkdf_expand(s, md, s->exporter_master_secret,
+                                  (const unsigned char *)label, llen,
+                                  data, datalen, exportsecret, hashsize)
+            || !tls13_hkdf_expand(s, md, exportsecret, exporterlabel,
+                                  sizeof(exporterlabel) - 1, hash, hashsize,
+                                  out, olen))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_MD_CTX_free(ctx);
+    return ret;
+}
+
+int tls13_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
+                                       const char *label, size_t llen,
+                                       const unsigned char *context,
+                                       size_t contextlen)
+{
+    static const unsigned char exporterlabel[] = "exporter";
+    unsigned char exportsecret[EVP_MAX_MD_SIZE];
+    unsigned char hash[EVP_MAX_MD_SIZE], data[EVP_MAX_MD_SIZE];
+    const EVP_MD *md;
+    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    unsigned int hashsize, datalen;
+    int ret = 0;
+    const SSL_CIPHER *sslcipher;
+
+    if (ctx == NULL || !ossl_statem_export_early_allowed(s))
+        goto err;
+
+    if (!s->server && s->max_early_data > 0
+            && s->session->ext.max_early_data == 0)
+        sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+    else
+        sslcipher = SSL_SESSION_get0_cipher(s->session);
+
+    md = ssl_md(sslcipher->algorithm2);
+
+    /*
+     * Calculate the hash value and store it in |data|. The reason why
+     * the empty string is used is that the definition of TLS-Exporter
+     * is like so:
+     *
+     * TLS-Exporter(label, context_value, key_length) =
+     *     HKDF-Expand-Label(Derive-Secret(Secret, label, ""),
+     *                       "exporter", Hash(context_value), key_length)
+     *
+     * Derive-Secret(Secret, Label, Messages) =
+     *       HKDF-Expand-Label(Secret, Label,
+     *                         Transcript-Hash(Messages), Hash.length)
+     *
+     * Here Transcript-Hash is the cipher suite hash algorithm.
+     */
+    if (EVP_DigestInit_ex(ctx, md, NULL) <= 0
+            || EVP_DigestUpdate(ctx, context, contextlen) <= 0
+            || EVP_DigestFinal_ex(ctx, hash, &hashsize) <= 0
+            || EVP_DigestInit_ex(ctx, md, NULL) <= 0
+            || EVP_DigestFinal_ex(ctx, data, &datalen) <= 0
+            || !tls13_hkdf_expand(s, md, s->early_exporter_master_secret,
                                   (const unsigned char *)label, llen,
                                   data, datalen, exportsecret, hashsize)
             || !tls13_hkdf_expand(s, md, exportsecret, exporterlabel,

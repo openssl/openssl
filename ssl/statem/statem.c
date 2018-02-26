@@ -951,3 +951,18 @@ int ossl_statem_export_allowed(SSL *s)
     return s->s3->previous_server_finished_len != 0
            && s->statem.hand_state != TLS_ST_SW_FINISHED;
 }
+
+/*
+ * Return 1 if early TLS exporter is ready to export keying material,
+ * or 0 if otherwise.
+ */
+int ossl_statem_export_early_allowed(SSL *s)
+{
+    /*
+     * The early exporter secret is only present on the server if we
+     * have accepted early_data. It is present on the client as long
+     * as we have sent early_data.
+     */
+    return s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+           || (!s->server && s->ext.early_data != SSL_EARLY_DATA_NOT_SENT);
+}

@@ -3157,6 +3157,85 @@ static int test_export_key_mat(int tst)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_TLS1_3
+/*
+ * Test that SSL_export_keying_material_early() produces expected
+ * results. There are no test vectors so all we do is test that both
+ * sides of the communication produce the same results for different
+ * protocol versions.
+ */
+static int test_export_key_mat_early(int idx)
+{
+    static const char label[] = "test label";
+    static const unsigned char context[] = "context";
+    int testresult = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *sess = NULL;
+    const unsigned char *emptycontext = NULL;
+    unsigned char ckeymat1[80], ckeymat2[80];
+    unsigned char skeymat1[80], skeymat2[80];
+    unsigned char buf[1];
+    size_t readbytes, written;
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl, &serverssl,
+                                        &sess, idx)))
+        goto end;
+
+    /* Here writing 0 length early data is enough. */
+    if (!TEST_true(SSL_write_early_data(clientssl, NULL, 0, &written))
+            || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                                &readbytes),
+                            SSL_READ_EARLY_DATA_ERROR)
+            || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                            SSL_EARLY_DATA_ACCEPTED))
+        goto end;
+
+    if (!TEST_int_eq(SSL_export_keying_material_early(
+                     clientssl, ckeymat1, sizeof(ckeymat1), label,
+                     sizeof(label) - 1, context, sizeof(context) - 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material_early(
+                            clientssl, ckeymat2, sizeof(ckeymat2), label,
+                            sizeof(label) - 1, emptycontext, 0), 1)
+            || !TEST_int_eq(SSL_export_keying_material_early(
+                            serverssl, skeymat1, sizeof(skeymat1), label,
+                            sizeof(label) - 1, context, sizeof(context) - 1), 1)
+            || !TEST_int_eq(SSL_export_keying_material_early(
+                            serverssl, skeymat2, sizeof(skeymat2), label,
+                            sizeof(label) - 1, emptycontext, 0), 1)
+               /*
+                * Check that both sides created the same key material with the
+                * same context.
+                */
+            || !TEST_mem_eq(ckeymat1, sizeof(ckeymat1), skeymat1,
+                            sizeof(skeymat1))
+               /*
+                * Check that both sides created the same key material with an
+                * empty context.
+                */
+            || !TEST_mem_eq(ckeymat2, sizeof(ckeymat2), skeymat2,
+                            sizeof(skeymat2))
+               /* Different contexts should produce different results */
+            || !TEST_mem_ne(ckeymat1, sizeof(ckeymat1), ckeymat2,
+                            sizeof(ckeymat2)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    if (sess != clientpsk)
+        SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_TLS1_3 */
+
 static int test_ssl_clear(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -3431,6 +3510,9 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_serverinfo, 8);
     ADD_ALL_TESTS(test_export_key_mat, 4);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_ALL_TESTS(test_export_key_mat_early, 3);
+#endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
     return 1;

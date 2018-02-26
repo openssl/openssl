@@ -133,6 +133,7 @@ void ossl_statem_check_finish_init(SSL *s, int send);
 void ossl_statem_set_hello_verify_done(SSL *s);
 __owur int ossl_statem_app_data_allowed(SSL *s);
 __owur int ossl_statem_export_allowed(SSL *s);
+__owur int ossl_statem_export_early_allowed(SSL *s);
 
 /* Flush the write BIO */
 int statem_flush(SSL *s);
