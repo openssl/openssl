@@ -825,7 +825,6 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         thispkt = &pkt[j];
         thiswr = &wr[j];
 
-        SSL3_RECORD_set_type(thiswr, type);
         /*
          * In TLSv1.3, once encrypting, we always use application data for the
          * record type
@@ -834,6 +833,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             rectype = SSL3_RT_APPLICATION_DATA;
         else
             rectype = type;
+        SSL3_RECORD_set_type(thiswr, rectype);
+
         /*
          * Some servers hang if initial client hello is larger than 256 bytes
          * and record version number > TLS 1.0
@@ -843,6 +844,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
                 && TLS1_get_version(s) > TLS1_VERSION
                 && s->hello_retry_request == SSL_HRR_NONE)
             version = TLS1_VERSION;
+        SSL3_RECORD_set_rec_version(thiswr, version);
 
         maxcomplen = pipelens[j];
         if (s->compress != NULL)

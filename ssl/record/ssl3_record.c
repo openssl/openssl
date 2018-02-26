@@ -270,7 +270,8 @@ int ssl3_get_record(SSL *s)
                 thisrr->rec_version = version;
 
                 /*
-                 * Lets check version. In TLSv1.3 we ignore this field. For the
+                 * Lets check version. In TLSv1.3 we only check this field
+                 * when encryption is occurring (see later check). For the
                  * ServerHello after an HRR we haven't actually selected TLSv1.3
                  * yet, but we still treat it as TLSv1.3, so we must check for
                  * that explicitly
@@ -333,14 +334,19 @@ int ssl3_get_record(SSL *s)
                     }
                 }
 
-                if (SSL_IS_TLS13(s)
-                        && s->enc_read_ctx != NULL
-                        && thisrr->type != SSL3_RT_APPLICATION_DATA
-                        && (thisrr->type != SSL3_RT_CHANGE_CIPHER_SPEC
-                            || !SSL_IS_FIRST_HANDSHAKE(s))) {
-                    SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
-                             SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
-                    return -1;
+                if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
+                    if (thisrr->type != SSL3_RT_APPLICATION_DATA
+                            && (thisrr->type != SSL3_RT_CHANGE_CIPHER_SPEC
+                                || !SSL_IS_FIRST_HANDSHAKE(s))) {
+                        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+                                 SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
+                        return -1;
+                    }
+                    if (thisrr->rec_version != TLS1_2_VERSION) {
+                        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                                 SSL_R_WRONG_VERSION_NUMBER);
+                        return -1;
+                    }
                 }
 
                 if (thisrr->length >

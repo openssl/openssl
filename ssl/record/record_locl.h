@@ -80,6 +80,7 @@ int ssl3_release_write_buffer(SSL *s);
 
 #define SSL3_RECORD_get_type(r)                 ((r)->type)
 #define SSL3_RECORD_set_type(r, t)              ((r)->type = (t))
+#define SSL3_RECORD_set_rec_version(r, v)       ((r)->rec_version = (v))
 #define SSL3_RECORD_get_length(r)               ((r)->length)
 #define SSL3_RECORD_set_length(r, l)            ((r)->length = (l))
 #define SSL3_RECORD_add_length(r, l)            ((r)->length += (l))
