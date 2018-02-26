@@ -156,7 +156,11 @@ static EVP_PKEY *evp_pkey_new_key(int priv, int type, ENGINE *e,
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
 
-    /* Note: for compatibility reasons we allow keylen to be < 0 in some cases */
+    /*
+     * Note: for compatibility reasons we allow keylen to be < 0 in some cases.
+     * Specifically, when calling EVP_PKEY_new_mac_key() with HMAC this allows a
+     * keylen of -1 indicating that the key is a NUL terminated string.
+     */
 
     ctx = EVP_PKEY_CTX_new_id(type, e);
     if (ctx == NULL)
