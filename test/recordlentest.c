@@ -157,11 +157,7 @@ static int test_record_overflow(int idx)
         overf_expected = 0;
     }
 
-    if (idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_OK
-            || idx == TEST_ENCRYPTED_OVERFLOW_TLS1_3_NOT_OK)
-        recversion = TLS1_VERSION;
-    else
-        recversion = TLS1_2_VERSION;
+    recversion = TLS1_2_VERSION;
 
     if (!TEST_true(write_record(serverbio, len, SSL3_RT_APPLICATION_DATA,
                                 recversion)))

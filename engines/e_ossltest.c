@@ -637,7 +637,7 @@ int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_gcm())(ctx, out, in, inl);
 
     /* Throw it all away and just use the plaintext as the output */
-    if (tmpbuf != NULL)
+    if (tmpbuf != NULL && out != NULL)
         memcpy(out, tmpbuf, inl);
     OPENSSL_free(tmpbuf);
 
