@@ -3227,6 +3227,7 @@ static int test_export_key_mat_early(int idx)
         SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
