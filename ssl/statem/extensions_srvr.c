@@ -729,7 +729,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned long tm, now;
 
     /* Ignore any cookie if we're not set up to verify it */
-    if (s->ctx->app_verify_cookie_cb == NULL
+    if (s->ctx->verify_stateless_cookie_cb == NULL
             || (s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
         return 1;
 
@@ -852,7 +852,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     /* Verify the app cookie */
-    if (s->ctx->app_verify_cookie_cb(s, PACKET_data(&appcookie),
+    if (s->ctx->verify_stateless_cookie_cb(s, PACKET_data(&appcookie),
                                      PACKET_remaining(&appcookie)) == 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_CTOS_COOKIE,
                  SSL_R_COOKIE_MISMATCH);
@@ -1676,8 +1676,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
 {
     unsigned char *hashval1, *hashval2, *appcookie1, *appcookie2, *cookie;
     unsigned char *hmac, *hmac2;
-    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen;
-    unsigned int appcookielen;
+    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen, appcookielen;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
     int ret = EXT_RETURN_FAIL;
@@ -1685,7 +1684,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
     if ((s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
 
-    if (s->ctx->app_gen_cookie_cb == NULL) {
+    if (s->ctx->gen_stateless_cookie_cb == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
                  SSL_R_NO_COOKIE_CALLBACK_SET);
         return EXT_RETURN_FAIL;
@@ -1733,7 +1732,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     /* Generate the application cookie */
-    if (s->ctx->app_gen_cookie_cb(s, appcookie1, &appcookielen) == 0) {
+    if (s->ctx->gen_stateless_cookie_cb(s, appcookie1, &appcookielen) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
                  SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return EXT_RETURN_FAIL;
