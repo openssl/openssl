@@ -2444,6 +2444,7 @@ _____
             my $prefix = '';
             $prefix = $config{cross_compile_prefix}
                 if grep { $var eq $_ } @user_crossable;
+            $prefix //= '';
             print '    ',$var,' ' x (16 - length $var),'= ',
                 (ref $config{$makevars{$var}} eq 'ARRAY'
                  ? join(' ', @{$config{$makevars{$var}}})
