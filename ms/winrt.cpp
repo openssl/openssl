@@ -46,23 +46,36 @@ unsigned entropyRT(BYTE *buffer, unsigned len)
 	}
 
 #else
+#include <inspectable.h>
+#include <robuffer.h>
 unsigned entropyRT(BYTE *buffer, unsigned len)
+{
+	using Windows::Security::Cryptography::CryptographicBuffer;
+	using Windows::Storage::Streams::IBuffer;
+	using Windows::Storage::Streams::IBufferByteAccess;
+
+	IBuffer^ Buffer = CryptographicBuffer::GenerateRandom(len);
+	IInspectable* BufferABI = reinterpret_cast<IInspectable*>(Buffer);
+
+	byte* RawBuffer = nullptr;
+
+	IBufferByteAccess* BufferByteAccess = nullptr;
+	if (SUCCEEDED(BufferABI->QueryInterface(&BufferByteAccess)))
 	{
-	using namespace Platform;
-	using namespace Windows::Foundation;
-	using namespace Windows::Foundation::Collections;
-	using namespace Windows::Security::Cryptography;
-	using namespace Windows::Storage::Streams;
-	IBuffer ^buf = CryptographicBuffer::GenerateRandom(len);
-	Array<unsigned char> ^arr;
-	CryptographicBuffer::CopyToByteArray(buf, &arr);
-	unsigned arrayLen = arr->Length;
+		BufferByteAccess->Buffer(&RawBuffer);
+		BufferByteAccess->Release();
+	}
+
+	if (nullptr == RawBuffer)
+		return 0;
+
+	unsigned arrayLen = Buffer->Length;
 
 	// Make sure not to overflow the copy
 	arrayLen = (arrayLen > len) ? len : arrayLen;
-	memcpy(buffer, arr->Data, arrayLen);
+	memcpy(buffer, RawBuffer, arrayLen);
 	return arrayLen;
-	}
+}
 #endif
 
 int RAND_poll(void)
