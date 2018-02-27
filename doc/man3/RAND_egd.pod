@@ -45,7 +45,9 @@ success, or -1 if the connection failed.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<RAND_add(3)>
+L<RAND_add(3)>,
+L<RAND_bytes(3)>,
+L<RAND(7)>
 
 =head1 COPYRIGHT
 
