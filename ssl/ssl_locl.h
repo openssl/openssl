@@ -381,7 +381,8 @@
 # define SSL_PKEY_GOST12_256     5
 # define SSL_PKEY_GOST12_512     6
 # define SSL_PKEY_ED25519        7
-# define SSL_PKEY_NUM            8
+# define SSL_PKEY_ED448          8
+# define SSL_PKEY_NUM            9
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
@@ -1962,6 +1963,7 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_gostr34102001_gostr3411                   0xeded
 
 #define TLSEXT_SIGALG_ed25519                                   0x0807
+#define TLSEXT_SIGALG_ed448                                     0x0808
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
