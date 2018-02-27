@@ -44,7 +44,7 @@ const OPTIONS genrsa_options[] = {
     {"3", OPT_3, '-', "Use 3 for the E value"},
     {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
     {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
-    {"out", OPT_OUT, 's', "Output the key to specified file"},
+    {"out", OPT_OUT, '>', "Output the key to specified file"},
     OPT_R_OPTIONS,
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
