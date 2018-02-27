@@ -27,6 +27,21 @@ The environment is mapped onto a section called B<ENV>.
 
 Comments can be included by preceding them with the B<#> character
 
+Other files can be included using the B<.include> directive followed
+by a path. If the path points to a directory all files with
+names ending with B<.cnf> or B<.conf> are included from the directory.
+Recursive inclusion of directories from files in such directory is not
+supported. That means the files in the included directory can also contain
+B<.include> directives but only inclusion of regular files is supported
+there. The inclusion of directories is not supported on systems without
+POSIX IO support.
+
+It is strongly recommended to use absolute paths with the B<.include>
+directive. Relative paths are evaluated based on the application current
+working directory so unless the configuration file containing the
+B<.include> directive is application specific the inclusion will not
+work as expected.
+
 Each section in a configuration file consists of a number of name and
 value pairs of the form B<name=value>
 
@@ -51,6 +66,9 @@ It is possible to escape certain characters by using any kind of quote
 or the B<\> character. By making the last character of a line a B<\>
 a B<value> string can be spread across multiple lines. In addition
 the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
+
+All expansion and escape rules as described above that apply to B<value>
+also apply to the path of the B<.include> directive.
 
 =head1 OPENSSL LIBRARY CONFIGURATION
 

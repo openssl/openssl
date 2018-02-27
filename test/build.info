@@ -35,6 +35,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           bftest ssltest_old dsatest exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test \
+          conf_include_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
@@ -389,6 +390,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[time_offset_test]=time_offset_test.c
   INCLUDE[time_offset_test]=../include
   DEPEND[time_offset_test]=../libcrypto libtestutil.a
+
+  SOURCE[conf_include_test]=conf_include_test.c
+  INCLUDE[conf_include_test]=../include
+  DEPEND[conf_include_test]=../libcrypto libtestutil.a
 
   # Internal test programs.  These are essentially a collection of internal
   # test routines.  Some of them need to reach internal symbols that aren't
