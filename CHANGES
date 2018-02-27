@@ -9,6 +9,10 @@
 
  Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
+  *) Added new public header file <openssl/rand_drbg.h> and documentation
+     for the RAND_DRBG API. See manual page RAND_DRBG(7) for an overview.
+     [Matthias St. Pierre]
+
   *) QNX support removed (cannot find contributors to get their approval
      for the license change).
      [Rich Salz]

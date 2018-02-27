@@ -1,4 +1,3 @@
-
  OPENSSL INSTALLATION
  --------------------
 
@@ -209,11 +208,39 @@
                    without a path). This flag must be provided if the
                    zlib-dynamic option is not also used. If zlib-dynamic is used
                    then this flag is optional and a default value ("ZLIB1") is
-                   used if not provided. 
+                   used if not provided.
                    On VMS: this is the filename of the zlib library (with or
                    without a path). This flag is optional and if not provided
                    then "GNV$LIBZSHR", "GNV$LIBZSHR32" or "GNV$LIBZSHR64" is
                    used by default depending on the pointer size chosen.
+
+
+  --with-rand-seed=seed1[,seed2,...]
+                   A comma separated list of seeding methods which will be tried
+                   by OpenSSL in order to obtain random input (a.k.a "entropy")
+                   for seeding its cryptographically secure random number
+                   generator (CSPRNG). The current seeding methods are:
+
+                   os:         Use a trusted operating system entropy source.
+                               This is the default method if such an entropy
+                               source exists.
+                   getrandom:  Use the L<getrandom(2)> system call if available.
+                   devrandom:  Use the the first device from the DEVRANDOM list
+                               which can be opened to read random bytes. The
+                               DEVRANDOM preprocessor constant expands to
+                               "/dev/urandom","/dev/random","/dev/srandom" on
+                               most unix-ish operating systems.
+                   egd:        Check for an entropy generating daemon.
+                   rdcpu:      Use the RDSEED or RDRAND command if provided by
+                               the CPU.
+                   librandom:  Use librandom (not implemented yet).
+                   none:       Disable automatic seeding. This is the default
+                               on some operating systems where no suitable
+                               entropy source exists, or no support for it is
+                               implemented yet.
+
+                   For more information, see the section 'Note on random number
+                   generation' at the end of this document.
 
   no-afalgeng
                    Don't build the AFALG engine. This option will be forced if
@@ -810,7 +837,7 @@
        $ nmake TESTS='test_rsa test_dsa' test           # Windows
 
      And of course, you can combine (Unix example shown):
-       
+
        $ make VERBOSE=1 TESTS='test_rsa test_dsa' test
 
      You can find the list of available tests like this:
@@ -883,7 +910,7 @@
                         command symbols.
          [.SYSTEST]     Contains the installation verification procedure.
          [.HTML]        Contains the HTML rendition of the manual pages.
-                        
+
 
      Additionally, install will add the following directories under
      OPENSSLDIR (the directory given with --openssldir or its default)
@@ -1164,10 +1191,22 @@
 
  Availability of cryptographically secure random numbers is required for
  secret key generation. OpenSSL provides several options to seed the
- internal PRNG. If not properly seeded, the internal PRNG will refuse
+ internal CSPRNG. If not properly seeded, the internal CSPRNG will refuse
  to deliver random bytes and a "PRNG not seeded error" will occur.
- On systems without /dev/urandom (or similar) device, it may be necessary
- to install additional support software to obtain a random seed.
- Please check out the manual pages for RAND_add(), RAND_bytes(), RAND_egd(),
- and the FAQ for more information.
 
+ The seeding method can be configured using the --with-rand-seed option,
+ which can be used to specify a comma separated list of seed methods.
+ However in most cases OpenSSL will choose a suitable default method,
+ so it is not necessary to explicitely provide this option. Note also
+ that not all methods are available on all platforms.
+
+ I) On operating systems which provide a suitable randomness source (in
+ form  of a system call or system device), OpenSSL will use the optimal
+ available  method to seed the CSPRNG from the operating system's
+ randomness sources. This corresponds to the option --with-rand-seed=os.
+
+ II) On systems without such a suitable randomness source, automatic seeding
+ and reseeding is disabled (--with-rand-seed=none) and it may be necessary
+ to install additional support software to obtain a random seed and reseed
+ the CSPRNG manually.  Please check out the manual pages for RAND_add(),
+ RAND_bytes(), RAND_egd(), and the FAQ for more information.

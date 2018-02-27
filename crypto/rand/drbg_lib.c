@@ -17,8 +17,9 @@
 #include "internal/cryptlib_int.h"
 
 /*
- * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
- * The RAND_DRBG is OpenSSL's pointer to an instance of the DRBG.
+ * Support framework for NIST SP 800-90A DRBG
+ *
+ * See manual page RAND_DRBG(7) for a general overview.
  *
  * The OpenSSL model is to have new and free functions, and that new
  * does all initialization.  That is not the NIST model, which has
@@ -29,80 +30,46 @@
  */
 
 /*
- * THE THREE SHARED DRBGs
+ * The three shared DRBG instances
  *
- * There are three shared DRBGs (master, public and private), which are
- * accessed concurrently by all threads.
- *
- * THE MASTER DRBG
+ * There are three shared DRBG instances: <master>, <public>, and <private>.
+ */
+
+/*
+ * The <master> DRBG
  *
  * Not used directly by the application, only for reseeding the two other
  * DRBGs. It reseeds itself by pulling either randomness from os entropy
- * sources or by consuming randomnes which was added by RAND_add()
+ * sources or by consuming randomness which was added by RAND_add().
+ *
+ * The <master> DRBG is a global instance which is accessed concurrently by
+ * all threads. The necessary locking is managed automatically by its child
+ * DRBG instances during reseeding.
  */
-static RAND_DRBG *drbg_master;
-/*+
- * DRBG HIERARCHY
+static RAND_DRBG *master_drbg;
+/*
+ * The <public> DRBG
  *
- * In addition there are DRBGs, which are not shared, but used only by a
- * single thread at every time, for example the DRBGs which are owned by
- * an SSL context. All DRBGs are organized in a hierarchical fashion
- * with the <master> DRBG as root.
+ * Used by default for generating random bytes using RAND_bytes().
  *
- * This gives the following overall picture:
- *
- *                  <os entropy sources>
- *                         |
- *    RAND_add() ==>    <master>          \
- *                       /   \            | shared DRBGs (with locking)
- *                 <public>  <private>    /
- *                     |
- *                   <ssl>  owned by an SSL context
- *
- * AUTOMATIC RESEEDING
- *
- * Before satisfying a generate request, a DRBG reseeds itself automatically,
- * if one of the following two conditions holds:
- *
- * - the number of generate requests since the last reseeding exceeds a
- *   certain threshold, the so called |reseed_interval|. This behaviour
- *   can be disabled by setting the |reseed_interval| to 0.
- *
- * - the time elapsed since the last reseeding exceeds a certain time
- *   interval, the so called |reseed_time_interval|. This behaviour
- *   can be disabled by setting the |reseed_time_interval| to 0.
- *
- * MANUAL RESEEDING
- *
- * For the three shared DRBGs (and only for these) there is another way to
- * reseed them manually by calling RAND_seed() (or RAND_add() with a positive
- * |randomness| argument). This will immediately reseed the <master> DRBG.
- * The <public> and <private> DRBG will detect this on their next generate
- * call and reseed, pulling randomness from <master>.
- *
- * LOCKING
- *
- * The three shared DRBGs are intended to be used concurrently, so they
- * support locking. The RAND methods take the locks automatically, so using
- * the RAND api (in particular RAND_bytes() and RAND_priv_bytes()) is
- * thread-safe. Note however that accessing the shared DRBGs directly via
- * the RAND_DRBG interface is *not* thread-safe.
- *
- * All other DRBG instances don't support locking, because they are
- * intendended to be used by a single thread. Instead of accessing a single
- * DRBG instance concurrently from different threads, it is recommended to
- * instantiate a separate DRBG instance per thread. Using the same shared
- * DRBG (preferrably the public DRBG) as parent of DRBG instances on
- * different threads is safe.
+ * The <public> DRBG is thread-local, i.e., there is one instance per thread.
  */
+static CRYPTO_THREAD_LOCAL public_drbg;
+/*
+ * The <private> DRBG
+ *
+ * Used by default for generating private keys using RAND_priv_bytes()
+ *
+ * The <private> DRBG is thread-local, i.e., there is one instance per thread.
+ */
+static CRYPTO_THREAD_LOCAL private_drbg;
+
 
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
 static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
-static CRYPTO_THREAD_LOCAL private_drbg_thread_local_key;
-static CRYPTO_THREAD_LOCAL public_drbg_thread_local_key;
 
 
 
@@ -683,40 +650,10 @@ err:
 /*
  * Set the RAND_DRBG callbacks for obtaining entropy and nonce.
  *
- * In the following, the signature and the semantics of the
- * get_entropy() and cleanup_entropy() callbacks are explained.
+ * Setting the callbacks is allowed only if the drbg has not been
+ * initialized yet. Otherwise, the operation will fail.
  *
- * GET_ENTROPY
- *
- *     size_t get_entropy(RAND_DRBG *ctx,
- *                        unsigned char **pout,
- *                        int entropy,
- *                        size_t min_len, size_t max_len);
- *
- * This is a request to allocate and fill a buffer of size
- * |min_len| <= size <= |max_len| (in bytes) which contains
- * at least |entropy| bits of randomness. The buffer's address is
- * to be returned in |*pout| and the number of collected
- * randomness bytes (which may be less than the allocated size
- * of the buffer) as return value.
- *
- * If the callback fails to acquire at least |entropy| bits of
- * randomness, it shall return a buffer length of 0.
- *
- * CLEANUP_ENTROPY
- *
- *     void cleanup_entropy(RAND_DRBG *ctx,
- *                          unsigned char *out, size_t outlen);
- *
- * A request to clear and free the buffer allocated by get_entropy().
- * The values |out| and |outlen| are expected to be the random buffer's
- * address and length, as returned by the get_entropy() callback.
- *
- * GET_NONCE, CLEANUP_NONCE
- *
- * Signature and semantics of the get_nonce() and cleanup_nonce()
- * callbacks are analogous to get_entropy() and cleanup_entropy().
- * Currently, the nonce is used only for the known answer tests.
+ * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_entropy_fn get_entropy,
@@ -936,12 +873,12 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 
     ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
 
-    drbg_master = drbg_setup(NULL);
+    master_drbg = drbg_setup(NULL);
 
-    ret &= CRYPTO_THREAD_init_local(&private_drbg_thread_local_key, NULL);
-    ret &= CRYPTO_THREAD_init_local(&public_drbg_thread_local_key, NULL);
+    ret &= CRYPTO_THREAD_init_local(&private_drbg, NULL);
+    ret &= CRYPTO_THREAD_init_local(&public_drbg, NULL);
 
-    if (drbg_master == NULL || ret == 0)
+    if (master_drbg == NULL || ret == 0)
         return 0;
 
     return 1;
@@ -950,21 +887,21 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 /* Clean up the global DRBGs before exit */
 void rand_drbg_cleanup_int(void)
 {
-    RAND_DRBG_free(drbg_master);
-    drbg_master = NULL;
+    RAND_DRBG_free(master_drbg);
+    master_drbg = NULL;
 
-    CRYPTO_THREAD_cleanup_local(&private_drbg_thread_local_key);
-    CRYPTO_THREAD_cleanup_local(&public_drbg_thread_local_key);
+    CRYPTO_THREAD_cleanup_local(&private_drbg);
+    CRYPTO_THREAD_cleanup_local(&public_drbg);
 }
 
 void drbg_delete_thread_state()
 {
     RAND_DRBG *drbg;
 
-    drbg = CRYPTO_THREAD_get_local(&public_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&public_drbg);
     RAND_DRBG_free(drbg);
 
-    drbg = CRYPTO_THREAD_get_local(&private_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&private_drbg);
     RAND_DRBG_free(drbg);
 }
 
@@ -1044,7 +981,7 @@ RAND_DRBG *RAND_DRBG_get0_master(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return drbg_master;
+    return master_drbg;
 }
 
 /*
@@ -1058,11 +995,11 @@ RAND_DRBG *RAND_DRBG_get0_public(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    drbg = CRYPTO_THREAD_get_local(&public_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&public_drbg);
     if (drbg == NULL) {
         ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
-        drbg = drbg_setup(drbg_master);
-        CRYPTO_THREAD_set_local(&public_drbg_thread_local_key, drbg);
+        drbg = drbg_setup(master_drbg);
+        CRYPTO_THREAD_set_local(&public_drbg, drbg);
     }
     return drbg;
 }
@@ -1078,11 +1015,11 @@ RAND_DRBG *RAND_DRBG_get0_private(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    drbg = CRYPTO_THREAD_get_local(&private_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&private_drbg);
     if (drbg == NULL) {
         ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
-        drbg = drbg_setup(drbg_master);
-        CRYPTO_THREAD_set_local(&private_drbg_thread_local_key, drbg);
+        drbg = drbg_setup(master_drbg);
+        CRYPTO_THREAD_set_local(&private_drbg, drbg);
     }
     return drbg;
 }

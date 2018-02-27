@@ -20,7 +20,7 @@ Deprecated:
 =head1 DESCRIPTION
 
 RAND_bytes() puts B<num> cryptographically strong pseudo-random bytes
-into B<buf>. An error occurs if the PRNG has not been seeded with
+into B<buf>. An error occurs if the CSPRNG has not been seeded with
 enough randomness to ensure an unpredictable byte sequence.
 
 RAND_priv_bytes() has the same semantics as RAND_bytes().  It is intended to
@@ -30,7 +30,7 @@ a compromise of the global generator will not affect such key generation.
 
 =head1 RETURN VALUES
 
-RAND_bytes() nad RAND_priv_bytes()
+RAND_bytes() and RAND_priv_bytes()
 return 1 on success, -1 if not supported by the current
 RAND method, or 0 on other failure. The error code can be
 obtained by L<ERR_get_error(3)>.
@@ -41,12 +41,14 @@ RAND_pseudo_bytes() was deprecated in OpenSSL 1.1.0; use RAND_bytes() instead.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<ERR_get_error(3)>,
-L<RAND_add(3)>
+L<RAND_add(3)>,
+L<RAND_bytes(3)>,
+L<ERR_get_error(3)>,
+L<RAND(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
