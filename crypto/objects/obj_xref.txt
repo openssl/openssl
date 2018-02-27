@@ -22,6 +22,7 @@ RSA_SHA3_512		sha3_512 rsaEncryption
 # method should handle this explicitly.
 rsassaPss		undef	rsaEncryption
 ED25519		    undef	ED25519
+ED448		    undef	ED448
 
 # Alternative deprecated OIDs. By using the older "rsa" OID this
 # type will be recognized by not normally used.

@@ -59,6 +59,8 @@
 # define EVP_PKEY_SIPHASH NID_siphash
 # define EVP_PKEY_X25519 NID_X25519
 # define EVP_PKEY_ED25519 NID_ED25519
+# define EVP_PKEY_X448 NID_X448
+# define EVP_PKEY_ED448 NID_ED448
 
 #ifdef  __cplusplus
 extern "C" {
@@ -1263,9 +1265,18 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
                 EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_TYPE_SIG,  \
                                         EVP_PKEY_CTRL_GET_MD, 0, (void *)(pmd))
 
+# define  EVP_PKEY_CTX_set_priv_key(ctx, key, len) \
+                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN, \
+                                  EVP_PKEY_CTRL_SET_PRIV_KEY, len, \
+                                  (void *)(key))
+
+# define  EVP_PKEY_CTX_set_pub_key(ctx, key, len) \
+                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN, \
+                                  EVP_PKEY_CTRL_SET_PUB_KEY, len, \
+                                  (void *)(key))
+
 # define  EVP_PKEY_CTX_set_mac_key(ctx, key, len)        \
-                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN,  \
-                                  EVP_PKEY_CTRL_SET_MAC_KEY, len, (void *)(key))
+                EVP_PKEY_CTX_set_priv_key(ctx, key, len)
 
 # define EVP_PKEY_CTRL_MD                1
 # define EVP_PKEY_CTRL_PEER_KEY          2
@@ -1275,7 +1286,8 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 
 # define EVP_PKEY_CTRL_PKCS7_SIGN        5
 
-# define EVP_PKEY_CTRL_SET_MAC_KEY       6
+# define EVP_PKEY_CTRL_SET_PRIV_KEY      6
+# define EVP_PKEY_CTRL_SET_MAC_KEY       EVP_PKEY_CTRL_SET_PRIV_KEY
 
 # define EVP_PKEY_CTRL_DIGESTINIT        7
 
@@ -1291,6 +1303,8 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 # define EVP_PKEY_CTRL_GET_MD            13
 
 # define EVP_PKEY_CTRL_SET_DIGEST_SIZE   14
+
+# define EVP_PKEY_CTRL_SET_PUB_KEY       15
 
 # define EVP_PKEY_ALG_CTRL               0x1000
 
@@ -1333,6 +1347,10 @@ void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
 
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
                                const unsigned char *key, int keylen);
+EVP_PKEY *EVP_PKEY_new_priv_key(int type, ENGINE *e,
+                                const unsigned char *key, size_t keylen);
+EVP_PKEY *EVP_PKEY_new_pub_key(int type, ENGINE *e,
+                               const unsigned char *key, size_t keylen);
 
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx);

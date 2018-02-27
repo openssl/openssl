@@ -16,30 +16,88 @@
 #include "internal/evp_int.h"
 #include "ec_lcl.h"
 
-#define X25519_KEYLEN        32
 #define X25519_BITS          253
 #define X25519_SECURITY_BITS 128
 
 #define ED25519_SIGSIZE      64
 
-typedef struct {
-    unsigned char pubkey[X25519_KEYLEN];
-    unsigned char *privkey;
-} X25519_KEY;
+#define X448_BITS            448
+#define ED448_BITS           456
+#define X448_SECURITY_BITS   224
+
+#define ED448_SIGSIZE        114
+
+#define ISX448(id)      ((id) == EVP_PKEY_X448 ? 1 : 0)
+#define IS25519(id)     (((id) == EVP_PKEY_X25519 || (id) == EVP_PKEY_ED25519) \
+                            ? 1 : 0)
+#define KEYLENID(id)    (IS25519(id) ? X25519_KEYLEN \
+                                     : ((id) == EVP_PKEY_X448 ? X448_KEYLEN \
+                                                              : ED448_KEYLEN))
+#define KEYLEN(p)       KEYLENID((p)->ameth->pkey_id)
+
+#define MAX_KEYLEN  ED448_KEYLEN
+
+static ossl_inline void getprivkey(unsigned char **priv, const EVP_PKEY *pk)
+{
+    if (IS25519(pk->ameth->pkey_id)) {
+        if (pk->pkey.curve25519 == NULL)
+            return;
+        *priv = pk->pkey.curve25519->privkey;
+    } else if(ISX448(pk->ameth->pkey_id)) {
+        if (pk->pkey.x448 == NULL)
+            return;
+        *priv = pk->pkey.x448->privkey;
+    } else {
+        if (pk->pkey.ed448 == NULL)
+            return;
+        *priv = pk->pkey.ed448->privkey;
+    }
+}
+
+static ossl_inline void getpubkey(unsigned char **pub, const EVP_PKEY *pk)
+{
+    if (IS25519(pk->ameth->pkey_id)) {
+        if (pk->pkey.curve25519 == NULL)
+            return;
+        *pub = pk->pkey.curve25519->pubkey;
+    } else if(ISX448(pk->ameth->pkey_id)) {
+        if (pk->pkey.x448 == NULL)
+            return;
+        *pub = pk->pkey.x448->pubkey;
+    } else {
+        if (pk->pkey.ed448 == NULL)
+            return;
+        *pub = pk->pkey.ed448->pubkey;
+    }
+}
 
 typedef enum {
-    X25519_PUBLIC,
-    X25519_PRIVATE,
-    X25519_KEYGEN
+    KEY_OP_PUBLIC,
+    KEY_OP_PRIVATE,
+    KEY_OP_KEYGEN
 } ecx_key_op_t;
 
-/* Setup EVP_PKEY using public, private or generation */
-static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
-                      const unsigned char *p, int plen, ecx_key_op_t op)
-{
-    X25519_KEY *xkey;
+typedef struct {
+    enum {KEYTYPE_NONE, KEYTYPE_PRIV, KEYTYPE_PUB} keytype;
+    /* Temp storage for private or public raw key */
+    unsigned char keytmp[MAX_KEYLEN];
+    size_t keylength;
+} ECX_PKEY_CTX;
 
-    if (op != X25519_KEYGEN) {
+/* Setup EVP_PKEY using public, private or generation */
+static int ecx_key_op(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey, int id,
+                      const X509_ALGOR *palg, const unsigned char *p, int plen,
+                      ecx_key_op_t op)
+{
+    CURVE25519_KEY *key25519 = NULL;
+    X448_KEY *keyx448 = NULL;
+    ED448_KEY *keyed448 = NULL;
+    unsigned char **privkey;
+    unsigned char *pubkey;
+    void *key;
+    ECX_PKEY_CTX *ectx = NULL;
+
+    if (op != KEY_OP_KEYGEN) {
         if (palg != NULL) {
             int ptype;
 
@@ -51,69 +109,120 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             }
         }
 
-        if (p == NULL || plen != X25519_KEYLEN) {
+        if (p == NULL || plen != KEYLENID(id)) {
             ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
             return 0;
         }
     }
 
-    xkey = OPENSSL_zalloc(sizeof(*xkey));
-    if (xkey == NULL) {
+    if (IS25519(id)) {
+        key25519 = OPENSSL_zalloc(sizeof(*key25519));
+        key = key25519;
+    } else if(ISX448(id)) {
+        keyx448 = OPENSSL_zalloc(sizeof(*keyx448));
+        key = keyx448;
+    } else {
+        keyed448 = OPENSSL_zalloc(sizeof(*keyed448));
+        key = keyed448;
+    }
+    if (key == NULL) {
         ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-
-    if (op == X25519_PUBLIC) {
-        memcpy(xkey->pubkey, p, plen);
+    if (IS25519(id)) {
+        privkey = &key25519->privkey;
+        pubkey = key25519->pubkey;
+    } else if(ISX448(id)) {
+        privkey = &keyx448->privkey;
+        pubkey = keyx448->pubkey;
     } else {
-        xkey->privkey = OPENSSL_secure_malloc(X25519_KEYLEN);
-        if (xkey->privkey == NULL) {
-            ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
-            OPENSSL_free(xkey);
-            return 0;
-        }
-        if (op == X25519_KEYGEN) {
-            if (RAND_bytes(xkey->privkey, X25519_KEYLEN) <= 0) {
-                OPENSSL_secure_free(xkey->privkey);
-                OPENSSL_free(xkey);
-                return 0;
-            }
-            if (id == EVP_PKEY_X25519) {
-                xkey->privkey[0] &= 248;
-                xkey->privkey[31] &= 127;
-                xkey->privkey[31] |= 64;
-            }
-        } else {
-            memcpy(xkey->privkey, p, X25519_KEYLEN);
-        }
-        if (id == EVP_PKEY_X25519)
-            X25519_public_from_private(xkey->pubkey, xkey->privkey);
-        else
-            ED25519_public_from_private(xkey->pubkey, xkey->privkey);
+        privkey = &keyed448->privkey;
+        pubkey = keyed448->pubkey;
     }
 
-    EVP_PKEY_assign(pkey, id, xkey);
+    if (op == KEY_OP_KEYGEN)
+        ectx = EVP_PKEY_CTX_get_data(ctx);
+
+    if (op == KEY_OP_KEYGEN && ectx->keytype == KEYTYPE_PUB) {
+        /* Explicit public key was set */
+        if (ectx->keylength != KEYLENID(id)) {
+            ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
+            return 0;
+        }
+        memcpy(pubkey, ectx->keytmp, ectx->keylength);
+    } else if (op == KEY_OP_PUBLIC) {
+        memcpy(pubkey, p, plen);
+    } else {
+        *privkey = OPENSSL_secure_malloc(KEYLENID(id));
+        if (*privkey == NULL) {
+            ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (op == KEY_OP_KEYGEN
+                && ectx->keytype == KEYTYPE_PRIV) {
+            /* Explicit private key was set */
+            if (ectx->keylength != KEYLENID(id)) {
+                ECerr(EC_F_ECX_KEY_OP, EC_R_INVALID_ENCODING);
+                return 0;
+            }
+            memcpy(*privkey, ectx->keytmp, ectx->keylength);
+        } else if (op == KEY_OP_KEYGEN) {
+            if (RAND_bytes(*privkey, KEYLENID(id)) <= 0) {
+                OPENSSL_secure_free(*privkey);
+                goto err;
+            }
+            if (id == EVP_PKEY_X25519) {
+                (*privkey)[0] &= 248;
+                (*privkey)[X25519_KEYLEN - 1] &= 127;
+                (*privkey)[X25519_KEYLEN - 1] |= 64;
+            } else if (id == EVP_PKEY_X448) {
+                (*privkey)[0] &= 252;
+                (*privkey)[X448_KEYLEN - 1] |= 128;
+            }
+        } else {
+            memcpy(*privkey, p, KEYLENID(id));
+        }
+        switch (id) {
+        case EVP_PKEY_X25519:
+            X25519_public_from_private(pubkey, *privkey);
+            break;
+        case EVP_PKEY_ED25519:
+            ED25519_public_from_private(pubkey, *privkey);
+            break;
+        case EVP_PKEY_X448:
+            X448_public_from_private(pubkey, *privkey);
+            break;
+        case EVP_PKEY_ED448:
+            ED448_public_from_private(pubkey, *privkey);
+            break;
+        }
+    }
+
+    EVP_PKEY_assign(pkey, id, key);
     return 1;
+ err:
+    OPENSSL_free(key);
+    return 0;
 }
 
 static int ecx_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-    const X25519_KEY *xkey = pkey->pkey.ptr;
-    unsigned char *penc;
+    unsigned char *penc, *pubkey = NULL;
 
-    if (xkey == NULL) {
+    getpubkey(&pubkey, pkey);
+    if (pubkey == NULL) {
         ECerr(EC_F_ECX_PUB_ENCODE, EC_R_INVALID_KEY);
         return 0;
     }
 
-    penc = OPENSSL_memdup(xkey->pubkey, X25519_KEYLEN);
+    penc = OPENSSL_memdup(pubkey, KEYLEN(pkey));
     if (penc == NULL) {
         ECerr(EC_F_ECX_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
     if (!X509_PUBKEY_set0_param(pk, OBJ_nid2obj(pkey->ameth->pkey_id),
-                                V_ASN1_UNDEF, NULL, penc, X25519_KEYLEN)) {
+                                V_ASN1_UNDEF, NULL, penc, KEYLEN(pkey))) {
         OPENSSL_free(penc);
         ECerr(EC_F_ECX_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -129,18 +238,20 @@ static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
-    return ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, pklen,
-                      X25519_PUBLIC);
+    return ecx_key_op(NULL, pkey, pkey->ameth->pkey_id, palg, p, pklen,
+                      KEY_OP_PUBLIC);
 }
 
 static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    const X25519_KEY *akey = a->pkey.ptr;
-    const X25519_KEY *bkey = b->pkey.ptr;
+    unsigned char *pubkeya = NULL, *pubkeyb = NULL;
 
-    if (akey == NULL || bkey == NULL)
+    getpubkey(&pubkeya, a);
+    getpubkey(&pubkeyb, b);
+    if (pubkeya == NULL || pubkeyb == NULL)
         return -2;
-    return !CRYPTO_memcmp(akey->pubkey, bkey->pubkey, X25519_KEYLEN);
+
+    return CRYPTO_memcmp(pubkeya, pubkeyb, KEYLEN(a)) == 0;
 }
 
 static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
@@ -163,25 +274,27 @@ static int ecx_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         plen = ASN1_STRING_length(oct);
     }
 
-    rv = ecx_key_op(pkey, pkey->ameth->pkey_id, palg, p, plen, X25519_PRIVATE);
+    rv = ecx_key_op(NULL, pkey, pkey->ameth->pkey_id, palg, p, plen,
+                    KEY_OP_PRIVATE);
     ASN1_OCTET_STRING_free(oct);
     return rv;
 }
 
 static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
-    const X25519_KEY *xkey = pkey->pkey.ptr;
+    unsigned char *privkey = NULL;
     ASN1_OCTET_STRING oct;
     unsigned char *penc = NULL;
     int penclen;
 
-    if (xkey == NULL || xkey->privkey == NULL) {
+    getprivkey(&privkey, pkey);
+    if (privkey == NULL) {
         ECerr(EC_F_ECX_PRIV_ENCODE, EC_R_INVALID_PRIVATE_KEY);
         return 0;
     }
 
-    oct.data = xkey->privkey;
-    oct.length = X25519_KEYLEN;
+    oct.data = privkey;
+    oct.length = KEYLEN(pkey);
     oct.flags = 0;
 
     penclen = i2d_ASN1_OCTET_STRING(&oct, &penc);
@@ -202,26 +315,43 @@ static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 static int ecx_size(const EVP_PKEY *pkey)
 {
-    return X25519_KEYLEN;
+    return KEYLEN(pkey);
 }
 
 static int ecx_bits(const EVP_PKEY *pkey)
 {
-    return X25519_BITS;
+    if (IS25519(pkey->ameth->pkey_id)) {
+        return X25519_BITS;
+    } else if(ISX448(pkey->ameth->pkey_id)) {
+        return X448_BITS;
+    } else {
+        return ED448_BITS;
+    }
 }
 
 static int ecx_security_bits(const EVP_PKEY *pkey)
 {
-    return X25519_SECURITY_BITS;
+    if (IS25519(pkey->ameth->pkey_id)) {
+        return X25519_SECURITY_BITS;
+    } else {
+        return X448_SECURITY_BITS;
+    }
 }
 
 static void ecx_free(EVP_PKEY *pkey)
 {
-    X25519_KEY *xkey = pkey->pkey.ptr;
+    unsigned char *privkey = NULL;
 
-    if (xkey)
-        OPENSSL_secure_clear_free(xkey->privkey, X25519_KEYLEN);
-    OPENSSL_free(xkey);
+    getprivkey(&privkey, pkey);
+    OPENSSL_secure_clear_free(privkey, KEYLEN(pkey));
+
+    if (IS25519(pkey->ameth->pkey_id)) {
+        OPENSSL_free(pkey->pkey.curve25519);
+    } else if(ISX448(pkey->ameth->pkey_id)) {
+        OPENSSL_free(pkey->pkey.x448);
+    } else {
+        OPENSSL_free(pkey->pkey.ed448);
+    }
 }
 
 /* "parameters" are always equal */
@@ -233,12 +363,16 @@ static int ecx_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx, ecx_key_op_t op)
 {
-    const X25519_KEY *xkey = pkey->pkey.ptr;
-
+    unsigned char *pubkey = NULL;
     const char *nm = OBJ_nid2ln(pkey->ameth->pkey_id);
 
-    if (op == X25519_PRIVATE) {
-        if (xkey == NULL || xkey->privkey == NULL) {
+    getpubkey(&pubkey, pkey);
+
+    if (op == KEY_OP_PRIVATE) {
+        unsigned char *privkey = NULL;
+
+        getprivkey(&privkey, pkey);
+        if (privkey == NULL) {
             if (BIO_printf(bp, "%*s<INVALID PRIVATE KEY>\n", indent, "") <= 0)
                 return 0;
             return 1;
@@ -247,10 +381,10 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
             return 0;
         if (BIO_printf(bp, "%*spriv:\n", indent, "") <= 0)
             return 0;
-        if (ASN1_buf_print(bp, xkey->privkey, X25519_KEYLEN, indent + 4) == 0)
+        if (ASN1_buf_print(bp, privkey, KEYLEN(pkey), indent + 4) == 0)
             return 0;
     } else {
-        if (xkey == NULL) {
+        if (pubkey == NULL) {
             if (BIO_printf(bp, "%*s<INVALID PUBLIC KEY>\n", indent, "") <= 0)
                 return 0;
             return 1;
@@ -260,7 +394,10 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
     }
     if (BIO_printf(bp, "%*spub:\n", indent, "") <= 0)
         return 0;
-    if (ASN1_buf_print(bp, xkey->pubkey, X25519_KEYLEN, indent + 4) == 0)
+
+    if (pubkey == NULL)
+        return 0;
+    if (ASN1_buf_print(bp, pubkey, KEYLEN(pkey), indent + 4) == 0)
         return 0;
     return 1;
 }
@@ -268,30 +405,33 @@ static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 static int ecx_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                           ASN1_PCTX *ctx)
 {
-    return ecx_key_print(bp, pkey, indent, ctx, X25519_PRIVATE);
+    return ecx_key_print(bp, pkey, indent, ctx, KEY_OP_PRIVATE);
 }
 
 static int ecx_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
                          ASN1_PCTX *ctx)
 {
-    return ecx_key_print(bp, pkey, indent, ctx, X25519_PUBLIC);
+    return ecx_key_print(bp, pkey, indent, ctx, KEY_OP_PUBLIC);
 }
 
 static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    unsigned char *pubkey = NULL;
+
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(pkey, EVP_PKEY_X25519, NULL, arg2, arg1,
-                          X25519_PUBLIC);
+        return ecx_key_op(NULL, pkey, pkey->ameth->pkey_id, NULL, arg2, arg1,
+                          KEY_OP_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        if (pkey->pkey.ptr != NULL) {
-            const X25519_KEY *xkey = pkey->pkey.ptr;
+        getpubkey(&pubkey, pkey);
+        if (pubkey != NULL) {
             unsigned char **ppt = arg2;
-            *ppt = OPENSSL_memdup(xkey->pubkey, X25519_KEYLEN);
+
+            *ppt = OPENSSL_memdup(pubkey, KEYLEN(pkey));
             if (*ppt != NULL)
-                return X25519_KEYLEN;
+                return KEYLEN(pkey);
         }
         return 0;
 
@@ -335,9 +475,44 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     NULL
 };
 
-static int ecd_size(const EVP_PKEY *pkey)
+const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
+    EVP_PKEY_X448,
+    EVP_PKEY_X448,
+    0,
+    "X448",
+    "OpenSSL X448 algorithm",
+
+    ecx_pub_decode,
+    ecx_pub_encode,
+    ecx_pub_cmp,
+    ecx_pub_print,
+
+    ecx_priv_decode,
+    ecx_priv_encode,
+    ecx_priv_print,
+
+    ecx_size,
+    ecx_bits,
+    ecx_security_bits,
+
+    0, 0, 0, 0,
+    ecx_cmp_parameters,
+    0, 0,
+
+    ecx_free,
+    ecx_ctrl,
+    NULL,
+    NULL
+};
+
+static int ecd_size25519(const EVP_PKEY *pkey)
 {
     return ED25519_SIGSIZE;
+}
+
+static int ecd_size448(const EVP_PKEY *pkey)
+{
+    return ED448_SIGSIZE;
 }
 
 static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
@@ -346,10 +521,12 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 {
     const ASN1_OBJECT *obj;
     int ptype;
+    int nid;
 
+    /* Sanity check: make sure it is ED25519/ED448 with absent parameters */
     X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
-    /* Sanity check: make sure it is ED25519 with absent parameters */
-    if (OBJ_obj2nid(obj) != NID_ED25519 || ptype != V_ASN1_UNDEF) {
+    nid = OBJ_obj2nid(obj);
+    if ((nid != NID_ED25519 && nid != NID_ED448) || ptype != V_ASN1_UNDEF) {
         ECerr(EC_F_ECD_ITEM_VERIFY, EC_R_INVALID_ENCODING);
         return 0;
     }
@@ -360,7 +537,7 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return 2;
 }
 
-static int ecd_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
                          X509_ALGOR *alg1, X509_ALGOR *alg2,
                          ASN1_BIT_STRING *str)
 {
@@ -372,13 +549,35 @@ static int ecd_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return 3;
 }
 
-static int ecd_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
+static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                             const ASN1_STRING *sig)
 {
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED25519, X25519_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
     return 1;
 }
+
+
+static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+                         X509_ALGOR *alg1, X509_ALGOR *alg2,
+                         ASN1_BIT_STRING *str)
+{
+    /* Set algorithms identifiers */
+    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
+    if (alg2 != NULL)
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
+    /* Algorithm idetifiers set: carry on as normal */
+    return 3;
+}
+
+static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
+                            const ASN1_STRING *sig)
+{
+    X509_SIG_INFO_set(siginf, NID_undef, NID_ED448, X448_SECURITY_BITS,
+                      X509_SIG_INFO_TLS);
+    return 1;
+}
+
 
 const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     EVP_PKEY_ED25519,
@@ -396,7 +595,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_priv_encode,
     ecx_priv_print,
 
-    ecd_size,
+    ecd_size25519,
     ecx_bits,
     ecx_security_bits,
 
@@ -409,32 +608,97 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     NULL,
     NULL,
     ecd_item_verify,
-    ecd_item_sign,
-    ecd_sig_info_set
+    ecd_item_sign25519,
+    ecd_sig_info_set25519
 };
+
+const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
+    EVP_PKEY_ED448,
+    EVP_PKEY_ED448,
+    0,
+    "ED448",
+    "OpenSSL ED448 algorithm",
+
+    ecx_pub_decode,
+    ecx_pub_encode,
+    ecx_pub_cmp,
+    ecx_pub_print,
+
+    ecx_priv_decode,
+    ecx_priv_encode,
+    ecx_priv_print,
+
+    ecd_size448,
+    ecx_bits,
+    ecx_security_bits,
+
+    0, 0, 0, 0,
+    ecx_cmp_parameters,
+    0, 0,
+
+    ecx_free,
+    0,
+    NULL,
+    NULL,
+    ecd_item_verify,
+    ecd_item_sign448,
+    ecd_sig_info_set448
+};
+
+static int pkey_ecx_init(EVP_PKEY_CTX *ctx)
+{
+    ECX_PKEY_CTX *ectx;
+
+    ectx = OPENSSL_secure_zalloc(sizeof(*ectx));
+    if (ectx == NULL)
+        return 0;
+
+    EVP_PKEY_CTX_set_data(ctx, ectx);
+
+    return 1;
+}
+
+static void pkey_ecx_cleanup(EVP_PKEY_CTX *ctx)
+{
+    OPENSSL_secure_free(EVP_PKEY_CTX_get_data(ctx));
+    EVP_PKEY_CTX_set_data(ctx, NULL);
+}
+
+static int pkey_ecx_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+{
+    ECX_PKEY_CTX *sctx, *dctx;
+
+    if (!pkey_ecx_init(dst))
+        return 0;
+    sctx = EVP_PKEY_CTX_get_data(src);
+    dctx = EVP_PKEY_CTX_get_data(dst);
+    *sctx = *dctx;
+    return 1;
+}
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-    return ecx_key_op(pkey, ctx->pmeth->pkey_id, NULL, NULL, 0, X25519_KEYGEN);
+    return ecx_key_op(ctx, pkey, ctx->pmeth->pkey_id, NULL, NULL, 0,
+                      KEY_OP_KEYGEN);
 }
 
-static int pkey_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-                           size_t *keylen)
+static int pkey_ecx_derive25519(EVP_PKEY_CTX *ctx, unsigned char *key,
+                                size_t *keylen)
 {
-    const X25519_KEY *pkey, *peerkey;
+    const CURVE25519_KEY *pkey, *peerkey;
 
     if (ctx->pkey == NULL || ctx->peerkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_KEYS_NOT_SET);
+        ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_KEYS_NOT_SET);
         return 0;
     }
-    pkey = ctx->pkey->pkey.ptr;
-    peerkey = ctx->peerkey->pkey.ptr;
+    pkey = ctx->pkey->pkey.curve25519;
+    peerkey = ctx->peerkey->pkey.curve25519;
     if (pkey == NULL || pkey->privkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_INVALID_PRIVATE_KEY);
+        ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_INVALID_PRIVATE_KEY);
         return 0;
     }
     if (peerkey == NULL) {
-        ECerr(EC_F_PKEY_ECX_DERIVE, EC_R_INVALID_PEER_KEY);
+        ECerr(EC_F_PKEY_ECX_DERIVE25519, EC_R_INVALID_PEER_KEY);
         return 0;
     }
     *keylen = X25519_KEYLEN;
@@ -443,36 +707,96 @@ static int pkey_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
     return 1;
 }
 
+static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
+                              size_t *keylen)
+{
+    const X448_KEY *pkey, *peerkey;
+
+    if (ctx->pkey == NULL || ctx->peerkey == NULL) {
+        ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_KEYS_NOT_SET);
+        return 0;
+    }
+    pkey = ctx->pkey->pkey.x448;
+    peerkey = ctx->peerkey->pkey.x448;
+    if (pkey == NULL || pkey->privkey == NULL) {
+        ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_INVALID_PRIVATE_KEY);
+        return 0;
+    }
+    if (peerkey == NULL) {
+        ECerr(EC_F_PKEY_ECX_DERIVE448, EC_R_INVALID_PEER_KEY);
+        return 0;
+    }
+    *keylen = X448_KEYLEN;
+    if (key != NULL && X448(key, pkey->privkey, peerkey->pubkey) == 0)
+        return 0;
+    return 1;
+}
+
 static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    /* Only need to handle peer key for derivation */
-    if (type == EVP_PKEY_CTRL_PEER_KEY)
+    ECX_PKEY_CTX *ectx = EVP_PKEY_CTX_get_data(ctx);
+
+    switch (type) {
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PRIV;
         return 1;
-    return -2;
+
+    case EVP_PKEY_CTRL_SET_PUB_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PUB;
+        return 1;
+
+    case EVP_PKEY_CTRL_PEER_KEY:
+        /* Only need to handle peer key for derivation */
+        return 1;
+    default:
+        return -2;
+    }
 }
 
 const EVP_PKEY_METHOD ecx25519_pkey_meth = {
     EVP_PKEY_X25519,
-    0, 0, 0, 0, 0, 0, 0,
+    0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    pkey_ecx_derive,
+    pkey_ecx_derive25519,
     pkey_ecx_ctrl,
     0
 };
 
-static int pkey_ecd_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
-                               size_t *siglen, const unsigned char *tbs,
-                               size_t tbslen)
+const EVP_PKEY_METHOD ecx448_pkey_meth = {
+    EVP_PKEY_X448,
+    0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
+    pkey_ecx_keygen,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    pkey_ecx_derive448,
+    pkey_ecx_ctrl,
+    0
+};
+
+static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
+                                    size_t *siglen, const unsigned char *tbs,
+                                    size_t tbslen)
 {
-    const X25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+    const CURVE25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.curve25519;
 
     if (sig == NULL) {
         *siglen = ED25519_SIGSIZE;
         return 1;
     }
     if (*siglen < ED25519_SIGSIZE) {
-        ECerr(EC_F_PKEY_ECD_DIGESTSIGN, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN25519, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -482,11 +806,33 @@ static int pkey_ecd_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     return 1;
 }
 
-static int pkey_ecd_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
-                                 size_t siglen, const unsigned char *tbs,
-                                 size_t tbslen)
+static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
+                                  size_t *siglen, const unsigned char *tbs,
+                                  size_t tbslen)
 {
-    const X25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
+    const ED448_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ed448;
+
+    if (sig == NULL) {
+        *siglen = ED448_SIGSIZE;
+        return 1;
+    }
+    if (*siglen < ED448_SIGSIZE) {
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN448, EC_R_BUFFER_TOO_SMALL);
+        return 0;
+    }
+
+    if (ED448_sign(sig, tbs, tbslen, edkey->pubkey, edkey->privkey, NULL,
+                   0) == 0)
+        return 0;
+    *siglen = ED448_SIGSIZE;
+    return 1;
+}
+
+static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
+                                      size_t siglen, const unsigned char *tbs,
+                                      size_t tbslen)
+{
+    const CURVE25519_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.curve25519;
 
     if (siglen != ED25519_SIGSIZE)
         return 0;
@@ -494,9 +840,35 @@ static int pkey_ecd_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey);
 }
 
+static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
+                                    size_t siglen, const unsigned char *tbs,
+                                    size_t tbslen)
+{
+    const ED448_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ed448;
+
+    if (siglen != ED448_SIGSIZE)
+        return 0;
+
+    return ED448_verify(tbs, tbslen, sig, edkey->pubkey, NULL, 0);
+}
+
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
+    ECX_PKEY_CTX *ectx = EVP_PKEY_CTX_get_data(ctx);
+
     switch (type) {
+    case EVP_PKEY_CTRL_SET_PRIV_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PRIV;
+        return 1;
+
+    case EVP_PKEY_CTRL_SET_PUB_KEY:
+        memcpy(ectx->keytmp, p2, p1);
+        ectx->keylength = p1;
+        ectx->keytype = KEYTYPE_PUB;
+        return 1;
+
     case EVP_PKEY_CTRL_MD:
         /* Only NULL allowed as digest */
         if (p2 == NULL)
@@ -512,11 +884,28 @@ static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
 const EVP_PKEY_METHOD ed25519_pkey_meth = {
     EVP_PKEY_ED25519, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
-    0, 0, 0, 0, 0, 0,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
     pkey_ecx_keygen,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecd_ctrl,
     0,
-    pkey_ecd_digestsign,
-    pkey_ecd_digestverify
+    pkey_ecd_digestsign25519,
+    pkey_ecd_digestverify25519
+};
+
+const EVP_PKEY_METHOD ed448_pkey_meth = {
+    EVP_PKEY_ED448, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
+    pkey_ecx_init,
+    pkey_ecx_copy,
+    pkey_ecx_cleanup,
+    0, 0, 0,
+    pkey_ecx_keygen,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    pkey_ecd_ctrl,
+    0,
+    pkey_ecd_digestsign448,
+    pkey_ecd_digestverify448
 };

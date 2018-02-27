@@ -90,7 +90,9 @@ extern const EVP_PKEY_METHOD dhx_pkey_meth;
 extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
 extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
+extern const EVP_PKEY_METHOD ecx448_pkey_meth;
 extern const EVP_PKEY_METHOD ed25519_pkey_meth;
+extern const EVP_PKEY_METHOD ed448_pkey_meth;
 extern const EVP_PKEY_METHOD hmac_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pkey_meth;
 extern const EVP_PKEY_METHOD rsa_pss_pkey_meth;
@@ -361,6 +363,29 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
 
+# ifndef OPENSSL_NO_EC
+
+#define X25519_KEYLEN        32
+#define X448_KEYLEN          56
+#define ED448_KEYLEN         57
+
+typedef struct {
+    unsigned char pubkey[X25519_KEYLEN];
+    unsigned char *privkey;
+} CURVE25519_KEY;
+
+typedef struct {
+    unsigned char pubkey[X448_KEYLEN];
+    unsigned char *privkey;
+} X448_KEY;
+
+typedef struct {
+    unsigned char pubkey[ED448_KEYLEN];
+    unsigned char *privkey;
+} ED448_KEY;
+
+#endif
+
 /*
  * Type needs to be a bit field Sub-type needs to be for variations on the
  * method, as in, can it do arbitrary encryption....
@@ -385,6 +410,9 @@ struct evp_pkey_st {
 # endif
 # ifndef OPENSSL_NO_EC
         struct ec_key_st *ec;   /* ECC */
+        CURVE25519_KEY *curve25519;
+        X448_KEY *x448;
+        ED448_KEY *ed448;
 # endif
     } pkey;
     int save_parameters;
