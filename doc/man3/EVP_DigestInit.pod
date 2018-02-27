@@ -217,8 +217,8 @@ preference to the low level interfaces. This is because the code then becomes
 transparent to the digest used and much more flexible.
 
 New applications should use the SHA-2 (such as L<EVP_sha256(3)>) or the SHA-3
-digest algorithms (such as L<EVP_sha3_512>). The other digest algorithms are
-still in common use.
+digest algorithms (such as L<EVP_sha3_512(3)>). The other digest algorithms
+are still in common use.
 
 For most applications the B<impl> parameter to EVP_DigestInit_ex() will be
 set to NULL to use the default digest implementation.
