@@ -416,20 +416,22 @@ static int ecx_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 
 static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
+    unsigned char *pubkey = NULL;
+
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(NULL, pkey, EVP_PKEY_X25519, NULL, arg2, arg1,
+        return ecx_key_op(NULL, pkey, pkey->ameth->pkey_id, NULL, arg2, arg1,
                           KEY_OP_PUBLIC);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        if (pkey->pkey.curve25519 != NULL) {
-            const CURVE25519_KEY *xkey = pkey->pkey.curve25519;
+        getpubkey(&pubkey, pkey);
+        if (pubkey != NULL) {
             unsigned char **ppt = arg2;
 
-            *ppt = OPENSSL_memdup(xkey->pubkey, X25519_KEYLEN);
+            *ppt = OPENSSL_memdup(pubkey, KEYLEN(pkey));
             if (*ppt != NULL)
-                return X25519_KEYLEN;
+                return KEYLEN(pkey);
         }
         return 0;
 
@@ -503,9 +505,14 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     NULL
 };
 
-static int ecd_size(const EVP_PKEY *pkey)
+static int ecd_size25519(const EVP_PKEY *pkey)
 {
     return ED25519_SIGSIZE;
+}
+
+static int ecd_size448(const EVP_PKEY *pkey)
+{
+    return ED448_SIGSIZE;
 }
 
 static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
@@ -588,7 +595,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     ecx_priv_encode,
     ecx_priv_print,
 
-    ecd_size,
+    ecd_size25519,
     ecx_bits,
     ecx_security_bits,
 
@@ -621,7 +628,7 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     ecx_priv_encode,
     ecx_priv_print,
 
-    ecd_size,
+    ecd_size448,
     ecx_bits,
     ecx_security_bits,
 
