@@ -52,8 +52,10 @@ The specific structures are:
     RSA
     ENGINE
     UI
-    UI_METHOD
     BIO
+    APP
+    UI_METHOD
+    DRBG
 
 Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
 header file.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for

@@ -16,8 +16,9 @@
 #include "internal/rand_int.h"
 
 /*
- * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
- * The RAND_DRBG is OpenSSL's pointer to an instance of the DRBG.
+ * Support framework for NIST SP 800-90A DRBG
+ *
+ * See manual page RAND_DRBG(7) for a general overview.
  *
  * The OpenSSL model is to have new and free functions, and that new
  * does all initialization.  That is not the NIST model, which has
@@ -28,84 +29,33 @@
  */
 
 /*
- * THE THREE SHARED DRBGs
+ * The three shared DRBG instances
  *
- * There are three shared DRBGs (master, public and private), which are
- * accessed concurrently by all threads.
- *
- * THE MASTER DRBG
+ * There are three shared DRBG instances (<master>, <public>, and <private>),
+ * which are accessed concurrently by all threads. The necessary locking
+ * is managed automatically by the RAND methods (e.g., RAND_bytes()).
+ */
+
+/*
+ * The <master> DRBG
  *
  * Not used directly by the application, only for reseeding the two other
  * DRBGs. It reseeds itself by pulling either randomness from os entropy
- * sources or by consuming randomnes which was added by RAND_add()
+ * sources or by consuming randomness which was added by RAND_add().
  */
 static RAND_DRBG *drbg_master;
 /*
- * THE PUBLIC DRBG
+ * The <public> DRBG
  *
  * Used by default for generating random bytes using RAND_bytes().
  */
 static RAND_DRBG *drbg_public;
 /*
- * THE PRIVATE DRBG
+ * The <private> DRBG
  *
  * Used by default for generating private keys using RAND_priv_bytes()
  */
 static RAND_DRBG *drbg_private;
-/*+
- * DRBG HIERARCHY
- *
- * In addition there are DRBGs, which are not shared, but used only by a
- * single thread at every time, for example the DRBGs which are owned by
- * an SSL context. All DRBGs are organized in a hierarchical fashion
- * with the <master> DRBG as root.
- *
- * This gives the following overall picture:
- *
- *                  <os entropy sources>
- *                         |
- *    RAND_add() ==>    <master>          \
- *                       /   \            | shared DRBGs (with locking)
- *                 <public>  <private>    /
- *                     |
- *                   <ssl>  owned by an SSL context
- *
- * AUTOMATIC RESEEDING
- *
- * Before satisfying a generate request, a DRBG reseeds itself automatically,
- * if one of the following two conditions holds:
- *
- * - the number of generate requests since the last reseeding exceeds a
- *   certain threshold, the so called |reseed_interval|. This behaviour
- *   can be disabled by setting the |reseed_interval| to 0.
- *
- * - the time elapsed since the last reseeding exceeds a certain time
- *   interval, the so called |reseed_time_interval|. This behaviour
- *   can be disabled by setting the |reseed_time_interval| to 0.
- *
- * MANUAL RESEEDING
- *
- * For the three shared DRBGs (and only for these) there is another way to
- * reseed them manually by calling RAND_seed() (or RAND_add() with a positive
- * |randomness| argument). This will immediately reseed the <master> DRBG.
- * The <public> and <private> DRBG will detect this on their next generate
- * call and reseed, pulling randomness from <master>.
- *
- * LOCKING
- *
- * The three shared DRBGs are intended to be used concurrently, so they
- * support locking. The RAND methods take the locks automatically, so using
- * the RAND api (in particular RAND_bytes() and RAND_priv_bytes()) is
- * thread-safe. Note however that accessing the shared DRBGs directly via
- * the RAND_DRBG interface is *not* thread-safe.
- *
- * All other DRBG instances don't support locking, because they are
- * intendended to be used by a single thread. Instead of accessing a single
- * DRBG instance concurrently from different threads, it is recommended to
- * instantiate a separate DRBG instance per thread. Using the same shared
- * DRBG (preferrably the public DRBG) as parent of DRBG instances on
- * different threads is safe.
- */
 
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
@@ -687,40 +637,10 @@ err:
 /*
  * Set the RAND_DRBG callbacks for obtaining entropy and nonce.
  *
- * In the following, the signature and the semantics of the
- * get_entropy() and cleanup_entropy() callbacks are explained.
+ * Setting the callbacks is allowed only if the drbg has not been
+ * initialized yet. Otherwise, the operation will fail.
  *
- * GET_ENTROPY
- *
- *     size_t get_entropy(RAND_DRBG *ctx,
- *                        unsigned char **pout,
- *                        int entropy,
- *                        size_t min_len, size_t max_len);
- *
- * This is a request to allocate and fill a buffer of size
- * |min_len| <= size <= |max_len| (in bytes) which contains
- * at least |entropy| bits of randomness. The buffer's address is
- * to be returned in |*pout| and the number of collected
- * randomness bytes (which may be less than the allocated size
- * of the buffer) as return value.
- *
- * If the callback fails to acquire at least |entropy| bits of
- * randomness, it shall return a buffer length of 0.
- *
- * CLEANUP_ENTROPY
- *
- *     void cleanup_entropy(RAND_DRBG *ctx,
- *                          unsigned char *out, size_t outlen);
- *
- * A request to clear and free the buffer allocated by get_entropy().
- * The values |out| and |outlen| are expected to be the random buffer's
- * address and length, as returned by the get_entropy() callback.
- *
- * GET_NONCE, CLEANUP_NONCE
- *
- * Signature and semantics of the get_nonce() and cleanup_nonce()
- * callbacks are analogous to get_entropy() and cleanup_entropy().
- * Currently, the nonce is used only for the known answer tests.
+ * Returns 1 on success, 0 on failure.
  */
 int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_entropy_fn get_entropy,

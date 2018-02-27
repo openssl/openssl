@@ -87,26 +87,26 @@ RAND_DRBG *RAND_DRBG_get0_private(void);
  */
 # define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DRBG, l, p, newf, dupf, freef)
-int RAND_DRBG_set_ex_data(RAND_DRBG *dctx, int idx, void *arg);
-void *RAND_DRBG_get_ex_data(const RAND_DRBG *dctx, int idx);
+int RAND_DRBG_set_ex_data(RAND_DRBG *drbg, int idx, void *arg);
+void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx);
 
 /*
  * Callback function typedefs
  */
-typedef size_t (*RAND_DRBG_get_entropy_fn)(RAND_DRBG *ctx,
+typedef size_t (*RAND_DRBG_get_entropy_fn)(RAND_DRBG *drbg,
                                            unsigned char **pout,
                                            int entropy, size_t min_len,
                                            size_t max_len,
                                            int prediction_resistance);
 typedef void (*RAND_DRBG_cleanup_entropy_fn)(RAND_DRBG *ctx,
                                              unsigned char *out, size_t outlen);
-typedef size_t (*RAND_DRBG_get_nonce_fn)(RAND_DRBG *ctx, unsigned char **pout,
+typedef size_t (*RAND_DRBG_get_nonce_fn)(RAND_DRBG *drbg, unsigned char **pout,
                                          int entropy, size_t min_len,
                                          size_t max_len);
-typedef void (*RAND_DRBG_cleanup_nonce_fn)(RAND_DRBG *ctx,
+typedef void (*RAND_DRBG_cleanup_nonce_fn)(RAND_DRBG *drbg,
                                            unsigned char *out, size_t outlen);
 
-int RAND_DRBG_set_callbacks(RAND_DRBG *dctx,
+int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_entropy_fn get_entropy,
                             RAND_DRBG_cleanup_entropy_fn cleanup_entropy,
                             RAND_DRBG_get_nonce_fn get_nonce,
