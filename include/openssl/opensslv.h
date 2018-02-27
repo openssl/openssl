@@ -40,7 +40,7 @@ extern "C" {
  *  major minor fix final patch/beta)
  */
 # define OPENSSL_VERSION_NUMBER  0x10101002L
-# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-pre2-dev  xx XXX xxxx"
+# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-pre2 (alpha) 27 Feb 2018"
 
 #define OPENSSL_MAKE_VERSION(maj,min,fix,patch) ((0x10000000L)+((maj&0xff)<<20)+((min&0xff)<<12)+((fix&0xff)<<4)+patch)
 
