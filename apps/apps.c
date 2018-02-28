@@ -2340,6 +2340,73 @@ int app_isdir(const char *name)
 }
 #endif
 
+/* app_dirname section */
+
+/*
+ * This exactly follows what POSIX's
+ * dirname does, but is implemented
+ * in a more platform independent way.
+ *
+ * path        dirname
+ * /usr/lib    /usr
+ * /usr/       /
+ * usr         .
+ * /           /
+ * .           .
+ * ..          .
+ * ""          .
+ *
+ * Note: this function also keeps the
+ * possibility of modifying the 'path'
+ * string same as POSIX dirname.
+ */
+static char *posix_dirname(char *path)
+{
+    size_t l;
+    char *ret = ".";
+
+    l = strlen(path);
+    if (l == 0)
+        goto out;
+    if (strcmp(path, ".") == 0)
+        goto out;
+    if (strcmp(path, "..") == 0)
+        goto out;
+    if (strcmp(path, "/") == 0) {
+        ret = "/";
+        goto out;
+    }
+    if (path[l - 1] == '/') {
+        /* /usr/ */
+        path[l - 1] = '\0';
+    }
+    if ((ret = strrchr(path, '/')) == NULL) {
+        /* usr */
+        ret = ".";
+    } else if (ret == path) {
+        /* /usr */
+        *++ret = '\0';
+        ret = path;
+    } else {
+        /* /usr/lib */
+        *ret = '\0';
+        ret = path;
+    }
+ out:
+    return ret;
+}
+
+/*
+ * TODO: implement app_dirname for Windows
+ * and VMS.
+ */
+#if !defined(_WIN32) && !defined(__VMS)
+char *app_dirname(char *path)
+{
+    return posix_dirname(path);
+}
+#endif
+
 /* raw_read|write section */
 #if defined(__VMS)
 # include "vms_term_sock.h"
