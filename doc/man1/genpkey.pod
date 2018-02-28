@@ -246,7 +246,6 @@ numeric OID. Following parameter sets are supported:
 The X25519 and X448 algorithms do not currently support any key generation
 options.
 
-
 =head1 NOTES
 
 The use of the genpkey program is encouraged over the algorithm specific
