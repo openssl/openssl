@@ -27,9 +27,8 @@
 
 #define ED448_SIGSIZE        114
 
-#define ISX448(id)      ((id) == EVP_PKEY_X448 ? 1 : 0)
-#define IS25519(id)     (((id) == EVP_PKEY_X25519 || (id) == EVP_PKEY_ED25519) \
-                            ? 1 : 0)
+#define ISX448(id)      ((id) == EVP_PKEY_X448)
+#define IS25519(id)     ((id) == EVP_PKEY_X25519 || (id) == EVP_PKEY_ED25519)
 #define KEYLENID(id)    (IS25519(id) ? X25519_KEYLEN \
                                      : ((id) == EVP_PKEY_X448 ? X448_KEYLEN \
                                                               : ED448_KEYLEN))
@@ -83,7 +82,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             goto err;
         }
         if (op == KEY_OP_KEYGEN) {
-            if (RAND_bytes(privkey, KEYLENID(id)) <= 0) {
+            if (RAND_priv_bytes(privkey, KEYLENID(id)) <= 0) {
                 OPENSSL_secure_free(privkey);
                 key->privkey = NULL;
                 goto err;
@@ -435,8 +434,8 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 }
 
 static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                         X509_ALGOR *alg1, X509_ALGOR *alg2,
-                         ASN1_BIT_STRING *str)
+                              X509_ALGOR *alg1, X509_ALGOR *alg2,
+                              ASN1_BIT_STRING *str)
 {
     /* Set algorithms identifiers */
     X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
@@ -447,28 +446,27 @@ static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 }
 
 static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                            const ASN1_STRING *sig)
+                                 const ASN1_STRING *sig)
 {
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED25519, X25519_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
     return 1;
 }
 
-
 static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                         X509_ALGOR *alg1, X509_ALGOR *alg2,
-                         ASN1_BIT_STRING *str)
+                            X509_ALGOR *alg1, X509_ALGOR *alg2,
+                            ASN1_BIT_STRING *str)
 {
-    /* Set algorithms identifiers */
+    /* Set algorithm identifier */
     X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
     if (alg2 != NULL)
         X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
-    /* Algorithm idetifiers set: carry on as normal */
+    /* Algorithm identifier set: carry on as normal */
     return 3;
 }
 
 static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                            const ASN1_STRING *sig)
+                               const ASN1_STRING *sig)
 {
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED448, X448_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
