@@ -3002,10 +3002,22 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->ext.status_type = TLSEXT_STATUSTYPE_nothing;
 
     /*
-     * Default max early data is a fully loaded single record. Could be split
-     * across multiple records in practice
+     * We cannot usefully set a default max_early_data here (which gets
+     * propagated in SSL_new(), for the following reason: setting the
+     * SSL field causes tls_construct_stoc_early_data() to tell the
+     * client that early data will be accepted when constructing a TLS 1.3
+     * session ticket, and the client will accordingly send us early data
+     * when using that ticket (if the client has early data to send).
+     * However, in order for the early data to actually be consumed by
+     * the application, the application must also have calls to
+     * SSL_read_early_data(); otherwise we'll just skip past the early data
+     * and ignore it.  So, since the application must add calls to
+     * SSL_read_early_data(), we also require them to add
+     * calls to SSL_CTX_set_max_early_data() in order to use early data,
+     * eliminating the bandwidth-wasting early data in the case described
+     * above.
      */
-    ret->max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
+    ret->max_early_data = 0;
 
     return ret;
  err:
