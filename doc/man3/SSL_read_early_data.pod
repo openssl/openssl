@@ -101,7 +101,9 @@ was rejected or SSL_EARLY_DATA_NOT_SENT if no early data was sent. This function
 may be called by either the client or the server.
 
 A server uses the SSL_read_early_data() function to receive early data on a
-connection. As for SSL_write_early_data() this must be the first IO function
+connection for which early data has been enabled using
+SSL_CTX_set_max_early_data() or SSL_set_max_early_data(). As for
+SSL_write_early_data(), this must be the first IO function
 called on a connection, i.e. it must occur before any calls to
 L<SSL_write_ex(3)>, L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>,
 or other similar functions.
@@ -165,12 +167,16 @@ further action taken.
 
 When a session is created between a server and a client the server will specify
 the maximum amount of any early data that it will accept on any future
-connection attempt. By default this is approximately 16k. A server may override
-this default value by calling SSL_CTX_set_max_early_data() or
+connection attempt. By default the server does not accept early data; a
+server may indicate support for early data by calling
+SSL_CTX_set_max_early_data() or
 SSL_set_max_early_data() to set it for the whole SSL_CTX or an individual SSL
 object respectively. Similarly the SSL_CTX_get_max_early_data() and
 SSL_get_max_early_data() functions can be used to obtain the current maximum
 early data settings for the SSL_CTX and SSL objects respectively.
+Generally a server application will either use both of SSL_read_early_data()
+and SSL_CTX_set_max_early_data() (or SSL_set_max_early_data()), or neither
+of them, since there is no practical benefit from using only one of them.
 
 In the event that the current maximum early data setting for the server is
 different to that originally specified in a session that a client is resuming
