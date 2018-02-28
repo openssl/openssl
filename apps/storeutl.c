@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/store.h>
+#include <openssl/x509v3.h>      /* s2i_ASN1_INTEGER */
 
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
