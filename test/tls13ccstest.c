@@ -255,7 +255,11 @@ static int test_tls13ccs(int tst)
     chsessidlen = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       &sctx, &cctx, cert, privkey)))
+                                       &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_max_early_data(sctx,
+                                                 SSL3_RT_MAX_PLAIN_LENGTH))
+        || !TEST_true(SSL_CTX_set_max_early_data(cctx,
+                                                 SSL3_RT_MAX_PLAIN_LENGTH)))
         goto err;
 
     /*

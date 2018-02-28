@@ -1570,6 +1570,8 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_EARLY_DATA:
             early_data = 1;
+            if (max_early_data == -1)
+                max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
             break;
         }
     }
