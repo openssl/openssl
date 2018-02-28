@@ -594,6 +594,8 @@ EC_F_OSSL_ECDSA_SIGN_SIG:249:ossl_ecdsa_sign_sig
 EC_F_OSSL_ECDSA_VERIFY_SIG:250:ossl_ecdsa_verify_sig
 EC_F_PKEY_ECD_CTRL:271:pkey_ecd_ctrl
 EC_F_PKEY_ECD_DIGESTSIGN:272:pkey_ecd_digestsign
+EC_F_PKEY_ECD_DIGESTSIGN25519:276:pkey_ecd_digestsign25519
+EC_F_PKEY_ECD_DIGESTSIGN448:277:pkey_ecd_digestsign448
 EC_F_PKEY_ECX_DERIVE:269:pkey_ecx_derive
 EC_F_PKEY_EC_CTRL:197:pkey_ec_ctrl
 EC_F_PKEY_EC_CTRL_STR:198:pkey_ec_ctrl_str
@@ -601,6 +603,7 @@ EC_F_PKEY_EC_DERIVE:217:pkey_ec_derive
 EC_F_PKEY_EC_KEYGEN:199:pkey_ec_keygen
 EC_F_PKEY_EC_PARAMGEN:219:pkey_ec_paramgen
 EC_F_PKEY_EC_SIGN:218:pkey_ec_sign
+EC_F_VALIDATE_ECX_DERIVE:278:validate_ecx_derive
 ENGINE_F_DIGEST_UPDATE:198:digest_update
 ENGINE_F_DYNAMIC_CTRL:180:dynamic_ctrl
 ENGINE_F_DYNAMIC_GET_DATA_CTX:181:dynamic_get_data_ctx
