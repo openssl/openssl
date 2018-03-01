@@ -40,12 +40,12 @@
 # P4			+22%		+40%
 # Sandy Bridge		-3%		+11%
 # Haswell		-1%		+13%
-# Broadwell(***)	+26%		+30%
-# Skylake(***)		+30%		+47%
+# Broadwell(***)	+30%		+35%
+# Skylake(***)		+33%		+47%
 # Silvermont		+20%		+26%
 # Goldmont		+40%		+50%
 # Bulldozer		+20%		+9%
-# Ryzen(***)		+35%		+32%
+# Ryzen(***)		+43%		+40%
 # VIA			+170%		+120%
 #
 # (*)	amd64-51 is popular assembly implementation with 2^51 radix,
@@ -631,13 +631,10 @@ x25519_fe64_sqr:
 	and	\$38,%rax
 
 	add	%rax,$acc0
-	adc	\$0,$acc1
-	mov	$acc0,8*0(%rdi)
-	adc	\$0,$acc2
 	mov	$acc1,8*1(%rdi)
-	adc	\$0,$acc3
 	mov	$acc2,8*2(%rdi)
 	mov	$acc3,8*3(%rdi)
+	mov	$acc0,8*0(%rdi)
 
 	mov	8*3(%rsp),%r15
 	mov	8*4(%rsp),%r14
@@ -674,13 +671,10 @@ x25519_fe64_mul121666:
 	and	\$38,%rax
 
 	add	%rax,$acc0
-	adc	\$0,$acc1
-	mov	$acc0,8*0(%rdi)
-	adc	\$0,$acc2
 	mov	$acc1,8*1(%rdi)
-	adc	\$0,$acc3
 	mov	$acc2,8*2(%rdi)
 	mov	$acc3,8*3(%rdi)
+	mov	$acc0,8*0(%rdi)
 
 	ret
 .size	x25519_fe64_mul121666,.-x25519_fe64_mul121666
@@ -769,14 +763,11 @@ x25519_fe64_tobytes:
 	and	\$19,%rax
 
 	add	%rax,$acc0
-	adc	\$0,$acc1
-	adc	\$0,$acc2
-	adc	\$0,$acc3
 
-	mov	$acc0,8*0(%rdi)
 	mov	$acc1,8*1(%rdi)
 	mov	$acc2,8*2(%rdi)
 	mov	$acc3,8*3(%rdi)
+	mov	$acc0,8*0(%rdi)
 
 	ret
 .size	x25519_fe64_tobytes,.-x25519_fe64_tobytes
