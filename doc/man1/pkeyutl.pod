@@ -282,10 +282,10 @@ verify operations use ECDSA and derive uses ECDH. Currently there are no
 additional options other than B<digest>. Only the SHA1 digest can be used and
 this digest is assumed by default.
 
-=head1 X25519 ALGORITHM
+=head1 X25519 and X448 ALGORITHMS
 
-The X25519 algorithm supports key derivation only. Currently there are no
-additional options.
+The X25519 and X448 algorithms support key derivation only. Currently there are
+no additional options.
 
 =head1 EXAMPLES
 

@@ -9,6 +9,10 @@
 
  Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
+  *) Added support for X448 and Ed448. Currently this is only supported in
+     libcrypto (not libssl). Heavily based on original work by Mike Hamburg.
+     [Matt Caswell]
+
   *) Extend OSSL_STORE with capabilities to search and to narrow the set of
      objects loaded.  This adds the functions OSSL_STORE_expect() and
      OSSL_STORE_find() as well as needed tools to construct searches and

@@ -242,6 +242,10 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "ossl_ecdsa_verify_sig"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_CTRL, 0), "pkey_ecd_ctrl"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_DIGESTSIGN, 0), "pkey_ecd_digestsign"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_DIGESTSIGN25519, 0),
+     "pkey_ecd_digestsign25519"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_DIGESTSIGN448, 0),
+     "pkey_ecd_digestsign448"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECX_DERIVE, 0), "pkey_ecx_derive"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_CTRL, 0), "pkey_ec_ctrl"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_CTRL_STR, 0), "pkey_ec_ctrl_str"},
@@ -249,6 +253,7 @@ static const ERR_STRING_DATA EC_str_functs[] = {
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_KEYGEN, 0), "pkey_ec_keygen"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_PARAMGEN, 0), "pkey_ec_paramgen"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_SIGN, 0), "pkey_ec_sign"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_VALIDATE_ECX_DERIVE, 0), "validate_ecx_derive"},
     {0, NULL}
 };
 

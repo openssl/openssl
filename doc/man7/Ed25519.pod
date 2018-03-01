@@ -2,16 +2,18 @@
 
 =head1 NAME
 
-Ed25519 - EVP_PKEY Ed25519 support
+Ed25519,
+Ed448
+- EVP_PKEY Ed25519 and Ed448 support
 
 =head1 DESCRIPTION
 
-The B<Ed25519> EVP_PKEY implementation supports key generation, one shot
-digest sign and digest verify using PureEdDSA and B<Ed25519> (see RFC8032).
-It has associated private and public key formats compatible with
+The B<Ed25519> and B<Ed448> EVP_PKEY implementation supports key generation,
+one-shot digest sign and digest verify using PureEdDSA and B<Ed25519> or B<Ed448>
+(see RFC8032). It has associated private and public key formats compatible with
 draft-ietf-curdle-pkix-04.
 
-No additional parameters can be set during key generation one shot signing or
+No additional parameters can be set during key generation one-shot signing or
 verification. In particular, because PureEdDSA is used, when signing or
 verifying a digest must B<NOT> be specified.
 
@@ -19,19 +21,23 @@ verifying a digest must B<NOT> be specified.
 
 The PureEdDSA algorithm does not support the streaming mechanism
 of other signature algorithms using, for example, EVP_DigestUpdate().
-The message to sign or verify must be passed using the one shot
+The message to sign or verify must be passed using the one-shot
 EVP_DigestSign() asn EVP_DigestVerify() functions.
 
 When calling EVP_DigestSignInit() or EVP_DigestSignUpdate() the
 digest parameter B<MUST> be set to B<NULL>.
 
 Applications wishing to sign certificates (or other structures such as
-CRLs or certificate requests) using Ed25519 can either use X509_sign()
+CRLs or certificate requests) using Ed25519 or Ed448 can either use X509_sign()
 or X509_sign_ctx() in the usual way.
 
 A context for the B<Ed25519> algorithm can be obtained by calling:
 
  EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, NULL);
+
+For the B<Ed448> algorithm a context can be obtained by calling:
+
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED448, NULL);
 
 =head1 EXAMPLE
 
@@ -57,7 +63,7 @@ L<EVP_DigestVerifyInit(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

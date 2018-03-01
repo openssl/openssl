@@ -241,10 +241,10 @@ numeric OID. Following parameter sets are supported:
 
 =back
 
-=head1 X25519 KEY GENERATION OPTIONS
+=head1 X25519 and X448 KEY GENERATION OPTIONS
 
-The X25519 algorithm does not currently support any key generation options.
-
+The X25519 and X448 algorithms do not currently support any key generation
+options.
 
 =head1 NOTES
 

@@ -167,6 +167,8 @@ int ERR_load_EC_strings(void);
 #  define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
 #  define EC_F_PKEY_ECD_CTRL                               271
 #  define EC_F_PKEY_ECD_DIGESTSIGN                         272
+#  define EC_F_PKEY_ECD_DIGESTSIGN25519                    276
+#  define EC_F_PKEY_ECD_DIGESTSIGN448                      277
 #  define EC_F_PKEY_ECX_DERIVE                             269
 #  define EC_F_PKEY_EC_CTRL                                197
 #  define EC_F_PKEY_EC_CTRL_STR                            198
@@ -174,6 +176,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
+#  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*
  * EC reason codes.
