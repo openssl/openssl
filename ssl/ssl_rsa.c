@@ -1039,11 +1039,11 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
 static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
                                 STACK_OF(X509) *chain, int override)
 {
-    int ret = -1;
+    int ret = 0;
     size_t i;
     int j;
     int rv;
-    CERT *c = ssl ? ssl->cert : ctx->cert;
+    CERT *c = ssl != NULL ? ssl->cert : ctx->cert;
     STACK_OF(X509) *dup_chain = NULL;
     EVP_PKEY *pubkey = NULL;
 
@@ -1064,9 +1064,9 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
     pubkey = X509_get_pubkey(x509); /* bumps reference */
     if (pubkey == NULL)
         goto out;
-    if (privatekey == NULL)
+    if (privatekey == NULL) {
         privatekey = pubkey;
-    else {
+    } else {
         /* For RSA, which has no parameters, missing returns 0 */
         if (EVP_PKEY_missing_parameters(privatekey)) {
             if (EVP_PKEY_missing_parameters(pubkey)) {
@@ -1100,29 +1100,22 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
         goto out;
     }
 
-    if (c->pkeys[i].x509 == NULL &&
-        c->pkeys[i].privatekey == NULL &&
-        c->pkeys[i].chain == NULL) {
-        /* nothing there - will be success */
-        ret = 1;
-    } else if (override == 0) {
-        /* something already there, and no override */
-        ret = 0;
+    if (!override && (c->pkeys[i].x509 != NULL
+                      || c->pkeys[i].privatekey != NULL
+                      || c->pkeys[i].chain != NULL)) {
+        /* No override, and something already there */
+        SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, SSL_R_NOT_REPLACING_CERTIFICATE);
         goto out;
-    } else {
-        /* something already there, will be override */
-        ret = 2;
     }
 
-    /* this is the only thing that could fail */
     if (chain != NULL) {
         dup_chain = X509_chain_up_ref(chain);
         if  (dup_chain == NULL) {
             SSLerr(SSL_F_SSL_SET_CERT_AND_KEY, ERR_R_MALLOC_FAILURE);
-            ret = -1;
             goto out;
         }
     }
+
     sk_X509_pop_free(c->pkeys[i].chain, X509_free);
     c->pkeys[i].chain = dup_chain;
 
@@ -1136,6 +1129,7 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
 
     c->key = &(c->pkeys[i]);
 
+    ret = 1;
  out:
     EVP_PKEY_free(pubkey);
     return ret;
@@ -1144,15 +1138,11 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
 int SSL_use_cert_and_key(SSL *ssl, X509 *x509, EVP_PKEY *privatekey,
                          STACK_OF(X509) *chain, int override)
 {
-    if (ssl == NULL)
-        return -1;
     return ssl_set_cert_and_key(ssl, NULL, x509, privatekey, chain, override);
 }
 
 int SSL_CTX_use_cert_and_key(SSL_CTX *ctx, X509 *x509, EVP_PKEY *privatekey,
                              STACK_OF(X509) *chain, int override)
 {
-    if (ctx == NULL)
-        return -1;
     return ssl_set_cert_and_key(NULL, ctx, x509, privatekey, chain, override);
 }

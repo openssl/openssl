@@ -2529,6 +2529,7 @@ SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:209:missing supported groups extension
 SSL_R_MISSING_TMP_DH_KEY:171:missing tmp dh key
 SSL_R_MISSING_TMP_ECDH_KEY:311:missing tmp ecdh key
 SSL_R_NOT_ON_RECORD_BOUNDARY:182:not on record boundary
+SSL_R_NOT_REPLACING_CERTIFICATE:289:not replacing certificate
 SSL_R_NOT_SERVER:284:not server
 SSL_R_NO_APPLICATION_PROTOCOL:235:no application protocol
 SSL_R_NO_CERTIFICATES_RETURNED:176:no certificates returned

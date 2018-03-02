@@ -578,6 +578,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_MISSING_TMP_DH_KEY                         171
 # define SSL_R_MISSING_TMP_ECDH_KEY                       311
 # define SSL_R_NOT_ON_RECORD_BOUNDARY                     182
+# define SSL_R_NOT_REPLACING_CERTIFICATE                  289
 # define SSL_R_NOT_SERVER                                 284
 # define SSL_R_NO_APPLICATION_PROTOCOL                    235
 # define SSL_R_NO_CERTIFICATES_RETURNED                   176

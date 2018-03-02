@@ -107,8 +107,8 @@ If B<override> is non-0, then the certificate, private key and chain certs
 are always set. If B<pkey> is NULL, then the public key of B<x> is used as
 the private key. This is intended to be used with hardware (via the ENGINE
 inteface) that stores the private key securely, such that it cannot be
-accessed by OpenSSL. The reference count of the public key is incremented;
-(twice if there is no private key) it is not copied nor duplicated. This
+accessed by OpenSSL. The reference count of the public key is incremented
+(twice if there is no private key); it is not copied nor duplicated. This
 allows all private key validations checks to succeed without an actual
 private key being assigned via SSL_CTX_use_PrivateKey(), etc.
 
@@ -174,28 +174,6 @@ is considered public anyway.)
 
 On success, the functions return 1.
 Otherwise check out the error stack to find out the reason.
-
-For SSL_use_cert_and_key() and SSL_CTX_use_cert_and_key(), the return values are:
-
-=over 4
-
-=item Z<>2
-
-on success of replacing an existing certificate/private key (B<override> is non-0)
-
-=item Z<>1
-
-on success if no existing certificate
-
-=item Z<>0
-
-on failure to replace an existing certificate (B<override> = 0)
-
-=item Z<>-1
-
-other failure
-
-=back
 
 =head1 SEE ALSO
 

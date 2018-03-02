@@ -936,6 +936,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "missing tmp ecdh key"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NOT_ON_RECORD_BOUNDARY),
     "not on record boundary"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NOT_REPLACING_CERTIFICATE),
+    "not replacing certificate"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NOT_SERVER), "not server"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_APPLICATION_PROTOCOL),
     "no application protocol"},
