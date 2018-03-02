@@ -45,6 +45,9 @@
 #ifndef PAGE_SIZE
 # define PAGE_SIZE    4096
 #endif
+#if !defined(MAP_ANON) && defined(MAP_ANONYMOUS)
+# define MAP_ANON MAP_ANONYMOUS
+#endif
 
 #ifdef IMPLEMENTED
 static size_t secure_mem_used;
