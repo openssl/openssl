@@ -360,7 +360,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
     /*
      * Win32 abort() customarily shows a dialog, but we just did that...
      */
-# if !defined(_WIN32_WCE) && !defined(OPENSSL_SYS_WIN_CORE)
+# if !defined(_WIN32_WCE)
     raise(SIGABRT);
 # endif
     _exit(3);
