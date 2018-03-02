@@ -15,10 +15,10 @@
 
 /*
  * Even though the VMS C RTL claims to be C99 compatible, it's not entirely
- * so far (C RTL version 8.4).  For the sake of these tests, we therefore
- * define our own.
+ * so far (C RTL version 8.4). Same applies to OSF. For the sake of these
+ * tests, we therefore define our own.
  */
-#if defined(__VMS) && __CRTL_VER <= 80400000
+#if (defined(__VMS) && __CRTL_VER <= 80400000) || defined(__osf__)
 static int isblank(int c)
 {
     return c == ' ' || c == '\t';
@@ -35,7 +35,9 @@ static int test_ctype_chars(int n)
 
     return TEST_int_eq(isalpha(n) != 0, ossl_isalpha(n) != 0)
            && TEST_int_eq(isalnum(n) != 0, ossl_isalnum(n) != 0)
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
            && TEST_int_eq(isblank(n) != 0, ossl_isblank(n) != 0)
+#endif
            && TEST_int_eq(iscntrl(n) != 0, ossl_iscntrl(n) != 0)
            && TEST_int_eq(isdigit(n) != 0, ossl_isdigit(n) != 0)
            && TEST_int_eq(isgraph(n) != 0, ossl_isgraph(n) != 0)
