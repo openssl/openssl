@@ -109,6 +109,11 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
             }
             fnd->funct = NULL;
             (void)lh_ENGINE_PILE_insert(&(*table)->piles, fnd);
+            if (lh_ENGINE_PILE_retrieve(&(*table)->piles, &tmplate) != fnd) {
+                sk_ENGINE_free(fnd->sk);
+                OPENSSL_free(fnd);
+                goto end;
+            }
         }
         /* A registration shouldn't add duplicate entries */
         (void)sk_ENGINE_delete_ptr(fnd->sk, e);
