@@ -122,7 +122,7 @@ void gf_strong_reduce(gf a)
      * it was < p, so now scarry = -1 and this = x - p + 2^255 so let's add
      * back in p.  will carry back off the top for 2^255.
      */
-    assert(word_is_zero(scarry) | word_is_zero(scarry + 1));
+    assert(scarry == 0 || scarry == -1);
 
     scarry_0 = (word_t)scarry;
 
@@ -135,7 +135,7 @@ void gf_strong_reduce(gf a)
         carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
 
-    assert(word_is_zero(carry + scarry_0));
+    assert(carry < 2 && ((word_t)carry + scarry_0) == 0);
 }
 
 /* Subtract two gf elements d=a-b */
