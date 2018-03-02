@@ -296,10 +296,9 @@ void OPENSSL_showfatal(const char *fmta, ...)
     /* ONECORE is always NONGUI and NT >= 0x0601*/
         HRESULT tEventLog = TraceLoggingRegister(g_hProvider);
         if (SUCCEEDED(tEventLog)) {
-			const TCHAR *pmsg = buf;
             TraceLoggingWrite(g_hProvider, "ErrorLog",
                               TraceLoggingLevel(EVENTLOG_ERROR_TYPE),
-                              TraceLoggingWideString(pmsg, "Message"));
+                              TraceLoggingWideString(buf, "Message"));
         }
         TraceLoggingUnregister(g_hProvider);
 #  else
