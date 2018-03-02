@@ -135,9 +135,9 @@ void curve448_scalar_add(curve448_scalar_t out, const curve448_scalar_t a,
 
 static ossl_inline void scalar_decode_short(curve448_scalar_t s,
                                             const unsigned char *ser,
-                                            unsigned int nbytes)
+                                            size_t nbytes)
 {
-    unsigned int i, j, k = 0;
+    size_t i, j, k = 0;
 
     for (i = 0; i < C448_SCALAR_LIMBS; i++) {
         c448_word_t out = 0;
