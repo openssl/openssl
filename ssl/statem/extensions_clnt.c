@@ -705,9 +705,10 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
                  ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-#endif
-
     return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
 }
 
 EXT_RETURN tls_construct_ctos_cookie(SSL *s, WPACKET *pkt, unsigned int context,
