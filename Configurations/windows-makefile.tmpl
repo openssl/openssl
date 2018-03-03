@@ -14,18 +14,18 @@
 
  (our $sover_dirname = $config{shlib_version_number}) =~ s|\.|_|g;
 
+ my $build_scheme = $target{build_scheme};
+ my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
  my $win_installenv =
-     $target{build_scheme}->[2] eq "VC-W32" ?
-     "ProgramFiles(x86)" : "ProgramW6432";
+     $install_flavour eq "VC-WOW" ? "ProgramFiles(x86)"
+                                  : "ProgramW6432";
  my $win_commonenv =
-     $target{build_scheme}->[2] eq "VC-W32"
-     ? "CommonProgramFiles(x86)" : "CommonProgramW6432";
+     $install_flavour eq "VC-WOW" ? "CommonProgramFiles(x86)"
+                                  : "CommonProgramW6432";
  our $win_installroot =
-     defined($ENV{$win_installenv})
-     ? $win_installenv : 'ProgramFiles';
+     defined($ENV{$win_installenv}) ? $win_installenv : 'ProgramFiles';
  our $win_commonroot =
-     defined($ENV{$win_commonenv})
-     ? $win_commonenv : 'CommonProgramFiles';
+     defined($ENV{$win_commonenv}) ? $win_commonenv : 'CommonProgramFiles';
 
  # expand variables early
  $win_installroot = $ENV{$win_installroot};
