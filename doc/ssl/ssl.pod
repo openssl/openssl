@@ -825,7 +825,7 @@ L<DTLSv1_listen(3)>
 
 =head1 HISTORY
 
-B<SSLv2_client_method>, B<SSLv2_server_method> and B<SSLv2_method> where removed
+B<SSLv2_client_method>, B<SSLv2_server_method> and B<SSLv2_method> were removed
 in OpenSSL 1.1.0.
 
 The return type of B<SSL_copy_session_id> was changed from void to int in
