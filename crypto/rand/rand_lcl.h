@@ -108,6 +108,27 @@ typedef struct rand_drbg_ctr_st {
 
 
 /*
+ * The 'random pool' acts as a dumb container for collecting random
+ * input from various entropy sources. The pool has no knowledge about
+ * whether its randomness is fed into a legacy RAND_METHOD via RAND_add()
+ * or into a new style RAND_DRBG. It is the callers duty to 1) initialize the
+ * random pool, 2) pass it to the polling callbacks, 3) seed the RNG, and
+ * 4) cleanup the random pool again.
+ *
+ * The random pool contains no locking mechanism because its scope and
+ * lifetime is intended to be restricted to a single stack frame.
+ */
+struct rand_pool_st {
+    unsigned char *buffer;  /* points to the beginning of the random pool */
+    size_t len; /* current number of random bytes contained in the pool */
+
+    size_t min_len; /* minimum number of random bytes requested */
+    size_t max_len; /* maximum number of random bytes (allocated buffer size) */
+    size_t entropy; /* current entropy count in bits */
+    size_t requested_entropy; /* requested entropy count in bits */
+};
+
+/*
  * The state of all types of DRBGs, even though we only have CTR mode
  * right now.
  */
