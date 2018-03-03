@@ -16,6 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 #include "../crypto/rand/rand_lcl.h"
+#include "../crypto/include/internal/rand_int.h"
 
 #if defined(_WIN32)
 # include <windows.h>
@@ -864,6 +865,71 @@ static int test_multi_thread(void)
 }
 #endif
 
+/*
+ * This function is only returns the entropy already added with RAND_add(),
+ * and does not get entropy from the OS.
+ */
+static size_t rand_add_entropy(RAND_DRBG *drbg,
+                               unsigned char **pout,
+                               int entropy, size_t min_len, size_t max_len,
+                               int prediction_resistance)
+{
+    size_t ret = 0;
+
+    if (drbg->pool == NULL)
+        return 0;
+
+    if (drbg->pool->entropy < (size_t)entropy || drbg->pool->len < min_len
+        || drbg->pool->len > max_len)
+        return 0;
+
+    *pout = malloc(drbg->pool->len);
+    if (*pout == NULL)
+        return 0;
+
+    memcpy(*pout, drbg->pool->buffer, drbg->pool->len);
+    ret = drbg->pool->len;
+    OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
+    OPENSSL_free(drbg->pool);
+    drbg->pool = NULL;
+
+    return ret;
+}
+
+static void rand_add_clean_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
+{
+    free(out);
+}
+
+/*
+ * Test that instantiating works when OS entropy is not available and that
+ * RAND_add() is enough to reseed it.
+ */
+static int test_rand_add()
+{
+    RAND_DRBG *master = RAND_DRBG_get0_master();
+    RAND_DRBG_get_entropy_fn old_get_entropy = master->get_entropy;
+    RAND_DRBG_cleanup_entropy_fn old_cleanup_entropy = master->cleanup_entropy;
+    int rv = 0;
+    unsigned char rand_add_buf[256];
+
+    master->get_entropy = rand_add_entropy;
+    master->cleanup_entropy = rand_add_clean_entropy;
+    master->reseed_counter++;
+    RAND_DRBG_uninstantiate(master);
+    memset(rand_add_buf, 0, sizeof(rand_add_buf));
+    RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
+    if (!TEST_true(RAND_DRBG_instantiate(master, NULL, 0)))
+        goto error;
+
+    rv = 1;
+
+error:
+    master->get_entropy = old_get_entropy;
+    master->cleanup_entropy = old_cleanup_entropy;
+    return rv;
+}
+
 int setup_tests(void)
 {
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
@@ -871,6 +937,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
     ADD_TEST(test_rand_reseed);
+    ADD_TEST(test_rand_add);
 #if defined(OPENSSL_THREADS)
     ADD_TEST(test_multi_thread);
 #endif
