@@ -406,7 +406,8 @@ reconfigure reconf:
   sub generatesrc {
       my %args = @_;
       (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
-      my $generator = '"'.join('" "', @{$args{generator}}).'"';
+      my ($gen0, @gens) = @{$args{generator}};
+      my $generator = '"'.$gen0.'"'.join('', map { " $_" } @gens);
       my $generator_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
       my $incs = join("", map { " /I \"$_\"" } @{$args{incs}});
       my $deps = @{$args{deps}} ?
