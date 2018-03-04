@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include <internal/rand.h>
 #include "rsa_locl.h"
 
 static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -142,10 +143,10 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
     return RSA_padding_add_PKCS1_PSS_mgf1(rsa, EM, mHash, Hash, NULL, sLen);
 }
 
-int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
+int rsa_padding_add_pkcs1_pss_mgf1_ex(RSA *rsa, unsigned char *EM,
                                    const unsigned char *mHash,
                                    const EVP_MD *Hash, const EVP_MD *mgf1Hash,
-                                   int sLen)
+                                   int sLen, RAND_DRBG *drbg)
 {
     int i;
     int ret = 0;
@@ -171,7 +172,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
     } else if (sLen == RSA_PSS_SALTLEN_MAX_SIGN) {
         sLen = RSA_PSS_SALTLEN_MAX;
     } else if (sLen < RSA_PSS_SALTLEN_MAX) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1_EX, RSA_R_SLEN_CHECK_FAILED);
         goto err;
     }
 
@@ -182,26 +183,30 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         emLen--;
     }
     if (emLen < hLen + 2) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1_EX,
                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen == RSA_PSS_SALTLEN_MAX) {
         sLen = emLen - hLen - 2;
     } else if (sLen > emLen - hLen - 2) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1_EX,
                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         goto err;
     }
     if (sLen > 0) {
         salt = OPENSSL_malloc(sLen);
         if (salt == NULL) {
-            RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,
+            RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1_EX,
                    ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        if (RAND_bytes(salt, sLen) <= 0)
+        if (drbg != NULL) {
+            if (RAND_DRBG_bytes(drbg, salt, sLen) == 0)
+                goto err;
+        } else if (RAND_bytes(salt, sLen) <= 0) {
             goto err;
+        }
     }
     maskedDBLen = emLen - hLen - 1;
     H = EM + maskedDBLen;
@@ -248,6 +253,15 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
     return ret;
 
+}
+
+int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
+                                   const unsigned char *mHash,
+                                   const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+                                   int sLen)
+{
+    return rsa_padding_add_pkcs1_pss_mgf1_ex(rsa, EM, mHash, Hash, mgf1Hash,
+                                             sLen, NULL);
 }
 
 #if defined(_MSC_VER)

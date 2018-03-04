@@ -2689,6 +2689,7 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
+        EVP_PKEY_CTX_set_public_DRBG(pctx, s->drbg);
         if (lu->sig == EVP_PKEY_RSA_PSS) {
             if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
                 || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, RSA_PSS_SALTLEN_DIGEST) <= 0) {

@@ -85,6 +85,8 @@ struct bignum_ctx {
     int too_many;
     /* Flags. */
     int flags;
+    RAND_DRBG *public_drbg;
+    RAND_DRBG *private_drbg;
 };
 
 /* Enable this to find BN_CTX bugs */
@@ -230,6 +232,26 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     ctx->used++;
     CTXDBG_RET(ctx, ret);
     return ret;
+}
+
+void bn_ctx_set_public_drbg(BN_CTX *ctx, RAND_DRBG *drbg)
+{
+    ctx->public_drbg = drbg;
+}
+
+RAND_DRBG *bn_ctx_get_public_drbg(BN_CTX *ctx)
+{
+    return ctx->public_drbg;
+}
+
+void bn_ctx_set_private_drbg(BN_CTX *ctx, RAND_DRBG *drbg)
+{
+    ctx->private_drbg = drbg;
+}
+
+RAND_DRBG *bn_ctx_get_private_drbg(BN_CTX *ctx)
+{
+    return ctx->private_drbg;
 }
 
 /************/

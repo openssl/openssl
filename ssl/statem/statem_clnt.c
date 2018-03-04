@@ -2368,6 +2368,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                      ERR_R_EVP_LIB);
             goto err;
         }
+        EVP_PKEY_CTX_set_public_DRBG(pctx, s->drbg);
         if (SSL_USE_PSS(s)) {
             if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
                 || EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx,

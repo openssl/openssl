@@ -53,11 +53,15 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_PADDING_ADD_NONE                       107
 # define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP                 121
 # define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1            154
+# define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1_EX         167
 # define RSA_F_RSA_PADDING_ADD_PKCS1_PSS                  125
 # define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1             152
+# define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1_EX          166
 # define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1               108
 # define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2               109
+# define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2_EX            168
 # define RSA_F_RSA_PADDING_ADD_SSLV23                     110
+# define RSA_F_RSA_PADDING_ADD_SSLV23_EX                  169
 # define RSA_F_RSA_PADDING_ADD_X931                       127
 # define RSA_F_RSA_PADDING_CHECK_NONE                     111
 # define RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP               122

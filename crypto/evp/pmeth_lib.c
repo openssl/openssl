@@ -481,6 +481,26 @@ void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx)
     return ctx->app_data;
 }
 
+void EVP_PKEY_CTX_set_public_DRBG(EVP_PKEY_CTX *ctx, RAND_DRBG *drbg)
+{
+    ctx->public_drbg = drbg;
+}
+
+RAND_DRBG *EVP_PKEY_CTX_get_public_DRBG(EVP_PKEY_CTX *ctx)
+{
+    return ctx->public_drbg;
+}
+
+void EVP_PKEY_CTX_set_private_DRBG(EVP_PKEY_CTX *ctx, RAND_DRBG *drbg)
+{
+    ctx->private_drbg = drbg;
+}
+
+RAND_DRBG *EVP_PKEY_CTX_get_private_DRBG(EVP_PKEY_CTX *ctx)
+{
+    return ctx->private_drbg;
+}
+
 void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
                             int (*init) (EVP_PKEY_CTX *ctx))
 {

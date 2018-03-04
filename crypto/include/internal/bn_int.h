@@ -64,6 +64,11 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
  */
 int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words);
 
+void bn_ctx_set_public_drbg(BN_CTX *ctx, RAND_DRBG *drbg);
+void bn_ctx_set_private_drbg(BN_CTX *ctx, RAND_DRBG *drbg);
+RAND_DRBG *bn_ctx_get_public_drbg(BN_CTX *ctx);
+RAND_DRBG *bn_ctx_get_private_drbg(BN_CTX *ctx);
+
 #ifdef  __cplusplus
 }
 #endif

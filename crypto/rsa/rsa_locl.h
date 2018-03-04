@@ -110,6 +110,9 @@ struct rsa_meth_st {
     int (*rsa_keygen) (RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
     int (*rsa_multi_prime_keygen) (RSA *rsa, int bits, int primes,
                                    BIGNUM *e, BN_GENCB *cb);
+    int (*rsa_priv_enc_ex) (int flen, const unsigned char *from,
+                            unsigned char *to, RSA *rsa, int padding,
+                            EVP_PKEY_CTX *pctx);
 };
 
 extern int int_rsa_verify(int dtype, const unsigned char *m,
@@ -130,3 +133,19 @@ void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
 RSA_PRIME_INFO *rsa_multip_info_new(void);
 int rsa_multip_calc_product(RSA *rsa);
 int rsa_multip_cap(int bits);
+
+int rsa_padding_add_pkcs1_oaep_mgf1_ex(unsigned char *to, int tlen,
+                                       const unsigned char *from, int flen,
+                                       const unsigned char *param, int plen,
+                                       const EVP_MD *md, const EVP_MD *mgf1md,
+                                       RAND_DRBG *drbg);
+int rsa_padding_add_pkcs1_type_2_ex(unsigned char *to, int tlen,
+                                    const unsigned char *from, int flen,
+                                    RAND_DRBG *drbg);
+int rsa_padding_add_pkcs1_pss_mgf1_ex(RSA *rsa, unsigned char *EM,
+                                   const unsigned char *mHash,
+                                   const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+                                   int sLen, RAND_DRBG *drbg);
+int rsa_padding_add_sslv23_ex(unsigned char *to, int tlen,
+                              const unsigned char *from, int flen,
+                              RAND_DRBG *drbg);

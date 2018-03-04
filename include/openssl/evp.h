@@ -1347,6 +1347,11 @@ EVP_PKEY *EVP_PKEY_CTX_get0_peerkey(EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);
 
+void EVP_PKEY_CTX_set_public_DRBG(EVP_PKEY_CTX *ctx, RAND_DRBG *drbg);
+RAND_DRBG *EVP_PKEY_CTX_get_public_DRBG(EVP_PKEY_CTX *ctx);
+void EVP_PKEY_CTX_set_private_DRBG(EVP_PKEY_CTX *ctx, RAND_DRBG *drbg);
+RAND_DRBG *EVP_PKEY_CTX_get_private_DRBG(EVP_PKEY_CTX *ctx);
+
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                   unsigned char *sig, size_t *siglen,

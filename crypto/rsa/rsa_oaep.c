@@ -28,6 +28,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include <internal/rand.h>
 #include "rsa_locl.h"
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
@@ -38,10 +39,11 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                            param, plen, NULL, NULL);
 }
 
-int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
-                                    const unsigned char *from, int flen,
-                                    const unsigned char *param, int plen,
-                                    const EVP_MD *md, const EVP_MD *mgf1md)
+int rsa_padding_add_pkcs1_oaep_mgf1_ex(unsigned char *to, int tlen,
+                                       const unsigned char *from, int flen,
+                                       const unsigned char *param, int plen,
+                                       const EVP_MD *md, const EVP_MD *mgf1md,
+                                       RAND_DRBG *drbg)
 {
     int i, emlen = tlen - 1;
     unsigned char *db, *seed;
@@ -56,13 +58,13 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     mdlen = EVP_MD_size(md);
 
     if (flen > emlen - 2 * mdlen - 1) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1,
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1_EX,
                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
     if (emlen < 2 * mdlen + 1) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1,
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1_EX,
                RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
@@ -76,12 +78,16 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     memset(db + mdlen, 0, emlen - flen - 2 * mdlen - 1);
     db[emlen - flen - mdlen - 1] = 0x01;
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
-    if (RAND_bytes(seed, mdlen) <= 0)
+    if (drbg != NULL) {
+        if (RAND_DRBG_bytes(drbg, seed, mdlen) == 0)
+            return 0;
+    } else if (RAND_bytes(seed, mdlen) <= 0) {
         return 0;
+    }
 
     dbmask = OPENSSL_malloc(emlen - mdlen);
     if (dbmask == NULL) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1_EX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -101,6 +107,15 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
  err:
     OPENSSL_free(dbmask);
     return 0;
+}
+
+int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
+                                    const unsigned char *from, int flen,
+                                    const unsigned char *param, int plen,
+                                    const EVP_MD *md, const EVP_MD *mgf1md)
+{
+    return rsa_padding_add_pkcs1_oaep_mgf1_ex(to, tlen, from, flen, param, plen,
+                                              md, mgf1md, NULL);
 }
 
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
