@@ -3260,8 +3260,11 @@
      to work with OPENSSL_NO_SSL_INTERN defined.
      [Steve Henson]
 
-  *) Add SRP support.
-     [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
+  *) A long standing patch to add support for SRP from EdelWeb (Peter
+     Sylvester and Christophe Renou) was integrated.
+     [Christophe Renou <christophe.renou@edelweb.fr>, Peter Sylvester
+     <peter.sylvester@edelweb.fr>, Tom Wu <tjw@cs.stanford.edu>, and
+     Ben Laurie]
 
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
