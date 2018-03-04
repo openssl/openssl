@@ -46,6 +46,10 @@ my %shared_info;
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
         shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
     },
+    'ios-shared' => {
+        shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
+        shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
+    },
     'cygwin-shared' => {
         shared_ldflag         => '-shared -Wl,--enable-auto-image-base',
         shared_impflag        => '-Wl,--out-implib=',
