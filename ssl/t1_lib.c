@@ -2286,9 +2286,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
             unsigned char *sdata = data;
             int ecpointformatlist_length;
 
-            if (size == 0) {
+            if (size == 0)
                 goto err;
-            }
 
             ecpointformatlist_length = *(sdata++);
             if (ecpointformatlist_length != size - 1 ||
