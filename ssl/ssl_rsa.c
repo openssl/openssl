@@ -600,9 +600,11 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
     if (ctx != NULL) {
         passwd_callback = ctx->default_passwd_callback;
         passwd_callback_userdata = ctx->default_passwd_callback_userdata;
-    } else {
+    } else if (ssl != NULL) {
         passwd_callback = ssl->default_passwd_callback;
         passwd_callback_userdata = ssl->default_passwd_callback_userdata;
+    } else {
+        goto end;
     }
 
     in = BIO_new(BIO_s_file());

@@ -208,6 +208,10 @@ static int fd_gets(BIO *bp, char *buf, int size)
     char *ptr = buf;
     char *end = buf + size - 1;
 
+    if (ptr == NULL) {
+        return ret;
+    }
+
     while (ptr < end && fd_read(bp, ptr, 1) > 0) {
         if (*ptr++ == '\n')
            break;
