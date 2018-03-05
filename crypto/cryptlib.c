@@ -299,8 +299,7 @@ void OPENSSL_showfatal(const char *fmta, ...)
                             TraceLoggingLevel(EVENTLOG_ERROR_TYPE),
                             TraceLoggingWideString(buf, "Message"));
         /* OneCore fails to compile if UNICODE is not defined, use UNICODE. */
-    }
-    else {
+    } else {
 #   if !defined(NDEBUG)
         /*
         * We are in a situation where we tried to report a critical
