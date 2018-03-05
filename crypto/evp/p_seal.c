@@ -14,7 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
-#include <internal/rand.h>
+#include <openssl/rand_drbg.h>
 #include "evp_locl.h"
 
 int EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,

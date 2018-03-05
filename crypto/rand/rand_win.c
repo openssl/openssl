@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
+#include "internal/rand_int.h"
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
@@ -38,7 +39,7 @@
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 # endif
 
-size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
@@ -61,21 +62,21 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
-    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
         if (BCryptGenRandom(NULL, buffer, bytes_needed,
             BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
             bytes = bytes_needed;
 
-        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
     }
     if (entropy_available > 0)
         return entropy_available;
 # else
-    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
-    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
         /* poll the CryptoAPI PRNG */
@@ -87,13 +88,13 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
             CryptReleaseContext(hProvider, 0);
         }
 
-        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
     }
     if (entropy_available > 0)
         return entropy_available;
 
-    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
-    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
         /* poll the Pentium PRG with CryptoAPI */
@@ -105,13 +106,13 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 
             CryptReleaseContext(hProvider, 0);
         }
-        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
     }
     if (entropy_available > 0)
         return entropy_available;
 # endif
 
-    return RAND_POOL_entropy_available(pool);
+    return rand_pool_entropy_available(pool);
 }
 
 # if OPENSSL_API_COMPAT < 0x10100000L

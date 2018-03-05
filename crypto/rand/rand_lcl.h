@@ -15,7 +15,7 @@
 # include <openssl/sha.h>
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
-# include "internal/rand.h"
+# include <openssl/rand_drbg.h>
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -128,7 +128,7 @@ struct rand_drbg_st {
      * with respect to how randomness is added to the RNG during reseeding
      * (see PR #4328).
      */
-    RAND_POOL *pool;
+    struct rand_pool_st *pool;
 
     /*
      * The following parameters are setup by the per-type "init" function.
@@ -205,18 +205,6 @@ extern RAND_METHOD rand_meth;
 
 /* How often we've forked (only incremented in child). */
 extern int rand_fork_count;
-
-/* Hardware-based seeding functions. */
-size_t rand_acquire_entropy_from_tsc(RAND_POOL *pool);
-size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool);
-
-/* DRBG entropy callbacks. */
-size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
-                             unsigned char **pout,
-                             int entropy, size_t min_len, size_t max_len);
-void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
-                               unsigned char *out, size_t outlen);
-size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len);
 
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,

@@ -15,7 +15,7 @@
 # include "internal/evp_int.h"
 # include <openssl/des.h>
 # include <openssl/rand.h>
-# include <internal/rand.h>
+# include <openssl/rand_drbg.h>
 # include "evp_locl.h"
 
 typedef struct {

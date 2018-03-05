@@ -34,13 +34,13 @@ static const ERR_STRING_DATA RAND_str_functs[] = {
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_UNINSTANTIATE, 0),
      "RAND_DRBG_uninstantiate"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_LOAD_FILE, 0), "RAND_load_file"},
-    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD, 0), "RAND_POOL_add"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD, 0), "rand_pool_add"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD_BEGIN, 0),
-     "RAND_POOL_add_begin"},
-    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD_END, 0), "RAND_POOL_add_end"},
+     "rand_pool_add_begin"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD_END, 0), "rand_pool_add_end"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_BYTES_NEEDED, 0),
-     "RAND_POOL_bytes_needed"},
-    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_NEW, 0), "RAND_POOL_new"},
+     "rand_pool_bytes_needed"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_NEW, 0), "rand_pool_new"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_WRITE_FILE, 0), "RAND_write_file"},
     {0, NULL}
 };
