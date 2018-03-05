@@ -133,7 +133,7 @@ TRACELOGGING_DEFINE_PROVIDER(
      * {5ee02bf4-33cf-53cf-ddc9-f18679e677dd} 
      */
     (0x5ee02bf4, 0x33cf, 0x53cf, 0xdd, 0xc9, 0xf1, 0x86, 0x79, 0xe6, 0x77, 0xdd)
-    );
+);
 
 int OPENSSL_isservice(void)
 {
