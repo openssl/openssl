@@ -165,6 +165,7 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME}, /* brainpoolP384r1 (27) */
     {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
     {EVP_PKEY_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
+    {EVP_PKEY_X448, 224, TLS_CURVE_CUSTOM}, /* X448 (30) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -177,6 +178,7 @@ static const unsigned char ecformats_default[] = {
 static const uint16_t eccurves_default[] = {
     29,                      /* X25519 (29) */
     23,                      /* secp256r1 (23) */
+    30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
 };
@@ -622,6 +624,7 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp384r1_sha384,
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
     TLSEXT_SIGALG_ed25519,
+    TLSEXT_SIGALG_ed448,
 #endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
@@ -671,6 +674,9 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_ecdsa_with_SHA512, NID_secp521r1},
     {"ed25519", TLSEXT_SIGALG_ed25519,
      NID_undef, -1, EVP_PKEY_ED25519, SSL_PKEY_ED25519,
+     NID_undef, NID_undef},
+    {"ed448", TLSEXT_SIGALG_ed448,
+     NID_undef, -1, EVP_PKEY_ED448, SSL_PKEY_ED448,
      NID_undef, NID_undef},
     {NULL, TLSEXT_SIGALG_ecdsa_sha224,
      NID_sha224, SSL_MD_SHA224_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
@@ -764,7 +770,8 @@ static const uint16_t tls_default_sigalg[] = {
     TLSEXT_SIGALG_gostr34102001_gostr3411, /* SSL_PKEY_GOST01 */
     TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, /* SSL_PKEY_GOST12_256 */
     TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, /* SSL_PKEY_GOST12_512 */
-    0 /* SSL_PKEY_ED25519 */
+    0, /* SSL_PKEY_ED25519 */
+    0, /* SSL_PKEY_ED448 */
 };
 
 /* Lookup TLS signature algorithm */
@@ -2180,6 +2187,7 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_256);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED25519);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED448);
 }
 
 /* User level utility function to check a chain is suitable */

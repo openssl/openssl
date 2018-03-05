@@ -231,6 +231,9 @@ static const char *get_sigtype(int nid)
      case NID_ED25519:
         return "Ed25519";
 
+     case NID_ED448:
+        return "Ed448";
+
     default:
         return NULL;
     }

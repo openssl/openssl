@@ -239,7 +239,7 @@ static int test_builtin(void)
         unsigned char dirt, offset;
 
         nid = curves[n].nid;
-        if (nid == NID_ipsec4 || nid == NID_X25519)
+        if (nid == NID_ipsec4)
             continue;
         /* create new ecdsa key (== EC_KEY) */
         if (!TEST_ptr(eckey = EC_KEY_new())

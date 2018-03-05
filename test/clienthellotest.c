@@ -111,12 +111,19 @@ static int test_client_hello(int currtest)
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
          * needed.
          */
-        if (currtest == TEST_ADD_PADDING
-                && (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
+        if (currtest == TEST_ADD_PADDING) {
+             if (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
                                     (unsigned char *)alpn_prots,
-                                    sizeof(alpn_prots) - 1))))
+                                    sizeof(alpn_prots) - 1)))
+                goto end;
+        /*
+         * Otherwise we need to make sure we have a small enough message to
+         * not need padding.
+         */
+        } else if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
+                              "AES128-SHA:TLS13-AES-128-GCM-SHA256"))) {
             goto end;
-
+        }
         break;
 
     default:

@@ -70,6 +70,8 @@ static int test_ssl_cert_table(void)
         return 0;
     if (!test_cert_table(EVP_PKEY_ED25519, SSL_aECDSA, SSL_PKEY_ED25519))
         return 0;
+    if (!test_cert_table(EVP_PKEY_ED448, SSL_aECDSA, SSL_PKEY_ED448))
+        return 0;
 
     return 1;
 }
