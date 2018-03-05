@@ -1343,6 +1343,8 @@ EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
 EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
                                   const unsigned char *pub,
                                   size_t len);
+EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
+                                size_t len, const EVP_CIPHER *cipher);
 
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx);
