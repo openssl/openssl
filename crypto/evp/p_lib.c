@@ -174,10 +174,12 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
  * is NULL just return 1 or 0 if the algorithm exists.
  */
 
-static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
+static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
+                         int len)
 {
     const EVP_PKEY_ASN1_METHOD *ameth;
-    ENGINE *e = NULL;
+    ENGINE **eptr = (e == NULL) ? &e :  NULL;
+
     if (pkey) {
         if (pkey->pkey.ptr)
             EVP_PKEY_free_it(pkey);
@@ -196,11 +198,11 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 #endif
     }
     if (str)
-        ameth = EVP_PKEY_asn1_find_str(&e, str, len);
+        ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else
-        ameth = EVP_PKEY_asn1_find(&e, type);
+        ameth = EVP_PKEY_asn1_find(eptr, type);
 #ifndef OPENSSL_NO_ENGINE
-    if (pkey == NULL)
+    if (pkey == NULL && eptr != NULL)
         ENGINE_finish(e);
 #endif
     if (ameth == NULL) {
@@ -217,14 +219,73 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
     return 1;
 }
 
+EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e, unsigned char *priv,
+                                   size_t len)
+{
+    EVP_PKEY *ret = EVP_PKEY_new();
+
+    if (ret == NULL
+            || !pkey_set_type(ret, e, type, NULL, -1)) {
+        /* EVPerr already called */
+        goto err;
+    }
+
+    if (ret->ameth->set_priv_key == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_NEW_PRIVATE_KEY,
+               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        goto err;
+    }
+
+    if (!ret->ameth->set_priv_key(ret, priv, len)) {
+        /* We assume the method function calls EVPerr */
+        goto err;
+    }
+
+    return ret;
+
+ err:
+    EVP_PKEY_free(ret);
+    return NULL;
+}
+
+EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e, unsigned char *pub,
+                                  size_t len)
+{
+    EVP_PKEY *ret = EVP_PKEY_new();
+
+    if (ret == NULL
+            || !pkey_set_type(ret, e, type, NULL, -1)) {
+        /* EVPerr already called */
+        goto err;
+    }
+
+    if (ret->ameth->set_pub_key == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_NEW_PUBLIC_KEY,
+               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        goto err;
+    }
+
+    if (!ret->ameth->set_pub_key(ret, pub, len)) {
+        /* We assume the method function calls EVPerr */
+        goto err;
+    }
+
+    return ret;
+
+ err:
+    EVP_PKEY_free(ret);
+    return NULL;
+}
+
+
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
-    return pkey_set_type(pkey, type, NULL, -1);
+    return pkey_set_type(pkey, NULL, type, NULL, -1);
 }
 
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
-    return pkey_set_type(pkey, EVP_PKEY_NONE, str, len);
+    return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len);
 }
 #ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)

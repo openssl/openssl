@@ -4522,3 +4522,5 @@ OSSL_STORE_LOADER_set_find              4463	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_free                  4464	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_get0_digest           4465	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_set_reseed_defaults           4466	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_new_private_key                4467	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_new_public_key                 4468	1_1_1	EXIST::FUNCTION:

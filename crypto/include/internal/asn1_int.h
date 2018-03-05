@@ -58,6 +58,9 @@ struct evp_pkey_asn1_method_st {
     int (*pkey_check) (const EVP_PKEY *pk);
     int (*pkey_public_check) (const EVP_PKEY *pk);
     int (*pkey_param_check) (const EVP_PKEY *pk);
+    /* Get/set raw private/public key data */
+    int (*set_priv_key) (EVP_PKEY *pk, const unsigned char *priv, size_t len);
+    int (*set_pub_key) (EVP_PKEY *pk, const unsigned char *pub, size_t len);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
