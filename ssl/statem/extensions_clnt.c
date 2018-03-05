@@ -1397,6 +1397,12 @@ int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
 {
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
+        /* We ignore this if the server sends a CertificateRequest */
+        /* TODO(TLS1.3): Add support for this */
+        return 1;
+    }
+
     /*
      * MUST only be sent if we've requested a status
      * request message. In TLS <= 1.2 it must also be empty.
@@ -1435,6 +1441,12 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_sct(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx)
 {
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
+        /* We ignore this if the server sends it in a CertificateRequest */
+        /* TODO(TLS1.3): Add support for this */
+        return 1;
+    }
+
     /*
      * Only take it if we asked for it - i.e if there is no CT validation
      * callback set, then a custom extension MAY be processing it, so we

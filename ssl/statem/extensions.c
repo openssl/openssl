@@ -211,7 +211,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_status_request,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
-        | SSL_EXT_TLS1_3_CERTIFICATE,
+        | SSL_EXT_TLS1_3_CERTIFICATE | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
         init_status_request, tls_parse_ctos_status_request,
         tls_parse_stoc_status_request, tls_construct_stoc_status_request,
         tls_construct_ctos_status_request, NULL
@@ -263,7 +263,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         TLSEXT_TYPE_signed_certificate_timestamp,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
-        | SSL_EXT_TLS1_3_CERTIFICATE,
+        | SSL_EXT_TLS1_3_CERTIFICATE | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
         NULL,
         /*
          * No server side support for this, but can be provided by a custom
