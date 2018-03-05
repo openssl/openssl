@@ -514,6 +514,21 @@ int ocsp_main(int argc, char **argv)
         if (rkey == NULL)
             goto end;
     }
+
+    if (ridx_filename && (!rkey || !rsigner || !rca_cert)) {
+        BIO_printf(bio_err,
+                   "Responder mode requires certificate, key, and CA.\n");
+        goto end;
+    }
+
+    if (ridx_filename) {
+        rdb = load_index(ridx_filename, NULL);
+        if (!rdb || !index_index(rdb)) {
+            ret = 1;
+            goto end;
+        }
+    }
+
     if (acbio != NULL)
         BIO_printf(bio_err, "Waiting for OCSP client connections...\n");
 
@@ -575,21 +590,6 @@ redo_accept:
             goto end;
         i2d_OCSP_REQUEST_bio(derbio, req);
         BIO_free(derbio);
-    }
-
-    if (ridx_filename != NULL
-        && (rkey == NULL || rsigner == NULL || rca_cert == NULL)) {
-        BIO_printf(bio_err,
-                   "Need a responder certificate, key and CA for this operation!\n");
-        goto end;
-    }
-
-    if (ridx_filename != NULL && rdb == NULL) {
-        rdb = load_index(ridx_filename, NULL);
-        if (rdb == NULL)
-            goto end;
-        if (!index_index(rdb))
-            goto end;
     }
 
     if (rdb != NULL) {

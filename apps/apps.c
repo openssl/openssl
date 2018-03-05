@@ -1538,12 +1538,27 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     BIO *in;
     CONF *dbattr_conf = NULL;
     char buf[BSIZE];
+#ifndef OPENSSL_NO_POSIX_IO
+    FILE *dbfp;
+    struct stat dbst;
+#endif
 
     in = BIO_new_file(dbfile, "r");
     if (in == NULL) {
         ERR_print_errors(bio_err);
         goto err;
     }
+
+#ifndef OPENSSL_NO_POSIX_IO
+    BIO_get_fp(in, &dbfp);
+    if (fstat(fileno(dbfp), &dbst) == -1) {
+        SYSerr(SYS_F_FSTAT, errno);
+        ERR_add_error_data(3, "fstat('", dbfile, "')");
+        ERR_print_errors(bio_err);
+        goto err;
+    }
+#endif
+
     if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
         goto err;
 
@@ -1569,6 +1584,11 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
             retdb->attributes.unique_subject = parse_yesno(p, 1);
         }
     }
+
+    retdb->dbfname = OPENSSL_strdup(dbfile);
+#ifndef OPENSSL_NO_POSIX_IO
+    retdb->dbst = dbst;
+#endif
 
  err:
     NCONF_free(dbattr_conf);
@@ -1715,6 +1735,7 @@ void free_index(CA_DB *db)
 {
     if (db) {
         TXT_DB_free(db->db);
+        OPENSSL_free(db->dbfname);
         OPENSSL_free(db);
     }
 }
