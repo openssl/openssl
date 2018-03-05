@@ -911,31 +911,17 @@ static int mac_test_run(EVP_TEST *t)
     }
 #endif
 
-    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_id(expected->type, NULL))) {
-        t->err = "MAC_PKEY_CTX_ERROR";
+    if (expected->type == EVP_PKEY_CMAC)
+        key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
+                                    EVP_get_cipherbyname(expected->alg));
+    else
+        key = EVP_PKEY_new_private_key(expected->type, NULL, expected->key,
+                                       expected->key_len);
+    if (key == NULL) {
+        t->err = "MAC_KEY_CREATE_ERROR";
         goto err;
     }
 
-    if (EVP_PKEY_keygen_init(genctx) <= 0) {
-        t->err = "MAC_KEYGEN_INIT_ERROR";
-        goto err;
-    }
-    if (expected->type == EVP_PKEY_CMAC
-             && EVP_PKEY_CTX_ctrl_str(genctx, "cipher", expected->alg) <= 0) {
-        t->err = "MAC_ALGORITHM_SET_ERROR";
-        goto err;
-    }
-
-    if (EVP_PKEY_CTX_set_mac_key(genctx, expected->key,
-                                 expected->key_len) <= 0) {
-        t->err = "MAC_KEY_SET_ERROR";
-        goto err;
-    }
-
-    if (EVP_PKEY_keygen(genctx, &key) <= 0) {
-        t->err = "MAC_KEY_GENERATE_ERROR";
-        goto err;
-    }
     if (expected->type == EVP_PKEY_HMAC) {
         if (!TEST_ptr(md = EVP_get_digestbyname(expected->alg))) {
             t->err = "MAC_ALGORITHM_SET_ERROR";
