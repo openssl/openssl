@@ -28,6 +28,7 @@ B<openssl> B<ocsp>
 [B<-no_nonce>]
 [B<-url URL>]
 [B<-host host:port>]
+[B<-multi process-count>]
 [B<-header>]
 [B<-path>]
 [B<-CApath dir>]
@@ -187,7 +188,22 @@ This may be repeated.
 
 =item B<-timeout seconds>
 
-Connection timeout to the OCSP responder in seconds
+Connection timeout to the OCSP responder in seconds.
+On POSIX systems, when running as an OCSP responder, this option also limits
+the time that the responder is willing to wait for the client request.
+This time is measured from the time the responder accepts the connection until
+the complete request is received.
+
+=item B<-multi process-count>
+
+Run the specified number of OCSP responder child processes, with the parent
+process respawning child processes as needed.
+Child processes will detect changes in the CA index file and automatically
+reload it.
+When running as a responder B<-timeout> option is recommended to limit the time
+each child is willing to wait for the client's OCSP response.
+This option is available on POSIX systems (that support the fork() and other
+required unix system-calls).
 
 =item B<-CAfile file>, B<-CApath pathname>
 

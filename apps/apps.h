@@ -14,9 +14,7 @@
 # include "internal/nelem.h"
 # include <assert.h>
 
-# ifndef NO_SYS_TYPES_H
-#  include <sys/types.h>
-# endif
+# include <sys/types.h>
 # ifndef OPENSSL_NO_POSIX_IO
 #  include <sys/stat.h>
 #  include <fcntl.h>

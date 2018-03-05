@@ -26,6 +26,7 @@ NON_EMPTY_TRANSLATION_UNIT
 /* Needs to be included before the openssl headers */
 # include "apps.h"
 # include "progs.h"
+# include "internal/sockets.h"
 # include <openssl/e_os2.h>
 # include <openssl/crypto.h>
 # include <openssl/err.h>
@@ -33,6 +34,23 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/evp.h>
 # include <openssl/bn.h>
 # include <openssl/x509v3.h>
+# include <openssl/rand.h>
+
+# if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK)
+#  define OCSP_DAEMON
+#  include <sys/types.h>
+#  include <sys/wait.h>
+#  include <syslog.h>
+#  include <signal.h>
+#  define MAXERRLEN 1000 /* limit error text sent to syslog to 1000 bytes */
+# else
+#  undef LOG_INFO
+#  undef LOG_WARNING
+#  undef LOG_ERR
+#  define LOG_INFO      0
+#  define LOG_WARNING   1
+#  define LOG_ERR       2
+# endif
 
 /* Maximum leeway in validity period: default 5 minutes */
 # define MAX_VALIDITY_PERIOD    (5 * 60)
@@ -56,8 +74,19 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(const char *port);
-static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio);
+static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, int timeout);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
+static void log_message(int level, const char *fmt, ...);
+static char *prog;
+static int multi = 0;
+
+# ifdef OCSP_DAEMON
+static int acfd = (int) INVALID_SOCKET;
+static int index_changed(CA_DB *);
+static void spawn_loop(void);
+static int print_syslog(const char *str, size_t len, void *levPtr);
+static void sock_timeout(int signum);
+# endif
 
 # ifndef OPENSSL_NO_SOCK
 static OCSP_RESPONSE *query_responder(BIO *cbio, const char *host,
@@ -81,7 +110,8 @@ typedef enum OPTION_choice {
     OPT_INDEX, OPT_CA, OPT_NMIN, OPT_REQUEST, OPT_NDAYS, OPT_RSIGNER,
     OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_RSIGOPT, OPT_HEADER,
     OPT_V_ENUM,
-    OPT_MD
+    OPT_MD,
+    OPT_MULTI
 } OPTION_CHOICE;
 
 const OPTIONS ocsp_options[] = {
@@ -101,6 +131,9 @@ const OPTIONS ocsp_options[] = {
      "Don't include any certificates in response"},
     {"resp_key_id", OPT_RESP_KEY_ID, '-',
      "Identify response by signing certificate key ID"},
+# ifdef OCSP_DAEMON
+    {"multi", OPT_MULTI, 'p', "run multiple responder processes"},
+# endif
     {"no_certs", OPT_NO_CERTS, '-',
      "Don't include any certificates in signed request"},
     {"no_signature_verify", OPT_NO_SIGNATURE_VERIFY, '-',
@@ -197,13 +230,12 @@ int ocsp_main(int argc, char **argv)
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, ret = 1;
-#ifndef OPENSSL_NO_SOCK
+# ifndef OPENSSL_NO_SOCK
     int req_timeout = -1;
-#endif
+# endif
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
-    char *prog;
 
     reqnames = sk_OPENSSL_STRING_new_null();
     if (reqnames == NULL)
@@ -451,9 +483,13 @@ int ocsp_main(int argc, char **argv)
                 goto opthelp;
             trailing_md = 1;
             break;
+# ifdef OCSP_DAEMON
+        case OPT_MULTI:
+            multi = atoi(opt_arg());
+            break;
+# endif
         }
     }
-
     if (trailing_md) {
         BIO_printf(bio_err, "%s: Digest must be before -cert or -serial\n",
                    prog);
@@ -464,7 +500,7 @@ int ocsp_main(int argc, char **argv)
         goto opthelp;
 
     /* Have we anything to do? */
-    if (req == NULL&& reqin == NULL
+    if (req == NULL && reqin == NULL
         && respin == NULL && !(port != NULL && ridx_filename != NULL))
         goto opthelp;
 
@@ -515,28 +551,52 @@ int ocsp_main(int argc, char **argv)
             goto end;
     }
 
-    if (ridx_filename && (!rkey || !rsigner || !rca_cert)) {
+    if (ridx_filename != NULL
+        && (rkey != NULL || rsigner != NULL || rca_cert != NULL)) {
         BIO_printf(bio_err,
                    "Responder mode requires certificate, key, and CA.\n");
         goto end;
     }
 
-    if (ridx_filename) {
+    if (ridx_filename != NULL) {
         rdb = load_index(ridx_filename, NULL);
-        if (!rdb || !index_index(rdb)) {
+        if (rdb == NULL || !index_index(rdb)) {
             ret = 1;
             goto end;
         }
     }
 
+# ifdef OCSP_DAEMON
+    if (multi && acbio != NULL)
+        spawn_loop();
+    if (acbio != NULL && req_timeout > 0)
+        signal(SIGALRM, sock_timeout);
+#endif
+
     if (acbio != NULL)
-        BIO_printf(bio_err, "Waiting for OCSP client connections...\n");
+        log_message(LOG_INFO, "waiting for OCSP client connections...");
 
 redo_accept:
 
     if (acbio != NULL) {
-        if (!do_responder(&req, &cbio, acbio))
-            goto end;
+# ifdef OCSP_DAEMON
+        if (index_changed(rdb)) {
+            CA_DB *newrdb = load_index(ridx_filename, NULL);
+
+            if (newrdb != NULL) {
+                free_index(rdb);
+                rdb = newrdb;
+            } else {
+                log_message(LOG_ERR, "error reloading updated index: %s",
+                            ridx_filename);
+            }
+        }
+# endif
+
+        req = NULL;
+        if (!do_responder(&req, &cbio, acbio, req_timeout))
+            goto redo_accept;
+
         if (req == NULL) {
             resp =
                 OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
@@ -637,10 +697,10 @@ redo_accept:
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         BIO_printf(out, "Responder Error: %s (%d)\n",
                    OCSP_response_status_str(i), i);
-        if (ignore_err)
-            goto redo_accept;
-        ret = 0;
-        goto end;
+        if (!ignore_err) {
+                ret = 0;
+                goto end;
+        }
     }
 
     if (resp_text)
@@ -745,6 +805,180 @@ redo_accept:
 
     return ret;
 }
+
+static void
+log_message(int level, const char *fmt, ...)
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+# ifdef OCSP_DAEMON
+    if (multi) {
+        vsyslog(level, fmt, ap);
+        if (level >= LOG_ERR)
+            ERR_print_errors_cb(print_syslog, &level);
+    }
+# endif
+    if (!multi) {
+        BIO_printf(bio_err, "%s: ", prog);
+        BIO_vprintf(bio_err, fmt, ap);
+        BIO_printf(bio_err, "\n");
+    }
+    va_end(ap);
+}
+
+# ifdef OCSP_DAEMON
+
+static int print_syslog(const char *str, size_t len, void *levPtr)
+{
+    int level = *(int *)levPtr;
+    int ilen = (len > MAXERRLEN) ? MAXERRLEN : len;
+
+    syslog(level, "%.*s", ilen, str);
+
+    return ilen;
+}
+
+static int index_changed(CA_DB *rdb)
+{
+    struct stat sb;
+
+    if (rdb != NULL && stat(rdb->dbfname, &sb) != -1) {
+        if (rdb->dbst.st_mtime != sb.st_mtime
+            || rdb->dbst.st_ctime != sb.st_ctime
+            || rdb->dbst.st_ino != sb.st_ino
+            || rdb->dbst.st_dev != sb.st_dev) {
+            syslog(LOG_INFO, "index file changed, reloading");
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void killall(int ret, pid_t *kidpids)
+{
+    int i;
+
+    for (i = 0; i < multi; ++i)
+        if (kidpids[i] != 0)
+            (void)kill(kidpids[i], SIGTERM);
+    sleep(1);
+    exit(ret);
+}
+
+static int termsig = 0;
+
+static void noteterm (int sig)
+{
+    termsig = sig;
+}
+
+/*
+ * Loop spawning up to `multi` child processes, only child processes return
+ * from this function.  The parent process loops until receiving a termination
+ * signal, kills extant children and exits without returning.
+ */
+static void spawn_loop(void)
+{
+    const char *signame;
+    pid_t *kidpids = NULL;
+    int status;
+    int procs = 0;
+    int i;
+
+    openlog(prog, LOG_PID, LOG_DAEMON);
+
+    if (setpgid(0, 0)) {
+        syslog(LOG_ERR, "fatal: error detaching from parent process group: %s",
+               strerror(errno));
+        exit(1);
+    }
+    kidpids = app_malloc(multi * sizeof(*kidpids), "child PID array");
+    for (i = 0; i < multi; ++i)
+        kidpids[i] = 0;
+
+    signal(SIGINT, noteterm);
+    signal(SIGTERM, noteterm);
+
+    while (termsig == 0) {
+        pid_t fpid;
+
+        /*
+         * Wait for a child to replace when we're at the limit.
+         * Slow down if a child exited abnormally or waitpid() < 0
+         */
+        while (termsig == 0 && procs >= multi) {
+            if ((fpid = waitpid(-1, &status, 0)) > 0) {
+                for (i = 0; i < procs; ++i) {
+                    if (kidpids[i] == fpid) {
+                        kidpids[i] = 0;
+                        --procs;
+                        break;
+                    }
+                }
+                if (i >= multi) {
+                    syslog(LOG_ERR, "fatal: internal error: "
+                           "no matching child slot for pid: %ld",
+                           (long) fpid);
+                    killall(1, kidpids);
+                }
+                if (status != 0) {
+                    if (WIFEXITED(status))
+                        syslog(LOG_WARNING, "child process: %ld, exit status: %d",
+                               (long)fpid, WEXITSTATUS(status));
+                    else if (WIFSIGNALED(status))
+                        syslog(LOG_WARNING, "child process: %ld, term signal %d%s",
+                               (long)fpid, WTERMSIG(status),
+                               WCOREDUMP(status) ? " (core dumped)" : "");
+                    sleep(1);
+                }
+                break;
+            } else if (errno != EINTR) {
+                syslog(LOG_ERR, "fatal: waitpid(): %s", strerror(errno));
+                killall(1, kidpids);
+            }
+        }
+        if (termsig)
+            break;
+
+        switch(fpid = fork()) {
+        case -1:            /* error */
+            /* System critically low on memory, pause and try again later */
+            sleep(30);
+            break;
+        case 0:             /* child */
+            signal(SIGINT, SIG_DFL);
+            signal(SIGTERM, SIG_DFL);
+            if (termsig)
+                _exit(0);
+            if (RAND_poll() <= 0) {
+                syslog(LOG_ERR, "fatal: RAND_poll() failed");
+                _exit(1);
+            }
+            return;
+        default:            /* parent */
+            for (i = 0; i < multi; ++i) {
+                if (kidpids[i] == 0) {
+                    kidpids[i] = fpid;
+                    procs++;
+                    break;
+                }
+            }
+            if (i >= multi) {
+                syslog(LOG_ERR, "fatal: internal error: no free child slots");
+                killall(1, kidpids);
+            }
+            break;
+        }
+    }
+
+    /* The loop above can only break on termsig */
+    signame = strsignal(termsig);
+    syslog(LOG_INFO, "terminating on signal: %s(%d)",
+           signame ? signame : "", termsig);
+    killall(0, kidpids);
+}
+# endif
 
 static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
                          const EVP_MD *cert_id_md, X509 *issuer,
@@ -1035,16 +1269,14 @@ static BIO *init_responder(const char *port)
     if (acbio == NULL
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) < 0
         || BIO_set_accept_port(acbio, port) < 0) {
-        BIO_printf(bio_err, "Error setting up accept BIO\n");
-        ERR_print_errors(bio_err);
+        log_message(LOG_ERR, "Error setting up accept BIO");
         goto err;
     }
 
     BIO_set_accept_bios(acbio, bufbio);
     bufbio = NULL;
     if (BIO_do_accept(acbio) <= 0) {
-        BIO_printf(bio_err, "Error starting accept\n");
-        ERR_print_errors(bio_err);
+        log_message(LOG_ERR, "Error starting accept");
         goto err;
     }
 
@@ -1083,7 +1315,16 @@ static int urldecode(char *p)
 }
 # endif
 
-static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
+# ifdef OCSP_DAEMON
+static void sock_timeout(int signum)
+{
+    if (acfd != (int)INVALID_SOCKET)
+        (void)shutdown(acfd, SHUT_RD);
+}
+# endif
+
+static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
+                        int timeout)
 {
 # ifdef OPENSSL_NO_SOCK
     return 0;
@@ -1093,27 +1334,37 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
     char inbuf[2048], reqbuf[2048];
     char *p, *q;
     BIO *cbio = NULL, *getbio = NULL, *b64 = NULL;
+    const char *client;
 
-    if (BIO_do_accept(acbio) <= 0) {
-        BIO_printf(bio_err, "Error accepting connection\n");
-        ERR_print_errors(bio_err);
+    *preq = NULL;
+
+    /* Connection loss before accept() is routine, ignore silently */
+    if (BIO_do_accept(acbio) <= 0)
         return 0;
-    }
 
     cbio = BIO_pop(acbio);
     *pcbio = cbio;
+    client = BIO_get_peer_name(cbio);
+
+#  ifdef OCSP_DAEMON
+    if (timeout > 0) {
+        (void) BIO_get_fd(cbio, &acfd);
+        alarm(timeout);
+    }
+#  endif
 
     /* Read the request line. */
     len = BIO_gets(cbio, reqbuf, sizeof(reqbuf));
     if (len <= 0)
-        return 1;
+        goto out;
+
     if (strncmp(reqbuf, "GET ", 4) == 0) {
         /* Expecting GET {sp} /URL {sp} HTTP/1.x */
         for (p = reqbuf + 4; *p == ' '; ++p)
             continue;
         if (*p != '/') {
-            BIO_printf(bio_err, "Invalid request -- bad URL\n");
-            return 1;
+            log_message(LOG_INFO, "Invalid request -- bad URL: %s", client);
+            goto out;
         }
         p++;
 
@@ -1122,36 +1373,50 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
             if (*q == ' ')
                 break;
         if (strncmp(q, " HTTP/1.", 8) != 0) {
-            BIO_printf(bio_err, "Invalid request -- bad HTTP version\n");
-            return 1;
+            log_message(LOG_INFO,
+                        "Invalid request -- bad HTTP version: %s", client);
+            goto out;
         }
         *q = '\0';
+
+        /*
+         * Skip "GET / HTTP..." requests often used by load-balancers
+         */
+        if (p[1] == '\0')
+            goto out;
+
         len = urldecode(p);
         if (len <= 0) {
-            BIO_printf(bio_err, "Invalid request -- bad URL encoding\n");
-            return 1;
+            log_message(LOG_INFO,
+                        "Invalid request -- bad URL encoding: %s", client);
+            goto out;
         }
         if ((getbio = BIO_new_mem_buf(p, len)) == NULL
             || (b64 = BIO_new(BIO_f_base64())) == NULL) {
-            BIO_printf(bio_err, "Could not allocate memory\n");
-            ERR_print_errors(bio_err);
-            return 1;
+            log_message(LOG_ERR, "Could not allocate base64 bio: %s", client);
+            goto out;
         }
         BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
         getbio = BIO_push(b64, getbio);
     } else if (strncmp(reqbuf, "POST ", 5) != 0) {
-        BIO_printf(bio_err, "Invalid request -- bad HTTP verb\n");
-        return 1;
+        log_message(LOG_INFO, "Invalid request -- bad HTTP verb: %s", client);
+        goto out;
     }
 
     /* Read and skip past the headers. */
     for (;;) {
         len = BIO_gets(cbio, inbuf, sizeof(inbuf));
         if (len <= 0)
-            return 1;
+            goto out;
         if ((inbuf[0] == '\r') || (inbuf[0] == '\n'))
             break;
     }
+
+#  ifdef OCSP_DAEMON
+    /* Clear alarm before we close the client socket */
+    alarm(0);
+    timeout = 0;
+#  endif
 
     /* Try to read OCSP request */
     if (getbio != NULL) {
@@ -1161,13 +1426,17 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio)
         req = d2i_OCSP_REQUEST_bio(cbio, NULL);
     }
 
-    if (req == NULL) {
-        BIO_printf(bio_err, "Error parsing OCSP request\n");
-        ERR_print_errors(bio_err);
-    }
+    if (req == NULL)
+        log_message(LOG_ERR, "Error parsing OCSP request");
 
     *preq = req;
 
+out:
+#  ifdef OCSP_DAEMON
+    if (timeout > 0)
+        alarm(0);
+    acfd = (int)INVALID_SOCKET;
+#  endif
     return 1;
 # endif
 }
