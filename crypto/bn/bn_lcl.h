@@ -659,6 +659,8 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
 }
 
+int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, RAND_DRBG *drbg);
+
 #ifdef  __cplusplus
 }
 #endif

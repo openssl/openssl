@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/evp.h>
 #include "internal/cryptlib.h"
 #include "internal/bn_int.h"
 #include "rsa_locl.h"
@@ -14,7 +15,10 @@
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
 static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
-                                   unsigned char *to, RSA *rsa, int padding);
+                                    unsigned char *to, RSA *rsa, int padding);
+static int rsa_ossl_private_encrypt_ex(int flen, const unsigned char *from,
+                                       unsigned char *to, RSA *rsa, int padding,
+                                       EVP_PKEY_CTX *pctx);
 static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
 static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
@@ -39,7 +43,8 @@ static RSA_METHOD rsa_pkcs1_ossl_meth = {
     0,                          /* rsa_sign */
     0,                          /* rsa_verify */
     NULL,                       /* rsa_keygen */
-    NULL                        /* rsa_multi_prime_keygen */
+    NULL,                       /* rsa_multi_prime_keygen */
+    rsa_ossl_private_encrypt_ex /* rsa_priv_enc_ex */
 };
 
 static const RSA_METHOD *default_RSA_meth = &rsa_pkcs1_ossl_meth;
@@ -235,8 +240,9 @@ static int rsa_blinding_invert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind,
 }
 
 /* signing */
-static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
-                                   unsigned char *to, RSA *rsa, int padding)
+static int rsa_ossl_private_encrypt_ex(int flen, const unsigned char *from,
+                                       unsigned char *to, RSA *rsa, int padding,
+                                       EVP_PKEY_CTX *pctx)
 {
     BIGNUM *f, *ret, *res;
     int i, j, k, num = 0, r = -1;
@@ -292,6 +298,10 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     }
 
     if (!(rsa->flags & RSA_FLAG_NO_BLINDING)) {
+        if (pctx != NULL) {
+            bn_ctx_set_public_drbg(ctx, EVP_PKEY_CTX_get_public_DRBG(pctx));
+            bn_ctx_set_private_drbg(ctx, EVP_PKEY_CTX_get_public_DRBG(pctx));
+        }
         blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
         if (blinding == NULL) {
             RSAerr(RSA_F_RSA_OSSL_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
@@ -369,6 +379,12 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
     BN_CTX_free(ctx);
     OPENSSL_clear_free(buf, num);
     return r;
+}
+
+static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
+                                    unsigned char *to, RSA *rsa, int padding)
+{
+    return rsa_ossl_private_encrypt_ex(flen, from, to, rsa, padding, NULL);
 }
 
 static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,

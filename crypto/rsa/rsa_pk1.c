@@ -14,6 +14,8 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include <internal/rand.h>
+#include "rsa_locl.h"
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)
@@ -114,14 +116,15 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     return j;
 }
 
-int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
-                                 const unsigned char *from, int flen)
+int rsa_padding_add_pkcs1_type_2_ex(unsigned char *to, int tlen,
+                                    const unsigned char *from, int flen,
+                                    RAND_DRBG *drbg)
 {
     int i, j;
     unsigned char *p;
 
     if (flen > (tlen - 11)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2,
+        RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2_EX,
                RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
@@ -134,13 +137,21 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (RAND_bytes(p, j) <= 0)
+    if (drbg != NULL) {
+        if (RAND_DRBG_bytes(drbg, p, j) == 0)
+            return 0;
+    } else if (RAND_bytes(p, j) <= 0) {
         return 0;
+    }
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes(p, 1) <= 0)
+                if (drbg != NULL) {
+                    if (RAND_DRBG_bytes(drbg, p, 1) == 0)
+                        return 0;
+                } else if (RAND_bytes(p, 1) <= 0) {
                     return 0;
+                }
             } while (*p == '\0');
         p++;
     }
@@ -149,6 +160,12 @@ int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 
     memcpy(p, from, (unsigned int)flen);
     return 1;
+}
+
+int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
+                                 const unsigned char *from, int flen)
+{
+    return rsa_padding_add_pkcs1_type_2_ex(to, tlen, from, flen, NULL);
 }
 
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,

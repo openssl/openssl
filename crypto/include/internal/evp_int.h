@@ -29,6 +29,8 @@ struct evp_pkey_ctx_st {
     /* implementation specific keygen data */
     int *keygen_info;
     int keygen_info_count;
+    RAND_DRBG *public_drbg;
+    RAND_DRBG *private_drbg;
 } /* EVP_PKEY_CTX */ ;
 
 #define EVP_PKEY_FLAG_DYNAMIC   1

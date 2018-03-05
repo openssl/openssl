@@ -269,6 +269,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
                  ERR_R_EVP_LIB);
         goto err;
     }
+    EVP_PKEY_CTX_set_public_DRBG(pctx, s->drbg);
 
     if (lu->sig == EVP_PKEY_RSA_PSS) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0
@@ -456,6 +457,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
 #endif
+
+    EVP_PKEY_CTX_set_public_DRBG(pctx, s->drbg);
 
     if (SSL_USE_PSS(s)) {
         if (EVP_PKEY_CTX_set_rsa_padding(pctx, RSA_PKCS1_PSS_PADDING) <= 0

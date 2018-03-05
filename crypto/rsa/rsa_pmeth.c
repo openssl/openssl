@@ -165,13 +165,14 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
         } else if (rctx->pad_mode == RSA_PKCS1_PSS_PADDING) {
             if (!setup_tbuf(rctx, ctx))
                 return -1;
-            if (!RSA_padding_add_PKCS1_PSS_mgf1(rsa,
-                                                rctx->tbuf, tbs,
-                                                rctx->md, rctx->mgf1md,
-                                                rctx->saltlen))
+            if (!rsa_padding_add_pkcs1_pss_mgf1_ex(rsa,
+                                                   rctx->tbuf, tbs,
+                                                   rctx->md, rctx->mgf1md,
+                                                   rctx->saltlen,
+                                                   ctx->public_drbg))
                 return -1;
-            ret = RSA_private_encrypt(RSA_size(rsa), rctx->tbuf,
-                                      sig, rsa, RSA_NO_PADDING);
+            ret = rsa->meth->rsa_priv_enc_ex(RSA_size(rsa), rctx->tbuf,
+                                      sig, rsa, RSA_NO_PADDING, ctx);
         } else {
             return -1;
         }
@@ -298,11 +299,12 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx,
         int klen = RSA_size(ctx->pkey->pkey.rsa);
         if (!setup_tbuf(rctx, ctx))
             return -1;
-        if (!RSA_padding_add_PKCS1_OAEP_mgf1(rctx->tbuf, klen,
-                                             in, inlen,
-                                             rctx->oaep_label,
-                                             rctx->oaep_labellen,
-                                             rctx->md, rctx->mgf1md))
+        if (!rsa_padding_add_pkcs1_oaep_mgf1_ex(rctx->tbuf, klen,
+                                                in, inlen,
+                                                rctx->oaep_label,
+                                                rctx->oaep_labellen,
+                                                rctx->md, rctx->mgf1md,
+                                                ctx->public_drbg))
             return -1;
         ret = RSA_public_encrypt(klen, rctx->tbuf, out,
                                  ctx->pkey->pkey.rsa, RSA_NO_PADDING);
