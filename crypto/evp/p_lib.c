@@ -18,6 +18,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include <openssl/cmac.h>
 #include <openssl/engine.h>
 
 #include "internal/asn1_int.h"
@@ -279,6 +280,33 @@ EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
     return NULL;
 }
 
+EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
+                                size_t len, const EVP_CIPHER *cipher)
+{
+    EVP_PKEY *ret = EVP_PKEY_new();
+    CMAC_CTX *cmctx = CMAC_CTX_new();
+
+    if (ret == NULL
+            || cmctx == NULL
+            || !pkey_set_type(ret, e, EVP_PKEY_CMAC, NULL, -1)) {
+        /* EVPerr already called */
+        goto err;
+    }
+
+    if (!CMAC_Init(cmctx, priv, len, cipher, e)) {
+        EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY, EVP_R_KEY_SETUP_FAILED);
+        goto err;
+    }
+
+    ret->pkey.ptr = cmctx;
+    return ret;
+
+ err:
+    EVP_PKEY_free(ret);
+    CMAC_CTX_free(cmctx);
+    return NULL;
+
+}
 
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
