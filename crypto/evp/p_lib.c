@@ -239,7 +239,7 @@ EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
     }
 
     if (!ret->ameth->set_priv_key(ret, priv, len)) {
-        /* We assume the method function calls EVPerr */
+        EVPerr(EVP_F_EVP_PKEY_NEW_PRIVATE_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
@@ -269,7 +269,7 @@ EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
     }
 
     if (!ret->ameth->set_pub_key(ret, pub, len)) {
-        /* We assume the method function calls EVPerr */
+        EVPerr(EVP_F_EVP_PKEY_NEW_PUBLIC_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
