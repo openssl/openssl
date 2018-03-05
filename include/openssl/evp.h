@@ -1337,9 +1337,11 @@ void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
 
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
                                const unsigned char *key, int keylen);
-EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e, unsigned char *priv,
+EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
+                                   const unsigned char *priv,
                                    size_t len);
-EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e, unsigned char *pub,
+EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
+                                  const unsigned char *pub,
                                   size_t len);
 
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data);

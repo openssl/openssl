@@ -219,7 +219,8 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     return 1;
 }
 
-EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e, unsigned char *priv,
+EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
+                                   const unsigned char *priv,
                                    size_t len)
 {
     EVP_PKEY *ret = EVP_PKEY_new();
@@ -248,7 +249,8 @@ EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e, unsigned char *priv,
     return NULL;
 }
 
-EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e, unsigned char *pub,
+EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
+                                  const unsigned char *pub,
                                   size_t len)
 {
     EVP_PKEY *ret = EVP_PKEY_new();
