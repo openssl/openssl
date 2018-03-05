@@ -18,7 +18,7 @@
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
-#include <internal/rand.h>
+#include <openssl/rand_drbg.h>
 #include "modes_lcl.h"
 #include "internal/constant_time_locl.h"
 #include "internal/evp_int.h"

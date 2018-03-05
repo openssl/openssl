@@ -10,8 +10,12 @@
 #ifndef HEADER_DRBG_RAND_H
 # define HEADER_DRBG_RAND_H
 
+# include <time.h>
+# include <openssl/ossl_typ.h>
+
+
 /* In CTR mode, disable derivation function ctr_df */
-#define RAND_DRBG_FLAG_CTR_NO_DF            0x1
+# define RAND_DRBG_FLAG_CTR_NO_DF            0x1
 
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])
@@ -31,6 +35,11 @@
  */
 # define RAND_DRBG_STRENGTH             256
 # define RAND_DRBG_NID                  NID_aes_256_ctr
+
+
+# ifdef  __cplusplus
+extern "C" {
+# endif
 
 /*
  * Object lifetime functions.
@@ -70,13 +79,13 @@ RAND_DRBG *RAND_DRBG_get0_private(void);
 /*
  * EXDATA
  */
-#define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \
+# define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DRBG, l, p, newf, dupf, freef)
 int RAND_DRBG_set_ex_data(RAND_DRBG *dctx, int idx, void *arg);
 void *RAND_DRBG_get_ex_data(const RAND_DRBG *dctx, int idx);
 
 /*
- * Callback functions.  See comments in drbg_lib.c
+ * Callback function typedefs
  */
 typedef size_t (*RAND_DRBG_get_entropy_fn)(RAND_DRBG *ctx,
                                            unsigned char **pout,
@@ -96,38 +105,9 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *dctx,
                             RAND_DRBG_get_nonce_fn get_nonce,
                             RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
-/*
- * RAND_POOL functions
- */
-RAND_POOL *RAND_POOL_new(int entropy_requested, size_t min_len, size_t max_len);
-void RAND_POOL_free(RAND_POOL *pool);
 
-const unsigned char *RAND_POOL_buffer(RAND_POOL *pool);
-unsigned char *RAND_POOL_detach(RAND_POOL *pool);
+# ifdef  __cplusplus
+}
+# endif
 
-size_t RAND_POOL_entropy(RAND_POOL *pool);
-size_t RAND_POOL_length(RAND_POOL *pool);
-
-size_t RAND_POOL_entropy_available(RAND_POOL *pool);
-size_t RAND_POOL_entropy_needed(RAND_POOL *pool);
-size_t RAND_POOL_bytes_needed(RAND_POOL *pool, unsigned int entropy_per_byte);
-size_t RAND_POOL_bytes_remaining(RAND_POOL *pool);
-
-size_t RAND_POOL_add(RAND_POOL *pool,
-                     const unsigned char *buffer, size_t len, size_t entropy);
-unsigned char *RAND_POOL_add_begin(RAND_POOL *pool, size_t len);
-size_t RAND_POOL_add_end(RAND_POOL *pool, size_t len, size_t entropy);
-
-
-/*
- * Add random bytes to the pool to acquire requested amount of entropy
- *
- * This function is platform specific and tries to acquire the requested
- * amount of entropy by polling platform specific entropy sources.
- *
- * If the function succeeds in acquiring at least |entropy_requested| bits
- * of entropy, the total entropy count is returned. If it fails, it returns
- * an entropy count of 0.
- */
-size_t RAND_POOL_acquire_entropy(RAND_POOL *pool);
 #endif

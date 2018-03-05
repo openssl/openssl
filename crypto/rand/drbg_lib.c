@@ -328,7 +328,7 @@ end:
                     RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED);
             drbg->state = DRBG_ERROR;
         }
-        RAND_POOL_free(drbg->pool);
+        rand_pool_free(drbg->pool);
         drbg->pool = NULL;
     }
     if (drbg->state == DRBG_READY)
@@ -446,7 +446,7 @@ int rand_drbg_restart(RAND_DRBG *drbg,
 
     if (drbg->pool != NULL) {
         RANDerr(RAND_F_RAND_DRBG_RESTART, ERR_R_INTERNAL_ERROR);
-        RAND_POOL_free(drbg->pool);
+        rand_pool_free(drbg->pool);
         drbg->pool = NULL;
     }
 
@@ -464,11 +464,11 @@ int rand_drbg_restart(RAND_DRBG *drbg,
             }
 
             /* will be picked up by the rand_drbg_get_entropy() callback */
-            drbg->pool = RAND_POOL_new(entropy, len, len);
+            drbg->pool = rand_pool_new(entropy, len, len);
             if (drbg->pool == NULL)
                 return 0;
 
-            RAND_POOL_add(drbg->pool, buffer, len, entropy);
+            rand_pool_add(drbg->pool, buffer, len, entropy);
         } else {
             if (drbg->max_adinlen < len) {
                 RANDerr(RAND_F_RAND_DRBG_RESTART,
@@ -516,7 +516,7 @@ int rand_drbg_restart(RAND_DRBG *drbg,
     if (drbg->pool != NULL) {
         drbg->state = DRBG_ERROR;
         RANDerr(RAND_F_RAND_DRBG_RESTART, ERR_R_INTERNAL_ERROR);
-        RAND_POOL_free(drbg->pool);
+        rand_pool_free(drbg->pool);
         drbg->pool = NULL;
         return 0;
     }

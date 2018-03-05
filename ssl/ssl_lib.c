@@ -14,13 +14,13 @@
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
+#include <openssl/rand_drbg.h>
 #include <openssl/ocsp.h>
 #include <openssl/dh.h>
 #include <openssl/engine.h>
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include "internal/cryptlib.h"
-#include "internal/rand.h"
 #include "internal/refcount.h"
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;

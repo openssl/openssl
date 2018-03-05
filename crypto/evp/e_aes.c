@@ -17,7 +17,7 @@
 #include "internal/evp_int.h"
 #include "modes_lcl.h"
 #include <openssl/rand.h>
-#include <internal/rand.h>
+#include <openssl/rand_drbg.h>
 #include "evp_locl.h"
 
 typedef struct {

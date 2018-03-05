@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "rand_lcl.h"
+#include "internal/rand_int.h"
 #include <stdio.h>
 
 #if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
@@ -50,7 +51,7 @@
  *
  * As a precaution, we assume only 2 bits of entropy per byte.
  */
-size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
     short int code;
     gid_t curr_gid;
@@ -73,13 +74,13 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
      * different processes.
      */
     curr_gid = getgid();
-    RAND_POOL_add(pool, &curr_gid, sizeof(curr_gid), 0);
+    rand_pool_add(pool, &curr_gid, sizeof(curr_gid), 0);
     curr_pid = getpid();
-    RAND_POOL_add(pool, &curr_pid, sizeof(curr_pid), 0);
+    rand_pool_add(pool, &curr_pid, sizeof(curr_pid), 0);
     curr_uid = getuid();
-    RAND_POOL_add(pool, &curr_uid, sizeof(curr_uid), 0);
+    rand_pool_add(pool, &curr_uid, sizeof(curr_uid), 0);
 
-    bytes_needed = RAND_POOL_bytes_needed(pool, 2 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 2 /*entropy_per_byte*/);
 
     for (i = 0; i < bytes_needed; i++) {
         /*
@@ -102,9 +103,9 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
         /* Get wall clock time, take 8 bits. */
         clock_gettime(CLOCK_REALTIME, &ts);
         v = (unsigned char)(ts.tv_nsec & 0xFF);
-        RAND_POOL_add(pool, arg, &v, sizeof(v) , 2);
+        rand_pool_add(pool, arg, &v, sizeof(v) , 2);
     }
-    return RAND_POOL_entropy_available(pool);
+    return rand_pool_entropy_available(pool);
 }
 
 # else
@@ -155,25 +156,25 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
  * of input from the different entropy sources (trust, quality,
  * possibility of blocking).
  */
-size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
 #  ifdef OPENSSL_RAND_SEED_NONE
-    return RAND_POOL_entropy_available(pool);
+    return rand_pool_entropy_available(pool);
 #  else
     size_t bytes_needed;
     size_t entropy_available = 0;
     unsigned char *buffer;
 
 #   ifdef OPENSSL_RAND_SEED_GETRANDOM
-    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
-    buffer = RAND_POOL_add_begin(pool, bytes_needed);
+    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
 
         if (getrandom(buffer, bytes_needed, 0) == (int)bytes_needed)
             bytes = bytes_needed;
 
-        entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
     }
     if (entropy_available > 0)
         return entropy_available;
@@ -186,7 +187,7 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 #   endif
 
 #   ifdef OPENSSL_RAND_SEED_DEVRANDOM
-    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
     if (bytes_needed > 0) {
         static const char *paths[] = { DEVRANDOM, NULL };
         FILE *fp;
@@ -196,19 +197,19 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
             if ((fp = fopen(paths[i], "rb")) == NULL)
                 continue;
             setbuf(fp, NULL);
-            buffer = RAND_POOL_add_begin(pool, bytes_needed);
+            buffer = rand_pool_add_begin(pool, bytes_needed);
             if (buffer != NULL) {
                 size_t bytes = 0;
                 if (fread(buffer, 1, bytes_needed, fp) == bytes_needed)
                     bytes = bytes_needed;
 
-                entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+                entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
             }
             fclose(fp);
             if (entropy_available > 0)
                 return entropy_available;
 
-            bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
+            bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
         }
     }
 #   endif
@@ -226,13 +227,13 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
 #   endif
 
 #   ifdef OPENSSL_RAND_SEED_EGD
-    bytes_needed = RAND_POOL_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
     if (bytes_needed > 0) {
         static const char *paths[] = { DEVRANDOM_EGD, NULL };
         int i;
 
         for (i = 0; paths[i] != NULL; i++) {
-            buffer = RAND_POOL_add_begin(pool, bytes_needed);
+            buffer = rand_pool_add_begin(pool, bytes_needed);
             if (buffer != NULL) {
                 size_t bytes = 0;
                 int num = RAND_query_egd_bytes(paths[i],
@@ -240,7 +241,7 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
                 if (num == (int)bytes_needed)
                     bytes = bytes_needed;
 
-                entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
+                entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
             }
             if (entropy_available > 0)
                 return entropy_available;
@@ -248,7 +249,7 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
     }
 #   endif
 
-    return RAND_POOL_entropy_available(pool);
+    return rand_pool_entropy_available(pool);
 #  endif
 }
 # endif

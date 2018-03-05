@@ -54,7 +54,7 @@ static struct items_data_st {
     {0, 0}
 };
 
-size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
     /* determine the number of items in the JPI array */
     struct items_data_st item_entry;
@@ -117,7 +117,7 @@ size_t RAND_POOL_acquire_entropy(RAND_POOL *pool)
      * was that it contains 4 bits of entropy per byte. This makes a total
      * amount of total_length*16 bits (256bits).
      */
-    return RAND_POOL_add(pool,
+    return rand_pool_add(pool,
                          (PTR_T)data_buffer, total_length * 4,
                          total_length * 16);
 }
