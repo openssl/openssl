@@ -78,6 +78,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_NEW                               106
+# define EVP_F_EVP_PKEY_NEW_PRIVATE_KEY                   191
+# define EVP_F_EVP_PKEY_NEW_PUBLIC_KEY                    192
 # define EVP_F_EVP_PKEY_PARAMGEN                          148
 # define EVP_F_EVP_PKEY_PARAMGEN_INIT                     149
 # define EVP_F_EVP_PKEY_PARAM_CHECK                       189
