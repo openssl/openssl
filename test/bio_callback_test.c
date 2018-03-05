@@ -12,7 +12,7 @@
 
 #include "testutil.h"
 
-#define MAXCOUNT 4
+#define MAXCOUNT 5
 static int         my_param_count;
 static BIO        *my_param_b[MAXCOUNT];
 static int         my_param_oper[MAXCOUNT];
@@ -85,10 +85,28 @@ static int test_bio_callback(void)
             || !TEST_long_eq(my_param_ret[3], 5L))
         goto err;
 
+    i = BIO_free(bio);
+
+    if (!TEST_int_eq(i, 1)
+            || !TEST_int_eq(my_param_count, 5)
+            || !TEST_ptr_eq(my_param_b[4], bio)
+            || !TEST_int_eq(my_param_oper[4], BIO_CB_FREE)
+            || !TEST_ptr_eq(my_param_argp[4], NULL)
+            || !TEST_int_eq(my_param_argi[4], 0)
+            || !TEST_long_eq(my_param_argl[4], 0L)
+            || !TEST_long_eq(my_param_ret[4], 1L))
+        goto finish;
+
     ok = 1;
+    goto finish;
 
 err:
     BIO_free(bio);
+
+finish:
+    /* This helps finding memory leaks with ASAN */
+    memset(my_param_b, 0, sizeof(my_param_b));
+    memset(my_param_argp, 0, sizeof(my_param_argp));
     return ok;
 }
 
