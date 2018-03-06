@@ -3008,7 +3008,7 @@ sub compiler_predefined {
 
     return () if $^O eq 'VMS';
 
-    die 'compiler_predefines called without a default compiler'
+    die 'compiler_predefined called without a default compiler'
         unless $default_compiler;
 
     if (! $predefined{$default_compiler}) {
