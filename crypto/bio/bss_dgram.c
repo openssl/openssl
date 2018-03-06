@@ -17,14 +17,16 @@
 #define __USE_GNU
 
 #include <sys/types.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
 #include <sys/socket.h>
-#include <errno.h>
-#include <signal.h>
-#include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/ip6.h>
-#include <netinet/icmp6.h>
+#endif
+#include <errno.h>
+#include <signal.h>
 
 #include "bio_local.h"
 
@@ -379,12 +381,11 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
                                          BIO_ADDR *dstaddr, BIO_ADDR *peer)
 {
     struct sockaddr_in addr;
-    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
     socklen_t len = sizeof(addr);
     unsigned int ret;
 
     memset((void *)&addr, 0, sizeof(addr));
-    ret = recvfrom(b->num, out, outl, flags, &addr, &len);
+    ret = recvfrom(b->num, in, inl, flags, (struct sockaddr *)&addr, &len);
 
     if(ret > 0) {
       /* successs! */
@@ -394,7 +395,10 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
 }
 #endif
 
-#ifdef AF_INET6
+/* on Windows, RFC3542 is not implemented correctly, instead
+ * WSARecvMsg must be used rather than recvmsg
+ */
+#if defined(AF_INET6) && !defined(WIN32)
 static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
                                      int flags,
                                      BIO_ADDR *dstaddr, BIO_ADDR *peer)
@@ -455,6 +459,26 @@ static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
 
     /* NOTE: peer was filled in by kernel */
     return len;
+}
+#else
+
+/* generic version for windows */
+static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
+                                         int flags,
+                                         BIO_ADDR *dstaddr, BIO_ADDR *peer)
+{
+    struct sockaddr_in6 addr;
+    socklen_t len = sizeof(addr);
+    unsigned int ret;
+
+    memset((void *)&addr, 0, sizeof(addr));
+    ret = recvfrom(b->num, in, inl, flags, (struct sockaddr *)&addr, &len);
+
+    if(ret > 0) {
+      /* successs! */
+      BIO_set_dgram_origin(b, &addr);
+    }
+    return ret;
 }
 #endif
 
@@ -626,11 +650,12 @@ static int dgram_write_unconnected_v4(BIO *b, const char *out, int outl)
     memset((void *)&addr, 0, sizeof(addr));
     addr = *(struct sockaddr_in *)BIO_ADDR_sockaddr(&data->peer);
 
-    return sendto(b->num, out, outl, &addr, sizeof(addr));
+    return sendto(b->num, out, outl, 0 /* flags */,
+                  (struct sockaddr *)&addr, sizeof(addr));
 }
 #endif
 
-#ifdef AF_INET6
+#if defined(AF_INET6) && !defined(WIN32)
 static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
 {
     struct sockaddr_in6 addr;
@@ -670,6 +695,18 @@ static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
     }
 
     return sendmsg(b->num, &mhdr, 0);
+}
+#else
+static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
+{
+    struct sockaddr_in6 addr;
+    bio_dgram_data *data = (bio_dgram_data *)b->ptr;
+
+    memset((void *)&addr, 0, sizeof(addr));
+    addr = *(struct sockaddr_in6 *)BIO_ADDR_sockaddr(&data->peer);
+
+    return sendto(b->num, out, outl, 0 /* flags */,
+                  (struct sockaddr *)&addr, sizeof(addr));
 }
 #endif /* AF_INET6 */
 
