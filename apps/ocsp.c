@@ -35,7 +35,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/bn.h>
 # include <openssl/x509v3.h>
 
-# if (defined(OPENSSL_SYS_UNIX) || defined(OPENSSL_SYS_LINUX)) && !defined(OPENSSL_NO_SOCK)
+# if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK)
 #  define OCSP_DAEMON
 #  include <sys/types.h>
 #  include <sys/wait.h>
@@ -110,9 +110,7 @@ typedef enum OPTION_choice {
     OPT_RKEY, OPT_ROTHER, OPT_RMD, OPT_RSIGOPT, OPT_HEADER,
     OPT_V_ENUM,
     OPT_MD,
-# ifdef OCSP_DAEMON
     OPT_MULTI
-# endif
 } OPTION_CHOICE;
 
 const OPTIONS ocsp_options[] = {
@@ -501,7 +499,7 @@ int ocsp_main(int argc, char **argv)
         goto opthelp;
 
     /* Have we anything to do? */
-    if (req == NULL&& reqin == NULL
+    if (req == NULL && reqin == NULL
         && respin == NULL && !(port != NULL && ridx_filename != NULL))
         goto opthelp;
 
@@ -552,13 +550,14 @@ int ocsp_main(int argc, char **argv)
             goto end;
     }
 
-    if (ridx_filename && (!rkey || !rsigner || !rca_cert)) {
+    if (ridx_filename != NULL
+        && (rkey != NULL || rsigner != NULL || rca_cert != NULL)) {
         BIO_printf(bio_err,
                    "Responder mode requires certificate, key, and CA.\n");
         goto end;
     }
 
-    if (ridx_filename) {
+    if (ridx_filename != NULL) {
         rdb = load_index(ridx_filename, NULL);
         if (!rdb || !index_index(rdb)) {
             ret = 1;
@@ -567,9 +566,9 @@ int ocsp_main(int argc, char **argv)
     }
 
 # ifdef OCSP_DAEMON
-    if (multi && acbio)
+    if (multi && acbio != NULL)
         spawn_loop(prog, multi);
-    if (acbio && req_timeout > 0)
+    if (acbio != NULL && req_timeout > 0)
         signal(SIGALRM, sock_timeout);
 #endif
 
@@ -844,10 +843,10 @@ static int index_changed(CA_DB *rdb)
     struct stat sb;
 
     if (rdb && stat(rdb->dbfname, &sb) != -1) {
-        if (rdb->dbst.st_mtime != sb.st_mtime ||
-            rdb->dbst.st_ctime != sb.st_ctime ||
-            rdb->dbst.st_ino != sb.st_ino ||
-            rdb->dbst.st_dev != sb.st_dev) {
+        if (rdb->dbst.st_mtime != sb.st_mtime
+            || rdb->dbst.st_ctime != sb.st_ctime
+            || rdb->dbst.st_ino != sb.st_ino
+            || rdb->dbst.st_dev != sb.st_dev) {
             syslog(LOG_INFO, "index file changed, reloading");
             return 1;
         }
@@ -942,6 +941,7 @@ static void spawn_loop(const char *prog, int multi)
 
         switch(fpid = fork()) {
         case -1:            /* error */
+            /* System critically low on memory, pause and try again later */
             sleep(30);
             break;
         case 0:             /* child */
@@ -1313,8 +1313,8 @@ static int urldecode(char *p)
 # ifdef OCSP_DAEMON
 static void sock_timeout(int signum)
 {
-    if (acfd != (int) INVALID_SOCKET)
-        (void) shutdown(acfd, SHUT_RD);
+    if (acfd != (int)INVALID_SOCKET)
+        (void)shutdown(acfd, SHUT_RD);
 }
 # endif
 
@@ -1430,7 +1430,7 @@ out:
 #  ifdef OCSP_DAEMON
     if (timeout > 0)
         alarm(0);
-    acfd = (int) INVALID_SOCKET;
+    acfd = (int)INVALID_SOCKET;
 #  endif
     return 1;
 # endif
