@@ -30,7 +30,7 @@ extern "C" {
     }
     foreach (@{$config{openssl_api_defines}}) {
         (my $macro, my $value) = $_ =~ /^(.*?)=(.*?)$/;
-        $OUT .= "#define OPENSSL_MIN_API $value\n";
+        $OUT .= "#define $macro $value\n";
     }
     if (@{$config{openssl_algorithm_defines}}) {
       foreach (@{$config{openssl_algorithm_defines}}) {
