@@ -40,7 +40,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
 {
     BN_CTX *ctx;
     EC_POINT *tmp = NULL;
-    BIGNUM *x = NULL, *y = NULL;
+    BIGNUM *x = NULL;
     const BIGNUM *priv_key;
     const EC_GROUP *group;
     int ret = 0;
@@ -51,8 +51,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
         goto err;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
-    y = BN_CTX_get(ctx);
-    if (y == NULL) {
+    if (x == NULL) {
         ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -86,14 +85,14 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
 
     if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
         NID_X9_62_prime_field) {
-        if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, y, ctx)) {
+        if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, NULL, ctx)) {
             ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
             goto err;
         }
     }
 #ifndef OPENSSL_NO_EC2M
     else {
-        if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, y, ctx)) {
+        if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, NULL, ctx)) {
             ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
             goto err;
         }
