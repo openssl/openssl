@@ -7,8 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define get_last_sys_error()    GetLastError()
-#define clear_sys_error()       SetLastError(0)
+/*
+ * This file is included by e_os.h if building on a Windows platform.
+ * The order of #include's and #define's here isn't completely arbitrary,
+ * some tests only work properly after certain headers.
+ */
+
+#define get_last_sys_error() GetLastError()
+#define clear_sys_error()    SetLastError(0)
+#define EXIT(n)              exit(n)
+#define LIST_SEPARATOR_CHAR  ';'
 
 #if defined(WIN32) && !defined(WINNT)
 # define WIN_CONSOLE_BUG
@@ -24,7 +32,7 @@
 # define _setmode setmode
 # define _O_TEXT O_TEXT
 # define _O_BINARY O_BINARY
-# define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
+# define HAS_LFN_SUPPORT(name) (pathconf((name), _PC_NAME_MAX) > 12)
 # undef DEVRANDOM_EGD
 # undef DEVRANDOM
 # define DEVRANDOM "/dev/urandom\x24"
@@ -55,11 +63,11 @@
         * certain "discipline" for maintaining [broad] binary compatibility.
         * As long as structures are invariant among Winsock versions,
         * it's sufficient to check for specific Winsock2 API availability
-        * at run-time [DSO_global_lookup is recommended]...
+        * at run-time [DSO_global_lookup is recommended].  And yes, these
+        * two files have to be #include'd before <windows.h>.
         */
 # include <winsock2.h>
 # include <ws2tcpip.h>
-       /* yes, they have to be #included prior to <windows.h> */
 #endif
 #include <windows.h>
 #include <stdio.h>
@@ -67,7 +75,7 @@
 #include <errno.h>
 
 #if defined(_WIN32_WCE) && !defined(EACCES)
-# define EACCES   13
+# define EACCES 13
 #endif
 
 #include <string.h>
@@ -77,6 +85,7 @@
 static __inline unsigned int _strlen31(const char *str)
 {
     unsigned int len = 0;
+
     while (*str && len < 0x80000000U)
         str++, len++;
     return len & 0x7FFFFFFF;
@@ -86,7 +95,7 @@ static __inline unsigned int _strlen31(const char *str)
 #include <malloc.h>
 
 #if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
-# if _MSC_VER>=1300 && _MSC_VER<1600
+# if _MSC_VER >= 1300 && _MSC_VER < 1600
 #  undef stdin
 #  undef stdout
 #  undef stderr
@@ -94,7 +103,7 @@ FILE *__iob_func();
 #  define stdin  (&__iob_func()[0])
 #  define stdout (&__iob_func()[1])
 #  define stderr (&__iob_func()[2])
-# elif _MSC_VER<1300 && defined(I_CAN_LIVE_WITH_LNK4049)
+# elif _MSC_VER < 1300 && defined(I_CAN_LIVE_WITH_LNK4049)
 #  undef stdin
 #  undef stdout
 #  undef stderr
@@ -117,21 +126,25 @@ extern FILE *_imp___iob;
 
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
-
 #ifndef S_IFDIR
-# define S_IFDIR     _S_IFDIR
+# define S_IFDIR _S_IFDIR
 #endif
 #ifndef S_IFMT
-# define S_IFMT      _S_IFMT
+# define S_IFMT  _S_IFMT
 #endif
 #ifndef W_OK
-# define W_OK        2
+# define W_OK 2
 #endif
 #ifndef R_OK
-# define R_OK        4
+# define R_OK 4
+#endif
+#ifdef OPENSSL_SYS_WINCE
+# define DEFAULT_HOME ""
+#else
+# define DEFAULT_HOME "C:"
 #endif
 
-#if (_MSC_VER >= 1310)
+#if _MSC_VER >= 1310
 # define open _open
 # define fdopen _fdopen
 # define close _close
@@ -142,17 +155,8 @@ extern FILE *_imp___iob;
 # endif
 #endif
 
-#define EXIT(n) exit(n)
-#define LIST_SEPARATOR_CHAR ';'
-
-#ifdef OPENSSL_SYS_WINCE
-# define DEFAULT_HOME  ""
-#else
-# define DEFAULT_HOME  "C:"
-#endif
-
 /* Avoid Visual Studio 13 GetVersion deprecated problems */
-#if defined(_MSC_VER) && _MSC_VER >= 1800
+#if _MSC_VER >= 1800
 # define check_winnt() (1)
 #else
 # define check_winnt() (GetVersion() < 0x80000000)
