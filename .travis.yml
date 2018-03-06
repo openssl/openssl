@@ -124,7 +124,7 @@ before_script:
       fi
     - if [ -n "$DESTDIR" ]; then
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
-          tar -xvzf _srcdist.tar.gz;
+          tar -xzf _srcdist.tar.gz;
           mkdir _build;
           cd _build;
           srcdir=../_srcdist;
@@ -133,14 +133,14 @@ before_script:
           srcdir=.;
           top=.;
       fi
-    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+    - if [ "$CC" = i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
-      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+      elif [ "$CC" = x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if [ "$CC" == clang-3.9 ]; then
+          if [ "$CC" = clang-3.9 ]; then
               sudo cp .travis-apt-pin.preferences /etc/apt/preferences.d/no-ubuntu-clang;
               curl -sSL "http://apt.llvm.org/llvm-snapshot.gpg.key" | sudo -E apt-key add -;
               echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list > /dev/null;
@@ -199,18 +199,22 @@ script:
               echo -e '+\057\057\057\057 MAKE TEST FAILED'; false;
           fi;
       else
-          if $make build_tests; then
+          if $make build_tests >~/build.log 2>&1; then
               echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS OK';
           else
-              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED'; false;
+              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
+              cat ~/build.log
+              false;
           fi;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          if $make install install_docs DESTDIR="$top/$DESTDIR"; then
+          if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
               echo -e '+\057\057\057\057\057\057 MAKE INSTALL OK';
           else
-              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED'; false;
+              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED';
+              cat ~/install.log;
+              false;
           fi;
       fi
     - cd $top
