@@ -1028,6 +1028,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     for (id = 0; PACKET_remaining(&identities) != 0; id++) {
         PACKET identity;
         unsigned long ticket_agel;
+        size_t idlen;
 
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
                 || !PACKET_get_net_4(&identities, &ticket_agel)) {
@@ -1036,13 +1037,64 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
 
+        idlen = PACKET_remaining(&identity);
         if (s->psk_find_session_cb != NULL
-                && !s->psk_find_session_cb(s, PACKET_data(&identity),
-                                           PACKET_remaining(&identity),
+                && !s->psk_find_session_cb(s, PACKET_data(&identity), idlen,
                                            &sess)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PARSE_CTOS_PSK, SSL_R_BAD_EXTENSION);
             return 0;
+        }
+
+        if(sess == NULL
+                && s->psk_server_callback != NULL
+                && idlen <= PSK_MAX_IDENTITY_LEN) {
+            char *pskid = NULL;
+            unsigned char pskdata[PSK_MAX_PSK_LEN];
+            unsigned int pskdatalen;
+
+            if (!PACKET_strndup(&identity, &pskid)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
+                         ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            pskdatalen = s->psk_server_callback(s, pskid, pskdata,
+                                                sizeof(pskdata));
+            OPENSSL_free(pskid);
+            if (pskdatalen > PSK_MAX_PSK_LEN) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
+                         ERR_R_INTERNAL_ERROR);
+                return 0;
+            } else if (pskdatalen > 0) {
+                const SSL_CIPHER *cipher;
+                const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+
+                /*
+                 * We found a PSK using an old style callback. We don't know
+                 * the digest so we default to SHA256 as per the TLSv1.3 spec
+                 */
+                cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
+                if (cipher == NULL) {
+                    OPENSSL_cleanse(pskdata, pskdatalen);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
+                             ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+
+                sess = SSL_SESSION_new();
+                if (sess == NULL
+                        || !SSL_SESSION_set1_master_key(sess, pskdata,
+                                                        pskdatalen)
+                        || !SSL_SESSION_set_cipher(sess, cipher)
+                        || !SSL_SESSION_set_protocol_version(sess,
+                                                             TLS1_3_VERSION)) {
+                    OPENSSL_cleanse(pskdata, pskdatalen);
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
+                             ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                OPENSSL_cleanse(pskdata, pskdatalen);
+            }
         }
 
         if (sess != NULL) {
