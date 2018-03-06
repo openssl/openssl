@@ -99,9 +99,9 @@ package main;
 # This adds quotes (") around the given string, and escapes any $, @, \,
 # " and ' by prepending a \ to them.
 sub quotify1 {
-    my $s = shift @_;
+    my $s = my $orig = shift @_;
     $s =~ s/([\$\@\\"'])/\\$1/g;
-    '"'.$s.'"';
+    $s ne $orig || $s =~ /\s/ ? '"'.$s.'"' : $s;
 }
 
 # quotify_l LIST
