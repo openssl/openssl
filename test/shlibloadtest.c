@@ -52,12 +52,10 @@ static int shlib_sym(SHLIB lib, const char *symname, SHLIB_SYM *sym)
     return *sym != NULL;
 }
 
-# ifdef OPENSSL_USE_NODELETE
 static int shlib_close(SHLIB lib)
 {
     return dlclose(lib) != 0 ? 0 : 1;
 }
-# endif
 #endif
 
 #ifdef DSO_WIN32
@@ -81,12 +79,10 @@ static int shlib_sym(SHLIB lib, const char *symname, SHLIB_SYM *sym)
     return *sym != NULL;
 }
 
-# ifdef OPENSSL_USE_NODELETE
 static int shlib_close(SHLIB lib)
 {
     return FreeLibrary(lib) == 0 ? 0 : 1;
 }
-# endif
 #endif
 
 
@@ -149,7 +145,6 @@ static int test_lib(void)
     if (!TEST_int_eq(myOpenSSL_version_num(), OPENSSL_VERSION_NUMBER))
         goto end;
 
-#ifdef OPENSSL_USE_NODELETE
     switch (test_type) {
     case JUST_CRYPTO:
         if (!TEST_true(shlib_close(cryptolib)))
@@ -166,7 +161,6 @@ static int test_lib(void)
             goto end;
         break;
     }
-#endif
 
     result = 1;
 end:
