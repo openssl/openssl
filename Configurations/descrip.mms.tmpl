@@ -171,50 +171,167 @@ OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 # Where installed engines reside, for C
 ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
-CC= {- $config{cc} -}
-CPP= {- $config{cpp} -}
-DEFINES={- our $defines = join(",",
-                               '__dummy', # To make comma processing easier
-                               @{$config{defines}}) -}
-INCLUDES={- our $includes = join(',', @{$config{includes}}) -}
-CPPFLAGS='qual_includes'{- our $cppflags = join('', @{$config{cppflags}}) -}
-CPPFLAGS_Q={- (my $x = $cppflags) =~ s|"|""|g;
-              (my $d = $defines) =~ s|"|""|g;
-              $x .= "/INCLUDE=($includes)" if $includes;
-              $x .= "/DEFINE=($d)";
-              $x; -}
-CFLAGS={- join('', @{$config{cflags}}) -}
-LDFLAGS= {- join('', @{$config{lflags}}) -}
-EX_LIBS= {- join('', map { ','.$_ } @{$config{ex_libs}}) -}
+##### User defined commands and flags ################################
 
-LIB_DEFINES=$(DEFINES){- join("", (map { ",$_" }
-                                   @{$target{shared_defines}},
-                                   'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
-                                   'ENGINESDIR="""$(ENGINESDIR_C)"""')) -}
-LIB_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(LIB_DEFINES))
-LIB_CFLAGS=$(CFLAGS){- $target{lib_cflags} // "" -}
-DSO_DEFINES=$(DEFINES){- join("", (map { ",$_" } @{$target{dso_defines}})) -}
-DSO_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(DSO_DEFINES))
-DSO_CFLAGS=$(CFLAGS){- $target{dso_cflags} // "" -}
-BIN_DEFINES=$(DEFINES){- join("", (map { ",$_" } @{$target{bin_defines}})) -}
-BIN_CPPFLAGS=$(CPPFLAGS)/DEFINE=($(BIN_DEFINES))
-BIN_CFLAGS=$(CFLAGS){- $target{bin_cflags} // "" -}
-NO_INST_LIB_CFLAGS=$(CFLAGS){- $target{no_inst_lib_cflags}
-                               // $target{lib_cflags}
-                               // "" -}
-NO_INST_DSO_CFLAGS=$(CFLAGS){- $target{no_inst_dso_cflags}
-                               // $target{dso_cflags}
-                               // "" -}
-NO_INST_BIN_CFLAGS=$(CFLAGS){- $target{no_inst_bin_cflags}
-                               // $target{bin_cflags}
-                               // "" -}
+CC={- $config{CC} -}
+CPP={- $config{CPP} -}
+DEFINES={- our $defines1 = join('', map { ",$_" } @{$config{CPPDEFINES}}) -}
+INCLUDES={- our $includes1 = join('', map { ",$_" } @{$config{CPPINCLUDES}}) -}
+CPPFLAGS={- our $cppflags1 = join('', @{$config{CPPFLAGS}}) -}
+CFLAGS={- join('', @{$config{CFLAGS}}) -}
+LDFLAGS={- join('', @{$config{LFLAGS}}) -}
+EX_LIBS={- join('', map { ",$_" } @{$config{LDLIBS}}) -}
 
 PERL={- $config{perl} -}
 
-AS={- $config{as} -}
-ASFLAGS={- join(' ', @{$config{asflags}}) -}
+AS={- $config{AS} -}
+ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
+
+##### Special command flags ##########################################
+
 ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
+
+##### Project flags ##################################################
+
+# Variables starting with CNF_ are common variables for all product types
+
+CNF_ASFLAGS={- join('', $target{asflags} || (),
+                        @{$config{asflags}}) -}
+CNF_DEFINES={- our $defines2 = join('', map { ",$_" } @{$target{defines}},
+                                                      @{$config{defines}}) -}
+CNF_INCLUDES={- our $includes2 = join(',', @{$target{includes}},
+                                           @{$config{includes}}) -}
+CNF_CPPFLAGS={- our $cppflags2 = join('', $target{cppflags} || (),
+                                          @{$config{cppflags}}) -}
+CNF_CFLAGS={- join('', $target{cflags} || (),
+                       @{$config{cflags}}) -}
+CNF_CXXFLAGS={- join('', $target{cxxflags} || (),
+                         @{$config{cxxflags}}) -}
+CNF_LDFLAGS={- join('', $target{lflags} || (),
+                        @{$config{lflags}}) -}
+CNF_EX_LIBS={- join('', map{ ",$_" } @{$target{ex_libs}},
+                                     @{$config{ex_libs}}) -}
+
+# Variables starting with LIB_ are used to build library object files
+# and shared libraries.
+# Variables starting with DSO_ are used to build DSOs and their object files.
+# Variables starting with BIN_ are used to build programs and their object
+# files.
+
+LIB_ASFLAGS={- join(' ', $target{lib_asflags} || (),
+                         @{$config{lib_asflags}},
+                         '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
+LIB_DEFINES={- join('', (map { ",$_" } @{$target{lib_defines}},
+                                       @{$target{shared_defines}},
+                                       @{$config{lib_defines}},
+                                       @{$config{shared_defines}},
+                                       'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                                       'ENGINESDIR="""$(ENGINESDIR_C)"""'),
+                        '$(CNF_DEFINES)', '$(DEFINES)') -}
+LIB_INCLUDES={- join(',', @{$target{lib_includes}},
+                          @{$target{shared_includes}},
+                          @{$config{lib_includes}},
+                          @{$config{shared_includes}}) -}
+LIB_CPPFLAGS={- join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(LIB_DEFINES))',
+                         $target{lib_cppflags} || (),
+                         $target{shared_cppflags} || (),
+                         @{$config{lib_cppflags}},
+                         @{$config{shared_cppflag}},
+                         '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+LIB_CFLAGS={- join('', $target{lib_cflags} || (),
+                       $target{shared_cflag} || (),
+                       @{$config{lib_cflags}},
+                       @{$config{shared_cflag}},
+                       '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+LIB_LDFLAGS={- join('', $target{lib_lflags} || (),
+                        $target{shared_ldflag} || (),
+                        @{$config{lib_lflags}},
+                        @{$config{shared_ldflag}},
+                        '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+LIB_EX_LIBS=$(CNF_EX_LIBS)$(EX_LIBS)
+DSO_ASFLAGS={- join(' ', $target{dso_asflags} || (),
+                         $target{module_asflags} || (),
+                         @{$config{dso_asflags}},
+                         @{$config{module_asflags}},
+                         '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
+DSO_DEFINES={- join('', (map { ",$_" } @{$target{dso_defines}},
+                                       @{$target{module_defines}},
+                                       @{$config{dso_defines}},
+                                       @{$config{module_defines}}),
+                        '$(CNF_DEFINES)', '$(DEFINES)') -}
+DSO_INCLUDES={- join(',', @{$target{dso_includes}},
+                          @{$target{module_includes}},
+                          @{$config{dso_includes}},
+                          @{$config{module_includes}}) -}
+DSO_CPPFLAGS={- join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(DSO_DEFINES))',
+                         $target{dso_cppflags} || (),
+                         $target{module_cppflags} || (),
+                         @{$config{dso_cppflags}},
+                         @{$config{module_cppflags}},
+                         '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+DSO_CFLAGS={- join('', $target{dso_cflags} || (),
+                       $target{module_cflags} || (),
+                       @{$config{dso_cflags}},
+                       @{$config{module_cflags}},
+                       '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+DSO_LDFLAGS={- join('', $target{dso_lflags} || (),
+                        $target{module_ldflags} || (),
+                        @{$config{dso_lflags}},
+                        @{$config{module_ldflags}},
+                        '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+DSO_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+BIN_ASFLAGS={- join(' ', $target{bin_asflags} || (),
+                         @{$config{bin_asflags}},
+                         '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
+BIN_DEFINES={- join('', (map { ",$_" } @{$target{bin_defines}},
+                                       @{$config{bin_defines}}),
+                        '$(CNF_DEFINES)', '$(DEFINES)') -}
+BIN_INCLUDES={- join(',', @{$target{bin_includes}},
+                          @{$config{bin_includes}}) -}
+BIN_CPPFLAGS={- join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(DSO_DEFINES))',
+                         $target{bin_cppflags} || (),
+                         @{$config{bin_cppflag}},
+                         '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+BIN_CFLAGS={- join('', $target{bin_cflag} || (),
+                       @{$config{bin_cflag}},
+                       '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+BIN_LDFLAGS={- join('', $target{bin_lflags} || (),
+                        @{$config{bin_lflags}} || (),
+                        '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+NO_INST_LIB_CFLAGS={- join('', $target{no_inst_lib_cflags}
+                               // $target{lib_cflags}
+                               // (),
+                               $target{shared_cflag} || (),
+                               @{$config{lib_cflags}},
+                               @{$config{shared_cflag}},
+                               '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+NO_INST_DSO_CFLAGS={- join('', $target{no_inst_lib_cflags}
+                               // $target{lib_cflags}
+                               // (),
+                               $target{dso_cflags} || (),
+                               @{$config{lib_cflags}},
+                               @{$config{dso_cflags}},
+                               '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+NO_INST_BIN_CFLAGS={- join('', $target{no_inst_bin_cflags}
+                               // $target{bin_cflags}
+                               // (),
+                               @{$config{bin_cflags}},
+                               '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+
 PERLASM_SCHEME={- $target{perlasm_scheme} -}
+
+# CPPFLAGS_Q is used for one thing only: to build up buildinf.h
+CPPFLAGS_Q={- (my $c = $cppflags1.$cppflags2) =~ s|"|""|g;
+              (my $d = $defines1.$defines2) =~ s|"|""|g;
+              my $i = join(',', $includes1 || (), $includes2 || ());
+              my $x = $c;
+              $x .= "/INCLUDE=($i)" if $i;
+              $x .= "/DEFINE=($d)" if $d;
+              $x; -}
 
 # .FIRST and .LAST are special targets with MMS and MMK.
 # The defines in there are for C.  includes that look like
@@ -666,6 +783,7 @@ EOF
           my @incs_cmds = includes({ lib => '$(LIB_INCLUDES)',
                                      dso => '$(DSO_INCLUDES)',
                                      bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
+                                   '$(CNF_INCLUDES)',
                                    '$(INCLUDES)',
                                    @{$args{incs}});
           my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
@@ -725,11 +843,14 @@ EOF
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
 
       if ($srcs[0] =~ /\.asm$/) {
+          my $asflags = { lib => ' $(LIB_ASFLAGS)',
+		          dso => ' $(DSO_ASFLAGS)',
+		          bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
           return <<"EOF";
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
-        \$(AS) \$(ASFLAGS) \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
+        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
         SET DEFAULT $backward
 EOF
       }
@@ -817,8 +938,8 @@ $shlib.EXE : $lib.OLB $deps
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
-        LINK \$(LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
-                $lib-components.OPT/OPT \$(EX_LIBS)
+        LINK \$(LIB_LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
+                $lib-components.OPT/OPT \$(LIB_EX_LIBS)
         DELETE $defs[0]-translated;*,$lib-components.OPT;*
         PURGE $shlib.EXE,$shlib.MAP
 EOF
@@ -861,7 +982,7 @@ $lib.EXE : $deps
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
-        LINK \$(LDFLAGS)/SHARE=\$\@ $lib.OPT/OPT \$(EX_LIBS)
+        LINK \$(DSO_LDFLAGS)/SHARE=\$\@ $lib.OPT/OPT \$(DSO_EX_LIBS)
         - PURGE $lib.EXE,$lib.OPT,$lib.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"
@@ -949,7 +1070,7 @@ $bin.EXE : $deps
         @ CLOSE OPT_FILE
         TYPE $bin.opt ! For debugging
         - pipe SPAWN/WAIT/NOLOG/OUT=$bin.LINKLOG -
-                    LINK \$(LDFLAGS)/EXEC=\$\@ $bin.OPT/OPT \$(EX_LIBS) ; -
+                    LINK \$(BIN_LDFLAGS)/EXEC=\$\@ $bin.OPT/OPT \$(BIN_EX_LIBS) ; -
                link_status = \$status ; link_severity = link_status .AND. 7
         @ search_severity = 1
         -@ IF link_severity .EQ. 0 THEN -
