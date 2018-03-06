@@ -99,7 +99,10 @@ be at infinity by calling EC_POINT_set_to_infinity().
 The affine co-ordinates for a point describe a point in terms of its x and y
 position. The functions EC_POINT_set_affine_coordinates_GFp() and
 EC_POINT_set_affine_coordinates_GF2m() set the B<x> and B<y> co-ordinates for
-the point B<p> defined over the curve given in B<group>.
+the point B<p> defined over the curve given in B<group>. The functions
+EC_POINT_get_affine_coordinates_GFp() and
+EC_POINT_get_affine_coordinates_GF2m() set B<x> and B<y>, either of which may
+be NULL, to the corresponding coordinates of B<p>.
 
 As well as the affine co-ordinates, a point can alternatively be described in
 terms of its Jacobian projective co-ordinates (for Fp curves only). Jacobian
