@@ -176,8 +176,18 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 {
     size_t ret = 0;
     size_t entropy_available = 0;
-    RAND_POOL *pool = RAND_POOL_new(entropy, min_len, max_len);
+    RAND_POOL *pool;
 
+    if (drbg->parent && drbg->strength > drbg->parent->strength) {
+        /*
+         * We currently don't support the algorithm from NIST SP 800-90C
+         * 10.1.2 to use a weaker DRBG as source
+         */
+        RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY, RAND_R_PARENT_STRENGTH_TOO_WEAK);
+        return 0;
+    }
+
+    pool = RAND_POOL_new(entropy, min_len, max_len);
     if (pool == NULL)
         return 0;
 
