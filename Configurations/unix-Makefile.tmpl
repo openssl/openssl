@@ -188,53 +188,7 @@ HTMLSUFFIX=html
 # For "optional" echo messages, to get "real" silence
 ECHO = echo
 
-CROSS_COMPILE= {- $config{cross_compile_prefix} -}
-CPPFLAGS={- our $cppflags = join(" ",
-                                 (map { "-D".$_} @{$config{defines}}),
-                                 (map { "-I".$_} @{$config{includes}}),
-                                 @{$config{cppflags}}) -}
-CPPFLAGS_Q={- $cppflags =~ s|([\\"])|\\$1|g; $cppflags -}
-CC= $(CROSS_COMPILE){- $config{cc} -}
-CFLAGS={- join(' ', @{$config{cflags}}) -}
-CXX={- $config{cxx} ? "\$(CROSS_COMPILE)$config{cxx}" : '' -}
-CXXFLAGS={- join(' ', @{$config{cxxflags}}) -}
-LDFLAGS= {- join(' ', @{$config{lflags}}) -}
-PLIB_LDFLAGS= {- join(' ', @{$config{plib_lflags}}) -}
-EX_LIBS= {- join(' ', @{$config{ex_libs}}) -}
-
-LIB_CPPFLAGS={- join(' ', '$(CPPFLAGS)',
-                          $target{shared_cppflag} || (),
-                          (map { '-D'.$_ }
-                               ('OPENSSLDIR="\"$(OPENSSLDIR)\""',
-                                'ENGINESDIR="\"$(ENGINESDIR)\""'))) -}
-LIB_CFLAGS={- join(' ', '$(CFLAGS)', $target{shared_cflag} || ()) -}
-LIB_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{shared_cxxflag} || ()) -}
-LIB_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{shared_ldflag} || (), $config{shared_ldflag} || ()) -}
-DSO_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{dso_cppflags} || ()) -}
-DSO_CFLAGS={- join(' ', '$(CFLAGS)', $target{dso_cflags} || ()) -}
-DSO_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{dso_cxxflags} || ()) -}
-DSO_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{dso_lflags} || ()) -}
-BIN_CPPFLAGS={- join(' ', '$(CPPFLAGS)', $target{bin_cppflags} || ()) -}
-BIN_CFLAGS={- join(' ', '$(CFLAGS)', $target{bin_cflags} || ()) -}
-BIN_CXXFLAGS={- join(' ', '$(CXXFLAGS)', $target{bin_cxxflags} || ()) -}
-BIN_LDFLAGS={- join(' ', '$(LDFLAGS)', $target{bin_lflags} || ()) -}
-
-PERL={- $config{perl} -}
-
-AR=$(CROSS_COMPILE){- $config{ar} -}
-ARFLAGS= {- join(' ', @{$config{arflags}}) -}
-RANLIB={- $config{ranlib} ? "\$(CROSS_COMPILE)$config{ranlib}" : "true"; -}
-RC= $(CROSS_COMPILE){- $target{rc} || "windres" -}
-RCFLAGS={- join(' ', @{$config{rcflags}}) -} {- $target{shared_rcflag} -}
-RM= rm -f
-RMDIR= rmdir
-TAR= {- $target{tar} || "tar" -}
-TARFLAGS= {- $target{tarflags} -}
-MAKEDEPEND={- $config{makedepprog} -}
-
-BASENAME=       openssl
-NAME=           $(BASENAME)-$(VERSION)
-TARFILE=        ../$(NAME).tar
+##### User defined commands and flags ################################
 
 # We let the C compiler driver to take care of .s files. This is done in
 # order to be excused from maintaining a separate set of architecture
@@ -242,6 +196,128 @@ TARFILE=        ../$(NAME).tar
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.  In any case, we do not define AS or
 # ASFLAGS for this reason.
+
+CROSS_COMPILE={- $config{CROSS_COMPILE} -}
+CC=$(CROSS_COMPILE){- $config{CC} -}
+CXX={- $config{CXX} ? "\$(CROSS_COMPILE)$config{CXX}" : '' -}
+CPPFLAGS={- our $cppflags1 = join(" ",
+                                  (map { "-D".$_} @{$config{CPPDEFINES}}),
+                                  (map { "-I".$_} @{$config{CPPINCLUDES}}),
+                                  @{$config{CPPFLAGS}}) -}
+CFLAGS={- join(' ', @{$config{CFLAGS}}) -}
+CXXFLAGS={- join(' ', @{$config{CXXFLAGS}}) -}
+LDFLAGS= {- join(' ', @{$config{LDFLAGS}}) -}
+EX_LIBS= {- join(' ', @{$config{LDLIBS}}) -}
+
+MAKEDEPEND={- $config{makedepprog} -}
+
+PERL={- $config{perl} -}
+
+AR=$(CROSS_COMPILE){- $config{AR} -}
+ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
+RANLIB={- $config{RANLIB} ? "\$(CROSS_COMPILE)$config{RANLIB}" : "true"; -}
+RC= $(CROSS_COMPILE){- $config{RC} -}
+RCFLAGS={- join(' ', @{$config{RCFLAGS}}) -} {- $target{shared_rcflag} -}
+
+RM= rm -f
+RMDIR= rmdir
+TAR= {- $target{TAR} || "tar" -}
+TARFLAGS= {- $target{TARFLAGS} -}
+
+BASENAME=       openssl
+NAME=           $(BASENAME)-$(VERSION)
+TARFILE=        ../$(NAME).tar
+
+##### Project flags ##################################################
+
+# Variables starting with CNF_ are common variables for all product types
+
+CNF_CPPFLAGS={- our $cppflags2 =
+                    join(' ', $target{cppflags} || (),
+                              (map { "-D".$_} @{$target{defines}},
+                                              @{$config{defines}}),
+                              (map { "-I".$_} @{$target{includes}},
+                                              @{$config{includes}}),
+                              @{$config{cppflags}}) -}
+CNF_CFLAGS={- join(' ', $target{cflags} || (),
+                        @{$config{cflags}}) -}
+CNF_CXXFLAGS={- join(' ', $target{cxxflags} || (),
+                          @{$config{cxxflags}}) -}
+CNF_LDFLAGS={- join(' ', $target{lflags} || (),
+                         @{$config{lflags}}) -}
+CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
+                         @{$config{ex_libs}}) -}
+
+# Variables starting with LIB_ are used to build library object files
+# and shared libraries.
+# Variables starting with DSO_ are used to build DSOs and their object files.
+# Variables starting with BIN_ are used to build programs and their object
+# files.
+
+LIB_CPPFLAGS={- join(' ', $target{lib_cppflags} || (),
+                          $target{shared_cppflag} || (),
+                          (map { '-D'.$_ }
+                               @{$config{lib_defines}},
+                               @{$config{shared_defines}},
+                               'OPENSSLDIR="\"$(OPENSSLDIR)\""',
+                               'ENGINESDIR="\"$(ENGINESDIR)\""'),
+                          @{$config{lib_cppflags}},
+                          @{$config{shared_cppflag}},
+                          '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
+                        $target{shared_cflag} || (),
+                        @{$config{lib_cflags}},
+                        @{$config{shared_cflag}},
+                        '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+LIB_CXXFLAGS={- join(' ', $target{lib_cxxflags} || (),
+                          $target{shared_cxxflag} || (),
+                          @{$config{lib_cxxflags}},
+                          @{$config{shared_cxxflag}},
+                          '$(CNF_CXXFLAGS)', '$(CXXFLAGS)') -}
+LIB_LDFLAGS={- join(' ', $target{shared_ldflag} || (),
+                         $config{shared_ldflag} || (),
+                         '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+LIB_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
+                          $target{module_cppflags} || (),
+                          @{$config{dso_cppflags}},
+                          @{$config{module_cppflags}},
+                          '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+DSO_CFLAGS={- join(' ', $target{dso_cflags} || (),
+                        $target{module_cflags} || (),
+                        @{$config{dso_cflags}},
+                        @{$config{module_cflags}},
+                        '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+DSO_CXXFLAGS={- join(' ', $target{dso_cxxflags} || (),
+                          $target{module_cxxflags} || (),
+                          @{$config{dso_cxxflags}},
+                          @{$config{module_cxxflag}},
+                          '$(CNF_CXXFLAGS)', '$(CXXFLAGS)') -}
+DSO_LDFLAGS={- join(' ', $target{dso_ldflags} || (),
+                         $target{module_ldflags} || (),
+                         @{$config{dso_ldflags}},
+                         @{$config{module_ldflags}},
+                         '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+DSO_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+BIN_CPPFLAGS={- join(' ', $target{bin_cppflags} || (),
+                          @{$config{bin_cppflags}},
+                          '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
+BIN_CFLAGS={- join(' ', $target{bin_cflags} || (),
+                        @{$config{bin_cflags}},
+                        '$(CNF_CFLAGS)', '$(CFLAGS)') -}
+BIN_CXXFLAGS={- join(' ', $target{bin_cxxflags} || (),
+                          @{$config{bin_cxxflags}},
+                          '$(CNF_CXXFLAGS)', '$(CXXFLAGS)') -}
+BIN_LDFLAGS={- join(' ', $target{bin_lflags} || (),
+                         @{$config{bin_lflags}},
+                         '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
+BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+
+# CPPFLAGS_Q is used for one thing only: to build up buildinf.h
+CPPFLAGS_Q={- $cppflags1 =~ s|([\\"])|\\$1|g;
+              $cppflags2 =~ s|([\\"])|\\$1|g;
+              join(' ', $cppflags1 || (), $cppflags2 || ()) -}
+
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
 # For x86 assembler: Set PROCESSOR to 386 if you want to support
@@ -771,7 +847,7 @@ libcrypto.pc:
 	    echo 'Description: OpenSSL cryptography library'; \
 	    echo 'Version: '$(VERSION); \
 	    echo 'Libs: -L$${libdir} -lcrypto'; \
-	    echo 'Libs.private: $(EX_LIBS)'; \
+	    echo 'Libs.private: $(LIB_EX_LIBS)'; \
 	    echo 'Cflags: -I$${includedir}' ) > libcrypto.pc
 
 libssl.pc:
@@ -1024,7 +1100,7 @@ EOF
 $target: $deps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $target_full$shared_def $objs \\
-                \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
+                \$(PLIB_LDFLAGS) $linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
           $recipe .= <<"EOF";
@@ -1067,7 +1143,7 @@ EOF
 $target: $objs $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $target $objs \\
-                \$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
+                \$(PLIB_LDFLAGS) $linklibs \$(DSO_EX_LIBS)
 EOF
   }
   sub obj2lib {
@@ -1115,7 +1191,7 @@ $bin$exeext: $objs $deps
 	rm -f $bin$exeext
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
 		-o $bin$exeext $objs \\
-		\$(PLIB_LDFLAGS) $linklibs \$(EX_LIBS)
+		\$(PLIB_LDFLAGS) $linklibs \$(BIN_EX_LIBS)
 EOF
   }
   sub in2script {
