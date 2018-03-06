@@ -201,7 +201,14 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         return NULL;
 
     FAILTEST();
-    allow_customize = 0;
+    if (allow_customize) {
+        /*
+         * Disallow customization after the first allocation. We only set this
+         * if necessary to avoid a store to the same cache line on every
+         * allocation.
+         */
+        allow_customize = 0;
+    }
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
@@ -243,7 +250,6 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    allow_customize = 0;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         void *ret;
