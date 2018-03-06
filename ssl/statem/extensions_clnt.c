@@ -744,6 +744,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
                                          unsigned int context, X509 *x,
                                          size_t chainidx)
 {
+    char identity[PSK_MAX_IDENTITY_LEN + 1];
     const unsigned char *id = NULL;
     size_t idlen = 0;
     SSL_SESSION *psksess = NULL;
@@ -761,6 +762,58 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
                  SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
+    }
+
+    if (psksess == NULL && s->psk_client_callback != NULL) {
+        unsigned char psk[PSK_MAX_PSK_LEN];
+        size_t psklen = 0;
+
+        memset(identity, 0, sizeof(identity));
+        psklen = s->psk_client_callback(s, NULL, identity, sizeof(identity) - 1,
+                                        psk, sizeof(psk));
+
+        if (psklen > PSK_MAX_PSK_LEN) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                     SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        } else if (psklen > 0) {
+            const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+            const SSL_CIPHER *cipher;
+
+            idlen = strlen(identity);
+            if (idlen > PSK_MAX_IDENTITY_LEN) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                         ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+            id = (unsigned char *)identity;
+
+            /*
+             * We found a PSK using an old style callback. We don't know
+             * the digest so we default to SHA256 as per the TLSv1.3 spec
+             */
+            cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
+            if (cipher == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                         ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+
+            psksess = SSL_SESSION_new();
+            if (psksess == NULL
+                    || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
+                    || !SSL_SESSION_set_cipher(psksess, cipher)
+                    || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                         ERR_R_INTERNAL_ERROR);
+                OPENSSL_cleanse(psk, psklen);
+                return EXT_RETURN_FAIL;
+            }
+            OPENSSL_cleanse(psk, psklen);
+        }
     }
 
     SSL_SESSION_free(s->psksession);
