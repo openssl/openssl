@@ -145,7 +145,7 @@ Print out a usage message.
 
 This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
-If neither this nor the target positonal argument are specified then an attempt
+If neither this nor the target positional argument are specified then an attempt
 is made to connect to the local host on port 4433.
 
 =item B<-bind host:port>]
@@ -499,7 +499,7 @@ For example strings, see L<SSL_CTX_set1_sigalgs(3)>
 =item B<-curves curvelist>
 
 Specifies the list of supported curves to be sent by the client. The curve is
-is ultimately selected by the server. For a list of all curves, use:
+ultimately selected by the server. For a list of all curves, use:
 
     $ openssl ecparam -list_curves
 
