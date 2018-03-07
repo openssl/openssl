@@ -99,10 +99,10 @@ The B<PROFESSION_INFOS>, B<ADMISSION_SYNTAX>, B<ADMISSIONS>, and
 B<PROFESSION_INFO> types are opaque structures representing the
 analogous types defined in the Common PKI Specification published
 by L<https://www.t7ev.org>.
-Knowledge of those strutures and their semantics is assumed.
+Knowledge of those structures and their semantics is assumed.
 
 The conventional routines to convert between DER and the local format
-are desribed in L<d2i_X509(3)>.
+are described in L<d2i_X509(3)>.
 The conventional routines to allocate and free the types are defined
 in L<X509_dup(3)>.
 
