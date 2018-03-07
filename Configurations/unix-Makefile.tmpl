@@ -1100,7 +1100,7 @@ EOF
 $target: $deps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $target_full$shared_def $objs \\
-                \$(PLIB_LDFLAGS) $linklibs \$(LIB_EX_LIBS)
+                $linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
           $recipe .= <<"EOF";
@@ -1143,7 +1143,7 @@ EOF
 $target: $objs $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
 		-o $target $objs \\
-                \$(PLIB_LDFLAGS) $linklibs \$(DSO_EX_LIBS)
+                $linklibs \$(DSO_EX_LIBS)
 EOF
   }
   sub obj2lib {
@@ -1191,7 +1191,7 @@ $bin$exeext: $objs $deps
 	rm -f $bin$exeext
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS) \\
 		-o $bin$exeext $objs \\
-		\$(PLIB_LDFLAGS) $linklibs \$(BIN_EX_LIBS)
+		$linklibs \$(BIN_EX_LIBS)
 EOF
   }
   sub in2script {
