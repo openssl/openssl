@@ -1275,9 +1275,9 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
 if ($disabled{pic})
 	{
 	foreach (qw(shared_cflag shared_cxxflag shared_cppflag
-                    shared_defines shared_includes shared_ldflag
+		    shared_defines shared_includes shared_ldflag
 		    module_cflags module_cxxflags module_cppflags
-                    module_defines module_includes module_lflags))
+		    module_defines module_includes module_lflags))
 		{
 		delete $config{$_};
 		$target{$_} = "";
