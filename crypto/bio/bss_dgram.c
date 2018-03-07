@@ -16,8 +16,13 @@
 
 #define __USE_GNU
 
+/* this is needed on OSX to get IPV6_PKTINFO defined */
+#ifdef __APPLE__
+#define __APPLE_USE_RFC_3542
+#endif
+
 #include <sys/types.h>
-#ifdef WIN32
+#if defined(_WIN32)
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
@@ -56,6 +61,19 @@
          ((a)->s6_addr32[1] == 0) &&          \
          ((a)->s6_addr32[2] == htonl(0x0000ffff)))
 # endif
+
+/* this is needed on OSX to get IPV6_PKTINFO */
+#ifdef __APPLE__
+/* should be big enough */
+#define BIO_CMSG_ADDR_SIZE 256
+#define BIO_CMSG_PKT_SIZE  256
+#define BIO_CMSG_PKT6_SIZE 256
+#else
+#define BIO_CMSG_ADDR_SIZE CMSG_SPACE(sizeof(struct in_addr))
+#define BIO_CMSG_PKT_SIZE  CMSG_SPACE(sizeof(struct in_pktinfo))
+#define BIO_CMSG_PKT6_SIZE CMSG_SPACE(sizeof(struct in6_pktinfo))
+#endif
+
 
 static int dgram_write(BIO *h, const char *buf, int num);
 static int dgram_read(BIO *h, char *buf, int size);
@@ -320,7 +338,7 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
                                      BIO_ADDR *dstaddr, BIO_ADDR *peer)
 {
     int len = 0;
-    unsigned char    chdr[CMSG_SPACE(sizeof(struct in_pktinfo))];
+    unsigned char chdr[BIO_CMSG_ADDR_SIZE];
     struct iovec iov;
     struct msghdr mhdr;
     struct in_pktinfo *pkt_info = NULL;
@@ -333,7 +351,7 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
         return -1;
 
     memset(&iov, 0, sizeof(iov));
-    iov.iov_len  = inl;
+    iov.iov_len = inl;
     iov.iov_base = (caddr_t) in;
 
     memset(&mhdr, 0, sizeof(mhdr));
@@ -344,8 +362,8 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
 
     if(dstaddr != NULL) {
       memset(chdr, 0, sizeof(chdr));
-      cmsg = (struct cmsghdr *) chdr;
-      mhdr.msg_control = (void *) cmsg;
+      cmsg = (struct cmsghdr *)chdr;
+      mhdr.msg_control = (void *)cmsg;
       mhdr.msg_controllen = sizeof(chdr);
     }
 
@@ -382,8 +400,11 @@ static int dgram_read_unconnected_v4(BIO *b, const char *in, int inl,
 
 {
     int len = 0;
-    /* RFC2292 says CMSG_SPACE is guaranteed to evaluate to a constant */
-    unsigned char    chdr[CMSG_SPACE(sizeof(struct in_addr))];
+    /*
+     * RFC2292 says CMSG_SPACE is guaranteed to evaluate to a constant,
+     * but OSX Darwin manages to generate warnings about it anyway.
+     */
+    unsigned char chdr[BIO_CMSG_ADDR_SIZE];
     struct iovec iov;
     struct msghdr mhdr;
     struct in_addr *dstrecv;
@@ -414,25 +435,24 @@ static int dgram_read_unconnected_v4(BIO *b, const char *in, int inl,
       mhdr.msg_controllen = sizeof(chdr);
     }
 
-    dstaddr = NULL;
     if((len = recvmsg(b->num, &mhdr, 0)) >= 0) {
         for (cmsg = CMSG_FIRSTHDR(&mhdr);
              cmsg != NULL;
-             cmsg = CMSG_NXTHDR(&mhdr, cmsg))
-	{
+             cmsg = CMSG_NXTHDR(&mhdr, cmsg)) {
             if (cmsg->cmsg_level != IPPROTO_IP)
           	continue;
-            switch(cmsg->cmsg_type) {
-            case IP_RECVDSTADDR:
-              dstrecv = (struct in_addr *)CMSG_DATA(cmsg);
-              break;
-            }
+
+            if(cmsg->cmsg_type != IP_RECVDSTADDR)
+                continue;
+
+            dstrecv = (struct in_addr *)CMSG_DATA(cmsg);
+            break;
 	}
 
         /* see if we found something */
         if(dstrecv != NULL && dstaddr != NULL) {
           dstaddr->s_in.sin_family = AF_INET;
-          dstaddr->s_in.sin_addr   =*dstrecv;
+          dstaddr->s_in.sin_addr =*dstrecv;
         }
     }
 
@@ -459,16 +479,19 @@ static int dgram_read_unconnected_v4(BIO *b, char *in, int inl,
 }
 #endif
 
-/* on Windows, RFC3542 is not implemented correctly, instead
- * WSARecvMsg must be used rather than recvmsg
+/*
+ * on Windows, RFC3542 is not implemented correctly:
+ *   WSARecvMsg must be used rather than recvmsg,
+ *   so the stock recvfrom() code is used, thus !defined(_WIN32)
+ *
  */
-#if defined(AF_INET6) && !defined(WIN32)
+#if defined(AF_INET6) && !defined(_WIN32)
 static int dgram_read_unconnected_v6(BIO *b, char *in, int inl,
                                      int flags,
                                      BIO_ADDR *dstaddr, BIO_ADDR *peer)
 {
     int len = 0;
-    unsigned char    chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+    unsigned char    chdr[BIO_CMSG_PKT6_SIZE];
     struct iovec iov;
     struct msghdr mhdr;
     struct in6_pktinfo *pkt_info = NULL;
@@ -612,8 +635,7 @@ static int dgram_write_unconnected_v4(BIO *b, const char *out, int outl)
     struct cmsghdr *cmsg;
     struct iovec iov;
 
-    /* CMSG_SOCKET is from sys/socket.h, and makes space for a cmsghdr as well as alignment */
-    char chdr[CMSG_SPACE(sizeof(struct in_pktinfo))];
+    char chdr[BIO_CMSG_PKT_SIZE];
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
     memset((void *)&addr, 0, sizeof(addr));
@@ -660,11 +682,7 @@ static int dgram_write_unconnected_v4(BIO *b, const char *out, int outl)
     struct msghdr mhdr;
     struct cmsghdr *cmsg;
     struct iovec iov;
-
-    /* CMSG_SOCKET is from sys/socket.h, and makes
-     * space for a cmsghdr as well as alignment
-     */
-    char chdr[CMSG_SPACE(sizeof(struct in_addr))];
+    char chdr[BIO_CMSG_ADDR_SIZE];
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
     memset((void *)&addr, 0, sizeof(addr));
@@ -717,7 +735,7 @@ static int dgram_write_unconnected_v4(BIO *b, const char *out, int outl)
 }
 #endif
 
-#if defined(AF_INET6) && !defined(WIN32)
+#if defined(AF_INET6) && !defined(_WIN32)
 static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
 {
     struct sockaddr_in6 addr;
@@ -725,13 +743,13 @@ static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
     struct msghdr mhdr;
     struct cmsghdr *cmsg;
     struct iovec iov;
-    char __attribute__((aligned(8))) chdr[CMSG_SPACE(sizeof(struct in6_pktinfo))];
+    char chdr[BIO_CMSG_PKT6_SIZE];
     bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
     memset((void *)&addr, 0, sizeof(addr));
     addr = *(struct sockaddr_in6 *)BIO_ADDR_sockaddr(&data->peer);
 
-    iov.iov_len  = outl;
+    iov.iov_len = outl;
     iov.iov_base = (caddr_t) out;
 
     memset(&mhdr, 0, sizeof(mhdr));
@@ -746,12 +764,12 @@ static int dgram_write_unconnected_v6(BIO *b, const char *out, int outl)
       memset(chdr, 0, sizeof(chdr));
       cmsg = (struct cmsghdr *) chdr;
 
-      cmsg->cmsg_len   = CMSG_LEN(sizeof(struct in6_pktinfo));
+      cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
       cmsg->cmsg_level = IPPROTO_IPV6;
-      cmsg->cmsg_type  = IPV6_PKTINFO;
+      cmsg->cmsg_type = IPV6_PKTINFO;
 
       pkt_info = (struct in6_pktinfo *)CMSG_DATA(cmsg);
-      pkt_info->ipi6_addr    = srcaddr->sin6_addr;
+      pkt_info->ipi6_addr = srcaddr->sin6_addr;
       mhdr.msg_control = (void *) cmsg;
       mhdr.msg_controllen = sizeof(chdr);
     }

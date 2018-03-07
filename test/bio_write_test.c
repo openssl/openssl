@@ -13,7 +13,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 
-#ifdef WIN32
+#if defined(_WIN32)
 int setup_tests(void)
 {
     return 1;
