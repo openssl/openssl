@@ -973,9 +973,9 @@ my %target = resolve_config($target);
 
 # Make the flags to build DSOs the same as for shared libraries unless they
 # are already defined
-$target{dso_cflags} = $target{shared_cflag} unless defined $target{dso_cflags};
-$target{dso_cxxflags} = $target{shared_cxxflag} unless defined $target{dso_cxxflags};
-$target{dso_lflags} = $target{shared_ldflag} unless defined $target{dso_lflags};
+$target{module_cflags} = $target{shared_cflag} unless defined $target{module_cflags};
+$target{module_cxxflags} = $target{shared_cxxflag} unless defined $target{module_cxxflags};
+$target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_ldflags};
 {
     my $shared_info_pl =
         catfile(dirname($0), "Configurations", "shared-info.pl");
@@ -997,10 +997,10 @@ $target{dso_lflags} = $target{shared_ldflag} unless defined $target{dso_lflags};
     # Windows and VMS.
     if (defined $si) {
         # Just as above, copy certain shared_* attributes to the corresponding
-        # dso_ attribute unless the latter is already defined
-        $si->{dso_cflags} = $si->{shared_cflag} unless defined $si->{dso_cflags};
-        $si->{dso_cxxflags} = $si->{shared_cxxflag} unless defined $si->{dso_cxxflags};
-        $si->{dso_lflags} = $si->{shared_ldflag} unless defined $si->{dso_lflags};
+        # module_ attribute unless the latter is already defined
+        $si->{module_cflags} = $si->{shared_cflag} unless defined $si->{module_cflags};
+        $si->{module_cxxflags} = $si->{shared_cxxflag} unless defined $si->{module_cxxflags};
+        $si->{module_ldflags} = $si->{shared_ldflag} unless defined $si->{module_ldflags};
         foreach (sort keys %$si) {
             $target{$_} = defined $target{$_}
                 ? add($si->{$_})->($target{$_})
@@ -1275,9 +1275,9 @@ unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
 if ($disabled{pic})
 	{
 	foreach (qw(shared_cflag shared_cxxflag shared_cppflag
-                    shared_defines shared_includes shared_ldflag
-		    dso_cflags dso_cxxflags dso_cppflags
-                    dso_defines dso_includes dso_lflags))
+		    shared_defines shared_includes shared_ldflag
+		    module_cflags module_cxxflags module_cppflags
+		    module_defines module_includes module_lflags))
 		{
 		delete $config{$_};
 		$target{$_} = "";

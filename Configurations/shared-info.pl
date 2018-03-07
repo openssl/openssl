@@ -42,7 +42,7 @@ my %shared_info;
         };
     },
     'darwin-shared' => {
-        dso_lflags            => '-bundle',
+        module_ldflags        => '-bundle',
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
         shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
     },
@@ -61,7 +61,7 @@ my %shared_info;
     'alpha-osf1-shared' => sub {
         return $shared_info{'gnu-shared'} if detect_gnu_ld();
         return {
-            dso_lflags        => '-shared -Wl,-Bsymbolic',
+            module_ldflags    => '-shared -Wl,-Bsymbolic',
             shared_ldflag     => '-shared -Wl,-Bsymbolic -set_version $(SHLIB_VERSION_NUMBER)',
         };
     },
