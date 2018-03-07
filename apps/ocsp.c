@@ -34,6 +34,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/evp.h>
 # include <openssl/bn.h>
 # include <openssl/x509v3.h>
+# include <openssl/rand.h>
 
 # if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK)
 #  define OCSP_DAEMON
@@ -77,12 +78,12 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, int timeou
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
 static void log_message(int level, const char *fmt, ...);
 static char *prog;
+static int multi = 0;
 
 # ifdef OCSP_DAEMON
 static int acfd = (int) INVALID_SOCKET;
-static int multi = 0;
 static int index_changed(CA_DB *);
-static void spawn_loop(const char *, int);
+static void spawn_loop(void);
 static int print_syslog(const char *str, size_t len, void *levPtr);
 static void sock_timeout(int signum);
 # endif
@@ -567,7 +568,7 @@ int ocsp_main(int argc, char **argv)
 
 # ifdef OCSP_DAEMON
     if (multi && acbio != NULL)
-        spawn_loop(prog, multi);
+        spawn_loop();
     if (acbio != NULL && req_timeout > 0)
         signal(SIGALRM, sock_timeout);
 #endif
@@ -877,7 +878,7 @@ static void noteterm (int sig)
  * from this function.  The parent process loops until receiving a termination
  * signal, kills extant children and exits without returning.
  */
-static void spawn_loop(const char *prog, int multi)
+static void spawn_loop(void)
 {
     const char *signame;
     pid_t *kidpids = NULL;
@@ -888,7 +889,8 @@ static void spawn_loop(const char *prog, int multi)
     openlog(prog, LOG_PID, LOG_DAEMON);
 
     if (setpgid(0, 0)) {
-        syslog(LOG_ERR, "fatal: error detaching from parent process group: %m");
+        syslog(LOG_ERR, "fatal: error detaching from parent process group: %s",
+               strerror(errno));
         exit(1);
     }
     kidpids = app_malloc(multi * sizeof(*kidpids), "child PID array");
@@ -932,7 +934,7 @@ static void spawn_loop(const char *prog, int multi)
                 }
                 break;
             } else if (errno != EINTR) {
-                syslog(LOG_ERR, "fatal: waitpid(): %m");
+                syslog(LOG_ERR, "fatal: waitpid(): %s", strerror(errno));
                 killall(1, kidpids);
             }
         }
