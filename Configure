@@ -2135,16 +2135,12 @@ EOF
         next if $dest eq "";
         foreach my $d (keys %{$unified_info{depends}->{$dest}}) {
             next unless $d =~ /\.(h|pm)$/;
-            if ($d eq "configdata.pm"
-                    || defined($unified_info{generate}->{$d})) {
-                my $i = cleandir($blddir, dirname($d));
-                push @{$unified_info{includes}->{$dest}->{build}}, $i
-                    unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{build}};
-            } else {
-                my $i = cleandir($srcdir, dirname($d));
-                push @{$unified_info{includes}->{$dest}->{source}}, $i
-                    unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{source}};
-            }
+            my $i = dirname($d);
+            my $spot =
+                $d eq "configdata.pm" || defined($unified_info{generate}->{$d})
+                ? 'build' : 'source';
+            push @{$unified_info{includes}->{$dest}->{$spot}}, $i
+                unless grep { $_ eq $i } @{$unified_info{includes}->{$dest}->{$spot}};
         }
     }
 
