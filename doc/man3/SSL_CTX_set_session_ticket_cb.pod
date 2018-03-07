@@ -15,6 +15,7 @@ SSL_CTX_decrypt_session_ticket_fn - manage session ticket application data
  typedef int (*SSL_CTX_generate_session_ticket_fn)(SSL *s, void *arg);
  typedef SSL_TICKET_RETURN (*SSL_CTX_decrypt_session_ticket_fn)(SSL *s, SSL_SESSION *ss,
                                                                 const unsigned char *keyname,
+                                                                size_t keyname_len,
                                                                 SSL_TICKET_RETURN retv,
                                                                 void *arg);
  void SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
@@ -79,36 +80,37 @@ failure.
 The B<gen_cb> callback must return 1 to continue the connection. A return of 0
 will terminate the connection with an INTERNAL_ERROR alert.
 
-The B<dec_cb> callback must return one of the following B<TICKET_RETURN>
+The B<dec_cb> callback must return one of the following B<SSL_TICKET_RETURN>
 values. Under normal circumstances the B<retv> value is returned unmodified,
 but the callback can change the behavior of the post-ticket decryption code
-by returning something different.
+by returning something different. The B<dec_cb> callback must check the B<retv>
+value before performing any action.
 
- typedef int TICKET_RETURN;
+ typedef int SSL_TICKET_RETURN;
 
 =over 4
 
-=item TICKET_FATAL_ERR_MALLOC
+=item SSL_TICKET_FATAL_ERR_MALLOC
 
 Fatal error, malloc failure.
 
-=item TICKET_FATAL_ERR_OTHER
+=item SSL_TICKET_FATAL_ERR_OTHER
 
 Fatal error, either from parsing or decrypting the ticket.
 
-=item TICKET_NONE
+=item SSL_TICKET_NONE
 
 No ticket present.
 
-=item TICKET_EMPTY
+=item SSL_TICKET_EMPTY
 
 Empty ticket present.
 
-=item TICKET_NO_DECRYPT
+=item SSL_TICKET_NO_DECRYPT
 
 The ticket couldn't be decrypted.
 
-=item TICKET_SUCCESS
+=item SSL_TICKET_SUCCESS
 
 A ticket was successfully decrypted, any session ticket application data should
 be available.

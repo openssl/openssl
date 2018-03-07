@@ -250,8 +250,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
             OPENSSL_memdup(src->ticket_appdata, src->ticket_appdata_len);
         if (dest->ticket_appdata == NULL)
             goto err;
-    } else {
-        dest->ticket_appdata = 0;
     }
 
     return dest;

@@ -2290,6 +2290,7 @@ __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 __owur int SSL_free_buffers(SSL *ssl);
 __owur int SSL_alloc_buffers(SSL *ssl);
 
+/* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
 typedef int SSL_TICKET_RETURN;
 
 /* Support for ticket appdata */
@@ -2311,8 +2312,9 @@ typedef int SSL_TICKET_RETURN;
 typedef int (*SSL_CTX_generate_session_ticket_fn)(SSL *s, void *arg);
 typedef SSL_TICKET_RETURN (*SSL_CTX_decrypt_session_ticket_fn)(SSL *s, SSL_SESSION *ss,
                                                                const unsigned char *keyname,
+                                                               size_t keyname_length,
                                                                SSL_TICKET_RETURN retv,
-                                                               void * arg);
+                                                               void *arg);
 void SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
                                    SSL_CTX_generate_session_ticket_fn gen_cb,
                                    SSL_CTX_decrypt_session_ticket_fn dec_cb,

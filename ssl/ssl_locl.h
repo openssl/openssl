@@ -2451,9 +2451,6 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 
 __owur int tls1_set_server_sigalgs(SSL *s);
 
-/* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
-/* TICKET_RETURN is now defined in ssl.h */
-
 __owur SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                                     SSL_SESSION **ret);
 __owur SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,

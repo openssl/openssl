@@ -1245,6 +1245,7 @@ SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     if (s->session_ctx->decrypt_ticket_cb != NULL)
         retv = s->session_ctx->decrypt_ticket_cb(s, *ret,
                                                  PACKET_data(&ticketext->data),
+                                                 TLSEXT_KEYNAME_LENGTH,
                                                  retv, s->session_ctx->ticket_cb_data);
 
     switch (retv) {
