@@ -85,8 +85,6 @@ In each table entry, the following keys are significant:
         lflags          => Flags that are used when linking apps.
         shared_ldflag   => Flags that are used when linking shared
                            or dynamic libraries.
-        plib_lflags     => Extra linking flags to appear just before
-                           the libraries on the command line.
         ex_libs         => Extra libraries that are needed when
                            linking.
 
@@ -340,15 +338,15 @@ In each table entry, the following keys are significant:
     shared libraries:
         {ld} $(CFLAGS) {shared_ldflag} -shared -o libfoo.so \
             -Wl,--whole-archive libfoo.a -Wl,--no-whole-archive \
-            {plib_lflags} -lcrypto {ex_libs}
+            -lcrypto {ex_libs}
 
     shared objects:
-        {ld} $(CFLAGS) {shared_ldflag} -shared -o libeng.so \
-            blah1.o blah2.o {plib_lflags} -lcrypto {ex_libs}
+        {ld} $(CFLAGS) {lflags} {module_lflags} -o libeng.so \
+            blah1.o blah2.o -lcrypto {ex_libs}
 
     applications:
         {ld} $(CFLAGS) {lflags} -o app \
-            app1.o utils.o {plib_lflags} -lssl -lcrypto {ex_libs}
+            app1.o utils.o -lssl -lcrypto {ex_libs}
 
 
 Historically, the target configurations came in form of a string with

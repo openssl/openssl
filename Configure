@@ -1101,7 +1101,6 @@ foreach (keys %user) {
         || $mkvalue->($ref_type, $target{$_});
     delete $config{$_} unless defined $config{$_};
 }
-$config{plib_lflags} = [ $target{plib_lflags} ];
 
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
@@ -3104,7 +3103,6 @@ sub print_table_entry
 	"ld",
 	"lflags",
 	"loutflag",
-	"plib_lflags",
 	"ex_libs",
 	"bn_ops",
 	"apps_aux_src",
