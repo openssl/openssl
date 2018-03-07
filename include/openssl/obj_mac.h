@@ -4209,6 +4209,15 @@
 #define NID_id_tc26_sign_constants              995
 #define OBJ_id_tc26_sign_constants              OBJ_id_tc26_constants,1L
 
+#define SN_id_tc26_gost_3410_2012_256_constants         "id-tc26-gost-3410-2012-256-constants"
+#define NID_id_tc26_gost_3410_2012_256_constants                1147
+#define OBJ_id_tc26_gost_3410_2012_256_constants                OBJ_id_tc26_sign_constants,1L
+
+#define SN_id_tc26_gost_3410_2012_256_paramSetA         "id-tc26-gost-3410-2012-256-paramSetA"
+#define LN_id_tc26_gost_3410_2012_256_paramSetA         "GOST R 34.10-2012 (256 bit) ParamSet A"
+#define NID_id_tc26_gost_3410_2012_256_paramSetA                1148
+#define OBJ_id_tc26_gost_3410_2012_256_paramSetA                OBJ_id_tc26_gost_3410_2012_256_constants,1L
+
 #define SN_id_tc26_gost_3410_2012_512_constants         "id-tc26-gost-3410-2012-512-constants"
 #define NID_id_tc26_gost_3410_2012_512_constants                996
 #define OBJ_id_tc26_gost_3410_2012_512_constants                OBJ_id_tc26_sign_constants,2L
@@ -4227,6 +4236,11 @@
 #define LN_id_tc26_gost_3410_2012_512_paramSetB         "GOST R 34.10-2012 (512 bit) ParamSet B"
 #define NID_id_tc26_gost_3410_2012_512_paramSetB                999
 #define OBJ_id_tc26_gost_3410_2012_512_paramSetB                OBJ_id_tc26_gost_3410_2012_512_constants,2L
+
+#define SN_id_tc26_gost_3410_2012_512_paramSetC         "id-tc26-gost-3410-2012-512-paramSetC"
+#define LN_id_tc26_gost_3410_2012_512_paramSetC         "GOST R 34.10-2012 (512 bit) ParamSet C"
+#define NID_id_tc26_gost_3410_2012_512_paramSetC                1149
+#define OBJ_id_tc26_gost_3410_2012_512_paramSetC                OBJ_id_tc26_gost_3410_2012_512_constants,3L
 
 #define SN_id_tc26_digest_constants             "id-tc26-digest-constants"
 #define NID_id_tc26_digest_constants            1000
