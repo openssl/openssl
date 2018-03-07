@@ -2,7 +2,8 @@
      our $sover = $config{shlib_version_number};
      our $sover_filename = $sover;
      $sover_filename =~ s|\.|_|g
-         if $config{target} =~ /^mingw/ || $config{target} =~ /^VC-/;
+         if $config{target} =~ /^mingw/
+             || $config{target} =~ /^\w+-WIN(?:32|64)/;
      $sover_filename =
          sprintf "%02d%02d", split m|\.|, $config{shlib_version_number}
          if $config{target} =~ /^vms/;
@@ -45,7 +46,7 @@ IF[{- defined $target{shared_defflag} -}]
 ENDIF
 # VMS and VC don't have parametrised .def / .symvec generation, so they get
 # special treatment, since we know they do use these files
-IF[{- $config{target} =~ /^VC-/ -}]
+IF[{- $config{target} =~ /^\w+-WIN(?:32|64)/ -}]
   GENERATE[libcrypto.def]=util/mkdef.pl crypto 32
   DEPEND[libcrypto.def]=util/libcrypto.num
   GENERATE[libssl.def]=util/mkdef.pl ssl 32
@@ -63,7 +64,7 @@ ELSIF[{- $config{target} =~ /^vms/ -}]
   SHARED_SOURCE[libssl]=libssl.opt
 ENDIF
 
-IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|\w+-WIN(?:32|64))/ -}]
   GENERATE[libcrypto.rc]=util/mkrc.pl libcrypto
   GENERATE[libssl.rc]=util/mkrc.pl libssl
 
@@ -77,7 +78,7 @@ IF[{- $config{target} =~ /^Cygwin/ -}]
 ELSIF[{- $config{target} =~ /^mingw/ -}]
  SHARED_NAME[libcrypto]=libcrypto-{- $sover_filename -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
  SHARED_NAME[libssl]=libssl-{- $sover_filename -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
-ELSIF[{- $config{target} =~ /^VC-/ -}]
+ELSIF[{- $config{target} =~ /^\w+-WIN(?:32|64)/ -}]
  SHARED_NAME[libcrypto]=libcrypto-{- $sover_filename -}{- $target{multilib} -}
  SHARED_NAME[libssl]=libssl-{- $sover_filename -}{- $target{multilib} -}
 ENDIF

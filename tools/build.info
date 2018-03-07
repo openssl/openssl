@@ -1,5 +1,5 @@
 {- our $c_rehash_name =
-       $config{target} =~ /^(VC|vms)-/ ? "c_rehash.pl" : "c_rehash";
+       $config{target} =~ /^(\w+-WIN(?:32|64)|vms)-/ ? "c_rehash.pl" : "c_rehash";
    "" -}
 IF[{- !$disabled{apps} -}]
   SCRIPTS={- $c_rehash_name -}
