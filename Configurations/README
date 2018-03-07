@@ -45,19 +45,24 @@ In each table entry, the following keys are significant:
                            Note: if the same feature is both enabled
                            and disabled, disable wins.
 
+        as              => The assembler command.  This is not always
+                           used (for example on Unix, where the C
+                           compiler is used instead).
+        asflags         => Default assembler command flags [4].
         cpp             => The C preprocessor command, normally not
                            given, as the build file defaults are
                            usually good enough.
-        cppflags        => The C preprocessor flags.
+        cppflags        => Default C preprocessor flags [4].
         defines         => As an alternative, macro definitions may be
-                           given here instead of in `cppflags'.  If
-                           given here, they MUST be as an array of the
-                           string such as "MACRO=value", or just
+                           given here instead of in `cppflags' [4].
+                           If given here, they MUST be as an array of
+                           the string such as "MACRO=value", or just
                            "MACRO" for definitions without value.
         includes        => As an alternative, inclusion directories
-                           may be given here instead of in `cppflags'.
-                           If given here, the MUST be an array of
-                           strings, one directory specification each.
+                           may be given here instead of in `cppflags'
+                           [4].  If given here, the MUST be an array
+                           of strings, one directory specification
+                           each.
         cc              => The C compiler command, usually one of "cc",
                            "gcc" or "clang".  This command is normally
                            also used to link object files and
@@ -67,14 +72,9 @@ In each table entry, the following keys are significant:
                            also used when linking a program where at
                            least one of the object file is made from
                            C++ source.
-        cflags          => Flags that are used at all times when
-                           compiling C object files.
-        cxxflags        => Flags that are used at all times when
-                           compiling C++ object files.  If unset, it
-                           gets the same value as cflags.
-        shared_cflag    => Extra compilation flags used when
-                           compiling for shared libraries, typically
-                           something like "-fPIC".
+        cflags          => Defaults C compiler flags [4].
+        cxxflags        => Default  C++ compiler flags [4].  If unset,
+                           it gets the same value as cflags.
 
         (linking is a complex thing, see [3] below)
         ld              => Linker command, usually not defined
@@ -82,11 +82,24 @@ In each table entry, the following keys are significant:
                            instead).
                            (NOTE: this is here for future use, it's
                            not implemented yet)
-        lflags          => Flags that are used when linking apps.
-        shared_ldflag   => Flags that are used when linking shared
-                           or dynamic libraries.
+        lflags          => Default flags used when linking apps,
+                           shared libraries or DSOs [4].
         ex_libs         => Extra libraries that are needed when
-                           linking.
+                           linking shared libraries, DSOs or programs.
+
+        shared_cppflags => Extra C preprocessor flags used when
+                           processing C files for shared libraries.
+        shared_cflag    => Extra C compiler flags used when compiling
+                           for shared libraries, typically something
+                           like "-fPIC".
+        shared_ldflag   => Extra linking flags used when linking
+                           shared libraries.
+        module_cppflags
+        module_cflags
+        module_ldflags  => Has the same function as the corresponding
+                           `shared_' attributes, but for building DSOs.
+                           When unset, they get the same values as the
+                           corresponding `shared_' attributes.
 
         ar              => The library archive command, the default is
                            "ar".
@@ -336,18 +349,20 @@ In each table entry, the following keys are significant:
     of this file):
 
     shared libraries:
-        {ld} $(CFLAGS) {shared_ldflag} -shared -o libfoo.so \
-            -Wl,--whole-archive libfoo.a -Wl,--no-whole-archive \
-            -lcrypto {ex_libs}
+        {ld} $(CFLAGS) {lflags} {shared_ldflag} -o libfoo.so \
+            foo/something.o foo/somethingelse.o {ex_libs}
 
     shared objects:
-        {ld} $(CFLAGS) {lflags} {module_lflags} -o libeng.so \
+        {ld} $(CFLAGS) {lflags} {module_ldflags} -o libeng.so \
             blah1.o blah2.o -lcrypto {ex_libs}
 
     applications:
         {ld} $(CFLAGS) {lflags} -o app \
             app1.o utils.o -lssl -lcrypto {ex_libs}
 
+[4] There are variants of these attribute, prefixed with `lib_',
+    `dso_' or `bin_'.  Those variants replace the unprefixed attribute
+    when building library, DSO or program modules specifically.
 
 Historically, the target configurations came in form of a string with
 values separated by colons.  This use is deprecated.  The string form
