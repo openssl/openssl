@@ -1198,8 +1198,8 @@ int tls1_set_server_sigalgs(SSL *s)
  *   s->ctx->ext.ticket_key_cb asked to renew the client's ticket.
  *   Otherwise, s->ext.ticket_expected is set to 0.
  */
-TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
-                                         SSL_SESSION **ret)
+SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+                                             SSL_SESSION **ret)
 {
     int retv;
     size_t size;
@@ -1281,15 +1281,15 @@ TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
  *   psess: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  */
-TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
-                                 size_t eticklen, const unsigned char *sess_id,
-                                 size_t sesslen, SSL_SESSION **psess)
+SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+                                     size_t eticklen, const unsigned char *sess_id,
+                                     size_t sesslen, SSL_SESSION **psess)
 {
     SSL_SESSION *sess;
     unsigned char *sdec;
     const unsigned char *p;
     int slen, renew_ticket = 0, declen;
-    TICKET_RETURN ret = TICKET_FATAL_ERR_OTHER;
+    SSL_TICKET_RETURN ret = TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;

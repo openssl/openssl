@@ -2290,7 +2290,7 @@ __owur const struct openssl_ssl_test_functions *SSL_test_functions(void);
 __owur int SSL_free_buffers(SSL *ssl);
 __owur int SSL_alloc_buffers(SSL *ssl);
 
-typedef int TICKET_RETURN;
+typedef int SSL_TICKET_RETURN;
 
 /* Support for ticket appdata */
 /* fatal error, malloc failure */
@@ -2308,13 +2308,14 @@ typedef int TICKET_RETURN;
 /* same as above but the ticket needs to be renewed */
 # define TICKET_SUCCESS_RENEW    6
 
-typedef int (*tls_generate_session_ticket_cb_fn)(SSL *s, void *arg);
-typedef TICKET_RETURN (*tls_decrypt_session_ticket_cb_fn)(SSL *s, SSL_SESSION *ss,
-                                                          const unsigned char *keyname,
-                                                          TICKET_RETURN retv, void * arg);
+typedef int (*SSL_CTX_generate_session_ticket_fn)(SSL *s, void *arg);
+typedef SSL_TICKET_RETURN (*SSL_CTX_decrypt_session_ticket_fn)(SSL *s, SSL_SESSION *ss,
+                                                               const unsigned char *keyname,
+                                                               SSL_TICKET_RETURN retv,
+                                                               void * arg);
 void SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
-                                   tls_generate_session_ticket_cb_fn gen_cb,
-                                   tls_decrypt_session_ticket_cb_fn dec_cb,
+                                   SSL_CTX_generate_session_ticket_fn gen_cb,
+                                   SSL_CTX_decrypt_session_ticket_fn dec_cb,
                                    void *arg);
 int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t len);
 void SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);

@@ -1028,8 +1028,8 @@ struct ssl_ctx_st {
     size_t block_padding;
 
     /* Session ticket appdata */
-    tls_generate_session_ticket_cb_fn generate_ticket_cb;
-    tls_decrypt_session_ticket_cb_fn decrypt_ticket_cb;
+    SSL_CTX_generate_session_ticket_fn generate_ticket_cb;
+    SSL_CTX_decrypt_session_ticket_fn decrypt_ticket_cb;
     void *ticket_cb_data;
 };
 
@@ -2454,12 +2454,12 @@ __owur int tls1_set_server_sigalgs(SSL *s);
 /* Return codes for tls_get_ticket_from_client() and tls_decrypt_ticket() */
 /* TICKET_RETURN is now defined in ssl.h */
 
-__owur TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
-                                                SSL_SESSION **ret);
-__owur TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
-                                        size_t eticklen,
-                                        const unsigned char *sess_id,
-                                        size_t sesslen, SSL_SESSION **psess);
+__owur SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+                                                    SSL_SESSION **ret);
+__owur SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+                                            size_t eticklen,
+                                            const unsigned char *sess_id,
+                                            size_t sesslen, SSL_SESSION **psess);
 
 __owur int tls_use_ticket(SSL *s);
 

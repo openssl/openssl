@@ -469,9 +469,9 @@ static int generate_session_ticket_cb(SSL *s, void *arg)
     return SSL_SESSION_set1_ticket_appdata(ss, app_data, strlen(app_data));
 }
 
-static TICKET_RETURN decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
-                                               const unsigned char *keyname,
-                                               TICKET_RETURN retv, void *arg)
+static SSL_TICKET_RETURN decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
+                                                   const unsigned char *keyname,
+                                                   SSL_TICKET_RETURN retv, void *arg)
 {
     return retv;
 }

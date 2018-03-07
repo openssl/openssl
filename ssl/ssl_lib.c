@@ -5390,8 +5390,8 @@ int SSL_verify_client_post_handshake(SSL *ssl)
 }
 
 void SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
-                                   tls_generate_session_ticket_cb_fn gen_cb,
-                                   tls_decrypt_session_ticket_cb_fn dec_cb,
+                                   SSL_CTX_generate_session_ticket_fn gen_cb,
+                                   SSL_CTX_decrypt_session_ticket_fn dec_cb,
                                    void *arg)
 {
     ctx->generate_ticket_cb = gen_cb;

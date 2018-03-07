@@ -481,7 +481,7 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     SSL_SESSION *ret = NULL;
     int fatal = 0, discard;
     int try_session_cache = 0;
-    TICKET_RETURN r;
+    SSL_TICKET_RETURN r;
 
     if (SSL_IS_TLS13(s)) {
         if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes,
