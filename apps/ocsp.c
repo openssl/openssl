@@ -560,7 +560,7 @@ int ocsp_main(int argc, char **argv)
 
     if (ridx_filename != NULL) {
         rdb = load_index(ridx_filename, NULL);
-        if (!rdb || !index_index(rdb)) {
+        if (rdb == NULL || !index_index(rdb)) {
             ret = 1;
             goto end;
         }
@@ -819,7 +819,7 @@ log_message(int level, const char *fmt, ...)
             ERR_print_errors_cb(print_syslog, &level);
     }
 # endif
-    if (! multi) {
+    if (!multi) {
         BIO_printf(bio_err, "%s: ", prog);
         BIO_vprintf(bio_err, fmt, ap);
         BIO_printf(bio_err, "\n");
@@ -843,7 +843,7 @@ static int index_changed(CA_DB *rdb)
 {
     struct stat sb;
 
-    if (rdb && stat(rdb->dbfname, &sb) != -1) {
+    if (rdb != NULL && stat(rdb->dbfname, &sb) != -1) {
         if (rdb->dbst.st_mtime != sb.st_mtime
             || rdb->dbst.st_ctime != sb.st_ctime
             || rdb->dbst.st_ino != sb.st_ino
@@ -861,7 +861,7 @@ static void killall(int ret, pid_t *kidpids)
 
     for (i = 0; i < multi; ++i)
         if (kidpids[i] != 0)
-            (void) kill(kidpids[i], SIGTERM);
+            (void)kill(kidpids[i], SIGTERM);
     sleep(1);
     exit(ret);
 }
@@ -947,11 +947,14 @@ static void spawn_loop(void)
             sleep(30);
             break;
         case 0:             /* child */
-            RAND_poll();
             signal(SIGINT, SIG_DFL);
             signal(SIGTERM, SIG_DFL);
             if (termsig)
                 _exit(0);
+            if (RAND_poll() <= 0) {
+                syslog(LOG_ERR, "fatal: RAND_poll() failed");
+                _exit(1);
+            }
             return;
         default:            /* parent */
             for (i = 0; i < multi; ++i) {

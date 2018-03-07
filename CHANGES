@@ -9,6 +9,20 @@
 
  Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
+  *) On POSIX (BSD, Linux, ...) systems the ocsp(1) command running
+     in responder mode now supports the new "-multi" option, which
+     spawns the specified number of child processes to handle OCSP
+     requests.  The "-timeout" option now also limits the OCSP
+     responder's patience to wait to receive the full client request
+     on a newly accepted connection. Child processes are respawned
+     as needed, and the CA index file is automatically reloaded
+     when changed.  This makes it possible to run the "ocsp" responder
+     as a long-running service, making the OpenSSL CA somewhat more
+     feature-complete.  In this mode, most diagnostic messages logged
+     after entering the event loop are logged via syslog(3) rather than
+     written to stderr.
+     [Viktor Dukhovni]
+
   *) Added support for X448 and Ed448. Heavily based on original work by
      Mike Hamburg.
      [Matt Caswell]
