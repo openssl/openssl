@@ -26,7 +26,7 @@
 #  endif
 #  include <dlfcn.h>
 #  define HAVE_DLINFO 1
-#  if defined(_AIX) || defined(__CYGWIN__) || \
+#  if defined(__CYGWIN__) || \
      defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
      (defined(__osf__) && !defined(RTLD_NEXT))     || \
      (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
@@ -307,6 +307,54 @@ static int dladdr(void *address, Dl_info *dl)
     return (int)v;
 }
 # endif                         /* __sgi */
+# ifdef _AIX
+/*-
+ * See IBM's AIX Version 7.1/7.2 Technical Reference:
+ *  Base Operating System and Extensions, Volume 1 and 2
+ *  https://www.ibm.com/support/knowledgecenter/ssw_aix_71/com.ibm.aix.base/technicalreferences.htm
+ *  ftp://public.dhe.ibm.com/systems/power/docs/aix/72/basetrf{1,2}_pdf.pdf
+ */
+#  include <sys/ldr.h>
+#  include <errno.h>
+extern int errno;
+typedef struct Dl_info {
+    const char *dli_fname;
+} Dl_info;
+static int dladdr(void *address, Dl_info *dl)
+{
+    unsigned int ldinfo_max = sizeof(struct ld_info) * 32;
+    union {
+      void *c;
+      struct ld_info *ldinfos;
+    } buffer;
+    buffer.c = calloc(32, sizeof(struct ld_info))
+
+    errno = 0;
+    if ((loadquery(L_GETINFO, &buffer.c, ldinfo_max)) < 0) {
+      /* TODO: error handling, set for dlerror() if possible:
+       *  ENOMEM (ldinfos is too small),
+       *  EINVAL (invalid flags),
+       *  EFAULT (invalid ldinfos ptr)
+       */
+      dl->dli_fname = NULL;
+      return 0;
+    } else {
+      /* TODO: walk the ldinfos, check if address is between ldinfo->ldinfo_textorg and
+       * ldinfo->ldinfo_textorg+ldinfo->ldinfo_textsize
+       * if yes, read ldinfo->ldinfo_filename (pathname\0membername\0)
+       *  construct as pathname(membername) unless member is \0, malloc, memcpy, strncat, '\0'
+       *  (and set RTLD_MEMBER with dlopen() lateron)
+       * if no, retrieve ldinfo->ldinfo_next unless 0 and add it to ldinfo
+       * check plausible length everywhere and for NULL ptrs
+       */
+    }
+/* TODO: free memory as far as possible, will probably be leaking dli_fname */
+/* NOTE: when looking up a symbol from a foreign module, the caller of
+ *  DSO_*byaddr()/OPENSSL_atexit() must respect Pointer Glue instructions for
+ *  PowerPC (aka De-Virtualization, related to the ptrgl compiler flags):
+ *  (void*)*((ulong*)&address) if pto is not in effect at the caller's place */
+}
+# endif                         /* _AIX */
 
 static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
 {
