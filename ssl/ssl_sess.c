@@ -496,20 +496,20 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
         /* sets s->ext.ticket_expected */
         r = tls_get_ticket_from_client(s, hello, &ret);
         switch (r) {
-        case TICKET_FATAL_ERR_MALLOC:
-        case TICKET_FATAL_ERR_OTHER:
+        case SSL_TICKET_FATAL_ERR_MALLOC:
+        case SSL_TICKET_FATAL_ERR_OTHER:
             fatal = 1;
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_PREV_SESSION,
                      ERR_R_INTERNAL_ERROR);
             goto err;
-        case TICKET_NONE:
-        case TICKET_EMPTY:
+        case SSL_TICKET_NONE:
+        case SSL_TICKET_EMPTY:
             if (hello->session_id_len > 0)
                 try_session_cache = 1;
             break;
-        case TICKET_NO_DECRYPT:
-        case TICKET_SUCCESS:
-        case TICKET_SUCCESS_RENEW:
+        case SSL_TICKET_NO_DECRYPT:
+        case SSL_TICKET_SUCCESS:
+        case SSL_TICKET_SUCCESS_RENEW:
             break;
         }
     }

@@ -2294,19 +2294,19 @@ typedef int SSL_TICKET_RETURN;
 
 /* Support for ticket appdata */
 /* fatal error, malloc failure */
-# define TICKET_FATAL_ERR_MALLOC 0
+# define SSL_TICKET_FATAL_ERR_MALLOC 0
 /* fatal error, either from parsing or decrypting the ticket */
-# define TICKET_FATAL_ERR_OTHER  1
+# define SSL_TICKET_FATAL_ERR_OTHER  1
 /* No ticket present */
-# define TICKET_NONE             2
+# define SSL_TICKET_NONE             2
 /* Empty ticket present */
-# define TICKET_EMPTY            3
+# define SSL_TICKET_EMPTY            3
 /* the ticket couldn't be decrypted */
-# define TICKET_NO_DECRYPT       4
+# define SSL_TICKET_NO_DECRYPT       4
 /* a ticket was successfully decrypted */
-# define TICKET_SUCCESS          5
+# define SSL_TICKET_SUCCESS          5
 /* same as above but the ticket needs to be renewed */
-# define TICKET_SUCCESS_RENEW    6
+# define SSL_TICKET_SUCCESS_RENEW    6
 
 typedef int (*SSL_CTX_generate_session_ticket_fn)(SSL *s, void *arg);
 typedef SSL_TICKET_RETURN (*SSL_CTX_decrypt_session_ticket_fn)(SSL *s, SSL_SESSION *ss,
