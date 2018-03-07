@@ -316,43 +316,57 @@ static int dladdr(void *address, Dl_info *dl)
  */
 #  include <sys/ldr.h>
 #  include <errno.h>
+#  define DLFCN_MAX_LDINFOS 64
 extern int errno;
 typedef struct Dl_info {
     const char *dli_fname;
 } Dl_info;
+/* NOTE: when looking up a symbol from a foreign module, the caller of
+ *  DSO_*byaddr()/OPENSSL_atexit() must respect Pointer Glue instructions for
+ *  PowerPC (aka De-Virtualization, related to the ptrgl compiler flags):
+ *  (void*)*((ulong*)&address) if pto is not in effect at the caller's place */
 static int dladdr(void *address, Dl_info *dl)
 {
-    unsigned int ldinfo_max = sizeof(struct ld_info) * 32;
+    unsigned int ldinfo_max = sizeof(struct ld_info) * DLFCN_MAX_LDINFOS;
+    unsigned int found = 0;
+    struct ld_info *ldi;
     union {
-      void *c;
+      void *v;
       struct ld_info *ldinfos;
     } buffer;
-    buffer.c = calloc(32, sizeof(struct ld_info))
 
-    errno = 0;
-    if ((loadquery(L_GETINFO, &buffer.c, ldinfo_max)) < 0) {
-      /* TODO: error handling, set for dlerror() if possible:
-       *  ENOMEM (ldinfos is too small),
+    if ((buffer.v = OPENSSL_malloc(ldinfo_max)) == NULL) {
+      errno = ENOMEM;
+      dl->dli_fname = NULL;
+      return 0;
+    }
+
+    if ((loadquery(L_GETINFO, &buffer.v, ldinfo_max)) < 0) {
+      /* Error handling is done through errno and dlerror() reading errno:
+       *  ENOMEM (ldinfos buffer is too small),
        *  EINVAL (invalid flags),
        *  EFAULT (invalid ldinfos ptr)
        */
       dl->dli_fname = NULL;
       return 0;
-    } else {
-      /* TODO: walk the ldinfos, check if address is between ldinfo->ldinfo_textorg and
-       * ldinfo->ldinfo_textorg+ldinfo->ldinfo_textsize
-       * if yes, read ldinfo->ldinfo_filename (pathname\0membername\0)
-       *  construct as pathname(membername) unless member is \0, malloc, memcpy, strncat, '\0'
-       *  (and set RTLD_MEMBER with dlopen() lateron)
-       * if no, retrieve ldinfo->ldinfo_next unless 0 and add it to ldinfo
-       * check plausible length everywhere and for NULL ptrs
-       */
     }
-/* TODO: free memory as far as possible, will probably be leaking dli_fname */
-/* NOTE: when looking up a symbol from a foreign module, the caller of
- *  DSO_*byaddr()/OPENSSL_atexit() must respect Pointer Glue instructions for
- *  PowerPC (aka De-Virtualization, related to the ptrgl compiler flags):
- *  (void*)*((ulong*)&address) if pto is not in effect at the caller's place */
+    ldi = buffer.ldinfos;
+
+    do {
+      if ((address >= ldi->ldinfo_textorg) &&
+          (address < (ldi->ldinfo_textorg + ldi->ldinfo_textsize))) {
+        found = 1;
+        /* Ignoring the possibility of a member name and just returning the
+         * path name. See docs: ldr.h, loadquery() and dlopen()/RTLD_MEMBER. */
+        if ((dl->dli_fname = OPENSSL_strdup(ldi->ldinfo_filename)) == NULL) {
+          errno = ENOMEM;
+        }
+      } else {
+        ldi += ldi->ldinfo_next;
+      }
+    } while (ldi->ldinfo_next && !found);
+    OPENSSL_free(buffer.v);
+    return (found && dl->dli_fname != NULL);
 }
 # endif                         /* _AIX */
 
