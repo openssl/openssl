@@ -240,9 +240,8 @@ TARFILE=        ../$(NAME).tar
 # order to be excused from maintaining a separate set of architecture
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
-# and pass it down to assembler.
-AS={- $config{as} ? "\$(CROSS_COMPILE)$config{as}" : '$(CC) -c' -}
-ASFLAGS={- join(' ', @{$config{asflags}}) || '$(CFLAGS)' -}
+# and pass it down to assembler.  In any case, we do not define AS or
+# ASFLAGS for this reason.
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 
 # For x86 assembler: Set PROCESSOR to 386 if you want to support
