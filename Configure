@@ -584,6 +584,15 @@ my %target_attr_translate =(
     rm          => 'RM',
    );
 
+# Initialisers coming from 'config' scripts
+$config{defines} = [ split(/$list_separator_re/, env('__CNF_CPPDEFINES')) ],
+$config{includes} = [ split(/$list_separator_re/, env('__CNF_CPPINCLUDES')) ],
+$config{cppflags} = [ env('__CNF_CPPFLAGS') || () ],
+$config{cflags} = [ env('__CNF_CFLAGS') || () ],
+$config{cxxflags} = [ env('__CNF_CXXFLAGS') || () ],
+$config{lflags} = [ env('__CNF_LDFLAGS') || () ],
+$config{ex_libs} = [ env('__CNF_LDLIBS') || () ],
+
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
 $config{openssl_thread_defines}=[];
