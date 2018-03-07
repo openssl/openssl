@@ -19,7 +19,7 @@ our @tests = (
     {
 	"name" => "session-ticket-app-data",
 	"client" => {
-	    "MaxProtocol" => "TLSv1.2",
+	    "MaxProtocol" => "TLSv1.3",
 	    "Options" => "SessionTicket",
 	},
 	"server" => {
@@ -39,7 +39,7 @@ our @tests = (
     {
 	"name" => "session-ticket-app-data",
 	"client" => {
-	    "MaxProtocol" => "TLSv1.2",
+	    "MaxProtocol" => "TLSv1.3",
 	    "Options" => "SessionTicket",
 	},
 	"server" => {
