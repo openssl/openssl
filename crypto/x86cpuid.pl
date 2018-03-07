@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -453,18 +453,6 @@ my $max = "ebp";
 
 sub gen_random {
 my $rdop = shift;
-&function_begin_B("OPENSSL_ia32_${rdop}");
-	&mov	("ecx",8);
-&set_label("loop");
-	&${rdop}("eax");
-	&jc	(&label("break"));
-	&loop	(&label("loop"));
-&set_label("break");
-	&cmp	("eax",0);
-	&cmove	("eax","ecx");
-	&ret	();
-&function_end_B("OPENSSL_ia32_${rdop}");
-
 &function_begin_B("OPENSSL_ia32_${rdop}_bytes");
 	&push	("edi");
 	&push	("ebx");
@@ -502,6 +490,7 @@ my $rdop = shift;
 	&jnz	(&label("tail"));
 
 &set_label("done");
+	&xor	("edx","edx");		# Clear random value from registers
 	&pop	("ebx");
 	&pop	("edi");
 	&ret	();

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -434,21 +434,6 @@ ___
 sub gen_random {
 my $rdop = shift;
 print<<___;
-.globl	OPENSSL_ia32_${rdop}
-.type	OPENSSL_ia32_${rdop},\@abi-omnipotent
-.align	16
-OPENSSL_ia32_${rdop}:
-	mov	\$8,%ecx
-.Loop_${rdop}:
-	${rdop}	%rax
-	jc	.Lbreak_${rdop}
-	loop	.Loop_${rdop}
-.Lbreak_${rdop}:
-	cmp	\$0,%rax
-	cmove	%rcx,%rax
-	ret
-.size	OPENSSL_ia32_${rdop},.-OPENSSL_ia32_${rdop}
-
 .globl	OPENSSL_ia32_${rdop}_bytes
 .type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent
 .align	16
@@ -482,11 +467,12 @@ OPENSSL_ia32_${rdop}_bytes:
 	mov	%r10b,($arg1)
 	lea	1($arg1),$arg1
 	inc	%rax
-	shr	\$8,%r8
+	shr	\$8,%r10
 	dec	$arg2
 	jnz	.Ltail_${rdop}_bytes
 
 .Ldone_${rdop}_bytes:
+	xor	%r10,%r10	# Clear sensitive data from register
 	ret
 .size	OPENSSL_ia32_${rdop}_bytes,.-OPENSSL_ia32_${rdop}_bytes
 ___
