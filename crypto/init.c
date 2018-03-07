@@ -352,6 +352,14 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
         err_delete_thread_state();
     }
 
+    if (locals->rand) {
+#ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_stop: "
+                        "drbg_delete_thread_state()\n");
+#endif
+        drbg_delete_thread_state();
+    }
+
     OPENSSL_free(locals);
 }
 
@@ -387,6 +395,14 @@ int ossl_init_thread_start(uint64_t opts)
                         "marking thread for err_state\n");
 #endif
         locals->err_state = 1;
+    }
+
+    if (opts & OPENSSL_INIT_THREAD_RAND) {
+#ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_start: "
+                        "marking thread for rand\n");
+#endif
+        locals->rand = 1;
     }
 
     return 1;
