@@ -6,6 +6,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+/* TODO: add a fourth test case (at least for AIX):
+ *  retrieve DSO_free and DSO_dsobyaddr
+ *  call DSO_dsobyaddr with a module external symbol (!= NULL)
+ *  so that it crashes in ptrgl, then use ptrgl safe address retrieval */
 
 #include <stdio.h>
 #include <string.h>
