@@ -826,10 +826,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     if (drbg == NULL)
         return 0;
 
-    /* We have to lock the DRBG before generating bits from it. */
-    rand_drbg_lock(drbg);
     ret = RAND_DRBG_bytes(drbg, buf, num);
-    rand_drbg_unlock(drbg);
     return ret;
 }
 

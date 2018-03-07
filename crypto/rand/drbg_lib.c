@@ -14,6 +14,7 @@
 #include "rand_lcl.h"
 #include "internal/thread_once.h"
 #include "internal/rand_int.h"
+#include "internal/cryptlib_int.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG, AES-CTR mode.
@@ -40,18 +41,6 @@
  * sources or by consuming randomnes which was added by RAND_add()
  */
 static RAND_DRBG *drbg_master;
-/*
- * THE PUBLIC DRBG
- *
- * Used by default for generating random bytes using RAND_bytes().
- */
-static RAND_DRBG *drbg_public;
-/*
- * THE PRIVATE DRBG
- *
- * Used by default for generating private keys using RAND_priv_bytes()
- */
-static RAND_DRBG *drbg_private;
 /*+
  * DRBG HIERARCHY
  *
@@ -112,6 +101,8 @@ static RAND_DRBG *drbg_private;
 static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_THREAD_LOCAL private_drbg_thread_local_key;
+static CRYPTO_THREAD_LOCAL public_drbg_thread_local_key;
 
 
 
@@ -236,13 +227,18 @@ static RAND_DRBG *rand_drbg_new(int secure,
     if (RAND_DRBG_set(drbg, type, flags) == 0)
         goto err;
 
-    if (parent != NULL && drbg->strength > parent->strength) {
-        /*
-         * We currently don't support the algorithm from NIST SP 800-90C
-         * 10.1.2 to use a weaker DRBG as source
-         */
-        RANDerr(RAND_F_RAND_DRBG_NEW, RAND_R_PARENT_STRENGTH_TOO_WEAK);
-        goto err;
+    if (parent != NULL) {
+        rand_drbg_lock(parent);
+        if (drbg->strength > parent->strength) {
+            /*
+             * We currently don't support the algorithm from NIST SP 800-90C
+             * 10.1.2 to use a weaker DRBG as source
+             */
+            rand_drbg_unlock(parent);
+            RANDerr(RAND_F_RAND_DRBG_NEW, RAND_R_PARENT_STRENGTH_TOO_WEAK);
+            goto err;
+        }
+        rand_drbg_unlock(parent);
     }
 
     if (!RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
@@ -900,7 +896,8 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
     if (drbg == NULL)
         return NULL;
 
-    if (rand_drbg_enable_locking(drbg) == 0)
+    /* Only the master DRBG needs to have a lock */
+    if (parent == NULL && rand_drbg_enable_locking(drbg) == 0)
         goto err;
 
     /* enable seed propagation */
@@ -928,6 +925,8 @@ err:
  */
 DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 {
+    int ret = 1;
+
     /*
      * ensure that libcrypto is initialized, otherwise the
      * DRBG locks are not cleaned up properly
@@ -935,11 +934,14 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
     if (!OPENSSL_init_crypto(0, NULL))
         return 0;
 
-    drbg_master = drbg_setup(NULL);
-    drbg_public = drbg_setup(drbg_master);
-    drbg_private = drbg_setup(drbg_master);
+    ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
 
-    if (drbg_master == NULL || drbg_public == NULL || drbg_private == NULL)
+    drbg_master = drbg_setup(NULL);
+
+    ret &= CRYPTO_THREAD_init_local(&private_drbg_thread_local_key, NULL);
+    ret &= CRYPTO_THREAD_init_local(&public_drbg_thread_local_key, NULL);
+
+    if (drbg_master == NULL || ret == 0)
         return 0;
 
     return 1;
@@ -948,11 +950,22 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 /* Clean up the global DRBGs before exit */
 void rand_drbg_cleanup_int(void)
 {
-    RAND_DRBG_free(drbg_private);
-    RAND_DRBG_free(drbg_public);
     RAND_DRBG_free(drbg_master);
+    drbg_master = NULL;
 
-    drbg_private = drbg_public = drbg_master = NULL;
+    CRYPTO_THREAD_cleanup_local(&private_drbg_thread_local_key);
+    CRYPTO_THREAD_cleanup_local(&public_drbg_thread_local_key);
+}
+
+void drbg_delete_thread_state()
+{
+    RAND_DRBG *drbg;
+
+    drbg = CRYPTO_THREAD_get_local(&public_drbg_thread_local_key);
+    RAND_DRBG_free(drbg);
+
+    drbg = CRYPTO_THREAD_get_local(&private_drbg_thread_local_key);
+    RAND_DRBG_free(drbg);
 }
 
 /* Implements the default OpenSSL RAND_bytes() method */
@@ -964,9 +977,7 @@ static int drbg_bytes(unsigned char *out, int count)
     if (drbg == NULL)
         return 0;
 
-    rand_drbg_lock(drbg);
     ret = RAND_DRBG_bytes(drbg, out, count);
-    rand_drbg_unlock(drbg);
 
     return ret;
 }
@@ -1042,10 +1053,18 @@ RAND_DRBG *RAND_DRBG_get0_master(void)
  */
 RAND_DRBG *RAND_DRBG_get0_public(void)
 {
+    RAND_DRBG *drbg;
+
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return drbg_public;
+    drbg = CRYPTO_THREAD_get_local(&public_drbg_thread_local_key);
+    if (drbg == NULL) {
+        ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
+        drbg = drbg_setup(drbg_master);
+        CRYPTO_THREAD_set_local(&public_drbg_thread_local_key, drbg);
+    }
+    return drbg;
 }
 
 /*
@@ -1054,10 +1073,18 @@ RAND_DRBG *RAND_DRBG_get0_public(void)
  */
 RAND_DRBG *RAND_DRBG_get0_private(void)
 {
+    RAND_DRBG *drbg;
+
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return drbg_private;
+    drbg = CRYPTO_THREAD_get_local(&private_drbg_thread_local_key);
+    if (drbg == NULL) {
+        ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
+        drbg = drbg_setup(drbg_master);
+        CRYPTO_THREAD_set_local(&private_drbg_thread_local_key, drbg);
+    }
+    return drbg;
 }
 
 RAND_METHOD rand_meth = {
