@@ -1242,11 +1242,21 @@ SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
     retv = tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
                               hello->session_id, hello->session_id_len, ret);
 
-    if (s->session_ctx->decrypt_ticket_cb != NULL)
+    /*
+     * If set, the decrypt_ticket_cb() is always called regardless of the
+     * return from tls_decrypt_ticket(). The callback is responsible for
+     * checking |retv| before it performs any action
+     */
+    if (s->session_ctx->decrypt_ticket_cb != NULL) {
+        size_t keyname_len = size;
+
+        if (keyname_len > TLSEXT_KEYNAME_LENGTH)
+            keyname_len = TLSEXT_KEYNAME_LENGTH;
         retv = s->session_ctx->decrypt_ticket_cb(s, *ret,
                                                  PACKET_data(&ticketext->data),
-                                                 TLSEXT_KEYNAME_LENGTH,
+                                                 keyname_len,
                                                  retv, s->session_ctx->ticket_cb_data);
+    }
 
     switch (retv) {
     case SSL_TICKET_NO_DECRYPT:

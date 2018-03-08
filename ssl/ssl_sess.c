@@ -1294,10 +1294,11 @@ int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t le
     return 0;
 }
 
-void SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len)
+int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len)
 {
     *data = ss->ticket_appdata;
     *len = ss->ticket_appdata_len;
+    return 1;
 }
 
 IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)

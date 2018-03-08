@@ -2315,12 +2315,12 @@ typedef SSL_TICKET_RETURN (*SSL_CTX_decrypt_session_ticket_fn)(SSL *s, SSL_SESSI
                                                                size_t keyname_length,
                                                                SSL_TICKET_RETURN retv,
                                                                void *arg);
-void SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
-                                   SSL_CTX_generate_session_ticket_fn gen_cb,
-                                   SSL_CTX_decrypt_session_ticket_fn dec_cb,
-                                   void *arg);
+int SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
+                                  SSL_CTX_generate_session_ticket_fn gen_cb,
+                                  SSL_CTX_decrypt_session_ticket_fn dec_cb,
+                                  void *arg);
 int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t len);
-void SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);
+int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);
 
 extern const char SSL_version_str[];
 

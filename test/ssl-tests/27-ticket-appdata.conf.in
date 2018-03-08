@@ -13,11 +13,50 @@ use strict;
 use warnings;
 
 package ssltests;
+use OpenSSL::Test::Utils;
 
-
-our @tests = (
+our @tests12 = (
     {
-	"name" => "session-ticket-app-data",
+	"name" => "session-ticket-app-data12",
+	"client" => {
+	    "MaxProtocol" => "TLSv1.2",
+	    "Options" => "SessionTicket",
+	},
+	"server" => {
+	    "Options" => "SessionTicket",
+	    "extra" => {
+		"SessionTicketAppData" => "HelloWorld",
+	    },
+	},
+	"test" => {
+	    "HandshakeMode" => "Resume",
+	    "ExpectedResult" => "Success",
+	    "SessionTicketExpected" => "Yes",
+	    "ResumptionExpected" => "Yes",
+	    "ExpectedSessionTicketAppData" => "HelloWorld",
+	}
+    },
+    {
+	"name" => "session-ticket-app-data12",
+	"client" => {
+	    "MaxProtocol" => "TLSv1.2",
+	    "Options" => "SessionTicket",
+	},
+	"server" => {
+	    "Options" => "SessionTicket",
+	},
+	"test" => {
+	    "HandshakeMode" => "Resume",
+	    "ExpectedResult" => "Success",
+	    "SessionTicketExpected" => "Yes",
+	    "ResumptionExpected" => "Yes",
+	    "ExpectedSessionTicketAppData" => "",
+	}
+    }
+);
+our @tests13 = (
+    {
+	"name" => "session-ticket-app-data13",
 	"client" => {
 	    "MaxProtocol" => "TLSv1.3",
 	    "Options" => "SessionTicket",
@@ -37,7 +76,7 @@ our @tests = (
 	}
     },
     {
-	"name" => "session-ticket-app-data",
+	"name" => "session-ticket-app-data13",
 	"client" => {
 	    "MaxProtocol" => "TLSv1.3",
 	    "Options" => "SessionTicket",
@@ -55,3 +94,6 @@ our @tests = (
     }
 );
 
+our @tests = ();
+push @tests, @tests12 unless disabled("tls1_2");
+push @tests, @tests13 unless disabled("tls1_3");

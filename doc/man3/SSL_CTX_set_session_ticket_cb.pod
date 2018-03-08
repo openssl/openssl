@@ -18,12 +18,12 @@ SSL_CTX_decrypt_session_ticket_fn - manage session ticket application data
                                                                 size_t keyname_len,
                                                                 SSL_TICKET_RETURN retv,
                                                                 void *arg);
- void SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
-                                    SSL_CTX_generate_session_ticket_fn gen_cb,
-                                    SSL_CTX_decrypt_session_ticket_fn dec_cb,
-                                    void *arg);
+ int SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
+                                   SSL_CTX_generate_session_ticket_fn gen_cb,
+                                   SSL_CTX_decrypt_session_ticket_fn dec_cb,
+                                   void *arg);
  int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t len);
- void SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);
+ int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);
 
 =head1 DESCRIPTION
 
@@ -38,11 +38,13 @@ at this time to add application data to the session ticket. The value of B<arg>
 is the same as that given to SSL_CTX_set_session_ticket_cb(). The B<gen_cb>
 callback is defined as type B<SSL_CTX_generate_session_ticket_fn>.
 
-B<dec_cb> is the application defined callback invoked after a session ticket
-has been decrypted and any session ticket application data is available. The
-application can call SSL_SESSION_get_ticket_appdata() at this time to retrieve
+B<dec_cb> is the application defined callback invoked after session ticket
+decryption has been attempted and any session ticket application data is available.
+The application can call SSL_SESSION_get_ticket_appdata() at this time to retrieve
 the application data. The value of B<arg> is the same as that given to
-SSL_CTX_set_session_ticket_cb(). The B<dec_cb> callback is defined as type
+SSL_CTX_set_session_ticket_cb(). The B<retv> arguement is the result of the ticket
+decryption. The B<keyname> and B<keyname_len> identify the key used to decrypt the
+session ticket. The B<dec_cb> callback is defined as type
 B<SSL_CTX_decrypt_session_ticket_fn>.
 
 SSL_SESSION_set1_ticket_appdata() sets the application data specified by
@@ -65,16 +67,20 @@ application that a session ticket has just been decrypted.
 
 When the B<dec_cb> callback is invoked, the SSL_SESSION B<ss> has not yet been
 assigned to the SSL B<s>. The B<retv> indicates the result of the ticket
-decryption which can be modified by the callback before being returned.
+decryption which can be modified by the callback before being returned. The
+callback must check the B<retv> value before performing any action, as it's
+called even if ticket decryption fails.
+
+The B<keyname> and B<keyname_len> arguments to B<dec_cb> may be used to identify
+the key that was used to encrypt the session ticket.
 
 When the B<gen_cb> callback is invoked, the SSL_get_session() function can be
 used to retrieve the SSL_SESSION for SSL_SESSION_set1_ticket_appdata().
 
 =head1 RETURN VALUES
 
-The SSL_CTX_set_session_ticket_cb() function does not return a value.
-
-The SSL_SESSION_set1_ticket_appdata() function returns 1 on success and 0 on
+The SSL_CTX_set_session_ticket_cb(), SSL_SESSION_set1_ticket_appdata() and
+SSL_SESSION_get0_ticket_appdata() functions returns 1 on success and 0 on
 failure.
 
 The B<gen_cb> callback must return 1 to continue the connection. A return of 0
