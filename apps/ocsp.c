@@ -230,9 +230,7 @@ int ocsp_main(int argc, char **argv)
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
     int req_text = 0, resp_text = 0, ret = 1;
-# ifndef OPENSSL_NO_SOCK
     int req_timeout = -1;
-# endif
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
     OPTION_CHOICE o;
@@ -483,11 +481,11 @@ int ocsp_main(int argc, char **argv)
                 goto opthelp;
             trailing_md = 1;
             break;
-# ifdef OCSP_DAEMON
         case OPT_MULTI:
+# ifdef OCSP_DAEMON
             multi = atoi(opt_arg());
-            break;
 # endif
+            break;
         }
     }
     if (trailing_md) {
