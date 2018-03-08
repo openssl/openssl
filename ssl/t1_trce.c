@@ -79,7 +79,7 @@ static const ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
 };
 
-/* Handshake types */
+/* Handshake types, sorted by ascending id  */
 static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_HELLO_REQUEST, "HelloRequest"},
     {SSL3_MT_CLIENT_HELLO, "ClientHello"},
@@ -94,10 +94,10 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_SERVER_DONE, "ServerHelloDone"},
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
-    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
-    {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
+    {SSL3_MT_CERTIFICATE_URL, "CertificateUrl"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
+    {SSL3_MT_SUPPLEMENTAL_DATA, "SupplementalData"},
     {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {SSL3_MT_NEXT_PROTO, "NextProto"},
@@ -449,7 +449,7 @@ static const ssl_trace_tbl ssl_comp_tbl[] = {
     {0x0001, "Zlib Compression"}
 };
 
-/* Extensions */
+/* Extensions sorted by ascending id */
 static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_server_name, "server_name"},
     {TLSEXT_TYPE_max_fragment_length, "max_fragment_length"},
@@ -461,28 +461,32 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_client_authz, "client_authz"},
     {TLSEXT_TYPE_server_authz, "server_authz"},
     {TLSEXT_TYPE_cert_type, "cert_type"},
-    {TLSEXT_TYPE_key_share, "key_share"},
-    {TLSEXT_TYPE_psk, "psk"},
-    {TLSEXT_TYPE_psk_kex_modes, "psk_key_exchange_modes"},
     {TLSEXT_TYPE_supported_groups, "supported_groups"},
     {TLSEXT_TYPE_ec_point_formats, "ec_point_formats"},
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
-    {TLSEXT_TYPE_session_ticket, "session_ticket"},
-    {TLSEXT_TYPE_supported_versions, "supported_versions"},
-    {TLSEXT_TYPE_renegotiate, "renegotiate"},
-# ifndef OPENSSL_NO_NEXTPROTONEG
-    {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
-# endif
+    {TLSEXT_TYPE_heartbeat, "tls_heartbeat"},
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
+    {TLSEXT_TYPE_session_ticket, "session_ticket"},
+    {TLSEXT_TYPE_psk, "psk"},
     {TLSEXT_TYPE_early_data, "early_data"},
+    {TLSEXT_TYPE_supported_versions, "supported_versions"},
+    {TLSEXT_TYPE_cookie, "cookie_ext"},
+    {TLSEXT_TYPE_psk_kex_modes, "psk_key_exchange_modes"},
+    {TLSEXT_TYPE_certificate_authorities, "certificate_authorities"},
     {TLSEXT_TYPE_post_handshake_auth, "post_handshake_auth"}
+    {TLSEXT_TYPE_signature_algorithms_cert, "signature_algorithms_cert"}
+    {TLSEXT_TYPE_key_share, "key_share"},
+    {TLSEXT_TYPE_renegotiate, "renegotiate"}
+# ifndef OPENSSL_NO_NEXTPROTONEG
+    , {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"}
+# endif
 };
 
 static const ssl_trace_tbl ssl_groups_tbl[] = {
