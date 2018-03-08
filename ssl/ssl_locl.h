@@ -1407,7 +1407,6 @@ struct ssl_st {
     size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
-    RAND_DRBG *drbg;
 };
 
 /*
@@ -2238,7 +2237,6 @@ __owur int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
                                    int ref);
 
-__owur int ssl_randbytes(SSL *s, unsigned char *buf, size_t num);
 __owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);

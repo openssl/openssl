@@ -690,20 +690,6 @@ SSL *SSL_new(SSL_CTX *ctx)
         goto err;
     }
 
-    /*
-     * If not using the standard RAND (say for fuzzing), then don't use a
-     * chained DRBG.
-     */
-    if (RAND_get_rand_method() == RAND_OpenSSL()) {
-        s->drbg =
-            RAND_DRBG_new(0, 0, RAND_DRBG_get0_public());
-        if (s->drbg == NULL
-            || RAND_DRBG_instantiate(s->drbg,
-                                     (const unsigned char *) SSL_version_str,
-                                     sizeof(SSL_version_str) - 1) == 0)
-            goto err;
-    }
-
     RECORD_LAYER_init(&s->rlayer, s);
 
     s->options = ctx->options;
@@ -1220,7 +1206,6 @@ void SSL_free(SSL *s)
     sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 #endif
 
-    RAND_DRBG_free(s->drbg);
     CRYPTO_THREAD_lock_free(s->lock);
 
     OPENSSL_free(s);
@@ -5395,28 +5380,6 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 uint32_t SSL_get_max_early_data(const SSL *s)
 {
     return s->max_early_data;
-}
-
-int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
-{
-    if (s->drbg != NULL) {
-        /*
-         * Currently, it's the duty of the caller to serialize the generate
-         * requests to the DRBG. So formally we have to check whether
-         * s->drbg->lock != NULL and take the lock if this is the case.
-         * However, this DRBG is unique to a given SSL object, and we already
-         * require that SSL objects are only accessed by a single thread at
-         * a given time. Also, SSL DRBGs have no child DRBG, so there is
-         * no risk that this DRBG is accessed by a child DRBG in parallel
-         * for reseeding.  As such, we can rely on the application's
-         * serialization of SSL accesses for the needed concurrency protection
-         * here.
-         */
-        return RAND_DRBG_bytes(s->drbg, rnd, size);
-    }
-    if (size > INT_MAX)
-        return 0;
-    return RAND_bytes(rnd, size);
 }
 
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl)

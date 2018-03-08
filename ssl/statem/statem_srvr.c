@@ -2737,7 +2737,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
             OPENSSL_free(s->pha_context);
             s->pha_context_len = 32;
             if ((s->pha_context = OPENSSL_malloc(s->pha_context_len)) == NULL
-                    || ssl_randbytes(s, s->pha_context, s->pha_context_len) <= 0
+                    || RAND_bytes(s->pha_context, s->pha_context_len) <= 0
                     || !WPACKET_sub_memcpy_u8(pkt, s->pha_context, s->pha_context_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
@@ -2926,7 +2926,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
      */
 
-    if (ssl_randbytes(s, rand_premaster_secret,
+    if (RAND_bytes(rand_premaster_secret,
                       sizeof(rand_premaster_secret)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_INTERNAL_ERROR);
@@ -3692,7 +3692,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
-        if (ssl_randbytes(s, age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
+        if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
                      ERR_R_INTERNAL_ERROR);
@@ -3758,7 +3758,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
 
     p = senc;
     if (!i2d_SSL_SESSION(s->session, &p)) {
@@ -3830,7 +3829,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         const EVP_CIPHER *cipher = EVP_aes_256_cbc();
 
         iv_len = EVP_CIPHER_iv_length(cipher);
-        if (ssl_randbytes(s, iv, iv_len) <= 0
+        if (RAND_bytes(iv, iv_len) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
                                        tctx->ext.tick_aes_key, iv)
                 || !HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
