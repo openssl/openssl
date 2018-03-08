@@ -5352,7 +5352,10 @@ int SSL_stateless(SSL *s)
     if (ret > 0 && s->ext.cookieok)
         return 1;
 
-    return 0;
+    if (s->hello_retry_request == SSL_HRR_PENDING && !ossl_statem_in_error(s))
+        return 0;
+
+    return -1;
 }
 
 void SSL_force_post_handshake_auth(SSL *ssl)

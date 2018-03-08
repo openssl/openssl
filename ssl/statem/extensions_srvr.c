@@ -1682,9 +1682,14 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
     EVP_PKEY *pkey;
     int ret = EXT_RETURN_FAIL;
 
-    if (s->ctx->app_gen_cookie_cb == NULL
-            || (s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
+    if ((s->s3->flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
+
+    if (s->ctx->app_gen_cookie_cb == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
+                 SSL_R_NO_COOKIE_CALLBACK_SET);
+        return EXT_RETURN_FAIL;
+    }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_cookie)
             || !WPACKET_start_sub_packet_u16(pkt)

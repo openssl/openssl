@@ -952,6 +952,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     "no client cert method"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_COMPRESSION_SPECIFIED),
     "no compression specified"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_COOKIE_CALLBACK_SET),
+    "no cookie callback set"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER),
     "Peer haven't sent GOST certificate, required for selected ciphersuite"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_NO_METHOD_SPECIFIED),

@@ -2734,20 +2734,40 @@ static int test_stateless(void)
                                        &cctx, cert, privkey)))
         goto end;
 
+    /* The arrival of CCS messages can confuse the test */
+    SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
+               /* Send the first ClientHello */
+            || !TEST_false(create_ssl_connection(serverssl, clientssl,
+                                                 SSL_ERROR_WANT_READ))
+               /*
+                * This should fail with a -1 return because we have no callbacks
+                * set up
+                */
+            || !TEST_int_eq(SSL_stateless(serverssl), -1))
+        goto end;
+
+    /* Fatal error so abandon the connection from this client */
+    SSL_free(clientssl);
+    clientssl = NULL;
+
     /* Set up the cookie generation and verification callbacks */
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_callback);
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_callback);
 
-    /* The arrival of CCS messages can confuse the test */
-    SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
-
+    /*
+     * Create a new connection from the client (we can reuse the server SSL
+     * object).
+     */
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL))
                /* Send the first ClientHello */
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ))
                /* This should fail because there is no cookie */
-            || !TEST_false(SSL_stateless(serverssl)))
+            || !TEST_int_eq(SSL_stateless(serverssl), 0))
         goto end;
 
     /* Abandon the connection from this client */
@@ -2764,12 +2784,12 @@ static int test_stateless(void)
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ))
                /* This should fail because there is no cookie */
-            || !TEST_false(SSL_stateless(serverssl))
+            || !TEST_int_eq(SSL_stateless(serverssl), 0)
                /* Send the second ClientHello */
             || !TEST_false(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_WANT_READ))
                /* This should succeed because a cookie is now present */
-            || !TEST_true(SSL_stateless(serverssl))
+            || !TEST_int_eq(SSL_stateless(serverssl), 1)
                /* Complete the connection */
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
