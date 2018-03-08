@@ -209,11 +209,11 @@ script:
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install_docs.log 2>&1 ; then
+          if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
               echo -e '+\057\057\057\057\057\057 MAKE INSTALL OK';
           else
               echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED';
-              cat ~/install_docs.log;
+              cat ~/install.log;
               false;
           fi;
       fi
