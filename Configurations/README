@@ -45,10 +45,10 @@ In each table entry, the following keys are significant:
                            Note: if the same feature is both enabled
                            and disabled, disable wins.
 
-        as              => The Assembler compiler.  This is not always
+        as              => The assembler command.  This is not always
                            used (for example on Unix, where the C
                            compiler is used instead).
-        asflags         => Default Assembler compiler flags [4].
+        asflags         => Default assembler command flags [4].
         cpp             => The C preprocessor command, normally not
                            given, as the build file defaults are
                            usually good enough.
