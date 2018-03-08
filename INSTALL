@@ -581,29 +581,11 @@
                    RCFLAGS         Flags for the Windows reources manipulator.
                    RM              The command to remove files and directories.
 
-                   These can be mixed with flags given on the command line.
-                   Any variable assignment resets any corresponding flags
-                   given before it, so for example:
+                   These cannot be mixed with compiling / linking flags given
+                   on the command line.  In other words, something like this
+                   isn't permitted.
 
                        ./config -DFOO CPPFLAGS=-DBAR -DCOOKIE
-
-                   Will end up having 'CPPFLAGS=-DBAR -DCOOKIE'.
-
-                   Here is how the flags documented above are collected as
-                   augmentation of these variables:
-
-                   -Dxxx           xxx is collected in CPPDEFINES
-                   -Ixxx           xxx is collected in CPPINCLUDES
-                   -Wp,xxx         collected in CPPFLAGS
-                   -Lxxx           collected in LDFLAGS
-                   -lxxx           collected in LDLIBS
-                   -Wp,xxx         collected in LDLIBS
-                   -rpath xxx      collected in LDLIBS
-                   -R xxx          collected in LDLIBS
-                   -framework xxx  collected in LDLIBS
-                   -static         collected in LDLIBS
-                   -xxx            collected in CFLAGS
-                   +xxx            collected in CFLAGS
 
   reconf
   reconfigure

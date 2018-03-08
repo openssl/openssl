@@ -621,10 +621,10 @@ while (@argvcopy)
 			{
 			$user{$1} = ref $user{$1} eq "ARRAY" ? [] : undef;
 			}
-		if (exists $useradd{$1})
-			{
-			$useradd{$1} = [];
-			}
+		#if (exists $useradd{$1})
+		#	{
+		#	$useradd{$1} = [];
+		#	}
 		next;
 		}
 
@@ -890,6 +890,18 @@ while (@argvcopy)
 			join(", ", keys %unsupported_options), "\n";
 		}
 	}
+
+if (grep { scalar @$_ > 0 } values %useradd) {
+    my $detected_env = join(', ', grep { @{$useradd{$_}} || env($_) }
+                                  sort keys %useradd);
+    if ($detected_env) {
+        die <<"_____";
+***** Mixing env / make variables and additional compiler/linker flags as
+***** configure command line option is not permitted.
+***** Affected env / make variables: $detected_env
+_____
+    }
+}
 
 foreach (keys %user) {
     my $value = env($_);
