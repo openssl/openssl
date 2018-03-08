@@ -13,12 +13,12 @@
 
 sub detect_gnu_ld {
     my @lines =
-        `$config{cross_compile_prefix}$config{cc} -Wl,-V /dev/null 2>&1`;
+        `$config{CROSS_COMPILE}$config{CC} -Wl,-V /dev/null 2>&1`;
     return grep /^GNU ld/, @lines;
 }
 sub detect_gnu_cc {
     my @lines =
-        `$config{cross_compile_prefix}$config{cc} -v 2>&1`;
+        `$config{CROSS_COMPILE}$config{CC} -v 2>&1`;
     return grep /gcc/, @lines;
 }
 
@@ -42,7 +42,7 @@ my %shared_info;
         };
     },
     'darwin-shared' => {
-        dso_lflags            => '-bundle',
+        module_ldflags        => '-bundle',
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
         shared_sonameflag     => '-install_name $(INSTALLTOP)/$(LIBDIR)/',
     },
@@ -61,7 +61,7 @@ my %shared_info;
     'alpha-osf1-shared' => sub {
         return $shared_info{'gnu-shared'} if detect_gnu_ld();
         return {
-            dso_lflags        => '-shared -Wl,-Bsymbolic',
+            module_ldflags    => '-shared -Wl,-Bsymbolic',
             shared_ldflag     => '-shared -Wl,-Bsymbolic -set_version $(SHLIB_VERSION_NUMBER)',
         };
     },
