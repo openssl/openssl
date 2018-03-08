@@ -1343,7 +1343,7 @@ if ($target{sys_id} ne "")
 
 unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{DEFAULTS}->{cpuid_asm_src} if ($config{processor} eq "386");
-    push @{$config{defines}}, "OPENSSL_CPUID_OBJ" if ($target{cpuid_asm_src} ne "mem_clr.c");
+    push @{$config{lib_defines}}, "OPENSSL_CPUID_OBJ" if ($target{cpuid_asm_src} ne "mem_clr.c");
 
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
@@ -1395,7 +1395,7 @@ unless ($disabled{asm}) {
 	push @{$config{lib_defines}}, "ECP_NISTZ256_ASM";
     }
     if ($target{ec_asm_src} =~ /x25519/) {
-	push @{$config{defines}}, "X25519_ASM";
+	push @{$config{lib_defines}}, "X25519_ASM";
     }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
 	push @{$config{lib_defines}}, "PADLOCK_ASM";
