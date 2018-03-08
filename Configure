@@ -891,14 +891,29 @@ while (@argvcopy)
 		}
 	}
 
+# If any %useradd entry has been set, we must check that the environment
+# variables haven't been set.  We start by checking of any %useradd entry
+# is set.
 if (grep { scalar @$_ > 0 } values %useradd) {
-    my $detected_env = join(', ', grep { @{$useradd{$_}} || env($_) }
-                                  sort keys %useradd);
-    if ($detected_env) {
+    # Hash of env / make variables names.  The possible values are:
+    # 1 - environment set
+    # 2 - %useradd entry set
+    # 3 - both set
+    my %detected_env =
+        map { my $v = 0;
+              $v += 1 if env($_);
+              $v += 2 if @{$useradd{$_}};
+              $_ => $v }
+        keys %useradd;
+
+    # If any of the corresponding environment variables is set, we error
+    if (grep { $_ & 1 } values %detected_env) {
+        my $names = join(', ', grep { $detected_env{$_} > 0 }
+                               sort keys %detected_env);
         die <<"_____";
 ***** Mixing env / make variables and additional compiler/linker flags as
 ***** configure command line option is not permitted.
-***** Affected env / make variables: $detected_env
+***** Affected env / make variables: $names
 _____
     }
 }
