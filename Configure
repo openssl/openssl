@@ -1687,6 +1687,10 @@ if ($builder eq "unified") {
         my %sharednames = ();
         my %generate = ();
 
+        # We want to detect configdata.pm in the source tree, so we
+        # don't use it if the build tree is different.
+        my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
+
         push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
         my $template =
             Text::Template->new(TYPE => 'FILE',
@@ -1983,7 +1987,7 @@ EOF
 
                 # If it isn't in the source tree, we assume it's generated
                 # in the build tree
-                if (! -f $s || $generate{$_}) {
+                if ($s eq $src_configdata || ! -f $s || $generate{$_}) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
                 # We recognise C++, C and asm files
@@ -2011,7 +2015,7 @@ EOF
 
                 # If it isn't in the source tree, we assume it's generated
                 # in the build tree
-                if (! -f $s || $generate{$_}) {
+                if ($s eq $src_configdata || ! -f $s || $generate{$_}) {
                     $s = cleanfile($buildd, $_, $blddir);
                 }
 
@@ -2061,7 +2065,7 @@ EOF
 
             # If the destination doesn't exist in source, it can only be
             # a generated file in the build tree.
-            if ($ddest ne "" && ! -f $ddest) {
+            if ($ddest ne "" && ($ddest eq $src_configdata || ! -f $ddest)) {
                 $ddest = cleanfile($buildd, $_, $blddir);
                 if ($unified_info{rename}->{$ddest}) {
                     $ddest = $unified_info{rename}->{$ddest};
@@ -2075,7 +2079,8 @@ EOF
                 # in the build tree rather than the source tree, and assume
                 # and that there are lines to build it in a BEGINRAW..ENDRAW
                 # section or in the Makefile template.
-                if (! -f $d
+                if ($d eq $src_configdata
+                    || ! -f $d
                     || (grep { $d eq $_ }
                         map { cleanfile($srcdir, $_, $blddir) }
                         grep { /\.h$/ } keys %{$unified_info{generate}})) {
@@ -2102,7 +2107,7 @@ EOF
 
             # If the destination doesn't exist in source, it can only be
             # a generated file in the build tree.
-            if (! -f $ddest) {
+            if ($ddest eq $src_configdata || ! -f $ddest) {
                 $ddest = cleanfile($buildd, $_, $blddir);
                 if ($unified_info{rename}->{$ddest}) {
                     $ddest = $unified_info{rename}->{$ddest};
@@ -2659,14 +2664,6 @@ platform, so we will pretend you gave the option 'no-pic', which also disables
 'shared' and 'dynamic-engine'.  If you know how to implement shared libraries
 or position independent code, please let us know (but please first make sure
 you have tried with a current version of OpenSSL).
-EOF
-
-print <<"EOF" if (-f catfile($srcdir, "configdata.pm") && $srcdir ne $blddir);
-
-WARNING: there are indications that another build was made in the source
-directory.  This build may have picked up artifacts from that build, the
-safest course of action is to clean the source directory and redo this
-configuration.
 EOF
 
 print <<"EOF";
