@@ -896,8 +896,8 @@ if (grep { scalar @$_ > 0 } values %useradd) {
                                   sort keys %useradd);
     if ($detected_env) {
         die <<"_____";
-***** Mixing env / make variables and configure line compiling or linking flags
-***** is not permitted.
+***** Mixing env / make variables and additional compiler/linker flags as
+***** configure command line option is not permitted.
 ***** Affected env / make variables: $detected_env
 _____
     }
