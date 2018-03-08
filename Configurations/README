@@ -72,17 +72,9 @@ In each table entry, the following keys are significant:
                            also used when linking a program where at
                            least one of the object file is made from
                            C++ source.
-        cflags          => Defaults flags used when compiling C object
-                           files [4].
-        cxxflags        => Default flags used when compiling C++
-                           object files [4].  If unset, it gets the
-                           same value as cflags.
-        shared_cflag    => Extra compilation flags used when
-                           compiling for shared libraries, typically
-                           something like "-fPIC".
-        module_cflags   => Extra compilation flags used when
-                           compiling for DSOs, typically something
-                           like "-fPIC".
+        cflags          => Defaults C compiler flags [4].
+        cxxflags        => Default  C++ compiler flags [4].  If unset,
+                           it gets the same value as cflags.
 
         (linking is a complex thing, see [3] below)
         ld              => Linker command, usually not defined
@@ -92,20 +84,22 @@ In each table entry, the following keys are significant:
                            not implemented yet)
         lflags          => Default flags used when linking apps,
                            shared libraries or DSOs [4].
+        ex_libs         => Extra libraries that are needed when
+                           linking shared libraries, DSOs or programs.
+
         shared_cppflags => Extra C preprocessor flags used when
-                           processing C files that will be part of a
-                           shared library.
+                           processing C files for shared libraries.
         shared_cflag    => Extra C compiler flags used when compiling
-                           objects files that will be part of a shared
-                           library.
+                           for shared libraries, typically something
+                           like "-fPIC".
         shared_ldflag   => Extra linking flags used when linking
                            shared libraries.
         module_cppflags
         module_cflags
         module_ldflags  => Has the same function as the corresponding
                            `shared_' attributes, but for building DSOs.
-        ex_libs         => Extra libraries that are needed when
-                           linking shared libraries, DSOs or programs.
+                           When unset, they get the same values as the
+                           corresponding `shared_' attributes.
 
         ar              => The library archive command, the default is
                            "ar".
