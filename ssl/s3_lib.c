@@ -4524,12 +4524,12 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
         unsigned char *p = result;
 
         l2n(Time, p);
-        ret = ssl_randbytes(s, p, len - 4);
+        ret = RAND_bytes(p, len - 4);
     } else {
-        ret = ssl_randbytes(s, result, len);
+        ret = RAND_bytes(result, len);
     }
 #ifndef OPENSSL_NO_TLS13DOWNGRADE
-    if (ret) {
+    if (ret > 0) {
         if (!ossl_assert(sizeof(tls11downgrade) < len)
                 || !ossl_assert(sizeof(tls12downgrade) < len))
              return 0;
