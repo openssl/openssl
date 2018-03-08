@@ -892,7 +892,8 @@ while (@argvcopy)
 	}
 
 if (grep { scalar @$_ > 0 } values %useradd) {
-    my $detected_env = join(', ', grep { @{$useradd{$_}} } sort keys %useradd);
+    my $detected_env = join(', ', grep { @{$useradd{$_}} || env($_) }
+                                  sort keys %useradd);
     if ($detected_env) {
         die <<"_____";
 ***** Mixing env / make variables and configure line compiling or linking flags
