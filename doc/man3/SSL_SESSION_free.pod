@@ -5,6 +5,7 @@
 SSL_SESSION_new,
 SSL_SESSION_dup,
 SSL_SESSION_up_ref,
+SSL_SESSION_clear_peer_certificate,
 SSL_SESSION_free - create, free and manage SSL_SESSION structures
 
 =head1 SYNOPSIS
@@ -14,6 +15,7 @@ SSL_SESSION_free - create, free and manage SSL_SESSION structures
  SSL_SESSION *SSL_SESSION_new(void);
  SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src);
  int SSL_SESSION_up_ref(SSL_SESSION *ses);
+ void SSL_SESSION_clear_peer_certificate(SSL_SESSION *session);
  void SSL_SESSION_free(SSL_SESSION *session);
 
 =head1 DESCRIPTION
@@ -49,6 +51,19 @@ incorrectly became 0, but it is still referenced in the internal
 session cache and the cache list is processed during a
 L<SSL_CTX_flush_sessions(3)> operation.
 
+SSL_SESSION_clear_peer_certificate() frees up the peer certificate and peer
+certificate chain associated with the session, provided it does not reside in
+an internal session cache.  Applications should call this to free up RAM after
+the handshake has occurred.  This must be called with care as it can affect
+subsequent session resumptions, ticket issuance, and renegotiation.  For server
+side sessions, it is advised to call this only if the internal session cache is
+disabled and the server is using ticket based session resumption.  Applications
+managing an external session cache must take care to ensure safety of this call.
+If the application code causes the server to issue new tickets while a
+connection is established or initiate renegotiation, this method should not be
+called. For clients, it is generally safe to call this if the session is not
+cached elsewhere and renegotiation is disabled or never called.
+
 SSL_SESSION_free() must only be called for SSL_SESSION objects, for
 which the reference count was explicitly incremented (e.g.
 by calling SSL_get1_session(), see L<SSL_get_session(3)>)
@@ -74,6 +89,7 @@ L<d2i_SSL_SESSION(3)>
 =head1 HISTORY
 
 SSL_SESSION_dup() was added in OpenSSL 1.1.1.
+SSL_SESSION_clear_peer_certificate() was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

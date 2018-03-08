@@ -767,6 +767,21 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
     return ret;
 }
 
+void SSL_SESSION_clear_peer_certificate(SSL_SESSION *ss)
+{
+    if (ss == NULL)
+        return;
+
+    CRYPTO_THREAD_write_lock(ss->lock);
+    if ((ss->next == NULL) && (ss->prev == NULL)) {
+        X509_free(ss->peer);
+        ss->peer = NULL;
+        sk_X509_pop_free(ss->peer_chain, X509_free);
+        ss->peer_chain = NULL;
+    }
+    CRYPTO_THREAD_unlock(ss->lock);
+}
+
 void SSL_SESSION_free(SSL_SESSION *ss)
 {
     int i;
