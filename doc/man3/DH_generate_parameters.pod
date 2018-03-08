@@ -111,10 +111,10 @@ The parameter B<j> is invalid.
 
 =back
 
-DH_check_ex(), DH_check_params() and DH_check_pub_key_ex() are similiar with
-DH_check() and DH_check_params() respectively, but the error reasons are set
-to the OpenSSL error handling framework instead of returning by the function
-parameters.
+DH_check_ex(), DH_check_params() and DH_check_pub_key_ex() are similar to
+DH_check() and DH_check_params() respectively, but the error reasons are added
+to the thread's error queue instead of provided as return values from the
+function.
 
 =head1 RETURN VALUES
 
