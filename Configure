@@ -975,7 +975,7 @@ my %target = resolve_config($target);
 # are already defined
 $target{module_cflags} = $target{shared_cflag} unless defined $target{module_cflags};
 $target{module_cxxflags} = $target{shared_cxxflag} unless defined $target{module_cxxflags};
-$target{module_lflags} = $target{shared_ldflag} unless defined $target{module_lflags};
+$target{module_ldflags} = $target{shared_ldflag} unless defined $target{module_ldflags};
 {
     my $shared_info_pl =
         catfile(dirname($0), "Configurations", "shared-info.pl");
@@ -1000,7 +1000,7 @@ $target{module_lflags} = $target{shared_ldflag} unless defined $target{module_lf
         # module_ attribute unless the latter is already defined
         $si->{module_cflags} = $si->{shared_cflag} unless defined $si->{module_cflags};
         $si->{module_cxxflags} = $si->{shared_cxxflag} unless defined $si->{module_cxxflags};
-        $si->{module_lflags} = $si->{shared_ldflag} unless defined $si->{module_lflags};
+        $si->{module_ldflags} = $si->{shared_ldflag} unless defined $si->{module_ldflags};
         foreach (sort keys %$si) {
             $target{$_} = defined $target{$_}
                 ? add($si->{$_})->($target{$_})
