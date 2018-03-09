@@ -29,8 +29,8 @@ SSL_CTX_decrypt_session_ticket_fn - manage session ticket application data
 
 SSL_CTX_set_set_session_ticket_cb() sets the application callbacks B<gen_cb>
 and B<dec_cb> that are used by a server to set and get application data stored
-with a session, and placed into a session ticket. The value of B<arg> is passed
-to the callbacks.
+with a session, and placed into a session ticket. Either callback function may
+be set to NULL. The value of B<arg> is passed to the callbacks.
 
 B<gen_cb> is the application defined callback invoked when a session ticket is
 about to be created. The application can call SSL_SESSION_set1_ticket_appdata()
