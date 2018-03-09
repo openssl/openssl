@@ -4525,3 +4525,5 @@ RAND_DRBG_set_reseed_defaults           4466	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_new_private_key                4467	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_new_public_key                 4468	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_new_CMAC_key                   4469	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_set_priv_key          4470	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_set_pub_key           4471	1_1_1	EXIST::FUNCTION:
