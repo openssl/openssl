@@ -221,23 +221,28 @@ CNF_EX_LIBS={- join('', map{ ",$_" } @{$target{ex_libs}},
 LIB_ASFLAGS={- join(' ', $target{lib_asflags} || (),
                          @{$config{lib_asflags}},
                          '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
-LIB_DEFINES={- join('', (map { ",$_" } @{$target{lib_defines}},
+LIB_DEFINES={- our $lib_defines =
+               join('', (map { ",$_" } @{$target{lib_defines}},
                                        @{$target{shared_defines}},
                                        @{$config{lib_defines}},
-                                       @{$config{shared_defines}},
-                                       'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
+                                       @{$config{shared_defines}});
+               join('', $lib_defines,
+                        (map { ",$_" } 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
                                        'ENGINESDIR="""$(ENGINESDIR_C)"""'),
                         '$(CNF_DEFINES)', '$(DEFINES)') -}
-LIB_INCLUDES={- join(',', @{$target{lib_includes}},
+LIB_INCLUDES={- our $lib_includes =
+                join(',', @{$target{lib_includes}},
                           @{$target{shared_includes}},
                           @{$config{lib_includes}},
                           @{$config{shared_includes}}) -}
-LIB_CPPFLAGS={- join('', "'qual_includes'",
-                         '/DEFINE=(__dummy$(LIB_DEFINES))',
-                         $target{lib_cppflags} || (),
+LIB_CPPFLAGS={- our $lib_cppflags =
+                join('', $target{lib_cppflags} || (),
                          $target{shared_cppflags} || (),
                          @{$config{lib_cppflags}},
-                         @{$config{shared_cppflag}},
+                         @{$config{shared_cppflag}});
+                join('', "'qual_includes'",
+                         '/DEFINE=(__dummy$(LIB_DEFINES))'
+                         $lib_cppflags,
                          '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join('', $target{lib_cflags} || (),
                        $target{shared_cflag} || (),
@@ -325,9 +330,10 @@ NO_INST_BIN_CFLAGS={- join('', $target{no_inst_bin_cflags}
 PERLASM_SCHEME={- $target{perlasm_scheme} -}
 
 # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
-CPPFLAGS_Q={- (my $c = $cppflags1.$cppflags2) =~ s|"|""|g;
-              (my $d = $defines1.$defines2) =~ s|"|""|g;
-              my $i = join(',', $includes1 || (), $includes2 || ());
+CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
+              (my $d = $lib_defines.$defines2.$defines1) =~ s|"|""|g;
+              my $i = join(',', $lib_includes || (), $includes2 || (),
+                                $includes1 || ());
               my $x = $c;
               $x .= "/INCLUDE=($i)" if $i;
               $x .= "/DEFINE=($d)" if $d;
