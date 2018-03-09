@@ -254,15 +254,18 @@ CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
 # Variables starting with BIN_ are used to build programs and their object
 # files.
 
-LIB_CPPFLAGS={- join(' ', $target{lib_cppflags} || (),
+LIB_CPPFLAGS={- our $lib_cppflags =
+                join(' ', $target{lib_cppflags} || (),
                           $target{shared_cppflag} || (),
                           (map { '-D'.$_ }
                                @{$config{lib_defines}},
-                               @{$config{shared_defines}},
+                               @{$config{shared_defines}}),
+                          @{$config{lib_cppflags}},
+                          @{$config{shared_cppflag}});
+                join(' ', $lib_cppflags,
+                          (map { '-D'.$_ }
                                'OPENSSLDIR="\"$(OPENSSLDIR)\""',
                                'ENGINESDIR="\"$(ENGINESDIR)\""'),
-                          @{$config{lib_cppflags}},
-                          @{$config{shared_cppflag}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join(' ', $target{lib_cflags} || (),
                         $target{shared_cflag} || (),
@@ -316,7 +319,9 @@ BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
 CPPFLAGS_Q={- $cppflags1 =~ s|([\\"])|\\$1|g;
               $cppflags2 =~ s|([\\"])|\\$1|g;
-              join(' ', $cppflags1 || (), $cppflags2 || ()) -}
+              $lib_cppflags =~ s|([\\"])|\\$1|g;
+              join(' ', $lib_cppflags || (), $cppflags2 || (),
+                        $cppflags1 || ()) -}
 
 PERLASM_SCHEME= {- $target{perlasm_scheme} -}
 

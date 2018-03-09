@@ -1226,15 +1226,15 @@ if (!$disabled{dso} && $target{dso_scheme} ne "")
 	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
 	if ($target{dso_scheme} eq "DLFCN")
 		{
-		unshift @{$config{defines}}, "DSO_DLFCN", "HAVE_DLFCN_H";
+		unshift @{$config{lib_defines}}, "DSO_DLFCN", "HAVE_DLFCN_H";
 		}
 	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
 		{
-		unshift @{$config{defines}}, "DSO_DLFCN";
+		unshift @{$config{lib_defines}}, "DSO_DLFCN";
 		}
 	else
 		{
-		unshift @{$config{defines}}, "DSO_$target{dso_scheme}";
+		unshift @{$config{lib_defines}}, "DSO_$target{dso_scheme}";
 		}
 	}
 
@@ -1285,10 +1285,10 @@ if ($target{shared_target} eq "")
 	}
 
 if ($disabled{"dynamic-engine"}) {
-        push @{$config{defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+        push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
 } else {
-        push @{$config{defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
         $config{dynamic_engines} = 1;
 }
 
@@ -1333,7 +1333,7 @@ if ($disabled{pic})
 	}
 else
 	{
-	push @{$config{defines}}, "OPENSSL_PIC";
+	push @{$config{lib_defines}}, "OPENSSL_PIC";
 	}
 
 if ($target{sys_id} ne "")
@@ -1343,65 +1343,65 @@ if ($target{sys_id} ne "")
 
 unless ($disabled{asm}) {
     $target{cpuid_asm_src}=$table{DEFAULTS}->{cpuid_asm_src} if ($config{processor} eq "386");
-    push @{$config{defines}}, "OPENSSL_CPUID_OBJ" if ($target{cpuid_asm_src} ne "mem_clr.c");
+    push @{$config{lib_defines}}, "OPENSSL_CPUID_OBJ" if ($target{cpuid_asm_src} ne "mem_clr.c");
 
     $target{bn_asm_src} =~ s/\w+-gf2m.c// if (defined($disabled{ec2m}));
 
     # bn-586 is the only one implementing bn_*_part_words
-    push @{$config{defines}}, "OPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
-    push @{$config{defines}}, "OPENSSL_IA32_SSE2" if (!$disabled{sse2} && $target{bn_asm_src} =~ /86/);
+    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_PART_WORDS" if ($target{bn_asm_src} =~ /bn-586/);
+    push @{$config{lib_defines}}, "OPENSSL_IA32_SSE2" if (!$disabled{sse2} && $target{bn_asm_src} =~ /86/);
 
-    push @{$config{defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
-    push @{$config{defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
-    push @{$config{defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
+    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
+    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
+    push @{$config{lib_defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
 
     if ($target{sha1_asm_src}) {
-	push @{$config{defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
-	push @{$config{defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
-	push @{$config{defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
+	push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
+	push @{$config{lib_defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
+	push @{$config{lib_defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
     }
     if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
-	push @{$config{defines}}, "RC4_ASM";
+	push @{$config{lib_defines}}, "RC4_ASM";
     }
     if ($target{md5_asm_src}) {
-	push @{$config{defines}}, "MD5_ASM";
+	push @{$config{lib_defines}}, "MD5_ASM";
     }
     $target{cast_asm_src}=$table{DEFAULTS}->{cast_asm_src} unless $disabled{pic}; # CAST assembler is not PIC
     if ($target{rmd160_asm_src}) {
-	push @{$config{defines}}, "RMD160_ASM";
+	push @{$config{lib_defines}}, "RMD160_ASM";
     }
     if ($target{aes_asm_src}) {
-	push @{$config{defines}}, "AES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
+	push @{$config{lib_defines}}, "AES_ASM" if ($target{aes_asm_src} =~ m/\baes-/);;
 	# aes-ctr.fake is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
-	push @{$config{defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
+	push @{$config{lib_defines}}, "AES_CTR_ASM" if ($target{aes_asm_src} =~ s/\s*aes-ctr\.fake//);
 	# aes-xts.fake indicates presence of AES_xts_[en|de]crypt...
-	push @{$config{defines}}, "AES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
+	push @{$config{lib_defines}}, "AES_XTS_ASM" if ($target{aes_asm_src} =~ s/\s*aes-xts\.fake//);
 	$target{aes_asm_src} =~ s/\s*(vpaes|aesni)-x86\.s//g if ($disabled{sse2});
-	push @{$config{defines}}, "VPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
-	push @{$config{defines}}, "BSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
+	push @{$config{lib_defines}}, "VPAES_ASM" if ($target{aes_asm_src} =~ m/vpaes/);
+	push @{$config{lib_defines}}, "BSAES_ASM" if ($target{aes_asm_src} =~ m/bsaes/);
     }
     if ($target{wp_asm_src} =~ /mmx/) {
         if ($config{processor} eq "386") {
 	    $target{wp_asm_src}=$table{DEFAULTS}->{wp_asm_src};
 	} elsif (!$disabled{"whirlpool"}) {
-	    push @{$config{defines}}, "WHIRLPOOL_ASM";
+	    push @{$config{lib_defines}}, "WHIRLPOOL_ASM";
 	}
     }
     if ($target{modes_asm_src} =~ /ghash-/) {
-	push @{$config{defines}}, "GHASH_ASM";
+	push @{$config{lib_defines}}, "GHASH_ASM";
     }
     if ($target{ec_asm_src} =~ /ecp_nistz256/) {
-	push @{$config{defines}}, "ECP_NISTZ256_ASM";
+	push @{$config{lib_defines}}, "ECP_NISTZ256_ASM";
     }
     if ($target{ec_asm_src} =~ /x25519/) {
-	push @{$config{defines}}, "X25519_ASM";
+	push @{$config{lib_defines}}, "X25519_ASM";
     }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
-	push @{$config{defines}}, "PADLOCK_ASM";
+	push @{$config{lib_defines}}, "PADLOCK_ASM";
     }
     if ($target{poly1305_asm_src} ne "") {
-	push @{$config{defines}}, "POLY1305_ASM";
+	push @{$config{lib_defines}}, "POLY1305_ASM";
     }
 }
 
