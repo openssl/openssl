@@ -80,7 +80,7 @@ used to retrieve the SSL_SESSION for SSL_SESSION_set1_ticket_appdata().
 =head1 RETURN VALUES
 
 The SSL_CTX_set_session_ticket_cb(), SSL_SESSION_set1_ticket_appdata() and
-SSL_SESSION_get0_ticket_appdata() functions returns 1 on success and 0 on
+SSL_SESSION_get0_ticket_appdata() functions return 1 on success and 0 on
 failure.
 
 The B<gen_cb> callback must return 1 to continue the connection. A return of 0
