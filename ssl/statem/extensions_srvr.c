@@ -1124,13 +1124,13 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                                          PACKET_remaining(&identity), NULL, 0,
                                          &sess);
 
-            if (ret == TICKET_FATAL_ERR_MALLOC
-                    || ret == TICKET_FATAL_ERR_OTHER) {
+            if (ret == SSL_TICKET_FATAL_ERR_MALLOC
+                    || ret == SSL_TICKET_FATAL_ERR_OTHER) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_PARSE_CTOS_PSK, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-            if (ret == TICKET_NO_DECRYPT)
+            if (ret == SSL_TICKET_NO_DECRYPT)
                 continue;
 
             ticket_age = (uint32_t)ticket_agel;

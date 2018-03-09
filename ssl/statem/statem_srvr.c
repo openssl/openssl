@@ -3728,6 +3728,10 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         s->session->ext.max_early_data = s->max_early_data;
     }
 
+    if (tctx->generate_ticket_cb != NULL &&
+        tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0)
+        goto err;
+
     /* get session encoding length */
     slen_full = i2d_SSL_SESSION(s->session, NULL);
     /*

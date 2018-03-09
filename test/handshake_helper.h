@@ -65,6 +65,8 @@ typedef struct handshake_result {
     /* Session id status */
     ssl_session_id_t session_id;
     char *cipher;
+    /* session ticket application data */
+    char *result_session_ticket_app_data;
 } HANDSHAKE_RESULT;
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void);

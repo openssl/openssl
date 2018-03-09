@@ -55,6 +55,8 @@ static int serverconf_eq(SSL_TEST_SERVER_CONF *serv,
             || !TEST_str_eq(serv->alpn_protocols, serv2->alpn_protocols)
             || !TEST_int_eq(serv->broken_session_ticket,
                             serv2->broken_session_ticket)
+            || !TEST_str_eq(serv->session_ticket_app_data,
+                            serv2->session_ticket_app_data)
             || !TEST_int_eq(serv->cert_status, serv2->cert_status))
         return 0;
     return 1;
@@ -95,6 +97,8 @@ static int testctx_eq(SSL_TEST_CTX *ctx, SSL_TEST_CTX *ctx2)
                             ctx2->expected_alpn_protocol)
             || !TEST_str_eq(ctx->expected_cipher,
                             ctx2->expected_cipher)
+            || !TEST_str_eq(ctx->expected_session_ticket_app_data,
+                            ctx2->expected_session_ticket_app_data)
             || !TEST_int_eq(ctx->resumption_expected,
                             ctx2->resumption_expected)
             || !TEST_int_eq(ctx->session_id_expected,
