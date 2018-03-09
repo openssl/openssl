@@ -107,8 +107,7 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
 GENERATED={- join(" ",
-                  ( map { (my $x = $_) =~ s|\.S$|\.s|; $x }
-                    grep { defined $unified_info{generate}->{$_} }
+                  ( grep { defined $unified_info{generate}->{$_} }
                     map { @{$unified_info{sources}->{$_}} }
                     grep { /\.o$/ } keys %{$unified_info{sources}} ),
                   ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
@@ -957,20 +956,6 @@ EOF
               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
           } -> {$args{intent}};
           if (defined($generator)) {
-              # If the target is named foo.S in build.info, we want to
-              # end up generating foo.s in two steps.
-              if ($args{src} =~ /\.S$/) {
-                   (my $target = $args{src}) =~ s|\.S$|.s|;
-                   return <<"EOF";
-$target: $args{generator}->[0] $deps
-	( trap "rm -f \$@.*" INT 0; \\
-	  $generator \$@.S; \\
-	  \$(CPP) $incs $cppflags \$@.S | \\
-	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.i && \\
-	  mv -f \$@.i \$@ )
-EOF
-              }
-              # Otherwise....
               return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
 	$generator \$@
@@ -990,12 +975,7 @@ EOF
   sub src2obj {
       my %args = @_;
       (my $obj = $args{obj}) =~ s|\.o$||;
-      my @srcs = map { if ($unified_info{generate}->{$_}) {
-                           (my $x = $_) =~ s/\.S$/.s/; $x
-                       } else {
-                           $_
-                       }
-                     } ( @{$args{srcs}} );
+      my @srcs = @{$args{srcs}};
       my $srcs = join(" ",  @srcs);
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
@@ -1025,12 +1005,30 @@ EOF
               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
           } -> {$args{intent}};
       }
-      $cmdflags .= $cmdcompile;
-      my $recipe = <<"EOF";
-$obj$objext: $deps
-EOF
-      if (defined $makedepprog && $makedepprog !~ /\/makedepend/) {
+      my $recipe;
+      # extension-specific rules
+      if (grep /\.s$/, @srcs) {
           $recipe .= <<"EOF";
+$obj$objext: $deps
+	$cmd $cmdflags -c -o \$\@ $srcs
+EOF
+      } elsif (grep /\.S$/, @srcs) {
+          # In case one wonders why not just $(CC) -c file.S. While it
+          # does work with contemporary compilers, there are some legacy
+          # ones that get it wrong. Hence the elaborate scheme... We
+          # don't care to maintain dependecy lists, because dependency
+          # is rather weak, at most one header file that lists constants
+          # which are assigned in ascending order.
+          $recipe .= <<"EOF";
+$obj$objext: $deps
+	( trap "rm -f \$@.*" INT 0; \\
+	  \$(CPP) $incs $cmdflags $srcs | \\
+	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.s && \\
+	  $cmd $cmdflags -c -o \$\@ \$@.s )
+EOF
+      } elsif (defined $makedepprog && $makedepprog !~ /\/makedepend/) {
+          $recipe .= <<"EOF";
+$obj$objext: $deps
 	$cmd $incs $cmdflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
 	\@touch $obj$depext.tmp
 	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
@@ -1041,7 +1039,8 @@ EOF
 EOF
       } else {
           $recipe .= <<"EOF";
-	$cmd $incs $cmdflags -o \$\@ $srcs
+$obj$objext: $deps
+	$cmd $incs $cmdflags $cmdcompile -o \$\@ $srcs
 EOF
           if (defined $makedepprog  && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
