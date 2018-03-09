@@ -587,6 +587,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_CIPHER_MATCH                            185
 # define SSL_R_NO_CLIENT_CERT_METHOD                      331
 # define SSL_R_NO_COMPRESSION_SPECIFIED                   187
+# define SSL_R_NO_COOKIE_CALLBACK_SET                     287
 # define SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER           330
 # define SSL_R_NO_METHOD_SPECIFIED                        188
 # define SSL_R_NO_PEM_EXTENSIONS                          389

@@ -88,8 +88,9 @@ start.
 =head1 RETURN VALUES
 
 For SSL_stateless() a return value of 1 indicates success and the B<ssl> object
-will be set up ready to continue the handshake. A return value of 0 indicates
-failure. User code may retry the SSL_stateless() call.
+will be set up ready to continue the handshake. A return value of 0 or -1
+indicates failure. If the value is 0 then a HelloRetryRequest was sent. A value
+of -1 indicates any other error. User code may retry the SSL_stateless() call.
 
 For DTLSv1_listen() a return value of >= 1 indicates success. The B<ssl> object
 will be set up ready to continue the handshake.  the B<peer> value will also be
