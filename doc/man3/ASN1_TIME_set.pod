@@ -155,7 +155,7 @@ in the B<offset_sec> and B<offset_day> parameters instead of directly
 manipulating a time_t value.
 
 ASN1_TIME_adj() may change the type from ASN1_GENERALIZEDTIME to ASN1_UTCTIME,
-or vise-versa, based on the resulting year. The ASN1_GENERALIZEDTIME_adj() and
+or vice versa, based on the resulting year. The ASN1_GENERALIZEDTIME_adj() and
 ASN1_UTCTIME_adj() functions will not modify the type of the return structure.
 
 It is recommended that functions starting with ASN1_TIME be used instead of
