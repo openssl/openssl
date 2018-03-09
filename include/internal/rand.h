@@ -56,6 +56,13 @@ int RAND_DRBG_bytes(RAND_DRBG *drbg, unsigned char *out, size_t outlen);
 int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval);
 int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval);
 
+int RAND_DRBG_set_reseed_defaults(
+                                  unsigned int master_reseed_interval,
+                                  unsigned int slave_reseed_interval,
+                                  time_t master_reseed_time_interval,
+                                  time_t slave_reseed_time_interval
+                                  );
+
 RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);
