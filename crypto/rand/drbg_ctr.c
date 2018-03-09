@@ -366,6 +366,6 @@ int drbg_ctr_init(RAND_DRBG *drbg)
     }
 
     drbg->max_request = 1 << 16;
-    drbg->reseed_interval = MAX_RESEED_INTERVAL;
+
     return 1;
 }

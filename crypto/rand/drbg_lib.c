@@ -113,6 +113,12 @@ static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
+static unsigned int master_reseed_interval = MASTER_RESEED_INTERVAL;
+static unsigned int slave_reseed_interval  = SLAVE_RESEED_INTERVAL;
+
+static time_t master_reseed_time_interval = MASTER_RESEED_TIME_INTERVAL;
+static time_t slave_reseed_time_interval  = SLAVE_RESEED_TIME_INTERVAL;
+
 static RAND_DRBG *drbg_setup(RAND_DRBG *parent);
 
 static RAND_DRBG *rand_drbg_new(int secure,
@@ -175,6 +181,15 @@ static RAND_DRBG *rand_drbg_new(int secure,
     drbg->secure = secure && CRYPTO_secure_allocated(drbg);
     drbg->fork_count = rand_fork_count;
     drbg->parent = parent;
+
+    if (parent == NULL) {
+        drbg->reseed_interval = master_reseed_interval;
+        drbg->reseed_time_interval = master_reseed_time_interval;
+    } else {
+        drbg->reseed_interval = slave_reseed_interval;
+        drbg->reseed_time_interval = slave_reseed_time_interval;
+    }
+
     if (RAND_DRBG_set(drbg, type, flags) == 0)
         goto err;
 
@@ -710,6 +725,38 @@ int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval)
     return 1;
 }
 
+/*
+ * Set the default values for reseed (time) intervals of new DRBG instances
+ *
+ * The default values can be set independently for master DRBG instances
+ * (without a parent) and slave DRBG instances (with parent).
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+
+int RAND_DRBG_set_reseed_defaults(
+                                  unsigned int _master_reseed_interval,
+                                  unsigned int _slave_reseed_interval,
+                                  time_t _master_reseed_time_interval,
+                                  time_t _slave_reseed_time_interval
+                                  )
+{
+    if (_master_reseed_interval > MAX_RESEED_INTERVAL
+        || _slave_reseed_interval > MAX_RESEED_INTERVAL)
+        return 0;
+
+    if (_master_reseed_time_interval > MAX_RESEED_TIME_INTERVAL
+        || _slave_reseed_time_interval > MAX_RESEED_TIME_INTERVAL)
+        return 0;
+
+    master_reseed_interval = _master_reseed_interval;
+    slave_reseed_interval = _slave_reseed_interval;
+
+    master_reseed_time_interval = _master_reseed_time_interval;
+    slave_reseed_time_interval = _slave_reseed_time_interval;
+
+    return 1;
+}
 
 /*
  * Locks the given drbg. Locking a drbg which does not have locking
@@ -808,14 +855,6 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
 
     if (rand_drbg_enable_locking(drbg) == 0)
         goto err;
-
-    if (parent == NULL) {
-        drbg->reseed_interval = MASTER_RESEED_INTERVAL;
-        drbg->reseed_time_interval = MASTER_RESEED_TIME_INTERVAL;
-    } else {
-        drbg->reseed_interval = SLAVE_RESEED_INTERVAL;
-        drbg->reseed_time_interval = SLAVE_RESEED_TIME_INTERVAL;
-    }
 
     /* enable seed propagation */
     drbg->reseed_counter = 1;
