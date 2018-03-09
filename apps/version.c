@@ -105,7 +105,8 @@ opthelp:
             dirty = version = 1;
             break;
         case OPT_A:
-            seed = cflags = version = date = platform = dir = engdir = 1;
+            seed = options = cflags = version = date = platform = dir = engdir
+                = 1;
             break;
         }
     }
