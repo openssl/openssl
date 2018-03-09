@@ -14,7 +14,7 @@ OSSL_STORE_find
  int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type);
 
  int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int criterion_type);
- 
+
  int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search);
 
 =head1 DESCRIPTION
