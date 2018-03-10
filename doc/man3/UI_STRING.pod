@@ -120,11 +120,11 @@ UI_get0_test_string() returns the UI string action description
 string for B<UIT_VERIFY> type UI strings, NULL for any other type.
 
 UI_get_result_minsize() returns the minimum allowed result size for
-the UI string for  for B<UIT_PROMPT> and B<UIT_VERIFY> type strings,
+the UI string for B<UIT_PROMPT> and B<UIT_VERIFY> type strings,
 -1 for any other type.
 
 UI_get_result_maxsize() returns the minimum allowed result size for
-the UI string for  for B<UIT_PROMPT> and B<UIT_VERIFY> type strings,
+the UI string for B<UIT_PROMPT> and B<UIT_VERIFY> type strings,
 -1 for any other type.
 
 UI_set_result() returns 0 on success or when the UI string is of any

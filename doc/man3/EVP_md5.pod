@@ -16,7 +16,7 @@ EVP_md5
 MD5 is a cryptographic hash function standardized in RFC 1321 and designed by
 Ronald Rivest.
 
-The CMU Software Engieneering Institute considers MD5 unsuitable for further
+The CMU Software Engineering Institute considers MD5 unsuitable for further
 use since its security has been severely compromised.
 
 =over 4

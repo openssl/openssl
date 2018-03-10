@@ -45,7 +45,7 @@ OSSL_STORE_SEARCH_get0_digest
 
 =head1 DESCRIPTION
 
-These functions are use to specify search criteria to help search for specific
+These functions are used to specify search criteria to help search for specific
 objects through other names than just the URI that's given to OSSL_STORE_open().
 For example, this can be useful for an application that has received a URI
 and then wants to add on search criteria in a uniform and supported manner.
@@ -122,7 +122,7 @@ accordingly.
 A criterion of this type is created with OSSL_STORE_SEARCH_by_key_fingerprint()
 and the actual fingerprint and its length can be retrieved with
 OSSL_STORE_SEARCH_get0_bytes().
-The digest can be retreived with OSSL_STORE_SEARCH_get0_digest().
+The digest can be retrieved with OSSL_STORE_SEARCH_get0_digest().
 
 =item OSSL_STORE_SEARCH_BY_ALIAS
 
