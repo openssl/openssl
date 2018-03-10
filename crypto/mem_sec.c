@@ -33,7 +33,6 @@
 # include <sys/mman.h>
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
-#  include <linux/mman.h>
 #  include <errno.h>
 # endif
 # include <sys/param.h>
