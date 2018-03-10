@@ -176,7 +176,7 @@ ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 CC={- $config{CC} -}
 CPP={- $config{CPP} -}
 DEFINES={- our $defines1 = join('', map { ",$_" } @{$config{CPPDEFINES}}) -}
-INCLUDES={- our $includes1 = join('', map { ",$_" } @{$config{CPPINCLUDES}}) -}
+INCLUDES={- our $includes1 = join(',', @{$config{CPPINCLUDES}}) -}
 CPPFLAGS={- our $cppflags1 = join('', @{$config{CPPFLAGS}}) -}
 CFLAGS={- join('', @{$config{CFLAGS}}) -}
 LDFLAGS={- join('', @{$config{LFLAGS}}) -}
@@ -225,7 +225,7 @@ LIB_DEFINES={- our $lib_defines =
                join('', (map { ",$_" } @{$target{lib_defines}},
                                        @{$target{shared_defines}},
                                        @{$config{lib_defines}},
-                                       @{$config{shared_defines}});
+                                       @{$config{shared_defines}}));
                join('', $lib_defines,
                         (map { ",$_" } 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
                                        'ENGINESDIR="""$(ENGINESDIR_C)"""'),
@@ -241,7 +241,7 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                          @{$config{lib_cppflags}},
                          @{$config{shared_cppflag}});
                 join('', "'qual_includes'",
-                         '/DEFINE=(__dummy$(LIB_DEFINES))'
+                         '/DEFINE=(__dummy$(LIB_DEFINES))',
                          $lib_cppflags,
                          '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
 LIB_CFLAGS={- join('', $target{lib_cflags} || (),
