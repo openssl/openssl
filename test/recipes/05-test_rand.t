@@ -10,7 +10,8 @@ use strict;
 use warnings;
 use OpenSSL::Test;
 
-plan tests => 1;
+plan tests => 2;
 setup("test_rand");
 
 ok(run(test(["drbgtest"])));
+ok(run(test(["drbg_cavs_test"])));
