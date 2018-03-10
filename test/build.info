@@ -47,6 +47,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           asn1_encode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest sslbuffertest \
+          recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest
@@ -338,6 +339,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[drbgtest]=drbgtest.c
   INCLUDE[drbgtest]=../include
   DEPEND[drbgtest]=../libcrypto libtestutil.a
+
+  SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data.c
+  INCLUDE[drbg_cavs_test]=../include . ..
+  DEPEND[drbg_cavs_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
   INCLUDE[x509_dup_cert_test]=../include
