@@ -162,7 +162,7 @@ It is otherwise expected to return 0.
 =item B<OSSL_STORE_error_fn>
 
 This function takes a B<OSSL_STORE_LOADER_CTX> pointer and is expected to
-return 1 to indicate that an error occured in a previous call to the
+return 1 to indicate that an error occurred in a previous call to the
 B<OSSL_STORE_load_fn> function.
 It is otherwise expected to return 0.
 

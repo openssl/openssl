@@ -461,7 +461,7 @@ Represents a PKCS#3 DH parameters structure.
 
 =item B<DHparamx>
 
-Represents a ANSI X9.42 DH parameters structure.
+Represents an ANSI X9.42 DH parameters structure.
 
 =item B<DSA_PUBKEY>
 

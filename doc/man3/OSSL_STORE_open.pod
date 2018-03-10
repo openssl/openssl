@@ -86,7 +86,7 @@ object and return it wrapped with  B<OSSL_STORE_INFO>.
 OSSL_STORE_eof() takes a B<OSSL_STORE_CTX> and checks if we've reached the end
 of data.
 
-OSSL_STORE_error() takes a B<OSSL_STORE_CTX> and checks if an error occured in
+OSSL_STORE_error() takes a B<OSSL_STORE_CTX> and checks if an error occurred in
 the last OSSL_STORE_load() call.
 Note that it may still be meaningful to try and load more objects, unless
 OSSL_STORE_eof() shows that the end of data has been reached.
@@ -125,7 +125,7 @@ returned B<NULL>.
 OSSL_STORE_eof() returns 1 if the end of data has been reached, otherwise
 0.
 
-OSSL_STORE_error() returns 1 if an error occured in a OSSL_STORE_load() call,
+OSSL_STORE_error() returns 1 if an error occurred in an OSSL_STORE_load() call,
 otherwise 0.
 
 OSSL_STORE_ctrl() and OSSL_STORE_close() returns 1 on success, or 0 on failure.
