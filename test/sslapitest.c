@@ -723,6 +723,8 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd)
     size_t err = 0;
     char crec_wseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
     char crec_wseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char crec_rseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char crec_rseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
     char srec_wseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
     char srec_wseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
     char srec_rseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
@@ -730,6 +732,8 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd)
 
     cbuf[0] = count++;
     memcpy(crec_wseq_before, &clientssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(crec_rseq_before, &clientssl->rlayer.read_sequence,
             TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
     memcpy(srec_wseq_before, &serverssl->rlayer.write_sequence,
             TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
@@ -755,6 +759,8 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd)
     }
 
     memcpy(crec_wseq_after, &clientssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(crec_rseq_after, &clientssl->rlayer.read_sequence,
             TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
     memcpy(srec_wseq_after, &serverssl->rlayer.write_sequence,
             TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
@@ -786,16 +792,33 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd)
             goto end;
     }
 
-    if (!TEST_mem_ne(srec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
-                     srec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
-        goto end;
+    if (clientssl->mode & SSL_MODE_NO_KTLS_RX) {
+        if (!TEST_mem_ne(crec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         crec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(crec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         crec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    }
+
+    if (serverssl->mode & SSL_MODE_NO_KTLS_RX) {
+        if (!TEST_mem_ne(srec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         srec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(srec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         srec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    }
 
     return 1;
 end:
     return 0;
 }
 
-static int execute_test_ktls(int cis_ktls_tx, int sis_ktls_tx)
+static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
+                             int sis_ktls_tx, int sis_ktls_rx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -830,6 +853,16 @@ static int execute_test_ktls(int cis_ktls_tx, int sis_ktls_tx)
             goto end;
     }
 
+    if (!cis_ktls_rx) {
+        if (!TEST_true(SSL_set_mode(clientssl, SSL_MODE_NO_KTLS_RX)))
+            goto end;
+    }
+
+    if (!sis_ktls_rx) {
+        if (!TEST_true(SSL_set_mode(serverssl, SSL_MODE_NO_KTLS_RX)))
+            goto end;
+    }
+
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE)))
         goto end;
@@ -847,6 +880,22 @@ static int execute_test_ktls(int cis_ktls_tx, int sis_ktls_tx)
             goto end;
     } else {
         if (!TEST_true(BIO_get_ktls_send(serverssl->wbio)))
+            goto end;
+    }
+
+    if (!cis_ktls_rx) {
+        if (!TEST_false(BIO_get_ktls_recv(clientssl->rbio)))
+            goto end;
+    } else {
+        if (!TEST_true(BIO_get_ktls_recv(clientssl->rbio)))
+            goto end;
+    }
+
+    if (!sis_ktls_rx) {
+        if (!TEST_false(BIO_get_ktls_recv(serverssl->rbio)))
+            goto end;
+    } else {
+        if (!TEST_true(BIO_get_ktls_recv(serverssl->rbio)))
             goto end;
     }
 
@@ -869,24 +918,84 @@ end:
     return testresult;
 }
 
+static int test_ktls_no_txrx_client_no_txrx_server(void)
+{
+    return execute_test_ktls(0, 0, 0, 0);
+}
+
+static int test_ktls_no_rx_client_no_txrx_server(void)
+{
+    return execute_test_ktls(1, 0, 0, 0);
+}
+
+static int test_ktls_no_tx_client_no_txrx_server(void)
+{
+    return execute_test_ktls(0, 1, 0, 0);
+}
+
+static int test_ktls_client_no_txrx_server(void)
+{
+    return execute_test_ktls(1, 1, 0, 0);
+}
+
+static int test_ktls_no_txrx_client_no_rx_server(void)
+{
+    return execute_test_ktls(0, 0, 1, 0);
+}
+
+static int test_ktls_no_rx_client_no_rx_server(void)
+{
+    return execute_test_ktls(1, 0, 1, 0);
+}
+
+static int test_ktls_no_tx_client_no_rx_server(void)
+{
+    return execute_test_ktls(0, 1, 1, 0);
+}
+
+static int test_ktls_client_no_rx_server(void)
+{
+    return execute_test_ktls(1, 1, 1, 0);
+}
+
+static int test_ktls_no_txrx_client_no_tx_server(void)
+{
+    return execute_test_ktls(0, 0, 0, 1);
+}
+
+static int test_ktls_no_rx_client_no_tx_server(void)
+{
+    return execute_test_ktls(1, 0, 0, 1);
+}
+
+static int test_ktls_no_tx_client_no_tx_server(void)
+{
+    return execute_test_ktls(0, 1, 0, 1);
+}
+
+static int test_ktls_client_no_tx_server(void)
+{
+    return execute_test_ktls(1, 1, 0, 1);
+}
+
+static int test_ktls_no_txrx_client_server(void)
+{
+    return execute_test_ktls(0, 0, 1, 1);
+}
+
+static int test_ktls_no_rx_client_server(void)
+{
+    return execute_test_ktls(1, 0, 1, 1);
+}
+
+static int test_ktls_no_tx_client_server(void)
+{
+    return execute_test_ktls(0, 1, 1, 1);
+}
+
 static int test_ktls_client_server(void)
 {
-    return execute_test_ktls(1, 1);
-}
-
-static int test_ktls_no_client_server(void)
-{
-    return execute_test_ktls(0, 1);
-}
-
-static int test_ktls_client_no_server(void)
-{
-    return execute_test_ktls(1, 0);
-}
-
-static int test_ktls_no_client_no_server(void)
-{
-    return execute_test_ktls(0, 0);
+    return execute_test_ktls(1, 1, 1, 1);
 }
 
 #endif
@@ -6155,10 +6264,22 @@ int setup_tests(void)
 
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS) \
     && !defined(OPENSSL_NO_SOCK)
+    ADD_TEST(test_ktls_no_txrx_client_no_txrx_server);
+    ADD_TEST(test_ktls_no_rx_client_no_txrx_server);
+    ADD_TEST(test_ktls_no_tx_client_no_txrx_server);
+    ADD_TEST(test_ktls_client_no_txrx_server);
+    ADD_TEST(test_ktls_no_txrx_client_no_rx_server);
+    ADD_TEST(test_ktls_no_rx_client_no_rx_server);
+    ADD_TEST(test_ktls_no_tx_client_no_rx_server);
+    ADD_TEST(test_ktls_client_no_rx_server);
+    ADD_TEST(test_ktls_no_txrx_client_no_tx_server);
+    ADD_TEST(test_ktls_no_rx_client_no_tx_server);
+    ADD_TEST(test_ktls_no_tx_client_no_tx_server);
+    ADD_TEST(test_ktls_client_no_tx_server);
+    ADD_TEST(test_ktls_no_txrx_client_server);
+    ADD_TEST(test_ktls_no_rx_client_server);
+    ADD_TEST(test_ktls_no_tx_client_server);
     ADD_TEST(test_ktls_client_server);
-    ADD_TEST(test_ktls_no_client_server);
-    ADD_TEST(test_ktls_client_no_server);
-    ADD_TEST(test_ktls_no_client_no_server);
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
