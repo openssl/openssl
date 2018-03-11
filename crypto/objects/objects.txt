@@ -1612,3 +1612,33 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : ffdhe4096
                             : ffdhe6144
                             : ffdhe8192
+
+# OIDs for DSTU-4145/DSTU-7564 (http://zakon2.rada.gov.ua/laws/show/z0423-17)
+
+# DSTU OIDs
+member-body 804   : ISO-UA
+ISO-UA 2 1 1 1    : ua-pki
+ua-pki 1 1 1      : dstu28147         : DSTU Gost 28147-2009
+dstu28147 2       : dstu28147-ofb     : DSTU Gost 28147-2009 OFB mode
+dstu28147 3       : dstu28147-cfb     : DSTU Gost 28147-2009 CFB mode
+dstu28147 5       : dstu28147-wrap    : DSTU Gost 28147-2009 key wrap
+
+ua-pki 1 1 2      : hmacWithDstu34311 : HMAC DSTU Gost 34311-95
+ua-pki 1 2 1      : dstu34311         : DSTU Gost 34311-95
+
+ua-pki 1 3 1 1    : dstu4145le        : DSTU 4145-2002 little endian
+dstu4145le 1 1    : dstu4145be        : DSTU 4145-2002 big endian
+
+# 1.2.804. 2.1.1.1 1.3.1.1  .2.6
+#     UA    ua-pki  4145 le
+# DSTU named curves
+dstu4145le 2 0 : uacurve0 : DSTU curve 0
+dstu4145le 2 1 : uacurve1 : DSTU curve 1
+dstu4145le 2 2 : uacurve2 : DSTU curve 2
+dstu4145le 2 3 : uacurve3 : DSTU curve 3
+dstu4145le 2 4 : uacurve4 : DSTU curve 4
+dstu4145le 2 5 : uacurve5 : DSTU curve 5
+dstu4145le 2 6 : uacurve6 : DSTU curve 6
+dstu4145le 2 7 : uacurve7 : DSTU curve 7
+dstu4145le 2 8 : uacurve8 : DSTU curve 8
+dstu4145le 2 9 : uacurve9 : DSTU curve 9
