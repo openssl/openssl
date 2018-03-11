@@ -685,6 +685,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
 
         namelen = strlen(filename);
 
+
         if ((namelen > 5 && strcasecmp(filename + namelen - 5, ".conf") == 0)
             || (namelen > 4 && strcasecmp(filename + namelen - 4, ".cnf") == 0)) {
             size_t newlen;
@@ -697,10 +698,25 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
                 CONFerr(CONF_F_GET_NEXT_FILE, ERR_R_MALLOC_FAILURE);
                 break;
             }
-            OPENSSL_strlcat(newpath, path, newlen);
-#ifndef OPENSSL_SYS_VMS
-            OPENSSL_strlcat(newpath, "/", newlen);
+#ifdef OPENSSL_SYS_VMS
+            /*
+             * If the given path isn't clear VMS syntax,
+             * we treat it as on Unix.
+             */
+            {
+                size_t pathlen = strlen(path);
+
+                if (path[pathlen - 1] == ']' || path[pathlen - 1] == '>'
+                    || path[pathlen - 1] == ':') {
+                    /* Clear VMS directory syntax, just copy as is */
+                    OPENSSL_strlcpy(newpath, path, newlen);
+                }
+            }
 #endif
+            if (newpath[0] == '\0') {
+                OPENSSL_strlcpy(newpath, path, newlen);
+                OPENSSL_strlcat(newpath, "/", newlen);
+            }
             OPENSSL_strlcat(newpath, filename, newlen);
 
             bio = BIO_new_file(newpath, "r");
