@@ -779,8 +779,7 @@ static void run_multi_thread_test(void)
     RAND_DRBG_set_reseed_time_interval(public, 1);
     RAND_DRBG_set_reseed_time_interval(private, 1);
 
-    do
-    {
+    do {
         RAND_bytes(buf, sizeof(buf));
         RAND_priv_bytes(buf, sizeof(buf));
     }
