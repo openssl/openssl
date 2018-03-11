@@ -17,6 +17,10 @@
 #include <openssl/aes.h>
 #include "../crypto/rand/rand_lcl.h"
 
+#if defined(_WIN32)
+# include <windows.h>
+#endif
+
 #include "testutil.h"
 #include "drbgtest.h"
 
@@ -762,6 +766,88 @@ error:
     return rv;
 }
 
+#if defined(OPENSSL_THREADS)
+
+static void run_multi_thread_test(void)
+{
+    unsigned char buf[256];
+    time_t start = time(NULL);
+    RAND_DRBG *public, *private;
+
+    public = RAND_DRBG_get0_public();
+    private = RAND_DRBG_get0_private();
+    RAND_DRBG_set_reseed_time_interval(public, 1);
+    RAND_DRBG_set_reseed_time_interval(private, 1);
+
+    do {
+        RAND_bytes(buf, sizeof(buf));
+        RAND_priv_bytes(buf, sizeof(buf));
+    }
+    while(time(NULL) - start < 5);
+}
+
+# if defined(OPENSSL_SYS_WINDOWS)
+
+typedef HANDLE thread_t;
+
+static DWORD WINAPI thread_run(LPVOID arg)
+{
+    run_multi_thread_test();
+    return 0;
+}
+
+static int run_thread(thread_t *t)
+{
+    *t = CreateThread(NULL, 0, thread_run, NULL, 0, NULL);
+    return *t != NULL;
+}
+
+static int wait_for_thread(thread_t thread)
+{
+    return WaitForSingleObject(thread, INFINITE) == 0;
+}
+
+# else
+
+typedef pthread_t thread_t;
+
+static void *thread_run(void *arg)
+{
+    run_multi_thread_test();
+    return NULL;
+}
+
+static int run_thread(thread_t *t)
+{
+    return pthread_create(t, NULL, thread_run, NULL) == 0;
+}
+
+static int wait_for_thread(thread_t thread)
+{
+    return pthread_join(thread, NULL) == 0;
+}
+
+# endif
+
+/*
+ * The main thread will also run the test, so we'll have THREADS+1 parallel
+ * tests running
+ */
+#define THREADS 3
+
+static int test_multi_thread(void)
+{
+    thread_t t[THREADS];
+    int i;
+
+    for (i = 0; i < THREADS; i++)
+        run_thread(&t[i]);
+    run_multi_thread_test();
+    for (i = 0; i < THREADS; i++)
+        wait_for_thread(t[i]);
+    return 1;
+}
+#endif
 
 int setup_tests(void)
 {
@@ -770,5 +856,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
     ADD_TEST(test_rand_reseed);
+#if defined(OPENSSL_THREADS)
+    ADD_TEST(test_multi_thread);
+#endif
     return 1;
 }
