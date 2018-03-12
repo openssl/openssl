@@ -69,6 +69,12 @@ while (<STDIN>) {
         my $object = $ARGV[1];
         s/^Note: including file: */${object}: /;
 
+    } else {
+        if ($producer) {
+            die "Producer unrecognised: $producer\n";
+        } else {
+            die "Producer not given\n";
+        }
     }
 } continue {
     print or die "$!\n";
