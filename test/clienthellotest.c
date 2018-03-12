@@ -120,7 +120,9 @@ static int test_client_hello(int currtest)
          * not need padding.
          */
         } else if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
-                              "AES128-SHA:TLS13-AES-128-GCM-SHA256"))) {
+                              "AES128-SHA"))
+                   || !TEST_true(SSL_CTX_set_ciphersuites(ctx,
+                                 "TLS_AES_128_GCM_SHA256"))) {
             goto end;
         }
         break;
