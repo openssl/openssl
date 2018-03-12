@@ -1,0 +1,10 @@
+Alexander Grass
+David Derler
+Angela Promitzer
+Sebastian Ramacher
+
+Derived from the Picnic implementation at https://github.com/IAIK/fish-begol by
+by David Derler and Sebastian Ramacher.
+
+The SHA-3 implementation is downloaded and built from the Keccak Code Package,
+see https://github.com/gvanas/KeccakCodePackage for authorship.

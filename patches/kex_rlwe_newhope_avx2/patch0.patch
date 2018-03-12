@@ -1,0 +1,1075 @@
+diff --git a/src/kex_rlwe_newhope/avx2/bitrev.s b/src/kex_rlwe_newhope/avx2/bitrev.s
+index 002a1ee..faff35f 100644
+--- a/src/kex_rlwe_newhope/avx2/bitrev.s
++++ b/src/kex_rlwe_newhope/avx2/bitrev.s
+@@ -37,10 +37,10 @@
+ 
+ # qhasm: enter bitrev_vector
+ .p2align 5
+-.global _bitrev_vector
+-.global bitrev_vector
+-_bitrev_vector:
+-bitrev_vector:
++.global OQS_bitrev_vector
++.global OQS_bitrev_vector
++OQS_bitrev_vector:
++OQS_bitrev_vector:
+ movq %rsp,%r11
+ and $31,%r11
+ add $0,%r11
+diff --git a/src/kex_rlwe_newhope/avx2/cbd.s b/src/kex_rlwe_newhope/avx2/cbd.s
+index 7619a31..f2be41b 100644
+--- a/src/kex_rlwe_newhope/avx2/cbd.s
++++ b/src/kex_rlwe_newhope/avx2/cbd.s
+@@ -59,10 +59,10 @@
+ 
+ # qhasm: enter cbd
+ .p2align 5
+-.global _cbd
+-.global cbd
+-_cbd:
+-cbd:
++.global OQS_cbd
++.global OQS_cbd
++OQS_cbd:
++OQS_cbd:
+ mov %rsp,%r11
+ and $31,%r11
+ add $0,%r11
+diff --git a/src/kex_rlwe_newhope/avx2/chacha.S b/src/kex_rlwe_newhope/avx2/chacha.S
+index 4597b5a..9a79f72 100644
+--- a/src/kex_rlwe_newhope/avx2/chacha.S
++++ b/src/kex_rlwe_newhope/avx2/chacha.S
+@@ -18,14 +18,14 @@
+ 
+ .text
+ 
+-GLOBAL(chacha)
+-GLOBAL(xchacha)
+-GLOBAL(hchacha)
+-GLOBAL(chacha_blocks)
++GLOBAL(OQS_chacha)
++GLOBAL(OQS_xchacha)
++GLOBAL(OQS_hchacha)
++GLOBAL(OQS_chacha_blocks)
+ 
+ /* Windows 64 calling convention fixups */
+ #if defined(_WIN64) || defined(__CYGWIN64__)
+-FN(chacha)
++FN(OQS_chacha)
+ subq $184, %rsp
+ vmovdqa %xmm6, 0(%rsp)
+ vmovdqa %xmm7, 16(%rsp)
+@@ -60,9 +60,9 @@ movq 160(%rsp), %rdi
+ movq 168(%rsp), %rsi
+ addq $184, %rsp
+ ret
+-ENDFN(chacha)
++ENDFN(OQS_chacha)
+ 
+-FN(xchacha)
++FN(OQS_xchacha)
+ subq $184, %rsp
+ vmovdqa %xmm6, 0(%rsp)
+ vmovdqa %xmm7, 16(%rsp)
+@@ -97,9 +97,9 @@ movq 160(%rsp), %rdi
+ movq 168(%rsp), %rsi
+ addq $184, %rsp
+ ret
+-ENDFN(xchacha)
++ENDFN(OQS_xchacha)
+ 
+-FN(chacha_blocks)
++FN(OQS_chacha_blocks)
+ subq $184, %rsp
+ movdqa %xmm6, 0(%rsp)
+ movdqa %xmm7, 16(%rsp)
+@@ -132,9 +132,9 @@ movq 160(%rsp), %rdi
+ movq 168(%rsp), %rsi
+ addq $184, %rsp
+ ret
+-ENDFN(chacha_blocks)
++ENDFN(OQS_chacha_blocks)
+ 
+-FN(hchacha)
++FN(OQS_hchacha)
+ subq $40, %rsp
+ movdqa %xmm6, 0(%rsp)
+ movq %rdi, 16(%rsp)
+@@ -149,7 +149,7 @@ movq 16(%rsp), %rdi
+ movq 24(%rsp), %rsi
+ addq $40, %rsp
+ ret
+-ENDFN(hchacha)
++ENDFN(OQS_hchacha)
+ 
+ #define chacha chacha_thunk
+ #define xchacha xchacha_thunk
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.c b/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.c
+index 48159c2..b0a84c6 100644
+--- a/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.c
++++ b/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.c
+@@ -217,7 +217,7 @@ static int crypto_hashblocks_sha256(unsigned char *statebytes,const unsigned cha
+   return inlen;
+ }
+ 
+-static const char iv[32] = {
++static const unsigned iv[32] = {
+   0x6a,0x09,0xe6,0x67,
+   0xbb,0x67,0xae,0x85,
+   0x3c,0x6e,0xf3,0x72,
+@@ -228,7 +228,7 @@ static const char iv[32] = {
+   0x5b,0xe0,0xcd,0x19,
+ } ;
+ 
+-int crypto_hash_sha256(unsigned char *out,const unsigned char *in,unsigned long long inlen)
++static int crypto_hash_sha256(unsigned char *out,const unsigned char *in,unsigned long long inlen)
+ {
+   unsigned char h[32];
+   unsigned char padded[128];
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.h b/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.h
+index 4717f09..800ab4c 100644
+--- a/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.h
++++ b/src/kex_rlwe_newhope/avx2/crypto_hash_sha256.h
+@@ -1,9 +1,9 @@
+ #ifndef CRYPTO_HASH_SHA256_H
+ #define CRYPTO_HASH_SHA256_H
+ 
+-int crypto_hashblocks_sha256(unsigned char *statebytes,const unsigned char *in,unsigned long long inlen);
++static int crypto_hashblocks_sha256(unsigned char *statebytes,const unsigned char *in,unsigned long long inlen);
+ 
+-int crypto_hash_sha256(unsigned char *out,const unsigned char *in,unsigned long long inlen);
++static int crypto_hash_sha256(unsigned char *out,const unsigned char *in,unsigned long long inlen);static
+ 
+ #define crypto_hash_sha256_BYTES 32
+ 
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_stream.h b/src/kex_rlwe_newhope/avx2/crypto_stream.h
+index aab8052..2053382 100644
+--- a/src/kex_rlwe_newhope/avx2/crypto_stream.h
++++ b/src/kex_rlwe_newhope/avx2/crypto_stream.h
+@@ -5,12 +5,12 @@
+   #include "crypto_stream_chacha20.h"
+   #define CRYPTO_STREAM_KEYBYTES 32
+   #define CRYPTO_STREAM_NONCEBYTES 8
+-  #define crypto_stream crypto_stream_chacha20
++  #define crypto_stream OQS_crypto_stream_chacha20
+ #else
+   #include "crypto_stream_aes256ctr.h"
+   #define CRYPTO_STREAM_KEYBYTES 32
+   #define CRYPTO_STREAM_NONCEBYTES 16
+-  #define crypto_stream crypto_stream_aes256ctr
++  #define crypto_stream OQS_crypto_stream_aes256ctr
+ #endif
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.c b/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.c
+deleted file mode 100644
+index 3b74551..0000000
+--- a/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.c
++++ /dev/null
+@@ -1,242 +0,0 @@
+-/*
+-  aesenc-int.c version $Date: 2014/08/22 16:49:12 $
+-  AES-CTR
+-  Romain Dolbeau
+-  Public Domain
+-*/
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <immintrin.h>
+-#include "crypto_stream_aes256ctr.h"
+-
+-#ifdef __INTEL_COMPILER
+-#define ALIGN16 __declspec(align(16))
+-#define ALIGN32 __declspec(align(32))
+-#define ALIGN64 __declspec(align(64))
+-#else // assume GCC
+-#define ALIGN16  __attribute__((aligned(16)))
+-#define ALIGN32  __attribute__((aligned(32)))
+-#define ALIGN64  __attribute__((aligned(64)))
+-#define _bswap64(a) __builtin_bswap64(a)
+-#define _bswap(a) __builtin_bswap(a)
+-#endif
+-
+-static inline void aesni_key256_expand(const unsigned char* key, __m128 rkeys[16]) {
+-  __m128 key0 = _mm_loadu_ps((const float *)(key+0));
+-  __m128 key1 = _mm_loadu_ps((const float *)(key+16));
+-  __m128 temp0, temp1, temp2, temp4;
+-  int idx = 0;
+-
+-  rkeys[idx++] = key0;
+-  temp0 = key0;
+-  temp2 = key1;
+-  temp4 = _mm_setzero_ps();
+-
+-  /* why single precision floating-point rather than integer instructions ?
+-     because _mm_shuffle_ps takes two inputs, while _mm_shuffle_epi32 only
+-     takes one - it doesn't perform the same computation...
+-     _mm_shuffle_ps takes the lower 64 bits of the result from the first
+-     operand, and the higher 64 bits of the result from the second operand
+-     (in both cases, all four input floats are accessible).
+-     I don't like the non-orthogonal naming scheme :-(
+-     
+-     This is all strongly inspired by the openssl assembly code.
+-  */
+-#define BLOCK1(IMM)                                                     \
+-  temp1 = (__m128)_mm_aeskeygenassist_si128((__m128i)temp2, IMM);       \
+-  rkeys[idx++] = temp2;                                                 \
+-  temp4 = _mm_shuffle_ps(temp4, temp0, 0x10);                           \
+-  temp0 = _mm_xor_ps(temp0, temp4);                                     \
+-  temp4 = _mm_shuffle_ps(temp4, temp0, 0x8c);                           \
+-  temp0 = _mm_xor_ps(temp0, temp4);                                     \
+-  temp1 = _mm_shuffle_ps(temp1, temp1, 0xff);                           \
+-  temp0 = _mm_xor_ps(temp0, temp1)
+-  
+-#define BLOCK2(IMM)                                                     \
+-  temp1 = (__m128)_mm_aeskeygenassist_si128((__m128i)temp0, IMM);       \
+-  rkeys[idx++] = temp0;                                                 \
+-  temp4 = _mm_shuffle_ps(temp4, temp2, 0x10);                           \
+-  temp2 = _mm_xor_ps(temp2, temp4);                                     \
+-  temp4 = _mm_shuffle_ps(temp4, temp2, 0x8c);                           \
+-  temp2 = _mm_xor_ps(temp2, temp4);                                     \
+-  temp1 = _mm_shuffle_ps(temp1, temp1, 0xaa);                           \
+-  temp2 = _mm_xor_ps(temp2, temp1)
+-  
+-  BLOCK1(0x01);
+-  BLOCK2(0x01);
+-
+-  BLOCK1(0x02);
+-  BLOCK2(0x02);
+-
+-  BLOCK1(0x04);
+-  BLOCK2(0x04);
+-
+-  BLOCK1(0x08);
+-  BLOCK2(0x08);
+-
+-  BLOCK1(0x10);
+-  BLOCK2(0x10);
+-
+-  BLOCK1(0x20);
+-  BLOCK2(0x20);
+-
+-  BLOCK1(0x40);
+-  rkeys[idx++] = temp0;
+-}
+-
+-/** single, by-the-book AES encryption with AES-NI */
+-static inline void aesni_encrypt1(unsigned char *out, unsigned char *n, __m128i rkeys[16]) {
+-  __m128i nv = _mm_load_si128((const __m128i *)n);
+-  int i;
+-  __m128i temp = _mm_xor_si128(nv, rkeys[0]);
+-#pragma unroll(13)
+-  for (i = 1 ; i < 14 ; i++) {
+-    temp = _mm_aesenc_si128(temp, rkeys[i]);
+-  }
+-  temp = _mm_aesenclast_si128(temp, rkeys[14]);
+-  _mm_store_si128((__m128i*)(out), temp);
+-}
+-
+-/** increment the 16-bytes nonce ;
+-    this really should be improved somehow...
+-    but it's not yet time-critical, because we
+-    use the vector variant anyway  */
+-static inline void incle(unsigned char n[16]) {
+-/*   unsigned long long out; */
+-/*   unsigned char carry; */
+-  unsigned long long *n_ = (unsigned long long*)n;
+-  n_[1]++;
+-  if (n_[1] == 0)
+-    n_[0] ++;
+-  /* perhaps this will be efficient on broadwell ? */
+-  /*   carry = _addcarry_u64(0, n_[1], 1ULL, &out); */
+-  /*   carry = _addcarry_u64(carry, n_[0], 0ULL, &out); */
+-}
+-
+-/** multiple-blocks-at-once AES encryption with AES-NI ;
+-    on Haswell, aesenc as a latency of 7 and a througput of 1
+-    so the sequence of aesenc should be bubble-free, if you
+-    have at least 8 blocks. Let's build an arbitratry-sized
+-    function */
+-/* Step 1 : loading the nonce */
+-/* load & increment the n vector (non-vectorized, unused for now) */
+-#define NVx(a)                                                  \
+-  __m128i nv##a = _mm_shuffle_epi8(_mm_load_si128((const __m128i *)n), _mm_set_epi8(8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7)); incle(n)
+-/* load the incremented n vector (vectorized, probably buggy) */
+-#define NVxV_DEC(a)                                                     \
+-  __m128i nv##a;
+-#define NVxV_NOWRAP(a)                                                  \
+-  nv##a = _mm_shuffle_epi8(_mm_add_epi64(nv0i, _mm_set_epi64x(a,0)), _mm_set_epi8(8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7))
+-#define NVxV_WRAP(a)                                                    \
+-  __m128i ad##a = _mm_add_epi64(nv0i, _mm_set_epi64x(a,a>=wrapnumber?1:0)); \
+-  nv##a = _mm_shuffle_epi8(ad##a, _mm_set_epi8(8,9,10,11,12,13,14,15,0,1,2,3,4,5,6,7))
+-
+-/* Step 2 : define value in round one (xor with subkey #0, aka key) */
+-#define TEMPx(a)                                        \
+-  __m128i temp##a = _mm_xor_si128(nv##a, rkeys[0])
+-
+-/* Step 3: one round of AES */
+-#define AESENCx(a)                                      \
+-  temp##a =  _mm_aesenc_si128(temp##a, rkeys[i]);
+-
+-/* Step 4: last round of AES */
+-#define AESENCLASTx(a)                                  \
+-  temp##a = _mm_aesenclast_si128(temp##a, rkeys[14]);
+-
+-/* Step 5: store result */
+-#define STOREx(a)                                       \
+-  _mm_store_si128((__m128i*)(out+(a*16)), temp##a);
+-
+-/* all the MAKE* macros are for automatic explicit unrolling */
+-#define MAKE4(X)                                \
+-  X(0);X(1);X(2);X(3)
+-
+-#define MAKE6(X)                                \
+-  X(0);X(1);X(2);X(3);                          \
+-  X(4);X(5)
+-
+-#define MAKE7(X)                                \
+-  X(0);X(1);X(2);X(3);                          \
+-  X(4);X(5);X(6)
+-
+-#define MAKE8(X)                                \
+-  X(0);X(1);X(2);X(3);                          \
+-  X(4);X(5);X(6);X(7)
+-
+-#define MAKE10(X)                               \
+-  X(0);X(1);X(2);X(3);                          \
+-  X(4);X(5);X(6);X(7);                          \
+-  X(8);X(9)
+-
+-#define MAKE12(X)                               \
+-  X(0);X(1);X(2);X(3);                          \
+-  X(4);X(5);X(6);X(7);                          \
+-  X(8);X(9);X(10);X(11)
+-
+-/* create a function of unrolling N ; the MAKEN is the unrolling
+-   macro, defined above. The N in MAKEN must match N, obviously. */
+-#define FUNC(N, MAKEN)                          \
+-  static inline void aesni_encrypt##N(unsigned char *out, unsigned char *n, __m128i rkeys[16]) { \
+-    __m128i nv0i = _mm_load_si128((const __m128i *)n);                  \
+-    long long nl = *(long long*)&n[8];                                  \
+-    MAKEN(NVxV_DEC);                                                    \
+-    /* check for nonce wraparound */                                    \
+-    if ((nl < 0) && (nl + (N-1)) >= 0) {                                \
+-      int wrapnumber = (int)(N - (nl+N));                               \
+-      MAKEN(NVxV_WRAP);                                                 \
+-      _mm_storeu_si128((__m128i*)n, _mm_add_epi64(nv0i, _mm_set_epi64x(N,1))); \
+-    } else {                                                            \
+-      MAKEN(NVxV_NOWRAP);                                               \
+-      _mm_storeu_si128((__m128i*)n, _mm_add_epi64(nv0i, _mm_set_epi64x(N,0))); \
+-    }                                                                   \
+-    int i;                                                              \
+-    MAKEN(TEMPx);                                                       \
+-    for (i = 1 ; i < 14 ; i++) {                                        \
+-      MAKEN(AESENCx);                                                   \
+-    }                                                                   \
+-    MAKEN(AESENCLASTx);                                                 \
+-    MAKEN(STOREx);                                                      \
+-  }
+-
+-/* and now building our unrolled function is trivial */
+-FUNC(4, MAKE4)
+-FUNC(6, MAKE6)
+-FUNC(7, MAKE7)
+-FUNC(8, MAKE8)
+-FUNC(10, MAKE10)
+-FUNC(12, MAKE12)
+-
+-int crypto_stream_aes256ctr(
+-unsigned char *out,
+-unsigned long long outlen,
+-const unsigned char *n,
+-const unsigned char *k
+-)
+-{
+-  __m128 rkeys[16];
+-  ALIGN16 unsigned char n2[16];
+-  unsigned long long i, j;
+-  aesni_key256_expand(k, rkeys);
+-  /* n2 is in byte-reversed (i.e., native little endian)
+-     order to make increment/testing easier */
+-  (*(unsigned long long*)&n2[8]) = _bswap64((*(unsigned long long*)&n[8]));
+-  (*(unsigned long long*)&n2[0]) = _bswap64((*(unsigned long long*)&n[0]));
+-  
+-#define LOOP(iter)                                       \
+-  int lb = iter * 16;                                    \
+-  for (i = 0 ; i < outlen ; i+= lb) {                    \
+-    ALIGN16 unsigned char outni[lb];       \
+-    aesni_encrypt##iter(outni, n2, (__m128i*)rkeys);     \
+-    unsigned long long mj = lb;                          \
+-    if ((i+mj)>=outlen)                                  \
+-      mj = outlen-i;                                     \
+-    for (j = 0 ; j < mj ; j++)                           \
+-      out[i+j] = outni[j];                               \
+-  }
+-  
+-  LOOP(8);
+-
+-  return 0;
+-}
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.h b/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.h
+index 9be2881..f694dc9 100644
+--- a/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.h
++++ b/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.h
+@@ -1,6 +1,6 @@
+ #ifndef CRYPTO_STREAM_AES256CTR_H
+ #define CRYPTO_STREAM_AES256CTR_H
+ 
+-int crypto_stream_aes256ctr(unsigned char *c,unsigned long long clen, const unsigned char *n, const unsigned char *k);
++int OQS_crypto_stream_aes256ctr(unsigned char *c,unsigned long long clen, const unsigned char *n, const unsigned char *k);
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.s b/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.s
+index 0b56a2b..0c0b1db 100644
+--- a/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.s
++++ b/src/kex_rlwe_newhope/avx2/crypto_stream_aes256ctr.s
+@@ -4,9 +4,9 @@
+ 	.text
+ .LHOTB11:
+ 	.p2align 4,,15
+-	.globl	crypto_stream_aes256ctr
+-	.type	crypto_stream_aes256ctr, @function
+-crypto_stream_aes256ctr:
++	.globl	OQS_crypto_stream_aes256ctr
++	.type	OQS_crypto_stream_aes256ctr, @function
++OQS_crypto_stream_aes256ctr:
+ .LFB2248:
+ 	.cfi_startproc
+ 	pushq	%rbp
+@@ -328,7 +328,7 @@ crypto_stream_aes256ctr:
+ 	ret
+ 	.cfi_endproc
+ .LFE2248:
+-	.size	crypto_stream_aes256ctr, .-crypto_stream_aes256ctr
++	.size	OQS_crypto_stream_aes256ctr, .-OQS_crypto_stream_aes256ctr
+ 	.section	.text.unlikely
+ .LCOLDE11:
+ 	.text
+diff --git a/src/kex_rlwe_newhope/avx2/crypto_stream_chacha20.c b/src/kex_rlwe_newhope/avx2/crypto_stream_chacha20.c
+index a3ffee1..d4e511b 100644
+--- a/src/kex_rlwe_newhope/avx2/crypto_stream_chacha20.c
++++ b/src/kex_rlwe_newhope/avx2/crypto_stream_chacha20.c
+@@ -1,10 +1,10 @@
+ #include "crypto_stream_chacha20.h"
+ #include <stddef.h>
+ 
+-extern void chacha_avx2(const unsigned char *k, const unsigned char *n, const unsigned char *in, unsigned char *out, size_t inlen, size_t rounds);
++extern void OQS_chacha_avx2(const unsigned char *k, const unsigned char *n, const unsigned char *in, unsigned char *out, size_t inlen, size_t rounds);
+ 
+-int crypto_stream_chacha20(unsigned char *out, unsigned long long outlen, const unsigned char *n, const unsigned char *k) 
++int OQS_crypto_stream_chacha20(unsigned char *out, unsigned long long outlen, const unsigned char *n, const unsigned char *k)
+ {
+-	chacha_avx2(k, n, NULL, out, (size_t)outlen, 20);
++	OQS_chacha_avx2(k, n, NULL, out, (size_t)outlen, 20);
+ 	return 0;
+ }
+diff --git a/src/kex_rlwe_newhope/avx2/error_correction.c b/src/kex_rlwe_newhope/avx2/error_correction.c
+index 0970e6f..eaf2952 100644
+--- a/src/kex_rlwe_newhope/avx2/error_correction.c
++++ b/src/kex_rlwe_newhope/avx2/error_correction.c
+@@ -3,7 +3,7 @@
+ 
+ //See paper for details on the error reconciliation
+ 
+-extern void hr(poly *c, const poly *v, unsigned char rand[32]);
++extern void OQS_hr(poly *c, const poly *v, unsigned char rand[32]);
+ 
+ void helprec(poly *c, const poly *v, const unsigned char *seed, unsigned char nonce)
+ {
+@@ -17,5 +17,5 @@ void helprec(poly *c, const poly *v, const unsigned char *seed, unsigned char no
+ 
+   crypto_stream(rand,32,n,seed);
+ 
+-  hr(c, v, rand);
++  OQS_hr(c, v, rand);
+ }
+diff --git a/src/kex_rlwe_newhope/avx2/error_correction.h b/src/kex_rlwe_newhope/avx2/error_correction.h
+index 488c105..c0e913d 100644
+--- a/src/kex_rlwe_newhope/avx2/error_correction.h
++++ b/src/kex_rlwe_newhope/avx2/error_correction.h
+@@ -9,7 +9,7 @@
+ #include "poly.h"
+ #include <stdio.h>
+ 
+-void helprec(poly *c, const poly *v, const unsigned char *seed, unsigned char nonce);
+-void rec(unsigned char *key, const poly *v, const poly *c);
++static void helprec(poly *c, const poly *v, const unsigned char *seed, unsigned char nonce);
++void OQS_rec(unsigned char *key, const poly *v, const poly *c);
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/fips202.c b/src/kex_rlwe_newhope/avx2/fips202.c
+index f649a7d..b83029c 100644
+--- a/src/kex_rlwe_newhope/avx2/fips202.c
++++ b/src/kex_rlwe_newhope/avx2/fips202.c
+@@ -60,7 +60,7 @@ static const uint64_t KeccakF_RoundConstants[NROUNDS] =
+     (uint64_t)0x8000000080008008ULL
+ };
+ 
+-void KeccakF1600_StatePermute(uint64_t * state)
++static void KeccakF1600_StatePermute(uint64_t * state)
+ {
+   int round;
+ 
+@@ -381,19 +381,19 @@ static void keccak_squeezeblocks(unsigned char *h, unsigned long long int nblock
+ }
+ 
+ 
+-void shake128_absorb(uint64_t *s, const unsigned char *input, unsigned int inputByteLen)
++static void shake128_absorb(uint64_t *s, const unsigned char *input, unsigned int inputByteLen)
+ {
+   keccak_absorb(s, SHAKE128_RATE, input, inputByteLen, 0x1F);
+ }
+ 
+ 
+-void shake128_squeezeblocks(unsigned char *output, unsigned long long nblocks, uint64_t *s)
++static void shake128_squeezeblocks(unsigned char *output, unsigned long long nblocks, uint64_t *s)
+ {
+   keccak_squeezeblocks(output, nblocks, s, SHAKE128_RATE);
+ }
+ 
+ 
+-void shake128(unsigned char *output, unsigned int outputByteLen, const unsigned char *input, unsigned int inputByteLen)
++static void shake128(unsigned char *output, unsigned int outputByteLen, const unsigned char *input, unsigned int inputByteLen)
+ {
+   uint64_t s[25];
+   assert(!(outputByteLen%SHAKE128_RATE));
+@@ -402,7 +402,7 @@ void shake128(unsigned char *output, unsigned int outputByteLen, const unsigned
+ }
+ 
+ 
+-void sha3256(unsigned char *output, const unsigned char *input, unsigned int inputByteLen)
++static void sha3256(unsigned char *output, const unsigned char *input, unsigned int inputByteLen)
+ {
+   uint64_t s[25];
+   unsigned char t[SHA3_256_RATE];
+diff --git a/src/kex_rlwe_newhope/avx2/fips202.h b/src/kex_rlwe_newhope/avx2/fips202.h
+index b564434..d02ec7c 100644
+--- a/src/kex_rlwe_newhope/avx2/fips202.h
++++ b/src/kex_rlwe_newhope/avx2/fips202.h
+@@ -4,9 +4,9 @@
+ #define SHAKE128_RATE 168
+ #define SHA3_256_RATE 136
+ 
+-void shake128_absorb(uint64_t *s, const unsigned char *input, unsigned int inputByteLen);
+-void shake128_squeezeblocks(unsigned char *output, unsigned long long nblocks, uint64_t *s);
+-void shake128(unsigned char *output, unsigned int outputByteLen, const unsigned char *input, unsigned int inputByteLen);
+-void sha3256(unsigned char *output, const unsigned char *input, unsigned int inputByteLen);
++static void shake128_absorb(uint64_t *s, const unsigned char *input, unsigned int inputByteLen);
++static void shake128_squeezeblocks(unsigned char *output, unsigned long long nblocks, uint64_t *s);
++static void shake128(unsigned char *output, unsigned int outputByteLen, const unsigned char *input, unsigned int inputByteLen);
++static void sha3256(unsigned char *output, const unsigned char *input, unsigned int inputByteLen);
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/hr.s b/src/kex_rlwe_newhope/avx2/hr.s
+index beb93fe..7eac399 100644
+--- a/src/kex_rlwe_newhope/avx2/hr.s
++++ b/src/kex_rlwe_newhope/avx2/hr.s
+@@ -81,10 +81,10 @@
+ 
+ # qhasm: enter hr
+ .p2align 5
+-.global _hr
+-.global hr
+-_hr:
+-hr:
++.global OQS_hr
++.global OQS_hr
++OQS_hr:
++OQS_hr:
+ mov %rsp,%r11
+ and $31,%r11
+ add $0,%r11
+diff --git a/src/kex_rlwe_newhope/avx2/kex_rlwe_newhope_avx2.c b/src/kex_rlwe_newhope/avx2/kex_rlwe_newhope_avx2.c
+new file mode 100644
+index 0000000..c30a95e
+--- /dev/null
++++ b/src/kex_rlwe_newhope/avx2/kex_rlwe_newhope_avx2.c
+@@ -0,0 +1,160 @@
++#if defined(WINDOWS)
++#define UNUSED
++// __attribute__ not supported in VS, is there something else I should define?
++#else
++#define UNUSED __attribute__((unused))
++#endif
++
++#include <stdlib.h>
++#include <string.h>
++#if !defined(WINDOWS)
++#include <strings.h>
++#include <unistd.h>
++#endif
++
++#include <oqs/common.h>
++#include <oqs/kex.h>
++#include <oqs/rand.h>
++
++#include "kex_rlwe_newhope_avx2.h"
++#include "newhope.c"
++#include "params.h"
++
++OQS_KEX *OQS_KEX_rlwe_newhope_avx2_new(OQS_RAND *rand) {
++	OQS_KEX *k = malloc(sizeof(OQS_KEX));
++	if (k == NULL) {
++		return NULL;
++	}
++	k->method_name = strdup("RLWE NewHope AVX2");
++	k->estimated_classical_security = 229; // http://eprint.iacr.org/2015/1092.pdf Table 1 NewHope dual known classical
++	k->estimated_quantum_security = 206;   // http://eprint.iacr.org/2015/1092.pdf Table 1 NewHope dual known quantum
++	k->seed = NULL;
++	k->seed_len = 0;
++	k->named_parameters = 0;
++	k->rand = rand;
++	k->params = NULL;
++	k->alice_0 = &OQS_KEX_rlwe_newhope_avx2_alice_0;
++	k->bob = &OQS_KEX_rlwe_newhope_avx2_bob;
++	k->alice_1 = &OQS_KEX_rlwe_newhope_avx2_alice_1;
++	k->alice_priv_free = &OQS_KEX_rlwe_newhope_avx2_alice_priv_free;
++	k->free = &OQS_KEX_rlwe_newhope_avx2_free;
++	return k;
++}
++
++OQS_STATUS OQS_KEX_rlwe_newhope_avx2_alice_0(UNUSED OQS_KEX *k, void **alice_priv, uint8_t **alice_msg, size_t *alice_msg_len) {
++
++	OQS_STATUS ret;
++
++	/* allocate public/private key pair */
++	*alice_msg = malloc(NEWHOPE_SENDABYTES);
++	if (*alice_msg == NULL) {
++		goto err;
++	}
++	*alice_priv = malloc(sizeof(poly));
++	if (*alice_priv == NULL) {
++		goto err;
++	}
++
++	/* generate public/private key pair */
++	newhope_keygen(*alice_msg, (poly *) (*alice_priv));
++	*alice_msg_len = NEWHOPE_SENDABYTES;
++
++	ret = OQS_SUCCESS;
++	goto cleanup;
++
++err:
++	ret = OQS_ERROR;
++	free(*alice_msg);
++	*alice_msg = NULL;
++	free(*alice_priv);
++	*alice_priv = NULL;
++
++cleanup:
++
++	return ret;
++}
++
++OQS_STATUS OQS_KEX_rlwe_newhope_avx2_bob(UNUSED OQS_KEX *k, const uint8_t *alice_msg, const size_t alice_msg_len, uint8_t **bob_msg, size_t *bob_msg_len, uint8_t **key, size_t *key_len) {
++
++	OQS_STATUS ret;
++
++	if (alice_msg_len != NEWHOPE_SENDABYTES) {
++		goto err;
++	}
++
++	/* allocate message and session key */
++	*bob_msg = malloc(NEWHOPE_SENDBBYTES);
++	if (*bob_msg == NULL) {
++		goto err;
++	}
++	*key = malloc(32);
++	if (*key == NULL) {
++		goto err;
++	}
++
++	/* generate Bob's response */
++	newhope_sharedb(*key, *bob_msg, alice_msg);
++	*bob_msg_len = NEWHOPE_SENDBBYTES;
++	*key_len = 32;
++
++	ret = OQS_SUCCESS;
++	goto cleanup;
++
++err:
++	ret = OQS_ERROR;
++	free(*bob_msg);
++	*bob_msg = NULL;
++	free(*key);
++	*key = NULL;
++
++cleanup:
++
++	return ret;
++}
++
++OQS_STATUS OQS_KEX_rlwe_newhope_avx2_alice_1(UNUSED OQS_KEX *k, const void *alice_priv, const uint8_t *bob_msg, const size_t bob_msg_len, uint8_t **key, size_t *key_len) {
++
++	OQS_STATUS ret;
++
++	if (bob_msg_len != NEWHOPE_SENDBBYTES) {
++		goto err;
++	}
++
++	/* allocate session key */
++	*key = malloc(32);
++	if (*key == NULL) {
++		goto err;
++	}
++
++	/* generate Alice's session key */
++	newhope_shareda(*key, (poly *) alice_priv, bob_msg);
++	*key_len = 32;
++
++	ret = OQS_SUCCESS;
++	goto cleanup;
++
++err:
++	ret = OQS_ERROR;
++	free(*key);
++	*key = NULL;
++
++cleanup:
++
++	return ret;
++}
++
++void OQS_KEX_rlwe_newhope_avx2_alice_priv_free(UNUSED OQS_KEX *k, void *alice_priv) {
++	if (alice_priv) {
++		free(alice_priv);
++	}
++}
++
++void OQS_KEX_rlwe_newhope_avx2_free(OQS_KEX *k) {
++	if (k) {
++		free(k->named_parameters);
++		k->named_parameters = NULL;
++		free(k->method_name);
++		k->method_name = NULL;
++	}
++	free(k);
++}
+diff --git a/src/kex_rlwe_newhope/avx2/kex_rlwe_newhope_avx2.h b/src/kex_rlwe_newhope/avx2/kex_rlwe_newhope_avx2.h
+new file mode 100644
+index 0000000..5f40fc2
+--- /dev/null
++++ b/src/kex_rlwe_newhope/avx2/kex_rlwe_newhope_avx2.h
+@@ -0,0 +1,25 @@
++/**
++ * \file kex_rlwe_newhope.h
++ * \brief Header for ring-LWE key exchange protocol NewHope
++ */
++
++#ifndef __OQS_KEX_RLWE_NEWHOPE_AVX2_H
++#define __OQS_KEX_RLWE_NEWHOPE_AVX2_H
++
++#include <stddef.h>
++#include <stdint.h>
++
++#include <oqs/common.h>
++#include <oqs/kex.h>
++#include <oqs/rand.h>
++
++OQS_KEX *OQS_KEX_rlwe_newhope_avx2_new(OQS_RAND *rand);
++
++OQS_STATUS OQS_KEX_rlwe_newhope_avx2_alice_0(OQS_KEX *k, void **alice_priv, uint8_t **alice_msg, size_t *alice_msg_len);
++OQS_STATUS OQS_KEX_rlwe_newhope_avx2_bob(OQS_KEX *k, const uint8_t *alice_msg, const size_t alice_msg_len, uint8_t **bob_msg, size_t *bob_msg_len, uint8_t **key, size_t *key_len);
++OQS_STATUS OQS_KEX_rlwe_newhope_avx2_alice_1(OQS_KEX *k, const void *alice_priv, const uint8_t *bob_msg, const size_t bob_msg_len, uint8_t **key, size_t *key_len);
++
++void OQS_KEX_rlwe_newhope_avx2_alice_priv_free(OQS_KEX *k, void *alice_priv);
++void OQS_KEX_rlwe_newhope_avx2_free(OQS_KEX *k);
++
++#endif
+diff --git a/src/kex_rlwe_newhope/avx2/newhope.c b/src/kex_rlwe_newhope/avx2/newhope.c
+index b9f7a6c..f0c5ad9 100644
+--- a/src/kex_rlwe_newhope/avx2/newhope.c
++++ b/src/kex_rlwe_newhope/avx2/newhope.c
+@@ -1,7 +1,5 @@
+-#include "poly.h"
+-#include "randombytes.h"
+-#include "error_correction.h"
+-#include "fips202.h"
++#include "poly.c"
++#include "error_correction.c"
+ 
+ static void encode_a(unsigned char *r, const poly *pk, const unsigned char *seed)
+ {
+@@ -48,7 +46,7 @@ static void gen_a(poly *a, const unsigned char *seed)
+ 
+ // API FUNCTIONS 
+ 
+-void newhope_keygen(unsigned char *send, poly *sk)
++static void newhope_keygen(unsigned char *send, poly *sk)
+ {
+   poly a, e, r, pk;
+   unsigned char seed[NEWHOPE_SEEDBYTES];
+@@ -66,14 +64,14 @@ void newhope_keygen(unsigned char *send, poly *sk)
+   poly_getnoise(&e,noiseseed,1);
+   poly_ntt(&e);
+ 
+-  poly_pointwise(&r,sk,&a);
++  OQS_poly_pointwise(&r,sk,&a);
+   poly_add(&pk,&e,&r);
+ 
+   encode_a(send, &pk, seed);
+ }
+ 
+ 
+-void newhope_sharedb(unsigned char *sharedkey, unsigned char *send, const unsigned char *received)
++static void newhope_sharedb(unsigned char *sharedkey, unsigned char *send, const unsigned char *received)
+ {
+   poly sp, ep, v, a, pka, c, epp, bp;
+   unsigned char seed[NEWHOPE_SEEDBYTES];
+@@ -89,10 +87,10 @@ void newhope_sharedb(unsigned char *sharedkey, unsigned char *send, const unsign
+   poly_getnoise(&ep,noiseseed,1);
+   poly_ntt(&ep);
+ 
+-  poly_pointwise(&bp, &a, &sp);
++  OQS_poly_pointwise(&bp, &a, &sp);
+   poly_add(&bp, &bp, &ep);
+   
+-  poly_pointwise(&v, &pka, &sp);
++  OQS_poly_pointwise(&v, &pka, &sp);
+   poly_invntt(&v);
+ 
+   poly_getnoise(&epp,noiseseed,2);
+@@ -102,7 +100,7 @@ void newhope_sharedb(unsigned char *sharedkey, unsigned char *send, const unsign
+ 
+   encode_b(send, &bp, &c);
+   
+-  rec(sharedkey, &v, &c);
++  OQS_rec(sharedkey, &v, &c);
+ 
+ #ifndef STATISTICAL_TEST 
+   sha3256(sharedkey, sharedkey, 32);
+@@ -110,16 +108,16 @@ void newhope_sharedb(unsigned char *sharedkey, unsigned char *send, const unsign
+ }
+ 
+ 
+-void newhope_shareda(unsigned char *sharedkey, const poly *sk, const unsigned char *received)
++static void newhope_shareda(unsigned char *sharedkey, const poly *sk, const unsigned char *received)
+ {
+   poly v,bp, c;
+ 
+   decode_b(&bp, &c, received);
+ 
+-  poly_pointwise(&v,sk,&bp);
++  OQS_poly_pointwise(&v,sk,&bp);
+   poly_invntt(&v);
+  
+-  rec(sharedkey, &v, &c);
++  OQS_rec(sharedkey, &v, &c);
+ 
+ #ifndef STATISTICAL_TEST 
+   sha3256(sharedkey, sharedkey, 32); 
+diff --git a/src/kex_rlwe_newhope/avx2/ntt.h b/src/kex_rlwe_newhope/avx2/ntt.h
+index c24b137..1cb540a 100644
+--- a/src/kex_rlwe_newhope/avx2/ntt.h
++++ b/src/kex_rlwe_newhope/avx2/ntt.h
+@@ -8,8 +8,8 @@ extern int32_t psis_inv[];
+ extern double omegas_double[];
+ extern double omegas_inv_double[];
+ 
+-void bitrev_vector(int32_t* poly);
+-void pwmul_double(int32_t* poly, const int32_t* factors);
+-void ntt_double(int32_t*,const double*,const double*);
++void OQS_bitrev_vector(int32_t* poly);
++void OQS_pwmul_double(int32_t* poly, const int32_t* factors);
++void OQS_ntt_double(int32_t*,const double*,const double*);
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/ntt_double.s b/src/kex_rlwe_newhope/avx2/ntt_double.s
+index 1ec429f..d876550 100644
+--- a/src/kex_rlwe_newhope/avx2/ntt_double.s
++++ b/src/kex_rlwe_newhope/avx2/ntt_double.s
+@@ -76,9 +76,9 @@
+ # qhasm: enter ntt_double
+ .p2align 5
+ .global _ntt_double
+-.global ntt_double
++.global OQS_ntt_double
+ _ntt_double:
+-ntt_double:
++OQS_ntt_double:
+ mov %rsp,%r11
+ and $31,%r11
+ add $0,%r11
+diff --git a/src/kex_rlwe_newhope/avx2/poly.c b/src/kex_rlwe_newhope/avx2/poly.c
+index 43c0df2..44b0956 100644
+--- a/src/kex_rlwe_newhope/avx2/poly.c
++++ b/src/kex_rlwe_newhope/avx2/poly.c
+@@ -1,7 +1,7 @@
+ #include "poly.h"
+ #include "ntt.h"
+-#include "randombytes.h"
+-#include "fips202.h"
++#include "randombytes.c"
++#include "fips202.c"
+ #include "crypto_stream.h"
+ 
+ static uint16_t barrett_reduce(uint16_t a)
+@@ -14,7 +14,7 @@ static uint16_t barrett_reduce(uint16_t a)
+   return a;
+ }
+ 
+-void poly_frombytes(poly *r, const unsigned char *a)
++static void poly_frombytes(poly *r, const unsigned char *a)
+ {
+   int i;
+   for(i=0;i<PARAM_N/4;i++)
+@@ -26,7 +26,7 @@ void poly_frombytes(poly *r, const unsigned char *a)
+   }
+ }
+ 
+-void poly_tobytes(unsigned char *r, const poly *p)
++static void poly_tobytes(unsigned char *r, const poly *p)
+ {
+   int i;
+   uint16_t t0,t1,t2,t3,m;
+@@ -70,7 +70,7 @@ void poly_tobytes(unsigned char *r, const poly *p)
+ 
+ 
+ 
+-void poly_uniform(poly *a, const unsigned char *seed)
++static void poly_uniform(poly *a, const unsigned char *seed)
+ {
+   unsigned int pos=0, ctr=0;
+   uint16_t val;
+@@ -99,9 +99,9 @@ void poly_uniform(poly *a, const unsigned char *seed)
+ }
+ 
+ 
+-extern void cbd(poly *r, unsigned char *b);
++extern void OQS_cbd(poly *r, unsigned char *b);
+ 
+-void poly_getnoise(poly *r, unsigned char *seed, unsigned char nonce)
++static void poly_getnoise(poly *r, unsigned char *seed, unsigned char nonce)
+ {
+ #if PARAM_K != 16
+ #error "poly_getnoise in poly.c only supports k=16"
+@@ -115,29 +115,29 @@ void poly_getnoise(poly *r, unsigned char *seed, unsigned char nonce)
+   n[0] = nonce;
+ 
+   crypto_stream(buf,4*PARAM_N,n,seed);
+-  cbd(r,buf);
++  OQS_cbd(r,buf);
+ }
+ 
+-void poly_add(poly *r, const poly *a, const poly *b)
++static void poly_add(poly *r, const poly *a, const poly *b)
+ {
+   int i;
+   for(i=0;i<PARAM_N;i++)
+     r->coeffs[i] = barrett_reduce(a->coeffs[i] + b->coeffs[i]);
+ }
+ 
+-void poly_ntt(poly *r)
++static void poly_ntt(poly *r)
+ {
+   double __attribute__ ((aligned (32))) temp[PARAM_N];
+-  poly_pointwise(r, r, (poly *)psis_bitrev);
++  OQS_poly_pointwise(r, r, (poly *)psis_bitrev);
+ 
+-  ntt_double(r->coeffs,omegas_double,temp);
++  OQS_ntt_double(r->coeffs,omegas_double,temp);
+ }
+ 
+-void poly_invntt(poly *r)
++static void poly_invntt(poly *r)
+ {
+   double __attribute__ ((aligned (32))) temp[PARAM_N];
+ 
+-  bitrev_vector(r->coeffs);
+-  ntt_double(r->coeffs, omegas_inv_double,temp);
+-  poly_pointwise(r, r, (poly *)psis_inv);
++  OQS_bitrev_vector(r->coeffs);
++  OQS_ntt_double(r->coeffs, omegas_inv_double,temp);
++  OQS_poly_pointwise(r, r, (poly *)psis_inv);
+ }
+diff --git a/src/kex_rlwe_newhope/avx2/poly.h b/src/kex_rlwe_newhope/avx2/poly.h
+index bf86623..ed27ab2 100644
+--- a/src/kex_rlwe_newhope/avx2/poly.h
++++ b/src/kex_rlwe_newhope/avx2/poly.h
+@@ -8,15 +8,15 @@ typedef struct {
+   int32_t coeffs[PARAM_N];
+ } poly __attribute__ ((aligned (32)));
+ 
+-void poly_uniform(poly *a, const unsigned char *seed);
+-void poly_getnoise(poly *r, unsigned char *seed, unsigned char nonce);
+-void poly_add(poly *r, const poly *a, const poly *b);
++static void poly_uniform(poly *a, const unsigned char *seed);
++static void poly_getnoise(poly *r, unsigned char *seed, unsigned char nonce);
++static void poly_add(poly *r, const poly *a, const poly *b);
+ 
+-void poly_ntt(poly *r);
+-void poly_invntt(poly *r);
+-void poly_pointwise(poly *r, const poly *a, const poly *b);
++static void poly_ntt(poly *r);
++static void poly_invntt(poly *r);
++void OQS_poly_pointwise(poly *r, const poly *a, const poly *b);
+ 
+-void poly_frombytes(poly *r, const unsigned char *a);
+-void poly_tobytes(unsigned char *r, const poly *p);
++static void poly_frombytes(poly *r, const unsigned char *a);
++static void poly_tobytes(unsigned char *r, const poly *p);
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/poly_pointwise.s b/src/kex_rlwe_newhope/avx2/poly_pointwise.s
+index 53d7d26..648f130 100644
+--- a/src/kex_rlwe_newhope/avx2/poly_pointwise.s
++++ b/src/kex_rlwe_newhope/avx2/poly_pointwise.s
+@@ -51,10 +51,10 @@
+ 
+ # qhasm: enter poly_pointwise
+ .p2align 5
+-.global _poly_pointwise
+-.global poly_pointwise
+-_poly_pointwise:
+-poly_pointwise:
++.global OQS_poly_pointwise
++.global OQS_poly_pointwise
++OQS_poly_pointwise:
++OQS_poly_pointwise:
+ mov %rsp,%r11
+ and $31,%r11
+ add $0,%r11
+diff --git a/src/kex_rlwe_newhope/avx2/randombytes.c b/src/kex_rlwe_newhope/avx2/randombytes.c
+index dba8eca..46fac8f 100644
+--- a/src/kex_rlwe_newhope/avx2/randombytes.c
++++ b/src/kex_rlwe_newhope/avx2/randombytes.c
+@@ -8,7 +8,7 @@
+ 
+ static int fd = -1;
+ 
+-void randombytes(unsigned char *x,unsigned long long xlen)
++static void randombytes(unsigned char *x,unsigned long long xlen)
+ {
+   int i;
+ 
+diff --git a/src/kex_rlwe_newhope/avx2/randombytes.h b/src/kex_rlwe_newhope/avx2/randombytes.h
+index 7f2c4c0..72e06b7 100644
+--- a/src/kex_rlwe_newhope/avx2/randombytes.h
++++ b/src/kex_rlwe_newhope/avx2/randombytes.h
+@@ -1,6 +1,6 @@
+ #ifndef RANDOMBYTES_H
+ #define RANDOMBYTES_H
+ 
+-void randombytes(unsigned char *x,unsigned long long xlen);
++static void randombytes(unsigned char *x,unsigned long long xlen);
+ 
+ #endif
+diff --git a/src/kex_rlwe_newhope/avx2/rec.s b/src/kex_rlwe_newhope/avx2/rec.s
+index d1cf925..d6c15e2 100644
+--- a/src/kex_rlwe_newhope/avx2/rec.s
++++ b/src/kex_rlwe_newhope/avx2/rec.s
+@@ -72,9 +72,9 @@
+ # qhasm: enter rec
+ .p2align 5
+ .global _rec
+-.global rec
++.global OQS_rec
+ _rec:
+-rec:
++OQS_rec:
+ mov %rsp,%r11
+ and $31,%r11
+ add $32,%r11

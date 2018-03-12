@@ -1,0 +1,24 @@
+LIBRARY oqs
+EXPORTS
+	OQS_RAND_new
+	OQS_RAND_free
+	OQS_RAND_8
+	OQS_RAND_32
+	OQS_RAND_64
+	OQS_RAND_n
+	OQS_RAND_test_record_occurrence
+	OQS_RAND_report_statistics
+	OQS_KEX_new
+	OQS_KEX_alice_0
+	OQS_KEX_bob
+	OQS_KEX_alice_1
+	OQS_KEX_alice_priv_free
+	OQS_KEX_free
+	OQS_SIG_new
+	OQS_SIG_keygen
+	OQS_SIG_sign
+	OQS_SIG_verify
+	OQS_SIG_free
+	OQS_print_hex_string
+	OQS_print_part_hex_string
+	OQS_MEM_secure_free
