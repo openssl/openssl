@@ -620,10 +620,6 @@ int opt_next(void)
     unsigned long ulval;
     ossl_intmax_t imval;
     ossl_uintmax_t umval;
-#if !defined(_WIN32)
-    char *c;
-    int oerrno;
-#endif
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
@@ -722,7 +718,7 @@ int opt_next(void)
                  * directory it's going to be written in is writable (which
                  * implies it exists).
                  */
-                c = OPENSSL_strdup(arg);
+                char *c = OPENSSL_strdup(arg);
                 if (c == NULL) {
                     BIO_printf(bio_err,
                                "%s: Memory allocation failure\n", prog);
