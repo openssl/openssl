@@ -533,6 +533,12 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
       !SSL_CTX_set_max_proto_version(ssl_ctx.get(), TLS1_3_VERSION)) {
     return nullptr;
   }
+#else
+  /* Ensure we don't negotiate TLSv1.3 until we can handle it */
+  if (!config->is_dtls &&
+      !SSL_CTX_set_max_proto_version(ssl_ctx.get(), TLS1_2_VERSION)) {
+    return nullptr;
+  }
 #endif
 
   std::string cipher_list = "ALL";
