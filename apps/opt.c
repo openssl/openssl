@@ -11,7 +11,9 @@
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
 #endif
-
+#ifdef __VMS
+# include <sys/stat.h>
+#endif
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
@@ -696,6 +698,23 @@ int opt_next(void)
              */
             if (strcmp(arg, "-") == 0)
                 break;
+#ifdef __VMS
+            {
+                struct stat st;
+
+                /*
+                 * On VMS, "character devices" (such as NLA0:) aren't possible
+                 * to get any sensible information on with access(), because
+                 * the underlying system libraries and services do not support
+                 * the necessary operation to determine access on devices.
+                 * We therefore simply check for these "character devices" and
+                 * simply assumes they are writable here, and the attempt to
+                 * actually write to them will have to succeed or fail later.
+                 */
+                if (stat(arg, &st) == 0 && S_ISCHR(st.st_mode))
+                    break;
+            }
+#endif
 #if !defined(_WIN32)
             /*
              * If the intended output file exists, we start with checking if it
@@ -706,12 +725,12 @@ int opt_next(void)
                  * If it exists, we need to make sure it isn't a directory and
                  * that it's writable.
                  */
-                if (app_isdir(arg) <= 0)
+                if (app_isdir(arg) > 0)
+                    estr = "is a directory";
+                else if (app_access(arg, W_OK) == 0)
                     break;
-                estr = "is a directory";
-                if (app_access(arg, W_OK) == 0)
-                    break;
-                estr = strerror(errno);
+                else
+                    estr = strerror(errno);
             } else {
                 /*
                  * If the intended output file doesn't exist, we check if the
