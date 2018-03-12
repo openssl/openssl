@@ -305,9 +305,8 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
         if (ao[i] != NULL)
             OPENSSL_free(ao[i]);
-    if (o != NULL)
-        OPENSSL_free(o);
-    return (NID_undef);
+    ASN1_OBJECT_free(o);
+    return NID_undef;
 }
 
 ASN1_OBJECT *OBJ_nid2obj(int n)
