@@ -1,5 +1,6 @@
 /*
  * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,26 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- *
- * Portions of the attached software ("Contribution") are developed by
- * SUN MICROSYSTEMS, INC., and are contributed to the OpenSSL project.
- *
- * The Contribution is licensed pursuant to the OpenSSL open source
- * license provided above.
- *
- * The elliptic curve binary polynomial software is originally written by
- * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
- *
- */
-
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/opensslconf.h>
-#include "e_os.h"
+#include "internal/nelem.h"
 
 typedef struct {
     int field_type,             /* either NID_X9_62_prime_field or
@@ -2217,7 +2204,7 @@ static const struct {
 #endif
 
 /*
- * These curves were added by Annie Yousar <a.yousar@informatik.hu-berlin.de>
+ * These curves were added by Annie Yousar.
  * For the definition of RFC 5639 curves see
  * http://www.ietf.org/rfc/rfc5639.txt These curves are generated verifiable
  * at random, nevertheless the seed is omitted as parameter because the

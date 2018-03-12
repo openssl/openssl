@@ -17,9 +17,11 @@
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <internal/rand.h>
 #include "modes_lcl.h"
 #include "internal/evp_int.h"
 #include "internal/constant_time_locl.h"
+#include "evp_locl.h"
 
 typedef struct {
     AES_KEY ks;
@@ -154,7 +156,8 @@ void aesni_multi_cbc_encrypt(CIPH_DESC *, void *, int);
 static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
                                          unsigned char *out,
                                          const unsigned char *inp,
-                                         size_t inp_len, int n4x)
+                                         size_t inp_len, int n4x,
+                                         RAND_DRBG *drbg)
 {                               /* n4x is 1 or 2 */
     HASH_DESC hash_d[8], edges[8];
     CIPH_DESC ciph_d[8];
@@ -174,8 +177,13 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA1 *key,
 #  endif
 
     /* ask for IVs in bulk */
-    if (RAND_bytes((IVs = blocks[0].c), 16 * x4) <= 0)
+    IVs = blocks[0].c;
+    if (drbg != NULL) {
+        if (RAND_DRBG_bytes(drbg, IVs, 16 * x4) == 0)
+            return 0;
+    } else if (RAND_bytes(IVs, 16 * x4) <= 0) {
         return 0;
+    }
 
     ctx = (SHA1_MB_CTX *) (storage + 32 - ((size_t)storage % 32)); /* align */
 
@@ -528,12 +536,17 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             maxpad |= (255 - maxpad) >> (sizeof(maxpad) * 8 - 8);
             maxpad &= 255;
 
-            ret &= constant_time_ge(maxpad, pad);
+            mask = constant_time_ge(maxpad, pad);
+            ret &= mask;
+            /*
+             * If pad is invalid then we will fail the above test but we must
+             * continue anyway because we are in constant time code. However,
+             * we'll use the maxpad value instead of the supplied pad to make
+             * sure we perform well defined pointer arithmetic.
+             */
+            pad = constant_time_select(mask, pad, maxpad);
 
             inp_len = len - (SHA_DIGEST_LENGTH + pad + 1);
-            mask = (0 - ((inp_len - len) >> (sizeof(inp_len) * 8 - 1)));
-            inp_len &= mask;
-            ret &= (int)mask;
 
             key->aux.tls_aad[plen - 2] = inp_len >> 8;
             key->aux.tls_aad[plen - 1] = inp_len;
@@ -565,7 +578,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
 # endif
 
-# if 1
+# if 1      /* see original reference version in #else */
             len -= SHA_DIGEST_LENGTH; /* amend mac */
             if (len >= (256 + SHA_CBLOCK)) {
                 j = (len - (256 + SHA_CBLOCK)) & (0 - SHA_CBLOCK);
@@ -659,7 +672,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             }
 #  endif
             len += SHA_DIGEST_LENGTH;
-# else
+# else      /* pre-lucky-13 reference version of above */
             SHA1_Update(&key->md, out, inp_len);
             res = key->md.num;
             SHA1_Final(pmac->c, &key->md);
@@ -686,7 +699,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             /* verify HMAC */
             out += inp_len;
             len -= inp_len;
-# if 1
+# if 1      /* see original reference version in #else */
             {
                 unsigned char *p = out + len - 1 - maxpad - SHA_DIGEST_LENGTH;
                 size_t off = out - p;
@@ -708,7 +721,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                 res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
                 ret &= (int)~res;
             }
-# else
+# else      /* pre-lucky-13 reference version of above */
             for (res = 0, i = 0; i < SHA_DIGEST_LENGTH; i++)
                 res |= out[i] ^ pmac->c[i];
             res = 0 - ((0 - res) >> (sizeof(res) * 8 - 1));
@@ -809,6 +822,8 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
                 key->payload_length = len;
                 if ((key->aux.tls_ver =
                      p[arg - 4] << 8 | p[arg - 3]) >= TLS1_1_VERSION) {
+                    if (len < AES_BLOCK_SIZE)
+                        return 0;
                     len -= AES_BLOCK_SIZE;
                     p[arg - 2] = len >> 8;
                     p[arg - 1] = len;
@@ -886,7 +901,8 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             return (int)tls1_1_multi_block_encrypt(key, param->out,
                                                    param->inp, param->len,
-                                                   param->interleave / 4);
+                                                   param->interleave / 4,
+                                                   ctx->drbg);
         }
     case EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT:
 # endif

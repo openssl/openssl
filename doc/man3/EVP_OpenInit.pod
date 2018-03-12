@@ -9,11 +9,10 @@ EVP_OpenInit, EVP_OpenUpdate, EVP_OpenFinal - EVP envelope decryption
  #include <openssl/evp.h>
 
  int EVP_OpenInit(EVP_CIPHER_CTX *ctx, EVP_CIPHER *type, unsigned char *ek,
-                int ekl, unsigned char *iv, EVP_PKEY *priv);
+                  int ekl, unsigned char *iv, EVP_PKEY *priv);
  int EVP_OpenUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, unsigned char *in, int inl);
- int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl);
+                    int *outl, unsigned char *in, int inl);
+ int EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 =head1 DESCRIPTION
 

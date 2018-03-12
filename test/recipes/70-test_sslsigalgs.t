@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ my $test_name = "test_sslsigalgs";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -39,7 +39,12 @@ use constant {
     EMPTY_SIG_ALGS_EXT => 1,
     NO_KNOWN_SIG_ALGS => 2,
     NO_PSS_SIG_ALGS => 3,
-    PSS_ONLY_SIG_ALGS => 4
+    PSS_ONLY_SIG_ALGS => 4,
+    PURE_SIGALGS => 5,
+    COMPAT_SIGALGS => 6,
+    SIGALGS_CERT_ALL => 7,
+    SIGALGS_CERT_PKCS => 8,
+    SIGALGS_CERT_INVALID => 9
 };
 
 #Note: Throughout this test we override the default ciphersuites where TLSv1.2
@@ -48,7 +53,7 @@ use constant {
 
 #Test 1: Default sig algs should succeed
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 15;
+plan tests => 21;
 ok(TLSProxy::Message->success, "Default sigalgs");
 my $testtype;
 
@@ -92,20 +97,20 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EC, TLSv1.3 or TLSv1.2 disabled", 2
-        if disabled("tls1_2") || disabled("tls1_3") || disabled("ec");
-
+    skip "EC or TLSv1.3 disabled", 1
+        if disabled("tls1_3") || disabled("ec");
     #Test 7: Sending a valid sig algs list but not including a sig type that
-    #        matches the certificate should fail in TLSv1.3. We need TLSv1.2
-    #        enabled for this test - otherwise the client will not attempt to
-    #        connect due to no TLSv1.3 ciphers being available.
-    #        TODO(TLS1.3): When proper TLSv1.3 certificate selection is working
-    #        we can move this test into the section above
+    #        matches the certificate should fail in TLSv1.3.
     $proxy->clear();
     $proxy->clientflags("-sigalgs ECDSA+SHA256");
     $proxy->filter(undef);
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching TLSv1.3 sigalgs");
+}
+
+SKIP: {
+    skip "EC, TLSv1.3 or TLSv1.2 disabled", 1
+        if disabled("tls1_2") || disabled("tls1_3") || disabled("ec");
 
     #Test 8: Sending a full list of TLSv1.3 sig algs but negotiating TLSv1.2
     #        should succeed
@@ -118,7 +123,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EC or TLSv1.2 disabled", 7 if disabled("tls1_2") || disabled("ec");
+    skip "EC or TLSv1.2 disabled", 8 if disabled("tls1_2") || disabled("ec");
 
     $proxy->filter(\&sigalgs_filter);
 
@@ -164,7 +169,7 @@ SKIP: {
     ok(TLSProxy::Message->success, "PSS only sigalgs in TLSv1.2");
 
     #Test 14: Responding with a sig alg we did not send in TLSv1.2 should fail
-    #         We send rsa_pkcs1_sha256 and respond with rsa_pss_sha256
+    #         We send rsa_pkcs1_sha256 and respond with rsa_pss_rsae_sha256
     #         TODO(TLS1.3): Add a similar test to the TLSv1.3 section above
     #         when we have an API capable of configuring the TLSv1.3 sig algs
     $proxy->clear();
@@ -183,6 +188,68 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching TLSv1.2 sigalgs");
     $proxy->filter(\&sigalgs_filter);
+
+    #Test 16: No sig algs extension, ECDSA cert, TLSv1.2 should succeed
+    $proxy->clear();
+    $testtype = NO_SIG_ALGS_EXT;
+    $proxy->clientflags("-no_tls1_3");
+    $proxy->serverflags("-cert " . srctop_file("test", "certs",
+                                               "server-ecdsa-cert.pem") .
+                        " -key " . srctop_file("test", "certs",
+                                               "server-ecdsa-key.pem")),
+    $proxy->ciphers("ECDHE-ECDSA-AES128-SHA:TLS13-AES-128-GCM-SHA256");
+    $proxy->start();
+    ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs, ECDSA");
+}
+
+my ($dsa_status, $sha1_status, $sha224_status);
+SKIP: {
+    skip "TLSv1.3 disabled", 2 if disabled("tls1_3") || disabled("dsa");
+    #Test 17: signature_algorithms with 1.3-only ClientHello
+    $testtype = PURE_SIGALGS;
+    $dsa_status = $sha1_status = $sha224_status = 0;
+    $proxy->clear();
+    $proxy->clientflags("-tls1_3");
+    $proxy->filter(\&modify_sigalgs_filter);
+    $proxy->start();
+    ok($dsa_status && $sha1_status && $sha224_status,
+       "DSA/SHA2 sigalg sent for 1.3-only ClientHello");
+
+    #Test 18: signature_algorithms with backwards compatible ClientHello
+    SKIP: {
+        skip "TLSv1.2 disabled", 1 if disabled("tls1_2");
+        $testtype = COMPAT_SIGALGS;
+        $dsa_status = $sha1_status = $sha224_status = 0;
+        $proxy->clear();
+        $proxy->filter(\&modify_sigalgs_filter);
+        $proxy->start();
+        ok($dsa_status && $sha1_status && $sha224_status,
+           "DSA sigalg not sent for compat ClientHello");
+   }
+}
+
+SKIP: {
+    skip "TLSv1.3 disabled", 3 if disabled("tls1_3");
+    #Test 19: Insert signature_algorithms_cert that match normal sigalgs
+    $testtype = SIGALGS_CERT_ALL;
+    $proxy->clear();
+    $proxy->filter(\&modify_sigalgs_cert_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->success, "sigalgs_cert in TLSv1.3");
+
+    #Test 19: Insert signature_algorithms_cert that forces PKCS#1 cert
+    $testtype = SIGALGS_CERT_PKCS;
+    $proxy->clear();
+    $proxy->filter(\&modify_sigalgs_cert_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->success, "sigalgs_cert in TLSv1.3 with PKCS#1 cert");
+
+    #Test 19: Insert signature_algorithms_cert that fails
+    $testtype = SIGALGS_CERT_INVALID;
+    $proxy->clear();
+    $proxy->filter(\&modify_sigalgs_cert_filter);
+    $proxy->start();
+    ok(TLSProxy::Message->fail, "No matching certificate for sigalgs_cert");
 }
 
 
@@ -210,12 +277,105 @@ sub sigalgs_filter
                     #No PSS sig algs - just send rsa_pkcs1_sha256
                     $sigalg = pack "C4", 0x00, 0x02, 0x04, 0x01;
                 } else {
-                    #PSS sig algs only - just send rsa_pss_sha256
+                    #PSS sig algs only - just send rsa_pss_rsae_sha256
                     $sigalg = pack "C4", 0x00, 0x02, 0x08, 0x04;
                 }
                 $message->set_extension(TLSProxy::Message::EXT_SIG_ALGS, $sigalg);
             }
 
+            $message->repack();
+        }
+    }
+}
+
+sub modify_sigalgs_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ClientHello
+    return if ($proxy->flight != 0);
+
+    foreach my $message (@{$proxy->message_list}) {
+        my $ext;
+        my @algs;
+
+        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+            if ($testtype == PURE_SIGALGS) {
+                my $ok = 1;
+                $ext = $message->extension_data->{TLSProxy::Message::EXT_SIG_ALGS};
+                @algs = unpack('S>*', $ext);
+                # unpack will unpack the length as well
+                shift @algs;
+                foreach (@algs) {
+                    if ($_ == TLSProxy::Message::SIG_ALG_DSA_SHA256
+                        || $_ == TLSProxy::Message::SIG_ALG_DSA_SHA384
+                        || $_ == TLSProxy::Message::SIG_ALG_DSA_SHA512
+                        || $_ == TLSProxy::Message::OSSL_SIG_ALG_DSA_SHA224
+                        || $_ == TLSProxy::Message::SIG_ALG_RSA_PKCS1_SHA1
+                        || $_ == TLSProxy::Message::SIG_ALG_DSA_SHA1
+                        || $_ == TLSProxy::Message::SIG_ALG_ECDSA_SHA1) {
+                        $ok = 0;
+                    }
+                }
+                $sha1_status = $dsa_status = $sha224_status = 1 if ($ok);
+            } elsif ($testtype == COMPAT_SIGALGS) {
+                $ext = $message->extension_data->{TLSProxy::Message::EXT_SIG_ALGS};
+                @algs = unpack('S>*', $ext);
+                # unpack will unpack the length as well
+                shift @algs;
+                foreach (@algs) {
+                    if ($_ == TLSProxy::Message::SIG_ALG_DSA_SHA256
+                        || $_ == TLSProxy::Message::SIG_ALG_DSA_SHA384
+                        || $_ == TLSProxy::Message::SIG_ALG_DSA_SHA512) {
+                        $dsa_status = 1;
+                    }
+                    if ($_ == TLSProxy::Message::SIG_ALG_RSA_PKCS1_SHA1
+                        || $_ == TLSProxy::Message::SIG_ALG_DSA_SHA1
+                        || $_ == TLSProxy::Message::SIG_ALG_ECDSA_SHA1) {
+                        $sha1_status = 1;
+                    }
+                    if ($_ == TLSProxy::Message::OSSL_SIG_ALG_RSA_PKCS1_SHA224
+                        || $_ == TLSProxy::Message::OSSL_SIG_ALG_DSA_SHA224
+                        || $_ == TLSProxy::Message::OSSL_SIG_ALG_ECDSA_SHA224) {
+                        $sha224_status = 1;
+                    }
+                }
+            }
+        }
+    }
+}
+
+sub modify_sigalgs_cert_filter
+{
+    my $proxy = shift;
+
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight != 0) {
+        return;
+    }
+
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_CLIENT_HELLO) {
+            my $sigs;
+            # two byte length at front of sigs, then two-byte sigschemes
+            if ($testtype == SIGALGS_CERT_ALL) {
+                $sigs = pack "C26", 0x00, 0x18,
+                             # rsa_pkcs_sha{256,512}  rsa_pss_rsae_sha{256,512}
+                             0x04, 0x01,  0x06, 0x01,  0x08, 0x04,  0x08, 0x06,
+                             # ed25518    ed448        rsa_pss_pss_sha{256,512}
+                             0x08, 0x07,  0x08, 0x08,  0x08, 0x09,  0x08, 0x0b,
+                             # ecdsa_secp{256,512}     rsa+sha1     ecdsa+sha1
+                             0x04, 0x03,  0x06, 0x03,  0x02, 0x01,  0x02, 0x03;
+            } elsif ($testtype == SIGALGS_CERT_PKCS) {
+                $sigs = pack "C10", 0x00, 0x08,
+                             # rsa_pkcs_sha{256,384,512,1}
+                             0x04, 0x01,  0x05, 0x01,  0x06, 0x01,  0x02, 0x01;
+            } elsif ($testtype == SIGALGS_CERT_INVALID) {
+                $sigs = pack "C4", 0x00, 0x02,
+                             # unregistered codepoint
+                             0xb2, 0x6f;
+            }
+            $message->set_extension(TLSProxy::Message::EXT_SIG_ALGS_CERT, $sigs);
             $message->repack();
         }
     }

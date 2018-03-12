@@ -8,7 +8,8 @@ PKCS7_encrypt - create a PKCS#7 envelopedData structure
 
  #include <openssl/pkcs7.h>
 
- PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher, int flags);
+ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
+                      int flags);
 
 =head1 DESCRIPTION
 

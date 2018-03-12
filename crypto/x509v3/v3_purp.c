@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -277,6 +277,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
         NID_subject_alt_name,   /* 85 */
         NID_basic_constraints,  /* 87 */
         NID_certificate_policies, /* 89 */
+        NID_crl_distribution_points, /* 103 */
         NID_ext_key_usage,      /* 126 */
 #ifndef OPENSSL_NO_RFC3779
         NID_sbgp_ipAddrBlock,   /* 290 */
@@ -487,6 +488,7 @@ static void x509v3_cache_extensions(X509 *x)
             break;
         }
     }
+    x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
 }
 
@@ -844,6 +846,13 @@ const ASN1_OCTET_STRING *X509_get0_subject_key_id(X509 *x)
     /* Call for side-effect of computing hash and caching extensions */
     X509_check_purpose(x, -1, -1);
     return x->skid;
+}
+
+const ASN1_OCTET_STRING *X509_get0_authority_key_id(X509 *x)
+{
+    /* Call for side-effect of computing hash and caching extensions */
+    X509_check_purpose(x, -1, -1);
+    return (x->akid != NULL ? x->akid->keyid : NULL);
 }
 
 long X509_get_pathlen(X509 *x)

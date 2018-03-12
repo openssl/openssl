@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,10 +9,12 @@
 
 /* X509 v3 extension utilities */
 
-#include <stdio.h>
-#include <ctype.h>
+#include "e_os.h"
 #include "internal/cryptlib.h"
+#include <stdio.h>
+#include "internal/ctype.h"
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
 #include <openssl/x509v3.h>
 #include "internal/x509_int.h"
 #include <openssl/bn.h>
@@ -37,6 +39,7 @@ int X509V3_add_value(const char *name, const char *value,
 {
     CONF_VALUE *vtmp = NULL;
     char *tname = NULL, *tvalue = NULL;
+    int sk_allocated = (*extlist == NULL);
 
     if (name && (tname = OPENSSL_strdup(name)) == NULL)
         goto err;
@@ -44,7 +47,7 @@ int X509V3_add_value(const char *name, const char *value,
         goto err;
     if ((vtmp = OPENSSL_malloc(sizeof(*vtmp))) == NULL)
         goto err;
-    if (*extlist == NULL && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
+    if (sk_allocated && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
         goto err;
     vtmp->section = NULL;
     vtmp->name = tname;
@@ -54,6 +57,10 @@ int X509V3_add_value(const char *name, const char *value,
     return 1;
  err:
     X509V3err(X509V3_F_X509V3_ADD_VALUE, ERR_R_MALLOC_FAILURE);
+    if (sk_allocated) {
+        sk_CONF_VALUE_free(*extlist);
+        *extlist = NULL;
+    }
     OPENSSL_free(vtmp);
     OPENSSL_free(tname);
     OPENSSL_free(tvalue);
@@ -94,6 +101,43 @@ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
     return 1;
 }
 
+static char *bignum_to_string(const BIGNUM *bn)
+{
+    char *tmp, *ret;
+    size_t len;
+
+    /*
+     * Display large numbers in hex and small numbers in decimal. Converting to
+     * decimal takes quadratic time and is no more useful than hex for large
+     * numbers.
+     */
+    if (BN_num_bits(bn) < 128)
+        return BN_bn2dec(bn);
+
+    tmp = BN_bn2hex(bn);
+    if (tmp == NULL)
+        return NULL;
+
+    len = strlen(tmp) + 3;
+    ret = OPENSSL_malloc(len);
+    if (ret == NULL) {
+        X509V3err(X509V3_F_BIGNUM_TO_STRING, ERR_R_MALLOC_FAILURE);
+        OPENSSL_free(tmp);
+        return NULL;
+    }
+
+    /* Prepend "0x", but place it after the "-" if negative. */
+    if (tmp[0] == '-') {
+        OPENSSL_strlcpy(ret, "-0x", len);
+        OPENSSL_strlcat(ret, tmp + 1, len);
+    } else {
+        OPENSSL_strlcpy(ret, "0x", len);
+        OPENSSL_strlcat(ret, tmp, len);
+    }
+    OPENSSL_free(tmp);
+    return ret;
+}
+
 char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
@@ -102,7 +146,7 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
     if (!a)
         return NULL;
     if ((bntmp = ASN1_ENUMERATED_to_BN(a, NULL)) == NULL
-        || (strtmp = BN_bn2dec(bntmp)) == NULL)
+        || (strtmp = bignum_to_string(bntmp)) == NULL)
         X509V3err(X509V3_F_I2S_ASN1_ENUMERATED, ERR_R_MALLOC_FAILURE);
     BN_free(bntmp);
     return strtmp;
@@ -116,7 +160,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
     if (!a)
         return NULL;
     if ((bntmp = ASN1_INTEGER_to_BN(a, NULL)) == NULL
-        || (strtmp = BN_bn2dec(bntmp)) == NULL)
+        || (strtmp = bignum_to_string(bntmp)) == NULL)
         X509V3err(X509V3_F_I2S_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
     BN_free(bntmp);
     return strtmp;
@@ -334,12 +378,12 @@ static char *strip_spaces(char *name)
     char *p, *q;
     /* Skip over leading spaces */
     p = name;
-    while (*p && isspace((unsigned char)*p))
+    while (*p && ossl_isspace(*p))
         p++;
     if (!*p)
         return NULL;
     q = p + strlen(p) - 1;
-    while ((q != p) && isspace((unsigned char)*q))
+    while ((q != p) && ossl_isspace(*q))
         q--;
     if (p != q)
         q[1] = 0;

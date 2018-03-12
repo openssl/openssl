@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-speed,
 speed - test library performance
 
 =head1 SYNOPSIS
@@ -12,13 +13,17 @@ B<openssl speed>
 [B<-elapsed>]
 [B<-evp algo>]
 [B<-decrypt>]
+[B<-rand file...>]
+[B<-writerand file>]
+[B<-primes num>]
 [B<algorithm...>]
 
 =head1 DESCRIPTION
 
 This command is used to test the performance of cryptographic algorithms.
 To see the list of supported algorithms, use the I<list --digest-commands>
-or I<list --cipher-commands> command.
+or I<list --cipher-commands> command. The global CSPRNG is denoted by
+the I<rand> algorithm name.
 
 =head1 OPTIONS
 
@@ -30,7 +35,7 @@ Print out a usage message.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<speed>
+Specifying an engine (by its unique B<id> string) will cause B<speed>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -48,6 +53,32 @@ Use the specified cipher or message digest algorithm via the EVP interface.
 
 Time the decryption instead of encryption. Affects only the EVP testing.
 
+=item B<-rand file...>
+
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
+
+=item B<-primes num>
+
+Generate a B<num>-prime RSA key and use it to run the benchmarks. This option
+is only effective if RSA algorithm is specified to test.
+
+=item B<-seconds num>
+
+Run bechmarks for B<num> seconds.
+
+=item B<-bytes num>
+
+Run bechmarks on B<num>-byte buffers. Affects ciphers, digests and the CSPRNG.
+
 =item B<[zero or more test algorithms]>
 
 If any options are given, B<speed> tests those algorithms, otherwise all of
@@ -57,7 +88,7 @@ the above are tested.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -23,7 +23,8 @@ EC_GROUP_get_pentanomial_basis
 
  const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group);
 
- int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator, const BIGNUM *order, const BIGNUM *cofactor);
+ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
+                            const BIGNUM *order, const BIGNUM *cofactor);
  const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
 
  int EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx);
@@ -56,7 +57,7 @@ EC_GROUP_get_pentanomial_basis
  int EC_GROUP_get_basis_type(const EC_GROUP *);
  int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
  int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
-        unsigned int *k2, unsigned int *k3);
+                                    unsigned int *k2, unsigned int *k3);
 
 =head1 DESCRIPTION
 
@@ -190,13 +191,13 @@ trinomial or pentanomial respectively. Alternatively in the event of an error a 
 
 =head1 SEE ALSO
 
-L<crypto(7)>, L<ec(7)>, L<EC_GROUP_new(3)>,
+L<crypto(7)>, L<EC_GROUP_new(3)>,
 L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
 L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 #include "bio_lcl.h"
-#include <internal/thread_once.h>
+#include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_type_lock = NULL;
 static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;
@@ -37,16 +37,22 @@ BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
     BIO_METHOD *biom = OPENSSL_zalloc(sizeof(BIO_METHOD));
 
-    if (biom != NULL) {
-        biom->type = type;
-        biom->name = name;
+    if (biom == NULL
+            || (biom->name = OPENSSL_strdup(name)) == NULL) {
+        OPENSSL_free(biom);
+        BIOerr(BIO_F_BIO_METH_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
     }
+    biom->type = type;
     return biom;
 }
 
 void BIO_meth_free(BIO_METHOD *biom)
 {
-    OPENSSL_free(biom);
+    if (biom != NULL) {
+        OPENSSL_free(biom->name);
+        OPENSSL_free(biom);
+    }
 }
 
 int (*BIO_meth_get_write(BIO_METHOD *biom)) (BIO *, const char *, int)
@@ -200,14 +206,14 @@ int BIO_meth_set_destroy(BIO_METHOD *biom, int (*destroy) (BIO *))
     return 1;
 }
 
-long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom)) (BIO *, int, bio_info_cb *)
+long (*BIO_meth_get_callback_ctrl(BIO_METHOD *biom)) (BIO *, int, BIO_info_cb *)
 {
     return biom->callback_ctrl;
 }
 
 int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
                                long (*callback_ctrl) (BIO *, int,
-                                                      bio_info_cb *))
+                                                      BIO_info_cb *))
 {
     biom->callback_ctrl = callback_ctrl;
     return 1;

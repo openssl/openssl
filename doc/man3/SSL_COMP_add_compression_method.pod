@@ -35,12 +35,8 @@ SSL_COMP_get0_name() returns the name of the compression method B<comp>.
 
 SSL_COMP_get_id() returns the id of the compression method B<comp>.
 
-In versions of OpenSSL prior to 1.1.0 SSL_COMP_free_compression_methods() freed
-the internal table of compression methods that were built internally, and
-possibly augmented by adding SSL_COMP_add_compression_method(). However this is
-now unnecessary from version 1.1.0.  No explicit initialisation or
-de-initialisation is necessary. See L<OPENSSL_init_crypto(3)> and
-L<OPENSSL_init_ssl(3)>. From OpenSSL 1.1.0 calling this function does nothing.
+SSL_COMP_free_compression_methods() releases any resources acquired to
+maintain the internal table of compression methods.
 
 =head1 NOTES
 
@@ -65,12 +61,6 @@ of compression methods supported on a per connection basis.
 
 If enabled during compilation, the OpenSSL library will have the
 COMP_zlib() compression method available.
-
-=head1 WARNINGS
-
-Once the identities of the compression methods for the TLS protocol have
-been standardized, the compression API will most likely be changed. Using
-it in the current state is not recommended.
 
 =head1 RETURN VALUES
 
@@ -101,7 +91,8 @@ L<ssl(7)>
 
 =head1 HISTORY
 
-SSL_COMP_free_compression_methods() was deprecated in OpenSSL 1.1.0.
+SSL_COMP_free_compression_methods() was deprecated in OpenSSL 1.1.0;
+do not use it.
 SSL_COMP_get0_name() and SSL_comp_get_id() were added in OpenSSL 1.1.0d.
 
 =head1 COPYRIGHT

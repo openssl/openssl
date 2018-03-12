@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <openssl/objects.h>
 #include "obj_xref.h"
-#include "e_os.h"
+#include "internal/nelem.h"
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 

@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define USE_SOCKETS
 #include "ssl_locl.h"
 
 int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
@@ -15,21 +14,10 @@ int dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, size_t len,
 {
     int i;
 
-#ifndef OPENSSL_NO_SCTP
-    /*
-     * Check if we have to continue an interrupted handshake for reading
-     * belated app data with SCTP.
-     */
-    if ((SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) ||
-        (BIO_dgram_is_sctp(SSL_get_wbio(s)) &&
-         ossl_statem_in_sctp_read_sock(s)))
-#else
-    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s))
-#endif
-    {
+    if (SSL_in_init(s) && !ossl_statem_get_in_handshake(s)) {
         i = s->handshake_func(s);
         if (i < 0)
-            return (i);
+            return i;
         if (i == 0) {
             SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES,
                    SSL_R_SSL_HANDSHAKE_FAILURE);
@@ -59,23 +47,12 @@ int dtls1_dispatch_alert(SSL *s)
     *ptr++ = s->s3->send_alert[0];
     *ptr++ = s->s3->send_alert[1];
 
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-    if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE) {
-        s2n(s->d1->handshake_read_seq, ptr);
-        l2n3(s->d1->r_msg_hdr.frag_off, ptr);
-    }
-#endif
-
     i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0, &written);
     if (i <= 0) {
         s->s3->alert_dispatch = 1;
         /* fprintf( stderr, "not done with alert\n" ); */
     } else {
-        if (s->s3->send_alert[0] == SSL3_AL_FATAL
-#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-            || s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
-#endif
-            )
+        if (s->s3->send_alert[0] == SSL3_AL_FATAL)
             (void)BIO_flush(s->wbio);
 
         if (s->msg_callback)

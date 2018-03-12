@@ -240,10 +240,10 @@ static int PacketedFree(BIO *bio) {
   return 1;
 }
 
-static long PacketedCallbackCtrl(BIO *bio, int cmd, bio_info_cb fp) {
-  if (BIO_next(bio) == NULL) {
+static long PacketedCallbackCtrl(BIO *bio, int cmd, BIO_info_cb fp)
+{
+  if (BIO_next(bio) == NULL)
     return 0;
-  }
   return BIO_callback_ctrl(BIO_next(bio), cmd, fp);
 }
 

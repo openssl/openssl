@@ -705,7 +705,7 @@ my $depd = sub {
   my ($mod,$args) = @_;
   my $orig = "depd$mod\t$args";
 
-    # I only have ",z" completer, it's impicitly encoded...
+    # I only have ",z" completer, it's implicitly encoded...
     if ($args =~ /%r([0-9]+),([0-9]+),([0-9]+),%r([0-9]+)/)	# format 16
     {	my $opcode=(0x3c<<26)|($4<<21)|($1<<16);
     	my $cpos=63-$2;

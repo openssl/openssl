@@ -111,14 +111,6 @@ typedef struct dtls_record_layer_st {
      * loss.
      */
     record_pqueue buffered_app_data;
-    /*
-     * storage for Alert/Handshake protocol data received but not yet
-     * processed by ssl3_read_bytes:
-     */
-    unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];
-    size_t alert_fragment_len;
-    unsigned char handshake_fragment[DTLS1_HM_HEADER_LENGTH];
-    size_t handshake_fragment_len;
     /* save last and current sequence numbers for retransmissions */
     unsigned char last_write_sequence[8];
     unsigned char curr_write_sequence[8];
@@ -157,12 +149,6 @@ typedef struct record_layer_st {
     size_t packet_length;
     /* number of bytes sent so far */
     size_t wnum;
-    /*
-     * storage for Alert/Handshake protocol data received but not yet
-     * processed by ssl3_read_bytes:
-     */
-    unsigned char alert_fragment[2];
-    size_t alert_fragment_len;
     unsigned char handshake_fragment[4];
     size_t handshake_fragment_len;
     /* The number of consecutive empty records we have received */
@@ -207,9 +193,8 @@ void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
 void RECORD_LAYER_release(RECORD_LAYER *rl);
 int RECORD_LAYER_read_pending(const RECORD_LAYER *rl);
+int RECORD_LAYER_processed_read_pending(const RECORD_LAYER *rl);
 int RECORD_LAYER_write_pending(const RECORD_LAYER *rl);
-int RECORD_LAYER_set_data(RECORD_LAYER *rl, const unsigned char *buf,
-                          size_t len);
 void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl);
 void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl);
 int RECORD_LAYER_is_sslv2_record(RECORD_LAYER *rl);
@@ -236,7 +221,6 @@ void DTLS_RECORD_LAYER_free(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_saved_w_epoch(RECORD_LAYER *rl, unsigned short e);
 void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl);
-void DTLS_RECORD_LAYER_resync_write(RECORD_LAYER *rl);
 void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq);
 __owur int dtls1_read_bytes(SSL *s, int type, int *recvd_type,
                             unsigned char *buf, size_t len, int peek,

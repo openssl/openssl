@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,12 +39,13 @@ extern "C" {
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-# define OPENSSL_VERSION_NUMBER  0x10101000L
-# ifdef OPENSSL_FIPS
-#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-fips-dev  xx XXX xxxx"
-# else
-#  define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-dev  xx XXX xxxx"
-# endif
+# define OPENSSL_VERSION_NUMBER  0x10101003L
+# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-pre3-dev  xx XXX xxxx"
+
+#define OPENSSL_MAKE_VERSION(maj,min,fix,patch) ((0x10000000L)+((maj&0xff)<<20)+((min&0xff)<<12)+((fix&0xff)<<4)+patch)
+
+/* use this for #if tests, should never depend upon fix/patch */
+#define OPENSSL_VERSION_AT_LEAST(maj,min) (OPENSSL_MAKE_VERSION(maj,min, 0, 0) >= OPENSSL_VERSION_NUMBER)
 
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)

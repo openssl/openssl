@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <openssl/conf.h>
 #include <openssl/objects.h>
 #include <openssl/dh.h>
+#include "internal/nelem.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists
@@ -227,6 +228,14 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
     EC_KEY *ecdh;
     int nid;
 
+    /* Ignore values supported by 1.0.2 for the automatic selection */
+    if ((cctx->flags & SSL_CONF_FLAG_FILE) &&
+        strcasecmp(value, "+automatic") == 0)
+        return 1;
+    if ((cctx->flags & SSL_CONF_FLAG_CMDLINE) &&
+        strcmp(value, "auto") == 0)
+        return 1;
+
     nid = EC_curve_nist2nid(value);
     if (nid == NID_undef)
         nid = OBJ_sn2nid(value);
@@ -358,6 +367,10 @@ static int cmd_Options(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_TBL("UnsafeLegacyRenegotiation",
                      SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION),
         SSL_FLAG_TBL_INV("EncryptThenMac", SSL_OP_NO_ENCRYPT_THEN_MAC),
+        SSL_FLAG_TBL("NoRenegotiation", SSL_OP_NO_RENEGOTIATION),
+        SSL_FLAG_TBL("AllowNoDHEKEX", SSL_OP_ALLOW_NO_DHE_KEX),
+        SSL_FLAG_TBL("PrioritizeChaCha", SSL_OP_PRIORITIZE_CHACHA),
+        SSL_FLAG_TBL("MiddleboxCompat", SSL_OP_ENABLE_MIDDLEBOX_COMPAT)
     };
     if (value == NULL)
         return -3;
@@ -373,7 +386,12 @@ static int cmd_VerifyMode(SSL_CONF_CTX *cctx, const char *value)
         SSL_FLAG_VFY_SRV("Request", SSL_VERIFY_PEER),
         SSL_FLAG_VFY_SRV("Require",
                          SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT),
-        SSL_FLAG_VFY_SRV("Once", SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE)
+        SSL_FLAG_VFY_SRV("Once", SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE),
+        SSL_FLAG_VFY_SRV("RequestPostHandshake",
+                         SSL_VERIFY_PEER | SSL_VERIFY_POST_HANDSHAKE),
+        SSL_FLAG_VFY_SRV("RequirePostHandshake",
+                         SSL_VERIFY_PEER | SSL_VERIFY_POST_HANDSHAKE |
+                         SSL_VERIFY_FAIL_IF_NO_PEER_CERT),
     };
     if (value == NULL)
         return -3;
@@ -465,7 +483,7 @@ static int cmd_VerifyCAFile(SSL_CONF_CTX *cctx, const char *value)
     return do_store(cctx, value, NULL, 1);
 }
 
-static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_RequestCAFile(SSL_CONF_CTX *cctx, const char *value)
 {
     if (cctx->canames == NULL)
         cctx->canames = sk_X509_NAME_new_null();
@@ -474,13 +492,23 @@ static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
     return SSL_add_file_cert_subjects_to_stack(cctx->canames, value);
 }
 
-static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
+static int cmd_ClientCAFile(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_RequestCAFile(cctx, value);
+}
+
+static int cmd_RequestCAPath(SSL_CONF_CTX *cctx, const char *value)
 {
     if (cctx->canames == NULL)
         cctx->canames = sk_X509_NAME_new_null();
     if (cctx->canames == NULL)
         return 0;
     return SSL_add_dir_cert_subjects_to_stack(cctx->canames, value);
+}
+
+static int cmd_ClientCAPath(SSL_CONF_CTX *cctx, const char *value)
+{
+    return cmd_RequestCAPath(cctx, value);
 }
 
 #ifndef OPENSSL_NO_DH
@@ -510,6 +538,25 @@ static int cmd_DHParameters(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 #endif
+
+static int cmd_RecordPadding(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    int block_size = atoi(value);
+
+    /*
+     * All we care about is a non-negative value,
+     * the setters check the range
+     */
+    if (block_size >= 0) {
+        if (cctx->ctx)
+            rv = SSL_CTX_set_block_padding(cctx->ctx, block_size);
+        if (cctx->ssl)
+            rv = SSL_set_block_padding(cctx->ssl, block_size);
+    }
+    return rv;
+}
+
 typedef struct {
     int (*cmd) (SSL_CONF_CTX *cctx, const char *value);
     const char *str_file;
@@ -544,9 +591,13 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_SWITCH("serverpref", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("legacy_renegotiation", 0),
     SSL_CONF_CMD_SWITCH("legacy_server_connect", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_SWITCH("no_renegotiation", 0),
     SSL_CONF_CMD_SWITCH("no_resumption_on_reneg", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("no_legacy_server_connect", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_SWITCH("allow_no_dhe_kex", 0),
+    SSL_CONF_CMD_SWITCH("prioritize_chacha", SSL_CONF_FLAG_SERVER),
     SSL_CONF_CMD_SWITCH("strict", 0),
+    SSL_CONF_CMD_SWITCH("no_middlebox", 0),
     SSL_CONF_CMD_STRING(SignatureAlgorithms, "sigalgs", 0),
     SSL_CONF_CMD_STRING(ClientSignatureAlgorithms, "client_sigalgs", 0),
     SSL_CONF_CMD_STRING(Curves, "curves", 0),
@@ -575,17 +626,22 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
                  SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(VerifyCAFile, "verifyCAfile", SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(RequestCAFile, "requestCAFile", SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD(ClientCAFile, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_FILE),
+    SSL_CONF_CMD(RequestCAPath, NULL, SSL_CONF_FLAG_CERTIFICATE,
+                 SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(ClientCAPath, NULL,
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
                  SSL_CONF_TYPE_DIR),
 #ifndef OPENSSL_NO_DH
     SSL_CONF_CMD(DHParameters, "dhparam",
                  SSL_CONF_FLAG_SERVER | SSL_CONF_FLAG_CERTIFICATE,
-                 SSL_CONF_TYPE_FILE)
+                 SSL_CONF_TYPE_FILE),
 #endif
+    SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0)
 };
 
 /* Supported switches: must match order of switches in ssl_conf_cmds */
@@ -605,11 +661,19 @@ static const ssl_switch_tbl ssl_cmd_switches[] = {
     {SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, 0},
     /* legacy_server_connect */
     {SSL_OP_LEGACY_SERVER_CONNECT, 0},
+    /* no_renegotiation */
+    {SSL_OP_NO_RENEGOTIATION, 0},
     /* no_resumption_on_reneg */
     {SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION, 0},
     /* no_legacy_server_connect */
     {SSL_OP_LEGACY_SERVER_CONNECT, SSL_TFLAG_INV},
+    /* allow_no_dhe_kex */
+    {SSL_OP_ALLOW_NO_DHE_KEX, 0},
+    /* chacha reprioritization */
+    {SSL_OP_PRIORITIZE_CHACHA, 0},
     {SSL_CERT_FLAG_TLS_STRICT, SSL_TFLAG_CERT}, /* strict */
+    /* no_middlebox */
+    {SSL_OP_ENABLE_MIDDLEBOX_COMPAT, SSL_TFLAG_INV},
 };
 
 static int ssl_conf_cmd_skip_prefix(SSL_CONF_CTX *cctx, const char **pcmd)
@@ -802,9 +866,9 @@ int SSL_CONF_CTX_finish(SSL_CONF_CTX *cctx)
     }
     if (cctx->canames) {
         if (cctx->ssl)
-            SSL_set_client_CA_list(cctx->ssl, cctx->canames);
+            SSL_set0_CA_list(cctx->ssl, cctx->canames);
         else if (cctx->ctx)
-            SSL_CTX_set_client_CA_list(cctx->ctx, cctx->canames);
+            SSL_CTX_set0_CA_list(cctx->ctx, cctx->canames);
         else
             sk_X509_NAME_pop_free(cctx->canames, X509_NAME_free);
         cctx->canames = NULL;

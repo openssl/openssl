@@ -31,8 +31,11 @@ Initially, the default DH_METHOD is the OpenSSL internal implementation, as
 returned by DH_OpenSSL().
 
 DH_set_default_method() makes B<meth> the default method for all DH
-structures created later. B<NB>: This is true only whilst no ENGINE has been set
+structures created later.
+B<NB>: This is true only whilst no ENGINE has been set
 as a default for DH, so this function is no longer recommended.
+This function is not thread-safe and should not be called at the same time
+as other OpenSSL functions.
 
 DH_get_default_method() returns a pointer to the current default DH_METHOD.
 However, the meaningfulness of this result is dependent on whether the ENGINE

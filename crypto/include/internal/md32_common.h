@@ -22,7 +22,7 @@
  * HASH_CBLOCK
  *      size of a unit chunk HASH_BLOCK operates on.
  * HASH_LONG
- *      has to be at lest 32 bit wide.
+ *      has to be at least 32 bit wide.
  * HASH_CTX
  *      context structure that at least contains following
  *      members:
@@ -48,7 +48,7 @@
  *      name of "block" function capable of treating *unaligned* input
  *      message in original (data) byte order, implemented externally.
  * HASH_MAKE_STRING
- *      macro convering context variables to an ASCII hash string.
+ *      macro converting context variables to an ASCII hash string.
  *
  * MD5 example:
  *
@@ -61,8 +61,6 @@
  *      #define HASH_TRANSFORM          MD5_Transform
  *      #define HASH_FINAL              MD5_Final
  *      #define HASH_BLOCK_DATA_ORDER   md5_block_data_order
- *
- *                                      <appro@fy.chalmers.se>
  */
 
 #include <openssl/crypto.h>
@@ -109,7 +107,6 @@
    * Some GNU C inline assembler templates. Note that these are
    * rotates by *constant* number of bits! But that's exactly
    * what we need here...
-   *                                    <appro@fy.chalmers.se>
    */
 #  if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #   define ROTATE(a,n)  ({ register unsigned int ret;   \
@@ -243,7 +240,7 @@
 #endif
 
 /*
- * Time for some action:-)
+ * Time for some action :-)
  */
 
 int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
@@ -257,10 +254,6 @@ int HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
         return 1;
 
     l = (c->Nl + (((HASH_LONG) len) << 3)) & 0xffffffffUL;
-    /*
-     * 95-05-24 eay Fixed a bug with the overflow handling, thanks to Wei Dai
-     * <weidai@eskimo.com> for pointing it out.
-     */
     if (l < c->Nl)              /* overflow */
         c->Nh++;
     c->Nh += (HASH_LONG) (len >> 29); /* might cause compiler warning on
@@ -368,7 +361,6 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
  * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
  * Well, to be honest it should say that this *prevents*
  * performance degradation.
- *                              <appro@fy.chalmers.se>
  */
 # else
 /*
@@ -376,7 +368,6 @@ int HASH_FINAL(unsigned char *md, HASH_CTX *c)
  * generate better code if MD32_REG_T is defined int. The above
  * pre-processor condition reflects the circumstances under which
  * the conclusion was made and is subject to further extension.
- *                              <appro@fy.chalmers.se>
  */
 #  define MD32_REG_T int
 # endif

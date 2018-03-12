@@ -36,7 +36,7 @@ the call.
 X509_getm_notBefore() and X509_getm_notAfter() are similar to
 X509_get0_notBefore() and X509_get0_notAfter() except they return
 non-constant mutable references to the associated date field of
-the certficate.
+the certificate.
 
 X509_set1_notBefore() and X509_set1_notAfter() set the B<notBefore>
 and B<notAfter> fields of B<x> to B<tm>. Ownership of the passed

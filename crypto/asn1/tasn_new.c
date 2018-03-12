@@ -124,8 +124,13 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
                 goto memerr;
         }
         /* 0 : init. lock */
-        if (asn1_do_lock(pval, 0, it) < 0)
-            goto memerr2;
+        if (asn1_do_lock(pval, 0, it) < 0) {
+            if (!embed) {
+                OPENSSL_free(*pval);
+                *pval = NULL;
+            }
+            goto memerr;
+        }
         asn1_enc_init(pval, it);
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             pseqval = asn1_get_field_ptr(pval, tt);
@@ -142,7 +147,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     return 1;
 
  memerr2:
-    ASN1_item_ex_free(pval, it);
+    asn1_item_embed_free(pval, it, embed);
  memerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ERR_R_MALLOC_FAILURE);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -151,7 +156,7 @@ int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     return 0;
 
  auxerr2:
-    ASN1_item_ex_free(pval, it);
+    asn1_item_embed_free(pval, it, embed);
  auxerr:
     ASN1err(ASN1_F_ASN1_ITEM_EMBED_NEW, ASN1_R_AUX_ERROR);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -266,8 +271,14 @@ static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     if (it->funcs) {
         const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
-        if (pf->prim_new)
+        if (embed) {
+            if (pf->prim_clear) {
+                pf->prim_clear(pval, it);
+                return 1;
+            }
+        } else if (pf->prim_new) {
             return pf->prim_new(pval, it);
+        }
     }
 
     if (it->itype == ASN1_ITYPE_MSTRING)

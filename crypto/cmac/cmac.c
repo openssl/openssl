@@ -60,7 +60,7 @@ CMAC_CTX *CMAC_CTX_new(void)
 
 void CMAC_CTX_cleanup(CMAC_CTX *ctx)
 {
-    EVP_CIPHER_CTX_free(ctx->cctx);
+    EVP_CIPHER_CTX_reset(ctx->cctx);
     OPENSSL_cleanse(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
     OPENSSL_cleanse(ctx->k1, EVP_MAX_BLOCK_LENGTH);
     OPENSSL_cleanse(ctx->k2, EVP_MAX_BLOCK_LENGTH);
@@ -78,6 +78,7 @@ void CMAC_CTX_free(CMAC_CTX *ctx)
     if (!ctx)
         return;
     CMAC_CTX_cleanup(ctx);
+    EVP_CIPHER_CTX_free(ctx->cctx);
     OPENSSL_free(ctx);
 }
 

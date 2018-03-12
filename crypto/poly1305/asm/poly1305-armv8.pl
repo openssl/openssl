@@ -28,6 +28,7 @@
 # Denver	1.64/+50%	1.18(*)
 # X-Gene	2.13/+68%	2.27
 # Mongoose	1.77/+75%	1.12
+# Kryo		2.70/+55%	1.13
 #
 # (*)	estimate based on resources availability is less than 1.0,
 #	i.e. measured result is worse than expected, presumably binary
@@ -100,7 +101,11 @@ poly1305_init:
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
 
+#ifdef	__ILP32__
+	stp	w12,w13,[$len]
+#else
 	stp	$d0,$d1,[$len]
+#endif
 
 	mov	x0,#1
 .Lno_key:

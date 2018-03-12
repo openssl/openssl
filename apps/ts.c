@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <stdlib.h>
 # include <string.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/pem.h>
@@ -79,11 +80,11 @@ static int verify_cb(int ok, X509_STORE_CTX *ctx);
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_CONFIG, OPT_SECTION, OPT_QUERY, OPT_DATA,
-    OPT_DIGEST, OPT_RAND, OPT_TSPOLICY, OPT_NO_NONCE, OPT_CERT,
+    OPT_DIGEST, OPT_TSPOLICY, OPT_NO_NONCE, OPT_CERT,
     OPT_IN, OPT_TOKEN_IN, OPT_OUT, OPT_TOKEN_OUT, OPT_TEXT,
     OPT_REPLY, OPT_QUERYFILE, OPT_PASSIN, OPT_INKEY, OPT_SIGNER,
     OPT_CHAIN, OPT_VERIFY, OPT_CAPATH, OPT_CAFILE, OPT_UNTRUSTED,
-    OPT_MD, OPT_V_ENUM
+    OPT_MD, OPT_V_ENUM, OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ts_options[] = {
@@ -93,8 +94,7 @@ const OPTIONS ts_options[] = {
     {"query", OPT_QUERY, '-', "Generate a TS query"},
     {"data", OPT_DATA, '<', "File to hash"},
     {"digest", OPT_DIGEST, 's', "Digest (as a hex string)"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"tspolicy", OPT_TSPOLICY, 's', "Policy OID to use"},
     {"no_nonce", OPT_NO_NONCE, '-', "Do not include a nonce"},
     {"cert", OPT_CERT, '-', "Put cert request into query"},
@@ -106,7 +106,7 @@ const OPTIONS ts_options[] = {
     {"reply", OPT_REPLY, '-', "Generate a TS reply"},
     {"queryfile", OPT_QUERYFILE, '<', "File containing a TS query"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"inkey", OPT_INKEY, '<', "File with private key for reply"},
+    {"inkey", OPT_INKEY, 's', "File with private key for reply"},
     {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"chain", OPT_CHAIN, '<', "File with signer CA chain"},
     {"verify", OPT_VERIFY, '-', "Verify a TS response"},
@@ -158,7 +158,7 @@ int ts_main(int argc, char **argv)
     const char *section = NULL;
     char **helpp;
     char *password = NULL;
-    char *data = NULL, *digest = NULL, *rnd = NULL, *policy = NULL;
+    char *data = NULL, *digest = NULL, *policy = NULL;
     char *in = NULL, *out = NULL, *queryfile = NULL, *passin = NULL;
     char *inkey = NULL, *signer = NULL, *chain = NULL, *CApath = NULL;
     const EVP_MD *md = NULL;
@@ -207,8 +207,9 @@ int ts_main(int argc, char **argv)
         case OPT_DIGEST:
             digest = opt_arg();
             break;
-        case OPT_RAND:
-            rnd = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_TSPOLICY:
             policy = opt_arg();
@@ -275,16 +276,6 @@ int ts_main(int argc, char **argv)
     if (mode == OPT_ERR || opt_num_rest() != 0)
         goto opthelp;
 
-    /* Seed the random number generator if it is going to be used. */
-    if (mode == OPT_QUERY && !no_nonce) {
-        if (!app_RAND_load_file(NULL, 1) && rnd == NULL)
-            BIO_printf(bio_err, "warning, not much extra random "
-                       "data, consider using the -rand option\n");
-        if (rnd != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(rnd));
-    }
-
     if (mode == OPT_REPLY && passin &&
         !app_passwd(passin, NULL, &password, NULL)) {
         BIO_printf(bio_err, "Error getting password.\n");
@@ -328,10 +319,9 @@ int ts_main(int argc, char **argv)
 
  end:
     X509_VERIFY_PARAM_free(vpm);
-    app_RAND_write_file(NULL);
     NCONF_free(conf);
     OPENSSL_free(password);
-    return (ret);
+    return ret;
 }
 
 /*
@@ -498,7 +488,7 @@ static int create_digest(BIO *input, const char *digest, const EVP_MD *md,
     if (md_value_len < 0)
         return 0;
 
-    if (input) {
+    if (input != NULL) {
         unsigned char buffer[4096];
         int length;
 
@@ -590,7 +580,7 @@ static int reply_command(CONF *conf, const char *section, const char *engine,
     } else {
         response = create_response(conf, section, engine, queryfile,
                                    passin, inkey, md, signer, chain, policy);
-        if (response)
+        if (response != NULL)
             BIO_printf(bio_err, "Response has been generated.\n");
         else
             BIO_printf(bio_err, "Response is not generated.\n");
@@ -709,6 +699,8 @@ static TS_RESP *create_response(CONF *conf, const char *section, const char *eng
             goto end;
     }
 
+    if (!TS_CONF_set_ess_cert_id_digest(conf, section, resp_ctx))
+        goto end;
     if (!TS_CONF_set_def_policy(conf, section, policy, resp_ctx))
         goto end;
     if (!TS_CONF_set_policies(conf, section, resp_ctx))
@@ -744,13 +736,14 @@ static ASN1_INTEGER *serial_cb(TS_RESP_CTX *ctx, void *data)
     const char *serial_file = (const char *)data;
     ASN1_INTEGER *serial = next_serial(serial_file);
 
-    if (!serial) {
+    if (serial == NULL) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                     "Error during serial number "
                                     "generation.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_ADD_INFO_NOT_AVAILABLE);
-    } else
+    } else {
         save_ts_serial(serial_file, serial);
+    }
 
     return serial;
 }
@@ -913,8 +906,9 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
             goto err;
         if ((ctx = TS_REQ_to_TS_VERIFY_CTX(request, NULL)) == NULL)
             goto err;
-    } else
+    } else {
         return NULL;
+    }
 
     /* Add the signature verification flag and arguments. */
     TS_VERIFY_CTX_add_flags(ctx, f | TS_VFY_SIGNATURE);

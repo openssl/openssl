@@ -8,16 +8,20 @@ EC_POINT_add, EC_POINT_dbl, EC_POINT_invert, EC_POINT_is_at_infinity, EC_POINT_i
 
  #include <openssl/ec.h>
 
- int EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
+ int EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
+                  const EC_POINT *b, BN_CTX *ctx);
  int EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX *ctx);
  int EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx);
  int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *p);
  int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx);
  int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
  int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
- int EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[], BN_CTX *ctx);
- int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num, const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
- int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
+ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
+                           EC_POINT *points[], BN_CTX *ctx);
+ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num,
+                   const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
+ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
+                  const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
  int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
  int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 
@@ -64,13 +68,13 @@ EC_GROUP_have_precompute_mult return 1 if a precomputation has been done, or 0 i
 
 =head1 SEE ALSO
 
-L<crypto(7)>, L<ec(7)>, L<EC_GROUP_new(3)>, L<EC_GROUP_copy(3)>,
+L<crypto(7)>, L<EC_GROUP_new(3)>, L<EC_GROUP_copy(3)>,
 L<EC_POINT_new(3)>, L<EC_KEY_new(3)>,
 L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

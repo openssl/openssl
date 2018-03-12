@@ -85,9 +85,9 @@ truncated.
 
  int my_cb(char *buf, int size, int rwflag, void *u)
  {
-      strncpy(buf, (char *)u, size);
-      buf[size - 1] = '\0';
-      return strlen(buf);
+     strncpy(buf, (char *)u, size);
+     buf[size - 1] = '\0';
+     return strlen(buf);
  }
 
 =head1 HISTORY

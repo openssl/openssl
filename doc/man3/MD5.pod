@@ -9,34 +9,28 @@ MD4_Final, MD5_Init, MD5_Update, MD5_Final - MD2, MD4, and MD5 hash functions
 
  #include <openssl/md2.h>
 
- unsigned char *MD2(const unsigned char *d, unsigned long n,
-                  unsigned char *md);
+ unsigned char *MD2(const unsigned char *d, unsigned long n, unsigned char *md);
 
  int MD2_Init(MD2_CTX *c);
- int MD2_Update(MD2_CTX *c, const unsigned char *data,
-                  unsigned long len);
+ int MD2_Update(MD2_CTX *c, const unsigned char *data, unsigned long len);
  int MD2_Final(unsigned char *md, MD2_CTX *c);
 
 
  #include <openssl/md4.h>
 
- unsigned char *MD4(const unsigned char *d, unsigned long n,
-                  unsigned char *md);
+ unsigned char *MD4(const unsigned char *d, unsigned long n, unsigned char *md);
 
  int MD4_Init(MD4_CTX *c);
- int MD4_Update(MD4_CTX *c, const void *data,
-                  unsigned long len);
+ int MD4_Update(MD4_CTX *c, const void *data, unsigned long len);
  int MD4_Final(unsigned char *md, MD4_CTX *c);
 
 
  #include <openssl/md5.h>
 
- unsigned char *MD5(const unsigned char *d, unsigned long n,
-                  unsigned char *md);
+ unsigned char *MD5(const unsigned char *d, unsigned long n, unsigned char *md);
 
  int MD5_Init(MD5_CTX *c);
- int MD5_Update(MD5_CTX *c, const void *data,
-                  unsigned long len);
+ int MD5_Update(MD5_CTX *c, const void *data, unsigned long len);
  int MD5_Final(unsigned char *md, MD5_CTX *c);
 
 =head1 DESCRIPTION

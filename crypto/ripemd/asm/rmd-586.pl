@@ -19,7 +19,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],$0);
+&asm_init($ARGV[0]);
 
 $A="ecx";
 $B="esi";
@@ -339,7 +339,6 @@ sub ripemd160_block
 			  # aligned. The good news are that gcc-2.95
 			  # and later does keep first argument at
 			  # least double-wise aligned.
-			  #			<appro@fy.chalmers.se>
 
 	&set_label("start") unless $normal;
 	&comment("");

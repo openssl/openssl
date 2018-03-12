@@ -2,15 +2,30 @@
 
 =head1 NAME
 
-SSL_SESSION_free - free an allocated SSL_SESSION structure
+SSL_SESSION_new,
+SSL_SESSION_dup,
+SSL_SESSION_up_ref,
+SSL_SESSION_free - create, free and manage SSL_SESSION structures
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+ SSL_SESSION *SSL_SESSION_new(void);
+ SSL_SESSION *SSL_SESSION_dup(SSL_SESSION *src);
+ int SSL_SESSION_up_ref(SSL_SESSION *ses);
  void SSL_SESSION_free(SSL_SESSION *session);
 
 =head1 DESCRIPTION
+
+SSL_SESSION_new() creates a new SSL_SESSION structure and returns a pointer to
+it.
+
+SSL_SESSION_dup() copies the contents of the SSL_SESSION structure in B<src>
+and returns a pointer to it.
+
+SSL_SESSION_up_ref() increments the reference count on the given SSL_SESSION
+structure.
 
 SSL_SESSION_free() decrements the reference count of B<session> and removes
 the B<SSL_SESSION> structure pointed to by B<session> and frees up the allocated
@@ -44,7 +59,10 @@ incorrect reference counts and therefore program failures.
 
 =head1 RETURN VALUES
 
-SSL_SESSION_free() does not provide diagnostic information.
+SSL_SESSION_new returns a pointer to the newly allocated SSL_SESSION structure
+or NULL on error.
+
+SSL_SESSION_up_ref returns 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
@@ -52,6 +70,10 @@ L<ssl(7)>, L<SSL_get_session(3)>,
 L<SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_flush_sessions(3)>,
 L<d2i_SSL_SESSION(3)>
+
+=head1 HISTORY
+
+SSL_SESSION_dup() was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

@@ -6,10 +6,11 @@
  --------------------------------------------------
 
  In addition to the requirements and instructions listed in INSTALL,
- this are required as well:
+ these are required as well:
 
  - You need Perl.  We recommend ActiveState Perl, available from
-   https://www.activestate.com/ActivePerl.
+   https://www.activestate.com/ActivePerl. Another viable alternative
+   appears to be Strawberry Perl, http://strawberryperl.com.
    You also need the perl module Text::Template, available on CPAN.
    Please read NOTES.PERL for more information.
 

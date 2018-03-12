@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,21 +9,32 @@
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
+
 #include "../ssl/ssl_locl.h"
 
+#ifdef __VMS
+# pragma names restore
+#endif
+
 #include "testutil.h"
-#include "test_main.h"
 
 #define IVLEN   12
 #define KEYLEN  16
 
-/* The following are unofficial test vectors generated from a locally modified
- * version of picotls.
+/* The following are self-generated test vectors. This gives us very little
+ * confidence that we've got the implementation right, but at least tells us
+ * if we accidentally  break something in the future. Until we can get some
+ * other source of test vectors this is all we've got.
  * TODO(TLS1.3): As and when official vectors become available we should use
  * those, e.g. see
  * https://www.ietf.org/id/draft-thomson-tls-tls13-vectors-00.txt, however at
  * the time of writing these are not suitable because they are based on
- * draft -16, which works slightly differently to the draft -18 vectors below.
+ * draft -16, which works differently to the draft -20 vectors below.
  */
 
 static unsigned char hs_start_hash[] = {
@@ -51,84 +62,83 @@ static unsigned char ecdhe_secret[] = {
 };
 
 static unsigned char handshake_secret[] = {
-0xdf, 0xc9, 0x41, 0xd8, 0x26, 0x93, 0x2a, 0x59, 0x11, 0xb3, 0xb7, 0xd0, 0x38,
-0xcb, 0x65, 0x6f, 0xda, 0xaf, 0x77, 0x07, 0x1e, 0x40, 0x9a, 0x9b, 0xa6, 0xca,
-0x74, 0xda, 0x17, 0xb4, 0xe0, 0x04,
+0xf5, 0x51, 0xd0, 0xbd, 0x9e, 0x6a, 0xc0, 0x95, 0x5f, 0x8e, 0xae, 0xb6, 0x28,
+0x2e, 0x8d, 0x9e, 0xf3, 0xd4, 0x08, 0x57, 0x81, 0xbc, 0x9d, 0x80, 0x91, 0x8a,
+0x81, 0x33, 0x86, 0x58, 0x7f, 0x46
 };
 
-static const char *client_hts_label = "client handshake traffic secret";
+static const char *client_hts_label = "c hs traffic";
 
 static unsigned char client_hts[] = {
-0x4b, 0x38, 0x48, 0xf1, 0x5d, 0xb1, 0x5e, 0x88, 0xcf, 0x3e, 0x3b, 0xff, 0xa6,
-0xba, 0x02, 0xc1, 0xc5, 0xd1, 0xe5, 0xb1, 0xc3, 0xf3, 0x10, 0xdf, 0xe5, 0xc9,
-0x69, 0x5a, 0x4a, 0xc6, 0x06, 0x38,
+0x61, 0x7b, 0x35, 0x07, 0x6b, 0x9d, 0x0e, 0x08, 0xcf, 0x73, 0x1d, 0x94, 0xa8,
+0x66, 0x14, 0x78, 0x41, 0x09, 0xef, 0x25, 0x55, 0x51, 0x92, 0x1d, 0xd4, 0x6e,
+0x04, 0x01, 0x35, 0xcf, 0x46, 0xab
 };
 
 static unsigned char client_hts_key[] = {
-0xe5, 0x7b, 0x8c, 0x38, 0x6d, 0x6f, 0x09, 0x14, 0xe2, 0xe5, 0x4e, 0x36, 0x23,
-0x91, 0x2a, 0xd4
+0x62, 0xd0, 0xdd, 0x00, 0xf6, 0x96, 0x19, 0xd3, 0xb8, 0x19, 0x3a, 0xb4, 0xa0,
+0x95, 0x85, 0xa7
 };
 
 static unsigned char client_hts_iv[] = {
-0x4d, 0x2e, 0x61, 0x0c, 0x4d, 0x3a, 0x8e, 0x5f, 0x15, 0x41, 0x1e, 0xfd
+0xff, 0xf7, 0x5d, 0xf5, 0xad, 0x35, 0xd5, 0xcb, 0x3c, 0x53, 0xf3, 0xa9
 };
 
-static const char *server_hts_label = "server handshake traffic secret";
+static const char *server_hts_label = "s hs traffic";
 
 static unsigned char server_hts[] = {
-0x74, 0x1f, 0xb3, 0xb8, 0x41, 0x24, 0xc4, 0x7e, 0x1b, 0x2e, 0xa9, 0x4f, 0x0c,
-0x42, 0xc9, 0x06, 0xb7, 0x7c, 0x84, 0x92, 0x05, 0xed, 0x5f, 0x19, 0xda, 0xbb,
-0xbb, 0xce, 0xc7, 0x29, 0x06, 0x7e,
+0xfc, 0xf7, 0xdf, 0xe6, 0x4f, 0xa2, 0xc0, 0x4f, 0x62, 0x35, 0x38, 0x7f, 0x43,
+0x4e, 0x01, 0x42, 0x23, 0x36, 0xd9, 0xc0, 0x39, 0xde, 0x68, 0x47, 0xa0, 0xb9,
+0xdd, 0xcf, 0x29, 0xa8, 0x87, 0x59
 };
 
 static unsigned char server_hts_key[] = {
-0x72, 0x61, 0x1c, 0xc8, 0x0d, 0x65, 0x9c, 0x89, 0xf8, 0x94, 0x9e, 0x32, 0x67,
-0xe1, 0x6c, 0x2d
-
+0x04, 0x67, 0xf3, 0x16, 0xa8, 0x05, 0xb8, 0xc4, 0x97, 0xee, 0x67, 0x04, 0x7b,
+0xbc, 0xbc, 0x54
 };
 
 static unsigned char server_hts_iv[] = {
-0x43, 0xfe, 0x11, 0x29, 0x0f, 0xe8, 0xfe, 0x84, 0x9c, 0x9b, 0x21, 0xef,
+0xde, 0x83, 0xa7, 0x3e, 0x9d, 0x81, 0x4b, 0x04, 0xc4, 0x8b, 0x78, 0x09
 };
 
 static unsigned char master_secret[] = {
-0xfe, 0x8d, 0xfb, 0xd0, 0x14, 0x94, 0x4e, 0x22, 0x65, 0x16, 0x7d, 0xc4, 0x20,
-0x01, 0x5b, 0x10, 0x64, 0x74, 0xb7, 0x22, 0x9a, 0x95, 0xd1, 0x48, 0x0c, 0xb9,
-0xac, 0xd1, 0xa0, 0x28, 0xb7, 0x67
+0x34, 0x83, 0x83, 0x84, 0x67, 0x12, 0xe7, 0xff, 0x24, 0xe8, 0x6e, 0x70, 0x56,
+0x95, 0x16, 0x71, 0x43, 0x7f, 0x19, 0xd7, 0x85, 0x06, 0x9d, 0x75, 0x70, 0x49,
+0x6e, 0x6c, 0xa4, 0x81, 0xf0, 0xb8
 };
 
-static const char *client_ats_label = "client application traffic secret";
+static const char *client_ats_label = "c ap traffic";
 
 static unsigned char client_ats[] = {
-0x56, 0x9e, 0x9c, 0x17, 0xe3, 0x52, 0x1f, 0xdd, 0x09, 0xf4, 0xb8, 0x4f, 0x6c,
-0xd6, 0x6d, 0xa8, 0x23, 0xde, 0xeb, 0x81, 0xbb, 0xb1, 0xde, 0x61, 0xe2, 0x82,
-0x56, 0x27, 0xf7, 0x00, 0x63, 0x81,
+0xc1, 0x4a, 0x6d, 0x79, 0x76, 0xd8, 0x10, 0x2b, 0x5a, 0x0c, 0x99, 0x51, 0x49,
+0x3f, 0xee, 0x87, 0xdc, 0xaf, 0xf8, 0x2c, 0x24, 0xca, 0xb2, 0x14, 0xe8, 0xbe,
+0x71, 0xa8, 0x20, 0x6d, 0xbd, 0xa5
 };
 
 static unsigned char client_ats_key[] = {
-0xcb, 0xfa, 0xae, 0x71, 0x8d, 0xfb, 0x52, 0xba, 0x7b, 0x87, 0xde, 0x8b, 0x6d,
-0xac, 0x92, 0x60
+0xcc, 0x9f, 0x5f, 0x98, 0x0b, 0x5f, 0x10, 0x30, 0x6c, 0xba, 0xd7, 0xbe, 0x98,
+0xd7, 0x57, 0x2e
 };
 
 static unsigned char client_ats_iv[] = {
-0x74, 0x86, 0x88, 0xe9, 0x7f, 0x72, 0xfb, 0xf3, 0x33, 0x1e, 0xfb, 0x55
+0xb8, 0x09, 0x29, 0xe8, 0xd0, 0x2c, 0x70, 0xf6, 0x11, 0x62, 0xed, 0x6b
 };
 
-static const char *server_ats_label = "server application traffic secret";
+static const char *server_ats_label = "s ap traffic";
 
 static unsigned char server_ats[] = {
-0xd1, 0xbf, 0xdc, 0x8b, 0x84, 0xf4, 0x16, 0xb7, 0xc6, 0x90, 0xd9, 0xc9, 0x2c,
-0x23, 0x11, 0xb3, 0x05, 0xad, 0x75, 0xfc, 0xe6, 0x29, 0x90, 0x2b, 0xe1, 0x03,
-0xdd, 0x0c, 0x12, 0x51, 0xea, 0xd2,
+0x2c, 0x90, 0x77, 0x38, 0xd3, 0xf8, 0x37, 0x02, 0xd1, 0xe4, 0x59, 0x8f, 0x48,
+0x48, 0x53, 0x1d, 0x9f, 0x93, 0x65, 0x49, 0x1b, 0x9f, 0x7f, 0x52, 0xc8, 0x22,
+0x29, 0x0d, 0x4c, 0x23, 0x21, 0x92
 };
 
 static unsigned char server_ats_key[] = {
-0x35, 0xc2, 0xd1, 0x54, 0xa8, 0x43, 0x03, 0xc6, 0x55, 0xa0, 0x2e, 0x5e, 0x1f,
-0x82, 0x31, 0x62
+0x0c, 0xb2, 0x95, 0x62, 0xd8, 0xd8, 0x8f, 0x48, 0xb0, 0x2c, 0xbf, 0xbe, 0xd7,
+0xe6, 0x2b, 0xb3
 };
 
 static unsigned char server_ats_iv[] = {
-0xe5, 0x77, 0xd9, 0x8a, 0xb3, 0x2e, 0xec, 0x79, 0xb1, 0x63, 0x68, 0xc2
+0x0d, 0xb2, 0x8f, 0x98, 0x85, 0x86, 0xa1, 0xb7, 0xe4, 0xd5, 0xc6, 0x9c
 };
 
 /* Mocked out implementations of various functions */
@@ -192,6 +202,26 @@ int ssl_log_secret(SSL *ssl,
     return 1;
 }
 
+const EVP_MD *ssl_md(int idx)
+{
+    return EVP_sha256();
+}
+
+void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+                           int line)
+{
+}
+
+int ossl_statem_export_allowed(SSL *s)
+{
+    return 1;
+}
+
+int ossl_statem_export_early_allowed(SSL *s)
+{
+    return 1;
+}
+
 /* End of mocked out code */
 
 static int test_secret(SSL *s, unsigned char *prk,
@@ -207,40 +237,34 @@ static int test_secret(SSL *s, unsigned char *prk,
     const EVP_MD *md = ssl_handshake_md(s);
 
     if (!ssl_handshake_hash(s, hash, sizeof(hash), &hashsize)) {
-        fprintf(stderr, "Failed to get hash\n");
+        TEST_error("Failed to get hash");
         return 0;
     }
 
-    if (!tls13_hkdf_expand(s, md, prk, label, labellen, hash, gensecret,
-                           hashsize)) {
-        fprintf(stderr, "Secret generation failed\n");
+    if (!tls13_hkdf_expand(s, md, prk, label, labellen, hash, hashsize,
+                           gensecret, hashsize)) {
+        TEST_error("Secret generation failed");
         return 0;
     }
 
-    if (memcmp(gensecret, ref_secret, hashsize) != 0) {
-        fprintf(stderr, "Generated secret does not match\n");
+    if (!TEST_mem_eq(gensecret, hashsize, ref_secret, hashsize))
+        return 0;
+
+    if (!tls13_derive_key(s, md, gensecret, key, KEYLEN)) {
+        TEST_error("Key generation failed");
         return 0;
     }
 
-    if (!tls13_derive_key(s, gensecret, key, KEYLEN)) {
-        fprintf(stderr, "Key generation failed\n");
+    if (!TEST_mem_eq(key, KEYLEN, ref_key, KEYLEN))
+        return 0;
+
+    if (!tls13_derive_iv(s, md, gensecret, iv, IVLEN)) {
+        TEST_error("IV generation failed");
         return 0;
     }
 
-    if (memcmp(key, ref_key, KEYLEN) != 0) {
-        fprintf(stderr, "Generated key does not match\n");
+    if (!TEST_mem_eq(iv, IVLEN, ref_iv, IVLEN))
         return 0;
-    }
-
-    if (!tls13_derive_iv(s, gensecret, iv, IVLEN)) {
-        fprintf(stderr, "IV generation failed\n");
-        return 0;
-    }
-
-    if (memcmp(iv, ref_iv, IVLEN) != 0) {
-        fprintf(stderr, "Generated IV does not match\n");
-        return 0;
-    }
 
     return 1;
 }
@@ -255,64 +279,67 @@ static int test_handshake_secrets(void)
     size_t master_secret_length;
 
     ctx = SSL_CTX_new(TLS_method());
-    if (ctx == NULL)
+    if (!TEST_ptr(ctx))
         goto err;
 
     s = SSL_new(ctx);
-    if (s == NULL)
+    if (!TEST_ptr(s ))
         goto err;
 
     s->session = SSL_SESSION_new();
-    if (s->session == NULL)
+    if (!TEST_ptr(s->session))
         goto err;
 
-    if (!tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0,
-                               (unsigned char *)&s->early_secret)) {
-        fprintf(stderr, "Early secret generation failed\n");
+    if (!TEST_true(tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0,
+                                         (unsigned char *)&s->early_secret))) {
+        TEST_info("Early secret generation failed");
         goto err;
     }
 
-    if (memcmp(s->early_secret, early_secret, sizeof(early_secret)) != 0) {
-        fprintf(stderr, "Early secret does not match\n");
+    if (!TEST_mem_eq(s->early_secret, sizeof(early_secret),
+                     early_secret, sizeof(early_secret))) {
+        TEST_info("Early secret does not match");
         goto err;
     }
 
-    if (!tls13_generate_handshake_secret(s, ecdhe_secret,
-                                         sizeof(ecdhe_secret))) {
-        fprintf(stderr, "Hanshake secret generation failed\n");
+    if (!TEST_true(tls13_generate_handshake_secret(s, ecdhe_secret,
+                                                   sizeof(ecdhe_secret)))) {
+        TEST_info("Handshake secret generation failed");
         goto err;
     }
 
-    if (memcmp(s->handshake_secret, handshake_secret,
-               sizeof(handshake_secret)) != 0) {
-        fprintf(stderr, "Handshake secret does not match\n");
+    if (!TEST_mem_eq(s->handshake_secret, sizeof(handshake_secret),
+                     handshake_secret, sizeof(handshake_secret)))
         goto err;
-    }
 
     hashsize = EVP_MD_size(ssl_handshake_md(s));
-    if (sizeof(client_hts) != hashsize || sizeof(client_hts_key) != KEYLEN
-            || sizeof(client_hts_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(client_hts), hashsize))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_hts_key), KEYLEN))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_hts_iv), IVLEN))
+        goto err;
+
+    if (!TEST_true(test_secret(s, s->handshake_secret,
+                               (unsigned char *)client_hts_label,
+                               strlen(client_hts_label), client_hts,
+                               client_hts_key, client_hts_iv))) {
+        TEST_info("Client handshake secret test failed");
         goto err;
     }
 
-    if (!test_secret(s, s->handshake_secret, (unsigned char *)client_hts_label,
-                     strlen(client_hts_label), client_hts, client_hts_key,
-                     client_hts_iv)) {
-        fprintf(stderr, "Client handshake secret test failed\n");
+    if (!TEST_size_t_eq(sizeof(server_hts), hashsize))
         goto err;
-    }
-
-    if (sizeof(server_hts) != hashsize || sizeof(server_hts_key) != KEYLEN
-            || sizeof(server_hts_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(server_hts_key), KEYLEN))
         goto err;
-    }
+    if (!TEST_size_t_eq(sizeof(server_hts_iv), IVLEN))
+        goto err;
 
-    if (!test_secret(s, s->handshake_secret, (unsigned char *)server_hts_label,
-                     strlen(server_hts_label), server_hts, server_hts_key,
-                     server_hts_iv)) {
-        fprintf(stderr, "Server handshake secret test failed\n");
+    if (!TEST_true(test_secret(s, s->handshake_secret,
+                               (unsigned char *)server_hts_label,
+                               strlen(server_hts_label), server_hts,
+                               server_hts_key, server_hts_iv))) {
+        TEST_info("Server handshake secret test failed");
         goto err;
     }
 
@@ -322,43 +349,46 @@ static int test_handshake_secrets(void)
      */
     full_hash = 1;
 
-    if (!tls13_generate_master_secret(s, out_master_secret,
-                                      s->handshake_secret, hashsize,
-                                      &master_secret_length)) {
-        fprintf(stderr, "Master secret generation failed\n");
+    if (!TEST_true(tls13_generate_master_secret(s, out_master_secret,
+                                                s->handshake_secret, hashsize,
+                                                &master_secret_length))) {
+        TEST_info("Master secret generation failed");
         goto err;
     }
 
-    if (master_secret_length != sizeof(master_secret) ||
-            memcmp(out_master_secret, master_secret,
-                   sizeof(master_secret)) != 0) {
-        fprintf(stderr, "Master secret does not match\n");
+    if (!TEST_mem_eq(out_master_secret, master_secret_length,
+                     master_secret, sizeof(master_secret))) {
+        TEST_info("Master secret does not match");
         goto err;
     }
 
-    if (sizeof(client_ats) != hashsize || sizeof(client_ats_key) != KEYLEN
-            || sizeof(client_ats_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(client_ats), hashsize))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_ats_key), KEYLEN))
+        goto err;
+    if (!TEST_size_t_eq(sizeof(client_ats_iv), IVLEN))
+        goto err;
+
+    if (!TEST_true(test_secret(s, out_master_secret,
+                               (unsigned char *)client_ats_label,
+                               strlen(client_ats_label), client_ats,
+                               client_ats_key, client_ats_iv))) {
+        TEST_info("Client application data secret test failed");
         goto err;
     }
 
-    if (!test_secret(s, out_master_secret, (unsigned char *)client_ats_label,
-                     strlen(client_ats_label), client_ats, client_ats_key,
-                     client_ats_iv)) {
-        fprintf(stderr, "Client application data secret test failed\n");
+    if (!TEST_size_t_eq(sizeof(server_ats), hashsize))
         goto err;
-    }
-
-    if (sizeof(server_ats) != hashsize || sizeof(server_ats_key) != KEYLEN
-            || sizeof(server_ats_iv) != IVLEN) {
-        fprintf(stderr, "Internal test error\n");
+    if (!TEST_size_t_eq(sizeof(server_ats_key), KEYLEN))
         goto err;
-    }
+    if (!TEST_size_t_eq(sizeof(server_ats_iv), IVLEN))
+        goto err;
 
-    if (!test_secret(s, out_master_secret, (unsigned char *)server_ats_label,
-                     strlen(server_ats_label), server_ats, server_ats_key,
-                     server_ats_iv)) {
-        fprintf(stderr, "Server application data secret test failed\n");
+    if (!TEST_true(test_secret(s, out_master_secret,
+                               (unsigned char *)server_ats_label,
+                               strlen(server_ats_label), server_ats,
+                               server_ats_key, server_ats_iv))) {
+        TEST_info("Server application data secret test failed");
         goto err;
     }
 
@@ -369,7 +399,8 @@ static int test_handshake_secrets(void)
     return ret;
 }
 
-void register_tests()
+int setup_tests()
 {
     ADD_TEST(test_handshake_secrets);
+    return 1;
 }

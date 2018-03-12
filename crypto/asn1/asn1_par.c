@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,32 +38,32 @@ static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 
     p = str;
     if ((xclass & V_ASN1_PRIVATE) == V_ASN1_PRIVATE)
-        BIO_snprintf(str, sizeof str, "priv [ %d ] ", tag);
+        BIO_snprintf(str, sizeof(str), "priv [ %d ] ", tag);
     else if ((xclass & V_ASN1_CONTEXT_SPECIFIC) == V_ASN1_CONTEXT_SPECIFIC)
-        BIO_snprintf(str, sizeof str, "cont [ %d ]", tag);
+        BIO_snprintf(str, sizeof(str), "cont [ %d ]", tag);
     else if ((xclass & V_ASN1_APPLICATION) == V_ASN1_APPLICATION)
-        BIO_snprintf(str, sizeof str, "appl [ %d ]", tag);
+        BIO_snprintf(str, sizeof(str), "appl [ %d ]", tag);
     else if (tag > 30)
-        BIO_snprintf(str, sizeof str, "<ASN1 %d>", tag);
+        BIO_snprintf(str, sizeof(str), "<ASN1 %d>", tag);
     else
         p = ASN1_tag2str(tag);
 
     if (BIO_printf(bp, fmt, p) <= 0)
         goto err;
-    return (1);
+    return 1;
  err:
-    return (0);
+    return 0;
 }
 
 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent)
 {
-    return (asn1_parse2(bp, &pp, len, 0, 0, indent, 0));
+    return asn1_parse2(bp, &pp, len, 0, 0, indent, 0);
 }
 
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent,
                     int dump)
 {
-    return (asn1_parse2(bp, &pp, len, 0, 0, indent, dump));
+    return asn1_parse2(bp, &pp, len, 0, 0, indent, dump);
 }
 
 static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
@@ -79,8 +79,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     int dump_indent, dump_cont = 0;
 
     if (depth > ASN1_PARSE_MAXDEPTH) {
-            BIO_puts(bp, "BAD RECURSION DEPTH\n");
-            return 0;
+        BIO_puts(bp, "BAD RECURSION DEPTH\n");
+        return 0;
     }
 
     dump_indent = 6;            /* Because we know BIO_dump_indent() */
@@ -342,7 +342,7 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
     ASN1_OBJECT_free(o);
     ASN1_OCTET_STRING_free(os);
     *pp = p;
-    return (ret);
+    return ret;
 }
 
 const char *ASN1_tag2str(int tag)

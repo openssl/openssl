@@ -10,8 +10,8 @@ EVP_PKEY_decrypt_init, EVP_PKEY_decrypt - decrypt using a public key algorithm
 
  int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
-                        unsigned char *out, size_t *outlen,
-                        const unsigned char *in, size_t inlen);
+                      unsigned char *out, size_t *outlen,
+                      const unsigned char *in, size_t inlen);
 
 =head1 DESCRIPTION
 
@@ -49,31 +49,34 @@ Decrypt data using OAEP (for RSA keys):
  #include <openssl/rsa.h>
 
  EVP_PKEY_CTX *ctx;
+ ENGINE *eng;
  unsigned char *out, *in;
  size_t outlen, inlen;
  EVP_PKEY *key;
- /* NB: assumes key in, inlen are already set up
+
+ /*
+  * NB: assumes key, eng, in, inlen are already set up
   * and that key is an RSA private key
   */
- ctx = EVP_PKEY_CTX_new(key);
+ ctx = EVP_PKEY_CTX_new(key, eng);
  if (!ctx)
-        /* Error occurred */
+     /* Error occurred */
  if (EVP_PKEY_decrypt_init(ctx) <= 0)
-        /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_OAEP_PADDING) <= 0)
-        /* Error */
+     /* Error */
 
  /* Determine buffer length */
  if (EVP_PKEY_decrypt(ctx, NULL, &outlen, in, inlen) <= 0)
-        /* Error */
+     /* Error */
 
  out = OPENSSL_malloc(outlen);
 
  if (!out)
-        /* malloc failure */
+     /* malloc failure */
 
  if (EVP_PKEY_decrypt(ctx, out, &outlen, in, inlen) <= 0)
-        /* Error */
+     /* Error */
 
  /* Decrypted data is outlen bytes written to buffer out */
 
@@ -92,7 +95,7 @@ These functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

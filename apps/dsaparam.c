@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <time.h>
 # include <string.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/bn.h>
@@ -24,24 +25,12 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/x509.h>
 # include <openssl/pem.h>
 
-# ifdef GENCB_TEST
-
-static int stop_keygen_flag = 0;
-
-static void timebomb_sigalarm(int foo)
-{
-    stop_keygen_flag = 1;
-}
-
-# endif
-
 static int dsa_cb(int p, int n, BN_GENCB *cb);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
-    OPT_NOOUT, OPT_GENKEY, OPT_RAND, OPT_ENGINE,
-    OPT_TIMEBOMB
+    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
@@ -54,10 +43,7 @@ const OPTIONS dsaparam_options[] = {
     {"C", OPT_C, '-', "Output C code"},
     {"noout", OPT_NOOUT, '-', "No output"},
     {"genkey", OPT_GENKEY, '-', "Generate a DSA key"},
-    {"rand", OPT_RAND, 's', "Files to use for random number input"},
-# ifdef GENCB_TEST
-    {"timebomb", OPT_TIMEBOMB, 'p', "Interrupt keygen after 'pnum' seconds"},
-# endif
+    OPT_R_OPTIONS,
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
@@ -70,13 +56,10 @@ int dsaparam_main(int argc, char **argv)
     DSA *dsa = NULL;
     BIO *in = NULL, *out = NULL;
     BN_GENCB *cb = NULL;
-    int numbits = -1, num = 0, genkey = 0, need_rand = 0;
+    int numbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, i, text = 0, private = 0;
-# ifdef GENCB_TEST
-    int timebomb = 0;
-# endif
-    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, dsaparam_options);
@@ -108,11 +91,6 @@ int dsaparam_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
-        case OPT_TIMEBOMB:
-# ifdef GENCB_TEST
-            timebomb = atoi(opt_arg());
-            break;
-# endif
         case OPT_TEXT:
             text = 1;
             break;
@@ -120,11 +98,11 @@ int dsaparam_main(int argc, char **argv)
             C = 1;
             break;
         case OPT_GENKEY:
-            genkey = need_rand = 1;
+            genkey = 1;
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
-            need_rand = 1;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -139,7 +117,6 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         /* generate a key */
         numbits = num;
-        need_rand = 1;
     }
     private = genkey ? 1 : 0;
 
@@ -150,13 +127,6 @@ int dsaparam_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    if (need_rand) {
-        app_RAND_load_file(NULL, (inrand != NULL));
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
-    }
-
     if (numbits > 0) {
         cb = BN_GENCB_new();
         if (cb == NULL) {
@@ -164,7 +134,6 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
         BN_GENCB_set(cb, dsa_cb, bio_err);
-        assert(need_rand);
         dsa = DSA_new();
         if (dsa == NULL) {
             BIO_printf(bio_err, "Error allocating DSA object\n");
@@ -173,38 +142,16 @@ int dsaparam_main(int argc, char **argv)
         BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                    num);
         BIO_printf(bio_err, "This could take some time\n");
-# ifdef GENCB_TEST
-        if (timebomb > 0) {
-            struct sigaction act;
-            act.sa_handler = timebomb_sigalarm;
-            act.sa_flags = 0;
-            BIO_printf(bio_err,
-                       "(though I'll stop it if not done within %d secs)\n",
-                       timebomb);
-            if (sigaction(SIGALRM, &act, NULL) != 0) {
-                BIO_printf(bio_err, "Error, couldn't set SIGALRM handler\n");
-                goto end;
-            }
-            alarm(timebomb);
-        }
-# endif
         if (!DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL, cb)) {
-# ifdef GENCB_TEST
-            if (stop_keygen_flag) {
-                BIO_printf(bio_err, "DSA key generation time-stopped\n");
-                /* This is an asked-for behaviour! */
-                ret = 0;
-                goto end;
-            }
-# endif
             ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
-    } else if (informat == FORMAT_ASN1)
+    } else if (informat == FORMAT_ASN1) {
         dsa = d2i_DSAparams_bio(in, NULL);
-    else
+    } else {
         dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL);
+    }
     if (dsa == NULL) {
         BIO_printf(bio_err, "unable to load DSA parameters\n");
         ERR_print_errors(bio_err);
@@ -234,11 +181,11 @@ int dsaparam_main(int argc, char **argv)
                             "\n");
         BIO_printf(bio_out, "    if (dsa == NULL)\n"
                             "        return NULL;\n");
-        BIO_printf(bio_out, "    dsa->p = BN_bin2bn(dsap_%d, sizeof (dsap_%d), NULL);\n",
+        BIO_printf(bio_out, "    dsa->p = BN_bin2bn(dsap_%d, sizeof(dsap_%d), NULL);\n",
                bits_p, bits_p);
-        BIO_printf(bio_out, "    dsa->q = BN_bin2bn(dsaq_%d, sizeof (dsaq_%d), NULL);\n",
+        BIO_printf(bio_out, "    dsa->q = BN_bin2bn(dsaq_%d, sizeof(dsaq_%d), NULL);\n",
                bits_p, bits_p);
-        BIO_printf(bio_out, "    dsa->g = BN_bin2bn(dsag_%d, sizeof (dsag_%d), NULL);\n",
+        BIO_printf(bio_out, "    dsa->g = BN_bin2bn(dsag_%d, sizeof(dsag_%d), NULL);\n",
                bits_p, bits_p);
         BIO_printf(bio_out, "    if (!dsa->p || !dsa->q || !dsa->g) {\n"
                             "        DSA_free(dsa);\n"
@@ -262,7 +209,6 @@ int dsaparam_main(int argc, char **argv)
     if (genkey) {
         DSA *dsakey;
 
-        assert(need_rand);
         if ((dsakey = DSAparams_dup(dsa)) == NULL)
             goto end;
         if (!DSA_generate_key(dsakey)) {
@@ -278,8 +224,6 @@ int dsaparam_main(int argc, char **argv)
                                             NULL);
         DSA_free(dsakey);
     }
-    if (need_rand)
-        app_RAND_write_file(NULL);
     ret = 0;
  end:
     BN_GENCB_free(cb);
@@ -287,7 +231,7 @@ int dsaparam_main(int argc, char **argv)
     BIO_free_all(out);
     DSA_free(dsa);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 static int dsa_cb(int p, int n, BN_GENCB *cb)
@@ -304,10 +248,6 @@ static int dsa_cb(int p, int n, BN_GENCB *cb)
         c = '\n';
     BIO_write(BN_GENCB_get_arg(cb), &c, 1);
     (void)BIO_flush(BN_GENCB_get_arg(cb));
-# ifdef GENCB_TEST
-    if (stop_keygen_flag)
-        return 0;
-# endif
     return 1;
 }
 #endif

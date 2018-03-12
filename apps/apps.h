@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,17 +10,20 @@
 #ifndef HEADER_APPS_H
 # define HEADER_APPS_H
 
-# include "e_os.h"
-# if defined(__unix) || defined(__unix__)
-#  include <sys/time.h> /* struct timeval for DTLS */
-# endif
+# include "e_os.h" /* struct timeval for DTLS */
+# include "internal/nelem.h"
 # include <assert.h>
+
+# include <sys/types.h>
+# ifndef OPENSSL_NO_POSIX_IO
+#  include <sys/stat.h>
+#  include <fcntl.h>
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/bio.h>
 # include <openssl/x509.h>
-# include <openssl/lhash.h>
 # include <openssl/conf.h>
 # include <openssl/txt_db.h>
 # include <openssl/engine.h>
@@ -40,27 +43,38 @@
  */
 #define _UC(c) ((unsigned char)(c))
 
-int app_RAND_load_file(const char *file, int dont_warn);
-int app_RAND_write_file(const char *file);
-/*
- * When `file' is NULL, use defaults. `bio_e' is for error messages.
- */
-void app_RAND_allow_write_file(void);
-long app_RAND_load_files(char *file); /* `file' is a list of files to read,
-                                       * separated by LIST_SEPARATOR_CHAR
-                                       * (see e_os.h).  The string is
-                                       * destroyed! */
+void app_RAND_load_conf(CONF *c, const char *section);
+void app_RAND_write(void);
 
 extern char *default_config_file;
 extern BIO *bio_in;
 extern BIO *bio_out;
 extern BIO *bio_err;
+extern const unsigned char tls13_aes128gcmsha256_id[];
+extern const unsigned char tls13_aes256gcmsha384_id[];
+extern BIO_ADDR *ourpeer;
+
+BIO_METHOD *apps_bf_prefix(void);
+/*
+ * The control used to set the prefix with BIO_ctrl()
+ * We make it high enough so the chance of ever clashing with the BIO library
+ * remains unlikely for the foreseeable future and beyond.
+ */
+#define PREFIX_CTRL_SET_PREFIX  (1 << 15)
+/*
+ * apps_bf_prefix() returns a dynamically created BIO_METHOD, which we
+ * need to destroy at some point.  When created internally, it's stored
+ * in an internal pointer which can be freed with the following function
+ */
+void destroy_prefix_method(void);
+
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
+CONF *app_load_config_bio(BIO *in, const char *filename);
 CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
@@ -175,7 +189,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_V_ALLOW_PROXY_CERTS
 
 /*
- * Common "extended"? options.
+ * Common "extended validation" options.
  */
 # define OPT_X_ENUM \
         OPT_X__FIRST=1000, \
@@ -212,10 +226,12 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_NOSSL3, OPT_S_NOTLS1, OPT_S_NOTLS1_1, OPT_S_NOTLS1_2, \
         OPT_S_NOTLS1_3, OPT_S_BUGS, OPT_S_NO_COMP, OPT_S_NOTICKET, \
         OPT_S_SERVERPREF, OPT_S_LEGACYRENEG, OPT_S_LEGACYCONN, \
-        OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_STRICT, OPT_S_SIGALGS, \
-        OPT_S_CLIENTSIGALGS, OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
-        OPT_S_DHPARAM, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S__LAST
+        OPT_S_ONRESUMP, OPT_S_NOLEGACYCONN, OPT_S_ALLOW_NO_DHE_KEX, \
+        OPT_S_PRIORITIZE_CHACHA, \
+        OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
+        OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
+        OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
@@ -231,12 +247,18 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"serverpref", OPT_S_SERVERPREF, '-', "Use server's cipher preferences"}, \
         {"legacy_renegotiation", OPT_S_LEGACYRENEG, '-', \
             "Enable use of legacy renegotiation (dangerous)"}, \
+        {"no_renegotiation", OPT_S_NO_RENEGOTIATION, '-', \
+            "Disable all renegotiation."}, \
         {"legacy_server_connect", OPT_S_LEGACYCONN, '-', \
             "Allow initial connection to servers that don't support RI"}, \
         {"no_resumption_on_reneg", OPT_S_ONRESUMP, '-', \
             "Disallow session resumption on renegotiation"}, \
         {"no_legacy_server_connect", OPT_S_NOLEGACYCONN, '-', \
             "Disallow initial connection to servers that don't support RI"}, \
+        {"allow_no_dhe_kex", OPT_S_ALLOW_NO_DHE_KEX, '-', \
+            "In TLSv1.3 allow non-(ec)dhe based key exchange on resumption"}, \
+        {"prioritize_chacha", OPT_S_PRIORITIZE_CHACHA, '-', \
+            "Prioritize ChaCha ciphers when preferred by clients"}, \
         {"strict", OPT_S_STRICT, '-', \
             "Enforce strict certificate checks as per TLS standard"}, \
         {"sigalgs", OPT_S_SIGALGS, 's', \
@@ -244,15 +266,19 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"client_sigalgs", OPT_S_CLIENTSIGALGS, 's', \
             "Signature algorithms to support for client certificate" \
             " authentication (colon-separated list)" }, \
+        {"groups", OPT_S_GROUPS, 's', \
+            "Groups to advertise (colon-separated list)" }, \
         {"curves", OPT_S_CURVES, 's', \
-            "Elliptic curves to advertise (colon-separated list)" }, \
+            "Groups to advertise (colon-separated list)" }, \
         {"named_curve", OPT_S_NAMEDCURVE, 's', \
             "Elliptic curve used for ECDHE (server-side only)" }, \
         {"cipher", OPT_S_CIPHER, 's', "Specify cipher list to be used"}, \
-        {"dhparam", OPT_S_DHPARAM, '<', \
-            "DH parameter file to use, in cert file if not specified"}, \
+        {"record_padding", OPT_S_RECORD_PADDING, 's', \
+            "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
-            "Perform all sorts of protocol violations for testing purposes"}
+            "Perform all sorts of protocol violations for testing purposes"}, \
+        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', "Disable TLSv1.3 middlebox compat mode" }
+
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \
@@ -270,18 +296,37 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_LEGACYCONN: \
         case OPT_S_ONRESUMP: \
         case OPT_S_NOLEGACYCONN: \
+        case OPT_S_ALLOW_NO_DHE_KEX: \
+        case OPT_S_PRIORITIZE_CHACHA: \
         case OPT_S_STRICT: \
         case OPT_S_SIGALGS: \
         case OPT_S_CLIENTSIGALGS: \
+        case OPT_S_GROUPS: \
         case OPT_S_CURVES: \
         case OPT_S_NAMEDCURVE: \
         case OPT_S_CIPHER: \
-        case OPT_S_DHPARAM: \
-        case OPT_S_DEBUGBROKE
+        case OPT_S_RECORD_PADDING: \
+        case OPT_S_NO_RENEGOTIATION: \
+        case OPT_S_DEBUGBROKE: \
+        case OPT_S_NO_MIDDLEBOX
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
   || o == OPT_S_NOTLS1_2 || o == OPT_S_NOTLS1_3)
+
+/*
+ * Random state options.
+ */
+# define OPT_R_ENUM \
+        OPT_R__FIRST=1500, OPT_R_RAND, OPT_R_WRITERAND, OPT_R__LAST
+
+# define OPT_R_OPTIONS \
+    {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
+    {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
+
+# define OPT_R_CASES \
+        OPT_R__FIRST: case OPT_R__LAST: break; \
+        case OPT_R_RAND: case OPT_R_WRITERAND
 
 /*
  * Option parsing.
@@ -353,10 +398,10 @@ int opt_md(const char *name, const EVP_MD **mdp);
 char *opt_arg(void);
 char *opt_flag(void);
 char *opt_unknown(void);
-char *opt_reset(void);
 char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
+int opt_rand(int i);
 void opt_help(const OPTIONS * list);
 int opt_format_error(const char *s, unsigned long flags);
 
@@ -400,6 +445,8 @@ void print_name(BIO *out, const char *title, X509_NAME *nm,
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
 void print_array(BIO *, const char *, int, const unsigned char *);
+int set_nameopt(const char *arg);
+unsigned long get_nameopt(void);
 int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
@@ -468,6 +515,10 @@ typedef struct db_attr_st {
 typedef struct ca_db_st {
     DB_ATTR attributes;
     TXT_DB *db;
+    char *dbfname;
+# ifndef OPENSSL_NO_POSIX_IO
+    struct stat dbst;
+# endif
 } CA_DB;
 
 void* app_malloc(int sz, const char *what);
@@ -490,8 +541,6 @@ int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b);
 int parse_yesno(const char *str, int def);
 
 X509_NAME *parse_name(const char *str, long chtype, int multirdn);
-int args_verify(char ***pargs, int *pargc,
-                int *badarg, X509_VERIFY_PARAM **pm);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
@@ -503,9 +552,9 @@ int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
-# ifndef OPENSSL_NO_PSK
+
 extern char *psk_key;
-# endif
+
 
 unsigned char *next_protos_parse(size_t *outlen, const char *in);
 
@@ -546,10 +595,16 @@ void store_setup_crl_download(X509_STORE *st);
 
 # define APP_PASS_LEN    1024
 
-# define SERIAL_RAND_BITS        64
+/*
+ * IETF RFC 5280 says serial number must be <= 20 bytes. Use 159 bits
+ * so that the first bit will never be one, so that the DER encoding
+ * rules won't force a leading octet.
+ */
+# define SERIAL_RAND_BITS        159
 
 int app_isdir(const char *);
 int app_access(const char *, int flag);
+char *app_dirname(char *path);
 int fileno_stdin(void);
 int fileno_stdout(void);
 int raw_read_stdin(void *, int);
@@ -569,7 +624,5 @@ typedef struct verify_options_st {
 } VERIFY_CB_ARGS;
 
 extern VERIFY_CB_ARGS verify_args;
-
-# include "progs.h"
 
 #endif

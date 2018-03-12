@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,8 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/bio.h>
-#include <openssl/lhash.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
@@ -50,18 +50,18 @@ int errstr_main(int argc, char **argv)
 
     ret = 0;
     for (argv = opt_rest(); *argv; argv++) {
-        if (sscanf(*argv, "%lx", &l) == 0)
+        if (sscanf(*argv, "%lx", &l) == 0) {
             ret++;
-        else {
+        } else {
             /* We're not really an SSL application so this won't auto-init, but
              * we're still interested in SSL error strings
              */
             OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS
                              | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
-            ERR_error_string_n(l, buf, sizeof buf);
+            ERR_error_string_n(l, buf, sizeof(buf));
             BIO_printf(bio_out, "%s\n", buf);
         }
     }
  end:
-    return (ret);
+    return ret;
 }

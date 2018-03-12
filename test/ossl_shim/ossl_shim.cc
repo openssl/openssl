@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #define __STDC_FORMAT_MACROS
 #endif
 
+#include "packeted_bio.h"
 #include <openssl/e_os2.h>
 
 #if !defined(OPENSSL_SYS_WINDOWS)
@@ -53,7 +54,6 @@ OPENSSL_MSVC_PRAGMA(comment(lib, "Ws2_32.lib"))
 #include <vector>
 
 #include "async_bio.h"
-#include "packeted_bio.h"
 #include "test_config.h"
 
 namespace bssl {
@@ -518,6 +518,7 @@ class SocketCloser {
 };
 
 static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
+  const char sess_id_ctx[] = "ossl_shim";
   bssl::UniquePtr<SSL_CTX> ssl_ctx(SSL_CTX_new(
       config->is_dtls ? DTLS_method() : TLS_method()));
   if (!ssl_ctx) {
@@ -632,6 +633,11 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
   if (config->use_null_client_ca_list) {
     SSL_CTX_set_client_CA_list(ssl_ctx.get(), nullptr);
   }
+
+  if (!SSL_CTX_set_session_id_context(ssl_ctx.get(),
+                                      (const unsigned char *)sess_id_ctx,
+                                      sizeof(sess_id_ctx) - 1))
+    return nullptr;
 
   return ssl_ctx;
 }
@@ -852,7 +858,7 @@ static bool CheckHandshakeProperties(SSL *ssl, bool is_resume) {
       return false;
     }
   } else if (!config->is_server || config->require_any_client_certificate) {
-    if (SSL_get_peer_cert_chain(ssl) == nullptr) {
+    if (SSL_get_peer_certificate(ssl) == nullptr) {
       fprintf(stderr, "Received no peer certificate but expected one.\n");
       return false;
     }
@@ -962,7 +968,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
   }
   if (config->enable_all_curves) {
     static const int kAllCurves[] = {
-      NID_X9_62_prime256v1, NID_secp384r1, NID_secp521r1, NID_X25519,
+      NID_X25519, NID_X9_62_prime256v1, NID_X448, NID_secp521r1, NID_secp384r1
     };
     if (!SSL_set1_curves(ssl.get(), kAllCurves,
                          OPENSSL_ARRAY_SIZE(kAllCurves))) {
@@ -1043,7 +1049,7 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     }
 
     // Reset the state to assert later that the callback isn't called in
-    // renegotations.
+    // renegotiations.
     GetTestState(ssl.get())->got_new_session = false;
   }
 

@@ -2,10 +2,10 @@
 
 =head1 NAME
 
-ENGINE_get_DH, ENGINE_get_DSA, ENGINE_get_ECDH, ENGINE_get_ECDSA,
+ENGINE_get_DH, ENGINE_get_DSA,
 ENGINE_by_id, ENGINE_get_cipher_engine, ENGINE_get_default_DH,
-ENGINE_get_default_DSA, ENGINE_get_default_ECDH,
-ENGINE_get_default_ECDSA, ENGINE_get_default_RAND,
+ENGINE_get_default_DSA,
+ENGINE_get_default_RAND,
 ENGINE_get_default_RSA, ENGINE_get_digest_engine, ENGINE_get_first,
 ENGINE_get_last, ENGINE_get_next, ENGINE_get_prev, ENGINE_new,
 ENGINE_get_ciphers, ENGINE_get_ctrl_function, ENGINE_get_digests,
@@ -17,15 +17,15 @@ ENGINE_get_name, ENGINE_get_cmd_defns, ENGINE_get_cipher,
 ENGINE_get_digest, ENGINE_add, ENGINE_cmd_is_executable,
 ENGINE_ctrl, ENGINE_ctrl_cmd, ENGINE_ctrl_cmd_string,
 ENGINE_finish, ENGINE_free, ENGINE_get_flags, ENGINE_init,
-ENGINE_register_DH, ENGINE_register_DSA, ENGINE_register_ECDH,
-ENGINE_register_ECDSA, ENGINE_register_RAND, ENGINE_register_RSA,
+ENGINE_register_DH, ENGINE_register_DSA,
+ENGINE_register_RAND, ENGINE_register_RSA,
 ENGINE_register_all_complete, ENGINE_register_ciphers,
 ENGINE_register_complete, ENGINE_register_digests, ENGINE_remove,
-ENGINE_set_DH, ENGINE_set_DSA, ENGINE_set_ECDH, ENGINE_set_ECDSA,
+ENGINE_set_DH, ENGINE_set_DSA,
 ENGINE_set_RAND, ENGINE_set_RSA, ENGINE_set_ciphers,
 ENGINE_set_cmd_defns, ENGINE_set_ctrl_function, ENGINE_set_default,
-ENGINE_set_default_DH, ENGINE_set_default_DSA, ENGINE_set_default_ECDH,
-ENGINE_set_default_ECDSA, ENGINE_set_default_RAND, ENGINE_set_default_RSA,
+ENGINE_set_default_DH, ENGINE_set_default_DSA,
+ENGINE_set_default_RAND, ENGINE_set_default_RSA,
 ENGINE_set_default_ciphers, ENGINE_set_default_digests,
 ENGINE_set_default_string, ENGINE_set_destroy_function,
 ENGINE_set_digests, ENGINE_set_finish_function, ENGINE_set_flags,
@@ -33,11 +33,11 @@ ENGINE_set_id, ENGINE_set_init_function, ENGINE_set_load_privkey_function,
 ENGINE_set_load_pubkey_function, ENGINE_set_name, ENGINE_up_ref,
 ENGINE_get_table_flags, ENGINE_cleanup,
 ENGINE_load_builtin_engines, ENGINE_register_all_DH,
-ENGINE_register_all_DSA, ENGINE_register_all_ECDH,
-ENGINE_register_all_ECDSA, ENGINE_register_all_RAND,
+ENGINE_register_all_DSA,
+ENGINE_register_all_RAND,
 ENGINE_register_all_RSA, ENGINE_register_all_ciphers,
 ENGINE_register_all_digests, ENGINE_set_table_flags, ENGINE_unregister_DH,
-ENGINE_unregister_DSA, ENGINE_unregister_ECDH, ENGINE_unregister_ECDSA,
+ENGINE_unregister_DSA,
 ENGINE_unregister_RAND, ENGINE_unregister_RSA, ENGINE_unregister_ciphers,
 ENGINE_unregister_digests
 - ENGINE cryptographic module support
@@ -63,8 +63,6 @@ ENGINE_unregister_digests
 
  ENGINE *ENGINE_get_default_RSA(void);
  ENGINE *ENGINE_get_default_DSA(void);
- ENGINE *ENGINE_get_default_ECDH(void);
- ENGINE *ENGINE_get_default_ECDSA(void);
  ENGINE *ENGINE_get_default_DH(void);
  ENGINE *ENGINE_get_default_RAND(void);
  ENGINE *ENGINE_get_cipher_engine(int nid);
@@ -72,8 +70,6 @@ ENGINE_unregister_digests
 
  int ENGINE_set_default_RSA(ENGINE *e);
  int ENGINE_set_default_DSA(ENGINE *e);
- int ENGINE_set_default_ECDH(ENGINE *e);
- int ENGINE_set_default_ECDSA(ENGINE *e);
  int ENGINE_set_default_DH(ENGINE *e);
  int ENGINE_set_default_RAND(ENGINE *e);
  int ENGINE_set_default_ciphers(ENGINE *e);
@@ -91,12 +87,6 @@ ENGINE_unregister_digests
  int ENGINE_register_DSA(ENGINE *e);
  void ENGINE_unregister_DSA(ENGINE *e);
  void ENGINE_register_all_DSA(void);
- int ENGINE_register_ECDH(ENGINE *e);
- void ENGINE_unregister_ECDH(ENGINE *e);
- void ENGINE_register_all_ECDH(void);
- int ENGINE_register_ECDSA(ENGINE *e);
- void ENGINE_unregister_ECDSA(ENGINE *e);
- void ENGINE_register_all_ECDSA(void);
  int ENGINE_register_DH(ENGINE *e);
  void ENGINE_unregister_DH(ENGINE *e);
  void ENGINE_register_all_DH(void);
@@ -115,9 +105,9 @@ ENGINE_unregister_digests
  int ENGINE_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
  int ENGINE_cmd_is_executable(ENGINE *e, int cmd);
  int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name,
-         long i, void *p, void (*f)(void), int cmd_optional);
+                     long i, void *p, void (*f)(void), int cmd_optional);
  int ENGINE_ctrl_cmd_string(ENGINE *e, const char *cmd_name, const char *arg,
-         int cmd_optional);
+                            int cmd_optional);
 
  ENGINE *ENGINE_new(void);
  int ENGINE_free(ENGINE *e);
@@ -127,8 +117,6 @@ ENGINE_unregister_digests
  int ENGINE_set_name(ENGINE *e, const char *name);
  int ENGINE_set_RSA(ENGINE *e, const RSA_METHOD *rsa_meth);
  int ENGINE_set_DSA(ENGINE *e, const DSA_METHOD *dsa_meth);
- int ENGINE_set_ECDH(ENGINE *e, const ECDH_METHOD *dh_meth);
- int ENGINE_set_ECDSA(ENGINE *e, const ECDSA_METHOD *dh_meth);
  int ENGINE_set_DH(ENGINE *e, const DH_METHOD *dh_meth);
  int ENGINE_set_RAND(ENGINE *e, const RAND_METHOD *rand_meth);
  int ENGINE_set_destroy_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR destroy_f);
@@ -146,8 +134,6 @@ ENGINE_unregister_digests
  const char *ENGINE_get_name(const ENGINE *e);
  const RSA_METHOD *ENGINE_get_RSA(const ENGINE *e);
  const DSA_METHOD *ENGINE_get_DSA(const ENGINE *e);
- const ECDH_METHOD *ENGINE_get_ECDH(const ENGINE *e);
- const ECDSA_METHOD *ENGINE_get_ECDSA(const ENGINE *e);
  const DH_METHOD *ENGINE_get_DH(const ENGINE *e);
  const RAND_METHOD *ENGINE_get_RAND(const ENGINE *e);
  ENGINE_GEN_INT_FUNC_PTR ENGINE_get_destroy_function(const ENGINE *e);
@@ -164,9 +150,9 @@ ENGINE_unregister_digests
  const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 
  EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
-     UI_METHOD *ui_method, void *callback_data);
+                                   UI_METHOD *ui_method, void *callback_data);
  EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
-     UI_METHOD *ui_method, void *callback_data);
+                                  UI_METHOD *ui_method, void *callback_data);
 
 Deprecated:
 
@@ -335,29 +321,6 @@ consideration is whether any/all available ENGINE implementations should be
 made visible to OpenSSL - this is controlled by calling the various "load"
 functions.
 
-Having called any of these functions, ENGINE objects would have been
-dynamically allocated and populated with these implementations and linked
-into OpenSSL's internal linked list. At this point it is important to
-mention an important API function;
-
- void ENGINE_cleanup(void)
-
-If no ENGINE API functions are called at all in an application, then there
-are no inherent memory leaks to worry about from the ENGINE functionality.
-However, prior to OpenSSL 1.1.0 if any ENGINEs are loaded, even if they are
-never registered or used, it was necessary to use the ENGINE_cleanup() function
-to correspondingly cleanup before program exit, if the caller wishes to avoid
-memory leaks. This mechanism used an internal callback registration table
-so that any ENGINE API functionality that knows it requires cleanup can
-register its cleanup details to be called during ENGINE_cleanup(). This
-approach allowed ENGINE_cleanup() to clean up after any ENGINE functionality
-at all that your program uses, yet doesn't automatically create linker
-dependencies to all possible ENGINE functionality - only the cleanup
-callbacks required by the functionality you do use will be required by the
-linker. From OpenSSL 1.1.0 it is no longer necessary to explicitly call
-ENGINE_cleanup and this function is deprecated. Cleanup automatically takes
-place at program exit.
-
 The fact that ENGINEs are made visible to OpenSSL (and thus are linked into
 the program and loaded into memory at run-time) does not mean they are
 "registered" or called into use by OpenSSL automatically - that behaviour
@@ -372,6 +335,11 @@ things, so we will simply illustrate the consequences as they apply to a
 couple of simple cases and leave developers to consider these and the
 source code to openssl's builtin utilities as guides.
 
+If no ENGINE API functions are called within an application, then OpenSSL
+will not allocate any internal resources.  Prior to OpenSSL 1.1.0, however,
+if any ENGINEs are loaded, even if not registered or used, it was necessary to
+call ENGINE_cleanup() before the program exits.
+
 I<Using a specific ENGINE implementation>
 
 Here we'll assume an application has been configured by its user or admin
@@ -385,17 +353,19 @@ illustrates how to approach this;
  const char *engine_id = "ACME";
  ENGINE_load_builtin_engines();
  e = ENGINE_by_id(engine_id);
- if(!e)
+ if (!e)
      /* the engine isn't available */
      return;
- if(!ENGINE_init(e)) {
+ if (!ENGINE_init(e)) {
      /* the engine couldn't initialise, release 'e' */
      ENGINE_free(e);
      return;
  }
- if(!ENGINE_set_default_RSA(e))
-     /* This should only happen when 'e' can't initialise, but the previous
-      * statement suggests it did. */
+ if (!ENGINE_set_default_RSA(e))
+     /*
+      * This should only happen when 'e' can't initialise, but the previous
+      * statement suggests it did.
+      */
      abort();
  ENGINE_set_default_DSA(e);
  ENGINE_set_default_ciphers(e);
@@ -474,9 +444,9 @@ boolean success or failure.
      ENGINE *e = ENGINE_by_id(engine_id);
      if (!e) return 0;
      while (pre_num--) {
-         if(!ENGINE_ctrl_cmd_string(e, pre_cmds[0], pre_cmds[1], 0)) {
+         if (!ENGINE_ctrl_cmd_string(e, pre_cmds[0], pre_cmds[1], 0)) {
              fprintf(stderr, "Failed command (%s - %s:%s)\n", engine_id,
-                 pre_cmds[0], pre_cmds[1] ? pre_cmds[1] : "(NULL)");
+                     pre_cmds[0], pre_cmds[1] ? pre_cmds[1] : "(NULL)");
              ENGINE_free(e);
              return 0;
          }
@@ -487,13 +457,15 @@ boolean success or failure.
          ENGINE_free(e);
          return 0;
      }
-     /* ENGINE_init() returned a functional reference, so free the structural
-      * reference from ENGINE_by_id(). */
+     /*
+      * ENGINE_init() returned a functional reference, so free the structural
+      * reference from ENGINE_by_id().
+      */
      ENGINE_free(e);
-     while(post_num--) {
-         if(!ENGINE_ctrl_cmd_string(e, post_cmds[0], post_cmds[1], 0)) {
+     while (post_num--) {
+         if (!ENGINE_ctrl_cmd_string(e, post_cmds[0], post_cmds[1], 0)) {
              fprintf(stderr, "Failed command (%s - %s:%s)\n", engine_id,
-                 post_cmds[0], post_cmds[1] ? post_cmds[1] : "(NULL)");
+                     post_cmds[0], post_cmds[1] ? post_cmds[1] : "(NULL)");
              ENGINE_finish(e);
              return 0;
          }
@@ -546,7 +518,7 @@ If an ENGINE specifies the ENGINE_FLAGS_MANUAL_CMD_CTRL flag, then it will
 simply pass all these "core" control commands directly to the ENGINE's ctrl()
 handler (and thus, it must have supplied one), so it is up to the ENGINE to
 reply to these "discovery" commands itself. If that flag is not set, then the
-OpenSSL framework code will work with the following rules;
+OpenSSL framework code will work with the following rules:
 
  if no ctrl() handler supplied;
      ENGINE_HAS_CTRL_FUNCTION returns FALSE (zero),
@@ -589,19 +561,102 @@ might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific
 extension).
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_ENGINES>
+
+The path to the engines directory.
+
+=back
+
+=head1 RETURN VALUES
+
+ENGINE_get_first(), ENGINE_get_last(), ENGINE_get_next() and ENGINE_get_prev()
+return a valid B<ENGINE> structure or NULL if an error occurred.
+
+ENGINE_add() and ENGINE_remove() return 1 on success or 0 on error.
+
+ENGINE_by_id() returns a valid B<ENGINE> structure or NULL if an error occurred.
+
+ENGINE_init() and ENGINE_finish() return 1 on success or 0 on error.
+
+All ENGINE_get_default_TYPE() functions, ENGINE_get_cipher_engine() and
+ENGINE_get_digest_engine() return a valid B<ENGINE> structure on success or NULL
+if an error occurred.
+
+All ENGINE_set_default_TYPE() functions return 1 on success or 0 on error.
+
+ENGINE_set_default() returns 1 on success or 0 on error.
+
+ENGINE_get_table_flags() returns an unsigned integer value representing the
+global table flags which are used to control the registration behaviour of
+B<ENGINE> implementations.
+
+All ENGINE_register_TYPE() functions return 1 on success or 0 on error.
+
+ENGINE_register_complete() and ENGINE_register_all_complete() return 1 on success
+or 0 on error.
+
+ENGINE_ctrl() returns a positive value on success or others on error.
+
+ENGINE_cmd_is_executable() returns 1 if B<cmd> is executable or 0 otherwise.
+
+ENGINE_ctrl_cmd() and ENGINE_ctrl_cmd_string() return 1 on success or 0 on error.
+
+ENGINE_new() returns a valid B<ENGINE> structure on success or NULL if an error
+occurred.
+
+ENGINE_free() returns 1 on success or 0 on error.
+
+ENGINE_up_ref() returns 1 on success or 0 on error.
+
+ENGINE_set_id() and ENGINE_set_name() return 1 on success or 0 on error.
+
+All other B<ENGINE_set_*> functions return 1 on success or 0 on error.
+
+ENGINE_get_id() and ENGINE_get_name() return a string representing the identifier
+and the name of the ENGINE B<e> respectively.
+
+ENGINE_get_RSA(), ENGINE_get_DSA(), ENGINE_get_DH() and ENGINE_get_RAND()
+return corresponding method structures for each algorithms.
+
+ENGINE_get_destroy_function(), ENGINE_get_init_function(),
+ENGINE_get_finish_function(), ENGINE_get_ctrl_function(),
+ENGINE_get_load_privkey_function(), ENGINE_get_load_pubkey_function(),
+ENGINE_get_ciphers() and ENGINE_get_digests() return corresponding function
+pointers of the callbacks.
+
+ENGINE_get_cipher() returns a valid B<EVP_CIPHER> structure on success or NULL
+if an error occurred.
+
+ENGINE_get_digest() returns a valid B<EVP_MD> structure on success or NULL if an
+error occurred.
+
+ENGINE_get_flags() returns an integer representing the ENGINE flags which are
+used to control various behaviours of an ENGINE.
+
+ENGINE_get_cmd_defns() returns an B<ENGINE_CMD_DEFN> structure or NULL if it's
+not set.
+
+ENGINE_load_private_key() and ENGINE_load_public_key() return a valid B<EVP_PKEY>
+structure on success or NULL if an error occurred.
+
 =head1 SEE ALSO
 
-L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>, L<RAND_bytes(3)>
+L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>,
+L<RAND_bytes(3)>, L<config(5)>
 
 =head1 HISTORY
 
-ENGINE_cleanup(), ENGINE_load_openssl(), ENGINE_load_dynamic(), and
-ENGINE_load_cryptodev() were deprecated in OpenSSL 1.1.0 by
-OPENSSL_init_crypto().
+ENGINE_cleanup() was deprecated in OpenSSL 1.1.0 by the automatic cleanup
+done by OPENSSL_cleanup()
+and should not be used.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -8,7 +8,8 @@ PKCS7_sign_add_signer - add a signer PKCS7 signed data structure
 
  #include <openssl/pkcs7.h>
 
- PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert, EVP_PKEY *pkey, const EVP_MD *md, int flags);
+ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
+                                          EVP_PKEY *pkey, const EVP_MD *md, int flags);
 
 
 =head1 DESCRIPTION
@@ -55,7 +56,7 @@ B<signcert> parameter though. This can reduce the size of the signature if the
 signers certificate can be obtained by other means: for example a previously
 signed message.
 
-The signedData structure includes several PKCS#7 autenticatedAttributes
+The signedData structure includes several PKCS#7 authenticatedAttributes
 including the signing time, the PKCS#7 content type and the supported list of
 ciphers in an SMIMECapabilities attribute. If B<PKCS7_NOATTR> is set then no
 authenticatedAttributes will be used. If B<PKCS7_NOSMIMECAP> is set then just

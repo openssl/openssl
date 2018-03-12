@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,12 +33,12 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 
     if (num > 1 && a->top == num && b->top == num) {
         if (bn_wexpand(r, num) == NULL)
-            return (0);
+            return 0;
         if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
             r->neg = a->neg ^ b->neg;
             r->top = num;
             bn_correct_top(r);
-            return (1);
+            return 1;
         }
     }
 #endif
@@ -68,7 +68,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     ret = 1;
  err:
     BN_CTX_end(ctx);
-    return (ret);
+    return ret;
 }
 
 #ifdef MONT_WORD
@@ -82,12 +82,12 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     nl = n->top;
     if (nl == 0) {
         ret->top = 0;
-        return (1);
+        return 1;
     }
 
     max = (2 * nl);             /* carry is stored separately */
     if (bn_wexpand(r, max) == NULL)
-        return (0);
+        return 0;
 
     r->neg ^= n->neg;
     np = n->d;
@@ -101,6 +101,11 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     r->top = max;
     n0 = mont->n0[0];
 
+    /*
+     * Add multiples of |n| to |r| until R = 2^(nl * BN_BITS2) divides it. On
+     * input, we had |r| < |n| * R, so now |r| < 2 * |n| * R. Note that |r|
+     * includes |carry| which is stored separately.
+     */
     for (carry = 0, i = 0; i < nl; i++, rp++) {
         v = bn_mul_add_words(rp, np, nl, (rp[0] * n0) & BN_MASK2);
         v = (v + carry + rp[nl]) & BN_MASK2;
@@ -110,56 +115,34 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     }
 
     if (bn_wexpand(ret, nl) == NULL)
-        return (0);
+        return 0;
     ret->top = nl;
     ret->neg = r->neg;
 
     rp = ret->d;
+
+    /*
+     * Shift |nl| words to divide by R. We have |ap| < 2 * |n|. Note that |ap|
+     * includes |carry| which is stored separately.
+     */
     ap = &(r->d[nl]);
 
-# define BRANCH_FREE 1
-# if BRANCH_FREE
-    {
-        BN_ULONG *nrp;
-        size_t m;
-
-        v = bn_sub_words(rp, ap, np, nl) - carry;
-        /*
-         * if subtraction result is real, then trick unconditional memcpy
-         * below to perform in-place "refresh" instead of actual copy.
-         */
-        m = (0 - (size_t)v);
-        nrp =
-            (BN_ULONG *)(((PTR_SIZE_INT) rp & ~m) | ((PTR_SIZE_INT) ap & m));
-
-        for (i = 0, nl -= 4; i < nl; i += 4) {
-            BN_ULONG t1, t2, t3, t4;
-
-            t1 = nrp[i + 0];
-            t2 = nrp[i + 1];
-            t3 = nrp[i + 2];
-            ap[i + 0] = 0;
-            t4 = nrp[i + 3];
-            ap[i + 1] = 0;
-            rp[i + 0] = t1;
-            ap[i + 2] = 0;
-            rp[i + 1] = t2;
-            ap[i + 3] = 0;
-            rp[i + 2] = t3;
-            rp[i + 3] = t4;
-        }
-        for (nl += 4; i < nl; i++)
-            rp[i] = nrp[i], ap[i] = 0;
+    /*
+     * |v| is one if |ap| - |np| underflowed or zero if it did not. Note |v|
+     * cannot be -1. That would imply the subtraction did not fit in |nl| words,
+     * and we know at most one subtraction is needed.
+     */
+    v = bn_sub_words(rp, ap, np, nl) - carry;
+    v = 0 - v;
+    for (i = 0; i < nl; i++) {
+        rp[i] = (v & ap[i]) | (~v & rp[i]);
+        ap[i] = 0;
     }
-# else
-    if (bn_sub_words(rp, ap, np, nl) - carry)
-        memcpy(rp, ap, nl * sizeof(BN_ULONG));
-# endif
     bn_correct_top(r);
     bn_correct_top(ret);
     bn_check_top(ret);
 
-    return (1);
+    return 1;
 }
 #endif                          /* MONT_WORD */
 
@@ -180,7 +163,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
     BN_CTX_start(ctx);
     t1 = BN_CTX_get(ctx);
     t2 = BN_CTX_get(ctx);
-    if (t1 == NULL || t2 == NULL)
+    if (t2 == NULL)
         goto err;
 
     if (!BN_copy(t1, a))
@@ -207,7 +190,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
  err:
     BN_CTX_end(ctx);
 #endif                          /* MONT_WORD */
-    return (retn);
+    return retn;
 }
 
 BN_MONT_CTX *BN_MONT_CTX_new(void)
@@ -215,11 +198,11 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
     BN_MONT_CTX *ret;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return (NULL);
+        return NULL;
 
     BN_MONT_CTX_init(ret);
     ret->flags = BN_FLG_MALLOCED;
-    return (ret);
+    return ret;
 }
 
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
@@ -258,6 +241,8 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
     R = &(mont->RR);            /* grab RR as a temp */
     if (!BN_copy(&(mont->N), mod))
         goto err;               /* Set N */
+    if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
+        BN_set_flags(&(mont->N), BN_FLG_CONSTTIME);
     mont->N.neg = 0;
 
 #ifdef MONT_WORD
@@ -269,6 +254,9 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
         tmod.d = buf;
         tmod.dmax = 2;
         tmod.neg = 0;
+
+        if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
+            BN_set_flags(&tmod, BN_FLG_CONSTTIME);
 
         mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
 
@@ -381,7 +369,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 {
     if (to == from)
-        return (to);
+        return to;
 
     if (!BN_copy(&(to->RR), &(from->RR)))
         return NULL;
@@ -392,7 +380,7 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
     to->ri = from->ri;
     to->n0[0] = from->n0[0];
     to->n0[1] = from->n0[1];
-    return (to);
+    return to;
 }
 
 BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,

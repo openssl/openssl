@@ -8,7 +8,7 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project.
 #
 # Rights for redistribution and usage in source and binary forms are
@@ -42,7 +42,7 @@
 # Performance improvement is astonishing! 'apps/openssl speed rsa dsa'
 # goes way over 3 times faster!
 #
-#					<appro@fy.chalmers.se>
+#					<appro@openssl.org>
 
 # October 2010
 #

@@ -17,7 +17,6 @@ BIO_ctrl_get_read_request, BIO_ctrl_reset_read_request - BIO pair BIO
  int BIO_destroy_bio_pair(BIO *b);
  int BIO_shutdown_wr(BIO *b);
 
-
  int BIO_set_write_buf_size(BIO *b, long size);
  size_t BIO_get_write_buf_size(BIO *b, long size);
 
@@ -141,10 +140,11 @@ application. The application can call select() on the socket as required
 without having to go through the SSL-interface.
 
  BIO *internal_bio, *network_bio;
+
  ...
  BIO_new_bio_pair(&internal_bio, 0, &network_bio, 0);
  SSL_set_bio(ssl, internal_bio, internal_bio);
- SSL_operations(); //e.g SSL_read and SSL_write
+ SSL_operations(); /* e.g SSL_read and SSL_write */
  ...
 
  application |   TLS-engine

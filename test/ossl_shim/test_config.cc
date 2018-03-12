@@ -133,12 +133,26 @@ bool ParseConfig(int argc, char **argv, TestConfig *out_config) {
 
     std::string *string_field = FindField(out_config, kStringFlags, argv[i]);
     if (string_field != NULL) {
+      const char *val;
+
       i++;
       if (i >= argc) {
         fprintf(stderr, "Missing parameter\n");
         return false;
       }
-      string_field->assign(argv[i]);
+
+      /*
+       * Fix up the -cipher argument. runner uses "DEFAULT:NULL-SHA" to enable
+       * the NULL-SHA cipher. However in OpenSSL "DEFAULT" permanently switches
+       * off NULL ciphers, so we use "ALL:NULL-SHA" instead.
+       */
+      if (strcmp(argv[i - 1], "-cipher") == 0
+          && strcmp(argv[i], "DEFAULT:NULL-SHA") == 0)
+        val = "ALL:NULL-SHA";
+      else
+        val = argv[i];
+
+      string_field->assign(val);
       continue;
     }
 

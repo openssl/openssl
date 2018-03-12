@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
 #include "../ssl_locl.h"
 #include "record_locl.h"
+#include "internal/cryptlib.h"
 
 /*-
- * tls13_enc encrypts/decrypts |n_recs| in |recs|.
+ * tls13_enc encrypts/decrypts |n_recs| in |recs|. Will call SSLfatal() for
+ * internal errors, but not otherwise.
  *
  * Returns:
  *    0: (in non-constant time) if the record is publically invalid (i.e. too
@@ -21,7 +22,7 @@
  *   -1: if the record's AEAD-authenticator is invalid or, if sending,
  *       an internal error occurred.
  */
-int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
+int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH];
@@ -35,10 +36,12 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     if (n_recs != 1) {
         /* Should not happen */
         /* TODO(TLS1.3): Support pipelining */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
-    if (send) {
+    if (sending) {
         ctx = s->enc_write_ctx;
         staticiv = s->write_iv;
         seq = RECORD_LAYER_get_write_sequence(&s->rlayer);
@@ -56,32 +59,54 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
 
     ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
-    /*
-     * To get here we must have selected a ciphersuite - otherwise ctx would
-     * be NULL
-     */
-    assert(s->s3->tmp.new_cipher != NULL);
-    if (s->s3->tmp.new_cipher == NULL)
-        return -1;
-    alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
+    if (s->early_data_state == SSL_EARLY_DATA_WRITING
+            || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+        if (s->session != NULL && s->session->ext.max_early_data > 0) {
+            alg_enc = s->session->cipher->algorithm_enc;
+        } else {
+            if (!ossl_assert(s->psksession != NULL
+                             && s->psksession->ext.max_early_data > 0)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                         ERR_R_INTERNAL_ERROR);
+                return -1;
+            }
+            alg_enc = s->psksession->cipher->algorithm_enc;
+        }
+    } else {
+        /*
+         * To get here we must have selected a ciphersuite - otherwise ctx would
+         * be NULL
+         */
+        if (!ossl_assert(s->s3->tmp.new_cipher != NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                     ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+        alg_enc = s->s3->tmp.new_cipher->algorithm_enc;
+    }
 
     if (alg_enc & SSL_AESCCM) {
         if (alg_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
          else
             taglen = EVP_CCM_TLS_TAG_LEN;
-         if (send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
-                                         NULL) <= 0)
+         if (sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, taglen,
+                                         NULL) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                     ERR_R_INTERNAL_ERROR);
             return -1;
+        }
     } else if (alg_enc & SSL_AESGCM) {
         taglen = EVP_GCM_TLS_TAG_LEN;
     } else if (alg_enc & SSL_CHACHA20) {
         taglen = EVP_CHACHAPOLY_TLS_TAG_LEN;
     } else {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
 
-    if (!send) {
+    if (!sending) {
         /*
          * Take off tag. There must be at least one byte of content type as
          * well as the tag
@@ -94,6 +119,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     /* Set up IV */
     if (ivlen < SEQ_NUM_SIZE) {
         /* Should not happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                 ERR_R_INTERNAL_ERROR);
         return -1;
     }
     offset = ivlen - SEQ_NUM_SIZE;
@@ -113,8 +140,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
     }
 
     /* TODO(size_t): lenu/lenf should be a size_t but EVP doesn't support it */
-    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, send) <= 0
-            || (!send && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+    if (EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, sending) <= 0
+            || (!sending && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
                                              taglen,
                                              rec->data + rec->length) <= 0)
             || EVP_CipherUpdate(ctx, rec->data, &lenu, rec->input,
@@ -123,11 +150,14 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int send)
             || (size_t)(lenu + lenf) != rec->length) {
         return -1;
     }
-    if (send) {
+    if (sending) {
         /* Add the tag */
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG, taglen,
-                                rec->data + rec->length) <= 0)
+                                rec->data + rec->length) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
+                     ERR_R_INTERNAL_ERROR);
             return -1;
+        }
         rec->length += taglen;
     }
 

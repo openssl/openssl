@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@ use warnings;
 use File::Spec::Functions;
 use File::Copy;
 use File::Basename;
-use if $^O ne "VMS", 'File::Glob' => qw/glob/;
+use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_rehash");
@@ -23,7 +23,7 @@ setup("test_rehash");
 plan skip_all => "test_rehash is not available on this platform"
     unless run(app(["openssl", "rehash", "-help"]));
 
-plan tests => 5;
+plan tests => 4;
 
 indir "rehash.$$" => sub {
     prepare();
@@ -46,8 +46,7 @@ indir "rehash.$$" => sub {
     prepare();
     chmod 0500, curdir();
   SKIP: {
-      if (!ok(!open(FOO, ">unwritable.txt"),
-              "Testing that we aren't running as a privileged user, such as root")) {
+      if (open(FOO, ">unwritable.txt")) {
           close FOO;
           skip "It's pointless to run the next test as root", 1;
       }

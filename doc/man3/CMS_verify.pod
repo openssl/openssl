@@ -8,7 +8,8 @@ CMS_verify, CMS_get0_signers - verify a CMS SignedData structure
 
  #include <openssl/cms.h>
 
- int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata, BIO *out, unsigned int flags);
+ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs, X509_STORE *store,
+                BIO *indata, BIO *out, unsigned int flags);
 
  STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms);
 

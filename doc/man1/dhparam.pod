@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-dhparam,
 dhparam - DH parameter manipulation and generation
 
 =head1 SYNOPSIS
@@ -19,7 +20,8 @@ B<openssl dhparam>
 [B<-C>]
 [B<-2>]
 [B<-5>]
-[B<-rand> I<file(s)>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-engine id>]
 [I<numbits>]
 
@@ -44,8 +46,8 @@ additional header and footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in> I<filename>
 
@@ -82,17 +84,22 @@ input file is ignored and parameters are generated instead. If not
 present but B<numbits> is present, parameters are generated with the
 default generator 2.
 
-=item B<-rand> I<file(s)>
+=item B<-rand file...>
 
-a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+A file or files containing random data used to seed the random number
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
+
 =item I<numbits>
 
-this option specifies that a parameter set should be generated of size
+This option specifies that a parameter set should be generated of size
 I<numbits>. It must be the last option. If this option is present then
 the input file is ignored and parameters are generated instead. If
 this option is not present but a generator (B<-2> or B<-5>) is
@@ -100,20 +107,20 @@ present, parameters are generated with a default length of 2048 bits.
 
 =item B<-noout>
 
-this option inhibits the output of the encoded version of the parameters.
+This option inhibits the output of the encoded version of the parameters.
 
 =item B<-text>
 
-this option prints out the DH parameters in human readable form.
+This option prints out the DH parameters in human readable form.
 
 =item B<-C>
 
-this option converts the parameters into C code. The parameters can then
+This option converts the parameters into C code. The parameters can then
 be loaded by calling the get_dhNNNN() function.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<dhparam>
+Specifying an engine (by its unique B<id> string) will cause B<dhparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -149,7 +156,7 @@ L<dsaparam(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

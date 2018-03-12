@@ -184,6 +184,13 @@ audit/verify and also opens the window of opportunity for stack
 corruption and other hard-to-find bugs.  It also, apparently, violates
 ANSI-C.
 
+The LHASH code is not thread safe. All updating operations must be
+performed under a write lock. All retrieve operations should be performed
+under a read lock, I<unless> accurate usage statistics are desired.
+In which case, a write lock should be used for retrieve operations
+as well.  For output of the usage statistics, using the functions from
+L<OPENSSL_LH_stats(3)>, a read lock suffices.
+
 The LHASH code regards table entries as constant data.  As such, it
 internally represents lh_insert()'d items with a "const void *"
 pointer type.  This is why callbacks such as those used by lh_doall()
@@ -229,7 +236,7 @@ type checking.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

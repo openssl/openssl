@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ my $test_name = "test_tls13kexmodes";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -35,7 +35,7 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
-    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST,
+    [TLSProxy::Message::MT_SERVER_HELLO,
         checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
@@ -90,7 +90,9 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
-    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST, TLSProxy::Message::EXT_KEY_SHARE,
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_HRR_EXTENSION],
 
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
@@ -99,12 +101,20 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
         checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
         checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
         checkhandshake::ALPN_CLI_EXTENSION],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
         checkhandshake::SCT_CLI_EXTENSION],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
@@ -114,6 +124,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_SRV_EXTENSION],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
@@ -129,7 +141,7 @@ use constant {
     EMPTY_EXTENSION => 1,
     NON_DHE_KEX_MODE_ONLY => 2,
     DHE_KEX_MODE_ONLY => 3,
-    UNKNONW_KEX_MODES => 4,
+    UNKNOWN_KEX_MODES => 4,
     BOTH_KEX_MODES => 5
 };
 
@@ -143,6 +155,7 @@ my $proxy = TLSProxy::Proxy->new(
 #Test 1: First get a session
 (undef, my $session) = tempfile();
 $proxy->clientflags("-sess_out ".$session);
+$proxy->serverflags("-servername localhost");
 $proxy->sessionfile($session);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 11;
@@ -171,7 +184,8 @@ ok(TLSProxy::Message->fail(), "Resume with empty kex modes");
 #Test 4: Attempt a resume with non-dhe kex mode only. Should resume without a
 #        key_share
 $proxy->clear();
-$proxy->clientflags("-sess_in ".$session);
+$proxy->clientflags("-allow_no_dhe_kex -sess_in ".$session);
+$proxy->serverflags("-allow_no_dhe_kex");
 $testtype = NON_DHE_KEX_MODE_ONLY;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -197,7 +211,7 @@ checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
 #Test 6: Attempt a resume with only unrecognised kex modes. Should not resume
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
-$testtype = UNKNONW_KEX_MODES;
+$testtype = UNKNOWN_KEX_MODES;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::DEFAULT_HANDSHAKE,
                checkhandshake::DEFAULT_EXTENSIONS
@@ -236,7 +250,7 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
                | checkhandshake::PSK_SRV_EXTENSION,
                "Resume with both kex modes and HRR");
 
-#Test 9: Attempt a resume with dhe kex mode only and an unnacceptable initial
+#Test 9: Attempt a resume with dhe kex mode only and an unacceptable initial
 #        key_share. Should resume with a key_share following an HRR
 $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
@@ -256,8 +270,8 @@ checkhandshake($proxy, checkhandshake::HRR_RESUME_HANDSHAKE,
 #         initial key_share and no overlapping groups. Should resume without a
 #         key_share
 $proxy->clear();
-$proxy->clientflags("-curves P-384 -sess_in ".$session);
-$proxy->serverflags("-curves P-256");
+$proxy->clientflags("-allow_no_dhe_kex -curves P-384 -sess_in ".$session);
+$proxy->serverflags("-allow_no_dhe_kex -curves P-256");
 $testtype = BOTH_KEX_MODES;
 $proxy->start();
 checkhandshake($proxy, checkhandshake::RESUME_HANDSHAKE,
@@ -300,7 +314,7 @@ sub modify_kex_modes_filter
                 $ext = pack "C2",
                     0x01,       #List length
                     0x01;       #psk_dhe_ke
-            } elsif ($testtype == UNKNONW_KEX_MODES) {
+            } elsif ($testtype == UNKNOWN_KEX_MODES) {
                 $ext = pack "C3",
                     0x02,       #List length
                     0xfe,       #unknown

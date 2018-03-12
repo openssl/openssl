@@ -13,9 +13,6 @@
 #include <openssl/objects.h>
 #include "asn1_locl.h"
 
-static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                 int embed);
-
 /* Free up an ASN1 structure */
 
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
@@ -28,8 +25,7 @@ void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     asn1_item_embed_free(pval, it, 0);
 }
 
-static void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it,
-                                 int embed)
+void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
     const ASN1_EXTERN_FUNCS *ef;
@@ -155,7 +151,12 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
     if (it) {
         const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
 
-        if (pf && pf->prim_free) {
+        if (embed) {
+            if (pf && pf->prim_clear) {
+                pf->prim_clear(pval, it);
+                return;
+            }
+        } else if (pf && pf->prim_free) {
             pf->prim_free(pval, it);
             return;
         }

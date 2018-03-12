@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,7 +49,6 @@ extern "C" {
 #  define OPENSSL_SYS_WIN32_UWIN
 # else
 #  if defined(__CYGWIN__) || defined(OPENSSL_SYS_CYGWIN)
-#   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WIN32_CYGWIN
 #  else
 #   if defined(_WIN32) || defined(OPENSSL_SYS_WIN32)
@@ -147,36 +146,30 @@ extern "C" {
 # endif
 
 /*-
- * Definitions of OPENSSL_GLOBAL and OPENSSL_EXTERN, to define and declare
- * certain global symbols that, with some compilers under VMS, have to be
- * defined and declared explicitly with globaldef and globalref.
- * Definitions of OPENSSL_EXPORT and OPENSSL_IMPORT, to define and declare
- * DLL exports and imports for compilers under Win32.  These are a little
- * more complicated to use.  Basically, for any library that exports some
- * global variables, the following code must be present in the header file
- * that declares them, before OPENSSL_EXTERN is used:
+ * OPENSSL_EXTERN is normally used to declare a symbol with possible extra
+ * attributes to handle its presence in a shared library.
+ * OPENSSL_EXPORT is used to define a symbol with extra possible attributes
+ * to make it visible in a shared library.
+ * Care needs to be taken when a header file is used both to declare and
+ * define symbols.  Basically, for any library that exports some global
+ * variables, the following code must be present in the header file that
+ * declares them, before OPENSSL_EXTERN is used:
  *
  * #ifdef SOME_BUILD_FLAG_MACRO
  * # undef OPENSSL_EXTERN
  * # define OPENSSL_EXTERN OPENSSL_EXPORT
  * #endif
  *
- * The default is to have OPENSSL_EXPORT, OPENSSL_EXTERN and OPENSSL_GLOBAL
+ * The default is to have OPENSSL_EXPORT and OPENSSL_EXTERN
  * have some generally sensible values.
  */
 
-# if defined(OPENSSL_SYS_VMS_NODECC)
-#  define OPENSSL_EXPORT globalref
-#  define OPENSSL_EXTERN globalref
-#  define OPENSSL_GLOBAL globaldef
-# elif defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
+# if defined(OPENSSL_SYS_WINDOWS) && defined(OPENSSL_OPT_WINDLL)
 #  define OPENSSL_EXPORT extern __declspec(dllexport)
 #  define OPENSSL_EXTERN extern __declspec(dllimport)
-#  define OPENSSL_GLOBAL
 # else
 #  define OPENSSL_EXPORT extern
 #  define OPENSSL_EXTERN extern
-#  define OPENSSL_GLOBAL
 # endif
 
 /*-
@@ -197,7 +190,7 @@ extern "C" {
 #  define OPENSSL_DECLARE_GLOBAL(type,name) type *_shadow_##name(void)
 #  define OPENSSL_GLOBAL_REF(name) (*(_shadow_##name()))
 # else
-#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) OPENSSL_GLOBAL type _shadow_##name=value;
+#  define OPENSSL_IMPLEMENT_GLOBAL(type,name,value) type _shadow_##name=value;
 #  define OPENSSL_DECLARE_GLOBAL(type,name) OPENSSL_EXPORT type _shadow_##name
 #  define OPENSSL_GLOBAL_REF(name) _shadow_##name
 # endif
@@ -212,9 +205,9 @@ extern "C" {
 #  endif
 # endif
 
-# if defined(OPENSSL_SYS_UEFI) && !defined(ssize_t)
-#  define ossl_ssize_t int
-#  define OSSL_SSIZE_MAX INT_MAX
+# if defined(OPENSSL_SYS_UEFI) && !defined(ossl_ssize_t)
+#  define ossl_ssize_t INTN
+#  define OSSL_SSIZE_MAX MAX_INTN
 # endif
 
 # ifndef ossl_ssize_t
@@ -242,7 +235,6 @@ typedef INT32 int32_t;
 typedef UINT32 uint32_t;
 typedef INT64 int64_t;
 typedef UINT64 uint64_t;
-#  define PRIu64 "%Lu"
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
      defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
@@ -262,29 +254,6 @@ typedef __int64 int64_t;
 typedef unsigned __int64 uint64_t;
 # else
 #  include <stdint.h>
-# endif
-
-/*
- * We need a format operator for some client tools for uint64_t.  If inttypes.h
- * isn't available or did not define it, just go with hard-coded.
- */
-# ifndef PRIu64
-#  ifdef SIXTY_FOUR_BIT_LONG
-#   define PRIu64 "lu"
-#  else
-#   define PRIu64 "llu"
-#  endif
-# endif
-
-/* Format specifier for printing size_t */
-# if (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L)
-#  define OSSLzu  "zu"
-# else
-#  ifdef THIRTY_TWO_BIT
-#   define OSSLzu "u"
-#  else
-#   define OSSLzu PRIu64
-#  endif
 # endif
 
 /* ossl_inline: portable inline definition usable in public headers */

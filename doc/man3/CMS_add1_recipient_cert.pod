@@ -8,9 +8,15 @@ CMS_add1_recipient_cert, CMS_add0_recipient_key - add recipients to a CMS envelo
 
  #include <openssl/cms.h>
 
- CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms, X509 *recip, unsigned int flags);
+ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
+                                            X509 *recip, unsigned int flags);
 
- CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid, unsigned char *key, size_t keylen, unsigned char *id, size_t idlen, ASN1_GENERALIZEDTIME *date, ASN1_OBJECT *otherTypeId, ASN1_TYPE *otherType);
+ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
+                                           unsigned char *key, size_t keylen,
+                                           unsigned char *id, size_t idlen,
+                                           ASN1_GENERALIZEDTIME *date,
+                                           ASN1_OBJECT *otherTypeId,
+                                           ASN1_TYPE *otherType);
 
 =head1 DESCRIPTION
 

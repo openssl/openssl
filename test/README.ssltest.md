@@ -81,6 +81,11 @@ handshake.
   - Yes - a session ticket is expected
   - No - a session ticket is not expected
 
+* SessionIdExpected - whether or not a session id is expected
+  - Ignore - do not check for a session id (default)
+  - Yes - a session id is expected
+  - No - a session id is not expected
+
 * ResumptionExpected - whether or not resumption is expected (Resume mode only)
   - Yes - resumed handshake
   - No - full handshake (default)
@@ -97,6 +102,14 @@ handshake.
 
 * ExpectedServerSignType, ExpectedClientSignType - the expected
   signature type used by server or client when signing messages
+
+* ExpectedClientCANames - for client auth list of CA names the server must
+  send. If this is "empty" the list is expected to be empty otherwise it
+  is a file of certificates whose subject names form the list.
+
+* ExpectedServerCANames - list of CA names the client must send, TLS 1.3 only.
+  If this is "empty" the list is expected to be empty otherwise it is a file
+  of certificates whose subject names form the list.
 
 ## Configuring the client and server
 
@@ -179,6 +192,9 @@ client => {
   protocols can be specified as a comma-separated list, and a callback with the
   recommended behaviour will be installed automatically.
 
+* SRPUser, SRPPassword - SRP settings. For client, this is the SRP user to
+  connect as; for server, this is a known SRP user.
+
 ### Default server and client configurations
 
 The default server certificate and CA files are added to the configurations
@@ -211,7 +227,7 @@ client => {
 ```
 $ ./config
 $ cd test
-$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/my.conf.in \
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/my.conf.in \
   > ssl-tests/my.conf
 ```
 
@@ -220,7 +236,7 @@ where `my.conf.in` is your test input file.
 For example, to generate the test cases in `ssl-tests/01-simple.conf.in`, do
 
 ```
-$ TOP=.. perl -I testlib/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/01-simple.conf.in > ssl-tests/01-simple.conf
 ```
 
 Alternatively (hackish but simple), you can comment out

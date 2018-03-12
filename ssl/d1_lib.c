@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,19 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <stdio.h>
-#define USE_SOCKETS
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include "ssl_locl.h"
-
-#if defined(OPENSSL_SYS_VMS)
-# include <sys/timeb.h>
-#elif defined(OPENSSL_SYS_VXWORKS)
-# include <sys/times.h>
-#elif !defined(OPENSSL_SYS_WIN32)
-# include <sys/time.h>
-#endif
 
 static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL *s);
@@ -81,10 +73,10 @@ int dtls1_new(SSL *s)
     }
 
     if (!ssl3_new(s))
-        return (0);
+        return 0;
     if ((d1 = OPENSSL_zalloc(sizeof(*d1))) == NULL) {
         ssl3_free(s);
-        return (0);
+        return 0;
     }
 
     d1->buffered_messages = pqueue_new();
@@ -102,12 +94,15 @@ int dtls1_new(SSL *s)
         pqueue_free(d1->sent_messages);
         OPENSSL_free(d1);
         ssl3_free(s);
-        return (0);
+        return 0;
     }
 
     s->d1 = d1;
-    s->method->ssl_clear(s);
-    return (1);
+
+    if (!s->method->ssl_clear(s))
+        return 0;
+
+    return 1;
 }
 
 static void dtls1_clear_queues(SSL *s)
@@ -156,7 +151,7 @@ void dtls1_free(SSL *s)
     s->d1 = NULL;
 }
 
-void dtls1_clear(SSL *s)
+int dtls1_clear(SSL *s)
 {
     pqueue *buffered_messages;
     pqueue *sent_messages;
@@ -166,6 +161,8 @@ void dtls1_clear(SSL *s)
     DTLS_RECORD_LAYER_clear(&s->rlayer);
 
     if (s->d1) {
+        DTLS_timer_cb timer_cb = s->d1->timer_cb;
+
         buffered_messages = s->d1->buffered_messages;
         sent_messages = s->d1->sent_messages;
         mtu = s->d1->mtu;
@@ -174,6 +171,9 @@ void dtls1_clear(SSL *s)
         dtls1_clear_queues(s);
 
         memset(s->d1, 0, sizeof(*s->d1));
+
+        /* Restore the timer callback from previous state */
+        s->d1->timer_cb = timer_cb;
 
         if (s->server) {
             s->d1->cookie_len = sizeof(s->d1->cookie);
@@ -188,7 +188,8 @@ void dtls1_clear(SSL *s)
         s->d1->sent_messages = sent_messages;
     }
 
-    ssl3_clear(s);
+    if (!ssl3_clear(s))
+        return 0;
 
     if (s->method->version == DTLS_ANY_VERSION)
         s->version = DTLS_MAX_VERSION;
@@ -198,6 +199,8 @@ void dtls1_clear(SSL *s)
 #endif
     else
         s->version = s->method->version;
+
+    return 1;
 }
 
 long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
@@ -233,11 +236,13 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
         ret = ssl3_ctrl(s, cmd, larg, parg);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 void dtls1_start_timer(SSL *s)
 {
+    unsigned int sec, usec;
+
 #ifndef OPENSSL_NO_SCTP
     /* Disable timer for SCTP */
     if (BIO_dgram_is_sctp(SSL_get_wbio(s))) {
@@ -246,16 +251,34 @@ void dtls1_start_timer(SSL *s)
     }
 #endif
 
-    /* If timer is not set, initialize duration with 1 second */
+    /*
+     * If timer is not set, initialize duration with 1 second or
+     * a user-specified value if the timer callback is installed.
+     */
     if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0) {
-        s->d1->timeout_duration = 1;
+
+        if (s->d1->timer_cb != NULL)
+            s->d1->timeout_duration_us = s->d1->timer_cb(s, 0);
+        else
+            s->d1->timeout_duration_us = 1000000;
     }
 
     /* Set timeout to current time */
     get_current_time(&(s->d1->next_timeout));
 
     /* Add duration to current time */
-    s->d1->next_timeout.tv_sec += s->d1->timeout_duration;
+
+    sec  = s->d1->timeout_duration_us / 1000000;
+    usec = s->d1->timeout_duration_us - (sec * 1000000);
+
+    s->d1->next_timeout.tv_sec  += sec;
+    s->d1->next_timeout.tv_usec += usec;
+
+    if (s->d1->next_timeout.tv_usec >= 1000000) {
+        s->d1->next_timeout.tv_sec++;
+        s->d1->next_timeout.tv_usec -= 1000000;
+    }
+
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));
 }
@@ -320,9 +343,9 @@ int dtls1_is_timer_expired(SSL *s)
 
 void dtls1_double_timeout(SSL *s)
 {
-    s->d1->timeout_duration *= 2;
-    if (s->d1->timeout_duration > 60)
-        s->d1->timeout_duration = 60;
+    s->d1->timeout_duration_us *= 2;
+    if (s->d1->timeout_duration_us > 60000000)
+        s->d1->timeout_duration_us = 60000000;
     dtls1_start_timer(s);
 }
 
@@ -331,7 +354,7 @@ void dtls1_stop_timer(SSL *s)
     /* Reset everything */
     memset(&s->d1->timeout, 0, sizeof(s->d1->timeout));
     memset(&s->d1->next_timeout, 0, sizeof(s->d1->next_timeout));
-    s->d1->timeout_duration = 1;
+    s->d1->timeout_duration_us = 1000000;
     BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0,
              &(s->d1->next_timeout));
     /* Clear retransmission buffer */
@@ -355,7 +378,8 @@ int dtls1_check_timeout_num(SSL *s)
 
     if (s->d1->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
         /* fail the connection, enough alerts have been sent */
-        SSLerr(SSL_F_DTLS1_CHECK_TIMEOUT_NUM, SSL_R_READ_TIMEOUT_EXPIRED);
+        SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS1_CHECK_TIMEOUT_NUM,
+                 SSL_R_READ_TIMEOUT_EXPIRED);
         return -1;
     }
 
@@ -369,10 +393,15 @@ int dtls1_handle_timeout(SSL *s)
         return 0;
     }
 
-    dtls1_double_timeout(s);
+    if (s->d1->timer_cb != NULL)
+        s->d1->timeout_duration_us = s->d1->timer_cb(s, s->d1->timeout_duration_us);
+    else
+        dtls1_double_timeout(s);
 
-    if (dtls1_check_timeout_num(s) < 0)
+    if (dtls1_check_timeout_num(s) < 0) {
+        /* SSLfatal() already called */
         return -1;
+    }
 
     s->d1->timeout.read_timeouts++;
     if (s->d1->timeout.read_timeouts > DTLS1_TMO_READ_COUNT) {
@@ -380,6 +409,7 @@ int dtls1_handle_timeout(SSL *s)
     }
 
     dtls1_start_timer(s);
+    /* Calls SSLfatal() if required */
     return dtls1_retransmit_buffered_messages(s);
 }
 
@@ -404,11 +434,6 @@ static void get_current_time(struct timeval *t)
 # endif
     t->tv_sec = (long)(now.ul / 10000000);
     t->tv_usec = ((int)(now.ul % 10000000)) / 10;
-#elif defined(OPENSSL_SYS_VMS)
-    struct timeb tb;
-    ftime(&tb);
-    t->tv_sec = (long)tb.time;
-    t->tv_usec = (long)tb.millitm * 1000;
 #else
     gettimeofday(t, NULL);
 #endif
@@ -937,7 +962,7 @@ size_t DTLS_get_data_mtu(const SSL *s)
                                  &blocksize, &ext_overhead))
         return 0;
 
-    if (SSL_USE_ETM(s))
+    if (SSL_READ_ETM(s))
         ext_overhead += mac_overhead;
     else
         int_overhead += mac_overhead;
@@ -958,4 +983,9 @@ size_t DTLS_get_data_mtu(const SSL *s)
     mtu -= int_overhead;
 
     return mtu;
+}
+
+void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb)
+{
+    s->d1->timer_cb = cb;
 }

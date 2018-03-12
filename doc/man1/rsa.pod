@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-rsa,
 rsa - RSA key processing tool
 
 =head1 SYNOPSIS
@@ -17,6 +18,9 @@ B<openssl> B<rsa>
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
+[B<-aria128>]
+[B<-aria192>]
+[B<-aria256>]
 [B<-camellia128>]
 [B<-camellia192>]
 [B<-camellia256>]
@@ -60,8 +64,8 @@ section.
 
 =item B<-outform DER|NET|PEM>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in filename>
 
@@ -71,7 +75,7 @@ prompted for.
 
 =item B<-passin arg>
 
-the input file password source. For more information about the format of B<arg>
+The input file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-out filename>
@@ -83,10 +87,10 @@ filename.
 
 =item B<-passout password>
 
-the output file password source. For more information about the format of B<arg>
+The output file password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-aes128|-aes192|-aes256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
+=item B<-aes128|-aes192|-aes256|-aria128|-aria192|-aria256|-camellia128|-camellia192|-camellia256|-des|-des3|-idea>
 
 These options encrypt the private key with the specified
 cipher before outputting it. A pass phrase is prompted for.
@@ -98,39 +102,39 @@ These options can only be used with PEM format output files.
 
 =item B<-text>
 
-prints out the various public or private key components in
+Prints out the various public or private key components in
 plain text in addition to the encoded version.
 
 =item B<-noout>
 
-this option prevents output of the encoded version of the key.
+This option prevents output of the encoded version of the key.
 
 =item B<-modulus>
 
-this option prints out the value of the modulus of the key.
+This option prints out the value of the modulus of the key.
 
 =item B<-check>
 
-this option checks the consistency of an RSA private key.
+This option checks the consistency of an RSA private key.
 
 =item B<-pubin>
 
-by default a private key is read from the input file: with this
+By default a private key is read from the input file: with this
 option a public key is read instead.
 
 =item B<-pubout>
 
-by default a private key is output: with this option a public
+By default a private key is output: with this option a public
 key will be output instead. This option is automatically set if
 the input is a public key.
 
 =item B<-RSAPublicKey_in>, B<-RSAPublicKey_out>
 
-like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
+Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<rsa>
+Specifying an engine (by its unique B<id> string) will cause B<rsa>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -206,7 +210,7 @@ L<gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
+#include <assert.h>
 
 /*
  * This file implements the SSL/TLS/DTLS state machines.
@@ -110,13 +112,33 @@ void ossl_statem_set_renegotiate(SSL *s)
 }
 
 /*
- * Put the state machine into an error state. This is a permanent error for
- * the current connection.
+ * Put the state machine into an error state and send an alert if appropriate.
+ * This is a permanent error for the current connection.
  */
-void ossl_statem_set_error(SSL *s)
+void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+                       int line)
 {
+    /* We shouldn't call SSLfatal() twice. Once is enough */
+    assert(s->statem.state != MSG_FLOW_ERROR);
+    s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
+    ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
+    if (al != SSL_AD_NO_ALERT)
+        ssl3_send_alert(s, SSL3_AL_FATAL, al);
 }
+
+/*
+ * This macro should only be called if we are already expecting to be in
+ * a fatal error state. We verify that we are, and set it if not (this would
+ * indicate a bug).
+ */
+#define check_fatal(s, f) \
+    do { \
+        if (!ossl_assert((s)->statem.in_init \
+                         && (s)->statem.state == MSG_FLOW_ERROR)) \
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, (f), \
+                     SSL_R_MISSING_FATAL); \
+    } while (0)
 
 /*
  * Discover whether the current connection is in the error state.
@@ -149,6 +171,60 @@ void ossl_statem_set_in_handshake(SSL *s, int inhand)
         s->statem.in_handshake++;
     else
         s->statem.in_handshake--;
+}
+
+/* Are we in a sensible state to skip over unreadable early data? */
+int ossl_statem_skip_early_data(SSL *s)
+{
+    if (s->ext.early_data != SSL_EARLY_DATA_REJECTED)
+        return 0;
+
+    if (!s->server || s->statem.hand_state != TLS_ST_EARLY_DATA)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * Called when we are in SSL_read*(), SSL_write*(), or SSL_accept()
+ * /SSL_connect()/SSL_do_handshake(). Used to test whether we are in an early
+ * data state and whether we should attempt to move the handshake on if so.
+ * |sending| is 1 if we are attempting to send data (SSL_write*()), 0 if we are
+ * attempting to read data (SSL_read*()), or -1 if we are in SSL_do_handshake()
+ * or similar.
+ */
+void ossl_statem_check_finish_init(SSL *s, int sending)
+{
+    if (sending == -1) {
+        if (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
+                || s->statem.hand_state == TLS_ST_EARLY_DATA) {
+            ossl_statem_set_in_init(s, 1);
+            if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+                /*
+                 * SSL_connect() or SSL_do_handshake() has been called directly.
+                 * We don't allow any more writing of early data.
+                 */
+                s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
+            }
+        }
+    } else if (!s->server) {
+        if ((sending && (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
+                      || s->statem.hand_state == TLS_ST_EARLY_DATA)
+                  && s->early_data_state != SSL_EARLY_DATA_WRITING)
+                || (!sending && s->statem.hand_state == TLS_ST_EARLY_DATA)) {
+            ossl_statem_set_in_init(s, 1);
+            /*
+             * SSL_write() has been called directly. We don't allow any more
+             * writing of early data.
+             */
+            if (sending && s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY)
+                s->early_data_state = SSL_EARLY_DATA_FINISHED_WRITING;
+        }
+    } else {
+        if (s->early_data_state == SSL_EARLY_DATA_FINISHED_READING
+                && s->statem.hand_state == TLS_ST_EARLY_DATA)
+            ossl_statem_set_in_init(s, 1);
+    }
 }
 
 void ossl_statem_set_hello_verify_done(SSL *s)
@@ -218,7 +294,6 @@ static info_cb get_callback(SSL *s)
 static int state_machine(SSL *s, int server)
 {
     BUF_MEM *buf = NULL;
-    unsigned long Time = (unsigned long)time(NULL);
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
     OSSL_STATEM *st = &s->statem;
     int ret = -1;
@@ -229,7 +304,6 @@ static int state_machine(SSL *s, int server)
         return -1;
     }
 
-    RAND_add(&Time, sizeof(Time), 0);
     ERR_clear_error();
     clear_sys_error();
 
@@ -237,14 +311,18 @@ static int state_machine(SSL *s, int server)
 
     st->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
-        if (!SSL_clear(s))
+        /*
+         * If we are stateless then we already called SSL_clear() - don't do
+         * it again and clear the STATELESS flag itself.
+         */
+        if ((s->s3->flags & TLS1_FLAGS_STATELESS) == 0 && !SSL_clear(s))
             return -1;
     }
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s)) {
+    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
         /*
          * Notify SCTP BIO socket to enter handshake mode and prevent stream
-         * identifier other than 0. Will be ignored if no SCTP is used.
+         * identifier other than 0.
          */
         BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
                  st->in_handshake, NULL);
@@ -263,29 +341,42 @@ static int state_machine(SSL *s, int server)
         if (cb != NULL)
             cb(s, SSL_CB_HANDSHAKE_START, 1);
 
+        /*
+         * Fatal errors in this block don't send an alert because we have
+         * failed to even initialise properly. Sending an alert is probably
+         * doomed to failure.
+         */
+
         if (SSL_IS_DTLS(s)) {
             if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00) &&
                 (server || (s->version & 0xff00) != (DTLS1_BAD_VER & 0xff00))) {
-                SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         } else {
             if ((s->version >> 8) != SSL3_VERSION_MAJOR) {
-                SSLerr(SSL_F_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
         }
 
         if (!ssl_security(s, SSL_SECOP_VERSION, 0, s->version, NULL)) {
-            SSLerr(SSL_F_STATE_MACHINE, SSL_R_VERSION_TOO_LOW);
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             goto end;
         }
 
         if (s->init_buf == NULL) {
             if ((buf = BUF_MEM_new()) == NULL) {
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
             if (!BUF_MEM_grow(buf, SSL3_RT_MAX_PLAIN_LENGTH)) {
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
             s->init_buf = buf;
@@ -293,6 +384,8 @@ static int state_machine(SSL *s, int server)
         }
 
         if (!ssl3_setup_buffers(s)) {
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             goto end;
         }
         s->init_num = 0;
@@ -310,12 +403,15 @@ static int state_machine(SSL *s, int server)
         if (!SSL_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(s)))
 #endif
             if (!ssl_init_wbio_buffer(s)) {
+                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 goto end;
             }
 
-        if (SSL_IS_FIRST_HANDSHAKE(s) || s->renegotiate) {
+        if ((SSL_in_before(s))
+                || s->renegotiate) {
             if (!tls_setup_handshake(s)) {
-                ossl_statem_set_error(s);
+                /* SSLfatal() already called */
                 goto end;
             }
 
@@ -350,7 +446,8 @@ static int state_machine(SSL *s, int server)
             }
         } else {
             /* Error */
-            ossl_statem_set_error(s);
+            check_fatal(s, SSL_F_STATE_MACHINE);
+            SSLerr(SSL_F_STATE_MACHINE, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             goto end;
         }
     }
@@ -361,10 +458,10 @@ static int state_machine(SSL *s, int server)
     st->in_handshake--;
 
 #ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s)) {
+    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
         /*
          * Notify SCTP BIO socket to leave handshake mode and allow stream
-         * identifier other than 0. Will be ignored if no SCTP is used.
+         * identifier other than 0.
          */
         BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
                  st->in_handshake, NULL);
@@ -493,13 +590,13 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
              * to that state if so
              */
             if (!transition(s, mt)) {
-                ossl_statem_set_error(s);
+                check_fatal(s, SSL_F_READ_STATE_MACHINE);
                 return SUB_STATE_ERROR;
             }
 
             if (s->s3->tmp.message_size > max_message_size(s)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_ILLEGAL_PARAMETER);
-                SSLerr(SSL_F_READ_STATE_MACHINE, SSL_R_EXCESSIVE_MESSAGE_SIZE);
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_READ_STATE_MACHINE,
+                         SSL_R_EXCESSIVE_MESSAGE_SIZE);
                 return SUB_STATE_ERROR;
             }
 
@@ -508,8 +605,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                     && s->s3->tmp.message_size > 0
                     && !grow_init_buf(s, s->s3->tmp.message_size
                                          + SSL3_HM_HEADER_LENGTH)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_BUF_LIB);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
+                         ERR_R_BUF_LIB);
                 return SUB_STATE_ERROR;
             }
 
@@ -528,8 +625,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
             s->first_packet = 0;
             if (!PACKET_buf_init(&pkt, s->init_msg, len)) {
-                ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-                SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
             ret = process_message(s, &pkt);
@@ -539,6 +636,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
             switch (ret) {
             case MSG_PROCESS_ERROR:
+                check_fatal(s, SSL_F_READ_STATE_MACHINE);
                 return SUB_STATE_ERROR;
 
             case MSG_PROCESS_FINISHED_READING:
@@ -562,8 +660,11 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             st->read_state_work = post_process_message(s, st->read_state_work);
             switch (st->read_state_work) {
             case WORK_ERROR:
+                check_fatal(s, SSL_F_READ_STATE_MACHINE);
+                /* Fall through */
             case WORK_MORE_A:
             case WORK_MORE_B:
+            case WORK_MORE_C:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -580,9 +681,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
         default:
             /* Shouldn't happen */
-            ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_INTERNAL_ERROR);
-            SSLerr(SSL_F_READ_STATE_MACHINE, ERR_R_INTERNAL_ERROR);
-            ossl_statem_set_error(s);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             return SUB_STATE_ERROR;
         }
     }
@@ -697,6 +797,7 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
                 break;
 
             case WRITE_TRAN_ERROR:
+                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
                 return SUB_STATE_ERROR;
             }
             break;
@@ -704,8 +805,11 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         case WRITE_STATE_PRE_WORK:
             switch (st->write_state_work = pre_work(s, st->write_state_work)) {
             case WORK_ERROR:
+                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                /* Fall through */
             case WORK_MORE_A:
             case WORK_MORE_B:
+            case WORK_MORE_C:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -715,14 +819,33 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             case WORK_FINISHED_STOP:
                 return SUB_STATE_END_HANDSHAKE;
             }
+            if (!get_construct_message_f(s, &pkt, &confunc, &mt)) {
+                /* SSLfatal() already called */
+                return SUB_STATE_ERROR;
+            }
+            if (mt == SSL3_MT_DUMMY) {
+                /* Skip construction and sending. This isn't a "real" state */
+                st->write_state = WRITE_STATE_POST_WORK;
+                st->write_state_work = WORK_MORE_A;
+                break;
+            }
             if (!WPACKET_init(&pkt, s->init_buf)
-                    || !get_construct_message_f(s, &pkt, &confunc, &mt)
-                    || !ssl_set_handshake_header(s, &pkt, mt)
-                    || (confunc != NULL && !confunc(s, &pkt))
-                    || !ssl_close_construct_packet(s, &pkt, mt)
+                    || !ssl_set_handshake_header(s, &pkt, mt)) {
+                WPACKET_cleanup(&pkt);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
+                return SUB_STATE_ERROR;
+            }
+            if (confunc != NULL && !confunc(s, &pkt)) {
+                WPACKET_cleanup(&pkt);
+                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                return SUB_STATE_ERROR;
+            }
+            if (!ssl_close_construct_packet(s, &pkt, mt)
                     || !WPACKET_finish(&pkt)) {
                 WPACKET_cleanup(&pkt);
-                ossl_statem_set_error(s);
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
+                         ERR_R_INTERNAL_ERROR);
                 return SUB_STATE_ERROR;
             }
 
@@ -743,8 +866,11 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
         case WRITE_STATE_POST_WORK:
             switch (st->write_state_work = post_work(s, st->write_state_work)) {
             case WORK_ERROR:
+                check_fatal(s, SSL_F_WRITE_STATE_MACHINE);
+                /* Fall through */
             case WORK_MORE_A:
             case WORK_MORE_B:
+            case WORK_MORE_C:
                 return SUB_STATE_ERROR;
 
             case WORK_FINISHED_CONTINUE:
@@ -757,6 +883,8 @@ static SUB_STATE_RETURN write_state_machine(SSL *s)
             break;
 
         default:
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_WRITE_STATE_MACHINE,
+                     ERR_R_INTERNAL_ERROR);
             return SUB_STATE_ERROR;
         }
     }
@@ -814,25 +942,27 @@ int ossl_statem_app_data_allowed(SSL *s)
     return 0;
 }
 
-#ifndef OPENSSL_NO_SCTP
 /*
- * Set flag used by SCTP to determine whether we are in the read sock state
+ * This function returns 1 if TLS exporter is ready to export keying
+ * material, or 0 if otherwise.
  */
-void ossl_statem_set_sctp_read_sock(SSL *s, int read_sock)
+int ossl_statem_export_allowed(SSL *s)
 {
-    s->statem.in_sctp_read_sock = read_sock;
+    return s->s3->previous_server_finished_len != 0
+           && s->statem.hand_state != TLS_ST_SW_FINISHED;
 }
 
 /*
- * Called by the record layer to determine whether we are in the read sock
- * state or not.
- *
- * Return values are:
- *   1: Yes (we are in the read sock state)
- *   0: No (we are not in the read sock state)
+ * Return 1 if early TLS exporter is ready to export keying material,
+ * or 0 if otherwise.
  */
-int ossl_statem_in_sctp_read_sock(SSL *s)
+int ossl_statem_export_early_allowed(SSL *s)
 {
-    return s->statem.in_sctp_read_sock;
+    /*
+     * The early exporter secret is only present on the server if we
+     * have accepted early_data. It is present on the client as long
+     * as we have sent early_data.
+     */
+    return s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+           || (!s->server && s->ext.early_data != SSL_EARLY_DATA_NOT_SENT);
 }
-#endif

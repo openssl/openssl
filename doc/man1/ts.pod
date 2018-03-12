@@ -2,17 +2,19 @@
 
 =head1 NAME
 
+openssl-ts,
 ts - Time Stamping Authority tool (client/server)
 
 =head1 SYNOPSIS
 
 B<openssl> B<ts>
 B<-query>
-[B<-rand> file:file...]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-config> configfile]
 [B<-data> file_to_hash]
 [B<-digest> digest_bytes]
-[B<-[digest]>]
+[B<-I<digest>>]
 [B<-tspolicy> object_id]
 [B<-no_nonce>]
 [B<-cert>]
@@ -27,8 +29,8 @@ B<-reply>
 [B<-queryfile> request.tsq]
 [B<-passin> password_src]
 [B<-signer> tsa_cert.pem]
-[B<-inkey> private.pem]
-[B<-sha1|-sha224|-sha256|-sha384|-sha512>]
+[B<-inkey> file_or_id]
+[B<-I<digest>>]
 [B<-chain> certs_file.pem]
 [B<-tspolicy> object_id]
 [B<-in> response.tsr]
@@ -131,11 +133,18 @@ request with the following options:
 
 =over 4
 
-=item B<-rand> file:file...
+=item B<-rand file...>
 
-The files containing random data for seeding the random number
-generator. Multiple files can be specified, the separator is B<;> for
-MS-Windows, B<,> for VMS and B<:> for all other platforms. (Optional)
+A file or files containing random data used to seed the random number
+generator.
+Multiple files can be specified separated by an OS-dependent character.
+The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
+all others.
+
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
 
 =item B<-config> configfile
 
@@ -157,7 +166,7 @@ per byte, the bytes optionally separated by colons (e.g. 1A:F6:01:... or
 1AF601...). The number of bytes must match the message digest algorithm
 in use. (Optional)
 
-=item B<-[digest]>
+=item B<-I<digest>>
 
 The message digest to apply to the data file.
 Any digest supported by the OpenSSL B<dgst> command can be used.
@@ -187,7 +196,6 @@ response. (Optional)
 This option specifies a previously created time stamp request in DER
 format that will be printed into the output file. Useful when you need
 to examine the content of a request in human-readable
-
 format. (Optional)
 
 =item B<-out> request.tsq
@@ -244,12 +252,14 @@ timeStamping. The extended key usage must also be critical, otherwise
 the certificate is going to be refused. Overrides the B<signer_cert>
 variable of the config file. (Optional)
 
-=item B<-inkey> private.pem
+=item B<-inkey> file_or_id
 
 The signer private key of the TSA in PEM format. Overrides the
 B<signer_key> config file option. (Optional)
+If no engine is used, the argument is taken as a file; if an engine is
+specified, the argument is given to the engine as a key identifier.
 
-=item B<-sha1|-sha224|-sha256|-sha384|-sha512>
+=item B<-I<digest>>
 
 Signing digest to use. Overrides the B<signer_digest> config file
 option. (Optional)
@@ -450,7 +460,7 @@ command line option. (Optional)
 =item B<signer_digest>
 
 Signing digest to use. The same as the
-B<-sha1|-sha224|-sha256|-sha384|-sha512> command line option. (Optional)
+B<-I<digest>> command line option. (Optional)
 
 =item B<default_policy>
 
@@ -503,6 +513,11 @@ is specified then the certificate identifiers of the chain will also
 be included in the SigningCertificate signed attribute. If this
 variable is set to no, only the signing certificate identifier is
 included. Default is no. (Optional)
+
+=item B<ess_cert_id_alg>
+
+This option specifies the hash function to be used to calculate the TSA's
+public key certificate identifier. Default is sha1. (Optional)
 
 =back
 
@@ -606,28 +621,35 @@ You could also look at the 'test' directory for more examples.
 
 =for comment foreign manuals: procmail(1), perl(1)
 
-If you find any bugs or you have suggestions please write to
-Zoltan Glozik <zglozik@opentsa.org>. Known issues:
+=over 2
 
-=over 4
+=item *
 
-=item * No support for time stamps over SMTP, though it is quite easy
+No support for time stamps over SMTP, though it is quite easy
 to implement an automatic e-mail based TSA with L<procmail(1)>
 and L<perl(1)>. HTTP server support is provided in the form of
 a separate apache module. HTTP client support is provided by
 L<tsget(1)>. Pure TCP/IP protocol is not supported.
 
-=item * The file containing the last serial number of the TSA is not
+=item *
+
+The file containing the last serial number of the TSA is not
 locked when being read or written. This is a problem if more than one
 instance of L<openssl(1)> is trying to create a time stamp
 response at the same time. This is not an issue when using the apache
 server module, it does proper locking.
 
-=item * Look for the FIXME word in the source files.
+=item *
 
-=item * The source code should really be reviewed by somebody else, too.
+Look for the FIXME word in the source files.
 
-=item * More testing is needed, I have done only some basic tests (see
+=item *
+
+The source code should really be reviewed by somebody else, too.
+
+=item *
+
+More testing is needed, I have done only some basic tests (see
 test/testtsa).
 
 =back
@@ -640,7 +662,7 @@ L<config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

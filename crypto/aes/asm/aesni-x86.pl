@@ -80,7 +80,7 @@ $output = pop;
 open OUT,">$output";
 *STDOUT=*OUT;
 
-&asm_init($ARGV[0],$0);
+&asm_init($ARGV[0]);
 
 &external_label("OPENSSL_ia32cap_P");
 &static_label("key_const");
@@ -239,7 +239,7 @@ sub aesni_generate1	# fully unrolled loop
 # can schedule aes[enc|dec] every cycle optimal interleave factor
 # equals to corresponding instructions latency. 8x is optimal for
 # * Bridge, but it's unfeasible to accommodate such implementation
-# in XMM registers addreassable in 32-bit mode and therefore maximum
+# in XMM registers addressable in 32-bit mode and therefore maximum
 # of 6x is used instead...
 
 sub aesni_generate2

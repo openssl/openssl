@@ -180,6 +180,10 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 # define         X509_V_ERR_NO_VALID_SCTS                        71
 
 # define         X509_V_ERR_PROXY_SUBJECT_NAME_VIOLATION         72
+/* OCSP status errors */
+# define         X509_V_ERR_OCSP_VERIFY_NEEDED                   73  /* Need OCSP verification */
+# define         X509_V_ERR_OCSP_VERIFY_FAILED                   74  /* Couldn't verify cert through OCSP */
+# define         X509_V_ERR_OCSP_CERT_UNKNOWN                    75  /* Certificate wasn't recognized by the OCSP responder */
 
 /* Certificate verify flags */
 
@@ -272,7 +276,6 @@ int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
 X509_VERIFY_PARAM *X509_STORE_get0_param(X509_STORE *ctx);
-int X509_STORE_set_flags(X509_STORE *ctx, unsigned long flags);
 
 void X509_STORE_set_verify(X509_STORE *ctx, X509_STORE_CTX_verify_fn verify);
 #define X509_STORE_set_verify_func(ctx, func) \

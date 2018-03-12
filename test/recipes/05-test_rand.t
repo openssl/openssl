@@ -6,7 +6,11 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use strict;
+use warnings;
+use OpenSSL::Test;
 
-use OpenSSL::Test::Simple;
+plan tests => 1;
+setup("test_rand");
 
-simple_test("test_rand", "randtest", "rand");
+ok(run(test(["drbgtest"])));

@@ -12,7 +12,6 @@
 #include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-#include <assert.h>
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
 
@@ -60,6 +59,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
     EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
     EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
+#ifndef OPENSSL_NO_ARIA
+    EVP_add_cipher(EVP_aria_128_gcm());
+    EVP_add_cipher(EVP_aria_256_gcm());
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_cbc());
     EVP_add_cipher(EVP_camellia_256_cbc());
@@ -96,7 +99,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     SSL_COMP_get_compression_methods();
 #endif
     /* initialize cipher/digest methods table */
-    ssl_load_ciphers();
+    if (!ssl_load_ciphers())
+        return 0;
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
@@ -191,11 +195,11 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
         return 0;
     }
 
-    if (!OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
-                             | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
+    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
         return 0;
 
-    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
+    if (!OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
+                             | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)

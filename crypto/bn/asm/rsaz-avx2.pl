@@ -1,68 +1,30 @@
 #! /usr/bin/env perl
 # Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright (c) 2012, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
-
-
-##############################################################################
-#                                                                            #
-#  Copyright (c) 2012, Intel Corporation                                     #
-#                                                                            #
-#  All rights reserved.                                                      #
-#                                                                            #
-#  Redistribution and use in source and binary forms, with or without        #
-#  modification, are permitted provided that the following conditions are    #
-#  met:                                                                      #
-#                                                                            #
-#  *  Redistributions of source code must retain the above copyright         #
-#     notice, this list of conditions and the following disclaimer.          #
-#                                                                            #
-#  *  Redistributions in binary form must reproduce the above copyright      #
-#     notice, this list of conditions and the following disclaimer in the    #
-#     documentation and/or other materials provided with the                 #
-#     distribution.                                                          #
-#                                                                            #
-#  *  Neither the name of the Intel Corporation nor the names of its         #
-#     contributors may be used to endorse or promote products derived from   #
-#     this software without specific prior written permission.               #
-#                                                                            #
-#                                                                            #
-#  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          #
-#  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         #
-#  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        #
-#  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            #
-#  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     #
-#  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       #
-#  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        #
-#  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    #
-#  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      #
-#  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        #
-#  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              #
-#                                                                            #
-##############################################################################
-# Developers and authors:                                                    #
-# Shay Gueron (1, 2), and Vlad Krasnov (1)                                   #
-# (1) Intel Corporation, Israel Development Center, Haifa, Israel            #
-# (2) University of Haifa, Israel                                            #
-##############################################################################
-# Reference:                                                                 #
-# [1] S. Gueron, V. Krasnov: "Software Implementation of Modular             #
-#     Exponentiation,  Using Advanced Vector Instructions Architectures",    #
-#     F. Ozbudak and F. Rodriguez-Henriquez (Eds.): WAIFI 2012, LNCS 7369,   #
-#     pp. 119?135, 2012. Springer-Verlag Berlin Heidelberg 2012              #
-# [2] S. Gueron: "Efficient Software Implementations of Modular              #
-#     Exponentiation", Journal of Cryptographic Engineering 2:31-43 (2012).  #
-# [3] S. Gueron, V. Krasnov: "Speeding up Big-numbers Squaring",IEEE         #
-#     Proceedings of 9th International Conference on Information Technology: #
-#     New Generations (ITNG 2012), pp.821-823 (2012)                         #
-# [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis    #
-#     resistant 1024-bit modular exponentiation, for optimizing RSA2048      #
-#     on AVX2 capable x86_64 platforms",                                     #
-#     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest#
-##############################################################################
+#
+# Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
+# (1) Intel Corporation, Israel Development Center, Haifa, Israel
+# (2) University of Haifa, Israel
+#
+# References:
+# [1] S. Gueron, V. Krasnov: "Software Implementation of Modular
+#     Exponentiation,  Using Advanced Vector Instructions Architectures",
+#     F. Ozbudak and F. Rodriguez-Henriquez (Eds.): WAIFI 2012, LNCS 7369,
+#     pp. 119?135, 2012. Springer-Verlag Berlin Heidelberg 2012
+# [2] S. Gueron: "Efficient Software Implementations of Modular
+#     Exponentiation", Journal of Cryptographic Engineering 2:31-43 (2012).
+# [3] S. Gueron, V. Krasnov: "Speeding up Big-numbers Squaring",IEEE
+#     Proceedings of 9th International Conference on Information Technology:
+#     New Generations (ITNG 2012), pp.821-823 (2012)
+# [4] S. Gueron, V. Krasnov: "[PATCH] Efficient and side channel analysis
+#     resistant 1024-bit modular exponentiation, for optimizing RSA2048
+#     on AVX2 capable x86_64 platforms",
+#     http://rt.openssl.org/Ticket/Display.html?id=2850&user=guest&pass=guest
 #
 # +13% improvement over original submission by <appro@openssl.org>
 #
@@ -255,7 +217,7 @@ $code.=<<___;
 	vmovdqu		32*8-128($ap), $ACC8
 
 	lea	192(%rsp), $tp0			# 64+128=192
-	vpbroadcastq	.Land_mask(%rip), $AND_MASK
+	vmovdqu	.Land_mask(%rip), $AND_MASK
 	jmp	.LOOP_GRANDE_SQR_1024
 
 .align	32
@@ -1105,10 +1067,10 @@ $code.=<<___;
 	vpmuludq	32*6-128($np),$Yi,$TEMP1
 	vpaddq		$TEMP1,$ACC6,$ACC6
 	vpmuludq	32*7-128($np),$Yi,$TEMP2
-	 vpblendd	\$3, $ZERO, $ACC9, $ACC9	# correct $ACC3
+	 vpblendd	\$3, $ZERO, $ACC9, $TEMP1	# correct $ACC3
 	vpaddq		$TEMP2,$ACC7,$ACC7
 	vpmuludq	32*8-128($np),$Yi,$TEMP0
-	 vpaddq		$ACC9, $ACC3, $ACC3		# correct $ACC3
+	 vpaddq		$TEMP1, $ACC3, $ACC3		# correct $ACC3
 	vpaddq		$TEMP0,$ACC8,$ACC8
 
 	mov	%rbx, %rax
@@ -1121,7 +1083,9 @@ $code.=<<___;
 	 vmovdqu	-8+32*2-128($ap),$TEMP2
 
 	mov	$r1, %rax
+	 vpblendd	\$0xfc, $ZERO, $ACC9, $ACC9	# correct $ACC3
 	imull	$n0, %eax
+	 vpaddq		$ACC9,$ACC4,$ACC4		# correct $ACC3
 	and	\$0x1fffffff, %eax
 
 	 imulq	16-128($ap),%rbx
@@ -1357,15 +1321,12 @@ ___
 #	But as we underutilize resources, it's possible to correct in
 #	each iteration with marginal performance loss. But then, as
 #	we do it in each iteration, we can correct less digits, and
-#	avoid performance penalties completely. Also note that we
-#	correct only three digits out of four. This works because
-#	most significant digit is subjected to less additions.
+#	avoid performance penalties completely.
 
 $TEMP0 = $ACC9;
 $TEMP3 = $Bi;
 $TEMP4 = $Yi;
 $code.=<<___;
-	vpermq		\$0, $AND_MASK, $AND_MASK
 	vpaddq		(%rsp), $TEMP1, $ACC0
 
 	vpsrlq		\$29, $ACC0, $TEMP1
@@ -1812,7 +1773,7 @@ $code.=<<___;
 
 .align	64
 .Land_mask:
-	.quad	0x1fffffff,0x1fffffff,0x1fffffff,-1
+	.quad	0x1fffffff,0x1fffffff,0x1fffffff,0x1fffffff
 .Lscatter_permd:
 	.long	0,2,4,6,7,7,7,7
 .Lgather_permd:

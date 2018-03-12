@@ -3,6 +3,10 @@
 # This is mostly being used for generation of certificate requests.
 #
 
+# Note that you can include other files from the main configuration
+# file using the .include directive.
+#.include filename
+
 # This definition stops the following lines choking if HOME isn't
 # defined.
 HOME			= .
@@ -344,3 +348,5 @@ tsa_name		= yes	# Must the TSA name be included in the reply?
 				# (optional, default: no)
 ess_cert_id_chain	= no	# Must the ESS cert id chain be included?
 				# (optional, default: no)
+ess_cert_id_alg		= sha1	# algorithm to compute certificate
+				# identifier (optional, default: sha1)

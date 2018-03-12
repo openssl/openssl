@@ -2,21 +2,29 @@
 
 =head1 NAME
 
+SSL_get_ex_data_X509_STORE_CTX_idx,
 SSL_CTX_set_verify, SSL_set_verify,
 SSL_CTX_set_verify_depth, SSL_set_verify_depth,
-SSL_verify_cb
+SSL_verify_cb,
+SSL_verify_client_post_handshake,
+SSL_force_post_handshake_auth
 - set peer certificate verification parameters
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
- void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb verify_callback);
- void SSL_set_verify(SSL *s, int mode, SSL_verify_cb verify_callback);
- void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
- void SSL_set_verify_depth(SSL *s, int depth);
-
  typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
+
+ void SSL_CTX_set_verify(SSL_CTX *ctx, int mode, SSL_verify_cb verify_callback);
+ void SSL_set_verify(SSL *ssl, int mode, SSL_verify_cb verify_callback);
+ SSL_get_ex_data_X509_STORE_CTX_idx(void);
+
+ void SSL_CTX_set_verify_depth(SSL_CTX *ctx, int depth);
+ void SSL_set_verify_depth(SSL *ssl, int depth);
+
+ int SSL_verify_client_post_handshake(SSL *ssl);
+ void SSL_force_post_handshake_auth(SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -30,13 +38,25 @@ shall be specified, the NULL pointer can be used for B<verify_callback>. In
 this case last B<verify_callback> set specifically for this B<ssl> remains. If
 no special B<callback> was set before, the default callback for the underlying
 B<ctx> is used, that was valid at the time B<ssl> was created with
-L<SSL_new(3)>.
+L<SSL_new(3)>. Within the callback function,
+B<SSL_get_ex_data_X509_STORE_CTX_idx> can be called to get the data index
+of the current SSL object that is doing the verification.
 
 SSL_CTX_set_verify_depth() sets the maximum B<depth> for the certificate chain
-verification that shall be allowed for B<ctx>. (See the BUGS section.)
+verification that shall be allowed for B<ctx>.
 
 SSL_set_verify_depth() sets the maximum B<depth> for the certificate chain
-verification that shall be allowed for B<ssl>. (See the BUGS section.)
+verification that shall be allowed for B<ssl>.
+
+SSL_force_post_handshake_auth() forces the Post-Handshake Authentication
+extension to be added to the ClientHello regardless of certificate configuration
+at the time of the initial handshake, such that post-handshake authentication
+can be requested by the server. A certificate callback will need to be set via
+SSL_CTX_set_client_cert_cb() if no certificate is provided at initialization.
+
+SSL_verify_client_post_handshake() causes a CertificateRequest message to be
+sent by a server on the given B<ssl> connection. The SSL_VERIFY_PEER flag must
+be set; the SSL_VERIFY_POST_HANDSHAKE flag is optional.
 
 =head1 NOTES
 
@@ -64,7 +84,8 @@ fails, the TLS/SSL handshake is
 immediately terminated with an alert message containing the reason for
 the verification failure.
 The behaviour can be controlled by the additional
-SSL_VERIFY_FAIL_IF_NO_PEER_CERT and SSL_VERIFY_CLIENT_ONCE flags.
+SSL_VERIFY_FAIL_IF_NO_PEER_CERT, SSL_VERIFY_CLIENT_ONCE and
+SSL_VERIFY_POST_HANDSHAKE flags.
 
 B<Client mode:> the server certificate is verified. If the verification process
 fails, the TLS/SSL handshake is
@@ -82,9 +103,22 @@ B<Client mode:> ignored
 
 =item SSL_VERIFY_CLIENT_ONCE
 
-B<Server mode:> only request a client certificate on the initial TLS/SSL
-handshake. Do not ask for a client certificate again in case of a
-renegotiation. This flag must be used together with SSL_VERIFY_PEER.
+B<Server mode:> only request a client certificate once during the
+connection. Do not ask for a client certificate again during
+renegotiation or post-authentication if a certificate was requested
+during the initial handshake. This flag must be used together with
+SSL_VERIFY_PEER.
+
+B<Client mode:> ignored
+
+=item SSL_VERIFY_POST_HANDSHAKE
+
+B<Server mode:> the server will not send a client certificate request
+during the initial handshake, but will send the request via
+SSL_verify_client_post_handshake(). This allows the SSL_CTX or SSL
+to be configured for post-handshake peer verification before the
+handshake occurs. This flag must be used together with
+SSL_VERIFY_PEER. TLSv1.3 only; no effect on pre-TLSv1.3 connections.
 
 B<Client mode:> ignored
 
@@ -101,16 +135,19 @@ application provided procedure also has access to the verify depth information
 and the verify_callback() function, but the way this information is used
 may be different.
 
-SSL_CTX_set_verify_depth() and SSL_set_verify_depth() set the limit up
-to which depth certificates in a chain are used during the verification
-procedure. If the certificate chain is longer than allowed, the certificates
-above the limit are ignored. Error messages are generated as if these
-certificates would not be present, most likely a
-X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY will be issued.
+SSL_CTX_set_verify_depth() and SSL_set_verify_depth() set a limit on the
+number of certificates between the end-entity and trust-anchor certificates.
+Neither the
+end-entity nor the trust-anchor certificates count against B<depth>. If the
+certificate chain needed to reach a trusted issuer is longer than B<depth+2>,
+X509_V_ERR_CERT_CHAIN_TOO_LONG will be issued.
 The depth count is "level 0:peer certificate", "level 1: CA certificate",
 "level 2: higher level CA certificate", and so on. Setting the maximum
-depth to 2 allows the levels 0, 1, and 2. The default depth limit is 100,
-allowing for the peer certificate and additional 100 CA certificates.
+depth to 2 allows the levels 0, 1, 2 and 3 (0 being the end-entity and 3 the
+trust-anchor).
+The default depth limit is 100,
+allowing for the peer certificate, at most 100 intermediate CA certificates and
+a final trust anchor certificate.
 
 The B<verify_callback> function is used to control the behaviour when the
 SSL_VERIFY_PEER flag is set. It must be supplied by the application and
@@ -146,6 +183,20 @@ Its return value is identical to B<preverify_ok>, so that any verification
 failure will lead to a termination of the TLS/SSL handshake with an
 alert message, if SSL_VERIFY_PEER is set.
 
+After calling SSL_force_post_handshake_auth(), the client will need to add a
+certificate or certificate callback to its configuration before it can
+successfully authenticate. This must be called before SSL_connect().
+
+SSL_verify_client_post_handshake() requires that verify flags have been
+previously set, and that a client sent the post-handshake authentication
+extension. When the client returns a certificate the verify callback will be
+invoked. A write operation must take place for the Certificate Request to be
+sent to the client, this can be done with SSL_do_handshake() or SSL_write_ex().
+Only one certificate request may be outstanding at any time.
+
+When post-handshake authentication occurs, a refreshed NewSessionTicket
+message is sent to the client.
+
 =head1 BUGS
 
 In client mode, it is not checked whether the SSL_VERIFY_PEER flag
@@ -156,6 +207,10 @@ required.
 =head1 RETURN VALUES
 
 The SSL*_set_verify*() functions do not provide diagnostic information.
+
+The SSL_verify_client_post_handshake() function returns 1 if the request
+succeeded, and 0 if the request failed. The error stack can be examined
+to determine the failure reason.
 
 =head1 EXAMPLES
 
@@ -171,7 +226,7 @@ certificates.
 
 The example makes use of the ex_data technique to store application data
 into/retrieve application data from the SSL structure
-(see L<SSL_get_ex_new_index(3)>,
+(see L<CRYPTO_get_ex_new_index(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
 
  ...
@@ -181,65 +236,63 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
    int always_continue;
  } mydata_t;
  int mydata_index;
+
  ...
  static int verify_callback(int preverify_ok, X509_STORE_CTX *ctx)
  {
-    char    buf[256];
-    X509   *err_cert;
-    int     err, depth;
-    SSL    *ssl;
-    mydata_t *mydata;
+     char    buf[256];
+     X509   *err_cert;
+     int     err, depth;
+     SSL    *ssl;
+     mydata_t *mydata;
 
-    err_cert = X509_STORE_CTX_get_current_cert(ctx);
-    err = X509_STORE_CTX_get_error(ctx);
-    depth = X509_STORE_CTX_get_error_depth(ctx);
+     err_cert = X509_STORE_CTX_get_current_cert(ctx);
+     err = X509_STORE_CTX_get_error(ctx);
+     depth = X509_STORE_CTX_get_error_depth(ctx);
 
-    /*
-     * Retrieve the pointer to the SSL of the connection currently treated
-     * and the application specific data stored into the SSL object.
-     */
-    ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
-    mydata = SSL_get_ex_data(ssl, mydata_index);
+     /*
+      * Retrieve the pointer to the SSL of the connection currently treated
+      * and the application specific data stored into the SSL object.
+      */
+     ssl = X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx());
+     mydata = SSL_get_ex_data(ssl, mydata_index);
 
-    X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
+     X509_NAME_oneline(X509_get_subject_name(err_cert), buf, 256);
 
-    /*
-     * Catch a too long certificate chain. The depth limit set using
-     * SSL_CTX_set_verify_depth() is by purpose set to "limit+1" so
-     * that whenever the "depth>verify_depth" condition is met, we
-     * have violated the limit and want to log this error condition.
-     * We must do it here, because the CHAIN_TOO_LONG error would not
-     * be found explicitly; only errors introduced by cutting off the
-     * additional certificates would be logged.
-     */
-    if (depth > mydata->verify_depth) {
-        preverify_ok = 0;
-        err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
-        X509_STORE_CTX_set_error(ctx, err);
-    }
-    if (!preverify_ok) {
-        printf("verify error:num=%d:%s:depth=%d:%s\n", err,
-                 X509_verify_cert_error_string(err), depth, buf);
-    }
-    else if (mydata->verbose_mode)
-    {
-        printf("depth=%d:%s\n", depth, buf);
-    }
+     /*
+      * Catch a too long certificate chain. The depth limit set using
+      * SSL_CTX_set_verify_depth() is by purpose set to "limit+1" so
+      * that whenever the "depth>verify_depth" condition is met, we
+      * have violated the limit and want to log this error condition.
+      * We must do it here, because the CHAIN_TOO_LONG error would not
+      * be found explicitly; only errors introduced by cutting off the
+      * additional certificates would be logged.
+      */
+     if (depth > mydata->verify_depth) {
+         preverify_ok = 0;
+         err = X509_V_ERR_CERT_CHAIN_TOO_LONG;
+         X509_STORE_CTX_set_error(ctx, err);
+     }
+     if (!preverify_ok) {
+         printf("verify error:num=%d:%s:depth=%d:%s\n", err,
+                X509_verify_cert_error_string(err), depth, buf);
+     } else if (mydata->verbose_mode) {
+         printf("depth=%d:%s\n", depth, buf);
+     }
 
-    /*
-     * At this point, err contains the last verification error. We can use
-     * it for something special
-     */
-    if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT))
-    {
-      X509_NAME_oneline(X509_get_issuer_name(err_cert), buf, 256);
-      printf("issuer= %s\n", buf);
-    }
+     /*
+      * At this point, err contains the last verification error. We can use
+      * it for something special
+      */
+     if (!preverify_ok && (err == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT)) {
+         X509_NAME_oneline(X509_get_issuer_name(err_cert), buf, 256);
+         printf("issuer= %s\n", buf);
+     }
 
-    if (mydata->always_continue)
-      return 1;
-    else
-      return preverify_ok;
+     if (mydata->always_continue)
+         return 1;
+     else
+         return preverify_ok;
  }
  ...
 
@@ -249,7 +302,7 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
  mydata_index = SSL_get_ex_new_index(0, "mydata index", NULL, NULL, NULL);
 
  ...
- SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,
+ SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE,
                     verify_callback);
 
  /*
@@ -267,12 +320,10 @@ L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>).
 
  ...
  SSL_accept(ssl);       /* check of success left out for clarity */
- if (peer = SSL_get_peer_certificate(ssl))
- {
-   if (SSL_get_verify_result(ssl) == X509_V_OK)
-   {
-     /* The client sent a certificate which verified OK */
-   }
+ if (peer = SSL_get_peer_certificate(ssl)) {
+     if (SSL_get_verify_result(ssl) == X509_V_OK) {
+         /* The client sent a certificate which verified OK */
+     }
  }
 
 =head1 SEE ALSO
@@ -284,11 +335,17 @@ L<SSL_CTX_load_verify_locations(3)>,
 L<SSL_get_peer_certificate(3)>,
 L<SSL_CTX_set_cert_verify_callback(3)>,
 L<SSL_get_ex_data_X509_STORE_CTX_idx(3)>,
-L<SSL_get_ex_new_index(3)>
+L<SSL_CTX_set_client_cert_cb(3)>,
+L<CRYPTO_get_ex_new_index(3)>
+
+=head1 HISTORY
+
+The SSL_VERIFY_POST_HANDSHAKE option, and the SSL_verify_client_post_handshake()
+and SSL_force_post_handshake_auth() functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

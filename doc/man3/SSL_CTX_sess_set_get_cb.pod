@@ -11,18 +11,20 @@ SSL_CTX_sess_set_new_cb, SSL_CTX_sess_set_remove_cb, SSL_CTX_sess_set_get_cb, SS
  void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
                               int (*new_session_cb)(SSL *, SSL_SESSION *));
  void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
-           void (*remove_session_cb)(SSL_CTX *ctx, SSL_SESSION *));
+                                 void (*remove_session_cb)(SSL_CTX *ctx,
+                                                           SSL_SESSION *));
  void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
-           SSL_SESSION (*get_session_cb)(SSL *, const unsigned char *, int, int *));
+                              SSL_SESSION (*get_session_cb)(SSL *,
+                                                            const unsigned char *,
+                                                            int, int *));
 
- int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st *ssl, SSL_SESSION *sess);
- void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
- SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl, const unsigned char *data, int len, int *copy);
-
- int (*new_session_cb)(struct ssl_st *ssl, SSL_SESSION *sess);
- void (*remove_session_cb)(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
- SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl, unsigned char *data,
-               int len, int *copy);
+ int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st *ssl,
+                                              SSL_SESSION *sess);
+ void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx,
+                                                  SSL_SESSION *sess);
+ SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl,
+                                                       const unsigned char *data,
+                                                       int len, int *copy);
 
 =head1 DESCRIPTION
 
@@ -57,7 +59,18 @@ and session caching is enabled (see
 L<SSL_CTX_set_session_cache_mode(3)>).
 The new_session_cb() is passed the B<ssl> connection and the ssl session
 B<sess>. If the callback returns B<0>, the session will be immediately
-removed again.
+removed again. Note that in TLSv1.3, sessions are established after the main
+handshake has completed. The server decides when to send the client the session
+information and this may occur some time after the end of the handshake (or not
+at all). This means that applications should expect the new_session_cb()
+function to be invoked during the handshake (for <= TLSv1.2) or after the
+handshake (for TLSv1.3). It is also possible in TLSv1.3 for multiple sessions to
+be established with a single connection. In these case the new_session_cb()
+function will be invoked multiple times.
+
+In TLSv1.3 it is recommended that each SSL_SESSION object is only used for
+resumption once. One way of enforcing that is for applications to call
+L<SSL_CTX_remove_session(3)> after a session has been used.
 
 The remove_session_cb() is called, whenever the SSL engine removes a session
 from the internal cache. This happens when the session is removed because
@@ -76,6 +89,11 @@ Normally the reference count is not incremented and therefore the
 session must not be explicitly freed with
 L<SSL_SESSION_free(3)>.
 
+=head1 RETURN VALUES
+
+SSL_CTX_sess_get_new_cb(), SSL_CTX_sess_get_remove_cb() and SSL_CTX_sess_get_get_cb()
+return different callback function pointers respectively.
+
 =head1 SEE ALSO
 
 L<ssl(7)>, L<d2i_SSL_SESSION(3)>,
@@ -86,7 +104,7 @@ L<SSL_CTX_free(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

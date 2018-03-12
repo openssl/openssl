@@ -833,6 +833,9 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize);
 /* Copy |len| bytes of data from |*src| into the WPACKET. */
 int WPACKET_memcpy(WPACKET *pkt, const void *src, size_t len);
 
+/* Set |len| bytes of data to |ch| into the WPACKET. */
+int WPACKET_memset(WPACKET *pkt, int ch, size_t len);
+
 /*
  * Copy |len| bytes of data from |*src| into the WPACKET and prefix with its
  * length (consuming |lenbytes| of data for the length). Don't call this

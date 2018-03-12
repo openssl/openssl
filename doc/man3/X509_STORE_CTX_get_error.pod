@@ -70,7 +70,7 @@ is B<not> successful the returned chain may be incomplete or invalid. The
 returned chain persists after the B<ctx> structure is freed, when it is
 no longer needed it should be free up using:
 
-  sk_X509_pop_free(chain, X509_free);
+ sk_X509_pop_free(chain, X509_free);
 
 X509_verify_cert_error_string() returns a human readable error string for
 verification error B<n>.

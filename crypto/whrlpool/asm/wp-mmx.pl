@@ -8,7 +8,7 @@
 
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. Rights for redistribution and usage in source and binary
 # forms are granted according to the OpenSSL license.
 # ====================================================================
@@ -59,7 +59,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"wp-mmx.pl");
+&asm_init($ARGV[0]);
 
 sub L()  { &data_byte(@_); }
 sub LL()

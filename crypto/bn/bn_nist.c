@@ -254,7 +254,7 @@ static void nist_cp_bn_0(BN_ULONG *dst, const BN_ULONG *src, int top, int max)
     int i;
 
 #ifdef BN_DEBUG
-    OPENSSL_assert(top <= max);
+    assert(top <= max);
 #endif
     for (i = 0; i < top; i++)
         dst[i] = src[i];

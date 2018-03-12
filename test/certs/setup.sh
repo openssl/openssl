@@ -344,3 +344,11 @@ REQMASK=MASK:0x800 ./mkcert.sh req badalt7-key "O = Bad NC Test Certificate 7" \
     "DNS.1 = www.ok.good.com" "DNS.2 = bad.ok.good.com" \
     "email.1 = good@good.org" "email.2 = any@good.com" \
     "IP = 127.0.0.1" "IP = 192.168.0.1"
+
+# RSA-PSS signatures
+# SHA1
+./mkcert.sh genee PSS-SHA1 ee-key ee-pss-sha1-cert ca-key ca-cert \
+    -sha1 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
+# SHA256
+./mkcert.sh genee PSS-SHA256 ee-key ee-pss-sha256-cert ca-key ca-cert \
+    -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest

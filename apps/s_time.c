@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,8 +17,8 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#define USE_SOCKETS
 #include "apps.h"
+#include "progs.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>
@@ -49,11 +49,17 @@
 
 static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
 
+/*
+ * Define a HTTP get command globally.
+ * Also define the size of the command, this is two bytes less than
+ * the size of the string because the %s is replaced by the URL.
+ */
 static const char fmt_http_get_cmd[] = "GET %s HTTP/1.0\r\n\r\n";
+static const size_t fmt_http_get_cmd_size = sizeof(fmt_http_get_cmd) - 2;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_CONNECT, OPT_CIPHER, OPT_CERT, OPT_KEY, OPT_CAPATH,
+    OPT_CONNECT, OPT_CIPHER, OPT_CERT, OPT_NAMEOPT, OPT_KEY, OPT_CAPATH,
     OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE, OPT_BUGS,
     OPT_VERIFY, OPT_TIME, OPT_SSL3,
     OPT_WWW
@@ -65,6 +71,7 @@ const OPTIONS s_time_options[] = {
      "Where to connect as post:port (default is " SSL_CONNECT_NAME ")"},
     {"cipher", OPT_CIPHER, 's', "Cipher to use, see 'openssl ciphers'"},
     {"cert", OPT_CERT, '<', "Cert file to use, PEM format assumed"},
+    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
     {"key", OPT_KEY, '<', "File with key, PEM; default is -cert file"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"cafile", OPT_CAFILE, '<', "PEM format file of CA's"},
@@ -141,6 +148,10 @@ int s_time_main(int argc, char **argv)
         case OPT_CERT:
             certfile = opt_arg();
             break;
+        case OPT_NAMEOPT:
+            if (!set_nameopt(opt_arg()))
+                goto end;
+            break;
         case OPT_KEY:
             keyfile = opt_arg();
             break;
@@ -168,7 +179,7 @@ int s_time_main(int argc, char **argv)
             break;
         case OPT_WWW:
             www_path = opt_arg();
-            buf_size = strlen(www_path) + sizeof(fmt_http_get_cmd) - 2;  /* 2 is for %s */
+            buf_size = strlen(www_path) + fmt_http_get_cmd_size;
             if (buf_size > sizeof(buf)) {
                 BIO_printf(bio_err, "%s: -www option is too long\n", prog);
                 goto end;
@@ -225,12 +236,14 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            buf_len = BIO_snprintf(buf, sizeof buf,
-                                   fmt_http_get_cmd, www_path);
-            if (SSL_write(scon, buf, buf_len) <= 0)
+            buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
+                                   www_path);
+            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
-            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
-                bytes_read += i;
+            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0 ||
+                        SSL_get_error(scon, i) == SSL_ERROR_WANT_READ ||
+                        SSL_get_error(scon, i) == SSL_ERROR_WANT_WRITE)
+                if (i > 0) bytes_read += i;
         }
 #ifdef NO_SHUTDOWN
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
@@ -240,9 +253,9 @@ int s_time_main(int argc, char **argv)
         BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
-        if (SSL_session_reused(scon))
+        if (SSL_session_reused(scon)) {
             ver = 'r';
-        else {
+        } else {
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
@@ -283,11 +296,12 @@ int s_time_main(int argc, char **argv)
     }
 
     if (www_path != NULL) {
-        buf_len = BIO_snprintf(buf, sizeof buf,
-                               fmt_http_get_cmd, www_path);
-        if (SSL_write(scon, buf, buf_len) <= 0)
+        buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd, www_path);
+        if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
             goto end;
-        while (SSL_read(scon, buf, sizeof(buf)) > 0)
+        while ((i = SSL_read(scon, buf, sizeof(buf))) > 0 ||
+                    SSL_get_error(scon, i) == SSL_ERROR_WANT_READ ||
+                    SSL_get_error(scon, i) == SSL_ERROR_WANT_WRITE)
             continue;
     }
 #ifdef NO_SHUTDOWN
@@ -313,13 +327,15 @@ int s_time_main(int argc, char **argv)
         if ((doConnection(scon, host, ctx)) == NULL)
             goto end;
 
-        if (www_path) {
-            BIO_snprintf(buf, sizeof buf, "GET %s HTTP/1.0\r\n\r\n",
-                         www_path);
-            if (SSL_write(scon, buf, strlen(buf)) <= 0)
+        if (www_path != NULL) {
+            buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
+                                   www_path);
+            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
-            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
-                bytes_read += i;
+            while ((i = SSL_read(scon, buf, sizeof(buf))) > 0 ||
+                        SSL_get_error(scon, i) == SSL_ERROR_WANT_READ ||
+                        SSL_get_error(scon, i) == SSL_ERROR_WANT_WRITE)
+                if (i > 0) bytes_read += i;
         }
 #ifdef NO_SHUTDOWN
         SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN);
@@ -329,9 +345,9 @@ int s_time_main(int argc, char **argv)
         BIO_closesocket(SSL_get_fd(scon));
 
         nConn += 1;
-        if (SSL_session_reused(scon))
+        if (SSL_session_reused(scon)) {
             ver = 'r';
-        else {
+        } else {
             ver = SSL_version(scon);
             if (ver == TLS1_VERSION)
                 ver = 't';
@@ -357,7 +373,7 @@ int s_time_main(int argc, char **argv)
  end:
     SSL_free(scon);
     SSL_CTX_free(ctx);
-    return (ret);
+    return ret;
 }
 
 /*-
@@ -371,7 +387,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     fd_set readfds;
 
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
-        return (NULL);
+        return NULL;
 
     BIO_set_conn_hostname(conn, host);
 

@@ -93,7 +93,7 @@ B<issuer>:
  if (OCSP_REQUEST_add0_id(req, cid) == NULL)
     /* error */
 
-  /* Do something with req, e.g. query responder */
+ /* Do something with req, e.g. query responder */
 
  OCSP_REQUEST_free(req);
 

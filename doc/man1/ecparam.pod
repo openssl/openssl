@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-ecparam,
 ecparam - EC parameter manipulation and generation
 
 =head1 SYNOPSIS
@@ -21,7 +22,8 @@ B<openssl ecparam>
 [B<-conv_form arg>]
 [B<-param_enc arg>]
 [B<-no_seed>]
-[B<-rand file(s)>]
+[B<-rand file...>]
+[B<-writerand file>]
 [B<-genkey>]
 [B<-engine id>]
 
@@ -46,8 +48,8 @@ header and footer lines.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning as the
-B<-inform> option.
+This specifies the output format, the options have the same meaning and default
+as the B<-inform> option.
 
 =item B<-in filename>
 
@@ -116,17 +118,22 @@ is included in the ECParameters structure (see RFC 3279).
 
 This option will generate an EC private key using the specified parameters.
 
-=item B<-rand file(s)>
+=item B<-rand file...>
 
-a file or files containing random data used to seed the random number
-generator, or an EGD socket (see L<RAND_egd(3)>).
+A file or files containing random data used to seed the random number
+generator.
 Multiple files can be specified separated by an OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
 
+=item [B<-writerand file>]
+
+Writes random data to the specified I<file> upon exit.
+This can be used with a subsequent B<-rand> flag.
+
 =item B<-engine id>
 
-specifying an engine (by its unique B<id> string) will cause B<ecparam>
+Specifying an engine (by its unique B<id> string) will cause B<ecparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
@@ -175,7 +182,7 @@ L<ec(1)>, L<dsaparam(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

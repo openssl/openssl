@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,8 +39,6 @@ void *_malloc32(__size_t);
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 */
 # endif                         /* __INITIAL_POINTER_SIZE && defined
                                  * _ANSI_C_SOURCE */
-#elif defined(OPENSSL_SYS_NETWARE)
-# define NO_SYSLOG
 #elif (!defined(MSDOS) || defined(WATT32)) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG)
 # include <syslog.h>
 #endif
@@ -85,23 +83,24 @@ static void xsyslog(BIO *bp, int priority, const char *string);
 static void xcloselog(BIO *bp);
 
 static const BIO_METHOD methods_slg = {
-    BIO_TYPE_MEM, "syslog",
+    BIO_TYPE_MEM,
+    "syslog",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     slg_write,
-    NULL,
-    NULL,
+    NULL,                      /* slg_write_old,    */
+    NULL,                      /* slg_read,         */
     slg_puts,
     NULL,
     slg_ctrl,
     slg_new,
     slg_free,
-    NULL,
+    NULL,                      /* slg_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_log(void)
 {
-    return (&methods_slg);
+    return &methods_slg;
 }
 
 static int slg_new(BIO *bi)
@@ -110,15 +109,15 @@ static int slg_new(BIO *bi)
     bi->num = 0;
     bi->ptr = NULL;
     xopenlog(bi, "application", LOG_DAEMON);
-    return (1);
+    return 1;
 }
 
 static int slg_free(BIO *a)
 {
     if (a == NULL)
-        return (0);
+        return 0;
     xcloselog(a);
-    return (1);
+    return 1;
 }
 
 static int slg_write(BIO *b, const char *in, int inl)
@@ -196,7 +195,7 @@ static int slg_write(BIO *b, const char *in, int inl)
     };
 
     if ((buf = OPENSSL_malloc(inl + 1)) == NULL) {
-        return (0);
+        return 0;
     }
     strncpy(buf, in, inl);
     buf[inl] = '\0';
@@ -210,7 +209,7 @@ static int slg_write(BIO *b, const char *in, int inl)
     xsyslog(b, priority, pp);
 
     OPENSSL_free(buf);
-    return (ret);
+    return ret;
 }
 
 static long slg_ctrl(BIO *b, int cmd, long num, void *ptr)
@@ -223,7 +222,7 @@ static long slg_ctrl(BIO *b, int cmd, long num, void *ptr)
     default:
         break;
     }
-    return (0);
+    return 0;
 }
 
 static int slg_puts(BIO *bp, const char *str)
@@ -232,7 +231,7 @@ static int slg_puts(BIO *bp, const char *str)
 
     n = strlen(str);
     ret = slg_write(bp, str, n);
-    return (ret);
+    return ret;
 }
 
 # if defined(OPENSSL_SYS_WIN32)

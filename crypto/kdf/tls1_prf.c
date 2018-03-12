@@ -115,6 +115,8 @@ static int pkey_tls1_prf_ctrl_str(EVP_PKEY_CTX *ctx,
         return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
     if (strcmp(type, "hexseed") == 0)
         return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_TLS_SEED, value);
+
+    KDFerr(KDF_F_PKEY_TLS1_PRF_CTRL_STR, KDF_R_UNKNOWN_PARAMETER_TYPE);
     return -2;
 }
 
@@ -122,8 +124,16 @@ static int pkey_tls1_prf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                 size_t *keylen)
 {
     TLS1_PRF_PKEY_CTX *kctx = ctx->data;
-    if (kctx->md == NULL || kctx->sec == NULL || kctx->seedlen == 0) {
-        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_PARAMETER);
+    if (kctx->md == NULL) {
+        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_MESSAGE_DIGEST);
+        return 0;
+    }
+    if (kctx->sec == NULL) {
+        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_SECRET);
+        return 0;
+    }
+    if (kctx->seedlen == 0) {
+        KDFerr(KDF_F_PKEY_TLS1_PRF_DERIVE, KDF_R_MISSING_SEED);
         return 0;
     }
     return tls1_prf_alg(kctx->md, kctx->sec, kctx->seclen,
@@ -174,7 +184,8 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     int ret = 0;
 
     chunk = EVP_MD_size(md);
-    OPENSSL_assert(chunk >= 0);
+    if (!ossl_assert(chunk > 0))
+        goto err;
 
     ctx = EVP_MD_CTX_new();
     ctx_tmp = EVP_MD_CTX_new();

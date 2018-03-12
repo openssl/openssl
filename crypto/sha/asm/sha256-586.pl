@@ -18,7 +18,7 @@
 #
 # Performance improvement over compiler generated code varies from
 # 10% to 40% [see below]. Not very impressive on some µ-archs, but
-# it's 5 times smaller and optimizies amount of writes.
+# it's 5 times smaller and optimizes amount of writes.
 #
 # May 2012.
 #
@@ -76,7 +76,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $xmm=$avx=0;
 for (@ARGV) { $xmm=1 if (/-DOPENSSL_IA32_SSE2/); }

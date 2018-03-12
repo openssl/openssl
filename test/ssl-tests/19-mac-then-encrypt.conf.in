@@ -61,10 +61,10 @@ my @tests_tls1_2 = (
         name => "disable-encrypt-then-mac-server-sha2",
         server => {
           "Options" => "-EncryptThenMac",
-          "MaxProtocol" => "TLSv1.2"
         },
         client => {
           "CipherString" => "AES128-SHA256",
+          "MaxProtocol" => "TLSv1.2"
         },
         test   => {
           "ExpectedResult" => "Success",

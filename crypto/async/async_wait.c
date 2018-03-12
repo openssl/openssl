@@ -47,7 +47,7 @@ int ASYNC_WAIT_CTX_set_wait_fd(ASYNC_WAIT_CTX *ctx, const void *key,
 {
     struct fd_lookup_st *fdlookup;
 
-    fdlookup = OPENSSL_zalloc(sizeof *fdlookup);
+    fdlookup = OPENSSL_zalloc(sizeof(*fdlookup));
     if (fdlookup == NULL)
         return 0;
 
@@ -145,6 +145,7 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
     while (curr != NULL) {
         if (curr->del == 1) {
             /* This one has been marked deleted already so do nothing */
+            prev = curr;
             curr = curr->next;
             continue;
         }

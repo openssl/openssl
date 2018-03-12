@@ -35,6 +35,7 @@
 # Cortex-A57(*)	1.95		0.85		0.93
 # Denver	1.96		0.86		0.80
 # Mongoose	1.33		1.20		1.20
+# Kryo		1.26		0.94		1.00
 #
 # (*)	original 3.64/1.34/1.32 results were for r0p0 revision
 #	and are still same even for updated module;
@@ -59,9 +60,12 @@ $code=<<___;
 .text
 ___
 $code.=".arch	armv8-a+crypto\n"			if ($flavour =~ /64/);
-$code.=".arch	armv7-a\n.fpu	neon\n.code	32\n"	if ($flavour !~ /64/);
-		#^^^^^^ this is done to simplify adoption by not depending
-		#	on latest binutils.
+$code.=<<___						if ($flavour !~ /64/);
+.arch	armv7-a	// don't confuse not-so-latest binutils with argv8 :-)
+.fpu	neon
+.code	32
+#undef	__thumb2__
+___
 
 # Assembler mnemonics are an eclectic mix of 32- and 64-bit syntax,
 # NEON is mostly 32-bit mnemonics, integer - mostly 64. Goal is to
@@ -926,7 +930,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	s/^(\s+)v/$1/o		or	# strip off v prefix
 	s/\bbx\s+lr\b/ret/o;
 
-	# fix up remainig legacy suffixes
+	# fix up remaining legacy suffixes
 	s/\.[ui]?8//o;
 	m/\],#8/o and s/\.16b/\.8b/go;
 	s/\.[ui]?32//o and s/\.16b/\.4s/go;
@@ -985,7 +989,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	s/\bv([0-9])\.[12468]+[bsd]\b/q$1/go;	# new->old registers
 	s/\/\/\s?/@ /o;				# new->old style commentary
 
-	# fix up remainig new-style suffixes
+	# fix up remaining new-style suffixes
 	s/\{q([0-9]+)\},\s*\[(.+)\],#8/sprintf "{d%d},[$2]!",2*$1/eo	or
 	s/\],#[0-9]+/]!/o;
 

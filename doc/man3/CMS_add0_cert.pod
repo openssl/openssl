@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-CMS_add0_cert, CMS_add1_cert, CMS_get1_certs, CMS_add0_crl, CMS_add1_crl, CMS_get1_crls, - CMS certificate and CRL utility functions
+CMS_add0_cert, CMS_add1_cert, CMS_get1_certs, CMS_add0_crl, CMS_add1_crl, CMS_get1_crls
+- CMS certificate and CRL utility functions
 
 =head1 SYNOPSIS
 
@@ -15,7 +16,6 @@ CMS_add0_cert, CMS_add1_cert, CMS_get1_certs, CMS_add0_crl, CMS_add1_crl, CMS_ge
  int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl);
  int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl);
  STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms);
-
 
 =head1 DESCRIPTION
 

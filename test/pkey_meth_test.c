@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,15 +14,9 @@
 
 #include <openssl/evp.h>
 #include "testutil.h"
-#include "test_main.h"
 
-/**********************************************************************
- *
- * Test of EVP_PKEY_ASN1 method ordering
- *
- ***/
-
-static int test_asn1_meths()
+/* Test of EVP_PKEY_ASN1_METHOD ordering */
+static int test_asn1_meths(void)
 {
     int i;
     int prev = -1;
@@ -39,7 +33,7 @@ static int test_asn1_meths()
 
     }
     if (!good) {
-        fprintf(stderr, "EVP_PKEY_ASN1_METHOD table out of order!\n");
+        TEST_error("EVP_PKEY_ASN1_METHOD table out of order");
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             const char *info;
 
@@ -47,17 +41,43 @@ static int test_asn1_meths()
             EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, &info, NULL, ameth);
             if (info == NULL)
                 info = "<NO NAME>";
-            fprintf(stderr, "%d : %s : %s\n", pkey_id, OBJ_nid2ln(pkey_id),
-                    info);
+            TEST_note("%d : %s : %s", pkey_id, OBJ_nid2ln(pkey_id), info);
         }
-    } else {
-        fprintf(stderr, "Order OK\n");
     }
-
     return good;
 }
 
-void register_tests()
+/* Test of EVP_PKEY_METHOD ordering */
+static int test_pkey_meths(void)
+{
+    size_t i;
+    int prev = -1;
+    int good = 1;
+    int pkey_id;
+    const EVP_PKEY_METHOD *pmeth;
+
+    for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
+        pmeth = EVP_PKEY_meth_get0(i);
+        EVP_PKEY_meth_get0_info(&pkey_id, NULL, pmeth);
+        if (pkey_id < prev)
+            good = 0;
+        prev = pkey_id;
+
+    }
+    if (!good) {
+        TEST_error("EVP_PKEY_METHOD table out of order");
+        for (i = 0; i < EVP_PKEY_meth_get_count(); i++) {
+            pmeth = EVP_PKEY_meth_get0(i);
+            EVP_PKEY_meth_get0_info(&pkey_id, NULL, pmeth);
+            TEST_note("%d : %s", pkey_id, OBJ_nid2ln(pkey_id));
+        }
+    }
+    return good;
+}
+
+int setup_tests()
 {
     ADD_TEST(test_asn1_meths);
+    ADD_TEST(test_pkey_meths);
+    return 1;
 }

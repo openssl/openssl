@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include "eng_int.h"
 #include <openssl/rand.h>
 #include "internal/refcount.h"
@@ -81,7 +82,7 @@ int engine_free_util(ENGINE *e, int not_locked)
     else
         i = --e->struct_ref;
 #endif
-    engine_ref_debug(e, 0, -1)
+    engine_ref_debug(e, 0, -1);
     if (i > 0)
         return 1;
     REF_ASSERT_ISNT(i < 0);
@@ -166,11 +167,6 @@ void engine_cleanup_int(void)
                                         engine_cleanup_cb_free);
         cleanup_stack = NULL;
     }
-    /*
-     * FIXME: This should be handled (somehow) through RAND, eg. by it
-     * registering a cleanup callback.
-     */
-    RAND_set_rand_method(NULL);
     CRYPTO_THREAD_lock_free(global_engine_lock);
 }
 
@@ -178,12 +174,12 @@ void engine_cleanup_int(void)
 
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&e->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&e->ex_data, idx, arg);
 }
 
 void *ENGINE_get_ex_data(const ENGINE *e, int idx)
 {
-    return (CRYPTO_get_ex_data(&e->ex_data, idx));
+    return CRYPTO_get_ex_data(&e->ex_data, idx);
 }
 
 /*

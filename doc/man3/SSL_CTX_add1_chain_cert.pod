@@ -86,7 +86,7 @@ used to iterate over all certificates in an B<SSL_CTX> structure.
 SSL_set_current_cert() also supports the option B<SSL_CERT_SET_SERVER>.
 If B<ssl> is a server and has sent a certificate to a connected client
 this option sets that certificate to the current certificate and returns 1.
-If the negotiated ciphersuite is anonymous (and thus no certificate will
+If the negotiated cipher suite is anonymous (and thus no certificate will
 be sent) 2 is returned and the current certificate is unchanged. If B<ssl>
 is not a server or a certificate has not been sent 0 is returned and
 the current certificate is unchanged.
@@ -129,7 +129,7 @@ using SSL_CTX_add_extra_chain_cert() will be used.
 =head1 RETURN VALUES
 
 SSL_set_current_cert() with B<SSL_CERT_SET_SERVER> return 1 for success, 2 if
-no server certificate is used because the ciphersuites is anonymous and 0
+no server certificate is used because the cipher suites is anonymous and 0
 for failure.
 
 SSL_CTX_build_cert_chain() and SSL_build_cert_chain() return 1 for success

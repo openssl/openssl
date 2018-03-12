@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -41,8 +41,10 @@ if (eval { require Win32::API; 1; }) {
         SetConsoleOutputCP(1253);
         $pass = Encode::encode("cp1253",Encode::decode("utf-8",$pass));
     }
+} elsif ($^O eq "MSWin32") {
+    plan skip_all => "Win32::API unavailable";
 } else {
-    # Running MinGW tests transparenly under Wine apparently requires
+    # Running MinGW tests transparently under Wine apparently requires
     # UTF-8 locale...
 
     foreach(`locale -a`) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,39 +58,43 @@ ASN1_ITEM_TEMPLATE_END(AUTHORITY_INFO_ACCESS)
 
 IMPLEMENT_ASN1_FUNCTIONS(AUTHORITY_INFO_ACCESS)
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
-                                                       *method, AUTHORITY_INFO_ACCESS
-                                                       *ainfo, STACK_OF(CONF_VALUE)
-                                                       *ret)
+static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
+    X509V3_EXT_METHOD *method, AUTHORITY_INFO_ACCESS *ainfo,
+    STACK_OF(CONF_VALUE) *ret)
 {
     ACCESS_DESCRIPTION *desc;
     int i, nlen;
     char objtmp[80], *ntmp;
     CONF_VALUE *vtmp;
+    STACK_OF(CONF_VALUE) *tret = ret;
+
     for (i = 0; i < sk_ACCESS_DESCRIPTION_num(ainfo); i++) {
+        STACK_OF(CONF_VALUE) *tmp;
+
         desc = sk_ACCESS_DESCRIPTION_value(ainfo, i);
-        ret = i2v_GENERAL_NAME(method, desc->location, ret);
-        if (!ret)
-            break;
-        vtmp = sk_CONF_VALUE_value(ret, i);
-        i2t_ASN1_OBJECT(objtmp, sizeof objtmp, desc->method);
-        nlen = strlen(objtmp) + strlen(vtmp->name) + 5;
+        tmp = i2v_GENERAL_NAME(method, desc->location, tret);
+        if (tmp == NULL)
+            goto err;
+        tret = tmp;
+        vtmp = sk_CONF_VALUE_value(tret, i);
+        i2t_ASN1_OBJECT(objtmp, sizeof(objtmp), desc->method);
+        nlen = strlen(objtmp) + 3 + strlen(vtmp->name) + 1;
         ntmp = OPENSSL_malloc(nlen);
-        if (ntmp == NULL) {
-            X509V3err(X509V3_F_I2V_AUTHORITY_INFO_ACCESS,
-                      ERR_R_MALLOC_FAILURE);
-            return NULL;
-        }
-        OPENSSL_strlcpy(ntmp, objtmp, nlen);
-        OPENSSL_strlcat(ntmp, " - ", nlen);
-        OPENSSL_strlcat(ntmp, vtmp->name, nlen);
+        if (ntmp == NULL)
+            goto err;
+        BIO_snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
-
     }
-    if (!ret)
+    if (ret == NULL && tret == NULL)
         return sk_CONF_VALUE_new_null();
-    return ret;
+
+    return tret;
+ err:
+    X509V3err(X509V3_F_I2V_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
+    if (ret == NULL && tret != NULL)
+        sk_CONF_VALUE_pop_free(tret, X509V3_conf_free);
+    return NULL;
 }
 
 static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
@@ -103,20 +107,21 @@ static AUTHORITY_INFO_ACCESS *v2i_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
     CONF_VALUE *cnf, ctmp;
     ACCESS_DESCRIPTION *acc;
     int i, objlen;
+    const int num = sk_CONF_VALUE_num(nval);
     char *objtmp, *ptmp;
 
-    if ((ainfo = sk_ACCESS_DESCRIPTION_new_null()) == NULL) {
+    if ((ainfo = sk_ACCESS_DESCRIPTION_new_reserve(NULL, num)) == NULL) {
         X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
+    for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if ((acc = ACCESS_DESCRIPTION_new()) == NULL
-            || !sk_ACCESS_DESCRIPTION_push(ainfo, acc)) {
+        if ((acc = ACCESS_DESCRIPTION_new()) == NULL) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,
                       ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        sk_ACCESS_DESCRIPTION_push(ainfo, acc); /* Cannot fail due to reserve */
         ptmp = strchr(cnf->name, ';');
         if (!ptmp) {
             X509V3err(X509V3_F_V2I_AUTHORITY_INFO_ACCESS,

@@ -21,14 +21,14 @@ HMAC_size
  #include <openssl/hmac.h>
 
  unsigned char *HMAC(const EVP_MD *evp_md, const void *key,
-               int key_len, const unsigned char *d, int n,
-               unsigned char *md, unsigned int *md_len);
+                     int key_len, const unsigned char *d, int n,
+                     unsigned char *md, unsigned int *md_len);
 
  HMAC_CTX *HMAC_CTX_new(void);
  int HMAC_CTX_reset(HMAC_CTX *ctx);
 
  int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int key_len,
-                   const EVP_MD *md, ENGINE *impl);
+                  const EVP_MD *md, ENGINE *impl);
  int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, int len);
  int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
 
@@ -60,7 +60,8 @@ B<key_len> bytes long.
 It places the result in B<md> (which must have space for the output of
 the hash function, which is no more than B<EVP_MAX_MD_SIZE> bytes).
 If B<md> is NULL, the digest is placed in a static array.  The size of
-the output is placed in B<md_len>, unless it is B<NULL>.
+the output is placed in B<md_len>, unless it is B<NULL>. Note: passing a NULL
+value for B<md>  to use the static array is not thread safe.
 
 B<evp_md> can be EVP_sha1(), EVP_ripemd160() etc.
 
@@ -77,22 +78,20 @@ itself.
 The following functions may be used if the message is not completely
 stored in memory:
 
-HMAC_Init() initializes a B<HMAC_CTX> structure to use the hash
-function B<evp_md> and the key B<key> which is B<key_len> bytes
-long. It is deprecated and only included for backward compatibility
-with OpenSSL 0.9.6b.
-
 HMAC_Init_ex() initializes or reuses a B<HMAC_CTX> structure to use the hash
-function B<evp_md> and key B<key>. If both are NULL (or B<evp_md> is the same
-as the previous digest used by B<ctx> and B<key> is NULL) the existing key is
+function B<evp_md> and key B<key>. If both are NULL, or if B<key> is NULL
+and B<evp_md> is the same as the previous call, then the
+existing key is
 reused. B<ctx> must have been created with HMAC_CTX_new() before the first use
-of an B<HMAC_CTX> in this function. B<N.B. HMAC_Init() had this undocumented
-behaviour in previous versions of OpenSSL - failure to switch to HMAC_Init_ex()
-in programs that expect it will cause them to stop working>.
+of an B<HMAC_CTX> in this function.
 
-B<NOTE:> If HMAC_Init_ex() is called with B<key> NULL and B<evp_md> is not the
+If HMAC_Init_ex() is called with B<key> NULL and B<evp_md> is not the
 same as the previous digest used by B<ctx> then an error is returned
 because reuse of an existing key with a different digest is not supported.
+
+HMAC_Init() initializes a B<HMAC_CTX> structure to use the hash
+function B<evp_md> and the key B<key> which is B<key_len> bytes
+long. 
 
 HMAC_Update() can be called repeatedly with chunks of the message to
 be authenticated (B<len> bytes at B<data>).
@@ -137,15 +136,14 @@ L<SHA1(3)>, L<evp(7)>
 
 =head1 HISTORY
 
-HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL versions 1.1.0.
+HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL 1.1.0.
 
-HMAC_CTX_cleanup() existed in OpenSSL versions before 1.1.0.
+HMAC_CTX_cleanup() existed in OpenSSL before version 1.1.0.
 
-HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL version
-1.1.0.
+HMAC_CTX_new(), HMAC_CTX_free() and HMAC_CTX_get_md() are new in OpenSSL 1.1.0.
 
 HMAC_Init_ex(), HMAC_Update() and HMAC_Final() did not return values in
-versions of OpenSSL before 1.0.0.
+OpenSSL before version 1.0.0.
 
 =head1 COPYRIGHT
 

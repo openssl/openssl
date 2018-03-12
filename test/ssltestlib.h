@@ -17,7 +17,8 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
                         char *privkeyfile);
 int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio);
-int create_ssl_connection(SSL *serverssl, SSL *clientssl);
+int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want);
+void shutdown_ssl_connection(SSL *serverssl, SSL *clientssl);
 
 /* Note: Not thread safe! */
 const BIO_METHOD *bio_f_tls_dump_filter(void);

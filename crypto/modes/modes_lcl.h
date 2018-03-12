@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,6 +73,7 @@ typedef unsigned char u8;
 #  endif
 # elif defined(_MSC_VER)
 #  if _MSC_VER>=1300
+#   include <stdlib.h>
 #   pragma intrinsic(_byteswap_uint64,_byteswap_ulong)
 #   define BSWAP8(x)    _byteswap_uint64((u64)(x))
 #   define BSWAP4(x)    _byteswap_ulong((u32)(x))

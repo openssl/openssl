@@ -9,6 +9,7 @@
 
 #include "internal/constant_time_locl.h"
 #include "ssl_locl.h"
+#include "internal/cryptlib.h"
 
 #include <openssl/md5.h>
 #include <openssl/sha.h>
@@ -89,8 +90,6 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
  */
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
 {
-    if (FIPS_mode())
-        return 0;
     switch (EVP_MD_CTX_type(ctx)) {
     case NID_md5:
     case NID_sha1:
@@ -167,7 +166,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      * This is a, hopefully redundant, check that allows us to forget about
      * many possible overflows later in this function.
      */
-    OPENSSL_assert(data_plus_mac_plus_padding_size < 1024 * 1024);
+    if (!ossl_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
+        return 0;
 
     switch (EVP_MD_CTX_type(ctx)) {
     case NID_md5:
@@ -229,15 +229,15 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
          * ssl3_cbc_record_digest_supported should have been called first to
          * check that the hash function is supported.
          */
-        OPENSSL_assert(0);
-        if (md_out_size)
+        if (md_out_size != NULL)
             *md_out_size = 0;
-        return 0;
+        return ossl_assert(0);
     }
 
-    OPENSSL_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES);
-    OPENSSL_assert(md_block_size <= MAX_HASH_BLOCK_SIZE);
-    OPENSSL_assert(md_size <= EVP_MAX_MD_SIZE);
+    if (!ossl_assert(md_length_size <= MAX_HASH_BIT_COUNT_BYTES)
+            || !ossl_assert(md_block_size <= MAX_HASH_BLOCK_SIZE)
+            || !ossl_assert(md_size <= EVP_MAX_MD_SIZE))
+        return 0;
 
     header_length = 13;
     if (is_sslv3) {
@@ -333,7 +333,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
          */
         bits += 8 * md_block_size;
         memset(hmac_pad, 0, md_block_size);
-        OPENSSL_assert(mac_secret_length <= sizeof(hmac_pad));
+        if (!ossl_assert(mac_secret_length <= sizeof(hmac_pad)))
+            return 0;
         memcpy(hmac_pad, mac_secret, mac_secret_length);
         for (i = 0; i < md_block_size; i++)
             hmac_pad[i] ^= 0x36;
@@ -419,8 +420,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
              */
             b = constant_time_select_8(is_past_c, 0x80, b);
             /*
-             * If this the the block containing the end of the application
-             * data and we're past the 0x80 value then just write zero.
+             * If this block contains the end of the application data
+             * and we're past the 0x80 value then just write zero.
              */
             b = b & ~is_past_cp1;
             /*
@@ -482,50 +483,4 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
  err:
     EVP_MD_CTX_free(md_ctx);
     return 0;
-}
-
-/*
- * Due to the need to use EVP in FIPS mode we can't reimplement digests but
- * we can ensure the number of blocks processed is equal for all cases by
- * digesting additional data.
- */
-
-int tls_fips_digest_extra(const EVP_CIPHER_CTX *cipher_ctx,
-                          EVP_MD_CTX *mac_ctx, const unsigned char *data,
-                          size_t data_len, size_t orig_len)
-{
-    size_t block_size, digest_pad, blocks_data, blocks_orig;
-    if (EVP_CIPHER_CTX_mode(cipher_ctx) != EVP_CIPH_CBC_MODE)
-        return 1;
-    block_size = EVP_MD_CTX_block_size(mac_ctx);
-    /*-
-     * We are in FIPS mode if we get this far so we know we have only SHA*
-     * digests and TLS to deal with.
-     * Minimum digest padding length is 17 for SHA384/SHA512 and 9
-     * otherwise.
-     * Additional header is 13 bytes. To get the number of digest blocks
-     * processed round up the amount of data plus padding to the nearest
-     * block length. Block length is 128 for SHA384/SHA512 and 64 otherwise.
-     * So we have:
-     * blocks = (payload_len + digest_pad + 13 + block_size - 1)/block_size
-     * equivalently:
-     * blocks = (payload_len + digest_pad + 12)/block_size + 1
-     * HMAC adds a constant overhead.
-     * We're ultimately only interested in differences so this becomes
-     * blocks = (payload_len + 29)/128
-     * for SHA384/SHA512 and
-     * blocks = (payload_len + 21)/64
-     * otherwise.
-     */
-    digest_pad = block_size == 64 ? 21 : 29;
-    blocks_orig = (orig_len + digest_pad) / block_size;
-    blocks_data = (data_len + digest_pad) / block_size;
-    /*
-     * MAC enough blocks to make up the difference between the original and
-     * actual lengths plus one extra block to ensure this is never a no op.
-     * The "data" pointer should always have enough space to perform this
-     * operation as it is large enough for a maximum length TLS buffer.
-     */
-    return EVP_DigestSignUpdate(mac_ctx, data,
-                                (blocks_orig - blocks_data + 1) * block_size);
 }

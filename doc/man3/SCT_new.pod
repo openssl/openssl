@@ -11,28 +11,28 @@ SCT_get_signature_nid, SCT_set_signature_nid,
 SCT_get0_signature, SCT_set0_signature, SCT_set1_signature,
 SCT_get0_extensions, SCT_set0_extensions, SCT_set1_extensions,
 SCT_get_source, SCT_set_source
- - A Certificate Transparency Signed Certificate Timestamp
+- A Certificate Transparency Signed Certificate Timestamp
 
 =head1 SYNOPSIS
 
  #include <openssl/ct.h>
 
  typedef enum {
-  CT_LOG_ENTRY_TYPE_NOT_SET = -1,
-  CT_LOG_ENTRY_TYPE_X509 = 0,
-  CT_LOG_ENTRY_TYPE_PRECERT = 1
+     CT_LOG_ENTRY_TYPE_NOT_SET = -1,
+     CT_LOG_ENTRY_TYPE_X509 = 0,
+     CT_LOG_ENTRY_TYPE_PRECERT = 1
  } ct_log_entry_type_t;
 
  typedef enum {
-  SCT_VERSION_NOT_SET = -1,
-  SCT_VERSION_V1 = 0
+     SCT_VERSION_NOT_SET = -1,
+     SCT_VERSION_V1 = 0
  } sct_version_t;
 
  typedef enum {
-  SCT_SOURCE_UNKNOWN,
-  SCT_SOURCE_TLS_EXTENSION,
-  SCT_SOURCE_X509V3_EXTENSION,
-  SCT_SOURCE_OCSP_STAPLED_RESPONSE
+     SCT_SOURCE_UNKNOWN,
+     SCT_SOURCE_TLS_EXTENSION,
+     SCT_SOURCE_X509V3_EXTENSION,
+     SCT_SOURCE_OCSP_STAPLED_RESPONSE
  } sct_source_t;
 
  SCT *SCT_new(void);
@@ -84,31 +84,45 @@ An internal representation of an SCT can be created in one of two ways.
 The first option is to create a blank SCT, using SCT_new(), and then populate
 it using:
 
-=over
+=over 2
 
-=item * SCT_set_version() to set the SCT version.
+=item *
+
+SCT_set_version() to set the SCT version.
 
 Only SCT_VERSION_V1 is currently supported.
 
-=item * SCT_set_log_entry_type() to set the type of certificate the SCT was issued for:
+=item *
+
+SCT_set_log_entry_type() to set the type of certificate the SCT was issued for:
 
 B<CT_LOG_ENTRY_TYPE_X509> for a normal certificate.
 B<CT_LOG_ENTRY_TYPE_PRECERT> for a pre-certificate.
 
-=item * SCT_set0_log_id() or SCT_set1_log_id() to set the LogID of the CT log that the SCT came from.
+=item *
+
+SCT_set0_log_id() or SCT_set1_log_id() to set the LogID of the CT log that the SCT came from.
 
 The former takes ownership, whereas the latter makes a copy.
 See RFC 6962, Section 3.2 for the definition of LogID.
 
-=item * SCT_set_timestamp() to set the time the SCT was issued (epoch time in milliseconds).
+=item *
 
-=item * SCT_set_signature_nid() to set the NID of the signature.
+SCT_set_timestamp() to set the time the SCT was issued (epoch time in milliseconds).
 
-=item * SCT_set0_signature() or SCT_set1_signature() to set the raw signature value.
+=item *
+
+SCT_set_signature_nid() to set the NID of the signature.
+
+=item *
+
+SCT_set0_signature() or SCT_set1_signature() to set the raw signature value.
 
 The former takes ownership, whereas the latter makes a copy.
 
-=item * SCT_set0_extensions() or B<SCT_set1_extensions> to provide SCT extensions.
+=item *
+
+SCT_set0_extensions() or B<SCT_set1_extensions> to provide SCT extensions.
 
 The former takes ownership, whereas the latter makes a copy.
 
@@ -117,22 +131,33 @@ The former takes ownership, whereas the latter makes a copy.
 Alternatively, the SCT can be pre-populated from the following data using
 SCT_new_from_base64():
 
-=over
+=over 2
 
-=item * The SCT version (only SCT_VERSION_V1 is currently supported).
+=item *
 
-=item * The LogID (see RFC 6962, Section 3.2), base64 encoded.
+The SCT version (only SCT_VERSION_V1 is currently supported).
 
-=item * The type of certificate the SCT was issued for:
+=item *
 
+The LogID (see RFC 6962, Section 3.2), base64 encoded.
+
+=item *
+
+The type of certificate the SCT was issued for:
 B<CT_LOG_ENTRY_TYPE_X509> for a normal certificate.
 B<CT_LOG_ENTRY_TYPE_PRECERT> for a pre-certificate.
 
-=item * The time that the SCT was issued (epoch time in milliseconds).
+=item *
 
-=item * The SCT extensions, base64 encoded.
+The time that the SCT was issued (epoch time in milliseconds).
 
-=item * The SCT signature, base64 encoded.
+=item *
+
+The SCT extensions, base64 encoded.
+
+=item *
+
+The SCT signature, base64 encoded.
 
 =back
 
@@ -162,7 +187,7 @@ SCT_set_version() returns 1 if the specified version is supported, 0 otherwise.
 SCT_set_log_entry_type() returns 1 if the specified log entry type is supported, 0 otherwise.
 
 SCT_set0_log_id() and B<SCT_set1_log_id> return 1 if the specified LogID is a
-valid SHA-256 hash, 0 otherwise. Aditionally, B<SCT_set1_log_id> returns 0 if
+valid SHA-256 hash, 0 otherwise. Additionally, B<SCT_set1_log_id> returns 0 if
 malloc fails.
 
 B<SCT_set_signature_nid> returns 1 if the specified NID is supported, 0 otherwise.
@@ -175,7 +200,7 @@ B<SCT_set_source> returns 1 on success, 0 otherwise.
 =head1 SEE ALSO
 
 L<ct(7)>,
-L<SCT_verify(3)>,
+L<SCT_validate(3)>,
 L<OBJ_nid2obj(3)>
 
 =head1 HISTORY
@@ -184,7 +209,7 @@ These functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

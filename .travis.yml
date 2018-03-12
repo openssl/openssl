@@ -1,24 +1,24 @@
+dist: trusty
+sudo: required
+
 language: c
 cache: ccache
+git:
+    submodules: false
 
 before_install:
     - if [ -n "$COVERALLS" ]; then
           pip install --user cpp-coveralls;
+      fi;
+    - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
+          git submodule update --init --recursive;
       fi;
 
 addons:
     apt:
         packages:
             - ccache
-            - clang-3.6
-            - gcc-5
-            - g++-5
-            - golang
-            - binutils-mingw-w64
-            - gcc-mingw-w64
-        sources:
-            - llvm-toolchain-precise-3.6
-            - ubuntu-toolchain-r-test
+            - golang-1.6
 
 os:
     - linux
@@ -29,45 +29,88 @@ compiler:
     - gcc
 
 env:
-    - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="--debug no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-pic --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
-    - CONFIG_OPTS="no-engine no-shared --strict-warnings" BUILDONLY="yes"
-    - CONFIG_OPTS="no-stdio --strict-warnings" BUILDONLY="yes"
-    - CONFIG_OPTS="no-ec" BUILDONLY="yes"
+    - CONFIG_OPTS="" DESTDIR="_install" TESTS="-test_fuzz"
+    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
+    - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
 
 matrix:
     include:
         - os: linux
-          compiler: clang-3.6
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env: CONFIG_OPTS="--strict-warnings" TESTS="-test_fuzz" COMMENT="Move to the BORINGTEST build when interoperable"
+        - os: linux
+          compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers enable-external-tests no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="enable-msan"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
-        - os: linux
-          compiler: clang-3.6
-          env: CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
-        - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
-        - os: linux
-          compiler: gcc-5
-          env: CONFIG_OPTS="--strict-warnings enable-tls1_3" COMMENT="Move to the BORINGTEST build when interoperable"
-        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
         - os: linux
-          compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic"
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
+        - os: linux
+          compiler: clang-3.9
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
+        - os: linux
+          compiler: clang-3.9
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+        - os: linux
+          compiler: clang-3.9
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - gcc-5
+                      - g++-5
+                  sources:
+                      - ubuntu-toolchain-r-test
+          compiler: gcc-5
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
+          compiler: i686-w64-mingw32-gcc
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
+        - os: linux
+          addons:
+              apt:
+                  packages:
+                      - binutils-mingw-w64
+                      - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
     exclude:
         - os: linux
           compiler: clang
@@ -75,9 +118,13 @@ matrix:
           compiler: gcc
 
 before_script:
+    - env
+    - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
+          (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
+      fi
     - if [ -n "$DESTDIR" ]; then
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
-          tar -xvzf _srcdist.tar.gz;
+          tar -xzf _srcdist.tar.gz;
           mkdir _build;
           cd _build;
           srcdir=../_srcdist;
@@ -86,18 +133,26 @@ before_script:
           srcdir=.;
           top=.;
       fi
-    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+    - if [ "$CC" = i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
-      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+      elif [ "$CC" = x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if which ccache >/dev/null && [ "$CC" != clang-3.6 ]; then
+          if [ "$CC" = clang-3.9 ]; then
+              sudo cp .travis-apt-pin.preferences /etc/apt/preferences.d/no-ubuntu-clang;
+              curl -sSL "http://apt.llvm.org/llvm-snapshot.gpg.key" | sudo -E apt-key add -;
+              echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list > /dev/null;
+              sudo -E apt-add-repository -y "ppa:ubuntu-toolchain-r/test";
+              sudo -E apt-get -yq update;
+              sudo -E apt-get -yq --no-install-suggests --no-install-recommends --force-yes install clang-3.9;
+          elif which ccache >/dev/null; then
               CC="ccache $CC";
           fi;
           $srcdir/config -v $CONFIG_OPTS;
       fi
+    - ./configdata.pm --dump
     - cd $top
 
 script:
@@ -110,29 +165,63 @@ script:
     - if [ -n "$DESTDIR" ]; then
           cd _build;
       fi
-    - $make update
+    - if $make update; then
+          echo -e '+\057 MAKE UPDATE OK';
+      else
+          echo -e '+\057 MAKE UPDATE FAILED'; false;
+      fi;
+      git diff --exit-code
     - if [ -n "$CHECKDOCS" ]; then
-          $make doc-nits;
+          if $make doc-nits; then
+              echo -e '+\057\057 MAKE DOC-NITS OK';
+          else
+              echo -e '+\057\057 MAKE DOC-NITS FAILED'; false;
+          fi;
       fi
-    - $make
+    - if $make; then
+          echo -e '+\057\057\057 MAKE OK';
+      else
+          echo -e '+\057\057\057 MAKE FAILED'; false;
+      fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
+              sudo dpkg --add-architecture i386;
+              sudo apt-get update;
               sudo apt-get -yq --no-install-suggests --no-install-recommends --force-yes install wine;
               export EXE_SHELL="wine" WINEPREFIX=`pwd`;
           fi;
-          HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test;
+          if [ -e krb5/src ]; then
+              sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
+          fi;
+          if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
+              echo -e '+\057\057\057\057 MAKE TEST OK';
+          else
+              echo -e '+\057\057\057\057 MAKE TEST FAILED'; false;
+          fi;
       else
-          $make build_tests;
+          if $make build_tests >~/build.log 2>&1; then
+              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS OK';
+          else
+              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
+              cat ~/build.log
+              false;
+          fi;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          $make install install_docs DESTDIR="$top/$DESTDIR";
+          if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
+              echo -e '+\057\057\057\057\057\057 MAKE INSTALL OK';
+          else
+              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED';
+              cat ~/install.log;
+              false;
+          fi;
       fi
     - cd $top
 
 after_success:
     - if [ -n "$COVERALLS" ]; then
-          coveralls -b . --gcov gcov-5 --gcov-options '\-lp';
+          coveralls -b . --gcov gcov-5 --gcov-options '\-lpbc';
       fi;
 
 notifications:

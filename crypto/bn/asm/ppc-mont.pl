@@ -8,7 +8,7 @@
 
 
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -37,7 +37,7 @@
 # and squaring procedure operating on lengths divisible by 8. Length
 # is expressed in number of limbs. RSA private key operations are
 # ~35-50% faster (more for longer keys) on contemporary high-end POWER
-# processors in 64-bit builds, [mysterously enough] more in 32-bit
+# processors in 64-bit builds, [mysteriously enough] more in 32-bit
 # builds. On low-end 32-bit processors performance improvement turned
 # to be marginal...
 

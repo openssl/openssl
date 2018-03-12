@@ -28,6 +28,7 @@
 # Denver		4.50/+82%       2.63		2.67(*)
 # X-Gene		9.50/+46%       8.82		8.89(*)
 # Mongoose		8.00/+44%	3.64		3.25
+# Kryo			8.17/+50%	4.83		4.65
 #
 # (*)	it's expected that doubling interleave factor doesn't help
 #	all processors, only those with higher NEON latency and

@@ -25,14 +25,14 @@ static void h__dump(const unsigned char *p, int len);
 /*
  * This is an implementation of PKCS#5 v2.0 password based encryption key
  * derivation function PBKDF2. SHA1 version verified against test vectors
- * posted by Peter Gutmann <pgut001@cs.auckland.ac.nz> to the PKCS-TNG
- * <pkcs-tng@rsa.com> mailing list.
+ * posted by Peter Gutmann to the PKCS-TNG mailing list.
  */
 
 int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const unsigned char *salt, int saltlen, int iter,
                       const EVP_MD *digest, int keylen, unsigned char *out)
 {
+    const char *empty = "";
     unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
     int cplen, j, k, tkeylen, mdlen;
     unsigned long i = 1;
@@ -47,10 +47,12 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         return 0;
     p = out;
     tkeylen = keylen;
-    if (!pass)
+    if (pass == NULL) {
+        pass = empty;
         passlen = 0;
-    else if (passlen == -1)
+    } else if (passlen == -1) {
         passlen = strlen(pass);
+    }
     if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL)) {
         HMAC_CTX_free(hctx_tpl);
         return 0;
@@ -85,7 +87,6 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
             HMAC_CTX_free(hctx_tpl);
             return 0;
         }
-        HMAC_CTX_reset(hctx);
         memcpy(p, digtmp, cplen);
         for (j = 1; j < iter; j++) {
             if (!HMAC_CTX_copy(hctx, hctx_tpl)) {
@@ -99,7 +100,6 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                 HMAC_CTX_free(hctx_tpl);
                 return 0;
             }
-            HMAC_CTX_reset(hctx);
             for (k = 0; k < cplen; k++)
                 p[k] ^= digtmp[k];
         }
@@ -200,7 +200,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
     keylen = EVP_CIPHER_CTX_key_length(ctx);
-    OPENSSL_assert(keylen <= sizeof key);
+    OPENSSL_assert(keylen <= sizeof(key));
 
     /* Decode parameter */
 

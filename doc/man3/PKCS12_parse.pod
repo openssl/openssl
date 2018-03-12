@@ -29,6 +29,15 @@ The B<friendlyName> and B<localKeyID> attributes (if present) on each
 certificate will be stored in the B<alias> and B<keyid> attributes of the
 B<X509> structure.
 
+The parameter B<pass> is interpreted as a string in the UTF-8 encoding. If it
+is not valid UTF-8, then it is assumed to be ISO8859-1 instead.
+
+In particular, this means that passwords in the locale character set
+(or code page on Windows) must potentially be converted to UTF-8 before
+use. This may include passwords from local text files, or input from
+the terminal or command line. Refer to the documentation of
+L<UI_OpenSSL(3)>, for example.
+
 =head1 RETURN VALUES
 
 PKCS12_parse() returns 1 for success and zero if an error occurred.

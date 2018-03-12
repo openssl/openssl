@@ -19,7 +19,7 @@
 #include "async_locl.h"
 
 #include <openssl/err.h>
-#include <internal/cryptlib_int.h>
+#include "internal/cryptlib_int.h"
 #include <string.h>
 
 #define ASYNC_JOB_RUNNING   0
@@ -36,7 +36,7 @@ static async_ctx *async_ctx_new(void)
 {
     async_ctx *nctx = NULL;
 
-    nctx = OPENSSL_malloc(sizeof (async_ctx));
+    nctx = OPENSSL_malloc(sizeof(*nctx));
     if (nctx == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -81,7 +81,7 @@ static ASYNC_JOB *async_job_new(void)
 {
     ASYNC_JOB *job = NULL;
 
-    job = OPENSSL_zalloc(sizeof (ASYNC_JOB));
+    job = OPENSSL_zalloc(sizeof(*job));
     if (job == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_JOB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -330,13 +330,13 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
         return 0;
     }
 
-    pool = OPENSSL_zalloc(sizeof *pool);
+    pool = OPENSSL_zalloc(sizeof(*pool));
     if (pool == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    pool->jobs = sk_ASYNC_JOB_new_null();
+    pool->jobs = sk_ASYNC_JOB_new_reserve(NULL, init_size);
     if (pool->jobs == NULL) {
         ASYNCerr(ASYNC_F_ASYNC_INIT_THREAD, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(pool);
@@ -358,7 +358,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
             break;
         }
         job->funcargs = NULL;
-        sk_ASYNC_JOB_push(pool->jobs, job);
+        sk_ASYNC_JOB_push(pool->jobs, job); /* Cannot fail due to reserve */
         curr_size++;
     }
     pool->curr_size = curr_size;

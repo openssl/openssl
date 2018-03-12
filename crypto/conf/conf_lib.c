@@ -7,15 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
 #include <stdio.h>
 #include <string.h>
-#include <internal/conf.h>
+#include "internal/conf.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
 #include <openssl/lhash.h>
-#include "e_os.h"
 
 static CONF_METHOD *default_CONF_method = NULL;
 
@@ -186,7 +186,7 @@ CONF *NCONF_new(CONF_METHOD *meth)
     ret = meth->create(meth);
     if (ret == NULL) {
         CONFerr(CONF_F_NCONF_NEW, ERR_R_MALLOC_FAILURE);
-        return (NULL);
+        return NULL;
     }
 
     return ret;

@@ -21,9 +21,7 @@ OPENSSL_LH_node_stats_bio, OPENSSL_LH_node_usage_stats_bio - LHASH statistics
 =head1 DESCRIPTION
 
 The B<LHASH> structure records statistics about most aspects of
-accessing the hash table.  This is mostly a legacy of Eric Young
-writing this library for the reasons of implementing what looked like
-a nice algorithm rather than for a particular software product.
+accessing the hash table.
 
 OPENSSL_LH_stats() prints out statistics on the size of the hash table, how
 many entries are in it, and the number and result of calls to the
@@ -48,13 +46,19 @@ are the same as the above, except that the output goes to a B<BIO>.
 
 These functions do not return values.
 
+=head1 NOTE
+
+These calls should be made under a read lock. Refer to
+L<OPENSSL_LH_COMPFUNC(3)/NOTE> for more details about the locks required
+when using the LHASH data structure.
+
 =head1 SEE ALSO
 
-L<bio(7)>, L<LHASH(3)>
+L<bio(7)>, L<OPENSSL_LH_COMPFUNC(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

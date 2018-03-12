@@ -34,8 +34,6 @@ signed char *bn_compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len);
 
 int bn_get_top(const BIGNUM *a);
 
-void bn_set_top(BIGNUM *a, int top);
-
 int bn_get_dmax(const BIGNUM *a);
 
 /* Set all words to zero */
@@ -65,15 +63,6 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
  * function so we simply trust callers not to pass negative values.
  */
 int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words);
-
-size_t bn_sizeof_BIGNUM(void);
-
-/*
- * Return element el from an array of BIGNUMs starting at base (required
- * because callers do not know the size of BIGNUM at compilation time)
- */
-BIGNUM *bn_array_el(BIGNUM *base, int el);
-
 
 #ifdef  __cplusplus
 }

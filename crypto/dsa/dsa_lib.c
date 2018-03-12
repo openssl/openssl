@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,29 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
-
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/refcount.h"
 #include <openssl/bn.h>
 #include "dsa_locl.h"
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
 #include <openssl/dh.h>
-
-static const DSA_METHOD *default_DSA_method = NULL;
-
-void DSA_set_default_method(const DSA_METHOD *meth)
-{
-    default_DSA_method = meth;
-}
-
-const DSA_METHOD *DSA_get_default_method(void)
-{
-    if (!default_DSA_method)
-        default_DSA_method = DSA_OpenSSL();
-    return default_DSA_method;
-}
 
 DSA *DSA_new(void)
 {
@@ -175,17 +160,17 @@ int DSA_size(const DSA *r)
     i = i2d_ASN1_INTEGER(&bs, NULL);
     i += i;                     /* r and s */
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
-    return (ret);
+    return ret;
 }
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
-    return (CRYPTO_set_ex_data(&d->ex_data, idx, arg));
+    return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
 
 void *DSA_get_ex_data(DSA *d, int idx)
 {
-    return (CRYPTO_get_ex_data(&d->ex_data, idx));
+    return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
 
 int DSA_security_bits(const DSA *d)

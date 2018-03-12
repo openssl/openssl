@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,13 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
+#include "internal/nelem.h"
+#include "testutil.h"
+
+#ifdef __VMS
+# pragma names save
+# pragma names as_is,shortened
+#endif
 
 #include "../ssl/ssl_locl.h"
 
-int main(void)
+#ifdef __VMS
+# pragma names restore
+#endif
+
+static int cipher_overhead(void)
 {
-    int i, n = ssl3_num_ciphers();
+    int ret = 1, i, n = ssl3_num_ciphers();
     const SSL_CIPHER *ciph;
     size_t mac, in, blk, ex;
 
@@ -21,13 +31,19 @@ int main(void)
         ciph = ssl3_get_cipher(i);
         if (!ciph->min_dtls)
             continue;
-        if (!ssl_cipher_get_overhead(ciph, &mac, &in, &blk, &ex)) {
-            printf("Error getting overhead for %s\n", ciph->name);
-            exit(1);
+        if (!TEST_true(ssl_cipher_get_overhead(ciph, &mac, &in, &blk, &ex))) {
+            TEST_info("Failed getting %s", ciph->name);
+            ret = 0;
         } else {
-            printf("Cipher %s: %"OSSLzu" %"OSSLzu" %"OSSLzu" %"OSSLzu"\n",
-                   ciph->name, mac, in, blk, ex);
+            TEST_info("Cipher %s: %zu %zu %zu %zu",
+                      ciph->name, mac, in, blk, ex);
         }
     }
-    exit(0);
+    return ret;
+}
+
+int setup_tests(void)
+{
+    ADD_TEST(cipher_overhead);
+    return 1;
 }

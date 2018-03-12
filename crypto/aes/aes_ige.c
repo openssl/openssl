@@ -41,6 +41,9 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
     size_t n;
     size_t len = length;
 
+    if (length == 0)
+        return;
+
     OPENSSL_assert(in && out && key && ivec);
     OPENSSL_assert((AES_ENCRYPT == enc) || (AES_DECRYPT == enc));
     OPENSSL_assert((length % AES_BLOCK_SIZE) == 0);

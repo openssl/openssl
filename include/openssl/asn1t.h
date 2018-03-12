@@ -33,7 +33,7 @@ extern "C" {
 /* Macros for start and end of ASN1_ITEM definition */
 
 #  define ASN1_ITEM_start(itname) \
-        OPENSSL_GLOBAL const ASN1_ITEM itname##_it = {
+        const ASN1_ITEM itname##_it = {
 
 #  define static_ASN1_ITEM_start(itname) \
         static const ASN1_ITEM itname##_it = {
@@ -44,7 +44,7 @@ extern "C" {
 # else
 
 /* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
-#  define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)(iptr()))
+#  define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)((iptr)()))
 
 /* Macros for start and end of ASN1_ITEM definition */
 
@@ -325,10 +325,10 @@ extern "C" {
 /* implicit and explicit helper macros */
 
 # define ASN1_IMP_EX(stname, field, type, tag, ex) \
-                ASN1_EX_TYPE(ASN1_TFLG_IMPLICIT | ex, tag, stname, field, type)
+         ASN1_EX_TYPE(ASN1_TFLG_IMPLICIT | (ex), tag, stname, field, type)
 
 # define ASN1_EXP_EX(stname, field, type, tag, ex) \
-                ASN1_EX_TYPE(ASN1_TFLG_EXPLICIT | ex, tag, stname, field, type)
+         ASN1_EX_TYPE(ASN1_TFLG_EXPLICIT | (ex), tag, stname, field, type)
 
 /* Any defined by macros: the field used is in the table itself */
 
@@ -346,17 +346,22 @@ extern "C" {
 
 /* OPTIONAL simple type */
 # define ASN1_OPT(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_OPTIONAL, 0, stname, field, type)
+# define ASN1_OPT_EMBED(stname, field, type) ASN1_EX_TYPE(ASN1_TFLG_OPTIONAL|ASN1_TFLG_EMBED, 0, stname, field, type)
 
 /* IMPLICIT tagged simple type */
 # define ASN1_IMP(stname, field, type, tag) ASN1_IMP_EX(stname, field, type, tag, 0)
+# define ASN1_IMP_EMBED(stname, field, type, tag) ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_EMBED)
 
 /* IMPLICIT tagged OPTIONAL simple type */
 # define ASN1_IMP_OPT(stname, field, type, tag) ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL)
+# define ASN1_IMP_OPT_EMBED(stname, field, type, tag) ASN1_IMP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL|ASN1_TFLG_EMBED)
 
 /* Same as above but EXPLICIT */
 
 # define ASN1_EXP(stname, field, type, tag) ASN1_EXP_EX(stname, field, type, tag, 0)
+# define ASN1_EXP_EMBED(stname, field, type, tag) ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_EMBED)
 # define ASN1_EXP_OPT(stname, field, type, tag) ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL)
+# define ASN1_EXP_OPT_EMBED(stname, field, type, tag) ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_OPTIONAL|ASN1_TFLG_EMBED)
 
 /* SEQUENCE OF type */
 # define ASN1_SEQUENCE_OF(stname, field, type) \
@@ -526,10 +531,10 @@ struct ASN1_ADB_TABLE_st {
 # define ASN1_TFLG_TAG_MASK      (0x3 << 3)
 
 /* context specific IMPLICIT */
-# define ASN1_TFLG_IMPLICIT      ASN1_TFLG_IMPTAG|ASN1_TFLG_CONTEXT
+# define ASN1_TFLG_IMPLICIT      (ASN1_TFLG_IMPTAG|ASN1_TFLG_CONTEXT)
 
 /* context specific EXPLICIT */
-# define ASN1_TFLG_EXPLICIT      ASN1_TFLG_EXPTAG|ASN1_TFLG_CONTEXT
+# define ASN1_TFLG_EXPLICIT      (ASN1_TFLG_EXPTAG|ASN1_TFLG_CONTEXT)
 
 /*
  * If tagging is in force these determine the type of tag to use. Otherwise
@@ -901,8 +906,24 @@ DECLARE_ASN1_ITEM(ASN1_FBOOLEAN)
 DECLARE_ASN1_ITEM(ASN1_SEQUENCE)
 DECLARE_ASN1_ITEM(CBIGNUM)
 DECLARE_ASN1_ITEM(BIGNUM)
+DECLARE_ASN1_ITEM(INT32)
+DECLARE_ASN1_ITEM(ZINT32)
+DECLARE_ASN1_ITEM(UINT32)
+DECLARE_ASN1_ITEM(ZUINT32)
+DECLARE_ASN1_ITEM(INT64)
+DECLARE_ASN1_ITEM(ZINT64)
+DECLARE_ASN1_ITEM(UINT64)
+DECLARE_ASN1_ITEM(ZUINT64)
+
+# if OPENSSL_API_COMPAT < 0x10200000L
+/*
+ * LONG and ZLONG are strongly discouraged for use as stored data, as the
+ * underlying C type (long) differs in size depending on the architecture.
+ * They are designed with 32-bit longs in mind.
+ */
 DECLARE_ASN1_ITEM(LONG)
 DECLARE_ASN1_ITEM(ZLONG)
+# endif
 
 DEFINE_STACK_OF(ASN1_VALUE)
 

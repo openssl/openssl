@@ -14,8 +14,9 @@
  */
 
 #include <string.h>
-#include <internal/bio.h>
+#include "internal/bio.h"
 #include <openssl/asn1.h>
+#include "internal/cryptlib.h"
 
 /* Must be large enough for biggest tag+length */
 #define DEFAULT_ASN1_BUF_SIZE 20
@@ -65,7 +66,7 @@ static int asn1_bio_gets(BIO *h, char *str, int size);
 static long asn1_bio_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int asn1_bio_new(BIO *h);
 static int asn1_bio_free(BIO *data);
-static long asn1_bio_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long asn1_bio_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size);
 static int asn1_bio_flush_ex(BIO *b, BIO_ASN1_BUF_CTX *ctx,
@@ -94,7 +95,7 @@ static const BIO_METHOD methods_asn1 = {
 
 const BIO_METHOD *BIO_f_asn1(void)
 {
-    return (&methods_asn1);
+    return &methods_asn1;
 }
 
 static int asn1_bio_new(BIO *b)
@@ -181,7 +182,8 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
 
         case ASN1_STATE_HEADER:
             ctx->buflen = ASN1_object_size(0, inl, ctx->asn1_tag) - inl;
-            OPENSSL_assert(ctx->buflen <= ctx->bufsize);
+            if (!ossl_assert(ctx->buflen <= ctx->bufsize))
+                return 0;
             p = ctx->buf;
             ASN1_put_object(&p, 0, inl, ctx->asn1_tag, ctx->asn1_class);
             ctx->copylen = inl;
@@ -212,7 +214,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
                 wrmax = inl;
             ret = BIO_write(next, in, wrmax);
             if (ret <= 0)
-                break;
+                goto done;
             wrlen += ret;
             ctx->copylen -= ret;
             in += ret;
@@ -305,7 +307,7 @@ static int asn1_bio_gets(BIO *b, char *str, int size)
     return BIO_gets(next, str, size);
 }
 
-static long asn1_bio_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long asn1_bio_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     BIO *next = BIO_next(b);
     if (next == NULL)

@@ -75,7 +75,7 @@ L<bio>
 
 =head1 HISTORY
 
-The BIO_set_next() function was added in OpenSSL version 1.1.0.
+The BIO_set_next() function was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 

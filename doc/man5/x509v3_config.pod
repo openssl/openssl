@@ -165,7 +165,7 @@ registered ID: OBJECT IDENTIFIER), B<IP> (an IP address), B<dirName>
 (a distinguished name) and otherName.
 
 The email option include a special 'copy' value. This will automatically
-include and email addresses contained in the certificate subject name in
+include any email addresses contained in the certificate subject name in
 the extension.
 
 The IP address used in the B<IP> options can be in either IPv4 or IPv6 format.
@@ -205,7 +205,7 @@ certificate (if possible).
 
 Example:
 
- issuserAltName = issuer:copy
+ issuerAltName = issuer:copy
 
 
 =head2 Authority Info Access.
@@ -350,8 +350,14 @@ Example:
  noticeNumbers=1,2,3,4
 
 The B<ia5org> option changes the type of the I<organization> field. In RFC2459
-it can only be of type DisplayText. In RFC3280 IA5Strring is also permissible.
+it can only be of type DisplayText. In RFC3280 IA5String is also permissible.
 Some software (for example some versions of MSIE) may require ia5org.
+
+ASN1 type of explicitText can be specified by prepending B<UTF8>,
+B<BMP> or B<VISIBLE> prefix followed by colon. For example:
+
+ [notice]
+ explicitText="UTF8:Explicit Text Here"
 
 =head2 Policy Constraints
 

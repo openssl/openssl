@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -250,8 +250,9 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->hashAlgorithm) {
         if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "sha1 (default)") <= 0)
+    } else if (BIO_puts(bp, "sha1 (default)") <= 0) {
         goto err;
+    }
 
     if (BIO_puts(bp, "\n") <= 0)
         goto err;
@@ -270,10 +271,12 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
         if (maskHash != NULL) {
             if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
                 goto err;
-        } else if (BIO_puts(bp, "INVALID") <= 0)
+        } else if (BIO_puts(bp, "INVALID") <= 0) {
             goto err;
-    } else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
+        }
+    } else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0) {
         goto err;
+    }
     BIO_puts(bp, "\n");
 
     if (!BIO_indent(bp, indent, 128))
@@ -283,8 +286,9 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->saltLength) {
         if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "14 (default)") <= 0)
+    } else if (BIO_puts(bp, "14 (default)") <= 0) {
         goto err;
+    }
     BIO_puts(bp, "\n");
 
     if (!BIO_indent(bp, indent, 128))
@@ -294,8 +298,9 @@ static int rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss,
     if (pss->trailerField) {
         if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
             goto err;
-    } else if (BIO_puts(bp, "BC (default)") <= 0)
+    } else if (BIO_puts(bp, "BC (default)") <= 0) {
         goto err;
+    }
     BIO_puts(bp, "\n");
 
     rv = 1;
@@ -311,10 +316,11 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
     const RSA *x = pkey->pkey.rsa;
     char *str;
     const char *s;
-    int ret = 0, mod_len = 0;
+    int ret = 0, mod_len = 0, ex_primes;
 
     if (x->n != NULL)
         mod_len = BN_num_bits(x->n);
+    ex_primes = sk_RSA_PRIME_INFO_num(x->prime_infos);
 
     if (!BIO_indent(bp, off, 128))
         goto err;
@@ -323,7 +329,8 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
         goto err;
 
     if (priv && x->d) {
-        if (BIO_printf(bp, "Private-Key: (%d bit)\n", mod_len) <= 0)
+        if (BIO_printf(bp, "Private-Key: (%d bit, %d primes)\n",
+                       mod_len, ex_primes <= 0 ? 2 : ex_primes + 2) <= 0)
             goto err;
         str = "modulus:";
         s = "publicExponent:";
@@ -338,6 +345,8 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
     if (!ASN1_bn_print(bp, s, x->e, NULL, off))
         goto err;
     if (priv) {
+        int i;
+
         if (!ASN1_bn_print(bp, "privateExponent:", x->d, NULL, off))
             goto err;
         if (!ASN1_bn_print(bp, "prime1:", x->p, NULL, off))
@@ -350,6 +359,39 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
             goto err;
         if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, NULL, off))
             goto err;
+        for (i = 0; i < sk_RSA_PRIME_INFO_num(x->prime_infos); i++) {
+            /* print multi-prime info */
+            BIGNUM *bn = NULL;
+            RSA_PRIME_INFO *pinfo;
+            int j;
+
+            pinfo = sk_RSA_PRIME_INFO_value(x->prime_infos, i);
+            for (j = 0; j < 3; j++) {
+                if (!BIO_indent(bp, off, 128))
+                    goto err;
+                switch (j) {
+                case 0:
+                    if (BIO_printf(bp, "prime%d:", i + 3) <= 0)
+                        goto err;
+                    bn = pinfo->r;
+                    break;
+                case 1:
+                    if (BIO_printf(bp, "exponent%d:", i + 3) <= 0)
+                        goto err;
+                    bn = pinfo->d;
+                    break;
+                case 2:
+                    if (BIO_printf(bp, "coefficient%d:", i + 3) <= 0)
+                        goto err;
+                    bn = pinfo->t;
+                    break;
+                default:
+                    break;
+                }
+                if (!ASN1_bn_print(bp, "", bn, NULL, off))
+                    goto err;
+            }
+        }
     }
     if (pkey_is_pss(pkey) && !rsa_pss_param_print(bp, 1, x->pss, off))
         goto err;
@@ -536,9 +578,9 @@ static RSA_PSS_PARAMS *rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
         return NULL;
     if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
         return NULL;
-    if (saltlen == -1)
+    if (saltlen == -1) {
         saltlen = EVP_MD_size(sigmd);
-    else if (saltlen == -2) {
+    } else if (saltlen == -2) {
         saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
         if ((EVP_PKEY_bits(pk) & 0x7) == 1)
             saltlen--;
@@ -566,6 +608,8 @@ RSA_PSS_PARAMS *rsa_pss_params_create(const EVP_MD *sigmd,
     if (mgf1md == NULL)
         mgf1md = sigmd;
     if (!rsa_md_to_mgf1(&pss->maskGenAlgorithm, mgf1md))
+        goto err;
+    if (!rsa_md_to_algor(&pss->maskHash, mgf1md))
         goto err;
     return pss;
  err:
@@ -785,6 +829,41 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return 2;
 }
 
+static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
+                            const ASN1_STRING *sig)
+{
+    int rv = 0;
+    int mdnid, saltlen;
+    uint32_t flags;
+    const EVP_MD *mgf1md = NULL, *md = NULL;
+    RSA_PSS_PARAMS *pss;
+
+    /* Sanity check: make sure it is PSS */
+    if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS)
+        return 0;
+    /* Decode PSS parameters */
+    pss = rsa_pss_decode(sigalg);
+    if (!rsa_pss_get_param(pss, &md, &mgf1md, &saltlen))
+        goto err;
+    mdnid = EVP_MD_type(md);
+    /*
+     * For TLS need SHA256, SHA384 or SHA512, digest and MGF1 digest must
+     * match and salt length must equal digest size
+     */
+    if ((mdnid == NID_sha256 || mdnid == NID_sha384 || mdnid == NID_sha512)
+            && mdnid == EVP_MD_type(mgf1md) && saltlen == EVP_MD_size(md))
+        flags = X509_SIG_INFO_TLS;
+    else
+        flags = 0;
+    /* Note: security bits half number of digest bits */
+    X509_SIG_INFO_set(siginf, mdnid, EVP_PKEY_RSA_PSS, EVP_MD_size(md) * 4,
+                      flags);
+    rv = 1;
+    err:
+    RSA_PSS_PARAMS_free(pss);
+    return rv;
+}
+
 #ifndef OPENSSL_NO_CMS
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
 {
@@ -888,7 +967,8 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     int pad_mode = RSA_PKCS1_PADDING, rv = 0, labellen;
     unsigned char *label;
 
-    CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg);
+    if (CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg) <= 0)
+        return 0;
     if (pkctx) {
         if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
             return 0;
@@ -942,6 +1022,11 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
 }
 #endif
 
+static int rsa_pkey_check(const EVP_PKEY *pkey)
+{
+    return RSA_check_key_ex(pkey->pkey.rsa, NULL);
+}
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
     {
      EVP_PKEY_RSA,
@@ -972,7 +1057,10 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
      old_rsa_priv_decode,
      old_rsa_priv_encode,
      rsa_item_verify,
-     rsa_item_sign},
+     rsa_item_sign,
+     rsa_sig_info_set,
+     rsa_pkey_check
+    },
 
     {
      EVP_PKEY_RSA2,
@@ -1009,4 +1097,6 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      0, 0,
      rsa_item_verify,
      rsa_item_sign,
+     0,
+     rsa_pkey_check
 };

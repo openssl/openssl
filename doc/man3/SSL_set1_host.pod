@@ -81,23 +81,20 @@ matched in the certificate (which might be a wildcard) is retrieved,
 and must be copied by the application if it is to be retained beyond
 the lifetime of the SSL connection.
 
-  SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
-  if (!SSL_set1_host(ssl, "smtp.example.com")) {
-    /* handle error */
-  }
-  if (!SSL_add1_host(ssl, "example.com")) {
-    /* handle error */
-  }
+ SSL_set_hostflags(ssl, X509_CHECK_FLAG_NO_PARTIAL_WILDCARDS);
+ if (!SSL_set1_host(ssl, "smtp.example.com"))
+     /* error */
+ if (!SSL_add1_host(ssl, "example.com"))
+     /* error */
 
-  /* XXX: Perform SSL_connect() handshake and handle errors here */
+ /* XXX: Perform SSL_connect() handshake and handle errors here */
 
-  if (SSL_get_verify_result(ssl) == X509_V_OK) {
-      const char *peername = SSL_get0_peername(ssl);
+ if (SSL_get_verify_result(ssl) == X509_V_OK) {
+     const char *peername = SSL_get0_peername(ssl);
 
-      if (peername != NULL) {
-          /* Name checks were in scope and matched the peername */
-      }
-  }
+     if (peername != NULL)
+         /* Name checks were in scope and matched the peername */
+ }
 
 =head1 SEE ALSO
 

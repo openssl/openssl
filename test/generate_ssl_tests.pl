@@ -22,7 +22,7 @@ BEGIN {
     OpenSSL::Test::setup("no_test_here");
 }
 
-use lib srctop_dir("util");  # for with_fallback
+use lib srctop_dir("util", "perl");  # for with_fallback
 use lib srctop_dir("test", "ssl-tests");  # for ssltests_base
 
 use with_fallback qw(Text::Template);

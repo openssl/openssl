@@ -3,7 +3,7 @@
 =head1 NAME
 
 RSA_set_default_method, RSA_get_default_method, RSA_set_method,
-RSA_get_method, RSA_PKCS1_OpenSSL, RSA_null_method, RSA_flags,
+RSA_get_method, RSA_PKCS1_OpenSSL, RSA_flags,
 RSA_new_method - select RSA method
 
 =head1 SYNOPSIS
@@ -19,8 +19,6 @@ RSA_new_method - select RSA method
  RSA_METHOD *RSA_get_method(const RSA *rsa);
 
  RSA_METHOD *RSA_PKCS1_OpenSSL(void);
-
- RSA_METHOD *RSA_null_method(void);
 
  int RSA_flags(const RSA *rsa);
 
@@ -38,8 +36,11 @@ Initially, the default RSA_METHOD is the OpenSSL internal implementation,
 as returned by RSA_PKCS1_OpenSSL().
 
 RSA_set_default_method() makes B<meth> the default method for all RSA
-structures created later. B<NB>: This is true only whilst no ENGINE has
+structures created later.
+B<NB>: This is true only whilst no ENGINE has
 been set as a default for RSA, so this function is no longer recommended.
+This function is not thread-safe and should not be called at the same time
+as other OpenSSL functions.
 
 RSA_get_default_method() returns a pointer to the current default
 RSA_METHOD. However, the meaningfulness of this result is dependent on
@@ -80,56 +81,56 @@ the default method is used.
  typedef struct rsa_meth_st
  {
      /* name of the implementation */
-        const char *name;
+     const char *name;
 
      /* encrypt */
-        int (*rsa_pub_enc)(int flen, unsigned char *from,
-          unsigned char *to, RSA *rsa, int padding);
+     int (*rsa_pub_enc)(int flen, unsigned char *from,
+                        unsigned char *to, RSA *rsa, int padding);
 
      /* verify arbitrary data */
-        int (*rsa_pub_dec)(int flen, unsigned char *from,
-          unsigned char *to, RSA *rsa, int padding);
+     int (*rsa_pub_dec)(int flen, unsigned char *from,
+                        unsigned char *to, RSA *rsa, int padding);
 
      /* sign arbitrary data */
-        int (*rsa_priv_enc)(int flen, unsigned char *from,
-          unsigned char *to, RSA *rsa, int padding);
+     int (*rsa_priv_enc)(int flen, unsigned char *from,
+                         unsigned char *to, RSA *rsa, int padding);
 
      /* decrypt */
-        int (*rsa_priv_dec)(int flen, unsigned char *from,
-          unsigned char *to, RSA *rsa, int padding);
+     int (*rsa_priv_dec)(int flen, unsigned char *from,
+                         unsigned char *to, RSA *rsa, int padding);
 
-     /* compute r0 = r0 ^ I mod rsa->n (May be NULL for some
-                                        implementations) */
-        int (*rsa_mod_exp)(BIGNUM *r0, BIGNUM *I, RSA *rsa);
+     /* compute r0 = r0 ^ I mod rsa->n (May be NULL for some implementations) */
+     int (*rsa_mod_exp)(BIGNUM *r0, BIGNUM *I, RSA *rsa);
 
      /* compute r = a ^ p mod m (May be NULL for some implementations) */
-        int (*bn_mod_exp)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
-          const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
+     int (*bn_mod_exp)(BIGNUM *r, BIGNUM *a, const BIGNUM *p,
+                       const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 
      /* called at RSA_new */
-        int (*init)(RSA *rsa);
+     int (*init)(RSA *rsa);
 
      /* called at RSA_free */
-        int (*finish)(RSA *rsa);
+     int (*finish)(RSA *rsa);
 
-     /* RSA_FLAG_EXT_PKEY        - rsa_mod_exp is called for private key
+     /*
+      * RSA_FLAG_EXT_PKEY        - rsa_mod_exp is called for private key
       *                            operations, even if p,q,dmp1,dmq1,iqmp
       *                            are NULL
       * RSA_METHOD_FLAG_NO_CHECK - don't check pub/private match
       */
-        int flags;
+     int flags;
 
-        char *app_data; /* ?? */
+     char *app_data; /* ?? */
 
-        int (*rsa_sign)(int type,
-                const unsigned char *m, unsigned int m_length,
-                unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
-        int (*rsa_verify)(int dtype,
-                const unsigned char *m, unsigned int m_length,
-                const unsigned char *sigbuf, unsigned int siglen,
-                                                                const RSA *rsa);
+     int (*rsa_sign)(int type,
+                     const unsigned char *m, unsigned int m_length,
+                     unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
+     int (*rsa_verify)(int dtype,
+                       const unsigned char *m, unsigned int m_length,
+                       const unsigned char *sigbuf, unsigned int siglen,
+                       const RSA *rsa);
      /* keygen. If NULL builtin RSA key generation will be used */
-        int (*rsa_keygen)(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+     int (*rsa_keygen)(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
 
  } RSA_METHOD;
 
@@ -167,6 +168,11 @@ not currently exist).
 =head1 SEE ALSO
 
 L<RSA_new(3)>
+
+=head1 HISTORY
+
+The RSA_null_method(), which was a partial attempt to avoid patent issues,
+was replaced to always return NULL in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

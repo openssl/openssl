@@ -8,7 +8,7 @@ RSA_new, RSA_free - allocate and free RSA objects
 
  #include <openssl/rsa.h>
 
- RSA * RSA_new(void);
+ RSA *RSA_new(void);
 
  void RSA_free(RSA *rsa);
 

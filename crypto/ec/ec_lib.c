@@ -1,16 +1,11 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- */
-
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * Binary polynomial ECC support in OpenSSL originally developed by
- * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
 #include <string.h>
@@ -242,7 +237,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
         return NULL;
 
     if ((t = EC_GROUP_new(a->meth)) == NULL)
-        return (NULL);
+        return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
 
@@ -265,6 +260,8 @@ int EC_METHOD_get_field_type(const EC_METHOD *meth)
 {
     return meth->field_type;
 }
+
+static int ec_precompute_mont_data(EC_GROUP *);
 
 int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
                            const BIGNUM *order, const BIGNUM *cofactor)
@@ -335,7 +332,6 @@ const BIGNUM *EC_GROUP_get0_order(const EC_GROUP *group)
 
 int EC_GROUP_order_bits(const EC_GROUP *group)
 {
-    OPENSSL_assert(group->meth->group_order_bits != NULL);
     return group->meth->group_order_bits(group);
 }
 
@@ -629,7 +625,7 @@ EC_POINT *EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
 
     t = EC_POINT_new(group);
     if (t == NULL)
-        return (NULL);
+        return NULL;
     r = EC_POINT_copy(t, a);
     if (!r) {
         EC_POINT_free(t);
@@ -967,7 +963,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
  * ec_precompute_mont_data sets |group->mont_data| from |group->order| and
  * returns one on success. On error it returns zero.
  */
-int ec_precompute_mont_data(EC_GROUP *group)
+static int ec_precompute_mont_data(EC_GROUP *group)
 {
     BN_CTX *ctx = BN_CTX_new();
     int ret = 0;
@@ -1011,4 +1007,13 @@ int ec_group_simple_order_bits(const EC_GROUP *group)
     if (group->order == NULL)
         return 0;
     return BN_num_bits(group->order);
+}
+
+int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            BIGNUM *x, BN_CTX *ctx)
+{
+    if (group->meth->field_inverse_mod_ord != NULL)
+        return group->meth->field_inverse_mod_ord(group, res, x, ctx);
+    else
+        return 0;
 }

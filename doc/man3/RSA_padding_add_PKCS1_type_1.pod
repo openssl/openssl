@@ -14,34 +14,35 @@ padding
  #include <openssl/rsa.h>
 
  int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
-    unsigned char *f, int fl);
+                                  unsigned char *f, int fl);
 
  int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
-    unsigned char *f, int fl, int rsa_len);
+                                    unsigned char *f, int fl, int rsa_len);
 
  int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
-    unsigned char *f, int fl);
+                                  unsigned char *f, int fl);
 
  int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
-    unsigned char *f, int fl, int rsa_len);
+                                    unsigned char *f, int fl, int rsa_len);
 
  int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
-    unsigned char *f, int fl, unsigned char *p, int pl);
+                                unsigned char *f, int fl, unsigned char *p, int pl);
 
  int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
-    unsigned char *f, int fl, int rsa_len, unsigned char *p, int pl);
+                                  unsigned char *f, int fl, int rsa_len,
+                                  unsigned char *p, int pl);
 
  int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-    unsigned char *f, int fl);
+                            unsigned char *f, int fl);
 
  int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
-    unsigned char *f, int fl, int rsa_len);
+                              unsigned char *f, int fl, int rsa_len);
 
  int RSA_padding_add_none(unsigned char *to, int tlen,
-    unsigned char *f, int fl);
+                          unsigned char *f, int fl);
 
  int RSA_padding_check_none(unsigned char *to, int tlen,
-    unsigned char *f, int fl, int rsa_len);
+                            unsigned char *f, int fl, int rsa_len);
 
 =head1 DESCRIPTION
 
@@ -103,6 +104,13 @@ The RSA_padding_add_xxx() functions return 1 on success, 0 on error.
 The RSA_padding_check_xxx() functions return the length of the
 recovered data, -1 on error. Error codes can be obtained by calling
 L<ERR_get_error(3)>.
+
+=head1 WARNING
+
+The RSA_padding_check_PKCS1_type_2() padding check leaks timing
+information which can potentially be used to mount a Bleichenbacher
+padding oracle attack. This is an inherent weakness in the PKCS #1
+v1.5 padding design. Prefer PKCS1_OAEP padding.
 
 =head1 SEE ALSO
 

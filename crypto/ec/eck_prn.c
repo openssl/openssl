@@ -1,16 +1,11 @@
 /*
  * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- */
-
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * Portions originally developed by SUN MICROSYSTEMS, INC., and
- * contributed to the OpenSSL project.
  */
 
 #include <stdio.h>
@@ -27,12 +22,12 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ECerr(EC_F_ECPKPARAMETERS_PRINT_FP, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = ECPKParameters_print(b, x, off);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 
 int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
@@ -42,12 +37,12 @@ int EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ECerr(EC_F_EC_KEY_PRINT_FP, ERR_R_BIO_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = EC_KEY_print(b, x, off);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 
 int ECParameters_print_fp(FILE *fp, const EC_KEY *x)
@@ -57,12 +52,12 @@ int ECParameters_print_fp(FILE *fp, const EC_KEY *x)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         ECerr(EC_F_ECPARAMETERS_PRINT_FP, ERR_R_BIO_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = ECParameters_print(b, x);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 #endif
 
@@ -231,14 +226,14 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
     BN_free(b);
     BN_free(gen);
     BN_CTX_free(ctx);
-    return (ret);
+    return ret;
 }
 
 static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
                      size_t len, int off)
 {
     size_t i;
-    char str[128];
+    char str[128 + 1 + 4];
 
     if (buf == NULL)
         return 1;

@@ -19,7 +19,7 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
     int ret = 0, i;
 
     if (x == NULL)
-        return (0);
+        return 0;
 
     if (pkey == NULL)
         pk = X509_get0_pubkey(x);
@@ -27,7 +27,7 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
         pk = pkey;
 
     if (pk == NULL)
-        return (0);
+        return 0;
 
     switch (EVP_PKEY_id(pk)) {
     case EVP_PKEY_RSA:
@@ -40,6 +40,10 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
         break;
     case EVP_PKEY_EC:
         ret = EVP_PK_EC | EVP_PKT_SIGN | EVP_PKT_EXCH;
+        break;
+    case EVP_PKEY_ED448:
+    case EVP_PKEY_ED25519:
+        ret = EVP_PKT_SIGN;
         break;
     case EVP_PKEY_DH:
         ret = EVP_PK_DH | EVP_PKT_EXCH;
@@ -73,5 +77,5 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
         }
     }
 
-    return (ret);
+    return ret;
 }

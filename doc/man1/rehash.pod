@@ -5,6 +5,7 @@ Original text by James Westby, contributed under the OpenSSL license.
 
 =head1 NAME
 
+openssl-c_rehash, openssl-rehash,
 c_rehash, rehash - Create symbolic links to files named by the hash values
 
 =head1 SYNOPSIS
@@ -107,7 +108,7 @@ By default, B<rehash> only lists each directory as it is processed.
 
 =head1 ENVIRONMENT
 
-=over
+=over 4
 
 =item B<OPENSSL>
 

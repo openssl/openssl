@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,21 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+#include "internal/cryptlib.h"
 #include <stdio.h>
 #include <time.h>
 #include <errno.h>
+#include <sys/types.h>
 
-#include "internal/cryptlib.h"
-
-#ifndef NO_SYS_TYPES_H
-# include <sys/types.h>
-#endif
 #ifndef OPENSSL_NO_POSIX_IO
 # include <sys/stat.h>
 #endif
 
-
-#include <openssl/lhash.h>
 #include <openssl/x509.h>
 #include "internal/x509_int.h"
 #include "x509_lcl.h"
@@ -65,7 +61,7 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 {
-    return (&x509_dir_lookup);
+    return &x509_dir_lookup;
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
@@ -93,7 +89,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
             ret = add_cert_dir(ld, argp, (int)argl);
         break;
     }
-    return (ret);
+    return ret;
 }
 
 static int new_dir(X509_LOOKUP *lu)
@@ -152,7 +148,9 @@ static void free_dir(X509_LOOKUP *lu)
 
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 {
-    const char *s, *p;
+    int j;
+    size_t len;
+    const char *s, *ss, *p;
 
     if (dir == NULL || !*dir) {
         X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
@@ -164,17 +162,14 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     do {
         if ((*p == LIST_SEPARATOR_CHAR) || (*p == '\0')) {
             BY_DIR_ENTRY *ent;
-            int j;
-            size_t len;
-            const char *ss = s;
+            ss = s;
             s = p + 1;
             len = p - ss;
             if (len == 0)
                 continue;
             for (j = 0; j < sk_BY_DIR_ENTRY_num(ctx->dirs); j++) {
                 ent = sk_BY_DIR_ENTRY_value(ctx->dirs, j);
-                if (strlen(ent->dir) == len &&
-                    strncmp(ent->dir, ss, len) == 0)
+                if (strlen(ent->dir) == len && strncmp(ent->dir, ss, len) == 0)
                     break;
             }
             if (j < sk_BY_DIR_ENTRY_num(ctx->dirs))
@@ -221,7 +216,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     const char *postfix = "";
 
     if (name == NULL)
-        return (0);
+        return 0;
 
     stmp.type = type;
     if (type == X509_LU_X509) {
@@ -373,6 +368,13 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             ok = 1;
             ret->type = tmp->type;
             memcpy(&ret->data, &tmp->data, sizeof(ret->data));
+
+            /*
+             * Clear any errors that might have been raised processing empty
+             * or malformed files.
+             */
+            ERR_clear_error();
+
             /*
              * If we were going to up the reference count, we would need to
              * do it on a perl 'type' basis
@@ -384,5 +386,5 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     }
  finish:
     BUF_MEM_free(b);
-    return (ok);
+    return ok;
 }

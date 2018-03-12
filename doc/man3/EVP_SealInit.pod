@@ -12,9 +12,8 @@ EVP_SealInit, EVP_SealUpdate, EVP_SealFinal - EVP envelope encryption
                   unsigned char **ek, int *ekl, unsigned char *iv,
                   EVP_PKEY **pubk, int npubk);
  int EVP_SealUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl, unsigned char *in, int inl);
- int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out,
-         int *outl);
+                    int *outl, unsigned char *in, int inl);
+ int EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 =head1 DESCRIPTION
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <openssl/crypto.h>
+#include "internal/cryptlib.h"
 
 #include "arm_arch.h"
 
@@ -23,7 +24,7 @@ void OPENSSL_cpuid_setup(void)
 {
 }
 
-unsigned long OPENSSL_rdtsc(void)
+uint32_t OPENSSL_rdtsc(void)
 {
     return 0;
 }
@@ -45,9 +46,12 @@ void _armv8_aes_probe(void);
 void _armv8_sha1_probe(void);
 void _armv8_sha256_probe(void);
 void _armv8_pmull_probe(void);
-unsigned long _armv7_tick(void);
+# ifdef __aarch64__
+void _armv8_sha512_probe(void);
+# endif
+uint32_t _armv7_tick(void);
 
-unsigned long OPENSSL_rdtsc(void)
+uint32_t OPENSSL_rdtsc(void)
 {
     if (OPENSSL_armcap_P & ARMV7_TICK)
         return _armv7_tick();
@@ -69,7 +73,7 @@ static unsigned long (*getauxval) (unsigned long) = NULL;
 # endif
 
 /*
- * ARM puts the the feature bits for Crypto Extensions in AT_HWCAP2, whereas
+ * ARM puts the feature bits for Crypto Extensions in AT_HWCAP2, whereas
  * AArch64 used AT_HWCAP.
  */
 # if defined(__arm__) || defined (__arm)
@@ -93,11 +97,12 @@ static unsigned long (*getauxval) (unsigned long) = NULL;
 #  define HWCAP_CE_PMULL         (1 << 4)
 #  define HWCAP_CE_SHA1          (1 << 5)
 #  define HWCAP_CE_SHA256        (1 << 6)
+#  define HWCAP_CE_SHA512        (1 << 21)
 # endif
 
 void OPENSSL_cpuid_setup(void)
 {
-    char *e;
+    const char *e;
     struct sigaction ill_oact, ill_act;
     sigset_t oset;
     static int trigger = 0;
@@ -110,6 +115,24 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_armcap_P = (unsigned int)strtoul(e, NULL, 0);
         return;
     }
+
+# if defined(__APPLE__) && !defined(__aarch64__)
+    /*
+     * Capability probing by catching SIGILL appears to be problematic
+     * on iOS. But since Apple universe is "monocultural", it's actually
+     * possible to simply set pre-defined processor capability mask.
+     */
+    if (1) {
+        OPENSSL_armcap_P = ARMV7_NEON;
+        return;
+    }
+    /*
+     * One could do same even for __aarch64__ iOS builds. It's not done
+     * exclusively for reasons of keeping code unified across platforms.
+     * Unified code works because it never triggers SIGILL on Apple
+     * devices...
+     */
+# endif
 
     sigfillset(&all_masked);
     sigdelset(&all_masked, SIGILL);
@@ -144,6 +167,11 @@ void OPENSSL_cpuid_setup(void)
 
             if (hwcap & HWCAP_CE_SHA256)
                 OPENSSL_armcap_P |= ARMV8_SHA256;
+
+# ifdef __aarch64__
+            if (hwcap & HWCAP_CE_SHA512)
+                OPENSSL_armcap_P |= ARMV8_SHA512;
+# endif
         }
     } else if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_neon_probe();
@@ -163,6 +191,12 @@ void OPENSSL_cpuid_setup(void)
             _armv8_sha256_probe();
             OPENSSL_armcap_P |= ARMV8_SHA256;
         }
+# if defined(__aarch64__) && !defined(__APPLE__)
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            _armv8_sha512_probe();
+            OPENSSL_armcap_P |= ARMV8_SHA512;
+        }
+# endif
     }
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_tick();

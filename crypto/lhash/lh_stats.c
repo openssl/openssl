@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,13 +62,12 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
-    BIO_printf(out, "num_nodes             = %u\n", lh->num_nodes);
-    BIO_printf(out, "num_alloc_nodes       = %u\n", lh->num_alloc_nodes);
+    BIO_printf(out, "num_nodes             = %u\n",  lh->num_nodes);
+    BIO_printf(out, "num_alloc_nodes       = %u\n",  lh->num_alloc_nodes);
     BIO_printf(out, "num_expands           = %lu\n", lh->num_expands);
     BIO_printf(out, "num_expand_reallocs   = %lu\n", lh->num_expand_reallocs);
     BIO_printf(out, "num_contracts         = %lu\n", lh->num_contracts);
-    BIO_printf(out, "num_contract_reallocs = %lu\n",
-               lh->num_contract_reallocs);
+    BIO_printf(out, "num_contract_reallocs = %lu\n", lh->num_contract_reallocs);
     BIO_printf(out, "num_hash_calls        = %lu\n", lh->num_hash_calls);
     BIO_printf(out, "num_comp_calls        = %lu\n", lh->num_comp_calls);
     BIO_printf(out, "num_insert            = %lu\n", lh->num_insert);

@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define USE_SOCKETS
 #include "e_os.h"
+#include "internal/sockets.h"
 #include "internal/refcount.h"
 
 /* BEGIN BIO_ADDRINFO/BIO_ADDR stuff. */
@@ -87,7 +87,7 @@ union bio_addr_st {
 /* END BIO_ADDRINFO/BIO_ADDR stuff. */
 
 #include "internal/cryptlib.h"
-#include <internal/bio.h>
+#include "internal/bio.h"
 
 typedef struct bio_f_buffer_ctx_struct {
     /*-

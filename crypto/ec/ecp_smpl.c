@@ -1,16 +1,11 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- */
-
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * Portions of this software developed by SUN MICROSYSTEMS, INC.,
- * and contributed to the OpenSSL project.
  */
 
 #include <openssl/err.h>
@@ -1218,10 +1213,10 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
     BN_CTX_start(ctx);
     tmp = BN_CTX_get(ctx);
     tmp_Z = BN_CTX_get(ctx);
-    if (tmp == NULL || tmp_Z == NULL)
+    if (tmp_Z == NULL)
         goto err;
 
-    prod_Z = OPENSSL_malloc(num * sizeof prod_Z[0]);
+    prod_Z = OPENSSL_malloc(num * sizeof(prod_Z[0]));
     if (prod_Z == NULL)
         goto err;
     for (i = 0; i < num; i++) {

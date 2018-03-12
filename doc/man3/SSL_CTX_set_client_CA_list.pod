@@ -82,7 +82,7 @@ The operation succeeded.
 
 Scan all certificates in B<CAfile> and list them as acceptable CAs:
 
-  SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(CAfile));
+ SSL_CTX_set_client_CA_list(ctx, SSL_load_client_CA_file(CAfile));
 
 =head1 SEE ALSO
 

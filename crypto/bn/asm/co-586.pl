@@ -13,7 +13,7 @@ require "x86asm.pl";
 $output = pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],$0);
+&asm_init($ARGV[0]);
 
 &bn_mul_comba("bn_mul_comba8",8);
 &bn_mul_comba("bn_mul_comba4",4);

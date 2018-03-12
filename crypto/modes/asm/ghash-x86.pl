@@ -103,14 +103,13 @@
 #
 # Does it make sense to increase Naggr? To start with it's virtually
 # impossible in 32-bit mode, because of limited register bank
-# capacity. Otherwise improvement has to be weighed agiainst slower
+# capacity. Otherwise improvement has to be weighed against slower
 # setup, as well as code size and complexity increase. As even
 # optimistic estimate doesn't promise 30% performance improvement,
 # there are currently no plans to increase Naggr.
 #
-# Special thanks to David Woodhouse <dwmw2@infradead.org> for
-# providing access to a Westmere-based system on behalf of Intel
-# Open Source Technology Centre.
+# Special thanks to David Woodhouse for providing access to a
+# Westmere-based system on behalf of Intel Open Source Technology Centre.
 
 # January 2010
 #
@@ -139,7 +138,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"ghash-x86.pl",$x86only = $ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$x86only = $ARGV[$#ARGV] eq "386");
 
 $sse2=0;
 for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }

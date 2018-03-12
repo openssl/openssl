@@ -1,5 +1,5 @@
 $	! OpenSSL config: determine the architecture and run Configure
-$	! Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+$	! Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 $	!
 $	! Licensed under the OpenSSL license (the "License").  You may not use
 $	! this file except in compliance with the License.  You can obtain a
@@ -73,7 +73,7 @@ $               collected_args = collected_args + " --debug"
 $		P = ""
 $	    ENDIF
 $	    IF P .NES. "" THEN -
-	       collected_args = collected_args + " " + P1
+	       collected_args = collected_args + " """ + P1 + """"
 $	    P1 = P2
 $	    P2 = P3
 $	    P3 = P4
@@ -87,7 +87,7 @@ $	ENDLOOP1:
 $
 $	target = "vms-''arch'''pointer_size'"
 $       IF verbose THEN -
-           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""''collected_args'"
+           WRITE SYS$OUTPUT "PERL ''here'Configure ""''target'""",collected_args
 $       IF .not. dryrun THEN -
-           PERL 'here'Configure "''target'" 'debug' 'collected_args'
+           PERL 'here'Configure "''target'"'collected_args'
 $       EXIT $STATUS

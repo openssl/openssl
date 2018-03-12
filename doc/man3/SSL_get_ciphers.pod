@@ -3,7 +3,8 @@
 =head1 NAME
 
 SSL_get1_supported_ciphers, SSL_get_client_ciphers,
-SSL_get_ciphers, SSL_CTX_get_ciphers, SSL_get_cipher_list
+SSL_get_ciphers, SSL_CTX_get_ciphers,
+SSL_bytes_to_cipher_list, SSL_get_cipher_list
 - get list of available SSL_CIPHERs
 
 =head1 SYNOPSIS
@@ -14,6 +15,9 @@ SSL_get_ciphers, SSL_CTX_get_ciphers, SSL_get_cipher_list
  STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx);
  STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s);
  STACK_OF(SSL_CIPHER) *SSL_get_client_ciphers(const SSL *ssl);
+ int SSL_bytes_to_cipher_list(SSL *s, const unsigned char *bytes, size_t len,
+                              int isv2format, STACK_OF(SSL_CIPHER) **sk,
+                              STACK_OF(SSL_CIPHER) **scsvs);
  const char *SSL_get_cipher_list(const SSL *ssl, int priority);
 
 =head1 DESCRIPTION
@@ -25,21 +29,29 @@ is returned.
 SSL_CTX_get_ciphers() returns the stack of available SSL_CIPHERs for B<ctx>.
 
 SSL_get1_supported_ciphers() returns the stack of enabled SSL_CIPHERs for
-B<ssl>, sorted by preference.
+B<ssl> as would be sent in a ClientHello (that is, sorted by preference).
 The list depends on settings like the cipher list, the supported protocol
 versions, the security level, and the enabled signature algorithms.
 SRP and PSK ciphers are only enabled if the appropriate callbacks or settings
 have been applied.
-This is the list that will be sent by the client to the server.
-The list supported by the server might include more ciphers in case there is a
-hole in the list of supported protocols.
-The server will also not use ciphers from this list depending on the
-configured certificates and DH parameters.
+The list of ciphers that would be sent in a ClientHello can differ from
+the list of ciphers that would be acceptable when acting as a server.
+For example, additional ciphers may be usable by a server if there is
+a gap in the list of supported protocols, and some ciphers may not be
+usable by a server if there is not a suitable certificate configured.
 If B<ssl> is NULL or no ciphers are available, NULL is returned.
 
 SSL_get_client_ciphers() returns the stack of available SSL_CIPHERs matching the
 list received from the client on B<ssl>. If B<ssl> is NULL, no ciphers are
 available, or B<ssl> is not operating in server mode, NULL is returned.
+
+SSL_bytes_to_cipher_list() treats the supplied B<len> octets in B<bytes>
+as a wire-protocol cipher suite specification (in the three-octet-per-cipher
+SSLv2 wire format if B<isv2format> is nonzero; otherwise the two-octet
+SSLv3/TLS wire format), and parses the cipher suites supported by the library
+into the returned stacks of SSL_CIPHER objects sk and Signalling Cipher-Suite
+Values scsvs.  Unsupported cipher suites are ignored.  Returns 1 on success
+and 0 on failure.
 
 SSL_get_cipher_list() returns a pointer to the name of the SSL_CIPHER
 listed for B<ssl> with B<priority>. If B<ssl> is NULL, no ciphers are
@@ -61,6 +73,9 @@ the SSL or SSL_SESSION object is freed.  Therefore, the calling code B<MUST NOT>
 free the return value itself.
 
 The stack returned by SSL_get1_supported_ciphers() should be freed using
+sk_SSL_CIPHER_free().
+
+The stacks returned by SSL_bytes_to_cipher_list() should be freed using
 sk_SSL_CIPHER_free().
 
 =head1 RETURN VALUES

@@ -2,17 +2,15 @@
 
 =head1 NAME
 
-SSL_CTX_add_session, SSL_add_session, SSL_CTX_remove_session, SSL_remove_session - manipulate session cache
+SSL_CTX_add_session, SSL_CTX_remove_session - manipulate session cache
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c);
- int SSL_add_session(SSL_CTX *ctx, SSL_SESSION *c);
 
  int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *c);
- int SSL_remove_session(SSL_CTX *ctx, SSL_SESSION *c);
 
 =head1 DESCRIPTION
 
@@ -21,11 +19,8 @@ reference count for session B<c> is incremented by 1. If a session with
 the same session id already exists, the old session is removed by calling
 L<SSL_SESSION_free(3)>.
 
-SSL_CTX_remove_session() removes the session B<c> from the context B<ctx>.
-L<SSL_SESSION_free(3)> is called once for B<c>.
-
-SSL_add_session() and SSL_remove_session() are synonyms for their
-SSL_CTX_*() counterparts.
+SSL_CTX_remove_session() removes the session B<c> from the context B<ctx> and
+marks it as non-resumable. L<SSL_SESSION_free(3)> is called once for B<c>.
 
 =head1 NOTES
 
@@ -54,13 +49,13 @@ The following values are returned by all functions:
 
 =item Z<>0
 
- The operation failed. In case of the add operation, it was tried to add
- the same (identical) session twice. In case of the remove operation, the
- session was not found in the cache.
+The operation failed. In case of the add operation, it was tried to add
+the same (identical) session twice. In case of the remove operation, the
+session was not found in the cache.
 
 =item Z<>1
 
- The operation succeeded.
+The operation succeeded.
 
 =back
 

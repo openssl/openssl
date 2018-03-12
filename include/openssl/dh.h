@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,7 @@
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/bn.h>
 # endif
+# include <openssl/dherr.h>
 
 # ifdef  __cplusplus
 extern "C" {
@@ -87,12 +88,29 @@ DECLARE_ASN1_ITEM(DHparams)
  */
 # define DH_CHECK_P_NOT_STRONG_PRIME     DH_CHECK_P_NOT_SAFE_PRIME
 
-# define d2i_DHparams_fp(fp,x) (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
-                (char *(*)())d2i_DHparams,(fp),(unsigned char **)(x))
-# define i2d_DHparams_fp(fp,x) ASN1_i2d_fp(i2d_DHparams,(fp), \
-                (unsigned char *)(x))
-# define d2i_DHparams_bio(bp,x) ASN1_d2i_bio_of(DH,DH_new,d2i_DHparams,bp,x)
-# define i2d_DHparams_bio(bp,x) ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
+# define d2i_DHparams_fp(fp,x) \
+    (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
+                      (char *(*)())d2i_DHparams, \
+                      (fp), \
+                      (unsigned char **)(x))
+# define i2d_DHparams_fp(fp,x) \
+    ASN1_i2d_fp(i2d_DHparams,(fp), (unsigned char *)(x))
+# define d2i_DHparams_bio(bp,x) \
+    ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, bp, x)
+# define i2d_DHparams_bio(bp,x) \
+    ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
+
+# define d2i_DHxparams_fp(fp,x) \
+    (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
+                      (char *(*)())d2i_DHxparams, \
+                      (fp), \
+                      (unsigned char **)(x))
+# define i2d_DHxparams_fp(fp,x) \
+    ASN1_i2d_fp(i2d_DHxparams,(fp), (unsigned char *)(x))
+# define d2i_DHxparams_bio(bp,x) \
+    ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, bp, x)
+# define i2d_DHxparams_bio(bp,x) \
+    ASN1_i2d_bio_of_const(DH, i2d_DHxparams, bp, x)
 
 DH *DHparams_dup(DH *);
 
@@ -124,6 +142,9 @@ DEPRECATEDIN_0_9_8(DH *DH_generate_parameters(int prime_len, int generator,
 int DH_generate_parameters_ex(DH *dh, int prime_len, int generator,
                               BN_GENCB *cb);
 
+int DH_check_params_ex(const DH *dh);
+int DH_check_ex(const DH *dh);
+int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key);
 int DH_check_params(const DH *dh, int *ret);
 int DH_check(const DH *dh, int *codes);
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *codes);
@@ -143,6 +164,10 @@ int DHparams_print(BIO *bp, const DH *x);
 DH *DH_get_1024_160(void);
 DH *DH_get_2048_224(void);
 DH *DH_get_2048_256(void);
+
+/* Named parameters, currently RFC7919 */
+DH *DH_new_by_nid(int nid);
+int DH_get_nid(const DH *dh);
 
 # ifndef OPENSSL_NO_CMS
 /* RFC2631 KDF */
@@ -220,6 +245,15 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN, \
                         EVP_PKEY_CTRL_DH_RFC5114, gen, NULL)
 
+# define EVP_PKEY_CTX_set_dh_nid(ctx, nid) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, \
+                        EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN, \
+                        EVP_PKEY_CTRL_DH_NID, nid, NULL)
+
+# define EVP_PKEY_CTX_set_dh_pad(ctx, pad) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_DERIVE, \
+                          EVP_PKEY_CTRL_DH_PAD, pad, NULL)
+
 # define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
@@ -233,22 +267,22 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_CTX_set0_dh_kdf_oid(ctx, oid) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)oid)
+                                EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid))
 
 # define EVP_PKEY_CTX_get0_dh_kdf_oid(ctx, poid) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)poid)
+                                EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(poid))
 
 # define EVP_PKEY_CTX_set_dh_kdf_md(ctx, md) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)md)
+                                EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md))
 
 # define EVP_PKEY_CTX_get_dh_kdf_md(ctx, pmd) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)pmd)
+                                EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)(pmd))
 
 # define EVP_PKEY_CTX_set_dh_kdf_outlen(ctx, len) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
@@ -258,17 +292,17 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_CTX_get_dh_kdf_outlen(ctx, plen) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                        EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0, (void *)plen)
+                        EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0, (void *)(plen))
 
 # define EVP_PKEY_CTX_set0_dh_kdf_ukm(ctx, p, plen) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_DH_KDF_UKM, plen, (void *)p)
+                                EVP_PKEY_CTRL_DH_KDF_UKM, plen, (void *)(p))
 
 # define EVP_PKEY_CTX_get0_dh_kdf_ukm(ctx, p) \
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, \
                                 EVP_PKEY_OP_DERIVE, \
-                                EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)p)
+                                EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)(p))
 
 # define EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN     (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR     (EVP_PKEY_ALG_CTRL + 2)
@@ -284,6 +318,8 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_CTRL_GET_DH_KDF_UKM            (EVP_PKEY_ALG_CTRL + 12)
 # define EVP_PKEY_CTRL_DH_KDF_OID                (EVP_PKEY_ALG_CTRL + 13)
 # define EVP_PKEY_CTRL_GET_DH_KDF_OID            (EVP_PKEY_ALG_CTRL + 14)
+# define EVP_PKEY_CTRL_DH_NID                    (EVP_PKEY_ALG_CTRL + 15)
+# define EVP_PKEY_CTRL_DH_PAD                    (EVP_PKEY_ALG_CTRL + 16)
 
 /* KDF types */
 # define EVP_PKEY_DH_KDF_NONE                            1
@@ -291,51 +327,6 @@ int DH_meth_set_generate_params(DH_METHOD *dhm,
 # define EVP_PKEY_DH_KDF_X9_42                           2
 # endif
 
-/* BEGIN ERROR CODES */
-/*
- * The following lines are auto generated by the script mkerr.pl. Any changes
- * made after this point may be overwritten when the script is next run.
- */
-
-int ERR_load_DH_strings(void);
-
-/* Error codes for the DH functions. */
-
-/* Function codes. */
-# define DH_F_COMPUTE_KEY                                 102
-# define DH_F_DHPARAMS_PRINT_FP                           101
-# define DH_F_DH_BUILTIN_GENPARAMS                        106
-# define DH_F_DH_CMS_DECRYPT                              114
-# define DH_F_DH_CMS_SET_PEERKEY                          115
-# define DH_F_DH_CMS_SET_SHARED_INFO                      116
-# define DH_F_DH_METH_DUP                                 117
-# define DH_F_DH_METH_NEW                                 118
-# define DH_F_DH_METH_SET1_NAME                           119
-# define DH_F_DH_NEW_METHOD                               105
-# define DH_F_DH_PARAM_DECODE                             107
-# define DH_F_DH_PRIV_DECODE                              110
-# define DH_F_DH_PRIV_ENCODE                              111
-# define DH_F_DH_PUB_DECODE                               108
-# define DH_F_DH_PUB_ENCODE                               109
-# define DH_F_DO_DH_PRINT                                 100
-# define DH_F_GENERATE_KEY                                103
-# define DH_F_PKEY_DH_DERIVE                              112
-# define DH_F_PKEY_DH_KEYGEN                              113
-
-/* Reason codes. */
-# define DH_R_BAD_GENERATOR                               101
-# define DH_R_BN_DECODE_ERROR                             109
-# define DH_R_BN_ERROR                                    106
-# define DH_R_DECODE_ERROR                                104
-# define DH_R_INVALID_PUBKEY                              102
-# define DH_R_KDF_PARAMETER_ERROR                         112
-# define DH_R_KEYS_NOT_SET                                108
-# define DH_R_MODULUS_TOO_LARGE                           103
-# define DH_R_NO_PARAMETERS_SET                           107
-# define DH_R_NO_PRIVATE_VALUE                            100
-# define DH_R_PARAMETER_ENCODING_ERROR                    105
-# define DH_R_PEER_KEY_ERROR                              111
-# define DH_R_SHARED_INFO_ERROR                           113
 
 #  ifdef  __cplusplus
 }

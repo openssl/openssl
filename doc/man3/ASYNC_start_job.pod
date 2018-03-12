@@ -187,6 +187,7 @@ The following example demonstrates how to use most of the core async APIs:
  void cleanup(ASYNC_WAIT_CTX *ctx, const void *key, OSSL_ASYNC_FD r, void *vw)
  {
      OSSL_ASYNC_FD *w = (OSSL_ASYNC_FD *)vw;
+
      close(r);
      close(*w);
      OPENSSL_free(w);
@@ -262,17 +263,17 @@ The following example demonstrates how to use most of the core async APIs:
      }
 
      for (;;) {
-         switch(ASYNC_start_job(&job, ctx, &ret, jobfunc, msg, sizeof(msg))) {
+         switch (ASYNC_start_job(&job, ctx, &ret, jobfunc, msg, sizeof(msg))) {
          case ASYNC_ERR:
          case ASYNC_NO_JOBS:
-                 printf("An error occurred\n");
-                 goto end;
+             printf("An error occurred\n");
+             goto end;
          case ASYNC_PAUSE:
-                 printf("Job was paused\n");
-                 break;
+             printf("Job was paused\n");
+             break;
          case ASYNC_FINISH:
-                 printf("Job finished with return value %d\n", ret);
-                 goto end;
+             printf("Job finished with return value %d\n", ret);
+             goto end;
          }
 
          /* Wait for the job to be woken */

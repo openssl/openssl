@@ -8,7 +8,9 @@ CMS_sign_receipt - create a CMS signed receipt
 
  #include <openssl/cms.h>
 
- CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si, X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs, unsigned int flags);
+ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si, X509 *signcert,
+                                   EVP_PKEY *pkey, STACK_OF(X509) *certs,
+                                   unsigned int flags);
 
 =head1 DESCRIPTION
 

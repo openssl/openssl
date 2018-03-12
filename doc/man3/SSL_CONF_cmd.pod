@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CONF_cmd_value_type, SSL_CONF_finish,
+SSL_CONF_cmd_value_type,
 SSL_CONF_cmd - send configuration command
 
 =head1 SYNOPSIS
@@ -11,7 +11,6 @@ SSL_CONF_cmd - send configuration command
 
  int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
  int SSL_CONF_cmd_value_type(SSL_CONF_CTX *cctx, const char *cmd);
- int SSL_CONF_finish(SSL_CONF_CTX *cctx);
 
 =head1 DESCRIPTION
 
@@ -21,10 +20,6 @@ configuration of B<SSL_CTX> or B<SSL> structures by providing a common
 framework for command line options or configuration files.
 
 SSL_CONF_cmd_value_type() returns the type of value that B<cmd> refers to.
-
-The function SSL_CONF_finish() must be called after all configuration
-operations have been completed. It is used to finalise any operations
-or to process defaults.
 
 =head1 SUPPORTED COMMAND LINE COMMANDS
 
@@ -62,16 +57,25 @@ If a server does not request a certificate this option has no effect.
 The syntax of B<value> is identical to B<-sigalgs>. If not set then
 the value set for B<-sigalgs> will be used instead.
 
+=item B<-groups>
+
+This sets the supported groups. For clients, the groups are
+sent using the supported groups extension. For servers, it is used
+to determine which group to use. This setting affects groups used for both
+signatures and key exchange, if applicable. It also affects the preferred
+key_share sent by a client in a TLSv1.3 compatible connection.
+
+The B<value> argument is a colon separated list of groups. The group can be
+either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+names are case sensitive. The list should be in order of preference with the
+most preferred group first. The first listed group will be the one used for a
+key_share by a TLSv1.3 client.
+
 =item B<-curves>
 
-This sets the supported elliptic curves. For clients the curves are
-sent using the supported curves extension. For servers it is used
-to determine which curve to use. This setting affects curves used for both
-signatures and key exchange, if applicable.
+This is a synonym for the "-groups" command.
 
-The B<value> argument is a colon separated list of curves. The curve can be
-either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
-B<prime256v1>). Curve names are case sensitive.
 
 =item B<-named_curve>
 
@@ -109,6 +113,17 @@ not loaded unless the flag B<SSL_CONF_FLAG_REQUIRE_PRIVATE> is set.
 Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
+
+=item B<-record_padding>
+
+Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
+length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
+B<value> must be >1 or <=16384.
+
+=item B<-no_renegotiation>
+
+Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<-min_protocol>, B<-max_protocol>
 
@@ -156,6 +171,13 @@ Use server and not client preference order when determining which cipher suite,
 signature algorithm or elliptic curve to use for an incoming connection.
 Equivalent to B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
+=item B<-prioritize_chacha>
+
+Prioritize ChaCha ciphers when the client has a ChaCha20 cipher at the top of
+its preference list. This usually indicates a client without AES hardware
+acceleration (e.g. mobile) is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+Only used by servers. Requires B<-serverpref>.
+
 =item B<-no_resumption_on_reneg>
 
 set SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION flag. Only used by servers.
@@ -170,6 +192,11 @@ B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 permits or prohibits the use of unsafe legacy renegotiation for OpenSSL
 clients only. Equivalent to setting or clearing B<SSL_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
+
+=item B<-allow_no_dhe_kex>
+
+In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
+that there will be no forward secrecy for the resumed session.
 
 =item B<-strict>
 
@@ -217,6 +244,14 @@ These options indicate a file or directory used for building certificate
 chains or verifying certificate chains. These options are only supported
 if certificate operations are permitted.
 
+=item B<RequestCAFile>
+
+This option indicates a file containing a set of certificates in PEM form.
+The subject names of the certificates are sent to the peer in the
+B<certificate_authorities> extension for TLS 1.3 (in ClientHello or
+CertificateRequest) or in a certificate request for previous versions or
+TLS.
+
 =item B<ServerInfoFile>
 
 Attempts to use the file B<value> in the "serverinfo" extension using the
@@ -227,6 +262,17 @@ function SSL_CTX_use_serverinfo_file.
 Attempts to use the file B<value> as the set of temporary DH parameters for
 the appropriate context. This option is only supported if certificate
 operations are permitted.
+
+=item B<RecordPadding>
+
+Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
+length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
+B<value> must be >1 or <=16384.
+
+=item B<NoRenegotiation>
+
+Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
+B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<SignatureAlgorithms>
 
@@ -253,16 +299,24 @@ used to determine which signature algorithm to with the client certificate.
 The syntax of B<value> is identical to B<SignatureAlgorithms>. If not set then
 the value set for B<SignatureAlgorithms> will be used instead.
 
+=item B<Groups>
+
+This sets the supported groups. For clients, the groups are
+sent using the supported groups extension. For servers, it is used
+to determine which group to use. This setting affects groups used for both
+signatures and key exchange, if applicable. It also affects the preferred
+key_share sent by a client in a TLSv1.3 compatible connection.
+
+The B<value> argument is a colon separated list of groups. The group can be
+either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+names are case sensitive. The list should be in order of preference with the
+most preferred group first. The first listed group will be the one used for a
+key_share by a TLSv1.3 client.
+
 =item B<Curves>
 
-This sets the supported elliptic curves. For clients the curves are
-sent using the supported curves extension. For servers it is used
-to determine which curve to use. This setting affects curves used for both
-signatures and key exchange, if applicable.
-
-The B<value> argument is a colon separated list of curves. The curve can be
-either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
-B<prime256v1>). Curve names are case sensitive.
+This is a synonym for the "Groups" command.
 
 =item B<MinProtocol>
 
@@ -335,27 +389,42 @@ B<Bugs>: enable various bug workarounds. Same as B<SSL_OP_ALL>.
 B<DHSingle>: enable single use DH keys, set by default. Inverse of
 B<SSL_OP_DH_SINGLE>. Only used by servers.
 
-B<ECDHSingle> enable single use ECDH keys, set by default. Inverse of
+B<ECDHSingle>: enable single use ECDH keys, set by default. Inverse of
 B<SSL_OP_ECDH_SINGLE>. Only used by servers.
 
-B<ServerPreference> use server and not client preference order when
+B<ServerPreference>: use server and not client preference order when
 determining which cipher suite, signature algorithm or elliptic curve
 to use for an incoming connection.  Equivalent to
 B<SSL_OP_CIPHER_SERVER_PREFERENCE>. Only used by servers.
 
-B<NoResumptionOnRenegotiation> set
+B<PrioritizeChaCha>: prioritizes ChaCha ciphers when the client has a
+ChaCha20 cipher at the top of its preference list. This usually indicates
+a mobile client is in use. Equivalent to B<SSL_OP_PRIORITIZE_CHACHA>.
+Only used by servers.
+
+B<NoResumptionOnRenegotiation>: set
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
 
-B<UnsafeLegacyRenegotiation> permits the use of unsafe legacy renegotiation.
+B<UnsafeLegacyRenegotiation>: permits the use of unsafe legacy renegotiation.
 Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
 
-B<UnsafeLegacyServerConnect> permits the use of unsafe legacy renegotiation
+B<UnsafeLegacyServerConnect>: permits the use of unsafe legacy renegotiation
 for OpenSSL clients only. Equivalent to B<SSL_OP_LEGACY_SERVER_CONNECT>.
 Set by default.
 
 B<EncryptThenMac>: use encrypt-then-mac extension, enabled by
 default. Inverse of B<SSL_OP_NO_ENCRYPT_THEN_MAC>: that is,
 B<-EncryptThenMac> is the same as setting B<SSL_OP_NO_ENCRYPT_THEN_MAC>.
+
+B<AllowNoDHEKEX>: In TLSv1.3 allow a non-(ec)dhe based key exchange mode on
+resumption. This means that there will be no forward secrecy for the resumed
+session. Equivalent to B<SSL_OP_ALLOW_NO_DHE_KEX>.
+
+B<MiddleboxCompat>: If set then dummy Change Cipher Spec (CCS) messages are sent
+in TLSv1.3. This has the effect of making TLSv1.3 look more like TLSv1.2 so that
+middleboxes that do not understand TLSv1.3 will not drop the connection. This
+option is set by default. A future version of OpenSSL may not set this by
+default. Equivalent to B<SSL_OP_ENABLE_MIDDLEBOX_COMPAT>.
 
 =item B<VerifyMode>
 
@@ -371,6 +440,18 @@ occurs if the client does not present a certificate. Servers only.
 
 B<Once> requests a certificate from a client only on the initial connection:
 not when renegotiating. Servers only.
+
+B<RequestPostHandshake> configures the connection to support requests but does
+not require a certificate from the client post-handshake. A certificate will
+not be requested during the initial handshake. The server application must
+provide a mechanism to request a certificate post-handshake. Servers only.
+TLSv1.3 only.
+
+B<RequiresPostHandshake> configures the connection to support requests and
+requires a certificate from the client post-handshake: an error occurs if the
+client does not present a certificate. A certificate will not be requested
+during the initial handshake. The server application must provide a mechanism
+to request a certificate post-handshake. Servers only. TLSv1.3 only.
 
 =item B<ClientCAFile>, B<ClientCAPath>
 
@@ -428,22 +509,22 @@ however the call sequence is:
 SSLv3 is B<always> disabled and attempt to override this by the user are
 ignored.
 
-By checking the return code of SSL_CTX_cmd() it is possible to query if a
-given B<cmd> is recognised, this is useful is SSL_CTX_cmd() values are
+By checking the return code of SSL_CONF_cmd() it is possible to query if a
+given B<cmd> is recognised, this is useful if SSL_CONF_cmd() values are
 mixed with additional application specific operations.
 
-For example an application might call SSL_CTX_cmd() and if it returns
+For example an application might call SSL_CONF_cmd() and if it returns
 -2 (unrecognised command) continue with processing of application specific
 commands.
 
-Applications can also use SSL_CTX_cmd() to process command lines though the
-utility function SSL_CTX_cmd_argv() is normally used instead. One way
+Applications can also use SSL_CONF_cmd() to process command lines though the
+utility function SSL_CONF_cmd_argv() is normally used instead. One way
 to do this is to set the prefix to an appropriate value using
 SSL_CONF_CTX_set1_prefix(), pass the current argument to B<cmd> and the
 following argument to B<value> (which may be NULL).
 
 In this case if the return value is positive then it is used to skip that
-number of arguments as they have been processed by SSL_CTX_cmd(). If -2 is
+number of arguments as they have been processed by SSL_CONF_cmd(). If -2 is
 returned then B<cmd> is not recognised and application specific arguments
 can be checked instead. If -3 is returned a required argument is missing
 and an error is indicated. If 0 is returned some other error occurred and
@@ -522,8 +603,6 @@ error occurred attempting to perform the operation: for example due to an
 error in the syntax of B<value> in this case the error queue may provide
 additional information.
 
-SSL_CONF_finish() returns 1 for success and 0 for failure.
-
 =head1 SEE ALSO
 
 L<SSL_CONF_CTX_new(3)>,
@@ -546,9 +625,11 @@ B<SSL_CONF_TYPE_UNKNOWN>.
 
 B<MinProtocol> and B<MaxProtocol> where added in OpenSSL 1.1.0.
 
+B<AllowNoDHEKEX> and B<PrioritizeChaCha> were added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
-Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

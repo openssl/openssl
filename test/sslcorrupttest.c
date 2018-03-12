@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,8 +41,8 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     char *copy;
 
     if (docorrupt) {
-        copy = BUF_memdup(in, inl);
-        TEST_check(copy != NULL);
+        if (!TEST_ptr(copy = BUF_memdup(in, inl)))
+            return 0;
         /* corrupt last bit of application data */
         copy[inl-1] ^= 1;
         ret = BIO_write(next, copy, inl);
@@ -141,15 +141,13 @@ static int setup_cipher_list()
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;
-    static STACK_OF(SSL_CIPHER) *sk_ciphers = NULL;
-    int i, numciphers;
+    STACK_OF(SSL_CIPHER) *sk_ciphers = NULL;
+    int i, j, numciphers = 0;
 
-    ctx = SSL_CTX_new(TLS_server_method());
-    TEST_check(ctx != NULL);
-    ssl = SSL_new(ctx);
-    TEST_check(ssl != NULL);
-    sk_ciphers = SSL_get1_supported_ciphers(ssl);
-    TEST_check(sk_ciphers != NULL);
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method()))
+            || !TEST_ptr(ssl = SSL_new(ctx))
+            || !TEST_ptr(sk_ciphers = SSL_get1_supported_ciphers(ssl)))
+        goto err;
 
     /*
      * The |cipher_list| will be filled only with names of RSA ciphers,
@@ -158,16 +156,19 @@ static int setup_cipher_list()
      */
     cipher_list = OPENSSL_malloc(sk_SSL_CIPHER_num(sk_ciphers) *
                                  sizeof(cipher_list[0]));
-    TEST_check(cipher_list != NULL);
+    if (!TEST_ptr(cipher_list))
+        goto err;
 
-    for (numciphers = 0, i = 0; i < sk_SSL_CIPHER_num(sk_ciphers); i++) {
+    for (j = 0, i = 0; i < sk_SSL_CIPHER_num(sk_ciphers); i++) {
         const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(sk_ciphers, i);
 
         if (SSL_CIPHER_get_auth_nid(cipher) == NID_auth_rsa)
-            cipher_list[numciphers++] = SSL_CIPHER_get_name(cipher);
+            cipher_list[j++] = SSL_CIPHER_get_name(cipher);
     }
-    TEST_check(numciphers != 0);
+    if (TEST_int_ne(j, 0))
+        numciphers = j;
 
+err:
     sk_SSL_CIPHER_free(sk_ciphers);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
@@ -180,39 +181,30 @@ static char *privkey = NULL;
 
 static int test_ssl_corrupt(int testidx)
 {
+    static unsigned char junk[16000] = { 0 };
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *server = NULL, *client = NULL;
     BIO *c_to_s_fbio;
     int testresult = 0;
-    static unsigned char junk[16000] = { 0 };
     STACK_OF(SSL_CIPHER) *ciphers;
     const SSL_CIPHER *currcipher;
 
     docorrupt = 0;
 
-    printf("Starting Test %d, %s\n", testidx, cipher_list[testidx]);
+    TEST_info("Starting #%d, %s", testidx, cipher_list[testidx]);
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
-                             &cctx, cert, privkey)) {
-        printf("Unable to create SSL_CTX pair\n");
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(), &sctx,
+                                       &cctx, cert, privkey)))
         return 0;
-    }
 
-    if (!SSL_CTX_set_cipher_list(cctx, cipher_list[testidx])) {
-        printf("Failed setting cipher list\n");
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx])))
         goto end;
-    }
 
-    ciphers = SSL_CTX_get_ciphers(cctx);
-    if (ciphers == NULL || sk_SSL_CIPHER_num(ciphers) != 1) {
-        printf("Unexpected ciphers set\n");
+    if (!TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
+            || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
+            || !TEST_ptr(currcipher = sk_SSL_CIPHER_value(ciphers, 0)))
         goto end;
-    }
-    currcipher = sk_SSL_CIPHER_value(ciphers, 0);
-    if (currcipher == NULL) {
-        printf("Failed getting the current cipher\n");
-        goto end;
-    }
 
     /*
      * If we haven't got a TLSv1.3 cipher, then we mustn't attempt to use
@@ -220,50 +212,32 @@ static int test_ssl_corrupt(int testidx)
      * get a "no shared cipher" error.
      */
     if (strcmp(SSL_CIPHER_get_version(currcipher), "TLSv1.3") != 0) {
-        if (!SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)) {
-            printf("Failed setting max protocol version\n");
+        if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
             goto end;
-        }
     }
 
-    c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter());
-    if (c_to_s_fbio == NULL) {
-        printf("Failed to create filter BIO\n");
+    if (!TEST_ptr(c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter())))
         goto end;
-    }
 
     /* BIO is freed by create_ssl_connection on error */
-    if (!create_ssl_objects(sctx, cctx, &server, &client, NULL,
-                            c_to_s_fbio)) {
-        printf("Unable to create SSL objects\n");
-        ERR_print_errors_fp(stdout);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &server, &client, NULL,
+                                      c_to_s_fbio)))
         goto end;
-    }
 
-    if (!create_ssl_connection(server, client)) {
-        printf("Unable to create SSL connection\n");
-        ERR_print_errors_fp(stdout);
+    if (!TEST_true(create_ssl_connection(server, client, SSL_ERROR_NONE)))
         goto end;
-    }
 
     docorrupt = 1;
 
-    if (SSL_write(client, junk, sizeof(junk)) < 0) {
-        printf("Unable to SSL_write\n");
-        ERR_print_errors_fp(stdout);
+    if (!TEST_int_ge(SSL_write(client, junk, sizeof(junk)), 0))
         goto end;
-    }
 
-    if (SSL_read(server, junk, sizeof(junk)) >= 0) {
-        printf("Read should have failed with \"bad record mac\"\n");
+    if (!TEST_int_lt(SSL_read(server, junk, sizeof(junk)), 0))
         goto end;
-    }
 
-    if (ERR_GET_REASON(ERR_peek_error()) !=
-        SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC) {
-        ERR_print_errors_fp(stdout);
+    if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+                     SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC))
         goto end;
-    }
 
     testresult = 1;
  end:
@@ -271,44 +245,27 @@ static int test_ssl_corrupt(int testidx)
     SSL_free(client);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
-
     return testresult;
 }
 
-int main(int argc, char *argv[])
+int setup_tests(void)
 {
-    BIO *err = NULL;
-    int testresult = 1;
+    int n;
 
-    if (argc != 3) {
-        printf("Invalid argument count\n");
-        return 1;
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1))) {
+        TEST_note("Usage error: require cert and private key files");
+        return 0;
     }
 
-    cert = argv[1];
-    privkey = argv[2];
+    n = setup_cipher_list();
+    if (n > 0)
+        ADD_ALL_TESTS(test_ssl_corrupt, n);
+    return 1;
+}
 
-    err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
-
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-
-    ADD_ALL_TESTS(test_ssl_corrupt, setup_cipher_list());
-
-    testresult = run_tests(argv[0]);
-
+void cleanup_tests(void)
+{
     bio_f_tls_corrupt_filter_free();
-
     OPENSSL_free(cipher_list);
-
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(err) <= 0)
-        testresult = 1;
-#endif
-    BIO_free(err);
-
-    if (!testresult)
-        printf("PASS\n");
-
-    return testresult;
 }

@@ -5,7 +5,6 @@
 /Makefile.orig
 /MINFO
 /TABLE
-/*.a
 /*.pc
 /rehash.time
 /inc.*
@@ -27,9 +26,17 @@ Makefile
 
 # Auto generated headers
 /crypto/buildinf.h
+/apps/progs.h
 /crypto/include/internal/*_conf.h
 /openssl/include/opensslconf.h
 /util/domd
+
+# error code files
+/crypto/err/openssl.txt.old
+/engines/e_afalg.txt.old
+/engines/e_capi.txt.old
+/engines/e_dasync.txt.old
+/engines/e_ossltest.txt.old
 
 # Executables
 /apps/openssl
@@ -53,12 +60,7 @@ Makefile
 /test/ossl_shim/ossl_shim
 
 # Certain files that get created by tests on the fly
-/test/*.ss
-/test/*.srl
-/test/.rnd
-/test/test*.pem
-/test/newkey.pem
-/test/*.log
+/test/test-runs
 /test/buildtest_*
 
 # Fuzz stuff.
@@ -78,8 +80,8 @@ Makefile
 /util/shlib_wrap.sh
 /tags
 /TAGS
-/crypto.map
-/ssl.map
+/libcrypto.map
+/libssl.map
 
 # Windows (legacy)
 /tmp32
@@ -148,7 +150,8 @@ Makefile
 # Certificate symbolic links
 *.0
 
-# All kinds of executables
+# All kinds of libraries and executables
+*.a
 *.so
 *.so.*
 *.dylib

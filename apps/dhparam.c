@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <time.h>
 # include <string.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/bn.h>
@@ -36,7 +37,8 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
-    OPT_RAND, OPT_DSAPARAM, OPT_C, OPT_2, OPT_5
+    OPT_DSAPARAM, OPT_C, OPT_2, OPT_5,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dhparam_options[] = {
@@ -50,8 +52,7 @@ const OPTIONS dhparam_options[] = {
     {"check", OPT_CHECK, '-', "Check the DH parameters"},
     {"text", OPT_TEXT, '-', "Print a text form of the DH parameters"},
     {"noout", OPT_NOOUT, '-', "Don't output any DH parameters"},
-    {"rand", OPT_RAND, 's',
-     "Load the file(s) into the random number generator"},
+    OPT_R_OPTIONS,
     {"C", OPT_C, '-', "Print C code"},
     {"2", OPT_2, '-', "Generate parameters using 2 as the generator value"},
     {"5", OPT_5, '-', "Generate parameters using 5 as the generator value"},
@@ -69,7 +70,7 @@ int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL;
-    char *infile = NULL, *outfile = NULL, *prog, *inrand = NULL;
+    char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_DSA
     int dsaparam = 0;
@@ -130,15 +131,16 @@ int dhparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
-        case OPT_RAND:
-            inrand = opt_arg();
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         }
     }
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (argv[0] && (!opt_int(argv[0], &num) || num <= 0))
+    if (argv[0] != NULL && (!opt_int(argv[0], &num) || num <= 0))
         goto end;
 
     if (g && !num)
@@ -165,13 +167,6 @@ int dhparam_main(int argc, char **argv)
         }
 
         BN_GENCB_set(cb, dh_cb, bio_err);
-        if (!app_RAND_load_file(NULL, 1) && inrand == NULL) {
-            BIO_printf(bio_err,
-                       "warning, not much extra random data, consider using the -rand option\n");
-        }
-        if (inrand != NULL)
-            BIO_printf(bio_err, "%ld semi-random bytes loaded\n",
-                       app_RAND_load_files(inrand));
 
 # ifndef OPENSSL_NO_DSA
         if (dsaparam) {
@@ -211,7 +206,6 @@ int dhparam_main(int argc, char **argv)
         }
 
         BN_GENCB_free(cb);
-        app_RAND_write_file(NULL);
     } else {
 
         in = bio_open_default(infile, 'r', informat);
@@ -242,10 +236,19 @@ int dhparam_main(int argc, char **argv)
         } else
 # endif
         {
-            if (informat == FORMAT_ASN1)
+            if (informat == FORMAT_ASN1) {
+                /*
+                 * We have no PEM header to determine what type of DH params it
+                 * is. We'll just try both.
+                 */
                 dh = d2i_DHparams_bio(in, NULL);
-            else                /* informat == FORMAT_PEM */
+                /* BIO_reset() returns 0 for success for file BIOs only!!! */
+                if (dh == NULL && BIO_reset(in) == 0)
+                    dh = d2i_DHxparams_bio(in, NULL);
+            } else {
+                /* informat == FORMAT_PEM */
                 dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
+            }
 
             if (dh == NULL) {
                 BIO_printf(bio_err, "unable to load DH parameters\n");
@@ -317,9 +320,9 @@ int dhparam_main(int argc, char **argv)
                         "\n"
                         "    if (dh == NULL)\n"
                         "        return NULL;\n");
-        BIO_printf(out, "    dhp_bn = BN_bin2bn(dhp_%d, sizeof (dhp_%d), NULL);\n",
+        BIO_printf(out, "    dhp_bn = BN_bin2bn(dhp_%d, sizeof(dhp_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    dhg_bn = BN_bin2bn(dhg_%d, sizeof (dhg_%d), NULL);\n",
+        BIO_printf(out, "    dhg_bn = BN_bin2bn(dhg_%d, sizeof(dhg_%d), NULL);\n",
                    bits, bits);
         BIO_printf(out, "    if (dhp_bn == NULL || dhg_bn == NULL\n"
                         "            || !DH_set0_pqg(dh, dhp_bn, NULL, dhg_bn)) {\n"
@@ -340,12 +343,16 @@ int dhparam_main(int argc, char **argv)
     if (!noout) {
         const BIGNUM *q;
         DH_get0_pqg(dh, NULL, &q, NULL);
-        if (outformat == FORMAT_ASN1)
-            i = i2d_DHparams_bio(out, dh);
-        else if (q != NULL)
+        if (outformat == FORMAT_ASN1) {
+            if (q != NULL)
+                i = i2d_DHxparams_bio(out, dh);
+            else
+                i = i2d_DHparams_bio(out, dh);
+        } else if (q != NULL) {
             i = PEM_write_bio_DHxparams(out, dh);
-        else
+        } else {
             i = PEM_write_bio_DHparams(out, dh);
+        }
         if (!i) {
             BIO_printf(bio_err, "unable to write DH parameters\n");
             ERR_print_errors(bio_err);
@@ -358,7 +365,7 @@ int dhparam_main(int argc, char **argv)
     BIO_free_all(out);
     DH_free(dh);
     release_engine(e);
-    return (ret);
+    return ret;
 }
 
 static int dh_cb(int p, int n, BN_GENCB *cb)

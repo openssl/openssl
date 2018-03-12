@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "e_os.h"
+#include "internal/cryptlib.h"
+#include "internal/cryptlib_int.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <openssl/crypto.h>
-#include "internal/cryptlib.h"
-#include "internal/cryptlib_int.h"
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
 # include <execinfo.h>
 #endif
@@ -30,6 +31,14 @@ static void (*free_impl)(void *, const char *, int)
     = CRYPTO_free;
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+static int malloc_count;
+static int realloc_count;
+static int free_count;
+static int dummy;
+
+# define INCREMENT(x) CRYPTO_atomic_add(&x, 1, &dummy, memdbg_lock)
+# define GET(ret, val) CRYPTO_atomic_read(&val, ret, memdbg_lock)
+
 static char *md_failstring;
 static long md_count;
 static int md_fail_percent = 0;
@@ -44,6 +53,7 @@ static int shouldfail(void);
 #else
 static int call_malloc_debug = 0;
 
+# define INCREMENT(x) /* empty */
 # define FAILTEST() /* empty */
 #endif
 
@@ -85,6 +95,16 @@ void CRYPTO_get_mem_functions(
 }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
+{
+    if (mcount != NULL)
+        GET(mcount, malloc_count);
+    if (rcount != NULL)
+        GET(rcount, realloc_count);
+    if (fcount != NULL)
+        GET(fcount, free_count);
+}
+
 /*
  * Parse a "malloc failure spec" string.  This likes like a set of fields
  * separated by semicolons.  Each field has a count and an optional failure
@@ -112,28 +132,42 @@ static void parseit(void)
 }
 
 /*
+ * Windows doesn't have random(), but it has rand()
+ * Some rand() implementations aren't good, but we're not
+ * dealing with secure randomness here.
+ */
+# ifdef _WIN32
+#  define random() rand()
+# endif
+/*
  * See if the current malloc should fail.
  */
 static int shouldfail(void)
 {
     int roll = (int)(random() % 100);
-    int shouldfail = roll < md_fail_percent;
+    int shoulditfail = roll < md_fail_percent;
+# ifndef _WIN32
+/* suppressed on Windows as POSIX-like file descriptors are non-inheritable */
+    int len;
     char buff[80];
 
     if (md_tracefd > 0) {
         BIO_snprintf(buff, sizeof(buff),
                      "%c C%ld %%%d R%d\n",
-                     shouldfail ? '-' : '+', md_count, md_fail_percent, roll);
-        write(md_tracefd, buff, strlen(buff));
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
-        if (shouldfail) {
+                     shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
+        len = strlen(buff);
+        if (write(md_tracefd, buff, len) != len)
+            perror("shouldfail write failed");
+#  ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+        if (shoulditfail) {
             void *addrs[30];
             int num = backtrace(addrs, OSSL_NELEM(addrs));
 
             backtrace_symbols_fd(addrs, num, md_tracefd);
         }
-#endif
+#  endif
     }
+# endif
 
     if (md_count) {
         /* If we used up this one, go to the next. */
@@ -141,7 +175,7 @@ static int shouldfail(void)
             parseit();
     }
 
-    return shouldfail;
+    return shoulditfail;
 }
 
 void ossl_malloc_setup_failures(void)
@@ -159,14 +193,22 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
 {
     void *ret = NULL;
 
+    INCREMENT(malloc_count);
     if (malloc_impl != NULL && malloc_impl != CRYPTO_malloc)
         return malloc_impl(num, file, line);
 
-    if (num <= 0)
+    if (num == 0)
         return NULL;
 
     FAILTEST();
-    allow_customize = 0;
+    if (allow_customize) {
+        /*
+         * Disallow customization after the first allocation. We only set this
+         * if necessary to avoid a store to the same cache line on every
+         * allocation.
+         */
+        allow_customize = 0;
+    }
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
@@ -176,7 +218,7 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         ret = malloc(num);
     }
 #else
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
     ret = malloc(num);
 #endif
 
@@ -195,6 +237,7 @@ void *CRYPTO_zalloc(size_t num, const char *file, int line)
 
 void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
 {
+    INCREMENT(realloc_count);
     if (realloc_impl != NULL && realloc_impl != &CRYPTO_realloc)
         return realloc_impl(str, num, file, line);
 
@@ -207,7 +250,6 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    allow_customize = 0;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         void *ret;
@@ -217,7 +259,7 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return ret;
     }
 #else
-    osslargused(file); osslargused(line);
+    (void)(file); (void)(line);
 #endif
     return realloc(str, num);
 
@@ -252,6 +294,7 @@ void *CRYPTO_clear_realloc(void *str, size_t old_len, size_t num,
 
 void CRYPTO_free(void *str, const char *file, int line)
 {
+    INCREMENT(free_count);
     if (free_impl != NULL && free_impl != &CRYPTO_free) {
         free_impl(str, file, line);
         return;

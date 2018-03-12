@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,6 @@
 
 #include "internal/cryptlib_int.h"
 #include "internal/thread_once.h"
-#include <openssl/lhash.h>
 
 /*
  * Each structure type (sometimes called a class), that supports
@@ -124,7 +123,7 @@ static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                      void *from_d, int idx,
                      long argl, void *argp)
 {
-    return 0;
+    return 1;
 }
 
 int CRYPTO_free_ex_index(int class_index, int idx)
@@ -254,10 +253,11 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
                        const CRYPTO_EX_DATA *from)
 {
     int mx, j, i;
-    char *ptr;
+    void *ptr;
     EX_CALLBACK *stack[10];
     EX_CALLBACK **storage = NULL;
     EX_CALLBACKS *ip;
+    int toret = 0;
 
     if (from->sk == NULL)
         /* Nothing to copy over */
@@ -280,21 +280,35 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
     }
     CRYPTO_THREAD_unlock(ex_data_lock);
 
-    if (mx > 0 && storage == NULL) {
+    if (mx == 0)
+        return 1;
+    if (storage == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_DUP_EX_DATA, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    /*
+     * Make sure the ex_data stack is at least |mx| elements long to avoid
+     * issues in the for loop that follows; so go get the |mx|'th element
+     * (if it does not exist CRYPTO_get_ex_data() returns NULL), and assign
+     * to itself. This is normally a no-op; but ensures the stack is the
+     * proper size
+     */
+    if (!CRYPTO_set_ex_data(to, mx - 1, CRYPTO_get_ex_data(to, mx - 1)))
+        goto err;
 
     for (i = 0; i < mx; i++) {
         ptr = CRYPTO_get_ex_data(from, i);
         if (storage[i] && storage[i]->dup_func)
-            storage[i]->dup_func(to, from, &ptr, i,
-                                 storage[i]->argl, storage[i]->argp);
+            if (!storage[i]->dup_func(to, from, &ptr, i,
+                                      storage[i]->argl, storage[i]->argp))
+                goto err;
         CRYPTO_set_ex_data(to, i, ptr);
     }
+    toret = 1;
+ err:
     if (storage != stack)
         OPENSSL_free(storage);
-    return 1;
+    return toret;
 }
 
 

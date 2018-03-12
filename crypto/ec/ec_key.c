@@ -1,5 +1,6 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,15 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * Portions originally developed by SUN MICROSYSTEMS, INC., and
- * contributed to the OpenSSL project.
- */
-
-#include <internal/cryptlib.h>
+#include "internal/cryptlib.h"
 #include <string.h>
 #include "ec_lcl.h"
+#include "internal/refcount.h"
 #include <openssl/err.h>
 #include <openssl/engine.h>
 
@@ -177,6 +173,11 @@ int EC_KEY_up_ref(EC_KEY *r)
     return ((i > 1) ? 1 : 0);
 }
 
+ENGINE *EC_KEY_get0_engine(const EC_KEY *eckey)
+{
+    return eckey->engine;
+}
+
 int EC_KEY_generate_key(EC_KEY *eckey)
 {
     if (eckey == NULL || eckey->group == NULL) {
@@ -191,7 +192,6 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 int ossl_ec_key_gen(EC_KEY *eckey)
 {
-    OPENSSL_assert(eckey->group->meth->keygen != NULL);
     return eckey->group->meth->keygen(eckey);
 }
 
@@ -218,7 +218,7 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
         goto err;
 
     do
-        if (!BN_rand_range(priv_key, order))
+        if (!BN_priv_rand_range(priv_key, order))
             goto err;
     while (BN_is_zero(priv_key)) ;
 

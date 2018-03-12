@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,6 +61,8 @@ static const EVP_PBE_CTL builtin_pbe[] = {
      NID_des_cbc, NID_sha1, PKCS5_PBE_keyivgen},
 
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA1, -1, NID_sha1, 0},
+    {EVP_PBE_TYPE_PRF, NID_hmac_md5, -1, NID_md5, 0},
+    {EVP_PBE_TYPE_PRF, NID_hmac_sha1, -1, NID_sha1, 0},
     {EVP_PBE_TYPE_PRF, NID_hmacWithMD5, -1, NID_md5, 0},
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA224, -1, NID_sha224, 0},
     {EVP_PBE_TYPE_PRF, NID_hmacWithSHA256, -1, NID_sha256, 0},
@@ -90,9 +92,9 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         char obj_tmp[80];
         EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_PBE_ALGORITHM);
         if (!pbe_obj)
-            OPENSSL_strlcpy(obj_tmp, "NULL", sizeof obj_tmp);
+            OPENSSL_strlcpy(obj_tmp, "NULL", sizeof(obj_tmp));
         else
-            i2t_ASN1_OBJECT(obj_tmp, sizeof obj_tmp, pbe_obj);
+            i2t_ASN1_OBJECT(obj_tmp, sizeof(obj_tmp), pbe_obj);
         ERR_add_error_data(2, "TYPE=", obj_tmp);
         return 0;
     }

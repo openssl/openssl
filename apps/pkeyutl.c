@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include "apps.h"
+#include "progs.h"
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
@@ -36,7 +37,8 @@ typedef enum OPTION_choice {
     OPT_PUBIN, OPT_CERTIN, OPT_ASN1PARSE, OPT_HEXDUMP, OPT_SIGN,
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
-    OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN
+    OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_KDF, OPT_KDFLEN,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkeyutl_options[] = {
@@ -64,6 +66,7 @@ const OPTIONS pkeyutl_options[] = {
     {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
     {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
     {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"engine_impl", OPT_ENGINE_IMPL, '-',
@@ -133,6 +136,10 @@ int pkeyutl_main(int argc, char **argv)
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyform))
                 goto opthelp;
+            break;
+        case OPT_R_CASES:
+            if (!opt_rand(o))
+                goto end;
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
@@ -226,20 +233,17 @@ int pkeyutl_main(int argc, char **argv)
         }
     }
 
-    if (sigfile && (pkey_op != EVP_PKEY_OP_VERIFY)) {
+    if (sigfile != NULL && (pkey_op != EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,
                    "%s: Signature file specified for non verify\n", prog);
         goto end;
     }
 
-    if (!sigfile && (pkey_op == EVP_PKEY_OP_VERIFY)) {
+    if (sigfile == NULL && (pkey_op == EVP_PKEY_OP_VERIFY)) {
         BIO_printf(bio_err,
                    "%s: No signature file specified for verify\n", prog);
         goto end;
     }
-
-/* FIXME: seed PRNG only if needed */
-    app_RAND_load_file(NULL, 0);
 
     if (pkey_op != EVP_PKEY_OP_DERIVE) {
         in = bio_open_default(infile, 'r', FORMAT_BINARY);
@@ -250,9 +254,10 @@ int pkeyutl_main(int argc, char **argv)
     if (out == NULL)
         goto end;
 
-    if (sigfile) {
+    if (sigfile != NULL) {
         BIO *sigbio = BIO_new_file(sigfile, "rb");
-        if (!sigbio) {
+
+        if (sigbio == NULL) {
             BIO_printf(bio_err, "Can't open signature file %s\n", sigfile);
             goto end;
         }
@@ -264,7 +269,7 @@ int pkeyutl_main(int argc, char **argv)
         }
     }
 
-    if (in) {
+    if (in != NULL) {
         /* Read the input data */
         buf_inlen = bio_to_mem(&buf_in, keysize * 10, in);
         if (buf_inlen < 0) {
@@ -289,8 +294,9 @@ int pkeyutl_main(int argc, char **argv)
         if (rv == 1) {
             BIO_puts(out, "Signature Verified Successfully\n");
             ret = 0;
-        } else
+        } else {
             BIO_puts(out, "Signature Verification Failure\n");
+        }
         goto end;
     }
     if (kdflen != 0) {
@@ -316,10 +322,11 @@ int pkeyutl_main(int argc, char **argv)
     if (asn1parse) {
         if (!ASN1_parse_dump(out, buf_out, buf_outlen, 1, -1))
             ERR_print_errors(bio_err);
-    } else if (hexdump)
+    } else if (hexdump) {
         BIO_dump(out, (char *)buf_out, buf_outlen);
-    else
+    } else {
         BIO_write(out, buf_out, buf_outlen);
+    }
 
  end:
     EVP_PKEY_CTX_free(ctx);
@@ -381,10 +388,14 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         impl = e;
 #endif
 
-    if (kdfalg) {
+    if (kdfalg != NULL) {
         int kdfnid = OBJ_sn2nid(kdfalg);
-        if (kdfnid == NID_undef)
-            goto end;
+
+        if (kdfnid == NID_undef) {
+            kdfnid = OBJ_ln2nid(kdfalg);
+            if (kdfnid == NID_undef)
+                goto end;
+        }
         ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
         if (pkey == NULL)
@@ -444,7 +455,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
     if (peerform == FORMAT_ENGINE)
         engine = e;
     peer = load_pubkey(file, peerform, 0, NULL, engine, "Peer Key");
-    if (!peer) {
+    if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         ERR_print_errors(bio_err);
         return 0;

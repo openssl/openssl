@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ my $test_name = "test_sslversions";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -87,7 +87,7 @@ $testtype = REVERSE_ORDER_VERSIONS;
 $proxy->start();
 $record = pop @{$proxy->record_list};
 ok(TLSProxy::Message->success()
-   && $record->version() == TLSProxy::Record::VERS_TLS_1_0
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_2
    && TLSProxy::Proxy->is_tls13(),
    "Reverse order versions");
 
@@ -107,13 +107,24 @@ $testtype = WITH_TLS1_4;
 $proxy->start();
 $record = pop @{$proxy->record_list};
 ok(TLSProxy::Message->success()
-   && $record->version() == TLSProxy::Record::VERS_TLS_1_0
+   && $record->version() == TLSProxy::Record::VERS_TLS_1_2
    && TLSProxy::Proxy->is_tls13(),
    "TLS1.4 in supported versions extension");
 
 sub modify_supported_versions_filter
 {
     my $proxy = shift;
+
+    if ($proxy->flight == 1) {
+        # Change the ServerRandom so that the downgrade sentinel doesn't cause
+        # the connection to fail
+        my $message = ${$proxy->message_list}[1];
+        return if (!defined $message);
+
+        $message->random("\0"x32);
+        $message->repack();
+        return;
+    }
 
     # We're only interested in the initial ClientHello
     if ($proxy->flight != 0) {

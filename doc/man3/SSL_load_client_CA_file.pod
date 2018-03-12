@@ -33,9 +33,9 @@ Load names of CAs from file and use it as a client CA list:
  ...
  cert_names = SSL_load_client_CA_file("/path/to/CAfile.pem");
  if (cert_names != NULL)
-   SSL_CTX_set_client_CA_list(ctx, cert_names);
+     SSL_CTX_set_client_CA_list(ctx, cert_names);
  else
-   error_handling();
+     /* error */
  ...
 
 =head1 RETURN VALUES

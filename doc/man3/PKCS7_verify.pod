@@ -8,7 +8,8 @@ PKCS7_verify, PKCS7_get0_signers - verify a PKCS#7 signedData structure
 
  #include <openssl/pkcs7.h>
 
- int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store, BIO *indata, BIO *out, int flags);
+ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
+                  BIO *indata, BIO *out, int flags);
 
  STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
 

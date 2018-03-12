@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,37 +17,12 @@
 # define _kbhit kbhit
 #endif
 
-#if defined(OPENSSL_SYS_VMS) && !defined(FD_SET)
-/*
- * VAX C does not defined fd_set and friends, but it's actually quite simple
- */
-/* These definitions are borrowed from SOCKETSHR.       /Richard Levitte */
-# define MAX_NOFILE      32
-# define NBBY             8     /* number of bits in a byte */
-
-# ifndef FD_SETSIZE
-#  define FD_SETSIZE      MAX_NOFILE
-# endif                         /* FD_SETSIZE */
-
-/* How many things we'll allow select to use. 0 if unlimited */
-# define MAXSELFD        MAX_NOFILE
-typedef int fd_mask;            /* int here! VMS prototypes int, not long */
-# define NFDBITS (sizeof(fd_mask) * NBBY)/* bits per mask (power of 2!) */
-# define NFDSHIFT 5             /* Shift based on above */
-
-typedef fd_mask fd_set;
-# define FD_SET(n, p)    (*(p) |= (1 << ((n) % NFDBITS)))
-# define FD_CLR(n, p)    (*(p) &= ~(1 << ((n) % NFDBITS)))
-# define FD_ISSET(n, p)  (*(p) & (1 << ((n) % NFDBITS)))
-# define FD_ZERO(p)      memset((p), 0, sizeof(*(p)))
-#endif
-
 #define PORT            "4433"
 #define PROTOCOL        "tcp"
 
-typedef int (*do_server_cb)(int s, int stype, unsigned char *context);
+typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type,
+              int family, int type, int protocol,
               do_server_cb cb,
               unsigned char *context, int naccept);
 #ifdef HEADER_X509_H
@@ -63,7 +38,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
-                int family, int type);
+                const char *bindhost, const char *bindport,
+                int family, int type, int protocol);
 int should_retry(int i);
 
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
@@ -100,4 +76,5 @@ int ssl_load_stores(SSL_CTX *ctx, const char *vfyCApath,
                     int crl_download);
 void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose);
 int set_keylog_file(SSL_CTX *ctx, const char *keylog_file);
+void print_ca_names(BIO *bio, SSL *s);
 #endif

@@ -42,7 +42,7 @@
 # (*)	whichever best applicable.
 # (**)	x86_64 assembler performance is presented for reference
 #	purposes, the results are for integer-only code.
-# (***)	paddq is increadibly slow on Atom.
+# (***)	paddq is incredibly slow on Atom.
 #
 # IALU code-path is optimized for elder Pentiums. On vanilla Pentium
 # performance improvement over compiler generated code reaches ~60%,
@@ -62,7 +62,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $sse2=0;
 for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }

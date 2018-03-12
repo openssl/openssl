@@ -1,4 +1,4 @@
-// Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+// Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
 //
 // Licensed under the OpenSSL license (the "License").  You may not use
 // this file except in compliance with the License.  You can obtain a copy
@@ -75,7 +75,7 @@ OPENSSL_wipe_cpu:
 { .mii;	add		r9=96*8-8,r9
 	mov		ar.ec=1		};;
 
-// One can sweep double as fast, but then we can't quarantee
+// One can sweep double as fast, but then we can't guarantee
 // that backing storage is wiped...
 .L_wipe_top:
 { .mfi;	st8		[r9]=r0,-8

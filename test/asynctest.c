@@ -15,7 +15,6 @@
 #include <string.h>
 #include <openssl/async.h>
 #include <openssl/crypto.h>
-#include <../apps/apps.h>
 
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;

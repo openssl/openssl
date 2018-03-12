@@ -82,9 +82,11 @@
 # Haswell	5.45		4.15/+31%	3.57/+53%
 # Skylake	5.18		4.06/+28%	3.54/+46%
 # Bulldozer	9.11		5.95/+53%
+# Ryzen		4.75		3.80/+24%	1.93/+150%(**)
 # VIA Nano	9.32		7.15/+30%
 # Atom		10.3		9.17/+12%
 # Silvermont	13.1(*)		9.37/+40%
+# Knights L	13.2(*)		9.68/+36%	8.30/+59%
 # Goldmont	8.13		6.42/+27%	1.70/+380%(**)
 #
 # (*)	obviously suboptimal result, nothing was done about it,
@@ -576,7 +578,7 @@ sub AUTOLOAD()		# thunk [simplified] 32-bit style perlasm
     $code .= "\t$opcode\t".join(',',$arg,reverse @_)."\n";
 }
 
-sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_ssse3_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1041,7 +1043,7 @@ $code.=<<___;
 	jmp	.Loop_avx
 ___
 
-sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body);	# 40 instructions
@@ -1525,7 +1527,7 @@ sub bodyx_40_59 () {	# 10 instructions, 3 cycles critical path
 	)
 }
 
-sub Xupdate_avx2_16_31()		# recall that $Xi starts wtih 4
+sub Xupdate_avx2_16_31()		# recall that $Xi starts with 4
 { use integer;
   my $body = shift;
   my @insns = (&$body,&$body,&$body,&$body,&$body);	# 35 instructions
@@ -1982,9 +1984,9 @@ ssse3_handler:
 	mov	-40(%rax),%r14
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore cotnext->R12
-	mov	%r13,224($context)	# restore cotnext->R13
-	mov	%r14,232($context)	# restore cotnext->R14
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
 
 .Lcommon_seh_tail:
 	mov	8(%rax),%rdi

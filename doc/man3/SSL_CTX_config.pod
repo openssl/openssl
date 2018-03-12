@@ -40,16 +40,14 @@ If the file "config.cnf" contains the following:
  testapp = test_sect
 
  [test_sect]
- # list of confuration modules
+ # list of configuration modules
 
  ssl_conf = ssl_sect
 
  [ssl_sect]
-
  server = server_section
 
  [server_section]
-
  RSA.Certificate = server-rsa.pem
  ECDSA.Certificate = server-ecdsa.pem
  Ciphers = ALL:!RC4
@@ -57,8 +55,8 @@ If the file "config.cnf" contains the following:
 An application could call:
 
  if (CONF_modules_load_file("config.cnf", "testapp", 0) <= 0) {
-      fprintf(stderr, "Error processing config file\n");
-      goto err;
+     fprintf(stderr, "Error processing config file\n");
+     goto err;
  }
 
  ctx = SSL_CTX_new(TLS_server_method());

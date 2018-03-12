@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     BN_CTX_start(ctx);
     a = BN_CTX_get(ctx);
     b = BN_CTX_get(ctx);
-    if (a == NULL || b == NULL)
+    if (b == NULL)
         goto err;
 
     if (BN_copy(a, in_a) == NULL)
@@ -48,7 +48,7 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     bn_check_top(r);
-    return (ret);
+    return ret;
 }
 
 static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
@@ -111,9 +111,9 @@ static BIGNUM *euclid(BIGNUM *a, BIGNUM *b)
             goto err;
     }
     bn_check_top(a);
-    return (a);
+    return a;
  err:
-    return (NULL);
+    return NULL;
 }
 
 /* solves ax == 1 (mod n) */
@@ -277,8 +277,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                 if (!BN_uadd(Y, Y, X))
                     goto err;
                 /*
-                 * as above, BN_mod_add_quick(Y, Y, X, n) would slow things
-                 * down
+                 * as above, BN_mod_add_quick(Y, Y, X, n) would slow things down
                  */
                 if (!BN_usub(A, A, B))
                     goto err;
@@ -348,8 +347,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
              * (**)  sign*Y*a  ==  D*B + M   (mod |n|).
              */
 
-            tmp = A;            /* keep the BIGNUM object, the value does not
-                                 * matter */
+            tmp = A;    /* keep the BIGNUM object, the value does not matter */
 
             /* (A, B) := (B, A mod B) ... */
             A = B;
@@ -377,8 +375,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
              */
 
             /*
-             * most of the time D is very small, so we can optimize tmp :=
-             * D*X+Y
+             * most of the time D is very small, so we can optimize tmp := D*X+Y
              */
             if (BN_is_one(D)) {
                 if (!BN_add(tmp, X, Y))
@@ -403,8 +400,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                     goto err;
             }
 
-            M = Y;              /* keep the BIGNUM object, the value does not
-                                 * matter */
+            M = Y;      /* keep the BIGNUM object, the value does not matter */
             Y = X;
             X = tmp;
             sign = -sign;
@@ -445,7 +441,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
         BN_free(R);
     BN_CTX_end(ctx);
     bn_check_top(ret);
-    return (ret);
+    return ret;
 }
 
 /*
@@ -616,5 +612,5 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
         BN_free(R);
     BN_CTX_end(ctx);
     bn_check_top(ret);
-    return (ret);
+    return ret;
 }

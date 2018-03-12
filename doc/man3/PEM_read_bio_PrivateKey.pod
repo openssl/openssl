@@ -30,7 +30,7 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
  #include <openssl/pem.h>
 
- typedef int (*pem_password_cb)(char *buf, int size, int rwflag, void *u);
+ typedef int pem_password_cb(char *buf, int size, int rwflag, void *u);
 
  EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x,
                                    pem_password_cb *cb, void *u);
@@ -161,17 +161,18 @@ For more details about the meaning of arguments see the
 B<PEM FUNCTION ARGUMENTS> section.
 
 Each operation has four functions associated with it. For
-clarity the term "B<foobar> functions" will be used to collectively
-refer to the PEM_read_bio_foobar(), PEM_read_foobar(),
-PEM_write_bio_foobar() and PEM_write_foobar() functions.
+brevity the term "B<TYPE> functions" will be used below to collectively
+refer to the PEM_read_bio_TYPE(), PEM_read_TYPE(),
+PEM_write_bio_TYPE(), and PEM_write_TYPE() functions.
 
 The B<PrivateKey> functions read or write a private key in PEM format using an
 EVP_PKEY structure. The write routines use PKCS#8 private key format and are
 equivalent to PEM_write_bio_PKCS8PrivateKey().The read functions transparently
 handle traditional and PKCS#8 format encrypted and unencrypted keys.
 
-PEM_write_bio_PrivateKey_traditional() writes out a private key in legacy
-"traditional" format.
+PEM_write_bio_PrivateKey_traditional() writes out a private key in the
+"traditional" format with a simple private key marker and should only
+be used for compatibility with legacy programs.
 
 PEM_write_bio_PKCS8PrivateKey() and PEM_write_PKCS8PrivateKey() write a private
 key in an EVP_PKEY structure in PKCS#8 EncryptedPrivateKeyInfo format using
@@ -305,44 +306,41 @@ most of them are set to 0 or NULL.
 Read a certificate in PEM format from a BIO:
 
  X509 *x;
+
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);
- if (x == NULL) {
+ if (x == NULL)
      /* Error */
- }
 
 Alternative method:
 
  X509 *x = NULL;
- if (!PEM_read_bio_X509(bp, &x, 0, NULL)) {
+
+ if (!PEM_read_bio_X509(bp, &x, 0, NULL))
      /* Error */
- }
 
 Write a certificate to a BIO:
 
- if (!PEM_write_bio_X509(bp, x)) {
+ if (!PEM_write_bio_X509(bp, x))
      /* Error */
- }
 
 Write a private key (using traditional format) to a BIO using
 triple DES encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL)) {
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
      /* Error */
- }
 
 Write a private key (using PKCS#8 format) to a BIO using triple
 DES encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, "hello")) {
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
+                                    NULL, 0, 0, "hello"))
      /* Error */
- }
 
 Read a private key from a BIO using a pass phrase callback:
 
  key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
- if (key == NULL) {
+ if (key == NULL)
      /* Error */
- }
 
 Skeleton pass phrase callback:
 
@@ -382,6 +380,7 @@ A frequent cause of problems is attempting to use the PEM routines like
 this:
 
  X509 *x;
+
  PEM_read_bio_X509(bp, &x, 0, NULL);
 
 this is a bug because an attempt will be made to reuse the data at B<x>
@@ -432,9 +431,8 @@ The pseudo code to derive the key would look similar to:
 
  memcpy(iv, HexToBin("3F17F5316E2BAC89"), niv);
  rc = EVP_BytesToKey(cipher, md, iv /*salt*/, pword, plen, 1, key, NULL /*iv*/);
- if (rc != nkey) {
+ if (rc != nkey)
      /* Error */
- }
 
  /* On success, use key and iv to initialize the cipher */
 
@@ -452,7 +450,7 @@ where B<x> already contains a valid certificate, may not work, whereas:
 
 is guaranteed to work.
 
-=head1 RETURN CODES
+=head1 RETURN VALUES
 
 The read routines return either a pointer to the structure read or NULL
 if an error occurred.
@@ -462,7 +460,7 @@ The write routines return 1 for success or 0 for failure.
 =head1 HISTORY
 
 The old Netscape certificate sequences were no longer documented
-in OpenSSL 1.1; applications should use the PKCS7 standard instead
+in OpenSSL 1.1.0; applications should use the PKCS7 standard instead
 as they will be formally deprecated in a future releases.
 
 =head1 SEE ALSO
@@ -471,7 +469,7 @@ L<EVP_EncryptInit(3)>, L<EVP_BytesToKey(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

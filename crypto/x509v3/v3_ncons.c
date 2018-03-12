@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/numbers.h"
+#include <stdio.h>
 #include "internal/asn1_int.h"
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
@@ -61,6 +62,46 @@ ASN1_SEQUENCE(NAME_CONSTRAINTS) = {
 
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
+
+/*
+ * We cannot use strncasecmp here because that applies locale specific rules.
+ * For example in Turkish 'I' is not the uppercase character for 'i'. We need to
+ * do a simple ASCII case comparison ignoring the locale (that is why we use
+ * numeric constants below).
+ */
+static int ia5ncasecmp(const char *s1, const char *s2, size_t n)
+{
+    for (; n > 0; n--, s1++, s2++) {
+        if (*s1 != *s2) {
+            unsigned char c1 = (unsigned char)*s1, c2 = (unsigned char)*s2;
+
+            /* Convert to lower case */
+            if (c1 >= 0x41 /* A */ && c1 <= 0x5A /* Z */)
+                c1 += 0x20;
+            if (c2 >= 0x41 /* A */ && c2 <= 0x5A /* Z */)
+                c2 += 0x20;
+
+            if (c1 == c2)
+                continue;
+
+            if (c1 < c2)
+                return -1;
+
+            /* c1 > c2 */
+            return 1;
+        } else if (*s1 == 0) {
+            /* If we get here we know that *s2 == 0 too */
+            return 0;
+        }
+    }
+
+    return 0;
+}
+
+static int ia5casecmp(const char *s1, const char *s2)
+{
+    return ia5ncasecmp(s1, s2, SIZE_MAX);
+}
 
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
@@ -165,6 +206,22 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
     return 1;
 }
 
+#define NAME_CHECK_MAX (1 << 20)
+
+static int add_lengths(int *out, int a, int b)
+{
+    /* sk_FOO_num(NULL) returns -1 but is effectively 0 when iterating. */
+    if (a < 0)
+        a = 0;
+    if (b < 0)
+        b = 0;
+
+    if (a > INT_MAX - b)
+        return 0;
+    *out = a + b;
+    return 1;
+}
+
 /*-
  * Check a certificate conforms to a specified set of constraints.
  * Return values:
@@ -179,10 +236,22 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 
 int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 {
-    int r, i;
+    int r, i, name_count, constraint_count;
     X509_NAME *nm;
 
     nm = X509_get_subject_name(x);
+
+    /*
+     * Guard against certificates with an excessive number of names or
+     * constraints causing a computationally expensive name constraints check.
+     */
+    if (!add_lengths(&name_count, X509_NAME_entry_count(nm),
+                     sk_GENERAL_NAME_num(x->altname))
+        || !add_lengths(&constraint_count,
+                        sk_GENERAL_SUBTREE_num(nc->permittedSubtrees),
+                        sk_GENERAL_SUBTREE_num(nc->excludedSubtrees))
+        || (name_count > 0 && constraint_count > NAME_CHECK_MAX / name_count))
+        return X509_V_ERR_UNSPECIFIED;
 
     if (X509_NAME_entry_count(nm) > 0) {
         GENERAL_NAME gntmp;
@@ -388,7 +457,7 @@ static int nc_dns(ASN1_IA5STRING *dns, ASN1_IA5STRING *base)
             return X509_V_ERR_PERMITTED_VIOLATION;
     }
 
-    if (strcasecmp(baseptr, dnsptr))
+    if (ia5casecmp(baseptr, dnsptr))
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     return X509_V_OK;
@@ -408,7 +477,7 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
     if (!baseat && (*baseptr == '.')) {
         if (eml->length > base->length) {
             emlptr += eml->length - base->length;
-            if (strcasecmp(baseptr, emlptr) == 0)
+            if (ia5casecmp(baseptr, emlptr) == 0)
                 return X509_V_OK;
         }
         return X509_V_ERR_PERMITTED_VIOLATION;
@@ -429,7 +498,7 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
     }
     emlptr = emlat + 1;
     /* Just have hostname left to match: case insensitive */
-    if (strcasecmp(baseptr, emlptr))
+    if (ia5casecmp(baseptr, emlptr))
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     return X509_V_OK;
@@ -468,14 +537,14 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     if (*baseptr == '.') {
         if (hostlen > base->length) {
             p = hostptr + hostlen - base->length;
-            if (strncasecmp(p, baseptr, base->length) == 0)
+            if (ia5ncasecmp(p, baseptr, base->length) == 0)
                 return X509_V_OK;
         }
         return X509_V_ERR_PERMITTED_VIOLATION;
     }
 
     if ((base->length != (int)hostlen)
-        || strncasecmp(hostptr, baseptr, hostlen))
+        || ia5ncasecmp(hostptr, baseptr, hostlen))
         return X509_V_ERR_PERMITTED_VIOLATION;
 
     return X509_V_OK;

@@ -23,8 +23,8 @@ B<str> is an array of error string data:
 
  typedef struct ERR_string_data_st
  {
-        unsigned long error;
-        char *string;
+     unsigned long error;
+     char *string;
  } ERR_STRING_DATA;
 
 The error code is generated from the library number and a function and
@@ -36,7 +36,7 @@ The last entry in the array is {0,0}.
 ERR_get_next_error_library() can be used to assign library numbers
 to user libraries at runtime.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
 ERR_load_strings() returns no value. ERR_PACK() return the error code.
 ERR_get_next_error_library() returns zero on failure, otherwise a new
@@ -44,11 +44,11 @@ library number.
 
 =head1 SEE ALSO
 
-L<err(7)>, L<ERR_load_strings(3)>
+L<ERR_load_strings(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -25,7 +25,7 @@ SSL_write_ex(), or SSL_write().
 If necessary, a write function will negotiate a TLS/SSL session, if not already
 explicitly performed by L<SSL_connect(3)> or L<SSL_accept(3)>. If the peer
 requests a re-negotiation, it will be performed transparently during
-the write functio operation. The behaviour of the write functions depends on the
+the write function operation. The behaviour of the write functions depends on the
 underlying BIO.
 
 For the transparent negotiation to succeed, the B<ssl> must have been

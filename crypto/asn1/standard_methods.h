@@ -8,7 +8,7 @@
  */
 
 /*
- * This table MUST be kept in ascening order of the NID each method
+ * This table MUST be kept in ascending order of the NID each method
  * represents (corresponding to the pkey_id field) as OBJ_bsearch
  * is used to search it.
  */
@@ -42,12 +42,17 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #endif
 #ifndef OPENSSL_NO_EC
     &ecx25519_asn1_meth,
+    &ecx448_asn1_meth,
 #endif
 #ifndef OPENSSL_NO_POLY1305
     &poly1305_asn1_meth,
 #endif
 #ifndef OPENSSL_NO_SIPHASH
     &siphash_asn1_meth,
+#endif
+#ifndef OPENSSL_NO_EC
+    &ed25519_asn1_meth,
+    &ed448_asn1_meth,
 #endif
 };
 

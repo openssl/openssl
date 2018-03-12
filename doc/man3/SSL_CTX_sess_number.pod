@@ -32,7 +32,7 @@ client mode.
 SSL_CTX_sess_connect_good() returns the number of successfully established
 SSL/TLS sessions in client mode.
 
-SSL_CTX_sess_connect_renegotiate() returns the number of start renegotiations
+SSL_CTX_sess_connect_renegotiate() returns the number of started renegotiations
 in client mode.
 
 SSL_CTX_sess_accept() returns the number of started SSL/TLS handshakes in
@@ -41,7 +41,7 @@ server mode.
 SSL_CTX_sess_accept_good() returns the number of successfully established
 SSL/TLS sessions in server mode.
 
-SSL_CTX_sess_accept_renegotiate() returns the number of start renegotiations
+SSL_CTX_sess_accept_renegotiate() returns the number of started renegotiations
 in server mode.
 
 SSL_CTX_sess_hits() returns the number of successfully reused sessions.

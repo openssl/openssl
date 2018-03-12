@@ -136,35 +136,33 @@ named curve prime256v1 (aka P-256).
 First step: create an EC_KEY object (note: this part is B<not> ECDSA
 specific)
 
- int        ret;
+ int ret;
  ECDSA_SIG *sig;
- EC_KEY    *eckey;
+ EC_KEY *eckey;
+
  eckey = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
- if (eckey == NULL) {
-    /* error */
- }
- if (EC_KEY_generate_key(eckey) == 0) {
-    /* error */
- }
+ if (eckey == NULL)
+     /* error */
+ if (EC_KEY_generate_key(eckey) == 0)
+     /* error */
 
 Second step: compute the ECDSA signature of a SHA-256 hash value
 using ECDSA_do_sign():
 
  sig = ECDSA_do_sign(digest, 32, eckey);
- if (sig == NULL) {
-    /* error */
- }
+ if (sig == NULL)
+     /* error */
 
 or using ECDSA_sign():
 
  unsigned char *buffer, *pp;
- int            buf_len;
+ int buf_len;
+
  buf_len = ECDSA_size(eckey);
- buffer  = OPENSSL_malloc(buf_len);
+ buffer = OPENSSL_malloc(buf_len);
  pp = buffer;
- if (ECDSA_sign(0, dgst, dgstlen, pp, &buf_len, eckey) == 0) {
-    /* error */
- }
+ if (ECDSA_sign(0, dgst, dgstlen, pp, &buf_len, eckey) == 0)
+     /* error */
 
 Third step: verify the created ECDSA signature using ECDSA_do_verify():
 
@@ -176,13 +174,12 @@ or using ECDSA_verify():
 
 and finally evaluate the return value:
 
- if (ret == 1) {
-    /* signature ok */
- } else if (ret == 0) {
-    /* incorrect signature */
- } else {
-    /* error */
- }
+ if (ret == 1)
+     /* signature ok */
+ else if (ret == 0)
+     /* incorrect signature */
+ else
+     /* error */
 
 =head1 CONFORMING TO
 

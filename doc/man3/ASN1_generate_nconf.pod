@@ -30,7 +30,7 @@ The actual data encoded is determined by the string B<str> and
 the configuration information. The general format of the string
 is:
 
-=over 2
+=over 4
 
 =item B<[modifier,]type[:value]>
 
@@ -45,7 +45,7 @@ B<value> and B<modifier> are explained below.
 The supported types are listed below. Unless otherwise specified
 only the B<ASCII> format is permissible.
 
-=over 2
+=over 4
 
 =item B<BOOLEAN>, B<BOOL>
 
@@ -126,7 +126,7 @@ add EXPLICIT or IMPLICIT tagging, add wrappers or to change
 the string format of the final type and value. The supported
 formats are documented below.
 
-=over 2
+=over 4
 
 =item B<EXPLICIT>, B<EXP>
 

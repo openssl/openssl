@@ -5,8 +5,8 @@
 X509_digest, X509_CRL_digest,
 X509_pubkey_digest,
 X509_NAME_digest,
-X509_REQ_digest
-PKCS7_ISSUER_AND_SERIAL_digest,
+X509_REQ_digest,
+PKCS7_ISSUER_AND_SERIAL_digest
 - get digest of various objects
 
 =head1 SYNOPSIS
@@ -17,7 +17,7 @@ PKCS7_ISSUER_AND_SERIAL_digest,
                  unsigned int *len);
 
  int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type, unsigned char *md,
-                 unsigned int *len);
+                     unsigned int *len);
 
  int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
                         unsigned char *md, unsigned int *len);
@@ -51,7 +51,7 @@ All functions described here return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
-L<EVP_SHA1(3)>
+L<EVP_sha1(3)>
 
 =head1 COPYRIGHT
 

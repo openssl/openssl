@@ -9,11 +9,13 @@ SSL_CTX_set_tmp_dh_callback, SSL_CTX_set_tmp_dh, SSL_set_tmp_dh_callback, SSL_se
  #include <openssl/ssl.h>
 
  void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,
-            DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
+                                  DH *(*tmp_dh_callback)(SSL *ssl, int is_export,
+                                                         int keylength));
  long SSL_CTX_set_tmp_dh(SSL_CTX *ctx, DH *dh);
 
  void SSL_set_tmp_dh_callback(SSL *ctx,
-            DH *(*tmp_dh_callback)(SSL *ssl, int is_export, int keylength));
+                              DH *(*tmp_dh_callback)(SSL *ssl, int is_export,
+                                                     int keylength));
  long SSL_set_tmp_dh(SSL *ssl, DH *dh)
 
 =head1 DESCRIPTION
@@ -74,7 +76,7 @@ can supply the DH parameters via a callback function.
 
 Previous versions of the callback used B<is_export> and B<keylength>
 parameters to control parameter generation for export and non-export
-cipher suites. Modern servers that do not support export ciphersuites
+cipher suites. Modern servers that do not support export cipher suites
 are advised to either use SSL_CTX_set_tmp_dh() or alternatively, use
 the callback but ignore B<keylength> and B<is_export> and simply
 supply at least 2048-bit parameters in the callback.
@@ -84,31 +86,27 @@ supply at least 2048-bit parameters in the callback.
 Setup DH parameters with a key length of 2048 bits. (Error handling
 partly left out.)
 
- Command-line parameter generation:
+Command-line parameter generation:
+
  $ openssl dhparam -out dh_param_2048.pem 2048
 
- Code for setting up parameters during server initialization:
+Code for setting up parameters during server initialization:
 
- ...
  SSL_CTX ctx = SSL_CTX_new();
- ...
 
- /* Set up ephemeral DH parameters. */
  DH *dh_2048 = NULL;
- FILE *paramfile;
- paramfile = fopen("dh_param_2048.pem", "r");
+ FILE *paramfile = fopen("dh_param_2048.pem", "r");
+
  if (paramfile) {
-   dh_2048 = PEM_read_DHparams(paramfile, NULL, NULL, NULL);
-   fclose(paramfile);
+     dh_2048 = PEM_read_DHparams(paramfile, NULL, NULL, NULL);
+     fclose(paramfile);
  } else {
-   /* Error. */
+     /* Error. */
  }
- if (dh_2048 == NULL) {
-   /* Error. */
- }
- if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1) {
-   /* Error. */
- }
+ if (dh_2048 == NULL)
+     /* Error. */
+ if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1)
+     /* Error. */
  ...
 
 =head1 RETURN VALUES

@@ -8,6 +8,7 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <time.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/rsa.h>
@@ -17,13 +18,25 @@
 #include <openssl/err.h>
 #include "fuzzer.h"
 
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-extern int rand_predictable;
-#endif
-#define ENTROPY_NEEDED 32
+#include "rand.inc"
 
 /* unused, to avoid warning. */
 static int idx;
+
+#define FUZZTIME 1485898104
+
+#define TIME_IMPL(t) { if (t != NULL) *t = FUZZTIME; return FUZZTIME; }
+
+/*
+ * This might not work in all cases (and definitely not on Windows
+ * because of the way linkers are) and callees can still get the
+ * current time instead of the fixed time. This will just result
+ * in things not being fully reproducible and have a slightly
+ * different coverage.
+ */
+#if !defined(_WIN32)
+time_t time(time_t *t) TIME_IMPL(t)
+#endif
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
@@ -34,25 +47,10 @@ int FuzzerInitialize(int *argc, char ***argv)
     ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
     idx = SSL_get_ex_data_X509_STORE_CTX_idx();
-    RAND_add("", 1, ENTROPY_NEEDED);
-    RAND_status();
-    RSA_get_default_method();
-#ifndef OPENSSL_NO_DSA
-    DSA_get_default_method();
-#endif
-#ifndef OPENSSL_NO_EC
-    EC_KEY_get_default_method();
-#endif
-#ifndef OPENSSL_NO_DH
-    DH_get_default_method();
-#endif
+    FuzzerSetRand();
     comp_methods = SSL_COMP_get_compression_methods();
-    OPENSSL_sk_sort((OPENSSL_STACK *)comp_methods);
+    sk_SSL_COMP_sort(comp_methods);
 
-
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    rand_predictable = 1;
-#endif
 
     return 1;
 }

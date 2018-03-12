@@ -12,6 +12,7 @@ use warnings;
 
 use File::Spec::Functions qw/canonpath/;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_verify");
 
@@ -26,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 121;
+plan tests => 132;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -321,10 +322,46 @@ ok(!verify("badalt7-cert", "sslserver", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints CN BMPSTRING hostname not permitted");
 
 ok(!verify("badalt8-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
-   "Name constaints nested DNS name not permitted 1");
+   "Name constraints nested DNS name not permitted 1");
 
 ok(!verify("badalt9-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
-   "Name constaints nested DNS name not permitted 2");
+   "Name constraints nested DNS name not permitted 2");
 
 ok(!verify("badalt10-cert", "sslserver", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
-   "Name constaints nested DNS name excluded");
+   "Name constraints nested DNS name excluded");
+
+ok(verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
+    "Certificate PSS signature using SHA1");
+
+ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], ),
+    "CA with PSS signature using SHA256");
+
+ok(!verify("ee-pss-sha1-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
+    "Reject PSS signature using SHA1 and auth level 2");
+
+ok(verify("ee-pss-sha256-cert", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level", "2"),
+    "PSS signature using SHA256 and auth level 2");
+
+ok(!verify("many-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (1)");
+ok(!verify("many-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (2)");
+ok(!verify("many-names3", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Too many names and constraints to check (3)");
+
+ok(verify("some-names1", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (1)");
+ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (2)");
+ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"], ),
+    "Not too many names and constraints to check (3)");
+
+SKIP: {
+    skip "Ed25519 is not supported by this OpenSSL build", 1
+	      if disabled("ec");
+
+    # ED25519 certificate from draft-ietf-curdle-pkix-04
+    ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
+       "ED25519 signature");
+
+}

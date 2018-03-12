@@ -3,7 +3,6 @@
 =head1 NAME
 
 X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
-X509_VERIFY_PARAM_set_flags, X509_VERIFY_PARAM_clear_flags,
 X509_VERIFY_PARAM_get_flags, X509_VERIFY_PARAM_set_purpose,
 X509_VERIFY_PARAM_get_inh_flags, X509_VERIFY_PARAM_set_inh_flags,
 X509_VERIFY_PARAM_set_trust, X509_VERIFY_PARAM_set_depth,
@@ -38,15 +37,15 @@ X509_VERIFY_PARAM_set1_ip_asc
  time_t X509_VERIFY_PARAM_get_time(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
-                                        ASN1_OBJECT *policy);
+                                   ASN1_OBJECT *policy);
  int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
-                                        STACK_OF(ASN1_OBJECT) *policies);
+                                     STACK_OF(ASN1_OBJECT) *policies);
 
  void X509_VERIFY_PARAM_set_depth(X509_VERIFY_PARAM *param, int depth);
  int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
 
  void X509_VERIFY_PARAM_set_auth_level(X509_VERIFY_PARAM *param,
-                                        int auth_level);
+                                       int auth_level);
  int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param);
 
  int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
@@ -57,7 +56,7 @@ X509_VERIFY_PARAM_set1_ip_asc
                                       unsigned int flags);
  char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
-                                 const char *email, size_t emaillen);
+                                  const char *email, size_t emaillen);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
  int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
@@ -249,10 +248,14 @@ check the signature anyway. A side effect of not checking the root CA
 signature is that disabled or unsupported message digests on the root CA
 are not treated as fatal errors.
 
-If B<X509_V_FLAG_TRUSTED_FIRST> is set, when constructing the certificate chain,
-L<X509_verify_cert(3)> will search the trust store for issuer certificates before
-searching the provided untrusted certificates.
-As of OpenSSL 1.1.0 this option is on by default and cannot be disabled.
+When B<X509_V_FLAG_TRUSTED_FIRST> is set, construction of the certificate chain
+in L<X509_verify_cert(3)> will search the trust store for issuer certificates
+before searching the provided untrusted certificates.
+Local issuer certificates are often more likely to satisfy local security
+requirements and lead to a locally trusted root.
+This is especially important when some certificates in the trust store have
+explicit trust settings (see "TRUST SETTINGS" in L<x509(1)>).
+As of OpenSSL 1.1.0 this option is on by default.
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag suppresses checking for alternative
 chains.
@@ -264,13 +267,26 @@ found that is trusted.
 As of OpenSSL 1.1.0, with B<X509_V_FLAG_TRUSTED_FIRST> always set, this option
 has no effect.
 
+The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes intermediate certificates in the
+trust store to be treated as trust-anchors, in the same way as the self-signed
+root CA certificates.
+This makes it possible to trust certificates issued by an intermediate CA
+without having to trust its ancestor root CA.
+With OpenSSL 1.1.0 and later and <X509_V_FLAG_PARTIAL_CHAIN> set, chain
+construction stops as soon as the first certificate from the trust store is
+added to the chain, whether that certificate is a self-signed "root"
+certificate or a not self-signed intermediate certificate.
+Thus, when an intermediate certificate is found in the trust store, the
+verified chain passed to callbacks may be shorter than it otherwise would
+be without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
+
 The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
 of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
 is used to specify a verification time, the check is not suppressed.
 
 =head1 INHERITANCE FLAGS
 
-These flags spevify how parameters are "inherited" from one structure to
+These flags specify how parameters are "inherited" from one structure to
 another.
 
 If B<X509_VP_FLAG_ONCE> is set then the current setting is zeroed
@@ -293,8 +309,9 @@ of ORed.
 =head1 NOTES
 
 The above functions should be used to manipulate verification parameters
-instead of legacy functions which work in specific structures such as
-X509_STORE_CTX_set_flags().
+instead of functions which work in specific structures such as
+X509_STORE_CTX_set_flags() which are likely to be deprecated in a future
+release.
 
 =head1 BUGS
 
@@ -311,28 +328,30 @@ CRLs from the CRL distribution points extension.
 Enable CRL checking when performing certificate verification during SSL
 connections associated with an B<SSL_CTX> structure B<ctx>:
 
-  X509_VERIFY_PARAM *param;
-  param = X509_VERIFY_PARAM_new();
-  X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
-  SSL_CTX_set1_param(ctx, param);
-  X509_VERIFY_PARAM_free(param);
+ X509_VERIFY_PARAM *param;
+
+ param = X509_VERIFY_PARAM_new();
+ X509_VERIFY_PARAM_set_flags(param, X509_V_FLAG_CRL_CHECK);
+ SSL_CTX_set1_param(ctx, param);
+ X509_VERIFY_PARAM_free(param);
 
 =head1 SEE ALSO
 
 L<X509_verify_cert(3)>,
 L<X509_check_host(3)>,
 L<X509_check_email(3)>,
-L<X509_check_ip(3)>
+L<X509_check_ip(3)>,
+L<x509(1)>
 
 =head1 HISTORY
 
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag was added in OpenSSL 1.1.0
-The legacy B<X509_V_FLAG_CB_ISSUER_CHECK> flag is deprecated as of
+The flag B<X509_V_FLAG_CB_ISSUER_CHECK> was deprecated in
 OpenSSL 1.1.0, and has no effect.
 
 =head1 COPYRIGHT
 
-Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

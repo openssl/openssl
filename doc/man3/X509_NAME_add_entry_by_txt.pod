@@ -9,11 +9,14 @@ X509_NAME_add_entry, X509_NAME_delete_entry - X509_NAME modification functions
 
  #include <openssl/x509.h>
 
- int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type, const unsigned char *bytes, int len, int loc, int set);
+ int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type,
+                                const unsigned char *bytes, int len, int loc, int set);
 
- int X509_NAME_add_entry_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int type, const unsigned char *bytes, int len, int loc, int set);
+ int X509_NAME_add_entry_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int type,
+                                const unsigned char *bytes, int len, int loc, int set);
 
- int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type, const unsigned char *bytes, int len, int loc, int set);
+ int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type,
+                                const unsigned char *bytes, int len, int loc, int set);
 
  int X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne, int loc, int set);
 
@@ -78,18 +81,19 @@ Create an B<X509_NAME> structure:
 "C=UK, O=Disorganized Organization, CN=Joe Bloggs"
 
  X509_NAME *nm;
+
  nm = X509_NAME_new();
  if (nm == NULL)
-        /* Some error */
+     /* Some error */
  if (!X509_NAME_add_entry_by_txt(nm, "C", MBSTRING_ASC,
-                        "UK", -1, -1, 0))
-        /* Error */
+                                 "UK", -1, -1, 0))
+     /* Error */
  if (!X509_NAME_add_entry_by_txt(nm, "O", MBSTRING_ASC,
-                        "Disorganized Organization", -1, -1, 0))
-        /* Error */
+                                 "Disorganized Organization", -1, -1, 0))
+     /* Error */
  if (!X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
-                        "Joe Bloggs", -1, -1, 0))
-        /* Error */
+                                 "Joe Bloggs", -1, -1, 0))
+     /* Error */
 
 =head1 RETURN VALUES
 

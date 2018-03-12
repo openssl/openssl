@@ -65,8 +65,8 @@ data to standard output:
  bio = BIO_new_fp(stdin, BIO_NOCLOSE);
  bio_out = BIO_new_fp(stdout, BIO_NOCLOSE);
  BIO_push(b64, bio);
- while((inlen = BIO_read(b64, inbuf, 512)) > 0)
-        BIO_write(bio_out, inbuf, inlen);
+ while ((inlen = BIO_read(b64, inbuf, 512)) > 0)
+     BIO_write(bio_out, inbuf, inlen);
 
  BIO_flush(bio_out);
  BIO_free_all(b64);

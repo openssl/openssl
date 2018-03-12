@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include <openssl/crypto.h>
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
@@ -72,7 +72,7 @@ static int do_create(const char *value, const char *name)
         ostr = p + 1;
         if (!*ostr)
             return 0;
-        while (isspace((unsigned char)*ostr))
+        while (ossl_isspace(*ostr))
             ostr++;
     }
 
@@ -83,10 +83,10 @@ static int do_create(const char *value, const char *name)
 
     if (p) {
         ln = value;
-        while (isspace((unsigned char)*ln))
+        while (ossl_isspace(*ln))
             ln++;
         p--;
-        while (isspace((unsigned char)*p)) {
+        while (ossl_isspace(*p)) {
             if (p == ln)
                 return 0;
             p--;

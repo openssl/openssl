@@ -32,7 +32,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     int slen;
     EVP_PKEY *ret = NULL;
 
-    if (!PEM_bytes_read_bio(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp, cb, u))
+    if (!PEM_bytes_read_bio_secmem(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp,
+				   cb, u))
         return NULL;
     p = data;
 
@@ -66,6 +67,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
         }
         p8inf = PKCS8_decrypt(p8, psbuf, klen);
         X509_SIG_free(p8);
+        OPENSSL_cleanse(psbuf, klen);
         if (!p8inf)
             goto p8err;
         ret = EVP_PKCS82PKEY(p8inf);
@@ -85,9 +87,9 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if (ret == NULL)
         PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, ERR_R_ASN1_LIB);
  err:
-    OPENSSL_free(nm);
-    OPENSSL_clear_free(data, len);
-    return (ret);
+    OPENSSL_secure_free(nm);
+    OPENSSL_secure_clear_free(data, len);
+    return ret;
 }
 
 int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
@@ -146,7 +148,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
         PEMerr(PEM_F_PEM_READ_BIO_PARAMETERS, ERR_R_ASN1_LIB);
     OPENSSL_free(nm);
     OPENSSL_free(data);
-    return (ret);
+    return ret;
 }
 
 int PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x)
@@ -169,12 +171,12 @@ EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         PEMerr(PEM_F_PEM_READ_PRIVATEKEY, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = PEM_read_bio_PrivateKey(b, x, cb, u);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 
 int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
@@ -231,12 +233,12 @@ DH *PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u)
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
         PEMerr(PEM_F_PEM_READ_DHPARAMS, ERR_R_BUF_LIB);
-        return (0);
+        return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
     ret = PEM_read_bio_DHparams(b, x, cb, u);
     BIO_free(b);
-    return (ret);
+    return ret;
 }
 # endif
 

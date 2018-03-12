@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_SESSION_get0_id_context - get the SSL ID context associated with a session
+SSL_SESSION_get0_id_context,
+SSL_SESSION_set1_id_context
+- get and set the SSL ID context associated with a session
 
 =head1 SYNOPSIS
 
@@ -10,8 +12,13 @@ SSL_SESSION_get0_id_context - get the SSL ID context associated with a session
 
  const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
                                                   unsigned int *len)
+ int SSL_SESSION_set1_id_context(SSL_SESSION *s, const unsigned char *sid_ctx,
+                                unsigned int sid_ctx_len);
 
 =head1 DESCRIPTION
+
+See L<SSL_CTX_set_session_id_context(3)> for further details on session ID
+contexts.
 
 SSL_SESSION_get0_id_context() returns the ID context associated with
 the SSL/TLS session B<s>. The length of the ID context is written to
@@ -19,6 +26,14 @@ B<*len> if B<len> is not NULL.
 
 The value returned is a pointer to an object maintained within B<s> and
 should not be released.
+
+SSL_SESSION_set1_id_context() takes a copy of the provided ID context given in
+B<sid_ctx> and associates it with the session B<s>. The length of the ID context
+is given by B<sid_ctx_len> which must not exceed SSL_MAX_SID_CTX_LENGTH bytes.
+
+=head1 RETURN VALUES
+
+SSL_SESSION_set1_id_context() returns 1 on success or 0 on error.
 
 =head1 SEE ALSO
 

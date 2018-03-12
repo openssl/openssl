@@ -10,8 +10,8 @@ EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
 
  int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
  int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
-                        unsigned char *sig, size_t *siglen,
-                        const unsigned char *tbs, size_t tbslen);
+                   unsigned char *sig, size_t *siglen,
+                   const unsigned char *tbs, size_t tbslen);
 
 =head1 DESCRIPTION
 
@@ -66,25 +66,25 @@ Sign data using RSA with PKCS#1 padding and SHA256 digest:
   */
  ctx = EVP_PKEY_CTX_new(signing_key, NULL /* no engine */);
  if (!ctx)
-        /* Error occurred */
+     /* Error occurred */
  if (EVP_PKEY_sign_init(ctx) <= 0)
-        /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
-        /* Error */
+     /* Error */
  if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
-        /* Error */
+     /* Error */
 
  /* Determine buffer length */
  if (EVP_PKEY_sign(ctx, NULL, &siglen, md, mdlen) <= 0)
-        /* Error */
+     /* Error */
 
  sig = OPENSSL_malloc(siglen);
 
  if (!sig)
-        /* malloc failure */
+     /* malloc failure */
 
  if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0)
-        /* Error */
+     /* Error */
 
  /* Signature is siglen bytes written to buffer sig */
 

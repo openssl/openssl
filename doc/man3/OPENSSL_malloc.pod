@@ -14,8 +14,9 @@ OPENSSL_mem_debug_push, OPENSSL_mem_debug_pop,
 CRYPTO_mem_debug_push, CRYPTO_mem_debug_pop,
 CRYPTO_clear_realloc, CRYPTO_clear_free,
 CRYPTO_get_mem_functions, CRYPTO_set_mem_functions,
+CRYPTO_get_alloc_counts,
 CRYPTO_set_mem_debug, CRYPTO_mem_ctrl,
-CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp
+CRYPTO_mem_leaks, CRYPTO_mem_leaks_fp, CRYPTO_mem_leaks_cb,
 OPENSSL_MALLOC_FAILURES,
 OPENSSL_MALLOC_FD
 - Memory allocation functions
@@ -49,7 +50,8 @@ OPENSSL_MALLOC_FD
  void CRYPTO_free(void *str, const char *, int)
  char *CRYPTO_strdup(const char *p, const char *file, int line)
  char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line)
- void *CRYPTO_clear_realloc(void *p, size_t old_len, size_t num, const char *file, int line)
+ void *CRYPTO_clear_realloc(void *p, size_t old_len, size_t num,
+                            const char *file, int line)
  void CRYPTO_clear_free(void *str, size_t num, const char *, int)
 
  void CRYPTO_get_mem_functions(
@@ -60,6 +62,8 @@ OPENSSL_MALLOC_FD
          void *(*m)(size_t, const char *, int),
          void *(*r)(void *, size_t, const char *, int),
          void (*f)(void *, const char *, int))
+
+ void CRYPTO_get_alloc_counts(int *m, int *r, int *f)
 
  int CRYPTO_set_mem_debug(int onoff)
 
@@ -76,6 +80,8 @@ OPENSSL_MALLOC_FD
 
  void CRYPTO_mem_leaks(BIO *b);
  void CRYPTO_mem_leaks_fp(FILE *fp);
+ void CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
+                          void *u);
 
 =head1 DESCRIPTION
 
@@ -145,9 +151,42 @@ CRYPTO_set_mem_debug() turns this tracking on and off.  In order to have
 any effect, is must be called before any of the allocation functions
 (e.g., CRYPTO_malloc()) are called, and is therefore normally one of the
 first lines of main() in an application.
+CRYPTO_mem_ctrl() provides fine-grained control of memory leak tracking.
+To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
+the B<CRYPTO_MEM_CHECK_ON>.
+To disable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
+the B<CRYPTO_MEM_CHECK_OFF>.
 
-If the library is built with the C<crypto-mdebug> option, then two additional
-environment variables can be used for testing failure handling.  The variable
+While checking memory, it can be useful to store additional context
+about what is being done.
+For example, identifying the field names when parsing a complicated
+data structure.
+OPENSSL_mem_debug_push() (which calls CRYPTO_mem_debug_push())
+attachs an identifying string to the allocation stack.
+This must be a global or other static string; it is not copied.
+OPENSSL_mem_debug_pop() removes identifying state from the stack.
+
+At the end of the program, calling CRYPTO_mem_leaks() or
+CRYPTO_mem_leaks_fp() will report all "leaked" memory, writing it
+to the specified BIO B<b> or FILE B<fp>. These functions return 1 if
+there are no leaks, 0 if there are leaks and -1 if an error occurred.
+
+CRYPTO_mem_leaks_cb() does the same as CRYPTO_mem_leaks(), but instead
+of writing to a given BIO, the callback function is called for each
+output string with the string, length, and userdata B<u> as the callback
+parameters.
+
+If the library is built with the C<crypto-mdebug> option, then one
+function, CRYPTO_get_alloc_counts(), and two additional environment
+variables, B<OPENSSL_MALLOC_FAILURES> and B<OPENSSL_MALLOC_FD>,
+are available.
+
+The function CRYPTO_get_alloc_counts() fills in the number of times
+each of CRYPTO_malloc(), CRYPTO_realloc(), and CRYPTO_free() have been
+called, into the values pointed to by B<mcount>, B<rcount>, and B<fcount>,
+respectively.  If a pointer is NULL, then the corresponding count is not stored.
+
+The variable
 B<OPENSSL_MALLOC_FAILURES> controls how often allocations should fail.
 It is a set of fields separated by semicolons, which each field is a count
 (defaulting to zero) and an optional atsign and percentage (defaulting
@@ -170,25 +209,6 @@ to use this (will not work on all platforms):
   export OPENSSL_MALLOC_FD
   ...app invocation... 3>/tmp/log$$
 
-CRYPTO_mem_ctrl() provides fine-grained control of memory leak tracking.
-To enable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
-the B<CRYPTO_MEM_CHECK_ON>.
-To disable tracking call CRYPTO_mem_ctrl() with a B<mode> argument of
-the B<CRYPTO_MEM_CHECK_OFF>.
-
-While checking memory, it can be useful to store additional context
-about what is being done.
-For example, identifying the field names when parsing a complicated
-data structure.
-OPENSSL_mem_debug_push() (which calls CRYPTO_mem_debug_push())
-attachs an identifying string to the allocation stack.
-This must be a global or other static string; it is not copied.
-OPENSSL_mem_debug_pop() removes identifying state from the stack.
-
-At the end of the program, calling CRYPTO_mem_leaks() or
-CRYPTO_mem_leaks_fp() will report all "leaked" memory, writing it
-to the specified BIO B<b> or FILE B<fp>. These functions return 1 if
-there are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 =head1 RETURN VALUES
 

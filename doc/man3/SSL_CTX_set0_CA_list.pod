@@ -1,0 +1,92 @@
+=pod
+
+=head1 NAME
+
+SSL_set0_CA_list, SSL_CTX_set0_CA_list, SSL_get0_CA_list,
+SSL_CTX_get0_CA_list, SSL_add1_CA_list, SSL_CTX_add1_CA_list,
+SSL_get0_peer_CA_list - get or set CA list
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ void SSL_CTX_set0_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list);
+ void SSL_set0_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
+ const STACK_OF(X509_NAME) *SSL_CTX_get0_CA_list(const SSL_CTX *ctx);
+ const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s);
+ int SSL_CTX_add1_CA_list(SSL_CTX *ctx, const X509 *x);
+ int SSL_add1_CA_list(SSL *ssl, const X509 *x);
+
+ const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s);
+
+=head1 DESCRIPTION
+
+SSL_CTX_set0_CA_list() sets the list of CAs to be sent to the peer to
+B<name_list>. Ownership of B<name_list> is transferred to B<ctx> and
+it should not be freed by the caller.
+
+SSL_set0_CA_list() sets the list of CAs to be sent to the peer to B<name_list>
+overriding any list set in the parent B<SSL_CTX> of B<s>. Ownership of
+B<name_list> is transferred to B<s> and it should not be freed by the caller.
+
+SSL_CTX_get0_CA_list() retrieves any previously set list of CAs set for
+B<ctx>.
+
+SSL_CTX_get0_CA_list() retrieves any previously set list of CAs set for
+B<s> or if none are set the list from the parent B<SSL_CTX> is retrieved.
+
+SSL_CTX_add1_CA_list() appends the CA subject name extracted from B<x> to the
+list of CAs sent to peer for B<ctx>.
+
+SSL_add1_CA_list() appends the CA subject name extracted from B<x> to the
+list of CAs sent to the peer for B<s>, overriding the setting in the parent
+B<SSL_CTX>.
+
+SSL_get0_peer_CA_list() retrieves the list of CA names (if any) the peer
+has sent.
+
+=head1 NOTES
+
+These functions are generalised versions of the client authentication
+CA list functions such as L<SSL_CTX_set_client_CA_list(3)>.
+
+For TLS versions before 1.3 the list of CA names is only sent from the server
+to client when requesting a client certificate. So any list of CA names set
+is never sent from client to server and the list of CA names retrieved by
+SSL_get0_peer_CA_list() is always B<NULL>.
+
+For TLS 1.3 the list of CA names is sent using the B<certificate_authorities>
+extension and will be sent by a client (in the ClientHello message) or by
+a server (when requesting a certificate).
+
+=head1 RETURN VALUES
+
+SSL_CTX_set0_CA_list() and SSL_set0_CA_list() do not return a value.
+
+SSL_CTX_get0_CA_list() and SSL_get0_CA_list() return a stack of CA names
+or B<NULL> is no CA names are set.
+
+SSL_CTX_add1_CA_list() and SSL_add1_CA_list() return 1 for success and 0
+for failure.
+
+SSL_get0_peer_CA_list() returns a stack of CA names sent by the peer or
+B<NULL> or an empty stack if no list was sent.
+
+=head1 SEE ALSO
+
+L<ssl(7)>,
+L<SSL_CTX_set_client_CA_list(3)>,
+L<SSL_get_client_CA_list(3)>,
+L<SSL_load_client_CA_file(3)>,
+L<SSL_CTX_load_verify_locations(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

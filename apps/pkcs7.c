@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <string.h>
 #include <time.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -163,7 +164,7 @@ int pkcs7_main(int argc, char **argv)
             for (i = 0; i < sk_X509_CRL_num(crls); i++) {
                 crl = sk_X509_CRL_value(crls, i);
 
-                X509_CRL_print(out, crl);
+                X509_CRL_print_ex(out, crl, get_nameopt());
 
                 if (!noout)
                     PEM_write_bio_X509_CRL(out, crl);
@@ -193,5 +194,5 @@ int pkcs7_main(int argc, char **argv)
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
-    return (ret);
+    return ret;
 }

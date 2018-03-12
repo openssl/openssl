@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,9 +23,9 @@
 #include <openssl/evp.h>
 #include <openssl/modes.h>
 #include <openssl/aes.h>
+#include <openssl/rand.h>
 #include <openssl/crypto.h>
 
-#define OSSLTEST_LIB_NAME "OSSLTEST"
 #include "e_ossltest_err.c"
 
 /* Engine Id and Name */
@@ -43,6 +43,7 @@ void ENGINE_load_ossltest(void);
 /* Set up digests */
 static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
                           const int **nids, int nid);
+static const RAND_METHOD *ossltest_rand_method(void);
 
 /* MD5 */
 static int digest_md5_init(EVP_MD_CTX *ctx);
@@ -310,6 +311,7 @@ static int bind_ossltest(ENGINE *e)
         || !ENGINE_set_name(e, engine_ossltest_name)
         || !ENGINE_set_digests(e, ossltest_digests)
         || !ENGINE_set_ciphers(e, ossltest_ciphers)
+        || !ENGINE_set_RAND(e, ossltest_rand_method())
         || !ENGINE_set_destroy_function(e, ossltest_destroy)
         || !ENGINE_set_init_function(e, ossltest_init)
         || !ENGINE_set_finish_function(e, ossltest_finish)) {
@@ -591,17 +593,21 @@ int ossltest_aes128_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     int ret;
 
     tmpbuf = OPENSSL_malloc(inl);
-    if (tmpbuf == NULL)
+
+    /* OPENSSL_malloc will return NULL if inl == 0 */
+    if (tmpbuf == NULL && inl > 0)
         return -1;
 
     /* Remember what we were asked to encrypt */
-    memcpy(tmpbuf, in, inl);
+    if (tmpbuf != NULL)
+        memcpy(tmpbuf, in, inl);
 
     /* Go through the motions of encrypting it */
     ret = EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_cbc())(ctx, out, in, inl);
 
     /* Throw it all away and just use the plaintext as the output */
-    memcpy(out, tmpbuf, inl);
+    if (tmpbuf != NULL)
+        memcpy(out, tmpbuf, inl);
     OPENSSL_free(tmpbuf);
 
     return ret;
@@ -624,13 +630,15 @@ int ossltest_aes128_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         return -1;
 
     /* Remember what we were asked to encrypt */
-    memcpy(tmpbuf, in, inl);
+    if (tmpbuf != NULL)
+        memcpy(tmpbuf, in, inl);
 
     /* Go through the motions of encrypting it */
     EVP_CIPHER_meth_get_do_cipher(EVP_aes_128_gcm())(ctx, out, in, inl);
 
     /* Throw it all away and just use the plaintext as the output */
-    memcpy(out, tmpbuf, inl);
+    if (tmpbuf != NULL)
+        memcpy(out, tmpbuf, inl);
     OPENSSL_free(tmpbuf);
 
     return inl;
@@ -656,4 +664,33 @@ static int ossltest_aes128_gcm_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     }
 
     return 1;
+}
+
+static int ossltest_rand_bytes(unsigned char *buf, int num)
+{
+    unsigned char val = 1;
+
+    while (--num >= 0)
+        *buf++ = val++;
+    return 1;
+}
+
+static int ossltest_rand_status(void)
+{
+    return 1;
+}
+
+static const RAND_METHOD *ossltest_rand_method(void)
+{
+
+    static RAND_METHOD osslt_rand_meth = {
+        NULL,
+        ossltest_rand_bytes,
+        NULL,
+        NULL,
+        ossltest_rand_bytes,
+        ossltest_rand_status
+    };
+
+    return &osslt_rand_meth;
 }

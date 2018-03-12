@@ -11,13 +11,17 @@
 #include <openssl/x509.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include "fuzzer.h"
+
+#include "rand.inc"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_get_state();
     CRYPTO_free_ex_index(0, -1);
+    FuzzerSetRand();
     return 1;
 }
 

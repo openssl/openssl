@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,10 +13,9 @@
 #include <string.h>
 
 #include "testutil.h"
-#include "test_main_custom.h"
 #include "internal/poly1305.h"
 #include "../crypto/poly1305/poly1305_local.h"
-#include "e_os.h"
+#include "internal/nelem.h"
 
 typedef struct {
     size_t size;
@@ -34,55 +33,6 @@ typedef struct {
  * Test of poly1305 internal functions
  *
  ***/
-
-/* TODO : hex decoder / encoder should be implemented in testutil.c */
-static void hexdump(const unsigned char *a, size_t len)
-{
-    size_t i;
-
-    for (i = 0; i < len; i++)
-        fprintf(stderr, "%02x", a[i]);
-}
-
-static void benchmark_poly1305()
-{
-# ifdef OPENSSL_CPUID_OBJ
-    POLY1305 poly1305;
-    unsigned char key[32];
-    unsigned char buf[8192];
-    unsigned long long stopwatch;
-    unsigned long long OPENSSL_rdtsc();
-    unsigned int i;
-
-    memset (buf,0x55,sizeof(buf));
-    memset (key,0xAA,sizeof(key));
-
-    Poly1305_Init(&poly1305, key);
-
-    for (i=0;i<100000;i++)
-        Poly1305_Update(&poly1305,buf,sizeof(buf));
-
-    stopwatch = OPENSSL_rdtsc();
-    for (i=0;i<10000;i++)
-        Poly1305_Update(&poly1305,buf,sizeof(buf));
-    stopwatch = OPENSSL_rdtsc() - stopwatch;
-
-    printf("%g\n",stopwatch/(double)(i*sizeof(buf)));
-
-    stopwatch = OPENSSL_rdtsc();
-    for (i=0;i<10000;i++) {
-        Poly1305_Init(&poly1305, key);
-        Poly1305_Update(&poly1305,buf,16);
-        Poly1305_Final(&poly1305,buf);
-    }
-    stopwatch = OPENSSL_rdtsc() - stopwatch;
-
-    printf("%g\n",stopwatch/(double)(i));
-# else
-    fprintf(stderr,
-            "Benchmarking of poly1305 isn't available on this platform\n");
-# endif
-}
 
 static TESTDATA tests[] = {
     /*
@@ -1565,20 +1515,15 @@ static int test_poly1305(int idx)
     size_t expectedlen = test.expected.size;
     unsigned char out[16];
 
-    if (expectedlen != sizeof(out))
+    if (!TEST_size_t_eq(expectedlen, sizeof(out)))
         return 0;
 
     Poly1305_Init(&poly1305, key);
     Poly1305_Update(&poly1305, in, inlen);
     Poly1305_Final(&poly1305, out);
 
-    if (memcmp(out, expected, expectedlen) != 0) {
-        fprintf(stderr, "Poly1305 test #%d failed.\n", idx);
-        fprintf(stderr, "got:      ");
-        hexdump(out, sizeof(out));
-        fprintf(stderr, "\nexpected: ");
-        hexdump(expected, expectedlen);
-        fprintf(stderr, "\n");
+    if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+        TEST_info("Poly1305 test #%d failed.", idx);
         return 0;
     }
 
@@ -1588,13 +1533,8 @@ static int test_poly1305(int idx)
         Poly1305_Update(&poly1305, in+1, inlen-1);
         Poly1305_Final(&poly1305, out);
 
-        if (memcmp(out, expected, expectedlen) != 0) {
-            fprintf(stderr, "Poly1305 test #%d/1+(N-1) failed.\n", idx);
-            fprintf(stderr, "got:      ");
-            hexdump(out, sizeof(out));
-            fprintf(stderr, "\nexpected: ");
-            hexdump(expected, expectedlen);
-            fprintf(stderr, "\n");
+        if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+            TEST_info("Poly1305 test #%d/1+(N-1) failed.", idx);
             return 0;
         }
     }
@@ -1607,13 +1547,8 @@ static int test_poly1305(int idx)
         Poly1305_Update(&poly1305, in+half, inlen-half);
         Poly1305_Final(&poly1305, out);
 
-        if (memcmp(out, expected, expectedlen) != 0) {
-            fprintf(stderr, "Poly1305 test #%d/2 failed.\n", idx);
-            fprintf(stderr, "got:      ");
-            hexdump(out, sizeof(out));
-            fprintf(stderr, "\nexpected: ");
-            hexdump(expected, expectedlen);
-            fprintf(stderr, "\n");
+        if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+            TEST_info("Poly1305 test #%d/2 failed.", idx);
             return 0;
         }
 
@@ -1623,14 +1558,9 @@ static int test_poly1305(int idx)
             Poly1305_Update(&poly1305, in+half, inlen-half);
             Poly1305_Final(&poly1305, out);
 
-            if (memcmp(out, expected, expectedlen) != 0) {
-                fprintf(stderr, "Poly1305 test #%d/%" OSSLzu "+%" OSSLzu " failed.\n",
-                       idx, half, inlen-half);
-                fprintf(stderr, "got:      ");
-                hexdump(out, sizeof(out));
-                fprintf(stderr, "\nexpected: ");
-                hexdump(expected, expectedlen);
-                fprintf(stderr, "\n");
+            if (!TEST_mem_eq(out, expectedlen, expected, expectedlen)) {
+                TEST_info("Poly1305 test #%d/%zu+%zu failed.",
+                          idx, half, inlen-half);
                 return 0;
             }
         }
@@ -1639,31 +1569,8 @@ static int test_poly1305(int idx)
     return 1;
 }
 
-int test_main(int argc, char **argv)
+int setup_tests(void)
 {
-    int result = 0;
-    int iter_argv;
-    int benchmark = 0;
-
-    for (iter_argv = 1; iter_argv < argc; iter_argv++) {
-        if (strcmp(argv[iter_argv], "-b") == 0)
-            benchmark = 1;
-        else if (strcmp(argv[iter_argv], "-h") == 0)
-            goto help;
-    }
-
     ADD_ALL_TESTS(test_poly1305, OSSL_NELEM(tests));
-
-    result = run_tests(argv[0]);
-
-    if (benchmark)
-        benchmark_poly1305();
-
-    return result;
-
- help:
-    printf("-h\tThis help\n");
-    printf("-b\tBenchmark in addition to the tests\n");
-
-    return 0;
+    return 1;
 }

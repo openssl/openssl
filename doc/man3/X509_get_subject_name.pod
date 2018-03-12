@@ -37,7 +37,7 @@ X509_get_subject_name() and X509_set_subject_name() except the get and
 set the issuer name of B<x>.
 
 Similarly X509_REQ_get_subject_name(), X509_REQ_set_subject_name(),
- X509_CRL_get_issuer() and X509_CRL_set_issuer_name() get or set the subject
+X509_CRL_get_issuer() and X509_CRL_set_issuer_name() get or set the subject
 or issuer names of certificate requests of CRLs respectively.
 
 =head1 RETURN VALUES

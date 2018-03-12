@@ -17,7 +17,7 @@ use warnings;
 use List::Util qw/max min/;
 
 use OpenSSL::Test;
-use OpenSSL::Test::Utils qw/anydisabled alldisabled/;
+use OpenSSL::Test::Utils qw/anydisabled alldisabled disabled/;
 setup("no_test_here");
 
 my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
@@ -96,35 +96,70 @@ sub generate_version_tests {
 
     my @tests = ();
 
-    foreach my $c_min (0..$#min_protocols) {
-        my $c_max_min = $c_min == 0 ? 0 : $c_min - 1;
-        foreach my $c_max ($c_max_min..$#max_protocols) {
-            foreach my $s_min (0..$#min_protocols) {
-                my $s_max_min = $s_min == 0 ? 0 : $s_min - 1;
-                foreach my $s_max ($s_max_min..$#max_protocols) {
-                    my ($result, $protocol) =
-                        expected_result($c_min, $c_max, $s_min, $s_max,
-                                        $min_enabled, $max_enabled, \@protocols);
-                    push @tests, {
-                        "name" => "version-negotiation",
-                        "client" => {
-                            "MinProtocol" => $min_protocols[$c_min],
-                            "MaxProtocol" => $max_protocols[$c_max],
-                        },
-                        "server" => {
-                            "MinProtocol" => $min_protocols[$s_min],
-                            "MaxProtocol" => $max_protocols[$s_max],
-                        },
-                        "test" => {
-                            "ExpectedResult" => $result,
-                            "ExpectedProtocol" => $protocol,
-                            "Method" => $method,
-                        }
-                    };
+    for (my $sctp = 0; $sctp < ($dtls && !disabled("sctp") ? 2 : 1); $sctp++) {
+        foreach my $c_min (0..$#min_protocols) {
+            my $c_max_min = $c_min == 0 ? 0 : $c_min - 1;
+            foreach my $c_max ($c_max_min..$#max_protocols) {
+                foreach my $s_min (0..$#min_protocols) {
+                    my $s_max_min = $s_min == 0 ? 0 : $s_min - 1;
+                    foreach my $s_max ($s_max_min..$#max_protocols) {
+                        my ($result, $protocol) =
+                            expected_result($c_min, $c_max, $s_min, $s_max,
+                                            $min_enabled, $max_enabled,
+                                            \@protocols);
+                        push @tests, {
+                            "name" => "version-negotiation",
+                            "client" => {
+                                "MinProtocol" => $min_protocols[$c_min],
+                                "MaxProtocol" => $max_protocols[$c_max],
+                            },
+                            "server" => {
+                                "MinProtocol" => $min_protocols[$s_min],
+                                "MaxProtocol" => $max_protocols[$s_max],
+                            },
+                            "test" => {
+                                "ExpectedResult" => $result,
+                                "ExpectedProtocol" => $protocol,
+                                "Method" => $method,
+                            }
+                        };
+                        $tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    }
                 }
             }
         }
     }
+    return @tests if disabled("tls1_3") || disabled("tls1_2") || $dtls;
+
+    #Add some version/ciphersuite sanity check tests
+    push @tests, {
+        "name" => "ciphersuite-sanity-check-client",
+        "client" => {
+            #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+            "CipherString" => "AES128-SHA",
+        },
+        "server" => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        "test" => {
+            "ExpectedResult" => "ClientFail",
+        }
+    };
+    push @tests, {
+        "name" => "ciphersuite-sanity-check-server",
+        "client" => {
+            "CipherString" => "AES128-SHA",
+            "MaxProtocol" => "TLSv1.2"
+        },
+        "server" => {
+            #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+            "CipherString" => "AES128-SHA",
+        },
+        "test" => {
+            "ExpectedResult" => "ServerFail",
+        }
+    };
+
     return @tests;
 }
 
@@ -159,48 +194,72 @@ sub generate_resumption_tests {
                 $resumption_expected = "No";
             }
 
-            foreach my $ticket ("SessionTicket", "-SessionTicket") {
-                # Client is flexible, server upgrades/downgrades.
-                push @server_tests, {
-                    "name" => "resumption",
-                    "client" => { },
-                    "server" => {
-                        "MinProtocol" => $protocols[$original_protocol],
-                        "MaxProtocol" => $protocols[$original_protocol],
-                        "Options" => $ticket,
-                    },
-                    "resume_server" => {
-                        "MaxProtocol" => $protocols[$resume_protocol],
-                    },
-                    "test" => {
-                        "ExpectedProtocol" => $protocols[$resume_protocol],
-                        "Method" => $method,
-                        "HandshakeMode" => "Resume",
-                        "ResumptionExpected" => $resumption_expected,
-                    }
-                };
-                # Server is flexible, client upgrades/downgrades.
-                push @client_tests, {
-                    "name" => "resumption",
-                    "client" => {
-                        "MinProtocol" => $protocols[$original_protocol],
-                        "MaxProtocol" => $protocols[$original_protocol],
-                    },
-                    "server" => {
-                        "Options" => $ticket,
-                    },
-                    "resume_client" => {
-                        "MaxProtocol" => $protocols[$resume_protocol],
-                    },
-                    "test" => {
-                        "ExpectedProtocol" => $protocols[$resume_protocol],
-                        "Method" => $method,
-                        "HandshakeMode" => "Resume",
-                        "ResumptionExpected" => $resumption_expected,
-                    }
-                };
+            for (my $sctp = 0; $sctp < ($dtls && !disabled("sctp") ? 2 : 1);
+                 $sctp++) {
+                foreach my $ticket ("SessionTicket", "-SessionTicket") {
+                    # Client is flexible, server upgrades/downgrades.
+                    push @server_tests, {
+                        "name" => "resumption",
+                        "client" => { },
+                        "server" => {
+                            "MinProtocol" => $protocols[$original_protocol],
+                            "MaxProtocol" => $protocols[$original_protocol],
+                            "Options" => $ticket,
+                        },
+                        "resume_server" => {
+                            "MaxProtocol" => $protocols[$resume_protocol],
+                        },
+                        "test" => {
+                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "Method" => $method,
+                            "HandshakeMode" => "Resume",
+                            "ResumptionExpected" => $resumption_expected,
+                        }
+                    };
+                    $server_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    # Server is flexible, client upgrades/downgrades.
+                    push @client_tests, {
+                        "name" => "resumption",
+                        "client" => {
+                            "MinProtocol" => $protocols[$original_protocol],
+                            "MaxProtocol" => $protocols[$original_protocol],
+                        },
+                        "server" => {
+                            "Options" => $ticket,
+                        },
+                        "resume_client" => {
+                            "MaxProtocol" => $protocols[$resume_protocol],
+                        },
+                        "test" => {
+                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "Method" => $method,
+                            "HandshakeMode" => "Resume",
+                            "ResumptionExpected" => $resumption_expected,
+                        }
+                    };
+                    $client_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                }
             }
         }
+    }
+
+    if (!disabled("tls1_3") && !$dtls) {
+        push @client_tests, {
+            "name" => "resumption-with-hrr",
+            "client" => {
+            },
+            "server" => {
+                "Curves" => "P-256"
+            },
+            "resume_client" => {
+            },
+            "test" => {
+                "ExpectedProtocol" => "TLSv1.3",
+                "Method" => "TLS",
+                "HandshakeMode" => "Resume",
+                "ResumptionExpected" => "Yes",
+            }
+        };
     }
 
     return (@server_tests, @client_tests);
@@ -225,9 +284,7 @@ sub expected_result {
 
     if ($c_min > $c_max) {
         # Client should fail to even send a hello.
-        # This results in an internal error since the server will be
-        # waiting for input that never arrives.
-        return ("InternalError", undef);
+        return ("ClientFail", undef);
     } elsif ($s_min > $s_max) {
         # Server has no protocols, should always fail.
         return ("ServerFail", undef);

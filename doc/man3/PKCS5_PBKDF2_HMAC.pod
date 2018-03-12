@@ -13,9 +13,9 @@ PKCS5_PBKDF2_HMAC, PKCS5_PBKDF2_HMAC_SHA1 - password based derivation routines w
                        const EVP_MD *digest,
                        int keylen, unsigned char *out);
 
-int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
-                           const unsigned char *salt, int saltlen, int iter,
-                           int keylen, unsigned char *out);
+ int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
+                            const unsigned char *salt, int saltlen, int iter,
+                            int keylen, unsigned char *out);
 
 =head1 DESCRIPTION
 

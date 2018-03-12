@@ -1,16 +1,11 @@
 /*
  * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
- */
-
-/* ====================================================================
- * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
- * Portions of this software developed by SUN MICROSYSTEMS, INC.,
- * and contributed to the OpenSSL project.
  */
 
 #include <openssl/err.h>
@@ -130,7 +125,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
                       EC_R_INVALID_COMPRESSION_BIT);
             else
                 /*
-                 * BN_mod_sqrt() should have cought this error (not a square)
+                 * BN_mod_sqrt() should have caught this error (not a square)
                  */
                 ECerr(EC_F_EC_GFP_SIMPLE_SET_COMPRESSED_COORDINATES,
                       EC_R_INVALID_COMPRESSED_POINT);

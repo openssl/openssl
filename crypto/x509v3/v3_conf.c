@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,7 @@
 /* extension creation utilities */
 
 #include <stdio.h>
-#include <ctype.h>
+#include "internal/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -192,7 +192,7 @@ static int v3_check_critical(const char **value)
     if ((strlen(p) < 9) || strncmp(p, "critical,", 9))
         return 0;
     p += 9;
-    while (isspace((unsigned char)*p))
+    while (ossl_isspace(*p))
         p++;
     *value = p;
     return 1;
@@ -212,7 +212,7 @@ static int v3_check_generic(const char **value)
     } else
         return 0;
 
-    while (isspace((unsigned char)*p))
+    while (ossl_isspace(*p))
         p++;
     *value = p;
     return gen_type;
@@ -313,8 +313,12 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, const char *section,
             return 0;
         if (ctx->flags == X509V3_CTX_REPLACE)
             delete_ext(*sk, ext);
-        if (sk)
-            X509v3_add_ext(sk, ext, -1);
+        if (sk != NULL) {
+            if (X509v3_add_ext(sk, ext, -1) == NULL) {
+                X509_EXTENSION_free(ext);
+                return 0;
+            }
+        }
         X509_EXTENSION_free(ext);
     }
     return 1;

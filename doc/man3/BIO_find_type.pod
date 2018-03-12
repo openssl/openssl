@@ -45,15 +45,16 @@ BIO_method_type() returns the type of the BIO B<b>.
 Traverse a chain looking for digest BIOs:
 
  BIO *btmp;
+
  btmp = in_bio; /* in_bio is chain to search through */
-
  do {
-        btmp = BIO_find_type(btmp, BIO_TYPE_MD);
-        if (btmp == NULL) break; /* Not found */
-        /* btmp is a digest BIO, do something with it ...*/
-        ...
+     btmp = BIO_find_type(btmp, BIO_TYPE_MD);
+     if (btmp == NULL)
+         break; /* Not found */
+     /* btmp is a digest BIO, do something with it ...*/
+     ...
 
-        btmp = BIO_next(btmp);
+     btmp = BIO_next(btmp);
  } while (btmp);
 
 

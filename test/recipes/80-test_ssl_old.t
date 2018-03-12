@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -20,10 +20,10 @@ setup("test_ssl");
 
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 
-my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_srp, $no_psk,
+my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
-    anydisabled qw/rsa dsa dh ec srp psk
+    anydisabled qw/rsa dsa dh ec psk
                    ssl3 tls1 tls1_1 tls1_2 tls1_3
                    dtls dtls1 dtls1_2 ct/;
 my $no_anytls = alldisabled(available_protocols("tls"));
@@ -79,7 +79,7 @@ my $client_sess="client.ss";
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
     1				# For testss
-    +6  			# For the first testssl
+    +5  			# For the first testssl
     ;
 
 subtest 'test_ss' => sub {
@@ -101,7 +101,7 @@ testssl("keyU.ss", $Ucert, $CAcert);
 # subtest functions
 sub testss {
     open RND, ">>", ".rnd";
-    print RND "string to make the random number generator think it has entropy";
+    print RND "string to make the random number generator think it has randomness";
     close RND;
 
     my @req_dsa = ("-newkey",
@@ -331,7 +331,7 @@ sub testssl {
 
     subtest 'standard SSL tests' => sub {
 	######################################################################
-      plan tests => 21;
+      plan tests => 13;
 
       SKIP: {
 	  skip "SSLv3 is not supported by this OpenSSL build", 4
@@ -353,34 +353,6 @@ sub testssl {
 
 	  ok(run(test([@ssltest, "-bio_pair"])),
 	     'test sslv2/sslv3 via BIO pair');
-	}
-
-      SKIP: {
-	  skip "DTLSv1 is not supported by this OpenSSL build", 4
-	      if disabled("dtls1");
-
-	  ok(run(test([@ssltest, "-dtls1"])),
-	     'test dtlsv1');
-	  ok(run(test([@ssltest, "-dtls1", "-server_auth", @CA])),
-	   'test dtlsv1 with server authentication');
-	  ok(run(test([@ssltest, "-dtls1", "-client_auth", @CA])),
-	     'test dtlsv1 with client authentication');
-	  ok(run(test([@ssltest, "-dtls1", "-server_auth", "-client_auth", @CA])),
-	     'test dtlsv1 with both server and client authentication');
-	}
-
-      SKIP: {
-	  skip "DTLSv1.2 is not supported by this OpenSSL build", 4
-	      if disabled("dtls1_2");
-
-	  ok(run(test([@ssltest, "-dtls12"])),
-	     'test dtlsv1.2');
-	  ok(run(test([@ssltest, "-dtls12", "-server_auth", @CA])),
-	     'test dtlsv1.2 with server authentication');
-	  ok(run(test([@ssltest, "-dtls12", "-client_auth", @CA])),
-	     'test dtlsv1.2 with client authentication');
-	  ok(run(test([@ssltest, "-dtls12", "-server_auth", "-client_auth", @CA])),
-	     'test dtlsv1.2 with both server and client authentication');
 	}
 
       SKIP: {
@@ -424,62 +396,62 @@ sub testssl {
     subtest "Testing ciphersuites" => sub {
 
         my @exkeys = ();
-        my $ciphers = "-EXP:-PSK:-SRP:-kDH:-kECDHe";
+        my $ciphers = "-PSK:-SRP";
 
-        if ($no_dh) {
-            note "skipping DHE tests\n";
-            $ciphers .= ":-kDHE";
-        }
-        if ($no_dsa) {
-            note "skipping DSA tests\n";
-            $ciphers .= ":-aDSA";
-        } else {
+        if (!$no_dsa) {
             push @exkeys, "-s_cert", "certD.ss", "-s_key", "keyD.ss";
         }
 
-        if ($no_ec) {
-            note "skipping EC tests\n";
-            $ciphers .= ":!aECDSA:!kECDH";
-        } else {
+        if (!$no_ec) {
             push @exkeys, "-s_cert", "certE.ss", "-s_key", "keyE.ss";
         }
 
 	my @protocols = ();
-	# FIXME: I feel unsure about the following line, is that really just TLSv1.2, or is it all of the SSLv3/TLS protocols?
-        push(@protocols, "TLSv1.3") unless $no_tls1_3;
-        push(@protocols, "TLSv1.2") unless $no_tls1_2;
-        push(@protocols, "SSLv3") unless $no_ssl3;
-	my $protocolciphersuitcount = 0;
-	my %ciphersuites =
-	    map { my @c =
-		      map { split(/:/, $_) }
-		      run(app(["openssl", "ciphers", "${_}:$ciphers"]),
-                          capture => 1);
-		  map { s/\R//; } @c;  # chomp @c;
-		  $protocolciphersuitcount += scalar @c;
-		  $_ => [ @c ] } @protocols;
+	# We only use the flags that ssltest_old understands
+	push @protocols, "-tls1_3" unless $no_tls1_3;
+	push @protocols, "-tls1_2" unless $no_tls1_2;
+	push @protocols, "-tls1" unless $no_tls1;
+	push @protocols, "-ssl3" unless $no_ssl3;
+	my $protocolciphersuitecount = 0;
+	my %ciphersuites = ();
+	my %ciphersstatus = ();
+	foreach my $protocol (@protocols) {
+	    my $ciphersstatus = undef;
+	    my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
+				   "ALL:$ciphers"]),
+			      capture => 1, statusvar => \$ciphersstatus);
+	    $ciphersstatus{$protocol} = $ciphersstatus;
+	    if ($ciphersstatus) {
+		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
+					     @ciphers ];
+		$protocolciphersuitecount += scalar @{$ciphersuites{$protocol}};
+	    }
+	}
 
         plan skip_all => "None of the ciphersuites to test are available in this OpenSSL build"
-            if $protocolciphersuitcount + scalar(@protocols) == 0;
+            if $protocolciphersuitecount + scalar(keys %ciphersuites) == 0;
 
-        # The count of protocols is because in addition to the ciphersuits
+        # The count of protocols is because in addition to the ciphersuites
         # we got above, we're running a weak DH test for each protocol
-        plan tests => $protocolciphersuitcount + scalar(@protocols);
+        plan tests => scalar(@protocols) + $protocolciphersuitecount
+            + scalar(keys %ciphersuites);
 
         foreach my $protocol (@protocols) {
+            ok($ciphersstatus{$protocol}, "Getting ciphers for $protocol");
+        }
+
+        foreach my $protocol (sort keys %ciphersuites) {
             note "Testing ciphersuites for $protocol";
-            my $flag = "";
-            if ($protocol eq "SSLv3") {
-                $flag = "-ssl3";
-            } elsif ($protocol eq "TLSv1.2") {
-                $flag = "-tls1_2";
-            }
+            # ssltest_old doesn't know -tls1_3, but that's fine, since that's
+            # the default choice if TLSv1.3 enabled
+            my $flag = $protocol eq "-tls1_3" ? "" : $protocol;
             foreach my $cipher (@{$ciphersuites{$protocol}}) {
-                if ($protocol eq "SSLv3" && $cipher =~ /ECDH/ ) {
+                if ($protocol eq "-ssl3" && $cipher =~ /ECDH/ ) {
                     note "*****SKIPPING $protocol $cipher";
                     ok(1);
                 } else {
-                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher, $flag])),
+                    ok(run(test([@ssltest, @exkeys, "-cipher", $cipher,
+                                 $flag || ()])),
                     "Testing $cipher");
                 }
             }
@@ -566,28 +538,6 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext", "-serverinfo_file", $serverinfo, "-serverinfo_sct", "-serverinfo_tack"])));
-	}
-    };
-
-    subtest 'SRP tests' => sub {
-
-	plan tests => 4;
-
-      SKIP: {
-	  skip "skipping SRP tests", 4
-	      if $no_srp || alldisabled(grep !/^ssl3/, available_protocols("tls"));
-
-	  ok(run(test([@ssltest, "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP');
-
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "SRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP via BIO pair');
-
-	  ok(run(test([@ssltest, "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP auth');
-
-	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-cipher", "aSRP", "-srpuser", "test", "-srppass", "abc123"])),
-	     'test tls1 with SRP auth via BIO pair');
 	}
     };
 }

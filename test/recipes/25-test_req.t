@@ -20,7 +20,7 @@ plan tests => 4;
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 open RND, ">>", ".rnd";
-print RND "string to make the random number generator think it has entropy";
+print RND "string to make the random number generator think it has randomness";
 close RND;
 subtest "generating certificate requests" => sub {
     my @req_new;

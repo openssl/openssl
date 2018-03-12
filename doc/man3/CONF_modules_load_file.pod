@@ -9,9 +9,9 @@ CONF_modules_load_file, CONF_modules_load - OpenSSL configuration functions
  #include <openssl/conf.h>
 
  int CONF_modules_load_file(const char *filename, const char *appname,
-                                        unsigned long flags);
+                            unsigned long flags);
  int CONF_modules_load(const CONF *cnf, const char *appname,
-                               unsigned long flags);
+                       unsigned long flags);
 
 =head1 DESCRIPTION
 
@@ -65,9 +65,9 @@ Load a configuration file and print out any errors and exit (missing file
 considered fatal):
 
  if (CONF_modules_load_file(NULL, NULL, 0) <= 0) {
-    fprintf(stderr, "FATAL: error loading configuration file\n");
-    ERR_print_errors_fp(stderr);
-    exit(1);
+     fprintf(stderr, "FATAL: error loading configuration file\n");
+     ERR_print_errors_fp(stderr);
+     exit(1);
  }
 
 Load default configuration file using the section indicated by "myapp",
@@ -75,9 +75,9 @@ tolerate missing files, but exit on other errors:
 
  if (CONF_modules_load_file(NULL, "myapp",
                             CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-    fprintf(stderr, "FATAL: error loading configuration file\n");
-    ERR_print_errors_fp(stderr);
-    exit(1);
+     fprintf(stderr, "FATAL: error loading configuration file\n");
+     ERR_print_errors_fp(stderr);
+     exit(1);
  }
 
 Load custom configuration file and section, only print warnings on error,
@@ -85,8 +85,8 @@ missing configuration file ignored:
 
  if (CONF_modules_load_file("/something/app.cnf", "myapp",
                             CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0) {
-    fprintf(stderr, "WARNING: error loading configuration file\n");
-    ERR_print_errors_fp(stderr);
+     fprintf(stderr, "WARNING: error loading configuration file\n");
+     ERR_print_errors_fp(stderr);
  }
 
 Load and parse configuration file manually, custom error handling:
@@ -94,24 +94,25 @@ Load and parse configuration file manually, custom error handling:
  FILE *fp;
  CONF *cnf = NULL;
  long eline;
+
  fp = fopen("/somepath/app.cnf", "r");
  if (fp == NULL) {
-    fprintf(stderr, "Error opening configuration file\n");
-    /* Other missing configuration file behaviour */
+     fprintf(stderr, "Error opening configuration file\n");
+     /* Other missing configuration file behaviour */
  } else {
-    cnf = NCONF_new(NULL);
-    if (NCONF_load_fp(cnf, fp, &eline) == 0) {
-        fprintf(stderr, "Error on line %ld of configuration file\n", eline);
-        ERR_print_errors_fp(stderr);
-        /* Other malformed configuration file behaviour */
-    } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
-      fprintf(stderr, "Error configuring application\n");
-      ERR_print_errors_fp(stderr);
-      /* Other configuration error behaviour */
-    }
-    fclose(fp);
-    NCONF_free(cnf);
-  }
+     cnf = NCONF_new(NULL);
+     if (NCONF_load_fp(cnf, fp, &eline) == 0) {
+         fprintf(stderr, "Error on line %ld of configuration file\n", eline);
+         ERR_print_errors_fp(stderr);
+         /* Other malformed configuration file behaviour */
+     } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
+         fprintf(stderr, "Error configuring application\n");
+         ERR_print_errors_fp(stderr);
+         /* Other configuration error behaviour */
+     }
+     fclose(fp);
+     NCONF_free(cnf);
+ }
 
 =head1 RETURN VALUES
 
@@ -121,12 +122,11 @@ return value of the failing module (this will always be zero or negative).
 
 =head1 SEE ALSO
 
-L<config(5)>, L<OPENSSL_config(3)>,
-L<NCONF_free(3)>, L<err(7)>
+L<config(5)>, L<OPENSSL_config(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

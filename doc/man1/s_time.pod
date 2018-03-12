@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+openssl-s_time,
 s_time - SSL/TLS performance timing program
 
 =head1 SYNOPSIS
@@ -13,13 +14,13 @@ B<openssl> B<s_time>
 [B<-cert filename>]
 [B<-key filename>]
 [B<-CApath directory>]
-[B<-CAfile filename>]
+[B<-cafile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-reuse>]
 [B<-new>]
 [B<-verify depth>]
-[B<-nbio>]
+[B<-nameopt option>]
 [B<-time seconds>]
 [B<-ssl3>]
 [B<-bugs>]
@@ -70,6 +71,13 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
+=item B<-nameopt option>
+
+Option which determines how the subject or issuer names are displayed. The
+B<option> argument can be a single option or multiple options separated by
+commas.  Alternatively the B<-nameopt> switch may be used more than once to
+set multiple options. See the L<x509(1)> manual page for details.
+
 =item B<-CApath directory>
 
 The directory to use for server certificate verification. This directory
@@ -91,23 +99,19 @@ Do not load the trusted CA certificates from the default directory location
 
 =item B<-new>
 
-performs the timing test using a new session ID for each connection.
+Performs the timing test using a new session ID for each connection.
 If neither B<-new> nor B<-reuse> are specified, they are both on by default
 and executed in sequence.
 
 =item B<-reuse>
 
-performs the timing test using the same session ID; this can be used as a test
+Performs the timing test using the same session ID; this can be used as a test
 that session caching is working. If neither B<-new> nor B<-reuse> are
 specified, they are both on by default and executed in sequence.
 
-=item B<-nbio>
-
-turns on non-blocking I/O.
-
 =item B<-ssl3>
 
-these options disable the use of certain SSL or TLS protocols. By default
+These options disable the use of certain SSL or TLS protocols. By default
 the initial handshake uses a method which should be compatible with all
 servers and permit them to use SSL v3 or TLS as appropriate.
 The timing program is not as rich in options to turn protocols on and off as
@@ -119,19 +123,19 @@ work if TLS is turned off with the B<-ssl3> option.
 
 =item B<-bugs>
 
-there are several known bug in SSL and TLS implementations. Adding this
+There are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
 =item B<-cipher cipherlist>
 
-this allows the cipher list sent by the client to be modified. Although
+This allows the cipher list sent by the client to be modified. Although
 the server determines which cipher suite is used it should take the first
 supported cipher in the list sent by the client.
 See the L<ciphers(1)> command for more information.
 
 =item B<-time length>
 
-specifies how long (in seconds) B<s_time> should establish connections and
+Specifies how long (in seconds) B<s_time> should establish connections and
 optionally transfer payload data from a server. Server and client performance
 and the link speed determine how many connections B<s_time> can establish.
 
@@ -184,7 +188,7 @@ L<s_client(1)>, L<s_server(1)>, L<ciphers(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2017 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

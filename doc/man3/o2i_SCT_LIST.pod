@@ -9,7 +9,8 @@ decode and encode Signed Certificate Timestamp lists in TLS wire format
 
  #include <openssl/ct.h>
 
- STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, size_t len);
+ STACK_OF(SCT) *o2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp,
+                             size_t len);
  int i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp);
  SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
  int i2o_SCT(const SCT *sct, unsigned char **out);

@@ -50,7 +50,7 @@ require "x86asm.pl";
 $output=pop;
 open STDOUT,">$output";
 
-&asm_init($ARGV[0],"poly1305-x86.pl",$ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
 $sse2=$avx=0;
 for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
@@ -730,7 +730,7 @@ my $extra = shift;
 
 	&movdqa		($T0,$T1);			# -> base 2^26 ...
 	&pand		($T1,$MASK);
-	&paddd		($D0,$T1);			# ... and accumuate
+	&paddd		($D0,$T1);			# ... and accumulate
 
 	&movdqa		($T1,$T0);
 	&psrlq		($T0,26);

@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * The new form of this macro (check if the a*b == 0) was suggested by Colin
- * Plumb <colin@nyx10.cs.du.edu>
- */
-/* Removal of the inner if from from Wei Dai 24/4/96 */
 #define idea_mul(r,a,b,ul) \
 ul=(unsigned long)a*b; \
 if (ul != 0) \
@@ -22,28 +17,25 @@ if (ul != 0) \
 else \
         r=(-(int)a-b+1);        /* assuming a or b is 0 and in range */
 
-/*
- * 7/12/95 - Many thanks to Rhys Weatherley <rweather@us.oracle.com> for
- * pointing out that I was assuming little endian byte order for all
- * quantities what idea actually used bigendian.  No where in the spec does
- * it mention this, it is all in terms of 16 bit numbers and even the example
- * does not use byte streams for the input example :-(. If you byte swap each
- * pair of input, keys and iv, the functions would produce the output as the
- * old version :-(.
- */
-
 /* NOTE - c is not incremented as per n2l */
 #define n2ln(c,l1,l2,n) { \
                         c+=n; \
                         l1=l2=0; \
                         switch (n) { \
                         case 8: l2 =((unsigned long)(*(--(c))))    ; \
+                        /* fall thru */                              \
                         case 7: l2|=((unsigned long)(*(--(c))))<< 8; \
+                        /* fall thru */                              \
                         case 6: l2|=((unsigned long)(*(--(c))))<<16; \
+                        /* fall thru */                              \
                         case 5: l2|=((unsigned long)(*(--(c))))<<24; \
+                        /* fall thru */                              \
                         case 4: l1 =((unsigned long)(*(--(c))))    ; \
+                        /* fall thru */                              \
                         case 3: l1|=((unsigned long)(*(--(c))))<< 8; \
+                        /* fall thru */                              \
                         case 2: l1|=((unsigned long)(*(--(c))))<<16; \
+                        /* fall thru */                              \
                         case 1: l1|=((unsigned long)(*(--(c))))<<24; \
                                 } \
                         }
@@ -53,12 +45,19 @@ else \
                         c+=n; \
                         switch (n) { \
                         case 8: *(--(c))=(unsigned char)(((l2)    )&0xff); \
+                        /* fall thru */                                    \
                         case 7: *(--(c))=(unsigned char)(((l2)>> 8)&0xff); \
+                        /* fall thru */                                    \
                         case 6: *(--(c))=(unsigned char)(((l2)>>16)&0xff); \
+                        /* fall thru */                                    \
                         case 5: *(--(c))=(unsigned char)(((l2)>>24)&0xff); \
+                        /* fall thru */                                    \
                         case 4: *(--(c))=(unsigned char)(((l1)    )&0xff); \
+                        /* fall thru */                                    \
                         case 3: *(--(c))=(unsigned char)(((l1)>> 8)&0xff); \
+                        /* fall thru */                                    \
                         case 2: *(--(c))=(unsigned char)(((l1)>>16)&0xff); \
+                        /* fall thru */                                    \
                         case 1: *(--(c))=(unsigned char)(((l1)>>24)&0xff); \
                                 } \
                         }
