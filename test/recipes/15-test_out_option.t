@@ -19,7 +19,7 @@ setup("test_out_option");
 plan skip_all => "'-out' option tests are not available on Windows"
     if $^O eq 'MSWin32';
 
-plan tests => 11;
+plan tests => 12;
 
 # The following patterns should be tested:
 #
