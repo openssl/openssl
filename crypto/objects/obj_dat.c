@@ -213,7 +213,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
  err:
     for (i = ADDED_DATA; i <= ADDED_NID; i++)
         OPENSSL_free(ao[i]);
-    OPENSSL_free(o);
+    ASN1_OBJECT_free(o);
     return NID_undef;
 }
 
