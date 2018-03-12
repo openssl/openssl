@@ -895,7 +895,7 @@ $obj.OBJ : $deps
         - PURGE $obj.OBJ
 EOF
       . ($disabled{makedepend} ? "" : <<"EOF"
-        - \$(PERL) $postprocess_makedepend "VMS C" $objdir < $obj.tmp-D > $obj.d
+        \$(PERL) $postprocess_makedepend "VMS C" $objdir < $obj.tmp-D > $obj.d
         - DELETE $obj.tmp-D;*
 EOF
         );

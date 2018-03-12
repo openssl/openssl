@@ -1032,9 +1032,9 @@ $obj$objext: $deps
 EOF
           if (defined $makedepprog  && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
-	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cmdflags -- $srcs 2>/dev/null \\
-	     | \$(PERL) \$(SRCDIR)/util/postprocess-makedepend.pl \\
-	                'makedepend' > $obj$depext.tmp
+	\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cmdflags -- $srcs 2>/dev/null \\
+	    | \$(PERL) \$(SRCDIR)/util/postprocess-makedepend.pl \\
+	               'makedepend' > $obj$depext.tmp
 	if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
 		rm -f $obj$depext.tmp; \\
 	else \\
