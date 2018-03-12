@@ -2192,7 +2192,8 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
      * Check curve is named curve type and one of our preferences, if not
      * server has sent an invalid curve.
      */
-    if (curve_type != NAMED_CURVE_TYPE || !tls1_check_group_id(s, curve_id)) {
+    if (curve_type != NAMED_CURVE_TYPE
+            || !tls1_check_group_id(s, curve_id, 1)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SKE_ECDHE,
                  SSL_R_WRONG_CURVE);
         return 0;

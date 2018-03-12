@@ -467,7 +467,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 }
 
 /* Check a group id matches preferences */
-int tls1_check_group_id(SSL *s, uint16_t group_id)
+int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
     {
     const uint16_t *groups;
     size_t groups_len;
@@ -491,10 +491,12 @@ int tls1_check_group_id(SSL *s, uint16_t group_id)
         }
     }
 
-    /* Check group is one of our preferences */
-    tls1_get_supported_groups(s, &groups, &groups_len);
-    if (!tls1_in_list(group_id, groups, groups_len))
-        return 0;
+    if (check_own_groups) {
+        /* Check group is one of our preferences */
+        tls1_get_supported_groups(s, &groups, &groups_len);
+        if (!tls1_in_list(group_id, groups, groups_len))
+            return 0;
+    }
 
     if (!tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
         return 0;
@@ -554,7 +556,11 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
     if (!tls1_check_pkey_comp(s, pkey))
         return 0;
     group_id = tls1_get_group_id(pkey);
-    if (!tls1_check_group_id(s, group_id))
+    /*
+     * For a server we allow the certificate to not be in our list of supported
+     * groups.
+     */
+    if (!tls1_check_group_id(s, group_id, !s->server))
         return 0;
     /*
      * Special case for suite B. We *MUST* sign using SHA256+P-256 or
@@ -601,9 +607,9 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
      * curves permitted.
      */
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-        return tls1_check_group_id(s, TLSEXT_curve_P_256);
+        return tls1_check_group_id(s, TLSEXT_curve_P_256, 1);
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-        return tls1_check_group_id(s, TLSEXT_curve_P_384);
+        return tls1_check_group_id(s, TLSEXT_curve_P_384, 1);
 
     return 0;
 }
@@ -979,7 +985,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         }
         if (!SSL_IS_TLS13(s)) {
             /* Check curve matches extensions */
-            if (!tls1_check_group_id(s, tls1_get_group_id(pkey))) {
+            if (!tls1_check_group_id(s, tls1_get_group_id(pkey), 1)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                          SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
