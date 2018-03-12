@@ -1,0 +1,31 @@
+if(M4RI_FOUND AND OPENSSL_FOUND)
+  foreach(target IN ITEMS mpc lowmc mzd)
+    add_executable("${target}_test" "${target}_test.c")
+    target_link_libraries("${target}_test" picnic_static ${M4RI_LIBRARY} OpenSSL::Crypto)
+    target_compile_definitions("${target}_test" PRIVATE HAVE_CONFIG_H PICNIC_STATIC)
+    if(WITH_MUL_M4RI)
+      target_compile_definitions("${target}_test" PRIVATE MUL_M4RI)
+    endif()
+
+    add_test(NAME ${target} COMMAND "${target}_test")
+  endforeach(target)
+endif()
+
+foreach(target IN ITEMS bitstream kdf_shake256 picnic extended_picnic)
+  add_executable("${target}_test" "${target}_test.c")
+  target_link_libraries("${target}_test" picnic_static)
+  target_compile_definitions("${target}_test" PRIVATE HAVE_CONFIG_H PICNIC_STATIC)
+  if(WITH_MUL_M4RI)
+    target_compile_definitions("${target}_test" PRIVATE MUL_M4RI)
+  endif()
+
+  add_test(NAME ${target} COMMAND "${target}_test")
+endforeach(target)
+
+foreach(target IN ITEMS L1_FS L1_UR L3_FS L3_UR L5_FS L5_UR)
+  add_executable("api_${target}_test" "api_test.c")
+  target_link_libraries("api_${target}_test" "picnic_${target}")
+  target_include_directories("api_${target}_test" PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/../${target}")
+  add_test(NAME "api_${target}" COMMAND "api_${target}_test")
+endforeach(target)

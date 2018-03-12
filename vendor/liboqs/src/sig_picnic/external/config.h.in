@@ -1,0 +1,17 @@
+#ifndef PICNIC_CONFIG_H
+#define PICNIC_CONFIG_H
+
+/* from cmake checks */
+
+#cmakedefine HAVE_SYS_AUXV_H
+#cmakedefine HAVE_ASM_HWCAP_H
+#cmakedefine HAVE_SYS_RANDOM_H
+
+#cmakedefine HAVE_ALIGNED_ALLOC
+#cmakedefine HAVE_POSIX_MEMALIGN
+#cmakedefine HAVE_MEMALIGN
+#cmakedefine HAVE_GETRANDOM
+
+#cmakedefine HAVE_SECURITY_FRAMEWORK
+
+#endif

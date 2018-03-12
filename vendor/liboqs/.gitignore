@@ -1,0 +1,106 @@
+*.swp
+
+# Linked headers
+include
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+/test_kex
+/test_sig
+/test_rand
+/test_aes
+/minimal_kex_oqs
+/minimal_sig_oqs
+
+# Debug files
+*.dSYM/
+*.su
+
+# Generated documentation
+docs/doxygen
+
+# Backup files
+*~
+
+# Visual Studio files
+VisualStudio/*.db
+VisualStudio/*.opendb
+VisualStudio/.vs/
+VisualStudio/**/Win32/
+VisualStudio/**/x64/
+VisualStudio/include/
+VisualStudio/**/*.user
+
+# External sources
+external
+!src/sig_picnic/external
+src/sig_picnic/external/build/**
+src/sig_picnic/external/msbuild/**
+/temp/
+
+# Travis files
+cmake-3.8.0.tar.gz
+cmake-3.8.0/**
+
+#Autotools
+autom4te.cache
+.deps
+Makefile.in
+Makefile
+aclocal.m4
+compile
+config.guess
+config.h
+config.h.in
+config.log
+config.status
+config.sub
+config/libtool.m4
+config/ltoptions.m4
+config/ltsugar.m4
+config/ltversion.m4
+config/lt~obsolete.m4
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+stamp-h1
+.libs
+.dirstamp
+
+#params
+sample_params
+data/
+
+# Exceptions
+!/src/kex_sidh_msr/config.h
+!src/sig_picnic/external/config.h.in

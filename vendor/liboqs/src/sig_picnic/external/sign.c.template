@@ -1,0 +1,66 @@
+/*
+ *  This file is part of the optimized implementation of the Picnic signature scheme.
+ *  See the accompanying documentation for complete details.
+ *
+ *  The code is provided under the MIT license, see LICENSE for
+ *  more details.
+ *  SPDX-License-Identifier: MIT
+ */
+
+#ifdef PICNIC_INSTANCE
+
+#include "endian_compat.h"
+#include "picnic.h"
+
+#include <string.h>
+
+int crypto_sign_keypair(unsigned char* pk, unsigned char* sk) {
+  return picnic_keygen(PICNIC_INSTANCE, (picnic_publickey_t*)pk, (picnic_privatekey_t*)sk);
+}
+
+int crypto_sign(unsigned char* sm, unsigned long long* smlen, const unsigned char* m,
+                unsigned long long mlen, const unsigned char* sk) {
+
+  size_t signature_len = PICNIC_SIGNATURE_SIZE(PICNIC_INSTANCE);
+  uint32_t len         = 0;
+
+  const int ret = picnic_sign((const picnic_privatekey_t*)sk, m, mlen, sm + sizeof(len) + mlen, &signature_len);
+  if (ret) {
+    return ret;
+  }
+
+  len    = htole32(signature_len);
+  *smlen = sizeof(len) + mlen + signature_len;
+  memmove(sm + sizeof(len), m, mlen);
+  memcpy(sm, &len, sizeof(len));
+
+  return 0;
+}
+
+int crypto_sign_open(unsigned char* m, unsigned long long* mlen, const unsigned char* sm,
+                     unsigned long long smlen, const unsigned char* pk) {
+  uint32_t signature_len;
+  memcpy(&signature_len, sm, sizeof(signature_len));
+  signature_len = le32toh(signature_len);
+
+  if (signature_len + sizeof(signature_len) > smlen) {
+    return -2;
+  }
+
+  const size_t message_len = smlen - signature_len - sizeof(signature_len);
+  const uint8_t* message   = sm + sizeof(signature_len);
+  const uint8_t* sig       = sm + sizeof(signature_len) + message_len;
+
+  const int ret =
+      picnic_verify((const picnic_publickey_t*)pk, message, message_len, sig, signature_len);
+  if (ret) {
+    return ret;
+  }
+
+  memmove(m, message, message_len);
+  *mlen = message_len;
+
+  return 0;
+}
+
+#endif

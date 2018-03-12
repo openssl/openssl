@@ -1,0 +1,15 @@
+/*
+ * undefines SIDH symbols included in both P503 and P751
+ * to avoid Visual Studio errors
+ */
+
+#if defined(_WIN32)
+#undef OQS_SIDH_MSR_CRYPTO_SECRETKEYBYTES
+#undef OQS_SIDH_MSR_CRYPTO_PUBLICKEYBYTES
+#undef OQS_SIDH_MSR_CRYPTO_BYTES
+#undef OQS_SIDH_MSR_CRYPTO_CIPHERTEXTBYTES
+#undef OQS_SIDH_MSR_CRYPTO_ALGNAME
+#undef SIDH_SECRETKEYBYTES
+#undef SIDH_PUBLICKEYBYTES
+#undef SIDH_BYTES
+#endif

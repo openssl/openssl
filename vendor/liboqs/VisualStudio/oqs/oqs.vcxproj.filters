@@ -1,0 +1,355 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\fft.c">
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_lwe_frodo\kex_lwe_frodo.c">
+      <Filter>KEX_Frodo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.c">
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.c">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.c">
+      <Filter>KEX_NewHope</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto_kex.c">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_lwe_frodo\lwe.c">
+      <Filter>KEX_Frodo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_lwe_frodo\lwe_noise.c">
+      <Filter>KEX_Frodo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_msrln16\ntt_constants.c">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe.c">
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_rlwe_bcns15\rlwe_kex.c">
+      <Filter>KEX_BCNS15</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\common\common.c">
+      <Filter>Common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\aes\aes.c">
+      <Filter>Crypto\AES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\aes\aes_c.c">
+      <Filter>Crypto\AES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\aes\aes_ni.c">
+      <Filter>Crypto\AES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\sha3\sha3.c">
+      <Filter>Crypto\SHA3</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\rand\rand.c">
+      <Filter>Crypto\Rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.c">
+      <Filter>Crypto\Rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.c">
+      <Filter>Crypto\Rand</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex\kex.c">
+      <Filter>KEX</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_code_mcbits\kex_code_mcbits.c">
+      <Filter>KEX_McBits</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_code_mcbits\external\operations.c">
+      <Filter>KEX_McBits</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_ntru\kex_ntru.c">
+      <Filter>KEX_NTRU</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig\sig.c">
+      <Filter>Sig</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\sig_picnic.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_msr\kex_sidh_msr.c">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_msr\P503\P503.c">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_msr\P751\P751.c">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\kex_sidh_msr\sha3\fips202.c">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\aligned_alloc.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\bitstream.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\cpu.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\io.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\kdf_shake.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\lowmc.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\lowmc_128_128_20.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\lowmc_192_192_30.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\lowmc_256_256_38.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\lowmc_pars.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\mpc.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\mpc_lowmc.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\mzd_additional.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\picnic.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\picnic_impl.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\sha3\KeccakHash.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\sha3\KeccakSponge.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\sig_picnic\external\sha3\opt64\KeccakP-1600-opt64.c">
+      <Filter>Sig_Picnic</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\kex_lwe_frodo\kex_lwe_frodo.h">
+      <Filter>KEX_Frodo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\kex_rlwe_bcns15.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\kex_rlwe_msrln16.h">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\kex_rlwe_newhope.h">
+      <Filter>KEX_NewHope</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto.h">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_msrln16\LatticeCrypto_priv.h">
+      <Filter>KEX_MSR_LN16</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\local.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_lwe_frodo\local.h">
+      <Filter>KEX_Frodo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_newhope\params.h">
+      <Filter>KEX_NewHope</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_table.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_rlwe_bcns15\rlwe_a.h">
+      <Filter>KEX_BCNS15</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\common.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\aes\aes.h">
+      <Filter>Crypto\AES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\aes\aes_local.h">
+      <Filter>Crypto\AES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\sha3\sha3.h">
+      <Filter>Crypto\SHA3</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\rand\rand.h">
+      <Filter>Crypto\Rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\rand_urandom_aesctr\rand_urandom_aesctr.h">
+      <Filter>Crypto\Rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\crypto\rand_urandom_chacha20\rand_urandom_chacha20.h">
+      <Filter>Crypto\Rand</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex\kex.h">
+      <Filter>KEX</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_code_mcbits\kex_code_mcbits.h">
+      <Filter>KEX_McBits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_code_mcbits\mcbits.h">
+      <Filter>KEX_McBits</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_ntru\kex_ntru.h">
+      <Filter>KEX_NTRU</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig\sig.h">
+      <Filter>Sig</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\sig_picnic.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\kex_sidh_msr.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\sha3\fips202.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\P503\P503_api.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\P503\P503_internal.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\windows_undef.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\P751\P751_api.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kex_sidh_msr\P751\P751_internal.h">
+      <Filter>KEX_SIDH_MSR</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\picnic.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\common\oqs.h">
+      <Filter>Common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\winconfig.h" />
+    <ClInclude Include="..\..\src\sig_picnic\external\bitstream.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\compat.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\cpu.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\crypto_sign.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\endian_compat.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\io.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\kdf_shake.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\lowmc.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\lowmc_128_128_20.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\lowmc_192_192_30.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\lowmc_256_256_38.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\lowmc_pars.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\macros.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\mpc.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\mpc_lowmc.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\mzd_additional.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\picnic_impl.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\sha3\KeccakHash.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\sig_picnic\external\sha3\KeccakSponge.h">
+      <Filter>Sig_Picnic</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Common">
+      <UniqueIdentifier>{2b7cf696-2f08-4ea3-80c5-0d16a8c70cfa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto">
+      <UniqueIdentifier>{4a3e4a60-250c-46a9-8c6c-c8aecadee154}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto\AES">
+      <UniqueIdentifier>{71c917ec-9181-4b88-bdfc-9611ee1abe9a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto\Rand">
+      <UniqueIdentifier>{fd44eb34-2f81-411e-a55f-f279c4b101de}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX">
+      <UniqueIdentifier>{3bb6aa76-f294-47a9-bf22-76245c9cb1d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_BCNS15">
+      <UniqueIdentifier>{ab581356-2a96-4211-99e3-f5cecd92eda3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_Frodo">
+      <UniqueIdentifier>{6bfff158-3e78-402f-ba16-e8d315089de8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_MSR_LN16">
+      <UniqueIdentifier>{9f5ed87f-ed1e-47b4-b7e7-1d6648cb88fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_NewHope">
+      <UniqueIdentifier>{d0291785-4232-4264-b1bd-08b7e3f8df5e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Crypto\SHA3">
+      <UniqueIdentifier>{a9a0db92-1388-4ea2-b0d5-d61a51581993}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_McBits">
+      <UniqueIdentifier>{9c91a128-d5a0-4eec-998e-a7bc85b3691e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_NTRU">
+      <UniqueIdentifier>{f2432c4a-5195-4990-af30-65a61bf36897}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sig">
+      <UniqueIdentifier>{d8958465-5fd0-4d0f-8acf-f20d79c4a490}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sig_Picnic">
+      <UniqueIdentifier>{18dd9adb-41b8-4058-a714-0a0d49db26ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="KEX_SIDH_MSR">
+      <UniqueIdentifier>{e8cfee66-d051-4f66-af66-1478288097fb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="dll.def" />
+  </ItemGroup>
+</Project>

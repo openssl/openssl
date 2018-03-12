@@ -1,0 +1,21 @@
+version: 1.0.{build}
+
+image: Visual Studio 2017
+
+build:
+  verbosity: minimal
+
+configuration:
+  - Release
+
+test_script:
+- cmd: >-
+    %APPVEYOR_BUILD_FOLDER%\VisualStudio\x64\%CONFIGURATION%\test_rand.exe
+
+    %APPVEYOR_BUILD_FOLDER%\VisualStudio\x64\%CONFIGURATION%\test_kex.exe
+
+    %APPVEYOR_BUILD_FOLDER%\VisualStudio\x64\%CONFIGURATION%\test_sig.exe
+
+    %APPVEYOR_BUILD_FOLDER%\VisualStudio\x64\%CONFIGURATION%\minimal_kex_oqs.exe
+
+    %APPVEYOR_BUILD_FOLDER%\VisualStudio\x64\%CONFIGURATION%\minimal_sig_oqs.exe
