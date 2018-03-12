@@ -480,12 +480,12 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_cookie, "cookie_ext"},
     {TLSEXT_TYPE_psk_kex_modes, "psk_key_exchange_modes"},
     {TLSEXT_TYPE_certificate_authorities, "certificate_authorities"},
-    {TLSEXT_TYPE_post_handshake_auth, "post_handshake_auth"}
-    {TLSEXT_TYPE_signature_algorithms_cert, "signature_algorithms_cert"}
+    {TLSEXT_TYPE_post_handshake_auth, "post_handshake_auth"},
+    {TLSEXT_TYPE_signature_algorithms_cert, "signature_algorithms_cert"},
     {TLSEXT_TYPE_key_share, "key_share"},
-    {TLSEXT_TYPE_renegotiate, "renegotiate"}
+    {TLSEXT_TYPE_renegotiate, "renegotiate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
-    , {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"}
+    {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
 # endif
 };
 
