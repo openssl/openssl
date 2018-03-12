@@ -30,7 +30,7 @@ while (<STDIN>) {
         # Also, remove any dependency that starts with a /, because those are
         # typically system headers
         s/ \/(\\.|[^ ])*//;
-        # Finally, remove all empty lines or comment lines
+        # Finally, discard all empty lines or comment lines
         $_ = undef if (/: *$/ || /^(#.*| *)$/);
         $_.="\n" unless !defined($_) or /\R$/g;
 
@@ -50,9 +50,16 @@ while (<STDIN>) {
         # This is so a volume delimiter (a : without any spaces around it)
         # won't get mixed up with the target / deps delimiter.  We use this
         # fact in the regexp below to make sure we do look at the target.
-        s/^/$directory/ unless /^\S+[:<\]]\S+\s+:/;
+        s/^/$directory/ unless /^\S+[:>\]]\S+\s+:/;
 
-    } elsif ($producer eq 'Windows C') {
+        # We know that VMS has system header files in text libraries,
+        # extension .TLB.  We also know that our header files aren't stored
+        # in text libraries.  Finally, we know that VMS C produces exactly
+        # one dependency per line, so we simply discard any line ending with
+        # .TLB.
+        $_ = undef if /\.TLB\s*$/;
+
+    } elsif ($producer eq 'VC') {
 
         # For the moment, we only know of one native Windows C compiler, and
         # that's Visual C.  With that compiler, the flags /Zs /showIncludes
@@ -65,9 +72,16 @@ while (<STDIN>) {
         #
         # So all we really have to do is to is to replace the start of the line
         # with an object file specification, given to us as $ARGV[1].
+        #
+        # There are also other lines mixed in, for example compiler warnings,
+        # so we simply discard anything that doesn't start with the Note:
 
         my $object = $ARGV[1];
-        s/^Note: including file: */${object}: /;
+        if (/^Note: including file: */) {
+            $_ = "${object}: ".$';
+        } else {
+            $_ = undef;
+        }
 
     } else {
         if ($producer) {

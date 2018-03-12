@@ -601,7 +601,7 @@ EOF
 $obj$depext: $deps
 	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 \\
 	    | "\$(PERL)" "\$(SRCDIR)\\util\\postprocess-makedepend.pl" \\
-	                 "Windows C" "$obj$objext" > $obj$depext
+	                 "VC" "$obj$objext" > $obj$depext
 $obj$objext: $obj$depext
 	\$(CC) $cflags -c \$(COUTFLAG)\$\@ @<<
 $srcs
