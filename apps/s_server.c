@@ -2038,6 +2038,10 @@ int s_server_main(int argc, char *argv[])
     SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie_callback);
     SSL_CTX_set_cookie_verify_cb(ctx, verify_cookie_callback);
 
+    /* Set TLS1.3 cookie generation and verification callbacks */
+    SSL_CTX_set_stateless_cookie_generate_cb(ctx, generate_stateless_cookie_callback);
+    SSL_CTX_set_stateless_cookie_verify_cb(ctx, verify_stateless_cookie_callback);
+
     if (ctx2 != NULL) {
         SSL_CTX_set_verify(ctx2, s_server_verify, verify_callback);
         if (!SSL_CTX_set_session_id_context(ctx2,
