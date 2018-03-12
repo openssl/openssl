@@ -694,32 +694,49 @@ int opt_next(void)
             return -1;
         case '>':
             /* Output file. */
-#if !defined(_WIN32)
-            c = OPENSSL_strdup(arg);
-            if (c == NULL) {
-                BIO_printf(bio_err,
-                           "%s: Memory allocation failure\n", prog);
-                return -1;
-            }
-            oerrno = errno;
-            errno = 0;
-            if (strcmp(arg, "-") == 0
-                || (app_access(app_dirname(c), W_OK) == 0
-                    && app_isdir(arg) <= 0
-                    && (app_access(arg, W_OK) == 0 || errno == ENOENT))) {
-                OPENSSL_free(c);
+
+            /*
+             * "-" indicates we output to stdout, nothing more needs to be done
+             */
+            if (strcmp(arg, "-") == 0)
                 break;
-            }
-            OPENSSL_free(c);
-            if (errno == 0)
-                /* only possible if 'arg' is a directory */
+#if !defined(_WIN32)
+            /*
+             * If the intended output file exists, we start with checking if it
+             * exists.
+             */
+            if (app_access(arg, F_OK) == 0) {
+                /*
+                 * If it exists, we need to make sure it isn't a directory and
+                 * that it's writable.
+                 */
+                if (app_isdir(arg) <= 0)
+                    break;
                 estr = "is a directory";
-            else
+                if (app_access(arg, W_OK) == 0)
+                    break;
                 estr = strerror(errno);
-            errno = oerrno;
+            } else {
+                /*
+                 * If the intended output file doesn't exist, we check if the
+                 * directory it's going to be written in is writable (which
+                 * implies it exists).
+                 */
+                c = OPENSSL_strdup(arg);
+                if (c == NULL) {
+                    BIO_printf(bio_err,
+                               "%s: Memory allocation failure\n", prog);
+                    return -1;
+                }
+                if (app_access(app_dirname(c), W_OK) == 0) {
+                    OPENSSL_free(c);
+                    break;
+                }
+                estr = strerror(errno);
+                OPENSSL_free(c);
+            }
 #else
-            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) == 0
-                || errno == ENOENT)
+            if (app_access(arg, W_OK) == 0 || errno == ENOENT)
                 break;
             estr = strerror(errno);
 #endif

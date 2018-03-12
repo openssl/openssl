@@ -42,6 +42,7 @@ $rand_path .= "/test.pem";
 
 test_illegal_path($rand_path);
 test_legal_path('test.pem');
+test_legal_path(File::Spec->devnull());
 unlink 'test.pem';
 
 sub test_illegal_path {
