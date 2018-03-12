@@ -3,6 +3,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+  use File::Basename;
 
   # Our prefix, claimed when speaking with the VSI folks Tuesday
   # January 26th 2016
@@ -878,6 +879,9 @@ EOF
       my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
       my $depbuild = $disabled{makedepend} ? ""
           : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
+      my $postprocess_makedepend =
+          sourcefile("util", "postprocess-makedepend.pl");
+      my $objdir = dirname($obj);
 
       return <<"EOF"
 $obj.OBJ : $deps
@@ -891,9 +895,8 @@ $obj.OBJ : $deps
         - PURGE $obj.OBJ
 EOF
       . ($disabled{makedepend} ? "" : <<"EOF"
-        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.D"",""$obj.tmp-D""); exit(0x10000000 + (\$x == 0));" || -
-                 RENAME $obj.tmp-D $obj.d )
-        \@ IF F\$SEARCH("$obj.tmp-D") .NES. "" THEN DELETE $obj.tmp-D;*
+        \$(PERL) $postprocess_makedepend "VMS C" $objdir < $obj.tmp-D > $obj.d
+        - DELETE $obj.tmp-D;*
 EOF
         );
   }
