@@ -42,7 +42,11 @@ $rand_path .= "/test.pem";
 
 test_illegal_path($rand_path);
 test_legal_path('test.pem');
-test_legal_path(File::Spec->devnull());
+SKIP: {
+    skip "'".File::Spec->devnull()."' may not be a workable null device for this cross compiled build", 1
+        unless (config('CROSS_COMPILE') // '') eq '';
+    test_legal_path(File::Spec->devnull());
+}
 unlink 'test.pem';
 
 sub test_illegal_path {
