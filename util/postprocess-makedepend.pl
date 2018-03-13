@@ -96,7 +96,8 @@ my $procedure = {
             # the Note:
 
             if (/^Note: including file: */) {
-                $line = "${object}: ".$';
+                (my $tail = $') =~ s/\s*\R$//;
+                $line = "${object}: \"$tail\"\n";
             } else {
                 $line = undef;
             }
