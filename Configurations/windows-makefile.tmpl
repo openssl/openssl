@@ -382,7 +382,7 @@ distclean: clean
 
 depend:
 	@ rem {- output_off() if $disabled{makedepend}; "" -}
-	@ $(PERL) $(SRCDIR)\util\add-depends.pl
+	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl"
 	@ rem {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
