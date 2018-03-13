@@ -8,7 +8,6 @@ pipeline {
             retry(count: 8) {
               sh 'echo 789'
             }
-            
           }
         }
         stage('dzcxzxc') {
