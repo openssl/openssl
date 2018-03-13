@@ -41,6 +41,7 @@
 # include <sys/param.h>
 # include <sys/stat.h>
 # include <fcntl.h>
+# include <limits.h>
 #endif
 
 #define CLEAR(p, s) OPENSSL_cleanse(p, s)
@@ -402,6 +403,8 @@ static int sh_init(size_t size, int minsize)
     sh.minsize = minsize;
     sh.bittable_size = (sh.arena_size / sh.minsize) * 2;
 
+    if (sh.bittable_size > INT_MAX)
+        goto err;
     /* Prevent allocations of size 0 later on */
     if (sh.bittable_size >> 3 == 0)
         goto err;
@@ -539,8 +542,11 @@ static void *sh_malloc(size_t size)
         return NULL;
 
     list = sh.freelist_size - 1;
-    for (i = sh.minsize; i < size; i <<= 1)
+    for (i = sh.minsize; i > 0 && i < size; i <<= 1)
         list--;
+    /* Detect left-shift overflow */
+    if (i == 0)
+        return NULL;
     if (list < 0)
         return NULL;
 
