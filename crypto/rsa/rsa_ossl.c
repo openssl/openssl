@@ -34,7 +34,7 @@ static RSA_METHOD rsa_pkcs1_ossl_meth = {
                                  * if e == 3 */
     rsa_ossl_init,
     rsa_ossl_finish,
-    RSA_FLAG_FIPS_METHOD,       /* flags */
+    0,                          /* flags */
     NULL,
     0,                          /* rsa_sign */
     0,                          /* rsa_verify */

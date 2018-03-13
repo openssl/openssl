@@ -32,7 +32,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_C, OPT_R, OPT_OUT, OPT_SIGN, OPT_PASSIN, OPT_VERIFY,
     OPT_PRVERIFY, OPT_SIGNATURE, OPT_KEYFORM, OPT_ENGINE, OPT_ENGINE_IMPL,
-    OPT_HEX, OPT_BINARY, OPT_DEBUG, OPT_FIPS_FINGERPRINT,
+    OPT_HEX, OPT_BINARY, OPT_DEBUG,
     OPT_HMAC, OPT_MAC, OPT_SIGOPT, OPT_MACOPT,
     OPT_DIGEST,
     OPT_R_ENUM
@@ -58,8 +58,6 @@ const OPTIONS dgst_options[] = {
     {"binary", OPT_BINARY, '-', "Print in binary form"},
     {"d", OPT_DEBUG, '-', "Print debug info"},
     {"debug", OPT_DEBUG, '-', "Print debug info"},
-    {"fips-fingerprint", OPT_FIPS_FINGERPRINT, '-',
-     "Compute HMAC with the key used in OpenSSL-FIPS fingerprint"},
     {"hmac", OPT_HMAC, 's', "Create hashed MAC with key"},
     {"mac", OPT_MAC, 's', "Create MAC (not necessarily HMAC)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -156,9 +154,6 @@ int dgst_main(int argc, char **argv)
             break;
         case OPT_DEBUG:
             debug = 1;
-            break;
-        case OPT_FIPS_FINGERPRINT:
-            hmac_key = "etaonrishdlcupfm";
             break;
         case OPT_HMAC:
             hmac_key = opt_arg();

@@ -33,7 +33,7 @@ static DSA_METHOD openssl_dsa_meth = {
     NULL,                       /* dsa_bn_mod_exp, */
     dsa_init,
     dsa_finish,
-    DSA_FLAG_FIPS_METHOD,
+    0,
     NULL,
     NULL,
     NULL

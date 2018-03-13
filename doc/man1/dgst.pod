@@ -23,7 +23,6 @@ B<openssl dgst>
 [B<-prverify filename>]
 [B<-signature filename>]
 [B<-hmac key>]
-[B<-fips-fingerprint>]
 [B<-rand file...>]
 [B<-engine id>]
 [B<-engine_impl>]
@@ -161,10 +160,6 @@ all others.
 
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
-
-=item B<-fips-fingerprint>
-
-Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 
 =item B<-engine id>
 

@@ -131,7 +131,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 #  define EVP_MD_FLAG_DIGALGID_CUSTOM             0x0018
 
 /* Note if suitable for use in FIPS mode */
-#  define EVP_MD_FLAG_FIPS        0x0400
+#  define EVP_MD_FLAG_FIPS        0x0
 
 /* Digest ctrls */
 
@@ -158,8 +158,8 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
  * don't accidentally reuse the values for other purposes.
  */
 
-# define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW  0x0008/* Allow use of non FIPS
-                                                * digest in FIPS mode */
+/* Allow use of non FIPS digest in FIPS mode */
+# define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW  0x0
 
 /*
  * The following PAD options are also currently ignored in 1.0.0, digest
@@ -263,9 +263,9 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 /* Buffer length in bits not bytes: CFB1 mode only */
 # define         EVP_CIPH_FLAG_LENGTH_BITS       0x2000
 /* Note if suitable for use in FIPS mode */
-# define         EVP_CIPH_FLAG_FIPS              0x4000
+# define         EVP_CIPH_FLAG_FIPS              0x0
 /* Allow non FIPS cipher in FIPS mode */
-# define         EVP_CIPH_FLAG_NON_FIPS_ALLOW    0x8000
+# define         EVP_CIPH_FLAG_NON_FIPS_ALLOW    0x0
 /*
  * Cipher handles any and all padding logic as well as finalisation.
  */

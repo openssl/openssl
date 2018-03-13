@@ -339,7 +339,6 @@ static const EVP_MD *test_sha_md(void)
             || !EVP_MD_meth_set_input_blocksize(md, SHA_CBLOCK)
             || !EVP_MD_meth_set_app_datasize(md,
                                              sizeof(EVP_MD *) + sizeof(SHA_CTX))
-            || !EVP_MD_meth_set_flags(md, 0)
             || !EVP_MD_meth_set_init(md, test_sha1_init)
             || !EVP_MD_meth_set_update(md, test_sha1_update)
             || !EVP_MD_meth_set_final(md, test_sha1_final)) {
