@@ -1780,20 +1780,20 @@ int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
     if (version == TLS1_3_VERSION_DRAFT)
         version = TLS1_3_VERSION;
 
-    /* We ignore this extension for HRRs except to sanity check it */
-    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) {
-        /*
-         * The only protocol version we support which has an HRR message is
-         * TLSv1.3, therefore we shouldn't be getting an HRR for anything else.
-         */
-        if (version != TLS1_3_VERSION) {
-            SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
-                     SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
-                     SSL_R_BAD_HRR_VERSION);
-            return 0;
-        }
-        return 1;
+    /*
+     * The only protocol version we support which is valid in this extension in
+     * a ServerHello is TLSv1.3 therefore we shouldn't be getting anything else.
+     */
+    if (version != TLS1_3_VERSION) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
+                 SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+        return 0;
     }
+
+    /* We ignore this extension for HRRs except to sanity check it */
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
+        return 1;
 
     /* We just set it here. We validate it in ssl_choose_client_version */
     s->version = version;
