@@ -12,7 +12,7 @@ use configdata;
 use File::Compare qw(compare_text);
 
 my $buildfile = $config{build_file};
-my $buildfile_new = "$buildfile.$$";
+my $buildfile_new = "$buildfile-$$";
 my $depext = $target{dep_extension} || ".d";
 my @deps =
     grep { -f $_ }
@@ -45,4 +45,6 @@ if (compare_text($buildfile_new, $buildfile) != 0) {
     rename $buildfile_new, $buildfile
         or die "Trying to rename $buildfile_new -> $buildfile: $!\n";
 }
-
+# On VMS, we want to remove all generations of this file, in case there are
+# more than one
+while (unlink $buildfile_new) {}
