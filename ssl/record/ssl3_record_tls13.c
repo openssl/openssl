@@ -152,7 +152,8 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     if (!WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
             || !WPACKET_put_bytes_u8(&wpkt, rec->type)
             || !WPACKET_put_bytes_u16(&wpkt, rec->rec_version)
-            || !WPACKET_put_bytes_u16(&wpkt, rec->length + taglen)) {
+            || !WPACKET_put_bytes_u16(&wpkt, rec->length + taglen)
+            || !WPACKET_finish(&wpkt)) {
         return -1;
     }
 
