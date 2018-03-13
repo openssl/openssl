@@ -6,6 +6,9 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+use strict;
+use warnings;
+
 my $producer = shift @ARGV;
 
 die "Producer not given\n" unless $producer;
@@ -107,5 +110,7 @@ die "Producer unrecognised: $producer\n" unless defined $procedure;
 while (<STDIN>) {
     $_ = $procedure->($_, @ARGV);
 } continue {
-    print or die "$!\n";
+    if ($_) {
+        print or die "$!\n";
+    }
 }
