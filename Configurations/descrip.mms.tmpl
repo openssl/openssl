@@ -504,16 +504,7 @@ distclean : clean
 depend : descrip.mms
 descrip.mms : FORCE
 	@ ! {- output_off() if $disabled{makedepend}; "" -}
-        @ $(PERL) -pe "if (/^# DO NOT DELETE.*/) { exit(0); }" -
-                < descrip.mms > descrip.mms-new
-        @ OPEN/APPEND DESCRIP descrip.mms-new
-        @ WRITE DESCRIP "# DO NOT DELETE THIS LINE -- make depend depends on it."
-        {- join("\n\t", map { "\@ IF F\$SEARCH(\"$_\") .NES. \"\" THEN TYPE $_ /OUTPUT=DESCRIP:" } @deps); -}
-        @ CLOSE DESCRIP
-        @ PIPE ( $(PERL) -e "use File::Compare qw/compare_text/; my $x = compare_text(""descrip.mms"",""descrip.mms-new""); exit(0x10000000 + ($x == 0));" || -
-                 RENAME descrip.mms-new descrip.mms )
-        @ IF F$SEARCH("descrip.mms-new") .NES. "" THEN DELETE descrip.mms-new;*
-        -@ SPAWN/OUTPUT=NLA0: PURGE/NOLOG descrip.mms
+	@ $(PERL) {- sourcefile("util", "add-depends.pl") -}
 	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
