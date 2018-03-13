@@ -15,12 +15,10 @@ my $buildfile = $config{build_file};
 my $buildfile_new = "$buildfile.$$";
 my $depext = $target{dep_extension} || ".d";
 my @deps =
-    grep { print STDERR "$_ exists: ", -f $_ ? "yes" : "no", "\n"; -f $_ }
+    grep { -f $_ }
     map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
     grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
     keys %{$unified_info{sources}};
-
-print STDERR "\@deps = ( ", join(", ", @deps), " )\n";
 
 open IBF, $buildfile or die "Trying to read $buildfile: $!\n";
 open OBF, '>', $buildfile_new or die "Trying to write $buildfile_new: $!\n";
