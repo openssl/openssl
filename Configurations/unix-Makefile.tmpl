@@ -419,19 +419,7 @@ distclean: clean
 # concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@if egrep "^# DO NOT DELETE THIS LINE" Makefile >/dev/null && [ -z "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then :; else \
-	  ( $(PERL) -pe 'exit 0 if /^# DO NOT DELETE THIS LINE.*/' < Makefile; \
-	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
-	    echo; \
-	    for f in $(DEPS); do \
-	      if [ -f $$f ]; then cat $$f; fi; \
-	    done ) > Makefile.new; \
-	  if cmp Makefile.new Makefile >/dev/null 2>&1; then \
-	    rm -f Makefile.new; \
-	  else \
-	    mv -f Makefile.new Makefile; \
-	  fi; \
-	fi
+	@$(PERL) $(SRCDIR)/util/add-depends.pl
 	@: {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
