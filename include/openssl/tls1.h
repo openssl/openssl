@@ -30,9 +30,9 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define TLS_MAX_VERSION                 TLS1_3_VERSION
 
-/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -23 */
-# define TLS1_3_VERSION_DRAFT            0x7f17
-# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 23)"
+/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -26 */
+# define TLS1_3_VERSION_DRAFT            0x7f1a
+# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 26)"
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
