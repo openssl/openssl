@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,48 @@
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
+#ifdef OPENSSL_SYS_UNIX
+# include <sys/types.h>
+# include <unistd.h>
+# include <sys/time.h>
+#endif
+#include "e_os.h"
+
+/* Macro to convert two thirty two bit values into a sixty four bit one */
+#define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
+
+/*
+ * Check for the existence and support of POSIX timers.  The standard
+ * says that the _POSIX_TIMERS macro will have a positive value if they
+ * are available.
+ *
+ * However, we want an additional constraint: that the timer support does
+ * not require an extra library dependency.  Early versions of glibc
+ * require -lrt to be specified on the link line to access the timers,
+ * so this needs to be checked for.
+ *
+ * It is worse because some libraries define __GLIBC__ but don't
+ * support the version testing macro (e.g. uClibc).  This means
+ * an extra check is needed.
+ *
+ * The final condition is:
+ *      "have posix timers and either not glibc or glibc without -lrt"
+ *
+ * The nested #if sequences are required to avoid using a parameterised
+ * macro that might be undefined.
+ */
+#undef OSSL_POSIX_TIMER_OKAY
+#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
+# if defined(__GLIBC__)
+#  if defined(__GLIBC_PREREQ)
+#   if __GLIBC_PREREQ(2, 17)
+#    define OSSL_POSIX_TIMER_OKAY
+#   endif
+#  endif
+# else
+#  define OSSL_POSIX_TIMER_OKAY
+# endif
+#endif
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -134,8 +176,18 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 {
     size_t ret = 0;
     size_t entropy_available = 0;
-    RAND_POOL *pool = RAND_POOL_new(entropy, min_len, max_len);
+    RAND_POOL *pool;
 
+    if (drbg->parent && drbg->strength > drbg->parent->strength) {
+        /*
+         * We currently don't support the algorithm from NIST SP 800-90C
+         * 10.1.2 to use a weaker DRBG as source
+         */
+        RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY, RAND_R_PARENT_STRENGTH_TOO_WEAK);
+        return 0;
+    }
+
+    pool = RAND_POOL_new(entropy, min_len, max_len);
     if (pool == NULL)
         return 0;
 
@@ -158,17 +210,16 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             /*
              * Get random from parent, include our state as additional input.
              * Our lock is already held, but we need to lock our parent before
-             * generating bits from it.
+             * generating bits from it. (Note: taking the lock will be a no-op
+             * if locking if drbg->parent->lock == NULL.)
              */
-            if (drbg->parent->lock)
-                CRYPTO_THREAD_write_lock(drbg->parent->lock);
+            rand_drbg_lock(drbg->parent);
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
                                    0,
                                    (unsigned char *)drbg, sizeof(*drbg)) != 0)
                 bytes = bytes_needed;
-            if (drbg->parent->lock)
-                CRYPTO_THREAD_unlock(drbg->parent->lock);
+            rand_drbg_unlock(drbg->parent);
 
             entropy_available = RAND_POOL_add_end(pool, bytes, 8 * bytes);
         }
@@ -187,6 +238,126 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     return ret;
 }
 
+/*
+ * Find a suitable source of time.  Start with the highest resolution source
+ * and work down to the slower ones.  This is added as additional data and
+ * isn't counted as randomness, so any result is acceptable.
+ *
+ * Returns 0 when we weren't able to find any time source
+ */
+static uint64_t get_timer_bits(void)
+{
+    uint64_t res = OPENSSL_rdtsc();
+
+    if (res != 0)
+        return res;
+#if defined(_WIN32)
+    {
+        LARGE_INTEGER t;
+        FILETIME ft;
+
+        if (QueryPerformanceCounter(&t) != 0)
+            return t.QuadPart;
+        GetSystemTimeAsFileTime(&ft);
+        return TWO32TO64(ft.dwHighDateTime, ft.dwLowDateTime);
+    }
+#elif defined(__sun) || defined(__hpux)
+    return gethrtime();
+#elif defined(_AIX)
+    {
+        timebasestruct_t t;
+
+        read_wall_time(&t, TIMEBASE_SZ);
+        return TWO32TO64(t.tb_high, t.tb_low);
+    }
+#else
+
+# if defined(OSSL_POSIX_TIMER_OKAY)
+    {
+        struct timespec ts;
+        clockid_t cid;
+
+#  ifdef CLOCK_BOOTTIME
+        cid = CLOCK_BOOTTIME;
+#  elif defined(_POSIX_MONOTONIC_CLOCK)
+        cid = CLOCK_MONOTONIC;
+#  else
+        cid = CLOCK_REALTIME;
+#  endif
+
+        if (clock_gettime(cid, &ts) == 0)
+            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
+    }
+# endif
+# if defined(__unix__) \
+     || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+    {
+        struct timeval tv;
+
+        if (gettimeofday(&tv, NULL) == 0)
+            return TWO32TO64(tv.tv_sec, tv.tv_usec);
+    }
+# endif
+    {
+        time_t t = time(NULL);
+        if (t == (time_t)-1)
+            return 0;
+        return t;
+    }
+#endif
+}
+
+/*
+ * Generate additional data that can be used for the drbg. The data does
+ * not need to contain entropy, but it's useful if it contains at least
+ * some bits that are unpredictable.
+ *
+ * Returns 0 on failure.
+ *
+ * On success it allocates a buffer at |*pout| and returns the length of
+ * the data. The buffer should get freed using OPENSSL_secure_clear_free().
+ */
+size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
+{
+    RAND_POOL *pool;
+    CRYPTO_THREAD_ID thread_id;
+    size_t len;
+#ifdef OPENSSL_SYS_UNIX
+    pid_t pid;
+#elif defined(OPENSSL_SYS_WIN32)
+    DWORD pid;
+#endif
+    uint64_t tbits;
+
+    pool = RAND_POOL_new(0, 0, max_len);
+    if (pool == NULL)
+        return 0;
+
+#ifdef OPENSSL_SYS_UNIX
+    pid = getpid();
+    RAND_POOL_add(pool, (unsigned char *)&pid, sizeof(pid), 0);
+#elif defined(OPENSSL_SYS_WIN32)
+    pid = GetCurrentProcessId();
+    RAND_POOL_add(pool, (unsigned char *)&pid, sizeof(pid), 0);
+#endif
+
+    thread_id = CRYPTO_THREAD_get_current_id();
+    if (thread_id != 0)
+        RAND_POOL_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0);
+
+    tbits = get_timer_bits();
+    if (tbits != 0)
+        RAND_POOL_add(pool, (unsigned char *)&tbits, sizeof(tbits), 0);
+
+    /* TODO: Use RDSEED? */
+
+    len = RAND_POOL_length(pool);
+    if (len != 0)
+        *pout = RAND_POOL_detach(pool);
+    RAND_POOL_free(pool);
+
+    return len;
+}
 
 /*
  * Implements the cleanup_entropy() callback (see RAND_DRBG_set_callbacks())
@@ -208,10 +379,10 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     int ret = 1;
 
 #ifndef OPENSSL_NO_ENGINE
-    rand_engine_lock = CRYPTO_THREAD_glock_new("rand_engine");
+    rand_engine_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_engine_lock != NULL;
 #endif
-    rand_meth_lock = CRYPTO_THREAD_glock_new("rand_meth");
+    rand_meth_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_meth_lock != NULL;
 
     return ret;
@@ -246,15 +417,15 @@ int RAND_poll(void)
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth == RAND_OpenSSL()) {
-        /* fill random pool and seed the default DRBG */
-        RAND_DRBG *drbg = RAND_DRBG_get0_global();
+        /* fill random pool and seed the master DRBG */
+        RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
         if (drbg == NULL)
             return 0;
 
-        CRYPTO_THREAD_write_lock(drbg->lock);
+        rand_drbg_lock(drbg);
         ret = rand_drbg_restart(drbg, NULL, 0, 0);
-        CRYPTO_THREAD_unlock(drbg->lock);
+        rand_drbg_unlock(drbg);
 
         return ret;
 
@@ -639,14 +810,14 @@ int RAND_priv_bytes(unsigned char *buf, int num)
     if (meth != RAND_OpenSSL())
         return RAND_bytes(buf, num);
 
-    drbg = RAND_DRBG_get0_priv_global();
+    drbg = RAND_DRBG_get0_private();
     if (drbg == NULL)
         return 0;
 
     /* We have to lock the DRBG before generating bits from it. */
-    CRYPTO_THREAD_write_lock(drbg->lock);
-    ret = RAND_DRBG_generate(drbg, buf, num, 0, NULL, 0);
-    CRYPTO_THREAD_unlock(drbg->lock);
+    rand_drbg_lock(drbg);
+    ret = RAND_DRBG_bytes(drbg, buf, num);
+    rand_drbg_unlock(drbg);
     return ret;
 }
 

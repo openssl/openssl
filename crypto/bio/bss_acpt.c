@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,11 +61,11 @@ static const BIO_METHOD methods_acceptp = {
     bread_conv,
     acpt_read,
     acpt_puts,
-    NULL,                       /* connect_gets, */
+    NULL,                       /* connect_gets,         */
     acpt_ctrl,
     acpt_new,
     acpt_free,
-    NULL,
+    NULL,                       /* connect_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_accept(void)
@@ -275,6 +275,11 @@ static int acpt_state(BIO *b, BIO_ACCEPT *c)
             BIO_clear_retry_flags(b);
             b->retry_reason = 0;
 
+            OPENSSL_free(c->cache_peer_name);
+            c->cache_peer_name = NULL;
+            OPENSSL_free(c->cache_peer_serv);
+            c->cache_peer_serv = NULL;
+
             s = BIO_accept_ex(c->accept_sock, &c->cache_peer_addr,
                               c->accepted_mode);
 
@@ -450,7 +455,6 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
             data->accepted_mode &= ~BIO_SOCK_NONBLOCK;
         break;
     case BIO_C_SET_FD:
-        b->init = 1;
         b->num = *((int *)ptr);
         data->accept_sock = b->num;
         data->state = ACPT_S_ACCEPT;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -79,5 +79,6 @@ extern unsigned int OPENSSL_armcap_P;
 # define ARMV8_SHA1      (1<<3)
 # define ARMV8_SHA256    (1<<4)
 # define ARMV8_PMULL     (1<<5)
+# define ARMV8_SHA512    (1<<6)
 
 #endif

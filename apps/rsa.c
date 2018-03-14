@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <string.h>
 # include <time.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/rsa.h>
@@ -230,7 +231,7 @@ int rsa_main(int argc, char **argv)
                    ERR_GET_REASON(err) != ERR_R_MALLOC_FAILURE) {
                 BIO_printf(out, "RSA key error: %s\n",
                            ERR_reason_error_string(err));
-                ERR_get_error(); /* remove e from error stack */
+                ERR_get_error(); /* remove err from error stack */
             }
         } else if (r == -1) {
             ERR_print_errors(bio_err);

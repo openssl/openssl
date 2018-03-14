@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL licenses, (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ static const uint32_t default_ciphers_in_order[] = {
     TLS1_CK_DHE_RSA_WITH_AES_256_GCM_SHA384,
 # endif
 
-# if !defined OPENSSL_NO_CHACHA && !defined OPENSSL_NO_POLY1305
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 #  ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
     TLS1_CK_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -105,20 +105,23 @@ static const uint32_t default_ciphers_in_order[] = {
 # endif
 #endif  /* !OPENSSL_NO_TLS1_2 */
 
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3)
+    /* These won't be usable if TLSv1.3 is available but TLSv1.2 isn't */
+# ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
     TLS1_CK_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-#endif
-#ifndef OPENSSL_NO_DH
+# endif
+ #ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_256_SHA,
-#endif
-#ifndef OPENSSL_NO_EC
+# endif
+# ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
     TLS1_CK_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-#endif
-#ifndef OPENSSL_NO_DH
+# endif
+# ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
-#endif
+# endif
+#endif /* !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3) */
 
 #ifndef OPENSSL_NO_TLS1_2
     TLS1_CK_RSA_WITH_AES_256_GCM_SHA384,
@@ -126,15 +129,20 @@ static const uint32_t default_ciphers_in_order[] = {
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     TLS1_3_CK_AES_256_GCM_SHA384,
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     TLS1_3_CK_CHACHA20_POLY1305_SHA256,
+# endif
     TLS1_3_CK_AES_128_GCM_SHA256,
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     TLS1_CK_RSA_WITH_AES_256_SHA256,
     TLS1_CK_RSA_WITH_AES_128_SHA256,
 #endif
+#if !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3)
+    /* These won't be usable if TLSv1.3 is available but TLSv1.2 isn't */
     TLS1_CK_RSA_WITH_AES_256_SHA,
     TLS1_CK_RSA_WITH_AES_128_SHA,
+#endif
 };
 
 static int test_default_cipherlist(SSL_CTX *ctx)

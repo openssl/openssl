@@ -47,6 +47,11 @@ number was therefore 0x0090581f.
 
 OpenSSL_version_num() returns the version number.
 
+The macro OPENSSL_VERSION_AT_LEAST(major,minor) can be used at compile
+time test if the current version is at least as new as the version provided.
+The arguments major, minor and fix correspond to the version information
+as given above.
+
 OpenSSL_version() returns different strings depending on B<t>:
 
 =over 4
@@ -86,9 +91,11 @@ if available or "ENGINESDIR: N/A" otherwise.
 
 For an unknown B<t>, the text "not available" is returned.
 
-=head1 RETURN VALUE
+=head1 RETURN VALUES
 
-The version number.
+OpenSSL_version_num() returns the version number.
+
+OpenSSL_version() returns requested version strings.
 
 =head1 SEE ALSO
 
@@ -96,7 +103,7 @@ L<crypto(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

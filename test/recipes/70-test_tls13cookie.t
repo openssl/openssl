@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ my $test_name = "test_tls13cookie";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -74,7 +74,7 @@ sub cookie_filter
         0x04, 0x05;
 
     foreach my $message (@{$proxy->message_list}) {
-        if ($message->mt == TLSProxy::Message::MT_HELLO_RETRY_REQUEST
+        if ($message->mt == TLSProxy::Message::MT_SERVER_HELLO
                 && ${$message->records}[0]->flight == 1) {
             $message->delete_extension(TLSProxy::Message::EXT_KEY_SHARE)
                 if ($testtype == COOKIE_ONLY);

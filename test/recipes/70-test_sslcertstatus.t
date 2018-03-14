@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@ my $test_name = "test_sslcertstatus";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -27,7 +27,8 @@ plan skip_all => "$test_name needs the ocsp feature enabled"
     if disabled("ocsp");
 
 plan skip_all => "$test_name needs TLS enabled"
-    if alldisabled(available_protocols("tls"));
+    if alldisabled(available_protocols("tls"))
+       || (!disabled("tls1_3") && disabled("tls1_2"));
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(

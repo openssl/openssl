@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -89,6 +89,7 @@ static ERR_STRING_DATA ERR_str_functs[] = {
     {ERR_PACK(0, SYS_F_IOCTL, 0), "ioctl"},
     {ERR_PACK(0, SYS_F_STAT, 0), "stat"},
     {ERR_PACK(0, SYS_F_FCNTL, 0), "fcntl"},
+    {ERR_PACK(0, SYS_F_FSTAT, 0), "fstat"},
     {0, NULL},
 };
 
@@ -266,7 +267,7 @@ static void ERR_STATE_free(ERR_STATE *s)
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    err_string_lock = CRYPTO_THREAD_glock_new("err_string");
+    err_string_lock = CRYPTO_THREAD_lock_new();
     int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
                                             err_string_data_cmp);
     return err_string_lock != NULL && int_error_hash != NULL;
@@ -502,15 +503,13 @@ static unsigned long get_error_values(int inc, int top, const char **file,
         es->err_buffer[i] = 0;
     }
 
-    if ((file != NULL) && (line != NULL)) {
+    if (file != NULL && line != NULL) {
         if (es->err_file[i] == NULL) {
             *file = "NA";
-            if (line != NULL)
-                *line = 0;
+            *line = 0;
         } else {
             *file = es->err_file[i];
-            if (line != NULL)
-                *line = es->err_line[i];
+            *line = es->err_line[i];
         }
     }
 
@@ -667,6 +666,14 @@ ERR_STATE *ERR_get_state(void)
     ERR_STATE *state = NULL;
 
     if (!RUN_ONCE(&err_init, err_do_init))
+        return NULL;
+
+    /*
+     * If base OPENSSL_init_crypto() hasn't been called yet, be sure to call
+     * it now to avoid state to be doubly allocated and thereby leak memory.
+     * Needed on any platform that doesn't define OPENSSL_USE_NODELETE.
+     */
+    if (!OPENSSL_init_crypto(0, NULL))
         return NULL;
 
     state = CRYPTO_THREAD_get_local(&err_thread_local);

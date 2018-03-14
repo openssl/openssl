@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ my $test_name = "test_tls13kexmodes";
 setup($test_name);
 
 plan skip_all => "TLSProxy isn't usable on $^O"
-    if $^O =~ /^(VMS|MSWin32)$/;
+    if $^O =~ /^(VMS)$/;
 
 plan skip_all => "$test_name needs the dynamic engine feature enabled"
     if disabled("engine") || disabled("dynamic-engine");
@@ -35,7 +35,7 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::ALL_HANDSHAKES],
-    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST,
+    [TLSProxy::Message::MT_SERVER_HELLO,
         checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
     [TLSProxy::Message::MT_CLIENT_HELLO,
         checkhandshake::HRR_HANDSHAKE | checkhandshake::HRR_RESUME_HANDSHAKE],
@@ -90,7 +90,9 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
-    [TLSProxy::Message::MT_HELLO_RETRY_REQUEST, TLSProxy::Message::EXT_KEY_SHARE,
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_HRR_EXTENSION],
 
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
@@ -122,6 +124,8 @@ $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
     [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
         checkhandshake::PSK_CLI_EXTENSION],
 
+    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+        checkhandshake::DEFAULT_EXTENSIONS],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
         checkhandshake::KEY_SHARE_SRV_EXTENSION],
     [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,

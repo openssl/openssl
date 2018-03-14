@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 #ifndef OPENSSL_NO_SOCK
 
 #include "apps.h"
+#include "progs.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/pem.h>

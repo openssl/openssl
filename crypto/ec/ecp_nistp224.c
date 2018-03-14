@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,17 +40,16 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/err.h>
 # include "ec_lcl.h"
 
-# if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+# if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
 # else
-#  error "Need GCC 3.1 or later to define type uint128_t"
+#  error "Need GCC 4.0 or later to define type uint128_t"
 # endif
 
 typedef uint8_t u8;
 typedef uint64_t u64;
-typedef int64_t s64;
 
 /******************************************************************************/
 /*-
@@ -337,7 +336,7 @@ static int BN_to_felem(felem out, const BIGNUM *bn)
     /* BN_bn2bin eats leading zeroes */
     memset(b_out, 0, sizeof(b_out));
     num_bytes = BN_num_bytes(bn);
-    if (num_bytes > sizeof b_out) {
+    if (num_bytes > sizeof(b_out)) {
         ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
         return 0;
     }
@@ -356,8 +355,8 @@ static BIGNUM *felem_to_BN(BIGNUM *out, const felem in)
 {
     felem_bytearray b_in, b_out;
     felem_to_bin28(b_in, in);
-    flip_endian(b_out, b_in, sizeof b_out);
-    return BN_bin2bn(b_out, sizeof b_out, out);
+    flip_endian(b_out, b_in, sizeof(b_out));
+    return BN_bin2bn(b_out, sizeof(b_out), out);
 }
 
 /******************************************************************************/

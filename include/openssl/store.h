@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,6 +58,7 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
  * Each command takes different arguments.
  */
 int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
+int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args);
 
 /*
  * Common ctrl commands that different loaders may choose to support.
@@ -152,6 +153,55 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info);
 
 
 /*-
+ *  Functions to construct a search URI from a base URI and search criteria
+ *  -----------------------------------------------------------------------
+ */
+
+/* OSSL_STORE search types */
+# define OSSL_STORE_SEARCH_BY_NAME              1 /* subject in certs, issuer in CRLs */
+# define OSSL_STORE_SEARCH_BY_ISSUER_SERIAL     2
+# define OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT   3
+# define OSSL_STORE_SEARCH_BY_ALIAS             4
+
+/* To check what search types the scheme handler supports */
+int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type);
+
+/* Search term constructors */
+/*
+ * The input is considered to be owned by the caller, and must therefore
+ * remain present throughout the lifetime of the returned OSSL_STORE_SEARCH
+ */
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name);
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
+                                                      const ASN1_INTEGER
+                                                      *serial);
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
+                                                        const unsigned char
+                                                        *bytes, size_t len);
+OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_alias(const char *alias);
+
+/* Search term destructor */
+void OSSL_STORE_SEARCH_free(OSSL_STORE_SEARCH *search);
+
+/* Search term accessors */
+int OSSL_STORE_SEARCH_get_type(const OSSL_STORE_SEARCH *criterion);
+X509_NAME *OSSL_STORE_SEARCH_get0_name(OSSL_STORE_SEARCH *criterion);
+const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
+                                                  *criterion);
+const unsigned char *OSSL_STORE_SEARCH_get0_bytes(const OSSL_STORE_SEARCH
+                                                  *criterion, size_t *length);
+const char *OSSL_STORE_SEARCH_get0_string(const OSSL_STORE_SEARCH *criterion);
+const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion);
+
+/*
+ * Add search criterion and expected return type (which can be unspecified)
+ * to the loading channel.  This MUST happen before the first OSSL_STORE_load().
+ */
+int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type);
+int OSSL_STORE_find(OSSL_STORE_CTX *ctx, OSSL_STORE_SEARCH *search);
+
+
+/*-
  *  Function to register a loader for the given URI scheme.
  *  -------------------------------------------------------
  *
@@ -176,6 +226,13 @@ typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,
                                   va_list args);
 int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_ctrl_fn ctrl_function);
+typedef int (*OSSL_STORE_expect_fn)(OSSL_STORE_LOADER_CTX *ctx, int expected);
+int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
+                                 OSSL_STORE_expect_fn expect_function);
+typedef int (*OSSL_STORE_find_fn)(OSSL_STORE_LOADER_CTX *ctx,
+                                  OSSL_STORE_SEARCH *criteria);
+int OSSL_STORE_LOADER_set_find(OSSL_STORE_LOADER *loader,
+                               OSSL_STORE_find_fn find_function);
 typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
                                                const UI_METHOD *ui_method,
                                                void *ui_data);
@@ -202,12 +259,6 @@ OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme);
 int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
                                                    *loader, void *do_arg),
                               void *do_arg);
-
-
-/*
- * Error strings
- */
-int ERR_load_OSSL_STORE_strings(void);
 
 # ifdef  __cplusplus
 }

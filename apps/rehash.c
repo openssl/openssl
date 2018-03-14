@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2013-2014 Timo Teräs <timo.teras@gmail.com>
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include "apps.h"
+#include "progs.h"
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || \
     (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)
@@ -292,24 +293,6 @@ static int ends_with_dirsep(const char *path)
     return *path == '/';
 }
 
-static int massage_filename(char *name)
-{
-# ifdef __VMS
-    char *p = strchr(name, ';');
-    char *q = p;
-
-    if (q != NULL) {
-        for (q++; *q != '\0'; q++) {
-            if (!isdigit((unsigned char)*q))
-                return 1;
-        }
-    }
-
-    *p = '\0';
-# endif
-    return 1;
-}
-
 /*
  * Process a directory; return number of errors found.
  */
@@ -345,7 +328,6 @@ static int do_dir(const char *dirname, enum Hash h)
     }
     while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
         if ((copy = strdup(filename)) == NULL
-                || !massage_filename(copy)
                 || sk_OPENSSL_STRING_push(files, copy) == 0) {
             BIO_puts(bio_err, "out of memory\n");
             exit(1);

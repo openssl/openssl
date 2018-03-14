@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -425,6 +425,7 @@ ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
             || hdr->value == NULL) {
             sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
             ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_NO_SIG_CONTENT_TYPE);
+            sk_BIO_pop_free(parts, BIO_vfree);
             return NULL;
         }
 

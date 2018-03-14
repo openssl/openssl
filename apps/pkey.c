@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>

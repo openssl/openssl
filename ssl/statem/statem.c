@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -311,7 +311,11 @@ static int state_machine(SSL *s, int server)
 
     st->in_handshake++;
     if (!SSL_in_init(s) || SSL_in_before(s)) {
-        if (!SSL_clear(s))
+        /*
+         * If we are stateless then we already called SSL_clear() - don't do
+         * it again and clear the STATELESS flag itself.
+         */
+        if ((s->s3->flags & TLS1_FLAGS_STATELESS) == 0 && !SSL_clear(s))
             return -1;
     }
 #ifndef OPENSSL_NO_SCTP
@@ -936,4 +940,29 @@ int ossl_statem_app_data_allowed(SSL *s)
     }
 
     return 0;
+}
+
+/*
+ * This function returns 1 if TLS exporter is ready to export keying
+ * material, or 0 if otherwise.
+ */
+int ossl_statem_export_allowed(SSL *s)
+{
+    return s->s3->previous_server_finished_len != 0
+           && s->statem.hand_state != TLS_ST_SW_FINISHED;
+}
+
+/*
+ * Return 1 if early TLS exporter is ready to export keying material,
+ * or 0 if otherwise.
+ */
+int ossl_statem_export_early_allowed(SSL *s)
+{
+    /*
+     * The early exporter secret is only present on the server if we
+     * have accepted early_data. It is present on the client as long
+     * as we have sent early_data.
+     */
+    return s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+           || (!s->server && s->ext.early_data != SSL_EARLY_DATA_NOT_SENT);
 }

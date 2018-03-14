@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -210,6 +210,16 @@ const EVP_MD *ssl_md(int idx)
 void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
                            int line)
 {
+}
+
+int ossl_statem_export_allowed(SSL *s)
+{
+    return 1;
+}
+
+int ossl_statem_export_early_allowed(SSL *s)
+{
+    return 1;
 }
 
 /* End of mocked out code */

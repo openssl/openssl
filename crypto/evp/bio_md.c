@@ -26,10 +26,11 @@ static int md_gets(BIO *h, char *str, int size);
 static long md_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int md_new(BIO *h);
 static int md_free(BIO *data);
-static long md_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long md_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 static const BIO_METHOD methods_md = {
-    BIO_TYPE_MD, "message digest",
+    BIO_TYPE_MD,
+    "message digest",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     md_write,
@@ -197,7 +198,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long md_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long md_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
     BIO *next;

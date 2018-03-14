@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -743,7 +743,6 @@ void *ENGINE_get_static_state(void);
 DEPRECATEDIN_1_1_0(void ENGINE_setup_bsd_cryptodev(void))
 # endif
 
-int ERR_load_ENGINE_strings(void);
 
 #  ifdef  __cplusplus
 }

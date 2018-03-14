@@ -111,6 +111,14 @@ Note that the hash algorithm used for subject name hashing changed in OpenSSL
 OpenSSL includes a L<rehash(1)> utility which creates symlinks with correct
 hashed names for all files with .pem suffix in a given directory.
 
+=head1 RETURN VALUES
+
+X509_LOOKUP_hash_dir() and X509_LOOKUP_file() always return a valid
+B<X509_LOOKUP_METHOD> structure.
+
+X509_load_cert_file(), X509_load_crl_file() and X509_load_cert_crl_file() return
+the number of loaded objects or 0 on error.
+
 =head1 SEE ALSO
 
 L<PEM_read_PrivateKey(3)>,
@@ -120,7 +128,7 @@ L<SSL_CTX_load_verify_locations(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

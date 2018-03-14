@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,6 +35,8 @@
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
 
+extern const unsigned char hrrrandom[];
+
 /* Message processing return codes */
 typedef enum {
     /* Something bad happened */
@@ -50,14 +52,14 @@ typedef enum {
     MSG_PROCESS_CONTINUE_READING
 } MSG_PROCESS_RETURN;
 
-/* Flush the write BIO */
-int statem_flush(SSL *s);
-
 typedef int (*confunc_f) (SSL *s, WPACKET *pkt);
 
+int ssl3_take_mac(SSL *s);
 int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
                   size_t num_groups, int checkallow);
-int create_synthetic_message_hash(SSL *s);
+int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
+                                  size_t hashlen, const unsigned char *hrr,
+                                  size_t hrrlen);
 int parse_ca_names(SSL *s, PACKET *pkt);
 int construct_ca_names(SSL *s, WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL *s, unsigned char **ptbs,
@@ -104,7 +106,8 @@ __owur int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt);
 __owur int tls_construct_finished(SSL *s, WPACKET *pkt);
 __owur int tls_construct_key_update(SSL *s, WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt);
-__owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs);
+__owur WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs,
+                                       int stop);
 __owur WORK_STATE dtls_wait_for_dry(SSL *s);
 
 /* some client-only functions */
@@ -161,6 +164,8 @@ typedef enum ext_return_en {
     EXT_RETURN_NOT_SENT
 } EXT_RETURN;
 
+__owur int tls_validate_all_contexts(SSL *s, unsigned int thisctx,
+                                     RAW_EXTENSION *exts);
 __owur int extension_is_relevant(SSL *s, unsigned int extctx,
                                  unsigned int thisctx);
 __owur int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
@@ -201,6 +206,8 @@ int tls_parse_ctos_supported_groups(SSL *s, PACKET *pkt, unsigned int context,
 #endif
 int tls_parse_ctos_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
+int tls_parse_ctos_sig_algs_cert(SSL *s, PACKET *pkt, unsigned int context,
+                                 X509 *x, size_t chainidx);
 int tls_parse_ctos_sig_algs(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                             size_t chainidx);
 #ifndef OPENSSL_NO_OCSP
@@ -221,12 +228,16 @@ int tls_parse_ctos_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                              size_t chainidx);
+int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
+                          size_t chainidx);
 int tls_parse_ctos_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 int tls_parse_ctos_psk_kex_modes(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx);
 int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
+int tls_parse_ctos_post_handshake_auth(SSL *, PACKET *pkt, unsigned int context,
+                                       X509 *x, size_t chainidx);
 
 EXT_RETURN tls_construct_stoc_renegotiate(SSL *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
@@ -271,9 +282,14 @@ EXT_RETURN tls_construct_stoc_etm(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
 EXT_RETURN tls_construct_stoc_ems(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_stoc_supported_versions(SSL *s, WPACKET *pkt,
+                                                 unsigned int context, X509 *x,
+                                                 size_t chainidx);
 EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
                                         unsigned int context, X509 *x,
                                         size_t chainidx);
+EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
+                                     X509 *x, size_t chainidx);
 /*
  * Not in public headers as this is not an official extension. Only used when
  * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set.
@@ -352,6 +368,9 @@ EXT_RETURN tls_construct_ctos_padding(SSL *s, WPACKET *pkt,
                                       size_t chainidx);
 EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx);
+EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL *s, WPACKET *pkt, unsigned int context,
+                                                  X509 *x, size_t chainidx);
+
 int tls_parse_stoc_renegotiate(SSL *s, PACKET *pkt, unsigned int context,
                                X509 *x, size_t chainidx);
 int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
@@ -388,6 +407,8 @@ int tls_parse_stoc_etm(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 int tls_parse_stoc_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
+int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
+                                      X509 *x, size_t chainidx);
 int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                              size_t chainidx);
 int tls_parse_stoc_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
@@ -396,3 +417,6 @@ int tls_parse_stoc_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx);
 
 int tls_handle_alpn(SSL *s);
+
+int tls13_save_handshake_digest_for_pha(SSL *s);
+int tls13_restore_handshake_digest_for_pha(SSL *s);

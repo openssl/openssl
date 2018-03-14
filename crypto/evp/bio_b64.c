@@ -20,7 +20,7 @@ static int b64_puts(BIO *h, const char *str);
 static long b64_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int b64_new(BIO *h);
 static int b64_free(BIO *data);
-static long b64_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long b64_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 #define B64_BLOCK_SIZE  1024
 #define B64_BLOCK_SIZE2 768
 #define B64_NONE        0
@@ -44,7 +44,8 @@ typedef struct b64_struct {
 } BIO_B64_CTX;
 
 static const BIO_METHOD methods_b64 = {
-    BIO_TYPE_BASE64, "base64 encoding",
+    BIO_TYPE_BASE64,
+    "base64 encoding",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     b64_write,
@@ -288,6 +289,14 @@ static int b64_read(BIO *b, char *out, int outl)
                                  (unsigned char *)ctx->tmp, i);
             ctx->tmp_len = 0;
         }
+        /*
+         * If eof or an error was signalled, then the condition
+         * 'ctx->cont <= 0' will prevent b64_read() from reading
+         * more data on subsequent calls. This assignment was
+         * deleted accidentally in commit 5562cfaca4f3.
+         */
+        ctx->cont = i;
+
         ctx->buf_off = 0;
         if (i < 0) {
             ret_code = 0;
@@ -522,7 +531,7 @@ static long b64_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long b64_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long b64_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
     BIO *next = BIO_next(b);

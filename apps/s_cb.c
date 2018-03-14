@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -230,6 +230,9 @@ static const char *get_sigtype(int nid)
 
      case NID_ED25519:
         return "Ed25519";
+
+     case NID_ED448:
+        return "Ed448";
 
     default:
         return NULL;
@@ -525,7 +528,6 @@ static STRINT_PAIR handshakes[] = {
     {", HelloVerifyRequest", DTLS1_MT_HELLO_VERIFY_REQUEST},
     {", NewSessionTicket", SSL3_MT_NEWSESSION_TICKET},
     {", EndOfEarlyData", SSL3_MT_END_OF_EARLY_DATA},
-    {", HelloRetryRequest", SSL3_MT_HELLO_RETRY_REQUEST},
     {", EncryptedExtensions", SSL3_MT_ENCRYPTED_EXTENSIONS},
     {", Certificate", SSL3_MT_CERTIFICATE},
     {", ServerKeyExchange", SSL3_MT_SERVER_KEY_EXCHANGE},
@@ -534,9 +536,9 @@ static STRINT_PAIR handshakes[] = {
     {", CertificateVerify", SSL3_MT_CERTIFICATE_VERIFY},
     {", ClientKeyExchange", SSL3_MT_CLIENT_KEY_EXCHANGE},
     {", Finished", SSL3_MT_FINISHED},
-    {", CertificateUrl", 21},
+    {", CertificateUrl", SSL3_MT_CERTIFICATE_URL},
     {", CertificateStatus", SSL3_MT_CERTIFICATE_STATUS},
-    {", SupplementalData", 23},
+    {", SupplementalData", SSL3_MT_SUPPLEMENTAL_DATA},
     {", KeyUpdate", SSL3_MT_KEY_UPDATE},
 #ifndef OPENSSL_NO_NEXTPROTONEG
     {", NextProto", SSL3_MT_NEXT_PROTO},
@@ -667,6 +669,7 @@ static STRINT_PAIR tlsext_types[] = {
     {"psk", TLSEXT_TYPE_psk},
     {"psk kex modes", TLSEXT_TYPE_psk_kex_modes},
     {"certificate authorities", TLSEXT_TYPE_certificate_authorities},
+    {"post handshake auth", TLSEXT_TYPE_post_handshake_auth},
     {NULL}
 };
 
@@ -687,9 +690,9 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
     unsigned char *buffer;
-    size_t length;
+    size_t length = 0;
     unsigned short port;
-    BIO_ADDR *peer = NULL;
+    BIO_ADDR *lpeer = NULL, *peer = NULL;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
@@ -700,17 +703,24 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
         cookie_initialized = 1;
     }
 
-    peer = BIO_ADDR_new();
-    if (peer == NULL) {
-        BIO_printf(bio_err, "memory full\n");
-        return 0;
+    if (SSL_is_dtls(ssl)) {
+        lpeer = peer = BIO_ADDR_new();
+        if (peer == NULL) {
+            BIO_printf(bio_err, "memory full\n");
+            return 0;
+        }
+
+        /* Read peer information */
+        (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
+    } else {
+        peer = ourpeer;
     }
 
-    /* Read peer information */
-    (void)BIO_dgram_get_peer(SSL_get_rbio(ssl), peer);
-
     /* Create buffer with peer's address and port */
-    BIO_ADDR_rawaddress(peer, NULL, &length);
+    if (!BIO_ADDR_rawaddress(peer, NULL, &length)) {
+        BIO_printf(bio_err, "Failed getting peer address\n");
+        return 0;
+    }
     OPENSSL_assert(length != 0);
     port = BIO_ADDR_rawport(peer);
     length += sizeof(port);
@@ -724,7 +734,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
          buffer, length, cookie, cookie_len);
 
     OPENSSL_free(buffer);
-    BIO_ADDR_free(peer);
+    BIO_ADDR_free(lpeer);
 
     return 1;
 }
@@ -745,6 +755,22 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
 
     return 0;
 }
+
+int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
+                                       size_t *cookie_len)
+{
+    unsigned int temp;
+    int res = generate_cookie_callback(ssl, cookie, &temp);
+    *cookie_len = temp;
+    return res;
+}
+
+int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                                     size_t cookie_len)
+{
+    return verify_cookie_callback(ssl, cookie, cookie_len);
+}
+
 #endif
 
 /*

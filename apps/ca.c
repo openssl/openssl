@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,6 +32,7 @@
 #endif
 
 #include "apps.h"
+#include "progs.h"
 
 #ifndef W_OK
 # define F_OK 0
@@ -442,29 +443,22 @@ end_of_options:
         && (section = lookup_conf(conf, BASE_SECTION, ENV_DEFAULT_CA)) == NULL)
         goto end;
 
-    if (conf != NULL) {
-        p = NCONF_get_string(conf, NULL, "oid_file");
-        if (p == NULL)
-            ERR_clear_error();
-        if (p != NULL) {
-            BIO *oid_bio;
+    p = NCONF_get_string(conf, NULL, "oid_file");
+    if (p == NULL)
+        ERR_clear_error();
+    if (p != NULL) {
+        BIO *oid_bio = BIO_new_file(p, "r");
 
-            oid_bio = BIO_new_file(p, "r");
-            if (oid_bio == NULL) {
-                /*-
-                BIO_printf(bio_err,"problems opening %s for extra oid's\n",p);
-                ERR_print_errors(bio_err);
-                */
-                ERR_clear_error();
-            } else {
-                OBJ_create_objects(oid_bio);
-                BIO_free(oid_bio);
-            }
+        if (oid_bio == NULL) {
+            ERR_clear_error();
+        } else {
+            OBJ_create_objects(oid_bio);
+            BIO_free(oid_bio);
         }
-        if (!add_oid_section(conf)) {
-            ERR_print_errors(bio_err);
-            goto end;
-        }
+    }
+    if (!add_oid_section(conf)) {
+        ERR_print_errors(bio_err);
+        goto end;
     }
 
     app_RAND_load_conf(conf, BASE_SECTION);
@@ -669,6 +663,10 @@ end_of_options:
                            i + 1, *p, *p);
                 goto end;
             }
+        }
+        if (pp[DB_name][0] == '\0') {
+            BIO_printf(bio_err, "entry %d: bad Subject\n", i + 1);
+            goto end;
         }
     }
     if (verbose) {
@@ -1097,13 +1095,13 @@ end_of_options:
             goto end;
 
         tmptm = ASN1_TIME_new();
-        if (tmptm == NULL)
-            goto end;
-        X509_gmtime_adj(tmptm, 0);
-        X509_CRL_set1_lastUpdate(crl, tmptm);
-        if (!X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
-                              NULL)) {
+        if (tmptm == NULL
+                || X509_gmtime_adj(tmptm, 0) == NULL
+                || !X509_CRL_set1_lastUpdate(crl, tmptm)
+                || X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
+                                    NULL) == NULL) {
             BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+            ASN1_TIME_free(tmptm);
             goto end;
         }
         X509_CRL_set1_nextUpdate(crl, tmptm);
@@ -1410,6 +1408,10 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err, "The Subject's Distinguished Name is as follows\n");
 
     name = X509_REQ_get_subject_name(req);
+    if (X509_NAME_entry_count(name) == 0) {
+        BIO_printf(bio_err, "Error: The supplied Subject is empty\n");
+        goto end;
+    }
     for (i = 0; i < X509_NAME_entry_count(name); i++) {
         ne = X509_NAME_get_entry(name, i);
         str = X509_NAME_ENTRY_get_data(ne);
@@ -1554,7 +1556,6 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
             if (push != NULL) {
                 if (!X509_NAME_add_entry(subject, push, -1, 0)) {
-                    X509_NAME_ENTRY_free(push);
                     BIO_printf(bio_err, "Memory allocation failure\n");
                     goto end;
                 }
@@ -1570,6 +1571,12 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         subject = X509_NAME_dup(name);
         if (subject == NULL)
             goto end;
+    }
+
+    if (X509_NAME_entry_count(subject) == 0) {
+        BIO_printf(bio_err,
+                   "Error: After applying policy the Subject is empty\n");
+        goto end;
     }
 
     if (verbose)
@@ -1698,7 +1705,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
 
     if (enddate != NULL) {
         int tdays;
-        ASN1_TIME_diff(&tdays, NULL, NULL, X509_get0_notAfter(ret));
+
+        if (!ASN1_TIME_diff(&tdays, NULL, NULL, X509_get0_notAfter(ret)))
+            goto end;
         days = tdays;
     }
 
@@ -2201,7 +2210,10 @@ static int do_updatedb(CA_DB *db)
         return -1;
 
     /* get actual time and make a string */
-    a_tm = X509_gmtime_adj(a_tm, 0);
+    if (X509_gmtime_adj(a_tm, 0) == NULL) {
+        ASN1_UTCTIME_free(a_tm);
+        return -1;
+    }
     a_tm_s = app_malloc(a_tm->length + 1, "time string");
 
     memcpy(a_tm_s, a_tm->data, a_tm->length);

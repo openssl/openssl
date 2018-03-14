@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -940,8 +940,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-
-#ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_NULL_SHA,
@@ -1268,9 +1266,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* OPENSSL_NO_EC */
-
-#ifndef OPENSSL_NO_PSK
     {
      1,
      TLS1_TXT_PSK_WITH_NULL_SHA,
@@ -1757,7 +1752,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
-# ifndef OPENSSL_NO_EC
 #  ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -1888,10 +1882,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      0,
      0,
      },
-# endif                         /* OPENSSL_NO_EC */
-#endif                          /* OPENSSL_NO_PSK */
 
-#ifndef OPENSSL_NO_SRP
 # ifndef OPENSSL_NO_WEAK_SSL_CIPHERS
     {
      1,
@@ -2038,10 +2029,8 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-#endif                          /* OPENSSL_NO_SRP */
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-# ifndef OPENSSL_NO_RSA
     {
      1,
      TLS1_TXT_DHE_RSA_WITH_CHACHA20_POLY1305,
@@ -2058,9 +2047,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_RSA */
-
-# ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_CHACHA20_POLY1305,
@@ -2093,9 +2079,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_EC */
-
-# ifndef OPENSSL_NO_PSK
     {
      1,
      TLS1_TXT_PSK_WITH_CHACHA20_POLY1305,
@@ -2160,7 +2143,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_PSK */
 #endif                          /* !defined(OPENSSL_NO_CHACHA) &&
                                  * !defined(OPENSSL_NO_POLY1305) */
 
@@ -2421,8 +2403,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-
-# ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_ECDSA_WITH_CAMELLIA_128_CBC_SHA256,
@@ -2487,9 +2467,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_EC */
-
-# ifndef OPENSSL_NO_PSK
     {
      1,
      TLS1_TXT_PSK_WITH_CAMELLIA_128_CBC_SHA256,
@@ -2618,8 +2595,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-# endif                         /* OPENSSL_NO_PSK */
-
 #endif                          /* OPENSSL_NO_CAMELLIA */
 
 #ifndef OPENSSL_NO_GOST
@@ -2824,8 +2799,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-
-# ifndef OPENSSL_NO_EC
     {
      1,
      TLS1_TXT_ECDHE_PSK_WITH_RC4_128_SHA,
@@ -2890,9 +2863,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-# endif                         /* OPENSSL_NO_EC */
-
-# ifndef OPENSSL_NO_PSK
     {
      1,
      TLS1_TXT_PSK_WITH_RC4_128_SHA,
@@ -2941,8 +2911,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      128,
      128,
      },
-# endif                         /* OPENSSL_NO_PSK */
-
 #endif                          /* OPENSSL_NO_WEAK_SSL_CIPHERS */
 
 #ifndef OPENSSL_NO_ARIA
@@ -3074,7 +3042,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-
     {
      1,
      TLS1_TXT_ECDHE_RSA_WITH_ARIA_128_GCM_SHA256,
@@ -3171,7 +3138,6 @@ static SSL_CIPHER ssl3_ciphers[] = {
      256,
      256,
      },
-
     {
      1,
      TLS1_TXT_RSA_PSK_WITH_ARIA_128_GCM_SHA256,
@@ -3241,9 +3207,23 @@ static int cipher_compare(const void *a, const void *b)
 
 void ssl_sort_cipher_list(void)
 {
-    qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof ssl3_ciphers[0],
+    qsort(ssl3_ciphers, SSL3_NUM_CIPHERS, sizeof(ssl3_ciphers[0]),
           cipher_compare);
-    qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof ssl3_scsvs[0], cipher_compare);
+    qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
+}
+
+static int ssl_undefined_function_1(SSL *ssl, unsigned char *r, size_t s,
+                                    const char * t, size_t u,
+                                    const unsigned char * v, size_t w, int x)
+{
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
+    (void)v;
+    (void)w;
+    (void)x;
+    return ssl_undefined_function(ssl);
 }
 
 const SSL3_ENC_METHOD SSLv3_enc_data = {
@@ -3256,9 +3236,7 @@ const SSL3_ENC_METHOD SSLv3_enc_data = {
     SSL3_MD_CLIENT_FINISHED_CONST, 4,
     SSL3_MD_SERVER_FINISHED_CONST, 4,
     ssl3_alert_code,
-    (int (*)(SSL *, unsigned char *, size_t, const char *,
-             size_t, const unsigned char *, size_t,
-             int use_context))ssl_undefined_function,
+    ssl_undefined_function_1,
     0,
     ssl3_set_handshake_header,
     tls_close_construct_packet,
@@ -3346,6 +3324,7 @@ void ssl3_free(SSL *s)
     OPENSSL_free(s->s3->tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
+    OPENSSL_free(s->s3->tmp.peer_cert_sigalgs);
     ssl3_free_digest_list(s);
     OPENSSL_free(s->s3->alpn_selected);
     OPENSSL_free(s->s3->alpn_proposed);
@@ -3365,6 +3344,7 @@ int ssl3_clear(SSL *s)
     OPENSSL_free(s->s3->tmp.ciphers_raw);
     OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
     OPENSSL_free(s->s3->tmp.peer_sigalgs);
+    OPENSSL_free(s->s3->tmp.peer_cert_sigalgs);
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
     EVP_PKEY_free(s->s3->tmp.pkey);

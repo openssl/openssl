@@ -18,7 +18,7 @@ static int test_sanity_null_zero(void)
 
     /* Is NULL equivalent to all-bytes-zero? */
     p = NULL;
-    memset(bytes, 0, sizeof bytes);
+    memset(bytes, 0, sizeof(bytes));
     return TEST_mem_eq(&p, sizeof(p), bytes, sizeof(bytes));
 }
 

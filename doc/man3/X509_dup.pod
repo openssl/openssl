@@ -7,6 +7,10 @@ IMPLEMENT_ASN1_FUNCTIONS,
 ASN1_ITEM,
 ACCESS_DESCRIPTION_free,
 ACCESS_DESCRIPTION_new,
+ADMISSIONS_free,
+ADMISSIONS_new,
+ADMISSION_SYNTAX_free,
+ADMISSION_SYNTAX_new,
 ASIdOrRange_free,
 ASIdOrRange_new,
 ASIdentifierChoice_free,
@@ -75,6 +79,8 @@ ISSUING_DIST_POINT_free,
 ISSUING_DIST_POINT_new,
 NAME_CONSTRAINTS_free,
 NAME_CONSTRAINTS_new,
+NAMING_AUTHORITY_free,
+NAMING_AUTHORITY_new,
 NETSCAPE_CERT_SEQUENCE_free,
 NETSCAPE_CERT_SEQUENCE_new,
 NETSCAPE_SPKAC_free,
@@ -160,6 +166,10 @@ POLICY_CONSTRAINTS_free,
 POLICY_CONSTRAINTS_new,
 POLICY_MAPPING_free,
 POLICY_MAPPING_new,
+PROFESSION_INFO_free,
+PROFESSION_INFO_new,
+PROFESSION_INFOS_free,
+PROFESSION_INFOS_new,
 PROXY_CERT_INFO_EXTENSION_free,
 PROXY_CERT_INFO_EXTENSION_new,
 PROXY_POLICY_free,
@@ -294,7 +304,7 @@ TYPE_print_ctx() returns 1 on success or zero on failure.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

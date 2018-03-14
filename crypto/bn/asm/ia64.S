@@ -3,7 +3,7 @@
 .ident	"ia64.S, Version 2.1"
 .ident	"IA-64 ISA artwork by Andy Polyakov <appro@openssl.org>"
 
-// Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+// Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 //
 // Licensed under the OpenSSL license (the "License").  You may not use
 // this file except in compliance with the License.  You can obtain a copy
@@ -156,6 +156,9 @@
 #define	ADDP	addp4
 #else
 #define	ADDP	add
+#endif
+#ifdef __VMS
+.alias abort, "decc$abort"
 #endif
 
 #if 1
@@ -1428,6 +1431,7 @@ bn_div_words:
 	mov		ar.ec=0		// don't rotate at exit
 	mov		pr.rot=0	}
 { .mii;	mov		L=r33		// save l
+	mov		r25=r0		// needed if abort is called on VMS
 	mov		r36=r0		};;
 
 .L_divw_shift:	// -vv- note signed comparison

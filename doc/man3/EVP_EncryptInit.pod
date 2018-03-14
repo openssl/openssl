@@ -59,38 +59,39 @@ EVP_enc_null
  void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx);
 
  int EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                        ENGINE *impl, unsigned char *key, unsigned char *iv);
+                        ENGINE *impl, const unsigned char *key, const unsigned char *iv);
  int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        int *outl, const unsigned char *in, int inl);
  int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
  int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                        ENGINE *impl, unsigned char *key, unsigned char *iv);
+                        ENGINE *impl, const unsigned char *key, const unsigned char *iv);
  int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
                        int *outl, const unsigned char *in, int inl);
  int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                       ENGINE *impl, unsigned char *key, unsigned char *iv, int enc);
+                       ENGINE *impl, const unsigned char *key, const unsigned char *iv, int enc);
  int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                      int *outl, unsigned char *in, int inl);
+                      int *outl, const unsigned char *in, int inl);
  int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                     unsigned char *key, unsigned char *iv);
+                     const unsigned char *key, const unsigned char *iv);
  int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
  int EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                     unsigned char *key, unsigned char *iv);
+                     const unsigned char *key, const unsigned char *iv);
  int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-                    unsigned char *key, unsigned char *iv, int enc);
+                    const unsigned char *key, const unsigned char *iv, int enc);
  int EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
  int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *x, int padding);
  int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
  int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
+ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 
  const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
  const EVP_CIPHER *EVP_get_cipherbynid(int nid);
@@ -189,8 +190,7 @@ series of calls.
 
 EVP_EncryptInit(), EVP_DecryptInit() and EVP_CipherInit() behave in a
 similar way to EVP_EncryptInit_ex(), EVP_DecryptInit_ex() and
-EVP_CipherInit_ex() except the B<ctx> parameter does not need to be
-initialized and they always use the default cipher implementation.
+EVP_CipherInit_ex() except they always use the default cipher implementation.
 
 EVP_EncryptFinal(), EVP_DecryptFinal() and EVP_CipherFinal() are
 identical to EVP_EncryptFinal_ex(), EVP_DecryptFinal_ex() and
@@ -274,6 +274,11 @@ is not supported.
 EVP_CIPHER_CTX_ctrl() allows various cipher specific parameters to be determined
 and set.
 
+EVP_CIPHER_CTX_rand_key() generates a random key of the appropriate length
+based on the cipher context. The EVP_CIPHER can provide its own random key
+generation routine to support keys of a specific form. B<Key> must point to a
+buffer at least as big as the value returned by EVP_CIPHER_CTX_key_length().
+
 =head1 RETURN VALUES
 
 EVP_CIPHER_CTX_new() returns a pointer to a newly created
@@ -313,6 +318,8 @@ EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
 than zero for success and zero or a negative number.
+
+EVP_CIPHER_CTX_rand_key() returns 1 for success.
 
 =head1 CIPHER LISTING
 
@@ -449,6 +456,20 @@ C<taglen> must be between 1 and 16 (B<POLY1305_BLOCK_SIZE>) inclusive.
 This call is only valid when decrypting data.
 
 =back
+
+=head1 Random numbers
+
+The following can be used to select the DRBG that is used to generate the random
+numbers:
+
+EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_DRBG, 0, drbg)
+
+The following can be used to get the DRBG:
+
+EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GET_DRBG, 0, &drbg)
+
+By default it's set to NULL which results in RAND_bytes() being used.
+
 
 =head1 NOTES
 
@@ -635,7 +656,7 @@ EVP_CIPHER_CTX_reset().
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

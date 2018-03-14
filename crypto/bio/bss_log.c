@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -39,8 +39,6 @@ void *_malloc32(__size_t);
 #  endif                        /* __INITIAL_POINTER_SIZE == 64 */
 # endif                         /* __INITIAL_POINTER_SIZE && defined
                                  * _ANSI_C_SOURCE */
-#elif defined(OPENSSL_SYS_NETWARE)
-# define NO_SYSLOG
 #elif (!defined(MSDOS) || defined(WATT32)) && !defined(OPENSSL_SYS_VXWORKS) && !defined(NO_SYSLOG)
 # include <syslog.h>
 #endif
@@ -85,18 +83,19 @@ static void xsyslog(BIO *bp, int priority, const char *string);
 static void xcloselog(BIO *bp);
 
 static const BIO_METHOD methods_slg = {
-    BIO_TYPE_MEM, "syslog",
+    BIO_TYPE_MEM,
+    "syslog",
     /* TODO: Convert to new style write function */
     bwrite_conv,
     slg_write,
-    NULL,
-    NULL,
+    NULL,                      /* slg_write_old,    */
+    NULL,                      /* slg_read,         */
     slg_puts,
     NULL,
     slg_ctrl,
     slg_new,
     slg_free,
-    NULL,
+    NULL,                      /* slg_callback_ctrl */
 };
 
 const BIO_METHOD *BIO_s_log(void)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -551,7 +551,6 @@ int TS_CONF_set_ess_cert_id_chain(CONF *conf, const char *section,
                                   TS_RESP_CTX *ctx);
 int TS_CONF_set_ess_cert_id_digest(CONF *conf, const char *section,
                                       TS_RESP_CTX *ctx);
-int ERR_load_TS_strings(void);
 
 #  ifdef  __cplusplus
 }

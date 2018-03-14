@@ -73,7 +73,7 @@ EVP_CIPHER_meth_dup() creates a copy of B<cipher>.
 
 EVP_CIPHER_meth_free() destroys a B<EVP_CIPHER> structure.
 
-EVP_CIPHER_meth_iv_length() sets the length of the IV.
+EVP_CIPHER_meth_set_iv_length() sets the length of the IV.
 This is only needed when the implemented cipher mode requires it.
 
 EVP_CIPHER_meth_set_flags() sets the flags to describe optional

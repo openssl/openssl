@@ -7,7 +7,95 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.0f and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
+
+  *) On POSIX (BSD, Linux, ...) systems the ocsp(1) command running
+     in responder mode now supports the new "-multi" option, which
+     spawns the specified number of child processes to handle OCSP
+     requests.  The "-timeout" option now also limits the OCSP
+     responder's patience to wait to receive the full client request
+     on a newly accepted connection. Child processes are respawned
+     as needed, and the CA index file is automatically reloaded
+     when changed.  This makes it possible to run the "ocsp" responder
+     as a long-running service, making the OpenSSL CA somewhat more
+     feature-complete.  In this mode, most diagnostic messages logged
+     after entering the event loop are logged via syslog(3) rather than
+     written to stderr.
+     [Viktor Dukhovni]
+
+  *) Added support for X448 and Ed448. Heavily based on original work by
+     Mike Hamburg.
+     [Matt Caswell]
+
+  *) Extend OSSL_STORE with capabilities to search and to narrow the set of
+     objects loaded.  This adds the functions OSSL_STORE_expect() and
+     OSSL_STORE_find() as well as needed tools to construct searches and
+     get the search data out of them.
+     [Richard Levitte]
+
+  *) Support for TLSv1.3 added. Note that users upgrading from an earlier
+     version of OpenSSL should review their configuration settings to ensure
+     that they are still appropriate for TLSv1.3. In particular if no TLSv1.3
+     ciphersuites are enabled then OpenSSL will refuse to make a connection
+     unless (1) TLSv1.3 is explicitly disabled or (2) the ciphersuite
+     configuration is updated to include suitable ciphersuites. The DEFAULT
+     ciphersuite configuration does include TLSv1.3 ciphersuites. For further
+     information on this and other related issues please see:
+     https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
+
+     NOTE: In this pre-release of OpenSSL a draft version of the
+     TLSv1.3 standard has been implemented. Implementations of different draft
+     versions of the standard do not inter-operate, and this version will not
+     inter-operate with an implementation of the final standard when it is
+     eventually published. Different pre-release versions may implement
+     different versions of the draft. The final version of OpenSSL 1.1.1 will
+     implement the final version of the standard.
+     TODO(TLS1.3): Remove the above note before final release
+     [Matt Caswell]
+
+  *) Grand redesign of the OpenSSL random generator
+
+     The default RAND method now utilizes an AES-CTR DRBG according to
+     NIST standard SP 800-90Ar1. The new random generator is essentially
+     a port of the default random generator from the OpenSSL FIPS 2.0
+     object module. It is a hybrid deterministic random bit generator
+     using an AES-CTR bit stream and which seeds and reseeds itself
+     automatically using trusted system entropy sources.
+
+     Some of its new features are:
+      o Support for multiple DRBG instances with seed chaining.
+      o Add a public DRBG instance for the default RAND method.
+      o Add a dedicated DRBG instance for generating long term private keys.
+      o Make the DRBG instances fork-safe.
+      o Keep all global DRBG instances on the secure heap if it is enabled.
+      o Add a DRBG instance to every SSL instance for lock free operation
+        and to increase unpredictability.
+     [Paul Dale, Benjamin Kaduk, Kurt Roeckx, Rich Salz, Matthias St. Pierre]
+
+  *) Changed Configure so it only says what it does and doesn't dump
+     so much data.  Instead, ./configdata.pm should be used as a script
+     to display all sorts of configuration data.
+     [Richard Levitte]
+
+  *) Added processing of "make variables" to Configure.
+     [Richard Levitte]
+
+  *) Added SHA512/224 and SHA512/256 algorithm support.
+     [Paul Dale]
+
+  *) The last traces of Netware support, first removed in 1.1.0, have
+     now been removed.
+     [Rich Salz]
+
+  *) Get rid of Makefile.shared, and in the process, make the processing
+     of certain files (rc.obj, or the .def/.map/.opt files produced from
+     the ordinal files) more visible and hopefully easier to trace and
+     debug (or make silent).
+     [Richard Levitte]
+
+  *) Make it possible to have environment variable assignments as
+     arguments to config / Configure.
+     [Richard Levitte]
 
   *) Add multi-prime RSA (RFC 8017) support.
      [Paul Yang]
@@ -191,6 +279,10 @@
      [Rich Salz]
 
  Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
+
+  *) Removed the OS390-Unix config target.  It relied on a script that doesn't
+     exist.
+     [Rich Salz]
 
   *) rsaz_1024_mul_avx2 overflow bug on x86_64
 
@@ -2916,12 +3008,12 @@
      1. Do not use record version number > TLS 1.0 in initial client
         hello: some (but not all) hanging servers will now work.
      2. If we set OPENSSL_MAX_TLS1_2_CIPHER_LENGTH this will truncate
-	the number of ciphers sent in the client hello. This should be
+        the number of ciphers sent in the client hello. This should be
         set to an even number, such as 50, for example by passing:
         -DOPENSSL_MAX_TLS1_2_CIPHER_LENGTH=50 to config or Configure.
         Most broken servers should now work.
      3. If all else fails setting OPENSSL_NO_TLS1_2_CLIENT will disable
-	TLS 1.2 client support entirely.
+        TLS 1.2 client support entirely.
      [Steve Henson]
 
   *) Fix SEGV in Vector Permutation AES module observed in OpenSSH.
@@ -2958,12 +3050,12 @@
 
   *) Extensive assembler packs updates, most notably:
 
-	- x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
-	- x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
-	- x86_64:       bit-sliced AES implementation;
-	- ARM:          NEON support, contemporary platforms optimizations;
-	- s390x:        z196 support;
-	- *:            GHASH and GF(2^m) multiplication implementations;
+        - x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
+        - x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
+        - x86_64:       bit-sliced AES implementation;
+        - ARM:          NEON support, contemporary platforms optimizations;
+        - s390x:        z196 support;
+        - *:            GHASH and GF(2^m) multiplication implementations;
 
      [Andy Polyakov]
 
@@ -3182,8 +3274,11 @@
      to work with OPENSSL_NO_SSL_INTERN defined.
      [Steve Henson]
 
-  *) Add SRP support.
-     [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
+  *) A long standing patch to add support for SRP from EdelWeb (Peter
+     Sylvester and Christophe Renou) was integrated.
+     [Christophe Renou <christophe.renou@edelweb.fr>, Peter Sylvester
+     <peter.sylvester@edelweb.fr>, Tom Wu <tjw@cs.stanford.edu>, and
+     Ben Laurie]
 
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
@@ -3316,7 +3411,7 @@
   *) Add protection against ECDSA timing attacks as mentioned in the paper
      by Billy Bob Brumley and Nicola Tuveri, see:
 
-	http://eprint.iacr.org/2011/232.pdf
+        http://eprint.iacr.org/2011/232.pdf
 
      [Billy Bob Brumley and Nicola Tuveri]
 
@@ -5389,16 +5484,16 @@
      takes an extra flags argument for optional functionality.  Currently,
      the following flags are defined:
 
-	OBJ_BSEARCH_VALUE_ON_NOMATCH
-	This one gets OBJ_bsearch_ex() to return a pointer to the first
-	element where the comparing function returns a negative or zero
-	number.
+        OBJ_BSEARCH_VALUE_ON_NOMATCH
+        This one gets OBJ_bsearch_ex() to return a pointer to the first
+        element where the comparing function returns a negative or zero
+        number.
 
-	OBJ_BSEARCH_FIRST_VALUE_ON_MATCH
-	This one gets OBJ_bsearch_ex() to return a pointer to the first
-	element where the comparing function returns zero.  This is useful
-	if there are more than one element where the comparing function
-	returns zero.
+        OBJ_BSEARCH_FIRST_VALUE_ON_MATCH
+        This one gets OBJ_bsearch_ex() to return a pointer to the first
+        element where the comparing function returns zero.  This is useful
+        if there are more than one element where the comparing function
+        returns zero.
      [Richard Levitte]
 
   *) Make it possible to create self-signed certificates with 'openssl ca'
@@ -5545,8 +5640,8 @@
      is defined as follows (according to X.509_4thEditionDraftV6.pdf):
 
      CertificatePair ::= SEQUENCE {
-        forward		[0]	Certificate OPTIONAL,
-        reverse		[1]	Certificate OPTIONAL,
+        forward         [0]     Certificate OPTIONAL,
+        reverse         [1]     Certificate OPTIONAL,
         -- at least one of the pair shall be present -- }
 
      Also implement the PEM functions to read and write certificate
@@ -6548,15 +6643,15 @@
      build directory is the following (tested on Linux), maybe with
      some local tweaks:
 
-	# Place yourself outside of the OpenSSL source tree.  In
-	# this example, the environment variable OPENSSL_SOURCE
-	# is assumed to contain the absolute OpenSSL source directory.
-	mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
-	cd objtree/"`uname -s`-`uname -r`-`uname -m`"
-	(cd $OPENSSL_SOURCE; find . -type f) | while read F; do
-		mkdir -p `dirname $F`
-		ln -s $OPENSSL_SOURCE/$F $F
-	done
+        # Place yourself outside of the OpenSSL source tree.  In
+        # this example, the environment variable OPENSSL_SOURCE
+        # is assumed to contain the absolute OpenSSL source directory.
+        mkdir -p objtree/"`uname -s`-`uname -r`-`uname -m`"
+        cd objtree/"`uname -s`-`uname -r`-`uname -m`"
+        (cd $OPENSSL_SOURCE; find . -type f) | while read F; do
+                mkdir -p `dirname $F`
+                ln -s $OPENSSL_SOURCE/$F $F
+        done
 
      To be absolutely sure not to disturb the source tree, a "make clean"
      is a good thing.  If it isn't successful, don't worry about it,
@@ -7051,8 +7146,8 @@
 
          des_key_schedule ks;
 
-	 des_set_key_checked(..., &ks);
-	 des_ncbc_encrypt(..., &ks, ...);
+         des_set_key_checked(..., &ks);
+         des_ncbc_encrypt(..., &ks, ...);
 
      (Note that a later change renames 'des_...' into 'DES_...'.)
      [Ben Laurie]
@@ -7258,7 +7353,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
        '-pre' and '-post' switches. '-post' is only used if '-t' is
        specified and the ENGINE is successfully initialised. The syntax for
        the individual commands are colon-separated, for example;
-	 openssl engine chil -pre FORK_CHECK:0 -pre SO_PATH:/lib/test.so
+         openssl engine chil -pre FORK_CHECK:0 -pre SO_PATH:/lib/test.so
      [Geoff]
 
   *) New dynamic control command support for ENGINEs. ENGINEs can now
@@ -7446,16 +7541,16 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      To implement a global variable, use the macro OPENSSL_IMPLEMENT_GLOBAL
      in the source file (foo.c) like this:
 
-	OPENSSL_IMPLEMENT_GLOBAL(int,foo)=1;
-	OPENSSL_IMPLEMENT_GLOBAL(double,bar);
+        OPENSSL_IMPLEMENT_GLOBAL(int,foo)=1;
+        OPENSSL_IMPLEMENT_GLOBAL(double,bar);
 
      To declare a global variable, use the macros OPENSSL_DECLARE_GLOBAL
      and OPENSSL_GLOBAL_REF in the header file (foo.h) like this:
 
-	OPENSSL_DECLARE_GLOBAL(int,foo);
-	#define foo OPENSSL_GLOBAL_REF(foo)
-	OPENSSL_DECLARE_GLOBAL(double,bar);
-	#define bar OPENSSL_GLOBAL_REF(bar)
+        OPENSSL_DECLARE_GLOBAL(int,foo);
+        #define foo OPENSSL_GLOBAL_REF(foo)
+        OPENSSL_DECLARE_GLOBAL(double,bar);
+        #define bar OPENSSL_GLOBAL_REF(bar)
 
      The #defines are very important, and therefore so is including the
      header file everywhere where the defined globals are used.
@@ -7659,7 +7754,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      to data. This was previously part of the PKCS7 ASN1 code. This
      was causing problems with OpenSSL created PKCS#12 and PKCS#7 structures.
      [Steve Henson, reported by Kenneth R. Robinette
-				<support@securenetterm.com>]
+                                <support@securenetterm.com>]
 
   *) Add CRYPTO_push_info() and CRYPTO_pop_info() calls to new ASN1
      routines: without these tracing memory leaks is very painful.
@@ -7673,7 +7768,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      and use ASN1_TIME_set() if the value is not V_ASN1_UTCTIME or
      V_ASN1_GENERALIZEDTIME, without this it always uses GeneralizedTime.
      [Steve Henson, reported by Kenneth R. Robinette
-				<support@securenetterm.com>]
+                                <support@securenetterm.com>]
 
   *) Fixes to BN_to_ASN1_INTEGER when bn is zero. This would previously
      result in a zero length in the ASN1_INTEGER structure which was
@@ -7758,10 +7853,10 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      settings for extended allocation functions, the following
      functions are provided:
 
-	CRYPTO_set_mem_ex_functions
-	CRYPTO_set_locked_mem_ex_functions
-	CRYPTO_get_mem_ex_functions
-	CRYPTO_get_locked_mem_ex_functions
+        CRYPTO_set_mem_ex_functions
+        CRYPTO_set_locked_mem_ex_functions
+        CRYPTO_get_mem_ex_functions
+        CRYPTO_get_locked_mem_ex_functions
 
      These work the same way as CRYPTO_set_mem_functions and friends.
      CRYPTO_get_[locked_]mem_functions now writes 0 where such an
@@ -8102,11 +8197,11 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
   *) Add the following functions:
 
-	ENGINE_load_cswift()
-	ENGINE_load_chil()
-	ENGINE_load_atalla()
-	ENGINE_load_nuron()
-	ENGINE_load_builtin_engines()
+        ENGINE_load_cswift()
+        ENGINE_load_chil()
+        ENGINE_load_atalla()
+        ENGINE_load_nuron()
+        ENGINE_load_builtin_engines()
 
      That way, an application can itself choose if external engines that
      are built-in in OpenSSL shall ever be used or not.  The benefit is
@@ -8355,8 +8450,8 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Fix ASN1 checks. Check for overflow by comparing with LONG_MAX
      and get fix the header length calculation.
      [Florian Weimer <Weimer@CERT.Uni-Stuttgart.DE>,
-	Alon Kantor <alonk@checkpoint.com> (and others),
-	Steve Henson]
+        Alon Kantor <alonk@checkpoint.com> (and others),
+        Steve Henson]
 
   *) Use proper error handling instead of 'assertions' in buffer
      overflow checks added in 0.9.6e.  This prevents DoS (the
@@ -9426,27 +9521,27 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) Added BIO_vprintf() and BIO_vsnprintf().
      [Richard Levitte]
 
-  *) Added more prefixes to parse for in the the strings written
+  *) Added more prefixes to parse for in the strings written
      through a logging bio, to cover all the levels that are available
      through syslog.  The prefixes are now:
 
-	PANIC, EMERG, EMR	=>	LOG_EMERG
-	ALERT, ALR		=>	LOG_ALERT
-	CRIT, CRI		=>	LOG_CRIT
-	ERROR, ERR		=>	LOG_ERR
-	WARNING, WARN, WAR	=>	LOG_WARNING
-	NOTICE, NOTE, NOT	=>	LOG_NOTICE
-	INFO, INF		=>	LOG_INFO
-	DEBUG, DBG		=>	LOG_DEBUG
+        PANIC, EMERG, EMR       =>      LOG_EMERG
+        ALERT, ALR              =>      LOG_ALERT
+        CRIT, CRI               =>      LOG_CRIT
+        ERROR, ERR              =>      LOG_ERR
+        WARNING, WARN, WAR      =>      LOG_WARNING
+        NOTICE, NOTE, NOT       =>      LOG_NOTICE
+        INFO, INF               =>      LOG_INFO
+        DEBUG, DBG              =>      LOG_DEBUG
 
      and as before, if none of those prefixes are present at the
      beginning of the string, LOG_ERR is chosen.
 
      On Win32, the LOG_* levels are mapped according to this:
 
-	LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR	=> EVENTLOG_ERROR_TYPE
-	LOG_WARNING				=> EVENTLOG_WARNING_TYPE
-	LOG_NOTICE, LOG_INFO, LOG_DEBUG		=> EVENTLOG_INFORMATION_TYPE
+        LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR => EVENTLOG_ERROR_TYPE
+        LOG_WARNING                             => EVENTLOG_WARNING_TYPE
+        LOG_NOTICE, LOG_INFO, LOG_DEBUG         => EVENTLOG_INFORMATION_TYPE
 
      [Richard Levitte]
 
@@ -10491,9 +10586,9 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
      With these changes, a new set of functions and macros have appeared:
 
-       CRYPTO_set_mem_debug_functions()	        [F]
+       CRYPTO_set_mem_debug_functions()         [F]
        CRYPTO_get_mem_debug_functions()         [F]
-       CRYPTO_dbg_set_options()	                [F]
+       CRYPTO_dbg_set_options()                 [F]
        CRYPTO_dbg_get_options()                 [F]
        CRYPTO_malloc_debug_init()               [M]
 
@@ -11171,7 +11266,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      delete an unused file.
      [Ulf Möller]
 
-  *) Add support for the the free Netwide assembler (NASM) under Win32,
+  *) Add support for the free Netwide assembler (NASM) under Win32,
      since not many people have MASM (ml) and it can be hard to obtain.
      This is currently experimental but it seems to work OK and pass all
      the tests. Check out INSTALL.W32 for info.

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -623,7 +623,11 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
     top = m->top;
 
-    bits = BN_num_bits(p);
+    /*
+     * Use all bits stored in |p|, rather than |BN_num_bits|, so we do not leak
+     * whether the top bits are zero.
+     */
+    bits = p->top * BN_BITS2;
     if (bits == 0) {
         /* x**0 mod 1 is still zero. */
         if (BN_is_one(m)) {

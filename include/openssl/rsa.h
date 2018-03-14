@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -496,7 +496,6 @@ int RSA_meth_set_multi_prime_keygen(RSA_METHOD *meth,
                                     int (*keygen) (RSA *rsa, int bits,
                                                    int primes, BIGNUM *e,
                                                    BN_GENCB *cb));
-int ERR_load_RSA_strings(void);
 
 #  ifdef  __cplusplus
 }

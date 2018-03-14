@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,12 @@
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
 # include <assert.h>
+
+# include <sys/types.h>
+# ifndef OPENSSL_NO_POSIX_IO
+#  include <sys/stat.h>
+#  include <fcntl.h>
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/ossl_typ.h>
@@ -46,12 +52,29 @@ extern BIO *bio_out;
 extern BIO *bio_err;
 extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
+extern BIO_ADDR *ourpeer;
+
+BIO_METHOD *apps_bf_prefix(void);
+/*
+ * The control used to set the prefix with BIO_ctrl()
+ * We make it high enough so the chance of ever clashing with the BIO library
+ * remains unlikely for the foreseeable future and beyond.
+ */
+#define PREFIX_CTRL_SET_PREFIX  (1 << 15)
+/*
+ * apps_bf_prefix() returns a dynamically created BIO_METHOD, which we
+ * need to destroy at some point.  When created internally, it's stored
+ * in an internal pointer which can be freed with the following function
+ */
+void destroy_prefix_method(void);
+
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
+CONF *app_load_config_bio(BIO *in, const char *filename);
 CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
@@ -208,7 +231,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
-        OPT_S_NO_RENEGOTIATION, OPT_S__LAST
+        OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
@@ -253,7 +276,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
-            "Perform all sorts of protocol violations for testing purposes"}
+            "Perform all sorts of protocol violations for testing purposes"}, \
+        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', "Disable TLSv1.3 middlebox compat mode" }
 
 
 # define OPT_S_CASES \
@@ -283,7 +307,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_CIPHER: \
         case OPT_S_RECORD_PADDING: \
         case OPT_S_NO_RENEGOTIATION: \
-        case OPT_S_DEBUGBROKE
+        case OPT_S_DEBUGBROKE: \
+        case OPT_S_NO_MIDDLEBOX
 
 #define IS_NO_PROT_FLAG(o) \
  (o == OPT_S_NOSSL3 || o == OPT_S_NOTLS1 || o == OPT_S_NOTLS1_1 \
@@ -490,6 +515,10 @@ typedef struct db_attr_st {
 typedef struct ca_db_st {
     DB_ATTR attributes;
     TXT_DB *db;
+    char *dbfname;
+# ifndef OPENSSL_NO_POSIX_IO
+    struct stat dbst;
+# endif
 } CA_DB;
 
 void* app_malloc(int sz, const char *what);
@@ -575,6 +604,7 @@ void store_setup_crl_download(X509_STORE *st);
 
 int app_isdir(const char *);
 int app_access(const char *, int flag);
+char *app_dirname(char *path);
 int fileno_stdin(void);
 int fileno_stdout(void);
 int raw_read_stdin(void *, int);
@@ -594,7 +624,5 @@ typedef struct verify_options_st {
 } VERIFY_CB_ARGS;
 
 extern VERIFY_CB_ARGS verify_args;
-
-# include "progs.h"
 
 #endif

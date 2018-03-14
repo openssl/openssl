@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <stdlib.h>
 # include <string.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/crypto.h>
 # include <openssl/err.h>
 # include <openssl/pem.h>
@@ -319,8 +320,8 @@ int pkcs12_main(int argc, char **argv)
         /* To avoid bit rot */
         if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
-            if (EVP_read_pw_string
-                (macpass, sizeof macpass, "Enter MAC Password:", export_cert)) {
+            if (EVP_read_pw_string(
+                macpass, sizeof(macpass), "Enter MAC Password:", export_cert)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
             }
@@ -438,8 +439,8 @@ int pkcs12_main(int argc, char **argv)
             /* To avoid bit rot */
             if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
-                if (EVP_read_pw_string(pass, sizeof pass, "Enter Export Password:",
-                                       1)) {
+                if (EVP_read_pw_string(pass, sizeof(pass),
+                                       "Enter Export Password:", 1)) {
                     BIO_printf(bio_err, "Can't read Password\n");
                     goto export_end;
                 }
@@ -504,7 +505,7 @@ int pkcs12_main(int argc, char **argv)
     if (!noprompt) {
         if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
-            if (EVP_read_pw_string(pass, sizeof pass, "Enter Import Password:",
+            if (EVP_read_pw_string(pass, sizeof(pass), "Enter Import Password:",
                                    0)) {
                 BIO_printf(bio_err, "Can't read Password\n");
                 goto end;
@@ -517,7 +518,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     if (!twopass)
-        OPENSSL_strlcpy(macpass, pass, sizeof macpass);
+        OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
     if ((options & INFO) && PKCS12_mac_present(p12)) {
         const ASN1_INTEGER *tmaciter;

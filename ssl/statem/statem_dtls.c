@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -374,6 +374,15 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
     if (s->version != DTLS1_BAD_VER) {
         p -= DTLS1_HM_HEADER_LENGTH;
         msg_len += DTLS1_HM_HEADER_LENGTH;
+    }
+
+    /*
+     * If receiving Finished, record MAC of prior handshake messages for
+     * Finished verification.
+     */
+    if (*mt == SSL3_MT_FINISHED && !ssl3_take_mac(s)) {
+        /* SSLfatal() already called */
+        return 0;
     }
 
     if (!ssl3_finish_mac(s, p, msg_len))
@@ -944,7 +953,7 @@ int dtls1_read_failed(SSL *s, int code)
         return 0;
     }
 
-    if (!dtls1_is_timer_expired(s)) {
+    if (!dtls1_is_timer_expired(s) || ossl_statem_in_error(s)) {
         /*
          * not a timeout, none of our business, let higher layers handle
          * this.  in fact it's probably an error

@@ -28,6 +28,7 @@ B<openssl> B<ocsp>
 [B<-no_nonce>]
 [B<-url URL>]
 [B<-host host:port>]
+[B<-multi process-count>]
 [B<-header>]
 [B<-path>]
 [B<-CApath dir>]
@@ -81,6 +82,7 @@ B<openssl> B<ocsp>
 [B<-rsigner file>]
 [B<-rkey file>]
 [B<-rother file>]
+[B<-rsigopt nm:v>]
 [B<-resp_no_certs>]
 [B<-nmin n>]
 [B<-ndays n>]
@@ -186,7 +188,22 @@ This may be repeated.
 
 =item B<-timeout seconds>
 
-Connection timeout to the OCSP responder in seconds
+Connection timeout to the OCSP responder in seconds.
+On POSIX systems, when running as an OCSP responder, this option also limits
+the time that the responder is willing to wait for the client request.
+This time is measured from the time the responder accepts the connection until
+the complete request is received.
+
+=item B<-multi process-count>
+
+Run the specified number of OCSP responder child processes, with the parent
+process respawning child processes as needed.
+Child processes will detect changes in the CA index file and automatically
+reload it.
+When running as a responder B<-timeout> option is recommended to limit the time
+each child is willing to wait for the client's OCSP response.
+This option is available on POSIX systems (that support the fork() and other
+required unix system-calls).
 
 =item B<-CAfile file>, B<-CApath pathname>
 
@@ -340,6 +357,11 @@ subject name.
 The private key to sign OCSP responses with: if not present the file
 specified in the B<rsigner> option is used.
 
+=item B<-rsigopt nm:v>
+
+Pass options to the signature algorithm when signing OCSP responses.
+Names and values of these options are algorithm-specific.
+
 =item B<-port portnum>
 
 Port to listen for OCSP requests on. The port may also be specified
@@ -468,7 +490,7 @@ The -no_alt_chains options was first added to OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

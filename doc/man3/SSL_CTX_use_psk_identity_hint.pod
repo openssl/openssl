@@ -16,15 +16,20 @@ SSL_set_psk_find_session_callback
 
  #include <openssl/ssl.h>
 
- typedef unsigned int (*SSL_psk_server_cb_func)(SSL *ssl,
-                                                const char *identity,
-                                                unsigned char *psk,
-                                                unsigned int max_psk_len);
-
  typedef int (*SSL_psk_find_session_cb_func)(SSL *ssl,
                                              const unsigned char *identity,
                                              size_t identity_len,
                                              SSL_SESSION **sess);
+
+
+ void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
+                                            SSL_psk_find_session_cb_func cb);
+ void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb);
+
+ typedef unsigned int (*SSL_psk_server_cb_func)(SSL *ssl,
+                                                const char *identity,
+                                                unsigned char *psk,
+                                                unsigned int max_psk_len);
 
  int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *hint);
  int SSL_use_psk_identity_hint(SSL *ssl, const char *hint);
@@ -32,36 +37,9 @@ SSL_set_psk_find_session_callback
  void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, SSL_psk_server_cb_func cb);
  void SSL_set_psk_server_callback(SSL *ssl, SSL_psk_server_cb_func cb);
 
- void SSL_CTX_set_psk_find_session_callback(SSL_CTX *ctx,
-                                            SSL_psk_find_session_cb_func cb);
- void SSL_set_psk_find_session_callback(SSL *s, SSL_psk_find_session_cb_func cb);
-
 =head1 DESCRIPTION
 
-TLSv1.3 Pre-Shared Keys (PSKs) and PSKs for TLSv1.2 and below are not
-compatible.
-
-Identity hints are not relevant for TLSv1.3. A server application wishing to use
-PSK ciphersuites for TLSv1.2 and below may call SSL_CTX_use_psk_identity_hint()
-to set the given B<NUL>-terminated PSK identity hint B<hint> for SSL context
-object B<ctx>. SSL_use_psk_identity_hint() sets the given B<NUL>-terminated PSK
-identity hint B<hint> for the SSL connection object B<ssl>. If B<hint> is
-B<NULL> the current hint from B<ctx> or B<ssl> is deleted.
-
-In the case where PSK identity hint is B<NULL>, the server does not send the
-ServerKeyExchange message to the client.
-
-A server application for TLSv1.2 and below must provide a callback function
-which is called when the server receives the ClientKeyExchange message from the
-client. The purpose of the callback function is to validate the
-received PSK identity and to fetch the pre-shared key used during the
-connection setup phase. The callback is set using the functions
-SSL_CTX_set_psk_server_callback() or SSL_set_psk_server_callback(). The callback
-function is given the connection in parameter B<ssl>, B<NUL>-terminated PSK
-identity sent by the client in parameter B<identity>, and a buffer B<psk> of
-length B<max_psk_len> bytes where the pre-shared key is to be stored.
-
-A client application wishing to use TLSv1.3 PSKs must set a different callback
+A client application wishing to use TLSv1.3 PSKs should set a callback
 using either SSL_CTX_set_psk_use_session_callback() or
 SSL_set_psk_use_session_callback() as appropriate.
 
@@ -76,6 +54,36 @@ It is also possible for the callback to succeed but not supply a PSK. In this
 case no PSK will be used but the handshake will continue. To do this the
 callback should return successfully and ensure that B<*sess> is
 NULL.
+
+Identity hints are not relevant for TLSv1.3. A server application wishing to use
+PSK ciphersuites for TLSv1.2 and below may call SSL_CTX_use_psk_identity_hint()
+to set the given B<NUL>-terminated PSK identity hint B<hint> for SSL context
+object B<ctx>. SSL_use_psk_identity_hint() sets the given B<NUL>-terminated PSK
+identity hint B<hint> for the SSL connection object B<ssl>. If B<hint> is
+B<NULL> the current hint from B<ctx> or B<ssl> is deleted.
+
+In the case where PSK identity hint is B<NULL>, the server does not send the
+ServerKeyExchange message to the client.
+
+A server application wishing to use PSKs for TLSv1.2 and below must provide a
+callback function which is called when the server receives the
+ClientKeyExchange message from the client. The purpose of the callback function
+is to validate the received PSK identity and to fetch the pre-shared key used
+during the connection setup phase. The callback is set using the functions
+SSL_CTX_set_psk_server_callback() or SSL_set_psk_server_callback(). The callback
+function is given the connection in parameter B<ssl>, B<NUL>-terminated PSK
+identity sent by the client in parameter B<identity>, and a buffer B<psk> of
+length B<max_psk_len> bytes where the pre-shared key is to be stored.
+
+The callback for use in TLSv1.2 will also work in TLSv1.3 although it is
+recommended to use SSL_CTX_set_psk_find_session_callback()
+or SSL_set_psk_find_session_callback() for this purpose instead. If TLSv1.3 has
+been negotiated then OpenSSL will first check to see if a callback has been set
+via SSL_CTX_set_psk_find_session_callback() or SSL_set_psk_find_session_callback()
+and it will use that in preference. If no such callback is present then it will
+check to see if a callback has been set via SSL_CTX_set_psk_server_callback() or
+SSL_set_psk_server_callback() and use that. In this case the handshake digest
+will default to SHA-256 for any returned PSK.
 
 =head1 NOTES
 

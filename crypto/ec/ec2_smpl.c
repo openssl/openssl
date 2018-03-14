@@ -603,9 +603,9 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     if (!BN_GF2m_add(lh, lh, y2))
         goto err;
     ret = BN_is_zero(lh);
+
  err:
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }
@@ -656,8 +656,7 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
     ret = ((BN_cmp(aX, bX) == 0) && BN_cmp(aY, bY) == 0) ? 0 : 1;
 
  err:
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }
@@ -698,8 +697,7 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
     ret = 1;
 
  err:
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }

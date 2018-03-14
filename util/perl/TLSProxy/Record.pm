@@ -1,4 +1,4 @@
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,7 @@ my %record_type = (
 
 use constant {
     VERS_TLS_1_4 => 0x0305,
-    VERS_TLS_1_3_DRAFT => 0x7f15,
+    VERS_TLS_1_3_DRAFT => 0x7f17,
     VERS_TLS_1_3 => 0x0304,
     VERS_TLS_1_2 => 0x0303,
     VERS_TLS_1_1 => 0x0302,
@@ -109,19 +109,21 @@ sub get_records
                 substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
             );
 
-            if (($server && $server_encrypting)
-                     || (!$server && $client_encrypting)) {
-                if (!TLSProxy::Proxy->is_tls13() && $etm) {
-                    $record->decryptETM();
-                } else {
-                    $record->decrypt();
-                }
-                $record->encrypted(1);
-            }
+            if ($content_type != RT_CCS) {
+                if (($server && $server_encrypting)
+                         || (!$server && $client_encrypting)) {
+                    if (!TLSProxy::Proxy->is_tls13() && $etm) {
+                        $record->decryptETM();
+                    } else {
+                        $record->decrypt();
+                    }
+                    $record->encrypted(1);
 
-            if (TLSProxy::Proxy->is_tls13()) {
-                print "  Inner content type: "
-                      .$record_type{$record->content_type()}."\n";
+                    if (TLSProxy::Proxy->is_tls13()) {
+                        print "  Inner content type: "
+                              .$record_type{$record->content_type()}."\n";
+                    }
+                }
             }
 
             push @record_list, $record;
@@ -284,15 +286,13 @@ sub reconstruct_record
     my $self = shift;
     my $server = shift;
     my $data;
-    my $tls13_enc = 0;
 
     if ($self->sslv2) {
         $data = pack('n', $self->len | 0x8000);
     } else {
         if (TLSProxy::Proxy->is_tls13() && $self->encrypted) {
             $data = pack('Cnn', $self->outer_content_type, $self->version,
-                         $self->len + 1);
-            $tls13_enc = 1;
+                         $self->len);
         } else {
             $data = pack('Cnn', $self->content_type, $self->version,
                          $self->len);
@@ -300,10 +300,6 @@ sub reconstruct_record
 
     }
     $data .= $self->data;
-
-    if ($tls13_enc) {
-        $data .= pack('C', $self->content_type);
-    }
 
     return $data;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,7 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
+                const char *bindhost, const char *bindport,
                 int family, int type, int protocol);
 int should_retry(int i);
 
@@ -56,6 +57,11 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len);
 int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len);
+
+int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
+                                       size_t *cookie_len);
+int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cookie,
+                                     size_t cookie_len);
 
 typedef struct ssl_excert_st SSL_EXCERT;
 

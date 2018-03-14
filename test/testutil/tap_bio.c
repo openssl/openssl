@@ -18,7 +18,7 @@ static int tap_gets(BIO *b, char *str, int size);
 static long tap_ctrl(BIO *b, int cmd, long arg1, void *arg2);
 static int tap_new(BIO *b);
 static int tap_free(BIO *b);
-static long tap_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long tap_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 const BIO_METHOD *BIO_f_tap(void)
 {
@@ -134,7 +134,7 @@ static long tap_ctrl(BIO *b, int cmd, long num, void *ptr)
     return BIO_ctrl(next, cmd, num, ptr);
 }
 
-static long tap_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long tap_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     return BIO_callback_ctrl(BIO_next(b), cmd, fp);
 }

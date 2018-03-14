@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -71,12 +71,9 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
     STACK_OF(RSA_PRIME_INFO) *prime_infos = NULL;
     BN_CTX *ctx = NULL;
     BN_ULONG bitst = 0;
+    unsigned long error = 0;
 
-    /*
-     * When generating ridiculously small keys, we can get stuck
-     * continually regenerating the same prime values.
-     */
-    if (bits < 16) {
+    if (bits < RSA_MIN_MODULUS_BITS) {
         ok = 0;             /* we set our own err */
         RSAerr(RSA_F_RSA_BUILTIN_KEYGEN, RSA_R_KEY_SIZE_TOO_SMALL);
         goto err;
@@ -190,10 +187,20 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
             }
             if (!BN_sub(r2, prime, BN_value_one()))
                 goto err;
-            if (!BN_gcd(r1, r2, rsa->e, ctx))
-                goto err;
-            if (BN_is_one(r1))
+            ERR_set_mark();
+            BN_set_flags(r2, BN_FLG_CONSTTIME);
+            if (BN_mod_inverse(r1, r2, rsa->e, ctx) != NULL) {
+               /* GCD == 1 since inverse exists */
                 break;
+            }
+            error = ERR_peek_last_error();
+            if (ERR_GET_LIB(error) == ERR_LIB_BN
+                && ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
+                /* GCD != 1 */
+                ERR_pop_to_mark();
+            } else {
+                goto err;
+            }
             if (!BN_GENCB_call(cb, 2, n++))
                 goto err;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -30,6 +30,7 @@ typedef unsigned int u_int;
 #endif
 
 #include "apps.h"
+#include "progs.h"
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -196,19 +197,13 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
             return 0;
         }
 
-        if (key_len == EVP_MD_size(EVP_sha256()))
-            cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
-        else if (key_len == EVP_MD_size(EVP_sha384()))
-            cipher = SSL_CIPHER_find(s, tls13_aes256gcmsha384_id);
-
+        /* We default to SHA-256 */
+        cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
         if (cipher == NULL) {
-            /* Doesn't look like a suitable TLSv1.3 key. Ignore it */
-            OPENSSL_free(key);
-            *id = NULL;
-            *idlen = 0;
-            *sess = NULL;
+            BIO_printf(bio_err, "Error finding suitable ciphersuite\n");
             return 0;
         }
+
         usesess = SSL_SESSION_new();
         if (usesess == NULL
                 || !SSL_SESSION_set1_master_key(usesess, key, key_len)
@@ -569,7 +564,7 @@ static int tlsa_import_rrset(SSL *con, STACK_OF(OPENSSL_STRING) *rrset)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_UNIX,
+    OPT_4, OPT_6, OPT_HOST, OPT_PORT, OPT_CONNECT, OPT_BIND, OPT_UNIX,
     OPT_XMPPHOST, OPT_VERIFY, OPT_NAMEOPT,
     OPT_CERT, OPT_CRL, OPT_CRL_DOWNLOAD, OPT_SESS_OUT, OPT_SESS_IN,
     OPT_CERTFORM, OPT_CRLFORM, OPT_VERIFY_RET_ERROR, OPT_VERIFY_QUIET,
@@ -601,6 +596,7 @@ typedef enum OPTION_choice {
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
+    OPT_FORCE_PHA,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -610,6 +606,7 @@ const OPTIONS s_client_options[] = {
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
      "TCP/IP where to connect (default is :" PORT ")"},
+    {"bind", OPT_BIND, 's', "bind local address for connection"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
 #ifdef AF_UNIX
@@ -787,6 +784,7 @@ const OPTIONS s_client_options[] = {
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
+    {"force_pha", OPT_FORCE_PHA, '-', "Force-enable post-handshake-authentication"},
     {NULL, OPT_EOF, 0x00, NULL}
 };
 
@@ -881,10 +879,11 @@ int s_client_main(int argc, char **argv)
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL;
     char *cbuf = NULL, *sbuf = NULL;
-    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL;
+    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
+    char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
     char *ReqCAfile = NULL;
     char *sess_in = NULL, *crl_file = NULL, *p;
@@ -957,6 +956,7 @@ int s_client_main(int argc, char **argv)
     int isdtls = 0;
 #endif
     char *psksessf = NULL;
+    int force_pha = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1048,6 +1048,9 @@ int s_client_main(int argc, char **argv)
         case OPT_CONNECT:
             connect_type = use_inet;
             freeandcopy(&connectstr, opt_arg());
+            break;
+        case OPT_BIND:
+            freeandcopy(&bindstr, opt_arg());
             break;
         case OPT_PROXY:
             proxystr = opt_arg();
@@ -1468,6 +1471,9 @@ int s_client_main(int argc, char **argv)
         case OPT_EARLY_DATA:
             early_data_file = opt_arg();
             break;
+        case OPT_FORCE_PHA:
+            force_pha = 1;
+            break;
         }
     }
     if (count4or6 >= 2) {
@@ -1542,6 +1548,18 @@ int s_client_main(int argc, char **argv)
         if (!res) {
             BIO_printf(bio_err,
                        "%s: -connect argument or target parameter malformed or ambiguous\n",
+                       prog);
+            goto end;
+        }
+    }
+
+    if (bindstr != NULL) {
+        int res;
+        res = BIO_parse_hostserv(bindstr, &bindhost, &bindport,
+                                 BIO_PARSE_PRIO_HOST);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -bind argument parameter malformed or ambiguous\n",
                        prog);
             goto end;
         }
@@ -1903,6 +1921,9 @@ int s_client_main(int argc, char **argv)
     if (con == NULL)
         goto end;
 
+    if (force_pha)
+        SSL_force_post_handshake_auth(con);
+
     if (sess_in != NULL) {
         SSL_SESSION *sess;
         BIO *stmp = BIO_new_file(sess_in, "r");
@@ -1966,8 +1987,8 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-    if (init_client(&s, host, port, socket_family, socket_type, protocol)
-            == 0) {
+    if (init_client(&s, host, port, bindhost, bindport, socket_family,
+                    socket_type, protocol) == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(s);
         goto end;
@@ -3025,7 +3046,7 @@ int s_client_main(int argc, char **argv)
     if (in_init)
         print_stuff(bio_c_out, con, full_log);
     do_ssl_shutdown(con);
-#if defined(OPENSSL_SYS_WINDOWS)
+
     /*
      * Give the socket time to send its last data before we close it.
      * No amount of setting SO_LINGER etc on the socket seems to persuade
@@ -3033,8 +3054,23 @@ int s_client_main(int argc, char **argv)
      * for a short time seems to do it (units in ms)
      * TODO: Find a better way to do this
      */
+#if defined(OPENSSL_SYS_WINDOWS)
     Sleep(50);
+#elif defined(OPENSSL_SYS_CYGWIN)
+    usleep(50000);
 #endif
+
+    /*
+     * If we ended with an alert being sent, but still with data in the
+     * network buffer to be read, then calling BIO_closesocket() will
+     * result in a TCP-RST being sent. On some platforms (notably
+     * Windows) then this will result in the peer immediately abandoning
+     * the connection including any buffered alert data before it has
+     * had a chance to be read. Shutting down the sending side first,
+     * and then closing the socket sends TCP-FIN first followed by
+     * TCP-RST. This seems to allow the peer to read the alert data.
+     */
+    shutdown(SSL_get_fd(con), 1); /* SHUT_WR */
     BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
@@ -3057,6 +3093,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(srp_arg.srppassin);
 #endif
     OPENSSL_free(connectstr);
+    OPENSSL_free(bindstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
     X509_VERIFY_PARAM_free(vpm);

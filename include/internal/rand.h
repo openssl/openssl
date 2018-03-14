@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,24 +10,33 @@
 #ifndef HEADER_DRBG_RAND_H
 # define HEADER_DRBG_RAND_H
 
-/* In CTR mode, use derivation function ctr_df */
-#define RAND_DRBG_FLAG_CTR_USE_DF            0x2
+/* In CTR mode, disable derivation function ctr_df */
+#define RAND_DRBG_FLAG_CTR_NO_DF            0x1
 
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])
- * of the default OpenSSL DRBG, and the corresponding NID.
  *
- * Currently supported values: 128, 192, 256
+ * NIST SP 800-90Ar1 supports the strength of the DRBG being smaller than that
+ * of the cipher by collecting less entropy. The current DRBG implemantion does
+ * not take RAND_DRBG_STRENGTH into account and sets the strength of the DRBG
+ * to that of the cipher.
  *
- * TODO(DRBG): would be nice to have the strength configurable
+ * RAND_DRBG_STRENGTH is currently only used for the legacy RAND
+ * implementation.
+ *
+ * Currently supported ciphers are: NID_aes_128_ctr, NID_aes_192_ctr and
+ * NID_aes_256_ctr
+ *
+ * TODO(DRBG): would be nice to have the NID and strength configurable
  */
-# define RAND_DRBG_STRENGTH             128
-# define RAND_DRBG_NID                  NID_aes_128_ctr
+# define RAND_DRBG_STRENGTH             256
+# define RAND_DRBG_NID                  NID_aes_256_ctr
 
 /*
  * Object lifetime functions.
  */
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
+RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
 int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags);
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen);
@@ -42,9 +51,21 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
                        int prediction_resistance,
                        const unsigned char *adin, size_t adinlen);
-int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, int interval);
-RAND_DRBG *RAND_DRBG_get0_global(void);
-RAND_DRBG *RAND_DRBG_get0_priv_global(void);
+int RAND_DRBG_bytes(RAND_DRBG *drbg, unsigned char *out, size_t outlen);
+
+int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval);
+int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval);
+
+int RAND_DRBG_set_reseed_defaults(
+                                  unsigned int master_reseed_interval,
+                                  unsigned int slave_reseed_interval,
+                                  time_t master_reseed_time_interval,
+                                  time_t slave_reseed_time_interval
+                                  );
+
+RAND_DRBG *RAND_DRBG_get0_master(void);
+RAND_DRBG *RAND_DRBG_get0_public(void);
+RAND_DRBG *RAND_DRBG_get0_private(void);
 
 /*
  * EXDATA

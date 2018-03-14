@@ -14,48 +14,33 @@ SSL_set_psk_use_session_callback
 
  #include <openssl/ssl.h>
 
+ typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
+                                            const unsigned char **id,
+                                            size_t *idlen,
+                                            SSL_SESSION **sess);
+
+
+ void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
+                                           SSL_psk_use_session_cb_func cb);
+ void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
+
+
  typedef unsigned int (*SSL_psk_client_cb_func)(SSL *ssl,
                                                 const char *hint,
                                                 char *identity,
                                                 unsigned int max_identity_len,
                                                 unsigned char *psk,
                                                 unsigned int max_psk_len);
- typedef int (*SSL_psk_use_session_cb_func)(SSL *ssl, const EVP_MD *md,
-                                            const unsigned char **id,
-                                            size_t *idlen,
-                                            SSL_SESSION **sess);
 
  void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, SSL_psk_client_cb_func cb);
  void SSL_set_psk_client_callback(SSL *ssl, SSL_psk_client_cb_func cb);
 
- void SSL_CTX_set_psk_use_session_callback(SSL_CTX *ctx,
-                                           SSL_psk_use_session_cb_func cb);
- void SSL_set_psk_use_session_callback(SSL *s, SSL_psk_use_session_cb_func cb);
 
 =head1 DESCRIPTION
 
-TLSv1.3 Pre-Shared Keys (PSKs) and PSKs for TLSv1.2 and below are not
-compatible.
-
-A client application wishing to use PSK ciphersuites for TLSv1.2 and below must
-provide a callback function. This function will be called when the client is
-sending the ClientKeyExchange message to the server.
-
-The purpose of the callback function is to select the PSK identity and
-the pre-shared key to use during the connection setup phase.
-
-The callback is set using functions SSL_CTX_set_psk_client_callback()
-or SSL_set_psk_client_callback(). The callback function is given the
-connection in parameter B<ssl>, a B<NULL>-terminated PSK identity hint
-sent by the server in parameter B<hint>, a buffer B<identity> of
-length B<max_identity_len> bytes where the resulting
-B<NULL>-terminated identity is to be stored, and a buffer B<psk> of
-length B<max_psk_len> bytes where the resulting pre-shared key is to
-be stored.
-
-A client application wishing to use TLSv1.3 PSKs must set a different callback
-using either SSL_CTX_set_psk_use_session_callback() or
-SSL_set_psk_use_session_callback() as appropriate.
+A client application wishing to use TLSv1.3 PSKs should use either
+SSL_CTX_set_psk_use_session_callback() or SSL_set_psk_use_session_callback() as
+appropriate. These functions cannot be used for TLSv1.2 and below PSKs.
 
 The callback function is given a pointer to the SSL connection in B<ssl>.
 
@@ -112,6 +97,33 @@ It is also possible for the callback to succeed but not supply a PSK. In this
 case no PSK will be sent to the server but the handshake will continue. To do
 this the callback should return successfully and ensure that B<*sess> is
 NULL. The contents of B<*id> and B<*idlen> will be ignored.
+
+A client application wishing to use PSK ciphersuites for TLSv1.2 and below must
+provide a different callback function. This function will be called when the
+client is sending the ClientKeyExchange message to the server.
+
+The purpose of the callback function is to select the PSK identity and
+the pre-shared key to use during the connection setup phase.
+
+The callback is set using functions SSL_CTX_set_psk_client_callback()
+or SSL_set_psk_client_callback(). The callback function is given the
+connection in parameter B<ssl>, a B<NULL>-terminated PSK identity hint
+sent by the server in parameter B<hint>, a buffer B<identity> of
+length B<max_identity_len> bytes where the resulting
+B<NUL>-terminated identity is to be stored, and a buffer B<psk> of
+length B<max_psk_len> bytes where the resulting pre-shared key is to
+be stored.
+
+The callback for use in TLSv1.2 will also work in TLSv1.3 although it is
+recommended to use SSL_CTX_set_psk_use_session_callback()
+or SSL_set_psk_use_session_callback() for this purpose instead. If TLSv1.3 has
+been negotiated then OpenSSL will first check to see if a callback has been set
+via SSL_CTX_set_psk_use_session_callback() or SSL_set_psk_use_session_callback()
+and it will use that in preference. If no such callback is present then it will
+check to see if a callback has been set via SSL_CTX_set_psk_client_callback() or
+SSL_set_psk_client_callback() and use that. In this case the B<hint> value will
+always be NULL and the handshake digest will default to SHA-256 for any returned
+PSK.
 
 =head1 NOTES
 

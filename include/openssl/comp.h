@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -45,7 +45,6 @@ const BIO_METHOD *BIO_f_zlib(void);
 #  endif
 # endif
 
-int ERR_load_COMP_strings(void);
 
 #  ifdef  __cplusplus
 }

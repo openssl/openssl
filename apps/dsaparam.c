@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <time.h>
 # include <string.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/bn.h>
@@ -180,11 +181,11 @@ int dsaparam_main(int argc, char **argv)
                             "\n");
         BIO_printf(bio_out, "    if (dsa == NULL)\n"
                             "        return NULL;\n");
-        BIO_printf(bio_out, "    dsa->p = BN_bin2bn(dsap_%d, sizeof (dsap_%d), NULL);\n",
+        BIO_printf(bio_out, "    dsa->p = BN_bin2bn(dsap_%d, sizeof(dsap_%d), NULL);\n",
                bits_p, bits_p);
-        BIO_printf(bio_out, "    dsa->q = BN_bin2bn(dsaq_%d, sizeof (dsaq_%d), NULL);\n",
+        BIO_printf(bio_out, "    dsa->q = BN_bin2bn(dsaq_%d, sizeof(dsaq_%d), NULL);\n",
                bits_p, bits_p);
-        BIO_printf(bio_out, "    dsa->g = BN_bin2bn(dsag_%d, sizeof (dsag_%d), NULL);\n",
+        BIO_printf(bio_out, "    dsa->g = BN_bin2bn(dsag_%d, sizeof(dsag_%d), NULL);\n",
                bits_p, bits_p);
         BIO_printf(bio_out, "    if (!dsa->p || !dsa->q || !dsa->g) {\n"
                             "        DSA_free(dsa);\n"

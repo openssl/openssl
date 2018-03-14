@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "apps.h"
+#include "progs.h"
 
 #ifndef OPENSSL_NO_CMS
 
@@ -921,11 +922,15 @@ int cms_main(int argc, char **argv)
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
             signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
-            if (signer == NULL)
+            if (signer == NULL) {
+                ret = 2;
                 goto end;
+            }
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
-            if (key == NULL)
+            if (key == NULL) {
+                ret = 2;
                 goto end;
+            }
             for (kparam = key_first; kparam; kparam = kparam->next) {
                 if (kparam->idx == i) {
                     tflags |= CMS_KEY_PARAM;

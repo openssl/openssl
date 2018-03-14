@@ -5,11 +5,22 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 1.1.0f and OpenSSL 1.1.1 [under development]
+  Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.1 [in pre-release]
 
-      o 
+      o Support for TLSv1.3 added
+      o Move the display of configuration data to configdata.pm.
+      o Allow GNU style "make variables" to be used with Configure.
       o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
+      o Add multi-prime RSA (RFC 8017) support
+      o Add SM3 implemented according to GB/T 32905-2016
+      o Add SM4 implemented according to GB/T 32907-2016.
+      o Add 'Maximum Fragment Length' TLS extension negotiation and support
+      o Add ARIA support
+      o Add SHA3
+      o Rewrite of devcrypto engine
+      o Add support for SipHash
+      o Grand redesign of the OpenSSL random generator
 
   Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.0h [under development]
 
@@ -370,7 +381,7 @@
       o Compression memory leak fixed.
       o Compression session resumption fixed.
       o Ticket and SNI coexistence fixes.
-      o Many fixes to DTLS handling. 
+      o Many fixes to DTLS handling.
 
   Major changes between OpenSSL 0.9.8k and OpenSSL 0.9.8l [5 Nov 2009]:
 
@@ -403,7 +414,7 @@
       o Add gcc 4.2 support.
       o Add support for AES and SSE2 assembly language optimization
         for VC++ build.
-      o Support for RFC4507bis and server name extensions if explicitly 
+      o Support for RFC4507bis and server name extensions if explicitly
         selected at compile time.
       o DTLS improvements.
       o RFC4507bis support.
@@ -583,7 +594,7 @@
   Major changes between OpenSSL 0.9.7a and OpenSSL 0.9.7b [10 Apr 2003]:
 
       o Security: counter the Klima-Pokorny-Rosa extension of
-        Bleichbacher's attack 
+        Bleichbacher's attack
       o Security: make RSA blinding default.
       o Configuration: Irix fixes, AIX fixes, better mingw support.
       o Support for new platforms: linux-ia64-ecc.
@@ -643,7 +654,7 @@
       o SSL/TLS: allow optional cipher choice according to server's preference.
       o SSL/TLS: allow server to explicitly set new session ids.
       o SSL/TLS: support Kerberos cipher suites (RFC2712).
-	Only supports MIT Kerberos for now.
+        Only supports MIT Kerberos for now.
       o SSL/TLS: allow more precise control of renegotiations and sessions.
       o SSL/TLS: add callback to retrieve SSL/TLS messages.
       o SSL/TLS: support AES cipher suites (RFC3268).
@@ -656,7 +667,7 @@
   Major changes between OpenSSL 0.9.6i and OpenSSL 0.9.6j [10 Apr 2003]:
 
       o Security: counter the Klima-Pokorny-Rosa extension of
-        Bleichbacher's attack 
+        Bleichbacher's attack
       o Security: make RSA blinding default.
       o Build: shared library support fixes.
 
@@ -768,7 +779,7 @@
 
   Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a [1 Apr 2000]:
 
-      o Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8 
+      o Bug fixes for Win32, SuSE Linux, NeXTSTEP and FreeBSD 2.2.8
       o Shared library support for HPUX and Solaris-gcc
       o Support of Linux/IA64
       o Assembler support for Mingw32
@@ -868,4 +879,3 @@
       o Extended ASN.1 parser routines
       o Adjustments of the source tree for CVS
       o Support for various new platforms
-

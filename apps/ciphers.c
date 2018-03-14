@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
@@ -236,7 +237,7 @@ int ciphers_main(int argc, char **argv)
                     nm = "UNKNOWN";
                 BIO_printf(bio_out, "%s - ", nm);
             }
-            BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof buf));
+            BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof(buf)));
         }
     }
 

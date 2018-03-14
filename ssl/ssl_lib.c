@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -25,27 +25,81 @@
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
 
+static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
+{
+    (void)r;
+    (void)s;
+    (void)t;
+    return ssl_undefined_function(ssl);
+}
+
+static int ssl_undefined_function_2(SSL *ssl, SSL3_RECORD *r, unsigned char *s,
+                                    int t)
+{
+    (void)r;
+    (void)s;
+    (void)t;
+    return ssl_undefined_function(ssl);
+}
+
+static int ssl_undefined_function_3(SSL *ssl, unsigned char *r,
+                                    unsigned char *s, size_t t, size_t *u)
+{
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
+    return ssl_undefined_function(ssl);
+}
+
+static int ssl_undefined_function_4(SSL *ssl, int r)
+{
+    (void)r;
+    return ssl_undefined_function(ssl);
+}
+
+static size_t ssl_undefined_function_5(SSL *ssl, const char *r, size_t s,
+                                       unsigned char *t)
+{
+    (void)r;
+    (void)s;
+    (void)t;
+    return ssl_undefined_function(ssl);
+}
+
+static int ssl_undefined_function_6(int r)
+{
+    (void)r;
+    return ssl_undefined_function(NULL);
+}
+
+static int ssl_undefined_function_7(SSL *ssl, unsigned char *r, size_t s,
+                                    const char *t, size_t u,
+                                    const unsigned char *v, size_t w, int x)
+{
+    (void)r;
+    (void)s;
+    (void)t;
+    (void)u;
+    (void)v;
+    (void)w;
+    (void)x;
+    return ssl_undefined_function(ssl);
+}
+
 SSL3_ENC_METHOD ssl3_undef_enc_method = {
-    /*
-     * evil casts, but these functions are only called if there's a library
-     * bug
-     */
-    (int (*)(SSL *, SSL3_RECORD *, size_t, int))ssl_undefined_function,
-    (int (*)(SSL *, SSL3_RECORD *, unsigned char *, int))ssl_undefined_function,
+    ssl_undefined_function_1,
+    ssl_undefined_function_2,
     ssl_undefined_function,
-    (int (*)(SSL *, unsigned char *, unsigned char *, size_t, size_t *))
-        ssl_undefined_function,
-    (int (*)(SSL *, int))ssl_undefined_function,
-    (size_t (*)(SSL *, const char *, size_t, unsigned char *))
-        ssl_undefined_function,
+    ssl_undefined_function_3,
+    ssl_undefined_function_4,
+    ssl_undefined_function_5,
     NULL,                       /* client_finished_label */
     0,                          /* client_finished_label_len */
     NULL,                       /* server_finished_label */
     0,                          /* server_finished_label_len */
-    (int (*)(int))ssl_undefined_function,
-    (int (*)(SSL *, unsigned char *, size_t, const char *,
-             size_t, const unsigned char *, size_t,
-             int use_context))ssl_undefined_function,
+    ssl_undefined_function_6,
+    ssl_undefined_function_7,
 };
 
 struct ssl_async_args {
@@ -236,7 +290,7 @@ static const EVP_MD *tlsa_md_get(SSL_DANE *dane, uint8_t mtype)
 static int dane_tlsa_add(SSL_DANE *dane,
                          uint8_t usage,
                          uint8_t selector,
-                         uint8_t mtype, unsigned char *data, size_t dlen)
+                         uint8_t mtype, unsigned const char *data, size_t dlen)
 {
     danetls_record *t;
     const EVP_MD *md = NULL;
@@ -536,6 +590,7 @@ int SSL_clear(SSL *s)
     OPENSSL_free(s->psksession_id);
     s->psksession_id = NULL;
     s->psksession_id_len = 0;
+    s->hello_retry_request = 0;
 
     s->error = 0;
     s->hit = 0;
@@ -558,6 +613,9 @@ int SSL_clear(SSL *s)
     s->first_packet = 0;
 
     s->key_update = SSL_KEY_UPDATE_NONE;
+
+    EVP_MD_CTX_free(s->pha_dgst);
+    s->pha_dgst = NULL;
 
     /* Reset DANE verification result state */
     s->dane.mdpth = -1;
@@ -636,8 +694,7 @@ SSL *SSL_new(SSL_CTX *ctx)
      */
     if (RAND_get_rand_method() == RAND_OpenSSL()) {
         s->drbg =
-            RAND_DRBG_new(RAND_DRBG_NID, RAND_DRBG_FLAG_CTR_USE_DF,
-                          RAND_DRBG_get0_global());
+            RAND_DRBG_new(RAND_DRBG_NID, 0, RAND_DRBG_get0_public());
         if (s->drbg == NULL
             || RAND_DRBG_instantiate(s->drbg,
                                      (const unsigned char *) SSL_version_str,
@@ -677,7 +734,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->record_padding_arg = ctx->record_padding_arg;
     s->block_padding = ctx->block_padding;
     s->sid_ctx_length = ctx->sid_ctx_length;
-    if (!ossl_assert(s->sid_ctx_length <= sizeof s->sid_ctx))
+    if (!ossl_assert(s->sid_ctx_length <= sizeof(s->sid_ctx)))
         goto err;
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
     s->verify_callback = ctx->default_verify_callback;
@@ -806,7 +863,7 @@ int SSL_up_ref(SSL *s)
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
                                    unsigned int sid_ctx_len)
 {
-    if (sid_ctx_len > sizeof ctx->sid_ctx) {
+    if (sid_ctx_len > sizeof(ctx->sid_ctx)) {
         SSLerr(SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT,
                SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
@@ -859,7 +916,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      */
     SSL_SESSION r, *p;
 
-    if (id_len > sizeof r.session_id)
+    if (id_len > sizeof(r.session_id))
         return 0;
 
     r.ssl_version = ssl->version;
@@ -1035,7 +1092,7 @@ SSL_DANE *SSL_get0_dane(SSL *s)
 }
 
 int SSL_dane_tlsa_add(SSL *s, uint8_t usage, uint8_t selector,
-                      uint8_t mtype, unsigned char *data, size_t dlen)
+                      uint8_t mtype, unsigned const char *data, size_t dlen)
 {
     return dane_tlsa_add(&s->dane, usage, selector, mtype, data, dlen);
 }
@@ -1131,6 +1188,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.alpn);
     OPENSSL_free(s->ext.tls13_cookie);
     OPENSSL_free(s->clienthello);
+    OPENSSL_free(s->pha_context);
+    EVP_MD_CTX_free(s->pha_dgst);
 
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
 
@@ -1915,6 +1974,8 @@ int SSL_write_ex(SSL *s, const void *buf, size_t num, size_t *written)
 int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret, early_data_state;
+    size_t writtmp;
+    uint32_t partialwrite;
 
     switch (s->early_data_state) {
     case SSL_EARLY_DATA_NONE:
@@ -1940,9 +2001,29 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     case SSL_EARLY_DATA_WRITE_RETRY:
         s->early_data_state = SSL_EARLY_DATA_WRITING;
-        ret = SSL_write_ex(s, buf, num, written);
+        /*
+         * We disable partial write for early data because we don't keep track
+         * of how many bytes we've written between the SSL_write_ex() call and
+         * the flush if the flush needs to be retried)
+         */
+        partialwrite = s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
+        s->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
+        ret = SSL_write_ex(s, buf, num, &writtmp);
+        s->mode |= partialwrite;
+        if (!ret) {
+            s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
+            return ret;
+        }
+        s->early_data_state = SSL_EARLY_DATA_WRITE_FLUSH;
+        /* fall through */
+
+    case SSL_EARLY_DATA_WRITE_FLUSH:
+        /* The buffering BIO is still in place so we need to flush it */
+        if (statem_flush(s) != 1)
+            return 0;
+        *written = num;
         s->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
-        return ret;
+        return 1;
 
     case SSL_EARLY_DATA_FINISHED_READING:
     case SSL_EARLY_DATA_READ_RETRY:
@@ -2372,10 +2453,12 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
 {
     STACK_OF(SSL_CIPHER) *sk = NULL, *ciphers;
     int i;
+
     ciphers = SSL_get_ciphers(s);
     if (!ciphers)
         return NULL;
-    ssl_set_client_disabled(s);
+    if (!ssl_set_client_disabled(s))
+        return NULL;
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
         if (!ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0)) {
@@ -2727,6 +2810,18 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                                        contextlen, use_context);
 }
 
+int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
+                                     const char *label, size_t llen,
+                                     const unsigned char *context,
+                                     size_t contextlen)
+{
+    if (s->version != TLS1_3_VERSION)
+        return 0;
+
+    return tls13_export_keying_material_early(s, out, olen, label, llen,
+                                              context, contextlen);
+}
+
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
     const unsigned char *session_id = a->session_id;
@@ -2863,6 +2958,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
                        sizeof(ret->ext.tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
+    if (RAND_bytes(ret->ext.cookie_hmac_key,
+                   sizeof(ret->ext.cookie_hmac_key)) <= 0)
+        goto err;
+
 #ifndef OPENSSL_NO_SRP
     if (!SSL_CTX_SRP_CTX_init(ret))
         goto err;
@@ -2894,17 +2993,31 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      * Disable compression by default to prevent CRIME. Applications can
      * re-enable compression by configuring
      * SSL_CTX_clear_options(ctx, SSL_OP_NO_COMPRESSION);
-     * or by using the SSL_CONF library.
+     * or by using the SSL_CONF library. Similarly we also enable TLSv1.3
+     * middlebox compatibility by default. This may be disabled by default in
+     * a later OpenSSL version.
      */
-    ret->options |= SSL_OP_NO_COMPRESSION;
+    ret->options |= SSL_OP_NO_COMPRESSION | SSL_OP_ENABLE_MIDDLEBOX_COMPAT;
 
     ret->ext.status_type = TLSEXT_STATUSTYPE_nothing;
 
     /*
-     * Default max early data is a fully loaded single record. Could be split
-     * across multiple records in practice
+     * We cannot usefully set a default max_early_data here (which gets
+     * propagated in SSL_new(), for the following reason: setting the
+     * SSL field causes tls_construct_stoc_early_data() to tell the
+     * client that early data will be accepted when constructing a TLS 1.3
+     * session ticket, and the client will accordingly send us early data
+     * when using that ticket (if the client has early data to send).
+     * However, in order for the early data to actually be consumed by
+     * the application, the application must also have calls to
+     * SSL_read_early_data(); otherwise we'll just skip past the early data
+     * and ignore it.  So, since the application must add calls to
+     * SSL_read_early_data(), we also require them to add
+     * calls to SSL_CTX_set_max_early_data() in order to use early data,
+     * eliminating the bandwidth-wasting early data in the case described
+     * above.
      */
-    ret->max_early_data = SSL3_RT_MAX_PLAIN_LENGTH;
+    ret->max_early_data = 0;
 
     return ret;
  err:
@@ -3143,6 +3256,12 @@ void ssl_set_masks(SSL *s)
     /* Allow Ed25519 for TLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED25519)
             && pvalid[SSL_PKEY_ED25519] & CERT_PKEY_EXPLICIT_SIGN
+            && TLS1_get_version(s) == TLS1_2_VERSION)
+            mask_a |= SSL_aECDSA;
+
+    /* Allow Ed448 for TLS 1.2 if peer supports it */
+    if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED448)
+            && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
             && TLS1_get_version(s) == TLS1_2_VERSION)
             mask_a |= SSL_aECDSA;
 #endif
@@ -5184,9 +5303,11 @@ int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
          * serialization of SSL accesses for the needed concurrency protection
          * here.
          */
-         return RAND_DRBG_generate(s->drbg, rnd, size, 0, NULL, 0);
+        return RAND_DRBG_bytes(s->drbg, rnd, size);
     }
-    return RAND_bytes(rnd, (int)size);
+    if (size > INT_MAX)
+        return 0;
+    return RAND_bytes(rnd, size);
 }
 
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl)
@@ -5212,4 +5333,90 @@ __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl)
 
     /* return current SSL connection setting */
     return ssl->split_send_fragment;
+}
+
+int SSL_stateless(SSL *s)
+{
+    int ret;
+
+    /* Ensure there is no state left over from a previous invocation */
+    if (!SSL_clear(s))
+        return 0;
+
+    ERR_clear_error();
+
+    s->s3->flags |= TLS1_FLAGS_STATELESS;
+    ret = SSL_accept(s);
+    s->s3->flags &= ~TLS1_FLAGS_STATELESS;
+
+    if (ret > 0 && s->ext.cookieok)
+        return 1;
+
+    if (s->hello_retry_request == SSL_HRR_PENDING && !ossl_statem_in_error(s))
+        return 0;
+
+    return -1;
+}
+
+void SSL_force_post_handshake_auth(SSL *ssl)
+{
+    ssl->pha_forced = 1;
+}
+
+int SSL_verify_client_post_handshake(SSL *ssl)
+{
+    if (!SSL_IS_TLS13(ssl)) {
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+    if (!ssl->server) {
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_NOT_SERVER);
+        return 0;
+    }
+
+    if (!SSL_is_init_finished(ssl)) {
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_STILL_IN_INIT);
+        return 0;
+    }
+
+    switch (ssl->post_handshake_auth) {
+    case SSL_PHA_NONE:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_EXTENSION_NOT_RECEIVED);
+        return 0;
+    default:
+    case SSL_PHA_EXT_SENT:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, ERR_R_INTERNAL_ERROR);
+        return 0;
+    case SSL_PHA_EXT_RECEIVED:
+        break;
+    case SSL_PHA_REQUEST_PENDING:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_REQUEST_PENDING);
+        return 0;
+    case SSL_PHA_REQUESTED:
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_REQUEST_SENT);
+        return 0;
+    }
+
+    ssl->post_handshake_auth = SSL_PHA_REQUEST_PENDING;
+
+    /* checks verify_mode and algorithm_auth */
+    if (!send_certificate_request(ssl)) {
+        ssl->post_handshake_auth = SSL_PHA_EXT_RECEIVED; /* restore on error */
+        SSLerr(SSL_F_SSL_VERIFY_CLIENT_POST_HANDSHAKE, SSL_R_INVALID_CONFIG);
+        return 0;
+    }
+
+    ossl_statem_set_in_init(ssl, 1);
+    return 1;
+}
+
+int SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
+                                  SSL_CTX_generate_session_ticket_fn gen_cb,
+                                  SSL_CTX_decrypt_session_ticket_fn dec_cb,
+                                  void *arg)
+{
+    ctx->generate_ticket_cb = gen_cb;
+    ctx->decrypt_ticket_cb = dec_cb;
+    ctx->ticket_cb_data = arg;
+    return 1;
 }

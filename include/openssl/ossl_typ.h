@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -174,6 +174,7 @@ typedef struct ctlog_store_st CTLOG_STORE;
 typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
 typedef struct ossl_store_info_st OSSL_STORE_INFO;
+typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)

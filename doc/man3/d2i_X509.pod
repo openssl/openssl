@@ -3,6 +3,8 @@
 =head1 NAME
 
 d2i_ACCESS_DESCRIPTION,
+d2i_ADMISSIONS,
+d2i_ADMISSION_SYNTAX,
 d2i_ASIdOrRange,
 d2i_ASIdentifierChoice,
 d2i_ASIdentifiers,
@@ -71,6 +73,7 @@ d2i_IPAddressFamily,
 d2i_IPAddressOrRange,
 d2i_IPAddressRange,
 d2i_ISSUING_DIST_POINT,
+d2i_NAMING_AUTHORITY,
 d2i_NETSCAPE_CERT_SEQUENCE,
 d2i_NETSCAPE_SPKAC,
 d2i_NETSCAPE_SPKI,
@@ -120,6 +123,7 @@ d2i_PKCS8_fp,
 d2i_PKEY_USAGE_PERIOD,
 d2i_POLICYINFO,
 d2i_POLICYQUALINFO,
+d2i_PROFESSION_INFO,
 d2i_PROXY_CERT_INFO_EXTENSION,
 d2i_PROXY_POLICY,
 d2i_RSAPrivateKey,
@@ -175,6 +179,8 @@ d2i_X509_REVOKED,
 d2i_X509_SIG,
 d2i_X509_VAL,
 i2d_ACCESS_DESCRIPTION,
+i2d_ADMISSIONS,
+i2d_ADMISSION_SYNTAX,
 i2d_ASIdOrRange,
 i2d_ASIdentifierChoice,
 i2d_ASIdentifiers,
@@ -243,6 +249,7 @@ i2d_IPAddressFamily,
 i2d_IPAddressOrRange,
 i2d_IPAddressRange,
 i2d_ISSUING_DIST_POINT,
+i2d_NAMING_AUTHORITY,
 i2d_NETSCAPE_CERT_SEQUENCE,
 i2d_NETSCAPE_SPKAC,
 i2d_NETSCAPE_SPKI,
@@ -295,6 +302,7 @@ i2d_PKCS8_fp,
 i2d_PKEY_USAGE_PERIOD,
 i2d_POLICYINFO,
 i2d_POLICYQUALINFO,
+i2d_PROFESSION_INFO,
 i2d_PROXY_CERT_INFO_EXTENSION,
 i2d_PROXY_POLICY,
 i2d_PublicKey,
@@ -356,11 +364,11 @@ i2d_X509_VAL,
 
 =for comment generic
 
- TYPE *d2i_TYPE(TYPE **a, unsigned char **pp, long length);
+ TYPE *d2i_TYPE(TYPE **a, unsigned char **ppin, long length);
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
  TYPE *d2i_TYPE_fp(FILE *fp, TYPE **a);
 
- int i2d_TYPE(TYPE *a, unsigned char **pp);
+ int i2d_TYPE(TYPE *a, unsigned char **ppout);
  int i2d_TYPE_fp(FILE *fp, TYPE *a);
  int i2d_TYPE_bio(BIO *bp, TYPE *a);
 
@@ -368,14 +376,16 @@ i2d_X509_VAL,
 
 In the description here, I<TYPE> is used a placeholder
 for any of the OpenSSL datatypes, such as I<X509_CRL>.
+The function parameters I<ppin> and I<ppout> are generally
+either both named I<pp> in the headers, or I<in> and I<out>.
 
 These functions convert OpenSSL objects to and from their ASN.1/DER
 encoding.  Unlike the C structures which can have pointers to sub-objects
 within, the DER is a serialized encoding, suitable for sending over the
 network, writing to a file, and so on.
 
-d2i_TYPE() attempts to decode B<len> bytes at B<*in>. If successful a
-pointer to the B<TYPE> structure is returned and B<*in> is incremented to
+d2i_TYPE() attempts to decode B<len> bytes at B<*ppin>. If successful a
+pointer to the B<TYPE> structure is returned and B<*ppin> is incremented to
 the byte following the parsed data.  If B<a> is not B<NULL> then a pointer
 to the returned structure is also written to B<*a>.  If an error occurred
 then B<NULL> is returned.
@@ -393,13 +403,13 @@ d2i_TYPE_fp() is similar to d2i_TYPE() except it attempts
 to parse data from FILE pointer B<fp>.
 
 i2d_TYPE() encodes the structure pointed to by B<a> into DER format.
-If B<out> is not B<NULL>, it writes the DER encoded data to the buffer
-at B<*out>, and increments it to point after the data just written.
+If B<ppout> is not B<NULL>, it writes the DER encoded data to the buffer
+at B<*ppout>, and increments it to point after the data just written.
 If the return value is negative an error occurred, otherwise it
 returns the length of the encoded data.
 
-If B<*out> is B<NULL> memory will be allocated for a buffer and the encoded
-data written to it. In this case B<*out> is not incremented and it points
+If B<*ppout> is B<NULL> memory will be allocated for a buffer and the encoded
+data written to it. In this case B<*ppout> is not incremented and it points
 to the start of the data just written.
 
 i2d_TYPE_bio() is similar to i2d_TYPE() except it writes
@@ -430,7 +440,7 @@ Therefore any FILE pointers or BIOs should be opened in binary mode.
 Functions such as strlen() will B<not> return the correct length
 of the encoded structure.
 
-The ways that B<*in> and B<*out> are incremented after the operation
+The ways that B<*ppin> and B<*ppout> are incremented after the operation
 can trap the unwary. See the B<WARNINGS> section for some common
 errors.
 The reason for this-auto increment behaviour is to reflect a typical
@@ -451,7 +461,7 @@ Represents a PKCS#3 DH parameters structure.
 
 =item B<DHparamx>
 
-Represents a ANSI X9.42 DH parameters structure.
+Represents an ANSI X9.42 DH parameters structure.
 
 =item B<DSA_PUBKEY>
 
@@ -591,7 +601,7 @@ occurs.
 
 =head1 COPYRIGHT
 
-Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

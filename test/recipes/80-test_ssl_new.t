@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,18 +28,19 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 25;  # = scalar @conf_srcs
+plan tests => 27;  # = scalar @conf_srcs
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
 my $is_default_tls = (disabled("ssl3") && !disabled("tls1") &&
                       !disabled("tls1_1") && !disabled("tls1_2") &&
-                      disabled("tls1_3"));
+                      !disabled("tls1_3"));
 
 my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
 
 my @all_pre_tls1_3 = ("ssl3", "tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
+my $no_tls_below1_3 = $no_tls || (disabled("tls1_2") && !disabled("tls1_3"));
 my $no_pre_tls1_3 = alldisabled(@all_pre_tls1_3);
 my $no_dtls = alldisabled(available_protocols("dtls"));
 my $no_npn = disabled("nextprotoneg");
@@ -66,12 +67,14 @@ my %conf_dependent_tests = (
   "19-mac-then-encrypt.conf" => !$is_default_tls,
   "20-cert-select.conf" => !$is_default_tls || $no_dh || $no_dsa,
   "22-compression.conf" => !$is_default_tls,
+  "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
 );
 
 # Add your test here if it should be skipped for some compile-time
 # configurations. Default is $no_tls but some tests have different skip
 # conditions.
 my %skip = (
+  "06-sni-ticket.conf" => $no_tls_below1_3,
   "07-dtls-protocol-version.conf" => $no_dtls,
   "08-npn.conf" => (disabled("tls1") && disabled("tls1_1")
                     && disabled("tls1_2")) || $no_npn,
@@ -86,6 +89,7 @@ my %skip = (
   "14-curves.conf" => disabled("tls1_2") || $no_ec || $no_ec2m,
   "15-certstatus.conf" => $no_tls || $no_ocsp,
   "16-dtls-certstatus.conf" => $no_dtls || $no_ocsp,
+  "17-renegotiate.conf" => $no_tls_below1_3,
   "18-dtls-renegotiate.conf" => $no_dtls,
   "19-mac-then-encrypt.conf" => $no_pre_tls1_3,
   "20-cert-select.conf" => disabled("tls1_2") || $no_ec,
@@ -94,6 +98,8 @@ my %skip = (
   "23-srp.conf" => (disabled("tls1") && disabled ("tls1_1")
                     && disabled("tls1_2")) || disabled("srp"),
   "24-padding.conf" => disabled("tls1_3"),
+  "25-cipher.conf" => disabled("ec") || disabled("tls1_2"),
+  "26-tls13_client_auth.conf" => disabled("tls1_3"),
 );
 
 foreach my $conf (@conf_files) {

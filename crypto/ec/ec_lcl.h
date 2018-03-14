@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -14,6 +14,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include "internal/refcount.h"
+#include "curve448/curve448_lcl.h"
 
 #if defined(__SUNPRO_C)
 # if __SUNPRO_C >= 0x520
@@ -155,6 +156,9 @@ struct ec_method_st {
     /* custom ECDH operation */
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
+    /* Inverse modulo order */
+    int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r, BIGNUM *x,
+                                 BN_CTX *ctx);
 };
 
 /*
@@ -520,7 +524,6 @@ void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
 void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
                                      unsigned char *digit, unsigned char in);
 #endif
-int ec_precompute_mont_data(EC_GROUP *);
 int ec_group_simple_order_bits(const EC_GROUP *group);
 
 #ifdef ECP_NISTZ256_ASM
@@ -604,3 +607,6 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
            const uint8_t peer_public_value[32]);
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
+
+int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            BIGNUM *x, BN_CTX *ctx);

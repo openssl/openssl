@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -98,6 +98,8 @@ BIO *BIO_new(const BIO_METHOD *method)
         CRYPTO_THREAD_lock_free(bio->lock);
         goto err;
     }
+    if (method->create == NULL)
+        bio->init = 1;
 
     return bio;
 
@@ -533,9 +535,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
     return ret;
 }
 
-long BIO_callback_ctrl(BIO *b, int cmd,
-                       void (*fp) (struct bio_st *, int, const char *, int,
-                                   long, long))
+long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret;
 

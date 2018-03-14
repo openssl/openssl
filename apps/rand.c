@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include "apps.h"
+#include "progs.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -102,7 +103,7 @@ int rand_main(int argc, char **argv)
 
         chunk = num;
         if (chunk > (int)sizeof(buf))
-            chunk = sizeof buf;
+            chunk = sizeof(buf);
         r = RAND_bytes(buf, chunk);
         if (r <= 0)
             goto end;

@@ -1573,6 +1573,9 @@ ___
     }
 }
 
+$output=pop;
+open STDOUT,">$output";
+
 foreach (split($/,$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 

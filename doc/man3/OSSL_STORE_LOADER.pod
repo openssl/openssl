@@ -5,10 +5,12 @@
 OSSL_STORE_LOADER, OSSL_STORE_LOADER_CTX, OSSL_STORE_LOADER_new,
 OSSL_STORE_LOADER_get0_engine, OSSL_STORE_LOADER_get0_scheme,
 OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_ctrl,
+OSSL_STORE_LOADER_set_expect, OSSL_STORE_LOADER_set_find,
 OSSL_STORE_LOADER_set_load, OSSL_STORE_LOADER_set_eof,
 OSSL_STORE_LOADER_set_error, OSSL_STORE_LOADER_set_close,
 OSSL_STORE_LOADER_free, OSSL_STORE_register_loader,
 OSSL_STORE_unregister_loader, OSSL_STORE_open_fn, OSSL_STORE_ctrl_fn,
+OSSL_STORE_expect_fn, OSSL_STORE_find_fn,
 OSSL_STORE_load_fn, OSSL_STORE_eof_fn, OSSL_STORE_error_fn,
 OSSL_STORE_close_fn - Types and functions to manipulate, register and
 unregister STORE loaders for different URI schemes
@@ -37,6 +39,13 @@ unregister STORE loaders for different URI schemes
                                    va_list args);
  int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *store_loader,
                                 OSSL_STORE_ctrl_fn store_ctrl_function);
+ typedef int (*OSSL_STORE_expect_fn)(OSSL_STORE_LOADER_CTX *ctx, int expected);
+ int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
+                                  OSSL_STORE_expect_fn expect_function);
+ typedef int (*OSSL_STORE_find_fn)(OSSL_STORE_LOADER_CTX *ctx,
+                                   OSSL_STORE_SEARCH *criteria);
+ int OSSL_STORE_LOADER_set_find(OSSL_STORE_LOADER *loader,
+                                OSSL_STORE_find_fn find_function);
  typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
                                                 UI_METHOD *ui_method,
                                                 void *ui_data);
@@ -71,9 +80,10 @@ OSSL_STORE_close() for this scheme.
 B<OSSL_STORE_LOADER_CTX> is a type template, to be defined by each loader
 using B<struct ossl_store_loader_ctx_st { ... }>.
 
-B<OSSL_STORE_open_fn>, B<OSSL_STORE_ctrl_fn>, B<OSSL_STORE_load_fn>,
-B<OSSL_STORE_eof_fn> and B<OSSL_STORE_close_fn> are the function pointer
-types used within a STORE loader.
+B<OSSL_STORE_open_fn>, B<OSSL_STORE_ctrl_fn>, B<OSSL_STORE_expect_fn>,
+B<OSSL_STORE_find_fn>, B<OSSL_STORE_load_fn>, B<OSSL_STORE_eof_fn>,
+and B<OSSL_STORE_close_fn>
+are the function pointer types used within a STORE loader.
 The functions pointed at define the functionality of the given loader.
 
 =over 4
@@ -108,6 +118,27 @@ numbers.
 
 This function is expected to return 1 on success, 0 on error.
 
+=item B<OSSL_STORE_expect_fn>
+
+This function takes a B<OSSL_STORE_LOADER_CTX> pointer and a B<OSSL_STORE_INFO>
+identity B<expected>, and is used to tell the loader what object type is
+expected.
+B<expected> may be zero to signify that no specific object type is expected.
+
+This function is expected to return 1 on success, 0 on error.
+
+=item B<OSSL_STORE_find_fn>
+
+This function takes a B<OSSL_STORE_LOADER_CTX> pointer and a
+B<OSSL_STORE_SEARCH> search criterion, and is used to tell the loader what
+to search for.
+
+When called with the loader context being B<NULL>, this function is expected
+to return 1 if the loader supports the criterion, otherwise 0.
+
+When called with the loader context being something other than B<NULL>, this
+function is expected to return 1 on success, 0 on error.
+
 =item B<OSSL_STORE_load_fn>
 
 This function takes a B<OSSL_STORE_LOADER_CTX> pointer and a B<UI_METHOD>
@@ -131,7 +162,7 @@ It is otherwise expected to return 0.
 =item B<OSSL_STORE_error_fn>
 
 This function takes a B<OSSL_STORE_LOADER_CTX> pointer and is expected to
-return 1 to indicate that an error occured in a previous call to the
+return 1 to indicate that an error occurred in a previous call to the
 B<OSSL_STORE_load_fn> function.
 It is otherwise expected to return 0.
 
@@ -161,6 +192,9 @@ B<store_loader>.
 OSSL_STORE_LOADER_set_ctrl() sets the control function for the
 B<store_loader>.
 
+OSSL_STORE_LOADER_set_expect() sets the expect function for the
+B<store_loader>.
+
 OSSL_STORE_LOADER_set_load() sets the loader function for the
 B<store_loader>.
 
@@ -186,9 +220,10 @@ The B<file:> scheme has built in support.
 =head1 RETURN VALUES
 
 The functions with the types B<OSSL_STORE_open_fn>, B<OSSL_STORE_ctrl_fn>,
+B<OSSL_STORE_expect_fn>,
 B<OSSL_STORE_load_fn>, B<OSSL_STORE_eof_fn> and B<OSSL_STORE_close_fn> have the
-same return values as OSSL_STORE_open(), OSSL_STORE_load(), OSSL_STORE_eof() and
-OSSL_STORE_close(), respectively.
+same return values as OSSL_STORE_open(), OSSL_STORE_ctrl(), OSSL_STORE_expect(),
+OSSL_STORE_load(), OSSL_STORE_eof() and OSSL_STORE_close(), respectively.
 
 OSSL_STORE_LOADER_new() returns a pointer to a B<OSSL_STORE_LOADER> on success,
 or B<NULL> on failure.
@@ -219,7 +254,7 @@ were added to OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

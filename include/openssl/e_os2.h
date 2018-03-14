@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,7 +49,6 @@ extern "C" {
 #  define OPENSSL_SYS_WIN32_UWIN
 # else
 #  if defined(__CYGWIN__) || defined(OPENSSL_SYS_CYGWIN)
-#   undef OPENSSL_SYS_UNIX
 #   define OPENSSL_SYS_WIN32_CYGWIN
 #  else
 #   if defined(_WIN32) || defined(OPENSSL_SYS_WIN32)

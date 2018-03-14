@@ -232,7 +232,7 @@ static int prime_field_tests(void)
 
     len =
         EC_POINT_point2oct(group, Q, POINT_CONVERSION_COMPRESSED, buf,
-                           sizeof buf, ctx);
+                           sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
@@ -241,7 +241,7 @@ static int prime_field_tests(void)
                        buf, len);
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED,
-                             buf, sizeof buf, ctx);
+                             buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
@@ -250,7 +250,7 @@ static int prime_field_tests(void)
                        buf, len);
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID,
-                             buf, sizeof buf, ctx);
+                             buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
@@ -1071,7 +1071,7 @@ static int char2_field_tests(void)
 /* Change test based on whether binary point compression is enabled or not. */
 #  ifdef OPENSSL_EC_BIN_PT_COMP
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_COMPRESSED,
-                             buf, sizeof buf, ctx);
+                             buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
@@ -1081,7 +1081,7 @@ static int char2_field_tests(void)
 #  endif
 
     len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED,
-                             buf, sizeof buf, ctx);
+                             buf, sizeof(buf), ctx);
     if (!TEST_size_t_ne(len, 0)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
         || !TEST_int_eq(0, EC_POINT_cmp(group, P, Q, ctx)))
@@ -1092,7 +1092,7 @@ static int char2_field_tests(void)
 /* Change test based on whether binary point compression is enabled or not. */
 #  ifdef OPENSSL_EC_BIN_PT_COMP
     len =
-        EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof buf,
+        EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof(buf),
                            ctx);
     if (!TEST_size_t_ne(len, 0)
         || !TEST_true(EC_POINT_oct2point(group, P, buf, len, ctx))
@@ -1152,12 +1152,6 @@ static int internal_curve_test_method(int n)
     int r, nid = curves[n].nid;
     EC_GROUP *group;
 
-    /*
-     * Skip for X25519 because low level operations such as EC_POINT_mul()
-     * are not supported for this curve
-     */
-    if (nid == NID_X25519)
-        return 1;
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(nid))) {
         TEST_info("Curve %s failed\n", OBJ_nid2sn(nid));
         return 0;

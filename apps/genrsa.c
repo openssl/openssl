@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <sys/types.h>
 # include <sys/stat.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/bn.h>
@@ -43,7 +44,7 @@ const OPTIONS genrsa_options[] = {
     {"3", OPT_3, '-', "Use 3 for the E value"},
     {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
     {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
-    {"out", OPT_OUT, 's', "Output the key to specified file"},
+    {"out", OPT_OUT, '>', "Output the key to specified file"},
     OPT_R_OPTIONS,
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},

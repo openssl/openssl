@@ -18,9 +18,11 @@
 #include <openssl/aes.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <internal/rand.h>
 #include "modes_lcl.h"
 #include "internal/constant_time_locl.h"
 #include "internal/evp_int.h"
+#include "evp_locl.h"
 
 typedef struct {
     AES_KEY ks;
@@ -150,7 +152,8 @@ void aesni_multi_cbc_encrypt(CIPH_DESC *, void *, int);
 static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
                                          unsigned char *out,
                                          const unsigned char *inp,
-                                         size_t inp_len, int n4x)
+                                         size_t inp_len, int n4x,
+                                         RAND_DRBG *drbg)
 {                               /* n4x is 1 or 2 */
     HASH_DESC hash_d[8], edges[8];
     CIPH_DESC ciph_d[8];
@@ -170,8 +173,13 @@ static size_t tls1_1_multi_block_encrypt(EVP_AES_HMAC_SHA256 *key,
 #  endif
 
     /* ask for IVs in bulk */
-    if (RAND_bytes((IVs = blocks[0].c), 16 * x4) <= 0)
+    IVs = blocks[0].c;
+    if (drbg != NULL) {
+        if (RAND_DRBG_bytes(drbg, IVs, 16 * x4) == 0)
+            return 0;
+    } else if (RAND_bytes(IVs, 16 * x4) <= 0) {
         return 0;
+    }
 
     /* align */
     ctx = (SHA256_MB_CTX *) (storage + 32 - ((size_t)storage % 32));
@@ -877,7 +885,8 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             return (int)tls1_1_multi_block_encrypt(key, param->out,
                                                    param->inp, param->len,
-                                                   param->interleave / 4);
+                                                   param->interleave / 4,
+                                                   ctx->drbg);
         }
     case EVP_CTRL_TLS1_1_MULTIBLOCK_DECRYPT:
 # endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -251,6 +251,9 @@ int OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert);
 int OCSP_basic_sign(OCSP_BASICRESP *brsp,
                     X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
                     STACK_OF(X509) *certs, unsigned long flags);
+int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
+                        X509 *signer, EVP_MD_CTX *ctx,
+                        STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
@@ -342,7 +345,6 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE *o, unsigned long flags);
 int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
                       X509_STORE *st, unsigned long flags);
 
-int ERR_load_OCSP_strings(void);
 
 #  ifdef  __cplusplus
 }

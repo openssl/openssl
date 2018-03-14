@@ -22,6 +22,7 @@ addons:
 
 os:
     - linux
+    - osx
 
 compiler:
     - clang
@@ -29,7 +30,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install" TESTS="-test_fuzz"
-    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2 enable-aria" TESTS="-test_fuzz"
+    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
     - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
 
 matrix:
@@ -43,7 +44,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: CONFIG_OPTS="--strict-warnings enable-tls1_3" TESTS="-test_fuzz" COMMENT="Move to the BORINGTEST build when interoperable"
+          env: CONFIG_OPTS="--strict-warnings" TESTS="-test_fuzz" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
@@ -64,7 +65,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-aria enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
           addons:
               apt:
@@ -80,10 +81,10 @@ matrix:
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
         - os: linux
           compiler: clang-3.9
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-aria enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           compiler: clang-3.9
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 enable-aria no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
           addons:
               apt:
@@ -93,7 +94,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 enable-aria -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:
@@ -123,7 +124,7 @@ before_script:
       fi
     - if [ -n "$DESTDIR" ]; then
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
-          tar -xvzf _srcdist.tar.gz;
+          tar -xzf _srcdist.tar.gz;
           mkdir _build;
           cd _build;
           srcdir=../_srcdist;
@@ -132,14 +133,14 @@ before_script:
           srcdir=.;
           top=.;
       fi
-    - if [ "$CC" == i686-w64-mingw32-gcc ]; then
+    - if [ "$CC" = i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw $CONFIG_OPTS -Wno-pedantic-ms-format;
-      elif [ "$CC" == x86_64-w64-mingw32-gcc ]; then
+      elif [ "$CC" = x86_64-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
           $srcdir/Configure mingw64 $CONFIG_OPTS -Wno-pedantic-ms-format;
       else
-          if [ "$CC" == clang-3.9 ]; then
+          if [ "$CC" = clang-3.9 ]; then
               sudo cp .travis-apt-pin.preferences /etc/apt/preferences.d/no-ubuntu-clang;
               curl -sSL "http://apt.llvm.org/llvm-snapshot.gpg.key" | sudo -E apt-key add -;
               echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.9 main" | sudo tee -a /etc/apt/sources.list > /dev/null;
@@ -151,6 +152,7 @@ before_script:
           fi;
           $srcdir/config -v $CONFIG_OPTS;
       fi
+    - ./configdata.pm --dump
     - cd $top
 
 script:
@@ -197,18 +199,22 @@ script:
               echo -e '+\057\057\057\057 MAKE TEST FAILED'; false;
           fi;
       else
-          if $make build_tests; then
+          if $make build_tests >~/build.log 2>&1; then
               echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS OK';
           else
-              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED'; false;
+              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
+              cat ~/build.log
+              false;
           fi;
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          if $make install install_docs DESTDIR="$top/$DESTDIR"; then
+          if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
               echo -e '+\057\057\057\057\057\057 MAKE INSTALL OK';
           else
-              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED'; false;
+              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED';
+              cat ~/install.log;
+              false;
           fi;
       fi
     - cd $top

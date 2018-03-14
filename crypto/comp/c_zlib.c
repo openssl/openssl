@@ -291,7 +291,7 @@ static int bio_zlib_free(BIO *bi);
 static int bio_zlib_read(BIO *b, char *out, int outl);
 static int bio_zlib_write(BIO *b, const char *in, int inl);
 static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr);
-static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp);
+static long bio_zlib_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 
 static const BIO_METHOD bio_meth_zlib = {
     BIO_TYPE_COMP,
@@ -302,8 +302,8 @@ static const BIO_METHOD bio_meth_zlib = {
     /* TODO: Convert to new style read function */
     bread_conv,
     bio_zlib_read,
-    NULL,
-    NULL,
+    NULL,                      /* bio_zlib_puts, */
+    NULL,                      /* bio_zlib_gets, */
     bio_zlib_ctrl,
     bio_zlib_new,
     bio_zlib_free,
@@ -607,7 +607,7 @@ static long bio_zlib_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long bio_zlib_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long bio_zlib_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     BIO *next = BIO_next(b);
     if (next == NULL)

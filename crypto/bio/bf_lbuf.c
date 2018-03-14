@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,7 +20,7 @@ static int linebuffer_gets(BIO *h, char *str, int size);
 static long linebuffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int linebuffer_new(BIO *h);
 static int linebuffer_free(BIO *data);
-static long linebuffer_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long linebuffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 
 /* A 10k maximum should be enough for most purposes */
 #define DEFAULT_LINEBUFFER_SIZE 1024*10
@@ -120,9 +120,10 @@ static int linebuffer_write(BIO *b, const char *in, int inl)
 
     do {
         const char *p;
+        char c;
 
-        for (p = in; p < in + inl && *p != '\n'; p++) ;
-        if (*p == '\n') {
+        for (p = in, c = '\0'; p < in + inl && (c = *p) != '\n'; p++) ;
+        if (c == '\n') {
             p++;
             foundnl = 1;
         } else
@@ -296,7 +297,7 @@ static long linebuffer_ctrl(BIO *b, int cmd, long num, void *ptr)
     return 0;
 }
 
-static long linebuffer_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long linebuffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
 

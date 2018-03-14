@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -18,6 +18,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <time.h>
 # include <string.h>
 # include "apps.h"
+# include "progs.h"
 # include <openssl/bio.h>
 # include <openssl/err.h>
 # include <openssl/bn.h>
@@ -347,24 +348,24 @@ int ecparam_main(int argc, char **argv)
                         "    BIGNUM *tmp_3 = NULL;\n"
                         "\n");
 
-        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_p_%d, sizeof (ec_p_%d), NULL)) == NULL)\n"
+        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_p_%d, sizeof(ec_p_%d), NULL)) == NULL)\n"
                         "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_a_%d, sizeof (ec_a_%d), NULL)) == NULL)\n"
+        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_a_%d, sizeof(ec_a_%d), NULL)) == NULL)\n"
                         "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_b_%d, sizeof (ec_b_%d), NULL)) == NULL)\n"
+        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_b_%d, sizeof(ec_b_%d), NULL)) == NULL)\n"
                         "        goto err;\n", len, len);
         BIO_printf(out, "    if ((group = EC_GROUP_new_curve_GFp(tmp_1, tmp_2, tmp_3, NULL)) == NULL)\n"
                         "        goto err;\n"
                         "\n");
         BIO_printf(out, "    /* build generator */\n");
-        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_gen_%d, sizeof (ec_gen_%d), tmp_1)) == NULL)\n"
+        BIO_printf(out, "    if ((tmp_1 = BN_bin2bn(ec_gen_%d, sizeof(ec_gen_%d), tmp_1)) == NULL)\n"
                         "        goto err;\n", len, len);
         BIO_printf(out, "    point = EC_POINT_bn2point(group, tmp_1, NULL, NULL);\n");
         BIO_printf(out, "    if (point == NULL)\n"
                         "        goto err;\n");
-        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_order_%d, sizeof (ec_order_%d), tmp_2)) == NULL)\n"
+        BIO_printf(out, "    if ((tmp_2 = BN_bin2bn(ec_order_%d, sizeof(ec_order_%d), tmp_2)) == NULL)\n"
                         "        goto err;\n", len, len);
-        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_cofactor_%d, sizeof (ec_cofactor_%d), tmp_3)) == NULL)\n"
+        BIO_printf(out, "    if ((tmp_3 = BN_bin2bn(ec_cofactor_%d, sizeof(ec_cofactor_%d), tmp_3)) == NULL)\n"
                         "        goto err;\n", len, len);
         BIO_printf(out, "    if (!EC_GROUP_set_generator(group, point, tmp_2, tmp_3))\n"
                         "        goto err;\n"

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -361,7 +361,6 @@ int UI_UTIL_read_pw(char *buf, char *buff, int size, const char *prompt,
                     int verify);
 UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag);
 
-int ERR_load_UI_strings(void);
 
 # ifdef  __cplusplus
 }

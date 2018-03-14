@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -79,7 +79,7 @@ static const ssl_trace_tbl ssl_content_tbl[] = {
     {SSL3_RT_APPLICATION_DATA, "ApplicationData"},
 };
 
-/* Handshake types */
+/* Handshake types, sorted by ascending id  */
 static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_HELLO_REQUEST, "HelloRequest"},
     {SSL3_MT_CLIENT_HELLO, "ClientHello"},
@@ -87,7 +87,6 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {DTLS1_MT_HELLO_VERIFY_REQUEST, "HelloVerifyRequest"},
     {SSL3_MT_NEWSESSION_TICKET, "NewSessionTicket"},
     {SSL3_MT_END_OF_EARLY_DATA, "EndOfEarlyData"},
-    {SSL3_MT_HELLO_RETRY_REQUEST, "HelloRetryRequest"},
     {SSL3_MT_ENCRYPTED_EXTENSIONS, "EncryptedExtensions"},
     {SSL3_MT_CERTIFICATE, "Certificate"},
     {SSL3_MT_SERVER_KEY_EXCHANGE, "ServerKeyExchange"},
@@ -95,10 +94,10 @@ static const ssl_trace_tbl ssl_handshake_tbl[] = {
     {SSL3_MT_SERVER_DONE, "ServerHelloDone"},
     {SSL3_MT_CERTIFICATE_VERIFY, "CertificateVerify"},
     {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
-    {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
-    {SSL3_MT_CLIENT_KEY_EXCHANGE, "ClientKeyExchange"},
     {SSL3_MT_FINISHED, "Finished"},
+    {SSL3_MT_CERTIFICATE_URL, "CertificateUrl"},
     {SSL3_MT_CERTIFICATE_STATUS, "CertificateStatus"},
+    {SSL3_MT_SUPPLEMENTAL_DATA, "SupplementalData"},
     {SSL3_MT_KEY_UPDATE, "KeyUpdate"},
 # ifndef OPENSSL_NO_NEXTPROTONEG
     {SSL3_MT_NEXT_PROTO, "NextProto"},
@@ -450,7 +449,7 @@ static const ssl_trace_tbl ssl_comp_tbl[] = {
     {0x0001, "Zlib Compression"}
 };
 
-/* Extensions */
+/* Extensions sorted by ascending id */
 static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_server_name, "server_name"},
     {TLSEXT_TYPE_max_fragment_length, "max_fragment_length"},
@@ -462,27 +461,32 @@ static const ssl_trace_tbl ssl_exts_tbl[] = {
     {TLSEXT_TYPE_client_authz, "client_authz"},
     {TLSEXT_TYPE_server_authz, "server_authz"},
     {TLSEXT_TYPE_cert_type, "cert_type"},
-    {TLSEXT_TYPE_key_share, "key_share"},
-    {TLSEXT_TYPE_psk, "psk"},
-    {TLSEXT_TYPE_psk_kex_modes, "psk_key_exchange_modes"},
     {TLSEXT_TYPE_supported_groups, "supported_groups"},
     {TLSEXT_TYPE_ec_point_formats, "ec_point_formats"},
     {TLSEXT_TYPE_srp, "srp"},
     {TLSEXT_TYPE_signature_algorithms, "signature_algorithms"},
     {TLSEXT_TYPE_use_srtp, "use_srtp"},
-    {TLSEXT_TYPE_session_ticket, "session_ticket"},
-    {TLSEXT_TYPE_supported_versions, "supported_versions"},
-    {TLSEXT_TYPE_renegotiate, "renegotiate"},
-# ifndef OPENSSL_NO_NEXTPROTONEG
-    {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
-# endif
+    {TLSEXT_TYPE_heartbeat, "tls_heartbeat"},
     {TLSEXT_TYPE_application_layer_protocol_negotiation,
      "application_layer_protocol_negotiation"},
     {TLSEXT_TYPE_signed_certificate_timestamp, "signed_certificate_timestamps"},
     {TLSEXT_TYPE_padding, "padding"},
     {TLSEXT_TYPE_encrypt_then_mac, "encrypt_then_mac"},
     {TLSEXT_TYPE_extended_master_secret, "extended_master_secret"},
-    {TLSEXT_TYPE_early_data, "early_data"}
+    {TLSEXT_TYPE_session_ticket, "session_ticket"},
+    {TLSEXT_TYPE_psk, "psk"},
+    {TLSEXT_TYPE_early_data, "early_data"},
+    {TLSEXT_TYPE_supported_versions, "supported_versions"},
+    {TLSEXT_TYPE_cookie, "cookie_ext"},
+    {TLSEXT_TYPE_psk_kex_modes, "psk_key_exchange_modes"},
+    {TLSEXT_TYPE_certificate_authorities, "certificate_authorities"},
+    {TLSEXT_TYPE_post_handshake_auth, "post_handshake_auth"},
+    {TLSEXT_TYPE_signature_algorithms_cert, "signature_algorithms_cert"},
+    {TLSEXT_TYPE_key_share, "key_share"},
+    {TLSEXT_TYPE_renegotiate, "renegotiate"},
+# ifndef OPENSSL_NO_NEXTPROTONEG
+    {TLSEXT_TYPE_next_proto_neg, "next_proto_neg"},
+# endif
 };
 
 static const ssl_trace_tbl ssl_groups_tbl[] = {
@@ -515,6 +519,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {27, "brainpoolP384r1"},
     {28, "brainpoolP512r1"},
     {29, "ecdh_x25519"},
+    {30, "ecdh_x448"},
     {256, "ffdhe2048"},
     {257, "ffdhe3072"},
     {258, "ffdhe4096"},
@@ -544,10 +549,14 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_ecdsa_secp521r1_sha512, "ecdsa_secp521r1_sha512"},
     {TLSEXT_SIGALG_ecdsa_sha224, "ecdsa_sha224"},
     {TLSEXT_SIGALG_ed25519, "ed25519"},
+    {TLSEXT_SIGALG_ed448, "ed448"},
     {TLSEXT_SIGALG_ecdsa_sha1, "ecdsa_sha1"},
-    {TLSEXT_SIGALG_rsa_pss_sha256, "rsa_pss_sha256"},
-    {TLSEXT_SIGALG_rsa_pss_sha384, "rsa_pss_sha384"},
-    {TLSEXT_SIGALG_rsa_pss_sha512, "rsa_pss_sha512"},
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha256, "rsa_pss_rsae_sha256"},
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha384, "rsa_pss_rsae_sha384"},
+    {TLSEXT_SIGALG_rsa_pss_rsae_sha512, "rsa_pss_rsae_sha512"},
+    {TLSEXT_SIGALG_rsa_pss_pss_sha256, "rsa_pss_pss_sha256"},
+    {TLSEXT_SIGALG_rsa_pss_pss_sha384, "rsa_pss_pss_sha384"},
+    {TLSEXT_SIGALG_rsa_pss_pss_sha512, "rsa_pss_pss_sha512"},
     {TLSEXT_SIGALG_rsa_pkcs1_sha256, "rsa_pkcs1_sha256"},
     {TLSEXT_SIGALG_rsa_pkcs1_sha384, "rsa_pkcs1_sha384"},
     {TLSEXT_SIGALG_rsa_pkcs1_sha512, "rsa_pkcs1_sha512"},
@@ -783,11 +792,10 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         break;
 
     case TLSEXT_TYPE_key_share:
-        if (mt == SSL3_MT_HELLO_RETRY_REQUEST) {
+        if (server && extlen == 2) {
             int group_id;
 
-            if (extlen != 2)
-                return 0;
+            /* We assume this is an HRR, otherwise this is an invalid key_share */
             group_id = (ext[0] << 8) | ext[1];
             BIO_indent(bio, indent + 4, 80);
             BIO_printf(bio, "NamedGroup: %s (%d)\n",
@@ -823,6 +831,17 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
         break;
 
     case TLSEXT_TYPE_supported_versions:
+        if (server) {
+            int version;
+
+            if (extlen != 2)
+                return 0;
+            version = (ext[0] << 8) | ext[1];
+            BIO_indent(bio, indent + 4, 80);
+            BIO_printf(bio, "%s (%d)\n",
+                       ssl_trace_str(version, ssl_version_tbl), version);
+            break;
+        }
         if (extlen < 1)
             return 0;
         xlen = ext[0];
@@ -1001,29 +1020,6 @@ static int ssl_print_server_hello(BIO *bio, int indent,
     if (!ssl_print_extensions(bio, indent, 1, SSL3_MT_SERVER_HELLO, &msg,
                               &msglen))
         return 0;
-    return 1;
-}
-
-static int ssl_print_hello_retry_request(BIO *bio, int indent,
-                                         const unsigned char *msg,
-                                         size_t msglen)
-{
-    unsigned int cs;
-
-    if (!ssl_print_version(bio, indent, "server_version", &msg, &msglen, NULL))
-        return 0;
-
-    cs = (msg[0] << 8) | msg[1];
-    BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "cipher_suite {0x%02X, 0x%02X} %s\n",
-               msg[0], msg[1], ssl_trace_str(cs, ssl_ciphers_tbl));
-    msg += 2;
-    msglen -= 2;
-
-    if (!ssl_print_extensions(bio, indent, 1, SSL3_MT_HELLO_RETRY_REQUEST, &msg,
-                              &msglen))
-        return 0;
-
     return 1;
 }
 
@@ -1258,6 +1254,10 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL *ssl,
     if (SSL_IS_TLS13(ssl)) {
         if (!ssl_print_hexbuf(bio, indent, "request_context", 1, &msg, &msglen))
             return 0;
+        if (!ssl_print_extensions(bio, indent, 1,
+                                  SSL3_MT_CERTIFICATE_REQUEST, &msg, &msglen))
+            return 0;
+        return 1;
     } else {
         if (msglen < 1)
             return 0;
@@ -1457,11 +1457,6 @@ static int ssl_print_handshake(BIO *bio, const SSL *ssl, int server,
 
     case SSL3_MT_NEWSESSION_TICKET:
         if (!ssl_print_ticket(bio, indent + 2, ssl, msg, msglen))
-            return 0;
-        break;
-
-    case SSL3_MT_HELLO_RETRY_REQUEST:
-        if (!ssl_print_hello_retry_request(bio, indent + 2, msg, msglen))
             return 0;
         break;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,7 @@
 #include <string.h>
 #include <limits.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -43,7 +44,7 @@ typedef enum OPTION_choice {
     OPT_E, OPT_IN, OPT_OUT, OPT_PASS, OPT_ENGINE, OPT_D, OPT_P, OPT_V,
     OPT_NOPAD, OPT_SALT, OPT_NOSALT, OPT_DEBUG, OPT_UPPER_P, OPT_UPPER_A,
     OPT_A, OPT_Z, OPT_BUFSIZE, OPT_K, OPT_KFILE, OPT_UPPER_K, OPT_NONE,
-    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_CIPHER,
+    OPT_UPPER_S, OPT_IV, OPT_MD, OPT_ITER, OPT_PBKDF2, OPT_CIPHER,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -73,6 +74,8 @@ const OPTIONS enc_options[] = {
     {"S", OPT_UPPER_S, 's', "Salt, in hex"},
     {"iv", OPT_IV, 's', "IV in hex"},
     {"md", OPT_MD, 's', "Use specified digest to create a key from the passphrase"},
+    {"iter", OPT_ITER, 'p', "Specify the iteration count and force use of PBKDF2"},
+    {"pbkdf2", OPT_PBKDF2, '-', "Use password-based key derivation function 2"},
     {"none", OPT_NONE, '-', "Don't encrypt"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_R_OPTIONS,
@@ -98,7 +101,7 @@ int enc_main(int argc, char **argv)
     char *hkey = NULL, *hiv = NULL, *hsalt = NULL, *p;
     char *infile = NULL, *outfile = NULL, *prog;
     char *str = NULL, *passarg = NULL, *pass = NULL, *strbuf = NULL;
-    char mbuf[sizeof magic - 1];
+    char mbuf[sizeof(magic) - 1];
     OPTION_CHOICE o;
     int bsize = BSIZE, verbose = 0, debug = 0, olb64 = 0, nosalt = 0;
     int enc = 1, printkey = 0, i, k;
@@ -106,6 +109,8 @@ int enc_main(int argc, char **argv)
     int ret = 1, inl, nopad = 0;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *buff = NULL, salt[PKCS5_SALT_LEN];
+    int pbkdf2 = 0;
+    int iter = 0;
     long n;
     struct doall_enc_ciphers dec;
 #ifdef ZLIB
@@ -220,7 +225,7 @@ int enc_main(int argc, char **argv)
             in = bio_open_default(opt_arg(), 'r', FORMAT_TEXT);
             if (in == NULL)
                 goto opthelp;
-            i = BIO_gets(in, buf, sizeof buf);
+            i = BIO_gets(in, buf, sizeof(buf));
             BIO_free(in);
             in = NULL;
             if (i <= 0) {
@@ -254,6 +259,16 @@ int enc_main(int argc, char **argv)
                 goto opthelp;
             cipher = c;
             break;
+        case OPT_ITER:
+            if (!opt_int(opt_arg(), &iter))
+                goto opthelp;
+            pbkdf2 = 1;
+            break;
+        case OPT_PBKDF2:
+            pbkdf2 = 1;
+            if (iter == 0)    /* do not overwrite a chosen value */
+                iter = 10000;
+            break;
         case OPT_NONE:
             cipher = NULL;
             break;
@@ -280,6 +295,9 @@ int enc_main(int argc, char **argv)
 
     if (dgst == NULL)
         dgst = EVP_sha256();
+
+    if (iter == 0)
+        iter = 1;
 
     /* It must be large enough for a base64 encoded line */
     if (base64 && bsize < 80)
@@ -409,11 +427,11 @@ int enc_main(int argc, char **argv)
             } else {
                 if (enc) {
                     if (hsalt) {
-                        if (!set_hex(hsalt, salt, sizeof salt)) {
+                        if (!set_hex(hsalt, salt, sizeof(salt))) {
                             BIO_printf(bio_err, "invalid hex salt value\n");
                             goto end;
                         }
-                    } else if (RAND_bytes(salt, sizeof salt) <= 0) {
+                    } else if (RAND_bytes(salt, sizeof(salt)) <= 0) {
                         goto end;
                     }
                     /*
@@ -421,32 +439,54 @@ int enc_main(int argc, char **argv)
                      */
                     if ((printkey != 2)
                         && (BIO_write(wbio, magic,
-                                      sizeof magic - 1) != sizeof magic - 1
+                                      sizeof(magic) - 1) != sizeof(magic) - 1
                             || BIO_write(wbio,
                                          (char *)salt,
-                                         sizeof salt) != sizeof salt)) {
+                                         sizeof(salt)) != sizeof(salt))) {
                         BIO_printf(bio_err, "error writing output file\n");
                         goto end;
                     }
-                } else if (BIO_read(rbio, mbuf, sizeof mbuf) != sizeof mbuf
+                } else if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf)
                            || BIO_read(rbio,
                                        (unsigned char *)salt,
-                                       sizeof salt) != sizeof salt) {
+                                       sizeof(salt)) != sizeof(salt)) {
                     BIO_printf(bio_err, "error reading input file\n");
                     goto end;
-                } else if (memcmp(mbuf, magic, sizeof magic - 1)) {
+                } else if (memcmp(mbuf, magic, sizeof(magic) - 1)) {
                     BIO_printf(bio_err, "bad magic number\n");
                     goto end;
                 }
-
                 sptr = salt;
             }
 
-            if (!EVP_BytesToKey(cipher, dgst, sptr,
-                                (unsigned char *)str,
-                                str_len, 1, key, iv)) {
-                BIO_printf(bio_err, "EVP_BytesToKey failed\n");
-                goto end;
+            if (pbkdf2 == 1) {
+                /*
+                * derive key and default iv
+                * concatenated into a temporary buffer
+                */
+                unsigned char tmpkeyiv[EVP_MAX_KEY_LENGTH + EVP_MAX_IV_LENGTH];
+                int iklen = EVP_CIPHER_key_length(cipher);
+                int ivlen = EVP_CIPHER_iv_length(cipher);
+                /* not needed if HASH_UPDATE() is fixed : */
+                int islen = (sptr != NULL ? sizeof(salt) : 0);
+                if (!PKCS5_PBKDF2_HMAC(str, str_len, sptr, islen,
+                                       iter, dgst, iklen+ivlen, tmpkeyiv)) {
+                    BIO_printf(bio_err, "PKCS5_PBKDF2_HMAC failed\n");
+                    goto end;
+                }
+                /* split and move data back to global buffer */
+                memcpy(key, tmpkeyiv, iklen);
+                memcpy(iv, tmpkeyiv+iklen, ivlen);
+            } else {
+                BIO_printf(bio_err, "*** WARNING : "
+                                    "deprecated key derivation used.\n"
+                                    "Using -iter or -pbkdf2 would be better.\n");
+                if (!EVP_BytesToKey(cipher, dgst, sptr,
+                                    (unsigned char *)str, str_len,
+                                    1, key, iv)) {
+                    BIO_printf(bio_err, "EVP_BytesToKey failed\n");
+                    goto end;
+                }
             }
             /*
              * zero the complete buffer or the string passed from the command
@@ -469,9 +509,8 @@ int enc_main(int argc, char **argv)
         if ((hiv == NULL) && (str == NULL)
             && EVP_CIPHER_iv_length(cipher) != 0) {
             /*
-             * No IV was explicitly set and no IV was generated during
-             * EVP_BytesToKey. Hence the IV is undefined, making correct
-             * decryption impossible.
+             * No IV was explicitly set and no IV was generated.
+             * Hence the IV is undefined, making correct decryption impossible.
              */
             BIO_printf(bio_err, "iv undefined\n");
             goto end;

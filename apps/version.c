@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "apps.h"
+#include "progs.h"
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
@@ -104,7 +105,8 @@ opthelp:
             dirty = version = 1;
             break;
         case OPT_A:
-            seed = cflags = version = date = platform = dir = engdir = 1;
+            seed = options = cflags = version = date = platform = dir = engdir
+                = 1;
             break;
         }
     }

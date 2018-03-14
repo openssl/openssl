@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -69,7 +69,6 @@ ASYNC_WAIT_CTX *ASYNC_get_wait_ctx(ASYNC_JOB *job);
 void ASYNC_block_pause(void);
 void ASYNC_unblock_pause(void);
 
-int ERR_load_ASYNC_strings(void);
 
 # ifdef  __cplusplus
 }

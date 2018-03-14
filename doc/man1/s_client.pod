@@ -10,6 +10,7 @@ s_client - SSL/TLS client program
 B<openssl> B<s_client>
 [B<-help>]
 [B<-connect host:port>]
+[B<-bind host:port>]
 [B<-proxy host:port>]
 [B<-unix path>]
 [B<-4>]
@@ -118,6 +119,7 @@ B<openssl> B<s_client>
 [B<-ctlogfile>]
 [B<-keylogfile file>]
 [B<-early_data file>]
+[B<-force_pha>]
 [B<target>]
 
 =head1 DESCRIPTION
@@ -143,8 +145,14 @@ Print out a usage message.
 
 This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
-If neither this nor the target positonal argument are specified then an attempt
+If neither this nor the target positional argument are specified then an attempt
 is made to connect to the local host on port 4433.
+
+=item B<-bind host:port>]
+
+This specifies the host address and or port to bind as the source for the
+connection.  For Unix-domain sockets the port is ignored and the host is
+used as the source socket address.
 
 =item B<-proxy host:port>
 
@@ -491,7 +499,7 @@ For example strings, see L<SSL_CTX_set1_sigalgs(3)>
 =item B<-curves curvelist>
 
 Specifies the list of supported curves to be sent by the client. The curve is
-is ultimately selected by the server. For a list of all curves, use:
+ultimately selected by the server. For a list of all curves, use:
 
     $ openssl ecparam -list_curves
 
@@ -621,6 +629,11 @@ Reads the contents of the specified file and attempts to send it as early data
 to the server. This will only work with resumed sessions that support early
 data and when the server accepts the early data.
 
+=item B<-force_pha>
+
+For TLSv1.3 only, always send the Post-Handshake Authentication extension,
+whether or not a certificate has been provided via B<-cert>.
+
 =item B<[target]>
 
 Rather than providing B<-connect>, the target hostname and optional port may
@@ -680,6 +693,9 @@ applications should B<not> do this as it makes them vulnerable to a MITM
 attack. This behaviour can be changed by with the B<-verify_return_error>
 option: any verify errors are then returned aborting the handshake.
 
+The B<-bind> option may be useful if the server or a firewall requires
+connections to come from some particular address and or port.
+
 =head1 BUGS
 
 Because this program has a lot of options and also because some of the
@@ -703,7 +719,7 @@ The B<-name> option was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -75,7 +75,7 @@ SSL_get_selected_srtp_profile(). This function will return NULL if no SRTP
 protection profile was negotiated. The memory returned from this function should
 not be freed by the caller.
 
-If an SRTP protection profile has been sucessfully negotiated then the SRTP
+If an SRTP protection profile has been successfully negotiated then the SRTP
 keying material (on both the client and server) should be obtained via a call to
 L<SSL_export_keying_material(3)>. This call should provide a label value of
 "EXTRACTOR-dtls_srtp" and a NULL context value (use_context is 0). The total

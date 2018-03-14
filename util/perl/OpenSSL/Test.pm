@@ -1,4 +1,4 @@
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -476,7 +476,9 @@ sub run {
 	}
 	close $pipe;
     } else {
+	$ENV{HARNESS_OSSL_PREFIX} = "# ";
 	system("$prefix$cmd");
+	delete $ENV{HARNESS_OSSL_PREFIX};
     }
     $e = ($? & 0x7f) ? ($? & 0x7f)|0x80 : ($? >> 8);
     $r = $hooks{exit_checker}->($e);
@@ -758,12 +760,13 @@ I<This must never ever be done on VMS.>
 sub quotify {
     # Unix setup (default if nothing else is mentioned)
     my $arg_formatter =
-	sub { $_ = shift; /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/ ? "'$_'" : $_ };
+	sub { $_ = shift;
+	      ($_ eq '' || /\s|[\{\}\\\$\[\]\*\?\|\&:;<>]/) ? "'$_'" : $_ };
 
     if ( $^O eq "VMS") {	# VMS setup
 	$arg_formatter = sub {
 	    $_ = shift;
-	    if (/\s|["[:upper:]]/) {
+	    if ($_ eq '' || /\s|["[:upper:]]/) {
 		s/"/""/g;
 		'"'.$_.'"';
 	    } else {
@@ -773,7 +776,7 @@ sub quotify {
     } elsif ( $^O eq "MSWin32") { # MSWin setup
 	$arg_formatter = sub {
 	    $_ = shift;
-	    if (/\s|["\|\&\*\;<>]/) {
+	    if ($_ eq '' || /\s|["\|\&\*\;<>]/) {
 		s/(["\\])/\\$1/g;
 		'"'.$_.'"';
 	    } else {

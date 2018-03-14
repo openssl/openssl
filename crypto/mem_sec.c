@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2004-2014, Akamai Technologies. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -20,7 +20,11 @@
 
 #include <string.h>
 
-#if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
+/* e_os.h includes unistd.h, which defines _POSIX_VERSION */
+#if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
+    && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L) \
+         || defined(__sun) || defined(__hpux) || defined(__sgi) \
+         || defined(__osf__) )
 # define IMPLEMENTED
 # include <stdlib.h>
 # include <assert.h>
@@ -29,8 +33,10 @@
 # include <sys/mman.h>
 # if defined(OPENSSL_SYS_LINUX)
 #  include <sys/syscall.h>
-#  include <linux/mman.h>
-#  include <errno.h>
+#  if defined(SYS_mlock2)
+#   include <linux/mman.h>
+#   include <errno.h>
+#  endif
 # endif
 # include <sys/param.h>
 # include <sys/stat.h>
@@ -40,6 +46,9 @@
 #define CLEAR(p, s) OPENSSL_cleanse(p, s)
 #ifndef PAGE_SIZE
 # define PAGE_SIZE    4096
+#endif
+#if !defined(MAP_ANON) && defined(MAP_ANONYMOUS)
+# define MAP_ANON MAP_ANONYMOUS
 #endif
 
 #ifdef IMPLEMENTED
@@ -66,7 +75,7 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
     int ret = 0;
 
     if (!secure_mem_initialized) {
-        sec_malloc_lock = CRYPTO_THREAD_glock_new("sec_malloc");
+        sec_malloc_lock = CRYPTO_THREAD_lock_new();
         if (sec_malloc_lock == NULL)
             return 0;
         if ((ret = sh_init(size, minsize)) != 0) {
@@ -374,7 +383,7 @@ static int sh_init(size_t size, int minsize)
     size_t pgsize;
     size_t aligned;
 
-    memset(&sh, 0, sizeof sh);
+    memset(&sh, 0, sizeof(sh));
 
     /* make sure size and minsize are powers of 2 */
     OPENSSL_assert(size > 0);
@@ -401,7 +410,7 @@ static int sh_init(size_t size, int minsize)
     for (i = sh.bittable_size; i; i >>= 1)
         sh.freelist_size++;
 
-    sh.freelist = OPENSSL_zalloc(sh.freelist_size * sizeof (char *));
+    sh.freelist = OPENSSL_zalloc(sh.freelist_size * sizeof(char *));
     OPENSSL_assert(sh.freelist != NULL);
     if (sh.freelist == NULL)
         goto err;
@@ -498,7 +507,7 @@ static void sh_done()
     OPENSSL_free(sh.bitmalloc);
     if (sh.map_result != NULL && sh.map_size)
         munmap(sh.map_result, sh.map_size);
-    memset(&sh, 0, sizeof sh);
+    memset(&sh, 0, sizeof(sh));
 }
 
 static int sh_allocated(const char *ptr)

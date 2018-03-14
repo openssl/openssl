@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -136,9 +136,9 @@ static void parseit(void)
  * Some rand() implementations aren't good, but we're not
  * dealing with secure randomness here.
  */
-#ifdef _WIN32
-# define random() rand()
-#endif
+# ifdef _WIN32
+#  define random() rand()
+# endif
 /*
  * See if the current malloc should fail.
  */
@@ -146,6 +146,8 @@ static int shouldfail(void)
 {
     int roll = (int)(random() % 100);
     int shoulditfail = roll < md_fail_percent;
+# ifndef _WIN32
+/* suppressed on Windows as POSIX-like file descriptors are non-inheritable */
     int len;
     char buff[80];
 
@@ -156,15 +158,16 @@ static int shouldfail(void)
         len = strlen(buff);
         if (write(md_tracefd, buff, len) != len)
             perror("shouldfail write failed");
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
+#  ifndef OPENSSL_NO_CRYPTO_MDEBUG_BACKTRACE
         if (shoulditfail) {
             void *addrs[30];
             int num = backtrace(addrs, OSSL_NELEM(addrs));
 
             backtrace_symbols_fd(addrs, num, md_tracefd);
         }
-#endif
+#  endif
     }
+# endif
 
     if (md_count) {
         /* If we used up this one, go to the next. */
@@ -198,7 +201,14 @@ void *CRYPTO_malloc(size_t num, const char *file, int line)
         return NULL;
 
     FAILTEST();
-    allow_customize = 0;
+    if (allow_customize) {
+        /*
+         * Disallow customization after the first allocation. We only set this
+         * if necessary to avoid a store to the same cache line on every
+         * allocation.
+         */
+        allow_customize = 0;
+    }
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         CRYPTO_mem_debug_malloc(NULL, num, 0, file, line);
@@ -240,7 +250,6 @@ void *CRYPTO_realloc(void *str, size_t num, const char *file, int line)
         return NULL;
     }
 
-    allow_customize = 0;
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (call_malloc_debug) {
         void *ret;

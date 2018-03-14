@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -93,11 +93,10 @@ static CRYPTO_THREAD_ID disabling_threadid;
 
 DEFINE_RUN_ONCE_STATIC(do_memdbg_init)
 {
-    memdbg_lock = CRYPTO_THREAD_glock_new("malloc");
-    long_memdbg_lock = CRYPTO_THREAD_glock_new("long_malloc");
-    if (memdbg_lock == NULL
-            || long_memdbg_lock == NULL
-            || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
+    memdbg_lock = CRYPTO_THREAD_lock_new();
+    long_memdbg_lock = CRYPTO_THREAD_lock_new();
+    if (memdbg_lock == NULL || long_memdbg_lock == NULL
+        || !CRYPTO_THREAD_init_local(&appinfokey, NULL)) {
         CRYPTO_THREAD_lock_free(memdbg_lock);
         memdbg_lock = NULL;
         CRYPTO_THREAD_lock_free(long_memdbg_lock);

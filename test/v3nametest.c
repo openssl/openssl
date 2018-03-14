@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../e_os.h"
 #include <string.h>
-#include "internal/nelem.h"
+
+#include <openssl/e_os2.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "internal/nelem.h"
 #include "testutil.h"
+
+#ifdef OPENSSL_SYS_WINDOWS
+# define strcasecmp _stricmp
+#endif
 
 static const char *const names[] = {
     "a", "b", ".", "*", "@",

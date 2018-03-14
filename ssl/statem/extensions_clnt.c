@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -507,19 +507,26 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
 {
     int currv, min_version, max_version, reason;
 
+    reason = ssl_get_min_max_version(s, &min_version, &max_version);
+    if (reason != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
+        return EXT_RETURN_FAIL;
+    }
+
+    /*
+     * Don't include this if we can't negotiate TLSv1.3. We can do a straight
+     * comparison here because we will never be called in DTLS.
+     */
+    if (max_version < TLS1_3_VERSION)
+        return EXT_RETURN_NOT_SENT;
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_start_sub_packet_u8(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                  ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    reason = ssl_get_min_max_version(s, &min_version, &max_version);
-    if (reason != 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS, reason);
         return EXT_RETURN_FAIL;
     }
 
@@ -592,7 +599,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     size_t encodedlen;
 
     if (s->s3->tmp.pkey != NULL) {
-        if (!ossl_assert(s->hello_retry_request)) {
+        if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE,
                      ERR_R_INTERNAL_ERROR);
             return 0;
@@ -698,9 +705,10 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
                  ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-#endif
-
     return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
 }
 
 EXT_RETURN tls_construct_ctos_cookie(SSL *s, WPACKET *pkt, unsigned int context,
@@ -736,13 +744,14 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
                                          unsigned int context, X509 *x,
                                          size_t chainidx)
 {
+    char identity[PSK_MAX_IDENTITY_LEN + 1];
     const unsigned char *id = NULL;
     size_t idlen = 0;
     SSL_SESSION *psksess = NULL;
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
 
-    if (s->hello_retry_request)
+    if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
     if (s->psk_use_session_cb != NULL
@@ -753,6 +762,58 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
                  SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
+    }
+
+    if (psksess == NULL && s->psk_client_callback != NULL) {
+        unsigned char psk[PSK_MAX_PSK_LEN];
+        size_t psklen = 0;
+
+        memset(identity, 0, sizeof(identity));
+        psklen = s->psk_client_callback(s, NULL, identity, sizeof(identity) - 1,
+                                        psk, sizeof(psk));
+
+        if (psklen > PSK_MAX_PSK_LEN) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                     SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        } else if (psklen > 0) {
+            const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+            const SSL_CIPHER *cipher;
+
+            idlen = strlen(identity);
+            if (idlen > PSK_MAX_IDENTITY_LEN) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                         ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+            id = (unsigned char *)identity;
+
+            /*
+             * We found a PSK using an old style callback. We don't know
+             * the digest so we default to SHA256 as per the TLSv1.3 spec
+             */
+            cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
+            if (cipher == NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                         ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+
+            psksess = SSL_SESSION_new();
+            if (psksess == NULL
+                    || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
+                    || !SSL_SESSION_set_cipher(psksess, cipher)
+                    || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_EARLY_DATA,
+                         ERR_R_INTERNAL_ERROR);
+                OPENSSL_cleanse(psk, psklen);
+                return EXT_RETURN_FAIL;
+            }
+            OPENSSL_cleanse(psk, psklen);
+        }
     }
 
     SSL_SESSION_free(s->psksession);
@@ -954,7 +1015,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             || (s->session->ext.ticklen == 0 && s->psksession == NULL))
         return EXT_RETURN_NOT_SENT;
 
-    if (s->hello_retry_request)
+    if (s->hello_retry_request == SSL_HRR_PENDING)
         handmd = ssl_handshake_md(s);
 
     if (s->session->ext.ticklen != 0) {
@@ -973,7 +1034,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             goto dopsksess;
         }
 
-        if (s->hello_retry_request && mdres != handmd) {
+        if (s->hello_retry_request == SSL_HRR_PENDING && mdres != handmd) {
             /*
              * Selected ciphersuite hash does not match the hash for the session
              * so we can't use it.
@@ -991,6 +1052,16 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
          */
         now = (uint32_t)time(NULL);
         agesec = now - (uint32_t)s->session->time;
+        /*
+         * We calculate the age in seconds but the server may work in ms. Due to
+         * rounding errors we could overestimate the age by up to 1s. It is
+         * better to underestimate it. Otherwise, if the RTT is very short, when
+         * the server calculates the age reported by the client it could be
+         * bigger than the age calculated on the server - which should never
+         * happen.
+         */
+        if (agesec > 0)
+            agesec--;
 
         if (s->session->ext.tick_lifetime_hint < agesec) {
             /* Ticket is too old. Ignore it. */
@@ -1037,7 +1108,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
             return EXT_RETURN_FAIL;
         }
 
-        if (s->hello_retry_request && mdpsk != handmd) {
+        if (s->hello_retry_request == SSL_HRR_PENDING && mdpsk != handmd) {
             /*
              * Selected ciphersuite hash does not match the hash for the PSK
              * session. This is an application bug.
@@ -1126,6 +1197,48 @@ EXT_RETURN tls_construct_ctos_psk(SSL *s, WPACKET *pkt, unsigned int context,
 #endif
 }
 
+EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL *s, WPACKET *pkt,
+                                                  unsigned int context,
+                                                  X509 *x, size_t chainidx)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    if (!s->pha_forced) {
+        int i, n = 0;
+
+        /* check for cert, if present, we can do post-handshake auth */
+        if (s->cert == NULL)
+            return EXT_RETURN_NOT_SENT;
+
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            if (s->cert->pkeys[i].x509 != NULL
+                    && s->cert->pkeys[i].privatekey != NULL)
+                n++;
+        }
+
+        /* no identity certificates, so no extension */
+        if (n == 0)
+            return EXT_RETURN_NOT_SENT;
+    }
+
+    /* construct extension - 0 length, no contents */
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_post_handshake_auth)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_POST_HANDSHAKE_AUTH,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    s->post_handshake_auth = SSL_PHA_EXT_SENT;
+
+    return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_NOT_SENT;
+#endif
+}
+
+
 /*
  * Parse the server's renegotiation binding and abort if it's not right
  */
@@ -1195,7 +1308,7 @@ int tls_parse_stoc_maxfragmentlen(SSL *s, PACKET *pkt, unsigned int context,
     unsigned int value;
 
     if (PACKET_remaining(pkt) != 1 || !PACKET_get_1(pkt, &value)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_STOC_MAXFRAGMENTLEN, 
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_STOC_MAXFRAGMENTLEN,
                  SSL_R_BAD_EXTENSION);
         return 0;
     }
@@ -1266,7 +1379,7 @@ int tls_parse_stoc_server_name(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
                                  X509 *x, size_t chainidx)
 {
-    unsigned int ecpointformats_len;
+    size_t ecpointformats_len;
     PACKET ecptformatlist;
 
     if (!PACKET_as_length_prefixed_1(pkt, &ecptformatlist)) {
@@ -1276,8 +1389,13 @@ int tls_parse_stoc_ec_pt_formats(SSL *s, PACKET *pkt, unsigned int context,
     }
     if (!s->hit) {
         ecpointformats_len = PACKET_remaining(&ecptformatlist);
-        s->session->ext.ecpointformats_len = 0;
+        if (ecpointformats_len == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PARSE_STOC_EC_PT_FORMATS, SSL_R_BAD_LENGTH);
+            return 0;
+        }
 
+        s->session->ext.ecpointformats_len = 0;
         OPENSSL_free(s->session->ext.ecpointformats);
         s->session->ext.ecpointformats = OPENSSL_malloc(ecpointformats_len);
         if (s->session->ext.ecpointformats == NULL) {
@@ -1333,6 +1451,12 @@ int tls_parse_stoc_session_ticket(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
 {
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
+        /* We ignore this if the server sends a CertificateRequest */
+        /* TODO(TLS1.3): Add support for this */
+        return 1;
+    }
+
     /*
      * MUST only be sent if we've requested a status
      * request message. In TLS <= 1.2 it must also be empty.
@@ -1371,6 +1495,12 @@ int tls_parse_stoc_status_request(SSL *s, PACKET *pkt, unsigned int context,
 int tls_parse_stoc_sct(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx)
 {
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
+        /* We ignore this if the server sends it in a CertificateRequest */
+        /* TODO(TLS1.3): Add support for this */
+        return 1;
+    }
+
     /*
      * Only take it if we asked for it - i.e if there is no CT validation
      * callback set, then a custom extension MAY be processing it, so we
@@ -1629,6 +1759,44 @@ int tls_parse_stoc_ems(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->s3->flags |= TLS1_FLAGS_RECEIVED_EXTMS;
     if (!s->hit)
         s->session->flags |= SSL_SESS_FLAG_EXTMS;
+
+    return 1;
+}
+
+int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
+                                      X509 *x, size_t chainidx)
+{
+    unsigned int version;
+
+    if (!PACKET_get_net_2(pkt, &version)
+            || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR,
+                 SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
+                 SSL_R_LENGTH_MISMATCH);
+        return 0;
+    }
+
+    /* TODO(TLS1.3): Remove this before release */
+    if (version == TLS1_3_VERSION_DRAFT)
+        version = TLS1_3_VERSION;
+
+    /* We ignore this extension for HRRs except to sanity check it */
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) {
+        /*
+         * The only protocol version we support which has an HRR message is
+         * TLSv1.3, therefore we shouldn't be getting an HRR for anything else.
+         */
+        if (version != TLS1_3_VERSION) {
+            SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                     SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
+                     SSL_R_BAD_HRR_VERSION);
+            return 0;
+        }
+        return 1;
+    }
+
+    /* We just set it here. We validate it in ssl_choose_client_version */
+    s->version = version;
 
     return 1;
 }

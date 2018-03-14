@@ -146,7 +146,7 @@ static int async_write(BIO *bio, const char *in, int inl)
                 return -1;
 
             while (PACKET_remaining(&pkt) > 0) {
-                PACKET payload, wholebody;
+                PACKET payload, wholebody, sessionid, extensions;
                 unsigned int contenttype, versionhi, versionlo, data;
                 unsigned int msgtype = 0, negversion = 0;
 
@@ -164,11 +164,43 @@ static int async_write(BIO *bio, const char *in, int inl)
                         && !PACKET_get_1(&wholebody, &msgtype))
                     return -1;
 
-                if (msgtype == SSL3_MT_SERVER_HELLO
-                        && (!PACKET_forward(&wholebody,
+                if (msgtype == SSL3_MT_SERVER_HELLO) {
+                    if (!PACKET_forward(&wholebody,
                                             SSL3_HM_HEADER_LENGTH - 1)
-                            || !PACKET_get_net_2(&wholebody, &negversion)))
-                    return -1;
+                            || !PACKET_get_net_2(&wholebody, &negversion)
+                               /* Skip random (32 bytes) */
+                            || !PACKET_forward(&wholebody, 32)
+                               /* Skip session id */
+                            || !PACKET_get_length_prefixed_1(&wholebody,
+                                                             &sessionid)
+                               /*
+                                * Skip ciphersuite (2 bytes) and compression
+                                * method (1 byte)
+                                */
+                            || !PACKET_forward(&wholebody, 2 + 1)
+                            || !PACKET_get_length_prefixed_2(&wholebody,
+                                                             &extensions))
+                        return -1;
+
+                    /*
+                     * Find the negotiated version in supported_versions
+                     * extension, if present.
+                     */
+                    while (PACKET_remaining(&extensions)) {
+                        unsigned int type;
+                        PACKET extbody;
+
+                        if (!PACKET_get_net_2(&extensions, &type)
+                                || !PACKET_get_length_prefixed_2(&extensions,
+                                &extbody))
+                            return -1;
+
+                        if (type == TLSEXT_TYPE_supported_versions
+                                && (!PACKET_get_net_2(&extbody, &negversion)
+                                    || PACKET_remaining(&extbody) != 0))
+                            return -1;
+                    }
+                }
 
                 while (PACKET_get_1(&payload, &data)) {
                     /* Create a new one byte long record for each byte in the

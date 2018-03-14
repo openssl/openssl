@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -335,7 +335,6 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
 # define CMS_R_UNSUPPORTED_RECPIENTINFO_TYPE \
     CMS_R_UNSUPPORTED_RECIPIENTINFO_TYPE
 
-int ERR_load_CMS_strings(void);
 #  ifdef  __cplusplus
 }
 #  endif

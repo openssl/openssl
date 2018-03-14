@@ -101,7 +101,9 @@ was rejected or SSL_EARLY_DATA_NOT_SENT if no early data was sent. This function
 may be called by either the client or the server.
 
 A server uses the SSL_read_early_data() function to receive early data on a
-connection. As for SSL_write_early_data() this must be the first IO function
+connection for which early data has been enabled using
+SSL_CTX_set_max_early_data() or SSL_set_max_early_data(). As for
+SSL_write_early_data(), this must be the first IO function
 called on a connection, i.e. it must occur before any calls to
 L<SSL_write_ex(3)>, L<SSL_read_ex(3)>, L<SSL_accept(3)>, L<SSL_do_handshake(3)>,
 or other similar functions.
@@ -165,12 +167,16 @@ further action taken.
 
 When a session is created between a server and a client the server will specify
 the maximum amount of any early data that it will accept on any future
-connection attempt. By default this is approximately 16k. A server may override
-this default value by calling SSL_CTX_set_max_early_data() or
+connection attempt. By default the server does not accept early data; a
+server may indicate support for early data by calling
+SSL_CTX_set_max_early_data() or
 SSL_set_max_early_data() to set it for the whole SSL_CTX or an individual SSL
 object respectively. Similarly the SSL_CTX_get_max_early_data() and
 SSL_get_max_early_data() functions can be used to obtain the current maximum
 early data settings for the SSL_CTX and SSL objects respectively.
+Generally a server application will either use both of SSL_read_early_data()
+and SSL_CTX_set_max_early_data() (or SSL_set_max_early_data()), or neither
+of them, since there is no practical benefit from using only one of them.
 
 In the event that the current maximum early data setting for the server is
 different to that originally specified in a session that a client is resuming
@@ -188,10 +194,13 @@ early data solution as implemented in OpenSSL. In Nagle's algorithm the OS will
 buffer outgoing TCP data if a TCP packet has already been sent which we have not
 yet received an ACK for from the peer. The buffered data will only be
 transmitted if enough data to fill an entire TCP packet is accumulated, or if
-the ACK is received from the peer. The initial ClientHello will be sent as the
-first TCP packet, causing the early application data from calls to
-SSL_write_early_data() to be buffered by the OS and not sent until an ACK is
-received for the ClientHello packet. This means the early data is not actually
+the ACK is received from the peer. The initial ClientHello will be sent in the
+first TCP packet along with any data from the first call to
+SSL_write_early_data(). If the amount of data written will exceed the size of a
+single TCP packet, or if there are more calls to SSL_write_early_data() then
+that additional data will be sent in subsequent TCP packets which will be
+buffered by the OS and not sent until an ACK is received for the first packet
+containing the ClientHello. This means the early data is not actually
 sent until a complete round trip with the server has occurred which defeats the
 objective of early data.
 

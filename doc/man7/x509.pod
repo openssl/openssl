@@ -30,20 +30,20 @@ extension) and a few more.
 Finally, there's the supertype X509_INFO, which can contain a CRL, a
 certificate and a corresponding private key.
 
-B<X509_>I<...>, B<d2i_X509_>I<...> and B<i2d_X509_>I<...> handle X.509
-certificates, with some exceptions, shown below.
+B<X509_>I<XXX>, B<d2i_X509_>I<XXX>, and B<i2d_X509_>I<XXX> functions
+handle X.509 certificates, with some exceptions, shown below.
 
-B<X509_CRL_>I<...>, B<d2i_X509_CRL_>I<...> and B<i2d_X509_CRL_>I<...>
-handle X.509 CRLs.
+B<X509_CRL_>I<XXX>, B<d2i_X509_CRL_>I<XXX>, and B<i2d_X509_CRL_>I<XXX>
+functions handle X.509 CRLs.
 
-B<X509_REQ_>I<...>, B<d2i_X509_REQ_>I<...> and B<i2d_X509_REQ_>I<...>
-handle PKCS#10 certificate requests.
+B<X509_REQ_>I<XXX>, B<d2i_X509_REQ_>I<XXX>, and B<i2d_X509_REQ_>I<XXX>
+functions handle PKCS#10 certificate requests.
 
-B<X509_NAME_>I<...> handle certificate names.
+B<X509_NAME_>I<XXX> functions handle certificate names.
 
-B<X509_ATTRIBUTE_>I<...> handle certificate attributes.
+B<X509_ATTRIBUTE_>I<XXX> functions handle certificate attributes.
 
-B<X509_EXTENSION_>I<...> handle certificate extensions.
+B<X509_EXTENSION_>I<XXX> functions handle certificate extensions.
 
 =head1 SEE ALSO
 

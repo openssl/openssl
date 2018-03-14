@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,9 +21,7 @@ static int nullf_read(BIO *h, char *buf, int size);
 static int nullf_puts(BIO *h, const char *str);
 static int nullf_gets(BIO *h, char *str, int size);
 static long nullf_ctrl(BIO *h, int cmd, long arg1, void *arg2);
-static int nullf_new(BIO *h);
-static int nullf_free(BIO *data);
-static long nullf_callback_ctrl(BIO *h, int cmd, bio_info_cb *fp);
+static long nullf_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 static const BIO_METHOD methods_nullf = {
     BIO_TYPE_NULL_FILTER,
     "NULL filter",
@@ -36,34 +34,14 @@ static const BIO_METHOD methods_nullf = {
     nullf_puts,
     nullf_gets,
     nullf_ctrl,
-    nullf_new,
-    nullf_free,
+    NULL,
+    NULL,
     nullf_callback_ctrl,
 };
 
 const BIO_METHOD *BIO_f_null(void)
 {
     return &methods_nullf;
-}
-
-static int nullf_new(BIO *bi)
-{
-    bi->init = 1;
-    bi->ptr = NULL;
-    bi->flags = 0;
-    return 1;
-}
-
-static int nullf_free(BIO *a)
-{
-    if (a == NULL)
-        return 0;
-    /*-
-    a->ptr=NULL;
-    a->init=0;
-    a->flags=0;
-    */
-    return 1;
 }
 
 static int nullf_read(BIO *b, char *out, int outl)
@@ -115,7 +93,7 @@ static long nullf_ctrl(BIO *b, int cmd, long num, void *ptr)
     return ret;
 }
 
-static long nullf_callback_ctrl(BIO *b, int cmd, bio_info_cb *fp)
+static long nullf_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
     long ret = 1;
 

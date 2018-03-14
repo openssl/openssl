@@ -47,7 +47,7 @@ static int test_PACKET_end(void)
 
 static int test_PACKET_get_1(void)
 {
-    unsigned int i;
+    unsigned int i = 0;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
@@ -64,7 +64,7 @@ static int test_PACKET_get_1(void)
 
 static int test_PACKET_get_4(void)
 {
-    unsigned long i;
+    unsigned long i = 0;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
@@ -81,7 +81,7 @@ static int test_PACKET_get_4(void)
 
 static int test_PACKET_get_net_2(void)
 {
-    unsigned int i;
+    unsigned int i = 0;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
@@ -98,7 +98,7 @@ static int test_PACKET_get_net_2(void)
 
 static int test_PACKET_get_net_3(void)
 {
-    unsigned long i;
+    unsigned long i = 0;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
@@ -115,7 +115,7 @@ static int test_PACKET_get_net_3(void)
 
 static int test_PACKET_get_net_4(void)
 {
-    unsigned long i;
+    unsigned long i = 0;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
@@ -133,7 +133,7 @@ static int test_PACKET_get_net_4(void)
 static int test_PACKET_get_sub_packet(void)
 {
     PACKET pkt, subpkt;
-    unsigned long i;
+    unsigned long i = 0;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
             || !TEST_true(PACKET_get_sub_packet(&pkt, &subpkt, 4))
@@ -153,7 +153,7 @@ static int test_PACKET_get_sub_packet(void)
 
 static int test_PACKET_get_bytes(void)
 {
-    const unsigned char *bytes;
+    const unsigned char *bytes = NULL;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))
@@ -285,7 +285,7 @@ static int test_PACKET_contains_zero_byte(void)
 
 static int test_PACKET_forward(void)
 {
-    const unsigned char *byte;
+    const unsigned char *byte = NULL;
     PACKET pkt;
 
     if (!TEST_true(PACKET_buf_init(&pkt, smbuf, BUF_LEN))

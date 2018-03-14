@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -603,7 +603,7 @@ static int addrinfo_wrap(int family, int socktype,
 DEFINE_RUN_ONCE_STATIC(do_bio_lookup_init)
 {
     OPENSSL_init_crypto(0, NULL);
-    bio_lookup_lock = CRYPTO_THREAD_glock_new("bio_lookup");
+    bio_lookup_lock = CRYPTO_THREAD_lock_new();
     return bio_lookup_lock != NULL;
 }
 
@@ -676,7 +676,7 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
         int gai_ret = 0;
         struct addrinfo hints;
 
-        memset(&hints, 0, sizeof hints);
+        memset(&hints, 0, sizeof(hints));
 
         hints.ai_family = family;
         hints.ai_socktype = socktype;

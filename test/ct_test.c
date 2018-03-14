@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,6 @@
  */
 
 #include <ctype.h>
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +18,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "testutil.h"
-#include "openssl/crypto.h"
+#include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_CT
 /* Used when declaring buffers to read text files into */
@@ -297,7 +296,8 @@ static int execute_cert_test(CT_TEST_FIXTURE *fixture)
             for (i = 0; i < sk_SCT_num(scts); ++i) {
                 SCT *sct_i = sk_SCT_value(scts, i);
 
-                if (!TEST_int_eq(SCT_get_source(sct_i), SCT_SOURCE_X509V3_EXTENSION)) {
+                if (!TEST_int_eq(SCT_get_source(sct_i),
+                                 SCT_SOURCE_X509V3_EXTENSION)) {
                     goto end;
                 }
             }
@@ -504,8 +504,8 @@ static int test_default_ct_policy_eval_ctx_time_is_now(void)
                                 1000;
     const time_t time_tolerance = 600;  /* 10 minutes */
 
-    if (!TEST_uint_le((unsigned int)fabs(difftime(time(NULL), default_time)),
-                      (unsigned int)time_tolerance))
+    if (!TEST_time_t_le(abs((int)difftime(time(NULL), default_time)),
+                        time_tolerance))
         goto end;
 
     success = 1;

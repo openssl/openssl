@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -69,7 +69,7 @@ DEFINE_RUN_ONCE_STATIC(o_names_init)
 {
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
     names_lh = lh_OBJ_NAME_new(obj_name_hash, obj_name_cmp);
-    obj_lock = CRYPTO_THREAD_glock_new("obj");
+    obj_lock = CRYPTO_THREAD_lock_new();
     CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ENABLE);
     return names_lh != NULL && obj_lock != NULL;
 }

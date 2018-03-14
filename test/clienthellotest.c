@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -81,26 +81,49 @@ static int test_client_hello(int currtest)
 
     switch(currtest) {
     case TEST_SET_SESSION_TICK_DATA_VER_NEG:
+#if !defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_TLS1_2)
+        /* TLSv1.3 is enabled and TLSv1.2 is disabled so can't do this test */
+        return 1;
+#else
         /* Testing for session tickets <= TLS1.2; not relevant for 1.3 */
         if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION)))
             goto end;
+#endif
         break;
 
     case TEST_ADD_PADDING_AND_PSK:
+        /*
+         * In this case we're doing TLSv1.3 and we're sending a PSK so the
+         * ClientHello is already going to be quite long. To avoid getting one
+         * that is too long for this test we use a restricted ciphersuite list
+         */
+        if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
+                                               "TLS13-AES-128-GCM-SHA256")))
+            goto end;
+         /* Fall through */
     case TEST_ADD_PADDING:
     case TEST_PADDING_NOT_NEEDED:
         SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
+        /* Make sure we get a consistent size across TLS versions */
+        SSL_CTX_clear_options(ctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
         /*
          * Add some dummy ALPN protocols so that the ClientHello is at least
          * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
          * needed.
          */
-        if (currtest == TEST_ADD_PADDING
-                && (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
+        if (currtest == TEST_ADD_PADDING) {
+             if (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
                                     (unsigned char *)alpn_prots,
-                                    sizeof(alpn_prots) - 1))))
+                                    sizeof(alpn_prots) - 1)))
+                goto end;
+        /*
+         * Otherwise we need to make sure we have a small enough message to
+         * not need padding.
+         */
+        } else if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
+                              "AES128-SHA:TLS13-AES-128-GCM-SHA256"))) {
             goto end;
-
+        }
         break;
 
     default:

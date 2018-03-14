@@ -1,12 +1,12 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-use File::Spec;
+use File::Spec::Functions;
 use File::Copy;
 use MIME::Base64;
 use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
@@ -69,13 +69,13 @@ my @noexist_file_files =
     ( "file:blahdiblah.pem",
       "file:test/blahdibleh.der" );
 
-
 my $n = (3 * scalar @noexist_files)
     + (6 * scalar @src_files)
     + (4 * scalar @generated_files)
     + (scalar keys %generated_file_files)
     + (scalar @noexist_file_files)
-    + 4;
+    + 3
+    + 11;
 
 plan tests => $n;
 
@@ -84,9 +84,7 @@ indir "store_$$" => sub {
     {
         skip "failed initialisation", $n unless init();
 
-        # test PEM_read_bio_PrivateKey
-        ok(run(app(["openssl", "rsa", "-in", "rsa-key-pkcs8-pbes2-sha256.pem",
-                    "-passin", "pass:password"])));
+        my $rehash = init_rehash();
 
         foreach (@noexist_files) {
             my $file = srctop_file($_);
@@ -151,6 +149,55 @@ indir "store_$$" => sub {
 
                 ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
             }
+        }
+
+        ok(!run(app(['openssl', 'storeutl',
+                     '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+                     srctop_file('test', 'testx509.pem')])),
+           "Checking that -subject can't be used with a single file");
+
+        ok(run(app(['openssl', 'storeutl', '-certs',
+                    srctop_file('test', 'testx509.pem')])),
+           "Checking that -certs returns 1 object on a certificate file");
+        ok(run(app(['openssl', 'storeutl', '-certs',
+                     srctop_file('test', 'testcrl.pem')])),
+           "Checking that -certs returns 0 objects on a CRL file");
+
+        ok(run(app(['openssl', 'storeutl', '-crls',
+                     srctop_file('test', 'testx509.pem')])),
+           "Checking that -crls returns 0 objects on a certificate file");
+        ok(run(app(['openssl', 'storeutl', '-crls',
+                    srctop_file('test', 'testcrl.pem')])),
+           "Checking that -crls returns 1 object on a CRL file");
+
+    SKIP: {
+            skip "failed rehash initialisation", 6 unless $rehash;
+
+            # subject from testx509.pem:
+            # '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert'
+            # issuer from testcrl.pem:
+            # '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority'
+            ok(run(app(['openssl', 'storeutl',
+                        '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+                        catdir(curdir(), 'rehash')])));
+            ok(run(app(['openssl', 'storeutl',
+                        '-subject',
+                        '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
+                        catdir(curdir(), 'rehash')])));
+            ok(run(app(['openssl', 'storeutl', '-certs',
+                        '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+                        catdir(curdir(), 'rehash')])));
+            ok(run(app(['openssl', 'storeutl', '-crls',
+                        '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
+                        catdir(curdir(), 'rehash')])));
+            ok(run(app(['openssl', 'storeutl', '-certs',
+                        '-subject',
+                        '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
+                        catdir(curdir(), 'rehash')])));
+            ok(run(app(['openssl', 'storeutl', '-crls',
+                        '-subject',
+                        '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
+                        catdir(curdir(), 'rehash')])));
         }
     }
 }, create => 1, cleanup => 1;
@@ -347,6 +394,17 @@ sub init {
                           }
                           return 1;
                       }, keys %generated_file_files)
+           );
+}
+
+sub init_rehash {
+    return (
+            mkdir(catdir(curdir(), 'rehash'))
+            && copy(srctop_file('test', 'testx509.pem'),
+                    catdir(curdir(), 'rehash'))
+            && copy(srctop_file('test', 'testcrl.pem'),
+                    catdir(curdir(), 'rehash'))
+            && run(app(['openssl', 'rehash', catdir(curdir(), 'rehash')]))
            );
 }
 

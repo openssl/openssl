@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -481,7 +481,6 @@ BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
-int ERR_load_BN_strings(void);
 
 # ifdef  __cplusplus
 }

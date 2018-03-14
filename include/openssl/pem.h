@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,6 @@
 # include <openssl/safestack.h>
 # include <openssl/evp.h>
 # include <openssl/x509.h>
-# include <openssl/pem2.h>
 # include <openssl/pemerr.h>
 
 #ifdef  __cplusplus
@@ -372,7 +371,6 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 #  endif
 # endif
 
-int ERR_load_PEM_strings(void);
 # ifdef  __cplusplus
 }
 # endif
