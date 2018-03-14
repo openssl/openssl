@@ -127,6 +127,6 @@ die "Producer unrecognised: $producer\n" unless defined $procedure;
 
 while (<STDIN>) {
     if ($_ = $procedure->($_, @ARGV)) {
-        print or print or die "$!\n";
+        print or die "$!\n";
     }
 }
