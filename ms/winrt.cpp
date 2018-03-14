@@ -88,9 +88,9 @@ extern "C"
 		return NULL;
 		}
 #endif
-	void* GetModuleHandle(
-						 _In_opt_  LPCTSTR lpModuleName
-						 )
+	HMODULE winrt_GetModuleHandle(
+								 const wchar_t* lpModuleName
+								 )
 		{
 		return NULL;
 		}
@@ -144,7 +144,7 @@ extern "C"
 		return NULL;
 		}
 
-	BOOL WINAPI GetVersionEx(
+	BOOL winrt_GetVersionEx(
 							_Inout_  LPOSVERSIONINFO lpVersionInfo
 							)
 		{
