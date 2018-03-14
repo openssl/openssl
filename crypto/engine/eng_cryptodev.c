@@ -1057,7 +1057,7 @@ static int crparam2bn(struct crparam *crp, BIGNUM *a)
         return (-1);
 
     for (i = 0; i < bytes; i++)
-        pd[i] = crp->crp_p[bytes - i - 1];
+        pd[i] = ((char *)crp->crp_p)[bytes - i - 1];
 
     BN_bin2bn(pd, bytes, a);
     free(pd);
