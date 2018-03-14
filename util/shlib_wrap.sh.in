@@ -6,7 +6,9 @@
 #     OPENSSL_REGRESSION=/path/to/other/OpenSSL/build/tree
 if [ -n "$OPENSSL_REGRESSION" -a \
         -f "$OPENSSL_REGRESSION/util/shlib_wrap.sh" ]; then
-    exec $OPENSSL_REGRESSION/util/shlib_wrap.sh "$@"
+    # We clear OPENSSL_REGRESSION to avoid a loop, should the shlib_wrap.sh
+    # we exec also support that mechanism...
+    OPENSSL_REGRESSION= exec $OPENSSL_REGRESSION/util/shlib_wrap.sh "$@"
 fi
 
 [ $# -ne 0 ] || set -x		# debug mode without arguments:-)
