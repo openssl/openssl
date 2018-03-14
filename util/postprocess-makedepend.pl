@@ -48,9 +48,10 @@ my $procedure = {
             # Finally, discard all empty lines or comment lines
             return undef if $line =~ /:\s*$/ || $line =~ /^(#.*|\s*)$/;
 
-            $line.="\n" unless $line =~ /\R$/g;
-
-            return $line;
+            my ($target, $deps) = $line =~ /^((?:\\.|[^:])*):(.*)/;
+            $deps =~ s/^\s+//;
+            $deps =~ s/\s+$//;
+            return ($target, $deps);
         },
     'VMS C' =>
         sub {
@@ -79,7 +80,10 @@ my $procedure = {
             # .TLB.
             return undef if /\.TLB\s*$/;
 
-            return $line;
+            my ($target, $deps) = $line =~ /^(.*)\s:\s(.*)/;
+            $deps =~ s/^\s+//;
+            $deps =~ s/\s+$//;
+            return ($target, $deps);
         },
     'VC' =>
         sub {
@@ -112,7 +116,7 @@ my $procedure = {
                 $tail = canonpath($tail);
                 if ($tail =~ m|^\Q$abs_srcdir\E|i
                         || $tail =~ m|^\Q$abs_blddir\E|i) {
-                    return "${object}: \"$tail\"\n";
+                    return ($object, "\"$tail\"");
                 }
             }
 
@@ -122,8 +126,35 @@ my $procedure = {
 
 die "Producer unrecognised: $producer\n" unless defined $procedure;
 
+my %collect = ();
 while (<STDIN>) {
-    if ($_ = $procedure->($_, @ARGV)) {
-        print or die "$!\n";
+    s|\R$||;                    # The better chomp
+    my ($target, $deps) = $procedure->($_, @ARGV);
+    $collect{$target}->{$deps} = 1
+        if defined $target;
+}
+
+my $continuation = {
+    'makedepend' => "\\",
+    'VMS C' => "-",
+    'VC' => "\\",
+} -> {$producer};
+
+die "Producer unrecognised: $producer\n" unless defined $continuation;
+
+foreach my $target (sort keys %collect) {
+    my $prefix = $target . ' :';
+    my @deps = sort keys %{$collect{$target}};
+
+    while (@deps) {
+        my $buf = $prefix;
+        $prefix = '';
+
+        while (@deps && ($buf eq '' || length($buf) + length($deps[0]) <= 77)) {
+            $buf .= ' ' . shift @deps;
+        }
+        $buf .= ' '.$continuation if @deps;
+
+        print $buf,"\n";
     }
 }
