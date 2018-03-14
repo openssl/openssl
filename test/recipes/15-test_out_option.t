@@ -36,7 +36,8 @@ test_illegal_path('../');
 
 # Test for trying to create a file in a non-exist directory
 my @chars = ("A".."Z", "a".."z", "0".."9");
-my $rand_path = $chars[rand @chars] for 1..32;
+my $rand_path = "";
+$rand_path .= $chars[rand @chars] for 1..32;
 $rand_path .= "/test.pem";
 
 test_illegal_path($rand_path);
