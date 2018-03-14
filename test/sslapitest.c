@@ -767,12 +767,24 @@ static int new_called, remove_called, get_called;
 
 static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
 {
-    new_called++;
     /*
      * sess has been up-refed for us, but we don't actually need it so free it
      * immediately.
      */
     SSL_SESSION_free(sess);
+
+    /* Check some fields in the session to make sure they look sane */
+    if (!TEST_size_t_gt(sess->master_key_length, 0)
+            || !TEST_int_gt(sess->ssl_version, 0)
+            || !TEST_int_eq(sess->not_resumable, 0)
+            || (sess->ssl_version == TLS1_3_VERSION
+                && !TEST_uint_gt(sess->ext.tick_age_add, 0))) {
+        /* We'll allow things to continue so return 1 anyway */
+        return 1;
+    }
+
+    new_called++;
+
     return 1;
 }
 
