@@ -3019,10 +3019,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 #endif
 
-    if (!SSL_CTX_set_ciphersuites(ret,
-            "TLS_AES_256_GCM_SHA384:"
-            "TLS_CHACHA20_POLY1305_SHA256:"
-            "TLS_AES_128_GCM_SHA256"))
+    if (!SSL_CTX_set_ciphersuites(ret, TLS_DEFAULT_CIPHERSUITES))
         goto err;
 
     if (!ssl_create_cipher_list(ret->method,
