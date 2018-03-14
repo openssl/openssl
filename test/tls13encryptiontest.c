@@ -92,7 +92,7 @@ static RECORD_DATA refdata[] = {
             "83dd29f64508b2ec3e635a2134fc0e1a39d3ecb51dcddfcf8382c88ffe2a7378"
             "42ad1de7fe505b6c4d1673870f6fc2a0f2f7972acaee368a1599d64ba18798f1"
             "0333f9779bd5b05f9b084d03dab2f3d80c2eb74ec70c9866ea31c18b491cd597"
-            "aae3e941205fcc38a3a10ce8c0269f02ccc9c51278e25f1a0f0731a9"
+            "aae3e941205fcc38a3a10ce8f2e230d97e3406b77ee53d84d89ca548"
         },
         "d2dd45f87ad87801a85ac38187f9023b",
         "f0a14f808692cef87a3daf70",
@@ -106,7 +106,7 @@ static RECORD_DATA refdata[] = {
         },
         {
             "fa15e92daa21cd05d8f9c3152a61748d9aaf049da559718e583f95aacecad657"
-            "b52a6562da09a5819e864d86ac2989360a1eb22795","",""
+            "b52a6562da66864fd14969acc30dc04a78c38283c5","",""
         },
         "40e1201d75d419627f04c88530a15c9d",
         "a0f073f3b35e18f96969696b",
@@ -128,7 +128,7 @@ static RECORD_DATA refdata[] = {
             "836905229eac811c4ef8b2faa89867e9ffc586f7f03c216591aa5e620eac3c62"
             "dfe60f846036bd7ecc4464b584af184e9644e94ee1d7834dba408a51cbe42480"
             "04796ed9c558e0f5f96115a6f6ba487e17d16a2e20a3d3a650a9a070fb53d9da"
-            "82864b5621d77650bd0c7947e9889917b53d0515627c72b0ded521","",""
+            "82864b5621d77650bd0c7972f592aa8546de09b8e46921fab4d876","",""
         },
         "3381f6b3f94500f16226de440193e858",
         "4f1d73cc1d465eb30021c41f",
@@ -142,8 +142,8 @@ static RECORD_DATA refdata[] = {
         },
         {
             "e306178ad97f74bb64f35eaf3c39846b83aef8472cbc9046749b81a949dfb12c"
-            "fbc65cbabd20ade92c1f944605892ceeb12fdee8a927bce77c83036ac5a794a8"
-            "f54a69","",""
+            "fbc65cbabd20ade92c1f944605892ceeb12fde5781d40e2ca080fc921b750b8c"
+            "21bd8d","",""
         },
         "eb23a804904b80ba4fe8399e09b1ce42",
         "efa8c50c06b9c9b8c483e174",
@@ -157,8 +157,8 @@ static RECORD_DATA refdata[] = {
         },
         {
             "467d99a807dbf778e6ffd8be52456c70665f890811ef2f3c495d5bbe983feeda"
-            "b0c251dde596bc7e2b135909ec9f9166fb0152e8c16a84e4b1039256467f9538"
-            "be4463","",""
+            "b0c251dde596bc7e2b135909ec9f9166fb01526c70c7e42b6df52d63b0000222"
+            "cb2047","",""
         },
         "3381f6b3f94500f16226de440193e858",
         "4f1d73cc1d465eb30021c41f",
@@ -170,7 +170,7 @@ static RECORD_DATA refdata[] = {
             "010015","",""
         },
         {
-            "6bdf60847ba6fb650da36e872adc684a4af2e8","",""
+            "6bdf609107610cff95d70387a67b89e2494f0d","",""
         },
         "eb23a804904b80ba4fe8399e09b1ce42",
         "efa8c50c06b9c9b8c483e174",
@@ -182,7 +182,7 @@ static RECORD_DATA refdata[] = {
             "010015","",""
         },
         {
-            "621b7cc1962cd8a70109fee68a52efedf87d2e","",""
+            "621b7c60d32528b149b36a78c8891a8d2f65ad","",""
         },
         "3381f6b3f94500f16226de440193e858",
         "4f1d73cc1d465eb30021c41f",
@@ -306,7 +306,13 @@ static int test_tls13_encryption(void)
     int ret = 0;
     size_t ivlen, ctr;
 
+    /*
+     * Encrypted TLSv1.3 records always have an outer content type of
+     * application data, and a record version of TLSv1.2.
+     */
     rec.data = NULL;
+    rec.type = SSL3_RT_APPLICATION_DATA;
+    rec.rec_version = TLS1_2_VERSION;
 
     ctx = SSL_CTX_new(TLS_method());
     if (!TEST_ptr(ctx)) {
