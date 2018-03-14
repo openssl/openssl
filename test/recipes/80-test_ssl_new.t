@@ -68,6 +68,7 @@ my %conf_dependent_tests = (
   "20-cert-select.conf" => !$is_default_tls || $no_dh || $no_dsa,
   "22-compression.conf" => !$is_default_tls,
   "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
+  "27-ticket-appdata.conf" => !$is_default_tls,
 );
 
 # Add your test here if it should be skipped for some compile-time
