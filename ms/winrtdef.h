@@ -3,6 +3,14 @@
  * written by Alejandro Jimenez Martinez
  * (aljim@microsoft.com) for the OpenSSL project 2014.
  */
+
+#ifdef _WIN64
+#define SIXTY_FOUR_BIT_LONG
+#pragma warning(disable:4267)
+#pragma warning(disable:4244)
+#pragma warning(disable:4311)
+#endif
+
 #if defined(OPENSSL_WINAPP)
 //Include stdio.h to replace fprintf
 # include<stdio.h>
