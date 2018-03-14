@@ -81,7 +81,7 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 ######################################################################
 
-$big_endian=(`echo MIPSEL | $ENV{CC} -E -`=~/MIPSEL/)?1:0 if ($ENV{CC});
+$big_endian=(`echo MIPSEB | $ENV{CC} -E -`=~/MIPSEB/)?0:1 if ($ENV{CC});
 
 for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
