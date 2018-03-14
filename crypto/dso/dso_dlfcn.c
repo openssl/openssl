@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -316,56 +316,58 @@ static int dladdr(void *address, Dl_info *dl)
  */
 #  include <sys/ldr.h>
 #  include <errno.h>
-#  define DLFCN_MAX_LDINFOS 64
+#  define DLFCN_LDINFO_SIZE 81920
 extern int errno;
 typedef struct Dl_info {
     const char *dli_fname;
 } Dl_info;
 /* NOTE: when looking up a symbol from a foreign module, the caller of
- *  DSO_*byaddr()/OPENSSL_atexit() must respect Pointer Glue instructions for
+ *  DSO_...byaddr()/OPENSSL_atexit() must respect Pointer Glue instructions for
  *  PowerPC (aka De-Virtualization, related to the ptrgl compiler flags):
- *  (void*)*((ulong*)&address) if pto is not in effect at the caller's place */
+ *  (void*)*((ulong*)address) if pto is not in effect at the caller's place */
 static int dladdr(void *address, Dl_info *dl)
 {
-    unsigned int ldinfo_max = sizeof(struct ld_info) * DLFCN_MAX_LDINFOS;
     unsigned int found = 0;
-    struct ld_info *ldi;
-    union {
-      void *v;
-      struct ld_info *ldinfos;
-    } buffer;
+    struct ld_info *ldinfos, *next_ldi, *this_ldi;
 
-    if ((buffer.v = OPENSSL_malloc(ldinfo_max)) == NULL) {
+    if ((ldinfos = (struct ld_info *)OPENSSL_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
       errno = ENOMEM;
       dl->dli_fname = NULL;
       return 0;
     }
 
-    if ((loadquery(L_GETINFO, &buffer.v, ldinfo_max)) < 0) {
+    if ((loadquery(L_GETINFO, (void *)ldinfos, DLFCN_LDINFO_SIZE)) < 0) {
       /* Error handling is done through errno and dlerror() reading errno:
        *  ENOMEM (ldinfos buffer is too small),
        *  EINVAL (invalid flags),
        *  EFAULT (invalid ldinfos ptr)
        */
+      /* FIXME: remove! */
+      fprintf( stderr, "**** in dladdr(): loadquery error(%d): '%s'\n", errno, strerror(errno));
       dl->dli_fname = NULL;
       return 0;
     }
-    ldi = buffer.ldinfos;
+    next_ldi = ldinfos;
 
     do {
-      if ((address >= ldi->ldinfo_textorg) &&
-          (address < (ldi->ldinfo_textorg + ldi->ldinfo_textsize))) {
+      this_ldi = next_ldi;
+      /* FIXME: remove!
+       *  print ptrs, to find out, why it doesn't find base_inited */
+      fprintf( stderr, "**** in dladdr(): textorg:%p <= address:%p < +textsize(%d):%p -- filename(%p): '%s'\n",
+               this_ldi->ldinfo_textorg, address, this_ldi->ldinfo_textsize, (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize), this_ldi->ldinfo_filename, this_ldi->ldinfo_filename);
+      if ((address >= this_ldi->ldinfo_textorg) &&
+          (address < (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize))) {
         found = 1;
         /* Ignoring the possibility of a member name and just returning the
          * path name. See docs: ldr.h, loadquery() and dlopen()/RTLD_MEMBER. */
-        if ((dl->dli_fname = OPENSSL_strdup(ldi->ldinfo_filename)) == NULL) {
+        if ((dl->dli_fname = OPENSSL_strdup(this_ldi->ldinfo_filename)) == NULL) {
           errno = ENOMEM;
         }
       } else {
-        ldi += ldi->ldinfo_next;
+        next_ldi = (void *)this_ldi + this_ldi->ldinfo_next;
       }
-    } while (ldi->ldinfo_next && !found);
-    OPENSSL_free(buffer.v);
+    } while (this_ldi->ldinfo_next && !found);
+    OPENSSL_free((void *)ldinfos);
     return (found && dl->dli_fname != NULL);
 }
 # endif                         /* _AIX */
