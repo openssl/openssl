@@ -1861,11 +1861,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
     irow = NULL;
     ok = 1;
  end:
-    if (irow != NULL) {
+    if (ok != 1) {
         for (i = 0; i < DB_NUMBER; i++)
             OPENSSL_free(row[i]);
-        OPENSSL_free(irow);
     }
+    OPENSSL_free(irow);
 
     X509_NAME_free(CAname);
     X509_NAME_free(subject);
