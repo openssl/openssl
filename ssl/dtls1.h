@@ -68,7 +68,7 @@
 # endif
 # ifdef OPENSSL_SYS_WIN32
 /* Needed for struct timeval */
-#  include <winsock.h>
+#  include <winsock2.h>
 # elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
 #  include <sys/timeval.h>
 # else
@@ -224,17 +224,7 @@ typedef struct dtls1_state_st {
     /*
      * Indicates when the last handshake msg or heartbeat sent will timeout
      */
-#  if defined(WINAPI_FAMILY) && ( WINAPI_FAMILY==WINAPI_FAMILY_PHONE_APP || WINAPI_FAMILY==WINAPI_FAMILY_PC_APP || WINAPI_FAMILY==WINAPI_FAMILY_APP)
-    /*
-     * winsock.h is not present in WindowsPhone/WindowsStore, defining the expected struct here
-     */
-	struct next_timeout {
-		long tv_sec;
-		long tv_usec;
-	} next_timeout;
-#  else
 	struct timeval next_timeout;
-#  endif
     /* Timeout duration */
     unsigned short timeout_duration;
     /*

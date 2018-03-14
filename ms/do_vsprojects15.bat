@@ -3,8 +3,10 @@
 
 pushd %~dp0\..
 rem get vs tools
-call ms\setVSVars.bat VS14VC
-call "%_VS14VC%\vcvarsall" x86
+REM VS2017 dev prompt can change the folder. So push and pop it here again
+pushd %~dp0\..
+call ms\setVSVars.bat VS15VC
+call "%_VS15VC%\vcvarsall" x86 store
 popd
 
 rem create VS Project
@@ -13,9 +15,9 @@ if not exist vsout mkdir vsout
 rem INITONCE common preprocessing across configurations
 set INITONCE=YES
 
-copy ms\vstemplates\vstemplates14.sln vsout\openSSL.sln
-call:makeProject Universal 10.0 Static Unicode 5BAD3295-3CC2-4416-A65F-16B304654800 C4F0CF4C-F240-4E23-B520-026FFDDEB43A %UCRTVersion% VS14
-call:makeProject Universal 10.0 Dll    Unicode 5C2E2BD9-44D0-411E-B46C-E9129B8F94187 EA1A3F14-D6FD-49CC-B0F1-416E60FA593A %UCRTVersion% VS14
+copy ms\vstemplates\vstemplates15.sln vsout\openSSL.sln
+call:makeProject Universal 10.0 Static Unicode 5BAD3295-3CC2-4416-A65F-16B304654800 C4F0CF4C-F240-4E23-B520-026FFDDEB43A %UCRTVersion% VS15
+call:makeProject Universal 10.0 Dll    Unicode 5C2E2BD9-44D0-411E-B46C-E9129B8F94187 EA1A3F14-D6FD-49CC-B0F1-416E60FA593A %UCRTVersion% VS15
 
 goto :eof
 

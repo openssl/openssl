@@ -1,5 +1,7 @@
 @setLocal
-@echo off
+@if NOT "%_DEBUG%" GEQ "1" @echo off
+
+pushd %~dp0\..
 rem get vs tools
 call ms\setVSVars.bat VS12VC
 call "%_VS12VC%\vcvarsall" x86

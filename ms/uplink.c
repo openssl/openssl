@@ -13,6 +13,11 @@
 #include <stdio.h>
 #include "uplink.h"
 #include <stdlib.h>
+
+#if defined(OPENSSL_WINAPP)
+#include "winrtdef.h"
+#endif
+
 void OPENSSL_showfatal(const char *, ...);
 
 static TCHAR msg[128];

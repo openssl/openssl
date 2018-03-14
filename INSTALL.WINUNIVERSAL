@@ -10,14 +10,15 @@
 
  Requirments.
  - You need Perl location for Win32 or Win64 in your PATH environmental variable.
- - Visual Studio 2015
+ - Visual Studio 2015 or Visual Studio 2017
  - Tools for Windows 10 [https://dev.windows.com/en-US/windows-10-developer-preview-tools]
 
  QUICK MULTI-PLATFORM INSTALL
  -----------------------------------------------------------------------
 
  Execute the following script in the source root tree.
- > ms\do_vsprojects14.bat
+ > ms\do_vsprojects14.bat (for Visual Studio 2015)
+ > ms\do_vsprojects15.bat (for Visual Studio 2017)
 
  Open visual studio solution created
  > vsout\openssl.sln
