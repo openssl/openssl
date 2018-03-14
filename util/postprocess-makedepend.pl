@@ -148,9 +148,9 @@ foreach my $target (sort keys %collect) {
 
     while (@deps) {
         my $buf = $prefix;
-        $prefix = ' ';
+        $prefix = '';
 
-        while (@deps && length($buf) + length($deps[0]) <= 77) {
+        while (@deps && ($buf eq '' || length($buf) + length($deps[0]) <= 77)) {
             $buf .= ' ' . shift @deps;
         }
         $buf .= ' '.$continuation if @deps;
