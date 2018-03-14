@@ -39,8 +39,9 @@ my $procedure = {
             # are typically system headers
             $line =~ s/\s+\/(\\.|\S)*//g;
             # Finally, discard all empty lines or comment lines
-            $line = undef if $line =~ /:\s*$/ || $line =~ /^(#.*|\s*)$/;
-            $line.="\n" unless !defined($line) || $line =~ /\R$/g;
+            return undef if $line =~ /:\s*$/ || $line =~ /^(#.*|\s*)$/;
+
+            $line.="\n" unless $line =~ /\R$/g;
 
             return $line;
         },
@@ -69,7 +70,7 @@ my $procedure = {
             # in text libraries.  Finally, we know that VMS C produces exactly
             # one dependency per line, so we simply discard any line ending with
             # .TLB.
-            $line = undef if /\.TLB\s*$/;
+            return undef if /\.TLB\s*$/;
 
             return $line;
         },
@@ -97,12 +98,10 @@ my $procedure = {
 
             if (/^Note: including file: */) {
                 (my $tail = $') =~ s/\s*\R$//;
-                $line = "${object}: \"$tail\"\n";
-            } else {
-                $line = undef;
+                return "${object}: \"$tail\"\n";
             }
 
-            return $line;
+            return undef;
         },
 } -> {$producer};
 
