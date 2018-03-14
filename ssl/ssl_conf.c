@@ -256,10 +256,22 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_CipherString(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 1;
+
     if (cctx->ctx)
         rv = SSL_CTX_set_cipher_list(cctx->ctx, value);
     if (cctx->ssl)
         rv = SSL_set_cipher_list(cctx->ssl, value);
+    return rv > 0;
+}
+
+static int cmd_Ciphersuites(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 1;
+
+    if (cctx->ctx)
+        rv = SSL_CTX_set_ciphersuites(cctx->ctx, value);
+    if (cctx->ssl)
+        rv = SSL_set_ciphersuites(cctx->ssl, value);
     return rv > 0;
 }
 
@@ -606,6 +618,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(ECDHParameters, "named_curve", SSL_CONF_FLAG_SERVER),
 #endif
     SSL_CONF_CMD_STRING(CipherString, "cipher", 0),
+    SSL_CONF_CMD_STRING(Ciphersuites, "ciphersuites", 0),
     SSL_CONF_CMD_STRING(Protocol, NULL, 0),
     SSL_CONF_CMD_STRING(MinProtocol, "min_protocol", 0),
     SSL_CONF_CMD_STRING(MaxProtocol, "max_protocol", 0),

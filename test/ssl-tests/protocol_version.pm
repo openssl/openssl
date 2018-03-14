@@ -137,6 +137,7 @@ sub generate_version_tests {
         "client" => {
             #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
             "CipherString" => "AES128-SHA",
+            "Ciphersuites" => "",
         },
         "server" => {
             "MaxProtocol" => "TLSv1.2"
@@ -154,6 +155,7 @@ sub generate_version_tests {
         "server" => {
             #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
             "CipherString" => "AES128-SHA",
+            "Ciphersuites" => "",
         },
         "test" => {
             "ExpectedResult" => "ServerFail",

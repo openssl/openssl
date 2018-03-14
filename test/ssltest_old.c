@@ -612,6 +612,7 @@ static int custom_ext_3_srv_add_cb(SSL *s, unsigned int ext_type,
 }
 
 static char *cipher = NULL;
+static char *ciphersuites = NULL;
 static int verbose = 0;
 static int debug = 0;
 
@@ -671,7 +672,8 @@ static void sv_usage(void)
     fprintf(stderr, " -c_cert arg   - Client certificate file\n");
     fprintf(stderr,
             " -c_key arg    - Client key file (default: same as -c_cert)\n");
-    fprintf(stderr, " -cipher arg   - The cipher list\n");
+    fprintf(stderr, " -cipher arg   - The TLSv1.2 and below cipher list\n");
+    fprintf(stderr, " -ciphersuites arg   - The TLSv1.3 ciphersuites\n");
     fprintf(stderr, " -bio_pair     - Use BIO pairs\n");
     fprintf(stderr, " -ipv4         - Use IPv4 connection on localhost\n");
     fprintf(stderr, " -ipv6         - Use IPv6 connection on localhost\n");
@@ -918,7 +920,6 @@ int main(int argc, char *argv[])
 
     verbose = 0;
     debug = 0;
-    cipher = 0;
 
     bio_err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 
@@ -1046,6 +1047,10 @@ int main(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             cipher = *(++argv);
+        } else if (strcmp(*argv, "-ciphersuites") == 0) {
+            if (--argc < 1)
+                goto bad;
+            ciphersuites = *(++argv);
         } else if (strcmp(*argv, "-CApath") == 0) {
             if (--argc < 1)
                 goto bad;
@@ -1373,6 +1378,14 @@ int main(int argc, char *argv[])
         if (!SSL_CTX_set_cipher_list(c_ctx, cipher)
             || !SSL_CTX_set_cipher_list(s_ctx, cipher)
             || !SSL_CTX_set_cipher_list(s_ctx2, cipher)) {
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+    }
+    if (ciphersuites != NULL) {
+        if (!SSL_CTX_set_ciphersuites(c_ctx, ciphersuites)
+            || !SSL_CTX_set_ciphersuites(s_ctx, ciphersuites)
+            || !SSL_CTX_set_ciphersuites(s_ctx2, ciphersuites)) {
             ERR_print_errors(bio_err);
             goto end;
         }

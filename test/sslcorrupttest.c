@@ -202,19 +202,17 @@ static int test_ssl_corrupt(int testidx)
         goto end;
 
     if (!TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ""))
             || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
             || !TEST_ptr(currcipher = sk_SSL_CIPHER_value(ciphers, 0)))
         goto end;
 
     /*
-     * If we haven't got a TLSv1.3 cipher, then we mustn't attempt to use
-     * TLSv1.3. Version negotiation happens before cipher selection, so we will
-     * get a "no shared cipher" error.
+     * No ciphers we are using are TLSv1.3 compatible so we should not attempt
+     * to negotiate TLSv1.3
      */
-    if (strcmp(SSL_CIPHER_get_version(currcipher), "TLSv1.3") != 0) {
-        if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
-            goto end;
-    }
+    if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
+        goto end;
 
     if (!TEST_ptr(c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter())))
         goto end;

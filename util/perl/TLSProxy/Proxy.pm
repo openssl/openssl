@@ -58,7 +58,9 @@ sub new
         cert => $cert,
         debug => $debug,
         cipherc => "",
-        ciphers => "AES128-SHA:TLS13-AES-128-GCM-SHA256",
+        ciphersuitesc => "",
+        ciphers => "AES128-SHA",
+        ciphersuitess => "TLS_AES_128_GCM_SHA256",
         flight => 0,
         record_list => [],
         message_list => [],
@@ -135,6 +137,7 @@ sub clearClient
     my $self = shift;
 
     $self->{cipherc} = "";
+    $self->{ciphersuitec} = "";
     $self->{flight} = 0;
     $self->{record_list} = [];
     $self->{message_list} = [];
@@ -153,7 +156,8 @@ sub clear
     my $self = shift;
 
     $self->clearClient;
-    $self->{ciphers} = "AES128-SHA:TLS13-AES-128-GCM-SHA256";
+    $self->{ciphers} = "AES128-SHA";
+    $self->{ciphersuitess} = "TLS_AES_128_GCM_SHA256";
     $self->{serverflags} = "";
     $self->{serverconnects} = 1;
     $self->{serverpid} = 0;
@@ -198,6 +202,9 @@ sub start
         if ($self->ciphers ne "") {
             $execcmd .= " -cipher ".$self->ciphers;
         }
+        if ($self->ciphersuitess ne "") {
+            $execcmd .= " -ciphersuites ".$self->ciphersuitess;
+        }
         if ($self->serverflags ne "") {
             $execcmd .= " ".$self->serverflags;
         }
@@ -233,6 +240,9 @@ sub clientstart
             }
             if ($self->cipherc ne "") {
                 $execcmd .= " -cipher ".$self->cipherc;
+            }
+            if ($self->ciphersuitesc ne "") {
+                $execcmd .= " -ciphersuites ".$self->ciphersuitesc;
             }
             if ($self->clientflags ne "") {
                 $execcmd .= " ".$self->clientflags;
@@ -487,6 +497,14 @@ sub cipherc
     }
     return $self->{cipherc};
 }
+sub ciphersuitesc
+{
+    my $self = shift;
+    if (@_) {
+        $self->{ciphersuitesc} = shift;
+    }
+    return $self->{ciphersuitesc};
+}
 sub ciphers
 {
     my $self = shift;
@@ -494,6 +512,14 @@ sub ciphers
         $self->{ciphers} = shift;
     }
     return $self->{ciphers};
+}
+sub ciphersuitess
+{
+    my $self = shift;
+    if (@_) {
+        $self->{ciphersuitess} = shift;
+    }
+    return $self->{ciphersuitess};
 }
 sub serverflags
 {

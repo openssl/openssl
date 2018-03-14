@@ -82,10 +82,10 @@ $proxy->clear();
 $proxy->clientflags("-sess_in ".$session);
 $proxy->filter(\&modify_psk_filter);
 $proxy->serverflags("-curves P-256");
-$proxy->cipherc("TLS13-AES-128-GCM-SHA256:TLS13-AES-256-GCM-SHA384");
-$proxy->ciphers("TLS13-AES-256-GCM-SHA384");
+$proxy->ciphersuitesc("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
+$proxy->ciphersuitess("TLS_AES_256_GCM_SHA384");
 #We force an early failure because TLS Proxy doesn't actually support
-#TLS13-AES-256-GCM-SHA384. That doesn't matter for this test though.
+#TLS_AES_256_GCM_SHA384. That doesn't matter for this test though.
 $testtype = ILLEGAL_EXT_SECOND_CH;
 $proxy->start();
 #Check if the PSK is present in the second ClientHello
