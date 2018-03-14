@@ -9,8 +9,15 @@
 use strict;
 use warnings;
 
-my $producer = shift @ARGV;
+use lib '.';
+use configdata;
 
+use File::Spec::Functions qw(canonpath rel2abs);
+
+my $abs_srcdir = rel2abs($config{sourcedir});
+my $abs_blddir = rel2abs($config{builddir});
+
+my $producer = shift @ARGV;
 die "Producer not given\n" unless $producer;
 
 my $procedure = {
@@ -98,7 +105,18 @@ my $procedure = {
 
             if (/^Note: including file: */) {
                 (my $tail = $') =~ s/\s*\R$//;
-                return "${object}: \"$tail\"\n";
+
+                # VC gives us absolute paths for all include files, so to
+                # remove system header dependencies, we need to check that
+                # they don't match $abs_srcdir or $abs_blddir
+                $tail = canonpath($tail);
+                my $substr1 = substr($tail, 0, length $abs_srcdir);
+                my $substr2 = substr($tail, 0, length $abs_blddir);
+
+                if (lc $abs_srcdir eq lc $substr1
+                        || lc $abs_blddir eq lc $substr2) {
+                    return "${object}: \"$tail\"\n";
+                }
             }
 
             return undef;
