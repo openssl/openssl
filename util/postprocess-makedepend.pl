@@ -126,9 +126,7 @@ my $procedure = {
 die "Producer unrecognised: $producer\n" unless defined $procedure;
 
 while (<STDIN>) {
-    $_ = $procedure->($_, @ARGV);
-} continue {
-    if ($_) {
-        print or die "$!\n";
+    if ($_ = $procedure->($_, @ARGV)) {
+        print or print or die "$!\n";
     }
 }
