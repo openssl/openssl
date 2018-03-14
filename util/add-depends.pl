@@ -15,6 +15,7 @@ my $buildfile = $config{build_file};
 my $buildfile_new = "$buildfile-$$";
 my $depext = $target{dep_extension} || ".d";
 my @deps =
+    sort
     grep { -f $_ }
     map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
     grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
