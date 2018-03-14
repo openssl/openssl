@@ -638,7 +638,9 @@ while (@argvcopy)
 		{
 		s/^([^=]*)/lc($1)/e;
 		}
-	s /^-no-/no-/; # some people just can't read the instructions
+
+	# some people just can't read the instructions, clang people have to...
+	s/^-no-(?!integrated-as)/no-/;
 
 	# rewrite some options in "enable-..." form
 	s /^-?-?shared$/enable-shared/;
