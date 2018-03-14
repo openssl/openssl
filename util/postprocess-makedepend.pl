@@ -110,11 +110,8 @@ my $procedure = {
                 # remove system header dependencies, we need to check that
                 # they don't match $abs_srcdir or $abs_blddir
                 $tail = canonpath($tail);
-                my $substr1 = substr($tail, 0, length $abs_srcdir);
-                my $substr2 = substr($tail, 0, length $abs_blddir);
-
-                if (lc $abs_srcdir eq lc $substr1
-                        || lc $abs_blddir eq lc $substr2) {
+                if ($tail =~ m|^\Q$abs_scrdir\E|i
+                        || $tail =~ m|^\Q$abs_blddir\E|i) {
                     return "${object}: \"$tail\"\n";
                 }
             }
