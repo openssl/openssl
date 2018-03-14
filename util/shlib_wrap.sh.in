@@ -1,5 +1,14 @@
 #!/bin/sh
 
+# To test this OpenSSL version's applications against another version's
+# shared libraries, simply set
+#
+#     OPENSSL_REGRESSION=/path/to/other/OpenSSL/build/tree
+if [ -n "$OPENSSL_REGRESSION" -a \
+        -f "$OPENSSL_REGRESSION/util/shlib_wrap.sh" ]; then
+    exec $OPENSSL_REGRESSION/util/shlib_wrap.sh "$@"
+fi
+
 [ $# -ne 0 ] || set -x		# debug mode without arguments:-)
 
 THERE="`echo $0 | sed -e 's|[^/]*$||' 2>/dev/null`.."
