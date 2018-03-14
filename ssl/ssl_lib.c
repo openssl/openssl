@@ -576,6 +576,8 @@ static void clear_ciphers(SSL *s)
 
 int SSL_clear(SSL *s)
 {
+    size_t j;
+
     if (s->method == NULL) {
         SSLerr(SSL_F_SSL_CLEAR, SSL_R_NO_METHOD_SPECIFIED);
         return 0;
@@ -591,6 +593,11 @@ int SSL_clear(SSL *s)
     s->psksession_id = NULL;
     s->psksession_id_len = 0;
     s->hello_retry_request = 0;
+    for (j = 0; j < s->sent_tickets; j++)
+        SSL_SESSION_free(s->tickets[j]);
+    OPENSSL_free(s->tickets);
+    s->sent_tickets = 0;
+    s->tickets = NULL;
 
     s->error = 0;
     s->hit = 0;
@@ -1125,6 +1132,7 @@ void SSL_certs_clear(SSL *s)
 void SSL_free(SSL *s)
 {
     int i;
+    size_t j;
 
     if (s == NULL)
         return;
@@ -1158,6 +1166,10 @@ void SSL_free(SSL *s)
     }
     SSL_SESSION_free(s->psksession);
     OPENSSL_free(s->psksession_id);
+    for (j = 0; j < s->sent_tickets; j++)
+        SSL_SESSION_free(s->tickets[j]);
+    OPENSSL_free(s->tickets);
+    s->tickets = NULL;
 
     clear_ciphers(s);
 
@@ -3034,8 +3046,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      */
     ret->max_early_data = 0;
 
-    /* By default we send one session ticket automatically in TLSv1.3 */
-    ret->num_tickets = 1;
+    /* By default we send two session tickets automatically in TLSv1.3 */
+    ret->num_tickets = 2;
 
     ssl_ctx_system_config(ret);
 

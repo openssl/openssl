@@ -1425,6 +1425,8 @@ struct ssl_st {
     size_t num_tickets;
     /* The number of TLS1.3 tickets actually sent so far */
     size_t sent_tickets;
+    /* Tickets associated with this connection */
+    SSL_SESSION **tickets;
 };
 
 /*

@@ -2590,7 +2590,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * cache.
      */
     if (SSL_IS_TLS13(s) || s->session->session_id_length > 0) {
-        int i = s->session_ctx->session_cache_mode;
         SSL_SESSION *new_sess;
         /*
          * We reused an existing session, so we need to replace it with a new
@@ -2601,13 +2600,6 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
                      SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
                      ERR_R_MALLOC_FAILURE);
             goto err;
-        }
-
-        if (i & SSL_SESS_CACHE_CLIENT) {
-            /*
-             * Remove the old session from the cache. We carry on if this fails
-             */
-            SSL_CTX_remove_session(s->session_ctx, s->session);
         }
 
         SSL_SESSION_free(s->session);
