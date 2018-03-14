@@ -1043,7 +1043,12 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
         ssl3_cleanup_key_block(s);
 
         if (s->server) {
-            ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
+            /*
+             * In TLSv1.3 we update the cache as part of constructing the
+             * NewSessionTicket
+             */
+            if (!SSL_IS_TLS13(s))
+                ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             /* N.B. s->ctx may not equal s->session_ctx */
             CRYPTO_atomic_add(&s->ctx->stats.sess_accept_good, 1, &discard,

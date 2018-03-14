@@ -3889,12 +3889,14 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (SSL_IS_TLS13(s)
-            && !tls_construct_extensions(s, pkt,
-                                         SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
-                                         NULL, 0)) {
-        /* SSLfatal() already called */
-        goto err;
+    if (SSL_IS_TLS13(s)) {
+        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
+        if (!tls_construct_extensions(s, pkt,
+                                      SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
+                                      NULL, 0)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
     }
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
