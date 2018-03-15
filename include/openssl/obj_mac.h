@@ -63,6 +63,15 @@
 #define NID_certicom_arc                677
 #define OBJ_certicom_arc                OBJ_identified_organization,132L
 
+#define SN_ieee         "ieee"
+#define NID_ieee                1170
+#define OBJ_ieee                OBJ_identified_organization,111L
+
+#define SN_ieee_siswg           "ieee-siswg"
+#define LN_ieee_siswg           "IEEE Security in Storage Working Group"
+#define NID_ieee_siswg          1171
+#define OBJ_ieee_siswg          OBJ_ieee,2L,1619L
+
 #define SN_international_organizations          "international-organizations"
 #define LN_international_organizations          "International Organizations"
 #define NID_international_organizations         647
@@ -2780,6 +2789,16 @@
 #define NID_id_aes256_wrap_pad          903
 #define OBJ_id_aes256_wrap_pad          OBJ_aes,48L
 
+#define SN_aes_128_xts          "AES-128-XTS"
+#define LN_aes_128_xts          "aes-128-xts"
+#define NID_aes_128_xts         913
+#define OBJ_aes_128_xts         OBJ_ieee_siswg,0L,1L,1L
+
+#define SN_aes_256_xts          "AES-256-XTS"
+#define LN_aes_256_xts          "aes-256-xts"
+#define NID_aes_256_xts         914
+#define OBJ_aes_256_xts         OBJ_ieee_siswg,0L,1L,2L
+
 #define SN_aes_128_cfb1         "AES-128-CFB1"
 #define LN_aes_128_cfb1         "aes-128-cfb1"
 #define NID_aes_128_cfb1                650
@@ -2827,14 +2846,6 @@
 #define SN_aes_256_ocb          "AES-256-OCB"
 #define LN_aes_256_ocb          "aes-256-ocb"
 #define NID_aes_256_ocb         960
-
-#define SN_aes_128_xts          "AES-128-XTS"
-#define LN_aes_128_xts          "aes-128-xts"
-#define NID_aes_128_xts         913
-
-#define SN_aes_256_xts          "AES-256-XTS"
-#define LN_aes_256_xts          "aes-256-xts"
-#define NID_aes_256_xts         914
 
 #define SN_des_cfb1             "DES-CFB1"
 #define LN_des_cfb1             "des-cfb1"
