@@ -915,8 +915,8 @@ static int mac_test_run(EVP_TEST *t)
         key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
                                     EVP_get_cipherbyname(expected->alg));
     else
-        key = EVP_PKEY_new_private_key(expected->type, NULL, expected->key,
-                                       expected->key_len);
+        key = EVP_PKEY_new_raw_private_key(expected->type, NULL, expected->key,
+                                           expected->key_len);
     if (key == NULL) {
         t->err = "MAC_KEY_CREATE_ERROR";
         goto err;
@@ -2486,9 +2486,9 @@ top:
             return 0;
         }
         if (klist == &private_keys)
-            pkey = EVP_PKEY_new_private_key(nid, NULL, keybin, keylen);
+            pkey = EVP_PKEY_new_raw_private_key(nid, NULL, keybin, keylen);
         else
-            pkey = EVP_PKEY_new_public_key(nid, NULL, keybin, keylen);
+            pkey = EVP_PKEY_new_raw_public_key(nid, NULL, keybin, keylen);
         if (pkey == NULL) {
             TEST_info("Can't read %s data", pp->key);
             OPENSSL_free(keybin);

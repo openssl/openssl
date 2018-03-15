@@ -345,8 +345,8 @@ L<EVP_PKEY_param_check(3)> respectively.
 
 The set_priv_key() and set_pub_key() methods are used to set the raw private and
 public key data for an EVP_PKEY. They MUST return 0 on error, or 1 on success.
-They are called by L<EVP_PKEY_new_private_key(3)>, and
-L<EVP_PKEY_new_public_key(3)> respectively.
+They are called by L<EVP_PKEY_new_raw_private_key(3)>, and
+L<EVP_PKEY_new_raw_public_key(3)> respectively.
 
 =head2 Functions
 
