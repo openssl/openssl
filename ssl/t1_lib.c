@@ -1409,7 +1409,7 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     OPENSSL_free(sdec);
     if (sess) {
         /* Some additional consistency checks */
-        if (slen != 0 || sess->session_id_length != 0) {
+        if (slen != 0) {
             SSL_SESSION_free(sess);
             return SSL_TICKET_NO_DECRYPT;
         }
@@ -1419,9 +1419,10 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
          * structure. If it is empty set length to zero as required by
          * standard.
          */
-        if (sesslen)
+        if (sesslen) {
             memcpy(sess->session_id, sess_id, sesslen);
-        sess->session_id_length = sesslen;
+            sess->session_id_length = sesslen;
+        }
         *psess = sess;
         if (renew_ticket)
             return SSL_TICKET_SUCCESS_RENEW;

@@ -3691,6 +3691,10 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
+        if (!ssl_generate_session_id(s, s->session)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
         if (ssl_randbytes(s, age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
@@ -3776,7 +3780,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    sess->session_id_length = 0; /* ID is irrelevant for the ticket */
 
     slen = i2d_SSL_SESSION(sess, NULL);
     if (slen == 0 || slen > slen_full) {

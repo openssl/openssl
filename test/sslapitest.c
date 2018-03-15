@@ -1021,15 +1021,20 @@ static int execute_test_session(int maxprot, int use_int_cache,
         goto end;
 
     if (use_ext_cache) {
-        if (!TEST_int_eq(new_called, 0)
-                || !TEST_int_eq(remove_called, 0))
+        if (!TEST_int_eq(remove_called, 0))
             goto end;
 
         if (maxprot == TLS1_3_VERSION) {
-            if (!TEST_int_eq(get_called, 0))
+            /*
+             * Every time we issue a NewSessionTicket we are creating a new
+             * session for next time in TLSv1.3
+             */
+            if (!TEST_int_eq(new_called, 1)
+                    || !TEST_int_eq(get_called, 0))
                 goto end;
         } else {
-            if (!TEST_int_eq(get_called, 1))
+            if (!TEST_int_eq(new_called, 0)
+                    || !TEST_int_eq(get_called, 1))
                 goto end;
         }
     }
