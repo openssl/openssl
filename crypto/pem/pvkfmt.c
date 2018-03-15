@@ -285,14 +285,17 @@ static EVP_PKEY *b2i_dss(const unsigned char **in,
             goto memerr;
 
         BN_CTX_free(ctx);
+        ctx = NULL;
     }
     if (!DSA_set0_pqg(dsa, pbn, qbn, gbn))
         goto memerr;
     pbn = qbn = gbn = NULL;
     if (!DSA_set0_key(dsa, pub_key, priv_key))
         goto memerr;
+    pub_key = priv_key = NULL;
 
-    EVP_PKEY_set1_DSA(ret, dsa);
+    if (!EVP_PKEY_set1_DSA(ret, dsa))
+        goto memerr;
     DSA_free(dsa);
     *in = p;
     return ret;
@@ -345,12 +348,19 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
             goto memerr;
         if (!read_lebn(&pin, nbyte, &d))
             goto memerr;
-        RSA_set0_factors(rsa, p, q);
-        RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp);
+        if (!RSA_set0_factors(rsa, p, q))
+            goto memerr;
+        p = q = NULL;
+        if (!RSA_set0_crt_params(rsa, dmp1, dmq1, iqmp))
+            goto memerr;
+        dmp1 = dmq1 = iqmp = NULL;
     }
-    RSA_set0_key(rsa, n, e, d);
+    if (!RSA_set0_key(rsa, n, e, d))
+        goto memerr;
+    n = e = d = NULL;
 
-    EVP_PKEY_set1_RSA(ret, rsa);
+    if (!EVP_PKEY_set1_RSA(ret, rsa))
+        goto memerr;
     RSA_free(rsa);
     *in = pin;
     return ret;
