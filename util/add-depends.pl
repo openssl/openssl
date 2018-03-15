@@ -19,6 +19,7 @@ use File::Compare qw(compare_text);
 # data.  This doesn't affect the mtime field, so we're not losing anything...
 ${^WIN32_SLOPPY_STAT} = 1;
 
+my $debug = $ENV{ADD_DEPENDS_DEBUG};
 my $buildfile = $config{build_file};
 my $build_mtime = (stat($buildfile))[9];
 my $rebuild = 0;
