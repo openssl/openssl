@@ -603,9 +603,7 @@ $obj$depext: $deps
 	    | "\$(PERL)" "\$(SRCDIR)\\util\\postprocess-makedepend.pl" \\
 	                 "VC" "$obj$objext" > $obj$depext
 $obj$objext: $obj$depext
-	\$(CC) $cflags -c \$(COUTFLAG)\$\@ @<<
-$srcs
-<<
+	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
 EOF
     return <<"EOF"	if ($disabled{makedepend});
 $obj$objext: $deps
