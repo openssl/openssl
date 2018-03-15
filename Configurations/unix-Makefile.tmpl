@@ -12,6 +12,7 @@
      our $shlibextsimple = $target{shared_extension_simple} || ".so";
      our $shlibextimport = $target{shared_import_extension} || "";
      our $dsoext = $target{dso_extension} || ".so";
+     our $makedepprog = $disabled{makedepend} ? undef : $config{makedepprog};
 
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
@@ -419,7 +420,9 @@ distclean: clean
 # concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@$(PERL) $(SRCDIR)/util/add-depends.pl
+	@$(PERL) $(SRCDIR)/util/add-depends.pl {-
+		 defined $makedepprog  && $makedepprog =~ /\/makedepend/
+                 ? 'makedepend' : 'gcc' -}
 	@: {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -970,7 +973,6 @@ EOF
       my $cmd;
       my $cmdflags;
       my $cmdcompile;
-      my $makedepprog = $disabled{makedepend} ? undef : $config{makedepprog};
       if (grep /\.rc$/, @srcs) {
           $cmd = '$(RC)';
           $cmdflags = '$(RCFLAGS)';
@@ -1032,9 +1034,8 @@ $obj$objext: $deps
 EOF
           if (defined $makedepprog  && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
-	\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cmdflags -- $srcs 2>/dev/null \\
-	    | \$(PERL) \$(SRCDIR)/util/postprocess-makedepend.pl \\
-	               'makedepend' > $obj$depext
+	\$(MAKEDEPEND) -f- -Y -- $incs $cmdflags -- $srcs 2>/dev/null \\
+	    > $obj$depext
 EOF
           }
       }
