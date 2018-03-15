@@ -599,13 +599,9 @@ EOF
      }
      return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
-	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 | \\
-	    "\$(PERL)" -n << > $obj$depext
-chomp;
-s/^Note: including file: *//;
-\$\$collect{\$\$_} = 1;
-END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
-<<
+	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 \\
+	    | "\$(PERL)" "\$(SRCDIR)\\util\\postprocess-makedepend.pl" \\
+	                 "VC" "$obj$objext" > $obj$depext
 $obj$objext: $obj$depext
 	\$(CC) $cflags -c \$(COUTFLAG)\$\@ @<<
 $srcs
