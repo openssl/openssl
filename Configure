@@ -1518,7 +1518,7 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
-    if ($target =~ m/^linux/) {
+    if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
         my $minver = 4*10000 + 1*100 + 0;
         if ($config{CROSS_COMPILE} eq "") {
             my $verstr = `uname -r`;
