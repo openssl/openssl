@@ -400,3 +400,20 @@ void EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
 {
     ameth->pkey_param_check = pkey_param_check;
 }
+
+void EVP_PKEY_asn1_set_set_priv_key(EVP_PKEY_ASN1_METHOD *ameth,
+                                    int (*set_priv_key) (EVP_PKEY *pk,
+                                                         const unsigned char
+                                                            *priv,
+                                                         size_t len))
+{
+    ameth->set_priv_key = set_priv_key;
+}
+
+void EVP_PKEY_asn1_set_set_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
+                                   int (*set_pub_key) (EVP_PKEY *pk,
+                                                       const unsigned char *pub,
+                                                       size_t len))
+{
+    ameth->set_pub_key = set_pub_key;
+}

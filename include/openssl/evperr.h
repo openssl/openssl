@@ -78,6 +78,9 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_NEW                               106
+# define EVP_F_EVP_PKEY_NEW_CMAC_KEY                      193
+# define EVP_F_EVP_PKEY_NEW_RAW_PRIVATE_KEY               191
+# define EVP_F_EVP_PKEY_NEW_RAW_PUBLIC_KEY                192
 # define EVP_F_EVP_PKEY_PARAMGEN                          148
 # define EVP_F_EVP_PKEY_PARAMGEN_INIT                     149
 # define EVP_F_EVP_PKEY_PARAM_CHECK                       189
@@ -137,6 +140,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_KEY_LENGTH                         130
 # define EVP_R_INVALID_OPERATION                          148
 # define EVP_R_KEYGEN_FAILURE                             120
+# define EVP_R_KEY_SETUP_FAILED                           180
 # define EVP_R_MEMORY_LIMIT_EXCEEDED                      172
 # define EVP_R_MESSAGE_DIGEST_IS_NULL                     159
 # define EVP_R_METHOD_NOT_SUPPORTED                       144

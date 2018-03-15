@@ -752,9 +752,10 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
     /* Verify the HMAC of the cookie */
     hctx = EVP_MD_CTX_create();
-    pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
-                                s->session_ctx->ext.cookie_hmac_key,
-                                sizeof(s->session_ctx->ext.cookie_hmac_key));
+    pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
+                                        s->session_ctx->ext.cookie_hmac_key,
+                                        sizeof(s->session_ctx->ext
+                                               .cookie_hmac_key));
     if (hctx == NULL || pkey == NULL) {
         EVP_MD_CTX_free(hctx);
         EVP_PKEY_free(pkey);
@@ -1762,9 +1763,10 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
 
     /* HMAC the cookie */
     hctx = EVP_MD_CTX_create();
-    pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
-                                s->session_ctx->ext.cookie_hmac_key,
-                                sizeof(s->session_ctx->ext.cookie_hmac_key));
+    pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
+                                        s->session_ctx->ext.cookie_hmac_key,
+                                        sizeof(s->session_ctx->ext
+                                               .cookie_hmac_key));
     if (hctx == NULL || pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
                  ERR_R_MALLOC_FAILURE);
