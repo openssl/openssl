@@ -1,15 +1,11 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-/* TODO: add a fourth test case (at least for AIX):
- *  retrieve DSO_free and DSO_dsobyaddr
- *  call DSO_dsobyaddr with a module external symbol (!= NULL)
- *  so that it crashes in ptrgl, then use ptrgl safe address retrieval */
 
 #include <stdio.h>
 #include <string.h>
@@ -26,6 +22,9 @@
 #define ERR_GET_ERROR "ERR_get_error"
 #define OPENSSL_VERSION_NUM_FUNC "OpenSSL_version_num"
 
+#define DSO_DSOBYADDR "DSO_dsobyaddr"
+#define DSO_FREE "DSO_free"
+
 typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_method_st SSL_METHOD;
 typedef const SSL_METHOD * (*TLS_method_t)(void);
@@ -35,12 +34,19 @@ typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
 
+typedef void DSO;
+typedef DSO * (*DSO_dsobyaddr_t)(void *addr, int flags);
+typedef int (*DSO_free_t)(DSO *dso);
+
 static TLS_method_t TLS_method;
 static SSL_CTX_new_t SSL_CTX_new;
 static SSL_CTX_free_t SSL_CTX_free;
 
 static ERR_get_error_t ERR_get_error;
 static OpenSSL_version_num_t OpenSSL_version_num;
+
+static DSO_dsobyaddr_t DSO_dsobyaddr;
+static DSO_free_t DSO_free;
 
 #ifdef DSO_DLFCN
 
@@ -112,11 +118,13 @@ static int shlib_close(SHLIB lib)
 # define CRYPTO_FIRST_OPT    "-crypto_first"
 # define SSL_FIRST_OPT       "-ssl_first"
 # define JUST_CRYPTO_OPT     "-just_crypto"
+# define DSO_REFTEST_OPT     "-dso_ref"
 
 enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
-    JUST_CRYPTO
+    JUST_CRYPTO,
+    DSO_REFTEST
 };
 
 int main(int argc, char **argv)
@@ -127,7 +135,7 @@ int main(int argc, char **argv)
         void (*func) (void);
         SHLIB_SYM sym;
     } tls_method_sym, ssl_ctx_new_sym, ssl_ctx_free_sym, err_get_error_sym,
-    openssl_version_num_sym;
+    openssl_version_num_sym, dso_dsobyaddr_sym, dso_free_sym;
     enum test_types_en test_type;
     int i;
 
@@ -142,6 +150,8 @@ int main(int argc, char **argv)
             test_type = SSL_FIRST;
     } else if (strcmp(argv[1], JUST_CRYPTO_OPT) == 0) {
             test_type = JUST_CRYPTO;
+    } else if (strcmp(argv[1], DSO_REFTEST_OPT) == 0) {
+            test_type = DSO_REFTEST;
     } else {
         printf("Unrecognised argument\n");
         return 1;
@@ -149,7 +159,8 @@ int main(int argc, char **argv)
 
     for (i = 0; i < 2; i++) {
         if ((i == 0 && (test_type == CRYPTO_FIRST
-                       || test_type == JUST_CRYPTO))
+                       || test_type == JUST_CRYPTO
+                       || test_type == DSO_REFTEST))
                || (i == 1 && test_type == SSL_FIRST)) {
             if (!shlib_load(argv[2], &cryptolib)) {
                 printf("Unable to load libcrypto\n");
@@ -165,7 +176,7 @@ int main(int argc, char **argv)
         }
     }
 
-    if (test_type != JUST_CRYPTO) {
+    if (test_type != JUST_CRYPTO && test_type != DSO_REFTEST) {
         if (!shlib_sym(ssllib, TLS_METHOD, &tls_method_sym.sym)
                 || !shlib_sym(ssllib, SSL_CTX_NEW, &ssl_ctx_new_sym.sym)
                 || !shlib_sym(ssllib, SSL_CTX_FREE, &ssl_ctx_free_sym.sym)) {
@@ -205,6 +216,28 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    if (test_type == DSO_REFTEST) {
+        if (!shlib_sym(cryptolib, DSO_DSOBYADDR, &dso_dsobyaddr_sym.sym)
+            || !shlib_sym(cryptolib, DSO_FREE, &dso_free_sym.sym)) {
+            printf("Unable to load crypto dso symbols\n");
+            return 1;
+        }
+
+        DSO_dsobyaddr = (DSO_dsobyaddr_t)dso_dsobyaddr_sym.func;
+        DSO_free = (DSO_free_t)dso_free_sym.func;
+
+        {
+            DSO *hndl;
+            /* use known symbol from crypto module */
+            if ((hndl = DSO_dsobyaddr((void *)ERR_get_error, 0)) != NULL) {
+                DSO_free(hndl);
+            } else {
+                printf("Unable to obtain DSO reference from crypto symbol\n");
+                return 1;
+            }
+        }
+    }
+
     for (i = 0; i < 2; i++) {
         if ((i == 0 && test_type == CRYPTO_FIRST)
                 || (i == 1 && test_type == SSL_FIRST)) {
@@ -214,7 +247,8 @@ int main(int argc, char **argv)
             }
         }
         if ((i == 0 && (test_type == SSL_FIRST
-                       || test_type == JUST_CRYPTO))
+                       || test_type == JUST_CRYPTO
+                       || test_type == DSO_REFTEST))
                 || (i == 1 && test_type == CRYPTO_FIRST)) {
             if (!shlib_close(cryptolib)) {
                 printf("Unable to close libcrypto\n");

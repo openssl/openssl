@@ -113,14 +113,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         DSO *dso = NULL;
 
         ERR_set_mark();
-#  ifndef _AIX
         dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
-#  else
-        /* On AIX lookup a function from the TEXT segment. First resolve to
-         * real address instead of ptrgl jump address. */
-        dso = DSO_dsobyaddr((void*)*((ulong*)OPENSSL_cleanup),
-                            DSO_FLAG_NO_UNLOAD_ON_FREE);
-#  endif
 #  ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: obtained DSO reference? %s\n",
                 (dso == NULL ? "No!" : "Yes."));
@@ -672,17 +665,11 @@ int OPENSSL_atexit(void (*handler)(void))
             DSO *dso = NULL;
 
             ERR_set_mark();
-#  ifndef _AIX
             dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
-#  else
-        /* First resolve to real address instead of ptrgl jump address. */
-            dso = DSO_dsobyaddr((void*)*((ulong*)handlersym.sym),
-                                DSO_FLAG_NO_UNLOAD_ON_FREE);
-#  endif
 #  ifdef OPENSSL_INIT_DEBUG
             fprintf(stderr, "OPENSSL_INIT: OPENSSL_atexit: obtained DSO reference? %s\n",
                     (dso == NULL ? "No!" : "Yes."));
-        /* See same code above in ossl_init_base() for an explanation. */
+            /* See same code above in ossl_init_base() for an explanation. */
 #  endif
             DSO_free(dso);
             ERR_pop_to_mark();
