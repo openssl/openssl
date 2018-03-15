@@ -12,7 +12,7 @@ use warnings;
 use lib '.';
 use configdata;
 
-use File::Spec::Functions qw(canonpath rel2abs);
+use File::Spec::Functions qw(:DEFAULT rel2abs);
 use File::Compare qw(compare_text);
 
 # When using stat() on Windows, we can get it to perform better by avoid some
@@ -42,11 +42,26 @@ exit 0 unless $rebuild;
 
 # Ok, primary checks are done, time to do some real work
 
+my $producer = shift @ARGV;
+die "Producer not given\n" unless $producer;
+
 my $abs_srcdir = rel2abs($config{sourcedir});
 my $abs_blddir = rel2abs($config{builddir});
 
-my $producer = shift @ARGV;
-die "Producer not given\n" unless $producer;
+# Convenient cache of absolute to relative map.  We start with filling it
+# with mappings for the known generated header files.  They are relative to
+# the current working directory, so that's an easy task.
+# NOTE: there's more than C header files that are generated.  They will also
+# generate entries in this map.  We could of course deal with C header files
+# only, but in case we decide to handle more than just C files in the future,
+# we already have the mechanism in place here.
+# NOTE2: we lower case the index to make it searchable without regard for
+# character case.  That could seem dangerous, but as long as we don't have
+# files we depend on in the same directory that only differ by character case,
+# we're fine.
+my %depconv_cache =
+    map { lc catfile($abs_blddir, $_) => $_ }
+    keys %{$unified_info{generate}};
 
 my %procedures = (
     'gcc' => undef,             # gcc style dependency files needs no mods
@@ -138,12 +153,22 @@ my %procedures = (
 
                 # VC gives us absolute paths for all include files, so to
                 # remove system header dependencies, we need to check that
-                # they don't match $abs_srcdir or $abs_blddir
-                $tail = canonpath($tail);
-                if ($tail =~ m|^\Q$abs_srcdir\E|i
-                        || $tail =~ m|^\Q$abs_blddir\E|i) {
-                    return ($objfile, "\"$tail\"");
+                # they don't match $abs_srcdir or $abs_blddir.
+                $tail = lc canonpath($tail);
+
+                unless (defined $depconv_cache{$tail}) {
+                    my $dep = $tail;
+                    # Since we have already pre-populated the cache with
+                    # mappings for generated headers, we only need to deal
+                    # with the source tree.
+                    if ($dep =~ s|^\Q$abs_srcdir\E\\|\$(SRCDIR)\\|i) {
+                        $depconv_cache{$tail} = $dep;
+                    }
                 }
+                return ($objfile, '"'.$depconv_cache{$tail}.'"')
+                    if defined $depconv_cache{$tail};
+                print STDERR "DEBUG[VC]: ignoring $objfile <- $tail\n"
+                    if $debug;
             }
 
             return undef;
