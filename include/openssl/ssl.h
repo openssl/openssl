@@ -173,9 +173,14 @@ extern "C" {
  */
 # define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
 /* This is the default set of TLSv1.3 ciphersuites */
-# define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
-                                  "TLS_CHACHA20_POLY1305_SHA256:" \
-                                  "TLS_AES_128_GCM_SHA256"
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                   "TLS_CHACHA20_POLY1305_SHA256:" \
+                                   "TLS_AES_128_GCM_SHA256"
+# else
+#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                   "TLS_AES_128_GCM_SHA256"
+#endif
 /*
  * As of OpenSSL 1.0.0, ssl_create_cipher_list() in ssl/ssl_ciph.c always
  * starts with a reasonable order, and all we have to do for DEFAULT is
