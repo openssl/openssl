@@ -3608,9 +3608,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
 
-    if (new_sess != NULL)
-        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
-
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
      * message
