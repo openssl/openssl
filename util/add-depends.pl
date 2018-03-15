@@ -14,6 +14,7 @@ use configdata;
 
 use File::Spec::Functions qw(:DEFAULT rel2abs);
 use File::Compare qw(compare_text);
+use feature 'state';
 
 # When using stat() on Windows, we can get it to perform better by avoid some
 # data.  This doesn't affect the mtime field, so we're not losing anything...
@@ -45,8 +46,10 @@ exit 0 unless $rebuild;
 my $producer = shift @ARGV;
 die "Producer not given\n" unless $producer;
 
-my $abs_srcdir = rel2abs($config{sourcedir});
-my $abs_blddir = rel2abs($config{builddir});
+my $srcdir = $config{sourcedir};
+my $blddir = $config{builddir};
+my $abs_srcdir = rel2abs($srcdir);
+my $abs_blddir = rel2abs($blddir);
 
 # Convenient cache of absolute to relative map.  We start with filling it
 # with mappings for the known generated header files.  They are relative to
@@ -94,6 +97,14 @@ my %procedures = (
         },
     'VMS C' =>
         sub {
+            state $abs_srcdir_shaved = undef;
+            state $srcdir_shaved = undef;
+
+            unless (defined $abs_srcdir_shaved) {
+                ($abs_srcdir_shaved = $abs_srcdir) =~ s|[>\]]$||;
+                ($srcdir_shaved = $srcdir) =~ s|[>\]]$||;
+            }
+
             # current versions of DEC / Compaq / HP / VSI C strips away all
             # directory information from the object file, so we must insert it
             # back.  To make life simpler, we simply replace it with the
@@ -125,7 +136,26 @@ my %procedures = (
             # All we got now is a dependency, just shave off surrounding spaces
             $line =~ s/^\s+//;
             $line =~ s/\s+$//;
-            return ($objfile, $line);
+
+            # VMS C gives us absolute paths, always.  Let's see if we can
+            # make them relative instead.
+            $line = lc canonpath($line);
+
+            unless (defined $depconv_cache{$line}) {
+                my $dep = $line;
+                # Since we have already pre-populated the cache with
+                # mappings for generated headers, we only need to deal
+                # with the source tree.
+                if ($dep =~ s|^\Q$abs_srcdir_shaved\E([\.>\]])?|$srcdir_shaved$1|i) {
+                    $depconv_cache{$line} = $dep;
+                }
+            }
+            return ($objfile, $depconv_cache{$line})
+                if defined $depconv_cache{$line};
+            print STDERR "DEBUG[VMS C]: ignoring $objfile <- $line\n"
+                if $debug;
+
+            return undef;
         },
     'VC' =>
         sub {
