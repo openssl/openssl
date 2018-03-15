@@ -195,7 +195,7 @@ my %procedures = (
                         $depconv_cache{$tail} = $dep;
                     }
                 }
-                return ('"'.$objfile.'"', '"'.$depconv_cache{$tail}.'"')
+                return ($objfile, '"'.$depconv_cache{$tail}.'"')
                     if defined $depconv_cache{$tail};
                 print STDERR "DEBUG[VC]: ignoring $objfile <- $tail\n"
                     if $debug;
