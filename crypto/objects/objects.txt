@@ -20,6 +20,9 @@ identified-organization 36 8 3 3	: x509ExtAdmission	: Professional Information o
 
 identified-organization 132	: certicom-arc
 
+identified-organization 111     : ieee
+ieee 2 1619                     : ieee-siswg    : IEEE Security in Storage Working Group
+
 joint-iso-itu-t 23	: international-organizations	: International Organizations
 
 international-organizations 43	: wap
@@ -916,6 +919,9 @@ aes 46			: id-aes256-GCM		: aes-256-gcm
 aes 47			: id-aes256-CCM		: aes-256-ccm
 aes 48			: id-aes256-wrap-pad
 
+ieee-siswg 0 1 1        : AES-128-XTS		: aes-128-xts
+ieee-siswg 0 1 2        : AES-256-XTS		: aes-256-xts
+
 # There are no OIDs for these modes...
 
 			: AES-128-CFB1		: aes-128-cfb1
@@ -930,8 +936,6 @@ aes 48			: id-aes256-wrap-pad
 			: AES-128-OCB		: aes-128-ocb
 			: AES-192-OCB		: aes-192-ocb
 			: AES-256-OCB		: aes-256-ocb
-			: AES-128-XTS		: aes-128-xts
-			: AES-256-XTS		: aes-256-xts
 			: DES-CFB1		: des-cfb1
 			: DES-CFB8		: des-cfb8
 			: DES-EDE3-CFB1		: des-ede3-cfb1
