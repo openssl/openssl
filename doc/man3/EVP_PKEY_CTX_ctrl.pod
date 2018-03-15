@@ -88,10 +88,10 @@ allow private key data to be set explicitly using the EVP_PKEY_CTX_set_mac_key()
 macro. In this case key generation is simply the process of setting up the
 parameters for the key and then setting the raw key data to the value explicitly
 provided by that macro. Normally applications would call
-L<EVP_PKEY_new_private_key(3)> or similar functions instead of this macro.
+L<EVP_PKEY_new_raw_private_key(3)> or similar functions instead of this macro.
 
 The EVP_PKEY_CTX_set_mac_key() macro can be used with any of the algorithms
-supported by the L<EVP_PKEY_new_private_key(3)> function.
+supported by the L<EVP_PKEY_new_raw_private_key(3)> function.
 
 The macro EVP_PKEY_CTX_set_rsa_padding() sets the RSA padding mode for B<ctx>.
 The B<pad> parameter can take the value RSA_PKCS1_PADDING for PKCS#1 padding,

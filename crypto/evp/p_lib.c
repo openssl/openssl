@@ -220,9 +220,9 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     return 1;
 }
 
-EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
-                                   const unsigned char *priv,
-                                   size_t len)
+EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
+                                       const unsigned char *priv,
+                                       size_t len)
 {
     EVP_PKEY *ret = EVP_PKEY_new();
 
@@ -233,13 +233,13 @@ EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
     }
 
     if (ret->ameth->set_priv_key == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_PRIVATE_KEY,
+        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PRIVATE_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         goto err;
     }
 
     if (!ret->ameth->set_priv_key(ret, priv, len)) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_PRIVATE_KEY, EVP_R_KEY_SETUP_FAILED);
+        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PRIVATE_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
@@ -250,9 +250,9 @@ EVP_PKEY *EVP_PKEY_new_private_key(int type, ENGINE *e,
     return NULL;
 }
 
-EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
-                                  const unsigned char *pub,
-                                  size_t len)
+EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
+                                      const unsigned char *pub,
+                                      size_t len)
 {
     EVP_PKEY *ret = EVP_PKEY_new();
 
@@ -263,13 +263,13 @@ EVP_PKEY *EVP_PKEY_new_public_key(int type, ENGINE *e,
     }
 
     if (ret->ameth->set_pub_key == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_PUBLIC_KEY,
+        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PUBLIC_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         goto err;
     }
 
     if (!ret->ameth->set_pub_key(ret, pub, len)) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_PUBLIC_KEY, EVP_R_KEY_SETUP_FAILED);
+        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PUBLIC_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
