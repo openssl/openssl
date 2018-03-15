@@ -382,7 +382,7 @@ distclean: clean
 
 depend:
 	@ rem {- output_off() if $disabled{makedepend}; "" -}
-	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl"
+	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "VC"
 	@ rem {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -599,9 +599,7 @@ EOF
      }
      return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
-	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 \\
-	    | "\$(PERL)" "\$(SRCDIR)\\util\\postprocess-makedepend.pl" \\
-	                 "VC" "$obj$objext" > $obj$depext
+	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 > $obj$depext
 $obj$objext: $obj$depext
 	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
 EOF

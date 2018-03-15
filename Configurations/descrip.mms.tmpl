@@ -505,7 +505,7 @@ distclean : clean
 depend : descrip.mms
 descrip.mms : FORCE
 	@ ! {- output_off() if $disabled{makedepend}; "" -}
-	@ $(PERL) {- sourcefile("util", "add-depends.pl") -}
+	@ $(PERL) {- sourcefile("util", "add-depends.pl") -} "VMS C"
 	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -878,12 +878,9 @@ EOF
       my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
       my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
       my $depbuild = $disabled{makedepend} ? ""
-          : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
-      my $postprocess_makedepend =
-          sourcefile("util", "postprocess-makedepend.pl");
-      my $objdir = dirname($obj);
+          : " /MMS=(FILE=${objd}${objn}.D,TARGET=$obj.OBJ)";
 
-      return <<"EOF"
+      return <<"EOF";
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
@@ -894,11 +891,6 @@ $obj.OBJ : $deps
         ${after}
         - PURGE $obj.OBJ
 EOF
-      . ($disabled{makedepend} ? "" : <<"EOF"
-        \$(PERL) $postprocess_makedepend "VMS C" $objdir < $obj.tmp-D > $obj.d
-        - DELETE $obj.tmp-D;*
-EOF
-        );
   }
   sub libobj2shlib {
       my %args = @_;
