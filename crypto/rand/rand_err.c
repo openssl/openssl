@@ -31,6 +31,8 @@ static const ERR_STRING_DATA RAND_str_functs[] = {
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_RESEED, 0), "RAND_DRBG_reseed"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_RESTART, 0), "rand_drbg_restart"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_SET, 0), "RAND_DRBG_set"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_SET_DEFAULTS, 0),
+     "RAND_DRBG_set_defaults"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_DRBG_UNINSTANTIATE, 0),
      "RAND_DRBG_uninstantiate"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_LOAD_FILE, 0), "RAND_load_file"},
@@ -99,6 +101,8 @@ static const ERR_STRING_DATA RAND_str_reasons[] = {
     "request too large for drbg"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_RESEED_ERROR), "reseed error"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_SELFTEST_FAILURE), "selftest failure"},
+    {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNSUPPORTED_DRBG_FLAGS),
+    "unsupported drbg flags"},
     {ERR_PACK(ERR_LIB_RAND, 0, RAND_R_UNSUPPORTED_DRBG_TYPE),
     "unsupported drbg type"},
     {0, NULL}

@@ -17,6 +17,11 @@
 /* In CTR mode, disable derivation function ctr_df */
 # define RAND_DRBG_FLAG_CTR_NO_DF            0x1
 
+/* A logical OR of all used flag bits (currently there is only one) */
+# define RAND_DRBG_USED_FLAGS  ( \
+    RAND_DRBG_FLAG_CTR_NO_DF \
+                                 )
+
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])
  *
@@ -30,11 +35,10 @@
  *
  * Currently supported ciphers are: NID_aes_128_ctr, NID_aes_192_ctr and
  * NID_aes_256_ctr
- *
- * TODO(DRBG): would be nice to have the NID and strength configurable
  */
 # define RAND_DRBG_STRENGTH             256
-# define RAND_DRBG_NID                  NID_aes_256_ctr
+# define RAND_DRBG_TYPE                 NID_aes_256_ctr
+# define RAND_DRBG_FLAGS                0
 
 
 # ifdef  __cplusplus
@@ -47,6 +51,7 @@ extern "C" {
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
 int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags);
+int RAND_DRBG_set_defaults(int type, unsigned int flags);
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen);
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg);

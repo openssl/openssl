@@ -113,6 +113,11 @@ static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
 
+
+
+static int rand_drbg_type = RAND_DRBG_TYPE;
+static unsigned int rand_drbg_flags = RAND_DRBG_FLAGS;
+
 static unsigned int master_reseed_interval = MASTER_RESEED_INTERVAL;
 static unsigned int slave_reseed_interval  = SLAVE_RESEED_INTERVAL;
 
@@ -127,19 +132,26 @@ static RAND_DRBG *rand_drbg_new(int secure,
                                 RAND_DRBG *parent);
 
 /*
- * Set/initialize |drbg| to be of type |nid|, with optional |flags|.
+ * Set/initialize |drbg| to be of type |type|, with optional |flags|.
+ *
+ * If |type| and |flags| are zero, use the defaults
  *
  * Returns 1 on success, 0 on failure.
  */
-int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
+int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
 {
     int ret = 1;
 
+    if (type == 0 && flags == 0) {
+        type = rand_drbg_type;
+        flags = rand_drbg_flags;
+    }
+
     drbg->state = DRBG_UNINITIALISED;
     drbg->flags = flags;
-    drbg->nid = nid;
+    drbg->type = type;
 
-    switch (nid) {
+    switch (type) {
     default:
         RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_UNSUPPORTED_DRBG_TYPE);
         return 0;
@@ -157,6 +169,37 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int nid, unsigned int flags)
         RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_ERROR_INITIALISING_DRBG);
     return ret;
 }
+
+/*
+ * Set/initialize default |type| and |flag| for new drbg instances.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_set_defaults(int type, unsigned int flags)
+{
+    int ret = 1;
+
+    switch (type) {
+    default:
+        RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS, RAND_R_UNSUPPORTED_DRBG_TYPE);
+        return 0;
+    case NID_aes_128_ctr:
+    case NID_aes_192_ctr:
+    case NID_aes_256_ctr:
+        break;
+    }
+
+    if ((flags & ~RAND_DRBG_USED_FLAGS) != 0) {
+        RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS, RAND_R_UNSUPPORTED_DRBG_FLAGS);
+        return 0;
+    }
+
+    rand_drbg_type  = type;
+    rand_drbg_flags = flags;
+
+    return ret;
+}
+
 
 /*
  * Allocate memory and initialize a new DRBG. The DRBG is allocated on
@@ -357,7 +400,7 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
      * initial values.
      */
     drbg->meth->uninstantiate(drbg);
-    return RAND_DRBG_set(drbg, drbg->nid, drbg->flags);
+    return RAND_DRBG_set(drbg, drbg->type, drbg->flags);
 }
 
 /*
@@ -849,7 +892,7 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
 {
     RAND_DRBG *drbg;
 
-    drbg = RAND_DRBG_secure_new(RAND_DRBG_NID, 0, parent);
+    drbg = RAND_DRBG_secure_new(rand_drbg_type, rand_drbg_flags, parent);
     if (drbg == NULL)
         return NULL;
 
