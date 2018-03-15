@@ -69,13 +69,13 @@ It is possible to create chains of more than two DRBG in a row.
 
 =head1 THE THREE SHARED DRBG INSTANCES
 
-By default, the functions L<RAND_bytes(3)> and L<RAND_priv_bytes(3)> use
-global DRBG instances, which are accessed concurrently by all threads.
-The necessary locking is done automatically by the RAND methods, e.g.,
-by L<RAND_bytes(3)> and L<RAND_priv_bytes(3)>.
-
-Currently, there are three DRBG instances,
+Currently, there are three shared DRBG instances,
 the <master>, <public>, and <private> DRBG.
+While the <master> DRBG is a single global instance, the <public> and <private>
+DRBG are created per thread and accessed through thread-local storage.
+
+By default, the functions L<RAND_bytes(3)> and L<RAND_priv_bytes(3)> use
+the thread-local <public> and <private> DRBG instance, respectively.
 
 =head2 The <master> DRBG instance
 
@@ -95,11 +95,10 @@ This instance is used per default by L<RAND_priv_bytes(3)>
 
 =head1 LOCKING
 
-The three shared DRBGs are intended to be used concurrently, so they
-support locking. The RAND methods take the locks automatically, so using
-the RAND api (in particular RAND_bytes() and RAND_priv_bytes()) is
-thread-safe. Note however that accessing the shared DRBGs directly via
-the RAND_DRBG interface is I<not> thread-safe.
+The <master> DRBG is intended to be accessed concurrently for reseeding
+by the other two. The necessary locking is done internally.
+It is I<not> thread-safe to access the <master> DRBG directly via the
+RAND_DRBG interface.
 
 All other DRBG instances don't support locking, because they are
 intended to be used by a single thread. Instead of accessing a single
@@ -108,42 +107,33 @@ instantiate a separate DRBG instance per thread. Using the same shared
 DRBG (preferably the public DRBG) as parent of DRBG instances on
 different threads is safe.
 
+The <public> and <private> DRBG are thread-local, so they can safely
+be accessed via the RAND_DRBG interface.
+
 =head1 THE OVERALL PICTURE
 
 The following picture gives an overview over how the DRBG instances work
 together and are being used.
 
-           +--------------------+
-           | os entropy sources |
-           +--------------------+
-                    |
-                    v
-  RAND_add() ==> <master>        \   +-----------------------------+
-                  /   \          | <-| shared DRBGs (with locking) |
-            <public>  <private>  /   +-----------------------------+
-                |        |
-                |        + ==> RAND_priv_bytes()
-                |               ^
-                |               |
-                |              +------------------------------------+
-                |              | Used only for long-term secrets    |
-                |              | like private keys for certificates |
-                |              +------------------------------------+
-                |
-                + ==> RAND_bytes()
-                |      ^
-                |      |
-                |     +----------------------------------+
-                |     | General purpose random generator |
-                |     +----------------------------------+
-                v
-              <ssl->drbg> ==> RAND_DRBG_bytes(ssl->drbg, ...)
-                               ^
-                               |
-                              +---------------------------------+
-                              | Every SSL context has its own   |
-                              | private, unlocked DRBG instance |
-                              +---------------------------------+
+               +--------------------+
+               | os entropy sources |
+               +--------------------+
+                        |
+                        v           +-----------------------------+
+      RAND_add() ==> <master>     <-| shared DRBG (with locking)  |
+                      /   \         +-----------------------------+
+                     /     \              +---------------------------+
+              <public>     <private>   <- | per-thread DRBG instances |
+                 |             |          +---------------------------+
+                 v             v
+               RAND_bytes()   RAND_priv_bytes()
+                    |               ^
+                    |               |
+    +------------------+      +------------------------------------+
+    | general purpose  |      | used for secrets like session keys |
+    | random generator |      | and private keys for certificates  |
+    +------------------+      +------------------------------------+
+
 
 
 The method L<RAND_DRBG_bytes(3)> is a convenience method wrapping the

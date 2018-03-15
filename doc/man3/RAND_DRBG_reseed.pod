@@ -77,10 +77,10 @@ so in general it is not necessary to reseed it explicitly, or to modify
 its reseeding thresholds.
 
 The reseeding default values are applied only during creation of a DRBG instance.
-To ensure that they are applied to the global DRBG instances
-(<master>, <public>, and <private>), it is necessary to call
-RAND_DRBG_set_reseed_defaults() before calling any
-cryptographic routines that obtain random data directly or indirectly.
+To ensure that they are applied to the global and thread-local DRBG instances
+(<master>, resp. <public> and <private>), it is necessary to call
+RAND_DRBG_set_reseed_defaults() before creating any thread and before calling any
+ cryptographic routines that obtain random data directly or indirectly.
 
 =head1 HISTORY
 
