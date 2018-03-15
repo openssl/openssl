@@ -52,7 +52,7 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
 
         argi = (int)len;
 
-        if (inret && (oper & BIO_CB_RETURN)) {
+        if (inret && (oper & BIO_CB_RETURN) && processed != NULL) {
             if (*processed > INT_MAX)
                 return -1;
             inret = *processed;
@@ -62,7 +62,8 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
     ret = b->callback(b, oper, argp, argi, argl, inret);
 
     if (ret >= 0 && (HAS_LEN_OPER(bareoper) || bareoper == BIO_CB_PUTS)) {
-        *processed = (size_t)ret;
+        if (processed != NULL)
+            *processed = (size_t)ret;
         ret = 1;
     }
 
