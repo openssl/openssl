@@ -317,7 +317,7 @@ int drbg_ctr_init(RAND_DRBG *drbg)
     RAND_DRBG_CTR *ctr = &drbg->data.ctr;
     size_t keylen;
 
-    switch (drbg->nid) {
+    switch (drbg->type) {
     default:
         /* This can't happen, but silence the compiler warning. */
         return 0;
