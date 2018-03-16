@@ -3608,9 +3608,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
 
-    if (new_sess != NULL)
-        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
-
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
      * message
@@ -3691,6 +3688,10 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
+        if (!ssl_generate_session_id(s, s->session)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
         if (ssl_randbytes(s, age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
@@ -3776,7 +3777,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    sess->session_id_length = 0; /* ID is irrelevant for the ticket */
 
     slen = i2d_SSL_SESSION(sess, NULL);
     if (slen == 0 || slen > slen_full) {
