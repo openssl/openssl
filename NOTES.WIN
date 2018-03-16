@@ -4,27 +4,27 @@
 
  Windows targets can be classified as "native", ones that use Windows API
  directly, and "hosted" which rely on POSIX-compatible layer. "Native"
- targets are VC-* [where "VC" stems from abbreviating Microsoft Visual C
- compiler] and mingw[64]. "Hosted" platforms are Cygwin and MSYS[2]. Even
- though the latter is not directly supported by OpenSSL Team, it plays
- essential role in supporting MinGW targets. In the nutshell MinGW builds
+ targets are VC-* (where "VC" stems from abbreviating Microsoft Visual C
+ compiler) and mingw[64]. "Hosted" platforms are Cygwin and MSYS[2]. Even
+ though the latter is not directly supported by OpenSSL Team, it's #1
+ popular choice for building MinGW targets. In the nutshell MinGW builds
  are always cross-compiled. On Linux and Cygwin they look exactly as such
  and require --cross-compile-prefix option. While on MSYS[2] it's solved
  rather by placing gcc that produces "MinGW binary" code 1st on $PATH.
  This is customarily source of confusion. "Hosted" applications "live" in
  emulated file system name space with POSIX-y root, mount points, /dev
  and even /proc. Confusion is intensified by the fact that MSYS2 shell
- [or rather emulated execve(2) call] examines the binary it's about to
+ (or rather emulated execve(2) call) examines the binary it's about to
  start, and if it's found *not* to be linked with MSYS2 POSIX-y thing,
- it translates command line arguments that look like file names from
+ command line arguments that look like file names get translated from
  emulated name space to "native". For example '/c/some/where' becomes
  'c:\some\where', '/dev/null' - 'nul'. This creates an illusion that
  there is no difference between MSYS2 shell and "MinGW binary", but
  there is. Just keep in mind that "MinGW binary" "experiences" Windows
  system in exactly same way as one produced by VC, and in its essence
- is indistinguishable from the latter. [Which by the way is why
+ is indistinguishable from the latter. (Which by the way is why
  it's referred to in quotes here, as "MinGW binary", it's just as
- "native" as it can get.]
+ "native" as it can get.)
 
  Visual C++ builds, a.k.a. VC-*
  ==============================
@@ -35,17 +35,17 @@
  In addition to the requirements and instructions listed in INSTALL,
  these are required as well:
 
- - You need Perl.  We recommend ActiveState Perl, available from
+ - Perl. We recommend ActiveState Perl, available from
    https://www.activestate.com/ActivePerl. Another viable alternative
    appears to be Strawberry Perl, http://strawberryperl.com.
    You also need the perl module Text::Template, available on CPAN.
    Please read NOTES.PERL for more information.
 
- - You need a Microsoft Visual C compiler. There is ambiguity in which
-   versions are supported. It's probably safe to say that latest along
-   with couple of previous are fully supported. On the other hand we
-   know for sure that eldest one does not work. Everything between falls
-   to best-effort category.
+ - Microsoft Visual C compiler. Since we can't test them all, there is
+   natural uncertainty in which versions are supported. It's probably
+   safe to say that latest along with couple of previous are fully
+   supported. On the other hand we know for sure that eldest one does
+   not work. Everything between falls into best-effort category.
 
  - Netwide Assembler, a.k.a. NASM, available from http://www.nasm.us,
    is required if you intend to utilize assembler modules. Note that NASM
@@ -85,15 +85,15 @@
  mingw and mingw64
  =================
 
- * MSYS shell and development environment installation:
+ * MSYS2 shell and development environment installation:
 
    Download MSYS2 from https://msys2.github.io/ and follow installation
-   instructions. Once up and runinng install even make, perl, [git,]
-   mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc. You should have
-   corresponding MinGW items on your start menu, use *them*, not generic
-   MSYS2. As implied in opening note, difference between them is which
-   compiler is found 1st on $PATH. At this point ./config should recognize
-   correct target...
+   instructions. Once up and running install even make, perl, (git if
+   need it,) mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc. You should
+   have corresponding MinGW items on your start menu, use *them*, not
+   generic MSYS2. As implied in opening note, difference between them
+   is which compiler is found 1st on $PATH. At this point ./config
+   should recognize correct target, roll as it was Unix...
 
  * It is also possible to build mingw[64] on Linux or Cygwin by
    configuring with corresponding --cross-compile-prefix= option. For
@@ -105,8 +105,8 @@
 
      ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- ...
 
-   This naturally implies that you've installed corresponsing add-on
-   packages. [Just in case, you'll need "matching" perl on Cygwin.]
+   This naturally implies that you've installed corresponding add-on
+   packages.
 
  Linking your application
  ========================
