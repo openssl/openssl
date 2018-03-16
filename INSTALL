@@ -536,7 +536,7 @@
                    these flags interact with those variables.
 
   VAR=value
-                   Assignment if environment variable for Configure.  These
+                   Assignment of environment variable for Configure.  These
                    work just like normal environment variable assignments,
                    but are supported on all platforms and are confined to
                    the configuration scripts only.  These assignments override
@@ -586,6 +586,24 @@
                    isn't permitted.
 
                        ./config -DFOO CPPFLAGS=-DBAR -DCOOKIE
+
+                   Backward compatibility note:
+
+                   To be compatible with older configuration scripts, the
+                   environment variables are ignored if compiling / linking
+                   flags are given on the command line, except for these:
+
+                   AR, CC, CXX, CROSS_COMPILE, HASHBANGPERL, PERL, RANLIB, RC
+                   and WINDRES
+
+                   For example, the following command will not see -DBAR:
+
+                        CPPFLAGS=-DBAR ./config -DCOOKIE
+
+                   However, the following will see both set variables:
+
+                        CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- \
+                        ./config -DCOOKIE
 
   reconf
   reconfigure
