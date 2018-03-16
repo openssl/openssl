@@ -1858,6 +1858,58 @@ static int test_early_data_read_write(int idx)
     return testresult;
 }
 
+static int test_early_data_replay(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+                                        &serverssl, &sess, idx)))
+        goto end;
+
+    /*
+     * The server is configured to accept early data. Create a connection to
+     * "use up" the ticket
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, sess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                          SSL_ERROR_NONE))
+               /*
+                * This time we should not have resumed the session because we
+                * already used it once.
+                */
+            || !TEST_false(SSL_session_reused(clientssl)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    if (sess != clientpsk)
+        SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /*
  * Helper function to test that a server attempting to read early data can
  * handle a connection from a client where the early data should be skipped.
@@ -3688,6 +3740,11 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_early_data_read_write, 3);
+    /*
+     * We don't do replay tests for external PSK. Replay protection isn't used
+     * in that scenario.
+     */
+    ADD_ALL_TESTS(test_early_data_replay, 2);
     ADD_ALL_TESTS(test_early_data_skip, 3);
     ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
