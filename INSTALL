@@ -22,6 +22,7 @@
   * NOTES.VMS (OpenVMS)
   * NOTES.WIN (any supported Windows)
   * NOTES.DJGPP (DOS platform with DJGPP)
+  * NOTES.ANDROID (obviously Android [NDK])
 
  Notational conventions in this document
  ---------------------------------------
