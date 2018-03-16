@@ -1,0 +1,67 @@
+
+ NOTES FOR THE ANDROID PLATFORMS
+ ===============================
+
+ Requirement details
+ -------------------
+
+ Besides basic tools like perl and make you'll need to download Android
+ NDK. It's avialable for Linux, MacOS X and Windows, but only Linux
+ version was actually tested. There is no reason to believe that MacOS X
+ wouldn't work. And as for Windows it's unclear which "shell" would work
+ [best], MSYS2 might have best chances. NDK version should play lesser
+ role, the goal is to support any recent enough.
+
+ Configuration
+ -------------
+
+ Android is naturally cross-compiled target and you can't use ./config.
+ You have to use ./Configure and name your target explicitly, there are
+ android-arm, android-arm64, android-mips, android-mip64, android-x86
+ and android-x86_64. You might expect you would be required to pass
+ --cross-compile-prefix or set $CROSS_COMPILE environment variable, but
+ not this time, it will be "calculated" automatically based on chosen
+ platform. Though you'd still need to know it, the prefix, for $PATH
+ adjustment, that would allow to invoke $(CROSS_COMPILE)gcc and company.
+ [Yes, it can be summarized as "a bit messy."] Besides PATH adjustment
+ you need to set $ANDROID_NDK environment that points at NDK directory
+ as /some/where/android-ndk-<ver>.
+
+ Previous instructions required you to set even CROSS_SYSROOT variable
+ [to $ANDROID_NDK/platforms/android-<api>/arch-<arch>]. It's still
+ recognized [and even required for some legacy targets], but if not set,
+ it's "caclulated" and set to the latest Android platform available with
+ appointed NDK automatically. In such case if you need to target older
+ platform, pass additional -D__ANDROID_API__=N to Configure. For example,
+ to compile for ICS on ARM with NDK 10d:
+
+    ANDROID_NDK=/some/where/android-ndk-10d
+    PATH=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8/prebuild/linux-x86_64/bin:$PATH
+    [..]./Configure android-arm -D__ANDROID_API__=14
+
+ Caveat lector! Note that API level appears in CROSS_SYSROOT, and you may
+ sense the contradiction with recommendation to use -D__ANDROID_API__=N.
+ Yes, combination of the two is unsupported. If you set CROSS_SYSROOT,
+ then you can't use -D__ANDROID_API__=N. *Not* setting CROSS_SYSROOT is
+ recommended.
+
+ One can engage clang by passing CC=clang to Configure. In such case
+ PATH needs even more adjustments to cover NDK's clang itself, as well
+ as unprefixed, yet target-specific ar and ranlib [or not, if you use
+ binutils-multiarch on your Linux].
+
+ Running tests [on Linux]
+ ------------------------
+
+ Even though build output targets alien system, it's possible to execute
+ test suite on Linux system by employing qemu-user. Keyword is statically
+ linked binaries. In order to do that pass -static to Configure, then
+ edit generated Makefile and remove -ldl and -pie flags. You would also
+ need to pick API version that comes with usable static libraries, such
+ as 21. Once built, you should be able to
+
+    env EXE_SHELL=qemu-<arch> make test
+
+ If you need to pass additional flag to qemu, quotes are your friend, e.g.
+
+    env EXE_SHELL="qemu-mips64el -cpu MIPS64R6-generic" make test
