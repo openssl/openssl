@@ -100,6 +100,7 @@ struct ossl_statem_st {
     /* Should we skip the CertificateVerify message? */
     unsigned int no_cert_verify;
     int use_timer;
+    int invalid_enc_write_ctx;
 };
 typedef struct ossl_statem_st OSSL_STATEM;
 
