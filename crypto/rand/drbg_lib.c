@@ -218,7 +218,7 @@ static RAND_DRBG *rand_drbg_new(int secure,
 
     if (drbg == NULL) {
         RANDerr(RAND_F_RAND_DRBG_NEW, ERR_R_MALLOC_FAILURE);
-        goto err;
+        return NULL;
     }
 
     drbg->secure = secure && CRYPTO_secure_allocated(drbg);
