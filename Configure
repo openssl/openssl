@@ -602,6 +602,7 @@ $config{options}="";
 $config{build_type} = "release";
 my $target="";
 
+my %cmdvars = ();               # Stores FOO='blah' type arguments
 my %unsupported_options = ();
 my %deprecated_options = ();
 # If you change this, update apps/version.c
@@ -614,7 +615,7 @@ while (@argvcopy)
 	# Support env variable assignments among the options
 	if (m|^(\w+)=(.+)?$|)
 		{
-		$config{perlenv}->{$1} = $2;
+		$cmdvars{$1} = $2;
 		# Every time a variable is given as a configuration argument,
 		# it acts as a reset if the variable.
 		if (exists $user{$1})
@@ -891,36 +892,46 @@ while (@argvcopy)
 		}
 	}
 
-# If any %useradd entry has been set, we must check that the environment
-# variables haven't been set.  We start by checking of any %useradd entry
+# If any %useradd entry has been set, we must check that the "make
+# variables" haven't been set.  We start by checking of any %useradd entry
 # is set.
 if (grep { scalar @$_ > 0 } values %useradd) {
     # Hash of env / make variables names.  The possible values are:
-    # 1 - environment set
+    # 1 - "make vars"
     # 2 - %useradd entry set
     # 3 - both set
-    my %detected_env =
+    my %detected_vars =
         map { my $v = 0;
-              $v += 1 if env($_);
+              $v += 1 if $cmdvars{$_};
               $v += 2 if @{$useradd{$_}};
               $_ => $v }
         keys %useradd;
 
-    # If any of the corresponding environment variables is set, we error
-    if (grep { $_ & 1 } values %detected_env) {
-        my $names = join(', ', grep { $detected_env{$_} > 0 }
-                               sort keys %detected_env);
+    # If any of the corresponding "make variables" is set, we error
+    if (grep { $_ & 1 } values %detected_vars) {
+        my $names = join(', ', grep { $detected_vars{$_} > 0 }
+                               sort keys %detected_vars);
         die <<"_____";
-***** Mixing env / make variables and additional compiler/linker flags as
+***** Mixing make variables and additional compiler/linker flags as
 ***** configure command line option is not permitted.
-***** Affected env / make variables: $names
+***** Affected make variables: $names
 _____
     }
 }
 
+# Check through all supported command line variables to see if any of them
+# were set, and canonicalise the values we got.  If no compiler or linker
+# flag or anything else that affects %useradd was set, we also check the
+# environment for values.
+my $anyuseradd =
+    grep { defined $_ && (ref $_ ne 'ARRAY' || @$_) } values %useradd;
 foreach (keys %user) {
-    my $value = env($_);
-    $value //= defined $user_synonyms{$_} ? env($user_synonyms{$_}) : undef;
+    my $value = $cmdvars{$_};
+    $value //= env($_) unless $anyuseradd;
+    $value //=
+        defined $user_synonyms{$_} ? $cmdvars{$user_synonyms{$_}} : undef;
+    $value //= defined $user_synonyms{$_} ? env($user_synonyms{$_}) : undef
+        unless $anyuseradd;
 
     if (defined $value) {
         if (ref $user{$_} eq 'ARRAY') {
@@ -3090,13 +3101,16 @@ sub which
 sub env
 {
     my $name = shift;
+    my %opts = @_;
 
-    # Note that if $ENV{$name} doesn't exist or is undefined,
-    # $config{perlenv}->{$name} will be created with the value
-    # undef.  This is intentional.
+    unless ($opts{cacheonly}) {
+        # Note that if $ENV{$name} doesn't exist or is undefined,
+        # $config{perlenv}->{$name} will be created with the value
+        # undef.  This is intentional.
 
-    $config{perlenv}->{$name} = $ENV{$name}
-        if ! exists $config{perlenv}->{$name};
+        $config{perlenv}->{$name} = $ENV{$name}
+            if ! exists $config{perlenv}->{$name};
+    }
     return $config{perlenv}->{$name};
 }
 
