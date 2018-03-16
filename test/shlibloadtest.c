@@ -22,9 +22,6 @@
 #define ERR_GET_ERROR "ERR_get_error"
 #define OPENSSL_VERSION_NUM_FUNC "OpenSSL_version_num"
 
-#define DSO_DSOBYADDR "DSO_dsobyaddr"
-#define DSO_FREE "DSO_free"
-
 typedef struct ssl_ctx_st SSL_CTX;
 typedef struct ssl_method_st SSL_METHOD;
 typedef const SSL_METHOD * (*TLS_method_t)(void);
@@ -34,10 +31,6 @@ typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
 
-typedef void DSO;
-typedef DSO * (*DSO_dsobyaddr_t)(void *addr, int flags);
-typedef int (*DSO_free_t)(DSO *dso);
-
 static TLS_method_t TLS_method;
 static SSL_CTX_new_t SSL_CTX_new;
 static SSL_CTX_free_t SSL_CTX_free;
@@ -45,10 +38,17 @@ static SSL_CTX_free_t SSL_CTX_free;
 static ERR_get_error_t ERR_get_error;
 static OpenSSL_version_num_t OpenSSL_version_num;
 
+#ifdef DSO_DLFCN
+
+# define DSO_DSOBYADDR "DSO_dsobyaddr"
+# define DSO_FREE "DSO_free"
+
+typedef void DSO;
+typedef DSO * (*DSO_dsobyaddr_t)(void *addr, int flags);
+typedef int (*DSO_free_t)(DSO *dso);
+
 static DSO_dsobyaddr_t DSO_dsobyaddr;
 static DSO_free_t DSO_free;
-
-#ifdef DSO_DLFCN
 
 # include <dlfcn.h>
 
@@ -217,6 +217,14 @@ int main(int argc, char **argv)
     }
 
     if (test_type == DSO_REFTEST) {
+# ifdef DSO_DLFCN
+        /* This is resembling the code used in ossl_init_base() and
+         * OPENSSL_atexit() to block unloading the library after dlclose().
+         * We are not testing this on Windows, because it is done there in a
+         * completely different way. Especially as a call to DSO_dsobyaddr()
+         * will always return an error, because DSO_pathbyaddr() is not
+         * implemented there.
+         */
         if (!shlib_sym(cryptolib, DSO_DSOBYADDR, &dso_dsobyaddr_sym.sym)
             || !shlib_sym(cryptolib, DSO_FREE, &dso_free_sym.sym)) {
             printf("Unable to load crypto dso symbols\n");
@@ -229,13 +237,14 @@ int main(int argc, char **argv)
         {
             DSO *hndl;
             /* use known symbol from crypto module */
-            if ((hndl = DSO_dsobyaddr((void *)ERR_get_error, 0)) != NULL) {
+            if ((hndl = DSO_dsobyaddr(ERR_get_error, 0)) != NULL) {
                 DSO_free(hndl);
             } else {
                 printf("Unable to obtain DSO reference from crypto symbol\n");
                 return 1;
             }
         }
+# endif /* DSO_DLFCN */
     }
 
     for (i = 0; i < 2; i++) {
