@@ -1868,8 +1868,6 @@ static int test_early_data_replay(int idx)
                                         &serverssl, &sess, idx)))
         goto end;
 
-    sess = SSL_get1_session(clientssl);
-
     /*
      * The server is configured to accept early data. Create a connection to
      * "use up" the ticket
