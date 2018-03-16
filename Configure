@@ -523,28 +523,30 @@ my $list_separator_re =
     { VMS           => qr/(?<!\^),/,
       MSWin32       => qr/(?<!\\);/ } -> {$^O} // qr/(?<!\\)[:\s]/;
 # All the "make variables" we support
+# Some get pre-populated for the sake of backward compatibility
+# (we supported those before the change to "make variable" support.
 my %user = (
-    AR          => undef,
+    AR          => env('AR'),
     ARFLAGS     => [],
     AS          => undef,
     ASFLAGS     => [],
-    CC          => undef,
+    CC          => env('CC'),
     CFLAGS      => [],
-    CXX         => undef,
+    CXX         => env('CXX'),
     CXXFLAGS    => [],
     CPP         => undef,
     CPPFLAGS    => [],  # -D, -I, -Wp,
     CPPDEFINES  => [],  # Alternative for -D
     CPPINCLUDES => [],  # Alternative for -I
-    CROSS_COMPILE => undef,
-    HASHBANGPERL=> undef,
+    CROSS_COMPILE => env('CROSS_COMPILE'),
+    HASHBANGPERL=> env('HASHBANGPERL') || env('PERL'),
     LD          => undef,
     LDFLAGS     => [],  # -L, -Wl,
     LDLIBS      => [],  # -l
     MT          => undef,
     MTFLAGS     => [],
-    RANLIB      => undef,
-    RC          => undef,
+    RANLIB      => env('RANLIB'),
+    RC          => env('RC') || env('WINDRES'),
     RCFLAGS     => [],
     RM          => undef,
    );
