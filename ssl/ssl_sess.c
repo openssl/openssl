@@ -761,10 +761,10 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
     if ((c != NULL) && (c->session_id_length != 0)) {
         if (lck)
             CRYPTO_THREAD_write_lock(ctx->lock);
-        if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) == c) {
+        if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) != NULL) {
             ret = 1;
-            r = lh_SSL_SESSION_delete(ctx->sessions, c);
-            SSL_SESSION_list_remove(ctx, c);
+            r = lh_SSL_SESSION_delete(ctx->sessions, r);
+            SSL_SESSION_list_remove(ctx, r);
         }
         c->not_resumable = 1;
 
