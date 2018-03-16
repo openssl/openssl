@@ -590,8 +590,8 @@
                    Backward compatibility note:
 
                    To be compatible with older configuration scripts, the
-                   environment variables are ignored compiling / linking flags
-                   are given on the command line, except for these:
+                   environment variables are ignored if compiling / linking
+                   flags are given on the command line, except for these:
 
                    AR, CC, CXX, CROSS_COMPILE, HASHBANGPERL, PERL, RANLIB, RC
                    and WINDRES
