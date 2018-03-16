@@ -246,6 +246,10 @@ been removed from the internal cache but is still available in the external
 cache. Applications should be designed with this in mind in order to minimise
 the possibility of replay attacks.
 
+The OpenSSL replay protection does not apply to external Pre Shared Keys (PSKs)
+(e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
+should be applied when combining external PSKs with early data.
+
 =head1 RETURN VALUES
 
 SSL_write_early_data() returns 1 for success or 0 for failure. In the event of a
