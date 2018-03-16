@@ -988,8 +988,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         mac_ctx = hash;
     } else {
         hmac = EVP_MD_CTX_new();
-        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash))
+        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash)) {
+            EVP_MD_CTX_free(hmac);
             return -1;
+        }
         mac_ctx = hmac;
     }
 
