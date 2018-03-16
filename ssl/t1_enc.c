@@ -154,6 +154,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_secret = &(s->s3->read_mac_secret[0]);
         mac_secret_size = &(s->s3->read_mac_secret_size);
     } else {
+        s->statem.invalid_enc_write_ctx = 1;
         if (s->ext.use_etm)
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
         else
@@ -316,6 +317,7 @@ int tls1_change_cipher_state(SSL *s, int which)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    s->statem.invalid_enc_write_ctx = 0;
 
 #ifdef SSL_DEBUG
     printf("which = %04X\nkey=", which);

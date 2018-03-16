@@ -155,6 +155,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
         mac_secret = &(s->s3->read_mac_secret[0]);
     } else {
+        s->statem.invalid_enc_write_ctx = 1;
         if (s->enc_write_ctx != NULL) {
             reuse_dd = 1;
         } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
@@ -238,6 +239,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+    s->statem.invalid_enc_write_ctx = 0;
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
     return 1;
