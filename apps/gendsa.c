@@ -112,14 +112,14 @@ int gendsa_main(int argc, char **argv)
     BIO_free(in);
     in = NULL;
 
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
-    if (out == NULL)
-        goto end2;
-
     DSA_get0_pqg(dsa, &p, NULL, NULL);
     BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
     if (!DSA_generate_key(dsa))
         goto end;
+
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    if (out == NULL)
+        goto end2;
 
     assert(private);
     if (!PEM_write_bio_DSAPrivateKey(out, dsa, enc, NULL, 0, NULL, passout))

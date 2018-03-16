@@ -123,9 +123,6 @@ int dsaparam_main(int argc, char **argv)
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
 
     if (numbits > 0) {
         cb = BN_GENCB_new();
@@ -157,6 +154,10 @@ int dsaparam_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+
+    out = bio_open_owner(outfile, outformat, private);
+    if (out == NULL)
+        goto end;
 
     if (text) {
         DSAparams_print(out, dsa);

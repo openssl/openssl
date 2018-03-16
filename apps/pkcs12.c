@@ -493,9 +493,6 @@ int pkcs12_main(int argc, char **argv)
     in = bio_open_default(infile, 'r', FORMAT_PKCS12);
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
-    if (out == NULL)
-        goto end;
 
     if ((p12 = d2i_PKCS12_bio(in, NULL)) == NULL) {
         ERR_print_errors(bio_err);
@@ -571,6 +568,11 @@ int pkcs12_main(int argc, char **argv)
     }
 
     assert(private);
+
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    if (out == NULL)
+        goto end;
+
     if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
         BIO_printf(bio_err, "Error outputting keys and certificates\n");
         ERR_print_errors(bio_err);
