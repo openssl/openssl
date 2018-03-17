@@ -157,8 +157,17 @@ static int test_lib(void)
         goto end;
 
     if (test_type == DSO_REFTEST) {
+# ifdef DSO_DLFCN
+        /* This is resembling the code used in ossl_init_base() and
+         * OPENSSL_atexit() to block unloading the library after dlclose().
+         * We are not testing this on Windows, because it is done there in a
+         * completely different way. Especially as a call to DSO_dsobyaddr()
+         * will always return an error, because DSO_pathbyaddr() is not
+         * implemented there.
+         */
         if (!TEST_true(shlib_sym(cryptolib, "DSO_dsobyaddr", &symbols[0].sym))
-            || !TEST_true(shlib_sym(cryptolib, "DSO_free", &symbols[1].sym)))
+                || !TEST_true(shlib_sym(cryptolib, "DSO_free",
+                                        &symbols[1].sym)))
             goto end;
 
         myDSO_dsobyaddr = (DSO_dsobyaddr_t)symbols[0].func;
@@ -171,6 +180,7 @@ static int test_lib(void)
                 goto end;
             DSO_free(hndl);
         }
+# endif /* DSO_DLFCN */
     }
 
     switch (test_type) {
