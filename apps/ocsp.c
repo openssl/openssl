@@ -813,7 +813,10 @@ log_message(int level, const char *fmt, ...)
     va_start(ap, fmt);
 # ifdef OCSP_DAEMON
     if (multi) {
-        vsyslog(level, fmt, ap);
+        char buf[1024];
+        if (vsnprintf(buf, sizeof(buf), fmt, ap) > 0) {
+            syslog(level, "%s", buf);
+        }
         if (level >= LOG_ERR)
             ERR_print_errors_cb(print_syslog, &level);
     }
@@ -928,7 +931,10 @@ static void spawn_loop(void)
                     else if (WIFSIGNALED(status))
                         syslog(LOG_WARNING, "child process: %ld, term signal %d%s",
                                (long)fpid, WTERMSIG(status),
-                               WCOREDUMP(status) ? " (core dumped)" : "");
+#ifdef WCOREDUMP
+                               WCOREDUMP(status) ? " (core dumped)" :
+#endif
+                               "");
                     sleep(1);
                 }
                 break;
