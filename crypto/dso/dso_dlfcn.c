@@ -309,22 +309,26 @@ static int dladdr(void *address, Dl_info *dl)
 # endif                         /* __sgi */
 # ifdef _AIX
 /*-
- * See IBM's AIX Version 7.1/7.2 Technical Reference:
+ * See IBM's AIX Version 7.2, Technical Reference:
  *  Base Operating System and Extensions, Volume 1 and 2
- *  https://www.ibm.com/support/knowledgecenter/ssw_aix_71/com.ibm.aix.base/technicalreferences.htm
- *  ftp://public.dhe.ibm.com/systems/power/docs/aix/72/basetrf{1,2}_pdf.pdf
+ *  https://www.ibm.com/support/knowledgecenter/ssw_aix_72/com.ibm.aix.base/technicalreferences.htm
  */
 #  include <sys/ldr.h>
 #  include <errno.h>
-#  define DLFCN_LDINFO_SIZE 81920
+/* ~ 64 * (sizeof(struct ld_info) + _XOPEN_PATH_MAX + _XOPEN_NAME_MAX) */
+#  define DLFCN_LDINFO_SIZE 86976
 extern int errno;
 typedef struct Dl_info {
     const char *dli_fname;
 } Dl_info;
-/* NOTE: when looking up a symbol from a foreign module, the caller of
- *  DSO_...byaddr()/OPENSSL_atexit() must respect Pointer Glue instructions for
- *  PowerPC (aka De-Virtualization, related to the ptrgl compiler flags):
- *  (void*)*((ulong*)address) if pto is not in effect at the caller's place */
+/* NOTE: when looking up a function symbol, the caller of DSO_...byaddr() /
+ *  OPENSSL_atexit() might need to consider the Pointer Glue virtual address
+ *  handling on AIX/PowerPC (aka De-Virtualization; related to the ptrgl
+ *  compiler flags). The real address of a function can be retrieved with:
+ *  (void*)*((ulong*)function)
+ *  This dladdr()-implementation will also find the ptrgl virtual address of a
+ *  function, which is just located in the DATA segment instead of the TEXT
+ *  segment. */
 static int dladdr(void *address, Dl_info *dl)
 {
     unsigned int found = 0;
@@ -342,8 +346,7 @@ static int dladdr(void *address, Dl_info *dl)
        *  EINVAL (invalid flags),
        *  EFAULT (invalid ldinfos ptr)
        */
-      /* FIXME: remove! */
-      fprintf( stderr, "**** in dladdr(): loadquery error(%d): '%s'\n", errno, strerror(errno));
+      OPENSSL_free((void *)ldinfos);
       dl->dli_fname = NULL;
       return 0;
     }
@@ -351,12 +354,10 @@ static int dladdr(void *address, Dl_info *dl)
 
     do {
       this_ldi = next_ldi;
-      /* FIXME: remove!
-       *  print ptrs, to find out, why it doesn't find base_inited */
-      fprintf( stderr, "**** in dladdr(): textorg:%p <= address:%p < +textsize(%d):%p -- filename(%p): '%s'\n",
-               this_ldi->ldinfo_textorg, address, this_ldi->ldinfo_textsize, (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize), this_ldi->ldinfo_filename, this_ldi->ldinfo_filename);
-      if ((address >= this_ldi->ldinfo_textorg) &&
-          (address < (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize))) {
+      if (((address >= this_ldi->ldinfo_textorg) &&
+           (address < (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize))) ||
+          ((address >= this_ldi->ldinfo_dataorg) &&
+           (address < (this_ldi->ldinfo_dataorg + this_ldi->ldinfo_datasize)))) {
         found = 1;
         /* Ignoring the possibility of a member name and just returning the
          * path name. See docs: ldr.h, loadquery() and dlopen()/RTLD_MEMBER. */
@@ -390,12 +391,19 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
 
     if (dladdr(addr, &dli)) {
         len = (int)strlen(dli.dli_fname);
-        if (sz <= 0)
+        if (sz <= 0) {
+#  ifdef _AIX
+            OPENSSL_free(dli.dli_fname);
+#  endif
             return len + 1;
+        }
         if (len >= sz)
             len = sz - 1;
         memcpy(path, dli.dli_fname, len);
         path[len++] = 0;
+#  ifdef _AIX
+        OPENSSL_free(dli.dli_fname);
+#  endif
         return len;
     }
 
