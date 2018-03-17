@@ -220,35 +220,15 @@ This is in fact done automatically by L<RAND_DRBG_bytes(3)>.
 
 =head2 Configuring the Random Seed Source
 
-When configuring OpenSSL, the seed source can specified using the
-following option.
-
-   --with-rand-seed=seed1[,seed2,...]
-
-     os:          Use a trusted operating system entropy source (default)
-     getrandom:   Use the L<getrandom(2)> if available.
-     devrandom:   Use the /dev/urandom device.
-     egd:         Check for an entropy generating daemon.
-     rdcpu:       Use the RDSEED or RDRAND command if provided by the CPU.
-     librandom:   Use librandom (not implemented yet).
-
-Multiple seed sources can be specified in form of a comma separated list.
-Not all options are available on all platforms.
-The default option is --with-rand-seed=os, which is in general the best
-choice for the given operating system. So in general, it is not necessary
-to specify this option explicitly.
-
-Automatic seeding can be disabled entirely using the --with-rand-seed=none
-option. Some platforms have it disabled by default, because no suitable
-random seed source is available.
+In most cases OpenSSL will automatically choose a suitable seed source
+for automatically seeding and reseeding its <master> DRBG. In some cases
+however, it will be necessary to explicitely specify a seed source during
+configuration, using the --with-rand-seed option. For more information,
+see the INSTALL instructions. There are also operating systems where no
+seed source is available and automatic reseeding is disabled by default.
 
 The following two sections describe the reseeding process of the master
-DRBG, depending on whether automatic reseeding is configured or not.
-
-For more details about the configuration process, see the INSTALLATION
-instructions .
-A summary of the configure options can be displayed with the OpenSSL
-L<version(1)> command.
+DRBG, depending on whether automatic reseeding is available or not.
 
 
 =head2 Reseeding the master DRBG with automatic seeding enabled
