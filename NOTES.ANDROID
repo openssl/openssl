@@ -1,11 +1,11 @@
 
- NOTES FOR THE ANDROID PLATFORMS
+ NOTES FOR ANDROID PLATFORMS
  ===============================
 
  Requirement details
  -------------------
 
- Beside basic tools like perl and make you'll need to download Android
+ Beside basic tools like perl and make you'll need to download the Android
  NDK. It's available for Linux, Mac OS X and Windows, but only Linux
  version was actually tested. There is no reason to believe that Mac OS X
  wouldn't work. And as for Windows, it's unclear which "shell" would be
@@ -16,14 +16,14 @@
  -------------
 
  Android is naturally cross-compiled target and you can't use ./config.
- You have to use ./Configure and name your target explicitly, there are
+ You have to use ./Configure and name your target explicitly; there are
  android-arm, android-arm64, android-mips, android-mip64, android-x86
  and android-x86_64. Do not pass --cross-compile-prefix (as you might
  be tempted), as it will be "calculated" automatically based on chosen
- platform. Though you'd still need to know it, the prefix, for $PATH
- adjustment, that would allow to invoke $(CROSS_COMPILE)gcc and company.
- (Yes, it can be summarized as "a bit messy".) Apart from PATH adjustment
- you need to set $ANDROID_NDK environment to point at NDK directory
+ platform. Though you still need to know the prefix to extend your PATH,
+ in order to invoke $(CROSS_COMPILE)gcc and company. (Configure will fail
+ and give you a hint if you get it wrong.) Apart from PATH adjustment
+ you need to set ANDROID_NDK environment to point at NDK directory
  as /some/where/android-ndk-<ver>. NDK customarily supports multiple
  Android API levels, e.g. android-14, android-21, etc. By default latest 
  one available is chosen. If you need to target older platform, pass
@@ -44,7 +44,7 @@
 
  One can engage clang by passing CC=clang to Configure. In such case
  PATH needs even more adjustments to cover NDK's clang itself, as well
- as unprefixed, yet target-specific ar and ranlib (or not, if you use
+ as unprefixed, yet target-specific, ar and ranlib (or not, if you use
  binutils-multiarch on your Linux).
 
  Running tests (on Linux)
@@ -53,11 +53,11 @@
  This is not actually supported. Notes are meant rather as inspiration.
 
  Even though build output targets alien system, it's possible to execute
- test suite on Linux system by employing qemu-user. Secret password is
- static linking. Pass -static to Configure, then edit generated Makefile
- and remove -ldl and -pie flags. You would also need to pick API version
- that comes with usable static libraries, 21 used to work. Once built,
- you should be able to
+ test suite on Linux system by employing qemu-user. The trick is static
+ linking. Pass -static to Configure, then edit generated Makefile and
+ remove occurrences of -ldl and -pie flags. You would also need to pick
+ API version that comes with usable static libraries, 42/2=21 used to
+ work. Once built, you should be able to
 
     env EXE_SHELL=qemu-<arch> make test
 
