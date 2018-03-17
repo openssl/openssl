@@ -678,7 +678,8 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     }
 
     certs = ctx->flags & TS_ESS_CERT_ID_CHAIN ? ctx->certs : NULL;
-    if (ctx->ess_cert_id_digest == EVP_sha1()) {
+    if (ctx->ess_cert_id_digest == NULL
+        || ctx->ess_cert_id_digest == EVP_sha1()) {
         if ((sc = ess_SIGNING_CERT_new_init(ctx->signer_cert, certs)) == NULL)
             goto err;
 
