@@ -221,7 +221,8 @@
                    generator (CSPRNG). The current seeding methods are:
 
                    os:         Use a trusted operating system entropy source.
-                               This is the default method.
+                               This is the default method such an entropy source
+                               exists.
                    getrandom:  Use the L<getrandom(2)> system call if available.
                    devrandom:  Use the the first device from the DEVRANDOM list
                                which can be opened to read random bytes. The
@@ -232,7 +233,10 @@
                    rdcpu:      Use the RDSEED or RDRAND command if provided by
                                the CPU.
                    librandom:  Use librandom (not implemented yet).
-                   none:       Disable automatic seeding
+                   none:       Disable automatic seeding. This is the default
+                               on some operating systems where no suitable
+                               entropy source exists, or no support for it is
+                               implemented yet.
 
                    For more information, see the section 'Note on random number
                    generation' at the end of this document.
