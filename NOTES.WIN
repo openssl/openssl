@@ -89,7 +89,7 @@
 
    Download MSYS2 from https://msys2.github.io/ and follow installation
    instructions. Once up and running install even make, perl, (git if
-   need it,) mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc. You should
+   needed,) mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc. You should
    have corresponding MinGW items on your start menu, use *them*, not
    generic MSYS2. As implied in opening note, difference between them
    is which compiler is found 1st on $PATH. At this point ./config
