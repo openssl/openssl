@@ -43,10 +43,11 @@
  conflict, and mixing the two is therefore not supported. Migration to
  CROSS_SYSROOT-less setup is recommended.
 
- One can engage clang by passing CC=clang to Configure. In such case
- PATH needs even more adjustments to cover NDK's clang itself, as well
- as unprefixed, yet target-specific, ar and ranlib (or not, if you use
- binutils-multiarch on your Linux).
+ One can engage clang by adjusting PATH to cover NDK's clang. Just keep
+ in mind that if you miss it, Configure will try to use gcc... Also,
+ PATH would need even further adjustment to cover unprefixed, yet
+ target-specific, ar and ranlib (or not, if you use binutils-multiarch
+ on your Linux).
 
  Running tests (on Linux)
  ------------------------
