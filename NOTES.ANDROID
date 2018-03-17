@@ -27,8 +27,9 @@
  as /some/where/android-ndk-<ver>. NDK customarily supports multiple
  Android API levels, e.g. android-14, android-21, etc. By default latest 
  one available is chosen. If you need to target older platform, pass
- additional -D__ANDROID_API__=N to Configure. For example, to compile for
- ICS on ARM with NDK 10d:
+ additional -D__ANDROID_API__=N to Configure. N is numeric value of the
+ target platform version. For example, to compile for ICS on ARM with
+ NDK 10d:
 
     ANDROID_NDK=/some/where/android-ndk-10d
     PATH=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8/prebuild/linux-x86_64/bin:$PATH
