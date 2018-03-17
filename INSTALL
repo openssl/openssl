@@ -220,13 +220,19 @@
                    for seeding its cryptographically secure random number
                    generator (CSPRNG). The current seeding methods are:
 
-            os:         Use a trusted operating system entropy source (default)
-            getrandom:  Use the L<getrandom(2)> if available.
-            devrandom:  Use the /dev/urandom device.
-            egd:        Check for an entropy generating daemon.
-            rdcpu:      Use the RDSEED or RDRAND command if provided by the CPU.
-            librandom:  Use librandom (not implemented yet).
-            none:       Disable automatic seeding
+                   os:         Use a trusted operating system entropy source.
+                               This is the default method.
+                   getrandom:  Use the L<getrandom(2)> system call if available.
+                   devrandom:  Use the the first device from the DEVRANDOM list
+                               which can be opened to read random bytes. The
+                               DEVRANDOM preprocessor constant expands to
+                               "/dev/urandom","/dev/random","/dev/srandom" on
+                               most unix-ish operating systems.
+                   egd:        Check for an entropy generating daemon.
+                   rdcpu:      Use the RDSEED or RDRAND command if provided by
+                               the CPU.
+                   librandom:  Use librandom (not implemented yet).
+                   none:       Disable automatic seeding
 
                    For more information, see the section 'Note on random number
                    generation' at the end of this document.
@@ -582,6 +588,10 @@
                    CPPINCLUDES     List of CPP inclusion directories, separated
                                    the same way as for CPPDEFINES.  This can
                                    be used in place of -I.
+                   DEVRANDOM       A comma separated list of strings that
+                                   specify pathes of random devices which are
+                                   searched in the given order for seeding the
+                                   random generator.
                    HASHBANGPERL    Perl invocation to be inserted after '#!'
                                    in public perl scripts.
                    LD              The program linker (not used on Unix, $(CC)

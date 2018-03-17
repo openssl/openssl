@@ -21,8 +21,6 @@ RAND_DRBG_bytes
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND_DRBG(7)> API.
-
 RAND_DRBG_generate() generates B<outlen> random bytes using the given
 DRBG instance B<drbg> and stores them in the buffer at B<out>.
 

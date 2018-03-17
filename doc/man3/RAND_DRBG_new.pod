@@ -36,8 +36,6 @@ RAND_DRBG_free
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND_DRBG(7)> API.
-
 RAND_DRBG_new() and RAND_DRBG_secure_new()
 create a new DRBG instance of the given B<type>, allocated from the heap resp.
 the secure heap

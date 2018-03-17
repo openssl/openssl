@@ -18,8 +18,6 @@ RAND_DRBG_get0_private
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND_DRBG(7)> API.
-
 The default RAND API implementation (RAND_OpenSSL()) utilizes three
 global DRBG instances which are accessed via RAND_bytes() and RAND_priv_bytes().
 These functions here provide access to the global DRBG instances to allow for
@@ -54,8 +52,9 @@ The RAND_DRBG functions were added in OpenSSL 1.1.1.
 L<RAND_DRBG_set_reseed_interval(3)>,
 L<RAND_DRBG_set_reseed_time_interval(3)>,
 L<RAND_DRBG_set_callbacks(3)>,
+L<RAND_DRBG_generate(3)>,
 L<RAND_DRBG(7)>,
-L<RAND(7)>
+
 
 =head1 COPYRIGHT
 

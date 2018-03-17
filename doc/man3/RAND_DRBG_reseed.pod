@@ -31,8 +31,6 @@ RAND_DRBG_set_reseed_defaults
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND_DRBG(7)> API.
-
 RAND_DRBG_reseed()
 reseeds the given B<drbg>, obtaining entropy input from its parent drbg
 (if it is chained) or from the trusted os entropy sources,

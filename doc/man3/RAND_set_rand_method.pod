@@ -16,13 +16,10 @@ RAND_set_rand_method, RAND_get_rand_method, RAND_OpenSSL - select RAND method
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND(7)> API.
-
 A B<RAND_METHOD> specifies the functions that OpenSSL uses for random number
 generation.
 
-Initially, the default B<RAND_METHOD> is the OpenSSL internal implementation,
-as returned by RAND_OpenSSL().
+RAND_OpenSSL() returns the default B<RAND_METHOD> implementation by OpenSSL.
 This implementation ensures that the PRNG state is unique for each thread.
 
 If an B<ENGINE> is loaded that provides the RAND API, however, it will

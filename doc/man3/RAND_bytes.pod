@@ -19,8 +19,6 @@ Deprecated:
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND(7)> API.
-
 RAND_bytes() puts B<num> cryptographically strong pseudo-random bytes
 into B<buf>. An error occurs if the CSPRNG has not been seeded with
 enough randomness to ensure an unpredictable byte sequence.

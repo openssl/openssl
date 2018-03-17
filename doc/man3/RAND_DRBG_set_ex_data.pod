@@ -54,6 +54,7 @@ CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DRBG,...).
 L<CRYPTO_get_ex_data(3)>,
 L<CRYPTO_set_ex_data(3)>,
 L<CRYPTO_get_ex_new_index(3)>
+L<RAND_DRBG(7)>
 
 =head1 COPYRIGHT
 

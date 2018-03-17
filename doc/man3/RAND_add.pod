@@ -24,9 +24,8 @@ Deprecated:
 
 =head1 DESCRIPTION
 
-These functions are part of the OpenSSL L<RAND(7)> API.
-
-They can be used to seed the random generator and to check its seeded state.
+These functions can be used to seed the random generator and to check its
+seeded state.
 In general, manual (re-)seeding of the default OpenSSL random generator
 (L<RAND_OpenSSL(3)>) is not necessary (but allowed), since it does (re-)seed
 itself automatically using trusted system entropy sources.
