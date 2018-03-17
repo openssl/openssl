@@ -42,10 +42,10 @@
    Please read NOTES.PERL for more information.
 
  - Microsoft Visual C compiler. Since we can't test them all, there is
-   natural uncertainty in which versions are supported. It's probably
-   safe to say that latest along with couple of previous are fully
-   supported. On the other hand we know for sure that eldest one does
-   not work. Everything between falls into best-effort category.
+   unavoidable uncertainty about which versions are supported. Latest
+   version along with couple of previous are certainly supported. On
+   the other hand oldest one is known not to work. Everything between
+   falls into best-effort category.
 
  - Netwide Assembler, a.k.a. NASM, available from http://www.nasm.us,
    is required if you intend to utilize assembler modules. Note that NASM
@@ -93,7 +93,7 @@
    have corresponding MinGW items on your start menu, use *them*, not
    generic MSYS2. As implied in opening note, difference between them
    is which compiler is found 1st on $PATH. At this point ./config
-   should recognize correct target, roll as it was Unix...
+   should recognize correct target, roll as if it was Unix...
 
  * It is also possible to build mingw[64] on Linux or Cygwin by
    configuring with corresponding --cross-compile-prefix= option. For
