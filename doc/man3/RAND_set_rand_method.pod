@@ -53,7 +53,9 @@ RAND_OpenSSL() return pointers to the respective methods.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<ENGINE_by_id(3)>
+L<RAND_bytes(3)>,
+L<ENGINE_by_id(3)>,
+L<RAND(7)>
 
 =head1 COPYRIGHT
 

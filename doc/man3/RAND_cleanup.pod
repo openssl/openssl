@@ -28,6 +28,10 @@ RAND_cleanup() returns no value.
 RAND_cleanup() was deprecated in OpenSSL 1.1.0; do not use it.
 See L<OPENSSL_init_crypto(3)>
 
+=head1 SEE ALSO
+
+L<RAND(7)>
+
 =head1 COPYRIGHT
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.

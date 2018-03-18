@@ -53,7 +53,7 @@ L<RAND_DRBG_set_reseed_interval(3)>,
 L<RAND_DRBG_set_reseed_time_interval(3)>,
 L<RAND_DRBG_set_callbacks(3)>,
 L<RAND_DRBG_generate(3)>,
-L<RAND_DRBG(7)>,
+L<RAND_DRBG(7)>
 
 
 =head1 COPYRIGHT

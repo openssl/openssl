@@ -100,8 +100,7 @@ The RAND_DRBG functions were added in OpenSSL 1.1.1.
 L<OPENSSL_zalloc(3)>,
 L<OPENSSL_secure_zalloc(3)>,
 L<RAND_DRBG_generate(3)>,
-L<RAND_DRBG(7)>,
-L<RAND(7)>
+L<RAND_DRBG(7)>
 
 =head1 COPYRIGHT
 
