@@ -141,8 +141,20 @@ static int test_lib(void)
     myERR_get_error = (ERR_get_error_t)symbols[0].func;
     if (!TEST_int_eq(myERR_get_error(), 0))
         goto end;
+
+    /*
+     * The bits that COMPATIBILITY_MASK lets through MUST be the same in
+     * the library and in the application.
+     * The bits that are masked away MUST be a larger or equal number in
+     * the library compared to the application.
+     */
+# define COMPATIBILITY_MASK 0xfff00000L
     myOpenSSL_version_num = (OpenSSL_version_num_t)symbols[1].func;
-    if (!TEST_int_eq(myOpenSSL_version_num(), OPENSSL_VERSION_NUMBER))
+    if (!TEST_int_eq(myOpenSSL_version_num() & COMPATIBILITY_MASK,
+                     OPENSSL_VERSION_NUMBER & COMPATIBILITY_MASK)
+        goto end;
+    if (!TEST_int_ge(myOpenSSL_version_num() & ~COMPATIBILITY_MASK,
+                     OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK)
         goto end;
 
     switch (test_type) {
