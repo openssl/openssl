@@ -40,22 +40,22 @@ Several OpenSSL structures can have application-specific data attached to them,
 known as "exdata."
 The specific structures are:
 
+    APP
+    BIO
+    DH
+    DRBG
+    DSA
+    EC_KEY
+    ENGINE
+    RSA
     SSL
     SSL_CTX
     SSL_SESSION
+    UI
+    UI_METHOD
     X509
     X509_STORE
     X509_STORE_CTX
-    DH
-    DSA
-    EC_KEY
-    RSA
-    ENGINE
-    UI
-    BIO
-    APP
-    UI_METHOD
-    DRBG
 
 Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
 header file.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
