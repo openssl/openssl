@@ -26,6 +26,8 @@ RAND_DRBG_free
  int RAND_DRBG_set(RAND_DRBG *drbg,
                    int type, unsigned int flags);
 
+ int RAND_DRBG_set_defaults(int type, unsigned int flags);
+
  int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                            const unsigned char *pers, size_t perslen);
 
@@ -42,6 +44,9 @@ the secure heap
 (using OPENSSL_zalloc() resp. OPENSSL_secure_zalloc()).
 
 RAND_DRBG_set() initializes the B<drbg> with the given B<type> and B<flags>.
+
+RAND_DRBG_set_defaults() sets the default B<type> and B<flags> for new DRBG
+instances.
 
 Currently, all DRBG types are based on AES-CTR, so B<type> can be one of the
 following values: NID_aes_128_ctr, NID_aes_192_ctr, NID_aes_256_ctr.
@@ -90,6 +95,13 @@ to obtain fresh random input for reseeding, provided that B<parent> DRBG
 instance was properly instantiated, either from a trusted entropy source,
 or from yet another parent DRBG instance.
 For a detailed description of the reseeding process, see L<RAND_DRBG(7)>.
+
+The default DRBG type and flags are applied only during creation of a DRBG
+instance.
+To ensure that they are applied to the global DRBG instances
+(<master>, <public>, and <private>), it is necessary to call
+RAND_DRBG_set_defaults() before calling any
+cryptographic routines that obtain random data directly or indirectly.
 
 =head1 HISTORY
 
