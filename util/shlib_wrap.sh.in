@@ -5,13 +5,13 @@
 #
 #     OPENSSL_REGRESSION=/path/to/other/OpenSSL/build/tree
 if [ -n "$OPENSSL_REGRESSION" ]; then
-    shlibwrap=$OPENSSL_REGRESSION/util/shlib_wrap.sh
+    shlibwrap="$OPENSSL_REGRESSION/util/shlib_wrap.sh"
     if [ -x "$shlibwrap" ]; then
         # We clear OPENSSL_REGRESSION to avoid a loop, should the shlib_wrap.sh
         # we exec also support that mechanism...
         OPENSSL_REGRESSION= exec "$shlibwrap" "$@"
     else
-        if [ -f "$OPENSSL_REGRESSION" ]; then
+        if [ -f "$shlibwrap" ]; then
             echo "Not permitted to run $shlibwrap" >&2
         else
             echo "No $shlibwrap, perhaps OPENSSL_REGRESSION isn't properly set?" >&2
