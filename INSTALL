@@ -592,10 +592,6 @@
                    CPPINCLUDES     List of CPP inclusion directories, separated
                                    the same way as for CPPDEFINES.  This can
                                    be used in place of -I.
-                   DEVRANDOM       A comma separated list of strings that
-                                   specify pathes of random devices which are
-                                   searched in the given order for seeding the
-                                   random generator.
                    HASHBANGPERL    Perl invocation to be inserted after '#!'
                                    in public perl scripts.
                    LD              The program linker (not used on Unix, $(CC)
