@@ -57,20 +57,20 @@ padlock_capability:
 	cpuid
 	xor	%eax,%eax
 	cmp	\$`"0x".unpack("H*",'tneC')`,%ebx
-	jne	.Lshanghai
+	jne	.Lzhaoxin
 	cmp	\$`"0x".unpack("H*",'Hrua')`,%edx
 	jne	.Lnoluck
 	cmp	\$`"0x".unpack("H*",'slua')`,%ecx
 	jne	.Lnoluck
-	jmp .LshanghaiEnd
-.Lshanghai:
+	jmp	.LzhaoxinEnd
+.Lzhaoxin:
 	cmp	\$`"0x".unpack("H*",'hS  ')`,%ebx
 	jne	.Lnoluck
 	cmp	\$`"0x".unpack("H*",'hgna')`,%edx
 	jne	.Lnoluck
 	cmp	\$`"0x".unpack("H*",'  ia')`,%ecx
 	jne	.Lnoluck
-.LshanghaiEnd:
+.LzhaoxinEnd:
 	mov	\$0xC0000000,%eax
 	cpuid
 	mov	%eax,%edx
