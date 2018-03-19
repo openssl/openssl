@@ -87,7 +87,7 @@ static int pkey_pbkdf2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_PASS:
         return pkey_pbkdf2_set_membuf(&kctx->pass, &kctx->pass_len, p2, p1);
 
-    case EVP_PKEY_CTRL_PBKDF2_SALT:
+    case EVP_PKEY_CTRL_SALT:
         return pkey_pbkdf2_set_membuf(&kctx->salt, &kctx->salt_len, p2, p1);
 
     case EVP_PKEY_CTRL_ITER:
@@ -122,10 +122,10 @@ static int pkey_pbkdf2_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
         return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_PASS, value);
 
     if (strcmp(type, "salt") == 0)
-        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_PBKDF2_SALT, value);
+        return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SALT, value);
 
     if (strcmp(type, "hexsalt") == 0)
-        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_PBKDF2_SALT, value);
+        return EVP_PKEY_CTX_hex2ctrl(ctx, EVP_PKEY_CTRL_SALT, value);
 
     if (strcmp(type, "iter") == 0)
         return pkey_pbkdf2_ctrl(ctx, EVP_PKEY_CTRL_ITER, atoi(value),

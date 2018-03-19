@@ -124,6 +124,7 @@ static int pkey_scrypt_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return pkey_scrypt_set_membuf(&kctx->pass, &kctx->pass_len, p2, p1);
 
     case EVP_PKEY_CTRL_SCRYPT_SALT:
+    case EVP_PKEY_CTRL_SCRYPT_SALT_LEGACY:
         return pkey_scrypt_set_membuf(&kctx->salt, &kctx->salt_len, p2, p1);
 
     case EVP_PKEY_CTRL_SCRYPT_N:
