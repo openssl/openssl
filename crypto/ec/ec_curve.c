@@ -2751,6 +2751,7 @@ static const struct {
     }
 };
 
+#ifndef OPENSSL_NO_SM2
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[0 + 32 * 6];
@@ -2787,6 +2788,7 @@ static const struct {
         0x53, 0xbb, 0xf4, 0x09, 0x39, 0xd5, 0x41, 0x23,
     }
 };
+#endif /* OPENSSL_NO_SM2 */
 
 typedef struct _ec_list_element_st {
     int nid;
