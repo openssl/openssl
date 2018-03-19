@@ -1,15 +1,11 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-/* TODO: add a fourth test case (at least for AIX):
- *  retrieve DSO_free and DSO_dsobyaddr
- *  call DSO_dsobyaddr with a module external symbol (!= NULL)
- *  so that it crashes in ptrgl, then use ptrgl safe address retrieval */
 
 #include <stdio.h>
 #include <string.h>
@@ -19,16 +15,21 @@
 #include <openssl/ossl_typ.h>
 #include "testutil.h"
 
+typedef void DSO;
+
 typedef const SSL_METHOD * (*TLS_method_t)(void);
 typedef SSL_CTX * (*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
+typedef DSO * (*DSO_dsobyaddr_t)(void *addr, int flags);
+typedef int (*DSO_free_t)(DSO *dso);
 
 typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
-    JUST_CRYPTO
+    JUST_CRYPTO,
+    DSO_REFTEST
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
@@ -106,6 +107,8 @@ static int test_lib(void)
     SSL_CTX_free_t mySSL_CTX_free;
     ERR_get_error_t myERR_get_error;
     OpenSSL_version_num_t myOpenSSL_version_num;
+    DSO_dsobyaddr_t myDSO_dsobyaddr;
+    DSO_free_t myDSO_free;
     int result = 0;
 
     switch (test_type) {
@@ -123,9 +126,13 @@ static int test_lib(void)
                 || !TEST_true(shlib_load(path_crypto, &cryptolib)))
             goto end;
         break;
+    case DSO_REFTEST:
+        if (!TEST_true(shlib_load(path_crypto, &cryptolib)))
+            goto end;
+        break;
     }
 
-    if (test_type != JUST_CRYPTO) {
+    if (test_type != JUST_CRYPTO && test_type != DSO_REFTEST) {
         if (!TEST_true(shlib_sym(ssllib, "TLS_method", &symbols[0].sym))
                 || !TEST_true(shlib_sym(ssllib, "SSL_CTX_new", &symbols[1].sym))
                 || !TEST_true(shlib_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)))
@@ -161,6 +168,23 @@ static int test_lib(void)
                      OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK)
         goto end;
 
+    if (test_type == DSO_REFTEST) {
+        if (!TEST_true(shlib_sym(cryptolib, "DSO_dsobyaddr", &symbols[0].sym))
+            || !TEST_true(shlib_sym(cryptolib, "DSO_free", &symbols[1].sym)))
+            goto end;
+
+        myDSO_dsobyaddr = (DSO_dsobyaddr_t)symbols[0].func;
+        myDSO_free = (DSO_free_t)symbols[1].func;
+
+        {
+            DSO *hndl;
+            /* use known symbol from crypto module */
+            if (!TEST_ptr(hndl = DSO_dsobyaddr((void *)ERR_get_error, 0)))
+                goto end;
+            DSO_free(hndl);
+        }
+    }
+
     switch (test_type) {
     case JUST_CRYPTO:
         if (!TEST_true(shlib_close(cryptolib)))
@@ -174,6 +198,10 @@ static int test_lib(void)
     case SSL_FIRST:
         if (!TEST_true(shlib_close(ssllib))
                 || !TEST_true(shlib_close(cryptolib)))
+            goto end;
+        break;
+    case DSO_REFTEST:
+        if (!TEST_true(shlib_close(cryptolib)))
             goto end;
         break;
     }
@@ -194,6 +222,8 @@ int setup_tests(void)
     } else if (strcmp(p, "-ssl_first") == 0) {
         test_type = SSL_FIRST;
     } else if (strcmp(p, "-just_crypto") == 0) {
+        test_type = JUST_CRYPTO;
+    } else if (strcmp(p, "-dso_ref") == 0) {
         test_type = JUST_CRYPTO;
     } else {
         TEST_error("Unrecognised argument");
