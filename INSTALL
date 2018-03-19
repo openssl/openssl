@@ -561,12 +561,16 @@
                    CPPDEFINES      List of CPP macro definitions, separated
                                    by a platform specific character (':' or
                                    space for Unix, ';' for Windows, ',' for
-                                   VMS).  This can be used in place of -D.
+                                   VMS).  This can be used instead of using
+                                   -D (or what corresponds to that on your
+                                   compiler) in CPPFLAGS.
                    CPPINCLUDES     List of CPP inclusion directories, separated
                                    the same way as for CPPDEFINES.  This can
-                                   be used in place of -I.
+                                   be used instead of -I (or what corresponds
+                                   to that on your compiler) in CPPFLAGS.
                    HASHBANGPERL    Perl invocation to be inserted after '#!'
-                                   in public perl scripts.
+                                   in public perl scripts (only relevant on
+                                   Unix).
                    LD              The program linker (not used on Unix, $(CC)
                                    is used there).
                    LDFLAGS         Flags for the shared library, DSO and
