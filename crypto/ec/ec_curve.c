@@ -2997,8 +2997,10 @@ static const ec_list_element curve_list[] = {
      "RFC 5639 curve over a 512 bit prime field"},
     {NID_brainpoolP512t1, &_EC_brainpoolP512t1.h, 0,
      "RFC 5639 curve over a 512 bit prime field"},
+#ifndef OPENSSL_NO_SM2
     {NID_sm2, &_EC_sm2p256v1.h, 0,
      "SM2 curve over a 256 bit prime field"},
+#endif
 };
 
 #define curve_list_length OSSL_NELEM(curve_list)
