@@ -3035,6 +3035,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
         goto err;
 
+    if ((ret->ext.secure = OPENSSL_secure_zalloc(sizeof(*ret->ext.secure))) == NULL)
+        goto err;
+
     /* No compression for DTLS */
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS))
         ret->comp_methods = SSL_COMP_get_compression_methods();
@@ -3045,10 +3048,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     /* Setup RFC5077 ticket keys */
     if ((RAND_bytes(ret->ext.tick_key_name,
                     sizeof(ret->ext.tick_key_name)) <= 0)
-        || (RAND_bytes(ret->ext.tick_hmac_key,
-                       sizeof(ret->ext.tick_hmac_key)) <= 0)
-        || (RAND_bytes(ret->ext.tick_aes_key,
-                       sizeof(ret->ext.tick_aes_key)) <= 0))
+        || (RAND_bytes(ret->ext.secure->tick_hmac_key,
+                       sizeof(ret->ext.secure->tick_hmac_key)) <= 0)
+        || (RAND_bytes(ret->ext.secure->tick_aes_key,
+                       sizeof(ret->ext.secure->tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
     if (RAND_bytes(ret->ext.cookie_hmac_key,
@@ -3190,6 +3193,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.supportedgroups);
 #endif
     OPENSSL_free(a->ext.alpn);
+    OPENSSL_secure_free(a->ext.secure);
 
     CRYPTO_THREAD_lock_free(a->lock);
 

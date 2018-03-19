@@ -3831,9 +3831,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         iv_len = EVP_CIPHER_iv_length(cipher);
         if (RAND_bytes(iv, iv_len) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
-                                       tctx->ext.tick_aes_key, iv)
-                || !HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
-                                 sizeof(tctx->ext.tick_hmac_key),
+                                       tctx->ext.secure->tick_aes_key, iv)
+                || !HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
+                                 sizeof(tctx->ext.secure->tick_hmac_key),
                                  EVP_sha256(), NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,

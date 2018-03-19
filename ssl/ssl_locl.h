@@ -733,7 +733,13 @@ DEFINE_LHASH_OF(SSL_SESSION);
 /* Needed in ssl_cert.c */
 DEFINE_LHASH_OF(X509_NAME);
 
-# define TLSEXT_KEYNAME_LENGTH 16
+# define TLSEXT_KEYNAME_LENGTH  16
+# define TLSEXT_TICK_KEY_LENGTH 32
+
+typedef struct ssl_ctx_ext_secure_st {
+    unsigned char tick_hmac_key[TLSEXT_TICK_KEY_LENGTH];
+    unsigned char tick_aes_key[TLSEXT_TICK_KEY_LENGTH];
+} SSL_CTX_EXT_SECURE;
 
 struct ssl_ctx_st {
     const SSL_METHOD *method;
@@ -927,8 +933,7 @@ struct ssl_ctx_st {
         void *servername_arg;
         /* RFC 4507 session ticket keys */
         unsigned char tick_key_name[TLSEXT_KEYNAME_LENGTH];
-        unsigned char tick_hmac_key[32];
-        unsigned char tick_aes_key[32];
+        SSL_CTX_EXT_SECURE *secure;
         /* Callback to support customisation of ticket key setting */
         int (*ticket_key_cb) (SSL *ssl,
                               unsigned char *name, unsigned char *iv,

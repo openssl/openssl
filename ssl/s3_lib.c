@@ -3798,8 +3798,8 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         {
             unsigned char *keys = parg;
             long tick_keylen = (sizeof(ctx->ext.tick_key_name) +
-                                sizeof(ctx->ext.tick_hmac_key) +
-                                sizeof(ctx->ext.tick_aes_key));
+                                sizeof(ctx->ext.secure->tick_hmac_key) +
+                                sizeof(ctx->ext.secure->tick_aes_key));
             if (keys == NULL)
                 return tick_keylen;
             if (larg != tick_keylen) {
@@ -3809,23 +3809,23 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
             if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS) {
                 memcpy(ctx->ext.tick_key_name, keys,
                        sizeof(ctx->ext.tick_key_name));
-                memcpy(ctx->ext.tick_hmac_key,
+                memcpy(ctx->ext.secure->tick_hmac_key,
                        keys + sizeof(ctx->ext.tick_key_name),
-                       sizeof(ctx->ext.tick_hmac_key));
-                memcpy(ctx->ext.tick_aes_key,
+                       sizeof(ctx->ext.secure->tick_hmac_key));
+                memcpy(ctx->ext.secure->tick_aes_key,
                        keys + sizeof(ctx->ext.tick_key_name) +
-                       sizeof(ctx->ext.tick_hmac_key),
-                       sizeof(ctx->ext.tick_aes_key));
+                       sizeof(ctx->ext.secure->tick_hmac_key),
+                       sizeof(ctx->ext.secure->tick_aes_key));
             } else {
                 memcpy(keys, ctx->ext.tick_key_name,
                        sizeof(ctx->ext.tick_key_name));
                 memcpy(keys + sizeof(ctx->ext.tick_key_name),
-                       ctx->ext.tick_hmac_key,
-                       sizeof(ctx->ext.tick_hmac_key));
+                       ctx->ext.secure->tick_hmac_key,
+                       sizeof(ctx->ext.secure->tick_hmac_key));
                 memcpy(keys + sizeof(ctx->ext.tick_key_name) +
-                       sizeof(ctx->ext.tick_hmac_key),
-                       ctx->ext.tick_aes_key,
-                       sizeof(ctx->ext.tick_aes_key));
+                       sizeof(ctx->ext.secure->tick_hmac_key),
+                       ctx->ext.secure->tick_aes_key,
+                       sizeof(ctx->ext.secure->tick_aes_key));
             }
             return 1;
         }
