@@ -56,6 +56,8 @@ int main(int argc, char *argv[])
     for (; currtest < TOTAL_NUM_TESTS; currtest++) {
         testresult = 0;
         ctx = SSL_CTX_new(TLS_method());
+        if (!SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION))
+            goto end;
         con = SSL_new(ctx);
 
         rbio = BIO_new(BIO_s_mem());
