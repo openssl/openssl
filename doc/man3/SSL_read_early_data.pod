@@ -180,7 +180,7 @@ server application will either use both of SSL_read_early_data() and
 SSL_CTX_set_max_early_data() (or SSL_set_max_early_data()), or neither of them,
 since there is no practical benefit from using only one of them. If the maximum
 early data setting for a server is non-zero then replay protection is
-automatically enabled (see L<REPLAY PROTECTION> below).
+automatically enabled (see L</REPLAY PROTECTION> below).
 
 In the event that the current maximum early data setting for the server is
 different to that originally specified in a session that a client is resuming

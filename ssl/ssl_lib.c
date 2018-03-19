@@ -3112,6 +3112,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      */
     ret->max_early_data = 0;
 
+    ssl_ctx_system_config(ret);
+
     return ret;
  err:
     SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
