@@ -31,8 +31,8 @@
 
 int main(int argc, char *argv[])
 {
-    SSL_CTX *ctx;
-    SSL *con;
+    SSL_CTX *ctx = NULL;
+    SSL *con = NULL;
     BIO *rbio;
     BIO *wbio;
     BIO *err;
