@@ -737,6 +737,7 @@ PrivPubKeyPair = Alice-25519-Raw:Alice-25519-PUBLIC-Raw
 PrivateKeyRaw=Bob-25519-Raw:X25519:5dab087e624a8a4b79e17f8b83800ee66f3bb1292618b6fd1c2f8b27ff88e0eb
 
 PublicKeyRaw=Bob-25519-PUBLIC-Raw:X25519:de9edb7d7b7dc1b4d35b61c2ece435373f8343c85b78674dadfc7e146f882b4f
+
 PrivPubKeyPair = Bob-25519:Bob-25519-PUBLIC
 
 PrivPubKeyPair = Bob-25519-Raw:Bob-25519-PUBLIC-Raw

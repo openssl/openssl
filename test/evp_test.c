@@ -2489,7 +2489,7 @@ top:
             pkey = EVP_PKEY_new_raw_private_key(nid, NULL, keybin, keylen);
         else
             pkey = EVP_PKEY_new_raw_public_key(nid, NULL, keybin, keylen);
-        if (pkey == NULL) {
+        if (pkey == NULL && !key_unsupported()) {
             TEST_info("Can't read %s data", pp->key);
             OPENSSL_free(keybin);
             TEST_openssl_errors();
