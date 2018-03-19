@@ -367,7 +367,6 @@ my @disablables = (
     "nextprotoneg",
     "ocb",
     "ocsp",
-    "pbkdf2",
     "pic",
     "poly1305",
     "posix-io",
@@ -470,9 +469,6 @@ my @disable_cascades = (
 			=> [ "tls" ],
 
     "crypto-mdebug"     => [ "crypto-mdebug-backtrace" ],
-
-    # scrypt requires PBKDF2
-    "pbkdf2"            => [ "scrypt" ],
 
     # Without DSO, we can't load dynamic engines, so don't build them dynamic
     "dso"               => [ "dynamic-engine" ],

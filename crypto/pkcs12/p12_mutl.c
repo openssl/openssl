@@ -46,7 +46,6 @@ void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
 
 # define TK26_MAC_KEY_LEN 32
 
-#ifndef OPENSSL_NO_PBKDF2
 static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
                                    const unsigned char *salt, int saltlen,
                                    int iter, int keylen, unsigned char *key,
@@ -66,7 +65,6 @@ static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
     OPENSSL_cleanse(out, sizeof(out));
     return 1;
 }
-#endif
 
 /* Generate a MAC */
 static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
@@ -115,16 +113,11 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
          || md_type_nid == NID_id_GostR3411_2012_512)
         && !getenv("LEGACY_GOST_PKCS12")) {
         md_size = TK26_MAC_KEY_LEN;
-#ifndef OPENSSL_NO_PBKDF2
         if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
                                      md_size, key, md_type)) {
             PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_KEY_GEN_ERROR);
             return 0;
         }
-#else
-        PKCS12err(PKCS12_F_PKCS12_GEN_MAC, PKCS12_R_MISSING_PBKDF2);
-        return 0;
-#endif
     } else
         if (!(*pkcs12_key_gen)(pass, passlen, salt, saltlen, PKCS12_MAC_ID,
                                iter, md_size, key, md_type)) {
