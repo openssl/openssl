@@ -22,7 +22,7 @@ typedef SSL_CTX * (*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
-typedef DSO * (*DSO_dsobyaddr_t)(void *addr, int flags);
+typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
 
 typedef enum test_types_en {
@@ -188,7 +188,7 @@ static int test_lib(void)
         {
             DSO *hndl;
             /* use known symbol from crypto module */
-            if (!TEST_ptr(hndl = DSO_dsobyaddr((void *)ERR_get_error, 0)))
+            if (!TEST_ptr(hndl = DSO_dsobyaddr((void (*)())ERR_get_error, 0)))
                 goto end;
             DSO_free(hndl);
         }
