@@ -192,7 +192,7 @@ sub start
     $pid = fork();
     if ($pid == 0) {
         my $execcmd = $self->execute
-            ." s_server -no_comp -rev -engine ossltest -accept "
+            ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest -accept "
             .($self->server_port)
             ." -cert ".$self->cert." -cert2 ".$self->cert
             ." -naccept ".$self->serverconnects;
@@ -233,7 +233,7 @@ sub clientstart
                 $echostr = "test";
             }
             my $execcmd = "echo ".$echostr." | ".$self->execute
-                 ." s_client -engine ossltest -connect "
+                 ." s_client -max_protocol TLSv1.3 -engine ossltest -connect "
                  .($self->proxy_addr).":".($self->proxy_port);
             unless ($self->supports_IPv6) {
                 $execcmd .= " -4";
