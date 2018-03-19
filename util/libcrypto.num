@@ -2656,7 +2656,7 @@ ASN1_PCTX_free                          2621	1_1_0	EXIST::FUNCTION:
 ESS_SIGNING_CERT_new                    2622	1_1_0	EXIST::FUNCTION:TS
 X509V3_EXT_conf_nid                     2623	1_1_0	EXIST::FUNCTION:
 EC_KEY_check_key                        2624	1_1_0	EXIST::FUNCTION:EC
-PKCS5_PBKDF2_HMAC                       2625	1_1_0	EXIST::FUNCTION:PBKDF2
+PKCS5_PBKDF2_HMAC                       2625	1_1_0	EXIST::FUNCTION:
 CONF_get_section                        2626	1_1_0	EXIST::FUNCTION:
 CMS_RecipientInfo_kari_decrypt          2627	1_1_0	EXIST::FUNCTION:CMS
 OBJ_add_sigid                           2628	1_1_0	EXIST::FUNCTION:
@@ -3164,7 +3164,7 @@ OPENSSL_sk_deep_copy                    3116	1_1_0	EXIST::FUNCTION:
 i2d_RSA_PSS_PARAMS                      3117	1_1_0	EXIST::FUNCTION:RSA
 EVP_aes_128_wrap_pad                    3118	1_1_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set                     3119	1_1_0	EXIST::FUNCTION:
-PKCS5_PBKDF2_HMAC_SHA1                  3120	1_1_0	EXIST::FUNCTION:PBKDF2
+PKCS5_PBKDF2_HMAC_SHA1                  3120	1_1_0	EXIST::FUNCTION:
 RSA_padding_check_PKCS1_type_2          3121	1_1_0	EXIST::FUNCTION:RSA
 EVP_des_ede3_ecb                        3122	1_1_0	EXIST::FUNCTION:DES
 CBIGNUM_it                              3123	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
