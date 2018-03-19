@@ -30,7 +30,7 @@
 #else
 /* the test does not work without chdir() */
 # define chdir(x) (-1);
-# define DIRSEP ""
+# define DIRSEP "/"
 #  define DIRSEP_PRESERVE 0
 #endif
 
