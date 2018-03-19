@@ -744,7 +744,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
                                          unsigned int context, X509 *x,
                                          size_t chainidx)
 {
-    char identity[PSK_MAX_IDENTITY_LEN + 1];
     const unsigned char *id = NULL;
     size_t idlen = 0;
     SSL_SESSION *psksess = NULL;
@@ -764,7 +763,9 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
+#ifndef OPENSSL_NO_PSK
     if (psksess == NULL && s->psk_client_callback != NULL) {
+        char identity[PSK_MAX_IDENTITY_LEN + 1];
         unsigned char psk[PSK_MAX_PSK_LEN];
         size_t psklen = 0;
 
@@ -815,6 +816,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
             OPENSSL_cleanse(psk, psklen);
         }
     }
+#endif  /* OPENSSL_NO_PSK */
 
     SSL_SESSION_free(s->psksession);
     s->psksession = psksess;

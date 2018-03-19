@@ -1455,6 +1455,7 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
     return 1;
 }
 
+#ifndef OPENSSL_NO_PSK
 static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
                                   unsigned int max_id_len,
                                   unsigned char *psk,
@@ -1482,6 +1483,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
 
     return psklen;
 }
+#endif /* OPENSSL_NO_PSK */
 
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
@@ -1509,6 +1511,7 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
     return 1;
 }
 
+#ifndef OPENSSL_NO_PSK
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
                                   unsigned char *psk, unsigned int max_psk_len)
 {
@@ -1535,6 +1538,7 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 
     return psklen;
 }
+#endif /* OPENSSL_NO_PSK */
 
 #define MSG1    "Hello"
 #define MSG2    "World."
@@ -2590,10 +2594,12 @@ static int test_tls13_psk(int idx)
         SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
         SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
     }
+#ifndef OPENSSL_NO_PSK
     if (idx == 1 || idx == 2) {
         SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
         SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
     }
+#endif
     srvid = pskid;
     use_session_cb_cnt = 0;
     find_session_cb_cnt = 0;
@@ -3756,7 +3762,11 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_TEST(test_ciphersuite_change);
+#ifdef OPENSSL_NO_PSK
+    ADD_ALL_TESTS(test_tls13_psk, 1);
+#else
     ADD_ALL_TESTS(test_tls13_psk, 3);
+#endif  /* OPENSSL_NO_PSK */
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
