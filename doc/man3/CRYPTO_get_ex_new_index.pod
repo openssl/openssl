@@ -40,20 +40,22 @@ Several OpenSSL structures can have application-specific data attached to them,
 known as "exdata."
 The specific structures are:
 
+    APP
+    BIO
+    DH
+    DRBG
+    DSA
+    EC_KEY
+    ENGINE
+    RSA
     SSL
     SSL_CTX
     SSL_SESSION
+    UI
+    UI_METHOD
     X509
     X509_STORE
     X509_STORE_CTX
-    DH
-    DSA
-    EC_KEY
-    RSA
-    ENGINE
-    UI
-    UI_METHOD
-    BIO
 
 Each is identified by an B<CRYPTO_EX_INDEX_xxx> define in the B<crypto.h>
 header file.  In addition, B<CRYPTO_EX_INDEX_APP> is reserved for
@@ -155,7 +157,7 @@ dup_func() should return 0 for failure and 1 for success.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
