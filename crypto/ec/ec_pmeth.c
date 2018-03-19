@@ -205,24 +205,27 @@ static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
                               unsigned char *out, size_t *outlen,
                               const unsigned char *in, size_t inlen)
 {
-    int ret, md_type;
-    EC_PKEY_CTX *dctx = ctx->data;
+    int ret;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-
-    if (dctx->md)
-        md_type = EVP_MD_type(dctx->md);
-    else if (ec_nid == NID_sm2)
-        md_type = NID_sm3;
-    else
-        md_type = NID_sha256;
 
     if (ec_nid == NID_sm2) {
 # if defined(OPENSSL_NO_SM2)
         ret = -1;
 # else
+        int md_type;
+        EC_PKEY_CTX *dctx = ctx->data;
+
+        if (dctx->md)
+            md_type = EVP_MD_type(dctx->md);
+        else if (ec_nid == NID_sm2)
+            md_type = NID_sm3;
+        else
+            md_type = NID_sha256;
+
         if (out == NULL) {
-            *outlen = SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen);
+            *outlen = SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type),
+                                          inlen);
             ret = 1;
         }
         else {
@@ -242,22 +245,24 @@ static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
                               unsigned char *out, size_t *outlen,
                               const unsigned char *in, size_t inlen)
 {
-    int ret, md_type;
-    EC_PKEY_CTX *dctx = ctx->data;
+    int ret;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-
-    if (dctx->md)
-        md_type = EVP_MD_type(dctx->md);
-    else if (ec_nid == NID_sm2)
-        md_type = NID_sm3;
-    else
-        md_type = NID_sha256;
 
     if (ec_nid == NID_sm2) {
 # if defined(OPENSSL_NO_SM2)
         ret = -1;
 # else
+        int md_type;
+        EC_PKEY_CTX *dctx = ctx->data;
+
+        if (dctx->md)
+            md_type = EVP_MD_type(dctx->md);
+        else if (ec_nid == NID_sm2)
+            md_type = NID_sm3;
+        else
+            md_type = NID_sha256;
+
         if (out == NULL) {
             *outlen = SM2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen);
             ret = 1;

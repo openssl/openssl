@@ -2413,6 +2413,23 @@ static char *take_value(PAIR *pp)
     return p;
 }
 
+static int key_disabled(EVP_PKEY *pkey)
+{
+#if defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_EC)
+    int type = EVP_PKEY_base_id(pkey);
+
+    if (type == EVP_PKEY_EC) {
+        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+
+        if (nid == NID_sm2)
+            return 1;
+    }
+#endif /* OPENSSL_NO_SM2 */
+
+    return 0;
+}
+
 /*
  * Read and parse one test.  Return 0 if failure, 1 if okay.
  */
@@ -2439,6 +2456,7 @@ top:
     if (strcmp(pp->key, "PrivateKey") == 0) {
         pkey = PEM_read_bio_PrivateKey(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
+            EVP_PKEY_free(pkey);
             TEST_info("Can't read private key %s", pp->value);
             TEST_openssl_errors();
             return 0;
@@ -2447,6 +2465,7 @@ top:
     } else if (strcmp(pp->key, "PublicKey") == 0) {
         pkey = PEM_read_bio_PUBKEY(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
+            EVP_PKEY_free(pkey);
             TEST_info("Can't read public key %s", pp->value);
             TEST_openssl_errors();
             return 0;
@@ -2496,6 +2515,10 @@ top:
             return 0;
         }
         OPENSSL_free(keybin);
+    }
+    if (pkey != NULL && key_disabled(pkey)) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
     }
 
     /* If we have a key add to list */
