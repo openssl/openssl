@@ -1330,17 +1330,24 @@ int main(int argc, char *argv[])
     } else if (tls1_2) {
         min_version = TLS1_2_VERSION;
         max_version = TLS1_2_VERSION;
+    } else {
+        min_version = SSL3_VERSION;
+        max_version = TLS_MAX_VERSION;
     }
 #endif
 #ifndef OPENSSL_NO_DTLS
-    if (dtls || dtls1 || dtls12)
+    if (dtls || dtls1 || dtls12) {
         meth = DTLS_method();
-    if (dtls1) {
-        min_version = DTLS1_VERSION;
-        max_version = DTLS1_VERSION;
-    } else if (dtls12) {
-        min_version = DTLS1_2_VERSION;
-        max_version = DTLS1_2_VERSION;
+        if (dtls1) {
+            min_version = DTLS1_VERSION;
+            max_version = DTLS1_VERSION;
+        } else if (dtls12) {
+            min_version = DTLS1_2_VERSION;
+            max_version = DTLS1_2_VERSION;
+        } else {
+            min_version = DTLS_MIN_VERSION;
+            max_version = DTLS_MAX_VERSION;
+        }
     }
 #endif
 

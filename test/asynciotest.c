@@ -299,7 +299,8 @@ static int test_asyncio(int test)
     char buf[sizeof(testdata)];
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             &serverctx, &clientctx, cert, privkey)))
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &serverctx, &clientctx, cert, privkey)))
         goto end;
 
     /*

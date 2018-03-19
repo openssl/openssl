@@ -78,6 +78,8 @@ static int test_client_hello(int currtest)
     ctx = SSL_CTX_new(TLS_method());
     if (!TEST_ptr(ctx))
         goto end;
+    if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, TLS_MAX_VERSION)))
+        goto end;
 
     switch(currtest) {
     case TEST_SET_SESSION_TICK_DATA_VER_NEG:
