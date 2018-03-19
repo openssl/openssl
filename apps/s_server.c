@@ -1767,9 +1767,11 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
     }
-    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+    if (min_version != 0
+        && SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
-    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+    if (max_version != 0
+        && SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
         goto end;
 
     if (session_id_prefix) {
