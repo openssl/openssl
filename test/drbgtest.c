@@ -691,13 +691,28 @@ static int test_rand_reseed(void)
         || !TEST_ptr_eq(private->parent, master))
         return 0;
 
+    /* uninstantiate the three global DRBGs */
+    RAND_DRBG_uninstantiate(private);
+    RAND_DRBG_uninstantiate(public);
+    RAND_DRBG_uninstantiate(master);
+
+
     /* Install hooks for the following tests */
     hook_drbg(master,  &master_ctx);
     hook_drbg(public,  &public_ctx);
     hook_drbg(private, &private_ctx);
 
+
     /*
-     * Test initial state of shared DRBs
+     * Test initial seeding of shared DRBGs
+     */
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+
+    /*
+     * Test initial state of shared DRBGs
      */
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 0)))
         goto error;
