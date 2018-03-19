@@ -247,6 +247,22 @@ For example:
  ECDSA.Certificate = server-ecdsa.pem
  Ciphers = ALL:!RC4
 
+The system default configuration with name B<system_default> if present will
+be applied during any creation of the B<SSL_CTX> structure.
+
+Example of a configuration with the system default:
+
+ ssl_conf = ssl_sect
+
+ [ssl_sect]
+
+ system_default = system_default_sect
+
+ [system_default_sect]
+
+ MinProtocol = TLSv1.2
+
+
 =head1 NOTES
 
 If a configuration file attempts to expand a variable that doesn't exist
