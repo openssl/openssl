@@ -1672,6 +1672,9 @@ int s_client_main(int argc, char **argv)
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);
 
+    if (!config_ctx(cctx, ssl_args, ctx))
+        goto end;
+
     if (ssl_config != NULL) {
         if (SSL_CTX_config(ctx, ssl_config) == 0) {
             BIO_printf(bio_err, "Error using configuration \"%s\"\n",
@@ -1681,9 +1684,11 @@ int s_client_main(int argc, char **argv)
         }
     }
 
-    if (SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
+    if (min_version != 0
+        && SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;
-    if (SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
+    if (max_version != 0
+        && SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
         goto end;
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
@@ -1728,9 +1733,6 @@ int s_client_main(int argc, char **argv)
                    "\n", prog, maxfraglen);
         goto end;
     }
-
-    if (!config_ctx(cctx, ssl_args, ctx))
-        goto end;
 
     if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
                          crls, crl_download)) {
