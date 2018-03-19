@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include <openssl/opensslconf.h>
 
 #if !defined(OPENSSL_NO_STDIO)
 
 # include <stdio.h>
+# ifdef _WIN32
+#  include <windows.h>
+# endif
 
 FILE *openssl_fopen(const char *filename, const char *mode)
 {
@@ -44,7 +47,7 @@ FILE *openssl_fopen(const char *filename, const char *mode)
         if (MultiByteToWideChar(CP_UTF8, flags,
                                 filename, len_0, wfilename, sz) &&
             MultiByteToWideChar(CP_UTF8, 0, mode, strlen(mode) + 1,
-                                wmode, OSSL_NELEM(wmode)) &&
+                                wmode, sizeof(wmode) / sizeof(wmode[0])) &&
             (file = _wfopen(wfilename, wmode)) == NULL &&
             (errno == ENOENT || errno == EBADF)
             ) {
