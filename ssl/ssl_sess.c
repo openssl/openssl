@@ -417,7 +417,13 @@ int ssl_get_new_session(SSL *s, int session)
     s->session = NULL;
 
     if (session) {
-        if (!ssl_generate_session_id(s, ss)) {
+        if (SSL_IS_TLS13(s)) {
+            /*
+             * We generate the session id while constructing the
+             * NewSessionTicket in TLSv1.3.
+             */
+            ss->session_id_length = 0;
+        } else if (!ssl_generate_session_id(s, ss)) {
             /* SSLfatal() already called */
             SSL_SESSION_free(ss);
             return 0;
@@ -755,10 +761,10 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
     if ((c != NULL) && (c->session_id_length != 0)) {
         if (lck)
             CRYPTO_THREAD_write_lock(ctx->lock);
-        if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) == c) {
+        if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) != NULL) {
             ret = 1;
-            r = lh_SSL_SESSION_delete(ctx->sessions, c);
-            SSL_SESSION_list_remove(ctx, c);
+            r = lh_SSL_SESSION_delete(ctx->sessions, r);
+            SSL_SESSION_list_remove(ctx, r);
         }
         c->not_resumable = 1;
 

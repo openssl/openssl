@@ -1134,6 +1134,14 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             if (ret == SSL_TICKET_NO_DECRYPT)
                 continue;
 
+            /* Check for replay */
+            if (s->max_early_data > 0
+                    && !SSL_CTX_remove_session(s->session_ctx, sess)) {
+                SSL_SESSION_free(sess);
+                sess = NULL;
+                continue;
+            }
+
             ticket_age = (uint32_t)ticket_agel;
             now = (uint32_t)time(NULL);
             agesec = now - (uint32_t)sess->time;

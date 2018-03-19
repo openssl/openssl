@@ -9,6 +9,10 @@
 
  Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
+  *) TLSv1.3 replay protection for early data has been implemented. See the
+     SSL_read_early_data() man page for further details.
+     [Matt Caswell]
+
   *) Separated TLSv1.3 ciphersuite configuration out from TLSv1.2 ciphersuite
      configuration. TLSv1.3 ciphersuites are not compatible with TLSv1.2 and
      below. Similarly TLSv1.2 ciphersuites are not compatible with TLSv1.3.

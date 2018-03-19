@@ -1021,15 +1021,20 @@ static int execute_test_session(int maxprot, int use_int_cache,
         goto end;
 
     if (use_ext_cache) {
-        if (!TEST_int_eq(new_called, 0)
-                || !TEST_int_eq(remove_called, 0))
+        if (!TEST_int_eq(remove_called, 0))
             goto end;
 
         if (maxprot == TLS1_3_VERSION) {
-            if (!TEST_int_eq(get_called, 0))
+            /*
+             * Every time we issue a NewSessionTicket we are creating a new
+             * session for next time in TLSv1.3
+             */
+            if (!TEST_int_eq(new_called, 1)
+                    || !TEST_int_eq(get_called, 0))
                 goto end;
         } else {
-            if (!TEST_int_eq(get_called, 1))
+            if (!TEST_int_eq(new_called, 0)
+                    || !TEST_int_eq(get_called, 1))
                 goto end;
         }
     }
@@ -1836,6 +1841,58 @@ static int test_early_data_read_write(int idx)
             || !TEST_size_t_eq(written, strlen(MSG5))
             || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
             || !TEST_size_t_eq(readbytes, strlen(MSG5)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    if (sess != clientpsk)
+        SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_early_data_replay(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+                                        &serverssl, &sess, idx)))
+        goto end;
+
+    /*
+     * The server is configured to accept early data. Create a connection to
+     * "use up" the ticket
+     */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, sess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                          SSL_ERROR_NONE))
+               /*
+                * This time we should not have resumed the session because we
+                * already used it once.
+                */
+            || !TEST_false(SSL_session_reused(clientssl)))
         goto end;
 
     testresult = 1;
@@ -3683,6 +3740,11 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_early_data_read_write, 3);
+    /*
+     * We don't do replay tests for external PSK. Replay protection isn't used
+     * in that scenario.
+     */
+    ADD_ALL_TESTS(test_early_data_replay, 2);
     ADD_ALL_TESTS(test_early_data_skip, 3);
     ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
