@@ -15,6 +15,10 @@
 
 # ifndef OPENSSL_NO_SM2
 
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+
 #  include <openssl/ec.h>
 
 /* The default user id as specified in GM/T 0009-2012 */
@@ -73,6 +77,10 @@ int SM2_decrypt(const EC_KEY *key,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len);
 
 int ERR_load_SM2_strings(void);
+
+#  ifdef __cplusplus
+}
+#  endif
 
 # endif /* OPENSSL_NO_SM2 */
 #endif
