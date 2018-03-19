@@ -15,16 +15,21 @@
 #include <openssl/ossl_typ.h>
 #include "testutil.h"
 
+typedef void DSO;
+
 typedef const SSL_METHOD * (*TLS_method_t)(void);
 typedef SSL_CTX * (*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
 typedef unsigned long (*OpenSSL_version_num_t)(void);
+typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(), int flags);
+typedef int (*DSO_free_t)(DSO *dso);
 
 typedef enum test_types_en {
     CRYPTO_FIRST,
     SSL_FIRST,
-    JUST_CRYPTO
+    JUST_CRYPTO,
+    DSO_REFTEST
 } TEST_TYPE;
 
 static TEST_TYPE test_type;
@@ -102,6 +107,8 @@ static int test_lib(void)
     SSL_CTX_free_t mySSL_CTX_free;
     ERR_get_error_t myERR_get_error;
     OpenSSL_version_num_t myOpenSSL_version_num;
+    DSO_dsobyaddr_t myDSO_dsobyaddr;
+    DSO_free_t myDSO_free;
     int result = 0;
 
     switch (test_type) {
@@ -119,9 +126,13 @@ static int test_lib(void)
                 || !TEST_true(shlib_load(path_crypto, &cryptolib)))
             goto end;
         break;
+    case DSO_REFTEST:
+        if (!TEST_true(shlib_load(path_crypto, &cryptolib)))
+            goto end;
+        break;
     }
 
-    if (test_type != JUST_CRYPTO) {
+    if (test_type != JUST_CRYPTO && test_type != DSO_REFTEST) {
         if (!TEST_true(shlib_sym(ssllib, "TLS_method", &symbols[0].sym))
                 || !TEST_true(shlib_sym(ssllib, "SSL_CTX_new", &symbols[1].sym))
                 || !TEST_true(shlib_sym(ssllib, "SSL_CTX_free", &symbols[2].sym)))
@@ -157,6 +168,34 @@ static int test_lib(void)
                      OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK)
         goto end;
 
+    if (test_type == DSO_REFTEST) {
+# ifdef DSO_DLFCN
+        /*
+         * This is resembling the code used in ossl_init_base() and
+         * OPENSSL_atexit() to block unloading the library after dlclose().
+         * We are not testing this on Windows, because it is done there in a
+         * completely different way. Especially as a call to DSO_dsobyaddr()
+         * will always return an error, because DSO_pathbyaddr() is not
+         * implemented there.
+         */
+        if (!TEST_true(shlib_sym(cryptolib, "DSO_dsobyaddr", &symbols[0].sym))
+                || !TEST_true(shlib_sym(cryptolib, "DSO_free",
+                                        &symbols[1].sym)))
+            goto end;
+
+        myDSO_dsobyaddr = (DSO_dsobyaddr_t)symbols[0].func;
+        myDSO_free = (DSO_free_t)symbols[1].func;
+
+        {
+            DSO *hndl;
+            /* use known symbol from crypto module */
+            if (!TEST_ptr(hndl = DSO_dsobyaddr((void (*)())ERR_get_error, 0)))
+                goto end;
+            DSO_free(hndl);
+        }
+# endif /* DSO_DLFCN */
+    }
+
     switch (test_type) {
     case JUST_CRYPTO:
         if (!TEST_true(shlib_close(cryptolib)))
@@ -170,6 +209,10 @@ static int test_lib(void)
     case SSL_FIRST:
         if (!TEST_true(shlib_close(ssllib))
                 || !TEST_true(shlib_close(cryptolib)))
+            goto end;
+        break;
+    case DSO_REFTEST:
+        if (!TEST_true(shlib_close(cryptolib)))
             goto end;
         break;
     }
@@ -190,6 +233,8 @@ int setup_tests(void)
     } else if (strcmp(p, "-ssl_first") == 0) {
         test_type = SSL_FIRST;
     } else if (strcmp(p, "-just_crypto") == 0) {
+        test_type = JUST_CRYPTO;
+    } else if (strcmp(p, "-dso_ref") == 0) {
         test_type = JUST_CRYPTO;
     } else {
         TEST_error("Unrecognised argument");
