@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include "internal/cryptlib.h"
 
 #if !defined(OPENSSL_NO_STDIO)
 
