@@ -36,7 +36,8 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/x509v3.h>
 # include <openssl/rand.h>
 
-# if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK)
+# if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK) \
+     && !defined(OPENSSL_NO_POSIX_IO)
 #  define OCSP_DAEMON
 #  include <sys/types.h>
 #  include <sys/wait.h>
