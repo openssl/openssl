@@ -321,14 +321,11 @@ static int dladdr(void *address, Dl_info *dl)
 typedef struct Dl_info {
     const char *dli_fname;
 } Dl_info;
-/* NOTE: when looking up a function symbol, the caller of DSO_...byaddr() /
- *  OPENSSL_atexit() might need to consider the Pointer Glue virtual address
- *  handling on AIX/PowerPC (aka De-Virtualization; related to the ptrgl
- *  compiler flags). The real address of a function can be retrieved with:
- *  (void*)*((ulong*)function)
- *  This dladdr()-implementation will also find the ptrgl virtual address of a
- *  function, which is just located in the DATA segment instead of the TEXT
- *  segment. */
+/*
+ * This dladdr()-implementation will also find the ptrgl (Pointer Glue) virtual
+ * address of a function, which is just located in the DATA segment instead of
+ * the TEXT segment.
+ */
 static int dladdr(void *addr, Dl_info *dl)
 {
     unsigned int found = 0;
@@ -341,7 +338,8 @@ static int dladdr(void *addr, Dl_info *dl)
     }
 
     if ((loadquery(L_GETINFO, (void *)ldinfos, DLFCN_LDINFO_SIZE)) < 0) {
-        /* Error handling is done through errno and dlerror() reading errno:
+        /*-
+         * Error handling is done through errno and dlerror() reading errno:
          *  ENOMEM (ldinfos buffer is too small),
          *  EINVAL (invalid flags),
          *  EFAULT (invalid ldinfos ptr)
@@ -355,14 +353,18 @@ static int dladdr(void *addr, Dl_info *dl)
     do {
         this_ldi = next_ldi;
         if (((addr >= this_ldi->ldinfo_textorg)
-            && (addr < (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize)))
+             && (addr < (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize)))
             || ((addr >= this_ldi->ldinfo_dataorg)
-            && (addr < (this_ldi->ldinfo_dataorg + this_ldi->ldinfo_datasize)))) {
+                && (addr <
+                    (this_ldi->ldinfo_dataorg + this_ldi->ldinfo_datasize)))) {
             found = 1;
-            /* Ignoring the possibility of a member name and just returning
+            /*
+             * Ignoring the possibility of a member name and just returning
              * the path name. See docs: sys/ldr.h, loadquery() and
-             * dlopen()/RTLD_MEMBER. */
-            if ((dl->dli_fname = OPENSSL_strdup(this_ldi->ldinfo_filename)) == NULL)
+             * dlopen()/RTLD_MEMBER.
+             */
+            if ((dl->dli_fname =
+                 OPENSSL_strdup(this_ldi->ldinfo_filename)) == NULL)
                 errno = ENOMEM;
         } else {
             next_ldi = (char *)this_ldi + this_ldi->ldinfo_next;

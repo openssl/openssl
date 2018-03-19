@@ -218,7 +218,8 @@ int main(int argc, char **argv)
 
     if (test_type == DSO_REFTEST) {
 # ifdef DSO_DLFCN
-        /* This is resembling the code used in ossl_init_base() and
+        /*
+         * This is resembling the code used in ossl_init_base() and
          * OPENSSL_atexit() to block unloading the library after dlclose().
          * We are not testing this on Windows, because it is done there in a
          * completely different way. Especially as a call to DSO_dsobyaddr()
