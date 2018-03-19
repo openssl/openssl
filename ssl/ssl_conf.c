@@ -447,14 +447,6 @@ static int cmd_PrivateKey(SSL_CONF_CTX *cctx, const char *value)
     return rv > 0;
 }
 
-static int cmd_ServerInfoFile(SSL_CONF_CTX *cctx, const char *value)
-{
-    int rv = 1;
-    if (cctx->ctx)
-        rv = SSL_CTX_use_serverinfo_file(cctx->ctx, value);
-    return rv > 0;
-}
-
 static int do_store(SSL_CONF_CTX *cctx,
                     const char *CAfile, const char *CApath, int verify_store)
 {
