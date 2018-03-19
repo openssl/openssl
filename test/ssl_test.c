@@ -406,7 +406,8 @@ static int test_handshake(int idx)
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
         server_ctx = SSL_CTX_new(DTLS_server_method());
-        if (!TEST_(SSL_CTX_set_max_proto_version(server_ctx, DTLS_MAX_VERSION)))
+        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx,
+                                                     DTLS_MAX_VERSION)))
             goto err;
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
@@ -414,16 +415,17 @@ static int test_handshake(int idx)
                 goto err;
         }
         client_ctx = SSL_CTX_new(DTLS_client_method());
-        if (!TEST_(SSL_CTX_set_max_proto_version(client_ctx, DTLS_MAX_VERSION)))
+        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx,
+                                                     DTLS_MAX_VERSION)))
             goto err;
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(DTLS_server_method());
-            if (!TEST_(SSL_CTX_set_max_proto_version(resume_server_ctx,
-                                                     DTLS_MAX_VERSION)))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx,
+                                                         DTLS_MAX_VERSION)))
                 goto err;
             resume_client_ctx = SSL_CTX_new(DTLS_client_method());
-            if (!TEST_(SSL_CTX_set_max_proto_version(resume_client_ctx,
-                                                     DTLS_MAX_VERSION)))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx,
+                                                         DTLS_MAX_VERSION)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
                     || !TEST_ptr(resume_client_ctx))
@@ -433,28 +435,31 @@ static int test_handshake(int idx)
 #endif
     if (test_ctx->method == SSL_TEST_METHOD_TLS) {
         server_ctx = SSL_CTX_new(TLS_server_method());
-        if (!TEST_(SSL_CTX_set_max_proto_version(server_ctx, TLS_MAX_VERSION)))
+        if (!TEST_true(SSL_CTX_set_max_proto_version(server_ctx,
+                                                     TLS_MAX_VERSION)))
             goto err;
         /* SNI on resumption isn't supported/tested yet. */
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
             if (!TEST_ptr(server2_ctx = SSL_CTX_new(TLS_server_method())))
                 goto err;
-            if (!TEST_(SSL_CTX_set_max_proto_version(server2_ctx, TLS_MAX_VERSION)))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(server2_ctx,
+                                                         TLS_MAX_VERSION)))
                 goto err;
         }
         client_ctx = SSL_CTX_new(TLS_client_method());
-        if (!TEST_(SSL_CTX_set_max_proto_version(client_ctx, TLS_MAX_VERSION)))
+        if (!TEST_true(SSL_CTX_set_max_proto_version(client_ctx,
+                                                     TLS_MAX_VERSION)))
             goto err;
 
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(TLS_server_method());
-            if (!TEST_(SSL_CTX_set_max_proto_version(resume_server_ctx,
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx,
                                                      TLS_MAX_VERSION)))
                 goto err;
             resume_client_ctx = SSL_CTX_new(TLS_client_method());
-            if (!TEST_(SSL_CTX_set_max_proto_version(resume_client_ctx,
-                                                     TLS_MAX_VERSION)))
+            if (!TEST_true(SSL_CTX_set_max_proto_version(resume_client_ctx,
+                                                         TLS_MAX_VERSION)))
                 goto err;
             if (!TEST_ptr(resume_server_ctx)
                     || !TEST_ptr(resume_client_ctx))
