@@ -558,7 +558,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 s++;
             cp = section;
             e = np = s;
-            while (IS_ALPHA_NUMERIC(conf, *e))
+            while (IS_ALNUM(conf, *e))
                 e++;
             if ((e[0] == ':') && (e[1] == ':')) {
                 cp = np;
@@ -567,7 +567,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 *rrp = '\0';
                 e += 2;
                 np = e;
-                while (IS_ALPHA_NUMERIC(conf, *e))
+                while (IS_ALNUM(conf, *e))
                     e++;
             }
             r = *e;
@@ -759,7 +759,7 @@ static char *eat_alpha_numeric(CONF *conf, char *p)
             p = scan_esc(conf, p);
             continue;
         }
-        if (!IS_ALPHA_NUMERIC_PUNCT(conf, *p))
+        if (!IS_ALNUM_PUNCT(conf, *p))
             return p;
         p++;
     }
