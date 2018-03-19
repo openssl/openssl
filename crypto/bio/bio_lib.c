@@ -34,9 +34,8 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
     long ret;
     int bareoper;
 
-    if (b->callback_ex != NULL) {
+    if (b->callback_ex != NULL)
         return b->callback_ex(b, oper, argp, len, argi, argl, inret, processed);
-    }
 
     /* Strip off any BIO_CB_RETURN flag */
     bareoper = oper & ~BIO_CB_RETURN;
@@ -51,17 +50,17 @@ static long bio_call_callback(BIO *b, int oper, const char *argp, size_t len,
             return -1;
 
         argi = (int)len;
+    }
 
-        if (inret && (oper & BIO_CB_RETURN)) {
-            if (*processed > INT_MAX)
-                return -1;
-            inret = *processed;
-        }
+    if (inret && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
+        if (*processed > INT_MAX)
+            return -1;
+        inret = *processed;
     }
 
     ret = b->callback(b, oper, argp, argi, argl, inret);
 
-    if (ret >= 0 && (HAS_LEN_OPER(bareoper) || bareoper == BIO_CB_PUTS)) {
+    if (ret >= 0 && (oper & BIO_CB_RETURN) && bareoper != BIO_CB_CTRL) {
         *processed = (size_t)ret;
         ret = 1;
     }
@@ -260,7 +259,7 @@ static int bio_read_intern(BIO *b, void *data, size_t dlen, size_t *readbytes)
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
         ((ret = (int)bio_call_callback(b, BIO_CB_READ, data, dlen, 0, 0L, 1L,
-                                       readbytes)) <= 0))
+                                       NULL)) <= 0))
         return ret;
 
     if (!b->init) {
@@ -333,7 +332,7 @@ static int bio_write_intern(BIO *b, const void *data, size_t dlen,
 
     if ((b->callback != NULL || b->callback_ex != NULL) &&
         ((ret = (int)bio_call_callback(b, BIO_CB_WRITE, data, dlen, 0, 0L, 1L,
-                                       written)) <= 0))
+                                       NULL)) <= 0))
         return ret;
 
     if (!b->init) {
@@ -542,7 +541,8 @@ long BIO_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
     if (b == NULL)
         return 0;
 
-    if ((b->method == NULL) || (b->method->callback_ctrl == NULL)) {
+    if ((b->method == NULL) || (b->method->callback_ctrl == NULL)
+            || (cmd != BIO_CTRL_SET_CALLBACK)) {
         BIOerr(BIO_F_BIO_CALLBACK_CTRL, BIO_R_UNSUPPORTED_METHOD);
         return -2;
     }
