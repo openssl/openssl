@@ -882,7 +882,6 @@ static void noteterm (int sig)
  */
 static void spawn_loop(void)
 {
-    const char *signame;
     pid_t *kidpids = NULL;
     int status;
     int procs = 0;
@@ -978,9 +977,7 @@ static void spawn_loop(void)
     }
 
     /* The loop above can only break on termsig */
-    signame = strsignal(termsig);
-    syslog(LOG_INFO, "terminating on signal: %s(%d)",
-           signame ? signame : "", termsig);
+    syslog(LOG_INFO, "terminating on signal: %d", termsig);
     killall(0, kidpids);
 }
 # endif
