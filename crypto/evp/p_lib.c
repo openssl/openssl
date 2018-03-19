@@ -283,6 +283,7 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {
+#ifndef OPENSSL_NO_CMAC
     EVP_PKEY *ret = EVP_PKEY_new();
     CMAC_CTX *cmctx = CMAC_CTX_new();
 
@@ -305,7 +306,11 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
     EVP_PKEY_free(ret);
     CMAC_CTX_free(cmctx);
     return NULL;
-
+#else
+    EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY,
+           EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    return NULL;
+#endif
 }
 
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
