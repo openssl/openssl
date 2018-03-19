@@ -231,6 +231,7 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         OPT_S_STRICT, OPT_S_SIGALGS, OPT_S_CLIENTSIGALGS, OPT_S_GROUPS, \
         OPT_S_CURVES, OPT_S_NAMEDCURVE, OPT_S_CIPHER, OPT_S_CIPHERSUITES, \
         OPT_S_RECORD_PADDING, OPT_S_DEBUGBROKE, OPT_S_COMP, \
+        OPT_S_MINPROTO, OPT_S_MAXPROTO, \
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
@@ -274,6 +275,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             "Elliptic curve used for ECDHE (server-side only)" }, \
         {"cipher", OPT_S_CIPHER, 's', "Specify TLSv1.2 and below cipher list to be used"}, \
         {"ciphersuites", OPT_S_CIPHERSUITES, 's', "Specify TLSv1.3 ciphersuites to be used"}, \
+        {"min_protocol", OPT_S_MINPROTO, 's', "Specify the minimum protocol version to be used"}, \
+        {"max_protocol", OPT_S_MAXPROTO, 's', "Specify the maximum protocol version to be used"}, \
         {"record_padding", OPT_S_RECORD_PADDING, 's', \
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
@@ -309,6 +312,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
         case OPT_S_CIPHERSUITES: \
         case OPT_S_RECORD_PADDING: \
         case OPT_S_NO_RENEGOTIATION: \
+        case OPT_S_MINPROTO: \
+        case OPT_S_MAXPROTO: \
         case OPT_S_DEBUGBROKE: \
         case OPT_S_NO_MIDDLEBOX
 
