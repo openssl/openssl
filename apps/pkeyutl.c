@@ -408,7 +408,6 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             if (kdfnid == NID_undef) {
                 BIO_printf(bio_err, "The given KDF \"%s\" is unknown.\n",
                            kdfalg);
-                print_supported_kdfs();
                 goto end;
             }
         }
