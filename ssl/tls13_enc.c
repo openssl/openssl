@@ -594,6 +594,12 @@ int tls13_change_cipher_state(SSL *s, int which)
             /* SSLfatal() already called */
             goto err;
         }
+
+        if (!ssl_log_secret(s, EXPORTER_SECRET_LABEL, s->exporter_master_secret,
+                            hashlen)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
     } else if (label == client_application_traffic)
         memcpy(s->client_app_traffic_secret, secret, hashlen);
 
