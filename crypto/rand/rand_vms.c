@@ -11,6 +11,7 @@
 
 #if defined(OPENSSL_SYS_VMS)
 # include <openssl/rand.h>
+# include "internal/rand_int.h"
 # include "rand_lcl.h"
 # include <descrip.h>
 # include <jpidef.h>
