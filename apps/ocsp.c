@@ -551,7 +551,7 @@ int ocsp_main(int argc, char **argv)
     }
 
     if (ridx_filename != NULL
-        && (rkey != NULL || rsigner != NULL || rca_cert != NULL)) {
+        && (rkey == NULL || rsigner == NULL || rca_cert == NULL)) {
         BIO_printf(bio_err,
                    "Responder mode requires certificate, key, and CA.\n");
         goto end;
