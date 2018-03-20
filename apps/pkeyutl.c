@@ -255,7 +255,7 @@ int pkeyutl_main(int argc, char **argv)
             if (passin == NULL) {
                 /* Get password interactively */
                 char passwd_buf[4096];
-                snprintf(passwd_buf, sizeof(passwd_buf), "Enter %s: ", opt);
+                BIO_snprintf(passwd_buf, sizeof(passwd_buf), "Enter %s: ", opt);
                 EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
                                    passwd_buf, 0);
                 passwd = OPENSSL_strdup(passwd_buf);
