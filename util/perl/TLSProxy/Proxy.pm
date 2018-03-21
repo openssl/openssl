@@ -392,7 +392,7 @@ sub process_packet
     print "Processing flight ".$self->flight."\n";
 
     #Return contains the list of record found in the packet followed by the
-    #list of messages in those records
+    #list of messages in those records and any partial message
     my @ret = TLSProxy::Record->get_records($server, $self->flight, $self->{partial}[$server].$packet);
     $self->{partial}[$server] = $ret[2];
     push @{$self->record_list}, @{$ret[0]};
