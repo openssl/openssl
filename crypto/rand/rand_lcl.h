@@ -94,13 +94,12 @@ typedef struct rand_drbg_method_st {
  * The state of a DRBG AES-CTR.
  */
 typedef struct rand_drbg_ctr_st {
-    AES_KEY ks;
+    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx_df;
+    const EVP_CIPHER *cipher;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
-    /* Temp variables used by derivation function */
-    AES_KEY df_ks;
-    AES_KEY df_kxks;
     /* Temporary block storage used by ctr_df */
     unsigned char bltmp[16];
     size_t bltmp_pos;
