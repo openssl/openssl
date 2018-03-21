@@ -24,7 +24,7 @@ IF[{- !$disabled{apps} -}]
   DEPEND[openssl]=libapps.a ../libssl
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
-  GENERATE[openssl.rc]=util/mkrc.pl openssl
+  GENERATE[openssl.rc]=../util/mkrc.pl openssl
   SOURCE[openssl]=openssl.rc
 ENDIF
 
