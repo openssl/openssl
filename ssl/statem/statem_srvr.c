@@ -2101,6 +2101,7 @@ int tls_handle_alpn(SSL *s)
 
                 if (!s->hit) {
                     /* If a new session update it with the new ALPN value */
+                    OPENSSL_free(s->session->ext.alpn_selected);
                     s->session->ext.alpn_selected = OPENSSL_memdup(selected,
                                                                    selected_len);
                     if (s->session->ext.alpn_selected == NULL) {

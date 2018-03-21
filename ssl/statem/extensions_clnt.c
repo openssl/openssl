@@ -1680,6 +1680,7 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     if (!s->hit) {
         /* If a new session then update it with the selected ALPN */
+        OPENSSL_free(s->session->ext.alpn_selected);
         s->session->ext.alpn_selected =
             OPENSSL_memdup(s->s3->alpn_selected, s->s3->alpn_selected_len);
         if (s->session->ext.alpn_selected == NULL) {
