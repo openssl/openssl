@@ -382,8 +382,6 @@ static int test_keylog_no_master_key(void)
                                        TLS1_VERSION, TLS_MAX_VERSION,
                                        &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_max_early_data(sctx,
-                                                 SSL3_RT_MAX_PLAIN_LENGTH))
-        || !TEST_true(SSL_CTX_set_max_early_data(cctx,
                                                  SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
 
@@ -1706,8 +1704,6 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                                        TLS1_VERSION, TLS_MAX_VERSION,
                                        sctx, cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_max_early_data(*sctx,
-                                                 SSL3_RT_MAX_PLAIN_LENGTH))
-        || !TEST_true(SSL_CTX_set_max_early_data(*cctx,
                                                  SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
 
