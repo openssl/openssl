@@ -2100,7 +2100,17 @@ int tls_handle_alpn(SSL *s)
                 s->ext.early_data_ok = 0;
 
                 if (!s->hit) {
-                    /* If a new session update it with the new ALPN value */
+                    /*
+                     * This is a new session and so alpn_selected should have
+                     * been initialised to NULL. We should update it with the
+                     * selected ALPN.
+                     */
+                    if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                                 SSL_F_TLS_HANDLE_ALPN,
+                                 ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
                     s->session->ext.alpn_selected = OPENSSL_memdup(selected,
                                                                    selected_len);
                     if (s->session->ext.alpn_selected == NULL) {
