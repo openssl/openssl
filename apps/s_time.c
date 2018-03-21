@@ -376,7 +376,7 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
         no_linger.l_onoff  = 1;
         no_linger.l_linger = 0;
         (void) setsockopt(SSL_get_fd(serverCon), SOL_SOCKET, SO_LINGER,
-                          &no_linger, sizeof(no_linger));
+                          (char*)&no_linger, sizeof(no_linger));
     }
 #endif
 
