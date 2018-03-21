@@ -160,7 +160,7 @@ L\$oop_cmp
 	or		%r29,$rv,$rv
 
 	sub		%r0,$rv,%r29
-	extru		%r29,31,1,$rv
+	extru		%r29,0,1,$rv
 L\$no_data
 	bv		($rp)
 	.EXIT
