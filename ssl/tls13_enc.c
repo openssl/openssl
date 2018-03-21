@@ -493,6 +493,12 @@ int tls13_change_cipher_state(SSL *s, int which)
                          SSL_F_TLS13_CHANGE_CIPHER_STATE, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
+
+            if (!ssl_log_secret(s, EARLY_EXPORTER_SECRET_LABEL,
+                                s->early_exporter_master_secret, hashlen)) {
+                /* SSLfatal() already called */
+                goto err;
+            }
         } else if (which & SSL3_CC_HANDSHAKE) {
             insecret = s->handshake_secret;
             finsecret = s->client_finished_secret;
