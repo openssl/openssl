@@ -28,7 +28,7 @@ RSA_meth_get_multi_prime_keygen, RSA_meth_set_multi_prime_keygen
  const char *RSA_meth_get0_name(const RSA_METHOD *meth);
  int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
 
- int RSA_meth_get_flags(RSA_METHOD *meth);
+ int RSA_meth_get_flags(const RSA_METHOD *meth);
  int RSA_meth_set_flags(RSA_METHOD *meth, int flags);
 
  void *RSA_meth_get0_app_data(const RSA_METHOD *meth);

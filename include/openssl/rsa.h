@@ -415,7 +415,7 @@ void RSA_meth_free(RSA_METHOD *meth);
 RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth);
 const char *RSA_meth_get0_name(const RSA_METHOD *meth);
 int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
-int RSA_meth_get_flags(RSA_METHOD *meth);
+int RSA_meth_get_flags(const RSA_METHOD *meth);
 int RSA_meth_set_flags(RSA_METHOD *meth, int flags);
 void *RSA_meth_get0_app_data(const RSA_METHOD *meth);
 int RSA_meth_set0_app_data(RSA_METHOD *meth, void *app_data);
