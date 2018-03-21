@@ -12,6 +12,9 @@
 #if !defined(OPENSSL_NO_STDIO)
 
 # include <stdio.h>
+# ifdef _WIN32
+#  include <windows.h>
+# endif
 
 FILE *openssl_fopen(const char *filename, const char *mode)
 {

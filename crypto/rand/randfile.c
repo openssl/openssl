@@ -26,7 +26,12 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # ifdef _WIN32
+#  include <windows.h>
 #  include <io.h>
+#  define stat    _stat
+#  define chmod   _chmod
+#  define open    _open
+#  define fdopen  _fdopen
 # endif
 #endif
 
@@ -40,13 +45,6 @@
 # if !defined(S_ISREG)
 #   define S_ISREG(m) ((m) & S_IFREG)
 # endif
-
-#ifdef _WIN32
-# define stat    _stat
-# define chmod   _chmod
-# define open    _open
-# define fdopen  _fdopen
-#endif
 
 #define RAND_FILE_SIZE 1024
 #define RFILE ".rnd"
