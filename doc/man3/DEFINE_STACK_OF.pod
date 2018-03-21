@@ -102,8 +102,7 @@ function is equivalent to sk_TYPE_new_reserve(NULL, 0).
 sk_TYPE_reserve() allocates additional memory in the B<sk> structure
 such that the next B<n> calls to sk_TYPE_insert(), sk_TYPE_push()
 or sk_TYPE_unshift() will not fail or cause memory to be allocated
-or reallocated. If B<n> is zero, any excess space allocated in the
-B<sk> structure is freed. On error B<sk> is unchanged.
+or reallocated. On error B<sk> is unchanged.
 
 sk_TYPE_new_reserve() allocates a new stack. The new stack will have additional
 memory allocated to hold B<n> elements if B<n> is positive. The next B<n> calls
