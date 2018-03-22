@@ -52,7 +52,9 @@ sub new
         debug => $debug,
         cipherc => "",
         ciphers => "AES128-SHA",
-        flight => 0,
+        flight => -1,
+        direction => -1,
+        partial => ["", ""],
         record_list => [],
         message_list => [],
     };
@@ -128,7 +130,9 @@ sub clearClient
     my $self = shift;
 
     $self->{cipherc} = "";
-    $self->{flight} = 0;
+    $self->{flight} = -1;
+    $self->{direction} = -1;
+    $self->{partial} = ["", ""];
     $self->{record_list} = [];
     $self->{message_list} = [];
     $self->{clientflags} = "";
@@ -344,33 +348,37 @@ sub process_packet
         print "Received client packet\n";
     }
 
+    if ($self->{direction} != $server) {
+        $self->{flight} = $self->{flight} + 1;
+        $self->{direction} = $server;
+    }
+
     print "Packet length = ".length($packet)."\n";
     print "Processing flight ".$self->flight."\n";
 
     #Return contains the list of record found in the packet followed by the
-    #list of messages in those records
-    my @ret = TLSProxy::Record->get_records($server, $self->flight, $packet);
+    #list of messages in those records and any partial message
+    my @ret = TLSProxy::Record->get_records($server, $self->flight, $self->{partial}[$server].$packet);
+    $self->{partial}[$server] = $ret[2];
     push @{$self->record_list}, @{$ret[0]};
     push @{$self->{message_list}}, @{$ret[1]};
 
     print "\n";
 
+    if (scalar(@{$ret[0]}) == 0 or length($ret[2]) != 0) {
+        return "";
+    }
+
     #Finished parsing. Call user provided filter here
-    if(defined $self->filter) {
+    if (defined $self->filter) {
         $self->filter->($self);
     }
 
     #Reconstruct the packet
     $packet = "";
     foreach my $record (@{$self->record_list}) {
-        #We only replay the records for the current flight
-        if ($record->flight != $self->flight) {
-            next;
-        }
         $packet .= $record->reconstruct_record();
     }
-
-    $self->{flight} = $self->{flight} + 1;
 
     print "Forwarded packet length = ".length($packet)."\n\n";
 
