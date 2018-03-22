@@ -110,7 +110,7 @@ GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
 GENERATED={- join(" ",
                   ( grep { defined $unified_info{generate}->{$_} }
                     map { @{$unified_info{sources}->{$_}} }
-                    grep { /\.o$/ } keys %{$unified_info{sources}} ),
+                    grep { /\.(?:o|res)$/ } keys %{$unified_info{sources}} ),
                   ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
 
 INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
@@ -1060,10 +1060,10 @@ EOF
       my $linklibs = join("", map { my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
                                     " -l$l" } @{$args{deps}});
-      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
-                 grep { $_ =~ m|\.o$| }
+      my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
+                 grep { $_ !~ m/\.(?:def|map)$/ }
                  @{$args{objs}};
-      my @defs = grep { $_ =~ /\.(def|map)$/ } @{$args{objs}};
+      my @defs = grep { $_ =~ /\.(?:def|map)$/ } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one exported symbol map" if scalar @defs > 1;
       my $objs = join(" ", @objs);
@@ -1122,7 +1122,9 @@ EOF
       my $linklibs = join("", map { my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
                                     " -l$l" } @{$args{deps}});
-      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+      my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
+                 grep { $_ !~ m/\.(?:def|map)$/ }
+                 @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $objs = join(" ", @objs);
       my $deps = join(" ", @deps);
@@ -1150,7 +1152,7 @@ EOF
       my $bin = $args{bin};
       my $bind = dirname($bin);
       my $binn = basename($bin);
-      my $objs = join(" ", map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+      my $objs = join(" ", map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
                            @{$args{objs}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my @linkdirs = ();
