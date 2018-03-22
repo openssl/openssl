@@ -101,12 +101,13 @@ int RAND_load_file(const char *file, long bytes)
             n = RAND_FILE_SIZE;
         i = fread(buf, 1, n, in);
 #ifdef EINTR
-        if (i <= 0 && errno != EINTR)
-            break;
-#else
+        if (i <= 0 && errno == EINTR) {
+            clearerr(in);
+            continue;
+        }
+#endif
         if (i <= 0)
             break;
-#endif
         RAND_add(buf, i, (double)i);
         ret += i;
 
