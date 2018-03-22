@@ -84,9 +84,8 @@ int RAND_load_file(const char *file, long bytes)
 
 #ifndef OPENSSL_NO_POSIX_IO
     if (stat(file, &sb) < 0 || !S_ISREG(sb.st_mode)) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_NOT_A_REGULAR_FILE);
-        ERR_add_error_data(2, "Filename=", file);
-        return -1;
+        if (bytes == 0)
+            bytes = 256 / 8;
     }
 #endif
     if ((in = openssl_fopen(file, "rb")) == NULL) {
@@ -101,8 +100,13 @@ int RAND_load_file(const char *file, long bytes)
         else
             n = RAND_FILE_SIZE;
         i = fread(buf, 1, n, in);
+#ifdef EINTR
+        if (i <= 0 && errno != EINTR)
+            break;
+#else
         if (i <= 0)
             break;
+#endif
         RAND_add(buf, i, (double)i);
         ret += i;
 
