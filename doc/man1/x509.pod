@@ -871,8 +871,8 @@ this is because some Verisign certificates don't set the S/MIME bit.
 
 =item B<S/MIME Signing>
 
-In addition to the common S/MIME client tests the digitalSignature bit must
-be set if the keyUsage extension is present.
+In addition to the common S/MIME client tests the digitalSignature bit or
+the nonRepudiation bit must be set if the keyUsage extension is present.
 
 =item B<S/MIME Encryption>
 
