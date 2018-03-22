@@ -59,6 +59,7 @@ sub get_records
     my $server = shift;
     my $flight = shift;
     my $packet = shift;
+    my $partial = "";
     my @record_list = ();
     my @message_list = ();
     my $data;
@@ -77,8 +78,10 @@ sub get_records
             print " (client -> server)\n";
         }
         #Get the record header
-        if (length($packet) < TLS_RECORD_HEADER_LENGTH) {
+        if (length($packet) < TLS_RECORD_HEADER_LENGTH
+                || length($packet) < 5 + unpack("n", substr($packet, 3, 2))) {
             print "Partial data : ".length($packet)." bytes\n";
+            $partial = $packet;
             $packet = "";
         } else {
             ($content_type, $version, $len) = unpack('CnnC*', $packet);
@@ -127,7 +130,7 @@ sub get_records
         }
     }
 
-    return (\@record_list, \@message_list);
+    return (\@record_list, \@message_list, $partial);
 }
 
 sub clear
@@ -186,7 +189,8 @@ sub new
         decrypt_len => $decrypt_len,
         data => $data,
         decrypt_data => $decrypt_data,
-        orig_decrypt_data => $decrypt_data
+        orig_decrypt_data => $decrypt_data,
+        sent => 0
     };
 
     return bless $self, $class;
@@ -251,6 +255,11 @@ sub reconstruct_record
 {
     my $self = shift;
     my $data;
+
+    if ($self->{sent}) {
+        return "";
+    }
+    $self->{sent} = 1;
 
     if ($self->sslv2) {
         $data = pack('n', $self->len | 0x8000);
