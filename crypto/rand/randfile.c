@@ -46,7 +46,7 @@
 #   define S_ISREG(m) ((m) & S_IFREG)
 # endif
 
-#define RAND_FILE_SIZE 1024
+#define RAND_FILE_SIZE 128
 #define RFILE ".rnd"
 
 #ifdef OPENSSL_SYS_VMS
@@ -83,26 +83,38 @@ int RAND_load_file(const char *file, long bytes)
         return 0;
 
 #ifndef OPENSSL_NO_POSIX_IO
-    if (stat(file, &sb) < 0 || !S_ISREG(sb.st_mode)) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_NOT_A_REGULAR_FILE);
-        ERR_add_error_data(2, "Filename=", file);
-        return -1;
-    }
+    /*
+     * If not a regular file, assume it's a device and don't try to
+     * read everything.
+     */
+    if (stat(file, &sb) >= 0 && !S_ISREG(sb.st_mode) && bytes < 0)
+        bytes = 256 / 8;
 #endif
+
     if ((in = openssl_fopen(file, "rb")) == NULL) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
+    setbuf(in, NULL);
 
+    /* Read the file, in chunks. */
     for ( ; ; ) {
         if (bytes > 0)
             n = (bytes < RAND_FILE_SIZE) ? (int)bytes : RAND_FILE_SIZE;
         else
             n = RAND_FILE_SIZE;
+
         i = fread(buf, 1, n, in);
+#ifdef EINTR
+        if (ferror(in) && errno == EINTR) {
+            clearerr(in);
+            continue;
+        }
+#endif
         if (i <= 0)
             break;
+
         RAND_add(buf, i, (double)i);
         ret += i;
 
