@@ -43,7 +43,6 @@ OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
 PROFESSION_INFO                         datatype
 PROFESSION_INFOS                        datatype
-RAND_poll_cb                            datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_client_hello_cb_fn                  datatype
 SSL_psk_client_cb_func                  datatype

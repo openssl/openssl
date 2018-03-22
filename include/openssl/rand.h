@@ -48,7 +48,6 @@ void RAND_seed(const void *buf, int num);
 # if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
 # endif
-
 void RAND_add(const void *buf, int num, double randomness);
 int RAND_load_file(const char *file, long max_bytes);
 int RAND_write_file(const char *file);
@@ -61,8 +60,6 @@ int RAND_egd(const char *path);
 int RAND_egd_bytes(const char *path, int bytes);
 # endif
 
-typedef void (*RAND_poll_cb)(void *arg,
-                             const void *buf, int num, double randomness);
 int RAND_poll(void);
 
 # if defined(_WIN32) && (defined(BASETYPES) || defined(_WINDEF_H))
