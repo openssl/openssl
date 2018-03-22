@@ -2015,6 +2015,13 @@ EOF
                     $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.rc$/) {
+                    # We also recognise resource files
+                    my $o = $_;
+                    $o =~ s/\.rc$/.res/; # Resource configuration
+                    my $o = cleanfile($buildd, $o, $blddir);
+                    $unified_info{sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
                 } else {
                     $unified_info{sources}->{$ddest}->{$s} = 1;
                 }

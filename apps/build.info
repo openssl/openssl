@@ -23,6 +23,11 @@ IF[{- !$disabled{apps} -}]
   INCLUDE[openssl]=.. ../include
   DEPEND[openssl]=libapps.a ../libssl
 
+IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
+  GENERATE[openssl.rc]=../util/mkrc.pl openssl
+  SOURCE[openssl]=openssl.rc
+ENDIF
+
   {- join("\n  ", map { (my $x = $_) =~ s|\.c$|.o|; "DEPEND[$x]=progs.h" }
                   @apps_openssl_src) -}
   GENERATE[progs.h]=progs.pl $(APPS_OPENSSL)

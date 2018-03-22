@@ -39,13 +39,14 @@ while (<FD>) {
 close(FD);
 
 my $filename = $ARGV[0];
-$filename =~ /(.*)\.([^.]+)$/;
-my $basename = $1;
-my $extname  = $2;
+my $description = "OpenSSL library";
+my $vft = "VFT_DLL";
+if ( $filename =~ /openssl/i ) {
+    $description = "OpenSSL application";
+    $vft = "VFT_APP";
+}
 
-my $description = "OpenSSL application";
-$description = "OpenSSL shared library" if $extname =~ /dll/i;
-
+my $YEAR = [localtime()]->[5] + 1900;
 print <<___;
 #include <winver.h>
 
@@ -61,7 +62,7 @@ LANGUAGE 0x09,0x01
   FILEFLAGS 0x00L
 #endif
   FILEOS VOS__WINDOWS32
-  FILETYPE VFT_DLL
+  FILETYPE $vft
   FILESUBTYPE 0x0L
 BEGIN
     BLOCK "StringFileInfo"
@@ -72,13 +73,13 @@ BEGIN
             VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
             VALUE "FileDescription", "$description\\0"
             VALUE "FileVersion", "$version\\0"
-            VALUE "InternalName", "$basename\\0"
+            VALUE "InternalName", "$filename\\0"
             VALUE "OriginalFilename", "$filename\\0"
             VALUE "ProductName", "The OpenSSL Toolkit\\0"
             VALUE "ProductVersion", "$version\\0"
             // Optional:
             //VALUE "Comments", "\\0"
-            VALUE "LegalCopyright", "Copyright 1998-2016 The OpenSSL Authors. All rights reserved.\\0"
+            VALUE "LegalCopyright", "Copyright 1998-$YEAR The OpenSSL Authors. All rights reserved.\\0"
             //VALUE "LegalTrademarks", "\\0"
             //VALUE "PrivateBuild", "\\0"
             //VALUE "SpecialBuild", "\\0"
