@@ -13,6 +13,7 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include <openssl/crypto.h>
 #include "ts_lcl.h"
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);
@@ -986,7 +987,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
         unsigned precision)
 {
     time_t time_sec = (time_t)sec;
-    struct tm *tm = NULL;
+    struct tm *tm = NULL, tm_result;
     char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
     char *p = genTime_str;
     char *p_end = genTime_str + sizeof(genTime_str);
@@ -994,7 +995,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
     if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
         goto err;
 
-    if ((tm = gmtime(&time_sec)) == NULL)
+    if ((tm = OPENSSL_gmtime(&time_sec, &tm_result)) == NULL)
         goto err;
 
     /*
