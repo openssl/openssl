@@ -96,6 +96,7 @@ int RAND_load_file(const char *file, long bytes)
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
+    setbuf(in, NULL);
 
     /* Read the file, in chunks. */
     for ( ; ; ) {
