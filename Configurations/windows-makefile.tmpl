@@ -351,30 +351,17 @@ install: install_sw install_ssldirs install_docs
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """apps/$$1.*"""; } @ARGV" $(SHLIBS)
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """test/$$1.*"""; } @ARGV" $(SHLIBS)
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """fuzz/$$1.*"""; } @ARGV" $(SHLIBS)
-	-del /Q /F $(LIBS)
-	-del /Q ossl_static.pdb
+	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """{.,apps,test,fuzz}/$$1.*"""; } @ARGV" $(SHLIBS)
+	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	-del /Q /F $(ENGINES)
 	-del /Q /F $(SCRIPTS)
 	-del /Q /F $(GENERATED)
-	-del /Q /S /F *.d
-	-del /Q /S /F *.obj
-	-del /Q /S /F *.pdb
-	-del /Q /F *.exp
-	-del /Q /F apps\*.exp
-	-del /Q /F engines\*.exp
-	-del /Q /S /F engines\*.ilk
+	-del /Q /S /F *.d *.obj *.pdb *.exp *.ilk *.manifest
 	-del /Q /S /F engines\*.lib
-	-del /Q /S /F apps\*.lib
-	-del /Q /S /F engines\*.manifest
-	-del /Q /S /F apps\*.manifest
-	-del /Q /S /F test\*.manifest
+	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res
 
 distclean: clean
 	-del /Q /F configdata.pm
