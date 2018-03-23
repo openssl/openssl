@@ -1232,29 +1232,6 @@ if ($target =~ /linux.*-mips/ && !$disabled{asm}
 	unshift @{$config{cxxflags}}, $value if $config{CXX};
 }
 
-# The DSO code currently always implements all functions so that no
-# applications will have to worry about that from a compilation point
-# of view. However, the "method"s may return zero unless that platform
-# has support compiled in for them. Currently each method is enabled
-# by a define "DSO_<name>" ... we translate the "dso_scheme" config
-# string entry into using the following logic;
-if (!$disabled{dso} && $target{dso_scheme} ne "")
-	{
-	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
-	if ($target{dso_scheme} eq "DLFCN")
-		{
-		unshift @{$config{lib_defines}}, "DSO_DLFCN", "HAVE_DLFCN_H";
-		}
-	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
-		{
-		unshift @{$config{lib_defines}}, "DSO_DLFCN";
-		}
-	else
-		{
-		unshift @{$config{lib_defines}}, "DSO_$target{dso_scheme}";
-		}
-	}
-
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
     if ($auto_threads) {
