@@ -13,6 +13,7 @@
 #include <openssl/opensslv.h>
 #include <openssl/ssl.h>
 #include <openssl/ossl_typ.h>
+#include "internal/dso_conf.h"
 #include "testutil.h"
 
 typedef void DSO;
@@ -107,8 +108,6 @@ static int test_lib(void)
     SSL_CTX_free_t mySSL_CTX_free;
     ERR_get_error_t myERR_get_error;
     OpenSSL_version_num_t myOpenSSL_version_num;
-    DSO_dsobyaddr_t myDSO_dsobyaddr;
-    DSO_free_t myDSO_free;
     int result = 0;
 
     switch (test_type) {
@@ -162,14 +161,17 @@ static int test_lib(void)
 # define COMPATIBILITY_MASK 0xfff00000L
     myOpenSSL_version_num = (OpenSSL_version_num_t)symbols[1].func;
     if (!TEST_int_eq(myOpenSSL_version_num() & COMPATIBILITY_MASK,
-                     OPENSSL_VERSION_NUMBER & COMPATIBILITY_MASK)
+                     OPENSSL_VERSION_NUMBER & COMPATIBILITY_MASK))
         goto end;
     if (!TEST_int_ge(myOpenSSL_version_num() & ~COMPATIBILITY_MASK,
-                     OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK)
+                     OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK))
         goto end;
 
     if (test_type == DSO_REFTEST) {
 # ifdef DSO_DLFCN
+        DSO_dsobyaddr_t myDSO_dsobyaddr;
+        DSO_free_t myDSO_free;
+
         /*
          * This is resembling the code used in ossl_init_base() and
          * OPENSSL_atexit() to block unloading the library after dlclose().
@@ -189,9 +191,9 @@ static int test_lib(void)
         {
             DSO *hndl;
             /* use known symbol from crypto module */
-            if (!TEST_ptr(hndl = DSO_dsobyaddr((void (*)())ERR_get_error, 0)))
+            if (!TEST_ptr(hndl = myDSO_dsobyaddr((void (*)())ERR_get_error, 0)))
                 goto end;
-            DSO_free(hndl);
+            myDSO_free(hndl);
         }
 # endif /* DSO_DLFCN */
     }
