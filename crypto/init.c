@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
+#include "internal/dso_conf.h"
 #include "internal/dso.h"
 #include "internal/store.h"
 
