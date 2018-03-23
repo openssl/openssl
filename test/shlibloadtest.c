@@ -108,8 +108,6 @@ static int test_lib(void)
     SSL_CTX_free_t mySSL_CTX_free;
     ERR_get_error_t myERR_get_error;
     OpenSSL_version_num_t myOpenSSL_version_num;
-    DSO_dsobyaddr_t myDSO_dsobyaddr;
-    DSO_free_t myDSO_free;
     int result = 0;
 
     switch (test_type) {
@@ -171,6 +169,9 @@ static int test_lib(void)
 
     if (test_type == DSO_REFTEST) {
 # ifdef DSO_DLFCN
+        DSO_dsobyaddr_t myDSO_dsobyaddr;
+        DSO_free_t myDSO_free;
+
         /*
          * This is resembling the code used in ossl_init_base() and
          * OPENSSL_atexit() to block unloading the library after dlclose().
