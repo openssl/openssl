@@ -163,10 +163,10 @@ static int test_lib(void)
 # define COMPATIBILITY_MASK 0xfff00000L
     myOpenSSL_version_num = (OpenSSL_version_num_t)symbols[1].func;
     if (!TEST_int_eq(myOpenSSL_version_num() & COMPATIBILITY_MASK,
-                     OPENSSL_VERSION_NUMBER & COMPATIBILITY_MASK)
+                     OPENSSL_VERSION_NUMBER & COMPATIBILITY_MASK))
         goto end;
     if (!TEST_int_ge(myOpenSSL_version_num() & ~COMPATIBILITY_MASK,
-                     OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK)
+                     OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK))
         goto end;
 
     if (test_type == DSO_REFTEST) {
@@ -190,9 +190,9 @@ static int test_lib(void)
         {
             DSO *hndl;
             /* use known symbol from crypto module */
-            if (!TEST_ptr(hndl = DSO_dsobyaddr((void (*)())ERR_get_error, 0)))
+            if (!TEST_ptr(hndl = myDSO_dsobyaddr((void (*)())ERR_get_error, 0)))
                 goto end;
-            DSO_free(hndl);
+            myDSO_free(hndl);
         }
 # endif /* DSO_DLFCN */
     }
