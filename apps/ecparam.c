@@ -546,6 +546,9 @@ int MAIN(int argc, char **argv)
         BIO_printf(out, "\treturn(group);\n\t}\n");
     }
 
+    if (outformat == FORMAT_ASN1 && genkey)
+        noout = 1;
+
     if (!noout) {
         if (outformat == FORMAT_ASN1)
             i = i2d_ECPKParameters_bio(out, group);
@@ -581,6 +584,9 @@ int MAIN(int argc, char **argv)
 
         if (EC_KEY_set_group(eckey, group) == 0)
             goto end;
+
+        if (new_form)
+            EC_KEY_set_conv_form(eckey, form);
 
         if (!EC_KEY_generate_key(eckey)) {
             EC_KEY_free(eckey);
