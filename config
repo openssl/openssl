@@ -760,7 +760,11 @@ case "$GUESSOS" in
 	        OUT="hpux-ia64-cc"
              fi
 	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
-	     OUT=${OUT:-"hpux-parisc2-${CC}"}
+	     # PA-RISC 2.0 is no longer supported as separate 32-bit
+	     # target. This is compensated for by run-time detection
+	     # in most critical assembly modules and taking advantage
+	     # of 2.0 architecture in PA-RISC 1.1 build.
+	     OUT=${OUT:-"hpux-parisc1_1-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
 		echo "WARNING! If you wish to build 64-bit library then you have to"
 		echo "         invoke '$THERE/Configure hpux64-parisc2-cc' *manually*."
@@ -769,11 +773,6 @@ case "$GUESSOS" in
 		  (trap "stty `stty -g`; exit 0" 2 0; stty -icanon min 0 time 50; read waste) <&1
 		fi
 	     fi
-	     # PA-RISC 2.0 is no longer supported as separate 32-bit
-	     # target. This is compensated for by run-time detection
-	     # in most critical assembly modules and taking advantage
-	     # of 2.0 architecture in PA-RISC 1.1 build.
-	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
 	     OUT="hpux-parisc1_1-${CC}"
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
