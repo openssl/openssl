@@ -467,10 +467,6 @@ int x509_main(int argc, char **argv)
         goto opthelp;
     }
 
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
-
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
@@ -596,10 +592,12 @@ int x509_main(int argc, char **argv)
             goto end;
     }
 
-    if (!noout || text || next_serial) {
-        OBJ_create("2.99999.3", "SET.ex3", "SET x509v3 extension 3");
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
 
-    }
+    if (!noout || text || next_serial)
+        OBJ_create("2.99999.3", "SET.ex3", "SET x509v3 extension 3");
 
     if (alias)
         X509_alias_set1(x, (unsigned char *)alias, -1);
