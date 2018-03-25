@@ -195,6 +195,9 @@ int dsaparam_main(int argc, char **argv)
         OPENSSL_free(data);
     }
 
+    if (outformat == FORMAT_ASN1 && genkey)
+        noout = 1;
+
     if (!noout) {
         if (outformat == FORMAT_ASN1)
             i = i2d_DSAparams_bio(out, dsa);
