@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <assert.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include <openssl/buffer.h>
@@ -1198,14 +1199,14 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             sess_id_len = 0;
         }
     } else {
+        assert(s->session->session_id_length <= sizeof(s->session->session_id));
         sess_id_len = s->session->session_id_length;
         if (s->version == TLS1_3_VERSION) {
             s->tmp_session_id_len = sess_id_len;
             memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
         }
     }
-    if (sess_id_len > sizeof(s->session->session_id)
-            || !WPACKET_start_sub_packet_u8(pkt)
+    if (!WPACKET_start_sub_packet_u8(pkt)
             || (sess_id_len != 0 && !WPACKET_memcpy(pkt, session_id,
                                                     sess_id_len))
             || !WPACKET_close(pkt)) {
