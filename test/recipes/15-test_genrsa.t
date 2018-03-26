@@ -24,8 +24,8 @@ is(run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem', '8'])), 0, "ge
 # Depending on the shared library, we might have different lower limits.
 # Let's find it!
 note "Looking for lowest amount of bits";
-my $bad = 3;                    # Number of bits
-my $good = 11;                  # Number of bits
+my $bad = 3;                    # Log2 of number of bits
+my $good = 11;                  # Log2 of number of bits
 my $checked = int(($good + $bad + 1) / 2);
 while ($good > $bad + 1) {
     if (run(app([ 'openssl', 'genrsa', '-3', '-out', 'genrsatest.pem',
