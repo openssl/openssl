@@ -232,9 +232,6 @@ BIO_CONNECT *BIO_CONNECT_new(void)
 
 void BIO_CONNECT_free(BIO_CONNECT *a)
 {
-    if (a == NULL)
-        return;
-
     OPENSSL_free(a->param_hostname);
     OPENSSL_free(a->param_service);
     BIO_ADDRINFO_free(a->addr_first);

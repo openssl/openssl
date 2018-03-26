@@ -42,9 +42,6 @@ BUF_MEM *BUF_MEM_new(void)
 
 void BUF_MEM_free(BUF_MEM *a)
 {
-    if (a == NULL)
-        return;
-
     if (a->data != NULL) {
         if (a->flags & BUF_MEM_FLAG_SECURE)
             OPENSSL_secure_clear_free(a->data, a->max);
