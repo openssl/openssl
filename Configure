@@ -179,7 +179,10 @@ my $apitable = {
 our %table = ();
 our %config = ();
 our %withargs = ();
-our $now_printing;
+our $now_printing;      # set to current entry's name in print_table_entry
+                        # (todo: right thing would be to encapsulate name
+                        # into %target [class] and make print_table_entry
+                        # a method)
 
 # Forward declarations ###############################################
 
