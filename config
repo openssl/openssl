@@ -240,21 +240,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	esac
 	;;
 
-    QNX:*)
-	case "$RELEASE" in
-	    4*)
-		echo "${MACHINE}-whatever-qnx4"
-		;;
-	    6*)
-		echo "${MACHINE}-whatever-qnx6"
-		;;
-	    *)
-		echo "${MACHINE}-whatever-qnx"
-		;;
-	esac
-	exit 0
-	;;
-
     Paragon*:*:*:*)
 	echo "i860-intel-osf1"; exit 0
 	;;
@@ -831,8 +816,6 @@ case "$GUESSOS" in
   # these are all covered by the catchall below
   i[3456]86-*-cygwin) OUT="Cygwin-x86" ;;
   *-*-cygwin) OUT="Cygwin-${MACHINE}" ;;
-  x86pc-*-qnx6) OUT="QNX6-i386" ;;
-  *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
   armv[7-9]*-*-android)
       OUT="android-armeabi"
