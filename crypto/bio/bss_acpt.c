@@ -101,9 +101,6 @@ static BIO_ACCEPT *BIO_ACCEPT_new(void)
 
 static void BIO_ACCEPT_free(BIO_ACCEPT *a)
 {
-    if (a == NULL)
-        return;
-
     OPENSSL_free(a->param_addr);
     OPENSSL_free(a->param_serv);
     BIO_ADDRINFO_free(a->addr_first);

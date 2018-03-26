@@ -3312,7 +3312,7 @@ int ssl3_new(SSL *s)
 
 void ssl3_free(SSL *s)
 {
-    if (s == NULL || s->s3 == NULL)
+    if (s->s3 == NULL)
         return;
 
     ssl3_cleanup_key_block(s);

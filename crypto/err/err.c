@@ -256,9 +256,6 @@ static void ERR_STATE_free(ERR_STATE *s)
 {
     int i;
 
-    if (s == NULL)
-        return;
-
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
         err_clear_data(s, i);
     }
