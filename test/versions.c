@@ -16,4 +16,5 @@ int main(void)
 {
     printf("Build version: 0x%08lX\n", OPENSSL_VERSION_NUMBER);
     printf("Library version: 0x%08lX\n", OpenSSL_version_num());
+    return 0;
 }
