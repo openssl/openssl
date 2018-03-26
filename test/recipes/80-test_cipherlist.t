@@ -12,10 +12,15 @@ use strict;
 use warnings;
 
 use OpenSSL::Test::Simple;
-use OpenSSL::Test;
+use OpenSSL::Test qw(:DEFAULT openssl_versions);
 use OpenSSL::Test::Utils qw(alldisabled available_protocols);
 
 setup("test_cipherlist");
+
+my ($build_version, $library_version) = openssl_versions();
+plan skip_all =>
+    "This test recipe isn't supported when doing regression testing"
+    if $build_version != $library_version;
 
 my $no_anytls = alldisabled(available_protocols("tls"));
 

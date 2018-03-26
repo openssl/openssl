@@ -24,6 +24,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   ENDRAW[descrip.mms]
 
   PROGRAMS_NO_INST=\
+          versions \
           aborttest test_test \
           sanitytest exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
@@ -51,6 +52,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest
+
+  SOURCE[versions]=versions.c
+  INCLUDE[versions]=../include
+  DEPEND[versions]=../libcrypto
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
