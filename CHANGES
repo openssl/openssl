@@ -9,6 +9,10 @@
 
  Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
 
+  *) QNX support removed (cannot find contributors to get their approval
+     for the license change).
+     [Rich Salz]
+
   *) TLSv1.3 replay protection for early data has been implemented. See the
      SSL_read_early_data() man page for further details.
      [Matt Caswell]
