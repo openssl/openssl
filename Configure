@@ -179,6 +179,10 @@ my $apitable = {
 our %table = ();
 our %config = ();
 our %withargs = ();
+our $now_printing;      # set to current entry's name in print_table_entry
+                        # (todo: right thing would be to encapsulate name
+                        # into %target [class] and make print_table_entry
+                        # a method)
 
 # Forward declarations ###############################################
 
@@ -3108,8 +3112,8 @@ sub env
 
 sub print_table_entry
 {
-    my $target = shift;
-    my %target = resolve_config($target);
+    local $now_printing = shift;
+    my %target = resolve_config($now_printing);
     my $type = shift;
 
     # Don't print the templates
@@ -3178,7 +3182,7 @@ sub print_table_entry
 
     if ($type eq "TABLE") {
 	print "\n";
-	print "*** $target\n";
+	print "*** $now_printing\n";
         foreach (@sequence) {
             if (ref($target{$_}) eq "ARRAY") {
                 printf "\$%-12s = %s\n", $_, join(" ", @{$target{$_}});
@@ -3189,7 +3193,7 @@ sub print_table_entry
     } elsif ($type eq "HASH") {
 	my $largest =
 	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
-	print "    '$target' => {\n";
+	print "    '$now_printing' => {\n";
 	foreach (@sequence) {
 	    if ($target{$_}) {
                 if (ref($target{$_}) eq "ARRAY") {
