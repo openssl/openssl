@@ -102,8 +102,8 @@ int RAND_load_file(const char *file, long bytes)
 #endif
     /*
      * Don't buffer, because even if |file| is regular file, we have
-     * no control over the buffer, so why would we want copy of its
-     * content lie around?
+     * no control over the buffer, so why would we want a copy of its
+     * contents lying around?
      */
     setbuf(in, NULL);
 
