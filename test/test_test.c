@@ -531,6 +531,10 @@ static int test_bn_output(int n)
     return 1;
 }
 
+static int test_memcmp(void)
+{
+    return CRYPTO_memcmp("ab","cd",2);
+}
 
 int setup_tests(void)
 {
@@ -553,6 +557,7 @@ int setup_tests(void)
     ADD_TEST(test_messages);
     ADD_TEST(test_single_eval);
     ADD_TEST(test_output);
+    ADD_TEST(test_memcmp);
     ADD_ALL_TESTS(test_bn_output, OSSL_NELEM(bn_output_tests));
     return 1;
 }
