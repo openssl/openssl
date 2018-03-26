@@ -43,6 +43,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
+          bio_write_test bio_read_test \
           pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
           asn1_encode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
@@ -311,6 +312,14 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[dtlstest]=dtlstest.c ssltestlib.c
   INCLUDE[dtlstest]=../include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[bio_write_test]=bio_write_test.c
+  INCLUDE[bio_write_test]=../include
+  DEPEND[bio_write_test]=../libcrypto libtestutil.a
+
+  SOURCE[bio_read_test]=bio_read_test.c
+  INCLUDE[bio_read_test]=../include
+  DEPEND[bio_read_test]=../libcrypto libtestutil.a
 
   SOURCE[sslcorrupttest]=sslcorrupttest.c ssltestlib.c
   INCLUDE[sslcorrupttest]=../include

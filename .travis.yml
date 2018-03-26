@@ -29,6 +29,9 @@ compiler:
     - gcc
 
 env:
+  global:
+    - TRAVISCI_NO_IPV6=true
+  matrix:
     - CONFIG_OPTS="" DESTDIR="_install" TESTS="-test_fuzz"
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2" TESTS="-test_fuzz"
     - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"

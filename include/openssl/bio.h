@@ -144,6 +144,8 @@ extern "C" {
 # endif
 
 # define BIO_CTRL_DGRAM_SET_PEEK_MODE      71
+# define BIO_CTRL_DGRAM_GET_ADDR           72 /* address data sent to/from */
+# define BIO_CTRL_DGRAM_SET_ADDR           73 /* address data sent to/from */
 
 /* modifiers */
 # define BIO_FP_READ             0x02
@@ -422,6 +424,12 @@ struct bio_dgram_sctp_prinfo {
 /* BIO_s_fd() and BIO_s_file() */
 # define BIO_seek(b,ofs) (int)BIO_ctrl(b,BIO_C_FILE_SEEK,ofs,NULL)
 # define BIO_tell(b)     (int)BIO_ctrl(b,BIO_C_FILE_TELL,0,NULL)
+
+  /* BIO_s_dgram */
+#define BIO_set_dgram_origin(b, addr) BIO_ctrl(b, BIO_CTRL_DGRAM_SET_ADDR, 0, addr)
+#define BIO_get_dgram_origin(b, addr) BIO_ctrl(b, BIO_CTRL_DGRAM_GET_ADDR, 0, addr)
+#define BIO_set_dgram_dest(b, addr)   BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, addr)
+#define BIO_get_dgram_dest(b, addr)   BIO_ctrl(b, BIO_CTRL_DGRAM_GET_PEER, 0, addr)
 
 /*
  * name is cast to lose const, but might be better to route through a
