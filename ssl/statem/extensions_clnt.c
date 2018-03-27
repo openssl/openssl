@@ -1679,7 +1679,15 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         s->ext.early_data_ok = 0;
     }
     if (!s->hit) {
-        /* If a new session then update it with the selected ALPN */
+        /*
+         * This is a new session and so alpn_selected should have been
+         * initialised to NULL. We should update it with the selected ALPN.
+         */
+        if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_ALPN,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         s->session->ext.alpn_selected =
             OPENSSL_memdup(s->s3->alpn_selected, s->s3->alpn_selected_len);
         if (s->session->ext.alpn_selected == NULL) {
