@@ -32,6 +32,8 @@
 #  define chmod   _chmod
 #  define open    _open
 #  define fdopen  _fdopen
+#  define fstat   _fstat
+#  define fileno  _fileno
 # endif
 #endif
 
@@ -82,18 +84,28 @@ int RAND_load_file(const char *file, long bytes)
     if (bytes == 0)
         return 0;
 
-#ifndef OPENSSL_NO_POSIX_IO
-    if (stat(file, &sb) < 0 || !S_ISREG(sb.st_mode)) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_NOT_A_REGULAR_FILE);
-        ERR_add_error_data(2, "Filename=", file);
-        return -1;
-    }
-#endif
     if ((in = openssl_fopen(file, "rb")) == NULL) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
+
+#ifndef OPENSSL_NO_POSIX_IO
+    if (fstat(fileno(in), &sb) < 0) {
+        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_INTERNAL_ERROR);
+        ERR_add_error_data(2, "Filename=", file);
+        return -1;
+    }
+
+    if (!S_ISREG(sb.st_mode) && bytes < 0)
+        bytes = 256;
+#endif
+    /*
+     * Don't buffer, because even if |file| is regular file, we have
+     * no control over the buffer, so why would we want a copy of its
+     * contents lying around?
+     */
+    setbuf(in, NULL);
 
     for ( ; ; ) {
         if (bytes > 0)
@@ -101,8 +113,16 @@ int RAND_load_file(const char *file, long bytes)
         else
             n = RAND_FILE_SIZE;
         i = fread(buf, 1, n, in);
-        if (i <= 0)
+#ifdef EINTR
+        if (ferror(in) && errno == EINTR){
+            clearerr(in);
+            if (i == 0)
+                continue;
+        }
+#endif
+        if (i == 0)
             break;
+
         RAND_add(buf, i, (double)i);
         ret += i;
 
