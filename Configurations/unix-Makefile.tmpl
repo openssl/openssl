@@ -927,8 +927,10 @@ EOF
 	  . (windowsdll() ? <<"EOF" : "");
 	rm -f apps/$shlib$shlibext
 	rm -f test/$shlib$shlibext
+	rm -f fuzz/$shlib$shlibext
 	cp -p $shlib$shlibext apps/
 	cp -p $shlib$shlibext test/
+	cp -p $shlib$shlibext fuzz/
 EOF
   }
   sub obj2dso {
