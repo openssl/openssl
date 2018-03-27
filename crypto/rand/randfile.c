@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
@@ -76,43 +77,52 @@ int RAND_load_file(const char *file, long bytes)
 #ifndef OPENSSL_NO_POSIX_IO
     struct stat sb;
 #endif
-    int i, n, ret = 0;
-    FILE *in;
+    int ret = 0;
+    int in;
+    ssize_t got;
+    size_t need;
 
     if (bytes == 0)
         return 0;
 
-#ifndef OPENSSL_NO_POSIX_IO
-    if (stat(file, &sb) < 0 || !S_ISREG(sb.st_mode)) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_NOT_A_REGULAR_FILE);
-        ERR_add_error_data(2, "Filename=", file);
-        return -1;
-    }
-#endif
-    if ((in = openssl_fopen(file, "rb")) == NULL) {
+    in = open(file, O_RDONLY);
+    if (in < 0) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
 
+#ifndef OPENSSL_NO_POSIX_IO
+    if (bytes < 0 && (fstat(in, &sb) < 0 || !S_ISREG(sb.st_mode))) {
+        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_NOT_A_REGULAR_FILE);
+        ERR_add_error_data(2, "Filename=", file);
+        return -1;
+    }
+#endif
+
     for ( ; ; ) {
         if (bytes > 0)
-            n = (bytes < RAND_FILE_SIZE) ? (int)bytes : RAND_FILE_SIZE;
+            need = (bytes < RAND_FILE_SIZE) ? bytes : RAND_FILE_SIZE;
         else
-            n = RAND_FILE_SIZE;
-        i = fread(buf, 1, n, in);
-        if (i <= 0)
+            need = RAND_FILE_SIZE;
+        got = read(in, buf, need);
+        if (got < 0) {
+            if (errno == EINTR)
+                continue;
             break;
-        RAND_add(buf, i, (double)i);
-        ret += i;
+        } else if (got == 0) {
+            break;
+        }
+        RAND_add(buf, got, (double)got);
+        ret += got;
 
         /* If given a bytecount, and we did it, break. */
-        if (bytes > 0 && (bytes -= i) <= 0)
+        if (bytes > 0 && (bytes -= got) <= 0)
             break;
     }
 
     OPENSSL_cleanse(buf, sizeof(buf));
-    fclose(in);
+    close(in);
     return ret;
 }
 
