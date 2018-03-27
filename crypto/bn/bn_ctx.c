@@ -156,6 +156,8 @@ BN_CTX *BN_CTX_secure_new(void)
 
 void BN_CTX_free(BN_CTX *ctx)
 {
+    if (ctx == NULL)
+        return;
 #ifdef BN_CTX_DEBUG
     {
         BN_POOL_ITEM *pool = ctx->pool.head;

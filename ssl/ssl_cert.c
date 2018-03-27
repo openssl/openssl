@@ -225,6 +225,8 @@ void ssl_cert_free(CERT *c)
 {
     int i;
 
+    if (c == NULL)
+        return;
     CRYPTO_DOWN_REF(&c->references, &i, c->lock);
     REF_PRINT_COUNT("CERT", c);
     if (i > 0)
