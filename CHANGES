@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.0.2o and 1.0.2p [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2n and 1.0.2o [27 Mar 2018]
 
   *) Constructed ASN.1 types with a recursive definition could exceed the stack
