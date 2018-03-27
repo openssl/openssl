@@ -15,10 +15,6 @@ use OpenSSL::Test::Utils;
 
 setup("test_fuzz");
 
-# TODO vvvv Remove this line
-plan skip_all => "TLSProxy isn't usable on $^O";
-# TODO ^^^^ Remove this line
-
 my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'client', 'conf', 'crl', 'server', 'x509');
 if (!disabled("cms")) {
     push @fuzzers, 'cms';
