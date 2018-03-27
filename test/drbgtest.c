@@ -874,8 +874,6 @@ static size_t rand_add_entropy(RAND_DRBG *drbg,
                                int entropy, size_t min_len, size_t max_len,
                                int prediction_resistance)
 {
-    size_t ret = 0;
-
     if (drbg->pool == NULL)
         return 0;
 
@@ -883,22 +881,15 @@ static size_t rand_add_entropy(RAND_DRBG *drbg,
         || drbg->pool->len > max_len)
         return 0;
 
-    *pout = malloc(drbg->pool->len);
-    if (*pout == NULL)
-        return 0;
-
-    memcpy(*pout, drbg->pool->buffer, drbg->pool->len);
-    ret = drbg->pool->len;
-    OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
-    OPENSSL_free(drbg->pool);
-    drbg->pool = NULL;
-
-    return ret;
+    *pout = drbg->pool->buffer;
+    return drbg->pool->len;
 }
 
 static void rand_add_clean_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
-    free(out);
+    OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
+    OPENSSL_free(drbg->pool);
+    drbg->pool = NULL;
 }
 
 /*
@@ -917,7 +908,7 @@ static int test_rand_add()
     master->cleanup_entropy = rand_add_clean_entropy;
     master->reseed_counter++;
     RAND_DRBG_uninstantiate(master);
-    memset(rand_add_buf, 0, sizeof(rand_add_buf));
+    memset(rand_add_buf, 0xCD, sizeof(rand_add_buf));
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
     if (!TEST_true(RAND_DRBG_instantiate(master, NULL, 0)))
         goto error;
