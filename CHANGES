@@ -292,6 +292,52 @@
 
  Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
 
+  *) Constructed ASN.1 types with a recursive definition could exceed the stack
+
+     Constructed ASN.1 types with a recursive definition (such as can be found
+     in PKCS7) could eventually exceed the stack given malicious input with
+     excessive recursion. This could result in a Denial Of Service attack. There
+     are no such structures used within SSL/TLS that come from untrusted sources
+     so this is considered safe.
+
+     This issue was reported to OpenSSL on 4th January 2018 by the OSS-fuzz
+     project.
+     (CVE-2018-0739)
+     [Matt Caswell]
+
+  *) Incorrect CRYPTO_memcmp on HP-UX PA-RISC
+
+     Because of an implementation bug the PA-RISC CRYPTO_memcmp function is
+     effectively reduced to only comparing the least significant bit of each
+     byte. This allows an attacker to forge messages that would be considered as
+     authenticated in an amount of tries lower than that guaranteed by the
+     security claims of the scheme. The module can only be compiled by the
+     HP-UX assembler, so that only HP-UX PA-RISC targets are affected.
+
+     This issue was reported to OpenSSL on 2nd March 2018 by Peter Waltenberg
+     (IBM).
+     (CVE-2018-0733)
+     [Andy Polyakov]
+
+  *) Add a build target 'build_all_generated', to build all generated files
+     and only that.  This can be used to prepare everything that requires
+     things like perl for a system that lacks perl and then move everything
+     to that system and do the rest of the build there.
+     [Richard Levitte]
+
+  *) Backport SSL_OP_NO_RENGOTIATION
+
+     OpenSSL 1.0.2 and below had the ability to disable renegotiation using the
+     (undocumented) SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS flag. Due to the opacity
+     changes this is no longer possible in 1.1.0. Therefore the new
+     SSL_OP_NO_RENEGOTIATION option from 1.1.1-dev has been backported to
+     1.1.0 to provide equivalent functionality.
+
+     Note that if an application built against 1.1.0h headers (or above) is run
+     using an older version of 1.1.0 (prior to 1.1.0h) then the option will be
+     accepted but nothing will happen, i.e. renegotiation will not be prevented.
+     [Matt Caswell]
+
   *) Removed the OS390-Unix config target.  It relied on a script that doesn't
      exist.
      [Rich Salz]
