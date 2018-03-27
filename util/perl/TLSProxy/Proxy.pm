@@ -68,6 +68,11 @@ sub new
         message_list => [],
     };
 
+    ### TODO vvvv REMOVE THIS AGAIN
+    warn "Proxy tests temporarily disabled!\n";
+    $self->{proxy_sock} = 0;
+    return bless $self, $class;
+    ### TODO ^^^^ REMOVE THIS AGAIN
     # IO::Socket::IP is on the core module list, IO::Socket::INET6 isn't.
     # However, IO::Socket::INET6 is older and is said to be more widely
     # deployed for the moment, and may have less bugs, so we try the latter
