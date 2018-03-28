@@ -26,15 +26,15 @@ plan tests => scalar @fuzzers;
 
 foreach my $f (@fuzzers) {
     subtest "Fuzzing $f" => sub {
-        my @files = glob(srctop_file('fuzz', 'corpora', $f, '*'));
-        push @files, glob(srctop_file('fuzz', 'corpora', "$f-*", '*'));
+        my @cpiofiles = ( srctop_file('fuzz', 'corpora', "$f.cpio") );
+        push @cpiofiles, glob(srctop_file('fuzz', 'corpora', "$f-*.cpio"));
 
-        plan skip_all => "No corpora for $f-test" unless @files;
+        plan skip_all => "No corpora for $f-test" unless @cpiofiles;
 
-        plan tests => scalar @files;
+        plan tests => scalar @cpiofiles;
 
-        foreach (@files) {
-            ok(run(fuzz(["$f-test", $_])));
+        foreach (@cpiofiles) {
+            ok(run(fuzz(["$f-test", "-cpio", $_])));
         }
     }
 }
