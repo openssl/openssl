@@ -54,6 +54,8 @@ int main(int argc, char **argv) {
                 fflush(stdout);
                 OPENSSL_assert(pathname != NULL);
                 buf = malloc(size);
+                if (buf == NULL)
+                    continue;
                 s = cpio_read(cpio, buf, size);
                 OPENSSL_assert(s == size);
                 FuzzerTestOneInput(buf, s);
@@ -71,6 +73,8 @@ int main(int argc, char **argv) {
             if (f == NULL)
                 continue;
             buf = malloc(st.st_size);
+            if (buf == NULL)
+                continue;
             s = fread(buf, 1, st.st_size, f);
             OPENSSL_assert(s == (size_t)st.st_size);
             FuzzerTestOneInput(buf, s);
