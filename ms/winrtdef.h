@@ -21,7 +21,7 @@
 #  undef setenv
 # endif
 
-/*
+#if !defined(NTDDI_WIN10_RS1) || (NTDDI_VERSION <= NTDDI_WIN10_RS1)
 # ifdef FindFirstFile
 #  undef FindFirstFile
 # endif
@@ -36,7 +36,7 @@
 #  undef LoadLibraryA
 # endif
 # define LoadLibraryA winrt_LoadLibraryA
-*/
+#endif
 
 # ifdef GetModuleHandle
 #   undef GetModuleHandle
