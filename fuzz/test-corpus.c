@@ -22,6 +22,14 @@
 #include "fuzzer.h"
 #include "internal/o_dir.h"
 
+#ifdef __WIN32
+# define PATH_MAX _MAX_PATH
+#endif
+
+#ifndef PATH_MAX
+# define PATH_MAX 4096
+#endif
+
 static void testfile(const char *pathname)
 {
     struct stat st;
@@ -29,8 +37,7 @@ static void testfile(const char *pathname)
     unsigned char *buf;
     size_t s;
 
-    stat(pathname, &st);
-    if (!S_ISREG(st.st_mode))
+    if (stat(pathname, &st) < 0 || !S_ISREG(st.st_mode))
         return;
     printf("# %s\n", pathname);
     fflush(stdout);
