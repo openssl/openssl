@@ -1198,7 +1198,7 @@
  which can be used to specify a comma separated list of seed methods.
  However in most cases OpenSSL will choose a suitable default method,
  so it is not necessary to explicitely provide this option. Note also
- that not all methods are available on all  platforms.
+ that not all methods are available on all platforms.
 
  I) On operating systems which provide a suitable randomness source (in
  form  of a system call or system device), OpenSSL will use the optimal
