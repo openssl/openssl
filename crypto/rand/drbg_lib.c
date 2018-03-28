@@ -32,9 +32,7 @@
 /*
  * The three shared DRBG instances
  *
- * There are three shared DRBG instances (<master>, <public>, and <private>),
- * which are accessed concurrently by all threads. The necessary locking
- * is managed automatically by the RAND methods (e.g., RAND_bytes()).
+ * There are three shared DRBG instances: <master>, <public>, and <private>.
  */
 
 /*
@@ -43,28 +41,35 @@
  * Not used directly by the application, only for reseeding the two other
  * DRBGs. It reseeds itself by pulling either randomness from os entropy
  * sources or by consuming randomness which was added by RAND_add().
+ *
+ * The <master> DRBG is a global instance which is accessed concurrently by
+ * all threads. The necessary locking is managed automatically by its child
+ * DRBG instances during reseeding.
  */
-static RAND_DRBG *drbg_master;
+static RAND_DRBG *master_drbg;
 /*
  * The <public> DRBG
  *
  * Used by default for generating random bytes using RAND_bytes().
+ *
+ * The <public> DRBG is thread-local, i.e., there is one instance per thread.
  */
-static RAND_DRBG *drbg_public;
+static CRYPTO_THREAD_LOCAL public_drbg;
 /*
  * The <private> DRBG
  *
  * Used by default for generating private keys using RAND_priv_bytes()
+ *
+ * The <private> DRBG is thread-local, i.e., there is one instance per thread.
  */
-static RAND_DRBG *drbg_private;
+static CRYPTO_THREAD_LOCAL private_drbg;
+
 
 
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
 static const char ossl_pers_string[] = "OpenSSL NIST SP 800-90A DRBG";
 
 static CRYPTO_ONCE rand_drbg_init = CRYPTO_ONCE_STATIC_INIT;
-static CRYPTO_THREAD_LOCAL private_drbg_thread_local_key;
-static CRYPTO_THREAD_LOCAL public_drbg_thread_local_key;
 
 
 
@@ -868,12 +873,12 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 
     ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
 
-    drbg_master = drbg_setup(NULL);
+    master_drbg = drbg_setup(NULL);
 
-    ret &= CRYPTO_THREAD_init_local(&private_drbg_thread_local_key, NULL);
-    ret &= CRYPTO_THREAD_init_local(&public_drbg_thread_local_key, NULL);
+    ret &= CRYPTO_THREAD_init_local(&private_drbg, NULL);
+    ret &= CRYPTO_THREAD_init_local(&public_drbg, NULL);
 
-    if (drbg_master == NULL || ret == 0)
+    if (master_drbg == NULL || ret == 0)
         return 0;
 
     return 1;
@@ -882,21 +887,21 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 /* Clean up the global DRBGs before exit */
 void rand_drbg_cleanup_int(void)
 {
-    RAND_DRBG_free(drbg_master);
-    drbg_master = NULL;
+    RAND_DRBG_free(master_drbg);
+    master_drbg = NULL;
 
-    CRYPTO_THREAD_cleanup_local(&private_drbg_thread_local_key);
-    CRYPTO_THREAD_cleanup_local(&public_drbg_thread_local_key);
+    CRYPTO_THREAD_cleanup_local(&private_drbg);
+    CRYPTO_THREAD_cleanup_local(&public_drbg);
 }
 
 void drbg_delete_thread_state()
 {
     RAND_DRBG *drbg;
 
-    drbg = CRYPTO_THREAD_get_local(&public_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&public_drbg);
     RAND_DRBG_free(drbg);
 
-    drbg = CRYPTO_THREAD_get_local(&private_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&private_drbg);
     RAND_DRBG_free(drbg);
 }
 
@@ -976,7 +981,7 @@ RAND_DRBG *RAND_DRBG_get0_master(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    return drbg_master;
+    return master_drbg;
 }
 
 /*
@@ -990,11 +995,11 @@ RAND_DRBG *RAND_DRBG_get0_public(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    drbg = CRYPTO_THREAD_get_local(&public_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&public_drbg);
     if (drbg == NULL) {
         ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
-        drbg = drbg_setup(drbg_master);
-        CRYPTO_THREAD_set_local(&public_drbg_thread_local_key, drbg);
+        drbg = drbg_setup(master_drbg);
+        CRYPTO_THREAD_set_local(&public_drbg, drbg);
     }
     return drbg;
 }
@@ -1010,11 +1015,11 @@ RAND_DRBG *RAND_DRBG_get0_private(void)
     if (!RUN_ONCE(&rand_drbg_init, do_rand_drbg_init))
         return NULL;
 
-    drbg = CRYPTO_THREAD_get_local(&private_drbg_thread_local_key);
+    drbg = CRYPTO_THREAD_get_local(&private_drbg);
     if (drbg == NULL) {
         ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
-        drbg = drbg_setup(drbg_master);
-        CRYPTO_THREAD_set_local(&private_drbg_thread_local_key, drbg);
+        drbg = drbg_setup(master_drbg);
+        CRYPTO_THREAD_set_local(&private_drbg, drbg);
     }
     return drbg;
 }
