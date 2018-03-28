@@ -16,31 +16,72 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <openssl/crypto.h>
 #include "fuzzer.h"
+#include "cpio_rdr.h"
 
 int main(int argc, char **argv) {
     int n;
+    int wantcpio = 0;
+
+    if (argc > 1 && strcmp(argv[1], "-cpio") == 0) {
+        wantcpio = 1;
+        argc--;
+        argv++;
+    }
 
     FuzzerInitialize(&argc, &argv);
 
     for (n = 1; n < argc; ++n) {
-        struct stat st;
-        FILE *f;
         unsigned char *buf;
-        size_t s;
 
-        stat(argv[n], &st);
-        f = fopen(argv[n], "rb");
-        if (f == NULL)
-            continue;
-        buf = malloc(st.st_size);
-        s = fread(buf, 1, st.st_size, f);
-        OPENSSL_assert(s == (size_t)st.st_size);
-        FuzzerTestOneInput(buf, s);
-        free(buf);
-        fclose(f);
+        if (wantcpio) {
+            CPIO *cpio = cpio_open(argv[n]);
+            uint64_t size = 0;
+            uint64_t s = 0;
+
+            if (cpio == NULL)
+                continue;
+            while (!cpio_eof(cpio) && !cpio_error(cpio)) {
+                const char *pathname = cpio_readentry(cpio, &size);
+
+                if (cpio_eof(cpio))
+                    break;
+
+                printf("%s\n", pathname);
+                fflush(stdout);
+                OPENSSL_assert(pathname != NULL);
+                buf = malloc((size_t)size);
+                if (buf == NULL)
+                    continue;
+                s = cpio_read(cpio, buf, (size_t)size);
+                OPENSSL_assert(s == size);
+                FuzzerTestOneInput(buf, (size_t)s);
+                free(buf);
+                OPENSSL_assert(!cpio_error(cpio));
+                cpio_clearerr(cpio);
+            }
+            cpio_close(cpio);
+        } else {
+            struct stat st;
+            FILE *f;
+            size_t s;
+
+            stat(argv[n], &st);
+            f = fopen(argv[n], "rb");
+            if (f == NULL)
+                continue;
+            buf = malloc(st.st_size);
+            if (buf == NULL)
+                continue;
+            s = fread(buf, 1, st.st_size, f);
+            OPENSSL_assert(s == (size_t)st.st_size);
+            FuzzerTestOneInput(buf, s);
+            free(buf);
+            fclose(f);
+        }
     }
 
     FuzzerCleanup();
