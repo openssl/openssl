@@ -1734,8 +1734,7 @@ static int s390x_aes_gcm_init_key(EVP_CIPHER_CTX *ctx,
         keylen = EVP_CIPHER_CTX_key_length(ctx);
         memcpy(&gctx->kma.param.k, key, keylen);
 
-        /* Convert key size to function code. */
-        gctx->fc = S390X_AES_128 + (((keylen << 3) - 128) >> 6);
+        gctx->fc = S390X_AES_FC(keylen);
         if (!enc)
             gctx->fc |= S390X_DECRYPT;
 
@@ -2145,8 +2144,7 @@ static int s390x_aes_ccm_init_key(EVP_CIPHER_CTX *ctx,
 
     if (key != NULL) {
         keylen = EVP_CIPHER_CTX_key_length(ctx);
-        /* Convert key size to function code. */
-        cctx->aes.ccm.fc = S390X_AES_128 + (((keylen << 3) - 128) >> 6);
+        cctx->aes.ccm.fc = S390X_AES_FC(keylen);
         memcpy(cctx->aes.ccm.kmac_param.k, key, keylen);
 
         /* Store encoded m and l. */
