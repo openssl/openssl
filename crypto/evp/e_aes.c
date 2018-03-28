@@ -1407,7 +1407,7 @@ static int s390x_aes_gcm_aad(S390X_AES_GCM_CTX *ctx, const unsigned char *aad,
 
     rem = len & 0xf;
 
-    len &= ~0xf;
+    len &= ~(size_t)0xf;
     if (len) {
         s390x_kma(aad, len, NULL, 0, NULL, ctx->fc, &ctx->kma.param);
         aad += len;
@@ -1479,7 +1479,7 @@ static int s390x_aes_gcm(S390X_AES_GCM_CTX *ctx, const unsigned char *in,
 
     rem = len & 0xf;
 
-    len &= ~0xf;
+    len &= ~(size_t)0xf;
     if (len) {
         s390x_kma(ctx->ares, ctx->areslen, in, len, out,
                   ctx->fc | S390X_KMA_LAAD, &ctx->kma.param);
@@ -1965,7 +1965,7 @@ static void s390x_aes_ccm_aad(S390X_AES_CCM_CTX *ctx, const unsigned char *aad,
     ctx->aes.ccm.blocks += 2;
 
     rem = alen & 0xf;
-    alen &= ~0xf;
+    alen &= ~(size_t)0xf;
     if (alen) {
         s390x_kmac(aad, alen, ctx->aes.ccm.fc, &ctx->aes.ccm.kmac_param);
         ctx->aes.ccm.blocks += alen >> 4;
@@ -2027,7 +2027,7 @@ static int s390x_aes_ccm(S390X_AES_CCM_CTX *ctx, const unsigned char *in,
 
     num = 0;
     rem = len & 0xf;
-    len &= ~0xf;
+    len &= ~(size_t)0xf;
 
     if (enc) {
         /* mac-then-encrypt */
