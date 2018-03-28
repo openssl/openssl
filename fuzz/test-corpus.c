@@ -22,13 +22,17 @@
 #include "fuzzer.h"
 #include "internal/o_dir.h"
 
-#ifdef __WIN32
+#if defined(_WIN32) && defined(_MAX_PATH)
 # define PATH_MAX _MAX_PATH
 #endif
 
 #ifndef PATH_MAX
 # define PATH_MAX 4096
 #endif
+
+# if !defined(S_ISREG)
+#   define S_ISREG(m) ((m) & S_IFREG)
+# endif
 
 static void testfile(const char *pathname)
 {
