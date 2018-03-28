@@ -490,13 +490,16 @@ static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
     return 1;
 }
 
+# define DONT_CHECK_OWN_GROUPS  0
+# define CHECK_OWN_GROUPS       1
 /* Check an EC key is compatible with extensions */
-static int tls1_check_ec_key(SSL *s,
-                             unsigned char *curve_id, unsigned char *comp_id)
+static int tls1_check_ec_key(SSL *s, unsigned char *curve_id,
+                             unsigned char *comp_id, int check_own_groups)
 {
     const unsigned char *pformats, *pcurves;
     size_t num_formats, num_curves, i;
     int j;
+
     /*
      * If point formats extension present check it, otherwise everything is
      * supported (see RFC4492).
@@ -513,8 +516,12 @@ static int tls1_check_ec_key(SSL *s,
     }
     if (!curve_id)
         return 1;
+
+    if (!s->server && !check_own_groups)
+        return 1;
+
     /* Check curve is consistent with client and server preferences */
-    for (j = 0; j <= 1; j++) {
+    for (j = check_own_groups ? 0 : 1; j <= 1; j++) {
         if (!tls1_get_curvelist(s, j, &pcurves, &num_curves))
             return 0;
         if (j == 1 && num_curves == 0) {
@@ -579,9 +586,12 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int set_ee_md)
         return 0;
     /*
      * Can't check curve_id for client certs as we don't have a supported
-     * curves extension.
+     * curves extension. For server certs we will tolerate certificates that
+     * aren't in our own list of curves. If we've been configured to use an EC
+     * cert then we should use it - therefore we use DONT_CHECK_OWN_GROUPS here.
      */
-    rv = tls1_check_ec_key(s, s->server ? curve_id : NULL, &comp_id);
+    rv = tls1_check_ec_key(s, s->server ? curve_id : NULL, &comp_id,
+                           DONT_CHECK_OWN_GROUPS);
     if (!rv)
         return 0;
     /*
@@ -644,7 +654,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
             return 0;
         curve_id[0] = 0;
         /* Check this curve is acceptable */
-        if (!tls1_check_ec_key(s, curve_id, NULL))
+        if (!tls1_check_ec_key(s, curve_id, NULL, CHECK_OWN_GROUPS))
             return 0;
         return 1;
     }
@@ -746,8 +756,9 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const unsigned char **psigs)
 }
 
 /*
- * Check signature algorithm is consistent with sent supported signature
- * algorithms and if so return relevant digest.
+ * Check signature algorithm received from the peer with a signature is
+ * consistent with the sent supported signature algorithms and if so return
+ * relevant digest.
  */
 int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
                             const unsigned char *sig, EVP_PKEY *pkey)
@@ -769,7 +780,8 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
         /* Check compression and curve matches extensions */
         if (!tls1_set_ec_id(curve_id, &comp_id, EVP_PKEY_get0_EC_KEY(pkey)))
             return 0;
-        if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id)) {
+        if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id,
+                                             CHECK_OWN_GROUPS)) {
             SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
             return 0;
         }
