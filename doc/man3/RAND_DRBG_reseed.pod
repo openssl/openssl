@@ -32,11 +32,11 @@ RAND_DRBG_set_reseed_defaults
 =head1 DESCRIPTION
 
 RAND_DRBG_reseed()
-reseeds the given B<drbg>, obtaining entropy input from its parent drbg
-(if it is chained) or from the trusted os entropy sources,
-and mixing in the specified additional data provided
-in the buffer B<adin> of length B<adinlen>.
-The additional data can be omitted by setting B<adin> to NULL and B<adinlen> to 0.
+reseeds the given B<drbg>, obtaining entropy input from its entropy source
+and mixing in the specified additional data provided in the buffer B<adin>
+of length B<adinlen>.
+The additional data can be omitted by setting B<adin> to NULL and B<adinlen>
+to 0.
 
 RAND_DRBG_set_reseed_interval()
 sets the reseed interval of the B<drbg>, which is the maximum allowed number
@@ -76,6 +76,12 @@ The default OpenSSL random generator is already set up for automatic reseeding,
 so in general it is not necessary to reseed it explicitly, or to modify
 its reseeding thresholds.
 
+Normally, the entropy input for seeding a DRBG is either obtained from a
+trusted os entropy source or from a parent DRBG instance, which was seeded
+(directly or indirectly) from a trusted os entropy source.
+In exceptional cases it is possible to replace the reseeding mechanism entirely
+by providing application defined callbacks using RAND_DRBG_set_callbacks().
+
 The reseeding default values are applied only during creation of a DRBG instance.
 To ensure that they are applied to the global and thread-local DRBG instances
 (<master>, resp. <public> and <private>), it is necessary to call
@@ -90,6 +96,7 @@ The RAND_DRBG functions were added in OpenSSL 1.1.1.
 
 L<RAND_DRBG_generate(3)>,
 L<RAND_DRBG_bytes(3)>,
+L<RAND_DRBG_set_callbacks(3)>.
 L<RAND_DRBG(7)>
 
 =head1 COPYRIGHT
