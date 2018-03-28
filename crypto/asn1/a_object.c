@@ -135,8 +135,10 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
                     OPENSSL_free(tmp);
                 tmpsize = blsize + 32;
                 tmp = OPENSSL_malloc(tmpsize);
-                if (tmp == NULL)
+                if (tmp == NULL) {
+                    ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                     goto err;
+                }
             }
             while (blsize--) {
                 BN_ULONG t = BN_div_word(bl, 0x80L);
