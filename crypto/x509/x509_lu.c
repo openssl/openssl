@@ -17,14 +17,15 @@
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
-    X509_LOOKUP *ret;
+    X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL)
+    if (ret == NULL) {
+        X509err(X509_F_X509_LOOKUP_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     ret->method = method;
-    if ((method->new_item != NULL) && !method->new_item(ret)) {
+    if (method->new_item != NULL && method->new_item(ret) == 0) {
         OPENSSL_free(ret);
         return NULL;
     }
@@ -141,25 +142,36 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
 
 X509_STORE *X509_STORE_new(void)
 {
-    X509_STORE *ret;
+    X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
+    if (ret == NULL) {
+        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
-    if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL)
+    }
+    if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
+        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
     ret->cache = 1;
-    if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL)
+    if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL) {
+        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
-    if ((ret->param = X509_VERIFY_PARAM_new()) == NULL)
+    if ((ret->param = X509_VERIFY_PARAM_new()) == NULL) {
+        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
-
-    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+    }
+    if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data)) {
+        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL)
+    if (ret->lock == NULL) {
+        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     ret->references = 1;
     return ret;
@@ -228,17 +240,18 @@ X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m)
     }
     /* a new one */
     lu = X509_LOOKUP_new(m);
-    if (lu == NULL)
+    if (lu == NULL) {
+        X509err(X509_F_X509_STORE_ADD_LOOKUP, ERR_R_MALLOC_FAILURE);
         return NULL;
-    else {
-        lu->store_ctx = v;
-        if (sk_X509_LOOKUP_push(v->get_cert_methods, lu))
-            return lu;
-        else {
-            X509_LOOKUP_free(lu);
-            return NULL;
-        }
     }
+
+    lu->store_ctx = v;
+    if (sk_X509_LOOKUP_push(v->get_cert_methods, lu))
+        return lu;
+    /* malloc failed */
+    X509err(X509_F_X509_STORE_ADD_LOOKUP, ERR_R_MALLOC_FAILURE);
+    X509_LOOKUP_free(lu);
+    return NULL;
 }
 
 X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
