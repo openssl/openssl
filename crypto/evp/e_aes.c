@@ -960,6 +960,21 @@ typedef struct {
     union {
         double align;
         /*-
+         * KM-AES parameter block - begin
+         * (see z/Architecture Principles of Operation >= SA22-7832-06)
+         */
+        struct {
+            unsigned char k[32];
+        } param;
+        /* KM-AES parameter block - end */
+    } km;
+    unsigned int fc;
+} S390X_AES_ECB_CTX;
+
+typedef struct {
+    union {
+        double align;
+        /*-
          * KMA-GCM-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-11)
          */
@@ -1056,18 +1071,16 @@ typedef struct {
     } aes;
 } S390X_AES_CCM_CTX;
 
-# define S390X_aes_128_CAPABLE ((OPENSSL_s390xcap_P.km[0] &	\
-                                 S390X_CAPBIT(S390X_AES_128)) &&\
-                                (OPENSSL_s390xcap_P.kmc[0] &	\
-                                 S390X_CAPBIT(S390X_AES_128)))
-# define S390X_aes_192_CAPABLE ((OPENSSL_s390xcap_P.km[0] &	\
-                                 S390X_CAPBIT(S390X_AES_192)) &&\
-                                (OPENSSL_s390xcap_P.kmc[0] &	\
-                                 S390X_CAPBIT(S390X_AES_192)))
-# define S390X_aes_256_CAPABLE ((OPENSSL_s390xcap_P.km[0] &	\
-                                 S390X_CAPBIT(S390X_AES_256)) &&\
-                                (OPENSSL_s390xcap_P.kmc[0] &	\
-                                 S390X_CAPBIT(S390X_AES_256)))
+/* Convert key size to function code: [16,24,32] -> [18,19,20]. */
+# define S390X_AES_FC(keylen)  (S390X_AES_128 + ((((keylen) << 3) - 128) >> 6))
+
+/* Most modes of operation need km for partial block processing. */
+# define S390X_aes_128_CAPABLE (OPENSSL_s390xcap_P.km[0] &	\
+                                S390X_CAPBIT(S390X_AES_128))
+# define S390X_aes_192_CAPABLE (OPENSSL_s390xcap_P.km[0] &	\
+                                S390X_CAPBIT(S390X_AES_192))
+# define S390X_aes_256_CAPABLE (OPENSSL_s390xcap_P.km[0] &	\
+                                S390X_CAPBIT(S390X_AES_256))
 
 # define s390x_aes_init_key aes_init_key
 static int s390x_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -1076,22 +1089,48 @@ static int s390x_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 # define S390X_aes_128_cbc_CAPABLE	1	/* checked by callee */
 # define S390X_aes_192_cbc_CAPABLE	1
 # define S390X_aes_256_cbc_CAPABLE	1
+# define S390X_AES_CBC_CTX		EVP_AES_KEY
+
+# define s390x_aes_cbc_init_key aes_init_key
 
 # define s390x_aes_cbc_cipher aes_cbc_cipher
 static int s390x_aes_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
-# define S390X_aes_128_ecb_CAPABLE	0
-# define S390X_aes_192_ecb_CAPABLE	0
-# define S390X_aes_256_ecb_CAPABLE	0
+# define S390X_aes_128_ecb_CAPABLE	S390X_aes_128_CAPABLE
+# define S390X_aes_192_ecb_CAPABLE	S390X_aes_192_CAPABLE
+# define S390X_aes_256_ecb_CAPABLE	S390X_aes_256_CAPABLE
 
-# define s390x_aes_ecb_cipher aes_ecb_cipher
+static int s390x_aes_ecb_init_key(EVP_CIPHER_CTX *ctx,
+                                  const unsigned char *key,
+                                  const unsigned char *iv, int enc)
+{
+    S390X_AES_ECB_CTX *cctx = EVP_C_DATA(S390X_AES_ECB_CTX, ctx);
+    const int keylen = EVP_CIPHER_CTX_key_length(ctx);
+
+    cctx->fc = S390X_AES_FC(keylen);
+    if (!enc)
+        cctx->fc |= S390X_DECRYPT;
+
+    memcpy(cctx->km.param.k, key, keylen);
+    return 1;
+}
+
 static int s390x_aes_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                                const unsigned char *in, size_t len);
+                                const unsigned char *in, size_t len)
+{
+    S390X_AES_ECB_CTX *cctx = EVP_C_DATA(S390X_AES_ECB_CTX, ctx);
+
+    s390x_km(in, len, out, cctx->fc, &cctx->km.param);
+    return 1;
+}
 
 # define S390X_aes_128_ofb_CAPABLE	0
 # define S390X_aes_192_ofb_CAPABLE	0
 # define S390X_aes_256_ofb_CAPABLE	0
+# define S390X_AES_OFB_CTX		EVP_AES_KEY
+
+# define s390x_aes_ofb_init_key aes_init_key
 
 # define s390x_aes_ofb_cipher aes_ofb_cipher
 static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -1100,6 +1139,9 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # define S390X_aes_128_cfb_CAPABLE	0
 # define S390X_aes_192_cfb_CAPABLE	0
 # define S390X_aes_256_cfb_CAPABLE	0
+# define S390X_AES_CFB_CTX		EVP_AES_KEY
+
+# define s390x_aes_cfb_init_key aes_init_key
 
 # define s390x_aes_cfb_cipher aes_cfb_cipher
 static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -1109,6 +1151,8 @@ static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # define S390X_aes_192_cfb8_CAPABLE	0
 # define S390X_aes_256_cfb8_CAPABLE	0
 
+# define s390x_aes_cfb8_init_key aes_init_key
+
 # define s390x_aes_cfb8_cipher aes_cfb8_cipher
 static int s390x_aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                  const unsigned char *in, size_t len);
@@ -1117,6 +1161,8 @@ static int s390x_aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # define S390X_aes_192_cfb1_CAPABLE	0
 # define S390X_aes_256_cfb1_CAPABLE	0
 
+# define s390x_aes_cfb1_init_key aes_init_key
+
 # define s390x_aes_cfb1_cipher aes_cfb1_cipher
 static int s390x_aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                  const unsigned char *in, size_t len);
@@ -1124,6 +1170,9 @@ static int s390x_aes_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 # define S390X_aes_128_ctr_CAPABLE	1	/* checked by callee */
 # define S390X_aes_192_ctr_CAPABLE	1
 # define S390X_aes_256_ctr_CAPABLE	1
+# define S390X_AES_CTR_CTX		EVP_AES_KEY
+
+# define s390x_aes_ctr_init_key aes_init_key
 
 # define s390x_aes_ctr_cipher aes_ctr_cipher
 static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -2168,10 +2217,10 @@ static const EVP_CIPHER s390x_aes_##keylen##_##mode = {			\
     keylen / 8,								\
     ivlen,								\
     flags | EVP_CIPH_##MODE##_MODE,					\
-    s390x_aes_init_key,							\
+    s390x_aes_##mode##_init_key,					\
     s390x_aes_##mode##_cipher,						\
     NULL,								\
-    sizeof(EVP_AES_KEY),						\
+    sizeof(S390X_AES_##MODE##_CTX),					\
     NULL,								\
     NULL,								\
     NULL,								\
@@ -2187,7 +2236,10 @@ static const EVP_CIPHER aes_##keylen##_##mode = {			\
     aes_##mode##_cipher,						\
     NULL,								\
     sizeof(EVP_AES_KEY),						\
-    NULL,NULL,NULL,NULL							\
+    NULL,								\
+    NULL,								\
+    NULL,								\
+    NULL								\
 };									\
 const EVP_CIPHER *EVP_aes_##keylen##_##mode(void)			\
 {									\
