@@ -117,9 +117,9 @@ For more information on the derivation function and when it can be omitted,
 see [NIST SP 800-90A Rev. 1]. Roughly speeking it can be omitted if the random
 source has "full entropy", i.e., contains 8 bits of entropy per byte.
 
-Even if a nonce is required but the B<get_nonce>() and B<cleanup_nonce>()
-callbacks can be omitted (by setting them to NULL), in which case the DRBG will
-automatically request an extra amount of entropy
+Even if a nonce is required, the B<get_nonce>() and B<cleanup_nonce>()
+callbacks can be omitted by setting them to NULL.
+In this case the DRBG will automatically request an extra amount of entropy
 (using the B<get_entropy>() and B<cleanup_entropy>() callbacks) which it will
 utilize for the nonce, following the recommendations of [NIST SP 800-90A Rev. 1],
 section 8.6.7.
