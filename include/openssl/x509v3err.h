@@ -34,8 +34,12 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_F_I2S_ASN1_IA5STRING                      149
 # define X509V3_F_I2S_ASN1_INTEGER                        120
 # define X509V3_F_I2V_AUTHORITY_INFO_ACCESS               138
+# define X509V3_F_LEVEL_ADD_NODE                          168
 # define X509V3_F_NOTICE_SECTION                          132
 # define X509V3_F_NREF_NOS                                133
+# define X509V3_F_POLICY_CACHE_CREATE                     169
+# define X509V3_F_POLICY_CACHE_NEW                        170
+# define X509V3_F_POLICY_DATA_NEW                         171
 # define X509V3_F_POLICY_SECTION                          131
 # define X509V3_F_PROCESS_PCI_VALUE                       150
 # define X509V3_F_R2I_CERTPOL                             130
