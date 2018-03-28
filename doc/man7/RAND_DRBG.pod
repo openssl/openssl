@@ -96,19 +96,28 @@ This instance is used per default by L<RAND_priv_bytes(3)>
 =head1 LOCKING
 
 The <master> DRBG is intended to be accessed concurrently for reseeding
-by the other two. The necessary locking is done internally.
+by its child DRBG instances. The necessary locking is done internally.
 It is I<not> thread-safe to access the <master> DRBG directly via the
 RAND_DRBG interface.
+The <public> and <private> DRBG are thread-local, i.e. there is an
+instance of each per thread. So they can safely be accessed without
+locking via the RAND_DRBG interface.
 
-All other DRBG instances don't support locking, because they are
-intended to be used by a single thread. Instead of accessing a single
-DRBG instance concurrently from different threads, it is recommended to
-instantiate a separate DRBG instance per thread. Using the same shared
-DRBG (preferably the public DRBG) as parent of DRBG instances on
-different threads is safe.
+Pointers to these DRBG instances can be obtained using
+RAND_DRBG_get0_master(),
+RAND_DRBG_get0_public(), and
+RAND_DRBG_get0_private(), respectively.
+Note that it is not allowed to store a pointer to one of the thread-local
+DRBG instances in a variable or other memory location where it will be
+accessed and used by multiple threads.
 
-The <public> and <private> DRBG are thread-local, so they can safely
-be accessed via the RAND_DRBG interface.
+All other DRBG instances created by an application don't support locking,
+because they are intended to be used by a single thread.
+Instead of accessing a single DRBG instance concurrently from different
+threads, it is recommended to instantiate a separate DRBG instance per
+thread. Using the <master> DRBG as entropy source for multiple DRBG
+instances on different threads is thread-safe, because the DRBG instance
+will lock the <master> DRBG automatically for obtaining random input.
 
 =head1 THE OVERALL PICTURE
 
@@ -268,6 +277,9 @@ I<security strength> of the DRBG, which is set to 256 by default.
 L<RAND_DRBG_bytes(3)>,
 L<RAND_DRBG_generate(3)>,
 L<RAND_DRBG_reseed(3)>,
+L<RAND_DRBG_get0_master(3)>,
+L<RAND_DRBG_get0_public(3)>,
+L<RAND_DRBG_get0_private(3)>,
 L<RAND_DRBG_set_reseed_interval(3)>,
 L<RAND_DRBG_set_reseed_time_interval(3)>,
 L<RAND_DRBG_set_reseed_defaults(3)>,
