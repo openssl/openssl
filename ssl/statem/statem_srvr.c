@@ -3563,7 +3563,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         EVP_PKEY *pkey;
         i = ssl_verify_cert_chain(s, sk);
         if (i <= 0) {
-            SSLfatal(s, ssl_verify_alarm_type(s->verify_result),
+            SSLfatal(s, ssl_x509err2alert(s->verify_result),
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
                      SSL_R_CERTIFICATE_VERIFY_FAILED);
             goto err;
