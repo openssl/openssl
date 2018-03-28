@@ -36,11 +36,11 @@ int main(int argc, char **argv) {
 
     for (n = 1; n < argc; ++n) {
         unsigned char *buf;
-        size_t s;
 
         if (wantcpio) {
             CPIO *cpio = cpio_open(argv[n]);
-            size_t size = 0;
+            uint64_t size = 0;
+            uint64_t s = 0;
 
             if (cpio == NULL)
                 continue;
@@ -50,15 +50,15 @@ int main(int argc, char **argv) {
                 if (cpio_eof(cpio))
                     break;
 
-                printf("%s (%zu)\n", pathname, size);
+                printf("%s\n", pathname);
                 fflush(stdout);
                 OPENSSL_assert(pathname != NULL);
-                buf = malloc(size);
+                buf = malloc((size_t)size);
                 if (buf == NULL)
                     continue;
-                s = cpio_read(cpio, buf, size);
+                s = cpio_read(cpio, buf, (size_t)size);
                 OPENSSL_assert(s == size);
-                FuzzerTestOneInput(buf, s);
+                FuzzerTestOneInput(buf, (size_t)s);
                 free(buf);
                 OPENSSL_assert(!cpio_error(cpio));
                 cpio_clearerr(cpio);
@@ -67,6 +67,7 @@ int main(int argc, char **argv) {
         } else {
             struct stat st;
             FILE *f;
+            size_t s;
 
             stat(argv[n], &st);
             f = fopen(argv[n], "rb");

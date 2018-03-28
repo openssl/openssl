@@ -29,8 +29,8 @@
 struct cpio_reader_st {
     /* Function that checks if it's a CPIO format this reader recognises */
     size_t (*headersize)(void *cpio_header);
-    size_t (*filenamesize)(void *cpio_header);
-    size_t (*datasize)(void *cpio_header);
+    uint64_t (*filenamesize)(void *cpio_header);
+    uint64_t (*datasize)(void *cpio_header);
     unsigned int align;
     size_t (*checksum_size)(void);
     void (*checksum_init)(void *cpio_header, void *expected, void *calculated);
@@ -66,7 +66,7 @@ static size_t old_headersize(void *cpio_header) {
     return 0;
 }
 
-static size_t old_filenamesize(void *cpio_header) {
+static uint64_t old_filenamesize(void *cpio_header) {
     struct header_old_cpio *h = (struct header_old_cpio *)cpio_header;
 
     if (h->c_magic == 070707)
@@ -74,7 +74,7 @@ static size_t old_filenamesize(void *cpio_header) {
     return old_swap(h->c_namesize);
 }
 
-static size_t old_datasize(void *cpio_header) {
+static uint64_t old_datasize(void *cpio_header) {
     struct header_old_cpio *h = (struct header_old_cpio *)cpio_header;
 
     if (h->c_magic == 070707)
@@ -153,13 +153,13 @@ static size_t odc_headersize(void *cpio_header) {
         strncmp(h->c_magic, "070707", sizeof(h->c_magic)) == 0 ? sizeof(*h) : 0;
 }
 
-static size_t odc_filenamesize(void *cpio_header) {
+static uint64_t odc_filenamesize(void *cpio_header) {
     struct cpio_odc_header *h = (struct cpio_odc_header *)cpio_header;
 
     return octstr2uint64(h->c_namesize, sizeof(h->c_namesize));
 }
 
-static size_t odc_datasize(void *cpio_header) {
+static uint64_t odc_datasize(void *cpio_header) {
     struct cpio_odc_header *h = (struct cpio_odc_header *)cpio_header;
 
 
@@ -208,13 +208,13 @@ static size_t newc_headersize(void *cpio_header) {
         strncmp(h->c_magic, "070701", sizeof(h->c_magic)) == 0 ? sizeof(*h) : 0;
 }
 
-static size_t newc_filenamesize(void *cpio_header) {
+static uint64_t newc_filenamesize(void *cpio_header) {
     struct cpio_newc_header *h = (struct cpio_newc_header *)cpio_header;
 
     return hexstr2uint32(h->c_namesize, sizeof(h->c_namesize));
 }
 
-static size_t newc_datasize(void *cpio_header) {
+static uint64_t newc_datasize(void *cpio_header) {
     struct cpio_newc_header *h = (struct cpio_newc_header *)cpio_header;
 
     return hexstr2uint32(h->c_filesize, sizeof(h->c_filesize));
@@ -286,12 +286,12 @@ struct cpio_st {
         CPIO_AT_HEADER,
         CPIO_IN_FILE
     } state;
-    size_t headeroffset;        /* Position of last header in cpio file */
-    size_t rel_filenameoffset;  /* File name offset relative to header offset */
-    size_t rel_dataoffset;      /* data offset relative to header offset */
-    size_t datasize;            /* The data size given from header */
-    size_t datasize_aligned;    /* data size including alignment bytes */
-    size_t cur_readoffset;      /* read position relative to data offset */
+    uint64_t headeroffset;      /* Position of last header in cpio file */
+    uint64_t r_filenameoffset;  /* File name offset relative to header offset */
+    uint64_t r_dataoffset;      /* data offset relative to header offset */
+    uint64_t datasize;          /* The data size given from header */
+    uint64_t datasize_aligned;  /* data size including alignment bytes */
+    uint64_t cur_readoffset;    /* read position relative to data offset */
     const struct cpio_reader_st *reader;
     int error;
     int eof;
@@ -316,11 +316,11 @@ CPIO *cpio_open(const char *pathname)
     return cpio;
 }
 
-const char *cpio_readentry(CPIO *cpio, size_t *datasize)
+const char *cpio_readentry(CPIO *cpio, uint64_t *datasize)
 {
     const struct cpio_reader_st **readerp = cpio_reader_list;
     static char pathname[PATH_MAX] = { '\0', };
-    size_t filenamesize = 0;
+    uint64_t filenamesize = 0;
     uint8_t header[256];        /* Enough space for any CPIO header */
 
     /* If we've reached the end of the archive, we insist on eof */
@@ -328,15 +328,24 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize)
         cpio->eof = 1;
 
     if (cpio->eof || cpio->error)
-        return 0;
+        return NULL;
 
     if (cpio->state == CPIO_IN_FILE) {
-        cpio->headeroffset += cpio->rel_dataoffset + cpio->datasize_aligned;
-        if (fseek(cpio->file, cpio->headeroffset, SEEK_SET) != 0) {
+        cpio->headeroffset += cpio->r_dataoffset + cpio->datasize_aligned;
+
+        /*
+         * Check that we're not seeking too far, i.e. that the offset isn't
+         * larger than what fseek() can handle.
+         */
+        if ((int64_t)cpio->headeroffset > (long)cpio->headeroffset) {
             cpio->error = 1;
             return NULL;
         }
-        cpio->rel_filenameoffset = cpio->rel_dataoffset = cpio->cur_readoffset =
+        if (fseek(cpio->file, (long)cpio->headeroffset, SEEK_SET) != 0) {
+            cpio->error = 1;
+            return NULL;
+        }
+        cpio->r_filenameoffset = cpio->r_dataoffset = cpio->cur_readoffset =
             cpio->datasize_aligned = 0;
         cpio->state = CPIO_AT_HEADER;
     }
@@ -349,7 +358,7 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize)
     }
 
     while (*readerp != NULL
-           && (cpio->rel_filenameoffset = (*readerp)->headersize(header)) == 0)
+           && (cpio->r_filenameoffset = (*readerp)->headersize(header)) == 0)
         readerp++;
     cpio->reader = *readerp;
 
@@ -363,7 +372,8 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize)
         return NULL;
     }
 
-    if (fread(header + 6, cpio->rel_filenameoffset - 6, 1, cpio->file) == 0) {
+    if (fread(header + 6, (size_t)cpio->r_filenameoffset - 6, 1, cpio->file)
+        == 0) {
         cpio->error = ferror(cpio->file);
         cpio->eof = feof(cpio->file);
         return NULL;
@@ -372,15 +382,16 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize)
     filenamesize = cpio->reader->filenamesize(header);
     *datasize = cpio->datasize = cpio->reader->datasize(header);
 
-    cpio->rel_dataoffset =
-        ((cpio->rel_filenameoffset + filenamesize + cpio->reader->align - 1)
+    cpio->r_dataoffset =
+        ((cpio->r_filenameoffset + filenamesize + cpio->reader->align - 1)
          / cpio->reader->align)
         * cpio->reader->align;
     cpio->datasize_aligned =
         ((*datasize + cpio->reader->align - 1) / cpio->reader->align)
         * cpio->reader->align;
 
-    if (fread(pathname, cpio->rel_dataoffset - cpio->rel_filenameoffset, 1,
+    if (fread(pathname,
+              (size_t)cpio->r_dataoffset - (size_t)cpio->r_filenameoffset, 1,
               cpio->file) == 0) {
         cpio->error = ferror(cpio->file);
         cpio->eof = feof(cpio->file);
@@ -398,7 +409,7 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize)
     return pathname;
 }
 
-size_t cpio_read(CPIO *cpio, void *ptr, size_t size)
+uint64_t cpio_read(CPIO *cpio, void *ptr, uint64_t size)
 {
     if (cpio->eof || cpio->error)
         return 0;
@@ -413,7 +424,7 @@ size_t cpio_read(CPIO *cpio, void *ptr, size_t size)
 
     if (cpio->cur_readoffset + size > cpio->datasize)
         size = cpio->datasize - cpio->cur_readoffset;
-    if (fread(ptr, size, 1, cpio->file) == 0) {
+    if (fread(ptr, (size_t)size, 1, cpio->file) == 0) {
         cpio->error = ferror(cpio->file);
         cpio->eof = feof(cpio->file);
         return 0;

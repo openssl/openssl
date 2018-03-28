@@ -30,7 +30,7 @@ CPIO *cpio_open(const char *pathname);
  * Sets the error flag on errors.
  * Sets the eof flag when the end of the archive has been reached.
  */
-const char *cpio_readentry(CPIO *cpio, size_t *datasize);
+const char *cpio_readentry(CPIO *cpio, uint64_t *datasize);
 /*
  * cpio_read: read data from the file stored in the CPIO archive
  * Requires that cpio_readentry has been called first.
@@ -44,7 +44,7 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize);
  * Sets the eof flag when the end of the currently retrieved file has been
  * reached.
  */
-size_t cpio_read(CPIO *cpio, void *ptr, size_t size);
+uint64_t cpio_read(CPIO *cpio, void *ptr, uint64_t size);
 /*
  * cpio_eof: used to check if the eof flag has been set.
  *
