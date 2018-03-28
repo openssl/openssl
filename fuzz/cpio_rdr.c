@@ -306,7 +306,11 @@ CPIO *cpio_open(const char *pathname)
     if (f == NULL)
         return NULL;
 
-    cpio = OPENSSL_zalloc(sizeof(*cpio));
+    if ((cpio = OPENSSL_zalloc(sizeof(*cpio))) == NULL) {
+        fclose(f);
+        return NULL;
+    }
+
     cpio->file = f;
     cpio->state = CPIO_AT_HEADER;
     return cpio;
@@ -328,7 +332,10 @@ const char *cpio_readentry(CPIO *cpio, size_t *datasize)
 
     if (cpio->state == CPIO_IN_FILE) {
         cpio->headeroffset += cpio->rel_dataoffset + cpio->datasize_aligned;
-        fseek(cpio->file, cpio->headeroffset, SEEK_SET);
+        if (fseek(cpio->file, cpio->headeroffset, SEEK_SET) != 0) {
+            cpio->error = 1;
+            return NULL;
+        }
         cpio->rel_filenameoffset = cpio->rel_dataoffset = cpio->cur_readoffset =
             cpio->datasize_aligned = 0;
         cpio->state = CPIO_AT_HEADER;
