@@ -420,8 +420,10 @@ int ASN1_TIME_set_string_X509(ASN1_TIME *s, const char *str)
              * new t.data would be freed after ASN1_STRING_copy is done.
              */
             t.data = OPENSSL_zalloc(t.length + 1);
-            if (t.data == NULL)
+            if (t.data == NULL) {
+                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                 goto out;
+            }
             memcpy(t.data, str + 2, t.length);
             t.type = V_ASN1_UTCTIME;
         }

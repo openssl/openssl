@@ -216,9 +216,9 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
 static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                                 const ASN1_TEMPLATE *tt, int tag, int iclass)
 {
-    int i, ret, flags, ttag, tclass, ndef;
+    const int flags = tt->flags;
+    int i, ret, ttag, tclass, ndef;
     const ASN1_VALUE *tval;
-    flags = tt->flags;
 
     /*
      * If field is embedded then val needs fixing so it is a pointer to
@@ -391,10 +391,11 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
                             int skcontlen, const ASN1_ITEM *item,
                             int do_sort, int iclass)
 {
-    int i;
+    int i, ret = 0;
     const ASN1_VALUE *skitem;
     unsigned char *tmpdat = NULL, *p = NULL;
     DER_ENC *derlst = NULL, *tder;
+
     if (do_sort) {
         /* Don't need to sort less than 2 items */
         if (sk_const_ASN1_VALUE_num(sk) < 2)
@@ -402,12 +403,14 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         else {
             derlst = OPENSSL_malloc(sk_const_ASN1_VALUE_num(sk)
                                     * sizeof(*derlst));
-            if (derlst == NULL)
+            if (derlst == NULL) {
+                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
             tmpdat = OPENSSL_malloc(skcontlen);
             if (tmpdat == NULL) {
-                OPENSSL_free(derlst);
-                return 0;
+                ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
+                goto err;
             }
         }
     }
@@ -443,9 +446,11 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         for (i = 0, tder = derlst; i < sk_const_ASN1_VALUE_num(sk); i++, tder++)
             (void)sk_const_ASN1_VALUE_set(sk, i, tder->field);
     }
+    ret = 1;
+err:
     OPENSSL_free(derlst);
     OPENSSL_free(tmpdat);
-    return 1;
+    return ret;
 }
 
 static int asn1_i2d_ex_primitive(const ASN1_VALUE **pval, unsigned char **out,

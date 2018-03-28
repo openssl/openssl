@@ -102,8 +102,10 @@ static int asn1_bio_new(BIO *b)
 {
     BIO_ASN1_BUF_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_ASN1, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     if (!asn1_bio_init(ctx, DEFAULT_ASN1_BUF_SIZE)) {
         OPENSSL_free(ctx);
         return 0;
