@@ -305,6 +305,48 @@ ___
 }
 
 ################
+# void s390x_kmo(const unsigned char *in, size_t len, unsigned char *out,
+#                unsigned int fc, void *param)
+{
+my ($in,$len,$out,$fc,$param) = map("%r$_",(2..6));
+$code.=<<___;
+.globl	s390x_kmo
+.type	s390x_kmo,\@function
+.align	16
+s390x_kmo:
+	lr	%r0,$fc
+	l${g}r	%r1,$param
+
+	.long	0xb92b0042	# kmo $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_kmo,.-s390x_kmo
+___
+}
+
+################
+# void s390x_kmf(const unsigned char *in, size_t len, unsigned char *out,
+#                unsigned int fc, void *param)
+{
+my ($in,$len,$out,$fc,$param) = map("%r$_",(2..6));
+$code.=<<___;
+.globl	s390x_kmf
+.type	s390x_kmf,\@function
+.align	16
+s390x_kmf:
+	lr	%r0,$fc
+	l${g}r	%r1,$param
+
+	.long	0xb92a0042	# kmf $out,$in
+	brc	1,.-4		# pay attention to "partial completion"
+
+	br	$ra
+.size	s390x_kmf,.-s390x_kmf
+___
+}
+
+################
 # void s390x_kma(const unsigned char *aad, size_t alen,
 #                const unsigned char *in, size_t len,
 #                unsigned char *out, unsigned int fc, void *param)
