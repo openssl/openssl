@@ -993,6 +993,24 @@ typedef struct {
     union {
         double align;
         /*-
+         * KMF-AES parameter block - begin
+         * (see z/Architecture Principles of Operation >= SA22-7832-08)
+         */
+        struct {
+            unsigned char cv[16];
+            unsigned char k[32];
+        } param;
+        /* KMF-AES parameter block - end */
+    } kmf;
+    unsigned int fc;
+
+    int res;
+} S390X_AES_CFB_CTX;
+
+typedef struct {
+    union {
+        double align;
+        /*-
          * KMA-GCM-AES parameter block - begin
          * (see z/Architecture Principles of Operation >= SA22-7832-11)
          */
@@ -1208,26 +1226,116 @@ static int s390x_aes_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
-# define S390X_aes_128_cfb_CAPABLE	0
-# define S390X_aes_192_cfb_CAPABLE	0
-# define S390X_aes_256_cfb_CAPABLE	0
-# define S390X_AES_CFB_CTX		EVP_AES_KEY
+# define S390X_aes_128_cfb_CAPABLE (S390X_aes_128_CAPABLE &&		\
+                                    (OPENSSL_s390xcap_P.kmf[0] &	\
+                                     S390X_CAPBIT(S390X_AES_128)))
+# define S390X_aes_192_cfb_CAPABLE (S390X_aes_192_CAPABLE &&		\
+                                    (OPENSSL_s390xcap_P.kmf[0] &	\
+                                     S390X_CAPBIT(S390X_AES_192)))
+# define S390X_aes_256_cfb_CAPABLE (S390X_aes_256_CAPABLE &&		\
+                                    (OPENSSL_s390xcap_P.kmf[0] &	\
+                                     S390X_CAPBIT(S390X_AES_256)))
 
-# define s390x_aes_cfb_init_key aes_init_key
+static int s390x_aes_cfb_init_key(EVP_CIPHER_CTX *ctx,
+                                  const unsigned char *key,
+                                  const unsigned char *ivec, int enc)
+{
+    S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
+    const unsigned char *iv = EVP_CIPHER_CTX_original_iv(ctx);
+    const int keylen = EVP_CIPHER_CTX_key_length(ctx);
+    const int ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 
-# define s390x_aes_cfb_cipher aes_cfb_cipher
+    cctx->fc = S390X_AES_FC(keylen);
+    cctx->fc |= 16 << 24;   /* 16 bytes cipher feedback */
+    if (!enc)
+        cctx->fc |= S390X_DECRYPT;
+
+    cctx->res = 0;
+    memcpy(cctx->kmf.param.cv, iv, ivlen);
+    memcpy(cctx->kmf.param.k, key, keylen);
+    return 1;
+}
+
 static int s390x_aes_cfb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                                const unsigned char *in, size_t len);
+                                const unsigned char *in, size_t len)
+{
+    S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
+    const int keylen = EVP_CIPHER_CTX_key_length(ctx);
+    const int enc = EVP_CIPHER_CTX_encrypting(ctx);
+    int n = cctx->res;
+    int rem;
+    unsigned char tmp;
 
-# define S390X_aes_128_cfb8_CAPABLE	0
-# define S390X_aes_192_cfb8_CAPABLE	0
-# define S390X_aes_256_cfb8_CAPABLE	0
+    while (n && len) {
+        tmp = *in;
+        *out = cctx->kmf.param.cv[n] ^ tmp;
+        cctx->kmf.param.cv[n] = enc ? *out : tmp;
+        n = (n + 1) & 0xf;
+        --len;
+        ++in;
+        ++out;
+    }
 
-# define s390x_aes_cfb8_init_key aes_init_key
+    rem = len & 0xf;
 
-# define s390x_aes_cfb8_cipher aes_cfb8_cipher
+    len &= ~(size_t)0xf;
+    if (len) {
+        s390x_kmf(in, len, out, cctx->fc, &cctx->kmf.param);
+
+        out += len;
+        in += len;
+    }
+
+    if (rem) {
+        s390x_km(cctx->kmf.param.cv, 16, cctx->kmf.param.cv,
+                 S390X_AES_FC(keylen), cctx->kmf.param.k);
+
+        while (rem--) {
+            tmp = in[n];
+            out[n] = cctx->kmf.param.cv[n] ^ tmp;
+            cctx->kmf.param.cv[n] = enc ? out[n] : tmp;
+            ++n;
+        }
+    }
+
+    cctx->res = n;
+    return 1;
+}
+
+# define S390X_aes_128_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &	\
+                                     S390X_CAPBIT(S390X_AES_128))
+# define S390X_aes_192_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &	\
+                                     S390X_CAPBIT(S390X_AES_192))
+# define S390X_aes_256_cfb8_CAPABLE (OPENSSL_s390xcap_P.kmf[0] &	\
+                                     S390X_CAPBIT(S390X_AES_256))
+
+static int s390x_aes_cfb8_init_key(EVP_CIPHER_CTX *ctx,
+                                   const unsigned char *key,
+                                   const unsigned char *ivec, int enc)
+{
+    S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
+    const unsigned char *iv = EVP_CIPHER_CTX_original_iv(ctx);
+    const int keylen = EVP_CIPHER_CTX_key_length(ctx);
+    const int ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+
+    cctx->fc = S390X_AES_FC(keylen);
+    cctx->fc |= 1 << 24;   /* 1 byte cipher feedback */
+    if (!enc)
+        cctx->fc |= S390X_DECRYPT;
+
+    memcpy(cctx->kmf.param.cv, iv, ivlen);
+    memcpy(cctx->kmf.param.k, key, keylen);
+    return 1;
+}
+
 static int s390x_aes_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-                                 const unsigned char *in, size_t len);
+                                 const unsigned char *in, size_t len)
+{
+    S390X_AES_CFB_CTX *cctx = EVP_C_DATA(S390X_AES_CFB_CTX, ctx);
+
+    s390x_kmf(in, len, out, cctx->fc, &cctx->kmf.param);
+    return 1;
+}
 
 # define S390X_aes_128_cfb1_CAPABLE	0
 # define S390X_aes_192_cfb1_CAPABLE	0
