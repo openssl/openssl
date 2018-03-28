@@ -1898,7 +1898,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * set. The *documented* interface remains the same.
      */
     if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
-        SSLfatal(s, ssl_verify_alarm_type(s->verify_result),
+        SSLfatal(s, ssl_x509err2alert(s->verify_result),
                  SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
         goto err;
