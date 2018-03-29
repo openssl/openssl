@@ -69,7 +69,7 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
+          env: CONFIG_OPTS="no-pic"
         - os: linux
           addons:
               apt:
@@ -85,7 +85,7 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-pic" TESTS="-test_fuzz"
+          env: CONFIG_OPTS="no-pic"
         - os: linux
           addons:
               apt:
