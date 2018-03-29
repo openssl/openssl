@@ -267,8 +267,11 @@ from the trusted entropy sources.
 Calling RAND_poll() will always fail.
 
 RAND_add() needs to be called for initial seeding and periodic reseeding.
-At least 32 bytes (256 bits) of randomness have to be provided, otherwise
-the (re-)seeding of the DRBG will fail.
+At least 48 bytes (384 bits) of randomness have to be provided, otherwise
+the (re-)seeding of the DRBG will fail. This corresponds to one and a half
+times the security strength of the DRBG. The extra half is used for the
+nonce during instantiation.
+
 More precisely, the number of bytes needed for seeding depend on the
 I<security strength> of the DRBG, which is set to 256 by default.
 
