@@ -1506,6 +1506,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
+# define EVP_F_EVP_PKEY_METH_ADD0                         172
+# define EVP_F_EVP_PKEY_METH_NEW                          173
 # define EVP_F_EVP_PKEY_NEW                               106
 # define EVP_F_EVP_PKEY_PARAMGEN                          148
 # define EVP_F_EVP_PKEY_PARAMGEN_INIT                     149
@@ -1570,6 +1572,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
 # define EVP_R_OPERATON_NOT_INITIALIZED                   151
 # define EVP_R_PARTIALLY_OVERLAPPING                      162
+# define EVP_R_PBKDF2_ERROR                               176
 # define EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED 175
 # define EVP_R_PKEY_ASN1_METHOD_ALREADY_REGISTERED        164
 # define EVP_R_PRIVATE_KEY_DECODE_ERROR                   145
