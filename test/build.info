@@ -1,5 +1,6 @@
 IF[{- !$disabled{tests} -}]
   PROGRAMS_NO_INST=\
+          versions \
           aborttest \
           sanitytest exdatatest bntest \
           ectest ecdsatest gmdifftest pbelutest ideatest \
@@ -18,6 +19,10 @@ IF[{- !$disabled{tests} -}]
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           ocspapitest fatalerrtest
+
+  SOURCE[versions]=versions.c
+  INCLUDE[versions]=../include
+  DEPEND[versions]=../libcrypto
 
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include
