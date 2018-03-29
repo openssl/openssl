@@ -170,8 +170,10 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (r == 0 || p == 0 || N < 2 || (N & (N - 1)))
         return 0;
     /* Check p * r < SCRYPT_PR_MAX avoiding overflow */
-    if (p > SCRYPT_PR_MAX / r)
+    if (p > SCRYPT_PR_MAX / r) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
+    }
 
     /*
      * Need to check N: if 2^(128 * r / 8) overflows limit this is
@@ -179,8 +181,10 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
      */
 
     if (16 * r <= LOG2_UINT64_MAX) {
-        if (N >= (((uint64_t)1) << (16 * r)))
+        if (N >= (((uint64_t)1) << (16 * r))) {
+            EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
             return 0;
+        }
     }
 
     /* Memory checks: check total allocated buffer size fits in uint64_t */
@@ -205,13 +209,17 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
      * This is combined size V, X and T (section 4)
      */
     i = UINT64_MAX / (32 * sizeof(uint32_t));
-    if (N + 2 > i / r)
+    if (N + 2 > i / r) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
+    }
     Vlen = 32 * r * (N + 2) * sizeof(uint32_t);
 
     /* check total allocated size fits in uint64_t */
-    if (Blen > UINT64_MAX - Vlen)
+    if (Blen > UINT64_MAX - Vlen) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_MEMORY_LIMIT_EXCEEDED);
         return 0;
+    }
 
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
@@ -230,8 +238,10 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
         return 1;
 
     B = OPENSSL_malloc((size_t)(Blen + Vlen));
-    if (B == NULL)
+    if (B == NULL) {
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;
     V = T + 32 * r;
@@ -247,6 +257,9 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
         goto err;
     rv = 1;
  err:
+    if (rv == 0)
+        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PBKDF2_ERROR);
+
     OPENSSL_clear_free(B, (size_t)(Blen + Vlen));
     return rv;
 }
