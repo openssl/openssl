@@ -1500,7 +1500,7 @@ void SSL_trace(int write_p, int version, int content_type,
             int hvers;
 
             /* avoid overlapping with length at the end of buffer */
-            if (msglen < (SSL_IS_DTLS(ssl) ? 13 : 5)) {
+            if (msglen < (size_t)(SSL_IS_DTLS(ssl) ? 13 : 5)) {
                 BIO_puts(bio, write_p ? "Sent" : "Received");
                 ssl_print_hex(bio, 0, " too short message", msg, msglen);
                 break;
