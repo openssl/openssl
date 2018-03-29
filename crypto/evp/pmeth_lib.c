@@ -123,7 +123,6 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
      * If an ENGINE handled this method look it up. Otherwise use internal
      * tables.
      */
-
     if (e)
         pmeth = ENGINE_get_pkey_meth(e, id);
     else
@@ -169,8 +168,10 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     EVP_PKEY_METHOD *pmeth;
 
     pmeth = OPENSSL_zalloc(sizeof(*pmeth));
-    if (pmeth == NULL)
+    if (pmeth == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_METH_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     pmeth->pkey_id = id;
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
@@ -258,8 +259,10 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
     }
 #endif
     rctx = OPENSSL_malloc(sizeof(*rctx));
-    if (rctx == NULL)
+    if (rctx == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     rctx->pmeth = pctx->pmeth;
 #ifndef OPENSSL_NO_ENGINE
@@ -293,11 +296,15 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
 {
     if (app_pkey_methods == NULL) {
         app_pkey_methods = sk_EVP_PKEY_METHOD_new(pmeth_cmp);
-        if (app_pkey_methods == NULL)
+        if (app_pkey_methods == NULL){
+            EVPerr(EVP_F_EVP_PKEY_METH_ADD0, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
     }
-    if (!sk_EVP_PKEY_METHOD_push(app_pkey_methods, pmeth))
+    if (!sk_EVP_PKEY_METHOD_push(app_pkey_methods, pmeth)) {
+        EVPerr(EVP_F_EVP_PKEY_METH_ADD0, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     sk_EVP_PKEY_METHOD_sort(app_pkey_methods);
     return 1;
 }
