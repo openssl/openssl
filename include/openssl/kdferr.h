@@ -24,6 +24,8 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_PKEY_SCRYPT_CTRL_STR                       104
 # define KDF_F_PKEY_SCRYPT_CTRL_UINT64                    105
 # define KDF_F_PKEY_SCRYPT_DERIVE                         109
+# define KDF_F_PKEY_SCRYPT_INIT                           106
+# define KDF_F_PKEY_SCRYPT_SET_MEMBUF                     107
 # define KDF_F_PKEY_TLS1_PRF_CTRL_STR                     100
 # define KDF_F_PKEY_TLS1_PRF_DERIVE                       101
 
