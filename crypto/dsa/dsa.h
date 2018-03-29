@@ -307,6 +307,7 @@ void ERR_load_DSA_strings(void);
 # define DSA_F_I2D_DSA_SIG                                111
 # define DSA_F_OLD_DSA_PRIV_DECODE                        122
 # define DSA_F_PKEY_DSA_CTRL                              120
+# define DSA_F_PKEY_DSA_CTRL_STR                          127
 # define DSA_F_PKEY_DSA_KEYGEN                            121
 # define DSA_F_SIG_CB                                     114
 
