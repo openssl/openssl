@@ -294,7 +294,27 @@
      issues, has been replaced to always returns NULL.
      [Rich Salz]
 
- Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
+
+ Changes between 1.1.0h and 1.1.0i [xx XXX xxxx]
+
+  *) Fixed a text canonicalisation bug in CMS
+
+     Where a CMS detached signature is used with text content the text goes
+     through a canonicalisation process first prior to signing or verifying a
+     signature. This process strips trailing space at the end of lines, converts
+     line terminators to CRLF and removes additional trailing line terminators
+     at the end of a file. A bug in the canonicalisation process meant that
+     some characters, such as form-feed, were incorrectly treated as whitespace
+     and removed. This is contrary to the specification (RFC5485). This fix
+     could mean that detached text data signed with an earlier version of
+     OpenSSL 1.1.0 may fail to verify using the fixed version, or text data
+     signed with a fixed OpenSSL may fail to verify with an earlier version of
+     OpenSSL 1.1.0. A workaround is to only verify the canonicalised text data
+     and use the "-binary" flag (for the "cms" command line application) or set
+     the SMIME_BINARY/PKCS7_BINARY/CMS_BINARY flags (if using CMS_verify()).
+     [Matt Caswell]
+
+ Changes between 1.1.0g and 1.1.0h [27 Mar 2018]
 
   *) Constructed ASN.1 types with a recursive definition could exceed the stack
 
