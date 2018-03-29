@@ -370,7 +370,7 @@ int req_main(int argc, char **argv)
     if (addext_bio) {
         if (verbose)
             BIO_printf(bio_err,
-                       "Using additional configuraton from command line\n");
+                       "Using additional configuration from command line\n");
         addext_conf = app_load_config_bio(addext_bio, NULL);
     }
     if (template != default_config_file && !app_load_modules(req_conf))
