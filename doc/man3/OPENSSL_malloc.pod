@@ -78,10 +78,10 @@ OPENSSL_MALLOC_FD
  int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
  int CRYPTO_mem_debug_pop(void);
 
- void CRYPTO_mem_leaks(BIO *b);
- void CRYPTO_mem_leaks_fp(FILE *fp);
- void CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
-                          void *u);
+ int CRYPTO_mem_leaks(BIO *b);
+ int CRYPTO_mem_leaks_fp(FILE *fp);
+ int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
+                         void *u);
 
 =head1 DESCRIPTION
 
@@ -216,8 +216,8 @@ OPENSSL_malloc_init(), OPENSSL_free(), OPENSSL_clear_free()
 CRYPTO_free(), CRYPTO_clear_free() and CRYPTO_get_mem_functions()
 return no value.
 
-CRYPTO_mem_leaks() and CRYPTO_mem_leaks_fp() return 1 if there
-are no leaks, 0 if there are leaks and -1 if an error occurred.
+CRYPTO_mem_leaks(), CRYPTO_mem_leaks_fp() and CRYPTO_mem_leaks_cb() return 1 if
+there are no leaks, 0 if there are leaks and -1 if an error occurred.
 
 OPENSSL_malloc(), OPENSSL_zalloc(), OPENSSL_realloc(),
 OPENSSL_clear_realloc(),
