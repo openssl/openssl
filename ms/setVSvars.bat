@@ -1,4 +1,8 @@
 @if NOT "%_DEBUG%" GEQ "1" @echo off
+
+rem Set the Windows SDK version
+set WindowsSDKversion=10.0.10240.0
+
 pushd %~dp0\..
 call:set_%1
 popd
@@ -6,50 +10,50 @@ exit /b
 :set_universal10.0Win32
 	call:setVar _VS15VC VisualStudio15VC
 	if not "%_VS15VC%"=="" (
-		call "%_VS15VC%\vcvarsall" x86 store
+		call "%_VS15VC%\vcvarsall" x86 uwp %WindowsSDKversion%
 		call:setEnv
 		goto :eof
 	)
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x86 store
+	call "%_VS14VC%vcvarsall" x86 uwp %WindowsSDKversion%
 	call:setEnv
 	goto :eof
 
 :set_universal10.0x64
 	call:setVar _VS15VC VisualStudio15VC
 	if not "%_VS15VC%"=="" (
-		call "%_VS15VC%\vcvarsall" x64 store
+		call "%_VS15VC%\vcvarsall" x64 uwp %WindowsSDKversion%
 		call:setEnv
 		goto :eof
 	)
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x64 store
+	call "%_VS14VC%vcvarsall" x64 uwp %WindowsSDKversion%
 	call:setEnv
 	goto :eof
 
 :set_universal10.0arm
 	call:setVar _VS15VC VisualStudio15VC
 	if not "%_VS15VC%"=="" (
-		call "%_VS15VC%\vcvarsall" x86_arm store
+		call "%_VS15VC%\vcvarsall" x86_arm uwp %WindowsSDKversion%
 		rem
 		call:setEnv
 		goto :eof
 	)
 	call:setVar _VS14VC VisualStudio14VC
     rem
-	call "%_VS14VC%vcvarsall" x86_arm store
+	call "%_VS14VC%vcvarsall" x86_arm uwp %WindowsSDKversion%
 	call:setEnv
 	goto :eof
 
 :set_universal10.0arm64
     call:setVar _VS15VC VisualStudio15VC
     if not "%_VS15VC%"=="" (
-		call "%_VS15VC%\vcvarsall" x86_arm64 store
+		call "%_VS15VC%\vcvarsall" x86_arm64 uwp %WindowsSDKversion%
 		call:setEnv
 		goto :eof
 	)
 	call:setVar _VS14VC VisualStudio14VC
-	call "%_VS14VC%vcvarsall" x86_arm64 store
+	call "%_VS14VC%vcvarsall" x86_arm64 uwp %WindowsSDKversion%
 	call:setEnv
 	goto :eof
 

@@ -21,7 +21,6 @@
 #  undef setenv
 # endif
 
-/*
 # ifdef FindFirstFile
 #  undef FindFirstFile
 # endif
@@ -36,7 +35,6 @@
 #  undef LoadLibraryA
 # endif
 # define LoadLibraryA winrt_LoadLibraryA
-*/
 
 # ifdef GetModuleHandle
 #   undef GetModuleHandle
