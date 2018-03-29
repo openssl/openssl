@@ -44,6 +44,7 @@ int ERR_load_DSA_strings(void);
 #  define DSA_F_DSA_SIG_NEW                                102
 #  define DSA_F_OLD_DSA_PRIV_DECODE                        122
 #  define DSA_F_PKEY_DSA_CTRL                              120
+#  define DSA_F_PKEY_DSA_CTRL_STR                          104
 #  define DSA_F_PKEY_DSA_KEYGEN                            121
 
 /*

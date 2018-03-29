@@ -424,6 +424,7 @@ DSA_F_DSA_SIGN_SETUP:107:DSA_sign_setup
 DSA_F_DSA_SIG_NEW:102:DSA_SIG_new
 DSA_F_OLD_DSA_PRIV_DECODE:122:old_dsa_priv_decode
 DSA_F_PKEY_DSA_CTRL:120:pkey_dsa_ctrl
+DSA_F_PKEY_DSA_CTRL_STR:104:pkey_dsa_ctrl_str
 DSA_F_PKEY_DSA_KEYGEN:121:pkey_dsa_keygen
 DSO_F_DLFCN_BIND_FUNC:100:dlfcn_bind_func
 DSO_F_DLFCN_LOAD:102:dlfcn_load
