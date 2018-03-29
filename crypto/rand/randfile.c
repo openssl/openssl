@@ -101,11 +101,25 @@ int RAND_load_file(const char *file, long bytes)
         bytes = 256;
 #endif
     /*
+     * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+     * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+     * However, we trust that the C RTL will never give us a FILE pointer
+     * above the first 4 GB of memory, so we simply turn off the warning
+     * temporarily.
+     */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment save
+# pragma message disable maylosedata2
+#endif
+    /*
      * Don't buffer, because even if |file| is regular file, we have
      * no control over the buffer, so why would we want a copy of its
      * contents lying around?
      */
     setbuf(in, NULL);
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment restore
+#endif
 
     for ( ; ; ) {
         if (bytes > 0)
