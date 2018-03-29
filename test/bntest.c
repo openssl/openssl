@@ -408,9 +408,21 @@ static int test_modexp_mont5(void)
     BN_free(b);
     b = BN_dup(a);
     BN_MONT_CTX_set(mont, n, ctx);
-    BN_mod_mul_montgomery(c, a, a, mont, ctx);
-    BN_mod_mul_montgomery(d, a, b, mont, ctx);
-    if (!TEST_BN_eq(c, d))
+    if (!TEST_true(BN_mod_mul_montgomery(c, a, a, mont, ctx))
+            || !TEST_true(BN_mod_mul_montgomery(d, a, b, mont, ctx))
+            || !TEST_BN_eq(c, d))
+        goto err;
+
+    /* Regression test for bug in BN_from_montgomery_word */
+    BN_hex2bn(&a,
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    BN_hex2bn(&n,
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+    BN_MONT_CTX_set(mont, n, ctx);
+    if (!TEST_false(BN_mod_mul_montgomery(d, a, a, mont, ctx)))
         goto err;
 
     /* Regression test for bug in rsaz_1024_mul_avx2 */
