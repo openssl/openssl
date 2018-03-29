@@ -49,12 +49,12 @@ static void testfile(const char *pathname)
     if (f == NULL)
         return;
     buf = malloc(st.st_size);
-    if (buf == NULL)
-        return;
-    s = fread(buf, 1, st.st_size, f);
-    OPENSSL_assert(s == (size_t)st.st_size);
-    FuzzerTestOneInput(buf, s);
-    free(buf);
+    if (buf != NULL) {
+        s = fread(buf, 1, st.st_size, f);
+        OPENSSL_assert(s == (size_t)st.st_size);
+        FuzzerTestOneInput(buf, s);
+        free(buf);
+    }
     fclose(f);
 }
 
