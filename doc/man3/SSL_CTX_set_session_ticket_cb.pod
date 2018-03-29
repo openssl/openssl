@@ -42,7 +42,7 @@ B<dec_cb> is the application defined callback invoked after session ticket
 decryption has been attempted and any session ticket application data is available.
 The application can call SSL_SESSION_get_ticket_appdata() at this time to retrieve
 the application data. The value of B<arg> is the same as that given to
-SSL_CTX_set_session_ticket_cb(). The B<retv> arguement is the result of the ticket
+SSL_CTX_set_session_ticket_cb(). The B<retv> argument is the result of the ticket
 decryption. The B<keyname> and B<keyname_len> identify the key used to decrypt the
 session ticket. The B<dec_cb> callback is defined as type
 B<SSL_CTX_decrypt_session_ticket_fn>.
