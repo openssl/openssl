@@ -610,6 +610,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     unsigned char *buf = NULL;
     EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int reason = ERR_R_BUF_LIB;
+    int retval = 0;
 
     if (ctx == NULL) {
         reason = ERR_R_MALLOC_FAILURE;
@@ -654,14 +655,14 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
         (BIO_write(bp, name, nlen) != nlen) ||
         (BIO_write(bp, "-----\n", 6) != 6))
         goto err;
-    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
-    EVP_ENCODE_CTX_free(ctx);
-    return i + outl;
+    retval = i + outl;
+
  err:
-    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
+    if (retval == 0)
+        PEMerr(PEM_F_PEM_WRITE_BIO, reason);
     EVP_ENCODE_CTX_free(ctx);
-    PEMerr(PEM_F_PEM_WRITE_BIO, reason);
-    return 0;
+    OPENSSL_free(buf);
+    return retval;
 }
 
 #ifndef OPENSSL_NO_STDIO
