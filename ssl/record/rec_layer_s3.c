@@ -1588,7 +1588,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         s->rwstate = SSL_NOTHING;
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
-        return 0;
+        goto start;
     }
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC) {
