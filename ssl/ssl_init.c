@@ -19,6 +19,15 @@ static int stopped;
 
 static void ssl_library_stop(void);
 
+static CRYPTO_ONCE ssl_confmod = CRYPTO_ONCE_STATIC_INIT;
+static int ssl_confmod_inited = 0;
+DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_confmod)
+{
+    SSL_add_ssl_module();
+    ssl_confmod_inited = 1;
+    return 1;
+}
+
 static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
@@ -106,7 +115,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
             "SSL_add_ssl_module()\n");
 #endif
-    SSL_add_ssl_module();
     /*
      * We ignore an error return here. Not much we can do - but not that bad
      * either. We can still safely continue.
@@ -195,11 +203,19 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
         return 0;
     }
 
-    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
+    /*
+     * We must load the SSL conf module before we init libcrypto, but we need
+     * to initialise libcrypto before we do any other libssl initialisation to
+     * ensure we have loaded any engines specified by the configuration.
+     */
+    if (!RUN_ONCE(&ssl_confmod, ossl_init_ssl_confmod))
         return 0;
 
     if (!OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
                              | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
+        return 0;
+
+    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
