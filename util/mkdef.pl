@@ -241,6 +241,7 @@ my $crypto ="include/internal/dso.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
 $crypto.=" include/internal/err.h";
+$crypto.=" include/internal/sslconf.h";
 foreach my $f ( glob(catfile($config{sourcedir},'include/openssl/*.h')) ) {
     my $fn = "include/openssl/" . lc(basename($f));
     $crypto .= " $fn" if !defined $skipthese{$fn};
