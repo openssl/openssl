@@ -4234,3 +4234,6 @@ CRYPTO_secure_clear_free                4315	1_1_0g	EXIST::FUNCTION:
 EVP_PKEY_set1_engine                    4347	1_1_0g	EXIST::FUNCTION:ENGINE
 OCSP_resp_get0_signer                   4374	1_1_0h	EXIST::FUNCTION:OCSP
 X509_get0_authority_key_id              4448	1_1_0h	EXIST::FUNCTION:
+conf_ssl_name_find                      4469	1_1_0i	EXIST::FUNCTION:
+conf_ssl_get_cmd                        4470	1_1_0i	EXIST::FUNCTION:
+conf_ssl_get                            4471	1_1_0i	EXIST::FUNCTION:
