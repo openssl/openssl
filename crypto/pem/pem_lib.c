@@ -611,7 +611,6 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
     int reason = ERR_R_BUF_LIB;
     int retval = 0;
-    int bufsize = 0;
 
     if (ctx == NULL) {
         reason = ERR_R_MALLOC_FAILURE;
@@ -632,8 +631,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
             goto err;
     }
 
-    bufsize = PEM_BUFSIZE * 8;
-    buf = OPENSSL_malloc(bufsize);
+    buf = OPENSSL_malloc(PEM_BUFSIZE * 8);
     if (buf == NULL) {
         reason = ERR_R_MALLOC_FAILURE;
         goto err;
@@ -658,7 +656,6 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
         (BIO_write(bp, "-----\n", 6) != 6))
         goto err;
     retval = i + outl;
-    /* Fallthrough */
 
  err:
     if (retval == 0)
