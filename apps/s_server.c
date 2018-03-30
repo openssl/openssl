@@ -725,6 +725,7 @@ static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE,
+    OPT_PORTFILE, OPT_RMPORTFILE,
     OPT_4, OPT_6, OPT_ACCEPT, OPT_PORT, OPT_UNIX, OPT_UNLINK, OPT_NACCEPT,
     OPT_VERIFY, OPT_NAMEOPT, OPT_UPPER_V_VERIFY, OPT_CONTEXT, OPT_CERT, OPT_CRL,
     OPT_CRL_DOWNLOAD, OPT_SERVERINFO, OPT_CERTFORM, OPT_KEY, OPT_KEYFORM,
@@ -768,6 +769,8 @@ const OPTIONS s_server_options[] = {
 #ifdef AF_UNIX
     {"unlink", OPT_UNLINK, '-', "For -unix, unlink existing socket first"},
 #endif
+    {"portfile", OPT_PORTFILE, '>', "A file where the port number is written"},
+    {"rmportfile", OPT_RMPORTFILE, '-', "Remove the port file on termination"},
     {"context", OPT_CONTEXT, 's', "Set session ID context"},
     {"verify", OPT_VERIFY, 'n', "Turn on peer certificate verification"},
     {"Verify", OPT_UPPER_V_VERIFY, 'n',
@@ -996,6 +999,8 @@ int s_server_main(int argc, char *argv[])
     int state = 0, crl_format = FORMAT_PEM, crl_download = 0;
     char *host = NULL;
     char *port = BUF_strdup(PORT);
+    char *portfile = NULL;
+    int rmportfile = 0;
     unsigned char *context = NULL;
     OPTION_CHOICE o;
     EVP_PKEY *s_key2 = NULL;
@@ -1135,6 +1140,12 @@ int s_server_main(int argc, char *argv[])
                            port);
                 goto end;
             }
+            break;
+        case OPT_PORTFILE:
+            portfile = opt_arg();
+            break;
+        case OPT_RMPORTFILE:
+            rmportfile = 1;
             break;
 #ifdef AF_UNIX
         case OPT_UNIX:
@@ -2108,8 +2119,11 @@ int s_server_main(int argc, char *argv[])
         && unlink_unix_path)
         unlink(host);
 #endif
-    do_server(&accept_socket, host, port, socket_family, socket_type, protocol,
+    do_server(&accept_socket, host, port, portfile,
+              socket_family, socket_type, protocol,
               server_cb, context, naccept);
+    if (rmportfile && portfile != NULL)
+        remove(portfile);
     print_stats(bio_s_out, ctx);
     ret = 0;
  end:
