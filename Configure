@@ -1476,7 +1476,6 @@ if ($strict_warnings)
 
 	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
-	$gcc_devteam_warn .= " -Wmisleading-indentation" if $gccver >= 6;
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		push @{$config{cflags}}, $wopt
