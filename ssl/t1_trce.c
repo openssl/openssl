@@ -184,6 +184,8 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x006B, "TLS_DHE_RSA_WITH_AES_256_CBC_SHA256"},
     {0x006C, "TLS_DH_anon_WITH_AES_128_CBC_SHA256"},
     {0x006D, "TLS_DH_anon_WITH_AES_256_CBC_SHA256"},
+    {0x0081, "TLS_GOSTR341001_WITH_28147_CNT_IMIT"},
+    {0x0083, "TLS_GOSTR341001_WITH_NULL_GOSTR3411"},
     {0x0084, "TLS_RSA_WITH_CAMELLIA_256_CBC_SHA"},
     {0x0085, "TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA"},
     {0x0086, "TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA"},
@@ -441,6 +443,8 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x1305, "TLS_AES_128_CCM_8_SHA256"},
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
+    {0xFF85, "GOST2012-GOST8912-GOST8912"},
+    {0xFF87, "GOST2012-NULL-GOST12"},
 };
 
 /* Compression methods */
