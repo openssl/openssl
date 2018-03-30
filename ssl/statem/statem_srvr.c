@@ -3233,8 +3233,7 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
     const unsigned char *start;
     size_t outlen = 32, inlen;
     unsigned long alg_a;
-    int Ttag, Tclass;
-    long Tlen;
+    const unsigned char *b;
     size_t sess_key_len;
     const unsigned char *data;
     int ret = 0;
@@ -3285,16 +3284,38 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    /* TODO(size_t): Convert this function */
-    if (ASN1_get_object((const unsigned char **)&data, &Tlen, &Ttag,
-                        &Tclass, (long)sess_key_len) != V_ASN1_CONSTRUCTED
-        || Ttag != V_ASN1_SEQUENCE || Tclass != V_ASN1_UNIVERSAL) {
+    /* Read the session object; first the ASN1 header... */
+    if (!PACKET_get_bytes(pkt, &b, 1)
+            || !(*b == (V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED))
+            || !PACKET_get_bytes(pkt, &b, 1)
+            || !(*b == 0x81 || *b < 0x80)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
-    start = data;
-    inlen = Tlen;
+    /* ... now get the size... */
+    if (*b < 0x80) {
+        if (!PACKET_get_bytes(pkt, &b, 1)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                     SSL_R_DECRYPTION_FAILED);
+            goto err;
+        }
+    } else {
+        if (!PACKET_get_bytes(pkt, &b, 1)
+                || !PACKET_get_bytes(pkt, &b, 1)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                     SSL_R_DECRYPTION_FAILED);
+            goto err;
+        }
+    }
+    inlen = *b;
+    /* ... now get the data part. */
+    if (!PACKET_get_bytes(pkt, &start, inlen)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
+    }
+
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
                          inlen) <= 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
