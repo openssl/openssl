@@ -241,7 +241,7 @@ sub start
     open PORT, $self->{server_port_file};
     my $line = <PORT>;
     $line =~ s/\R$//;                    # Better chomp
-    ($self->{server_addr}, $self->{server_port}) = $line =~ /^(.*):(\d+)$/;
+    ($self->{server_port}) = $line =~ /^:(\d+)$/;
     close PORT;
     print STDERR "Server responds on ",
         $self->{server_addr}, ":", $self->{server_port}, "\n";
