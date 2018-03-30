@@ -36,6 +36,7 @@ static const ERR_STRING_DATA CONF_str_functs[] = {
     {ERR_PACK(ERR_LIB_CONF, CONF_F_NCONF_LOAD_FP, 0), "NCONF_load_fp"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_NCONF_NEW, 0), "NCONF_new"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_PROCESS_INCLUDE, 0), "process_include"},
+    {ERR_PACK(ERR_LIB_CONF, CONF_F_SSL_MODULE_INIT, 0), "ssl_module_init"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_STR_COPY, 0), "str_copy"},
     {0, NULL}
 };
@@ -61,6 +62,13 @@ static const ERR_STRING_DATA CONF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_NO_VALUE), "no value"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_RECURSIVE_DIRECTORY_INCLUDE),
     "recursive directory include"},
+    {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_SSL_COMMAND_SECTION_EMPTY),
+    "ssl command section empty"},
+    {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_SSL_COMMAND_SECTION_NOT_FOUND),
+    "ssl command section not found"},
+    {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_SSL_SECTION_EMPTY), "ssl section empty"},
+    {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_SSL_SECTION_NOT_FOUND),
+    "ssl section not found"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_UNABLE_TO_CREATE_NEW_SECTION),
     "unable to create new section"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_UNKNOWN_MODULE_NAME),

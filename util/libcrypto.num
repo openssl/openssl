@@ -4524,3 +4524,6 @@ SM2_do_verify                           4465	1_1_1	EXIST::FUNCTION:SM2
 SM2_sign                                4466	1_1_1	EXIST::FUNCTION:SM2
 ERR_load_SM2_strings                    4467	1_1_1	EXIST::FUNCTION:SM2
 SM2_plaintext_size                      4468	1_1_1	EXIST::FUNCTION:SM2
+conf_ssl_name_find                      4469	1_1_0i	EXIST::FUNCTION:
+conf_ssl_get_cmd                        4470	1_1_0i	EXIST::FUNCTION:
+conf_ssl_get                            4471	1_1_0i	EXIST::FUNCTION:
