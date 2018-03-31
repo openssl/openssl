@@ -226,7 +226,7 @@ int asn1parse_main(int argc, char **argv)
             ASN1_TYPE *atmp;
             int typ;
             j = atoi(sk_OPENSSL_STRING_value(osk, i));
-            if (j == 0) {
+            if (j <= 0 || j >= tmplen) {
                 BIO_printf(bio_err, "'%s' is an invalid number\n",
                            sk_OPENSSL_STRING_value(osk, i));
                 continue;
