@@ -87,6 +87,9 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
     if (inf && !(ret & V_ASN1_CONSTRUCTED))
         goto err;
 
+    //This is missing a cast, causing an attacker to be able to do an integer overflow
+   //Example: openssl asn1parse -in apticket.der -inform DER -strparse 414141414141
+  //Influence: rip will point 13 addresses ahead
     if (*plength > (omax - (p - *pp))) {
         ASN1err(ASN1_F_ASN1_GET_OBJECT, ASN1_R_TOO_LONG);
         /*
