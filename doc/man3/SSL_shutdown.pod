@@ -45,7 +45,7 @@ alert, SSL_shutdown() will only send the alert and then set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
 be kept in the cache).
 SSL_shutdown() will then return with 0.
-if a unidirectional shutdown is enough (the underlying connection shall be
+If a unidirectional shutdown is enough (the underlying connection shall be
 closed anyway), this first call to SSL_shutdown() is sufficient.
 
 In order to complete the bidirectional shutdown handshake, the peer needs
