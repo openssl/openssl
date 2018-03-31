@@ -35,8 +35,9 @@ performed, so that the peers stay synchronized.
 SSL_shutdown() supports both uni- and bidirectional shutdown by its 2 step
 behaviour.
 
-SSL_shutdown() only closes the communication in 1 direction.
+SSL_shutdown() only closes the write direction.
 It is not possible to call SSL_write() after calling SSL_shutdown().
+The read direction is closed by the peer.
 
 =head2 First to close the connection
 
@@ -57,7 +58,7 @@ SSL_shutdown() will return 1 when it has been received.
 The peer is still allowed to send data after receiving the "close notify"
 event.
 If the peer did send data it needs to be processed by calling SSL_read()
-before calling SSL_shutdown().
+before calling SSL_shutdown() a second time.
 SSL_read() will indicate the end of the peer data by returning <= 0
 and SSL_get_error() returning SSL_ERROR_ZERO_RETURN.
 
@@ -122,7 +123,9 @@ and the peer's "close notify" alert was received.
 
 The shutdown was not successful.
 Call L<SSL_get_error(3)> with the return value B<ret> to find out the reason.
-It can occur if action is need to continue the operation for non-blocking BIOs.
+It can occur if action is needed to continue the operation for non-blocking BIOs.
+
+It can also occur when not all data was read using SSL_read().
 
 =back
 
