@@ -901,7 +901,7 @@ static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t out
  * Test that instantiating works when OS entropy is not available and that
  * RAND_add() is enough to reseed it.
  */
-static int test_rand_add()
+static int test_rand_add(void)
 {
     RAND_DRBG *master = RAND_DRBG_get0_master();
     RAND_DRBG_get_entropy_fn old_get_entropy = master->get_entropy;
