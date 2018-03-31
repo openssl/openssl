@@ -347,8 +347,8 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     if (drbg->min_noncelen > 0 && drbg->get_nonce != NULL) {
-            noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
-                                       drbg->min_noncelen, drbg->max_noncelen);
+        noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
+                                   drbg->min_noncelen, drbg->max_noncelen);
         if (noncelen < drbg->min_noncelen || noncelen > drbg->max_noncelen) {
             RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
             goto end;
