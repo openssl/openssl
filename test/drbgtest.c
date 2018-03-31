@@ -869,7 +869,7 @@ static int test_multi_thread(void)
  * This function is only returns the entropy already added with RAND_add(),
  * and does not get entropy from the OS.
  */
-static size_t rand_add_entropy(RAND_DRBG *drbg,
+static size_t get_pool_entropy(RAND_DRBG *drbg,
                                unsigned char **pout,
                                int entropy, size_t min_len, size_t max_len,
                                int prediction_resistance)
@@ -885,7 +885,7 @@ static size_t rand_add_entropy(RAND_DRBG *drbg,
     return drbg->pool->len;
 }
 
-static void rand_add_clean_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
+static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
     OPENSSL_free(drbg->pool);
@@ -904,8 +904,8 @@ static int test_rand_add()
     int rv = 0;
     unsigned char rand_add_buf[256];
 
-    master->get_entropy = rand_add_entropy;
-    master->cleanup_entropy = rand_add_clean_entropy;
+    master->get_entropy = get_pool_entropy;
+    master->cleanup_entropy = cleanup_pool_entropy;
     master->reseed_counter++;
     RAND_DRBG_uninstantiate(master);
     memset(rand_add_buf, 0xCD, sizeof(rand_add_buf));
