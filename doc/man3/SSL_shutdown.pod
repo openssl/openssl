@@ -61,6 +61,7 @@ If the peer did send data it needs to be processed by calling SSL_read()
 before calling SSL_shutdown() a second time.
 SSL_read() will indicate the end of the peer data by returning <= 0
 and SSL_get_error() returning SSL_ERROR_ZERO_RETURN.
+It is recommended to call SSL_read() between SSL_shutdown() calls.
 
 =head2 Peer closes the connection
 
