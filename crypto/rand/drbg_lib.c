@@ -266,6 +266,9 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 {
     unsigned char *nonce = NULL, *entropy = NULL;
     size_t noncelen = 0, entropylen = 0;
+    size_t min_entropy = drbg->strength;
+    size_t min_entropylen = drbg->min_entropylen;
+    size_t max_entropylen = drbg->max_entropylen;
 
     if (perslen > drbg->max_perslen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
@@ -288,22 +291,33 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     drbg->state = DRBG_ERROR;
+
+    /*
+     * NIST SP800-90Ar1 section 9.1 says you can combine getting the entropy
+     * and nonce in 1 call by increasing the entropy with 50% and increasing
+     * the minimum length to accomadate the length of the nonce.
+     * We do this in case a nonce is require and get_nonce is NULL.
+     */
+    if (drbg->min_noncelen > 0 && drbg->get_nonce == NULL) {
+        min_entropy += drbg->strength / 2;
+        min_entropylen += drbg->min_noncelen;
+        max_entropylen += drbg->max_noncelen;
+    }
+
     if (drbg->get_entropy != NULL)
-        entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                       drbg->min_entropylen,
-                                       drbg->max_entropylen, 0);
-    if (entropylen < drbg->min_entropylen
-        || entropylen > drbg->max_entropylen) {
+        entropylen = drbg->get_entropy(drbg, &entropy, min_entropy,
+                                       min_entropylen, max_entropylen, 0);
+    if (entropylen < min_entropylen
+        || entropylen > max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
-    if (drbg->max_noncelen > 0 && drbg->get_nonce != NULL) {
+    if (drbg->min_noncelen > 0 && drbg->get_nonce != NULL) {
         noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
                                    drbg->min_noncelen, drbg->max_noncelen);
         if (noncelen < drbg->min_noncelen || noncelen > drbg->max_noncelen) {
-            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
-                    RAND_R_ERROR_RETRIEVING_NONCE);
+            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
             goto end;
         }
     }
