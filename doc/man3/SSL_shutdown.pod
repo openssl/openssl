@@ -79,7 +79,6 @@ It is recommended to do a bidirectional shutdown by checking the return value
 of SSL_shutdown() and call it again until it returns 1 or a fatal error.
 
 The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
-
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
 handshake step has been finished or an error occurred.
 
