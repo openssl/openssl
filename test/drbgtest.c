@@ -866,8 +866,10 @@ static int test_multi_thread(void)
 #endif
 
 /*
- * This function is only returns the entropy already added with RAND_add(),
+ * This function only returns the entropy already added with RAND_add(),
  * and does not get entropy from the OS.
+ *
+ * Returns 0 on failure and the size of the buffer on success.
  */
 static size_t get_pool_entropy(RAND_DRBG *drbg,
                                unsigned char **pout,
@@ -885,6 +887,9 @@ static size_t get_pool_entropy(RAND_DRBG *drbg,
     return drbg->pool->len;
 }
 
+/*
+ * Clean up the entropy that get_pool_entropy() returned.
+ */
 static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
