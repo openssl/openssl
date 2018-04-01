@@ -113,13 +113,13 @@ int asn1parse_main(int argc, char **argv)
             offset = strtol(opt_arg(), NULL, 0);
             break;
         case OPT_LENGTH:
-            length = atoi(opt_arg());
+            length = strtol(opt_arg(), NULL, 0);
             break;
         case OPT_DUMP:
             dump = -1;
             break;
         case OPT_DLIMIT:
-            dump = atoi(opt_arg());
+            dump = strtol(opt_arg(), NULL, 0);
             break;
         case OPT_STRPARSE:
             sk_OPENSSL_STRING_push(osk, opt_arg());
@@ -225,7 +225,7 @@ int asn1parse_main(int argc, char **argv)
         for (i = 0; i < sk_OPENSSL_STRING_num(osk); i++) {
             ASN1_TYPE *atmp;
             int typ;
-            j = atoi(sk_OPENSSL_STRING_value(osk, i));
+            j = strtol(sk_OPENSSL_STRING_value(osk, i), NULL, 0);
             if (j <= 0 || j >= tmplen) {
                 BIO_printf(bio_err, "'%s' is out of range\n",
                            sk_OPENSSL_STRING_value(osk, i));
