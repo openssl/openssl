@@ -124,7 +124,8 @@ and the peer's "close notify" alert was received.
 
 The shutdown was not successful.
 Call L<SSL_get_error(3)> with the return value B<ret> to find out the reason.
-It can occur if action is needed to continue the operation for non-blocking BIOs.
+It can occur if an action is needed to continue the operation for non-blocking
+BIOs.
 
 It can also occur when not all data was read using SSL_read().
 
