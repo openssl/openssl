@@ -419,6 +419,7 @@ void evp_app_cleanup_int(void);
 /* Pulling defines out of C source files */
 
 #define EVP_RC4_KEY_SIZE 16
+#define EVP_CAESAR_KEY_SIZE 1
 #ifndef TLS1_1_VERSION
 # define TLS1_1_VERSION   0x0302
 #endif

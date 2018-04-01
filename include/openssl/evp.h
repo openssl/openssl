@@ -726,6 +726,9 @@ const EVP_MD *EVP_whirlpool(void);
 const EVP_MD *EVP_sm3(void);
 # endif
 const EVP_CIPHER *EVP_enc_null(void); /* does nothing :-) */
+# ifndef OPENSSL_NO_CAESAR
+const EVP_CIPHER *EVP_caesar_ecb(void);
+# endif
 # ifndef OPENSSL_NO_DES
 const EVP_CIPHER *EVP_des_ecb(void);
 const EVP_CIPHER *EVP_des_ede(void);
