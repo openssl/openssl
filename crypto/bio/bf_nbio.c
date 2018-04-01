@@ -89,7 +89,7 @@ static int nbiof_read(BIO *b, char *out, int outl)
         return 0;
 
     BIO_clear_retry_flags(b);
-    if (RAND_bytes(&n, 1) <= 0)
+    if (RAND_priv_bytes(&n, 1) <= 0)
         return -1;
     num = (n & 0x07);
 
@@ -126,7 +126,7 @@ static int nbiof_write(BIO *b, const char *in, int inl)
         num = nt->lwn;
         nt->lwn = 0;
     } else {
-        if (RAND_bytes(&n, 1) <= 0)
+        if (RAND_priv_bytes(&n, 1) <= 0)
             return -1;
         num = (n & 7);
     }
