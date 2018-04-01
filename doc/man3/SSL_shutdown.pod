@@ -109,6 +109,11 @@ at the protocol level or a connection failure occurred. It can also occur if
 action is need to continue the operation for non-blocking BIOs.
 Call L<SSL_get_error(3)> with the return value B<ret>
 to find out the reason.
+An error of SSL_ERROR_SYSCALL can also happen in a bidirectional shutdown when
+the peer sends more data instead of the expected "close notify" shutdown alert.
+To avoid that issue one could call L<SSL_read(3)> after the first successful
+SSL_shutdown() until L<SSL_read(3)> returns 0 and <SSL_get_error(3)> returns
+SSL_ERROR_ZERO_RETURN.
 
 =back
 
