@@ -99,7 +99,6 @@ EVP_enc_null
 
  int EVP_CIPHER_nid(const EVP_CIPHER *e);
  int EVP_CIPHER_block_size(const EVP_CIPHER *e);
- int EVP_CIPHER_key_length(const EVP_CIPHER *e)
  int EVP_CIPHER_key_length(const EVP_CIPHER *e);
  int EVP_CIPHER_iv_length(const EVP_CIPHER *e);
  unsigned long EVP_CIPHER_flags(const EVP_CIPHER *e);
