@@ -258,14 +258,14 @@ int asn1parse_main(int argc, char **argv)
         num = tmplen;
     }
 
-    if (offset >= num) {
+    if (offset < 0 || offset >= num) {
         BIO_printf(bio_err, "Error: offset too large\n");
         goto end;
     }
 
     num -= offset;
 
-    if ((length == 0) || ((long)length > num))
+    if (length == 0 || length > (unsigned int)num)
         length = (unsigned int)num;
     if (derout != NULL) {
         if (BIO_write(derout, str + offset, length) != (int)length) {
