@@ -88,21 +88,26 @@ print <<"EOF";
 #define KEYTYPES(c)       ((const unsigned short *)((c)->meth_data))
 
 #ifndef CHARSET_EBCDIC
-# define CVT(a) ((a) & 0x7F)
+# define CVT(a) ((unsigned char)(a) <= 127 ? (a) : 127)
 #else
-# define CVT(a) os_toascci[(a) & 0x7F]
+# define CVT(a) os_toascii[(unsigned char)(a)]
 #endif
 
-#define IS_COMMENT(c,a)     (KEYTYPES(c)[CVT(a)] & CONF_COMMENT)
-#define IS_FCOMMENT(c,a)    (KEYTYPES(c)[CVT(a)] & CONF_FCOMMENT)
-#define IS_EOF(c,a)         (KEYTYPES(c)[CVT(a)] & CONF_EOF)
-#define IS_ESC(c,a)         (KEYTYPES(c)[CVT(a)] & CONF_ESC)
-#define IS_NUMBER(c,a)      (KEYTYPES(c)[CVT(a)] & CONF_NUMBER)
-#define IS_WS(c,a)          (KEYTYPES(c)[CVT(a)] & CONF_WS)
-#define IS_ALNUM(c,a)       (KEYTYPES(c)[CVT(a)] & CONF_ALNUM)
-#define IS_ALNUM_PUNCT(c,a) (KEYTYPES(c)[CVT(a)] & CONF_ALNUM_PUNCT)
-#define IS_QUOTE(c,a)       (KEYTYPES(c)[CVT(a)] & CONF_QUOTE)
-#define IS_DQUOTE(c,a)      (KEYTYPES(c)[CVT(a)] & CONF_DQUOTE)
+/*
+ * Attention: because the macro argument 'a' is evaluated twice in CVT(a),
+ * it is not allowed pass 'a' arguments with side effects to IS_*(c,a)
+ * like for example IS_*(c, *p++).
+ */
+#define IS_COMMENT(c,a)     ((KEYTYPES(c)[CVT(a)] & CONF_COMMENT) ? 1 : 0)
+#define IS_FCOMMENT(c,a)    ((KEYTYPES(c)[CVT(a)] & CONF_FCOMMENT) ? 1 : 0)
+#define IS_EOF(c,a)         ((KEYTYPES(c)[CVT(a)] & CONF_EOF) ? 1 : 0)
+#define IS_ESC(c,a)         ((KEYTYPES(c)[CVT(a)] & CONF_ESC) ? 1 : 0)
+#define IS_NUMBER(c,a)      ((KEYTYPES(c)[CVT(a)] & CONF_NUMBER) ? 1 : 0)
+#define IS_WS(c,a)          ((KEYTYPES(c)[CVT(a)] & CONF_WS) ? 1 : 0)
+#define IS_ALNUM(c,a)       ((KEYTYPES(c)[CVT(a)] & CONF_ALNUM) ? 1 : 0)
+#define IS_ALNUM_PUNCT(c,a) ((KEYTYPES(c)[CVT(a)] & CONF_ALNUM_PUNCT) ? 1 : 0)
+#define IS_QUOTE(c,a)       ((KEYTYPES(c)[CVT(a)] & CONF_QUOTE) ? 1 : 0)
+#define IS_DQUOTE(c,a)      ((KEYTYPES(c)[CVT(a)] & CONF_DQUOTE) ? 1 : 0)
 
 EOF
 
