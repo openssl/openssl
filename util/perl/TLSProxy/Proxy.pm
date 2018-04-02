@@ -301,6 +301,9 @@ sub clientstart
     }
 
     # Wait for incoming connection from client
+    my $fdset = IO::Select->new($self->{proxy_sock});
+    $fdset->can_read(1) or die "client didn't try to connect\n";
+
     my $client_sock;
     if(!($client_sock = $self->{proxy_sock}->accept())) {
         warn "Failed accepting incoming connection: $!\n";
@@ -310,10 +313,10 @@ sub clientstart
     print "Connection opened\n";
 
     my $server_sock = $self->{server_sock};
-    my $fdset = IO::Select->new($server_sock, $client_sock);
     my $indata;
 
     #Wait for either the server socket or the client socket to become readable
+    $fdset = IO::Select->new($server_sock, $client_sock);
     my @ready;
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
