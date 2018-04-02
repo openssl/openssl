@@ -28,7 +28,7 @@
 #define KEYTYPES(c)       ((const unsigned short *)((c)->meth_data))
 
 #ifndef CHARSET_EBCDIC
-# define CVT(a) ((unsigned char)(a) <= 127 ? (a) : 127)
+# define CVT(a) ((unsigned char)(a) <= 127 ? (unsigned char)(a) : 127)
 #else
 # define CVT(a) os_toascii[(unsigned char)(a)]
 #endif
