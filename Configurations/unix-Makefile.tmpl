@@ -797,7 +797,7 @@ tar:
 	mkdir -p $$TMPDIR/$$DISTDIR; \
 	(cd $(SRCDIR); \
 	 excl_re=`git submodule status | sed -e 's/^.//' | cut -d' ' -f2`; \
-	 excl_re="^(fuzz/corpora|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
+	 excl_re="^(fuzz/corpora|Configurations/.*\.norelease\.conf|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
 	 echo "$$excl_re"; \
 	 git ls-tree -r --name-only --full-tree HEAD \
 	 | egrep -v "$$excl_re" \
