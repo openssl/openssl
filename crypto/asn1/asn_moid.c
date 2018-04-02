@@ -92,9 +92,10 @@ static int do_create(const char *value, const char *name)
             p--;
         }
         p++;
-        lntmp = OPENSSL_malloc((p - ln) + 1);
-        if (lntmp == NULL)
+        if ((lntmp = OPENSSL_malloc((p - ln) + 1)) == NULL) {
+            ASN1err(ASN1_F_DO_CREATE, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
         memcpy(lntmp, ln, p - ln);
         lntmp[p - ln] = 0;
         oid = OBJ_nid2obj(nid);

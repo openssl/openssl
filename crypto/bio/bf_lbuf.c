@@ -59,11 +59,13 @@ static int linebuffer_new(BIO *bi)
 {
     BIO_LINEBUFFER_CTX *ctx;
 
-    ctx = OPENSSL_malloc(sizeof(*ctx));
-    if (ctx == NULL)
+    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
+        BIOerr(BIO_F_LINEBUFFER_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     ctx->obuf = OPENSSL_malloc(DEFAULT_LINEBUFFER_SIZE);
     if (ctx->obuf == NULL) {
+        BIOerr(BIO_F_LINEBUFFER_NEW, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ctx);
         return 0;
     }

@@ -213,9 +213,10 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     if (src->seed) {
         OPENSSL_free(dest->seed);
-        dest->seed = OPENSSL_malloc(src->seed_len);
-        if (dest->seed == NULL)
+        if ((dest->seed = OPENSSL_malloc(src->seed_len)) == NULL) {
+            ECerr(EC_F_EC_GROUP_COPY, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
         if (!memcpy(dest->seed, src->seed, src->seed_len))
             return 0;
         dest->seed_len = src->seed_len;

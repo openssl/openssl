@@ -29,6 +29,7 @@ int ERR_load_PEM_strings(void);
 # define PEM_F_DO_B2I                                     132
 # define PEM_F_DO_B2I_BIO                                 133
 # define PEM_F_DO_BLOB_HEADER                             134
+# define PEM_F_DO_I2B                                     146
 # define PEM_F_DO_PK8PKEY                                 126
 # define PEM_F_DO_PK8PKEY_FP                              125
 # define PEM_F_DO_PVK_BODY                                135

@@ -342,9 +342,11 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
      * ids < 32
      */
     unsigned long dup_list = 0;
-    glist = OPENSSL_malloc(ngroups * sizeof(*glist));
-    if (glist == NULL)
+
+    if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0; i < ngroups; i++) {
         unsigned long idmask;
         uint16_t id;
@@ -1600,9 +1602,10 @@ static int tls1_set_shared_sigalgs(SSL *s)
     }
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
-        salgs = OPENSSL_malloc(nmatch * sizeof(*salgs));
-        if (salgs == NULL)
+        if ((salgs = OPENSSL_malloc(nmatch * sizeof(*salgs))) == NULL) {
+            SSLerr(SSL_F_TLS1_SET_SHARED_SIGALGS, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
     } else {
         salgs = NULL;
@@ -1626,9 +1629,10 @@ int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
 
     size >>= 1;
 
-    buf = OPENSSL_malloc(size * sizeof(*buf));
-    if (buf == NULL)
+    if ((buf = OPENSSL_malloc(size * sizeof(*buf))) == NULL)  {
+        SSLerr(SSL_F_TLS1_SAVE_U16, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
         buf[i] = stmp;
 
@@ -1856,9 +1860,10 @@ int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
 {
     uint16_t *sigalgs;
 
-    sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs));
-    if (sigalgs == NULL)
+    if ((sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs))) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_RAW_SIGALGS, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     memcpy(sigalgs, psigs, salglen * sizeof(*sigalgs));
 
     if (client) {
@@ -1881,9 +1886,10 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 
     if (salglen & 1)
         return 0;
-    sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs));
-    if (sigalgs == NULL)
+    if ((sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs))) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_SIGALGS, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
         size_t j;
         const SIGALG_LOOKUP *curr;

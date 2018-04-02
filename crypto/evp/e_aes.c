@@ -1586,9 +1586,10 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                 if (gctx->iv != iv)
                     OPENSSL_free(gctx->iv);
 
-                gctx->iv = OPENSSL_malloc(len);
-                if (gctx->iv == NULL)
+                if ((gctx->iv = OPENSSL_malloc(len)) == NULL) {
+                    EVPerr(EVP_F_S390X_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
+                }
             }
             /* Add padding. */
             memset(gctx->iv + arg, 0, len - arg - 8);
@@ -1704,9 +1705,10 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         } else {
             len = S390X_gcm_ivpadlen(gctx->ivlen);
 
-            gctx_out->iv = OPENSSL_malloc(len);
-            if (gctx_out->iv == NULL)
+            if ((gctx_out->iv = OPENSSL_malloc(len)) == NULL) {
+                EVPerr(EVP_F_S390X_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
 
             memcpy(gctx_out->iv, gctx->iv, len);
         }
@@ -2826,9 +2828,10 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
                 OPENSSL_free(gctx->iv);
-            gctx->iv = OPENSSL_malloc(arg);
-            if (gctx->iv == NULL)
+            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
+                EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
         }
         gctx->ivlen = arg;
         return 1;
@@ -2930,9 +2933,10 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == EVP_CIPHER_CTX_iv_noconst(c))
                 gctx_out->iv = EVP_CIPHER_CTX_iv_noconst(out);
             else {
-                gctx_out->iv = OPENSSL_malloc(gctx->ivlen);
-                if (gctx_out->iv == NULL)
+                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
+                    EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
+                }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
             }
             return 1;

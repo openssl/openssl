@@ -21,6 +21,7 @@ static const ERR_STRING_DATA CONF_str_functs[] = {
     {ERR_PACK(ERR_LIB_CONF, CONF_F_DEF_LOAD, 0), "def_load"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_DEF_LOAD_BIO, 0), "def_load_bio"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_GET_NEXT_FILE, 0), "get_next_file"},
+    {ERR_PACK(ERR_LIB_CONF, CONF_F_MODULE_ADD, 0), "module_add"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_MODULE_INIT, 0), "module_init"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_MODULE_LOAD_DSO, 0), "module_load_dso"},
     {ERR_PACK(ERR_LIB_CONF, CONF_F_MODULE_RUN, 0), "module_run"},

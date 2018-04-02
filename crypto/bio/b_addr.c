@@ -565,9 +565,10 @@ static int addrinfo_wrap(int family, int socktype,
                          unsigned short port,
                          BIO_ADDRINFO **bai)
 {
-    *bai = OPENSSL_zalloc(sizeof(**bai));
-    if (*bai == NULL)
+    if ((*bai = OPENSSL_zalloc(sizeof(**bai))) == NULL) {
+        BIOerr(BIO_F_ADDRINFO_WRAP, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     (*bai)->bai_family = family;
     (*bai)->bai_socktype = socktype;

@@ -15,6 +15,7 @@
 
 static const ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_PACK(ERR_LIB_BIO, BIO_F_ACPT_STATE, 0), "acpt_state"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_ADDRINFO_WRAP, 0), "addrinfo_wrap"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_ADDR_STRINGS, 0), "addr_strings"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT, 0), "BIO_accept"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT_EX, 0), "BIO_accept_ex"},
@@ -55,11 +56,14 @@ static const ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BUFFER_CTRL, 0), "buffer_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_CONN_CTRL, 0), "conn_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_CONN_STATE, 0), "conn_state"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_DGRAM_SCTP_NEW, 0), "dgram_sctp_new"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_DGRAM_SCTP_READ, 0), "dgram_sctp_read"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_DGRAM_SCTP_WRITE, 0), "dgram_sctp_write"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_DOAPR_OUTCH, 0), "doapr_outch"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_FILE_CTRL, 0), "file_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_FILE_READ, 0), "file_read"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_LINEBUFFER_CTRL, 0), "linebuffer_ctrl"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_LINEBUFFER_NEW, 0), "linebuffer_new"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_MEM_WRITE, 0), "mem_write"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_SSL_NEW, 0), "SSL_new"},
     {0, NULL}

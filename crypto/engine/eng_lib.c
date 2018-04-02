@@ -126,9 +126,12 @@ static int int_cleanup_check(int create)
 
 static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 {
-    ENGINE_CLEANUP_ITEM *item = OPENSSL_malloc(sizeof(*item));
-    if (item == NULL)
+    ENGINE_CLEANUP_ITEM *item;
+    
+    if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
+        ENGINEerr(ENGINE_F_INT_CLEANUP_ITEM, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
     item->cb = cb;
     return item;
 }
@@ -136,6 +139,7 @@ static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 void engine_cleanup_add_first(ENGINE_CLEANUP_CB *cb)
 {
     ENGINE_CLEANUP_ITEM *item;
+
     if (!int_cleanup_check(1))
         return;
     item = int_cleanup_item(cb);

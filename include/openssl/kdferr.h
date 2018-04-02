@@ -21,6 +21,7 @@ int ERR_load_KDF_strings(void);
  */
 # define KDF_F_PKEY_HKDF_CTRL_STR                         103
 # define KDF_F_PKEY_HKDF_DERIVE                           102
+# define KDF_F_PKEY_HKDF_INIT                             108
 # define KDF_F_PKEY_SCRYPT_CTRL_STR                       104
 # define KDF_F_PKEY_SCRYPT_CTRL_UINT64                    105
 # define KDF_F_PKEY_SCRYPT_DERIVE                         109
@@ -28,6 +29,8 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_PKEY_SCRYPT_SET_MEMBUF                     107
 # define KDF_F_PKEY_TLS1_PRF_CTRL_STR                     100
 # define KDF_F_PKEY_TLS1_PRF_DERIVE                       101
+# define KDF_F_PKEY_TLS1_PRF_INIT                         110
+# define KDF_F_TLS1_PRF_ALG                               111
 
 /*
  * KDF reason codes.

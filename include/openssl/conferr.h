@@ -26,6 +26,7 @@ int ERR_load_CONF_strings(void);
 # define CONF_F_DEF_LOAD                                  120
 # define CONF_F_DEF_LOAD_BIO                              121
 # define CONF_F_GET_NEXT_FILE                             107
+# define CONF_F_MODULE_ADD                                122
 # define CONF_F_MODULE_INIT                               115
 # define CONF_F_MODULE_LOAD_DSO                           117
 # define CONF_F_MODULE_RUN                                118

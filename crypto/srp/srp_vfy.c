@@ -19,6 +19,7 @@
 # include <openssl/buffer.h>
 # include <openssl/rand.h>
 # include <openssl/txt_db.h>
+# include <openssl/err.h>
 
 # define SRP_RANDOM_SALT_LEN 20
 # define MAX_LEN 2500
@@ -58,9 +59,12 @@ void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
 
 static SRP_user_pwd *SRP_user_pwd_new(void)
 {
-    SRP_user_pwd *ret = OPENSSL_malloc(sizeof(*ret));
-    if (ret == NULL)
+    SRP_user_pwd *ret;
+    
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+        /* SRPerr(SRP_F_SRP_USER_PWD_NEW, ERR_R_MALLOC_FAILURE); */
         return NULL;
+    }
     ret->N = NULL;
     ret->g = NULL;
     ret->s = NULL;

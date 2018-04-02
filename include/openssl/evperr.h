@@ -20,19 +20,23 @@ int ERR_load_EVP_strings(void);
  * EVP function codes.
  */
 # define EVP_F_AESNI_INIT_KEY                             165
+# define EVP_F_AES_GCM_CTRL                               196
 # define EVP_F_AES_INIT_KEY                               133
 # define EVP_F_AES_OCB_CIPHER                             169
 # define EVP_F_AES_T4_INIT_KEY                            178
 # define EVP_F_AES_WRAP_CIPHER                            170
 # define EVP_F_ALG_MODULE_INIT                            177
 # define EVP_F_ARIA_CCM_INIT_KEY                          175
+# define EVP_F_ARIA_GCM_CTRL                              197
 # define EVP_F_ARIA_GCM_INIT_KEY                          176
 # define EVP_F_ARIA_INIT_KEY                              185
+# define EVP_F_B64_NEW                                    198
 # define EVP_F_CAMELLIA_INIT_KEY                          159
 # define EVP_F_CHACHA20_POLY1305_CTRL                     182
 # define EVP_F_CMLL_T4_INIT_KEY                           179
 # define EVP_F_DES_EDE3_WRAP_CIPHER                       171
 # define EVP_F_DO_SIGVER_INIT                             161
+# define EVP_F_ENC_NEW                                    199
 # define EVP_F_EVP_CIPHERINIT_EX                          123
 # define EVP_F_EVP_CIPHER_CTX_COPY                        163
 # define EVP_F_EVP_CIPHER_CTX_CTRL                        124
@@ -97,6 +101,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_SIGNFINAL                              107
 # define EVP_F_EVP_VERIFYFINAL                            108
 # define EVP_F_INT_CTX_NEW                                157
+# define EVP_F_OK_NEW                                     200
 # define EVP_F_PKCS5_PBE_KEYIVGEN                         117
 # define EVP_F_PKCS5_V2_PBE_KEYIVGEN                      118
 # define EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN                   164
@@ -104,6 +109,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_PKEY_SET_TYPE                              158
 # define EVP_F_RC2_MAGIC_TO_METH                          109
 # define EVP_F_RC5_CTRL                                   125
+# define EVP_F_S390X_AES_GCM_CTRL                         201
 # define EVP_F_UPDATE                                     173
 
 /*

@@ -25,6 +25,7 @@ int ERR_load_ASYNC_strings(void);
 # define ASYNC_F_ASYNC_PAUSE_JOB                          103
 # define ASYNC_F_ASYNC_START_FUNC                         104
 # define ASYNC_F_ASYNC_START_JOB                          105
+# define ASYNC_F_ASYNC_WAIT_CTX_SET_WAIT_FD               106
 
 /*
  * ASYNC reason codes.
