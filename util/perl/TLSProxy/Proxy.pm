@@ -41,9 +41,9 @@ sub new
     my $self = {
         #Public read/write
         proxy_addr => "localhost",
-        proxy_port => 4453,
+        proxy_port => 0,
         server_addr => "localhost",
-        server_port => 4443,
+        server_port => 0,
         filter => $filter,
         serverflags => "",
         clientflags => "",
@@ -110,18 +110,17 @@ sub new
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
     my @proxyargs = (
         LocalHost   => $proxaddr,
-        LocalPort   => $self->{proxy_port},
+        LocalPort   => 0,
         Proto       => "tcp",
         Listen      => SOMAXCONN,
        );
-    push @proxyargs, ReuseAddr => 1
-        unless $^O eq "MSWin32";
     $self->{proxy_sock} = $IP_factory->(@proxyargs);
 
     if ($self->{proxy_sock}) {
+        $self->{proxy_port} = $self->{proxy_sock}->sockport();
         print "Proxy started on port ".$self->{proxy_port}."\n";
     } else {
-        warn "Failed creating proxy socket (".$proxaddr.",".$self->{proxy_port}."): $!\n";
+        warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
     }
 
     return bless $self, $class;
@@ -193,31 +192,59 @@ sub start
         return 0;
     }
 
-    $pid = fork();
-    if ($pid == 0) {
-        my $execcmd = $self->execute
-            ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest -accept "
-            .($self->server_port)
-            ." -cert ".$self->cert." -cert2 ".$self->cert
-            ." -naccept ".$self->serverconnects;
-        unless ($self->supports_IPv6) {
-            $execcmd .= " -4";
-        }
-        if ($self->ciphers ne "") {
-            $execcmd .= " -cipher ".$self->ciphers;
-        }
-        if ($self->ciphersuitess ne "") {
-            $execcmd .= " -ciphersuites ".$self->ciphersuitess;
-        }
-        if ($self->serverflags ne "") {
-            $execcmd .= " ".$self->serverflags;
-        }
-        if ($self->debug) {
-            print STDERR "Server command: $execcmd\n";
-        }
-        exec($execcmd);
+    my $execcmd = $self->execute
+        ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
+        ." -accept 0 -cert ".$self->cert." -cert2 ".$self->cert
+        ." -naccept ".$self->serverconnects;
+    unless ($self->supports_IPv6) {
+        $execcmd .= " -4";
     }
-    $self->serverpid($pid);
+    if ($self->ciphers ne "") {
+        $execcmd .= " -cipher ".$self->ciphers;
+    }
+    if ($self->ciphersuitess ne "") {
+        $execcmd .= " -ciphersuites ".$self->ciphersuitess;
+    }
+    if ($self->serverflags ne "") {
+        $execcmd .= " ".$self->serverflags;
+    }
+    if ($self->debug) {
+        print STDERR "Server command: $execcmd\n";
+    }
+
+    open(my $savedin, "<&STDIN");
+
+    # Temporarily replace STDIN so that sink process can inherit it...
+    $pid = open(STDIN, "$execcmd |") or die "Failed to $execcmd: $!\n";
+
+    # Process the output from s_server until we find the ACCEPT line, which
+    # tells us what the accepting address and port are.
+    while (<>) {
+        print;
+        s/\R$//;                # Better chomp
+        next unless (/^ACCEPT\s.*:(\d+)$/);
+        $self->{server_port} = $1;
+        last;
+    }
+
+    # Just make sure everything else is simply printed.
+    # The sub process simply inherits our STD* and will keep consuming
+    # server's output and printing it as long as there is anything there,
+    # out of our way.
+    if (eval { require Win32::Process; 1; }) {
+        Win32::Process::Create(my $h, "$^X", "perl -ne print", 0, 0, ".");
+        $self->serverpid($h->GetProcessID());
+    } else {
+        $pid = fork or exec("$^X -ne print");
+        $self->serverpid($pid);
+    }
+
+    # Change back to original stdin
+    open(STDIN, "<&", $savedin);
+    close($savedin);
+
+    print STDERR "Server responds on ",
+        $self->{server_addr}, ":", $self->{server_port}, "\n";
 
     return $self->clientstart;
 }
@@ -225,41 +252,44 @@ sub start
 sub clientstart
 {
     my ($self) = shift;
-    my $oldstdout;
 
     if ($self->execute) {
-        my $pid = fork();
-        if ($pid == 0) {
-            my $echostr;
-            if ($self->reneg()) {
-                $echostr = "R";
-            } else {
-                $echostr = "test";
-            }
-            my $execcmd = "echo ".$echostr." | ".$self->execute
-                 ." s_client -max_protocol TLSv1.3 -engine ossltest -connect "
-                 .($self->proxy_addr).":".($self->proxy_port);
-            unless ($self->supports_IPv6) {
-                $execcmd .= " -4";
-            }
-            if ($self->cipherc ne "") {
-                $execcmd .= " -cipher ".$self->cipherc;
-            }
-            if ($self->ciphersuitesc ne "") {
-                $execcmd .= " -ciphersuites ".$self->ciphersuitesc;
-            }
-            if ($self->clientflags ne "") {
-                $execcmd .= " ".$self->clientflags;
-            }
-            if (defined $self->sessionfile) {
-                $execcmd .= " -ign_eof";
-            }
-            if ($self->debug) {
-                print STDERR "Client command: $execcmd\n";
-            }
-            exec($execcmd);
+        my $pid;
+        my $execcmd = $self->execute
+             ." s_client -max_protocol TLSv1.3 -engine ossltest -connect "
+             .($self->proxy_addr).":".($self->proxy_port);
+        unless ($self->supports_IPv6) {
+            $execcmd .= " -4";
         }
+        if ($self->cipherc ne "") {
+            $execcmd .= " -cipher ".$self->cipherc;
+        }
+        if ($self->ciphersuitesc ne "") {
+            $execcmd .= " -ciphersuites ".$self->ciphersuitesc;
+        }
+        if ($self->clientflags ne "") {
+            $execcmd .= " ".$self->clientflags;
+        }
+        if (defined $self->sessionfile) {
+            $execcmd .= " -ign_eof";
+        }
+        if ($self->debug) {
+            print STDERR "Client command: $execcmd\n";
+        }
+
+        open(my $savedout, ">&STDOUT");
+        # If we open pipe with new descriptor, attempt to close it,
+        # explicitly or implicitly, would incur waitpid and effectively
+        # dead-lock...
+        $pid = open(STDOUT, "| $execcmd") or die "Failed to $execcmd: $!\n";
         $self->clientpid($pid);
+
+        # queue [magic] input
+        print $self->reneg ? "R" : "test";
+
+        # this closes client's stdin without waiting for its pid
+        open(STDOUT, ">&", $savedout);
+        close($savedout);
     }
 
     # Wait for incoming connection from client
@@ -283,7 +313,6 @@ sub clientstart
             $server_sock = $IP_factory->(
                 PeerAddr => $servaddr,
                 PeerPort => $self->server_port,
-                MultiHomed => 1,
                 Proto => 'tcp'
             );
         };
@@ -304,9 +333,8 @@ sub clientstart
         }
     } while (!$server_sock);
 
-    my $sel = IO::Select->new($server_sock, $client_sock);
+    my $fdset = IO::Select->new($server_sock, $client_sock);
     my $indata;
-    my @handles = ($server_sock, $client_sock);
 
     #Wait for either the server socket or the client socket to become readable
     my @ready;
@@ -316,7 +344,7 @@ sub clientstart
                 || (defined $self->sessionfile()
                     && (-s $self->sessionfile()) == 0))
             && $ctr < 10) {
-        if (!(@ready = $sel->can_read(1))) {
+        if (!(@ready = $fdset->can_read(1))) {
             $ctr++;
             next;
         }
@@ -348,15 +376,14 @@ sub clientstart
         #Closing this also kills the child process
         $client_sock->close();
     }
-    if(!$self->debug) {
-        select($oldstdout);
-    }
+
     $self->serverconnects($self->serverconnects - 1);
     if ($self->serverconnects == 0) {
         die "serverpid is zero\n" if $self->serverpid == 0;
         print "Waiting for server process to close: "
               .$self->serverpid."\n";
-        waitpid( $self->serverpid, 0);
+        # recall that we wait on process that buffers server's output
+        waitpid($self->serverpid, 0);
         die "exit code $? from server process\n" if $? != 0;
     } else {
         # Give s_server sufficient time to finish what it was doing
@@ -471,24 +498,18 @@ sub proxy_port
     my $self = shift;
     return $self->{proxy_port};
 }
-
-#Read/write accessors
 sub server_addr
 {
     my $self = shift;
-    if (@_) {
-        $self->{server_addr} = shift;
-    }
     return $self->{server_addr};
 }
 sub server_port
 {
     my $self = shift;
-    if (@_) {
-        $self->{server_port} = shift;
-    }
     return $self->{server_port};
 }
+
+#Read/write accessors
 sub filter
 {
     my $self = shift;
