@@ -33,6 +33,7 @@
  */
 #define MAX_CONF_VALUE_LENGTH       65536
 
+static int is_keytype(const CONF *conf, char c, unsigned short type);
 static char *eat_ws(CONF *conf, char *p);
 static void trim_ws(CONF *conf, char *start);
 static char *eat_alpha_numeric(CONF *conf, char *p);
@@ -731,6 +732,30 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
     return NULL;
 }
 #endif
+
+static int is_keytype(const CONF *conf, char c, unsigned short type)
+{
+    const unsigned short * keytypes = (const unsigned short *) conf->meth_data;
+    unsigned char key = (unsigned char)c;
+
+#ifdef CHARSET_EBCDIC
+# if CHAR_BIT > 8
+    if (key > 255) {
+        /* key is out of range for os_toascii table */
+        return 0;
+    }
+# endif
+    /* convert key from ebcdic to ascii */
+    key = os_toascii[key];
+#endif
+
+    if (key > 127) {
+        /* key is not a seven bit ascii character */
+        return 0;
+    }
+
+    return (keytypes[key] & type) ? 1 : 0;
+}
 
 static char *eat_ws(CONF *conf, char *p)
 {
