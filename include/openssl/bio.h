@@ -735,7 +735,7 @@ void BIO_copy_next_retry(BIO *b);
  * long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);
  */
 
-# define __bio_h__attr__(x)
+# define ossl_bio__attr__(x)
 # if defined(__GNUC__) && defined(__STDC_VERSION__) \
     && !defined(__APPLE__)
     /*
@@ -743,19 +743,25 @@ void BIO_copy_next_retry(BIO *b);
      * we can't use __attribute__ with pre C99 dialects.
      */
 #  if __STDC_VERSION__ >= 199901L
-#   undef __bio_h__attr__
-#   define __bio_h__attr__ __attribute__
+#   undef ossl_bio__attr__
+#   define ossl_bio__attr__ __attribute__
+#   if __GNUC__*10 + __GNUC_MINOR__ >= 44
+#    define ossl_bio__printf__ __gnu_printf__
+#   else
+#    define ossl_bio__printf__ __printf__
+#   endif
 #  endif
 # endif
 int BIO_printf(BIO *bio, const char *format, ...)
-__bio_h__attr__((__format__(__printf__, 2, 3)));
+ossl_bio__attr__((__format__(ossl_bio__printf__, 2, 3)));
 int BIO_vprintf(BIO *bio, const char *format, va_list args)
-__bio_h__attr__((__format__(__printf__, 2, 0)));
+ossl_bio__attr__((__format__(ossl_bio__printf__, 2, 0)));
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
-__bio_h__attr__((__format__(__printf__, 3, 4)));
+ossl_bio__attr__((__format__(ossl_bio__printf__, 3, 4)));
 int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
-__bio_h__attr__((__format__(__printf__, 3, 0)));
-# undef __bio_h__attr__
+ossl_bio__attr__((__format__(ossl_bio__printf__, 3, 0)));
+# undef ossl_bio__attr__
+# undef ossl_bio__printf__
 
 
 BIO_METHOD *BIO_meth_new(int type, const char *name);
