@@ -328,7 +328,7 @@ int MAIN(int argc, char **argv)
     }
 
     if (offset < 0 || offset >= num) {
-        BIO_printf(bio_err, "Error: offset too large\n");
+        BIO_printf(bio_err, "Error: offset out of range\n");
         goto end;
     }
 
