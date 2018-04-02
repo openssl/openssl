@@ -22,7 +22,6 @@ use TLSProxy::Certificate;
 use TLSProxy::CertificateVerify;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
-use Time::HiRes qw/usleep/;
 
 my $have_IPv6 = 0;
 my $IP_factory;
@@ -246,6 +245,15 @@ sub start
     print STDERR "Server responds on ",
         $self->{server_addr}, ":", $self->{server_port}, "\n";
 
+    # Connect directly...
+    my $servaddr = $self->{server_addr};
+    $servaddr =~ s/[\[\]]//g; # Remove [ and ]
+
+    $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
+                                         PeerPort => $self->{server_port},
+                                         Proto => 'tcp')
+                           or die "unable to connect: $!\n";
+
     return $self->clientstart;
 }
 
@@ -301,38 +309,7 @@ sub clientstart
 
     print "Connection opened\n";
 
-    # Now connect to the server
-    my $retry = 50;
-    my $server_sock;
-    #We loop over this a few times because sometimes s_server can take a while
-    #to start up
-    do {
-        my $servaddr = $self->server_addr;
-        $servaddr =~ s/[\[\]]//g; # Remove [ and ]
-        eval {
-            $server_sock = $IP_factory->(
-                PeerAddr => $servaddr,
-                PeerPort => $self->server_port,
-                Proto => 'tcp'
-            );
-        };
-
-        $retry--;
-        #Some buggy IP factories can return a defined server_sock that hasn't
-        #actually connected, so we check peerport too
-        if ($@ || !defined($server_sock) || !defined($server_sock->peerport)) {
-            $server_sock->close() if defined($server_sock);
-            undef $server_sock;
-            if ($retry) {
-                #Sleep for a short while
-                select(undef, undef, undef, 0.1);
-            } else {
-                warn "Failed to start up server (".$servaddr.",".$self->server_port."): $!\n";
-                return 0;
-            }
-        }
-    } while (!$server_sock);
-
+    my $server_sock = $self->{server_sock};
     my $fdset = IO::Select->new($server_sock, $client_sock);
     my $indata;
 
@@ -371,6 +348,7 @@ sub clientstart
     print "Connection closed\n";
     if($server_sock) {
         $server_sock->close();
+        $self->{server_sock} = undef;
     }
     if($client_sock) {
         #Closing this also kills the child process
@@ -386,8 +364,16 @@ sub clientstart
         waitpid($self->serverpid, 0);
         die "exit code $? from server process\n" if $? != 0;
     } else {
-        # Give s_server sufficient time to finish what it was doing
-        usleep(250000);
+        # since we will be using this server again, connect back right
+        # away, which allows for accurate synchronization without
+        # sleeping...
+        my $servaddr = $self->{server_addr};
+        $servaddr =~ s/[\[\]]//g; # Remove [ and ]
+
+        $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
+                                             PeerPort => $self->{server_port},
+                                             Proto => 'tcp')
+                               or die "unable to connect: $!\n";
     }
     die "clientpid is zero\n" if $self->clientpid == 0;
     print "Waiting for client process to close: ".$self->clientpid."\n";
