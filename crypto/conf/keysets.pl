@@ -85,24 +85,17 @@ print <<"EOF";
 #define CONF_ALNUM        (CONF_ALPHA|CONF_NUMBER|CONF_UNDER)
 #define CONF_ALNUM_PUNCT  (CONF_ALPHA|CONF_NUMBER|CONF_UNDER|CONF_PUNCT)
 
-#define KEYTYPES(c)       ((const unsigned short *)((c)->meth_data))
 
-#ifndef CHARSET_EBCDIC
-# define CVT(a) ((a) & 0x7F)
-#else
-# define CVT(a) os_toascci[(a) & 0x7F]
-#endif
-
-#define IS_COMMENT(c,a)     (KEYTYPES(c)[CVT(a)] & CONF_COMMENT)
-#define IS_FCOMMENT(c,a)    (KEYTYPES(c)[CVT(a)] & CONF_FCOMMENT)
-#define IS_EOF(c,a)         (KEYTYPES(c)[CVT(a)] & CONF_EOF)
-#define IS_ESC(c,a)         (KEYTYPES(c)[CVT(a)] & CONF_ESC)
-#define IS_NUMBER(c,a)      (KEYTYPES(c)[CVT(a)] & CONF_NUMBER)
-#define IS_WS(c,a)          (KEYTYPES(c)[CVT(a)] & CONF_WS)
-#define IS_ALNUM(c,a)       (KEYTYPES(c)[CVT(a)] & CONF_ALNUM)
-#define IS_ALNUM_PUNCT(c,a) (KEYTYPES(c)[CVT(a)] & CONF_ALNUM_PUNCT)
-#define IS_QUOTE(c,a)       (KEYTYPES(c)[CVT(a)] & CONF_QUOTE)
-#define IS_DQUOTE(c,a)      (KEYTYPES(c)[CVT(a)] & CONF_DQUOTE)
+#define IS_COMMENT(conf,c)     is_keytype(conf, c, CONF_COMMENT)
+#define IS_FCOMMENT(conf,c)    is_keytype(conf, c, CONF_FCOMMENT)
+#define IS_EOF(conf,c)         is_keytype(conf, c, CONF_EOF)
+#define IS_ESC(conf,c)         is_keytype(conf, c, CONF_ESC)
+#define IS_NUMBER(conf,c)      is_keytype(conf, c, CONF_NUMBER)
+#define IS_WS(conf,c)          is_keytype(conf, c, CONF_WS)
+#define IS_ALNUM(conf,c)       is_keytype(conf, c, CONF_ALNUM)
+#define IS_ALNUM_PUNCT(conf,c) is_keytype(conf, c, CONF_ALNUM_PUNCT)
+#define IS_QUOTE(conf,c)       is_keytype(conf, c, CONF_QUOTE)
+#define IS_DQUOTE(conf,c)      is_keytype(conf, c, CONF_DQUOTE)
 
 EOF
 
