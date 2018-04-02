@@ -205,7 +205,7 @@ int asn1parse_main(int argc, char **argv)
 
             num = 0;
             for (;;) {
-                if (!BUF_MEM_grow(buf, (int)num + BUFSIZ))
+                if (!BUF_MEM_grow(buf, num + BUFSIZ))
                     goto end;
                 i = BIO_read(in, &(buf->data[num]), BUFSIZ);
                 if (i <= 0)
