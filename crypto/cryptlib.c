@@ -44,9 +44,13 @@ static variant_char *ossl_getenv(const char *name)
 
     return (len > 0 && len < 48) ? value : NULL;
 }
+#  define ossl_mkstring1(str) #str
+#  define ossl_mkstring(str) L ## ossl_mkstring1(str)
 #  else
 typedef char variant_char;
 #   define ossl_getenv getenv
+#   define ossl_mkstring1(str) #str
+#   define ossl_mkstring(str) ossl_mkstring1(str)
 #  endif
 
 #  include "crypto/ctype.h"
@@ -91,6 +95,20 @@ static variant_char *ossl_strchr(const variant_char *str, char srch)
     return NULL;
 }
 
+/*
+ * If OPENSSL_IA32CAP_OVERRIDE is not defined,
+ * OPENSSL_IA32CAP_OVERRIDE_0 and OPENSSL_IA32CAP_OVERRIDE_1
+ * can be used instead. They are assumed to be simple
+ * numbers so they can be used in assembler modules to
+ * exclude not needed code when the target system is fully known.
+ */
+#  if  !  defined(OPENSSL_IA32CAP_OVERRIDE)   \
+       && defined(OPENSSL_IA32CAP_OVERRIDE_0) \
+       && defined(OPENSSL_IA32CAP_OVERRIDE_1)
+#   define OPENSSL_IA32CAP_OVERRIDE \
+           OPENSSL_IA32CAP_OVERRIDE_0:OPENSSL_IA32CAP_OVERRIDE_1
+#  endif
+
 #  define OPENSSL_CPUID_SETUP
 typedef uint64_t IA32CAP;
 
@@ -105,11 +123,15 @@ void OPENSSL_cpuid_setup(void)
         return;
 
     trigger = 1;
-    if ((env = ossl_getenv("OPENSSL_ia32cap")) != NULL) {
+#  ifdef OPENSSL_IA32CAP_OVERRIDE
+    if (1) {
+        env = ossl_mkstring(OPENSSL_IA32CAP_OVERRIDE);
+#  else
+    if ((env = ossl_getenv("OPENSSL_ia32cap"))) {
+#  endif
         int off = (env[0] == '~') ? 1 : 0;
 
         vec = ossl_strtouint64(env + off);
-
         if (off) {
             IA32CAP mask = vec;
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~mask;
@@ -126,6 +148,10 @@ void OPENSSL_cpuid_setup(void)
             }
         } else if (env[0] == ':') {
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+        } else {
+#  ifndef OPENSSL_IA32CAP_OVERRIDE
+            vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & vec;
+#  endif
         }
 
         if ((env = ossl_strchr(env, ':')) != NULL) {
@@ -135,11 +161,19 @@ void OPENSSL_cpuid_setup(void)
             off = (env[0] == '~') ? 1 : 0;
             vecx = ossl_strtouint64(env + off);
             if (off) {
+#  ifdef OPENSSL_IA32CAP_OVERRIDE
+                OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
+#  endif
                 OPENSSL_ia32cap_P[2] &= ~(unsigned int)vecx;
                 OPENSSL_ia32cap_P[3] &= ~(unsigned int)(vecx >> 32);
             } else {
+#  ifdef OPENSSL_IA32CAP_OVERRIDE
                 OPENSSL_ia32cap_P[2] = (unsigned int)vecx;
                 OPENSSL_ia32cap_P[3] = (unsigned int)(vecx >> 32);
+#  else
+                OPENSSL_ia32cap_P[2] &= (unsigned int)vecx;
+                OPENSSL_ia32cap_P[3] &= (unsigned int)(vecx >> 32);
+#  endif
             }
         } else {
             OPENSSL_ia32cap_P[2] = 0;
