@@ -182,7 +182,7 @@ L<ec(1)>, L<dsaparam(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2003-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
