@@ -3,10 +3,12 @@
 =head1 NAME
 
 OPENSSL_ia32cap - the x86[_64] processor capabilities vector
+OPENSSL_IA32CAP_OVERRIDE - compile option override define
 
 =head1 SYNOPSIS
 
  env OPENSSL_ia32cap=... <application>
+ ./config -DOPENSSL_IA32CAP_OVERRIDE=...
 
 =head1 DESCRIPTION
 
@@ -150,6 +152,16 @@ the problem by making build procedure use following script:
 
 instead of real clang. In which case it doesn't matter which clang
 version is used, as it is GNU assembler version that will be checked.
+
+The environment value is limited to whatever the cpuid instruction
+allows, thus it cannot enable features that are not available by
+the hardware detection.  Previous versions allowed the environment
+variable to enable unavailable hardware features, and thus cause the
+application to fail.
+
+If the compile option is used, the environment variable is ignored.
+It can be used to enable features that are not enabled by the cpuid
+instruction, however using it in this way is not recommended.
 
 =head1 RETURN VALUES
 
