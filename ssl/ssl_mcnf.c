@@ -36,14 +36,14 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
 
     if (name == NULL && system)
         name = "system_default";
-    if (!CONF_ssl_name_find(name, &idx)) {
+    if (!conf_ssl_name_find(name, &idx)) {
         if (!system) {
             SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_INVALID_CONFIGURATION_NAME);
             ERR_add_error_data(2, "name=", name);
         }
         goto err;
     }
-    cmds = CONF_ssl_get(idx, &name, &cmd_count);
+    cmds = conf_ssl_get(idx, &name, &cmd_count);
     cctx = SSL_CONF_CTX_new();
     if (cctx == NULL)
         goto err;
@@ -65,7 +65,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     for (i = 0; i < cmd_count; i++) {
         char *cmdstr, *arg;
 
-        CONF_ssl_get_cmd(cmds, i, &cmdstr, &arg);
+        conf_ssl_get_cmd(cmds, i, &cmdstr, &arg);
         rv = SSL_CONF_cmd(cctx, cmdstr, arg);
         if (rv <= 0) {
             if (rv == -2)

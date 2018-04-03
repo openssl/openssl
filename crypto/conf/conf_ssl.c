@@ -14,7 +14,10 @@
 #include "internal/sslconf.h"
 #include "conflcl.h"
 
-/* SSL library configuration module placeholder. */
+/*
+ * SSL library configuration module placeholder. We load it here but defer
+ * all decisions about its contents to libssl.
+ */
 
 struct ssl_conf_name_st {
     /* Name of this set of commands */
@@ -123,14 +126,24 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     return rv;
 }
 
-const SSL_CONF_CMD *CONF_ssl_get(size_t idx, const char **name, size_t *cnt)
+/*
+ * Returns the set of commands with index |idx| previously searched for via
+ * conf_ssl_name_find. Also stores the name of the set of commands in |*name|
+ * and the number of commands in the set in |*cnt|.
+ */
+const SSL_CONF_CMD *conf_ssl_get(size_t idx, const char **name, size_t *cnt)
 {
     *name = ssl_names[idx].name;
     *cnt = ssl_names[idx].cmd_count;
     return ssl_names[idx].cmds;
 }
 
-int CONF_ssl_name_find(const char *name, size_t *idx)
+/*
+ * Search for the named set of commands given in |name|. On success return the
+ * index for the command set in |*idx|.
+ * Returns 1 on success or 0 on failure.
+ */
+int conf_ssl_name_find(const char *name, size_t *idx)
 {
     size_t i;
     const struct ssl_conf_name_st *nm;
@@ -146,7 +159,13 @@ int CONF_ssl_name_find(const char *name, size_t *idx)
     return 0;
 }
 
-void CONF_ssl_get_cmd(const SSL_CONF_CMD *cmd, size_t idx, char **cmdstr,
+/*
+ * Given a command set |cmd|, return details on the command at index |idx| which
+ * must be less than the number of commands in the set (as returned by
+ * conf_ssl_get). The name of the command will be returned in |*cmdstr| and the
+ * argument is returned in |*arg|.
+ */
+void conf_ssl_get_cmd(const SSL_CONF_CMD *cmd, size_t idx, char **cmdstr,
                       char **arg)
 {
     *cmdstr = cmd[idx].cmd;
