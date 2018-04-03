@@ -213,6 +213,8 @@ exit /b
 	call:setVar _WKITS10VER WindowsKits10Version
 	for /D %%f in ("%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.foundationcontract\*") do set LIBPATH=%LIBPATH%;%%f\
 	for /D %%f in ("%_WKITS10%\references\%_WKITS10VER%.0\windows.foundation.universalapicontract\*") do set LIBPATH=%LIBPATH%;%%f\
+	for /D %%f in ("%_WKITS10%\references\windows.foundation.foundationcontract\*") do set LIBPATH=%LIBPATH%;%%f\
+	for /D %%f in ("%_WKITS10%\references\windows.foundation.universalapicontract\*") do set LIBPATH=%LIBPATH%;%%f\
 	goto :eof
 
 :end
