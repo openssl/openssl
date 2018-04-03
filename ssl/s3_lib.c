@@ -17,6 +17,7 @@
 #include <openssl/dh.h>
 #include <openssl/rand.h>
 #include "internal/cryptlib.h"
+#include <oqs/oqs.h>
 
 #define SSL3_NUM_CIPHERS        OSSL_NELEM(ssl3_ciphers)
 #define SSL3_NUM_SCSVS          OSSL_NELEM(ssl3_scsvs)
@@ -3370,6 +3371,11 @@ int ssl3_clear(SSL *s)
     s->ext.npn_len = 0;
 #endif
 
+    /* Clear OQS artefacts */
+    OQS_RAND_free(s->s3->tmp.oqs_rand);
+    s->s3->tmp.oqs_rand = NULL;
+    OQS_KEX_free(s->s3->tmp.oqs_kex);
+    s->s3->tmp.oqs_kex = NULL;
     return 1;
 }
 

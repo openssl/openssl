@@ -520,6 +520,12 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {28, "brainpoolP512r1"},
     {29, "ecdh_x25519"},
     {30, "ecdh_x448"},
+    /* OQS groups. 
+       FIXMEOQS: should we use code points between 0x01FC..0x01F,
+       reserved for private-use finite field groups? */
+    {31, "frodo"},
+    {32, "sike503"},
+    {33, "sike751"},
     {256, "ffdhe2048"},
     {257, "ffdhe3072"},
     {258, "ffdhe4096"},

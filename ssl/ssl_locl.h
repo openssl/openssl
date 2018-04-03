@@ -33,6 +33,7 @@
 # include "packet_locl.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
+#include <oqs/oqs.h>
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -402,6 +403,29 @@
 #define CERT_PUBLIC_KEY         1
 #define CERT_PRIVATE_KEY        2
 */
+
+/* Returns the curve ID for an OQS KEX NID */
+/* FIXMEOQS: we could call tls1_nid2group_id instead, but it's static */
+#define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo ? 31 : \
+                              (nid == NID_OQS_SIKE_503 ? 32 : \
+                              (nid == NID_OQS_SIKE_751 ? 33 : 0)))
+#define OQS_KEX_NID(curveID)  (curveID == 31 ? NID_OQS_Frodo : \
+			      (curveID == 32 ? NID_OQS_SIKE_503 : \
+			      (curveID == 33 ? NID_OQS_SIKE_751 : 0)))
+/* Returns true if the curve ID is for an OQS KEX */
+#define IS_OQS_KEX_CURVEID(id)	(id == 31 || \
+				 id == 32 || \
+				 id == 33)
+/* Returns the OQS alg ID for OQS API */
+#define OQS_ALG_NAME(nid)   (nid == NID_OQS_Frodo ? OQS_KEX_alg_lwe_frodo : \
+			    (nid == NID_OQS_SIKE_503 ? OQS_KEX_alg_sike_msr_503 : \
+                            (nid == NID_OQS_SIKE_751 ? OQS_KEX_alg_sike_msr_751 : 0)))
+/* Returns the parameters ID for an OQS alg */
+#define OQS_NAMED_PARAMETERS(nid) (nid == NID_OQS_Frodo ? "recommended" : NULL)
+/* Returns true if OQS alg needs a seed */
+#define OQS_NEED_SEED(nid) (nid == NID_OQS_Frodo ? 1 : 0)
+/* Returns the size of the seed */
+#define OQS_SEED_LEN(nid) (nid == NID_OQS_Frodo ? 16 : 0)
 
 /* Post-Handshake Authentication state */
 typedef enum {
@@ -1572,6 +1596,12 @@ typedef struct ssl3_state_st {
          */
         int min_ver;
         int max_ver;
+        /*
+	 * OQS artefacts.
+	 */
+         OQS_RAND* oqs_rand; /* random generator */
+         OQS_KEX* oqs_kex; /* KEX context */
+         int peer_msg_len; /* save peer message's len */
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */

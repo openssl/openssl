@@ -239,6 +239,16 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
     nid = EC_curve_nist2nid(value);
     if (nid == NID_undef)
         nid = OBJ_sn2nid(value);
+    if (nid == NID_undef) {
+      /* FIXMEOQS: share code with t1_lib.c's nid_cb */
+      if (memcmp(value,"Frodo", strlen(value)) == 0) {
+	nid = NID_OQS_Frodo;
+      } else if (memcmp(value,"Sike503", strlen(value)) == 0) {
+	nid = NID_OQS_SIKE_503;
+      } else if (memcmp(value,"Sike751", strlen(value)) == 0) {
+	nid = NID_OQS_SIKE_751;
+      }
+    }
     if (nid == 0)
         return 0;
     ecdh = EC_KEY_new_by_curve_name(nid);

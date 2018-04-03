@@ -439,6 +439,18 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
+/* OQS integration */
+/* NID for OQS algs. Pick values starting from NUM_NID. We need to do
+   this in crypto (vs ssl) layer because we need these values in evp
+   keys (in p_lib.c). */
+/* FIXMEOQS: should I import obj_dat.h to use NUM_NID? */
+#define NID_OQS_Frodo    1170
+#define NID_OQS_SIKE_503 1171
+#define NID_OQS_SIKE_751 1172
+/* Returns true if the nid is for an OQS KEX */
+#define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
+			     nid == NID_OQS_SIKE_503 ||	\
+			     nid == NID_OQS_SIKE_751)
 
 # ifdef  __cplusplus
 }

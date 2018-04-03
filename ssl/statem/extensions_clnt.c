@@ -11,6 +11,7 @@
 #include "../ssl_locl.h"
 #include "internal/cryptlib.h"
 #include "statem_locl.h"
+#include <oqs/oqs.h>
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt,
                                           unsigned int context, X509 *x,
@@ -600,8 +601,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 
     if (s->s3->tmp.pkey != NULL) {
         if (!ossl_assert(s->hello_retry_request == SSL_HRR_PENDING)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE,
-                     ERR_R_INTERNAL_ERROR);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
             return 0;
         }
         /*
@@ -609,19 +609,73 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
          */
         key_share_key = s->s3->tmp.pkey;
     } else {
+      if (IS_OQS_KEX_CURVEID(curve_id)) {
+	/* This is a group handled by OQS */
+	void* client_key;
+	int has_error = 0;
+	int oqs_nid = OQS_KEX_NID(curve_id);
+	enum OQS_KEX_alg_name oqs_alg_name = OQS_ALG_NAME(oqs_nid);
+	uint8_t oqs_seed[SHA256_DIGEST_LENGTH]; /* FIXMEQOS: is this big enough for all OQS alg? */
+	size_t oqs_seed_len = OQS_SEED_LEN(oqs_nid);
+	char *oqs_named_parameters = OQS_NAMED_PARAMETERS(oqs_nid);
+	if (OQS_NEED_SEED(oqs_nid)) {
+	  /* hash the client random to seed the OQS alg (server's not yet available) */
+	  SHA256_CTX sha256_ctx;
+	  if (SHA256_Init(&sha256_ctx) != 1) goto oqs_cleanup;
+	  if (SHA256_Update(&sha256_ctx, s->s3->client_random, SSL3_RANDOM_SIZE) != 1) goto oqs_cleanup;
+	  if (SHA256_Final(oqs_seed, &sha256_ctx) != 1) goto oqs_cleanup;
+	}
+	/* initialize the random generator */
+	if ((s->s3->tmp.oqs_rand = OQS_RAND_new(OQS_RAND_alg_default)) == NULL) {
+	  SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	  has_error = 1;
+	  goto oqs_cleanup;
+	}
+	/* initialize the kex */
+	if ((s->s3->tmp.oqs_kex = OQS_KEX_new(s->s3->tmp.oqs_rand, oqs_alg_name, oqs_seed, oqs_seed_len, oqs_named_parameters)) == NULL) {
+	  SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	  has_error = 1;
+	  goto oqs_cleanup;
+	}
+	/* compute the client's key and first message (encoded in encoded_point) */
+	if (OQS_KEX_alice_0(s->s3->tmp.oqs_kex, &client_key, &encoded_point, &encodedlen) != OQS_SUCCESS) {
+	  SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	  has_error = 1;
+	  goto oqs_cleanup;
+	}
+	/* save the client's message */
+        if ((key_share_key = EVP_PKEY_new()) == NULL ||
+	    EVP_PKEY_assign(key_share_key, oqs_nid, client_key) == 0) {
+	  SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	  has_error = 1;
+	  goto oqs_cleanup;
+	}
+      oqs_cleanup:
+	/* oqs_rand and oqs_kex will be freed in tls_parse_stoc_key_share when the kex completes, unless there is an error */
+	if (has_error) {
+	  OQS_RAND_free(s->s3->tmp.oqs_rand);
+	  s->s3->tmp.oqs_rand = NULL;
+	  OQS_KEX_free(s->s3->tmp.oqs_kex);
+	  s->s3->tmp.oqs_kex = NULL;
+	  return 0;
+	}
+      } else {
         key_share_key = ssl_generate_pkey_group(s, curve_id);
         if (key_share_key == NULL) {
             /* SSLfatal() already called */
             return 0;
         }
+      }
     }
 
-    /* Encode the public key. */
-    encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
-                                                &encoded_point);
-    if (encodedlen == 0) {
+    if (!IS_OQS_KEX_CURVEID(curve_id)) { /* Already encoded above for OQS schemes */
+      /* Encode the public key. */
+      encodedlen = EVP_PKEY_get1_tls_encodedpoint(key_share_key,
+						  &encoded_point);
+      if (encodedlen == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_EC_LIB);
         goto err;
+      }
     }
 
     /* Create KeyShareEntry */
@@ -1878,25 +1932,70 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    skey = ssl_generate_pkey(ckey);
-    if (skey == NULL) {
+    if (IS_OQS_KEX_CURVEID(group_id)) {
+	void* client_key = EVP_PKEY_get0(ckey);
+	unsigned char* shared_secret = NULL;
+	size_t shared_secret_len = 0;
+	int has_error = 0;
+
+	/* make sure ctx was initialized in add_key_share */
+	if (s->s3->tmp.oqs_rand == NULL || s->s3->tmp.oqs_kex == NULL) {
+	  /* this should never happen */
+	  return 0;
+	}
+	/* compute the shared secret */
+	if (OQS_KEX_alice_1(s->s3->tmp.oqs_kex, client_key, PACKET_data(&encoded_pt), PACKET_remaining(&encoded_pt), &shared_secret, &shared_secret_len) != OQS_SUCCESS) {
+	  SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	  has_error = 1;
+	  goto oqs_cleanup;
+	}
+	{
+	  /* OQS note: this code is copied from ssl_derive */
+	  if (!s->hit) {
+	    if (!tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL, 0, (unsigned char *)&s->early_secret)) {
+	      SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	      has_error = 1;
+	      goto oqs_cleanup;
+	    }
+	  }
+	  if (!tls13_generate_handshake_secret(s, shared_secret, shared_secret_len)) {
+	    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	    has_error = 1;
+	    goto oqs_cleanup;
+	  }
+	}
+    oqs_cleanup:
+	/* we free the OQS artefacts on success or error */
+	OQS_MEM_secure_free(shared_secret, shared_secret_len);
+	s->s3->tmp.oqs_kex->alice_priv_free(s->s3->tmp.oqs_kex, client_key);
+	OQS_RAND_free(s->s3->tmp.oqs_rand);
+	s->s3->tmp.oqs_rand = NULL;
+	OQS_KEX_free(s->s3->tmp.oqs_kex);
+	s->s3->tmp.oqs_kex = NULL;
+	if (has_error) {
+	  return 0;
+	}
+    } else {
+      skey = ssl_generate_pkey(ckey);
+      if (skey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
                  ERR_R_MALLOC_FAILURE);
         return 0;
-    }
-    if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
-                                        PACKET_remaining(&encoded_pt))) {
+      }
+      if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
+					  PACKET_remaining(&encoded_pt))) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
                  SSL_R_BAD_ECPOINT);
         EVP_PKEY_free(skey);
         return 0;
-    }
-
-    if (ssl_derive(s, ckey, skey, 1) == 0) {
+      }
+      if (ssl_derive(s, ckey, skey, 1) == 0) {
         /* SSLfatal() already called */
         EVP_PKEY_free(skey);
         return 0;
+      }
     }
+
     s->s3->peer_tmp = skey;
 #endif
 
