@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
   *) Added new public header file <openssl/rand_drbg.h> and documentation
      for the RAND_DRBG API. See manual page RAND_DRBG(7) for an overview.
