@@ -144,6 +144,11 @@ padlock engine (if available). This not a default option.
 With this option the library will automatically load and initialise the
 DASYNC engine. This not a default option.
 
+=item OPENSSL_INIT_ENGINE_CHIL
+
+With this option the library will automatically load and initialise the
+CHIL engine (if available). This not a default option.
+
 =item OPENSSL_INIT_ENGINE_ALL_BUILTIN
 
 With this option the library will automatically load and initialise all the

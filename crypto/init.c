@@ -325,6 +325,18 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_afalg)
     return 1;
 }
 #  endif
+#  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_CHIL)
+static CRYPTO_ONCE engine_chil = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_engine_chil)
+{
+#   ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_engine_chil "
+                    "engine_load_chil_int()\n");
+#   endif
+    engine_load_chil_int();
+    return 1;
+}
+#  endif
 # endif
 #endif
 
@@ -636,6 +648,11 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 #  if !defined(OPENSSL_NO_AFALGENG)
     if ((opts & OPENSSL_INIT_ENGINE_AFALG)
             && !RUN_ONCE(&engine_afalg, ossl_init_engine_afalg))
+        return 0;
+#  endif
+#  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_CHIL)
+    if ((opts & OPENSSL_INIT_ENGINE_CHIL)
+            && !RUN_ONCE(&engine_chil, ossl_init_engine_chil))
         return 0;
 #  endif
 # endif
