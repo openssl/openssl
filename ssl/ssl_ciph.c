@@ -1523,9 +1523,10 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
     if (buf == NULL) {
         len = 128;
-        buf = OPENSSL_malloc(len);
-        if (buf == NULL)
+        if ((buf = OPENSSL_malloc(len)) == NULL) {
+            SSLerr(SSL_F_SSL_CIPHER_DESCRIPTION, ERR_R_MALLOC_FAILURE);
             return NULL;
+        }
     } else if (len < 128) {
         return NULL;
     }

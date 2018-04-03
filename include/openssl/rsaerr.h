@@ -40,6 +40,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_METH_NEW                               162
 # define RSA_F_RSA_METH_SET1_NAME                         163
 # define RSA_F_RSA_MGF1_TO_MD                             157
+# define RSA_F_RSA_MULTIP_INFO_NEW                        166
 # define RSA_F_RSA_NEW_METHOD                             106
 # define RSA_F_RSA_NULL                                   124
 # define RSA_F_RSA_NULL_PRIVATE_DECRYPT                   132
@@ -80,6 +81,7 @@ int ERR_load_RSA_strings(void);
 # define RSA_F_RSA_VERIFY                                 119
 # define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING               120
 # define RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1                  126
+# define RSA_F_SETUP_TBUF                                 167
 
 /*
  * RSA reason codes.

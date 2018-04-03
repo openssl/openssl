@@ -266,9 +266,10 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
                 OPENSSL_free(gctx->iv);
-            gctx->iv = OPENSSL_malloc(arg);
-            if (gctx->iv == NULL)
+            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
+                EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
         }
         gctx->ivlen = arg;
         return 1;
@@ -370,9 +371,10 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == EVP_CIPHER_CTX_iv_noconst(c))
                 gctx_out->iv = EVP_CIPHER_CTX_iv_noconst(out);
             else {
-                gctx_out->iv = OPENSSL_malloc(gctx->ivlen);
-                if (gctx_out->iv == NULL)
+                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
+                    EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
+                }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
             }
             return 1;

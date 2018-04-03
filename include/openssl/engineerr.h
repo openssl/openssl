@@ -58,9 +58,11 @@ int ERR_load_ENGINE_strings(void);
 #  define ENGINE_F_ENGINE_TABLE_REGISTER                   184
 #  define ENGINE_F_ENGINE_UNLOCKED_FINISH                  191
 #  define ENGINE_F_ENGINE_UP_REF                           190
+#  define ENGINE_F_INT_CLEANUP_ITEM                        199
 #  define ENGINE_F_INT_CTRL_HELPER                         172
 #  define ENGINE_F_INT_ENGINE_CONFIGURE                    188
 #  define ENGINE_F_INT_ENGINE_MODULE_INIT                  187
+#  define ENGINE_F_OSSL_HMAC_INIT                          200
 
 /*
  * ENGINE reason codes.

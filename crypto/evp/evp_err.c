@@ -15,14 +15,17 @@
 
 static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AESNI_INIT_KEY, 0), "aesni_init_key"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_GCM_CTRL, 0), "aes_gcm_ctrl"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_INIT_KEY, 0), "aes_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_OCB_CIPHER, 0), "aes_ocb_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_T4_INIT_KEY, 0), "aes_t4_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_AES_WRAP_CIPHER, 0), "aes_wrap_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ALG_MODULE_INIT, 0), "alg_module_init"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_CCM_INIT_KEY, 0), "aria_ccm_init_key"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_GCM_CTRL, 0), "aria_gcm_ctrl"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_GCM_INIT_KEY, 0), "aria_gcm_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_ARIA_INIT_KEY, 0), "aria_init_key"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_B64_NEW, 0), "b64_new"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_CAMELLIA_INIT_KEY, 0), "camellia_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_CHACHA20_POLY1305_CTRL, 0),
      "chacha20_poly1305_ctrl"},
@@ -30,6 +33,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_DES_EDE3_WRAP_CIPHER, 0),
      "des_ede3_wrap_cipher"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_DO_SIGVER_INIT, 0), "do_sigver_init"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_ENC_NEW, 0), "enc_new"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_CIPHERINIT_EX, 0), "EVP_CipherInit_ex"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_CIPHER_CTX_COPY, 0),
      "EVP_CIPHER_CTX_copy"},
@@ -122,6 +126,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_SIGNFINAL, 0), "EVP_SignFinal"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_VERIFYFINAL, 0), "EVP_VerifyFinal"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_INT_CTX_NEW, 0), "int_ctx_new"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_OK_NEW, 0), "ok_new"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_PKCS5_PBE_KEYIVGEN, 0), "PKCS5_PBE_keyivgen"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_PKCS5_V2_PBE_KEYIVGEN, 0),
      "PKCS5_v2_PBE_keyivgen"},
@@ -132,6 +137,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_PKEY_SET_TYPE, 0), "pkey_set_type"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_RC2_MAGIC_TO_METH, 0), "rc2_magic_to_meth"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_RC5_CTRL, 0), "rc5_ctrl"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_S390X_AES_GCM_CTRL, 0), "s390x_aes_gcm_ctrl"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_UPDATE, 0), "update"},
     {0, NULL}
 };

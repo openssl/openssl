@@ -9,6 +9,7 @@
  */
 
 #include <openssl/bn.h>
+#include <openssl/err.h>
 #include "rsa_locl.h"
 
 void rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)
@@ -32,9 +33,10 @@ RSA_PRIME_INFO *rsa_multip_info_new(void)
     RSA_PRIME_INFO *pinfo;
 
     /* create a RSA_PRIME_INFO structure */
-    pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO));
-    if (pinfo == NULL)
+    if ((pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL) {
+        RSAerr(RSA_F_RSA_MULTIP_INFO_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
     if ((pinfo->r = BN_secure_new()) == NULL)
         goto err;
     if ((pinfo->d = BN_secure_new()) == NULL)

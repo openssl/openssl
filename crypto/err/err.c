@@ -678,9 +678,10 @@ ERR_STATE *ERR_get_state(void)
     state = CRYPTO_THREAD_get_local(&err_thread_local);
 
     if (state == NULL) {
-        state = OPENSSL_zalloc(sizeof(*state));
-        if (state == NULL)
+        if ((state = OPENSSL_zalloc(sizeof(*state))) == NULL) {
+            /* ERRerr(ERR_F_ERR_GET_STATE, ERR_R_MALLOC_FAILURE); */
             return NULL;
+        }
 
         if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE)
             || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
@@ -739,9 +740,10 @@ void ERR_add_error_vdata(int num, va_list args)
     char *str, *p, *a;
 
     s = 80;
-    str = OPENSSL_malloc(s + 1);
-    if (str == NULL)
+    if ((str = OPENSSL_malloc(s + 1)) == NULL) {
+        /* ERRerr(ERR_F_ERR_ADD_ERROR_VDATA, ERR_R_MALLOC_FAILURE); */
         return;
+    }
     str[0] = '\0';
 
     n = 0;

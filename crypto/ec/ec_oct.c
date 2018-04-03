@@ -144,12 +144,14 @@ size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point,
 {
     size_t len;
     unsigned char *buf;
+
     len = EC_POINT_point2oct(group, point, form, NULL, 0, NULL);
     if (len == 0)
         return 0;
-    buf = OPENSSL_malloc(len);
-    if (buf == NULL)
+    if ((buf = OPENSSL_malloc(len)) == NULL) {
+        ECerr(EC_F_EC_POINT_POINT2BUF, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     len = EC_POINT_point2oct(group, point, form, buf, len, ctx);
     if (len == 0) {
         OPENSSL_free(buf);

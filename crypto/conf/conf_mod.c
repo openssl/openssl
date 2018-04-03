@@ -232,9 +232,10 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         supported_modules = sk_CONF_MODULE_new_null();
     if (supported_modules == NULL)
         return NULL;
-    tmod = OPENSSL_zalloc(sizeof(*tmod));
-    if (tmod == NULL)
+    if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
+        CONFerr(CONF_F_MODULE_ADD, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     tmod->dso = dso;
     tmod->name = OPENSSL_strdup(name);

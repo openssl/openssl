@@ -16,6 +16,7 @@
 static const ERR_STRING_DATA KDF_str_functs[] = {
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_CTRL_STR, 0), "pkey_hkdf_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_DERIVE, 0), "pkey_hkdf_derive"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_HKDF_INIT, 0), "pkey_hkdf_init"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_SCRYPT_CTRL_STR, 0),
      "pkey_scrypt_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_SCRYPT_CTRL_UINT64, 0),
@@ -28,6 +29,8 @@ static const ERR_STRING_DATA KDF_str_functs[] = {
      "pkey_tls1_prf_ctrl_str"},
     {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_TLS1_PRF_DERIVE, 0),
      "pkey_tls1_prf_derive"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_PKEY_TLS1_PRF_INIT, 0), "pkey_tls1_prf_init"},
+    {ERR_PACK(ERR_LIB_KDF, KDF_F_TLS1_PRF_ALG, 0), "tls1_prf_alg"},
     {0, NULL}
 };
 

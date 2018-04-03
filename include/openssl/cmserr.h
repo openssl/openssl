@@ -49,6 +49,7 @@ int ERR_load_CMS_strings(void);
 #  define CMS_F_CMS_DIGEST_VERIFY                          118
 #  define CMS_F_CMS_ENCODE_RECEIPT                         161
 #  define CMS_F_CMS_ENCRYPT                                119
+#  define CMS_F_CMS_ENCRYPTEDCONTENT_INIT                  179
 #  define CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO              120
 #  define CMS_F_CMS_ENCRYPTEDDATA_DECRYPT                  121
 #  define CMS_F_CMS_ENCRYPTEDDATA_ENCRYPT                  122
@@ -103,6 +104,7 @@ int ERR_load_CMS_strings(void);
 #  define CMS_F_CMS_STREAM                                 155
 #  define CMS_F_CMS_UNCOMPRESS                             156
 #  define CMS_F_CMS_VERIFY                                 157
+#  define CMS_F_KEK_UNWRAP_KEY                             180
 
 /*
  * CMS reason codes.

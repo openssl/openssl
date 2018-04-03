@@ -46,9 +46,10 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx;
 
-    dctx = OPENSSL_zalloc(sizeof(*dctx));
-    if (dctx == NULL)
+    if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
+        ECerr(EC_F_PKEY_EC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     dctx->cofactor_mode = -1;
     dctx->kdf_type = EVP_PKEY_ECDH_KDF_NONE;
@@ -297,9 +298,10 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
         return 0;
     if (!pkey_ec_derive(ctx, NULL, &ktmplen))
         return 0;
-    ktmp = OPENSSL_malloc(ktmplen);
-    if (ktmp == NULL)
+    if ((ktmp = OPENSSL_malloc(ktmplen)) == NULL) {
+        ECerr(EC_F_PKEY_EC_KDF_DERIVE, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     if (!pkey_ec_derive(ctx, ktmp, &ktmplen))
         goto err;
     /* Do KDF stuff */

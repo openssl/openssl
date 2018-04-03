@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include "ec_lcl.h"
 
 BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
@@ -39,9 +40,10 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
 
     if ((buf_len = BN_num_bytes(bn)) == 0)
         return NULL;
-    buf = OPENSSL_malloc(buf_len);
-    if (buf == NULL)
+    if ((buf = OPENSSL_malloc(buf_len)) == NULL) {
+        ECerr(EC_F_EC_POINT_BN2POINT, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     if (!BN_bn2bin(bn, buf)) {
         OPENSSL_free(buf);

@@ -431,9 +431,10 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
 {
     OSSL_HMAC_PKEY_CTX *hctx;
 
-    hctx = OPENSSL_zalloc(sizeof(*hctx));
-    if (hctx == NULL)
+    if ((hctx = OPENSSL_zalloc(sizeof(*hctx))) == NULL) {
+        ENGINEerr(ENGINE_F_OSSL_HMAC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
     hctx->ctx = HMAC_CTX_new();
     if (hctx->ctx == NULL) {

@@ -116,9 +116,10 @@ static int asn1_bio_new(BIO *b)
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 {
-    ctx->buf = OPENSSL_malloc(size);
-    if (ctx->buf == NULL)
+    if ((ctx->buf = OPENSSL_malloc(size)) == NULL) {
+        ASN1err(ASN1_F_ASN1_BIO_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     ctx->bufsize = size;
     ctx->asn1_class = V_ASN1_UNIVERSAL;
     ctx->asn1_tag = V_ASN1_OCTET_STRING;

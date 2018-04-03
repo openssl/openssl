@@ -168,9 +168,10 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 {
     ec->cipher = cipher;
     if (key) {
-        ec->key = OPENSSL_malloc(keylen);
-        if (ec->key == NULL)
+        if ((ec->key = OPENSSL_malloc(keylen)) == NULL) {
+            CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
         memcpy(ec->key, key, keylen);
     }
     ec->keylen = keylen;
