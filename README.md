@@ -5,6 +5,19 @@ OpenSSL is an open-source TLS/SSL and crypto library [https://openssl.org/](http
 
 This repository contains a fork of OpenSSL that adds quantum-safe cryptographic algorithms and ciphersuites.
 
+OQS REVIEW NOTES:
+ * This is an experimental integration of OQS into TLS 1.3.
+ * Currently, only PQS KEX in TLS 1.3 is supported. Next in line: hybrid KEX, auth, hybrid auth. And also supporting TLS 1.2.
+ * One goal is to minimize the OQS footprint into the OpenSSL code, to improve readability. Therefore, some redundant code is implemented using macros to avoid creating functions and registrating them in OpenSSL.
+ * The TLS 1.3 integration is done at the TLS layer (start looking in ssl/statem/extensions_(clnt,srvr).c). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the KEM asymetric API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked.
+ * If you have an oqs-related build error, try building it manually, and re-run openssl's make:
+   - cd vendor/liboqs
+   - autoreconf -i
+   - ./configure --enable-shared
+   - make
+   - cd ../..
+   - make
+
 Overview
 --------
 
