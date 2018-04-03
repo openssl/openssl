@@ -120,6 +120,14 @@ void OPENSSL_cpuid_setup(void)
 # endif
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+#  ifdef OPENSSL_SYS_WIN_CORE
+
+int OPENSSL_isservice(void)
+{
+    /* OneCore API cannot interact with GUI */
+    return 1;
+}
+#  else
 int OPENSSL_isservice(void)
 {
     HWINSTA h;
@@ -160,7 +168,7 @@ int OPENSSL_isservice(void)
 
     len++, len &= ~1;           /* paranoia */
     name[len / sizeof(WCHAR)] = L'\0'; /* paranoia */
-#  if 1
+#   if 1
     /*
      * This doesn't cover "interactive" services [working with real
      * WinSta0's] nor programs started non-interactively by Task Scheduler
@@ -168,14 +176,15 @@ int OPENSSL_isservice(void)
      */
     if (wcsstr(name, L"Service-0x"))
         return 1;
-#  else
+#   else
     /* This covers all non-interactive programs such as services. */
     if (!wcsstr(name, L"WinSta0"))
         return 1;
-#  endif
+#   endif
     else
         return 0;
 }
+#  endif
 # else
 int OPENSSL_isservice(void)
 {
@@ -272,6 +281,24 @@ void OPENSSL_showfatal(const char *fmta, ...)
     va_end(ap);
 
 # if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
+#  ifdef OPENSSL_SYS_WIN_CORE
+    /* ONECORE is always NONGUI and NT >= 0x0601 */
+
+    /*
+    * TODO: (For non GUI and no std error cases)
+    * Add event logging feature here. 
+    */
+    
+#   if !defined(NDEBUG)
+        /*
+        * We are in a situation where we tried to report a critical
+        * error and this failed for some reason. As a last resort,
+        * in debug builds, send output to the debugger or any other
+        * tool like DebugView which can monitor the output.
+        */
+        OutputDebugString(buf);
+#   endif
+#  else
     /* this -------------v--- guards NT-specific calls */
     if (check_winnt() && OPENSSL_isservice() > 0) {
         HANDLE hEventLog = RegisterEventSource(NULL, _T("OpenSSL"));
@@ -281,7 +308,7 @@ void OPENSSL_showfatal(const char *fmta, ...)
 
             if (!ReportEvent(hEventLog, EVENTLOG_ERROR_TYPE, 0, 0, NULL,
                              1, 0, &pmsg, NULL)) {
-#if defined(DEBUG)
+#   if !defined(NDEBUG)
                 /*
                  * We are in a situation where we tried to report a critical
                  * error and this failed for some reason. As a last resort,
@@ -289,14 +316,18 @@ void OPENSSL_showfatal(const char *fmta, ...)
                  * tool like DebugView which can monitor the output.
                  */
                 OutputDebugString(pmsg);
-#endif
+#   endif
             }
 
             (void)DeregisterEventSource(hEventLog);
         }
-    } else
-# endif
+    } else {
         MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+    }
+#  endif
+# else
+    MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
+# endif     
 }
 #else
 void OPENSSL_showfatal(const char *fmta, ...)
