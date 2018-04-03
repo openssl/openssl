@@ -14,7 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
-#include "conflcl.h"
+#include "conf_lcl.h"
 
 /* Load all OpenSSL builtin modules */
 
