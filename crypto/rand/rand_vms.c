@@ -10,6 +10,7 @@
 #include "e_os.h"
 
 #if defined(OPENSSL_SYS_VMS)
+# include "internal/cryptlib.h"
 # include <openssl/rand.h>
 # include "internal/rand_int.h"
 # include "rand_lcl.h"
@@ -55,25 +56,34 @@ static struct items_data_st {
     {0, 0}
 };
 
+/*
+ * We assume there we get about 4 bits of entropy per byte from the items
+ * above, with a bit of scrambling added rand_pool_acquire_entropy()
+ */
+#define ENTROPY_BITS_PER_BYTE   4
+
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
     /* determine the number of items in the JPI array */
     struct items_data_st item_entry;
-    int item_entry_count = OSSL_NELEM(items_data);
-    /* Create the JPI itemlist array to hold item_data content */
+    size_t item_entry_count = OSSL_NELEM(items_data);
+    /* Create the 32-bit JPI itemlist array to hold item_data content */
     struct {
-        short length, code;
-        int *buffer;
-        int *retlen;
+        uint16_t length, code;
+        uint32_t *buffer;
+        uint32_t *retlen;
     } item[item_entry_count], *pitem;
     struct items_data_st *pitems_data;
-    int data_buffer[(item_entry_count * 2) + 4]; /* 8 bytes per entry max */
-    int iosb[2];
-    int sys_time[2];
-    int *ptr;
-    int i, j ;
-    int tmp_length   = 0;
-    int total_length = 0;
+    /* 8 bytes (two longs) per entry max */
+    uint32_t data_buffer[(item_entry_count * 2) + 4];
+    uint32_t iosb[2];
+    uint32_t sys_time[2];
+    uint32_t *ptr;
+    size_t i, j ;
+    size_t tmp_length   = 0;
+    size_t total_length = 0;
+    size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_BITS_PER_BYTE);
+    size_t bytes_remaining = rand_pool_bytes_remaining(pool);
 
     /* Setup itemlist for GETJPI */
     pitems_data = items_data;
@@ -113,14 +123,33 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
     total_length += (tmp_length - 1);
 
+    /* Change the total length to number of bytes */
+    total_length *= 4;
+
     /*
-     * Size of seed is total_length*4 bytes (64bytes). The original assumption
-     * was that it contains 4 bits of entropy per byte. This makes a total
-     * amount of total_length*16 bits (256bits).
+     * If we can't feed the requirements from the caller, we're in deep trouble.
      */
-    return rand_pool_add(pool,
-                         (PTR_T)data_buffer, total_length * 4,
-                         total_length * 16);
+    if (!ossl_assert(total_length >= bytes_needed)) {
+        char neededstr[20];
+        char availablestr[20];
+
+        BIO_snprintf(neededstr, sizeof(neededstr), "%zu", bytes_needed);
+        BIO_snprintf(availablestr, sizeof(availablestr), "%zu", total_length);
+        RANDerr(RAND_F_RAND_POOL_ACQUIRE_ENTROPY,
+                RAND_R_RANDOM_POOL_UNDERFLOW);
+        ERR_add_error_data(4, "Needed: ", neededstr, ", Available: ",
+                           availablestr);
+        return 0;
+    }
+
+    /*
+     * Try not to overfeed the pool
+     */
+    if (total_length > bytes_remaining)
+        total_length = bytes_remaining;
+
+    return rand_pool_add(pool, (PTR_T)data_buffer, total_length,
+                         total_length * ENTROPY_BITS_PER_BYTE);
 }
 
 #endif
