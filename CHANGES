@@ -13,6 +13,9 @@
      in libcrypto when run as setuid/setgid.
      [Bernd Edlinger]
 
+  *) Load any config file by default when libssl is used.
+     [Matt Caswell]
+
   *) Added new public header file <openssl/rand_drbg.h> and documentation
      for the RAND_DRBG API. See manual page RAND_DRBG(7) for an overview.
      [Matthias St. Pierre]
