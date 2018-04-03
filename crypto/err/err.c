@@ -667,25 +667,23 @@ ERR_STATE *ERR_get_state(void)
     if (!RUN_ONCE(&err_init, err_do_init))
         return NULL;
 
-    /*
-     * If base OPENSSL_init_crypto() hasn't been called yet, be sure to call
-     * it now to avoid state to be doubly allocated and thereby leak memory.
-     * Needed on any platform that doesn't define OPENSSL_USE_NODELETE.
-     */
-    if (!OPENSSL_init_crypto(0, NULL))
+    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    if (state == (ERR_STATE*)-1)
         return NULL;
 
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
-
     if (state == NULL) {
+        if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+            return NULL;
+
         if ((state = OPENSSL_zalloc(sizeof(*state))) == NULL) {
-            /* ERRerr(ERR_F_ERR_GET_STATE, ERR_R_MALLOC_FAILURE); */
+            CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
 
         if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE)
-            || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
+                || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
             ERR_STATE_free(state);
+            CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
 
