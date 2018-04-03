@@ -342,6 +342,9 @@
   no-hw-padlock
                    Don't build the padlock engine.
 
+  no-hw-chil
+                   Don't build the CHIL engine.
+
   no-makedepend
                    Don't generate dependencies.
 

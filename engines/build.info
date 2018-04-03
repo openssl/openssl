@@ -10,6 +10,7 @@ IF[{- !$disabled{"engine"} -}]
     IF[{- !$disabled{afalgeng} -}]
       SOURCE[../libcrypto]=e_afalg.c
     ENDIF
+    SOURCE[../libcrypto]=e_chil.c
   ELSE
     ENGINES=padlock
     SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
@@ -27,6 +28,10 @@ IF[{- !$disabled{"engine"} -}]
       DEPEND[afalg]=../libcrypto
       INCLUDE[afalg]= ../include
     ENDIF
+    ENGINES=chil
+    SOURCE[chil]=e_chil.c
+    DEPEND[chil]=../libcrypto
+    INCLUDE[chil]=../include
 
     ENGINES_NO_INST=ossltest dasync
     SOURCE[dasync]=e_dasync.c
