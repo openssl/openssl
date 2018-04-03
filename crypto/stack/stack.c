@@ -47,7 +47,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
     OPENSSL_STACK *ret;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return NULL;
+        goto err;
 
     /* direct structure assignment */
     *ret = *sk;
@@ -65,6 +65,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
     return ret;
  err:
     OPENSSL_sk_free(ret);
+    CRYPTOerr(CRYPTO_F_OPENSSL_SK_DUP, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -76,7 +77,7 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     int i;
 
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
-        return NULL;
+        goto err;
 
     /* direct structure assignment */
     *ret = *sk;
@@ -90,10 +91,8 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
 
     ret->num_alloc = sk->num > min_nodes ? sk->num : min_nodes;
     ret->data = OPENSSL_zalloc(sizeof(*ret->data) * ret->num_alloc);
-    if (ret->data == NULL) {
-        OPENSSL_free(ret);
-        return NULL;
-    }
+    if (ret->data == NULL)
+        goto err;
 
     for (i = 0; i < ret->num; ++i) {
         if (sk->data[i] == NULL)
@@ -102,11 +101,15 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
             while (--i >= 0)
                 if (ret->data[i] != NULL)
                     free_func((void *)ret->data[i]);
-            OPENSSL_sk_free(ret);
-            return NULL;
+            goto err;
         }
     }
     return ret;
+
+err:
+    OPENSSL_free(ret);
+    CRYPTOerr(CRYPTO_F_OPENSSL_SK_DEEP_COPY, ERR_R_MALLOC_FAILURE);
+    return NULL;
 }
 
 OPENSSL_STACK *OPENSSL_sk_new_null(void)
@@ -192,8 +195,10 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
     }
 
     tmpdata = OPENSSL_realloc((void *)st->data, sizeof(void *) * num_alloc);
-    if (tmpdata == NULL)
+    if (tmpdata == NULL) {
+        CRYPTOerr(CRYPTO_F_SK_RESERVE, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     st->data = tmpdata;
     st->num_alloc = num_alloc;
@@ -202,10 +207,12 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
 
 OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
 {
-    OPENSSL_STACK *st = OPENSSL_zalloc(sizeof(OPENSSL_STACK));
-
-    if (st == NULL)
+    OPENSSL_STACK *st;
+    
+    if ((st = OPENSSL_zalloc(sizeof(OPENSSL_STACK))) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_SK_NEW_RESERVE, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     st->comp = c;
 
@@ -214,6 +221,7 @@ OPENSSL_STACK *OPENSSL_sk_new_reserve(OPENSSL_sk_compfunc c, int n)
 
     if (!sk_reserve(st, n, 1)) {
         OPENSSL_sk_free(st);
+        CRYPTOerr(CRYPTO_F_OPENSSL_SK_NEW_RESERVE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

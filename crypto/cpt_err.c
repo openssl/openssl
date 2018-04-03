@@ -25,6 +25,8 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "CRYPTO_new_ex_data"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_SET_EX_DATA, 0),
      "CRYPTO_set_ex_data"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_THREAD_LOCK_NEW, 0),
+     "CRYPTO_THREAD_lock_new"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_FIPS_MODE_SET, 0), "FIPS_mode_set"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_GET_AND_LOCK, 0), "get_and_lock"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_ATEXIT, 0), "OPENSSL_atexit"},
@@ -35,6 +37,12 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "OPENSSL_hexstr2buf"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_INIT_CRYPTO, 0),
      "OPENSSL_init_crypto"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_DEEP_COPY, 0),
+     "OPENSSL_sk_deep_copy"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_DUP, 0), "OPENSSL_sk_dup"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_NEW_RESERVE, 0),
+     "OPENSSL_sk_new_reserve"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_SK_RESERVE, 0), "sk_reserve"},
     {0, NULL}
 };
 

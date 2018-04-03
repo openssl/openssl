@@ -25,6 +25,7 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
+# define CRYPTO_F_CRYPTO_THREAD_LOCK_NEW                  120
 # define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_GET_AND_LOCK                            113
 # define CRYPTO_F_OPENSSL_ATEXIT                          114
@@ -32,6 +33,10 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_FOPEN                           119
 # define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
+# define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    121
+# define CRYPTO_F_OPENSSL_SK_DUP                          122
+# define CRYPTO_F_OPENSSL_SK_NEW_RESERVE                  123
+# define CRYPTO_F_SK_RESERVE                              124
 
 /*
  * CRYPTO reason codes.
