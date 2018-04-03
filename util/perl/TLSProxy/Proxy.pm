@@ -182,6 +182,19 @@ sub clientrestart
     $self->clientstart;
 }
 
+sub connect_to_server
+{
+    my $self = shift;
+    my $servaddr = $self->{server_addr};
+
+    $servaddr =~ s/[\[\]]//g; # Remove [ and ]
+
+    $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
+                                         PeerPort => $self->{server_port},
+                                         Proto => 'tcp')
+                           or die "unable to connect: $!\n";
+}
+
 sub start
 {
     my ($self) = shift;
@@ -215,6 +228,7 @@ sub start
 
     # Temporarily replace STDIN so that sink process can inherit it...
     $pid = open(STDIN, "$execcmd |") or die "Failed to $execcmd: $!\n";
+    $self->{real_serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
@@ -245,14 +259,8 @@ sub start
     print STDERR "Server responds on ",
         $self->{server_addr}, ":", $self->{server_port}, "\n";
 
-    # Connect directly...
-    my $servaddr = $self->{server_addr};
-    $servaddr =~ s/[\[\]]//g; # Remove [ and ]
-
-    $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
-                                         PeerPort => $self->{server_port},
-                                         Proto => 'tcp')
-                           or die "unable to connect: $!\n";
+    # Connect right away...
+    $self->connect_to_server();
 
     return $self->clientstart;
 }
@@ -302,7 +310,10 @@ sub clientstart
 
     # Wait for incoming connection from client
     my $fdset = IO::Select->new($self->{proxy_sock});
-    $fdset->can_read(1) or die "client didn't try to connect\n";
+    if (!$fdset->can_read(1)) {
+        kill(3, $self->{real_serverpid});
+        die "s_client didn't try to connect\n";
+    }
 
     my $client_sock;
     if(!($client_sock = $self->{proxy_sock}->accept())) {
@@ -367,16 +378,11 @@ sub clientstart
         waitpid($self->serverpid, 0);
         die "exit code $? from server process\n" if $? != 0;
     } else {
-        # since we will be using this server again, connect back right
-        # away, which allows for accurate synchronization without
-        # sleeping...
-        my $servaddr = $self->{server_addr};
-        $servaddr =~ s/[\[\]]//g; # Remove [ and ]
-
-        $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
-                                             PeerPort => $self->{server_port},
-                                             Proto => 'tcp')
-                               or die "unable to connect: $!\n";
+        # It's a bit counter-intuitive spot to make next connection to
+        # the s_server. Rationale is that established connection works
+        # as syncronization point, in sense that this way we know that
+        # s_server is actually done with current session...
+        $self->connect_to_server();
     }
     die "clientpid is zero\n" if $self->clientpid == 0;
     print "Waiting for client process to close: ".$self->clientpid."\n";
