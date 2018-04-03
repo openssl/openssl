@@ -20,8 +20,11 @@
 # ifdef setenv
 #  undef setenv
 # endif
+#define getenv winrt_getenv
+#define setenv winrt_setenv
 
-/*
+
+#if !defined(NTDDI_WIN10_RS1) || (NTDDI_VERSION <= NTDDI_WIN10_RS1)
 # ifdef FindFirstFile
 #  undef FindFirstFile
 # endif
@@ -36,7 +39,7 @@
 #  undef LoadLibraryA
 # endif
 # define LoadLibraryA winrt_LoadLibraryA
-*/
+#endif
 
 # ifdef GetModuleHandle
 #   undef GetModuleHandle
@@ -53,7 +56,7 @@ int winrt_GetTickCount(void);
 void* LoadLibraryA(
 	const char* lpFileName
   );
-char* getenv(const char* varname);
+char* winrt_getenv(const char* varname);
 int _kbhit();
 
 int MoveFile(
