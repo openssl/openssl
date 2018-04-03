@@ -239,12 +239,15 @@ CNF_CPPFLAGS={- our $cppflags2 =
                                               @{$config{includes}}),
                               @{$config{cppflags}}) -}
 CNF_CFLAGS={- join(' ', $target{cflags} || (),
+                        "-Ivendor/liboqs/include",
                         @{$config{cflags}}) -}
 CNF_CXXFLAGS={- join(' ', $target{cxxflags} || (),
                           @{$config{cxxflags}}) -}
 CNF_LDFLAGS={- join(' ', $target{lflags} || (),
+                         "-Lvendor/liboqs",
                          @{$config{lflags}}) -}
 CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
+                         "-loqs",
                          @{$config{ex_libs}}) -}
 
 # Variables starting with LIB_ are used to build library object files
