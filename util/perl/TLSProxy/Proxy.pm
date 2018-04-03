@@ -11,6 +11,7 @@ use POSIX ":sys_wait_h";
 package TLSProxy::Proxy;
 
 use File::Spec;
+use File::Temp qw(tempfile);
 use IO::Socket;
 use IO::Select;
 use TLSProxy::Record;
@@ -41,9 +42,10 @@ sub new
     my $self = {
         #Public read/write
         proxy_addr => "localhost",
-        proxy_port => 4453,
+        proxy_port => 0,
         server_addr => "localhost",
-        server_port => 4443,
+        server_port => 0,
+        server_port_file => "",
         filter => $filter,
         serverflags => "",
         clientflags => "",
@@ -110,7 +112,7 @@ sub new
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
     my @proxyargs = (
         LocalHost   => $proxaddr,
-        LocalPort   => $self->{proxy_port},
+        LocalPort   => 0,
         Proto       => "tcp",
         Listen      => SOMAXCONN,
        );
@@ -119,9 +121,10 @@ sub new
     $self->{proxy_sock} = $IP_factory->(@proxyargs);
 
     if ($self->{proxy_sock}) {
+        $self->{proxy_port} = $self->{proxy_sock}->sockport();
         print "Proxy started on port ".$self->{proxy_port}."\n";
     } else {
-        warn "Failed creating proxy socket (".$proxaddr.",".$self->{proxy_port}."): $!\n";
+        warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
     }
 
     return bless $self, $class;
@@ -131,6 +134,8 @@ sub DESTROY
 {
     my $self = shift;
 
+    unlink $self->{server_port_file} if $self->{server_port_file} ne "";
+    $self->{server_port_file} = "";
     $self->{proxy_sock}->close() if $self->{proxy_sock};
 }
 
@@ -166,6 +171,8 @@ sub clear
     $self->{serverconnects} = 1;
     $self->{serverpid} = 0;
     $self->{reneg} = 0;
+    unlink $self->{server_port_file} if $self->{server_port_file} ne "";
+    $self->{server_port_file} = "";
 }
 
 sub restart
@@ -193,11 +200,20 @@ sub start
         return 0;
     }
 
+    # We create a temp file and close it immediately, so we have the name of
+    # an existing file that can be passed to s_server
+    my ($fh, $serverportfile) = tempfile(DIR => File::Spec->curdir(),
+                                         SUFFIX => 'serverport',
+                                         UNLINK => 0,
+                                         OPEN => 1);
+    close $fh;
+    $self->{server_port_file} = $serverportfile;
+
     $pid = fork();
     if ($pid == 0) {
         my $execcmd = $self->execute
-            ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest -accept "
-            .($self->server_port)
+            ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
+            ." -accept 0 -portfile ".$self->{server_port_file}
             ." -cert ".$self->cert." -cert2 ".$self->cert
             ." -naccept ".$self->serverconnects;
         unless ($self->supports_IPv6) {
@@ -218,6 +234,17 @@ sub start
         exec($execcmd);
     }
     $self->serverpid($pid);
+
+    while(! -f $self->{server_port_file} || -z $self->{server_port_file}) {
+        usleep(100000);         # .1 s
+    }
+    open PORT, $self->{server_port_file};
+    my $line = <PORT>;
+    $line =~ s/\R$//;                    # Better chomp
+    ($self->{server_port}) = $line =~ /:(\d+)$/;
+    close PORT;
+    print STDERR "Server responds on ",
+        $self->{server_addr}, ":", $self->{server_port}, "\n";
 
     return $self->clientstart;
 }
@@ -471,24 +498,18 @@ sub proxy_port
     my $self = shift;
     return $self->{proxy_port};
 }
-
-#Read/write accessors
 sub server_addr
 {
     my $self = shift;
-    if (@_) {
-        $self->{server_addr} = shift;
-    }
     return $self->{server_addr};
 }
 sub server_port
 {
     my $self = shift;
-    if (@_) {
-        $self->{server_port} = shift;
-    }
     return $self->{server_port};
 }
+
+#Read/write accessors
 sub filter
 {
     my $self = shift;

@@ -203,6 +203,7 @@ out:
  * 0 on failure, something other on success.
  */
 int do_server(int *accept_sock, const char *host, const char *port,
+              const char *portfile,
               int family, int type, int protocol, do_server_cb cb,
               unsigned char *context, int naccept)
 {
@@ -282,6 +283,32 @@ int do_server(int *accept_sock, const char *host, const char *port,
 
     BIO_ADDRINFO_free(res);
     res = NULL;
+
+    if (portfile != NULL) {
+        BIO *pf = NULL;
+        union BIO_sock_info_u info;
+        char *hostname = NULL;
+        char *service = NULL;
+        int success = 0;
+
+        if ((info.addr = BIO_ADDR_new()) != NULL
+            && BIO_sock_info(asock, BIO_SOCK_INFO_ADDRESS, &info)
+            && (hostname = BIO_ADDR_hostname_string(info.addr, 1)) != NULL
+            && (service = BIO_ADDR_service_string(info.addr, 1)) != NULL
+            && (pf = BIO_new_file(portfile, "w")) != NULL
+            && ((strchr(hostname, ':') == NULL
+                 ? /* IPv4 */ BIO_printf(pf, "%s:%s\n", hostname, service)
+                 : /* IPv6 */ BIO_printf(pf, "[%s]:%s\n", hostname, service))
+                > 0))
+            success = 1;
+
+        BIO_free_all(pf);
+        OPENSSL_free(service);
+        OPENSSL_free(hostname);
+        BIO_ADDR_free(info.addr);
+        if (!success)
+            goto end;
+    }
 
     if (accept_sock != NULL)
         *accept_sock = asock;
