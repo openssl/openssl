@@ -2439,6 +2439,87 @@ static int test_early_data_tls1_2(int idx)
 }
 # endif /* OPENSSL_NO_TLS1_2 */
 
+/*
+ * Test configuring the TLSv1.3 ciphersuites
+ *
+ * Test 0: Set a default ciphersuite in the SSL_CTX (no explicit cipher_list)
+ * Test 1: Set a non-default ciphersuite in the SSL_CTX (no explicit cipher_list)
+ * Test 2: Set a default ciphersuite in the SSL (no explicit cipher_list)
+ * Test 3: Set a non-default ciphersuite in the SSL (no explicit cipher_list)
+ * Test 4: Set a default ciphersuite in the SSL_CTX (SSL_CTX cipher_list)
+ * Test 5: Set a non-default ciphersuite in the SSL_CTX (SSL_CTX cipher_list)
+ * Test 6: Set a default ciphersuite in the SSL (SSL_CTX cipher_list)
+ * Test 7: Set a non-default ciphersuite in the SSL (SSL_CTX cipher_list)
+ * Test 8: Set a default ciphersuite in the SSL (SSL cipher_list)
+ * Test 9: Set a non-default ciphersuite in the SSL (SSL cipher_list)
+ */
+static int test_set_ciphersuite(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                           "TLS_AES_128_GCM_SHA256:TLS_AES_128_CCM_SHA256")))
+        goto end;
+
+    if (idx >=4 && idx <= 7) {
+        /* SSL_CTX explicit cipher list */
+        if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES256-GCM-SHA384")))
+            goto end;
+    }
+
+    if (idx == 0 || idx == 4) {
+        /* Default ciphersuite */
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                "TLS_AES_128_GCM_SHA256")))
+            goto end;
+    } else if (idx == 1 || idx == 5) {
+        /* Non default ciphersuite */
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                                "TLS_AES_128_CCM_SHA256")))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL)))
+        goto end;
+
+    if (idx == 8 || idx == 9) {
+        /* SSL explicit cipher list */
+        if (!TEST_true(SSL_set_cipher_list(clientssl, "AES256-GCM-SHA384")))
+            goto end;
+    }
+
+    if (idx == 2 || idx == 6 || idx == 8) {
+        /* Default ciphersuite */
+        if (!TEST_true(SSL_set_ciphersuites(clientssl,
+                                            "TLS_AES_128_GCM_SHA256")))
+            goto end;
+    } else if (idx == 3 || idx == 7 || idx == 9) {
+        /* Non default ciphersuite */
+        if (!TEST_true(SSL_set_ciphersuites(clientssl,
+                                            "TLS_AES_128_CCM_SHA256")))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 static int test_ciphersuite_change(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -3770,6 +3851,7 @@ int setup_tests(void)
 # endif
 #endif
 #ifndef OPENSSL_NO_TLS1_3
+    ADD_ALL_TESTS(test_set_ciphersuite, 10);
     ADD_TEST(test_ciphersuite_change);
 #ifdef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk, 1);
