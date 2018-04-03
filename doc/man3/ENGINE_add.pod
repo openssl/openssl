@@ -568,6 +568,7 @@ extension).
 =item B<OPENSSL_ENGINES>
 
 The path to the engines directory.
+Ignored in set-user-ID and set-group-ID programs.
 
 =back
 
