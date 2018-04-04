@@ -148,8 +148,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (total_length > bytes_remaining)
         total_length = bytes_remaining;
 
-    return rand_pool_add(pool, (PTR_T)data_buffer, total_length,
-                         total_length * ENTROPY_BITS_PER_BYTE);
+    rand_pool_add(pool, (PTR_T)data_buffer, total_length,
+                  total_length * ENTROPY_BITS_PER_BYTE);
+    return rand_pool_entropy_available(pool);
 }
 
 #endif

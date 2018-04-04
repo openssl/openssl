@@ -174,7 +174,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         if (getrandom(buffer, bytes_needed, 0) == (int)bytes_needed)
             bytes = bytes_needed;
 
-        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+        rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;
@@ -203,7 +204,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                 if (fread(buffer, 1, bytes_needed, fp) == bytes_needed)
                     bytes = bytes_needed;
 
-                entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+                rand_pool_add_end(pool, bytes, 8 * bytes);
+                entropy_available = rand_pool_entropy_available(pool);
             }
             fclose(fp);
             if (entropy_available > 0)
@@ -241,7 +243,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                 if (num == (int)bytes_needed)
                     bytes = bytes_needed;
 
-                entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+                rand_pool_add_end(pool, bytes, 8 * bytes);
+                entropy_available = rand_pool_entropy_available(pool);
             }
             if (entropy_available > 0)
                 return entropy_available;
