@@ -94,6 +94,7 @@ int RAND_load_file(const char *file, long bytes)
     if (fstat(fileno(in), &sb) < 0) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_INTERNAL_ERROR);
         ERR_add_error_data(2, "Filename=", file);
+        fclose(in);
         return -1;
     }
 
