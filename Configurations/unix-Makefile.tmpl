@@ -848,7 +848,7 @@ EOF
           $recipe .= <<"EOF";
 $obj$objext: $deps
 	( trap "rm -f \$@.*" INT 0; \\
-	  \$(CPP) $incs \$(CFLAGS) $ecflags $srcs | \\
+	  \$(CC) $incs \$(CFLAGS) $ecflags -E $srcs | \\
 	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.s && \\
 	  \$(CC) \$(CFLAGS) $ecflags -c -o \$\@ \$@.s )
 EOF
