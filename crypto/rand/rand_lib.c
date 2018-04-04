@@ -628,8 +628,8 @@ size_t rand_pool_bytes_remaining(RAND_POOL *pool)
  *
  * Returns 1 if the added amount is adequate, otherwise 0
  */
-size_t rand_pool_add(RAND_POOL *pool,
-                     const unsigned char *buffer, size_t len, size_t entropy)
+int rand_pool_add(RAND_POOL *pool,
+                  const unsigned char *buffer, size_t len, size_t entropy)
 {
     if (len > pool->max_len - pool->len) {
         RANDerr(RAND_F_RAND_POOL_ADD, RAND_R_ENTROPY_INPUT_TOO_LONG);
@@ -679,7 +679,7 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
  * to the buffer which contain at least |entropy| bits of randomness.
  * It is allowed to add less bytes than originally reserved.
  */
-size_t rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
+int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
 {
     if (len > pool->max_len - pool->len) {
         RANDerr(RAND_F_RAND_POOL_ADD_END, RAND_R_RANDOM_POOL_OVERFLOW);
