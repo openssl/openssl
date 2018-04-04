@@ -954,7 +954,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(CPP) $incs $cppflags $args{generator}->[0] | \\
+	\$(CC) $incs $cppflags -E $args{generator}->[0] | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
@@ -1012,7 +1012,7 @@ EOF
           $recipe .= <<"EOF";
 $obj$objext: $deps
 	( trap "rm -f \$@.*" INT 0; \\
-	  \$(CPP) $incs $cmdflags $srcs | \\
+	  \$(CC) $incs $cmdflags -E $srcs | \\
 	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.s && \\
 	  $cmd $cmdflags -c -o \$\@ \$@.s )
 EOF
