@@ -70,7 +70,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
             bytes = bytes_needed;
 
-        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+        rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;
@@ -88,7 +89,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             CryptReleaseContext(hProvider, 0);
         }
 
-        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+        rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;
@@ -106,7 +108,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
             CryptReleaseContext(hProvider, 0);
         }
-        entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+        rand_pool_add_end(pool, bytes, 8 * bytes);
+        entropy_available = rand_pool_entropy_available(pool);
     }
     if (entropy_available > 0)
         return entropy_available;

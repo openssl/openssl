@@ -130,26 +130,20 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
         buffer = rand_pool_add_begin(pool, bytes_needed);
 
         if (buffer != NULL) {
-
-            /* If RDSEED is available, use that. */
+            /* Whichever comes first, use RDSEED, RDRAND or nothing */
             if ((OPENSSL_ia32cap_P[2] & (1 << 18)) != 0) {
                 if (OPENSSL_ia32_rdseed_bytes(buffer, bytes_needed)
-                    == bytes_needed)
-                    return rand_pool_add_end(pool,
-                                             bytes_needed,
-                                             8 * bytes_needed);
-            }
-
-            /* Second choice is RDRAND. */
-            if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
+                    == bytes_needed) {
+                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
+                }
+            } else if ((OPENSSL_ia32cap_P[1] & (1 << (62 - 32))) != 0) {
                 if (OPENSSL_ia32_rdrand_bytes(buffer, bytes_needed)
-                    == bytes_needed)
-                    return rand_pool_add_end(pool,
-                                             bytes_needed,
-                                             8 * bytes_needed);
+                    == bytes_needed) {
+                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
+                }
+            } else {
+                rand_pool_add_end(pool, 0, 0);
             }
-
-            return rand_pool_add_end(pool, 0, 0);
         }
     }
 
@@ -222,7 +216,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                 bytes = bytes_needed;
             rand_drbg_unlock(drbg->parent);
 
-            entropy_available = rand_pool_add_end(pool, bytes, 8 * bytes);
+            rand_pool_add_end(pool, bytes, 8 * bytes);
+            entropy_available = rand_pool_entropy_available(pool);
         }
 
     } else {
@@ -631,11 +626,10 @@ size_t rand_pool_bytes_remaining(RAND_POOL *pool)
  * random input which contains at least |entropy| bits of
  * randomness.
  *
- * Return available amount of entropy after this operation.
- * (see rand_pool_entropy_available(pool))
+ * Returns 1 if the added amount is adequate, otherwise 0
  */
-size_t rand_pool_add(RAND_POOL *pool,
-                     const unsigned char *buffer, size_t len, size_t entropy)
+int rand_pool_add(RAND_POOL *pool,
+                  const unsigned char *buffer, size_t len, size_t entropy)
 {
     if (len > pool->max_len - pool->len) {
         RANDerr(RAND_F_RAND_POOL_ADD, RAND_R_ENTROPY_INPUT_TOO_LONG);
@@ -648,7 +642,7 @@ size_t rand_pool_add(RAND_POOL *pool,
         pool->entropy += entropy;
     }
 
-    return rand_pool_entropy_available(pool);
+    return 1;
 }
 
 /*
@@ -685,7 +679,7 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
  * to the buffer which contain at least |entropy| bits of randomness.
  * It is allowed to add less bytes than originally reserved.
  */
-size_t rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
+int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
 {
     if (len > pool->max_len - pool->len) {
         RANDerr(RAND_F_RAND_POOL_ADD_END, RAND_R_RANDOM_POOL_OVERFLOW);
@@ -697,7 +691,7 @@ size_t rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
         pool->entropy += entropy;
     }
 
-    return rand_pool_entropy_available(pool);
+    return 1;
 }
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
