@@ -41,9 +41,9 @@ sub new
     my $self = {
         #Public read/write
         proxy_addr => "localhost",
-        proxy_port => 4453,
+        proxy_port => 0,
         server_addr => "localhost",
-        server_port => 4443,
+        server_port => 0,
         filter => $filter,
         serverflags => "",
         clientflags => "",
@@ -110,7 +110,7 @@ sub new
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
     my @proxyargs = (
         LocalHost   => $proxaddr,
-        LocalPort   => $self->{proxy_port},
+        LocalPort   => 0,
         Proto       => "tcp",
         Listen      => SOMAXCONN,
        );
@@ -119,9 +119,10 @@ sub new
     $self->{proxy_sock} = $IP_factory->(@proxyargs);
 
     if ($self->{proxy_sock}) {
+        $self->{proxy_port} = $self->{proxy_sock}->sockport();
         print "Proxy started on port ".$self->{proxy_port}."\n";
     } else {
-        warn "Failed creating proxy socket (".$proxaddr.",".$self->{proxy_port}."): $!\n";
+        warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
     }
 
     return bless $self, $class;
@@ -193,31 +194,49 @@ sub start
         return 0;
     }
 
-    $pid = fork();
-    if ($pid == 0) {
-        my $execcmd = $self->execute
-            ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest -accept "
-            .($self->server_port)
-            ." -cert ".$self->cert." -cert2 ".$self->cert
-            ." -naccept ".$self->serverconnects;
-        unless ($self->supports_IPv6) {
-            $execcmd .= " -4";
-        }
-        if ($self->ciphers ne "") {
-            $execcmd .= " -cipher ".$self->ciphers;
-        }
-        if ($self->ciphersuitess ne "") {
-            $execcmd .= " -ciphersuites ".$self->ciphersuitess;
-        }
-        if ($self->serverflags ne "") {
-            $execcmd .= " ".$self->serverflags;
-        }
-        if ($self->debug) {
-            print STDERR "Server command: $execcmd\n";
-        }
-        exec($execcmd);
+    my $execcmd = $self->execute
+        ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
+        ." -accept 0 -cert ".$self->cert." -cert2 ".$self->cert
+        ." -naccept ".$self->serverconnects;
+    unless ($self->supports_IPv6) {
+        $execcmd .= " -4";
     }
-    $self->serverpid($pid);
+    if ($self->ciphers ne "") {
+        $execcmd .= " -cipher ".$self->ciphers;
+    }
+    if ($self->ciphersuitess ne "") {
+        $execcmd .= " -ciphersuites ".$self->ciphersuitess;
+    }
+    if ($self->serverflags ne "") {
+        $execcmd .= " ".$self->serverflags;
+    }
+    if ($self->debug) {
+        print STDERR "Server command: $execcmd\n";
+    }
+
+    $self->serverpid(open(my $sh, "$execcmd |"));
+
+    # Process the output from s_server until we find the ACCEPT line, which
+    # tells us what the accepting address and port are.
+    while (<$sh>) {
+        print;
+        s/\R$//;                # Better chomp
+        next unless (/^ACCEPT\s.*:(\d+)$/);
+        $self->{server_port} = $1;
+        last;
+    }
+
+    # Just make sure everything else is simply printed.
+    # The sub process simply inherits our STDIN and will keep consuming
+    # and printing it as long as there is anything there, out of our way.
+    if (fork() == 0) {
+        open STDIN, '<&', $sh;
+        close $sh;
+        exec ("$^X -ne print");
+    }
+
+    print STDERR "Server responds on ",
+        $self->{server_addr}, ":", $self->{server_port}, "\n";
 
     return $self->clientstart;
 }
@@ -471,24 +490,18 @@ sub proxy_port
     my $self = shift;
     return $self->{proxy_port};
 }
-
-#Read/write accessors
 sub server_addr
 {
     my $self = shift;
-    if (@_) {
-        $self->{server_addr} = shift;
-    }
     return $self->{server_addr};
 }
 sub server_port
 {
     my $self = shift;
-    if (@_) {
-        $self->{server_port} = shift;
-    }
     return $self->{server_port};
 }
+
+#Read/write accessors
 sub filter
 {
     my $self = shift;
