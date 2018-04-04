@@ -4009,6 +4009,262 @@ static int test_srp(int tst)
 }
 #endif
 
+static int info_cb_failed = 0;
+static int info_cb_offset = 0;
+static int info_cb_this_state = -1;
+
+static struct info_cb_states_st {
+    int where;
+    const char *statestr;
+} info_cb_states[][60] = {
+    {
+        /* TLSv1.2 server followed by resumption */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
+        {SSL_CB_LOOP, "TWSC"}, {SSL_CB_LOOP, "TWSKE"}, {SSL_CB_LOOP, "TWSD"},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWSD"}, {SSL_CB_LOOP, "TRCKE"},
+        {SSL_CB_LOOP, "TRCCS"}, {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_LOOP, "TWST"},
+        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_ALERT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"},
+        {SSL_CB_LOOP, "TWSH"}, {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWFIN"}, {SSL_CB_LOOP, "TRCCS"},
+        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        /* TLSv1.2 client followed by resumption */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWCH"},
+        {SSL_CB_LOOP, "TRSH"}, {SSL_CB_LOOP, "TRSC"}, {SSL_CB_LOOP, "TRSKE"},
+        {SSL_CB_LOOP, "TRSD"}, {SSL_CB_LOOP, "TWCKE"}, {SSL_CB_LOOP, "TWCCS"},
+        {SSL_CB_LOOP, "TWFIN"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_LOOP, "TRST"}, {SSL_CB_LOOP, "TRCCS"}, {SSL_CB_LOOP, "TRFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL}, {SSL_CB_ALERT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWCH"},
+        {SSL_CB_LOOP, "TRSH"}, {SSL_CB_LOOP, "TRCCS"}, {SSL_CB_LOOP, "TRFIN"},
+        {SSL_CB_LOOP, "TWCCS"},  {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        /* TLSv1.3 server followed by resumption */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
+        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"}, {SSL_CB_LOOP, "TWSC"},
+        {SSL_CB_LOOP, "TRSCV"}, {SSL_CB_LOOP, "TWFIN"}, {SSL_CB_LOOP, "TED"},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TED"}, {SSL_CB_LOOP, "TRFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "TWST"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_ALERT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
+        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_LOOP, "TED"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TED"},
+        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "TWST"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        /* TLSv1.3 client followed by resumption */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TWCH"},
+        {SSL_CB_LOOP, "TRSH"}, {SSL_CB_LOOP, "TREE"}, {SSL_CB_LOOP, "TRSC"},
+        {SSL_CB_LOOP, "TRSCV"}, {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_LOOP, "TWCCS"},
+        {SSL_CB_LOOP, "TWFIN"},  {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "TRST"},
+        {SSL_CB_HANDSHAKE_DONE, NULL},  {SSL_CB_EXIT, NULL},
+        {SSL_CB_ALERT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_LOOP, "TRSH"},  {SSL_CB_LOOP, "TREE"},
+        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "SSLOK "},
+        {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "TRST"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        /* TLSv1.3 server, early_data */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
+        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"}, {SSL_CB_LOOP, "TWFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "TED"},
+        {SSL_CB_LOOP, "TED"}, {SSL_CB_LOOP, "TWEOED"}, {SSL_CB_LOOP, "TRFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "TWST"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        /* TLSv1.3 client, early_data */
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
+        {SSL_CB_LOOP, "TWCH"}, {SSL_CB_LOOP, "TWCCS"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "TED"},
+        {SSL_CB_LOOP, "TED"}, {SSL_CB_LOOP, "TRSH"}, {SSL_CB_LOOP, "TREE"},
+        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_LOOP, "TPEDE"}, {SSL_CB_LOOP, "TWEOED"},
+        {SSL_CB_LOOP, "TWFIN"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "TRST"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL}, {0, NULL},
+    }, {
+        {0, NULL},
+    }
+};
+
+static void sslapi_info_callback(const SSL *s, int where, int ret)
+{
+    struct info_cb_states_st *state = info_cb_states[info_cb_offset];
+
+    /* We do not ever expect a connection to fail in this test */
+    if (!TEST_false(ret == 0)) {
+        info_cb_failed = 1;
+        return;
+    }
+
+    /*
+     * Do some sanity checks. We never expect these things to happen in this
+     * test
+     */
+    if (!TEST_false((SSL_is_server(s) && (where & SSL_ST_CONNECT) != 0))
+            || !TEST_false(!SSL_is_server(s) && (where & SSL_ST_ACCEPT) != 0)
+            || !TEST_int_ne(state[++info_cb_this_state].where, 0)) {
+        info_cb_failed = 1;
+        return;
+    }
+
+    /* Now check we're in the right state */
+    if (!TEST_true((where & state[info_cb_this_state].where) != 0)) {
+        info_cb_failed = 1;
+        return;
+    }
+    if ((where & SSL_CB_LOOP) != 0
+            && !TEST_int_eq(strcmp(SSL_state_string(s),
+                            state[info_cb_this_state].statestr), 0)) {
+        info_cb_failed = 1;
+        return;
+    }
+}
+
+/*
+ * Test the info callback gets called when we expect it to.
+ *
+ * Test 0: TLSv1.2, server
+ * Test 1: TLSv1.2, client
+ * Test 2: TLSv1.3, server
+ * Test 3: TLSv1.3, client
+ * Test 4: TLSv1.3, server, early_data
+ * Test 5: TLSv1.3, client, early_data
+ */
+static int test_info_callback(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *clntsess = NULL;
+    int testresult = 0;
+    int tlsvers;
+
+    if (tst < 2) {
+#ifndef OPENSSL_NO_TLS1_2
+        tlsvers = TLS1_2_VERSION;
+#else
+        return 1;
+#endif
+    } else {
+#ifndef OPENSSL_NO_TLS1_3
+        tlsvers = TLS1_3_VERSION;
+#else
+        return 1;
+#endif
+    }
+
+    /* Reset globals */
+    info_cb_failed = 0;
+    info_cb_this_state = -1;
+    info_cb_offset = tst;
+
+    if (tst >= 4) {
+        SSL_SESSION *sess = NULL;
+        size_t written, readbytes;
+        unsigned char buf[80];
+
+        /* early_data tests */
+        if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+                                            &serverssl, &sess, 0)))
+            goto end;
+
+        /* We don't actually need this reference */
+        SSL_SESSION_free(sess);
+
+        SSL_set_info_callback((tst % 2) == 0 ? serverssl : clientssl,
+                              sslapi_info_callback);
+
+        /* Write and read some early data and then complete the connection */
+        if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+                                            &written))
+                || !TEST_size_t_eq(written, strlen(MSG1))
+                || !TEST_int_eq(SSL_read_early_data(serverssl, buf,
+                                                    sizeof(buf), &readbytes),
+                                SSL_READ_EARLY_DATA_SUCCESS)
+                || !TEST_mem_eq(MSG1, readbytes, buf, strlen(MSG1))
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                                SSL_EARLY_DATA_ACCEPTED)
+                || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                    SSL_ERROR_NONE))
+                || !TEST_false(info_cb_failed))
+            goto end;
+
+        testresult = 1;
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       tlsvers, tlsvers, &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    /*
+     * For even numbered tests we check the server callbacks. For odd numbers we
+     * check the client.
+     */
+    SSL_CTX_set_info_callback((tst % 2) == 0 ? sctx : cctx,
+                              sslapi_info_callback);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                            SSL_ERROR_NONE))
+        || !TEST_false(info_cb_failed))
+    goto end;
+
+
+
+    clntsess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Now do a resumption */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl))
+            || !TEST_false(info_cb_failed))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_SESSION_free(clntsess);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -4099,6 +4355,7 @@ int setup_tests(void)
 #if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
     ADD_ALL_TESTS(test_srp, 6);
 #endif
+    ADD_ALL_TESTS(test_info_callback, 6);
     return 1;
 }
 
