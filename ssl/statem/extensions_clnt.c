@@ -1949,6 +1949,12 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 	  has_error = 1;
 	  goto oqs_cleanup;
 	}
+	/* We assign the OQS nid to the skey (saved in s->s3->peer), so it can be printed out later
+	   in s_client output. Setting the key to NULL to avoid generating allocating memory.
+	   This is a hack. When we integrate the OQS sig scheme, we'll have a better EVP integration,
+	   but since we currently only support the OQS KEX schemes, we have a lightweight integration
+	   and simply calling this gives us what we want. (FIXMEOQS) */
+	EVP_PKEY_assign(skey = EVP_PKEY_new(), OQS_KEX_NID(group_id), NULL);
 	{
 	  /* OQS note: this code is copied from ssl_derive */
 	  if (!s->hit) {

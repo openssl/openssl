@@ -451,6 +451,9 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 #define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
 			     nid == NID_OQS_SIKE_503 ||	\
 			     nid == NID_OQS_SIKE_751)
+#define OQS_ALG_NAME_STR(nid)   (nid == NID_OQS_Frodo ? "Frodo recommended" : \
+				(nid == NID_OQS_SIKE_503 ? "SIKE 503" : \
+				(nid == NID_OQS_SIKE_751 ? "SIKE 751" : "")))
 
 # ifdef  __cplusplus
 }

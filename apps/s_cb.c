@@ -387,8 +387,9 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     EVP_PKEY *key;
     if (!SSL_get_server_tmp_key(s, &key))
         return 1;
+    int nid_key = EVP_PKEY_id(key);
     BIO_puts(out, "Server Temp Key: ");
-    switch (EVP_PKEY_id(key)) {
+    switch (nid_key) {
     case EVP_PKEY_RSA:
         BIO_printf(out, "RSA, %d bits\n", EVP_PKEY_bits(key));
         break;
@@ -412,8 +413,12 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     break;
 #endif
     default:
-        BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
-                   EVP_PKEY_bits(key));
+        if (IS_OQS_KEX_NID(nid_key)) {
+	  BIO_printf(out, "%s\n", OQS_ALG_NAME_STR(nid_key));
+        } else {
+	  BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
+                      EVP_PKEY_bits(key));
+	}
     }
     EVP_PKEY_free(key);
     return 1;
