@@ -1033,6 +1033,10 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
             && s->post_handshake_auth == SSL_PHA_REQUESTED)
         s->post_handshake_auth = SSL_PHA_EXT_SENT;
 
+    /*
+     * Only set if there was a Finished message and this isn't after a TLSv1.3
+     * post handshake exchange
+     */
     if (s->statem.cleanuphand) {
         /* skipped if we just sent a HelloRequest */
         s->renegotiate = 0;
@@ -1069,11 +1073,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
                               &discard, s->session_ctx->lock);
         }
 
-        if (s->info_callback != NULL)
-            cb = s->info_callback;
-        else if (s->ctx->info_callback != NULL)
-            cb = s->ctx->info_callback;
-
         if (cb != NULL)
             cb(s, SSL_CB_HANDSHAKE_DONE, 1);
 
@@ -1085,6 +1084,14 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
             dtls1_clear_received_buffer(s);
         }
     }
+
+    if (s->info_callback != NULL)
+        cb = s->info_callback;
+    else if (s->ctx->info_callback != NULL)
+        cb = s->ctx->info_callback;
+
+    if (cb != NULL)
+        cb(s, SSL_CB_HANDSHAKE_DONE, 1);
 
     if (!stop)
         return WORK_FINISHED_CONTINUE;
