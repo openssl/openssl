@@ -2,7 +2,11 @@
 
 =head1 NAME
 
-SSL_CTX_set_info_callback, SSL_CTX_get_info_callback, SSL_set_info_callback, SSL_get_info_callback - handle information callback for SSL connections
+SSL_CTX_set_info_callback,
+SSL_CTX_get_info_callback,
+SSL_set_info_callback,
+SSL_get_info_callback
+- handle information callback for SSL connections
 
 =head1 SYNOPSIS
 
@@ -37,7 +41,8 @@ callback function for B<ssl>.
 
 When setting up a connection and during use, it is possible to obtain state
 information from the SSL/TLS engine. When set, an information callback function
-is called whenever the state changes, an alert appears, or an error occurs.
+is called whenever a significant event occurs such as: the state changes,
+an alert appears, or an error occurs.
 
 The callback function is called as B<callback(SSL *ssl, int where, int ret)>.
 The B<where> argument specifies information about where (in which context)
@@ -51,12 +56,15 @@ B<where> is a bitmask made up of the following bits:
 
 =item SSL_CB_LOOP
 
-Callback has been called to indicate state change inside a loop.
+Callback has been called to indicate state change or some other significant
+state machine event. This may mean that the callback gets invoked more than once
+per state in some situations.
 
 =item SSL_CB_EXIT
 
-Callback has been called to indicate error exit of a handshake function.
-(May be soft error with retry option for non-blocking setups.)
+Callback has been called to indicate exit of a handshake function. This will
+happen after the end of a handshake, but may happen at other times too such as
+on error or when IO might otherwise block and non-blocking is being used.
 
 =item SSL_CB_READ
 
@@ -84,11 +92,17 @@ Callback has been called due to an alert being sent or received.
 
 =item SSL_CB_HANDSHAKE_START
 
-Callback has been called because a new handshake is started.
+Callback has been called because a new handshake is started. In TLSv1.3 this is
+also used for the start of post-handshake message exchanges such as for the
+exchange of session tickets, or for key updates. It also occurs when resuming a
+handshake following a pause to handle early data.
 
 =item SSL_CB_HANDSHAKE_DONE           0x20
 
-Callback has been called because a handshake is finished.
+Callback has been called because a handshake is finished. In TLSv1.3 this is
+also used at the end of an exchange of post-handshake messages such as for
+session tickets or key updates. It also occurs if the handshake is paused to
+allow the exchange of early data.
 
 =back
 
