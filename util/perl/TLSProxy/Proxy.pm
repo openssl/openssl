@@ -40,19 +40,19 @@ sub new
     my $self = {
         #Public read/write
         proxy_addr => "localhost",
-        proxy_port => 0,
         server_addr => "localhost",
-        server_port => 0,
         filter => $filter,
         serverflags => "",
         clientflags => "",
         serverconnects => 1,
-        serverpid => 0,
-        clientpid => 0,
         reneg => 0,
         sessionfile => undef,
 
         #Public read
+        proxy_port => 0,
+        server_port => 0,
+        serverpid => 0,
+        clientpid => 0,
         execute => $execute,
         cert => $cert,
         debug => $debug,
@@ -240,21 +240,42 @@ sub start
         last;
     }
 
-    # Just make sure everything else is simply printed.
+    if ($self->{server_port} == 0) {
+        # This actually means that s_server exited, because otherwise
+        # we would still searching for ACCEPT...
+        die "no ACCEPT detected in '$execcmd' output\n";
+    }
+
+    # Just make sure everything else is simply printed [as separate lines].
     # The sub process simply inherits our STD* and will keep consuming
     # server's output and printing it as long as there is anything there,
     # out of our way.
+    my $error;
+    $pid = undef;
     if (eval { require Win32::Process; 1; }) {
-        Win32::Process::Create(my $h, "$^X", "perl -ne print", 0, 0, ".");
-        $self->serverpid($h->GetProcessID());
+        if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
+            $pid = $h->GetProcessID();
+        } else {
+            $error = Win32::FormatMessage(Win32::GetLastError());
+        }
     } else {
-        $pid = fork or exec("$^X -ne print");
-        $self->serverpid($pid);
+        if (defined($pid = fork)) {
+            $pid or exec("$^X -ne print") or exit($!);
+        } else {
+            $error = $!;
+        }
     }
 
     # Change back to original stdin
     open(STDIN, "<&", $savedin);
     close($savedin);
+
+    if (!defined($pid)) {
+        kill(3, $self->{real_serverpid});
+        die "Failed to capture s_server's output: $error\n";
+    }
+
+    $self->{serverpid} = $pid;
 
     print STDERR "Server responds on ",
         $self->{server_addr}, ":", $self->{server_port}, "\n";
@@ -297,8 +318,12 @@ sub clientstart
         # If we open pipe with new descriptor, attempt to close it,
         # explicitly or implicitly, would incur waitpid and effectively
         # dead-lock...
-        $pid = open(STDOUT, "| $execcmd") or die "Failed to $execcmd: $!\n";
-        $self->clientpid($pid);
+        if (!($pid = open(STDOUT, "| $execcmd"))) {
+            my $err = $!;
+            kill(3, $self->{real_serverpid});
+            die "Failed to $execcmd: $err\n";
+        }
+        $self->{clientpid} = $pid;
 
         # queue [magic] input
         print $self->reneg ? "R" : "test";
@@ -351,12 +376,16 @@ sub clientstart
                 $server_sock->syswrite($indata);
                 $ctr = 0;
             } else {
+                kill(3, $self->{real_serverpid});
                 die "Unexpected handle";
             }
         }
     }
 
-    die "No progress made" if $ctr >= 10;
+    if ($ctr >= 10) {
+        kill(3, $self->{real_serverpid});
+        die "No progress made";
+    }
 
     END:
     print "Connection closed\n";
@@ -369,13 +398,13 @@ sub clientstart
         $client_sock->close();
     }
 
-    $self->serverconnects($self->serverconnects - 1);
-    if ($self->serverconnects == 0) {
-        die "serverpid is zero\n" if $self->serverpid == 0;
-        print "Waiting for server process to close: "
-              .$self->serverpid."\n";
+    my $pid;
+    if (--$self->{serverconnects} == 0) {
+        $pid = $self->{serverpid};
+        die "serverpid is zero\n" if $pid == 0;
+        print "Waiting for server process to close: $pid...\n";
         # recall that we wait on process that buffers server's output
-        waitpid($self->serverpid, 0);
+        waitpid($pid, 0);
         die "exit code $? from server process\n" if $? != 0;
     } else {
         # It's a bit counter-intuitive spot to make next connection to
@@ -384,9 +413,10 @@ sub clientstart
         # s_server is actually done with current session...
         $self->connect_to_server();
     }
-    die "clientpid is zero\n" if $self->clientpid == 0;
-    print "Waiting for client process to close: ".$self->clientpid."\n";
-    waitpid($self->clientpid, 0);
+    $pid = $self->{clientpid};
+    die "clientpid is zero\n" if $pid == 0;
+    print "Waiting for client process to close: $pid...\n";
+    waitpid($pid, 0);
 
     return 1;
 }
@@ -417,7 +447,7 @@ sub process_packet
     #list of messages in those records and any partial message
     my @ret = TLSProxy::Record->get_records($server, $self->flight, $self->{partial}[$server].$packet);
     $self->{partial}[$server] = $ret[2];
-    push @{$self->record_list}, @{$ret[0]};
+    push @{$self->{record_list}}, @{$ret[0]};
     push @{$self->{message_list}}, @{$ret[1]};
 
     print "\n";
@@ -584,17 +614,11 @@ sub message_list
 sub serverpid
 {
     my $self = shift;
-    if (@_) {
-        $self->{serverpid} = shift;
-    }
     return $self->{serverpid};
 }
 sub clientpid
 {
     my $self = shift;
-    if (@_) {
-        $self->{clientpid} = shift;
-    }
     return $self->{clientpid};
 }
 
