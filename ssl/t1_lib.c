@@ -169,6 +169,8 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_OQS_Frodo, 144 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Frodo (31) */
     {NID_OQS_SIKE_503, 126 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 503 (32) */
     {NID_OQS_SIKE_751, 188 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 751 (33) */
+    {NID_OQS_Newhope, 229 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Newhope (34) */
+    {NID_OQS_NTRU, 256 /* classical */, TLS_CURVE_CUSTOM}, /* OQS NTRU (35) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -186,9 +188,11 @@ static const uint16_t eccurves_default[] = {
     24,                      /* secp384r1 (24) */
     /* FIXMEOQS: what should the code points be? TLS1.3 only specify DH and EC groups.
        Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
-    31,                      /* OQS Frodo (31)  */
+    31,                      /* OQS Frodo (31) */
     32,                      /* OQS Sike503 (32) */
     33,                      /* OQS Sike751 (33) */
+    34,                      /* OQS Newhope (34) */
+    35,                      /* OQS NTRU (35) */
 };
 
 static const uint16_t suiteb_curves[] = {
@@ -403,14 +407,7 @@ static int nid_cb(const char *elem, int len, void *arg)
        minimizing the OQS footprint for now.
     */
     if (nid == NID_undef) {
-      /* FIXMEOQS: share code with ssl_conf.c's cmd_ECDHParameters */
-      if (memcmp(etmp,"Frodo", strlen(etmp)) == 0) {
-	nid = NID_OQS_Frodo;
-      } else if (memcmp(etmp,"Sike503", strlen(etmp)) == 0) {
-	nid = NID_OQS_SIKE_503;
-      } else if (memcmp(etmp,"Sike751", strlen(etmp)) == 0) {
-	nid = NID_OQS_SIKE_751;
-      }
+      nid = OQS_nid_from_string(etmp);
     }
     if (nid == NID_undef)
         return 0;

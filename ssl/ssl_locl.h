@@ -406,26 +406,52 @@
 
 /* Returns the curve ID for an OQS KEX NID */
 /* FIXMEOQS: we could call tls1_nid2group_id instead, but it's static */
-#define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo ? 31 : \
+#define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo    ? 31 : \
                               (nid == NID_OQS_SIKE_503 ? 32 : \
-                              (nid == NID_OQS_SIKE_751 ? 33 : 0)))
-#define OQS_KEX_NID(curveID)  (curveID == 31 ? NID_OQS_Frodo : \
+			      (nid == NID_OQS_SIKE_751 ? 33 : \
+			      (nid == NID_OQS_Newhope  ? 34 : \
+			      (nid == NID_OQS_NTRU     ? 35 : 0)))))
+#define OQS_KEX_NID(curveID)  (curveID == 31 ? NID_OQS_Frodo :	  \
 			      (curveID == 32 ? NID_OQS_SIKE_503 : \
-			      (curveID == 33 ? NID_OQS_SIKE_751 : 0)))
+			      (curveID == 33 ? NID_OQS_SIKE_751 : \
+			      (curveID == 34 ? NID_OQS_Newhope :  \
+			      (curveID == 35 ? NID_OQS_NTRU : 0)))))
 /* Returns true if the curve ID is for an OQS KEX */
 #define IS_OQS_KEX_CURVEID(id)	(id == 31 || \
 				 id == 32 || \
-				 id == 33)
+				 id == 33 || \
+				 id == 34 || \
+				 id == 35)
 /* Returns the OQS alg ID for OQS API */
 #define OQS_ALG_NAME(nid)   (nid == NID_OQS_Frodo ? OQS_KEX_alg_lwe_frodo : \
 			    (nid == NID_OQS_SIKE_503 ? OQS_KEX_alg_sike_msr_503 : \
-                            (nid == NID_OQS_SIKE_751 ? OQS_KEX_alg_sike_msr_751 : 0)))
+			    (nid == NID_OQS_SIKE_751 ? OQS_KEX_alg_sike_msr_751 : \
+			    (nid == NID_OQS_Newhope ? OQS_KEX_alg_rlwe_newhope : \
+			    (nid == NID_OQS_NTRU ? OQS_KEX_alg_ntru : 0)))))
 /* Returns the parameters ID for an OQS alg */
 #define OQS_NAMED_PARAMETERS(nid) (nid == NID_OQS_Frodo ? "recommended" : NULL)
 /* Returns true if OQS alg needs a seed */
 #define OQS_NEED_SEED(nid) (nid == NID_OQS_Frodo ? 1 : 0)
 /* Returns the size of the seed */
 #define OQS_SEED_LEN(nid) (nid == NID_OQS_Frodo ? 16 : 0)
+
+/* Returns the OQS NID from a given alg name, or 0 if there is no match */
+static int OQS_nid_from_string(const char *value) {
+  int nid = 0;
+  int len = strlen(value);
+  if (memcmp(value,"frodo", len) == 0) {
+    nid = NID_OQS_Frodo;
+  } else if (memcmp(value,"sike503", len) == 0) {
+    nid = NID_OQS_SIKE_503;
+  } else if (memcmp(value,"sike751", len) == 0) {
+    nid = NID_OQS_SIKE_751;
+  } else if (memcmp(value,"newhope", len) == 0) {
+    nid = NID_OQS_Newhope;
+  } else if (memcmp(value,"ntru", len) == 0) {
+    nid = NID_OQS_NTRU;
+  }
+  return nid;
+}
 
 /* Post-Handshake Authentication state */
 typedef enum {

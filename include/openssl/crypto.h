@@ -447,13 +447,19 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 #define NID_OQS_Frodo    1170
 #define NID_OQS_SIKE_503 1171
 #define NID_OQS_SIKE_751 1172
+#define NID_OQS_Newhope  1173
+#define NID_OQS_NTRU     1174
 /* Returns true if the nid is for an OQS KEX */
 #define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
 			     nid == NID_OQS_SIKE_503 ||	\
-			     nid == NID_OQS_SIKE_751)
-#define OQS_ALG_NAME_STR(nid)   (nid == NID_OQS_Frodo ? "Frodo recommended" : \
-				(nid == NID_OQS_SIKE_503 ? "SIKE 503" : \
-				(nid == NID_OQS_SIKE_751 ? "SIKE 751" : "")))
+			     nid == NID_OQS_SIKE_751 ||	\
+			     nid == NID_OQS_Newhope  ||	\
+			     nid == NID_OQS_NTRU)
+#define OQS_ALG_NAME_STR(nid) (nid == NID_OQS_Frodo    ? "Frodo recommended" : \
+			      (nid == NID_OQS_SIKE_503 ? "SIKE 503" :          \
+			      (nid == NID_OQS_SIKE_751 ? "SIKE 751" :	       \
+			      (nid == NID_OQS_Newhope  ? "Newhope" :	\
+			      (nid == NID_OQS_NTRU     ? "NTRU" : "")))))
 
 # ifdef  __cplusplus
 }

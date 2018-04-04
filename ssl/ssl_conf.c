@@ -240,14 +240,7 @@ static int cmd_ECDHParameters(SSL_CONF_CTX *cctx, const char *value)
     if (nid == NID_undef)
         nid = OBJ_sn2nid(value);
     if (nid == NID_undef) {
-      /* FIXMEOQS: share code with t1_lib.c's nid_cb */
-      if (memcmp(value,"Frodo", strlen(value)) == 0) {
-	nid = NID_OQS_Frodo;
-      } else if (memcmp(value,"Sike503", strlen(value)) == 0) {
-	nid = NID_OQS_SIKE_503;
-      } else if (memcmp(value,"Sike751", strlen(value)) == 0) {
-	nid = NID_OQS_SIKE_751;
-      }
+      nid = OQS_nid_from_string(value);
     }
     if (nid == 0)
         return 0;

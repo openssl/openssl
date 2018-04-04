@@ -36,7 +36,7 @@ This project integrates post-quantum key exchange from liboqs in TLS 1.3 in Open
 
 ### Key exchange mechanisms
 
-Currently, only Frodo, Sike503, and Sike751 are supported. TODO: add the others.
+Currently, only Frodo, Sike503, Sike751, Newhope, and NTRU are supported. Others will be added when OQS is updated.
 
 
 ### Authentication mechanisms
@@ -92,7 +92,7 @@ To run a basic TLS server with all OQS ciphersuites enabled:
 
 	apps/openssl s_server -cert rsa.crt -key rsa.key -HTTP -tls1_3
 
-In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<OQSALG> = Frodo, Sike503, Sike751), for example:
+In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<OQSALG> = newhope, frodo, sike503, sike751, ntru), for example:
 
         apps/openssl s_client -curves <OQSALG> -connect localhost:4433
 
