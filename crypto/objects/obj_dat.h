@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7626] = {
+static const unsigned char so[7631] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1060,9 +1060,10 @@ static const unsigned char so[7626] = {
     0x2B,0x6F,                                     /* [ 7610] OBJ_ieee */
     0x2B,0x6F,0x02,0x8C,0x53,                      /* [ 7612] OBJ_ieee_siswg */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x82,0x2D,       /* [ 7617] OBJ_sm2 */
+    0x69,0x89,0xCF,0xDB,0x31,                      /* [ 7625] OBJ_caesar */
 };
 
-#define NUM_NID 1173
+#define NUM_NID 1174
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2237,9 +2238,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"ieee", "ieee", NID_ieee, 2, &so[7610]},
     {"ieee-siswg", "IEEE Security in Storage Working Group", NID_ieee_siswg, 5, &so[7612]},
     {"SM2", "sm2", NID_sm2, 8, &so[7617]},
+    {"caesar", "CAESAR Cipher", NID_caesar, 5, &so[7625]},
 };
 
-#define NUM_SN 1164
+#define NUM_SN 1165
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2594,6 +2596,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      483,    /* "cNAMERecord" */
      179,    /* "caIssuers" */
      785,    /* "caRepository" */
+    1173,    /* "caesar" */
     1023,    /* "capwapAC" */
     1024,    /* "capwapWTP" */
      443,    /* "caseIgnoreIA5StringSyntax" */
@@ -3407,7 +3410,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1164
+#define NUM_LN 1165
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3419,6 +3422,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      285,    /* "Biometric Info" */
      179,    /* "CA Issuers" */
      785,    /* "CA Repository" */
+    1173,    /* "CAESAR Cipher" */
     1131,    /* "CMC Certificate Authority" */
     1132,    /* "CMC Registration Authority" */
      954,    /* "CT Certificate SCTs" */
@@ -4575,7 +4579,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1055
+#define NUM_OBJ 1056
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4902,6 +4906,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      743,    /* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 1 4 10 */
      744,    /* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 1 4 11 */
      745,    /* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 1 4 12 */
+    1173,    /* OBJ_caesar                       2 25 20180401 */
      804,    /* OBJ_whirlpool                    1 0 10118 3 0 55 */
     1142,    /* OBJ_sm_scheme                    1 2 156 10197 1 */
      773,    /* OBJ_kisa                         1 2 410 200004 */

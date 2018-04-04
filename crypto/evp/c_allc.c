@@ -227,6 +227,10 @@ void openssl_add_all_ciphers_int(void)
     EVP_add_cipher_alias(SN_aria_256_cbc, "aria256");
 #endif
 
+#ifndef OPENSSL_NO_CAESAR
+    EVP_add_cipher(EVP_caesar_ecb());
+#endif
+
 #ifndef OPENSSL_NO_CAMELLIA
     EVP_add_cipher(EVP_camellia_128_ecb());
     EVP_add_cipher(EVP_camellia_128_cbc());

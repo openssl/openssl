@@ -143,6 +143,7 @@ foreach my $cmd (
     "aria-256-cbc", "aria-256-cfb",
     "aria-256-ctr", "aria-256-ecb", "aria-256-ofb",
     "aria-256-cfb1", "aria-256-cfb8",
+    "caesar-ecb",
     "camellia-128-cbc", "camellia-128-ecb",
     "camellia-192-cbc", "camellia-192-ecb",
     "camellia-256-cbc", "camellia-256-ecb",

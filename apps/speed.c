@@ -40,6 +40,9 @@
 # include <openssl/des.h>
 #endif
 #include <openssl/aes.h>
+#ifndef OPENSSL_NO_CAESAR
+# include <openssl/caesar.h>
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
 # include <openssl/camellia.h>
 #endif
@@ -114,7 +117,7 @@
 
 #define MAX_MISALIGNMENT 63
 
-#define ALGOR_NUM       31
+#define ALGOR_NUM       32
 #define RSA_NUM         7
 #define DSA_NUM         3
 
@@ -238,7 +241,7 @@ static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
     "des cbc", "des ede3", "idea cbc", "seed cbc",
     "rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
-    "aes-128 cbc", "aes-192 cbc", "aes-256 cbc",
+    "aes-128 cbc", "aes-192 cbc", "aes-256 cbc", "caesar-ecb",
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
     "evp", "sha256", "sha512", "whirlpool",
     "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
@@ -417,6 +420,7 @@ const OPTIONS speed_options[] = {
 #define D_IGE_256_AES   28
 #define D_GHASH         29
 #define D_RAND          30
+#define D_CAESAR        31
 static OPT_PAIR doit_choices[] = {
 #ifndef OPENSSL_NO_MD2
     {"md2", D_MD2},
@@ -483,6 +487,9 @@ static OPT_PAIR doit_choices[] = {
 #endif
     {"ghash", D_GHASH},
     {"rand", D_RAND},
+#ifndef OPENSSL_NO_CAESAR
+    {"caesar-ecb", D_CAESAR},
+#endif
     {NULL}
 };
 
@@ -1303,6 +1310,9 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_CAST
     CAST_KEY cast_ks;
 #endif
+#ifndef OPENSSL_NO_CAESAR
+    CAESAR_KEY caesar_ks;
+#endif
     static const unsigned char key16[16] = {
         0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
         0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12
@@ -1559,6 +1569,12 @@ int speed_main(int argc, char **argv)
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] = doit[D_CBC_256_AES] = 1;
             continue;
         }
+#ifndef OPENSSL_NO_CAESAR
+        if (strcmp(*argv, "caesar") == 0) {
+            doit[D_CAESAR] = 1;
+            continue;
+        }
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
         if (strcmp(*argv, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] = doit[D_CBC_256_CML] = 1;
@@ -1699,6 +1715,9 @@ int speed_main(int argc, char **argv)
     AES_set_encrypt_key(key16, 128, &aes_ks1);
     AES_set_encrypt_key(key24, 192, &aes_ks2);
     AES_set_encrypt_key(key32, 256, &aes_ks3);
+#ifndef OPENSSL_NO_CAESAR
+    CAESAR_set_key(&caesar_ks, 16, key16);
+#endif
 #ifndef OPENSSL_NO_CAMELLIA
     Camellia_set_key(key16, 128, &camellia_ks1);
     Camellia_set_key(ckey24, 192, &camellia_ks2);

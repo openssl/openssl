@@ -5111,3 +5111,8 @@
 #define LN_uacurve9             "DSTU curve 9"
 #define NID_uacurve9            1169
 #define OBJ_uacurve9            OBJ_dstu4145le,2L,9L
+
+#define SN_caesar               "caesar"
+#define LN_caesar               "CAESAR Cipher"
+#define NID_caesar              1173
+#define OBJ_caesar              2L,25L,20180401L
