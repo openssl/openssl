@@ -533,6 +533,16 @@ sub server_port
     my $self = shift;
     return $self->{server_port};
 }
+sub serverpid
+{
+    my $self = shift;
+    return $self->{serverpid};
+}
+sub clientpid
+{
+    my $self = shift;
+    return $self->{clientpid};
+}
 
 #Read/write accessors
 sub filter
@@ -610,16 +620,6 @@ sub message_list
         $self->{message_list} = shift;
     }
     return $self->{message_list};
-}
-sub serverpid
-{
-    my $self = shift;
-    return $self->{serverpid};
-}
-sub clientpid
-{
-    my $self = shift;
-    return $self->{clientpid};
 }
 
 sub fill_known_data
