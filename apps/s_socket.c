@@ -146,7 +146,7 @@ int init_client(int *sock, const char *host, const char *port,
         }
 #endif
 
-        if (!BIO_connect(*sock, BIO_ADDRINFO_address(ai), 0)) {
+        if (!BIO_connect(*sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
             BIO_closesocket(*sock);
             *sock = INVALID_SOCKET;
             continue;
@@ -330,6 +330,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
                 BIO_closesocket(asock);
                 break;
             }
+            BIO_set_tcp_ndelay(sock, 1);
             i = (*cb)(sock, type, protocol, context);
 
             /*
