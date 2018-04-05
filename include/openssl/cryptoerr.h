@@ -19,11 +19,14 @@ int ERR_load_CRYPTO_strings(void);
 /*
  * CRYPTO function codes.
  */
+# define CRYPTO_F_CMAC_CTX_NEW                            120
 # define CRYPTO_F_CRYPTO_DUP_EX_DATA                      110
 # define CRYPTO_F_CRYPTO_FREE_EX_DATA                     111
 # define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX                 100
 # define CRYPTO_F_CRYPTO_MEMDUP                           115
 # define CRYPTO_F_CRYPTO_NEW_EX_DATA                      112
+# define CRYPTO_F_CRYPTO_OCB128_COPY_CTX                  121
+# define CRYPTO_F_CRYPTO_OCB128_INIT                      122
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_GET_AND_LOCK                            113
@@ -32,6 +35,9 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_FOPEN                           119
 # define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
+# define CRYPTO_F_PKEY_HMAC_INIT                          123
+# define CRYPTO_F_PKEY_POLY1305_INIT                      124
+# define CRYPTO_F_PKEY_SIPHASH_INIT                       125
 
 /*
  * CRYPTO reason codes.

@@ -12,6 +12,7 @@
 #include <string.h>
 #include "internal/cryptlib.h"
 #include <openssl/cmac.h>
+#include <openssl/err.h>
 
 struct CMAC_CTX_st {
     /* Cipher context to use */
@@ -46,9 +47,10 @@ CMAC_CTX *CMAC_CTX_new(void)
 {
     CMAC_CTX *ctx;
 
-    ctx = OPENSSL_malloc(sizeof(*ctx));
-    if (ctx == NULL)
+    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
+        CRYPTOerr(CRYPTO_F_CMAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
     ctx->cctx = EVP_CIPHER_CTX_new();
     if (ctx->cctx == NULL) {
         OPENSSL_free(ctx);

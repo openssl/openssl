@@ -13,6 +13,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/err.h>
 #include "internal/evp_int.h"
 
 /* HMAC pkey context structure */
@@ -27,9 +28,10 @@ static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
 {
     HMAC_PKEY_CTX *hctx;
 
-    hctx = OPENSSL_zalloc(sizeof(*hctx));
-    if (hctx == NULL)
+    if ((hctx = OPENSSL_zalloc(sizeof(*hctx))) == NULL) {
+        CRYPTOerr(CRYPTO_F_PKEY_HMAC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     hctx->ktmp.type = V_ASN1_OCTET_STRING;
     hctx->ctx = HMAC_CTX_new();
     if (hctx->ctx == NULL) {
