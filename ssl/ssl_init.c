@@ -12,6 +12,7 @@
 #include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/conf.h>
 #include <assert.h>
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
@@ -191,11 +192,13 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
         return 0;
     }
 
-    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
+    if (!OPENSSL_init_crypto(opts
+                             | OPENSSL_INIT_ADD_ALL_CIPHERS
+                             | OPENSSL_INIT_ADD_ALL_DIGESTS,
+                             settings))
         return 0;
 
-    if (!OPENSSL_init_crypto(opts | OPENSSL_INIT_ADD_ALL_CIPHERS
-                             | OPENSSL_INIT_ADD_ALL_DIGESTS, settings))
+    if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_SSL_STRINGS)
