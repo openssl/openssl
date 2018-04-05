@@ -249,6 +249,8 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "pkey_ecd_digestsign25519"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_DIGESTSIGN448, 0),
      "pkey_ecd_digestsign448"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_SIGN25519, 0), "pkey_ecd_sign25519"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_SIGN448, 0), "pkey_ecd_sign448"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECX_DERIVE, 0), "pkey_ecx_derive"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_CTRL, 0), "pkey_ec_ctrl"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_CTRL_STR, 0), "pkey_ec_ctrl_str"},
