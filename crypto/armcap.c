@@ -29,6 +29,7 @@ uint32_t OPENSSL_rdtsc(void)
     return 0;
 }
 #else
+# ifndef OPENSSL_ARMCAP_OVERRIDE
 static sigset_t all_masked;
 
 static sigjmp_buf ill_jmp;
@@ -36,6 +37,7 @@ static void ill_handler(int sig)
 {
     siglongjmp(ill_jmp, sig);
 }
+# endif
 
 /*
  * Following subroutines could have been inlined, but it's not all
@@ -135,28 +137,34 @@ static unsigned long getauxval(unsigned long key)
 
 void OPENSSL_cpuid_setup(void)
 {
+# ifndef OPENSSL_ARMCAP_OVERRIDE
     const char *e;
     struct sigaction ill_oact, ill_act;
     sigset_t oset;
+    volatile unsigned int mask;
+# endif
     static int trigger = 0;
 
     if (trigger)
         return;
     trigger = 1;
 
-    if ((e = getenv("OPENSSL_armcap"))) {
-        OPENSSL_armcap_P = (unsigned int)strtoul(e, NULL, 0);
-        return;
-    }
+# ifdef OPENSSL_ARMCAP_OVERRIDE
+    OPENSSL_armcap_P = OPENSSL_ARMCAP_OVERRIDE;
+# else
+    if ((e = getenv("OPENSSL_armcap")))
+        mask = (unsigned int)strtoul(e, NULL, 0);
+    else
+        mask = 0xFFFFFFFF;
 
-# if defined(__APPLE__) && !defined(__aarch64__)
+#  if defined(__APPLE__) && !defined(__aarch64__)
     /*
      * Capability probing by catching SIGILL appears to be problematic
      * on iOS. But since Apple universe is "monocultural", it's actually
      * possible to simply set pre-defined processor capability mask.
      */
     if (1) {
-        OPENSSL_armcap_P = ARMV7_NEON;
+        OPENSSL_armcap_P = mask & ARMV7_NEON;
         return;
     }
     /*
@@ -165,7 +173,7 @@ void OPENSSL_cpuid_setup(void)
      * Unified code works because it never triggers SIGILL on Apple
      * devices...
      */
-# endif
+#  endif
 
     OPENSSL_armcap_P = 0;
 
@@ -191,6 +199,8 @@ void OPENSSL_cpuid_setup(void)
         if (hwcap & HWCAP_CE_SHA512)
             OPENSSL_armcap_P |= ARMV8_SHA512;
 #  endif
+
+        OPENSSL_armcap_P &= mask;
     }
 # endif
 
@@ -210,40 +220,58 @@ void OPENSSL_cpuid_setup(void)
 
     /* If we used getauxval, we already have all the values */
 # ifndef OSSL_IMPLEMENT_GETAUXVAL
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv7_neon_probe();
-        OPENSSL_armcap_P |= ARMV7_NEON;
+    if (mask & ARMV7_NEON) {
         if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_pmull_probe();
-            OPENSSL_armcap_P |= ARMV8_PMULL | ARMV8_AES;
-        } else if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_aes_probe();
-            OPENSSL_armcap_P |= ARMV8_AES;
-        }
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sha1_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA1;
-        }
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sha256_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA256;
-        }
+            _armv7_neon_probe();
+            OPENSSL_armcap_P |= ARMV7_NEON;
+            if ((mask & ARMV8_PMULL) && (mask & ARMV8_AES)) {
+                if (sigsetjmp(ill_jmp, 1) == 0) {
+                    _armv8_pmull_probe();
+                    OPENSSL_armcap_P |= ARMV8_PMULL | ARMV8_AES;
+                    goto test_sha1;
+                }
+            }
+            if (mask & ARMV8_AES) {
+                if (sigsetjmp(ill_jmp, 1) == 0) {
+                    _armv8_aes_probe();
+                    OPENSSL_armcap_P |= ARMV8_AES;
+                }
+            }
+        test_sha1:
+            if (mask & ARMV8_SHA1) {
+                if (sigsetjmp(ill_jmp, 1) == 0) {
+                    _armv8_sha1_probe();
+                    OPENSSL_armcap_P |= ARMV8_SHA1;
+                }
+            }
+            if (mask & ARMV8_SHA256) {
+                if (sigsetjmp(ill_jmp, 1) == 0) {
+                    _armv8_sha256_probe();
+                    OPENSSL_armcap_P |= ARMV8_SHA256;
+                }
+            }
 #  if defined(__aarch64__) && !defined(__APPLE__)
-        if (sigsetjmp(ill_jmp, 1) == 0) {
-            _armv8_sha512_probe();
-            OPENSSL_armcap_P |= ARMV8_SHA512;
-        }
+            if (mask & ARMV8_SHA512) {
+                if (sigsetjmp(ill_jmp, 1) == 0) {
+                    _armv8_sha512_probe();
+                    OPENSSL_armcap_P |= ARMV8_SHA512;
+                }
+            }
 #  endif
+        }
     }
 # endif
 
     /* Things that getauxval didn't tell us */
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        _armv7_tick();
-        OPENSSL_armcap_P |= ARMV7_TICK;
+    if (mask & ARMV7_TICK) {
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            _armv7_tick();
+            OPENSSL_armcap_P |= ARMV7_TICK;
+        }
     }
 
     sigaction(SIGILL, &ill_oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
+# endif /* !OPENSSL_ARMCAP_OVERRIDE */
 }
 #endif
