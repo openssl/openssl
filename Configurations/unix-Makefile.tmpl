@@ -12,6 +12,7 @@
      our $shlibextsimple = $target{shared_extension_simple} || ".so";
      our $shlibextimport = $target{shared_import_extension} || "";
      our $dsoext = $target{dso_extension} || ".so";
+     our $makedepprog = $disabled{makedepend} ? undef : $config{makedepprog};
 
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
@@ -109,7 +110,7 @@ GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
 GENERATED={- join(" ",
                   ( grep { defined $unified_info{generate}->{$_} }
                     map { @{$unified_info{sources}->{$_}} }
-                    grep { /\.o$/ } keys %{$unified_info{sources}} ),
+                    grep { /\.(?:o|res)$/ } keys %{$unified_info{sources}} ),
                   ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
 
 INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
@@ -425,19 +426,9 @@ distclean: clean
 # concatenate only if that is true.
 depend:
 	@: {- output_off() if $disabled{makedepend}; "" -}
-	@if egrep "^# DO NOT DELETE THIS LINE" Makefile >/dev/null && [ -z "`find $(DEPS) -newer Makefile 2>/dev/null; exit 0`" ]; then :; else \
-	  ( $(PERL) -pe 'exit 0 if /^# DO NOT DELETE THIS LINE.*/' < Makefile; \
-	    echo '# DO NOT DELETE THIS LINE -- make depend depends on it.'; \
-	    echo; \
-	    for f in $(DEPS); do \
-	      if [ -f $$f ]; then cat $$f; fi; \
-	    done ) > Makefile.new; \
-	  if cmp Makefile.new Makefile >/dev/null 2>&1; then \
-	    rm -f Makefile.new; \
-	  else \
-	    mv -f Makefile.new Makefile; \
-	  fi; \
-	fi
+	@$(PERL) $(SRCDIR)/util/add-depends.pl {-
+		 defined $makedepprog  && $makedepprog =~ /\/makedepend/
+                 ? 'makedepend' : 'gcc' -}
 	@: {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -969,7 +960,7 @@ EOF
           }
           return <<"EOF";
 $args{src}: $args{generator}->[0] $deps
-	\$(CPP) $incs $cppflags $args{generator}->[0] | \\
+	\$(CC) $incs $cppflags -E $args{generator}->[0] | \\
 	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
 EOF
       }
@@ -988,7 +979,6 @@ EOF
       my $cmd;
       my $cmdflags;
       my $cmdcompile;
-      my $makedepprog = $disabled{makedepend} ? undef : $config{makedepprog};
       if (grep /\.rc$/, @srcs) {
           $cmd = '$(RC)';
           $cmdflags = '$(RCFLAGS)';
@@ -1028,7 +1018,7 @@ EOF
           $recipe .= <<"EOF";
 $obj$objext: $deps
 	( trap "rm -f \$@.*" INT 0; \\
-	  \$(CPP) $incs $cmdflags $srcs | \\
+	  \$(CC) $incs $cmdflags -E $srcs | \\
 	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.s && \\
 	  $cmd $cmdflags -c -o \$\@ \$@.s )
 EOF
@@ -1050,14 +1040,8 @@ $obj$objext: $deps
 EOF
           if (defined $makedepprog  && $makedepprog =~ /\/makedepend/) {
               $recipe .= <<"EOF";
-	-\$(MAKEDEPEND) -f- -o"|\$\@" -- $incs $cmdflags -- $srcs \\
-	    >$obj$depext.tmp 2>/dev/null
-	-\$(PERL) -i -pe 's/^.*\\|//; s/ \\/(\\\\.|[^ ])*//; \$\$_ = undef if (/: *\$\$/ || /^(#.*| *)\$\$/); \$\$_.="\\n" unless !defined(\$\$_) or /\\R\$\$/g;' $obj$depext.tmp
-	\@if cmp $obj$depext.tmp $obj$depext > /dev/null 2> /dev/null; then \\
-		rm -f $obj$depext.tmp; \\
-	else \\
-		mv $obj$depext.tmp $obj$depext; \\
-	fi
+	\$(MAKEDEPEND) -f- -Y -- $incs $cmdflags -- $srcs 2>/dev/null \\
+	    > $obj$depext
 EOF
           }
       }
@@ -1082,10 +1066,10 @@ EOF
       my $linklibs = join("", map { my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
                                     " -l$l" } @{$args{deps}});
-      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
-                 grep { $_ =~ m|\.o$| }
+      my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
+                 grep { $_ !~ m/\.(?:def|map)$/ }
                  @{$args{objs}};
-      my @defs = grep { $_ =~ /\.(def|map)$/ } @{$args{objs}};
+      my @defs = grep { $_ =~ /\.(?:def|map)$/ } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one exported symbol map" if scalar @defs > 1;
       my $objs = join(" ", @objs);
@@ -1144,7 +1128,9 @@ EOF
       my $linklibs = join("", map { my $f = basename($_);
                                     (my $l = $f) =~ s/^lib//;
                                     " -l$l" } @{$args{deps}});
-      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+      my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
+                 grep { $_ !~ m/\.(?:def|map)$/ }
+                 @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $objs = join(" ", @objs);
       my $deps = join(" ", @deps);
@@ -1172,7 +1158,7 @@ EOF
       my $bin = $args{bin};
       my $bind = dirname($bin);
       my $binn = basename($bin);
-      my $objs = join(" ", map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+      my $objs = join(" ", map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
                            @{$args{objs}});
       my $deps = join(" ",compute_lib_depends(@{$args{deps}}));
       my @linkdirs = ();

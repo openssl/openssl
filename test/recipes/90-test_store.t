@@ -89,84 +89,89 @@ indir "store_$$" => sub {
         foreach (@noexist_files) {
             my $file = srctop_file($_);
 
-            ok(!run(app(["openssl", "storeutl", $file])));
-            ok(!run(app(["openssl", "storeutl", to_abs_file($file)])));
+            ok(!run(app(["openssl", "storeutl", "-noout", $file])));
+            ok(!run(app(["openssl", "storeutl", "-noout",
+                         to_abs_file($file)])));
             {
                 local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(!run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
+                ok(!run(app(["openssl", "storeutl", "-noout",
+                             to_abs_file_uri($file)])));
             }
         }
         foreach (@src_files) {
             my $file = srctop_file($_);
 
-            ok(run(app(["openssl", "storeutl", $file])));
-            ok(run(app(["openssl", "storeutl", to_abs_file($file)])));
+            ok(run(app(["openssl", "storeutl", "-noout", $file])));
+            ok(run(app(["openssl", "storeutl", "-noout", to_abs_file($file)])));
             {
                 local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(run(app(["openssl", "storeutl", to_abs_file_uri($file)])));
-                ok(run(app(["openssl", "storeutl",
+                ok(run(app(["openssl", "storeutl", "-noout",
+                            to_abs_file_uri($file)])));
+                ok(run(app(["openssl", "storeutl", "-noout",
                             to_abs_file_uri($file, 0, "")])));
-                ok(run(app(["openssl", "storeutl",
+                ok(run(app(["openssl", "storeutl", "-noout",
                             to_abs_file_uri($file, 0, "localhost")])));
-                ok(!run(app(["openssl", "storeutl",
+                ok(!run(app(["openssl", "storeutl", "-noout",
                              to_abs_file_uri($file, 0, "dummy")])));
             }
         }
         foreach (@generated_files) {
-            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        $_])));
-            ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                        to_abs_file($_)])));
+            ok(run(app(["openssl", "storeutl", "-noout", "-passin",
+                        "pass:password", $_])));
+            ok(run(app(["openssl", "storeutl",  "-noout", "-passin",
+                        "pass:password", to_abs_file($_)])));
 
             {
                 local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(run(app(["openssl", "storeutl", "-passin", "pass:password",
-                            to_abs_file_uri($_)])));
-                ok(!run(app(["openssl", "storeutl", "-passin", "pass:password",
-                             to_file_uri($_)])));
+                ok(run(app(["openssl", "storeutl", "-noout", "-passin",
+                            "pass:password", to_abs_file_uri($_)])));
+                ok(!run(app(["openssl", "storeutl", "-noout", "-passin",
+                             "pass:password", to_file_uri($_)])));
             }
         }
         foreach (values %generated_file_files) {
             local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-            ok(run(app(["openssl", "storeutl", $_])));
+            ok(run(app(["openssl", "storeutl",  "-noout", $_])));
         }
         foreach (@noexist_file_files) {
             local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-            ok(!run(app(["openssl", "storeutl", $_])));
+            ok(!run(app(["openssl", "storeutl",  "-noout", $_])));
         }
         {
             my $dir = srctop_dir("test", "certs");
 
-            ok(run(app(["openssl", "storeutl", $dir])));
-            ok(run(app(["openssl", "storeutl", to_abs_file($dir, 1)])));
+            ok(run(app(["openssl", "storeutl",  "-noout", $dir])));
+            ok(run(app(["openssl", "storeutl",  "-noout",
+                        to_abs_file($dir, 1)])));
             {
                 local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
 
-                ok(run(app(["openssl", "storeutl", to_abs_file_uri($dir, 1)])));
+                ok(run(app(["openssl", "storeutl",  "-noout",
+                            to_abs_file_uri($dir, 1)])));
             }
         }
 
-        ok(!run(app(['openssl', 'storeutl',
+        ok(!run(app(['openssl', 'storeutl', '-noout',
                      '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
                      srctop_file('test', 'testx509.pem')])),
            "Checking that -subject can't be used with a single file");
 
-        ok(run(app(['openssl', 'storeutl', '-certs',
+        ok(run(app(['openssl', 'storeutl', '-certs', '-noout',
                     srctop_file('test', 'testx509.pem')])),
            "Checking that -certs returns 1 object on a certificate file");
-        ok(run(app(['openssl', 'storeutl', '-certs',
+        ok(run(app(['openssl', 'storeutl', '-certs', '-noout',
                      srctop_file('test', 'testcrl.pem')])),
            "Checking that -certs returns 0 objects on a CRL file");
 
-        ok(run(app(['openssl', 'storeutl', '-crls',
+        ok(run(app(['openssl', 'storeutl', '-crls', '-noout',
                      srctop_file('test', 'testx509.pem')])),
            "Checking that -crls returns 0 objects on a certificate file");
-        ok(run(app(['openssl', 'storeutl', '-crls',
+        ok(run(app(['openssl', 'storeutl', '-crls', '-noout',
                     srctop_file('test', 'testcrl.pem')])),
            "Checking that -crls returns 1 object on a CRL file");
 
@@ -177,24 +182,24 @@ indir "store_$$" => sub {
             # '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert'
             # issuer from testcrl.pem:
             # '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority'
-            ok(run(app(['openssl', 'storeutl',
+            ok(run(app(['openssl', 'storeutl', '-noout',
                         '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl',
+            ok(run(app(['openssl', 'storeutl', '-noout',
                         '-subject',
                         '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-certs',
+            ok(run(app(['openssl', 'storeutl', '-noout', '-certs',
                         '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-crls',
+            ok(run(app(['openssl', 'storeutl', '-noout', '-crls',
                         '-subject', '/C=AU/ST=QLD/CN=SSLeay\/rsa test cert',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-certs',
+            ok(run(app(['openssl', 'storeutl', '-noout', '-certs',
                         '-subject',
                         '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
                         catdir(curdir(), 'rehash')])));
-            ok(run(app(['openssl', 'storeutl', '-crls',
+            ok(run(app(['openssl', 'storeutl', '-noout', '-crls',
                         '-subject',
                         '/C=US/O=RSA Data Security, Inc./OU=Secure Server Certification Authority',
                         catdir(curdir(), 'rehash')])));

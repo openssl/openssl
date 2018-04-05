@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -180,7 +180,6 @@ void X509_STORE_free(X509_STORE *vfy)
 
     if (vfy == NULL)
         return;
-
     CRYPTO_DOWN_REF(&vfy->references, &i, vfy->lock);
     REF_PRINT_COUNT("X509_STORE", vfy);
     if (i > 0)

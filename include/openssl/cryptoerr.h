@@ -27,7 +27,9 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_GET_AND_LOCK                            113
+# define CRYPTO_F_OPENSSL_ATEXIT                          114
 # define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
+# define CRYPTO_F_OPENSSL_FOPEN                           119
 # define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
 

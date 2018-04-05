@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -70,9 +70,10 @@ static int b64_new(BIO *bi)
 {
     BIO_B64_CTX *ctx;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
-    if (ctx == NULL)
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+        EVPerr(EVP_F_B64_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     ctx->cont = 1;
     ctx->start = 1;

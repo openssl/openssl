@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include <time.h>
+#include <assert.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include <openssl/buffer.h>
@@ -1188,8 +1189,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             s->tmp_session_id_len = sess_id_len;
             session_id = s->tmp_session_id;
             if (s->hello_retry_request == SSL_HRR_NONE
-                    && ssl_randbytes(s, s->tmp_session_id,
-                                     sess_id_len) <= 0) {
+                    && RAND_bytes(s->tmp_session_id, sess_id_len) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
                          ERR_R_INTERNAL_ERROR);
@@ -1199,14 +1199,14 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             sess_id_len = 0;
         }
     } else {
+        assert(s->session->session_id_length <= sizeof(s->session->session_id));
         sess_id_len = s->session->session_id_length;
         if (s->version == TLS1_3_VERSION) {
             s->tmp_session_id_len = sess_id_len;
             memcpy(s->tmp_session_id, s->session->session_id, sess_id_len);
         }
     }
-    if (sess_id_len > sizeof(s->session->session_id)
-            || !WPACKET_start_sub_packet_u8(pkt)
+    if (!WPACKET_start_sub_packet_u8(pkt)
             || (sess_id_len != 0 && !WPACKET_memcpy(pkt, session_id,
                                                     sess_id_len))
             || !WPACKET_close(pkt)) {
@@ -1898,7 +1898,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * set. The *documented* interface remains the same.
      */
     if (s->verify_mode != SSL_VERIFY_NONE && i <= 0) {
-        SSLfatal(s, ssl_verify_alarm_type(s->verify_result),
+        SSLfatal(s, ssl_x509err2alert(s->verify_result),
                  SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
                  SSL_R_CERTIFICATE_VERIFY_FAILED);
         goto err;
@@ -2192,7 +2192,8 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
      * Check curve is named curve type and one of our preferences, if not
      * server has sent an invalid curve.
      */
-    if (curve_type != NAMED_CURVE_TYPE || !tls1_check_group_id(s, curve_id)) {
+    if (curve_type != NAMED_CURVE_TYPE
+            || !tls1_check_group_id(s, curve_id, 1)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SKE_ECDHE,
                  SSL_R_WRONG_CURVE);
         return 0;
@@ -2925,7 +2926,7 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
     pms[0] = s->client_version >> 8;
     pms[1] = s->client_version & 0xff;
     /* TODO(size_t): Convert this function */
-    if (ssl_randbytes(s, pms + 2, (int)(pmslen - 2)) <= 0) {
+    if (RAND_bytes(pms + 2, (int)(pmslen - 2)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_RSA,
                  ERR_R_MALLOC_FAILURE);
         goto err;
@@ -3146,7 +3147,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
         /* Generate session key
          * TODO(size_t): Convert this function
          */
-        || ssl_randbytes(s, pms, (int)pmslen) <= 0) {
+        || RAND_bytes(pms, (int)pmslen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                  ERR_R_INTERNAL_ERROR);
         goto err;

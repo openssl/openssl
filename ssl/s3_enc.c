@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -155,6 +155,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
         mac_secret = &(s->s3->read_mac_secret[0]);
     } else {
+        s->statem.invalid_enc_write_ctx = 1;
         if (s->enc_write_ctx != NULL) {
             reuse_dd = 1;
         } else if ((s->enc_write_ctx = EVP_CIPHER_CTX_new()) == NULL) {
@@ -167,7 +168,6 @@ int ssl3_change_cipher_state(SSL *s, int which)
              */
             EVP_CIPHER_CTX_reset(s->enc_write_ctx);
         }
-        EVP_CIPHER_CTX_ctrl(s->enc_write_ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
         dd = s->enc_write_ctx;
         if (ssl_replace_hash(&s->write_hash, m) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_CHANGE_CIPHER_STATE,
@@ -238,6 +238,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+    s->statem.invalid_enc_write_ctx = 0;
     OPENSSL_cleanse(exp_key, sizeof(exp_key));
     OPENSSL_cleanse(exp_iv, sizeof(exp_iv));
     return 1;

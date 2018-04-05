@@ -2100,7 +2100,17 @@ int tls_handle_alpn(SSL *s)
                 s->ext.early_data_ok = 0;
 
                 if (!s->hit) {
-                    /* If a new session update it with the new ALPN value */
+                    /*
+                     * This is a new session and so alpn_selected should have
+                     * been initialised to NULL. We should update it with the
+                     * selected ALPN.
+                     */
+                    if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                                 SSL_F_TLS_HANDLE_ALPN,
+                                 ERR_R_INTERNAL_ERROR);
+                        return 0;
+                    }
                     s->session->ext.alpn_selected = OPENSSL_memdup(selected,
                                                                    selected_len);
                     if (s->session->ext.alpn_selected == NULL) {
@@ -2737,7 +2747,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
             OPENSSL_free(s->pha_context);
             s->pha_context_len = 32;
             if ((s->pha_context = OPENSSL_malloc(s->pha_context_len)) == NULL
-                    || ssl_randbytes(s, s->pha_context, s->pha_context_len) <= 0
+                    || RAND_bytes(s->pha_context, s->pha_context_len) <= 0
                     || !WPACKET_sub_memcpy_u8(pkt, s->pha_context, s->pha_context_len)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
@@ -2926,7 +2936,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
      * fails. See https://tools.ietf.org/html/rfc5246#section-7.4.7.1
      */
 
-    if (ssl_randbytes(s, rand_premaster_secret,
+    if (RAND_priv_bytes(rand_premaster_secret,
                       sizeof(rand_premaster_secret)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_RSA,
                  ERR_R_INTERNAL_ERROR);
@@ -3223,11 +3233,9 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
     const unsigned char *start;
     size_t outlen = 32, inlen;
     unsigned long alg_a;
-    int Ttag, Tclass;
-    long Tlen;
-    size_t sess_key_len;
-    const unsigned char *data;
+    unsigned int asn1id, asn1len;
     int ret = 0;
+    PACKET encdata;
 
     /* Get our certificate private key */
     alg_a = s->s3->tmp.new_cipher->algorithm_auth;
@@ -3269,22 +3277,42 @@ static int tls_process_cke_gost(SSL *s, PACKET *pkt)
             ERR_clear_error();
     }
     /* Decrypt session key */
-    sess_key_len = PACKET_remaining(pkt);
-    if (!PACKET_get_bytes(pkt, &data, sess_key_len)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
-                 ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    /* TODO(size_t): Convert this function */
-    if (ASN1_get_object((const unsigned char **)&data, &Tlen, &Ttag,
-                        &Tclass, (long)sess_key_len) != V_ASN1_CONSTRUCTED
-        || Ttag != V_ASN1_SEQUENCE || Tclass != V_ASN1_UNIVERSAL) {
+    if (!PACKET_get_1(pkt, &asn1id)
+            || asn1id != (V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED)
+            || !PACKET_peek_1(pkt, &asn1len)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
                  SSL_R_DECRYPTION_FAILED);
         goto err;
     }
-    start = data;
-    inlen = Tlen;
+    if (asn1len == 0x81) {
+        /*
+         * Long form length. Should only be one byte of length. Anything else
+         * isn't supported.
+         * We did a successful peek before so this shouldn't fail
+         */
+        if (!PACKET_forward(pkt, 1)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                     SSL_R_DECRYPTION_FAILED);
+            goto err;
+        }
+    } else  if (asn1len >= 0x80) {
+        /*
+         * Indefinite length, or more than one long form length bytes. We don't
+         * support it
+         */
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
+    } /* else short form length */
+
+    if (!PACKET_as_length_prefixed_1(pkt, &encdata)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
+                 SSL_R_DECRYPTION_FAILED);
+        goto err;
+    }
+    inlen = PACKET_remaining(&encdata);
+    start = PACKET_data(&encdata);
+
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
                          inlen) <= 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CKE_GOST,
@@ -3553,7 +3581,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         EVP_PKEY *pkey;
         i = ssl_verify_cert_chain(s, sk);
         if (i <= 0) {
-            SSLfatal(s, ssl_verify_alarm_type(s->verify_result),
+            SSLfatal(s, ssl_x509err2alert(s->verify_result),
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
                      SSL_R_CERTIFICATE_VERIFY_FAILED);
             goto err;
@@ -3607,9 +3635,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
-
-    if (new_sess != NULL)
-        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -3691,7 +3716,11 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
-        if (ssl_randbytes(s, age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
+        if (!ssl_generate_session_id(s, s->session)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+        if (RAND_bytes(age_add_u.age_add_c, sizeof(age_add_u)) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
                      ERR_R_INTERNAL_ERROR);
@@ -3757,7 +3786,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
 
     p = senc;
     if (!i2d_SSL_SESSION(s->session, &p)) {
@@ -3776,7 +3804,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    sess->session_id_length = 0; /* ID is irrelevant for the ticket */
 
     slen = i2d_SSL_SESSION(sess, NULL);
     if (slen == 0 || slen > slen_full) {
@@ -3830,11 +3857,11 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         const EVP_CIPHER *cipher = EVP_aes_256_cbc();
 
         iv_len = EVP_CIPHER_iv_length(cipher);
-        if (ssl_randbytes(s, iv, iv_len) <= 0
+        if (RAND_bytes(iv, iv_len) <= 0
                 || !EVP_EncryptInit_ex(ctx, cipher, NULL,
-                                       tctx->ext.tick_aes_key, iv)
-                || !HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
-                                 sizeof(tctx->ext.tick_hmac_key),
+                                       tctx->ext.secure->tick_aes_key, iv)
+                || !HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
+                                 sizeof(tctx->ext.secure->tick_hmac_key),
                                  EVP_sha256(), NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
@@ -3889,12 +3916,14 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                  SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (SSL_IS_TLS13(s)
-            && !tls_construct_extensions(s, pkt,
-                                         SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
-                                         NULL, 0)) {
-        /* SSLfatal() already called */
-        goto err;
+    if (SSL_IS_TLS13(s)) {
+        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
+        if (!tls_construct_extensions(s, pkt,
+                                      SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
+                                      NULL, 0)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
     }
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);

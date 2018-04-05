@@ -24,6 +24,9 @@ Do not load the same file multiple times unless its contents have
 been updated by RAND_write_file() between reads.
 Also, note that B<filename> should be adequately protected so that an
 attacker cannot replace or examine the contents.
+If B<filename> is not a regular file, then user is considered to be
+responsible for any side effects, e.g. non-anticipated blocking or
+capture of controlling terminal.
 
 RAND_write_file() writes a number of random bytes (currently 128) to
 file B<filename> which can be used to initialize the PRNG by calling
@@ -68,18 +71,13 @@ error.
 
 =head1 SEE ALSO
 
-L<RAND_bytes(3)>, L<RAND_add(3)>
-
-=head1 HISTORY
-
-A comment in the source since at least OpenSSL 1.0.2 said that
-RAND_load_file() and RAND_write_file() were only intended for regular files,
-and not really device special files such as C</dev/random>.  This was
-poorly enforced before OpenSSL 1.1.1.
+L<RAND_add(3)>,
+L<RAND_bytes(3)>,
+L<RAND(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

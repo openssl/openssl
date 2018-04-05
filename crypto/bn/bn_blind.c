@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -82,7 +82,6 @@ void BN_BLINDING_free(BN_BLINDING *r)
 {
     if (r == NULL)
         return;
-
     BN_free(r->A);
     BN_free(r->Ai);
     BN_free(r->e);
@@ -251,7 +250,7 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 
     do {
         int rv;
-        if (!BN_rand_range(ret->A, ret->mod))
+        if (!BN_priv_rand_range(ret->A, ret->mod))
             goto err;
         if (!int_bn_mod_inverse(ret->Ai, ret->A, ret->mod, ctx, &rv)) {
             /*

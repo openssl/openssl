@@ -768,9 +768,10 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
     /* Verify the HMAC of the cookie */
     hctx = EVP_MD_CTX_create();
-    pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
-                                s->session_ctx->ext.cookie_hmac_key,
-                                sizeof(s->session_ctx->ext.cookie_hmac_key));
+    pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
+                                        s->session_ctx->ext.cookie_hmac_key,
+                                        sizeof(s->session_ctx->ext
+                                               .cookie_hmac_key));
     if (hctx == NULL || pkey == NULL) {
         EVP_MD_CTX_free(hctx);
         EVP_PKEY_free(pkey);
@@ -1062,6 +1063,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             return 0;
         }
 
+#ifndef OPENSSL_NO_PSK
         if(sess == NULL
                 && s->psk_server_callback != NULL
                 && idlen <= PSK_MAX_IDENTITY_LEN) {
@@ -1112,6 +1114,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                 OPENSSL_cleanse(pskdata, pskdatalen);
             }
         }
+#endif /* OPENSSL_NO_PSK */
 
         if (sess != NULL) {
             /* We found a PSK */
@@ -1148,6 +1151,14 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             }
             if (ret == SSL_TICKET_NO_DECRYPT)
                 continue;
+
+            /* Check for replay */
+            if (s->max_early_data > 0
+                    && !SSL_CTX_remove_session(s->session_ctx, sess)) {
+                SSL_SESSION_free(sess);
+                sess = NULL;
+                continue;
+            }
 
             ticket_age = (uint32_t)ticket_agel;
             now = (uint32_t)time(NULL);
@@ -1588,8 +1599,12 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL *s, WPACKET *pkt,
                                                  unsigned int context, X509 *x,
                                                  size_t chainidx)
 {
-    if (!SSL_IS_TLS13(s))
-        return EXT_RETURN_NOT_SENT;
+    if (!ossl_assert(SSL_IS_TLS13(s))) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_VERSIONS,
+                 ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
@@ -1842,9 +1857,10 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
 
     /* HMAC the cookie */
     hctx = EVP_MD_CTX_create();
-    pkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL,
-                                s->session_ctx->ext.cookie_hmac_key,
-                                sizeof(s->session_ctx->ext.cookie_hmac_key));
+    pkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
+                                        s->session_ctx->ext.cookie_hmac_key,
+                                        sizeof(s->session_ctx->ext
+                                               .cookie_hmac_key));
     if (hctx == NULL || pkey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_COOKIE,
                  ERR_R_MALLOC_FAILURE);

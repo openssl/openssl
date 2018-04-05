@@ -558,7 +558,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 s++;
             cp = section;
             e = np = s;
-            while (IS_ALPHA_NUMERIC(conf, *e))
+            while (IS_ALNUM(conf, *e))
                 e++;
             if ((e[0] == ':') && (e[1] == ':')) {
                 cp = np;
@@ -567,7 +567,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
                 *rrp = '\0';
                 e += 2;
                 np = e;
-                while (IS_ALPHA_NUMERIC(conf, *e))
+                while (IS_ALNUM(conf, *e))
                     e++;
             }
             r = *e;
@@ -685,6 +685,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
 
         namelen = strlen(filename);
 
+
         if ((namelen > 5 && strcasecmp(filename + namelen - 5, ".conf") == 0)
             || (namelen > 4 && strcasecmp(filename + namelen - 4, ".cnf") == 0)) {
             size_t newlen;
@@ -697,10 +698,25 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
                 CONFerr(CONF_F_GET_NEXT_FILE, ERR_R_MALLOC_FAILURE);
                 break;
             }
-            OPENSSL_strlcat(newpath, path, newlen);
-#ifndef OPENSSL_SYS_VMS
-            OPENSSL_strlcat(newpath, "/", newlen);
+#ifdef OPENSSL_SYS_VMS
+            /*
+             * If the given path isn't clear VMS syntax,
+             * we treat it as on Unix.
+             */
+            {
+                size_t pathlen = strlen(path);
+
+                if (path[pathlen - 1] == ']' || path[pathlen - 1] == '>'
+                    || path[pathlen - 1] == ':') {
+                    /* Clear VMS directory syntax, just copy as is */
+                    OPENSSL_strlcpy(newpath, path, newlen);
+                }
+            }
 #endif
+            if (newpath[0] == '\0') {
+                OPENSSL_strlcpy(newpath, path, newlen);
+                OPENSSL_strlcat(newpath, "/", newlen);
+            }
             OPENSSL_strlcat(newpath, filename, newlen);
 
             bio = BIO_new_file(newpath, "r");
@@ -743,7 +759,7 @@ static char *eat_alpha_numeric(CONF *conf, char *p)
             p = scan_esc(conf, p);
             continue;
         }
-        if (!IS_ALPHA_NUMERIC_PUNCT(conf, *p))
+        if (!IS_ALNUM_PUNCT(conf, *p))
             return p;
         p++;
     }

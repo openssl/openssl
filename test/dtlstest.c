@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -61,8 +61,9 @@ static int test_dtls_unprocessed(int testidx)
     timer_cb_count = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
-                                       DTLS_client_method(), &sctx,
-                                       &cctx, cert, privkey)))
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, DTLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
         return 0;
 
     if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))

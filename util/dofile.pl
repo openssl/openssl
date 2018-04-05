@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -99,9 +99,9 @@ package main;
 # This adds quotes (") around the given string, and escapes any $, @, \,
 # " and ' by prepending a \ to them.
 sub quotify1 {
-    my $s = my $orig = shift @_;
+    my $s = shift @_;
     $s =~ s/([\$\@\\"'])/\\$1/g;
-    $s ne $orig || $s =~ /\s/ ? '"'.$s.'"' : $s;
+    '"'.$s.'"';
 }
 
 # quotify_l LIST

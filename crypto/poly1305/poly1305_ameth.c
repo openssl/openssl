@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include "internal/asn1_int.h"
 #include "internal/poly1305.h"
 #include "poly1305_local.h"
+#include "internal/evp_int.h"
 
 /*
  * POLY1305 "ASN1" method. This is just here to indicate the maximum
@@ -45,6 +46,27 @@ static int poly1305_pkey_public_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return ASN1_OCTET_STRING_cmp(EVP_PKEY_get0(a), EVP_PKEY_get0(b));
 }
 
+static int poly1305_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
+                                 size_t len)
+{
+    ASN1_OCTET_STRING *os;
+
+    if (pkey->pkey.ptr != NULL || len != POLY1305_KEY_SIZE)
+        return 0;
+
+    os = ASN1_OCTET_STRING_new();
+    if (os == NULL)
+        return 0;
+
+    if (!ASN1_OCTET_STRING_set(os, priv, len)) {
+        ASN1_OCTET_STRING_free(os);
+        return 0;
+    }
+
+    pkey->pkey.ptr = os;
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth = {
     EVP_PKEY_POLY1305,
     EVP_PKEY_POLY1305,
@@ -63,5 +85,17 @@ const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth = {
 
     poly1305_key_free,
     poly1305_pkey_ctrl,
-    0, 0
+    NULL,
+    NULL,
+
+    NULL,
+    NULL,
+    NULL,
+
+    NULL,
+    NULL,
+    NULL,
+
+    poly1305_set_priv_key,
+    NULL,
 };

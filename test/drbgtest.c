@@ -16,6 +16,11 @@
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 #include "../crypto/rand/rand_lcl.h"
+#include "../crypto/include/internal/rand_int.h"
+
+#if defined(_WIN32)
+# include <windows.h>
+#endif
 
 #include "testutil.h"
 #include "drbgtest.h"
@@ -118,7 +123,8 @@ typedef struct test_ctx_st {
 } TEST_CTX;
 
 static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
-                          int entropy, size_t min_len, size_t max_len)
+                          int entropy, size_t min_len, size_t max_len,
+                          int prediction_resistance)
 {
     TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
 
@@ -182,7 +188,7 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
     /* Reseed DRBG with test entropy and additional input */
     t.entropy = td->entropyreseed;
     t.entropylen = td->entropyreseedlen;
-    if (!TEST_true(RAND_DRBG_reseed(drbg, td->adinreseed, td->adinreseedlen)
+    if (!TEST_true(RAND_DRBG_reseed(drbg, td->adinreseed, td->adinreseedlen, 0)
             || !TEST_true(RAND_DRBG_generate(drbg, buff, td->kat2len, 0,
                                              td->adin2, td->adin2len))
             || !TEST_mem_eq(td->kat2, td->kat2len, buff, td->kat2len)))
@@ -415,12 +421,12 @@ static int error_check(DRBG_SELFTEST_DATA *td)
 
     /* Test explicit reseed with too large additional input */
     if (!init(drbg, td, &t)
-            || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1) > 0)
+            || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1, 0) > 0)
         goto err;
 
     /* Test explicit reseed with entropy source failure */
     t.entropylen = 0;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
+    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
             || !uninstantiate(drbg))
         goto err;
 
@@ -428,7 +434,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!init(drbg, td, &t))
         goto err;
     t.entropylen = drbg->max_entropylen + 1;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
+    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
             || !uninstantiate(drbg))
         goto err;
 
@@ -436,7 +442,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!init(drbg, td, &t))
         goto err;
     t.entropylen = drbg->min_entropylen - 1;
-    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen), 0)
+    if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
             || !uninstantiate(drbg))
         goto err;
 
@@ -504,7 +510,8 @@ static HOOK_CTX *get_hook_ctx(RAND_DRBG *drbg)
 
 /* Intercepts and counts calls to the get_entropy() callback */
 static size_t get_entropy_hook(RAND_DRBG *drbg, unsigned char **pout,
-                          int entropy, size_t min_len, size_t max_len)
+                              int entropy, size_t min_len, size_t max_len,
+                              int prediction_resistance)
 {
     size_t ret;
     HOOK_CTX *ctx = get_hook_ctx(drbg);
@@ -512,8 +519,8 @@ static size_t get_entropy_hook(RAND_DRBG *drbg, unsigned char **pout,
     if (ctx->fail != 0)
         return 0;
 
-    ret = ctx->get_entropy(
-        drbg, pout, entropy, min_len, max_len);
+    ret = ctx->get_entropy(drbg, pout, entropy, min_len, max_len,
+                           prediction_resistance);
 
     if (ret != 0)
         ctx->reseed_count++;
@@ -685,13 +692,28 @@ static int test_rand_reseed(void)
         || !TEST_ptr_eq(private->parent, master))
         return 0;
 
+    /* uninstantiate the three global DRBGs */
+    RAND_DRBG_uninstantiate(private);
+    RAND_DRBG_uninstantiate(public);
+    RAND_DRBG_uninstantiate(master);
+
+
     /* Install hooks for the following tests */
     hook_drbg(master,  &master_ctx);
     hook_drbg(public,  &public_ctx);
     hook_drbg(private, &private_ctx);
 
+
     /*
-     * Test initial state of shared DRBs
+     * Test initial seeding of shared DRBGs
+     */
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1)))
+        goto error;
+    reset_drbg_hook_ctx();
+
+
+    /*
+     * Test initial state of shared DRBGs
      */
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 0)))
         goto error;
@@ -760,6 +782,149 @@ error:
     return rv;
 }
 
+#if defined(OPENSSL_THREADS)
+
+static void run_multi_thread_test(void)
+{
+    unsigned char buf[256];
+    time_t start = time(NULL);
+    RAND_DRBG *public, *private;
+
+    public = RAND_DRBG_get0_public();
+    private = RAND_DRBG_get0_private();
+    RAND_DRBG_set_reseed_time_interval(public, 1);
+    RAND_DRBG_set_reseed_time_interval(private, 1);
+
+    do {
+        RAND_bytes(buf, sizeof(buf));
+        RAND_priv_bytes(buf, sizeof(buf));
+    }
+    while(time(NULL) - start < 5);
+}
+
+# if defined(OPENSSL_SYS_WINDOWS)
+
+typedef HANDLE thread_t;
+
+static DWORD WINAPI thread_run(LPVOID arg)
+{
+    run_multi_thread_test();
+    return 0;
+}
+
+static int run_thread(thread_t *t)
+{
+    *t = CreateThread(NULL, 0, thread_run, NULL, 0, NULL);
+    return *t != NULL;
+}
+
+static int wait_for_thread(thread_t thread)
+{
+    return WaitForSingleObject(thread, INFINITE) == 0;
+}
+
+# else
+
+typedef pthread_t thread_t;
+
+static void *thread_run(void *arg)
+{
+    run_multi_thread_test();
+    return NULL;
+}
+
+static int run_thread(thread_t *t)
+{
+    return pthread_create(t, NULL, thread_run, NULL) == 0;
+}
+
+static int wait_for_thread(thread_t thread)
+{
+    return pthread_join(thread, NULL) == 0;
+}
+
+# endif
+
+/*
+ * The main thread will also run the test, so we'll have THREADS+1 parallel
+ * tests running
+ */
+#define THREADS 3
+
+static int test_multi_thread(void)
+{
+    thread_t t[THREADS];
+    int i;
+
+    for (i = 0; i < THREADS; i++)
+        run_thread(&t[i]);
+    run_multi_thread_test();
+    for (i = 0; i < THREADS; i++)
+        wait_for_thread(t[i]);
+    return 1;
+}
+#endif
+
+/*
+ * This function only returns the entropy already added with RAND_add(),
+ * and does not get entropy from the OS.
+ *
+ * Returns 0 on failure and the size of the buffer on success.
+ */
+static size_t get_pool_entropy(RAND_DRBG *drbg,
+                               unsigned char **pout,
+                               int entropy, size_t min_len, size_t max_len,
+                               int prediction_resistance)
+{
+    if (drbg->pool == NULL)
+        return 0;
+
+    if (drbg->pool->entropy < (size_t)entropy || drbg->pool->len < min_len
+        || drbg->pool->len > max_len)
+        return 0;
+
+    *pout = drbg->pool->buffer;
+    return drbg->pool->len;
+}
+
+/*
+ * Clean up the entropy that get_pool_entropy() returned.
+ */
+static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
+{
+    OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
+    OPENSSL_free(drbg->pool);
+    drbg->pool = NULL;
+}
+
+/*
+ * Test that instantiating works when OS entropy is not available and that
+ * RAND_add() is enough to reseed it.
+ */
+static int test_rand_add(void)
+{
+    RAND_DRBG *master = RAND_DRBG_get0_master();
+    RAND_DRBG_get_entropy_fn old_get_entropy = master->get_entropy;
+    RAND_DRBG_cleanup_entropy_fn old_cleanup_entropy = master->cleanup_entropy;
+    int rv = 0;
+    unsigned char rand_add_buf[256];
+
+    master->get_entropy = get_pool_entropy;
+    master->cleanup_entropy = cleanup_pool_entropy;
+    master->reseed_counter++;
+    RAND_DRBG_uninstantiate(master);
+    memset(rand_add_buf, 0xCD, sizeof(rand_add_buf));
+    RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
+    if (!TEST_true(RAND_DRBG_instantiate(master, NULL, 0)))
+        goto error;
+
+    rv = 1;
+
+error:
+    master->get_entropy = old_get_entropy;
+    master->cleanup_entropy = old_cleanup_entropy;
+    return rv;
+}
 
 int setup_tests(void)
 {
@@ -768,5 +933,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
     ADD_TEST(test_rand_reseed);
+    ADD_TEST(test_rand_add);
+#if defined(OPENSSL_THREADS)
+    ADD_TEST(test_multi_thread);
+#endif
     return 1;
 }

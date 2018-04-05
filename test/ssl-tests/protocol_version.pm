@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -137,6 +137,7 @@ sub generate_version_tests {
         "client" => {
             #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
             "CipherString" => "AES128-SHA",
+            "Ciphersuites" => "",
         },
         "server" => {
             "MaxProtocol" => "TLSv1.2"
@@ -154,6 +155,7 @@ sub generate_version_tests {
         "server" => {
             #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
             "CipherString" => "AES128-SHA",
+            "Ciphersuites" => "",
         },
         "test" => {
             "ExpectedResult" => "ServerFail",

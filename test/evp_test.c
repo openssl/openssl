@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -911,31 +911,17 @@ static int mac_test_run(EVP_TEST *t)
     }
 #endif
 
-    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_id(expected->type, NULL))) {
-        t->err = "MAC_PKEY_CTX_ERROR";
+    if (expected->type == EVP_PKEY_CMAC)
+        key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
+                                    EVP_get_cipherbyname(expected->alg));
+    else
+        key = EVP_PKEY_new_raw_private_key(expected->type, NULL, expected->key,
+                                           expected->key_len);
+    if (key == NULL) {
+        t->err = "MAC_KEY_CREATE_ERROR";
         goto err;
     }
 
-    if (EVP_PKEY_keygen_init(genctx) <= 0) {
-        t->err = "MAC_KEYGEN_INIT_ERROR";
-        goto err;
-    }
-    if (expected->type == EVP_PKEY_CMAC
-             && EVP_PKEY_CTX_ctrl_str(genctx, "cipher", expected->alg) <= 0) {
-        t->err = "MAC_ALGORITHM_SET_ERROR";
-        goto err;
-    }
-
-    if (EVP_PKEY_CTX_set_mac_key(genctx, expected->key,
-                                 expected->key_len) <= 0) {
-        t->err = "MAC_KEY_SET_ERROR";
-        goto err;
-    }
-
-    if (EVP_PKEY_keygen(genctx, &key) <= 0) {
-        t->err = "MAC_KEY_GENERATE_ERROR";
-        goto err;
-    }
     if (expected->type == EVP_PKEY_HMAC) {
         if (!TEST_ptr(md = EVP_get_digestbyname(expected->alg))) {
             t->err = "MAC_ALGORITHM_SET_ERROR";
@@ -2427,6 +2413,23 @@ static char *take_value(PAIR *pp)
     return p;
 }
 
+static int key_disabled(EVP_PKEY *pkey)
+{
+#if defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_EC)
+    int type = EVP_PKEY_base_id(pkey);
+
+    if (type == EVP_PKEY_EC) {
+        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
+        int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+
+        if (nid == NID_sm2)
+            return 1;
+    }
+#endif /* OPENSSL_NO_SM2 */
+
+    return 0;
+}
+
 /*
  * Read and parse one test.  Return 0 if failure, 1 if okay.
  */
@@ -2453,20 +2456,69 @@ top:
     if (strcmp(pp->key, "PrivateKey") == 0) {
         pkey = PEM_read_bio_PrivateKey(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
+            EVP_PKEY_free(pkey);
             TEST_info("Can't read private key %s", pp->value);
             TEST_openssl_errors();
             return 0;
         }
         klist = &private_keys;
-    }
-    else if (strcmp(pp->key, "PublicKey") == 0) {
+    } else if (strcmp(pp->key, "PublicKey") == 0) {
         pkey = PEM_read_bio_PUBKEY(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
+            EVP_PKEY_free(pkey);
             TEST_info("Can't read public key %s", pp->value);
             TEST_openssl_errors();
             return 0;
         }
         klist = &public_keys;
+    } else if (strcmp(pp->key, "PrivateKeyRaw") == 0
+               || strcmp(pp->key, "PublicKeyRaw") == 0 ) {
+        char *strnid = NULL, *keydata = NULL;
+        unsigned char *keybin;
+        size_t keylen;
+        int nid;
+
+        if (strcmp(pp->key, "PrivateKeyRaw") == 0)
+            klist = &private_keys;
+        else
+            klist = &public_keys;
+
+        strnid = strchr(pp->value, ':');
+        if (strnid != NULL) {
+            *strnid++ = '\0';
+            keydata = strchr(strnid, ':');
+            if (keydata != NULL)
+                *keydata++ = '\0';
+        }
+        if (keydata == NULL) {
+            TEST_info("Failed to parse %s value", pp->key);
+            return 0;
+        }
+
+        nid = OBJ_txt2nid(strnid);
+        if (nid == NID_undef) {
+            TEST_info("Uncrecognised algorithm NID");
+            return 0;
+        }
+        if (!parse_bin(keydata, &keybin, &keylen)) {
+            TEST_info("Failed to create binary key");
+            return 0;
+        }
+        if (klist == &private_keys)
+            pkey = EVP_PKEY_new_raw_private_key(nid, NULL, keybin, keylen);
+        else
+            pkey = EVP_PKEY_new_raw_public_key(nid, NULL, keybin, keylen);
+        if (pkey == NULL && !key_unsupported()) {
+            TEST_info("Can't read %s data", pp->key);
+            OPENSSL_free(keybin);
+            TEST_openssl_errors();
+            return 0;
+        }
+        OPENSSL_free(keybin);
+    }
+    if (pkey != NULL && key_disabled(pkey)) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
     }
 
     /* If we have a key add to list */

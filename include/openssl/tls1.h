@@ -30,9 +30,9 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define TLS_MAX_VERSION                 TLS1_3_VERSION
 
-/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -23 */
-# define TLS1_3_VERSION_DRAFT            0x7f17
-# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 23)"
+/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -26 */
+# define TLS1_3_VERSION_DRAFT            0x7f1a
+# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 26)"
 
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
@@ -1130,18 +1130,6 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 # define TLS1_TXT_DHE_PSK_WITH_ARIA_256_GCM_SHA384         "DHE-PSK-ARIA256-GCM-SHA384"
 # define TLS1_TXT_RSA_PSK_WITH_ARIA_128_GCM_SHA256         "RSA-PSK-ARIA128-GCM-SHA256"
 # define TLS1_TXT_RSA_PSK_WITH_ARIA_256_GCM_SHA384         "RSA-PSK-ARIA256-GCM-SHA384"
-
-
-/* TLSv1.3 ciphersuites */
-/*
- * TODO(TLS1.3): Review the naming scheme for TLSv1.3 ciphers and also the
- * cipherstring selection process for these ciphers
- */
-# define TLS1_3_TXT_AES_128_GCM_SHA256                     "TLS13-AES-128-GCM-SHA256"
-# define TLS1_3_TXT_AES_256_GCM_SHA384                     "TLS13-AES-256-GCM-SHA384"
-# define TLS1_3_TXT_CHACHA20_POLY1305_SHA256               "TLS13-CHACHA20-POLY1305-SHA256"
-# define TLS1_3_TXT_AES_128_CCM_SHA256                     "TLS13-AES-128-CCM-SHA256"
-# define TLS1_3_TXT_AES_128_CCM_8_SHA256                   "TLS13-AES-128-CCM-8-SHA256"
 
 # define TLS_CT_RSA_SIGN                 1
 # define TLS_CT_DSS_SIGN                 2

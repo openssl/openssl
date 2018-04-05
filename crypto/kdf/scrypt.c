@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,8 +58,10 @@ static int pkey_scrypt_init(EVP_PKEY_CTX *ctx)
     SCRYPT_PKEY_CTX *kctx;
 
     kctx = OPENSSL_zalloc(sizeof(*kctx));
-    if (kctx == NULL)
+    if (kctx == NULL) {
+        KDFerr(KDF_F_PKEY_SCRYPT_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     /* Default values are the most conservative recommendation given in the
      * original paper of C. Percival. Derivation uses roughly 1 GiB of memory
@@ -102,8 +104,10 @@ static int pkey_scrypt_set_membuf(unsigned char **buffer, size_t *buflen,
     } else {
         *buffer = OPENSSL_malloc(1);
     }
-    if (*buffer == NULL)
+    if (*buffer == NULL) {
+        KDFerr(KDF_F_PKEY_SCRYPT_SET_MEMBUF, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     *buflen = new_buflen;
     return 1;

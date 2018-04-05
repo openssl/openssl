@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -1376,6 +1376,15 @@ static int nistp_single_test(int idx)
     EC_POINT_mul(NISTP, Q, NULL, G, n, ctx);
     if (!TEST_int_eq(0, EC_POINT_cmp(NISTP, Q, Q_CHECK, ctx)))
         goto err;
+
+    /* regression test for felem_neg bug */
+    if (!TEST_true(BN_set_word(m, 32))
+        || !TEST_true(BN_set_word(n, 31))
+        || !TEST_true(EC_POINT_copy(P, G))
+        || !TEST_true(EC_POINT_invert(NISTP, P, ctx))
+        || !TEST_true(EC_POINT_mul(NISTP, Q, m, P, n, ctx))
+        || !TEST_int_eq(0, EC_POINT_cmp(NISTP, Q, G, ctx)))
+      goto err;
 
     r = group_order_tests(NISTP);
 err:

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,14 @@
 # include <sys/stat.h>
 # include <fcntl.h>
 # ifdef _WIN32
+#  include <windows.h>
 #  include <io.h>
+#  define stat    _stat
+#  define chmod   _chmod
+#  define open    _open
+#  define fdopen  _fdopen
+#  define fstat   _fstat
+#  define fileno  _fileno
 # endif
 #endif
 
@@ -40,13 +47,6 @@
 # if !defined(S_ISREG)
 #   define S_ISREG(m) ((m) & S_IFREG)
 # endif
-
-#ifdef _WIN32
-# define stat    _stat
-# define chmod   _chmod
-# define open    _open
-# define fdopen  _fdopen
-#endif
 
 #define RAND_FILE_SIZE 1024
 #define RFILE ".rnd"
@@ -84,18 +84,43 @@ int RAND_load_file(const char *file, long bytes)
     if (bytes == 0)
         return 0;
 
-#ifndef OPENSSL_NO_POSIX_IO
-    if (stat(file, &sb) < 0 || !S_ISREG(sb.st_mode)) {
-        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_NOT_A_REGULAR_FILE);
-        ERR_add_error_data(2, "Filename=", file);
-        return -1;
-    }
-#endif
     if ((in = openssl_fopen(file, "rb")) == NULL) {
         RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_CANNOT_OPEN_FILE);
         ERR_add_error_data(2, "Filename=", file);
         return -1;
     }
+
+#ifndef OPENSSL_NO_POSIX_IO
+    if (fstat(fileno(in), &sb) < 0) {
+        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_INTERNAL_ERROR);
+        ERR_add_error_data(2, "Filename=", file);
+        fclose(in);
+        return -1;
+    }
+
+    if (!S_ISREG(sb.st_mode) && bytes < 0)
+        bytes = 256;
+#endif
+    /*
+     * On VMS, setbuf() will only take 32-bit pointers, and a compilation
+     * with /POINTER_SIZE=64 will give off a MAYLOSEDATA2 warning here.
+     * However, we trust that the C RTL will never give us a FILE pointer
+     * above the first 4 GB of memory, so we simply turn off the warning
+     * temporarily.
+     */
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment save
+# pragma message disable maylosedata2
+#endif
+    /*
+     * Don't buffer, because even if |file| is regular file, we have
+     * no control over the buffer, so why would we want a copy of its
+     * contents lying around?
+     */
+    setbuf(in, NULL);
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma environment restore
+#endif
 
     for ( ; ; ) {
         if (bytes > 0)
@@ -103,8 +128,16 @@ int RAND_load_file(const char *file, long bytes)
         else
             n = RAND_FILE_SIZE;
         i = fread(buf, 1, n, in);
-        if (i <= 0)
+#ifdef EINTR
+        if (ferror(in) && errno == EINTR){
+            clearerr(in);
+            if (i == 0)
+                continue;
+        }
+#endif
+        if (i == 0)
             break;
+
         RAND_add(buf, i, (double)i);
         ret += i;
 
@@ -134,7 +167,7 @@ int RAND_write_file(const char *file)
 #endif
 
     /* Collect enough random data. */
-    if (RAND_bytes(buf, (int)sizeof(buf)) != 1)
+    if (RAND_priv_bytes(buf, (int)sizeof(buf)) != 1)
         return  -1;
 
 #if defined(O_CREAT) && !defined(OPENSSL_NO_POSIX_IO) && \

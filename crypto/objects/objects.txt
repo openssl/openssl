@@ -20,6 +20,9 @@ identified-organization 36 8 3 3	: x509ExtAdmission	: Professional Information o
 
 identified-organization 132	: certicom-arc
 
+identified-organization 111     : ieee
+ieee 2 1619                     : ieee-siswg    : IEEE Security in Storage Working Group
+
 joint-iso-itu-t 23	: international-organizations	: International Organizations
 
 international-organizations 43	: wap
@@ -32,6 +35,10 @@ selected-attribute-types 55	: clearance
 member-body 840		: ISO-US		: ISO US Member Body
 ISO-US 10040		: X9-57			: X9.57
 X9-57 4			: X9cm			: X9.57 CM ?
+
+member-body 156         : ISO-CN        : ISO CN Member Body
+ISO-CN 10197            : oscca
+oscca 1                 : sm-scheme
 
 !Cname dsa
 X9cm 1			: DSA			: dsaEncryption
@@ -373,8 +380,10 @@ rsadsi 2 5		: MD5			: md5
 rsadsi 2 6		:			: hmacWithMD5
 rsadsi 2 7		:			: hmacWithSHA1
 
-member-body 156 10197 1 401 : SM3               : sm3
-member-body 156 10197 1 504 : RSA-SM3		: sm3WithRSAEncryption
+sm-scheme 301           : SM2                   : sm2
+
+sm-scheme 401           : SM3                   : sm3
+sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
 
 # From RFC4231
 rsadsi 2 8		:			: hmacWithSHA224
@@ -916,6 +925,9 @@ aes 46			: id-aes256-GCM		: aes-256-gcm
 aes 47			: id-aes256-CCM		: aes-256-ccm
 aes 48			: id-aes256-wrap-pad
 
+ieee-siswg 0 1 1        : AES-128-XTS		: aes-128-xts
+ieee-siswg 0 1 2        : AES-256-XTS		: aes-256-xts
+
 # There are no OIDs for these modes...
 
 			: AES-128-CFB1		: aes-128-cfb1
@@ -930,8 +942,6 @@ aes 48			: id-aes256-wrap-pad
 			: AES-128-OCB		: aes-128-ocb
 			: AES-192-OCB		: aes-192-ocb
 			: AES-256-OCB		: aes-256-ocb
-			: AES-128-XTS		: aes-128-xts
-			: AES-256-XTS		: aes-256-xts
 			: DES-CFB1		: des-cfb1
 			: DES-CFB8		: des-cfb8
 			: DES-EDE3-CFB1		: des-ede3-cfb1
@@ -1471,10 +1481,6 @@ kisa 1 6                : SEED-OFB      : seed-ofb
 
 
 # Definitions for SM4 cipher
-
-member-body 156         : ISO-CN        : ISO CN Member Body
-ISO-CN 10197            : oscca
-oscca 1                 : sm-scheme
 
 sm-scheme 104 1         : SM4-ECB             : sm4-ecb
 sm-scheme 104 2         : SM4-CBC             : sm4-cbc

@@ -169,8 +169,18 @@ extern "C" {
 /*
  * The following cipher list is used by default. It also is substituted when
  * an application-defined cipher list string starts with 'DEFAULT'.
+ * This applies to ciphersuites for TLSv1.2 and below.
  */
 # define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
+/* This is the default set of TLSv1.3 ciphersuites */
+# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                   "TLS_CHACHA20_POLY1305_SHA256:" \
+                                   "TLS_AES_128_GCM_SHA256"
+# else
+#  define TLS_DEFAULT_CIPHERSUITES "TLS_AES_256_GCM_SHA384:" \
+                                   "TLS_AES_128_GCM_SHA256"
+#endif
 /*
  * As of OpenSSL 1.0.0, ssl_create_cipher_list() in ssl/ssl_ciph.c always
  * starts with a reasonable order, and all we have to do for DEFAULT is
@@ -1500,6 +1510,8 @@ void SSL_set_bio(SSL *s, BIO *rbio, BIO *wbio);
 __owur BIO *SSL_get_rbio(const SSL *s);
 __owur BIO *SSL_get_wbio(const SSL *s);
 __owur int SSL_set_cipher_list(SSL *s, const char *str);
+__owur int SSL_CTX_set_ciphersuites(SSL_CTX *ctx, const char *str);
+__owur int SSL_set_ciphersuites(SSL *s, const char *str);
 void SSL_set_read_ahead(SSL *s, int yes);
 __owur int SSL_get_verify_mode(const SSL *s);
 __owur int SSL_get_verify_depth(const SSL *s);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -239,7 +239,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
     memset(private_bytes + todo, 0, sizeof(private_bytes) - todo);
 
     for (done = 0; done < num_k_bytes;) {
-        if (RAND_bytes(random_bytes, sizeof(random_bytes)) != 1)
+        if (RAND_priv_bytes(random_bytes, sizeof(random_bytes)) != 1)
             goto err;
         SHA512_Init(&sha);
         SHA512_Update(&sha, &done, sizeof(done));

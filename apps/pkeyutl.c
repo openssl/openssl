@@ -84,8 +84,7 @@ int pkeyutl_main(int argc, char **argv)
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
     unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
     OPTION_CHOICE o;
-    int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform =
-        FORMAT_PEM;
+    int buf_inlen = 0, siglen = -1, keyform = FORMAT_PEM, peerform = FORMAT_PEM;
     int keysize = -1, pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
     int engine_impl = 0;
     int ret = 1, rv = -1;
@@ -200,10 +199,18 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
 
     if (kdfalg != NULL) {
-        if (kdflen == 0)
+        if (kdflen == 0) {
+            BIO_printf(bio_err,
+                       "%s: no KDF length given (-kdflen parameter).\n", prog);
             goto opthelp;
-    } else if ((inkey == NULL)
-            || (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE)) {
+        }
+    } else if (inkey == NULL) {
+        BIO_printf(bio_err,
+                   "%s: no private key given (-inkey parameter).\n", prog);
+        goto opthelp;
+    } else if (peerkey != NULL && pkey_op != EVP_PKEY_OP_DERIVE) {
+        BIO_printf(bio_err,
+                   "%s: no peer key given (-peerkey parameter).\n", prog);
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
@@ -226,7 +233,8 @@ int pkeyutl_main(int argc, char **argv)
             const char *opt = sk_OPENSSL_STRING_value(pkeyopts, i);
 
             if (pkey_ctrl_string(ctx, opt) <= 0) {
-                BIO_printf(bio_err, "%s: Can't set parameter:\n", prog);
+                BIO_printf(bio_err, "%s: Can't set parameter \"%s\":\n",
+                           prog, opt);
                 ERR_print_errors(bio_err);
                 goto end;
             }
@@ -313,7 +321,11 @@ int pkeyutl_main(int argc, char **argv)
                       buf_in, (size_t)buf_inlen);
     }
     if (rv <= 0) {
-        BIO_puts(bio_err, "Public Key operation error\n");
+        if (pkey_op != EVP_PKEY_OP_DERIVE) {
+            BIO_puts(bio_err, "Public Key operation error\n");
+        } else {
+            BIO_puts(bio_err, "Key derivation failed\n");
+        }
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -393,8 +405,11 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
         if (kdfnid == NID_undef) {
             kdfnid = OBJ_ln2nid(kdfalg);
-            if (kdfnid == NID_undef)
+            if (kdfnid == NID_undef) {
+                BIO_printf(bio_err, "The given KDF \"%s\" is unknown.\n",
+                           kdfalg);
                 goto end;
+            }
         }
         ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
@@ -446,10 +461,10 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 }
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
-                      ENGINE* e)
+                      ENGINE *e)
 {
     EVP_PKEY *peer = NULL;
-    ENGINE* engine = NULL;
+    ENGINE *engine = NULL;
     int ret;
 
     if (peerform == FORMAT_ENGINE)

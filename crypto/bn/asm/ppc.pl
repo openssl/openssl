@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -40,7 +40,7 @@
 #dsa  512 bits   0.0087s   0.0106s    114.3     94.5
 #dsa 1024 bits   0.0256s   0.0313s     39.0     32.0
 #
-#	Same bechmark with this assembler code:
+#	Same benchmark with this assembler code:
 #
 #rsa  512 bits   0.0056s   0.0005s    178.6   2049.2
 #rsa 1024 bits   0.0283s   0.0015s     35.3    674.1

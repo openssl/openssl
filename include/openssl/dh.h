@@ -195,7 +195,7 @@ void DH_meth_free(DH_METHOD *dhm);
 DH_METHOD *DH_meth_dup(const DH_METHOD *dhm);
 const char *DH_meth_get0_name(const DH_METHOD *dhm);
 int DH_meth_set1_name(DH_METHOD *dhm, const char *name);
-int DH_meth_get_flags(DH_METHOD *dhm);
+int DH_meth_get_flags(const DH_METHOD *dhm);
 int DH_meth_set_flags(DH_METHOD *dhm, int flags);
 void *DH_meth_get0_app_data(const DH_METHOD *dhm);
 int DH_meth_set0_app_data(DH_METHOD *dhm, void *app_data);

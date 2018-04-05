@@ -23,6 +23,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_A2I_ASN1_INTEGER                          102
 # define ASN1_F_A2I_ASN1_STRING                           103
 # define ASN1_F_APPEND_EXP                                176
+# define ASN1_F_ASN1_BIO_INIT                             113
 # define ASN1_F_ASN1_BIT_STRING_SET_BIT                   183
 # define ASN1_F_ASN1_CB                                   177
 # define ASN1_F_ASN1_CHECK_TLEN                           104
@@ -34,6 +35,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_DO_ADB                               110
 # define ASN1_F_ASN1_DO_LOCK                              233
 # define ASN1_F_ASN1_DUP                                  111
+# define ASN1_F_ASN1_ENC_SAVE                             115
 # define ASN1_F_ASN1_EX_C2I                               204
 # define ASN1_F_ASN1_FIND_END                             190
 # define ASN1_F_ASN1_GENERALIZEDTIME_ADJ                  216
@@ -47,6 +49,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_ITEM_DUP                             191
 # define ASN1_F_ASN1_ITEM_EMBED_D2I                       120
 # define ASN1_F_ASN1_ITEM_EMBED_NEW                       121
+# define ASN1_F_ASN1_ITEM_FLAGS_I2D                       118
 # define ASN1_F_ASN1_ITEM_I2D_BIO                         192
 # define ASN1_F_ASN1_ITEM_I2D_FP                          193
 # define ASN1_F_ASN1_ITEM_PACK                            198
@@ -58,6 +61,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_ASN1_OBJECT_NEW                           123
 # define ASN1_F_ASN1_OUTPUT_DATA                          214
 # define ASN1_F_ASN1_PCTX_NEW                             205
+# define ASN1_F_ASN1_PRIMITIVE_NEW                        119
 # define ASN1_F_ASN1_SCTX_NEW                             221
 # define ASN1_F_ASN1_SIGN                                 128
 # define ASN1_F_ASN1_STR2TYPE                             179
@@ -91,7 +95,10 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_D2I_AUTOPRIVATEKEY                        207
 # define ASN1_F_D2I_PRIVATEKEY                            154
 # define ASN1_F_D2I_PUBLICKEY                             155
+# define ASN1_F_DO_CREATE                                 124
+# define ASN1_F_DO_DUMP                                   125
 # define ASN1_F_DO_TCREATE                                222
+# define ASN1_F_I2A_ASN1_OBJECT                           126
 # define ASN1_F_I2D_ASN1_BIO_STREAM                       211
 # define ASN1_F_I2D_DSA_PUBKEY                            161
 # define ASN1_F_I2D_EC_PUBKEY                             181
@@ -99,6 +106,8 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_I2D_PUBLICKEY                             164
 # define ASN1_F_I2D_RSA_PUBKEY                            165
 # define ASN1_F_LONG_C2I                                  166
+# define ASN1_F_NDEF_PREFIX                               127
+# define ASN1_F_NDEF_SUFFIX                               136
 # define ASN1_F_OID_MODULE_INIT                           174
 # define ASN1_F_PARSE_TAGGING                             182
 # define ASN1_F_PKCS5_PBE2_SET_IV                         167
@@ -109,9 +118,12 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_PKCS5_SCRYPT_SET                          232
 # define ASN1_F_SMIME_READ_ASN1                           212
 # define ASN1_F_SMIME_TEXT                                213
+# define ASN1_F_STABLE_GET                                138
 # define ASN1_F_STBL_MODULE_INIT                          223
 # define ASN1_F_UINT32_C2I                                105
+# define ASN1_F_UINT32_NEW                                139
 # define ASN1_F_UINT64_C2I                                112
+# define ASN1_F_UINT64_NEW                                141
 # define ASN1_F_X509_CRL_ADD0_REVOKED                     169
 # define ASN1_F_X509_INFO_NEW                             170
 # define ASN1_F_X509_NAME_ENCODE                          203
@@ -191,6 +203,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_R_MSTRING_NOT_UNIVERSAL                     139
 # define ASN1_R_MSTRING_WRONG_TAG                         140
 # define ASN1_R_NESTED_ASN1_STRING                        197
+# define ASN1_R_NESTED_TOO_DEEP                           201
 # define ASN1_R_NON_HEX_CHARACTERS                        141
 # define ASN1_R_NOT_ASCII_FORMAT                          190
 # define ASN1_R_NOT_ENOUGH_DATA                           142

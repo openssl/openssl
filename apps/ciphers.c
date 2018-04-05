@@ -26,6 +26,7 @@ typedef enum OPTION_choice {
     OPT_TLS1_3,
     OPT_PSK,
     OPT_SRP,
+    OPT_CIPHERSUITES,
     OPT_V, OPT_UPPER_V, OPT_S
 } OPTION_CHOICE;
 
@@ -57,6 +58,8 @@ const OPTIONS ciphers_options[] = {
     {"srp", OPT_SRP, '-', "include ciphersuites requiring SRP"},
 #endif
     {"convert", OPT_CONVERT, 's', "Convert standard name into OpenSSL name"},
+    {"ciphersuites", OPT_CIPHERSUITES, 's',
+     "Configure the TLSv1.3 ciphersuites to use"},
     {NULL}
 };
 
@@ -91,7 +94,7 @@ int ciphers_main(int argc, char **argv)
     int srp = 0;
 #endif
     const char *p;
-    char *ciphers = NULL, *prog, *convert = NULL;
+    char *ciphers = NULL, *prog, *convert = NULL, *ciphersuites = NULL;
     char buf[512];
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0;
@@ -153,6 +156,9 @@ int ciphers_main(int argc, char **argv)
             srp = 1;
 #endif
             break;
+        case OPT_CIPHERSUITES:
+            ciphersuites = opt_arg();
+            break;
         }
     }
     argv = opt_rest();
@@ -185,6 +191,12 @@ int ciphers_main(int argc, char **argv)
     if (srp)
         SSL_CTX_set_srp_client_pwd_callback(ctx, dummy_srp);
 #endif
+
+    if (ciphersuites != NULL && !SSL_CTX_set_ciphersuites(ctx, ciphersuites)) {
+        BIO_printf(bio_err, "Error setting TLSv1.3 ciphersuites\n");
+        goto err;
+    }
+
     if (ciphers != NULL) {
         if (!SSL_CTX_set_cipher_list(ctx, ciphers)) {
             BIO_printf(bio_err, "Error in cipher list\n");

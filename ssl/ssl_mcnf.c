@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -125,6 +125,7 @@ static const struct ssl_conf_name *ssl_name_find(const char *name)
 {
     size_t i;
     const struct ssl_conf_name *nm;
+
     if (name == NULL)
         return NULL;
     for (i = 0, nm = ssl_names; i < ssl_names_count; i++, nm++) {
@@ -134,7 +135,7 @@ static const struct ssl_conf_name *ssl_name_find(const char *name)
     return NULL;
 }
 
-static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name)
+static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
 {
     SSL_CONF_CTX *cctx = NULL;
     size_t i;
@@ -143,21 +144,28 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name)
     const SSL_METHOD *meth;
     const struct ssl_conf_name *nm;
     struct ssl_conf_cmd *cmd;
+
     if (s == NULL && ctx == NULL) {
         SSLerr(SSL_F_SSL_DO_CONFIG, ERR_R_PASSED_NULL_PARAMETER);
         goto err;
     }
+
+    if (name == NULL && system)
+        name = "system_default";
     nm = ssl_name_find(name);
     if (nm == NULL) {
-        SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_INVALID_CONFIGURATION_NAME);
-        ERR_add_error_data(2, "name=", name);
+        if (!system) {
+            SSLerr(SSL_F_SSL_DO_CONFIG, SSL_R_INVALID_CONFIGURATION_NAME);
+            ERR_add_error_data(2, "name=", name);
+        }
         goto err;
     }
     cctx = SSL_CONF_CTX_new();
     if (cctx == NULL)
         goto err;
     flags = SSL_CONF_FLAG_FILE;
-    flags |= SSL_CONF_FLAG_CERTIFICATE | SSL_CONF_FLAG_REQUIRE_PRIVATE;
+    if (!system)
+        flags |= SSL_CONF_FLAG_CERTIFICATE | SSL_CONF_FLAG_REQUIRE_PRIVATE;
     if (s != NULL) {
         meth = s->method;
         SSL_CONF_CTX_set_ssl(cctx, s);
@@ -190,10 +198,15 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name)
 
 int SSL_config(SSL *s, const char *name)
 {
-    return ssl_do_config(s, NULL, name);
+    return ssl_do_config(s, NULL, name, 0);
 }
 
 int SSL_CTX_config(SSL_CTX *ctx, const char *name)
 {
-    return ssl_do_config(NULL, ctx, name);
+    return ssl_do_config(NULL, ctx, name, 0);
+}
+
+void ssl_ctx_system_config(SSL_CTX *ctx)
+{
+    ssl_do_config(NULL, ctx, NULL, 1);
 }

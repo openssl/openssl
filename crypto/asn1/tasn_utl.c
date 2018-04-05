@@ -133,9 +133,10 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
         return 1;
 
     OPENSSL_free(enc->enc);
-    enc->enc = OPENSSL_malloc(inlen);
-    if (enc->enc == NULL)
+    if ((enc->enc = OPENSSL_malloc(inlen)) == NULL) {
+        ASN1err(ASN1_F_ASN1_ENC_SAVE, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     memcpy(enc->enc, in, inlen);
     enc->len = inlen;
     enc->modified = 0;

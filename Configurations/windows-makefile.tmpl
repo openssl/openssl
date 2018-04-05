@@ -207,10 +207,10 @@ CNF_ASFLAGS={- join(' ', $target{asflags} || (),
                          @{$config{asflags}}) -}
 CNF_CPPFLAGS={- our $cppfags2 =
                     join(' ', $target{cppflags} || (),
-                              (map { quotify_l("-D".$_) } @{$target{defines}},
-                                                          @{$config{defines}}),
-                              (map { quotify_l("-I".$_) } @{$target{includes}},
-                                                          @{$config{includes}}),
+                              (map { '-D'.quotify1($_) } @{$target{defines}},
+                                                         @{$config{defines}}),
+                              (map { '-I'.quotify1($_) } @{$target{includes}},
+                                                         @{$config{includes}}),
                               @{$config{cppflags}}) -}
 CNF_CFLAGS={- join(' ', $target{cflags} || (),
                         @{$config{cflags}}) -}
@@ -233,12 +233,12 @@ LIB_ASFLAGS={- join(' ', $target{lib_asflags} || (),
 LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $target{lib_cppflags} || (),
                           $target{shared_cppflag} || (),
-                          (map { quotify_l("-D".$_) }
+                          (map { '-D'.quotify1($_) }
                                @{$target{lib_defines}},
                                @{$target{shared_defines}},
                                @{$config{lib_defines}},
                                @{$config{shared_defines}}),
-                          (map { quotify_l("-I".$_) }
+                          (map { '-I'.quotify1($_) }
                                @{$target{lib_includes}},
                                @{$target{shared_includes}},
                                @{$config{lib_includes}},
@@ -246,7 +246,7 @@ LIB_CPPFLAGS={- our $lib_cppflags =
                           @{$config{lib_cppflags}},
                           @{$config{shared_cppflag}});
                 join(' ', $lib_cppflags,
-                          (map { quotify_l("-D".$_) }
+                          (map { '-D'.quotify1($_) }
                                "OPENSSLDIR=\"$openssldir\"",
                                "ENGINESDIR=\"$enginesdir\""),
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -351,36 +351,26 @@ install: install_sw install_ssldirs install_docs
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """$$1.*"""; } @ARGV" $(SHLIBS)
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """apps/$$1.*"""; } @ARGV" $(SHLIBS)
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """test/$$1.*"""; } @ARGV" $(SHLIBS)
-	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """fuzz/$$1.*"""; } @ARGV" $(SHLIBS)
-	-del /Q /F $(LIBS)
-	-del /Q ossl_static.pdb
+	"$(PERL)" -e "map { m/(.*)\.dll$$/; unlink glob """{.,apps,test,fuzz}/$$1.*"""; } @ARGV" $(SHLIBS)
+	-del /Q /F $(LIBS) libcrypto.* libssl.* ossl_static.pdb
 
 clean: libclean
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	-del /Q /F $(ENGINES)
 	-del /Q /F $(SCRIPTS)
 	-del /Q /F $(GENERATED)
-	-del /Q /S /F *.d
-	-del /Q /S /F *.obj
-	-del /Q /S /F *.pdb
-	-del /Q /F *.exp
-	-del /Q /F apps\*.exp
-	-del /Q /F engines\*.exp
-	-del /Q /S /F engines\*.ilk
+	-del /Q /S /F *.d *.obj *.pdb *.exp *.ilk *.manifest
 	-del /Q /S /F engines\*.lib
-	-del /Q /S /F apps\*.lib
-	-del /Q /S /F engines\*.manifest
-	-del /Q /S /F apps\*.manifest
-	-del /Q /S /F test\*.manifest
+	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res
 
 distclean: clean
 	-del /Q /F configdata.pm
 	-del /Q /F makefile
 
 depend:
+	@ rem {- output_off() if $disabled{makedepend}; "" -}
+	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "VC"
+	@ rem {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
 
@@ -596,17 +586,9 @@ EOF
      }
      return <<"EOF"	if (!$disabled{makedepend});
 $obj$depext: $deps
-	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 | \\
-	    "\$(PERL)" -n << > $obj$depext
-chomp;
-s/^Note: including file: *//;
-\$\$collect{\$\$_} = 1;
-END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
-<<
+	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 > $obj$depext
 $obj$objext: $obj$depext
-	\$(CC) $cflags -c \$(COUTFLAG)\$\@ @<<
-$srcs
-<<
+	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
 EOF
     return <<"EOF"	if ($disabled{makedepend});
 $obj$objext: $deps

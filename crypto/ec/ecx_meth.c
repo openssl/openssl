@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -341,6 +341,19 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     }
 }
 
+static int ecx_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
+                            size_t len)
+{
+    return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, priv, len,
+                       KEY_OP_PRIVATE);
+}
+
+static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
+{
+    return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, pub, len,
+                      KEY_OP_PUBLIC);
+}
+
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     EVP_PKEY_X25519,
     EVP_PKEY_X25519,
@@ -368,7 +381,18 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     ecx_free,
     ecx_ctrl,
     NULL,
-    NULL
+    NULL,
+
+    NULL,
+    NULL,
+    NULL,
+
+    NULL,
+    NULL,
+    NULL,
+
+    ecx_set_priv_key,
+    ecx_set_pub_key,
 };
 
 const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
@@ -398,7 +422,18 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     ecx_free,
     ecx_ctrl,
     NULL,
-    NULL
+    NULL,
+
+    NULL,
+    NULL,
+    NULL,
+
+    NULL,
+    NULL,
+    NULL,
+
+    ecx_set_priv_key,
+    ecx_set_pub_key,
 };
 
 static int ecd_size25519(const EVP_PKEY *pkey)
@@ -504,7 +539,14 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     NULL,
     ecd_item_verify,
     ecd_item_sign25519,
-    ecd_sig_info_set25519
+    ecd_sig_info_set25519,
+
+    NULL,
+    NULL,
+    NULL,
+
+    ecx_set_priv_key,
+    ecx_set_pub_key,
 };
 
 const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
@@ -537,7 +579,14 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     NULL,
     ecd_item_verify,
     ecd_item_sign448,
-    ecd_sig_info_set448
+    ecd_sig_info_set448,
+
+    NULL,
+    NULL,
+    NULL,
+
+    ecx_set_priv_key,
+    ecx_set_pub_key,
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)

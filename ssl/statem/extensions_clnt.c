@@ -798,7 +798,9 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
                                          unsigned int context, X509 *x,
                                          size_t chainidx)
 {
+#ifndef OPENSSL_NO_PSK
     char identity[PSK_MAX_IDENTITY_LEN + 1];
+#endif  /* OPENSSL_NO_PSK */
     const unsigned char *id = NULL;
     size_t idlen = 0;
     SSL_SESSION *psksess = NULL;
@@ -818,6 +820,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
+#ifndef OPENSSL_NO_PSK
     if (psksess == NULL && s->psk_client_callback != NULL) {
         unsigned char psk[PSK_MAX_PSK_LEN];
         size_t psklen = 0;
@@ -869,6 +872,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL *s, WPACKET *pkt,
             OPENSSL_cleanse(psk, psklen);
         }
     }
+#endif  /* OPENSSL_NO_PSK */
 
     SSL_SESSION_free(s->psksession);
     s->psksession = psksess;
@@ -1729,7 +1733,15 @@ int tls_parse_stoc_alpn(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         s->ext.early_data_ok = 0;
     }
     if (!s->hit) {
-        /* If a new session then update it with the selected ALPN */
+        /*
+         * This is a new session and so alpn_selected should have been
+         * initialised to NULL. We should update it with the selected ALPN.
+         */
+        if (!ossl_assert(s->session->ext.alpn_selected == NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_ALPN,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
         s->session->ext.alpn_selected =
             OPENSSL_memdup(s->s3->alpn_selected, s->s3->alpn_selected_len);
         if (s->session->ext.alpn_selected == NULL) {
@@ -1834,20 +1846,20 @@ int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
     if (version == TLS1_3_VERSION_DRAFT)
         version = TLS1_3_VERSION;
 
-    /* We ignore this extension for HRRs except to sanity check it */
-    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) {
-        /*
-         * The only protocol version we support which has an HRR message is
-         * TLSv1.3, therefore we shouldn't be getting an HRR for anything else.
-         */
-        if (version != TLS1_3_VERSION) {
-            SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
-                     SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
-                     SSL_R_BAD_HRR_VERSION);
-            return 0;
-        }
-        return 1;
+    /*
+     * The only protocol version we support which is valid in this extension in
+     * a ServerHello is TLSv1.3 therefore we shouldn't be getting anything else.
+     */
+    if (version != TLS1_3_VERSION) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                 SSL_F_TLS_PARSE_STOC_SUPPORTED_VERSIONS,
+                 SSL_R_BAD_PROTOCOL_VERSION_NUMBER);
+        return 0;
     }
+
+    /* We ignore this extension for HRRs except to sanity check it */
+    if (context == SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST)
+        return 1;
 
     /* We just set it here. We validate it in ssl_choose_client_version */
     s->version = version;

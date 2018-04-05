@@ -173,9 +173,10 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
          * At this point, |st->num_alloc| and |st->num| are 0;
          * so |num_alloc| value is |n| or |min_nodes| if greater than |n|.
          */
-        st->data = OPENSSL_zalloc(sizeof(void *) * num_alloc);
-        if (st->data == NULL)
+        if ((st->data = OPENSSL_zalloc(sizeof(void *) * num_alloc)) == NULL) {
+            /* STACKerr(STACK_F_SK_RESERVE, ERR_R_MALLOC_FAILURE); */
             return 0;
+        }
         st->num_alloc = num_alloc;
         return 1;
     }

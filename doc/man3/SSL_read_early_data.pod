@@ -41,9 +41,9 @@ can be used to send data from the server to the client when the client has not
 yet completed the authentication stage of the handshake.
 
 Early data has weaker security properties than other data sent over an SSL/TLS
-connection. In particular the data does not have forward secrecy and there are
-no guarantees that the same early data was not replayed across multiple
-connections. For this reason extreme care should be exercised when using early
+connection. In particular the data does not have forward secrecy. There are also
+additional considerations around replay attacks (see L<REPLAY PROTECTION>
+below). For these reasons extreme care should be exercised when using early
 data. For specific details, consult the TLS 1.3 specification.
 
 When a server receives early data it may opt to immediately respond by sending
@@ -171,12 +171,16 @@ connection attempt. By default the server does not accept early data; a
 server may indicate support for early data by calling
 SSL_CTX_set_max_early_data() or
 SSL_set_max_early_data() to set it for the whole SSL_CTX or an individual SSL
-object respectively. Similarly the SSL_CTX_get_max_early_data() and
+object respectively. The B<max_early_data> parameter specifies the maximum
+amount of early data in bytes that is permitted to be sent on a single
+connection. Similarly the SSL_CTX_get_max_early_data() and
 SSL_get_max_early_data() functions can be used to obtain the current maximum
-early data settings for the SSL_CTX and SSL objects respectively.
-Generally a server application will either use both of SSL_read_early_data()
-and SSL_CTX_set_max_early_data() (or SSL_set_max_early_data()), or neither
-of them, since there is no practical benefit from using only one of them.
+early data settings for the SSL_CTX and SSL objects respectively. Generally a
+server application will either use both of SSL_read_early_data() and
+SSL_CTX_set_max_early_data() (or SSL_set_max_early_data()), or neither of them,
+since there is no practical benefit from using only one of them. If the maximum
+early data setting for a server is non-zero then replay protection is
+automatically enabled (see L</REPLAY PROTECTION> below).
 
 In the event that the current maximum early data setting for the server is
 different to that originally specified in a session that a client is resuming
@@ -208,6 +212,43 @@ In many operating systems the TCP_NODELAY socket option is available to disable
 Nagle's algorithm. If an application opts to disable Nagle's algorithm
 consideration should be given to turning it back on again after the handshake is
 complete if appropriate.
+
+=head1 REPLAY PROTECTION
+
+When early data is in use the TLS protocol provides no security guarantees that
+the same early data was not replayed across multiple connections. As a
+mitigation for this issue OpenSSL automatically enables replay protection if the
+server is configured with a non-zero max early data value. With replay
+protection enabled sessions are forced to be single use only. If a client
+attempts to reuse a session ticket more than once, then the second and
+subsequent attempts will fall back to a full handshake (and any early data that
+was submitted will be ignored). Note that single use tickets are enforced even
+if a client does not send any early data.
+
+The replay protection mechanism relies on the internal OpenSSL server session
+cache (see L<SSL_CTX_set_session_cache_mode(3)>). By default sessions will be
+added to the cache whenever a session ticket is issued. When a client attempts
+to resume the session OpenSSL will check for its presence in the internal cache.
+If it exists then the resumption is allowed and the session is removed from the
+cache. If it does not exist then the resumption is not allowed and a full
+handshake will occur.
+
+Note that some applications may maintain an external cache of sessions (see
+L<SSL_CTX_sess_set_new_cb(3)> and similar functions). It is the application's
+responsibility to ensure that any sessions in the external cache are also
+populated in the internal cache and that once removed from the internal cache
+they are similarly removed from the external cache. Failing to do this could
+result in an application becoming vulnerable to replay attacks. Note that
+OpenSSL will lock the internal cache while a session is removed but that lock is
+not held when the remove session callback (see L<SSL_CTX_sess_set_remove_cb(3)>)
+is called. This could result in a small amount of time where the session has
+been removed from the internal cache but is still available in the external
+cache. Applications should be designed with this in mind in order to minimise
+the possibility of replay attacks.
+
+The OpenSSL replay protection does not apply to external Pre Shared Keys (PSKs)
+(e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
+should be applied when combining external PSKs with early data.
 
 =head1 RETURN VALUES
 
@@ -248,7 +289,7 @@ All of the functions described above were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

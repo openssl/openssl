@@ -48,9 +48,10 @@ static int pkey_hkdf_init(EVP_PKEY_CTX *ctx)
 {
     HKDF_PKEY_CTX *kctx;
 
-    kctx = OPENSSL_zalloc(sizeof(*kctx));
-    if (kctx == NULL)
+    if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL) {
+        KDFerr(KDF_F_PKEY_HKDF_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     ctx->data = kctx;
 

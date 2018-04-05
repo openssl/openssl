@@ -93,10 +93,6 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #   include <sys/select.h>
 #  endif
 
-#  ifdef __QNX__
-#   include <sys/select.h>
-#  endif
-
 #  ifndef VMS
 #   include <sys/ioctl.h>
 #  else

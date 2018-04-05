@@ -179,6 +179,10 @@ my $apitable = {
 our %table = ();
 our %config = ();
 our %withargs = ();
+our $now_printing;      # set to current entry's name in print_table_entry
+                        # (todo: right thing would be to encapsulate name
+                        # into %target [class] and make print_table_entry
+                        # a method)
 
 # Forward declarations ###############################################
 
@@ -297,7 +301,7 @@ $config{sdirs} = [
     "objects",
     "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash", "sm3",
     "des", "aes", "rc2", "rc4", "rc5", "idea", "aria", "bf", "cast", "camellia", "seed", "sm4", "chacha", "modes",
-    "bn", "ec", "rsa", "dsa", "dh", "dso", "engine",
+    "bn", "ec", "rsa", "dsa", "dh", "sm2", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
     "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store"
@@ -382,6 +386,7 @@ my @disablables = (
     "seed",
     "shared",
     "siphash",
+    "sm2",
     "sm3",
     "sm4",
     "sock",
@@ -418,7 +423,7 @@ my %deprecated_disablables = (
     "ui" => "ui-console",
     );
 
-# All of the following is disabled by default (RC5 was enabled before 0.9.8):
+# All of the following are disabled by default:
 
 our %disabled = ( # "what"         => "comment"
                   "asan"		=> "default",
@@ -484,7 +489,8 @@ my @disable_cascades = (
     "apps"              => [ "tests" ],
     "tests"             => [ "external-tests" ],
     "comp"              => [ "zlib" ],
-    "ec"                => [ "tls1_3" ],
+    "ec"                => [ "tls1_3", "sm2" ],
+    "sm3"               => [ "sm2" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
@@ -523,28 +529,30 @@ my $list_separator_re =
     { VMS           => qr/(?<!\^),/,
       MSWin32       => qr/(?<!\\);/ } -> {$^O} // qr/(?<!\\)[:\s]/;
 # All the "make variables" we support
+# Some get pre-populated for the sake of backward compatibility
+# (we supported those before the change to "make variable" support.
 my %user = (
-    AR          => undef,
+    AR          => env('AR'),
     ARFLAGS     => [],
     AS          => undef,
     ASFLAGS     => [],
-    CC          => undef,
+    CC          => env('CC'),
     CFLAGS      => [],
-    CXX         => undef,
+    CXX         => env('CXX'),
     CXXFLAGS    => [],
     CPP         => undef,
     CPPFLAGS    => [],  # -D, -I, -Wp,
     CPPDEFINES  => [],  # Alternative for -D
     CPPINCLUDES => [],  # Alternative for -I
-    CROSS_COMPILE => undef,
-    HASHBANGPERL=> undef,
+    CROSS_COMPILE => env('CROSS_COMPILE'),
+    HASHBANGPERL=> env('HASHBANGPERL') || env('PERL'),
     LD          => undef,
     LDFLAGS     => [],  # -L, -Wl,
     LDLIBS      => [],  # -l
     MT          => undef,
     MTFLAGS     => [],
-    RANLIB      => undef,
-    RC          => undef,
+    RANLIB      => env('RANLIB'),
+    RC          => env('RC') || env('WINDRES'),
     RCFLAGS     => [],
     RM          => undef,
    );
@@ -585,13 +593,13 @@ my %target_attr_translate =(
    );
 
 # Initialisers coming from 'config' scripts
-$config{defines} = [ split(/$list_separator_re/, env('__CNF_CPPDEFINES')) ],
-$config{includes} = [ split(/$list_separator_re/, env('__CNF_CPPINCLUDES')) ],
-$config{cppflags} = [ env('__CNF_CPPFLAGS') || () ],
-$config{cflags} = [ env('__CNF_CFLAGS') || () ],
-$config{cxxflags} = [ env('__CNF_CXXFLAGS') || () ],
-$config{lflags} = [ env('__CNF_LDFLAGS') || () ],
-$config{ex_libs} = [ env('__CNF_LDLIBS') || () ],
+$config{defines} = [ split(/$list_separator_re/, env('__CNF_CPPDEFINES')) ];
+$config{includes} = [ split(/$list_separator_re/, env('__CNF_CPPINCLUDES')) ];
+$config{cppflags} = [ env('__CNF_CPPFLAGS') || () ];
+$config{cflags} = [ env('__CNF_CFLAGS') || () ];
+$config{cxxflags} = [ env('__CNF_CXXFLAGS') || () ];
+$config{lflags} = [ env('__CNF_LDFLAGS') || () ];
+$config{ex_libs} = [ env('__CNF_LDLIBS') || () ];
 
 $config{openssl_api_defines}=[];
 $config{openssl_algorithm_defines}=[];
@@ -602,6 +610,7 @@ $config{options}="";
 $config{build_type} = "release";
 my $target="";
 
+my %cmdvars = ();               # Stores FOO='blah' type arguments
 my %unsupported_options = ();
 my %deprecated_options = ();
 # If you change this, update apps/version.c
@@ -614,7 +623,7 @@ while (@argvcopy)
 	# Support env variable assignments among the options
 	if (m|^(\w+)=(.+)?$|)
 		{
-		$config{perlenv}->{$1} = $2;
+		$cmdvars{$1} = $2;
 		# Every time a variable is given as a configuration argument,
 		# it acts as a reset if the variable.
 		if (exists $user{$1})
@@ -635,7 +644,9 @@ while (@argvcopy)
 		{
 		s/^([^=]*)/lc($1)/e;
 		}
-	s /^-no-/no-/; # some people just can't read the instructions
+
+	# some people just can't read the instructions, clang people have to...
+	s/^-no-(?!integrated-as)/no-/;
 
 	# rewrite some options in "enable-..." form
 	s /^-?-?shared$/enable-shared/;
@@ -891,36 +902,46 @@ while (@argvcopy)
 		}
 	}
 
-# If any %useradd entry has been set, we must check that the environment
-# variables haven't been set.  We start by checking of any %useradd entry
+# If any %useradd entry has been set, we must check that the "make
+# variables" haven't been set.  We start by checking of any %useradd entry
 # is set.
 if (grep { scalar @$_ > 0 } values %useradd) {
     # Hash of env / make variables names.  The possible values are:
-    # 1 - environment set
+    # 1 - "make vars"
     # 2 - %useradd entry set
     # 3 - both set
-    my %detected_env =
+    my %detected_vars =
         map { my $v = 0;
-              $v += 1 if env($_);
+              $v += 1 if $cmdvars{$_};
               $v += 2 if @{$useradd{$_}};
               $_ => $v }
         keys %useradd;
 
-    # If any of the corresponding environment variables is set, we error
-    if (grep { $_ & 1 } values %detected_env) {
-        my $names = join(', ', grep { $detected_env{$_} > 0 }
-                               sort keys %detected_env);
+    # If any of the corresponding "make variables" is set, we error
+    if (grep { $_ & 1 } values %detected_vars) {
+        my $names = join(', ', grep { $detected_vars{$_} > 0 }
+                               sort keys %detected_vars);
         die <<"_____";
-***** Mixing env / make variables and additional compiler/linker flags as
+***** Mixing make variables and additional compiler/linker flags as
 ***** configure command line option is not permitted.
-***** Affected env / make variables: $names
+***** Affected make variables: $names
 _____
     }
 }
 
+# Check through all supported command line variables to see if any of them
+# were set, and canonicalise the values we got.  If no compiler or linker
+# flag or anything else that affects %useradd was set, we also check the
+# environment for values.
+my $anyuseradd =
+    grep { defined $_ && (ref $_ ne 'ARRAY' || @$_) } values %useradd;
 foreach (keys %user) {
-    my $value = env($_);
-    $value //= defined $user_synonyms{$_} ? env($user_synonyms{$_}) : undef;
+    my $value = $cmdvars{$_};
+    $value //= env($_) unless $anyuseradd;
+    $value //=
+        defined $user_synonyms{$_} ? $cmdvars{$user_synonyms{$_}} : undef;
+    $value //= defined $user_synonyms{$_} ? env($user_synonyms{$_}) : undef
+        unless $anyuseradd;
 
     if (defined $value) {
         if (ref $user{$_} eq 'ARRAY') {
@@ -1215,29 +1236,6 @@ if ($target =~ /linux.*-mips/ && !$disabled{asm}
 	unshift @{$config{cxxflags}}, $value if $config{CXX};
 }
 
-# The DSO code currently always implements all functions so that no
-# applications will have to worry about that from a compilation point
-# of view. However, the "method"s may return zero unless that platform
-# has support compiled in for them. Currently each method is enabled
-# by a define "DSO_<name>" ... we translate the "dso_scheme" config
-# string entry into using the following logic;
-if (!$disabled{dso} && $target{dso_scheme} ne "")
-	{
-	$target{dso_scheme} =~ tr/[a-z]/[A-Z]/;
-	if ($target{dso_scheme} eq "DLFCN")
-		{
-		unshift @{$config{lib_defines}}, "DSO_DLFCN", "HAVE_DLFCN_H";
-		}
-	elsif ($target{dso_scheme} eq "DLFCN_NO_H")
-		{
-		unshift @{$config{lib_defines}}, "DSO_DLFCN";
-		}
-	else
-		{
-		unshift @{$config{lib_defines}}, "DSO_$target{dso_scheme}";
-		}
-	}
-
 # If threads aren't disabled, check how possible they are
 unless ($disabled{threads}) {
     if ($auto_threads) {
@@ -1478,7 +1476,6 @@ if ($strict_warnings)
 
 	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
-	$gcc_devteam_warn .= " -Wmisleading-indentation" if $gccver >= 6;
 	foreach $wopt (split /\s+/, $gcc_devteam_warn)
 		{
 		push @{$config{cflags}}, $wopt
@@ -1518,7 +1515,7 @@ unless ($disabled{"crypto-mdebug-backtrace"})
 
 unless ($disabled{afalgeng}) {
     $config{afalgeng}="";
-    if ($target =~ m/^linux/) {
+    if (grep { $_ eq 'afalgeng' } @{$target{enable}}) {
         my $minver = 4*10000 + 1*100 + 0;
         if ($config{CROSS_COMPILE} eq "") {
             my $verstr = `uname -r`;
@@ -1996,6 +1993,13 @@ EOF
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
+                    $unified_info{sources}->{$ddest}->{$o} = 1;
+                    $unified_info{sources}->{$o}->{$s} = 1;
+                } elsif ($s =~ /\.rc$/) {
+                    # We also recognise resource files
+                    my $o = $_;
+                    $o =~ s/\.rc$/.res/; # Resource configuration
+                    my $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{sources}->{$ddest}->{$o} = 1;
                     $unified_info{sources}->{$o}->{$s} = 1;
                 } else {
@@ -3090,13 +3094,16 @@ sub which
 sub env
 {
     my $name = shift;
+    my %opts = @_;
 
-    # Note that if $ENV{$name} doesn't exist or is undefined,
-    # $config{perlenv}->{$name} will be created with the value
-    # undef.  This is intentional.
+    unless ($opts{cacheonly}) {
+        # Note that if $ENV{$name} doesn't exist or is undefined,
+        # $config{perlenv}->{$name} will be created with the value
+        # undef.  This is intentional.
 
-    $config{perlenv}->{$name} = $ENV{$name}
-        if ! exists $config{perlenv}->{$name};
+        $config{perlenv}->{$name} = $ENV{$name}
+            if ! exists $config{perlenv}->{$name};
+    }
     return $config{perlenv}->{$name};
 }
 
@@ -3104,8 +3111,8 @@ sub env
 
 sub print_table_entry
 {
-    my $target = shift;
-    my %target = resolve_config($target);
+    local $now_printing = shift;
+    my %target = resolve_config($now_printing);
     my $type = shift;
 
     # Don't print the templates
@@ -3174,7 +3181,7 @@ sub print_table_entry
 
     if ($type eq "TABLE") {
 	print "\n";
-	print "*** $target\n";
+	print "*** $now_printing\n";
         foreach (@sequence) {
             if (ref($target{$_}) eq "ARRAY") {
                 printf "\$%-12s = %s\n", $_, join(" ", @{$target{$_}});
@@ -3185,7 +3192,7 @@ sub print_table_entry
     } elsif ($type eq "HASH") {
 	my $largest =
 	    length((sort { length($a) <=> length($b) } @sequence)[-1]);
-	print "    '$target' => {\n";
+	print "    '$now_printing' => {\n";
 	foreach (@sequence) {
 	    if ($target{$_}) {
                 if (ref($target{$_}) eq "ARRAY") {

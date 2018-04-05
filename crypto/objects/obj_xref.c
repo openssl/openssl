@@ -10,6 +10,7 @@
 #include <openssl/objects.h>
 #include "obj_xref.h"
 #include "internal/nelem.h"
+#include <openssl/err.h>
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 
@@ -103,9 +104,10 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
         sigx_app = sk_nid_triple_new(sigx_cmp);
     if (sigx_app == NULL)
         return 0;
-    ntr = OPENSSL_malloc(sizeof(*ntr));
-    if (ntr == NULL)
+    if ((ntr = OPENSSL_malloc(sizeof(*ntr))) == NULL) {
+        OBJerr(OBJ_F_OBJ_ADD_SIGID, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     ntr->sign_id = signid;
     ntr->hash_id = dig_id;
     ntr->pkey_id = pkey_id;

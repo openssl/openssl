@@ -7,7 +7,32 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.0g and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
+
+  *) Don't use OPENSSL_ENGINES and OPENSSL_CONF environment values
+     in libcrypto when run as setuid/setgid.
+     [Bernd Edlinger]
+
+  *) Added new public header file <openssl/rand_drbg.h> and documentation
+     for the RAND_DRBG API. See manual page RAND_DRBG(7) for an overview.
+     [Matthias St. Pierre]
+
+  *) QNX support removed (cannot find contributors to get their approval
+     for the license change).
+     [Rich Salz]
+
+  *) TLSv1.3 replay protection for early data has been implemented. See the
+     SSL_read_early_data() man page for further details.
+     [Matt Caswell]
+
+  *) Separated TLSv1.3 ciphersuite configuration out from TLSv1.2 ciphersuite
+     configuration. TLSv1.3 ciphersuites are not compatible with TLSv1.2 and
+     below. Similarly TLSv1.2 ciphersuites are not compatible with TLSv1.3.
+     In order to avoid issues where legacy TLSv1.2 ciphersuite configuration
+     would otherwise inadvertently disable all TLSv1.3 ciphersuites the
+     configuraton has been separated out. See the ciphers man page or the
+     SSL_CTX_set_ciphersuites() man page for more information.
+     [Matt Caswell]
 
   *) On POSIX (BSD, Linux, ...) systems the ocsp(1) command running
      in responder mode now supports the new "-multi" option, which
@@ -35,12 +60,7 @@
 
   *) Support for TLSv1.3 added. Note that users upgrading from an earlier
      version of OpenSSL should review their configuration settings to ensure
-     that they are still appropriate for TLSv1.3. In particular if no TLSv1.3
-     ciphersuites are enabled then OpenSSL will refuse to make a connection
-     unless (1) TLSv1.3 is explicitly disabled or (2) the ciphersuite
-     configuration is updated to include suitable ciphersuites. The DEFAULT
-     ciphersuite configuration does include TLSv1.3 ciphersuites. For further
-     information on this and other related issues please see:
+     that they are still appropriate for TLSv1.3. For further information see:
      https://www.openssl.org/blog/blog/2018/02/08/tlsv1.3/
 
      NOTE: In this pre-release of OpenSSL a draft version of the
@@ -278,7 +298,73 @@
      issues, has been replaced to always returns NULL.
      [Rich Salz]
 
- Changes between 1.1.0g and 1.1.0h [xx XXX xxxx]
+
+ Changes between 1.1.0h and 1.1.0i [xx XXX xxxx]
+
+  *) Fixed a text canonicalisation bug in CMS
+
+     Where a CMS detached signature is used with text content the text goes
+     through a canonicalisation process first prior to signing or verifying a
+     signature. This process strips trailing space at the end of lines, converts
+     line terminators to CRLF and removes additional trailing line terminators
+     at the end of a file. A bug in the canonicalisation process meant that
+     some characters, such as form-feed, were incorrectly treated as whitespace
+     and removed. This is contrary to the specification (RFC5485). This fix
+     could mean that detached text data signed with an earlier version of
+     OpenSSL 1.1.0 may fail to verify using the fixed version, or text data
+     signed with a fixed OpenSSL may fail to verify with an earlier version of
+     OpenSSL 1.1.0. A workaround is to only verify the canonicalised text data
+     and use the "-binary" flag (for the "cms" command line application) or set
+     the SMIME_BINARY/PKCS7_BINARY/CMS_BINARY flags (if using CMS_verify()).
+     [Matt Caswell]
+
+ Changes between 1.1.0g and 1.1.0h [27 Mar 2018]
+
+  *) Constructed ASN.1 types with a recursive definition could exceed the stack
+
+     Constructed ASN.1 types with a recursive definition (such as can be found
+     in PKCS7) could eventually exceed the stack given malicious input with
+     excessive recursion. This could result in a Denial Of Service attack. There
+     are no such structures used within SSL/TLS that come from untrusted sources
+     so this is considered safe.
+
+     This issue was reported to OpenSSL on 4th January 2018 by the OSS-fuzz
+     project.
+     (CVE-2018-0739)
+     [Matt Caswell]
+
+  *) Incorrect CRYPTO_memcmp on HP-UX PA-RISC
+
+     Because of an implementation bug the PA-RISC CRYPTO_memcmp function is
+     effectively reduced to only comparing the least significant bit of each
+     byte. This allows an attacker to forge messages that would be considered as
+     authenticated in an amount of tries lower than that guaranteed by the
+     security claims of the scheme. The module can only be compiled by the
+     HP-UX assembler, so that only HP-UX PA-RISC targets are affected.
+
+     This issue was reported to OpenSSL on 2nd March 2018 by Peter Waltenberg
+     (IBM).
+     (CVE-2018-0733)
+     [Andy Polyakov]
+
+  *) Add a build target 'build_all_generated', to build all generated files
+     and only that.  This can be used to prepare everything that requires
+     things like perl for a system that lacks perl and then move everything
+     to that system and do the rest of the build there.
+     [Richard Levitte]
+
+  *) Backport SSL_OP_NO_RENGOTIATION
+
+     OpenSSL 1.0.2 and below had the ability to disable renegotiation using the
+     (undocumented) SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS flag. Due to the opacity
+     changes this is no longer possible in 1.1.0. Therefore the new
+     SSL_OP_NO_RENEGOTIATION option from 1.1.1-dev has been backported to
+     1.1.0 to provide equivalent functionality.
+
+     Note that if an application built against 1.1.0h headers (or above) is run
+     using an older version of 1.1.0 (prior to 1.1.0h) then the option will be
+     accepted but nothing will happen, i.e. renegotiation will not be prevented.
+     [Matt Caswell]
 
   *) Removed the OS390-Unix config target.  It relied on a script that doesn't
      exist.

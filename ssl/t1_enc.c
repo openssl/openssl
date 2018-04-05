@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -154,6 +154,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_secret = &(s->s3->read_mac_secret[0]);
         mac_secret_size = &(s->s3->read_mac_secret_size);
     } else {
+        s->statem.invalid_enc_write_ctx = 1;
         if (s->ext.use_etm)
             s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
         else
@@ -170,7 +171,6 @@ int tls1_change_cipher_state(SSL *s, int which)
                      ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        EVP_CIPHER_CTX_ctrl(s->enc_write_ctx, EVP_CTRL_SET_DRBG, 0, s->drbg);
         dd = s->enc_write_ctx;
         if (SSL_IS_DTLS(s)) {
             mac_ctx = EVP_MD_CTX_new();
@@ -257,8 +257,8 @@ int tls1_change_cipher_state(SSL *s, int which)
 
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
         /* TODO(size_t): Convert this function */
-        mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-                                       mac_secret, (int)*mac_secret_size);
+        mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
+                                               (int)*mac_secret_size);
         if (mac_key == NULL
             || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
             EVP_PKEY_free(mac_key);
@@ -316,6 +316,7 @@ int tls1_change_cipher_state(SSL *s, int which)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    s->statem.invalid_enc_write_ctx = 0;
 
 #ifdef SSL_DEBUG
     printf("which = %04X\nkey=", which);

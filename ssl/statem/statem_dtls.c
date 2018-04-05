@@ -59,13 +59,14 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
     unsigned char *buf = NULL;
     unsigned char *bitmask = NULL;
 
-    frag = OPENSSL_malloc(sizeof(*frag));
-    if (frag == NULL)
+    if ((frag = OPENSSL_malloc(sizeof(*frag))) == NULL) {
+        SSLerr(SSL_F_DTLS1_HM_FRAGMENT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     if (frag_len) {
-        buf = OPENSSL_malloc(frag_len);
-        if (buf == NULL) {
+        if ((buf = OPENSSL_malloc(frag_len)) == NULL) {
+            SSLerr(SSL_F_DTLS1_HM_FRAGMENT_NEW, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(frag);
             return NULL;
         }
@@ -78,6 +79,7 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
     if (reassembly) {
         bitmask = OPENSSL_zalloc(RSMBLY_BITMASK_SIZE(frag_len));
         if (bitmask == NULL) {
+            SSLerr(SSL_F_DTLS1_HM_FRAGMENT_NEW, ERR_R_MALLOC_FAILURE);
             OPENSSL_free(buf);
             OPENSSL_free(frag);
             return NULL;
@@ -922,9 +924,14 @@ int dtls_construct_change_cipher_spec(SSL *s, WPACKET *pkt)
 }
 
 #ifndef OPENSSL_NO_SCTP
+/*
+ * Wait for a dry event. Should only be called at a point in the handshake
+ * where we are not expecting any data from the peer except an alert.
+ */
 WORK_STATE dtls_wait_for_dry(SSL *s)
 {
-    int ret;
+    int ret, errtype;
+    size_t len;
 
     /* read app data until dry event */
     ret = BIO_dgram_sctp_wait_for_dry(SSL_get_wbio(s));
@@ -935,6 +942,19 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
     }
 
     if (ret == 0) {
+        /*
+         * We're not expecting any more messages from the peer at this point -
+         * but we could get an alert. If an alert is waiting then we will never
+         * return successfully. Therefore we attempt to read a message. This
+         * should never succeed but will process any waiting alerts.
+         */
+        if (dtls_get_reassembled_message(s, &errtype, &len)) {
+            /* The call succeeded! This should never happen */
+            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_DTLS_WAIT_FOR_DRY,
+                     SSL_R_UNEXPECTED_MESSAGE);
+            return WORK_ERROR;
+        }
+
         s->s3->in_read_app_data = 2;
         s->rwstate = SSL_READING;
         BIO_clear_retry_flags(SSL_get_rbio(s));

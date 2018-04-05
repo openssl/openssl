@@ -2,13 +2,20 @@
 
 =head1 NAME
 
-EVP_PKEY_CTX_ctrl, EVP_PKEY_CTX_ctrl_str,
-EVP_PKEY_CTX_set_signature_md, EVP_PKEY_CTX_set_rsa_padding,
-EVP_PKEY_CTX_set_rsa_pss_saltlen, EVP_PKEY_CTX_set_rsa_keygen_bits,
-EVP_PKEY_CTX_set_rsa_keygen_pubexp, EVP_PKEY_CTX_set_dsa_paramgen_bits,
+EVP_PKEY_CTX_ctrl,
+EVP_PKEY_CTX_ctrl_str,
+EVP_PKEY_CTX_set_signature_md,
+EVP_PKEY_CTX_get_signature_md,
+EVP_PKEY_CTX_set_mac_key,
+EVP_PKEY_CTX_set_rsa_padding,
+EVP_PKEY_CTX_set_rsa_pss_saltlen,
+EVP_PKEY_CTX_set_rsa_keygen_bits,
+EVP_PKEY_CTX_set_rsa_keygen_pubexp,
+EVP_PKEY_CTX_set_dsa_paramgen_bits,
 EVP_PKEY_CTX_set_dh_paramgen_prime_len,
 EVP_PKEY_CTX_set_dh_paramgen_generator,
-EVP_PKEY_CTX_set_dh_pad, EVP_PKEY_CTX_set_dh_nid,
+EVP_PKEY_CTX_set_dh_pad,
+EVP_PKEY_CTX_set_dh_nid,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
 EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
 
@@ -21,9 +28,12 @@ EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
  int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
                            const char *value);
 
- #include <openssl/rsa.h>
-
  int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd);
+
+ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, unsigned char *key, int len);
+
+ #include <openssl/rsa.h>
 
  int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad);
  int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int len);
@@ -67,8 +77,21 @@ B<pkeyutl>, B<genpkey> and B<req> commands.
 All the remaining "functions" are implemented as macros.
 
 The EVP_PKEY_CTX_set_signature_md() macro sets the message digest type used
-in a signature. It can be used with any public key algorithm supporting
-signature operations.
+in a signature. It can be used in the RSA, DSA and ECDSA algorithms.
+
+The EVP_PKEY_CTX_get_signature_md() macro gets the message digest type used in a
+signature. It can be used in the RSA, DSA and ECDSA algorithms.
+
+Key generation typically involves setting up parameters to be used and
+generating the private and public key data. Some algorithm implementations
+allow private key data to be set explicitly using the EVP_PKEY_CTX_set_mac_key()
+macro. In this case key generation is simply the process of setting up the
+parameters for the key and then setting the raw key data to the value explicitly
+provided by that macro. Normally applications would call
+L<EVP_PKEY_new_raw_private_key(3)> or similar functions instead of this macro.
+
+The EVP_PKEY_CTX_set_mac_key() macro can be used with any of the algorithms
+supported by the L<EVP_PKEY_new_raw_private_key(3)> function.
 
 The macro EVP_PKEY_CTX_set_rsa_padding() sets the RSA padding mode for B<ctx>.
 The B<pad> parameter can take the value RSA_PKCS1_PADDING for PKCS#1 padding,
@@ -160,7 +183,7 @@ These functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

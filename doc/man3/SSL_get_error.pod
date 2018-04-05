@@ -38,11 +38,10 @@ if and only if B<ret E<gt> 0>.
 
 =item SSL_ERROR_ZERO_RETURN
 
-The TLS/SSL connection has been closed.
-If the protocol version is SSL 3.0 or higher, this result code is returned only
-if a closure alert has occurred in the protocol, i.e. if the connection has been
-closed cleanly.
-Note that in this case B<SSL_ERROR_ZERO_RETURN> does not necessarily
+The TLS/SSL peer has closed the connection for writing by sending the
+"close notify" alert.
+No more data can be read.
+Note that B<SSL_ERROR_ZERO_RETURN> does not necessarily
 indicate that the underlying transport has been closed.
 
 =item SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
@@ -141,7 +140,7 @@ SSL_ERROR_WANT_CLIENT_HELLO_CB was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

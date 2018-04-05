@@ -86,6 +86,8 @@ In each table entry, the following keys are significant:
                            shared libraries or DSOs [4].
         ex_libs         => Extra libraries that are needed when
                            linking shared libraries, DSOs or programs.
+                           The value is also assigned to Libs.private
+                           in $(libdir)/pkgconfig/libcrypto.pc.
 
         shared_cppflags => Extra C preprocessor flags used when
                            processing C files for shared libraries.

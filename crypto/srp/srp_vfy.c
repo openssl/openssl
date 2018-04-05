@@ -1,10 +1,14 @@
 /*
- * Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
+ *
+ * Originally written by Christophe Renou and Peter Sylvester,
+ * for the EdelKey project.
  */
 
 #ifndef OPENSSL_NO_SRP
@@ -15,6 +19,7 @@
 # include <openssl/buffer.h>
 # include <openssl/rand.h>
 # include <openssl/txt_db.h>
+# include <openssl/err.h>
 
 # define SRP_RANDOM_SALT_LEN 20
 # define MAX_LEN 2500
@@ -54,9 +59,12 @@ void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
 
 static SRP_user_pwd *SRP_user_pwd_new(void)
 {
-    SRP_user_pwd *ret = OPENSSL_malloc(sizeof(*ret));
-    if (ret == NULL)
+    SRP_user_pwd *ret;
+    
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+        /* SRPerr(SRP_F_SRP_USER_PWD_NEW, ERR_R_MALLOC_FAILURE); */
         return NULL;
+    }
     ret->N = NULL;
     ret->g = NULL;
     ret->s = NULL;
@@ -418,7 +426,7 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
     if (!SRP_user_pwd_set_ids(user, username, NULL))
         goto err;
 
-    if (RAND_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
+    if (RAND_priv_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
         goto err;
     ctxt = EVP_MD_CTX_new();
     if (ctxt == NULL

@@ -18,14 +18,15 @@ struct pqueue_st {
 pitem *pitem_new(unsigned char *prio64be, void *data)
 {
     pitem *item = OPENSSL_malloc(sizeof(*item));
-    if (item == NULL)
+
+    if (item == NULL) {
+        SSLerr(SSL_F_PITEM_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     memcpy(item->priority, prio64be, sizeof(item->priority));
-
     item->data = data;
     item->next = NULL;
-
     return item;
 }
 
@@ -37,6 +38,9 @@ void pitem_free(pitem *item)
 pqueue *pqueue_new()
 {
     pqueue *pq = OPENSSL_zalloc(sizeof(*pq));
+
+    if (pq == NULL)
+        SSLerr(SSL_F_PQUEUE_NEW, ERR_R_MALLOC_FAILURE);
 
     return pq;
 }

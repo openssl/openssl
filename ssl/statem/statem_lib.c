@@ -19,6 +19,14 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 
+/*
+ * Map error codes to TLS/SSL alart types.
+ */
+typedef struct x509err2alert_st {
+    int x509err;
+    int alert;
+} X509ERR2ALERT;
+
 /* Fixed value used in the ServerHello random field to identify an HRR */
 const unsigned char hrrrandom[] = {
     0xcf, 0x21, 0xad, 0x74, 0xe5, 0x9a, 0x61, 0x11, 0xbe, 0x1d, 0x8c, 0x02,
@@ -1004,15 +1012,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
     int discard;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
-#ifndef OPENSSL_NO_SCTP
-    if (SSL_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(s))) {
-        WORK_STATE ret;
-        ret = dtls_wait_for_dry(s);
-        if (ret != WORK_FINISHED_CONTINUE)
-            return ret;
-    }
-#endif
-
     if (clearbufs) {
         if (!SSL_IS_DTLS(s)) {
             /*
@@ -1043,7 +1042,12 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
         ssl3_cleanup_key_block(s);
 
         if (s->server) {
-            ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
+            /*
+             * In TLSv1.3 we update the cache as part of constructing the
+             * NewSessionTicket
+             */
+            if (!SSL_IS_TLS13(s))
+                ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             /* N.B. s->ctx may not equal s->session_ctx */
             CRYPTO_atomic_add(&s->ctx->stats.sess_accept_good, 1, &discard,
@@ -1281,73 +1285,59 @@ int tls_get_message_body(SSL *s, size_t *len)
     return 1;
 }
 
-int ssl_verify_alarm_type(long type)
-{
-    int al;
+static const X509ERR2ALERT x509table[] = {
+    {X509_V_ERR_APPLICATION_VERIFICATION, SSL_AD_HANDSHAKE_FAILURE},
+    {X509_V_ERR_CA_KEY_TOO_SMALL, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_CA_MD_TOO_WEAK, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_CERT_CHAIN_TOO_LONG, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_CERT_HAS_EXPIRED, SSL_AD_CERTIFICATE_EXPIRED},
+    {X509_V_ERR_CERT_NOT_YET_VALID, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_CERT_REJECTED, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_CERT_REVOKED, SSL_AD_CERTIFICATE_REVOKED},
+    {X509_V_ERR_CERT_SIGNATURE_FAILURE, SSL_AD_DECRYPT_ERROR},
+    {X509_V_ERR_CERT_UNTRUSTED, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_CRL_HAS_EXPIRED, SSL_AD_CERTIFICATE_EXPIRED},
+    {X509_V_ERR_CRL_NOT_YET_VALID, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_CRL_SIGNATURE_FAILURE, SSL_AD_DECRYPT_ERROR},
+    {X509_V_ERR_DANE_NO_MATCH, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_EE_KEY_TOO_SMALL, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_EMAIL_MISMATCH, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_HOSTNAME_MISMATCH, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_INVALID_CA, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_INVALID_CALL, SSL_AD_INTERNAL_ERROR},
+    {X509_V_ERR_INVALID_PURPOSE, SSL_AD_UNSUPPORTED_CERTIFICATE},
+    {X509_V_ERR_IP_ADDRESS_MISMATCH, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_OUT_OF_MEM, SSL_AD_INTERNAL_ERROR},
+    {X509_V_ERR_PATH_LENGTH_EXCEEDED, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_STORE_LOOKUP, SSL_AD_INTERNAL_ERROR},
+    {X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE, SSL_AD_BAD_CERTIFICATE},
+    {X509_V_ERR_UNABLE_TO_GET_CRL, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE, SSL_AD_UNKNOWN_CA},
+    {X509_V_ERR_UNSPECIFIED, SSL_AD_INTERNAL_ERROR},
 
-    switch (type) {
-    case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-    case X509_V_ERR_UNABLE_TO_GET_CRL:
-    case X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER:
-        al = SSL_AD_UNKNOWN_CA;
-        break;
-    case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
-    case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
-    case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
-    case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-    case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-    case X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
-    case X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
-    case X509_V_ERR_CERT_NOT_YET_VALID:
-    case X509_V_ERR_CRL_NOT_YET_VALID:
-    case X509_V_ERR_CERT_UNTRUSTED:
-    case X509_V_ERR_CERT_REJECTED:
-    case X509_V_ERR_HOSTNAME_MISMATCH:
-    case X509_V_ERR_EMAIL_MISMATCH:
-    case X509_V_ERR_IP_ADDRESS_MISMATCH:
-    case X509_V_ERR_DANE_NO_MATCH:
-    case X509_V_ERR_EE_KEY_TOO_SMALL:
-    case X509_V_ERR_CA_KEY_TOO_SMALL:
-    case X509_V_ERR_CA_MD_TOO_WEAK:
-        al = SSL_AD_BAD_CERTIFICATE;
-        break;
-    case X509_V_ERR_CERT_SIGNATURE_FAILURE:
-    case X509_V_ERR_CRL_SIGNATURE_FAILURE:
-        al = SSL_AD_DECRYPT_ERROR;
-        break;
-    case X509_V_ERR_CERT_HAS_EXPIRED:
-    case X509_V_ERR_CRL_HAS_EXPIRED:
-        al = SSL_AD_CERTIFICATE_EXPIRED;
-        break;
-    case X509_V_ERR_CERT_REVOKED:
-        al = SSL_AD_CERTIFICATE_REVOKED;
-        break;
-    case X509_V_ERR_UNSPECIFIED:
-    case X509_V_ERR_OUT_OF_MEM:
-    case X509_V_ERR_INVALID_CALL:
-    case X509_V_ERR_STORE_LOOKUP:
-        al = SSL_AD_INTERNAL_ERROR;
-        break;
-    case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-    case X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
-    case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
-    case X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
-    case X509_V_ERR_CERT_CHAIN_TOO_LONG:
-    case X509_V_ERR_PATH_LENGTH_EXCEEDED:
-    case X509_V_ERR_INVALID_CA:
-        al = SSL_AD_UNKNOWN_CA;
-        break;
-    case X509_V_ERR_APPLICATION_VERIFICATION:
-        al = SSL_AD_HANDSHAKE_FAILURE;
-        break;
-    case X509_V_ERR_INVALID_PURPOSE:
-        al = SSL_AD_UNSUPPORTED_CERTIFICATE;
-        break;
-    default:
-        al = SSL_AD_CERTIFICATE_UNKNOWN;
-        break;
-    }
-    return al;
+    /* Last entry; return this if we don't find the value above. */
+    {X509_V_OK, SSL_AD_CERTIFICATE_UNKNOWN}
+};
+
+int ssl_x509err2alert(int x509err)
+{
+    const X509ERR2ALERT *tp;
+
+    for (tp = x509table; tp->x509err != X509_V_OK; ++tp)
+        if (tp->x509err == x509err)
+            break;
+    return tp->alert;
 }
 
 int ssl_allow_compression(SSL *s)

@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include "internal/thread_once.h"
+#include "internal/dso_conf.h"
 #include "internal/dso.h"
 #include "internal/store.h"
 
@@ -119,6 +120,15 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 
         ERR_set_mark();
         dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
+#  ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: obtained DSO reference? %s\n",
+                (dso == NULL ? "No!" : "Yes."));
+        /*
+         * In case of No!, it is uncertain our exit()-handlers can still be
+         * called. After dlclose() the whole library might have been unloaded
+         * already.
+         */
+#  endif
         DSO_free(dso);
         ERR_pop_to_mark();
     }
@@ -352,6 +362,14 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
         err_delete_thread_state();
     }
 
+    if (locals->rand) {
+#ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_stop: "
+                        "drbg_delete_thread_state()\n");
+#endif
+        drbg_delete_thread_state();
+    }
+
     OPENSSL_free(locals);
 }
 
@@ -387,6 +405,14 @@ int ossl_init_thread_start(uint64_t opts)
                         "marking thread for err_state\n");
 #endif
         locals->err_state = 1;
+    }
+
+    if (opts & OPENSSL_INIT_THREAD_RAND) {
+#ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_start: "
+                        "marking thread for rand\n");
+#endif
+        locals->rand = 1;
     }
 
     return 1;
@@ -514,18 +540,8 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    static int stoperrset = 0;
-
     if (stopped) {
-        if (!stoperrset) {
-            /*
-             * We only ever set this once to avoid getting into an infinite
-             * loop where the error system keeps trying to init and fails so
-             * sets an error etc
-             */
-            stoperrset = 1;
-            CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
-        }
+        CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
         return 0;
     }
 
@@ -669,6 +685,12 @@ int OPENSSL_atexit(void (*handler)(void))
 
             ERR_set_mark();
             dso = DSO_dsobyaddr(handlersym.sym, DSO_FLAG_NO_UNLOAD_ON_FREE);
+#  ifdef OPENSSL_INIT_DEBUG
+            fprintf(stderr,
+                    "OPENSSL_INIT: OPENSSL_atexit: obtained DSO reference? %s\n",
+                    (dso == NULL ? "No!" : "Yes."));
+            /* See same code above in ossl_init_base() for an explanation. */
+#  endif
             DSO_free(dso);
             ERR_pop_to_mark();
         }
@@ -676,9 +698,10 @@ int OPENSSL_atexit(void (*handler)(void))
     }
 #endif
 
-    newhand = OPENSSL_malloc(sizeof(*newhand));
-    if (newhand == NULL)
+    if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_ATEXIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     newhand->handler = handler;
     newhand->next = stop_handlers;

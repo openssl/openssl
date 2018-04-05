@@ -63,6 +63,15 @@
 #define NID_certicom_arc                677
 #define OBJ_certicom_arc                OBJ_identified_organization,132L
 
+#define SN_ieee         "ieee"
+#define NID_ieee                1170
+#define OBJ_ieee                OBJ_identified_organization,111L
+
+#define SN_ieee_siswg           "ieee-siswg"
+#define LN_ieee_siswg           "IEEE Security in Storage Working Group"
+#define NID_ieee_siswg          1171
+#define OBJ_ieee_siswg          OBJ_ieee,2L,1619L
+
 #define SN_international_organizations          "international-organizations"
 #define LN_international_organizations          "International Organizations"
 #define NID_international_organizations         647
@@ -99,6 +108,19 @@
 #define LN_X9cm         "X9.57 CM ?"
 #define NID_X9cm                185
 #define OBJ_X9cm                OBJ_X9_57,4L
+
+#define SN_ISO_CN               "ISO-CN"
+#define LN_ISO_CN               "ISO CN Member Body"
+#define NID_ISO_CN              1140
+#define OBJ_ISO_CN              OBJ_member_body,156L
+
+#define SN_oscca                "oscca"
+#define NID_oscca               1141
+#define OBJ_oscca               OBJ_ISO_CN,10197L
+
+#define SN_sm_scheme            "sm-scheme"
+#define NID_sm_scheme           1142
+#define OBJ_sm_scheme           OBJ_oscca,1L
 
 #define SN_dsa          "DSA"
 #define LN_dsa          "dsaEncryption"
@@ -1142,15 +1164,20 @@
 #define NID_hmacWithSHA1                163
 #define OBJ_hmacWithSHA1                OBJ_rsadsi,2L,7L
 
+#define SN_sm2          "SM2"
+#define LN_sm2          "sm2"
+#define NID_sm2         1172
+#define OBJ_sm2         OBJ_sm_scheme,301L
+
 #define SN_sm3          "SM3"
 #define LN_sm3          "sm3"
 #define NID_sm3         1143
-#define OBJ_sm3         OBJ_member_body,156L,10197L,1L,401L
+#define OBJ_sm3         OBJ_sm_scheme,401L
 
 #define SN_sm3WithRSAEncryption         "RSA-SM3"
 #define LN_sm3WithRSAEncryption         "sm3WithRSAEncryption"
 #define NID_sm3WithRSAEncryption                1144
-#define OBJ_sm3WithRSAEncryption                OBJ_member_body,156L,10197L,1L,504L
+#define OBJ_sm3WithRSAEncryption                OBJ_sm_scheme,504L
 
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
@@ -2780,6 +2807,16 @@
 #define NID_id_aes256_wrap_pad          903
 #define OBJ_id_aes256_wrap_pad          OBJ_aes,48L
 
+#define SN_aes_128_xts          "AES-128-XTS"
+#define LN_aes_128_xts          "aes-128-xts"
+#define NID_aes_128_xts         913
+#define OBJ_aes_128_xts         OBJ_ieee_siswg,0L,1L,1L
+
+#define SN_aes_256_xts          "AES-256-XTS"
+#define LN_aes_256_xts          "aes-256-xts"
+#define NID_aes_256_xts         914
+#define OBJ_aes_256_xts         OBJ_ieee_siswg,0L,1L,2L
+
 #define SN_aes_128_cfb1         "AES-128-CFB1"
 #define LN_aes_128_cfb1         "aes-128-cfb1"
 #define NID_aes_128_cfb1                650
@@ -2827,14 +2864,6 @@
 #define SN_aes_256_ocb          "AES-256-OCB"
 #define LN_aes_256_ocb          "aes-256-ocb"
 #define NID_aes_256_ocb         960
-
-#define SN_aes_128_xts          "AES-128-XTS"
-#define LN_aes_128_xts          "aes-128-xts"
-#define NID_aes_128_xts         913
-
-#define SN_aes_256_xts          "AES-256-XTS"
-#define LN_aes_256_xts          "aes-256-xts"
-#define NID_aes_256_xts         914
 
 #define SN_des_cfb1             "DES-CFB1"
 #define LN_des_cfb1             "des-cfb1"
@@ -4617,19 +4646,6 @@
 #define LN_seed_ofb128          "seed-ofb"
 #define NID_seed_ofb128         778
 #define OBJ_seed_ofb128         OBJ_kisa,1L,6L
-
-#define SN_ISO_CN               "ISO-CN"
-#define LN_ISO_CN               "ISO CN Member Body"
-#define NID_ISO_CN              1140
-#define OBJ_ISO_CN              OBJ_member_body,156L
-
-#define SN_oscca                "oscca"
-#define NID_oscca               1141
-#define OBJ_oscca               OBJ_ISO_CN,10197L
-
-#define SN_sm_scheme            "sm-scheme"
-#define NID_sm_scheme           1142
-#define OBJ_sm_scheme           OBJ_oscca,1L
 
 #define SN_sm4_ecb              "SM4-ECB"
 #define LN_sm4_ecb              "sm4-ecb"

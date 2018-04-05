@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -13,9 +13,9 @@
 # include <openssl/evp.h>
 # include <openssl/modes.h>
 # include <openssl/rand.h>
+# include <openssl/rand_drbg.h>
 # include "internal/aria.h"
 # include "internal/evp_int.h"
-# include "internal/rand.h"
 # include "modes_lcl.h"
 # include "evp_locl.h"
 
@@ -266,9 +266,10 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
                 OPENSSL_free(gctx->iv);
-            gctx->iv = OPENSSL_malloc(arg);
-            if (gctx->iv == NULL)
+            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
+                EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
         }
         gctx->ivlen = arg;
         return 1;
@@ -302,14 +303,9 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
         if (arg)
             memcpy(gctx->iv, ptr, arg);
-        if (EVP_CIPHER_CTX_encrypting(c)) {
-            if (c->drbg != NULL) {
-                if (RAND_DRBG_bytes(c->drbg, gctx->iv + arg, gctx->ivlen - arg) == 0)
-                    return 0;
-            } else if (RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0) {
-                return 0;
-            }
-        }
+        if (EVP_CIPHER_CTX_encrypting(c)
+            && RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0)
+            return 0;
         gctx->iv_gen = 1;
         return 1;
 
@@ -375,9 +371,10 @@ static int aria_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == EVP_CIPHER_CTX_iv_noconst(c))
                 gctx_out->iv = EVP_CIPHER_CTX_iv_noconst(out);
             else {
-                gctx_out->iv = OPENSSL_malloc(gctx->ivlen);
-                if (gctx_out->iv == NULL)
+                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
+                    EVPerr(EVP_F_ARIA_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
+                }
                 memcpy(gctx_out->iv, gctx->iv, gctx->ivlen);
             }
             return 1;

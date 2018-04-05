@@ -66,11 +66,6 @@ The B<EVP> interface to digital signatures should almost always be used in
 preference to the low level interfaces. This is because the code then becomes
 transparent to the algorithm used and much more flexible.
 
-Due to the link between message digests and public key algorithms the correct
-digest algorithm must be used with the correct public key type. A list of
-algorithms and associated public key algorithms appears in
-L<EVP_DigestInit(3)>.
-
 When signing with DSA private keys the random number generator must be seeded
 or the operation will fail. The random number generator does not need to be
 seeded for RSA signatures.
@@ -107,7 +102,7 @@ L<SHA1(3)>, L<dgst(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

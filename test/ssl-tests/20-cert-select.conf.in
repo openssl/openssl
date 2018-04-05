@@ -54,6 +54,50 @@ our @tests = (
         },
     },
     {
+        name => "ECDSA CipherString Selection",
+        server => {
+            "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+            "MaxProtocol" => "TLSv1.2",
+            #Deliberately set supported_groups to one not in the cert. This
+            #should be tolerated
+            "Groups" => "P-384"
+        },
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            "Groups" => "P-256:P-384",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "P-256",
+            "ExpectedServerSignType" =>, "EC",
+            # Note: certificate_authorities not sent for TLS < 1.3
+            "ExpectedServerCANames" =>, "empty",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "ECDSA CipherString Selection",
+        server => {
+            "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+            "MaxProtocol" => "TLSv1.2",
+            "Groups" => "P-256:P-384"
+        },
+        client => {
+            "CipherString" => "aECDSA",
+            "MaxProtocol" => "TLSv1.2",
+            #Deliberately set groups to not include the certificate group. This
+            #should fail
+            "Groups" => "P-384",
+            "RequestCAFile" => test_pem("root-cert.pem"),
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
         name => "Ed25519 CipherString and Signature Algorithm Selection",
         server => $server,
         client => {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -193,28 +193,24 @@ static int test_ssl_corrupt(int testidx)
 
     TEST_info("Starting #%d, %s", testidx, cipher_list[testidx]);
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
-                                       TLS_client_method(), &sctx,
-                                       &cctx, cert, privkey)))
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
         return 0;
 
-    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx])))
-        goto end;
-
-    if (!TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, cipher_list[testidx]))
+            || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ""))
+            || !TEST_ptr(ciphers = SSL_CTX_get_ciphers(cctx))
             || !TEST_int_eq(sk_SSL_CIPHER_num(ciphers), 1)
             || !TEST_ptr(currcipher = sk_SSL_CIPHER_value(ciphers, 0)))
         goto end;
 
     /*
-     * If we haven't got a TLSv1.3 cipher, then we mustn't attempt to use
-     * TLSv1.3. Version negotiation happens before cipher selection, so we will
-     * get a "no shared cipher" error.
+     * No ciphers we are using are TLSv1.3 compatible so we should not attempt
+     * to negotiate TLSv1.3
      */
-    if (strcmp(SSL_CIPHER_get_version(currcipher), "TLSv1.3") != 0) {
-        if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
-            goto end;
-    }
+    if (!TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION)))
+        goto end;
 
     if (!TEST_ptr(c_to_s_fbio = BIO_new(bio_f_tls_corrupt_filter())))
         goto end;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,9 +34,8 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
 {
     if (recp == NULL)
         return;
-
-    BN_free(&(recp->N));
-    BN_free(&(recp->Nr));
+    BN_free(&recp->N);
+    BN_free(&recp->Nr);
     if (recp->flags & BN_FLG_MALLOCED)
         OPENSSL_free(recp);
 }

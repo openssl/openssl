@@ -259,9 +259,10 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
     t.type = str->type;
     t.value.ptr = (char *)str;
     der_len = i2d_ASN1_TYPE(&t, NULL);
-    der_buf = OPENSSL_malloc(der_len);
-    if (der_buf == NULL)
+    if ((der_buf = OPENSSL_malloc(der_len)) == NULL) {
+        ASN1err(ASN1_F_DO_DUMP, ERR_R_MALLOC_FAILURE);
         return -1;
+    }
     p = der_buf;
     i2d_ASN1_TYPE(&t, &p);
     outlen = do_hex_dump(io_ch, arg, der_buf, der_len);

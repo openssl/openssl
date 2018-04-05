@@ -307,9 +307,8 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     },
     {
         TLSEXT_TYPE_supported_versions,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
-        | SSL_EXT_TLS1_3_SERVER_HELLO | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
-        | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
+        | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
         NULL,
         /* Processed inline as part of version selection */
         NULL, tls_parse_stoc_supported_versions,
@@ -1560,7 +1559,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         goto err;
     }
 
-    mackey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, finishedkey, hashsize);
+    mackey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, finishedkey,
+                                          hashsize);
     if (mackey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);

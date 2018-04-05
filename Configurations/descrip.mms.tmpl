@@ -3,6 +3,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+  use File::Basename;
 
   # Our prefix, claimed when speaking with the VSI folks Tuesday
   # January 26th 2016
@@ -504,16 +505,7 @@ distclean : clean
 depend : descrip.mms
 descrip.mms : FORCE
 	@ ! {- output_off() if $disabled{makedepend}; "" -}
-        @ $(PERL) -pe "if (/^# DO NOT DELETE.*/) { exit(0); }" -
-                < descrip.mms > descrip.mms-new
-        @ OPEN/APPEND DESCRIP descrip.mms-new
-        @ WRITE DESCRIP "# DO NOT DELETE THIS LINE -- make depend depends on it."
-        {- join("\n\t", map { "\@ IF F\$SEARCH(\"$_\") .NES. \"\" THEN TYPE $_ /OUTPUT=DESCRIP:" } @deps); -}
-        @ CLOSE DESCRIP
-        @ PIPE ( $(PERL) -e "use File::Compare qw/compare_text/; my $x = compare_text(""descrip.mms"",""descrip.mms-new""); exit(0x10000000 + ($x == 0));" || -
-                 RENAME descrip.mms-new descrip.mms )
-        @ IF F$SEARCH("descrip.mms-new") .NES. "" THEN DELETE descrip.mms-new;*
-        -@ SPAWN/OUTPUT=NLA0: PURGE/NOLOG descrip.mms
+	@ $(PERL) {- sourcefile("util", "add-depends.pl") -} "VMS C"
 	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
@@ -886,9 +878,9 @@ EOF
       my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
       my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
       my $depbuild = $disabled{makedepend} ? ""
-          : " /MMS=(FILE=${objd}${objn}.tmp-D,TARGET=$obj.OBJ)";
+          : " /MMS=(FILE=${objd}${objn}.D,TARGET=$obj.OBJ)";
 
-      return <<"EOF"
+      return <<"EOF";
 $obj.OBJ : $deps
         ${before}
         SET DEFAULT $forward
@@ -899,12 +891,6 @@ $obj.OBJ : $deps
         ${after}
         - PURGE $obj.OBJ
 EOF
-      . ($disabled{makedepend} ? "" : <<"EOF"
-        \@ PIPE ( \$(PERL) -e "use File::Compare qw/compare_text/; my \$x = compare_text(""$obj.D"",""$obj.tmp-D""); exit(0x10000000 + (\$x == 0));" || -
-                 RENAME $obj.tmp-D $obj.d )
-        \@ IF F\$SEARCH("$obj.tmp-D") .NES. "" THEN DELETE $obj.tmp-D;*
-EOF
-        );
   }
   sub libobj2shlib {
       my %args = @_;

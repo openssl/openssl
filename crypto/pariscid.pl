@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -160,7 +160,7 @@ L\$oop_cmp
 	or		%r29,$rv,$rv
 
 	sub		%r0,$rv,%r29
-	extru		%r29,31,1,$rv
+	extru		%r29,0,1,$rv
 L\$no_data
 	bv		($rp)
 	.EXIT

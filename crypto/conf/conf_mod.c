@@ -232,9 +232,10 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         supported_modules = sk_CONF_MODULE_new_null();
     if (supported_modules == NULL)
         return NULL;
-    tmod = OPENSSL_zalloc(sizeof(*tmod));
-    if (tmod == NULL)
+    if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
+        CONFerr(CONF_F_MODULE_ADD, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     tmod->dso = dso;
     tmod->name = OPENSSL_strdup(name);
@@ -479,9 +480,11 @@ char *CONF_get1_default_config_file(void)
     char *file, *sep = "";
     int len;
 
-    file = getenv("OPENSSL_CONF");
-    if (file)
-        return OPENSSL_strdup(file);
+    if (!OPENSSL_issetugid()) {
+        file = getenv("OPENSSL_CONF");
+        if (file)
+            return OPENSSL_strdup(file);
+    }
 
     len = strlen(X509_get_default_cert_area());
 #ifndef OPENSSL_SYS_VMS

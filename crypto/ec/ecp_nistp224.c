@@ -395,22 +395,6 @@ static void felem_sum(felem out, const felem in)
     out[3] += in[3];
 }
 
-/* Get negative value: out = -in */
-/* Assumes in[i] < 2^57 */
-static void felem_neg(felem out, const felem in)
-{
-    static const limb two58p2 = (((limb) 1) << 58) + (((limb) 1) << 2);
-    static const limb two58m2 = (((limb) 1) << 58) - (((limb) 1) << 2);
-    static const limb two58m42m2 = (((limb) 1) << 58) -
-        (((limb) 1) << 42) - (((limb) 1) << 2);
-
-    /* Set to 0 mod 2^224-2^96+1 to ensure out > in */
-    out[0] = two58p2 - in[0];
-    out[1] = two58m42m2 - in[1];
-    out[2] = two58m2 - in[2];
-    out[3] = two58m2 - in[3];
-}
-
 /* Subtract field elements: out -= in */
 /* Assumes in[i] < 2^57 */
 static void felem_diff(felem out, const felem in)
@@ -677,6 +661,18 @@ static void felem_contract(felem out, const felem in)
     out[1] = tmp[1];
     out[2] = tmp[2];
     out[3] = tmp[3];
+}
+
+/*
+ * Get negative value: out = -in
+ * Requires in[i] < 2^63,
+ * ensures out[0] < 2^56, out[1] < 2^56, out[2] < 2^56, out[3] <= 2^56 + 2^16
+ */
+static void felem_neg(felem out, const felem in)
+{
+    widefelem tmp = {0};
+    felem_diff_128_64(tmp, in);
+    felem_reduce(out, tmp);
 }
 
 /*

@@ -955,9 +955,10 @@ static int dgram_sctp_new(BIO *bi)
 
     bi->init = 0;
     bi->num = 0;
-    data = OPENSSL_zalloc(sizeof(*data));
-    if (data == NULL)
+    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL) {
+        BIOerr(BIO_F_DGRAM_SCTP_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 #  ifdef SCTP_PR_SCTP_NONE
     data->prinfo.pr_policy = SCTP_PR_SCTP_NONE;
 #  endif

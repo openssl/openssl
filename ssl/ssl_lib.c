@@ -14,13 +14,13 @@
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
+#include <openssl/rand_drbg.h>
 #include <openssl/ocsp.h>
 #include <openssl/dh.h>
 #include <openssl/engine.h>
 #include <openssl/async.h>
 #include <openssl/ct.h>
 #include "internal/cryptlib.h"
-#include "internal/rand.h"
 #include "internal/refcount.h"
 
 const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
@@ -653,7 +653,9 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 
     ctx->method = meth;
 
-    sk = ssl_create_cipher_list(ctx->method, &(ctx->cipher_list),
+    sk = ssl_create_cipher_list(ctx->method,
+                                ctx->tls13_ciphersuites,
+                                &(ctx->cipher_list),
                                 &(ctx->cipher_list_by_id),
                                 SSL_DEFAULT_CIPHER_LIST, ctx->cert);
     if ((sk == NULL) || (sk_SSL_CIPHER_num(sk) <= 0)) {
@@ -688,20 +690,6 @@ SSL *SSL_new(SSL_CTX *ctx)
         goto err;
     }
 
-    /*
-     * If not using the standard RAND (say for fuzzing), then don't use a
-     * chained DRBG.
-     */
-    if (RAND_get_rand_method() == RAND_OpenSSL()) {
-        s->drbg =
-            RAND_DRBG_new(RAND_DRBG_NID, 0, RAND_DRBG_get0_public());
-        if (s->drbg == NULL
-            || RAND_DRBG_instantiate(s->drbg,
-                                     (const unsigned char *) SSL_version_str,
-                                     sizeof(SSL_version_str) - 1) == 0)
-            goto err;
-    }
-
     RECORD_LAYER_init(&s->rlayer, s);
 
     s->options = ctx->options;
@@ -711,6 +699,11 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->max_early_data = ctx->max_early_data;
+
+    /* Shallow copy of the ciphersuites stack */
+    s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->tls13_ciphersuites);
+    if (s->tls13_ciphersuites == NULL)
+        goto err;
 
     /*
      * Earlier library versions used to copy the pointer to the CERT, not
@@ -1134,7 +1127,6 @@ void SSL_free(SSL *s)
 
     if (s == NULL)
         return;
-
     CRYPTO_DOWN_REF(&s->references, &i, s->lock);
     REF_PRINT_COUNT("SSL", s);
     if (i > 0)
@@ -1156,6 +1148,7 @@ void SSL_free(SSL *s)
     /* add extra stuff */
     sk_SSL_CIPHER_free(s->cipher_list);
     sk_SSL_CIPHER_free(s->cipher_list_by_id);
+    sk_SSL_CIPHER_free(s->tls13_ciphersuites);
 
     /* Make the next call work :-) */
     if (s->session != NULL) {
@@ -1212,7 +1205,6 @@ void SSL_free(SSL *s)
     sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
 #endif
 
-    RAND_DRBG_free(s->drbg);
     CRYPTO_THREAD_lock_free(s->lock);
 
     OPENSSL_free(s);
@@ -2520,8 +2512,9 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(ctx->method, &ctx->cipher_list,
-                                &ctx->cipher_list_by_id, str, ctx->cert);
+    sk = ssl_create_cipher_list(ctx->method, ctx->tls13_ciphersuites,
+                                &ctx->cipher_list, &ctx->cipher_list_by_id, str,
+                                ctx->cert);
     /*
      * ssl_create_cipher_list may return an empty stack if it was unable to
      * find a cipher matching the given rule string (for example if the rule
@@ -2543,8 +2536,9 @@ int SSL_set_cipher_list(SSL *s, const char *str)
 {
     STACK_OF(SSL_CIPHER) *sk;
 
-    sk = ssl_create_cipher_list(s->ctx->method, &s->cipher_list,
-                                &s->cipher_list_by_id, str, s->cert);
+    sk = ssl_create_cipher_list(s->ctx->method, s->tls13_ciphersuites,
+                                &s->cipher_list, &s->cipher_list_by_id, str,
+                                s->cert);
     /* see comment in SSL_CTX_set_cipher_list */
     if (sk == NULL)
         return 0;
@@ -2915,7 +2909,12 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (ret->ctlog_store == NULL)
         goto err;
 #endif
+
+    if (!SSL_CTX_set_ciphersuites(ret, TLS_DEFAULT_CIPHERSUITES))
+        goto err;
+
     if (!ssl_create_cipher_list(ret->method,
+                                ret->tls13_ciphersuites,
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 SSL_DEFAULT_CIPHER_LIST, ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
@@ -2942,6 +2941,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
         goto err;
 
+    if ((ret->ext.secure = OPENSSL_secure_zalloc(sizeof(*ret->ext.secure))) == NULL)
+        goto err;
+
     /* No compression for DTLS */
     if (!(meth->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS))
         ret->comp_methods = SSL_COMP_get_compression_methods();
@@ -2952,13 +2954,13 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     /* Setup RFC5077 ticket keys */
     if ((RAND_bytes(ret->ext.tick_key_name,
                     sizeof(ret->ext.tick_key_name)) <= 0)
-        || (RAND_bytes(ret->ext.tick_hmac_key,
-                       sizeof(ret->ext.tick_hmac_key)) <= 0)
-        || (RAND_bytes(ret->ext.tick_aes_key,
-                       sizeof(ret->ext.tick_aes_key)) <= 0))
+        || (RAND_priv_bytes(ret->ext.secure->tick_hmac_key,
+                       sizeof(ret->ext.secure->tick_hmac_key)) <= 0)
+        || (RAND_priv_bytes(ret->ext.secure->tick_aes_key,
+                       sizeof(ret->ext.secure->tick_aes_key)) <= 0))
         ret->options |= SSL_OP_NO_TICKET;
 
-    if (RAND_bytes(ret->ext.cookie_hmac_key,
+    if (RAND_priv_bytes(ret->ext.cookie_hmac_key,
                    sizeof(ret->ext.cookie_hmac_key)) <= 0)
         goto err;
 
@@ -3019,6 +3021,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      */
     ret->max_early_data = 0;
 
+    ssl_ctx_system_config(ret);
+
     return ret;
  err:
     SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -3075,6 +3079,7 @@ void SSL_CTX_free(SSL_CTX *a)
 #endif
     sk_SSL_CIPHER_free(a->cipher_list);
     sk_SSL_CIPHER_free(a->cipher_list_by_id);
+    sk_SSL_CIPHER_free(a->tls13_ciphersuites);
     ssl_cert_free(a->cert);
     sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
     sk_X509_pop_free(a->extra_certs, X509_free);
@@ -3094,6 +3099,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.supportedgroups);
 #endif
     OPENSSL_free(a->ext.alpn);
+    OPENSSL_secure_free(a->ext.secure);
 
     CRYPTO_THREAD_lock_free(a->lock);
 
@@ -3325,6 +3331,18 @@ void ssl_update_cache(SSL *s, int mode)
      * would be rather hard to do anyway :-)
      */
     if (s->session->session_id_length == 0)
+        return;
+
+    /*
+     * If sid_ctx_length is 0 there is no specific application context
+     * associated with this session, so when we try to resume it and
+     * SSL_VERIFY_PEER is requested, we have no indication that this is
+     * actually a session for the proper application context, and the
+     * *handshake* will fail, not just the resumption attempt.
+     * Do not cache these sessions that are not resumable.
+     */
+    if (s->session->sid_ctx_length == 0
+            && (s->verify_mode & SSL_VERIFY_PEER) != 0)
         return;
 
     i = s->session_ctx->session_cache_mode;
@@ -4937,9 +4955,11 @@ int SSL_client_hello_get1_extensions_present(SSL *s, int **out, size_t *outlen)
         if (ext->present)
             num++;
     }
-    present = OPENSSL_malloc(sizeof(*present) * num);
-    if (present == NULL)
+    if ((present = OPENSSL_malloc(sizeof(*present) * num)) == NULL) {
+        SSLerr(SSL_F_SSL_CLIENT_HELLO_GET1_EXTENSIONS_PRESENT,
+               ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0; i < s->clienthello->pre_proc_exts_len; i++) {
         ext = s->clienthello->pre_proc_exts + i;
         if (ext->present) {
@@ -5286,28 +5306,6 @@ int SSL_set_max_early_data(SSL *s, uint32_t max_early_data)
 uint32_t SSL_get_max_early_data(const SSL *s)
 {
     return s->max_early_data;
-}
-
-int ssl_randbytes(SSL *s, unsigned char *rnd, size_t size)
-{
-    if (s->drbg != NULL) {
-        /*
-         * Currently, it's the duty of the caller to serialize the generate
-         * requests to the DRBG. So formally we have to check whether
-         * s->drbg->lock != NULL and take the lock if this is the case.
-         * However, this DRBG is unique to a given SSL object, and we already
-         * require that SSL objects are only accessed by a single thread at
-         * a given time. Also, SSL DRBGs have no child DRBG, so there is
-         * no risk that this DRBG is accessed by a child DRBG in parallel
-         * for reseeding.  As such, we can rely on the application's
-         * serialization of SSL accesses for the needed concurrency protection
-         * here.
-         */
-        return RAND_DRBG_bytes(s->drbg, rnd, size);
-    }
-    if (size > INT_MAX)
-        return 0;
-    return RAND_bytes(rnd, size);
 }
 
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl)

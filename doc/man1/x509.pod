@@ -429,7 +429,7 @@ the CA certificate file.
 Sets the CA serial number file to use.
 
 When the B<-CA> option is used to sign a certificate it uses a serial
-number specified in a file. This file consist of one line containing
+number specified in a file. This file consists of one line containing
 an even number of hex digits with the serial number to use. After each
 use the serial number is incremented and written out to the file again.
 
@@ -871,8 +871,8 @@ this is because some Verisign certificates don't set the S/MIME bit.
 
 =item B<S/MIME Signing>
 
-In addition to the common S/MIME client tests the digitalSignature bit must
-be set if the keyUsage extension is present.
+In addition to the common S/MIME client tests the digitalSignature bit or
+the nonRepudiation bit must be set if the keyUsage extension is present.
 
 =item B<S/MIME Encryption>
 

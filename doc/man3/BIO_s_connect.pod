@@ -4,8 +4,8 @@
 
 BIO_set_conn_address, BIO_get_conn_address,
 BIO_s_connect, BIO_new_connect, BIO_set_conn_hostname, BIO_set_conn_port,
-BIO_get_conn_hostname,
-BIO_get_conn_port,
+BIO_set_conn_ip_family, BIO_get_conn_ip_family,
+BIO_get_conn_hostname, BIO_get_conn_port,
 BIO_set_nbio, BIO_do_connect - connect BIO
 
 =head1 SYNOPSIS
@@ -19,9 +19,11 @@ BIO_set_nbio, BIO_do_connect - connect BIO
  long BIO_set_conn_hostname(BIO *b, char *name);
  long BIO_set_conn_port(BIO *b, char *port);
  long BIO_set_conn_address(BIO *b, BIO_ADDR *addr);
+ long BIO_set_conn_ip_family(BIO *b, long family);
  const char *BIO_get_conn_hostname(BIO *b);
  const char *BIO_get_conn_port(BIO *b);
  const BIO_ADDR *BIO_get_conn_address(BIO *b);
+ const long BIO_get_conn_ip_family(BIO *b);
 
  long BIO_set_nbio(BIO *b, long n);
 
@@ -69,6 +71,8 @@ list is http, telnet, socks, https, ssl, ftp, and gopher.
 BIO_set_conn_address() sets the address and port information using
 a BIO_ADDR(3ssl).
 
+BIO_set_conn_ip_family() sets the IP family.
+
 BIO_get_conn_hostname() returns the hostname of the connect BIO or
 NULL if the BIO is initialized but no hostname is set.
 This return value is an internal pointer which should not be modified.
@@ -78,6 +82,8 @@ This return value is an internal pointer which should not be modified.
 
 BIO_get_conn_address() returns the address information as a BIO_ADDR.
 This return value is an internal pointer which should not be modified.
+
+BIO_get_conn_ip_family() returns the IP family of the connect BIO.
 
 BIO_set_nbio() sets the non blocking I/O flag to B<n>. If B<n> is
 zero then blocking I/O is set. If B<n> is 1 then non blocking I/O
@@ -107,10 +113,10 @@ ports. This can be avoided by checking for the presence of the ':'
 character in the passed hostname and either indicating an error or
 truncating the string at that point.
 
-The values returned by BIO_get_conn_hostname(), BIO_get_conn_port(),
-BIO_get_conn_ip() and BIO_get_conn_int_port() are updated when a
-connection attempt is made. Before any connection attempt the values
-returned are those set by the application itself.
+The values returned by BIO_get_conn_hostname(), BIO_get_conn_address(),
+and BIO_get_conn_port() are updated when a connection attempt is made.
+Before any connection attempt the values returned are those set by the
+application itself.
 
 Applications do not have to call BIO_do_connect() but may wish to do
 so to separate the connection process from other I/O processing.
@@ -124,10 +130,10 @@ then this is an indication that a connection attempt would block,
 the application should then take appropriate action to wait until
 the underlying socket has connected and retry the call.
 
-BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip(),
-BIO_set_conn_int_port(), BIO_get_conn_hostname(), BIO_get_conn_port(),
-BIO_get_conn_ip(), BIO_get_conn_int_port(), BIO_set_nbio() and
-BIO_do_connect() are macros.
+BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_get_conn_hostname(),
+BIO_set_conn_address(), BIO_get_conn_port(), BIO_get_conn_address(),
+BIO_set_conn_ip_family(), BIO_get_conn_ip_family(),
+BIO_set_nbio(), and BIO_do_connect() are macros.
 
 =head1 RETURN VALUES
 
@@ -136,20 +142,21 @@ BIO_s_connect() returns the connect BIO method.
 BIO_get_fd() returns the socket or -1 if the BIO has not
 been initialized.
 
-BIO_set_conn_hostname(), BIO_set_conn_port(), BIO_set_conn_ip() and
-BIO_set_conn_int_port() always return 1.
+BIO_set_conn_address(), BIO_set_conn_port(), and BIO_set_conn_ip_family()
+always return 1.
 
-BIO_get_conn_hostname() returns the connected hostname or NULL is
+BIO_set_conn_hostname() returns 1 on success and 0 on failure.
+
+BIO_get_conn_address() returns the address information or NULL if none
+was set.
+
+BIO_get_conn_hostname() returns the connected hostname or NULL if
 none was set.
+
+BIO_get_conn_ip_family() returns the address family or -1 if none was set.
 
 BIO_get_conn_port() returns a string representing the connected
 port or NULL if not set.
-
-BIO_get_conn_ip() returns a pointer to the connected IP address in
-binary form or all zeros if not set.
-
-BIO_get_conn_int_port() returns the connected port or 0 if none was
-set.
 
 BIO_set_nbio() always returns 1.
 
@@ -188,9 +195,15 @@ to retrieve a page and copy the result to standard output.
 
 L<BIO_ADDR(3)>
 
+=head1 HISTORY
+
+BIO_set_conn_int_port(), BIO_get_conn_int_port(), BIO_set_conn_ip(), and BIO_get_conn_ip()
+were removed in OpenSSL 1.1.0.
+Use BIO_set_conn_address() and BIO_get_conn_address() instead.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

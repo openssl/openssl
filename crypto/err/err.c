@@ -60,6 +60,7 @@ static ERR_STRING_DATA ERR_str_libraries[] = {
     {ERR_PACK(ERR_LIB_ASYNC, 0, 0), "ASYNC routines"},
     {ERR_PACK(ERR_LIB_KDF, 0, 0), "KDF routines"},
     {ERR_PACK(ERR_LIB_OSSL_STORE, 0, 0), "STORE routines"},
+    {ERR_PACK(ERR_LIB_SM2, 0, 0), "SM2 routines"},
     {0, NULL},
 };
 
@@ -232,24 +233,23 @@ static void build_SYS_str_reasons(void)
 }
 #endif
 
-#define err_clear_data(p,i) \
+#define err_clear_data(p, i) \
         do { \
-        if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
-                {  \
+            if ((p)->err_data_flags[i] & ERR_TXT_MALLOCED) {\
                 OPENSSL_free((p)->err_data[i]); \
-                (p)->err_data[i]=NULL; \
-                } \
-        (p)->err_data_flags[i]=0; \
-        } while(0)
+                (p)->err_data[i] = NULL; \
+            } \
+            (p)->err_data_flags[i] = 0; \
+        } while (0)
 
-#define err_clear(p,i) \
+#define err_clear(p, i) \
         do { \
-        (p)->err_flags[i]=0; \
-        (p)->err_buffer[i]=0; \
-        err_clear_data(p,i); \
-        (p)->err_file[i]=NULL; \
-        (p)->err_line[i]= -1; \
-        } while(0)
+            err_clear_data(p, i); \
+            (p)->err_flags[i] = 0; \
+            (p)->err_buffer[i] = 0; \
+            (p)->err_file[i] = NULL; \
+            (p)->err_line[i] = -1; \
+        } while (0)
 
 static void ERR_STATE_free(ERR_STATE *s)
 {
@@ -257,7 +257,6 @@ static void ERR_STATE_free(ERR_STATE *s)
 
     if (s == NULL)
         return;
-
     for (i = 0; i < ERR_NUM_ERRORS; i++) {
         err_clear_data(s, i);
     }
@@ -668,24 +667,23 @@ ERR_STATE *ERR_get_state(void)
     if (!RUN_ONCE(&err_init, err_do_init))
         return NULL;
 
-    /*
-     * If base OPENSSL_init_crypto() hasn't been called yet, be sure to call
-     * it now to avoid state to be doubly allocated and thereby leak memory.
-     * Needed on any platform that doesn't define OPENSSL_USE_NODELETE.
-     */
-    if (!OPENSSL_init_crypto(0, NULL))
+    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    if (state == (ERR_STATE*)-1)
         return NULL;
 
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
-
     if (state == NULL) {
-        state = OPENSSL_zalloc(sizeof(*state));
-        if (state == NULL)
+        if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
             return NULL;
 
+        if ((state = OPENSSL_zalloc(sizeof(*state))) == NULL) {
+            CRYPTO_THREAD_set_local(&err_thread_local, NULL);
+            return NULL;
+        }
+
         if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ERR_STATE)
-            || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
+                || !CRYPTO_THREAD_set_local(&err_thread_local, state)) {
             ERR_STATE_free(state);
+            CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
 
@@ -740,9 +738,10 @@ void ERR_add_error_vdata(int num, va_list args)
     char *str, *p, *a;
 
     s = 80;
-    str = OPENSSL_malloc(s + 1);
-    if (str == NULL)
+    if ((str = OPENSSL_malloc(s + 1)) == NULL) {
+        /* ERRerr(ERR_F_ERR_ADD_ERROR_VDATA, ERR_R_MALLOC_FAILURE); */
         return;
+    }
     str[0] = '\0';
 
     n = 0;

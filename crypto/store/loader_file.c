@@ -236,35 +236,35 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
             }
 
             if (PKCS12_parse(p12, pass, &pkey, &cert, &chain)) {
-                OSSL_STORE_INFO *si_pkey = NULL;
-                OSSL_STORE_INFO *si_cert = NULL;
-                OSSL_STORE_INFO *si_ca = NULL;
+                OSSL_STORE_INFO *osi_pkey = NULL;
+                OSSL_STORE_INFO *osi_cert = NULL;
+                OSSL_STORE_INFO *osi_ca = NULL;
 
                 if ((ctx = sk_OSSL_STORE_INFO_new_null()) != NULL
-                    && (si_pkey = OSSL_STORE_INFO_new_PKEY(pkey)) != NULL
-                    && sk_OSSL_STORE_INFO_push(ctx, si_pkey) != 0
-                    && (si_cert = OSSL_STORE_INFO_new_CERT(cert)) != NULL
-                    && sk_OSSL_STORE_INFO_push(ctx, si_cert) != 0) {
+                    && (osi_pkey = OSSL_STORE_INFO_new_PKEY(pkey)) != NULL
+                    && sk_OSSL_STORE_INFO_push(ctx, osi_pkey) != 0
+                    && (osi_cert = OSSL_STORE_INFO_new_CERT(cert)) != NULL
+                    && sk_OSSL_STORE_INFO_push(ctx, osi_cert) != 0) {
                     ok = 1;
-                    si_pkey = NULL;
-                    si_cert = NULL;
+                    osi_pkey = NULL;
+                    osi_cert = NULL;
 
                     while(sk_X509_num(chain) > 0) {
                         X509 *ca = sk_X509_value(chain, 0);
 
-                        if ((si_ca = OSSL_STORE_INFO_new_CERT(ca)) == NULL
-                            || sk_OSSL_STORE_INFO_push(ctx, si_ca) == 0) {
+                        if ((osi_ca = OSSL_STORE_INFO_new_CERT(ca)) == NULL
+                            || sk_OSSL_STORE_INFO_push(ctx, osi_ca) == 0) {
                             ok = 0;
                             break;
                         }
-                        si_ca = NULL;
+                        osi_ca = NULL;
                         (void)sk_X509_shift(chain);
                     }
                 }
                 if (!ok) {
-                    OSSL_STORE_INFO_free(si_ca);
-                    OSSL_STORE_INFO_free(si_cert);
-                    OSSL_STORE_INFO_free(si_pkey);
+                    OSSL_STORE_INFO_free(osi_ca);
+                    OSSL_STORE_INFO_free(osi_cert);
+                    OSSL_STORE_INFO_free(osi_pkey);
                     sk_OSSL_STORE_INFO_pop_free(ctx, OSSL_STORE_INFO_free);
                     EVP_PKEY_free(pkey);
                     X509_free(cert);

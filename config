@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 1998-2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -238,21 +238,6 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 		echo "${MACHINE}-dec-osf"; exit 0
 		;;
 	esac
-	;;
-
-    QNX:*)
-	case "$RELEASE" in
-	    4*)
-		echo "${MACHINE}-whatever-qnx4"
-		;;
-	    6*)
-		echo "${MACHINE}-whatever-qnx6"
-		;;
-	    *)
-		echo "${MACHINE}-whatever-qnx"
-		;;
-	esac
-	exit 0
 	;;
 
     Paragon*:*:*:*)
@@ -831,8 +816,6 @@ case "$GUESSOS" in
   # these are all covered by the catchall below
   i[3456]86-*-cygwin) OUT="Cygwin-x86" ;;
   *-*-cygwin) OUT="Cygwin-${MACHINE}" ;;
-  x86pc-*-qnx6) OUT="QNX6-i386" ;;
-  *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
   armv[7-9]*-*-android)
       OUT="android-armeabi"
@@ -886,7 +869,7 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in aes aria bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha sm3 sm4
+for i in aes aria bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha sm2 sm3 sm4
 do
   if [ ! -d $THERE/crypto/$i ]
   then

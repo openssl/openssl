@@ -270,7 +270,8 @@ int ssl3_get_record(SSL *s)
                 thisrr->rec_version = version;
 
                 /*
-                 * Lets check version. In TLSv1.3 we ignore this field. For the
+                 * Lets check version. In TLSv1.3 we only check this field
+                 * when encryption is occurring (see later check). For the
                  * ServerHello after an HRR we haven't actually selected TLSv1.3
                  * yet, but we still treat it as TLSv1.3, so we must check for
                  * that explicitly
@@ -333,14 +334,19 @@ int ssl3_get_record(SSL *s)
                     }
                 }
 
-                if (SSL_IS_TLS13(s)
-                        && s->enc_read_ctx != NULL
-                        && thisrr->type != SSL3_RT_APPLICATION_DATA
-                        && (thisrr->type != SSL3_RT_CHANGE_CIPHER_SPEC
-                            || !SSL_IS_FIRST_HANDSHAKE(s))) {
-                    SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
-                             SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
-                    return -1;
+                if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
+                    if (thisrr->type != SSL3_RT_APPLICATION_DATA
+                            && (thisrr->type != SSL3_RT_CHANGE_CIPHER_SPEC
+                                || !SSL_IS_FIRST_HANDSHAKE(s))) {
+                        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
+                                 SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
+                        return -1;
+                    }
+                    if (thisrr->rec_version != TLS1_2_VERSION) {
+                        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
+                                 SSL_R_WRONG_VERSION_NUMBER);
+                        return -1;
+                    }
                 }
 
                 if (thisrr->length >
@@ -966,7 +972,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
                                  ERR_R_INTERNAL_ERROR);
                         return -1;
-                    } else if (ssl_randbytes(s, recs[ctr].input, ivlen) <= 0) {
+                    } else if (RAND_bytes(recs[ctr].input, ivlen) <= 0) {
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
                                  ERR_R_INTERNAL_ERROR);
                         return -1;
@@ -1250,7 +1256,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
             || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
             || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
             || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
-            EVP_MD_CTX_reset(md_ctx);
+            EVP_MD_CTX_free(md_ctx);
             return 0;
         }
 
@@ -1291,8 +1297,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         mac_ctx = hash;
     } else {
         hmac = EVP_MD_CTX_new();
-        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash))
+        if (hmac == NULL || !EVP_MD_CTX_copy(hmac, hash)) {
+            EVP_MD_CTX_free(hmac);
             return 0;
+        }
         mac_ctx = hmac;
     }
 

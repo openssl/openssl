@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -511,6 +511,7 @@ static int mempacket_test_puts(BIO *bio, const char *str)
 }
 
 int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
+                        int min_proto_version, int max_proto_version,
                         SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
                         char *privkeyfile)
 {
@@ -519,6 +520,22 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
 
     if (!TEST_ptr(serverctx = SSL_CTX_new(sm))
             || (cctx != NULL && !TEST_ptr(clientctx = SSL_CTX_new(cm))))
+        goto err;
+
+    if ((min_proto_version > 0
+         && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
+                                                     min_proto_version)))
+        || (max_proto_version > 0
+            && !TEST_true(SSL_CTX_set_max_proto_version(serverctx,
+                                                        max_proto_version))))
+        goto err;
+    if (clientctx != NULL
+        && ((min_proto_version > 0
+             && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
+                                                         min_proto_version)))
+            || (max_proto_version > 0
+                && !TEST_true(SSL_CTX_set_max_proto_version(serverctx,
+                                                            max_proto_version)))))
         goto err;
 
     if (!TEST_int_eq(SSL_CTX_use_certificate_file(serverctx, certfile,

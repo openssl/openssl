@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -234,7 +234,6 @@ void BIO_CONNECT_free(BIO_CONNECT *a)
 {
     if (a == NULL)
         return;
-
     OPENSSL_free(a->param_hostname);
     OPENSSL_free(a->param_service);
     BIO_ADDRINFO_free(a->addr_first);

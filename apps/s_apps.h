@@ -22,9 +22,8 @@
 
 typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
 int do_server(int *accept_sock, const char *host, const char *port,
-              int family, int type, int protocol,
-              do_server_cb cb,
-              unsigned char *context, int naccept);
+              int family, int type, int protocol, do_server_cb cb,
+              unsigned char *context, int naccept, BIO *bio_s_out);
 #ifdef HEADER_X509_H
 int verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
@@ -57,6 +56,11 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len);
 int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
                            unsigned int cookie_len);
+
+#ifdef __VMS                     /* 31 char symbol name limit */
+# define generate_stateless_cookie_callback      generate_stateless_cookie_cb
+# define verify_stateless_cookie_callback        verify_stateless_cookie_cb
+#endif
 
 int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
                                        size_t *cookie_len);

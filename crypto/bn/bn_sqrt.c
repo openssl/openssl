@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -179,7 +179,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             if (!BN_set_word(y, i))
                 goto end;
         } else {
-            if (!BN_rand(y, BN_num_bits(p), 0, 0))
+            if (!BN_priv_rand(y, BN_num_bits(p), 0, 0))
                 goto end;
             if (BN_ucmp(y, p) >= 0) {
                 if (!(p->neg ? BN_add : BN_sub) (y, y, p))

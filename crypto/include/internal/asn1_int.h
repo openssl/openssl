@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -58,6 +58,9 @@ struct evp_pkey_asn1_method_st {
     int (*pkey_check) (const EVP_PKEY *pk);
     int (*pkey_public_check) (const EVP_PKEY *pk);
     int (*pkey_param_check) (const EVP_PKEY *pk);
+    /* Get/set raw private/public key data */
+    int (*set_priv_key) (EVP_PKEY *pk, const unsigned char *priv, size_t len);
+    int (*set_pub_key) (EVP_PKEY *pk, const unsigned char *pub, size_t len);
 } /* EVP_PKEY_ASN1_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)

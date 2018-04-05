@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -73,11 +73,20 @@ $chunk="ebx";
 	&cpuid	();
 	&xor	("eax","eax");
 	&cmp	("ebx","0x".unpack("H*",'tneC'));
-	&jne	(&label("noluck"));
+	&jne	(&label("zhaoxin"));
 	&cmp	("edx","0x".unpack("H*",'Hrua'));
 	&jne	(&label("noluck"));
 	&cmp	("ecx","0x".unpack("H*",'slua'));
 	&jne	(&label("noluck"));
+	&jmp	(&label("zhaoxinEnd"));
+&set_label("zhaoxin");
+	&cmp	("ebx","0x".unpack("H*",'hS  '));
+	&jne	(&label("noluck"));
+	&cmp	("edx","0x".unpack("H*",'hgna'));
+	&jne	(&label("noluck"));
+	&cmp	("ecx","0x".unpack("H*",'  ia'));
+	&jne	(&label("noluck"));
+&set_label("zhaoxinEnd");
 	&mov	("eax",0xC0000000);
 	&cpuid	();
 	&mov	("edx","eax");

@@ -354,9 +354,11 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
      * ids < 32
      */
     unsigned long dup_list = 0;
-    glist = OPENSSL_malloc(ngroups * sizeof(*glist));
-    if (glist == NULL)
+
+    if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0; i < ngroups; i++) {
         unsigned long idmask;
         uint16_t id;
@@ -486,7 +488,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 }
 
 /* Check a group id matches preferences */
-int tls1_check_group_id(SSL *s, uint16_t group_id)
+int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
     {
     const uint16_t *groups;
     size_t groups_len;
@@ -510,10 +512,12 @@ int tls1_check_group_id(SSL *s, uint16_t group_id)
         }
     }
 
-    /* Check group is one of our preferences */
-    tls1_get_supported_groups(s, &groups, &groups_len);
-    if (!tls1_in_list(group_id, groups, groups_len))
-        return 0;
+    if (check_own_groups) {
+        /* Check group is one of our preferences */
+        tls1_get_supported_groups(s, &groups, &groups_len);
+        if (!tls1_in_list(group_id, groups, groups_len))
+            return 0;
+    }
 
     if (!tls_curve_allowed(s, group_id, SSL_SECOP_CURVE_CHECK))
         return 0;
@@ -573,7 +577,11 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
     if (!tls1_check_pkey_comp(s, pkey))
         return 0;
     group_id = tls1_get_group_id(pkey);
-    if (!tls1_check_group_id(s, group_id))
+    /*
+     * For a server we allow the certificate to not be in our list of supported
+     * groups.
+     */
+    if (!tls1_check_group_id(s, group_id, !s->server))
         return 0;
     /*
      * Special case for suite B. We *MUST* sign using SHA256+P-256 or
@@ -620,9 +628,9 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
      * curves permitted.
      */
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-        return tls1_check_group_id(s, TLSEXT_curve_P_256);
+        return tls1_check_group_id(s, TLSEXT_curve_P_256, 1);
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-        return tls1_check_group_id(s, TLSEXT_curve_P_384);
+        return tls1_check_group_id(s, TLSEXT_curve_P_384, 1);
 
     return 0;
 }
@@ -998,7 +1006,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         }
         if (!SSL_IS_TLS13(s)) {
             /* Check curve matches extensions */
-            if (!tls1_check_group_id(s, tls1_get_group_id(pkey))) {
+            if (!tls1_check_group_id(s, tls1_get_group_id(pkey), 1)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                          SSL_F_TLS12_CHECK_PEER_SIGALG, SSL_R_WRONG_CURVE);
                 return 0;
@@ -1368,11 +1376,11 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             ret = SSL_TICKET_NO_DECRYPT;
             goto err;
         }
-        if (HMAC_Init_ex(hctx, tctx->ext.tick_hmac_key,
-                         sizeof(tctx->ext.tick_hmac_key),
+        if (HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
+                         sizeof(tctx->ext.secure->tick_hmac_key),
                          EVP_sha256(), NULL) <= 0
             || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
-                                  tctx->ext.tick_aes_key,
+                                  tctx->ext.secure->tick_aes_key,
                                   etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
             goto err;
         }
@@ -1428,7 +1436,7 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     OPENSSL_free(sdec);
     if (sess) {
         /* Some additional consistency checks */
-        if (slen != 0 || sess->session_id_length != 0) {
+        if (slen != 0) {
             SSL_SESSION_free(sess);
             return SSL_TICKET_NO_DECRYPT;
         }
@@ -1438,9 +1446,10 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
          * structure. If it is empty set length to zero as required by
          * standard.
          */
-        if (sesslen)
+        if (sesslen) {
             memcpy(sess->session_id, sess_id, sesslen);
-        sess->session_id_length = sesslen;
+            sess->session_id_length = sesslen;
+        }
         *psess = sess;
         if (renew_ticket)
             return SSL_TICKET_SUCCESS_RENEW;
@@ -1612,9 +1621,10 @@ static int tls1_set_shared_sigalgs(SSL *s)
     }
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
-        salgs = OPENSSL_malloc(nmatch * sizeof(*salgs));
-        if (salgs == NULL)
+        if ((salgs = OPENSSL_malloc(nmatch * sizeof(*salgs))) == NULL) {
+            SSLerr(SSL_F_TLS1_SET_SHARED_SIGALGS, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
         nmatch = tls12_shared_sigalgs(s, salgs, pref, preflen, allow, allowlen);
     } else {
         salgs = NULL;
@@ -1638,9 +1648,10 @@ int tls1_save_u16(PACKET *pkt, uint16_t **pdest, size_t *pdestlen)
 
     size >>= 1;
 
-    buf = OPENSSL_malloc(size * sizeof(*buf));
-    if (buf == NULL)
+    if ((buf = OPENSSL_malloc(size * sizeof(*buf))) == NULL)  {
+        SSLerr(SSL_F_TLS1_SAVE_U16, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0; i < size && PACKET_get_net_2(pkt, &stmp); i++)
         buf[i] = stmp;
 
@@ -1868,9 +1879,10 @@ int tls1_set_raw_sigalgs(CERT *c, const uint16_t *psigs, size_t salglen,
 {
     uint16_t *sigalgs;
 
-    sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs));
-    if (sigalgs == NULL)
+    if ((sigalgs = OPENSSL_malloc(salglen * sizeof(*sigalgs))) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_RAW_SIGALGS, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     memcpy(sigalgs, psigs, salglen * sizeof(*sigalgs));
 
     if (client) {
@@ -1893,9 +1905,10 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 
     if (salglen & 1)
         return 0;
-    sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs));
-    if (sigalgs == NULL)
+    if ((sigalgs = OPENSSL_malloc((salglen / 2) * sizeof(*sigalgs))) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_SIGALGS, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     for (i = 0, sptr = sigalgs; i < salglen; i += 2) {
         size_t j;
         const SIGALG_LOOKUP *curr;

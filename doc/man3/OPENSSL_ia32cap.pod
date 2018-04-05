@@ -124,7 +124,7 @@ extensions.
 It should be noted that whether or not some of the most "fancy"
 extension code paths are actually assembled depends on current assembler
 version. Base minimum of AES-NI/PCLMULQDQ, SSSE3 and SHA extension code
-paths are always assembled. Besides that, minimum assembler version
+paths are always assembled. Apart from that, minimum assembler version
 requirements are summarized in below table:
 
    Extension   | GNU as | nasm   | llvm
@@ -134,7 +134,7 @@ requirements are summarized in below table:
    ADCX/ADOX   | 2.23   | 2.10   | 3.3
    AVX512      | 2.25   | 2.11.8 | see NOTES
    AVX512IFMA  | 2.26   | 2.11.8 | see NOTES
-   VAES        | n/a    | n/a    |
+   VAES        | 2.30   | 2.13.3 |
 
 =head1 NOTES
 

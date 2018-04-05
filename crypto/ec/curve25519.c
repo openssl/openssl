@@ -13,7 +13,8 @@
 
 #if defined(X25519_ASM) \
     || ( (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16) \
-         && !defined(__sparc__) )
+         && !defined(__sparc__) \
+         && !(defined(__ANDROID__) && !defined(__clang__)) )
 /*
  * Base 2^51 implementation.
  */

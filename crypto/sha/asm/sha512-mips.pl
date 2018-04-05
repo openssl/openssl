@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -81,7 +81,7 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 ######################################################################
 
-$big_endian=(`echo MIPSEL | $ENV{CC} -E -`=~/MIPSEL/)?1:0 if ($ENV{CC});
+$big_endian=(`echo MIPSEB | $ENV{CC} -E -`=~/MIPSEB/)?0:1 if ($ENV{CC});
 
 for (@ARGV) {	$output=$_ if (/\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";

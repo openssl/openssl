@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,8 @@ use strict;
 use warnings;
 use OpenSSL::Test;
 
-plan tests => 1;
+plan tests => 2;
 setup("test_rand");
 
 ok(run(test(["drbgtest"])));
+ok(run(test(["drbg_cavs_test"])));

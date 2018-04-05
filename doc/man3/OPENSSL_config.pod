@@ -48,6 +48,17 @@ application calls OPENSSL_config() it doesn't need to know or care about
 ENGINE control operations because they can be performed by editing a
 configuration file.
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_CONF>
+
+The path to the config file.
+Ignored in set-user-ID and set-group-ID programs.
+
+=back
+
 =head1 RETURN VALUES
 
 Neither OPENSSL_config() nor OPENSSL_no_config() return a value.

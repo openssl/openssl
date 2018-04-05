@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,7 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
+#include <openssl/crypto.h>
 #include "ts_lcl.h"
 
 static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *, void *);
@@ -678,7 +679,8 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
     }
 
     certs = ctx->flags & TS_ESS_CERT_ID_CHAIN ? ctx->certs : NULL;
-    if (ctx->ess_cert_id_digest == EVP_sha1()) {
+    if (ctx->ess_cert_id_digest == NULL
+        || ctx->ess_cert_id_digest == EVP_sha1()) {
         if ((sc = ess_SIGNING_CERT_new_init(ctx->signer_cert, certs)) == NULL)
             goto err;
 
@@ -985,7 +987,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
         unsigned precision)
 {
     time_t time_sec = (time_t)sec;
-    struct tm *tm = NULL;
+    struct tm *tm = NULL, tm_result;
     char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
     char *p = genTime_str;
     char *p_end = genTime_str + sizeof(genTime_str);
@@ -993,7 +995,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
     if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
         goto err;
 
-    if ((tm = gmtime(&time_sec)) == NULL)
+    if ((tm = OPENSSL_gmtime(&time_sec, &tm_result)) == NULL)
         goto err;
 
     /*
