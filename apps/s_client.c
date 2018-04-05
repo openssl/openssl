@@ -3061,11 +3061,10 @@ int s_client_main(int argc, char **argv)
      * TCP-RST. This seems to allow the peer to read the alert data.
      */
     shutdown(SSL_get_fd(con), 1); /* SHUT_WR */
-#if 0
     /*
-     * Formally speaking it's appropriate to consume incoming data after you
-     * shutdown your side, but TCP_NODELAY seems to be sufficient. But if
-     * problems are reported, this would be the solution...
+     * We just said we have nothing else to say, but it doesn't mean that
+     * the other side has nothing. It's even commended to consume incoming
+     * data. This ensures that alerts are passed on...
      */
     timeout.tv_sec = 0;
     timeout.tv_usec = 500000;  /* some extreme round-trip */
@@ -3074,7 +3073,7 @@ int s_client_main(int argc, char **argv)
         openssl_fdset(s, &readfds);
     } while (select(s + 1, &readfds, NULL, NULL, &timeout) > 0
              && BIO_read(sbio, sbuf, BUFSIZZ) > 0);
-#endif
+
     BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
