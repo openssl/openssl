@@ -51,6 +51,7 @@ Makefile
 /test/ssltest_old
 /test/x509aux
 /test/v3ext
+/test/versions
 
 # Certain files that get created by tests on the fly
 /test/test-runs
