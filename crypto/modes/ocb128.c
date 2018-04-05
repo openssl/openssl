@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include "modes_lcl.h"
 
 #ifndef OPENSSL_NO_OCB
@@ -164,9 +165,10 @@ int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
     memset(ctx, 0, sizeof(*ctx));
     ctx->l_index = 0;
     ctx->max_l_index = 5;
-    ctx->l = OPENSSL_malloc(ctx->max_l_index * 16);
-    if (ctx->l == NULL)
+    if ((ctx->l = OPENSSL_malloc(ctx->max_l_index * 16)) == NULL) {
+        CRYPTOerr(CRYPTO_F_CRYPTO_OCB128_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     /*
      * We set both the encryption and decryption key schedules - decryption
@@ -210,9 +212,10 @@ int CRYPTO_ocb128_copy_ctx(OCB128_CONTEXT *dest, OCB128_CONTEXT *src,
     if (keydec)
         dest->keydec = keydec;
     if (src->l) {
-        dest->l = OPENSSL_malloc(src->max_l_index * 16);
-        if (dest->l == NULL)
+        if ((dest->l = OPENSSL_malloc(src->max_l_index * 16)) == NULL) {
+            CRYPTOerr(CRYPTO_F_CRYPTO_OCB128_COPY_CTX, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
         memcpy(dest->l, src->l, (src->l_index + 1) * 16);
     }
     return 1;

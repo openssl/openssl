@@ -12,6 +12,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "internal/poly1305.h"
 #include "poly1305_local.h"
 #include "internal/evp_int.h"
@@ -27,9 +28,10 @@ static int pkey_poly1305_init(EVP_PKEY_CTX *ctx)
 {
     POLY1305_PKEY_CTX *pctx;
 
-    pctx = OPENSSL_zalloc(sizeof(*pctx));
-    if (pctx == NULL)
+    if ((pctx = OPENSSL_zalloc(sizeof(*pctx))) == NULL) {
+        CRYPTOerr(CRYPTO_F_PKEY_POLY1305_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     pctx->ktmp.type = V_ASN1_OCTET_STRING;
 
     EVP_PKEY_CTX_set_data(ctx, pctx);

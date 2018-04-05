@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA CRYPTO_str_functs[] = {
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CMAC_CTX_NEW, 0), "CMAC_CTX_new"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_DUP_EX_DATA, 0),
      "CRYPTO_dup_ex_data"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_FREE_EX_DATA, 0),
@@ -23,6 +24,10 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_MEMDUP, 0), "CRYPTO_memdup"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_NEW_EX_DATA, 0),
      "CRYPTO_new_ex_data"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_OCB128_COPY_CTX, 0),
+     "CRYPTO_ocb128_copy_ctx"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_OCB128_INIT, 0),
+     "CRYPTO_ocb128_init"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_CRYPTO_SET_EX_DATA, 0),
      "CRYPTO_set_ex_data"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_FIPS_MODE_SET, 0), "FIPS_mode_set"},
@@ -35,6 +40,11 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "OPENSSL_hexstr2buf"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_INIT_CRYPTO, 0),
      "OPENSSL_init_crypto"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_HMAC_INIT, 0), "pkey_hmac_init"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_POLY1305_INIT, 0),
+     "pkey_poly1305_init"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_SIPHASH_INIT, 0),
+     "pkey_siphash_init"},
     {0, NULL}
 };
 
