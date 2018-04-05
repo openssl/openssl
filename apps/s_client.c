@@ -3051,19 +3051,6 @@ int s_client_main(int argc, char **argv)
     do_ssl_shutdown(con);
 
     /*
-     * Give the socket time to send its last data before we close it.
-     * No amount of setting SO_LINGER etc on the socket seems to persuade
-     * Windows to send the data before closing the socket...but sleeping
-     * for a short time seems to do it (units in ms)
-     * TODO: Find a better way to do this
-     */
-#if defined(OPENSSL_SYS_WINDOWS)
-    Sleep(50);
-#elif defined(OPENSSL_SYS_CYGWIN)
-    usleep(50000);
-#endif
-
-    /*
      * If we ended with an alert being sent, but still with data in the
      * network buffer to be read, then calling BIO_closesocket() will
      * result in a TCP-RST being sent. On some platforms (notably
@@ -3074,6 +3061,19 @@ int s_client_main(int argc, char **argv)
      * TCP-RST. This seems to allow the peer to read the alert data.
      */
     shutdown(SSL_get_fd(con), 1); /* SHUT_WR */
+    /*
+     * We just said we have nothing else to say, but it doesn't mean that
+     * the other side has nothing. It's even recommended to consume incoming
+     * data. [In testing context this ensures that alerts are passed on...]
+     */
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 500000;  /* some extreme round-trip */
+    do {
+        FD_ZERO(&readfds);
+        openssl_fdset(s, &readfds);
+    } while (select(s + 1, &readfds, NULL, NULL, &timeout) > 0
+             && BIO_read(sbio, sbuf, BUFSIZZ) > 0);
+
     BIO_closesocket(SSL_get_fd(con));
  end:
     if (con != NULL) {
