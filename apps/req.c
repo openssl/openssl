@@ -63,6 +63,11 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
                          char *value, int nid, int n_min, int n_max,
                          unsigned long chtype, int mval);
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
+static int build_data(char *text, const char *def,
+                      char *value, int n_min, int n_max,
+                      char *buf, const int buf_size,
+                      const char *desc1, const char *desc2
+                      );
 static int req_check_len(int len, int n_min, int n_max);
 static int check_end(const char *str, const char *end);
 static int join(char buf[], size_t buf_size, const char *name,
@@ -1202,58 +1207,19 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def,
                          char *value, int nid, int n_min, int n_max,
                          unsigned long chtype, int mval)
 {
-    int i, ret = 0;
+    int ret = 0;
     char buf[1024];
- start:
-    if (!batch)
-        BIO_printf(bio_err, "%s [%s]:", text, def);
-    (void)BIO_flush(bio_err);
-    if (value != NULL) {
-        if (!join(buf, sizeof(buf), value, "\n", "DN value"))
-            return 0;
-        BIO_printf(bio_err, "%s\n", value);
-    } else {
-        buf[0] = '\0';
-        if (!batch) {
-            if (!fgets(buf, sizeof(buf), stdin))
-                return 0;
-        } else {
-            buf[0] = '\n';
-            buf[1] = '\0';
-        }
-    }
 
-    if (buf[0] == '\0')
-        return 0;
-    if (buf[0] == '\n') {
-        if ((def == NULL) || (def[0] == '\0'))
-            return 1;
-        if (!join(buf, sizeof(buf), def, "\n", "DN default"))
-            return 0;
-    } else if ((buf[0] == '.') && (buf[1] == '\n')) {
-        return 1;
-    }
-
-    i = strlen(buf);
-    if (buf[i - 1] != '\n') {
-        BIO_printf(bio_err, "weird input :-(\n");
-        return 0;
-    }
-    buf[--i] = '\0';
-#ifdef CHARSET_EBCDIC
-    ebcdic2ascii(buf, buf, i);
-#endif
-    if (!req_check_len(i, n_min, n_max)) {
-        if (batch || value)
-            return 0;
-        goto start;
-    }
+    ret = build_data(text, def, value, n_min, n_max, buf, sizeof(buf),
+                     "DN value", "DN default");
+    if ((ret == 0) || (ret == 1))
+        return ret;
+    ret = 1;
 
     if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
                                     (unsigned char *)buf, -1, -1, mval))
-        goto err;
-    ret = 1;
- err:
+        ret = 0;
+
     return ret;
 }
 
@@ -1261,21 +1227,45 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
                                 char *value, int nid, int n_min,
                                 int n_max, unsigned long chtype)
 {
-    int i;
-    static char buf[1024];
+    int ret = 0;
+    char buf[1024];
 
+    ret = build_data(text, def, value, n_min, n_max, buf, sizeof(buf),
+                     "Attribute value", "Attribute default");
+    if ((ret == 0) || (ret == 1))
+        return ret;
+    ret = 1;
+
+    if (!X509_REQ_add1_attr_by_NID(req, nid, chtype,
+                                   (unsigned char *)buf, -1)) {
+        BIO_printf(bio_err, "Error adding attribute\n");
+        ERR_print_errors(bio_err);
+        ret = 0;
+    }
+
+    return ret;
+}
+
+
+static int build_data(char *text, const char *def,
+                         char *value, int n_min, int n_max,
+                         char *buf, const int buf_size,
+                         const char *desc1, const char *desc2
+                         )
+{
+    int i;
  start:
     if (!batch)
         BIO_printf(bio_err, "%s [%s]:", text, def);
     (void)BIO_flush(bio_err);
     if (value != NULL) {
-        if (!join(buf, sizeof(buf), value, "\n", "Attribute value"))
+        if (!join(buf, buf_size, value, "\n", desc1))
             return 0;
         BIO_printf(bio_err, "%s\n", value);
     } else {
         buf[0] = '\0';
         if (!batch) {
-            if (!fgets(buf, sizeof(buf), stdin))
+            if (!fgets(buf, buf_size, stdin))
                 return 0;
         } else {
             buf[0] = '\n';
@@ -1288,7 +1278,7 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
     if (buf[0] == '\n') {
         if ((def == NULL) || (def[0] == '\0'))
             return 1;
-        if (!join(buf, sizeof(buf), def, "\n", "Attribute default"))
+        if (!join(buf, buf_size, def, "\n", desc2))
             return 0;
     } else if ((buf[0] == '.') && (buf[1] == '\n')) {
         return 1;
@@ -1308,17 +1298,7 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
             return 0;
         goto start;
     }
-
-    if (!X509_REQ_add1_attr_by_NID(req, nid, chtype,
-                                   (unsigned char *)buf, -1)) {
-        BIO_printf(bio_err, "Error adding attribute\n");
-        ERR_print_errors(bio_err);
-        goto err;
-    }
-
-    return 1;
- err:
-    return 0;
+    return 2;
 }
 
 static int req_check_len(int len, int n_min, int n_max)
