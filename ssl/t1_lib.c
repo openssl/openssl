@@ -2156,6 +2156,10 @@ static int ssl_scan_clienthello_tlsext(SSL *s, PACKET *pkt, int *al)
                 }
             }
         } else if (type == TLSEXT_TYPE_status_request) {
+            /* Ignore this if resuming */
+            if (s->hit)
+                continue;
+
             if (!PACKET_get_1(&extension,
                               (unsigned int *)&s->tlsext_status_type)) {
                 return 0;
