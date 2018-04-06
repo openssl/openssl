@@ -191,7 +191,7 @@ int ERR_load_CONF_strings(void);
 # define CONF_F_NCONF_LOAD_BIO                            110
 # define CONF_F_NCONF_LOAD_FP                             114
 # define CONF_F_NCONF_NEW                                 111
-# define CONF_F_SSL_MODULE_INIT                           122
+# define CONF_F_SSL_MODULE_INIT                           123
 # define CONF_F_STR_COPY                                  101
 
 /* Reason codes. */
