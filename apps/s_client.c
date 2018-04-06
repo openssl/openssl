@@ -3063,8 +3063,8 @@ int s_client_main(int argc, char **argv)
     shutdown(SSL_get_fd(con), 1); /* SHUT_WR */
     /*
      * We just said we have nothing else to say, but it doesn't mean that
-     * the other side has nothing. It's even commended to consume incoming
-     * data. This ensures that alerts are passed on...
+     * the other side has nothing. It's even recommended to consume incoming
+     * data. [In testing context this ensures that alerts are passed on...]
      */
     timeout.tv_sec = 0;
     timeout.tv_usec = 500000;  /* some extreme round-trip */
