@@ -368,8 +368,9 @@ sub clientstart
         foreach my $hand (@ready) {
             if ($hand == $server_sock) {
                 if ($server_sock->sysread($indata, 16384)) {
-                    $indata = $self->process_packet(1, $indata);
-                    $client_sock->syswrite($indata) or goto END;
+                    if ($indata = $self->process_packet(1, $indata)) {
+                        $client_sock->syswrite($indata) or goto END;
+                    }
                     $ctr = 0;
                 } else {
                     $fdset->remove($server_sock);
@@ -377,8 +378,9 @@ sub clientstart
                 }
             } elsif ($hand == $client_sock) {
                 if ($client_sock->sysread($indata, 16384)) {
-                    $indata = $self->process_packet(0, $indata);
-                    $server_sock->syswrite($indata) or goto END;
+                    if ($indata = $self->process_packet(0, $indata)) {
+                        $server_sock->syswrite($indata) or goto END;
+                    }
                     $ctr = 0;
                 } else {
                     $fdset->remove($client_sock);
