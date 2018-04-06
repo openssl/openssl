@@ -43,6 +43,7 @@ BIO_METHOD *BIO_meth_new(int type, const char *name)
         BIOerr(BIO_F_BIO_METH_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    biom->type = type;
     return biom;
 }
 
