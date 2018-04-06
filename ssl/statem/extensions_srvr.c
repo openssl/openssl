@@ -324,6 +324,10 @@ int tls_parse_ctos_status_request(SSL *s, PACKET *pkt, unsigned int context,
 {
     PACKET responder_id_list, exts;
 
+    /* We ignore this in a resumption handshake */
+    if (s->hit)
+        return 1;
+
     /* Not defined if we get one of these in a client Certificate */
     if (x != NULL)
         return 1;
