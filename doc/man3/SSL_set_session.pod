@@ -2,12 +2,14 @@
 
 =head1 NAME
 
-SSL_set_session - set a TLS/SSL session to be used during TLS/SSL connect
+SSL_clear_session,
+SSL_set_session - clear or set a TLS/SSL session to be used during TLS/SSL connect
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+ int SSL_clear_session(SSL *ssl);
  int SSL_set_session(SSL *ssl, SSL_SESSION *session);
 
 =head1 DESCRIPTION
@@ -18,6 +20,10 @@ When the session is set, the reference count of B<session> is incremented
 by 1. If the session is not reused, the reference count is decremented
 again during SSL_connect(). Whether the session was reused can be queried
 with the L<SSL_session_reused(3)> call.
+
+SSL_clear_session() removes the session from a TLS/SSL connection.
+SSL_clear_session() is only useful for TLS/SSL servers. When the session is cleared,
+it will cause L<SSL_session_reused(3)> to return 0;
 
 If there is already a session set inside B<ssl> (because it was set with
 SSL_set_session() before or because the same B<ssl> was already used for

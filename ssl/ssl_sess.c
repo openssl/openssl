@@ -854,6 +854,14 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     return 1;
 }
 
+int SSL_clear_session(SSL *s)
+{
+    if (!SSL_set_session(s, NULL))
+        return 0;
+    s->hit = 0;
+    return 1;
+}
+
 int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
                         unsigned int sid_len)
 {
