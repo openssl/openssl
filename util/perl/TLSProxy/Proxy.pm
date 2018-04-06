@@ -456,14 +456,15 @@ sub process_packet
 
     #Return contains the list of record found in the packet followed by the
     #list of messages in those records and any partial message
-    my @ret = TLSProxy::Record->get_records($server, $self->flight, $self->{partial}[$server].$packet);
+    my @ret = TLSProxy::Record->get_records($server, $self->flight,
+                                            $self->{partial}[$server].$packet);
     $self->{partial}[$server] = $ret[2];
     push @{$self->{record_list}}, @{$ret[0]};
     push @{$self->{message_list}}, @{$ret[1]};
 
     print "\n";
 
-    if (scalar(@{$ret[0]}) == 0 or length($ret[2]) != 0) {
+    if (scalar(@{$ret[0]}) == 0) {
         return "";
     }
 
