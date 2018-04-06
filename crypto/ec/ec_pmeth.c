@@ -17,7 +17,7 @@
 #include "internal/evp_int.h"
 
 #if !defined(OPENSSL_NO_SM2)
-# include <openssl/sm2.h>
+# include "internal/sm2.h"
 #endif
 
 /* EC pkey context structure */

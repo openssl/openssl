@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/sm2.h>
+#include "internal/sm2.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <string.h>
