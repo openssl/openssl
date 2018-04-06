@@ -59,7 +59,7 @@
                        grep { defined $unified_info{generate}->{$_} }
                        map { @{$unified_info{sources}->{$_}} }
                        grep { /\.o$/ } keys %{$unified_info{sources}} ),
-                     ( grep { /\.h$/ } keys %{$unified_info{generate}} ) );
+                     ( grep { /\.(?:h|opt)$/ } keys %{$unified_info{generate}} ) );
 
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.

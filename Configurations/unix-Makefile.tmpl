@@ -111,7 +111,7 @@ GENERATED={- join(" ",
                   ( grep { defined $unified_info{generate}->{$_} }
                     map { @{$unified_info{sources}->{$_}} }
                     grep { /\.(?:o|res)$/ } keys %{$unified_info{sources}} ),
-                  ( grep { /\.h$/ } keys %{$unified_info{generate}} )) -}
+                  ( grep { /\.(?:h|map|def)$/ } keys %{$unified_info{generate}} )) -}
 
 INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}
