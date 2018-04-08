@@ -414,9 +414,14 @@ sub clientstart
         $pid = $self->{serverpid};
         die "serverpid is zero\n" if $pid == 0;
         print "Waiting for server process to close: $pid...\n";
-        # recall that we wait on process that buffers server's output
-        waitpid($pid, 0);
-        die "exit code $? from server process\n" if $? != 0;
+        # note that we wait on process that buffers server's output
+        $pid = waitpid($pid, 0);
+        if ($pid > 0) {
+            die "exit code $? from server process\n" if $? != 0;
+        } elsif ($pid == 0) {
+            kill(3, $self->{real_serverpid});
+            die "lost control over $self->{serverpid}?";
+        }
     } else {
         # It's a bit counter-intuitive spot to make next connection to
         # the s_server. Rationale is that established connection works
