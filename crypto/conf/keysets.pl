@@ -26,7 +26,7 @@ my @V_w32;
 
 my $v;
 my $c;
-foreach (0 .. 127) {
+foreach (0 .. 255) {
     $c = sprintf("%c", $_);
     $v = 0;
     $v |= $NUMBER      if $c =~ /[0-9]/;
@@ -88,35 +88,35 @@ print <<"EOF";
 #define KEYTYPES(c)       ((const unsigned short *)((c)->meth_data))
 
 #ifndef CHARSET_EBCDIC
-# define CVT(a) ((a) & 0x7F)
+# define CVT(a) ((unsigned char)(a))
 #else
-# define CVT(a) os_toascci[(a) & 0x7F]
+# define CVT(a) os_toascii[(unsigned char)(a)]
 #endif
 
-#define IS_COMMENT(c,a)     (KEYTYPES(c)[CVT(a)] & CONF_COMMENT)
-#define IS_FCOMMENT(c,a)    (KEYTYPES(c)[CVT(a)] & CONF_FCOMMENT)
-#define IS_EOF(c,a)         (KEYTYPES(c)[CVT(a)] & CONF_EOF)
-#define IS_ESC(c,a)         (KEYTYPES(c)[CVT(a)] & CONF_ESC)
-#define IS_NUMBER(c,a)      (KEYTYPES(c)[CVT(a)] & CONF_NUMBER)
-#define IS_WS(c,a)          (KEYTYPES(c)[CVT(a)] & CONF_WS)
-#define IS_ALNUM(c,a)       (KEYTYPES(c)[CVT(a)] & CONF_ALNUM)
-#define IS_ALNUM_PUNCT(c,a) (KEYTYPES(c)[CVT(a)] & CONF_ALNUM_PUNCT)
-#define IS_QUOTE(c,a)       (KEYTYPES(c)[CVT(a)] & CONF_QUOTE)
-#define IS_DQUOTE(c,a)      (KEYTYPES(c)[CVT(a)] & CONF_DQUOTE)
+#define IS_COMMENT(c,a)     ((KEYTYPES(c)[CVT(a)] & CONF_COMMENT) ? 1 : 0)
+#define IS_FCOMMENT(c,a)    ((KEYTYPES(c)[CVT(a)] & CONF_FCOMMENT) ? 1 : 0)
+#define IS_EOF(c,a)         ((KEYTYPES(c)[CVT(a)] & CONF_EOF) ? 1 : 0)
+#define IS_ESC(c,a)         ((KEYTYPES(c)[CVT(a)] & CONF_ESC) ? 1 : 0)
+#define IS_NUMBER(c,a)      ((KEYTYPES(c)[CVT(a)] & CONF_NUMBER) ? 1 : 0)
+#define IS_WS(c,a)          ((KEYTYPES(c)[CVT(a)] & CONF_WS) ? 1 : 0)
+#define IS_ALNUM(c,a)       ((KEYTYPES(c)[CVT(a)] & CONF_ALNUM) ? 1 : 0)
+#define IS_ALNUM_PUNCT(c,a) ((KEYTYPES(c)[CVT(a)] & CONF_ALNUM_PUNCT) ? 1 : 0)
+#define IS_QUOTE(c,a)       ((KEYTYPES(c)[CVT(a)] & CONF_QUOTE) ? 1 : 0)
+#define IS_DQUOTE(c,a)      ((KEYTYPES(c)[CVT(a)] & CONF_DQUOTE) ? 1 : 0)
 
 EOF
 
 my $i;
 
-print "static const unsigned short CONF_type_default[128] = {";
-for ($i = 0; $i < 128; $i++) {
+print "static const unsigned short CONF_type_default[256] = {";
+for ($i = 0; $i < 256; $i++) {
     print "\n   " if ($i % 8) == 0;
     printf " 0x%04X,", $V_def[$i];
 }
 print "\n};\n\n";
 
-print "static const unsigned short CONF_type_win32[128] = {";
-for ($i = 0; $i < 128; $i++) {
+print "static const unsigned short CONF_type_win32[256] = {";
+for ($i = 0; $i < 256; $i++) {
     print "\n   " if ($i % 8) == 0;
     printf " 0x%04X,", $V_w32[$i];
 }
