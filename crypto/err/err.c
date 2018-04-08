@@ -265,11 +265,19 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
-    OPENSSL_init_crypto(0, NULL);
+    if (!OPENSSL_init_crypto(0, NULL))
+        return 0;
     err_string_lock = CRYPTO_THREAD_lock_new();
+    if (err_string_lock == NULL)
+        return 0;
     int_error_hash = lh_ERR_STRING_DATA_new(err_string_data_hash,
                                             err_string_data_cmp);
-    return err_string_lock != NULL && int_error_hash != NULL;
+    if (int_error_hash == NULL) {
+        CRYPTO_THREAD_lock_free(err_string_lock);
+        err_string_lock = NULL;
+        return 0;
+    }
+    return 1;
 }
 
 void err_cleanup(void)
@@ -662,7 +670,10 @@ DEFINE_RUN_ONCE_STATIC(err_do_init)
 
 ERR_STATE *ERR_get_state(void)
 {
-    ERR_STATE *state = NULL;
+    ERR_STATE *state;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return NULL;
 
     if (!RUN_ONCE(&err_init, err_do_init))
         return NULL;
@@ -694,13 +705,35 @@ ERR_STATE *ERR_get_state(void)
     return state;
 }
 
+void *err_shelve_state(void)
+{
+    void *state;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return (void*)-1;
+
+    if (!RUN_ONCE(&err_init, err_do_init))
+        return (void*)-1;
+
+    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+        return (void*)-1;
+
+    return state;
+}
+
+void err_unshelve_state(void* state)
+{
+    if (state != (void*)-1)
+        CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)state);
+}
+
 int ERR_get_next_error_library(void)
 {
     int ret;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
-    }
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     ret = int_err_library_number++;

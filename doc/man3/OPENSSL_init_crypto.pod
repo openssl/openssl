@@ -141,15 +141,15 @@ CAPI engine (if available). This not a default option.
 With this option the library will automatically load and initialise the
 padlock engine (if available). This not a default option.
 
-=item OPENSSL_INIT_ENGINE_DASYNC
+=item OPENSSL_INIT_ENGINE_AFALG
 
 With this option the library will automatically load and initialise the
-DASYNC engine. This not a default option.
+AFALG engine. This not a default option.
 
 =item OPENSSL_INIT_ENGINE_ALL_BUILTIN
 
 With this option the library will automatically load and initialise all the
-built in engines listed above with the exception of the openssl and dasync
+built in engines listed above with the exception of the openssl and afalg
 engines. This not a default option.
 
 =item OPENSSL_INIT_ATFORK
