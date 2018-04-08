@@ -64,12 +64,6 @@ sub get_records
     my $partial = "";
     my @record_list = ();
     my @message_list = ();
-    my $data;
-    my $content_type;
-    my $version;
-    my $len;
-    my $len_real;
-    my $decrypt_len;
 
     my $recnum = 1;
     while (length ($packet) > 0) {
@@ -79,65 +73,59 @@ sub get_records
         } else {
             print " (client -> server)\n";
         }
-        #Get the record header
-        if (length($packet) < TLS_RECORD_HEADER_LENGTH
-                || length($packet) < 5 + unpack("n", substr($packet, 3, 2))) {
+
+        #Get the record header (unpack can't fail if $packet is too short)
+        my ($content_type, $version, $len) = unpack('Cnn', $packet);
+
+        if (length($packet) < TLS_RECORD_HEADER_LENGTH + $len) {
             print "Partial data : ".length($packet)." bytes\n";
             $partial = $packet;
-            $packet = "";
-        } else {
-            ($content_type, $version, $len) = unpack('CnnC*', $packet);
-            $data = substr($packet, 5, $len);
+            last;
+        }
 
-            print "  Content type: ".$record_type{$content_type}."\n";
-            print "  Version: $tls_version{$version}\n";
-            print "  Length: $len";
-            if ($len == length($data)) {
-                print "\n";
-                $decrypt_len = $len_real = $len;
-            } else {
-                print " (expected), ".length($data)." (actual)\n";
-                $decrypt_len = $len_real = length($data);
-            }
+        my $data = substr($packet, TLS_RECORD_HEADER_LENGTH, $len);
 
-            my $record = TLSProxy::Record->new(
-                $flight,
-                $content_type,
-                $version,
-                $len,
-                0,
-                $len_real,
-                $decrypt_len,
-                substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real),
-                substr($packet, TLS_RECORD_HEADER_LENGTH, $len_real)
-            );
+        print "  Content type: ".$record_type{$content_type}."\n";
+        print "  Version: $tls_version{$version}\n";
+        print "  Length: $len\n";
 
-            if ($content_type != RT_CCS) {
-                if (($server && $server_encrypting)
-                         || (!$server && $client_encrypting)) {
-                    if (!TLSProxy::Proxy->is_tls13() && $etm) {
-                        $record->decryptETM();
-                    } else {
-                        $record->decrypt();
-                    }
-                    $record->encrypted(1);
+        my $record = TLSProxy::Record->new(
+            $flight,
+            $content_type,
+            $version,
+            $len,
+            0,
+            $len,       # len_real
+            $len,       # decrypt_len
+            $data,      # data
+            $data       # decrypt_data
+        );
 
-                    if (TLSProxy::Proxy->is_tls13()) {
-                        print "  Inner content type: "
-                              .$record_type{$record->content_type()}."\n";
-                    }
+        if ($content_type != RT_CCS) {
+            if (($server && $server_encrypting)
+                     || (!$server && $client_encrypting)) {
+                if (!TLSProxy::Proxy->is_tls13() && $etm) {
+                    $record->decryptETM();
+                } else {
+                    $record->decrypt();
+                }
+                $record->encrypted(1);
+
+                if (TLSProxy::Proxy->is_tls13()) {
+                    print "  Inner content type: "
+                          .$record_type{$record->content_type()}."\n";
                 }
             }
-
-            push @record_list, $record;
-
-            #Now figure out what messages are contained within this record
-            my @messages = TLSProxy::Message->get_messages($server, $record);
-            push @message_list, @messages;
-
-            $packet = substr($packet, TLS_RECORD_HEADER_LENGTH + $len_real);
-            $recnum++;
         }
+
+        push @record_list, $record;
+
+        #Now figure out what messages are contained within this record
+        my @messages = TLSProxy::Message->get_messages($server, $record);
+        push @message_list, @messages;
+
+        $packet = substr($packet, TLS_RECORD_HEADER_LENGTH + $len);
+        $recnum++;
     }
 
     return (\@record_list, \@message_list, $partial);

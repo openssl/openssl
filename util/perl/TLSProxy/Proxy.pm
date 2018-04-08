@@ -356,7 +356,8 @@ sub clientstart
     my @ready;
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
-    while(     (!(TLSProxy::Message->end)
+    while($fdset->count
+            && (!(TLSProxy::Message->end)
                 || (defined $self->sessionfile()
                     && (-s $self->sessionfile()) == 0))
             && $ctr < 10) {
@@ -366,15 +367,25 @@ sub clientstart
         }
         foreach my $hand (@ready) {
             if ($hand == $server_sock) {
-                $server_sock->sysread($indata, 16384) or goto END;
-                $indata = $self->process_packet(1, $indata);
-                $client_sock->syswrite($indata);
-                $ctr = 0;
+                if ($server_sock->sysread($indata, 16384)) {
+                    if ($indata = $self->process_packet(1, $indata)) {
+                        $client_sock->syswrite($indata) or goto END;
+                    }
+                    $ctr = 0;
+                } else {
+                    $fdset->remove($server_sock);
+                    $client_sock->shutdown(SHUT_WR);
+                }
             } elsif ($hand == $client_sock) {
-                $client_sock->sysread($indata, 16384) or goto END;
-                $indata = $self->process_packet(0, $indata);
-                $server_sock->syswrite($indata);
-                $ctr = 0;
+                if ($client_sock->sysread($indata, 16384)) {
+                    if ($indata = $self->process_packet(0, $indata)) {
+                        $server_sock->syswrite($indata) or goto END;
+                    }
+                    $ctr = 0;
+                } else {
+                    $fdset->remove($client_sock);
+                    $server_sock->shutdown(SHUT_WR);
+                }
             } else {
                 kill(3, $self->{real_serverpid});
                 die "Unexpected handle";
@@ -445,14 +456,15 @@ sub process_packet
 
     #Return contains the list of record found in the packet followed by the
     #list of messages in those records and any partial message
-    my @ret = TLSProxy::Record->get_records($server, $self->flight, $self->{partial}[$server].$packet);
+    my @ret = TLSProxy::Record->get_records($server, $self->flight,
+                                            $self->{partial}[$server].$packet);
     $self->{partial}[$server] = $ret[2];
     push @{$self->{record_list}}, @{$ret[0]};
     push @{$self->{message_list}}, @{$ret[1]};
 
     print "\n";
 
-    if (scalar(@{$ret[0]}) == 0 or length($ret[2]) != 0) {
+    if (scalar(@{$ret[0]}) == 0) {
         return "";
     }
 
