@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#define _GNU_SOURCE
 #include "e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -14,6 +15,17 @@
 #include "rand_lcl.h"
 #include "internal/rand_int.h"
 #include <stdio.h>
+#if defined(__linux)
+# include <sys/syscall.h>
+#endif
+#if defined(__FreeBSD__)
+# include <sys/types.h>
+# include <sys/sysctl.h>
+# include <sys/param.h>
+#endif
+#if defined(__OpenBSD__)
+# include <sys/param.h>
+#endif
 #ifdef OPENSSL_SYS_UNIX
 # include <sys/types.h>
 # include <unistd.h>
@@ -58,6 +70,8 @@ static uint64_t get_timer_bits(void);
 #  endif
 # endif
 #endif
+
+int syscall_random(void *buf, size_t buflen);
 
 #if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
         !defined(OPENSSL_RAND_SEED_NONE)
@@ -149,25 +163,92 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #   error "Seeding uses urandom but DEVRANDOM is not configured"
 #  endif
 
+#  if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#   if __GLIBC_PREREQ(2, 25)
+#    define OPENSSL_HAVE_GETRANDOM
+#   endif
+#  endif
+
+#  if (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
+#   define OPENSSL_HAVE_GETRANDOM
+#  endif
+
+#  if defined(OPENSSL_HAVE_GETRANDOM)
+#   include <sys/random.h>
+#  endif
+
 #  if defined(OPENSSL_RAND_SEED_OS)
 #   if !defined(DEVRANDOM)
 #    error "OS seeding requires DEVRANDOM to be configured"
 #   endif
+#   define OPENSSL_RAND_SEED_GETRANDOM
 #   define OPENSSL_RAND_SEED_DEVRANDOM
-#   if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
-#    if __GLIBC_PREREQ(2, 25)
-#     define OPENSSL_RAND_SEED_GETRANDOM
-#    endif
-#   endif
-#  endif
-
-#  ifdef OPENSSL_RAND_SEED_GETRANDOM
-#   include <sys/random.h>
 #  endif
 
 #  if defined(OPENSSL_RAND_SEED_LIBRANDOM)
 #   error "librandom not (yet) supported"
 #  endif
+
+#  if defined(__FreeBSD__) && defined(KERN_ARND)
+/*
+ * sysctl_random(): Use sysctl() to read a random number from the kernel
+ * Returns the size on success, 0 on failure.
+ */
+static size_t sysctl_random(char *buf, size_t buflen)
+{
+    int mib[2];
+    size_t done = 0;
+    size_t len;
+
+    /*
+     * Old implementations returned longs, newer versions support variable
+     * sizes up to 256 byte. The code below would not work properly when
+     * the sysctl returns long and we want to request something not a multiple
+     * of longs, which should never be the case.
+     */
+    ossl_assert(buflen % sizeof(long) == 0);
+
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_ARND;
+
+    do {
+        len = buflen;
+        if (sysctl(mib, 2, buf, &len, NULL, 0) == -1)
+            return done;
+        done += len;
+        buf += len;
+        buflen -= len;
+    } while (buflen > 0);
+
+    return done;
+}
+#  endif
+
+/*
+ * syscall_random(): Try to get random data using a system call
+ * returns the number of bytes returned in buf, or <= 0 on error.
+ */
+int syscall_random(void *buf, size_t buflen)
+{
+#  if defined(OPENSSL_HAVE_GETRANDOM)
+    return (int)getrandom(buf, buflen, 0);
+#  endif
+
+#  if defined(__linux) && defined(SYS_getrandom)
+    return (int)syscall(SYS_getrandom, buf, buflen, 0);
+#  endif
+
+#  if defined(__FreeBSD__) && defined(KERN_ARND)
+    return (int)sysctl_random(buf, buflen);
+#  endif
+
+   /* Supported since OpenBSD 5.6 */
+#  if defined(__OpenBSD__) && OpenBSD >= 201411
+    return getentropy(buf, buflen);
+#  endif
+
+    return -1;
+}
 
 /*
  * Try the various seeding methods in turn, exit when successful.
@@ -201,7 +282,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (buffer != NULL) {
         size_t bytes = 0;
 
-        if (getrandom(buffer, bytes_needed, 0) == (int)bytes_needed)
+        if (syscall_random(buffer, bytes_needed) == (int)bytes_needed)
             bytes = bytes_needed;
 
         rand_pool_add_end(pool, bytes, 8 * bytes);
