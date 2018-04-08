@@ -346,10 +346,12 @@ int setup_tests(void)
     if (sizeof(time_t) > sizeof(uint32_t)) {
         TEST_info("Adding 64-bit time_t tests");
         ADD_ALL_TESTS(test_table_pos_64bit, OSSL_NELEM(tbl_testdata_pos_64bit));
+#ifndef __hpux
         if (!(t > 0) && ptm != NULL) {
             TEST_info("Adding negative-sign 64-bit time_t tests");
             ADD_ALL_TESTS(test_table_neg_64bit, OSSL_NELEM(tbl_testdata_neg_64bit));
         }
+#endif
     }
     ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
     return 1;
