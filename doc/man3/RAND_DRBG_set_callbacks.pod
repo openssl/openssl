@@ -37,8 +37,8 @@ RAND_DRBG_cleanup_nonce_fn
  typedef size_t (*RAND_DRBG_get_nonce_fn)(
                        RAND_DRBG *drbg,
                        unsigned char **pout,
-                       int entropy,
-                       size_t min_len, size_t max_len);
+                       int security_strength,
+                       size_t max_len);
 
  typedef void (*RAND_DRBG_cleanup_nonce_fn)(
                      RAND_DRBG *drbg,
@@ -85,8 +85,10 @@ as returned by the get_entropy() callback.
 The B<get_nonce>() and B<cleanup_nonce>() callbacks are used to obtain a nonce
 and free it again. A nonce is only required for instantiation (not for reseeding)
 and only in the case where the DRBG uses a derivation function.
-The callbacks are analogous to get_entropy() and cleanup_entropy(),
-except for the missing prediction_resistance flag.
+The callbacks are analogous to get_entropy() and cleanup_entropy().
+The returned value should either be random and provide B<security_strength> bits
+of entropy or not expected to repeat more often than a B<security_strength> bit
+random string.
 
 If the derivation function is disabled, then no nonce is used for instantiation,
 and the B<get_nonce>() and B<cleanup_nonce>() callbacks can be omitted by
@@ -99,9 +101,9 @@ RAND_DRBG_set_callbacks() return 1 on success, and 0 on failure
 
 =head1 NOTES
 
-It is important that B<cleanup_entropy>() and B<cleanup_nonce>() clear the buffer
-contents safely before freeing it, in order not to leave sensitive information
-about the DRBG's state in memory.
+It is important that B<cleanup_entropy>() clear the buffer contents safely
+before freeing it, in order not to leave sensitive information about the DRBG's
+state in memory.
 
 A request for prediction resistance can only be satisfied by pulling fresh
 entropy from one of the approved entropy sources listed in section 5.5.2 of

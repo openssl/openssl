@@ -418,15 +418,15 @@ int drbg_ctr_init(RAND_DRBG *drbg)
 
         drbg->min_entropylen = ctr->keylen;
         drbg->max_entropylen = DRBG_MINMAX_FACTOR * drbg->min_entropylen;
-        drbg->min_noncelen = drbg->min_entropylen / 2;
-        drbg->max_noncelen = DRBG_MINMAX_FACTOR * drbg->min_noncelen;
+        drbg->nonce_required = 1;
+        drbg->max_noncelen = drbg->max_entropylen / 2;
         drbg->max_perslen = DRBG_MAX_LENGTH;
         drbg->max_adinlen = DRBG_MAX_LENGTH;
     } else {
         drbg->min_entropylen = drbg->seedlen;
         drbg->max_entropylen = drbg->seedlen;
         /* Nonce not used */
-        drbg->min_noncelen = 0;
+        drbg->nonce_required = 0;
         drbg->max_noncelen = 0;
         drbg->max_perslen = drbg->seedlen;
         drbg->max_adinlen = drbg->seedlen;

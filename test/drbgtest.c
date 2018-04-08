@@ -134,7 +134,7 @@ static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
 }
 
 static size_t kat_nonce(RAND_DRBG *drbg, unsigned char **pout,
-                        int entropy, size_t min_len, size_t max_len)
+                        int entropy, size_t max_len)
 {
     TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
 
@@ -331,9 +331,9 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      * Nonce tests
      */
 
-    /* Test too small nonce */
-    if (drbg->min_noncelen) {
-        t.noncelen = drbg->min_noncelen - 1;
+    /* Test with failed nonce */
+    if (drbg->nonce_required) {
+        t.noncelen = 0;
         if (!init(drbg, td, &t)
                 || RAND_DRBG_instantiate(drbg, td->pers, td->perslen) > 0
                 || !uninstantiate(drbg))

@@ -36,7 +36,7 @@
 # define DRBG_MAX_LENGTH                4096
 
 /*
- * The quotient between max_{entropy,nonce}len and min_{entropy,nonce}len
+ * The quotient between max_entropylen and min_entropylen
  *
  * The current factor is large enough that the RAND_POOL can store a
  * random input which has a lousy entropy rate of 0.0625 bits per byte.
@@ -174,9 +174,10 @@ struct rand_drbg_st {
      */
 
     int strength;
+    int nonce_required;
     size_t max_request;
     size_t min_entropylen, max_entropylen;
-    size_t min_noncelen, max_noncelen;
+    size_t max_noncelen;
     size_t max_perslen, max_adinlen;
 
     /* Counts the number of generate requests since the last reseed. */

@@ -298,10 +298,10 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
      * the minimum length to accomadate the length of the nonce.
      * We do this in case a nonce is require and get_nonce is NULL.
      */
-    if (drbg->min_noncelen > 0 && drbg->get_nonce == NULL) {
+    if (drbg->nonce_required && drbg->get_nonce == NULL) {
         min_entropy += drbg->strength / 2;
-        min_entropylen += drbg->min_noncelen;
-        max_entropylen += drbg->max_noncelen;
+        min_entropylen += drbg->strength / 2;
+        max_entropylen += drbg->strength / 2 * DRBG_MINMAX_FACTOR;
     }
 
     if (drbg->get_entropy != NULL)
@@ -313,11 +313,12 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         goto end;
     }
 
-    if (drbg->min_noncelen > 0 && drbg->get_nonce != NULL) {
+    if (drbg->nonce_required && drbg->get_nonce != NULL) {
         noncelen = drbg->get_nonce(drbg, &nonce, drbg->strength / 2,
-                                   drbg->min_noncelen, drbg->max_noncelen);
-        if (noncelen < drbg->min_noncelen || noncelen > drbg->max_noncelen) {
-            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_NONCE);
+                                   drbg->max_noncelen);
+        if (noncelen == 0 || noncelen > drbg->max_noncelen) {
+            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                    RAND_R_ERROR_RETRIEVING_NONCE);
             goto end;
         }
     }
