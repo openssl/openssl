@@ -229,7 +229,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
              */
             RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY,
                     RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED);
-            return 0;
+            goto err;
         }
 
         /* Get entropy by polling system entropy sources. */
@@ -241,6 +241,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         *pout = rand_pool_detach(pool);
     }
 
+ err:
     rand_pool_free(pool);
     return ret;
 }
