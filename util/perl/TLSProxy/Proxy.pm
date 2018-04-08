@@ -255,6 +255,7 @@ sub start
     if (eval { require Win32::Process; 1; }) {
         if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
             $pid = $h->GetProcessID();
+            $self->{proc_handle} = $h;  # hold handle till next round [or exit]
         } else {
             $error = Win32::FormatMessage(Win32::GetLastError());
         }
