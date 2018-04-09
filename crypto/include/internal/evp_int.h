@@ -427,4 +427,7 @@ void evp_app_cleanup_int(void);
 void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 
 /* EVP_ENCODE_CTX flags */
-#define EVP_ENCODE_CTX_NO_NEWLINES      1
+/* Don't generate new lines when encoding */
+#define EVP_ENCODE_CTX_NO_NEWLINES          1
+/* Use the SRP base64 alphabet instead of the standard one */
+#define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
