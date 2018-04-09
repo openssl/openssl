@@ -537,8 +537,7 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             /* figure out payload length */
             pad = out[len - 1];
             maxpad = len - (SHA256_DIGEST_LENGTH + 1);
-            maxpad |= (255 - maxpad) >> (sizeof(maxpad) * 8 - 8);
-            maxpad &= 255;
+            maxpad = maxpad > 255 ? 255 : maxpad;
 
             mask = constant_time_ge(maxpad, pad);
             ret &= mask;
