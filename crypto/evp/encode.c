@@ -12,6 +12,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include "evp_locl.h"
+#include "internal/evp_int.h"
 
 static unsigned char conv_ascii2bin(unsigned char a);
 #ifndef CHARSET_EBCDIC
@@ -115,11 +116,17 @@ int EVP_ENCODE_CTX_num(EVP_ENCODE_CTX *ctx)
     return ctx->num;
 }
 
+void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags)
+{
+    ctx->flags = flags;
+}
+
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 {
     ctx->length = 48;
     ctx->num = 0;
     ctx->line_num = 0;
+    ctx->flags = 0;
 }
 
 int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -145,18 +152,24 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
         j = EVP_EncodeBlock(out, ctx->enc_data, ctx->length);
         ctx->num = 0;
         out += j;
-        *(out++) = '\n';
+        total = j;
+        if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0) {
+            *(out++) = '\n';
+            total++;
+        }
         *out = '\0';
-        total = j + 1;
     }
     while (inl >= ctx->length && total <= INT_MAX) {
         j = EVP_EncodeBlock(out, in, ctx->length);
         in += ctx->length;
         inl -= ctx->length;
         out += j;
-        *(out++) = '\n';
+        total += j;
+        if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0) {
+            *(out++) = '\n';
+            total++;
+        }
         *out = '\0';
-        total += j + 1;
     }
     if (total > INT_MAX) {
         /* Too much output data! */
@@ -177,7 +190,8 @@ void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 
     if (ctx->num != 0) {
         ret = EVP_EncodeBlock(out, ctx->enc_data, ctx->num);
-        out[ret++] = '\n';
+        if ((ctx->flags & EVP_ENCODE_CTX_NO_NEWLINES) == 0)
+            out[ret++] = '\n';
         out[ret] = '\0';
         ctx->num = 0;
     }
@@ -217,11 +231,11 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
 {
-    /* Only ctx->num is used during decoding. */
+    /* Only ctx->num and ctx->flags are used during decoding. */
     ctx->num = 0;
     ctx->length = 0;
     ctx->line_num = 0;
-    ctx->expect_nl = 0;
+    ctx->flags = 0;
 }
 
 /*-

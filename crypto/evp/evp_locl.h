@@ -59,7 +59,7 @@ struct evp_Encode_Ctx_st {
     unsigned char enc_data[80];
     /* number read on current line */
     int line_num;
-    int expect_nl;
+    unsigned int flags;
 };
 
 typedef struct evp_pbe_st EVP_PBE_CTL;

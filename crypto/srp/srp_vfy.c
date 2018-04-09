@@ -13,6 +13,7 @@
 
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
+# include "internal/evp_int.h"
 # include <openssl/sha.h>
 # include <openssl/srp.h>
 # include <openssl/evp.h>
@@ -26,24 +27,55 @@
 
 /*
  * Convert a base64 string into raw byte array representation.
+ * Returns the length of the decoded data, or -1 on error.
  */
 static int t_fromb64(unsigned char *a, size_t alen, const char *src)
 {
+    EVP_ENCODE_CTX *ctx;
+    int outl = 0, outl2 = 0;
     size_t size = strlen(src);
 
-    /* Four bytes in src become three bytes output. */
-    if (size > INT_MAX || (size / 4) * 3 > alen)
+    if (size > INT_MAX)
         return -1;
 
-    return EVP_DecodeBlock(a, (unsigned char *)src, (int)size);
+    ctx = EVP_ENCODE_CTX_new();
+    if (ctx == NULL)
+        return -1;
+
+    EVP_DecodeInit(ctx);
+    if (EVP_DecodeUpdate(ctx, a, &outl, (const unsigned char *)src, size) < 0) {
+        EVP_ENCODE_CTX_free(ctx);
+        return -1;
+    }
+    EVP_DecodeFinal(ctx, a + outl, &outl2);
+
+    EVP_ENCODE_CTX_free(ctx);
+    return outl + outl2;
 }
 
 /*
  * Convert a raw byte string into a null-terminated base64 ASCII string.
+ * Returns 1 on success or 0 on error.
  */
-static void t_tob64(char *dst, const unsigned char *src, int size)
+static int t_tob64(char *dst, const unsigned char *src, int size)
 {
-    EVP_EncodeBlock((unsigned char *)dst, src, size);
+    EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
+    int outl = 0, outl2 = 0;
+
+    if (ctx == NULL)
+        return 0;
+
+    EVP_EncodeInit(ctx);
+    evp_encode_ctx_set_flags(ctx, EVP_ENCODE_CTX_NO_NEWLINES);
+
+    if (!EVP_EncodeUpdate(ctx, (unsigned char *)dst, &outl, src, size)) {
+        EVP_ENCODE_CTX_free(ctx);
+        return 0;
+    }
+    EVP_EncodeFinal(ctx, (unsigned char *)dst + outl, &outl2);
+
+    EVP_ENCODE_CTX_free(ctx);
+    return 1;
 }
 
 void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
