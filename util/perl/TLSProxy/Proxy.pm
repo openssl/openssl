@@ -464,7 +464,7 @@ sub process_packet
 
     print "\n";
 
-    if (scalar(@{$ret[0]}) == 0) {
+    if (scalar(@{$ret[0]}) == 0 or length($ret[2]) != 0) {
         return "";
     }
 
@@ -476,6 +476,10 @@ sub process_packet
     #Reconstruct the packet
     $packet = "";
     foreach my $record (@{$self->record_list}) {
+        #We only replay the records in the same direction
+        if (($record->flight ^ $self->flight) & 1) {
+            next;
+        }
         $packet .= $record->reconstruct_record($server);
     }
 
