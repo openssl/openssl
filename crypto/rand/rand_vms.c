@@ -157,7 +157,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     /* TODO(LEVITTE): add some process specific data and a high resolution utc time */
 
-#if 0
+# if 0
     DWORD curr_pid;
     DWORD curr_tid;
     LARGE_INTEGER t;
@@ -180,14 +180,14 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
     GetSystemTimeAsFileTime(&ft);
     if (rand_pool_add(pool, (unsigned char *)&ft, sizeof(ft), 0) == 0)
         return 0;
-#endif
+# endif
 
     return 1;
 }
 
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
- #if 0
+# if 0
     DWORD curr_pid;
     DWORD curr_tid;
     LARGE_INTEGER t;
@@ -209,7 +209,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
     GetSystemTimeAsFileTime(&ft);
     if (rand_pool_add(pool, &ft, sizeof(ft), 0) == 0)
         return 0;
-
+# endif
     return 1;
 }
 
