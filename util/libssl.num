@@ -524,3 +524,12 @@ SSL_client_hello_get_extension_order    ?	3_1_0	EXIST::FUNCTION:
 OSSL_QUIC_client_method                 ?	3_1_0	EXIST::FUNCTION:QUIC
 OSSL_QUIC_client_thread_method          ?	3_1_0	EXIST::FUNCTION:QUIC
 OSSL_QUIC_server_method                 ?	3_1_0	EXIST::FUNCTION:QUIC
+SSL_CTX_get0_session_id_context         ?	3_1_0	EXIST::FUNCTION:
+SSL_get0_session_id_context             ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_get_verify_result           ?	3_1_0	EXIST::FUNCTION:
+SSL_get1_previous_client_session        ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_set_timeout_update_cache    ?	3_1_0	EXIST::FUNCTION:
+SSL_set1_cache_id                       ?	3_1_0	EXIST::FUNCTION:
+SSL_get0_cache_id                       ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_set1_cache_id               ?	3_1_0	EXIST::FUNCTION:
+SSL_SESSION_get0_cache_id               ?	3_1_0	EXIST::FUNCTION:
