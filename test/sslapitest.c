@@ -14,6 +14,8 @@
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/ocsp.h>
+#include <openssl/srp.h>
+#include <openssl/txt_db.h>
 
 #include "ssltestlib.h"
 #include "testutil.h"
@@ -23,6 +25,8 @@
 
 static char *cert = NULL;
 static char *privkey = NULL;
+static char *srpvfile = NULL;
+static char *tmpfilename = NULL;
 
 #define LOG_BUFFER_SIZE 1024
 static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
@@ -3786,10 +3790,231 @@ static int test_pha_key_update(void)
 }
 #endif
 
+#if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
+
+static SRP_VBASE *vbase = NULL;
+
+static int ssl_srp_cb(SSL *s, int *ad, void *arg)
+{
+    int ret = SSL3_AL_FATAL;
+    char *username;
+    SRP_user_pwd *user = NULL;
+
+    username = SSL_get_srp_username(s);
+    if (username == NULL) {
+        *ad = SSL_AD_INTERNAL_ERROR;
+        goto err;
+    }
+
+    user = SRP_VBASE_get1_by_user(vbase, username);
+    if (user == NULL) {
+        *ad = SSL_AD_INTERNAL_ERROR;
+        goto err;
+    }
+
+    if (SSL_set_srp_server_param(s, user->N, user->g, user->s, user->v,
+                                 user->info) <= 0) {
+        *ad = SSL_AD_INTERNAL_ERROR;
+        goto err;
+    }
+
+    ret = 0;
+
+ err:
+    SRP_user_pwd_free(user);
+    return ret;
+}
+
+static int create_new_vfile(char *userid, char *password, const char *filename)
+{
+    char *gNid = NULL;
+    OPENSSL_STRING *row = OPENSSL_zalloc(sizeof(row) * (DB_NUMBER + 1));
+    TXT_DB *db = NULL;
+    int ret = 0;
+    BIO *out = NULL, *dummy = BIO_new_mem_buf("", 0);
+    size_t i;
+
+    if (!TEST_ptr(dummy) || !TEST_ptr(row))
+        goto end;
+
+    gNid = SRP_create_verifier(userid, password, &row[DB_srpsalt],
+                               &row[DB_srpverifier], NULL, NULL);
+    if (!TEST_ptr(gNid))
+        goto end;
+
+    /*
+     * The only way to create an empty TXT_DB is to provide a BIO with no data
+     * in it!
+     */
+    db = TXT_DB_read(dummy, DB_NUMBER);
+    if (!TEST_ptr(db))
+        goto end;
+
+    out = BIO_new_file(filename, "w");
+    if (!TEST_ptr(out))
+        goto end;
+
+    row[DB_srpid] = OPENSSL_strdup(userid);
+    row[DB_srptype] = OPENSSL_strdup("V");
+    row[DB_srpgN] = OPENSSL_strdup(gNid);
+
+    if (!TEST_ptr(row[DB_srpid])
+            || !TEST_ptr(row[DB_srptype])
+            || !TEST_ptr(row[DB_srpgN])
+            || !TEST_true(TXT_DB_insert(db, row)))
+        goto end;
+
+    row = NULL;
+
+    if (!TXT_DB_write(out, db))
+        goto end;
+
+    ret = 1;
+ end:
+    if (row != NULL) {
+        for (i = 0; i < DB_NUMBER; i++)
+            OPENSSL_free(row[i]);
+    }
+    OPENSSL_free(row);
+    BIO_free(dummy);
+    BIO_free(out);
+    TXT_DB_free(db);
+
+    return ret;
+}
+
+static int create_new_vbase(char *userid, char *password)
+{
+    BIGNUM *verifier = NULL, *salt = NULL;
+    const SRP_gN *lgN = NULL;
+    SRP_user_pwd *user_pwd = NULL;
+    int ret = 0;
+
+    lgN = SRP_get_default_gN(NULL);
+    if (!TEST_ptr(lgN))
+        goto end;
+
+    if (!TEST_true(SRP_create_verifier_BN(userid, password, &salt, &verifier,
+                                          lgN->N, lgN->g)))
+        goto end;
+
+    user_pwd = OPENSSL_zalloc(sizeof(*user_pwd));
+    if (!TEST_ptr(user_pwd))
+        goto end;
+
+    user_pwd->N = lgN->N;
+    user_pwd->g = lgN->g;
+    user_pwd->id = OPENSSL_strdup(userid);
+    if (!TEST_ptr(user_pwd->id))
+        goto end;
+
+    user_pwd->v = verifier;
+    user_pwd->s = salt;
+    verifier = salt = NULL;
+
+    if (sk_SRP_user_pwd_insert(vbase->users_pwd, user_pwd, 0) == 0)
+        goto end;
+    user_pwd = NULL;
+
+    ret = 1;
+end:
+    SRP_user_pwd_free(user_pwd);
+    BN_free(salt);
+    BN_free(verifier);
+
+    return ret;
+}
+
+/*
+ * SRP tests
+ *
+ * Test 0: Simple successful SRP connection, new vbase
+ * Test 1: Connection failure due to bad password, new vbase
+ * Test 2: Simple successful SRP connection, vbase loaded from existing file
+ * Test 3: Connection failure due to bad password, vbase loaded from existing
+ *         file
+ * Test 4: Simple successful SRP connection, vbase loaded from new file
+ * Test 5: Connection failure due to bad password, vbase loaded from new file
+ */
+static int test_srp(int tst)
+{
+    char *userid = "test", *password = "password", *tstsrpfile;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int ret, testresult = 0;
+
+    vbase = SRP_VBASE_new(NULL);
+    if (!TEST_ptr(vbase))
+        goto end;
+
+    if (tst == 0 || tst == 1) {
+        if (!TEST_true(create_new_vbase(userid, password)))
+            goto end;
+    } else {
+        if (tst == 4 || tst == 5) {
+            if (!TEST_true(create_new_vfile(userid, password, tmpfilename)))
+                goto end;
+            tstsrpfile = tmpfilename;
+        } else {
+            tstsrpfile = srpvfile;
+        }
+        if (!TEST_int_eq(SRP_VBASE_init(vbase, tstsrpfile), SRP_NO_ERROR))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_int_gt(SSL_CTX_set_srp_username_callback(sctx, ssl_srp_cb), 0)
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx, "SRP-AES-128-CBC-SHA"))
+            || !TEST_true(SSL_CTX_set_max_proto_version(sctx, TLS1_2_VERSION))
+            || !TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION))
+            || !TEST_int_gt(SSL_CTX_set_srp_username(cctx, userid), 0))
+        goto end;
+
+    if (tst % 2 == 1) {
+        if (!TEST_int_gt(SSL_CTX_set_srp_password(cctx, "badpass"), 0))
+            goto end;
+    } else {
+        if (!TEST_int_gt(SSL_CTX_set_srp_password(cctx, password), 0))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    ret = create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE);
+    if (ret) {
+        if (!TEST_true(tst % 2 == 0))
+            goto end;
+    } else {
+        if (!TEST_true(tst % 2 == 1))
+            goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    SRP_VBASE_free(vbase);
+    vbase = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
-            || !TEST_ptr(privkey = test_get_argument(1)))
+            || !TEST_ptr(privkey = test_get_argument(1))
+            || !TEST_ptr(srpvfile = test_get_argument(2))
+            || !TEST_ptr(tmpfilename = test_get_argument(3)))
         return 0;
 
     if (getenv("OPENSSL_TEST_GETCOUNTS") != NULL) {
@@ -3871,6 +4096,9 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
+#if !defined(OPENSSL_NO_SRP) && !defined(OPENSSL_NO_TLS1_2)
+    ADD_ALL_TESTS(test_srp, 6);
+#endif
     return 1;
 }
 
