@@ -476,10 +476,6 @@ sub process_packet
     #Reconstruct the packet
     $packet = "";
     foreach my $record (@{$self->record_list}) {
-        #We only replay the records in the same direction
-        if (($record->flight ^ $self->flight) & 1) {
-            next;
-        }
         $packet .= $record->reconstruct_record($server);
     }
 
