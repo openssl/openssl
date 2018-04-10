@@ -10,6 +10,7 @@
 #include "e_os.h"
 
 #if defined(OPENSSL_SYS_VMS)
+# include <unistd.h>
 # include "internal/cryptlib.h"
 # include <openssl/rand.h>
 # include "internal/rand_int.h"
@@ -155,87 +156,34 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
-    /* TODO(LEVITTE): add some process specific data and a high resolution utc time */
-
-# if 0
-    DWORD curr_pid;
-    DWORD curr_tid;
-    LARGE_INTEGER t;
-    FILETIME ft;
-
+    struct {
+        pid_t pid;
+        CRYPTO_THREAD_ID tid;
+        uint64_t time;
+    } data;
 
     /*
-     * Add gid, pid, and uid to nonce to ensure variation between
-     * different processes.
+     * Add PID and TID to ensure variation between different processes and
+     * threads.
      */
+    data.pid = getpid();
+    data.tid = CRYPTO_THREAD_get_current_id();
+    sys$gettim_prec((struct _generic_64 *)&data.time);
 
-    curr_pid = GetCurrentProcessId();
-    if (rand_pool_add(pool, (unsigned char *)&curr_pid, sizeof(curr_pid), 0) == 0)
-        return 0;
-
-    curr_tid = GetCurrentThreadId();
-    if (rand_pool_add(pool, (unsigned char *)&curr_tid, sizeof(curr_tid), 0) == 0)
-        return 0;
-
-    GetSystemTimeAsFileTime(&ft);
-    if (rand_pool_add(pool, (unsigned char *)&ft, sizeof(ft), 0) == 0)
-        return 0;
-# endif
-
-    return 1;
-}
-
-int rand_pool_add_nonce_data(RAND_POOL *pool)
-{
-# if 0
-    DWORD curr_pid;
-    DWORD curr_tid;
-    LARGE_INTEGER t;
-    FILETIME ft;
-
-    /*
-     * TODO(LEVITTE): add some process specific data (gid, pid, whatever)
-     * and a high resolution utc time (utc for monotonicity)
-     */
-
-    curr_pid = GetCurrentProcessId();
-    if (rand_pool_add(pool, &curr_pid, sizeof(curr_pid), 0) == 0)
-        return 0;
-
-    curr_tid = GetCurrentThreadId();
-    if (rand_pool_add(pool, &curr_tid, sizeof(curr_tid), 0) == 0)
-        return 0;
-
-    GetSystemTimeAsFileTime(&ft);
-    if (rand_pool_add(pool, &ft, sizeof(ft), 0) == 0)
-        return 0;
-# endif
-    return 1;
+    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
 int rand_pool_add_additional_data(RAND_POOL *pool)
 {
-    CRYPTO_THREAD_ID thread_id;
-    uint64_t rdtsc;
-    LARGE_INTEGER t;
+    struct {
+        CRYPTO_THREAD_ID tid;
+        uint64_t time;
+    } data;
 
-    /*
-     * TODO(LEVITTE): add some noise bits
-     *
-     * For the timer, you can use OPENSSL_rdtsc() (is it implemented on VMS?) even though
-     * it adds only 32 bits, because the 'noise' is in the lower order bits anyway.
-     */
+    data.tid = CRYPTO_THREAD_get_current_id();
+    sys$gettim_prec((struct _generic_64 *)&data.time);
 
-    thread_id = CRYPTO_THREAD_get_current_id();
-    if (rand_pool_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0) == 0)
-        return 0;
-
-    rdtsc = OPENSSL_rdtsc();
-    if (rdtsc != 0)
-        return rand_pool_add(pool, (unsigned char *)&rdtsc, sizeof(rdtsc), 0);
-
-    QueryPerformanceCounter(&t);
-    return rand_pool_add(pool, (unsigned char *)&t, sizeof(t), 0);
+    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
 #endif
