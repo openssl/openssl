@@ -4,6 +4,7 @@
 
 SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout,
 SSL_SESSION_set_timeout,
+SSL_SESSION_set_timeout_update_cache,
 SSL_get_time, SSL_set_time, SSL_get_timeout, SSL_set_timeout
 - retrieve and manipulate session time and timeout settings
 
@@ -15,6 +16,7 @@ SSL_get_time, SSL_set_time, SSL_get_timeout, SSL_set_timeout
  long SSL_SESSION_set_time(SSL_SESSION *s, long tm);
  long SSL_SESSION_get_timeout(const SSL_SESSION *s);
  long SSL_SESSION_set_timeout(SSL_SESSION *s, long tm);
+ int SSL_SESSION_set_timeout_update_cache(const SSL *ssl, long tm);
 
  long SSL_get_time(const SSL_SESSION *s);
  long SSL_set_time(SSL_SESSION *s, long tm);
@@ -35,6 +37,10 @@ in seconds.
 
 SSL_SESSION_set_timeout() sets the timeout value for session B<s> in seconds
 to B<tm>.
+
+SSL_SESSION_set_timeout_update_cache() sets the timeout value for session
+referencerd by B<ssl> in in seconds to B<tm>, and ensures that the any 
+cached session that matches the SSL's session is updated as well.
 
 The SSL_get_time(), SSL_set_time(), SSL_get_timeout(), and SSL_set_timeout()
 functions are synonyms for the SSL_SESSION_*() counterparts.
@@ -57,6 +63,9 @@ SSL_SESSION_set_time() and SSL_SESSION_set_timeout() return 1 on success.
 
 If any of the function is passed the NULL pointer for the session B<s>,
 0 is returned.
+
+SSL_SESSION_set_timeout_update_cache() returns 1 on success and 0 on
+failure.
 
 =head1 SEE ALSO
 

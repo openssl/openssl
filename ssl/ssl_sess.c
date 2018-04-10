@@ -130,6 +130,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
     dest->peer_chain = NULL;
     dest->peer = NULL;
     dest->ticket_appdata = NULL;
+    dest->cache_id = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
     /* We deliberately don't copy the prev and next pointers */
@@ -213,6 +214,13 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
         dest->ticket_appdata =
             OPENSSL_memdup(src->ticket_appdata, src->ticket_appdata_len);
         if (dest->ticket_appdata == NULL)
+            goto err;
+    }
+
+    if (src->cache_id != NULL) {
+        dest->cache_id =
+            OPENSSL_memdup(src->cache_id, src->cache_id_len);
+        if (dest->cache_id == NULL)
             goto err;
     }
 
@@ -401,6 +409,10 @@ int ssl_get_new_session(SSL *s, int session)
     }
     memcpy(ss->sid_ctx, s->sid_ctx, s->sid_ctx_length);
     ss->sid_ctx_length = s->sid_ctx_length;
+    if (s->cache_id != NULL && s->cache_id_len > 0) {
+        ss->cache_id = OPENSSL_memdup(s->cache_id, s->cache_id_len);
+        ss->cache_id_len = s->cache_id_len;
+    }
     s->session = ss;
     ss->ssl_version = s->version;
     ss->verify_result = X509_V_OK;
@@ -421,6 +433,7 @@ SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
          & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP) == 0) {
         SSL_SESSION data;
 
+        data.cache_id = NULL;
         data.ssl_version = s->version;
         if (!ossl_assert(sess_id_len <= SSL_MAX_SSL_SESSION_ID_LENGTH))
             return NULL;
@@ -767,6 +780,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #endif
     OPENSSL_free(ss->ext.alpn_selected);
     OPENSSL_free(ss->ticket_appdata);
+    OPENSSL_free(ss->cache_id);
     CRYPTO_THREAD_lock_free(ss->lock);
     OPENSSL_clear_free(ss, sizeof(*ss));
 }
@@ -794,6 +808,9 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
     if (session != NULL) {
         SSL_SESSION_up_ref(session);
         s->verify_result = session->verify_result;
+        s->hit = 1;
+    } else {
+        s->hit = 0;
     }
     SSL_SESSION_free(s->session);
     s->session = session;
@@ -1249,6 +1266,170 @@ void SSL_CTX_set_stateless_cookie_verify_cb(
                size_t cookie_len))
 {
     ctx->verify_stateless_cookie_cb = cb;
+}
+
+SSL_SESSION *SSL_get1_previous_client_session(SSL *s)
+{
+    SSL_SESSION *ret = NULL;
+    SSL_SESSION data;
+    uint32_t mode = s->session_ctx->session_cache_mode;
+
+    /* Not client mode w/o server also */
+    if ((mode & SSL_SESS_CACHE_BOTH) != SSL_SESS_CACHE_CLIENT) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_BAD_CACHE_MODE);
+        return NULL;
+    }
+
+    if (!(mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
+        /* Set up the search parameters */
+        memset(&data, 0, sizeof(data));
+        data.cache_id = s->cache_id;
+        data.cache_id_len = s->cache_id_len;
+        data.sid_ctx_length = s->sid_ctx_length;
+        if (s->sid_ctx_length > 0)
+            memcpy(data.sid_ctx, s->sid_ctx, s->sid_ctx_length);
+
+        /* search */
+        CRYPTO_THREAD_read_lock(s->session_ctx->lock);
+        ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
+        if (ret != NULL)
+            SSL_SESSION_up_ref(ret);
+        CRYPTO_THREAD_unlock(s->session_ctx->lock);
+
+        if (ret == NULL) {
+            tsan_counter(&s->session_ctx->stats.sess_miss);
+        } else if (ret->timeout < (long)(time(NULL) - ret->time)) {
+            tsan_counter(&s->session_ctx->stats.sess_timeout);
+            SSL_CTX_remove_session(s->session_ctx, ret);
+            SSL_SESSION_free(ret);
+            ret = NULL;
+        } else {
+            tsan_counter(&s->session_ctx->stats.sess_hit);
+        }
+    }
+
+    if (ret == NULL && s->session_ctx->get_session_cb != NULL) {
+        int copy = 1;
+
+        ret = s->session_ctx->get_session_cb(s, s->cache_id,
+                                             s->cache_id_len,
+                                             &copy);
+
+        if (ret != NULL) {
+            tsan_counter(&s->session_ctx->stats.sess_hit);
+
+            /*
+             * Increment reference count now if the session callback asks us
+             * to do so (note that if the session structures returned by the
+             * callback are shared between threads, it must handle the
+             * reference count itself [i.e. copy == 0], or things won't be
+             * thread-safe).
+             */
+            if (copy)
+                SSL_SESSION_up_ref(ret);
+
+            /*
+             * Add the externally cached session to the internal cache as
+             * well if and only if we are supposed to.
+             */
+            if (!(mode & SSL_SESS_CACHE_NO_INTERNAL_STORE)) {
+                /*
+                 * Either return value of SSL_CTX_add_session should not
+                 * interrupt the session resumption process. The return
+                 * value is intentionally ignored.
+                 */
+                SSL_CTX_add_session(s->session_ctx, ret);
+            }
+        }
+    }
+
+    return ret;
+}
+
+int SSL_SESSION_set_timeout_update_cache(const SSL *s, long t)
+{
+    SSL_SESSION *ss, *ret;
+
+    ss = s->session;
+    if (ss == NULL)
+        return 0;
+
+    ss->timeout = t;
+
+    /* update cache in case it's a copy */
+    CRYPTO_THREAD_read_lock(s->session_ctx->lock);
+    ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, ss);
+    if (ret != NULL && ret != ss)
+        ret->timeout = t;
+    CRYPTO_THREAD_unlock(s->session_ctx->lock);
+
+    return 1;
+}
+
+int SSL_set1_cache_id(SSL *s, const unsigned char *data, size_t len)
+{
+    if (s->session != NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SESSION_ALREADY_SET);
+        return 0;
+    }
+    OPENSSL_free(s->cache_id);
+    s->cache_id_len = 0;
+    if (data == NULL) {
+        s->cache_id = NULL;
+    } else {
+        s->cache_id = OPENSSL_memdup(data, len);
+        if (s->cache_id == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        s->cache_id_len = len;
+    }
+    return 1;
+}
+
+int SSL_get0_cache_id(const SSL *s, const unsigned char **data, size_t *len)
+{
+    if (s->cache_id == NULL)
+        return 0;
+    *data = s->cache_id;
+    *len = s->cache_id_len;
+    return 1;
+}
+
+int SSL_SESSION_set1_cache_id(SSL_SESSION *ss, const unsigned char *data, size_t len)
+{
+    if (ss->next != NULL || ss->prev != NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_SESSION_ALREADY_IN_CACHE);
+        return 0;
+    }
+
+    OPENSSL_free(ss->cache_id);
+    ss->cache_id_len = 0;
+    if (data == NULL) {
+        ss->cache_id = NULL;
+    } else {
+        ss->cache_id = OPENSSL_memdup(data, len);
+        if (ss->cache_id == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        ss->cache_id_len = len;
+    }
+    return 1;
+}
+
+int SSL_SESSION_get0_cache_id(const SSL_SESSION *ss, const unsigned char **data, size_t *len)
+{
+    if (ss->cache_id == NULL)
+        return 0;
+    *data = ss->cache_id;
+    *len = ss->cache_id_len;
+    return 1;
+}
+
+long SSL_SESSION_get_verify_result(const SSL_SESSION *ss)
+{
+    return ss->verify_result;
 }
 
 IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)

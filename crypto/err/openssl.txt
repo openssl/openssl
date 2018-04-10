@@ -1214,6 +1214,7 @@ SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE:143:\
 	at least TLS 1.0 needed in FIPS mode
 SSL_R_AT_LEAST_TLS_1_2_NEEDED_IN_SUITEB_MODE:158:\
 	at least (D)TLS 1.2 needed in Suite B mode
+SSL_R_BAD_CACHE_MODE:305:bad cache mode
 SSL_R_BAD_CHANGE_CIPHER_SPEC:103:bad change cipher spec
 SSL_R_BAD_CIPHER:186:bad cipher
 SSL_R_BAD_DATA:390:bad data
@@ -1428,6 +1429,8 @@ SSL_R_REQUIRED_COMPRESSION_ALGORITHM_MISSING:342:\
 SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING:345:scsv received when renegotiating
 SSL_R_SCT_VERIFICATION_FAILED:208:sct verification failed
 SSL_R_SERVERHELLO_TLSEXT:275:serverhello tlsext
+SSL_R_SESSION_ALREADY_IN_CACHE:310:session already in cache
+SSL_R_SESSION_ALREADY_SET:313:session already set
 SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED:277:session id context uninitialized
 SSL_R_SHUTDOWN_WHILE_IN_INIT:407:shutdown while in init
 SSL_R_SIGNATURE_ALGORITHMS_ERROR:360:signature algorithms error

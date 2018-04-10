@@ -86,7 +86,7 @@ for all sessions in the internal session cache when
 L<SSL_CTX_free(3)> is called. The remove_session_cb() is passed
 the B<ctx> and the ssl session B<sess>. It does not provide any feedback.
 
-The get_session_cb() is only called on SSL/TLS servers, and is given
+The get_session_cb() is called on SSL/TLS servers, and is given
 the session id
 proposed by the client. The get_session_cb() is always called, even when
 session caching was disabled. The get_session_cb() is passed the
@@ -96,6 +96,16 @@ SSL engine to increment the reference count of the SSL_SESSION object;
 setting B<copy> to B<0> causes the reference count to remain unchanged.
 If the get_session_cb() does not write to B<copy>, the reference count
 is incremented and the session must be explicitly freed with
+L<SSL_SESSION_free(3)>.
+
+The get_session_cb() is called on SSL/TLS clients with the application-defined
+cache identifier set by the client. The get_session_cb() is always called when
+session caching is disabled. The get_session_cb() is passed the
+B<ssl> connection, the cache identifier of length B<length> at the memory location
+B<data>. With the parameter B<copy> the callback can require the
+SSL engine to increment the reference count of the SSL_SESSION object,
+Normally the reference count is not incremented and therefore the
+session must not be explicitly freed with
 L<SSL_SESSION_free(3)>.
 
 =head1 RETURN VALUES
@@ -109,7 +119,9 @@ L<ssl(7)>, L<d2i_SSL_SESSION(3)>,
 L<SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_flush_sessions(3)>,
 L<SSL_SESSION_free(3)>,
-L<SSL_CTX_free(3)>
+L<SSL_CTX_free(3)>,
+L<SSL_get1_previous_client_session(3)>,
+L<SSL_set1_cache_id(3)>
 
 =head1 COPYRIGHT
 

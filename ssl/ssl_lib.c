@@ -878,6 +878,16 @@ int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
     return 1;
 }
 
+int SSL_CTX_get0_session_id_context(const SSL_CTX *ctx,
+                                    const unsigned char **sid_ctx,
+                                    size_t *sid_ctx_len)
+{
+    *sid_ctx = ctx->sid_ctx;
+    *sid_ctx_len = ctx->sid_ctx_length;
+    return 1;
+}
+
+
 int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                unsigned int sid_ctx_len)
 {
@@ -888,6 +898,15 @@ int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
     ssl->sid_ctx_length = sid_ctx_len;
     memcpy(ssl->sid_ctx, sid_ctx, sid_ctx_len);
 
+    return 1;
+}
+
+int SSL_get0_session_id_context(const SSL *ssl,
+                                const unsigned char **sid_ctx,
+                                size_t *sid_ctx_len)
+{
+    *sid_ctx = ssl->sid_ctx;
+    *sid_ctx_len = ssl->sid_ctx_length;
     return 1;
 }
 
@@ -922,6 +941,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
     if (id_len > sizeof(r.session_id))
         return 0;
 
+    r.cache_id = NULL;
     r.ssl_version = ssl->version;
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
@@ -1229,6 +1249,7 @@ void SSL_free(SSL *s)
         OPENSSL_free(s->clienthello->pre_proc_exts);
     OPENSSL_free(s->clienthello);
     OPENSSL_free(s->pha_context);
+    OPENSSL_free(s->cache_id);
     EVP_MD_CTX_free(s->pha_dgst);
 
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
@@ -3072,9 +3093,24 @@ int SSL_export_keying_material_early(SSL *s, unsigned char *out, size_t olen,
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
     const unsigned char *session_id = a->session_id;
-    unsigned long l;
+    unsigned long l = 0;
     unsigned char tmp_storage[4];
+    size_t i;
 
+    /* if cache_id set, use that (assume client-side cache) */
+    if (a->cache_id != NULL) {
+        /* Hash the session id context */
+        for (i = 0; i < a->sid_ctx_length; i++)
+            l ^= (long)a->sid_ctx[i] << ((i & (sizeof(l)-1)) * 8);
+
+        /* hash the cache id */
+        for (i = 0; i < a->cache_id_len; i++)
+            l ^= (long)a->cache_id[i] << ((i & (sizeof(l)-1)) * 8);
+
+        return l;
+    }
+
+    /* hash session id (assume server-side cache) */
     if (a->session_id_length < sizeof(tmp_storage)) {
         memset(tmp_storage, 0, sizeof(tmp_storage));
         memcpy(tmp_storage, a->session_id, a->session_id_length);
@@ -3092,12 +3128,26 @@ static unsigned long ssl_session_hash(const SSL_SESSION *a)
 /*
  * NB: If this function (or indeed the hash function which uses a sort of
  * coarser function than this one) is changed, ensure
- * SSL_CTX_has_matching_session_id() is checked accordingly. It relies on
+ * SSL_has_matching_session_id() is checked accordingly. It relies on
  * being able to construct an SSL_SESSION that will collide with any existing
  * session with a matching session ID.
  */
 static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
 {
+    /* if both have cache_id set, use that (assume client-side cache) */
+    if (a->cache_id != NULL && b->cache_id != NULL) {
+        if (a->cache_id_len != b->cache_id_len
+                || memcmp(a->cache_id, b->cache_id, a->cache_id_len) != 0)
+            return 1;
+        if (a->sid_ctx_length != b->sid_ctx_length)
+            return 1;
+        if (a->sid_ctx_length > 0
+                && memcmp(a->sid_ctx, b->sid_ctx, a->sid_ctx_length) != 0)
+            return 1;
+        return 0;
+    }
+
+    /* compare session id (assume server-side cache) */
     if (a->ssl_version != b->ssl_version)
         return 1;
     if (a->session_id_length != b->session_id_length)
@@ -4049,6 +4099,10 @@ SSL *SSL_dup(SSL *s)
     if (!dup_ca_names(&ret->ca_names, s->ca_names)
             || !dup_ca_names(&ret->client_ca_names, s->client_ca_names))
         goto err;
+
+    if (s->cache_id != NULL)
+        if ((ret->cache_id = OPENSSL_memdup(s->cache_id, s->cache_id_len)) == NULL)
+            goto err;
 
     return ret;
 

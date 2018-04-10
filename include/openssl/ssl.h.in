@@ -1784,15 +1784,23 @@ void *SSL_get_default_passwd_cb_userdata(SSL *s);
 __owur int SSL_CTX_check_private_key(const SSL_CTX *ctx);
 __owur int SSL_check_private_key(const SSL *ctx);
 
+#define SSL_CTX_set1_session_id_context SSL_CTX_set_session_id_context
 __owur int SSL_CTX_set_session_id_context(SSL_CTX *ctx,
                                           const unsigned char *sid_ctx,
                                           unsigned int sid_ctx_len);
+__owur int SSL_CTX_get0_session_id_context(const SSL_CTX *ctx,
+                                           const unsigned char **sid_ctx,
+                                           size_t *sid_ctx_len);
 
 SSL *SSL_new(SSL_CTX *ctx);
 int SSL_up_ref(SSL *s);
 int SSL_is_dtls(const SSL *s);
+#define SSL_set1_session_id_context SSL_set_session_id_context
 __owur int SSL_set_session_id_context(SSL *ssl, const unsigned char *sid_ctx,
                                       unsigned int sid_ctx_len);
+__owur int SSL_get0_session_id_context(const SSL *ssl,
+                                       const unsigned char **sid_ctx,
+                                       size_t *sid_ctx_len);
 
 __owur int SSL_CTX_set_purpose(SSL_CTX *ctx, int purpose);
 __owur int SSL_set_purpose(SSL *ssl, int purpose);
@@ -2100,6 +2108,7 @@ __owur OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl);
 
 void SSL_set_verify_result(SSL *ssl, long v);
 __owur long SSL_get_verify_result(const SSL *ssl);
+__owur long SSL_SESSION_get_verify_result(const SSL_SESSION *ss);
 __owur STACK_OF(X509) *SSL_get0_verified_chain(const SSL *s);
 
 __owur size_t SSL_get_client_random(const SSL *ssl, unsigned char *out,
@@ -2527,7 +2536,6 @@ typedef unsigned int (*DTLS_timer_cb)(SSL *s, unsigned int timer_us);
 
 void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb);
 
-
 typedef int (*SSL_allow_early_data_cb_fn)(SSL *s, void *arg);
 void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
                                      SSL_allow_early_data_cb_fn cb,
@@ -2539,6 +2547,14 @@ void SSL_set_allow_early_data_cb(SSL *s,
 /* store the default cipher strings inside the library */
 const char *OSSL_default_cipher_list(void);
 const char *OSSL_default_ciphersuites(void);
+
+/* Client cache implementation */
+__owur SSL_SESSION *SSL_get1_previous_client_session(SSL *s);
+__owur int SSL_SESSION_set_timeout_update_cache(const SSL *s, long t);
+__owur int SSL_set1_cache_id(SSL *s, const unsigned char *data, size_t len);
+__owur int SSL_get0_cache_id(const SSL *s, const unsigned char **data, size_t *len);
+__owur int SSL_SESSION_set1_cache_id(SSL_SESSION *ss, const unsigned char *data, size_t len);
+__owur int SSL_SESSION_get0_cache_id(const SSL_SESSION *ss, const unsigned char **data, size_t *len);
 
 # ifdef  __cplusplus
 }

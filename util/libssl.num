@@ -520,3 +520,12 @@ SSL_load_client_CA_file_ex              ?	3_0_0	EXIST::FUNCTION:
 SSL_set0_tmp_dh_pkey                    ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set0_tmp_dh_pkey                ?	3_0_0	EXIST::FUNCTION:
 SSL_group_to_name                       ?	3_0_0	EXIST::FUNCTION:
+SSL_CTX_get0_session_id_context         ?	3_0_0	EXIST::FUNCTION:
+SSL_get0_session_id_context             ?	3_0_0	EXIST::FUNCTION:
+SSL_SESSION_get_verify_result           ?	3_0_0	EXIST::FUNCTION:
+SSL_get1_previous_client_session        ?	3_0_0	EXIST::FUNCTION:
+SSL_SESSION_set_timeout_update_cache    ?	3_0_0	EXIST::FUNCTION:
+SSL_set1_cache_id                       ?	3_0_0	EXIST::FUNCTION:
+SSL_get0_cache_id                       ?	3_0_0	EXIST::FUNCTION:
+SSL_SESSION_set1_cache_id               ?	3_0_0	EXIST::FUNCTION:
+SSL_SESSION_get0_cache_id               ?	3_0_0	EXIST::FUNCTION:
