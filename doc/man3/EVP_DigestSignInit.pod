@@ -77,7 +77,7 @@ context. This means that calls to EVP_DigestSignUpdate() and
 EVP_DigestSignFinal() can be called later to digest and sign additional data.
 
 Since only a copy of the digest context is ever finalized the context must
-be cleaned up after use by calling EVP_MD_CTX_cleanup() or a memory leak
+be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 
 The use of EVP_PKEY_size() with these functions is discouraged because some
