@@ -15,48 +15,7 @@
 #include <openssl/engine.h>
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
-#ifdef OPENSSL_SYS_UNIX
-# include <sys/types.h>
-# include <unistd.h>
-# include <sys/time.h>
-#endif
 #include "e_os.h"
-
-/* Macro to convert two thirty two bit values into a sixty four bit one */
-#define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
-
-/*
- * Check for the existence and support of POSIX timers.  The standard
- * says that the _POSIX_TIMERS macro will have a positive value if they
- * are available.
- *
- * However, we want an additional constraint: that the timer support does
- * not require an extra library dependency.  Early versions of glibc
- * require -lrt to be specified on the link line to access the timers,
- * so this needs to be checked for.
- *
- * It is worse because some libraries define __GLIBC__ but don't
- * support the version testing macro (e.g. uClibc).  This means
- * an extra check is needed.
- *
- * The final condition is:
- *      "have posix timers and either not glibc or glibc without -lrt"
- *
- * The nested #if sequences are required to avoid using a parameterised
- * macro that might be undefined.
- */
-#undef OSSL_POSIX_TIMER_OKAY
-#if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
-# if defined(__GLIBC__)
-#  if defined(__GLIBC_PREREQ)
-#   if __GLIBC_PREREQ(2, 17)
-#    define OSSL_POSIX_TIMER_OKAY
-#   endif
-#  endif
-# else
-#  define OSSL_POSIX_TIMER_OKAY
-# endif
-#endif
 
 #ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
@@ -68,6 +27,9 @@ static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
 int rand_fork_count;
+
+static CRYPTO_RWLOCK *rand_nonce_lock;
+static int rand_nonce_count;
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
@@ -247,72 +209,62 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 }
 
 /*
- * Find a suitable source of time.  Start with the highest resolution source
- * and work down to the slower ones.  This is added as additional data and
- * isn't counted as randomness, so any result is acceptable.
+ * Implements the cleanup_entropy() callback (see RAND_DRBG_set_callbacks())
  *
- * Returns 0 when we weren't able to find any time source
  */
-static uint64_t get_timer_bits(void)
+void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
+                               unsigned char *out, size_t outlen)
 {
-    uint64_t res = OPENSSL_rdtsc();
+    OPENSSL_secure_clear_free(out, outlen);
+}
 
-    if (res != 0)
-        return res;
-#if defined(_WIN32)
-    {
-        LARGE_INTEGER t;
-        FILETIME ft;
 
-        if (QueryPerformanceCounter(&t) != 0)
-            return t.QuadPart;
-        GetSystemTimeAsFileTime(&ft);
-        return TWO32TO64(ft.dwHighDateTime, ft.dwLowDateTime);
-    }
-#elif defined(__sun) || defined(__hpux)
-    return gethrtime();
-#elif defined(_AIX)
-    {
-        timebasestruct_t t;
+/*
+ * Implements the get_nonce() callback (see RAND_DRBG_set_callbacks())
+ *
+ */
+size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
+                           unsigned char **pout,
+                           int entropy, size_t min_len, size_t max_len)
+{
+    size_t ret = 0;
+    RAND_POOL *pool;
 
-        read_wall_time(&t, TIMEBASE_SZ);
-        return TWO32TO64(t.tb_high, t.tb_low);
-    }
-#else
+    struct {
+        void * instance;
+        int count;
+    } data = { 0 };
 
-# if defined(OSSL_POSIX_TIMER_OKAY)
-    {
-        struct timespec ts;
-        clockid_t cid;
+    pool = rand_pool_new(0, min_len, max_len);
+    if (pool == NULL)
+        return 0;
 
-#  ifdef CLOCK_BOOTTIME
-        cid = CLOCK_BOOTTIME;
-#  elif defined(_POSIX_MONOTONIC_CLOCK)
-        cid = CLOCK_MONOTONIC;
-#  else
-        cid = CLOCK_REALTIME;
-#  endif
+    if (rand_pool_add_nonce_data(pool) == 0)
+        goto err;
 
-        if (clock_gettime(cid, &ts) == 0)
-            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
-    }
-# endif
-# if defined(__unix__) \
-     || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-    {
-        struct timeval tv;
+    data.instance = drbg;
+    CRYPTO_atomic_add(&rand_nonce_count, 1, &data.count, rand_nonce_lock);
 
-        if (gettimeofday(&tv, NULL) == 0)
-            return TWO32TO64(tv.tv_sec, tv.tv_usec);
-    }
-# endif
-    {
-        time_t t = time(NULL);
-        if (t == (time_t)-1)
-            return 0;
-        return t;
-    }
-#endif
+    if (rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0) == 0)
+        goto err;
+
+    ret   = rand_pool_length(pool);
+    *pout = rand_pool_detach(pool);
+
+ err:
+    rand_pool_free(pool);
+
+    return ret;
+}
+
+/*
+ * Implements the cleanup_nonce() callback (see RAND_DRBG_set_callbacks())
+ *
+ */
+void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
+                             unsigned char *out, size_t outlen)
+{
+    OPENSSL_secure_clear_free(out, outlen);
 }
 
 /*
@@ -327,52 +279,26 @@ static uint64_t get_timer_bits(void)
  */
 size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
 {
+    size_t ret = 0;
     RAND_POOL *pool;
-    CRYPTO_THREAD_ID thread_id;
-    size_t len;
-#ifdef OPENSSL_SYS_UNIX
-    pid_t pid;
-#elif defined(OPENSSL_SYS_WIN32)
-    DWORD pid;
-#endif
-    uint64_t tbits;
 
     pool = rand_pool_new(0, 0, max_len);
     if (pool == NULL)
         return 0;
 
-#ifdef OPENSSL_SYS_UNIX
-    pid = getpid();
-    rand_pool_add(pool, (unsigned char *)&pid, sizeof(pid), 0);
-#elif defined(OPENSSL_SYS_WIN32)
-    pid = GetCurrentProcessId();
-    rand_pool_add(pool, (unsigned char *)&pid, sizeof(pid), 0);
-#endif
+    if (rand_pool_add_additional_data(pool) == 0)
+        goto err;
 
-    thread_id = CRYPTO_THREAD_get_current_id();
-    if (thread_id != 0)
-        rand_pool_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0);
+    ret = rand_pool_length(pool);
+    *pout = rand_pool_detach(pool);
 
-    tbits = get_timer_bits();
-    if (tbits != 0)
-        rand_pool_add(pool, (unsigned char *)&tbits, sizeof(tbits), 0);
-
-    /* TODO: Use RDSEED? */
-
-    len = rand_pool_length(pool);
-    if (len != 0)
-        *pout = rand_pool_detach(pool);
+ err:
     rand_pool_free(pool);
 
-    return len;
+    return ret;
 }
 
-/*
- * Implements the cleanup_entropy() callback (see RAND_DRBG_set_callbacks())
- *
- */
-void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
-                               unsigned char *out, size_t outlen)
+void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(out, outlen);
 }
@@ -393,6 +319,9 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     rand_meth_lock = CRYPTO_THREAD_lock_new();
     ret &= rand_meth_lock != NULL;
 
+    rand_nonce_lock = CRYPTO_THREAD_lock_new();
+    ret &= rand_meth_lock != NULL;
+
     return ret;
 }
 
@@ -407,6 +336,7 @@ void rand_cleanup_int(void)
     CRYPTO_THREAD_lock_free(rand_engine_lock);
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
+    CRYPTO_THREAD_lock_free(rand_nonce_lock);
 }
 
 /*

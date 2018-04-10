@@ -184,9 +184,23 @@ static RAND_DRBG *rand_drbg_new(int secure,
     drbg->parent = parent;
 
     if (parent == NULL) {
+        drbg->get_entropy = rand_drbg_get_entropy;
+        drbg->cleanup_entropy = rand_drbg_cleanup_entropy;
+#ifndef RAND_DRBG_GET_RANDOM_NONCE
+        drbg->get_nonce = rand_drbg_get_nonce;
+        drbg->cleanup_nonce = rand_drbg_cleanup_nonce;
+#endif
+
         drbg->reseed_interval = master_reseed_interval;
         drbg->reseed_time_interval = master_reseed_time_interval;
     } else {
+        drbg->get_entropy = rand_drbg_get_entropy;
+        drbg->cleanup_entropy = rand_drbg_cleanup_entropy;
+        /*
+         * Do not provide nonce callbacks, the child DRBGs will
+         * obtain their nonce using random bits from the parent.
+         */
+
         drbg->reseed_interval = slave_reseed_interval;
         drbg->reseed_time_interval = slave_reseed_time_interval;
     }
@@ -207,11 +221,6 @@ static RAND_DRBG *rand_drbg_new(int secure,
         }
         rand_drbg_unlock(parent);
     }
-
-    if (!RAND_DRBG_set_callbacks(drbg, rand_drbg_get_entropy,
-                                 rand_drbg_cleanup_entropy,
-                                 NULL, NULL))
-        goto err;
 
     return drbg;
 
