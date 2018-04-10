@@ -10,6 +10,7 @@
 #include "e_os.h"
 
 #if defined(OPENSSL_SYS_VMS)
+# include <unistd.h>
 # include "internal/cryptlib.h"
 # include <openssl/rand.h>
 # include "internal/rand_int.h"
@@ -151,6 +152,38 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     rand_pool_add(pool, (PTR_T)data_buffer, total_length,
                   total_length * ENTROPY_BITS_PER_BYTE);
     return rand_pool_entropy_available(pool);
+}
+
+int rand_pool_add_nonce_data(RAND_POOL *pool)
+{
+    struct {
+        pid_t pid;
+        CRYPTO_THREAD_ID tid;
+        uint64_t time;
+    } data;
+
+    /*
+     * Add PID and TID to ensure variation between different processes and
+     * threads.
+     */
+    data.pid = getpid();
+    data.tid = CRYPTO_THREAD_get_current_id();
+    sys$gettim_prec((struct _generic_64 *)&data.time);
+
+    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+}
+
+int rand_pool_add_additional_data(RAND_POOL *pool)
+{
+    struct {
+        CRYPTO_THREAD_ID tid;
+        uint64_t time;
+    } data;
+
+    data.tid = CRYPTO_THREAD_get_current_id();
+    sys$gettim_prec((struct _generic_64 *)&data.time);
+
+    return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
 #endif

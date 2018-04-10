@@ -118,6 +118,53 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     return rand_pool_entropy_available(pool);
 }
 
+
+int rand_pool_add_nonce_data(RAND_POOL *pool)
+{
+    DWORD curr_pid;
+    DWORD curr_tid;
+    LARGE_INTEGER t;
+    FILETIME ft;
+
+
+    /*
+     * Add gid, pid, and uid to nonce to ensure variation between
+     * different processes.
+     */
+
+    curr_pid = GetCurrentProcessId();
+    if (rand_pool_add(pool, (unsigned char *)&curr_pid, sizeof(curr_pid), 0) == 0)
+        return 0;
+
+    curr_tid = GetCurrentThreadId();
+    if (rand_pool_add(pool, (unsigned char *)&curr_tid, sizeof(curr_tid), 0) == 0)
+        return 0;
+
+    GetSystemTimeAsFileTime(&ft);
+    if (rand_pool_add(pool, (unsigned char *)&ft, sizeof(ft), 0) == 0)
+        return 0;
+
+    return 1;
+}
+
+int rand_pool_add_additional_data(RAND_POOL *pool)
+{
+    CRYPTO_THREAD_ID thread_id;
+    uint64_t rdtsc;
+    LARGE_INTEGER t;
+
+    thread_id = CRYPTO_THREAD_get_current_id();
+    if (rand_pool_add(pool, (unsigned char *)&thread_id, sizeof(thread_id), 0) == 0)
+        return 0;
+
+    rdtsc = OPENSSL_rdtsc();
+    if (rdtsc != 0)
+        return rand_pool_add(pool, (unsigned char *)&rdtsc, sizeof(rdtsc), 0);
+
+    QueryPerformanceCounter(&t);
+    return rand_pool_add(pool, (unsigned char *)&t, sizeof(t), 0);
+}
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
