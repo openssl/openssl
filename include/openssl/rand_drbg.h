@@ -35,9 +35,17 @@
  *
  * Currently supported ciphers are: NID_aes_128_ctr, NID_aes_192_ctr and
  * NID_aes_256_ctr
+ *
+ * Note: VMS entropy acquisition cannot deliver more than 256 bits for the
+ * moment. a DRBG strength of 256 bits  + 50% for nonce is more than that,
+ * so we currently must require lower strength on VMS.
  */
 # define RAND_DRBG_STRENGTH             256
-# define RAND_DRBG_TYPE                 NID_aes_256_ctr
+# ifndef __VMS
+#  define RAND_DRBG_TYPE                 NID_aes_256_ctr
+# else
+#  define RAND_DRBG_TYPE                 NID_aes_128_ctr
+# endif
 # define RAND_DRBG_FLAGS                0
 
 
