@@ -117,7 +117,12 @@ sub new
 
     if ($self->{proxy_sock}) {
         $self->{proxy_port} = $self->{proxy_sock}->sockport();
-        print "Proxy started on port ".$self->{proxy_port}."\n";
+        $self->{proxy_addr} = $self->{proxy_sock}->sockhost();
+        $self->{proxy_addr} =~ s/(.*:.*)/[$1]/;
+        print "Proxy started on port ",
+              "$self->{proxy_addr}:$self->{proxy_port}\n";
+        # use same address for s_server
+        $self->{server_addr} = $self->{proxy_addr};
     } else {
         warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
     }
@@ -212,11 +217,9 @@ sub start
 
     my $execcmd = $self->execute
         ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
-        ." -accept 0 -cert ".$self->cert." -cert2 ".$self->cert
+        ." -accept $self->{server_addr}:0"
+        ." -cert ".$self->cert." -cert2 ".$self->cert
         ." -naccept ".$self->serverconnects;
-    unless ($self->supports_IPv6) {
-        $execcmd .= " -4";
-    }
     if ($self->ciphers ne "") {
         $execcmd .= " -cipher ".$self->ciphers;
     }
@@ -286,7 +289,7 @@ sub start
     $self->{serverpid} = $pid;
 
     print STDERR "Server responds on ",
-        $self->{server_addr}, ":", $self->{server_port}, "\n";
+                 "$self->{server_addr}:$self->{server_port}\n";
 
     # Connect right away...
     $self->connect_to_server();
@@ -301,11 +304,8 @@ sub clientstart
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -max_protocol TLSv1.3 -engine ossltest -connect "
-             .($self->proxy_addr).":".($self->proxy_port);
-        unless ($self->supports_IPv6) {
-            $execcmd .= " -4";
-        }
+             ." s_client -max_protocol TLSv1.3 -engine ossltest"
+             ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->cipherc ne "") {
             $execcmd .= " -cipher ".$self->cipherc;
         }
@@ -314,6 +314,9 @@ sub clientstart
         }
         if ($self->clientflags ne "") {
             $execcmd .= " ".$self->clientflags;
+        }
+        if ($self->clientflags !~ m/-(no)?servername/) {
+            $execcmd .= " -servername localhost";
         }
         if (defined $self->sessionfile) {
             $execcmd .= " -ign_eof";
