@@ -1836,7 +1836,8 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     int err_in_client = 0;
     int err_in_server = 0;
 
-    acpt = BIO_new_accept("0");
+    acpt = BIO_new_accept(family == BIO_FAMILY_IPV4 ? "127.0.0.1:0"
+                                                    : "[::1]:0");
     if (acpt == NULL)
         goto err;
     BIO_set_accept_ip_family(acpt, family);

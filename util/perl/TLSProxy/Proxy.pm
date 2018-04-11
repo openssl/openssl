@@ -23,54 +23,15 @@ use TLSProxy::CertificateVerify;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
 
-my $have_IPv6 = 0;
+my $have_IPv6;
 my $IP_factory;
 
-my $is_tls13 = 0;
-my $ciphersuite = undef;
-
-sub new
+BEGIN
 {
-    my $class = shift;
-    my ($filter,
-        $execute,
-        $cert,
-        $debug) = @_;
-
-    my $self = {
-        #Public read/write
-        proxy_addr => "localhost",
-        server_addr => "localhost",
-        filter => $filter,
-        serverflags => "",
-        clientflags => "",
-        serverconnects => 1,
-        reneg => 0,
-        sessionfile => undef,
-
-        #Public read
-        proxy_port => 0,
-        server_port => 0,
-        serverpid => 0,
-        clientpid => 0,
-        execute => $execute,
-        cert => $cert,
-        debug => $debug,
-        cipherc => "",
-        ciphersuitesc => "",
-        ciphers => "AES128-SHA",
-        ciphersuitess => "TLS_AES_128_GCM_SHA256",
-        flight => -1,
-        direction => -1,
-        partial => ["", ""],
-        record_list => [],
-        message_list => [],
-    };
-
     # IO::Socket::IP is on the core module list, IO::Socket::INET6 isn't.
     # However, IO::Socket::INET6 is older and is said to be more widely
     # deployed for the moment, and may have less bugs, so we try the latter
-    # first, then fall back on the code modules.  Worst case scenario, we
+    # first, then fall back on the core modules.  Worst case scenario, we
     # fall back to IO::Socket::INET, only supports IPv4.
     eval {
         require IO::Socket::INET6;
@@ -101,8 +62,50 @@ sub new
             $have_IPv6 = 1;
         } else {
             $IP_factory = sub { IO::Socket::INET->new(@_); };
+            $have_IPv6 = 0;
         }
     }
+}
+
+my $is_tls13 = 0;
+my $ciphersuite = undef;
+
+sub new
+{
+    my $class = shift;
+    my ($filter,
+        $execute,
+        $cert,
+        $debug) = @_;
+
+    my $self = {
+        #Public read/write
+        proxy_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
+        filter => $filter,
+        serverflags => "",
+        clientflags => "",
+        serverconnects => 1,
+        reneg => 0,
+        sessionfile => undef,
+
+        #Public read
+        proxy_port => 0,
+        server_port => 0,
+        serverpid => 0,
+        clientpid => 0,
+        execute => $execute,
+        cert => $cert,
+        debug => $debug,
+        cipherc => "",
+        ciphersuitesc => "",
+        ciphers => "AES128-SHA",
+        ciphersuitess => "TLS_AES_128_GCM_SHA256",
+        flight => -1,
+        direction => -1,
+        partial => ["", ""],
+        record_list => [],
+        message_list => [],
+    };
 
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
@@ -113,11 +116,16 @@ sub new
         Proto       => "tcp",
         Listen      => SOMAXCONN,
        );
-    $self->{proxy_sock} = $IP_factory->(@proxyargs);
 
-    if ($self->{proxy_sock}) {
-        $self->{proxy_port} = $self->{proxy_sock}->sockport();
-        print "Proxy started on port ".$self->{proxy_port}."\n";
+    if (my $sock = $IP_factory->(@proxyargs)) {
+        $self->{proxy_sock} = $sock;
+        $self->{proxy_port} = $sock->sockport();
+        $self->{proxy_addr} = $sock->sockhost();
+        $self->{proxy_addr} =~ s/(.*:.*)/[$1]/;
+        print "Proxy started on port ",
+              "$self->{proxy_addr}:$self->{proxy_port}\n";
+        # use same address for s_server
+        $self->{server_addr} = $self->{proxy_addr};
     } else {
         warn "Failed creating proxy socket (".$proxaddr.",0): $!\n";
     }
@@ -212,11 +220,9 @@ sub start
 
     my $execcmd = $self->execute
         ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
-        ." -accept 0 -cert ".$self->cert." -cert2 ".$self->cert
+        ." -accept $self->{server_addr}:0"
+        ." -cert ".$self->cert." -cert2 ".$self->cert
         ." -naccept ".$self->serverconnects;
-    unless ($self->supports_IPv6) {
-        $execcmd .= " -4";
-    }
     if ($self->ciphers ne "") {
         $execcmd .= " -cipher ".$self->ciphers;
     }
@@ -286,7 +292,7 @@ sub start
     $self->{serverpid} = $pid;
 
     print STDERR "Server responds on ",
-        $self->{server_addr}, ":", $self->{server_port}, "\n";
+                 "$self->{server_addr}:$self->{server_port}\n";
 
     # Connect right away...
     $self->connect_to_server();
@@ -301,11 +307,8 @@ sub clientstart
     if ($self->execute) {
         my $pid;
         my $execcmd = $self->execute
-             ." s_client -max_protocol TLSv1.3 -engine ossltest -connect "
-             .($self->proxy_addr).":".($self->proxy_port);
-        unless ($self->supports_IPv6) {
-            $execcmd .= " -4";
-        }
+             ." s_client -max_protocol TLSv1.3 -engine ossltest"
+             ." -connect $self->{proxy_addr}:$self->{proxy_port}";
         if ($self->cipherc ne "") {
             $execcmd .= " -cipher ".$self->cipherc;
         }
@@ -314,6 +317,9 @@ sub clientstart
         }
         if ($self->clientflags ne "") {
             $execcmd .= " ".$self->clientflags;
+        }
+        if ($self->clientflags !~ m/-(no)?servername/) {
+            $execcmd .= " -servername localhost";
         }
         if (defined $self->sessionfile) {
             $execcmd .= " -ign_eof";
