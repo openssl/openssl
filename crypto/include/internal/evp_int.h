@@ -424,7 +424,7 @@ void evp_app_cleanup_int(void);
 # define TLS1_1_VERSION   0x0302
 #endif
 
-void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, uint64_t flags);
+void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 
 /* EVP_ENCODE_CTX flags */
 /* Don't generate new lines when encoding */
