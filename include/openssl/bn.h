@@ -60,6 +60,7 @@ extern "C" {
  */
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
+# define BN_FLG_PUBLIC_DATA      0x10
 
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */

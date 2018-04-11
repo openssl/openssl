@@ -143,8 +143,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     if (pnoinv)
         *pnoinv = 0;
 
-    if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
+    if ((BN_get_flags(a, BN_FLG_PUBLIC_DATA) == 0)
+        || (BN_get_flags(n, BN_FLG_PUBLIC_DATA) == 0)) {
         return BN_mod_inverse_no_branch(in, a, n, ctx);
     }
 

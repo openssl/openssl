@@ -158,8 +158,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     bn_check_top(num);
     bn_check_top(divisor);
 
-    if ((BN_get_flags(num, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0)) {
+    if ((BN_get_flags(num, BN_FLG_PUBLIC_DATA) == 0)
+        || (BN_get_flags(divisor, BN_FLG_PUBLIC_DATA) == 0)) {
         no_branch = 1;
     }
 

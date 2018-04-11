@@ -134,9 +134,9 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
     if (BN_is_odd(m)) {
 # ifdef MONT_EXP_WORD
         if (a->top == 1 && !a->neg
-            && (BN_get_flags(p, BN_FLG_CONSTTIME) == 0)
-            && (BN_get_flags(a, BN_FLG_CONSTTIME) == 0)
-            && (BN_get_flags(m, BN_FLG_CONSTTIME) == 0)) {
+                && BN_get_flags(p, BN_FLG_PUBLIC_DATA) != 0
+                && BN_get_flags(a, BN_FLG_PUBLIC_DATA) != 0
+                && BN_get_flags(m, BN_FLG_PUBLIC_DATA) != 0) {
             BN_ULONG A = a->d[0];
             ret = BN_mod_exp_mont_word(r, A, p, m, ctx, NULL);
         } else
@@ -304,9 +304,9 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     BIGNUM *val[TABLE_SIZE];
     BN_MONT_CTX *mont = NULL;
 
-    if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0
-            || BN_get_flags(a, BN_FLG_CONSTTIME) != 0
-            || BN_get_flags(m, BN_FLG_CONSTTIME) != 0) {
+    if (BN_get_flags(p, BN_FLG_PUBLIC_DATA) == 0
+            || BN_get_flags(a, BN_FLG_PUBLIC_DATA) == 0
+            || BN_get_flags(m, BN_FLG_PUBLIC_DATA) == 0) {
         return BN_mod_exp_mont_consttime(rr, a, p, m, ctx, in_mont);
     }
 
