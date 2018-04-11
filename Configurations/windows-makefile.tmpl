@@ -88,12 +88,9 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
-GENERATED={- join(" ",
-                  ( map { (my $x = $_) =~ s|\.[sS]$|\.asm|; $x }
-                    grep { defined $unified_info{generate}->{$_} }
-                    map { @{$unified_info{sources}->{$_}} }
-                    grep { /\.o$/ } keys %{$unified_info{sources}} ),
-                  ( grep { /\.(?:h|def)$/ } keys %{$unified_info{generate}} )) -}
+GENERATED={- # common0.tmpl provides @generated
+             join(" ", map { (my $x = $_) =~ s|\.[sS]$|.asm|; $x }
+                       @generated) -}
 
 INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}

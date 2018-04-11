@@ -55,11 +55,6 @@
   our @install_shlibs =
       map { $unified_info{sharednames}->{$_} || () }
       grep(!/\.a$/, @{$unified_info{install}->{libraries}});
-  our @generated = ( ( map { (my $x = $_) =~ s|\.[sS]$|\.asm|; $x }
-                       grep { defined $unified_info{generate}->{$_} }
-                       map { @{$unified_info{sources}->{$_}} }
-                       grep { /\.o$/ } keys %{$unified_info{sources}} ),
-                     ( grep { /\.(?:h|opt)$/ } keys %{$unified_info{generate}} ) );
 
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.
@@ -136,7 +131,9 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
         join(", ", map { "-\n\t".$_ } @deps); -}
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
-GENERATED={- join(", ", map { "-\n\t".$_ } @generated) -}
+GENERATED={- # common0.tmpl provides @generated
+             join(", ", map { (my $x = $_) =~ s|\.[sS]$|.asm|; "-\n\t".$x }
+                        @generated) -}
 
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
