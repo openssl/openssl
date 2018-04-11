@@ -319,6 +319,11 @@ build_apps build_tests: build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
+	@rem {- output_off() if $disabled{makedepend}; "" -}
+	@echo "Warning: consider configuring with no-makedepend, because if"
+	@echo "         target system doesn't have $(PERL),"
+	@echo "         then make will fail..."
+	@rem {- output_on() if $disabled{makedepend}; "" -}
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
@@ -579,6 +584,11 @@ EOF
          return <<"EOF";
 $obj$objext: $deps
 	\$(AS) $asflags \$(ASOUTFLAG)\$\@ $srcs
+EOF
+     } elsif ($srcs[0] =~ /.S$/) {
+         return <<"EOF";
+$obj$objext: $deps
+	\$(CC) /EP /D__ASSEMBLER__ $cflags $srcs > \$@.asm && \$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
 EOF
      }
      return <<"EOF"	if (!$disabled{makedepend});
