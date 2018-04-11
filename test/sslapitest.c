@@ -3887,7 +3887,7 @@ static int create_new_vbase(char *userid, char *password)
 {
     BIGNUM *verifier = NULL, *salt = NULL;
     const SRP_gN *lgN = NULL;
-    SRP_user_pwd *user_pwd;
+    SRP_user_pwd *user_pwd = NULL;
     int ret = 0;
 
     lgN = SRP_get_default_gN(NULL);
