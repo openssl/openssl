@@ -165,7 +165,7 @@ In each table entry, the following keys are significant:
                            that use dlopen() et al but do not have
                            fcntl.h), "DL" (shl_load() et al), "WIN32"
                            and "VMS".
-        perlasm_scheme  => The perlasm method used to created the
+        perlasm_scheme  => The perlasm method used to create the
                            assembler files used when compiling with
                            assembler implementations.
         shared_target   => The shared library building method used.
@@ -429,7 +429,7 @@ It's also possible to depend on static libraries explicitly:
 
 This should be rarely used, and care should be taken to make sure it's
 only used when supported.  For example, native Windows build doesn't
-support build static libraries and DLLs at the same time, so using
+support building static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
 'no-shared'.
 
@@ -445,7 +445,7 @@ library:
 
     RENAME[libfoo]=libbar
 
-That lines has "libfoo" get renamed to "libbar".  While it makes no
+That line has "libfoo" renamed to "libbar".  While it makes no
 sense at all to just have a rename like that (why not just use
 "libbar" everywhere?), it does make sense when it can be used
 conditionally.  See a little further below for an example.
