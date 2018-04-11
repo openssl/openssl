@@ -177,12 +177,16 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 int rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
+        CRYPTO_THREAD_ID tid;
         uint64_t time;
     } data;
 
     /*
-     * Add some noise from a high resolution timer
+     * Add some noise from the thread id and a high resolution timer.
+     * The thread id adds a little randomness if the drbg is accessed
+     * concurrently (which is the case for the <master> drbg).
      */
+    data.tid = CRYPTO_THREAD_get_current_id();
     sys$gettim_prec((struct _generic_64 *)&data.time);
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
