@@ -43,16 +43,16 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
     EVP_ENCODE_CTX *ctx;
     int outl = 0, outl2 = 0;
     size_t size, padsize;
-    unsigned char *pad = (unsigned char *)"00";
+    const unsigned char *pad = (unsigned char *)"00";
 
-    while (*src != '\0' && (*src == ' ' || *src == '\t' || *src == '\n'))
+    while (*src == ' ' || *src == '\t' || *src == '\n')
         ++src;
     size = strlen(src);
     padsize = 4 - (size & 3);
-    if (padsize == 4)
-        padsize = 0;
+    padsize &= 3;
 
-    if (size > INT_MAX)
+    /* Four bytes in src become three bytes output. */
+    if (size > INT_MAX || (size / 4) * 3 > alen)
         return -1;
 
     ctx = EVP_ENCODE_CTX_new();
@@ -95,6 +95,19 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
     if (padsize != 0) {
         if ((int)padsize >= outl)
             return -1;
+        /*
+         * If we added 1 byte of padding prior to encoding then we have 2 bytes
+         * of "real" data which gets spread across 4 encoded bytes like this:
+         *   (6 bits pad)(2 bits pad | 4 bits data)(6 bits data)(6 bits data)
+         * So 1 byte of pre-encoding padding results in 1 full byte of encoded
+         * padding.
+         * If we added 2 bytes of padding prior to encoding this gets encoded
+         * as:
+         *   (6 bits pad)(6 bits pad)(4 bits pad | 2 bits data)(6 bits data)
+         * So 2 bytes of pre-encoding padding results in 2 full bytes of encoded
+         * padding, i.e. we have to strip the same number of bytes of padding
+         * from the encoded data as we added to the pre-encoded data.
+         */
         memmove(a, a + padsize, outl - padsize);
         outl -= padsize;
     }
@@ -122,7 +135,11 @@ static int t_tob64(char *dst, const unsigned char *src, int size)
     evp_encode_ctx_set_flags(ctx, EVP_ENCODE_CTX_NO_NEWLINES
                                   | EVP_ENCODE_CTX_USE_SRP_ALPHABET);
 
-    /* We pad at the front with zero bytes as required */
+    /*
+     * We pad at the front with zero bytes until the length is a multiple of 3
+     * so that EVP_EncodeUpdate/EVP_EncodeFinal does not add any of its own "="
+     * padding
+     */
     leadz = 3 - (size % 3);
     if (leadz != 3
             && !EVP_EncodeUpdate(ctx, (unsigned char *)dst, &outl, pad,
