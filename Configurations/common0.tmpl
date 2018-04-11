@@ -12,8 +12,10 @@
      ( # The sources of stuff may be generated
          ( map { @{$unified_info{sources}->{$_}} }
                keys %{$unified_info{sources}} ),
-         ( map { @{$unified_info{shared_sources}->{$_}} }
-               keys %{$unified_info{shared_sources}} ),
+         $disabled{shared}
+             ? ()
+             : ( map { @{$unified_info{shared_sources}->{$_}} }
+                 keys %{$unified_info{shared_sources}} ),
          # Sources keys may be scripts, and thereby generated
          keys %{$unified_info{sources}},
          # Things we explicitely depend on are usually generated
