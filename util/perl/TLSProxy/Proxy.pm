@@ -189,10 +189,16 @@ sub connect_to_server
 
     $servaddr =~ s/[\[\]]//g; # Remove [ and ]
 
-    $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
-                                         PeerPort => $self->{server_port},
-                                         Proto => 'tcp')
-                           or die "unable to connect: $!\n";
+    my $sock = $IP_factory->(PeerAddr => $servaddr,
+                             PeerPort => $self->{server_port},
+                             Proto => 'tcp');
+    if (!defined($sock)) {
+        my $err = $!;
+        kill(3, $self->{real_serverpid});
+        die "unable to connect: $err\n";
+    }
+
+    $self->{server_sock} = $sock;
 }
 
 sub start
