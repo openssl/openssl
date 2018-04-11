@@ -31,7 +31,7 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes"
+    - CONFIG_OPTS="no-asm no-makedepend --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
 
 matrix:
     include:
@@ -161,6 +161,11 @@ script:
       else
           make="make";
       fi
+    - if [ -n "$GENERATE" ]; then
+          make2="$make PERL=no-perl";
+      else
+          make2="$make";
+      fi
     - top=${PWD}
     - if [ -n "$DESTDIR" ]; then
           cd _build;
@@ -178,10 +183,17 @@ script:
               echo -e '+\057\057 MAKE DOC-NITS FAILED'; false;
           fi;
       fi
-    - if $make; then
-          echo -e '+\057\057\057 MAKE OK';
+    - if [ -n "$GENERATE" ]; then
+          if $make build_all_generated; then
+              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED OK';
+          else
+              echo -e '+\057\057\057 MAKE BUILD_ALL_GENERATED FAILED'; false;
+          fi;
+      fi
+    - if $make2; then
+          echo -e '+\057\057\057\057 MAKE OK';
       else
-          echo -e '+\057\057\057 MAKE FAILED'; false;
+          echo -e '+\057\057\057\057 MAKE FAILED'; false;
       fi;
     - if [ -z "$BUILDONLY" ]; then
           if [ -n "$CROSS_COMPILE" ]; then
@@ -194,15 +206,15 @@ script:
               sudo apt-get -yq install bison dejagnu gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python-cjson python-paste python-pyrad slapd tcl-dev tcsh;
           fi;
           if HARNESS_VERBOSE=yes BORING_RUNNER_DIR=$top/boringssl/ssl/test/runner make test; then
-              echo -e '+\057\057\057\057 MAKE TEST OK';
+              echo -e '+\057\057\057\057\057 MAKE TEST OK';
           else
-              echo -e '+\057\057\057\057 MAKE TEST FAILED'; false;
+              echo -e '+\057\057\057\057\057 MAKE TEST FAILED'; false;
           fi;
       else
           if $make build_tests >~/build.log 2>&1; then
-              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS OK';
+              echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS OK';
           else
-              echo -e '+\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
+              echo -e '+\057\057\057\057\057\057 MAKE BUILD_TESTS FAILED';
               cat ~/build.log
               false;
           fi;
@@ -210,9 +222,9 @@ script:
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
           if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
-              echo -e '+\057\057\057\057\057\057 MAKE INSTALL OK';
+              echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL OK';
           else
-              echo -e '+\057\057\057\057\057\057 MAKE INSTALL FAILED';
+              echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL FAILED';
               cat ~/install.log;
               false;
           fi;

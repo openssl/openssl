@@ -43,7 +43,8 @@ build_script:
     - cd _build
     - ps: >-
         If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            cmd /c "nmake 2>&1"
+            cmd /c "nmake build_all_generated 2>&1"
+            cmd /c "nmake PERL=no-perl 2>&1"
         }
     - cd ..
 
