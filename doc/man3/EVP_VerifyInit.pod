@@ -57,7 +57,7 @@ This means that calls to EVP_VerifyUpdate() and EVP_VerifyFinal() can be called
 later to digest and verify additional data.
 
 Since only a copy of the digest context is ever finalized the context must
-be cleaned up after use by calling EVP_MD_CTX_cleanup() or a memory leak
+be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 
 =head1 BUGS
