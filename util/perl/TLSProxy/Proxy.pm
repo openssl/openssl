@@ -430,7 +430,7 @@ sub clientstart
         }
         $pid = $self->{real_serverpid};
         print "Waiting for s_server process to close: $pid...\n";
-	# it's done already, just collect the exit code [and reap]...
+        # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
         die "exit code $? from s_server process\n" if $? != 0;
     } else {
