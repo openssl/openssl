@@ -254,6 +254,46 @@ struct bn_gencb_st {
     } cb;
 };
 
+static ossl_inline void bn_set_public_private(BIGNUM *r, int is_public)
+{
+    if (is_public)
+        BN_set_public(r);
+    else
+        BN_set_private(r);
+}
+
+/* Sets |r| to public if |a| is. Otherwise sets it to private */
+static ossl_inline void bn_set_public_private1(BIGNUM *r, const BIGNUM *a)
+{
+    if (BN_is_public(a))
+        BN_set_public(r);
+    else
+        BN_set_private(r);
+}
+
+/* Sets |r| to public if both |a| and |b| are. Otherwise sets it to private */
+static ossl_inline void bn_set_public_private2(BIGNUM *r, const BIGNUM *a,
+                                               const BIGNUM *b)
+{
+    if (BN_is_public(a) && BN_is_public(b))
+        BN_set_public(r);
+    else
+        BN_set_private(r);
+}
+
+/*
+ * Sets |r| to public if both |a|, |b| and |c| are. Otherwise sets it to
+ * private
+ */
+static ossl_inline void bn_set_public_private3(BIGNUM *r, const BIGNUM *a,
+                                               const BIGNUM *b, const BIGNUM *c)
+{
+    if (BN_is_public(a) && BN_is_public(b) && BN_is_public(c))
+        BN_set_public(r);
+    else
+        BN_set_private(r);
+}
+
 /*-
  * BN_window_bits_for_exponent_size -- macro for sliding window mod_exp functions
  *

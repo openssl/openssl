@@ -44,7 +44,10 @@ int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 {
     if (!BN_copy(&(recp->N), d))
         return 0;
-    BN_zero(&(recp->Nr));
+    if (BN_is_public(d))
+        BN_zero_public(&(recp->Nr));
+    else
+        BN_zero(&(recp->Nr));
     recp->num_bits = BN_num_bits(d);
     recp->shift = 0;
     return 1;
@@ -155,6 +158,10 @@ int BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 
     r->neg = BN_is_zero(r) ? 0 : m->neg;
     d->neg = m->neg ^ recp->N.neg;
+
+    bn_set_public_private2(r, m, &(recp->N));
+    bn_set_public_private2(d, m, &(recp->N));
+
     ret = 1;
  err:
     BN_CTX_end(ctx);
@@ -177,6 +184,7 @@ int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
     BN_CTX_start(ctx);
     if ((t = BN_CTX_get(ctx)) == NULL)
         goto err;
+    bn_set_public_private1(t, m);
 
     if (!BN_set_bit(t, len))
         goto err;

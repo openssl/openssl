@@ -53,7 +53,7 @@ const BIGNUM bn_group_1024 = {
     OSSL_NELEM(bn_group_1024_value),
     OSSL_NELEM(bn_group_1024_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_group_1536_value[] = {
@@ -88,7 +88,7 @@ const BIGNUM bn_group_1536 = {
     OSSL_NELEM(bn_group_1536_value),
     OSSL_NELEM(bn_group_1536_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_group_2048_value[] = {
@@ -131,7 +131,7 @@ const BIGNUM bn_group_2048 = {
     OSSL_NELEM(bn_group_2048_value),
     OSSL_NELEM(bn_group_2048_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_group_3072_value[] = {
@@ -190,7 +190,7 @@ const BIGNUM bn_group_3072 = {
     OSSL_NELEM(bn_group_3072_value),
     OSSL_NELEM(bn_group_3072_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_group_4096_value[] = {
@@ -265,7 +265,7 @@ const BIGNUM bn_group_4096 = {
     OSSL_NELEM(bn_group_4096_value),
     OSSL_NELEM(bn_group_4096_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_group_6144_value[] = {
@@ -372,7 +372,7 @@ const BIGNUM bn_group_6144 = {
     OSSL_NELEM(bn_group_6144_value),
     OSSL_NELEM(bn_group_6144_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_group_8192_value[] = {
@@ -511,7 +511,7 @@ const BIGNUM bn_group_8192 = {
     OSSL_NELEM(bn_group_8192_value),
     OSSL_NELEM(bn_group_8192_value),
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BN_ULONG bn_generator_19_value[] = { 19 };
@@ -521,7 +521,7 @@ const BIGNUM bn_generator_19 = {
     1,
     1,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 static const BN_ULONG bn_generator_5_value[] = { 5 };
 
@@ -530,7 +530,7 @@ const BIGNUM bn_generator_5 = {
     1,
     1,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 static const BN_ULONG bn_generator_2_value[] = { 2 };
 
@@ -539,7 +539,7 @@ const BIGNUM bn_generator_2 = {
     1,
     1,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 #endif

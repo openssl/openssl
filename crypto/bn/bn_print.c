@@ -156,6 +156,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         ret = *bn;
         BN_zero(ret);
     }
+    BN_set_private(ret);
 
     /* i is the number of hex digits */
     if (bn_expand(ret, i * 4) == NULL)
@@ -196,6 +197,15 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
     return 0;
 }
 
+int BN_hex2bn_public(BIGNUM **bn, const char *a)
+{
+    int ret = BN_hex2bn(bn, a);
+
+    if (ret > 0)
+        BN_set_public(*bn);
+    return ret;
+}
+
 int BN_dec2bn(BIGNUM **bn, const char *a)
 {
     BIGNUM *ret = NULL;
@@ -231,6 +241,7 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
         ret = *bn;
         BN_zero(ret);
     }
+    BN_set_private(ret);
 
     /* i is the number of digits, a bit of an over expand */
     if (bn_expand(ret, i * 4) == NULL)
@@ -266,6 +277,15 @@ int BN_dec2bn(BIGNUM **bn, const char *a)
     return 0;
 }
 
+int BN_dec2bn_public(BIGNUM **bn, const char *a)
+{
+    int ret = BN_dec2bn(bn, a);
+
+    if (ret > 0)
+        BN_set_public(*bn);
+    return ret;
+}
+
 int BN_asc2bn(BIGNUM **bn, const char *a)
 {
     const char *p = a;
@@ -284,6 +304,15 @@ int BN_asc2bn(BIGNUM **bn, const char *a)
     if (*a == '-' && (*bn)->top != 0)
         (*bn)->neg = 1;
     return 1;
+}
+
+int BN_asc2bn_public(BIGNUM **bn, const char *a)
+{
+    int ret = BN_asc2bn(bn, a);
+
+    if (ret > 0)
+        BN_set_public(*bn);
+    return ret;
 }
 
 # ifndef OPENSSL_NO_STDIO

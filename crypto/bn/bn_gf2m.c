@@ -276,6 +276,7 @@ int BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     r->top = at->top;
     bn_correct_top(r);
 
+    bn_set_public_private2(r, a, b);
     return 1;
 }
 
@@ -298,6 +299,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
     if (!p[0]) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
+        bn_set_public_private1(r, a);
         return 1;
     }
 
@@ -376,6 +378,7 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
     }
 
     bn_correct_top(r);
+    bn_set_public_private1(r, a);
     return 1;
 }
 
@@ -398,6 +401,7 @@ int BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
     }
     ret = BN_GF2m_mod_arr(r, a, arr);
     bn_check_top(r);
+    bn_set_public_private2(r, a, p);
     return ret;
 }
 
@@ -422,6 +426,7 @@ int BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_CTX_start(ctx);
     if ((s = BN_CTX_get(ctx)) == NULL)
         goto err;
+    bn_set_public_private2(s, a, b);
 
     zlen = a->top + b->top + 4;
     if (!bn_wexpand(s, zlen))
@@ -494,6 +499,7 @@ int BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[],
     BN_CTX_start(ctx);
     if ((s = BN_CTX_get(ctx)) == NULL)
         goto err;
+    bn_set_public_private1(s, a);
     if (!bn_wexpand(s, 2 * a->top))
         goto err;
 
@@ -536,6 +542,7 @@ int BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     }
     ret = BN_GF2m_mod_sqr_arr(r, a, arr, ctx);
     bn_check_top(r);
+    bn_set_public_private2(r, a, p);
  err:
     OPENSSL_free(arr);
     return ret;
@@ -563,6 +570,9 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
     v = BN_CTX_get(ctx);
     if (v == NULL)
         goto err;
+
+    bn_set_public_private2(b, a, p);
+    bn_set_public_private2(c, a, p);
 
     if (!BN_GF2m_mod(u, a, p))
         goto err;
@@ -796,6 +806,7 @@ int BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x,
     v = BN_CTX_get(ctx);
     if (v == NULL)
         goto err;
+    bn_set_public_private3(v, y, x, p);
 
     /* reduce x and y mod p */
     if (!BN_GF2m_mod(u, y, p))
@@ -906,8 +917,11 @@ int BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     if (BN_is_zero(b))
         return BN_one(r);
 
-    if (BN_abs_is_word(b, 1))
-        return (BN_copy(r, a) != NULL);
+    if (BN_abs_is_word(b, 1)) {
+        if (BN_copy(r, a) == NULL)
+            return 0;
+        bn_set_public_private2(r, a, b);
+    }
 
     BN_CTX_start(ctx);
     if ((u = BN_CTX_get(ctx)) == NULL)
@@ -957,6 +971,7 @@ int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         goto err;
     }
     ret = BN_GF2m_mod_exp_arr(r, a, b, arr, ctx);
+    bn_set_public_private3(r, a, b, p);
     bn_check_top(r);
  err:
     OPENSSL_free(arr);
@@ -978,6 +993,7 @@ int BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const int p[],
     if (!p[0]) {
         /* reduction mod 1 => return 0 */
         BN_zero(r);
+        bn_set_public_private1(r, a);
         return 1;
     }
 
@@ -1016,6 +1032,7 @@ int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         goto err;
     }
     ret = BN_GF2m_mod_sqrt_arr(r, a, arr, ctx);
+    bn_set_public_private2(r, a, p);
     bn_check_top(r);
  err:
     OPENSSL_free(arr);
@@ -1053,6 +1070,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
     if (BN_is_zero(a)) {
         BN_zero(r);
         ret = 1;
+        bn_set_public_private1(r, a_);
         goto err;
     }
 
@@ -1116,6 +1134,7 @@ int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
     if (!BN_copy(r, z))
         goto err;
     bn_check_top(r);
+    bn_set_public_private1(r, a_);
 
     ret = 1;
 
@@ -1147,6 +1166,7 @@ int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     }
     ret = BN_GF2m_mod_solve_quad_arr(r, a, arr, ctx);
     bn_check_top(r);
+    bn_set_public_private2(r, a, p);
  err:
     OPENSSL_free(arr);
     return ret;

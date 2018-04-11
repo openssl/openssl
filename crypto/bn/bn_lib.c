@@ -81,7 +81,18 @@ const BIGNUM *BN_value_one(void)
 {
     static const BN_ULONG data_one = 1L;
     static const BIGNUM const_one =
-        { (BN_ULONG *)&data_one, 1, 1, 0, BN_FLG_STATIC_DATA };
+        { (BN_ULONG *)&data_one, 1, 1, 0,
+          BN_FLG_STATIC_DATA};
+
+    return &const_one;
+}
+
+const BIGNUM *BN_value_one_public(void)
+{
+    static const BN_ULONG data_one = 1L;
+    static const BIGNUM const_one =
+        { (BN_ULONG *)&data_one, 1, 1, 0,
+          BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA};
 
     return &const_one;
 }
@@ -195,13 +206,14 @@ BIGNUM *BN_new(void)
     return ret;
 }
 
- BIGNUM *BN_secure_new(void)
- {
-     BIGNUM *ret = BN_new();
-     if (ret != NULL)
-         ret->flags |= BN_FLG_SECURE;
-     return ret;
- }
+BIGNUM *BN_secure_new(void)
+{
+    BIGNUM *ret = BN_new();
+
+    if (ret != NULL)
+        ret->flags |= BN_FLG_SECURE;
+    return ret;
+}
 
 /* This is used by bn_expand2() */
 /* The caller MUST check that words > b->dmax before calling this */
@@ -279,6 +291,8 @@ BIGNUM *BN_dup(const BIGNUM *a)
         return NULL;
     }
     bn_check_top(t);
+    if (BN_is_public(a))
+        BN_set_public(t);
     return t;
 }
 
@@ -287,7 +301,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     bn_check_top(b);
 
     if (a == b)
-        return a;
+        goto end;
     if (bn_wexpand(a, b->top) == NULL)
         return NULL;
 
@@ -297,6 +311,11 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     a->top = b->top;
     a->neg = b->neg;
     bn_check_top(a);
+ end:
+    if (BN_is_public(b))
+        BN_set_public(a);
+    else
+        BN_set_private(a);
     return a;
 }
 
@@ -342,6 +361,7 @@ void BN_clear(BIGNUM *a)
         OPENSSL_cleanse(a->d, sizeof(*a->d) * a->dmax);
     a->top = 0;
     a->neg = 0;
+    BN_set_private(a);
 }
 
 BN_ULONG BN_get_word(const BIGNUM *a)
@@ -362,6 +382,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     a->neg = 0;
     a->d[0] = w;
     a->top = (w ? 1 : 0);
+    BN_set_private(a);
     bn_check_top(a);
     return 1;
 }
@@ -378,6 +399,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     if (ret == NULL)
         return NULL;
     bn_check_top(ret);
+    BN_set_private(ret);
     /* Skip leading zero's. */
     for ( ; len > 0 && *s == 0; s++, len--)
         continue;
@@ -409,6 +431,16 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
      */
     bn_correct_top(ret);
     return ret;
+}
+
+BIGNUM *BN_bin2bn_public(const unsigned char *s, int len, BIGNUM *ret)
+{
+    BIGNUM *tmp = BN_bin2bn(s, len, ret);
+
+    if (ret != NULL)
+        BN_set_public(tmp);
+
+    return tmp;
 }
 
 /* ignore negative */
@@ -458,6 +490,7 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
         ret = bn = BN_new();
     if (ret == NULL)
         return NULL;
+    BN_set_private(ret);
     bn_check_top(ret);
     s += len;
     /* Skip trailing zeroes. */
@@ -492,6 +525,16 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
      */
     bn_correct_top(ret);
     return ret;
+}
+
+BIGNUM *BN_lebin2bn_public(const unsigned char *s, int len, BIGNUM *ret)
+{
+    BIGNUM *tmp = BN_lebin2bn(s, len, ret);
+
+    if (tmp != NULL)
+        BN_set_public(tmp);
+
+    return tmp;
 }
 
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
@@ -733,6 +776,9 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     assert((condition & (condition - 1)) == 0);
     assert(sizeof(BN_ULONG) >= sizeof(int));
 
+    BN_set_private(a);
+    BN_set_private(b);
+
     condition = ((condition - 1) >> (BN_BITS2 - 1)) - 1;
 
     t = (a->top ^ b->top) & condition;
@@ -804,6 +850,7 @@ void BN_zero_ex(BIGNUM *a)
 {
     a->top = 0;
     a->neg = 0;
+    BN_set_private(a);
 }
 
 int BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
@@ -875,6 +922,11 @@ void BN_GENCB_free(BN_GENCB *cb)
 void BN_set_flags(BIGNUM *b, int n)
 {
     b->flags |= n;
+}
+
+void BN_clear_flags(BIGNUM *b, int flags)
+{
+    b->flags &= ~flags;
 }
 
 int BN_get_flags(const BIGNUM *b, int n)

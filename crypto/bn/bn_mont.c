@@ -38,6 +38,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
             r->neg = a->neg ^ b->neg;
             r->top = num;
             bn_correct_top(r);
+            bn_set_public_private3(r, a, b, &(mont->N));
             return 1;
         }
     }
@@ -143,6 +144,7 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
     bn_correct_top(r);
     bn_correct_top(ret);
     bn_check_top(ret);
+    bn_set_public_private2(ret, r, &(mont->N));
 
     return 1;
 }
@@ -258,6 +260,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
         if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
             BN_set_flags(&tmod, BN_FLG_CONSTTIME);
+        bn_set_public_private1(&tmod, mod);
 
         mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
 
@@ -270,6 +273,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
          */
 
         BN_zero(R);
+        bn_set_private_public1(R, mod);
         if (!(BN_set_bit(R, 2 * BN_BITS2)))
             goto err;
 
@@ -356,6 +360,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
     /* setup RR for conversions */
     BN_zero(&(mont->RR));
+    bn_set_public_private1(&(mont->RR), mod);
     if (!BN_set_bit(&(mont->RR), mont->ri * 2))
         goto err;
     if (!BN_mod(&(mont->RR), &(mont->RR), &(mont->N), ctx))

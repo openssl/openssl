@@ -83,6 +83,10 @@ static int bnrand(BNRAND_FLAG flag, BIGNUM *rnd, int bits, int top, int bottom)
         buf[bytes - 1] |= 1;
     if (!BN_bin2bn(buf, bytes, rnd))
         goto err;
+    if (flag == NORMAL)
+        BN_set_public(rnd);
+    else
+        BN_set_private(rnd);
     ret = 1;
  err:
     OPENSSL_clear_free(buf, bytes);
@@ -259,6 +263,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         goto err;
     if (BN_mod(out, out, range, ctx) != 1)
         goto err;
+    BN_set_private(out);
     ret = 1;
 
  err:

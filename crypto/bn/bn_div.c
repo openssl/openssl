@@ -405,8 +405,18 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
             rm->neg = neg;
         bn_check_top(rm);
     }
-    if (no_branch)
+    if (no_branch) {
         bn_correct_top(res);
+        if (rm != NULL)
+            BN_set_private(rm);
+        if (dv != NULL)
+            BN_set_private(dv);
+    } else {
+        if (rm != NULL)
+            BN_set_public(rm);
+        if (dv != NULL)
+            BN_set_public(dv);
+    }
     BN_CTX_end(ctx);
     return 1;
  err:

@@ -10,10 +10,6 @@
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
-/* r must not be a */
-/*
- * I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96
- */
 int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
     int max, al;
@@ -26,6 +22,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     if (al <= 0) {
         r->top = 0;
         r->neg = 0;
+        bn_set_public_private1(r, a);
         return 1;
     }
 
@@ -93,6 +90,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     if (r != rr && BN_copy(r, rr) == NULL)
         goto err;
 
+    bn_set_public_private1(r, a);
     ret = 1;
  err:
     bn_check_top(rr);
