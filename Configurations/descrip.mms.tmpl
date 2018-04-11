@@ -415,6 +415,11 @@ build_apps build_tests : build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated : $(GENERATED_MANDATORY) $(GENERATED)
+	@ ! {- output_off() if $disabled{makedepend}; "" -}
+	@ WRITE SYS$OUTPUT "Warning: consider configuring with no-makedepend, because if"
+	@ WRITE SYS$OUTPUT "         target system doesn't have $(PERL),"
+	@ WRITE SYS$OUTPUT "         then make will fail..."
+	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 test : tests
 {- dependmagic('tests'); -} : build_programs_nodep, build_engines_nodep
