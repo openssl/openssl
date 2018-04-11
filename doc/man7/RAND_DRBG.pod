@@ -37,8 +37,7 @@ Typical examples for such special use cases are the following:
 
 =item *
 
-You want to use your own private DRBG instances, similar to how it
-is currently done in the ssl library.
+You want to use your own private DRBG instances.
 Multiple DRBG instances which are accessed only by a single thread provide
 additional security (because their internal states are independent) and
 better scalability in multithreaded applications (because they don't need
@@ -80,8 +79,8 @@ the thread-local <public> and <private> DRBG instance, respectively.
 =head2 The <master> DRBG instance
 
 The <master> DRBG is not used directly by the application, only for reseeding
-the two other two  DRBG instances. It reseeds itself by obtaining randomness
-either from os entropy  sources or by consuming randomness which was added
+the two other two DRBG instances. It reseeds itself by obtaining randomness
+either from os entropy sources or by consuming randomness which was added
 previously by L<RAND_add(3)>.
 
 =head2 The <public> DRBG instance
@@ -144,10 +143,12 @@ together and are being used.
     +------------------+      +------------------------------------+
 
 
-
-The method L<RAND_DRBG_bytes(3)> is a convenience method wrapping the
-L<RAND_DRBG_generate(3)> function, which serves the actual request for
-random data.
+The usual way to obtain random bytes is to call RAND_bytes(...) or
+RAND_priv_bytes(...). These calls are roughly equivalent to calling
+RAND_DRBG_bytes(<public>, ...) and RAND_DRBG_bytes(<private>, ...),
+respectively. The method L<RAND_DRBG_bytes(3)> is a convenience method
+wrapping the L<RAND_DRBG_generate(3)> function, which serves the actual
+request for random data.
 
 =head1 RESEEDING
 

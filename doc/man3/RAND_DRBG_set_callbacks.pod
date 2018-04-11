@@ -79,7 +79,7 @@ See NOTES section for more details.
 
 The B<cleanup_entropy>() callback is called from the B<drbg> to to clear and
 free the buffer allocated previously by get_entropy().
-The values B<out> and B<outlen> are the random buffer's  address and length,
+The values B<out> and B<outlen> are the random buffer's address and length,
 as returned by the get_entropy() callback.
 
 The B<get_nonce>() and B<cleanup_nonce>() callbacks are used to obtain a nonce

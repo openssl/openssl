@@ -32,8 +32,8 @@ return value of L<RAND_bytes(3)> and don't take randomness for granted.
 For long-term secrets, you can use L<RAND_priv_bytes(3)> instead.
 This method does not provide 'better' randomness, it uses the same type of CSPRNG.
 The intention behind using a dedicated CSPRNG exclusively for long-term secrets is
-that none  of its output should be visible to an attacker (e.g used as salt value),
-in order  to reveal as little information as possible about its internal state.
+that none of its output should be visible to an attacker (e.g used as salt value),
+in order to reveal as little information as possible about its internal state.
 
 In the rare case where the default implementation does not satisfy your special
 requirements, there are two options:
