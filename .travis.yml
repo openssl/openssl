@@ -31,7 +31,7 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-asm --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
+    - CONFIG_OPTS="no-asm no-makedepend --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
 
 matrix:
     include:
@@ -162,7 +162,7 @@ script:
           make="make";
       fi
     - if [ -n "$GENERATE" ]; then
-          make2="$make PERL=foobar";
+          make2="$make PERL=no-perl";
       else
           make2="$make";
       fi
