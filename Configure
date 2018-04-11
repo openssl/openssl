@@ -1630,7 +1630,9 @@ if ($builder eq "unified") {
 	die "*** Couldn't find any of:\n", join("\n", @build_file_templates), "\n";
     }
     $config{build_file_templates}
-      = [ $build_file_template,
+      = [ cleanfile($srcdir, catfile("Configurations", "common0.tmpl"),
+                    $blddir),
+          $build_file_template,
           cleanfile($srcdir, catfile("Configurations", "common.tmpl"),
                     $blddir) ];
 
