@@ -369,12 +369,14 @@ sub clientstart
     $fdset = IO::Select->new($server_sock, $client_sock);
     my @ready;
     my $ctr = 0;
+    my $sessionfile = $self->{sessionfile};
     local $SIG{PIPE} = "IGNORE";
-    while($fdset->count
-            && (!(TLSProxy::Message->end)
-                || (defined $self->sessionfile()
-                    && (-s $self->sessionfile()) == 0))
-            && $ctr < 10) {
+    while($fdset->count && $ctr < 10) {
+        if (defined($sessionfile)) {
+            # s_client got -ign_eof and won't be exiting voluntarily, so we
+            # look for data *and* check on session file...
+            last if TLSProxy::Message->success() && -s $sessionfile;
+        }
         if (!(@ready = $fdset->can_read(1))) {
             $ctr++;
             next;
