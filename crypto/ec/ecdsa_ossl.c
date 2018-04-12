@@ -424,7 +424,7 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
      */
     if (8 * dgst_len > i)
         dgst_len = (i + 7) / 8;
-    if (!BN_bin2bn(dgst, dgst_len, m)) {
+    if (!BN_bin2bn_public(dgst, dgst_len, m)) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_BN_LIB);
         goto err;
     }

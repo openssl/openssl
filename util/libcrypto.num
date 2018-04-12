@@ -4537,3 +4537,5 @@ BN_hex2bn_public                        4478	1_1_1	EXIST::FUNCTION:
 BN_dec2bn_public                        4479	1_1_1	EXIST::FUNCTION:
 BN_clear_flags                          4480	1_1_1	EXIST::FUNCTION:
 ASN1_INTEGER_to_BN_public               4481	1_1_1	EXIST::FUNCTION:
+EC_POINT_oct2point_public               4482	1_1_1	EXIST::FUNCTION:EC
+EC_POINT_hex2point_public               4483	1_1_1	EXIST::FUNCTION:EC

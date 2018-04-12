@@ -120,8 +120,8 @@ static int gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y,
     int ret = 0;
 
     if (BN_is_zero(z1)) {
-        BN_zero(x2);
-        BN_zero(z2);
+        BN_zero_pubpriv(x2);
+        BN_zero_pubpriv(z2);
         return 1;
     }
 
@@ -141,8 +141,13 @@ static int gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y,
     if (t5 == NULL)
         goto err;
 
-    if (!BN_one(t5))
-        goto err;
+    if (BN_is_public(x) && BN_is_public(y)) {
+        if (!BN_one_public(t5))
+            goto err;
+    } else {
+        if (!BN_one(t5))
+            goto err;
+    }
 
     if (!group->meth->field_mul(group, t3, z1, z2, ctx))
         goto err;
@@ -294,7 +299,7 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group,
         if (!EC_POINT_set_to_infinity(group, r))
             goto err;
     } else {
-        if (!BN_one(r->Z))
+        if (!BN_one_pubpriv(r->Z))
             goto err;
         r->Z_is_one = 1;
     }

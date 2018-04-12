@@ -556,6 +556,19 @@ size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *p,
 int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *p,
                        const unsigned char *buf, size_t len, BN_CTX *ctx);
 
+/**
+ *  Decodes a EC_POINT from a octet string. The internal BIGNUMs will be marked
+ *  as public.
+ *  \param  group  underlying EC_GROUP object
+ *  \param  p      EC_POINT object
+ *  \param  buf    memory buffer with the encoded ec point
+ *  \param  len    length of the encoded ec point
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+int EC_POINT_oct2point_public(const EC_GROUP *group, EC_POINT *point,
+                              const unsigned char *buf, size_t len, BN_CTX *ctx);
+
 /** Encodes an EC_POINT object to an allocated octet string
  *  \param  group  underlying EC_GROUP object
  *  \param  point  EC_POINT object
@@ -577,6 +590,8 @@ char *EC_POINT_point2hex(const EC_GROUP *, const EC_POINT *,
                          point_conversion_form_t form, BN_CTX *);
 EC_POINT *EC_POINT_hex2point(const EC_GROUP *, const char *,
                              EC_POINT *, BN_CTX *);
+EC_POINT *EC_POINT_hex2point_public(const EC_GROUP *, const char *,
+                                    EC_POINT *, BN_CTX *);
 
 /********************************************************************/
 /*         functions for doing EC_POINT arithmetic                  */

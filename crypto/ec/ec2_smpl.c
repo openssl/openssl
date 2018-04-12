@@ -161,6 +161,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
     /* group->field */
     if (!BN_copy(group->field, p))
         goto err;
+    BN_set_public(group->field);
     i = BN_GF2m_poly2arr(group->field, group->poly, 6) - 1;
     if ((i != 5) && (i != 3)) {
         ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);
@@ -174,6 +175,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
         == NULL)
         goto err;
     bn_set_all_zero(group->a);
+    BN_set_public(group->a);
 
     /* group->b */
     if (!BN_GF2m_mod_arr(group->b, b, group->poly))
@@ -182,6 +184,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
         == NULL)
         goto err;
     bn_set_all_zero(group->b);
+    BN_set_public(group->b);
 
     ret = 1;
  err:
@@ -328,7 +331,7 @@ int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
                                          EC_POINT *point)
 {
     point->Z_is_one = 0;
-    BN_zero(point->Z);
+    BN_zero_pubpriv(point->Z);
     return 1;
 }
 
@@ -342,6 +345,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
                                                 const BIGNUM *y, BN_CTX *ctx)
 {
     int ret = 0;
+
     if (x == NULL || y == NULL) {
         ECerr(EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES,
               ERR_R_PASSED_NULL_PARAMETER);
@@ -357,6 +361,16 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
     if (!BN_copy(point->Z, BN_value_one()))
         goto err;
     BN_set_negative(point->Z, 0);
+
+    if (BN_is_public(x) && BN_is_public(y)) {
+        BN_set_public(point->X);
+        BN_set_public(point->Y);
+        BN_set_public(point->Z);
+    } else {
+        BN_set_private(point->X);
+        BN_set_private(point->Y);
+        BN_set_private(point->Z);
+    }
     point->Z_is_one = 1;
     ret = 1;
 
@@ -690,7 +704,7 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
         goto err;
     if (!BN_copy(point->Y, y))
         goto err;
-    if (!BN_one(point->Z))
+    if (!BN_one_pubpriv(point->Z))
         goto err;
     point->Z_is_one = 1;
 

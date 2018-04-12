@@ -279,18 +279,25 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     }
     if (!EC_POINT_copy(group->generator, generator))
         return 0;
+    BN_set_public(group->generator->X);
+    BN_set_public(group->generator->Y);
+    BN_set_public(group->generator->Z);
 
     if (order != NULL) {
         if (!BN_copy(group->order, order))
             return 0;
-    } else
+    } else {
         BN_zero(group->order);
+    }
+    BN_set_public(group->order);
 
     if (cofactor != NULL) {
         if (!BN_copy(group->cofactor, cofactor))
             return 0;
-    } else
+    } else {
         BN_zero(group->cofactor);
+    }
+    BN_set_public(group->cofactor);
 
     /*
      * Some groups have an order with

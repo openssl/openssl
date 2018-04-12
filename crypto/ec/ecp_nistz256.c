@@ -1402,6 +1402,14 @@ __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
         return 0;
     }
 
+    if (BN_is_public(point->X) && BN_is_public(point->Y)) {
+        BN_set_public(x);
+        BN_set_public(y);
+    } else {
+        BN_set_private(x);
+        BN_set_private(y);
+    }
+
     if (!ecp_nistz256_bignum_to_field_elem(point_x, point->X) ||
         !ecp_nistz256_bignum_to_field_elem(point_y, point->Y) ||
         !ecp_nistz256_bignum_to_field_elem(point_z, point->Z)) {

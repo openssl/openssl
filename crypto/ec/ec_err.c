@@ -208,6 +208,8 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "EC_POINT_make_affine"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_NEW, 0), "EC_POINT_new"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_OCT2POINT, 0), "EC_POINT_oct2point"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_OCT2POINT_INT, 0),
+     "ec_point_oct2point_int"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_POINT2BUF, 0), "EC_POINT_point2buf"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_POINT2OCT, 0), "EC_POINT_point2oct"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M, 0),

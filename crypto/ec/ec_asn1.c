@@ -618,12 +618,12 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, EC_R_ASN1_ERROR);
         goto err;
     }
-    a = BN_bin2bn(params->curve->a->data, params->curve->a->length, NULL);
+    a = BN_bin2bn_public(params->curve->a->data, params->curve->a->length, NULL);
     if (a == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_BN_LIB);
         goto err;
     }
-    b = BN_bin2bn(params->curve->b->data, params->curve->b->length, NULL);
+    b = BN_bin2bn_public(params->curve->b->data, params->curve->b->length, NULL);
     if (b == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_BN_LIB);
         goto err;
@@ -653,6 +653,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        BN_set_public(p);
 
         /* get the base type */
         tmp = OBJ_obj2nid(char_two->type);
@@ -728,7 +729,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, EC_R_ASN1_ERROR);
             goto err;
         }
-        p = ASN1_INTEGER_to_BN(params->fieldID->p.prime, NULL);
+        p = ASN1_INTEGER_to_BN_public(params->fieldID->p.prime, NULL);
         if (p == NULL) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_ASN1_LIB);
             goto err;
@@ -789,7 +790,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     }
 
     /* extract the order */
-    if ((a = ASN1_INTEGER_to_BN(params->order, a)) == NULL) {
+    if ((a = ASN1_INTEGER_to_BN_public(params->order, a)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -806,7 +807,7 @@ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
     if (params->cofactor == NULL) {
         BN_free(b);
         b = NULL;
-    } else if ((b = ASN1_INTEGER_to_BN(params->cofactor, b)) == NULL) {
+    } else if ((b = ASN1_INTEGER_to_BN_public(params->cofactor, b)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS, ERR_R_ASN1_LIB);
         goto err;
     }
@@ -1206,6 +1207,8 @@ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     BN_clear_free(sig->s);
     sig->r = r;
     sig->s = s;
+    BN_set_public(r);
+    BN_set_public(s);
     return 1;
 }
 

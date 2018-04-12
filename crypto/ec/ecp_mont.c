@@ -131,7 +131,7 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 {
     BN_CTX *new_ctx = NULL;
     BN_MONT_CTX *mont = NULL;
-    BIGNUM *one = NULL;
+    BIGNUM *pdup = NULL, *one = NULL;
     int ret = 0;
 
     BN_MONT_CTX_free(group->field_data1);
@@ -148,14 +148,18 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     mont = BN_MONT_CTX_new();
     if (mont == NULL)
         goto err;
-    if (!BN_MONT_CTX_set(mont, p, ctx)) {
+    pdup = BN_dup(p);
+    if (pdup == NULL)
+        goto err;
+    BN_set_public(pdup);
+    if (!BN_MONT_CTX_set(mont, pdup, ctx)) {
         ECerr(EC_F_EC_GFP_MONT_GROUP_SET_CURVE, ERR_R_BN_LIB);
         goto err;
     }
     one = BN_new();
     if (one == NULL)
         goto err;
-    if (!BN_to_montgomery(one, BN_value_one(), mont, ctx))
+    if (!BN_to_montgomery(one, BN_value_one_public(), mont, ctx))
         goto err;
 
     group->field_data1 = mont;
@@ -163,7 +167,7 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     group->field_data2 = one;
     one = NULL;
 
-    ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
+    ret = ec_GFp_simple_group_set_curve(group, pdup, a, b, ctx);
 
     if (!ret) {
         BN_MONT_CTX_free(group->field_data1);
@@ -174,6 +178,7 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 
  err:
     BN_free(one);
+    BN_free(pdup);
     BN_CTX_free(new_ctx);
     BN_MONT_CTX_free(mont);
     return ret;
