@@ -640,7 +640,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
         int ret;
 
         BIGNUM *pubexp = NULL;
-        if (!BN_asc2bn(&pubexp, value))
+        if (!BN_asc2bn_public(&pubexp, value))
             return 0;
         ret = EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, pubexp);
         if (ret <= 0)

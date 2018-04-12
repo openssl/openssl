@@ -190,14 +190,17 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
     if (n != NULL) {
         BN_free(r->n);
         r->n = n;
+        BN_set_public(n);
     }
     if (e != NULL) {
         BN_free(r->e);
         r->e = e;
+        BN_set_public(e);
     }
     if (d != NULL) {
         BN_free(r->d);
         r->d = d;
+        BN_set_private(d);
     }
 
     return 1;
@@ -215,10 +218,12 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
     if (p != NULL) {
         BN_free(r->p);
         r->p = p;
+        BN_set_private(p);
     }
     if (q != NULL) {
         BN_free(r->q);
         r->q = q;
+        BN_set_private(q);
     }
 
     return 1;
@@ -237,14 +242,17 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     if (dmp1 != NULL) {
         BN_free(r->dmp1);
         r->dmp1 = dmp1;
+        BN_set_private(dmp1);
     }
     if (dmq1 != NULL) {
         BN_free(r->dmq1);
         r->dmq1 = dmq1;
+        BN_set_private(dmq1);
     }
     if (iqmp != NULL) {
         BN_free(r->iqmp);
         r->iqmp = iqmp;
+        BN_set_private(iqmp);
     }
 
     return 1;
@@ -282,6 +290,9 @@ int RSA_set0_multi_prime_params(RSA *r, BIGNUM *primes[], BIGNUM *exps[],
             pinfo->r = primes[i];
             pinfo->d = exps[i];
             pinfo->t = coeffs[i];
+            BN_set_private(pinfo->r);
+            BN_set_private(pinfo->d);
+            BN_set_private(pinfo->t);
         } else {
             rsa_multip_info_free(pinfo);
             goto err;
