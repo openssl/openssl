@@ -43,7 +43,7 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
     EVP_ENCODE_CTX *ctx;
     int outl = 0, outl2 = 0;
     size_t size, padsize;
-    const unsigned char *pad = (unsigned char *)"00";
+    const unsigned char *pad = (const unsigned char *)"00";
 
     while (*src == ' ' || *src == '\t' || *src == '\n')
         ++src;
@@ -52,7 +52,7 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
     padsize &= 3;
 
     /* Four bytes in src become three bytes output. */
-    if (size > INT_MAX || (size / 4) * 3 > alen)
+    if (size > INT_MAX || ((size + padsize) / 4) * 3 > alen)
         return -1;
 
     ctx = EVP_ENCODE_CTX_new();
