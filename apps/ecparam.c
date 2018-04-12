@@ -171,7 +171,7 @@ int ecparam_main(int argc, char **argv)
     in = bio_open_default(infile, 'r', informat);
     if (in == NULL)
         goto end;
-    out = bio_open_owner(outfile, outformat, private);
+    out = bio_open_owner_tmp(outfile, outformat, private);
     if (out == NULL)
         goto end;
 
@@ -444,6 +444,7 @@ int ecparam_main(int argc, char **argv)
     release_engine(e);
     BIO_free(in);
     BIO_free_all(out);
+    bio_tempfile_cleanup();
     return ret;
 }
 

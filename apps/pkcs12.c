@@ -472,7 +472,7 @@ int pkcs12_main(int argc, char **argv)
 
         assert(private);
 
-        out = bio_open_owner(outfile, FORMAT_PKCS12, private);
+        out = bio_open_owner_tmp(outfile, FORMAT_PKCS12, private);
         if (out == NULL)
             goto end;
 
@@ -569,7 +569,7 @@ int pkcs12_main(int argc, char **argv)
 
     assert(private);
 
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    out = bio_open_owner_tmp(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end;
 
@@ -588,6 +588,7 @@ int pkcs12_main(int argc, char **argv)
     OPENSSL_free(badpass);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    bio_tempfile_cleanup();
     return ret;
 }
 

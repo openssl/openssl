@@ -173,7 +173,7 @@ int dsa_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
+    out = bio_open_owner_tmp(outfile, outformat, private);
     if (out == NULL)
         goto end;
 
@@ -260,6 +260,7 @@ int dsa_main(int argc, char **argv)
     release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    bio_tempfile_cleanup();
     return ret;
 }
 #endif

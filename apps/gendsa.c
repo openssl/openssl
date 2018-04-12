@@ -117,7 +117,7 @@ int gendsa_main(int argc, char **argv)
     if (!DSA_generate_key(dsa))
         goto end;
 
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    out = bio_open_owner_tmp(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end2;
 
@@ -134,6 +134,7 @@ int gendsa_main(int argc, char **argv)
     DSA_free(dsa);
     release_engine(e);
     OPENSSL_free(passout);
+    bio_tempfile_cleanup();
     return ret;
 }
 #endif

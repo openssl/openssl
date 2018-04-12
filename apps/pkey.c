@@ -137,7 +137,7 @@ int pkey_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
+    out = bio_open_owner_tmp(outfile, outformat, private);
     if (out == NULL)
         goto end;
 
@@ -230,6 +230,7 @@ int pkey_main(int argc, char **argv)
     BIO_free(in);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
+    bio_tempfile_cleanup();
 
     return ret;
 }

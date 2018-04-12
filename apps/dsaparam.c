@@ -155,7 +155,7 @@ int dsaparam_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
+    out = bio_open_owner_tmp(outfile, outformat, private);
     if (out == NULL)
         goto end;
 
@@ -235,6 +235,7 @@ int dsaparam_main(int argc, char **argv)
     BIO_free_all(out);
     DSA_free(dsa);
     release_engine(e);
+    bio_tempfile_cleanup();
     return ret;
 }
 
