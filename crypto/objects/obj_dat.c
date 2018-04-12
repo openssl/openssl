@@ -445,6 +445,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
                     goto err;
                 if (!BN_set_word(bl, l))
                     goto err;
+                BN_set_public(bl);
                 use_bn = 1;
             }
             if (use_bn) {
