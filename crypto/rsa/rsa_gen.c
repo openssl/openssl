@@ -157,6 +157,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
             pinfo = sk_RSA_PRIME_INFO_value(prime_infos, i - 2);
             prime = pinfo->r;
         }
+        BN_set_flags(prime, BN_FLG_CONSTTIME);
 
         for (;;) {
  redo:
