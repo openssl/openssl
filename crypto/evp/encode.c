@@ -154,6 +154,9 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags)
 void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 {
     ctx->length = 48;
+    ctx->num = 0;
+    ctx->line_num = 0;
+    ctx->flags = 0;
 }
 
 int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
@@ -270,6 +273,11 @@ int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 
 void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
 {
+    /* Only ctx->num and ctx->flags are used during decoding. */
+    ctx->num = 0;
+    ctx->length = 0;
+    ctx->line_num = 0;
+    ctx->flags = 0;
 }
 
 /*-
