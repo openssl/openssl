@@ -326,8 +326,9 @@ typedef struct Dl_info {
  * address of a function, which is just located in the DATA segment instead of
  * the TEXT segment.
  */
-static int dladdr(void *addr, Dl_info *dl)
+static int dladdr(void *ptr, Dl_info *dl)
 {
+    uintptr_t addr = (uintptr_t)ptr;
     unsigned int found = 0;
     struct ld_info *ldinfos, *next_ldi, *this_ldi;
 
@@ -352,11 +353,12 @@ static int dladdr(void *addr, Dl_info *dl)
 
     do {
         this_ldi = next_ldi;
-        if (((addr >= this_ldi->ldinfo_textorg)
-             && (addr < (this_ldi->ldinfo_textorg + this_ldi->ldinfo_textsize)))
-            || ((addr >= this_ldi->ldinfo_dataorg)
-                && (addr <
-                    (this_ldi->ldinfo_dataorg + this_ldi->ldinfo_datasize)))) {
+        if (((addr >= (uintptr_t)this_ldi->ldinfo_textorg)
+             && (addr < ((uintptr_t)this_ldi->ldinfo_textorg +
+                         this_ldi->ldinfo_textsize)))
+            || ((addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
+                && (addr < ((uintptr_t)this_ldi->ldinfo_dataorg +
+                            this_ldi->ldinfo_datasize)))) {
             found = 1;
             /*
              * Ignoring the possibility of a member name and just returning
@@ -367,7 +369,8 @@ static int dladdr(void *addr, Dl_info *dl)
                  OPENSSL_strdup(this_ldi->ldinfo_filename)) == NULL)
                 errno = ENOMEM;
         } else {
-            next_ldi = (char *)this_ldi + this_ldi->ldinfo_next;
+            next_ldi =
+                (struct ld_info *)((uintptr_t)this_ldi + this_ldi->ldinfo_next);
         }
     } while (this_ldi->ldinfo_next && !found);
     OPENSSL_free((void *)ldinfos);
@@ -395,7 +398,7 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         len = (int)strlen(dli.dli_fname);
         if (sz <= 0) {
 #  ifdef _AIX
-            OPENSSL_free(dli.dli_fname);
+            OPENSSL_free((void *)dli.dli_fname);
 #  endif
             return len + 1;
         }
@@ -404,7 +407,7 @@ static int dlfcn_pathbyaddr(void *addr, char *path, int sz)
         memcpy(path, dli.dli_fname, len);
         path[len++] = 0;
 #  ifdef _AIX
-        OPENSSL_free(dli.dli_fname);
+        OPENSSL_free((void *)dli.dli_fname);
 #  endif
         return len;
     }
