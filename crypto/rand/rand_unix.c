@@ -19,7 +19,8 @@
 # include <unistd.h>
 # include <sys/time.h>
 
-static uint64_t get_time64(void);
+static uint64_t get_time_stamp(void);
+static uint64_t get_timer_bits(void);
 
 /* Macro to convert two thirty two bit values into a sixty four bit one */
 # define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
@@ -303,7 +304,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
      */
     data.pid = getpid();
     data.tid = CRYPTO_THREAD_get_current_id();
-    data.time = get_time64();
+    data.time = get_time_stamp();
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
@@ -321,9 +322,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * concurrently (which is the case for the <master> drbg).
      */
     data.tid = CRYPTO_THREAD_get_current_id();
-    data.time = OPENSSL_rdtsc();
-    if (data.time == 0)
-        data.time = get_time64();
+    data.time = get_timer_bits();
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
@@ -331,37 +330,19 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
 
 
 /*
- * Find a suitable source of time.  Start with the highest resolution source
- * and work down to the slower ones.  This is added to the nonce or additional data
- * and isn't counted as randomness, so any result is acceptable.
+ * Get the current time with the highest possible accuracy
  *
- * Returns 0 when we weren't able to find any time source
+ * The time stamp is added to the nonce, so it is optimized for not repeating.
+ * The current time is ideal for this purpose, provided the computer's clock
+ * is synchronized.
  */
-static uint64_t get_time64(void)
+static uint64_t get_time_stamp(void)
 {
-# if defined(__sun) || defined(__hpux)
-    return gethrtime();
-# elif defined(_AIX)
-    {
-        timebasestruct_t t;
-
-        read_wall_time(&t, TIMEBASE_SZ);
-        return TWO32TO64(t.tb_high, t.tb_low);
-    }
-# elif defined(OSSL_POSIX_TIMER_OKAY)
+# if defined(OSSL_POSIX_TIMER_OKAY)
     {
         struct timespec ts;
-        clockid_t cid;
 
-#  ifdef CLOCK_BOOTTIME
-        cid = CLOCK_BOOTTIME;
-#  elif defined(_POSIX_MONOTONIC_CLOCK)
-        cid = CLOCK_MONOTONIC;
-#  else
-        cid = CLOCK_REALTIME;
-#  endif
-
-        if (clock_gettime(cid, &ts) == 0)
+        if (clock_gettime(CLOCK_REALTIME, &ts) == 0)
             return TWO32TO64(ts.tv_sec, ts.tv_nsec);
     }
 # endif
@@ -374,24 +355,57 @@ static uint64_t get_time64(void)
             return TWO32TO64(tv.tv_sec, tv.tv_usec);
     }
 # endif
-    {
-        /*
-         * TODO: OPENSSL_rdtsc() was moved to the end, because its
-         * return type was declared as uint32_t in d807db26a403.
-         * So it returns only 32 timer bits even if the platform
-         * would supports 64 bits.
-         */
-        uint32_t res = OPENSSL_rdtsc();
+    return time(NULL);
+}
 
-        if (res != 0)
-            return res;
-    }
+/*
+ * Get an arbitrary timer value of the highest possible resolution
+ *
+ * The timer value is added as random noise to the additional data,
+ * which does is not considered a trusted entropy sourec, so any
+ * result is acceptable.
+ */
+static uint64_t get_timer_bits(void)
+{
+    uint64_t res = OPENSSL_rdtsc();
 
+    if (res != 0)
+        return res;
+
+# if defined(__sun) || defined(__hpux)
+    return gethrtime();
+# elif defined(_AIX)
     {
-        time_t t = time(NULL);
-        if (t == (time_t)-1)
-            return 0;
-        return t;
+        timebasestruct_t t;
+
+        read_wall_time(&t, TIMEBASE_SZ);
+        return TWO32TO64(t.tb_high, t.tb_low);
     }
+# elif defined(OSSL_POSIX_TIMER_OKAY)
+    {
+        struct timespec ts;
+
+#  ifdef CLOCK_BOOTTIME
+#   define CLOCK_TYPE CLOCK_BOOTTIME
+#  elif defined(_POSIX_MONOTONIC_CLOCK)
+#   define CLOCK_TYPE CLOCK_MONOTONIC
+#  else
+#   define CLOCK_TYPE CLOCK_REALTIME
+#  endif
+
+        if (clock_gettime(CLOCK_TYPE, &ts) == 0)
+            return TWO32TO64(ts.tv_sec, ts.tv_nsec);
+    }
+# endif
+# if defined(__unix__) \
+     || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+    {
+        struct timeval tv;
+
+        if (gettimeofday(&tv, NULL) == 0)
+            return TWO32TO64(tv.tv_sec, tv.tv_usec);
+    }
+# endif
+    return time(NULL);
 }
 #endif
