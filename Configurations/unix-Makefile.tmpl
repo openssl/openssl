@@ -353,6 +353,11 @@ build_apps build_tests: build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
+	@ : {- output_off() if $disabled{makedepend}; "" -}
+	@echo "Warning: consider configuring with no-makedepend, because if"
+	@echo "         target system doesn't have $(PERL),"
+	@echo "         then make will fail..."
+	@ : {- output_on() if $disabled{makedepend}; "" -}
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep link-utils
@@ -1000,18 +1005,14 @@ $obj$objext: $deps
 	$cmd $cmdflags -c -o \$\@ $srcs
 EOF
       } elsif (grep /\.S$/, @srcs) {
-          # In case one wonders why not just $(CC) -c file.S. While it
-          # does work with contemporary compilers, there are some legacy
-          # ones that get it wrong. Hence the elaborate scheme... We
-          # don't care to maintain dependecy lists, because dependency
-          # is rather weak, at most one header file that lists constants
-          # which are assigned in ascending order.
+          # Originally there was mutli-step rule with $(CC) -E file.S
+          # followed by $(CC) -c file.s. It compensated for one of
+          # legacy platform compiler's inability to handle .S files.
+          # The platform is long discontinued by vendor so there is
+          # hardly a point to drag it along...
           $recipe .= <<"EOF";
 $obj$objext: $deps
-	( trap "rm -f \$@.*" INT 0; \\
-	  \$(CC) $incs $cmdflags -E $srcs | \\
-	  \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@.s && \\
-	  $cmd $cmdflags -c -o \$\@ \$@.s )
+	$cmd $incs $cmdflags -c -o \$\@ $srcs
 EOF
       } elsif (defined $makedepprog && $makedepprog !~ /\/makedepend/) {
           $recipe .= <<"EOF";
