@@ -189,10 +189,16 @@ sub connect_to_server
 
     $servaddr =~ s/[\[\]]//g; # Remove [ and ]
 
-    $self->{server_sock} = $IP_factory->(PeerAddr => $servaddr,
-                                         PeerPort => $self->{server_port},
-                                         Proto => 'tcp')
-                           or die "unable to connect: $!\n";
+    my $sock = $IP_factory->(PeerAddr => $servaddr,
+                             PeerPort => $self->{server_port},
+                             Proto => 'tcp');
+    if (!defined($sock)) {
+        my $err = $!;
+        kill(3, $self->{real_serverpid});
+        die "unable to connect: $err\n";
+    }
+
+    $self->{server_sock} = $sock;
 }
 
 sub start
@@ -243,7 +249,8 @@ sub start
     if ($self->{server_port} == 0) {
         # This actually means that s_server exited, because otherwise
         # we would still searching for ACCEPT...
-        die "no ACCEPT detected in '$execcmd' output\n";
+        waitpid($pid, 0);
+        die "no ACCEPT detected in '$execcmd' output: $?\n";
     }
 
     # Just make sure everything else is simply printed [as separate lines].
@@ -255,6 +262,7 @@ sub start
     if (eval { require Win32::Process; 1; }) {
         if (Win32::Process::Create(my $h, $^X, "perl -ne print", 0, 0, ".")) {
             $pid = $h->GetProcessID();
+            $self->{proc_handle} = $h;  # hold handle till next round [or exit]
         } else {
             $error = Win32::FormatMessage(Win32::GetLastError());
         }
@@ -412,11 +420,19 @@ sub clientstart
     my $pid;
     if (--$self->{serverconnects} == 0) {
         $pid = $self->{serverpid};
-        die "serverpid is zero\n" if $pid == 0;
-        print "Waiting for server process to close: $pid...\n";
-        # recall that we wait on process that buffers server's output
+        print "Waiting for 'perl -ne print' process to close: $pid...\n";
+        $pid = waitpid($pid, 0);
+        if ($pid > 0) {
+            die "exit code $? from 'perl -ne print' process\n" if $? != 0;
+        } elsif ($pid == 0) {
+            kill(3, $self->{real_serverpid});
+            die "lost control over $self->{serverpid}?";
+        }
+        $pid = $self->{real_serverpid};
+        print "Waiting for s_server process to close: $pid...\n";
+        # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
-        die "exit code $? from server process\n" if $? != 0;
+        die "exit code $? from s_server process\n" if $? != 0;
     } else {
         # It's a bit counter-intuitive spot to make next connection to
         # the s_server. Rationale is that established connection works
@@ -425,7 +441,6 @@ sub clientstart
         $self->connect_to_server();
     }
     $pid = $self->{clientpid};
-    die "clientpid is zero\n" if $pid == 0;
     print "Waiting for client process to close: $pid...\n";
     waitpid($pid, 0);
 
