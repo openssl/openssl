@@ -479,13 +479,14 @@ int rehash_main(int argc, char **argv)
     if (*argv != NULL) {
         while (*argv != NULL)
             errs += do_dir(*argv++, h);
-    } else if ((env = getenv("SSL_CERT_DIR")) != NULL) {
+    } else if ((env = getenv(X509_get_default_cert_dir_env())) != NULL) {
+        char lsc[2] = { LIST_SEPARATOR_CHAR, '\0' };
         m = OPENSSL_strdup(env);
-        for (e = strtok(m, ":"); e != NULL; e = strtok(NULL, ":"))
+        for (e = strtok(m, lsc); e != NULL; e = strtok(NULL, lsc))
             errs += do_dir(e, h);
         OPENSSL_free(m);
     } else {
-        errs += do_dir("/etc/ssl/certs", h);
+        errs += do_dir(X509_get_default_cert_dir(), h);
     }
 
  end:
