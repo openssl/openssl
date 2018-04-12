@@ -352,11 +352,11 @@ static int dladdr(void *addr, Dl_info *dl)
 
     do {
         this_ldi = next_ldi;
-        if (((addr >= this_ldi->ldinfo_textorg)
+        if ((((uintptr_t)addr >= (uintptr_t)this_ldi->ldinfo_textorg)
              && ((uintptr_t)addr <
                  ((uintptr_t)this_ldi->ldinfo_textorg +
                      this_ldi->ldinfo_textsize)))
-            || ((addr >= this_ldi->ldinfo_dataorg)
+            || (((uintptr_t)addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
                 && ((uintptr_t)addr <
                     ((uintptr_t)this_ldi->ldinfo_dataorg +
                         this_ldi->ldinfo_datasize)))) {
