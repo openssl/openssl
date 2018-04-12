@@ -125,7 +125,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         DWORD pid;
         DWORD tid;
         FILETIME time;
-    } data;
+    } data = { 0 };
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
@@ -144,7 +144,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     struct {
         DWORD tid;
         LARGE_INTEGER time;
-    } data;
+    } data = { 0 };
 
     /*
      * Add some noise from the thread id and a high resolution timer.
