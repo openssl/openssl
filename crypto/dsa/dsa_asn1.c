@@ -54,6 +54,8 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     BN_clear_free(sig->s);
     sig->r = r;
     sig->s = s;
+    BN_set_public(r);
+    BN_set_public(s);
     return 1;
 }
 

@@ -58,7 +58,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
         goto err;
     }
 
-    if ((dsa->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL) {
+    if ((dsa->pub_key = ASN1_INTEGER_to_BN_public(public_key, NULL)) == NULL) {
         DSAerr(DSA_F_DSA_PUB_DECODE, DSA_R_BN_DECODE_ERROR);
         goto err;
     }
