@@ -326,8 +326,9 @@ typedef struct Dl_info {
  * address of a function, which is just located in the DATA segment instead of
  * the TEXT segment.
  */
-static int dladdr(void *addr, Dl_info *dl)
+static int dladdr(void *ptr, Dl_info *dl)
 {
+    uintptr_t addr = (uintptr_t)ptr;
     unsigned int found = 0;
     struct ld_info *ldinfos, *next_ldi, *this_ldi;
 
@@ -352,14 +353,12 @@ static int dladdr(void *addr, Dl_info *dl)
 
     do {
         this_ldi = next_ldi;
-        if ((((uintptr_t)addr >= (uintptr_t)this_ldi->ldinfo_textorg)
-             && ((uintptr_t)addr <
-                 ((uintptr_t)this_ldi->ldinfo_textorg +
-                     this_ldi->ldinfo_textsize)))
-            || (((uintptr_t)addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
-                && ((uintptr_t)addr <
-                    ((uintptr_t)this_ldi->ldinfo_dataorg +
-                        this_ldi->ldinfo_datasize)))) {
+        if (((addr >= (uintptr_t)this_ldi->ldinfo_textorg)
+             && (addr < ((uintptr_t)this_ldi->ldinfo_textorg +
+                         this_ldi->ldinfo_textsize)))
+            || ((addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
+                && (addr < ((uintptr_t)this_ldi->ldinfo_dataorg +
+                            this_ldi->ldinfo_datasize)))) {
             found = 1;
             /*
              * Ignoring the possibility of a member name and just returning
