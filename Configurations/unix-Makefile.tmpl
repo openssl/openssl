@@ -390,9 +390,13 @@ uninstall: uninstall_docs uninstall_sw
 
 libclean:
 	@set -e; for s in $(SHLIB_INFO); do \
+		if [ "$$s" = ";" ]; then continue; fi; \
 		s1=`echo "$$s" | cut -f1 -d";"`; \
 		s2=`echo "$$s" | cut -f2 -d";"`; \
-		$(ECHO) $(RM) $$s1; \
+		$(ECHO) $(RM) $$s1; {- output_off() unless windowsdll(); "" -}\
+		$(RM) apps/$$s1; \
+		$(RM) test/$$s1; \
+		$(RM) fuzz/$$s1; {- output_on() unless windowsdll(); "" -}\
 		$(RM) $$s1; \
 		if [ "$$s1" != "$$s2" ]; then \
 			$(ECHO) $(RM) $$s2; \
@@ -979,7 +983,6 @@ EOF
           $cmd = '$(RC)';
           $cmdflags = '$(RCFLAGS)';
           $cmdcompile = '';
-          $makedepprog = undef;
       } elsif (grep /\.(cc|cpp)$/, @srcs) {
           $cmd = '$(CXX)';
           $cmdcompile = ' -c';
@@ -1014,7 +1017,8 @@ EOF
 $obj$objext: $deps
 	$cmd $incs $cmdflags -c -o \$\@ $srcs
 EOF
-      } elsif (defined $makedepprog && $makedepprog !~ /\/makedepend/) {
+      } elsif (defined $makedepprog && $makedepprog !~ /\/makedepend/
+               && !grep /\.rc$/, @srcs) {
           $recipe .= <<"EOF";
 $obj$objext: $deps
 	$cmd $incs $cmdflags -MMD -MF $obj$depext.tmp -MT \$\@ -c -o \$\@ $srcs
