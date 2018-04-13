@@ -39,8 +39,15 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                              int prediction_resistance);
 void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
                                unsigned char *out, size_t outlen);
+size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
+                           unsigned char **pout,
+                           int entropy, size_t min_len, size_t max_len);
+void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
+                             unsigned char *out, size_t outlen);
+
 size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len);
 
+void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen);
 
 /*
  * RAND_POOL functions
@@ -76,5 +83,31 @@ int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy);
  * an entropy count of 0.
  */
 size_t rand_pool_acquire_entropy(RAND_POOL *pool);
+
+/*
+ * Add some application specific nonce data
+ *
+ * This function is platform specific and adds some application specific
+ * data to the nonce used for instantiating the drbg.
+ *
+ * This data currently consists of the process and thread id, and a high
+ * resolution timestamp. The data does not include an atomic counter,
+ * because that is added by the calling function rand_drbg_get_nonce().
+ *
+ * Returns 1 on success and 0 on failure.
+ */
+int rand_pool_add_nonce_data(RAND_POOL *pool);
+
+
+/*
+ * Add some platform specific additional data
+ *
+ * This function is platform specific and adds some random noise to the
+ * additional data used for generating random bytes and for reseeding
+ * the drbg.
+ *
+ * Returns 1 on success and 0 on failure.
+ */
+int rand_pool_add_additional_data(RAND_POOL *pool);
 
 #endif
