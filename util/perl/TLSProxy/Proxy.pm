@@ -23,7 +23,7 @@ use TLSProxy::CertificateVerify;
 use TLSProxy::ServerKeyExchange;
 use TLSProxy::NewSessionTicket;
 
-my $have_IPv6 = 0;
+my $have_IPv6;
 my $IP_factory;
 
 BEGIN
