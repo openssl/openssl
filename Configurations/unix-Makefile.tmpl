@@ -408,7 +408,7 @@ libclean:
 
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
-	$(RM) $(GENERATED)
+	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-$(RM) `find . -name '*{- $depext -}' -a \! -path "./.git/*"`
 	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
 	$(RM) core
