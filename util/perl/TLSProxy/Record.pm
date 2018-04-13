@@ -279,7 +279,8 @@ sub reconstruct_record
     my $server = shift;
     my $data;
 
-    if ($self->{sent}) {
+    #We only replay the records in the same direction
+    if ($self->{sent} || ($self->flight & 1) != $server) {
         return "";
     }
     $self->{sent} = 1;
