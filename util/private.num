@@ -187,6 +187,8 @@ EVP_PKEY_CTX_get_signature_md           define
 EVP_PKEY_CTX_hkdf_mode                  define
 EVP_PKEY_CTX_set1_hkdf_key              define
 EVP_PKEY_CTX_set1_hkdf_salt             define
+EVP_PKEY_CTX_set1_pbe_pass              define
+EVP_PKEY_CTX_set1_scrypt_salt           define
 EVP_PKEY_CTX_set1_tls1_prf_secret       define
 EVP_PKEY_CTX_set_dh_paramgen_generator  define
 EVP_PKEY_CTX_set_dh_paramgen_prime_len  define
@@ -199,7 +201,14 @@ EVP_PKEY_CTX_set_hkdf_md                define
 EVP_PKEY_CTX_set_mac_key                define
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      define
 EVP_PKEY_CTX_set_rsa_padding            define
+EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md define
+EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen define
+EVP_PKEY_CTX_set_rsa_pss_keygen_md      define
 EVP_PKEY_CTX_set_rsa_pss_saltlen        define
+EVP_PKEY_CTX_set_scrypt_N               define
+EVP_PKEY_CTX_set_scrypt_r               define
+EVP_PKEY_CTX_set_scrypt_maxmem_bytes    define
+EVP_PKEY_CTX_set_scrypt_p               define
 EVP_PKEY_CTX_set_signature_md           define
 EVP_PKEY_CTX_set_tls1_prf_md            define
 EVP_PKEY_assign_DH                      define
