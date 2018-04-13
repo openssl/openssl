@@ -1436,6 +1436,10 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
         ssl_security(s, SSL_SECOP_VERSION, 0, version, NULL) == 0)
         return SSL_R_VERSION_TOO_LOW;
 
+    if (s->absolute_max_proto_version != 0 &&
+        version_cmp(s, version, s->absolute_max_proto_version) > 0)
+        return SSL_R_VERSION_TOO_HIGH;
+
     if (s->max_proto_version != 0 &&
         version_cmp(s, version, s->max_proto_version) > 0)
         return SSL_R_VERSION_TOO_HIGH;

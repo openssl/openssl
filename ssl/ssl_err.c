@@ -214,7 +214,7 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_CTX_ENABLE_CT, 0), "SSL_CTX_enable_ct"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_CTX_MAKE_PROFILES, 0),
      "ssl_ctx_make_profiles"},
-    {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_CTX_NEW, 0), "SSL_CTX_new"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_CTX_NEW_INT, 0), "ssl_ctx_new_int"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_CTX_SET_ALPN_PROTOS, 0),
      "SSL_CTX_set_alpn_protos"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_CTX_SET_CIPHER_LIST, 0),

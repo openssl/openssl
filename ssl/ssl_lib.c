@@ -460,7 +460,9 @@ static int dane_tlsa_add(SSL_DANE *dane,
  * Return 0 if there is only one version configured and it was disabled
  * at configure time.  Return 1 otherwise.
  */
-static int ssl_check_allowed_versions(int min_version, int max_version)
+static int ssl_check_allowed_versions(int min_version, int max_version,
+                                      int absolute_min_tls_version,
+                                      int absolute_max_tls_version)
 {
     int minisdtls = 0, maxisdtls = 0;
 
@@ -560,6 +562,8 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
 #ifdef OPENSSL_NO_TLS1_3
             || (min_version <= TLS1_3_VERSION && TLS1_3_VERSION <= max_version)
 #endif
+            || min_version < absolute_min_tls_version
+            || max_version > absolute_max_tls_version
             )
             return 0;
     }
@@ -696,6 +700,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->dane.flags = ctx->dane.flags;
     s->min_proto_version = ctx->min_proto_version;
     s->max_proto_version = ctx->max_proto_version;
+    s->absolute_max_proto_version = ctx->absolute_max_proto_version;
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->max_early_data = ctx->max_early_data;
@@ -2216,13 +2221,15 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
         else
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, s->max_proto_version)
+        return ssl_check_allowed_versions(larg, s->max_proto_version,
+                                          0, s->absolute_max_proto_version)
                && ssl_set_version_bound(s->ctx->method->version, (int)larg,
                                         &s->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return s->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(s->min_proto_version, larg)
+        return ssl_check_allowed_versions(s->min_proto_version, larg,
+                                          0, s->absolute_max_proto_version)
                && ssl_set_version_bound(s->ctx->method->version, (int)larg,
                                         &s->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -2370,13 +2377,15 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
     case SSL_CTRL_CLEAR_CERT_FLAGS:
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
-        return ssl_check_allowed_versions(larg, ctx->max_proto_version)
+        return ssl_check_allowed_versions(larg, ctx->max_proto_version,
+                                          0, ctx->absolute_max_proto_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
-        return ssl_check_allowed_versions(ctx->min_proto_version, larg)
+        return ssl_check_allowed_versions(ctx->min_proto_version, larg,
+                                          0, ctx->absolute_max_proto_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -2859,12 +2868,13 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
+static SSL_CTX *ssl_ctx_new_int(const SSL_METHOD *meth,
+                                int absolute_max_proto_version)
 {
     SSL_CTX *ret = NULL;
 
     if (meth == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_NULL_SSL_METHOD_PASSED);
+        SSLerr(SSL_F_SSL_CTX_NEW_INT, SSL_R_NULL_SSL_METHOD_PASSED);
         return NULL;
     }
 
@@ -2872,7 +2882,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         return NULL;
 
     if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
+        SSLerr(SSL_F_SSL_CTX_NEW_INT, SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
         goto err;
     }
     ret = OPENSSL_zalloc(sizeof(*ret));
@@ -2882,6 +2892,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->method = meth;
     ret->min_proto_version = 0;
     ret->max_proto_version = 0;
+    ret->absolute_max_proto_version =
+        absolute_max_proto_version == 0
+        ? TLS_MAX_VERSION : absolute_max_proto_version;
     ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
     ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
     /* We take the system default. */
@@ -2889,7 +2902,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        SSLerr(SSL_F_SSL_CTX_NEW_INT, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ret);
         return NULL;
     }
@@ -2918,7 +2931,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
                                 &ret->cipher_list, &ret->cipher_list_by_id,
                                 SSL_DEFAULT_CIPHER_LIST, ret->cert)
         || sk_SSL_CIPHER_num(ret->cipher_list) <= 0) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_LIBRARY_HAS_NO_CIPHERS);
+        SSLerr(SSL_F_SSL_CTX_NEW_INT, SSL_R_LIBRARY_HAS_NO_CIPHERS);
         goto err2;
     }
 
@@ -2927,11 +2940,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
         goto err;
 
     if ((ret->md5 = EVP_get_digestbyname("ssl3-md5")) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
+        SSLerr(SSL_F_SSL_CTX_NEW_INT, SSL_R_UNABLE_TO_LOAD_SSL3_MD5_ROUTINES);
         goto err2;
     }
     if ((ret->sha1 = EVP_get_digestbyname("ssl3-sha1")) == NULL) {
-        SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
+        SSLerr(SSL_F_SSL_CTX_NEW_INT, SSL_R_UNABLE_TO_LOAD_SSL3_SHA1_ROUTINES);
         goto err2;
     }
 
@@ -3025,10 +3038,28 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
     return ret;
  err:
-    SSLerr(SSL_F_SSL_CTX_NEW, ERR_R_MALLOC_FAILURE);
+    SSLerr(SSL_F_SSL_CTX_NEW_INT, ERR_R_MALLOC_FAILURE);
  err2:
     SSL_CTX_free(ret);
     return NULL;
+}
+
+#undef SSL_CTX_new
+/* Exported for the sake of programs linked with pre-1.1.1 OpenSSL */
+SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
+{
+    return ssl_ctx_new_int(meth, TLS1_2_VERSION);
+}
+
+/* Exported for programs linked with OpenSSL 1.1.1 */
+SSL_CTX *SSL_CTX_new_111(const SSL_METHOD *meth)
+{
+    /*
+     * Note: if we encounter another similar incompatibility in the future,
+     * 0 will have to be changed to the highest TLSv1.3 compatible version
+     * at that time.
+     */
+    return ssl_ctx_new_int(meth, 0);
 }
 
 int SSL_CTX_up_ref(SSL_CTX *ctx)
