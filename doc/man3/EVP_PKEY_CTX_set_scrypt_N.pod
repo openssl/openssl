@@ -67,10 +67,6 @@ failure.
 In particular a return value of -2 indicates the operation is not
 supported by the public key algorithm.
 
-=head1 CONFORMING TO
-
-RFC 7914
-
 =head1 SEE ALSO
 
 L<scrypt(7)>,

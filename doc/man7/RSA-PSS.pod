@@ -36,6 +36,10 @@ The PKCS#8 private key format used for RSA-PSS keys is similar to the RSA
 format except it uses the B<id-RSASSA-PSS> OID and the parameters field, if
 present, restricts the key parameters in the same way as the public key.
 
+=head1 CONFORMING TO
+
+RFC 4055
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_set_rsa_pss_keygen_md(3)>,

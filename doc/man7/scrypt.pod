@@ -88,6 +88,10 @@ This example derives a 64-byte long test vector using scrypt using the password
 
  EVP_PKEY_CTX_free(pctx);
 
+=head1 CONFORMING TO
+
+RFC 7914
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_set1_scrypt_salt(3)>,

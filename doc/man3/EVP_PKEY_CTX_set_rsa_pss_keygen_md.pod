@@ -20,6 +20,8 @@ EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 
 =head1 DESCRIPTION
 
+These are the functions that implement L<RSA-PSS(7)>.
+
 =head2 Signing and Verification
 
 The macro EVP_PKEY_CTX_set_rsa_padding() is supported but an error is
@@ -72,10 +74,6 @@ A context for the B<RSA-PSS> algorithm can be obtained by calling:
 All these functions return 1 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
-
-=head1 CONFORMING TO
-
-RFC 4055
 
 =head1 SEE ALSO
 
