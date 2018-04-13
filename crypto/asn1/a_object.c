@@ -92,7 +92,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
             if (!use_bn && l >= ((ULONG_MAX - 80) / 10L)) {
                 use_bn = 1;
                 if (bl == NULL)
-                    bl = BN_new();
+                    bl = BN_set_public(BN_new());
                 if (bl == NULL || !BN_set_word(bl, l))
                     goto err;
             }

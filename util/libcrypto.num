@@ -4536,3 +4536,4 @@ BN_asc2bn_public                        4477	1_1_1	EXIST::FUNCTION:
 BN_hex2bn_public                        4478	1_1_1	EXIST::FUNCTION:
 BN_dec2bn_public                        4479	1_1_1	EXIST::FUNCTION:
 BN_clear_flags                          4480	1_1_1	EXIST::FUNCTION:
+ASN1_INTEGER_to_BN_public               4481	1_1_1	EXIST::FUNCTION:
