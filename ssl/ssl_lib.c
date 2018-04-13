@@ -2873,21 +2873,6 @@ int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  * via ssl.h.
  */
 
-SSL_CTX *SSL_CTX_new_ex(const SSL_METHOD *meth, SSL_SESSION_CACHE *session_cache)
-{
-    SSL_CTX *ctx = SSL_CTX_new(meth);
-
-    if (ctx != NULL && session_cache != NULL) {
-        if (!SSL_SESSION_CACHE_up_ref(session_cache)) {
-            SSL_CTX_free(ctx);
-            return NULL;
-        }
-        SSL_SESSION_CACHE_free(ctx->session_cache, ctx);
-        ctx->session_cache = session_cache;
-    }
-    return ctx;
-}
-
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 {
     SSL_CTX *ret = NULL;

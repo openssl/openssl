@@ -497,7 +497,7 @@ SSL_CTX_get1_session_cache              497	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_CACHE_free                  498	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_CACHE_set_size              499	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_CACHE_set_remove_cb         500	1_1_1	EXIST::FUNCTION:
-SSL_CTX_new_ex                          501	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set1_session_cache              501	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_CACHE_get_get_cb            502	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_CACHE_set_get_cb            503	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_CACHE_set_timeout           504	1_1_1	EXIST::FUNCTION:

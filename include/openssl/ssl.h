@@ -1460,8 +1460,6 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
-__owur SSL_CTX *SSL_CTX_new_ex(const SSL_METHOD *meth,
-                               SSL_SESSION_CACHE *session_cache);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
@@ -1688,6 +1686,7 @@ int SSL_SESSION_CACHE_up_ref(SSL_SESSION_CACHE *l);
 /* returns number of references, so 0 = freed */
 int SSL_SESSION_CACHE_free(SSL_SESSION_CACHE *c, SSL_CTX *ctx);
 SSL_SESSION_CACHE *SSL_CTX_get1_session_cache(SSL_CTX *ctx);
+int SSL_CTX_set1_session_cache(SSL_CTX *ctx, SSL_SESSION_CACHE *cache);
 SSL_SESSION *SSL_SESSION_CACHE_get1_session(SSL_SESSION_CACHE *cache,
                                             SSL_SESSION *key);
 long SSL_SESSION_CACHE_set_timeout(SSL_SESSION_CACHE *cache, long t);

@@ -6,6 +6,7 @@ SSL_SESSION_CACHE_new,
 SSL_SESSION_CACHE_up_ref,
 SSL_SESSION_CACHE_free,
 SSL_CTX_get1_session_cache,
+SSL_CTX_set1_session_cache,
 SSL_SESSION_CACHE_get1_session - enable sharing of session cache
 
 =head1 SYNOPSIS
@@ -17,6 +18,7 @@ SSL_SESSION_CACHE_get1_session - enable sharing of session cache
  int SSL_SESSION_CACHE_up_ref(SSL_SESSION_CACHE *l);
  int SSL_SESSION_CACHE_free(SSL_SESSION_CACHE *c, SSL_CTX *ctx);
  SSL_SESSION_CACHE *SSL_CTX_get1_session_cache(SSL_CTX *ctx);
+ int SSL_CTX_set1_session_cache(SSL_CTX *ctx, SSL_SESSION_CACHE *cache);
  SSL_SESSION *SSL_SESSION_CACHE_get1_session(SSL_SESSION_CACHE *cache,
                                              SSL_SESSION *key);
 
@@ -42,12 +44,15 @@ SSL_CTX_get1_session_cache() returns the B<SSL_SESSION_CACHE> used by B<ctx>, an
 increments the reference count of the returned B<SSL_SESSION_CACHE>.
 SSL_SESSION_CACHE_free() must be called to release the reference count when done.
 
+SSL_CTX_set1_session_cache() assigns SSL_SESSION_CACHE B<cache> to SSL_CTX B<ctx>.
+A new SSL_SESSION_CACHE may only be assigned to an SSL_CTX that has an empty cache.
+
 SSL_SESSION_CACHE_get1_session() returns a B<SSL_SESSION> from the B<cache> that
 matches the B<key>, and increments the  reference count of the returned
 B<SSL_SESSION>. SSL_SESSION_free() must be called to release the reference count
 when done.
 
-Adding the B<SSL_SESSION_CACHE> to a B<SSL_CTX> via SSL_CTX_new_ex() increments the
+Adding the B<SSL_SESSION_CACHE> to a B<SSL_CTX> via SSL_CTX_set1_session_cache() increments the
 reference count, freeing the B<SSL_CTX> via SSL_CTX_free() decrements the reference
 count.
 
@@ -61,7 +66,8 @@ In the following example (error handling eliminated):
 
  SSL_CTX ctx1 = SSL_CTX_new(TLS_method());
  SSL_SESSION_CACHE *cache = SSL_CTX_get1_session_cache(ctx1);
- SSL_CTX ctx2 = SSL_CTX_new_ex(TLS_method(), cache);
+ SSL_CTX ctx2 = SSL_CTX_new(TLS_method());
+ SSL_CTX_set1_session_cache(ctx2, cache);
  SSL_SESSION_CACHE_free(cache);
 
 The result of this is that B<ctx1>'s session cache is shared by B<ctx2>.
@@ -77,7 +83,8 @@ session cache.
 SSL_SESSION_CACHE_new() returns a newly created B<SSL_SESSION_CACHE> object
 on success, and NULL on failure.
 
-SSL_SESSION_CACHE_up_ref() returns 1 for success and 0 for failure.
+SSL_SESSION_CACHE_up_ref() and SSL_CTX_set1_session_cache() return 1 for
+success and 0 for failure.
 
 SSL_SESSION_CACHE_free() returns the number of remaining references to the
 B<SSL_SESSION_CACHE>. A return value of 0 means that the object has been freed,
@@ -93,15 +100,14 @@ NULL on failure.
 
 The SSL_SESSION_CACHE_new(), SSL_SESSION_CACHE_up_ref(),
 SSL_SESSION_CACHE_free(), SSL_CTX_get1_session_cache(),
-and SSL_SESSION_CACHE_get1_session()
-functions were introduced in OpenSSL 1.1.1.
+SSL_SESSION_CACHE_get1_session(), and SSL_SESSION_CACHE_set1_session()
+functions were introduced in OpenSSL 1.1.2.
 
 =head1 SEE ALSO
 
 L<ssl(3)>,
 L<SSL_set_session(3)>,
 L<SSL_session_reused(3)>,
-L<SSL_CTX_new_ex(3)>,
 L<SSL_CTX_sess_set_get_cb(3)>,
 L<SSL_CTX_sessions(3)>,
 L<SSL_CTX_set_session_id_context(3)>,

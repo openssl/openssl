@@ -1440,6 +1440,26 @@ SSL_SESSION_CACHE *SSL_CTX_get1_session_cache(SSL_CTX *ctx)
     return ctx->session_cache;
 }
 
+int SSL_CTX_set1_session_cache(SSL_CTX *ctx, SSL_SESSION_CACHE *cache)
+{
+    int ret = 0;
+    SSL_SESSION_CACHE* old_cache = NULL;
+
+    if (!SSL_SESSION_CACHE_up_ref(cache))
+        return 0;
+
+    CRYPTO_THREAD_write_lock(ctx->lock);
+    if (lh_SSL_SESSION_num_items(ctx->session_cache->sessions) == 0) {
+        old_cache = ctx->session_cache;
+        ctx->session_cache = cache;
+        ret = 1;
+    }
+    CRYPTO_THREAD_write_lock(ctx->lock);
+    
+    SSL_SESSION_CACHE_free(old_cache, ctx);
+    return ret;
+}
+
 /*
  * The following functions have long input/return for compatibility with
  * SSL_CTX_ctrl()

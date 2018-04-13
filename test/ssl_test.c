@@ -421,7 +421,12 @@ static int test_handshake(int idx)
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             SSL_SESSION_CACHE *c = SSL_CTX_get1_session_cache(server_ctx);
 
-            resume_server_ctx = SSL_CTX_new_ex(DTLS_server_method(), c);
+            resume_server_ctx = SSL_CTX_new(DTLS_server_method());
+            if (!TEST_ptr(resume_server_ctx)
+                    || !TEST_true(SSL_CTX_set1_session_cache(resume_server_ctx, c))) {
+                SSL_SESSION_CACHE_free(c, NULL);
+                goto err;
+            }
             SSL_SESSION_CACHE_free(c, NULL);
             if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx,
                                                          DTLS_MAX_VERSION)))
@@ -458,7 +463,12 @@ static int test_handshake(int idx)
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             SSL_SESSION_CACHE *c = SSL_CTX_get1_session_cache(server_ctx);
 
-            resume_server_ctx = SSL_CTX_new_ex(TLS_server_method(), c);
+            resume_server_ctx = SSL_CTX_new(TLS_server_method());
+            if (!TEST_ptr(resume_server_ctx)
+                    || !TEST_true(SSL_CTX_set1_session_cache(resume_server_ctx, c))) {
+                SSL_SESSION_CACHE_free(c, NULL);
+                goto err;
+            }
             SSL_SESSION_CACHE_free(c, NULL);
             if (!TEST_true(SSL_CTX_set_max_proto_version(resume_server_ctx,
                                                      TLS_MAX_VERSION)))
