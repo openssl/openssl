@@ -26,51 +26,12 @@ use TLSProxy::NewSessionTicket;
 my $have_IPv6 = 0;
 my $IP_factory;
 
-my $is_tls13 = 0;
-my $ciphersuite = undef;
-
-sub new
+BEGIN
 {
-    my $class = shift;
-    my ($filter,
-        $execute,
-        $cert,
-        $debug) = @_;
-
-    my $self = {
-        #Public read/write
-        proxy_addr => "localhost",
-        server_addr => "localhost",
-        filter => $filter,
-        serverflags => "",
-        clientflags => "",
-        serverconnects => 1,
-        reneg => 0,
-        sessionfile => undef,
-
-        #Public read
-        proxy_port => 0,
-        server_port => 0,
-        serverpid => 0,
-        clientpid => 0,
-        execute => $execute,
-        cert => $cert,
-        debug => $debug,
-        cipherc => "",
-        ciphersuitesc => "",
-        ciphers => "AES128-SHA",
-        ciphersuitess => "TLS_AES_128_GCM_SHA256",
-        flight => -1,
-        direction => -1,
-        partial => ["", ""],
-        record_list => [],
-        message_list => [],
-    };
-
     # IO::Socket::IP is on the core module list, IO::Socket::INET6 isn't.
     # However, IO::Socket::INET6 is older and is said to be more widely
     # deployed for the moment, and may have less bugs, so we try the latter
-    # first, then fall back on the code modules.  Worst case scenario, we
+    # first, then fall back on the core modules.  Worst case scenario, we
     # fall back to IO::Socket::INET, only supports IPv4.
     eval {
         require IO::Socket::INET6;
@@ -103,6 +64,47 @@ sub new
             $IP_factory = sub { IO::Socket::INET->new(@_); };
         }
     }
+}
+
+my $is_tls13 = 0;
+my $ciphersuite = undef;
+
+sub new
+{
+    my $class = shift;
+    my ($filter,
+        $execute,
+        $cert,
+        $debug) = @_;
+
+    my $self = {
+        #Public read/write
+        proxy_addr => $have_IPv6 ? "[::1]" : "127.0.0.1",
+        filter => $filter,
+        serverflags => "",
+        clientflags => "",
+        serverconnects => 1,
+        reneg => 0,
+        sessionfile => undef,
+
+        #Public read
+        proxy_port => 0,
+        server_port => 0,
+        serverpid => 0,
+        clientpid => 0,
+        execute => $execute,
+        cert => $cert,
+        debug => $debug,
+        cipherc => "",
+        ciphersuitesc => "",
+        ciphers => "AES128-SHA",
+        ciphersuitess => "TLS_AES_128_GCM_SHA256",
+        flight => -1,
+        direction => -1,
+        partial => ["", ""],
+        record_list => [],
+        message_list => [],
+    };
 
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
@@ -113,11 +115,11 @@ sub new
         Proto       => "tcp",
         Listen      => SOMAXCONN,
        );
-    $self->{proxy_sock} = $IP_factory->(@proxyargs);
 
-    if ($self->{proxy_sock}) {
-        $self->{proxy_port} = $self->{proxy_sock}->sockport();
-        $self->{proxy_addr} = $self->{proxy_sock}->sockhost();
+    if (my $sock = $IP_factory->(@proxyargs)) {
+        $self->{proxy_sock} = $sock;
+        $self->{proxy_port} = $sock->sockport();
+        $self->{proxy_addr} = $sock->sockhost();
         $self->{proxy_addr} =~ s/(.*:.*)/[$1]/;
         print "Proxy started on port ",
               "$self->{proxy_addr}:$self->{proxy_port}\n";
