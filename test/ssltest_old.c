@@ -1432,24 +1432,17 @@ int main(int argc, char *argv[])
     } else if (tls1) {
         min_version = TLS1_VERSION;
         max_version = TLS1_VERSION;
-    } else {
-        min_version = SSL3_VERSION;
-        max_version = TLS_MAX_VERSION;
     }
 #endif
 #ifndef OPENSSL_NO_DTLS
-    if (dtls || dtls1 || dtls12) {
+    if (dtls || dtls1 || dtls12)
         meth = DTLS_method();
-        if (dtls1) {
-            min_version = DTLS1_VERSION;
-            max_version = DTLS1_VERSION;
-        } else if (dtls12) {
-            min_version = DTLS1_2_VERSION;
-            max_version = DTLS1_2_VERSION;
-        } else {
-            min_version = DTLS_MIN_VERSION;
-            max_version = DTLS_MAX_VERSION;
-        }
+    if (dtls1) {
+        min_version = DTLS1_VERSION;
+        max_version = DTLS1_VERSION;
+    } else if (dtls12) {
+        min_version = DTLS1_2_VERSION;
+        max_version = DTLS1_2_VERSION;
     }
 #endif
 
@@ -1474,26 +1467,14 @@ int main(int argc, char *argv[])
         SSL_CTX_set_options(s_ctx, SSL_OP_NO_TICKET);
     }
 
-    if (SSL_CTX_set_min_proto_version(c_ctx, min_version) == 0) {
-        printf("Unable to set client min protocol version (0x%X)\n",
-               min_version);
+    if (SSL_CTX_set_min_proto_version(c_ctx, min_version) == 0)
         goto end;
-    }
-    if (SSL_CTX_set_max_proto_version(c_ctx, max_version) == 0) {
-        printf("Unable to set client max protocol version (0x%X)\n",
-               max_version);
+    if (SSL_CTX_set_max_proto_version(c_ctx, max_version) == 0)
         goto end;
-    }
-    if (SSL_CTX_set_min_proto_version(s_ctx, min_version) == 0) {
-        printf("Unable to set server min protocol version (0x%X)\n",
-               min_version);
+    if (SSL_CTX_set_min_proto_version(s_ctx, min_version) == 0)
         goto end;
-    }
-    if (SSL_CTX_set_max_proto_version(s_ctx, max_version) == 0) {
-        printf("Unable to set server max protocol version (0x%X)\n",
-               max_version);
+    if (SSL_CTX_set_max_proto_version(s_ctx, max_version) == 0)
         goto end;
-    }
 
     if (cipher != NULL) {
         if (!SSL_CTX_set_cipher_list(c_ctx, cipher)

@@ -255,7 +255,6 @@ int main(int argc, char *argv[])
     }
 
     if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, TLS_MAX_VERSION,
                              &serverctx, &clientctx, argv[1], argv[2])) {
         printf("Failed to create SSL_CTX pair\n");
         goto end;

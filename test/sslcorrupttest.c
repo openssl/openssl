@@ -185,9 +185,8 @@ static int test_ssl_corrupt(int testidx)
 
     printf("Starting Test %d, %s\n", testidx, cipher_list[testidx]);
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, TLS_MAX_VERSION, &sctx, &cctx,
-                             cert, privkey)) {
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         return 0;
     }
