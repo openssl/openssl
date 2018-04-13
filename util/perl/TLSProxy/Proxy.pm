@@ -479,7 +479,7 @@ sub process_packet
 
     print "\n";
 
-    if (scalar(@{$ret[0]}) == 0) {
+    if (scalar(@{$ret[0]}) == 0 or length($ret[2]) != 0) {
         return "";
     }
 
