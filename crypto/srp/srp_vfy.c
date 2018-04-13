@@ -13,6 +13,7 @@
 
 #ifndef OPENSSL_NO_SRP
 # include "internal/cryptlib.h"
+# include "internal/evp_int.h"
 # include <openssl/sha.h>
 # include <openssl/srp.h>
 # include <openssl/evp.h>
@@ -25,25 +26,145 @@
 # define MAX_LEN 2500
 
 /*
+ * Note that SRP uses its own variant of base 64 encoding. A different base64
+ * alphabet is used and no padding '=' characters are added. Instead we pad to
+ * the front with 0 bytes and subsequently strip off leading encoded padding.
+ * This variant is used for compatibility with other SRP implementations -
+ * notably libsrp, but also others. It is also required for backwards
+ * compatibility in order to load verifier files from other OpenSSL versions.
+ */
+
+/*
  * Convert a base64 string into raw byte array representation.
+ * Returns the length of the decoded data, or -1 on error.
  */
 static int t_fromb64(unsigned char *a, size_t alen, const char *src)
 {
-    size_t size = strlen(src);
+    EVP_ENCODE_CTX *ctx;
+    int outl = 0, outl2 = 0;
+    size_t size, padsize;
+    const unsigned char *pad = (const unsigned char *)"00";
+
+    while (*src == ' ' || *src == '\t' || *src == '\n')
+        ++src;
+    size = strlen(src);
+    padsize = 4 - (size & 3);
+    padsize &= 3;
 
     /* Four bytes in src become three bytes output. */
-    if (size > INT_MAX || (size / 4) * 3 > alen)
+    if (size > INT_MAX || ((size + padsize) / 4) * 3 > alen)
         return -1;
 
-    return EVP_DecodeBlock(a, (unsigned char *)src, (int)size);
+    ctx = EVP_ENCODE_CTX_new();
+    if (ctx == NULL)
+        return -1;
+
+    /*
+     * This should never occur because 1 byte of data always requires 2 bytes of
+     * encoding, i.e.
+     *  0 bytes unencoded = 0 bytes encoded
+     *  1 byte unencoded  = 2 bytes encoded
+     *  2 bytes unencoded = 3 bytes encoded
+     *  3 bytes unencoded = 4 bytes encoded
+     *  4 bytes unencoded = 6 bytes encoded
+     *  etc
+     */
+    if (padsize == 3)
+        return -1;
+
+    /* Valid padsize values are now 0, 1 or 2 */
+
+    EVP_DecodeInit(ctx);
+    evp_encode_ctx_set_flags(ctx, EVP_ENCODE_CTX_USE_SRP_ALPHABET);
+
+    /* Add any encoded padding that is required */
+    if (padsize != 0
+            && EVP_DecodeUpdate(ctx, a, &outl, pad, padsize) < 0) {
+        EVP_ENCODE_CTX_free(ctx);
+        return -1;
+    }
+    if (EVP_DecodeUpdate(ctx, a, &outl2, (const unsigned char *)src, size) < 0) {
+        EVP_ENCODE_CTX_free(ctx);
+        return -1;
+    }
+    outl += outl2;
+    EVP_DecodeFinal(ctx, a + outl, &outl2);
+    outl += outl2;
+
+    /* Strip off the leading padding */
+    if (padsize != 0) {
+        if ((int)padsize >= outl)
+            return -1;
+        /*
+         * If we added 1 byte of padding prior to encoding then we have 2 bytes
+         * of "real" data which gets spread across 4 encoded bytes like this:
+         *   (6 bits pad)(2 bits pad | 4 bits data)(6 bits data)(6 bits data)
+         * So 1 byte of pre-encoding padding results in 1 full byte of encoded
+         * padding.
+         * If we added 2 bytes of padding prior to encoding this gets encoded
+         * as:
+         *   (6 bits pad)(6 bits pad)(4 bits pad | 2 bits data)(6 bits data)
+         * So 2 bytes of pre-encoding padding results in 2 full bytes of encoded
+         * padding, i.e. we have to strip the same number of bytes of padding
+         * from the encoded data as we added to the pre-encoded data.
+         */
+        memmove(a, a + padsize, outl - padsize);
+        outl -= padsize;
+    }
+
+    EVP_ENCODE_CTX_free(ctx);
+
+    return outl;
 }
 
 /*
  * Convert a raw byte string into a null-terminated base64 ASCII string.
+ * Returns 1 on success or 0 on error.
  */
-static void t_tob64(char *dst, const unsigned char *src, int size)
+static int t_tob64(char *dst, const unsigned char *src, int size)
 {
-    EVP_EncodeBlock((unsigned char *)dst, src, size);
+    EVP_ENCODE_CTX *ctx = EVP_ENCODE_CTX_new();
+    int outl = 0, outl2 = 0;
+    unsigned char pad[2] = {0, 0};
+    size_t leadz = 0;
+
+    if (ctx == NULL)
+        return 0;
+
+    EVP_EncodeInit(ctx);
+    evp_encode_ctx_set_flags(ctx, EVP_ENCODE_CTX_NO_NEWLINES
+                                  | EVP_ENCODE_CTX_USE_SRP_ALPHABET);
+
+    /*
+     * We pad at the front with zero bytes until the length is a multiple of 3
+     * so that EVP_EncodeUpdate/EVP_EncodeFinal does not add any of its own "="
+     * padding
+     */
+    leadz = 3 - (size % 3);
+    if (leadz != 3
+            && !EVP_EncodeUpdate(ctx, (unsigned char *)dst, &outl, pad,
+                                 leadz)) {
+        EVP_ENCODE_CTX_free(ctx);
+        return 0;
+    }
+
+    if (!EVP_EncodeUpdate(ctx, (unsigned char *)dst + outl, &outl2, src,
+                          size)) {
+        EVP_ENCODE_CTX_free(ctx);
+        return 0;
+    }
+    outl += outl2;
+    EVP_EncodeFinal(ctx, (unsigned char *)dst + outl, &outl2);
+    outl += outl2;
+
+    /* Strip the encoded padding at the front */
+    if (leadz != 3) {
+        memmove(dst, dst + leadz, outl - leadz);
+        dst[outl - leadz] = '\0';
+    }
+
+    EVP_ENCODE_CTX_free(ctx);
+    return 1;
 }
 
 void SRP_user_pwd_free(SRP_user_pwd *user_pwd)

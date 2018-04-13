@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/evp.h>
 #include "internal/refcount.h"
 
 struct evp_pkey_ctx_st {
@@ -422,3 +423,11 @@ void evp_app_cleanup_int(void);
 #ifndef TLS1_1_VERSION
 # define TLS1_1_VERSION   0x0302
 #endif
+
+void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
+
+/* EVP_ENCODE_CTX flags */
+/* Don't generate new lines when encoding */
+#define EVP_ENCODE_CTX_NO_NEWLINES          1
+/* Use the SRP base64 alphabet instead of the standard one */
+#define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
