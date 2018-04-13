@@ -22,13 +22,6 @@ EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 
 =head2 Signing and Verification
 
-Signing and verification is similar to the B<RSA> algorithm except the
-padding mode is always PSS. If the key in use has parameter restrictions then
-the corresponding signature parameters are set to the restrictions:
-for example, if the key can only be used with digest SHA256, MGF1 SHA256
-and minimum salt length 32 then the digest, MGF1 digest and salt length
-will be set to SHA256, SHA256 and 32 respectively.
-
 The macro EVP_PKEY_CTX_set_rsa_padding() is supported but an error is
 returned if an attempt is made to set the padding mode to anything other
 than B<PSS>. It is otherwise similar to the B<RSA> version.
@@ -52,13 +45,12 @@ As with RSA key generation the EVP_PKEY_CTX_set_rsa_rsa_keygen_bits()
 and EVP_PKEY_CTX_set_rsa_keygen_pubexp() macros are supported for RSA-PSS:
 they have exactly the same meaning as for the RSA algorithm.
 
-Optional parameter restrictions can be specified when generating a PSS key. By
-default no parameter restrictions are placed on the generated key. If any
-restrictions are set (using the macros described below) then B<all> parameters
-are restricted. For example, setting a minimum salt length also restricts the
-digest and MGF1 algorithms. If any restrictions are in place then they are
-reflected in the corresponding parameters of the public key when (for example)
-a certificate request is signed.
+Optional parameter restrictions can be specified when generating a PSS key.
+If any restrictions are set (using the macros described below) then B<all>
+parameters are restricted. For example, setting a minimum salt length also
+restricts the digest and MGF1 algorithms. If any restrictions are in place
+then they are reflected in the corresponding parameters of the public key
+when (for example) a certificate request is signed.
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_md() restricts the digest algorithm the
 generated key can use to B<md>.

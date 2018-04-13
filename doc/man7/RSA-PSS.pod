@@ -15,6 +15,19 @@ It has associated private key and public key formats.
 This algorithm shares several control operations with the B<RSA> algorithm
 but with some restrictions described below.
 
+=head2 Signing and Verification
+
+Signing and verification is similar to the B<RSA> algorithm except the
+padding mode is always PSS. If the key in use has parameter restrictions then
+the corresponding signature parameters are set to the restrictions:
+for example, if the key can only be used with digest SHA256, MGF1 SHA256
+and minimum salt length 32 then the digest, MGF1 digest and salt length
+will be set to SHA256, SHA256 and 32 respectively.
+
+=head2 Key Generation
+
+By default no parameter restrictions are placed on the generated key.
+
 =head1 NOTES
 
 The public key format is documented in RFC4055.

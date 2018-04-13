@@ -16,7 +16,8 @@ EVP_PKEY_CTX_set1_pbe_pass
 
 These functions are generic support functions for all KDF algorithms.
 
-EVP_PKEY_CTX_set1_pbe_pass() sets the B<passlen> bytes long password.
+EVP_PKEY_CTX_set1_pbe_pass() sets the password to the B<passlen> first
+bytes from B<pass>.
 
 =begin comment
 
@@ -35,7 +36,7 @@ The B<password> can be directly specified using the B<type> parameter
 
 =begin comment
 
-Just as for the function description, there strings "salt", "hexsalt",
+Just as for the function description, the strings "salt", "hexsalt",
 "key", "hexkey" and "md" should be generically specified, and
 supported by the algorithms that use them.
 
