@@ -1465,7 +1465,7 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
 /* As an option for apps, TLSv1.3 can be disabled */
-#ifndef OPENSSL_DISABLE_TLSv13
+#ifndef OPENSSL_DISABLE_TLS1_3
 /*
  * With TLSv1.3 enabled, we make sure that apps linked against the shared
  * libraries of earlier OpenSSL versions don't get it by mistake, as TLSv1.3
