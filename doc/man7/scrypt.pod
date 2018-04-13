@@ -4,24 +4,6 @@
 
 scrypt - EVP_PKEY scrypt KDF support
 
-=head1 SYNOPSIS
-
- #include <openssl/kdf.h>
-
- int EVP_PKEY_CTX_set1_pbe_pass(EVP_PKEY_CTX *pctx, unsigned char *pass,
-                                int passlen);
-
- int EVP_PKEY_CTX_set1_scrypt_salt(EVP_PKEY_CTX *pctx, unsigned char *salt,
-                                   int saltlen);
-
- int EVP_PKEY_CTX_set_scrypt_N(EVP_PKEY_CTX *pctx, uint64_t N);
-
- int EVP_PKEY_CTX_set_scrypt_r(EVP_PKEY_CTX *pctx, uint64_t r);
-
- int EVP_PKEY_CTX_set_scrypt_p(EVP_PKEY_CTX *pctx, uint64_t p);
-
- int EVP_PKEY_CTX_set_scrypt_maxmem_bytes(EVP_PKEY_CTX *pctx, uint64_t maxmem);
-
 =head1 DESCRIPTION
 
 The EVP_PKEY_SCRYPT algorithm implements the scrypt password based key
@@ -47,44 +29,14 @@ GHz), this computation takes about 3 seconds. When N, r or p are not specified,
 they default to 1048576, 8, and 1, respectively. The default amount of RAM that
 may be used by scrypt defaults to 1025 MiB.
 
-EVP_PKEY_CTX_set1_pbe_pass() sets the B<passlen> bytes long password.
-
-EVP_PKEY_CTX_set1_scrypt_salt() sets the B<saltlen> bytes long salt value.
-
-EVP_PKEY_CTX_set_scrypt_N(), EVP_PKEY_CTX_set_scrypt_r() and
-EVP_PKEY_CTX_set_scrypt_p() configure the work factors N, r and p.
-
-EVP_PKEY_CTX_set_scrypt_maxmem_bytes() sets how much RAM key derivation may
-maximally use, given in bytes. If RAM is exceeded because the load factors are
-chosen too high, the key derivation will fail.
-
-=head1 STRING CTRLS
-
-scrypt also supports string based control operations via
-L<EVP_PKEY_CTX_ctrl_str(3)>.
-The B<password> can be directly specified using the B<type> parameter "pass" or
-given in hex encoding using the "hexpass" parameter. Similarly, the B<salt> can
-either be specified using the B<type> parameter "salt" or in hex encoding by
-using the "hexsalt" parameter. The work factors B<N>, B<r> and B<p> as well as
-B<maxmem_bytes> can be set by using the parameters "N", "r", "p" and
-"maxmem_bytes", respectively.
-
 =head1 NOTES
-
-All these functions are implemented as macros.
 
 A context for scrypt can be obtained by calling:
 
  EVP_PKEY_CTX *pctx = EVP_PKEY_new_id(EVP_PKEY_SCRYPT, NULL);
 
-The output length of an scrypt key derivation is specified via the length
-parameter to the L<EVP_PKEY_derive(3)> function.
-
-=head1 RETURN VALUES
-
-All these functions return 1 for success and 0 or a negative value for failure.
-In particular a return value of -2 indicates the operation is not supported by
-the public key algorithm.
+The output length of an scrypt key derivation is specified via the
+length parameter to the L<EVP_PKEY_derive(3)> function.
 
 =head1 EXAMPLE
 
@@ -142,13 +94,18 @@ RFC 7914
 
 =head1 SEE ALSO
 
+L<EVP_PKEY_CTX_set1_scrypt_salt(3)>,
+L<EVP_PKEY_CTX_set_scrypt_N(3)>,
+L<EVP_PKEY_CTX_set_scrypt_r(3)>,
+L<EVP_PKEY_CTX_set_scrypt_p(3)>,
+L<EVP_PKEY_CTX_set_scrypt_maxmem_bytes(3)>,
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_CTX_ctrl_str(3)>,
 L<EVP_PKEY_derive(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
