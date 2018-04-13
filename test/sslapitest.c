@@ -34,9 +34,7 @@ static X509 *ocspcert = NULL;
 #define NUM_EXTRA_CERTS 40
 
 static int execute_test_large_message(const SSL_METHOD *smeth,
-                                      const SSL_METHOD *cmeth,
-                                      int min_version, int max_version,
-                                      int read_ahead)
+                                      const SSL_METHOD *cmeth, int read_ahead)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -58,7 +56,7 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
         goto end;
     }
 
-    if (!create_ssl_ctx_pair(smeth, cmeth, min_version, max_version, &sctx,
+    if (!create_ssl_ctx_pair(smeth, cmeth, &sctx,
                              &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         goto end;
@@ -127,14 +125,12 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 static int test_large_message_tls(void)
 {
     return execute_test_large_message(TLS_server_method(), TLS_client_method(),
-                                      TLS1_VERSION, TLS_MAX_VERSION,
                                       0);
 }
 
 static int test_large_message_tls_read_ahead(void)
 {
     return execute_test_large_message(TLS_server_method(), TLS_client_method(),
-                                      TLS1_VERSION, TLS_MAX_VERSION,
                                       1);
 }
 
@@ -146,9 +142,7 @@ static int test_large_message_dtls(void)
      * read_ahead is set.
      */
     return execute_test_large_message(DTLS_server_method(),
-                                      DTLS_client_method(),
-                                      DTLS1_VERSION, DTLS_MAX_VERSION,
-                                      0);
+                                      DTLS_client_method(), 0);
 }
 #endif
 
@@ -213,9 +207,8 @@ static int test_tlsext_status_type(void)
     OCSP_RESPID *id = NULL;
     BIO *certbio = NULL;
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, TLS_MAX_VERSION, &sctx, &cctx,
-                             cert, privkey)) {
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         return 0;
     }
@@ -438,9 +431,8 @@ static int execute_test_session(SSL_SESSION_TEST_FIXTURE fix)
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
     int testresult = 0;
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, TLS_MAX_VERSION, &sctx, &cctx,
-                             cert, privkey)) {
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         return 0;
     }
@@ -936,9 +928,8 @@ static int test_set_sigalgs(int idx)
     curr = testctx ? &testsigalgs[idx]
                    : &testsigalgs[idx - OSSL_NELEM(testsigalgs)];
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                             TLS1_VERSION, TLS_MAX_VERSION, &sctx, &cctx,
-                             cert, privkey)) {
+    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         return 0;
     }
@@ -1088,16 +1079,14 @@ static int test_custom_exts(int tst)
     clntaddcb = clntparsecb = srvaddcb = srvparsecb = 0;
     snicb = 0;
 
-    if (!create_ssl_ctx_pair(TLS_server_method(),  TLS_client_method(),
-                             TLS1_VERSION, TLS_MAX_VERSION, &sctx, &cctx,
-                             cert, privkey)) {
+    if (!create_ssl_ctx_pair(TLS_server_method(),  TLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         goto end;
     }
 
     if (tst == 1
-            && !create_ssl_ctx_pair(TLS_server_method(), NULL,
-                                    TLS1_VERSION, TLS_MAX_VERSION, &sctx2, NULL,
+            && !create_ssl_ctx_pair(TLS_server_method(), NULL, &sctx2, NULL,
                                     cert, privkey)) {
         printf("Unable to create SSL_CTX pair (2)\n");
         goto end;
