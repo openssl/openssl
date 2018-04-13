@@ -62,6 +62,7 @@ BEGIN
             $have_IPv6 = 1;
         } else {
             $IP_factory = sub { IO::Socket::INET->new(@_); };
+            $have_IPv6 = 0;
         }
     }
 }
