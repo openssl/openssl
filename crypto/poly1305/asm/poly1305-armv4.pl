@@ -186,6 +186,7 @@ $code.=<<___;
 .type	poly1305_blocks,%function
 .align	5
 poly1305_blocks:
+.Lpoly1305_blocks:
 	stmdb	sp!,{r3-r11,lr}
 
 	ands	$len,$len,#-16
@@ -677,7 +678,7 @@ poly1305_blocks_neon:
 	cmp	$len,#64
 	bhs	.Lenter_neon
 	tst	ip,ip			@ is_base2_26?
-	beq	poly1305_blocks
+	beq	.Lpoly1305_blocks
 
 .Lenter_neon:
 	stmdb	sp!,{r4-r7}
