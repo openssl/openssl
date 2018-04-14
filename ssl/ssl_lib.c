@@ -700,7 +700,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->dane.flags = ctx->dane.flags;
     s->min_proto_version = ctx->min_proto_version;
     s->max_proto_version = ctx->max_proto_version;
-    s->absolute_max_proto_version = ctx->absolute_max_proto_version;
+    s->absolute_max_tls_version = ctx->absolute_max_tls_version;
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->max_early_data = ctx->max_early_data;
@@ -2222,14 +2222,14 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
             return 0;
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
         return ssl_check_allowed_versions(larg, s->max_proto_version,
-                                          0, s->absolute_max_proto_version)
+                                          0, s->absolute_max_tls_version)
                && ssl_set_version_bound(s->ctx->method->version, (int)larg,
                                         &s->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return s->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
         return ssl_check_allowed_versions(s->min_proto_version, larg,
-                                          0, s->absolute_max_proto_version)
+                                          0, s->absolute_max_tls_version)
                && ssl_set_version_bound(s->ctx->method->version, (int)larg,
                                         &s->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -2378,14 +2378,14 @@ long SSL_CTX_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
         return (ctx->cert->cert_flags &= ~larg);
     case SSL_CTRL_SET_MIN_PROTO_VERSION:
         return ssl_check_allowed_versions(larg, ctx->max_proto_version,
-                                          0, ctx->absolute_max_proto_version)
+                                          0, ctx->absolute_max_tls_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->min_proto_version);
     case SSL_CTRL_GET_MIN_PROTO_VERSION:
         return ctx->min_proto_version;
     case SSL_CTRL_SET_MAX_PROTO_VERSION:
         return ssl_check_allowed_versions(ctx->min_proto_version, larg,
-                                          0, ctx->absolute_max_proto_version)
+                                          0, ctx->absolute_max_tls_version)
                && ssl_set_version_bound(ctx->method->version, (int)larg,
                                         &ctx->max_proto_version);
     case SSL_CTRL_GET_MAX_PROTO_VERSION:
@@ -2869,9 +2869,13 @@ static int ssl_session_cmp(const SSL_SESSION *a, const SSL_SESSION *b)
  */
 
 static SSL_CTX *ssl_ctx_new_int(const SSL_METHOD *meth,
-                                int absolute_max_proto_version)
+                                int absolute_max_tls_version)
 {
     SSL_CTX *ret = NULL;
+    int isdtls =
+        meth->version == DTLS_ANY_VERSION
+        || meth->version == DTLS1_BAD_VER
+        || meth->version >> 8 == DTLS1_VERSION_MAJOR;
 
     if (meth == NULL) {
         SSLerr(SSL_F_SSL_CTX_NEW_INT, SSL_R_NULL_SSL_METHOD_PASSED);
@@ -2892,9 +2896,12 @@ static SSL_CTX *ssl_ctx_new_int(const SSL_METHOD *meth,
     ret->method = meth;
     ret->min_proto_version = 0;
     ret->max_proto_version = 0;
-    ret->absolute_max_proto_version =
-        absolute_max_proto_version == 0
-        ? TLS_MAX_VERSION : absolute_max_proto_version;
+    ret->absolute_max_tls_version =
+        absolute_max_tls_version == 0
+        ? TLS_MAX_VERSION : absolute_max_tls_version;
+    /* Check TLS version compatibility */
+    if (!isdtls)
+        ret->max_proto_version = absolute_max_tls_version;
     ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
     ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
     /* We take the system default. */

@@ -869,7 +869,7 @@ struct ssl_ctx_st {
      * For compatibility reasons, we keep an absolute max as well.
      * When set, no one can go over.
      */
-    int absolute_max_proto_version;
+    int absolute_max_tls_version;
     size_t max_cert_list;
 
     struct cert_st /* CERT */ *cert;
@@ -1225,7 +1225,7 @@ struct ssl_st {
     uint32_t mode;
     int min_proto_version;
     int max_proto_version;
-    int absolute_max_proto_version;
+    int absolute_max_tls_version;
     size_t max_cert_list;
     int first_packet;
     /*
