@@ -466,6 +466,14 @@ static int ssl_check_allowed_versions(int min_version, int max_version,
 {
     int minisdtls = 0, maxisdtls = 0;
 
+    /* Make sure that the absolute limits are non-zero */
+    if (absolute_min_tls_version == 0
+        || absolute_min_tls_version < SSL3_VERSION)
+        absolute_min_tls_version = SSL3_VERSION;
+    if (absolute_max_tls_version == 0
+        || absolute_max_tls_version > TLS_MAX_VERSION)
+        absolute_max_tls_version = TLS_MAX_VERSION;
+
     /* Figure out if we're doing DTLS versions or TLS versions */
     if (min_version == DTLS1_BAD_VER
         || min_version >> 8 == DTLS1_VERSION_MAJOR)
@@ -510,9 +518,9 @@ static int ssl_check_allowed_versions(int min_version, int max_version,
     } else {
         /* Regular TLS version checks. */
         if (min_version == 0)
-            min_version = SSL3_VERSION;
+            min_version = absolute_min_tls_version;
         if (max_version == 0)
-            max_version = TLS1_3_VERSION;
+            max_version = absolute_max_tls_version;
 #ifdef OPENSSL_NO_TLS1_3
         if (max_version == TLS1_3_VERSION)
             max_version = TLS1_2_VERSION;
