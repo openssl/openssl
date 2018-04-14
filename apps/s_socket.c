@@ -283,7 +283,8 @@ int do_server(int *accept_sock, const char *host, const char *port,
     BIO_ADDRINFO_free(res);
     res = NULL;
 
-    {
+    if (BIO_ADDR_rawport(sock_address) == 0) {
+        /* dynamically allocated port, report which one */
         union BIO_sock_info_u info;
         char *hostname = NULL;
         char *service = NULL;
@@ -309,6 +310,9 @@ int do_server(int *accept_sock, const char *host, const char *port,
             ERR_print_errors(bio_err);
             goto end;
         }
+    } else {
+        (void)BIO_printf(bio_s_out, "ACCEPT\n");
+        (void)BIO_flush(bio_s_out);
     }
 
     if (accept_sock != NULL)
