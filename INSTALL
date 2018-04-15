@@ -276,6 +276,10 @@
                    error strings. For a statically linked application this may
                    be undesirable if small executable size is an objective.
 
+  no-autoload-config
+                   Don't automatically load the default openssl.cnf file.
+                   Typically OpenSSL will automatically load a system config
+                   file which configures default ssl options.
 
   no-capieng
                    Don't build the CAPI engine. This option will be forced if

@@ -467,6 +467,11 @@ static int test_handshake(int idx)
         }
     }
 
+#ifdef OPENSSL_NO_AUTOLOAD_CONFIG
+    if (!TEST_true(OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL)))
+        goto err;
+#endif
+
     if (!TEST_ptr(server_ctx)
             || !TEST_ptr(client_ctx)
             || !TEST_int_gt(CONF_modules_load(conf, test_app, 0),  0))
