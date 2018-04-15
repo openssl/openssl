@@ -195,7 +195,9 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
     }
 
     if (!OPENSSL_init_crypto(opts
+#ifndef OPENSSL_NO_AUTOLOAD_CONFIG
                              | OPENSSL_INIT_LOAD_CONFIG
+#endif
                              | OPENSSL_INIT_ADD_ALL_CIPHERS
                              | OPENSSL_INIT_ADD_ALL_DIGESTS,
                              settings))
