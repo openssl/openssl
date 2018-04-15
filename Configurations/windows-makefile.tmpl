@@ -360,10 +360,12 @@ clean: libclean
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
 	-del /Q /F $(ENGINES)
 	-del /Q /F $(SCRIPTS)
+	-del /Q /F $(GENERATED_MANDATORY)
 	-del /Q /F $(GENERATED)
 	-del /Q /S /F *.d *.obj *.pdb *.exp *.ilk *.manifest
 	-del /Q /S /F engines\*.lib
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res
+	-rmdir /Q /S test\test-runs
 
 distclean: clean
 	-del /Q /F configdata.pm
