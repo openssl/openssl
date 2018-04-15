@@ -1463,8 +1463,20 @@ __owur BIO *BIO_new_buffer_ssl_connect(SSL_CTX *ctx);
 __owur int BIO_ssl_copy_session_id(BIO *to, BIO *from);
 void BIO_ssl_shutdown(BIO *ssl_bio);
 
-__owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
+/* As an option for apps, TLSv1.3 can be disabled */
+#ifndef OPENSSL_DISABLE_TLS1_3
+/*
+ * With TLSv1.3 enabled, we make sure that apps linked against the shared
+ * libraries of earlier OpenSSL versions don't get it by mistake, as TLSv1.3
+ * is different enough to be able to cause faults for the unknowing.
+ * Note: this overrides the previous declaration of SSL_CTX_new() for new
+ * apps.
+ */
+__owur SSL_CTX *SSL_CTX_new_111(const SSL_METHOD *meth);
+#define SSL_CTX_new(meth) SSL_CTX_new_111((meth))
+#endif
+__owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);

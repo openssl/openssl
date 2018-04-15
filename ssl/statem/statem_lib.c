@@ -1430,11 +1430,19 @@ static const version_info dtls_version_table[] = {
 static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 {
     int version = method->version;
+    int isdtls =
+        version == DTLS_ANY_VERSION
+        || version == DTLS1_BAD_VER
+        || version >> 8 == DTLS1_VERSION_MAJOR;
 
     if ((s->min_proto_version != 0 &&
          version_cmp(s, version, s->min_proto_version) < 0) ||
         ssl_security(s, SSL_SECOP_VERSION, 0, version, NULL) == 0)
         return SSL_R_VERSION_TOO_LOW;
+
+    if (!isdtls && s->absolute_max_tls_version != 0 &&
+        version_cmp(s, version, s->absolute_max_tls_version) > 0)
+        return SSL_R_VERSION_TOO_HIGH;
 
     if (s->max_proto_version != 0 &&
         version_cmp(s, version, s->max_proto_version) > 0)
