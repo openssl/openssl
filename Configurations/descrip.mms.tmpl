@@ -491,6 +491,7 @@ clean : libclean
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{depends}->{""}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
         - DELETE [...]*.MAP;*
         - DELETE [...]*.D;*
