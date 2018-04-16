@@ -449,6 +449,12 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 #define NID_OQS_SIKE_751 1172
 #define NID_OQS_Newhope  1173
 #define NID_OQS_NTRU     1174
+#define NID_OQS_p256_Frodo    1175
+#define NID_OQS_p256_SIKE_503 1176
+#define NID_OQS_p256_SIKE_751 1177
+#define NID_OQS_p256_Newhope  1178
+#define NID_OQS_p256_NTRU     1179
+
 /* Returns true if the nid is for an OQS KEX */
 #define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
 			     nid == NID_OQS_SIKE_503 ||	\

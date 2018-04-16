@@ -20,6 +20,7 @@
 #include "internal/nelem.h"
 #include "ssl_locl.h"
 #include <openssl/ct.h>
+#include "ssl_oqs_extra.h"
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
@@ -166,11 +167,22 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
     {EVP_PKEY_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
     {EVP_PKEY_X448, 224, TLS_CURVE_CUSTOM}, /* X448 (30) */
+    /* OQS "groups". The values are arbitraty, since the TLS does not specify values
+       for non finite field and elliptic curve "groups". For now, we use sequentially
+       incremented values, because some OpenSSL code looks at the index of an element
+       in this table to determine its value.
+     */
     {NID_OQS_Frodo, 144 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Frodo (31) */
     {NID_OQS_SIKE_503, 126 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 503 (32) */
     {NID_OQS_SIKE_751, 188 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 751 (33) */
     {NID_OQS_Newhope, 229 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Newhope (34) */
     {NID_OQS_NTRU, 256 /* classical */, TLS_CURVE_CUSTOM}, /* OQS NTRU (35) */
+    /* Hybrid curves */
+    {NID_OQS_p256_Frodo, 128 /* classical, min(p256,frodo) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Frodo hybrid (131) */
+    {NID_OQS_p256_SIKE_503, 126 /* classical, min(p256,sike503) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 503 hybrid (132) */
+    {NID_OQS_p256_SIKE_751, 128 /* classical, min(p256,sike751) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 751 hybrid (133) */
+    {NID_OQS_p256_Newhope, 128 /* classical, min(p256,newhope) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Newhope hybrid (134) */
+    {NID_OQS_p256_NTRU, 128 /* classical, min(p256,ntru) */, TLS_CURVE_CUSTOM}, /* p256 + OQS NTRU hybrid (135) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -193,6 +205,11 @@ static const uint16_t eccurves_default[] = {
     33,                      /* OQS Sike751 (33) */
     34,                      /* OQS Newhope (34) */
     35,                      /* OQS NTRU (35) */
+    131,                      /* p256 + OQS Frodo hybrid (131) */
+    132,                      /* p256 + OQS Sike503 hybrid (132) */
+    133,                      /* p256 + OQS Sike751 hybrid (133) */
+    134,                      /* p256 + OQS Newhope hybrid (134) */
+    135,                      /* p256 + OQS NTRU hybrid (135) */
 };
 
 static const uint16_t suiteb_curves[] = {
