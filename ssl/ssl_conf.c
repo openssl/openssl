@@ -13,6 +13,7 @@
 #include <openssl/objects.h>
 #include <openssl/dh.h>
 #include "internal/nelem.h"
+#include "ssl_oqs_extra.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists

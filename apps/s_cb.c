@@ -384,7 +384,16 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
+    /* Special case for oqs key. Instead of relying on the peer key (s->s3->peer_tmp),
+       we see if our special field is set (s->s3->tmp.oqs_kex_nid). This way, we won't
+       have to modify the EVP api to set the key type (EVP_PKEY_assign). */
     EVP_PKEY *key;
+    int oqs_kex_nid = SSL_get_oqs_kex_nid(s);
+    if (oqs_kex_nid != 0) {
+      BIO_printf(out, "Server Temp Key: %s\n", OQS_ALG_NAME_STR(oqs_kex_nid));
+      return 1;
+    }
+    /* ------------- end oqs */
     if (!SSL_get_server_tmp_key(s, &key))
         return 1;
     int nid_key = EVP_PKEY_id(key);
@@ -413,12 +422,10 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
     break;
 #endif
     default:
-        if (IS_OQS_KEX_NID(nid_key)) {
-	  BIO_printf(out, "%s\n", OQS_ALG_NAME_STR(nid_key));
-        } else {
+      {
 	  BIO_printf(out, "%s, %d bits\n", OBJ_nid2sn(EVP_PKEY_id(key)),
                       EVP_PKEY_bits(key));
-	}
+      }
     }
     EVP_PKEY_free(key);
     return 1;

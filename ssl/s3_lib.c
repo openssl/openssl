@@ -3702,7 +3702,14 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return (int)sess->ext.ecpointformats_len;
         }
 #endif
-
+    case SSL_CTRL_GET_OQS_KEX_NID:
+        {
+	  if (s->server || s->session == NULL || s->s3->tmp.oqs_kex_nid == 0) {
+	    return 0;
+	  } else {
+            return s->s3->tmp.oqs_kex_nid;
+	  }
+	}
     default:
         break;
     }

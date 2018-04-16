@@ -1627,7 +1627,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 #ifndef OPENSSL_NO_TLS1_3
     unsigned char *encodedPoint;
     size_t encoded_pt_len = 0;
-    EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
+    EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL; /* FIXMEOQS: use s->s3->oqs_kex_client? */
     int is_oqs = 0;
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
@@ -1648,7 +1648,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_SENT;
     }
 
-    if (ckey == NULL) { /* FIXMEOQS: is this ok with oqs kex? */
+    if (ckey == NULL) { /* FIXMEOQS: is this ok with oqs kex? FIXMEOQS*/
         /* No key_share received from client - must be resuming */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -1672,7 +1672,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
       int oqs_nid = OQS_KEX_NID(s->s3->group_id);
       OQS_RAND* oqs_rand = NULL;
       OQS_KEX* oqs_kex = NULL;
-      unsigned char* client_msg = (unsigned char*) EVP_PKEY_get0(ckey);
+      unsigned char* client_msg = (unsigned char*) EVP_PKEY_get0(ckey); /* FIXMEOQS: get that from s->s3->oqs_client_key */
       int client_msg_len = s->s3->tmp.peer_msg_len; /* saved when received in tls_parse_ctos_key_share */
       unsigned char* shared_secret = NULL;
       size_t shared_secret_len = 0;
@@ -1800,7 +1800,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt,
                                               &ciphlen)
                /* Is there a key_share extension present in this HRR? */
-            || !WPACKET_put_bytes_u8(pkt, s->s3->peer_tmp == NULL)
+	    || !WPACKET_put_bytes_u8(pkt, s->s3->peer_tmp == NULL)
             || !WPACKET_put_bytes_u32(pkt, (unsigned int)time(NULL))
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {

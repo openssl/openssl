@@ -435,24 +435,6 @@
 /* Returns the size of the seed */
 #define OQS_SEED_LEN(nid) (nid == NID_OQS_Frodo ? 16 : 0)
 
-/* Returns the OQS NID from a given alg name, or 0 if there is no match */
-static int OQS_nid_from_string(const char *value) {
-  int nid = 0;
-  int len = strlen(value);
-  if (memcmp(value,"frodo", len) == 0) {
-    nid = NID_OQS_Frodo;
-  } else if (memcmp(value,"sike503", len) == 0) {
-    nid = NID_OQS_SIKE_503;
-  } else if (memcmp(value,"sike751", len) == 0) {
-    nid = NID_OQS_SIKE_751;
-  } else if (memcmp(value,"newhope", len) == 0) {
-    nid = NID_OQS_Newhope;
-  } else if (memcmp(value,"ntru", len) == 0) {
-    nid = NID_OQS_NTRU;
-  }
-  return nid;
-}
-
 /* Post-Handshake Authentication state */
 typedef enum {
     SSL_PHA_NONE = 0,
@@ -1637,9 +1619,11 @@ typedef struct ssl3_state_st {
         /*
 	 * OQS artefacts.
 	 */
-         OQS_RAND* oqs_rand; /* random generator */
-         OQS_KEX* oqs_kex; /* KEX context */
-         int peer_msg_len; /* save peer message's len */
+        int oqs_kex_nid; /* nid of the kex */
+        OQS_RAND* oqs_rand; /* random generator */
+        OQS_KEX* oqs_kex; /* KEX context */
+        int peer_msg_len; /* save peer message's len */
+        void* oqs_kex_client; /* oqs client private key (in extensions_clnt.c) or message (in extensions_srvr.c) */
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
