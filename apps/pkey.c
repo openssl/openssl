@@ -137,7 +137,7 @@ int pkey_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner_tmp(outfile, outformat, private);
+    out = bio_open_owner(outfile, outformat, private);
     if (out == NULL)
         goto end;
 

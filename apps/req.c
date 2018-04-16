@@ -564,7 +564,7 @@ int req_main(int argc, char **argv)
             BIO_printf(bio_err, "writing new private key to stdout\n");
         else
             BIO_printf(bio_err, "writing new private key to '%s'\n", keyout);
-        out = bio_open_owner_tmp(keyout, outformat, private);
+        out = bio_open_owner(keyout, outformat, private);
         if (out == NULL)
             goto end;
 

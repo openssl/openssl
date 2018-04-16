@@ -156,7 +156,7 @@ opthelp:
     cb_data.prompt_info = outfile;
     assert(private);
 
-    out = bio_open_owner_tmp(outfile, FORMAT_PEM, private);
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
     if (out == NULL)
         goto end;
 
