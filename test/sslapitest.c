@@ -1113,11 +1113,27 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
-#define USE_NULL    0
-#define USE_BIO_1   1
-#define USE_BIO_2   2
+#define USE_NULL            0
+#define USE_BIO_1           1
+#define USE_BIO_2           2
+#define USE_DEFAULT         3
 
-#define TOTAL_SSL_SET_BIO_TESTS (3 * 3 * 3 * 3)
+#define CONNTYPE_CONNECTION_SUCCESS  0
+#define CONNTYPE_CONNECTION_FAIL     1
+#define CONNTYPE_NO_CONNECTION       2
+
+#define TOTAL_NO_CONN_SSL_SET_BIO_TESTS         (3 * 3 * 3 * 3)
+#define TOTAL_CONN_SUCCESS_SSL_SET_BIO_TESTS    (2 * 2)
+#if !defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_TLS1_2)
+# define TOTAL_CONN_FAIL_SSL_SET_BIO_TESTS       (2 * 2)
+#else
+# define TOTAL_CONN_FAIL_SSL_SET_BIO_TESTS       0
+#endif
+
+
+#define TOTAL_SSL_SET_BIO_TESTS TOTAL_NO_CONN_SSL_SET_BIO_TESTS \
+                                + TOTAL_CONN_SUCCESS_SSL_SET_BIO_TESTS \
+                                + TOTAL_CONN_FAIL_SSL_SET_BIO_TESTS
 
 static void setupbio(BIO **res, BIO *bio1, BIO *bio2, int type)
 {
@@ -1134,28 +1150,65 @@ static void setupbio(BIO **res, BIO *bio1, BIO *bio2, int type)
     }
 }
 
+
+/*
+ * Tests calls to SSL_set_bio() under various conditions.
+ *
+ * For the first 3 * 3 * 3 * 3 = 81 tests we do 2 calls to SSL_set_bio() with
+ * various combinations of valid BIOs or NULL being set for the rbio/wbio. We
+ * then do more tests where we create a successful connection first using our
+ * standard connection setup functions, and then call SSL_set_bio() with
+ * various combinations of valid BIOs or NULL. We then repeat these tests
+ * following a failed connection. In this last case we are looking to check that
+ * SSL_set_bio() functions correctly in the case where s->bbio is not NULL.
+ */
 static int test_ssl_set_bio(int idx)
 {
-    SSL_CTX *ctx;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
     BIO *bio1 = NULL;
     BIO *bio2 = NULL;
     BIO *irbio = NULL, *iwbio = NULL, *nrbio = NULL, *nwbio = NULL;
-    SSL *ssl = NULL;
-    int initrbio, initwbio, newrbio, newwbio;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int initrbio, initwbio, newrbio, newwbio, conntype;
     int testresult = 0;
 
-    initrbio = idx % 3;
-    idx /= 3;
-    initwbio = idx % 3;
-    idx /= 3;
-    newrbio = idx % 3;
-    idx /= 3;
-    newwbio = idx;
-    if (!TEST_int_le(newwbio, 2))
-        return 0;
+    if (idx < TOTAL_NO_CONN_SSL_SET_BIO_TESTS) {
+        initrbio = idx % 3;
+        idx /= 3;
+        initwbio = idx % 3;
+        idx /= 3;
+        newrbio = idx % 3;
+        idx /= 3;
+        newwbio = idx % 3;
+        conntype = CONNTYPE_NO_CONNECTION;
+    } else {
+        idx -= TOTAL_NO_CONN_SSL_SET_BIO_TESTS;
+        initrbio = initwbio = USE_DEFAULT;
+        newrbio = idx % 2;
+        idx /= 2;
+        newwbio = idx % 2;
+        idx /= 2;
+        conntype = idx % 2;
+    }
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_method()))
-                || !TEST_ptr(ssl = SSL_new(ctx)))
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (conntype == CONNTYPE_CONNECTION_FAIL) {
+        /*
+         * We won't ever get here if either TLSv1.3 or TLSv1.2 is disabled
+         * because we reduced the number of tests in the definition of
+         * TOTAL_CONN_FAIL_SSL_SET_BIO_TESTS to avoid this scenario. By setting
+         * mismatched protocol versions we will force a connection failure.
+         */
+        SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION);
+        SSL_CTX_set_max_proto_version(cctx, TLS1_2_VERSION);
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
         goto end;
 
     if (initrbio == USE_BIO_1
@@ -1174,19 +1227,27 @@ static int test_ssl_set_bio(int idx)
             goto end;
     }
 
-    setupbio(&irbio, bio1, bio2, initrbio);
-    setupbio(&iwbio, bio1, bio2, initwbio);
+    if (initrbio != USE_DEFAULT) {
+        setupbio(&irbio, bio1, bio2, initrbio);
+        setupbio(&iwbio, bio1, bio2, initwbio);
+        SSL_set_bio(clientssl, irbio, iwbio);
 
-    /*
-     * We want to maintain our own refs to these BIO, so do an up ref for each
-     * BIO that will have ownership transferred in the SSL_set_bio() call
-     */
-    if (irbio != NULL)
-        BIO_up_ref(irbio);
-    if (iwbio != NULL && iwbio != irbio)
-        BIO_up_ref(iwbio);
+        /*
+         * We want to maintain our own refs to these BIO, so do an up ref for
+         * each BIO that will have ownership transferred in the SSL_set_bio()
+         * call
+         */
+        if (irbio != NULL)
+            BIO_up_ref(irbio);
+        if (iwbio != NULL && iwbio != irbio)
+            BIO_up_ref(iwbio);
+    }
 
-    SSL_set_bio(ssl, irbio, iwbio);
+    if (conntype != CONNTYPE_NO_CONNECTION
+            && !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)
+                          == (conntype == CONNTYPE_CONNECTION_SUCCESS)))
+        goto end;
 
     setupbio(&nrbio, bio1, bio2, newrbio);
     setupbio(&nwbio, bio1, bio2, newwbio);
@@ -1205,12 +1266,11 @@ static int test_ssl_set_bio(int idx)
             && (nwbio != iwbio || (nwbio == iwbio && irbio == iwbio)))
         BIO_up_ref(nwbio);
 
-    SSL_set_bio(ssl, nrbio, nwbio);
+    SSL_set_bio(clientssl, nrbio, nwbio);
 
     testresult = 1;
 
  end:
-    SSL_free(ssl);
     BIO_free(bio1);
     BIO_free(bio2);
 
@@ -1220,7 +1280,10 @@ static int test_ssl_set_bio(int idx)
      * functions. If we haven't done enough then this will only be detected in
      * a crypto-mdebug build
      */
-    SSL_CTX_free(ctx);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
     return testresult;
 }
 
