@@ -369,13 +369,14 @@ sub clientstart
     $fdset = IO::Select->new($server_sock, $client_sock);
     my @ready;
     my $ctr = 0;
-    my $sessionfile = $self->{sessionfile};
     local $SIG{PIPE} = "IGNORE";
+    $self->{saw_session_ticket} = undef;
     while($fdset->count && $ctr < 10) {
-        if (defined($sessionfile)) {
+        if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
-            # look for data *and* check on session file...
-            last if TLSProxy::Message->success() && -s $sessionfile;
+            # look for data *and* session ticket...
+            last if TLSProxy::Message->success()
+                    && $self->{saw_session_ticket};
         }
         if (!(@ready = $fdset->can_read(1))) {
             $ctr++;
@@ -449,7 +450,7 @@ sub clientstart
         $self->connect_to_server();
     }
     $pid = $self->{clientpid};
-    print "Waiting for client process to close: $pid...\n";
+    print "Waiting for s_client process to close: $pid...\n";
     waitpid($pid, 0);
 
     return 1;
@@ -494,6 +495,14 @@ sub process_packet
     #Finished parsing. Call user provided filter here
     if (defined $self->filter) {
         $self->filter->($self);
+    }
+
+    #Take a note on NewSessionTicket
+    foreach my $message (reverse @{$self->{message_list}}) {
+        if ($message->{mt} == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+            $self->{saw_session_ticket} = 1;
+            last;
+        }
     }
 
     #Reconstruct the packet
