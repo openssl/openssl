@@ -267,14 +267,17 @@ sub get_messages
         }
     } elsif ($record->content_type == TLSProxy::Record::RT_ALERT) {
         my ($alertlev, $alertdesc) = unpack('CC', $record->decrypt_data);
+        print "  [$alertlev, $alertdesc]\n";
         #A CloseNotify from the client indicates we have finished successfully
         #(we assume)
         if (!$end && !$server && $alertlev == AL_LEVEL_WARN
             && $alertdesc == AL_DESC_CLOSE_NOTIFY) {
             $success = 1;
         }
-        #All alerts end the test
-        $end = 1;
+        #Fatal or close notify alerts end the test
+        if ($alertlev == AL_LEVEL_FATAL || $alertdesc == AL_DESC_CLOSE_NOTIFY) {
+            $end = 1;
+        }
     }
 
     return @messages;
