@@ -3519,7 +3519,6 @@ void ssl_free_wbio_buffer(SSL *s)
         return;
 
     s->wbio = BIO_pop(s->wbio);
-    assert(s->wbio != NULL);
     BIO_free(s->bbio);
     s->bbio = NULL;
 }
