@@ -69,8 +69,10 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
      *  4 bytes unencoded = 6 bytes encoded
      *  etc
      */
-    if (padsize == 3)
-        return -1;
+    if (padsize == 3) {
+        outl = -1;
+        goto err;
+    }
 
     /* Valid padsize values are now 0, 1 or 2 */
 
@@ -80,12 +82,12 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
     /* Add any encoded padding that is required */
     if (padsize != 0
             && EVP_DecodeUpdate(ctx, a, &outl, pad, padsize) < 0) {
-        EVP_ENCODE_CTX_free(ctx);
-        return -1;
+        outl = -1;
+        goto err;
     }
     if (EVP_DecodeUpdate(ctx, a, &outl2, (const unsigned char *)src, size) < 0) {
-        EVP_ENCODE_CTX_free(ctx);
-        return -1;
+        outl = -1;
+        goto err;
     }
     outl += outl2;
     EVP_DecodeFinal(ctx, a + outl, &outl2);
@@ -93,8 +95,11 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
 
     /* Strip off the leading padding */
     if (padsize != 0) {
-        if ((int)padsize >= outl)
-            return -1;
+        if ((int)padsize >= outl) {
+            outl = -1;
+            goto err;
+        }
+
         /*
          * If we added 1 byte of padding prior to encoding then we have 2 bytes
          * of "real" data which gets spread across 4 encoded bytes like this:
@@ -112,6 +117,7 @@ static int t_fromb64(unsigned char *a, size_t alen, const char *src)
         outl -= padsize;
     }
 
+ err:
     EVP_ENCODE_CTX_free(ctx);
 
     return outl;
