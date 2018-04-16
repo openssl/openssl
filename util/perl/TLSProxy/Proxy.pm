@@ -349,7 +349,7 @@ sub clientstart
 
     # Wait for incoming connection from client
     my $fdset = IO::Select->new($self->{proxy_sock});
-    if (!$fdset->can_read(1)) {
+    if (!$fdset->can_read(60)) {
         kill(3, $self->{real_serverpid});
         die "s_client didn't try to connect\n";
     }
