@@ -31,18 +31,47 @@ the signing algorithm supports it.
 
 Only EVP_PKEY types that support signing can be used with these functions. This
 includes MAC algorithms where the MAC generation is considered as a form of
-"signing". Built-in EVP_PKEY types supported by these functions are CMAC,
+"signing." Built-in EVP_PKEY types supported by these functions are CMAC,
 Poly1305, DSA, HMAC, RSA, Siphash, Ed25519 and Ed448.
 
 Not all digests can be used for all key types. The following combinations apply.
-DSA supports SHA1, SHA224, SHA256, SHA384 and SHA512. ECDSA supports SHA1,
-SHA224, SHA256, SHA384, SHA512 and SM3. RSA with no padding supports no digests
-(the digest B<type> must be NULL). RSA with X931 padding supports SHA1, SHA256,
-SHA384 and SHA512. All other RSA padding types support SHA1, SHA224, SHA256,
-SHA384, SHA512, MD5, MD5_SHA1, MD2, MD4, MDC2, SHA3-224, SHA3-256, SHA3-384,
-SHA3-512. Ed25519 and Ed448 support no digests (the digest B<type> must be
-NULL). HMAC supports any digest. CMAC, Poly1305 and Siphash will ignore any
-digest provided. 
+
+=over 4
+
+=item DSA
+
+Supports SHA1, SHA224, SHA256, SHA384 and SHA512
+
+=item ECDSA
+
+Supports SHA1, SHA224, SHA256, SHA384, SHA512 and SM3
+
+=item RSA with no padding
+
+Supports no digests (the digest B<type> must be NULL)
+
+=item RSA with X931 padding
+
+Supports SHA1, SHA256, SHA384 and SHA512
+
+=item All other RSA padding types
+
+Support SHA1, SHA224, SHA256, SHA384, SHA512, MD5, MD5_SHA1, MD2, MD4, MDC2,
+SHA3-224, SHA3-256, SHA3-384, SHA3-512
+
+=item Ed25519 and Ed448
+
+Support no digests (the digest B<type> must be NULL)
+
+=item HMAC
+
+Supports any digest
+
+=item CMAC, Poly1305 and Siphash
+
+Will ignore any digest provided.
+
+=back
 
 If RSA-PSS is used and restrictions apply then the digest must match.
 
