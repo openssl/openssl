@@ -1698,6 +1698,12 @@ int tls_construct_server_key_exchange(SSL *s)
         }
 
         dh = EVP_PKEY_get0_DH(s->s3->tmp.pkey);
+        if (dh == NULL) {
+            al = SSL_AD_INTERNAL_ERROR;
+            SSLerr(SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                   ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
 
         EVP_PKEY_free(pkdh);
         pkdh = NULL;
