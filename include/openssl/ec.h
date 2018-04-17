@@ -823,6 +823,8 @@ int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub);
 
 unsigned EC_KEY_get_enc_flags(const EC_KEY *key);
 void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
+void EC_KEY_set_enc_flag(EC_KEY *key, unsigned int flag);
+void EC_KEY_clear_enc_flag(EC_KEY *key, unsigned int flag);
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
 void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
 

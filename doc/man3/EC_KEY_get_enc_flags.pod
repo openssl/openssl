@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-EC_KEY_get_enc_flags, EC_KEY_set_enc_flags
-- Get and set flags for encoding EC_KEY structures
+EC_KEY_get_enc_flags, EC_KEY_set_enc_flags, EC_KEY_clear_enc_flag,
+EC_KEY_set_enc_flag
+- Get, set and clear flags for encoding EC_KEY structures
 
 =head1 SYNOPSIS
 
@@ -11,6 +12,8 @@ EC_KEY_get_enc_flags, EC_KEY_set_enc_flags
 
  unsigned int EC_KEY_get_enc_flags(const EC_KEY *key);
  void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
+ void EC_KEY_set_enc_flag(EC_KEY *key, unsigned int flag);
+ void EC_KEY_clear_enc_flag(EC_KEY *key, unsigned int flag);
 
 =head1 DESCRIPTION
 
@@ -26,12 +29,16 @@ the missing public key automatically. Private keys encoded without parameters
 d2i_ECPrivateKey().
 
 The functions EC_KEY_get_enc_flags() and EC_KEY_set_enc_flags() get and set the
-value of the encoding flags for the B<key>. There are two encoding flags
-currently defined - EC_PKEY_NO_PARAMETERS and EC_PKEY_NO_PUBKEY.  These flags
-define the behaviour of how the  B<key> is converted into ASN1 in a call to
-i2d_ECPrivateKey(). If EC_PKEY_NO_PARAMETERS is set then the public parameters for
-the curve are not encoded along with the private key. If EC_PKEY_NO_PUBKEY is
-set then the public key is not encoded along with the private key.
+value of the encoding flags for the B<key>. EC_KEY_set_enc_flag() sets the flags
+in the B<flags> parameter on the EC_KEY object. Any flags that are already set
+are left set. EC_KEY_clear_enc_flag() clears the flags indicated by the B<flags>
+parameter; all other flags are left in their existing state. There are two
+encoding flags currently defined - EC_PKEY_NO_PARAMETERS and EC_PKEY_NO_PUBKEY.
+These flags define the behaviour of how the  B<key> is converted into ASN1 in a
+call to i2d_ECPrivateKey(). If EC_PKEY_NO_PARAMETERS is set then the public
+parameters for the curve are not encoded along with the private key. If
+EC_PKEY_NO_PUBKEY is set then the public key is not encoded along with the
+private key.
 
 =head1 RETURN VALUES
 

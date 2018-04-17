@@ -475,6 +475,16 @@ void EC_KEY_set_enc_flags(EC_KEY *key, unsigned int flags)
     key->enc_flag = flags;
 }
 
+void EC_KEY_set_enc_flag(EC_KEY *key, unsigned int flag)
+{
+    key->enc_flag |= flag;
+}
+
+void EC_KEY_clear_enc_flag(EC_KEY *key, unsigned int flag)
+{
+    key->enc_flag &= ~flag;
+}
+
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key)
 {
     return key->conv_form;
