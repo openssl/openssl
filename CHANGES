@@ -9,6 +9,38 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Updated CONTRIBUTING
+     [Rich Salz]
+
+  *) Updated DRBG / RAND to request nonce and additional low entropy
+     randomness from the system.
+     [Matthias St. Pierre]
+
+  *) Updated 'openssl rehash' to use OpenSSL consistent default.
+     [Richard Levitte]
+
+  *) Moved the load of the ssl_conf module to libcrypto, which helps
+     loading engines that libssl uses before libssl is initialised.
+     [Matt Caswell]
+
+  *) Added EVP_PKEY_sign() and EVP_PKEY_verify() for EdDSA
+     [Matt Caswell]
+
+  *) Fixed X509_NAME_ENTRY_set to get multi-valued RDNs right in all cases.
+     [Ingo Schwarze, Rich Salz]
+
+  *) Added output of accepting IP address and port for 'openssl s_server'
+     [Richard Levitte]
+
+  *) Added a new API for TLSv1.3 ciphersuites:
+        SSL_CTX_set_ciphersuites()
+        SSL_set_ciphersuites()
+     [Matt Caswell]
+
+  *) Memory allocation failures consistenly add an error to the error
+     stack.
+     [Rich Salz]
+
   *) Don't use OPENSSL_ENGINES and OPENSSL_CONF environment values
      in libcrypto when run as setuid/setgid.
      [Bernd Edlinger]
