@@ -211,7 +211,7 @@ int do_server(int *accept_sock, const char *host, const char *port,
     int i;
     BIO_ADDRINFO *res = NULL;
     const BIO_ADDRINFO *next;
-    int sock_family, sock_type, sock_protocol;
+    int sock_family, sock_type, sock_protocol, sock_port;
     const BIO_ADDR *sock_address;
     int sock_options = BIO_SOCK_REUSEADDR;
     int ret = 0;
@@ -280,10 +280,12 @@ int do_server(int *accept_sock, const char *host, const char *port,
     }
 #endif
 
+    sock_port = BIO_ADDR_rawport(sock_address);
+
     BIO_ADDRINFO_free(res);
     res = NULL;
 
-    if (BIO_ADDR_rawport(sock_address) == 0) {
+    if (sock_port == 0) {
         /* dynamically allocated port, report which one */
         union BIO_sock_info_u info;
         char *hostname = NULL;
