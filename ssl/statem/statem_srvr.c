@@ -2481,6 +2481,12 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
         }
 
         dh = EVP_PKEY_get0_DH(s->s3->tmp.pkey);
+        if (dh == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
+                     ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
 
         EVP_PKEY_free(pkdh);
         pkdh = NULL;
