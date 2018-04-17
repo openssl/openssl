@@ -7,6 +7,8 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
+use feature 'state';
+
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
@@ -57,12 +59,11 @@ foreach my $offset (@test_offsets) {
     ok($fatal_alert, "Invalid padding byte $bad_padding_offset");
 }
 
-{
-my $sent_corrupted_payload;
 sub add_maximal_padding_filter
 {
     my $proxy = shift;
     my $messages = $proxy->message_list;
+    state $sent_corrupted_payload;
 
     if ($proxy->flight == 0) {
         # Disable Encrypt-then-MAC.
@@ -81,9 +82,9 @@ sub add_maximal_padding_filter
 
     my $last_message = @{$messages}[-1];
     if (defined($last_message)
-        && $last_message->{server}
-        && $last_message->{mt} == TLSProxy::Message::MT_FINISHED
-        && !@{$last_message->{records}}[0]->{sent}) {
+        && $last_message->server
+        && $last_message->mt == TLSProxy::Message::MT_FINISHED
+        && !@{$last_message->records}[0]->{sent}) {
 
         # Insert a maximally-padded record. Assume a block size of 16 (AES) and
         # a MAC length of 20 (SHA-1).
@@ -124,8 +125,7 @@ sub add_maximal_padding_filter
         push @{$proxy->record_list}, $record;
     } elsif ($sent_corrupted_payload) {
         # Check for bad_record_mac from client
-        my $last_record = @{$proxy->{record_list}}[-1];
+        my $last_record = @{$proxy->record_list}[-1];
         $fatal_alert = 1 if $last_record->is_fatal_alert(0) == 20;
     }
-}
 }

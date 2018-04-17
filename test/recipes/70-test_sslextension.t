@@ -7,6 +7,8 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
+use feature 'state';
+
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
@@ -124,12 +126,11 @@ sub inject_duplicate_extension_serverhello
     $fatal_alert = 1 if $last_record->is_fatal_alert(0);
 }
 
-{
-my $sent_unsolisited_extension;
 sub inject_unsolicited_extension
 {
     my $proxy = shift;
     my $message;
+    state $sent_unsolisited_extension;
 
     if ($proxy->flight == 0) {
         $sent_unsolisited_extension = 0;
@@ -139,7 +140,7 @@ sub inject_unsolicited_extension
     # We're only interested in the initial ServerHello/EncryptedExtensions
     if ($proxy->flight != 1) {
         if ($sent_unsolisited_extension) {
-            my $last_record = @{$proxy->{record_list}}[-1];
+            my $last_record = @{$proxy->record_list}[-1];
             $fatal_alert = 1 if $last_record->is_fatal_alert(0);
         }
         return;
@@ -170,7 +171,6 @@ sub inject_unsolicited_extension
     $message->set_extension($type, $ext);
     $message->repack();
     $sent_unsolisited_extension = 1;
-}
 }
 
 # Test 1-2: Sending a duplicate extension should fail.

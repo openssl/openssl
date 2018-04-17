@@ -7,6 +7,8 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
+use feature 'state';
+
 use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils;
 use TLSProxy::Proxy;
@@ -441,12 +443,11 @@ sub add_sslv2_filter
 
 }
 
-{
-my $added_record;
 sub add_unknown_record_type
 {
     my $proxy = shift;
     my $records = $proxy->record_list;
+    state $added_record;
 
     # We'll change a record after the initial version neg has taken place
     if ($proxy->flight == 0) {
@@ -478,7 +479,6 @@ sub add_unknown_record_type
 
     splice @{$proxy->record_list}, $i, 0, $record;
     $added_record = 1;
-}
 }
 
 sub change_version
