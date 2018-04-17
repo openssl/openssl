@@ -21,10 +21,10 @@
 
   *) Moved the load of the ssl_conf module to libcrypto, which helps
      loading engines that libssl uses before libssl is initialised.
-     [Matt Casswell]
+     [Matt Caswell]
 
   *) Added EVP_PKEY_sign() and EVP_PKEY_verify() for EdDSA
-     [Matt Casswell]
+     [Matt Caswell]
 
   *) Fixed X509_NAME_ENTRY_set to get multi-valued RDNs right in all cases.
      [Ingo Schwarze, Rich Salz]
@@ -35,7 +35,7 @@
   *) Added a new API for TLSv1.3 ciphersuites:
         SSL_CTX_set_ciphersuites()
         SSL_set_ciphersuites()
-     [Matt Casswell]
+     [Matt Caswell]
 
   *) Memory allocation failures consistenly add an error to the error
      stack.
