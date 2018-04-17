@@ -2408,8 +2408,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p,
                 goto err;
             if (!tls1_save_sigalgs(s, data, dsize))
                 goto err;
-        } else if (type == TLSEXT_TYPE_status_request) {
-
+        } else if (type == TLSEXT_TYPE_status_request && !s->hit) {
             if (size < 5)
                 goto err;
 
