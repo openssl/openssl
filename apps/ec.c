@@ -219,6 +219,8 @@ int ec_main(int argc, char **argv)
 
     if (no_public)
         EC_KEY_set_enc_flags(eckey, EC_PKEY_NO_PUBKEY);
+    else
+        EC_KEY_clear_enc_flag(eckey, EC_PKEY_NO_PUBKEY);
 
     if (text) {
         assert(pubin || private);
