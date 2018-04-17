@@ -258,8 +258,6 @@ static int test_tls13ccs(int tst)
                                        TLS1_VERSION, TLS_MAX_VERSION,
                                        &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_max_early_data(sctx,
-                                                 SSL3_RT_MAX_PLAIN_LENGTH))
-        || !TEST_true(SSL_CTX_set_max_early_data(cctx,
                                                  SSL3_RT_MAX_PLAIN_LENGTH)))
         goto err;
 
