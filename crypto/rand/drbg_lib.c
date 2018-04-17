@@ -869,9 +869,9 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
      * The state of the drbg will be checked in RAND_DRBG_generate() and
      * an automatic recovery is attempted.
      */
-    RAND_DRBG_instantiate(drbg,
-                          (const unsigned char *) ossl_pers_string,
-                          sizeof(ossl_pers_string) - 1);
+    (void)RAND_DRBG_instantiate(drbg,
+                                (const unsigned char *) ossl_pers_string,
+                                sizeof(ossl_pers_string) - 1);
     return drbg;
 
 err:

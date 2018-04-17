@@ -783,6 +783,8 @@ error:
 }
 
 #if defined(OPENSSL_THREADS)
+static int multi_thread_rand_bytes_succeeded = 1;
+static int multi_thread_rand_priv_bytes_succeeded = 1;
 
 static void run_multi_thread_test(void)
 {
@@ -796,8 +798,10 @@ static void run_multi_thread_test(void)
     RAND_DRBG_set_reseed_time_interval(private, 1);
 
     do {
-        RAND_bytes(buf, sizeof(buf));
-        RAND_priv_bytes(buf, sizeof(buf));
+        if (RAND_bytes(buf, sizeof(buf)) <= 0)
+            multi_thread_rand_bytes_succeeded = 0;
+        if (RAND_priv_bytes(buf, sizeof(buf)) <= 0)
+            multi_thread_rand_priv_bytes_succeeded = 0;
     }
     while(time(NULL) - start < 5);
 }
@@ -849,7 +853,7 @@ static int wait_for_thread(thread_t thread)
  * The main thread will also run the test, so we'll have THREADS+1 parallel
  * tests running
  */
-#define THREADS 3
+# define THREADS 3
 
 static int test_multi_thread(void)
 {
@@ -861,6 +865,12 @@ static int test_multi_thread(void)
     run_multi_thread_test();
     for (i = 0; i < THREADS; i++)
         wait_for_thread(t[i]);
+
+    if (!TEST_true(multi_thread_rand_bytes_succeeded))
+        return 0;
+    if (!TEST_true(multi_thread_rand_priv_bytes_succeeded))
+        return 0;
+
     return 1;
 }
 #endif
