@@ -107,6 +107,10 @@ sub new
         message_list => [],
     };
 
+    if (defined($ENV{TRAVIS_OS_NAME}) && $ENV{TRAVIS_OS_NAME} eq 'osx') {
+        return bless $self, $class;
+    }
+
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
@@ -137,7 +141,7 @@ sub DESTROY
 {
     my $self = shift;
 
-    $self->{proxy_sock}->close() if $self->{proxy_sock};
+    $self->{proxy_sock}->close() if defined($self->{proxy_sock});
 }
 
 sub clearClient
@@ -214,7 +218,7 @@ sub start
     my ($self) = shift;
     my $pid;
 
-    if ($self->{proxy_sock} == 0) {
+    if (!defined($self->{proxy_sock})) {
         return 0;
     }
 
