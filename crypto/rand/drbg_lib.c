@@ -864,7 +864,7 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
     drbg->reseed_counter = 1;
 
     /*
-     * Ignore instantiation error so support just-in-time instantiation.
+     * Ignore instantiation error to support just-in-time instantiation.
      *
      * The state of the drbg will be checked in RAND_DRBG_generate() and
      * an automatic recovery is attempted.
