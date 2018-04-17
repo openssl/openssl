@@ -180,7 +180,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 {
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE **eptr = (e == NULL) ? &e :  NULL;
-    int is_oqs = IS_OQS_KEX_NID(type);
     if (pkey) {
         if (pkey->pkey.ptr)
             EVP_PKEY_free_it(pkey);
@@ -206,8 +205,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     if (pkey == NULL && eptr != NULL)
         ENGINE_finish(e);
 #endif
-    if (ameth == NULL && !is_oqs) {
-        /* it's ok for OQS algs not to have any ameth */
+    if (ameth == NULL) {
         EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
         return 0;
     }
@@ -216,7 +214,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         pkey->ameth = ameth;
         pkey->engine = e;
 
-        pkey->type = is_oqs ? type : pkey->ameth->pkey_id; /* OQS note: encode directly for OQS (no ameth) */
+        pkey->type = pkey->ameth->pkey_id;
         pkey->save_type = type;
     }
     return 1;

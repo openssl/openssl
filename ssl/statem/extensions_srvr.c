@@ -613,7 +613,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 1;
 
     /* Sanity check */
-    if (s->s3->peer_tmp != NULL) {
+    if (s->s3->peer_tmp != NULL) { /* in oqs, this will be null; is this ok? FIXMEOQS */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -701,12 +701,17 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 	  s->s3->tmp.peer_msg_len = PACKET_remaining(&encoded_pt);
 	  unsigned char* peer_key = OPENSSL_malloc(s->s3->tmp.peer_msg_len);
 	  memcpy(peer_key, peer_msg, s->s3->tmp.peer_msg_len); /* FIXMEOQS: when should I free that? */
-	  if ((s->s3->peer_tmp = EVP_PKEY_new()) == NULL ||
-	      EVP_PKEY_assign(s->s3->peer_tmp, OQS_KEX_NID(group_id), (void *) peer_key) == 0) {
+	  s->s3->tmp.oqs_kex_client = peer_key;
+	  /* OQS note: we are not using peer_tmp in the oqs case, but kex fails if this
+	     value is null, so we instantiate it but we don't assign any value.
+	     FIXMEOQS: figure out what fails and fix it.
+	  */
+	  if ((s->s3->peer_tmp = EVP_PKEY_new()) == NULL) {
 	    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
 		     ERR_R_INTERNAL_ERROR);
-            return 0;
+	    return 0;
 	  }
+	  /* ---------- end oqs note */
 	} else {
 	  if ((s->s3->peer_tmp = ssl_generate_param_group(group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
@@ -1631,7 +1636,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
     int is_oqs = 0;
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
-        if (ckey != NULL) {
+      if (ckey != NULL) { /* this is null in OQS, is this ok? (FIXMEOQS) */
             /* Original key_share was acceptable so don't ask for another one */
             return EXT_RETURN_NOT_SENT;
         }
@@ -1648,7 +1653,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_SENT;
     }
 
-    if (ckey == NULL) { /* FIXMEOQS: is this ok with oqs kex? FIXMEOQS*/
+    if (ckey == NULL && s->s3->tmp.oqs_kex_client == NULL) { /* FIXMEOQS: is this ok with oqs kex? FIXMEOQS*/
         /* No key_share received from client - must be resuming */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -1672,7 +1677,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
       int oqs_nid = OQS_KEX_NID(s->s3->group_id);
       OQS_RAND* oqs_rand = NULL;
       OQS_KEX* oqs_kex = NULL;
-      unsigned char* client_msg = (unsigned char*) EVP_PKEY_get0(ckey); /* FIXMEOQS: get that from s->s3->oqs_client_key */
+      unsigned char* client_msg = s->s3->tmp.oqs_kex_client;
       int client_msg_len = s->s3->tmp.peer_msg_len; /* saved when received in tls_parse_ctos_key_share */
       unsigned char* shared_secret = NULL;
       size_t shared_secret_len = 0;
@@ -1800,7 +1805,7 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt,
                                               &ciphlen)
                /* Is there a key_share extension present in this HRR? */
-	    || !WPACKET_put_bytes_u8(pkt, s->s3->peer_tmp == NULL)
+            || !WPACKET_put_bytes_u8(pkt, s->s3->peer_tmp == NULL) /* in oqs, this is null; is this ok? (FIXMEOQS) */
             || !WPACKET_put_bytes_u32(pkt, (unsigned int)time(NULL))
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_reserve_bytes(pkt, EVP_MAX_MD_SIZE, &hashval1)) {
