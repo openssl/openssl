@@ -133,7 +133,7 @@ Reference Implementation:
                                      HMAC_CTX *hctx, int enc)
  {
      if (enc) { /* create new session */
-         if (RAND_bytes(iv, EVP_MAX_IV_LENGTH))
+         if (RAND_bytes(iv, EVP_MAX_IV_LENGTH) <= 0)
              return -1; /* insufficient random */
 
          key = currentkey(); /* something that you need to implement */
