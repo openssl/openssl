@@ -239,7 +239,7 @@ sub start
     open(my $savedin, "<&STDIN");
 
     # Temporarily replace STDIN so that sink process can inherit it...
-    $pid = open(STDIN, "$execcmd |") or die "Failed to $execcmd: $!\n";
+    $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
     $self->{real_serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
