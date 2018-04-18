@@ -264,6 +264,9 @@ int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     X509_OBJECT stmp, *tmp;
     int i, j;
 
+    if (ctx == NULL)
+        return 0;
+
     CRYPTO_THREAD_write_lock(ctx->lock);
     tmp = X509_OBJECT_retrieve_by_subject(ctx->objs, type, name);
     CRYPTO_THREAD_unlock(ctx->lock);
@@ -473,6 +476,9 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
     X509 *x;
     X509_OBJECT *obj;
 
+    if (ctx->ctx == NULL)
+        return NULL;
+
     CRYPTO_THREAD_write_lock(ctx->ctx->lock);
     idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_X509, nm, &cnt);
     if (idx < 0) {
@@ -522,8 +528,10 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
     X509_OBJECT *obj, *xobj = X509_OBJECT_new();
 
     /* Always do lookup to possibly add new CRLs to cache */
-    if (sk == NULL || xobj == NULL ||
-            !X509_STORE_CTX_get_by_subject(ctx, X509_LU_CRL, nm, xobj)) {
+    if (sk == NULL
+            || xobj == NULL
+            || ctx->ctx == NULL
+            || !X509_STORE_CTX_get_by_subject(ctx, X509_LU_CRL, nm, xobj)) {
         X509_OBJECT_free(xobj);
         sk_X509_CRL_free(sk);
         return NULL;
@@ -616,6 +624,9 @@ int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
         }
     }
     X509_OBJECT_free(obj);
+
+    if (ctx->ctx == NULL)
+        return 0;
 
     /* Else find index of first cert accepted by 'check_issued' */
     ret = 0;
