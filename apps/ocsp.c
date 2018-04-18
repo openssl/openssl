@@ -787,7 +787,6 @@ int MAIN(int argc, char **argv)
                    OCSP_response_status_str(i), i);
         if (ignore_err)
             goto redo_accept;
-        ret = 0;
         goto end;
     }
 
