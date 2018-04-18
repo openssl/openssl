@@ -4308,6 +4308,7 @@ static int test_info_callback(int tst)
     info_cb_this_state = -1;
     info_cb_offset = tst;
 
+#ifndef OPENSSL_NO_TLS1_3
     if (tst >= 4) {
         SSL_SESSION *sess = NULL;
         size_t written, readbytes;
@@ -4342,6 +4343,7 @@ static int test_info_callback(int tst)
         testresult = 1;
         goto end;
     }
+#endif
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(),
