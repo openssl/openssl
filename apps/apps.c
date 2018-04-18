@@ -1597,6 +1597,9 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     return retdb;
 }
 
+/*
+ * Returns > 0 on success, <= 0 on error
+ */
 int index_index(CA_DB *db)
 {
     if (!TXT_DB_create_index(db->db, DB_serial, NULL,
