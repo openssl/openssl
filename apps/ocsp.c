@@ -697,10 +697,8 @@ redo_accept:
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         BIO_printf(out, "Responder Error: %s (%d)\n",
                    OCSP_response_status_str(i), i);
-        if (!ignore_err) {
-                ret = 0;
+        if (!ignore_err)
                 goto end;
-        }
     }
 
     if (resp_text)
