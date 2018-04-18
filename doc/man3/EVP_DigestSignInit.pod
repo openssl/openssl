@@ -32,7 +32,7 @@ the signing algorithm supports it.
 Only EVP_PKEY types that support signing can be used with these functions. This
 includes MAC algorithms where the MAC generation is considered as a form of
 "signing." Built-in EVP_PKEY types supported by these functions are CMAC,
-Poly1305, DSA, HMAC, RSA, SipHash, Ed25519 and Ed448.
+Poly1305, DSA, ECDSA, HMAC, RSA, SipHash, Ed25519 and Ed448.
 
 Not all digests can be used for all key types. The following combinations apply.
 
