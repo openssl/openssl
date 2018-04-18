@@ -12,6 +12,7 @@
 #include <string.h>
 #include <errno.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include "apps.h"
 
 #define BIO_TYPE_TEMP_FILE      (25|BIO_TYPE_FILTER)
@@ -22,6 +23,7 @@ typedef struct {
     char *tmp_filename;
 } TEMPFILE_CTX;
 
+static void apps_bf_tempfile_cleanup(void);
 static int tempfile_new(BIO *b);
 static int tempfile_free(BIO *b);
 static int tempfile_read(BIO *b, char *out, int outl);
@@ -46,10 +48,11 @@ BIO_METHOD *apps_bf_tempfile(void)
             || !BIO_meth_set_destroy(methods_tempfile, tempfile_free))
             return NULL;
     }
+    OPENSSL_atexit(apps_bf_tempfile_cleanup);
     return methods_tempfile;
 }
 
-void apps_bf_tempfile_cleanup(void)
+static void apps_bf_tempfile_cleanup(void)
 {
     BIO_meth_free(methods_tempfile);
     methods_tempfile = NULL;
@@ -82,14 +85,10 @@ static int tempfile_free(BIO *b)
 
     temp = BIO_get_data(b);
     if (temp->filename != NULL && temp->tmp_filename != NULL) {
-#if !defined(__VMS)
         rename(temp->tmp_filename, temp->filename);
-#endif
     }
-    if (temp->filename)
-        OPENSSL_free(temp->filename);
-    if (temp->tmp_filename)
-        OPENSSL_free(temp->tmp_filename);
+    OPENSSL_free(temp->filename);
+    OPENSSL_free(temp->tmp_filename);
     OPENSSL_free(temp);
     BIO_set_data(b, NULL);
     BIO_set_init(b, 0);
@@ -145,27 +144,6 @@ static void make_temp_filename(const char *orig, char *filename)
     *p = '\0';
 
     return;
-}
-
-static int istext(int format)
-{
-    return (format & B_FORMAT_TEXT) == B_FORMAT_TEXT;
-}
-
-static const char *modestr(char mode, int format)
-{
-    OPENSSL_assert(mode == 'a' || mode == 'r' || mode == 'w');
-
-    switch (mode) {
-    case 'a':
-        return istext(format) ? "a" : "ab";
-    case 'r':
-        return istext(format) ? "r" : "rb";
-    case 'w':
-        return istext(format) ? "w" : "wb";
-    }
-    /* The assert above should make sure we never reach this point */
-    return NULL;
 }
 
 static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
@@ -228,8 +206,7 @@ static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
         fclose(fp);
     else if (fd >= 0)
         close(fd);
-    if (tmp_filename)
-        OPENSSL_free(tmp_filename);
+    OPENSSL_free(tmp_filename);
     return NULL;
 }
 

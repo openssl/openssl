@@ -196,7 +196,6 @@ int genpkey_main(int argc, char **argv)
     BIO_free(in);
     release_engine(e);
     OPENSSL_free(pass);
-    apps_bf_tempfile_cleanup();
     return ret;
 }
 

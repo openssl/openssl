@@ -278,7 +278,6 @@ int ec_main(int argc, char **argv)
     release_engine(e);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    apps_bf_tempfile_cleanup();
     return ret;
 }
 #endif

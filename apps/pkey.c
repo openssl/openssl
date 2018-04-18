@@ -230,7 +230,6 @@ int pkey_main(int argc, char **argv)
     BIO_free(in);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    apps_bf_tempfile_cleanup();
 
     return ret;
 }

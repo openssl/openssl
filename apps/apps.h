@@ -70,7 +70,6 @@ void destroy_prefix_method(void);
 
 /* almost the same reason as above - the bf_prefix one */
 BIO_METHOD *apps_bf_tempfile(void);
-void apps_bf_tempfile_cleanup(void);
 
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
@@ -635,5 +634,8 @@ typedef struct verify_options_st {
 } VERIFY_CB_ARGS;
 
 extern VERIFY_CB_ARGS verify_args;
+
+int istext(int format);
+const char *modestr(char mode, int format);
 
 #endif

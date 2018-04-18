@@ -883,7 +883,6 @@ int req_main(int argc, char **argv)
         OPENSSL_free(passin);
     if (passout != nofree_passout)
         OPENSSL_free(passout);
-    apps_bf_tempfile_cleanup();
     return ret;
 }
 

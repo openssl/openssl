@@ -175,7 +175,6 @@ opthelp:
     OPENSSL_free(passout);
     if (ret != 0)
         ERR_print_errors(bio_err);
-    apps_bf_tempfile_cleanup();
     return ret;
 }
 

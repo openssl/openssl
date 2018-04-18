@@ -2554,7 +2554,7 @@ int raw_write_stdout(const void *buf, int siz)
  * does impact behavior on some platform, such as differentiating between
  * text and binary input/output on non-Unix platforms
  */
-static int istext(int format)
+int istext(int format)
 {
     return (format & B_FORMAT_TEXT) == B_FORMAT_TEXT;
 }
@@ -2624,7 +2624,7 @@ void unbuffer(FILE *fp)
 #endif
 }
 
-static const char *modestr(char mode, int format)
+const char *modestr(char mode, int format)
 {
     OPENSSL_assert(mode == 'a' || mode == 'r' || mode == 'w');
 
@@ -2678,7 +2678,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
     b = BIO_push(filter, sink);
 
     /* set real filename to filter BIO for later usage */
-    if (!BIO_ctrl(filter, BIO_C_SET_FILENAME, format, (void *)filename))
+    if (!BIO_ctrl(b, BIO_C_SET_FILENAME, format, (void *)filename))
         goto err;
 
     return b;
