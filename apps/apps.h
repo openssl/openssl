@@ -638,4 +638,9 @@ extern VERIFY_CB_ARGS verify_args;
 int istext(int format);
 const char *modestr(char mode, int format);
 
+#ifdef _WIN32
+int WIN32_rename(const char *from, const char *to);
+# define rename(from,to) WIN32_rename((from),(to))
+#endif
+
 #endif

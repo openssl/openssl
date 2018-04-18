@@ -71,11 +71,6 @@ static int tempfile_new(BIO *b)
     return 1;
 }
 
-#ifdef _WIN32
-static int WIN32_rename(const char *from, const char *to);
-# define rename(from,to) WIN32_rename((from),(to))
-#endif
-
 static int tempfile_free(BIO *b)
 {
     TEMPFILE_CTX *temp;
