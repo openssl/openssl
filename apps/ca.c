@@ -498,7 +498,7 @@ end_of_options:
         if (db == NULL)
             goto end;
 
-        if (!index_index(db))
+        if (index_index(db) <= 0)
             goto end;
 
         if (get_certificate_status(ser_status, db) != 1)
@@ -672,7 +672,7 @@ end_of_options:
         BIO_printf(bio_err, "generating index\n");
     }
 
-    if (!index_index(db))
+    if (index_index(db) <= 0)
         goto end;
 
     /*****************************************************************/

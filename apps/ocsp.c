@@ -559,7 +559,7 @@ int ocsp_main(int argc, char **argv)
 
     if (ridx_filename != NULL) {
         rdb = load_index(ridx_filename, NULL);
-        if (rdb == NULL || !index_index(rdb)) {
+        if (rdb == NULL || index_index(rdb) <= 0) {
             ret = 1;
             goto end;
         }
@@ -582,7 +582,7 @@ redo_accept:
         if (index_changed(rdb)) {
             CA_DB *newrdb = load_index(ridx_filename, NULL);
 
-            if (newrdb != NULL) {
+            if (newrdb != NULL && index_index(newrdb) > 0) {
                 free_index(rdb);
                 rdb = newrdb;
             } else {
