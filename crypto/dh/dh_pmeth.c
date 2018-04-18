@@ -486,7 +486,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         return ret;
     }
 #endif
-    return 1;
+    return 0;
 }
 
 const EVP_PKEY_METHOD dh_pkey_meth = {
