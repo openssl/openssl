@@ -67,12 +67,8 @@ sub get_records
 
     my $recnum = 1;
     while (length ($packet) > 0) {
-        print " Record $recnum";
-        if ($server) {
-            print " (server -> client)\n";
-        } else {
-            print " (client -> server)\n";
-        }
+        print " Record $recnum ", $server ? "(server -> client)\n"
+                                          : "(client -> server)\n";
 
         #Get the record header (unpack can't fail if $packet is too short)
         my ($content_type, $version, $len) = unpack('Cnn', $packet);
