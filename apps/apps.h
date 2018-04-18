@@ -68,11 +68,14 @@ BIO_METHOD *apps_bf_prefix(void);
  */
 void destroy_prefix_method(void);
 
+/* almost the same reason as above - the bf_prefix one */
+BIO_METHOD *apps_bf_tempfile(void);
+void apps_bf_tempfile_cleanup(void);
+
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
 BIO *bio_open_owner(const char *filename, int format, int private);
-void bio_tempfile_cleanup(void);
 BIO *bio_open_default(const char *filename, char mode, int format);
 BIO *bio_open_default_quiet(const char *filename, char mode, int format);
 CONF *app_load_config_bio(BIO *in, const char *filename);

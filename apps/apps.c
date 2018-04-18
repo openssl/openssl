@@ -2657,116 +2657,33 @@ static const char *modeverb(char mode)
  * Open a file for writing, owner-read-only. The file is written in
  * a 'write-to-temp-file-then-rename' basis.
  */
-#define RND_SIZE 16
-
-static const BIO_METHOD *BIO_f_tempfile(void);
-
-static void make_temp_filename(const char *orig, char *filename)
-{
-    int i, size = RND_SIZE;
-    char *p;
-    char set[] = "0123456789abcdefghijklmnopqrstuvwxyz"
-                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-    strcpy(filename, orig);
-    p = filename + strlen(orig);
-    *p++ = '.';
-
-    srand(time(NULL));
-    while (size--) {
-        i = rand() % (sizeof(set) - 1);
-        *p++ = set[i];
-    }
-
-    *p = '\0';
-
-    return;
-}
-
 BIO *bio_open_owner(const char *filename, int format, int private)
 {
-    FILE *fp = NULL;
     BIO *b = NULL;
     BIO *sink = NULL;
     BIO *filter = NULL;
-    int fd = -1, bflags, mode, textmode;
-    char *tmp_filename = NULL;
 
     if (!private || filename == NULL || strcmp(filename, "-") == 0)
         return bio_open_default(filename, 'w', format);
 
-    /* create tmp file name */
-    tmp_filename = OPENSSL_malloc(strlen(filename) + RND_SIZE + 2);
-    if (tmp_filename == NULL)
-        goto err;
-    make_temp_filename(filename, tmp_filename);
-
-    /* create a tmp file sink BIO */
-    mode = O_WRONLY;
-#ifdef O_CREAT
-    mode |= O_CREAT;
-#endif
-#ifdef O_TRUNC
-    mode |= O_TRUNC;
-#endif
-    textmode = istext(format);
-    if (!textmode) {
-#ifdef O_BINARY
-        mode |= O_BINARY;
-#elif defined(_O_BINARY)
-        mode |= _O_BINARY;
-#endif
-    }
-
-#ifdef OPENSSL_SYS_VMS
-    /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
-     * it still needs to know that we're going binary, or fdopen()
-     * will fail with "invalid argument"...  so we tell VMS what the
-     * context is.
-     */
-    if (!textmode)
-        fd = open(tmp_filename, mode, 0600, "ctx=bin");
-    else
-#endif
-        fd = open(tmp_filename, mode, 0600);
-    if (fd < 0)
-        goto err;
-    fp = fdopen(fd, modestr('w', format));
-    if (fp == NULL)
-        goto err;
-    bflags = BIO_CLOSE;
-    if (textmode)
-        bflags |= BIO_FP_TEXT;
-    sink = BIO_new_fp(fp, bflags);
+    sink = BIO_new(BIO_s_file());
     if (sink == NULL)
         goto err;
 
     /* create the filter BIO */
-    filter = BIO_new(BIO_f_tempfile());
+    filter = BIO_new(apps_bf_tempfile());
     if (filter == NULL)
         goto err;
 
     b = BIO_push(filter, sink);
 
     /* set real filename to filter BIO for later usage */
-    BIO_ctrl(filter, BIO_C_SET_FILENAME, 1, (void *)filename);
-    BIO_ctrl(filter, BIO_C_SET_FILENAME, 2, (void *)tmp_filename);
-
-    OPENSSL_free(tmp_filename);
+    if (!BIO_ctrl(filter, BIO_C_SET_FILENAME, format, (void *)filename))
+        goto err;
 
     return b;
 
  err:
-    BIO_printf(bio_err, "%s: Can't open \"%s\" for writing, %s\n",
-               opt_getprog(), filename, strerror(errno));
-    ERR_print_errors(bio_err);
-    /* If we have fp, then fdopen took over fd, so don't close both. */
-    if (fp)
-        fclose(fp);
-    else if (fd >= 0)
-        close(fd);
-    if (tmp_filename)
-        OPENSSL_free(tmp_filename);
     BIO_free(sink);
     BIO_free(filter);
     return NULL;
@@ -2906,165 +2823,4 @@ void make_uppercase(char *string)
 
     for (i = 0; string[i] != '\0'; i++)
         string[i] = toupper((unsigned char)string[i]);
-}
-
-#define BIO_TYPE_TEMP_FILE      (25|BIO_TYPE_FILTER)
-static BIO_METHOD *methods_tempfile = NULL;
-
-typedef struct {
-    char *filename;
-    char *tmp_filename;
-} TEMPFILE_CTX;
-
-static int tempfile_new(BIO *b);
-static int tempfile_free(BIO *b);
-static int tempfile_read(BIO *b, char *out, int outl);
-static int tempfile_write(BIO *b, const char *in, int inl);
-static long tempfile_ctrl(BIO *b, int cmd, long num, void *ptr);
-static int tempfile_gets(BIO *b, char *buf, int size);
-static int tempfile_puts(BIO *b, const char *str);
-
-static const BIO_METHOD *BIO_f_tempfile(void)
-{
-    if (methods_tempfile == NULL) {
-        methods_tempfile = BIO_meth_new(BIO_TYPE_TEMP_FILE,
-                                        "Temporary file filter");
-        if (methods_tempfile == NULL
-            || !BIO_meth_set_write(methods_tempfile, tempfile_write)
-            || !BIO_meth_set_read(methods_tempfile, tempfile_read)
-            || !BIO_meth_set_puts(methods_tempfile, tempfile_puts)
-            || !BIO_meth_set_gets(methods_tempfile, tempfile_gets)
-            || !BIO_meth_set_ctrl(methods_tempfile, tempfile_ctrl)
-            || !BIO_meth_set_create(methods_tempfile, tempfile_new)
-            || !BIO_meth_set_destroy(methods_tempfile, tempfile_free))
-            return NULL;
-    }
-    return methods_tempfile;
-}
-
-void bio_tempfile_cleanup(void)
-{
-    BIO_meth_free(methods_tempfile);
-}
-
-static int tempfile_new(BIO *b)
-{
-    TEMPFILE_CTX *temp;
-
-    temp = app_malloc(sizeof(*temp), "temp file");
-    temp->filename = NULL;
-    temp->tmp_filename = NULL;
-    BIO_set_data(b, temp);
-    BIO_set_init(b, 1);
-
-    return 1;
-}
-
-static int tempfile_free(BIO *b)
-{
-    TEMPFILE_CTX *temp;
-
-    if (b == NULL)
-        return 0;
-
-    temp = BIO_get_data(b);
-    if (temp->filename != NULL && temp->tmp_filename != NULL) {
-#if !defined(_WIN32) && !defined(__VMS)
-        rename(temp->tmp_filename, temp->filename);
-#endif
-    }
-    if (temp->filename)
-        OPENSSL_free(temp->filename);
-    if (temp->tmp_filename)
-        OPENSSL_free(temp->tmp_filename);
-    OPENSSL_free(temp);
-    BIO_set_data(b, NULL);
-    BIO_set_init(b, 0);
-
-    return 1;
-}
-
-static int tempfile_read(BIO *b, char *out, int outl)
-{
-    int ret = 0;
-    BIO *next = BIO_next(b);
-
-    if (out == NULL || outl == 0)
-        return 0;
-    if (next == NULL)
-        return 0;
-
-    ret = BIO_read(next, out, outl);
-    return ret;
-}
-
-static int tempfile_write(BIO *b, const char *in, int inl)
-{
-    BIO *next = BIO_next(b);
-
-    if ((in == NULL) || (inl <= 0))
-        return 0;
-    if (next == NULL)
-        return 0;
-
-    return BIO_write(next, in, inl);
-}
-
-static long tempfile_ctrl(BIO *b, int cmd, long num, void *ptr)
-{
-    long ret = 1;
-    BIO *next = BIO_next(b);
-    TEMPFILE_CTX *temp;
-    char **p;
-
-    if (next == NULL)
-        return 0;
-    switch (cmd) {
-    case BIO_C_SET_FILENAME:
-        temp = BIO_get_data(b);
-        if (num == 1)
-            p = &temp->filename;
-        else
-            p = &temp->tmp_filename;
-        if (*p)
-            OPENSSL_free(*p);
-        *p = OPENSSL_strdup((char *)ptr);
-        if (p == NULL)
-            return 0;
-        break;
-    default:
-        ret = BIO_ctrl(next, cmd, num, ptr);
-        break;
-    }
-    return ret;
-}
-
-static int tempfile_gets(BIO *b, char *buf, int size)
-{
-    int i, ret = 0;
-    BIO *next = BIO_next(b);
-
-    if (next == NULL)
-        return 0;
-    for (i = 0; i < size - 1; ++i) {
-        ret = tempfile_read(b, &buf[i], 1);
-        if (ret <= 0)
-            break;
-        else if (buf[i] == '\n') {
-            ++i;
-            break;
-        }
-    }
-    if (i < size)
-        buf[i] = '\0';
-    return (ret < 0 && i == 0) ? ret : i;
-}
-
-static int tempfile_puts(BIO *b, const char *str)
-{
-    BIO *next = BIO_next(b);
-
-    if (next == NULL)
-        return 0;
-    return tempfile_write(next, str, strlen(str));
 }

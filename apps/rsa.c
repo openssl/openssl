@@ -308,7 +308,7 @@ int rsa_main(int argc, char **argv)
     RSA_free(rsa);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    bio_tempfile_cleanup();
+    apps_bf_tempfile_cleanup();
     return ret;
 }
 #endif

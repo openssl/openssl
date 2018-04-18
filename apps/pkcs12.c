@@ -588,7 +588,7 @@ int pkcs12_main(int argc, char **argv)
     OPENSSL_free(badpass);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
-    bio_tempfile_cleanup();
+    apps_bf_tempfile_cleanup();
     return ret;
 }
 
