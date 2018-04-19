@@ -74,6 +74,8 @@ FILE *openssl_fopen(const char *filename, const char *mode);
 void *openssl_fopen(const char *filename, const char *mode);
 # endif
 
+unsigned long OPENSSL_rdtsc(void);
+
 #ifdef  __cplusplus
 }
 #endif

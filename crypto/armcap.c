@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <openssl/crypto.h>
+#include <internal/cryptlib.h>
 
 #include "arm_arch.h"
 
