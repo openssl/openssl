@@ -4401,6 +4401,57 @@ static int test_info_callback(int tst)
     return testresult;
 }
 
+static int test_ssl_pending(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char msg[] = "A test message";
+    char buf[5];
+    size_t written, readbytes;
+
+    if (tst == 0) {
+        if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                           TLS_client_method(),
+                                           TLS1_VERSION, TLS_MAX_VERSION,
+                                           &sctx, &cctx, cert, privkey)))
+            goto end;
+    } else {
+#ifndef OPENSSL_NO_DTLS
+        if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                           DTLS_client_method(),
+                                           DTLS1_VERSION, DTLS_MAX_VERSION,
+                                           &sctx, &cctx, cert, privkey)))
+            goto end;
+#else
+        return 1;
+#endif
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
+            || !TEST_size_t_eq(written, sizeof(msg))
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+            || !TEST_size_t_eq(readbytes, sizeof(buf))
+            || !TEST_int_eq(SSL_pending(clientssl), (int)(written - readbytes)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -4492,6 +4543,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_srp, 6);
 #endif
     ADD_ALL_TESTS(test_info_callback, 6);
+    ADD_ALL_TESTS(test_ssl_pending, 2);
     return 1;
 }
 
