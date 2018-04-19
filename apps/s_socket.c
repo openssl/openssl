@@ -385,7 +385,6 @@ static int init_server(int *sock, int port, int type)
 static int do_accept(int acc_sock, int *sock)
 {
     int ret;
-    struct hostent *h1, *h2;
 
     if (!ssl_sock_init())
         return 0;
