@@ -109,7 +109,7 @@ static int ssl_sock_init(void);
 static int init_client_ip(int *sock, unsigned char ip[4], int port, int type);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port, char *ip, int type);
-static int do_accept(int acc_sock, int *sock, char **host);
+static int do_accept(int acc_sock, int *sock);
 static int host_ip(char *str, unsigned char ip[4]);
 
 # ifdef OPENSSL_SYS_WIN16
