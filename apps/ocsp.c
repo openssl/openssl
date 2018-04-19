@@ -586,6 +586,7 @@ redo_accept:
                 free_index(rdb);
                 rdb = newrdb;
             } else {
+                free_index(newrdb);
                 log_message(LOG_ERR, "error reloading updated index: %s",
                             ridx_filename);
             }
