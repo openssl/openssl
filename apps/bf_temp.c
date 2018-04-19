@@ -16,6 +16,9 @@
 #include "apps.h"
 
 #define BIO_TYPE_TEMP_FILE      (25 | BIO_TYPE_FILTER)
+#define TEMPFILE_MAX_TRIES      64
+#define RND_SIZE                16
+
 static BIO_METHOD *methods_tempfile = NULL;
 
 typedef struct {
@@ -117,8 +120,6 @@ static int tempfile_write(BIO *b, const char *in, int inl)
     return BIO_write(next, in, inl);
 }
 
-#define RND_SIZE 16
-
 static void make_temp_filename(const char *orig, char *filename)
 {
     int i, size = RND_SIZE;
@@ -147,12 +148,7 @@ static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
     FILE *fp = NULL;
     int fd = -1, mode, textmode;
     char *tmp_filename = NULL;
-
-    /* create tmp file name */
-    tmp_filename = OPENSSL_malloc(strlen(filename) + RND_SIZE + 2);
-    if (tmp_filename == NULL)
-        goto err;
-    make_temp_filename(filename, tmp_filename);
+    int max = TEMPFILE_MAX_TRIES;
 
     /* create a tmp file sink BIO */
     mode = O_WRONLY | O_EXCL;
@@ -171,6 +167,14 @@ static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
     mode |= O_NOFOLLOW;
 #endif
 
+ redo:
+    /* create tmp file name */
+    tmp_filename = OPENSSL_malloc(strlen(filename) + RND_SIZE + 2);
+    if (tmp_filename == NULL)
+        goto err;
+
+    make_temp_filename(filename, tmp_filename);
+
 #ifdef OPENSSL_SYS_VMS
     /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
      * it still needs to know that we're going binary, or fdopen()
@@ -182,8 +186,14 @@ static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
     else
 #endif
         fd = open(tmp_filename, mode, 0600);
-    if (fd < 0)
+    if (fd < 0) {
+        if (max > 0) {
+            OPENSSL_free(tmp_filename);
+            max--;
+            goto redo;
+        }
         goto err;
+    }
     fp = fdopen(fd, modestr('w', format));
     if (fp == NULL)
         goto err;
