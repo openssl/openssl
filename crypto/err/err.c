@@ -709,21 +709,19 @@ ERR_STATE *ERR_get_state(void)
  * err_shelve_state returns the current thread local error state
  * and freezes the error module until err_unshelve_state is called.
  */
-void *err_shelve_state(void)
+int err_shelve_state(void **state)
 {
-    void *state;
-
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
-        return (void*)-1;
+        return 0;
 
     if (!RUN_ONCE(&err_init, err_do_init))
-        return (void*)-1;
+        return 0;
 
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
-        return (void*)-1;
+        return 0;
 
-    return state;
+    return 1;
 }
 
 /*

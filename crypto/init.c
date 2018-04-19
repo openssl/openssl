@@ -137,7 +137,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
         DSO *dso;
         void *err;
 
-        err = err_shelve_state();
+        if (!err_shelve_state(&err))
+            return 0;
+
         dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
 #  ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: obtained DSO reference? %s\n",
