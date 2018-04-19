@@ -739,6 +739,19 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     a->top ^= t;
     b->top ^= t;
 
+    t = (a->neg ^ b->neg) & condition;
+    a->neg ^= t;
+    b->neg ^= t;
+
+    /*
+     * cannot just arbitrarily swap flags.
+     * The way a->d is allocated etc.
+     * BN_FLG_MALLOCED, BN_FLG_STATIC_DATA, ...
+     */
+    t = (a->flags ^ b->flags) & condition & BN_FLG_CONSTTIME;
+    a->flags ^= t;
+    b->flags ^= t;
+
 #define BN_CONSTTIME_SWAP(ind) \
         do { \
                 t = (a->d[ind] ^ b->d[ind]) & condition; \
