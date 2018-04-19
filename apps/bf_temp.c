@@ -15,7 +15,7 @@
 #include <openssl/err.h>
 #include "apps.h"
 
-#define BIO_TYPE_TEMP_FILE      (25|BIO_TYPE_FILTER)
+#define BIO_TYPE_TEMP_FILE      (25 | BIO_TYPE_FILTER)
 static BIO_METHOD *methods_tempfile = NULL;
 
 typedef struct {
@@ -47,8 +47,8 @@ BIO_METHOD *apps_bf_tempfile(void)
             || !BIO_meth_set_create(methods_tempfile, tempfile_new)
             || !BIO_meth_set_destroy(methods_tempfile, tempfile_free))
             return NULL;
+        OPENSSL_atexit(apps_bf_tempfile_cleanup);
     }
-    OPENSSL_atexit(apps_bf_tempfile_cleanup);
     return methods_tempfile;
 }
 

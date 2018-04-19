@@ -2081,7 +2081,7 @@ void store_setup_crl_download(X509_STORE *st)
 # include <windows.h>
 # include <tchar.h>
 
-static int WIN32_rename(const char *from, const char *to)
+int WIN32_rename(const char *from, const char *to)
 {
     TCHAR *tfrom = NULL, *tto;
     DWORD err;
