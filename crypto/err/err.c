@@ -705,6 +705,10 @@ ERR_STATE *ERR_get_state(void)
     return state;
 }
 
+/*
+ * err_shelve_state returns the current thread local error state
+ * and freezes the error module until err_unshelve_state is called.
+ */
 void *err_shelve_state(void)
 {
     void *state;
@@ -722,6 +726,10 @@ void *err_shelve_state(void)
     return state;
 }
 
+/*
+ * err_unshelve_state restores the error state that was returned
+ * by err_shelve_state previously.
+ */
 void err_unshelve_state(void* state)
 {
     if (state != (void*)-1)
