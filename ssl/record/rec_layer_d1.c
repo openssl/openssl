@@ -418,6 +418,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /* get new packet if necessary */
     if ((SSL3_RECORD_get_length(rr) == 0)
         || (s->rlayer.rstate == SSL_ST_READ_BODY)) {
+        RECORD_LAYER_set_numrpipes(&s->rlayer, 0);
         iret = dtls1_get_record(s);
         if (iret <= 0) {
             iret = dtls1_read_failed(s, iret);
@@ -430,6 +431,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             else
                 goto start;
         }
+        RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
     }
 
     /*
