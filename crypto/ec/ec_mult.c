@@ -111,6 +111,8 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  * This functions computes (in constant time) a point multiplication over the
  * EC group.
  *
+ * At a high level, it is Montgomery ladder with conditional swaps.
+ *
  * It performs either a fixed scalar point multiplication
  *          (scalar * generator)
  * when point is NULL, or a generic scalar point multiplication
@@ -231,6 +233,64 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r, const BIGNUM *sc
         (a)->Z_is_one ^= (t);                      \
         (b)->Z_is_one ^= (t);                      \
 } while(0)
+
+    /*
+     * The ladder step, with branches, is
+     *
+     * k[i] == 0: S = add(R, S), R = dbl(R)
+     * k[i] == 1: R = add(S, R), S = dbl(S)
+     *
+     * Swapping R, S conditionally on k[i] leaves you with state
+     *
+     * k[i] == 0: T, U = R, S
+     * k[i] == 1: T, U = S, R
+     *
+     * Then perform the ECC ops.
+     *
+     * U = add(T, U)
+     * T = dbl(T)
+     *
+     * Which leaves you with state
+     *
+     * k[i] == 0: U = add(R, S), T = dbl(R)
+     * k[i] == 1: U = add(S, R), T = dbl(S)
+     *
+     * Swapping T, U conditionally on k[i] leaves you with state
+     *
+     * k[i] == 0: R, S = T, U
+     * k[i] == 1: R, S = U, T
+     *
+     * Which leaves you with state
+     *
+     * k[i] == 0: S = add(R, S), R = dbl(R)
+     * k[i] == 1: R = add(S, R), S = dbl(S)
+     *
+     * So we get the same logic, but instead of a branch it's a
+     * conditional swap, followed by ECC ops, then another conditional swap.
+     *
+     * Optimization: The end of iteration i and start of i-1 looks like
+     *
+     * ...
+     * CSWAP(k[i], R, S)
+     * ECC
+     * CSWAP(k[i], R, S)
+     * (next iteration)
+     * CSWAP(k[i-1], R, S)
+     * ECC
+     * CSWAP(k[i-1], R, S)
+     * ...
+     *
+     * So instead of two contiguous swaps, you can merge the condition
+     * bits and do a single swap.
+     *
+     * k[i]    k[i-1]    Outcome
+     * 0       0         No Swap
+     * 0       1         Swap
+     * 1       0         Swap
+     * 1       1         No Swap
+     *
+     * This is XOR. pbit tracks the previous bit of k.
+     */
 
     for (i = order_bits - 1; i >= 0; i--) {
         kbit = BN_is_bit_set(k, i) ^ pbit;
