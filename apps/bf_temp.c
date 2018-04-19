@@ -155,7 +155,7 @@ static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
     make_temp_filename(filename, tmp_filename);
 
     /* create a tmp file sink BIO */
-    mode = O_WRONLY;
+    mode = O_WRONLY | O_EXCL;
 #ifdef O_CREAT
     mode |= O_CREAT;
 #endif
