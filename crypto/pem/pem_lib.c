@@ -661,7 +661,7 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     if (retval == 0)
         PEMerr(PEM_F_PEM_WRITE_BIO, reason);
     EVP_ENCODE_CTX_free(ctx);
-    OPENSSL_free(buf);
+    OPENSSL_clear_free(buf, PEM_BUFSIZE * 8);
     return retval;
 }
 
