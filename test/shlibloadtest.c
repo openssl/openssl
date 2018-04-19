@@ -44,7 +44,7 @@ static OpenSSL_version_num_t OpenSSL_version_num;
 # define DSO_FREE "DSO_free"
 
 typedef void DSO;
-typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(), int flags);
+typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
 
 static DSO_dsobyaddr_t DSO_dsobyaddr;
@@ -252,7 +252,7 @@ int main(int argc, char **argv)
         {
             DSO *hndl;
             /* use known symbol from crypto module */
-            if ((hndl = DSO_dsobyaddr((void (*)())ERR_get_error, 0)) != NULL) {
+            if ((hndl = DSO_dsobyaddr((void (*)(void))ERR_get_error, 0)) != NULL) {
                 DSO_free(hndl);
             } else {
                 printf("Unable to obtain DSO reference from crypto symbol\n");
