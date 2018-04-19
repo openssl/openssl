@@ -167,6 +167,9 @@ static FILE *make_temp_file_ptr(const char *filename, int format, int *bflags,
         mode |= _O_BINARY;
 #endif
     }
+#ifdef O_NOFOLLOW
+    mode |= O_NOFOLLOW;
+#endif
 
 #ifdef OPENSSL_SYS_VMS
     /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
