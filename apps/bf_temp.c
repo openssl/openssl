@@ -131,7 +131,7 @@ static void make_temp_filename(const char *orig, char *filename)
     p = filename + strlen(orig);
     *p++ = '.';
 
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
     while (size--) {
         i = rand() % (sizeof(set) - 1);
         *p++ = set[i];
