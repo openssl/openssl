@@ -209,9 +209,9 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
-static int sv_body(char *hostname, int s, int stype, unsigned char *context);
-static int www_body(char *hostname, int s, int stype, unsigned char *context);
-static int rev_body(char *hostname, int s, int stype, unsigned char *context);
+static int sv_body(int s, int stype, unsigned char *context);
+static int www_body(int s, int stype, unsigned char *context);
+static int rev_body(int s, int stype, unsigned char *context);
 static void close_accept_socket(void);
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
@@ -2165,7 +2165,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(char *hostname, int s, int stype, unsigned char *context)
+static int sv_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2780,7 +2780,7 @@ static int load_CA(SSL_CTX *ctx, char *file)
 }
 #endif
 
-static int www_body(char *hostname, int s, int stype, unsigned char *context)
+static int www_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -3183,7 +3183,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
     return (ret);
 }
 
-static int rev_body(char *hostname, int s, int stype, unsigned char *context)
+static int rev_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     int i;
