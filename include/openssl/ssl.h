@@ -1368,28 +1368,16 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_SET_CHAIN_CERT_STORE,1,(char *)(st))
 # define SSL_get1_groups(ctx, s) \
         SSL_ctrl(ctx,SSL_CTRL_GET_GROUPS,0,(char *)(s))
-# define SSL_get1_curves(ctx, s) \
-        SSL_get1_groups((ctx), (s))
 # define SSL_CTX_set1_groups(ctx, glist, glistlen) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)(glist))
 # define SSL_CTX_set1_groups_list(ctx, s) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)(s))
-# define SSL_CTX_set1_curves(ctx, clist, clistlen) \
-        SSL_CTX_set1_groups((ctx), (clist), (clistlen))
-# define SSL_CTX_set1_curves_list(ctx, s) \
-        SSL_CTX_set1_groups_list((ctx), (s))
 # define SSL_set1_groups(ctx, glist, glistlen) \
         SSL_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)(glist))
 # define SSL_set1_groups_list(ctx, s) \
         SSL_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)(s))
-# define SSL_set1_curves(ctx, clist, clistlen) \
-        SSL_set1_groups((ctx), (clist), (clistlen))
-# define SSL_set1_curves_list(ctx, s) \
-        SSL_set1_groups_list((ctx), (s))
 # define SSL_get_shared_group(s, n) \
         SSL_ctrl(s,SSL_CTRL_GET_SHARED_GROUP,n,NULL)
-# define SSL_get_shared_curve(s, n) \
-        SSL_get_shared_group((s), (n))
 # define SSL_CTX_set1_sigalgs(ctx, slist, slistlen) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_SIGALGS,slistlen,(int *)(slist))
 # define SSL_CTX_set1_sigalgs_list(ctx, s) \
@@ -1437,6 +1425,23 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s, SSL_CTRL_GET_MIN_PROTO_VERSION, 0, NULL)
 # define SSL_get_max_proto_version(s) \
         SSL_ctrl(s, SSL_CTRL_GET_MAX_PROTO_VERSION, 0, NULL)
+
+/*
+ * The following symbol names are old and obsolete. They are kept
+ * for compatibility reasons only and should not be used anymore.
+ */
+# define SSL_CTRL_GET_CURVES           SSL_CTRL_GET_GROUPS
+# define SSL_CTRL_SET_CURVES           SSL_CTRL_SET_GROUPS
+# define SSL_CTRL_SET_CURVES_LIST      SSL_CTRL_SET_GROUPS_LIST
+# define SSL_CTRL_GET_SHARED_CURVE     SSL_CTRL_GET_SHARED_GROUP
+
+# define SSL_get1_curves               SSL_get1_groups
+# define SSL_CTX_set1_curves           SSL_CTX_set1_groups
+# define SSL_CTX_set1_curves_list      SSL_CTX_set1_groups_list
+# define SSL_set1_curves               SSL_set1_groups
+# define SSL_set1_curves_list          SSL_set1_groups_list
+# define SSL_get_shared_curve          SSL_get_shared_group
+
 
 # if OPENSSL_API_COMPAT < 0x10100000L
 /* Provide some compatibility macros for removed functionality. */
