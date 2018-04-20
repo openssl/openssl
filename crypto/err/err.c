@@ -254,7 +254,8 @@ static void ERR_STATE_free(ERR_STATE *s)
 
 DEFINE_RUN_ONCE_STATIC(do_err_strings_init)
 {
-    OPENSSL_init_crypto(0, NULL);
+    if (!OPENSSL_init_crypto(0, NULL))
+        return 0;
     err_string_lock = CRYPTO_THREAD_lock_new();
     return err_string_lock != NULL;
 }
@@ -653,7 +654,10 @@ DEFINE_RUN_ONCE_STATIC(err_do_init)
 
 ERR_STATE *ERR_get_state(void)
 {
-    ERR_STATE *state = NULL;
+    ERR_STATE *state;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return NULL;
 
     if (!RUN_ONCE(&err_init, err_do_init))
         return NULL;
@@ -686,13 +690,41 @@ ERR_STATE *ERR_get_state(void)
     return state;
 }
 
+/*
+ * err_shelve_state returns the current thread local error state
+ * and freezes the error module until err_unshelve_state is called.
+ */
+int err_shelve_state(void **state)
+{
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+        return 0;
+
+    if (!RUN_ONCE(&err_init, err_do_init))
+        return 0;
+
+    *state = CRYPTO_THREAD_get_local(&err_thread_local);
+    if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
+        return 0;
+
+    return 1;
+}
+
+/*
+ * err_unshelve_state restores the error state that was returned
+ * by err_shelve_state previously.
+ */
+void err_unshelve_state(void* state)
+{
+    if (state != (void*)-1)
+        CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)state);
+}
+
 int ERR_get_next_error_library(void)
 {
     int ret;
 
-    if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
+    if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
-    }
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     ret = int_err_library_number++;

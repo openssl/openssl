@@ -75,22 +75,36 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
      * We use a dummy thread local key here. We use the destructor to detect
      * when the thread is going to stop (where that feature is available)
      */
-    CRYPTO_THREAD_init_local(&threadstopkey, ossl_init_thread_stop_wrap);
-#ifndef OPENSSL_SYS_UEFI
-    atexit(OPENSSL_cleanup);
-#endif
-    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
+    if (!CRYPTO_THREAD_init_local(&threadstopkey, ossl_init_thread_stop_wrap))
         return 0;
+    if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
+        goto err;
+#ifndef OPENSSL_SYS_UEFI
+    if (atexit(OPENSSL_cleanup) != 0)
+        goto err;
+#endif
     OPENSSL_cpuid_setup();
 
-    /*
-     * BIG FAT WARNING!
-     * Everything needed to be initialized in this function before threads
-     * come along MUST happen before base_inited is set to 1, or we will
-     * see race conditions.
-     */
     base_inited = 1;
+    return 1;
 
+err:
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_base not ok!\n");
+#endif
+    CRYPTO_THREAD_lock_free(init_lock);
+    init_lock = NULL;
+
+    CRYPTO_THREAD_cleanup_local(&threadstopkey);
+    return 0;
+}
+
+static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
+{
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_nodelete()\n");
+#endif
 #if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
 # ifdef DSO_WIN32
     {
@@ -102,6 +116,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
                                 | GET_MODULE_HANDLE_EX_FLAG_PIN,
                                 (void *)&base_inited, &handle);
 
+#  ifdef OPENSSL_INIT_DEBUG
+        fprintf(stderr, "OPENSSL_INIT: obtained DSO reference? %s\n",
+                (ret == TRUE ? "No!" : "Yes."));
+#  endif
         return (ret == TRUE) ? 1 : 0;
     }
 # else
@@ -110,9 +128,12 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
      * to remain loaded until the atexit() handler is run at process exit.
      */
     {
-        DSO *dso = NULL;
+        DSO *dso;
+        void *err;
 
-        ERR_set_mark();
+        if (!err_shelve_state(&err))
+            return 0;
+
         dso = DSO_dsobyaddr(&base_inited, DSO_FLAG_NO_UNLOAD_ON_FREE);
 #  ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: obtained DSO reference? %s\n",
@@ -124,7 +145,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
          */
 #  endif
         DSO_free(dso);
-        ERR_pop_to_mark();
+        err_unshelve_state(err);
     }
 # endif
 #endif
@@ -514,22 +535,18 @@ void OPENSSL_cleanup(void)
  */
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 {
-    static int stoperrset = 0;
-
     if (stopped) {
-        if (!stoperrset) {
-            /*
-             * We only ever set this once to avoid getting into an infinite
-             * loop where the error system keeps trying to init and fails so
-             * sets an error etc
-             */
-            stoperrset = 1;
+        if (!(opts & OPENSSL_INIT_BASE_ONLY))
             CRYPTOerr(CRYPTO_F_OPENSSL_INIT_CRYPTO, ERR_R_INIT_FAIL);
-        }
         return 0;
     }
 
-    if (!base_inited && !RUN_ONCE(&base, ossl_init_base))
+    if (!RUN_ONCE(&base, ossl_init_base))
+        return 0;
+
+    if (!(opts & OPENSSL_INIT_BASE_ONLY)
+            && !RUN_ONCE(&load_crypto_nodelete,
+                         ossl_init_load_crypto_nodelete))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
