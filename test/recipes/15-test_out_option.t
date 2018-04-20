@@ -16,46 +16,49 @@ use OpenSSL::Test::Utils;
 
 setup("test_out_option");
 
-plan skip_all => "'-out' option tests are not available on Windows"
-    if $^O eq 'MSWin32';
-
-plan tests => 11;
-
-# The following patterns should be tested:
-#
-# path        dirname
-# /usr/       /
-# /           /
-# .           .
-# ..          .
-
-test_illegal_path('/usr/');
-test_illegal_path('/');
-test_illegal_path('./');
-test_illegal_path('../');
+# Paths that should generate failure when trying to write to them.
+# Directories are a safe bet for failure on all platforms.
+# Note that directories must end with a slash here, because of how
+# File::Spec massages them into directory specs on some platforms.
+my @failure_paths = (
+    './',
+   );
+my @success_paths = (
+    'randomname.bin'
+   );
 
 # Test for trying to create a file in a non-exist directory
-my @chars = ("A".."Z", "a".."z", "0".."9");
 my $rand_path = "";
-$rand_path .= $chars[rand @chars] for 1..32;
-$rand_path .= "/test.pem";
+do {
+    my @chars = ("A".."Z", "a".."z", "0".."9");
+    $rand_path .= $chars[rand @chars] for 1..32;
+} while (-d File::Spec->catdir('.', $rand_path));
+$rand_path .= "/randomname.bin";
 
-test_illegal_path($rand_path);
-test_legal_path('test.pem');
-unlink 'test.pem';
+push @failure_paths, $rand_path;
 
-sub test_illegal_path {
-    my $path = File::Spec->canonpath($_[0]);
-
-    my $start = time();
-    ok(!run(app([ 'openssl', 'genrsa', '-out', $path, '16384'])), "invalid output path: $path");
-    my $end = time();
-    # The above process should exit in 2 seconds if the path is not valid
-    ok($end - $start < 2, "check time consumed");
+# All explicit cross compilations run a risk of failing this, because the
+# null device provided by perl might not match what the cross compiled
+# application expects to see as a null device.  Therefore, we skip the check
+# of outputing to the null device if the cross compile prefix is set.
+if ((config('CROSS_COMPILE') // '') eq '') {
+    # Check that we can write to the NULL device
+    push @success_paths, File::Spec->devnull();
 }
 
-sub test_legal_path {
-    my $path = File::Spec->canonpath($_[0]);
+plan tests => scalar @failure_paths + scalar @success_paths;
 
-    ok(run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])), "valid output path: $path");
+foreach (@failure_paths) {
+    my $path = File::Spec->canonpath($_);
+    ok(!run(app([ 'openssl', 'rand', '-out', $path, '1'])),
+       "invalid output path: $path");
+}
+foreach (@success_paths) {
+    my $path = File::Spec->canonpath($_);
+    ok(run(app([ 'openssl', 'rand', '-out', $path, '1'])),
+       "valid output path: $path");
+}
+
+END {
+    unlink 'randomname.bin' if -f 'randomname.bin';
 }
