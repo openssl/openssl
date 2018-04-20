@@ -372,6 +372,15 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                                  * precomputation is not available */
     int ret = 0;
 
+    if (group->meth != r->meth) {
+        ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
+
+    if ((scalar == NULL) && (num == 0)) {
+        return EC_POINT_set_to_infinity(group, r);
+    }
+
     /*-
      * Handle the common cases where the scalar is secret, enforcing a constant
      * time scalar multiplication algorithm.
@@ -396,15 +405,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
          * we always call the constant time version.
          */
         return ec_mul_consttime(group, r, scalars[0], points[0], ctx);
-    }
-
-    if (group->meth != r->meth) {
-        ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-        return 0;
-    }
-
-    if ((scalar == NULL) && (num == 0)) {
-        return EC_POINT_set_to_infinity(group, r);
     }
 
     for (i = 0; i < num; i++) {
