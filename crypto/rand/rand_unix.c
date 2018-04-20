@@ -204,10 +204,9 @@ static size_t sysctl_random(char *buf, size_t buflen)
      * Old implementations returned longs, newer versions support variable
      * sizes up to 256 byte. The code below would not work properly when
      * the sysctl returns long and we want to request something not a multiple
-     * of longs.
+     * of longs, which should never be the case.
      */
-    if (buflen % sizeof(long) != 0)
-        return 0;
+    ossl_assert(buflen % sizeof(long) == 0);
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARND;
