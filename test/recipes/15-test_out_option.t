@@ -61,7 +61,7 @@ push @success_paths, $tempfile;
 # we don't have write permission to.
 push @failure_paths, File::Spec->catfile($tempdir, "unwritable.pem");
 
-plan tests => 2 * scalar @failure_paths + scalar @success_paths;
+plan tests => (2 * scalar @failure_paths) + scalar @success_paths;
 
 test_illegal_path($_) foreach @failure_paths;
 test_legal_path($_) foreach @success_paths;
