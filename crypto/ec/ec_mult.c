@@ -107,7 +107,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
     BN_set_flags((P)->Z, (flags)); \
 } while(0)
 
-/*
+/*-
  * This functions computes (in constant time) a point multiplication over the
  * EC group.
  *
@@ -128,8 +128,9 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  *
  * Returns 1 on success, 0 otherwise.
  */
-static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-                            const EC_POINT *point, BN_CTX *ctx)
+static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
+                            const BIGNUM *scalar, const EC_POINT *point,
+                            BN_CTX *ctx)
 {
     int i, order_bits, group_top, kbit, pbit, Z_is_one;
     EC_POINT *s = NULL;
@@ -185,11 +186,11 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r, const BIGNUM *sc
     BN_set_flags(k, BN_FLG_CONSTTIME);
 
     if ((BN_num_bits(k) > order_bits) || (BN_is_negative(k))) {
-        /*
+        /*-
          * this is an unusual input, and we don't guarantee
          * constant-timeness
          */
-        if(!BN_nnmod(k, k, group->order, ctx))
+        if (!BN_nnmod(k, k, group->order, ctx))
             goto err;
     }
 
@@ -234,7 +235,7 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r, const BIGNUM *sc
         (b)->Z_is_one ^= (t);                      \
 } while(0)
 
-    /*
+    /*-
      * The ladder step, with branches, is
      *
      * k[i] == 0: S = add(R, S), R = dbl(R)
@@ -283,11 +284,11 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r, const BIGNUM *sc
      * So instead of two contiguous swaps, you can merge the condition
      * bits and do a single swap.
      *
-     * k[i]    k[i-1]    Outcome
-     * 0       0         No Swap
-     * 0       1         Swap
-     * 1       0         Swap
-     * 1       1         No Swap
+     * k[i]   k[i-1]    Outcome
+     * 0      0         No Swap
+     * 0      1         Swap
+     * 1      0         Swap
+     * 1      1         No Swap
      *
      * This is XOR. pbit tracks the previous bit of k.
      */
@@ -311,13 +312,14 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r, const BIGNUM *sc
 
     ret = 1;
 
-err:
+ err:
     EC_POINT_free(s);
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
 
     return ret;
 }
+
 #undef EC_POINT_BN_set_flags
 
 /*
@@ -370,30 +372,31 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                                  * precomputation is not available */
     int ret = 0;
 
-    /* Handle the common cases where the scalar is secret, enforcing a
-     * constant time scalar multiplication algorithm.
+    /*-
+     * Handle the common cases where the scalar is secret, enforcing a constant
+     * time scalar multiplication algorithm.
      */
     if ((scalar != NULL) && (num == 0)) {
-        /* In this case we want to compute scalar * GeneratorPoint:
-         * this codepath is reached most prominently by (ephemeral) key
-         * generation of EC cryptosystems (i.e. ECDSA keygen and sign setup,
-         * ECDH keygen/first half), where the scalar is always secret.
-         * This is why we ignore if BN_FLG_CONSTTIME is actually set and we
-         * always call the constant time version.
+        /*-
+         * In this case we want to compute scalar * GeneratorPoint: this
+         * codepath is reached most prominently by (ephemeral) key generation
+         * of EC cryptosystems (i.e. ECDSA keygen and sign setup, ECDH
+         * keygen/first half), where the scalar is always secret. This is why
+         * we ignore if BN_FLG_CONSTTIME is actually set and we always call the
+         * constant time version.
          */
         return ec_mul_consttime(group, r, scalar, NULL, ctx);
     }
     if ((scalar == NULL) && (num == 1)) {
-        /* In this case we want to compute scalar * GenericPoint:
-         * this codepath is reached most prominently by the second half of
-         * ECDH, where the secret scalar is multiplied by the peer's public
-         * point.
-         * To protect the secret scalar, we ignore if BN_FLG_CONSTTIME is
-         * actually set and we always call the constant time version.
+        /*-
+         * In this case we want to compute scalar * GenericPoint: this codepath
+         * is reached most prominently by the second half of ECDH, where the
+         * secret scalar is multiplied by the peer's public point. To protect
+         * the secret scalar, we ignore if BN_FLG_CONSTTIME is actually set and
+         * we always call the constant time version.
          */
         return ec_mul_consttime(group, r, scalars[0], points[0], ctx);
     }
-
 
     if (group->meth != r->meth) {
         ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
