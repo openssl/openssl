@@ -20,14 +20,9 @@ protocol information of a connection
 =head1 DESCRIPTION
 
 SSL_client_version() returns the protocol version used by the client when
-initiating the connection.
-
-SSL_get_version() returns the name of the protocol used for the
-connection.
-
-SSL_version() returns the protocol version used for the connection.
-
-The above functions should only be called after the intial handshake has been
+initiating the connection. SSL_get_version() returns the name of the protocol
+used for the connection. SSL_version() returns the protocol version used for the
+connection. They should only be called after the intial handshake has been
 completed. Prior to that the results returned from these functions may be
 unreliable.
 
