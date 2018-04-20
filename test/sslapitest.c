@@ -4269,6 +4269,12 @@ static void sslapi_info_callback(const SSL *s, int where, int ret)
         info_cb_failed = 1;
         return;
     }
+
+    /* Check that, if we've got SSL_CB_HANDSHAKE_DONE we are not in init */
+    if ((where & SSL_CB_HANDSHAKE_DONE) && SSL_in_init((SSL *)s) != 0) {
+        info_cb_failed = 1;
+        return;
+    }
 }
 
 /*

@@ -1090,13 +1090,18 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
     else if (s->ctx->info_callback != NULL)
         cb = s->ctx->info_callback;
 
+    /* The callback may expect us to not be in init at handshake done */
+    ossl_statem_set_in_init(s, 0);
+
     if (cb != NULL)
         cb(s, SSL_CB_HANDSHAKE_DONE, 1);
 
-    if (!stop)
+    if (!stop) {
+        /* If we've got more work to do we go back into init */
+        ossl_statem_set_in_init(s, 1);
         return WORK_FINISHED_CONTINUE;
+    }
 
-    ossl_statem_set_in_init(s, 0);
     return WORK_FINISHED_STOP;
 }
 
