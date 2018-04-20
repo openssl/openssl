@@ -16,33 +16,64 @@ use OpenSSL::Test::Utils;
 
 setup("test_out_option");
 
-plan skip_all => "'-out' option tests are not available on Windows"
-    if $^O eq 'MSWin32';
+# Paths that should generate failure when trying to write to them.
+# Directories are a safe bet for failure on all platforms.
+# Note that directories must end with a slash here, because of how
+# File::Spec massages them into directory specs on some platforms.
+my @failure_paths = (
+    '/',
+    './',
+    '../'
+   );
+my @success_paths = (
+    'test.pem'
+   );
 
-plan tests => 11;
-
-# The following patterns should be tested:
-#
-# path        dirname
-# /usr/       /
-# /           /
-# .           .
-# ..          .
-
-test_illegal_path('/usr/');
-test_illegal_path('/');
-test_illegal_path('./');
-test_illegal_path('../');
+# /usr/ can only be expected on Unix lookalikes...  On Windows and VMS,
+# this might be a writable file, so let's not bother those platforms
+# with it.
+push @failure_paths, '/usr/'
+    unless $^O eq 'MSWin32' ||  $^O eq 'VMS';
 
 # Test for trying to create a file in a non-exist directory
-my @chars = ("A".."Z", "a".."z", "0".."9");
 my $rand_path = "";
-$rand_path .= $chars[rand @chars] for 1..32;
+do {
+    my @chars = ("A".."Z", "a".."z", "0".."9");
+    $rand_path .= $chars[rand @chars] for 1..32;
+} while (-d File::Spec->catdir('.', $rand_path));
 $rand_path .= "/test.pem";
 
-test_illegal_path($rand_path);
-test_legal_path('test.pem');
-unlink 'test.pem';
+push @failure_paths, $rand_path;
+
+# Check that we can write to the NULL device
+push @success_paths, File::Spec->devnull();
+
+# Check that we can write to a file that we have write permission to
+# in a directory that we don't have write permission to.
+my $tempdir = File::Spec->catdir('.', "test_out_option-nowrite-$$");
+mkdir $tempdir or die "Trying to create $tempdir: $!\n";
+my $tempfile = File::Spec->catfile($tempdir, "writable.pem");
+open my $fh, ">", $tempfile or die "Trying to create $tempfile: $!\n";
+chmod 0555, $tempdir;
+push @success_paths, $tempfile;
+
+# Check that non-existent files cannot be created in a directory that
+# we don't have write permission to.
+push @failure_paths, File::Spec->catfile($tempdir, "unwritable.pem");
+
+plan tests => 2 * scalar @failure_paths + scalar @success_paths;
+
+test_illegal_path($_) foreach @failure_paths;
+test_legal_path($_) foreach @success_paths;
+
+END {
+    if (-d $tempdir) {
+        chmod 0755, $tempdir;
+        unlink $tempfile if -f $tempfile;
+        rmdir $tempdir;
+    }
+    unlink 'test.pem' if -f 'test.pem';
+}
 
 sub test_illegal_path {
     my $path = File::Spec->canonpath($_[0]);
