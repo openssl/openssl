@@ -676,13 +676,13 @@ int opt_next(void)
             /* Just a string. */
             break;
         case '/':
-            if (app_isdir(arg) >= 0)
+            if (app_isdir(arg) > 0)
                 break;
             BIO_printf(bio_err, "%s: Not a directory: %s\n", prog, arg);
             return -1;
         case '<':
             /* Input file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, R_OK) >= 0)
+            if (strcmp(arg, "-") == 0 || app_access(arg, R_OK) == 0)
                 break;
             BIO_printf(bio_err,
                        "%s: Cannot open input file %s, %s\n",
@@ -690,7 +690,7 @@ int opt_next(void)
             return -1;
         case '>':
             /* Output file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) >= 0 || errno == ENOENT)
+            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) == 0 || errno == ENOENT)
                 break;
             BIO_printf(bio_err,
                        "%s: Cannot open output file %s, %s\n",
