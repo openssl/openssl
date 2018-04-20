@@ -20,7 +20,8 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
-    OPENSSL_init_crypto(0, NULL);
+    if (!OPENSSL_init_crypto(0, NULL))
+        return 0;
     global_engine_lock = CRYPTO_THREAD_lock_new();
     return global_engine_lock != NULL;
 }
