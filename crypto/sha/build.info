@@ -57,6 +57,8 @@ GENERATE[sha256-armv4.S]=asm/sha256-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[sha256-armv4.o]=..
 GENERATE[sha512-armv4.S]=asm/sha512-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[sha512-armv4.o]=..
+GENERATE[keccak1600-armv4.S]=asm/keccak1600-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[keccak1600-armv4.o]=..
 
 GENERATE[sha1-armv8.S]=asm/sha1-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[sha1-armv8.o]=..
