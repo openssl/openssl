@@ -45,21 +45,32 @@ $rand_path .= "/test.pem";
 
 push @failure_paths, $rand_path;
 
-# Check that we can write to the NULL device
-push @success_paths, File::Spec->devnull();
+# Specifically for mingw, the NULL device might not be what's expected.
+# For example, if cross compiled and tested on the build host, perl will
+# generate an incorrect NULL device name.
+# We might expand the exceptions...
+unless (config('target') =~ m|^mingw| && $^O ne 'msys') {
+    # Check that we can write to the NULL device
+    push @success_paths, File::Spec->devnull();
+}
 
-# Check that we can write to a file that we have write permission to
-# in a directory that we don't have write permission to.
-my $tempdir = File::Spec->catdir('.', "test_out_option-nowrite-$$");
-mkdir $tempdir or die "Trying to create $tempdir: $!\n";
-my $tempfile = File::Spec->catfile($tempdir, "writable.pem");
-open my $fh, ">", $tempfile or die "Trying to create $tempfile: $!\n";
-chmod 0555, $tempdir;
-push @success_paths, $tempfile;
+# chmod doesn't seem to work as expected in Windows Command prompt,
+# so these test are meaningless in that environment (for example,
+# "unwritable.pem" turns out to be writable...
+unless ($^O eq 'MSWin32') {
+    # Check that we can write to a file that we have write permission to
+    # in a directory that we don't have write permission to.
+    my $tempdir = File::Spec->catdir('.', "test_out_option-nowrite-$$");
+    mkdir $tempdir or die "Trying to create $tempdir: $!\n";
+    my $tempfile = File::Spec->catfile($tempdir, "writable.pem");
+    open my $fh, ">", $tempfile or die "Trying to create $tempfile: $!\n";
+    chmod 0555, $tempdir;
+    push @success_paths, $tempfile;
 
-# Check that non-existent files cannot be created in a directory that
-# we don't have write permission to.
-push @failure_paths, File::Spec->catfile($tempdir, "unwritable.pem");
+    # Check that non-existent files cannot be created in a directory that
+    # we don't have write permission to.
+    push @failure_paths, File::Spec->catfile($tempdir, "unwritable.pem");
+}
 
 plan tests => (2 * scalar @failure_paths) + scalar @success_paths;
 
