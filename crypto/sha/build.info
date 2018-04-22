@@ -38,6 +38,7 @@ GENERATE[sha256-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha512-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha256p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha512p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-ppc64.s]=asm/keccak1600-ppc64.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl $(PERLASM_SCHEME)
 GENERATE[sha256-parisc.s]=asm/sha512-parisc.pl $(PERLASM_SCHEME)
