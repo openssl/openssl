@@ -1633,7 +1633,7 @@ ___
 $code.=<<___;
 .Ladd_done:
 	add	sp,sp,#32*18+16+16	@ +16 means "skip even over saved r0-r3"
-#if __ARM_ARCH__>=5 || defined(__thumb__)
+#if __ARM_ARCH__>=5 || !defined(__thumb__)
 	ldmia	sp!,{r4-r12,pc}
 #else
 	ldmia	sp!,{r4-r12,lr}
