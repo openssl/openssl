@@ -70,6 +70,21 @@
 #	Cortex-Mx, x>=3. Otherwise, non-NEON results for NEON-capable
 #	processors are presented mostly for reference purposes.
 
+$flavour = shift;
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
+
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
+
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
+
 my @C = map("r$_",(0..9));
 my @E = map("r$_",(10..12,14));
 
@@ -96,6 +111,8 @@ my @D = map(8*$_, (25..29));
 my @T = map([ 8*$_, 8*($_+1), 8*($_+2), 8*($_+3), 8*($_+4) ], (30,35,40,45,50));
 
 $code.=<<___;
+#include "arm_arch.h"
+
 .text
 
 #if defined(__thumb2__)
@@ -1044,6 +1061,7 @@ ___
 }
 
 $code.=<<___;
+#if __ARM_MAX_ARCH__>=7
 .fpu	neon
 
 .type	iotas64, %object
@@ -1545,6 +1563,7 @@ SHA3_squeeze_neon:
 .Lsqueeze_neon_done:
 	ldmia	sp!, {r4-r6,pc}
 .size	SHA3_squeeze_neon,.-SHA3_squeeze_neon
+#endif
 .asciz	"Keccak-1600 absorb and squeeze for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
 ___
@@ -1573,13 +1592,11 @@ ___
     }
 }
 
-$output=pop;
-open STDOUT,">$output";
-
 foreach (split($/,$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 
 	s/^\s+(ldr|str)\.([lh])\s+(r[0-9]+),\s*(\[.*)/ldrd($1,$2,$3,$4)/ge or
+	s/\b(ror|ls[rl])\s+(r[0-9]+.*)#/mov	$2$1#/g or
 	s/\bret\b/bx	lr/g		or
 	s/\bbx\s+lr\b/.word\t0xe12fff1e/g;	# make it possible to compile with -march=armv4
 
