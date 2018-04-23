@@ -1,7 +1,7 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         sha1dgst.c sha1_one.c sha256.c sha512.c {- $target{sha1_asm_src} -} \
-        keccak1600.c
+        {- $target{keccak1600_asm_src} -}
 
 GENERATE[sha1-586.s]=asm/sha1-586.pl \
         $(PERLASM_SCHEME) $(LIB_CFLAGS) $(LIB_CPPFLAGS) $(PROCESSOR)
@@ -24,6 +24,7 @@ GENERATE[sha1-mb-x86_64.s]=asm/sha1-mb-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[sha256-x86_64.s]=asm/sha512-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[sha256-mb-x86_64.s]=asm/sha256-mb-x86_64.pl $(PERLASM_SCHEME)
 GENERATE[sha512-x86_64.s]=asm/sha512-x86_64.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-x86_64.s]=asm/keccak1600-x86_64.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-sparcv9.S]=asm/sha1-sparcv9.pl $(PERLASM_SCHEME)
 INCLUDE[sha1-sparcv9.o]=..
@@ -37,6 +38,7 @@ GENERATE[sha256-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha512-ppc.s]=asm/sha512-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha256p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
 GENERATE[sha512p8-ppc.s]=asm/sha512p8-ppc.pl $(PERLASM_SCHEME)
+GENERATE[keccak1600-ppc64.s]=asm/keccak1600-ppc64.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl $(PERLASM_SCHEME)
 GENERATE[sha256-parisc.s]=asm/sha512-parisc.pl $(PERLASM_SCHEME)
@@ -55,6 +57,8 @@ GENERATE[sha256-armv4.S]=asm/sha256-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[sha256-armv4.o]=..
 GENERATE[sha512-armv4.S]=asm/sha512-armv4.pl $(PERLASM_SCHEME)
 INCLUDE[sha512-armv4.o]=..
+GENERATE[keccak1600-armv4.S]=asm/keccak1600-armv4.pl $(PERLASM_SCHEME)
+INCLUDE[keccak1600-armv4.o]=..
 
 GENERATE[sha1-armv8.S]=asm/sha1-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[sha1-armv8.o]=..
@@ -62,6 +66,7 @@ GENERATE[sha256-armv8.S]=asm/sha512-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[sha256-armv8.o]=..
 GENERATE[sha512-armv8.S]=asm/sha512-armv8.pl $(PERLASM_SCHEME)
 INCLUDE[sha512-armv8.o]=..
+GENERATE[keccak1600-armv8.S]=asm/keccak1600-armv8.pl $(PERLASM_SCHEME)
 
 GENERATE[sha1-s390x.S]=asm/sha1-s390x.pl $(PERLASM_SCHEME)
 INCLUDE[sha1-s390x.o]=..
@@ -69,6 +74,7 @@ GENERATE[sha256-s390x.S]=asm/sha512-s390x.pl $(PERLASM_SCHEME)
 INCLUDE[sha256-s390x.o]=..
 GENERATE[sha512-s390x.S]=asm/sha512-s390x.pl $(PERLASM_SCHEME)
 INCLUDE[sha512-s390x.o]=..
+GENERATE[keccak1600-s390x.S]=asm/keccak1600-s390x.pl $(PERLASM_SCHEME)
 
 BEGINRAW[Makefile(unix)]
 ##### SHA assembler implementations

@@ -1359,6 +1359,9 @@ unless ($disabled{asm}) {
 	push @{$config{lib_defines}}, "SHA256_ASM" if ($target{sha1_asm_src} =~ /sha256/);
 	push @{$config{lib_defines}}, "SHA512_ASM" if ($target{sha1_asm_src} =~ /sha512/);
     }
+    if ($target{keccak1600_asm_src} ne $table{DEFAULTS}->{keccak1600_asm_src}) {
+	push @{$config{lib_defines}}, "KECCAK1600_ASM";
+    }
     if ($target{rc4_asm_src} ne $table{DEFAULTS}->{rc4_asm_src}) {
 	push @{$config{lib_defines}}, "RC4_ASM";
     }
