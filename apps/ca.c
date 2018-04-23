@@ -722,8 +722,13 @@ end_of_options:
 
     /*****************************************************************/
     if (req || gencrl) {
+        if (spkac_file != NULL) {
+            output_der = 1;
+            batch = 1;
+        }
         /* FIXME: Is it really always text? */
-        Sout = bio_open_default(outfile, 'w', FORMAT_TEXT);
+        Sout = bio_open_default(outfile, 'w',
+                                output_der ? FORMAT_ASN1 : FORMAT_TEXT);
         if (Sout == NULL)
             goto end;
     }
@@ -876,10 +881,6 @@ end_of_options:
                 if (!sk_X509_push(cert_sk, x)) {
                     BIO_printf(bio_err, "Memory allocation failure\n");
                     goto end;
-                }
-                if (outfile) {
-                    output_der = 1;
-                    batch = 1;
                 }
             }
         }
