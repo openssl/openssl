@@ -439,34 +439,6 @@ int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key);
 CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
-/* OQS integration */
-/* NID for OQS algs. Pick values starting from NUM_NID. We need to do
-   this in crypto (vs ssl) layer because we need these values in evp
-   keys (in p_lib.c). */
-/* FIXMEOQS: should I import obj_dat.h to use NUM_NID? */
-#define NID_OQS_Frodo    1170
-#define NID_OQS_SIKE_503 1171
-#define NID_OQS_SIKE_751 1172
-#define NID_OQS_Newhope  1173
-#define NID_OQS_NTRU     1174
-#define NID_OQS_p256_Frodo    1175
-#define NID_OQS_p256_SIKE_503 1176
-#define NID_OQS_p256_SIKE_751 1177
-#define NID_OQS_p256_Newhope  1178
-#define NID_OQS_p256_NTRU     1179
-
-/* Returns true if the nid is for an OQS KEX */
-#define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
-			     nid == NID_OQS_SIKE_503 ||	\
-			     nid == NID_OQS_SIKE_751 ||	\
-			     nid == NID_OQS_Newhope  ||	\
-			     nid == NID_OQS_NTRU)
-#define OQS_ALG_NAME_STR(nid) (nid == NID_OQS_Frodo    ? "Frodo recommended" : \
-			      (nid == NID_OQS_SIKE_503 ? "SIKE 503" :          \
-			      (nid == NID_OQS_SIKE_751 ? "SIKE 751" :	       \
-			      (nid == NID_OQS_Newhope  ? "Newhope" :	\
-			      (nid == NID_OQS_NTRU     ? "NTRU" : "")))))
-
 # ifdef  __cplusplus
 }
 # endif

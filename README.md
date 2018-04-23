@@ -7,7 +7,7 @@ This repository contains a fork of OpenSSL that adds quantum-safe cryptographic 
 
 OQS REVIEW NOTES:
  * This is an experimental integration of OQS into TLS 1.3.
- * Currently, only PQS KEX in TLS 1.3 is supported. Next in line: hybrid KEX, auth, hybrid auth. And also supporting TLS 1.2.
+ * Currently, only PQC and hybrid (classical+PQC) KEX in TLS 1.3 are supported. Next in line: auth, hybrid auth, and TLS 1.2.
  * One goal is to minimize the OQS footprint into the OpenSSL code, to improve readability. Therefore, some redundant code is implemented using macros to avoid creating functions and registrating them in OpenSSL.
  * The TLS 1.3 integration is done at the TLS layer (start looking in ssl/statem/extensions_(clnt,srvr).c). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the KEM asymetric API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked.
  * If you have an oqs-related build error, try building it manually, and re-run openssl's make:
@@ -42,7 +42,6 @@ Currently, only Frodo, Sike503, Sike751, Newhope, and NTRU are supported. Others
 ### Authentication mechanisms
 
 TODO: add them
-
 
 Building
 --------
@@ -92,9 +91,9 @@ To run a basic TLS server with all OQS ciphersuites enabled:
 
 	apps/openssl s_server -cert rsa.crt -key rsa.key -HTTP -tls1_3
 
-In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<OQSALG> = newhope, frodo, sike503, sike751, ntru), for example:
+In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<OQSALG> = newhope, frodo, sike503, sike751, ntru) or the hybrid ciphersuites ("p256-<OQSALG>", only the NIST p256 curve is supported for now), for example:
 
-        apps/openssl s_client -curves <OQSALG> -connect localhost:4433
+        apps/openssl s_client -curves p256-frodo -connect localhost:4433
 
 License
 -------

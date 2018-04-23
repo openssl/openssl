@@ -178,11 +178,11 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_OQS_Newhope, 229 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Newhope (34) */
     {NID_OQS_NTRU, 256 /* classical */, TLS_CURVE_CUSTOM}, /* OQS NTRU (35) */
     /* Hybrid curves */
-    {NID_OQS_p256_Frodo, 128 /* classical, min(p256,frodo) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Frodo hybrid (131) */
-    {NID_OQS_p256_SIKE_503, 126 /* classical, min(p256,sike503) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 503 hybrid (132) */
-    {NID_OQS_p256_SIKE_751, 128 /* classical, min(p256,sike751) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 751 hybrid (133) */
-    {NID_OQS_p256_Newhope, 128 /* classical, min(p256,newhope) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Newhope hybrid (134) */
-    {NID_OQS_p256_NTRU, 128 /* classical, min(p256,ntru) */, TLS_CURVE_CUSTOM}, /* p256 + OQS NTRU hybrid (135) */
+    {NID_OQS_p256_Frodo, 128 /* classical, min(p256,frodo) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Frodo hybrid (36) */
+    {NID_OQS_p256_SIKE_503, 126 /* classical, min(p256,sike503) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 503 hybrid (37) */
+    {NID_OQS_p256_SIKE_751, 128 /* classical, min(p256,sike751) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 751 hybrid (38) */
+    {NID_OQS_p256_Newhope, 128 /* classical, min(p256,newhope) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Newhope hybrid (39) */
+    {NID_OQS_p256_NTRU, 128 /* classical, min(p256,ntru) */, TLS_CURVE_CUSTOM}, /* p256 + OQS NTRU hybrid (40) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -205,11 +205,11 @@ static const uint16_t eccurves_default[] = {
     33,                      /* OQS Sike751 (33) */
     34,                      /* OQS Newhope (34) */
     35,                      /* OQS NTRU (35) */
-    131,                      /* p256 + OQS Frodo hybrid (131) */
-    132,                      /* p256 + OQS Sike503 hybrid (132) */
-    133,                      /* p256 + OQS Sike751 hybrid (133) */
-    134,                      /* p256 + OQS Newhope hybrid (134) */
-    135,                      /* p256 + OQS NTRU hybrid (135) */
+    36,                      /* p256 + OQS Frodo hybrid (36) */
+    37,                      /* p256 + OQS Sike503 hybrid (37) */
+    38,                      /* p256 + OQS Sike751 hybrid (38) */
+    39,                      /* p256 + OQS Newhope hybrid (39) */
+    40,                      /* p256 + OQS NTRU hybrid (40) */
 };
 
 static const uint16_t suiteb_curves[] = {
@@ -421,10 +421,7 @@ static int nid_cb(const char *elem, int len, void *arg)
         nid = OBJ_sn2nid(etmp);
     if (nid == NID_undef)
         nid = OBJ_ln2nid(etmp);
-    /* OQS algs.
-       FIXMEOQS: we could move these to its own function, but I prefer
-       minimizing the OQS footprint for now.
-    */
+    /* OQS note: parse oqs algs */
     if (nid == NID_undef) {
       nid = OQS_nid_from_string(etmp);
     }

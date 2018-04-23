@@ -404,24 +404,51 @@
 #define CERT_PRIVATE_KEY        2
 */
 
+/* OQS integration */
+/* NID for OQS algs. Pick values starting from NUM_NID */
+/* FIXMEOQS: should I import obj_dat.h to use NUM_NID? */
+#define NID_OQS_Frodo    1170
+#define NID_OQS_SIKE_503 1171
+#define NID_OQS_SIKE_751 1172
+#define NID_OQS_Newhope  1173
+#define NID_OQS_NTRU     1174
+#define NID_OQS_p256_Frodo    1175
+#define NID_OQS_p256_SIKE_503 1176
+#define NID_OQS_p256_SIKE_751 1177
+#define NID_OQS_p256_Newhope  1178
+#define NID_OQS_p256_NTRU     1179
+
+/* Returns true if the nid is for an OQS KEX */
+#define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
+			     nid == NID_OQS_SIKE_503 ||	\
+			     nid == NID_OQS_SIKE_751 ||	\
+			     nid == NID_OQS_Newhope  ||	\
+			     nid == NID_OQS_NTRU)
 /* Returns the curve ID for an OQS KEX NID */
-/* FIXMEOQS: we could call tls1_nid2group_id instead, but it's static */
+/* OQS note: we could call tls1_nid2group_id instead, but it's static to t1_lib
+   and we need this functionality outside that file */
 #define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo    ? 31 : \
                               (nid == NID_OQS_SIKE_503 ? 32 : \
 			      (nid == NID_OQS_SIKE_751 ? 33 : \
 			      (nid == NID_OQS_Newhope  ? 34 : \
 			      (nid == NID_OQS_NTRU     ? 35 : 0)))))
-#define OQS_KEX_NID(curveID)  (curveID == 31 ? NID_OQS_Frodo :	  \
-			      (curveID == 32 ? NID_OQS_SIKE_503 : \
-			      (curveID == 33 ? NID_OQS_SIKE_751 : \
-			      (curveID == 34 ? NID_OQS_Newhope :  \
-			      (curveID == 35 ? NID_OQS_NTRU : 0)))))
+#define OQS_KEX_NID(curveID)  ((curveID == 31 || curveID == 36) ? NID_OQS_Frodo : \
+			      ((curveID == 32 || curveID == 37) ? NID_OQS_SIKE_503 : \
+			      ((curveID == 33 || curveID == 38) ? NID_OQS_SIKE_751 :	\
+			      ((curveID == 34 || curveID == 39) ? NID_OQS_Newhope :	\
+			      ((curveID == 35 || curveID == 40) ? NID_OQS_NTRU : 0)))))
 /* Returns true if the curve ID is for an OQS KEX */
 #define IS_OQS_KEX_CURVEID(id)	(id == 31 || \
 				 id == 32 || \
 				 id == 33 || \
 				 id == 34 || \
 				 id == 35)
+/* Returns true if the curve ID is for an OQS KEX */
+#define IS_OQS_KEX_HYBRID_CURVEID(id)	(id == 36 || \
+					 id == 37 || \
+					 id == 38 || \
+					 id == 39 || \
+					 id == 40)
 /* Returns the OQS alg ID for OQS API */
 #define OQS_ALG_NAME(nid)   (nid == NID_OQS_Frodo ? OQS_KEX_alg_lwe_frodo : \
 			    (nid == NID_OQS_SIKE_503 ? OQS_KEX_alg_sike_msr_503 : \
@@ -434,6 +461,8 @@
 #define OQS_NEED_SEED(nid) (nid == NID_OQS_Frodo ? 1 : 0)
 /* Returns the size of the seed */
 #define OQS_SEED_LEN(nid) (nid == NID_OQS_Frodo ? 16 : 0)
+/* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */
+#define OQS_KEX_CLASSICAL_CURVEID(curveID) (IS_OQS_KEX_HYBRID_CURVEID(curveID) ? 23 : 0)
 
 /* Post-Handshake Authentication state */
 typedef enum {
@@ -1619,10 +1648,10 @@ typedef struct ssl3_state_st {
         /*
 	 * OQS artefacts.
 	 */
-        int oqs_kex_nid; /* nid of the kex */
+        int oqs_kex_curve_id; /* curve_id of the kex */
         OQS_RAND* oqs_rand; /* random generator */
         OQS_KEX* oqs_kex; /* KEX context */
-        int peer_msg_len; /* save peer message's len */
+        int oqs_peer_msg_len; /* save peer message's len */
         void* oqs_kex_client; /* oqs client private key (in extensions_clnt.c) or message (in extensions_srvr.c) */
     } tmp;
 

@@ -7,11 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* OQS note:
+   This file has been modified to enable PQC and hybrid (classical+PQC) KEX.
+   The key shares include: the DH messages in the classical case, the KEM
+   messages in the PQC case, and a concatenation of both in the hybrid case
+   (see ext_oqs_extra.h for encoding details).
+*/
+
 #include <openssl/ocsp.h>
 #include "../ssl_locl.h"
 #include "statem_locl.h"
 #include "internal/cryptlib.h"
 #include <oqs/oqs.h>
+#include "ext_oqs_extra.h"
 
 #define COOKIE_STATE_FORMAT_VERSION     0
 
@@ -608,6 +616,11 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     const uint16_t *clntgroups, *srvrgroups;
     size_t clnt_num_groups, srvr_num_groups;
     int found = 0;
+    int do_pqc = 0; /* 1 if post-quantum alg, 0 otherwise */
+    int do_hybrid = 0; /* 1 if post-quantum hybrid alg, 0 otherwise */
+    unsigned char *classical_encoded_pt = NULL, *oqs_encoded_pt = NULL;
+    uint32_t classical_encodedlen, oqs_encodedlen;
+    int has_error = 0;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
@@ -692,45 +705,77 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
-	if (IS_OQS_KEX_CURVEID(group_id)) {
-	  /* This is a group handled by OQS */
-	  /* client's message = PACKET_data(&encoded_pt)
-	   *              len = PACKET_remaining(&encoded_pt)
-	   */
-	  const unsigned char* peer_msg = PACKET_data(&encoded_pt);
-	  s->s3->tmp.peer_msg_len = PACKET_remaining(&encoded_pt);
-	  unsigned char* peer_key = OPENSSL_malloc(s->s3->tmp.peer_msg_len);
-	  memcpy(peer_key, peer_msg, s->s3->tmp.peer_msg_len); /* FIXMEOQS: when should I free that? */
+	/* check if we are dealing with pqc or hybrid */
+	do_pqc = IS_OQS_KEX_CURVEID(group_id);
+	do_hybrid = IS_OQS_KEX_HYBRID_CURVEID(group_id);
+
+	/* parse the encoded_pt, which is either a classical, PQC, or hybrid (both) message. */
+	if (do_hybrid) {
+	  if (!OQS_decode_hybrid_message(PACKET_data(&encoded_pt), &classical_encoded_pt, &classical_encodedlen, &oqs_encoded_pt, &oqs_encodedlen)) {
+	    has_error = 1;
+	    goto oqs_cleanup;
+	  }
+	} else if (do_pqc) {
+	  oqs_encoded_pt = (unsigned char*) PACKET_data(&encoded_pt);
+	  oqs_encodedlen = PACKET_remaining(&encoded_pt);
+	} else {
+	  classical_encoded_pt = (unsigned char*) PACKET_data(&encoded_pt);
+	  classical_encodedlen = PACKET_remaining(&encoded_pt);
+	}
+
+	if (do_pqc || do_hybrid) {
+	  const unsigned char* peer_msg = oqs_encoded_pt;
+	  s->s3->tmp.oqs_peer_msg_len = oqs_encodedlen;
+	  unsigned char* peer_key = OPENSSL_malloc(s->s3->tmp.oqs_peer_msg_len);
+	  memcpy(peer_key, peer_msg, s->s3->tmp.oqs_peer_msg_len); /* FIXMEOQS: when should I free that? */
 	  s->s3->tmp.oqs_kex_client = peer_key;
-	  /* OQS note: we are not using peer_tmp in the oqs case, but kex fails if this
-	     value is null, so we instantiate it but we don't assign any value.
+	  /* OQS note: we are not using peer_tmp in the oqs case, but the kex fails if this
+	     value is null, so we instantiate it but we don't assign any value. It will get
+	     cleaned up later.
 	     FIXMEOQS: figure out what fails and fix it.
 	  */
-	  if ((s->s3->peer_tmp = EVP_PKEY_new()) == NULL) {
+	  if (!do_hybrid && (s->s3->peer_tmp = EVP_PKEY_new()) == NULL) {
 	    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
 		     ERR_R_INTERNAL_ERROR);
-	    return 0;
+	    has_error = 1;
+	    goto oqs_cleanup;
 	  }
 	  /* ---------- end oqs note */
-	} else {
-	  if ((s->s3->peer_tmp = ssl_generate_param_group(group_id)) == NULL) {
+	}
+	if (!do_pqc) {
+	  /* get the curve_id for the classical alg */
+	  int classical_group_id = do_hybrid ? OQS_KEX_CLASSICAL_CURVEID(group_id) : group_id;
+	  if ((s->s3->peer_tmp = ssl_generate_param_group(classical_group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
 		     SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
-            return 0;
+	    has_error = 1;
+	    goto oqs_cleanup;
 	  }
 
 	  if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
-					      PACKET_data(&encoded_pt),
-					      PACKET_remaining(&encoded_pt))) {
+					      classical_encoded_pt,
+					      classical_encodedlen)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_F_TLS_PARSE_CTOS_KEY_SHARE, SSL_R_BAD_ECPOINT);
-            return 0;
+	    has_error = 1;
+	    goto oqs_cleanup;
 	  }
 	}
         s->s3->group_id = group_id;
         found = 1;
     }
 #endif
+
+    oqs_cleanup:
+      if (do_hybrid) {
+	/* we allocated these in the hybrid case. in the non-hybrid case, these are
+	   just pointers into the packet, and openssl will clean them up */
+	OPENSSL_free(classical_encoded_pt);
+	OPENSSL_free(oqs_encoded_pt);
+      }
+      if (has_error) {
+	return 0;
+      }
 
     return 1;
 }
@@ -1630,10 +1675,11 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
                                         size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    unsigned char *encodedPoint;
-    size_t encoded_pt_len = 0;
-    EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL; /* FIXMEOQS: use s->s3->oqs_kex_client? */
-    int is_oqs = 0;
+    unsigned char *encodedPoint = NULL, *classical_encodedPoint = NULL, *oqs_encodedPoint = NULL;
+    size_t encoded_pt_len = 0, classical_encoded_pt_len = 0, oqs_encoded_pt_len = 0;
+    EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
+    int do_pqc = 0; /* 1 if post-quantum alg, 0 otherwise */
+    int do_hybrid = 0; /* 1 if post-quantum hybrid alg, 0 otherwise */
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
       if (ckey != NULL) { /* this is null in OQS, is this ok? (FIXMEOQS) */
@@ -1653,7 +1699,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_SENT;
     }
 
-    if (ckey == NULL && s->s3->tmp.oqs_kex_client == NULL) { /* FIXMEOQS: is this ok with oqs kex? FIXMEOQS*/
+    if (ckey == NULL && s->s3->tmp.oqs_kex_client == NULL) { /* FIXMEOQS: is this ok with oqs kex? */
         /* No key_share received from client - must be resuming */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -1671,16 +1717,46 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    if (IS_OQS_KEX_CURVEID(s->s3->group_id)) {
+    do_pqc = IS_OQS_KEX_CURVEID(s->s3->group_id);
+    do_hybrid = IS_OQS_KEX_HYBRID_CURVEID(s->s3->group_id);
+    if (!do_pqc || do_hybrid) {
+      skey = ssl_generate_pkey(ckey);
+      if (skey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                 ERR_R_MALLOC_FAILURE);
+        return EXT_RETURN_FAIL;
+      }
+
+      /* Generate encoding of server key */
+      classical_encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &classical_encodedPoint);
+      if (classical_encoded_pt_len == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
+                 ERR_R_EC_LIB);
+        EVP_PKEY_free(skey);
+        return EXT_RETURN_FAIL;
+      }
+
+      /* this code has been moved up from the bottom of the function, because
+	 oqs code below needs it in case of hybrid */
+      /* OQS note: only derive the secret if we don't do hybrid. In case of hybrid, the 
+	 shared key will be store in s->s3->tmp.pms */
+      if (ssl_derive(s, skey, ckey, do_hybrid ? 0 : 1) == 0) {
+        /* SSLfatal() already called */
+        return EXT_RETURN_FAIL;
+      }
+
+    }
+
+    if (do_pqc || do_hybrid) {
       /* This is a group handled by OQS */
-      is_oqs = 1;
       int oqs_nid = OQS_KEX_NID(s->s3->group_id);
       OQS_RAND* oqs_rand = NULL;
       OQS_KEX* oqs_kex = NULL;
       unsigned char* client_msg = s->s3->tmp.oqs_kex_client;
-      int client_msg_len = s->s3->tmp.peer_msg_len; /* saved when received in tls_parse_ctos_key_share */
-      unsigned char* shared_secret = NULL;
-      size_t shared_secret_len = 0;
+      int client_msg_len = s->s3->tmp.oqs_peer_msg_len; /* saved when received in tls_parse_ctos_key_share */
+      unsigned char* shared_secret = NULL, *oqs_shared_secret = NULL;
+      size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
+
       int has_error = 0;
       enum OQS_KEX_alg_name oqs_alg_name = OQS_ALG_NAME(oqs_nid);
       uint8_t oqs_seed[SHA256_DIGEST_LENGTH]; /* FIXMEQOS: is this big enough for all OQS alg? */
@@ -1708,12 +1784,32 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 	goto oqs_cleanup;
       }
       /* compute the servers's shared secret and message (encoded in encoded_point) */
-      if (OQS_KEX_bob(oqs_kex, client_msg, client_msg_len, &encodedPoint, &encoded_pt_len, &shared_secret, &shared_secret_len) != OQS_SUCCESS) {
+      if (OQS_KEX_bob(oqs_kex, client_msg, client_msg_len, &oqs_encodedPoint, &oqs_encoded_pt_len, &oqs_shared_secret, &oqs_shared_secret_len) != OQS_SUCCESS) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
 	has_error = 1;
 	goto oqs_cleanup;
       }
+
+	/* derive the ssl secret */
+	if (do_hybrid) {
+	  /* make sure the classical secret was correctly generated above */
+	  if (s->s3->tmp.pmslen == 0 ||  s->s3->tmp.pms == NULL) {
+	    SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
+	    has_error = 1;
+	    goto oqs_cleanup;
+	  }
+	  /* we concatenate the classical and oqs shared secret */
+	  shared_secret_len = s->s3->tmp.pmslen + oqs_shared_secret_len;
+	  shared_secret = OPENSSL_malloc(shared_secret_len); /* FIXMEOQS: free me! */
+	  memcpy(shared_secret, s->s3->tmp.pms, s->s3->tmp.pmslen);
+	  memcpy(shared_secret + s->s3->tmp.pmslen, oqs_shared_secret, oqs_shared_secret_len);
+	} else {
+	  /* we use the oqs shared secret */
+	  shared_secret_len = oqs_shared_secret_len;
+	  shared_secret = oqs_shared_secret;
+	}
+
       {
 	/* OQS note: this code is copied from ssl_derive */
 	  if (!s->hit) {
@@ -1733,26 +1829,29 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
       OQS_MEM_secure_free(shared_secret, shared_secret_len);
       OQS_RAND_free(oqs_rand);
       OQS_KEX_free(oqs_kex);
+      OPENSSL_free(s->s3->tmp.oqs_kex_client);
       if (has_error) {
 	return EXT_RETURN_FAIL;
       }
-    } else {
-      skey = ssl_generate_pkey(ckey);
-      if (skey == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                 ERR_R_MALLOC_FAILURE);
-        return EXT_RETURN_FAIL;
-      }
-
-      /* Generate encoding of server key */
-      encoded_pt_len = EVP_PKEY_get1_tls_encodedpoint(skey, &encodedPoint);
-      if (encoded_pt_len == 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
-                 ERR_R_EC_LIB);
-        EVP_PKEY_free(skey);
-        return EXT_RETURN_FAIL;
-      }
     }
+
+    if (do_hybrid) {
+      uint32_t encoded_pt_len32;
+      int ret = OQS_encode_hybrid_message(classical_encodedPoint, classical_encoded_pt_len, oqs_encodedPoint, oqs_encoded_pt_len, &encodedPoint, &encoded_pt_len32);
+      encoded_pt_len = encoded_pt_len32;
+      OPENSSL_free(classical_encodedPoint);
+      OPENSSL_free(oqs_encodedPoint);
+      if (!ret) {
+	return EXT_RETURN_FAIL;
+      }
+    } else if (do_pqc) {
+      encodedPoint = oqs_encodedPoint;
+      encoded_pt_len = oqs_encoded_pt_len;
+    } else {
+      encodedPoint = classical_encodedPoint;
+      encoded_pt_len = classical_encoded_pt_len;
+    }
+
     if (!WPACKET_sub_memcpy_u16(pkt, encodedPoint, encoded_pt_len)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE,
@@ -1765,11 +1864,14 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 
     /* This causes the crypto state to be updated based on the derived keys */
     s->s3->tmp.pkey = skey;
-    /* OQS note: the shared key has already been derived and updated for OQS (see above) */
+
+    /* OQS note: this has been moved up to accomodate the hybrid case */
+    /*
     if (!is_oqs && ssl_derive(s, skey, ckey, 1) == 0) {
-        /* SSLfatal() already called */
-        return EXT_RETURN_FAIL;
+      // SSLfatal() already called
+      return EXT_RETURN_FAIL;
     }
+    */
 #endif
 
     return EXT_RETURN_SENT;

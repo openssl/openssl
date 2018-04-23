@@ -382,15 +382,27 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 }
 #endif
 
+/* OQS note: is there a better place to put this? we only need it here... */
+#define OQS_CURVE_ID_NAME_STR(id) (id == 31 ? "Frodo recommended" :               \
+				  (id == 32 ? "SIKE 503" :	                  \
+				  (id == 33 ? "SIKE 751" :	                  \
+				  (id == 34 ? "Newhope" :	                  \
+				  (id == 35 ? "NTRU" :		                  \
+				  (id == 36 ? "P256 - Frodo recommended hybrid" : \
+				  (id == 37 ? "P256 - SIKE 503 hybrid" :          \
+				  (id == 38 ? "P256 - SIKE 751 hybrid" :          \
+				  (id == 39 ? "P256 - Newhope hybrid" :           \
+				  (id == 40 ? "P256 - NTRU hybrid" : ""))))))))))
+
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
     /* Special case for oqs key. Instead of relying on the peer key (s->s3->peer_tmp),
        we see if our special field is set (s->s3->tmp.oqs_kex_nid). This way, we won't
        have to modify the EVP api to set the key type (EVP_PKEY_assign). */
     EVP_PKEY *key;
-    int oqs_kex_nid = SSL_get_oqs_kex_nid(s);
-    if (oqs_kex_nid != 0) {
-      BIO_printf(out, "Server Temp Key: %s\n", OQS_ALG_NAME_STR(oqs_kex_nid));
+    int oqs_kex_curve_id = SSL_get_oqs_kex_curve_id(s);
+    if (oqs_kex_curve_id != 0) {
+      BIO_printf(out, "Server Temp Key: %s\n", OQS_CURVE_ID_NAME_STR(oqs_kex_curve_id));
       return 1;
     }
     /* ------------- end oqs */
