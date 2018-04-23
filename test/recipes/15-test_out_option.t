@@ -54,15 +54,17 @@ unless (config('target') =~ m|^mingw| && $^O ne 'msys') {
     push @success_paths, File::Spec->devnull();
 }
 
+my $tempdir;
+my $tempfile;
 # chmod doesn't seem to work as expected in Windows Command prompt,
 # so these test are meaningless in that environment (for example,
 # "unwritable.pem" turns out to be writable...
 unless ($^O eq 'MSWin32') {
     # Check that we can write to a file that we have write permission to
     # in a directory that we don't have write permission to.
-    my $tempdir = File::Spec->catdir('.', "test_out_option-nowrite-$$");
+    $tempdir = File::Spec->catdir('.', "test_out_option-nowrite-$$");
     mkdir $tempdir or die "Trying to create $tempdir: $!\n";
-    my $tempfile = File::Spec->catfile($tempdir, "writable.pem");
+    $tempfile = File::Spec->catfile($tempdir, "writable.pem");
     open my $fh, ">", $tempfile or die "Trying to create $tempfile: $!\n";
     chmod 0555, $tempdir;
     push @success_paths, $tempfile;
@@ -78,7 +80,7 @@ test_illegal_path($_) foreach @failure_paths;
 test_legal_path($_) foreach @success_paths;
 
 END {
-    if (-d $tempdir) {
+    if (defined $tempdir && -d $tempdir) {
         chmod 0755, $tempdir;
         unlink $tempfile if -f $tempfile;
         rmdir $tempdir;
