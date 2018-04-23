@@ -1073,6 +1073,13 @@ int ssl_set_client_hello_version(SSL *s)
 {
     int ver_min, ver_max, ret;
 
+    /*
+     * In a renegotiation we always send the same client_version that we sent
+     * last time, regardless of which version we eventually negotiated.
+     */
+    if (!SSL_IS_FIRST_HANDSHAKE(s))
+        return 0;
+
     ret = ssl_get_client_min_max_version(s, &ver_min, &ver_max);
 
     if (ret != 0)
