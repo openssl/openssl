@@ -726,7 +726,6 @@ end_of_options:
             output_der = 1;
             batch = 1;
         }
-        /* FIXME: Is it really always text? */
         Sout = bio_open_default(outfile, 'w',
                                 output_der ? FORMAT_ASN1 : FORMAT_TEXT);
         if (Sout == NULL)
