@@ -334,6 +334,7 @@ test: tests
 	set RESULT_D=$(BLDDIR)\test\test-runs
 	set PERL=$(PERL)
 	set OPENSSL_ENGINES=$(MAKEDIR)\engines
+	set TMPCUR=%CD% & cd $(SRCDIR)\test & set OPENSSL_CONF=%CD%\defaults.cnf & cd %TMPCUR%
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
