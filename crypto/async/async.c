@@ -401,7 +401,7 @@ ASYNC_JOB *ASYNC_get_current_job(void)
     async_ctx *ctx;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
-        return 0;
+        return NULL;
 
     ctx = async_get_ctx();
     if (ctx == NULL)
