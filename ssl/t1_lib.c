@@ -4188,6 +4188,9 @@ static int ssl_security_cert_sig(SSL *s, SSL_CTX *ctx, X509 *x, int op)
     if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0)
         return 1;
     sig_nid = X509_get_signature_nid(x);
+    /* We are not able to look up the CA MD for RSA PSS in this version */
+    if (sig_nid == NID_rsassaPss)
+        return 1;
     if (sig_nid && OBJ_find_sigid_algs(sig_nid, &md_nid, NULL)) {
         const EVP_MD *md;
         if (md_nid && (md = EVP_get_digestbynid(md_nid)))

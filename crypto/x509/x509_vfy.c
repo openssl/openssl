@@ -3265,6 +3265,10 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;
 
+    /* We are not able to look up the CA MD for RSA PSS in this version */
+    if (nid == NID_rsassaPss)
+        return 1;
+
     /* Lookup signature algorithm digest */
     if (nid && OBJ_find_sigid_algs(nid, &mdnid, NULL)) {
         const EVP_MD *md;
