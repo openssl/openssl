@@ -206,7 +206,8 @@ static size_t sysctl_random(char *buf, size_t buflen)
      * the sysctl returns long and we want to request something not a multiple
      * of longs, which should never be the case.
      */
-    ossl_assert(buflen % sizeof(long) == 0);
+    if (!ossl_assert(buflen % sizeof(long) == 0))
+        return 0;
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARND;
