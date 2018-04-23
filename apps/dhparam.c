@@ -153,6 +153,11 @@ int dhparam_main(int argc, char **argv)
         goto end;
     }
 # endif
+
+    out = bio_open_default(outfile, 'w', outformat);
+    if (out == NULL)
+        goto end;
+
     /* DH parameters */
     if (num && !g)
         g = 2;
@@ -259,10 +264,6 @@ int dhparam_main(int argc, char **argv)
 
         /* dh != NULL */
     }
-
-    out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (text) {
         DHparams_print(out, dh);
