@@ -142,9 +142,6 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
         goto err;
 
-    if ((group->order == NULL) || (group->field == NULL))
-        goto err;
-
     order_bits = BN_num_bits(group->order);
 
     s = EC_POINT_new(group);
@@ -152,8 +149,6 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
         goto err;
 
     if (point == NULL) {
-        if (group->generator == NULL)
-            goto err;
         if (!EC_POINT_copy(s, group->generator))
             goto err;
     } else {
