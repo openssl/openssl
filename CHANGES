@@ -9,6 +9,10 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Apply blinding to binary field modular inversion and remove patent
+     pending (OPENSSL_SUN_GF2M_DIV) BN_GF2m_mod_div implementation.
+     [Billy Bob Brumley]
+
   *) Deprecate ec2_mult.c and unify scalar multiplication code paths for
      binary and prime elliptic curves.
      [Billy Bob Brumley]
