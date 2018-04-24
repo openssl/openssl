@@ -21,19 +21,11 @@ setup("test_out_option");
 # Note that directories must end with a slash here, because of how
 # File::Spec massages them into directory specs on some platforms.
 my @failure_paths = (
-    '/',
     './',
-    '../'
    );
 my @success_paths = (
     'test.pem'
    );
-
-# /usr/ can only be expected on Unix lookalikes...  On Windows and VMS,
-# this might be a writable file, so let's not bother those platforms
-# with it.
-push @failure_paths, '/usr/'
-    unless $^O eq 'MSWin32' ||  $^O eq 'VMS';
 
 # Test for trying to create a file in a non-exist directory
 my $rand_path = "";
@@ -54,52 +46,19 @@ unless (config('target') =~ m|^mingw| && $^O ne 'msys') {
     push @success_paths, File::Spec->devnull();
 }
 
-my $tempdir;
-my $tempfile;
-# chmod doesn't seem to work as expected in Windows Command prompt,
-# so these test are meaningless in that environment (for example,
-# "unwritable.pem" turns out to be writable...
-unless ($^O eq 'MSWin32') {
-    # Check that we can write to a file that we have write permission to
-    # in a directory that we don't have write permission to.
-    $tempdir = File::Spec->catdir('.', "test_out_option-nowrite-$$");
-    mkdir $tempdir or die "Trying to create $tempdir: $!\n";
-    $tempfile = File::Spec->catfile($tempdir, "writable.pem");
-    open my $fh, ">", $tempfile or die "Trying to create $tempfile: $!\n";
-    chmod 0555, $tempdir;
-    push @success_paths, $tempfile;
+plan tests => scalar @failure_paths + scalar @success_paths;
 
-    # Check that non-existent files cannot be created in a directory that
-    # we don't have write permission to.
-    push @failure_paths, File::Spec->catfile($tempdir, "unwritable.pem");
+foreach (@failure_paths) {
+    my $path = File::Spec->canonpath($_);
+    ok(!run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])),
+       "invalid output path: $path");
 }
-
-plan tests => (2 * scalar @failure_paths) + scalar @success_paths;
-
-test_illegal_path($_) foreach @failure_paths;
-test_legal_path($_) foreach @success_paths;
+foreach (@success_paths) {
+    my $path = File::Spec->canonpath($_);
+    ok(run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])),
+       "valid output path: $path");
+}
 
 END {
-    if (defined $tempdir && -d $tempdir) {
-        chmod 0755, $tempdir;
-        unlink $tempfile if -f $tempfile;
-        rmdir $tempdir;
-    }
     unlink 'test.pem' if -f 'test.pem';
-}
-
-sub test_illegal_path {
-    my $path = File::Spec->canonpath($_[0]);
-
-    my $start = time();
-    ok(!run(app([ 'openssl', 'genrsa', '-out', $path, '16384'])), "invalid output path: $path");
-    my $end = time();
-    # The above process should exit in 2 seconds if the path is not valid
-    ok($end - $start < 2, "check time consumed");
-}
-
-sub test_legal_path {
-    my $path = File::Spec->canonpath($_[0]);
-
-    ok(run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])), "valid output path: $path");
 }
