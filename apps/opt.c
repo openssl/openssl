@@ -11,7 +11,9 @@
 #if !defined(OPENSSL_SYS_MSDOS)
 # include OPENSSL_UNISTD
 #endif
-
+#ifdef __VMS
+# include <sys/stat.h>
+#endif
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
@@ -620,10 +622,6 @@ int opt_next(void)
     unsigned long ulval;
     ossl_intmax_t imval;
     ossl_uintmax_t umval;
-#if !defined(_WIN32)
-    char *c;
-    int oerrno;
-#endif
 
     /* Look at current arg; at end of the list? */
     arg = NULL;
@@ -694,32 +692,66 @@ int opt_next(void)
             return -1;
         case '>':
             /* Output file. */
-#if !defined(_WIN32)
-            c = OPENSSL_strdup(arg);
-            if (c == NULL) {
-                BIO_printf(bio_err,
-                           "%s: Memory allocation failure\n", prog);
-                return -1;
-            }
-            oerrno = errno;
-            errno = 0;
-            if (strcmp(arg, "-") == 0
-                || (app_access(app_dirname(c), W_OK) == 0
-                    && app_isdir(arg) <= 0
-                    && (app_access(arg, W_OK) == 0 || errno == ENOENT))) {
-                OPENSSL_free(c);
+
+            /*
+             * "-" indicates we output to stdout, nothing more needs to be done
+             */
+            if (strcmp(arg, "-") == 0)
                 break;
+#ifdef __VMS
+            {
+                struct stat st;
+
+                /*
+                 * On VMS, "character devices" (such as NLA0:) aren't possible
+                 * to get any sensible information on with access(), because
+                 * the underlying system libraries and services do not support
+                 * the necessary operation to determine access on devices.
+                 * We therefore simply check for these "character devices" and
+                 * simply assumes they are writable here, and the attempt to
+                 * actually write to them will have to succeed or fail later.
+                 */
+                if (stat(arg, &st) == 0 && S_ISCHR(st.st_mode))
+                    break;
             }
-            OPENSSL_free(c);
-            if (errno == 0)
-                /* only possible if 'arg' is a directory */
-                estr = "is a directory";
-            else
+#endif
+#if !defined(_WIN32)
+            /*
+             * If the intended output file exists, we start with checking if it
+             * exists.
+             */
+            if (app_access(arg, F_OK) == 0) {
+                /*
+                 * If it exists, we need to make sure it isn't a directory and
+                 * that it's writable.
+                 */
+                if (app_isdir(arg) > 0)
+                    estr = "is a directory";
+                else if (app_access(arg, W_OK) == 0)
+                    break;
+                else
+                    estr = strerror(errno);
+            } else {
+                /*
+                 * If the intended output file doesn't exist, we check if the
+                 * directory it's going to be written in is writable (which
+                 * implies it exists).
+                 */
+                char *c = OPENSSL_strdup(arg);
+                if (c == NULL) {
+                    BIO_printf(bio_err,
+                               "%s: Memory allocation failure\n", prog);
+                    return -1;
+                }
+                if (app_access(app_dirname(c), W_OK) == 0) {
+                    OPENSSL_free(c);
+                    break;
+                }
                 estr = strerror(errno);
-            errno = oerrno;
+                OPENSSL_free(c);
+            }
 #else
-            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) == 0
-                || errno == ENOENT)
+            if (app_access(arg, W_OK) == 0 || errno == ENOENT)
                 break;
             estr = strerror(errno);
 #endif

@@ -19,7 +19,7 @@ setup("test_out_option");
 plan skip_all => "'-out' option tests are not available on Windows"
     if $^O eq 'MSWin32';
 
-plan tests => 11;
+plan tests => 12;
 
 # The following patterns should be tested:
 #
@@ -42,6 +42,11 @@ $rand_path .= "/test.pem";
 
 test_illegal_path($rand_path);
 test_legal_path('test.pem');
+SKIP: {
+    skip "'".File::Spec->devnull()."' may not be a workable null device for this cross compiled build", 1
+        unless (config('CROSS_COMPILE') // '') eq '';
+    test_legal_path(File::Spec->devnull());
+}
 unlink 'test.pem';
 
 sub test_illegal_path {
