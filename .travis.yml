@@ -103,10 +103,10 @@ jobs:
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -Wno-unused-command-line-argument" CXX="clang++"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -Wno-unused-command-line-argument" CXX="clang++"
         - os: linux
           compiler: gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 enable-buildtest-c++ -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-buildtest-c++" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           dist: xenial
           addons:

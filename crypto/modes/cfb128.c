@@ -11,6 +11,12 @@
 #include <openssl/crypto.h>
 #include "crypto/modes.h"
 
+#if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
+typedef size_t size_t_aX __attribute((__aligned__(1)));
+#else
+typedef size_t size_t_aX;
+#endif
+
 /*
  * The input and output encrypted as though 128bit cfb mode is being used.
  * The extra state information to record how much of the 128bit block we have
@@ -43,8 +49,9 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                 while (len >= 16) {
                     (*block) (ivec, ivec, key);
                     for (; n < 16; n += sizeof(size_t)) {
-                        *(size_t *)(out + n) =
-                            *(size_t *)(ivec + n) ^= *(size_t *)(in + n);
+                        *(size_t_aX *)(out + n) =
+                            *(size_t_aX *)(ivec + n)
+                                ^= *(size_t_aX *)(in + n);
                     }
                     len -= 16;
                     out += 16;
@@ -92,9 +99,10 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
                 while (len >= 16) {
                     (*block) (ivec, ivec, key);
                     for (; n < 16; n += sizeof(size_t)) {
-                        size_t t = *(size_t *)(in + n);
-                        *(size_t *)(out + n) = *(size_t *)(ivec + n) ^ t;
-                        *(size_t *)(ivec + n) = t;
+                        size_t t = *(size_t_aX *)(in + n);
+                        *(size_t_aX *)(out + n)
+                            = *(size_t_aX *)(ivec + n) ^ t;
+                        *(size_t_aX *)(ivec + n) = t;
                     }
                     len -= 16;
                     out += 16;

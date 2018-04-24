@@ -12,6 +12,12 @@
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
 
+#if defined(__GNUC__) && !defined(STRICT_ALIGNMENT)
+typedef size_t size_t_aX __attribute((__aligned__(1)));
+#else
+typedef size_t size_t_aX;
+#endif
+
 #if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
 /* redefine, because alignment is ensured */
 # undef  GETU32
@@ -1080,8 +1086,8 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                 size_t j = GHASH_CHUNK;
 
                 while (j) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1107,8 +1113,8 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                 size_t j = i;
 
                 while (len >= 16) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1318,8 +1324,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
                 GHASH(ctx, in, GHASH_CHUNK);
                 while (j) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
@@ -1343,8 +1349,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
             if ((i = (len & (size_t)-16))) {
                 GHASH(ctx, in, i);
                 while (len >= 16) {
-                    size_t *out_t = (size_t *)out;
-                    const size_t *in_t = (const size_t *)in;
+                    size_t_aX *out_t = (size_t_aX *)out;
+                    const size_t_aX *in_t = (const size_t_aX *)in;
 
                     (*block) (ctx->Yi.c, ctx->EKi.c, key);
                     ++ctr;
