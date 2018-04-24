@@ -1073,9 +1073,6 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
                               &discard, s->session_ctx->lock);
         }
 
-        if (cb != NULL)
-            cb(s, SSL_CB_HANDSHAKE_DONE, 1);
-
         if (SSL_IS_DTLS(s)) {
             /* done with handshaking */
             s->d1->handshake_read_seq = 0;
