@@ -2,7 +2,7 @@ LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
         ec_err.c ec_curve.c ec_check.c ec_print.c ec_asn1.c ec_key.c \
-        ec2_smpl.c ec2_mult.c ec_ameth.c ec_pmeth.c eck_prn.c \
+        ec2_smpl.c ec_ameth.c ec_pmeth.c eck_prn.c \
         ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c \
         ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c ecdh_kdf.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c ecx_meth.c \

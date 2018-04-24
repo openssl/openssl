@@ -9,6 +9,10 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Deprecate ec2_mult.c and unify scalar multiplication code paths for
+     binary and prime elliptic curves.
+     [Billy Bob Brumley]
+
   *) Remove ECDSA nonce padding: EC_POINT_mul is now responsible for
      constant time fixed point multiplication.
      [Billy Bob Brumley]
