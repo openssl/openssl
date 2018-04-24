@@ -105,23 +105,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
             }
         while (BN_is_zero(k));
 
-        /*
-         * We do not want timing information to leak the length of k, so we
-         * compute G*k using an equivalent scalar of fixed bit-length.
-         *
-         * We unconditionally perform both of these additions to prevent a
-         * small timing information leakage.  We then choose the sum that is
-         * one bit longer than the order.  This guarantees the code
-         * path used in the constant time implementations elsewhere.
-         *
-         * TODO: revisit the BN_copy aiming for a memory access agnostic
-         * conditional copy.
-         */
-        if (!BN_add(r, k, order)
-            || !BN_add(X, r, order)
-            || !BN_copy(k, BN_num_bits(r) > order_bits ? r : X))
-            goto err;
-
         /* compute r the x-coordinate of generator * k */
         if (!EC_POINT_mul(group, tmp_point, k, NULL, NULL, ctx)) {
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);

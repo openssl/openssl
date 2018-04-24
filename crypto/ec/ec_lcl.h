@@ -120,6 +120,23 @@ struct ec_method_st {
      * EC_POINT_have_precompute_mult (default implementations are used if the
      * 'mul' pointer is 0):
      */
+    /*-
+     * mul() calculates the value
+     *
+     *   r := generator * scalar
+     *        + points[0] * scalars[0]
+     *        + ...
+     *        + points[num-1] * scalars[num-1].
+     *
+     * For a fixed point multiplication (scalar != NULL, num == 0)
+     * or a variable point multiplication (scalar == NULL, num == 1),
+     * mul() must use a constant time algorithm: in both cases callers
+     * should provide an input scalar (either scalar or scalars[0])
+     * in the range [0, ec_group_order); for robustness, implementers
+     * should handle the case when the scalar has not been reduced, but
+     * may treat it as an unusual input, without any constant-timeness
+     * guarantee.
+     */
     int (*mul) (const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                 size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
                 BN_CTX *);

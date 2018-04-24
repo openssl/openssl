@@ -113,9 +113,9 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  *
  * At a high level, it is Montgomery ladder with conditional swaps.
  *
- * It performs either a fixed scalar point multiplication
+ * It performs either a fixed point multiplication
  *          (scalar * generator)
- * when point is NULL, or a generic scalar point multiplication
+ * when point is NULL, or a variable point multiplication
  *          (scalar * point)
  * when point is not NULL.
  *
