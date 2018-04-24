@@ -442,8 +442,11 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
     if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_UNCOMPRESSED) {
             comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
     } else if (SSL_IS_TLS13(s)) {
-            /* Compression not allowed in TLS 1.3 */
-            return 0;
+            /*
+             * ec_point_formats extension is not used in TLSv1.3 so we ignore
+             * this check.
+             */
+            return 1;
     } else {
         int field_type = EC_METHOD_get_field_type(EC_GROUP_method_of(grp));
 
@@ -2435,7 +2438,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
     if (SSL_IS_TLS13(s)) {
         size_t i;
 #ifndef OPENSSL_NO_EC
-        int curve = -1, skip_ec = 0;
+        int curve = -1;
 #endif
 
         /* Look for a certificate matching shared sigalgs */
@@ -2458,11 +2461,8 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                     EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
 
                     curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-                    if (EC_KEY_get_conv_form(ec)
-                        != POINT_CONVERSION_UNCOMPRESSED)
-                        skip_ec = 1;
                 }
-                if (skip_ec || (lu->curve != NID_undef && curve != lu->curve))
+                if (lu->curve != NID_undef && curve != lu->curve)
                     continue;
 #else
                 continue;
