@@ -50,12 +50,12 @@ plan tests => scalar @failure_paths + scalar @success_paths;
 
 foreach (@failure_paths) {
     my $path = File::Spec->canonpath($_);
-    ok(!run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])),
+    ok(!run(app([ 'openssl', 'rand', '-out', $path, '1'])),
        "invalid output path: $path");
 }
 foreach (@success_paths) {
     my $path = File::Spec->canonpath($_);
-    ok(run(app([ 'openssl', 'genrsa', '-out', $path, '2048'])),
+    ok(run(app([ 'openssl', 'rand', '-out', $path, '1'])),
        "valid output path: $path");
 }
 
