@@ -408,7 +408,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
     return 1;
 }
 
-# define MAX_CURVELIST   28
+# define MAX_CURVELIST   OSSL_NELEM(nid_list)
 
 typedef struct {
     size_t nidcnt;
