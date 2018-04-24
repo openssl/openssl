@@ -43,10 +43,12 @@ The functions EC_POINT_make_affine and EC_POINTs_make_affine force the internal 
 co-ordinate system. In the case of EC_POINTs_make_affine the value B<num> provides the number of points in the array B<points> to be
 forced.
 
-EC_POINT_mul calculates the value generator * B<n> + B<q> * B<m> and stores the result in B<r>. The value B<n> may be NULL in which case the result is just B<q> * B<m>.
+EC_POINT_mul is a convenient interface to EC_POINTs_mul: it calculates the value generator * B<n> + B<q> * B<m> and stores the result in B<r>.
+The value B<n> may be NULL in which case the result is just B<q> * B<m> (variable point multiplication). Alternatively, both B<q> and B<m> may be NULL, and B<n> non-NULL, in which case the result is just generator * B<n> (fixed point multiplication).
+When performing a single fixed or variable point multiplication, the underlying implementation uses a constant time algorithm, when the input scalar (either B<n> or B<m>) is in the range [0, ec_group_order).
 
-EC_POINTs_mul calculates the value generator * B<n> + B<q[0]> * B<m[0]> + ... + B<q[num-1]> * B<m[num-1]>. As for EC_POINT_mul the value
-B<n> may be NULL.
+EC_POINTs_mul calculates the value generator * B<n> + B<q[0]> * B<m[0]> + ... + B<q[num-1]> * B<m[num-1]>. As for EC_POINT_mul the value B<n> may be NULL or B<num> may be zero.
+When performing a fixed point multiplication (B<n> is non-NULL and B<num> is 0) or a variable point multiplication (B<n> is NULL and B<num> is 1), the underlying implementation uses a constant time algorithm, when the input scalar (either B<n> or B<m[0]>) is in the range [0, ec_group_order).
 
 The function EC_GROUP_precompute_mult stores multiples of the generator for faster point multiplication, whilst
 EC_GROUP_have_precompute_mult tests whether precomputation has already been done. See L<EC_GROUP_copy(3)> for information
