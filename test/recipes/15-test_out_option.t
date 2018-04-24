@@ -37,11 +37,11 @@ $rand_path .= "/test.pem";
 
 push @failure_paths, $rand_path;
 
-# Specifically for mingw, the NULL device might not be what's expected.
-# For example, if cross compiled and tested on the build host, perl will
-# generate an incorrect NULL device name.
-# We might expand the exceptions...
-unless (config('target') =~ m|^mingw| && $^O ne 'msys') {
+# All explicit cross compilations run a risk of failing this, because the
+# null device provided by perl might not match what the cross compiled
+# application expects to see as a null device.  Therefore, we skip the check
+# of outputing to the null device if the cross compile prefix is set.
+if ((config('CROSS_COMPILE') // '') eq '') {
     # Check that we can write to the NULL device
     push @success_paths, File::Spec->devnull();
 }
