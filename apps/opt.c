@@ -682,20 +682,10 @@ int opt_next(void)
             return -1;
         case '<':
             /* Input file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, R_OK) == 0)
-                break;
-            BIO_printf(bio_err,
-                       "%s: Cannot open input file %s, %s\n",
-                       prog, arg, strerror(errno));
-            return -1;
+            break;
         case '>':
             /* Output file. */
-            if (strcmp(arg, "-") == 0 || app_access(arg, W_OK) == 0 || errno == ENOENT)
-                break;
-            BIO_printf(bio_err,
-                       "%s: Cannot open output file %s, %s\n",
-                       prog, arg, strerror(errno));
-            return -1;
+            break;
         case 'p':
         case 'n':
             if (!opt_int(arg, &ival)
