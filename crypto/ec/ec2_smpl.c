@@ -47,14 +47,9 @@ const EC_METHOD *EC_GF2m_simple_method(void)
         ec_GF2m_simple_cmp,
         ec_GF2m_simple_make_affine,
         ec_GF2m_simple_points_make_affine,
-
-        /*
-         * the following three method functions are defined in ec2_mult.c
-         */
-        ec_GF2m_simple_mul,
-        ec_GF2m_precompute_mult,
-        ec_GF2m_have_precompute_mult,
-
+        0 /* mul */,
+        0 /* precompute_mul */,
+        0 /* have_precompute_mul */,
         ec_GF2m_simple_field_mul,
         ec_GF2m_simple_field_sqr,
         ec_GF2m_simple_field_div,
