@@ -24,7 +24,7 @@ my @failure_paths = (
     './',
    );
 my @success_paths = (
-    'test.pem'
+    'randomname.bin'
    );
 
 # Test for trying to create a file in a non-exist directory
@@ -33,7 +33,7 @@ do {
     my @chars = ("A".."Z", "a".."z", "0".."9");
     $rand_path .= $chars[rand @chars] for 1..32;
 } while (-d File::Spec->catdir('.', $rand_path));
-$rand_path .= "/test.pem";
+$rand_path .= "/randomname.bin";
 
 push @failure_paths, $rand_path;
 
@@ -60,5 +60,5 @@ foreach (@success_paths) {
 }
 
 END {
-    unlink 'test.pem' if -f 'test.pem';
+    unlink 'randomname.bin' if -f 'randomname.bin';
 }
