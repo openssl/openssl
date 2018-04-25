@@ -30,7 +30,7 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
-    int i;
+    int i, min_len;
     const char *prompt;
 
     if (key) {
@@ -48,7 +48,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
      * We assume that w == 0 means decryption,
      * while w == 1 means encryption
      */
-    int min_len = w ? MIN_LENGTH : 0;
+    min_len = w ? MIN_LENGTH : 0;
 
     i = EVP_read_pw_string_min(buf, min_len, num, prompt, w);
     if (i != 0) {
