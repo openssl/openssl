@@ -28,15 +28,16 @@ static int load_iv(char **fromp, unsigned char *to, int num);
 static int check_pem(const char *nm, const char *name);
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
-int PEM_def_callback(char *buf, int num, int w, void *key)
+int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
 {
     int i, min_len;
     const char *prompt;
 
-    if (key) {
-        i = strlen(key);
+    /* We assume that the user passes a default password as userdata */
+    if (userdata) {
+        i = strlen(userdata);
         i = (i > num) ? num : i;
-        memcpy(buf, key, i);
+        memcpy(buf, userdata, i);
         return i;
     }
 
@@ -45,12 +46,15 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
         prompt = "Enter PEM pass phrase:";
 
     /*
-     * We assume that w == 0 means decryption,
-     * while w == 1 means encryption
+     * rwflag == 0 means decryption
+     * rwflag == 1 means encryption
+     *
+     * We assume that for encryption, we want a minimum length, while for
+     * decryption, we cannot know any minimum length, so we assume zero.
      */
-    min_len = w ? MIN_LENGTH : 0;
+    min_len = rwflag ? MIN_LENGTH : 0;
 
-    i = EVP_read_pw_string_min(buf, min_len, num, prompt, w);
+    i = EVP_read_pw_string_min(buf, min_len, num, prompt, rwflag);
     if (i != 0) {
         PEMerr(PEM_F_PEM_DEF_CALLBACK, PEM_R_PROBLEMS_GETTING_PASSWORD);
         memset(buf, 0, (unsigned int)num);
