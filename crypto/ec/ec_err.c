@@ -166,6 +166,7 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "EC_GROUP_set_curve_GFp"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_GROUP_SET_GENERATOR, 0),
      "EC_GROUP_set_generator"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_EC_GROUP_SET_SEED, 0), "EC_GROUP_set_seed"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_KEY_CHECK_KEY, 0), "EC_KEY_check_key"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_KEY_COPY, 0), "EC_KEY_copy"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_KEY_GENERATE_KEY, 0), "EC_KEY_generate_key"},

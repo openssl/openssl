@@ -57,11 +57,13 @@ int ERR_load_BN_strings(void);
 # define BN_F_BN_MOD_INVERSE_NO_BRANCH                    139
 # define BN_F_BN_MOD_LSHIFT_QUICK                         119
 # define BN_F_BN_MOD_SQRT                                 121
+# define BN_F_BN_MONT_CTX_NEW                             149
 # define BN_F_BN_MPI2BN                                   112
 # define BN_F_BN_NEW                                      113
 # define BN_F_BN_POOL_GET                                 147
 # define BN_F_BN_RAND                                     114
 # define BN_F_BN_RAND_RANGE                               122
+# define BN_F_BN_RECP_CTX_NEW                             150
 # define BN_F_BN_RSHIFT                                   146
 # define BN_F_BN_SET_WORDS                                144
 # define BN_F_BN_STACK_PUSH                               148

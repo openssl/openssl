@@ -19,6 +19,10 @@ int ERR_load_PKCS12_strings(void);
 /*
  * PKCS12 function codes.
  */
+# define PKCS12_F_OPENSSL_ASC2UNI                         121
+# define PKCS12_F_OPENSSL_UNI2ASC                         124
+# define PKCS12_F_OPENSSL_UNI2UTF8                        127
+# define PKCS12_F_OPENSSL_UTF82UNI                        129
 # define PKCS12_F_PKCS12_CREATE                           105
 # define PKCS12_F_PKCS12_GEN_MAC                          107
 # define PKCS12_F_PKCS12_INIT                             109

@@ -71,6 +71,7 @@ static const ERR_STRING_DATA X509V3_str_functs[] = {
      "SXNET_get_id_asc"},
     {ERR_PACK(ERR_LIB_X509V3, X509V3_F_SXNET_GET_ID_ULONG, 0),
      "SXNET_get_id_ulong"},
+    {ERR_PACK(ERR_LIB_X509V3, X509V3_F_TREE_INIT, 0), "tree_init"},
     {ERR_PACK(ERR_LIB_X509V3, X509V3_F_V2I_ASIDENTIFIERS, 0),
      "v2i_ASIdentifiers"},
     {ERR_PACK(ERR_LIB_X509V3, X509V3_F_V2I_ASN1_BIT_STRING, 0),
