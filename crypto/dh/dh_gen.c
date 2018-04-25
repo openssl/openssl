@@ -66,8 +66,8 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     if (ctx == NULL)
         goto err;
     BN_CTX_start(ctx);
-    t1 = BN_CTX_get(ctx);
-    t2 = BN_CTX_get(ctx);
+    t1 = BN_set_public(BN_CTX_get(ctx));
+    t2 = BN_set_public(BN_CTX_get(ctx));
     if (t2 == NULL)
         goto err;
 
@@ -111,9 +111,10 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
 
     if (!BN_generate_prime_ex(ret->p, prime_len, 1, t1, t2, cb))
         goto err;
+    BN_set_public(ret->p);
     if (!BN_GENCB_call(cb, 3, 0))
         goto err;
-    if (!BN_set_word(ret->g, g))
+    if (!BN_set_word(BN_set_public(ret->g), g))
         goto err;
     ok = 1;
  err:

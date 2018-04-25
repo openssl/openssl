@@ -154,6 +154,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
     if (!BN_copy(group->field, p))
         goto err;
     BN_set_negative(group->field, 0);
+    BN_set_public(group->field);
 
     /* group->a */
     if (!BN_nnmod(tmp_a, a, p, ctx))
@@ -163,6 +164,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
             goto err;
     } else if (!BN_copy(group->a, tmp_a))
         goto err;
+    BN_set_public(group->a);
 
     /* group->b */
     if (!BN_nnmod(group->b, b, p, ctx))
@@ -170,6 +172,7 @@ int ec_GFp_simple_group_set_curve(EC_GROUP *group,
     if (group->meth->field_encode)
         if (!group->meth->field_encode(group, group->b, group->b, ctx))
             goto err;
+    BN_set_public(group->b);
 
     /* group->a_is_minus3 */
     if (!BN_add_word(tmp_a, 3))
@@ -368,6 +371,7 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
 {
     BN_CTX *new_ctx = NULL;
     int ret = 0;
+    int is_public = 0;
 
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
@@ -382,6 +386,7 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
             if (!group->meth->field_encode(group, point->X, point->X, ctx))
                 goto err;
         }
+        is_public = BN_is_public(x);
     }
 
     if (y != NULL) {
@@ -391,6 +396,7 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
             if (!group->meth->field_encode(group, point->Y, point->Y, ctx))
                 goto err;
         }
+        is_public = is_public && BN_is_public(y);
     }
 
     if (z != NULL) {
@@ -410,6 +416,17 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
             }
         }
         point->Z_is_one = Z_is_one;
+        is_public = is_public && BN_is_public(y);
+    }
+
+    if (is_public) {
+        BN_set_public(point->X);
+        BN_set_public(point->Y);
+        BN_set_public(point->Z);
+    } else {
+        BN_set_private(point->X);
+        BN_set_private(point->Y);
+        BN_set_private(point->Z);
     }
 
     ret = 1;
@@ -483,7 +500,9 @@ int ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *group,
     }
 
     return EC_POINT_set_Jprojective_coordinates_GFp(group, point, x, y,
-                                                    BN_value_one(), ctx);
+            BN_is_public(x) && BN_is_public(y) ? BN_value_one_public()
+                                               : BN_value_one(),
+            ctx);
 }
 
 int ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
@@ -706,7 +725,7 @@ int ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
             goto end;
         } else {
             /* a is the inverse of b */
-            BN_zero(r->Z);
+            BN_zero_pubpriv(r->Z);
             r->Z_is_one = 0;
             ret = 1;
             goto end;
@@ -1238,7 +1257,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
             if (!group->meth->field_set_to_one(group, prod_Z[0], ctx))
                 goto err;
         } else {
-            if (!BN_one(prod_Z[0]))
+            if (!BN_one_pubpriv(prod_Z[0]))
                 goto err;
         }
     }
@@ -1328,7 +1347,7 @@ int ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num,
                 if (!group->meth->field_set_to_one(group, p->Z, ctx))
                     goto err;
             } else {
-                if (!BN_one(p->Z))
+                if (!BN_one_pubpriv(p->Z))
                     goto err;
             }
             p->Z_is_one = 1;

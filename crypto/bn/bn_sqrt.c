@@ -35,6 +35,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
                 return NULL;
             }
             bn_check_top(ret);
+            bn_set_public_private2(ret, a, p);
             return ret;
         }
 
@@ -53,6 +54,7 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
             return NULL;
         }
         bn_check_top(ret);
+        bn_set_public_private2(ret, a, p);
         return ret;
     }
 
@@ -351,6 +353,8 @@ BIGNUM *BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         if (ret != in)
             BN_clear_free(ret);
         ret = NULL;
+    } else {
+        bn_set_public_private2(ret, a, p);
     }
     BN_CTX_end(ctx);
     bn_check_top(ret);

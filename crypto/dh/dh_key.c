@@ -139,7 +139,9 @@ static int generate_key(DH *dh)
     }
 
     dh->pub_key = pub_key;
+    BN_set_public(pub_key);
     dh->priv_key = priv_key;
+    BN_set_private(priv_key);
     ok = 1;
  err:
     if (ok != 1)

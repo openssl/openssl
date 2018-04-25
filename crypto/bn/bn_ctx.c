@@ -227,6 +227,8 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     }
     /* OK, make sure the returned bignum is "zero" */
     BN_zero(ret);
+    /* Private data by default */
+    ret->flags &= ~BN_FLG_PUBLIC_DATA;
     ctx->used++;
     CTXDBG_RET(ctx, ret);
     return ret;

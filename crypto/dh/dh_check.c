@@ -206,7 +206,7 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
         goto err;
     BN_CTX_start(ctx);
     tmp = BN_CTX_get(ctx);
-    if (tmp == NULL || !BN_set_word(tmp, 1))
+    if (tmp == NULL || !BN_set_word(BN_set_public(tmp), 1))
         goto err;
     if (BN_cmp(pub_key, tmp) <= 0)
         *ret |= DH_CHECK_PUBKEY_TOO_SMALL;

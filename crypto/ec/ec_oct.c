@@ -110,16 +110,17 @@ size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
     return group->meth->point2oct(group, point, form, buf, len, ctx);
 }
 
-int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
-                       const unsigned char *buf, size_t len, BN_CTX *ctx)
+static int ec_point_oct2point_int(const EC_GROUP *group, EC_POINT *point,
+                                  const unsigned char *buf, size_t len,
+                                  BN_CTX *ctx)
 {
     if (group->meth->oct2point == 0
         && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-        ECerr(EC_F_EC_POINT_OCT2POINT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ECerr(EC_F_EC_POINT_OCT2POINT_INT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
     if (group->meth != point->meth) {
-        ECerr(EC_F_EC_POINT_OCT2POINT, EC_R_INCOMPATIBLE_OBJECTS);
+        ECerr(EC_F_EC_POINT_OCT2POINT_INT, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
     if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
@@ -128,7 +129,7 @@ int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
         else
 #ifdef OPENSSL_NO_EC2M
         {
-            ECerr(EC_F_EC_POINT_OCT2POINT, EC_R_GF2M_NOT_SUPPORTED);
+            ECerr(EC_F_EC_POINT_OCT2POINT_INT, EC_R_GF2M_NOT_SUPPORTED);
             return 0;
         }
 #else
@@ -136,6 +137,30 @@ int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
 #endif
     }
     return group->meth->oct2point(group, point, buf, len, ctx);
+}
+
+int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
+                       const unsigned char *buf, size_t len, BN_CTX *ctx)
+{
+    if (!ec_point_oct2point_int(group, point, buf, len, ctx))
+        return 0;
+
+    BN_set_private(point->X);
+    BN_set_private(point->Y);
+    BN_set_private(point->Z);
+    return 1;
+}
+
+int EC_POINT_oct2point_public(const EC_GROUP *group, EC_POINT *point,
+                              const unsigned char *buf, size_t len, BN_CTX *ctx)
+{
+    if (!ec_point_oct2point_int(group, point, buf, len, ctx))
+        return 0;
+
+    BN_set_public(point->X);
+    BN_set_public(point->Y);
+    BN_set_public(point->Z);
+    return 1;
 }
 
 size_t EC_POINT_point2buf(const EC_GROUP *group, const EC_POINT *point,

@@ -1944,6 +1944,14 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
     if ((!BN_to_felem(x_in, point->X)) || (!BN_to_felem(y_in, point->Y)) ||
         (!BN_to_felem(z1, point->Z)))
         return 0;
+    if (BN_is_public(point->X) && BN_is_public(point->Y)) {
+        BN_set_public(x);
+        BN_set_public(y);
+    } else {
+        BN_set_private(x);
+        BN_set_private(y);
+    }
+        
     felem_inv(z2, z1);
     felem_square(tmp, z2);
     felem_reduce(z1, tmp);
@@ -2013,6 +2021,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
     int ret = 0;
     int j;
     int mixed = 0;
+    int is_public = 1;
     BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y, *z, *tmp_scalar;
     felem_bytearray g_secret;
@@ -2060,6 +2069,9 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
             ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
             goto err;
         }
+        BN_set_public(x);
+        BN_set_public(y);
+        BN_set_public(z);
         if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
                                                       generator, x, y, z,
                                                       ctx))
@@ -2113,6 +2125,16 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
             {
                 p = points[i];
                 p_scalar = scalars[i];
+            }
+            if (is_public) {
+                if (p_scalar != NULL)
+                    is_public = BN_is_public(p_scalar);
+                if (p != NULL) {
+                    is_public = is_public
+                                && BN_is_public(p->X)
+                                && BN_is_public(p->Y)
+                                && BN_is_public(Y);
+                }
             }
             if ((p_scalar != NULL) && (p != NULL)) {
                 /* reduce scalar to 0 <= scalar < 2^256 */
@@ -2196,6 +2218,15 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
         (!smallfelem_to_BN(z, z_in))) {
         ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
         goto err;
+    }
+    if (is_public) {
+        BN_set_public(x);
+        BN_set_public(y);
+        BN_set_public(z);
+    } else {
+        BN_set_private(x);
+        BN_set_private(y);
+        BN_set_private(z);
     }
     ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
 

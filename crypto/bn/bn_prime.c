@@ -133,6 +133,7 @@ int BN_generate_prime_ex(BIGNUM *ret, int bits, int safe,
     }
     /* we have a prime :-) */
     found = 1;
+    BN_set_private(ret);
  err:
     OPENSSL_free(mods);
     if (ctx != NULL)

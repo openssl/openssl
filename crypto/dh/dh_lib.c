@@ -193,14 +193,17 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     if (p != NULL) {
         BN_free(dh->p);
         dh->p = p;
+        BN_set_public(p);
     }
     if (q != NULL) {
         BN_free(dh->q);
         dh->q = q;
+        BN_set_public(q);
     }
     if (g != NULL) {
         BN_free(dh->g);
         dh->g = g;
+        BN_set_public(g);
     }
 
     if (q != NULL) {
@@ -234,10 +237,12 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
     if (pub_key != NULL) {
         BN_free(dh->pub_key);
         dh->pub_key = pub_key;
+        BN_set_public(pub_key);
     }
     if (priv_key != NULL) {
         BN_free(dh->priv_key);
         dh->priv_key = priv_key;
+        BN_set_private(priv_key);
     }
 
     return 1;

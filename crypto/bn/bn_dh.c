@@ -485,12 +485,12 @@ static const BN_ULONG ffdhe8192_p[] = {
                        const BIGNUM _bignum_##x = { (BN_ULONG *) x, \
                         OSSL_NELEM(x),\
                         OSSL_NELEM(x),\
-                        0, BN_FLG_STATIC_DATA };
+                        0, BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA };
 
 static const BN_ULONG value_2 = 2;
 
 const BIGNUM _bignum_const_2 =
-    { (BN_ULONG *)&value_2, 1, 1, 0, BN_FLG_STATIC_DATA };
+    { (BN_ULONG *)&value_2, 1, 1, 0, BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA };
 
 make_dh_bn(dh1024_160_p)
 make_dh_bn(dh1024_160_g)

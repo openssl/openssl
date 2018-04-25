@@ -122,7 +122,7 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
     if (i <= 0)
         goto err;
 
-    if (BN_bin2bn(buf, num, f) == NULL)
+    if (BN_bin2bn_public(buf, num, f) == NULL)
         goto err;
 
     if (BN_ucmp(f, rsa->n) >= 0) {
@@ -552,7 +552,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
         goto err;
     }
 
-    if (BN_bin2bn(from, flen, f) == NULL)
+    if (BN_bin2bn_public(from, flen, f) == NULL)
         goto err;
 
     if (BN_ucmp(f, rsa->n) >= 0) {

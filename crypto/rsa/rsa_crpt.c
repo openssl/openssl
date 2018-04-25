@@ -101,7 +101,7 @@ static BIGNUM *rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p,
     if (!BN_mul(r0, r1, r2, ctx))
         goto err;
 
-    ret = BN_mod_inverse(NULL, d, r0, ctx);
+    ret = BN_set_public(BN_mod_inverse(NULL, d, r0, ctx));
  err:
     BN_CTX_end(ctx);
     return ret;

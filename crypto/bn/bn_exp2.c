@@ -25,6 +25,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     /* Tables of variables obtained from 'ctx' */
     BIGNUM *val1[TABLE_SIZE], *val2[TABLE_SIZE];
     BN_MONT_CTX *mont = NULL;
+    int is_public = 0;
 
     bn_check_top(a1);
     bn_check_top(p1);
@@ -36,10 +37,20 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
         BNerr(BN_F_BN_MOD_EXP2_MONT, BN_R_CALLED_WITH_EVEN_MODULUS);
         return 0;
     }
+
+    is_public = BN_is_public(a1)
+                && BN_is_public(p1)
+                && BN_is_public(a2)
+                && BN_is_public(p2)
+                && BN_is_public(m);
+    if (in_mont != NULL)
+        is_public = is_public && BN_is_public(&(in_mont->N));
+
     bits1 = BN_num_bits(p1);
     bits2 = BN_num_bits(p2);
     if ((bits1 == 0) && (bits2 == 0)) {
         ret = BN_one(rr);
+        bn_set_public_private(rr, is_public);
         return ret;
     }
 
@@ -77,6 +88,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     if (BN_is_zero(a_mod_m)) {
         BN_zero(rr);
         ret = 1;
+        bn_set_public_private(rr, is_public);
         goto err;
     }
 
@@ -106,6 +118,7 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     if (BN_is_zero(a_mod_m)) {
         BN_zero(rr);
         ret = 1;
+        bn_set_public_private(rr, is_public);
         goto err;
     }
     if (!BN_to_montgomery(val2[0], a_mod_m, mont, ctx))
@@ -131,7 +144,9 @@ int BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
     wpos2 = 0;                  /* If wvalue2 > 0, the bottom bit of the
                                  * second window */
 
-    if (!BN_to_montgomery(r, BN_value_one(), mont, ctx))
+    if (!BN_to_montgomery(r,
+                          is_public ? BN_value_one_public() : BN_value_one(),
+                          mont, ctx))
         goto err;
     for (b = bits - 1; b >= 0; b--) {
         if (!r_is_one) {

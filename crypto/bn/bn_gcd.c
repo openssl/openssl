@@ -143,8 +143,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     if (pnoinv)
         *pnoinv = 0;
 
-    if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
-        || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
+    if (!BN_is_public(a) || !BN_is_public(n)) {
         return BN_mod_inverse_no_branch(in, a, n, ctx);
     }
 
@@ -171,6 +170,8 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
     BN_one(X);
     BN_zero(Y);
+    BN_set_public(X);
+    BN_set_public(Y);
     if (BN_copy(B, a) == NULL)
         goto err;
     if (BN_copy(A, n) == NULL)
@@ -297,7 +298,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
             /* (D, M) := (A/B, A%B) ... */
             if (BN_num_bits(A) == BN_num_bits(B)) {
-                if (!BN_one(D))
+                if (!BN_one_public(D))
                     goto err;
                 if (!BN_sub(M, A, B))
                     goto err;
@@ -307,7 +308,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                     goto err;
                 if (BN_ucmp(A, T) < 0) {
                     /* A < 2*B, so D=1 */
-                    if (!BN_one(D))
+                    if (!BN_one_public(D))
                         goto err;
                     if (!BN_sub(M, A, B))
                         goto err;
@@ -607,6 +608,7 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
         goto err;
     }
     ret = R;
+    BN_set_private(ret);
  err:
     if ((ret == NULL) && (in == NULL))
         BN_free(R);

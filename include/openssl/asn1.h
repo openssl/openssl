@@ -658,6 +658,7 @@ int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
 long ASN1_INTEGER_get(const ASN1_INTEGER *a);
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
 BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn);
+BIGNUM *ASN1_INTEGER_to_BN_public(const ASN1_INTEGER *ai, BIGNUM *bn);
 
 int ASN1_ENUMERATED_get_int64(int64_t *pr, const ASN1_ENUMERATED *a);
 int ASN1_ENUMERATED_set_int64(ASN1_ENUMERATED *a, int64_t r);

@@ -107,8 +107,9 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
     if (!w)
         return 1;
     /* degenerate case: a is zero */
-    if (BN_is_zero(a))
+    if (BN_is_zero(a)) {
         return BN_set_word(a, w);
+    }
     /* handle 'a' when negative */
     if (a->neg) {
         a->neg = 0;

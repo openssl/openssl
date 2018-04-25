@@ -145,6 +145,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_POINT_MAKE_AFFINE                        120
 #  define EC_F_EC_POINT_NEW                                121
 #  define EC_F_EC_POINT_OCT2POINT                          122
+#  define EC_F_EC_POINT_OCT2POINT_INT                      286
 #  define EC_F_EC_POINT_POINT2BUF                          281
 #  define EC_F_EC_POINT_POINT2OCT                          123
 #  define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M        185

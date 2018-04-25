@@ -60,6 +60,7 @@ extern "C" {
  */
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
+# define BN_FLG_PUBLIC_DATA      0x10
 
 # if OPENSSL_API_COMPAT < 0x00908000L
 /* deprecated name for the flag */
@@ -68,7 +69,17 @@ extern "C" {
 # endif
 
 void BN_set_flags(BIGNUM *b, int n);
+void BN_clear_flags(BIGNUM *b, int flags);
 int BN_get_flags(const BIGNUM *b, int n);
+
+# define BN_set_private(a) \
+    ((a) == NULL ? (a) : (BN_clear_flags((a), BN_FLG_PUBLIC_DATA), (a)))
+# define BN_set_public(a) \
+    ((a) == NULL ? (a) : (BN_set_flags((a), BN_FLG_PUBLIC_DATA), (a)))
+# define BN_is_public(a)    (BN_get_flags((a), \
+                                          BN_FLG_PUBLIC_DATA \
+                                          | BN_FLG_CONSTTIME) \
+                             == BN_FLG_PUBLIC_DATA)
 
 /* Values for |top| in BN_rand() */
 #define BN_RAND_TOP_ANY    -1
@@ -135,17 +146,22 @@ int BN_is_one(const BIGNUM *a);
 int BN_is_word(const BIGNUM *a, const BN_ULONG w);
 int BN_is_odd(const BIGNUM *a);
 
-# define BN_one(a)       (BN_set_word((a),1))
+# define BN_one(a)          BN_set_word(BN_set_private(a),1)
+# define BN_one_public(a)   BN_set_word(BN_set_public(a),1)
+# define BN_one_pubpriv(a)  BN_set_word((a),1)
 
 void BN_zero_ex(BIGNUM *a);
+# define BN_zero_public(a)  BN_set_word(BN_set_public(a), 0)
+# define BN_zero_pubpriv(a) BN_set_word((a), 0)
 
 # if OPENSSL_API_COMPAT >= 0x00908000L
 #  define BN_zero(a)      BN_zero_ex(a)
 # else
-#  define BN_zero(a)      (BN_set_word((a),0))
+#  define BN_zero(a)      BN_set_word(BN_set_private(a), 0)
 # endif
 
 const BIGNUM *BN_value_one(void);
+const BIGNUM *BN_value_one_public(void);
 char *BN_options(void);
 BN_CTX *BN_CTX_new(void);
 BN_CTX *BN_CTX_secure_new(void);
@@ -168,9 +184,11 @@ void BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void BN_swap(BIGNUM *a, BIGNUM *b);
 BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret);
+BIGNUM *BN_bin2bn_public(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2bin(const BIGNUM *a, unsigned char *to);
 int BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret);
+BIGNUM *BN_lebin2bn_public(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen);
 BIGNUM *BN_mpi2bn(const unsigned char *s, int len, BIGNUM *ret);
 int BN_bn2mpi(const BIGNUM *a, unsigned char *to);
@@ -258,8 +276,12 @@ int BN_clear_bit(BIGNUM *a, int n);
 char *BN_bn2hex(const BIGNUM *a);
 char *BN_bn2dec(const BIGNUM *a);
 int BN_hex2bn(BIGNUM **a, const char *str);
+int BN_hex2bn_public(BIGNUM **bn, const char *a);
 int BN_dec2bn(BIGNUM **a, const char *str);
+int BN_dec2bn_public(BIGNUM **bn, const char *a);
+int BN_hex2bn_public(BIGNUM **bn, const char *a);
 int BN_asc2bn(BIGNUM **a, const char *str);
+int BN_asc2bn_public(BIGNUM **bn, const char *a);
 int BN_gcd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx); /* returns
                                                                   * -2 for

@@ -78,7 +78,7 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     }
 
     /* We have parameters now set public key */
-    if ((dh->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL) {
+    if ((dh->pub_key = ASN1_INTEGER_to_BN_public(public_key, NULL)) == NULL) {
         DHerr(DH_F_DH_PUB_DECODE, DH_R_BN_DECODE_ERROR);
         goto err;
     }
@@ -647,7 +647,8 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     }
 
     /* We have parameters now set public key */
-    if ((dhpeer->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)) == NULL) {
+    if ((dhpeer->pub_key = ASN1_INTEGER_to_BN_public(public_key, NULL))
+            == NULL) {
         DHerr(DH_F_DH_CMS_SET_PEERKEY, DH_R_BN_DECODE_ERROR);
         goto err;
     }

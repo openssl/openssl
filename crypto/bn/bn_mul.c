@@ -516,6 +516,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
     if ((al == 0) || (bl == 0)) {
         BN_zero(r);
+        bn_set_public_private2(r, a, b);
         return 1;
     }
     top = al + bl;
@@ -526,6 +527,8 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
             goto err;
     } else
         rr = r;
+
+    bn_set_public_private2(rr, a, b);
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
     i = al - bl;

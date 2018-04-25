@@ -118,6 +118,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
     r->neg = 0;
     bn_check_top(r);
+    bn_set_public_private2(r, a, b);
     return 1;
 }
 
@@ -165,6 +166,8 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     r->top = max;
     r->neg = 0;
     bn_pollute(r);
+
+    bn_set_public_private2(r, a, b);
 
     return 1;
 }

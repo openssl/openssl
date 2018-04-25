@@ -67,6 +67,7 @@ int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
         if (!BN_one(rr))
             goto err;
     }
+    bn_set_public_private2(rr, a, p);
 
     for (i = 1; i < bits; i++) {
         if (!BN_sqr(v, v, ctx))
@@ -133,10 +134,11 @@ int BN_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 #ifdef MONT_MUL_MOD
     if (BN_is_odd(m)) {
 # ifdef MONT_EXP_WORD
-        if (a->top == 1 && !a->neg
-            && (BN_get_flags(p, BN_FLG_CONSTTIME) == 0)
-            && (BN_get_flags(a, BN_FLG_CONSTTIME) == 0)
-            && (BN_get_flags(m, BN_FLG_CONSTTIME) == 0)) {
+        if (a->top == 1
+                && !a->neg
+                && BN_is_public(p)
+                && BN_is_public(a)
+                && BN_is_public(m)) {
             BN_ULONG A = a->d[0];
             ret = BN_mod_exp_mont_word(r, A, p, m, ctx, NULL);
         } else
@@ -185,6 +187,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
         } else {
             ret = BN_one(r);
         }
+        bn_set_public_private3(r, a, p, m);
         return ret;
     }
 
@@ -285,6 +288,7 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
         if (wstart < 0)
             break;
     }
+    bn_set_public_private3(r, a, p, m);
     ret = 1;
  err:
     BN_CTX_end(ctx);
@@ -304,11 +308,10 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     BIGNUM *val[TABLE_SIZE];
     BN_MONT_CTX *mont = NULL;
 
-    if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0
-            || BN_get_flags(a, BN_FLG_CONSTTIME) != 0
-            || BN_get_flags(m, BN_FLG_CONSTTIME) != 0) {
+    if (!BN_is_public(p)
+            || !BN_is_public(a)
+            || !BN_is_public(m))
         return BN_mod_exp_mont_consttime(rr, a, p, m, ctx, in_mont);
-    }
 
     bn_check_top(a);
     bn_check_top(p);
@@ -327,6 +330,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         } else {
             ret = BN_one(rr);
         }
+        BN_set_public(rr);
         return ret;
     }
 
@@ -336,6 +340,10 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     val[0] = BN_CTX_get(ctx);
     if (val[0] == NULL)
         goto err;
+
+    BN_set_public(d);
+    BN_set_public(r);
+    BN_set_public(val[0]);
 
     /*
      * If this is not done, things will break in the montgomery part
@@ -357,7 +365,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     } else
         aa = a;
     if (BN_is_zero(aa)) {
-        BN_zero(rr);
+        BN_zero_public(rr);
         ret = 1;
         goto err;
     }
@@ -400,7 +408,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         bn_correct_top(r);
     } else
 #endif
-    if (!BN_to_montgomery(r, BN_value_one(), mont, ctx))
+    if (!BN_to_montgomery(r, BN_value_one_public(), mont, ctx))
         goto err;
     for (;;) {
         if (BN_is_bit_set(p, wstart) == 0) {
@@ -464,6 +472,7 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #endif
     if (!BN_from_montgomery(rr, r, mont, ctx))
         goto err;
+    BN_set_public(rr);
     ret = 1;
  err:
     if (in_mont == NULL)
@@ -636,6 +645,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         } else {
             ret = BN_one(rr);
         }
+        BN_set_private(rr);
         return ret;
     }
 
@@ -1086,6 +1096,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #endif
     if (!BN_from_montgomery(rr, &tmp, mont, ctx))
         goto err;
+    BN_set_private(rr);
     ret = 1;
  err:
     if (in_mont == NULL)
@@ -1150,11 +1161,13 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
         } else {
             ret = BN_one(rr);
         }
+        bn_set_public_private2(rr, p, m);
         return ret;
     }
     if (a == 0) {
         BN_zero(rr);
         ret = 1;
+        bn_set_public_private2(rr, p, m);
         return ret;
     }
 
@@ -1236,6 +1249,7 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
         if (!BN_from_montgomery(rr, r, mont, ctx))
             goto err;
     }
+    bn_set_public_private2(rr, p, m);
     ret = 1;
  err:
     if (in_mont == NULL)
@@ -1272,6 +1286,7 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
         } else {
             ret = BN_one(r);
         }
+        bn_set_public_private3(r, a, p, m);
         return ret;
     }
 
@@ -1286,6 +1301,7 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     if (BN_is_zero(val[0])) {
         BN_zero(r);
         ret = 1;
+        bn_set_public_private3(r, a, p, m);
         goto err;
     }
 
@@ -1310,6 +1326,7 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
     if (!BN_one(r))
         goto err;
+    bn_set_public_private3(r, a, p, m);
 
     for (;;) {
         if (BN_is_bit_set(p, wstart) == 0) {

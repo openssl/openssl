@@ -262,14 +262,17 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
     if (p != NULL) {
         BN_free(d->p);
         d->p = p;
+        BN_set_public(p);
     }
     if (q != NULL) {
         BN_free(d->q);
         d->q = q;
+        BN_set_public(q);
     }
     if (g != NULL) {
         BN_free(d->g);
         d->g = g;
+        BN_set_public(g);
     }
 
     return 1;
@@ -296,10 +299,12 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
     if (pub_key != NULL) {
         BN_free(d->pub_key);
         d->pub_key = pub_key;
+        BN_set_public(pub_key);
     }
     if (priv_key != NULL) {
         BN_free(d->priv_key);
         d->priv_key = priv_key;
+        BN_set_private(priv_key);
     }
 
     return 1;

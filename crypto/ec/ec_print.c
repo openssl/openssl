@@ -31,6 +31,18 @@ BIGNUM *EC_POINT_point2bn(const EC_GROUP *group,
     return ret;
 }
 
+/* Will accept a NULL input */
+static EC_POINT *ec_point_set_public(EC_POINT *point)
+{
+    if (point != NULL) {
+        BN_set_public(point->X);
+        BN_set_public(point->Y);
+        BN_set_public(point->Z);
+    }
+
+    return point;
+}
+
 EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
                             const BIGNUM *bn, EC_POINT *point, BN_CTX *ctx)
 {
@@ -66,7 +78,8 @@ EC_POINT *EC_POINT_bn2point(const EC_GROUP *group,
     }
 
     OPENSSL_free(buf);
-    return ret;
+
+    return BN_is_public(bn) ? ec_point_set_public(ret) : ret;
 }
 
 static const char *HEX_DIGITS = "0123456789ABCDEF";
@@ -110,6 +123,7 @@ EC_POINT *EC_POINT_hex2point(const EC_GROUP *group,
     EC_POINT *ret = NULL;
     BIGNUM *tmp_bn = NULL;
 
+    /* Will be a private BIGNUM so the EC_POINT will also be private */
     if (!BN_hex2bn(&tmp_bn, buf))
         return NULL;
 
@@ -118,4 +132,10 @@ EC_POINT *EC_POINT_hex2point(const EC_GROUP *group,
     BN_clear_free(tmp_bn);
 
     return ret;
+}
+
+EC_POINT *EC_POINT_hex2point_public(const EC_GROUP *group, const char *buf,
+                                    EC_POINT *point, BN_CTX *ctx)
+{
+    return ec_point_set_public(EC_POINT_hex2point(group, buf, point, ctx));
 }

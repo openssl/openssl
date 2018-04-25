@@ -559,6 +559,16 @@ BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
     return asn1_string_to_bn(ai, bn, V_ASN1_INTEGER);
 }
 
+BIGNUM *ASN1_INTEGER_to_BN_public(const ASN1_INTEGER *ai, BIGNUM *bn)
+{
+    BIGNUM *ret = asn1_string_to_bn(ai, bn, V_ASN1_INTEGER);
+
+    if (ret != NULL)
+        BN_set_public(ret);
+
+    return ret;
+}
+
 int ASN1_ENUMERATED_get_int64(int64_t *pr, const ASN1_ENUMERATED *a)
 {
     return asn1_string_get_int64(pr, a, V_ASN1_ENUMERATED);

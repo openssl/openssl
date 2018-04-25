@@ -189,7 +189,7 @@ static const BIGNUM _bignum_nist_p_192 = {
     BN_NIST_192_TOP,
     BN_NIST_192_TOP,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BIGNUM _bignum_nist_p_224 = {
@@ -197,7 +197,7 @@ static const BIGNUM _bignum_nist_p_224 = {
     BN_NIST_224_TOP,
     BN_NIST_224_TOP,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BIGNUM _bignum_nist_p_256 = {
@@ -205,7 +205,7 @@ static const BIGNUM _bignum_nist_p_256 = {
     BN_NIST_256_TOP,
     BN_NIST_256_TOP,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BIGNUM _bignum_nist_p_384 = {
@@ -213,7 +213,7 @@ static const BIGNUM _bignum_nist_p_384 = {
     BN_NIST_384_TOP,
     BN_NIST_384_TOP,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 static const BIGNUM _bignum_nist_p_521 = {
@@ -221,7 +221,7 @@ static const BIGNUM _bignum_nist_p_521 = {
     BN_NIST_521_TOP,
     BN_NIST_521_TOP,
     0,
-    BN_FLG_STATIC_DATA
+    BN_FLG_STATIC_DATA | BN_FLG_PUBLIC_DATA
 };
 
 const BIGNUM *BN_get0_nist_prime_192(void)
@@ -438,6 +438,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     nist_cp_bn(r_d, res, BN_NIST_192_TOP);
     r->top = BN_NIST_192_TOP;
     bn_correct_top(r);
+    bn_set_public_private1(r, a);
 
     return 1;
 }
@@ -621,6 +622,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     nist_cp_bn(r_d, res, BN_NIST_224_TOP);
     r->top = BN_NIST_224_TOP;
     bn_correct_top(r);
+    bn_set_public_private1(r, a);
 
     return 1;
 }
@@ -863,6 +865,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     nist_cp_bn(r_d, res, BN_NIST_256_TOP);
     r->top = BN_NIST_256_TOP;
     bn_correct_top(r);
+    bn_set_public_private1(r, a);
 
     return 1;
 }
@@ -1144,6 +1147,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     nist_cp_bn(r_d, res, BN_NIST_384_TOP);
     r->top = BN_NIST_384_TOP;
     bn_correct_top(r);
+    bn_set_public_private1(r, a);
 
     return 1;
 }
@@ -1219,6 +1223,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     nist_cp_bn(r_d, res, BN_NIST_521_TOP);
     r->top = BN_NIST_521_TOP;
     bn_correct_top(r);
+    bn_set_public_private1(r, a);
 
     return 1;
 }

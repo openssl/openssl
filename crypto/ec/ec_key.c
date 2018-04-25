@@ -437,17 +437,26 @@ const BIGNUM *EC_KEY_get0_private_key(const EC_KEY *key)
 
 int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 {
+    BIGNUM *priv_key_dup = BN_dup(priv_key);
+
+    if (priv_key_dup == NULL)
+        return 0;
+    BN_set_private(priv_key_dup);
+
     if (key->group == NULL || key->group->meth == NULL)
-        return 0;
+       goto err;
     if (key->group->meth->set_private != NULL
-        && key->group->meth->set_private(key, priv_key) == 0)
-        return 0;
+        && key->group->meth->set_private(key, priv_key_dup) == 0)
+        goto err;
     if (key->meth->set_private != NULL
-        && key->meth->set_private(key, priv_key) == 0)
-        return 0;
+        && key->meth->set_private(key, priv_key_dup) == 0)
+        goto err;
     BN_clear_free(key->priv_key);
-    key->priv_key = BN_dup(priv_key);
-    return (key->priv_key == NULL) ? 0 : 1;
+    key->priv_key = priv_key_dup;
+    return 1;
+ err:
+    BN_free(priv_key_dup);
+    return 0;
 }
 
 const EC_POINT *EC_KEY_get0_public_key(const EC_KEY *key)
@@ -462,7 +471,15 @@ int EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
         return 0;
     EC_POINT_free(key->pub_key);
     key->pub_key = EC_POINT_dup(pub_key, key->group);
-    return (key->pub_key == NULL) ? 0 : 1;
+    if (key->pub_key == NULL)
+        return 0;
+    if(key->pub_key->X != NULL)
+        BN_set_public(key->pub_key->X);
+    if(key->pub_key->Y != NULL)
+        BN_set_public(key->pub_key->Y);
+    if(key->pub_key->Z != NULL)
+        BN_set_public(key->pub_key->Z);
+    return 1;
 }
 
 unsigned int EC_KEY_get_enc_flags(const EC_KEY *key)
@@ -532,7 +549,7 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
         key->pub_key = EC_POINT_new(key->group);
     if (key->pub_key == NULL)
         return 0;
-    if (EC_POINT_oct2point(key->group, key->pub_key, buf, len, ctx) == 0)
+    if (EC_POINT_oct2point_public(key->group, key->pub_key, buf, len, ctx) == 0)
         return 0;
     /*
      * Save the point conversion form.
