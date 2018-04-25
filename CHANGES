@@ -21,6 +21,14 @@
      constant time fixed point multiplication.
      [Billy Bob Brumley]
 
+  *) Revise elliptic curve scalar multiplication with timing attack
+     defenses: ec_wNAF_mul redirects to a constant time implementation
+     when computing fixed point and variable point multiplication (which
+     in OpenSSL are mostly used with secret scalars in keygen, sign,
+     ECDH derive operations).
+     [Billy Bob Brumley, Nicola Tuveri, Cesar Pereida García,
+      Sohaib ul Hassan]
+
   *) Updated CONTRIBUTING
      [Rich Salz]
 
