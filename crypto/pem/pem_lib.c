@@ -30,7 +30,7 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
-    int i, j;
+    int i;
     const char *prompt;
 
     if (key) {
