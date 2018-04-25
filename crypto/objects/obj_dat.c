@@ -350,7 +350,7 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 {
     int nid = NID_undef;
-    ASN1_OBJECT *op = NULL;
+    ASN1_OBJECT *op;
     unsigned char *buf;
     unsigned char *p;
     const unsigned char *cp;
@@ -376,8 +376,10 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     if (j < 0)
         return NULL;
 
-    if ((buf = OPENSSL_malloc(j)) == NULL)
+    if ((buf = OPENSSL_malloc(j)) == NULL) {
+        OBJerr(OBJ_F_OBJ_TXT2OBJ, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     p = buf;
     /* Write out tag+length */
