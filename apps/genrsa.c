@@ -134,10 +134,6 @@ opthelp:
         goto end;
     }
 
-    out = bio_open_owner(outfile, FORMAT_PEM, private);
-    if (out == NULL)
-        goto end;
-
     BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus (%d primes)\n",
                num, primes);
     rsa = eng ? RSA_new_method(eng) : RSA_new();
@@ -159,6 +155,11 @@ opthelp:
     cb_data.password = passout;
     cb_data.prompt_info = outfile;
     assert(private);
+
+    out = bio_open_owner(outfile, FORMAT_PEM, private);
+    if (out == NULL)
+        goto end;
+
     if (!PEM_write_bio_RSAPrivateKey(out, rsa, enc, NULL, 0,
                                      (pem_password_cb *)password_callback,
                                      &cb_data))

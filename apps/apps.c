@@ -43,11 +43,6 @@
 #include "s_apps.h"
 #include "apps.h"
 
-#ifdef _WIN32
-static int WIN32_rename(const char *from, const char *to);
-# define rename(from,to) WIN32_rename((from),(to))
-#endif
-
 typedef struct {
     const char *name;
     unsigned long flag;
@@ -2083,7 +2078,7 @@ void store_setup_crl_download(X509_STORE *st)
 # include <windows.h>
 # include <tchar.h>
 
-static int WIN32_rename(const char *from, const char *to)
+int WIN32_rename(const char *from, const char *to)
 {
     TCHAR *tfrom = NULL, *tto;
     DWORD err;
@@ -2441,7 +2436,7 @@ int raw_write_stdout(const void *buf, int siz)
  * does impact behavior on some platform, such as differentiating between
  * text and binary input/output on non-Unix platforms
  */
-static int istext(int format)
+int istext(int format)
 {
     return (format & B_FORMAT_TEXT) == B_FORMAT_TEXT;
 }
@@ -2511,7 +2506,7 @@ void unbuffer(FILE *fp)
 #endif
 }
 
-static const char *modestr(char mode, int format)
+const char *modestr(char mode, int format)
 {
     OPENSSL_assert(mode == 'a' || mode == 'r' || mode == 'w');
 
@@ -2541,65 +2536,38 @@ static const char *modeverb(char mode)
 }
 
 /*
- * Open a file for writing, owner-read-only.
+ * Open a file for writing, owner-read-only. The file is written in
+ * a 'write-to-temp-file-then-rename' basis.
  */
 BIO *bio_open_owner(const char *filename, int format, int private)
 {
-    FILE *fp = NULL;
     BIO *b = NULL;
-    int fd = -1, bflags, mode, textmode;
+    BIO *sink = NULL;
+    BIO *filter = NULL;
 
     if (!private || filename == NULL || strcmp(filename, "-") == 0)
         return bio_open_default(filename, 'w', format);
 
-    mode = O_WRONLY;
-#ifdef O_CREAT
-    mode |= O_CREAT;
-#endif
-#ifdef O_TRUNC
-    mode |= O_TRUNC;
-#endif
-    textmode = istext(format);
-    if (!textmode) {
-#ifdef O_BINARY
-        mode |= O_BINARY;
-#elif defined(_O_BINARY)
-        mode |= _O_BINARY;
-#endif
-    }
+    sink = BIO_new(BIO_s_file());
+    if (sink == NULL)
+        goto err;
 
-#ifdef OPENSSL_SYS_VMS
-    /* VMS doesn't have O_BINARY, it just doesn't make sense.  But,
-     * it still needs to know that we're going binary, or fdopen()
-     * will fail with "invalid argument"...  so we tell VMS what the
-     * context is.
-     */
-    if (!textmode)
-        fd = open(filename, mode, 0600, "ctx=bin");
-    else
-#endif
-        fd = open(filename, mode, 0600);
-    if (fd < 0)
+    /* create the filter BIO */
+    filter = BIO_new(apps_bf_tempfile());
+    if (filter == NULL)
         goto err;
-    fp = fdopen(fd, modestr('w', format));
-    if (fp == NULL)
+
+    b = BIO_push(filter, sink);
+
+    /* set real filename to filter BIO for later usage */
+    if (!BIO_ctrl(b, BIO_C_SET_FILENAME, format, (void *)filename))
         goto err;
-    bflags = BIO_CLOSE;
-    if (textmode)
-        bflags |= BIO_FP_TEXT;
-    b = BIO_new_fp(fp, bflags);
-    if (b)
-        return b;
+
+    return b;
 
  err:
-    BIO_printf(bio_err, "%s: Can't open \"%s\" for writing, %s\n",
-               opt_getprog(), filename, strerror(errno));
-    ERR_print_errors(bio_err);
-    /* If we have fp, then fdopen took over fd, so don't close both. */
-    if (fp)
-        fclose(fp);
-    else if (fd >= 0)
-        close(fd);
+    BIO_free(sink);
+    BIO_free(filter);
     return NULL;
 }
 

@@ -68,6 +68,9 @@ BIO_METHOD *apps_bf_prefix(void);
  */
 void destroy_prefix_method(void);
 
+/* almost the same reason as above - the bf_prefix one */
+BIO_METHOD *apps_bf_tempfile(void);
+
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
 BIO *dup_bio_err(int format);
@@ -630,5 +633,13 @@ typedef struct verify_options_st {
 } VERIFY_CB_ARGS;
 
 extern VERIFY_CB_ARGS verify_args;
+
+int istext(int format);
+const char *modestr(char mode, int format);
+
+#ifdef _WIN32
+int WIN32_rename(const char *from, const char *to);
+# define rename(from,to) WIN32_rename((from),(to))
+#endif
 
 #endif

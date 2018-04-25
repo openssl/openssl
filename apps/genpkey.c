@@ -136,10 +136,6 @@ int genpkey_main(int argc, char **argv)
         goto end;
     }
 
-    out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
-
     EVP_PKEY_CTX_set_cb(ctx, genpkey_cb);
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
@@ -156,6 +152,10 @@ int genpkey_main(int argc, char **argv)
             goto end;
         }
     }
+
+    out = bio_open_owner(outfile, outformat, private);
+    if (out == NULL)
+        goto end;
 
     if (do_param) {
         rv = PEM_write_bio_Parameters(out, pkey);
