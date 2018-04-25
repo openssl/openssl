@@ -45,7 +45,7 @@ The connection uses the TLSv1.2 protocol.
 
 =item unknown
 
-This indicates that the protocol is in an unknown state.
+This indicates an unknown protocol version.
 
 =back
 
