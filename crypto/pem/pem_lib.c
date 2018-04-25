@@ -30,12 +30,8 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 {
-#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
-    int i;
-#else
-    int i, j;
+    int i, min_len;
     const char *prompt;
-#endif
 
     if (key) {
         i = strlen(key);
@@ -52,28 +48,19 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
     if (prompt == NULL)
         prompt = "Enter PEM pass phrase:";
 
-    for (;;) {
-        /*
-         * We assume that w == 0 means decryption,
-         * while w == 1 means encryption
-         */
-        int min_len = w ? MIN_LENGTH : 0;
+    /*
+     * We assume that w == 0 means decryption,
+     * while w == 1 means encryption
+     */
+    min_len = w ? MIN_LENGTH : 0;
 
-        i = EVP_read_pw_string_min(buf, min_len, num, prompt, w);
-        if (i != 0) {
-            PEMerr(PEM_F_PEM_DEF_CALLBACK, PEM_R_PROBLEMS_GETTING_PASSWORD);
-            memset(buf, 0, (unsigned int)num);
-            return -1;
-        }
-        j = strlen(buf);
-        if (min_len && j < min_len) {
-            fprintf(stderr,
-                    "phrase is too short, needs to be at least %d chars\n",
-                    min_len);
-        } else
-            break;
+    i = EVP_read_pw_string_min(buf, min_len, num, prompt, w);
+    if (i != 0) {
+        PEMerr(PEM_F_PEM_DEF_CALLBACK, PEM_R_PROBLEMS_GETTING_PASSWORD);
+        memset(buf, 0, (unsigned int)num);
+        return -1;
     }
-    return j;
+    return strlen(buf);
 #endif
 }
 
