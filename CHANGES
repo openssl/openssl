@@ -9,6 +9,9 @@
 
  Changes between 1.0.2o and 1.0.2p [xx XXX xxxx]
 
+  *) Increase the number of Miller-Rabin rounds for DSA key generating to 64.
+     [Kurt Roeckx]
+
   *) Add blinding to ECDSA and DSA signatures to protect against side channel
      attacks discovered by Keegan Ryan (NCC Group).
      [Matt Caswell]
