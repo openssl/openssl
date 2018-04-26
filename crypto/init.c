@@ -365,9 +365,9 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
     if (locals->async) {
 #ifdef OPENSSL_INIT_DEBUG
         fprintf(stderr, "OPENSSL_INIT: ossl_init_thread_stop: "
-                        "ASYNC_cleanup_thread()\n");
+                        "async_delete_thread_state()\n");
 #endif
-        ASYNC_cleanup_thread();
+        async_delete_thread_state();
     }
 
     if (locals->err_state) {
