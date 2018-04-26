@@ -54,6 +54,7 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_F_SXNET_ADD_ID_ULONG                      127
 # define X509V3_F_SXNET_GET_ID_ASC                        128
 # define X509V3_F_SXNET_GET_ID_ULONG                      129
+# define X509V3_F_TREE_INIT                               172
 # define X509V3_F_V2I_ASIDENTIFIERS                       163
 # define X509V3_F_V2I_ASN1_BIT_STRING                     101
 # define X509V3_F_V2I_AUTHORITY_INFO_ACCESS               139

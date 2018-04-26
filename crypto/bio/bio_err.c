@@ -19,10 +19,12 @@ static const ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_PACK(ERR_LIB_BIO, BIO_F_ADDR_STRINGS, 0), "addr_strings"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT, 0), "BIO_accept"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT_EX, 0), "BIO_accept_ex"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ACCEPT_NEW, 0), "BIO_ACCEPT_new"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_ADDR_NEW, 0), "BIO_ADDR_new"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_BIND, 0), "BIO_bind"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CALLBACK_CTRL, 0), "BIO_callback_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CONNECT, 0), "BIO_connect"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CONNECT_NEW, 0), "BIO_CONNECT_new"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_CTRL, 0), "BIO_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_GETS, 0), "BIO_gets"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_BIO_GET_HOST_IP, 0), "BIO_get_host_ip"},
@@ -65,6 +67,8 @@ static const ERR_STRING_DATA BIO_str_functs[] = {
     {ERR_PACK(ERR_LIB_BIO, BIO_F_LINEBUFFER_CTRL, 0), "linebuffer_ctrl"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_LINEBUFFER_NEW, 0), "linebuffer_new"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_MEM_WRITE, 0), "mem_write"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_NBIOF_NEW, 0), "nbiof_new"},
+    {ERR_PACK(ERR_LIB_BIO, BIO_F_SLG_WRITE, 0), "slg_write"},
     {ERR_PACK(ERR_LIB_BIO, BIO_F_SSL_NEW, 0), "SSL_new"},
     {0, NULL}
 };

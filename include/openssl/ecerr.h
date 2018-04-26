@@ -114,6 +114,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_GROUP_SET_CURVE_GF2M                     176
 #  define EC_F_EC_GROUP_SET_CURVE_GFP                      109
 #  define EC_F_EC_GROUP_SET_GENERATOR                      111
+#  define EC_F_EC_GROUP_SET_SEED                           286
 #  define EC_F_EC_KEY_CHECK_KEY                            177
 #  define EC_F_EC_KEY_COPY                                 178
 #  define EC_F_EC_KEY_GENERATE_KEY                         179

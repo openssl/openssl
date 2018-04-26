@@ -394,8 +394,10 @@ size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
     if (!len || !p)
         return 1;
 
-    if ((group->seed = OPENSSL_malloc(len)) == NULL)
+    if ((group->seed = OPENSSL_malloc(len)) == NULL) {
+        ECerr(EC_F_EC_GROUP_SET_SEED, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
     memcpy(group->seed, p, len);
     group->seed_len = len;
 
@@ -558,7 +560,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
         ECerr(EC_F_EC_POINT_NEW, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if (group->meth->point_init == 0) {
+    if (group->meth->point_init == NULL) {
         ECerr(EC_F_EC_POINT_NEW, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return NULL;
     }
