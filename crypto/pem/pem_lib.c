@@ -30,8 +30,11 @@ int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
 {
-    int i, min_len;
+    int i;
+#ifndef OPENSSL_NO_UI
+    int min_len;
     const char *prompt;
+#endif
 
     /* We assume that the user passes a default password as userdata */
     if (userdata) {
@@ -41,7 +44,7 @@ int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
         return i;
     }
 
-#if defined(OPENSSL_NO_STDIO) || defined(OPENSSL_NO_UI)
+#ifdef OPENSSL_NO_UI
     PEMerr(PEM_F_PEM_DEF_CALLBACK, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return -1;
 #else
