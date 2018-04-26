@@ -356,7 +356,9 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
 
 /* KDF types */
 # define EVP_PKEY_DH_KDF_NONE                            1
+# ifndef OPENSSL_NO_CMS
 # define EVP_PKEY_DH_KDF_X9_42                           2
+# endif
 
 /* BEGIN ERROR CODES */
 /*
