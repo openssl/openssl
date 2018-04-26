@@ -55,6 +55,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST        385
 # define SSL_F_DTLS_GET_REASSEMBLED_MESSAGE               370
 # define SSL_F_DTLS_PROCESS_HELLO_VERIFY                  386
+# define SSL_F_DTLS_RECORD_LAYER_NEW                      635
 # define SSL_F_DTLS_WAIT_FOR_DRY                          592
 # define SSL_F_EARLY_DATA_COUNT_OK                        532
 # define SSL_F_FINAL_EARLY_DATA                           556

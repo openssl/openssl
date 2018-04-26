@@ -35,9 +35,13 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_FOPEN                           119
 # define CRYPTO_F_OPENSSL_HEXSTR2BUF                      118
 # define CRYPTO_F_OPENSSL_INIT_CRYPTO                     116
+# define CRYPTO_F_OPENSSL_LH_NEW                          126
+# define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
+# define CRYPTO_F_OPENSSL_SK_DUP                          128
 # define CRYPTO_F_PKEY_HMAC_INIT                          123
 # define CRYPTO_F_PKEY_POLY1305_INIT                      124
 # define CRYPTO_F_PKEY_SIPHASH_INIT                       125
+# define CRYPTO_F_SK_RESERVE                              129
 
 /*
  * CRYPTO reason codes.

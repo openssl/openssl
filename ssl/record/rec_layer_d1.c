@@ -20,8 +20,10 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
 
-    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
+    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL) {
+        SSLerr(SSL_F_DTLS_RECORD_LAYER_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     rl->d = d;
 
