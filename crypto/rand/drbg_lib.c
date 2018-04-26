@@ -285,8 +285,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         goto end;
     }
 
-    if (drbg->meth == NULL)
-    {
+    if (drbg->meth == NULL) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
                 RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
         goto end;
@@ -375,8 +374,7 @@ end:
  */
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
-    if (drbg->meth == NULL)
-    {
+    if (drbg->meth == NULL) {
         RANDerr(RAND_F_RAND_DRBG_UNINSTANTIATE,
                 RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
         return 0;
@@ -413,9 +411,9 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
         return 0;
     }
 
-    if (adin == NULL)
+    if (adin == NULL) {
         adinlen = 0;
-    else if (adinlen > drbg->max_adinlen) {
+    } else if (adinlen > drbg->max_adinlen) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
@@ -885,8 +883,6 @@ err:
  */
 DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
 {
-    int ret = 1;
-
     /*
      * ensure that libcrypto is initialized, otherwise the
      * DRBG locks are not cleaned up properly
@@ -894,17 +890,23 @@ DEFINE_RUN_ONCE_STATIC(do_rand_drbg_init)
     if (!OPENSSL_init_crypto(0, NULL))
         return 0;
 
-    ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
-
-    master_drbg = drbg_setup(NULL);
-
-    ret &= CRYPTO_THREAD_init_local(&private_drbg, NULL);
-    ret &= CRYPTO_THREAD_init_local(&public_drbg, NULL);
-
-    if (master_drbg == NULL || ret == 0)
+    if (!CRYPTO_THREAD_init_local(&private_drbg, NULL))
         return 0;
 
+    if (!CRYPTO_THREAD_init_local(&public_drbg, NULL))
+        goto err1;
+
+    master_drbg = drbg_setup(NULL);
+    if (master_drbg == NULL)
+        goto err2;
+
     return 1;
+
+err2:
+    CRYPTO_THREAD_cleanup_local(&public_drbg);
+err1:
+    CRYPTO_THREAD_cleanup_local(&private_drbg);
+    return 0;
 }
 
 /* Clean up the global DRBGs before exit */
@@ -922,9 +924,11 @@ void drbg_delete_thread_state()
     RAND_DRBG *drbg;
 
     drbg = CRYPTO_THREAD_get_local(&public_drbg);
+    CRYPTO_THREAD_set_local(&public_drbg, NULL);
     RAND_DRBG_free(drbg);
 
     drbg = CRYPTO_THREAD_get_local(&private_drbg);
+    CRYPTO_THREAD_set_local(&private_drbg, NULL);
     RAND_DRBG_free(drbg);
 }
 
@@ -1020,7 +1024,8 @@ RAND_DRBG *RAND_DRBG_get0_public(void)
 
     drbg = CRYPTO_THREAD_get_local(&public_drbg);
     if (drbg == NULL) {
-        ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
+        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND))
+            return NULL;
         drbg = drbg_setup(master_drbg);
         CRYPTO_THREAD_set_local(&public_drbg, drbg);
     }
@@ -1040,7 +1045,8 @@ RAND_DRBG *RAND_DRBG_get0_private(void)
 
     drbg = CRYPTO_THREAD_get_local(&private_drbg);
     if (drbg == NULL) {
-        ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND);
+        if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_RAND))
+            return NULL;
         drbg = drbg_setup(master_drbg);
         CRYPTO_THREAD_set_local(&private_drbg, drbg);
     }
