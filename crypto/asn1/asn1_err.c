@@ -109,6 +109,7 @@ static const ERR_STRING_DATA ASN1_str_functs[] = {
      "d2i_AutoPrivateKey"},
     {ERR_PACK(ERR_LIB_ASN1, ASN1_F_D2I_PRIVATEKEY, 0), "d2i_PrivateKey"},
     {ERR_PACK(ERR_LIB_ASN1, ASN1_F_D2I_PUBLICKEY, 0), "d2i_PublicKey"},
+    {ERR_PACK(ERR_LIB_ASN1, ASN1_F_DO_BUF, 0), "do_buf"},
     {ERR_PACK(ERR_LIB_ASN1, ASN1_F_DO_CREATE, 0), "do_create"},
     {ERR_PACK(ERR_LIB_ASN1, ASN1_F_DO_DUMP, 0), "do_dump"},
     {ERR_PACK(ERR_LIB_ASN1, ASN1_F_DO_TCREATE, 0), "do_tcreate"},
