@@ -67,6 +67,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
      "dtls_get_reassembled_message"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_DTLS_PROCESS_HELLO_VERIFY, 0),
      "dtls_process_hello_verify"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_DTLS_RECORD_LAYER_NEW, 0),
+     "DTLS_RECORD_LAYER_new"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_DTLS_WAIT_FOR_DRY, 0), "dtls_wait_for_dry"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_EARLY_DATA_COUNT_OK, 0),
      "early_data_count_ok"},

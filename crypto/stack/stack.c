@@ -46,8 +46,10 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *sk)
 {
     OPENSSL_STACK *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_SK_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     /* direct structure assignment */
     *ret = *sk;
@@ -75,8 +77,10 @@ OPENSSL_STACK *OPENSSL_sk_deep_copy(const OPENSSL_STACK *sk,
     OPENSSL_STACK *ret;
     int i;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+        CRYPTOerr(CRYPTO_F_OPENSSL_SK_DEEP_COPY, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     /* direct structure assignment */
     *ret = *sk;
@@ -174,7 +178,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
          * so |num_alloc| value is |n| or |min_nodes| if greater than |n|.
          */
         if ((st->data = OPENSSL_zalloc(sizeof(void *) * num_alloc)) == NULL) {
-            /* STACKerr(STACK_F_SK_RESERVE, ERR_R_MALLOC_FAILURE); */
+            CRYPTOerr(CRYPTO_F_SK_RESERVE, ERR_R_MALLOC_FAILURE);
             return 0;
         }
         st->num_alloc = num_alloc;
