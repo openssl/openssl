@@ -2012,9 +2012,7 @@ static int sv_body(int s, int stype, unsigned char *context)
     SSL *con = NULL;
     BIO *sbio;
     struct timeval timeout;
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
-    struct timeval tv;
-#else
+#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS))
     struct timeval *timeoutp;
 #endif
 
@@ -2149,9 +2147,9 @@ static int sv_body(int s, int stype, unsigned char *context)
              * second and check for any keypress. In a proper Windows
              * application we wouldn't do this because it is inefficient.
              */
-            tv.tv_sec = 1;
-            tv.tv_usec = 0;
-            i = select(width, (void *)&readfds, NULL, NULL, &tv);
+            timeout.tv_sec = 1;
+            timeout.tv_usec = 0;
+            i = select(width, (void *)&readfds, NULL, NULL, &timeout);
             if (has_stdin_waiting())
                 read_from_terminal = 1;
             if ((i < 0) || (!i && !read_from_terminal))
