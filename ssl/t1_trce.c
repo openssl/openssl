@@ -19,11 +19,11 @@ typedef struct {
 } ssl_trace_tbl;
 
 # define ssl_trace_str(val, tbl) \
-        do_ssl_trace_str(val, tbl, OSSL_NELEM(tbl))
+    do_ssl_trace_str(val, tbl, OSSL_NELEM(tbl))
 
 # define ssl_trace_list(bio, indent, msg, msglen, value, table) \
-        do_ssl_trace_list(bio, indent, msg, msglen, value, \
-         table, OSSL_NELEM(table))
+    do_ssl_trace_list(bio, indent, msg, msglen, value, \
+                      table, OSSL_NELEM(table))
 
 static const char *do_ssl_trace_str(int val, const ssl_trace_tbl *tbl,
                                     size_t ntbl)
@@ -1362,8 +1362,8 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
 
         if (msglen < 4)
             return 0;
-        ticket_age_add = (msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8)
-                          | msg[3];
+        ticket_age_add =
+            (msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
         msglen -= 4;
         msg += 4;
         BIO_indent(bio, indent + 2, 80);
@@ -1505,7 +1505,7 @@ void SSL_trace(int write_p, int version, int content_type,
 
             /* avoid overlapping with length at the end of buffer */
             if (msglen < (size_t)(SSL_IS_DTLS(ssl) ?
-	                 DTLS1_RT_HEADER_LENGTH : SSL3_RT_HEADER_LENGTH)) {
+                     DTLS1_RT_HEADER_LENGTH : SSL3_RT_HEADER_LENGTH)) {
                 BIO_puts(bio, write_p ? "Sent" : "Received");
                 ssl_print_hex(bio, 0, " too short message", msg, msglen);
                 break;
