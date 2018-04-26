@@ -33,7 +33,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     EVP_PKEY *ret = NULL;
 
     if (!PEM_bytes_read_bio_secmem(&data, &len, &nm, PEM_STRING_EVP_PKEY, bp,
-				   cb, u))
+                                   cb, u))
         return NULL;
     p = data;
 

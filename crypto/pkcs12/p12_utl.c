@@ -101,10 +101,10 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
          * decoding failure...
          */
         if (j < 0)
-	    return OPENSSL_asc2uni(asc, asclen, uni, unilen);
+            return OPENSSL_asc2uni(asc, asclen, uni, unilen);
 
         if (utf32chr > 0x10FFFF)        /* UTF-16 cap */
-	    return NULL;
+            return NULL;
 
         if (utf32chr >= 0x10000)        /* pair of UTF-16 characters */
             ulen += 2*2;
