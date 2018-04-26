@@ -95,6 +95,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_D2I_AUTOPRIVATEKEY                        207
 # define ASN1_F_D2I_PRIVATEKEY                            154
 # define ASN1_F_D2I_PUBLICKEY                             155
+# define ASN1_F_DO_BUF                                    142
 # define ASN1_F_DO_CREATE                                 124
 # define ASN1_F_DO_DUMP                                   125
 # define ASN1_F_DO_TCREATE                                222
