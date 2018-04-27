@@ -4452,6 +4452,109 @@ static int test_ssl_pending(int tst)
     return testresult;
 }
 
+static struct {
+    unsigned int maxprot;
+    const char *clntciphers;
+    const char *clnttls13ciphers;
+    const char *srvrciphers;
+    const char *srvrtls13ciphers;
+    const char *shared;
+} shared_ciphers_data[] = {
+    {
+        TLS1_2_VERSION,
+        "AES128-SHA:AES256-SHA",
+        NULL,
+        "AES256-SHA:DHE-RSA-AES128-SHA",
+        NULL,
+        "AES256-SHA"
+    },
+    {
+        TLS1_2_VERSION,
+        "AES128-SHA:DHE-RSA-AES128-SHA:AES256-SHA",
+        NULL,
+        "AES128-SHA:DHE-RSA-AES256-SHA:AES256-SHA",
+        NULL,
+        "AES128-SHA:AES256-SHA"
+    },
+    {
+        TLS1_2_VERSION,
+        "AES128-SHA:AES256-SHA",
+        NULL,
+        "AES128-SHA:DHE-RSA-AES128-SHA",
+        NULL,
+        "AES128-SHA"
+    },
+#ifndef OPENSSL_NO_TLS1_3
+    {
+        TLS1_3_VERSION,
+        "AES128-SHA:AES256-SHA",
+        NULL,
+        "AES256-SHA:AES128-SHA256",
+        NULL,
+        "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
+        "TLS_AES_128_GCM_SHA256:AES256-SHA"
+    },
+    {
+        TLS1_3_VERSION,
+        "AES128-SHA",
+        "TLS_AES_256_GCM_SHA384",
+        "AES256-SHA",
+        "TLS_AES_256_GCM_SHA384",
+        "TLS_AES_256_GCM_SHA384"
+    },
+#endif
+};
+
+static int test_ssl_get_shared_ciphers(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[1024];
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       shared_ciphers_data[tst].maxprot,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                        shared_ciphers_data[tst].clntciphers))
+            || (shared_ciphers_data[tst].clnttls13ciphers != NULL
+                && !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                    shared_ciphers_data[tst].clnttls13ciphers)))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx,
+                                        shared_ciphers_data[tst].srvrciphers))
+            || (shared_ciphers_data[tst].srvrtls13ciphers != NULL
+                && !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                    shared_ciphers_data[tst].srvrtls13ciphers))))
+        goto end;
+
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_ptr(SSL_get_shared_ciphers(serverssl, buf, sizeof(buf)))
+            || !TEST_int_eq(strcmp(buf, shared_ciphers_data[tst].shared), 0)) {
+        TEST_info("Shared ciphers are: %s\n", buf);
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -4544,6 +4647,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_info_callback, 6);
     ADD_ALL_TESTS(test_ssl_pending, 2);
+    ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     return 1;
 }
 
