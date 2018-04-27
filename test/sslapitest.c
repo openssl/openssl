@@ -4452,7 +4452,7 @@ static int test_ssl_pending(int tst)
     return testresult;
 }
 
-struct {
+static struct {
     unsigned int maxprot;
     const char *clntciphers;
     const char *clnttls13ciphers;
