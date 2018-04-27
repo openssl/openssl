@@ -136,34 +136,10 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     }
     while (BN_is_zero(r));
 
-    /* Check if optimized inverse is implemented */
-    if (EC_GROUP_do_inverse_ord(group, k, k, ctx) == 0) {
-        /* compute the inverse of k */
-        if (group->mont_data != NULL) {
-            /*
-             * We want inverse in constant time, therefore we utilize the fact
-             * order must be prime and use Fermats Little Theorem instead.
-             */
-            if (!BN_set_word(X, 2)) {
-                ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            if (!BN_mod_sub(X, order, X, order, ctx)) {
-                ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-                goto err;
-            }
-            BN_set_flags(X, BN_FLG_CONSTTIME);
-            if (!BN_mod_exp_mont_consttime(k, k, X, order, ctx,
-                                           group->mont_data)) {
-                ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-                goto err;
-            }
-        } else {
-            if (!BN_mod_inverse(k, k, order, ctx)) {
-                ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
-                goto err;
-            }
-        }
+    /* compute the inverse of k */
+    if (!EC_GROUP_do_inverse_ord(group, k, k, ctx)) {
+        ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
+        goto err;
     }
 
     /* clear old values if necessary */
@@ -449,12 +425,9 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         goto err;
     }
     /* calculate tmp1 = inv(S) mod order */
-    /* Check if optimized inverse is implemented */
-    if (EC_GROUP_do_inverse_ord(group, u2, sig->s, ctx) == 0) {
-        if (!BN_mod_inverse(u2, sig->s, order, ctx)) {
-            ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_BN_LIB);
-            goto err;
-        }
+    if (!EC_GROUP_do_inverse_ord(group, u2, sig->s, ctx)) {
+        ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_BN_LIB);
+        goto err;
     }
     /* digest -> m */
     i = BN_num_bits(order);

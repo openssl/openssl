@@ -1017,13 +1017,80 @@ int ec_group_simple_order_bits(const EC_GROUP *group)
     return BN_num_bits(group->order);
 }
 
+static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
+                                    BIGNUM *x, BN_CTX *ctx)
+{
+    BIGNUM *exp = NULL;
+    BN_CTX *new_ctx = NULL;
+    int ret = 0;
+
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
+        return 0;
+
+    BN_CTX_start(ctx);
+    exp = BN_CTX_get(ctx);
+    if (exp == NULL)
+        goto err;
+
+    /* Check if optimized inverse is implemented */
+    if (group->mont_data != NULL) {
+        /*-
+         * We want inverse in constant time, therefore we utilize the fact
+         * order must be prime and use Fermats Little Theorem instead.
+         */
+        if (!BN_set_word(exp, 2))
+            goto err;
+        if (!BN_sub(exp, group->order, exp))
+            goto err;
+        /*-
+         * Exponent X is public.
+         * No need for scatter-gather or BN_FLG_CONSTTIME.
+         */
+        if (!BN_mod_exp_mont(r, x, exp, group->order, ctx, group->mont_data))
+            goto err;
+        /* Inverse of zero doesn't exist. Let the fallback catch it. */
+        if (BN_is_zero(r))
+            ret = 0;
+        else
+            ret = 1;
+    }
+
+    /*-
+     * Fallback to classic inverse, blinded.
+     * BN_FLG_CONSTTIME is a don't care here.
+     */
+    if (ret == 0) {
+        do {
+            if (!BN_priv_rand_range(exp, group->order))
+            goto err;
+        } while (BN_is_zero(exp));
+
+        /* r := x * exp */
+        if (!BN_mod_mul(r, x, exp, group->order, ctx))
+            goto err;
+        /* r := 1/(x * exp) */
+        if (!BN_mod_inverse(r, r, group->order, ctx))
+            goto err;
+        /* r := exp/(x * exp) = 1/x */
+        if (!BN_mod_mul(r, r, exp, group->order, ctx))
+            goto err;
+
+        ret = 1;
+    }
+
+ err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(new_ctx);
+    return ret;
+}
+
 int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
                             BIGNUM *x, BN_CTX *ctx)
 {
     if (group->meth->field_inverse_mod_ord != NULL)
         return group->meth->field_inverse_mod_ord(group, res, x, ctx);
     else
-        return 0;
+        return ec_field_inverse_mod_ord(group, res, x, ctx);
 }
 
 /*-
