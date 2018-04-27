@@ -503,6 +503,10 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     return (a);
 }
 
+#define FLAGS_DATA(flags) ((flags) & (BN_FLG_STATIC_DATA \
+                                    | BN_FLG_CONSTTIME))
+#define FLAGS_STRUCT(flags) ((flags) & (BN_FLG_MALLOCED))
+
 void BN_swap(BIGNUM *a, BIGNUM *b)
 {
     int flags_old_a, flags_old_b;
@@ -530,10 +534,8 @@ void BN_swap(BIGNUM *a, BIGNUM *b)
     b->dmax = tmp_dmax;
     b->neg = tmp_neg;
 
-    a->flags =
-        (flags_old_a & BN_FLG_MALLOCED) | (flags_old_b & BN_FLG_STATIC_DATA);
-    b->flags =
-        (flags_old_b & BN_FLG_MALLOCED) | (flags_old_a & BN_FLG_STATIC_DATA);
+    a->flags = FLAGS_STRUCT(flags_old_a) | FLAGS_DATA(flags_old_b);
+    b->flags = FLAGS_STRUCT(flags_old_b) | FLAGS_DATA(flags_old_a);
     bn_check_top(a);
     bn_check_top(b);
 }
