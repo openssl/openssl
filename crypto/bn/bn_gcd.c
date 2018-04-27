@@ -140,7 +140,14 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     BIGNUM *ret = NULL;
     int sign;
 
-    if (pnoinv)
+    /* This is invalid input so we don't worry about constant time here */
+    if (BN_abs_is_word(n, 1) || BN_is_zero(n)) {
+        if (pnoinv != NULL)
+            *pnoinv = 1;
+        return NULL;
+    }
+
+    if (pnoinv != NULL)
         *pnoinv = 0;
 
     if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
