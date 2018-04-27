@@ -2552,23 +2552,32 @@ int SSL_set_cipher_list(SSL *s, const char *str)
 char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
 {
     char *p;
-    STACK_OF(SSL_CIPHER) *sk;
+    STACK_OF(SSL_CIPHER) *clntsk, *srvrsk;
     const SSL_CIPHER *c;
     int i;
 
-    if ((s->session == NULL) || (s->session->ciphers == NULL) || (len < 2))
+    if (!s->server
+            || s->session == NULL
+            || s->session->ciphers == NULL
+            || len < 2)
         return NULL;
 
     p = buf;
-    sk = s->session->ciphers;
-
-    if (sk_SSL_CIPHER_num(sk) == 0)
+    clntsk = s->session->ciphers;
+    srvrsk = SSL_get_ciphers(s);
+    if (clntsk == NULL || srvrsk == NULL)
         return NULL;
 
-    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
+    if (sk_SSL_CIPHER_num(clntsk) == 0 || sk_SSL_CIPHER_num(srvrsk) == 0)
+        return NULL;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(clntsk); i++) {
         int n;
 
-        c = sk_SSL_CIPHER_value(sk, i);
+        c = sk_SSL_CIPHER_value(clntsk, i);
+        if (sk_SSL_CIPHER_find(srvrsk, c) < 0)
+            continue;
+
         n = strlen(c->name);
         if (n + 1 > len) {
             if (p != buf)
