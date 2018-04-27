@@ -531,10 +531,10 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
         goto err;
     if (clientctx != NULL
         && ((min_proto_version > 0
-             && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
+             && !TEST_true(SSL_CTX_set_min_proto_version(clientctx,
                                                          min_proto_version)))
             || (max_proto_version > 0
-                && !TEST_true(SSL_CTX_set_max_proto_version(serverctx,
+                && !TEST_true(SSL_CTX_set_max_proto_version(clientctx,
                                                             max_proto_version)))))
         goto err;
 
