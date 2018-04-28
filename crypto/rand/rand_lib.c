@@ -310,19 +310,31 @@ void rand_fork()
 
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
-    int ret = 1;
-
 #ifndef OPENSSL_NO_ENGINE
     rand_engine_lock = CRYPTO_THREAD_lock_new();
-    ret &= rand_engine_lock != NULL;
+    if (rand_engine_lock == NULL)
+        return 0;
 #endif
+
     rand_meth_lock = CRYPTO_THREAD_lock_new();
-    ret &= rand_meth_lock != NULL;
+    if (rand_meth_lock == NULL)
+        goto err1;
 
     rand_nonce_lock = CRYPTO_THREAD_lock_new();
-    ret &= rand_meth_lock != NULL;
+    if (rand_nonce_lock == NULL)
+        goto err2;
 
-    return ret;
+    return 1;
+
+err2:
+    CRYPTO_THREAD_lock_free(rand_meth_lock);
+    rand_meth_lock = NULL;
+err1:
+#ifndef OPENSSL_NO_ENGINE
+    CRYPTO_THREAD_lock_free(rand_engine_lock);
+    rand_engine_lock = NULL;
+#endif
+    return 0;
 }
 
 void rand_cleanup_int(void)
@@ -334,9 +346,12 @@ void rand_cleanup_int(void)
     RAND_set_rand_method(NULL);
 #ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
+    rand_engine_lock = NULL;
 #endif
     CRYPTO_THREAD_lock_free(rand_meth_lock);
+    rand_meth_lock = NULL;
     CRYPTO_THREAD_lock_free(rand_nonce_lock);
+    rand_nonce_lock = NULL;
 }
 
 /*
