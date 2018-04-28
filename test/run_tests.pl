@@ -28,6 +28,8 @@ my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
 
+$ENV{OPENSSL_CONF} = catdir($srctop, "apps", "openssl.cnf");
+
 my %tapargs =
     ( verbosity => $ENV{VERBOSE} || $ENV{V} || $ENV{HARNESS_VERBOSE} ? 1 : 0,
       lib       => [ $libdir ],
