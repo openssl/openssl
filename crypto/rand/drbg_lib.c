@@ -912,11 +912,13 @@ err1:
 /* Clean up the global DRBGs before exit */
 void rand_drbg_cleanup_int(void)
 {
-    RAND_DRBG_free(master_drbg);
-    master_drbg = NULL;
+    if (master_drbg != NULL) {
+        RAND_DRBG_free(master_drbg);
+        master_drbg = NULL;
 
-    CRYPTO_THREAD_cleanup_local(&private_drbg);
-    CRYPTO_THREAD_cleanup_local(&public_drbg);
+        CRYPTO_THREAD_cleanup_local(&private_drbg);
+        CRYPTO_THREAD_cleanup_local(&public_drbg);
+    }
 }
 
 void drbg_delete_thread_state()
