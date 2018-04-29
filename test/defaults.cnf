@@ -1,0 +1,7 @@
+#
+# Test defaults config file
+# This literally forces openssl, libcrypto and libssl to run with built in
+# defaults
+#
+
+RANDFILE		= ./.rnd
