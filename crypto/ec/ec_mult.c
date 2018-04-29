@@ -309,7 +309,8 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
 
  err:
     EC_POINT_free(s);
-    BN_CTX_end(ctx);
+    if (ctx != NULL)
+        BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
 
     return ret;
