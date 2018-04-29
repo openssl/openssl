@@ -8,7 +8,7 @@
  */
 
 #define _GNU_SOURCE
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>

@@ -15,7 +15,7 @@
  * See ssl/ssltest.c for some hints on how this can be used.
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 #include <assert.h>
 #include <limits.h>
 #include <stdlib.h>

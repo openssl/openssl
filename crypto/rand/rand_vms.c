@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "internal/e_os.h"
 
 #if defined(OPENSSL_SYS_VMS)
 # include <unistd.h>

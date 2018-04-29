@@ -12,7 +12,7 @@
 #ifndef HEADER_SSL_LOCL_H
 # define HEADER_SSL_LOCL_H
 
-# include "e_os.h"              /* struct timeval for DTLS */
+# include "internal/e_os.h"
 # include <stdlib.h>
 # include <time.h>
 # include <string.h>
