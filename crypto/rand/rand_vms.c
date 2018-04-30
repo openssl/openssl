@@ -10,16 +10,24 @@
 #include "e_os.h"
 
 #if defined(OPENSSL_SYS_VMS)
+# define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
 # include <unistd.h>
 # include "internal/cryptlib.h"
 # include <openssl/rand.h>
 # include "internal/rand_int.h"
 # include "rand_lcl.h"
 # include <descrip.h>
+# include <dvidef.h>
 # include <jpidef.h>
+# include <rmidef.h>
+# include <syidef.h>
 # include <ssdef.h>
 # include <starlet.h>
-# include <efndef>
+# include <efndef.h>
+# include <gen64def.h>
+# include <iosbdef.h>
+# include <iledef.h>
+# include <lib$routines.h>
 # ifdef __DECC
 #  pragma message disable DOLLARID
 # endif
@@ -28,34 +36,106 @@
 #  error "Unsupported seeding method configured; must be os"
 # endif
 
-/*
- * Use 32-bit pointers almost everywhere.  Define the type to which to cast a
- * pointer passed to an external function.
- */
+/* We need to make sure we have the right size pointer in some cases */
 # if __INITIAL_POINTER_SIZE == 64
-#  define PTR_T __void_ptr64
 #  pragma pointer_size save
 #  pragma pointer_size 32
-# else
-#  define PTR_T void *
+# endif
+typedef uint32_t *uint32_t__ptr32;
+# if __INITIAL_POINTER_SIZE == 64
+#  pragma pointer_size restore
 # endif
 
-static struct items_data_st {
+static const struct item_st {
     short length, code;         /* length is number of bytes */
-} items_data[] = {
-    {4, JPI$_BUFIO},
-    {4, JPI$_CPUTIM},
-    {4, JPI$_DIRIO},
-    {4, JPI$_IMAGECOUNT},
-    {8, JPI$_LAST_LOGIN_I},
-    {8, JPI$_LOGINTIM},
-    {4, JPI$_PAGEFLTS},
-    {4, JPI$_PID},
-    {4, JPI$_PPGCNT},
-    {4, JPI$_WSPEAK},
-    {4, JPI$_FINALEXC},
-    {0, 0}
+} item_data[] = {
+    {4,  JPI$_BUFIO},
+    {4,  JPI$_CPUTIM},
+    {4,  JPI$_DIRIO},
+    {4,  JPI$_IMAGECOUNT},
+    {8,  JPI$_LAST_LOGIN_I},
+    {8,  JPI$_LOGINTIM},
+    {4,  JPI$_PAGEFLTS},
+    {4,  JPI$_PID},
+    {4,  JPI$_PPGCNT},
+    {4,  JPI$_WSPEAK},
+    /*
+     * Note: the direct result is just a 32-bit address.  However, it points
+     * to a list of 4 32-bit words, so we make extra space for them so we can
+     * do in-place replacement of values
+     */
+    {16, JPI$_FINALEXC},
 };
+
+/*
+ * Input:
+ * items_data           - an array of lengths and codes
+ * items_data_num       - number of elements in that array, minus one
+ *                        (caller MUST have space for one extra NULL element)
+ *
+ * Output:
+ * items                - pre-allocated ILE3 array to be filled.
+ *                        It's assume to have items_data_num elements.
+ * databuffer           - pre-allocated 32-bit word array.
+ *
+ * Returns the number of bytes used in databuffer
+ */
+static size_t prepare_item_list(const struct item_st *items_input,
+                                size_t items_input_num,
+                                ILE3 *items,
+                                uint32_t__ptr32 databuffer)
+{
+    const struct item_st *pitems_input;
+    ILE3 *pitems;
+    size_t data_sz = 0;
+
+    for (pitems_input = items_input, pitems = items;
+         items_input_num-- > 0;
+         pitems_input++, pitems++) {
+
+        /* Special treatment of JPI$_FINALEXC */
+        if (pitems->ile3$w_code == JPI$_FINALEXC)
+            pitems->ile3$w_length = 4;
+        else
+            pitems->ile3$w_length = pitems_input->length;
+
+        pitems->ile3$w_code   = pitems_input->code;
+        pitems->ile3$ps_bufaddr = databuffer;
+        pitems->ile3$ps_retlen_addr = 0;
+
+        databuffer += pitems_input->length / sizeof(*databuffer);
+        data_sz += pitems_input->length;
+    }
+    /* Terminating NULL entry */
+    pitems->ile3$w_length = pitems->ile3$w_code = 0;
+
+    return data_sz;
+}
+
+static void massage_JPI(ILE3 *items)
+{
+    /*
+     * Special treatment of JPI$_FINALEXC
+     * The result of that item's data buffer is a 32-bit address to a list of
+     * 4 32-bit words.
+     */
+    for (; items->ile3$w_length != 0; items++) {
+        if (items->ile3$w_code == JPI$_FINALEXC) {
+            uint32_t *data = items->ile3$ps_bufaddr;
+            uint32_t *ptr = (uint32_t *)*data;
+            size_t j;
+
+            /*
+             * We know we made space for 4 32-bit words, so we can do in-place
+             * replacement.
+             */
+            for (j = 0; j < 4; j++)
+                data[j] = ptr[j];
+
+            break;
+        }
+    }
+}
 
 /*
  * This number expresses how many bits of data contain 1 bit of entropy.
@@ -67,67 +147,31 @@ static struct items_data_st {
 
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-    /* determine the number of items in the JPI array */
-    struct items_data_st item_entry;
-    size_t item_entry_count = OSSL_NELEM(items_data);
-    /* Create the 32-bit JPI itemlist array to hold item_data content */
-    struct {
-        uint16_t length, code;
-        uint32_t *buffer;
-        uint32_t *retlen;
-    } item[item_entry_count], *pitem;
-    struct items_data_st *pitems_data;
-    /* 8 bytes (two longs) per entry max */
-    uint32_t data_buffer[(item_entry_count * 2) + 4];
-    uint32_t iosb[2];
-    uint32_t sys_time[2];
-    uint32_t *ptr;
-    size_t i, j ;
-    size_t tmp_length   = 0;
+    ILE3 items[OSSL_NELEM(item_data) + 1];
+    /*
+     * All items get 1 or 2 32-bit words of data, except JPI$_FINALEXC
+     * We make sure that we have ample space
+     */
+    uint32_t data_buffer[(OSSL_NELEM(item_data)) * 2 + 4];
     size_t total_length = 0;
     size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
     size_t bytes_remaining = rand_pool_bytes_remaining(pool);
 
-    /* Setup itemlist for GETJPI */
-    pitems_data = items_data;
-    for (pitem = item; pitems_data->length != 0; pitem++) {
-        pitem->length = pitems_data->length;
-        pitem->code   = pitems_data->code;
-        pitem->buffer = &data_buffer[total_length];
-        pitem->retlen = 0;
-        /* total_length is in longwords */
-        total_length += pitems_data->length / 4;
-        pitems_data++;
-    }
-    pitem->length = pitem->code = 0;
+    total_length += prepare_item_list(item_data, OSSL_NELEM(item_data),
+                                      items, &data_buffer[total_length]);
 
     /* Fill data_buffer with various info bits from this process */
-    if (sys$getjpiw(EFN$C_ENF, NULL, NULL, item, &iosb, 0, 0) != SS$_NORMAL)
-        return 0;
+    {
+        uint32_t status;
 
-    /* Now twist that data to seed the SSL random number init */
-    for (i = 0; i < total_length; i++) {
-        sys$gettim((struct _generic_64 *)&sys_time[0]);
-        srand(sys_time[0] * data_buffer[0] * data_buffer[1] + i);
-
-        if (i == (total_length - 1)) { /* for JPI$_FINALEXC */
-            ptr = &data_buffer[i];
-            for (j = 0; j < 4; j++) {
-                data_buffer[i + j] = ptr[j];
-                /* OK to use rand() just to scramble the seed */
-                data_buffer[i + j] ^= (sys_time[0] ^ rand());
-                tmp_length++;
-            }
-        } else {
-            /* OK to use rand() just to scramble the seed */
-            data_buffer[i] ^= (sys_time[0] ^ rand());
+        if ((status = sys$getjpiw(EFN$C_ENF, 0, 0, items, 0, 0, 0))
+            != SS$_NORMAL) {
+            lib$signal(status);
+            return 0;
         }
     }
 
-    total_length += (tmp_length - 1);
-
-    /* Change the total length to number of bytes */
-    total_length *= 4;
+    massage_JPI(items);
 
     /*
      * If we can't feed the requirements from the caller, we're in deep trouble.
@@ -152,7 +196,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         total_length = bytes_remaining;
 
     /* We give the pessimistic value for the amount of entropy */
-    rand_pool_add(pool, (PTR_T)data_buffer, total_length,
+    rand_pool_add(pool, (unsigned char *)data_buffer, total_length,
                   total_length / ENTROPY_FACTOR);
     return rand_pool_entropy_available(pool);
 }
@@ -172,7 +216,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
      */
     data.pid = getpid();
     data.tid = CRYPTO_THREAD_get_current_id();
-    sys$gettim_prec((struct _generic_64 *)&data.time);
+    sys$gettim_prec(&data.time);
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
@@ -190,7 +234,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
      * concurrently (which is the case for the <master> drbg).
      */
     data.tid = CRYPTO_THREAD_get_current_id();
-    sys$gettim_prec((struct _generic_64 *)&data.time);
+    sys$gettim_prec(&data.time);
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
