@@ -40,7 +40,7 @@ extern "C" {
  *  major minor fix final patch/beta)
  */
 # define OPENSSL_VERSION_NUMBER  0x10101006L
-# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-pre6-dev  xx XXX xxxx"
+# define OPENSSL_VERSION_TEXT    "OpenSSL 1.1.1-pre6 (beta) 1 May 2018"
 
 /*-
  * The macros below are to be used for shared library (.so, .dll, ...)
