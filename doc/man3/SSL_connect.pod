@@ -35,6 +35,19 @@ nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
 
+Many OSes implement Nagle's algorithm by default which means that the OS will
+buffer outgoing TCP data if a TCP packet has already been sent for which no
+corresponding ACK has been received yet from the peer. This can have performance
+impacts after a successful TLSv1.3 handshake or a successful TLSv1.2 (or below)
+resumption handshake because the last peer to communicate in the handshake is
+the client. If the client is also the first to send application data (as is
+typical for many protocols) then this data could be buffered by the OS until an
+ACK has been received for the final handshake message.
+
+In many operating systems the TCP_NODELAY socket option is available to disable
+Nagle's algorithm. If an application opts to disable Nagle's algorithm
+consideration should be given to turning it back on again later if appropriate.
+
 =head1 RETURN VALUES
 
 The following return values can occur:
