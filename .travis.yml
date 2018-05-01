@@ -91,8 +91,8 @@ matrix:
           addons:
               apt:
                   packages:
-                      - gcc-5
-                      - g++-5
+                      - gcc-5=5.4.1-2ubuntu1
+                      - g++-5=5.4.1-2ubuntu1
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
