@@ -631,6 +631,7 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
          * all.
          */
         else if (!cert || !CMS_RecipientInfo_ktri_cert_cmp(ri, cert)) {
+            EVP_PKEY_up_ref(pk);
             CMS_RecipientInfo_set0_pkey(ri, pk);
             r = CMS_RecipientInfo_decrypt(cms, ri);
             CMS_RecipientInfo_set0_pkey(ri, NULL);
