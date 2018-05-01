@@ -20,7 +20,6 @@ extern "C" {
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
-# include <openssl/opensslconf.h>
 # include <openssl/bn.h>
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  include <openssl/dh.h>
