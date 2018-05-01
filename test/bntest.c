@@ -1964,43 +1964,44 @@ err:
     return st;
 }
 
-static int test_count_low_zero(void) {
-  BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = 0;
-  int st = 0;
-  
-  if (!TEST_ptr(a = BN_new())
-          || !TEST_ptr(b = BN_new())
-          || !TEST_ptr(c = BN_new())
-          || !TEST_ptr(d = BN_new()))
-    goto err;
-  
-  if (!TEST_true(BN_set_word(a, 17)))
-    goto err;
-  
-  if (!TEST_true(BN_lshift(b, BN_value_one(), 128)))
-    goto err;
-  
-  if (!TEST_true(BN_lshift(c, BN_value_one(), 256)))
-    goto err;
-  
-  if (!TEST_true(BN_add_word(c, 4)))
-    goto err;
-  
-  if (!TEST_true(BN_zero(d)))
-    goto err;
+static int test_count_low_zero(void) 
+{
+    BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = 0;
+    int st = 0;
 
-  if (!TEST_true(BN_count_low_zero_bits(a) == 4) ||
-      !TEST_true(BN_count_low_zero_bits(b) == 128) ||
-      !TEST_true(BN_count_low_zero_bits(c) == 3) ||
-      !TEST_true(BN_count_low_zero_bits(d) == 0))
-  
+    if (!TEST_ptr(a = BN_new())
+            || !TEST_ptr(b = BN_new())
+            || !TEST_ptr(c = BN_new())
+            || !TEST_ptr(d = BN_new()))
+        goto err;
+
+    if (!TEST_true(BN_set_word(a, 112)))
+        goto err;
+
+    if (!TEST_true(BN_lshift(b, BN_value_one(), 128)))
+        goto err;
+
+    if (!TEST_true(BN_lshift(c, BN_value_one(), 256)))
+        goto err;
+
+    if (!TEST_true(BN_add_word(c, 4)))
+        goto err;
+
+    BN_zero(d);
+
+    if (!TEST_true(BN_count_low_zero_bits(a) == 4) ||
+        !TEST_true(BN_count_low_zero_bits(b) == 128) ||
+        !TEST_true(BN_count_low_zero_bits(c) == 2) ||
+        !TEST_true(BN_count_low_zero_bits(d) == 0))
+        goto err;
+
     st = 1;
 err:
-  BN_free(a);
-  BN_free(b);
-  BN_free(c);
-  BN_free(d);
-  return st;
+    BN_free(a);
+    BN_free(b);
+    BN_free(c);
+    BN_free(d);
+    return st;
 }
 
 static int test_badmod(void)
