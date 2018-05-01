@@ -1373,8 +1373,7 @@ int speed_main(int argc, char **argv)
         const char *name;
         unsigned int nid;
         unsigned int bits;
-    } test_curves[] =
-    {
+    } test_curves[] = {
         /* Prime Curves */
         {"secp160r1", NID_secp160r1, 160},
         {"nistp192", NID_X9_62_prime192v1, 192},
