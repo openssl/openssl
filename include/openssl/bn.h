@@ -223,6 +223,7 @@ BN_ULONG BN_get_word(const BIGNUM *a);
 int BN_cmp(const BIGNUM *a, const BIGNUM *b);
 void BN_free(BIGNUM *a);
 int BN_is_bit_set(const BIGNUM *a, int n);
+int BN_count_low_zero_bits(const BIGNUM *a);
 int BN_lshift(BIGNUM *r, const BIGNUM *a, int n);
 int BN_lshift1(BIGNUM *r, const BIGNUM *a);
 int BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);

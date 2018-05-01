@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-BN_set_bit, BN_clear_bit, BN_is_bit_set, BN_mask_bits, BN_lshift,
-BN_lshift1, BN_rshift, BN_rshift1 - bit operations on BIGNUMs
+BN_set_bit, BN_clear_bit, BN_is_bit_set, BN_count_low_zero_bits, BN_mask_bits,
+BN_lshift, BN_lshift1, BN_rshift, BN_rshift1 - bit operations on BIGNUMs
 
 =head1 SYNOPSIS
 
@@ -13,6 +13,8 @@ BN_lshift1, BN_rshift, BN_rshift1 - bit operations on BIGNUMs
  int BN_clear_bit(BIGNUM *a, int n);
 
  int BN_is_bit_set(const BIGNUM *a, int n);
+
+ int BN_count_low_zero_bits(const BIGNUM *a);
 
  int BN_mask_bits(BIGNUM *a, int n);
 
@@ -32,6 +34,8 @@ error occurs if B<a> is shorter than B<n> bits.
 
 BN_is_bit_set() tests if bit B<n> in B<a> is set.
 
+BN_count_low_zero_bits() counts the number of low-order zero bits
+
 BN_mask_bits() truncates B<a> to an B<n> bit number
 (C<a&=~((~0)E<gt>E<gt>n)>).  An error occurs if B<a> already is
 shorter than B<n> bits.
@@ -49,6 +53,8 @@ For the shift functions, B<r> and B<a> may be the same variable.
 =head1 RETURN VALUES
 
 BN_is_bit_set() returns 1 if the bit is set, 0 otherwise.
+
+BN_count_low_zero_bits() returns the number of low-order zero bits
 
 All other functions return 1 for success, 0 on error. The error codes
 can be obtained by L<ERR_get_error(3)>.

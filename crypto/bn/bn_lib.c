@@ -640,6 +640,24 @@ int BN_is_bit_set(const BIGNUM *a, int n)
     return (int)(((a->d[i]) >> j) & ((BN_ULONG)1));
 }
 
+int BN_count_low_zero_bits(const BIGNUM *a) 
+{
+    int i, bits;
+    BN_ULONG w;
+
+    bn_check_top(a);
+    for (i = 0; i < a->top; i++) {
+        if (a->d[i] != 0) {
+            bits = 0;
+            for (w = a->d[i]; (w & 1) == 0; w >>= 1)
+                bits++;
+            return i * BN_BITS2 + bits;
+        }
+    }
+    /* No low non-zero words in |bn| */
+    return 0;
+}
+
 int BN_mask_bits(BIGNUM *a, int n)
 {
     int b, w;

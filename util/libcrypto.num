@@ -4528,3 +4528,4 @@ conf_ssl_name_find                      4469	1_1_0i	EXIST::FUNCTION:
 conf_ssl_get_cmd                        4470	1_1_0i	EXIST::FUNCTION:
 conf_ssl_get                            4471	1_1_0i	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_hostflags         4472	1_1_0i	EXIST::FUNCTION:
+BN_count_low_zero_bits                  4473	1_1_0i	EXIST::FUNCTION:
