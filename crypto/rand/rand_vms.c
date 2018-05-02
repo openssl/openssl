@@ -58,10 +58,12 @@ static struct items_data_st {
 };
 
 /*
- * We assume there we get about 4 bits of entropy per byte from the items
- * above, with a bit of scrambling added rand_pool_acquire_entropy()
+ * This number expresses how many bits of data contain 1 bit of entropy.
+ *
+ * For the moment, we assume about 0.5 entropy bits per data bit, or 1
+ * bit of entropy per 2 data bits.
  */
-#define ENTROPY_BITS_PER_BYTE   4
+#define ENTROPY_FACTOR  2
 
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
@@ -83,7 +85,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     size_t i, j ;
     size_t tmp_length   = 0;
     size_t total_length = 0;
-    size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_BITS_PER_BYTE);
+    size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
     size_t bytes_remaining = rand_pool_bytes_remaining(pool);
 
     /* Setup itemlist for GETJPI */
@@ -149,8 +151,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (total_length > bytes_remaining)
         total_length = bytes_remaining;
 
+    /* We give the pessimistic value for the amount of entropy */
     rand_pool_add(pool, (PTR_T)data_buffer, total_length,
-                  total_length * ENTROPY_BITS_PER_BYTE);
+                  total_length / ENTROPY_FACTOR);
     return rand_pool_entropy_available(pool);
 }
 
