@@ -568,7 +568,7 @@ fresh handle for each connection.
 
 =item SSL_SESSION *B<SSL_get_session>(const SSL *ssl);
 
-=item char *B<SSL_get_shared_ciphers>(const SSL *ssl, char *buf, int len);
+=item char *B<SSL_get_shared_ciphers>(const SSL *ssl, char *buf, int size);
 
 =item int B<SSL_get_shutdown>(const SSL *ssl);
 
