@@ -393,7 +393,7 @@ void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
     param->hostflags = flags;
 }
 
-unsigned int X509_VERIFY_PARAM_get_hostflags(X509_VERIFY_PARAM *param)
+unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param)
 {
     return param->hostflags;
 }
