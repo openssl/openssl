@@ -377,16 +377,17 @@ sub testssl {
 	  ok(run(test([@ssltest, "-bio_pair", "-server_auth", "-client_auth", "-app_verify", @CA])),
 	     'test sslv2/sslv3 with both client and server authentication via BIO pair and app verify');
 
+        my $travis_osx = defined($ENV{TRAVIS_OS_NAME}) && $ENV{TRAVIS_OS_NAME} eq 'osx';
         SKIP: {
             skip "No IPv4 available on this machine", 1
-                unless !disabled("sock") && have_IPv4();
+                if disabled("sock") || !have_IPv4() || $travis_osx;
             ok(run(test([@ssltest, "-ipv4"])),
                'test TLS via IPv4');
           }
 
         SKIP: {
             skip "No IPv6 available on this machine", 1
-                unless !disabled("sock") && have_IPv6();
+                if disabled("sock") || !have_IPv6() || $travis_osx;
             ok(run(test([@ssltest, "-ipv6"])),
                'test TLS via IPv6');
           }
