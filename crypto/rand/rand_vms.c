@@ -74,6 +74,11 @@ static const struct item_st JPI_item_data[] = {
     {16,  JPI$_FINALEXC},
 };
 
+static const struct item_st JPI_item_data_64bit[] = {
+    {8,   JPI$_LAST_LOGIN_I},
+    {8,   JPI$_LOGINTIM},
+};
+
 static const struct item_st RMI_item_data[] = {
     {4,   RMI$_COLPG},
     {4,   RMI$_MWAIT},
@@ -92,9 +97,6 @@ static const struct item_st RMI_item_data[] = {
 #if defined __alpha
     {4,   RMI$_FRLIST},
     {4,   RMI$_MODLIST},
-#elif defined __ia64
-    {8,   RMI$_FRLIST},
-    {8,   RMI$_MODLIST},
 #endif
     {4,   RMI$_FAULTS},
     {4,   RMI$_PREADS},
@@ -155,10 +157,6 @@ static const struct item_st RMI_item_data[] = {
     {152, RMI$_DDTM_ALL},          /* 38 32-bit words */
     {80,  RMI$_TMSCP_EVERYTHING}   /* 20 32-bit words */
 #endif
-    {8,   RMI$_LCKMGR_REQCNT},
-    {8,   RMI$_LCKMGR_REQTIME},
-    {8,   RMI$_LCKMGR_SPINCNT},
-    {8,   RMI$_LCKMGR_SPINTIME},
     {4,   RMI$_LPZ_PAGCNT},
     {4,   RMI$_LPZ_HITS},
     {4,   RMI$_LPZ_MISSES},
@@ -191,12 +189,6 @@ static const struct item_st RMI_item_data[] = {
     {4,   RMI$_DIRDATA_MISS},
     {4,   RMI$_FILHDR_MISS},
     {4,   RMI$_STORAGMAP_MISS},
-    {8,   RMI$_CPUINTSTK},
-    {8,   RMI$_CPUMPSYNCH},
-    {8,   RMI$_CPUKERNEL},
-    {8,   RMI$_CPUEXEC},
-    {8,   RMI$_CPUSUPER},
-    {8,   RMI$_CPUUSER},
     {4,   RMI$_PROCCNTMAX},
     {4,   RMI$_PROCBATCNT},
     {4,   RMI$_PROCINTCNT},
@@ -217,8 +209,6 @@ static const struct item_st RMI_item_data[] = {
     {4,   RMI$_WRTFAULTS},
 #if defined __alpha
     {4,   RMI$_USERPAGES},
-#elif defined __ia64
-    {8,   RMI$_USERPAGES},
 #endif
     {4,   RMI$_VMSPAGES},
     {4,   RMI$_TTWRITES},
@@ -235,12 +225,32 @@ static const struct item_st RMI_item_data[] = {
     {4,   RMI$_DLCK_INCMPLT},
     {4,   RMI$_DLCKMSGS_IN},
     {4,   RMI$_DLCKMSGS_OUT},
+    {4,   RMI$_MCHKERRS},
+    {4,   RMI$_MEMERRS},
+};
+
+static const struct item_st RMI_item_data_64bit[] = {
+#if defined __ia64
+    {8,   RMI$_FRLIST},
+    {8,   RMI$_MODLIST},
+#endif
+    {8,   RMI$_LCKMGR_REQCNT},
+    {8,   RMI$_LCKMGR_REQTIME},
+    {8,   RMI$_LCKMGR_SPINCNT},
+    {8,   RMI$_LCKMGR_SPINTIME},
+    {8,   RMI$_CPUINTSTK},
+    {8,   RMI$_CPUMPSYNCH},
+    {8,   RMI$_CPUKERNEL},
+    {8,   RMI$_CPUEXEC},
+    {8,   RMI$_CPUSUPER},
+    {8,   RMI$_CPUUSER},
+#if defined __ia64
+    {8,   RMI$_USERPAGES},
+#endif
     {8,   RMI$_TQETOTAL},
     {8,   RMI$_TQESYSUB},
     {8,   RMI$_TQEUSRTIMR},
     {8,   RMI$_TQEUSRWAKE},
-    {4,   RMI$_MCHKERRS},
-    {4,   RMI$_MEMERRS},
 };
 
 static const struct item_st SYI_item_data[] = {
@@ -328,21 +338,30 @@ static void massage_JPI(ILE3 *items)
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
     ILE3 DVI_items[OSSL_NELEM(DVI_item_data) + 1];
-    ILE3 JPI_items[OSSL_NELEM(JPI_item_data) + 1];
-    ILE3 RMI_items[OSSL_NELEM(RMI_item_data) + 1];
+    ILE3 JPI_items[OSSL_NELEM(JPI_item_data)
+                   + OSSL_NELEM(JPI_item_data_64bit) + 1];
+    ILE3 RMI_items[OSSL_NELEM(RMI_item_data)
+                   + OSSL_NELEM(RMI_item_data_64bit) + 1];
     ILE3 SYI_items[OSSL_NELEM(SYI_item_data) + 1];
-    /*
-     * All items get 1 or 2 32-bit words of data, except JPI$_FINALEXC
-     * We make sure that we have ample space
-     */
-    uint32_t data_buffer[(OSSL_NELEM(DVI_item_data)
-                          + OSSL_NELEM(JPI_item_data)
-                          + OSSL_NELEM(RMI_item_data)
-                          + OSSL_NELEM(SYI_item_data)) * 2 + 4];
+    uint32_t data_buffer[OSSL_NELEM(JPI_item_data_64bit) * 2
+                         + OSSL_NELEM(RMI_item_data_64bit) * 2
+                         + OSSL_NELEM(DVI_item_data)
+                         + OSSL_NELEM(JPI_item_data)
+                         + OSSL_NELEM(RMI_item_data)
+                         + OSSL_NELEM(SYI_item_data)
+                         + 4 /* For JPI$_FINALEXC */ ];
     size_t total_length = 0;
     size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
     size_t bytes_remaining = rand_pool_bytes_remaining(pool);
 
+    /* Take all the 64-bit items first, to avoid possible alignment problems */
+    total_length += prepare_item_list(JPI_item_data_64bit,
+                                      OSSL_NELEM(JPI_item_data_64bit),
+                                      JPI_items, &data_buffer[total_length]);
+    total_length += prepare_item_list(RMI_item_data_64bit,
+                                      OSSL_NELEM(RMI_item_data_64bit),
+                                      RMI_items, &data_buffer[total_length]);
+    /* Now the 32-bit items */
     total_length += prepare_item_list(DVI_item_data, OSSL_NELEM(DVI_item_data),
                                       DVI_items, &data_buffer[total_length]);
     total_length += prepare_item_list(JPI_item_data, OSSL_NELEM(JPI_item_data),
