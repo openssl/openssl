@@ -60,8 +60,6 @@ static const struct item_st JPI_item_data[] = {
     {4,   JPI$_CPUTIM},
     {4,   JPI$_DIRIO},
     {4,   JPI$_IMAGECOUNT},
-    {8,   JPI$_LAST_LOGIN_I},
-    {8,   JPI$_LOGINTIM},
     {4,   JPI$_PAGEFLTS},
     {4,   JPI$_PID},
     {4,   JPI$_PPGCNT},
