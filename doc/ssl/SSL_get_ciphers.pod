@@ -13,7 +13,7 @@ SSL_get_shared_ciphers
 
  STACK_OF(SSL_CIPHER) *SSL_get_ciphers(const SSL *ssl);
  const char *SSL_get_cipher_list(const SSL *ssl, int priority);
- char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len);
+ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size);
 
 =head1 DESCRIPTION
 
@@ -28,7 +28,7 @@ is returned.
 
 SSL_get_shared_ciphers() creates a colon separated and NUL terminated list of
 SSL_CIPHER names that are available in both the client and the server. B<buf> is
-the buffer that should be populated with the list of names and B<len> is the
+the buffer that should be populated with the list of names and B<size> is the
 size of that buffer. A pointer to B<buf> is returned on success or NULL on
 error. If the supplied buffer is not large enough to contain the complete list
 of names then a truncated list of names will be returned. Note that just because
