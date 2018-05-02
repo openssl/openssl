@@ -529,7 +529,7 @@ size_t rand_pool_entropy_needed(RAND_POOL *pool)
 
 /*
  * Returns the number of bytes needed to fill the pool, assuming
- * the input has 1 / 'entropy_factor' entropy bits per data bit.
+ * the input has 1 / |entropy_factor| entropy bits per data bit.
  * In case of an error, 0 is returned.
  */
 
