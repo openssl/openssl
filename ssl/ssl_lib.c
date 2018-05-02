@@ -2213,7 +2213,7 @@ int SSL_set_cipher_list(SSL *s, const char *str)
     return 1;
 }
 
-char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
+char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
 {
     char *p;
     STACK_OF(SSL_CIPHER) *clntsk, *srvrsk;
@@ -2223,7 +2223,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
     if (!s->server
             || s->session == NULL
             || s->session->ciphers == NULL
-            || len < 2)
+            || size < 2)
         return NULL;
 
     p = buf;
@@ -2243,7 +2243,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
             continue;
 
         n = strlen(c->name);
-        if (n + 1 > len) {
+        if (n + 1 > size) {
             if (p != buf)
                 --p;
             *p = '\0';
@@ -2252,7 +2252,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
         memcpy(p, c->name, n + 1);
         p += n;
         *(p++) = ':';
-        len -= n + 1;
+        size -= n + 1;
     }
     p[-1] = '\0';
     return (buf);
