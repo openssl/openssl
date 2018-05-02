@@ -296,6 +296,7 @@ static size_t prepare_item_list(const struct item_st *items_input,
     }
     /* Terminating NULL entry */
     pitems->ile3$w_length = pitems->ile3$w_code = 0;
+    pitems->ile3$ps_bufaddr = pitems->ile3$ps_retlen_addr = NULL;
 
     return data_sz;
 }
