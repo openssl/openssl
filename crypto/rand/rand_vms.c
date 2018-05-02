@@ -262,7 +262,7 @@ static const struct item_st SYI_item_data[] = {
  *
  * Output:
  * items                - pre-allocated ILE3 array to be filled.
- *                        It's assume to have items_data_num elements plus
+ *                        It's assumed to have items_data_num elements plus
  *                        one extra for the terminating NULL element
  * databuffer           - pre-allocated 32-bit word array.
  *
