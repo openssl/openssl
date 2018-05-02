@@ -298,7 +298,7 @@ static size_t prepare_item_list(const struct item_st *items_input,
     pitems->ile3$w_length = pitems->ile3$w_code = 0;
     pitems->ile3$ps_bufaddr = pitems->ile3$ps_retlen_addr = NULL;
 
-    return data_sz;
+    return data_sz / sizeof(databuffer[0]);
 }
 
 static void massage_JPI(ILE3 *items)
@@ -340,6 +340,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data) + 1];
     uint32_t data_buffer_64bit[OSSL_NELEM(JPI_item_data_64bit) * 2
                                + OSSL_NELEM(RMI_item_data_64bit) * 2];
+    size_t total_elems_64bit = 0;
     size_t total_length_64bit = 0;
     ILE3 DVI_items[OSSL_NELEM(DVI_item_data) + 1];
     ILE3 JPI_items[OSSL_NELEM(JPI_item_data) + 1];
@@ -350,28 +351,31 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                          + OSSL_NELEM(RMI_item_data)
                          + OSSL_NELEM(SYI_item_data)
                          + 4 /* For JPI$_FINALEXC */ ];
+    size_t total_elems = 0;
     size_t total_length = 0;
     size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
     size_t bytes_remaining = rand_pool_bytes_remaining(pool);
 
     /* Take all the 64-bit items first, to avoid possible alignment problems */
-    total_length_64bit +=
+    total_elems_64bit +=
         prepare_item_list(JPI_item_data_64bit, OSSL_NELEM(JPI_item_data_64bit),
                           JPI_items_64bit,
-                          &data_buffer_64bit[total_length_64bit]);
-    total_length_64bit +=
+                          &data_buffer_64bit[total_elems_64bit]);
+    total_elems_64bit +=
         prepare_item_list(RMI_item_data_64bit, OSSL_NELEM(RMI_item_data_64bit),
                           RMI_items_64bit,
-                          &data_buffer_64bit[total_length_64bit]);
+                          &data_buffer_64bit[total_elems_64bit]);
+    total_length_64bit = total_elems_64bit * sizeof(data_buffer_64bit[0]);
     /* Now the 32-bit items */
-    total_length += prepare_item_list(DVI_item_data, OSSL_NELEM(DVI_item_data),
-                                      DVI_items, &data_buffer[total_length]);
-    total_length += prepare_item_list(JPI_item_data, OSSL_NELEM(JPI_item_data),
-                                      JPI_items, &data_buffer[total_length]);
-    total_length += prepare_item_list(RMI_item_data, OSSL_NELEM(RMI_item_data),
-                                      RMI_items, &data_buffer[total_length]);
-    total_length += prepare_item_list(SYI_item_data, OSSL_NELEM(SYI_item_data),
-                                      SYI_items, &data_buffer[total_length]);
+    total_elems += prepare_item_list(DVI_item_data, OSSL_NELEM(DVI_item_data),
+                                     DVI_items, &data_buffer[total_elems]);
+    total_elems += prepare_item_list(JPI_item_data, OSSL_NELEM(JPI_item_data),
+                                     JPI_items, &data_buffer[total_elems]);
+    total_elems += prepare_item_list(RMI_item_data, OSSL_NELEM(RMI_item_data),
+                                     RMI_items, &data_buffer[total_elems]);
+    total_elems += prepare_item_list(SYI_item_data, OSSL_NELEM(SYI_item_data),
+                                     SYI_items, &data_buffer[total_elems]);
+    total_length = total_elems * sizeof(data_buffer[0]);
 
     /* Fill data_buffer with various info bits from this process */
     {
