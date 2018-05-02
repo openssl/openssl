@@ -2149,7 +2149,7 @@ int SSL_get_fd(const SSL *s);
 int SSL_get_rfd(const SSL *s);
 int SSL_get_wfd(const SSL *s);
 const char *SSL_get_cipher_list(const SSL *s, int n);
-char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len);
+char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size);
 int SSL_get_read_ahead(const SSL *s);
 int SSL_pending(const SSL *s);
 # ifndef OPENSSL_NO_SOCK
