@@ -188,8 +188,8 @@ static int read_string(UI *ui, UI_STRING *uis);
 static int write_string(UI *ui, UI_STRING *uis);
 
 static int open_console(UI *ui);
-static int echo_console(UI *ui);
 static int noecho_console(UI *ui);
+static int echo_console(UI *ui);
 static int close_console(UI *ui);
 
 static UI_METHOD ui_openssl = {
@@ -524,7 +524,6 @@ static int echo_console(UI *ui)
 {
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
-    tty_new.TTY_FLAGS |= ECHO;
 #endif
 
 #if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
@@ -534,7 +533,7 @@ static int echo_console(UI *ui)
 #ifdef OPENSSL_SYS_VMS
     if (is_a_tty) {
         tty_new[0] = tty_orig[0];
-        tty_new[1] = tty_orig[1] & ~TT$M_NOECHO;
+        tty_new[1] = tty_orig[1];
         tty_new[2] = tty_orig[2];
         status = sys$qiow(0, channel, IO$_SETMODE, &iosb, 0, 0, tty_new, 12,
                           0, 0, 0, 0);
@@ -555,7 +554,6 @@ static int echo_console(UI *ui)
 #if defined(_WIN32) && !defined(_WIN32_WCE)
     if (is_a_tty) {
         tty_new = tty_orig;
-        tty_new |= ENABLE_ECHO_INPUT;
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), tty_new);
     }
 #endif
