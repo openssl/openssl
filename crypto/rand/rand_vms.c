@@ -291,7 +291,7 @@ static size_t prepare_item_list(const struct item_st *items_input,
         pitems->ile3$ps_bufaddr = databuffer;
         pitems->ile3$ps_retlen_addr = 0;
 
-        databuffer += pitems_input->length / sizeof(*databuffer);
+        databuffer += pitems_input->length / sizeof(databuffer[0]);
         data_sz += pitems_input->length;
     }
     /* Terminating NULL entry */
@@ -336,8 +336,8 @@ static void massage_JPI(ILE3 *items)
 
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-    ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data) + 1];
-    ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data) + 1];
+    ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data_64bit) + 1];
+    ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data_64bit) + 1];
     uint32_t data_buffer_64bit[OSSL_NELEM(JPI_item_data_64bit) * 2
                                + OSSL_NELEM(RMI_item_data_64bit) * 2];
     size_t total_elems_64bit = 0;
