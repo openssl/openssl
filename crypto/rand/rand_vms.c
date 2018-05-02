@@ -361,7 +361,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     total_length_64bit +=
         prepare_item_list(RMI_item_data_64bit, OSSL_NELEM(RMI_item_data_64bit),
                           RMI_items_64bit,
-                          &data_buffer[total_length]);
+                          &data_buffer_64bit[total_length_64bit]);
     /* Now the 32-bit items */
     total_length += prepare_item_list(DVI_item_data, OSSL_NELEM(DVI_item_data),
                                       DVI_items, &data_buffer[total_length]);
