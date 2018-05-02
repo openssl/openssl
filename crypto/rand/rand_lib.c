@@ -87,7 +87,7 @@ size_t rand_acquire_entropy_from_cpu(RAND_POOL *pool)
     size_t bytes_needed;
     unsigned char *buffer;
 
-    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) {
         buffer = rand_pool_add_begin(pool, bytes_needed);
 
@@ -158,7 +158,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     }
 
     if (drbg->parent) {
-        size_t bytes_needed = rand_pool_bytes_needed(pool, 8);
+        size_t bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
         unsigned char *buffer = rand_pool_add_begin(pool, bytes_needed);
 
         if (buffer != NULL) {
@@ -488,11 +488,11 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
 
 
 /*
- * If every byte of the input contains |entropy_per_bytes| bits of entropy,
- * how many bytes does one need to obtain at least |bits| bits of entropy?
+ * If |entropy_factor| bits contain 1 bit of entropy, how many bytes does one
+ * need to obtain at least |bits| bits of entropy?
  */
-#define ENTROPY_TO_BYTES(bits, entropy_per_bytes) \
-    (((bits) + ((entropy_per_bytes) - 1))/(entropy_per_bytes))
+#define ENTROPY_TO_BYTES(bits, entropy_factor) \
+    (((bits) * (entropy_factor) + 7) / 8)
 
 
 /*
@@ -529,21 +529,21 @@ size_t rand_pool_entropy_needed(RAND_POOL *pool)
 
 /*
  * Returns the number of bytes needed to fill the pool, assuming
- * the input has 'entropy_per_byte' entropy bits per byte.
+ * the input has 1 / |entropy_factor| entropy bits per data bit.
  * In case of an error, 0 is returned.
  */
 
-size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_per_byte)
+size_t rand_pool_bytes_needed(RAND_POOL *pool, unsigned int entropy_factor)
 {
     size_t bytes_needed;
     size_t entropy_needed = rand_pool_entropy_needed(pool);
 
-    if (entropy_per_byte < 1 || entropy_per_byte > 8) {
+    if (entropy_factor < 1) {
         RANDerr(RAND_F_RAND_POOL_BYTES_NEEDED, RAND_R_ARGUMENT_OUT_OF_RANGE);
         return 0;
     }
 
-    bytes_needed = ENTROPY_TO_BYTES(entropy_needed, entropy_per_byte);
+    bytes_needed = ENTROPY_TO_BYTES(entropy_needed, entropy_factor);
 
     if (bytes_needed > pool->max_len - pool->len) {
         /* not enough space left */
