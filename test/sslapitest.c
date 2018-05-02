@@ -4454,11 +4454,16 @@ static int test_ssl_pending(int tst)
                                                 SSL_ERROR_NONE)))
         goto end;
 
-    if (!TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
+    if (!TEST_int_eq(SSL_pending(clientssl), 0)
+            || !TEST_false(SSL_has_pending(clientssl))
+            || !TEST_int_eq(SSL_pending(serverssl), 0)
+            || !TEST_false(SSL_has_pending(serverssl))
+            || !TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
             || !TEST_size_t_eq(written, sizeof(msg))
             || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
             || !TEST_size_t_eq(readbytes, sizeof(buf))
-            || !TEST_int_eq(SSL_pending(clientssl), (int)(written - readbytes)))
+            || !TEST_int_eq(SSL_pending(clientssl), (int)(written - readbytes))
+            || !TEST_true(SSL_has_pending(clientssl)))
         goto end;
 
     testresult = 1;
