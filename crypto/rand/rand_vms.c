@@ -427,7 +427,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
     /* We give the pessimistic value for the amount of entropy */
     rand_pool_add(pool, (unsigned char *)data_buffer, total_length,
-                  total_length / ENTROPY_FACTOR);
+                  8 * total_length / ENTROPY_FACTOR);
     return rand_pool_entropy_available(pool);
 }
 
