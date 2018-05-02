@@ -250,12 +250,12 @@ static const struct item_st SYI_item_data[] = {
 /*
  * Input:
  * items_data           - an array of lengths and codes
- * items_data_num       - number of elements in that array, minus one
- *                        (caller MUST have space for one extra NULL element)
+ * items_data_num       - number of elements in that array
  *
  * Output:
  * items                - pre-allocated ILE3 array to be filled.
- *                        It's assume to have items_data_num elements.
+ *                        It's assume to have items_data_num elements plus
+ *                        one extra for the terminating NULL element
  * databuffer           - pre-allocated 32-bit word array.
  *
  * Returns the number of bytes used in databuffer
@@ -279,7 +279,7 @@ static size_t prepare_item_list(const struct item_st *items_input,
         else
             pitems->ile3$w_length = pitems_input->length;
 
-        pitems->ile3$w_code   = pitems_input->code;
+        pitems->ile3$w_code = pitems_input->code;
         pitems->ile3$ps_bufaddr = databuffer;
         pitems->ile3$ps_retlen_addr = 0;
 
