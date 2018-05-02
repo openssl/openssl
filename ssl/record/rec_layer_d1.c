@@ -460,6 +460,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return -1;
         }
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         goto start;
     }
 
@@ -469,8 +470,9 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         s->rwstate = SSL_NOTHING;
-        return (0);
+        return 0;
     }
 
     if (type == SSL3_RECORD_get_type(rr)
@@ -495,8 +497,16 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         if (recvd_type != NULL)
             *recvd_type = SSL3_RECORD_get_type(rr);
 
-        if (len <= 0)
-            return (len);
+        if (len <= 0) {
+            /*
+             * Mark a zero length record as read. This ensures multiple calls to
+             * SSL_read() with a zero length buffer will eventually cause
+             * SSL_pending() to report data as being available.
+             */
+            if (SSL3_RECORD_get_length(rr) == 0)
+                SSL3_RECORD_set_read(rr);
+            return len;
+        }
 
         if ((unsigned int)len > SSL3_RECORD_get_length(rr))
             n = SSL3_RECORD_get_length(rr);
@@ -504,12 +514,16 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             n = (unsigned int)len;
 
         memcpy(buf, &(SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)]), n);
-        if (!peek) {
+        if (peek) {
+            if (SSL3_RECORD_get_length(rr) == 0)
+                SSL3_RECORD_set_read(rr);
+        } else {
             SSL3_RECORD_sub_length(rr, n);
             SSL3_RECORD_add_off(rr, n);
             if (SSL3_RECORD_get_length(rr) == 0) {
                 s->rlayer.rstate = SSL_ST_READ_HEADER;
                 SSL3_RECORD_set_off(rr, 0);
+                SSL3_RECORD_set_read(rr);
             }
         }
 #ifndef OPENSSL_NO_SCTP
@@ -560,6 +574,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
             /* Exit and notify application to read again */
             SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             s->rwstate = SSL_READING;
             BIO_clear_retry_flags(SSL_get_rbio(s));
             BIO_set_retry_read(SSL_get_rbio(s));
@@ -604,6 +619,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 #endif
                 s->rlayer.rstate = SSL_ST_READ_HEADER;
                 SSL3_RECORD_set_length(rr, 0);
+                SSL3_RECORD_set_read(rr);
                 goto start;
             }
 
@@ -613,6 +629,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 SSL3_RECORD_add_off(rr, 1);
                 SSL3_RECORD_add_length(rr, -1);
             }
+            if (SSL3_RECORD_get_length(rr) == 0)
+                SSL3_RECORD_set_read(rr);
             *dest_len = dest_maxlen;
         }
     }
@@ -683,6 +701,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             }
         } else {
             SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
         }
         /*
@@ -707,6 +726,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 || (s->options & SSL_OP_NO_RENEGOTIATION) != 0)) {
         s->rlayer.d->handshake_fragment_len = 0;
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_RENEGOTIATION);
         goto start;
     }
@@ -734,6 +754,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
         if (alert_level == SSL3_AL_WARNING) {
             s->s3->warn_alert = alert_descr;
+            SSL3_RECORD_set_read(rr);
 
             s->rlayer.alert_count++;
             if (s->rlayer.alert_count == MAX_WARN_ALERT_COUNT) {
@@ -798,6 +819,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             BIO_snprintf(tmp, sizeof(tmp), "%d", alert_descr);
             ERR_add_error_data(2, "SSL alert number ", tmp);
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            SSL3_RECORD_set_read(rr);
             SSL_CTX_remove_session(s->session_ctx, s->session);
             return (0);
         } else {
@@ -813,7 +835,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                                             * shutdown */
         s->rwstate = SSL_NOTHING;
         SSL3_RECORD_set_length(rr, 0);
-        return (0);
+        SSL3_RECORD_set_read(rr);
+        return 0;
     }
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC) {
@@ -822,6 +845,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * are still missing, so just drop it.
          */
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         goto start;
     }
 
@@ -836,6 +860,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         dtls1_get_message_header(rr->data, &msg_hdr);
         if (SSL3_RECORD_get_epoch(rr) != s->rlayer.d->r_epoch) {
             SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             goto start;
         }
 
@@ -849,6 +874,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
             dtls1_retransmit_buffered_messages(s);
             SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             goto start;
         }
 
@@ -891,6 +917,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         /* TLS just ignores unknown message types */
         if (s->version == TLS1_VERSION) {
             SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             goto start;
         }
         al = SSL_AD_UNEXPECTED_MESSAGE;
