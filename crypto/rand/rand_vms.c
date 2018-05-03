@@ -334,46 +334,45 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
     ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data_64bit) + 1];
     ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data_64bit) + 1];
-    uint32_t data_buffer_64bit[OSSL_NELEM(JPI_item_data_64bit) * 2
-                               + OSSL_NELEM(RMI_item_data_64bit) * 2];
-    size_t total_elems_64bit = 0;
-    size_t total_length_64bit = 0;
     ILE3 DVI_items[OSSL_NELEM(DVI_item_data) + 1];
     ILE3 JPI_items[OSSL_NELEM(JPI_item_data) + 1];
     ILE3 RMI_items[OSSL_NELEM(RMI_item_data) + 1];
     ILE3 SYI_items[OSSL_NELEM(SYI_item_data) + 1];
-    uint32_t data_buffer[OSSL_NELEM(DVI_item_data)
-                         + OSSL_NELEM(JPI_item_data)
-                         + OSSL_NELEM(RMI_item_data)
-                         + OSSL_NELEM(SYI_item_data)
-                         + 4 /* For JPI$_FINALEXC */ ];
+    union {
+        /* This ensures buffer starts at 64 bit boundary */
+        uint64_t dummy;
+        uint32_t buffer[OSSL_NELEM(JPI_item_data_64bit) * 2
+                        + OSSL_NELEM(RMI_item_data_64bit) * 2
+                        + OSSL_NELEM(DVI_item_data)
+                        + OSSL_NELEM(JPI_item_data)
+                        + OSSL_NELEM(RMI_item_data)
+                        + OSSL_NELEM(SYI_item_data)
+                        + 4 /* For JPI$_FINALEXC */];
+    } data;
     size_t total_elems = 0;
     size_t total_length = 0;
     size_t bytes_needed = rand_pool_bytes_needed(pool, ENTROPY_FACTOR);
     size_t bytes_remaining = rand_pool_bytes_remaining(pool);
 
-    /* Take all the 64-bit items first, to avoid possible alignment problems */
-    total_elems_64bit +=
+    /* Take all the 64-bit items first, to ensure proper alignment of data */
+    total_elems +=
         prepare_item_list(JPI_item_data_64bit, OSSL_NELEM(JPI_item_data_64bit),
-                          JPI_items_64bit,
-                          &data_buffer_64bit[total_elems_64bit]);
-    total_elems_64bit +=
+                          JPI_items_64bit, &data.buffer[total_elems]);
+    total_elems +=
         prepare_item_list(RMI_item_data_64bit, OSSL_NELEM(RMI_item_data_64bit),
-                          RMI_items_64bit,
-                          &data_buffer_64bit[total_elems_64bit]);
-    total_length_64bit = total_elems_64bit * sizeof(data_buffer_64bit[0]);
+                          RMI_items_64bit, &data.buffer[total_elems]);
     /* Now the 32-bit items */
     total_elems += prepare_item_list(DVI_item_data, OSSL_NELEM(DVI_item_data),
-                                     DVI_items, &data_buffer[total_elems]);
+                                     DVI_items, &data.buffer[total_elems]);
     total_elems += prepare_item_list(JPI_item_data, OSSL_NELEM(JPI_item_data),
-                                     JPI_items, &data_buffer[total_elems]);
+                                     JPI_items, &data.buffer[total_elems]);
     total_elems += prepare_item_list(RMI_item_data, OSSL_NELEM(RMI_item_data),
-                                     RMI_items, &data_buffer[total_elems]);
+                                     RMI_items, &data.buffer[total_elems]);
     total_elems += prepare_item_list(SYI_item_data, OSSL_NELEM(SYI_item_data),
-                                     SYI_items, &data_buffer[total_elems]);
-    total_length = total_elems * sizeof(data_buffer[0]);
+                                     SYI_items, &data.buffer[total_elems]);
+    total_length = total_elems * sizeof(data.buffer[0]);
 
-    /* Fill data_buffer with various info bits from this process */
+    /* Fill data.buffer with various info bits from this process */
     {
         uint32_t status;
         uint32_t efn;
@@ -445,7 +444,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     /*
      * If we can't feed the requirements from the caller, we're in deep trouble.
      */
-    if (!ossl_assert(total_length + total_length_64bit >= bytes_needed)) {
+    if (!ossl_assert(total_length >= bytes_needed)) {
         char neededstr[20];
         char availablestr[20];
 
@@ -461,19 +460,12 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     /*
      * Try not to overfeed the pool
      */
-    if (total_length > bytes_remaining) {
+    if (total_length > bytes_remaining)
         total_length = bytes_remaining;
-        total_length_64bit = 0;
-    } else if (total_length + total_length_64bit > bytes_remaining)
-        total_length_64bit = bytes_remaining - total_length;
 
     /* We give the pessimistic value for the amount of entropy */
-    rand_pool_add(pool, (unsigned char *)data_buffer, total_length,
+    rand_pool_add(pool, (unsigned char *)data.buffer, total_length,
                   8 * total_length / ENTROPY_FACTOR);
-    if (total_length_64bit > 0)
-        rand_pool_add(pool, (unsigned char *)data_buffer_64bit,
-                      total_length_64bit,
-                      8 * total_length_64bit / ENTROPY_FACTOR);
     return rand_pool_entropy_available(pool);
 }
 
