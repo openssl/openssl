@@ -661,7 +661,12 @@ static const uint16_t tls12_sigalgs[] = {
 
     TLSEXT_SIGALG_dsa_sha256,
     TLSEXT_SIGALG_dsa_sha384,
-    TLSEXT_SIGALG_dsa_sha512
+    TLSEXT_SIGALG_dsa_sha512,
+#endif
+#ifndef OPENSSL_NO_GOST
+    TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
+    TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
+    TLSEXT_SIGALG_gostr34102001_gostr3411,
 #endif
 };
 
