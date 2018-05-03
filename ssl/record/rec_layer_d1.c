@@ -849,6 +849,18 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
             dtls1_retransmit_buffered_messages(s);
             SSL3_RECORD_set_length(rr, 0);
+            if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
+                if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
+                    /* no read-ahead left? */
+                    BIO *bio;
+
+                    s->rwstate = SSL_READING;
+                    bio = SSL_get_rbio(s);
+                    BIO_clear_retry_flags(bio);
+                    BIO_set_retry_read(bio);
+                    return -1;
+                }
+            }
             goto start;
         }
 
