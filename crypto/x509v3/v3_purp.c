@@ -760,8 +760,12 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
                       X509_get_issuer_name(subject)))
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
+    CRYPTO_THREAD_write_lock(issuer->lock);
     x509v3_cache_extensions(issuer);
+    CRYPTO_THREAD_unlock(issuer->lock);
+    CRYPTO_THREAD_write_lock(subject->lock);
     x509v3_cache_extensions(subject);
+    CRYPTO_THREAD_unlock(subject->lock);
 
     if (subject->akid) {
         int ret = X509_check_akid(issuer, subject->akid);
