@@ -857,6 +857,21 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
                     break;
                 }
             }
+
+            /*
+             * Some GOST ciphersuites allow more than one signature algorithms
+             * */
+            if (idx == SSL_PKEY_GOST01 && s->s3->tmp.new_cipher->algorithm_auth != SSL_aGOST01) {
+                int real_idx;
+
+                for (real_idx = SSL_PKEY_GOST12_512; real_idx >= SSL_PKEY_GOST01;
+                     real_idx--) {
+                    if (s->cert->pkeys[real_idx].privatekey != NULL) {
+                        idx = real_idx;
+                        break;
+                    }
+                }
+            }
         } else {
             idx = s->cert->key - s->cert->pkeys;
         }
