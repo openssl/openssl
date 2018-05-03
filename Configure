@@ -1215,8 +1215,10 @@ if ($^O ne "VMS") {
 
     if (!$disabled{makedepend}) {
 	# We know that GNU C version 3 and up as well as all clang
-	# versions support dependency generation
-	if ($predefined{__GNUC__} >= 3) {
+	# versions support dependency generation, but Xcode did not
+	# handle $cc -M before clang support (but claims __GNUC__ = 3)
+	if (($predefined{__GNUC__} // -1) >= 3
+		&& !($predefined{__APPLE_CC__} && !$predefined{__clang__})) {
 	    $config{makedepprog} = $cc;
 	} else {
 	    $config{makedepprog} = which('makedepend');
