@@ -273,30 +273,26 @@ static size_t prepare_item_list(const struct item_st *items_input,
                                 ILE3 *items,
                                 uint32_t__ptr32 databuffer)
 {
-    const struct item_st *pitems_input;
-    ILE3 *pitems;
     size_t data_sz = 0;
 
-    for (pitems_input = items_input, pitems = items;
-         items_input_num-- > 0;
-         pitems_input++, pitems++) {
+    for (; items_input_num-- > 0; items_input++, items++) {
 
         /* Special treatment of JPI$_FINALEXC */
-        if (pitems->ile3$w_code == JPI$_FINALEXC)
-            pitems->ile3$w_length = 4;
+        if (items->ile3$w_code == JPI$_FINALEXC)
+            items->ile3$w_length = 4;
         else
-            pitems->ile3$w_length = pitems_input->length;
+            items->ile3$w_length = items_input->length;
 
-        pitems->ile3$w_code = pitems_input->code;
-        pitems->ile3$ps_bufaddr = databuffer;
-        pitems->ile3$ps_retlen_addr = 0;
+        items->ile3$w_code = items_input->code;
+        items->ile3$ps_bufaddr = databuffer;
+        items->ile3$ps_retlen_addr = 0;
 
-        databuffer += pitems_input->length / sizeof(databuffer[0]);
-        data_sz += pitems_input->length;
+        databuffer += items_input->length / sizeof(databuffer[0]);
+        data_sz += items_input->length;
     }
     /* Terminating NULL entry */
-    pitems->ile3$w_length = pitems->ile3$w_code = 0;
-    pitems->ile3$ps_bufaddr = pitems->ile3$ps_retlen_addr = NULL;
+    items->ile3$w_length = items->ile3$w_code = 0;
+    items->ile3$ps_bufaddr = items->ile3$ps_retlen_addr = NULL;
 
     return data_sz / sizeof(databuffer[0]);
 }
