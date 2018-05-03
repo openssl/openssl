@@ -877,7 +877,6 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
                     }
                 }
             }
-
         } else {
             idx = s->cert->key - s->cert->pkeys;
         }
