@@ -1057,6 +1057,15 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
             CRYPTO_atomic_add(&s->ctx->stats.sess_accept_good, 1, &discard,
                               s->ctx->lock);
             s->handshake_func = ossl_statem_accept;
+
+            if (SSL_IS_DTLS(s) && !s->hit) {
+                /*
+                 * We are finishing after the client. We start the timer going
+                 * in case there are any retransmits of our final flight
+                 * required.
+                 */
+                dtls1_start_timer(s);
+            }
         } else {
             /*
              * In TLSv1.3 we update the cache as part of processing the
@@ -1071,6 +1080,15 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
             s->handshake_func = ossl_statem_connect;
             CRYPTO_atomic_add(&s->session_ctx->stats.sess_connect_good, 1,
                               &discard, s->session_ctx->lock);
+
+            if (SSL_IS_DTLS(s) && s->hit) {
+                /*
+                 * We are finishing after the server. We start the timer going
+                 * in case there are any retransmits of our final flight
+                 * required.
+                 */
+                dtls1_start_timer(s);
+            }
         }
 
         if (SSL_IS_DTLS(s)) {
