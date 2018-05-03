@@ -93,7 +93,7 @@ struct x509_lookup_st {
     int init;                   /* have we been started */
     int skip;                   /* don't use us. */
     X509_LOOKUP_METHOD *method; /* the functions */
-    char *method_data;          /* method data */
+    void *method_data;          /* method data */
     X509_STORE *store_ctx;      /* who owns us */
 };
 

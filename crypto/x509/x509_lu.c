@@ -120,7 +120,7 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 
 int X509_LOOKUP_set0_method_data(X509_LOOKUP *ctx, void *data)
 {
-    ctx->method_data = (char*)data;
+    ctx->method_data = data;
     return 1;
 }
 

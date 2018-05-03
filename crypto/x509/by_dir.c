@@ -110,7 +110,7 @@ static int new_dir(X509_LOOKUP *lu)
         X509err(X509_F_NEW_DIR, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-    lu->method_data = (char *)a;
+    lu->method_data = a;
     return 1;
 
  err:
