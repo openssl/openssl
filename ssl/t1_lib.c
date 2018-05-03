@@ -875,17 +875,16 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
         /*
          * Some GOST ciphersuites allow more than one signature algorithms
          * */
-        if ((start_idx == -1) && (s->server) && (idx == SSL_PKEY_GOST01) && (s->s3->tmp.new_cipher->algorithm_auth != SSL_aGOST01))
-        {
-          int real_idx;
-          for (real_idx = SSL_PKEY_GOST01; real_idx <= SSL_PKEY_GOST12_512; real_idx++)
-          {
-            if (s->cert->pkeys[real_idx].privatekey != NULL)
-            {
-              break;
+        if ((start_idx == -1) && (s->server) && (idx == SSL_PKEY_GOST01)
+            && (s->s3->tmp.new_cipher->algorithm_auth != SSL_aGOST01)) {
+            int real_idx;
+            for (real_idx = SSL_PKEY_GOST01; real_idx <= SSL_PKEY_GOST12_512;
+                 real_idx++) {
+                if (s->cert->pkeys[real_idx].privatekey != NULL) {
+                    break;
+                }
             }
-          }
-        lu = tls1_lookup_sigalg(tls_default_sigalg[real_idx]);
+            lu = tls1_lookup_sigalg(tls_default_sigalg[real_idx]);
         }
 
         if (!tls1_lookup_md(lu, NULL))
