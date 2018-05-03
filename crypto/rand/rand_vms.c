@@ -266,7 +266,7 @@ static const struct item_st SYI_item_data[] = {
  *                        one extra for the terminating NULL element
  * databuffer           - pre-allocated 32-bit word array.
  *
- * Returns the number of bytes used in databuffer
+ * Returns the number of elements used in databuffer
  */
 static size_t prepare_item_list(const struct item_st *items_input,
                                 size_t items_input_num,
