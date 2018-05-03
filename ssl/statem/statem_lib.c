@@ -299,6 +299,15 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
 
             s->ctx->stats.sess_accept_good++;
             s->handshake_func = ossl_statem_accept;
+
+            if (SSL_IS_DTLS(s) && !s->hit) {
+                /*
+                 * We are finishing after the client. We start the timer going
+                 * in case there are any retransmits of our final flight
+                 * required.
+                 */
+                dtls1_start_timer(s);
+            }
         } else {
             ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             if (s->hit)
@@ -306,6 +315,15 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst)
 
             s->handshake_func = ossl_statem_connect;
             s->ctx->stats.sess_connect_good++;
+
+            if (SSL_IS_DTLS(s) && s->hit) {
+                /*
+                 * We are finishing after the server. We start the timer going
+                 * in case there are any retransmits of our final flight
+                 * required.
+                 */
+                dtls1_start_timer(s);
+            }
         }
 
         if (s->info_callback != NULL)
