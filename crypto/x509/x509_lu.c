@@ -118,18 +118,18 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
 
-int X509_LOOKUP_set0_method_data(X509_LOOKUP *ctx, void *data)
+int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data)
 {
     ctx->method_data = data;
     return 1;
 }
 
-void *X509_LOOKUP_get0_method_data(const X509_LOOKUP *ctx)
+void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx)
 {
     return ctx->method_data;
 }
 
-X509_STORE *X509_LOOKUP_get0_store(const X509_LOOKUP *ctx)
+X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx)
 {
     return ctx->store_ctx;
 }

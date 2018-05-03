@@ -469,9 +469,9 @@ int X509_LOOKUP_by_fingerprint(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                X509_OBJECT *ret);
 int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                          const char *str, int len, X509_OBJECT *ret);
-int X509_LOOKUP_set0_method_data(X509_LOOKUP *ctx, void *data);
-void *X509_LOOKUP_get0_method_data(const X509_LOOKUP *ctx);
-X509_STORE *X509_LOOKUP_get0_store(const X509_LOOKUP *ctx);
+int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data);
+void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx);
+X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx);
 int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 
 int X509_STORE_load_locations(X509_STORE *ctx,
