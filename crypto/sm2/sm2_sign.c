@@ -279,9 +279,7 @@ int SM2_sign(int type, const unsigned char *dgst, int dgstlen,
 
     *siglen = i2d_ECDSA_SIG(s, &sig);
 
-    ECDSA_SIG_free(s);
-
-    ret = 0;
+    ret = 1;
 
  done:
     ECDSA_SIG_free(s);

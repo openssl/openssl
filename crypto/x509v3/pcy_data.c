@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -40,6 +40,7 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
 {
     X509_POLICY_DATA *ret;
     ASN1_OBJECT *id;
+
     if (policy == NULL && cid == NULL)
         return NULL;
     if (cid) {
@@ -49,12 +50,15 @@ X509_POLICY_DATA *policy_data_new(POLICYINFO *policy,
     } else
         id = NULL;
     ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL)
+    if (ret == NULL) {
+        X509V3err(X509V3_F_POLICY_DATA_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
     ret->expected_policy_set = sk_ASN1_OBJECT_new_null();
     if (ret->expected_policy_set == NULL) {
         OPENSSL_free(ret);
         ASN1_OBJECT_free(id);
+        X509V3err(X509V3_F_POLICY_DATA_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 

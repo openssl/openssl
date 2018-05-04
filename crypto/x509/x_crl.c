@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -309,6 +309,7 @@ static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 {
     X509_CRL_INFO *inf;
+
     inf = &crl->crl;
     if (inf->revoked == NULL)
         inf->revoked = sk_X509_REVOKED_new(X509_REVOKED_cmp);
@@ -429,10 +430,12 @@ X509_CRL_METHOD *X509_CRL_METHOD_new(int (*crl_init) (X509_CRL *crl),
                                      int (*crl_verify) (X509_CRL *crl,
                                                         EVP_PKEY *pk))
 {
-    X509_CRL_METHOD *m;
-    m = OPENSSL_malloc(sizeof(*m));
-    if (m == NULL)
+    X509_CRL_METHOD *m = OPENSSL_malloc(sizeof(*m));
+
+    if (m == NULL) {
+        X509err(X509_F_X509_CRL_METHOD_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
     m->crl_init = crl_init;
     m->crl_free = crl_free;
     m->crl_lookup = crl_lookup;

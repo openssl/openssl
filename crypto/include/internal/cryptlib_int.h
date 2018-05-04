@@ -25,6 +25,7 @@ int ossl_init_thread_start(uint64_t opts);
  * use".
  */
 # define OPENSSL_INIT_ZLIB                   0x00010000L
+# define OPENSSL_INIT_BASE_ONLY              0x00040000L
 
 /* OPENSSL_INIT_THREAD flags */
 # define OPENSSL_INIT_THREAD_ASYNC           0x01

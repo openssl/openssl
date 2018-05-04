@@ -536,6 +536,7 @@ ENDIF
    use OpenSSL::Glob;
 
    my @nogo_headers = ( "asn1_mac.h",
+                        "opensslconf.h",
                         "__decc_include_prologue.h",
                         "__decc_include_epilogue.h" );
    my @nogo_headers_re = ( qr/.*err\.h/ );

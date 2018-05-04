@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -163,8 +163,10 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         return ret;
 
     /* If we get this far initialize the tree */
-    if ((tree = OPENSSL_zalloc(sizeof(*tree))) == NULL)
+    if ((tree = OPENSSL_zalloc(sizeof(*tree))) == NULL) {
+        X509V3err(X509V3_F_TREE_INIT, ERR_R_MALLOC_FAILURE);
         return X509_PCY_TREE_INTERNAL;
+    }
 
     /*
      * http://tools.ietf.org/html/rfc5280#section-6.1.2, figure 3.
@@ -175,6 +177,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      */
     if ((tree->levels = OPENSSL_zalloc(sizeof(*tree->levels)*(n+1))) == NULL) {
         OPENSSL_free(tree);
+        X509V3err(X509V3_F_TREE_INIT, ERR_R_MALLOC_FAILURE);
         return X509_PCY_TREE_INTERNAL;
     }
     tree->nlevel = n+1;

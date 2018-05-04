@@ -27,8 +27,11 @@ int ERR_load_X509_strings(void);
 # define X509_F_DANE_I2D                                  107
 # define X509_F_DIR_CTRL                                  102
 # define X509_F_GET_CERT_BY_SUBJECT                       103
+# define X509_F_I2D_X509_AUX                              151
+# define X509_F_LOOKUP_CERTS_SK                           152
 # define X509_F_NETSCAPE_SPKI_B64_DECODE                  129
 # define X509_F_NETSCAPE_SPKI_B64_ENCODE                  130
+# define X509_F_NEW_DIR                                   153
 # define X509_F_X509AT_ADD1_ATTR                          135
 # define X509_F_X509V3_ADD_EXT                            104
 # define X509_F_X509_ATTRIBUTE_CREATE_BY_NID              136
@@ -38,6 +41,7 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_ATTRIBUTE_SET1_DATA                  138
 # define X509_F_X509_CHECK_PRIVATE_KEY                    128
 # define X509_F_X509_CRL_DIFF                             105
+# define X509_F_X509_CRL_METHOD_NEW                       154
 # define X509_F_X509_CRL_PRINT_FP                         147
 # define X509_F_X509_EXTENSION_CREATE_BY_NID              108
 # define X509_F_X509_EXTENSION_CREATE_BY_OBJ              109
@@ -45,7 +49,9 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_LOAD_CERT_CRL_FILE                   132
 # define X509_F_X509_LOAD_CERT_FILE                       111
 # define X509_F_X509_LOAD_CRL_FILE                        112
+# define X509_F_X509_LOOKUP_NEW                           155
 # define X509_F_X509_NAME_ADD_ENTRY                       113
+# define X509_F_X509_NAME_CANON                           156
 # define X509_F_X509_NAME_ENTRY_CREATE_BY_NID             114
 # define X509_F_X509_NAME_ENTRY_CREATE_BY_TXT             131
 # define X509_F_X509_NAME_ENTRY_SET_OBJECT                115
@@ -62,14 +68,17 @@ int ERR_load_X509_strings(void);
 # define X509_F_X509_REQ_TO_X509                          123
 # define X509_F_X509_STORE_ADD_CERT                       124
 # define X509_F_X509_STORE_ADD_CRL                        125
+# define X509_F_X509_STORE_ADD_LOOKUP                     157
 # define X509_F_X509_STORE_CTX_GET1_ISSUER                146
 # define X509_F_X509_STORE_CTX_INIT                       143
 # define X509_F_X509_STORE_CTX_NEW                        142
 # define X509_F_X509_STORE_CTX_PURPOSE_INHERIT            134
+# define X509_F_X509_STORE_NEW                            158
 # define X509_F_X509_TO_X509_REQ                          126
 # define X509_F_X509_TRUST_ADD                            133
 # define X509_F_X509_TRUST_SET                            141
 # define X509_F_X509_VERIFY_CERT                          127
+# define X509_F_X509_VERIFY_PARAM_NEW                     159
 
 /*
  * X509 reason codes.

@@ -27,6 +27,7 @@ int ERR_load_OBJ_strings(void);
 # define OBJ_F_OBJ_NID2LN                                 102
 # define OBJ_F_OBJ_NID2OBJ                                103
 # define OBJ_F_OBJ_NID2SN                                 104
+# define OBJ_F_OBJ_TXT2OBJ                                108
 
 /*
  * OBJ reason codes.

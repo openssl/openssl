@@ -28,7 +28,7 @@ static char *privkey = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
 
-#define LOG_BUFFER_SIZE 1024
+#define LOG_BUFFER_SIZE 2048
 static char server_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
 static size_t server_log_buffer_index = 0;
 static char client_log_buffer[LOG_BUFFER_SIZE + 1] = {0};
@@ -54,10 +54,13 @@ static X509 *ocspcert = NULL;
 struct sslapitest_log_counts {
     unsigned int rsa_key_exchange_count;
     unsigned int master_secret_count;
+    unsigned int client_early_secret_count;
     unsigned int client_handshake_secret_count;
     unsigned int server_handshake_secret_count;
     unsigned int client_application_secret_count;
     unsigned int server_application_secret_count;
+    unsigned int early_exporter_secret_count;
+    unsigned int exporter_secret_count;
 };
 
 
@@ -139,10 +142,13 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
     size_t master_key_size = SSL_MAX_MASTER_KEY_LENGTH;
     unsigned int rsa_key_exchange_count = 0;
     unsigned int master_secret_count = 0;
+    unsigned int client_early_secret_count = 0;
     unsigned int client_handshake_secret_count = 0;
     unsigned int server_handshake_secret_count = 0;
     unsigned int client_application_secret_count = 0;
     unsigned int server_application_secret_count = 0;
+    unsigned int early_exporter_secret_count = 0;
+    unsigned int exporter_secret_count = 0;
 
     for (token = strtok(buffer, " \n"); token != NULL;
          token = strtok(NULL, " \n")) {
@@ -196,17 +202,22 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
                                                        master_key_size)))
                 return 0;
             master_secret_count++;
-        } else if (strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0
+        } else if (strcmp(token, "CLIENT_EARLY_TRAFFIC_SECRET") == 0
+                    || strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0
                     || strcmp(token, "SERVER_HANDSHAKE_TRAFFIC_SECRET") == 0
                     || strcmp(token, "CLIENT_TRAFFIC_SECRET_0") == 0
-                    || strcmp(token, "SERVER_TRAFFIC_SECRET_0") == 0) {
+                    || strcmp(token, "SERVER_TRAFFIC_SECRET_0") == 0
+                    || strcmp(token, "EARLY_EXPORTER_SECRET") == 0
+                    || strcmp(token, "EXPORTER_SECRET") == 0) {
             /*
              * TLSv1.3 secret. Tokens should be: 64 ASCII bytes of hex-encoded
              * client random, and then the hex-encoded secret. In this case,
              * we treat all of these secrets identically and then just
              * distinguish between them when counting what we saw.
              */
-            if (strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0)
+            if (strcmp(token, "CLIENT_EARLY_TRAFFIC_SECRET") == 0)
+                client_early_secret_count++;
+            else if (strcmp(token, "CLIENT_HANDSHAKE_TRAFFIC_SECRET") == 0)
                 client_handshake_secret_count++;
             else if (strcmp(token, "SERVER_HANDSHAKE_TRAFFIC_SECRET") == 0)
                 server_handshake_secret_count++;
@@ -214,6 +225,10 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
                 client_application_secret_count++;
             else if (strcmp(token, "SERVER_TRAFFIC_SECRET_0") == 0)
                 server_application_secret_count++;
+            else if (strcmp(token, "EARLY_EXPORTER_SECRET") == 0)
+                early_exporter_secret_count++;
+            else if (strcmp(token, "EXPORTER_SECRET") == 0)
+                exporter_secret_count++;
 
             client_random_size = SSL_get_client_random(ssl,
                                                        actual_client_random,
@@ -247,6 +262,8 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
                         expected->rsa_key_exchange_count)
             || !TEST_size_t_eq(master_secret_count,
                                expected->master_secret_count)
+            || !TEST_size_t_eq(client_early_secret_count,
+                               expected->client_early_secret_count)
             || !TEST_size_t_eq(client_handshake_secret_count,
                                expected->client_handshake_secret_count)
             || !TEST_size_t_eq(server_handshake_secret_count,
@@ -254,7 +271,11 @@ static int test_keylog_output(char *buffer, const SSL *ssl,
             || !TEST_size_t_eq(client_application_secret_count,
                                expected->client_application_secret_count)
             || !TEST_size_t_eq(server_application_secret_count,
-                               expected->server_application_secret_count))
+                               expected->server_application_secret_count)
+            || !TEST_size_t_eq(early_exporter_secret_count,
+                               expected->early_exporter_secret_count)
+            || !TEST_size_t_eq(exporter_secret_count,
+                               expected->exporter_secret_count))
         return 0;
     return 1;
 }
@@ -344,8 +365,11 @@ static int test_keylog_no_master_key(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *sess = NULL;
     int testresult = 0;
     struct sslapitest_log_counts expected = {0};
+    unsigned char buf[1];
+    size_t readbytes, written;
 
     /* Clean up logging space */
     memset(client_log_buffer, 0, sizeof(client_log_buffer));
@@ -356,7 +380,9 @@ static int test_keylog_no_master_key(void)
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, TLS_MAX_VERSION,
-                                       &sctx, &cctx, cert, privkey)))
+                                       &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_max_early_data(sctx,
+                                                 SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
 
     if (!TEST_true(SSL_CTX_get_keylog_callback(cctx) == NULL)
@@ -390,6 +416,46 @@ static int test_keylog_no_master_key(void)
     expected.server_handshake_secret_count = 1;
     expected.client_application_secret_count = 1;
     expected.server_application_secret_count = 1;
+    expected.exporter_secret_count = 1;
+    if (!TEST_true(test_keylog_output(client_log_buffer, clientssl,
+                                      SSL_get_session(clientssl), &expected))
+            || !TEST_true(test_keylog_output(server_log_buffer, serverssl,
+                                             SSL_get_session(serverssl),
+                                             &expected)))
+        goto end;
+
+    /* Terminate old session and resume with early data. */
+    sess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Reset key log */
+    memset(client_log_buffer, 0, sizeof(client_log_buffer));
+    memset(server_log_buffer, 0, sizeof(server_log_buffer));
+    client_log_buffer_index = 0;
+    server_log_buffer_index = 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL))
+            || !TEST_true(SSL_set_session(clientssl, sess))
+            /* Here writing 0 length early data is enough. */
+            || !TEST_true(SSL_write_early_data(clientssl, NULL, 0, &written))
+            || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                                &readbytes),
+                            SSL_READ_EARLY_DATA_ERROR)
+            || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                            SSL_EARLY_DATA_ACCEPTED)
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                          SSL_ERROR_NONE))
+            || !TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    /* In addition to the previous entries, expect early secrets. */
+    expected.client_early_secret_count = 1;
+    expected.early_exporter_secret_count = 1;
     if (!TEST_true(test_keylog_output(client_log_buffer, clientssl,
                                       SSL_get_session(clientssl), &expected))
             || !TEST_true(test_keylog_output(server_log_buffer, serverssl,
@@ -400,6 +466,7 @@ static int test_keylog_no_master_key(void)
     testresult = 1;
 
 end:
+    SSL_SESSION_free(sess);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -1637,8 +1704,6 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                                        TLS1_VERSION, TLS_MAX_VERSION,
                                        sctx, cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_max_early_data(*sctx,
-                                                 SSL3_RT_MAX_PLAIN_LENGTH))
-        || !TEST_true(SSL_CTX_set_max_early_data(*cctx,
                                                  SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
 
@@ -4204,6 +4269,12 @@ static void sslapi_info_callback(const SSL *s, int where, int ret)
         info_cb_failed = 1;
         return;
     }
+
+    /* Check that, if we've got SSL_CB_HANDSHAKE_DONE we are not in init */
+    if ((where & SSL_CB_HANDSHAKE_DONE) && SSL_in_init((SSL *)s) != 0) {
+        info_cb_failed = 1;
+        return;
+    }
 }
 
 /*
@@ -4243,6 +4314,7 @@ static int test_info_callback(int tst)
     info_cb_this_state = -1;
     info_cb_offset = tst;
 
+#ifndef OPENSSL_NO_TLS1_3
     if (tst >= 4) {
         SSL_SESSION *sess = NULL;
         size_t written, readbytes;
@@ -4277,6 +4349,7 @@ static int test_info_callback(int tst)
         testresult = 1;
         goto end;
     }
+#endif
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
                                        TLS_client_method(),
@@ -4325,6 +4398,160 @@ static int test_info_callback(int tst)
     SSL_SESSION_free(clntsess);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+    return testresult;
+}
+
+static int test_ssl_pending(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char msg[] = "A test message";
+    char buf[5];
+    size_t written, readbytes;
+
+    if (tst == 0) {
+        if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                           TLS_client_method(),
+                                           TLS1_VERSION, TLS_MAX_VERSION,
+                                           &sctx, &cctx, cert, privkey)))
+            goto end;
+    } else {
+#ifndef OPENSSL_NO_DTLS
+        if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                           DTLS_client_method(),
+                                           DTLS1_VERSION, DTLS_MAX_VERSION,
+                                           &sctx, &cctx, cert, privkey)))
+            goto end;
+#else
+        return 1;
+#endif
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
+            || !TEST_size_t_eq(written, sizeof(msg))
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+            || !TEST_size_t_eq(readbytes, sizeof(buf))
+            || !TEST_int_eq(SSL_pending(clientssl), (int)(written - readbytes)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static struct {
+    unsigned int maxprot;
+    const char *clntciphers;
+    const char *clnttls13ciphers;
+    const char *srvrciphers;
+    const char *srvrtls13ciphers;
+    const char *shared;
+} shared_ciphers_data[] = {
+    {
+        TLS1_2_VERSION,
+        "AES128-SHA:AES256-SHA",
+        NULL,
+        "AES256-SHA:DHE-RSA-AES128-SHA",
+        NULL,
+        "AES256-SHA"
+    },
+    {
+        TLS1_2_VERSION,
+        "AES128-SHA:DHE-RSA-AES128-SHA:AES256-SHA",
+        NULL,
+        "AES128-SHA:DHE-RSA-AES256-SHA:AES256-SHA",
+        NULL,
+        "AES128-SHA:AES256-SHA"
+    },
+    {
+        TLS1_2_VERSION,
+        "AES128-SHA:AES256-SHA",
+        NULL,
+        "AES128-SHA:DHE-RSA-AES128-SHA",
+        NULL,
+        "AES128-SHA"
+    },
+#ifndef OPENSSL_NO_TLS1_3
+    {
+        TLS1_3_VERSION,
+        "AES128-SHA:AES256-SHA",
+        NULL,
+        "AES256-SHA:AES128-SHA256",
+        NULL,
+        "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
+        "TLS_AES_128_GCM_SHA256:AES256-SHA"
+    },
+    {
+        TLS1_3_VERSION,
+        "AES128-SHA",
+        "TLS_AES_256_GCM_SHA384",
+        "AES256-SHA",
+        "TLS_AES_256_GCM_SHA384",
+        "TLS_AES_256_GCM_SHA384"
+    },
+#endif
+};
+
+static int test_ssl_get_shared_ciphers(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[1024];
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       shared_ciphers_data[tst].maxprot,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                        shared_ciphers_data[tst].clntciphers))
+            || (shared_ciphers_data[tst].clnttls13ciphers != NULL
+                && !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                    shared_ciphers_data[tst].clnttls13ciphers)))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx,
+                                        shared_ciphers_data[tst].srvrciphers))
+            || (shared_ciphers_data[tst].srvrtls13ciphers != NULL
+                && !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+                                    shared_ciphers_data[tst].srvrtls13ciphers))))
+        goto end;
+
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_ptr(SSL_get_shared_ciphers(serverssl, buf, sizeof(buf)))
+            || !TEST_int_eq(strcmp(buf, shared_ciphers_data[tst].shared), 0)) {
+        TEST_info("Shared ciphers are: %s\n", buf);
+        goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
     return testresult;
 }
 
@@ -4419,6 +4646,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_srp, 6);
 #endif
     ADD_ALL_TESTS(test_info_callback, 6);
+    ADD_ALL_TESTS(test_ssl_pending, 2);
+    ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     return 1;
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -81,7 +81,7 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
 $code.=<<___;
 .text
 
-.type	__KeccakF1600,\@function
+.type	__KeccakF1600,\@abi-omnipotent
 .align	32
 __KeccakF1600:
 	mov	$A[4][0](%rdi),@C[0]
@@ -345,7 +345,7 @@ $code.=<<___;
 .size	__KeccakF1600,.-__KeccakF1600
 
 .globl	KeccakF1600
-.type	KeccakF1600,\@function
+.type	KeccakF1600,\@abi-omnipotent
 .align	32
 KeccakF1600:
 .cfi_startproc
@@ -410,7 +410,7 @@ ___
      ($A_flat,$inp) = ("%r8","%r9");
 $code.=<<___;
 .globl	SHA3_absorb
-.type	SHA3_absorb,\@function
+.type	SHA3_absorb,\@function,4
 .align	32
 SHA3_absorb:
 .cfi_startproc
@@ -505,7 +505,7 @@ ___
 
 $code.=<<___;
 .globl	SHA3_squeeze
-.type	SHA3_squeeze,\@function
+.type	SHA3_squeeze,\@function,4
 .align	32
 SHA3_squeeze:
 .cfi_startproc

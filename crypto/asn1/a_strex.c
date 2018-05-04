@@ -139,7 +139,7 @@ static int do_buf(unsigned char *buf, int buflen,
                   int type, unsigned short flags, char *quotes, char_io *io_ch,
                   void *arg)
 {
-    int i, outlen, len;
+    int i, outlen, len, charwidth;
     unsigned short orflags;
     unsigned char *p, *q;
     unsigned long c;
@@ -147,12 +147,32 @@ static int do_buf(unsigned char *buf, int buflen,
     p = buf;
     q = buf + buflen;
     outlen = 0;
+    charwidth = type & BUF_TYPE_WIDTH_MASK;
+
+    switch (charwidth) {
+    case 4:
+        if (buflen & 3) {
+            ASN1err(ASN1_F_DO_BUF, ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
+            return -1;
+        }
+        break;
+    case 2:
+        if (buflen & 1) {
+            ASN1err(ASN1_F_DO_BUF, ASN1_R_INVALID_BMPSTRING_LENGTH);
+            return -1;
+        }
+        break;
+    default:
+        break;
+    }
+
     while (p != q) {
         if (p == buf && flags & ASN1_STRFLGS_ESC_2253)
             orflags = CHARTYPE_FIRST_ESC_2253;
         else
             orflags = 0;
-        switch (type & BUF_TYPE_WIDTH_MASK) {
+
+        switch (charwidth) {
         case 4:
             c = ((unsigned long)*p++) << 24;
             c |= ((unsigned long)*p++) << 16;
@@ -173,6 +193,7 @@ static int do_buf(unsigned char *buf, int buflen,
             i = UTF8_getc(p, buflen, &c);
             if (i < 0)
                 return -1;      /* Invalid UTF8String */
+            buflen -= i;
             p += i;
             break;
         default:
@@ -281,12 +302,22 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
 static const signed char tag2nbyte[] = {
     -1, -1, -1, -1, -1,         /* 0-4 */
     -1, -1, -1, -1, -1,         /* 5-9 */
-    -1, -1, 0, -1,              /* 10-13 */
-    -1, -1, -1, -1,             /* 15-17 */
-    1, 1, 1,                    /* 18-20 */
-    -1, 1, 1, 1,                /* 21-24 */
-    -1, 1, -1,                  /* 25-27 */
-    4, -1, 2                    /* 28-30 */
+    -1, -1,                     /* 10-11 */
+     0,                         /* 12 V_ASN1_UTF8STRING */
+    -1, -1, -1, -1, -1,         /* 13-17 */
+     1,                         /* 18 V_ASN1_NUMERICSTRING */
+     1,                         /* 19 V_ASN1_PRINTABLESTRING */
+     1,                         /* 20 V_ASN1_T61STRING */
+    -1,                         /* 21 */
+     1,                         /* 22 V_ASN1_IA5STRING */
+     1,                         /* 23 V_ASN1_UTCTIME */
+     1,                         /* 24 V_ASN1_GENERALIZEDTIME */
+    -1,                         /* 25 */
+     1,                         /* 26 V_ASN1_ISO64STRING */
+    -1,                         /* 27 */
+     4,                         /* 28 V_ASN1_UNIVERSALSTRING */
+    -1,                         /* 29 */
+     2                          /* 30 V_ASN1_BMPSTRING */
 };
 
 /*

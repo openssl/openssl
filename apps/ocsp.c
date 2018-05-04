@@ -559,7 +559,7 @@ int ocsp_main(int argc, char **argv)
 
     if (ridx_filename != NULL) {
         rdb = load_index(ridx_filename, NULL);
-        if (rdb == NULL || !index_index(rdb)) {
+        if (rdb == NULL || index_index(rdb) <= 0) {
             ret = 1;
             goto end;
         }
@@ -582,10 +582,11 @@ redo_accept:
         if (index_changed(rdb)) {
             CA_DB *newrdb = load_index(ridx_filename, NULL);
 
-            if (newrdb != NULL) {
+            if (newrdb != NULL && index_index(newrdb) > 0) {
                 free_index(rdb);
                 rdb = newrdb;
             } else {
+                free_index(newrdb);
                 log_message(LOG_ERR, "error reloading updated index: %s",
                             ridx_filename);
             }
@@ -696,10 +697,8 @@ redo_accept:
     if (i != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         BIO_printf(out, "Responder Error: %s (%d)\n",
                    OCSP_response_status_str(i), i);
-        if (!ignore_err) {
-                ret = 0;
+        if (!ignore_err)
                 goto end;
-        }
     }
 
     if (resp_text)

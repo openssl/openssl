@@ -511,7 +511,11 @@ my @tests_tls_1_3 = (
             "SignatureAlgorithms" => "ECDSA+SHA256",
         },
         test   => {
-            "ExpectedResult" => "ServerFail"
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA256",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedServerCANames" => "empty",
+            "ExpectedResult" => "Success"
         },
     },
     {

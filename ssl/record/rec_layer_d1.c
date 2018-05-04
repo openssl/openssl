@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,8 +20,10 @@ int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {
     DTLS_RECORD_LAYER *d;
 
-    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL)
+    if ((d = OPENSSL_malloc(sizeof(*d))) == NULL) {
+        SSLerr(SSL_F_DTLS_RECORD_LAYER_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
+    }
 
     rl->d = d;
 
@@ -418,6 +420,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     /* get new packet if necessary */
     if ((SSL3_RECORD_get_length(rr) == 0)
         || (s->rlayer.rstate == SSL_ST_READ_BODY)) {
+        RECORD_LAYER_set_numrpipes(&s->rlayer, 0);
         iret = dtls1_get_record(s);
         if (iret <= 0) {
             iret = dtls1_read_failed(s, iret);
@@ -430,6 +433,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             else
                 goto start;
         }
+        RECORD_LAYER_set_numrpipes(&s->rlayer, 1);
     }
 
     /*

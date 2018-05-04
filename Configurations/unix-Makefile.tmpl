@@ -369,7 +369,7 @@ test: tests
 	  RESULT_D=test-runs \
 	  PERL="$(PERL)" \
 	  EXE_EXT={- $exeext -} \
-	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines; pwd` \
+	  OPENSSL_ENGINES=`cd ../$(BLDDIR)/engines 2>/dev/null && pwd` \
 	  OPENSSL_DEBUG_MEMORY=on \
 	    $(PERL) ../$(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
@@ -797,7 +797,7 @@ tar:
 	mkdir -p $$TMPDIR/$$DISTDIR; \
 	(cd $(SRCDIR); \
 	 excl_re=`git submodule status | sed -e 's/^.//' | cut -d' ' -f2`; \
-	 excl_re="^(fuzz/corpora|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
+	 excl_re="^(fuzz/corpora|Configurations/.*\.norelease\.conf|`echo $$excl_re | sed -e 's/ /$$|/g'`\$$)"; \
 	 echo "$$excl_re"; \
 	 git ls-tree -r --name-only --full-tree HEAD \
 	 | egrep -v "$$excl_re" \

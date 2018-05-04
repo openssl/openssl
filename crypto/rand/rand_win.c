@@ -62,7 +62,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
@@ -76,7 +76,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (entropy_available > 0)
         return entropy_available;
 # else
-    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
@@ -95,7 +95,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     if (entropy_available > 0)
         return entropy_available;
 
-    bytes_needed = rand_pool_bytes_needed(pool, 8 /*entropy_per_byte*/);
+    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;

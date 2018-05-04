@@ -12,14 +12,17 @@
 #include <string.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
+#include <openssl/err.h>
 #include "comp_lcl.h"
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {
     COMP_CTX *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+        COMPerr(COMP_F_COMP_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
     ret->meth = meth;
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         OPENSSL_free(ret);

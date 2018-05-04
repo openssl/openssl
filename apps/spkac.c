@@ -98,7 +98,7 @@ int spkac_main(int argc, char **argv)
         case OPT_KEYFORM:
             if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
                 goto opthelp;
-	    break;
+            break;
         case OPT_CHALLENGE:
             challenge = opt_arg();
             break;

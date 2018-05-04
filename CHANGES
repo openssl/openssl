@@ -65,7 +65,7 @@
      below. Similarly TLSv1.2 ciphersuites are not compatible with TLSv1.3.
      In order to avoid issues where legacy TLSv1.2 ciphersuite configuration
      would otherwise inadvertently disable all TLSv1.3 ciphersuites the
-     configuraton has been separated out. See the ciphers man page or the
+     configuration has been separated out. See the ciphers man page or the
      SSL_CTX_set_ciphersuites() man page for more information.
      [Matt Caswell]
 

@@ -239,7 +239,7 @@ sub start
     open(my $savedin, "<&STDIN");
 
     # Temporarily replace STDIN so that sink process can inherit it...
-    $pid = open(STDIN, "$execcmd |") or die "Failed to $execcmd: $!\n";
+    $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
     $self->{real_serverpid} = $pid;
 
     # Process the output from s_server until we find the ACCEPT line, which
@@ -349,7 +349,7 @@ sub clientstart
 
     # Wait for incoming connection from client
     my $fdset = IO::Select->new($self->{proxy_sock});
-    if (!$fdset->can_read(1)) {
+    if (!$fdset->can_read(60)) {
         kill(3, $self->{real_serverpid});
         die "s_client didn't try to connect\n";
     }
@@ -369,13 +369,14 @@ sub clientstart
     $fdset = IO::Select->new($server_sock, $client_sock);
     my @ready;
     my $ctr = 0;
-    my $sessionfile = $self->{sessionfile};
     local $SIG{PIPE} = "IGNORE";
+    $self->{saw_session_ticket} = undef;
     while($fdset->count && $ctr < 10) {
-        if (defined($sessionfile)) {
+        if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
-            # look for data *and* check on session file...
-            last if TLSProxy::Message->success() && -s $sessionfile;
+            # look for data *and* session ticket...
+            last if TLSProxy::Message->success()
+                    && $self->{saw_session_ticket};
         }
         if (!(@ready = $fdset->can_read(1))) {
             $ctr++;
@@ -449,7 +450,7 @@ sub clientstart
         $self->connect_to_server();
     }
     $pid = $self->{clientpid};
-    print "Waiting for client process to close: $pid...\n";
+    print "Waiting for s_client process to close: $pid...\n";
     waitpid($pid, 0);
 
     return 1;
@@ -494,6 +495,14 @@ sub process_packet
     #Finished parsing. Call user provided filter here
     if (defined $self->filter) {
         $self->filter->($self);
+    }
+
+    #Take a note on NewSessionTicket
+    foreach my $message (reverse @{$self->{message_list}}) {
+        if ($message->{mt} == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+            $self->{saw_session_ticket} = 1;
+            last;
+        }
     }
 
     #Reconstruct the packet

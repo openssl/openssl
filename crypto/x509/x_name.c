@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -300,7 +300,7 @@ static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
 static int x509_name_canon(X509_NAME *a)
 {
     unsigned char *p;
-    STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname = NULL;
+    STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
     int i, set = -1, ret = 0, len;
@@ -313,44 +313,53 @@ static int x509_name_canon(X509_NAME *a)
         return 1;
     }
     intname = sk_STACK_OF_X509_NAME_ENTRY_new_null();
-    if (!intname)
+    if (intname == NULL) {
+        X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
         entry = sk_X509_NAME_ENTRY_value(a->entries, i);
         if (entry->set != set) {
             entries = sk_X509_NAME_ENTRY_new_null();
-            if (!entries)
+            if (entries == NULL)
                 goto err;
             if (!sk_STACK_OF_X509_NAME_ENTRY_push(intname, entries)) {
                 sk_X509_NAME_ENTRY_free(entries);
+                X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
             set = entry->set;
         }
         tmpentry = X509_NAME_ENTRY_new();
-        if (tmpentry == NULL)
+        if (tmpentry == NULL) {
+            X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
         tmpentry->object = OBJ_dup(entry->object);
-        if (tmpentry->object == NULL)
+        if (tmpentry->object == NULL) {
+            X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
         if (!asn1_string_canon(tmpentry->value, entry->value))
             goto err;
-        if (!sk_X509_NAME_ENTRY_push(entries, tmpentry))
+        if (!sk_X509_NAME_ENTRY_push(entries, tmpentry)) {
+            X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
         tmpentry = NULL;
     }
 
     /* Finally generate encoding */
-
     len = i2d_name_canon(intname, NULL);
     if (len < 0)
         goto err;
     a->canon_enclen = len;
 
     p = OPENSSL_malloc(a->canon_enclen);
-
-    if (p == NULL)
+    if (p == NULL) {
+        X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     a->canon_enc = p;
 
@@ -359,7 +368,6 @@ static int x509_name_canon(X509_NAME *a)
     ret = 1;
 
  err:
-
     X509_NAME_ENTRY_free(tmpentry);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
                                          local_sk_X509_NAME_ENTRY_pop_free);

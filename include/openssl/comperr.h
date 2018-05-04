@@ -27,6 +27,7 @@ int ERR_load_COMP_strings(void);
 #  define COMP_F_BIO_ZLIB_NEW                              100
 #  define COMP_F_BIO_ZLIB_READ                             101
 #  define COMP_F_BIO_ZLIB_WRITE                            102
+#  define COMP_F_COMP_CTX_NEW                              103
 
 /*
  * COMP reason codes.

@@ -22,6 +22,7 @@ static const ERR_STRING_DATA OBJ_str_functs[] = {
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NID2LN, 0), "OBJ_nid2ln"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NID2OBJ, 0), "OBJ_nid2obj"},
     {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_NID2SN, 0), "OBJ_nid2sn"},
+    {ERR_PACK(ERR_LIB_OBJ, OBJ_F_OBJ_TXT2OBJ, 0), "OBJ_txt2obj"},
     {0, NULL}
 };
 

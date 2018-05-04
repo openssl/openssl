@@ -78,11 +78,9 @@ int X509_check_purpose(X509 *x, int id, int ca)
 {
     int idx;
     const X509_PURPOSE *pt;
-    if (!(x->ex_flags & EXFLAG_SET)) {
-        CRYPTO_THREAD_write_lock(x->lock);
-        x509v3_cache_extensions(x);
-        CRYPTO_THREAD_unlock(x->lock);
-    }
+
+    x509v3_cache_extensions(x);
+
     /* Return if side-effect only call */
     if (id == -1)
         return 1;
@@ -354,8 +352,16 @@ static void x509v3_cache_extensions(X509 *x)
     X509_EXTENSION *ex;
 
     int i;
+
     if (x->ex_flags & EXFLAG_SET)
         return;
+
+    CRYPTO_THREAD_write_lock(x->lock);
+    if (x->ex_flags & EXFLAG_SET) {
+        CRYPTO_THREAD_unlock(x->lock);
+        return;
+    }
+
     X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
     /* V1 should mean no extensions ... */
     if (!X509_get_version(x))
@@ -490,6 +496,7 @@ static void x509v3_cache_extensions(X509 *x)
     }
     x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
+    CRYPTO_THREAD_unlock(x->lock);
 }
 
 /*-
@@ -542,11 +549,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 
 int X509_check_ca(X509 *x)
 {
-    if (!(x->ex_flags & EXFLAG_SET)) {
-        CRYPTO_THREAD_write_lock(x->lock);
-        x509v3_cache_extensions(x);
-        CRYPTO_THREAD_unlock(x->lock);
-    }
+    x509v3_cache_extensions(x);
 
     return check_ca(x);
 }
@@ -760,6 +763,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
                       X509_get_issuer_name(subject)))
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
+
     x509v3_cache_extensions(issuer);
     x509v3_cache_extensions(subject);
 

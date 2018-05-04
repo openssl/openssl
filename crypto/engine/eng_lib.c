@@ -20,7 +20,8 @@ CRYPTO_ONCE engine_lock_init = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE(do_engine_lock_init)
 {
-    OPENSSL_init_crypto(0, NULL);
+    if (!OPENSSL_init_crypto(0, NULL))
+        return 0;
     global_engine_lock = CRYPTO_THREAD_lock_new();
     return global_engine_lock != NULL;
 }
@@ -153,8 +154,10 @@ void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb)
     if (!int_cleanup_check(1))
         return;
     item = int_cleanup_item(cb);
-    if (item)
-        sk_ENGINE_CLEANUP_ITEM_push(cleanup_stack, item);
+    if (item != NULL) {
+        if (sk_ENGINE_CLEANUP_ITEM_push(cleanup_stack, item) <= 0)
+            OPENSSL_free(item);
+    }
 }
 
 /* The API function that performs all cleanup */

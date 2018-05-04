@@ -11,7 +11,9 @@ X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time,
 X509_VERIFY_PARAM_get_time,
 X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
-X509_VERIFY_PARAM_set_hostflags, X509_VERIFY_PARAM_get0_peername,
+X509_VERIFY_PARAM_set_hostflags,
+X509_VERIFY_PARAM_get_hostflags,
+X509_VERIFY_PARAM_get0_peername,
 X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip,
 X509_VERIFY_PARAM_set1_ip_asc
 - X509 verification parameters
@@ -54,6 +56,7 @@ X509_VERIFY_PARAM_set1_ip_asc
                                  const char *name, size_t namelen);
  void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                       unsigned int flags);
+ unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
  char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                   const char *email, size_t emaillen);
@@ -139,6 +142,9 @@ calling L<X509_check_host(3)>, hostname checks are out of scope
 with the DANE-EE(3) certificate usage, and the internal check will
 be suppressed as appropriate when DANE support is added to OpenSSL.
 
+X509_VERIFY_PARAM_get_hostflags() returns any host flags previously set via a
+call to X509_VERIFY_PARAM_set_hostflags().
+
 X509_VERIFY_PARAM_add1_host() adds B<name> as an additional reference
 identifier that can match the peer's certificate.  Any previous names
 set via X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_add1_host()
@@ -185,6 +191,8 @@ X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
 failure.
 
 X509_VERIFY_PARAM_get_flags() returns the current verification flags.
+
+X509_VERIFY_PARAM_get_hostflags() returns any current host flags.
 
 X509_VERIFY_PARAM_get_inh_flags() returns the current inheritance flags.
 
@@ -348,6 +356,8 @@ L<x509(1)>
 The B<X509_V_FLAG_NO_ALT_CHAINS> flag was added in OpenSSL 1.1.0
 The flag B<X509_V_FLAG_CB_ISSUER_CHECK> was deprecated in
 OpenSSL 1.1.0, and has no effect.
+
+X509_VERIFY_PARAM_get_hostflags() was added in OpenSSL 1.1.0i.
 
 =head1 COPYRIGHT
 

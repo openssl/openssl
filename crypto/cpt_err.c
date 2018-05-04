@@ -40,11 +40,16 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "OPENSSL_hexstr2buf"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_INIT_CRYPTO, 0),
      "OPENSSL_init_crypto"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_LH_NEW, 0), "OPENSSL_LH_new"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_DEEP_COPY, 0),
+     "OPENSSL_sk_deep_copy"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_SK_DUP, 0), "OPENSSL_sk_dup"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_HMAC_INIT, 0), "pkey_hmac_init"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_POLY1305_INIT, 0),
      "pkey_poly1305_init"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_PKEY_SIPHASH_INIT, 0),
      "pkey_siphash_init"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_SK_RESERVE, 0), "sk_reserve"},
     {0, NULL}
 };
 

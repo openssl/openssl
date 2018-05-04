@@ -224,7 +224,8 @@
                    os:         Use a trusted operating system entropy source.
                                This is the default method if such an entropy
                                source exists.
-                   getrandom:  Use the L<getrandom(2)> system call if available.
+                   getrandom:  Use the L<getrandom(2)> or equivalent system
+                               call.
                    devrandom:  Use the the first device from the DEVRANDOM list
                                which can be opened to read random bytes. The
                                DEVRANDOM preprocessor constant expands to
