@@ -1407,7 +1407,7 @@ unless ($disabled{asm}) {
     }
 }
 
-my %predefined = compiler_predefined($config{CC});
+my %predefined = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
 
 # Check for makedepend capabilities.
 if (!$disabled{makedepend}) {
@@ -3068,28 +3068,27 @@ sub run_dofile
 
 sub compiler_predefined {
     state %predefined;
-    my $default_compiler = shift;
+    my $cc = shift;
 
     return () if $^O eq 'VMS';
 
-    die 'compiler_predefined called without a default compiler'
-        unless $default_compiler;
+    die 'compiler_predefined called without a compiler command'
+        unless $cc;
 
-    if (! $predefined{$default_compiler}) {
-        my $cc = "$config{CROSS_COMPILE}$default_compiler";
+    if (! $predefined{$cc}) {
 
-        $predefined{$default_compiler} = {};
+        $predefined{$cc} = {};
 
         # collect compiler pre-defines from gcc or gcc-alike...
         open(PIPE, "$cc -dM -E -x c /dev/null 2>&1 |");
         while (my $l = <PIPE>) {
             $l =~ m/^#define\s+(\w+(?:\(\w+\))?)(?:\s+(.+))?/ or last;
-            $predefined{$default_compiler}->{$1} = $2 // '';
+            $predefined{$cc}->{$1} = $2 // '';
         }
         close(PIPE);
     }
 
-    return %{$predefined{$default_compiler}};
+    return %{$predefined{$cc}};
 }
 
 sub which
