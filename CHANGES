@@ -9,6 +9,10 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) When unlocking a pass phrase protected PEM file or PKCS#8 container, we
+     now allow empty (zero character) pass phrases.
+     [Richard Levitte]
+
   *) Apply blinding to binary field modular inversion and remove patent
      pending (OPENSSL_SUN_GF2M_DIV) BN_GF2m_mod_div implementation.
      [Billy Bob Brumley]

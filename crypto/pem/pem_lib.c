@@ -430,7 +430,7 @@ int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *plen,
         keylen = PEM_def_callback(buf, PEM_BUFSIZE, 0, u);
     else
         keylen = callback(buf, PEM_BUFSIZE, 0, u);
-    if (keylen <= 0) {
+    if (keylen < 0) {
         PEMerr(PEM_F_PEM_DO_HEADER, PEM_R_BAD_PASSWORD_READ);
         return 0;
     }
