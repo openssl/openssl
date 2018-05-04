@@ -1,5 +1,5 @@
 dist: trusty
-sudo: required
+sudo: false
 
 osx_image: xcode9.3
 
@@ -15,12 +15,6 @@ before_install:
     - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
           git submodule update --init --recursive;
       fi;
-
-addons:
-    apt:
-        packages:
-            - ccache
-            - golang-1.6
 
 os:
     - linux
@@ -38,6 +32,7 @@ env:
 matrix:
     include:
         - os: linux
+          sudo: required
           addons:
               apt:
                   packages:
@@ -48,6 +43,7 @@ matrix:
           compiler: gcc-5
           env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
+          sudo: required
           compiler: clang-3.9
           env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
         - os: linux
@@ -59,9 +55,11 @@ matrix:
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
         - os: linux
+          sudo: required
           addons:
               apt:
                   packages:
+                      - golang-1.6
                       - gcc-5
                       - g++-5
                   sources:
@@ -69,25 +67,31 @@ matrix:
           compiler: gcc-5
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
         - os: linux
+          sudo: required
           addons:
               apt:
                   packages:
+                      - golang-1.6
                       - gcc-5
                       - g++-5
-                  sources:
+                sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
         - os: linux
+          sudo: required
           compiler: clang-3.9
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
         - os: linux
+          sudo: required
           compiler: clang-3.9
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
+          sudo: required
           compiler: clang-3.9
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
         - os: linux
+          sudo: required
           addons:
               apt:
                   packages:
@@ -98,6 +102,7 @@ matrix:
           compiler: gcc-5
           env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
+          sudo: required
           addons:
               apt:
                   packages:
@@ -106,6 +111,7 @@ matrix:
           compiler: i686-w64-mingw32-gcc
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
         - os: linux
+          sudo: required
           addons:
               apt:
                   packages:
