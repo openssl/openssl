@@ -1434,7 +1434,7 @@ if (!$disabled{asm}) {
         # but it apparently recognizes the option in question on all
         # supported platforms even when it's meaningless. In other words
         # probe would fail, but probed option always accepted...
-        push @{$config{cflags}}, "-Wa,--noexecstack";
+        push @{$config{cflags}}, "-Wa,--noexecstack", "-Qunused-arguments";
     } elsif ($^O ne 'VMS') {
         my $cc = $config{CROSS_COMPILE}.$config{CC};
         open(PIPE, "$cc -Wa,--help -c -o null.$$.o -x assembler /dev/null 2>&1 |");
@@ -1487,11 +1487,6 @@ if (defined($config{api})) {
     $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
     my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
     push @{$config{defines}}, $apiflag;
-}
-
-if (defined($predefined{__clang__}) && !$disabled{asm}) {
-    push @{$config{cflags}}, "-Qunused-arguments";
-    push @{$config{cxxflags}}, "-Qunused-arguments" if $config{CXX};
 }
 
 if ($strict_warnings)
