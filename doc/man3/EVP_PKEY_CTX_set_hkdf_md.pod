@@ -99,7 +99,7 @@ All these functions are implemented as macros.
 
 A context for HKDF can be obtained by calling:
 
- EVP_PKEY_CTX *pctx = EVP_PKEY_new_id(EVP_PKEY_HKDF, NULL);
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
 
 The total length of the info buffer cannot exceed 1024 bytes in length: this
 should be more than enough for any normal use of HKDF.
