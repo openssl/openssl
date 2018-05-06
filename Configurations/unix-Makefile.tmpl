@@ -1508,7 +1508,7 @@ $obj: $deps
 	$cmd $cmdflags -c -o \$\@ $srcs
 EOF
       } elsif (grep /\.S$/, @srcs) {
-          # Originally there was mutli-step rule with $(CC) -E file.S
+          # Originally there was multi-step rule with $(CC) -E file.S
           # followed by $(CC) -c file.s. It compensated for one of
           # legacy platform compiler's inability to handle .S files.
           # The platform is long discontinued by vendor so there is
