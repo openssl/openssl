@@ -764,7 +764,7 @@ reconfigure reconf :
   # To resolve 2, we need to have a variable that will hold the whole
   # inclusion qualifier, or be the empty string if there are no inclusion
   # directories.  That's the symbol 'qual_includes' that's used in CPPFLAGS
-  # To resolve 3, we creata a logical name TMP_INCLUDES: to hold the list
+  # To resolve 3, we create a logical name TMP_INCLUDES: to hold the list
   # of inclusion directories.
   #
   # This function returns a list of two lists, one being the collection of
@@ -1233,7 +1233,7 @@ EOF
       # bar.obj happens to have a symbol that also exists in libsomething.exe,
       # the linker will warn about it, loudly, and will then choose to pick
       # the first copy encountered (the one in bar.obj in this example).
-      # On Unix and on Windows, the corresponding maneuvre goes through
+      # On Unix and on Windows, the corresponding maneuver goes through
       # silently with the same effect.
       # With some test programs, made for checking the internals of OpenSSL,
       # we do this kind of linking deliberately, picking a few specific object
