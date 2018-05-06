@@ -362,9 +362,10 @@ clean: libclean
 	-del /Q /F $(SCRIPTS)
 	-del /Q /F $(GENERATED_MANDATORY)
 	-del /Q /F $(GENERATED)
-	-del /Q /S /F *.d *.obj *.pdb *.exp *.ilk *.manifest
-	-del /Q /S /F engines\*.lib
-	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res
+	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
+	-del /Q /S /F engines\*.lib engines\*.exp
+	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
+	-del /Q /S /F test\*.exp
 	-rmdir /Q /S test\test-runs
 
 distclean: clean
