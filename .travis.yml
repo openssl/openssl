@@ -52,6 +52,14 @@ matrix:
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+        - os: linux-ppc64le
+          sudo: false
+          env: CONFIG_OPTS="--strict-warnings -Wno-array-bounds -Wno-missing-prototypes -Wno-pedantic"
+          compiler: clang
+        - os: linux-ppc64le
+          sudo: false
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic no-asm enable-asan enable-ubsan"
+          compiler: gcc
         - os: linux
           addons:
               apt:
