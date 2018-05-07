@@ -28,6 +28,9 @@
 #endif
 #include <openssl/crypto.h>
 #include <openssl/bn.h>
+#include <internal/cryptlib.h>
+#include <internal/chacha.h>
+#include "bn/bn_lcl.h"
 
 #include "ppc_arch.h"
 
@@ -64,6 +67,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 
 void sha256_block_p8(void *ctx, const void *inp, size_t len);
 void sha256_block_ppc(void *ctx, const void *inp, size_t len);
+void sha256_block_data_order(void *ctx, const void *inp, size_t len);
 void sha256_block_data_order(void *ctx, const void *inp, size_t len)
 {
     OPENSSL_ppccap_P & PPC_CRYPTO207 ? sha256_block_p8(ctx, inp, len) :
@@ -72,6 +76,7 @@ void sha256_block_data_order(void *ctx, const void *inp, size_t len)
 
 void sha512_block_p8(void *ctx, const void *inp, size_t len);
 void sha512_block_ppc(void *ctx, const void *inp, size_t len);
+void sha512_block_data_order(void *ctx, const void *inp, size_t len);
 void sha512_block_data_order(void *ctx, const void *inp, size_t len)
 {
     OPENSSL_ppccap_P & PPC_CRYPTO207 ? sha512_block_p8(ctx, inp, len) :
@@ -106,16 +111,17 @@ void poly1305_blocks_fpu(void *ctx, const unsigned char *inp, size_t len,
                          unsigned int padbit);
 void poly1305_emit_fpu(void *ctx, unsigned char mac[16],
                        const unsigned int nonce[4]);
+int poly1305_init(void *ctx, const unsigned char key[16], void *func[2]);
 int poly1305_init(void *ctx, const unsigned char key[16], void *func[2])
 {
     if (sizeof(size_t) == 4 && (OPENSSL_ppccap_P & PPC_FPU)) {
         poly1305_init_fpu(ctx, key);
-        func[0] = poly1305_blocks_fpu;
-        func[1] = poly1305_emit_fpu;
+        func[0] = (void*)(uintptr_t)poly1305_blocks_fpu;
+        func[1] = (void*)(uintptr_t)poly1305_emit_fpu;
     } else {
         poly1305_init_int(ctx, key);
-        func[0] = poly1305_blocks;
-        func[1] = poly1305_emit;
+        func[0] = (void*)(uintptr_t)poly1305_blocks;
+        func[1] = (void*)(uintptr_t)poly1305_emit;
     }
     return 1;
 }
