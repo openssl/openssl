@@ -140,7 +140,9 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     int ret = 0;
 
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
-        goto err;
+        return 0;
+
+    BN_CTX_start(ctx);
 
     order_bits = BN_num_bits(group->order);
 
@@ -158,7 +160,6 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
 
     EC_POINT_BN_set_flags(s, BN_FLG_CONSTTIME);
 
-    BN_CTX_start(ctx);
     lambda = BN_CTX_get(ctx);
     k = BN_CTX_get(ctx);
     if (k == NULL)
