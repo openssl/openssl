@@ -36,7 +36,15 @@
 
 unsigned int OPENSSL_ppccap_P = 0;
 
+#ifndef OPENSSL_PPCCAP_OVERRIDE
 static sigset_t all_masked;
+
+static sigjmp_buf ill_jmp;
+static void ill_handler(int sig)
+{
+    siglongjmp(ill_jmp, sig);
+}
+#endif
 
 #ifdef OPENSSL_BN_ASM_MONT
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
@@ -156,12 +164,6 @@ void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
 }
 #endif
 
-static sigjmp_buf ill_jmp;
-static void ill_handler(int sig)
-{
-    siglongjmp(ill_jmp, sig);
-}
-
 void OPENSSL_fpu_probe(void);
 void OPENSSL_ppc64_probe(void);
 void OPENSSL_altivec_probe(void);
@@ -250,41 +252,51 @@ static unsigned long getauxval(unsigned long key)
 #define HWCAP_VEC_CRYPTO        (1U << 25)
 #define HWCAP_ARCH_3_00         (1U << 23)
 
-# if defined(__GNUC__) && __GNUC__>=2
+#if defined(__GNUC__) && __GNUC__>=2
 __attribute__ ((constructor))
-# endif
+#endif
 void OPENSSL_cpuid_setup(void)
 {
+#ifndef OPENSSL_PPCCAP_OVERRIDE
     char *e;
     struct sigaction ill_oact, ill_act;
     sigset_t oset;
+    volatile unsigned int mask;
+#endif
     static int trigger = 0;
 
     if (trigger)
         return;
     trigger = 1;
 
-    if ((e = getenv("OPENSSL_ppccap"))) {
-        OPENSSL_ppccap_P = strtoul(e, NULL, 0);
-        return;
-    }
+#ifdef OPENSSL_PPCCAP_OVERRIDE
+    OPENSSL_ppccap_P = OPENSSL_PPCCAP_OVERRIDE;
+#else
+    if ((e = getenv("OPENSSL_ppccap")))
+        mask = (unsigned int)strtoul(e, NULL, 0);
+    else
+        mask = 0xFFFFFFFF;
 
     OPENSSL_ppccap_P = 0;
 
-#if defined(_AIX)
-    OPENSSL_ppccap_P |= PPC_FPU;
-
+# if defined(_AIX)
     if (sizeof(size_t) == 4) {
         struct utsname uts;
-# if defined(_SC_AIX_KERNEL_BITMODE)
-        if (sysconf(_SC_AIX_KERNEL_BITMODE) != 64)
+#  if defined(_SC_AIX_KERNEL_BITMODE)
+        if (sysconf(_SC_AIX_KERNEL_BITMODE) != 64) {
+            OPENSSL_ppccap_P = mask & PPC_FPU;
             return;
-# endif
-        if (uname(&uts) != 0 || atoi(uts.version) < 6)
+        }
+#  endif
+        if (uname(&uts) != 0 || atoi(uts.version) < 6) {
+            OPENSSL_ppccap_P = mask & PPC_FPU;
             return;
+        }
     }
 
-# if defined(__power_set)
+#  if defined(__power_set)
+    OPENSSL_ppccap_P |= PPC_FPU;
+
     /*
      * Value used in __power_set is a single-bit 1<<n one denoting
      * specific processor class. Incidentally 0xffffffff<<n can be
@@ -309,11 +321,12 @@ void OPENSSL_cpuid_setup(void)
     if (__power_set(0xffffffffU<<17))           /* POWER9 and later */
         OPENSSL_ppccap_P |= PPC_MADD300;
 
+    OPENSSL_ppccap_P &= mask;
     return;
+#  endif
 # endif
-#endif
 
-#if defined(__APPLE__) && defined(__MACH__)
+# if defined(__APPLE__) && defined(__MACH__)
     OPENSSL_ppccap_P |= PPC_FPU;
 
     {
@@ -331,11 +344,12 @@ void OPENSSL_cpuid_setup(void)
                 OPENSSL_ppccap_P |= PPC_ALTIVEC;
         }
 
+        OPENSSL_ppccap_P &= mask;
         return;
     }
-#endif
+# endif
 
-#ifdef OSSL_IMPLEMENT_GETAUXVAL
+# ifdef OSSL_IMPLEMENT_GETAUXVAL
     {
         unsigned long hwcap = getauxval(HWCAP);
         unsigned long hwcap2 = getauxval(HWCAP2);
@@ -364,15 +378,17 @@ void OPENSSL_cpuid_setup(void)
         if (hwcap2 & HWCAP_ARCH_3_00) {
             OPENSSL_ppccap_P |= PPC_MADD300;
         }
+
+        OPENSSL_ppccap_P &= mask;
     }
-#endif
+# endif
 
     sigfillset(&all_masked);
     sigdelset(&all_masked, SIGILL);
     sigdelset(&all_masked, SIGTRAP);
-#ifdef SIGEMT
+# ifdef SIGEMT
     sigdelset(&all_masked, SIGEMT);
-#endif
+# endif
     sigdelset(&all_masked, SIGFPE);
     sigdelset(&all_masked, SIGBUS);
     sigdelset(&all_masked, SIGSEGV);
@@ -384,50 +400,68 @@ void OPENSSL_cpuid_setup(void)
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
     sigaction(SIGILL, &ill_act, &ill_oact);
 
-#ifndef OSSL_IMPLEMENT_GETAUXVAL
-    if (sigsetjmp(ill_jmp,1) == 0) {
-        OPENSSL_fpu_probe();
-        OPENSSL_ppccap_P |= PPC_FPU;
+# ifndef OSSL_IMPLEMENT_GETAUXVAL
+    if (mask & PPC_FPU) {
+        if (sigsetjmp(ill_jmp,1) == 0) {
+            OPENSSL_fpu_probe();
+            OPENSSL_ppccap_P |= PPC_FPU;
 
-        if (sizeof(size_t) == 4) {
-# ifdef __linux
-            struct utsname uts;
-            if (uname(&uts) == 0 && strcmp(uts.machine, "ppc64") == 0)
-# endif
-                if (sigsetjmp(ill_jmp, 1) == 0) {
-                    OPENSSL_ppc64_probe();
-                    OPENSSL_ppccap_P |= PPC_FPU64;
-                }
-        } else {
-            /*
-             * Wanted code detecting POWER6 CPU and setting PPC_FPU64
-             */
+            if (sizeof(size_t) == 4 && (mask & PPC_FPU64)) {
+#  ifdef __linux
+                struct utsname uts;
+                if (uname(&uts) == 0 && strcmp(uts.machine, "ppc64") == 0)
+#  endif
+                    if (sigsetjmp(ill_jmp, 1) == 0) {
+                        OPENSSL_ppc64_probe();
+                        OPENSSL_ppccap_P |= PPC_FPU64;
+                    }
+            } else {
+                /*
+                 * Wanted code detecting POWER6 CPU and setting PPC_FPU64
+                 */
+            }
         }
     }
 
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_altivec_probe();
-        OPENSSL_ppccap_P |= PPC_ALTIVEC;
+    if (mask & PPC_ALTIVEC) {
         if (sigsetjmp(ill_jmp, 1) == 0) {
-            OPENSSL_crypto207_probe();
-            OPENSSL_ppccap_P |= PPC_CRYPTO207;
+            OPENSSL_altivec_probe();
+            OPENSSL_ppccap_P |= PPC_ALTIVEC;
+            if (mask & PPC_CRYPTO207) {
+                if (sigsetjmp(ill_jmp, 1) == 0) {
+                    OPENSSL_crypto207_probe();
+                    OPENSSL_ppccap_P |= PPC_CRYPTO207;
+                }
+            }
         }
     }
 
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_madd300_probe();
-        OPENSSL_ppccap_P |= PPC_MADD300;
+    if (mask & PPC_MADD300) {
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_madd300_probe();
+            OPENSSL_ppccap_P |= PPC_MADD300;
+        }
     }
-#endif
+# endif
 
-    if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_rdtsc_mftb();
-        OPENSSL_ppccap_P |= PPC_MFTB;
-    } else if (sigsetjmp(ill_jmp, 1) == 0) {
-        OPENSSL_rdtsc_mfspr268();
-        OPENSSL_ppccap_P |= PPC_MFSPR268;
+    /* Things that getauxval didn't tell us */
+    if (mask & PPC_MFTB) {
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_rdtsc_mftb();
+            OPENSSL_ppccap_P |= PPC_MFTB;
+            goto done;
+        }
     }
+
+    if (mask & PPC_MFSPR268) {
+        if (sigsetjmp(ill_jmp, 1) == 0) {
+            OPENSSL_rdtsc_mfspr268();
+            OPENSSL_ppccap_P |= PPC_MFSPR268;
+        }
+    }
+ done:
 
     sigaction(SIGILL, &ill_oact, NULL);
     sigprocmask(SIG_SETMASK, &oset, NULL);
+#endif /* !OPENSSL_PPCCAP_OVERRIDE */
 }
