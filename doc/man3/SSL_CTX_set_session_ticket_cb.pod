@@ -77,6 +77,12 @@ the key that was used to encrypt the session ticket.
 When the B<gen_cb> callback is invoked, the SSL_get_session() function can be
 used to retrieve the SSL_SESSION for SSL_SESSION_set1_ticket_appdata().
 
+By default, in TLSv1.2 and below, a new session ticket is not issued on a
+successful resumption and therefore B<gen_cb> will not be called. In TLSv1.3 the
+default behaviour is to always issue a new ticket on resumption. In both cases
+this behaviour can be changed if a ticket key callback is in use (see
+L<SSL_CTX_set_tlsext_ticket_key_cb(3)>).
+
 =head1 RETURN VALUES
 
 The SSL_CTX_set_session_ticket_cb(), SSL_SESSION_set1_ticket_appdata() and
