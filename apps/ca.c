@@ -1706,11 +1706,11 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
             BIO_printf(bio_err, "Memory allocation failure\n");
             goto end;
         }
+        i = -1;
         while ((i = X509_NAME_get_index_by_NID(dn_subject,
                                                NID_pkcs9_emailAddress,
-                                               -1)) >= 0) {
-            tmpne = X509_NAME_get_entry(dn_subject, i);
-            X509_NAME_delete_entry(dn_subject, i);
+                                               i)) >= 0) {
+            tmpne = X509_NAME_delete_entry(dn_subject, i--);
             X509_NAME_ENTRY_free(tmpne);
         }
 
