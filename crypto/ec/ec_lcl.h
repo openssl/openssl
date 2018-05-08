@@ -174,8 +174,8 @@ struct ec_method_st {
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
     /* Inverse modulo order */
-    int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r, BIGNUM *x,
-                                 BN_CTX *ctx);
+    int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r,
+                                 const BIGNUM *x, BN_CTX *);
     int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 };
 
@@ -636,7 +636,7 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
 
-int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
-                            BIGNUM *x, BN_CTX *ctx);
+int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            const BIGNUM *x, BN_CTX *ctx);
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
