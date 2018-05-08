@@ -444,6 +444,19 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             && SSL3_RECORD_get_length(rr) != 0)
         s->rlayer.alert_count = 0;
 
+    if (SSL3_RECORD_get_type(rr) != SSL3_RT_HANDSHAKE
+            && SSL3_RECORD_get_type(rr) != SSL3_RT_CHANGE_CIPHER_SPEC
+            && !SSL_in_init(s)
+            && (s->d1->next_timeout.tv_sec != 0
+                || s->d1->next_timeout.tv_usec != 0)) {
+        /*
+         * The timer is still running but we've received something that isn't
+         * handshake data - so the peer must have finished processing our
+         * last handshake flight. Stop the timer.
+         */
+        dtls1_stop_timer(s);
+    }
+
     /* we now have a packet which can be read and processed */
 
     if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,
@@ -664,6 +677,18 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                     return -1;
             }
             SSL3_RECORD_set_length(rr, 0);
+            if (!(s->mode & SSL_MODE_AUTO_RETRY)) {
+                if (SSL3_BUFFER_get_left(&s->rlayer.rbuf) == 0) {
+                    /* no read-ahead left? */
+                    BIO *bio;
+
+                    s->rwstate = SSL_READING;
+                    bio = SSL_get_rbio(s);
+                    BIO_clear_retry_flags(bio);
+                    BIO_set_retry_read(bio);
+                    return -1;
+                }
+            }
             goto start;
         }
 

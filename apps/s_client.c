@@ -2703,8 +2703,7 @@ int s_client_main(int argc, char **argv)
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
 
-        if ((SSL_version(con) == DTLS1_VERSION) &&
-            DTLSv1_get_timeout(con, &timeout))
+        if (SSL_is_dtls(con) && DTLSv1_get_timeout(con, &timeout))
             timeoutp = &timeout;
         else
             timeoutp = NULL;
@@ -2815,10 +2814,8 @@ int s_client_main(int argc, char **argv)
             }
         }
 
-        if ((SSL_version(con) == DTLS1_VERSION)
-            && DTLSv1_handle_timeout(con) > 0) {
+        if (SSL_is_dtls(con) && DTLSv1_handle_timeout(con) > 0)
             BIO_printf(bio_err, "TIMEOUT occurred\n");
-        }
 
         if (!ssl_pending && FD_ISSET(SSL_get_fd(con), &writefds)) {
             k = SSL_write(con, &(cbuf[cbuf_off]), (unsigned int)cbuf_len);
