@@ -114,7 +114,7 @@ matrix:
           compiler: x86_64-w64-mingw32-gcc
           env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
         # Uncomment if there is reason to believe that PPC-specific problem
-        # can be diagnosed with with possibly >30 mins sanitizer build...
+        # can be diagnosed with this possibly >30 mins sanitizer build...
         #- os: linux-ppc64le
         #  sudo: false
         #  compiler: gcc
