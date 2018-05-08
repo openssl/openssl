@@ -277,13 +277,13 @@ static size_t prepare_item_list(const struct item_st *items_input,
 
     for (; items_input_num-- > 0; items_input++, items++) {
 
+        items->ile3$w_code = items_input->code;
         /* Special treatment of JPI$_FINALEXC */
         if (items->ile3$w_code == JPI$_FINALEXC)
             items->ile3$w_length = 4;
         else
             items->ile3$w_length = items_input->length;
 
-        items->ile3$w_code = items_input->code;
         items->ile3$ps_bufaddr = databuffer;
         items->ile3$ps_retlen_addr = 0;
 
