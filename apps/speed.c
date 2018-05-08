@@ -497,8 +497,14 @@ static double rsa_results[RSA_NUM][2];  /* 2 ops: sign then verify */
 #define R_EC_B283    13
 #define R_EC_B409    14
 #define R_EC_B571    15
-#define R_EC_X25519  16
-#define R_EC_X448    17
+#define R_EC_BRP256R1  16
+#define R_EC_BRP256T1  17
+#define R_EC_BRP384R1  18
+#define R_EC_BRP384T1  19
+#define R_EC_BRP512R1  20
+#define R_EC_BRP512T1  21
+#define R_EC_X25519  22
+#define R_EC_X448    23
 #ifndef OPENSSL_NO_EC
 static OPT_PAIR ecdsa_choices[] = {
     {"ecdsap160", R_EC_P160},
@@ -516,7 +522,13 @@ static OPT_PAIR ecdsa_choices[] = {
     {"ecdsab233", R_EC_B233},
     {"ecdsab283", R_EC_B283},
     {"ecdsab409", R_EC_B409},
-    {"ecdsab571", R_EC_B571}
+    {"ecdsab571", R_EC_B571},
+    {"ecdsabrp256r1", R_EC_BRP256R1},
+    {"ecdsabrp256t1", R_EC_BRP256T1},
+    {"ecdsabrp384r1", R_EC_BRP384R1},
+    {"ecdsabrp384t1", R_EC_BRP384T1},
+    {"ecdsabrp512r1", R_EC_BRP512R1},
+    {"ecdsabrp512t1", R_EC_BRP512T1}
 };
 # define ECDSA_NUM       OSSL_NELEM(ecdsa_choices)
 
@@ -539,6 +551,12 @@ static const OPT_PAIR ecdh_choices[] = {
     {"ecdhb283", R_EC_B283},
     {"ecdhb409", R_EC_B409},
     {"ecdhb571", R_EC_B571},
+    {"ecdhbrp256r1", R_EC_BRP256R1},
+    {"ecdhbrp256t1", R_EC_BRP256T1},
+    {"ecdhbrp384r1", R_EC_BRP384R1},
+    {"ecdhbrp384t1", R_EC_BRP384T1},
+    {"ecdhbrp512r1", R_EC_BRP512R1},
+    {"ecdhbrp512t1", R_EC_BRP512T1},
     {"ecdhx25519", R_EC_X25519},
     {"ecdhx448", R_EC_X448}
 };
@@ -1387,6 +1405,12 @@ int speed_main(int argc, char **argv)
         {"nistb283", NID_sect283r1, 283},
         {"nistb409", NID_sect409r1, 409},
         {"nistb571", NID_sect571r1, 571},
+        {"brainpoolP256r1", NID_brainpoolP256r1, 256},
+        {"brainpoolP256t1", NID_brainpoolP256t1, 256},
+        {"brainpoolP384r1", NID_brainpoolP384r1, 384},
+        {"brainpoolP384t1", NID_brainpoolP384t1, 384},
+        {"brainpoolP512r1", NID_brainpoolP512r1, 512},
+        {"brainpoolP512t1", NID_brainpoolP512t1, 512},
         /* Other and ECDH only ones */
         {"X25519", NID_X25519, 253},
         {"X448", NID_X448, 448}
