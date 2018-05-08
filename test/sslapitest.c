@@ -2204,9 +2204,9 @@ static int test_early_data_not_sent(int idx)
 
     /*
      * Should block due to the NewSessionTicket arrival unless we're using
-     * read_ahead
+     * read_ahead, or PSKs
      */
-    if (idx != 1) {
+    if (idx != 1 && idx != 2) {
         if (!TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)))
             goto end;
     }
