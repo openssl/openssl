@@ -49,7 +49,7 @@ of space needed in B<buf> (excluding the final null) is returned.
 =head1 NOTES
 
 X509_NAME_get_text_by_NID() and X509_NAME_get_text_by_OBJ() should be
-considered deprecaated because they
+considered deprecated because they
 have various limitations which make them
 of minimal use in practice. They can only find the first matching
 entry and will copy the contents of the field verbatim: this can
