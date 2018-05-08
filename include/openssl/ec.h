@@ -363,6 +363,10 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params);
 ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
                                             ECPKPARAMETERS *params);
 
+/* TODO */
+int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            BIGNUM *x, BN_CTX *ctx);
+
 /********************************************************************/
 /*               handling of internal curves                        */
 /********************************************************************/

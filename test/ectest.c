@@ -131,6 +131,74 @@ err:
     return r;
 }
 
+/* test inversion modulo the group order */
+static int group_order_inv_tests(EC_GROUP *group)
+{
+    BIGNUM *n1 = NULL, *n2 = NULL, *n3 = NULL, *order = NULL;
+    BN_CTX *ctx = NULL;
+    int i = 0, r = 0;
+    long error;
+
+    if (!TEST_ptr(ctx = BN_CTX_new()))
+        return 0;
+    BN_CTX_start(ctx);
+    n1 = BN_CTX_get(ctx);
+    n2 = BN_CTX_get(ctx);
+    n3 = BN_CTX_get(ctx);
+    if (!TEST_ptr(order = BN_CTX_get(ctx))
+        || !TEST_true(EC_GROUP_get_order(group, order, ctx)))
+        goto err;
+
+    /* loop goes n2 = [0, 1, -1, 2, -2, .., 31, -31, rnd] */
+    for (i = 1; i <= 64; i++) {
+        /* take the last iter as random non-zero n2 */
+        if (i == 64) {
+            do {
+                if (!TEST_true(BN_priv_rand_range(n2, order)))
+                    goto err;
+            } while (BN_is_zero(n2));
+        } else {
+            if (!TEST_true(BN_set_word(n2, i >> 1)))
+                goto err;
+            if (i & 1)
+                BN_set_negative(n2, 1);
+        }
+        /*-
+         * When n2 is zero or both order and n2 are even,
+         * no inverse exists. Test to ensure we are told that.
+         */
+        if (BN_is_zero(n2) || (!BN_is_odd(order) && !BN_is_odd(n2))) {
+            ERR_set_mark();
+            if (!TEST_false(EC_GROUP_do_inverse_ord(group, n1, n2, ctx)))
+                goto err;
+            error = ERR_peek_last_error();
+            if (!TEST_true(ERR_GET_LIB(error) == ERR_LIB_BN
+                && ERR_GET_REASON(error) == BN_R_NO_INVERSE))
+                goto err;
+            ERR_pop_to_mark();
+            continue;
+        }
+        /*-
+         * Here n2 is non-zero. Test the following:
+         * - EC_GROUP_do_inverse_ord and BN_mod_inverse return the same value
+         * - n2 * (1 / n2) == 1
+         * - No function call failures
+         */
+        if (!TEST_true(EC_GROUP_do_inverse_ord(group, n1, n2, ctx))
+            || !TEST_true(BN_mod_inverse(n3, n2, order, ctx))
+            || !TEST_BN_eq(n1, n3)
+            || !TEST_true(BN_mod_mul(n1, n1, n2, order, ctx))
+            || !TEST_BN_eq_one(n1))
+            goto err;
+    }
+
+    r = 1;
+err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    return r;
+}
+
 static int prime_field_tests(void)
 {
     BN_CTX *ctx = NULL;
@@ -1149,14 +1217,25 @@ static int internal_curve_test(int n)
 
 static int internal_curve_test_method(int n)
 {
-    int r, nid = curves[n].nid;
-    EC_GROUP *group;
+    EC_GROUP *group = NULL;
+    int r = 0, nid = curves[n].nid;
 
     if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(nid))) {
-        TEST_info("Curve %s failed\n", OBJ_nid2sn(nid));
-        return 0;
+        TEST_info("EC_GROUP_new_curve_name() failed with curve %s\n",
+                  OBJ_nid2sn(nid));
     }
-    r = group_order_tests(group);
+    if (!TEST_true(group_order_tests(group))) {
+        TEST_info("group_order_tests() failed with curve %s\n",
+                  OBJ_nid2sn(nid));
+        goto err;
+    }
+    if (!TEST_true(group_order_inv_tests(group))) {
+        TEST_info("group_order_inv_tests() failed with curve %s\n",
+                  OBJ_nid2sn(nid));
+        goto err;
+    }
+    r = 1;
+ err:
     EC_GROUP_free(group);
     return r;
 }
