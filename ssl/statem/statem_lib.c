@@ -1042,6 +1042,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
         s->renegotiate = 0;
         s->new_session = 0;
         s->statem.cleanuphand = 0;
+        s->ext.ticket_expected = 0;
 
         ssl3_cleanup_key_block(s);
 
