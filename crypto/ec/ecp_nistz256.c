@@ -1512,7 +1512,7 @@ void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
                                int rep);
 
 static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
-                                    BIGNUM *x, BN_CTX *ctx)
+                                    const BIGNUM *x, BN_CTX *ctx)
 {
     /* RR = 2^512 mod ord(p256) */
     static const BN_ULONG RR[P256_LIMBS]  = {

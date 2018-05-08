@@ -137,7 +137,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
     while (BN_is_zero(r));
 
     /* compute the inverse of k */
-    if (!EC_GROUP_do_inverse_ord(group, k, k, ctx)) {
+    if (!ec_group_do_inverse_ord(group, k, k, ctx)) {
         ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
         goto err;
     }
@@ -425,7 +425,7 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         goto err;
     }
     /* calculate tmp1 = inv(S) mod order */
-    if (!EC_GROUP_do_inverse_ord(group, u2, sig->s, ctx)) {
+    if (!ec_group_do_inverse_ord(group, u2, sig->s, ctx)) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_BN_LIB);
         goto err;
     }
