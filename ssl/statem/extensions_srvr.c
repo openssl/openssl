@@ -1030,6 +1030,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    s->ext.ticket_expected = 0;
     for (id = 0; PACKET_remaining(&identities) != 0; id++) {
         PACKET identity;
         unsigned long ticket_agel;
@@ -1127,9 +1128,17 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                 s->ext.early_data_ok = 1;
         } else {
             uint32_t ticket_age = 0, now, agesec, agems;
-            int ret = tls_decrypt_ticket(s, PACKET_data(&identity),
-                                         PACKET_remaining(&identity), NULL, 0,
-                                         &sess);
+            int ret;
+
+            ret = tls_decrypt_ticket(s, PACKET_data(&identity),
+                                     PACKET_remaining(&identity), NULL, 0,
+                                     &sess);
+
+            if (ret == SSL_TICKET_EMPTY) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,
+                         SSL_R_BAD_EXTENSION);
+                return 0;
+            }
 
             if (ret == SSL_TICKET_FATAL_ERR_MALLOC
                     || ret == SSL_TICKET_FATAL_ERR_OTHER) {
@@ -1137,7 +1146,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                          SSL_F_TLS_PARSE_CTOS_PSK, ERR_R_INTERNAL_ERROR);
                 return 0;
             }
-            if (ret == SSL_TICKET_NO_DECRYPT)
+            if (ret == SSL_TICKET_NONE || ret == SSL_TICKET_NO_DECRYPT)
                 continue;
 
             /* Check for replay */

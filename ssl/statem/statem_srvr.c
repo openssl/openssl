@@ -489,10 +489,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         st->hand_state = TLS_ST_SW_SESSION_TICKET;
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
             s->post_handshake_auth = SSL_PHA_EXT_RECEIVED;
-        } else if (s->hit && !s->ext.ticket_expected) {
+        } else if (!s->ext.ticket_expected) {
             /*
-             * If we resumed and we're not going to renew the ticket then we
-             * just finish the handshake at this point.
+             * If we're not going to renew the ticket then we just finish the
+             * handshake at this point.
              */
             st->hand_state = TLS_ST_OK;
         }

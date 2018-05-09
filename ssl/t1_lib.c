@@ -1194,20 +1194,8 @@ int tls1_set_server_sigalgs(SSL *s)
  *   hello: The parsed ClientHello data
  *   ret: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
- *
- * If s->tls_session_secret_cb is set then we are expecting a pre-shared key
- * ciphersuite, in which case we have no use for session tickets and one will
- * never be decrypted, nor will s->ext.ticket_expected be set to 1.
- *
- * Side effects:
- *   Sets s->ext.ticket_expected to 1 if the server will have to issue
- *   a new session ticket to the client because the client indicated support
- *   (and s->tls_session_secret_cb is NULL) but the client either doesn't have
- *   a session ticket or we couldn't use the one it gave us, or if
- *   s->ctx->ext.ticket_key_cb asked to renew the client's ticket.
- *   Otherwise, s->ext.ticket_expected is set to 0.
  */
-SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
+SSL_TICKET_STATUS tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
                                              SSL_SESSION **ret)
 {
     size_t size;
@@ -1229,23 +1217,6 @@ SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
         return SSL_TICKET_NONE;
 
     size = PACKET_remaining(&ticketext->data);
-    if (size == 0) {
-        /*
-         * The client will accept a ticket but doesn't currently have
-         * one.
-         */
-        s->ext.ticket_expected = 1;
-        return SSL_TICKET_EMPTY;
-    }
-    if (s->ext.session_secret_cb) {
-        /*
-         * Indicate that the ticket couldn't be decrypted rather than
-         * generating the session from ticket now, trigger
-         * abbreviated handshake based on external mechanism to
-         * calculate the master secret later.
-         */
-        return SSL_TICKET_NO_DECRYPT;
-    }
 
     return tls_decrypt_ticket(s, PACKET_data(&ticketext->data), size,
                               hello->session_id, hello->session_id_len, ret);
@@ -1254,6 +1225,19 @@ SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
 /*-
  * tls_decrypt_ticket attempts to decrypt a session ticket.
  *
+ * If s->tls_session_secret_cb is set and we're not doing TLSv1.3 then we are
+ * expecting a pre-shared key ciphersuite, in which case we have no use for
+ * session tickets and one will never be decrypted, nor will
+ * s->ext.ticket_expected be set to 1.
+ *
+ * Side effects:
+ *   Sets s->ext.ticket_expected to 1 if the server will have to issue
+ *   a new session ticket to the client because the client indicated support
+ *   (and s->tls_session_secret_cb is NULL) but the client either doesn't have
+ *   a session ticket or we couldn't use the one it gave us, or if
+ *   s->ctx->ext.ticket_key_cb asked to renew the client's ticket.
+ *   Otherwise, s->ext.ticket_expected is set to 0.
+ *
  *   etick: points to the body of the session ticket extension.
  *   eticklen: the length of the session tickets extension.
  *   sess_id: points at the session ID.
@@ -1261,20 +1245,39 @@ SSL_TICKET_RETURN tls_get_ticket_from_client(SSL *s, CLIENTHELLO_MSG *hello,
  *   psess: (output) on return, if a ticket was decrypted, then this is set to
  *       point to the resulting session.
  */
-SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
+SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
                                      size_t eticklen, const unsigned char *sess_id,
                                      size_t sesslen, SSL_SESSION **psess)
 {
-    SSL_SESSION *sess;
+    SSL_SESSION *sess = NULL;
     unsigned char *sdec;
     const unsigned char *p;
     int slen, renew_ticket = 0, declen;
-    SSL_TICKET_RETURN ret = SSL_TICKET_FATAL_ERR_OTHER;
+    SSL_TICKET_STATUS ret = SSL_TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
     HMAC_CTX *hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
+
+    if (eticklen == 0) {
+        /*
+         * The client will accept a ticket but doesn't currently have
+         * one (TLSv1.2 and below), or treated as a fatal error in TLSv1.3
+         */
+        ret = SSL_TICKET_EMPTY;
+        goto end;
+    }
+    if (!SSL_IS_TLS13(s) && s->ext.session_secret_cb) {
+        /*
+         * Indicate that the ticket couldn't be decrypted rather than
+         * generating the session from ticket now, trigger
+         * abbreviated handshake based on external mechanism to
+         * calculate the master secret later.
+         */
+        ret = SSL_TICKET_NO_DECRYPT;
+        goto end;
+    }
 
     /* Need at least keyname + iv */
     if (eticklen < TLSEXT_KEYNAME_LENGTH + EVP_MAX_IV_LENGTH) {
@@ -1394,7 +1397,6 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             memcpy(sess->session_id, sess_id, sesslen);
             sess->session_id_length = sesslen;
         }
-        *psess = sess;
         if (renew_ticket)
             ret = SSL_TICKET_SUCCESS_RENEW;
         else
@@ -1412,18 +1414,56 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     HMAC_CTX_free(hctx);
 
     /*
-     * If set, the decrypt_ticket_cb() is always called regardless of the
-     * return value determined above. The callback is responsible for checking
-     * |ret| before it performs any action
+     * If set, the decrypt_ticket_cb() is called unless a fatal error was
+     * detected above. The callback is responsible for checking |ret| before it
+     * performs any action
      */
-    if (s->session_ctx->decrypt_ticket_cb != NULL) {
+    if (s->session_ctx->decrypt_ticket_cb != NULL
+            && (ret == SSL_TICKET_EMPTY
+                || ret == SSL_TICKET_NO_DECRYPT
+                || ret == SSL_TICKET_SUCCESS
+                || ret == SSL_TICKET_SUCCESS_RENEW)) {
         size_t keyname_len = eticklen;
+        int retcb;
 
         if (keyname_len > TLSEXT_KEYNAME_LENGTH)
             keyname_len = TLSEXT_KEYNAME_LENGTH;
-        ret = s->session_ctx->decrypt_ticket_cb(s, *psess, etick, keyname_len,
-                                                ret,
-                                                s->session_ctx->ticket_cb_data);
+        retcb = s->session_ctx->decrypt_ticket_cb(s, sess, etick, keyname_len,
+                                                  ret,
+                                                  s->session_ctx->ticket_cb_data);
+        switch (retcb) {
+        case SSL_TICKET_RETURN_ABORT:
+            ret = SSL_TICKET_FATAL_ERR_OTHER;
+            break;
+
+        case SSL_TICKET_RETURN_IGNORE:
+            ret = SSL_TICKET_NONE;
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            break;
+
+        case SSL_TICKET_RETURN_IGNORE_RENEW:
+            if (ret != SSL_TICKET_EMPTY && ret != SSL_TICKET_NO_DECRYPT)
+                ret = SSL_TICKET_NO_DECRYPT;
+            /* else the value of |ret| will already do the right thing */
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            break;
+
+        case SSL_TICKET_RETURN_USE:
+        case SSL_TICKET_RETURN_USE_RENEW:
+            if (ret != SSL_TICKET_SUCCESS
+                    && ret != SSL_TICKET_SUCCESS_RENEW)
+                ret = SSL_TICKET_FATAL_ERR_OTHER;
+            else if (retcb == SSL_TICKET_RETURN_USE)
+                ret = SSL_TICKET_SUCCESS;
+            else
+                ret = SSL_TICKET_SUCCESS_RENEW;
+            break;
+
+        default:
+            ret = SSL_TICKET_FATAL_ERR_OTHER;
+        }
     }
 
     switch (ret) {
@@ -1431,13 +1471,11 @@ SSL_TICKET_RETURN tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     case SSL_TICKET_SUCCESS_RENEW:
     case SSL_TICKET_EMPTY:
         s->ext.ticket_expected = 1;
-        /* Fall through */
-    case SSL_TICKET_SUCCESS:
-    case SSL_TICKET_NONE:
-        return ret;
     }
 
-    return SSL_TICKET_FATAL_ERR_OTHER;
+    *psess = sess;
+
+    return ret;
 }
 
 /* Check to see if a signature algorithm is allowed */
