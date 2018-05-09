@@ -485,9 +485,14 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
     SSL_SESSION *ret = NULL;
     int fatal = 0, discard;
     int try_session_cache = 0;
-    SSL_TICKET_RETURN r;
+    SSL_TICKET_STATUS r;
 
     if (SSL_IS_TLS13(s)) {
+        /*
+         * By default we will send a new ticket. This can be overridden in the
+         * ticket processing.
+         */
+        s->ext.ticket_expected = 1;
         if (!tls_parse_extension(s, TLSEXT_IDX_psk_kex_modes,
                                  SSL_EXT_CLIENT_HELLO, hello->pre_proc_exts,
                                  NULL, 0)
