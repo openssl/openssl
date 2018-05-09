@@ -55,7 +55,7 @@ matrix:
         - os: linux-ppc64le
           sudo: false
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES -Wno-missing-prototypes -Wno-pedantic"
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
           addons:
               apt:
