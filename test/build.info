@@ -51,7 +51,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest cmsapitest
+          sysdefaulttest
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -373,9 +373,12 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[servername_test]=../include
   DEPEND[servername_test]=../libcrypto ../libssl libtestutil.a
 
-  SOURCE[cmsapitest]=cmsapitest.c
-  INCLUDE[cmsapitest]=../include
-  DEPEND[cmsapitest]=../libcrypto libtestutil.a
+  IF[{- !$disabled{cms} -}]
+    PROGRAMS_NO_INST=cmsapitest
+    SOURCE[cmsapitest]=cmsapitest.c
+    INCLUDE[cmsapitest]=../include
+    DEPEND[cmsapitest]=../libcrypto libtestutil.a
+  ENDIF
 
   IF[{- !$disabled{psk} -}]
     PROGRAMS_NO_INST=dtls_mtu_test
