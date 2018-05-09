@@ -4460,6 +4460,11 @@ static struct {
     const char *srvrtls13ciphers;
     const char *shared;
 } shared_ciphers_data[] = {
+/*
+ * We can't establish a connection (even in TLSv1.1) with these ciphersuites if
+ * TLSv1.3 is enabled but TLSv1.2 is disabled.
+ */
+#if defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
     {
         TLS1_2_VERSION,
         "AES128-SHA:AES256-SHA",
@@ -4484,7 +4489,13 @@ static struct {
         NULL,
         "AES128-SHA"
     },
-#ifndef OPENSSL_NO_TLS1_3
+#endif
+/*
+ * This test combines TLSv1.3 and TLSv1.2 ciphersuites so they must both be
+ * enabled.
+ */
+#if !defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_TLS1_2) \
+    && !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     {
         TLS1_3_VERSION,
         "AES128-SHA:AES256-SHA",
@@ -4494,6 +4505,8 @@ static struct {
         "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:"
         "TLS_AES_128_GCM_SHA256:AES256-SHA"
     },
+#endif
+#ifndef OPENSSL_NO_TLS1_3
     {
         TLS1_3_VERSION,
         "AES128-SHA",
