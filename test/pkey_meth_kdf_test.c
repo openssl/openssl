@@ -170,7 +170,7 @@ static int test_kdf_scrypt(void)
 }
 #endif
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_hkdf);

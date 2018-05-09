@@ -92,7 +92,7 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
 #endif /* IMPLEMENTED */
 }
 
-int CRYPTO_secure_malloc_done()
+int CRYPTO_secure_malloc_done(void)
 {
 #ifdef IMPLEMENTED
     if (secure_mem_used == 0) {
@@ -106,7 +106,7 @@ int CRYPTO_secure_malloc_done()
     return 0;
 }
 
-int CRYPTO_secure_malloc_initialized()
+int CRYPTO_secure_malloc_initialized(void)
 {
 #ifdef IMPLEMENTED
     return secure_mem_initialized;
@@ -209,7 +209,7 @@ int CRYPTO_secure_allocated(const void *ptr)
 #endif /* IMPLEMENTED */
 }
 
-size_t CRYPTO_secure_used()
+size_t CRYPTO_secure_used(void)
 {
 #ifdef IMPLEMENTED
     return secure_mem_used;
@@ -500,7 +500,7 @@ static int sh_init(size_t size, int minsize)
     return 0;
 }
 
-static void sh_done()
+static void sh_done(void)
 {
     OPENSSL_free(sh.freelist);
     OPENSSL_free(sh.bittable);

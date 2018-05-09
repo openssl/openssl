@@ -31,7 +31,7 @@ int ENGINE_register_RAND(ENGINE *e)
     return 1;
 }
 
-void ENGINE_register_all_RAND()
+void ENGINE_register_all_RAND(void)
 {
     ENGINE *e;
 

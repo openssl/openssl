@@ -2378,7 +2378,7 @@ static void free_key_list(KEY_LIST *lst)
 /*
  * Is the key type an unsupported algorithm?
  */
-static int key_unsupported()
+static int key_unsupported(void)
 {
     long err = ERR_peek_error();
 

@@ -14,7 +14,7 @@
 #include "internal/poly1305.h"
 #include "poly1305_local.h"
 
-size_t Poly1305_ctx_size ()
+size_t Poly1305_ctx_size(void)
 {
     return sizeof(struct poly1305_context);
 }

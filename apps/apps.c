@@ -2486,7 +2486,7 @@ BIO *dup_bio_err(int format)
     return b;
 }
 
-void destroy_prefix_method()
+void destroy_prefix_method(void)
 {
     BIO_meth_free(prefix_method);
     prefix_method = NULL;

@@ -34,7 +34,7 @@ int ENGINE_register_ciphers(ENGINE *e)
     return 1;
 }
 
-void ENGINE_register_all_ciphers()
+void ENGINE_register_all_ciphers(void)
 {
     ENGINE *e;
 

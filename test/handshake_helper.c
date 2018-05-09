@@ -22,7 +22,7 @@
 #include "handshake_helper.h"
 #include "testutil.h"
 
-HANDSHAKE_RESULT *HANDSHAKE_RESULT_new()
+HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
     HANDSHAKE_RESULT *ret;
 

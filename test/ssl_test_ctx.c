@@ -709,7 +709,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
 };
 
-SSL_TEST_CTX *SSL_TEST_CTX_new()
+SSL_TEST_CTX *SSL_TEST_CTX_new(void)
 {
     SSL_TEST_CTX *ret;
 

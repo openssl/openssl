@@ -348,7 +348,7 @@ static int dtls_listen_test(int i)
 }
 #endif
 
-int setup_tests()
+int setup_tests(void)
 {
 #ifndef OPENSSL_NO_SOCK
     ADD_ALL_TESTS(dtls_listen_test, (int)OSSL_NELEM(testpackets));

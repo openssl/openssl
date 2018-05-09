@@ -391,7 +391,7 @@ X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a)
     return a->type;
 }
 
-X509_OBJECT *X509_OBJECT_new()
+X509_OBJECT *X509_OBJECT_new(void)
 {
     X509_OBJECT *ret = OPENSSL_zalloc(sizeof(*ret));
 

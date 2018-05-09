@@ -921,7 +921,7 @@ void rand_drbg_cleanup_int(void)
     }
 }
 
-void drbg_delete_thread_state()
+void drbg_delete_thread_state(void)
 {
     RAND_DRBG *drbg;
 

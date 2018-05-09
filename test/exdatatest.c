@@ -127,7 +127,7 @@ typedef struct myobj_st {
     int st;
 } MYOBJ;
 
-static MYOBJ *MYOBJ_new()
+static MYOBJ *MYOBJ_new(void)
 {
     static int count = 0;
     MYOBJ *obj = OPENSSL_malloc(sizeof(*obj));
