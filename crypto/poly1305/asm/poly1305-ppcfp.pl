@@ -26,6 +26,7 @@
 # PPC970		6.03/+80%
 # POWER7		3.50/+30%
 # POWER8		3.75/+10%
+# POWER9		2.80/+12%
 
 $flavour = shift;
 
