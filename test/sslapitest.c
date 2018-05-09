@@ -1769,8 +1769,15 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
         }
         serverpsk = clientpsk;
 
-        if (sess != NULL)
+        if (sess != NULL) {
+            if (!TEST_true(SSL_SESSION_up_ref(clientpsk))) {
+                SSL_SESSION_free(clientpsk);
+                SSL_SESSION_free(serverpsk);
+                clientpsk = serverpsk = NULL;
+                return 0;
+            }
             *sess = clientpsk;
+        }
         return 1;
     }
 
@@ -1939,9 +1946,7 @@ static int test_early_data_read_write(int idx)
             || !TEST_mem_eq(buf, readbytes, MSG7, strlen(MSG7)))
         goto end;
 
-    /* We keep the PSK session around if using PSK */
-    if (idx != 2)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     sess = SSL_get1_session(clientssl);
     use_session_cb_cnt = 0;
     find_session_cb_cnt = 0;
@@ -1991,8 +1996,7 @@ static int test_early_data_read_write(int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -2043,8 +2047,7 @@ static int test_early_data_replay(int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -2131,8 +2134,7 @@ static int early_data_skip_helper(int hrr, int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
     SSL_SESSION_free(sess);
@@ -2219,8 +2221,8 @@ static int test_early_data_not_sent(int idx)
     testresult = 1;
 
  end:
-    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
@@ -2428,6 +2430,7 @@ static int test_early_data_psk(int idx)
     testresult = 1;
 
  end:
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -2485,8 +2488,8 @@ static int test_early_data_not_expected(int idx)
     testresult = 1;
 
  end:
-    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
@@ -2559,7 +2562,6 @@ static int test_early_data_tls1_2(int idx)
     testresult = 1;
 
  end:
-    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -3705,8 +3707,7 @@ static int test_export_key_mat_early(int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
