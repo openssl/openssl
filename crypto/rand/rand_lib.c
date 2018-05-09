@@ -303,7 +303,7 @@ void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen)
     OPENSSL_secure_clear_free(out, outlen);
 }
 
-void rand_fork()
+void rand_fork(void)
 {
     rand_fork_count++;
 }

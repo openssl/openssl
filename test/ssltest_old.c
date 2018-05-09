@@ -423,7 +423,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     return 1;
 }
 
-static int verify_serverinfo()
+static int verify_serverinfo(void)
 {
     if (serverinfo_sct != serverinfo_sct_seen)
         return -1;
@@ -2836,7 +2836,7 @@ static int app_verify_callback(X509_STORE_CTX *ctx, void *arg)
  *    $ openssl dhparam -C -noout -dsaparam 1024
  * (The third function has been renamed to avoid name conflicts.)
  */
-static DH *get_dh512()
+static DH *get_dh512(void)
 {
     static unsigned char dh512_p[] = {
         0xCB, 0xC8, 0xE1, 0x86, 0xD0, 0x1F, 0x94, 0x17, 0xA6, 0x99, 0xF0,
@@ -2870,7 +2870,7 @@ static DH *get_dh512()
     return dh;
 }
 
-static DH *get_dh1024()
+static DH *get_dh1024(void)
 {
     static unsigned char dh1024_p[] = {
         0xF8, 0x81, 0x89, 0x7D, 0x14, 0x24, 0xC5, 0xD1, 0xE6, 0xF7, 0xBF,
@@ -2914,7 +2914,7 @@ static DH *get_dh1024()
     return dh;
 }
 
-static DH *get_dh1024dsa()
+static DH *get_dh1024dsa(void)
 {
     static unsigned char dh1024_p[] = {
         0xC8, 0x00, 0xF7, 0x08, 0x07, 0x89, 0x4D, 0x90, 0x53, 0xF3, 0xD5,

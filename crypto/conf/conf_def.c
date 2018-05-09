@@ -85,12 +85,12 @@ static CONF_METHOD WIN32_method = {
     def_load
 };
 
-CONF_METHOD *NCONF_default()
+CONF_METHOD *NCONF_default(void)
 {
     return &default_method;
 }
 
-CONF_METHOD *NCONF_WIN32()
+CONF_METHOD *NCONF_WIN32(void)
 {
     return &WIN32_method;
 }

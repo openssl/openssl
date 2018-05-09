@@ -64,7 +64,7 @@ static int test_mdc2(int idx)
     return 1;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_ALL_TESTS(test_mdc2, OSSL_NELEM(tests));
     return 1;
