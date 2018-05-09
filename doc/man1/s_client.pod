@@ -23,9 +23,19 @@ B<openssl> B<s_client>
 [B<-certform DER|PEM>]
 [B<-key filename>]
 [B<-keyform DER|PEM>]
+[B<-cert_chain filename>]
+[B<-build_chain>]
+[B<-xkey>]
+[B<-xcert>]
+[B<-xchain>]
+[B<-xchain_build>]
+[B<-xcertform PEM|DER>]
+[B<-xkeyform PEM|DER>]
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-chainCApath directory>]
+[B<-chainCAfile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-requestCAfile filename>]
@@ -60,6 +70,7 @@ B<openssl> B<s_client>
 [B<-verify_hostname hostname>]
 [B<-verify_ip ip>]
 [B<-verify_name name>]
+[B<-build_chain>]
 [B<-x509_strict>]
 [B<-reconnect>]
 [B<-showcerts>]
@@ -209,6 +220,34 @@ be used.
 
 The private format to use: DER or PEM. PEM is the default.
 
+=item B<-cert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+client certificate chain when certificate specified via B<-cert> option is in
+use.
+
+=item B<-build_chain>
+
+Specify whether the application should build the certificate chain to be
+provided to server.
+
+=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain, these behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by
+client.
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to client for the extra certificates provided via B<-xkey infile>,
+B<-xcert infile>, B<-xchain> options.
+
+=item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
+
+Extra certificate and private key format and passphrase respectively.
+
 =item B<-pass arg>
 
 the private key password source. For more information about the format of B<arg>
@@ -244,6 +283,16 @@ also used when building the client certificate chain.
 
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
+
+=item B<-chainCApath directory>
+
+The directory to use for building the chain provided to server. This directory
+must be in "hash format", see B<verify> for more information.
+
+=item B<-chainCAfile file>
+
+A file containing trusted certificates to use when attempting to build the
+client certificate chain.
 
 =item B<-no-CAfile>
 
