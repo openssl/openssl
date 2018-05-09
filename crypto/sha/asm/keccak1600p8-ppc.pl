@@ -23,7 +23,7 @@
 # buffer for r=1088, which matches SHA3-256. This is 17% better than
 # scalar PPC64 code. It probably should be noted that if POWER8's
 # successor can achieve higher scalar instruction issue rate, then
-# this module will loose...
+# this module will loose... And it does on POWER9 with 8.8 vs. 7.2.
 
 $flavour = shift;
 

@@ -30,6 +30,7 @@
 # PPC970/G5	14.6/+120%
 # POWER7	10.3/+100%
 # POWER8	11.5/+85%
+# POWER9	7.2/+45%
 #
 # (*)	Corresponds to SHA3-256. Percentage after slash is improvement
 #	over gcc-4.x-generated KECCAK_1X_ALT code. Newer compilers do

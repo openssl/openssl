@@ -28,6 +28,7 @@
 # PPC970		7.00/+114%	3.51/+205%
 # POWER7		3.75/+260%	1.93/+100%
 # POWER8		-		2.03/+200%
+# POWER9		-		1.56/+150%
 #
 # Do we need floating-point implementation for PPC? Results presented
 # in poly1305_ieee754.c are tricky to compare to, because they are for
