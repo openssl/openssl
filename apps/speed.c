@@ -136,7 +136,7 @@ typedef struct openssl_speed_sec_st {
 
 static volatile int run = 0;
 
-static int mr = 0;
+static int mr = 0;  /* machine-readeable output format to merge fork results */
 static int usertime = 1;
 
 static double Time_F(int s);
@@ -151,6 +151,7 @@ static int do_multi(int multi, int size_num);
 static const int lengths_list[] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
+#define SIZE_NUM         OSSL_NELEM(lengths_list)
 static const int *lengths = lengths_list;
 
 static const int aead_lengths_list[] = {
@@ -232,8 +233,6 @@ static double Time_F(int s)
 static void multiblock_speed(const EVP_CIPHER *evp_cipher, int lengths_single,
                              const openssl_speed_sec_t *seconds);
 
-#define found(value, pairs, result)\
-    opt_found(value, result, pairs, OSSL_NELEM(pairs))
 static int opt_found(const char *name, unsigned int *result,
                      const OPT_PAIR pairs[], unsigned int nbelem)
 {
@@ -246,6 +245,23 @@ static int opt_found(const char *name, unsigned int *result,
         }
     return 0;
 }
+#define opt_found(value, pairs, result)\
+    opt_found(value, result, pairs, OSSL_NELEM(pairs))
+
+static int alg_found(const char *name, unsigned int *result,
+                     const char * const alg_names[], unsigned int nbelem)
+{
+    unsigned int idx;
+
+    for (idx = 0; idx < nbelem; ++idx)
+        if (strcmp(name, alg_names[idx]) == 0) {
+            *result = idx;
+            return 1;
+        }
+    return 0;
+}
+#define found(value, algo_name_list, result)\
+    alg_found(value, result, algo_name_list, OSSL_NELEM(algo_name_list))
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -302,42 +318,18 @@ const OPTIONS speed_options[] = {
     {NULL}
 };
 
-#define D_MD2           0
-#define D_MDC2          1
-#define D_MD4           2
-#define D_MD5           3
-#define D_HMAC          4
-#define D_SHA1          5
-#define D_RMD160        6
-#define D_RC4           7
-#define D_CBC_DES       8
-#define D_EDE3_DES      9
-#define D_CBC_IDEA      10
-#define D_CBC_SEED      11
-#define D_CBC_RC2       12
-#define D_CBC_RC5       13
-#define D_CBC_BF        14
-#define D_CBC_CAST      15
-#define D_CBC_128_AES   16
-#define D_CBC_192_AES   17
-#define D_CBC_256_AES   18
-#define D_CBC_128_CML   19
-#define D_CBC_192_CML   20
-#define D_CBC_256_CML   21
-#define D_EVP           22
-#define D_SHA256        23
-#define D_SHA512        24
-#define D_WHIRLPOOL     25
-#define D_IGE_128_AES   26
-#define D_IGE_192_AES   27
-#define D_IGE_256_AES   28
-#define D_GHASH         29
-#define D_RAND          30
-#define D_EVP_HMAC      31
-#define D_EVP_CMAC      32
-
-/* name of algorithms to test */
-static const char *names[] = {
+enum {
+    D_MD2, D_MDC2, D_MD4, D_MD5 , D_HMAC, D_SHA1, D_RMD160, D_RC4,
+    D_CBC_DES, D_EDE3_DES, D_CBC_IDEA, D_CBC_SEED,
+    D_CBC_RC2, D_CBC_RC5, D_CBC_BF, D_CBC_CAST,
+    D_CBC_128_AES, D_CBC_192_AES, D_CBC_256_AES,
+    D_CBC_128_CML, D_CBC_192_CML, D_CBC_256_CML,
+    D_EVP, D_SHA256, D_SHA512, D_WHIRLPOOL,
+    D_IGE_128_AES, D_IGE_192_AES, D_IGE_256_AES,
+    D_GHASH, D_RAND, D_EVP_HMAC, D_EVP_CMAC, ALGOR_NUM 
+};
+/* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
+static const char *names[ALGOR_NUM] = {
     "md2", "mdc2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
     "des cbc", "des ede3", "idea cbc", "seed cbc",
     "rc2 cbc", "rc5-32/12 cbc", "blowfish cbc", "cast cbc",
@@ -347,9 +339,8 @@ static const char *names[] = {
     "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
     "rand", "hmac", "cmac"
 };
-#define ALGOR_NUM       OSSL_NELEM(names)
 
-/* list of configured algorithm (remaining) */
+/* list of configured algorithm (remaining), with some few alias */
 static const OPT_PAIR doit_choices[] = {
 #ifndef OPENSSL_NO_MD2
     {"md2", D_MD2},
@@ -420,31 +411,24 @@ static const OPT_PAIR doit_choices[] = {
     {"rand", D_RAND}
 };
 
-static double results[ALGOR_NUM][OSSL_NELEM(lengths_list)];
+static double results[ALGOR_NUM][SIZE_NUM];
 
 #ifndef OPENSSL_NO_DSA
-# define R_DSA_512       0
-# define R_DSA_1024      1
-# define R_DSA_2048      2
+enum { R_DSA_512, R_DSA_1024, R_DSA_2048, DSA_NUM };
 static const OPT_PAIR dsa_choices[] = {
     {"dsa512", R_DSA_512},
     {"dsa1024", R_DSA_1024},
     {"dsa2048", R_DSA_2048}
 };
-# define DSA_NUM         OSSL_NELEM(dsa_choices)
-
 static double dsa_results[DSA_NUM][2];  /* 2 ops: sign then verify */
 #endif  /* OPENSSL_NO_DSA */
 
-#define R_RSA_512       0
-#define R_RSA_1024      1
-#define R_RSA_2048      2
-#define R_RSA_3072      3
-#define R_RSA_4096      4
-#define R_RSA_7680      5
-#define R_RSA_15360     6
 #ifndef OPENSSL_NO_RSA
-static const OPT_PAIR rsa_choices[] = {
+enum {
+    R_RSA_512, R_RSA_1024, R_RSA_2048, R_RSA_3072, R_RSA_4096, R_RSA_7680,
+    R_RSA_15360, RSA_NUM
+};
+static const OPT_PAIR rsa_choices[RSA_NUM] = {
     {"rsa512", R_RSA_512},
     {"rsa1024", R_RSA_1024},
     {"rsa2048", R_RSA_2048},
@@ -453,42 +437,22 @@ static const OPT_PAIR rsa_choices[] = {
     {"rsa7680", R_RSA_7680},
     {"rsa15360", R_RSA_15360}
 };
-# define RSA_NUM OSSL_NELEM(rsa_choices)
 
 static double rsa_results[RSA_NUM][2];  /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_RSA */
 
-enum {
-    R_EC_P160,
-    R_EC_P192,
-    R_EC_P224,
-    R_EC_P256,
-    R_EC_P384,
-    R_EC_P521,
-#ifndef OPENSSL_NO_EC2M
-    R_EC_K163,
-    R_EC_K233,
-    R_EC_K283,
-    R_EC_K409,
-    R_EC_K571,
-    R_EC_B163,
-    R_EC_B233,
-    R_EC_B283,
-    R_EC_B409,
-    R_EC_B571,
-#endif
-    R_EC_BRP256R1,
-    R_EC_BRP256T1,
-    R_EC_BRP384R1,
-    R_EC_BRP384T1,
-    R_EC_BRP512R1,
-    R_EC_BRP512T1,
-    R_EC_X25519,
-    R_EC_X448
-};
-
 #ifndef OPENSSL_NO_EC
-static OPT_PAIR ecdsa_choices[] = {
+enum ec_curves_t {
+    R_EC_P160, R_EC_P192, R_EC_P224, R_EC_P256, R_EC_P384, R_EC_P521,
+# ifndef OPENSSL_NO_EC2M
+    R_EC_K163, R_EC_K233, R_EC_K283, R_EC_K409, R_EC_K571,
+    R_EC_B163, R_EC_B233, R_EC_B283, R_EC_B409, R_EC_B571,
+# endif
+    R_EC_BRP256R1, R_EC_BRP256T1, R_EC_BRP384R1, R_EC_BRP384T1,
+    R_EC_BRP512R1, R_EC_BRP512T1, ECDSA_NUM
+};
+/* list of ecdsa curves */
+static const OPT_PAIR ecdsa_choices[ECDSA_NUM] = {
     {"ecdsap160", R_EC_P160},
     {"ecdsap192", R_EC_P192},
     {"ecdsap224", R_EC_P224},
@@ -514,11 +478,9 @@ static OPT_PAIR ecdsa_choices[] = {
     {"ecdsabrp512r1", R_EC_BRP512R1},
     {"ecdsabrp512t1", R_EC_BRP512T1}
 };
-# define ECDSA_NUM       OSSL_NELEM(ecdsa_choices)
-
-static double ecdsa_results[ECDSA_NUM][2];    /* 2 ops: sign then verify */
-
-static const OPT_PAIR ecdh_choices[] = {
+enum { R_EC_X25519 = ECDSA_NUM, R_EC_X448, EC_NUM };
+/* list of ecdh curves, extension of |ecdsa_choices| list above */
+static const OPT_PAIR ecdh_choices[EC_NUM] = {
     {"ecdhp160", R_EC_P160},
     {"ecdhp192", R_EC_P192},
     {"ecdhp224", R_EC_P224},
@@ -546,29 +508,25 @@ static const OPT_PAIR ecdh_choices[] = {
     {"ecdhx25519", R_EC_X25519},
     {"ecdhx448", R_EC_X448}
 };
-# define EC_NUM       OSSL_NELEM(ecdh_choices)
 
-static double ecdh_results[EC_NUM][1];  /* 1 op: derivation */
+static double ecdh_results[EC_NUM][1];      /* 1 op: derivation */
+static double ecdsa_results[ECDSA_NUM][2];  /* 2 ops: sign then verify */
 
-#define R_EC_Ed25519    0
-#define R_EC_Ed448      1
-static OPT_PAIR eddsa_choices[] = {
+enum { R_EC_Ed25519, R_EC_Ed448, EdDSA_NUM };
+static const OPT_PAIR eddsa_choices[EdDSA_NUM] = {
     {"ed25519", R_EC_Ed25519},
     {"ed448", R_EC_Ed448}
-};
-# define EdDSA_NUM       OSSL_NELEM(eddsa_choices)
 
+};
 static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
 
 # ifndef OPENSSL_NO_SM2
-#  define R_EC_CURVESM2        0
-static OPT_PAIR sm2_choices[] = {
+enum { R_EC_CURVESM2, SM2_NUM };
+static const OPT_PAIR sm2_choices[SM2_NUM] = {
     {"curveSM2", R_EC_CURVESM2}
 };
 #  define SM2_ID        "TLSv1.3+GM+Cipher+Suite"
 #  define SM2_ID_LEN    sizeof("TLSv1.3+GM+Cipher+Suite") - 1
-#  define SM2_NUM       OSSL_NELEM(sm2_choices)
-
 static double sm2_results[SM2_NUM][2];    /* 2 ops: sign then verify */
 # endif /* OPENSSL_NO_SM2 */
 #endif /* OPENSSL_NO_EC */
@@ -623,7 +581,7 @@ static int run_benchmark(int async_jobs, int (*loop_function) (void *),
 static unsigned int testnum;
 
 /* Nb of iterations to do per algorithm and key-size */
-static long c[ALGOR_NUM][OSSL_NELEM(lengths_list)];
+static long c[ALGOR_NUM][SIZE_NUM];
 
 #ifndef OPENSSL_NO_MD2
 static int EVP_Digest_MD2_loop(void *args)
@@ -1489,7 +1447,7 @@ int speed_main(int argc, char **argv)
     uint8_t doit[ALGOR_NUM] = { 0 };
     int ret = 1, misalign = 0, lengths_single = 0, aead = 0;
     long count = 0;
-    unsigned int size_num = OSSL_NELEM(lengths_list);
+    unsigned int size_num = SIZE_NUM;
     unsigned int i, k, loopargs_len = 0, async_jobs = 0;
     int keylen;
     int buflen;
@@ -1572,7 +1530,8 @@ int speed_main(int argc, char **argv)
     /*
      * We only test over the following curves as they are representative, To
      * add tests over more curves, simply add the curve NID and curve name to
-     * the following arrays and increase the |ecdh_choices| list accordingly.
+     * the following arrays and increase the |ecdh_choices| and |ecdsa_choices|
+     * lists accordingly.
      */
     static const EC_CURVE ec_curves[EC_NUM] = {
         /* Prime Curves */
@@ -1620,10 +1579,20 @@ int speed_main(int argc, char **argv)
     uint8_t ecdsa_doit[ECDSA_NUM] = { 0 };
     uint8_t ecdh_doit[EC_NUM] = { 0 };
     uint8_t eddsa_doit[EdDSA_NUM] = { 0 };
-    OPENSSL_assert(OSSL_NELEM(ec_curves) >= EC_NUM);
-    OPENSSL_assert(OSSL_NELEM(ed_curves) >= EdDSA_NUM);
+
+    /* checks declarated curves against choices list. */
+    OPENSSL_assert(ed_curves[EdDSA_NUM - 1].nid == NID_ED448);
+    OPENSSL_assert(strcmp(eddsa_choices[EdDSA_NUM - 1].name, "ed448") == 0);
+
+    OPENSSL_assert(ec_curves[EC_NUM - 1].nid == NID_X448);
+    OPENSSL_assert(strcmp(ecdh_choices[EC_NUM - 1].name, "ecdhx448") == 0);
+
+    OPENSSL_assert(ec_curves[ECDSA_NUM - 1].nid == NID_brainpoolP512t1);
+    OPENSSL_assert(strcmp(ecdsa_choices[ECDSA_NUM - 1].name, "ecdsabrp512t1") == 0);
+
 # ifndef OPENSSL_NO_SM2
-    OPENSSL_assert(OSSL_NELEM(sm2_curves) >= SM2_NUM);
+    OPENSSL_assert(sm2_curves[SM2_NUM - 1].nid == NID_sm2);
+    OPENSSL_assert(strcmp(sm2_choices[SM2_NUM - 1].name, "curveSM2") == 0);
 # endif
 #endif                          /* ndef OPENSSL_NO_EC */
 
@@ -1757,7 +1726,7 @@ int speed_main(int argc, char **argv)
     for (; *argv; argv++) {
         const char *algo = *argv;
 
-        if (found(algo, doit_choices, &i)) {
+        if (opt_found(algo, doit_choices, &i)) {
             doit[i] = 1;
             continue;
         }
@@ -1779,7 +1748,7 @@ int speed_main(int argc, char **argv)
                 memset(rsa_doit, 1, sizeof(rsa_doit));
                 continue;
             }
-            if (found(algo, rsa_choices, &i)) {
+            if (opt_found(algo, rsa_choices, &i)) {
                 rsa_doit[i] = 1;
                 continue;
             }
@@ -1791,7 +1760,7 @@ int speed_main(int argc, char **argv)
                 memset(dsa_doit, 1, sizeof(dsa_doit));
                 continue;
             }
-            if (found(algo, dsa_choices, &i)) {
+            if (opt_found(algo, dsa_choices, &i)) {
                 dsa_doit[i] = 2;
                 continue;
             }
@@ -1813,7 +1782,7 @@ int speed_main(int argc, char **argv)
                 memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
                 continue;
             }
-            if (found(algo, ecdsa_choices, &i)) {
+            if (opt_found(algo, ecdsa_choices, &i)) {
                 ecdsa_doit[i] = 2;
                 continue;
             }
@@ -1823,32 +1792,30 @@ int speed_main(int argc, char **argv)
                 memset(ecdh_doit, 1, sizeof(ecdh_doit));
                 continue;
             }
-            if (found(algo, ecdh_choices, &i)) {
+            if (opt_found(algo, ecdh_choices, &i)) {
                 ecdh_doit[i] = 2;
                 continue;
             }
         }
-        if (strncmp(algo, "ed", 2) == 0) {
-            if (strcmp(algo, "eddsa") == 0) {
-                memset(eddsa_doit, 1, sizeof(eddsa_doit));
-                continue;
-            }
-            if (found(algo, eddsa_choices, &i)) {
-                eddsa_doit[i] = 2;
-                continue;
-            }
+        if (strcmp(algo, "eddsa") == 0) {
+            memset(eddsa_doit, 1, sizeof(eddsa_doit));
+            continue;
+        }
+        if (opt_found(algo, eddsa_choices, &i)) {
+            eddsa_doit[i] = 2;
+            continue;
         }
 # ifndef OPENSSL_NO_SM2
         if (strcmp(algo, "sm2") == 0) {
             memset(sm2_doit, 1, sizeof(sm2_doit));
             continue;
         }
-        if (found(algo, sm2_choices, &i)) {
+        if (opt_found(algo, sm2_choices, &i)) {
             sm2_doit[i] = 2;
             continue;
         }
 # endif
-#endif
+#endif  /* OPENSSL_NO_EC */
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
         goto end;
     }
@@ -2274,7 +2241,7 @@ int speed_main(int argc, char **argv)
 #   ifndef OPENSSL_NO_SM2
     sm2_c[R_EC_SM2P256][0] = count / 1800;
 #   endif
-#  endif
+#  endif                          /* OPENSSL_NO_EC */
 
 # else
 /* not worth fixing */
@@ -2880,7 +2847,7 @@ int speed_main(int argc, char **argv)
         if (!rsa_doit[testnum])
             continue;
         for (i = 0; i < loopargs_len; i++) {
-            if (primes > 2) {
+            if (primes > RSA_DEFAULT_PRIME_NUM) {
                 /* we haven't set keys yet,  generate multi-prime RSA keys */
                 BIGNUM *bn = BN_new();
 
@@ -3693,7 +3660,7 @@ int speed_main(int argc, char **argv)
                    sm2_results[k][0], sm2_results[k][1]);
     }
 # endif
-#endif
+#endif                          /* OPENSSL_NO_EC */
 
     ret = 0;
 
