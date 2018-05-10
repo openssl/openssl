@@ -985,6 +985,10 @@ static bool DoExchange(bssl::UniquePtr<SSL_SESSION> *out_session,
     SSL_set_max_cert_list(ssl.get(), config->max_cert_list);
   }
 
+  if (!config->async) {
+    SSL_set_mode(ssl.get(), SSL_MODE_AUTO_RETRY);
+  }
+
   int sock = Connect(config->port);
   if (sock == -1) {
     return false;
