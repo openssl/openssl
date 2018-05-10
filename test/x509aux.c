@@ -161,6 +161,6 @@ int setup_tests(void)
         return 0;
     }
 
-    ADD_ALL_TESTS(test_certs, n);
+    ADD_ALL_TESTS(test_certs, (int)n);
     return 1;
 }
