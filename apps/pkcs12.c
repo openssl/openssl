@@ -906,8 +906,8 @@ int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
             av = X509_ATTRIBUTE_get0_type(attr, 0);
             switch (av->type) {
             case V_ASN1_BMPSTRING:
-                value = OPENSSL_uni2asc(av->value.bmpstring->data,
-                                        av->value.bmpstring->length);
+                value = OPENSSL_uni2utf8(av->value.bmpstring->data,
+                                         av->value.bmpstring->length);
                 BIO_printf(out, "%s\n", value);
                 OPENSSL_free(value);
                 break;
