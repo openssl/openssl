@@ -38,9 +38,11 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_DO_SIGVER_INIT                             161
 # define EVP_F_ENC_NEW                                    199
 # define EVP_F_EVP_CIPHERINIT_EX                          123
+# define EVP_F_EVP_CIPHER_ASN1_TO_PARAM                   202
 # define EVP_F_EVP_CIPHER_CTX_COPY                        163
 # define EVP_F_EVP_CIPHER_CTX_CTRL                        124
 # define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH              122
+# define EVP_F_EVP_CIPHER_PARAM_TO_ASN1                   203
 # define EVP_F_EVP_DECRYPTFINAL_EX                        101
 # define EVP_F_EVP_DECRYPTUPDATE                          166
 # define EVP_F_EVP_DIGESTFINALXOF                         174
