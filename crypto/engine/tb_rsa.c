@@ -31,7 +31,7 @@ int ENGINE_register_RSA(ENGINE *e)
     return 1;
 }
 
-void ENGINE_register_all_RSA()
+void ENGINE_register_all_RSA(void)
 {
     ENGINE *e;
 

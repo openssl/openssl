@@ -31,7 +31,7 @@ int ENGINE_register_DH(ENGINE *e)
     return 1;
 }
 
-void ENGINE_register_all_DH()
+void ENGINE_register_all_DH(void)
 {
     ENGINE *e;
 

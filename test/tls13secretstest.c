@@ -399,7 +399,7 @@ static int test_handshake_secrets(void)
     return ret;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_handshake_secrets);
     return 1;

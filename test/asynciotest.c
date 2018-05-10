@@ -42,7 +42,7 @@ struct async_ctrs {
     unsigned int wctr;
 };
 
-static const BIO_METHOD *bio_f_async_filter()
+static const BIO_METHOD *bio_f_async_filter(void)
 {
     if (methods_async == NULL) {
         methods_async = BIO_meth_new(BIO_TYPE_ASYNC_FILTER, "Async filter");

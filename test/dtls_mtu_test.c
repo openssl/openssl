@@ -189,7 +189,7 @@ static int run_mtu_tests(void)
     return ret;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(run_mtu_tests);
     return 1;

@@ -137,7 +137,7 @@ static void bio_f_tls_corrupt_filter_free(void)
  */
 static const char **cipher_list = NULL;
 
-static int setup_cipher_list()
+static int setup_cipher_list(void)
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;

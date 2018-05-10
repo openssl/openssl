@@ -482,7 +482,7 @@ static int test_x509_time_print(int idx)
     return ret;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_x509_cmp_time_current);
     ADD_ALL_TESTS(test_x509_cmp_time, OSSL_NELEM(x509_cmp_tests));

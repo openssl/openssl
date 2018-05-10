@@ -34,7 +34,7 @@ int ENGINE_register_digests(ENGINE *e)
     return 1;
 }
 
-void ENGINE_register_all_digests()
+void ENGINE_register_all_digests(void)
 {
     ENGINE *e;
 

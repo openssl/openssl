@@ -31,7 +31,7 @@ int ENGINE_register_EC(ENGINE *e)
     return 1;
 }
 
-void ENGINE_register_all_EC()
+void ENGINE_register_all_EC(void)
 {
     ENGINE *e;
 

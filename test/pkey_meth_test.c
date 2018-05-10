@@ -75,7 +75,7 @@ static int test_pkey_meths(void)
     return good;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_asn1_meths);
     ADD_TEST(test_pkey_meths);

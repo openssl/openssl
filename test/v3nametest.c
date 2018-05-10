@@ -251,7 +251,7 @@ static const struct set_name_fn name_fns[] = {
     {set_altname_email, "set rfc822Name", 0, 1},
 };
 
-static X509 *make_cert()
+static X509 *make_cert(void)
 {
     X509 *crt = NULL;
 
