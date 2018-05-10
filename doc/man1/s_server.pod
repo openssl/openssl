@@ -157,6 +157,7 @@ B<openssl> B<s_server>
 [B<-psk_identity val>]
 [B<-psk_hint val>]
 [B<-psk val>]
+[B<-psk_session file>]
 [B<-srpvfile infile>]
 [B<-srpuserseed val>]
 [B<-ssl3>]
@@ -596,6 +597,11 @@ Use the PSK key B<val> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 This option must be provided in order to use a PSK cipher.
+
+=item B<-psk_session file>
+
+Use the pem encoded SSL_SESSION data stored in B<file> as the basis of a PSK.
+Note that this will only work if TLSv1.3 is negotiated.
 
 =item B<-listen>
 
