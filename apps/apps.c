@@ -48,6 +48,8 @@ static int WIN32_rename(const char *from, const char *to);
 # define rename(from,to) WIN32_rename((from),(to))
 #endif
 
+#define PASS_SOURCE_SIZE_MAX 4
+
 typedef struct {
     const char *name;
     unsigned long flag;
@@ -254,12 +256,11 @@ static char *app_get_pass(const char *arg, int keepbio)
             }
         } else {
             /* argument syntax error; do not reveal too much about arg */
-            #define SOURCE_SIZE_MAX 4
             tmp = strchr(arg, ':');
-            if (tmp == NULL || tmp - arg > SOURCE_SIZE_MAX)
+            if (tmp == NULL || tmp - arg > PASS_SOURCE_SIZE_MAX)
                 BIO_printf(bio_err,
            "Invalid password argument, missing ':' within the first %d chars\n",
-                           SOURCE_SIZE_MAX + 1);
+                           PASS_SOURCE_SIZE_MAX + 1);
             else
                 BIO_printf(bio_err,
                           "Invalid password argument, starting with \"%.*s\"\n",
