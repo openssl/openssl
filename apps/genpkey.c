@@ -120,6 +120,13 @@ int genpkey_main(int argc, char **argv)
             if (!opt_cipher(opt_unknown(), &cipher)
                 || do_param == 1)
                 goto opthelp;
+            if (EVP_CIPHER_mode(cipher) == EVP_CIPH_GCM_MODE ||
+                EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE ||
+                EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE ||
+                EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE) {
+                BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
+                goto end;
+            }
         }
     }
     argc = opt_num_rest();

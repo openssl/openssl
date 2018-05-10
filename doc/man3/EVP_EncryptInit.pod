@@ -316,7 +316,7 @@ OBJECT IDENTIFIER or NID_undef if it has no defined OBJECT IDENTIFIER.
 EVP_CIPHER_CTX_cipher() returns an B<EVP_CIPHER> structure.
 
 EVP_CIPHER_param_to_asn1() and EVP_CIPHER_asn1_to_param() return greater
-than zero for success and zero or a negative number.
+than zero for success and zero or a negative number on failure.
 
 EVP_CIPHER_CTX_rand_key() returns 1 for success.
 

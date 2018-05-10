@@ -32,13 +32,19 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
-            ret = -1;
+            ret = -2;
             break;
 
         default:
             ret = EVP_CIPHER_set_asn1_iv(c, type);
         }
     } else
+        ret = -1;
+    if (ret <= 0)
+        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, ret == -2 ?
+               ASN1_R_UNSUPPORTED_CIPHER :
+               EVP_R_CIPHER_PARAMETER_ERROR);
+    if (ret < -1)
         ret = -1;
     return ret;
 }
@@ -60,7 +66,7 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
-            ret = -1;
+            ret = -2;
             break;
 
         default:
@@ -68,6 +74,12 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
             break;
         }
     } else
+        ret = -1;
+    if (ret <= 0)
+        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, ret == -2 ?
+               EVP_R_UNSUPPORTED_CIPHER :
+               EVP_R_CIPHER_PARAMETER_ERROR);
+    if (ret < -1)
         ret = -1;
     return ret;
 }

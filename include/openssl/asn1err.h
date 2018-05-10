@@ -241,6 +241,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM               199
 # define ASN1_R_UNKNOWN_TAG                               194
 # define ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE           164
+# define ASN1_R_UNSUPPORTED_CIPHER                        228
 # define ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE               167
 # define ASN1_R_UNSUPPORTED_TYPE                          196
 # define ASN1_R_WRONG_INTEGER_TYPE                        225
