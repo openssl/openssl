@@ -125,7 +125,7 @@ int genpkey_main(int argc, char **argv)
                 EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE ||
                 EVP_CIPHER_mode(cipher) == EVP_CIPH_OCB_MODE) {
                 BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
-                //goto end;
+                goto end;
             }
         }
     }
