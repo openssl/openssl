@@ -16,6 +16,7 @@
 #include <openssl/ocsp.h>
 #include <openssl/srp.h>
 #include <openssl/txt_db.h>
+#include <openssl/aes.h>
 
 #include "ssltestlib.h"
 #include "testutil.h"
@@ -1768,8 +1769,15 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
         }
         serverpsk = clientpsk;
 
-        if (sess != NULL)
+        if (sess != NULL) {
+            if (!TEST_true(SSL_SESSION_up_ref(clientpsk))) {
+                SSL_SESSION_free(clientpsk);
+                SSL_SESSION_free(serverpsk);
+                clientpsk = serverpsk = NULL;
+                return 0;
+            }
             *sess = clientpsk;
+        }
         return 1;
     }
 
@@ -1938,9 +1946,7 @@ static int test_early_data_read_write(int idx)
             || !TEST_mem_eq(buf, readbytes, MSG7, strlen(MSG7)))
         goto end;
 
-    /* We keep the PSK session around if using PSK */
-    if (idx != 2)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     sess = SSL_get1_session(clientssl);
     use_session_cb_cnt = 0;
     find_session_cb_cnt = 0;
@@ -1990,8 +1996,7 @@ static int test_early_data_read_write(int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -2042,8 +2047,7 @@ static int test_early_data_replay(int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -2130,8 +2134,7 @@ static int early_data_skip_helper(int hrr, int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
     SSL_SESSION_free(sess);
@@ -2204,9 +2207,9 @@ static int test_early_data_not_sent(int idx)
 
     /*
      * Should block due to the NewSessionTicket arrival unless we're using
-     * read_ahead
+     * read_ahead, or PSKs
      */
-    if (idx != 1) {
+    if (idx != 1 && idx != 2) {
         if (!TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)))
             goto end;
     }
@@ -2218,8 +2221,8 @@ static int test_early_data_not_sent(int idx)
     testresult = 1;
 
  end:
-    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
@@ -2427,6 +2430,7 @@ static int test_early_data_psk(int idx)
     testresult = 1;
 
  end:
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -2484,8 +2488,8 @@ static int test_early_data_not_expected(int idx)
     testresult = 1;
 
  end:
-    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
     SSL_free(serverssl);
@@ -2558,7 +2562,6 @@ static int test_early_data_tls1_2(int idx)
     testresult = 1;
 
  end:
-    /* If using PSK then clientpsk and sess are the same */
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -3704,8 +3707,7 @@ static int test_export_key_mat_early(int idx)
     testresult = 1;
 
  end:
-    if (sess != clientpsk)
-        SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess);
     SSL_SESSION_free(clientpsk);
     SSL_SESSION_free(serverpsk);
     clientpsk = serverpsk = NULL;
@@ -4593,6 +4595,232 @@ static int test_ssl_get_shared_ciphers(int tst)
     return testresult;
 }
 
+static const char *appdata = "Hello World";
+static int gen_tick_called, dec_tick_called, tick_key_cb_called;
+static int tick_key_renew = 0;
+static SSL_TICKET_RETURN tick_dec_ret = SSL_TICKET_RETURN_ABORT;
+
+static int gen_tick_cb(SSL *s, void *arg)
+{
+    gen_tick_called = 1;
+
+    return SSL_SESSION_set1_ticket_appdata(SSL_get_session(s), appdata,
+                                           strlen(appdata));
+}
+
+static SSL_TICKET_RETURN dec_tick_cb(SSL *s, SSL_SESSION *ss,
+                                     const unsigned char *keyname,
+                                     size_t keyname_length,
+                                     SSL_TICKET_STATUS status,
+                                     void *arg)
+{
+    void *tickdata;
+    size_t tickdlen;
+
+    dec_tick_called = 1;
+
+    if (status == SSL_TICKET_EMPTY)
+        return SSL_TICKET_RETURN_IGNORE_RENEW;
+
+    if (!TEST_true(status == SSL_TICKET_SUCCESS
+                   || status == SSL_TICKET_SUCCESS_RENEW))
+        return SSL_TICKET_RETURN_ABORT;
+
+    if (!TEST_true(SSL_SESSION_get0_ticket_appdata(ss, &tickdata,
+                                                   &tickdlen))
+            || !TEST_size_t_eq(tickdlen, strlen(appdata))
+            || !TEST_int_eq(memcmp(tickdata, appdata, tickdlen), 0))
+        return SSL_TICKET_RETURN_ABORT;
+
+    if (tick_key_cb_called)  {
+        /* Don't change what the ticket key callback wanted to do */
+        switch (status) {
+        case SSL_TICKET_NO_DECRYPT:
+            return SSL_TICKET_RETURN_IGNORE_RENEW;
+
+        case SSL_TICKET_SUCCESS:
+            return SSL_TICKET_RETURN_USE;
+
+        case SSL_TICKET_SUCCESS_RENEW:
+            return SSL_TICKET_RETURN_USE_RENEW;
+
+        default:
+            return SSL_TICKET_RETURN_ABORT;
+        }
+    }
+    return tick_dec_ret;
+
+}
+
+static int tick_key_cb(SSL *s, unsigned char key_name[16],
+                       unsigned char iv[EVP_MAX_IV_LENGTH], EVP_CIPHER_CTX *ctx,
+                       HMAC_CTX *hctx, int enc)
+{
+    const unsigned char tick_aes_key[16] = "0123456789abcdef";
+    const unsigned char tick_hmac_key[16] = "0123456789abcdef";
+
+    tick_key_cb_called = 1;
+    memset(iv, 0, AES_BLOCK_SIZE);
+    memset(key_name, 0, 16);
+    if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, tick_aes_key, iv, enc)
+            || !HMAC_Init_ex(hctx, tick_hmac_key, sizeof(tick_hmac_key),
+                             EVP_sha256(), NULL))
+        return -1;
+
+    return tick_key_renew ? 2 : 1;
+}
+
+/*
+ * Test the various ticket callbacks
+ * Test 0: TLSv1.2, no ticket key callback, no ticket, no renewal
+ * Test 1: TLSv1.3, no ticket key callback, no ticket, no renewal
+ * Test 2: TLSv1.2, no ticket key callback, no ticket, renewal
+ * Test 3: TLSv1.3, no ticket key callback, no ticket, renewal
+ * Test 4: TLSv1.2, no ticket key callback, ticket, no renewal
+ * Test 5: TLSv1.3, no ticket key callback, ticket, no renewal
+ * Test 6: TLSv1.2, no ticket key callback, ticket, renewal
+ * Test 7: TLSv1.3, no ticket key callback, ticket, renewal
+ * Test 8: TLSv1.2, ticket key callback, ticket, no renewal
+ * Test 9: TLSv1.3, ticket key callback, ticket, no renewal
+ * Test 10: TLSv1.2, ticket key callback, ticket, renewal
+ * Test 11: TLSv1.3, ticket key callback, ticket, renewal
+ */
+static int test_ticket_callbacks(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *clntsess = NULL;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (tst % 2 == 0);
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    if (tst % 2 == 1);
+        return 1;
+#endif
+
+    gen_tick_called = dec_tick_called = tick_key_cb_called = 0;
+
+    /* Which tests the ticket key callback should request renewal for */
+    if (tst == 10 || tst == 11)
+        tick_key_renew = 1;
+    else
+        tick_key_renew = 0;
+
+    /* Which tests the decrypt ticket callback should request renewal for */
+    switch (tst) {
+    case 0:
+    case 1:
+        tick_dec_ret = SSL_TICKET_RETURN_IGNORE;
+        break;
+
+    case 2:
+    case 3:
+        tick_dec_ret = SSL_TICKET_RETURN_IGNORE_RENEW;
+        break;
+
+    case 4:
+    case 5:
+        tick_dec_ret = SSL_TICKET_RETURN_USE;
+        break;
+
+    case 6:
+    case 7:
+        tick_dec_ret = SSL_TICKET_RETURN_USE_RENEW;
+        break;
+
+    default:
+        tick_dec_ret = SSL_TICKET_RETURN_ABORT;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       ((tst % 2) == 0) ? TLS1_2_VERSION
+                                                        : TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /*
+     * We only want sessions to resume from tickets - not the session cache. So
+     * switch the cache off.
+     */
+    if (!TEST_true(SSL_CTX_set_session_cache_mode(sctx, SSL_SESS_CACHE_OFF)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_session_ticket_cb(sctx, gen_tick_cb, dec_tick_cb,
+                                                 NULL)))
+        goto end;
+
+    if (tst >= 8
+            && !TEST_true(SSL_CTX_set_tlsext_ticket_key_cb(sctx, tick_key_cb)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * The decrypt ticket key callback in TLSv1.2 should be called even though
+     * we have no ticket yet, because it gets called with a status of
+     * SSL_TICKET_EMPTY (the client indicates support for tickets but does not
+     * actually send any ticket data). This does not happen in TLSv1.3 because
+     * it is not valid to send empty ticket data in TLSv1.3.
+     */
+    if (!TEST_int_eq(gen_tick_called, 1)
+            || !TEST_int_eq(dec_tick_called, ((tst % 2) == 0) ? 1 : 0))
+        goto end;
+
+    gen_tick_called = dec_tick_called = 0;
+
+    clntsess = SSL_get1_session(clientssl);
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Now do a resumption */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+                                      NULL))
+            || !TEST_true(SSL_set_session(clientssl, clntsess))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (tick_dec_ret == SSL_TICKET_RETURN_IGNORE
+            || tick_dec_ret == SSL_TICKET_RETURN_IGNORE_RENEW) {
+        if (!TEST_false(SSL_session_reused(clientssl)))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_session_reused(clientssl)))
+            goto end;
+    }
+
+    if (!TEST_int_eq(gen_tick_called,
+                     (tick_key_renew
+                      || tick_dec_ret == SSL_TICKET_RETURN_IGNORE_RENEW
+                      || tick_dec_ret == SSL_TICKET_RETURN_USE_RENEW)
+                     ? 1 : 0)
+            || !TEST_int_eq(dec_tick_called, 1))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(clntsess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -4686,6 +4914,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_info_callback, 6);
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
+    ADD_ALL_TESTS(test_ticket_callbacks, 12);
     return 1;
 }
 

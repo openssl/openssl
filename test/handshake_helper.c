@@ -469,12 +469,24 @@ static int generate_session_ticket_cb(SSL *s, void *arg)
     return SSL_SESSION_set1_ticket_appdata(ss, app_data, strlen(app_data));
 }
 
-static SSL_TICKET_RETURN decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
-                                                   const unsigned char *keyname,
-                                                   size_t keyname_len,
-                                                   SSL_TICKET_RETURN retv, void *arg)
+static int decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
+                                     const unsigned char *keyname,
+                                     size_t keyname_len,
+                                     SSL_TICKET_STATUS status,
+                                     void *arg)
 {
-    return retv;
+    switch (status) {
+    case SSL_TICKET_EMPTY:
+    case SSL_TICKET_NO_DECRYPT:
+        return SSL_TICKET_RETURN_IGNORE_RENEW;
+    case SSL_TICKET_SUCCESS:
+        return SSL_TICKET_RETURN_USE;
+    case SSL_TICKET_SUCCESS_RENEW:
+        return SSL_TICKET_RETURN_USE_RENEW;
+    default:
+        break;
+    }
+    return SSL_TICKET_RETURN_ABORT;
 }
 
 /*
