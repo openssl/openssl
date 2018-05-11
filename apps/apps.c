@@ -265,7 +265,7 @@ static char *app_get_pass(const char *arg, int keepbio)
             else
                 BIO_printf(bio_err,
                           "Invalid password argument, starting with \"%.*s\"\n",
-                           tmp - arg + 1, arg);
+                           (int)(tmp - arg + 1), arg);
             return NULL;
         }
     }
