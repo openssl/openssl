@@ -36,8 +36,7 @@ Certificate:
             X509v3 Subject Key Identifier: 
                 11:49:46:19:2A:4E:4D:D1:C8:FB:79:55:3D:81:99:22:EE:34:4F:22
             X509v3 Authority Key Identifier: 
-                keyid:11:49:46:19:2A:4E:4D:D1:C8:FB:79:55:3D:81:99:22:EE:34:4F:22
-
+                11:49:46:19:2A:4E:4D:D1:C8:FB:79:55:3D:81:99:22:EE:34:4F:22
             X509v3 Basic Constraints: 
                 CA:TRUE
     Signature Algorithm: sha256WithRSAEncryption
