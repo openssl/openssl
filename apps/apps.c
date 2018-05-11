@@ -207,6 +207,7 @@ static char *app_get_pass(const char *arg, int keepbio)
     char *tmp, tpass[APP_PASS_LEN];
     int i;
 
+    /* PASS_SOURCE_SIZE_MAX = max number of chars before ':' in below strings */
     if (strncmp(arg, "pass:", 5) == 0)
         return OPENSSL_strdup(arg + 5);
     if (strncmp(arg, "env:", 4) == 0) {
