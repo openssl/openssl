@@ -594,12 +594,15 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
                                                             max_proto_version)))))
         goto err;
 
-    if (!TEST_int_eq(SSL_CTX_use_certificate_file(serverctx, certfile,
-                                                  SSL_FILETYPE_PEM), 1)
-            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(serverctx, privkeyfile,
-                                                        SSL_FILETYPE_PEM), 1)
-            || !TEST_int_eq(SSL_CTX_check_private_key(serverctx), 1))
-        goto err;
+    if (certfile != NULL && privkeyfile != NULL) {
+        if (!TEST_int_eq(SSL_CTX_use_certificate_file(serverctx, certfile,
+                                                      SSL_FILETYPE_PEM), 1)
+                || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(serverctx,
+                                                            privkeyfile,
+                                                            SSL_FILETYPE_PEM), 1)
+                || !TEST_int_eq(SSL_CTX_check_private_key(serverctx), 1))
+            goto err;
+    }
 
 #ifndef OPENSSL_NO_DH
     SSL_CTX_set_dh_auto(serverctx, 1);

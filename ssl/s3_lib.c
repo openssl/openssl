@@ -4108,8 +4108,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 {
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
-    int i, ii, ok;
+    int i, ii, ok, prefer_sha256 = 0;
     unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
+    const EVP_MD *mdsha256 = EVP_sha256();
 #ifndef OPENSSL_NO_CHACHA
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
 #endif
@@ -4190,7 +4191,24 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         allow = srvr;
     }
 
-    if (!SSL_IS_TLS13(s)) {
+    if (SSL_IS_TLS13(s)) {
+        int j;
+
+        /*
+         * If we allow "old" style PSK callbacks, and we have no certificate (so
+         * we're not going to succeed without a PSK anyway), and we're in
+         * TLSv1.3 then the default hash for a PSK is SHA-256 (as per the
+         * TLSv1.3 spec). Therefore we should prioritise ciphersuites using
+         * that.
+         */
+        if (s->psk_server_callback != NULL) {
+            for (j = 0; j < SSL_PKEY_NUM && !ssl_has_cert(s, j); j++);
+            if (j == SSL_PKEY_NUM) {
+                /* There are no certificates */
+                prefer_sha256 = 1;
+            }
+        }
+    } else {
         tls1_set_cert_validity(s);
         ssl_set_masks(s);
     }
@@ -4262,6 +4280,17 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 continue;
             }
 #endif
+            if (prefer_sha256) {
+                const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
+
+                if (ssl_md(tmp->algorithm2) == mdsha256) {
+                    ret = tmp;
+                    break;
+                }
+                if (ret == NULL)
+                    ret = tmp;
+                continue;
+            }
             ret = sk_SSL_CIPHER_value(allow, ii);
             break;
         }
