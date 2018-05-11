@@ -223,30 +223,30 @@ The private format to use: DER or PEM. PEM is the default.
 =item B<-cert_chain>
 
 A file containing trusted certificates to use when attempting to build the
-client certificate chain when certificate specified via B<-cert> option is in
-use.
+client certificate chain when a certificate specified via the B<-cert> option
+is in use.
 
 =item B<-build_chain>
 
 Specify whether the application should build the certificate chain to be
-provided to server.
+provided to the server.
 
 =item B<-xkey infile>, B<-xcert infile>, B<-xchain>
 
-Specify an extra certificate, private key and certificate chain, these behave
+Specify an extra certificate, private key and certificate chain. These behave
 in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
-specified, the callback returning the first valid chain will be in use by
+specified, the callback returning the first valid chain will be in use by the
 client.
 
 =item B<-xchain_build>
 
 Specify whether the application should build the certificate chain to be
-provided to client for the extra certificates provided via B<-xkey infile>,
+provided to the server for the extra certificates provided via B<-xkey infile>,
 B<-xcert infile>, B<-xchain> options.
 
 =item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
 
-Extra certificate and private key format and passphrase respectively.
+Extra certificate and private key format respectively.
 
 =item B<-pass arg>
 
@@ -286,8 +286,8 @@ and to use when attempting to build the client certificate chain.
 
 =item B<-chainCApath directory>
 
-The directory to use for building the chain provided to server. This directory
-must be in "hash format", see B<verify> for more information.
+The directory to use for building the chain provided to the server. This
+directory must be in "hash format", see L<verify> for more information.
 
 =item B<-chainCAfile file>
 

@@ -248,13 +248,13 @@ for example the DSS cipher suites require a certificate containing a DSS
 =item B<-cert_chain>
 
 A file containing trusted certificates to use when attempting to build the
-server certificate chain when certificate specified via B<-cert> option is in
-use.
+server certificate chain when certificate specified via the B<-cert> option is
+in use.
 
 =item B<-build_chain>
 
 Specify whether the application should build the certificate chain to be
-provided to client.
+provided to the client.
 
 =item B<-nameopt val>
 
@@ -308,8 +308,8 @@ by using an appropriate certificate.
 =item B<-dcert_chain>
 
 A file containing trusted certificates to use when attempting to build the
-server certificate chain when certificate specified via B<-dcert> option is in
-use.
+server certificate chain when a certificate specified via the B<-dcert> option
+is in use.
 
 =item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>, B<-dpass val>
 
@@ -317,20 +317,20 @@ Additional certificate and private key format and passphrase respectively.
 
 =item B<-xkey infile>, B<-xcert infile>, B<-xchain>
 
-Specify an extra certificate, private key and certificate chain, these behave
+Specify an extra certificate, private key and certificate chain. These behave
 in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
 specified, the callback returning the first valid chain will be in use by
-server.
+the server.
 
 =item B<-xchain_build>
 
 Specify whether the application should build the certificate chain to be
-provided to client for the extra certificates provided via B<-xkey infile>,
+provided to the client for the extra certificates provided via B<-xkey infile>,
 B<-xcert infile>, B<-xchain> options.
 
 =item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
 
-Extra certificate and private key format and passphrase respectively.
+Extra certificate and private key format respectively.
 
 =item B<-nbio_test>
 
@@ -371,8 +371,8 @@ also used when building the server certificate chain.
 
 =item B<-chainCApath dir>
 
-The directory to use for building the chain provided to client. This directory
-must be in "hash format", see B<verify> for more information.
+The directory to use for building the chain provided to the client. This
+directory must be in "hash format", see L<verify> for more information.
 
 =item B<-chainCAfile file>
 
