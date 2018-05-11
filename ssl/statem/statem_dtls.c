@@ -504,7 +504,7 @@ static int dtls1_retrieve_buffered_fragment(SSL *s, size_t *len)
         /* Calls SSLfatal() as required */
         ret = dtls1_preprocess_fragment(s, &frag->msg_header);
 
-        if (ret) {
+        if (ret && frag->msg_header.frag_len > 0) {
             unsigned char *p =
                 (unsigned char *)s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
             memcpy(&p[frag->msg_header.frag_off], frag->fragment,
