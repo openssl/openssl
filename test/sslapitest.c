@@ -1184,11 +1184,28 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
-SSL_SESSION *sesscache[9];
+SSL_SESSION *sesscache[6];
 
 static int new_cachesession_cb(SSL *ssl, SSL_SESSION *sess)
 {
     sesscache[new_called++] = sess;
+
+    return 1;
+}
+
+static int post_handshake_verify(SSL *sssl, SSL *cssl)
+{
+    SSL_set_verify(sssl, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(sssl)))
+        return 0;
+
+    /* Start handshake on the server and client */
+    if (!TEST_int_eq(SSL_do_handshake(sssl), 1)
+            || !TEST_int_le(SSL_read(cssl, NULL, 0), 0)
+            || !TEST_int_le(SSL_read(sssl, NULL, 0), 0)
+            || !TEST_true(create_ssl_connection(sssl, cssl,
+                                                SSL_ERROR_NONE)))
+        return 0;
 
     return 1;
 }
@@ -1227,20 +1244,10 @@ static int test_tickets(int idx)
         goto end;
 
     /* After a post-handshake authentication we should get new tickets issued */
-    SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
-    if (!TEST_true(SSL_verify_client_post_handshake(serverssl)))
-        goto end;
-
-    /* Start handshake on the server and client */
-    if (!TEST_int_eq(SSL_do_handshake(serverssl), 1)
-            || !TEST_int_le(SSL_read(clientssl, NULL, 0), 0)
-            || !TEST_int_le(SSL_read(serverssl, NULL, 0), 0)
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE))
+    if (!post_handshake_verify(serverssl, clientssl)
             || !TEST_int_eq(idx * 2, new_called))
         goto end;
 
-    SSL_CTX_sess_set_new_cb(cctx, NULL);
     SSL_shutdown(clientssl);
     SSL_shutdown(serverssl);
     SSL_free(serverssl);
@@ -1248,13 +1255,26 @@ static int test_tickets(int idx)
     serverssl = clientssl = NULL;
 
     /* Test that we can resume with all the tickets we got given */
-    for (i = 0; i < new_called; i++) {
+    for (i = 0; i < idx * 2; i++) {
+        new_called = 0;
         if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                               &clientssl, NULL, NULL))
-                || !TEST_true(SSL_set_session(clientssl, sesscache[i]))
-                || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
+            goto end;
+
+        SSL_force_post_handshake_auth(clientssl);
+
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                                     SSL_ERROR_NONE))
-                || !TEST_true(SSL_session_reused(clientssl)))
+                || !TEST_true(SSL_session_reused(clientssl))
+                   /* Following a resumption we only get 1 ticket */
+                || !TEST_int_eq(new_called, 1))
+            goto end;
+
+        new_called = 0;
+        /* After a post-handshake authentication we should get 1 new ticket */
+        if (!post_handshake_verify(serverssl, clientssl)
+                || !TEST_int_eq(new_called, 1))
             goto end;
 
         SSL_shutdown(clientssl);
