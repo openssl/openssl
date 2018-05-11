@@ -260,7 +260,7 @@ static char *app_get_pass(const char *arg, int keepbio)
             tmp = strchr(arg, ':');
             if (tmp == NULL || tmp - arg > PASS_SOURCE_SIZE_MAX)
                 BIO_printf(bio_err,
-           "Invalid password argument, missing ':' within the first %d chars\n",
+                           "Invalid password argument, missing ':' within the first %d chars\n",
                            PASS_SOURCE_SIZE_MAX + 1);
             else
                 BIO_printf(bio_err,
