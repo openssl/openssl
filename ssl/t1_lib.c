@@ -1384,6 +1384,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         /* Some additional consistency checks */
         if (slen != 0) {
             SSL_SESSION_free(sess);
+            sess = NULL;
             ret = SSL_TICKET_NO_DECRYPT;
             goto end;
         }
