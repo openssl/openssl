@@ -276,7 +276,7 @@ set multiple options. See the L<x509(1)> manual page for details.
 =item B<-CApath directory>
 
 The directory to use for server certificate verification. This directory
-must be in "hash format", see B<verify> for more information. These are
+must be in "hash format", see L<verify(1)> for more information. These are
 also used when building the client certificate chain.
 
 =item B<-CAfile file>
@@ -287,7 +287,7 @@ and to use when attempting to build the client certificate chain.
 =item B<-chainCApath directory>
 
 The directory to use for building the chain provided to the server. This
-directory must be in "hash format", see L<verify> for more information.
+directory must be in "hash format", see L<verify(1)> for more information.
 
 =item B<-chainCAfile file>
 
