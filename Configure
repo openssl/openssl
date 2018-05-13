@@ -319,6 +319,7 @@ my @dtls = qw(dtls1 dtls1_2);
 
 my @disablables = (
     "afalgeng",
+    "apps",
     "aria",
     "asan",
     "asm",
