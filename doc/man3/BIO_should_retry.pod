@@ -32,11 +32,13 @@ should then be retried at a later time.
 
 If BIO_should_retry() is false then the cause is an error condition.
 
-BIO_should_read() is true if the cause of the condition is that a BIO
-needs to read data.
+BIO_should_read() is true if the cause of the condition is that the BIO
+has insufficient data to return. Check for readability and/or retry the
+last operation.
 
-BIO_should_write() is true if the cause of the condition is that a BIO
-needs to read data.
+BIO_should_write() is true if the cause of the condition is that the BIO
+has pending data to write. Check for writability and/or retry the
+last operation.
 
 BIO_should_io_special() is true if some "special" condition, that is a
 reason other than reading or writing is the cause of the condition.
