@@ -57,7 +57,8 @@ Attributes currently cannot be stored in the private key B<EVP_PKEY> structure.
 
 =head1 SEE ALSO
 
-L<d2i_PKCS12(3)>
+L<d2i_PKCS12(3)>,
+L<passphrase-encoding(7)>
 
 =head1 COPYRIGHT
 
