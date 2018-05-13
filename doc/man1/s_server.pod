@@ -248,8 +248,8 @@ for example the DSS cipher suites require a certificate containing a DSS
 =item B<-cert_chain>
 
 A file containing trusted certificates to use when attempting to build the
-server certificate chain when certificate specified via the B<-cert> option is
-in use.
+client/server certificate chain related to the certificate specified via the
+B<-cert> option.
 
 =item B<-build_chain>
 

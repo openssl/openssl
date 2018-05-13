@@ -223,8 +223,8 @@ The private format to use: DER or PEM. PEM is the default.
 =item B<-cert_chain>
 
 A file containing trusted certificates to use when attempting to build the
-client certificate chain when a certificate specified via the B<-cert> option
-is in use.
+client/server certificate chain related to the certificate specified via the
+B<-cert> option.
 
 =item B<-build_chain>
 
