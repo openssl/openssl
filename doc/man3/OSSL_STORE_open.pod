@@ -112,6 +112,14 @@ URI, or if it's a different error (such as memory allocation
 failures); if the URI was parsable but the scheme unregistered, the
 top error will have the reason C<OSSL_STORE_R_UNREGISTERED_SCHEME>.
 
+These functions make no direct assumption regarding the pass phrase received
+from the password callback.
+The loaders may make assumptions, however.
+For example, the B<file:> scheme loader inherits the assumptions made by
+OpenSSL functionality that handles the different file types; this is mostly
+relevant for PKCS#12 objects.
+See L<passphrase-encoding(7)> for further information.
+
 =head1 RETURN VALUES
 
 OSSL_STORE_open() returns a pointer to a B<OSSL_STORE_CTX> on success, or
@@ -132,7 +140,8 @@ OSSL_STORE_ctrl() and OSSL_STORE_close() returns 1 on success, or 0 on failure.
 
 =head1 SEE ALSO
 
-L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_register_loader(3)>
+L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_register_loader(3)>,
+L<passphrase-encoding(7)>
 
 =head1 HISTORY
 

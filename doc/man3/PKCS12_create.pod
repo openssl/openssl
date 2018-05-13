@@ -60,13 +60,18 @@ should be used.
 
 B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 
+PKCS12_create() makes assumptions regarding the encoding of the given pass
+phrase.
+See L<passphrase-encoding(7)> for more information.
+
 =head1 RETURN VALUES
 
 PKCS12_create() returns a valid B<PKCS12> structure or NULL if an error occurred.
 
 =head1 SEE ALSO
 
-L<d2i_PKCS12(3)>
+L<d2i_PKCS12(3)>,
+L<passphrase-encoding(7)>
 
 =head1 COPYRIGHT
 
