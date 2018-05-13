@@ -1571,7 +1571,7 @@ TS_F_TS_VERIFY:108:*
 TS_F_TS_VERIFY_CERT:109:ts_verify_cert
 TS_F_TS_VERIFY_CTX_NEW:144:TS_VERIFY_CTX_new
 UI_F_CLOSE_CONSOLE:115:close_console
-UI_F_ECHO_CONSOLE:116:restore_console
+UI_F_ECHO_CONSOLE:116:echo_console
 UI_F_GENERAL_ALLOCATE_BOOLEAN:108:general_allocate_boolean
 UI_F_GENERAL_ALLOCATE_PROMPT:109:general_allocate_prompt
 UI_F_NOECHO_CONSOLE:117:noecho_console
