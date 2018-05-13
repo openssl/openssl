@@ -61,6 +61,10 @@ For socket B<BIO>s (e.g. when SSL_set_fd() was used), select() or
 poll() on the underlying socket can be used to find out when the
 TLS/SSL I/O function should be retried.
 
+The read and write functions can return SSL_ERROR_WANT_READ when there is still
+unprocessed data available at either the SSL or the BIO layer, see
+L<SSL_read(3)> and L<SSL_write(3)> for more information.
+
 Caveat: Any TLS/SSL I/O function can lead to either of
 B<SSL_ERROR_WANT_READ> and B<SSL_ERROR_WANT_WRITE>.  In particular,
 SSL_read_ex(), SSL_read(), SSL_peek_ex(), or SSL_peek() may want to write data
