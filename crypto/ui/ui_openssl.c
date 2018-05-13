@@ -318,8 +318,8 @@ static int read_string(UI *ui, UI_STRING *uis);
 static int write_string(UI *ui, UI_STRING *uis);
 
 static int open_console(UI *ui);
-static int noecho_console(UI *ui);
 static int echo_console(UI *ui);
+static int noecho_console(UI *ui);
 static int close_console(UI *ui);
 
 static UI_METHOD ui_openssl = {
