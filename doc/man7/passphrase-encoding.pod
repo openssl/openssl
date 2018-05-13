@@ -92,9 +92,10 @@ This section assumes that you know what pass phrase you should type in is, but
 that it may have been used in a different character encoding than your current
 environment gives you by default.
 For example, the pass phrase may have been used at a time when your default
-encoding was ISO-8859-1 (i.e. "räka" resulting in the byte sequence 0x72 0xE4
-0x6B ox61), and you're now in an environment where your default encoding is
-UTF-8 (i.e. "räka" resulting in the byte sequence 0x72 0xC3 0xA4 0x6B ox61).
+encoding was ISO-8859-1 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61
+0xEF 0x76 0x65), and you're now in an environment where your default encoding
+is UTF-8 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61 0xC3 0xAF 0x76
+0x65).
 Whenever it's mentioned that you should use a certain character encoding, it
 should be understood that you either change your environment to use the
 mentioned encoding by default when you type in your pass phrase, or use some
@@ -152,8 +153,8 @@ U+0000 to U+00FF, which other non-UTF-8 character sets do not.
 
 This also takes care of the case when a UTF-8 encoded string was used with
 OpenSSL older than 1.1.0.
-(for example, C<ä>, which is 0xC3 0xA4 when encoded in UTF-8, would become 0xC3
-0x83 0xC2 0xA4 when re-encoded in the naïve manner.
+(for example, C<ï>, which is 0xC3 0xAF when encoded in UTF-8, would become 0xC3
+0x83 0xC2 0xAF when re-encoded in the naïve manner.
 The PKCS#12 functions would then re-encode it back to 0xC3 0xA4, and make the
 BMSString 0x00 0xC3 0x00 0xA4 0x00 0x00)
 
