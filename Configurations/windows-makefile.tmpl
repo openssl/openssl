@@ -627,6 +627,7 @@ EOF
      return <<"EOF"
 $target: $deps
 	IF EXIST $shlib$shlibext.manifest DEL /F /Q $shlib$shlibext.manifest
+	IF EXIST \$@ DEL /F /Q \$@
 	\$(LD) \$(LDFLAGS) \$(LIB_LDFLAGS) \\
 		/implib:\$@ \$(LDOUTFLAG)$shlib$shlibext$shared_def @<< || (DEL /Q \$(\@B).* $shlib.* && EXIT 1)
 $objs
