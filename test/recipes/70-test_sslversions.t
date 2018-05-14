@@ -138,7 +138,8 @@ sub modify_supported_versions_filter
                 $ext = pack "C5",
                     0x04, # Length
                     0x03, 0x03, #TLSv1.2
-                    0x03, 0x04; #TLSv1.3
+                    #TODO(TLS1.3): Fix before release
+                    0x7f, 0x1c; #TLSv1.3 (draft 28)
             } elsif ($testtype == UNRECOGNISED_VERSIONS) {
                 $ext = pack "C5",
                     0x04, # Length
@@ -152,8 +153,8 @@ sub modify_supported_versions_filter
             } elsif ($testtype == WITH_TLS1_4) {
                     $ext = pack "C5",
                         0x04, # Length
-                        0x03, 0x05, #TLSv1.4
-                        0x03, 0x04; #TLSv1.3
+                        #TODO(TLS1.3): Fix before release
+                        0x7f, 0x1c; #TLSv1.3 (draft 28)
             }
             if ($testtype == REVERSE_ORDER_VERSIONS
                     || $testtype == UNRECOGNISED_VERSIONS
