@@ -186,7 +186,7 @@ script:
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "../$DESTDIR";
-          if $make install install_docs DESTDIR="../$DESTDIR"; then
+          if $make install DESTDIR="../$DESTDIR"; then
               echo -e '+\057\057\057\057\057 MAKE INSTALL_DOCS OK';
           else
               echo -e '+\057\057\057\057\057 MAKE INSTALL_DOCS FAILED'; false;
