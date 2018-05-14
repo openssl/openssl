@@ -538,7 +538,9 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
     for (currv = max_version; currv >= min_version; currv--) {
         /* TODO(TLS1.3): Remove this first if clause prior to release!! */
         if (currv == TLS1_3_VERSION) {
-            if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)) {
+            if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
+                    || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT_27)
+                    || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT_26)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                          ERR_R_INTERNAL_ERROR);
@@ -1789,7 +1791,9 @@ int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
     }
 
     /* TODO(TLS1.3): Remove this before release */
-    if (version == TLS1_3_VERSION_DRAFT)
+    if (version == TLS1_3_VERSION_DRAFT
+            || version == TLS1_3_VERSION_DRAFT_27
+            || version == TLS1_3_VERSION_DRAFT_26)
         version = TLS1_3_VERSION;
 
     /*
