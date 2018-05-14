@@ -99,10 +99,9 @@ encoding was ISO-8859-1 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61
 is UTF-8 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61 0xC3 0xAF 0x76
 0x65).
 Whenever it's mentioned that you should use a certain character encoding, it
-should be understood that you either change your environment to use the
-mentioned encoding by default when you type in your pass phrase, or use some
-suitable tool to convert your pass phrase from your default encoding to the
-target encoding.
+should be understood that you either change the input method to use the
+mentioned encoding when you type in your pass phrase, or use some suitable tool
+to convert your pass phrase from your default encoding to the target encoding.
 
 Also note that the sub-sections below discuss human readable pass phrases.
 This is particularly relevant for PKCS#12 objects, where human readable pass
