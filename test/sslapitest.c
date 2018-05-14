@@ -1184,11 +1184,18 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
-SSL_SESSION *sesscache[6];
+static SSL_SESSION *sesscache[6];
+static int do_cache;
 
 static int new_cachesession_cb(SSL *ssl, SSL_SESSION *sess)
 {
-    sesscache[new_called++] = sess;
+    if (do_cache) {
+        sesscache[new_called] = sess;
+    } else {
+        /* We don't need the reference to the session, so free it */
+        SSL_SESSION_free(sess);
+    }
+    new_called++;
 
     return 1;
 }
@@ -1220,6 +1227,7 @@ static int test_tickets(int idx)
     /* idx is the test number, but also the number of tickets we want */
 
     new_called = 0;
+    do_cache = 1;
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, TLS_MAX_VERSION, &sctx,
@@ -1253,6 +1261,9 @@ static int test_tickets(int idx)
     SSL_free(serverssl);
     SSL_free(clientssl);
     serverssl = clientssl = NULL;
+
+    /* Stop caching sessions - just count them */
+    do_cache = 0;
 
     /* Test that we can resume with all the tickets we got given */
     for (i = 0; i < idx * 2; i++) {
@@ -1291,8 +1302,10 @@ static int test_tickets(int idx)
  end:
     SSL_free(serverssl);
     SSL_free(clientssl);
-    for (j = 0; j < OSSL_NELEM(sesscache); j++)
+    for (j = 0; j < OSSL_NELEM(sesscache); j++) {
         SSL_SESSION_free(sesscache[j]);
+        sesscache[j] = NULL;
+    }
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
