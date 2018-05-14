@@ -935,7 +935,9 @@ int s_client_main(int argc, char **argv)
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
 #endif
+#ifndef OPENSSL_NO_SRTP
     char *srtp_profiles = NULL;
+#endif
 #ifndef OPENSSL_NO_CT
     char *ctlog_file = NULL;
     int ct_validation = 0;
@@ -1422,7 +1424,9 @@ int s_client_main(int argc, char **argv)
             noservername = 1;
             break;
         case OPT_USE_SRTP:
+#ifndef OPENSSL_NO_SRTP
             srtp_profiles = opt_arg();
+#endif
             break;
         case OPT_KEYMATEXPORT:
             keymatexportlabel = opt_arg();
