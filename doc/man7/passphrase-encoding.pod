@@ -90,9 +90,9 @@ I<Note that other loaders will have their own behaviours>.
 
 =head1 RECOMMENDATIONS
 
-This section assumes that you know what pass phrase you should type in is, but
-that it may have been used in a different character encoding than your current
-environment gives you by default.
+This section assumes that you know what pass phrase was used for encryption,
+but that it may have been encoded in a different character encoding than the
+one used by your current input method.
 For example, the pass phrase may have been used at a time when your default
 encoding was ISO-8859-1 (i.e. "naïve" resulting in the byte sequence 0x6E 0x61
 0xEF 0x76 0x65), and you're now in an environment where your default encoding
@@ -119,8 +119,8 @@ encoded using UTF-8.
 This is default on most modern Unixes, but may involve an effort on other
 platforms.
 Specifically for Windows, setting the environment variable
-C<OPENSSL_WIN32_UTF8> will have anything prompted on standard input converted
-to UTF-8.
+C<OPENSSL_WIN32_UTF8> will have anything entered on [Windows] console prompt
+converted to UTF-8 (command line and separately prompted pass phrases alike).
 
 =head2 Opening existing objects
 
