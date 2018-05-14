@@ -102,7 +102,8 @@ this function.
 
 =head1 SEE ALSO
 
-L<PKCS12_create(3)>, L<ERR_get_error(3)>
+L<PKCS12_create(3)>, L<ERR_get_error(3)>,
+L<passphrase-encoding(7)>
 
 =head1 COPYRIGHT
 

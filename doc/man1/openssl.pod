@@ -439,6 +439,9 @@ password argument is given and a password is required then the user is
 prompted to enter one: this will typically be read from the current
 terminal with echoing turned off.
 
+Note that character encoding may be relevant, please see
+L<passphrase-encoding(7)>.
+
 =over 4
 
 =item B<pass:password>
