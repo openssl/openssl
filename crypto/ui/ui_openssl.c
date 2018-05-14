@@ -503,9 +503,6 @@ static int echo_console(UI *ui)
 {
 # if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
-# endif
-
-# if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     if (is_a_tty && (TTY_set(fileno(tty_in), &tty_new) == -1))
         return 0;
 # endif
