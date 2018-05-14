@@ -1695,6 +1695,8 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
         unsigned int best_vers = 0;
         const SSL_METHOD *best_method = NULL;
         PACKET versionslist;
+        /* TODO(TLS1.3): Remove this before release */
+        unsigned int orig_candidate = 0;
 
         suppversions->parsed = 1;
 
@@ -1705,8 +1707,18 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
 
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
             /* TODO(TLS1.3): Remove this before release */
-            if (candidate_vers == TLS1_3_VERSION_DRAFT)
+            if (candidate_vers == TLS1_3_VERSION_DRAFT
+                    || candidate_vers == TLS1_3_VERSION_DRAFT_27
+                    || candidate_vers == TLS1_3_VERSION_DRAFT_26) {
+                if (best_vers == TLS1_3_VERSION
+                        && orig_candidate > candidate_vers)
+                    continue;
+                orig_candidate = candidate_vers;
                 candidate_vers = TLS1_3_VERSION;
+            } else if (candidate_vers == TLS1_3_VERSION) {
+                /* Don't actually accept real TLSv1.3 */
+                continue;
+            }
             /*
              * TODO(TLS1.3): There is some discussion on the TLS list about
              * whether to ignore versions <TLS1.2 in supported_versions. At the
@@ -1745,6 +1757,9 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
             }
             check_for_downgrade(s, best_vers, dgrd);
             s->version = best_vers;
+            /* TODO(TLS1.3): Remove this before release */
+            if (best_vers == TLS1_3_VERSION)
+                s->version_draft = orig_candidate;
             s->method = best_method;
             return 0;
         }
