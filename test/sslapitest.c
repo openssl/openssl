@@ -4693,11 +4693,11 @@ static int test_ticket_callbacks(int tst)
     int testresult = 0;
 
 #ifdef OPENSSL_NO_TLS1_2
-    if (tst % 2 == 0);
+    if (tst % 2 == 0)
         return 1;
 #endif
 #ifdef OPENSSL_NO_TLS1_3
-    if (tst % 2 == 1);
+    if (tst % 2 == 1)
         return 1;
 #endif
 
