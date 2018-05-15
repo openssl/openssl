@@ -974,7 +974,7 @@ int s_client_main(int argc, char **argv)
     c_quiet = 0;
     c_debug = 0;
     c_showcerts = 0;
-    c_nbio = 0;
+    c_nbio = 1;
     vpm = X509_VERIFY_PARAM_new();
     cctx = SSL_CONF_CTX_new();
 

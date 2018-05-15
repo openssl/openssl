@@ -9,6 +9,8 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) SSL_MODE_AUTO_RETRY is enabled by default.
+
   *) When unlocking a pass phrase protected PEM file or PKCS#8 container, we
      now allow empty (zero character) pass phrases.
      [Richard Levitte]
