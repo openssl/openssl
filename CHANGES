@@ -9,6 +9,17 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) SSL_MODE_AUTO_RETRY is enabled by default. Applications that use blocking
+     I/O in combination with something like select() or poll() will hang. This
+     can be turned off again using SSL_CTX_clear_mode().
+     Many applications do not properly handle non-application data records, and
+     TLS 1.3 sends more of such records. Setting SSL_MODE_AUTO_RETRY works
+     around the problems in those applications, but can also break some.
+     It's recommended to read the manpages about SSL_read(), SSL_write(),
+     SSL_get_error(), SSL_shutdown(), SSL_CTX_set_mode() and
+     SSL_CTX_set_read_ahead() again.
+     [Kurt Roeckx]
+
   *) When unlocking a pass phrase protected PEM file or PKCS#8 container, we
      now allow empty (zero character) pass phrases.
      [Richard Levitte]

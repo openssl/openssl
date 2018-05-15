@@ -1675,6 +1675,8 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
+    SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
+
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);
 

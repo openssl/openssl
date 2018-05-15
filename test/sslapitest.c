@@ -2351,15 +2351,6 @@ static int test_early_data_not_sent(int idx)
             || !TEST_size_t_eq(written, strlen(MSG2)))
         goto end;
 
-    /*
-     * Should block due to the NewSessionTicket arrival unless we're using
-     * read_ahead, or PSKs
-     */
-    if (idx != 1 && idx != 2) {
-        if (!TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)))
-            goto end;
-    }
-
     if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
             || !TEST_mem_eq(buf, readbytes, MSG2, strlen(MSG2)))
         goto end;
