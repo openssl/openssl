@@ -3692,8 +3692,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
     /* Save the current hash state for when we receive the CertificateVerify */
     if (SSL_IS_TLS13(s)) {
-        size_t j;
-
         if (!ssl_handshake_hash(s, s->cert_verify_hash,
                                 sizeof(s->cert_verify_hash),
                                 &s->cert_verify_hash_len)) {
@@ -3701,14 +3699,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        /* Invalidate old tickets */
-        for (j = 0; j < s->sent_tickets; j++) {
-            SSL_CTX_remove_session(s->session_ctx, s->tickets[j]);
-            SSL_SESSION_free(s->tickets[j]);
-            s->tickets[j] = NULL;
-        }
-        OPENSSL_free(s->tickets);
-        s->tickets = NULL;
+        /* Resend session tickets */
         s->sent_tickets = 0;
     }
 
@@ -4006,25 +3997,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         goto err;
     }
     if (SSL_IS_TLS13(s)) {
-        SSL_SESSION **tmp;
-
         if (!tls_construct_extensions(s, pkt,
                                       SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                                       NULL, 0)) {
             /* SSLfatal() already called */
             goto err;
         }
-        tmp = OPENSSL_realloc(s->tickets,
-                              sizeof(SSL_SESSION *) * (s->sent_tickets + 1));
-        if (tmp == NULL || !SSL_SESSION_up_ref(s->session)) {
-            OPENSSL_free(tmp);
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
-                     ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
-        s->tickets = tmp;
-        s->tickets[s->sent_tickets++] = s->session;
+        s->sent_tickets++;
         ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
     }
     EVP_CIPHER_CTX_free(ctx);
