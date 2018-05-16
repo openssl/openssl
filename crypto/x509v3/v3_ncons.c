@@ -335,7 +335,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
         return CN2DNSID_BADNAME;
 
     /*
-     * XXX: Deviation from strinct DNS name syntax, also check names with '_'
+     * XXX: Deviation from strict DNS name syntax, also check names with '_'
      * Check DNS name syntax, any '-' or '.' must be internal,
      * and on either side of each '.' we can't have a '-' or '.'.
      *
