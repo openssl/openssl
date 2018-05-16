@@ -515,11 +515,10 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
          * Following an initial handshake we send the number of tickets we have
          * been configured for.
          */
-        if (!s->hit && s->num_tickets > s->sent_tickets) {
-            /* We've not written enough tickets out yet. Stay in this state */
-            return WRITE_TRAN_CONTINUE;
+        if (s->hit || s->num_tickets <= s->sent_tickets) {
+            /* We've written enough tickets out. */
+            st->hand_state = TLS_ST_OK;
         }
-        st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
     }
 }
