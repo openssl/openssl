@@ -969,8 +969,14 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad,
     }
 #endif
     if (len) {
+		i = 0;
         n = (unsigned int)len;
-        for (i = 0; i < len; ++i)
+        if(len >= 8)
+        {
+            ctx->Xi.u[0] ^= *(u64*)(aad);
+            i=8;
+        }
+        for (; i < len; ++i)
             ctx->Xi.c[i] ^= aad[i];
     }
 
@@ -1467,6 +1473,30 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 # endif
         else
             ctx->Yi.d[3] = ctr;
+
+        if (len >= 8) {
+            const u64* in64p  = (u64*)&in[n];
+            const u64* EKi64p  = (u64*)&ctx->EKi.c[n];
+            u64* out64p = (u64*)&out[n];
+            u64* Xi64p  = (u64*)&ctx->Xi.c[n];
+
+            *out64p = *in64p ^ *EKi64p;
+            *Xi64p ^= *out64p;
+
+            n += 8;
+            len -= 8;
+        }
+        if (len >= 4) {
+            const u32* in32p  = (u32*)&in[n];
+            const u32* EKi32p  = (u32*)&ctx->EKi.c[n];
+            u32* out32p = (u32*)&out[n];
+            u32* Xi32p  = (u32*)&ctx->Xi.c[n];
+
+            *out32p = *in32p ^ *EKi32p;
+            *Xi32p ^= *out32p;
+            n += 4;
+            len -= 4;
+        }
         while (len--) {
             ctx->Xi.c[n] ^= out[n] = in[n] ^ ctx->EKi.c[n];
             ++n;
