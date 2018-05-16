@@ -183,6 +183,11 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void DH_get0_key(const DH *dh,
                  const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+const BIGNUM *DH_get0_p(const DH *dh);
+const BIGNUM *DH_get0_q(const DH *dh);
+const BIGNUM *DH_get0_g(const DH *dh);
+const BIGNUM *DH_get0_priv_key(const DH *dh);
+const BIGNUM *DH_get0_pub_key(const DH *dh);
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
 void DH_set_flags(DH *dh, int flags);
