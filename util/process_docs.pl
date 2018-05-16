@@ -112,6 +112,32 @@ foreach my $section (sort @{$options{section}}) {
                 @output = `$generate`;
                 map { s|href="http://man\.he\.net/(man\d/[^"]+)(?:\.html)?"|href="../$1.html"|g; } @output
                     if $options{type} eq "html";
+                if ($options{type} eq "man") {
+                    # Because some *roff parsers are more strict than others,
+                    # multiple lines in the NAME section must be merged into
+                    # one.
+                    my $in_name = 0;
+                    my $name_line = "";
+                    my @newoutput = ();
+                    foreach (@output) {
+                        if ($in_name) {
+                            if (/^\.SH "/) {
+                                $in_name = 0;
+                                push @newoutput, $name_line."\n";
+                            } else {
+                                chomp (my $x = $_);
+                                $name_line .= " " if $name_line;
+                                $name_line .= $x;
+                                next;
+                            }
+                        }
+                        if (/^\.SH +"NAME" *$/) {
+                            $in_name = 1;
+                        }
+                        push @newoutput, $_;
+                    }
+                    @output = @newoutput;
+                }
             }
             print STDERR "DEBUG: Done processing\n" if $options{debug};
 
