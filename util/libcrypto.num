@@ -4411,7 +4411,7 @@ EVP_sm4_ofb                             4356	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_ecb                             4357	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm4_cfb128                          4358	1_1_1	EXIST::FUNCTION:SM4
 EVP_sm3                                 4359	1_1_1	EXIST::FUNCTION:SM3
-OCSP_resp_get0_signer                   4360	1_1_0h	EXIST::FUNCTION:OCSP
+RSA_get0_multi_prime_factors            4360	1_1_1	EXIST::FUNCTION:RSA
 EVP_PKEY_public_check                   4361	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_param_check                    4362	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_meth_set_public_check          4363	1_1_1	EXIST::FUNCTION:
@@ -4425,7 +4425,7 @@ DH_check_pub_key_ex                     4370	1_1_1	EXIST::FUNCTION:DH
 DH_check_params_ex                      4371	1_1_1	EXIST::FUNCTION:DH
 RSA_generate_multi_prime_key            4372	1_1_1	EXIST::FUNCTION:RSA
 RSA_get_multi_prime_extra_count         4373	1_1_1	EXIST::FUNCTION:RSA
-RSA_get0_multi_prime_factors            4374	1_1_1	EXIST::FUNCTION:RSA
+OCSP_resp_get0_signer                   4374	1_1_0h	EXIST::FUNCTION:OCSP
 RSA_get0_multi_prime_crt_params         4375	1_1_1	EXIST::FUNCTION:RSA
 RSA_set0_multi_prime_params             4376	1_1_1	EXIST::FUNCTION:RSA
 RSA_get_version                         4377	1_1_1	EXIST::FUNCTION:RSA
@@ -4489,7 +4489,7 @@ OCSP_basic_sign_ctx                     4430	1_1_1	EXIST::FUNCTION:OCSP
 RAND_DRBG_bytes                         4431	1_1_1	EXIST::FUNCTION:
 RAND_DRBG_secure_new                    4432	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_vctrl                        4433	1_1_1	EXIST::FUNCTION:
-X509_get0_authority_key_id              4434	1_1_0h	EXIST::FUNCTION:
+OSSL_STORE_SEARCH_by_alias              4434	1_1_1	EXIST::FUNCTION:
 BIO_bind                                4435	1_1_1	EXIST::FUNCTION:SOCK
 OSSL_STORE_LOADER_set_expect            4436	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_expect                       4437	1_1_1	EXIST::FUNCTION:
@@ -4503,7 +4503,7 @@ OSSL_STORE_SEARCH_get0_bytes            4444	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_get0_string           4445	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_by_issuer_serial      4446	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_get0_name             4447	1_1_1	EXIST::FUNCTION:
-OSSL_STORE_SEARCH_by_alias              4448	1_1_1	EXIST::FUNCTION:
+X509_get0_authority_key_id              4448	1_1_0h	EXIST::FUNCTION:
 OSSL_STORE_LOADER_set_find              4449	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_free                  4450	1_1_1	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_get0_digest           4451	1_1_1	EXIST::FUNCTION:
