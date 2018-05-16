@@ -297,17 +297,111 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
 }
 
+#define CN2DNSID_NOMEM   (-2)
+#define CN2DNSID_BADNAME (-1)
+
+static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
+{
+    int utf8_length;
+    int i;
+    unsigned char *utf8_value;
+    int isdnsname = 0;
+
+    if ((utf8_length = ASN1_STRING_to_UTF8(&utf8_value, cn)) < 0)
+        return CN2DNSID_NOMEM;
+
+    /*
+     * Some certificates have had names that include a *trailing* NUL byte.
+     * Remove these harmless NUL characters. They would otherwise yield false
+     * alarms with the following embedded NUL check.
+     */
+    while (utf8_length > 0 && utf8_value[utf8_length-1] == '\0')
+        --utf8_length;
+
+    /* Reject *embedded* NULs */
+    if ((size_t)utf8_length != strlen((char *)utf8_value))
+        return CN2DNSID_BADNAME;
+
+    /*
+     * XXX: loose DNS name syntax, also check names with '_'
+     * Check DNS name syntax, any '-' or '.' must be internal,
+     * and on either side of each '.' we can't have a '-' or '.'.
+     *
+     * If the name has just one label, we don't consider it a DNS name.  This
+     * means that "CN=sometld" cannot be precluded by DNS name constraints, but
+     * that is not a problem.
+     */
+    for (i = 0; i < utf8_length; ++i) {
+        unsigned char c = utf8_value[i];
+
+        if ((c >= 'a' && c <= 'z')
+            || (c >= 'A' && c <= 'Z')
+            || (c >= '0' && c <= '9')
+            || c == '_')
+            continue;
+
+        /* Dot and hyphen cannot be first or last. */
+        if (i > 0 && i < utf8_length - 1) {
+            if (c == '-')
+                continue;
+            /*
+             * Next to a dot the preceding and following characters must not be
+             * another dot or a hyphen.  Otherwise, record that the name is
+             * plausible, since it has two or more labels.
+             */
+            if (c == '.'
+                && utf8_value[i-1] != '.' && utf8_value[i+1] != '.'
+                && utf8_value[i-1] != '-' && utf8_value[i+1] != '-') {
+                isdnsname = 1;
+                continue;
+            }
+        }
+        isdnsname = 0;
+        break;
+    }
+
+    if (isdnsname) {
+        *dnsid = utf8_value;
+        return utf8_length;
+    }
+    OPENSSL_free(utf8_value);
+    *dnsid = NULL;
+    return 0;
+}
+
+/*
+ * Check CN against DNS-ID name constraints, provided no DNS-ID
+ * subjectAlternativeName valies are present in the certificate.
+ */
 int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i;
+    int dnsid_present = 0;
+    GENERAL_NAMES *gens = NULL;
     X509_NAME *nm;
-
     ASN1_STRING stmp;
     GENERAL_NAME gntmp;
+
     stmp.flags = 0;
     stmp.type = V_ASN1_IA5STRING;
     gntmp.type = GEN_DNS;
     gntmp.d.dNSName = &stmp;
+
+    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+    if (gens) {
+        for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
+            GENERAL_NAME *gen;
+
+            gen = sk_GENERAL_NAME_value(gens, i);
+            if (gen->type == GEN_DNS) {
+                dnsid_present = 1;
+                break;
+            }
+        }
+        GENERAL_NAMES_free(gens);
+    }
+    if (dnsid_present)
+        return X509_V_OK;
 
     nm = X509_get_subject_name(x);
 
@@ -315,29 +409,31 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
 
     for (i = -1;;) {
         X509_NAME_ENTRY *ne;
-        ASN1_STRING *hn;
+        ASN1_STRING *cn;
+        unsigned char *idval = NULL;
+        int idlen = 0;
 
         i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
         if (i == -1)
             break;
         ne = X509_NAME_get_entry(nm, i);
-        hn = X509_NAME_ENTRY_get_data(ne);
+        cn = X509_NAME_ENTRY_get_data(ne);
+
         /* Only process attributes that look like host names */
-        if (asn1_valid_host(hn)) {
-            unsigned char *h;
-            int hlen = ASN1_STRING_to_UTF8(&h, hn);
-            if (hlen <= 0)
-                return X509_V_ERR_OUT_OF_MEM;
-
-            stmp.length = hlen;
-            stmp.data = h;
-
+        switch (idlen = cn2dnsid(cn, &idval)) {
+        case CN2DNSID_NOMEM:
+            return X509_V_ERR_OUT_OF_MEM;
+        case CN2DNSID_BADNAME:
+            return X509_V_ERR_UNSPECIFIED;
+        case 0:
+            return X509_V_OK;
+        default:
+            stmp.length = idlen;
+            stmp.data = idval;
             r = nc_match(&gntmp, nc);
-
-            OPENSSL_free(h);
-
+            OPENSSL_free(idval);
             if (r != X509_V_OK)
-                    return r;
+                return r;
         }
     }
     return X509_V_OK;

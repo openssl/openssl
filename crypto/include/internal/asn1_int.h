@@ -107,5 +107,4 @@ struct asn1_pctx_st {
     unsigned long str_flags;
 } /* ASN1_PCTX */ ;
 
-int asn1_valid_host(const ASN1_STRING *host);
 int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb);
