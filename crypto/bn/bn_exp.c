@@ -473,7 +473,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     return ret;
 }
 
-#if defined(SPARC_T4_MONT)
 static BN_ULONG bn_get_bits(const BIGNUM *a, int bitpos)
 {
     BN_ULONG ret = 0;
@@ -492,7 +491,6 @@ static BN_ULONG bn_get_bits(const BIGNUM *a, int bitpos)
 
     return ret & BN_MASK2;
 }
-#endif
 
 /*
  * BN_mod_exp_mont_consttime() stores the precomputed powers in a specific
@@ -599,7 +597,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                               const BIGNUM *m, BN_CTX *ctx,
                               BN_MONT_CTX *in_mont)
 {
-    int i, bits, ret = 0, window, wvalue;
+    int i, bits, ret = 0, window, wvalue, wmask, window0;
     int top;
     BN_MONT_CTX *mont = NULL;
 
@@ -1040,27 +1038,44 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             }
         }
 
-        bits--;
-        for (wvalue = 0, i = bits % window; i >= 0; i--, bits--)
-            wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
+        /* 
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows
+         */ 
+        window0 = (bits - 1) % window + 1;
+        wmask = (1 << window0) - 1;
+        bits -= window0;
+        wvalue = bn_get_bits(p, bits) & wmask;
         if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&tmp, top, powerbuf, wvalue,
                                             window))
             goto err;
 
+        wmask = (1 << window) - 1;
         /*
          * Scan the exponent one window at a time starting from the most
          * significant bits.
          */
-        while (bits >= 0) {
-            wvalue = 0;         /* The 'value' of the window */
+        while (bits > 0) {
 
-            /* Scan the window, squaring the result as we go */
-            for (i = 0; i < window; i++, bits--) {
+            /* Square the result window-size times */
+            for (i = 0; i < window; i++)
                 if (!BN_mod_mul_montgomery(&tmp, &tmp, &tmp, mont, ctx))
                     goto err;
-                wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
-            }
 
+            /* 
+             * Get a window's worth of bits from the exponent
+             * This avoids calling BN_is_bit_set for each bit, which
+             * is not only slower but also makes each bit vulnerable to
+             * EM (and likely other) side-channel attacks like One&Done
+             * (for details see "One&Done: A Single-Decryption EM-Based
+             *  Attack on OpenSSL’s Constant-Time Blinded RSA" by M. Alam,
+             *  H. Khan, M. Dey, N. Sinha, R. Callan, A. Zajic, and
+             *  M. Prvulovic, in USENIX Security'18)
+             */
+            bits -= window;
+            wvalue = bn_get_bits(p, bits) & wmask;
             /*
              * Fetch the appropriate pre-computed value from the pre-buf
              */
