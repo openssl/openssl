@@ -302,11 +302,23 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
 static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
 {
-    int utf8_length;
+    int utf8_length;    /* Return type of ASN1_STRING_to_UTF8 */
     int i;
     unsigned char *utf8_value;
     int isdnsname = 0;
 
+    /*
+     * Per RFC 6125 DNS-IDs representing internationalized domain names appear
+     * in certificates in A-label encoded form.  The same applies to CNs which
+     * are intended to represent DNS names.  However, while in the SAN DNS-IDs
+     * are IA5Strings as CNs they may be needlessly stored in 16-bit Unicode.
+     * We perform a conversion to UTF-8 here, to ensure that we get an ASCII
+     * representation of strings that have been encoded in some other way in
+     * the CN.
+     *
+     * Note, 'int' is the return type of ASN1_STRING_to_UTF8() so that's what
+     * we must use for 'utf8_length'.
+     */
     if ((utf8_length = ASN1_STRING_to_UTF8(&utf8_value, cn)) < 0)
         return CN2DNSID_NOMEM;
 
@@ -323,7 +335,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
         return CN2DNSID_BADNAME;
 
     /*
-     * XXX: loose DNS name syntax, also check names with '_'
+     * XXX: Deviation from strinct DNS name syntax, also check names with '_'
      * Check DNS name syntax, any '-' or '.' must be internal,
      * and on either side of each '.' we can't have a '-' or '.'.
      *
@@ -350,8 +362,9 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
              * plausible, since it has two or more labels.
              */
             if (c == '.'
-                && utf8_value[i-1] != '.' && utf8_value[i+1] != '.'
-                && utf8_value[i-1] != '-' && utf8_value[i+1] != '-') {
+                && utf8_value[i+1] != '.'
+                && utf8_value[i-1] != '-'
+                && utf8_value[i+1] != '-') {
                 isdnsname = 1;
                 continue;
             }
@@ -371,12 +384,11 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
 
 /*
  * Check CN against DNS-ID name constraints, provided no DNS-ID
- * subjectAlternativeName valies are present in the certificate.
+ * subjectAlternativeName values are present in the certificate.
  */
 int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i;
-    int dnsid_present = 0;
     GENERAL_NAMES *gens = NULL;
     X509_NAME *nm;
     ASN1_STRING stmp;
@@ -388,20 +400,17 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     gntmp.d.dNSName = &stmp;
 
     gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-    if (gens) {
+    if (gens != NULL) {
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-            GENERAL_NAME *gen;
+            GENERAL_NAME *gen = sk_GENERAL_NAME_value(gens, i);
 
-            gen = sk_GENERAL_NAME_value(gens, i);
             if (gen->type == GEN_DNS) {
-                dnsid_present = 1;
-                break;
+                GENERAL_NAMES_free(gens);
+                return X509_V_OK;
             }
         }
         GENERAL_NAMES_free(gens);
     }
-    if (dnsid_present)
-        return X509_V_OK;
 
     nm = X509_get_subject_name(x);
 
