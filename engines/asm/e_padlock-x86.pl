@@ -631,19 +631,6 @@ my ($mode,$opcode) = @_;
 	&ret	();
 &function_end_B("gmi_xstore");
 
-&function_begin_B("_win32_segv_handler");
-	&mov	("eax",1);			# ExceptionContinueSearch
-	&mov	("edx",&wparam(0));		# *ExceptionRecord
-	&mov	("ecx",&wparam(2));		# *ContextRecord
-	&cmp	(&DWP(0,"edx"),0xC0000005)	# ExceptionRecord->ExceptionCode == STATUS_ACCESS_VIOLATION
-	&jne	(&label("ret"));
-	&add	(&DWP(184,"ecx"),4);		# skip over rep sha*
-	&mov	("eax",0);			# ExceptionContinueExecution
-&set_label("ret");
-	&ret	();
-&function_end_B("_win32_segv_handler");
-&safeseh("_win32_segv_handler")			if ($::win32);
-
 &function_begin_B("gmi_sm3_oneshot");
 	&push	("ebx");
 	&push	("edi");

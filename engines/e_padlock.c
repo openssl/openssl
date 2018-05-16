@@ -291,7 +291,7 @@ static int gmi_available(void)
 	unsigned int leaf = 0x1;
 
 	asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx", "ecx");
-	cpu_family = (eax & 0xf00) >> 8;  // bit 11-08
+	cpu_family = (eax & 0xf00) >> 8; 
         
     if(cpu_family > 6){
 		edx = padlock_capability();
