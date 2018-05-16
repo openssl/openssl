@@ -227,7 +227,7 @@ struct gmi_cipher_data {
         unsigned int pad[4];
         struct {
             int encdec:1;
-            int func:5;
+            unsigned int func:5;
             int mode:5;
             int digest:1; 
         } b;
@@ -237,7 +237,6 @@ struct gmi_cipher_data {
 
 /* Interface to assembler module */
 unsigned int padlock_capability();
-unsigned int zx_cpu_info();
 void padlock_key_bswap(AES_KEY *key);
 void padlock_verify_context(struct padlock_cipher_data *ctx);
 void padlock_reload_key();
@@ -289,8 +288,9 @@ static int gmi_available(void)
     uint8_t cpu_family;
     unsigned int eax = 0;
     unsigned int edx = 0;
+	unsigned int leaf = 0x1;
 
-	eax = zx_cpu_info();
+	asm volatile("cpuid":"=a"(eax):"0"(leaf):"ebx", "ecx");
 	cpu_family = (eax & 0xf00) >> 8;  // bit 11-08
         
     if(cpu_family > 6){
@@ -753,11 +753,11 @@ DECLARE_AES_EVP(256, cfb, CFB)
 DECLARE_AES_EVP(256, ofb, OFB)
 DECLARE_AES_EVP(256, ctr, CTR)
 
-DECLARE_SM4_EVP(ecb, ECB);
-DECLARE_SM4_EVP(cbc, CBC);
-DECLARE_SM4_EVP(ctr, CTR);
-DECLARE_SM4_EVP(cfb128, CFB);
-DECLARE_SM4_EVP(ofb128, OFB);
+DECLARE_SM4_EVP(ecb, ECB)
+DECLARE_SM4_EVP(cbc, CBC)
+DECLARE_SM4_EVP(ctr, CTR)
+DECLARE_SM4_EVP(cfb128, CFB)
+DECLARE_SM4_EVP(ofb128, OFB)
 
 static int
 padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
@@ -984,87 +984,23 @@ padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-
-/* ===== Random Number Generator ===== */
-/*
- * This code is not engaged. The reason is that it does not comply
- * with recommendations for VIA RNG usage for secure applications
- * (posted at http://www.via.com.tw/en/viac3/c3.jsp) nor does it
- * provide meaningful error control...
- */
-/*
- * Wrapper that provides an interface between the API and the raw PadLock
- * RNG
- */
-static int padlock_rand_bytes(unsigned char *output, int count)
-{
-    unsigned int eax, buf;
-
-    while (count >= 8) {
-        eax = padlock_xstore(output, 0);
-        if (!(eax & (1 << 6)))
-            return 0;           /* RNG disabled */
-        /* this ---vv--- covers DC bias, Raw Bits and String Filter */
-        if (eax & (0x1F << 10))
-            return 0;
-        if ((eax & 0x1F) == 0)
-            continue;           /* no data, retry... */
-        if ((eax & 0x1F) != 8)
-            return 0;           /* fatal failure...  */
-        output += 8;
-        count -= 8;
-    }
-    while (count > 0) {
-        eax = padlock_xstore(&buf, 3);
-        if (!(eax & (1 << 6)))
-            return 0;           /* RNG disabled */
-        /* this ---vv--- covers DC bias, Raw Bits and String Filter */
-        if (eax & (0x1F << 10))
-            return 0;
-        if ((eax & 0x1F) == 0)
-            continue;           /* no data, retry... */
-        if ((eax & 0x1F) != 1)
-            return 0;           /* fatal failure...  */
-        *output++ = (unsigned char)buf;
-        count--;
-    }
-    OPENSSL_cleanse(&buf, sizeof(buf));
-
-    return 1;
-}
-
-/* Dummy but necessary function */
-static int padlock_rand_status(void)
-{
-    return 1;
-}
-
-/* Prepare structure for registration */
-static RAND_METHOD padlock_rand = {
-    NULL,                       /* seed */
-    padlock_rand_bytes,         /* bytes */
-    NULL,                       /* cleanup */
-    NULL,                       /* add */
-    padlock_rand_bytes,         /* pseudorand */
-    padlock_rand_status,        /* rand status */
-};
-
-#  endif                        /* COMPILE_HW_PADLOCK */
-# endif                         /* !OPENSSL_NO_HW_PADLOCK */
-#endif                          /* !OPENSSL_NO_HW */
-
 /* ===== GMI SM3 digest ===== */
 #define SM3_MAKE_STRING(c, s) do {                     \
         unsigned long ll;                              \
         unsigned int  nn;                              \
         for (nn=0; nn<SM3_DIGEST_LENGTH/4; nn++)       \
-        {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(s));   } \
+        {   ll=(c)->h[nn]; (void)HOST_l2c(ll,(&s));   } \
                                                        \
         } while (0)
 
-#define HOST_l2c(l,c)	( { unsigned int r=(l);\
-		asm ("bswapl %0":"=r"(r):"0"(r)); \
-		*((unsigned int *)(c))=r; (c)+=4; r; })
+static unsigned int HOST_l2c(unsigned long l, unsigned char **c)
+{
+	unsigned int r = l;
+	asm ("bswapl %0":"=r"(r):"0"(r));
+	*((unsigned int *)(*c))=r;
+	(*c)+=4;
+	return r;
+}
 
 static int gmi_sm3_init(EVP_MD_CTX *ctx)
 {
@@ -1157,8 +1093,8 @@ static int gmi_sm3_final(EVP_MD_CTX *ctx, unsigned char *md)
 
     p += SM3_CBLOCK - 8;
 
-    (void)HOST_l2c(c->Nh, p);
-    (void)HOST_l2c(c->Nl, p);
+    (void)HOST_l2c(c->Nh, &p);
+    (void)HOST_l2c(c->Nl, &p);
 
     p -= SM3_CBLOCK;
     gmi_sm3_blocks(c->h, p, 1);
@@ -1196,6 +1132,9 @@ static int gmi_digests(ENGINE *e, const EVP_MD **digest,
 {
     int ok = 1;
 
+	//TODO: Jeff
+	printf("Jeff: got into %s\n", __func__);
+
     if (!digest) {
         /* We are returning a list of supported nids */
         *nids = gmi_digest_nids;
@@ -1214,6 +1153,75 @@ static int gmi_digests(ENGINE *e, const EVP_MD **digest,
     }
     return ok;
 }
+
+/* ===== Random Number Generator ===== */
+/*
+ * This code is not engaged. The reason is that it does not comply
+ * with recommendations for VIA RNG usage for secure applications
+ * (posted at http://www.via.com.tw/en/viac3/c3.jsp) nor does it
+ * provide meaningful error control...
+ */
+/*
+ * Wrapper that provides an interface between the API and the raw PadLock
+ * RNG
+ */
+static int padlock_rand_bytes(unsigned char *output, int count)
+{
+    unsigned int eax, buf;
+
+    while (count >= 8) {
+        eax = padlock_xstore(output, 0);
+        if (!(eax & (1 << 6)))
+            return 0;           /* RNG disabled */
+        /* this ---vv--- covers DC bias, Raw Bits and String Filter */
+        if (eax & (0x1F << 10))
+            return 0;
+        if ((eax & 0x1F) == 0)
+            continue;           /* no data, retry... */
+        if ((eax & 0x1F) != 8)
+            return 0;           /* fatal failure...  */
+        output += 8;
+        count -= 8;
+    }
+    while (count > 0) {
+        eax = padlock_xstore(&buf, 3);
+        if (!(eax & (1 << 6)))
+            return 0;           /* RNG disabled */
+        /* this ---vv--- covers DC bias, Raw Bits and String Filter */
+        if (eax & (0x1F << 10))
+            return 0;
+        if ((eax & 0x1F) == 0)
+            continue;           /* no data, retry... */
+        if ((eax & 0x1F) != 1)
+            return 0;           /* fatal failure...  */
+        *output++ = (unsigned char)buf;
+        count--;
+    }
+    OPENSSL_cleanse(&buf, sizeof(buf));
+
+    return 1;
+}
+
+/* Dummy but necessary function */
+static int padlock_rand_status(void)
+{
+    return 1;
+}
+
+/* Prepare structure for registration */
+static RAND_METHOD padlock_rand = {
+    NULL,                       /* seed */
+    padlock_rand_bytes,         /* bytes */
+    NULL,                       /* cleanup */
+    NULL,                       /* add */
+    padlock_rand_bytes,         /* pseudorand */
+    padlock_rand_status,        /* rand status */
+};
+
+#  endif                        /* COMPILE_HW_PADLOCK */
+# endif                         /* !OPENSSL_NO_HW_PADLOCK */
+#endif                          /* !OPENSSL_NO_HW */
+
 
 #if defined(OPENSSL_NO_HW) || defined(OPENSSL_NO_HW_PADLOCK) \
         || !defined(COMPILE_HW_PADLOCK)

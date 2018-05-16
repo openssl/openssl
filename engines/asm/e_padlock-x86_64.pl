@@ -14,6 +14,11 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
+# ====================================================================
+# GMI's SM3 and SM4 assembly is Written by yunshen@zhaoxin.com and 
+# kelvinkli@zhaoxin.com. 
+# ====================================================================
+
 # September 2011
 #
 # Assembler helpers for Padlock engine. See even e_padlock-x86.pl for
@@ -276,17 +281,6 @@ padlock_sha512_blocks:
 	movups	%xmm3,48(%rdx)
 	ret
 .size	padlock_sha512_blocks,.-padlock_sha512_blocks
-
-.globl  zx_cpu_info
-.type	zx_cpu_info,\@abi-omnipotent
-.align  16
-zx_cpu_info:
-	mov %rbx, %r8
-	mov \$0x01,%eax
-	cpuid
-	mov %r8, %rbx
-	ret
-.size   zx_cpu_info,.-zx_cpu_info
 
 .globl	gmi_reload_key
 .type	gmi_reload_key,\@abi-omnipotent
