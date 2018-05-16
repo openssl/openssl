@@ -1132,15 +1132,13 @@ static int gmi_digests(ENGINE *e, const EVP_MD **digest,
 {
     int ok = 1;
 
-	//TODO: Jeff
-	printf("Jeff: got into %s\n", __func__);
-
     if (!digest) {
         /* We are returning a list of supported nids */
         *nids = gmi_digest_nids;
         return (sizeof(gmi_digest_nids) -
                 1) / sizeof(gmi_digest_nids[0]);
     }
+
     /* We are being asked for a specific digest */
     switch (nid) {
     case NID_sm3:
