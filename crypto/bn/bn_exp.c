@@ -473,7 +473,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     return ret;
 }
 
-#if defined(SPARC_T4_MONT)
 static BN_ULONG bn_get_bits(const BIGNUM *a, int bitpos)
 {
     BN_ULONG ret = 0;
@@ -492,7 +491,6 @@ static BN_ULONG bn_get_bits(const BIGNUM *a, int bitpos)
 
     return ret & BN_MASK2;
 }
-#endif
 
 /*
  * BN_mod_exp_mont_consttime() stores the precomputed powers in a specific
@@ -599,7 +597,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                               const BIGNUM *m, BN_CTX *ctx,
                               BN_MONT_CTX *in_mont)
 {
-    int i, bits, ret = 0, window, wvalue;
+    int i, bits, ret = 0, window, wvalue, wmask, window0;
     int top;
     BN_MONT_CTX *mont = NULL;
 
@@ -1041,30 +1039,45 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         }
 
         bits--;
-        for (wvalue = 0, i = bits % window; i >= 0; i--, bits--)
-            wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
-        if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&tmp, top, powerbuf, wvalue,
+        window0=bits%window+1;
+        wmask=(1<<window0)-1;
+        bits-=window0;
+        wvalue=bn_get_bits(p,bits+1);
+        if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&tmp, top, powerbuf, wvalue&wmask,
                                             window))
             goto err;
+        wmask=(1<<window)-1;
 
         /*
          * Scan the exponent one window at a time starting from the most
          * significant bits.
          */
         while (bits >= 0) {
-            wvalue = 0;         /* The 'value' of the window */
 
-            /* Scan the window, squaring the result as we go */
-            for (i = 0; i < window; i++, bits--) {
+            /* Get window-aligned word's worth of bits from the exponent
+             *  This avoids calling BN_is_bit_set for each bit, which
+             *  is not only slower but also makes each bit vulnerable to
+             *  EM (and likely other) side-channel attacks like One&Done
+             *  (for details see "One&Done: A Single-Decryption EM-Based
+             *   Attack on OpenSSL’s Constant-Time Blinded RSA" by M. Alam,
+             *   H. Khan, M. Dey, N. Sinha, R. Callan, A. Zajic, and
+             *   M. Prvulovic, in USENIX Security'18)
+             */
+            bits-=window;
+            wvalue=bn_get_bits(p,bits+1);
+            /* Square the result window-size times */
+            for (i = 0; i < window; i++)
                 if (!BN_mod_mul_montgomery(&tmp, &tmp, &tmp, mont, ctx))
                     goto err;
-                wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
-            }
 
             /*
              * Fetch the appropriate pre-computed value from the pre-buf
+             * (the index is masked now so that only the actual window
+             *  bits are used, not the entire word returned by bn_get_bits,
+             *  and this masking should not be done earlier because that
+             *  would facilitate One&Done-like side-channel attacks)
              */
-            if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&am, top, powerbuf, wvalue,
+            if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&am, top, powerbuf, wvalue&wmask,
                                                 window))
                 goto err;
 
