@@ -295,7 +295,7 @@ for it twice) if B<rwflag> is 1. The B<u> parameter has the same
 value as the B<u> parameter passed to the PEM routine. It allows
 arbitrary data to be passed to the callback by the application
 (for example a window handle in a GUI application). The callback
-B<must> return the number of characters in the passphrase or 0 if
+B<must> return the number of characters in the passphrase or -1 if
 an error occurred.
 
 =head1 EXAMPLES
