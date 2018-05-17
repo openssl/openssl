@@ -10,6 +10,8 @@
  */
 
 #include "internal/sm2.h"
+#include "internal/sm2err.h"
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/asn1.h>
@@ -112,11 +114,17 @@ int SM2_encrypt(const EC_KEY *key,
     kG = EC_POINT_new(group);
     kP = EC_POINT_new(group);
     if (kG == NULL || kP == NULL)
+       {
+       SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
        goto done;
+       }
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
+       {
+       SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
        goto done;
+       }
 
     BN_CTX_start(ctx);
     k = BN_CTX_get(ctx);
@@ -126,36 +134,57 @@ int SM2_encrypt(const EC_KEY *key,
     y2 = BN_CTX_get(ctx);
 
     if (y2 == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_BN_LIB);
+        goto done;
+        }
 
     x2y2 = OPENSSL_zalloc(2 * field_size);
     C3 = OPENSSL_zalloc(C3_size);
 
     if (x2y2 == NULL || C3 == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+        }
 
     memset(ciphertext_buf, 0, *ciphertext_len);
 
     BN_priv_rand_range(k, order);
 
     if (EC_POINT_mul(group, kG, k, NULL, NULL, ctx) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     if (EC_POINT_get_affine_coordinates_GFp(group, kG, x1, y1, ctx) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     if (EC_POINT_mul(group, kP, NULL, P, k, ctx) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     if (EC_POINT_get_affine_coordinates_GFp(group, kP, x2, y2, ctx) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     BN_bn2binpad(x2, x2y2, field_size);
     BN_bn2binpad(y2, x2y2 + field_size, field_size);
 
     msg_mask = OPENSSL_zalloc(msg_len);
     if (msg_mask == NULL)
+       {
+       SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
        goto done;
+       }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
     if (ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0, digest)
@@ -166,19 +195,34 @@ int SM2_encrypt(const EC_KEY *key,
         msg_mask[i] ^= msg[i];
 
     if (EVP_DigestInit(hash, digest) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestUpdate(hash, x2y2, field_size) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestUpdate(hash, msg, msg_len) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestFinal(hash, C3, NULL) == 0)
+        {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     ctext_struct.C1x = x1;
     ctext_struct.C1y = y1;
@@ -240,10 +284,16 @@ int SM2_decrypt(const EC_KEY *key,
     sm2_ctext = d2i_SM2_Ciphertext(NULL, &ciphertext, ciphertext_len);
 
     if (sm2_ctext == NULL)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, SM2_R_ASN1_ERROR);
         goto done;
+        }
 
     if (sm2_ctext->C3->length != hash_size)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, SM2_R_INVALID_ENCODING);
         goto done;
+        }
 
     C2 = sm2_ctext->C2->data;
     C3 = sm2_ctext->C3->data;
@@ -251,36 +301,57 @@ int SM2_decrypt(const EC_KEY *key,
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+        }
 
     BN_CTX_start(ctx);
     x2 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
 
     if(y2 == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_BN_LIB);
+        goto done;
+        }
 
     msg_mask = OPENSSL_zalloc(msg_len);
     x2y2 = OPENSSL_zalloc(2 * field_size);
     computed_C3 = OPENSSL_zalloc(hash_size);
 
     if(msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+        }
 
     C1 = EC_POINT_new(group);
     if (C1 == NULL)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
+        }
 
     if (EC_POINT_set_affine_coordinates_GFp
         (group, C1, sm2_ctext->C1x, sm2_ctext->C1y, ctx) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     if (EC_POINT_mul(group, C1, NULL, C1, EC_KEY_get0_private_key(key), ctx) ==
         0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     if (EC_POINT_get_affine_coordinates_GFp(group, C1, x2, y2, ctx) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
         goto done;
+        }
 
     BN_bn2binpad(x2, x2y2, field_size);
     BN_bn2binpad(y2, x2y2 + field_size, field_size);
@@ -295,22 +366,40 @@ int SM2_decrypt(const EC_KEY *key,
     hash = EVP_MD_CTX_new();
 
     if (hash == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+        }
 
     if (EVP_DigestInit(hash, digest) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestUpdate(hash, x2y2, field_size) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestUpdate(hash, ptext_buf, msg_len) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (EVP_DigestFinal(hash, computed_C3, NULL) == 0)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
         goto done;
+        }
 
     if (memcmp(computed_C3, C3, hash_size) != 0)
         goto done;
