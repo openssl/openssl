@@ -435,16 +435,17 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         cn = X509_NAME_ENTRY_get_data(ne);
 
         /* Only process attributes that look like host names */
-        if ((r = cn2dnsid(cn, &idval, &idlen)) != X509_V_OK) {
+        if ((r = cn2dnsid(cn, &idval, &idlen)) != X509_V_OK)
             return r;
-        } else if (idlen > 0) {
-            stmp.length = idlen;
-            stmp.data = idval;
-            r = nc_match(&gntmp, nc);
-            OPENSSL_free(idval);
-            if (r != X509_V_OK)
-                return r;
-        }
+        if (idlen == 0)
+            continue;
+
+        stmp.length = idlen;
+        stmp.data = idval;
+        r = nc_match(&gntmp, nc);
+        OPENSSL_free(idval);
+        if (r != X509_V_OK)
+            return r;
     }
     return X509_V_OK;
 }
