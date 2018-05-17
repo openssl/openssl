@@ -1049,6 +1049,9 @@ struct ssl_ctx_st {
     SSL_CTX_generate_session_ticket_fn generate_ticket_cb;
     SSL_CTX_decrypt_session_ticket_fn decrypt_ticket_cb;
     void *ticket_cb_data;
+
+    /* The number of TLS1.3 tickets to automatically send */
+    size_t num_tickets;
 };
 
 struct ssl_st {
@@ -1418,6 +1421,12 @@ struct ssl_st {
     size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
+    RAND_DRBG *drbg;
+
+    /* The number of TLS1.3 tickets to automatically send */
+    size_t num_tickets;
+    /* The number of TLS1.3 tickets actually sent so far */
+    size_t sent_tickets;
 };
 
 /*

@@ -1403,7 +1403,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1, client_turn_count = 0;
+    int client_turn = 1, client_turn_count = 0, client_wait_count = 0;
     connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
     const unsigned char* tick = NULL;
@@ -1586,9 +1586,19 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                     ret->result = SSL_TEST_INTERNAL_ERROR;
                     goto err;
                 }
-
-                /* Continue. */
-                client_turn ^= 1;
+                if (client_turn && server.status == PEER_SUCCESS) {
+                    /*
+                     * The server may finish before the client because the
+                     * client spends some turns processing NewSessionTickets.
+                     */
+                    if (client_wait_count++ >= 2) {
+                        ret->result = SSL_TEST_INTERNAL_ERROR;
+                        goto err;
+                    }
+                } else {
+                    /* Continue. */
+                    client_turn ^= 1;
+                }
             }
             break;
         }

@@ -882,9 +882,13 @@ static int execute_test_session(int maxprot, int use_int_cache,
     SSL *serverssl3 = NULL, *clientssl3 = NULL;
 # endif
     SSL_SESSION *sess1 = NULL, *sess2 = NULL;
-    int testresult = 0;
+    int testresult = 0, numnewsesstick = 1;
 
     new_called = remove_called = 0;
+
+    /* TLSv1.3 sends 2 NewSessionTickets */
+    if (maxprot == TLS1_3_VERSION)
+        numnewsesstick = 2;
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, TLS_MAX_VERSION,
@@ -923,7 +927,9 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (use_int_cache && !TEST_false(SSL_CTX_add_session(cctx, sess1)))
         goto end;
     if (use_ext_cache
-            && (!TEST_int_eq(new_called, 1) || !TEST_int_eq(remove_called, 0)))
+            && (!TEST_int_eq(new_called, numnewsesstick)
+
+                || !TEST_int_eq(remove_called, 0)))
         goto end;
 
     new_called = remove_called = 0;
@@ -938,11 +944,11 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (maxprot == TLS1_3_VERSION) {
         /*
          * In TLSv1.3 we should have created a new session even though we have
-         * resumed. The original session should also have been removed.
+         * resumed.
          */
         if (use_ext_cache
                 && (!TEST_int_eq(new_called, 1)
-                    || !TEST_int_eq(remove_called, 1)))
+                    || !TEST_int_eq(remove_called, 0)))
             goto end;
     } else {
         /*
@@ -972,7 +978,8 @@ static int execute_test_session(int maxprot, int use_int_cache,
         goto end;
 
     if (use_ext_cache
-            && (!TEST_int_eq(new_called, 1) || !TEST_int_eq(remove_called, 0)))
+            && (!TEST_int_eq(new_called, numnewsesstick)
+                || !TEST_int_eq(remove_called, 0)))
         goto end;
 
     new_called = remove_called = 0;
@@ -1072,7 +1079,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (use_ext_cache) {
         SSL_SESSION *tmp = sess2;
 
-        if (!TEST_int_eq(new_called, 1)
+        if (!TEST_int_eq(new_called, numnewsesstick)
                 || !TEST_int_eq(remove_called, 0)
                 || !TEST_int_eq(get_called, 0))
             goto end;
@@ -1105,10 +1112,6 @@ static int execute_test_session(int maxprot, int use_int_cache,
             goto end;
 
         if (maxprot == TLS1_3_VERSION) {
-            /*
-             * Every time we issue a NewSessionTicket we are creating a new
-             * session for next time in TLSv1.3
-             */
             if (!TEST_int_eq(new_called, 1)
                     || !TEST_int_eq(get_called, 0))
                 goto end;
@@ -1181,6 +1184,134 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
+static SSL_SESSION *sesscache[6];
+static int do_cache;
+
+static int new_cachesession_cb(SSL *ssl, SSL_SESSION *sess)
+{
+    if (do_cache) {
+        sesscache[new_called] = sess;
+    } else {
+        /* We don't need the reference to the session, so free it */
+        SSL_SESSION_free(sess);
+    }
+    new_called++;
+
+    return 1;
+}
+
+static int post_handshake_verify(SSL *sssl, SSL *cssl)
+{
+    SSL_set_verify(sssl, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(sssl)))
+        return 0;
+
+    /* Start handshake on the server and client */
+    if (!TEST_int_eq(SSL_do_handshake(sssl), 1)
+            || !TEST_int_le(SSL_read(cssl, NULL, 0), 0)
+            || !TEST_int_le(SSL_read(sssl, NULL, 0), 0)
+            || !TEST_true(create_ssl_connection(sssl, cssl,
+                                                SSL_ERROR_NONE)))
+        return 0;
+
+    return 1;
+}
+
+static int test_tickets(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0, i;
+    size_t j;
+
+    /* idx is the test number, but also the number of tickets we want */
+
+    new_called = 0;
+    do_cache = 1;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION, &sctx,
+                                       &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_num_tickets(sctx, idx)))
+        goto end;
+
+    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT
+                                         | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    SSL_CTX_sess_set_new_cb(cctx, new_cachesession_cb);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL)))
+        goto end;
+
+    SSL_force_post_handshake_auth(clientssl);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+               /* Check we got the number of tickets we were expecting */
+            || !TEST_int_eq(idx, new_called))
+        goto end;
+
+    /* After a post-handshake authentication we should get new tickets issued */
+    if (!post_handshake_verify(serverssl, clientssl)
+            || !TEST_int_eq(idx * 2, new_called))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Stop caching sessions - just count them */
+    do_cache = 0;
+
+    /* Test that we can resume with all the tickets we got given */
+    for (i = 0; i < idx * 2; i++) {
+        new_called = 0;
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                              &clientssl, NULL, NULL))
+                || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
+            goto end;
+
+        SSL_force_post_handshake_auth(clientssl);
+
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                    SSL_ERROR_NONE))
+                || !TEST_true(SSL_session_reused(clientssl))
+                   /* Following a resumption we only get 1 ticket */
+                || !TEST_int_eq(new_called, 1))
+            goto end;
+
+        new_called = 0;
+        /* After a post-handshake authentication we should get 1 new ticket */
+        if (!post_handshake_verify(serverssl, clientssl)
+                || !TEST_int_eq(new_called, 1))
+            goto end;
+
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+        SSL_SESSION_free(sesscache[i]);
+        sesscache[i] = NULL;
+    }
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    for (j = 0; j < OSSL_NELEM(sesscache); j++) {
+        SSL_SESSION_free(sesscache[j]);
+        sesscache[j] = NULL;
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 #define USE_NULL            0
 #define USE_BIO_1           1
 #define USE_BIO_2           2
@@ -1197,7 +1328,6 @@ static int test_session_with_both_cache(void)
 #else
 # define TOTAL_CONN_FAIL_SSL_SET_BIO_TESTS       0
 #endif
-
 
 #define TOTAL_SSL_SET_BIO_TESTS TOTAL_NO_CONN_SSL_SET_BIO_TESTS \
                                 + TOTAL_CONN_SUCCESS_SSL_SET_BIO_TESTS \
@@ -1933,10 +2063,13 @@ static int test_early_data_read_write(int idx)
         goto end;
 
     /*
-     * Make sure we process the NewSessionTicket. This arrives post-handshake.
-     * We attempt a read which we do not expect to return any data.
+     * Make sure we process the two NewSessionTickets. These arrive
+     * post-handshake. We attempt reads which we do not expect to return any
+     * data.
      */
-    if (!TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes)))
+    if (!TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf),
+                           &readbytes)))
         goto end;
 
     /* Server should be able to write normal data */
@@ -3392,9 +3525,10 @@ static int test_custom_exts(int tst)
                 || (tst == 2 && snicb != 1))
             goto end;
     } else {
+        /* In this case there 2 NewSessionTicket messages created */
         if (clntaddnewcb != 1
-                || clntparsenewcb != 4
-                || srvaddnewcb != 4
+                || clntparsenewcb != 5
+                || srvaddnewcb != 5
                 || srvparsenewcb != 1)
             goto end;
     }
@@ -3438,10 +3572,13 @@ static int test_custom_exts(int tst)
                 || srvparsenewcb != 2)
             goto end;
     } else {
-        /* No Certificate message extensions in the resumption handshake */
+        /*
+         * No Certificate message extensions in the resumption handshake,
+         * 2 NewSessionTickets in the initial handshake, 1 in the resumption
+         */
         if (clntaddnewcb != 2
-                || clntparsenewcb != 7
-                || srvaddnewcb != 7
+                || clntparsenewcb != 8
+                || srvaddnewcb != 8
                 || srvparsenewcb != 2)
             goto end;
     }
@@ -4205,14 +4342,16 @@ static struct info_cb_states_st {
         {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TED"}, {SSL_CB_LOOP, "TRFIN"},
         {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
         {SSL_CB_LOOP, "TWST"}, {SSL_CB_HANDSHAKE_DONE, NULL},
-        {SSL_CB_EXIT, NULL}, {SSL_CB_ALERT, NULL},
-        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
-        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"}, {SSL_CB_LOOP, "TWSH"},
-        {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"}, {SSL_CB_LOOP, "TWFIN"},
-        {SSL_CB_LOOP, "TED"}, {SSL_CB_EXIT, NULL}, {SSL_CB_LOOP, "TED"},
-        {SSL_CB_LOOP, "TRFIN"}, {SSL_CB_HANDSHAKE_DONE, NULL},
         {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "TWST"},
-        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL}, {0, NULL},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_ALERT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TRCH"},
+        {SSL_CB_LOOP, "TWSH"}, {SSL_CB_LOOP, "TWCCS"}, {SSL_CB_LOOP, "TWEE"},
+        {SSL_CB_LOOP, "TWFIN"}, {SSL_CB_LOOP, "TED"}, {SSL_CB_EXIT, NULL},
+        {SSL_CB_LOOP, "TED"}, {SSL_CB_LOOP, "TRFIN"},
+        {SSL_CB_HANDSHAKE_DONE, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
+        {SSL_CB_LOOP, "TWST"}, {SSL_CB_HANDSHAKE_DONE, NULL},
+        {SSL_CB_EXIT, NULL}, {0, NULL},
     }, {
         /* TLSv1.3 client followed by resumption */
         {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "PINIT "},
@@ -4222,6 +4361,9 @@ static struct info_cb_states_st {
         {SSL_CB_LOOP, "TWFIN"},  {SSL_CB_HANDSHAKE_DONE, NULL},
         {SSL_CB_EXIT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
         {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "TRST"},
+        {SSL_CB_HANDSHAKE_DONE, NULL},  {SSL_CB_EXIT, NULL},
+        {SSL_CB_HANDSHAKE_START, NULL}, {SSL_CB_LOOP, "SSLOK "},
+        {SSL_CB_LOOP, "SSLOK "}, {SSL_CB_LOOP, "TRST"},
         {SSL_CB_HANDSHAKE_DONE, NULL},  {SSL_CB_EXIT, NULL},
         {SSL_CB_ALERT, NULL}, {SSL_CB_HANDSHAKE_START, NULL},
         {SSL_CB_LOOP, "PINIT "}, {SSL_CB_LOOP, "TWCH"}, {SSL_CB_EXIT, NULL},
@@ -4856,6 +4998,9 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_ALL_TESTS(test_tickets, 3);
+#endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
     ADD_TEST(test_ssl_bio_pop_ssl_bio);
