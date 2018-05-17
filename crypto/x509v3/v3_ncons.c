@@ -297,30 +297,36 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
 }
 
-#define CN2DNSID_NOMEM   (-2)
-#define CN2DNSID_BADNAME (-1)
-
-static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
+static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
 {
     int utf8_length;    /* Return type of ASN1_STRING_to_UTF8 */
     int i;
     unsigned char *utf8_value;
     int isdnsname = 0;
 
-    /*
-     * Per RFC 6125 DNS-IDs representing internationalized domain names appear
-     * in certificates in A-label encoded form.  The same applies to CNs which
-     * are intended to represent DNS names.  However, while in the SAN DNS-IDs
-     * are IA5Strings as CNs they may be needlessly stored in 16-bit Unicode.
-     * We perform a conversion to UTF-8 here, to ensure that we get an ASCII
-     * representation of strings that have been encoded in some other way in
-     * the CN.
+    /* Don't leave outputs uninitialized */
+    *dnsid = NULL;
+    *idlen = 0;
+
+    /*-
+     * Per RFC 6125, DNS-IDs representing internationalized domain names appear
+     * in certificates in A-label encoded form:
+     *
+     *   https://tools.ietf.org/html/rfc6125#section-6.4.2
+     *
+     * The same applies to CNs which are intended to represent DNS names.
+     * However, while in the SAN DNS-IDs are IA5Strings, as CNs they may be
+     * needlessly encoded in 16-bit Unicode.  We perform a conversion to UTF-8
+     * to ensure that we get an ASCII representation of any CNs that are
+     * representable as ASCII, but just not encoded as ASCII.  The UTF-8 form
+     * may contain some non-ASCII octets, and that's fine, such CNs are not
+     * valid legacy DNS names.
      *
      * Note, 'int' is the return type of ASN1_STRING_to_UTF8() so that's what
      * we must use for 'utf8_length'.
      */
     if ((utf8_length = ASN1_STRING_to_UTF8(&utf8_value, cn)) < 0)
-        return CN2DNSID_NOMEM;
+        return X509_V_ERR_OUT_OF_MEM;
 
     /*
      * Some certificates have had names that include a *trailing* NUL byte.
@@ -332,7 +338,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
 
     /* Reject *embedded* NULs */
     if ((size_t)utf8_length != strlen((char *)utf8_value))
-        return CN2DNSID_BADNAME;
+        return X509_V_ERR_UNSPECIFIED;
 
     /*
      * XXX: Deviation from strict DNS name syntax, also check names with '_'
@@ -362,9 +368,9 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
              * plausible, since it has two or more labels.
              */
             if (c == '.'
-                && utf8_value[i+1] != '.'
-                && utf8_value[i-1] != '-'
-                && utf8_value[i+1] != '-') {
+                && utf8_value[i + 1] != '.'
+                && utf8_value[i - 1] != '-'
+                && utf8_value[i + 1] != '-') {
                 isdnsname = 1;
                 continue;
             }
@@ -375,11 +381,11 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid)
 
     if (isdnsname) {
         *dnsid = utf8_value;
-        return utf8_length;
+        *idlen = (size_t)utf8_length;
+        return X509_V_OK;
     }
     OPENSSL_free(utf8_value);
-    *dnsid = NULL;
-    return 0;
+    return X509_V_OK;
 }
 
 /*
@@ -419,8 +425,8 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     for (i = -1;;) {
         X509_NAME_ENTRY *ne;
         ASN1_STRING *cn;
-        unsigned char *idval = NULL;
-        int idlen = 0;
+        unsigned char *idval;
+        size_t idlen;
 
         i = X509_NAME_get_index_by_NID(nm, NID_commonName, i);
         if (i == -1)
@@ -429,14 +435,9 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         cn = X509_NAME_ENTRY_get_data(ne);
 
         /* Only process attributes that look like host names */
-        switch (idlen = cn2dnsid(cn, &idval)) {
-        case CN2DNSID_NOMEM:
-            return X509_V_ERR_OUT_OF_MEM;
-        case CN2DNSID_BADNAME:
-            return X509_V_ERR_UNSPECIFIED;
-        case 0:
-            return X509_V_OK;
-        default:
+        if ((r = cn2dnsid(cn, &idval, &idlen)) != X509_V_OK) {
+            return r;
+        } else if (idlen > 0) {
             stmp.length = idlen;
             stmp.data = idval;
             r = nc_match(&gntmp, nc);
