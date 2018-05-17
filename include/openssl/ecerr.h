@@ -173,8 +173,6 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_ECD_DIGESTSIGN                         272
 #  define EC_F_PKEY_ECD_DIGESTSIGN25519                    276
 #  define EC_F_PKEY_ECD_DIGESTSIGN448                      277
-#  define EC_F_PKEY_ECD_SIGN25519                          284
-#  define EC_F_PKEY_ECD_SIGN448                            285
 #  define EC_F_PKEY_ECX_DERIVE                             269
 #  define EC_F_PKEY_EC_CTRL                                197
 #  define EC_F_PKEY_EC_CTRL_STR                            198
