@@ -405,18 +405,20 @@
 */
 
 /* OQS integration */
-/* NID for OQS algs. Pick values starting from NUM_NID */
-/* FIXMEOQS: should I import obj_dat.h to use NUM_NID? */
-#define NID_OQS_Frodo    1170
-#define NID_OQS_SIKE_503 1171
-#define NID_OQS_SIKE_751 1172
-#define NID_OQS_Newhope  1173
-#define NID_OQS_NTRU     1174
-#define NID_OQS_p256_Frodo    1175
-#define NID_OQS_p256_SIKE_503 1176
-#define NID_OQS_p256_SIKE_751 1177
-#define NID_OQS_p256_Newhope  1178
-#define NID_OQS_p256_NTRU     1179
+/* NID for OQS algs. Pick values starting way above NUM_NID (defined in obj_dat.h)
+   to avoid conflicts with dynamically registered schemes (we keep things local to
+   avoid modifying the libcrypto layer) */
+#define NID_OQS_START    2000
+#define NID_OQS_Frodo    (NID_OQS_START + 1)
+#define NID_OQS_SIKE_503 (NID_OQS_START + 2)
+#define NID_OQS_SIKE_751 (NID_OQS_START + 3)
+#define NID_OQS_Newhope  (NID_OQS_START + 4)
+#define NID_OQS_NTRU     (NID_OQS_START + 5)
+#define NID_OQS_p256_Frodo    (NID_OQS_START + 6)
+#define NID_OQS_p256_SIKE_503 (NID_OQS_START + 7)
+#define NID_OQS_p256_SIKE_751 (NID_OQS_START + 8)
+#define NID_OQS_p256_Newhope  (NID_OQS_START + 9)
+#define NID_OQS_p256_NTRU     (NID_OQS_START + 10)
 
 /* Returns true if the nid is for an OQS KEX */
 #define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
