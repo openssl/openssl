@@ -8,6 +8,10 @@
  release branch.
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
+  *) Enforce checking in the pkeyutl command line app to ensure that the input
+     length does not exceed the maximum supported digest length when performing
+     a sign, verify or verifyrecover operation.
+     [Matt Caswell]
 
   *) When unlocking a pass phrase protected PEM file or PKCS#8 container, we
      now allow empty (zero character) pass phrases.
