@@ -735,17 +735,21 @@ end_of_options:
     if (md == NULL && (md = lookup_conf(conf, section, ENV_DEFAULT_MD)) == NULL)
         goto end;
 
-    if (strcmp(md, "default") == 0) {
-        int def_nid;
-        if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
-            BIO_puts(bio_err, "no default digest\n");
+    if (strcmp(md, "null") == 0) {
+        dgst = EVP_md_null();
+    } else {
+        if (strcmp(md, "default") == 0) {
+            int def_nid;
+            if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
+                BIO_puts(bio_err, "no default digest\n");
+                goto end;
+            }
+            md = (char *)OBJ_nid2sn(def_nid);
+        }
+
+        if (!opt_md(md, &dgst)) {
             goto end;
         }
-        md = (char *)OBJ_nid2sn(def_nid);
-    }
-
-    if (!opt_md(md, &dgst)) {
-        goto end;
     }
 
     if (req) {
