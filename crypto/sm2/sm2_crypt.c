@@ -301,7 +301,10 @@ int SM2_decrypt(const EC_KEY *key,
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+        }
 
     BN_CTX_start(ctx);
     x2 = BN_CTX_get(ctx);
@@ -325,7 +328,10 @@ int SM2_decrypt(const EC_KEY *key,
 
     C1 = EC_POINT_new(group);
     if (C1 == NULL)
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
+        }
 
     if (EC_POINT_set_affine_coordinates_GFp
         (group, C1, sm2_ctext->C1x, sm2_ctext->C1y, ctx) == 0)
@@ -360,7 +366,10 @@ int SM2_decrypt(const EC_KEY *key,
     hash = EVP_MD_CTX_new();
 
     if (hash == NULL)
-       goto done;
+        {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+        }
 
     if (EVP_DigestInit(hash, digest) == 0)
         {

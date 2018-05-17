@@ -231,10 +231,17 @@ int SM2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig, const BIGNUM *e)
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
+        {
+        SM2err(SM2_F_SM2_SIG_VERIFY, ERR_R_MALLOC_FAILURE);
         goto done;
+        }
+
     pt = EC_POINT_new(group);
     if (pt == NULL)
+        {
+        SM2err(SM2_F_SM2_SIG_VERIFY, ERR_R_MALLOC_FAILURE);
         goto done;
+        }
 
     BN_CTX_start(ctx);
 
