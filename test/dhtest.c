@@ -102,6 +102,7 @@ static int dh_test(void)
     if (!TEST_ptr(pub_key2)
         || !TEST_ptr_eq(priv_key2, priv_key))
         goto err;
+
     /* test it the simple getters for pub_key and priv_key */
     if (!TEST_ptr_eq(DH_get0_pub_key(dh), pub_key2)
         || !TEST_ptr_eq(DH_get0_priv_key(dh), priv_key2))
