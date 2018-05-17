@@ -19,6 +19,14 @@ static const ERR_STRING_DATA SM2_str_functs[] = {
     {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_KEYGEN, 0), "pkey_sm2_keygen"},
     {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_PARAMGEN, 0), "pkey_sm2_paramgen"},
     {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_SIGN, 0), "pkey_sm2_sign"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_COMPUTE_MSG_HASH, 0),
+     "SM2_compute_msg_hash"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_DECRYPT, 0), "SM2_decrypt"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_ENCRYPT, 0), "SM2_encrypt"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_SIGN, 0), "SM2_sign"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_SIG_GEN, 0), "SM2_sig_gen"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_SIG_VERIFY, 0), "SM2_sig_verify"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_VERIFY, 0), "SM2_verify"},
     {0, NULL}
 };
 
