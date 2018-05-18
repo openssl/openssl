@@ -1072,9 +1072,22 @@ static int execute_test_session(int maxprot, int use_int_cache,
             || !TEST_ptr(sess2 = SSL_get1_session(serverssl1)))
         goto end;
 
-    /* Should fail because it should already be in the cache */
-    if (use_int_cache && !TEST_false(SSL_CTX_add_session(sctx, sess2)))
-        goto end;
+    if (use_int_cache) {
+        if (maxprot == TLS1_3_VERSION && !use_ext_cache) {
+            /*
+             * In TLSv1.3 it should not have been added to the internal cache,
+             * except in the case where we also have an external cache (in that
+             * case it gets added to the cache in order to generate remove
+             * events after timeout).
+             */
+            if (!TEST_false(SSL_CTX_remove_session(sctx, sess2)))
+                goto end;
+        } else {
+            /* Should fail because it should already be in the cache */
+            if (!TEST_false(SSL_CTX_add_session(sctx, sess2)))
+                goto end;
+        }
+    }
 
     if (use_ext_cache) {
         SSL_SESSION *tmp = sess2;
@@ -1088,7 +1101,7 @@ static int execute_test_session(int maxprot, int use_int_cache,
          * the external cache. We take a copy first because
          * SSL_CTX_remove_session() also marks the session as non-resumable.
          */
-        if (use_int_cache) {
+        if (use_int_cache && maxprot != TLS1_3_VERSION) {
             if (!TEST_ptr(tmp = SSL_SESSION_dup(sess2))
                     || !TEST_true(SSL_CTX_remove_session(sctx, sess2)))
                 goto end;
