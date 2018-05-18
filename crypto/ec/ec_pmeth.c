@@ -124,7 +124,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
     if (ec_nid == NID_sm2) {
 #if defined(OPENSSL_NO_SM2)
-        ret = -1;
+        return -1;
 #else
         ret = SM2_sign(type, tbs, tbslen, sig, &sltmp, ec);
 #endif
