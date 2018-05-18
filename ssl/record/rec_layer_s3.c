@@ -1497,6 +1497,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
         unsigned int alert_level, alert_descr;
+        int tls13_user_cancelled;
         unsigned char *alert_bytes = SSL3_RECORD_get_data(rr)
                                      + SSL3_RECORD_get_off(rr);
         PACKET alert;
@@ -1524,7 +1525,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             cb(s, SSL_CB_READ_ALERT, j);
         }
 
-        if (alert_level == SSL3_AL_WARNING) {
+        tls13_user_cancelled = SSL_IS_TLS13(s)
+                               && alert_descr == SSL_AD_USER_CANCELLED;
+        if (alert_level == SSL3_AL_WARNING || tls13_user_cancelled) {
             s->s3->warn_alert = alert_descr;
             SSL3_RECORD_set_read(rr);
 
@@ -1535,33 +1538,37 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 return -1;
             }
 
-            if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
-                s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-                return 0;
-            }
             /*
              * Apart from close_notify the only other warning alert in TLSv1.3
              * is user_cancelled - which we just ignore.
              */
-            if (SSL_IS_TLS13(s) && alert_descr != SSL_AD_USER_CANCELLED) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
-                         SSL_R_UNKNOWN_ALERT_TYPE);
-                return -1;
-            }
-            /*
-             * This is a warning but we receive it if we requested
-             * renegotiation and the peer denied it. Terminate with a fatal
-             * alert because if application tried to renegotiate it
-             * presumably had a good reason and expects it to succeed. In
-             * future we might have a renegotiation where we don't care if
-             * the peer refused it where we carry on.
-             */
-            if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
-                SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL3_READ_BYTES,
-                         SSL_R_NO_RENEGOTIATION);
-                return -1;
-            }
-        } else if (alert_level == SSL3_AL_FATAL) {
+            if (tls13_user_cancelled)
+                goto start;
+        }
+
+        if (alert_descr == SSL_AD_CLOSE_NOTIFY
+                && (SSL_IS_TLS13(s) || alert_level == SSL3_AL_WARNING)) {
+            s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            return 0;
+        }
+
+        /*
+         * This is a warning but we receive it if we requested
+         * renegotiation and the peer denied it. Terminate with a fatal
+         * alert because if application tried to renegotiate it
+         * presumably had a good reason and expects it to succeed. In
+         * future we might have a renegotiation where we don't care if
+         * the peer refused it where we carry on.
+         */
+        if (alert_descr == SSL_AD_NO_RENEGOTIATION
+                && !SSL_IS_TLS13(s)
+                && alert_level == SSL3_AL_WARNING) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL3_READ_BYTES,
+                     SSL_R_NO_RENEGOTIATION);
+            return -1;
+        }
+
+        if (alert_level == SSL3_AL_FATAL || SSL_IS_TLS13(s)) {
             char tmp[16];
 
             s->rwstate = SSL_NOTHING;
@@ -1579,8 +1586,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                      SSL_R_UNKNOWN_ALERT_TYPE);
             return -1;
         }
-
-        goto start;
     }
 
     if (s->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
