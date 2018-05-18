@@ -984,7 +984,9 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
         return 0;
 
     case SSL_TLSEXT_ERR_ALERT_WARNING:
-        ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
+        /* TLSv1.3 doesn't have warning alerts so we suppress this */
+        if (!SSL_IS_TLS13(s))
+            ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
         return 1;
 
     case SSL_TLSEXT_ERR_NOACK:
