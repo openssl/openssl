@@ -333,7 +333,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
      * Remove these harmless NUL characters. They would otherwise yield false
      * alarms with the following embedded NUL check.
      */
-    while (utf8_length > 0 && utf8_value[utf8_length-1] == '\0')
+    while (utf8_length > 0 && utf8_value[utf8_length - 1] == '\0')
         --utf8_length;
 
     /* Reject *embedded* NULs */
