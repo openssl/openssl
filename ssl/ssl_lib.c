@@ -3365,13 +3365,33 @@ void ssl_update_cache(SSL *s, int mode)
 
     i = s->session_ctx->session_cache_mode;
     if ((i & mode) != 0
-        && (!s->hit || SSL_IS_TLS13(s))
-        && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) != 0
-            || SSL_CTX_add_session(s->session_ctx, s->session))
-        && s->session_ctx->new_session_cb != NULL) {
-        SSL_SESSION_up_ref(s->session);
-        if (!s->session_ctx->new_session_cb(s, s->session))
-            SSL_SESSION_free(s->session);
+        && (!s->hit || SSL_IS_TLS13(s))) {
+        /*
+         * Add the session to the internal cache. In server side TLSv1.3 we
+         * normally don't do this because its a full stateless ticket with only
+         * a dummy session id so there is no reason to cache it, unless:
+         * - we are doing early_data, in which case we cache so that we can
+         *   detect replays
+         * - the application has set a remove_session_cb so needs to know about
+         *   session timeout events
+         */
+        if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
+                && (!SSL_IS_TLS13(s)
+                    || !s->server
+                    || s->max_early_data > 0
+                    || s->session_ctx->remove_session_cb != NULL))
+            SSL_CTX_add_session(s->session_ctx, s->session);
+
+        /*
+         * Add the session to the external cache. We do this even in server side
+         * TLSv1.3 without early data because some applications just want to
+         * know about the creation of a session and aren't doing a full cache.
+         */
+        if (s->session_ctx->new_session_cb != NULL) {
+            SSL_SESSION_up_ref(s->session);
+            if (!s->session_ctx->new_session_cb(s, s->session))
+                SSL_SESSION_free(s->session);
+        }
     }
 
     /* auto flush every 255 connections */
