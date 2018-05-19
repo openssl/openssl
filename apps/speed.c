@@ -169,6 +169,7 @@ static int CRYPTO_gcm128_aad_loop(void *args);
 static int RAND_bytes_loop(void *args);
 static int EVP_Update_loop(void *args);
 static int EVP_Update_loop_ccm(void *args);
+static int EVP_Update_loop_aead(void *args);
 static int EVP_Digest_loop(void *args);
 #ifndef OPENSSL_NO_RSA
 static int RSA_sign_loop(void *args);
@@ -196,6 +197,10 @@ static const int lengths_list[] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
 static const int *lengths = lengths_list;
+
+static const int aead_lengths_list[] = {
+    7, 31, 136, 1024, 8 * 1024, 16 * 1024
+};
 
 #define START   0
 #define STOP    1
@@ -291,7 +296,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ELAPSED, OPT_EVP, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
     OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM,
-    OPT_PRIMES, OPT_SECONDS, OPT_BYTES
+    OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
@@ -323,6 +328,8 @@ const OPTIONS speed_options[] = {
      "Run benchmarks for pnum seconds"},
     {"bytes", OPT_BYTES, 'p',
      "Run cipher, digest and rand benchmarks on pnum bytes"},
+    {"aead", OPT_AEAD, '-',
+     "Run AEAD cipher benchmark in TLS-like sequence"},
     {NULL}
 };
 
@@ -944,6 +951,41 @@ static int EVP_Update_loop_ccm(void *args)
     }
     return count;
 }
+/*
+ * To make AEAD benchmarking more relevant perform TLS-like operations,
+ * 13-byte AAD followed by payload. But don't use TLS-formatted AAD, as
+ * payload length is not actually limited by 16KB...
+ */
+static int EVP_Update_loop_aead(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_CIPHER_CTX *ctx = tempargs->ctx;
+    int outl, count;
+    unsigned char aad[13] = { 0xcc };
+    unsigned char faketag[16] = { 0xcc };
+#ifndef SIGALRM
+    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
+#endif
+    if (decrypt) {
+        for (count = 0; COND(nb_iter); count++) {
+            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                sizeof(faketag), faketag);
+            EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
+            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            EVP_DecryptFinal_ex(ctx, buf + outl, &outl);
+        }
+    } else {
+        for (count = 0; COND(nb_iter); count++) {
+            EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
+            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            EVP_EncryptFinal_ex(ctx, buf + outl, &outl);
+        }
+    }
+    return count;
+}
 
 static const EVP_MD *evp_md = NULL;
 static int EVP_Digest_loop(void *args)
@@ -1277,7 +1319,7 @@ int speed_main(int argc, char **argv)
     OPTION_CHOICE o;
     int async_init = 0, multiblock = 0, pr_header = 0;
     int doit[ALGOR_NUM] = { 0 };
-    int ret = 1, misalign = 0, lengths_single = 0;
+    int ret = 1, misalign = 0, lengths_single = 0, aead = 0;
     long count = 0;
     unsigned int size_num = OSSL_NELEM(lengths_list);
     unsigned int i, k, loop, loopargs_len = 0, async_jobs = 0;
@@ -1512,6 +1554,9 @@ int speed_main(int argc, char **argv)
             lengths_single = atoi(opt_arg());
             lengths = &lengths_single;
             size_num = 1;
+            break;
+        case OPT_AEAD:
+            aead = 1;
             break;
         }
     }
@@ -2414,10 +2459,9 @@ int speed_main(int argc, char **argv)
     }
 
     if (doit[D_EVP]) {
-        if (multiblock && evp_cipher) {
-            if (!
-                (EVP_CIPHER_flags(evp_cipher) &
-                 EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
+        if (multiblock && evp_cipher != NULL) {
+            if (!(EVP_CIPHER_flags(evp_cipher) &
+                  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
                 BIO_printf(bio_err, "%s is not multi-block capable\n",
                            OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
                 goto end;
@@ -2430,14 +2474,25 @@ int speed_main(int argc, char **argv)
             ret = 0;
             goto end;
         }
-        for (testnum = 0; testnum < size_num; testnum++) {
-            if (evp_cipher) {
 
-                names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
-                /*
-                 * -O3 -fschedule-insns messes up an optimization here!
-                 * names[D_EVP] somehow becomes NULL
-                 */
+        loopfunc = EVP_Update_loop;
+        if (evp_cipher != NULL) {
+            names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
+
+            if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_CCM_MODE) {
+                loopfunc = EVP_Update_loop_ccm;
+            } else if (aead && (EVP_CIPHER_flags(evp_cipher) &
+                                EVP_CIPH_FLAG_AEAD_CIPHER)) {
+                loopfunc = EVP_Update_loop_aead;
+                lengths = aead_lengths_list;
+                size_num = OSSL_NELEM(aead_lengths_list);
+            }
+        } else if (evp_md != NULL) {
+            names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
+        }
+
+        for (testnum = 0; testnum < size_num; testnum++) {
+            if (evp_cipher != NULL) {
                 print_message(names[D_EVP], save_count, lengths[testnum],
                               seconds.sym);
 
@@ -2455,13 +2510,6 @@ int speed_main(int argc, char **argv)
                                       loopargs[k].key, NULL, -1);
                     OPENSSL_clear_free(loopargs[k].key, keylen);
                 }
-                switch (EVP_CIPHER_mode(evp_cipher)) {
-                case EVP_CIPH_CCM_MODE:
-                    loopfunc = EVP_Update_loop_ccm;
-                    break;
-                default:
-                    loopfunc = EVP_Update_loop;
-                }
 
                 Time_F(START);
                 count = run_benchmark(async_jobs, loopfunc, loopargs);
@@ -2469,9 +2517,7 @@ int speed_main(int argc, char **argv)
                 for (k = 0; k < loopargs_len; k++) {
                     EVP_CIPHER_CTX_free(loopargs[k].ctx);
                 }
-            }
-            if (evp_md) {
-                names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
+            } else if (evp_md != NULL) {
                 print_message(names[D_EVP], save_count, lengths[testnum],
                               seconds.sym);
                 Time_F(START);
