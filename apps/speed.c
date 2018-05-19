@@ -169,6 +169,7 @@ static int CRYPTO_gcm128_aad_loop(void *args);
 static int RAND_bytes_loop(void *args);
 static int EVP_Update_loop(void *args);
 static int EVP_Update_loop_ccm(void *args);
+static int EVP_Update_loop_aead(void *args);
 static int EVP_Digest_loop(void *args);
 #ifndef OPENSSL_NO_RSA
 static int RSA_sign_loop(void *args);
@@ -196,6 +197,10 @@ static const int lengths_list[] = {
     16, 64, 256, 1024, 8 * 1024, 16 * 1024
 };
 static const int *lengths = lengths_list;
+
+static const int aead_lengths_list[] = {
+    2, 31, 136, 1024, 8 * 1024, 16 * 1024
+};
 
 #define START   0
 #define STOP    1
@@ -291,38 +296,41 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ELAPSED, OPT_EVP, OPT_DECRYPT, OPT_ENGINE, OPT_MULTI,
     OPT_MR, OPT_MB, OPT_MISALIGN, OPT_ASYNCJOBS, OPT_R_ENUM,
-    OPT_PRIMES, OPT_SECONDS, OPT_BYTES
+    OPT_PRIMES, OPT_SECONDS, OPT_BYTES, OPT_AEAD
 } OPTION_CHOICE;
 
 const OPTIONS speed_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"evp", OPT_EVP, 's', "Use specified EVP cipher"},
+    {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
     {"decrypt", OPT_DECRYPT, '-',
      "Time decryption instead of encryption (only EVP)"},
-    {"mr", OPT_MR, '-', "Produce machine readable output"},
+    {"aead", OPT_AEAD, '-',
+     "Benchmark EVP-named AEAD cipher in TLS-like sequence"},
     {"mb", OPT_MB, '-',
-     "Enable (tls1.1) multi-block mode on evp_cipher requested with -evp"},
-    {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
-    {"elapsed", OPT_ELAPSED, '-',
-     "Measure time in real time instead of CPU user time"},
+     "Enable (tls1>=1) multi-block mode on EVP-named cipher"},
+    {"mr", OPT_MR, '-', "Produce machine readable output"},
 #ifndef NO_FORK
     {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
 #endif
 #ifndef OPENSSL_NO_ASYNC
     {"async_jobs", OPT_ASYNCJOBS, 'p',
-     "Enable async mode and start pnum jobs"},
+     "Enable async mode and start specified number of jobs"},
 #endif
     OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"elapsed", OPT_ELAPSED, '-',
+     "Use wall-clock time instead of CPU user time as divisor"},
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
     {"seconds", OPT_SECONDS, 'p',
-     "Run benchmarks for pnum seconds"},
+     "Run benchmarks for specified amount of seconds"},
     {"bytes", OPT_BYTES, 'p',
-     "Run cipher, digest and rand benchmarks on pnum bytes"},
+     "Run [non-PKI] benchmarks on custom-sized buffer"},
+    {"misalign", OPT_MISALIGN, 'p',
+     "Use specified offset to mis-align buffers"},
     {NULL}
 };
 
@@ -911,6 +919,7 @@ static int EVP_Update_loop(void *args)
         EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
+
 /*
  * CCM does not support streaming. For the purpose of performance measurement,
  * each message is encrypted using the same (key,iv)-pair. Do not use this
@@ -940,6 +949,42 @@ static int EVP_Update_loop_ccm(void *args)
             EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
             EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             EVP_EncryptFinal_ex(ctx, buf, &outl);
+        }
+    }
+    return count;
+}
+
+/*
+ * To make AEAD benchmarking more relevant perform TLS-like operations,
+ * 13-byte AAD followed by payload. But don't use TLS-formatted AAD, as
+ * payload length is not actually limited by 16KB...
+ */
+static int EVP_Update_loop_aead(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_CIPHER_CTX *ctx = tempargs->ctx;
+    int outl, count;
+    unsigned char aad[13] = { 0xcc };
+    unsigned char faketag[16] = { 0xcc };
+#ifndef SIGALRM
+    int nb_iter = save_count * 4 * lengths[0] / lengths[testnum];
+#endif
+    if (decrypt) {
+        for (count = 0; COND(nb_iter); count++) {
+            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                sizeof(faketag), faketag);
+            EVP_DecryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
+            EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            EVP_DecryptFinal_ex(ctx, buf + outl, &outl);
+        }
+    } else {
+        for (count = 0; COND(nb_iter); count++) {
+            EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            EVP_EncryptUpdate(ctx, NULL, &outl, aad, sizeof(aad));
+            EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
+            EVP_EncryptFinal_ex(ctx, buf + outl, &outl);
         }
     }
     return count;
@@ -1268,7 +1313,6 @@ static int run_benchmark(int async_jobs,
 int speed_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    int (*loopfunc)(void *args);
     loopargs_t *loopargs = NULL;
     const char *prog;
     const char *engine_id = NULL;
@@ -1277,7 +1321,7 @@ int speed_main(int argc, char **argv)
     OPTION_CHOICE o;
     int async_init = 0, multiblock = 0, pr_header = 0;
     int doit[ALGOR_NUM] = { 0 };
-    int ret = 1, misalign = 0, lengths_single = 0;
+    int ret = 1, misalign = 0, lengths_single = 0, aead = 0;
     long count = 0;
     unsigned int size_num = OSSL_NELEM(lengths_list);
     unsigned int i, k, loop, loopargs_len = 0, async_jobs = 0;
@@ -1513,6 +1557,9 @@ int speed_main(int argc, char **argv)
             lengths = &lengths_single;
             size_num = 1;
             break;
+        case OPT_AEAD:
+            aead = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -1590,6 +1637,34 @@ int speed_main(int argc, char **argv)
 #endif
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, *argv);
         goto end;
+    }
+
+    /* Sanity checks */
+    if (aead) {
+        if (evp_cipher == NULL) {
+            BIO_printf(bio_err, "-aead can be used only with an AEAD cipher\n");
+            goto end;
+        } else if (!(EVP_CIPHER_flags(evp_cipher) &
+                     EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            BIO_printf(bio_err, "%s is not an AEAD cipher\n",
+                       OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
+            goto end;
+        }
+    }
+    if (multiblock) {
+        if (evp_cipher == NULL) {
+            BIO_printf(bio_err,"-mb can be used only with a multi-block"
+                               " capable cipher\n");
+            goto end;
+        } else if (!(EVP_CIPHER_flags(evp_cipher) &
+                     EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
+            BIO_printf(bio_err, "%s is not a multi-block capable\n",
+                       OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
+            goto end;
+        } else if (async_jobs > 0) {
+            BIO_printf(bio_err, "Async mode is not supported with -mb");
+            goto end;
+        }
     }
 
     /* Initialize the job pool if async mode is enabled */
@@ -2414,30 +2489,30 @@ int speed_main(int argc, char **argv)
     }
 
     if (doit[D_EVP]) {
-        if (multiblock && evp_cipher) {
-            if (!
-                (EVP_CIPHER_flags(evp_cipher) &
-                 EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
-                BIO_printf(bio_err, "%s is not multi-block capable\n",
-                           OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
+        if (evp_cipher != NULL) {
+            int (*loopfunc)(void *args) = EVP_Update_loop;
+
+            if (multiblock && (EVP_CIPHER_flags(evp_cipher) &
+                               EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
+                multiblock_speed(evp_cipher, lengths_single, &seconds);
+                ret = 0;
                 goto end;
             }
-            if (async_jobs > 0) {
-                BIO_printf(bio_err, "Async mode is not supported, exiting...");
-                exit(1);
-            }
-            multiblock_speed(evp_cipher, lengths_single, &seconds);
-            ret = 0;
-            goto end;
-        }
-        for (testnum = 0; testnum < size_num; testnum++) {
-            if (evp_cipher) {
 
-                names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
-                /*
-                 * -O3 -fschedule-insns messes up an optimization here!
-                 * names[D_EVP] somehow becomes NULL
-                 */
+            names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
+
+            if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_CCM_MODE) {
+                loopfunc = EVP_Update_loop_ccm;
+            } else if (aead && (EVP_CIPHER_flags(evp_cipher) &
+                                EVP_CIPH_FLAG_AEAD_CIPHER)) {
+                loopfunc = EVP_Update_loop_aead;
+                if (lengths == lengths_list) {
+                    lengths = aead_lengths_list;
+                    size_num = OSSL_NELEM(aead_lengths_list);
+                }
+            }
+
+            for (testnum = 0; testnum < size_num; testnum++) {
                 print_message(names[D_EVP], save_count, lengths[testnum],
                               seconds.sym);
 
@@ -2455,13 +2530,6 @@ int speed_main(int argc, char **argv)
                                       loopargs[k].key, NULL, -1);
                     OPENSSL_clear_free(loopargs[k].key, keylen);
                 }
-                switch (EVP_CIPHER_mode(evp_cipher)) {
-                case EVP_CIPH_CCM_MODE:
-                    loopfunc = EVP_Update_loop_ccm;
-                    break;
-                default:
-                    loopfunc = EVP_Update_loop;
-                }
 
                 Time_F(START);
                 count = run_benchmark(async_jobs, loopfunc, loopargs);
@@ -2469,16 +2537,19 @@ int speed_main(int argc, char **argv)
                 for (k = 0; k < loopargs_len; k++) {
                     EVP_CIPHER_CTX_free(loopargs[k].ctx);
                 }
+                print_result(D_EVP, testnum, count, d);
             }
-            if (evp_md) {
-                names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
+        } else if (evp_md != NULL) {
+            names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
+
+            for (testnum = 0; testnum < size_num; testnum++) {
                 print_message(names[D_EVP], save_count, lengths[testnum],
                               seconds.sym);
                 Time_F(START);
                 count = run_benchmark(async_jobs, EVP_Digest_loop, loopargs);
                 d = Time_F(STOP);
+                print_result(D_EVP, testnum, count, d);
             }
-            print_result(D_EVP, testnum, count, d);
         }
     }
 
