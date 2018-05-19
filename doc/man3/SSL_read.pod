@@ -73,7 +73,7 @@ operation.
 In this case a call to L<SSL_get_error(3)> with the
 return value of the read function will yield B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE>.
-As at any time it's possible that non-application data needs to be send,
+As at any time it's possible that non-application data needs to be sent,
 a read function can also cause write operations.
 The calling process then must repeat the call after taking appropriate action
 to satisfy the needs of the read function.
