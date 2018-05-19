@@ -18,6 +18,7 @@ use Fcntl;
 my $stripcr = 0;
 
 my $arg;
+my @excludes = ();
 
 foreach $arg (@ARGV) {
 	if ($arg eq "-stripcr")
@@ -25,11 +26,16 @@ foreach $arg (@ARGV) {
 		$stripcr = 1;
 		next;
 		}
+	if ($arg =~ /^-exclude_re=(.*)$/)
+		{
+		push @excludes, $1;
+		next;
+		}
 	$arg =~ s|\\|/|g;	# compensate for bug/feature in cygwin glob...
 	$arg = qq("$arg") if ($arg =~ /\s/);	# compensate for bug in 5.10...
-	foreach (glob $arg)
+	foreach my $f (glob $arg)
 		{
-		push @filelist, $_;
+		push @filelist, $f unless grep { $f =~ /$_/ } @excludes;
 		}
 }
 
