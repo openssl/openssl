@@ -197,29 +197,29 @@ static const int lengths_list[] = {
 };
 static const int *lengths = lengths_list;
 
-#ifdef SIGALRM
-# if defined(__STDC__) || defined(sgi) || defined(_AIX)
-#  define SIGRETTYPE void
-# else
-#  define SIGRETTYPE int
-# endif
-
-static SIGRETTYPE sig_done(int sig);
-static SIGRETTYPE sig_done(int sig)
-{
-    signal(SIGALRM, sig_done);
-    run = 0;
-}
-#endif
-
 #define START   0
 #define STOP    1
 
-#if defined(_WIN32)
+#ifdef SIGALRM
 
-# if !defined(SIGALRM)
-#  define SIGALRM
-# endif
+static void alarmed(int sig)
+{
+    signal(SIGALRM, alarmed);
+    run = 0;
+}
+
+static double Time_F(int s)
+{
+    double ret = app_tminterval(s, usertime);
+    if (s == STOP)
+        alarm(0);
+    return ret;
+}
+
+#elif defined(_WIN32)
+
+# define SIGALRM -1
+
 static unsigned int lapse;
 static volatile unsigned int schlock;
 static void alarm_win32(unsigned int secs)
@@ -263,13 +263,9 @@ static double Time_F(int s)
     return ret;
 }
 #else
-
 static double Time_F(int s)
 {
-    double ret = app_tminterval(s, usertime);
-    if (s == STOP)
-        alarm(0);
-    return ret;
+    return app_tminterval(s, usertime);
 }
 #endif
 
@@ -1961,10 +1957,8 @@ int speed_main(int argc, char **argv)
 /* not worth fixing */
 #  error "You cannot disable DES on systems without SIGALRM."
 # endif                         /* OPENSSL_NO_DES */
-#else
-# ifndef _WIN32
-    signal(SIGALRM, sig_done);
-# endif
+#elif SIGALRM > 0
+    signal(SIGALRM, alarmed);
 #endif                          /* SIGALRM */
 
 #ifndef OPENSSL_NO_MD2
