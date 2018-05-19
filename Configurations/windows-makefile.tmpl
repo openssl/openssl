@@ -412,7 +412,8 @@ install_dev:
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
 				       "$(INSTALLTOP)\include\openssl"
 	@rem {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\include\openssl\*.h" \
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "-exclude_re=/__DECC_" \
+				       "$(SRCDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\include\openssl\*.h \
 				       "$(INSTALLTOP)\include\openssl"
