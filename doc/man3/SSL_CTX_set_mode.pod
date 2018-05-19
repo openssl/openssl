@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_mode, SSL_set_mode, SSL_CTX_get_mode, SSL_get_mode - manipulate SSL engine mode
+SSL_CTX_set_mode, SSL_CTX_clear_mode, SSL_set_mode, SSL_clear_mode, SSL_CTX_get_mode, SSL_get_mode - manipulate SSL engine mode
 
 =head1 SYNOPSIS
 
