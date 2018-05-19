@@ -974,7 +974,7 @@ int s_client_main(int argc, char **argv)
     c_quiet = 0;
     c_debug = 0;
     c_showcerts = 0;
-    c_nbio = 1;
+    c_nbio = 0;
     vpm = X509_VERIFY_PARAM_new();
     cctx = SSL_CONF_CTX_new();
 
@@ -1670,6 +1670,8 @@ int s_client_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+
+    SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);

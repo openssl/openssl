@@ -1041,8 +1041,7 @@ int s_server_main(int argc, char *argv[])
     local_argv = argv;
 
     ctx = ctx2 = NULL;
-    s_nbio = 1;
-    s_nbio_test = 0;
+    s_nbio = s_nbio_test = 0;
     www = 0;
     bio_s_out = NULL;
     s_debug = 0;
@@ -1747,6 +1746,9 @@ int s_server_main(int argc, char *argv[])
         ERR_print_errors(bio_err);
         goto end;
     }
+
+    SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
+
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);
 
