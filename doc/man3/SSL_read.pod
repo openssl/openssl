@@ -57,15 +57,20 @@ of the underlying transport (e.g. TCP), it may be necessary to read several
 packets from the transport layer before the record is complete and the read call
 can succeed.
 
-If a non-application data record had been processed, the read function can
-return and set the error to B<SSL_ERROR_WANT_READ>.
-This behaviour can be controlled with the B<SSL_MODE_AUTO_RETRY> flag of the
-L<SSL_CTX_set_mode(3)> call.
+If B<SSL_MODE_AUTO_RETRY> is not set and a non-application data record has been
+processed, the read function can return and set the error to
+B<SSL_ERROR_WANT_READ>.
+In this case there might still be unprocessed data available in the B<BIO>.
+If read ahead was set using L<SSL_CTX_set_read_ahead(3)>, there might also still
+be unprocessed data available in the B<SSL>.
+This behaviour can be controlled using the L<SSL_CTX_set_mode(3)> call.
 
 If the underlying BIO is B<blocking>, a read function will only return once the
 read operation has been finished or an error occurred, except when a
 non-application data record had been processed and B<SSL_MODE_AUTO_RETRY> is
 not set.
+Note that if B<SSL_MODE_AUTO_RETRY> is set and only non-application data is
+available the call will hang.
 
 If the underlying BIO is B<non-blocking>, a read function will also return when
 the underlying BIO could not satisfy the needs of the function to continue the
@@ -87,12 +92,6 @@ L<SSL_pending(3)> can be used to find out whether there
 are buffered bytes available for immediate retrieval.
 In this case the read function can be called without blocking or actually
 receiving new data from the underlying socket.
-
-=head1 WARNING
-
-When a read function operation has to be repeated because L<SSL_get_error(3)>
-returned B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>, it must be repeated
-with the same arguments.
 
 =head1 RETURN VALUES
 
