@@ -9,7 +9,7 @@
  */
 
 #undef SECONDS
-#define SECONDS                 3
+#define SECONDS                 1
 #define RSA_SECONDS             10
 #define DSA_SECONDS             10
 #define ECDSA_SECONDS   10
@@ -193,8 +193,12 @@ static int do_multi(int multi, int size_num);
 #endif
 
 static const int lengths_list[] = {
-    16, 64, 256, 1024, 8 * 1024, 16 * 1024
-};
+    2,    4,    6,    8,    10,   12,   14,   
+	16,   18,   20,   22,   24,   26,   28,   30,
+    64,   66,   68,   70,   72,   74,   76,   78,
+    256,  258,  260,  262,  264,  266,  268,  270, 
+	1024, 1026, 1028, 1030, 1032, 1034, 1036, 1038,
+    4096, 4098, 4100, 4102, 4104, 4106, 4108, 4110};
 static const int *lengths = lengths_list;
 
 #ifdef SIGALRM
@@ -904,15 +908,15 @@ static int EVP_Update_loop(void *args)
         }
     } else {
         for (count = 0; COND(nb_iter); count++) {
+            EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+            rc = EVP_EncryptUpdate(ctx, NULL, &outl, buf, 13);
             rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            if (rc != 1)
-                EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+            EVP_EncryptFinal_ex(ctx, buf, &outl);
         }
     }
     if (decrypt)
         EVP_DecryptFinal_ex(ctx, buf, &outl);
-    else
-        EVP_EncryptFinal_ex(ctx, buf, &outl);
+        
     return count;
 }
 /*
