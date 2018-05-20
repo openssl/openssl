@@ -199,7 +199,7 @@ static const int lengths_list[] = {
 static const int *lengths = lengths_list;
 
 static const int aead_lengths_list[] = {
-    7, 31, 136, 1024, 8 * 1024, 16 * 1024
+    2, 31, 136, 1024, 8 * 1024, 16 * 1024
 };
 
 #define START   0
