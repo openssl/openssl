@@ -115,6 +115,19 @@ OPENSSL_cleanse:
 CRYPTO_memcmp:
 	eor	w3,w3,w3
 	cbz	x2,.Lno_data	// len==0?
+	cmp	x2,#16
+	b.ne	.Loop_cmp
+	ldp	x8,x9,[x0]
+	ldp	x10,x11,[x1]
+	eor	x8,x8,x10
+	eor	x9,x9,x11
+	orr	x8,x8,x9
+	mov	x0,#1
+	cmp	x8,#0
+	csel	x0,xzr,x0,eq
+	ret
+
+.align	4
 .Loop_cmp:
 	ldrb	w4,[x0],#1
 	ldrb	w5,[x1],#1

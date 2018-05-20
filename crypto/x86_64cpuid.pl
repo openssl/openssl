@@ -271,6 +271,18 @@ CRYPTO_memcmp:
 	xor	%r10,%r10
 	cmp	\$0,$arg3
 	je	.Lno_data
+	cmp	\$16,$arg3
+	jne	.Loop_cmp
+	mov	($arg1),%r10
+	mov	8($arg1),%r11
+	mov	\$1,$arg3
+	xor	($arg2),%r10
+	xor	8($arg2),%r11
+	or	%r11,%r10
+	cmovnz	$arg3,%rax
+	ret
+
+.align	16
 .Loop_cmp:
 	mov	($arg1),%r10b
 	lea	1($arg1),$arg1
