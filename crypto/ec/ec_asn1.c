@@ -841,7 +841,7 @@ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
             ECerr(EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS, ERR_R_EC_LIB);
             return NULL;
         }
-        EC_GROUP_set_asn1_flag(ret, 0x0);
+        EC_GROUP_set_asn1_flag(ret, OPENSSL_EC_EXPLICIT_CURVE);
     } else if (params->type == 2) { /* implicitlyCA */
         return NULL;
     } else {
