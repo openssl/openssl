@@ -368,7 +368,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                                  * precomputation is not available */
     int ret = 0;
 
-    if (group->meth != r->meth) {
+    if (!ec_point_is_compat(r, group)) {
         ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
@@ -404,7 +404,7 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     }
 
     for (i = 0; i < num; i++) {
-        if (group->meth != points[i]->meth) {
+        if (!ec_point_is_compat(points[i], group)) {
             ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
             return 0;
         }
