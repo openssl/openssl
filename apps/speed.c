@@ -3152,7 +3152,7 @@ static int do_multi(int multi, int size_num)
     int *fds;
     static char sep[] = ":";
 
-    fds = malloc(sizeof(*fds) * multi);
+    fds = app_malloc(sizeof(*fds) * multi, "fd buffer for do_multi");
     for (n = 0; n < multi; ++n) {
         if (pipe(fd) == -1) {
             BIO_printf(bio_err, "pipe failure\n");
