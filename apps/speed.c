@@ -308,7 +308,7 @@ const OPTIONS speed_options[] = {
      "Time decryption instead of encryption (only EVP)"},
     {"mr", OPT_MR, '-', "Produce machine readable output"},
     {"mb", OPT_MB, '-',
-     "Enable (tls1.1) multi-block mode on evp_cipher requested with -evp"},
+     "Enable (tls1>=1) multi-block mode on cipher requested with -evp"},
     {"misalign", OPT_MISALIGN, 'n', "Amount to mis-align buffers"},
     {"elapsed", OPT_ELAPSED, '-',
      "Measure time in real time instead of CPU user time"},
@@ -329,7 +329,7 @@ const OPTIONS speed_options[] = {
     {"bytes", OPT_BYTES, 'p',
      "Run cipher, digest and rand benchmarks on pnum bytes"},
     {"aead", OPT_AEAD, '-',
-     "Run AEAD cipher benchmark in TLS-like sequence"},
+     "Benchmark AEAD cipher requested with -evp in TLS-like sequence"},
     {NULL}
 };
 
@@ -1310,7 +1310,6 @@ static int run_benchmark(int async_jobs,
 int speed_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    int (*loopfunc)(void *args);
     loopargs_t *loopargs = NULL;
     const char *prog;
     const char *engine_id = NULL;
@@ -1635,6 +1634,34 @@ int speed_main(int argc, char **argv)
 #endif
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, *argv);
         goto end;
+    }
+
+    /* Sanity checks */
+    if (aead) {
+        if (evp_cipher == NULL) {
+            BIO_printf(bio_err, "-aead can be used only with AEAD cipher\n");
+            goto end;
+        } else if (!(EVP_CIPHER_flags(evp_cipher) &
+                     EVP_CIPH_FLAG_AEAD_CIPHER)) {
+            BIO_printf(bio_err, "%s is not an AEAD cipher\n",
+                       OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
+            goto end;
+        }
+    }
+    if (multiblock) {
+        if (evp_cipher == NULL) {
+            BIO_printf(bio_err,"-mb can be used only with multi-block"
+                               " capable cipher\n");
+            goto end;
+        } else if (!(EVP_CIPHER_flags(evp_cipher) &
+                     EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
+            BIO_printf(bio_err, "%s is not multi-block capable\n",
+                       OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
+            goto end;
+        } else if (async_jobs > 0) {
+            BIO_printf(bio_err, "Async mode is not supported with -mb");
+            goto end;
+        }
     }
 
     /* Initialize the job pool if async mode is enabled */
@@ -2459,24 +2486,16 @@ int speed_main(int argc, char **argv)
     }
 
     if (doit[D_EVP]) {
-        if (multiblock && evp_cipher != NULL) {
-            if (!(EVP_CIPHER_flags(evp_cipher) &
-                  EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
-                BIO_printf(bio_err, "%s is not multi-block capable\n",
-                           OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
+        if (evp_cipher != NULL) {
+            int (*loopfunc)(void *args) = EVP_Update_loop;
+
+            if (multiblock && (EVP_CIPHER_flags(evp_cipher) &
+                               EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
+                multiblock_speed(evp_cipher, lengths_single, &seconds);
+                ret = 0;
                 goto end;
             }
-            if (async_jobs > 0) {
-                BIO_printf(bio_err, "Async mode is not supported, exiting...");
-                exit(1);
-            }
-            multiblock_speed(evp_cipher, lengths_single, &seconds);
-            ret = 0;
-            goto end;
-        }
 
-        loopfunc = EVP_Update_loop;
-        if (evp_cipher != NULL) {
             names[D_EVP] = OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher));
 
             if (EVP_CIPHER_mode(evp_cipher) == EVP_CIPH_CCM_MODE) {
@@ -2484,15 +2503,13 @@ int speed_main(int argc, char **argv)
             } else if (aead && (EVP_CIPHER_flags(evp_cipher) &
                                 EVP_CIPH_FLAG_AEAD_CIPHER)) {
                 loopfunc = EVP_Update_loop_aead;
-                lengths = aead_lengths_list;
-                size_num = OSSL_NELEM(aead_lengths_list);
+                if (lengths == lengths_list) {
+                    lengths = aead_lengths_list;
+                    size_num = OSSL_NELEM(aead_lengths_list);
+                }
             }
-        } else if (evp_md != NULL) {
-            names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
-        }
 
-        for (testnum = 0; testnum < size_num; testnum++) {
-            if (evp_cipher != NULL) {
+            for (testnum = 0; testnum < size_num; testnum++) {
                 print_message(names[D_EVP], save_count, lengths[testnum],
                               seconds.sym);
 
@@ -2517,14 +2534,19 @@ int speed_main(int argc, char **argv)
                 for (k = 0; k < loopargs_len; k++) {
                     EVP_CIPHER_CTX_free(loopargs[k].ctx);
                 }
-            } else if (evp_md != NULL) {
+                print_result(D_EVP, testnum, count, d);
+            }
+        } else if (evp_md != NULL) {
+            names[D_EVP] = OBJ_nid2ln(EVP_MD_type(evp_md));
+
+            for (testnum = 0; testnum < size_num; testnum++) {
                 print_message(names[D_EVP], save_count, lengths[testnum],
                               seconds.sym);
                 Time_F(START);
                 count = run_benchmark(async_jobs, EVP_Digest_loop, loopargs);
                 d = Time_F(STOP);
+                print_result(D_EVP, testnum, count, d);
             }
-            print_result(D_EVP, testnum, count, d);
         }
     }
 
