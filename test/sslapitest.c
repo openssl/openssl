@@ -4473,7 +4473,9 @@ static int test_info_callback(int tst)
     int tlsvers;
 
     if (tst < 2) {
-#ifndef OPENSSL_NO_TLS1_2
+/* We need either ECDHE or DHE for the TLSv1.2 test to work */
+#if !defined(OPENSSL_NO_TLS1_2) && (!defined(OPENSSL_NO_EC) \
+                                    || !defined(OPENSSL_NO_DH))
         tlsvers = TLS1_2_VERSION;
 #else
         return 1;
