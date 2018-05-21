@@ -352,6 +352,7 @@ int ec_GFp_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
     if (!BN_copy(dest->Z, src->Z))
         return 0;
     dest->Z_is_one = src->Z_is_one;
+    dest->curve_name = src->curve_name;
 
     return 1;
 }

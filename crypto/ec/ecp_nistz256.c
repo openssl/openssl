@@ -1168,7 +1168,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
         return 0;
     }
 
-    if (group->meth != r->meth) {
+    if (!ec_point_is_compat(r, group)) {
         ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
@@ -1177,7 +1177,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
         return EC_POINT_set_to_infinity(group, r);
 
     for (j = 0; j < num; j++) {
-        if (group->meth != points[j]->meth) {
+        if (!ec_point_is_compat(points[j], group)) {
             ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
             return 0;
         }
