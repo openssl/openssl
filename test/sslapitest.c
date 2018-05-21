@@ -1197,6 +1197,7 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
+#ifndef OPENSSL_NO_TLS1_3
 static SSL_SESSION *sesscache[6];
 static int do_cache;
 
@@ -1324,6 +1325,7 @@ static int test_tickets(int idx)
 
     return testresult;
 }
+#endif
 
 #define USE_NULL            0
 #define USE_BIO_1           1
