@@ -1038,46 +1038,46 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             }
         }
 
-        bits--;
-        window0=bits%window+1;
-        wmask=(1<<window0)-1;
-        bits-=window0;
-        wvalue=bn_get_bits(p,bits+1);
-        if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&tmp, top, powerbuf, wvalue&wmask,
+        /* The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows
+         */ 
+        window0 = (bits - 1) % window + 1;
+        wmask = (1 << window0) - 1;
+        bits -= window0;
+        wvalue = bn_get_bits(p, bits) & wmask;
+        if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&tmp, top, powerbuf, wvalue,
                                             window))
             goto err;
-        wmask=(1<<window)-1;
 
+        wmask= (1 << window) - 1;
         /*
          * Scan the exponent one window at a time starting from the most
          * significant bits.
          */
-        while (bits >= 0) {
+        while (bits > 0) {
 
-            /* Get window-aligned word's worth of bits from the exponent
-             *  This avoids calling BN_is_bit_set for each bit, which
-             *  is not only slower but also makes each bit vulnerable to
-             *  EM (and likely other) side-channel attacks like One&Done
-             *  (for details see "One&Done: A Single-Decryption EM-Based
-             *   Attack on OpenSSL’s Constant-Time Blinded RSA" by M. Alam,
-             *   H. Khan, M. Dey, N. Sinha, R. Callan, A. Zajic, and
-             *   M. Prvulovic, in USENIX Security'18)
-             */
-            bits-=window;
-            wvalue=bn_get_bits(p,bits+1);
             /* Square the result window-size times */
             for (i = 0; i < window; i++)
                 if (!BN_mod_mul_montgomery(&tmp, &tmp, &tmp, mont, ctx))
                     goto err;
 
+            /* Get a window's worth of bits from the exponent
+             * This avoids calling BN_is_bit_set for each bit, which
+             * is not only slower but also makes each bit vulnerable to
+             * EM (and likely other) side-channel attacks like One&Done
+             * (for details see "One&Done: A Single-Decryption EM-Based
+             *  Attack on OpenSSL’s Constant-Time Blinded RSA" by M. Alam,
+             *  H. Khan, M. Dey, N. Sinha, R. Callan, A. Zajic, and
+             *  M. Prvulovic, in USENIX Security'18)
+             */
+            bits -= window;
+            wvalue = bn_get_bits(p, bits) & wmask;
             /*
              * Fetch the appropriate pre-computed value from the pre-buf
-             * (the index is masked now so that only the actual window
-             *  bits are used, not the entire word returned by bn_get_bits,
-             *  and this masking should not be done earlier because that
-             *  would facilitate One&Done-like side-channel attacks)
              */
-            if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&am, top, powerbuf, wvalue&wmask,
+            if (!MOD_EXP_CTIME_COPY_FROM_PREBUF(&am, top, powerbuf, wvalue,
                                                 window))
                 goto err;
 
