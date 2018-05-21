@@ -918,6 +918,7 @@ static int EVP_Update_loop(void *args)
         EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
+
 /*
  * CCM does not support streaming. For the purpose of performance measurement,
  * each message is encrypted using the same (key,iv)-pair. Do not use this
@@ -951,6 +952,7 @@ static int EVP_Update_loop_ccm(void *args)
     }
     return count;
 }
+
 /*
  * To make AEAD benchmarking more relevant perform TLS-like operations,
  * 13-byte AAD followed by payload. But don't use TLS-formatted AAD, as
@@ -1639,7 +1641,7 @@ int speed_main(int argc, char **argv)
     /* Sanity checks */
     if (aead) {
         if (evp_cipher == NULL) {
-            BIO_printf(bio_err, "-aead can be used only with AEAD cipher\n");
+            BIO_printf(bio_err, "-aead can be used only with an AEAD cipher\n");
             goto end;
         } else if (!(EVP_CIPHER_flags(evp_cipher) &
                      EVP_CIPH_FLAG_AEAD_CIPHER)) {
@@ -1650,12 +1652,12 @@ int speed_main(int argc, char **argv)
     }
     if (multiblock) {
         if (evp_cipher == NULL) {
-            BIO_printf(bio_err,"-mb can be used only with multi-block"
+            BIO_printf(bio_err,"-mb can be used only with a multi-block"
                                " capable cipher\n");
             goto end;
         } else if (!(EVP_CIPHER_flags(evp_cipher) &
                      EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) {
-            BIO_printf(bio_err, "%s is not multi-block capable\n",
+            BIO_printf(bio_err, "%s is not a multi-block capable\n",
                        OBJ_nid2ln(EVP_CIPHER_nid(evp_cipher)));
             goto end;
         } else if (async_jobs > 0) {
