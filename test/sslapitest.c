@@ -1197,6 +1197,7 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
+#ifndef OPENSSL_NO_TLS1_3
 static SSL_SESSION *sesscache[6];
 static int do_cache;
 
@@ -1324,6 +1325,7 @@ static int test_tickets(int idx)
 
     return testresult;
 }
+#endif
 
 #define USE_NULL            0
 #define USE_BIO_1           1
@@ -4473,7 +4475,9 @@ static int test_info_callback(int tst)
     int tlsvers;
 
     if (tst < 2) {
-#ifndef OPENSSL_NO_TLS1_2
+/* We need either ECDHE or DHE for the TLSv1.2 test to work */
+#if !defined(OPENSSL_NO_TLS1_2) && (!defined(OPENSSL_NO_EC) \
+                                    || !defined(OPENSSL_NO_DH))
         tlsvers = TLS1_2_VERSION;
 #else
         return 1;
