@@ -336,8 +336,9 @@
 
   enable-ec_nistp_64_gcc_128
                    Enable support for optimised implementations of some commonly
-                   used NIST elliptic curves. This is only supported on some
-                   platforms.
+                   used NIST elliptic curves.
+                   This is only supported on little endian platforms that
+                   tolerate misaligned memory references.
 
   enable-egd
                    Build support for gathering entropy from EGD (Entropy
