@@ -299,9 +299,9 @@ int NAME_CONSTRAINTS_check(X509 *x, NAME_CONSTRAINTS *nc)
 
 static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
 {
-    int utf8_length;    /* Return type of ASN1_STRING_to_UTF8 */
-    int i;
+    int utf8_length;
     unsigned char *utf8_value;
+    int i;
     int isdnsname = 0;
 
     /* Don't leave outputs uninitialized */
@@ -337,8 +337,10 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
         --utf8_length;
 
     /* Reject *embedded* NULs */
-    if ((size_t)utf8_length != strlen((char *)utf8_value))
-        return X509_V_ERR_UNSPECIFIED;
+    if ((size_t)utf8_length != strlen((char *)utf8_value)) {
+        OPENSSL_free(utf8_value);
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+    }
 
     /*
      * XXX: Deviation from strict DNS name syntax, also check names with '_'
@@ -389,14 +391,12 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
 }
 
 /*
- * Check CN against DNS-ID name constraints, provided no DNS-ID
- * subjectAlternativeName values are present in the certificate.
+ * Check CN against DNS-ID name constraints.
  */
 int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i;
-    GENERAL_NAMES *gens = NULL;
-    X509_NAME *nm;
+    X509_NAME *nm = X509_get_subject_name(x);
     ASN1_STRING stmp;
     GENERAL_NAME gntmp;
 
@@ -404,21 +404,6 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     stmp.type = V_ASN1_IA5STRING;
     gntmp.type = GEN_DNS;
     gntmp.d.dNSName = &stmp;
-
-    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-    if (gens != NULL) {
-        for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-            GENERAL_NAME *gen = sk_GENERAL_NAME_value(gens, i);
-
-            if (gen->type == GEN_DNS) {
-                GENERAL_NAMES_free(gens);
-                return X509_V_OK;
-            }
-        }
-        GENERAL_NAMES_free(gens);
-    }
-
-    nm = X509_get_subject_name(x);
 
     /* Process any commonName attributes in subject name */
 

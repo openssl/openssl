@@ -560,6 +560,27 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
     return 1;
 }
 
+static int has_san_id(X509 *x, int gtype)
+{
+    int i;
+    int ret = 0;
+    GENERAL_NAMES *gs = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+
+    if (gs == NULL)
+        return 0;
+
+    for (i = 0; i < sk_GENERAL_NAME_num(gs); i++) {
+        GENERAL_NAME *g = sk_GENERAL_NAME_value(gs, i);
+
+        if (g->type == gtype) {
+            ret = 1;
+            break;
+        }
+    }
+    GENERAL_NAMES_free(gs);
+    return ret;
+}
+
 static int check_name_constraints(X509_STORE_CTX *ctx)
 {
     int i;
@@ -658,7 +679,12 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
                 int rv = NAME_CONSTRAINTS_check(x, nc);
 
                 /* If EE certificate check commonName too */
-                if (rv == X509_V_OK && i == 0)
+                if (rv == X509_V_OK && i == 0
+                    && (ctx->param->hostflags
+                        & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT) == 0
+                    && ((ctx->param->hostflags
+                         & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT) != 0
+                        || !has_san_id(x, GEN_DNS)))
                     rv = NAME_CONSTRAINTS_check_CN(x, nc);
 
                 switch (rv) {
