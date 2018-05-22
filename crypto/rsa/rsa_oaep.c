@@ -120,7 +120,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                       int plen, const EVP_MD *md,
                                       const EVP_MD *mgf1md)
 {
-    int i, dblen, mlen = -1, one_index = 0, msg_index;
+    int i, dblen = 0, mlen = -1, one_index = 0, msg_index;
     unsigned int good, found_one_byte;
     const unsigned char *maskedseed, *maskeddb;
     /*
