@@ -673,8 +673,9 @@ If a connection request is established with an SSL client and neither the
 B<-www> nor the B<-WWW> option has been used then normally any data received
 from the client is displayed and any key presses will be sent to the client.
 
-Certain single letter commands are also recognized which perform special
-operations: these are listed below.
+Certain commands are also recognized which perform special operations. These
+commands are a letter which must appear at the start of a line. They are listed
+below.
 
 =over 4
 
@@ -688,11 +689,12 @@ End the current SSL connection and exit.
 
 =item B<r>
 
-Renegotiate the SSL session.
+Renegotiate the SSL session (TLSv1.2 and below only).
 
 =item B<R>
 
-Renegotiate the SSL session and request a client certificate.
+Renegotiate the SSL session and request a client certificate (TLSv1.2 and below
+only).
 
 =item B<P>
 
@@ -702,6 +704,22 @@ cause the client to disconnect due to a protocol violation.
 =item B<S>
 
 Print out some session cache status information.
+
+=item B<B>
+
+Send a heartbeat message to the client (DTLS only)
+
+=item B<k>
+
+Send a key update message to the client (TLSv1.3 only)
+
+=item B<K>
+
+Send a key update message to the client and request one back (TLSv1.3 only)
+
+=item B<c>
+
+Send a certificate request to the client (TLSv1.3 only)
 
 =back
 
