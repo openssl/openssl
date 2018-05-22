@@ -303,33 +303,34 @@ const OPTIONS speed_options[] = {
     {OPT_HELP_STR, 1, '-', "Usage: %s [options] ciphers...\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"evp", OPT_EVP, 's', "Use specified EVP cipher"},
+    {"evp", OPT_EVP, 's', "Use EVP-named cipher or digest"},
     {"decrypt", OPT_DECRYPT, '-',
      "Time decryption instead of encryption (only EVP)"},
     {"aead", OPT_AEAD, '-',
-     "Benchmark AEAD cipher requested with -evp in TLS-like sequence"},
+     "Benchmark EVP-named AEAD cipher in TLS-like sequence"},
     {"mb", OPT_MB, '-',
-     "Enable (tls1>=1) multi-block mode on cipher requested with -evp"},
+     "Enable (tls1>=1) multi-block mode on EVP-named cipher"},
     {"mr", OPT_MR, '-', "Produce machine readable output"},
 #ifndef NO_FORK
     {"multi", OPT_MULTI, 'p', "Run benchmarks in parallel"},
 #endif
 #ifndef OPENSSL_NO_ASYNC
     {"async_jobs", OPT_ASYNCJOBS, 'p',
-     "Enable async mode and start pnum jobs"},
+     "Enable async mode and start specified number of jobs"},
 #endif
     OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
     {"elapsed", OPT_ELAPSED, '-',
-     "Measure time in real time instead of CPU user time"},
+     "Use wall-clock time instead of CPU user time as divisor"},
     {"primes", OPT_PRIMES, 'p', "Specify number of primes (for RSA only)"},
     {"seconds", OPT_SECONDS, 'p',
-     "Run benchmarks for pnum seconds"},
+     "Run benchmarks for specified amount of seconds"},
     {"bytes", OPT_BYTES, 'p',
-     "Run cipher, digest and rand benchmarks on pnum bytes"},
-    {"misalign", OPT_MISALIGN, 'p', "Offset to mis-align buffers"},
+     "Run [non-PKI] benchmarks on custom-sized buffer"},
+    {"misalign", OPT_MISALIGN, 'p',
+     "Use specified offset to mis-align buffers"},
     {NULL}
 };
 

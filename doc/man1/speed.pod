@@ -44,8 +44,9 @@ for all available algorithms.
 
 =item B<-elapsed>
 
-Measure time in real time instead of CPU time. It can be useful when testing
-speed of hardware engines.
+When calculation operations- or bytes-per-second use wall-clock time
+instead of CPU user time as divisor. It can be useful when testing speed
+of hardware engines.
 
 =item B<-evp algo>
 
