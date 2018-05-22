@@ -328,7 +328,7 @@ static int do_dir(const char *dirname, enum Hash h)
         exit(1);
     }
     while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
-        if ((copy = strdup(filename)) == NULL
+        if ((copy = OPENSSL_strdup(filename)) == NULL
                 || sk_OPENSSL_STRING_push(files, copy) == 0) {
             BIO_puts(bio_err, "out of memory\n");
             exit(1);
