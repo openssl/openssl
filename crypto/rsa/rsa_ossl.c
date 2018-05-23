@@ -602,14 +602,15 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
     return r;
 }
 
-static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
+static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *II, RSA *rsa, BN_CTX *ctx)
 {
-    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2];
+    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2],*I=NULL;
     int ret = 0, i, ex_primes = 0;
     RSA_PRIME_INFO *pinfo;
 
     BN_CTX_start(ctx);
 
+    I = BN_dup(II);
     r1 = BN_CTX_get(ctx);
     r2 = BN_CTX_get(ctx);
     m1 = BN_CTX_get(ctx);
