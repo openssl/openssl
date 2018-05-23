@@ -669,8 +669,9 @@ If a connection is established with an SSL server then any data received
 from the server is displayed and any key presses will be sent to the
 server. If end of file is reached then the connection will be closed down. When
 used interactively (which means neither B<-quiet> nor B<-ign_eof> have been
-given), then certain single letter commands are also recognized which perform
-special operations: these are listed below.
+given), then certain commands are also recognized which perform special
+operations. These commands are a letter which must appear at the start of a
+line. They are listed below.
 
 =over 4
 
