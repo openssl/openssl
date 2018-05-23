@@ -759,7 +759,7 @@ int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
 int generate_stateless_cookie_callback(SSL *ssl, unsigned char *cookie,
                                        size_t *cookie_len)
 {
-    unsigned int temp;
+    unsigned int temp = 0;
     int res = generate_cookie_callback(ssl, cookie, &temp);
     *cookie_len = temp;
     return res;
