@@ -189,11 +189,11 @@ hash the input data. It is used (by some algorithms) for sanity-checking the
 lengths of data passed in to the B<pkeyutl> and for creating the structures that
 make up the signature (e.g. B<DigestInfo> in RSASSA PKCS#1 v1.5 signatures).
 
-This utility will not perform hashing on input data but rather it will use the
-data directly as input to the signature algorithm. Depending on the key type,
-signature type and mode of padding, the maximum acceptable lengths of input data
-differ. In general, with RSA the signed data can't be longer than the key
-modulus. In case of ECDSA and DSA the data shouldn't be longer than the field
+This utility does not hash the input data but rather it will use the data
+directly as input to the signature algorithm. Depending on the key type,
+signature type, and mode of padding, the maximum acceptable lengths of input
+data differ. The signed data can't be longer than the key modulus with RSA. In
+case of ECDSA and DSA the data shouldn't be longer than the field
 size, otherwise it will be silently truncated to the field size. In any event
 the input size must not be larger than the largest supported digest size.
 
