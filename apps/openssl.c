@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <locale.h>
 #include <internal/cryptlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -76,6 +77,8 @@ static void calculate_columns(DISPLAY_COLUMNS *dc)
 
 static int apps_startup(void)
 {
+    setlocale(LC_ALL, "");
+
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
