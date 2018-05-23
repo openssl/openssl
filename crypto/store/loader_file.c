@@ -292,7 +292,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                                               OSSL_NELEM(wpass)))
                         == (size_t) -1) {
                         SYSerr(SYS_F_MBSTOWCS, errno);
-                        goto p12_end;
+                        goto p12_variant2_end;
                     }
 
                     /*
@@ -325,6 +325,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                         goto p12_parse;
 
                     OPENSSL_clear_free(pass_utf8, utf8_count);
+                 p12_variant2_end:
                     tofree = pass = NULL;
                 }
 #endif
