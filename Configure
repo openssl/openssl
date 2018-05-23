@@ -1451,13 +1451,6 @@ if (!$disabled{asm}) {
     }
 }
 
-if (!$disabled{ec_nistp_64_gcc_128} && !$predefined{__SIZEOF_INT128__}) {
-    die <<"_____";
-Your compiler doesn't pre-define __SIZEOF_INT128__.  Enabling
-ec_nistp_64_gcc_128 is therefore not permitted.
-_____
-}
-
 # Deal with bn_ops ###################################################
 
 $config{bn_ll}			=0;
