@@ -337,8 +337,11 @@
   enable-ec_nistp_64_gcc_128
                    Enable support for optimised implementations of some commonly
                    used NIST elliptic curves.
-                   This is only supported on little endian platforms that
-                   tolerate misaligned memory references.
+                   This is only supported with compilers that:
+                   - support the non-standard type __uint128_t
+                   - define the built-in macro __SIZEOF_INT128__
+                   - support little-endian integers
+                   - tolerate misaligned memory references
 
   enable-egd
                    Build support for gathering entropy from EGD (Entropy
