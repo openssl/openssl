@@ -9,13 +9,10 @@
 
 #include "e_os.h"
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <assert.h>
-
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199409L
-# include <wchar.h>
-#endif
 
 #include <openssl/bio.h>
 #include <openssl/dsa.h>         /* For d2i_DSAPrivateKey */
