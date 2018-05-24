@@ -271,7 +271,8 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                 if (PKCS12_verify_mac(p12, pass, strlen(pass)))
                     goto p12_parse;
 
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199409L
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199409L \
+    || defined(_WIN32)
                 /*
                  * Check variant 2: locale to UTF-8 translation
                  * Convert the pass phrase from the current application locale
@@ -285,10 +286,20 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                     unsigned char *pass_utf8 = NULL;
                     size_t utf8_count, i, j;
 
-                    if ((wpass_len = mbstowcs(wpass, (char *)tpass,
-                                              OSSL_NELEM(wpass)))
-                        == (size_t) -1) {
-                        SYSerr(SYS_F_MBSTOWCS, errno);
+# ifdef _WIN32
+                    wpass_len = MultiByteToWideChar(CP_ACP,
+                                                    MB_ERR_INVALID_CHARS
+                                                    | MB_PRECOMPOSED,
+                                                    (char *)tpass, -1, wpass,
+                                                    OSSL_NELEM(wpass));
+                    if (wpass_len == 0)
+                        wpass_len = (size_t)-1; /* Simulate mbstowcs errcode */
+# else
+                    wpass_len = mbstowcs(wpass, (char *)tpass,
+                                         OSSL_NELEM(wpass));
+# endif
+                    if (wpass_len == (size_t) -1) {
+                        SYSerr(SYS_F_MBSTOWCS, get_last_sys_error());
                         goto p12_variant2_end;
                     }
 
