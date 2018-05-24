@@ -290,8 +290,8 @@ int BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 
     bits = BN_num_bits(p);
     if (bits == 0) {
-        /* x**0 mod 1 is still zero. */
-        if (BN_is_one(m)) {
+        /* x**0 mod 1, or x**0 mod -1 is still zero. */
+        if (BN_abs_is_word(m, 1)) {
             ret = 1;
             BN_zero(r);
         } else {
@@ -432,8 +432,8 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     }
     bits = BN_num_bits(p);
     if (bits == 0) {
-        /* x**0 mod 1 is still zero. */
-        if (BN_is_one(m)) {
+        /* x**0 mod 1, or x**0 mod -1 is still zero. */
+        if (BN_abs_is_word(m, 1)) {
             ret = 1;
             BN_zero(rr);
         } else {
@@ -733,8 +733,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
      */
     bits = p->top * BN_BITS2;
     if (bits == 0) {
-        /* x**0 mod 1 is still zero. */
-        if (BN_is_one(m)) {
+        /* x**0 mod 1, or x**0 mod -1 is still zero. */
+        if (BN_abs_is_word(m, 1)) {
             ret = 1;
             BN_zero(rr);
         } else {
@@ -1247,8 +1247,8 @@ int BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p,
 
     bits = BN_num_bits(p);
     if (bits == 0) {
-        /* x**0 mod 1 is still zero. */
-        if (BN_is_one(m)) {
+        /* x**0 mod 1, or x**0 mod -1 is still zero. */
+        if (BN_abs_is_word(m, 1)) {
             ret = 1;
             BN_zero(rr);
         } else {
@@ -1369,9 +1369,9 @@ int BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     }
 
     bits = BN_num_bits(p);
-   if (bits == 0) {
-        /* x**0 mod 1 is still zero. */
-        if (BN_is_one(m)) {
+    if (bits == 0) {
+        /* x**0 mod 1, or x**0 mod -1 is still zero. */
+        if (BN_abs_is_word(m, 1)) {
             ret = 1;
             BN_zero(r);
         } else {
