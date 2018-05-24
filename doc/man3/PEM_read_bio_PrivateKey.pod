@@ -346,17 +346,16 @@ Skeleton pass phrase callback:
 
  int pass_cb(char *buf, int size, int rwflag, void *u)
  {
-     int len;
-     char *tmp;
 
      /* We'd probably do something else if 'rwflag' is 1 */
      printf("Enter pass phrase for \"%s\"\n", (char *)u);
 
      /* get pass phrase, length 'len' into 'tmp' */
-     tmp = "hello";
-     len = strlen(tmp);
-     if (len <= 0)
-         return 0;
+     char *tmp = "hello";
+     if (tmp == NULL) /* An error occurred */
+         return -1;
+
+     size_t len = strlen(tmp);
 
      if (len > size)
          len = size;
