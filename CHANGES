@@ -8,6 +8,10 @@
  release branch.
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
+  *) Add blinding to an ECDSA signature to protect against side channel attacks
+     discovered by Keegan Ryan (NCC Group).
+     [Matt Caswell]
+
   *) Enforce checking in the pkeyutl command line app to ensure that the input
      length does not exceed the maximum supported digest length when performing
      a sign, verify or verifyrecover operation.
