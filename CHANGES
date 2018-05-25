@@ -9,6 +9,10 @@
 
  Changes between 1.0.2o and 1.0.2p [xx XXX xxxx]
 
+  *) Add blinding to an ECDSA signature to protect against side channel attacks
+     discovered by Keegan Ryan (NCC Group).
+     [Matt Caswell]
+
   *) When unlocking a pass phrase protected PEM file or PKCS#8 container, we
      now allow empty (zero character) pass phrases.
      [Richard Levitte]
