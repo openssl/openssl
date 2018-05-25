@@ -260,9 +260,10 @@ int s_time_main(int argc, char **argv)
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
-    printf
-        ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+    if (nConn > 0)
+        printf
+            ("%d connections in %ld real seconds, %ld bytes read per connection\n",
+             nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
 
     /*
      * Now loop and time connections using the same session id over and over
@@ -336,9 +337,11 @@ int s_time_main(int argc, char **argv)
     printf
         ("\n\n%d connections in %.2fs; %.2f connections/user sec, bytes read %ld\n",
          nConn, totalTime, ((double)nConn / totalTime), bytes_read);
-    printf
-        ("%d connections in %ld real seconds, %ld bytes read per connection\n",
-         nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
+
+    if (nConn > 0)
+        printf
+            ("%d connections in %ld real seconds, %ld bytes read per connection\n",
+             nConn, (long)time(NULL) - finishtime + maxtime, bytes_read / nConn);
 
     ret = 0;
 
