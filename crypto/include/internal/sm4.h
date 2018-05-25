@@ -13,6 +13,7 @@
 
 # include <openssl/opensslconf.h>
 # include <openssl/e_os2.h>
+# include <inttypes.h>
 
 # ifdef OPENSSL_NO_SM4
 #  error SM4 is disabled.

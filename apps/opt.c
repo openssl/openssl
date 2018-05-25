@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <openssl/bio.h>
 #include <openssl/x509v3.h>
