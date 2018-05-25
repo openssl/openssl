@@ -204,7 +204,8 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
     if (src->ext.supportedgroups) {
         dest->ext.supportedgroups =
             OPENSSL_memdup(src->ext.supportedgroups,
-                           src->ext.supportedgroups_len);
+                           src->ext.supportedgroups_len
+                                * sizeof(*src->ext.supportedgroups));
         if (dest->ext.supportedgroups == NULL)
             goto err;
     }
