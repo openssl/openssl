@@ -240,12 +240,12 @@ CNF_CPPFLAGS={- our $cppflags2 =
                                               @{$config{includes}}),
                               @{$config{cppflags}}) -}
 CNF_CFLAGS={- join(' ', $target{cflags} || (),
-                        "-Ivendor/liboqs/include",
+                        "-Ioqs/include",
                         @{$config{cflags}}) -}
 CNF_CXXFLAGS={- join(' ', $target{cxxflags} || (),
                           @{$config{cxxflags}}) -}
 CNF_LDFLAGS={- join(' ', $target{lflags} || (),
-                         "-Lvendor/liboqs",
+                         "-Loqs/lib",
                          @{$config{lflags}}) -}
 CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
                          "-loqs",
@@ -343,7 +343,7 @@ LANG=C
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -}: build_liboqs build_libs_nodep build_engines_nodep build_programs_nodep link-utils
+{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep link-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_engines'); -}: build_engines_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
@@ -359,9 +359,6 @@ build_apps build_tests: build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
-
-build_liboqs: build_generated
-	cd vendor/liboqs && autoreconf -i && ./configure --enable-shared && $(MAKE)
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep link-utils
