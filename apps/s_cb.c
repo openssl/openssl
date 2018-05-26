@@ -383,16 +383,16 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 #endif
 
 /* OQS note: is there a better place to put this? we only need it here... */
-#define OQS_CURVE_ID_NAME_STR(id) (id == 31 ? "Frodo recommended" :               \
-				  (id == 32 ? "SIKE 503" :	                  \
-				  (id == 33 ? "SIKE 751" :	                  \
-				  (id == 34 ? "Newhope" :	                  \
-				  (id == 35 ? "NTRU" :		                  \
-				  (id == 36 ? "P256 - Frodo recommended hybrid" : \
-				  (id == 37 ? "P256 - SIKE 503 hybrid" :          \
-				  (id == 38 ? "P256 - SIKE 751 hybrid" :          \
-				  (id == 39 ? "P256 - Newhope hybrid" :           \
-				  (id == 40 ? "P256 - NTRU hybrid" : ""))))))))))
+#define OQS_CURVE_ID_NAME_STR(id) (id == 0x0200 ? "Frodo recommended" :               \
+				  (id == 0x0201 ? "SIKE 503" :	                  \
+				  (id == 0x0202 ? "SIKE 751" :	                  \
+				  (id == 0x0203 ? "Newhope" :	                  \
+				  (id == 0x0204 ? "NTRU" :		                  \
+				  (id == 0x0300 ? "P256 - Frodo recommended hybrid" : \
+				  (id == 0x0301 ? "P256 - SIKE 503 hybrid" :          \
+				  (id == 0x0302 ? "P256 - SIKE 751 hybrid" :          \
+				  (id == 0x0303 ? "P256 - Newhope hybrid" :           \
+				  (id == 0x0304 ? "P256 - NTRU hybrid" : ""))))))))))
 
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {

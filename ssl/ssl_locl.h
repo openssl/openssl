@@ -427,30 +427,33 @@
 			     nid == NID_OQS_Newhope  ||	\
 			     nid == NID_OQS_NTRU)
 /* Returns the curve ID for an OQS KEX NID */
-/* OQS note: we could call tls1_nid2group_id instead, but it's static to t1_lib
-   and we need this functionality outside that file */
-#define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo    ? 31 : \
-                              (nid == NID_OQS_SIKE_503 ? 32 : \
-			      (nid == NID_OQS_SIKE_751 ? 33 : \
-			      (nid == NID_OQS_Newhope  ? 34 : \
-			      (nid == NID_OQS_NTRU     ? 35 : 0)))))
-#define OQS_KEX_NID(curveID)  ((curveID == 31 || curveID == 36) ? NID_OQS_Frodo : \
-			      ((curveID == 32 || curveID == 37) ? NID_OQS_SIKE_503 : \
-			      ((curveID == 33 || curveID == 38) ? NID_OQS_SIKE_751 :	\
-			      ((curveID == 34 || curveID == 39) ? NID_OQS_Newhope :	\
-			      ((curveID == 35 || curveID == 40) ? NID_OQS_NTRU : 0)))))
+#define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo    ? 0x0200 : \
+                              (nid == NID_OQS_SIKE_503 ? 0x0201 : \
+			      (nid == NID_OQS_SIKE_751 ? 0x0202 : \
+			      (nid == NID_OQS_Newhope  ? 0x0203 : \
+			      (nid == NID_OQS_NTRU     ? 0x0204 : 0)))))
+#define OQS_KEX_HYBRID_CURVEID(nid)  (nid == NID_OQS_p256_Frodo    ? 0x0300 : \
+				     (nid == NID_OQS_p256_SIKE_503 ? 0x0301 : \
+				     (nid == NID_OQS_p256_SIKE_751 ? 0x0302 : \
+				     (nid == NID_OQS_p256_Newhope  ? 0x0303 : \
+				     (nid == NID_OQS_p256_NTRU     ? 0x0304 : 0)))))
+#define OQS_KEX_NID(curveID)  ((curveID == 0x0200 || curveID == 0x0300) ? NID_OQS_Frodo : \
+			      ((curveID == 0x0201 || curveID == 0x0301) ? NID_OQS_SIKE_503 : \
+			      ((curveID == 0x0202 || curveID == 0x0302) ? NID_OQS_SIKE_751 :	\
+			      ((curveID == 0x0203 || curveID == 0x0303) ? NID_OQS_Newhope :	\
+			      ((curveID == 0x0204 || curveID == 0x0304) ? NID_OQS_NTRU : 0)))))
 /* Returns true if the curve ID is for an OQS KEX */
-#define IS_OQS_KEX_CURVEID(id)	(id == 31 || \
-				 id == 32 || \
-				 id == 33 || \
-				 id == 34 || \
-				 id == 35)
+#define IS_OQS_KEX_CURVEID(id)	(id == 0x0200 || \
+				 id == 0x0201 || \
+				 id == 0x0202 || \
+				 id == 0x0203 || \
+				 id == 0x0204)
 /* Returns true if the curve ID is for an OQS KEX */
-#define IS_OQS_KEX_HYBRID_CURVEID(id)	(id == 36 || \
-					 id == 37 || \
-					 id == 38 || \
-					 id == 39 || \
-					 id == 40)
+#define IS_OQS_KEX_HYBRID_CURVEID(id)	(id == 0x0300 || \
+					 id == 0x0301 || \
+					 id == 0x0302 || \
+					 id == 0x0303 || \
+					 id == 0x0304)
 /* Returns the OQS alg ID for OQS API */
 #define OQS_ALG_NAME(nid)   (nid == NID_OQS_Frodo ? OQS_KEX_alg_lwe_frodo : \
 			    (nid == NID_OQS_SIKE_503 ? OQS_KEX_alg_sike_msr_503 : \

@@ -524,17 +524,19 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {28, "brainpoolP512r1"},
     {29, "ecdh_x25519"},
     {30, "ecdh_x448"},
-    /* OQS groups. 
-       FIXMEOQS: should we use code points between 0x01FC..0x01F,
-       reserved for private-use finite field groups? */
-    {31, "frodo"},
-    {32, "sike503"},
-    {33, "sike751"},
     {256, "ffdhe2048"},
     {257, "ffdhe3072"},
     {258, "ffdhe4096"},
     {259, "ffdhe6144"},
     {260, "ffdhe8192"},
+    /* OQS groups, using private code points. The TLS 1.3 spec only reserves
+       FF and EC ranges for code points; we'll update our values if/when
+       this gets updated for PQC. */
+    {OQS_KEX_CURVEID(NID_OQS_Frodo), "frodo"},
+    {OQS_KEX_CURVEID(NID_OQS_SIKE_503), "sike503"},
+    {OQS_KEX_CURVEID(NID_OQS_SIKE_751), "sike751"},
+    {OQS_KEX_CURVEID(NID_OQS_NewHope), "newhope"},
+    {OQS_KEX_CURVEID(NID_OQS_NTRU), "ntru"},
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };
