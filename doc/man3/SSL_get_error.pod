@@ -64,7 +64,7 @@ B<SSL_ERROR_WANT_WRITE> is returned when the last operation was a write
 to a non-blocking B<BIO> and it was unable to sent all data to the B<BIO>.
 When the B<BIO> is writeable again, the same function can be called again.
 
-Note that the retry may again lead to a B<SSL_ERROR_WANT_READ> or
+Note that the retry may again lead to an B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE> condition.
 There is no fixed upper limit for the number of iterations that
 may be necessary until progress becomes visible at application
@@ -141,6 +141,10 @@ Details depend on the application.
 Some non-recoverable I/O error occurred.
 The OpenSSL error queue may contain more information on the error.
 For socket I/O on Unix systems, consult B<errno> for details.
+
+This error can also be returned when the library generates an error.
+For instance it's generated on the second call to SSL_shutdown() when not all
+data was read using SSL_read().
 
 =item SSL_ERROR_SSL
 

@@ -55,9 +55,9 @@ non-blocking write().
 
 =item SSL_MODE_AUTO_RETRY
 
-During normal operations, non-applications data records might need to be sent or
+During normal operations, non-application data records might need to be sent or
 received that the application is not aware of.
-If a non-application data record was processed, a
+If a non-application data record was processed,
 L<SSL_read_ex(3)>, L<SSL_read(3)>, L<SSL_write_ex(3)> or L<SSL_write(3)> can
 return with a failure and indicate the need to retry with B<SSL_ERROR_WANT_READ>.
 If such a non-application data record was processed, the flag

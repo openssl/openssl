@@ -67,7 +67,7 @@ This behaviour can be controlled using the L<SSL_CTX_set_mode(3)> call.
 
 If the underlying BIO is B<blocking>, a read function will only return once the
 read operation has been finished or an error occurred, except when a
-non-application data record had been processed and B<SSL_MODE_AUTO_RETRY> is
+non-application data record has been processed and B<SSL_MODE_AUTO_RETRY> is
 not set.
 Note that if B<SSL_MODE_AUTO_RETRY> is set and only non-application data is
 available the call will hang.
