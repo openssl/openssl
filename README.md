@@ -10,13 +10,6 @@ OQS REVIEW NOTES:
  * Currently, only PQC and hybrid (classical+PQC) KEX in TLS 1.3 are supported. Next in line: auth, hybrid auth, and TLS 1.2.
  * One goal is to minimize the OQS footprint into the OpenSSL code, to improve readability. Therefore, some redundant code is implemented using macros to avoid creating functions and registrating them in OpenSSL.
  * The TLS 1.3 integration is done at the TLS layer (start looking in ssl/statem/extensions_(clnt,srvr).c). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the KEM asymetric API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked.
- * If you have an oqs-related build error, try building it manually, and re-run openssl's make:
-   - cd vendor/liboqs
-   - autoreconf -i
-   - ./configure --enable-shared
-   - make
-   - cd ../..
-   - make
 
 Overview
 --------
@@ -39,35 +32,48 @@ This project integrates post-quantum key exchange from liboqs in TLS 1.3 in Open
 Currently, only Frodo, Sike503, Sike751, Newhope, and NTRU are supported. Others will be added when OQS is updated.
 
 
-### Authentication mechanisms
+Building on Linux and macOS
+---------------------------
 
-TODO: add them
+Builds have been tested on macOS 10.13.3 (clang), Ubuntu 14.04.5 (gcc-7).
 
-Building
---------
+### Step 1: Build liboqs
 
-Builds have been tested on Ubuntu 16.04.1.
+First, you must download and build liboqs.  You must use a version of liboqs that uses the old API (this project will be updated once the new KEM API in integrated in liboqs's master branch). 
 
-### Linux and macOS
+Follow the instructions there to download and build that branch of liboqs.
 
-To build, clone or download the source from Github:
+### Step 2: Download fork of OpenSSL
 
-	git clone --branch master https://github.com/open-quantum-safe/openssl.git
-	cd openssl
+Clone or download the source from Github:
+
+        git clone --branch master https://github.com/open-quantum-safe/openssl.git
+        cd openssl
+
+### Step 3: Install liboqs into OpenSSL directory
+
+Go back to the directory where you built liboqs.
+
+        make install PREFIX=<path-to-openssl-dir>/oqs
+
+This will create a directory `oqs` in your newly download OpenSSL directory, with subdirectories `include` and `lib` containing the headers and library files of liboqs.
+
+### Step 4: Build fork of OpenSSL
+
+Now we follow the standard instructions for building OpenSSL.
 
 To configure OpenSSL, on Linux type:
 
-	./config
-	
-and on Mac OS X type:
+        ./config
 
-	./Configure darwin64-x86_64-cc
-	
+and on macOS type:
+
+        ./Configure darwin64-x86_64-cc
+
 Then type:
-	make
-	
-This will build both liboqs and OpenSSL.  
 
+	make
+		
 Running
 -------
 
