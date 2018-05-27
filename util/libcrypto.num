@@ -4546,3 +4546,5 @@ RSA_get0_e                              4487	1_1_1	EXIST::FUNCTION:RSA
 RSA_get0_q                              4488	1_1_1	EXIST::FUNCTION:RSA
 RSA_get0_p                              4489	1_1_1	EXIST::FUNCTION:RSA
 RSA_get0_iqmp                           4490	1_1_1	EXIST::FUNCTION:RSA
+ECDSA_SIG_get0_r                        4491	1_1_1	EXIST::FUNCTION:EC
+ECDSA_SIG_get0_s                        4492	1_1_1	EXIST::FUNCTION:EC

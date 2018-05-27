@@ -1066,6 +1066,16 @@ ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
  */
 void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
 
+/** Accessor for r field of ECDSA_SIG
+ *  \param  sig  pointer to ECDSA_SIG structure
+ */
+const BIGNUM *ECDSA_SIG_get0_r(const ECDSA_SIG *sig);
+
+/** Accessor for s field of ECDSA_SIG
+ *  \param  sig  pointer to ECDSA_SIG structure
+ */
+const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
+
 /** Setter for r and s fields of ECDSA_SIG
  *  \param  sig  pointer to ECDSA_SIG pointer
  *  \param  r    pointer to BIGNUM for r (may be NULL)
