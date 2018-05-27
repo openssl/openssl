@@ -23,11 +23,14 @@
 #			IALU/gcc-4.x    3xAltiVec+1xIALU
 #
 # Freescale e300	13.6/+115%	-
-# PPC74x0/G4e		6.81/+310%	4.66
-# PPC970/G5		9.29/+160%	4.60
-# POWER7		8.62/+61%	4.27
-# POWER8		8.70/+51%	3.96
-# POWER9		6.61/+29%	3.67
+# PPC74x0/G4e		6.81/+310%	3.72
+# PPC970/G5		9.29/+160%	?
+# POWER7		8.62/+61%	3.38
+# POWER8		8.70/+51%	3.36
+# POWER9		6.61/+29%	3.30(*)
+#
+# (*)	this is trade-off result, it's possible to improve it, but
+#	then it would negatively affect all others;
 
 $flavour = shift;
 
@@ -392,19 +395,19 @@ Loop_tail:					# byte-by-byte loop
 ___
 
 {{{
-my ($A0,$B0,$C0,$D0,$A1,$B1,$C1,$D1,$A2,$B2,$C2,$D2,$T0,$T1,$T2) =
-    map("v$_",(0..14));
-my (@K)=map("v$_",(15..20));
-my ($FOUR,$sixteen,$twenty4,$twenty,$twelve,$twenty5,$seven) =
-    map("v$_",(21..27));
-my ($inpperm,$outperm,$outmask) = map("v$_",(28..30));
-my @D=("v31",$seven,$T0,$T1,$T2);
+my ($A0,$B0,$C0,$D0,$A1,$B1,$C1,$D1,$A2,$B2,$C2,$D2)
+				= map("v$_",(0..11));
+my @K				= map("v$_",(12..17));
+my ($FOUR,$sixteen,$twenty4)	= map("v$_",(18..20));
+my ($inpperm,$outperm,$outmask)	= map("v$_",(21..23));
+my @D				= map("v$_",(24..28));
+my ($twelve,$seven,$T0,$T1) = @D;
 
-my $FRAME=$LOCALS+64+13*16+18*$SIZE_T;	# 13*16 is for v20-v31 offload
+my $FRAME=$LOCALS+64+10*16+18*$SIZE_T;	# 10*16 is for v20-v28 offload
 
 sub VMXROUND {
 my $odd = pop;
-my ($a,$b,$c,$d,$t)=@_;
+my ($a,$b,$c,$d)=@_;
 
 	(
 	"&vadduwm	('$a','$a','$b')",
@@ -412,20 +415,16 @@ my ($a,$b,$c,$d,$t)=@_;
 	"&vperm		('$d','$d','$d','$sixteen')",
 
 	"&vadduwm	('$c','$c','$d')",
-	"&vxor		('$t','$b','$c')",
-	"&vsrw		('$b','$t','$twenty')",
-	"&vslw		('$t','$t','$twelve')",
-	"&vor		('$b','$b','$t')",
+	"&vxor		('$b','$b','$c')",
+	"&vrlw		('$b','$b','$twelve')",
 
 	"&vadduwm	('$a','$a','$b')",
 	"&vxor		('$d','$d','$a')",
 	"&vperm		('$d','$d','$d','$twenty4')",
 
 	"&vadduwm	('$c','$c','$d')",
-	"&vxor		('$t','$b','$c')",
-	"&vsrw		('$b','$t','$twenty5')",
-	"&vslw		('$t','$t','$seven')",
-	"&vor		('$b','$b','$t')",
+	"&vxor		('$b','$b','$c')",
+	"&vrlw		('$b','$b','$seven')",
 
 	"&vsldoi	('$c','$c','$c',8)",
 	"&vsldoi	('$b','$b','$b',$odd?4:12)",
@@ -461,13 +460,7 @@ $code.=<<___;
 	stvx	v26,r10,$sp
 	addi	r10,r10,32
 	stvx	v27,r11,$sp
-	addi	r11,r11,32
 	stvx	v28,r10,$sp
-	addi	r10,r10,32
-	stvx	v29,r11,$sp
-	addi	r11,r11,32
-	stvx	v30,r10,$sp
-	stvx	v31,r11,$sp
 	stw	r12,`$FRAME-$SIZE_T*18-4`($sp)	# save vrsave
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
@@ -487,9 +480,9 @@ $code.=<<___;
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
-	li	r12,-1
+	li	r12,-8
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
-	mtspr	256,r12				# preserve all AltiVec registers
+	mtspr	256,r12				# preserve 29 AltiVec registers
 
 	bl	Lconsts				# returns pointer Lsigma in r12
 	li	@x[0],16
@@ -526,11 +519,6 @@ $code.=<<___;
 	lwz	@d[3],12($ctr)
 	vadduwm	@K[5],@K[4],@K[5]
 
-	vspltisw $twenty,-12			# synthesize constants
-	vspltisw $twelve,12
-	vspltisw $twenty5,-7
-	#vspltisw $seven,7			# synthesized in the loop
-
 	vxor	$T0,$T0,$T0			# 0x00..00
 	vspltisw $outmask,-1			# 0xff..ff
 	?lvsr	$inpperm,0,$inp			# prepare for unaligned load
@@ -543,6 +531,7 @@ $code.=<<___;
 	be?vxor	$outperm,$outperm,$T1
 	be?vperm $inpperm,$inpperm,$inpperm,$T0
 
+	li	r0,10				# inner loop counter
 	b	Loop_outer_vmx
 
 .align	4
@@ -560,7 +549,6 @@ Loop_outer_vmx:
 	ori	@x[3],@x[3],0x6574
 	 vmr	$B0,@K[1]
 
-	li	r0,10				# inner loop counter
 	lwz	@x[4],0($key)			# load key to GPR
 	 vmr	$B1,@K[1]
 	lwz	@x[5],4($key)
@@ -586,15 +574,17 @@ Loop_outer_vmx:
 	mr	@t[1],@x[5]
 	mr	@t[2],@x[6]
 	mr	@t[3],@x[7]
+
+	vspltisw $twelve,12			# synthesize constants
 	vspltisw $seven,7
 
 	mtctr	r0
 	nop
 Loop_vmx:
 ___
-	my @thread0=&VMXROUND($A0,$B0,$C0,$D0,$T0,0);
-	my @thread1=&VMXROUND($A1,$B1,$C1,$D1,$T1,0);
-	my @thread2=&VMXROUND($A2,$B2,$C2,$D2,$T2,0);
+	my @thread0=&VMXROUND($A0,$B0,$C0,$D0,0);
+	my @thread1=&VMXROUND($A1,$B1,$C1,$D1,0);
+	my @thread2=&VMXROUND($A2,$B2,$C2,$D2,0);
 	my @thread3=&ROUND(0,4,8,12);
 
 	foreach (@thread0) {
@@ -602,10 +592,11 @@ ___
 		eval(shift(@thread1));	eval(shift(@thread3));
 		eval(shift(@thread2));	eval(shift(@thread3));
 	}
+	foreach (@thread3) { eval; }
 
-	@thread0=&VMXROUND($A0,$B0,$C0,$D0,$T0,1);
-	@thread1=&VMXROUND($A1,$B1,$C1,$D1,$T1,1);
-	@thread2=&VMXROUND($A2,$B2,$C2,$D2,$T2,1);
+	@thread0=&VMXROUND($A0,$B0,$C0,$D0,1);
+	@thread1=&VMXROUND($A1,$B1,$C1,$D1,1);
+	@thread2=&VMXROUND($A2,$B2,$C2,$D2,1);
 	@thread3=&ROUND(0,5,10,15);
 
 	foreach (@thread0) {
@@ -613,6 +604,7 @@ ___
 		eval(shift(@thread1));	eval(shift(@thread3));
 		eval(shift(@thread2));	eval(shift(@thread3));
 	}
+	foreach (@thread3) { eval; }
 $code.=<<___;
 	bdnz	Loop_vmx
 
@@ -866,13 +858,7 @@ Ldone_vmx:
 	lvx	v26,r10,$sp
 	addi	r10,r10,32
 	lvx	v27,r11,$sp
-	addi	r11,r11,32
 	lvx	v28,r10,$sp
-	addi	r10,r10,32
-	lvx	v29,r11,$sp
-	addi	r11,r11,32
-	lvx	v30,r10,$sp
-	lvx	v31,r11,$sp
 	$POP	r0, `$FRAME+$LRSAVE`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
 	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
@@ -904,7 +890,7 @@ Ldone_vmx:
 Lconsts:
 	mflr	r0
 	bcl	20,31,\$+4
-	mflr	r12	#vvvvv "distance between . and _vpaes_consts
+	mflr	r12	#vvvvv "distance between . and Lsigma
 	addi	r12,r12,`64-8`
 	mtlr	r0
 	blr
