@@ -41,6 +41,8 @@ If the parameters have not yet been set then B<*p>, B<*q> and B<*g> will be set
 to NULL. Otherwise they are set to pointers to their respective values. These
 point directly to the internal representations of the values and therefore
 should not be freed directly.
+Any of the out parameters B<p>, B<q>, and B<g> can be NULL, in which case no
+value will be returned for that parameter.
 
 The B<p>, B<q> and B<g> values can be set by calling DH_set0_pqg() and passing
 the new values for B<p>, B<q> and B<g> as parameters to the function. Calling
@@ -54,6 +56,8 @@ private key will be stored in B<*priv_key>. Either may be NULL if they have not
 been set yet, although if the private key has been set then the public key must
 be. The values point to the internal representation of the public key and
 private key values. This memory should not be freed directly.
+Any of the out parameters B<pub_key> and B<priv_key> can be NULL, in which case
+no value will be returned for that parameter.
 
 The public and private key values can be set using DH_set0_key(). Either
 parameter may be NULL, which means the corresponding DH field is left
@@ -93,7 +97,7 @@ duplicate.  The same applies to DH_get0_pqg() and DH_set0_pqg().
 DH_set0_pqg() and DH_set0_key() return 1 on success or 0 on failure.
 
 DH_get0_p(), DH_get0_q(), DH_get0_g(), DH_get0_priv_key(), and DH_get0_pub_key()
-return the respective value.
+return the respective value, or NULL if it is unset.
 
 DH_test_flags() returns the current state of the flags in the DH object.
 
