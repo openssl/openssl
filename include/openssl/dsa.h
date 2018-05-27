@@ -171,6 +171,11 @@ int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void DSA_get0_key(const DSA *d,
                   const BIGNUM **pub_key, const BIGNUM **priv_key);
 int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
+const BIGNUM *DSA_get0_p(const DSA *d);
+const BIGNUM *DSA_get0_q(const DSA *d);
+const BIGNUM *DSA_get0_g(const DSA *d);
+const BIGNUM *DSA_get0_pub_key(const DSA *d);
+const BIGNUM *DSA_get0_priv_key(const DSA *d);
 void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);

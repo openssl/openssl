@@ -4533,3 +4533,8 @@ DH_get0_q                               4474	1_1_1	EXIST::FUNCTION:DH
 DH_get0_g                               4475	1_1_1	EXIST::FUNCTION:DH
 DH_get0_priv_key                        4476	1_1_1	EXIST::FUNCTION:DH
 DH_get0_pub_key                         4477	1_1_1	EXIST::FUNCTION:DH
+DSA_get0_priv_key                       4478	1_1_1	EXIST::FUNCTION:DSA
+DSA_get0_pub_key                        4479	1_1_1	EXIST::FUNCTION:DSA
+DSA_get0_q                              4480	1_1_1	EXIST::FUNCTION:DSA
+DSA_get0_p                              4481	1_1_1	EXIST::FUNCTION:DSA
+DSA_get0_g                              4482	1_1_1	EXIST::FUNCTION:DSA
