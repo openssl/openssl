@@ -1183,6 +1183,16 @@ void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
         *ps = sig->s;
 }
 
+const BIGNUM *ECDSA_SIG_get0_r(const ECDSA_SIG *sig)
+{
+    return sig->r;
+}
+
+const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig)
+{
+    return sig->s;
+}
+
 int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 {
     if (r == NULL || s == NULL)
