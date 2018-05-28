@@ -403,7 +403,7 @@ my ($inpperm,$outperm,$outmask)	= map("v$_",(21..23));
 my @D				= map("v$_",(24..28));
 my ($twelve,$seven,$T0,$T1) = @D;
 
-my $FRAME=$LOCALS+64+13*16+18*$SIZE_T;	# 13*16 is for v20-v31 offload
+my $FRAME=$LOCALS+64+10*16+18*$SIZE_T;	# 10*16 is for v20-v28 offload
 
 sub VMXROUND {
 my $odd = pop;
@@ -482,7 +482,7 @@ $code.=<<___;
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
 	li	r12,-8
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
-	mtspr	256,r12				# preserve all AltiVec registers
+	mtspr	256,r12				# preserve 29 AltiVec registers
 
 	bl	Lconsts				# returns pointer Lsigma in r12
 	li	@x[0],16
