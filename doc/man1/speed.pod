@@ -44,7 +44,7 @@ for all available algorithms.
 
 =item B<-elapsed>
 
-When calculation operations- or bytes-per-second use wall-clock time
+When calculating operations- or bytes-per-second, use wall-clock time
 instead of CPU user time as divisor. It can be useful when testing speed
 of hardware engines.
 
