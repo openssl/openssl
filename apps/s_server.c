@@ -212,6 +212,7 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
     cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
     if (cipher == NULL) {
         BIO_printf(bio_err, "Error finding suitable ciphersuite\n");
+        OPENSSL_free(key);
         return 0;
     }
 
