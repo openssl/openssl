@@ -1038,7 +1038,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             }
         }
 
-        /* The exponent may not have a whole number of fixed-size windows.
+        /* 
+         * The exponent may not have a whole number of fixed-size windows.
          * To simplify the main loop, the initial window has between 1 and
          * full-window-size bits such that what remains is always a whole
          * number of windows
@@ -1051,7 +1052,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                                             window))
             goto err;
 
-        wmask= (1 << window) - 1;
+        wmask = (1 << window) - 1;
         /*
          * Scan the exponent one window at a time starting from the most
          * significant bits.
@@ -1063,7 +1064,8 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                 if (!BN_mod_mul_montgomery(&tmp, &tmp, &tmp, mont, ctx))
                     goto err;
 
-            /* Get a window's worth of bits from the exponent
+            /* 
+             * Get a window's worth of bits from the exponent
              * This avoids calling BN_is_bit_set for each bit, which
              * is not only slower but also makes each bit vulnerable to
              * EM (and likely other) side-channel attacks like One&Done
