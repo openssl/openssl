@@ -661,7 +661,12 @@ static const uint16_t tls12_sigalgs[] = {
 
     TLSEXT_SIGALG_dsa_sha256,
     TLSEXT_SIGALG_dsa_sha384,
-    TLSEXT_SIGALG_dsa_sha512
+    TLSEXT_SIGALG_dsa_sha512,
+#endif
+#ifndef OPENSSL_NO_GOST
+    TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
+    TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
+    TLSEXT_SIGALG_gostr34102001_gostr3411,
 #endif
 };
 
@@ -855,6 +860,21 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
                 if (clu->amask & s->s3->tmp.new_cipher->algorithm_auth) {
                     idx = i;
                     break;
+                }
+            }
+
+            /*
+             * Some GOST ciphersuites allow more than one signature algorithms
+             * */
+            if (idx == SSL_PKEY_GOST01 && s->s3->tmp.new_cipher->algorithm_auth != SSL_aGOST01) {
+                int real_idx;
+
+                for (real_idx = SSL_PKEY_GOST12_512; real_idx >= SSL_PKEY_GOST01;
+                     real_idx--) {
+                    if (s->cert->pkeys[real_idx].privatekey != NULL) {
+                        idx = real_idx;
+                        break;
+                    }
                 }
             }
         } else {
