@@ -389,11 +389,14 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
 #if defined(SOL_SOCKET) && defined(SO_LINGER)
     {
         struct linger no_linger;
+        int fd;
 
         no_linger.l_onoff  = 1;
         no_linger.l_linger = 0;
-        (void) setsockopt(SSL_get_fd(serverCon), SOL_SOCKET, SO_LINGER,
-                          (char*)&no_linger, sizeof(no_linger));
+        fd = SSL_get_fd(serverCon);
+        if (fd >= 0)
+            (void)setsockopt(fd, SOL_SOCKET, SO_LINGER, (char*)&no_linger,
+                             sizeof(no_linger));
     }
 #endif
 
