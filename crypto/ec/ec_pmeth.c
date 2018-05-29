@@ -219,10 +219,8 @@ static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
 
         if (dctx->md)
             md_type = EVP_MD_type(dctx->md);
-        else if (ec_nid == NID_sm2)
-            md_type = NID_sm3;
         else
-            md_type = NID_sha256;
+            md_type = NID_sm3;
 
         if (out == NULL) {
             *outlen = SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type),
@@ -259,13 +257,12 @@ static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
 
         if (dctx->md)
             md_type = EVP_MD_type(dctx->md);
-        else if (ec_nid == NID_sm2)
-            md_type = NID_sm3;
         else
-            md_type = NID_sha256;
+            md_type = NID_sm3;
 
         if (out == NULL) {
-            *outlen = SM2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen);
+            *outlen = SM2_plaintext_size(ec, EVP_get_digestbynid(md_type),
+                                         inlen);
             ret = 1;
         }
         else {
