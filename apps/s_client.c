@@ -201,6 +201,7 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
         cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
         if (cipher == NULL) {
             BIO_printf(bio_err, "Error finding suitable ciphersuite\n");
+            OPENSSL_free(key);
             return 0;
         }
 
