@@ -308,6 +308,7 @@ int storeutl_main(int argc, char *argv[])
                   text, noout, recursive, 0, out, prog);
 
  end:
+    OPENSSL_free(fingerprint);
     OPENSSL_free(alias);
     ASN1_INTEGER_free(serial);
     X509_NAME_free(subject);
