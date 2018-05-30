@@ -55,6 +55,19 @@ possible to distinguish those from any other data coming as an ASN.1
 OCTET STRING, so such keys would naturally be accepted as PEM files
 only).
 
+Pass phrases for PKCS#12 objects get extra treatment to be able to
+handle objects produced with OpenSSL, as well as objects produced
+other programs with as long as the pass phrase encoding is UTF-8 or
+ISO-8859-1.
+
+If the application sets a locale that corresponds to the encoding of
+the pass phrase characters, the 'file' scheme will also handle objects
+produced with other programs with pass phrases in any available
+locale.  The most usual way for an application to enable this is by
+calling setlocale() as follows as part of program startup:
+
+ setlocale(LC_CTYPE, "");
+
 =head1 EXAMPLES
 
 =head2 A generic call
