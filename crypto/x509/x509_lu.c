@@ -420,7 +420,7 @@ X509_OBJECT *X509_OBJECT_new(void)
     return ret;
 }
 
-static void X509_OBJECT_free_internal(X509_OBJECT *a)
+static void x509_object_free_internal(X509_OBJECT *a)
 {
     if (a == NULL)
         return;
@@ -441,7 +441,7 @@ int X509_OBJECT_set1_X509(X509_OBJECT *a, X509 *obj)
     if (a == NULL || !X509_up_ref(obj))
         return 0;
 
-    X509_OBJECT_free_internal(a);
+    x509_object_free_internal(a);
     a->type = X509_LU_X509;
     a->data.x509 = obj;
     return 1;
@@ -452,7 +452,7 @@ int X509_OBJECT_set1_X509_CRL(X509_OBJECT *a, X509_CRL *obj)
     if (a == NULL || !X509_CRL_up_ref(obj))
         return 0;
 
-    X509_OBJECT_free_internal(a);
+    x509_object_free_internal(a);
     a->type = X509_LU_CRL;
     a->data.crl = obj;
     return 1;
@@ -460,7 +460,7 @@ int X509_OBJECT_set1_X509_CRL(X509_OBJECT *a, X509_CRL *obj)
 
 void X509_OBJECT_free(X509_OBJECT *a)
 {
-    X509_OBJECT_free_internal(a);
+    x509_object_free_internal(a);
     OPENSSL_free(a);
 }
 

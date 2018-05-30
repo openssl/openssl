@@ -38,9 +38,8 @@ err:
 
 void X509_LOOKUP_meth_free(X509_LOOKUP_METHOD *method)
 {
-    if (method != NULL) {
+    if (method != NULL)
         OPENSSL_free(method->name);
-    }
     OPENSSL_free(method);
 }
 
