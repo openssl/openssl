@@ -292,12 +292,14 @@ extern "C"
 		return 0;
 		}
 
+# if !defined(NTDDI_VERSION) || (NTDDI_VERSION < NTDDI_WIN10_RS4)
 	BOOL WINAPI FlushConsoleInputBuffer(
 									   _In_  HANDLE hConsoleInput
 									   )
 		{
 		return 0;
 		}
+#endif
 	BOOL DeleteDC(
 				 _In_  HDC hdc
 				 )
