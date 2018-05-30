@@ -421,15 +421,6 @@ int ssl_get_new_session(SSL *s, int session)
             return 0;
         }
 
-        if (s->ext.hostname) {
-            ss->ext.hostname = OPENSSL_strdup(s->ext.hostname);
-            if (ss->ext.hostname == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
-                         ERR_R_INTERNAL_ERROR);
-                SSL_SESSION_free(ss);
-                return 0;
-            }
-        }
     } else {
         ss->session_id_length = 0;
     }

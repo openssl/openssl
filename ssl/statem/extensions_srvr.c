@@ -127,7 +127,7 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (!s->hit) {
+    if (!s->hit || SSL_IS_TLS13(s)) {
         if (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) {
             SSLfatal(s, SSL_AD_UNRECOGNIZED_NAME,
                      SSL_F_TLS_PARSE_CTOS_SERVER_NAME,
@@ -142,21 +142,26 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
             return 0;
         }
 
-        OPENSSL_free(s->session->ext.hostname);
-        s->session->ext.hostname = NULL;
-        if (!PACKET_strndup(&hostname, &s->session->ext.hostname)) {
+        /*
+         * Store the requested SNI in the SSL as temporary storage.
+         * If we accept it, it will get stored in the SSL_SESSION as well.
+         */
+        OPENSSL_free(s->ext.hostname);
+        s->ext.hostname = NULL;
+        if (!PACKET_strndup(&hostname, &s->ext.hostname)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_SERVER_NAME,
                      ERR_R_INTERNAL_ERROR);
             return 0;
         }
 
         s->servername_done = 1;
-    } else {
+    }
+    if (s->hit) {
         /*
          * TODO(openssl-team): if the SNI doesn't match, we MUST
          * fall back to a full handshake.
          */
-        s->servername_done = s->session->ext.hostname
+        s->servername_done = (s->session->ext.hostname != NULL)
             && PACKET_equal(&hostname, s->session->ext.hostname,
                             strlen(s->session->ext.hostname));
 
@@ -1325,7 +1330,7 @@ EXT_RETURN tls_construct_stoc_server_name(SSL *s, WPACKET *pkt,
                                           size_t chainidx)
 {
     if (s->hit || s->servername_done != 1
-            || s->session->ext.hostname == NULL)
+            || s->ext.hostname == NULL)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_server_name)

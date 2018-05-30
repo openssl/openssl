@@ -929,9 +929,28 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
         ret = s->session_ctx->ext.servername_cb(s, &altmp,
                                        s->session_ctx->ext.servername_arg);
 
-    if (!sent) {
-        OPENSSL_free(s->session->ext.hostname);
-        s->session->ext.hostname = NULL;
+    /*
+     * For servers, propagate the SNI hostname from the temporary
+     * storage in the SSL to the persistent SSL_SESSION, now that we
+     * know we accepted it.
+     * Clients make this copy when parsing the server's response to
+     * the extension, which is when they find out that the negotiation
+     * was successful.
+     */
+    if (s->server) {
+        if (!sent) {
+            /* Nothing from the client this handshake; cleanup stale value */
+            OPENSSL_free(s->ext.hostname);
+            s->ext.hostname = NULL;
+        } else if (ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
+            /* Only store the hostname in the session if we accepted it. */
+            OPENSSL_free(s->session->ext.hostname);
+            s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
+            if (s->session->ext.hostname == NULL && s->ext.hostname != NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_FINAL_SERVER_NAME,
+                         ERR_R_INTERNAL_ERROR);
+            }
+        }
     }
 
     /*

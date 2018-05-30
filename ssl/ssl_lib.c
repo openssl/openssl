@@ -2612,7 +2612,15 @@ const char *SSL_get_servername(const SSL *s, const int type)
     if (type != TLSEXT_NAMETYPE_host_name)
         return NULL;
 
-    return s->session && !s->ext.hostname ?
+    /*
+     * TODO(OpenSSL1.2) clean up this compat mess.  This API is
+     * currently a mix of "what did I configure" and "what did the
+     * peer send" and "what was actually negotiated"; we should have
+     * a clear distinction amongst those three.
+     */
+    if (SSL_in_init(s))
+        return s->ext.hostname;
+    return (s->session != NULL && s->ext.hostname == NULL) ?
         s->session->ext.hostname : s->ext.hostname;
 }
 
