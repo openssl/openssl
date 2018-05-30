@@ -142,6 +142,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     }
 
     mdleni = EVP_MD_size(md);
+    /* Ensure cast to size_t is safe */
     if (!ossl_assert(mdleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
@@ -326,6 +327,7 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
     int hashleni = EVP_MD_size(md);
     size_t hashlen;
 
+    /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DERIVE_SECRET_KEY_AND_IV,
                  ERR_R_EVP_LIB);

@@ -1432,6 +1432,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     int ret = -1;
     int usepskfored = 0;
 
+    /* Ensure cast to size_t is safe */
     if (!ossl_assert(hashsizei >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);
