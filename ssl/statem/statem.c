@@ -68,17 +68,17 @@ OSSL_HANDSHAKE_STATE SSL_get_state(const SSL *ssl)
     return ssl->statem.hand_state;
 }
 
-int SSL_in_init(SSL *s)
+int SSL_in_init(const SSL *s)
 {
     return s->statem.in_init;
 }
 
-int SSL_is_init_finished(SSL *s)
+int SSL_is_init_finished(const SSL *s)
 {
     return !(s->statem.in_init) && (s->statem.hand_state == TLS_ST_OK);
 }
 
-int SSL_in_before(SSL *s)
+int SSL_in_before(const SSL *s)
 {
     /*
      * Historically being "in before" meant before anything had happened. In the
