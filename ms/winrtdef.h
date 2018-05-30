@@ -13,15 +13,17 @@
 
 #if defined(OPENSSL_WINAPP)
 //Include stdio.h to replace fprintf
-# include<stdio.h>
-# ifdef getenv
-#  undef getenv
+# include <stdio.h>
+# if !defined(NTDDI_VERSION) || (NTDDI_VERSION < NTDDI_WIN10_RS4)
+#  ifdef getenv
+#   undef getenv
+#  endif
+# define getenv winrt_getenv
 # endif
 # ifdef setenv
 #  undef setenv
 # endif
-#define getenv winrt_getenv
-#define setenv winrt_setenv
+# define setenv winrt_setenv
 
 
 #if !defined(NTDDI_WIN10_RS1) || (NTDDI_VERSION <= NTDDI_WIN10_RS1)
