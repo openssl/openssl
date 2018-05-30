@@ -128,6 +128,12 @@ int dsaparam_main(int argc, char **argv)
         goto end;
 
     if (numbits > 0) {
+        if (numbits > OPENSSL_DSA_MAX_MODULUS_BITS)
+            BIO_printf(bio_err,
+                       "# Warning: It is not recommended to use more than %d bit for DSA keys.      #\n"
+                       "#          Larger key size may behave not as expected. Your key size is %d! #\n",
+                       OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
+
         cb = BN_GENCB_new();
         if (cb == NULL) {
             BIO_printf(bio_err, "Error allocating BN_GENCB object\n");
