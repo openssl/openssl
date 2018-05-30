@@ -1058,9 +1058,9 @@ typedef enum {
 /* Is the SSL_connection established? */
 # define SSL_in_connect_init(a)          (SSL_in_init(a) && !SSL_is_server(a))
 # define SSL_in_accept_init(a)           (SSL_in_init(a) && SSL_is_server(a))
-int SSL_in_init(SSL *s);
-int SSL_in_before(SSL *s);
-int SSL_is_init_finished(SSL *s);
+int SSL_in_init(const SSL *s);
+int SSL_in_before(const SSL *s);
+int SSL_is_init_finished(const SSL *s);
 
 /*
  * The following 3 states are kept in ssl->rlayer.rstate when reads fail, you
