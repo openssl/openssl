@@ -1497,6 +1497,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_ALERT) {
         unsigned int alert_level, alert_descr;
+        int tls13_user_cancelled;
         unsigned char *alert_bytes = SSL3_RECORD_get_data(rr)
                                      + SSL3_RECORD_get_off(rr);
         PACKET alert;
@@ -1524,8 +1525,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             cb(s, SSL_CB_READ_ALERT, j);
         }
 
-        if (alert_level == SSL3_AL_WARNING
-                || (SSL_IS_TLS13(s) && alert_descr == SSL_AD_USER_CANCELLED)) {
+        tls13_user_cancelled = SSL_IS_TLS13(s)
+                               && alert_descr == SSL_AD_USER_CANCELLED;
+        if (alert_level == SSL3_AL_WARNING || tls13_user_cancelled) {
             s->s3->warn_alert = alert_descr;
             SSL3_RECORD_set_read(rr);
 
@@ -1535,6 +1537,13 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                          SSL_R_TOO_MANY_WARN_ALERTS);
                 return -1;
             }
+
+            /*
+             * Apart from close_notify the only other warning alert in TLSv1.3
+             * is user_cancelled - which we just ignore.
+             */
+            if (tls13_user_cancelled)
+                goto start;
         }
 
         if (alert_descr == SSL_AD_CLOSE_NOTIFY
@@ -1559,32 +1568,24 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             return -1;
         }
 
-        /*
-         * Apart from close_notify the only other warning alert in TLSv1.3
-         * is user_cancelled - which we just ignore.
-         */
-        if (!SSL_IS_TLS13(s) || alert_descr != SSL_AD_USER_CANCELLED) {
-            if (SSL_IS_TLS13(s) || alert_level == SSL3_AL_FATAL) {
-                char tmp[16];
+        if (alert_level == SSL3_AL_FATAL || SSL_IS_TLS13(s)) {
+            char tmp[16];
 
-                s->rwstate = SSL_NOTHING;
-                s->s3->fatal_alert = alert_descr;
-                SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
-                         SSL_AD_REASON_OFFSET + alert_descr);
-                BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
-                ERR_add_error_data(2, "SSL alert number ", tmp);
-                s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-                SSL3_RECORD_set_read(rr);
-                SSL_CTX_remove_session(s->session_ctx, s->session);
-                return 0;
-            } else {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
-                         SSL_R_UNKNOWN_ALERT_TYPE);
-                return -1;
-            }
+            s->rwstate = SSL_NOTHING;
+            s->s3->fatal_alert = alert_descr;
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
+                     SSL_AD_REASON_OFFSET + alert_descr);
+            BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
+            ERR_add_error_data(2, "SSL alert number ", tmp);
+            s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            SSL3_RECORD_set_read(rr);
+            SSL_CTX_remove_session(s->session_ctx, s->session);
+            return 0;
+        } else {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
+                     SSL_R_UNKNOWN_ALERT_TYPE);
+            return -1;
         }
-
-        goto start;
     }
 
     if (s->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
