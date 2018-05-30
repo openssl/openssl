@@ -3466,6 +3466,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
+        /*
+         * TODO(OpenSSL1.2)
+         * This API is only used for a client to set what SNI it will request
+         * from the server, but we currently allow it to be used on servers
+         * as well, which is a programming error.  Currently we just clear
+         * the field in SSL_do_handshake() for server SSLs, but when we can
+         * make ABI-breaking changes, we may want to make use of this API
+         * an error on server SSLs.
+         */
         if (larg == TLSEXT_NAMETYPE_host_name) {
             size_t len;
 
