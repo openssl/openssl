@@ -129,6 +129,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                           unsigned char *outsecret)
 {
     size_t mdlen, prevsecretlen;
+    int mdleni;
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     static const char derived_secret_label[] = "derived";
@@ -140,7 +141,14 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         return 0;
     }
 
-    mdlen = EVP_MD_size(md);
+    mdleni = EVP_MD_size(md);
+    /* Ensure cast to size_t is safe */
+    if (!ossl_assert(mdleni >= 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    mdlen = (size_t)mdleni;
 
     if (insecret == NULL) {
         insecret = default_zeros;
@@ -316,7 +324,16 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 {
     unsigned char key[EVP_MAX_KEY_LENGTH];
     size_t ivlen, keylen, taglen;
-    size_t hashlen = EVP_MD_size(md);
+    int hashleni = EVP_MD_size(md);
+    size_t hashlen;
+
+    /* Ensure cast to size_t is safe */
+    if (!ossl_assert(hashleni >= 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DERIVE_SECRET_KEY_AND_IV,
+                 ERR_R_EVP_LIB);
+        goto err;
+    }
+    hashlen = (size_t)hashleni;
 
     if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, hashlen,
                            secret, hashlen)) {
