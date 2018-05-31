@@ -223,9 +223,11 @@ static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
             md_type = NID_sm3;
 
         if (out == NULL) {
-            *outlen = SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type),
-                                          inlen);
-            ret = 1;
+            if (!SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen,
+                                     outlen))
+                ret = -1;
+            else
+                ret = 1;
         }
         else {
             ret = SM2_encrypt(ec, EVP_get_digestbynid(md_type),
@@ -261,9 +263,11 @@ static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
             md_type = NID_sm3;
 
         if (out == NULL) {
-            *outlen = SM2_plaintext_size(ec, EVP_get_digestbynid(md_type),
-                                         inlen);
-            ret = 1;
+            if (!SM2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen,
+                                    outlen))
+                ret = -1;
+            else
+                ret = 1;
         }
         else {
             ret = SM2_decrypt(ec, EVP_get_digestbynid(md_type),
