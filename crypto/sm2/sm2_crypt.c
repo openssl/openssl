@@ -83,7 +83,7 @@ int SM2_encrypt(const EC_KEY *key,
                 const uint8_t *msg,
                 size_t msg_len, uint8_t *ciphertext_buf, size_t *ciphertext_len)
 {
-    int rc = 0;
+    int rc = 0, ciphertext_leni;
     size_t i;
     BN_CTX *ctx = NULL;
     BIGNUM *k = NULL;
@@ -91,9 +91,7 @@ int SM2_encrypt(const EC_KEY *key,
     BIGNUM *y1 = NULL;
     BIGNUM *x2 = NULL;
     BIGNUM *y2 = NULL;
-
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
-
     struct SM2_Ciphertext_st ctext_struct;
     const EC_GROUP *group = EC_KEY_get0_group(key);
     const BIGNUM *order = EC_GROUP_get0_order(group);
@@ -101,30 +99,32 @@ int SM2_encrypt(const EC_KEY *key,
     EC_POINT *kG = NULL;
     EC_POINT *kP = NULL;
     uint8_t *msg_mask = NULL;
-
     uint8_t *x2y2 = NULL;
     uint8_t *C3 = NULL;
-
     const size_t field_size = EC_field_size(group);
     const size_t C3_size = EVP_MD_size(digest);
 
-    if (field_size == 0 || C3_size == 0)
-       goto done;
+    /* NULL these before any "goto done" */
+    ctext_struct.C2 = NULL;
+    ctext_struct.C3 = NULL;
+
+    if (hash == NULL
+            || group == NULL
+            || order == NULL
+            || P == NULL
+            || field_size == 0
+            || C3_size == 0) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
 
     kG = EC_POINT_new(group);
     kP = EC_POINT_new(group);
-    if (kG == NULL || kP == NULL)
-       {
-       SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
-       goto done;
-       }
-
     ctx = BN_CTX_new();
-    if (ctx == NULL)
-       {
-       SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
-       goto done;
-       }
+    if (kG == NULL || kP == NULL || ctx == NULL) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
+        goto done;
+    }
 
     BN_CTX_start(ctx);
     k = BN_CTX_get(ctx);
@@ -133,112 +133,93 @@ int SM2_encrypt(const EC_KEY *key,
     y1 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
 
-    if (y2 == NULL)
-        {
+    if (y2 == NULL) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_BN_LIB);
         goto done;
-        }
+    }
 
     x2y2 = OPENSSL_zalloc(2 * field_size);
     C3 = OPENSSL_zalloc(C3_size);
 
-    if (x2y2 == NULL || C3 == NULL)
-        {
+    if (x2y2 == NULL || C3 == NULL) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
-        }
+    }
 
     memset(ciphertext_buf, 0, *ciphertext_len);
 
-    BN_priv_rand_range(k, order);
+    if (!BN_priv_rand_range(k, order)) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
 
-    if (EC_POINT_mul(group, kG, k, NULL, NULL, ctx) == 0)
-        {
+    if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
+            || !EC_POINT_get_affine_coordinates_GFp(group, kG, x1, y1, ctx)
+            || !EC_POINT_mul(group, kP, NULL, P, k, ctx)
+            || !EC_POINT_get_affine_coordinates_GFp(group, kP, x2, y2, ctx)) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
         goto done;
-        }
+    }
 
-    if (EC_POINT_get_affine_coordinates_GFp(group, kG, x1, y1, ctx) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
+    if (BN_bn2binpad(x2, x2y2, field_size) < 0
+            || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
-        }
-
-    if (EC_POINT_mul(group, kP, NULL, P, k, ctx) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
-        goto done;
-        }
-
-    if (EC_POINT_get_affine_coordinates_GFp(group, kP, x2, y2, ctx) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
-        goto done;
-        }
-
-    BN_bn2binpad(x2, x2y2, field_size);
-    BN_bn2binpad(y2, x2y2 + field_size, field_size);
+    }
 
     msg_mask = OPENSSL_zalloc(msg_len);
-    if (msg_mask == NULL)
-       {
+    if (msg_mask == NULL) {
        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
        goto done;
-       }
+   }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
-    if (ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0, digest)
-        == 0)
+    if (!ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
+                        digest)) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
+    }
 
     for (i = 0; i != msg_len; ++i)
         msg_mask[i] ^= msg[i];
 
-    if (EVP_DigestInit(hash, digest) == 0)
-        {
+    if (EVP_DigestInit(hash, digest) == 0
+            || EVP_DigestUpdate(hash, x2y2, field_size) == 0
+            || EVP_DigestUpdate(hash, msg, msg_len) == 0
+            || EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0
+            || EVP_DigestFinal(hash, C3, NULL) == 0) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
-        }
-
-    if (EVP_DigestUpdate(hash, x2y2, field_size) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
-
-    if (EVP_DigestUpdate(hash, msg, msg_len) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
-
-    if (EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
-
-    if (EVP_DigestFinal(hash, C3, NULL) == 0)
-        {
-        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
+    }
 
     ctext_struct.C1x = x1;
     ctext_struct.C1y = y1;
     ctext_struct.C3 = ASN1_OCTET_STRING_new();
-    ASN1_OCTET_STRING_set(ctext_struct.C3, C3, C3_size);
     ctext_struct.C2 = ASN1_OCTET_STRING_new();
-    ASN1_OCTET_STRING_set(ctext_struct.C2, msg_mask, msg_len);
 
-    *ciphertext_len = i2d_SM2_Ciphertext(&ctext_struct, &ciphertext_buf);
+    if (ctext_struct.C3 == NULL || ctext_struct.C2 == NULL) {
+       SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
+       goto done;
+    }
+    if (!ASN1_OCTET_STRING_set(ctext_struct.C3, C3, C3_size)
+            || !ASN1_OCTET_STRING_set(ctext_struct.C2, msg_mask, msg_len)) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
 
-    ASN1_OCTET_STRING_free(ctext_struct.C2);
-    ASN1_OCTET_STRING_free(ctext_struct.C3);
+    ciphertext_leni = i2d_SM2_Ciphertext(&ctext_struct, &ciphertext_buf);
+    /* Ensure cast to size_t is safe */
+    if (ciphertext_leni < 0) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+    *ciphertext_len = (size_t)ciphertext_leni;
 
     rc = 1;
 
  done:
+    ASN1_OCTET_STRING_free(ctext_struct.C2);
+    ASN1_OCTET_STRING_free(ctext_struct.C3);
     OPENSSL_free(msg_mask);
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
