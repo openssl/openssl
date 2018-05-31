@@ -17,7 +17,7 @@
 #include <openssl/bn.h>
 #include <string.h>
 
-static BIGNUM *SM2_compute_msg_hash(const EVP_MD *digest,
+static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
                                     const EC_KEY *key,
                                     const char *user_id,
                                     const uint8_t *msg, size_t msg_len)
@@ -37,7 +37,7 @@ static BIGNUM *SM2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    if (!SM2_compute_userid_digest(za, digest, user_id, key)) {
+    if (!sm2_compute_userid_digest(za, digest, user_id, key)) {
         /* SM2err already called */
         goto done;
     }
@@ -61,7 +61,7 @@ static BIGNUM *SM2_compute_msg_hash(const EVP_MD *digest,
     return e;
 }
 
-static ECDSA_SIG *SM2_sig_gen(const EC_KEY *key, const BIGNUM *e)
+static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 {
     const BIGNUM *dA = EC_KEY_get0_private_key(key);
     const EC_GROUP *group = EC_KEY_get0_group(key);
@@ -163,7 +163,7 @@ static ECDSA_SIG *SM2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     return sig;
 }
 
-static int SM2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
+static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
                           const BIGNUM *e)
 {
     int ret = 0;
@@ -241,27 +241,27 @@ static int SM2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     return ret;
 }
 
-ECDSA_SIG *SM2_do_sign(const EC_KEY *key,
+ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
                        const EVP_MD *digest,
                        const char *user_id, const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     ECDSA_SIG *sig = NULL;
 
-    e = SM2_compute_msg_hash(digest, key, user_id, msg, msg_len);
+    e = sm2_compute_msg_hash(digest, key, user_id, msg, msg_len);
     if (e == NULL) {
         /* SM2err already called */
         goto done;
     }
 
-    sig = SM2_sig_gen(key, e);
+    sig = sm2_sig_gen(key, e);
 
  done:
     BN_free(e);
     return sig;
 }
 
-int SM2_do_verify(const EC_KEY *key,
+int sm2_do_verify(const EC_KEY *key,
                   const EVP_MD *digest,
                   const ECDSA_SIG *sig,
                   const char *user_id, const uint8_t *msg, size_t msg_len)
@@ -269,20 +269,20 @@ int SM2_do_verify(const EC_KEY *key,
     BIGNUM *e = NULL;
     int ret = 0;
 
-    e = SM2_compute_msg_hash(digest, key, user_id, msg, msg_len);
+    e = sm2_compute_msg_hash(digest, key, user_id, msg, msg_len);
     if (e == NULL) {
         /* SM2err already called */
         goto done;
     }
 
-    ret = SM2_sig_verify(key, sig, e);
+    ret = sm2_sig_verify(key, sig, e);
 
  done:
     BN_free(e);
     return ret;
 }
 
-int SM2_sign(int type, const unsigned char *dgst, int dgstlen,
+int sm2_sign(int type, const unsigned char *dgst, int dgstlen,
              unsigned char *sig, unsigned int *siglen, EC_KEY *eckey)
 {
     BIGNUM *e = NULL;
@@ -301,7 +301,7 @@ int SM2_sign(int type, const unsigned char *dgst, int dgstlen,
        goto done;
     }
 
-    s = SM2_sig_gen(eckey, e);
+    s = sm2_sig_gen(eckey, e);
 
     sigleni = i2d_ECDSA_SIG(s, &sig);
     if (sigleni < 0) {
@@ -318,7 +318,7 @@ int SM2_sign(int type, const unsigned char *dgst, int dgstlen,
     return ret;
 }
 
-int SM2_verify(int type, const unsigned char *dgst, int dgstlen,
+int sm2_verify(int type, const unsigned char *dgst, int dgstlen,
                const unsigned char *sig, int sig_len, EC_KEY *eckey)
 {
     ECDSA_SIG *s = NULL;
@@ -355,7 +355,7 @@ int SM2_verify(int type, const unsigned char *dgst, int dgstlen,
         goto done;
     }
 
-    ret = SM2_sig_verify(eckey, s, e);
+    ret = sm2_sig_verify(eckey, s, e);
 
  done:
     OPENSSL_free(der);

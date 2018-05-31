@@ -16,7 +16,7 @@
 #include <openssl/bn.h>
 #include <string.h>
 
-int SM2_compute_userid_digest(uint8_t *out,
+int sm2_compute_userid_digest(uint8_t *out,
                               const EVP_MD *digest,
                               const char *user_id,
                               const EC_KEY *key)
