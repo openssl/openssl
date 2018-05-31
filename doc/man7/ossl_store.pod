@@ -55,18 +55,42 @@ possible to distinguish those from any other data coming as an ASN.1
 OCTET STRING, so such keys would naturally be accepted as PEM files
 only).
 
-Pass phrases for PKCS#12 objects get extra treatment to be able to
-handle objects produced with OpenSSL, as well as objects produced
-other programs as long as the pass phrase encoding is UTF-8 or
-ISO-8859-1.
+Pass phrases received through the B<UI_METHOD> that was passed through
+OSSL_STORE_open() are used as is for most object types.  However,
+where pass phrases for PKCS#12 objects contain non-ASCII characters,
+careful consideration is required.  The 'file' scheme loader will
+attempt to decrypt the object by interpreting the provided passphrase
+in three encodings. Each of these three encodings may be required in
+order to decrypt files generated with different versions of OpenSSL or
+other software:
 
-If the application sets a locale that corresponds to the encoding of
-the pass phrase characters, the 'file' scheme will also handle objects
-produced with other programs with pass phrases in any available
-locale.  The most usual way for an application to enable this is by
-calling setlocale() as follows as part of program startup:
+=over 4
 
- setlocale(LC_CTYPE, "");
+=item Z<>
+
+UTF-8.
+
+=item Z<>
+
+ISO8859-1.
+
+=item Z<>
+
+The character encoding corresponding to C<LC_CTYPE> on a POSIX system,
+or C<CP_ACP> on Windows.
+
+=back
+
+On POSIX systems, setting C<LC_CTYPE> correctly requires explicit
+action from the application. The most usual method is to call
+setlocale() as follows as part of program startup:
+
+    setlocale(LC_CTYPE, "");
+
+When operating in a locale which uses neither UTF-8 nor ISO8859-1
+(each of which is attempted anyway), setting C<LC_CTYPE> correctly may
+be necessary in order to decrypt PKCS#12 objects created by compliant
+software.
 
 =head1 EXAMPLES
 
