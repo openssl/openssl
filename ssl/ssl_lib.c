@@ -2616,7 +2616,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
      */
     if (SSL_in_init(s))
         return s->ext.hostname;
-    return (s->session != NULL && s->ext.hostname != NULL) ?
+    return (s->session != NULL && s->ext.hostname == NULL) ?
         s->session->ext.hostname : s->ext.hostname;
 }
 
