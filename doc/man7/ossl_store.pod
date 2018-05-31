@@ -60,21 +60,21 @@ OSSL_STORE_open() are used as is for most object types.  However,
 where pass phrases for PKCS#12 objects contain non-ASCII characters,
 careful consideration is required.  The 'file' scheme loader will
 attempt to decrypt the object by interpreting the provided passphrase
-in three encodings. Each of these three encodings may be required in
+in three encodings.  Each of these three encodings may be required in
 order to decrypt files generated with different versions of OpenSSL or
 other software:
 
 =over 4
 
-=item Z<>
+=item -
 
 UTF-8.
 
-=item Z<>
+=item -
 
 ISO8859-1.
 
-=item Z<>
+=item -
 
 The character encoding corresponding to C<LC_CTYPE> on a POSIX system,
 or C<CP_ACP> on Windows.
