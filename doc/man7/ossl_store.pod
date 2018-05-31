@@ -57,7 +57,7 @@ only).
 
 Pass phrases for PKCS#12 objects get extra treatment to be able to
 handle objects produced with OpenSSL, as well as objects produced
-other programs with as long as the pass phrase encoding is UTF-8 or
+other programs as long as the pass phrase encoding is UTF-8 or
 ISO-8859-1.
 
 If the application sets a locale that corresponds to the encoding of
