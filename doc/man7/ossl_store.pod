@@ -76,13 +76,21 @@ ISO8859-1.
 
 =item -
 
-The character encoding corresponding to C<LC_CTYPE> on a POSIX system,
-or C<CP_ACP> on Windows.
+The character encoding corresponding to C<LC_CTYPE> on a POSIX
+compatible system, or C<CP_ACP> on Windows.
 
 =back
 
+The above interpretations are designed to achieve compatibility with
+current and older versions of OpenSSL when the passphrase provided by
+the B<UI_METHOD> is in the native (i.e. C<LC_CTYPE>/C<CP_ACP>)
+encoding.  If the B<UI_METHOD> returns a passphrase encoded in UTF-8
+where the native encoding is not ISO-8859-1 or UTF-8, that will
+suffice to decrypt correctly generated PKCS#12 objects but may not
+work for objects created by OpenSSL.
+
 On POSIX systems, setting C<LC_CTYPE> correctly requires explicit
-action from the application. The most usual method is to call
+action from the application.  The most usual method is to call
 setlocale() as follows as part of program startup:
 
     setlocale(LC_CTYPE, "");
