@@ -67,17 +67,17 @@ int SM2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     size_t overhead;
 
     if (md_size < 0) {
-        SM2err(SM2_F_SM2_ENCRYPT, SM2_R_INVALID_DIGEST);
+        SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_DIGEST);
         return 0;
     }
     if (field_size == 0) {
-        SM2err(SM2_F_SM2_ENCRYPT, SM2_R_INVALID_FIELD);
+        SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_FIELD);
         return 0;
     }
 
     overhead = 10 + 2 * field_size + (size_t)md_size;
-    if(msg_len <= overhead) {
-        SM2err(SM2_F_SM2_ENCRYPT, SM2_R_INVALID_ENCODING);
+    if (msg_len <= overhead) {
+        SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_ENCODING);
         return 0;
     }
 
@@ -257,20 +257,16 @@ int SM2_decrypt(const EC_KEY *key,
 {
     int rc = 0;
     int i;
-
     BN_CTX *ctx = NULL;
     const EC_GROUP *group = EC_KEY_get0_group(key);
     EC_POINT *C1 = NULL;
     struct SM2_Ciphertext_st *sm2_ctext = NULL;
     BIGNUM *x2 = NULL;
     BIGNUM *y2 = NULL;
-
     uint8_t *x2y2 = NULL;
     uint8_t *computed_C3 = NULL;
-
     const size_t field_size = EC_field_size(group);
     const int hash_size = EVP_MD_size(digest);
-
     uint8_t *msg_mask = NULL;
     const uint8_t *C2 = NULL;
     const uint8_t *C3 = NULL;
@@ -284,132 +280,94 @@ int SM2_decrypt(const EC_KEY *key,
 
     sm2_ctext = d2i_SM2_Ciphertext(NULL, &ciphertext, ciphertext_len);
 
-    if (sm2_ctext == NULL)
-        {
+    if (sm2_ctext == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, SM2_R_ASN1_ERROR);
         goto done;
-        }
+    }
 
-    if (sm2_ctext->C3->length != hash_size)
-        {
+    if (sm2_ctext->C3->length != hash_size) {
         SM2err(SM2_F_SM2_DECRYPT, SM2_R_INVALID_ENCODING);
         goto done;
-        }
+    }
 
     C2 = sm2_ctext->C2->data;
     C3 = sm2_ctext->C3->data;
     msg_len = sm2_ctext->C2->length;
 
     ctx = BN_CTX_new();
-    if (ctx == NULL)
-        {
+    if (ctx == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
-        }
+    }
 
     BN_CTX_start(ctx);
     x2 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
 
-    if(y2 == NULL)
-        {
+    if (y2 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_BN_LIB);
         goto done;
-        }
+    }
 
     msg_mask = OPENSSL_zalloc(msg_len);
     x2y2 = OPENSSL_zalloc(2 * field_size);
     computed_C3 = OPENSSL_zalloc(hash_size);
 
-    if(msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL)
-        {
+    if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
-        }
+    }
 
     C1 = EC_POINT_new(group);
-    if (C1 == NULL)
-        {
+    if (C1 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
-        }
+    }
 
-    if (EC_POINT_set_affine_coordinates_GFp
-        (group, C1, sm2_ctext->C1x, sm2_ctext->C1y, ctx) == 0)
-        {
+    if (!EC_POINT_set_affine_coordinates_GFp(group, C1, sm2_ctext->C1x,
+                                            sm2_ctext->C1y, ctx)
+            || !EC_POINT_mul(group, C1, NULL, C1, EC_KEY_get0_private_key(key),
+                             ctx)
+            || !EC_POINT_get_affine_coordinates_GFp(group, C1, x2, y2, ctx)) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
         goto done;
-        }
+    }
 
-    if (EC_POINT_mul(group, C1, NULL, C1, EC_KEY_get0_private_key(key), ctx) ==
-        0)
-        {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
+    if (BN_bn2binpad(x2, x2y2, field_size) < 0
+            || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
+            || !ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
+                               digest)) {
+        SM2err(SM2_F_SM2_DECRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
-        }
-
-    if (EC_POINT_get_affine_coordinates_GFp(group, C1, x2, y2, ctx) == 0)
-        {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
-        goto done;
-        }
-
-    BN_bn2binpad(x2, x2y2, field_size);
-    BN_bn2binpad(y2, x2y2 + field_size, field_size);
-
-    if (ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0, digest)
-        == 0)
-        goto done;
+    }
 
     for (i = 0; i != msg_len; ++i)
         ptext_buf[i] = C2[i] ^ msg_mask[i];
 
     hash = EVP_MD_CTX_new();
-
-    if (hash == NULL)
-        {
+    if (hash == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
-        }
+    }
 
-    if (EVP_DigestInit(hash, digest) == 0)
-        {
+    if (!EVP_DigestInit(hash, digest)
+            || !EVP_DigestUpdate(hash, x2y2, field_size)
+            || !EVP_DigestUpdate(hash, ptext_buf, msg_len)
+            || !EVP_DigestUpdate(hash, x2y2 + field_size, field_size)
+            || !EVP_DigestFinal(hash, computed_C3, NULL)) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
         goto done;
-        }
+    }
 
-    if (EVP_DigestUpdate(hash, x2y2, field_size) == 0)
-        {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
+    if (CRYPTO_memcmp(computed_C3, C3, hash_size) != 0) {
+        SM2err(SM2_F_SM2_DECRYPT, SM2_R_INVALID_DIGEST);
         goto done;
-        }
-
-    if (EVP_DigestUpdate(hash, ptext_buf, msg_len) == 0)
-        {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
-
-    if (EVP_DigestUpdate(hash, x2y2 + field_size, field_size) == 0)
-        {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
-
-    if (EVP_DigestFinal(hash, computed_C3, NULL) == 0)
-        {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_EVP_LIB);
-        goto done;
-        }
-
-    if (memcmp(computed_C3, C3, hash_size) != 0)
-        goto done;
+    }
 
     rc = 1;
     *ptext_len = msg_len;
 
  done:
-
     if (rc == 0)
         memset(ptext_buf, 0, *ptext_len);
 

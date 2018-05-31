@@ -29,8 +29,10 @@ int ERR_load_SM2_strings(void);
 #  define SM2_F_PKEY_SM2_PARAMGEN                          277
 #  define SM2_F_PKEY_SM2_SIGN                              278
 #  define SM2_F_SM2_COMPUTE_MSG_HASH                       284
+#  define SM2_F_SM2_COMPUTE_USERID_DIGEST                  286
 #  define SM2_F_SM2_DECRYPT                                279
 #  define SM2_F_SM2_ENCRYPT                                280
+#  define SM2_F_SM2_PLAINTEXT_SIZE                         287
 #  define SM2_F_SM2_SIGN                                   281
 #  define SM2_F_SM2_SIG_GEN                                285
 #  define SM2_F_SM2_SIG_VERIFY                             282
@@ -97,6 +99,7 @@ int ERR_load_SM2_strings(void);
 #  define SM2_R_UNKNOWN_GROUP                              129
 #  define SM2_R_UNKNOWN_ORDER                              114
 #  define SM2_R_UNSUPPORTED_FIELD                          131
+#  define SM2_R_USER_ID_TOO_LARGE                          136
 #  define SM2_R_WRONG_CURVE_PARAMETERS                     145
 #  define SM2_R_WRONG_ORDER                                130
 
