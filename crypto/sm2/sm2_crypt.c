@@ -37,7 +37,7 @@ ASN1_SEQUENCE(SM2_Ciphertext) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(SM2_Ciphertext)
 
-static size_t EC_field_size(const EC_GROUP *group)
+static size_t ec_field_size(const EC_GROUP *group)
 {
     /* Is there some simpler way to do this? */
     BIGNUM *p = BN_new();
@@ -59,10 +59,10 @@ static size_t EC_field_size(const EC_GROUP *group)
     return field_size;
 }
 
-int SM2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
+int sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
                        size_t *pt_size)
 {
-    const size_t field_size = EC_field_size(EC_KEY_get0_group(key));
+    const size_t field_size = ec_field_size(EC_KEY_get0_group(key));
     const int md_size = EVP_MD_size(digest);
     size_t overhead;
 
@@ -85,10 +85,10 @@ int SM2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     return 1;
 }
 
-int SM2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
+int sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
                         size_t *ct_size)
 {
-    const size_t field_size = EC_field_size(EC_KEY_get0_group(key));
+    const size_t field_size = ec_field_size(EC_KEY_get0_group(key));
     const int md_size = EVP_MD_size(digest);
 
     if (field_size == 0 || md_size < 0)
@@ -98,7 +98,7 @@ int SM2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     return 1;
 }
 
-int SM2_encrypt(const EC_KEY *key,
+int sm2_encrypt(const EC_KEY *key,
                 const EVP_MD *digest,
                 const uint8_t *msg,
                 size_t msg_len, uint8_t *ciphertext_buf, size_t *ciphertext_len)
@@ -121,7 +121,7 @@ int SM2_encrypt(const EC_KEY *key,
     uint8_t *msg_mask = NULL;
     uint8_t *x2y2 = NULL;
     uint8_t *C3 = NULL;
-    const size_t field_size = EC_field_size(group);
+    const size_t field_size = ec_field_size(group);
     const size_t C3_size = EVP_MD_size(digest);
 
     /* NULL these before any "goto done" */
@@ -250,7 +250,7 @@ int SM2_encrypt(const EC_KEY *key,
     return rc;
 }
 
-int SM2_decrypt(const EC_KEY *key,
+int sm2_decrypt(const EC_KEY *key,
                 const EVP_MD *digest,
                 const uint8_t *ciphertext,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len)
@@ -265,7 +265,7 @@ int SM2_decrypt(const EC_KEY *key,
     BIGNUM *y2 = NULL;
     uint8_t *x2y2 = NULL;
     uint8_t *computed_C3 = NULL;
-    const size_t field_size = EC_field_size(group);
+    const size_t field_size = ec_field_size(group);
     const int hash_size = EVP_MD_size(digest);
     uint8_t *msg_mask = NULL;
     const uint8_t *C2 = NULL;
