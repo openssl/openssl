@@ -472,7 +472,7 @@ sub addToProject{
 my @config=("Debug","Release");
 my @arch=("Win32","arm");
 my $rep="";
-push(@arch, "x64") if($ARGV[0]=~/Store|Universal/);
+push(@arch, "x64","arm64") if($ARGV[0]=~/Store|Universal/);
 for my $_config (@config) {
    for my $_arch (@arch) {
       my $suffix=$ARGV[2]=~/Dll/?"dll":"";
@@ -527,6 +527,11 @@ $rep.=addToProject("\$(SolutionDir)\\..\\apps\\client.pem");
         <BuildConfiguration>arm</BuildConfiguration>
       </PropertyGroup>
     </When>
+    <When Condition=" '$(Platform)'=='arm64' ">
+      <PropertyGroup>
+        <BuildConfiguration>arm64</BuildConfiguration>
+      </PropertyGroup>
+    </When>
     </Choose>
 END_MESSAGE
 
@@ -548,6 +553,9 @@ END_MESSAGE
     </PropertyGroup>
     <PropertyGroup Condition="'$(Platform)'=='ARM'">
         <BuildConfiguration>ARM</BuildConfiguration>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(Platform)'=='ARM64'">
+        <BuildConfiguration>ARM64</BuildConfiguration>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Platform)'=='x64'">
         <BuildConfiguration>x64</BuildConfiguration>
