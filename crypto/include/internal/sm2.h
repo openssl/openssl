@@ -57,13 +57,11 @@ int SM2_verify(int type, const unsigned char *dgst, int dgstlen,
 /*
  * SM2 encryption
  */
-size_t SM2_ciphertext_size(const EC_KEY *key,
-                           const EVP_MD *digest,
-                           size_t msg_len);
+int SM2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
+                        size_t *ct_size);
 
-size_t SM2_plaintext_size(const EC_KEY *key,
-                          const EVP_MD *digest,
-                          size_t msg_len);
+int SM2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
+                       size_t *pt_size);
 
 int SM2_encrypt(const EC_KEY *key,
                 const EVP_MD *digest,
@@ -75,8 +73,6 @@ int SM2_decrypt(const EC_KEY *key,
                 const EVP_MD *digest,
                 const uint8_t *ciphertext,
                 size_t ciphertext_len, uint8_t *ptext_buf, size_t *ptext_len);
-
-int ERR_load_SM2_strings(void);
 
 #  ifdef __cplusplus
 }

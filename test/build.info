@@ -440,7 +440,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
       PROGRAMS_NO_INST=siphash_internal_test
     ENDIF
     IF[{- !$disabled{sm2} -}]
-      PROGRAMS_NO_INST=sm2_crypt_internal_test sm2_sign_internal_test
+      PROGRAMS_NO_INST=sm2_internal_test
     ENDIF
     IF[{- !$disabled{sm4} -}]
       PROGRAMS_NO_INST=sm4_internal_test
@@ -485,13 +485,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
     DEPEND[siphash_internal_test]=../libcrypto.a libtestutil.a
 
-    SOURCE[sm2_sign_internal_test]=sm2_sign_internal_test.c
-    INCLUDE[sm2_sign_internal_test]=../include ../crypto/include
-    DEPEND[sm2_sign_internal_test]=../libcrypto.a libtestutil.a
-
-    SOURCE[sm2_crypt_internal_test]=sm2_crypt_internal_test.c
-    INCLUDE[sm2_crypt_internal_test]=../include ../crypto/include
-    DEPEND[sm2_crypt_internal_test]=../libcrypto.a libtestutil.a
+    SOURCE[sm2_internal_test]=sm2_internal_test.c
+    INCLUDE[sm2_internal_test]=../include ../crypto/include
+    DEPEND[sm2_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../crypto/include
