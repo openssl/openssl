@@ -258,7 +258,7 @@ static int test_sm2_sign(const EC_GROUP *group,
                          const char *s_hex)
 {
     const size_t msg_len = strlen(message);
-    int ok = -1;
+    int ok = 0;
     BIGNUM *priv = NULL;
     EC_POINT *pt = NULL;
     EC_KEY *key = NULL;
