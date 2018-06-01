@@ -76,7 +76,7 @@ int sm2_plaintext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     }
 
     overhead = 10 + 2 * field_size + (size_t)md_size;
-    if(msg_len <= overhead) {
+    if (msg_len <= overhead) {
         SM2err(SM2_F_SM2_PLAINTEXT_SIZE, SM2_R_INVALID_ENCODING);
         return 0;
     }
@@ -304,7 +304,7 @@ int sm2_decrypt(const EC_KEY *key,
     x2 = BN_CTX_get(ctx);
     y2 = BN_CTX_get(ctx);
 
-    if(y2 == NULL) {
+    if (y2 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_BN_LIB);
         goto done;
     }
@@ -313,7 +313,7 @@ int sm2_decrypt(const EC_KEY *key,
     x2y2 = OPENSSL_zalloc(2 * field_size);
     computed_C3 = OPENSSL_zalloc(hash_size);
 
-    if(msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL) {
+    if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto done;
     }

@@ -132,11 +132,11 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         if (BN_cmp(rk, order) == 0)
             continue;
 
-        if(!BN_add(s, dA, BN_value_one())
+        if (!BN_add(s, dA, BN_value_one())
                 || !BN_mod_inverse(s, s, order, ctx)
                 || !BN_mod_mul(tmp, dA, r, order, ctx)
                 || !BN_sub(tmp, k, tmp)
-                || !BN_mod_mul(s, s, tmp, order, ctx) == 0) {
+                || !BN_mod_mul(s, s, tmp, order, ctx)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_BN_LIB);
             goto done;
         }
