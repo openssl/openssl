@@ -79,6 +79,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_POLY1305                     184
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
 # define EVP_F_EVP_PKEY_GET0_SIPHASH                      172
+# define EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY               202
+# define EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY                203
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_METH_ADD0                         194
@@ -139,6 +141,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_A_POLY1305_KEY                   164
 # define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
+# define EVP_R_GET_RAW_KEY_FAILED                         182
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INITIALIZATION_ERROR                       134
 # define EVP_R_INPUT_NOT_INITIALIZED                      111
