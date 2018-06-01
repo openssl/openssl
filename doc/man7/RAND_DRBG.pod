@@ -156,7 +156,6 @@ A DRBG instance seeds itself automatically, pulling random input from
 its entropy source. The entropy source can be either a trusted operating
 system entropy source, or another DRBG with access to such a source.
 
-Automatic reseeding occurs after a predefined number of generate requests.
 The selection of the trusted entropy sources is configured at build
 time using the --with-rand-seed option. The following sections explain
 the reseeding process in more detail.
@@ -182,6 +181,15 @@ B<Note>: An error state is entered if the entropy source fails while
 the DRBG is seeding or reseeding.
 The last case ensures that the DRBG automatically recovers
 from the error as soon as the entropy source is available again.
+
+If entropy sources are permanently unavailable, there is no way for DRBG
+to recover. Special care has to be taken by applications when I<chroot()>ing
+into an environment without I</dev/[urandom|srandom|random]> and when
+I<getrandom()> or equivalent syscalls are not available: as the initial
+seed may happen before I<chroot()>, the application will initially work, but
+when either I<reseed_interval> or I<reseed_time_interval> trigger, DRBG
+reseeding will permanently fail. An application may catch this scenario
+early by checking the return code off I<RAND_poll()> after I<chroot()>ing.
 
 =head2 Manual Reseeding
 

@@ -61,6 +61,7 @@ and the reseed time interval
 of DRBG instances.
 The default values are set independently for master DRBG instances (which don't
 have a parent) and slave DRBG instances (which are chained to a parent DRBG).
+Default values defined in I<crypto/rand/rand_lcl.h> apply otherwise.
 
 =head1 RETURN VALUES
 

@@ -24,10 +24,11 @@ to be initialized ('seeded') explicitly.
 It seeds and reseeds itself automatically using trusted random sources
 provided by the operating system.
 
-As a normal application developer, you don't have to worry about any details,
+As a normal application developer, you don't have to worry about most details,
 just use L<RAND_bytes(3)> to obtain random data.
-Having said that, there is one important rule to obey: Always check the error
-return value of L<RAND_bytes(3)> and don't take randomness for granted.
+Having said that, there are a few important rules to obey: Always check the error
+return value of L<RAND_bytes(3)>, don't take randomness for granted and make
+sure system entropy sources can be accessed at all times (especially after chroot).
 
 For long-term secrets, you can use L<RAND_priv_bytes(3)> instead.
 This method does not provide 'better' randomness, it uses the same type of CSPRNG.

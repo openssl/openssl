@@ -154,7 +154,9 @@
      a port of the default random generator from the OpenSSL FIPS 2.0
      object module. It is a hybrid deterministic random bit generator
      using an AES-CTR bit stream and which seeds and reseeds itself
-     automatically using trusted system entropy sources.
+     automatically using trusted system entropy sources. Inaccessible system
+     entropy sources can lead to permanent failures after some time, due to
+     automatic reseeding. Please see RAND_DRBG(7) manpage for further details.
 
      Some of its new features are:
       o Support for multiple DRBG instances with seed chaining.
