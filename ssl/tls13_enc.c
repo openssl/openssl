@@ -602,12 +602,11 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
                                resumption_master_secret,
                                sizeof(resumption_master_secret) - 1,
-                               hashval, hashlen, s->session->master_key,
+                               hashval, hashlen, s->resumption_master_secret,
                                hashlen)) {
             /* SSLfatal() already called */
             goto err;
         }
-        s->session->master_key_length = hashlen;
     }
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
