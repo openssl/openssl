@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -476,6 +477,85 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
+static struct keys_st {
+    int type;
+    char *priv;
+    char *pub;
+} keys[] = {
+    {
+        EVP_PKEY_HMAC, "0123456789", NULL
+    }, {
+        EVP_PKEY_POLY1305, "01234567890123456789012345678901", NULL
+    }, {
+        EVP_PKEY_SIPHASH, "0123456789012345", NULL
+    }, {
+        EVP_PKEY_X25519, "01234567890123456789012345678901",
+        "abcdefghijklmnopqrstuvwxyzabcdef"
+    }, {
+        EVP_PKEY_ED25519, "01234567890123456789012345678901",
+        "abcdefghijklmnopqrstuvwxyzabcdef"
+    }, {
+        EVP_PKEY_X448,
+        "01234567890123456789012345678901234567890123456789012345",
+        "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcd"
+    }, {
+        EVP_PKEY_ED448,
+        "012345678901234567890123456789012345678901234567890123456",
+        "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcde"
+    }
+};
+
+static int test_set_get_raw_keys_int(int tst, int pub)
+{
+    int ret = 0;
+    unsigned char buf[80];
+    unsigned char *in;
+    size_t inlen, len = 0;
+    EVP_PKEY *pkey;
+
+    /* Check if this algorithm supports public keys */
+    if (keys[tst].pub == NULL)
+        return 1;
+
+    memset(buf, 0, sizeof(buf));
+
+    if (pub) {
+        inlen = strlen(keys[tst].pub);
+        in = (unsigned char *)keys[tst].pub;
+        pkey = EVP_PKEY_new_raw_public_key(keys[tst].type,
+                                           NULL,
+                                           in,
+                                           inlen);
+    } else {
+        inlen = strlen(keys[tst].priv);
+        in = (unsigned char *)keys[tst].priv;
+        pkey = EVP_PKEY_new_raw_private_key(keys[tst].type,
+                                            NULL,
+                                            in,
+                                            inlen);
+    }
+
+    if (!TEST_ptr(pkey)
+            || (!pub && !TEST_true(EVP_PKEY_get_raw_private_key(pkey, NULL, &len)))
+            || (pub && !TEST_true(EVP_PKEY_get_raw_public_key(pkey, NULL, &len)))
+            || !TEST_true(len == inlen)
+            || (!pub && !TEST_true(EVP_PKEY_get_raw_private_key(pkey, buf, &len)))
+            || (pub && !TEST_true(EVP_PKEY_get_raw_public_key(pkey, buf, &len)))
+            || !TEST_mem_eq(in, inlen, buf, len))
+        goto done;
+
+    ret = 1;
+ done:
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+static int test_set_get_raw_keys(int tst)
+{
+    return test_set_get_raw_keys_int(tst, 0)
+           && test_set_get_raw_keys_int(tst, 1);
+}
+
 static int pkey_custom_check(EVP_PKEY *pkey)
 {
     return 0xbeef;
@@ -581,6 +661,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
+    ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
     custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
     if (!TEST_ptr(custom_pmeth))
         return 0;
