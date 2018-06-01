@@ -280,6 +280,40 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
     return NULL;
 }
 
+int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
+                                 size_t *len)
+{
+     if (pkey->ameth->get_priv_key == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY,
+               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return 0;
+    }
+
+    if (!pkey->ameth->get_priv_key(pkey, priv, len)) {
+        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY, EVP_R_GET_RAW_KEY_FAILED);
+        return 0;
+    }
+
+    return 1;
+}
+
+int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
+                                size_t *len)
+{
+     if (pkey->ameth->get_pub_key == NULL) {
+        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY,
+               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return 0;
+    }
+
+    if (!pkey->ameth->get_pub_key(pkey, pub, len)) {
+        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY, EVP_R_GET_RAW_KEY_FAILED);
+        return 0;
+    }
+
+    return 1;
+}
+
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher)
 {

@@ -1352,6 +1352,11 @@ EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
 EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                       const unsigned char *pub,
                                       size_t len);
+int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
+                                 size_t *len);
+int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
+                                size_t *len);
+
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher);
 
