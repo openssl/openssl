@@ -1238,6 +1238,14 @@ void EVP_PKEY_asn1_set_set_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
                                    int (*set_pub_key) (EVP_PKEY *pk,
                                                        const unsigned char *pub,
                                                        size_t len));
+void EVP_PKEY_asn1_set_get_priv_key(EVP_PKEY_ASN1_METHOD *ameth,
+                                    int (*get_priv_key) (const EVP_PKEY *pk,
+                                                         unsigned char *priv,
+                                                         size_t *len));
+void EVP_PKEY_asn1_set_get_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
+                                   int (*get_pub_key) (const EVP_PKEY *pk,
+                                                       unsigned char *pub,
+                                                       size_t *len));
 
 void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
                                      int (*pkey_security_bits) (const EVP_PKEY
