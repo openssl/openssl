@@ -631,4 +631,6 @@ typedef struct verify_options_st {
 
 extern VERIFY_CB_ARGS verify_args;
 
+char *to_utf8(const char *str);
+int is_asciistr(const char *str);
 #endif

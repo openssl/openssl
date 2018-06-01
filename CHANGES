@@ -8,6 +8,12 @@
  release branch.
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
+
+  *) Enforce UTF-8 encoding of the pass phrase when exporting to PKCS#12
+     objects using 'openssl pkcs12', to ensure that we generate standard
+     compliant objects at all times.
+     [Richard Levitte]
+
   *) Enforce checking in the pkeyutl command line app to ensure that the input
      length does not exceed the maximum supported digest length when performing
      a sign, verify or verifyrecover operation.

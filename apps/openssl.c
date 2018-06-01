@@ -8,6 +8,7 @@
  */
 
 #include <internal/cryptlib.h>
+#include <locale.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -76,6 +77,8 @@ static void calculate_columns(DISPLAY_COLUMNS *dc)
 
 static int apps_startup(void)
 {
+    setlocale(LC_ALL, "");
+
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif

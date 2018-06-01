@@ -339,6 +339,7 @@ int pkcs12_main(int argc, char **argv)
         const EVP_MD *macmd = NULL;
         unsigned char *catmp = NULL;
         int i;
+        char *cpass_utf8 = NULL, *mpass_utf8 = NULL;
 
         if ((options & (NOCERTS | NOKEYS)) == (NOCERTS | NOKEYS)) {
             BIO_printf(bio_err, "Nothing to do!\n");
@@ -454,6 +455,23 @@ int pkcs12_main(int argc, char **argv)
         if (!twopass)
             OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
+        cpass_utf8 = to_utf8(cpass);
+        if (cpass_utf8 == NULL) {
+            BIO_printf(bio_err,
+                       "Export password couldn't be converted to UTF-8\n");
+            goto export_end;
+        }
+        if (twopass) {
+            mpass_utf8 = to_utf8(mpass);
+            if (mpass_utf8 == NULL) {
+                BIO_printf(bio_err,
+                           "MAC password couldn't be converted to UTF-8\n");
+                goto export_end;
+            }
+        } else {
+            mpass_utf8 = cpass_utf8;
+        }
+
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
                             key_pbe, cert_pbe, iter, -1, keytype);
 
@@ -482,6 +500,8 @@ int pkcs12_main(int argc, char **argv)
 
  export_end:
 
+        OPENSSL_free(cpass_utf8);
+        OPENSSL_free(mpass_utf8);
         EVP_PKEY_free(key);
         sk_X509_pop_free(certs, X509_free);
         X509_free(ucert);
