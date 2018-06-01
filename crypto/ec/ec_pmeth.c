@@ -40,6 +40,8 @@ typedef struct {
     size_t kdf_ukmlen;
     /* KDF output length */
     size_t kdf_outlen;
+    /* desired algorithm set (SEGC, SM2, ...) */
+    int algo_set;
 } EC_PKEY_CTX;
 
 static int pkey_ec_init(EVP_PKEY_CTX *ctx)
@@ -53,6 +55,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 
     dctx->cofactor_mode = -1;
     dctx->kdf_type = EVP_PKEY_ECDH_KDF_NONE;
+    dctx->algo_set = EVP_PKEY_EC_ALGO_SET_SEGC;
     ctx->data = dctx;
     return 1;
 }
@@ -76,6 +79,7 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
         if (!dctx->co_key)
             return 0;
     }
+    dctx->algo_set = sctx->algo_set;
     dctx->kdf_type = sctx->kdf_type;
     dctx->kdf_md = sctx->kdf_md;
     dctx->kdf_outlen = sctx->kdf_outlen;
@@ -107,7 +111,6 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     unsigned int sltmp;
     EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
     if (!sig) {
         *siglen = ECDSA_size(ec);
@@ -122,14 +125,17 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     else
         type = NID_sha1;
 
-    if (ec_nid == NID_sm2) {
-#if defined(OPENSSL_NO_SM2)
-        return -1;
-#else
-        ret = sm2_sign(type, tbs, tbslen, sig, &sltmp, ec);
-#endif
-    } else {
+    if(dctx->algo_set == EVP_PKEY_EC_ALGO_SET_SEGC) {
         ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
+    }
+#if !defined(OPENSSL_NO_SM2)
+    else if (dctx->algo_set == EVP_PKEY_EC_ALGO_SET_SM2) {
+        ret = sm2_sign(type, tbs, tbslen, sig, &sltmp, ec);
+    }
+#endif
+    else {
+        ECerr(EC_F_PKEY_EC_SIGN, EC_R_UNSUPPORTED_ALGORITHM);
+        return 0;
     }
 
     if (ret <= 0)
@@ -145,21 +151,23 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
     int ret, type;
     EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
     if (dctx->md)
         type = EVP_MD_type(dctx->md);
     else
         type = NID_sha1;
 
-    if (ec_nid == NID_sm2) {
-#if defined(OPENSSL_NO_SM2)
-        ret = -1;
-#else
-        ret = sm2_verify(type, tbs, tbslen, sig, siglen, ec);
-#endif
-    } else {
+    if (dctx->algo_set == EVP_PKEY_EC_ALGO_SET_SEGC) {
         ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
+    }
+#if !defined(OPENSSL_NO_SM2)
+    else if (dctx->algo_set == EVP_PKEY_EC_ALGO_SET_SM2) {
+        ret = sm2_verify(type, tbs, tbslen, sig, siglen, ec);
+    }
+#endif
+    else {
+        ECerr(EC_F_PKEY_EC_VERIFY, EC_R_UNSUPPORTED_ALGORITHM);
+        return 0;
     }
 
     return ret;
@@ -201,43 +209,45 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     *keylen = ret;
     return 1;
 }
+#endif
 
 static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
                               unsigned char *out, size_t *outlen,
                               const unsigned char *in, size_t inlen)
 {
-    int ret;
+    int ret = -1;
+    int md_type;
+    EC_PKEY_CTX *dctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
 
-    if (ec_nid == NID_sm2) {
-# if defined(OPENSSL_NO_SM2)
-        ret = -1;
-# else
-        int md_type;
-        EC_PKEY_CTX *dctx = ctx->data;
-
-        if (dctx->md)
-            md_type = EVP_MD_type(dctx->md);
-        else
-            md_type = NID_sm3;
-
-        if (out == NULL) {
-            if (!sm2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen,
-                                     outlen))
-                ret = -1;
-            else
-                ret = 1;
-        }
-        else {
-            ret = sm2_encrypt(ec, EVP_get_digestbynid(md_type),
-                              in, inlen, out, outlen);
-        }
-# endif
-    } else {
-        /* standard ECIES not implemented */
-        ret = -1;
+    if (dctx->algo_set != EVP_PKEY_EC_ALGO_SET_SM2) {
+        // Standard ECIES is not implemented
+        ECerr(EC_F_PKEY_ECIES_ENCRYPT, EC_R_UNSUPPORTED_ALGORITHM);
+        return -1;
     }
+
+#if defined(OPENSSL_NO_SM2)
+    ECerr(EC_F_PKEY_ECIES_ENCRYPT, EC_R_UNSUPPORTED_ALGORITHM);
+    return -1;
+#else
+
+    if (dctx->md)
+        md_type = EVP_MD_type(dctx->md);
+    else
+        md_type = NID_sm3;
+
+    if (out == NULL) {
+        if (!sm2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen,
+                                 outlen))
+            ret = -1;
+        else
+            ret = 1;
+    }
+    else {
+        ret = sm2_encrypt(ec, EVP_get_digestbynid(md_type),
+                          in, inlen, out, outlen);
+    }
+#endif
 
     return ret;
 }
@@ -247,37 +257,38 @@ static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
                               const unsigned char *in, size_t inlen)
 {
     int ret;
+    int md_type;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    const int ec_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+    EC_PKEY_CTX *dctx = ctx->data;
 
-    if (ec_nid == NID_sm2) {
-# if defined(OPENSSL_NO_SM2)
-        ret = -1;
-# else
-        int md_type;
-        EC_PKEY_CTX *dctx = ctx->data;
-
-        if (dctx->md)
-            md_type = EVP_MD_type(dctx->md);
-        else
-            md_type = NID_sm3;
-
-        if (out == NULL) {
-            if (!sm2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen,
-                                    outlen))
-                ret = -1;
-            else
-                ret = 1;
-        }
-        else {
-            ret = sm2_decrypt(ec, EVP_get_digestbynid(md_type),
-                              in, inlen, out, outlen);
-        }
-# endif
-    } else {
-        /* standard ECIES not implemented */
-        ret = -1;
+    if (dctx->algo_set != EVP_PKEY_EC_ALGO_SET_SM2) {
+        // Standard ECIES is not implemented
+        ECerr(EC_F_PKEY_ECIES_DECRYPT, EC_R_UNSUPPORTED_ALGORITHM);
+        return -1;
     }
+
+#if defined(OPENSSL_NO_SM2)
+    ECerr(EC_F_PKEY_ECIES_DECRYPT, EC_R_UNSUPPORTED_ALGORITHM);
+    return -1;
+#else
+
+
+    if (dctx->md)
+        md_type = EVP_MD_type(dctx->md);
+    else
+        md_type = NID_sm3;
+
+    if (out == NULL) {
+        if (!sm2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen,
+                                outlen))
+            ret = -1;
+        else
+            ret = 1;
+    }
+    else {
+        ret = sm2_decrypt(ec, EVP_get_digestbynid(md_type),
+                          in, inlen, out, outlen);
+        }
 
     return ret;
 }
@@ -428,6 +439,24 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         dctx->md = p2;
         return 1;
 
+    case EVP_PKEY_CTRL_GET_EC_ALGO_SET:
+        *(int *)p2 = dctx->algo_set;
+        return 1;
+
+    case EVP_PKEY_CTRL_SET_EC_ALGO_SET:
+        if(p1 != EVP_PKEY_EC_ALGO_SET_SEGC && p1 != EVP_PKEY_EC_ALGO_SET_SM2) {
+           ECerr(EC_F_PKEY_EC_CTRL, EC_R_UNSUPPORTED_ALGORITHM);
+           return -1;
+        }
+#if defined(OPENSSL_NO_SM2)
+        if(p1 == EVP_PKEY_EC_ALGO_SET_SM2) {
+           ECerr(EC_F_PKEY_EC_CTRL, EC_R_UNSUPPORTED_ALGORITHM);
+           return -1;
+        }
+#endif
+        dctx->algo_set = p1;
+        return 1;
+
     case EVP_PKEY_CTRL_GET_MD:
         *(const EVP_MD **)p2 = dctx->md;
         return 1;
@@ -480,6 +509,18 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
         int co_mode;
         co_mode = atoi(value);
         return EVP_PKEY_CTX_set_ecdh_cofactor_mode(ctx, co_mode);
+    } else if (strcmp(type, "ec_algo_set") == 0) {
+
+        if (strcmp(value, "segc") || strcmp(value, "nist")) {
+           return EVP_PKEY_CTX_set_ec_algo_set(ctx, EVP_PKEY_EC_ALGO_SET_SEGC);
+        }
+        else if (strcmp(value, "sm2")) {
+           return EVP_PKEY_CTX_set_ec_algo_set(ctx, EVP_PKEY_EC_ALGO_SET_SM2);
+        }
+        else {
+           ECerr(EC_F_PKEY_EC_CTRL_STR, EC_R_UNSUPPORTED_ALGORITHM);
+           return 0;
+        }
     }
 
     return -2;

@@ -173,6 +173,8 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_ECD_DIGESTSIGN                         272
 #  define EC_F_PKEY_ECD_DIGESTSIGN25519                    276
 #  define EC_F_PKEY_ECD_DIGESTSIGN448                      277
+#  define EC_F_PKEY_ECIES_DECRYPT                          287
+#  define EC_F_PKEY_ECIES_ENCRYPT                          284
 #  define EC_F_PKEY_ECX_DERIVE                             269
 #  define EC_F_PKEY_EC_CTRL                                197
 #  define EC_F_PKEY_EC_CTRL_STR                            198
@@ -182,6 +184,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
+#  define EC_F_PKEY_EC_VERIFY                              285
 #  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*
@@ -243,6 +246,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_UNDEFINED_ORDER                             128
 #  define EC_R_UNKNOWN_GROUP                               129
 #  define EC_R_UNKNOWN_ORDER                               114
+#  define EC_R_UNSUPPORTED_ALGORITHM                       136
 #  define EC_R_UNSUPPORTED_FIELD                           131
 #  define EC_R_WRONG_CURVE_PARAMETERS                      145
 #  define EC_R_WRONG_ORDER                                 130

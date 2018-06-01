@@ -1342,6 +1342,16 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
                                 EVP_PKEY_OP_DERIVE, \
                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(p))
 
+# define EVP_PKEY_CTX_set_ec_algo_set(ctx, typ) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
+                                EVP_PKEY_OP_DERIVE, \
+                                EVP_PKEY_CTRL_SET_EC_ALGO_SET, typ, NULL)
+
+# define EVP_PKEY_CTX_get_ec_algo_set(ctx, typ) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
+                                EVP_PKEY_OP_DERIVE, \
+                                EVP_PKEY_CTRL_GET_EC_ALGO_SET, 0, (void *)(typ))
+
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_EC_PARAM_ENC                      (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_EC_ECDH_COFACTOR                  (EVP_PKEY_ALG_CTRL + 3)
@@ -1352,6 +1362,13 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN                 (EVP_PKEY_ALG_CTRL + 8)
 # define EVP_PKEY_CTRL_EC_KDF_UKM                        (EVP_PKEY_ALG_CTRL + 9)
 # define EVP_PKEY_CTRL_GET_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 10)
+# define EVP_PKEY_CTRL_SET_EC_ALGO_SET                   (EVP_PKEY_ALG_CTRL + 11)
+# define EVP_PKEY_CTRL_GET_EC_ALGO_SET                   (EVP_PKEY_ALG_CTRL + 12)
+
+/* Algorithm types */
+# define EVP_PKEY_EC_ALGO_SET_SEGC                       1
+# define EVP_PKEY_EC_ALGO_SET_SM2                        2
+
 /* KDF types */
 # define EVP_PKEY_ECDH_KDF_NONE                          1
 # define EVP_PKEY_ECDH_KDF_X9_62                         2
