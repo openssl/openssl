@@ -299,7 +299,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
         goto err;
 
     if (!ssl_session_memcpy(ret->master_key, &tmpl,
-                            as->master_key, TLS13_MAX_RESUMPTION_MASTER_LENGTH))
+                            as->master_key, TLS13_MAX_RESUMPTION_PSK_LENGTH))
         goto err;
 
     ret->master_key_length = tmpl;

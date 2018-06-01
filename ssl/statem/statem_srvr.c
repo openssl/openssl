@@ -24,6 +24,8 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
+#define TICKET_NONCE_SIZE       8
+
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
 
 /*
@@ -3758,7 +3760,21 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
+        size_t i, hashlen;
+        uint64_t nonce;
+        const char nonce_label[] = "resumption";
+        const EVP_MD *md = ssl_handshake_md(s);
         void (*cb) (const SSL *ssl, int type, int val) = NULL;
+        int hashleni = EVP_MD_size(md);
+
+        /* Ensure cast to size_t is safe */
+        if (!ossl_assert(hashleni >= 0)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                     ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        hashlen = (size_t)hashleni;
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
@@ -3806,20 +3822,34 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             goto err;
         }
         s->session->ext.tick_age_add = age_add_u.age_add;
-       /*
-        * ticket_nonce is set to a single 0 byte because we only ever send a
-        * single ticket per connection. IMPORTANT: If we ever support multiple
-        * tickets per connection then this will need to be changed.
-        */
+
         OPENSSL_free(s->session->ext.tick_nonce);
-        s->session->ext.tick_nonce = OPENSSL_zalloc(sizeof(char));
+        s->session->ext.tick_nonce = OPENSSL_zalloc(TICKET_NONCE_SIZE);
         if (s->session->ext.tick_nonce == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
                      ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        s->session->ext.tick_nonce_len = 1;
+        nonce = s->next_ticket_nonce;
+        for (i = TICKET_NONCE_SIZE; nonce > 0 && i > 0; i--) {
+            s->session->ext.tick_nonce[i - 1] = nonce & 0xff;
+            nonce >>= 8;
+        }
+        s->session->ext.tick_nonce_len = TICKET_NONCE_SIZE;
+
+        if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
+                               (const unsigned char *)nonce_label,
+                               sizeof(nonce_label) - 1,
+                               s->session->ext.tick_nonce,
+                               s->session->ext.tick_nonce_len,
+                               s->session->master_key,
+                               hashlen)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+        s->session->master_key_length = hashlen;
+
         s->session->time = (long)time(NULL);
         if (s->s3->alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);
@@ -4002,7 +4032,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+        /*
+         * Increment both |sent_tickets| and |next_ticket_nonce|. |sent_tickets|
+         * gets reset to 0 if we send more tickets following a post-handshake
+         * auth, but |next_ticket_nonce| does not.
+         */
         s->sent_tickets++;
+        s->next_ticket_nonce++;
         ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
     }
     EVP_CIPHER_CTX_free(ctx);
