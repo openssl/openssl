@@ -164,20 +164,6 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #   error "Seeding uses urandom but DEVRANDOM is not configured"
 #  endif
 
-#  if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
-#   if __GLIBC_PREREQ(2, 25)
-#    define OPENSSL_HAVE_GETRANDOM
-#   endif
-#  endif
-
-#  if (defined(__FreeBSD__) && __FreeBSD_version >= 1200061)
-#   define OPENSSL_HAVE_GETRANDOM
-#  endif
-
-#  if defined(OPENSSL_HAVE_GETRANDOM)
-#   include <sys/random.h>
-#  endif
-
 #  if defined(OPENSSL_RAND_SEED_OS)
 #   if !defined(DEVRANDOM)
 #    error "OS seeding requires DEVRANDOM to be configured"
@@ -264,10 +250,6 @@ int syscall_random(void *buf, size_t buflen)
     p_getentropy.p = DSO_global_lookup("getentropy");
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen);
-
-#  if defined(OPENSSL_HAVE_GETRANDOM)
-    return (int)getrandom(buf, buflen, 0);
-#  endif
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(SYS_getrandom)
