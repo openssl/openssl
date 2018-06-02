@@ -15,6 +15,7 @@
 #include "rand_lcl.h"
 #include "internal/rand_int.h"
 #include <stdio.h>
+#include "internal/dso.h"
 #if defined(__linux)
 # include <sys/syscall.h>
 #endif
@@ -242,21 +243,39 @@ static size_t sysctl_random(char *buf, size_t buflen)
  */
 int syscall_random(void *buf, size_t buflen)
 {
+    union {
+        void *p;
+        int (*f)(void *buffer, size_t length);
+    } p_getentropy;
+
+    /*
+     * Do runtime detection to find getentropy().
+     *
+     * We could cache the result of the lookup, but we normally don't
+     * call this function often.
+     *
+     * Known OSs that should support this:
+     * - Darwin since 16 (OSX 10.12, IOS 10.0).
+     * - Solaris since 11.3
+     * - OpenBSD since 5.6
+     * - Linux since 3.17 with glibc 2.25
+     * - FreeBSD since 12.0 (1200061)
+     */
+    p_getentropy.p = DSO_global_lookup("getentropy");
+    if (p_getentropy.p != NULL)
+        return p_getentropy.f(buf, buflen);
+
 #  if defined(OPENSSL_HAVE_GETRANDOM)
     return (int)getrandom(buf, buflen, 0);
 #  endif
 
+    /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(SYS_getrandom)
     return (int)syscall(SYS_getrandom, buf, buflen, 0);
 #  endif
 
 #  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return (int)sysctl_random(buf, buflen);
-#  endif
-
-   /* Supported since OpenBSD 5.6 */
-#  if defined(__OpenBSD__) && OpenBSD >= 201411
-    return getentropy(buf, buflen);
 #  endif
 
     return -1;
