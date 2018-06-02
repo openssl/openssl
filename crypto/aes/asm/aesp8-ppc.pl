@@ -40,7 +40,8 @@
 #		CBC en-/decrypt	CTR	XTS
 # POWER8[le]	3.96/0.72	0.74	1.1
 # POWER8[be]	3.75/0.65	0.66	1.0
-# POWER9[le]	3.05/0.65	0.65	0.80
+# POWER9[le]	4.02/0.86	0.84	1.05
+# POWER9[be]	3.99/0.78	0.79	0.97
 
 $flavour = shift;
 
