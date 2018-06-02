@@ -23,11 +23,11 @@
 #			IALU/gcc-4.x    3xAltiVec+1xIALU
 #
 # Freescale e300	13.6/+115%	-
-# PPC74x0/G4e		6.81/+310%	3.72
+# PPC74x0/G4e		6.81/+310%	3.81
 # PPC970/G5		9.29/+160%	?
-# POWER7		8.62/+61%	3.38
-# POWER8		8.70/+51%	3.36
-# POWER9		8.80/+29%	4.50(*)
+# POWER7		8.62/+61%	3.35
+# POWER8		8.70/+51%	2.91
+# POWER9		8.80/+29%	4.44(*)
 #
 # (*)	this is trade-off result, it's possible to improve it, but
 #	then it would negatively affect all others;
@@ -398,12 +398,12 @@ ___
 my ($A0,$B0,$C0,$D0,$A1,$B1,$C1,$D1,$A2,$B2,$C2,$D2)
 				= map("v$_",(0..11));
 my @K				= map("v$_",(12..17));
-my ($FOUR,$sixteen,$twenty4)	= map("v$_",(18..20));
-my ($inpperm,$outperm,$outmask)	= map("v$_",(21..23));
-my @D				= map("v$_",(24..28));
+my ($FOUR,$sixteen,$twenty4)	= map("v$_",(18..19,23));
+my ($inpperm,$outperm,$outmask)	= map("v$_",(24..26));
+my @D				= map("v$_",(27..31));
 my ($twelve,$seven,$T0,$T1) = @D;
 
-my $FRAME=$LOCALS+64+10*16+18*$SIZE_T;	# 10*16 is for v20-v28 offload
+my $FRAME=$LOCALS+64+10*16+18*$SIZE_T;	# 10*16 is for v23-v31 offload
 
 sub VMXROUND {
 my $odd = pop;
@@ -445,22 +445,22 @@ $code.=<<___;
 	li	r10,`15+$LOCALS+64`
 	li	r11,`31+$LOCALS+64`
 	mfspr	r12,256
-	stvx	v20,r10,$sp
+	stvx	v23,r10,$sp
 	addi	r10,r10,32
-	stvx	v21,r11,$sp
+	stvx	v24,r11,$sp
 	addi	r11,r11,32
-	stvx	v22,r10,$sp
+	stvx	v25,r10,$sp
 	addi	r10,r10,32
-	stvx	v23,r11,$sp
+	stvx	v26,r11,$sp
 	addi	r11,r11,32
-	stvx	v24,r10,$sp
+	stvx	v27,r10,$sp
 	addi	r10,r10,32
-	stvx	v25,r11,$sp
+	stvx	v28,r11,$sp
 	addi	r11,r11,32
-	stvx	v26,r10,$sp
+	stvx	v29,r10,$sp
 	addi	r10,r10,32
-	stvx	v27,r11,$sp
-	stvx	v28,r10,$sp
+	stvx	v30,r11,$sp
+	stvx	v31,r10,$sp
 	stw	r12,`$FRAME-$SIZE_T*18-4`($sp)	# save vrsave
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
@@ -480,7 +480,7 @@ $code.=<<___;
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
-	li	r12,-8
+	li	r12,-4096+511
 	$PUSH	r0, `$FRAME+$LRSAVE`($sp)
 	mtspr	256,r12				# preserve 29 AltiVec registers
 
@@ -588,9 +588,13 @@ ___
 	my @thread3=&ROUND(0,4,8,12);
 
 	foreach (@thread0) {
-		eval;			eval(shift(@thread3));
-		eval(shift(@thread1));	eval(shift(@thread3));
-		eval(shift(@thread2));	eval(shift(@thread3));
+		eval;
+		eval(shift(@thread1));
+		eval(shift(@thread2));
+
+		eval(shift(@thread3));
+		eval(shift(@thread3));
+		eval(shift(@thread3));
 	}
 	foreach (@thread3) { eval; }
 
@@ -600,9 +604,13 @@ ___
 	@thread3=&ROUND(0,5,10,15);
 
 	foreach (@thread0) {
-		eval;			eval(shift(@thread3));
-		eval(shift(@thread1));	eval(shift(@thread3));
-		eval(shift(@thread2));	eval(shift(@thread3));
+		eval;
+		eval(shift(@thread1));
+		eval(shift(@thread2));
+
+		eval(shift(@thread3));
+		eval(shift(@thread3));
+		eval(shift(@thread3));
 	}
 	foreach (@thread3) { eval; }
 $code.=<<___;
@@ -843,22 +851,22 @@ Ldone_vmx:
 	li	r10,`15+$LOCALS+64`
 	li	r11,`31+$LOCALS+64`
 	mtspr	256,r12				# restore vrsave
-	lvx	v20,r10,$sp
+	lvx	v23,r10,$sp
 	addi	r10,r10,32
-	lvx	v21,r11,$sp
+	lvx	v24,r11,$sp
 	addi	r11,r11,32
-	lvx	v22,r10,$sp
+	lvx	v25,r10,$sp
 	addi	r10,r10,32
-	lvx	v23,r11,$sp
+	lvx	v26,r11,$sp
 	addi	r11,r11,32
-	lvx	v24,r10,$sp
+	lvx	v27,r10,$sp
 	addi	r10,r10,32
-	lvx	v25,r11,$sp
+	lvx	v28,r11,$sp
 	addi	r11,r11,32
-	lvx	v26,r10,$sp
+	lvx	v29,r10,$sp
 	addi	r10,r10,32
-	lvx	v27,r11,$sp
-	lvx	v28,r10,$sp
+	lvx	v30,r11,$sp
+	lvx	v31,r10,$sp
 	$POP	r0, `$FRAME+$LRSAVE`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
 	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
