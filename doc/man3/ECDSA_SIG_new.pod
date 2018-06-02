@@ -121,6 +121,8 @@ returned as a newly allocated B<ECDSA_SIG> structure (or NULL on error).
 
 =head1 RETURN VALUES
 
+ECDSA_SIG_new() returns NULL if the allocation fails.
+
 ECDSA_SIG_set0() returns 1 on success or 0 on failure.
 
 ECDSA_SIG_get0_r() and ECDSA_SIG_get0_s() return the corresponding value,
