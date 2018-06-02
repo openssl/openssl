@@ -27,7 +27,7 @@
 # PPC970/G5		9.29/+160%	?
 # POWER7		8.62/+61%	3.38
 # POWER8		8.70/+51%	3.36
-# POWER9		6.61/+29%	3.30(*)
+# POWER9		8.80/+29%	4.50(*)
 #
 # (*)	this is trade-off result, it's possible to improve it, but
 #	then it would negatively affect all others;
