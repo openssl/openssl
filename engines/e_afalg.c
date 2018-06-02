@@ -224,7 +224,7 @@ static int afalg_fin_cipher_aio(afalg_aio *aio, int sfd, unsigned char *buf,
     struct iocb *cb;
     struct timespec timeout;
     struct io_event events[MAX_INFLIGHTS];
-    u_int64_t eval = 0;
+    uint64_t eval = 0;
 
     timeout.tv_sec = 0;
     timeout.tv_nsec = 0;
