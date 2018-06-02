@@ -2,7 +2,7 @@
  --------------------
 
  This document describes installation on all supported operating
- systems (the Linux/Unix family, OpenVMS and Windows)
+ systems (the Linux/Unix family including Mac OS/X, OpenVMS and Windows)
 
  To install OpenSSL, you will need:
 
@@ -76,7 +76,7 @@
 
  If you want to just get on with it, do:
 
-  on Unix:
+  on Unix (again, this includes Mac OS/X):
 
     $ ./config
     $ make
