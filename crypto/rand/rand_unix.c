@@ -23,7 +23,7 @@
 # include <sys/sysctl.h>
 # include <sys/param.h>
 #endif
-#if defined(__OpenBSD__)
+#if defined(__OpenBSD__) || defined(__NetBSD__)
 # include <sys/param.h>
 #endif
 #ifdef OPENSSL_SYS_UNIX
@@ -189,7 +189,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #   error "librandom not (yet) supported"
 #  endif
 
-#  if defined(__FreeBSD__) && defined(KERN_ARND)
+#  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
 /*
  * sysctl_random(): Use sysctl() to read a random number from the kernel
  * Returns the size on success, 0 on failure.
@@ -201,13 +201,24 @@ static size_t sysctl_random(char *buf, size_t buflen)
     size_t len;
 
     /*
-     * Old implementations returned longs, newer versions support variable
-     * sizes up to 256 byte. The code below would not work properly when
-     * the sysctl returns long and we want to request something not a multiple
-     * of longs, which should never be the case.
+     * On FreeBSD old implementations returned longs, newer versions support
+     * variable sizes up to 256 byte. The code below would not work properly
+     * when the sysctl returns long and we want to request something not a
+     * multiple of longs, which should never be the case.
      */
     if (!ossl_assert(buflen % sizeof(long) == 0))
         return 0;
+
+    /*
+     * On NetBSD before 4.0 KERN_ARND was an alias for KERN_URND, and only
+     * filled in an int, leaving the rest uninitialized. Since NetBSD 4.0
+     * it returns a variable number of bytes with the current version supporting
+     * up to 256 bytes.
+     * Just return an error on older NetBSD versions.
+     */
+#if   defined(__NetBSD__) && __NetBSD_Version__ < 400000000
+    return 0;
+#endif
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARND;
@@ -239,7 +250,7 @@ int syscall_random(void *buf, size_t buflen)
     return (int)syscall(SYS_getrandom, buf, buflen, 0);
 #  endif
 
-#  if defined(__FreeBSD__) && defined(KERN_ARND)
+#  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return (int)sysctl_random(buf, buflen);
 #  endif
 
