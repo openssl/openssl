@@ -229,13 +229,16 @@ static size_t sysctl_random(char *buf, size_t buflen)
  */
 int syscall_random(void *buf, size_t buflen)
 {
-    static union {
+    union {
         void *p;
         int (*f)(void *buffer, size_t length);
-    } p_getentropy = { NULL };
+    } p_getentropy;
 
     /*
      * Do runtime detection to find getentropy().
+     *
+     * We could cache the result of the lookup, but we normally don't
+     * call this function often.
      *
      * Known OSs that should support this:
      * - Darwin since 16 (OSX 10.12, IOS 10.0).
