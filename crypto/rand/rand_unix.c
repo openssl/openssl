@@ -249,7 +249,7 @@ int syscall_random(void *buf, size_t buflen)
      */
     p_getentropy.p = DSO_global_lookup("getentropy");
     if (p_getentropy.p != NULL)
-        return p_getentropy.f(buf, buflen);
+        return p_getentropy.f(buf, buflen) == 0 ? buflen : 0;
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(SYS_getrandom)
