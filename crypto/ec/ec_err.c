@@ -250,6 +250,8 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "pkey_ecd_digestsign25519"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECD_DIGESTSIGN448, 0),
      "pkey_ecd_digestsign448"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECIES_DECRYPT, 0), "pkey_ecies_decrypt"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECIES_ENCRYPT, 0), "pkey_ecies_encrypt"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_ECX_DERIVE, 0), "pkey_ecx_derive"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_CTRL, 0), "pkey_ec_ctrl"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_CTRL_STR, 0), "pkey_ec_ctrl_str"},
@@ -259,6 +261,7 @@ static const ERR_STRING_DATA EC_str_functs[] = {
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_KEYGEN, 0), "pkey_ec_keygen"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_PARAMGEN, 0), "pkey_ec_paramgen"},
     {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_SIGN, 0), "pkey_ec_sign"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_PKEY_EC_VERIFY, 0), "pkey_ec_verify"},
     {ERR_PACK(ERR_LIB_EC, EC_F_VALIDATE_ECX_DERIVE, 0), "validate_ecx_derive"},
     {0, NULL}
 };
@@ -341,6 +344,8 @@ static const ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNDEFINED_ORDER), "undefined order"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNKNOWN_GROUP), "unknown group"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNKNOWN_ORDER), "unknown order"},
+    {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNSUPPORTED_ALGORITHM),
+    "unsupported algorithm"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_UNSUPPORTED_FIELD), "unsupported field"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_WRONG_CURVE_PARAMETERS),
     "wrong curve parameters"},
