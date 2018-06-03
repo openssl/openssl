@@ -8,6 +8,7 @@
  */
 
 #include <openssl/e_os2.h>
+#include <inttypes.h>
 #include <string.h>
 #include <assert.h>
 

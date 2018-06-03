@@ -22,6 +22,7 @@
 #include "internal/aria.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <string.h>
 
 #ifndef OPENSSL_SMALL_FOOTPRINT

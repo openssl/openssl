@@ -238,7 +238,9 @@ typedef UINT64 uint64_t;
 # elif (defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L) || \
      defined(__osf__) || defined(__sgi) || defined(__hpux) || \
      defined(OPENSSL_SYS_VMS) || defined (__OpenBSD__)
-#  include <inttypes.h>
+#  if !defined(__APPLE__)
+#   include <inttypes.h>
+#  endif
 # elif defined(_MSC_VER) && _MSC_VER<=1500
 /*
  * minimally required typdefs for systems not supporting inttypes.h or
