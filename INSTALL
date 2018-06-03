@@ -89,11 +89,11 @@
     
     then, change CC="..." into CC="xcrun -sdk iphoneos clang -mios-version-min=7.0 -arch arm64” and delete "-isysroot $(CROSS_TOP)/SDKs/$(CROSS_SDK)" of CFLAGS in Makefile.
     
-    $make 
-    $make install 
+    $ make 
+    $ make install 
     
     get static library(libssl.a,libcrypt.a) and openssl header files. Copy header files to $SDKROOT/usr/include, copy static library files to $SDKROOT/usr/lib.
-    You can use this files to compile openssh for iOS 
+    Finally, you can use this files to compile openssh for iOS 
 
  
   on OpenVMS:
