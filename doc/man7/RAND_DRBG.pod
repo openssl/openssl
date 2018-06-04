@@ -189,7 +189,7 @@ I<getrandom()> or equivalent syscalls are not available: as the initial
 seed may happen before I<chroot()>, the application will initially work, but
 when either I<reseed_interval> or I<reseed_time_interval> trigger, DRBG
 reseeding will permanently fail. An application may catch this scenario
-early by checking the return code off I<RAND_poll()> after I<chroot()>ing.
+early by checking the return code of I<RAND_poll()> after I<chroot()>ing.
 
 =head2 Manual Reseeding
 
