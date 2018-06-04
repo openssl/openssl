@@ -56,7 +56,7 @@ typedef enum OPTION_choice {
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
-    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_ENGINE,
+    OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOINTEROP, OPT_ENGINE,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -87,6 +87,7 @@ const OPTIONS pkcs12_options[] = {
     {"maciter", OPT_MACITER, '-', "Use MAC iteration"},
     {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
+    {"nointerop", OPT_NOINTEROP, '-', "Don't enforce interoperability"},
     {"LMK", OPT_LMK, '-',
      "Add local machine keyset attribute to private key"},
     {"nodes", OPT_NODES, '-', "Don't encrypt private keys"},
@@ -131,7 +132,7 @@ int pkcs12_main(int argc, char **argv)
     int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 # endif
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-    int ret = 1, macver = 1, add_lmk = 0, private = 0;
+    int ret = 1, macver = 1, add_lmk = 0, private = 0, interop = 1;
     int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL, *macalg = NULL;
@@ -211,6 +212,9 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_NOMAC:
             maciter = -1;
+            break;
+        case OPT_NOINTEROP:
+            interop = 0;
             break;
         case OPT_MACALG:
             macalg = opt_arg();
@@ -459,9 +463,14 @@ int pkcs12_main(int argc, char **argv)
             if ((cpass_utf8 = to_utf8(cpass)) != NULL) {
                 cpass = cpass_utf8;
             } else {
-                BIO_printf(bio_err,
-                           "Export password couldn't be converted to UTF-8\n");
-                goto export_end;
+                BIO_printf(bio_err, "%s: %s\n",
+                           (interop ? "ERROR" : "Warning"),
+                           "Export password couldn't be converted to UTF-8");
+                if (interop) {
+                    BIO_printf(bio_err,
+                               "Re-run this command with '-nointerop' or with an all ASCII pass phrase\n");
+                    goto export_end;
+                }
             }
         }
         if (twopass) {
@@ -469,9 +478,14 @@ int pkcs12_main(int argc, char **argv)
                 if ((mpass_utf8 = to_utf8(mpass)) != NULL) {
                     mpass = mpass_utf8;
                 } else {
-                    BIO_printf(bio_err,
-                               "MAC password couldn't be converted to UTF-8\n");
-                    goto export_end;
+                    BIO_printf(bio_err, "%s: %s\n",
+                               (interop ? "ERROR" : "Warning"),
+                               "MAC password couldn't be converted to UTF-8");
+                    if (interop) {
+                        BIO_printf(bio_err,
+                                   "Re-run this command with '-nointerop' or with an all ASCII pass phrase\n");
+                        goto export_end;
+                    }
                 }
             }
         } else {
