@@ -386,7 +386,6 @@ static int ecx_get_pub_key(const EVP_PKEY *pkey, unsigned char *pub,
     }
 
     if (key == NULL
-            || key->pubkey == NULL
             || *len < KEYLENID(pkey->ameth->pkey_id))
         return 0;
 
