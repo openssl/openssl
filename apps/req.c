@@ -524,7 +524,7 @@ int req_main(int argc, char **argv)
                        OPENSSL_RSA_MAX_MODULUS_BITS, newkey);
             if (newkey <= OPENSSL_DSA_MAX_MODULUS_BITS)
                 BIO_printf(bio_err,
-                           "DSA would provide key size up to %d.",
+                           "         DSA would provide a key size up to %d.\n",
                            OPENSSL_DSA_MAX_MODULUS_BITS);
         }
 
@@ -535,7 +535,7 @@ int req_main(int argc, char **argv)
                        OPENSSL_DSA_MAX_MODULUS_BITS, newkey);
             if (newkey <= OPENSSL_RSA_MAX_MODULUS_BITS)
                 BIO_printf(bio_err,
-                           "RSA would provide key size up to %d.",
+                           "         RSA would provide a key size up to %d.\n",
                            OPENSSL_RSA_MAX_MODULUS_BITS);
         }
 
