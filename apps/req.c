@@ -517,27 +517,17 @@ int req_main(int argc, char **argv)
             goto end;
         }
 
-        if (pkey_type == EVP_PKEY_RSA && newkey > OPENSSL_RSA_MAX_MODULUS_BITS) {
+        if (pkey_type == EVP_PKEY_RSA && newkey > OPENSSL_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
                        OPENSSL_RSA_MAX_MODULUS_BITS, newkey);
-            if (newkey <= OPENSSL_DSA_MAX_MODULUS_BITS)
-                BIO_printf(bio_err,
-                           "         DSA would provide a key size up to %d.\n",
-                           OPENSSL_DSA_MAX_MODULUS_BITS);
-        }
 
-        if (pkey_type == EVP_PKEY_DSA && newkey > OPENSSL_DSA_MAX_MODULUS_BITS) {
+        if (pkey_type == EVP_PKEY_DSA && newkey > OPENSSL_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                        "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
                        "         Your key size is %ld! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, newkey);
-            if (newkey <= OPENSSL_RSA_MAX_MODULUS_BITS)
-                BIO_printf(bio_err,
-                           "         RSA would provide a key size up to %d.\n",
-                           OPENSSL_RSA_MAX_MODULUS_BITS);
-        }
 
         if (genctx == NULL) {
             genctx = set_keygen_ctx(NULL, &pkey_type, &newkey,
