@@ -483,24 +483,16 @@ struct keys_st {
     char *pub;
 } keys[] = {
     {
-        EVP_PKEY_HMAC,
-        "0123456789",
-        NULL
+        EVP_PKEY_HMAC, "0123456789", NULL
     }, {
-        EVP_PKEY_POLY1305,
-        "01234567890123456789012345678901",
-        NULL
+        EVP_PKEY_POLY1305, "01234567890123456789012345678901", NULL
     }, {
-        EVP_PKEY_SIPHASH,
-        "0123456789012345",
-        NULL
+        EVP_PKEY_SIPHASH, "0123456789012345", NULL
     }, {
-        EVP_PKEY_X25519,
-        "01234567890123456789012345678901",
+        EVP_PKEY_X25519, "01234567890123456789012345678901",
         "abcdefghijklmnopqrstuvwxyzabcdef"
     }, {
-        EVP_PKEY_ED25519,
-        "01234567890123456789012345678901",
+        EVP_PKEY_ED25519, "01234567890123456789012345678901",
         "abcdefghijklmnopqrstuvwxyzabcdef"
     }, {
         EVP_PKEY_X448,
@@ -513,23 +505,13 @@ struct keys_st {
     }
 };
 
-/*
- * There are twice as many tests as elements in the keys array. First we test
- * all the private keys, then we test all the public keys.
- */
-static int test_set_get_raw_keys(int tst)
+static int test_set_get_raw_keys_int(int tst, int pub)
 {
     int ret = 0;
     unsigned char buf[80];
     unsigned char *in;
     size_t inlen, len;
     EVP_PKEY *pkey;
-    int pub = 0;
-
-    if ((size_t)tst >= OSSL_NELEM(keys)) {
-        pub = 1;
-        tst -= OSSL_NELEM(keys);
-    }
 
     /* Check if this algorithm supports public keys */
     if (keys[tst].pub == NULL)
@@ -566,6 +548,12 @@ static int test_set_get_raw_keys(int tst)
  done:
     EVP_PKEY_free(pkey);
     return ret;
+}
+
+static int test_set_get_raw_keys(int tst)
+{
+    return test_set_get_raw_keys_int(tst, 0)
+           && test_set_get_raw_keys_int(tst, 1);
 }
 
 static int pkey_custom_check(EVP_PKEY *pkey)
@@ -673,7 +661,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
-    ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys) * 2);
+    ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
     custom_pmeth = EVP_PKEY_meth_new(0xdefaced, 0);
     if (!TEST_ptr(custom_pmeth))
         return 0;
