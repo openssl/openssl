@@ -510,7 +510,7 @@ static int test_set_get_raw_keys_int(int tst, int pub)
     int ret = 0;
     unsigned char buf[80];
     unsigned char *in;
-    size_t inlen, len;
+    size_t inlen, len = 0;
     EVP_PKEY *pkey;
 
     /* Check if this algorithm supports public keys */
