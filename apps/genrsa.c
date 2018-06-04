@@ -125,8 +125,8 @@ opthelp:
             goto end;
         if (num > OPENSSL_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
-                       "# Warning: It is not recommended to use more than %d bit for RSA keys.      #\n"
-                       "#          Your key size is %d! Larger key size may behave not as expected. #\n",
+                       "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
+                       "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_RSA_MAX_MODULUS_BITS, num);
     } else if (argc > 0) {
         BIO_printf(bio_err, "Extra arguments given.\n");

@@ -519,14 +519,14 @@ int req_main(int argc, char **argv)
 
         if (pkey_type == EVP_PKEY_RSA && newkey > OPENSSL_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
-                       "# Warning: It is not recommended to use more than %d bit for RSA keys.      #\n"
-                       "#          Your key size is %ld! Larger key size may behave not as expected. #\n",
+                       "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
+                       "         Your key size is %ld! Larger key size may behave not as expected.\n",
                        OPENSSL_RSA_MAX_MODULUS_BITS, newkey);
 
         if (pkey_type == EVP_PKEY_DSA && newkey > OPENSSL_DSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
-                       "# Warning: It is not recommended to use more than %d bit for DSA keys.      #\n"
-                       "#          Your key size is %d! Larger key size may behave not as expected. #\n",
+                       "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
+                       "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, newkey);
 
         if (genctx == NULL) {
