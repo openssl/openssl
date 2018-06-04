@@ -366,7 +366,7 @@ static int ecx_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
 
     if (key == NULL
             || key->privkey == NULL
-            || *len < KEYLENID(pkey->ameth->pkey_id))
+            || *len < (size_t)KEYLENID(pkey->ameth->pkey_id))
         return 0;
 
     *len = KEYLENID(pkey->ameth->pkey_id);
