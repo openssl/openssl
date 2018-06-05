@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <string.h>
+#include "internal/numbers.h"
 
 int sm2_compute_userid_digest(uint8_t *out,
                               const EVP_MD *digest,
