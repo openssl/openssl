@@ -71,7 +71,7 @@ static uint64_t get_timer_bits(void);
 #   define OSSL_POSIX_TIMER_OKAY
 #  endif
 # endif
-#endif
+#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
 
 int syscall_random(void *buf, size_t buflen);
 
@@ -503,4 +503,4 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif /* OPENSSL_SYS_UNIX || __DJGPP__ */
+#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
