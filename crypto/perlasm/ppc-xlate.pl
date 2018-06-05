@@ -256,6 +256,8 @@ my $vsubudm	= sub { vcrypto_op(@_, 1216); };
 my $vaddcuq	= sub { vcrypto_op(@_, 320);  };
 my $vaddeuqm	= sub { vfour(@_,60); };
 my $vaddecuq	= sub { vfour(@_,61); };
+my $vmrgew	= sub { vfour(@_,0,1932); };
+my $vmrgow	= sub { vfour(@_,0,1676); };
 
 my $mtsle	= sub {
     my ($f, $arg) = @_;
