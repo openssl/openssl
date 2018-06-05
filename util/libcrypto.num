@@ -4563,3 +4563,4 @@ X509_OBJECT_set1_X509                   4514	1_1_0i	EXIST::FUNCTION:
 X509_LOOKUP_meth_get_get_by_issuer_serial 4515	1_1_0i	EXIST::FUNCTION:
 X509_LOOKUP_meth_set_init               4516	1_1_0i	EXIST::FUNCTION:
 X509_OBJECT_set1_X509_CRL               4517	1_1_0i	EXIST::FUNCTION:
+EC_GF2m_lambda_method                   4518	1_1_1	EXIST::FUNCTION:EC,EC2M
