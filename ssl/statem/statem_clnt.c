@@ -2559,6 +2559,8 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     RAW_EXTENSION *exts = NULL;
     PACKET nonce;
 
+    PACKET_null_init(&nonce);
+
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
         || (SSL_IS_TLS13(s)
             && (!PACKET_get_net_4(pkt, &age_add)
