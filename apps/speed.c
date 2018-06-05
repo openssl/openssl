@@ -782,16 +782,14 @@ static int RC4_loop(void *args)
 
 #ifndef OPENSSL_NO_DES
 static unsigned char DES_iv[8];
-static DES_key_schedule sch;
-static DES_key_schedule sch2;
-static DES_key_schedule sch3;
+static DES_key_schedule sch[3];
 static int DES_ncbc_encrypt_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
     int count;
     for (count = 0; COND(c[D_CBC_DES][testnum]); count++)
-        DES_ncbc_encrypt(buf, buf, lengths[testnum], &sch,
+        DES_ncbc_encrypt(buf, buf, lengths[testnum], &sch[0],
                          &DES_iv, DES_ENCRYPT);
     return count;
 }
@@ -803,7 +801,7 @@ static int DES_ede3_cbc_encrypt_loop(void *args)
     int count;
     for (count = 0; COND(c[D_EDE3_DES][testnum]); count++)
         DES_ede3_cbc_encrypt(buf, buf, lengths[testnum],
-                             &sch, &sch2, &sch3, &DES_iv, DES_ENCRYPT);
+                             &sch[0], &sch[1], &sch[2], &DES_iv, DES_ENCRYPT);
     return count;
 }
 #endif
@@ -1538,29 +1536,7 @@ int speed_main(int argc, char **argv)
         0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56
     };
 #ifndef OPENSSL_NO_CAMELLIA
-    static const unsigned char ckey24[24] = {
-        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
-        0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12,
-        0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34
-    };
-    static const unsigned char ckey32[32] = {
-        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0,
-        0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12,
-        0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34,
-        0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34, 0x56
-    };
-    CAMELLIA_KEY camellia_ks1, camellia_ks2, camellia_ks3;
-#endif
-#ifndef OPENSSL_NO_DES
-    static DES_cblock key = {
-        0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0
-    };
-    static DES_cblock key2 = {
-        0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12
-    };
-    static DES_cblock key3 = {
-        0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34
-    };
+    CAMELLIA_KEY camellia_ks[3];
 #endif
 #ifndef OPENSSL_NO_RSA
     static const unsigned int rsa_bits[RSA_NUM] = {
@@ -1642,13 +1618,11 @@ int speed_main(int argc, char **argv)
         /* SM2 */
         {"CurveSM2", NID_sm2, 256}
     };
+    int sm2_doit[SM2_NUM] = { 0 };
 # endif
     int ecdsa_doit[ECDSA_NUM] = { 0 };
     int ecdh_doit[EC_NUM] = { 0 };
     int eddsa_doit[EdDSA_NUM] = { 0 };
-# ifndef OPENSSL_NO_SM2
-    int sm2_doit[SM2_NUM] = { 0 };
-# endif
     OPENSSL_assert(OSSL_NELEM(test_curves) >= EC_NUM);
     OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
 # ifndef OPENSSL_NO_SM2
@@ -2016,41 +1990,57 @@ int speed_main(int argc, char **argv)
     }
 #endif
 #ifndef OPENSSL_NO_DES
-    DES_set_key_unchecked(&key, &sch);
-    DES_set_key_unchecked(&key2, &sch2);
-    DES_set_key_unchecked(&key3, &sch3);
+    if (doit[D_CBC_DES] || doit[D_EDE3_DES]) {
+        static DES_cblock keys[] = {
+            { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0 }, /* keys[0] */
+            { 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12 }, /* keys[1] */
+            { 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x12, 0x34 }  /* keys[3] */
+        };
+        DES_set_key_unchecked(&keys[0], &sch[0]);
+        DES_set_key_unchecked(&keys[1], &sch[1]);
+        DES_set_key_unchecked(&keys[2], &sch[2]);
+    }
 #endif
     AES_set_encrypt_key(key16, 128, &aes_ks1);
     AES_set_encrypt_key(key24, 192, &aes_ks2);
     AES_set_encrypt_key(key32, 256, &aes_ks3);
 #ifndef OPENSSL_NO_CAMELLIA
-    Camellia_set_key(key16, 128, &camellia_ks1);
-    Camellia_set_key(ckey24, 192, &camellia_ks2);
-    Camellia_set_key(ckey32, 256, &camellia_ks3);
-#endif
-#ifndef OPENSSL_NO_IDEA
-    IDEA_set_encrypt_key(key16, &idea_ks);
-#endif
-#ifndef OPENSSL_NO_SEED
-    SEED_set_key(key16, &seed_ks);
-#endif
-#ifndef OPENSSL_NO_RC4
-    RC4_set_key(&rc4_ks, 16, key16);
-#endif
-#ifndef OPENSSL_NO_RC2
-    RC2_set_key(&rc2_ks, 16, key16, 128);
-#endif
-#ifndef OPENSSL_NO_RC5
-    if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
-        BIO_printf(bio_err, "Failed setting RC5 key\n");
-        goto end;
+    if (doit[D_CBC_128_CML] || doit[D_CBC_192_CML] || doit[D_CBC_256_CML]) {
+        Camellia_set_key(key16, 128, &camellia_ks[0]);
+        Camellia_set_key(key24, 192, &camellia_ks[1]);
+        Camellia_set_key(key32, 256, &camellia_ks[2]);
     }
 #endif
+#ifndef OPENSSL_NO_IDEA
+    if (doit[D_CBC_IDEA])
+        IDEA_set_encrypt_key(key16, &idea_ks);
+#endif
+#ifndef OPENSSL_NO_SEED
+    if (doit[D_CBC_SEED])
+        SEED_set_key(key16, &seed_ks);
+#endif
+#ifndef OPENSSL_NO_RC4
+    if (doit[D_RC4])
+        RC4_set_key(&rc4_ks, 16, key16);
+#endif
+#ifndef OPENSSL_NO_RC2
+    if (doit[D_CBC_RC2])
+        RC2_set_key(&rc2_ks, 16, key16, 128);
+#endif
+#ifndef OPENSSL_NO_RC5
+    if (doit[D_CBC_RC5])
+        if (!RC5_32_set_key(&rc5_ks, 16, key16, 12)) {
+            BIO_printf(bio_err, "Failed setting RC5 key\n");
+            goto end;
+        }
+#endif
 #ifndef OPENSSL_NO_BF
-    BF_set_key(&bf_ks, 16, key16);
+    if (doit[D_CBC_BF])
+        BF_set_key(&bf_ks, 16, key16);
 #endif
 #ifndef OPENSSL_NO_CAST
-    CAST_set_key(&cast_ks, 16, key16);
+    if (doit[D_CBC_CAST]) 
+        CAST_set_key(&cast_ks, 16, key16);
 #endif
 #ifndef SIGALRM
 # ifndef OPENSSL_NO_DES
@@ -2573,7 +2563,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_128_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                     (size_t)lengths[testnum], &camellia_ks1,
+                                     (size_t)lengths[testnum], &camellia_ks[0],
                                      iv, CAMELLIA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_128_CML, testnum, count, d);
@@ -2595,7 +2585,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_192_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                     (size_t)lengths[testnum], &camellia_ks2,
+                                     (size_t)lengths[testnum], &camellia_ks[1],
                                      iv, CAMELLIA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_192_CML, testnum, count, d);
@@ -2613,7 +2603,7 @@ int speed_main(int argc, char **argv)
             Time_F(START);
             for (count = 0, run = 1; COND(c[D_CBC_256_CML][testnum]); count++)
                 Camellia_cbc_encrypt(loopargs[0].buf, loopargs[0].buf,
-                                     (size_t)lengths[testnum], &camellia_ks3,
+                                     (size_t)lengths[testnum], &camellia_ks[2],
                                      iv, CAMELLIA_ENCRYPT);
             d = Time_F(STOP);
             print_result(D_CBC_256_CML, testnum, count, d);
