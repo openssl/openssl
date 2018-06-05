@@ -28,6 +28,7 @@ B<openssl> B<pkcs12>
 [B<-noiter>]
 [B<-maciter | -nomaciter | -nomac>]
 [B<-twopass>]
+[B<-nointerop>]
 [B<-descert>]
 [B<-certpbe cipher>]
 [B<-keypbe cipher>]
@@ -155,6 +156,16 @@ Don't attempt to verify the integrity MAC before reading the file.
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
 PKCS#12 files unreadable.
+
+=item B<-interop>
+
+When creating a PKCS#12 file, the B<openssl pkcs12> command will do
+what it can to ensure that pass phrases are UTF-8 encoded.  If they
+aren't, the default is to generate an error and stop without creating
+the file.  This option makes the error a warning instead, and proceeds
+with creating the file, at the risk of making it non-interoperable,
+which means it isn't safe to try and use the file with other programs
+or with other character sets.
 
 =back
 

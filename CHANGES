@@ -11,7 +11,8 @@
 
   *) Enforce UTF-8 encoding of the pass phrase when exporting to PKCS#12
      objects using 'openssl pkcs12', to ensure that we generate standard
-     compliant objects at all times.
+     compliant objects at all times.  This can be bypassed with the option
+     '-nointerop' (for "not interoperable").
      [Richard Levitte]
 
   *) Enforce checking in the pkeyutl command line app to ensure that the input
