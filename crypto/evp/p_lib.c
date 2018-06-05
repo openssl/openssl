@@ -180,7 +180,6 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 {
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE **eptr = (e == NULL) ? &e :  NULL;
-
     if (pkey) {
         if (pkey->pkey.ptr)
             EVP_PKEY_free_it(pkey);
@@ -210,6 +209,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
         return 0;
     }
+
     if (pkey) {
         pkey->ameth = ameth;
         pkey->engine = e;

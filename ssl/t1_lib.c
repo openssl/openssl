@@ -20,6 +20,7 @@
 #include "internal/nelem.h"
 #include "ssl_locl.h"
 #include <openssl/ct.h>
+#include "ssl_oqs_extra.h"
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
@@ -168,6 +169,25 @@ static const TLS_GROUP_INFO nid_list[] = {
     {EVP_PKEY_X448, 224, TLS_CURVE_CUSTOM}, /* X448 (30) */
 };
 
+    /* OQS groups. The values are arbitraty, since the TLS spec does not specify values
+       for non finite field and elliptic curve "groups".
+     */
+static const TLS_GROUP_INFO oqs_nid_list[] = {
+    {NID_OQS_Frodo, 144 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Frodo (0x0200) */
+    {NID_OQS_SIKE_503, 126 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 503 (0x0201) */
+    {NID_OQS_SIKE_751, 188 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 751 (0x0202) */
+    {NID_OQS_Newhope, 229 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Newhope (0x0203) */
+    {NID_OQS_NTRU, 256 /* classical */, TLS_CURVE_CUSTOM}, /* OQS NTRU (0x0205) */
+};
+    /* Hybrid OQS groups. */
+static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
+    {NID_OQS_p256_Frodo, 128 /* classical, min(p256,frodo) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Frodo hybrid (0x0300) */
+    {NID_OQS_p256_SIKE_503, 126 /* classical, min(p256,sike503) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 503 hybrid (0x0301) */
+    {NID_OQS_p256_SIKE_751, 128 /* classical, min(p256,sike751) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 751 hybrid (0x0302) */
+    {NID_OQS_p256_Newhope, 128 /* classical, min(p256,newhope) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Newhope hybrid (0x0303) */
+    {NID_OQS_p256_NTRU, 128 /* classical, min(p256,ntru) */, TLS_CURVE_CUSTOM}, /* p256 + OQS NTRU hybrid (0x0304) */
+};
+
 static const unsigned char ecformats_default[] = {
     TLSEXT_ECPOINTFORMAT_uncompressed,
     TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime,
@@ -181,6 +201,18 @@ static const uint16_t eccurves_default[] = {
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
+    /* FIXMEOQS: what should the code points be? TLS1.3 only specify DH and EC groups.
+       Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
+    0x0200,                  /* OQS Frodo (0x0200) */
+    0x0201,                  /* OQS Sike503 (0x0201) */
+    0x0202,                  /* OQS Sike751 (0x0202) */
+    0x0203,                  /* OQS Newhope (0x0203) */
+    0x0204,                  /* OQS NTRU (0x0204) */
+    0x0300,                  /* p256 + OQS Frodo hybrid (0x0300) */
+    0x0301,                  /* p256 + OQS Sike503 hybrid (0x0301) */
+    0x0302,                  /* p256 + OQS Sike751 hybrid (0x0302) */
+    0x0303,                  /* p256 + OQS Newhope hybrid (0x0303) */
+    0x0304,                  /* p256 + OQS NTRU hybrid (0x0304) */
 };
 
 static const uint16_t suiteb_curves[] = {
@@ -190,6 +222,14 @@ static const uint16_t suiteb_curves[] = {
 
 const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
+    /* check if it is an OQS group */
+    if (IS_OQS_KEX_CURVEID(group_id)) {
+      return &oqs_nid_list[group_id - 0x0200 /* first oqs value */];
+    }
+    if (IS_OQS_KEX_HYBRID_CURVEID(group_id)) {
+      return &oqs_hybrid_nid_list[group_id - 0x0300 /* first oqs hybrid value */ ];
+    }
+
     /* ECC curves from RFC 4492 and RFC 7027 */
     if (group_id < 1 || group_id > OSSL_NELEM(nid_list))
         return NULL;
@@ -199,6 +239,17 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 static uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
+
+    /* check if it is an OQS group */
+    int oqs_group_id = OQS_KEX_CURVEID(nid);
+    if (oqs_group_id != 0) {
+      return oqs_group_id;
+    }
+    oqs_group_id = OQS_KEX_HYBRID_CURVEID(nid);
+    if (oqs_group_id != 0) {
+      return oqs_group_id;
+    }
+
     for (i = 0; i < OSSL_NELEM(nid_list); i++) {
         if (nid_list[i].nid == nid)
             return (uint16_t)(i + 1);
@@ -392,6 +443,10 @@ static int nid_cb(const char *elem, int len, void *arg)
         nid = OBJ_sn2nid(etmp);
     if (nid == NID_undef)
         nid = OBJ_ln2nid(etmp);
+    /* OQS note: parse oqs algs */
+    if (nid == NID_undef) {
+      nid = OQS_nid_from_string(etmp);
+    }
     if (nid == NID_undef)
         return 0;
     for (i = 0; i < narg->nidcnt; i++)

@@ -33,6 +33,7 @@
 # include "packet_locl.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
+#include <oqs/oqs.h>
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -402,6 +403,71 @@
 #define CERT_PUBLIC_KEY         1
 #define CERT_PRIVATE_KEY        2
 */
+
+/* OQS integration */
+/* NID for OQS algs. Pick values starting way above NUM_NID (defined in obj_dat.h)
+   to avoid conflicts with dynamically registered schemes (we keep things local to
+   avoid modifying the libcrypto layer) */
+#define NID_OQS_START    2000
+#define NID_OQS_Frodo    (NID_OQS_START + 1)
+#define NID_OQS_SIKE_503 (NID_OQS_START + 2)
+#define NID_OQS_SIKE_751 (NID_OQS_START + 3)
+#define NID_OQS_Newhope  (NID_OQS_START + 4)
+#define NID_OQS_NTRU     (NID_OQS_START + 5)
+#define NID_OQS_p256_Frodo    (NID_OQS_START + 6)
+#define NID_OQS_p256_SIKE_503 (NID_OQS_START + 7)
+#define NID_OQS_p256_SIKE_751 (NID_OQS_START + 8)
+#define NID_OQS_p256_Newhope  (NID_OQS_START + 9)
+#define NID_OQS_p256_NTRU     (NID_OQS_START + 10)
+
+/* Returns true if the nid is for an OQS KEX */
+#define IS_OQS_KEX_NID(nid) (nid == NID_OQS_Frodo    ||	\
+			     nid == NID_OQS_SIKE_503 ||	\
+			     nid == NID_OQS_SIKE_751 ||	\
+			     nid == NID_OQS_Newhope  ||	\
+			     nid == NID_OQS_NTRU)
+/* Returns the curve ID for an OQS KEX NID */
+#define OQS_KEX_CURVEID(nid)  (nid == NID_OQS_Frodo    ? 0x0200 : \
+                              (nid == NID_OQS_SIKE_503 ? 0x0201 : \
+			      (nid == NID_OQS_SIKE_751 ? 0x0202 : \
+			      (nid == NID_OQS_Newhope  ? 0x0203 : \
+			      (nid == NID_OQS_NTRU     ? 0x0204 : 0)))))
+#define OQS_KEX_HYBRID_CURVEID(nid)  (nid == NID_OQS_p256_Frodo    ? 0x0300 : \
+				     (nid == NID_OQS_p256_SIKE_503 ? 0x0301 : \
+				     (nid == NID_OQS_p256_SIKE_751 ? 0x0302 : \
+				     (nid == NID_OQS_p256_Newhope  ? 0x0303 : \
+				     (nid == NID_OQS_p256_NTRU     ? 0x0304 : 0)))))
+#define OQS_KEX_NID(curveID)  ((curveID == 0x0200 || curveID == 0x0300) ? NID_OQS_Frodo : \
+			      ((curveID == 0x0201 || curveID == 0x0301) ? NID_OQS_SIKE_503 : \
+			      ((curveID == 0x0202 || curveID == 0x0302) ? NID_OQS_SIKE_751 :	\
+			      ((curveID == 0x0203 || curveID == 0x0303) ? NID_OQS_Newhope :	\
+			      ((curveID == 0x0204 || curveID == 0x0304) ? NID_OQS_NTRU : 0)))))
+/* Returns true if the curve ID is for an OQS KEX */
+#define IS_OQS_KEX_CURVEID(id)	(id == 0x0200 || \
+				 id == 0x0201 || \
+				 id == 0x0202 || \
+				 id == 0x0203 || \
+				 id == 0x0204)
+/* Returns true if the curve ID is for an OQS KEX */
+#define IS_OQS_KEX_HYBRID_CURVEID(id)	(id == 0x0300 || \
+					 id == 0x0301 || \
+					 id == 0x0302 || \
+					 id == 0x0303 || \
+					 id == 0x0304)
+/* Returns the OQS alg ID for OQS API */
+#define OQS_ALG_NAME(nid)   (nid == NID_OQS_Frodo ? OQS_KEX_alg_lwe_frodo : \
+			    (nid == NID_OQS_SIKE_503 ? OQS_KEX_alg_sike_msr_503 : \
+			    (nid == NID_OQS_SIKE_751 ? OQS_KEX_alg_sike_msr_751 : \
+			    (nid == NID_OQS_Newhope ? OQS_KEX_alg_rlwe_newhope : \
+			    (nid == NID_OQS_NTRU ? OQS_KEX_alg_ntru : 0)))))
+/* Returns the parameters ID for an OQS alg */
+#define OQS_NAMED_PARAMETERS(nid) (nid == NID_OQS_Frodo ? "recommended" : NULL)
+/* Returns true if OQS alg needs a seed */
+#define OQS_NEED_SEED(nid) (nid == NID_OQS_Frodo ? 1 : 0)
+/* Returns the size of the seed */
+#define OQS_SEED_LEN(nid) (nid == NID_OQS_Frodo ? 16 : 0)
+/* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */
+#define OQS_KEX_CLASSICAL_CURVEID(curveID) (IS_OQS_KEX_HYBRID_CURVEID(curveID) ? 23 : 0)
 
 /* Post-Handshake Authentication state */
 typedef enum {
@@ -1584,6 +1650,14 @@ typedef struct ssl3_state_st {
          */
         int min_ver;
         int max_ver;
+        /*
+	 * OQS artefacts.
+	 */
+        int oqs_kex_curve_id; /* curve_id of the kex */
+        OQS_RAND* oqs_rand; /* random generator */
+        OQS_KEX* oqs_kex; /* KEX context */
+        int oqs_peer_msg_len; /* save peer message's len */
+        void* oqs_kex_client; /* oqs client private key (in extensions_clnt.c) or message (in extensions_srvr.c) */
     } tmp;
 
     /* Connection binding to prevent renegotiation attacks */
