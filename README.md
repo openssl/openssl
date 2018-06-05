@@ -25,7 +25,7 @@ More information on OQS can be found on our website: [https://openquantumsafe.or
 Contents
 --------
 
-This project integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1, and appear only on the [master branch](https://github.com/open-quantum-safe/openssl/tree/master). For TLS 1.2, see the [OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OpenSSL_1_0_2-stable).
+This project integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1, and appear only on the [master branch](https://github.com/open-quantum-safe/openssl/tree/OQS-master). For TLS 1.2, see the [OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OpenSSL_1_0_2-stable) and [OQS-OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable).
 
 ### Key exchange mechanisms
 
@@ -37,38 +37,38 @@ Building on Linux and macOS
 
 Builds have been tested on macOS 10.13.3 (clang), Ubuntu 14.04.5 (gcc-7).
 
-### Step 1: Build liboqs
-
-First, you must download and build liboqs.  You must use a version of liboqs that uses the old API (this project will be updated once the new KEM API in integrated in liboqs's master branch). 
-
-Follow the instructions there to download and build that branch of liboqs.
-
-### Step 2: Download fork of OpenSSL
+### Step 1: Download fork of OpenSSL
 
 Clone or download the source from Github:
 
-        git clone --branch master https://github.com/open-quantum-safe/openssl.git
-        cd openssl
+    git clone --branch master https://github.com/open-quantum-safe/openssl.git
 
-### Step 3: Install liboqs into OpenSSL directory
+### Step 2: Build liboqs
 
-Go back to the directory where you built liboqs.
+Next, you must download and build liboqs.  You must use a version of liboqs that uses the old liboqs API, such as the liboqs master branch as of May 2018. (This project will be updated once the new KEM API in integrated in liboqs's master branch.( 
 
-        make install PREFIX=<path-to-openssl-dir>/oqs
+Follow the instructions there to download and build that branch of liboqs and install into a subdirectory inside the OpenSSL folder.
+
+    git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+    cd liboqs
+    autoreconf -i
+    ./configure --prefix=<path-to-openssl-dir>/oqs
+    make
+    make install
 
 This will create a directory `oqs` in your newly download OpenSSL directory, with subdirectories `include` and `lib` containing the headers and library files of liboqs.
 
-### Step 4: Build fork of OpenSSL
+### Step 3: Build fork of OpenSSL
 
 Now we follow the standard instructions for building OpenSSL.
 
 To configure OpenSSL, on Linux type:
 
-        ./config
+    ./config
 
 and on macOS type:
 
-        ./Configure darwin64-x86_64-cc
+    ./Configure darwin64-x86_64-cc
 
 Then type:
 
@@ -86,12 +86,13 @@ OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) whi
 To run a server, we first need to generate a self-signed X.509 certificate.  Run the following command:
 
 	apps/openssl req -x509 -new -newkey rsa:2048 -keyout rsa.key -nodes -out rsa.crt -sha256 -days 365 -config apps/openssl.cnf
-
+	
 Hit enter in response to all the prompts to accept the defaults.  
 
-When done, type to combine the key and certificate (as required by `s_server`):
+On macOS, you may need to set an environment variable for the dynamic library path:
 
-	cat server.key server.cer > server.pem
+	DYLD_LIBRARY_PATH=<path-to-openssl>
+	export DYLD_LIBRARY_PATH
 
 To run a basic TLS server with all OQS ciphersuites enabled:
 
@@ -99,7 +100,7 @@ To run a basic TLS server with all OQS ciphersuites enabled:
 
 In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<OQSALG> = newhope, frodo, sike503, sike751, ntru) or the hybrid ciphersuites ("p256-<OQSALG>", only the NIST p256 curve is supported for now), for example:
 
-        apps/openssl s_client -curves p256-frodo -connect localhost:4433
+    apps/openssl s_client -curves p256-frodo -connect localhost:4433
 
 License
 -------
