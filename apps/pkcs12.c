@@ -455,21 +455,28 @@ int pkcs12_main(int argc, char **argv)
         if (!twopass)
             OPENSSL_strlcpy(macpass, pass, sizeof(macpass));
 
-        cpass_utf8 = to_utf8(cpass);
-        if (cpass_utf8 == NULL) {
-            BIO_printf(bio_err,
-                       "Export password couldn't be converted to UTF-8\n");
-            goto export_end;
-        }
-        if (twopass) {
-            mpass_utf8 = to_utf8(mpass);
-            if (mpass_utf8 == NULL) {
+        if (!is_asciistr(cpass)) {
+            if ((cpass_utf8 = to_utf8(cpass)) != NULL) {
+                cpass = cpass_utf8;
+            } else {
                 BIO_printf(bio_err,
-                           "MAC password couldn't be converted to UTF-8\n");
+                           "Export password couldn't be converted to UTF-8\n");
                 goto export_end;
             }
+        }
+        if (twopass) {
+            if (!is_asciistr(mpass)) {
+                if ((mpass_utf8 = to_utf8(mpass)) != NULL) {
+                    mpass = mpass_utf8;
+                } else {
+                    BIO_printf(bio_err,
+                               "MAC password couldn't be converted to UTF-8\n");
+                    goto export_end;
+                }
+            }
         } else {
-            mpass_utf8 = cpass_utf8;
+            /* 'cause cpass may have changed above */
+            mpass = cpass;
         }
 
         p12 = PKCS12_create(cpass, name, key, ucert, certs,
