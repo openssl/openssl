@@ -272,16 +272,19 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 {
     unsigned char *c;
     const char *data = _data;
+    size_t new_len = 0;
 
     if (len < 0) {
         if (data == NULL)
             return 0;
         else
-            len = strlen(data);
+            new_len = strlen(data);
     }
 
-    if ( len < 0)
+    if ( new_len > INT_MAX)
         return 0;
+    else
+        len = (int)new_len;
 
     if ((str->length <= len) || (str->data == NULL)) {
         c = str->data;
