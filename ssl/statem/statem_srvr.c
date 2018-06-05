@@ -3761,7 +3761,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
-        size_t i, nonce, hashlen;
+        size_t i, hashlen;
+        uint64_t nonce;
         const char nonce_label[] = "resumption";
         const EVP_MD *md = ssl_handshake_md(s);
         void (*cb) (const SSL *ssl, int type, int val) = NULL;

@@ -1423,7 +1423,7 @@ struct ssl_st {
     /* The number of TLS1.3 tickets actually sent so far */
     size_t sent_tickets;
     /* The next nonce value to use when we send a ticket on this connection */
-    size_t next_ticket_nonce;
+    uint64_t next_ticket_nonce;
 };
 
 /*
