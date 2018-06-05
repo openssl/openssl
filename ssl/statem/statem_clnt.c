@@ -2562,9 +2562,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
         || (SSL_IS_TLS13(s)
             && (!PACKET_get_net_4(pkt, &age_add)
-                || !PACKET_get_length_prefixed_1(pkt, &nonce)
-                || !PACKET_memdup(&nonce, &s->session->ext.tick_nonce,
-                                  &s->session->ext.tick_nonce_len)))
+                || !PACKET_get_length_prefixed_1(pkt, &nonce)))
         || !PACKET_get_net_2(pkt, &ticklen)
         || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
         || (SSL_IS_TLS13(s)
@@ -2692,8 +2690,8 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
                                (const unsigned char *)nonce_label,
                                sizeof(nonce_label) - 1,
-                               s->session->ext.tick_nonce,
-                               s->session->ext.tick_nonce_len,
+                               PACKET_data(&nonce),
+                               PACKET_remaining(&nonce),
                                s->session->master_key,
                                hashlen)) {
             /* SSLfatal() already called */

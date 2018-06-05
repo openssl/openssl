@@ -3753,6 +3753,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
     int iv_len;
+    unsigned char tick_nonce[TICKET_NONCE_SIZE];
     size_t macoffset, macendoffset;
     union {
         unsigned char age_add_c[sizeof(uint32_t)];
@@ -3822,26 +3823,18 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         }
         s->session->ext.tick_age_add = age_add_u.age_add;
 
-        OPENSSL_free(s->session->ext.tick_nonce);
-        s->session->ext.tick_nonce = OPENSSL_zalloc(TICKET_NONCE_SIZE);
-        if (s->session->ext.tick_nonce == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
-                     ERR_R_MALLOC_FAILURE);
-            goto err;
-        }
         nonce = s->next_ticket_nonce;
+        memset(tick_nonce, 0, TICKET_NONCE_SIZE);
         for (i = TICKET_NONCE_SIZE; nonce > 0 && i > 0; i--) {
-            s->session->ext.tick_nonce[i - 1] = nonce & 0xff;
+            tick_nonce[i - 1] = nonce & 0xff;
             nonce >>= 8;
         }
-        s->session->ext.tick_nonce_len = TICKET_NONCE_SIZE;
 
         if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
                                (const unsigned char *)nonce_label,
                                sizeof(nonce_label) - 1,
-                               s->session->ext.tick_nonce,
-                               s->session->ext.tick_nonce_len,
+                               tick_nonce,
+                               TICKET_NONCE_SIZE,
                                s->session->master_key,
                                hashlen)) {
             /* SSLfatal() already called */
@@ -3991,8 +3984,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                                ? 0 : s->session->timeout)
             || (SSL_IS_TLS13(s)
                 && (!WPACKET_put_bytes_u32(pkt, age_add_u.age_add)
-                    || !WPACKET_sub_memcpy_u8(pkt, s->session->ext.tick_nonce,
-                                              s->session->ext.tick_nonce_len)))
+                    || !WPACKET_sub_memcpy_u8(pkt, tick_nonce,
+                                              TICKET_NONCE_SIZE)))
                /* Now the actual ticket data */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &macoffset)
