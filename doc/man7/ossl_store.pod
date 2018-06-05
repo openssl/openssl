@@ -33,6 +33,51 @@ dynamically from the calling application or from a loadable engine.
 Support for the 'file' scheme is built into C<libcrypto>.
 See L<ossl_store-file(7)> for more information.
 
+Pass phrases received through the B<UI_METHOD> that was passed through
+OSSL_STORE_open() are used as is for most object types.  However,
+where pass phrases for PKCS#12 objects contain non-ASCII characters,
+careful consideration is required.  The 'file' scheme loader will
+attempt to decrypt the object by interpreting the provided passphrase
+in three encodings.  Each of these three encodings may be required in
+order to decrypt files generated with different versions of OpenSSL or
+other software:
+
+=over 4
+
+=item -
+
+UTF-8.
+
+=item -
+
+ISO8859-1.
+
+=item -
+
+The character encoding corresponding to C<LC_CTYPE> on a POSIX
+compatible system, or C<CP_ACP> on Windows.
+
+=back
+
+The above interpretations are designed to achieve compatibility with
+current and older versions of OpenSSL when the passphrase provided by
+the B<UI_METHOD> is in the native (i.e. C<LC_CTYPE>/C<CP_ACP>)
+encoding.  If the B<UI_METHOD> returns a passphrase encoded in UTF-8
+where the native encoding is not ISO-8859-1 or UTF-8, that will
+suffice to decrypt correctly generated PKCS#12 objects but may not
+work for objects created by OpenSSL.
+
+On POSIX systems, setting C<LC_CTYPE> correctly requires explicit
+action from the application.  The most usual method is to call
+setlocale() as follows as part of program startup:
+
+    setlocale(LC_CTYPE, "");
+
+When operating in a locale which uses neither UTF-8 nor ISO8859-1
+(each of which is attempted anyway), setting C<LC_CTYPE> correctly may
+be necessary in order to decrypt PKCS#12 objects created by compliant
+software.
+
 =head1 EXAMPLES
 
 =head2 A generic call

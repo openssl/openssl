@@ -168,6 +168,7 @@ typedef struct err_state_st {
 # define SYS_F_STAT              22
 # define SYS_F_FCNTL             23
 # define SYS_F_FSTAT             24
+# define SYS_F_MBSTOWCS          25
 
 /* reasons */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */

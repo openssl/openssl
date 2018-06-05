@@ -91,6 +91,7 @@ static ERR_STRING_DATA ERR_str_functs[] = {
     {ERR_PACK(0, SYS_F_STAT, 0), "stat"},
     {ERR_PACK(0, SYS_F_FCNTL, 0), "fcntl"},
     {ERR_PACK(0, SYS_F_FSTAT, 0), "fstat"},
+    {ERR_PACK(0, SYS_F_MBSTOWCS, 0), "mbstowcs"},
     {0, NULL},
 };
 

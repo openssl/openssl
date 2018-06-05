@@ -9,6 +9,7 @@
 
 #include "e_os.h"
 #include <string.h>
+#include <stdlib.h>
 #include <sys/stat.h>
 #include <ctype.h>
 #include <assert.h>
@@ -209,11 +210,16 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
             return NULL;
 
         if ((p12 = d2i_PKCS12(NULL, &blob, len)) != NULL) {
-            char *pass = NULL;
-            char tpass[PEM_BUFSIZE];
+            unsigned char tpass[PEM_BUFSIZE];
+            char *pass = NULL, *tofree = NULL;
             EVP_PKEY *pkey = NULL;
             X509 *cert = NULL;
             STACK_OF(X509) *chain = NULL;
+
+#ifdef OPENSSL_DEBUG_KEYGEN
+            /* Defined in p12_key.c */
+            void h__dump(unsigned char *p, int len);
+#endif
 
             *matchcount = 1;
 
@@ -221,20 +227,164 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                 || PKCS12_verify_mac(p12, NULL, 0)) {
                 pass = "";
             } else {
-                if ((pass = file_get_pass(ui_method, tpass, PEM_BUFSIZE,
-                                          "PKCS12 import password",
-                                          ui_data)) == NULL) {
+                if (file_get_pass(ui_method, (char *)tpass, PEM_BUFSIZE,
+                                  "PKCS12 import password",
+                                  ui_data) == NULL) {
                     OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS12,
                                   OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR);
                     goto p12_end;
                 }
-                if (!PKCS12_verify_mac(p12, pass, strlen(pass))) {
-                    OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS12,
-                                  OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC);
-                    goto p12_end;
+
+                /*
+                 * OpenSSL <1.1.0 does a naïve ISO-8859-1 to UCS-2 conversion
+                 * (i.e. treats all input characters as if they were ISO-8859-1
+                 * encoded and just zero extends them to 16 bits each) of the
+                 * pass phrase when encoding it to BMPString (and decoding).
+                 *
+                 * OpenSSL >=1.1.0 attempts a naïve UTF-8 decode (i.e. without
+                 * checking if the application locale indicates UTF-8 encoded
+                 * input) to BMPString of the pass phrase, and failing that, it
+                 * falls back on the OpenSSL <1.1.0 behaviour.
+                 *
+                 * The correct thing to do for PKCS#12 would be to convert the
+                 * pass phrase from the application's locale to a wide character
+                 * string (and hope this takes care of any normalization), and
+                 * and then simply recode that to BMPString.  That's not what
+                 * OpenSSL's PKCS#12 routines do today, though.
+                 *
+                 * We need to cater for all these possible encodings, so we
+                 * create three variants of the pass phrase:
+                 */
+
+                /*
+                 * Check variant 1: use what we get as is.
+                 * It may be perfectly legitimate UTF-8, which will be decoded
+                 * correctly, and it may be perfectly legitimate ISO-8859-1 or
+                 * ASCII, which will be correctly encded by the <1.1.0 fallback
+                 * in the majority of cases.
+                 */
+                pass = (char *)tpass;
+#ifdef OPENSSL_DEBUG_KEYGEN
+                fprintf(stderr, "Trying password as is:\n");
+                h__dump((unsigned char *)pass, strlen(pass));
+#endif
+                if (PKCS12_verify_mac(p12, pass, strlen(pass)))
+                    goto p12_parse;
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199409L \
+    || defined(_WIN32)
+                /*
+                 * Check variant 2: locale to UTF-8 translation
+                 * Convert the pass phrase from the current application locale
+                 * via wide chars to UTF-8.  This should ensure that we can
+                 * read containers protected with correctly encoded pass
+                 * phrases (i.e. PKCS#12 files from other softwares as well)
+                 */
+                {
+                    wchar_t wpass[PEM_BUFSIZE];
+                    size_t wpass_len;
+                    unsigned char *pass_utf8 = NULL;
+                    size_t utf8_count, i, j;
+
+# ifdef _WIN32
+                    wpass_len = MultiByteToWideChar(CP_ACP,
+                                                    MB_ERR_INVALID_CHARS
+                                                    | MB_PRECOMPOSED,
+                                                    (char *)tpass, -1, wpass,
+                                                    OSSL_NELEM(wpass));
+                    if (wpass_len == 0)
+                        wpass_len = (size_t)-1; /* Simulate mbstowcs errcode */
+# else
+                    wpass_len = mbstowcs(wpass, (char *)tpass,
+                                         OSSL_NELEM(wpass));
+# endif
+                    if (wpass_len == (size_t) -1) {
+                        SYSerr(SYS_F_MBSTOWCS, get_last_sys_error());
+                        goto p12_variant2_end;
+                    }
+
+                    /*
+                     * We use our own rather than iconv for two reasons:
+                     * 1. We're not sure iconv is available "everywhere"
+                     * 2. We assume that any normalization is done by
+                     *    mbstowcs() and that a naïve conversion to UTF8
+                     *    is therefore harmless.
+                     */
+                    utf8_count = 0;
+                    for (i = 0; i < wpass_len; i++)
+                        utf8_count += UTF8_putc(NULL, 0, wpass[i]);
+
+                    if ((pass_utf8 = OPENSSL_malloc(utf8_count + 1)) == NULL) {
+                        OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS12,
+                                      ERR_R_MALLOC_FAILURE);
+                        goto p12_end;
+                    }
+
+                    for (i = 0, j = 0; i < wpass_len; i++)
+                        j += UTF8_putc(&pass_utf8[j], utf8_count - j, wpass[i]);
+                    pass_utf8[j] = '\0';
+
+                    tofree = pass = (char *)pass_utf8;
+#ifdef OPENSSL_DEBUG_KEYGEN
+                    fprintf(stderr, "Trying password converted from locale to UTF-8:\n");
+                    h__dump((unsigned char *)pass, strlen(pass));
+#endif
+                    if (PKCS12_verify_mac(p12, pass, strlen(pass)))
+                        goto p12_parse;
+
+                    OPENSSL_clear_free(pass_utf8, utf8_count);
+                 p12_variant2_end:
+                    tofree = pass = NULL;
                 }
+#endif
+                /*
+                 * Check variant 3: Naïve ISO-8859-1 to UTF-8 translation
+                 * This ensures that a byte sequence that was given to OpenSSL
+                 * <1.1.0 will be given to the PKCS#12 in such a manner that it
+                 * will be converted to the exact same BMPString.  This covers
+                 * the corner case when the pass phrase byte sequence might
+                 * otherwise be mistaken for a legitimate UTF-8 string.
+                 */
+                {
+                    size_t utf8_count, i, j;
+                    size_t tpass_len = strlen((char *)tpass);
+                    unsigned char *pass_utf8_naive = NULL;
+
+                    utf8_count = 0;
+                    for (i = 0; i < tpass_len; i++)
+                        utf8_count += UTF8_putc(NULL, 0, tpass[i]);
+
+                    if ((pass_utf8_naive =
+                         OPENSSL_malloc(utf8_count + 1)) == NULL) {
+                        OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS12,
+                                      ERR_R_MALLOC_FAILURE);
+                        goto p12_end;
+                    }
+
+                    for (i = 0, j = 0; i < tpass_len; i++)
+                        j += UTF8_putc(&pass_utf8_naive[j], utf8_count - j,
+                                       tpass[i]);
+                    pass_utf8_naive[j] = '\0';
+
+                    tofree = pass = (char *)pass_utf8_naive;
+#ifdef OPENSSL_DEBUG_KEYGEN
+                    fprintf(stderr, "Trying password naïvely converted ISO-8859-1 to UTF-8:\n");
+                    h__dump((unsigned char *)pass, strlen(pass));
+#endif
+                    if (PKCS12_verify_mac(p12, pass, strlen(pass)))
+                        goto p12_parse;
+
+                    OPENSSL_clear_free(pass_utf8_naive, utf8_count);
+                    tofree = pass = NULL;
+                }
+
+                OPENSSL_cleanse(tpass, sizeof(tpass));
+                OSSL_STOREerr(OSSL_STORE_F_TRY_DECODE_PKCS12,
+                              OSSL_STORE_R_ERROR_VERIFYING_PKCS12_MAC);
+                goto p12_end;
             }
 
+         p12_parse:
             if (PKCS12_parse(p12, pass, &pkey, &cert, &chain)) {
                 OSSL_STORE_INFO *osi_pkey = NULL;
                 OSSL_STORE_INFO *osi_cert = NULL;
@@ -273,6 +423,8 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                 }
                 *pctx = ctx;
             }
+            OPENSSL_cleanse(pass, strlen(pass));
+            OPENSSL_free(tofree);
         }
      p12_end:
         PKCS12_free(p12);
