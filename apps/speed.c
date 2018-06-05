@@ -1473,6 +1473,9 @@ static int run_benchmark(int async_jobs,
     return error ? -1 : total_op_count;
 }
 
+#define stop_it(do_it, test_num)\
+    memset(do_it + test_num, 0, OSSL_NELEM(do_it) - test_num);
+
 int speed_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
@@ -1483,11 +1486,11 @@ int speed_main(int argc, char **argv)
     double d = 0.0;
     OPTION_CHOICE o;
     int async_init = 0, multiblock = 0, pr_header = 0;
-    int doit[ALGOR_NUM] = { 0 };
+    uint8_t doit[ALGOR_NUM] = { 0 };
     int ret = 1, misalign = 0, lengths_single = 0, aead = 0;
     long count = 0;
     unsigned int size_num = OSSL_NELEM(lengths_list);
-    unsigned int i, k, loop, loopargs_len = 0, async_jobs = 0;
+    unsigned int i, k, loopargs_len = 0, async_jobs = 0;
     int keylen;
     int buflen;
 #ifndef NO_FORK
@@ -1551,12 +1554,12 @@ int speed_main(int argc, char **argv)
         sizeof(test4096), sizeof(test7680),
         sizeof(test15360)
     };
-    int rsa_doit[RSA_NUM] = { 0 };
+    uint8_t rsa_doit[RSA_NUM] = { 0 };
     int primes = RSA_DEFAULT_PRIME_NUM;
 #endif
 #ifndef OPENSSL_NO_DSA
     static const unsigned int dsa_bits[DSA_NUM] = { 512, 1024, 2048 };
-    int dsa_doit[DSA_NUM] = { 0 };
+    uint8_t dsa_doit[DSA_NUM] = { 0 };
 #endif
 #ifndef OPENSSL_NO_EC
     /*
@@ -1618,11 +1621,11 @@ int speed_main(int argc, char **argv)
         /* SM2 */
         {"CurveSM2", NID_sm2, 256}
     };
-    int sm2_doit[SM2_NUM] = { 0 };
+    uint8_t sm2_doit[SM2_NUM] = { 0 };
 # endif
-    int ecdsa_doit[ECDSA_NUM] = { 0 };
-    int ecdh_doit[EC_NUM] = { 0 };
-    int eddsa_doit[EdDSA_NUM] = { 0 };
+    uint8_t ecdsa_doit[ECDSA_NUM] = { 0 };
+    uint8_t ecdh_doit[EC_NUM] = { 0 };
+    uint8_t eddsa_doit[EdDSA_NUM] = { 0 };
     OPENSSL_assert(OSSL_NELEM(test_curves) >= EC_NUM);
     OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
 # ifndef OPENSSL_NO_SM2
@@ -1758,95 +1761,101 @@ int speed_main(int argc, char **argv)
 
     /* Remaining arguments are algorithms. */
     for (; *argv; argv++) {
-        if (found(*argv, doit_choices, &i)) {
+        const char *algo = *argv;
+
+        if (found(algo, doit_choices, &i)) {
             doit[i] = 1;
             continue;
         }
 #ifndef OPENSSL_NO_DES
-        if (strcmp(*argv, "des") == 0) {
+        if (strcmp(algo, "des") == 0) {
             doit[D_CBC_DES] = doit[D_EDE3_DES] = 1;
             continue;
         }
 #endif
-        if (strcmp(*argv, "sha") == 0) {
+        if (strcmp(algo, "sha") == 0) {
             doit[D_SHA1] = doit[D_SHA256] = doit[D_SHA512] = 1;
             continue;
         }
 #ifndef OPENSSL_NO_RSA
-        if (strcmp(*argv, "openssl") == 0)
+        if (strcmp(algo, "openssl") == 0) /* just for compatibility */
             continue;
-        if (strcmp(*argv, "rsa") == 0) {
-            for (loop = 0; loop < OSSL_NELEM(rsa_doit); loop++)
-                rsa_doit[loop] = 1;
-            continue;
-        }
-        if (found(*argv, rsa_choices, &i)) {
-            rsa_doit[i] = 1;
-            continue;
+        if (strncmp(algo, "rsa", 3) == 0) {
+            if (algo[3] == '\0') {
+                memset(rsa_doit, 1, sizeof(rsa_doit));
+                continue;
+            }
+            if (found(algo, rsa_choices, &i)) {
+                rsa_doit[i] = 1;
+                continue;
+            }
         }
 #endif
 #ifndef OPENSSL_NO_DSA
-        if (strcmp(*argv, "dsa") == 0) {
-            dsa_doit[R_DSA_512] = dsa_doit[R_DSA_1024] =
-                dsa_doit[R_DSA_2048] = 1;
-            continue;
-        }
-        if (found(*argv, dsa_choices, &i)) {
-            dsa_doit[i] = 2;
-            continue;
+        if (strncmp(algo, "dsa", 3) == 0) {
+            if (algo[3] == '\0') {
+                memset(dsa_doit, 1, sizeof(dsa_doit));
+                continue;
+            }
+            if (found(algo, dsa_choices, &i)) {
+                dsa_doit[i] = 2;
+                continue;
+            }
         }
 #endif
-        if (strcmp(*argv, "aes") == 0) {
+        if (strcmp(algo, "aes") == 0) {
             doit[D_CBC_128_AES] = doit[D_CBC_192_AES] = doit[D_CBC_256_AES] = 1;
             continue;
         }
 #ifndef OPENSSL_NO_CAMELLIA
-        if (strcmp(*argv, "camellia") == 0) {
+        if (strcmp(algo, "camellia") == 0) {
             doit[D_CBC_128_CML] = doit[D_CBC_192_CML] = doit[D_CBC_256_CML] = 1;
             continue;
         }
 #endif
 #ifndef OPENSSL_NO_EC
-        if (strcmp(*argv, "ecdsa") == 0) {
-            for (loop = 0; loop < OSSL_NELEM(ecdsa_doit); loop++)
-                ecdsa_doit[loop] = 1;
-            continue;
+        if (strncmp(algo, "ecdsa", 5) == 0) {
+            if (algo[5] == '\0') {
+                memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
+                continue;
+            }
+            if (found(algo, ecdsa_choices, &i)) {
+                ecdsa_doit[i] = 2;
+                continue;
+            }
         }
-        if (found(*argv, ecdsa_choices, &i)) {
-            ecdsa_doit[i] = 2;
-            continue;
+        if (strncmp(algo, "ecdh", 4) == 0) {
+            if (algo[4] == '\0') {
+                memset(ecdh_doit, 1, sizeof(ecdh_doit));
+                continue;
+            }
+            if (found(algo, ecdh_choices, &i)) {
+                ecdh_doit[i] = 2;
+                continue;
+            }
         }
-        if (strcmp(*argv, "ecdh") == 0) {
-            for (loop = 0; loop < OSSL_NELEM(ecdh_doit); loop++)
-                ecdh_doit[loop] = 1;
-            continue;
-        }
-        if (found(*argv, ecdh_choices, &i)) {
-            ecdh_doit[i] = 2;
-            continue;
-        }
-        if (strcmp(*argv, "eddsa") == 0) {
-            for (loop = 0; loop < OSSL_NELEM(eddsa_doit); loop++)
-                eddsa_doit[loop] = 1;
-            continue;
-        }
-        if (found(*argv, eddsa_choices, &i)) {
-            eddsa_doit[i] = 2;
-            continue;
+        if (strncmp(algo, "ed", 2) == 0) {
+            if (strcmp(algo, "eddsa") == 0) {
+                memset(eddsa_doit, 1, sizeof(eddsa_doit));
+                continue;
+            }
+            if (found(algo, eddsa_choices, &i)) {
+                eddsa_doit[i] = 2;
+                continue;
+            }
         }
 # ifndef OPENSSL_NO_SM2
-        if (strcmp(*argv, "sm2") == 0) {
-            for (loop = 0; loop < OSSL_NELEM(sm2_doit); loop++)
-                sm2_doit[loop] = 1;
+        if (strcmp(algo, "sm2") == 0) {
+            memset(sm2_doit, 1, sizeof(sm2_doit));
             continue;
         }
-        if (found(*argv, sm2_choices, &i)) {
+        if (found(algo, sm2_choices, &i)) {
             sm2_doit[i] = 2;
             continue;
         }
 # endif
 #endif
-        BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, *argv);
+        BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, algo);
         goto end;
     }
 
@@ -1929,27 +1938,20 @@ int speed_main(int argc, char **argv)
 
     /* No parameters; turn on everything. */
     if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC] && !doit[D_EVP_CMAC]) {
-        for (i = 0; i < ALGOR_NUM; i++)
-            if (i != D_EVP && i != D_EVP_HMAC && i != D_EVP_CMAC)
-                doit[i] = 1;
+        memset(doit, 1, sizeof(doit));
+        doit[D_EVP] = doit[D_EVP_HMAC] = doit[D_EVP_CMAC] = 0;
 #ifndef OPENSSL_NO_RSA
-        for (i = 0; i < RSA_NUM; i++)
-            rsa_doit[i] = 1;
+        memset(rsa_doit, 1, sizeof(rsa_doit));
 #endif
 #ifndef OPENSSL_NO_DSA
-        for (i = 0; i < DSA_NUM; i++)
-            dsa_doit[i] = 1;
+        memset(dsa_doit, 1, sizeof(dsa_doit));
 #endif
 #ifndef OPENSSL_NO_EC
-        for (loop = 0; loop < OSSL_NELEM(ecdsa_doit); loop++)
-            ecdsa_doit[loop] = 1;
-        for (loop = 0; loop < OSSL_NELEM(ecdh_doit); loop++)
-            ecdh_doit[loop] = 1;
-        for (loop = 0; loop < OSSL_NELEM(eddsa_doit); loop++)
-            eddsa_doit[loop] = 1;
+        memset(ecdsa_doit, 1, sizeof(ecdsa_doit));
+        memset(ecdh_doit, 1, sizeof(ecdh_doit));
+        memset(eddsa_doit, 1, sizeof(eddsa_doit));
 # ifndef OPENSSL_NO_SM2
-        for (loop = 0; loop < OSSL_NELEM(sm2_doit); loop++)
-            sm2_doit[loop] = 1;
+        memset(sm2_doit, 1, sizeof(sm2_doit));
 # endif
 #endif
     }
@@ -2966,8 +2968,7 @@ int speed_main(int argc, char **argv)
 
         if (rsa_count <= 1) {
             /* if longer than 10s, don't do any more */
-            for (testnum++; testnum < RSA_NUM; testnum++)
-                rsa_doit[testnum] = 0;
+            stop_it(rsa_doit, testnum);
         }
     }
 #endif                          /* OPENSSL_NO_RSA */
@@ -3037,8 +3038,7 @@ int speed_main(int argc, char **argv)
 
         if (rsa_count <= 1) {
             /* if longer than 10s, don't do any more */
-            for (testnum++; testnum < DSA_NUM; testnum++)
-                dsa_doit[testnum] = 0;
+            stop_it(dsa_doit, testnum);
         }
     }
 #endif                          /* OPENSSL_NO_DSA */
@@ -3122,8 +3122,7 @@ int speed_main(int argc, char **argv)
 
             if (rsa_count <= 1) {
                 /* if longer than 10s, don't do any more */
-                for (testnum++; testnum < ECDSA_NUM; testnum++)
-                    ecdsa_doit[testnum] = 0;
+                stop_it(ecdsa_doit, testnum);
             }
         }
     }
@@ -3283,8 +3282,7 @@ int speed_main(int argc, char **argv)
 
         if (rsa_count <= 1) {
             /* if longer than 10s, don't do any more */
-            for (testnum++; testnum < OSSL_NELEM(ecdh_doit); testnum++)
-                ecdh_doit[testnum] = 0;
+            stop_it(ecdh_doit, testnum);
         }
     }
 
@@ -3386,8 +3384,7 @@ int speed_main(int argc, char **argv)
 
             if (rsa_count <= 1) {
                 /* if longer than 10s, don't do any more */
-                for (testnum++; testnum < EdDSA_NUM; testnum++)
-                    eddsa_doit[testnum] = 0;
+                stop_it(eddsa_doit, testnum);
             }
         }
     }
