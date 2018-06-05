@@ -27,7 +27,8 @@
 #if defined(__OpenBSD__) || defined(__NetBSD__)
 # include <sys/param.h>
 #endif
-#ifdef OPENSSL_SYS_UNIX
+
+#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 # include <sys/types.h>
 # include <unistd.h>
 # include <sys/time.h>
@@ -382,7 +383,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#ifdef OPENSSL_SYS_UNIX
+#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
@@ -502,4 +503,4 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif
+#endif /* OPENSSL_SYS_UNIX || __DJGPP__ */
