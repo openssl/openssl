@@ -80,13 +80,11 @@ than 1.1.0 was misinterpreted as ISO-8859-1 sequences.
 
 L<ossl_store(7)> acts as a general interface to access all kinds of objects,
 potentially protected with a pass phrase, a PIN or something else.
-This API currently doesn't stipulate any specific encoding of pass phrases, but
-uses the underlying routines with their behaviours.
-This means that when using the built-in C<file:> scheme loader, the pass phrase
-to unlock a PKCS#12 file will be treated as described for PKCS#12 above, and
-the pass phrase for a PEM files will be treated as the general case described
-above, since that loader uses the same underlying routines.
-I<Note that other loaders will have their own behaviours>.
+This API stipulates that pass phrases should be UTF-8 encoded, and that any
+other pass phrase encoding may give undefined results.
+This API relies on the application to ensure UTF-8 encoding, and doesn't check
+that this is the case, so what it gets, it will also pass to the underlying
+loader.
 
 =head1 RECOMMENDATIONS
 
