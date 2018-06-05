@@ -277,7 +277,11 @@ LIB_CXXFLAGS={- join(' ', $target{lib_cxxflags} || (),
 LIB_LDFLAGS={- join(' ', $target{shared_ldflag} || (),
                          $config{shared_ldflag} || (),
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
-LIB_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+LIB_EX_LIBS={- join(' ', $target{lib_ex_libs} || (),
+                         $target{shared_ex_libs} || (),
+                         @{$config{lib_ex_libs}},
+                         @{$config{shared_ex_libs}},
+                         '$(CNF_EX_LIBS)', '$(EX_LIBS)') -}
 DSO_CPPFLAGS={- join(' ', $target{dso_cppflags} || (),
                           $target{module_cppflags} || (),
                           @{$config{dso_cppflags}},
@@ -298,7 +302,11 @@ DSO_LDFLAGS={- join(' ', $target{dso_ldflags} || (),
                          @{$config{dso_ldflags}},
                          @{$config{module_ldflags}},
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
-DSO_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+DSO_EX_LIBS={- join(' ', $target{dso_ex_libs} || (),
+                         $target{module_ex_libs} || (),
+                         @{$config{dso_ex_libs}},
+                         @{$config{module_ex_libs}},
+                         '$(CNF_EX_LIBS)', '$(EX_LIBS)') -}
 BIN_CPPFLAGS={- join(' ', $target{bin_cppflags} || (),
                           @{$config{bin_cppflags}},
                           '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
@@ -311,7 +319,9 @@ BIN_CXXFLAGS={- join(' ', $target{bin_cxxflags} || (),
 BIN_LDFLAGS={- join(' ', $target{bin_lflags} || (),
                          @{$config{bin_lflags}},
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
-BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+BIN_EX_LIBS={- join(' ', $target{bin_ex_libs} || (),
+                         @{$config{bin_ex_libs}},
+                         '$(CNF_EX_LIBS)', '$(EX_LIBS)') -}
 
 # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
 CPPFLAGS_Q={- $cppflags1 =~ s|([\\"])|\\$1|g;

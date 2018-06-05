@@ -252,7 +252,11 @@ LIB_LDFLAGS={- join('', $target{lib_lflags} || (),
                         @{$config{lib_lflags}},
                         @{$config{shared_ldflag}},
                         '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
-LIB_EX_LIBS=$(CNF_EX_LIBS)$(EX_LIBS)
+LIB_EX_LIBS={- join('', (map { ",$_" } $target{lib_ex_libs} || (),
+                                       $target{shared_ex_libs} || (),
+                                       @{$config{lib_ex_libs}},
+                                       @{$config{shared_ex_libs}}))
+            -} $(CNF_EX_LIBS)$(EX_LIBS)
 DSO_ASFLAGS={- join(' ', $target{dso_asflags} || (),
                          $target{module_asflags} || (),
                          @{$config{dso_asflags}},
@@ -284,7 +288,11 @@ DSO_LDFLAGS={- join('', $target{dso_lflags} || (),
                         @{$config{dso_lflags}},
                         @{$config{module_ldflags}},
                         '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
-DSO_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+DSO_EX_LIBS={- join('', (map { ",$_" } $target{dso_ex_libs} || (),
+                                       $target{module_ex_libs} || (),
+                                       @{$config{dso_ex_libs}},
+                                       @{$config{module_ex_libs}}))
+            -} $(CNF_EX_LIBS)$(EX_LIBS)
 BIN_ASFLAGS={- join(' ', $target{bin_asflags} || (),
                          @{$config{bin_asflags}},
                          '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
@@ -304,7 +312,9 @@ BIN_CFLAGS={- join('', $target{bin_cflag} || (),
 BIN_LDFLAGS={- join('', $target{bin_lflags} || (),
                         @{$config{bin_lflags}} || (),
                         '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
-BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
+BIN_EX_LIBS={- join('', (map { ",$_" } $target{bin_ex_libs} || (),
+                                       @{$config{bin_ex_libs}},
+            -} $(CNF_EX_LIBS)$(EX_LIBS)
 NO_INST_LIB_CFLAGS={- join('', $target{no_inst_lib_cflags}
                                // $target{lib_cflags}
                                // (),
