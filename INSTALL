@@ -2,7 +2,8 @@
  --------------------
 
  This document describes installation on all supported operating
- systems (the Linux/Unix family including Mac OS/X, OpenVMS and Windows)
+ systems (the Unix/Linux family (which includes Mac OS/X), OpenVMS,
+ and Windows).
 
  To install OpenSSL, you will need:
 
