@@ -33,6 +33,13 @@ dynamically from the calling application or from a loadable engine.
 Support for the 'file' scheme is built into C<libcrypto>.
 See L<ossl_store-file(7)> for more information.
 
+=head2 UI_METHOD and pass phrases
+
+The B<OSS_STORE> API does nothing to enforce any specific format or
+encoding on the pass phrase that the B<UI_METHOD> provides.  However,
+the pass phrase is expected to be UTF-8 encoded.  The result of any
+other encoding is undefined.
+
 =head1 EXAMPLES
 
 =head2 A generic call
