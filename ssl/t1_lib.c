@@ -1487,11 +1487,13 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         }
     }
 
-    switch (ret) {
-    case SSL_TICKET_NO_DECRYPT:
-    case SSL_TICKET_SUCCESS_RENEW:
-    case SSL_TICKET_EMPTY:
-        s->ext.ticket_expected = 1;
+    if (s->ext.session_secret_cb == NULL || SSL_IS_TLS13(s)) {
+        switch (ret) {
+        case SSL_TICKET_NO_DECRYPT:
+        case SSL_TICKET_SUCCESS_RENEW:
+        case SSL_TICKET_EMPTY:
+            s->ext.ticket_expected = 1;
+        }
     }
 
     *psess = sess;
