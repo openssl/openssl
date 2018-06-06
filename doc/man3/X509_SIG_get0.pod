@@ -11,7 +11,7 @@ X509_SIG_get0, X509_SIG_getm - DigestInfo functions
  void X509_SIG_get0(const X509_SIG *sig, const X509_ALGOR **palg,
                     const ASN1_OCTET_STRING **pdigest);
  void X509_SIG_getm(X509_SIG *sig, X509_ALGOR **palg,
-                    ASN1_OCTET_STRING **pdigest,
+                    ASN1_OCTET_STRING **pdigest);
 
 =head1 DESCRIPTION
 
