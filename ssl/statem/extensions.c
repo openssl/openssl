@@ -1422,9 +1422,9 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
     unsigned char *early_secret;
-    const char resumption_label[] = "res binder";
-    const char external_label[] = "ext binder";
-    const char *label;
+    static const unsigned char resumption_label[] = "res binder";
+    static const unsigned char external_label[] = "ext binder";
+    const unsigned char *label;
     size_t bindersize, labelsize, hashsize;
     int hashsizei = EVP_MD_size(md);
     int ret = -1;
@@ -1485,8 +1485,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     }
 
     /* Generate the binder key */
-    if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
-                           labelsize, hash, hashsize, binderkey, hashsize)) {
+    if (!tls13_hkdf_expand(s, md, early_secret, label, labelsize, hash,
+                           hashsize, binderkey, hashsize)) {
         /* SSLfatal() already called */
         goto err;
     }

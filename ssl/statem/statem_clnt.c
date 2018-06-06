@@ -2678,7 +2678,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         const EVP_MD *md = ssl_handshake_md(s);
         int hashleni = EVP_MD_size(md);
         size_t hashlen;
-        const char nonce_label[] = "resumption";
+        static const unsigned char nonce_label[] = "resumption";
 
         /* Ensure cast to size_t is safe */
         if (!ossl_assert(hashleni >= 0)) {
@@ -2690,7 +2690,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         hashlen = (size_t)hashleni;
 
         if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
-                               (const unsigned char *)nonce_label,
+                               nonce_label,
                                sizeof(nonce_label) - 1,
                                PACKET_data(&nonce),
                                PACKET_remaining(&nonce),
