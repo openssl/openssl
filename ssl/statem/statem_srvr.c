@@ -3763,7 +3763,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     if (SSL_IS_TLS13(s)) {
         size_t i, hashlen;
         uint64_t nonce;
-        const char nonce_label[] = "resumption";
+        static const char nonce_label[] = "resumption";
         const EVP_MD *md = ssl_handshake_md(s);
         void (*cb) (const SSL *ssl, int type, int val) = NULL;
         int hashleni = EVP_MD_size(md);
@@ -3781,7 +3781,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             cb = s->info_callback;
         else if (s->ctx->info_callback != NULL)
             cb = s->ctx->info_callback;
-
 
         if (cb != NULL) {
             /*
@@ -3825,9 +3824,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         s->session->ext.tick_age_add = age_add_u.age_add;
 
         nonce = s->next_ticket_nonce;
-        memset(tick_nonce, 0, TICKET_NONCE_SIZE);
-        for (i = TICKET_NONCE_SIZE; nonce > 0 && i > 0; i--) {
-            tick_nonce[i - 1] = nonce & 0xff;
+        for (i = TICKET_NONCE_SIZE; i > 0; i--) {
+            tick_nonce[i - 1] = (unsigned char)(nonce & 0xff);
             nonce >>= 8;
         }
 
