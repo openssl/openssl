@@ -72,6 +72,14 @@ my $level = 0;
 # functions to verify that setup() has been used.
 my $test_name = undef;
 
+# Name of temp file optionally used for buffering output
+# for conditional suppression of stdout/stderr
+my $tmpout;
+
+# Variable optionally used for buffering output
+# for conditional suppression of echoing the command line
+my $cmdline;
+
 # Directories we want to keep track of TOP, APPS, TEST and RESULTS are the
 # ones we're interested in, corresponding to the environment variables TOP
 # (mandatory), BIN_D, TEST_D, UTIL_D and RESULT_D.
@@ -430,10 +438,12 @@ sub run {
     my %runopts;
     # Make a default stdout.  If the user has passed a stdout option of their own,
     # that one will override this.
-    my $tmpout = __results_file("$test_name.log");
     if ($ENV{HARNESS_ACTIVE} && $ENV{HARNESS_VERBOSE} == 2) {
+        $tmpout = __results_file("$test_name.log");
         $runopts{stdout} = $tmpout;
         $runopts{stderr} = $tmpout;
+    } else {
+        $tmpout = undef;
     }
     my ($cmd, $display_cmd) = shift->(%runopts);
     my %opts = @_;
@@ -501,17 +511,11 @@ sub run {
         open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
         open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
     }
-    if (!$ENV{HARNESS_ACTIVE} || ($ENV{HARNESS_VERBOSE} && !($ENV{HARNESS_VERBOSE} == 2 && $r))) {
-        print STDERR "$prefix$display_cmd => $e\n";
-        if ($tmpout) {
-            open (TH, $tmpout) or die "Can't open $tmpout: $!";
-            while (<TH>) {
-                print $_;
-            }
-            close TH;
-        }
+    $cmdline = "$prefix$display_cmd => $e\n";
+    unless ($tmpout) {
+        print STDERR $cmdline;
+        $cmdline = undef;
     }
-    unlink $tmpout if $tmpout;
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -523,6 +527,39 @@ sub run {
     } else {
 	return $r;
     }
+}
+
+sub __display_output {
+    my $res = shift;
+    if ($tmpout && !$res) {
+        open (TH, $tmpout) or die "Can't open $tmpout: $!";
+        while (<TH>) {
+            print $_;
+        }
+        close TH;
+        print STDERR $cmdline;
+    }
+    unlink $tmpout if $tmpout;
+}
+
+no warnings qw( redefine );
+
+sub ok ($;$) {
+    my ($res, $test_name) = @_;
+    __display_output($res);
+    return Test::More::ok($res, $test_name);
+}
+
+sub is ($$;$) {
+    my ($got, $expected, $test_name) = @_;
+    __display_output($got eq $expected);
+    return Test::More::is($got, $expected, $test_name);
+}
+
+sub isnt ($$;$) {
+    my ($got, $expected, $test_name) = @_;
+    __display_output($got ne $expected);
+    return Test::More::isnt($got, $expected, $test_name);
 }
 
 END {
