@@ -67,7 +67,6 @@ use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
 
 my $level = 0;
-my $tmpout = "tmp.txt"; # TODO maybe use some more unique file name via File::Temp
 
 # The name of the test.  This is set by setup() and is used in the other
 # functions to verify that setup() has been used.
@@ -428,7 +427,15 @@ the function C<with> further down.
 =cut
 
 sub run {
-    my ($cmd, $display_cmd) = shift->();
+    my %runopts;
+    # Make a default stdout.  If the user has passed a stdout option of their own,
+    # that one will override this.
+    my $tmpout = __results_file("$test_name.log");
+    if ($ENV{HARNESS_ACTIVE} && $ENV{HARNESS_VERBOSE} == 2) {
+        $runopts{stdout} = $tmpout;
+        $runopts{stderr} = $tmpout;
+    }
+    my ($cmd, $display_cmd) = shift->(%runopts);
     my %opts = @_;
 
     return () if !$cmd;
@@ -1185,12 +1192,6 @@ sub __decorate_cmd {
     $stdin = " < ".$fileornull->($opts{stdin})  if exists($opts{stdin});
     $stdout= " > ".$fileornull->($opts{stdout}) if exists($opts{stdout});
     $stderr=" 2> ".$fileornull->($opts{stderr}) if exists($opts{stderr});
-    if ($ENV{HARNESS_VERBOSE} == 2 && (!exists($opts{stdout}) || !exists($opts{stderr}))) {
-        $stdout= " >> ".$tmpout if !exists($opts{stdout});
-        $stderr=" 2>> ".$tmpout if !exists($opts{stderr});
-    } else {
-        $tmpout = undef;
-    }
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
     $stderr=" 2> ".$null
