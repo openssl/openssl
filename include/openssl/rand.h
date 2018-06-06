@@ -44,6 +44,7 @@ int RAND_priv_bytes(unsigned char *buf, int num);
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 
 void RAND_seed(const void *buf, int num);
+void RAND_keep_random_devices_open(int keep);
 
 # if defined(__ANDROID__) && defined(__NDK_FPABI__)
 __NDK_FPABI__	/* __attribute__((pcs("aapcs"))) on ARM */
