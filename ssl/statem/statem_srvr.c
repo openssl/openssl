@@ -3763,7 +3763,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     if (SSL_IS_TLS13(s)) {
         size_t i, hashlen;
         uint64_t nonce;
-        static const char nonce_label[] = "resumption";
+        static const unsigned char nonce_label[] = "resumption";
         const EVP_MD *md = ssl_handshake_md(s);
         void (*cb) (const SSL *ssl, int type, int val) = NULL;
         int hashleni = EVP_MD_size(md);
