@@ -67,6 +67,7 @@ use File::Path 2.00 qw/rmtree mkpath/;
 use File::Basename;
 
 my $level = 0;
+my $tmpout = "tmp.txt"; # TODO maybe use some more unique file name via File::Temp
 
 # The name of the test.  This is set by setup() and is used in the other
 # functions to verify that setup() has been used.
@@ -493,9 +494,17 @@ sub run {
         open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
         open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
     }
-
-    print STDERR "$prefix$display_cmd => $e\n"
-        if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+    if (!$ENV{HARNESS_ACTIVE} || ($ENV{HARNESS_VERBOSE} && !($ENV{HARNESS_VERBOSE} == 2 && $r))) {
+        print STDERR "$prefix$display_cmd => $e\n";
+        if ($tmpout) {
+            open (TH, $tmpout) or die "Can't open $tmpout: $!";
+            while (<TH>) {
+                print $_;
+            }
+            close TH;
+        }
+    }
+    unlink $tmpout if $tmpout;
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -1177,7 +1186,12 @@ sub __decorate_cmd {
     $stdin = " < ".$fileornull->($opts{stdin})  if exists($opts{stdin});
     $stdout= " > ".$fileornull->($opts{stdout}) if exists($opts{stdout});
     $stderr=" 2> ".$fileornull->($opts{stderr}) if exists($opts{stderr});
-
+    if ($ENV{HARNESS_VERBOSE} == 2 && (!exists($opts{stdout}) || !exists($opts{stderr}))) {
+        $stdout= " >> ".$tmpout if !exists($opts{stdout});
+        $stderr=" 2>> ".$tmpout if !exists($opts{stderr});
+    } else {
+        $tmpout = undef;
+    }
     my $display_cmd = "$cmdstr$stdin$stdout$stderr";
 
     $stderr=" 2> ".$null
