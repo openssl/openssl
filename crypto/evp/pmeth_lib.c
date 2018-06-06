@@ -64,6 +64,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &ed25519_pkey_meth,
     &ed448_pkey_meth,
 #endif
+    /* OQS schemes */
+    &picnicL1FS_pkey_meth,
+    /* ADD_MORE_OQS_SIG_HERE */
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,

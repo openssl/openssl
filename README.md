@@ -7,9 +7,9 @@ This repository contains a fork of OpenSSL that adds quantum-safe cryptographic 
 
 OQS REVIEW NOTES:
  * This is an experimental integration of OQS into TLS 1.3.
- * Currently, only PQC and hybrid (classical+PQC) KEX in TLS 1.3 are supported. Next in line: auth, hybrid auth, and TLS 1.2.
+ * Currently, PQC and hybrid (classical+PQC) KEX and PQC auth in TLS 1.3 are supported. Further down the line: hybrid auth, and TLS 1.2.
  * One goal is to minimize the OQS footprint into the OpenSSL code, to improve readability. Therefore, some redundant code is implemented using macros to avoid creating functions and registrating them in OpenSSL.
- * The TLS 1.3 integration is done at the TLS layer (start looking in ssl/statem/extensions_(clnt,srvr).c). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the KEM asymetric API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked.
+ * The TLS 1.3 KEX integration is done at the TLS layer (start looking in ssl/statem/extensions_(clnt,srvr).c). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the KEM asymetric API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked.
 
 Overview
 --------
@@ -83,12 +83,10 @@ See the [liboqs Github site](https://github.com/open-quantum-safe/liboqs/) for i
 
 OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
 
-To run a server, we first need to generate a self-signed X.509 certificate.  Run the following command:
+To run a server, we first need to generate a self-signed X.509 certificate, using either a classical or post-quantum algorithm (currently, only "picnicl1fs" is supported). Run the following command, with <SIGALG> = rsa, picnicl1fs):
 
-	apps/openssl req -x509 -new -newkey rsa:2048 -keyout rsa.key -nodes -out rsa.crt -sha256 -days 365 -config apps/openssl.cnf
+	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/C=US/L=Redmond/CN=oqstest" -days 365 -config apps/openssl.cnf
 	
-Hit enter in response to all the prompts to accept the defaults.  
-
 On macOS, you may need to set an environment variable for the dynamic library path:
 
 	DYLD_LIBRARY_PATH=<path-to-openssl>
@@ -96,11 +94,30 @@ On macOS, you may need to set an environment variable for the dynamic library pa
 
 To run a basic TLS server with all OQS ciphersuites enabled:
 
-	apps/openssl s_server -cert rsa.crt -key rsa.key -HTTP -tls1_3
+	apps/openssl s_server -cert <SIGALG>.crt -key <SIGALG>.key -HTTP -tls1_3
 
-In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<OQSALG> = newhope, frodo, sike503, sike751, ntru) or the hybrid ciphersuites ("p256-<OQSALG>", only the NIST p256 curve is supported for now), for example:
+In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<KEXALG> = newhope, frodo, sike503, sike751, ntru) or the hybrid ciphersuites ("p256-<KEXALG>", only the NIST p256 curve is supported for now), for example:
 
-    apps/openssl s_client -curves p256-frodo -connect localhost:4433
+    apps/openssl s_client -curves <KEXALG> -connect localhost:4433
+
+Contributing
+------------
+
+Follow these steps to add additional key exchange and signature algorithms from liboqs.
+
+### Adding a key exchange algorithm
+
+FIXMEOQS: explain this
+
+### Adding an authentication mechanism
+
+To add a new algorithm <NEWALG> with OID <NEWOID>:
+
+ 1. Define <NEWOID> in crypto/objects/objects.txt, add <NEWALG> to crypto/objects/obj_mac.num,
+    incrementing the last NID value, and Run "make generate_crypto_objects" to re-generate
+    objects-related files (obj_dat.h, obj_mac.num, obj_mac.h)
+ 2. Run "grep -r ADD_MORE_OQS_SIG_HERE" and add new code following the example of other
+    OQS schemes.
 
 License
 -------

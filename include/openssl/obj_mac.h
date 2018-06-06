@@ -5111,3 +5111,16 @@
 #define LN_uacurve9             "DSTU curve 9"
 #define NID_uacurve9            1169
 #define OBJ_uacurve9            OBJ_dstu4145le,2L,9L
+
+#define SN_Microsoft            "Microsoft"
+#define NID_Microsoft           1174
+#define OBJ_Microsoft           OBJ_identified_organization,6L,1L,4L,1L,311L
+
+#define SN_MSRPQC               "MSRPQC"
+#define NID_MSRPQC              1175
+#define OBJ_MSRPQC              OBJ_Microsoft,89L,2L
+
+#define SN_picnicL1FS           "picnicL1FS"
+#define LN_picnicL1FS           "Picnic L1 FS"
+#define NID_picnicL1FS          1173
+#define OBJ_picnicL1FS          OBJ_MSRPQC,1L,1L

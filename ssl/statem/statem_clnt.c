@@ -959,7 +959,16 @@ size_t ossl_statem_client_max_message_size(SSL *s)
         return s->max_cert_list;
 
     case TLS_ST_CR_CERT_VRFY:
-        return SSL3_RT_MAX_PLAIN_LENGTH;
+      /* OQS note: the max plain length seems wrong, since the CertificateVerify message
+       * is defined in the spec as:
+       * struct {
+       *   SignatureScheme algorithm;
+       *   opaque signature<0..2^16-1>;
+       * } CertificateVerify;
+       * which could exceed that limit. Return instead 2^16 + 2 (max encoding value (0xffff) for "algorithm")
+       */
+      // return SSL3_RT_MAX_PLAIN_LENGTH;
+	return 65536;
 
     case TLS_ST_CR_CERT_STATUS:
         return SSL3_RT_MAX_PLAIN_LENGTH;

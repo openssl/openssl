@@ -692,6 +692,9 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
 #endif
+    /* OQS schemes*/
+    TLSEXT_SIGALG_picnicL1FS,
+    /* ADD_MORE_OQS_SIG_HERE */
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
     TLSEXT_SIGALG_rsa_pss_pss_sha384,
@@ -813,8 +816,13 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_gostr34102001_gostr3411,
      NID_id_GostR3411_94, SSL_MD_GOST94_IDX,
      NID_id_GostR3410_2001, SSL_PKEY_GOST01,
-     NID_undef, NID_undef}
+     NID_undef, NID_undef},
 #endif
+    /* OQS schemes */
+    {"picnicL1FS", TLSEXT_SIGALG_picnicL1FS,
+     NID_undef, -1, EVP_PKEY_PICNICL1FS, SSL_PKEY_PICNICL1FS,
+     NID_undef, NID_undef},
+    /* ADD_MORE_OQS_SIG_HERE */
 };
 /* Legacy sigalgs for TLS < 1.2 RSA TLS signatures */
 static const SIGALG_LOOKUP legacy_rsa_sigalg = {
@@ -2283,6 +2291,9 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED25519);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED448);
+    /* OQS schemes */
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
+    /* ADD_MORE_OQS_SIG_HERE */
 }
 
 /* User level utility function to check a chain is suitable */

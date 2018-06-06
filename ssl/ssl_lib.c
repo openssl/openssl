@@ -3279,6 +3279,8 @@ void ssl_set_masks(SSL *s)
             && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
             && TLS1_get_version(s) == TLS1_2_VERSION)
             mask_a |= SSL_aECDSA;
+
+    /* OQS integration note: the OQS schemes cannot currently be compiled out (TODO) */
 #endif
 
 #ifndef OPENSSL_NO_EC

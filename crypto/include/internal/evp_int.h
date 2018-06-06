@@ -102,6 +102,9 @@ extern const EVP_PKEY_METHOD tls1_prf_pkey_meth;
 extern const EVP_PKEY_METHOD hkdf_pkey_meth;
 extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
+/* OQS schemes */
+extern const EVP_PKEY_METHOD picnicL1FS_pkey_meth;
+/* ADD_MORE_OQS_SIG_HERE */
 
 struct evp_md_st {
     int type;
