@@ -21,8 +21,8 @@
 # June 2018
 #
 # Add VSX 2.07 code path. Original 3xAltiVec+1xIALU is well-suited for
-# processors that can't issue more than one vector instructions per
-# cycle. But POWER8 (and POWER9) can issue a pair, and 4x vector-only
+# processors that can't issue more than one vector instruction per
+# cycle. But POWER8 (and POWER9) can issue a pair, and vector-only 4x
 # interleave would perform better. Incidentally PowerISA 2.07 (first
 # implemented by POWER8) defined new usable instructions, hence 4xVSX
 # code path...
@@ -1261,7 +1261,7 @@ Ldone_vsx:
 Ltail_vsx:
 	addi	r11,$sp,$LOCALS
 	mtctr	$len
-	stvx_4w	$xa0,$x00,r11
+	stvx_4w	$xa0,$x00,r11			# offload block to stack
 	stvx_4w	$xb0,$x10,r11
 	stvx_4w	$xc0,$x20,r11
 	stvx_4w	$xd0,$x30,r11
@@ -1276,7 +1276,7 @@ Loop_tail_vsx:
 	stbu	r6,1($out)
 	bdnz	Loop_tail_vsx
 
-	stvx_4w	$K[0],$x00,r11			# wipe stack frame
+	stvx_4w	$K[0],$x00,r11			# wipe copy of the block
 	stvx_4w	$K[0],$x10,r11
 	stvx_4w	$K[0],$x20,r11
 	stvx_4w	$K[0],$x30,r11
