@@ -480,13 +480,9 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
     case TLS_ST_SR_FINISHED:
         /*
          * Technically we have finished the handshake at this point, but we're
-         * going to remain "in_init" for now and write out the session ticket
+         * going to remain "in_init" for now and write out any session tickets
          * immediately.
-         * TODO(TLS1.3): Perhaps we need to be able to control this behaviour
-         * and give the application the opportunity to delay sending the
-         * session ticket?
          */
-        st->hand_state = TLS_ST_SW_SESSION_TICKET;
         if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
             s->post_handshake_auth = SSL_PHA_EXT_RECEIVED;
         } else if (!s->ext.ticket_expected) {
@@ -495,7 +491,12 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
              * handshake at this point.
              */
             st->hand_state = TLS_ST_OK;
+            return WRITE_TRAN_CONTINUE;
         }
+        if (s->num_tickets > s->sent_tickets)
+            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+        else
+            st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
@@ -506,8 +507,18 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         /* Fall through */
 
     case TLS_ST_SW_KEY_UPDATE:
-    case TLS_ST_SW_SESSION_TICKET:
         st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        /* In a resumption we only ever send a maximum of one new ticket.
+         * Following an initial handshake we send the number of tickets we have
+         * been configured for.
+         */
+        if (s->hit || s->num_tickets <= s->sent_tickets) {
+            /* We've written enough tickets out. */
+            st->hand_state = TLS_ST_OK;
+        }
         return WRITE_TRAN_CONTINUE;
     }
 }
@@ -700,7 +711,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_IS_TLS13(s)) {
+        if (SSL_IS_TLS13(s) && s->sent_tickets == 0) {
             /*
              * Actually this is the end of the handshake, but we're going
              * straight into writing the session ticket out. So we finish off
@@ -3679,12 +3690,16 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     sk = NULL;
 
     /* Save the current hash state for when we receive the CertificateVerify */
-    if (SSL_IS_TLS13(s)
-            && !ssl_handshake_hash(s, s->cert_verify_hash,
-                                   sizeof(s->cert_verify_hash),
-                                   &s->cert_verify_hash_len)) {
-        /* SSLfatal() already called */
-        goto err;
+    if (SSL_IS_TLS13(s)) {
+        if (!ssl_handshake_hash(s, s->cert_verify_hash,
+                                sizeof(s->cert_verify_hash),
+                                &s->cert_verify_hash_len)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+
+        /* Resend session tickets */
+        s->sent_tickets = 0;
     }
 
     ret = MSG_PROCESS_CONTINUE_READING;
@@ -3743,21 +3758,41 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
-        if (s->post_handshake_auth != SSL_PHA_EXT_RECEIVED) {
-            void (*cb) (const SSL *ssl, int type, int val) = NULL;
+        void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
+        if (s->info_callback != NULL)
+            cb = s->info_callback;
+        else if (s->ctx->info_callback != NULL)
+            cb = s->ctx->info_callback;
+
+
+        if (cb != NULL) {
             /*
-             * This is the first session ticket we've sent. In the state
-             * machine we "cheated" and tacked this onto the end of the first
-             * handshake. From an info callback perspective this should appear
-             * like the start of a new handshake.
+             * We don't start and stop the handshake in between each ticket when
+             * sending more than one - but it should appear that way to the info
+             * callback.
              */
-            if (s->info_callback != NULL)
-                cb = s->info_callback;
-            else if (s->ctx->info_callback != NULL)
-                cb = s->ctx->info_callback;
-            if (cb != NULL)
-                cb(s, SSL_CB_HANDSHAKE_START, 1);
+            if (s->sent_tickets != 0) {
+                ossl_statem_set_in_init(s, 0);
+                cb(s, SSL_CB_HANDSHAKE_DONE, 1);
+                ossl_statem_set_in_init(s, 1);
+            }
+            cb(s, SSL_CB_HANDSHAKE_START, 1);
+        }
+        /*
+         * If we already sent one NewSessionTicket then we need to take a copy
+         * of it and create a new session from it.
+         */
+        if (s->sent_tickets != 0) {
+            SSL_SESSION *new_sess = ssl_session_dup(s->session, 0);
+
+            if (new_sess == NULL) {
+                /* SSLfatal already called */
+                goto err;
+            }
+
+            SSL_SESSION_free(s->session);
+            s->session = new_sess;
         }
 
         if (!ssl_generate_session_id(s, s->session)) {
@@ -3961,13 +3996,14 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         goto err;
     }
     if (SSL_IS_TLS13(s)) {
-        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
         if (!tls_construct_extensions(s, pkt,
                                       SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                                       NULL, 0)) {
             /* SSLfatal() already called */
             goto err;
         }
+        s->sent_tickets++;
+        ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
     }
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);

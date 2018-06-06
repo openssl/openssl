@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -303,6 +303,31 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
     }
 
     return 1;
+}
+
+const BIGNUM *DSA_get0_p(const DSA *d)
+{
+    return d->p;
+}
+
+const BIGNUM *DSA_get0_q(const DSA *d)
+{
+    return d->q;
+}
+
+const BIGNUM *DSA_get0_g(const DSA *d)
+{
+    return d->g;
+}
+
+const BIGNUM *DSA_get0_pub_key(const DSA *d)
+{
+    return d->pub_key;
+}
+
+const BIGNUM *DSA_get0_priv_key(const DSA *d)
+{
+    return d->priv_key;
 }
 
 void DSA_clear_flags(DSA *d, int flags)

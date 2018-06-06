@@ -481,6 +481,8 @@ static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
 
 int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 {
+    if (*xn == name)
+        return *xn != NULL;
     if ((name = X509_NAME_dup(name)) == NULL)
         return 0;
     X509_NAME_free(*xn);

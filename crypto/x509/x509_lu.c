@@ -118,6 +118,23 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
 
+int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data)
+{
+    ctx->method_data = data;
+    return 1;
+}
+
+void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx)
+{
+    return ctx->method_data;
+}
+
+X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx)
+{
+    return ctx->store_ctx;
+}
+
+
 static int x509_object_cmp(const X509_OBJECT *const *a,
                            const X509_OBJECT *const *b)
 {
@@ -403,8 +420,7 @@ X509_OBJECT *X509_OBJECT_new(void)
     return ret;
 }
 
-
-void X509_OBJECT_free(X509_OBJECT *a)
+static void x509_object_free_internal(X509_OBJECT *a)
 {
     if (a == NULL)
         return;
@@ -418,6 +434,33 @@ void X509_OBJECT_free(X509_OBJECT *a)
         X509_CRL_free(a->data.crl);
         break;
     }
+}
+
+int X509_OBJECT_set1_X509(X509_OBJECT *a, X509 *obj)
+{
+    if (a == NULL || !X509_up_ref(obj))
+        return 0;
+
+    x509_object_free_internal(a);
+    a->type = X509_LU_X509;
+    a->data.x509 = obj;
+    return 1;
+}
+
+int X509_OBJECT_set1_X509_CRL(X509_OBJECT *a, X509_CRL *obj)
+{
+    if (a == NULL || !X509_CRL_up_ref(obj))
+        return 0;
+
+    x509_object_free_internal(a);
+    a->type = X509_LU_CRL;
+    a->data.crl = obj;
+    return 1;
+}
+
+void X509_OBJECT_free(X509_OBJECT *a)
+{
+    x509_object_free_internal(a);
     OPENSSL_free(a);
 }
 

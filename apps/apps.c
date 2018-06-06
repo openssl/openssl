@@ -1050,7 +1050,8 @@ int set_name_ex(unsigned long *flags, const char *arg)
     };
     if (set_multi_opts(flags, arg, ex_tbl) == 0)
         return 0;
-    if ((*flags & XN_FLAG_SEP_MASK) == 0)
+    if (*flags != XN_FLAG_COMPAT
+        && (*flags & XN_FLAG_SEP_MASK) == 0)
         *flags |= XN_FLAG_SEP_CPLUS_SPC;
     return 1;
 }

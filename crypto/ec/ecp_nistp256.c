@@ -47,7 +47,7 @@ typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
 typedef __int128_t int128_t;
 # else
-#  error "Need GCC 4.0 or later to define type uint128_t"
+#  error "Your compiler doesn't appear to support 128-bit integer types"
 # endif
 
 typedef uint8_t u8;

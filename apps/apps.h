@@ -281,8 +281,8 @@ int set_cert_times(X509 *x, const char *startdate, const char *enddate,
             "Block size to pad TLS 1.3 records to."}, \
         {"debug_broken_protocol", OPT_S_DEBUGBROKE, '-', \
             "Perform all sorts of protocol violations for testing purposes"}, \
-        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', "Disable TLSv1.3 middlebox compat mode" }
-
+        {"no_middlebox", OPT_S_NO_MIDDLEBOX, '-', \
+            "Disable TLSv1.3 middlebox compat mode" }
 
 # define OPT_S_CASES \
         OPT_S__FIRST: case OPT_S__LAST: break; \

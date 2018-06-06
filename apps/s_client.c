@@ -201,6 +201,7 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
         cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
         if (cipher == NULL) {
             BIO_printf(bio_err, "Error finding suitable ciphersuite\n");
+            OPENSSL_free(key);
             return 0;
         }
 
@@ -935,7 +936,9 @@ int s_client_main(int argc, char **argv)
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
 #endif
+#ifndef OPENSSL_NO_SRTP
     char *srtp_profiles = NULL;
+#endif
 #ifndef OPENSSL_NO_CT
     char *ctlog_file = NULL;
     int ct_validation = 0;
@@ -1422,7 +1425,9 @@ int s_client_main(int argc, char **argv)
             noservername = 1;
             break;
         case OPT_USE_SRTP:
+#ifndef OPENSSL_NO_SRTP
             srtp_profiles = opt_arg();
+#endif
             break;
         case OPT_KEYMATEXPORT:
             keymatexportlabel = opt_arg();
@@ -1670,6 +1675,8 @@ int s_client_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+
+    SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);

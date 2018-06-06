@@ -151,6 +151,8 @@ of RFC4507bis tickets for stateless session resumption.
 If this option is set this functionality is disabled and tickets will
 not be used by clients or servers.
 
+This option only applies to TLSv1.2 and below. It is ignored for TLSv1.3.
+
 =item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
 
 Allow legacy insecure renegotiation between OpenSSL and unpatched clients or

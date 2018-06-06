@@ -17,7 +17,7 @@
 #include "internal/evp_int.h"
 
 #if !defined(OPENSSL_NO_SM2)
-# include <openssl/sm2.h>
+# include "internal/sm2.h"
 #endif
 
 /* EC pkey context structure */
@@ -124,9 +124,9 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
     if (ec_nid == NID_sm2) {
 #if defined(OPENSSL_NO_SM2)
-        ret = -1;
+        return -1;
 #else
-        ret = SM2_sign(type, tbs, tbslen, sig, &sltmp, ec);
+        ret = sm2_sign(type, tbs, tbslen, sig, &sltmp, ec);
 #endif
     } else {
         ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
@@ -156,7 +156,7 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
 #if defined(OPENSSL_NO_SM2)
         ret = -1;
 #else
-        ret = SM2_verify(type, tbs, tbslen, sig, siglen, ec);
+        ret = sm2_verify(type, tbs, tbslen, sig, siglen, ec);
 #endif
     } else {
         ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
@@ -219,18 +219,18 @@ static int pkey_ecies_encrypt(EVP_PKEY_CTX *ctx,
 
         if (dctx->md)
             md_type = EVP_MD_type(dctx->md);
-        else if (ec_nid == NID_sm2)
-            md_type = NID_sm3;
         else
-            md_type = NID_sha256;
+            md_type = NID_sm3;
 
         if (out == NULL) {
-            *outlen = SM2_ciphertext_size(ec, EVP_get_digestbynid(md_type),
-                                          inlen);
-            ret = 1;
+            if (!sm2_ciphertext_size(ec, EVP_get_digestbynid(md_type), inlen,
+                                     outlen))
+                ret = -1;
+            else
+                ret = 1;
         }
         else {
-            ret = SM2_encrypt(ec, EVP_get_digestbynid(md_type),
+            ret = sm2_encrypt(ec, EVP_get_digestbynid(md_type),
                               in, inlen, out, outlen);
         }
 # endif
@@ -259,17 +259,18 @@ static int pkey_ecies_decrypt(EVP_PKEY_CTX *ctx,
 
         if (dctx->md)
             md_type = EVP_MD_type(dctx->md);
-        else if (ec_nid == NID_sm2)
-            md_type = NID_sm3;
         else
-            md_type = NID_sha256;
+            md_type = NID_sm3;
 
         if (out == NULL) {
-            *outlen = SM2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen);
-            ret = 1;
+            if (!sm2_plaintext_size(ec, EVP_get_digestbynid(md_type), inlen,
+                                    outlen))
+                ret = -1;
+            else
+                ret = 1;
         }
         else {
-            ret = SM2_decrypt(ec, EVP_get_digestbynid(md_type),
+            ret = sm2_decrypt(ec, EVP_get_digestbynid(md_type),
                               in, inlen, out, outlen);
         }
 # endif

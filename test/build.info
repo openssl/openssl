@@ -28,7 +28,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           aborttest test_test \
           sanitytest exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
-          sm2sigtest sm2crypttest \
           md2test \
           hmactest \
           rc2test rc4test rc5test \
@@ -51,7 +50,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest
+          sysdefaulttest errtest
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -88,14 +87,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[ecdsatest]=ecdsatest.c
   INCLUDE[ecdsatest]=../include
   DEPEND[ecdsatest]=../libcrypto libtestutil.a
-
-  SOURCE[sm2sigtest]=sm2sigtest.c
-  INCLUDE[sm2sigtest]=../include
-  DEPEND[sm2sigtest]=../libcrypto libtestutil.a
-
-  SOURCE[sm2crypttest]=sm2crypttest.c
-  INCLUDE[sm2crypttest]=../include
-  DEPEND[sm2crypttest]=../libcrypto libtestutil.a
 
   SOURCE[gmdifftest]=gmdifftest.c
   INCLUDE[gmdifftest]=../include
@@ -448,6 +439,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     IF[{- !$disabled{siphash} -}]
       PROGRAMS_NO_INST=siphash_internal_test
     ENDIF
+    IF[{- !$disabled{sm2} -}]
+      PROGRAMS_NO_INST=sm2_internal_test
+    ENDIF
     IF[{- !$disabled{sm4} -}]
       PROGRAMS_NO_INST=sm4_internal_test
     ENDIF
@@ -490,6 +484,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
     DEPEND[siphash_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[sm2_internal_test]=sm2_internal_test.c
+    INCLUDE[sm2_internal_test]=../include ../crypto/include
+    DEPEND[sm2_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../crypto/include
@@ -535,6 +533,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[sysdefaulttest]=sysdefaulttest.c
   INCLUDE[sysdefaulttest]=../include
   DEPEND[sysdefaulttest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[errtest]=errtest.c
+  INCLUDE[errtest]=../include
+  DEPEND[errtest]=../libcrypto libtestutil.a
 ENDIF
 
 {-

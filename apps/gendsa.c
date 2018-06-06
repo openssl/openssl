@@ -117,6 +117,13 @@ int gendsa_main(int argc, char **argv)
         goto end2;
 
     DSA_get0_pqg(dsa, &p, NULL, NULL);
+
+    if (BN_num_bits(p) > OPENSSL_DSA_MAX_MODULUS_BITS)
+        BIO_printf(bio_err,
+                   "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
+                   "         Your key size is %d! Larger key size may behave not as expected.\n",
+                   OPENSSL_DSA_MAX_MODULUS_BITS, BN_num_bits(p));
+
     BIO_printf(bio_err, "Generating DSA key, %d bits\n", BN_num_bits(p));
     if (!DSA_generate_key(dsa))
         goto end;

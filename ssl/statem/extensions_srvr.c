@@ -721,6 +721,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                           size_t chainidx)
 {
+#ifndef OPENSSL_NO_TLS1_3
     unsigned int format, version, key_share, group_id;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
@@ -892,7 +893,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(&hrrpkt)
                /* TODO(TLS1.3): Fix this before release */
-            || !WPACKET_put_bytes_u16(&hrrpkt, TLS1_3_VERSION_DRAFT)
+            || !WPACKET_put_bytes_u16(&hrrpkt, s->version_draft)
             || !WPACKET_close(&hrrpkt)) {
         WPACKET_cleanup(&hrrpkt);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
@@ -936,6 +937,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     s->hello_retry_request = 1;
 
     s->ext.cookieok = 1;
+#endif
 
     return 1;
 }
@@ -1606,7 +1608,7 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL *s, WPACKET *pkt,
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
                 /* TODO(TLS1.3): Update to remove the TLSv1.3 draft indicator */
-            || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
+            || !WPACKET_put_bytes_u16(pkt, s->version_draft)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_VERSIONS,
@@ -1694,14 +1696,16 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         /* SSLfatal() already called */
         return EXT_RETURN_FAIL;
     }
-#endif
-
     return EXT_RETURN_SENT;
+#else
+    return EXT_RETURN_FAIL;
+#endif
 }
 
 EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
                                      X509 *x, size_t chainidx)
 {
+#ifndef OPENSSL_NO_TLS1_3
     unsigned char *hashval1, *hashval2, *appcookie1, *appcookie2, *cookie;
     unsigned char *hmac, *hmac2;
     size_t startlen, ciphlen, totcookielen, hashlen, hmaclen, appcookielen;
@@ -1826,6 +1830,9 @@ EXT_RETURN tls_construct_stoc_cookie(SSL *s, WPACKET *pkt, unsigned int context,
     EVP_MD_CTX_free(hctx);
     EVP_PKEY_free(pkey);
     return ret;
+#else
+    return EXT_RETURN_FAIL;
+#endif
 }
 
 EXT_RETURN tls_construct_stoc_cryptopro_bug(SSL *s, WPACKET *pkt,

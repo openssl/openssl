@@ -591,6 +591,7 @@ int SSL_clear(SSL *s)
     s->psksession_id = NULL;
     s->psksession_id_len = 0;
     s->hello_retry_request = 0;
+    s->sent_tickets = 0;
 
     s->error = 0;
     s->hit = 0;
@@ -699,6 +700,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->mode = ctx->mode;
     s->max_cert_list = ctx->max_cert_list;
     s->max_early_data = ctx->max_early_data;
+    s->num_tickets = ctx->num_tickets;
 
     /* Shallow copy of the ciphersuites stack */
     s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->tls13_ciphersuites);
@@ -2894,6 +2896,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     ret->method = meth;
     ret->min_proto_version = 0;
     ret->max_proto_version = 0;
+    ret->mode = SSL_MODE_AUTO_RETRY;
     ret->session_cache_mode = SSL_SESS_CACHE_SERVER;
     ret->session_cache_size = SSL_SESSION_CACHE_MAX_SIZE_DEFAULT;
     /* We take the system default. */
@@ -3032,6 +3035,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
      * above.
      */
     ret->max_early_data = 0;
+
+    /* By default we send two session tickets automatically in TLSv1.3 */
+    ret->num_tickets = 2;
 
     ssl_ctx_system_config(ret);
 
@@ -3360,13 +3366,33 @@ void ssl_update_cache(SSL *s, int mode)
 
     i = s->session_ctx->session_cache_mode;
     if ((i & mode) != 0
-        && (!s->hit || SSL_IS_TLS13(s))
-        && ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) != 0
-            || SSL_CTX_add_session(s->session_ctx, s->session))
-        && s->session_ctx->new_session_cb != NULL) {
-        SSL_SESSION_up_ref(s->session);
-        if (!s->session_ctx->new_session_cb(s, s->session))
-            SSL_SESSION_free(s->session);
+        && (!s->hit || SSL_IS_TLS13(s))) {
+        /*
+         * Add the session to the internal cache. In server side TLSv1.3 we
+         * normally don't do this because its a full stateless ticket with only
+         * a dummy session id so there is no reason to cache it, unless:
+         * - we are doing early_data, in which case we cache so that we can
+         *   detect replays
+         * - the application has set a remove_session_cb so needs to know about
+         *   session timeout events
+         */
+        if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
+                && (!SSL_IS_TLS13(s)
+                    || !s->server
+                    || s->max_early_data > 0
+                    || s->session_ctx->remove_session_cb != NULL))
+            SSL_CTX_add_session(s->session_ctx, s->session);
+
+        /*
+         * Add the session to the external cache. We do this even in server side
+         * TLSv1.3 without early data because some applications just want to
+         * know about the creation of a session and aren't doing a full cache.
+         */
+        if (s->session_ctx->new_session_cb != NULL) {
+            SSL_SESSION_up_ref(s->session);
+            if (!s->session_ctx->new_session_cb(s, s->session))
+                SSL_SESSION_free(s->session);
+        }
     }
 
     /* auto flush every 255 connections */
@@ -4312,6 +4338,30 @@ int SSL_set_block_padding(SSL *ssl, size_t block_size)
     else
         return 0;
     return 1;
+}
+
+int SSL_set_num_tickets(SSL *s, size_t num_tickets)
+{
+    s->num_tickets = num_tickets;
+
+    return 1;
+}
+
+size_t SSL_get_num_tickets(SSL *s)
+{
+    return s->num_tickets;
+}
+
+int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets)
+{
+    ctx->num_tickets = num_tickets;
+
+    return 1;
+}
+
+size_t SSL_CTX_get_num_tickets(SSL_CTX *ctx)
+{
+    return ctx->num_tickets;
 }
 
 /*

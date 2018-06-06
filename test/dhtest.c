@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,6 +26,11 @@ static int cb(int p, int n, BN_GENCB *arg);
 
 static int dh_test(void)
 {
+    DH *dh;
+    BIGNUM *p, *q, *g;
+    const BIGNUM *p2, *q2, *g2;
+    BIGNUM *priv_key;
+    const BIGNUM *pub_key2, *priv_key2;
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
@@ -39,6 +44,78 @@ static int dh_test(void)
     int i, alen, blen, clen, aout, bout, cout;
     int ret = 0;
 
+    if (!TEST_ptr(dh = DH_new())
+        || !TEST_ptr(p = BN_new())
+        || !TEST_ptr(q = BN_new())
+        || !TEST_ptr(g = BN_new())
+        || !TEST_ptr(priv_key = BN_new()))
+        goto err;
+
+    /*
+     * I) basic tests
+     */
+
+    /* using a small predefined Sophie Germain DH group with generator 3 */
+    if (!TEST_true(BN_set_word(p, 4079L))
+        || !TEST_true(BN_set_word(q, 2039L))
+        || !TEST_true(BN_set_word(g, 3L))
+        || !TEST_true(DH_set0_pqg(dh, p, q, g)))
+        goto err;
+
+    /* test the combined getter for p, q, and g */
+    DH_get0_pqg(dh, &p2, &q2, &g2);
+    if (!TEST_ptr_eq(p2, p)
+        || !TEST_ptr_eq(q2, q)
+        || !TEST_ptr_eq(g2, g))
+        goto err;
+
+    /* test the simple getters for p, q, and g */
+    if (!TEST_ptr_eq(DH_get0_p(dh), p2)
+        || !TEST_ptr_eq(DH_get0_q(dh), q2)
+        || !TEST_ptr_eq(DH_get0_g(dh), g2))
+        goto err;
+
+    /* set the private key only*/
+    if (!TEST_true(BN_set_word(priv_key, 1234L))
+        || !TEST_true(DH_set0_key(dh, NULL, priv_key)))
+        goto err;
+
+    /* test the combined getter for pub_key and priv_key */
+    DH_get0_key(dh, &pub_key2, &priv_key2);
+    if (!TEST_ptr_eq(pub_key2, NULL)
+        || !TEST_ptr_eq(priv_key2, priv_key))
+        goto err;
+
+    /* test the simple getters for pub_key and priv_key */
+    if (!TEST_ptr_eq(DH_get0_pub_key(dh), pub_key2)
+        || !TEST_ptr_eq(DH_get0_priv_key(dh), priv_key2))
+        goto err;
+
+    /* now generate a key pair ... */
+    if (!DH_generate_key(dh))
+        goto err;
+
+    /* ... and check whether the private key was reused: */
+
+    /* test it with the combined getter for pub_key and priv_key */
+    DH_get0_key(dh, &pub_key2, &priv_key2);
+    if (!TEST_ptr(pub_key2)
+        || !TEST_ptr_eq(priv_key2, priv_key))
+        goto err;
+
+    /* test it the simple getters for pub_key and priv_key */
+    if (!TEST_ptr_eq(DH_get0_pub_key(dh), pub_key2)
+        || !TEST_ptr_eq(DH_get0_priv_key(dh), priv_key2))
+        goto err;
+
+    /* check whether the public key was calculated correclty */
+    TEST_uint_eq(BN_get_word(pub_key2), 3331L);
+
+    /*
+     * II) key generation
+     */
+
+    /* generate a DH group ... */
     if (!TEST_ptr(_cb = BN_GENCB_new()))
         goto err;
     BN_GENCB_set(_cb, &cb, NULL);
@@ -47,6 +124,7 @@ static int dh_test(void)
                                                     DH_GENERATOR_5, _cb)))
         goto err;
 
+    /* ... and check whether it is valid */
     if (!DH_check(a, &i))
         goto err;
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
@@ -57,6 +135,7 @@ static int dh_test(void)
 
     DH_get0_pqg(a, &ap, NULL, &ag);
 
+    /* now create another copy of the DH group for the peer */
     if (!TEST_ptr(b = DH_new()))
         goto err;
 
@@ -65,6 +144,10 @@ static int dh_test(void)
             || !TEST_true(DH_set0_pqg(b, bp, NULL, bg)))
         goto err;
     bp = bg = NULL;
+
+    /*
+     * III) simulate a key exchange
+     */
 
     if (!DH_generate_key(a))
         goto err;
@@ -114,6 +197,8 @@ static int dh_test(void)
     BN_free(bg);
     BN_free(cpriv_key);
     BN_GENCB_free(_cb);
+    DH_free(dh);
+
     return ret;
 }
 

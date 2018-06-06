@@ -2,9 +2,11 @@
 
 =head1 NAME
 
-DH_get0_pqg, DH_set0_pqg, DH_get0_key, DH_set0_key, DH_clear_flags,
-DH_test_flags, DH_set_flags, DH_get0_engine, DH_get_length,
-DH_set_length - Routines for getting and setting data in a DH object
+DH_get0_pqg, DH_set0_pqg, DH_get0_key, DH_set0_key,
+DH_get0_p, DH_get0_q, DH_get0_g,
+DH_get0_priv_key, DH_get0_pub_key,
+DH_clear_flags, DH_test_flags, DH_set_flags, DH_get0_engine,
+DH_get_length, DH_set_length - Routines for getting and setting data in a DH object
 
 =head1 SYNOPSIS
 
@@ -16,6 +18,11 @@ DH_set_length - Routines for getting and setting data in a DH object
  void DH_get0_key(const DH *dh,
                   const BIGNUM **pub_key, const BIGNUM **priv_key);
  int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key);
+ const BIGNUM *DH_get0_p(const DH *dh);
+ const BIGNUM *DH_get0_q(const DH *dh);
+ const BIGNUM *DH_get0_g(const DH *dh);
+ const BIGNUM *DH_get0_priv_key(const DH *dh);
+ const BIGNUM *DH_get0_pub_key(const DH *dh);
  void DH_clear_flags(DH *dh, int flags);
  int DH_test_flags(const DH *dh, int flags);
  void DH_set_flags(DH *dh, int flags);
@@ -34,6 +41,8 @@ If the parameters have not yet been set then B<*p>, B<*q> and B<*g> will be set
 to NULL. Otherwise they are set to pointers to their respective values. These
 point directly to the internal representations of the values and therefore
 should not be freed directly.
+Any of the out parameters B<p>, B<q>, and B<g> can be NULL, in which case no
+value will be returned for that parameter.
 
 The B<p>, B<q> and B<g> values can be set by calling DH_set0_pqg() and passing
 the new values for B<p>, B<q> and B<g> as parameters to the function. Calling
@@ -47,12 +56,18 @@ private key will be stored in B<*priv_key>. Either may be NULL if they have not
 been set yet, although if the private key has been set then the public key must
 be. The values point to the internal representation of the public key and
 private key values. This memory should not be freed directly.
+Any of the out parameters B<pub_key> and B<priv_key> can be NULL, in which case
+no value will be returned for that parameter.
 
 The public and private key values can be set using DH_set0_key(). Either
 parameter may be NULL, which means the corresponding DH field is left
 untouched. As with DH_set0_pqg() this function transfers the memory management
 of the key values to the DH object, and therefore they should not be freed
 directly after this function has been called.
+
+Any of the values B<p>, B<q>, B<g>, B<priv_key>, and B<pub_key> can also be
+retrieved separately by the corresponding function DH_get0_p(), DH_get0_q(),
+DH_get0_g(), DH_get0_priv_key(), and DH_get0_pub_key(), respectively.
 
 DH_set_flags() sets the flags in the B<flags> parameter on the DH object.
 Multiple flags can be passed in one go (bitwise ORed together). Any flags that
@@ -81,6 +96,9 @@ duplicate.  The same applies to DH_get0_pqg() and DH_set0_pqg().
 
 DH_set0_pqg() and DH_set0_key() return 1 on success or 0 on failure.
 
+DH_get0_p(), DH_get0_q(), DH_get0_g(), DH_get0_priv_key(), and DH_get0_pub_key()
+return the respective value, or NULL if it is unset.
+
 DH_test_flags() returns the current state of the flags in the DH object.
 
 DH_get0_engine() returns the ENGINE set for the DH object or NULL if no ENGINE
@@ -100,7 +118,7 @@ The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

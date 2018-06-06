@@ -4192,6 +4192,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
     }
 
     if (SSL_IS_TLS13(s)) {
+#ifndef OPENSSL_NO_PSK
         int j;
 
         /*
@@ -4208,6 +4209,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 prefer_sha256 = 1;
             }
         }
+#endif
     } else {
         tls1_set_cert_validity(s);
         ssl_set_masks(s);

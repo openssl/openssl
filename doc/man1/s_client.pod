@@ -667,10 +667,35 @@ on port 4433.
 
 If a connection is established with an SSL server then any data received
 from the server is displayed and any key presses will be sent to the
-server. When used interactively (which means neither B<-quiet> nor B<-ign_eof>
-have been given), the session will be renegotiated if the line begins with an
-B<R>, and if the line begins with a B<Q> or if end of file is reached, the
-connection will be closed down.
+server. If end of file is reached then the connection will be closed down. When
+used interactively (which means neither B<-quiet> nor B<-ign_eof> have been
+given), then certain commands are also recognized which perform special
+operations. These commands are a letter which must appear at the start of a
+line. They are listed below.
+
+=over 4
+
+=item B<Q>
+
+End the current SSL connection and exit.
+
+=item B<R>
+
+Renegotiate the SSL session (TLSv1.2 and below only).
+
+=item B<B>
+
+Send a heartbeat message to the server (DTLS only)
+
+=item B<k>
+
+Send a key update message to the server (TLSv1.3 only)
+
+=item B<K>
+
+Send a key update message to the server and request one back (TLSv1.3 only)
+
+=back
 
 =head1 NOTES
 

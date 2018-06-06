@@ -116,7 +116,16 @@ static int test_dtls_unprocessed(int testidx)
 
 #define CLI_TO_SRV_EPOCH_0_RECS 3
 #define CLI_TO_SRV_EPOCH_1_RECS 1
-#define SRV_TO_CLI_EPOCH_0_RECS 12
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+# define SRV_TO_CLI_EPOCH_0_RECS 12
+#else
+/*
+ * In this case we have no ServerKeyExchange message, because we don't have
+ * ECDHE or DHE. When it is present it gets fragmented into 3 records in this
+ * test.
+ */
+# define SRV_TO_CLI_EPOCH_0_RECS 9
+#endif
 #define SRV_TO_CLI_EPOCH_1_RECS 1
 #define TOTAL_FULL_HAND_RECORDS \
             (CLI_TO_SRV_EPOCH_0_RECS + CLI_TO_SRV_EPOCH_1_RECS + \
