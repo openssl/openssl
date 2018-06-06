@@ -311,13 +311,13 @@ sub cmd {
     my $cmd = shift;
     my %opts = @_;
     return sub {
-        my $num = shift;
+        my %internal_opts = @_;
         # Make a copy to not destroy the caller's array
         my @cmdargs = ( @$cmd );
         my @prog = __wrap_cmd(shift @cmdargs, $opts{exe_shell} // ());
 
-        return __decorate_cmd($num, [ @prog, quotify(@cmdargs) ],
-                              %opts);
+        return __decorate_cmd([ @prog, quotify(@cmdargs) ],
+                              %internal_opts, %opts);
     }
 }
 
@@ -328,7 +328,7 @@ sub app {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__apps_file(shift @cmdargs, __exeext()));
         return cmd([ @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
     }
 }
 
@@ -339,7 +339,7 @@ sub fuzz {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__fuzz_file(shift @cmdargs, __exeext()));
         return cmd([ @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
     }
 }
 
@@ -350,7 +350,7 @@ sub test {
         my @cmdargs = ( @{$cmd} );
         my @prog = __fixup_prg(__test_file(shift @cmdargs, __exeext()));
         return cmd([ @prog, @cmdargs ],
-                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
+                   exe_shell => $ENV{EXE_SHELL}, %opts) -> (@_);
     }
 }
 
@@ -364,7 +364,7 @@ sub perlapp {
         my @cmdargs = ( @{$cmd} );
         my @prog = __apps_file(shift @cmdargs, undef);
         return cmd([ @interpreter, @interpreter_args,
-                     @prog, @cmdargs ], %opts) -> (shift);
+                     @prog, @cmdargs ], %opts) -> (@_);
     }
 }
 
@@ -378,7 +378,7 @@ sub perltest {
         my @cmdargs = ( @{$cmd} );
         my @prog = __test_file(shift @cmdargs, undef);
         return cmd([ @interpreter, @interpreter_args,
-                     @prog, @cmdargs ], %opts) -> (shift);
+                     @prog, @cmdargs ], %opts) -> (@_);
     }
 }
 
@@ -427,7 +427,7 @@ the function C<with> further down.
 =cut
 
 sub run {
-    my ($cmd, $display_cmd) = shift->(0);
+    my ($cmd, $display_cmd) = shift->();
     my %opts = @_;
 
     return () if !$cmd;
@@ -661,7 +661,7 @@ sub pipe {
 	    my @els = ();
 	    my $counter = 0;
 	    foreach (@cmds) {
-		my ($c, $dc, @el) = $_->(++$counter);
+		my ($c, $dc, @el) = $_->();
 
 		return () if !$c;
 
@@ -750,7 +750,7 @@ Default: 0
 =cut
 
 sub cmdstr {
-    my ($cmd, $display_cmd) = shift->(0);
+    my ($cmd, $display_cmd) = shift->();
     my %opts = @_;
 
     if ($opts{display}) {
@@ -1163,7 +1163,6 @@ sub __fixup_prg {
 sub __decorate_cmd {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
-    my $num = shift;
     my $cmd = shift;
     my %opts = @_;
 
