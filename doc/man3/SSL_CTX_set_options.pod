@@ -226,6 +226,17 @@ this option is set or not CCS messages received from the peer will always be
 ignored in TLSv1.3. This option is set by default. To switch it off use
 SSL_clear_options(). A future version of OpenSSL may not set this by default.
 
+=item SSL_OP_NO_ANTI_REPLAY
+
+By default, when a server is configured for early data (i.e., max_early_data > 0),
+OpenSSL will switch on replay protection. See L<SSL_read_early_data(3)> for a
+description of the replay protection feature. Anti-replay measures are required
+to comply with the TLSv1.3 specification. Some applications may be able to
+mitigate the replay risks in other ways and in such cases the built in OpenSSL
+functionality is not required. Those applications can turn this feature off by
+setting this option. This is a server-side opton only. It is ignored by
+clients.
+
 =back
 
 The following options no longer have any effect but their identifiers are

@@ -10,7 +10,10 @@ SSL_SESSION_get_max_early_data,
 SSL_SESSION_set_max_early_data,
 SSL_write_early_data,
 SSL_read_early_data,
-SSL_get_early_data_status
+SSL_get_early_data_status,
+SSL_allow_early_data_cb_fn,
+SSL_CTX_set_allow_early_data_cb,
+SSL_set_allow_early_data_cb
 - functions for sending and receiving early data
 
 =head1 SYNOPSIS
@@ -29,6 +32,16 @@ SSL_get_early_data_status
  int SSL_read_early_data(SSL *s, void *buf, size_t num, size_t *readbytes);
 
  int SSL_get_early_data_status(const SSL *s);
+
+
+ typedef int (*SSL_allow_early_data_cb_fn)(SSL *s, void *arg);
+
+ void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
+                                      SSL_allow_early_data_cb_fn cb,
+                                      void *arg);
+ void SSL_set_allow_early_data_cb(SSL *s,
+                                  SSL_allow_early_data_cb_fn cb,
+                                  void *arg);
 
 =head1 DESCRIPTION
 
@@ -186,6 +199,20 @@ In the event that the current maximum early data setting for the server is
 different to that originally specified in a session that a client is resuming
 with then the lower of the two values will apply.
 
+Some server applications may wish to have more control over whether early data
+is accepted or not, for example to mitigate replay risks (see L</REPLAY PROTECTION>
+below) or to decline early_data when the server is heavily loaded. The functions
+SSL_CTX_set_allow_early_data_cb() and SSL_set_allow_early_data_cb() set a
+callback which is called at a point in the handshake immediately before a
+decision is made to accept or reject early data. The callback is provided with a
+pointer to the user data argument that was provided when the callback was first
+set. Returning 1 from the callback will allow early data and returning 0 will
+reject it. Note that the OpenSSL library may reject early data for other reasons
+in which case this callback will not get called. Notably, the built-in replay
+protection feature will still be used even if a callback is present unless it
+has been explicitly disabled using the SSL_OP_NO_ANTI_REPLAY option. See
+L</REPLAY PROTECTION> below.
+
 =head1 NOTES
 
 The whole purpose of early data is to enable a client to start sending data to
@@ -251,6 +278,12 @@ the possibility of replay attacks.
 The OpenSSL replay protection does not apply to external Pre Shared Keys (PSKs)
 (e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
 should be applied when combining external PSKs with early data.
+
+Some applications may mitigate the replay risks in other ways. For those
+applications it is possible to turn off the built-in replay protection feature
+using the B<SSL_OP_NO_ANTI_REPLAY> option. See L<SSL_CTX_set_options(3)> for
+details. Applications can also set a callback to make decisions about accepting
+early data or not. See SSL_CTX_set_allow_early_data_cb() above for details.
 
 =head1 RETURN VALUES
 
