@@ -354,6 +354,47 @@ static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
                       KEY_OP_PUBLIC);
 }
 
+static int ecx_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
+                            size_t *len)
+{
+    const ECX_KEY *key = pkey->pkey.ecx;
+
+    if (priv == NULL) {
+        *len = KEYLENID(pkey->ameth->pkey_id);
+        return 1;
+    }
+
+    if (key == NULL
+            || key->privkey == NULL
+            || *len < (size_t)KEYLENID(pkey->ameth->pkey_id))
+        return 0;
+
+    *len = KEYLENID(pkey->ameth->pkey_id);
+    memcpy(priv, key->privkey, *len);
+
+    return 1;
+}
+
+static int ecx_get_pub_key(const EVP_PKEY *pkey, unsigned char *pub,
+                           size_t *len)
+{
+    const ECX_KEY *key = pkey->pkey.ecx;
+
+    if (pub == NULL) {
+        *len = KEYLENID(pkey->ameth->pkey_id);
+        return 1;
+    }
+
+    if (key == NULL
+            || *len < (size_t)KEYLENID(pkey->ameth->pkey_id))
+        return 0;
+
+    *len = KEYLENID(pkey->ameth->pkey_id);
+    memcpy(pub, key->pubkey, *len);
+
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     EVP_PKEY_X25519,
     EVP_PKEY_X25519,
@@ -393,6 +434,8 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
@@ -434,6 +477,8 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 static int ecd_size25519(const EVP_PKEY *pkey)
@@ -547,6 +592,8 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
@@ -587,6 +634,8 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)

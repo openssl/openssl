@@ -417,3 +417,19 @@ void EVP_PKEY_asn1_set_set_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
 {
     ameth->set_pub_key = set_pub_key;
 }
+
+void EVP_PKEY_asn1_set_get_priv_key(EVP_PKEY_ASN1_METHOD *ameth,
+                                    int (*get_priv_key) (const EVP_PKEY *pk,
+                                                         unsigned char *priv,
+                                                         size_t *len))
+{
+    ameth->get_priv_key = get_priv_key;
+}
+
+void EVP_PKEY_asn1_set_get_pub_key(EVP_PKEY_ASN1_METHOD *ameth,
+                                   int (*get_pub_key) (const EVP_PKEY *pk,
+                                                       unsigned char *pub,
+                                                       size_t *len))
+{
+    ameth->get_pub_key = get_pub_key;
+}

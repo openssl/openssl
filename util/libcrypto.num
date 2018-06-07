@@ -4563,3 +4563,7 @@ X509_OBJECT_set1_X509                   4514	1_1_0i	EXIST::FUNCTION:
 X509_LOOKUP_meth_get_get_by_issuer_serial 4515	1_1_0i	EXIST::FUNCTION:
 X509_LOOKUP_meth_set_init               4516	1_1_0i	EXIST::FUNCTION:
 X509_OBJECT_set1_X509_CRL               4517	1_1_0i	EXIST::FUNCTION:
+EVP_PKEY_get_raw_public_key             4518	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_get_raw_private_key            4519	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_get_priv_key          4520	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_asn1_set_get_pub_key           4521	1_1_1	EXIST::FUNCTION:
