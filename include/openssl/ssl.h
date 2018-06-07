@@ -368,6 +368,12 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
  */
 # define SSL_OP_TLS_ROLLBACK_BUG                         0x00800000U
 
+/*
+ * Switches off automatic TLSv1.3 anti-replay protection for early data. This
+ * is a server-side option only (no effect on the client).
+ */
+# define SSL_OP_NO_ANTI_REPLAY                           0x01000000U
+
 # define SSL_OP_NO_SSLv3                                 0x02000000U
 # define SSL_OP_NO_TLSv1                                 0x04000000U
 # define SSL_OP_NO_TLSv1_2                               0x08000000U

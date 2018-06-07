@@ -3381,7 +3381,8 @@ void ssl_update_cache(SSL *s, int mode)
         if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
                 && (!SSL_IS_TLS13(s)
                     || !s->server
-                    || s->max_early_data > 0
+                    || (s->max_early_data > 0
+                        && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0)
                     || s->session_ctx->remove_session_cb != NULL
                     || (s->options & SSL_OP_NO_TICKET) != 0))
             SSL_CTX_add_session(s->session_ctx, s->session);
