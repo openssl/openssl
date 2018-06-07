@@ -3830,7 +3830,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         }
 
         if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
-                               (const unsigned char *)nonce_label,
+                               nonce_label,
                                sizeof(nonce_label) - 1,
                                tick_nonce,
                                TICKET_NONCE_SIZE,
