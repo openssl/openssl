@@ -1047,6 +1047,10 @@ struct ssl_ctx_st {
 
     /* The number of TLS1.3 tickets to automatically send */
     size_t num_tickets;
+
+    /* Callback to determine if early_data is acceptable or not */
+    SSL_allow_early_data_cb_fn allow_early_data_cb;
+    void *allow_early_data_cb_data;
 };
 
 struct ssl_st {
@@ -1205,8 +1209,6 @@ struct ssl_st {
 # endif
     SSL_psk_find_session_cb_func psk_find_session_cb;
     SSL_psk_use_session_cb_func psk_use_session_cb;
-
-    int (*allow_early_data_cb)(SSL *s, SSL_SESSION *sess);
 
     SSL_CTX *ctx;
     /* Verified chain of peer */
@@ -1427,6 +1429,10 @@ struct ssl_st {
     size_t sent_tickets;
     /* The next nonce value to use when we send a ticket on this connection */
     uint64_t next_ticket_nonce;
+
+    /* Callback to determine if early_data is acceptable or not */
+    SSL_allow_early_data_cb_fn allow_early_data_cb;
+    void *allow_early_data_cb_data;
 };
 
 /*
