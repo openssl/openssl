@@ -1063,15 +1063,11 @@ size_t ossl_statem_server_max_message_size(SSL *s)
         return CLIENT_KEY_EXCH_MAX_LENGTH;
 
     case TLS_ST_SR_CERT_VRFY:
-      /* OQS note: the max plain length seems wrong, since the CertificateVerify message
-       * is defined in the spec as:
-       * struct {
-       *   SignatureScheme algorithm;
-       *   opaque signature<0..2^16-1>;
-       * } CertificateVerify;
-       * which could exceed that limit. Return instead 2^16 + 2 (max encoding value (0xffff) for "algorithm")
+      /* OQS note: the CertificateVerify message's size is artificially limited in OpenSSL to be large enough
+       * for conventional signatures. The TLS 1.3 spec defines it as 2^16 + 2, which is what we need to support
+       * longer PQC signatures. (See https://github.com/openssl/openssl/issues/6433)
        */
-      // return SSL3_RT_MAX_PLAIN_LENGTH;
+      /* return SSL3_RT_MAX_PLAIN_LENGTH; */
 	return 65536;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
