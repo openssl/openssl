@@ -459,6 +459,21 @@ int ec_GF2m_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 int ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                              const BIGNUM *b, BN_CTX *);
 
+/* method functions in ec2_lambda.c */
+int ec_GF2m_lambda_point_set_affine_coordinates(const EC_GROUP *, EC_POINT *,
+                                                const BIGNUM *x,
+                                                const BIGNUM *y, BN_CTX *);
+int ec_GF2m_lambda_point_get_affine_coordinates(const EC_GROUP *,
+                                                const EC_POINT *, BIGNUM *x,
+                                                BIGNUM *y, BN_CTX *);
+int ec_GF2m_lambda_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a,
+                       const EC_POINT *b, BN_CTX *);
+int ec_GF2m_lambda_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a,
+                       BN_CTX *);
+int ec_GF2m_lambda_invert(const EC_GROUP *, EC_POINT *, BN_CTX *);
+int ec_GF2m_lambda_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
+int ec_GF2m_lambda_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
+
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /* method functions in ecp_nistp224.c */
 int ec_GFp_nistp224_group_init(EC_GROUP *group);

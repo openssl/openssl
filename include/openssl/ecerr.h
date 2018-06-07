@@ -61,6 +61,8 @@ int ERR_load_EC_strings(void);
 #  define EC_F_ECX_PUB_ENCODE                              268
 #  define EC_F_EC_ASN1_GROUP2CURVE                         153
 #  define EC_F_EC_ASN1_GROUP2FIELDID                       154
+#  define EC_F_EC_GF2M_LAMBDA_POINT_GET_AFFINE_COORDINATES 284
+#  define EC_F_EC_GF2M_LAMBDA_POINT_SET_AFFINE_COORDINATES 285
 #  define EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY           208
 #  define EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT     159
 #  define EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE              195
