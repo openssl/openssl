@@ -477,7 +477,7 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
-struct keys_st {
+static struct keys_st {
     int type;
     char *priv;
     char *pub;
