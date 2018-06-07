@@ -1205,6 +1205,9 @@ struct ssl_st {
 # endif
     SSL_psk_find_session_cb_func psk_find_session_cb;
     SSL_psk_use_session_cb_func psk_use_session_cb;
+
+    int (*allow_early_data_cb)(SSL *s, SSL_SESSION *sess);
+
     SSL_CTX *ctx;
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
