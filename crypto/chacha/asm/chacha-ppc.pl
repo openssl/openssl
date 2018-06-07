@@ -438,9 +438,9 @@ my ($a,$b,$c,$d)=@_;
 	"&vxor		('$b','$b','$c')",
 	"&vrlw		('$b','$b','$seven')",
 
-	"&vsldoi	('$c','$c','$c',8)",
-	"&vsldoi	('$b','$b','$b',$odd?4:12)",
-	"&vsldoi	('$d','$d','$d',$odd?12:4)"
+	"&vrldoi	('$c','$c',8)",
+	"&vrldoi	('$b','$b',$odd?4:12)",
+	"&vrldoi	('$d','$d',$odd?12:4)"
 	);
 }
 
@@ -1334,11 +1334,12 @@ foreach (split("\n",$code)) {
 	    s/\?lvsr/lvsl/	or
 	    s/\?lvsl/lvsr/	or
 	    s/\?(vperm\s+v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+,\s*)(v[0-9]+)/$1$3$2$4/ or
-	    s/(vsldoi\s+v[0-9]+,\s*)(v[0-9]+,)\s*(v[0-9]+,\s*)([0-9]+)/$1$3$2 16-$4/;
+	    s/vrldoi(\s+v[0-9]+,\s*)(v[0-9]+,)\s*([0-9]+)/vsldoi$1$2$2 16-$3/;
 	} else {			# little-endian
 	    s/le\?//		or
 	    s/be\?/#be#/	or
-	    s/\?([a-z]+)/$1/;
+	    s/\?([a-z]+)/$1/	or
+	    s/vrldoi(\s+v[0-9]+,\s*)(v[0-9]+,)\s*([0-9]+)/vsldoi$1$2$2 $3/;
 	}
 
 	print $_,"\n";
