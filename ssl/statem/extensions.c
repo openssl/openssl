@@ -1421,13 +1421,11 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX *mctx = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
-    unsigned char tmppsk[EVP_MAX_MD_SIZE];
-    unsigned char *early_secret, *psk;
-    const char resumption_label[] = "res binder";
-    const char external_label[] = "ext binder";
-    const char nonce_label[] = "resumption";
-    const char *label;
-    size_t bindersize, labelsize, psklen, hashsize;
+    unsigned char *early_secret;
+    static const unsigned char resumption_label[] = "res binder";
+    static const unsigned char external_label[] = "ext binder";
+    const unsigned char *label;
+    size_t bindersize, labelsize, hashsize;
     int hashsizei = EVP_MD_size(md);
     int ret = -1;
     int usepskfored = 0;
@@ -1454,21 +1452,6 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         labelsize = sizeof(resumption_label) - 1;
     }
 
-    if (external) {
-        psk = sess->master_key;
-        psklen = sess->master_key_length;
-    } else {
-        psk = tmppsk;
-        psklen = hashsize;
-        if (!tls13_hkdf_expand(s, md, sess->master_key,
-                               (const unsigned char *)nonce_label,
-                               sizeof(nonce_label) - 1, sess->ext.tick_nonce,
-                               sess->ext.tick_nonce_len, psk, hashsize)) {
-            /* SSLfatal() already called */
-            goto err;
-        }
-    }
-
     /*
      * Generate the early_secret. On the server side we've selected a PSK to
      * resume with (internal or external) so we always do this. On the client
@@ -1481,7 +1464,9 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         early_secret = (unsigned char *)s->early_secret;
     else
         early_secret = (unsigned char *)sess->early_secret;
-    if (!tls13_generate_secret(s, md, NULL, psk, psklen, early_secret)) {
+
+    if (!tls13_generate_secret(s, md, NULL, sess->master_key,
+                               sess->master_key_length, early_secret)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -1500,8 +1485,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     }
 
     /* Generate the binder key */
-    if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
-                           labelsize, hash, hashsize, binderkey, hashsize)) {
+    if (!tls13_hkdf_expand(s, md, early_secret, label, labelsize, hash,
+                           hashsize, binderkey, hashsize)) {
         /* SSLfatal() already called */
         goto err;
     }

@@ -133,7 +133,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
 #endif
     dest->peer_chain = NULL;
     dest->peer = NULL;
-    dest->ext.tick_nonce = NULL;
     dest->ticket_appdata = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
@@ -228,13 +227,6 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         if (dest->ext.alpn_selected == NULL) {
             goto err;
         }
-    }
-
-    if (src->ext.tick_nonce != NULL) {
-        dest->ext.tick_nonce = OPENSSL_memdup(src->ext.tick_nonce,
-                                              src->ext.tick_nonce_len);
-        if (dest->ext.tick_nonce == NULL)
-            goto err;
     }
 
 #ifndef OPENSSL_NO_SRP
@@ -824,7 +816,6 @@ void SSL_SESSION_free(SSL_SESSION *ss)
     OPENSSL_free(ss->srp_username);
 #endif
     OPENSSL_free(ss->ext.alpn_selected);
-    OPENSSL_free(ss->ext.tick_nonce);
     OPENSSL_free(ss->ticket_appdata);
     CRYPTO_THREAD_lock_free(ss->lock);
     OPENSSL_clear_free(ss, sizeof(*ss));

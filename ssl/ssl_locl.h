@@ -470,6 +470,8 @@ struct ssl_method_st {
     long (*ssl_ctx_callback_ctrl) (SSL_CTX *s, int cb_id, void (*fp) (void));
 };
 
+# define TLS13_MAX_RESUMPTION_PSK_LENGTH      64
+
 /*-
  * Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
@@ -505,9 +507,9 @@ struct ssl_session_st {
     unsigned char early_secret[EVP_MAX_MD_SIZE];
     /*
      * For <=TLS1.2 this is the master_key. For TLS1.3 this is the resumption
-     * master secret
+     * PSK
      */
-    unsigned char master_key[TLS13_MAX_RESUMPTION_MASTER_LENGTH];
+    unsigned char master_key[TLS13_MAX_RESUMPTION_PSK_LENGTH];
     /* session_id - valid? */
     size_t session_id_length;
     unsigned char session_id[SSL_MAX_SSL_SESSION_ID_LENGTH];
@@ -567,8 +569,6 @@ struct ssl_session_st {
         /* Session lifetime hint in seconds */
         unsigned long tick_lifetime_hint;
         uint32_t tick_age_add;
-        unsigned char *tick_nonce;
-        size_t tick_nonce_len;
         int tick_identity;
         /* Max number of bytes that can be sent as early data */
         uint32_t max_early_data;
@@ -1125,12 +1125,12 @@ struct ssl_st {
      */
     uint32_t mac_flags;
     /*
-     * The TLS1.3 secrets. The resumption master secret is stored in the
-     * session.
+     * The TLS1.3 secrets.
      */
     unsigned char early_secret[EVP_MAX_MD_SIZE];
     unsigned char handshake_secret[EVP_MAX_MD_SIZE];
     unsigned char master_secret[EVP_MAX_MD_SIZE];
+    unsigned char resumption_master_secret[EVP_MAX_MD_SIZE];
     unsigned char client_finished_secret[EVP_MAX_MD_SIZE];
     unsigned char server_finished_secret[EVP_MAX_MD_SIZE];
     unsigned char server_finished_hash[EVP_MAX_MD_SIZE];
@@ -1422,6 +1422,8 @@ struct ssl_st {
     size_t num_tickets;
     /* The number of TLS1.3 tickets actually sent so far */
     size_t sent_tickets;
+    /* The next nonce value to use when we send a ticket on this connection */
+    uint64_t next_ticket_nonce;
 };
 
 /*

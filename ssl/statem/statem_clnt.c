@@ -22,6 +22,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/engine.h>
+#include <internal/cryptlib.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s, PACKET *pkt);
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
@@ -2558,16 +2559,15 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
     RAW_EXTENSION *exts = NULL;
     PACKET nonce;
 
+    PACKET_null_init(&nonce);
+
     if (!PACKET_get_net_4(pkt, &ticket_lifetime_hint)
         || (SSL_IS_TLS13(s)
             && (!PACKET_get_net_4(pkt, &age_add)
-                || !PACKET_get_length_prefixed_1(pkt, &nonce)
-                || !PACKET_memdup(&nonce, &s->session->ext.tick_nonce,
-                                  &s->session->ext.tick_nonce_len)))
+                || !PACKET_get_length_prefixed_1(pkt, &nonce)))
         || !PACKET_get_net_2(pkt, &ticklen)
-        || (!SSL_IS_TLS13(s) && PACKET_remaining(pkt) != ticklen)
-        || (SSL_IS_TLS13(s)
-            && (ticklen == 0 || PACKET_remaining(pkt) < ticklen))) {
+        || (SSL_IS_TLS13(s) ? (ticklen == 0 || PACKET_remaining(pkt) < ticklen)
+                            : PACKET_remaining(pkt) != ticklen)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
                  SSL_R_LENGTH_MISMATCH);
         goto err;
@@ -2674,6 +2674,32 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
 
     /* This is a standalone message in TLSv1.3, so there is no more to read */
     if (SSL_IS_TLS13(s)) {
+        const EVP_MD *md = ssl_handshake_md(s);
+        int hashleni = EVP_MD_size(md);
+        size_t hashlen;
+        static const unsigned char nonce_label[] = "resumption";
+
+        /* Ensure cast to size_t is safe */
+        if (!ossl_assert(hashleni >= 0)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
+                     ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        hashlen = (size_t)hashleni;
+
+        if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
+                               nonce_label,
+                               sizeof(nonce_label) - 1,
+                               PACKET_data(&nonce),
+                               PACKET_remaining(&nonce),
+                               s->session->master_key,
+                               hashlen)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+        s->session->master_key_length = hashlen;
+
         OPENSSL_free(exts);
         ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
         return MSG_PROCESS_FINISHED_READING;

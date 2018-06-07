@@ -24,6 +24,8 @@
 #include <openssl/bn.h>
 #include <openssl/md5.h>
 
+#define TICKET_NONCE_SIZE       8
+
 static int tls_construct_encrypted_extensions(SSL *s, WPACKET *pkt);
 
 /*
@@ -3751,6 +3753,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char key_name[TLSEXT_KEYNAME_LENGTH];
     int iv_len;
+    unsigned char tick_nonce[TICKET_NONCE_SIZE];
     size_t macoffset, macendoffset;
     union {
         unsigned char age_add_c[sizeof(uint32_t)];
@@ -3758,13 +3761,26 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     } age_add_u;
 
     if (SSL_IS_TLS13(s)) {
+        size_t i, hashlen;
+        uint64_t nonce;
+        static const unsigned char nonce_label[] = "resumption";
+        const EVP_MD *md = ssl_handshake_md(s);
         void (*cb) (const SSL *ssl, int type, int val) = NULL;
+        int hashleni = EVP_MD_size(md);
+
+        /* Ensure cast to size_t is safe */
+        if (!ossl_assert(hashleni >= 0)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                     ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+        hashlen = (size_t)hashleni;
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
         else if (s->ctx->info_callback != NULL)
             cb = s->ctx->info_callback;
-
 
         if (cb != NULL) {
             /*
@@ -3806,20 +3822,25 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             goto err;
         }
         s->session->ext.tick_age_add = age_add_u.age_add;
-       /*
-        * ticket_nonce is set to a single 0 byte because we only ever send a
-        * single ticket per connection. IMPORTANT: If we ever support multiple
-        * tickets per connection then this will need to be changed.
-        */
-        OPENSSL_free(s->session->ext.tick_nonce);
-        s->session->ext.tick_nonce = OPENSSL_zalloc(sizeof(char));
-        if (s->session->ext.tick_nonce == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
-                     ERR_R_MALLOC_FAILURE);
+
+        nonce = s->next_ticket_nonce;
+        for (i = TICKET_NONCE_SIZE; i > 0; i--) {
+            tick_nonce[i - 1] = (unsigned char)(nonce & 0xff);
+            nonce >>= 8;
+        }
+
+        if (!tls13_hkdf_expand(s, md, s->resumption_master_secret,
+                               nonce_label,
+                               sizeof(nonce_label) - 1,
+                               tick_nonce,
+                               TICKET_NONCE_SIZE,
+                               s->session->master_key,
+                               hashlen)) {
+            /* SSLfatal() already called */
             goto err;
         }
-        s->session->ext.tick_nonce_len = 1;
+        s->session->master_key_length = hashlen;
+
         s->session->time = (long)time(NULL);
         if (s->s3->alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);
@@ -3962,8 +3983,8 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                                ? 0 : s->session->timeout)
             || (SSL_IS_TLS13(s)
                 && (!WPACKET_put_bytes_u32(pkt, age_add_u.age_add)
-                    || !WPACKET_sub_memcpy_u8(pkt, s->session->ext.tick_nonce,
-                                              s->session->ext.tick_nonce_len)))
+                    || !WPACKET_sub_memcpy_u8(pkt, tick_nonce,
+                                              TICKET_NONCE_SIZE)))
                /* Now the actual ticket data */
             || !WPACKET_start_sub_packet_u16(pkt)
             || !WPACKET_get_total_written(pkt, &macoffset)
@@ -4002,7 +4023,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+        /*
+         * Increment both |sent_tickets| and |next_ticket_nonce|. |sent_tickets|
+         * gets reset to 0 if we send more tickets following a post-handshake
+         * auth, but |next_ticket_nonce| does not.
+         */
         s->sent_tickets++;
+        s->next_ticket_nonce++;
         ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
     }
     EVP_CIPHER_CTX_free(ctx);
