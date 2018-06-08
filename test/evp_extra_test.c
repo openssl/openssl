@@ -488,7 +488,9 @@ static struct keys_st {
         EVP_PKEY_POLY1305, "01234567890123456789012345678901", NULL
     }, {
         EVP_PKEY_SIPHASH, "0123456789012345", NULL
-    }, {
+    },
+#ifndef OPENSSL_NO_EC
+    {
         EVP_PKEY_X25519, "01234567890123456789012345678901",
         "abcdefghijklmnopqrstuvwxyzabcdef"
     }, {
@@ -503,6 +505,7 @@ static struct keys_st {
         "012345678901234567890123456789012345678901234567890123456",
         "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcde"
     }
+#endif
 };
 
 static int test_set_get_raw_keys_int(int tst, int pub)
