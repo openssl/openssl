@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7626] = {
+static const unsigned char so[7746] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1060,9 +1060,23 @@ static const unsigned char so[7626] = {
     0x2B,0x6F,                                     /* [ 7610] OBJ_ieee */
     0x2B,0x6F,0x02,0x8C,0x53,                      /* [ 7612] OBJ_ieee_siswg */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x82,0x2D,       /* [ 7617] OBJ_sm2 */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,       /* [ 7625] OBJ_id_tc26_cipher_gostr3412_2015_magma */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,0x01,  /* [ 7633] OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,0x02,  /* [ 7642] OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,       /* [ 7651] OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,0x01,  /* [ 7659] OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,0x02,  /* [ 7668] OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,            /* [ 7677] OBJ_id_tc26_wrap */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,       /* [ 7684] OBJ_id_tc26_wrap_gostr3412_2015_magma */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,0x01,  /* [ 7692] OBJ_id_tc26_wrap_gostr3412_2015_magma_kexp15 */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,       /* [ 7701] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,0x01,  /* [ 7709] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15 */
+    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x02,  /* [ 7718] OBJ_id_tc26_gost_3410_2012_256_paramSetB */
+    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x03,  /* [ 7727] OBJ_id_tc26_gost_3410_2012_256_paramSetC */
+    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
 };
 
-#define NUM_NID 1173
+#define NUM_NID 1193
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2237,9 +2251,29 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"ieee", "ieee", NID_ieee, 2, &so[7610]},
     {"ieee-siswg", "IEEE Security in Storage Working Group", NID_ieee_siswg, 5, &so[7612]},
     {"SM2", "sm2", NID_sm2, 8, &so[7617]},
+    {"id-tc26-cipher-gostr3412-2015-magma", "id-tc26-cipher-gostr3412-2015-magma", NID_id_tc26_cipher_gostr3412_2015_magma, 8, &so[7625]},
+    {"id-tc26-cipher-gostr3412-2015-magma-ctracpkm", "id-tc26-cipher-gostr3412-2015-magma-ctracpkm", NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm, 9, &so[7633]},
+    {"id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac", "id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac", NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac, 9, &so[7642]},
+    {"id-tc26-cipher-gostr3412-2015-kuznyechik", "id-tc26-cipher-gostr3412-2015-kuznyechik", NID_id_tc26_cipher_gostr3412_2015_kuznyechik, 8, &so[7651]},
+    {"id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm", "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm", NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm, 9, &so[7659]},
+    {"id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac", "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac", NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac, 9, &so[7668]},
+    {"id-tc26-wrap", "id-tc26-wrap", NID_id_tc26_wrap, 7, &so[7677]},
+    {"id-tc26-wrap-gostr3412-2015-magma", "id-tc26-wrap-gostr3412-2015-magma", NID_id_tc26_wrap_gostr3412_2015_magma, 8, &so[7684]},
+    {"id-tc26-wrap-gostr3412-2015-magma-kexp15", "id-tc26-wrap-gostr3412-2015-magma-kexp15", NID_id_tc26_wrap_gostr3412_2015_magma_kexp15, 9, &so[7692]},
+    {"id-tc26-wrap-gostr3412-2015-kuznyechik", "id-tc26-wrap-gostr3412-2015-kuznyechik", NID_id_tc26_wrap_gostr3412_2015_kuznyechik, 8, &so[7701]},
+    {"id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15", "id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15", NID_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15, 9, &so[7709]},
+    {"id-tc26-gost-3410-2012-256-paramSetB", "GOST R 34.10-2012 (256 bit) ParamSet B", NID_id_tc26_gost_3410_2012_256_paramSetB, 9, &so[7718]},
+    {"id-tc26-gost-3410-2012-256-paramSetC", "GOST R 34.10-2012 (256 bit) ParamSet C", NID_id_tc26_gost_3410_2012_256_paramSetC, 9, &so[7727]},
+    {"id-tc26-gost-3410-2012-256-paramSetD", "GOST R 34.10-2012 (256 bit) ParamSet D", NID_id_tc26_gost_3410_2012_256_paramSetD, 9, &so[7736]},
+    {"magma-ecb", "magma-ecb", NID_magma_ecb},
+    {"magma-ctr", "magma-ctr", NID_magma_ctr},
+    {"magma-ofb", "magma-ofb", NID_magma_ofb},
+    {"magma-cbc", "magma-cbc", NID_magma_cbc},
+    {"magma-cfb", "magma-cfb", NID_magma_cfb},
+    {"magma-mac", "magma-mac", NID_magma_mac},
 };
 
-#define NUM_SN 1164
+#define NUM_SN 1184
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2999,6 +3033,12 @@ static const unsigned int sn_objs[NUM_SN] = {
      977,    /* "id-tc26-algorithms" */
      990,    /* "id-tc26-cipher" */
     1001,    /* "id-tc26-cipher-constants" */
+    1176,    /* "id-tc26-cipher-gostr3412-2015-kuznyechik" */
+    1177,    /* "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm" */
+    1178,    /* "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac" */
+    1173,    /* "id-tc26-cipher-gostr3412-2015-magma" */
+    1174,    /* "id-tc26-cipher-gostr3412-2015-magma-ctracpkm" */
+    1175,    /* "id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac" */
      994,    /* "id-tc26-constants" */
      981,    /* "id-tc26-digest" */
     1000,    /* "id-tc26-digest-constants" */
@@ -3006,6 +3046,9 @@ static const unsigned int sn_objs[NUM_SN] = {
     1003,    /* "id-tc26-gost-28147-param-Z" */
     1147,    /* "id-tc26-gost-3410-2012-256-constants" */
     1148,    /* "id-tc26-gost-3410-2012-256-paramSetA" */
+    1184,    /* "id-tc26-gost-3410-2012-256-paramSetB" */
+    1185,    /* "id-tc26-gost-3410-2012-256-paramSetC" */
+    1186,    /* "id-tc26-gost-3410-2012-256-paramSetD" */
      996,    /* "id-tc26-gost-3410-2012-512-constants" */
      998,    /* "id-tc26-gost-3410-2012-512-paramSetA" */
      999,    /* "id-tc26-gost-3410-2012-512-paramSetB" */
@@ -3019,6 +3062,11 @@ static const unsigned int sn_objs[NUM_SN] = {
      984,    /* "id-tc26-signwithdigest" */
      985,    /* "id-tc26-signwithdigest-gost3410-2012-256" */
      986,    /* "id-tc26-signwithdigest-gost3410-2012-512" */
+    1179,    /* "id-tc26-wrap" */
+    1182,    /* "id-tc26-wrap-gostr3412-2015-kuznyechik" */
+    1183,    /* "id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15" */
+    1180,    /* "id-tc26-wrap-gostr3412-2015-magma" */
+    1181,    /* "id-tc26-wrap-gostr3412-2015-magma-kexp15" */
      676,    /* "identified-organization" */
     1170,    /* "ieee" */
     1171,    /* "ieee-siswg" */
@@ -3045,6 +3093,12 @@ static const unsigned int sn_objs[NUM_SN] = {
      476,    /* "lastModifiedTime" */
      157,    /* "localKeyID" */
      480,    /* "mXRecord" */
+    1190,    /* "magma-cbc" */
+    1191,    /* "magma-cfb" */
+    1188,    /* "magma-ctr" */
+    1187,    /* "magma-ecb" */
+    1192,    /* "magma-mac" */
+    1189,    /* "magma-ofb" */
      460,    /* "mail" */
      493,    /* "mailPreferenceOption" */
      467,    /* "manager" */
@@ -3407,7 +3461,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1164
+#define NUM_LN 1184
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3464,6 +3518,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      811,    /* "GOST R 34.10-2001" */
      817,    /* "GOST R 34.10-2001 DH" */
     1148,    /* "GOST R 34.10-2012 (256 bit) ParamSet A" */
+    1184,    /* "GOST R 34.10-2012 (256 bit) ParamSet B" */
+    1185,    /* "GOST R 34.10-2012 (256 bit) ParamSet C" */
+    1186,    /* "GOST R 34.10-2012 (256 bit) ParamSet D" */
      998,    /* "GOST R 34.10-2012 (512 bit) ParamSet A" */
      999,    /* "GOST R 34.10-2012 (512 bit) ParamSet B" */
     1149,    /* "GOST R 34.10-2012 (512 bit) ParamSet C" */
@@ -4154,6 +4211,12 @@ static const unsigned int ln_objs[NUM_LN] = {
      977,    /* "id-tc26-algorithms" */
      990,    /* "id-tc26-cipher" */
     1001,    /* "id-tc26-cipher-constants" */
+    1176,    /* "id-tc26-cipher-gostr3412-2015-kuznyechik" */
+    1177,    /* "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm" */
+    1178,    /* "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac" */
+    1173,    /* "id-tc26-cipher-gostr3412-2015-magma" */
+    1174,    /* "id-tc26-cipher-gostr3412-2015-magma-ctracpkm" */
+    1175,    /* "id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac" */
      994,    /* "id-tc26-constants" */
      981,    /* "id-tc26-digest" */
     1000,    /* "id-tc26-digest-constants" */
@@ -4164,6 +4227,11 @@ static const unsigned int ln_objs[NUM_LN] = {
      978,    /* "id-tc26-sign" */
      995,    /* "id-tc26-sign-constants" */
      984,    /* "id-tc26-signwithdigest" */
+    1179,    /* "id-tc26-wrap" */
+    1182,    /* "id-tc26-wrap-gostr3412-2015-kuznyechik" */
+    1183,    /* "id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15" */
+    1180,    /* "id-tc26-wrap-gostr3412-2015-magma" */
+    1181,    /* "id-tc26-wrap-gostr3412-2015-magma-kexp15" */
       34,    /* "idea-cbc" */
       35,    /* "idea-cfb" */
       36,    /* "idea-ecb" */
@@ -4201,6 +4269,12 @@ static const unsigned int ln_objs[NUM_LN] = {
      157,    /* "localKeyID" */
       15,    /* "localityName" */
      480,    /* "mXRecord" */
+    1190,    /* "magma-cbc" */
+    1191,    /* "magma-cfb" */
+    1188,    /* "magma-ctr" */
+    1187,    /* "magma-ecb" */
+    1192,    /* "magma-mac" */
+    1189,    /* "magma-ofb" */
      493,    /* "mailPreferenceOption" */
      467,    /* "manager" */
        3,    /* "md2" */
@@ -4575,7 +4649,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1055
+#define NUM_OBJ 1069
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4975,6 +5049,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      987,    /* OBJ_id_tc26_mac                  1 2 643 7 1 1 4 */
      990,    /* OBJ_id_tc26_cipher               1 2 643 7 1 1 5 */
      991,    /* OBJ_id_tc26_agreement            1 2 643 7 1 1 6 */
+    1179,    /* OBJ_id_tc26_wrap                 1 2 643 7 1 1 7 */
      995,    /* OBJ_id_tc26_sign_constants       1 2 643 7 1 2 1 */
     1000,    /* OBJ_id_tc26_digest_constants     1 2 643 7 1 2 2 */
     1001,    /* OBJ_id_tc26_cipher_constants     1 2 643 7 1 2 5 */
@@ -5063,8 +5138,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      986,    /* OBJ_id_tc26_signwithdigest_gost3410_2012_512 1 2 643 7 1 1 3 3 */
      988,    /* OBJ_id_tc26_hmac_gost_3411_2012_256 1 2 643 7 1 1 4 1 */
      989,    /* OBJ_id_tc26_hmac_gost_3411_2012_512 1 2 643 7 1 1 4 2 */
+    1173,    /* OBJ_id_tc26_cipher_gostr3412_2015_magma 1 2 643 7 1 1 5 1 */
+    1176,    /* OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik 1 2 643 7 1 1 5 2 */
      992,    /* OBJ_id_tc26_agreement_gost_3410_2012_256 1 2 643 7 1 1 6 1 */
      993,    /* OBJ_id_tc26_agreement_gost_3410_2012_512 1 2 643 7 1 1 6 2 */
+    1180,    /* OBJ_id_tc26_wrap_gostr3412_2015_magma 1 2 643 7 1 1 7 1 */
+    1182,    /* OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik 1 2 643 7 1 1 7 2 */
     1147,    /* OBJ_id_tc26_gost_3410_2012_256_constants 1 2 643 7 1 2 1 1 */
      996,    /* OBJ_id_tc26_gost_3410_2012_512_constants 1 2 643 7 1 2 1 2 */
     1002,    /* OBJ_id_tc26_gost_28147_constants 1 2 643 7 1 2 5 1 */
@@ -5270,7 +5349,16 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1120,    /* OBJ_aria_128_ccm                 1 2 410 200046 1 1 37 */
     1121,    /* OBJ_aria_192_ccm                 1 2 410 200046 1 1 38 */
     1122,    /* OBJ_aria_256_ccm                 1 2 410 200046 1 1 39 */
+    1174,    /* OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm 1 2 643 7 1 1 5 1 1 */
+    1175,    /* OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac 1 2 643 7 1 1 5 1 2 */
+    1177,    /* OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm 1 2 643 7 1 1 5 2 1 */
+    1178,    /* OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac 1 2 643 7 1 1 5 2 2 */
+    1181,    /* OBJ_id_tc26_wrap_gostr3412_2015_magma_kexp15 1 2 643 7 1 1 7 1 1 */
+    1183,    /* OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15 1 2 643 7 1 1 7 1 1 */
     1148,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetA 1 2 643 7 1 2 1 1 1 */
+    1184,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetB 1 2 643 7 1 2 1 1 2 */
+    1185,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetC 1 2 643 7 1 2 1 1 3 */
+    1186,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetD 1 2 643 7 1 2 1 1 4 */
      997,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetTest 1 2 643 7 1 2 1 2 0 */
      998,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetA 1 2 643 7 1 2 1 2 1 */
      999,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetB 1 2 643 7 1 2 1 2 2 */
