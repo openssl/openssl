@@ -247,7 +247,9 @@ int syscall_random(void *buf, size_t buflen)
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
      */
+    ERR_set_mark();
     p_getentropy.p = DSO_global_lookup("getentropy");
+    ERR_pop_to_mark();
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? buflen : 0;
 
