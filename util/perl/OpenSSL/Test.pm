@@ -435,6 +435,8 @@ the function C<with> further down.
 =cut
 
 sub run {
+    $tmpout = undef;
+    my $errhandle = *STDERR;
     my %runopts;
     # Make a default stdout.  If the user has passed a stdout option of their own,
     # that one will override this.
@@ -442,8 +444,8 @@ sub run {
         $tmpout = __results_file("$test_name.log");
         $runopts{stdout} = $tmpout;
         $runopts{stderr} = $tmpout;
-    } else {
-        $tmpout = undef;
+        open TMPH, ">>", $tmpout or die "Can't open $tmpout for appending: $!";
+        $errhandle = *TMPH;
     }
     my ($cmd, $display_cmd) = shift->(%runopts);
     my %opts = @_;
@@ -472,6 +474,11 @@ sub run {
         open $save_STDERR, '>&', \*STDERR or die "Can't dup STDERR: $!";
         open STDOUT, ">", devnull();
         open STDERR, ">", devnull();
+    }
+
+    $cmdline = "$prefix$display_cmd\n";
+    unless ($tmpout) { # unfortunately cannot prepend $cmdline to $tmpout
+        print $errhandle $cmdline;
     }
 
     $ENV{HARNESS_OSSL_LEVEL} = $level + 1;
@@ -511,11 +518,8 @@ sub run {
         open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
         open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
     }
-    $cmdline = "$prefix$display_cmd => $e\n";
-    unless ($tmpout) {
-        print STDERR $cmdline;
-        $cmdline = undef;
-    }
+    print $errhandle "Exit code: $e\n";
+    close TMPH if $tmpout;
 
     # At this point, $? stops being interesting, and unfortunately,
     # there are Test::More versions that get picky if we leave it
@@ -532,12 +536,12 @@ sub run {
 sub __display_output {
     my ($ok, $display_verdict) = @_;
     if ($tmpout && !$ok) {
+        print STDERR $cmdline;
         open (TH, $tmpout) or die "Can't open $tmpout: $!";
         while (<TH>) {
             print $_;
         }
         close TH;
-        print STDERR $cmdline;
     }
     unlink $tmpout if $tmpout;
     my $res = $display_verdict->();
