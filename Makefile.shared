@@ -430,24 +430,36 @@ link_app.hpux:
 	fi; \
 	$(LINK_APP)
 
+# AIX has no concept of SONAME, hence using -lname would always link
+# against libname.so without any notion of a version. The ld command
+# accepts full names in addition to -l, however. With -bnoipath the path
+# component is dropped, so we get a similar behavior as on other
+# platforms.
+# The sed command is limited in its RE support, so instead of addressing
+# words with "-l\(crypto\|ssl\)" we have to address single characters
+# with "-l\([cs][rs][yl]p*t*o*\)" for the same effect.
+#
 link_dso.aix:
 	@OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || :; \
 	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bnoipath,-bM:SRE'; \
 	rm -f $(SHLIBNAME_FULL) 2>&1 > /dev/null ; \
+	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)@g'` || :;\
 	$(LINK_SO_DSO);
 link_shlib.aix:
-	@ OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || : ; \
+	@OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || : ; \
 	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
+	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bnoipath,-bM:SRE'; \
 	rm -f $(SHLIBNAME_FULL) 2>&1 > /dev/null ; \
+	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)@g'` || :;\
 	$(LINK_SO_SHLIB_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) -Wl,-bsvr4 $(LDFLAGS)"; \
+	LDFLAGS="$(CFLAGS) -Wl,-bsvr4,-bnoipath $(LDFLAGS)"; \
+	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)@g'` || :;\
 	$(LINK_APP)
 
 
