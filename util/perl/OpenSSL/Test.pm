@@ -530,8 +530,8 @@ sub run {
 }
 
 sub __display_output {
-    my $res = shift;
-    if ($tmpout && !$res) {
+    my ($ok, $display_verdict) = @_;
+    if ($tmpout && !$ok) {
         open (TH, $tmpout) or die "Can't open $tmpout: $!";
         while (<TH>) {
             print $_;
@@ -540,26 +540,30 @@ sub __display_output {
         print STDERR $cmdline;
     }
     unlink $tmpout if $tmpout;
+    my $res = $display_verdict->();
+    if ($tmpout && !$ok || $ENV{HARNESS_VERBOSE} == 1) {
+        note("================================================================================");
+    }
+    return $res;
 }
 
 no warnings qw( redefine );
 
 sub ok ($;$) {
     my ($res, $test_name) = @_;
-    __display_output($res);
-    return Test::More::ok($res, $test_name);
+    return __display_output($res, sub{Test::More::ok($res, $test_name)});
 }
 
 sub is ($$;$) {
     my ($got, $expected, $test_name) = @_;
-    __display_output($got eq $expected);
-    return Test::More::is($got, $expected, $test_name);
+    return __display_output($got eq $expected,
+                            sub{ Test::More::is($got, $expected, $test_name)});
 }
 
 sub isnt ($$;$) {
     my ($got, $expected, $test_name) = @_;
-    __display_output($got ne $expected);
-    return Test::More::isnt($got, $expected, $test_name);
+    return __display_output($got ne $expected,
+                            sub{Test::More::isnt($got, $expected, $test_name)});
 }
 
 END {
