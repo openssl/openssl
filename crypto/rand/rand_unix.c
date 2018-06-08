@@ -229,16 +229,8 @@ static size_t sysctl_random(char *buf, size_t buflen)
  */
 int syscall_random(void *buf, size_t buflen)
 {
-    union {
-        void *p;
-        int (*f)(void *buffer, size_t length);
-    } p_getentropy;
-
     /*
      * Do runtime detection to find getentropy().
-     *
-     * We could cache the result of the lookup, but we normally don't
-     * call this function often.
      *
      * Known OSs that should support this:
      * - Darwin since 16 (OSX 10.12, IOS 10.0).
@@ -247,11 +239,27 @@ int syscall_random(void *buf, size_t buflen)
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
      */
+#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__)
+    extern int getentropy(void *bufer, size_t length) __attribute__((weak));
+
+    if (getentropy != NULL)
+        return getentropy(buf, buflen) == 0 ? buflen : 0;
+#  else
+    union {
+        void *p;
+        int (*f)(void *buffer, size_t length);
+    } p_getentropy;
+
+    /*
+     * We could cache the result of the lookup, but we normally don't
+     * call this function often.
+     */
     ERR_set_mark();
     p_getentropy.p = DSO_global_lookup("getentropy");
     ERR_pop_to_mark();
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? buflen : 0;
+#  endif
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(SYS_getrandom)
