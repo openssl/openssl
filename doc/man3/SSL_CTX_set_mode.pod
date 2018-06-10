@@ -76,6 +76,11 @@ requests, and setting the B<SSL_MODE_AUTO_RETRY> flag will cause the functions
 to only return after successfully processing an application data record or a
 failure.
 
+Turning off B<SSL_MODE_AUTO_RETRY> can be useful with blocking B<BIO>s in case
+they are used in combination with something like select() or poll().
+Otherwise the call to SSL_read() or SSL_read_ex() might hang when a
+non-application record was sent and no application data was sent.
+
 =item SSL_MODE_RELEASE_BUFFERS
 
 When we no longer need a read buffer or a write buffer for a given SSL,

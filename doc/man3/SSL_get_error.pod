@@ -142,9 +142,8 @@ Some non-recoverable I/O error occurred.
 The OpenSSL error queue may contain more information on the error.
 For socket I/O on Unix systems, consult B<errno> for details.
 
-This error can also be returned when the library generates an error.
-For instance it's generated on the second call to SSL_shutdown() when not all
-data was read using SSL_read().
+This value can also be returned for other errors, check the error queue for
+details.
 
 =item SSL_ERROR_SSL
 
