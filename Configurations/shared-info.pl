@@ -68,6 +68,7 @@ my %shared_info;
     'solaris-shared' => {
         shared_ldflag     => '-Wl,-Bsymbolic',
         shared_defflag    => '-Wl,-M,',
+        shared_sonameflag => '-Wl,-h,',
     },
     'svr3-shared' => sub {
         return $shared_info{'gnu-shared'} if detect_gnu_ld();
