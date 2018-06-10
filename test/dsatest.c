@@ -17,6 +17,9 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
+#include <openssl/md5.h>
 
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -115,6 +118,71 @@ static int dsa_test(void)
     return ret;
 }
 
+static int dsa_digest(void)
+{
+    BN_GENCB *cb;
+    DSA *dsa = NULL;
+    int counter, ret = 0;
+    unsigned long h;
+    ASN1_INTEGER *pub_key = NULL, *priv_key = NULL;
+    unsigned char *penc = NULL;
+    unsigned int penclen;
+    unsigned char md[16];
+    unsigned int mdlen;
+    unsigned char digest[16];
+
+    if (!TEST_ptr(cb = BN_GENCB_new()))
+        goto end;
+
+    BN_GENCB_set(cb, dsa_cb, NULL);
+    if (!TEST_ptr(dsa = DSA_new())
+        || !TEST_true(DSA_generate_parameters_ex(dsa, 512, seed, 20,
+                                                &counter, &h, cb)))
+        goto end;
+
+    DSA_generate_key(dsa);
+    DSA_public_digest(dsa, EVP_md5(), md, &mdlen);
+
+    pub_key = BN_to_ASN1_INTEGER(DSA_get0_pub_key(dsa), NULL);
+    if (!TEST_ptr(pub_key))
+        goto end;
+
+    penclen = i2d_ASN1_INTEGER(pub_key, &penc);
+    if (!TEST_int_gt(penclen, 0))
+        goto end;
+
+    MD5(penc, penclen, digest);
+    if (!TEST_mem_eq(digest, sizeof(digest), md, mdlen))
+        goto end;
+
+    OPENSSL_free(penc);
+    penc = NULL;
+
+    DSA_private_digest(dsa, EVP_md5(), md, &mdlen);
+
+    priv_key = BN_to_ASN1_INTEGER(DSA_get0_priv_key(dsa), NULL);
+    if (!TEST_ptr(priv_key))
+        goto end;
+
+    penclen = i2d_DSAPrivateKey(dsa, &penc);
+    if (!TEST_int_gt(penclen, 0))
+        goto end;
+
+    MD5(penc, penclen, digest);
+    if (!TEST_mem_eq(digest, sizeof(digest), md, mdlen))
+        goto end;
+
+    ret = 1;
+
+ end:
+    OPENSSL_free(penc);
+    ASN1_INTEGER_free(priv_key);
+    ASN1_INTEGER_free(pub_key);
+    DSA_free(dsa);
+    BN_GENCB_free(cb);
+    return ret;
+}
+
 static int dsa_cb(int p, int n, BN_GENCB *arg)
 {
     static int ok = 0, num = 0;
@@ -136,6 +204,7 @@ int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(dsa_test);
+    ADD_TEST(dsa_digest);
 #endif
     return 1;
 }

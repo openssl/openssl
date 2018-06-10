@@ -4576,3 +4576,5 @@ EC_GROUP_set_curve                      4527	1_1_1	EXIST::FUNCTION:EC
 EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC
 d2i_DSAPublicKey_fp                     4529	1_1_1	EXIST::FUNCTION:DSA,STDIO
 i2d_DSAPublicKey_fp                     4530	1_1_1	EXIST::FUNCTION:DSA,STDIO
+DSA_public_digest                       4531	1_1_1	EXIST::FUNCTION:DSA
+DSA_private_digest                      4532	1_1_1	EXIST::FUNCTION:DSA

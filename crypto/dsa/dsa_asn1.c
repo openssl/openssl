@@ -13,6 +13,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
+#include <openssl/x509.h>
 
 ASN1_SEQUENCE(DSA_SIG) = {
         ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
@@ -152,4 +153,22 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
     OPENSSL_clear_free(der, derlen);
     DSA_SIG_free(s);
     return ret;
+}
+
+int DSA_public_digest(DSA *dsa, const EVP_MD *mdtype, unsigned char *md,
+                      unsigned int *mdlen)
+{
+    ASN1_INTEGER *pub_key = BN_to_ASN1_INTEGER(DSA_get0_pub_key(dsa), NULL);
+
+    int ret = ASN1_digest((i2d_of_void *)i2d_ASN1_INTEGER, mdtype, (char *)pub_key, md, mdlen);
+
+    ASN1_INTEGER_free(pub_key);
+    return ret;
+}
+
+int DSA_private_digest(DSA *dsa, const EVP_MD *mdtype, unsigned char *md,
+                       unsigned int *mdlen)
+{
+    return ASN1_item_digest(ASN1_ITEM_rptr(DSAPrivateKey), mdtype, dsa, md,
+                            mdlen);
 }

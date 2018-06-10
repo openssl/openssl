@@ -230,6 +230,10 @@ int DSA_meth_set_paramgen(DSA_METHOD *dsam,
 int (*DSA_meth_get_keygen(const DSA_METHOD *dsam)) (DSA *);
 int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *));
 
+int DSA_public_digest(DSA *dsa, const EVP_MD *mdtype,
+                      unsigned char *md, unsigned int *mdlen);
+int DSA_private_digest(DSA *dsa, const EVP_MD *mdtype,
+                       unsigned char *md, unsigned int *mdlen);
 
 #  ifdef  __cplusplus
 }
