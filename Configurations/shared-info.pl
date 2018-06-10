@@ -65,10 +65,6 @@ my %shared_info;
             shared_ldflag     => '-shared -Wl,-Bsymbolic -set_version $(SHLIB_VERSION_NUMBER)',
         };
     },
-    'solaris-shared' => {
-        shared_ldflag     => '-Wl,-Bsymbolic',
-        shared_defflag    => '-Wl,-M,',
-    },
     'svr3-shared' => sub {
         return $shared_info{'gnu-shared'} if detect_gnu_ld();
         return {
