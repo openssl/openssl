@@ -1288,7 +1288,7 @@ EOF
 	} elsif ($VMS) {
             print OUT ")\n";
             (my $libvmaj, my $libvmin, my $libvedit) =
-                $currversion =~ /^(\d+)_(\d+)_(\d+)$/;
+                $currversion =~ /^(\d+)_(\d+)_(\d+)[a-z]{0,2}$/;
             # The reason to multiply the edit number with 100 is to make space
             # for the possibility that we want to encode the patch letters
             print OUT "GSMATCH=LEQUAL,",($libvmaj * 100 + $libvmin),",",($libvedit * 100),"\n";
