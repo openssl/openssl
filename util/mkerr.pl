@@ -168,6 +168,18 @@ while ( <IN> ) {
 }
 close IN;
 
+if ( $internal ) {
+    my @dirs = glob('crypto/*/');
+    my $excl = "aes aria bf blake2 buffer camellia cast chacha cmac des hmac idea include lhash md2 md4 md5 mdc2 modes objects perlasm poly1305 rc2 rc4 rc5 ripemd seed sha siphash sm3 sm4 srp stack store txt_db whrlpool";
+    foreach my $dir ( @dirs ) {
+        my $lib = $dir;
+        $lib =~ s/^(crypto|ssl)\///;
+        $lib =~ s/\/$//;
+        print STDERR "WARNING: no entry for $lib in $config\n"
+            if ( index($excl, $lib) == -1 && ! $hinc{uc $lib} );
+    }
+}
+
 if ( ! $statefile ) {
     $statefile = $config;
     $statefile =~ s/.ec/.txt/;
