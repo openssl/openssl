@@ -446,7 +446,7 @@ link_dso.aix:
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bnoipath,-bM:SRE'; \
 	rm -f $(SHLIBNAME_FULL) 2>&1 > /dev/null ; \
-	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)@g'` || :;\
+	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIBVERSION)@g'` || :;\
 	$(LINK_SO_DSO);
 link_shlib.aix:
 	@OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || : ; \
@@ -455,11 +455,11 @@ link_shlib.aix:
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bnoipath,-bM:SRE'; \
 	rm -f $(SHLIBNAME_FULL) 2>&1 > /dev/null ; \
-	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)@g'` || :;\
+	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIBVERSION)@g'` || :;\
 	$(LINK_SO_SHLIB_VIA_O)
 link_app.aix:
 	LDFLAGS="$(CFLAGS) -Wl,-bsvr4,-bnoipath $(LDFLAGS)"; \
-	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIB_MAJOR).$(SHLIB_MINOR)@g'` || :;\
+	LIBDEPS=`echo $(LIBDEPS) | sed -e 's@-L\([^ ]*\) -l\([cs][rs][yl]p*t*o*\)@\1/lib\2.so.$(SHLIBVERSION)@g'` || :;\
 	$(LINK_APP)
 
 

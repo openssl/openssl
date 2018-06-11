@@ -912,14 +912,13 @@ EOF
 # It's not necessary to have both as targets.  The choice falls on the
 # simplest, {libname}$shlibextimport for Windows POSIX layers and
 # {libname}$shlibextsimple for the Unix platforms.
-# The AIX targets in Makefile.shared need SHLIB_MAJOR and SHLIB_MINOR.
+# The AIX targets in Makefile.shared need SHLIBVERSION.
 $target: $lib$libext $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
 		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$libd" \\
 		INSTALLTOP='\$(INSTALLTOP)' LIBDIR='\$(LIBDIR)' \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		SHLIB_MAJOR='\$(SHLIB_MAJOR)' SHLIB_MINOR='\$(SHLIB_MINOR)' \\
 		LIBNAME=$libname SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		STLIBNAME=$lib$libext \\
 		SHLIBNAME=$target SHLIBNAME_FULL=$target_full \\
@@ -956,7 +955,7 @@ $target: $objs $deps
 		PLATFORM=\$(PLATFORM) \\
 		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$dsod" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$shlibdeps"' \$(EX_LIBS)' \\
-		SHLIB_MAJOR='\$(SHLIB_MAJOR)' SHLIB_MINOR='\$(SHLIB_MINOR)' \\
+		SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		SHLIBNAME_FULL=$target LDFLAGS='\$(LDFLAGS)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(DSO_CFLAGS)' \\
 		SHARED_LDFLAGS='\$(DSO_LDFLAGS)' \\
@@ -994,7 +993,7 @@ $bin$exeext: $objs $deps
 		PERL="\$(PERL)" SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
-		SHLIB_MAJOR='\$(SHLIB_MAJOR)' SHLIB_MINOR='\$(SHLIB_MINOR)' \\
+		SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(BIN_CFLAGS)' \\
 		LDFLAGS='\$(LDFLAGS)' \\
 		link_app.$shlib_target
