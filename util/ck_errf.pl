@@ -19,6 +19,16 @@ use warnings;
 my $err_strict = 0;
 my $bad        = 0;
 
+my $config     = "crypto/err/openssl.ec";
+my %libs       = ( "SYS" => 1 );
+open my $cfh, $config or die "Trying to read $config: $!\n";
+while (<$cfh>) {
+    s|\R$||;                    # Better chomp
+    next unless m|^L ([0-9A-Z_]+)\s|;
+    next if $1 eq "NONE";
+    $libs{$1} = 1;
+}
+
 foreach my $file (@ARGV) {
     if ( $file eq "-strict" ) {
         $err_strict = 1;
@@ -33,9 +43,14 @@ foreach my $file (@ARGV) {
             $func = $1;
             $func =~ tr/A-Z/a-z/;
         }
-        if ( /([A-Z0-9]+)err\(([^,]+)/ && !/ckerr_ignore/ ) {
+        if ( /([A-Z0-9_]+[A-Z0-9])err\(([^,]+)/ && !/ckerr_ignore/ ) {
             my $errlib = $1;
             my $n      = $2;
+
+            unless ( $libs{$errlib} ) {
+                print "$file:$.:$errlib unknown\n";
+                $bad = 1;
+            }
 
             if ( $func eq "" ) {
                 print "$file:$.:???:$n\n";
@@ -43,7 +58,7 @@ foreach my $file (@ARGV) {
                 next;
             }
 
-            if ( $n !~ /([^_]+)_F_(.+)$/ ) {
+            if ( $n !~ /^(.+)_F_(.+)$/ ) {
                 #print "check -$file:$.:$func:$n\n";
                 next;
             }
