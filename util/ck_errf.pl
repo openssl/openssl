@@ -74,6 +74,8 @@ if ( $internal ) {
     @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'),
                 glob('ssl/*.c'), glob('ssl/*/*.c') );
 } else {
+    die "Configuration file not given.\nSee '$0 -help' for information\n"
+        unless defined $config;
     @source = @ARGV;
 }
 
@@ -107,7 +109,8 @@ foreach my $file (@source) {
             my $n      = $2;
 
             unless ( $libs{$errlib} ) {
-                print "$file:$.:$errlib unknown\n";
+                print "$file:$.:$errlib not listed in $config\n";
+                $libs{$errlib} = 1; # To not display it again
                 $bad = 1;
             }
 
