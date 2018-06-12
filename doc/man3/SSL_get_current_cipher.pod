@@ -15,7 +15,7 @@ SSL_get_pending_cipher - get SSL_CIPHER of a connection
 
  const char *SSL_get_cipher_name(const SSL *s);
  const char *SSL_get_cipher(const SSL *s);
- int SSL_get_cipher_bits(const SSL *s, int *np) \
+ int SSL_get_cipher_bits(const SSL *s, int *np);
  const char *SSL_get_cipher_version(const SSL *s);
 
 =head1 DESCRIPTION
