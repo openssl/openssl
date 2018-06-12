@@ -760,11 +760,13 @@ generate_fuzz_oids:
 # Set to -force to force a rebuild
 ERROR_REBUILD=
 errors:
-	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
-	( b=`pwd`; cd $(SRCDIR); \
+	( b=`pwd`; set -e; cd $(SRCDIR); \
+          $(PERL) util/ck_errf.pl -strict -internal; \
           $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal )
-	( b=`pwd`; cd $(SRCDIR)/engines; \
+	( b=`pwd`; set -e; cd $(SRCDIR)/engines; \
           for E in *.ec ; do \
+              $(PERL) ../util/ck_errf.pl -strict \
+                -conf $$E `basename $$E .ec`.c; \
               $(PERL) -I$$b ../util/mkerr.pl $(ERROR_REBUILD) -static \
                 -conf $$E `basename $$E .ec`.c ; \
           done )
