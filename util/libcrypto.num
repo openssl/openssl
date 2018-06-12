@@ -728,7 +728,7 @@ BIO_snprintf                            726	1_1_0	EXIST::FUNCTION:
 EC_POINT_hex2point                      727	1_1_0	EXIST::FUNCTION:EC
 X509v3_get_ext_by_critical              728	1_1_0	EXIST::FUNCTION:
 ENGINE_get_default_RSA                  729	1_1_0	EXIST::FUNCTION:ENGINE
-DSA_sign_setup                          730	1_1_0	EXIST::FUNCTION:DSA
+DSA_sign_setup                          730	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,DSA
 OPENSSL_sk_new_null                     731	1_1_0	EXIST::FUNCTION:
 PEM_read_PKCS8                          732	1_1_0	EXIST::FUNCTION:STDIO
 BN_mod_sqr                              733	1_1_0	EXIST::FUNCTION:
