@@ -186,8 +186,8 @@ script:
           echo -e '+\057 MAKE UPDATE OK';
       else
           echo -e '+\057 MAKE UPDATE FAILED'; false;
-      fi;
-      git diff --exit-code
+      fi
+    - git diff --exit-code
     - if [ -n "$CHECKDOCS" ]; then
           if $make doc-nits; then
               echo -e '+\057\057 MAKE DOC-NITS OK';
