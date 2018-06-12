@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-password encoding
+passphrase-encoding
 - How diverse parts of OpenSSL treat pass phrases character encoding
 
 =head1 DESCRIPTION
@@ -61,11 +61,11 @@ OpenSSL still does this, to be able to read files produced with older versions.
 
 It should be noted that this approach isn't entirely fault free.
 
-A passphrase encoded in ISO-8859-2 could very well have a sequence such as
+A pass phrase encoded in ISO-8859-2 could very well have a sequence such as
 0xC3 0xAF (which is the two characters "LATIN CAPITAL LETTER A WITH BREVE"
 and "LATIN CAPITAL LETTER Z WITH DOT ABOVE" in ISO-8859-2 encoding), but would
 be misinterpreted as the perfectly valid UTF-8 encoded code point U+00EF (LATIN
-SMALL LETTER I WITH DIARESIS) I<if the passphrase doesn't contain anything that
+SMALL LETTER I WITH DIARESIS) I<if the pass phrase doesn't contain anything that
 would be invalid UTF-8>.
 A pass phrase that contains this kind of byte sequence will give a different
 outcome in OpenSSL 1.1.0 and newer than in OpenSSL older than 1.1.0.
@@ -133,7 +133,7 @@ following:
 
 =item 1.
 
-Try the password that you have as it is in the character encoding of your
+Try the pass phrase that you have as it is in the character encoding of your
 environment.
 It's possible that its byte sequence is exactly right.
 
