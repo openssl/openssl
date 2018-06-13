@@ -850,20 +850,27 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         top /= 2;
         bn_flip_t4(np, mont->N.d, top);
 
-        bits--;
-        for (wvalue = 0, i = bits % 5; i >= 0; i--, bits--)
-            wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
+        /*
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows
+         */
+        window0 = (bits - 1) % 5 + 1;
+        wmask = (1 << window0) - 1;
+        bits -= window0;
+        wvalue = bn_get_bits(p, bits) & wmask;
         bn_gather5_t4(tmp.d, top, powerbuf, wvalue);
 
         /*
          * Scan the exponent one window at a time starting from the most
          * significant bits.
          */
-        while (bits >= 0) {
+        while (bits > 0) {
             if (bits < stride)
-                stride = bits + 1;
+                stride = bits;
             bits -= stride;
-            wvalue = bn_get_bits(p, bits + 1);
+            wvalue = bn_get_bits(p, bits);
 
             if ((*pwr5_worker) (tmp.d, np, n0, powerbuf, wvalue, stride))
                 continue;
@@ -971,32 +978,36 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             bn_scatter5(tmp.d, top, powerbuf, i);
         }
 # endif
-        bits--;
-        for (wvalue = 0, i = bits % 5; i >= 0; i--, bits--)
-            wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
+        /*
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows
+         */
+        window0 = (bits - 1) % 5 + 1;
+        wmask = (1 << window0) - 1;
+        bits -= window0;
+        wvalue = bn_get_bits(p, bits) & wmask;
         bn_gather5(tmp.d, top, powerbuf, wvalue);
 
         /*
          * Scan the exponent one window at a time starting from the most
          * significant bits.
          */
-        if (top & 7)
-            while (bits >= 0) {
-                for (wvalue = 0, i = 0; i < 5; i++, bits--)
-                    wvalue = (wvalue << 1) + BN_is_bit_set(p, bits);
-
+        if (top & 7) {
+            while (bits > 0) {
                 bn_mul_mont(tmp.d, tmp.d, tmp.d, np, n0, top);
                 bn_mul_mont(tmp.d, tmp.d, tmp.d, np, n0, top);
                 bn_mul_mont(tmp.d, tmp.d, tmp.d, np, n0, top);
                 bn_mul_mont(tmp.d, tmp.d, tmp.d, np, n0, top);
                 bn_mul_mont(tmp.d, tmp.d, tmp.d, np, n0, top);
                 bn_mul_mont_gather5(tmp.d, tmp.d, powerbuf, np, n0, top,
-                                    wvalue);
+                                    bn_get_bits5(p->d, bits -= 5));
+            }
         } else {
-            while (bits >= 0) {
-                wvalue = bn_get_bits5(p->d, bits - 4);
-                bits -= 5;
-                bn_power5(tmp.d, tmp.d, powerbuf, np, n0, top, wvalue);
+            while (bits > 0) {
+                bn_power5(tmp.d, tmp.d, powerbuf, np, n0, top,
+                          bn_get_bits5(p->d, bits -= 5));
             }
         }
 
@@ -1038,12 +1049,12 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             }
         }
 
-        /* 
+        /*
          * The exponent may not have a whole number of fixed-size windows.
          * To simplify the main loop, the initial window has between 1 and
          * full-window-size bits such that what remains is always a whole
          * number of windows
-         */ 
+         */
         window0 = (bits - 1) % window + 1;
         wmask = (1 << window0) - 1;
         bits -= window0;
@@ -1064,7 +1075,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                 if (!BN_mod_mul_montgomery(&tmp, &tmp, &tmp, mont, ctx))
                     goto err;
 
-            /* 
+            /*
              * Get a window's worth of bits from the exponent
              * This avoids calling BN_is_bit_set for each bit, which
              * is not only slower but also makes each bit vulnerable to
