@@ -91,8 +91,4 @@ my %shared_info;
         shared_ldflag     => '-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:',
         shared_sonameflag => '-Wl,+h,',
     },
-    'aix-shared' => {
-        bin_lflags            => '-Wl,-bsvr4',
-        shared_ldflag         => '-Wl,-bexpall,-bnolibpath,-bM:SRE',
-    },
 );

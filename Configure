@@ -2777,7 +2777,10 @@ sub threads {
     return sub { add($disabled{threads} ? () : @flags)->(); }
 }
 
-
+sub shared {
+    my @flags = @_;
+    return sub { add($disabled{shared} ? () : @flags)->(); }
+}
 
 our $add_called = 0;
 # Helper function to implement adding values to already existing configuration
