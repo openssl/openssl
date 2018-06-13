@@ -127,7 +127,7 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         return 0;
     }
 
-    if (!s->hit) {
+    if (!s->hit || SSL_IS_TLS13(s)) {
         if (PACKET_remaining(&hostname) > TLSEXT_MAXLEN_host_name) {
             SSLfatal(s, SSL_AD_UNRECOGNIZED_NAME,
                      SSL_F_TLS_PARSE_CTOS_SERVER_NAME,
@@ -153,7 +153,8 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
         }
 
         s->servername_done = 1;
-    } else {
+    }
+    if (s->hit) {
         /*
          * TODO(openssl-team): if the SNI doesn't match, we MUST
          * fall back to a full handshake.

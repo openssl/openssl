@@ -939,9 +939,10 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      */
     if (s->server) {
         if (!sent) {
+            /* Nothing from the client this handshake; cleanup stale value */
             OPENSSL_free(s->ext.hostname);
             s->ext.hostname = NULL;
-        } else if (!s->hit || SSL_IS_TLS13(s)) {
+        } else if (ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
             s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
