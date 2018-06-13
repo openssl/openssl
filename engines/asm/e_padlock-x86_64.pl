@@ -17,6 +17,7 @@
 # ====================================================================
 # GMI's SM3 and SM4 assembly is Written by yunshen@zhaoxin.com and 
 # kelvinkli@zhaoxin.com. 
+#
 # ====================================================================
 
 # September 2011
