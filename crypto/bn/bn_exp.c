@@ -850,6 +850,12 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         top /= 2;
         bn_flip_t4(np, mont->N.d, top);
 
+        /*
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows
+         */
         window0 = (bits - 1) % 5 + 1;
         wmask = (1 << window0) - 1;
         bits -= window0;
@@ -972,6 +978,12 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
             bn_scatter5(tmp.d, top, powerbuf, i);
         }
 # endif
+        /*
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows
+         */
         window0 = (bits - 1) % 5 + 1;
         wmask = (1 << window0) - 1;
         bits -= window0;
