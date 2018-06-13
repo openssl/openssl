@@ -9,15 +9,19 @@
      call :pack Universal 10.0 Dll    Unicode Debug   Win32
      call :pack Universal 10.0 Dll    Unicode Debug   arm
      call :pack Universal 10.0 Dll    Unicode Debug   x64
+     call :pack Universal 10.0 Dll    Unicode Debug   arm64
      call :pack Universal 10.0 Dll    Unicode Release Win32
      call :pack Universal 10.0 Dll    Unicode Release arm
      call :pack Universal 10.0 Dll    Unicode Release x64
+     call :pack Universal 10.0 Dll    Unicode Release arm64
      call :pack Universal 10.0 Static Unicode Debug   Win32
      call :pack Universal 10.0 Static Unicode Debug   arm
      call :pack Universal 10.0 Static Unicode Debug   x64
+     call :pack Universal 10.0 Static Unicode Debug   arm64
      call :pack Universal 10.0 Static Unicode Release Win32
      call :pack Universal 10.0 Static Unicode Release arm
      call :pack Universal 10.0 Static Unicode Release x64
+     call :pack Universal 10.0 Static Unicode Release arm64
 
      :pack
      echo %1 %2 %3 %4 %5 %6

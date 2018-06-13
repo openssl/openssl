@@ -31,9 +31,11 @@ goto :eof
 	call:makeConfiguration %1 %2 %3 %4 Debug   Win32
 	call:makeConfiguration %1 %2 %3 %4 Debug   arm
 	call:makeConfiguration %1 %2 %3 %4 Debug   x64
+	call:makeConfiguration %1 %2 %3 %4 Debug   arm64
 	call:makeConfiguration %1 %2 %3 %4 Release Win32
 	call:makeConfiguration %1 %2 %3 %4 Release arm
 	call:makeConfiguration %1 %2 %3 %4 Release x64
+	call:makeConfiguration %1 %2 %3 %4 Release arm64
 	perl ms\do_vsproject.pl %1 %2 %3 %4 %5 %6 %7 %8
 	goto :eof
 
