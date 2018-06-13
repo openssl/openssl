@@ -1062,7 +1062,8 @@ static int execute_test_session(int maxprot, int use_int_cache,
     sess2 = NULL;
 
     SSL_CTX_set_max_proto_version(sctx, maxprot);
-    SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
+    if (maxprot == TLS1_2_VERSION)
+        SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
     new_called = remove_called = get_called = 0;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
                                       NULL, NULL))
