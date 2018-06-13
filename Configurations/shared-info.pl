@@ -86,9 +86,4 @@ my %shared_info;
             shared_sonameflag => '-Wl,-soname=',
         };
     },
-    'hpux-shared' => {
-        bin_lflags        => '-Wl,+s,+cdp,../:,+cdp,./:',
-        shared_ldflag     => '-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:',
-        shared_sonameflag => '-Wl,+h,',
-    },
 );
