@@ -3799,29 +3799,29 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
      * long
      */
     if (slen_full == 0 || slen_full > 0xFF00) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
     senc = OPENSSL_malloc(slen_full);
     if (senc == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
+                 SSL_F_CONSTRUCT_STATELESS_TICKET, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     ctx = EVP_CIPHER_CTX_new();
     hctx = HMAC_CTX_new();
     if (ctx == NULL || hctx == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_MALLOC_FAILURE);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     p = senc;
     if (!i2d_SSL_SESSION(s->session, &p)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -3831,23 +3831,23 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
     const_p = senc;
     sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
     if (sess == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     slen = i2d_SSL_SESSION(sess, NULL);
     if (slen == 0 || slen > slen_full) {
         /* shouldn't ever happen */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         SSL_SESSION_free(sess);
         goto err;
     }
     p = senc;
     if (!i2d_SSL_SESSION(sess, &p)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         SSL_SESSION_free(sess);
         goto err;
     }
@@ -3868,7 +3868,7 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
             if (!WPACKET_put_bytes_u32(pkt, 0)
                     || !WPACKET_put_bytes_u16(pkt, 0)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                         SSL_F_CONSTRUCT_STATELESS_TICKET,
                          ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -3878,8 +3878,7 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
             return 1;
         }
         if (ret < 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
                      SSL_R_CALLBACK_FAILED);
             goto err;
         }
@@ -3894,8 +3893,7 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
                 || !HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
                                  sizeof(tctx->ext.secure->tick_hmac_key),
                                  EVP_sha256(), NULL)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                     SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -3933,14 +3931,14 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
             || !WPACKET_allocate_bytes(pkt, hlen, &macdata2)
             || macdata1 != macdata2) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+                 SSL_F_CONSTRUCT_STATELESS_TICKET, ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
     /* Close the sub-packet created by create_ticket_prequel() */
     if (!WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET, ERR_R_INTERNAL_ERROR);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATELESS_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
@@ -3950,6 +3948,25 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
     EVP_CIPHER_CTX_free(ctx);
     HMAC_CTX_free(hctx);
     return ok;
+}
+
+static int construct_stateful_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
+                                     unsigned char *tick_nonce)
+{
+    if (!create_ticket_prequel(s, pkt, age_add, tick_nonce)) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    if (!WPACKET_memcpy(pkt, s->session->session_id,
+                        s->session->session_id_length)
+            || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_STATEFUL_TICKET,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
 }
 
 int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
@@ -4065,7 +4082,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0)
         goto err;
 
-    if (!construct_stateless_ticket(s, pkt, age_add_u.age_add, tick_nonce)) {
+    if ((s->options & SSL_OP_NO_TICKET) != 0 && SSL_IS_TLS13(s)) {
+        if (!construct_stateful_ticket(s, pkt, age_add_u.age_add, tick_nonce)) {
+            /* SSLfatal() already called */
+            goto err;
+        }
+    } else if (!construct_stateless_ticket(s, pkt, age_add_u.age_add,
+                                           tick_nonce)) {
         /* SSLfatal() already called */
         goto err;
     }
