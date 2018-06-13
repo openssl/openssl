@@ -26,6 +26,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
      "construct_key_exchange_tbs"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH, 0),
      "create_synthetic_message_hash"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_CREATE_TICKET_PREQUEL, 0),
+     "create_ticket_prequel"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CT_MOVE_SCTS, 0), "ct_move_scts"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CT_STRICT, 0), "ct_strict"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_CUSTOM_EXT_ADD, 0), "custom_ext_add"},

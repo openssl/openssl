@@ -27,6 +27,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_CONSTRUCT_CA_NAMES                         552
 # define SSL_F_CONSTRUCT_KEY_EXCHANGE_TBS                 553
 # define SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH              539
+# define SSL_F_CREATE_TICKET_PREQUEL                      636
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
 # define SSL_F_CUSTOM_EXT_ADD                             554
