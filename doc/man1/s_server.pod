@@ -180,6 +180,8 @@ B<openssl> B<s_server>
 [B<-keylogfile outfile>]
 [B<-max_early_data int>]
 [B<-early_data>]
+[B<-anti_replay>]
+[B<-no_anti_replay>]
 
 =head1 DESCRIPTION
 
@@ -708,6 +710,15 @@ greater than or equal to 0.
 =item B<-early_data>
 
 Accept early data where possible.
+
+=item B<-anti_replay>, B<-no_anti_replay>
+
+Switches replay protection on or off, respectively. Replay protection is on by
+default unless overridden by a configuration file. When it is on, OpenSSL will
+automatically detect if a session ticket has been used more than once, TLSv1.3
+has been negotiated, and early data is enabled on the server. A full handshake
+is forced if a session ticket is used a second or subsequent time. Any early
+data that was sent will be rejected.
 
 =back
 
