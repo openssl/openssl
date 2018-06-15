@@ -2179,8 +2179,10 @@ static int allow_early_data_cb(SSL *s, void *arg)
  * usecb == 0: Don't use a custom early data callback
  * usecb == 1: Use a custom early data callback and reject the early data
  * usecb == 2: Use a custom early data callback and accept the early data
+ * confopt == 0: Configure anti-replay directly
+ * confopt == 1: Configure anti-replay using SSL_CONF
  */
-static int test_early_data_replay_int(int idx, int usecb)
+static int test_early_data_replay_int(int idx, int usecb, int confopt)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -2197,7 +2199,23 @@ static int test_early_data_replay_int(int idx, int usecb)
         return 0;
 
     if (usecb > 0) {
-        SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY);
+        if (confopt == 0) {
+            SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY);
+        } else {
+            SSL_CONF_CTX *confctx = SSL_CONF_CTX_new();
+
+            if (!TEST_ptr(confctx))
+                goto end;
+            SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE
+                                            | SSL_CONF_FLAG_SERVER);
+            SSL_CONF_CTX_set_ssl_ctx(confctx, sctx);
+            if (!TEST_int_eq(SSL_CONF_cmd(confctx, "Options", "-AntiReplay"),
+                             2)) {
+                SSL_CONF_CTX_free(confctx);
+                goto end;
+            }
+            SSL_CONF_CTX_free(confctx);
+        }
         SSL_CTX_set_allow_early_data_cb(sctx, allow_early_data_cb, &usecb);
     }
 
@@ -2282,11 +2300,12 @@ static int test_early_data_replay_int(int idx, int usecb)
 
 static int test_early_data_replay(int idx)
 {
-    int ret;
+    int ret = 1, usecb, confopt;
 
-    ret = test_early_data_replay_int(idx, 0);
-    ret &= test_early_data_replay_int(idx, 1);
-    ret &= test_early_data_replay_int(idx, 2);
+    for (usecb = 0; usecb < 3; usecb++) {
+        for (confopt = 0; confopt < 2; confopt++)
+            ret &= test_early_data_replay_int(idx, usecb, confopt);
+    }
 
     return ret;
 }
