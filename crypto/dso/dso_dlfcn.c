@@ -108,6 +108,10 @@ static int dlfcn_load(DSO *dso)
     if (dso->flags & DSO_FLAG_GLOBAL_SYMBOLS)
         flags |= RTLD_GLOBAL;
 # endif
+# ifdef _AIX
+    if (filename[strlen(filename) - 1] == ')')
+        flags |= RTLD_MEMBER;
+# endif
     ptr = dlopen(filename, flags);
     if (ptr == NULL) {
         DSOerr(DSO_F_DLFCN_LOAD, DSO_R_LOAD_FAILED);
@@ -359,14 +363,27 @@ static int dladdr(void *ptr, Dl_info *dl)
             || ((addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
                 && (addr < ((uintptr_t)this_ldi->ldinfo_dataorg +
                             this_ldi->ldinfo_datasize)))) {
+            char *member = (char *)((uintptr_t)this_ldi->ldinfo_filename +
+                                    strlen(this_ldi->ldinfo_filename) + 1);
+            size_t member_len = strlen(member);
             found = 1;
-            /*
-             * Ignoring the possibility of a member name and just returning
-             * the path name. See docs: sys/ldr.h, loadquery() and
-             * dlopen()/RTLD_MEMBER.
-             */
             if ((dl->dli_fname =
-                 OPENSSL_strdup(this_ldi->ldinfo_filename)) == NULL)
+                 OPENSSL_strdup(this_ldi->ldinfo_filename)) != NULL) {
+                if ((member_len > 0)
+                    && (dl->dli_fname =
+                        OPENSSL_realloc(dl->dli_fname, strlen(dl->dli_fname) +
+                                                       1 + member_len + 2)) {
+                    /*
+                     * Need to respect a possible member name and not just
+                     * returning the path name in this case. See docs:
+                     * sys/ldr.h, loadquery() and dlopen()/RTLD_MEMBER.
+                     */
+                    strcat(dl->dli_fname, "(");
+                    strcat(dl->dli_fname, member);
+                    strcat(dl->dli_fname, ")");
+                } else
+                    errno = ENOMEM;
+            } else
                 errno = ENOMEM;
         } else {
             next_ldi =
