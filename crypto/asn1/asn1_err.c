@@ -322,6 +322,8 @@ static const ERR_STRING_DATA ASN1_str_reasons[] = {
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNKNOWN_TAG), "unknown tag"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE),
     "unsupported any defined by type"},
+    {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNSUPPORTED_CIPHER),
+    "unsupported cipher"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE),
     "unsupported public key type"},
     {ERR_PACK(ERR_LIB_ASN1, 0, ASN1_R_UNSUPPORTED_TYPE), "unsupported type"},

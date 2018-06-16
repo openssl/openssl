@@ -22,7 +22,8 @@ the structure and B<cert> its corresponding certificates. B<ca>, if not B<NULL>
 is an optional set of certificates to also include in the structure.
 
 B<nid_key> and B<nid_cert> are the encryption algorithms that should be used
-for the key and certificate respectively. B<iter> is the encryption algorithm
+for the key and certificate respectively. The modes
+GCM, CCM, XTS, and OCB are unsupported. B<iter> is the encryption algorithm
 iteration count to use and B<mac_iter> is the MAC iteration count to use.
 B<keytype> is the type of key.
 
