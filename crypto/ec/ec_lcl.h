@@ -176,6 +176,7 @@ struct ec_method_st {
     /* Inverse modulo order */
     int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r, BIGNUM *x,
                                  BN_CTX *ctx);
+    int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 };
 
 /*
@@ -382,6 +383,8 @@ int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                             const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                             BN_CTX *);
+int ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
+                                   BN_CTX *ctx);
 
 /* method functions in ecp_mont.c */
 int ec_GFp_mont_group_init(EC_GROUP *);
@@ -635,3 +638,5 @@ void X25519_public_from_private(uint8_t out_public_value[32],
 
 int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
                             BIGNUM *x, BN_CTX *ctx);
+
+int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);

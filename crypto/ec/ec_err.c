@@ -116,6 +116,8 @@ static const ERR_STRING_DATA EC_str_functs[] = {
      "ec_GFp_nist_field_sqr"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_GFP_NIST_GROUP_SET_CURVE, 0),
      "ec_GFp_nist_group_set_curve"},
+    {ERR_PACK(ERR_LIB_EC, EC_F_EC_GFP_SIMPLE_BLIND_COORDINATES, 0),
+     "ec_GFp_simple_blind_coordinates"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT, 0),
      "ec_GFp_simple_group_check_discriminant"},
     {ERR_PACK(ERR_LIB_EC, EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE, 0),
