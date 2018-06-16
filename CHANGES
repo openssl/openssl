@@ -9,7 +9,10 @@
 
  Changes between 1.1.0i and 1.1.0j [xx XXX xxxx]
 
-  *)
+  *) Add coordinate blinding for EC_POINT and implement projective
+     coordinate blinding for generic prime curves as a countermeasure to
+     chosen point SCA attacks.
+     [Sohaib ul Hassan, Nicola Tuveri, Billy Bob Brumley]
 
  Changes between 1.1.0h and 1.1.0i [14 Aug 2018]
 

@@ -1017,3 +1017,21 @@ int ec_group_simple_order_bits(const EC_GROUP *group)
         return 0;
     return BN_num_bits(group->order);
 }
+
+/*-
+ * Coordinate blinding for EC_POINT.
+ *
+ * The underlying EC_METHOD can optionally implement this function:
+ * underlying implementations should return 0 on errors, or 1 on
+ * success.
+ *
+ * This wrapper returns 1 in case the underlying EC_METHOD does not
+ * support coordinate blinding.
+ */
+int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->blind_coordinates == NULL)
+        return 1; /* ignore if not implemented */
+
+    return group->meth->blind_coordinates(group, p, ctx);
+}

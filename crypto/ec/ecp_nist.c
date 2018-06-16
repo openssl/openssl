@@ -68,7 +68,8 @@ const EC_METHOD *EC_GFp_nist_method(void)
         ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
-        ecdh_simple_compute_key
+        ecdh_simple_compute_key,
+        ec_GFp_simple_blind_coordinates
     };
 
     return &ret;

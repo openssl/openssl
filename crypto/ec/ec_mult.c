@@ -216,6 +216,17 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
         || (bn_wexpand(r->Z, group_top) == NULL))
         goto err;
 
+    /*-
+     * Apply coordinate blinding for EC_POINT.
+     *
+     * The underlying EC_METHOD can optionally implement this function:
+     * ec_point_blind_coordinates() returns 0 in case of errors or 1 on
+     * success or if coordinate blinding is not implemented for this
+     * group.
+     */
+    if (!ec_point_blind_coordinates(group, s, ctx))
+        goto err;
+
     /* top bit is a 1, in a fixed pos */
     if (!EC_POINT_copy(r, s))
         goto err;
