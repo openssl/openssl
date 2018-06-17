@@ -360,8 +360,10 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         ECDSA_SIG_free(ret);
         ret = NULL;
     }
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
+    if (ctx != NULL) {
+        BN_CTX_end(ctx);
+        BN_CTX_free(ctx);
+    }
     BN_clear_free(kinv);
     return ret;
 }
