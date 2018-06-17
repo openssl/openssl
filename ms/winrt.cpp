@@ -46,35 +46,81 @@ unsigned entropyRT(BYTE *buffer, unsigned len)
 	}
 
 #else
-#include <inspectable.h>
+#include <roapi.h>
 #include <robuffer.h>
+#include <windows.security.cryptography.h>
+#include <winstring.h>
+
 unsigned entropyRT(BYTE *buffer, unsigned len)
 {
-	using Windows::Security::Cryptography::CryptographicBuffer;
-	using Windows::Storage::Streams::IBuffer;
+	using ABI::Windows::Storage::Streams::IBuffer;
+	using ABI::Windows::Security::Cryptography::ICryptographicBufferStatics;
 	using Windows::Storage::Streams::IBufferByteAccess;
 
-	IBuffer^ Buffer = CryptographicBuffer::GenerateRandom(len);
-	IInspectable* BufferABI = reinterpret_cast<IInspectable*>(Buffer);
+	unsigned ArrayLength = 0;
 
-	byte* RawBuffer = nullptr;
-
-	IBufferByteAccess* BufferByteAccess = nullptr;
-	if (SUCCEEDED(BufferABI->QueryInterface(&BufferByteAccess)))
+	if (SUCCEEDED(RoInitialize(RO_INIT_MULTITHREADED)))
 	{
-		BufferByteAccess->Buffer(&RawBuffer);
-		BufferByteAccess->Release();
+		const wchar_t* CryptographicBufferName =
+			RuntimeClass_Windows_Security_Cryptography_CryptographicBuffer;
+		UINT32 CryptographicBufferNameLength =
+			static_cast<UINT32>(wcslen(CryptographicBufferName));
+		HSTRING_HEADER CryptographicBufferNameObjectHeader = { 0 };
+		HSTRING CryptographicBufferNameObject = nullptr;
+		ICryptographicBufferStatics* pCryptographicBuffer = nullptr;
+		IBuffer* pBuffer = nullptr;
+		IBufferByteAccess* pBufferByteAccess = nullptr;
+		byte* RawBuffer = nullptr;
+
+		do
+		{
+			if (FAILED(WindowsCreateStringReference(
+				CryptographicBufferName,
+				CryptographicBufferNameLength,
+				&CryptographicBufferNameObjectHeader,
+				&CryptographicBufferNameObject)))
+				break;
+
+			if (FAILED(RoGetActivationFactory(
+				CryptographicBufferNameObject,
+				IID_INS_ARGS(&pCryptographicBuffer))))
+				break;
+
+			if (FAILED(pCryptographicBuffer->GenerateRandom(len, &pBuffer)))
+				break;
+
+			if (FAILED(pBuffer->QueryInterface(&pBufferByteAccess)))
+				break;
+
+			if (FAILED(pBufferByteAccess->Buffer(&RawBuffer)))
+				break;
+
+			if (nullptr == RawBuffer)
+				break;
+
+			if (FAILED(pBuffer->get_Length(&ArrayLength)))
+				break;
+
+			// Make sure not to overflow the copy
+			ArrayLength = (ArrayLength > len) ? len : ArrayLength;
+			memcpy(buffer, RawBuffer, ArrayLength);
+
+		} while (false);
+
+
+		if (nullptr != pBufferByteAccess)
+			pBufferByteAccess->Release();
+
+		if (nullptr != pBuffer)
+			pBuffer->Release();
+
+		if (nullptr != pCryptographicBuffer)
+			pCryptographicBuffer->Release();
+
+		RoUninitialize();
 	}
 
-	if (nullptr == RawBuffer)
-		return 0;
-
-	unsigned arrayLen = Buffer->Length;
-
-	// Make sure not to overflow the copy
-	arrayLen = (arrayLen > len) ? len : arrayLen;
-	memcpy(buffer, RawBuffer, arrayLen);
-	return arrayLen;
+	return ArrayLength;
 }
 #endif
 

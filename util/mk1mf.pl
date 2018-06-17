@@ -754,13 +754,13 @@ foreach (values %lib_nam)
 if ($platform eq "VC-WINPHONE" or $platform eq "VC-WINSTORE") {
     $rules.= <<"EOF";
 \$(OBJ_D)\\winrt.obj: \$(SRC_D)\\ms\\winrt.cpp
-	\$(CC)  /ZW:nostdlib /EHsc /ZW /Fo\$(OBJ_D)\\winrt.obj /FUPlatform.winmd  /FUWindows.winmd \$(LIB_CFLAGS) -c \$(SRC_D)\\ms\\winrt.cpp
+	\$(CC) /Fo\$(OBJ_D)\\winrt.obj \$(LIB_CFLAGS) -c \$(SRC_D)\\ms\\winrt.cpp
 
 EOF
 } elsif($platform eq "VC-WINUNIVERSAL") {
     $rules.= <<"EOF";
 \$(OBJ_D)\\winrt.obj: \$(SRC_D)\\ms\\winrt.cpp
-	\$(CC)  /ZW:nostdlib /EHsc /ZW /Fo\$(OBJ_D)\\winrt.obj /FUPlatform.winmd  /FUwindows.foundation.foundationcontract.winmd /FUwindows.foundation.universalapicontract.winmd \$(LIB_CFLAGS) -c \$(SRC_D)\\ms\\winrt.cpp
+	\$(CC) /Fo\$(OBJ_D)\\winrt.obj \$(LIB_CFLAGS) -c \$(SRC_D)\\ms\\winrt.cpp
 
 EOF
 }
