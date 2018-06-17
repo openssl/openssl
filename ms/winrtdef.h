@@ -25,6 +25,7 @@
 # endif
 # define setenv winrt_setenv
 
+
 #if !defined(NTDDI_WIN10_RS1) || (NTDDI_VERSION <= NTDDI_WIN10_RS1)
 # ifdef FindFirstFile
 #  undef FindFirstFile
