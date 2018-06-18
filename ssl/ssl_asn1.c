@@ -328,7 +328,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
     ret->ext.tick_lifetime_hint = (unsigned long)as->tlsext_tick_lifetime_hint;
     ret->ext.tick_age_add = as->tlsext_tick_age_add;
-    if (as->tlsext_tick) {
+    OPENSSL_free(ret->ext.tick);
+    if (as->tlsext_tick != NULL) {
         ret->ext.tick = as->tlsext_tick->data;
         ret->ext.ticklen = as->tlsext_tick->length;
         as->tlsext_tick->data = NULL;
@@ -355,11 +356,11 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
     ret->flags = (int32_t)as->flags;
     ret->ext.max_early_data = as->max_early_data;
 
+    OPENSSL_free(ret->ext.alpn_selected);
     if (as->alpn_selected != NULL) {
-        if (!ssl_session_strndup((char **)&ret->ext.alpn_selected,
-                                 as->alpn_selected))
-            goto err;
+        ret->ext.alpn_selected = as->alpn_selected->data;
         ret->ext.alpn_selected_len = as->alpn_selected->length;
+        as->alpn_selected->data = NULL;
     } else {
         ret->ext.alpn_selected = NULL;
         ret->ext.alpn_selected_len = 0;
@@ -367,6 +368,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
     ret->ext.max_fragment_len_mode = as->tlsext_max_fragment_len_mode;
 
+    OPENSSL_free(ret->ticket_appdata);
     if (as->ticket_appdata != NULL) {
         ret->ticket_appdata = as->ticket_appdata->data;
         ret->ticket_appdata_len = as->ticket_appdata->length;
