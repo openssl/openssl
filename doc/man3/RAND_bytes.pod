@@ -24,9 +24,10 @@ into B<buf>. An error occurs if the CSPRNG has not been seeded with
 enough randomness to ensure an unpredictable byte sequence.
 
 RAND_priv_bytes() has the same semantics as RAND_bytes().  It is intended to
-be used for generating long-term private keys. If using the default
-RAND_METHOD, this function uses a separate instance of the PRNG so that
-a compromise of the global generator will not affect such key generation.
+be used for generating values that should remain private. If using the
+default RAND_METHOD, this function uses a separate instance of the PRNG
+so that a compromise of the global generator will not affect the secrecy
+of such values.
 
 =head1 RETURN VALUES
 
