@@ -823,17 +823,17 @@ while (@argvcopy)
 			{
 			read_config $1;
 			}
-		elsif (/^-L(.*)$/)
-			{
-			push @{$useradd{LDFLAGS}}, $_;
-			}
-		elsif (/^-l(.*)$/ or /^-Wl,/)
+		elsif (/^-l(.*)$/)
 			{
 			push @{$useradd{LDLIBS}}, $_;
 			}
 		elsif (/^-framework$/)
 			{
 			push @{$useradd{LDLIBS}}, $_, shift(@argvcopy);
+			}
+		elsif (/^-L(.*)$/ or /^-Wl,/)
+			{
+			push @{$useradd{LDFLAGS}}, $_;
 			}
 		elsif (/^-rpath$/ or /^-R$/)
 			# -rpath is the OSF1 rpath flag
@@ -954,7 +954,7 @@ foreach (keys %user) {
     }
 }
 
-if (grep { $_ =~ /(^|\s)-Wl,-rpath,/ } ($user{LDLIBS} ? @{$user{LDLIBS}} : ())
+if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
     && !$disabled{shared}
     && !($disabled{asan} && $disabled{msan} && $disabled{ubsan})) {
     die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
