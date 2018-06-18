@@ -76,6 +76,7 @@ extern const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed448_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD sm2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth;
 
 extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;

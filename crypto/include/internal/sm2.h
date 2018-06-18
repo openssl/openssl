@@ -42,15 +42,15 @@ int sm2_do_verify(const EC_KEY *key,
                   const char *user_id, const uint8_t *msg, size_t msg_len);
 
 /*
- * SM2 signature generation. Assumes input is an SM3 digest
+ * SM2 signature generation.
  */
-int sm2_sign(int type, const unsigned char *dgst, int dgstlen,
+int sm2_sign(const unsigned char *dgst, int dgstlen,
              unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
 
 /*
- * SM2 signature verification. Assumes input is an SM3 digest
+ * SM2 signature verification.
  */
-int sm2_verify(int type, const unsigned char *dgst, int dgstlen,
+int sm2_verify(const unsigned char *dgst, int dgstlen,
                const unsigned char *sig, int siglen, EC_KEY *eckey);
 
 
