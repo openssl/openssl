@@ -122,6 +122,8 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
      "EVP_PKEY_public_check"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_SET1_ENGINE, 0),
      "EVP_PKEY_set1_engine"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_SET_ALIAS_TYPE, 0),
+     "EVP_PKEY_set_alias_type"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_SIGN, 0), "EVP_PKEY_sign"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_SIGN_INIT, 0), "EVP_PKEY_sign_init"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_EVP_PKEY_VERIFY, 0), "EVP_PKEY_verify"},

@@ -4567,3 +4567,4 @@ EVP_PKEY_get_raw_public_key             4518	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_get_raw_private_key            4519	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_priv_key          4520	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_pub_key           4521	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_set_alias_type                 4522	1_1_1	EXIST::FUNCTION:
