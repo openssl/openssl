@@ -1573,6 +1573,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL3_READ_BYTES,
                      SSL_R_NO_RENEGOTIATION);
             return -1;
+        } else if (alert_level == SSL3_AL_WARNING) {
+            /* We ignore any other warning alert in TLSv1.2 and below */
+            goto start;
         }
 
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
