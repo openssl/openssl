@@ -14,6 +14,10 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA SM2_str_functs[] = {
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_CTRL, 0), "pkey_sm2_ctrl"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_CTRL_STR, 0), "pkey_sm2_ctrl_str"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_INIT, 0), "pkey_sm2_init"},
+    {ERR_PACK(ERR_LIB_SM2, SM2_F_PKEY_SM2_SIGN, 0), "pkey_sm2_sign"},
     {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_COMPUTE_MSG_HASH, 0),
      "sm2_compute_msg_hash"},
     {ERR_PACK(ERR_LIB_SM2, SM2_F_SM2_COMPUTE_USERID_DIGEST, 0),
@@ -31,11 +35,14 @@ static const ERR_STRING_DATA SM2_str_functs[] = {
 static const ERR_STRING_DATA SM2_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_ASN1_ERROR), "asn1 error"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_BAD_SIGNATURE), "bad signature"},
+    {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_BUFFER_TOO_SMALL), "buffer too small"},
+    {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_CURVE), "invalid curve"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_DIGEST), "invalid digest"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_DIGEST_TYPE),
     "invalid digest type"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_ENCODING), "invalid encoding"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_INVALID_FIELD), "invalid field"},
+    {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_NO_PARAMETERS_SET), "no parameters set"},
     {ERR_PACK(ERR_LIB_SM2, 0, SM2_R_USER_ID_TOO_LARGE), "user id too large"},
     {0, NULL}
 };

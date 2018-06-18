@@ -602,6 +602,14 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     ec_pkey_param_check
 };
 
+#if !defined(OPENSSL_NO_SM2)
+const EVP_PKEY_ASN1_METHOD sm2_asn1_meth = {
+   EVP_PKEY_SM2,
+   EVP_PKEY_EC,
+   ASN1_PKEY_ALIAS
+};
+#endif
+
 int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 {
     int private = EC_KEY_get0_private_key(x) != NULL;
