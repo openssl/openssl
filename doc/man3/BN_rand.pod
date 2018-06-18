@@ -48,8 +48,9 @@ BN_rand() and BN_rand_range() respectively.  They are intended to be
 used for generating values that should remain private, and mirror the
 same difference between RAND_bytes() and RAND_priv_bytes().
 
-The PRNG must be seeded prior to calling BN_rand(), BN_rand_range(),
-BN_priv_rand(), or BN_priv_rand_range().
+An error occurs in the underlying B<RAND> functions if the CSPRNG has
+not been seeded with enough randomness to ensure an unpredictable byte
+sequence.
 
 =head1 RETURN VALUES
 
@@ -64,6 +65,8 @@ and
 BN_pseudo_rand_range() has been identical to BN_rand_range().
 The "pseudo" functions should not be used and may be deprecated in
 a future release.
+
+BN_priv_rand() and BN_priv_rand_range() were added in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 

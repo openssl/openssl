@@ -26,8 +26,8 @@ enough randomness to ensure an unpredictable byte sequence.
 RAND_priv_bytes() has the same semantics as RAND_bytes().  It is intended to
 be used for generating values that should remain private. If using the
 default RAND_METHOD, this function uses a separate instance of the PRNG
-so that a compromise of the global generator will not affect the secrecy
-of such values.
+so that a compromise of the PRNG used for public-facing values will not
+affect the secrecy of the values from the private generator.
 
 =head1 RETURN VALUES
 
@@ -39,6 +39,8 @@ obtained by L<ERR_get_error(3)>.
 =head1 HISTORY
 
 RAND_pseudo_bytes() was deprecated in OpenSSL 1.1.0; use RAND_bytes() instead.
+
+RAND_priv_bytes() was added in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 
