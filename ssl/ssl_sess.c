@@ -220,13 +220,11 @@ SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket)
         dest->ext.ticklen = 0;
     }
 
-    if (src->ext.alpn_selected) {
-        dest->ext.alpn_selected =
-            (unsigned char*)OPENSSL_strndup((char*)src->ext.alpn_selected,
-                                            src->ext.alpn_selected_len);
-        if (dest->ext.alpn_selected == NULL) {
+    if (src->ext.alpn_selected != NULL) {
+        dest->ext.alpn_selected = OPENSSL_memdup(src->ext.alpn_selected,
+                                                 src->ext.alpn_selected_len);
+        if (dest->ext.alpn_selected == NULL)
             goto err;
-        }
     }
 
 #ifndef OPENSSL_NO_SRP
