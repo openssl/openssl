@@ -96,6 +96,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_PARAM_CHECK                       189
 # define EVP_F_EVP_PKEY_PUBLIC_CHECK                      190
 # define EVP_F_EVP_PKEY_SET1_ENGINE                       187
+# define EVP_F_EVP_PKEY_SET_ALIAS_TYPE                    206
 # define EVP_F_EVP_PKEY_SIGN                              140
 # define EVP_F_EVP_PKEY_SIGN_INIT                         141
 # define EVP_F_EVP_PKEY_VERIFY                            142
