@@ -13,8 +13,8 @@
      chosen point SCA attacks.
      [Sohaib ul Hassan, Nicola Tuveri, Billy Bob Brumley]
 
-  *) Add blinding to an ECDSA signature to protect against side channel attacks
-     discovered by Keegan Ryan (NCC Group).
+  *) Add blinding to ECDSA and DSA signatures to protect against side channel
+     attacks discovered by Keegan Ryan (NCC Group).
      [Matt Caswell]
 
   *) Enforce checking in the pkeyutl command line app to ensure that the input
