@@ -8,6 +8,15 @@
  release branch.
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
+
+  *) AIX shared library support overhaul. Switch to AIX "natural" way of
+     handling shared libraries, which means collecting shared objects of
+     different versions and bitnesses in one common archive. This allows to
+     mitigate conflict between 1.0 and 1.1 side-by-side installations. It
+     doesn't affect the way 3rd party applications are linked, only how
+     multi-version installation is managed.
+     [Andy Polyakov]
+
   *) Make ec_group_do_inverse_ord() more robust and available to other
      EC cryptosystems, so that irrespective of BN_FLG_CONSTTIME, SCA
      mitigations are applied to the fallback BN_mod_inverse().
