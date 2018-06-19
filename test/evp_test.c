@@ -2413,23 +2413,6 @@ static char *take_value(PAIR *pp)
     return p;
 }
 
-static int key_disabled(EVP_PKEY *pkey)
-{
-#if defined(OPENSSL_NO_SM2) && !defined(OPENSSL_NO_EC)
-    int type = EVP_PKEY_base_id(pkey);
-
-    if (type == EVP_PKEY_EC) {
-        EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
-        int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-
-        if (nid == NID_sm2)
-            return 1;
-    }
-#endif /* OPENSSL_NO_SM2 */
-
-    return 0;
-}
-
 /*
  * Read and parse one test.  Return 0 if failure, 1 if okay.
  */
@@ -2516,10 +2499,6 @@ top:
         }
         OPENSSL_free(keybin);
     }
-    if (pkey != NULL && key_disabled(pkey)) {
-        EVP_PKEY_free(pkey);
-        pkey = NULL;
-    }
 
     /* If we have a key add to list */
     if (klist != NULL) {
@@ -2532,8 +2511,14 @@ top:
         key->name = take_value(pp);
 
         /* Hack to detect SM2 keys */
-        if(strstr(key->name, "SM2"))
+        if(pkey != NULL && strstr(key->name, "SM2") != NULL) {
+#ifdef OPENSSL_NO_SM2
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
+#else
             EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+#endif
+        }
 
         key->key = pkey;
         key->next = *klist;
