@@ -64,8 +64,8 @@ of cryptographic principles and understand the implications of your changes.
 L<RAND_add(3)>,
 L<RAND_bytes(3)>,
 L<RAND_priv_bytes(3)>,
-L<RAND_get_rand_method(3)>
-L<RAND_set_rand_method(3)>
+L<RAND_get_rand_method(3)>,
+L<RAND_set_rand_method(3)>,
 L<RAND_OpenSSL(3)>,
 L<RAND_DRBG(7)>
 
