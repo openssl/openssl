@@ -59,18 +59,30 @@ The error codes can be obtained by L<ERR_get_error(3)>.
 
 =head1 HISTORY
 
-Starting with OpenSSL release 1.1.0,
-BN_pseudo_rand() has been identical to BN_rand()
-and
-BN_pseudo_rand_range() has been identical to BN_rand_range().
+=over 2
+
+=item *
+
+Starting with OpenSSL release 1.1.0, BN_pseudo_rand() has been identical
+to BN_rand() and BN_pseudo_rand_range() has been identical to
+BN_rand_range().
 The "pseudo" functions should not be used and may be deprecated in
 a future release.
 
+=item *
+
 BN_priv_rand() and BN_priv_rand_range() were added in OpenSSL 1.1.1.
+
+=back
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<RAND_add(3)>, L<RAND_bytes(3)>, L<RAND_priv_bytes(3)>
+L<ERR_get_error(3)>,
+L<RAND_add(3)>,
+L<RAND_bytes(3)>,
+L<RAND_priv_bytes(3)>,
+L<RAND(7)>,
+L<RAND_DRBG(7)>
 
 =head1 COPYRIGHT
 
