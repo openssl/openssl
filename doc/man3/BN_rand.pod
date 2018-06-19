@@ -48,9 +48,11 @@ BN_rand() and BN_rand_range() respectively.  They are intended to be
 used for generating values that should remain private, and mirror the
 same difference between RAND_bytes() and RAND_priv_bytes().
 
-An error occurs in the underlying B<RAND> functions if the CSPRNG has
-not been seeded with enough randomness to ensure an unpredictable byte
-sequence.
+=head1 NOTES
+
+Always check the error return value of these functions and don't take
+randomness for granted: an error occurs if the CSPRNG has not been
+seeded with enough randomness to ensure an unpredictable byte sequence.
 
 =head1 RETURN VALUES
 

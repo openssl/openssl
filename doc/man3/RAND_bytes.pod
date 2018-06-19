@@ -20,8 +20,7 @@ Deprecated:
 =head1 DESCRIPTION
 
 RAND_bytes() puts B<num> cryptographically strong pseudo-random bytes
-into B<buf>. An error occurs if the CSPRNG has not been seeded with
-enough randomness to ensure an unpredictable byte sequence.
+into B<buf>.
 
 RAND_priv_bytes() has the same semantics as RAND_bytes().  It is intended to
 be used for generating values that should remain private. If using the
@@ -29,6 +28,13 @@ default RAND_METHOD, this function uses a separate "private" PRNG
 instance so that a compromise of the "public" PRNG instance will not
 affect the secrecy of these private values, as described in L<RAND(7)>
 and L<RAND_DRBG(7)>.
+
+=head1 NOTES
+
+Always check the error return value of RAND_bytes() and
+RAND_priv_bytes() and don't take randomness for granted: an error occurs
+if the CSPRNG has not been seeded with enough randomness to ensure an
+unpredictable byte sequence.
 
 =head1 RETURN VALUES
 
