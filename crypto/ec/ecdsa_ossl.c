@@ -288,7 +288,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
          *
          * We will blind this to protect against side channel attacks
          *
-         *   s := k^-1 * blind^-1 * (blind * m + blind * r * priv_key) mod order
+         *   s := blind^-1 * k^-1 * (blind * m + blind * r * priv_key) mod order
          */
 
         /* Generate a blinding value */
@@ -323,18 +323,18 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
             goto err;
         }
 
+        /* s := s * k^-1 mod order */
+        if (!BN_mod_mul(s, s, ckinv, order, ctx)) {
+            ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
+            goto err;
+        }
+
         /* s:= s * blind^-1 mod order */
         if (BN_mod_inverse(blind, blind, order, ctx) == NULL) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
         if (!BN_mod_mul(s, s, blind, order, ctx)) {
-            ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
-            goto err;
-        }
-
-        /* s := s * k^-1 mod order */
-        if (!BN_mod_mul(s, s, ckinv, order, ctx)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
