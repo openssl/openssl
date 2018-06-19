@@ -50,7 +50,7 @@ same difference between L<RAND_bytes(3)> and L<RAND_priv_bytes(3)>.
 
 =head1 NOTES
 
-Always check the error return value of these functions and don't take
+Always check the error return value of these functions and do not take
 randomness for granted: an error occurs if the CSPRNG has not been
 seeded with enough randomness to ensure an unpredictable byte sequence.
 

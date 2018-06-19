@@ -32,7 +32,7 @@ and L<RAND_DRBG(7)>.
 =head1 NOTES
 
 Always check the error return value of RAND_bytes() and
-RAND_priv_bytes() and don't take randomness for granted: an error occurs
+RAND_priv_bytes() and do not take randomness for granted: an error occurs
 if the CSPRNG has not been seeded with enough randomness to ensure an
 unpredictable byte sequence.
 
