@@ -9,8 +9,8 @@
 
  Changes between 1.1.0h and 1.1.0i [xx XXX xxxx]
 
-  *) Add blinding to an ECDSA signature to protect against side channel attacks
-     discovered by Keegan Ryan (NCC Group).
+  *) Add blinding to ECDSA and DSA signatures to protect against side channel
+     attacks discovered by Keegan Ryan (NCC Group).
      [Matt Caswell]
 
   *) When unlocking a pass phrase protected PEM file or PKCS#8 container, we
