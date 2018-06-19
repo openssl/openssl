@@ -2527,17 +2527,20 @@ top:
             TEST_info("Duplicate key %s", pp->value);
             return 0;
         }
-        if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key))))
-            return 0;
-        key->name = take_value(pp);
+        /* Only add key if it exists */
+        if (pkey) {
+            if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key))))
+                return 0;
+            key->name = take_value(pp);
 
-        /* Hack to detect SM2 keys */
-        if(strstr(key->name, "SM2"))
-            EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+            /* Hack to detect SM2 keys */
+            if(strstr(key->name, "SM2"))
+                EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
 
-        key->key = pkey;
-        key->next = *klist;
-        *klist = key;
+            key->key = pkey;
+            key->next = *klist;
+            *klist = key;
+        }
 
         /* Go back and start a new stanza. */
         if (t->s.numpairs != 1)
