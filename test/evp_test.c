@@ -2502,20 +2502,6 @@ top:
 
     /* If we have a key add to list */
     if (klist != NULL) {
-        if (t->s.numpairs != 1)
-            TEST_info("Line %d: missing blank line\n", t->s.curr);
-
-        /* Hack to detect SM2 keys */
-        if(strstr(pp->value, "SM2")) {
-#ifdef OPENSSL_NO_SM2
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-            goto top;
-#else
-            EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-#endif
-        }
-
         if (find_key(NULL, pp->value, *klist)) {
             TEST_info("Duplicate key %s", pp->value);
             return 0;
@@ -2524,11 +2510,23 @@ top:
             return 0;
         key->name = take_value(pp);
 
+        /* Hack to detect SM2 keys */
+        if(pkey != NULL && strstr(key->name, "SM2") != NULL) {
+#ifdef OPENSSL_NO_SM2
+            EVP_PKEY_free(pkey);
+            pkey = NULL;
+#else
+            EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+#endif
+        }
+
         key->key = pkey;
         key->next = *klist;
         *klist = key;
 
         /* Go back and start a new stanza. */
+        if (t->s.numpairs != 1)
+            TEST_info("Line %d: missing blank line\n", t->s.curr);
         goto top;
     }
 
