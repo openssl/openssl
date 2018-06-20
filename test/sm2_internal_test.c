@@ -37,6 +37,9 @@ static int get_faked_bytes(unsigned char *buf, int num)
     if (fake_rand_bytes == NULL)
         return saved_rand->bytes(buf, num);
 
+    if (!TEST_size_t_le(fake_rand_bytes_offset + num, fake_rand_size))
+        return 0;
+
     for (i = 0; i != num; ++i)
         buf[i] = fake_rand_bytes[fake_rand_bytes_offset + i];
     fake_rand_bytes_offset += num;
