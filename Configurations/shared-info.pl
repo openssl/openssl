@@ -79,11 +79,4 @@ my %shared_info;
             shared_sonameflag => '-h ',
         };
     },
-    'irix-shared' => sub {
-        return $shared_info{'gnu-shared'} if detect_gnu_ld();
-        return {
-            shared_ldflag     => '-shared -Wl,-Bsymbolic',
-            shared_sonameflag => '-Wl,-soname=',
-        };
-    },
 );
