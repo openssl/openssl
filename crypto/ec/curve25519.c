@@ -150,7 +150,7 @@ void x25519_fe51_mul121666(fe51 h, fe51 f);
 
 typedef uint64_t fe64[4];
 
-int x25519_fe64_eligible();
+int x25519_fe64_eligible(void);
 
 /*
  * There are no reference C implementations for this radix.

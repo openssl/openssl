@@ -26,7 +26,7 @@
  */
 typedef struct test_info {
     const char *test_case_name;
-    int (*test_fn) ();
+    int (*test_fn) (void);
     int (*param_test_fn)(int idx);
     int num;
 
