@@ -96,11 +96,12 @@ static void oqs_pkey_ctx_free(OQS_KEY* key) {
 /*
  * Initializes a OQS_KEY, given an OpenSSL NID.
  */
-static int oqs_key_init(OQS_KEY **oqs_key, int nid, oqs_key_type_t keytype) {
+static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
+    OQS_KEY *oqs_key = NULL;
     OQS_RAND *oqs_rand = NULL;
     int oqs_alg_id = get_oqs_alg_id(nid);
     
-    *oqs_key = OPENSSL_zalloc(sizeof(*oqs_key));
+    oqs_key = OPENSSL_zalloc(sizeof(*oqs_key));
     if (oqs_key == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       goto err;
@@ -110,28 +111,29 @@ static int oqs_key_init(OQS_KEY **oqs_key, int nid, oqs_key_type_t keytype) {
       OQSerr(0, ERR_R_FATAL);
       goto err;
     }
-    (*oqs_key)->s = OQS_SIG_new(oqs_rand, oqs_alg_id);
-    if ((*oqs_key)->s == NULL) {
+    oqs_key->s = OQS_SIG_new(oqs_rand, oqs_alg_id);
+    if (oqs_key->s == NULL) {
       OQSerr(0, ERR_R_FATAL);
       goto err;
     }
-    (*oqs_key)->pubkey = OPENSSL_malloc((*oqs_key)->s->pub_key_len);
-    if ((*oqs_key)->pubkey == NULL) {
+    oqs_key->pubkey = OPENSSL_malloc(oqs_key->s->pub_key_len);
+    if (oqs_key->pubkey == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       goto err;
     }
     /* Optionally allocate the private key */
     if (keytype == KEY_TYPE_PRIVATE) {
-      (*oqs_key)->privkey = OPENSSL_secure_malloc((*oqs_key)->s->priv_key_len);
-      if ((*oqs_key)->privkey == NULL) {
+      oqs_key->privkey = OPENSSL_secure_malloc(oqs_key->s->priv_key_len);
+      if (oqs_key->privkey == NULL) {
 	OQSerr(0, ERR_R_MALLOC_FAILURE);
 	goto err;
       }
     }
+    *p_oqs_key = oqs_key;
     return 1;
 
  err:
-    oqs_pkey_ctx_free(*oqs_key); /* this also frees the priv/pub keys if allocated */
+    oqs_pkey_ctx_free(oqs_key); /* this also frees oqs_rand and the priv/pub keys if allocated */
     return 0;
 }
 
