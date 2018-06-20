@@ -5,6 +5,19 @@
  For Unix/POSIX runtime systems on Windows, please see NOTES.WIN.
 
 
+ Using compiler to link programs and shared libraries
+ ----------------------------------------------------
+
+ OpenSSL's generated Makefile generally uses $(CC) (the C compiler) to
+ link programs, shared libraries and dynamically loadable shared
+ objects.  With this in mind, any linking option that's given to the
+ configuration scripts MUST be in a form that the compiler can accept.
+ This varies between systems, where some have compilers that accept
+ linker flags directly, while others take them in '-Wl,' form.  You need
+ to read your compiler documentation to figure out what it can take, and
+ ld(1) to figure out what linker options are available.
+
+
  Shared libraries and installation in non-default locations
  ----------------------------------------------------------
 
