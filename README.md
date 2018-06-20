@@ -85,7 +85,7 @@ OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) whi
 
 To run a server, we first need to generate a self-signed X.509 certificate, using either a classical or post-quantum algorithm (currently, only "picnicl1fs" is supported). Run the following command, with <SIGALG> = rsa, picnicl1fs):
 
-	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/C=US/L=Redmond/CN=oqstest" -days 365 -config apps/openssl.cnf
+	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
 	
 On macOS, you may need to set an environment variable for the dynamic library path:
 
