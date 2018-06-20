@@ -8,7 +8,7 @@
  Using compiler to link programs and shared libraries
  ----------------------------------------------------
 
- OpenSSL's generated Makefile generally uses $(CC) (the C compiler) to
+ OpenSSL's generated Makefile uses the C compiler command line to
  link programs, shared libraries and dynamically loadable shared
  objects.  With this in mind, any linking option that's given to the
  configuration scripts MUST be in a form that the compiler can accept.
@@ -43,9 +43,9 @@
 
  Possible options to set the runtime shared library search path are:
 
-    -rpath /whatever/path
-    -R /whatever/path
     -Wl,-rpath,/whatever/path
+    -R /whatever/path
+    -rpath /whatever/path
 
  OpenSSL's configuration scripts recognise all these options and pass
  them to the Makefile that they build.
@@ -68,17 +68,23 @@
  arguments, and 2) the shell will try to expand $(LIBRPATH))
 
  On modern ELF based systems, there are two runtime search paths tags to
- consider, DT_RPATH and DT_RUNPATH.  DT_RUNPATH is considered after the
- environment variable LD_LIBRARY_PATH, while DT_RPATH is considered
- before that environment variable (which means that the values in that
- environment variable won't matter if the library is found in the paths
- given by DT_RPATH).
+ consider, DT_RPATH and DT_RUNPATH.  Shared objects are searched for in
+ this order:
+
+    1. Using directories specified in DT_RPATH, unless DT_RUNPATH is
+       also set.
+    2. Using the environment variable LD_LIBRARY_PATH
+    3. Using directories specified in DT_RUNPATH.
+    4. Using system shared object caches and default directories.
+
+ This means that the values in that environment variable LD_LIBRARY_PATH
+ won't matter if the library is found in the paths given by DT_RPATH.
 
  Exactly which of DT_RPATH or DT_RUNPATH is set by default appears to
  depend on the system.  For example, according to documentation,
  DT_RPATH appears to be deprecated on Solaris for the benefit of
  DT_RUNPATH, while on Debian GNU/Linux, either can be set, and DT_RPATH
- is the default.
+ is the default at the time of writing.
 
  How to choose which runtime search path tag is to be set depends on
  your system, please refer to ld(1) for the exact information on your
