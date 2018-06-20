@@ -16,10 +16,11 @@
  not find them and therefore fail to run unless they get a bit of help
  from a defined runtime shared library search path.
 
- OpenSSL's configuration scripts do NOT generally set the runtime shared
- library search path for you.  It's therefore advisable to set it
- explicitelly when configuring unless the libraries are to be installed
- in directories that are known to be default.
+ For OpenSSL's application (the 'openssl' command), our configuration
+ scripts do NOT generally set the runtime shared library search path for
+ you.  It's therefore advisable to set it explicitelly when configuring
+ unless the libraries are to be installed in directories that are known
+ to be default.
 
  Runtime shared library search paths are specified with different
  linking options depending on operating system and versions thereof, and
@@ -60,17 +61,17 @@
  environment variable won't matter if the library is found in the paths
  given by DT_RPATH).
 
- Exactly which of DT_RPATH or DT_RUNPATH is normally set appears to
+ Exactly which of DT_RPATH or DT_RUNPATH is set by default appears to
  depend on the system.  For example, according to documentation,
  DT_RPATH appears to be deprecated on Solaris for the benefit of
- DT_RUNPATH, while with GNU ld, either tag may be set.
+ DT_RUNPATH, while on Debian GNU/Linux, either can be set, and DT_RPATH
+ is the default.
 
- With GNU ld, '-Wl,-rpath,$(LIBRPATH)' will set DT_RPATH.  To set
- DT_RUNPATH, use the new dtags, like this:
+ How to choose which runtime search path tag is to be set depends on
+ your system, please refer to ld(1) for the exact information on your
+ system.  As an example, the way to ensure the DT_RUNPATH is set on
+ Debian GNU/Linux systems rather than DT_RPATH is to tell the linker to
+ set new dtags, like this:
 
     $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
-
- Some other linkers may support the same syntax, or something other.
- please refer to ld(1) for the exact information on your system.
-
