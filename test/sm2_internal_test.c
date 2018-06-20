@@ -37,7 +37,6 @@ static int get_faked_bytes(unsigned char *buf, int num)
     if (fake_rand_bytes == NULL)
         return saved_rand->bytes(buf, num);
 
-    OPENSSL_assert(fake_rand_bytes_offset + num <= fake_rand_size);
     for (i = 0; i != num; ++i)
         buf[i] = fake_rand_bytes[fake_rand_bytes_offset + i];
     fake_rand_bytes_offset += num;
@@ -173,11 +172,11 @@ static int test_sm2_crypt(const EC_GROUP *group,
 
     start_fake_rand(k_hex);
     if (!TEST_true(sm2_encrypt(key, digest, (const uint8_t *)message, msg_len,
-                               ctext, &ctext_len))) {
+                               ctext, &ctext_len))
+            || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
         restore_rand();
         goto done;
     }
-    OPENSSL_assert(fake_rand_bytes_offset == fake_rand_size);
     restore_rand();
 
     if (!TEST_mem_eq(ctext, ctext_len, expected, ctext_len))
@@ -293,11 +292,12 @@ static int test_sm2_sign(const EC_GROUP *group,
 
     start_fake_rand(k_hex);
     sig = sm2_do_sign(key, EVP_sm3(), userid, (const uint8_t *)message, msg_len);
-    OPENSSL_assert(fake_rand_bytes_offset == fake_rand_size);
-    restore_rand();
-
-    if (!TEST_ptr(sig))
+    if (!TEST_ptr(sig)
+            || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
+        restore_rand();
         goto done;
+    }
+    restore_rand();
 
     ECDSA_SIG_get0(sig, &sig_r, &sig_s);
 
