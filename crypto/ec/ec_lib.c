@@ -1017,13 +1017,66 @@ int ec_group_simple_order_bits(const EC_GROUP *group)
     return BN_num_bits(group->order);
 }
 
-int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
-                            BIGNUM *x, BN_CTX *ctx)
+static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
+                                    const BIGNUM *x, BN_CTX *ctx)
+{
+    BIGNUM *e = NULL;
+    BN_CTX *new_ctx = NULL;
+    int ret = 0;
+
+    if (group->mont_data == NULL)
+        return 0;
+
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
+        return 0;
+
+    BN_CTX_start(ctx);
+    if ((e = BN_CTX_get(ctx)) == NULL)
+        goto err;
+
+    /*-
+     * We want inverse in constant time, therefore we utilize the fact
+     * order must be prime and use Fermats Little Theorem instead.
+     */
+    if (!BN_set_word(e, 2))
+        goto err;
+    if (!BN_sub(e, group->order, e))
+        goto err;
+    /*-
+     * Exponent e is public.
+     * No need for scatter-gather or BN_FLG_CONSTTIME.
+     */
+    if (!BN_mod_exp_mont(r, x, e, group->order, ctx, group->mont_data))
+        goto err;
+
+    ret = 1;
+
+ err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(new_ctx);
+    return ret;
+}
+
+/*-
+ * Default behavior, if group->meth->field_inverse_mod_ord is NULL:
+ * - When group->order is even, this function returns an error.
+ * - When group->order is otherwise composite, the correctness
+ *   of the output is not guaranteed.
+ * - When x is outside the range [1, group->order), the correctness
+ *   of the output is not guaranteed.
+ * - Otherwise, this function returns the multiplicative inverse in the
+ *   range [1, group->order).
+ *
+ * EC_METHODs must implement their own field_inverse_mod_ord for
+ * other functionality.
+ */
+int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
+                            const BIGNUM *x, BN_CTX *ctx)
 {
     if (group->meth->field_inverse_mod_ord != NULL)
         return group->meth->field_inverse_mod_ord(group, res, x, ctx);
     else
-        return 0;
+        return ec_field_inverse_mod_ord(group, res, x, ctx);
 }
 
 /*-
