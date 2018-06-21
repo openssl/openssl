@@ -154,19 +154,21 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     int i, j, ret = -1;
     int k;
     BN_CTX *ctx = NULL;
-    BIGNUM *A1, *A1_odd, *check; /* taken from ctx */
+    BIGNUM *A1, *A1_odd, *A3, *check; /* taken from ctx */
     BN_MONT_CTX *mont = NULL;
 
-    if (BN_cmp(a, BN_value_one()) <= 0)
+    /* Take care of the really small primes 2 & 3 */
+    if (BN_is_word(a, 2) || BN_is_word(a, 3))
+        return 1;
+
+    /* Check odd and bigger than 1 */
+    if (!BN_is_odd(a) || BN_cmp(a, BN_value_one()) <= 0)
         return 0;
 
     if (checks == BN_prime_checks)
         checks = BN_prime_checks_for_size(BN_num_bits(a));
 
     /* first look for small factors */
-    if (!BN_is_odd(a))
-        /* a is even => a is prime if and only if a == 2 */
-        return BN_is_word(a, 2);
     if (do_trial_division) {
         for (i = 1; i < NUMPRIMES; i++) {
             BN_ULONG mod = BN_mod_word(a, primes[i]);
@@ -186,20 +188,18 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     BN_CTX_start(ctx);
 
     A1 = BN_CTX_get(ctx);
+    A3 = BN_CTX_get(ctx);
     A1_odd = BN_CTX_get(ctx);
     check = BN_CTX_get(ctx);
     if (check == NULL)
         goto err;
 
     /* compute A1 := a - 1 */
-    if (!BN_copy(A1, a))
+    if (!BN_copy(A1, a) || !BN_sub_word(A1, 1))
         goto err;
-    if (!BN_sub_word(A1, 1))
+    /* compute A3 := a - 3 */
+    if (!BN_copy(A3, a) || !BN_sub_word(A3, 3))
         goto err;
-    if (BN_is_zero(A1)) {
-        ret = 0;
-        goto err;
-    }
 
     /* write  A1  as  A1_odd * 2^k */
     k = 1;
@@ -216,11 +216,9 @@ int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
         goto err;
 
     for (i = 0; i < checks; i++) {
-        if (!BN_priv_rand_range(check, A1))
+        /* 1 < check < a-1 */
+        if (!BN_priv_rand_range(check, A3) || !BN_add_word(check, 2))
             goto err;
-        if (!BN_add_word(check, 1))
-            goto err;
-        /* now 1 <= check < a */
 
         j = witness(check, a, A1, A1_odd, k, ctx, mont);
         if (j == -1)
