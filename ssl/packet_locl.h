@@ -18,10 +18,6 @@
 
 # include "internal/numbers.h"
 
-# ifdef __cplusplus
-extern "C" {
-# endif
-
 typedef struct {
     /* Pointer to where we are currently reading from */
     const unsigned char *curr;
@@ -874,9 +870,5 @@ unsigned char *WPACKET_get_curr(WPACKET *pkt);
 
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif                          /* HEADER_PACKET_LOCL_H */
