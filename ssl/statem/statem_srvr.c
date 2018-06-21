@@ -4082,7 +4082,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0)
         goto err;
 
-    if ((s->options & SSL_OP_NO_TICKET) != 0 && SSL_IS_TLS13(s)) {
+    /*
+     * If we are using anti-replay protection then we behave as if
+     * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
+     * is no point in using full stateless tickets.
+     */
+    if (((s->options & SSL_OP_NO_TICKET) != 0 || s->max_early_data > 0)
+            && SSL_IS_TLS13(s)) {
         if (!construct_stateful_ticket(s, pkt, age_add_u.age_add, tick_nonce)) {
             /* SSLfatal() already called */
             goto err;
