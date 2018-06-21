@@ -22,10 +22,6 @@
  * outside; this file e_os.h is not part of the exported interface.
  */
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 # ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. By
@@ -323,10 +319,6 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 # define CRYPTO_memcmp memcmp
-#endif
-
-#ifdef  __cplusplus
-}
 #endif
 
 #endif

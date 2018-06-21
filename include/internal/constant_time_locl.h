@@ -14,10 +14,6 @@
 # include <string.h>
 # include <openssl/e_os2.h>              /* For 'ossl_inline' */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
  * and 0 for false. This is useful for choosing a value based on the result
@@ -327,9 +323,5 @@ static ossl_inline void constant_time_lookup(void *out,
             *(outc + j) |= constant_time_select_8(mask, *(tablec++), 0);
     }
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif                          /* HEADER_CONSTANT_TIME_LOCL_H */

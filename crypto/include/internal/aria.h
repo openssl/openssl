@@ -25,10 +25,6 @@
 # define ARIA_BLOCK_SIZE    16  /* Size of each encryption/decryption block */
 # define ARIA_MAX_KEYS      17  /* Number of keys needed in the worst case  */
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-
 typedef union {
     unsigned char c[ARIA_BLOCK_SIZE];
     unsigned int u[ARIA_BLOCK_SIZE / sizeof(unsigned int)];
@@ -50,9 +46,5 @@ int aria_set_decrypt_key(const unsigned char *userKey, const int bits,
 
 void aria_encrypt(const unsigned char *in, unsigned char *out,
                   const ARIA_KEY *key);
-
-# ifdef  __cplusplus
-}
-# endif
 
 #endif

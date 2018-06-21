@@ -14,10 +14,6 @@
 # include <openssl/store.h>
 # include <openssl/ui.h>
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-
 /*
  * Two functions to read PEM data off an already opened BIO.  To be used
  * instead of OSSLSTORE_open() and OSSLSTORE_close().  Everything is done
@@ -27,7 +23,4 @@ OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
                                           void *ui_data);
 int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx);
 
-# ifdef  __cplusplus
-}
-# endif
 #endif

@@ -12,10 +12,6 @@
 
 #include <stddef.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * ChaCha20_ctr32 encrypts |len| bytes from |inp| with the given key and
  * nonce and writes the result to |out|, which may be equal to |inp|.
@@ -43,7 +39,4 @@ void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp,
 #define CHACHA_CTR_SIZE		16
 #define CHACHA_BLK_SIZE		64
 
-#ifdef __cplusplus
-}
-#endif
 #endif

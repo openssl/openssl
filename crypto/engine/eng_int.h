@@ -16,10 +16,6 @@
 # include "internal/thread_once.h"
 # include "internal/refcount.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
@@ -171,9 +167,5 @@ struct engine_st {
 typedef struct st_engine_pile ENGINE_PILE;
 
 DEFINE_LHASH_OF(ENGINE_PILE);
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif                          /* HEADER_ENGINE_INT_H */

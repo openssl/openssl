@@ -13,10 +13,6 @@
 # include <openssl/bn.h>
 # include <limits.h>
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
 
@@ -63,9 +59,5 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
  * function so we simply trust callers not to pass negative values.
  */
 int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words);
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif
