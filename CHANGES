@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added EVP_KDF, an EVP layer KDF API, to simplify adding KDF and PRF
+     implementations.  This includes an EVP_PKEY to EVP_KDF bridge for
+     those algorithms that were already supported through the EVP_PKEY API
+     (scrypt, TLS1 PRF and HKDF).  The low-level KDF functions for PBKDF2
+     and scrypt are now wrappers that call EVP_KDF.
+     [David Makepeace]     
+
   *) Build devcrypto engine as a dynamic engine.
      [Eneas U de Queiroz]
 

@@ -151,6 +151,24 @@ const EVP_MD *evp_keccak_kmac256(void);
  */
 int EVP_add_mac(const EVP_MAC *mac);
 
+/* struct evp_kdf_impl_st is defined by the implementation */
+typedef struct evp_kdf_impl_st EVP_KDF_IMPL;
+typedef struct {
+    int type;
+    EVP_KDF_IMPL *(*new) (void);
+    void (*free) (EVP_KDF_IMPL *impl);
+    void (*reset) (EVP_KDF_IMPL *impl);
+    int (*ctrl) (EVP_KDF_IMPL *impl, int cmd, va_list args);
+    int (*ctrl_str) (EVP_KDF_IMPL *impl, const char *type, const char *value);
+    size_t (*size) (EVP_KDF_IMPL *impl);
+    int (*derive) (EVP_KDF_IMPL *impl, unsigned char *key, size_t keylen);
+} EVP_KDF_METHOD;
+
+extern const EVP_KDF_METHOD pbkdf2_kdf_meth;
+extern const EVP_KDF_METHOD scrypt_kdf_meth;
+extern const EVP_KDF_METHOD tls1_prf_kdf_meth;
+extern const EVP_KDF_METHOD hkdf_kdf_meth;
+
 struct evp_md_st {
     int type;
     int pkey_type;

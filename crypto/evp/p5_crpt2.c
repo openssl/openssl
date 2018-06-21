@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,105 +10,51 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "internal/cryptlib.h"
-# include <openssl/x509.h>
-# include <openssl/evp.h>
-# include <openssl/hmac.h>
-# include "evp_locl.h"
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+#include <openssl/hmac.h>
+#include "internal/evp_int.h"
+#include "evp_locl.h"
 
 /* set this to print out info about the keygen algorithm */
 /* #define OPENSSL_DEBUG_PKCS5V2 */
 
-# ifdef OPENSSL_DEBUG_PKCS5V2
+#ifdef OPENSSL_DEBUG_PKCS5V2
 static void h__dump(const unsigned char *p, int len);
-# endif
-
-/*
- * This is an implementation of PKCS#5 v2.0 password based encryption key
- * derivation function PBKDF2. SHA1 version verified against test vectors
- * posted by Peter Gutmann to the PKCS-TNG mailing list.
- */
+#endif
 
 int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const unsigned char *salt, int saltlen, int iter,
                       const EVP_MD *digest, int keylen, unsigned char *out)
 {
     const char *empty = "";
-    unsigned char digtmp[EVP_MAX_MD_SIZE], *p, itmp[4];
-    int cplen, j, k, tkeylen, mdlen;
-    unsigned long i = 1;
-    HMAC_CTX *hctx_tpl = NULL, *hctx = NULL;
+    int rv = 1;
+    EVP_KDF_CTX *kctx;
 
-    mdlen = EVP_MD_size(digest);
-    if (mdlen < 0)
-        return 0;
-
-    hctx_tpl = HMAC_CTX_new();
-    if (hctx_tpl == NULL)
-        return 0;
-    p = out;
-    tkeylen = keylen;
+    /* Keep documented behaviour. */
     if (pass == NULL) {
         pass = empty;
         passlen = 0;
     } else if (passlen == -1) {
         passlen = strlen(pass);
     }
-    if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL)) {
-        HMAC_CTX_free(hctx_tpl);
+    if (salt == NULL && saltlen == 0)
+        salt = (unsigned char *)empty;
+
+    kctx = EVP_KDF_CTX_new_id(EVP_KDF_PBKDF2);
+    if (kctx == NULL)
         return 0;
-    }
-    hctx = HMAC_CTX_new();
-    if (hctx == NULL) {
-        HMAC_CTX_free(hctx_tpl);
-        return 0;
-    }
-    while (tkeylen) {
-        if (tkeylen > mdlen)
-            cplen = mdlen;
-        else
-            cplen = tkeylen;
-        /*
-         * We are unlikely to ever use more than 256 blocks (5120 bits!) but
-         * just in case...
-         */
-        itmp[0] = (unsigned char)((i >> 24) & 0xff);
-        itmp[1] = (unsigned char)((i >> 16) & 0xff);
-        itmp[2] = (unsigned char)((i >> 8) & 0xff);
-        itmp[3] = (unsigned char)(i & 0xff);
-        if (!HMAC_CTX_copy(hctx, hctx_tpl)) {
-            HMAC_CTX_free(hctx);
-            HMAC_CTX_free(hctx_tpl);
-            return 0;
-        }
-        if (!HMAC_Update(hctx, salt, saltlen)
-            || !HMAC_Update(hctx, itmp, 4)
-            || !HMAC_Final(hctx, digtmp, NULL)) {
-            HMAC_CTX_free(hctx);
-            HMAC_CTX_free(hctx_tpl);
-            return 0;
-        }
-        memcpy(p, digtmp, cplen);
-        for (j = 1; j < iter; j++) {
-            if (!HMAC_CTX_copy(hctx, hctx_tpl)) {
-                HMAC_CTX_free(hctx);
-                HMAC_CTX_free(hctx_tpl);
-                return 0;
-            }
-            if (!HMAC_Update(hctx, digtmp, mdlen)
-                || !HMAC_Final(hctx, digtmp, NULL)) {
-                HMAC_CTX_free(hctx);
-                HMAC_CTX_free(hctx_tpl);
-                return 0;
-            }
-            for (k = 0; k < cplen; k++)
-                p[k] ^= digtmp[k];
-        }
-        tkeylen -= cplen;
-        i++;
-        p += cplen;
-    }
-    HMAC_CTX_free(hctx);
-    HMAC_CTX_free(hctx_tpl);
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, pass, (size_t)passlen) != 1
+            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT,
+                            salt, (size_t)saltlen) != 1
+            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_ITER, iter) != 1
+            || EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, digest) != 1
+            || EVP_KDF_derive(kctx, out, keylen) != 1)
+        rv = 0;
+
+    EVP_KDF_CTX_free(kctx);
+
 # ifdef OPENSSL_DEBUG_PKCS5V2
     fprintf(stderr, "Password:\n");
     h__dump(pass, passlen);
@@ -118,7 +64,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     fprintf(stderr, "Key:\n");
     h__dump(out, keylen);
 # endif
-    return 1;
+    return rv;
 }
 
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
