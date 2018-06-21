@@ -9,6 +9,12 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Numerous side-channel attack mitigations have been applied. This may have
+     performance impacts for some algorithms for the benefit of improved
+     security. Specific changes are noted in this change log by their respective
+     authors.
+     [Matt Caswell]
+
   *) AIX shared library support overhaul. Switch to AIX "natural" way of
      handling shared libraries, which means collecting shared objects of
      different versions and bitnesses in one common archive. This allows to
