@@ -199,10 +199,10 @@ struct padlock_cipher_data {
 };
 
 /* Interface to assembler module */
-unsigned int padlock_capability();
+unsigned int padlock_capability(void);
 void padlock_key_bswap(AES_KEY *key);
 void padlock_verify_context(struct padlock_cipher_data *ctx);
-void padlock_reload_key();
+void padlock_reload_key(void);
 void padlock_aes_block(void *out, const void *inp,
                        struct padlock_cipher_data *ctx);
 int padlock_ecb_encrypt(void *out, const void *inp,

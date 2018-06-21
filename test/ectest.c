@@ -1167,7 +1167,7 @@ static int internal_curve_test_method(int n)
  * implementations of several NIST curves with characteristic > 3.
  */
 struct nistp_test_params {
-    const EC_METHOD *(*meth) ();
+    const EC_METHOD *(*meth) (void);
     int degree;
     /*
      * Qx, Qy and D are taken from
