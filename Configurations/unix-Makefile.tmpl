@@ -912,6 +912,7 @@ EOF
 # It's not necessary to have both as targets.  The choice falls on the
 # simplest, {libname}$shlibextimport for Windows POSIX layers and
 # {libname}$shlibextsimple for the Unix platforms.
+# The AIX targets in Makefile.shared need SHLIBVERSION.
 $target: $lib$libext $deps $ordinalsfile
 	\$(MAKE) -f \$(SRCDIR)/Makefile.shared -e \\
 		PLATFORM=\$(PLATFORM) \\
@@ -954,6 +955,7 @@ $target: $objs $deps
 		PLATFORM=\$(PLATFORM) \\
 		PERL="\$(PERL)" SRCDIR='\$(SRCDIR)' DSTDIR="$dsod" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$shlibdeps"' \$(EX_LIBS)' \\
+		SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		SHLIBNAME_FULL=$target LDFLAGS='\$(LDFLAGS)' \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(DSO_CFLAGS)' \\
 		SHARED_LDFLAGS='\$(DSO_LDFLAGS)' \\
@@ -991,6 +993,7 @@ $bin$exeext: $objs $deps
 		PERL="\$(PERL)" SRCDIR=\$(SRCDIR) \\
 		APPNAME=$bin$exeext OBJECTS="$objs" \\
 		LIBDEPS='\$(PLIB_LDFLAGS) '"$linklibs"' \$(EX_LIBS)' \\
+		SHLIBVERSION=\$(SHLIB_MAJOR).\$(SHLIB_MINOR) \\
 		CC='\$(CC)' CFLAGS='\$(CFLAGS) \$(BIN_CFLAGS)' \\
 		LDFLAGS='\$(LDFLAGS)' \\
 		link_app.$shlib_target
