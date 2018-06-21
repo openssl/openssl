@@ -10,13 +10,6 @@
 #ifndef HEADER_HMAC_LCL_H
 # define HEADER_HMAC_LCL_H
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-#if 0                            /* emacs indentation fix */
-}
-#endif
-
 struct hmac_ctx_st {
     const EVP_MD *md;
     EVP_MD_CTX *md_ctx;
@@ -25,9 +18,5 @@ struct hmac_ctx_st {
     unsigned int key_length;
     unsigned char key[HMAC_MAX_MD_CBLOCK];
 };
-
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
 #endif

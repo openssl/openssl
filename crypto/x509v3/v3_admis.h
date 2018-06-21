@@ -10,10 +10,6 @@
 #ifndef HEADER_V3_ADMISSION_H
 # define HEADER_V3_ADMISSION_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct NamingAuthority_st {
     ASN1_OBJECT* namingAuthorityId;
     ASN1_IA5STRING* namingAuthorityUrl;
@@ -39,7 +35,4 @@ struct AdmissionSyntax_st {
     STACK_OF(ADMISSIONS)* contentsOfAdmissions;
 };
 
-#ifdef  __cplusplus
-}
-#endif
 #endif

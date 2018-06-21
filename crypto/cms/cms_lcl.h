@@ -10,10 +10,6 @@
 #ifndef HEADER_CMS_LCL_H
 # define HEADER_CMS_LCL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 # include <openssl/x509.h>
 
 /*
@@ -438,7 +434,4 @@ DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
 DECLARE_ASN1_ITEM(CMS_SignedData)
 DECLARE_ASN1_ITEM(CMS_CompressedData)
 
-#ifdef  __cplusplus
-}
-#endif
 #endif

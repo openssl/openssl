@@ -23,10 +23,6 @@
 
 # include "internal/bn_int.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 /*
  * These preprocessor symbols control various aspects of the bignum headers
  * and library code. They're not defined by any "normal" configuration, as
@@ -658,9 +654,5 @@ static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 
     return bn_expand2((a),(bits+BN_BITS2-1)/BN_BITS2);
 }
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif
