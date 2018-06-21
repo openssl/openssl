@@ -1159,7 +1159,13 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             uint32_t ticket_age = 0, now, agesec, agems;
             int ret;
 
-            if ((s->options & SSL_OP_NO_TICKET) != 0)
+            /*
+             * If we are using anti-replay protection then we behave as if
+             * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
+             * is no point in using full stateless tickets.
+             */
+            if ((s->options & SSL_OP_NO_TICKET) != 0
+                    || s->max_early_data > 0)
                 ret = tls_get_stateful_ticket(s, &identity, &sess);
             else
                 ret = tls_decrypt_ticket(s, PACKET_data(&identity),
