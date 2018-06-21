@@ -22,6 +22,7 @@ CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
 DTLS_timer_cb                           datatype
+EVP_KDF_CTX                             datatype
 EVP_MAC                                 datatype
 EVP_MAC_CTX                             datatype
 EVP_PKEY_gen_cb                         datatype
