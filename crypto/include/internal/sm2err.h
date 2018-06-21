@@ -15,9 +15,6 @@
 
 # ifndef OPENSSL_NO_SM2
 
-#  ifdef  __cplusplus
-extern "C"
-#  endif
 int ERR_load_SM2_strings(void);
 
 /*

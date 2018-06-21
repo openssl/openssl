@@ -13,10 +13,6 @@
 # include <openssl/crypto.h>
 # include "internal/dsoerr.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* These values are used as commands to DSO_ctrl() */
 # define DSO_CTRL_GET_FLAGS      1
 # define DSO_CTRL_SET_FLAGS      2
@@ -166,7 +162,4 @@ void *DSO_global_lookup(const char *name);
 
 int ERR_load_DSO_strings(void);
 
-# ifdef  __cplusplus
-}
-# endif
 #endif

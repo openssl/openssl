@@ -25,10 +25,6 @@
 # include <openssl/err.h>
 # include "internal/nelem.h"
 
-#ifdef  __cplusplus
-extern "C" {
-#endif
-
 #ifdef NDEBUG
 # define ossl_assert(x) ((x) != 0)
 #else
@@ -95,9 +91,5 @@ void *openssl_fopen(const char *filename, const char *mode);
 # endif
 
 uint32_t OPENSSL_rdtsc(void);
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif
