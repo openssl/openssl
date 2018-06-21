@@ -1028,7 +1028,7 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
         return 0;
 
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
-        goto err;
+        return 0;
 
     BN_CTX_start(ctx);
     if ((e = BN_CTX_get(ctx)) == NULL)
@@ -1052,8 +1052,7 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
     ret = 1;
 
  err:
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
     return ret;
 }
