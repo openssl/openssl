@@ -2128,25 +2128,48 @@ err:
     return st;
 }
 
-static int test_3_is_prime(void)
+static int primes[] = { 2, 3, 5, 7, 17863 };
+
+static int test_is_prime(int i)
 {
     int ret = 0;
     BIGNUM *r = NULL;
+    int trial;
 
-    /*
-     * For a long time, small primes were not considered prime when
-     * do_trial_division was set.
-     */
-    if (!TEST_ptr(r = BN_new())
-            || !TEST_true(BN_set_word(r, 3))
-            || !TEST_int_eq(BN_is_prime_fasttest_ex(r, 3 /* nchecks */, ctx,
-                                0 /* do_trial_division */, NULL), 1)
-            || !TEST_int_eq(BN_is_prime_fasttest_ex(r, 3 /* nchecks */, ctx,
-                                1 /* do_trial_division */, NULL), 1))
+    if (!TEST_ptr(r = BN_new()))
         goto err;
 
-    ret = 1;
+    for (trial = 0; trial <= 1; ++trial) {
+        if (!TEST_true(BN_set_word(r, primes[i]))
+                || !TEST_int_eq(BN_is_prime_fasttest_ex(r, 1, ctx, trial, NULL),
+                                1))
+            goto err;
+    }
 
+    ret = 1;
+err:
+    BN_free(r);
+    return ret;
+}
+
+static int not_primes[] = { -1, 0, 1, 4 };
+
+static int test_not_prime(int i)
+{
+    int ret = 0;
+    BIGNUM *r = NULL;
+    int trial;
+
+    if (!TEST_ptr(r = BN_new()))
+        goto err;
+
+    for (trial = 0; trial <= 1; ++trial) {
+        if (!TEST_true(BN_set_word(r, not_primes[i]))
+                || !TEST_false(BN_is_prime_fasttest_ex(r, 1, ctx, trial, NULL)))
+            goto err;
+    }
+
+    ret = 1;
 err:
     BN_free(r);
     return ret;
@@ -2250,7 +2273,8 @@ int setup_tests(void)
         ADD_TEST(test_gf2m_modsqrt);
         ADD_TEST(test_gf2m_modsolvequad);
 #endif
-        ADD_TEST(test_3_is_prime);
+        ADD_ALL_TESTS(test_is_prime, (int)OSSL_NELEM(primes));
+        ADD_ALL_TESTS(test_not_prime, (int)OSSL_NELEM(not_primes));
     } else {
         ADD_ALL_TESTS(run_file_tests, n);
     }
