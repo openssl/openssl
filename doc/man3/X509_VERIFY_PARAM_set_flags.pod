@@ -155,7 +155,7 @@ B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> host flag, or because some DNS subject
 alternative names are present in the certificate, DNS name constraints in
 issuer certificates will not be applied to the subject DN.
 As described in X509_check_host(3) the B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT>
-flag takes precendence over the B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag.
+flag takes precedence over the B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag.
 
 X509_VERIFY_PARAM_get_hostflags() returns any host flags previously set via a
 call to X509_VERIFY_PARAM_set_hostflags().
