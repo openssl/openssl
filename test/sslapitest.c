@@ -5051,12 +5051,7 @@ static int test_shutdown(int tst)
     }
 
     /* Writing on the client after sending close_notify shouldn't be possible */
-    if (!TEST_false(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
-               /*
-                * Writing on the server after sending close_notify shouldn't be
-                * possible.
-                */
-            || !TEST_false(SSL_write_ex(clientssl, msg, sizeof(msg), &written)))
+    if (!TEST_false(SSL_write_ex(clientssl, msg, sizeof(msg), &written)))
         goto end;
 
     if (tst < 4) {
@@ -5066,6 +5061,11 @@ static int test_shutdown(int tst)
          * yet.
          */
         if (!TEST_int_eq(SSL_shutdown(serverssl), 0)
+                   /*
+                    * Writing on the server after sending close_notify shouldn't
+                    * be possible.
+                    */
+                || !TEST_false(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
                 || !TEST_int_eq(SSL_shutdown(clientssl), 1)
                 || !TEST_int_eq(SSL_shutdown(serverssl), 1))
             goto end;
