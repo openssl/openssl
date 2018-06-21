@@ -354,84 +354,78 @@ Read a certificate in PEM format from a BIO:
 
  X509 *x;
  x = PEM_read_bio_X509(bp, NULL, 0, NULL);
- if (x == NULL)
-	{
-	/* Error */
-	}
+ if (x == NULL)	{
+     /* Error */
+ }
 
 Alternative method:
 
  X509 *x = NULL;
- if (!PEM_read_bio_X509(bp, &x, 0, NULL))
-	{
-	/* Error */
-	}
+ if (!PEM_read_bio_X509(bp, &x, 0, NULL)) {
+     /* Error */
+ }
 
 Write a certificate to a BIO:
 
- if (!PEM_write_bio_X509(bp, x))
-	{
-	/* Error */
-	}
+ if (!PEM_write_bio_X509(bp, x)) {
+     /* Error */
+ }
 
 Write an unencrypted private key to a FILE pointer:
 
- if (!PEM_write_PrivateKey(fp, key, NULL, NULL, 0, 0, NULL))
-	{
-	/* Error */
-	}
+ if (!PEM_write_PrivateKey(fp, key, NULL, NULL, 0, 0, NULL)) {
+     /* Error */
+ }
 
 Write a private key (using traditional format) to a BIO using
 triple DES encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
-	{
-	/* Error */
-	}
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL)) {
+     /* Error */
+ }
 
 Write a private key (using PKCS#8 format) to a BIO using triple
 DES encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, "hello"))
-	{
-	/* Error */
-	}
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, "hello")) {
+     /* Error */
+ }
 
 Read a private key from a BIO using the pass phrase "hello":
 
  key = PEM_read_bio_PrivateKey(bp, NULL, 0, "hello");
- if (key == NULL)
-	{
-	/* Error */
-	}
+ if (key == NULL) {
+     /* Error */
+ }
 
 Read a private key from a BIO using a pass phrase callback:
 
  key = PEM_read_bio_PrivateKey(bp, NULL, pass_cb, "My Private Key");
- if (key == NULL)
-	{
-	/* Error */
-	}
+ if (key == NULL) {
+     /* Error */
+ }
 
 Skeleton pass phrase callback:
 
- int pass_cb(char *buf, int size, int rwflag, void *u);
-	{
-	int len;
-	char *tmp;
-	/* We'd probably do something else if 'rwflag' is 1 */
-	printf("Enter pass phrase for \"%s\"\n", u);
+ int pass_cb(char *buf, int size, int rwflag, void *u)
+ {
+     int len;
+     char *tmp;
 
-	/* get pass phrase, length 'len' into 'tmp' */
-	tmp = "hello";
-	len = strlen(tmp);
+     /* We'd probably do something else if 'rwflag' is 1 */
+     printf("Enter pass phrase for \"%s\"\n", u);
 
-	if (len <= 0) return 0;
-	/* if too long, truncate */
-	if (len > size) len = size;
-	memcpy(buf, tmp, len);
-	return len;
-	}
+     /* get pass phrase, length 'len' into 'tmp' */
+     tmp = "hello";
+     len = strlen(tmp);
+     if (len <= 0)
+         return 0;
+
+     if (len > size)
+         len = size;
+     memcpy(buf, tmp, len);
+     return len;
+ }
 
 =head1 NOTES
 
