@@ -74,7 +74,7 @@ int subtest_level(void)
 }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-static int should_report_leaks()
+static int should_report_leaks(void)
 {
     /*
      * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0
