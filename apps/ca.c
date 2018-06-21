@@ -729,10 +729,6 @@ end_of_options:
             output_der = 1;
             batch = 1;
         }
-        Sout = bio_open_default(outfile, 'w',
-                                output_der ? FORMAT_ASN1 : FORMAT_TEXT);
-        if (Sout == NULL)
-            goto end;
     }
 
     if (md == NULL
@@ -1020,6 +1016,11 @@ end_of_options:
             if (verbose)
                 BIO_printf(bio_err, "writing %s\n", buf[2]);
 
+            Sout = bio_open_default(outfile, 'w',
+                                    output_der ? FORMAT_ASN1 : FORMAT_TEXT);
+            if (Sout == NULL)
+                goto end;
+
             Cout = BIO_new_file(buf[2], "w");
             if (Cout == NULL) {
                 perror(buf[2]);
@@ -1028,6 +1029,8 @@ end_of_options:
             write_new_certificate(Cout, xi, 0, notext);
             write_new_certificate(Sout, xi, output_der, notext);
             BIO_free_all(Cout);
+            BIO_free_all(Sout);
+            Sout = NULL;
         }
 
         if (sk_X509_num(cert_sk)) {
@@ -1174,6 +1177,11 @@ end_of_options:
         crlnumber = NULL;
 
         if (!do_X509_CRL_sign(crl, pkey, dgst, sigopts))
+            goto end;
+
+        Sout = bio_open_default(outfile, 'w',
+                                output_der ? FORMAT_ASN1 : FORMAT_TEXT);
+        if (Sout == NULL)
             goto end;
 
         PEM_write_bio_X509_CRL(Sout, crl);
