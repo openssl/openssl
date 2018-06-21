@@ -11,6 +11,7 @@
 
 #include "internal/sm2.h"
 #include "internal/sm2err.h"
+#include "internal/ec_int.h" /* ec_group_do_inverse_ord() */
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -133,7 +134,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             continue;
 
         if (!BN_add(s, dA, BN_value_one())
-                || !BN_mod_inverse(s, s, order, ctx)
+                || !ec_group_do_inverse_ord(group, s, s, ctx)
                 || !BN_mod_mul(tmp, dA, r, order, ctx)
                 || !BN_sub(tmp, k, tmp)
                 || !BN_mod_mul(s, s, tmp, order, ctx)) {
