@@ -8,6 +8,12 @@
  release branch.
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
+  *) Numerous side-channel attack mitigations have been applied. This may have
+     performance impacts for some algorithms for the benefit of improved
+     security. Specific changes are noted in this change log by their respective
+     authors.
+     [Matt Caswell]
+
   *) Add coordinate blinding for EC_POINT and implement projective
      coordinate blinding for generic prime curves as a countermeasure to
      chosen point SCA attacks.
