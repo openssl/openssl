@@ -209,7 +209,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
 
 static int sm2_crypt_test(void)
 {
-    int testresult = 1;
+    int testresult = 0;
     EC_GROUP *test_group =
         create_EC_group
         ("8542D69E4C044F18E8B92435BF6FF7DE457283915C45517D722EDB8B08F1DFC3",
