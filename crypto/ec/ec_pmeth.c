@@ -113,15 +113,14 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     if (sig == NULL) {
         *siglen = (size_t)sig_sz;
         return 1;
-    } else if (*siglen < (size_t)sig_sz) {
+    }
+
+    if (*siglen < (size_t)sig_sz) {
         ECerr(EC_F_PKEY_EC_SIGN, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
-    if (dctx->md != NULL)
-        type = EVP_MD_type(dctx->md);
-    else
-        type = NID_sha1;
+    type = (dctx->md != NULL) ? EVP_MD_type(dctx->md) : NID_sha1;
 
     ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
 
