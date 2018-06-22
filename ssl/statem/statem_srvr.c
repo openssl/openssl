@@ -3796,10 +3796,11 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             cb(s, SSL_CB_HANDSHAKE_START, 1);
         }
         /*
-         * If we already sent one NewSessionTicket then we need to take a copy
-         * of it and create a new session from it.
+         * If we already sent one NewSessionTicket, or we resumed then
+         * s->session may already be in a cache and so we must not modify it.
+         * Instead we need to take a copy of it and modify that.
          */
-        if (s->sent_tickets != 0) {
+        if (s->sent_tickets != 0 || s->hit) {
             SSL_SESSION *new_sess = ssl_session_dup(s->session, 0);
 
             if (new_sess == NULL) {
