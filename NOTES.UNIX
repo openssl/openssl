@@ -62,6 +62,9 @@
     $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         '-Wl,-rpath,$(LIBRPATH)'
 
+ There is a convenience --run-path option that passes option suitable
+ for target system.
+
  On modern ELF based systems, there are two runtime search paths tags to
  consider, DT_RPATH and DT_RUNPATH.  Shared objects are searched for in
  this order:
@@ -90,6 +93,9 @@
 
     $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
+
+ If you chose to use --run-path option, just pass additional
+ -Wl,--enable-new-dtags.
 
  It might be worth noting that some/most ELF systems implement support
  for runtime search path relative to the directory containing current

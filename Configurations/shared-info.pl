@@ -27,6 +27,7 @@ my %shared_info;
     'gnu-shared' => {
         shared_ldflag         => '-shared -Wl,-Bsymbolic',
         shared_sonameflag     => '-Wl,-soname=',
+        rpath_flag            => '-Wl,-rpath=',
     },
     'linux-shared' => sub {
         return {
@@ -63,6 +64,7 @@ my %shared_info;
         return {
             module_ldflags    => '-shared -Wl,-Bsymbolic',
             shared_ldflag     => '-shared -Wl,-Bsymbolic -set_version $(SHLIB_VERSION_NUMBER)',
+            rpath_flag        => '-rpath ',
         };
     },
     'svr3-shared' => sub {

@@ -101,7 +101,7 @@ SunOS|IRIX*)
 	;;
 esac
 
-{- output_off() unless grep (/-rpath\b/, @{$config{LDFLAGS}}); ""; -}
+{- output_off() unless $config{runpath} or grep (/-rpath\b/, @{$config{LDFLAGS}}); ""; -}
 if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	# Following three lines are major excuse for isolating them into
 	# this wrapper script. Original reason for setting LD_PRELOAD
@@ -117,7 +117,7 @@ if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	DYLD_INSERT_LIBRARIES="$LIBCRYPTOSO:$LIBSSLSO"	# MacOS X
 	export LD_PRELOAD _RLD_LIST DYLD_INSERT_LIBRARIES
 fi
-{- output_on() unless grep (/-rpath\b/, @{$config{LDFLAGS}}); ""; -}
+{- output_on() unless $config{runpath} or grep (/-rpath\b/, @{$config{LDFLAGS}}); ""; -}
 
 cmd="$1"; [ -x "$cmd" ] || cmd="$cmd${EXE_EXT}"
 shift

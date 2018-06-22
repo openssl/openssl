@@ -88,6 +88,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               the lookup requests. For this reason on Linux statically
 #               linked openssl executable has rather debugging value than
 #               production quality.
+# --run-path    pass target-specific linker option that sets runtime shared
+#               library search path to $(LIBRPATH).
 #
 # DEBUG_SAFESTACK use type-safe stacks to enforce type-safety on stack items
 #		provided to stack calls. Generates unique stack functions for
@@ -845,6 +847,10 @@ while (@argvcopy)
 			$rpath .= " " if $rpath ne "";
 			push @{$useradd{LDFLAGS}}, $_, $rpath;
 			}
+		elsif (/^--run-path$/)
+			{
+			$config{runpath} = 1;
+			}
 		elsif (/^-static$/)
 			{
 			push @{$useradd{LDFLAGS}}, $_;
@@ -956,7 +962,7 @@ foreach (keys %user) {
     }
 }
 
-if (grep { /-rpath\b/ } ($user{LDFLAGS} ? @{$user{LDFLAGS}} : ())
+if ((grep (/-rpath\b/, @{$user{LDFLAGS}}) || $config{runpath})
     && !$disabled{shared}
     && !($disabled{asan} && $disabled{msan} && $disabled{ubsan})) {
     die "***** Cannot simultaneously use -rpath, shared libraries, and\n",
@@ -1463,6 +1469,12 @@ if (!$disabled{asm} && !$predefined{__MACH__} && $^O ne 'VMS') {
         close(PIPE);
         unlink("null.$$.o");
     }
+}
+
+if (!$disabled{shared} && $config{runpath} && $target{rpath_flag}) {
+    die "double runtime path options" if grep($target{rpath_flag},
+                                              @{$useradd{LDFLAGS}});
+    push @{$useradd{LDFLAGS}}, $target{rpath_flag}.'$(LIBRPATH)';
 }
 
 # Deal with bn_ops ###################################################
