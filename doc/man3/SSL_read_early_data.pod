@@ -226,12 +226,14 @@ was submitted will be ignored). Note that single use tickets are enforced even
 if a client does not send any early data.
 
 The replay protection mechanism relies on the internal OpenSSL server session
-cache (see L<SSL_CTX_set_session_cache_mode(3)>). By default sessions will be
-added to the cache whenever a session ticket is issued. When a client attempts
-to resume the session OpenSSL will check for its presence in the internal cache.
-If it exists then the resumption is allowed and the session is removed from the
-cache. If it does not exist then the resumption is not allowed and a full
-handshake will occur.
+cache (see L<SSL_CTX_set_session_cache_mode(3)>). When replay protection is
+being used the server will operate as if the SSL_OP_NO_TICKET option had been
+selected (see L<SSL_CTX_set_options(3)>). Sessions will be added to the cache
+whenever a session ticket is issued. When a client attempts to resume the
+session, OpenSSL will check for its presence in the internal cache. If it exists
+then the resumption is allowed and the session is removed from the cache. If it
+does not exist then the resumption is not allowed and a full handshake will
+occur.
 
 Note that some applications may maintain an external cache of sessions (see
 L<SSL_CTX_sess_set_new_cb(3)> and similar functions). It is the application's
