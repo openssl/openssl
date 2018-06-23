@@ -39,7 +39,8 @@ ASN1_CHOICE(GENERAL_NAME) = {
         ASN1_IMP(GENERAL_NAME, d.ediPartyName, EDIPARTYNAME, GEN_EDIPARTY),
         ASN1_IMP(GENERAL_NAME, d.uniformResourceIdentifier, ASN1_IA5STRING, GEN_URI),
         ASN1_IMP(GENERAL_NAME, d.iPAddress, ASN1_OCTET_STRING, GEN_IPADD),
-        ASN1_IMP(GENERAL_NAME, d.registeredID, ASN1_OBJECT, GEN_RID)
+        ASN1_IMP(GENERAL_NAME, d.registeredID, ASN1_OBJECT, GEN_RID),
+        ASN1_IMP(GENERAL_NAME, d.smtpUtf8Name, ASN1_UTF8STRING, GEN_EMAILUTF8)
 } ASN1_CHOICE_END(GENERAL_NAME)
 
 IMPLEMENT_ASN1_FUNCTIONS(GENERAL_NAME)
@@ -77,6 +78,7 @@ int GENERAL_NAME_cmp(GENERAL_NAME *a, GENERAL_NAME *b)
     case GEN_EMAIL:
     case GEN_DNS:
     case GEN_URI:
+		case GEN_EMAILUTF8:
         result = ASN1_STRING_cmp(a->d.ia5, b->d.ia5);
         break;
 
@@ -139,6 +141,10 @@ void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value)
     case GEN_RID:
         a->d.rid = value;
         break;
+
+    case GEN_EMAILUTF8:
+        a->d.smtpUtf8Name = value;
+        break;
     }
     a->type = type;
 }
@@ -168,6 +174,9 @@ void *GENERAL_NAME_get0_value(const GENERAL_NAME *a, int *ptype)
 
     case GEN_RID:
         return a->d.rid;
+
+    case GEN_EMAILUTF8:
+        return a->d.smtpUtf8Name;
 
     default:
         return NULL;

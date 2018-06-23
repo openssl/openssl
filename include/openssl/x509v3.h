@@ -130,6 +130,7 @@ typedef struct GENERAL_NAME_st {
 # define GEN_URI         6
 # define GEN_IPADD       7
 # define GEN_RID         8
+# define GEN_EMAILUTF8   9
     int type;
     union {
         char *ptr;
@@ -148,6 +149,7 @@ typedef struct GENERAL_NAME_st {
         ASN1_IA5STRING *ia5;    /* rfc822Name, dNSName,
                                  * uniformResourceIdentifier */
         ASN1_OBJECT *rid;       /* registeredID */
+        ASN1_UTF8STRING *smtpUtf8Name; /* smtpUtf8Name (RFC 8398)*/
         ASN1_TYPE *other;       /* x400Address */
     } d;
 } GENERAL_NAME;

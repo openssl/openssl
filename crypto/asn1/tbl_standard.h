@@ -56,6 +56,7 @@ static const ASN1_STRING_TABLE tbl_standard[] = {
     {NID_SNILS, 1, 11, B_ASN1_NUMERICSTRING, STABLE_NO_MASK},
     {NID_countryCode3c, 3, 3, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
     {NID_countryCode3n, 3, 3, B_ASN1_NUMERICSTRING, STABLE_NO_MASK},
-    {NID_dnsName, 0, -1, B_ASN1_UTF8STRING, STABLE_NO_MASK}
+    {NID_dnsName, 0, -1, B_ASN1_UTF8STRING, STABLE_NO_MASK},
+    {NID_id_on_SmtpUTF8Mailbox, 1, ub_email_address, B_ASN1_UTF8STRING, STABLE_NO_MASK}
 };
 

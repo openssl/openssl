@@ -134,6 +134,11 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         if (!X509V3_add_value("Registered ID", oline, &ret))
             return NULL;
         break;
+
+    case GEN_EMAILUTF8:
+        if (!X509V3_add_value_uchar("Utf8 email", gen->d.smtpUtf8Name->data, &ret))
+            return NULL;
+        break;
     }
     return ret;
 }
@@ -195,6 +200,10 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
     case GEN_RID:
         BIO_printf(out, "Registered ID:");
         i2a_ASN1_OBJECT(out, gen->d.rid);
+        break;
+
+    case GEN_EMAILUTF8:
+        BIO_printf(out, "Utf8 email:%s", gen->d.smtpUtf8Name->data);
         break;
     }
     return 1;
@@ -435,6 +444,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     case GEN_URI:
     case GEN_EMAIL:
     case GEN_DNS:
+    case GEN_EMAILUTF8:
         is_string = 1;
         break;
 
