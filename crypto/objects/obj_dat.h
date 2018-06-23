@@ -2945,6 +2945,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      279,    /* "id-mod-qualified-cert-93" */
      281,    /* "id-mod-timestamp-protocol" */
      264,    /* "id-on" */
+    1193,    /* "id-on-SmtpUTF8Mailbox" */
      858,    /* "id-on-permanentIdentifier" */
      347,    /* "id-on-personalData" */
      265,    /* "id-pda" */
@@ -3664,6 +3665,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1033,    /* "Signing KDC Response" */
     1008,    /* "Signing Tool of Issuer" */
     1007,    /* "Signing Tool of Subject" */
+    1193,    /* "Smtp UTF8 Mailbox" */
      143,    /* "Strong Extranet ID" */
      398,    /* "Subject Information Access" */
     1020,    /* "TLS Feature" */
@@ -5345,6 +5347,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      346,    /* OBJ_id_cmc_confirmCertAcceptance 1 3 6 1 5 5 7 7 24 */
      347,    /* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
      858,    /* OBJ_id_on_permanentIdentifier    1 3 6 1 5 5 7 8 3 */
+    1193,    /* OBJ_id_on_SmtpUTF8Mailbox        1 3 6 1 5 5 7 8 9 */
      348,    /* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
      349,    /* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */
      351,    /* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 3 */
