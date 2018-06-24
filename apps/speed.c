@@ -2557,7 +2557,8 @@ int speed_main(int argc, char **argv)
     }
 
     for (i = 0; i < loopargs_len; i++)
-        RAND_bytes(loopargs[i].buf, 36);
+        if (RAND_bytes(loopargs[i].buf, 36) <= 0)
+            goto end;
 
 #ifndef OPENSSL_NO_RSA
     for (testnum = 0; testnum < RSA_NUM; testnum++) {
@@ -2653,7 +2654,8 @@ int speed_main(int argc, char **argv)
 #endif                          /* OPENSSL_NO_RSA */
 
     for (i = 0; i < loopargs_len; i++)
-        RAND_bytes(loopargs[i].buf, 36);
+        if (RAND_bytes(loopargs[i].buf, 36) <= 0)
+            goto end;
 
 #ifndef OPENSSL_NO_DSA
     for (testnum = 0; testnum < DSA_NUM; testnum++) {
