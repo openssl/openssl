@@ -14,6 +14,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include "internal/refcount.h"
+#include "internal/ec_int.h"
 #include "curve448/curve448_lcl.h"
 
 #if defined(__SUNPRO_C)
@@ -635,8 +636,5 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
            const uint8_t peer_public_value[32]);
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
-
-int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
-                            const BIGNUM *x, BN_CTX *ctx);
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
