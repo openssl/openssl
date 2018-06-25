@@ -1573,11 +1573,18 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             rbio = SSL_get_rbio(s);
             BIO_clear_retry_flags(rbio);
             BIO_set_retry_read(rbio);
-            return -1;
+        } else {
+            /*
+             * The peer is continuing to send application data, but we have
+             * already sent close_notify. If this was expected we should have
+             * been called via SSL_read() and this would have been handled
+             * above.
+             * No alert sent because we already sent close_notify
+             */
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
+                     SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
         }
-
-        s->rwstate = SSL_NOTHING;
-        return 0;
+        return -1;
     }
 
     /*

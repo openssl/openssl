@@ -5069,17 +5069,24 @@ static int test_shutdown(int tst)
                 || !TEST_int_eq(SSL_shutdown(clientssl), 1)
                 || !TEST_int_eq(SSL_shutdown(serverssl), 1))
             goto end;
-    } else {
+    } else if (tst == 4) {
         /*
          * In this test the client has sent close_notify and it has been
          * received by the server which has responded with a close_notify. The
-         * client needs to read the close_notify sent by the server. When
-         * tst == 5, there is application data to be read first but this is
-         * discarded with a -1 return value.
+         * client needs to read the close_notify sent by the server.
          */
-        if (tst == 5 && !TEST_int_eq(SSL_shutdown(clientssl), -1))
-            goto end;
         if (!TEST_int_eq(SSL_shutdown(clientssl), 1))
+            goto end;
+    } else {
+        /*
+         * tst == 5
+         *
+         * The client has sent close_notify and is expecting a close_notify
+         * back, but instead there is application data first. The shutdown
+         * should fail with a fatal error.
+         */
+        if (!TEST_int_eq(SSL_shutdown(clientssl), -1)
+                || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL))
             goto end;
     }
 
