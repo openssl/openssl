@@ -1959,11 +1959,12 @@ int ssl3_send_server_key_exchange(SSL *s)
 
 #ifndef OPENSSL_NO_PSK
         if (type & SSL_kPSK) {
+            size_t len = strlen(s->ctx->psk_identity_hint);
+
             /* copy PSK identity hint */
-            s2n(strlen(s->ctx->psk_identity_hint), p);
-            strncpy((char *)p, s->ctx->psk_identity_hint,
-                    strlen(s->ctx->psk_identity_hint));
-            p += strlen(s->ctx->psk_identity_hint);
+            s2n(len, p);
+            memcpy(p, s->ctx->psk_identity_hint, len);
+            p += len;
         }
 #endif
 
