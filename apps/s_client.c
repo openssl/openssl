@@ -844,15 +844,29 @@ static void freeandcopy(char **dest, const char *source)
         *dest = OPENSSL_strdup(source);
 }
 
-static int new_session_cb(SSL *S, SSL_SESSION *sess)
+static int new_session_cb(SSL *s, SSL_SESSION *sess)
 {
-    BIO *stmp = BIO_new_file(sess_out, "w");
 
-    if (stmp == NULL) {
-        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
-    } else {
-        PEM_write_bio_SSL_SESSION(stmp, sess);
-        BIO_free(stmp);
+    if (sess_out != NULL) {
+        BIO *stmp = BIO_new_file(sess_out, "w");
+
+        if (stmp == NULL) {
+            BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+        } else {
+            PEM_write_bio_SSL_SESSION(stmp, sess);
+            BIO_free(stmp);
+        }
+    }
+
+    /*
+     * Session data gets dumped on connection for TLSv1.2 and below, and on
+     * arrival of the NewSessionTicket for TLSv1.3.
+     */
+    if (SSL_version(s) == TLS1_3_VERSION) {
+        BIO_printf(bio_c_out,
+                   "---\nPost-Handshake New Session Ticket arrived:\n");
+        SSL_SESSION_print(bio_c_out, sess);
+        BIO_printf(bio_c_out, "---\n");
     }
 
     /*
@@ -1919,11 +1933,9 @@ int s_client_main(int argc, char **argv)
      * come at any time. Therefore we use a callback to write out the session
      * when we know about it. This approach works for < TLSv1.3 as well.
      */
-    if (sess_out != NULL) {
-        SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
-                                            | SSL_SESS_CACHE_NO_INTERNAL_STORE);
-        SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
-    }
+    SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
+                                        | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
 
     if (set_keylog_file(ctx, keylog_file))
         goto end;
@@ -3125,7 +3137,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
-    int i;
+    int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
+    long verify_result;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
 #endif
@@ -3282,7 +3295,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 #endif
 
-    if (SSL_version(s) == TLS1_3_VERSION) {
+    if (istls13) {
         switch (SSL_get_early_data_status(s)) {
         case SSL_EARLY_DATA_NOT_SENT:
             BIO_printf(bio, "Early data was not sent\n");
@@ -3297,9 +3310,20 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             break;
 
         }
+
+        /*
+         * We also print the verify results when we dump session information,
+         * but in TLSv1.3 we may not get that right away (or at all) depending
+         * on when we get a NewSessionTicket. Therefore we print it now as well.
+         */
+        verify_result = SSL_get_verify_result(s);
+        BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,
+                   X509_verify_cert_error_string(verify_result));
+    } else {
+        /* In TLSv1.3 we do this on arrival of a NewSessionTicket */
+        SSL_SESSION_print(bio, SSL_get_session(s));
     }
 
-    SSL_SESSION_print(bio, SSL_get_session(s));
     if (SSL_get_session(s) != NULL && keymatexportlabel != NULL) {
         BIO_printf(bio, "Keying material exporter:\n");
         BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
