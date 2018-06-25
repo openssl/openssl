@@ -3130,6 +3130,8 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
         goto err;
     }
     cdh = EVP_PKEY_get0_DH(ckey);
+    if (cdh == NULL)
+        goto err;
     pub_key = BN_bin2bn(data, i, NULL);
 
     if (pub_key == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
