@@ -3976,7 +3976,9 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     union {
         unsigned char age_add_c[sizeof(uint32_t)];
         uint32_t age_add;
-    } age_add_u = { .age_add = 0 };
+    } age_add_u;
+
+    age_add_u.age_add = 0;
 
     if (SSL_IS_TLS13(s)) {
         size_t i, hashlen;
