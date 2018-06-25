@@ -33,6 +33,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 {
     size_t i;
     const char *s;
+    int istls13 = (x->ssl_version == TLS1_3_VERSION);
 
     if (x == NULL)
         goto err;
@@ -70,7 +71,10 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
         if (BIO_printf(bp, "%02X", x->sid_ctx[i]) <= 0)
             goto err;
     }
-    if (BIO_puts(bp, "\n    Master-Key: ") <= 0)
+    if (istls13) {
+        if (BIO_puts(bp, "\n    Resumption PSK: ") <= 0)
+            goto err;
+    } else if (BIO_puts(bp, "\n    Master-Key: ") <= 0)
         goto err;
     for (i = 0; i < x->master_key_length; i++) {
         if (BIO_printf(bp, "%02X", x->master_key[i]) <= 0)
@@ -144,6 +148,12 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
     if (BIO_printf(bp, "    Extended master secret: %s\n",
                    x->flags & SSL_SESS_FLAG_EXTMS ? "yes" : "no") <= 0)
         goto err;
+
+    if (istls13) {
+        if (BIO_printf(bp, "    Max Early Data: %u\n",
+                       x->ext.max_early_data) <= 0)
+            goto err;
+    }
 
     return 1;
  err:
