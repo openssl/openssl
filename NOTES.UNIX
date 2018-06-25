@@ -100,8 +100,8 @@
  ------------------------
 
  Third-party applications dynamically linked with OpenSSL (or any other)
- shared library face exactly same problem with non-default locations.
- Abovementioned OpenSSL config options might or might not have bearing
+ shared library face exactly the same problem with non-default locations.
+ The OpenSSL config options mentioned above might or might not have bearing
  on linking of the target application. "Might" means that under some
  circumstances it would be sufficient to link with OpenSSL shared library
  "naturally", i.e. with -L/whatever/path -lssl -lcrypto. But there are
