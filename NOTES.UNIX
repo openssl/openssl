@@ -92,20 +92,26 @@
         '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
 
  It might be worth noting that some/most ELF systems implement support
- for relative runtime search path, relative to directory containing
- the executable object, by interpreting $ORIGIN along with some other
- internal variables. Consult your system documentation.
+ for runtime search path relative to the directory containing current
+ executable, by interpreting $ORIGIN along with some other internal
+ variables. Consult your system documentation.
 
  Linking your application
  ------------------------
 
- Above is the story of building and installing OpenSSL shared libraries
- and application. But third-party applications dynamically linked with
- OpenSSL (or any other) shared library face exactly same problem with
- non-default locations. Naturally abovementioned OpenSSL config options
- do not necessarily have bearing on linking of the target application.
- "Not necessarily" means that under some circumstances it would be
- sufficient to link with OpenSSL shared library "naturally", i.e. with
- -L/whatever/path -lssl -lcrypto. But there also are cases when you'd
- have to specify runtime search path yourself. Consult your system
- documentation and use above section as inspiration...
+ Third-party applications dynamically linked with OpenSSL (or any other)
+ shared library face exactly same problem with non-default locations.
+ Abovementioned OpenSSL config options might or might not have bearing
+ on linking of the target application. "Might" means that under some
+ circumstances it would be sufficient to link with OpenSSL shared library
+ "naturally", i.e. with -L/whatever/path -lssl -lcrypto. But there also
+ are cases when you'd have to explicitly specify runtime search path
+ when linking your applcation. Consult your system documentation and use
+ above section as inspiration...
+
+ Shared OpenSSL build installs even static libraries. Linking with the
+ latter is likely to require special care, because customarily linkers
+ look for shared libraries first, and tend to remain "blind" to static
+ OpenSSL libraries. Referring to system documentation would suffice, if
+ not for a corner case. On AIX static libraries [in shared build] are
+ named diffently, add _a suffix to link with them, e.g. -lcrypto_a.
