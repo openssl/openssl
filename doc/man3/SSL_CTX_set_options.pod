@@ -165,7 +165,7 @@ ids. However OpenSSL allows two modes of ticket operation in TLSv1.3: stateful
 and stateless. Stateless tickets work the same way as in TLSv1.2 and below.
 Stateful tickets mimic the session id behaviour available in TLSv1.2 and below.
 The session information is cached on the server and the session id is wrapped up
-in a ticket and sent back to the client. When the client wishes to resume it
+in a ticket and sent back to the client. When the client wishes to resume, it
 presents a ticket in the same way as for stateless tickets. The server can then
 extract the session id from the ticket and retrieve the session information from
 its cache.
@@ -173,7 +173,7 @@ its cache.
 By default OpenSSL will use stateless tickets. The SSL_OP_NO_TICKET option will
 cause stateless tickets to not be issued. In TLSv1.2 and below this means no
 ticket gets sent to the client at all. In TLSv1.3 a stateful ticket will be
-sent. This is a server side option only.
+sent. This is a server-side option only.
 
 In TLSv1.3 it is possible to suppress all tickets (stateful and stateless) from
 being sent by calling L<SSL_CTX_set_num_tickets(3)> or
