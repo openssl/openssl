@@ -5074,8 +5074,6 @@ static int test_shutdown(int tst)
          * received by the server which has responded with a close_notify. The
          * client needs to read the close_notify sent by the server.
          */
-        if (tst == 5 && !TEST_int_eq(SSL_shutdown(clientssl), -1))
-            goto end;
         if (!TEST_int_eq(SSL_shutdown(clientssl), 1))
             goto end;
     } else {
