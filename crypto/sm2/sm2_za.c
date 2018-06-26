@@ -59,8 +59,6 @@ int sm2_compute_userid_digest(uint8_t *out,
         goto done;
     }
 
-    memset(out, 0, EVP_MD_size(digest));
-
     if (!EVP_DigestInit(hash, digest)) {
         SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EVP_LIB);
         goto done;
