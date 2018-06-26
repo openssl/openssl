@@ -1396,7 +1396,8 @@ static int create_sctp_socks(int *ssock, int *csock)
 static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_CTX *server_ctx, SSL_CTX *server2_ctx, SSL_CTX *client_ctx,
     const SSL_TEST_CTX *test_ctx, const SSL_TEST_EXTRA_CONF *extra,
-    SSL_SESSION *session_in, SSL_SESSION **session_out)
+    SSL_SESSION *session_in, SSL_SESSION *serv_sess_in,
+    SSL_SESSION **session_out, SSL_SESSION **serv_sess_out)
 {
     PEER server, client;
     BIO *client_to_server = NULL, *server_to_client = NULL;
@@ -1452,10 +1453,14 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     configure_handshake_ssl(server.ssl, client.ssl, extra);
     if (session_in != NULL) {
+        SSL_SESSION_get_id(serv_sess_in, &sess_id_len);
         /* In case we're testing resumption without tickets. */
-        if (!TEST_true(SSL_CTX_add_session(server_ctx, session_in))
+        if ((sess_id_len > 0
+                    && !TEST_true(SSL_CTX_add_session(server_ctx,
+                                                      serv_sess_in)))
                 || !TEST_true(SSL_set_session(client.ssl, session_in)))
             goto err;
+        sess_id_len = 0;
     }
 
     ret->result = SSL_TEST_INTERNAL_ERROR;
@@ -1657,6 +1662,16 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);
+    if (serv_sess_out != NULL) {
+        SSL_SESSION *tmp = SSL_get_session(server.ssl);
+
+        /*
+         * We create a fresh copy that is not in the server session ctx linked
+         * list.
+         */
+        if (tmp != NULL)
+            *serv_sess_out = SSL_SESSION_dup(tmp);
+    }
 
     if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
         ret->tmp_key_type = pkey_type(tmp_key);
@@ -1699,11 +1714,11 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                const SSL_TEST_CTX *test_ctx)
 {
     HANDSHAKE_RESULT *result;
-    SSL_SESSION *session = NULL;
+    SSL_SESSION *session = NULL, *serv_sess = NULL;
 
     result = do_handshake_internal(server_ctx, server2_ctx, client_ctx,
                                    test_ctx, &test_ctx->extra,
-                                   NULL, &session);
+                                   NULL, NULL, &session, &serv_sess);
     if (result == NULL
             || test_ctx->handshake_mode != SSL_TEST_HANDSHAKE_RESUME
             || result->result == SSL_TEST_INTERNAL_ERROR)
@@ -1718,8 +1733,9 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     /* We don't support SNI on second handshake yet, so server2_ctx is NULL. */
     result = do_handshake_internal(resume_server_ctx, NULL, resume_client_ctx,
                                    test_ctx, &test_ctx->resume_extra,
-                                   session, NULL);
+                                   session, serv_sess, NULL, NULL);
  end:
     SSL_SESSION_free(session);
+    SSL_SESSION_free(serv_sess);
     return result;
 }

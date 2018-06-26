@@ -1009,6 +1009,33 @@ int tls_parse_ctos_early_data(SSL *s, PACKET *pkt, unsigned int context,
     return 1;
 }
 
+static SSL_TICKET_STATUS tls_get_stateful_ticket(SSL *s, PACKET *tick,
+                                                 SSL_SESSION **sess)
+{
+    SSL_SESSION *tmpsess = NULL;
+
+    switch (PACKET_remaining(tick)) {
+        case 0:
+            return SSL_TICKET_EMPTY;
+
+        case SSL_MAX_SSL_SESSION_ID_LENGTH:
+            break;
+
+        default:
+            return SSL_TICKET_NO_DECRYPT;
+    }
+
+    tmpsess = lookup_sess_in_cache(s, PACKET_data(tick),
+                                   SSL_MAX_SSL_SESSION_ID_LENGTH);
+
+    if (tmpsess == NULL)
+        return SSL_TICKET_NO_DECRYPT;
+
+    s->ext.ticket_expected = 1;
+    *sess = tmpsess;
+    return SSL_TICKET_SUCCESS;
+}
+
 int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
                        size_t chainidx)
 {
@@ -1132,9 +1159,18 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             uint32_t ticket_age = 0, now, agesec, agems;
             int ret;
 
-            ret = tls_decrypt_ticket(s, PACKET_data(&identity),
-                                     PACKET_remaining(&identity), NULL, 0,
-                                     &sess);
+            /*
+             * If we are using anti-replay protection then we behave as if
+             * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
+             * is no point in using full stateless tickets.
+             */
+            if ((s->options & SSL_OP_NO_TICKET) != 0
+                    || s->max_early_data > 0)
+                ret = tls_get_stateful_ticket(s, &identity, &sess);
+            else
+                ret = tls_decrypt_ticket(s, PACKET_data(&identity),
+                                         PACKET_remaining(&identity), NULL, 0,
+                                         &sess);
 
             if (ret == SSL_TICKET_EMPTY) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_CTOS_PSK,

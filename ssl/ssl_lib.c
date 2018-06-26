@@ -3369,18 +3369,21 @@ void ssl_update_cache(SSL *s, int mode)
         && (!s->hit || SSL_IS_TLS13(s))) {
         /*
          * Add the session to the internal cache. In server side TLSv1.3 we
-         * normally don't do this because its a full stateless ticket with only
-         * a dummy session id so there is no reason to cache it, unless:
+         * normally don't do this because by default it's a full stateless ticket
+         * with only a dummy session id so there is no reason to cache it,
+         * unless:
          * - we are doing early_data, in which case we cache so that we can
          *   detect replays
          * - the application has set a remove_session_cb so needs to know about
          *   session timeout events
+         * - SSL_OP_NO_TICKET is set in which case it is a stateful ticket
          */
         if ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0
                 && (!SSL_IS_TLS13(s)
                     || !s->server
                     || s->max_early_data > 0
-                    || s->session_ctx->remove_session_cb != NULL))
+                    || s->session_ctx->remove_session_cb != NULL
+                    || (s->options & SSL_OP_NO_TICKET) != 0))
             SSL_CTX_add_session(s->session_ctx, s->session);
 
         /*

@@ -2212,6 +2212,8 @@ void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur int ssl_generate_session_id(SSL *s, SSL_SESSION *ss);
 __owur int ssl_get_new_session(SSL *s, int session);
+__owur SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
+                                         size_t sess_id_len);
 __owur int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
