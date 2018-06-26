@@ -944,11 +944,12 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (maxprot == TLS1_3_VERSION) {
         /*
          * In TLSv1.3 we should have created a new session even though we have
-         * resumed.
+         * resumed. Since we attempted a resume we should also have removed the
+         * old ticket from the cache so that we try to only use tickets once.
          */
         if (use_ext_cache
                 && (!TEST_int_eq(new_called, 1)
-                    || !TEST_int_eq(remove_called, 0)))
+                    || !TEST_int_eq(remove_called, 1)))
             goto end;
     } else {
         /*
