@@ -114,7 +114,7 @@ int sm2_encrypt(const EC_KEY *key,
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
     struct SM2_Ciphertext_st ctext_struct;
     const EC_GROUP *group = EC_KEY_get0_group(key);
-    const BIGNUM *order = EC_GROUP_get0_order(group);
+    const BIGNUM *order;
     const EC_POINT *P = EC_KEY_get0_public_key(key);
     EC_POINT *kG = NULL;
     EC_POINT *kP = NULL;
@@ -122,7 +122,7 @@ int sm2_encrypt(const EC_KEY *key,
     uint8_t *x2y2 = NULL;
     uint8_t *C3 = NULL;
     const size_t field_size = ec_field_size(group);
-    const size_t C3_size = EVP_MD_size(digest);
+    const int C3_size = EVP_MD_size(digest);
 
     /* NULL these before any "goto done" */
     ctext_struct.C2 = NULL;
@@ -130,10 +130,15 @@ int sm2_encrypt(const EC_KEY *key,
 
     if (hash == NULL
             || group == NULL
-            || order == NULL
             || P == NULL
             || field_size == 0
-            || C3_size == 0) {
+            || C3_size <= 0) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
