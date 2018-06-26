@@ -121,19 +121,20 @@ int sm2_encrypt(const EC_KEY *key,
     uint8_t *msg_mask = NULL;
     uint8_t *x2y2 = NULL;
     uint8_t *C3 = NULL;
-    const size_t field_size = ec_field_size(group);
-    const size_t C3_size = EVP_MD_size(digest);
+    size_t field_size;
+    const int C3_size = EVP_MD_size(digest);
 
     /* NULL these before any "goto done" */
     ctext_struct.C2 = NULL;
     ctext_struct.C3 = NULL;
 
-    if (hash == NULL
-            || group == NULL
-            || order == NULL
-            || P == NULL
-            || field_size == 0
-            || C3_size == 0) {
+    if (hash == NULL || C3_size <= 0) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    field_size = ec_field_size(group);
+    if (field_size == 0) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
@@ -273,7 +274,7 @@ int sm2_decrypt(const EC_KEY *key,
     int msg_len = 0;
     EVP_MD_CTX *hash = NULL;
 
-    if (field_size == 0 || hash_size == 0)
+    if (field_size == 0 || hash_size <= 0)
        goto done;
 
     memset(ptext_buf, 0xFF, *ptext_len);
