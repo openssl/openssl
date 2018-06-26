@@ -2324,13 +2324,12 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt, int *al)
         SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, SSL_R_BN_LIB);
         goto err;
     }
+
     cdh = EVP_PKEY_get0_DH(ckey);
     pub_key = BN_bin2bn(data, i, NULL);
-
-    if (pub_key == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
+    if (pub_key == NULL || cdh == NULL || !DH_set0_key(cdh, pub_key, NULL)) {
         SSLerr(SSL_F_TLS_PROCESS_CKE_DHE, ERR_R_INTERNAL_ERROR);
-        if (pub_key != NULL)
-            BN_free(pub_key);
+        BN_free(pub_key);
         goto err;
     }
 
