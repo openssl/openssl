@@ -9,6 +9,13 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Modified the random device based seed sources to keep the relevant
+     file descriptors open rather than reopening them on each access.
+     This allows such sources to operate in a chroot() jail without
+     the associated device nodes being available. This behaviour can be
+     controlled using RAND_keep_random_devices_open().
+     [Paul Dale]
+
   *) Numerous side-channel attack mitigations have been applied. This may have
      performance impacts for some algorithms for the benefit of improved
      security. Specific changes are noted in this change log by their respective

@@ -111,4 +111,21 @@ int rand_pool_add_nonce_data(RAND_POOL *pool);
  */
 int rand_pool_add_additional_data(RAND_POOL *pool);
 
+/*
+ * Initialise the random pool reseeding sources.
+ *
+ * Returns 1 on success and 0 on failure.
+ */
+int rand_pool_init(void);
+
+/*
+ * Finalise the random pool reseeding sources.
+ */
+void rand_pool_cleanup(void);
+
+/*
+ * Control the random pool use of open file descriptors.
+ */
+void rand_pool_keep_random_devices_open(int keep);
+
 #endif
