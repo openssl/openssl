@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "internal/refcount.h"
+#include "internal/cryptlib.h"
 #include "ssl_locl.h"
 #include "statem/statem_locl.h"
 
@@ -463,6 +464,9 @@ SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
         SSL_SESSION data;
 
         data.ssl_version = s->version;
+        if (!ossl_assert(sess_id_len <= SSL_MAX_SSL_SESSION_ID_LENGTH))
+            return NULL;
+
         memcpy(data.session_id, sess_id, sess_id_len);
         data.session_id_length = sess_id_len;
 
@@ -508,7 +512,7 @@ SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
                  * interrupt the session resumption process. The return
                  * value is intentionally ignored.
                  */
-                SSL_CTX_add_session(s->session_ctx, ret);
+                (void)SSL_CTX_add_session(s->session_ctx, ret);
             }
         }
     }

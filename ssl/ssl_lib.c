@@ -3369,7 +3369,7 @@ void ssl_update_cache(SSL *s, int mode)
         && (!s->hit || SSL_IS_TLS13(s))) {
         /*
          * Add the session to the internal cache. In server side TLSv1.3 we
-         * normally don't do this because by default its a full stateless ticket
+         * normally don't do this because by default it's a full stateless ticket
          * with only a dummy session id so there is no reason to cache it,
          * unless:
          * - we are doing early_data, in which case we cache so that we can
