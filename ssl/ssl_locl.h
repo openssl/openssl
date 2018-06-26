@@ -201,11 +201,15 @@
 # define SSL_aSRP                0x00000040U
 /* GOST R 34.10-2012 signature auth */
 # define SSL_aGOST12             0x00000080U
+/* OQS schemes */
+/* Picnic */
+# define SSL_aPICNICL1FS         0x00000100U
+/* ADD_MORE_OQS_SIG_HERE */
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
 /* All bits requiring a certificate */
 #define SSL_aCERT \
-    (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12)
+  (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12) /* FIXMEOQS: should I add picnic here? */
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U
@@ -383,7 +387,10 @@
 # define SSL_PKEY_GOST12_512     6
 # define SSL_PKEY_ED25519        7
 # define SSL_PKEY_ED448          8
-# define SSL_PKEY_NUM            9
+/* OQS schemes */
+# define SSL_PKEY_PICNICL1FS     9
+/* ADD_MORE_OQS_SIG_HERE */
+# define SSL_PKEY_NUM            10
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
@@ -405,7 +412,7 @@
 */
 
 /* OQS integration */
-/* NID for OQS algs. Pick values starting way above NUM_NID (defined in obj_dat.h)
+/* NID for OQS KEX algs. Pick values starting way above NUM_NID (defined in obj_dat.h)
    to avoid conflicts with dynamically registered schemes (we keep things local to
    avoid modifying the libcrypto layer) */
 #define NID_OQS_START    2000
@@ -2065,6 +2072,10 @@ typedef enum downgrade_en {
 
 #define TLSEXT_SIGALG_ed25519                                   0x0807
 #define TLSEXT_SIGALG_ed448                                     0x0808
+
+/* OQS schemes */
+#define TLSEXT_SIGALG_picnicL1FS                                0xfe00 /* private use code point */
+/* ADD_MORE_OQS_SIG_HERE */
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00

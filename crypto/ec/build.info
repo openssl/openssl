@@ -8,6 +8,7 @@ SOURCE[../../libcrypto]=\
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c ecx_meth.c \
         curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
+	oqs_meth.c \
         {- $target{ec_asm_src} -}
 
 GENERATE[ecp_nistz256-x86.s]=asm/ecp_nistz256-x86.pl \

@@ -959,7 +959,12 @@ size_t ossl_statem_client_max_message_size(SSL *s)
         return s->max_cert_list;
 
     case TLS_ST_CR_CERT_VRFY:
-        return SSL3_RT_MAX_PLAIN_LENGTH;
+      /* OQS note: the CertificateVerify message's size is artificially limited in OpenSSL to be large enough
+       * for conventional signatures. The TLS 1.3 spec defines it as 2^16 + 2, which is what we need to support
+       * longer PQC signatures. (See https://github.com/openssl/openssl/issues/6433)
+       */
+      /* return SSL3_RT_MAX_PLAIN_LENGTH; */
+	return 65536;
 
     case TLS_ST_CR_CERT_STATUS:
         return SSL3_RT_MAX_PLAIN_LENGTH;

@@ -94,6 +94,7 @@ typedef struct err_state_st {
 # define ERR_LIB_ASYNC           51
 # define ERR_LIB_KDF             52
 # define ERR_LIB_SM2             53
+# define ERR_LIB_OQS             54
 
 # define ERR_LIB_USER            128
 
@@ -133,6 +134,8 @@ typedef struct err_state_st {
 # define ASYNCerr(f,r) ERR_PUT_error(ERR_LIB_ASYNC,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define KDFerr(f,r) ERR_PUT_error(ERR_LIB_KDF,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 # define SM2err(f,r) ERR_PUT_error(ERR_LIB_SM2,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# define OSSL_STOREerr(f,r) ERR_PUT_error(ERR_LIB_OSSL_STORE,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
+# define OQSerr(f,r)   ERR_PUT_error(ERR_LIB_OQS,(f),(r),OPENSSL_FILE,OPENSSL_LINE)
 
 # define ERR_PACK(l,f,r) ( \
         (((unsigned int)(l) & 0x0FF) << 24L) | \

@@ -62,6 +62,9 @@
 # define EVP_PKEY_ED25519 NID_ED25519
 # define EVP_PKEY_X448 NID_X448
 # define EVP_PKEY_ED448 NID_ED448
+/* OQS schemes */
+# define EVP_PKEY_PICNICL1FS NID_picnicL1FS
+/* ADD_MORE_OQS_SIG_HERE */
 
 #ifdef  __cplusplus
 extern "C" {

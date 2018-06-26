@@ -81,6 +81,10 @@ extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
+/* OQS schemes */
+extern const EVP_PKEY_ASN1_METHOD picnicL1FS_asn1_meth;
+/* ADD_MORE_OQS_SIG_HERE */
+
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
  * names and data need to be free()ed
