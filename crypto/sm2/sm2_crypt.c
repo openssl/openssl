@@ -48,7 +48,8 @@ static size_t ec_field_size(const EC_GROUP *group)
     if (p == NULL || a == NULL || b == NULL)
        goto done;
 
-    EC_GROUP_get_curve_GFp(group, p, a, b, NULL);
+    if (!EC_GROUP_get_curve_GFp(group, p, a, b, NULL))
+        goto done;
     field_size = (BN_num_bits(p) + 7) / 8;
 
  done:
