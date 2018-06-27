@@ -180,7 +180,8 @@ L<ASN1_generate_nconf(3)> format.
 
 Examples:
 
- subjectAltName=email:copy,email:my@other.address,URI:http://my.url.here/
+ subjectAltName=email:my@other.address
+ subjectAltName=email:copy,URI:http://my.url.here/
  subjectAltName=IP:192.168.7.1
  subjectAltName=IP:13::17
  subjectAltName=email:my@other.address,RID:1.2.3.4

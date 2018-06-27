@@ -340,9 +340,11 @@ whitespace is ignored in the associated data field.  For example:
     -connect smtp.example.com:25 \
     -dane_tlsa_domain smtp.example.com \
     -dane_tlsa_rrdata "2 1 1
-      B111DD8A1C2091A89BD4FD60C57F0716CCE50FEEFF8137CDBEE0326E 02CF362B" \
+      B111DD8A1C2091A89BD4FD60C57F0716CCE50FEEFF8137CDBEE0326E
+      02CF362B" \
     -dane_tlsa_rrdata "2 1 1
-      60B87575447DCBA2A36B7D11AC09FB24A9DB406FEE12D2CC90180517 616E8A18"
+      60B87575447DCBA2A36B7D11AC09FB24A9DB406FEE12D2CC90180517
+      616E8A18"
   ...
   Verification: OK
   Verified peername: smtp.example.com
@@ -804,7 +806,8 @@ information whenever a session is renegotiated.
 =head1 SEE ALSO
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>,
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_send_fragment(3)>,
+L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY

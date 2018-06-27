@@ -609,7 +609,7 @@ Certify a Netscape SPKAC:
 
 A sample SPKAC file (the SPKAC line has been truncated for clarity):
 
- SPKAC=MIG0MGAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEAn7PDhCeV/xIxUg8V70YRxK2A5
+ SPKAC=MIG0MGAwXDANBgkqhkiG9w0BAQEFAA...
  CN=Steve Test
  emailAddress=steve@openssl.org
  0.OU=OpenSSL Group

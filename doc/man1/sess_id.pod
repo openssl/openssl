@@ -80,14 +80,14 @@ be used.
 
 =head1 OUTPUT
 
-Typical output:
+Typical output (long lines truncated):
 
  SSL-Session:
      Protocol  : TLSv1
      Cipher    : 0016
-     Session-ID: 871E62626C554CE95488823752CBD5F3673A3EF3DCE9C67BD916C809914B40ED
+     Session-ID: 871E62626C554CE9548...
      Session-ID-ctx: 01000000
-     Master-Key: A7CEFC571974BE02CAC305269DC59F76EA9F0B180CB6642697A68251F2D2BB57E51DBBB4C7885573192AE9AEE220FACD
+     Master-Key: A7CEFC571974BE02CAC3...
      Key-Arg   : None
      Start Time: 948459261
      Timeout   : 300 (sec)
