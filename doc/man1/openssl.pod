@@ -376,31 +376,31 @@ SM3 Digest
 
 Base64 Encoding
 
-=item B<bf bf-cbc bf-cfb bf-ecb bf-ofb>
+=item B<bf>, B<bf-cbc>, B<bf-cfb>, B<bf-ecb>, B<bf-ofb>
 
 Blowfish Cipher
 
-=item B<cast cast-cbc>
+=item B<cast>, B<cast-cbc>
 
 CAST Cipher
 
-=item B<cast5-cbc cast5-cfb cast5-ecb cast5-ofb>
+=item B<cast5-cbc>, B<cast5-cfb>, B<cast5-ecb>, B<cast5-ofb>
 
 CAST5 Cipher
 
-=item B<des des-cbc des-cfb des-ecb des-ede des-ede-cbc des-ede-cfb des-ede-ofb des-ofb>
+=item B<des>, B<des-cbc>, B<des-cfb>, B<des-ecb>, B<des-ede>, B<des-ede-cbc>, B<des-ede-cfb>, B<des-ede-ofb>, B<des-ofb>
 
 DES Cipher
 
-=item B<des3 desx des-ede3 des-ede3-cbc des-ede3-cfb des-ede3-ofb>
+=item B<des3>, B<desx>, B<des-ede3>, B<des-ede3-cbc>, B<des-ede3-cfb>, B<des-ede3-ofb>
 
 Triple-DES Cipher
 
-=item B<idea idea-cbc idea-cfb idea-ecb idea-ofb>
+=item B<idea>, B<idea-cbc>, B<idea-cfb>, B<idea-ecb>, B<idea-ofb>
 
 IDEA Cipher
 
-=item B<rc2 rc2-cbc rc2-cfb rc2-ecb rc2-ofb>
+=item B<rc2>, B<rc2-cbc>, B<rc2-cfb>, B<rc2-ecb>, B<rc2-ofb>
 
 RC2 Cipher
 
@@ -408,7 +408,7 @@ RC2 Cipher
 
 RC4 Cipher
 
-=item B<rc5 rc5-cbc rc5-cfb rc5-ecb rc5-ofb>
+=item B<rc5>, B<rc5-cbc>, B<rc5-cfb>, B<rc5-ecb>, B<rc5-ofb>
 
 RC5 Cipher
 

@@ -288,7 +288,7 @@ to the output file. This option does not require a request, it is
 useful e.g. when you need to examine the content of a response or
 token or you want to extract the time stamp token from a response. If
 the input is a token and the output is a time stamp response a default
-'granted' status info is added to the token. (Optional)
+"granted" status info is added to the token. (Optional)
 
 =item B<-token_in>
 
@@ -557,10 +557,12 @@ OID section of the config file):
 
 Before generating a response a signing certificate must be created for
 the TSA that contains the B<timeStamping> critical extended key usage extension
-without any other key usage extensions. You can add the
-'extendedKeyUsage = critical,timeStamping' line to the user certificate section
-of the config file to generate a proper certificate. See L<req(1)>,
-L<ca(1)>, L<x509(1)> for instructions. The examples
+without any other key usage extensions. You can add this line to the
+user certificate section of the config file to generate a proper certificate;
+
+   extendedKeyUsage = critical,timeStamping
+
+See L<req(1)>, L<ca(1)>, and L<x509(1)> for instructions. The examples
 below assume that cacert.pem contains the certificate of the CA,
 tsacert.pem is the signing certificate issued by cacert.pem and
 tsakey.pem is the private key of the TSA.
