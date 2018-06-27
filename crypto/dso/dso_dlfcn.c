@@ -363,26 +363,26 @@ static int dladdr(void *ptr, Dl_info *dl)
             || ((addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
                 && (addr < ((uintptr_t)this_ldi->ldinfo_dataorg +
                             this_ldi->ldinfo_datasize)))) {
+            char *fname;
             char *member = (char *)((uintptr_t)this_ldi->ldinfo_filename +
                                     strlen(this_ldi->ldinfo_filename) + 1);
             size_t member_len = strlen(member);
             found = 1;
-            if ((dl->dli_fname =
-                 OPENSSL_strdup(this_ldi->ldinfo_filename)) != NULL) {
+            if ((fname = OPENSSL_strdup(this_ldi->ldinfo_filename)) != NULL) {
                 if ((member_len > 0)
-                    && (dl->dli_fname =
-                        OPENSSL_realloc(dl->dli_fname, strlen(dl->dli_fname) +
-                                                       1 + member_len + 2)) {
+                    && (fname = OPENSSL_realloc((void *)fname, strlen(fname) +
+                                                    1 + member_len + 2))) {
                     /*
                      * Need to respect a possible member name and not just
                      * returning the path name in this case. See docs:
                      * sys/ldr.h, loadquery() and dlopen()/RTLD_MEMBER.
                      */
-                    strcat(dl->dli_fname, "(");
-                    strcat(dl->dli_fname, member);
-                    strcat(dl->dli_fname, ")");
+                    strcat(fname, "(");
+                    strcat(fname, member);
+                    strcat(fname, ")");
                 } else
                     errno = ENOMEM;
+                dl->dli_fname = fname;
             } else
                 errno = ENOMEM;
         } else {
