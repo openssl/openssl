@@ -230,7 +230,7 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         } else {
             for (i = 0; i < plen; i++) {
                 unsigned char c = in[i];
-                out[i] = ctr[i] ^ in[i];
+                out[i] = ctr[i] ^ c;
                 ctr[i] = c;
             }
         }
