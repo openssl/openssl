@@ -726,6 +726,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
 };
 
 static const ERR_STRING_DATA SSL_str_reasons[] = {
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY),
+    "application data after close notify"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_APP_DATA_IN_HANDSHAKE),
     "app data in handshake"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT),
