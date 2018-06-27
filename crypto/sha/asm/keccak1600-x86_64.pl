@@ -344,7 +344,6 @@ $code.=<<___;
 	ret
 .size	__KeccakF1600,.-__KeccakF1600
 
-.globl	KeccakF1600
 .type	KeccakF1600,\@abi-omnipotent
 .align	32
 KeccakF1600:
