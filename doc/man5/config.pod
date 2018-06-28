@@ -64,8 +64,8 @@ length after variable expansion. Otherwise an error will occur.
 
 It is possible to escape certain characters by using any kind of quote
 or the B<\> character. By making the last character of a line a B<\>
-a B<value> string can be spread across multiple lines. In addition, a
-B<\> can be followed by one of B<n>, B<r>, B<b>, or B<t>.
+a B<value> string can be spread across multiple lines. In addition
+the sequences B<\n>, B<\r>, B<\b> and B<\t> are recognized.
 
 All expansion and escape rules as described above that apply to B<value>
 also apply to the path of the B<.include> directive.
@@ -308,7 +308,7 @@ mentioned above.
  cover several lines \
  by including \\ characters
 
- message = Hello World\\n
+ message = Hello World\n
 
  [ section_two ]
 
