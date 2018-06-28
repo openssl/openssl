@@ -466,6 +466,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
     char *dekinfostart, c;
 
     cipher->cipher = NULL;
+    memset(cipher->iv, 0, sizeof(cipher->iv));
     if ((header == NULL) || (*header == '\0') || (*header == '\n'))
         return 1;
 
