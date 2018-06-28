@@ -2309,13 +2309,16 @@ DH *ssl_get_auto_dh(SSL *s)
         if (dhp == NULL)
             return NULL;
         g = BN_new();
-        if (g != NULL)
-            BN_set_word(g, 2);
+        if (g == NULL || !BN_set_word(g, 2)) {
+            DH_free(dhp);
+            BN_free(g);
+            return NULL;
+        }
         if (dh_secbits >= 192)
             p = BN_get_rfc3526_prime_8192(NULL);
         else
             p = BN_get_rfc3526_prime_3072(NULL);
-        if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
+        if (p == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
             BN_free(p);
             BN_free(g);
