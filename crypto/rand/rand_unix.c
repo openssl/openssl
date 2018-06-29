@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include "e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
