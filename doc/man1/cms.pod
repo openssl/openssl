@@ -83,7 +83,8 @@ B<openssl> B<cms>
 [B<-signer file>]
 [B<-recip file>]
 [B<-keyid>]
-[B<-receipt_request_all -receipt_request_first>]
+[B<-receipt_request_all>]
+[B<-receipt_request_first>]
 [B<-receipt_request_from emailaddress>]
 [B<-receipt_request_to emailaddress>]
 [B<-receipt_request_print>]
@@ -403,7 +404,7 @@ Use subject key identifier to identify certificates instead of issuer name and
 serial number. The supplied certificate B<must> include a subject key
 identifier extension. Supported by B<-sign> and B<-encrypt> options.
 
-=item B<-receipt_request_all -receipt_request_first>
+=item B<-receipt_request_all>, B<-receipt_request_first>
 
 For B<-sign> option include a signed receipt request. Indicate requests should
 be provided by all recipient or first tier recipients (those mailed directly
