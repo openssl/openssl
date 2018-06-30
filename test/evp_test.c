@@ -1592,19 +1592,19 @@ static int pderive_test_run(struct evp_test *t)
     struct pkey_data *kdata = t->data;
     unsigned char *out = NULL;
     size_t out_len;
-    const char *err = "INTERNAL_ERROR";
+    const char *err = "DERIVE_ERROR";
 
-    out_len = kdata->output_len;
+    if (EVP_PKEY_derive(kdata->ctx, NULL, &out_len) <= 0)
+        goto err;
     out = OPENSSL_malloc(out_len);
     if (!out) {
         fprintf(stderr, "Error allocating output buffer!\n");
         exit(1);
     }
-    err = "DERIVE_ERROR";
     if (EVP_PKEY_derive(kdata->ctx, out, &out_len) <= 0)
         goto err;
     err = "SHARED_SECRET_LENGTH_MISMATCH";
-    if (out_len != kdata->output_len)
+    if (kdata->output == NULL || out_len != kdata->output_len)
         goto err;
     err = "SHARED_SECRET_MISMATCH";
     if (check_output(t, kdata->output, out, out_len))
