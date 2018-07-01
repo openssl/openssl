@@ -106,6 +106,10 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     const EVP_PKEY_METHOD *pmeth;
 
     if (id == -1) {
+        if (!pkey){
+            EVPerr(EVP_F_INT_CTX_NEW, ERR_R_PASSED_NULL_PARAMETER);
+            return NULL;
+        }
         id = pkey->type;
     }
 #ifndef OPENSSL_NO_ENGINE
