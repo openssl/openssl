@@ -259,6 +259,8 @@
                           c[1]=(unsigned char)(((l)>> 8)&0xff), \
                           c[2]=(unsigned char)(((l)    )&0xff)),c+=3)
 
+# define SSL_MAX_2_BYTE_LEN     (0xffff)
+
 /* LOCAL STUFF */
 
 # define SSL_DECRYPT     0
