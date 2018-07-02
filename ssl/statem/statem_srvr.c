@@ -2006,6 +2006,11 @@ int tls_construct_certificate_request(SSL *s)
         const unsigned char *psigs;
         unsigned char *etmp = p;
         nl = tls12_get_psigalgs(s, 1, &psigs);
+        if (nl > SSL_MAX_2_BYTE_LEN) {
+            SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
+                   SSL_R_LENGTH_TOO_LONG);
+            goto err;
+        }
         /* Skip over length for now */
         p += 2;
         nl = tls12_copy_sigalgs(s, p, psigs, nl);
@@ -2025,6 +2030,11 @@ int tls_construct_certificate_request(SSL *s)
         for (i = 0; i < sk_X509_NAME_num(sk); i++) {
             name = sk_X509_NAME_value(sk, i);
             j = i2d_X509_NAME(name, NULL);
+            if (j > SSL_MAX_2_BYTE_LEN) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
+                       SSL_R_LENGTH_TOO_LONG);
+                goto err;
+            }
             if (!BUF_MEM_grow_clean(buf, SSL_HM_HEADER_LENGTH(s) + n + j + 2)) {
                 SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST, ERR_R_BUF_LIB);
                 goto err;
@@ -2034,6 +2044,11 @@ int tls_construct_certificate_request(SSL *s)
             i2d_X509_NAME(name, &p);
             n += 2 + j;
             nl += 2 + j;
+            if (nl > SSL_MAX_2_BYTE_LEN) {
+                SSLerr(SSL_F_TLS_CONSTRUCT_CERTIFICATE_REQUEST,
+                       SSL_R_LENGTH_TOO_LONG);
+                goto err;
+            }
         }
     }
     /* else no CA names */
