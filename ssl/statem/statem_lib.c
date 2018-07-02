@@ -1070,8 +1070,8 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
         } else {
             if (SSL_IS_TLS13(s)) {
                 /*
-                 * We should only aim to use TLSv1.3 tickets once, so we remove
-                 * this one from the cache.
+                 * We encourage applications to only use TLSv1.3 tickets once,
+                 * so we remove this one from the cache.
                  */
                 if ((s->session_ctx->session_cache_mode
                      & SSL_SESS_CACHE_CLIENT) != 0)
