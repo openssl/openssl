@@ -288,7 +288,7 @@ to the output file. This option does not require a request, it is
 useful e.g. when you need to examine the content of a response or
 token or you want to extract the time stamp token from a response. If
 the input is a token and the output is a time stamp response a default
-"granted" status info is added to the token. (Optional)
+'granted' status info is added to the token. (Optional)
 
 =item B<-token_in>
 

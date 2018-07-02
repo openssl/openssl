@@ -77,161 +77,161 @@ B<list>, or B<no->I<XXX> itself.)
 
 =over 4
 
-=item L<B<asn1parse>|asn1parse(1)>
+=item L<asn1parse(1)>
 
 Parse an ASN.1 sequence.
 
-=item L<B<ca>|ca(1)>
+=item L<ca(1)>
 
 Certificate Authority (CA) Management.
 
-=item L<B<ciphers>|ciphers(1)>
+=item L<ciphers(1)>
 
 Cipher Suite Description Determination.
 
-=item L<B<cms>|cms(1)>
+=item L<cms(1)>
 
 CMS (Cryptographic Message Syntax) utility.
 
-=item L<B<crl>|crl(1)>
+=item L<crl(1)>
 
 Certificate Revocation List (CRL) Management.
 
-=item L<B<crl2pkcs7>|crl2pkcs7(1)>
+=item L<crl2pkcs7(1)>
 
 CRL to PKCS#7 Conversion.
 
-=item L<B<dgst>|dgst(1)>
+=item L<dgst(1)>
 
 Message Digest Calculation.
 
 =item B<dh>
 
 Diffie-Hellman Parameter Management.
-Obsoleted by L<B<dhparam>|dhparam(1)>.
+Obsoleted by L<dhparam(1)>.
 
-=item L<B<dhparam>|dhparam(1)>
+=item L<dhparam(1)>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>.
+L<genpkey(1)> and L<pkeyparam(1)>.
 
-=item L<B<dsa>|dsa(1)>
+=item L<dsa(1)>
 
 DSA Data Management.
 
-=item L<B<dsaparam>|dsaparam(1)>
+=item L<dsaparam(1)>
 
 DSA Parameter Generation and Management. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>.
+L<genpkey(1)> and L<pkeyparam(1)>.
 
-=item L<B<ec>|ec(1)>
+=item L<ec(1)>
 
 EC (Elliptic curve) key processing.
 
-=item L<B<ecparam>|ecparam(1)>
+=item L<ecparam(1)>
 
 EC parameter manipulation and generation.
 
-=item L<B<enc>|enc(1)>
+=item L<enc(1)>
 
 Encoding with Ciphers.
 
-=item L<B<engine>|engine(1)>
+=item L<engine(1)>
 
 Engine (loadable module) information and manipulation.
 
-=item L<B<errstr>|errstr(1)>
+=item L<errstr(1)>
 
 Error Number to Error String Conversion.
 
 =item B<gendh>
 
 Generation of Diffie-Hellman Parameters.
-Obsoleted by L<B<dhparam>|dhparam(1)>.
+Obsoleted by L<dhparam(1)>.
 
-=item L<B<gendsa>|gendsa(1)>
+=item L<gendsa(1)>
 
 Generation of DSA Private Key from Parameters. Superseded by
-L<B<genpkey>|genpkey(1)> and L<B<pkey>|pkey(1)>.
+L<genpkey(1)> and L<pkey(1)>.
 
-=item L<B<genpkey>|genpkey(1)>
+=item L<genpkey(1)>
 
 Generation of Private Key or Parameters.
 
-=item L<B<genrsa>|genrsa(1)>
+=item L<genrsa(1)>
 
-Generation of RSA Private Key. Superseded by L<B<genpkey>|genpkey(1)>.
+Generation of RSA Private Key. Superseded by L<genpkey(1)>.
 
-=item L<B<nseq>|nseq(1)>
+=item L<nseq(1)>
 
 Create or examine a Netscape certificate sequence.
 
-=item L<B<ocsp>|ocsp(1)>
+=item L<ocsp(1)>
 
 Online Certificate Status Protocol utility.
 
-=item L<B<passwd>|passwd(1)>
+=item L<passwd(1)>
 
 Generation of hashed passwords.
 
-=item L<B<pkcs12>|pkcs12(1)>
+=item L<pkcs12(1)>
 
 PKCS#12 Data Management.
 
-=item L<B<pkcs7>|pkcs7(1)>
+=item L<pkcs7(1)>
 
 PKCS#7 Data Management.
 
-=item L<B<pkcs8>|pkcs8(1)>
+=item L<pkcs8(1)>
 
 PKCS#8 format private key conversion tool.
 
-=item L<B<pkey>|pkey(1)>
+=item L<pkey(1)>
 
 Public and private key management.
 
-=item L<B<pkeyparam>|pkeyparam(1)>
+=item L<pkeyparam(1)>
 
 Public key algorithm parameter management.
 
-=item L<B<pkeyutl>|pkeyutl(1)>
+=item L<pkeyutl(1)>
 
 Public key algorithm cryptographic operation utility.
 
-=item L<B<prime>|prime(1)>
+=item L<prime(1)>
 
 Compute prime numbers.
 
-=item L<B<rand>|rand(1)>
+=item L<rand(1)>
 
 Generate pseudo-random bytes.
 
-=item L<B<rehash>|rehash(1)>
+=item L<rehash(1)>
 
 Create symbolic links to certificate and CRL files named by the hash values.
 
-=item L<B<req>|req(1)>
+=item L<req(1)>
 
 PKCS#10 X.509 Certificate Signing Request (CSR) Management.
 
-=item L<B<rsa>|rsa(1)>
+=item L<rsa(1)>
 
 RSA key management.
 
 
-=item L<B<rsautl>|rsautl(1)>
+=item L<rsautl(1)>
 
 RSA utility for signing, verification, encryption, and decryption. Superseded
-by  L<B<pkeyutl>|pkeyutl(1)>.
+by  L<pkeyutl(1)>.
 
-=item L<B<s_client>|s_client(1)>
+=item L<s_client(1)>
 
 This implements a generic SSL/TLS client which can establish a transparent
 connection to a remote server speaking SSL/TLS. It's intended for testing
 purposes only and provides only rudimentary interface functionality but
 internally uses mostly all functionality of the OpenSSL B<ssl> library.
 
-=item L<B<s_server>|s_server(1)>
+=item L<s_server(1)>
 
 This implements a generic SSL/TLS server which accepts connections from remote
 clients speaking SSL/TLS. It's intended for testing purposes only and provides
@@ -240,47 +240,47 @@ functionality of the OpenSSL B<ssl> library.  It provides both an own command
 line oriented protocol for testing SSL functions and a simple HTTP response
 facility to emulate an SSL/TLS-aware webserver.
 
-=item L<B<s_time>|s_time(1)>
+=item L<s_time(1)>
 
 SSL Connection Timer.
 
-=item L<B<sess_id>|sess_id(1)>
+=item L<sess_id(1)>
 
 SSL Session Data Management.
 
-=item L<B<smime>|smime(1)>
+=item L<smime(1)>
 
 S/MIME mail processing.
 
-=item L<B<speed>|speed(1)>
+=item L<speed(1)>
 
 Algorithm Speed Measurement.
 
-=item L<B<spkac>|spkac(1)>
+=item L<spkac(1)>
 
 SPKAC printing and generating utility.
 
-=item L<B<srp>|srp(1)>
+=item L<srp(1)>
 
 Maintain SRP password file.
 
-=item L<B<storeutl>|storeutl(1)>
+=item L<storeutl(1)>
 
 Utility to list and display certificates, keys, CRLs, etc.
 
-=item L<B<ts>|ts(1)>
+=item L<ts(1)>
 
 Time Stamping Authority tool (client/server).
 
-=item L<B<verify>|verify(1)>
+=item L<verify(1)>
 
 X.509 Certificate Verification.
 
-=item L<B<version>|version(1)>
+=item L<version(1)>
 
 OpenSSL Version Information.
 
-=item L<B<x509>|x509(1)>
+=item L<x509(1)>
 
 X.509 Certificate Data Management.
 
