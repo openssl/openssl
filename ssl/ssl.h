@@ -2954,6 +2954,7 @@ void ERR_load_SSL_strings(void);
 # define SSL_R_KRB5_S_TKT_NYV                             294
 # define SSL_R_KRB5_S_TKT_SKEW                            295
 # define SSL_R_LENGTH_MISMATCH                            159
+# define SSL_R_LENGTH_TOO_LONG                            404
 # define SSL_R_LENGTH_TOO_SHORT                           160
 # define SSL_R_LIBRARY_BUG                                274
 # define SSL_R_LIBRARY_HAS_NO_CIPHERS                     161
