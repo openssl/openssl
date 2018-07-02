@@ -877,7 +877,7 @@ my %globals;
 							$var=~s/^(0b[0-1]+)/oct($1)/eig;
 							$var=~s/^0x([0-9a-f]+)/0$1h/ig if ($masm);
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
-							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
+							{ $var=~s/^([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
 						    };
 
