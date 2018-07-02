@@ -30,7 +30,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        OPENSSL_cpuid_setup();
+        if(!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
+            return FALSE;
 # if defined(_WIN32_WINNT)
         {
             IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *) hinstDLL;
