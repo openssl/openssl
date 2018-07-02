@@ -1165,7 +1165,8 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
              * is no point in using full stateless tickets.
              */
             if ((s->options & SSL_OP_NO_TICKET) != 0
-                    || s->max_early_data > 0)
+                    || (s->max_early_data > 0
+                        && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))
                 ret = tls_get_stateful_ticket(s, &identity, &sess);
             else
                 ret = tls_decrypt_ticket(s, PACKET_data(&identity),
@@ -1189,6 +1190,7 @@ int tls_parse_ctos_psk(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 
             /* Check for replay */
             if (s->max_early_data > 0
+                    && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0
                     && !SSL_CTX_remove_session(s->session_ctx, sess)) {
                 SSL_SESSION_free(sess);
                 sess = NULL;

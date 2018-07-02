@@ -749,6 +749,7 @@ typedef enum OPTION_choice {
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_EARLY_DATA, OPT_S_NUM_TICKETS,
+    OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -958,6 +959,8 @@ const OPTIONS s_server_options[] = {
     {"early_data", OPT_EARLY_DATA, '-', "Attempt to read early data"},
     {"num_tickets", OPT_S_NUM_TICKETS, 'n',
      "The number of TLSv1.3 session tickets that a server will automatically  issue" },
+    {"anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)"},
+    {"no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection"},
     {NULL, OPT_EOF, 0, NULL}
 };
 
@@ -1258,6 +1261,8 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_S_CASES:
         case OPT_S_NUM_TICKETS:
+        case OPT_ANTI_REPLAY:
+        case OPT_NO_ANTI_REPLAY:
             if (ssl_args == NULL)
                 ssl_args = sk_OPENSSL_STRING_new_null();
             if (ssl_args == NULL
