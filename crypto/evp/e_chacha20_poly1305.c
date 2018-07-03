@@ -196,14 +196,23 @@ static int chacha20_poly1305_init_key(EVP_CIPHER_CTX *ctx,
 }
 
 #  if !defined(OPENSSL_SMALL_FOOTPRINT)
+
+#   if defined(POLY1305_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
+                                 defined(_M_AMD64) || defined(_M_X64))
+#    define XOR128_HELPERS
+void *xor128_encrypt_n_pad(void *out, const void *inp, void *otp, size_t len);
+void *xor128_decrypt_n_pad(void *out, const void *inp, void *otp, size_t len);
+static const unsigned char zero[4 * CHACHA_BLK_SIZE] = { 0 };
+#   else
 static const unsigned char zero[2 * CHACHA_BLK_SIZE] = { 0 };
+#   endif
 
 static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                         const unsigned char *in, size_t len)
 {
     EVP_CHACHA_AEAD_CTX *actx = aead_data(ctx);
-    size_t i, tail, tohash_len, plen = actx->tls_payload_length;
-    unsigned char *buf, *tohash, *ctr, storage[2 * CHACHA_BLK_SIZE + 32];
+    size_t tail, tohash_len, buf_len, plen = actx->tls_payload_length;
+    unsigned char *buf, *tohash, *ctr, storage[sizeof(zero) + 32];
 
     if (len != plen + POLY1305_BLOCK_SIZE)
         return -1;
@@ -212,10 +221,37 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     ctr = buf + CHACHA_BLK_SIZE;
     tohash = buf + CHACHA_BLK_SIZE - POLY1305_BLOCK_SIZE;
 
-    if (plen <= CHACHA_BLK_SIZE) {
+#   ifdef XOR128_HELPERS
+    if (plen <= 3 * CHACHA_BLK_SIZE) {
         actx->key.counter[0] = 0;
-        ChaCha20_ctr32(buf, zero, 2 * CHACHA_BLK_SIZE, actx->key.key.d,
+        buf_len = (plen + 2 * CHACHA_BLK_SIZE - 1) & (0 - CHACHA_BLK_SIZE);
+        ChaCha20_ctr32(buf, zero, buf_len, actx->key.key.d,
                        actx->key.counter);
+        Poly1305_Init(POLY1305_ctx(actx), buf);
+        actx->key.partial_len = 0;
+        memcpy(tohash, actx->tls_aad, POLY1305_BLOCK_SIZE);
+        tohash_len = POLY1305_BLOCK_SIZE;
+        actx->len.aad = EVP_AEAD_TLS1_AAD_LEN;
+        actx->len.text = plen;
+
+        if (plen) {
+            if (ctx->encrypt)
+                ctr = xor128_encrypt_n_pad(out, in, ctr, plen);
+            else
+                ctr = xor128_decrypt_n_pad(out, in, ctr, plen);
+
+            in += plen;
+            out += plen;
+            tohash_len = (size_t)(ctr - tohash);
+        }
+    }
+#   else
+    if (plen <= CHACHA_BLK_SIZE) {
+        size_t i;
+
+        actx->key.counter[0] = 0;
+        ChaCha20_ctr32(buf, zero, (buf_len = 2 * CHACHA_BLK_SIZE),
+                       actx->key.key.d, actx->key.counter);
         Poly1305_Init(POLY1305_ctx(actx), buf);
         actx->key.partial_len = 0;
         memcpy(tohash, actx->tls_aad, POLY1305_BLOCK_SIZE);
@@ -242,10 +278,12 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         memset(ctr + i, 0, tail);
         ctr += i + tail;
         tohash_len += i + tail;
-    } else {
+    }
+#   endif
+    else {
         actx->key.counter[0] = 0;
-        ChaCha20_ctr32(buf, zero, CHACHA_BLK_SIZE, actx->key.key.d,
-                       actx->key.counter);
+        ChaCha20_ctr32(buf, zero, (buf_len = CHACHA_BLK_SIZE),
+                       actx->key.key.d, actx->key.counter);
         Poly1305_Init(POLY1305_ctx(actx), buf);
         actx->key.counter[0] = 1;
         actx->key.partial_len = 0;
@@ -300,7 +338,7 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
     Poly1305_Update(POLY1305_ctx(actx), tohash, tohash_len);
-    OPENSSL_cleanse(buf, 2 * CHACHA_BLK_SIZE);
+    OPENSSL_cleanse(buf, buf_len);
     Poly1305_Final(POLY1305_ctx(actx), ctx->encrypt ? actx->tag
                                                     : tohash);
 
