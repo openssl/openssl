@@ -5097,11 +5097,11 @@ static int test_shutdown(int tst)
     size_t written, readbytes;
 
 #ifdef OPENSSL_NO_TLS1_2
-    if (tst == 0)
+    if (tst <= 1)
         return 1;
 #endif
 #ifdef OPENSSL_NO_TLS1_3
-    if (tst != 0)
+    if (tst >= 2)
         return 1;
 #endif
 
