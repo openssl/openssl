@@ -153,6 +153,31 @@ static int test_check_null_numbers(void)
     return 1;
 }
 
+static int test_check_overflow(void)
+{
+#if defined(_BSD_SOURCE) \
+        || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+        || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    long val = 0;
+    char max[(sizeof(long) * 8) / 3 + 3];
+    char *p;
+
+    p = max + sprintf(max, "0%ld", LONG_MAX) - 1;
+    setenv("FNORD", max, 1);
+    if (!TEST_true(NCONF_get_number(NULL, "missing", "FNORD", &val))
+            || !TEST_long_eq(val, LONG_MAX))
+        return 0;
+
+    while (++*p > '9')
+        *p-- = '0';
+
+    setenv("FNORD", max, 1);
+    if (!TEST_false(NCONF_get_number(NULL, "missing", "FNORD", &val)))
+        return 0;
+#endif
+    return 1;
+}
+
 int setup_tests(void)
 {
     const char *conf_file;
@@ -181,6 +206,7 @@ int setup_tests(void)
 
     ADD_TEST(test_load_config);
     ADD_TEST(test_check_null_numbers);
+    ADD_TEST(test_check_overflow);
     return 1;
 }
 
