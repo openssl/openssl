@@ -36,12 +36,12 @@
 # Sandy Bridge	8.31/+42%	5.45/4.00	2.72
 # Ivy Bridge	6.71/+46%	5.40/?		2.41
 # Haswell	5.92/+43%	5.20/3.45	2.42        1.23
-# Skylake[-X]	5.87/+39%	4.70/3.22	2.31	    1.19[0.80(vi)]
+# Skylake[-X]	5.87/+39%	4.70/3.22	2.31        1.19[0.80(vi)]
 # Silvermont	12.0/+33%	7.75/6.90	7.03(iii)
 # Knights L	11.7/-		?		9.60(iii)   0.80
 # Goldmont	10.6/+17%	5.10/3.52	3.28
 # Sledgehammer	7.28/+52%	-		-
-# Bulldozer	9.66/+28%	9.85/?		3.06(iv)
+# Bulldozer	9.66/+28%	9.85/6.00(iv)	3.06(iv)
 # Ryzen		5.96/+50%	5.19/3.00	2.40        2.09
 # VIA Nano	10.5/+46%	6.72/6.88	6.05
 #
@@ -52,7 +52,8 @@
 # (iii)	this is not optimal result for Atom because of MSROM
 #	limitations, SSE2 can do better, but gain is considered too
 #	low to justify the [maintenance] effort;
-# (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20;
+# (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20
+#	and 5.45 for 128-byte inputs;
 # (v)	8xAVX2, 8xAVX512VL or 16xAVX512F, whichever best applicable;
 # (vi)	even though Skylake-X can execute AVX512F code and deliver 0.57
 #	cpb in single thread, the corresponding capability is suppressed;
