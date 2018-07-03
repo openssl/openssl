@@ -123,6 +123,36 @@ static int test_load_config(void)
     return 1;
 }
 
+static int test_check_null_numbers(void)
+{
+#if defined(_BSD_SOURCE) \
+        || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+        || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    long val = 0;
+
+    /* Verify that a NULL config with a present environment variable returns
+     * success and the value.
+     */
+    if (!TEST_int_eq(setenv("FNORD", "123", 1), 0)
+            || !TEST_true(NCONF_get_number(NULL, "missing", "FNORD", &val))
+            || !TEST_long_eq(val, 123)) {
+        TEST_note("environment variable with NULL conf failed");
+        return 0;
+    }
+
+    /*
+     * Verify that a NULL config with a missing envrionment variable returns
+     * a failure code.
+     */
+    if (!TEST_int_eq(unsetenv("FNORD"), 0)
+            || !TEST_false(NCONF_get_number(NULL, "missing", "FNORD", &val))) {
+        TEST_note("missing environment variable with NULL conf failed");
+        return 0;
+    }
+#endif
+    return 1;
+}
+
 int setup_tests(void)
 {
     const char *conf_file;
@@ -150,6 +180,7 @@ int setup_tests(void)
     change_path(conf_file);
 
     ADD_TEST(test_load_config);
+    ADD_TEST(test_check_null_numbers);
     return 1;
 }
 

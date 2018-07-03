@@ -292,10 +292,13 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
     if (str == NULL)
         return 0;
 
-    for (*result = 0; conf->meth->is_number(conf, *str);) {
-        *result = (*result) * 10 + conf->meth->to_int(conf, *str);
-        str++;
-    }
+    if (conf == NULL)
+        *result = strtol(str, &str, 10);
+    else
+        for (*result = 0; conf->meth->is_number(conf, *str);) {
+            *result = (*result) * 10 + conf->meth->to_int(conf, *str);
+            str++;
+        }
 
     return 1;
 }
