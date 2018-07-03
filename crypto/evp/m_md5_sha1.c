@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,32 +19,69 @@
 # include <openssl/rsa.h>
 
 struct md5_sha1_ctx {
-    MD5_CTX md5;
-    SHA_CTX sha1;
+    EVP_MD_CTX *md5;
+    EVP_MD_CTX *sha1;
 };
+
+static int cleanup(EVP_MD_CTX *ctx)
+{
+    struct md5_sha1_ctx *mctx = EVP_MD_CTX_md_data(ctx);
+
+    EVP_MD_CTX_free(mctx->md5);
+    EVP_MD_CTX_free(mctx->sha1);
+    mctx->md5 = mctx->sha1 = NULL;
+    return 1;
+}
 
 static int init(EVP_MD_CTX *ctx)
 {
     struct md5_sha1_ctx *mctx = EVP_MD_CTX_md_data(ctx);
-    if (!MD5_Init(&mctx->md5))
-        return 0;
-    return SHA1_Init(&mctx->sha1);
+
+    if (mctx->md5 == NULL && (mctx->md5 = EVP_MD_CTX_new()) == NULL)
+        goto err;
+    if (mctx->sha1 == NULL && (mctx->sha1 = EVP_MD_CTX_new()) == NULL)
+        goto err;
+
+    if (EVP_DigestInit_ex(mctx->sha1, EVP_get_digestbynid(NID_sha1), NULL)
+            && EVP_DigestInit_ex(mctx->md5, EVP_get_digestbynid(NID_md5), NULL))
+        return 1;
+err:
+    EVP_MD_CTX_free(mctx->md5);
+    EVP_MD_CTX_free(mctx->sha1);
+    mctx->md5 = mctx->sha1 = NULL;
+    return 0;
 }
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
     struct md5_sha1_ctx *mctx = EVP_MD_CTX_md_data(ctx);
-    if (!MD5_Update(&mctx->md5, data, count))
-        return 0;
-    return SHA1_Update(&mctx->sha1, data, count);
+
+    return EVP_DigestUpdate(mctx->md5, data, count)
+           && EVP_DigestUpdate(mctx->sha1, data, count);
 }
 
 static int final(EVP_MD_CTX *ctx, unsigned char *md)
 {
     struct md5_sha1_ctx *mctx = EVP_MD_CTX_md_data(ctx);
-    if (!MD5_Final(md, &mctx->md5))
+
+    return EVP_DigestFinal_ex(mctx->md5, md, NULL)
+           && EVP_DigestFinal_ex(mctx->sha1, md + MD5_DIGEST_LENGTH, NULL);
+}
+
+static int copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
+{
+    struct md5_sha1_ctx *mto = EVP_MD_CTX_md_data(to);
+    struct md5_sha1_ctx *mfrom = EVP_MD_CTX_md_data(from);
+
+    mto->md5 = mto->sha1 = NULL;
+    if ((mto->md5 = EVP_MD_CTX_new()) == NULL
+            || (mto->sha1 = EVP_MD_CTX_new()) == NULL 
+            || !EVP_MD_CTX_copy_ex(mto->md5, mfrom->md5)
+            || !EVP_MD_CTX_copy_ex(mto->sha1, mfrom->sha1)) {
+        cleanup(to);
         return 0;
-    return SHA1_Final(md + MD5_DIGEST_LENGTH, &mctx->sha1);
+    }
+    return 1;
 }
 
 static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
@@ -76,16 +113,10 @@ static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
     /* Set padtmp to pad_1 value */
     memset(padtmp, 0x36, sizeof(padtmp));
 
-    if (!MD5_Update(&mctx->md5, padtmp, sizeof(padtmp)))
-        return 0;
-
-    if (!MD5_Final(md5tmp, &mctx->md5))
-        return 0;
-
-    if (!SHA1_Update(&mctx->sha1, padtmp, 40))
-        return 0;
-
-    if (!SHA1_Final(sha1tmp, &mctx->sha1))
+    if (!EVP_DigestUpdate(mctx->md5, padtmp, sizeof(padtmp))
+            || !EVP_DigestFinal_ex(mctx->md5, md5tmp, NULL)
+            || !EVP_DigestUpdate(mctx->sha1, padtmp, sizeof(padtmp))
+            || !EVP_DigestFinal_ex(mctx->sha1, sha1tmp, NULL))
         return 0;
 
     /* Reinitialise context */
@@ -99,16 +130,10 @@ static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
     /* Set padtmp to pad_2 value */
     memset(padtmp, 0x5c, sizeof(padtmp));
 
-    if (!MD5_Update(&mctx->md5, padtmp, sizeof(padtmp)))
-        return 0;
-
-    if (!MD5_Update(&mctx->md5, md5tmp, sizeof(md5tmp)))
-        return 0;
-
-    if (!SHA1_Update(&mctx->sha1, padtmp, 40))
-        return 0;
-
-    if (!SHA1_Update(&mctx->sha1, sha1tmp, sizeof(sha1tmp)))
+    if (!EVP_DigestUpdate(mctx->md5, padtmp, sizeof(padtmp))
+            || !EVP_DigestUpdate(mctx->md5, md5tmp, sizeof(padtmp))
+            || !EVP_DigestUpdate(mctx->sha1, padtmp, sizeof(padtmp))
+            || !EVP_DigestUpdate(mctx->sha1, sha1tmp, sizeof(padtmp)))
         return 0;
 
     /* Now when ctx is finalised it will return the SSL v3 hash value */
@@ -117,7 +142,6 @@ static int ctrl(EVP_MD_CTX *ctx, int cmd, int mslen, void *ms)
     OPENSSL_cleanse(sha1tmp, sizeof(sha1tmp));
 
     return 1;
-
 }
 
 static const EVP_MD md5_sha1_md = {
@@ -128,8 +152,8 @@ static const EVP_MD md5_sha1_md = {
     init,
     update,
     final,
-    NULL,
-    NULL,
+    copy,
+    cleanup,
     MD5_CBLOCK,
     sizeof(EVP_MD *) + sizeof(struct md5_sha1_ctx),
     ctrl
