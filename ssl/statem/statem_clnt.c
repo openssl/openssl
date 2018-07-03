@@ -2591,6 +2591,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      */
     if (SSL_IS_TLS13(s) || s->session->session_id_length > 0) {
         SSL_SESSION *new_sess;
+
         /*
          * We reused an existing session, so we need to replace it with a new
          * one
@@ -2600,6 +2601,16 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
                      SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
                      ERR_R_MALLOC_FAILURE);
             goto err;
+        }
+
+        if ((s->session_ctx->session_cache_mode & SSL_SESS_CACHE_CLIENT) != 0
+                && !SSL_IS_TLS13(s)) {
+            /*
+             * In TLSv1.2 and below the arrival of a new tickets signals that
+             * any old ticket we were using is now out of date, so we remove the
+             * old session from the cache. We carry on if this fails
+             */
+            SSL_CTX_remove_session(s->session_ctx, s->session);
         }
 
         SSL_SESSION_free(s->session);
@@ -2671,6 +2682,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         goto err;
     }
     s->session->session_id_length = sess_len;
+    s->session->not_resumable = 0;
 
     /* This is a standalone message in TLSv1.3, so there is no more to read */
     if (SSL_IS_TLS13(s)) {

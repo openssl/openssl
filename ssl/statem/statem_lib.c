@@ -1068,12 +1068,21 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
                 dtls1_start_timer(s);
             }
         } else {
-            /*
-             * In TLSv1.3 we update the cache as part of processing the
-             * NewSessionTicket
-             */
-            if (!SSL_IS_TLS13(s))
+            if (SSL_IS_TLS13(s)) {
+                /*
+                 * We encourage applications to only use TLSv1.3 tickets once,
+                 * so we remove this one from the cache.
+                 */
+                if ((s->session_ctx->session_cache_mode
+                     & SSL_SESS_CACHE_CLIENT) != 0)
+                    SSL_CTX_remove_session(s->session_ctx, s->session);
+            } else {
+                /*
+                 * In TLSv1.3 we update the cache as part of processing the
+                 * NewSessionTicket
+                 */
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
+            }
             if (s->hit)
                 CRYPTO_atomic_add(&s->session_ctx->stats.sess_hit, 1, &discard,
                                   s->session_ctx->lock);
