@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 #include "apps.h"
 #include "progs.h"
 #include <openssl/bio.h>
@@ -147,6 +148,58 @@ const OPTIONS req_options[] = {
     {NULL}
 };
 
+/*
+ * Is the |kv| key already duplicated?  This is remarkably tricky to get
+ * right.  Return 0 if unique, -1 on runtime error; 1 if found or a syntax
+ * error.
+ */
+static int duplicated(STACK_OF(OPENSSL_STRING) *list, char *kv)
+{
+    int i;
+    char *p;
+
+    /* Check syntax. */
+    if (strchr(kv, '=') == NULL)
+        return 1;
+
+    /* Skip leading whitespace, make a copy. */
+    while (*kv && isspace(*kv))
+        if (*++kv == '\0')
+            return 1;
+    if ((kv = OPENSSL_strdup(kv)) == NULL)
+        return -1;
+
+    /* Skip trailing space before the equal sign. */
+    for (p = strchr(kv, '='); p > kv; --p)
+        if (p[-1] != ' ' && p[-1] != '\t')
+            break;
+    if (p == kv) {
+        OPENSSL_free(kv);
+        return 1;
+    }
+    *p = '\0';
+
+    /* Finally have a clean "key"; see if it's there. */
+    for (i = 0; i < sk_OPENSSL_STRING_num(list); i++) {
+        const char *k = sk_OPENSSL_STRING_value(list, i);
+
+        if (strcmp(k, kv) == 0) {
+            BIO_printf(bio_err, "Extension \"%s\" repeated\n", kv);
+            OPENSSL_free(kv);
+            return 1;
+        }
+    }
+
+    /* Not found; add it. */
+    sk_OPENSSL_STRING_push(list, kv);
+    return(0);
+}
+
+static void myfree(char *x)
+{
+    OPENSSL_free(x);
+}
+
 int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
@@ -154,7 +207,7 @@ int req_main(int argc, char **argv)
     ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
-    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
+    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL, *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
@@ -324,11 +377,17 @@ int req_main(int argc, char **argv)
             multirdn = 1;
             break;
         case OPT_ADDEXT:
-            if (addext_bio == NULL) {
+            p = opt_arg();
+            if (addexts == NULL) {
+                addexts = sk_OPENSSL_STRING_new_null();
                 addext_bio = BIO_new(BIO_s_mem());
             }
-            if (addext_bio == NULL
-                || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
+            if (addexts == NULL || addext_bio == NULL)
+                goto end;
+            i = duplicated(addexts, p);
+            if (i == 1)
+                goto opthelp;
+            if (i < 0 || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
                 goto end;
             break;
         case OPT_EXTENSIONS:
@@ -885,6 +944,8 @@ int req_main(int argc, char **argv)
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
+    sk_OPENSSL_STRING_pop_free(addexts, myfree);
+    sk_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_free(gen_eng);
 #endif
