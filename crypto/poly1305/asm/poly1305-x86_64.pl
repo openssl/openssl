@@ -3753,6 +3753,110 @@ poly1305_emit_base2_44:
 .size	poly1305_emit_base2_44,.-poly1305_emit_base2_44
 ___
 }	}	}
+
+{	# chacha20-poly1305 helpers
+my ($out,$inp,$otp,$len)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
+                                  ("%rdi","%rsi","%rdx","%rcx");  # Unix order
+$code.=<<___;
+.globl	xor128_encrypt_n_pad
+.type	xor128_encrypt_n_pad,\@abi-omnipotent
+.align	16
+xor128_encrypt_n_pad:
+	sub	$otp,$inp
+	sub	$otp,$out
+	mov	$len,%r10		# put len aside
+	shr	\$4,$len		# len / 16
+	jz	.Ltail_enc
+	nop
+.Loop_enc_xmm:
+	movdqu	($inp,$otp),%xmm0
+	pxor	($otp),%xmm0
+	movdqu	%xmm0,($out,$otp)
+	movdqa	%xmm0,($otp)
+	lea	16($otp),$otp
+	dec	$len
+	jnz	.Loop_enc_xmm
+
+	and	\$15,%r10		# len % 16
+	jz	.Ldone_enc
+
+.Ltail_enc:
+	mov	\$16,$len
+	sub	%r10,$len
+	xor	%eax,%eax
+.Loop_enc_byte:
+	mov	($inp,$otp),%al
+	xor	($otp),%al
+	mov	%al,($out,$otp)
+	mov	%al,($otp)
+	lea	1($otp),$otp
+	dec	%r10
+	jnz	.Loop_enc_byte
+
+	xor	%eax,%eax
+.Loop_enc_pad:
+	mov	%al,($otp)
+	lea	1($otp),$otp
+	dec	$len
+	jnz	.Loop_enc_pad
+
+.Ldone_enc:
+	mov	$otp,%rax
+	ret
+.size	xor128_encrypt_n_pad,.-xor128_encrypt_n_pad
+
+.globl	xor128_decrypt_n_pad
+.type	xor128_decrypt_n_pad,\@abi-omnipotent
+.align	16
+xor128_decrypt_n_pad:
+	sub	$otp,$inp
+	sub	$otp,$out
+	mov	$len,%r10		# put len aside
+	shr	\$4,$len		# len / 16
+	jz	.Ltail_dec
+	nop
+.Loop_dec_xmm:
+	movdqu	($inp,$otp),%xmm0
+	movdqa	($otp),%xmm1
+	pxor	%xmm0,%xmm1
+	movdqu	%xmm1,($out,$otp)
+	movdqa	%xmm0,($otp)
+	lea	16($otp),$otp
+	dec	$len
+	jnz	.Loop_dec_xmm
+
+	pxor	%xmm1,%xmm1
+	and	\$15,%r10		# len % 16
+	jz	.Ldone_dec
+
+.Ltail_dec:
+	mov	\$16,$len
+	sub	%r10,$len
+	xor	%eax,%eax
+	xor	%r11,%r11
+.Loop_dec_byte:
+	mov	($inp,$otp),%r11b
+	mov	($otp),%al
+	xor	%r11b,%al
+	mov	%al,($out,$otp)
+	mov	%r11b,($otp)
+	lea	1($otp),$otp
+	dec	%r10
+	jnz	.Loop_dec_byte
+
+	xor	%eax,%eax
+.Loop_dec_pad:
+	mov	%al,($otp)
+	lea	1($otp),$otp
+	dec	$len
+	jnz	.Loop_dec_pad
+
+.Ldone_dec:
+	mov	$otp,%rax
+	ret
+.size	xor128_decrypt_n_pad,.-xor128_decrypt_n_pad
+___
+}
 $code.=<<___;
 .align	64
 .Lconst:
