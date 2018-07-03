@@ -77,31 +77,31 @@ B<list>, or B<no->I<XXX> itself.)
 
 =over 4
 
-=item L<asn1parse(1)>
+=item B<asn1parse>
 
 Parse an ASN.1 sequence.
 
-=item L<ca(1)>
+=item B<ca>
 
 Certificate Authority (CA) Management.
 
-=item L<ciphers(1)>
+=item B<ciphers>
 
 Cipher Suite Description Determination.
 
-=item L<cms(1)>
+=item B<cms>
 
 CMS (Cryptographic Message Syntax) utility.
 
-=item L<crl(1)>
+=item B<crl>
 
 Certificate Revocation List (CRL) Management.
 
-=item L<crl2pkcs7(1)>
+=item B<crl2pkcs7>
 
 CRL to PKCS#7 Conversion.
 
-=item L<dgst(1)>
+=item B<dgst>
 
 Message Digest Calculation.
 
@@ -110,37 +110,37 @@ Message Digest Calculation.
 Diffie-Hellman Parameter Management.
 Obsoleted by L<dhparam(1)>.
 
-=item L<dhparam(1)>
+=item B<dhparam>
 
 Generation and Management of Diffie-Hellman Parameters. Superseded by
 L<genpkey(1)> and L<pkeyparam(1)>.
 
-=item L<dsa(1)>
+=item B<dsa>
 
 DSA Data Management.
 
-=item L<dsaparam(1)>
+=item B<dsaparam>
 
 DSA Parameter Generation and Management. Superseded by
 L<genpkey(1)> and L<pkeyparam(1)>.
 
-=item L<ec(1)>
+=item B<ec>
 
 EC (Elliptic curve) key processing.
 
-=item L<ecparam(1)>
+=item B<ecparam>
 
 EC parameter manipulation and generation.
 
-=item L<enc(1)>
+=item B<enc>
 
 Encoding with Ciphers.
 
-=item L<engine(1)>
+=item B<engine>
 
 Engine (loadable module) information and manipulation.
 
-=item L<errstr(1)>
+=item B<errstr>
 
 Error Number to Error String Conversion.
 
@@ -149,89 +149,88 @@ Error Number to Error String Conversion.
 Generation of Diffie-Hellman Parameters.
 Obsoleted by L<dhparam(1)>.
 
-=item L<gendsa(1)>
+=item B<gendsa>
 
 Generation of DSA Private Key from Parameters. Superseded by
 L<genpkey(1)> and L<pkey(1)>.
 
-=item L<genpkey(1)>
+=item B<genpkey>
 
 Generation of Private Key or Parameters.
 
-=item L<genrsa(1)>
+=item B<genrsa>
 
 Generation of RSA Private Key. Superseded by L<genpkey(1)>.
 
-=item L<nseq(1)>
+=item B<nseq>
 
 Create or examine a Netscape certificate sequence.
 
-=item L<ocsp(1)>
+=item B<ocsp>
 
 Online Certificate Status Protocol utility.
 
-=item L<passwd(1)>
+=item B<passwd>
 
 Generation of hashed passwords.
 
-=item L<pkcs12(1)>
+=item B<pkcs12>
 
 PKCS#12 Data Management.
 
-=item L<pkcs7(1)>
+=item B<pkcs7>
 
 PKCS#7 Data Management.
 
-=item L<pkcs8(1)>
+=item B<pkcs8>
 
 PKCS#8 format private key conversion tool.
 
-=item L<pkey(1)>
+=item B<pkey>
 
 Public and private key management.
 
-=item L<pkeyparam(1)>
+=item B<pkeyparam>
 
 Public key algorithm parameter management.
 
-=item L<pkeyutl(1)>
+=item B<pkeyutl>
 
 Public key algorithm cryptographic operation utility.
 
-=item L<prime(1)>
+=item B<prime>
 
 Compute prime numbers.
 
-=item L<rand(1)>
+=item B<rand>
 
 Generate pseudo-random bytes.
 
-=item L<rehash(1)>
+=item B<rehash>
 
 Create symbolic links to certificate and CRL files named by the hash values.
 
-=item L<req(1)>
+=item B<req>
 
 PKCS#10 X.509 Certificate Signing Request (CSR) Management.
 
-=item L<rsa(1)>
+=item B<rsa>
 
 RSA key management.
 
-
-=item L<rsautl(1)>
+=item B<rsautl>
 
 RSA utility for signing, verification, encryption, and decryption. Superseded
 by  L<pkeyutl(1)>.
 
-=item L<s_client(1)>
+=item B<s_client>
 
 This implements a generic SSL/TLS client which can establish a transparent
 connection to a remote server speaking SSL/TLS. It's intended for testing
 purposes only and provides only rudimentary interface functionality but
 internally uses mostly all functionality of the OpenSSL B<ssl> library.
 
-=item L<s_server(1)>
+=item B<s_server>
 
 This implements a generic SSL/TLS server which accepts connections from remote
 clients speaking SSL/TLS. It's intended for testing purposes only and provides
@@ -240,47 +239,47 @@ functionality of the OpenSSL B<ssl> library.  It provides both an own command
 line oriented protocol for testing SSL functions and a simple HTTP response
 facility to emulate an SSL/TLS-aware webserver.
 
-=item L<s_time(1)>
+=item B<s_time>
 
 SSL Connection Timer.
 
-=item L<sess_id(1)>
+=item B<sess_id>
 
 SSL Session Data Management.
 
-=item L<smime(1)>
+=item B<smime>
 
 S/MIME mail processing.
 
-=item L<speed(1)>
+=item B<speed>
 
 Algorithm Speed Measurement.
 
-=item L<spkac(1)>
+=item B<spkac>
 
 SPKAC printing and generating utility.
 
-=item L<srp(1)>
+=item B<srp>
 
 Maintain SRP password file.
 
-=item L<storeutl(1)>
+=item B<storeutl>
 
 Utility to list and display certificates, keys, CRLs, etc.
 
-=item L<ts(1)>
+=item B<ts>
 
 Time Stamping Authority tool (client/server).
 
-=item L<verify(1)>
+=item B<verify>
 
 X.509 Certificate Verification.
 
-=item L<version(1)>
+=item B<version>
 
 OpenSSL Version Information.
 
-=item L<x509(1)>
+=item B<x509>
 
 X.509 Certificate Data Management.
 
