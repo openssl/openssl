@@ -557,10 +557,12 @@ OID section of the config file):
 
 Before generating a response a signing certificate must be created for
 the TSA that contains the B<timeStamping> critical extended key usage extension
-without any other key usage extensions. You can add the
-'extendedKeyUsage = critical,timeStamping' line to the user certificate section
-of the config file to generate a proper certificate. See L<req(1)>,
-L<ca(1)>, L<x509(1)> for instructions. The examples
+without any other key usage extensions. You can add this line to the
+user certificate section of the config file to generate a proper certificate;
+
+   extendedKeyUsage = critical,timeStamping
+
+See L<req(1)>, L<ca(1)>, and L<x509(1)> for instructions. The examples
 below assume that cacert.pem contains the certificate of the CA,
 tsacert.pem is the signing certificate issued by cacert.pem and
 tsakey.pem is the private key of the TSA.

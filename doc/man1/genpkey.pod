@@ -261,13 +261,13 @@ Encrypt output private key using 128 bit AES and the passphrase "hello":
 
 Generate a 2048 bit RSA key using 3 as the public exponent:
 
- openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048 \
-                                                -pkeyopt rsa_keygen_pubexp:3
+ openssl genpkey -algorithm RSA -out key.pem \
+     -pkeyopt rsa_keygen_bits:2048 -pkeyopt rsa_keygen_pubexp:3
 
 Generate 2048 bit DSA parameters:
 
  openssl genpkey -genparam -algorithm DSA -out dsap.pem \
-                                                -pkeyopt dsa_paramgen_bits:2048
+     -pkeyopt dsa_paramgen_bits:2048
 
 Generate DSA key from parameters:
 
@@ -276,13 +276,13 @@ Generate DSA key from parameters:
 Generate 2048 bit DH parameters:
 
  openssl genpkey -genparam -algorithm DH -out dhp.pem \
-                                        -pkeyopt dh_paramgen_prime_len:2048
+     -pkeyopt dh_paramgen_prime_len:2048
 
 Generate 2048 bit X9.42 DH parameters:
 
  openssl genpkey -genparam -algorithm DH -out dhpx.pem \
-                                        -pkeyopt dh_paramgen_prime_len:2048 \
-                                        -pkeyopt dh_paramgen_type:1
+     -pkeyopt dh_paramgen_prime_len:2048 \
+     -pkeyopt dh_paramgen_type:1
 
 Output RFC5114 2048 bit DH parameters with 224 bit subgroup:
 
