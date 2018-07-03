@@ -41,7 +41,7 @@
 # Knights L	11.7/-		?		9.60(iii)   0.80
 # Goldmont	10.6/+17%	5.10/3.52	3.28
 # Sledgehammer	7.28/+52%	-		-
-# Bulldozer	9.66/+28%	9.85/6.00(iv)	3.06(iv)
+# Bulldozer	9.66/+28%	9.85/5.35(iv)	3.06(iv)
 # Ryzen		5.96/+50%	5.19/3.00	2.40        2.09
 # VIA Nano	10.5/+46%	6.72/6.88	6.05
 #
@@ -53,7 +53,7 @@
 #	limitations, SSE2 can do better, but gain is considered too
 #	low to justify the [maintenance] effort;
 # (iv)	Bulldozer actually executes 4xXOP code path that delivers 2.20
-#	and 5.45 for 128-byte inputs;
+#	and 4.85 for 128-byte inputs;
 # (v)	8xAVX2, 8xAVX512VL or 16xAVX512F, whichever best applicable;
 # (vi)	even though Skylake-X can execute AVX512F code and deliver 0.57
 #	cpb in single thread, the corresponding capability is suppressed;
