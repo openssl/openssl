@@ -1486,6 +1486,35 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 }
 
 /*
+ * Only called by servers. Returns 1 if the server has a TLSv1.3 capable
+ * certificate type, or has PSK configured. Otherwise returns 0.
+ */
+static int is_tls13_capable(const SSL *s)
+{
+    int i;
+
+    if (s->psk_server_callback != NULL || s->psk_find_session_cb != NULL)
+        return 1;
+
+    for (i = 0; i < SSL_PKEY_NUM; i++) {
+        /* Skip over certs disallowed for TLSv1.3 */
+        switch (i) {
+        case SSL_PKEY_DSA_SIGN:
+        case SSL_PKEY_GOST01:
+        case SSL_PKEY_GOST12_256:
+        case SSL_PKEY_GOST12_512:
+            continue;
+        default:
+            break;
+        }
+        if (ssl_has_cert(s, i))
+            return 1;
+    }
+
+    return 0;
+}
+
+/*
  * ssl_version_supported - Check that the specified `version` is supported by
  * `SSL *` instance
  *
@@ -1514,9 +1543,12 @@ int ssl_version_supported(const SSL *s, int version, const SSL_METHOD **meth)
     for (vent = table;
          vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
          ++vent) {
-        if (vent->cmeth != NULL &&
-            version_cmp(s, version, vent->version) == 0 &&
-            ssl_method_error(s, vent->cmeth()) == 0) {
+        if (vent->cmeth != NULL
+                && version_cmp(s, version, vent->version) == 0
+                && ssl_method_error(s, vent->cmeth()) == 0
+                && (!s->server
+                    || version != TLS1_3_VERSION
+                    || is_tls13_capable(s))) {
             if (meth != NULL)
                 *meth = vent->cmeth();
             return 1;
