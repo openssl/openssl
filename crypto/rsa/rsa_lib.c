@@ -253,7 +253,7 @@ static uint32_t ilog_e(uint64_t v)
  *           \cdot(log_e(nBits \cdot log_e(2))^{2/3} - 4.69}{log_e(2)}
  * The two cube roots are merged together here.
  */
-static uint16_t rsa_compute_security_bits(int n)
+uint16_t rsa_compute_security_bits(int n)
 {
     uint64_t x;
     uint32_t lx;
