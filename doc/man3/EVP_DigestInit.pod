@@ -19,6 +19,9 @@ EVP_get_digestbyobj - EVP digest routines
  int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
  void EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void* p2);
+ void EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
+ void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
+ int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags);
 
  int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
  int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *d, size_t cnt);
@@ -41,6 +44,7 @@ EVP_get_digestbyobj - EVP digest routines
  int EVP_MD_CTX_size(const EVP_MD *ctx);
  int EVP_MD_CTX_block_size(const EVP_MD *ctx);
  int EVP_MD_CTX_type(const EVP_MD *ctx);
+ void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
  const EVP_MD *EVP_md_null(void);
 
@@ -71,6 +75,10 @@ Cleans up digest context B<ctx> and frees up the space allocated to it.
 =item EVP_MD_CTX_ctrl()
 
 Performs digest-specific control actions on context B<ctx>.
+
+=item EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags(), EVP_MD_CTX_test_flags()
+
+Sets, clears and tests B<ctx> flags.  See L</FLAGS> below for more information.
 
 =item EVP_DigestInit_ex()
 
@@ -140,6 +148,12 @@ Return the NID of the OBJECT IDENTIFIER representing the given message digest
 when passed an B<EVP_MD> structure.  For example, C<EVP_MD_type(EVP_sha1())>
 returns B<NID_sha1>. This function is normally used when setting ASN1 OIDs.
 
+=item EVP_MD_CTX_md_data()
+
+Return the digest method private data for the passed B<EVP_MD_CTX>.
+The space is allocated by OpenSSL and has the size originally set with
+EVP_MD_meth_set_app_datasize().
+
 =item EVP_MD_CTX_md()
 
 Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>.
@@ -162,6 +176,38 @@ EVP_get_digestbyobj()
 
 Returns an B<EVP_MD> structure when passed a digest name, a digest B<NID> or an
 B<ASN1_OBJECT> structure respectively.
+
+=back
+
+=head1 FLAGS
+
+EVP_MD_CTX_set_flags(), EVP_MD_CTX_clear_flags() and EVP_MD_CTX_test_flags()
+can be used the manipulate and test these B<EVP_MD_CTX> flags:
+
+=over 4
+
+=item EVP_MD_CTX_FLAG_ONESHOT
+
+This flag instructs the digest to optimize for one update only, if possible.
+
+=for comment EVP_MD_CTX_FLAG_CLEANED is internal, don't mention it
+
+=for comment EVP_MD_CTX_FLAG_REUSE is internal, don't mention it
+
+=for comment We currently avoid documenting flags that are only bit holder:
+EVP_MD_CTX_FLAG_NON_FIPS_ALLOW, EVP_MD_CTX_FLAGS_PAD_*
+
+=item EVP_MD_CTX_FLAG_NO_INIT
+
+This flag instructs EVP_DigestInit() and similar not to initialise the
+implementation specific data.
+
+=item EVP_MD_CTX_FLAG_FINALISE
+
+Some functions such as EVP_DigestSign only finalise copies of internal
+contexts so additional data can be included after the finalisation call.
+This is inefficient if this functionality is not required, and can be
+disabled with this flag.
 
 =back
 
