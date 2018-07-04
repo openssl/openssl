@@ -122,7 +122,7 @@ int sm2_encrypt(const EC_KEY *key,
     uint8_t *msg_mask = NULL;
     uint8_t *x2y2 = NULL;
     uint8_t *C3 = NULL;
-    const size_t field_size = ec_field_size(group);
+    size_t field_size;
     const int C3_size = EVP_MD_size(digest);
 
     /* NULL these before any "goto done" */
@@ -132,14 +132,14 @@ int sm2_encrypt(const EC_KEY *key,
     if (hash == NULL
             || group == NULL
             || P == NULL
-            || field_size == 0
             || C3_size <= 0) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
 
     order = EC_GROUP_get0_order(group);
-    if (order == NULL) {
+    field_size = ec_field_size(group);
+    if (order == NULL || field_size == 0) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
