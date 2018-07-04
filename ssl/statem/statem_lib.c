@@ -1494,7 +1494,7 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
  *
  * Returns 1 when supported, otherwise 0
  */
-int ssl_version_supported(const SSL *s, int version)
+int ssl_version_supported(const SSL *s, int version, const SSL_METHOD **meth)
 {
     const version_info *vent;
     const version_info *table;
@@ -1517,6 +1517,8 @@ int ssl_version_supported(const SSL *s, int version)
         if (vent->cmeth != NULL &&
             version_cmp(s, version, vent->version) == 0 &&
             ssl_method_error(s, vent->cmeth()) == 0) {
+            if (meth != NULL)
+                *meth = vent->cmeth();
             return 1;
         }
     }
@@ -1625,11 +1627,11 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
 {
     if (vers == TLS1_2_VERSION
-            && ssl_version_supported(s, TLS1_3_VERSION)) {
+            && ssl_version_supported(s, TLS1_3_VERSION, NULL)) {
         *dgrd = DOWNGRADE_TO_1_2;
     } else if (!SSL_IS_DTLS(s) && vers < TLS1_2_VERSION
-            && (ssl_version_supported(s, TLS1_2_VERSION)
-                || ssl_version_supported(s, TLS1_3_VERSION))) {
+            && (ssl_version_supported(s, TLS1_2_VERSION, NULL)
+                || ssl_version_supported(s, TLS1_3_VERSION, NULL))) {
         *dgrd = DOWNGRADE_TO_1_1;
     } else {
         *dgrd = DOWNGRADE_NONE;
@@ -1735,19 +1737,8 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
              */
             if (version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
-            for (vent = table;
-                 vent->version != 0 && vent->version != (int)candidate_vers;
-                 ++vent)
-                continue;
-            if (vent->version != 0 && vent->smeth != NULL) {
-                const SSL_METHOD *method;
-
-                method = vent->smeth();
-                if (ssl_method_error(s, method) == 0) {
-                    best_vers = candidate_vers;
-                    best_method = method;
-                }
-            }
+            if (ssl_version_supported(s, candidate_vers, &best_method))
+                best_vers = candidate_vers;
         }
         if (PACKET_remaining(&versionslist) != 0) {
             /* Trailing data? */
