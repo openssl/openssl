@@ -103,7 +103,7 @@ static int ssl3_record_app_data_waiting(SSL *s)
 
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
 {
-    uint32_t max_early_data = s->max_early_data;
+    uint32_t max_early_data;
     SSL_SESSION *sess = s->session;
 
     /*
@@ -120,9 +120,14 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
         }
         sess = s->psksession;
     }
-    if (!s->server
-            || (s->hit && sess->ext.max_early_data < s->max_early_data))
+
+    if (!s->server)
         max_early_data = sess->ext.max_early_data;
+    else if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED)
+        max_early_data = s->recv_max_early_data;
+    else
+        max_early_data = s->recv_max_early_data < sess->ext.max_early_data
+                         ? s->recv_max_early_data : sess->ext.max_early_data;
 
     if (max_early_data == 0) {
         SSLfatal(s, send ? SSL_AD_INTERNAL_ERROR : SSL_AD_UNEXPECTED_MESSAGE,
