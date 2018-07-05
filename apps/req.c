@@ -24,6 +24,8 @@
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#include <openssl/bn.h>
+#include <openssl/lhash.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
 #endif
@@ -148,14 +150,32 @@ const OPTIONS req_options[] = {
     {NULL}
 };
 
+
+/*
+ * An LHASH of strings, where each string is an extension name.
+ */
+static unsigned long ext_name_hash(const OPENSSL_STRING *a)
+{
+    return OPENSSL_LH_strhash((const char *)a);
+}
+
+static int ext_name_cmp(const OPENSSL_STRING *a, const OPENSSL_STRING *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
+
+static void exts_cleanup(OPENSSL_STRING *x)
+{
+    OPENSSL_free((char *)x);
+}
+
 /*
  * Is the |kv| key already duplicated?  This is remarkably tricky to get
  * right.  Return 0 if unique, -1 on runtime error; 1 if found or a syntax
  * error.
  */
-static int duplicated(STACK_OF(OPENSSL_STRING) *list, char *kv)
+static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 {
-    int i;
     char *p;
 
     /* Check syntax. */
@@ -180,24 +200,16 @@ static int duplicated(STACK_OF(OPENSSL_STRING) *list, char *kv)
     *p = '\0';
 
     /* Finally have a clean "key"; see if it's there. */
-    for (i = 0; i < sk_OPENSSL_STRING_num(list); i++) {
-        const char *k = sk_OPENSSL_STRING_value(list, i);
-
-        if (strcmp(k, kv) == 0) {
-            BIO_printf(bio_err, "Extension \"%s\" repeated\n", kv);
-            OPENSSL_free(kv);
-            return 1;
-        }
+    if (lh_OPENSSL_STRING_retrieve(addexts, (OPENSSL_STRING*)kv) != NULL) {
+        BIO_printf(bio_err, "Extension \"%s\" repeated\n", kv);
+        OPENSSL_free(kv);
+        return 1;
     }
 
     /* Not found; add it. */
-    sk_OPENSSL_STRING_push(list, kv);
-    return(0);
-}
-
-static void myfree(char *x)
-{
-    OPENSSL_free(x);
+    if (lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv) == NULL)
+        return -1;
+    return 0;
 }
 
 int req_main(int argc, char **argv)
@@ -207,7 +219,8 @@ int req_main(int argc, char **argv)
     ENGINE *e = NULL, *gen_eng = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
-    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL, *addexts = NULL;
+    STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
+    LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
@@ -379,11 +392,11 @@ int req_main(int argc, char **argv)
         case OPT_ADDEXT:
             p = opt_arg();
             if (addexts == NULL) {
-                addexts = sk_OPENSSL_STRING_new_null();
+                addexts = lh_OPENSSL_STRING_new(ext_name_hash, ext_name_cmp);
                 addext_bio = BIO_new(BIO_s_mem());
+                if (addexts == NULL || addext_bio == NULL)
+                    goto end;
             }
-            if (addexts == NULL || addext_bio == NULL)
-                goto end;
             i = duplicated(addexts, p);
             if (i == 1)
                 goto opthelp;
@@ -944,8 +957,8 @@ int req_main(int argc, char **argv)
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
-    sk_OPENSSL_STRING_pop_free(addexts, myfree);
-    sk_OPENSSL_STRING_free(addexts);
+    lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
+    lh_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_free(gen_eng);
 #endif
