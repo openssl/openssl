@@ -19,13 +19,45 @@
  */
 #include "bn_prime.h"
 
-static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
-                   const BIGNUM *a1_odd, int k, BN_CTX *ctx,
-                   BN_MONT_CTX *mont);
 static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods);
 static int probable_prime_dh_safe(BIGNUM *rnd, int bits,
                                   const BIGNUM *add, const BIGNUM *rem,
                                   BN_CTX *ctx);
+
+#if BN_BITS2 == 64
+#define BN_DEF(l, h) 0x##h##l##ULL
+#else
+#define BN_DEF(l, h) 0x##l, 0x##h
+#endif
+
+/*
+ * See SP800 89 5.3.3 (Step f)
+ * The product of the set of primes ranging from 3 to 751 */
+static const BN_ULONG small_prime_factors[] = {
+    BN_DEF(3ef4e3e1, c4309333), BN_DEF(cd2d655f, 71161eb6),
+    BN_DEF(0bf94862, 95e2238c), BN_DEF(24f7912b, 3eb233d3),
+    BN_DEF(bf26c483, 6b55514b), BN_DEF(5a144871, 0a84d817),
+    BN_DEF(9b82210a, 77d12fee), BN_DEF(97f050b3, db5b93c2),
+    BN_DEF(4d6c026b, 4acad6b9), BN_DEF(54aec893, eb7751f3),
+    BN_DEF(36bc85c4, dba53368), BN_DEF(7f5ec78e, d85a1b28),
+    BN_DEF(6b322244, 2eb072d8), BN_DEF(5e2b3aea, bba51112),
+    BN_DEF(0e2486bf, 36ed1a6c), BN_DEF(ec0c5727, 5f270460),
+    0x000017b1
+};
+
+#define BN_SMALL_PRIME_FACTORS_TOP OSSL_NELEM(small_prime_factors)
+static const BIGNUM _bignum_small_prime_factors = {
+    (BN_ULONG *)small_prime_factors,
+    BN_SMALL_PRIME_FACTORS_TOP,
+    BN_SMALL_PRIME_FACTORS_TOP,
+    0,
+    BN_FLG_STATIC_DATA
+};
+
+const BIGNUM *bn_get0_small_factors(void)
+{
+    return &_bignum_small_prime_factors;
+}
 
 int BN_GENCB_call(BN_GENCB *cb, int a, int b)
 {
@@ -148,125 +180,188 @@ int BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     return BN_is_prime_fasttest_ex(a, checks, ctx_passed, 0, cb);
 }
 
-int BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
+/* See FIPS 186-4 C.3.1 Miller Rabin Probabilistic Primality Test. */
+int BN_is_prime_fasttest_ex(const BIGNUM *w, int checks, BN_CTX *ctx_passed,
                             int do_trial_division, BN_GENCB *cb)
 {
-    int i, j, ret = -1;
-    int k;
+    int i, status, ret = -1;
     BN_CTX *ctx = NULL;
-    BIGNUM *A1, *A1_odd, *A3, *check; /* taken from ctx */
-    BN_MONT_CTX *mont = NULL;
 
-    /* Take care of the really small primes 2 & 3 */
-    if (BN_is_word(a, 2) || BN_is_word(a, 3))
-        return 1;
-
-    /* Check odd and bigger than 1 */
-    if (!BN_is_odd(a) || BN_cmp(a, BN_value_one()) <= 0)
+    /* w must be bigger than 1 */
+    if (BN_cmp(w, BN_value_one()) <= 0)
         return 0;
 
-    if (checks == BN_prime_checks)
-        checks = BN_prime_checks_for_size(BN_num_bits(a));
+    /* w must be odd */
+    if (BN_is_odd(w)) {
+        /* Take care of the really small prime 3 */
+        if (BN_is_word(w, 3))
+            return 1;
+    }
+    else {
+        /* 2 is the only even prime */
+        return BN_is_word(w, 2);
+    }
 
     /* first look for small factors */
     if (do_trial_division) {
         for (i = 1; i < NUMPRIMES; i++) {
-            BN_ULONG mod = BN_mod_word(a, primes[i]);
+            BN_ULONG mod = BN_mod_word(w, primes[i]);
             if (mod == (BN_ULONG)-1)
-                goto err;
+                return -1;
             if (mod == 0)
-                return BN_is_word(a, primes[i]);
+                return BN_is_word(w, primes[i]);
         }
         if (!BN_GENCB_call(cb, 1, -1))
-            goto err;
+            return 0;
     }
-
     if (ctx_passed != NULL)
         ctx = ctx_passed;
     else if ((ctx = BN_CTX_new()) == NULL)
         goto err;
+
+    ret = bn_miller_rabin_is_prime(w, checks, ctx, cb, 0, &status);
+    if (!ret)
+        goto err;
+    ret = (status == BN_PRIMETEST_PROBABLY_PRIME);
+err:
+    if (ctx_passed == NULL)
+        BN_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Refer to FIPS 186-4 C.3.2 Enhanced Miller-Rabin Probabilistic Primality Test.
+ * OR C.3.1 Miller-Rabin Probabilistic Primality Test if enhanced is zero.
+ * The Step numbers listed in the code refer to the enhanced case.
+ */
+int bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
+                             BN_GENCB *cb, int enhanced, int *status)
+{
+    int i, j, a, ret = 0;
+    BIGNUM *g, *w1, *w3, *x, *m, *z, *b;
+    BN_MONT_CTX *mont = NULL;
+
+    /* w must be odd */
+    if (!BN_is_odd(w))
+        return 0;
+
     BN_CTX_start(ctx);
+    g = BN_CTX_get(ctx);
+    w1 = BN_CTX_get(ctx);
+    w3 = BN_CTX_get(ctx);
+    x = BN_CTX_get(ctx);
+    m = BN_CTX_get(ctx);
+    z = BN_CTX_get(ctx);
+    b = BN_CTX_get(ctx);
 
-    A1 = BN_CTX_get(ctx);
-    A3 = BN_CTX_get(ctx);
-    A1_odd = BN_CTX_get(ctx);
-    check = BN_CTX_get(ctx);
-    if (check == NULL)
+    if (!(b != NULL
+            /* w1 := w - 1 */
+            && BN_copy(w1, w)
+            && BN_sub_word(w1, 1)
+            /* w3 := w - 3 */
+            && BN_copy(w3, w)
+            && BN_sub_word(w3, 3)))
         goto err;
 
-    /* compute A1 := a - 1 */
-    if (!BN_copy(A1, a) || !BN_sub_word(A1, 1))
-        goto err;
-    /* compute A3 := a - 3 */
-    if (!BN_copy(A3, a) || !BN_sub_word(A3, 3))
+    /* check w is larger than 3, otherwise the random b will be too small */
+    if (BN_is_zero(w3) || BN_is_negative(w3))
         goto err;
 
-    /* write  A1  as  A1_odd * 2^k */
-    k = 1;
-    while (!BN_is_bit_set(A1, k))
-        k++;
-    if (!BN_rshift(A1_odd, A1, k))
+    /* (Step 1) Calculate largest integer 'a' such that 2^a divides w-1 */
+    a = 1;
+    while (!BN_is_bit_set(w1, a))
+        a++;
+    /* (Step 2) m = (w-1) / 2^a */
+    if (!BN_rshift(m, w1, a))
         goto err;
 
     /* Montgomery setup for computations mod a */
     mont = BN_MONT_CTX_new();
-    if (mont == NULL)
-        goto err;
-    if (!BN_MONT_CTX_set(mont, a, ctx))
+    if (mont == NULL || !BN_MONT_CTX_set(mont, w, ctx))
         goto err;
 
-    for (i = 0; i < checks; i++) {
-        /* 1 < check < a-1 */
-        if (!BN_priv_rand_range(check, A3) || !BN_add_word(check, 2))
+    if (iterations == BN_prime_checks)
+        iterations = BN_prime_checks_for_size(BN_num_bits(w));
+
+    /* (Step 4) */
+    for (i = 0; i < iterations; ) {
+        /* (Step 4.1) obtain a Random string of bits b where 1 < b < w-1 */
+        if (!BN_priv_rand_range(b, w3) || !BN_add_word(b, 2)) /* 1 < b < w-1 */
             goto err;
 
-        j = witness(check, a, A1, A1_odd, k, ctx, mont);
-        if (j == -1)
+        if (enhanced) {
+            /* (Step 4.3) */
+            if (!BN_gcd(g, b, w, ctx))
+                goto err;
+            /* (Step 4.4) */
+            if (!BN_is_one(g)) {
+                *status = BN_PRIMETEST_COMPOSITE_WITH_FACTOR;
+                ret = 1;
+                goto err;
+            }
+        }
+        /* (Step 4.5) z = b^m mod w */
+        if (!BN_mod_exp_mont(z, b, m, w, ctx, mont))
             goto err;
-        if (j) {
-            ret = 0;
-            goto err;
+        /* (Step 4.6) if (z = 1 or z = w-1) */
+        if (BN_is_one(z) || BN_cmp(z, w1) == 0)
+            goto outer_loop;
+        /* (Step 4.7) for j = 1 to a-1 */
+        for (j = 1; j < a ; ++j) {
+            /* (Step 4.7.1 - 4.7.2) x = z. z = x^2 mod w */
+            if (!BN_copy(x, z) || !BN_mod_mul(z, x, x, w, ctx))
+                goto err;
+            /* (Step 4.7.3) */
+            if (BN_cmp(z, w1) == 0)
+                goto outer_loop;
+            /* (Step 4.7.4) */
+            if (BN_is_one(z))
+                goto composite;
         }
         if (!BN_GENCB_call(cb, 1, i))
             goto err;
+        /* (Steps 4.8 - 4.9) x = z. z = b^((w-1)/2) mod w */
+        if (!BN_copy(x, z) || !BN_mod_mul(z, x, x, w, ctx))
+            goto err;
+        /* (Step 4.10) */
+        if (BN_is_one(z))
+            goto composite;
+        /* (Step 4.11) x = b^(w-1) mod w */
+        if (!BN_copy(x, z))
+            goto err;
+composite:
+        if (enhanced) {
+            /* (Step 4.1.2) g = GCD(x-1, w) */
+            if (!BN_sub_word(x, 1) || !BN_gcd(g, x, w, ctx))
+                goto err;
+            /* (Steps 4.1.3 - 4.1.4) */
+            if (BN_is_one(g))
+                *status = BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME;
+            else
+                *status = BN_PRIMETEST_COMPOSITE_WITH_FACTOR;
+        } else {
+            *status = BN_PRIMETEST_COMPOSITE;
+        }
+        ret = 1;
+        goto err;
+outer_loop:
+        /* (Step 4.1.5) */
+        i++;
     }
+    /* (Step 5) */
+    *status = BN_PRIMETEST_PROBABLY_PRIME;
     ret = 1;
- err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        if (ctx_passed == NULL)
-            BN_CTX_free(ctx);
-    }
+err:
+    BN_clear(g);
+    BN_clear(w1);
+    BN_clear(w3);
+    BN_clear(x);
+    BN_clear(m);
+    BN_clear(z);
+    BN_clear(b);
+    BN_CTX_end(ctx);
     BN_MONT_CTX_free(mont);
-
     return ret;
-}
-
-static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
-                   const BIGNUM *a1_odd, int k, BN_CTX *ctx,
-                   BN_MONT_CTX *mont)
-{
-    if (!BN_mod_exp_mont(w, w, a1_odd, a, ctx, mont)) /* w := w^a1_odd mod a */
-        return -1;
-    if (BN_is_one(w))
-        return 0;               /* probably prime */
-    if (BN_cmp(w, a1) == 0)
-        return 0;               /* w == -1 (mod a), 'a' is probably prime */
-    while (--k) {
-        if (!BN_mod_mul(w, w, w, a, ctx)) /* w := w^2 mod a */
-            return -1;
-        if (BN_is_one(w))
-            return 1;           /* 'a' is composite, otherwise a previous 'w'
-                                 * would have been == -1 (mod 'a') */
-        if (BN_cmp(w, a1) == 0)
-            return 0;           /* w == -1 (mod a), 'a' is probably prime */
-    }
-    /*
-     * If we get here, 'w' is the (a-1)/2-th power of the original 'w', and
-     * it is neither -1 nor +1 -- so 'a' cannot be prime
-     */
-    bn_check_top(w);
-    return 1;
 }
 
 static int probable_prime(BIGNUM *rnd, int bits, prime_t *mods)
