@@ -15,13 +15,24 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 4;
+plan tests => 8;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 open RND, ">>", ".rnd";
 print RND "string to make the random number generator think it has randomness";
 close RND;
+
+# Check for duplicate -addext parameters
+my $val = "subjectAltName=DNS:example.com";
+my $val2 = " " . $val;
+my $val3 = $val;
+$val3 =~ s/=/    =/;
+ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val])));
+ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val2])));
+ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val3])));
+ok(!run(app(["openssl", "req", "-new", "-addext", $val2, "-addext", $val3])));
+
 subtest "generating certificate requests" => sub {
     my @req_new;
     if (disabled("rsa")) {
