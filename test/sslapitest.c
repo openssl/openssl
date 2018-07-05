@@ -1233,11 +1233,11 @@ static int post_handshake_verify(SSL *sssl, SSL *cssl)
     return 1;
 }
 
-static int test_tickets(int idx)
+static int test_tickets(int stateful, int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    int testresult = 0, i;
+    int testresult = 0, sess_id_ctx = 1, i;
     size_t j;
 
     /* idx is the test number, but also the number of tickets we want */
@@ -1248,8 +1248,14 @@ static int test_tickets(int idx)
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, TLS_MAX_VERSION, &sctx,
                                        &cctx, cert, privkey))
-            || !TEST_true(SSL_CTX_set_num_tickets(sctx, idx)))
+            || !TEST_true(SSL_CTX_set_num_tickets(sctx, idx))
+            || !TEST_true(SSL_CTX_set_session_id_context(sctx,
+                                                         (void *)&sess_id_ctx,
+                                                         sizeof(sess_id_ctx))))
         goto end;
+
+    if (stateful)
+        SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
 
     SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT
                                          | SSL_SESS_CACHE_NO_INTERNAL_STORE);
@@ -1326,6 +1332,16 @@ static int test_tickets(int idx)
     SSL_CTX_free(cctx);
 
     return testresult;
+}
+
+static int test_stateless_tickets(int idx)
+{
+    return test_tickets(0, idx);
+}
+
+static int test_stateful_tickets(int idx)
+{
+    return test_tickets(1, idx);
 }
 #endif
 
@@ -5272,7 +5288,8 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
 #ifndef OPENSSL_NO_TLS1_3
-    ADD_ALL_TESTS(test_tickets, 3);
+    ADD_ALL_TESTS(test_stateful_tickets, 3);
+    ADD_ALL_TESTS(test_stateless_tickets, 3);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
