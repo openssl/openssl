@@ -263,8 +263,6 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
     const BN_ULONG *B;
     int i;
 
-    bn_check_top(b);
-
     if (words > (INT_MAX / (4 * BN_BITS2))) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, BN_R_BIGNUM_TOO_LONG);
         return NULL;
@@ -398,8 +396,6 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
 
 BIGNUM *bn_expand2(BIGNUM *b, int words)
 {
-    bn_check_top(b);
-
     if (words > b->dmax) {
         BN_ULONG *a = bn_expand_internal(b, words);
         if (!a)
@@ -433,7 +429,6 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
         assert(A == &(b->d[b->dmax]));
     }
 #endif
-    bn_check_top(b);
     return b;
 }
 
