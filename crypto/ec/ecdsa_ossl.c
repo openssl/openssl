@@ -53,13 +53,12 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         return 0;
     }
 
-    if (ctx_in == NULL) {
+    if ((ctx = ctx_in) == NULL) {
         if ((ctx = BN_CTX_new()) == NULL) {
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-    } else
-        ctx = ctx_in;
+    }
 
     k = BN_new();               /* this value is later returned in *kinvp */
     r = BN_new();               /* this value is later returned in *rp */
@@ -73,10 +72,6 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         goto err;
     }
     order = EC_GROUP_get0_order(group);
-    if (order == NULL) {
-        ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
-        goto err;
-    }
 
     /* Preallocate space */
     order_bits = BN_num_bits(order);
@@ -87,23 +82,23 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
 
     do {
         /* get random k */
-        do
+        do {
             if (dgst != NULL) {
-                if (!BN_generate_dsa_nonce
-                    (k, order, EC_KEY_get0_private_key(eckey), dgst, dlen,
-                     ctx)) {
+                if (!BN_generate_dsa_nonce(k, order,
+                                           EC_KEY_get0_private_key(eckey),
+                                           dgst, dlen, ctx)) {
                     ECerr(EC_F_ECDSA_SIGN_SETUP,
-                             EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                          EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
             } else {
                 if (!BN_priv_rand_range(k, order)) {
                     ECerr(EC_F_ECDSA_SIGN_SETUP,
-                             EC_R_RANDOM_NUMBER_GENERATION_FAILED);
+                          EC_R_RANDOM_NUMBER_GENERATION_FAILED);
                     goto err;
                 }
             }
-        while (BN_is_zero(k));
+        } while (BN_is_zero(k));
 
         /* compute r the x-coordinate of generator * k */
         if (!EC_POINT_mul(group, tmp_point, k, NULL, NULL, ctx)) {
@@ -112,18 +107,16 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
         }
         if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
             NID_X9_62_prime_field) {
-            if (!EC_POINT_get_affine_coordinates_GFp
-                (group, tmp_point, X, NULL, ctx)) {
+            if (!EC_POINT_get_affine_coordinates_GFp(group, tmp_point, X,
+                                                     NULL, ctx)) {
                 ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
                 goto err;
             }
         }
 #ifndef OPENSSL_NO_EC2M
         else {                  /* NID_X9_62_characteristic_two_field */
-
-            if (!EC_POINT_get_affine_coordinates_GF2m(group,
-                                                      tmp_point, X, NULL,
-                                                      ctx)) {
+            if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp_point, X,
+                                                      NULL, ctx)) {
                 ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
                 goto err;
             }
@@ -133,8 +126,7 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
             goto err;
         }
-    }
-    while (BN_is_zero(r));
+    } while (BN_is_zero(r));
 
     /* compute the inverse of k */
     if (!ec_group_do_inverse_ord(group, k, k, ctx)) {
@@ -212,10 +204,6 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     }
 
     order = EC_GROUP_get0_order(group);
-    if (order == NULL) {
-        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_EC_LIB);
-        goto err;
-    }
     i = BN_num_bits(order);
     /*
      * Need to truncate digest if it is too long: first truncate whole bytes.
@@ -226,7 +214,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
         goto err;
     }
-    /* If still too long truncate remaining bits with a shift */
+    /* If still too long, truncate remaining bits with a shift */
     if ((8 * dgst_len > i) && !BN_rshift(m, m, 8 - (i & 0x7))) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
         goto err;
@@ -267,11 +255,11 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                 ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, EC_R_NEED_NEW_SETUP_VALUES);
                 goto err;
             }
-        } else
+        } else {
             /* s != 0 => we have a valid signature */
             break;
-    }
-    while (1);
+        }
+    } while (1);
 
     ok = 1;
  err:
