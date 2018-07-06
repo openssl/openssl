@@ -130,15 +130,14 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
      */
     ap = &(r->d[nl]);
 
+    carry -= bn_sub_words(rp, ap, np, nl);
     /*
-     * |v| is one if |ap| - |np| underflowed or zero if it did not. Note |v|
-     * cannot be -1. That would imply the subtraction did not fit in |nl| words,
-     * and we know at most one subtraction is needed.
+     * |carry| is -1 if |ap| - |np| underflowed or zero if it did not. Note
+     * |carry| cannot be 1. That would imply the subtraction did not fit in
+     * |nl| words, and we know at most one subtraction is needed.
      */
-    v = bn_sub_words(rp, ap, np, nl) - carry;
-    v = 0 - v;
     for (i = 0; i < nl; i++) {
-        rp[i] = (v & ap[i]) | (~v & rp[i]);
+        rp[i] = (carry & ap[i]) | (~carry & rp[i]);
         ap[i] = 0;
     }
     bn_correct_top(r);
