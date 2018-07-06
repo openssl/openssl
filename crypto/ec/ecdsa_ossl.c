@@ -172,8 +172,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                EC_KEY *eckey)
 {
     int ok = 0, i;
-    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL, *blind = NULL;
-    BIGNUM *blindm = NULL;
+    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL;
     const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
@@ -206,18 +205,8 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     s = ret->s;
 
-    ctx = BN_CTX_secure_new();
-    if (ctx == NULL) {
-        ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    m = BN_CTX_get(ctx);
-    blind = BN_CTX_get(ctx);
-    blindm = BN_CTX_get(ctx);
-    if (blindm == NULL) {
+    if ((ctx = BN_CTX_new()) == NULL ||
+        (tmp = BN_new()) == NULL || (m = BN_new()) == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -257,64 +246,18 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
             }
         }
 
-        /*
-         * The normal signature calculation is:
-         *
-         *   s := k^-1 * (m + r * priv_key) mod order
-         *
-         * We will blind this to protect against side channel attacks
-         *
-         *   s := blind^-1 * k^-1 * (blind * m + blind * r * priv_key) mod order
-         */
-
-        /* Generate a blinding value */
-        do {
-            if (!BN_priv_rand(blind, BN_num_bits(order) - 1,
-                              BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
-                goto err;
-        } while (BN_is_zero(blind));
-        BN_set_flags(blind, BN_FLG_CONSTTIME);
-        BN_set_flags(blindm, BN_FLG_CONSTTIME);
-        BN_set_flags(tmp, BN_FLG_CONSTTIME);
-
-        /* tmp := blind * priv_key * r mod order */
-        if (!BN_mod_mul(tmp, blind, priv_key, order, ctx)) {
+        if (!BN_mod_mul(tmp, priv_key, ret->r, order, ctx)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
-        if (!BN_mod_mul(tmp, tmp, ret->r, order, ctx)) {
+        if (!BN_mod_add_quick(s, tmp, m, order)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
-
-        /* blindm := blind * m mod order */
-        if (!BN_mod_mul(blindm, blind, m, order, ctx)) {
-            ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
-            goto err;
-        }
-
-        /* s : = (blind * priv_key * r) + (blind * m) mod order */
-        if (!BN_mod_add_quick(s, tmp, blindm, order)) {
-            ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
-            goto err;
-        }
-
-        /* s := s * k^-1 mod order */
         if (!BN_mod_mul(s, s, ckinv, order, ctx)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
-
-        /* s:= s * blind^-1 mod order */
-        if (BN_mod_inverse(blind, blind, order, ctx) == NULL) {
-            ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
-            goto err;
-        }
-        if (!BN_mod_mul(s, s, blind, order, ctx)) {
-            ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
-            goto err;
-        }
-
         if (BN_is_zero(s)) {
             /*
              * if kinv and r have been supplied by the caller, don't
@@ -336,9 +279,9 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
         ECDSA_SIG_free(ret);
         ret = NULL;
     }
-    if (ctx != NULL)
-        BN_CTX_end(ctx);
     BN_CTX_free(ctx);
+    BN_clear_free(m);
+    BN_clear_free(tmp);
     BN_clear_free(kinv);
     return ret;
 }
