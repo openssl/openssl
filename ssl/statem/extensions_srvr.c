@@ -142,8 +142,10 @@ int tls_parse_ctos_server_name(SSL *s, PACKET *pkt, unsigned int context,
             return 0;
         }
 
-        /* Store the requested SNI in the SSL as temporary storage.
-         * If we accept it, it will get stored in the SSL_SESSION as well. */
+        /*
+         * Store the requested SNI in the SSL as temporary storage.
+         * If we accept it, it will get stored in the SSL_SESSION as well.
+         */
         OPENSSL_free(s->ext.hostname);
         s->ext.hostname = NULL;
         if (!PACKET_strndup(&hostname, &s->ext.hostname)) {
