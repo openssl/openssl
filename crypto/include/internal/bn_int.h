@@ -60,4 +60,12 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
  */
 int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words);
 
+/*
+ * BN_mod_mul_montgomery without bn_correct_top.
+ */
+int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+                          BN_MONT_CTX *mont, BN_CTX *ctx);
+int bn_to_mont_fixed_top(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
+                         BN_CTX *ctx);
+
 #endif
