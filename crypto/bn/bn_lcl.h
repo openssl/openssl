@@ -113,6 +113,7 @@
 # define HEADER_BN_LCL_H
 
 # include <openssl/bn.h>
+# include "bn_int.h"
 
 #ifdef  __cplusplus
 extern "C" {
