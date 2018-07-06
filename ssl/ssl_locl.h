@@ -1032,8 +1032,17 @@ struct ssl_ctx_st {
      */
     SSL_CTX_keylog_cb_func keylog_callback;
 
-    /* The maximum number of bytes that can be sent as early data */
+    /*
+     * The maximum number of bytes advertised in session tickets that can be
+     * sent as early data.
+     */
     uint32_t max_early_data;
+
+    /*
+     * The maximum number of bytes of early data that a server will tolerate
+     * (which should be at least as much as max_early_data).
+     */
+    uint32_t recv_max_early_data;
 
     /* TLS1.3 padding callback */
     size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
@@ -1406,8 +1415,17 @@ struct ssl_st {
     ASYNC_WAIT_CTX *waitctx;
     size_t asyncrw;
 
-    /* The maximum number of plaintext bytes that can be sent as early data */
+    /*
+     * The maximum number of bytes advertised in session tickets that can be
+     * sent as early data.
+     */
     uint32_t max_early_data;
+    /*
+     * The maximum number of bytes of early data that a server will tolerate
+     * (which should be at least as much as max_early_data).
+     */
+    uint32_t recv_max_early_data;
+
     /*
      * The number of bytes of early data received so far. If we accepted early
      * data then this is a count of the plaintext bytes. If we rejected it then
