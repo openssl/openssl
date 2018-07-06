@@ -3466,25 +3466,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
-#if 0
         /*
-         * TODO(OpenSSL1.2) s->server is initially set based on the absence
-         * of an accept method, and can be a false positive when a generic
-         * SSL_METHOD is used.  We rely on the ability to set a (client)
-         * SNI hostname before forcing 'client' status, as tested in
-         * test_servername.c:client_setup_sni_before_state(), so this
-         * block of code cannot be enabled until ABI-breaking changes
-         * are permitted by release policy.
+         * TODO(OpenSSL1.2)
+         * This API is only used for a client to set what SNI it will request
+         * from the server, but we currently allow it to be used on servers
+         * as well, which is a programming error.  Currently we just clear
+         * the field in SSL_do_handshake() for server SSLs, but when we can
+         * make ABI-breaking changes, we may want to make use of this API
+         * an error on server SSLs.
          */
-        /*
-         * This is the API to set what SNI a client requests; it makes no
-         * sense for a server.
-         */
-        if (s->server) {
-            SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
-            return 0;
-        }
-#endif
         if (larg == TLSEXT_NAMETYPE_host_name) {
             size_t len;
 
