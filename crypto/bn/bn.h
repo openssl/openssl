@@ -824,6 +824,16 @@ BIGNUM *bn_dup_expand(const BIGNUM *a, int words); /* unused */
 /* We only need assert() when debugging */
 #  include <assert.h>
 
+/*
+ * The new BN_FLG_FIXED_TOP flag marks vectors that were not treated with
+ * bn_correct_top, in other words such vectors are permitted to have zeros
+ * in most significant limbs. Such vectors are used internally to achieve
+ * execution time invariance for critical operations with private keys.
+ * It's BN_DEBUG-only flag, because user application is not supposed to
+ * observe it anyway. Moreover, optimizing compiler would actually remove
+ * all operations manipulating the bit in question in non-BN_DEBUG build.
+ */
+#  define BN_FLG_FIXED_TOP 0x10000
 #  ifdef BN_DEBUG_RAND
 /* To avoid "make update" cvs wars due to BN_DEBUG, use some tricks */
 #   ifndef RAND_pseudo_bytes
@@ -856,8 +866,10 @@ int RAND_pseudo_bytes(unsigned char *buf, int num);
         do { \
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
-                        assert((_bnum2->top == 0) || \
-                                (_bnum2->d[_bnum2->top - 1] != 0)); \
+                        int _top = _bnum2->top; \
+                        assert((_top == 0) || \
+                               (_bnum2->flags & BN_FLG_FIXED_TOP) || \
+                               (_bnum2->d[_top - 1] != 0)); \
                         bn_pollute(_bnum2); \
                 } \
         } while(0)
@@ -875,6 +887,7 @@ int RAND_pseudo_bytes(unsigned char *buf, int num);
 
 # else                          /* !BN_DEBUG */
 
+#  define BN_FLG_FIXED_TOP 0
 #  define bn_pollute(a)
 #  define bn_check_top(a)
 #  define bn_fix_top(a)           bn_correct_top(a)

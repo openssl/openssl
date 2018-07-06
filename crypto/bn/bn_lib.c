@@ -492,14 +492,16 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
     memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
 #endif
 
-    a->top = b->top;
     a->neg = b->neg;
+    a->top = b->top;
+    a->flags |= b->flags & BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return (a);
 }
 
 #define FLAGS_DATA(flags) ((flags) & (BN_FLG_STATIC_DATA \
-                                    | BN_FLG_CONSTTIME))
+                                    | BN_FLG_CONSTTIME   \
+                                    | BN_FLG_FIXED_TOP))
 #define FLAGS_STRUCT(flags) ((flags) & (BN_FLG_MALLOCED))
 
 void BN_swap(BIGNUM *a, BIGNUM *b)
@@ -542,6 +544,7 @@ void BN_clear(BIGNUM *a)
         OPENSSL_cleanse(a->d, a->dmax * sizeof(a->d[0]));
     a->top = 0;
     a->neg = 0;
+    a->flags &= ~BN_FLG_FIXED_TOP;
 }
 
 BN_ULONG BN_get_word(const BIGNUM *a)
@@ -562,6 +565,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
     a->neg = 0;
     a->d[0] = w;
     a->top = (w ? 1 : 0);
+    a->flags &= ~BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return (1);
 }
@@ -708,6 +712,7 @@ int BN_set_bit(BIGNUM *a, int n)
         for (k = a->top; k < i + 1; k++)
             a->d[k] = 0;
         a->top = i + 1;
+        a->flags &= ~BN_FLG_FIXED_TOP;
     }
 
     a->d[i] |= (((BN_ULONG)1) << j);
