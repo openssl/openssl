@@ -192,8 +192,11 @@ static int psk_find_session_cb(SSL *ssl, const unsigned char *identity,
     const SSL_CIPHER *cipher = NULL;
 
     if (strlen(psk_identity) != identity_len
-            || memcmp(psk_identity, identity, identity_len) != 0)
-        return 0;
+            || memcmp(psk_identity, identity, identity_len) != 0) {
+        BIO_printf(bio_s_out,
+                   "PSK warning: client identity not what we expected"
+                   " (got '%s' expected '%s')\n", identity, psk_identity);
+    }
 
     if (psksess != NULL) {
         SSL_SESSION_up_ref(psksess);
