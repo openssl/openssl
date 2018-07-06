@@ -229,7 +229,8 @@ struct bignum_st {
 /* Used for montgomery multiplication */
 struct bn_mont_ctx_st {
     int ri;                     /* number of bits in R */
-    BIGNUM RR;                  /* used to convert to montgomery form */
+    BIGNUM RR;                  /* used to convert to montgomery form,
+                                   possibly zero-padded */
     BIGNUM N;                   /* The modulus */
     BIGNUM Ni;                  /* R*(1/R mod N) - N*Ni = 1 (Ni is only
                                  * stored for bignum algorithm) */
