@@ -252,7 +252,6 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 {
     int ok = 0, i;
     BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL, *order = NULL;
-    BIGNUM *blind = NULL, *blindm = NULL;
     const BIGNUM *ckinv;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
@@ -270,25 +269,14 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
     }
 
     ret = ECDSA_SIG_new();
-    if (ret == NULL) {
+    if (!ret) {
         ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     s = ret->s;
 
-    ctx = BN_CTX_new();
-    if (ctx == NULL) {
-        ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    BN_CTX_start(ctx);
-    order = BN_CTX_get(ctx);
-    tmp = BN_CTX_get(ctx);
-    m = BN_CTX_get(ctx);
-    blind = BN_CTX_get(ctx);
-    blindm = BN_CTX_get(ctx);
-    if (blindm == NULL) {
+    if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
+        (tmp = BN_new()) == NULL || (m = BN_new()) == NULL) {
         ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -327,70 +315,26 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
             }
         }
 
-        /*
-         * The normal signature calculation is:
-         *
-         *   s := k^-1 * (m + r * priv_key) mod order
-         *
-         * We will blind this to protect against side channel attacks
-         *
-         *   s := blind^-1 * k^-1 * (blind * m + blind * r * priv_key) mod order
-         */
-
-        /* Generate a blinding value */
-        do {
-            if (!BN_rand(blind, BN_num_bits(order) - 1, -1, 0))
-                goto err;
-        } while (BN_is_zero(blind));
-        BN_set_flags(blind, BN_FLG_CONSTTIME);
-        BN_set_flags(blindm, BN_FLG_CONSTTIME);
-        BN_set_flags(tmp, BN_FLG_CONSTTIME);
-
-        /* tmp := blind * priv_key * r mod order */
-        if (!BN_mod_mul(tmp, blind, priv_key, order, ctx)) {
+        if (!BN_mod_mul(tmp, priv_key, ret->r, order, ctx)) {
             ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
             goto err;
         }
-        if (!BN_mod_mul(tmp, tmp, ret->r, order, ctx)) {
+        if (!BN_mod_add_quick(s, tmp, m, order)) {
             ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
             goto err;
         }
-
-        /* blindm := blind * m mod order */
-        if (!BN_mod_mul(blindm, blind, m, order, ctx)) {
-            ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
-            goto err;
-        }
-
-        /* s : = (blind * priv_key * r) + (blind * m) mod order */
-        if (!BN_mod_add_quick(s, tmp, blindm, order)) {
-            ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
-            goto err;
-        }
-
-        /* s := s * k^-1 mod order */
         if (!BN_mod_mul(s, s, ckinv, order, ctx)) {
             ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
             goto err;
         }
-
-        /* s:= s * blind^-1 mod order */
-        if (BN_mod_inverse(blind, blind, order, ctx) == NULL) {
-            ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
-            goto err;
-        }
-        if (!BN_mod_mul(s, s, blind, order, ctx)) {
-            ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
-            goto err;
-        }
-
         if (BN_is_zero(s)) {
             /*
              * if kinv and r have been supplied by the caller don't to
              * generate new kinv and r values
              */
             if (in_kinv != NULL && in_r != NULL) {
-                ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ECDSA_R_NEED_NEW_SETUP_VALUES);
+                ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,
+                         ECDSA_R_NEED_NEW_SETUP_VALUES);
                 goto err;
             }
         } else
@@ -405,11 +349,15 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
         ECDSA_SIG_free(ret);
         ret = NULL;
     }
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
+    if (ctx)
         BN_CTX_free(ctx);
-    }
-    if (kinv != NULL)
+    if (m)
+        BN_clear_free(m);
+    if (tmp)
+        BN_clear_free(tmp);
+    if (order)
+        BN_free(order);
+    if (kinv)
         BN_clear_free(kinv);
     return ret;
 }
