@@ -28,9 +28,9 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 {
     BIGNUM *tmp;
     int ret = 0;
-#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
     int num = mont->N.top;
 
+#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
     if (num > 1 && a->top == num && b->top == num) {
         if (bn_wexpand(r, num) == NULL)
             return 0;
@@ -42,6 +42,9 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         }
     }
 #endif
+
+    if ((a->top + b->top) > 2 * num)
+        return 0;
 
     BN_CTX_start(ctx);
     tmp = BN_CTX_get(ctx);
@@ -95,8 +98,6 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 
     /* clear the top words of T */
     i = max - r->top;
-    if (i < 0)
-        return 0;
     if (i)
         memset(&rp[r->top], 0, sizeof(*rp) * i);
 
