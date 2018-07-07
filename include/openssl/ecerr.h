@@ -156,6 +156,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP    126
 #  define EC_F_EC_POINT_SET_TO_INFINITY                    127
 #  define EC_F_EC_PRE_COMP_NEW                             196
+#  define EC_F_EC_SCALAR_MUL_LADDER                        284
 #  define EC_F_EC_WNAF_MUL                                 187
 #  define EC_F_EC_WNAF_PRECOMPUTE_MULT                     188
 #  define EC_F_I2D_ECPARAMETERS                            190
@@ -222,6 +223,9 @@ int ERR_load_EC_strings(void);
 #  define EC_R_INVALID_TRINOMIAL_BASIS                     137
 #  define EC_R_KDF_PARAMETER_ERROR                         148
 #  define EC_R_KEYS_NOT_SET                                140
+#  define EC_R_LADDER_POST_FAILURE                         136
+#  define EC_R_LADDER_PRE_FAILURE                          153
+#  define EC_R_LADDER_STEP_FAILURE                         162
 #  define EC_R_MISSING_PARAMETERS                          124
 #  define EC_R_MISSING_PRIVATE_KEY                         125
 #  define EC_R_NEED_NEW_SETUP_VALUES                       157
@@ -236,6 +240,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_PKPARAMETERS2GROUP_FAILURE                  127
 #  define EC_R_POINT_ARITHMETIC_FAILURE                    155
 #  define EC_R_POINT_AT_INFINITY                           106
+#  define EC_R_POINT_COORDINATES_BLIND_FAILURE             163
 #  define EC_R_POINT_IS_NOT_ON_CURVE                       107
 #  define EC_R_RANDOM_NUMBER_GENERATION_FAILED             158
 #  define EC_R_SHARED_INFO_ERROR                           150

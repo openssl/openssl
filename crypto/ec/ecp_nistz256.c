@@ -1731,7 +1731,10 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* keyfinish */
         ecdh_simple_compute_key,
         ecp_nistz256_inv_mod_ord,                   /* can be #define-d NULL */
-        0                                           /* blind_coordinates */
+        0,                                          /* blind_coordinates */
+        0,                                          /* ladder_pre */
+        0,                                          /* ladder_step */
+        0                                           /* ladder_post */
     };
 
     return &ret;

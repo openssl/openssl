@@ -178,6 +178,15 @@ struct ec_method_st {
     int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r,
                                  const BIGNUM *x, BN_CTX *);
     int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
+    int (*ladder_pre)(const EC_GROUP *group,
+                      EC_POINT *r, EC_POINT *s,
+                      EC_POINT *p, BN_CTX *ctx);
+    int (*ladder_step)(const EC_GROUP *group,
+                       EC_POINT *r, EC_POINT *s,
+                       EC_POINT *p, BN_CTX *ctx);
+    int (*ladder_post)(const EC_GROUP *group,
+                       EC_POINT *r, EC_POINT *s,
+                       EC_POINT *p, BN_CTX *ctx);
 };
 
 /*
@@ -638,3 +647,42 @@ void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
+
+static inline int ec_point_ladder_pre(const EC_GROUP *group,
+                                      EC_POINT *r, EC_POINT *s,
+                                      EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->ladder_pre != NULL)
+        return group->meth->ladder_pre(group, r, s, p, ctx);
+
+    if (!EC_POINT_copy(s, p)
+        || !EC_POINT_dbl(group, r, s, ctx))
+        return 0;
+
+    return 1;
+}
+
+static inline int ec_point_ladder_step(const EC_GROUP *group,
+                                       EC_POINT *r, EC_POINT *s,
+                                       EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->ladder_step != NULL)
+        return group->meth->ladder_step(group, r, s, p, ctx);
+
+    if (!EC_POINT_add(group, s, r, s, ctx)
+        || !EC_POINT_dbl(group, r, r, ctx))
+        return 0;
+
+    return 1;
+
+}
+
+static inline int ec_point_ladder_post(const EC_GROUP *group,
+                                       EC_POINT *r, EC_POINT *s,
+                                       EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->ladder_post != NULL)
+        return group->meth->ladder_post(group, r, s, p, ctx);
+
+    return 1;
+}
