@@ -31,6 +31,7 @@ static int group_order_tests(EC_GROUP *group)
 {
     BIGNUM *n1 = NULL, *n2 = NULL, *order = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL, *S = NULL;
+    const EC_POINT *G = NULL;
     BN_CTX *ctx = NULL;
     int i = 0, r = 0;
 
@@ -38,6 +39,7 @@ static int group_order_tests(EC_GROUP *group)
         || !TEST_ptr(n2 = BN_new())
         || !TEST_ptr(order = BN_new())
         || !TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(G = EC_GROUP_get0_generator(group))
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(Q = EC_POINT_new(group))
         || !TEST_ptr(R = EC_POINT_new(group))
@@ -49,7 +51,15 @@ static int group_order_tests(EC_GROUP *group)
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
         || !TEST_true(EC_GROUP_precompute_mult(group, ctx))
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
-        || !TEST_true(EC_POINT_is_at_infinity(group, Q)))
+        || !TEST_true(EC_POINT_is_at_infinity(group, Q))
+        || !TEST_true(EC_POINT_copy(P, G))
+        || !TEST_true(BN_one(n1))
+        || !TEST_true(EC_POINT_mul(group, Q, n1, NULL, NULL, ctx))
+        || !TEST_int_eq(0, EC_POINT_cmp(group, Q, P, ctx))
+        || !TEST_true(BN_sub(n1, order, n1))
+        || !TEST_true(EC_POINT_mul(group, Q, n1, NULL, NULL, ctx))
+        || !TEST_true(EC_POINT_invert(group, Q, ctx))
+        || !TEST_int_eq(0, EC_POINT_cmp(group, Q, P, ctx)))
         goto err;
 
     for (i = 1; i <= 2; i++) {
@@ -62,6 +72,7 @@ static int group_order_tests(EC_GROUP *group)
              * EC_GROUP_precompute_mult has set up precomputation.
              */
             || !TEST_true(EC_POINT_mul(group, P, n1, NULL, NULL, ctx))
+            || (i == 1 && !TEST_int_eq(0, EC_POINT_cmp(group, P, G, ctx)))
             || !TEST_true(BN_one(n1))
             /* n1 = 1 - order */
             || !TEST_true(BN_sub(n1, n1, order))
