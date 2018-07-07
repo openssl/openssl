@@ -1821,7 +1821,12 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
         ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
-        ecdh_simple_compute_key
+        ecdh_simple_compute_key,
+        0, /* field_inverse_mod_ord */
+        0, /* blind_coordinates */
+        0, /* ladder_pre */
+        0, /* ladder_step */
+        0  /* ladder_post */
     };
 
     return &ret;

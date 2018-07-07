@@ -9,6 +9,13 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Add a scaffold to optionally enhance the Montgomery ladder implementation
+     for `ec_scalar_mul_ladder` (formerly `ec_mul_consttime`) allowing
+     EC_METHODs to implement their own specialized "ladder step", to take
+     advantage of more favorable coordinate systems or more efficient
+     differential addition-and-doubling algorithms.
+     [Billy Bob Brumley, Sohaib ul Hassan, Nicola Tuveri]
+
   *) Modified the random device based seed sources to keep the relevant
      file descriptors open rather than reopening them on each access.
      This allows such sources to operate in a chroot() jail without

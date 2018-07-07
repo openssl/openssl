@@ -108,10 +108,9 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
 } while(0)
 
 /*-
- * This functions computes (in constant time) a point multiplication over the
- * EC group.
- *
- * At a high level, it is Montgomery ladder with conditional swaps.
+ * This functions computes a single point multiplication over the EC group,
+ * using, at a high level, a Montgomery ladder with conditional swaps, with
+ * various timing attack defenses.
  *
  * It performs either a fixed point multiplication
  *          (scalar * generator)
@@ -119,20 +118,25 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  *          (scalar * point)
  * when point is not NULL.
  *
- * scalar should be in the range [0,n) otherwise all constant time bets are off.
+ * `scalar` cannot be NULL and should be in the range [0,n) otherwise all
+ * constant time bets are off (where n is the cardinality of the EC group).
  *
- * NB: This says nothing about EC_POINT_add and EC_POINT_dbl,
- * which of course are not constant time themselves.
+ * NB: This says nothing about the constant-timeness of the ladder step
+ * implementation (i.e., the default implementation is based on EC_POINT_add and
+ * EC_POINT_dbl, which of course are not constant time themselves) or the
+ * underlying multiprecision arithmetic.
  *
- * The product is stored in r.
+ * The product is stored in `r`.
  *
  * Returns 1 on success, 0 otherwise.
  */
-static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
-                            const BIGNUM *scalar, const EC_POINT *point,
-                            BN_CTX *ctx)
+static
+int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
+                         const BIGNUM *scalar, const EC_POINT *point,
+                         BN_CTX *ctx)
 {
     int i, cardinality_bits, group_top, kbit, pbit, Z_is_one;
+    EC_POINT *p = NULL;
     EC_POINT *s = NULL;
     BIGNUM *k = NULL;
     BIGNUM *lambda = NULL;
@@ -140,30 +144,49 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     BN_CTX *new_ctx = NULL;
     int ret = 0;
 
+    /* early exit if the input point is the point at infinity */
+    if (point != NULL && EC_POINT_is_at_infinity(group, point))
+        return EC_POINT_set_to_infinity(group, r);
+
     if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
         return 0;
 
     BN_CTX_start(ctx);
 
-    s = EC_POINT_new(group);
-    if (s == NULL)
+    if (((p = EC_POINT_new(group)) == NULL)
+        || ((s = EC_POINT_new(group)) == NULL)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_MALLOC_FAILURE);
         goto err;
-
-    if (point == NULL) {
-        if (!EC_POINT_copy(s, group->generator))
-            goto err;
-    } else {
-        if (!EC_POINT_copy(s, point))
-            goto err;
     }
 
+    if (point == NULL) {
+        if (!EC_POINT_copy(p, group->generator)) {
+            ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_EC_LIB);
+            goto err;
+        }
+    } else {
+        if (!EC_POINT_copy(p, point)) {
+            ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_EC_LIB);
+            goto err;
+        }
+    }
+
+    EC_POINT_BN_set_flags(p, BN_FLG_CONSTTIME);
+    EC_POINT_BN_set_flags(r, BN_FLG_CONSTTIME);
     EC_POINT_BN_set_flags(s, BN_FLG_CONSTTIME);
 
     cardinality = BN_CTX_get(ctx);
     lambda = BN_CTX_get(ctx);
     k = BN_CTX_get(ctx);
-    if (k == NULL || !BN_mul(cardinality, group->order, group->cofactor, ctx))
+    if (k == NULL) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
+
+    if (!BN_mul(cardinality, group->order, group->cofactor, ctx)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
+        goto err;
+    }
 
     /*
      * Group cardinalities are often on a word boundary.
@@ -174,11 +197,15 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     cardinality_bits = BN_num_bits(cardinality);
     group_top = bn_get_top(cardinality);
     if ((bn_wexpand(k, group_top + 1) == NULL)
-        || (bn_wexpand(lambda, group_top + 1) == NULL))
+            || (bn_wexpand(lambda, group_top + 1) == NULL)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
+    }
 
-    if (!BN_copy(k, scalar))
+    if (!BN_copy(k, scalar)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
+    }
 
     BN_set_flags(k, BN_FLG_CONSTTIME);
 
@@ -187,15 +214,21 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
          * this is an unusual input, and we don't guarantee
          * constant-timeness
          */
-        if (!BN_nnmod(k, k, cardinality, ctx))
+        if (!BN_nnmod(k, k, cardinality, ctx)) {
+            ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
             goto err;
+        }
     }
 
-    if (!BN_add(lambda, k, cardinality))
+    if (!BN_add(lambda, k, cardinality)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
+    }
     BN_set_flags(lambda, BN_FLG_CONSTTIME);
-    if (!BN_add(k, lambda, cardinality))
+    if (!BN_add(k, lambda, cardinality)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
+    }
     /*
      * lambda := scalar + cardinality
      * k := scalar + 2*cardinality
@@ -209,8 +242,13 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
         || (bn_wexpand(s->Z, group_top) == NULL)
         || (bn_wexpand(r->X, group_top) == NULL)
         || (bn_wexpand(r->Y, group_top) == NULL)
-        || (bn_wexpand(r->Z, group_top) == NULL))
+        || (bn_wexpand(r->Z, group_top) == NULL)
+        || (bn_wexpand(p->X, group_top) == NULL)
+        || (bn_wexpand(p->Y, group_top) == NULL)
+        || (bn_wexpand(p->Z, group_top) == NULL)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
+    }
 
     /*-
      * Apply coordinate blinding for EC_POINT.
@@ -220,19 +258,19 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
      * success or if coordinate blinding is not implemented for this
      * group.
      */
-    if (!ec_point_blind_coordinates(group, s, ctx))
+    if (!ec_point_blind_coordinates(group, p, ctx)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_POINT_COORDINATES_BLIND_FAILURE);
         goto err;
+    }
+
+    /* Initialize the Montgomery ladder */
+    if (!ec_point_ladder_pre(group, r, s, p, ctx)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_LADDER_PRE_FAILURE);
+        goto err;
+    }
 
     /* top bit is a 1, in a fixed pos */
-    if (!EC_POINT_copy(r, s))
-        goto err;
-
-    EC_POINT_BN_set_flags(r, BN_FLG_CONSTTIME);
-
-    if (!EC_POINT_dbl(group, s, s, ctx))
-        goto err;
-
-    pbit = 0;
+    pbit = 1;
 
 #define EC_POINT_CSWAP(c, a, b, w, t) do {         \
         BN_consttime_swap(c, (a)->X, (b)->X, w);   \
@@ -304,10 +342,12 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     for (i = cardinality_bits - 1; i >= 0; i--) {
         kbit = BN_is_bit_set(k, i) ^ pbit;
         EC_POINT_CSWAP(kbit, r, s, group_top, Z_is_one);
-        if (!EC_POINT_add(group, s, r, s, ctx))
+
+        /* Perform a single step of the Montgomery ladder */
+        if (!ec_point_ladder_step(group, r, s, p, ctx)) {
+            ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_LADDER_STEP_FAILURE);
             goto err;
-        if (!EC_POINT_dbl(group, r, r, ctx))
-            goto err;
+        }
         /*
          * pbit logic merges this cswap with that of the
          * next iteration
@@ -318,9 +358,16 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     EC_POINT_CSWAP(pbit, r, s, group_top, Z_is_one);
 #undef EC_POINT_CSWAP
 
+    /* Finalize ladder (and recover full point coordinates) */
+    if (!ec_point_ladder_post(group, r, s, p, ctx)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_LADDER_POST_FAILURE);
+        goto err;
+    }
+
     ret = 1;
 
  err:
+    EC_POINT_free(p);
     EC_POINT_free(s);
     BN_CTX_end(ctx);
     BN_CTX_free(new_ctx);
@@ -391,29 +438,30 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
     if (!BN_is_zero(group->order) && !BN_is_zero(group->cofactor)) {
         /*-
-         * Handle the common cases where the scalar is secret, enforcing a constant
-         * time scalar multiplication algorithm.
+         * Handle the common cases where the scalar is secret, enforcing a
+         * scalar multiplication implementation based on a Montgomery ladder,
+         * with various timing attack defenses.
          */
         if ((scalar != NULL) && (num == 0)) {
             /*-
              * In this case we want to compute scalar * GeneratorPoint: this
-             * codepath is reached most prominently by (ephemeral) key generation
-             * of EC cryptosystems (i.e. ECDSA keygen and sign setup, ECDH
-             * keygen/first half), where the scalar is always secret. This is why
-             * we ignore if BN_FLG_CONSTTIME is actually set and we always call the
-             * constant time version.
+             * codepath is reached most prominently by (ephemeral) key
+             * generation of EC cryptosystems (i.e. ECDSA keygen and sign setup,
+             * ECDH keygen/first half), where the scalar is always secret. This
+             * is why we ignore if BN_FLG_CONSTTIME is actually set and we
+             * always call the ladder version.
              */
-            return ec_mul_consttime(group, r, scalar, NULL, ctx);
+            return ec_scalar_mul_ladder(group, r, scalar, NULL, ctx);
         }
         if ((scalar == NULL) && (num == 1)) {
             /*-
-             * In this case we want to compute scalar * GenericPoint: this codepath
-             * is reached most prominently by the second half of ECDH, where the
-             * secret scalar is multiplied by the peer's public point. To protect
-             * the secret scalar, we ignore if BN_FLG_CONSTTIME is actually set and
-             * we always call the constant time version.
+             * In this case we want to compute scalar * VariablePoint: this
+             * codepath is reached most prominently by the second half of ECDH,
+             * where the secret scalar is multiplied by the peer's public point.
+             * To protect the secret scalar, we ignore if BN_FLG_CONSTTIME is
+             * actually set and we always call the ladder version.
              */
-            return ec_mul_consttime(group, r, scalars[0], points[0], ctx);
+            return ec_scalar_mul_ladder(group, r, scalars[0], points[0], ctx);
         }
     }
 
