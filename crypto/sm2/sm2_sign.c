@@ -25,16 +25,17 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
 {
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
     const int md_size = EVP_MD_size(digest);
-    uint8_t *za = OPENSSL_zalloc(md_size);
+    uint8_t *za = NULL;
     BIGNUM *e = NULL;
-
-    if (hash == NULL || za == NULL) {
-        SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
-        goto done;
-    }
 
     if (md_size < 0) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, SM2_R_INVALID_DIGEST);
+        goto done;
+    }
+
+    za = OPENSSL_zalloc(md_size);
+    if (hash == NULL || za == NULL) {
+        SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
