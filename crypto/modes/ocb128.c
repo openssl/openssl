@@ -74,7 +74,7 @@ static void ocb_double(OCB_BLOCK *in, OCB_BLOCK *out)
      */
     mask = in->c[0] & 0x80;
     mask >>= 7;
-    mask *= 135;
+    mask = (0 - mask) & 0x87;
 
     ocb_block_lshift(in->c, 1, out->c);
 
