@@ -196,12 +196,12 @@
 
      Some of its new features are:
       o Support for multiple DRBG instances with seed chaining.
-      o Add a public DRBG instance for the default RAND method.
-      o Add a dedicated DRBG instance for generating long term private keys.
-      o Make the DRBG instances fork-safe.
+      o The default RAND method makes use of a DRBG.
+      o There is a public and private DRBG instance.
+      o The DRBG instances are fork-safe.
       o Keep all global DRBG instances on the secure heap if it is enabled.
-      o Add a DRBG instance to every SSL instance for lock free operation
-        and to increase unpredictability.
+      o The public and private DRBG instance are per thread for lock free
+        operation
      [Paul Dale, Benjamin Kaduk, Kurt Roeckx, Rich Salz, Matthias St. Pierre]
 
   *) Changed Configure so it only says what it does and doesn't dump
