@@ -128,9 +128,11 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  *
  * The product is stored in `r`.
  *
+ * This is an internal function: callers are in charge of ensuring that the
+ * input parameters `group`, `r`, `scalar` and `ctx` are not NULL.
+ *
  * Returns 1 on success, 0 otherwise.
  */
-static
 int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
                          const BIGNUM *scalar, const EC_POINT *point,
                          BN_CTX *ctx)
@@ -141,15 +143,11 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     BIGNUM *k = NULL;
     BIGNUM *lambda = NULL;
     BIGNUM *cardinality = NULL;
-    BN_CTX *new_ctx = NULL;
     int ret = 0;
 
     /* early exit if the input point is the point at infinity */
     if (point != NULL && EC_POINT_is_at_infinity(group, point))
         return EC_POINT_set_to_infinity(group, r);
-
-    if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL)
-        return 0;
 
     BN_CTX_start(ctx);
 
@@ -370,7 +368,6 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     EC_POINT_free(p);
     EC_POINT_free(s);
     BN_CTX_end(ctx);
-    BN_CTX_free(new_ctx);
 
     return ret;
 }
@@ -402,7 +399,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                 size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
                 BN_CTX *ctx)
 {
-    BN_CTX *new_ctx = NULL;
     const EC_POINT *generator = NULL;
     EC_POINT *tmp = NULL;
     size_t totalnum;
@@ -426,15 +422,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                                  * treated like other scalars, i.e.
                                  * precomputation is not available */
     int ret = 0;
-
-    if (!ec_point_is_compat(r, group)) {
-        ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-        return 0;
-    }
-
-    if ((scalar == NULL) && (num == 0)) {
-        return EC_POINT_set_to_infinity(group, r);
-    }
 
     if (!BN_is_zero(group->order) && !BN_is_zero(group->cofactor)) {
         /*-
@@ -463,19 +450,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
              */
             return ec_scalar_mul_ladder(group, r, scalars[0], points[0], ctx);
         }
-    }
-
-    for (i = 0; i < num; i++) {
-        if (!ec_point_is_compat(points[i], group)) {
-            ECerr(EC_F_EC_WNAF_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-            return 0;
-        }
-    }
-
-    if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new();
-        if (ctx == NULL)
-            goto err;
     }
 
     if (scalar != NULL) {
@@ -784,7 +758,6 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     ret = 1;
 
  err:
-    BN_CTX_free(new_ctx);
     EC_POINT_free(tmp);
     OPENSSL_free(wsize);
     OPENSSL_free(wNAF_len);

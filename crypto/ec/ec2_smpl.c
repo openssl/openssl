@@ -832,6 +832,63 @@ int ec_GF2m_simple_ladder_post(const EC_GROUP *group,
     return ret;
 }
 
+static
+int ec_GF2m_simple_points_mul(const EC_GROUP *group, EC_POINT *r,
+                              const BIGNUM *scalar, size_t num,
+                              const EC_POINT *points[],
+                              const BIGNUM *scalars[],
+                              BN_CTX *ctx)
+{
+    int ret = 0;
+    EC_POINT *t = NULL;
+
+    /*-
+     * We limit use of the ladder only to the following cases:
+     * - r := scalar * G
+     *   Fixed point mul: scalar != NULL && num == 0;
+     * - r := scalars[0] * points[0]
+     *   Variable point mul: scalar == NULL && num == 1;
+     * - r := scalar * G + scalars[0] * points[0]
+     *   used, e.g., in ECDSA verification: scalar != NULL && num == 1
+     *
+     * In any other case (num > 1) we use the default wNAF implementation.
+     *
+     * We also let the default implementation handle degenerate cases like group
+     * order or cofactor set to 0.
+     */
+    if (num > 1 || BN_is_zero(group->order) || BN_is_zero(group->cofactor))
+        return ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+
+    if (scalar != NULL && num == 0)
+        /* Fixed point multiplication */
+        return ec_scalar_mul_ladder(group, r, scalar, NULL, ctx);
+
+    if (scalar == NULL && num == 1)
+        /* Variable point multiplication */
+        return ec_scalar_mul_ladder(group, r, scalars[0], points[0], ctx);
+
+    /*-
+     * Double point multiplication:
+     *  r := scalar * G + scalars[0] * points[0]
+     */
+
+    if ((t = EC_POINT_new(group)) == NULL) {
+        ECerr(EC_F_EC_GF2M_SIMPLE_POINTS_MUL, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!ec_scalar_mul_ladder(group, t, scalar, NULL, ctx)
+        || !ec_scalar_mul_ladder(group, r, scalars[0], points[0], ctx)
+        || !EC_POINT_add(group, r, t, r, ctx))
+        goto err;
+
+    ret = 1;
+
+ err:
+    EC_POINT_free(t);
+    return ret;
+}
+
 const EC_METHOD *EC_GF2m_simple_method(void)
 {
     static const EC_METHOD ret = {
@@ -866,7 +923,7 @@ const EC_METHOD *EC_GF2m_simple_method(void)
         ec_GF2m_simple_cmp,
         ec_GF2m_simple_make_affine,
         ec_GF2m_simple_points_make_affine,
-        0, /* mul */
+        ec_GF2m_simple_points_mul,
         0, /* precompute_mult */
         0, /* have_precompute_mult */
         ec_GF2m_simple_field_mul,

@@ -68,6 +68,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_GF2M_SIMPLE_LADDER_PRE                   288
 #  define EC_F_EC_GF2M_SIMPLE_OCT2POINT                    160
 #  define EC_F_EC_GF2M_SIMPLE_POINT2OCT                    161
+#  define EC_F_EC_GF2M_SIMPLE_POINTS_MUL                   289
 #  define EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES 162
 #  define EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES 163
 #  define EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES   164
@@ -135,6 +136,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_PKEY_CHECK                               273
 #  define EC_F_EC_PKEY_PARAM_CHECK                         274
 #  define EC_F_EC_POINTS_MAKE_AFFINE                       136
+#  define EC_F_EC_POINTS_MUL                               290
 #  define EC_F_EC_POINT_ADD                                112
 #  define EC_F_EC_POINT_BN2POINT                           280
 #  define EC_F_EC_POINT_CMP                                113
