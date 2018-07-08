@@ -1120,7 +1120,7 @@ $target{dso_extension}//=$target{shared_extension_simple};
 # Allow overriding the names of some tools.  USE WITH CARE
 # Note: only Unix cares about HASHBANGPERL...  that explains
 # the default string.
-$config{perl} = env('PERL') || ($^O ne "VMS" ? $^X : "perl");
+$config{perl} =    ($^O ne "VMS" ? $^X : "perl");
 foreach (keys %user) {
     my $ref_type = ref $user{$_};
 
