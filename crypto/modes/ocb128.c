@@ -42,22 +42,13 @@ static u32 ocb_ntz(u64 n)
 static void ocb_block_lshift(const unsigned char *in, size_t shift,
                              unsigned char *out)
 {
-    unsigned char shift_mask;
     int i;
-    unsigned char mask[15];
+    unsigned char carry = 0, carry_next;
 
-    shift_mask = 0xff;
-    shift_mask <<= (8 - shift);
     for (i = 15; i >= 0; i--) {
-        if (i > 0) {
-            mask[i - 1] = in[i] & shift_mask;
-            mask[i - 1] >>= 8 - shift;
-        }
-        out[i] = in[i] << shift;
-
-        if (i != 15) {
-            out[i] ^= mask[i];
-        }
+        carry_next = in[i] >> (8 - shift);
+        out[i] = (in[i] << shift) | carry;
+        carry = carry_next;
     }
 }
 
@@ -119,8 +110,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
          * the index.
          */
         ctx->max_l_index += (idx - ctx->max_l_index + 4) & ~3;
-        tmp_ptr =
-            OPENSSL_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
+        tmp_ptr = OPENSSL_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
         if (tmp_ptr == NULL) /* prevent ctx->l from being clobbered */
             return NULL;
         ctx->l = tmp_ptr;
