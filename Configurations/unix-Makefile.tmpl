@@ -212,7 +212,7 @@ EX_LIBS= {- join(' ', @{$config{LDLIBS}}) -}
 
 MAKEDEPEND={- $config{makedepprog} -}
 
-PERL={- $config{perl} -}
+PERL={- $config{PERL} -}
 
 AR=$(CROSS_COMPILE){- $config{AR} -}
 ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
