@@ -553,6 +553,7 @@ my %user = (
     LDLIBS      => [],  # -l
     MT          => undef,
     MTFLAGS     => [],
+    PERL        => env('PERL') || ($^O ne "VMS" ? $^X : "perl"),
     RANLIB      => env('RANLIB'),
     RC          => env('RC') || env('WINDRES'),
     RCFLAGS     => [],
@@ -1117,10 +1118,8 @@ $target{dso_extension}//=$target{shared_extension_simple};
 ($target{shared_import_extension}=$target{shared_extension_simple}.".a")
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
-# Allow overriding the names of some tools.  USE WITH CARE
-# Note: only Unix cares about HASHBANGPERL...  that explains
-# the default string.
-$config{perl} =    ($^O ne "VMS" ? $^X : "perl");
+# Fill %config with values from %user, and in case those are undefined or
+# empty, use values from %target (acting as a default).
 foreach (keys %user) {
     my $ref_type = ref $user{$_};
 
@@ -2459,7 +2458,7 @@ _____
     if ($dump || $cmdline) {
         print "\nCommand line (with current working directory = $here):\n\n";
         print '    ',join(' ',
-                          $config{perl},
+                          $config{PERL},
                           catfile($config{sourcedir}, 'Configure'),
                           @{$config{perlargv}}), "\n";
         print "\nPerl information:\n\n";
@@ -3065,7 +3064,7 @@ sub run_dofile
     foreach (@templates) {
         die "Can't open $_, $!" unless -f $_;
     }
-    my $perlcmd = (quotify("maybeshell", $config{perl}))[0];
+    my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
     my $cmd = "$perlcmd \"-I.\" \"-Mconfigdata\" \"$dofile\" -o\"Configure\" \"".join("\" \"",@templates)."\" > \"$out.new\"";
     #print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
     system($cmd);
