@@ -1855,7 +1855,6 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
     int ret = 0;
     int j;
     int mixed = 0;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y, *z, *tmp_scalar;
     felem_bytearray g_secret;
     felem_bytearray *secrets = NULL;
@@ -1872,9 +1871,6 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
     const EC_POINT *p = NULL;
     const BIGNUM *p_scalar = NULL;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -2041,7 +2037,6 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-    BN_CTX_free(new_ctx);
     OPENSSL_free(secrets);
     OPENSSL_free(pre_comp);
     OPENSSL_free(tmp_felems);

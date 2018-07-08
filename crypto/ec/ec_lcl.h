@@ -646,6 +646,39 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
 
+/*-
+ * This functions computes a single point multiplication over the EC group,
+ * using, at a high level, a Montgomery ladder with conditional swaps, with
+ * various timing attack defenses.
+ *
+ * It performs either a fixed point multiplication
+ *          (scalar * generator)
+ * when point is NULL, or a variable point multiplication
+ *          (scalar * point)
+ * when point is not NULL.
+ *
+ * `scalar` cannot be NULL and should be in the range [0,n) otherwise all
+ * constant time bets are off (where n is the cardinality of the EC group).
+ *
+ * This function expects `group->order` and `group->cardinality` to be well
+ * defined and non-zero: it fails with an error code otherwise.
+ *
+ * NB: This says nothing about the constant-timeness of the ladder step
+ * implementation (i.e., the default implementation is based on EC_POINT_add and
+ * EC_POINT_dbl, which of course are not constant time themselves) or the
+ * underlying multiprecision arithmetic.
+ *
+ * The product is stored in `r`.
+ *
+ * This is an internal function: callers are in charge of ensuring that the
+ * input parameters `group`, `r`, `scalar` and `ctx` are not NULL.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
+                         const BIGNUM *scalar, const EC_POINT *point,
+                         BN_CTX *ctx);
+
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
 static inline int ec_point_ladder_pre(const EC_GROUP *group,
