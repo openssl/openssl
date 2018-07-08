@@ -24,7 +24,6 @@
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
-#include <openssl/bn.h>
 #include <openssl/lhash.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
@@ -177,21 +176,22 @@ static void exts_cleanup(OPENSSL_STRING *x)
 static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
 {
     char *p;
+    size_t off;
 
     /* Check syntax. */
-    if (strchr(kv, '=') == NULL)
-        return 1;
-
     /* Skip leading whitespace, make a copy. */
     while (*kv && isspace(*kv))
         if (*++kv == '\0')
             return 1;
+    if ((p = strchr(kv, '=')) == NULL)
+        return 1;
+    off = p - kv;
     if ((kv = OPENSSL_strdup(kv)) == NULL)
         return -1;
 
     /* Skip trailing space before the equal sign. */
-    for (p = strchr(kv, '='); p > kv; --p)
-        if (p[-1] != ' ' && p[-1] != '\t')
+    for (p = kv + off; p > kv; --p)
+        if (!isspace(p[-1]))
             break;
     if (p == kv) {
         OPENSSL_free(kv);
@@ -199,16 +199,13 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
     }
     *p = '\0';
 
-    /* Finally have a clean "key"; see if it's there. */
-    if (lh_OPENSSL_STRING_retrieve(addexts, (OPENSSL_STRING*)kv) != NULL) {
-        BIO_printf(bio_err, "Extension \"%s\" repeated\n", kv);
-        OPENSSL_free(kv);
-        return 1;
+    /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
+    if ((p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv))
+        != NULL || lh_OPENSSL_STRING_error(addexts)) {
+        OPENSSL_free(p != NULL ? p : kv);
+        return -1;
     }
 
-    /* Not found; add it. */
-    if (lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv) == NULL)
-        return -1;
     return 0;
 }
 
