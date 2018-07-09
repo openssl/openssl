@@ -141,6 +141,15 @@
  */
 
 # ifdef BN_DEBUG
+/*
+ * The new BN_FLG_FIXED_TOP flag marks vectors that were not treated with
+ * bn_correct_top, in other words such vectors are permitted to have zeros
+ * in most significant limbs. Such vectors are used internally to achieve
+ * execution time invariance for critical operations with private keys.
+ * It's BN_DEBUG-only flag, because user application is not supposed to
+ * observe it anyway. Moreover, optimizing compiler would actually remove
+ * all operations manipulating the bit in question in non-BN_DEBUG build.
+ */
 #  define BN_FLG_FIXED_TOP 0x10000
 #  include <assert.h>
 #  ifdef BN_DEBUG_RAND
