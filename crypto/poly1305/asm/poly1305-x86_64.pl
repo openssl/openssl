@@ -3753,6 +3753,44 @@ poly1305_emit_base2_44:
 .size	poly1305_emit_base2_44,.-poly1305_emit_base2_44
 ___
 }	}	}
+$code.=<<___;
+.align	64
+.Lconst:
+.Lmask24:
+.long	0x0ffffff,0,0x0ffffff,0,0x0ffffff,0,0x0ffffff,0
+.L129:
+.long	`1<<24`,0,`1<<24`,0,`1<<24`,0,`1<<24`,0
+.Lmask26:
+.long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
+.Lpermd_avx2:
+.long	2,2,2,3,2,0,2,1
+.Lpermd_avx512:
+.long	0,0,0,1, 0,2,0,3, 0,4,0,5, 0,6,0,7
+
+.L2_44_inp_permd:
+.long	0,1,1,2,2,3,7,7
+.L2_44_inp_shift:
+.quad	0,12,24,64
+.L2_44_mask:
+.quad	0xfffffffffff,0xfffffffffff,0x3ffffffffff,0xffffffffffffffff
+.L2_44_shift_rgt:
+.quad	44,44,42,64
+.L2_44_shift_lft:
+.quad	8,8,10,64
+
+.align	64
+.Lx_mask44:
+.quad	0xfffffffffff,0xfffffffffff,0xfffffffffff,0xfffffffffff
+.quad	0xfffffffffff,0xfffffffffff,0xfffffffffff,0xfffffffffff
+.Lx_mask42:
+.quad	0x3ffffffffff,0x3ffffffffff,0x3ffffffffff,0x3ffffffffff
+.quad	0x3ffffffffff,0x3ffffffffff,0x3ffffffffff,0x3ffffffffff
+___
+}
+$code.=<<___;
+.asciz	"Poly1305 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.align	16
+___
 
 {	# chacha20-poly1305 helpers
 my ($out,$inp,$otp,$len)=$win64 ? ("%rcx","%rdx","%r8", "%r9") :  # Win64 order
@@ -3857,45 +3895,6 @@ xor128_decrypt_n_pad:
 .size	xor128_decrypt_n_pad,.-xor128_decrypt_n_pad
 ___
 }
-$code.=<<___;
-.align	64
-.Lconst:
-.Lmask24:
-.long	0x0ffffff,0,0x0ffffff,0,0x0ffffff,0,0x0ffffff,0
-.L129:
-.long	`1<<24`,0,`1<<24`,0,`1<<24`,0,`1<<24`,0
-.Lmask26:
-.long	0x3ffffff,0,0x3ffffff,0,0x3ffffff,0,0x3ffffff,0
-.Lpermd_avx2:
-.long	2,2,2,3,2,0,2,1
-.Lpermd_avx512:
-.long	0,0,0,1, 0,2,0,3, 0,4,0,5, 0,6,0,7
-
-.L2_44_inp_permd:
-.long	0,1,1,2,2,3,7,7
-.L2_44_inp_shift:
-.quad	0,12,24,64
-.L2_44_mask:
-.quad	0xfffffffffff,0xfffffffffff,0x3ffffffffff,0xffffffffffffffff
-.L2_44_shift_rgt:
-.quad	44,44,42,64
-.L2_44_shift_lft:
-.quad	8,8,10,64
-
-.align	64
-.Lx_mask44:
-.quad	0xfffffffffff,0xfffffffffff,0xfffffffffff,0xfffffffffff
-.quad	0xfffffffffff,0xfffffffffff,0xfffffffffff,0xfffffffffff
-.Lx_mask42:
-.quad	0x3ffffffffff,0x3ffffffffff,0x3ffffffffff,0x3ffffffffff
-.quad	0x3ffffffffff,0x3ffffffffff,0x3ffffffffff,0x3ffffffffff
-___
-}
-
-$code.=<<___;
-.asciz	"Poly1305 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
-.align	16
-___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
 #		CONTEXT *context,DISPATCHER_CONTEXT *disp)
