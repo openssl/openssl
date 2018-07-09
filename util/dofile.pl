@@ -40,7 +40,7 @@ package OpenSSL::Template;
 use File::Basename;
 use File::Spec::Functions;
 use lib "$FindBin::Bin/perl";
-use with_fallback qw(Text::Template);
+use with_fallback "Text::Template 1.46";
 
 #use parent qw/Text::Template/;
 use vars qw/@ISA/;
