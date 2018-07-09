@@ -33,17 +33,18 @@ if (disabled("rsa")) {
     note("There should not be more that at most 80 per line");
 }
 
-# Check for duplicate -addext parameters
+# Check for duplicate -addext parameters, and one "working" case.
+my @addext_args = ( "openssl", "req", "-new", "-out", "testreq.pem",
+    "-config", srctop_file("test", "test.cnf"), @req_new );
 my $val = "subjectAltName=DNS:example.com";
 my $val2 = " " . $val;
 my $val3 = $val;
 $val3 =~ s/=/    =/;
-ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val])));
-ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val2])));
-ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val3])));
-ok(!run(app(["openssl", "req", "-new", "-addext", $val2, "-addext", $val3])));
-ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
-		"-addext", $val, @req_new, "-out", "testreq.pem"])));
+ok( run(app([@addext_args, "-addext", $val])));
+ok(!run(app([@addext_args, "-addext", $val, "-addext", $val])));
+ok(!run(app([@addext_args, "-addext", $val, "-addext", $val2])));
+ok(!run(app([@addext_args, "-addext", $val, "-addext", $val3])));
+ok(!run(app([@addext_args, "-addext", $val2, "-addext", $val3])));
 
 subtest "generating certificate requests" => sub {
     plan tests => 2;
