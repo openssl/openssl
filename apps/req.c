@@ -947,6 +947,7 @@ int req_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     }
     NCONF_free(req_conf);
+    NCONF_free(addext_conf);
     BIO_free(addext_bio);
     BIO_free(in);
     BIO_free_all(out);
