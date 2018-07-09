@@ -7,6 +7,9 @@
 
 # Quick transfer to the downloaded Text::Template
 
+package transfer::Text::Template;
+$VERSION = 1.46;
+
 BEGIN {
     use File::Spec::Functions;
     use File::Basename;
