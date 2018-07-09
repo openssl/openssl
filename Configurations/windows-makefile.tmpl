@@ -406,6 +406,7 @@ install_ssldirs:
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
+	where echo
 	@echo *** Installing development files
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
 	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
