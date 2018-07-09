@@ -15,13 +15,23 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 8;
+plan tests => 9;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 open RND, ">>", ".rnd";
 print RND "string to make the random number generator think it has randomness";
 close RND;
+
+# What type of key to generate?
+my @req_new;
+if (disabled("rsa")) {
+    @req_new = ("-newkey", "dsa:".srctop_file("apps", "dsa512.pem"));
+} else {
+    @req_new = ("-new");
+    note("There should be a 2 sequences of .'s and some +'s.");
+    note("There should not be more that at most 80 per line");
+}
 
 # Check for duplicate -addext parameters
 my $val = "subjectAltName=DNS:example.com";
@@ -32,17 +42,10 @@ ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val])));
 ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val2])));
 ok(!run(app(["openssl", "req", "-new", "-addext", $val, "-addext", $val3])));
 ok(!run(app(["openssl", "req", "-new", "-addext", $val2, "-addext", $val3])));
+ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+		"-addext", $val, @req_new, "-out", "testreq.pem"])));
 
 subtest "generating certificate requests" => sub {
-    my @req_new;
-    if (disabled("rsa")) {
-	@req_new = ("-newkey", "dsa:".srctop_file("apps", "dsa512.pem"));
-    } else {
-	@req_new = ("-new");
-	note("There should be a 2 sequences of .'s and some +'s.");
-	note("There should not be more that at most 80 per line");
-    }
-
     plan tests => 2;
 
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
