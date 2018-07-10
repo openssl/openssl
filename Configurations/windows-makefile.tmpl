@@ -186,6 +186,8 @@ ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
 RC={- $config{RC} -}
 
+ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
+
 ##### Special command flags ##########################################
 
 COUTFLAG={- $target{coutflag} -}$(OSSL_EMPTY)
@@ -320,9 +322,9 @@ build_apps build_tests: build_programs
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
 	@rem {- output_off() if $disabled{makedepend}; "" -}
-	@echo "Warning: consider configuring with no-makedepend, because if"
-	@echo "         target system doesn't have $(PERL),"
-	@echo "         then make will fail..."
+	@$(ECHO) "Warning: consider configuring with no-makedepend, because if"
+	@$(ECHO) "         target system doesn't have $(PERL),"
+	@$(ECHO) "         then make will fail..."
 	@rem {- output_on() if $disabled{makedepend}; "" -}
 
 test: tests
@@ -337,7 +339,7 @@ test: tests
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
-	@echo "Tests are not supported with your chosen Configure options"
+	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@rem {- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
@@ -345,7 +347,7 @@ list-tests:
 	@set SRCTOP=$(SRCDIR)
 	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
 	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
-	@echo "Tests are not supported with your chosen Configure options"
+	@$(ECHO) "Tests are not supported with your chosen Configure options"
 	@rem {- output_on() if !$disabled{tests}; "" -}
 
 install: install_sw install_ssldirs install_docs
@@ -405,8 +407,8 @@ install_ssldirs:
                                         "$(OPENSSLDIR)\ct_log_list.cnf"
 
 install_dev:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing development files
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing development files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
 	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
@@ -425,8 +427,8 @@ install_dev:
 uninstall_dev:
 
 install_engines:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing engines
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing engines"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
@@ -436,8 +438,8 @@ install_engines:
 uninstall_engines:
 
 install_runtime:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing runtime files
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing runtime files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_SHLIBS) "$(INSTALLTOP)\bin"
@@ -462,13 +464,13 @@ uninstall_html_docs:
 # Building targets ###################################################
 
 configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
-	@echo "Detected changed: $?"
+	@$(ECHO) "Detected changed: $?"
 	"$(PERL)" configdata.pm -r
-	@echo "**************************************************"
-	@echo "***                                            ***"
-	@echo "***   Please run the same make command again   ***"
-	@echo "***                                            ***"
-	@echo "**************************************************"
+	@$(ECHO) "**************************************************"
+	@$(ECHO) "***                                            ***"
+	@$(ECHO) "***   Please run the same make command again   ***"
+	@$(ECHO) "***                                            ***"
+	@$(ECHO) "**************************************************"
 	@exit 1
 
 reconfigure reconf:
