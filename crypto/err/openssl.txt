@@ -2012,6 +2012,7 @@ CONF_R_NO_CONF_OR_ENVIRONMENT_VARIABLE:106:no conf or environment variable
 CONF_R_NO_SECTION:107:no section
 CONF_R_NO_SUCH_FILE:114:no such file
 CONF_R_NO_VALUE:108:no value
+CONF_R_NUMBER_TOO_LARGE:121:number too large
 CONF_R_RECURSIVE_DIRECTORY_INCLUDE:111:recursive directory include
 CONF_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 CONF_R_SSL_COMMAND_SECTION_NOT_FOUND:118:ssl command section not found

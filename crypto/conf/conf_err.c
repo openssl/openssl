@@ -60,6 +60,7 @@ static const ERR_STRING_DATA CONF_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_NO_SECTION), "no section"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_NO_SUCH_FILE), "no such file"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_NO_VALUE), "no value"},
+    {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_NUMBER_TOO_LARGE), "number too large"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_RECURSIVE_DIRECTORY_INCLUDE),
     "recursive directory include"},
     {ERR_PACK(ERR_LIB_CONF, 0, CONF_R_SSL_COMMAND_SECTION_EMPTY),
