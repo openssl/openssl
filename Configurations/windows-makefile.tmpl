@@ -406,7 +406,7 @@ install_ssldirs:
 
 install_dev:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing development files
+	@echo "*** Installing development files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
 	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
@@ -426,7 +426,7 @@ uninstall_dev:
 
 install_engines:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing engines
+	@echo "*** Installing engines"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
@@ -437,7 +437,7 @@ uninstall_engines:
 
 install_runtime:
 	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing runtime files
+	@echo "*** Installing runtime files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_SHLIBS) "$(INSTALLTOP)\bin"
