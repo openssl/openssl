@@ -305,7 +305,7 @@ $config{sdirs} = [
     "bn", "ec", "rsa", "dsa", "dh", "sm2", "dso", "engine",
     "buffer", "bio", "stack", "lhash", "rand", "err",
     "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
-    "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store"
+    "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store", "jpake"
     ];
 # test/ subdirectories to build
 $config{tdirs} = [ "ossl_shim" ];

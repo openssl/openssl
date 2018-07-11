@@ -50,7 +50,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest
+          sysdefaulttest errtest ecjpake_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -363,6 +363,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[servername_test]=servername_test.c
   INCLUDE[servername_test]=../include
   DEPEND[servername_test]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[ecjpake_test]=ecjpake_test.c
+  INCLUDE[ecjpake_test]=.. ../include
+  DEPEND[ecjpake_test]=../libcrypto libtestutil.a
 
   IF[{- !$disabled{cms} -}]
     PROGRAMS_NO_INST=cmsapitest

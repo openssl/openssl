@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        ecjpake_struct.c ecjpake_zkp.c ecjpake.c
