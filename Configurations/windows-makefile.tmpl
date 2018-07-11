@@ -210,7 +210,7 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
-	@rem {- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "" -}
 	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
@@ -219,17 +219,17 @@ test: tests
 	set OPENSSL_ENGINES=$(MAKEDIR)\engines
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
-	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
-	@rem {- output_on() if !$disabled{tests}; "" -}
+	@{- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
-	@rem {- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "" -}
 	@set SRCTOP=$(SRCDIR)
 	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
-	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
-	@rem {- output_on() if !$disabled{tests}; "" -}
+	@{- output_on() if !$disabled{tests}; "" -}
 
 install: install_sw install_ssldirs install_docs
 
@@ -291,10 +291,10 @@ install_dev:
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing development files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
-	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@{- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
 				       "$(INSTALLTOP)\include\openssl"
-	@rem {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@{- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "-exclude_re=/__DECC_" \
 				       "$(SRCDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
@@ -608,8 +608,6 @@ EOF
               foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
                   if (dirname($prod) eq $dir) {
                       push @deps, $prod.$extinfo{$type};
-                  } else {
-                      push @actions, "\t@rem No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
                   }
               }
           }
