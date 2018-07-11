@@ -698,12 +698,16 @@ x25519_fe64_add:
 
 	add	%rax,$acc0
 	adc	\$0,$acc1
-	mov	$acc0,8*0(%rdi)
 	adc	\$0,$acc2
 	mov	$acc1,8*1(%rdi)
 	adc	\$0,$acc3
 	mov	$acc2,8*2(%rdi)
+	sbb	%rax,%rax		# cf -> mask
 	mov	$acc3,8*3(%rdi)
+	and	\$38,%rax
+
+	add	%rax,$acc0
+	mov	$acc0,8*0(%rdi)
 
 	ret
 .size	x25519_fe64_add,.-x25519_fe64_add
@@ -727,12 +731,16 @@ x25519_fe64_sub:
 
 	sub	%rax,$acc0
 	sbb	\$0,$acc1
-	mov	$acc0,8*0(%rdi)
 	sbb	\$0,$acc2
 	mov	$acc1,8*1(%rdi)
 	sbb	\$0,$acc3
 	mov	$acc2,8*2(%rdi)
+	sbb	%rax,%rax		# cf -> mask
 	mov	$acc3,8*3(%rdi)
+	and	\$38,%rax
+
+	sub	%rax,$acc0
+	mov	$acc0,8*0(%rdi)
 
 	ret
 .size	x25519_fe64_sub,.-x25519_fe64_sub
@@ -751,6 +759,7 @@ x25519_fe64_tobytes:
 	sar	\$63,$acc3		# most significant bit -> mask
 	shr	\$1,%rax		# most significant bit cleared
 	and	\$19,$acc3
+	add	\$19,$acc3		# compare to modulus in the same go
 
 	add	$acc3,$acc0
 	adc	\$0,$acc1
@@ -760,14 +769,18 @@ x25519_fe64_tobytes:
 	lea	(%rax,%rax),$acc3
 	sar	\$63,%rax		# most significant bit -> mask
 	shr	\$1,$acc3		# most significant bit cleared
+	not	%rax
 	and	\$19,%rax
 
-	add	%rax,$acc0
+	sub	%rax,$acc0
+	sbb	\$0,$acc1
+	sbb	\$0,$acc2
+	sbb	\$0,$acc3
 
+	mov	$acc0,8*0(%rdi)
 	mov	$acc1,8*1(%rdi)
 	mov	$acc2,8*2(%rdi)
 	mov	$acc3,8*3(%rdi)
-	mov	$acc0,8*0(%rdi)
 
 	ret
 .size	x25519_fe64_tobytes,.-x25519_fe64_tobytes
