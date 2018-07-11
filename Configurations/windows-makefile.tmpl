@@ -321,15 +321,15 @@ build_apps build_tests: build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
-	@rem {- output_off() if $disabled{makedepend}; "" -}
+	@{- output_off() if $disabled{makedepend}; "" -}
 	@$(ECHO) "Warning: consider configuring with no-makedepend, because if"
 	@$(ECHO) "         target system doesn't have $(PERL),"
 	@$(ECHO) "         then make will fail..."
-	@rem {- output_on() if $disabled{makedepend}; "" -}
+	@{- output_on() if $disabled{makedepend}; "" -}
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
-	@rem {- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "" -}
 	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
@@ -338,17 +338,17 @@ test: tests
 	set OPENSSL_ENGINES=$(MAKEDIR)\engines
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
-	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
-	@rem {- output_on() if !$disabled{tests}; "" -}
+	@{- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
-	@rem {- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "" -}
 	@set SRCTOP=$(SRCDIR)
 	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
-	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
-	@rem {- output_on() if !$disabled{tests}; "" -}
+	@{- output_on() if !$disabled{tests}; "" -}
 
 install: install_sw install_ssldirs install_docs
 
@@ -375,9 +375,9 @@ distclean: clean
 	-del /Q /F makefile
 
 depend:
-	@ rem {- output_off() if $disabled{makedepend}; "" -}
+	@ {- output_off() if $disabled{makedepend}; "" -}
 	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "VC"
-	@ rem {- output_on() if $disabled{makedepend}; "" -}
+	@ {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
 
@@ -410,10 +410,10 @@ install_dev:
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing development files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
-	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
+	@{- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
 				       "$(INSTALLTOP)\include\openssl"
-	@rem {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
+	@{- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "-exclude_re=/__DECC_" \
 				       "$(SRCDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
@@ -742,8 +742,6 @@ EOF
               foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
                   if (dirname($prod) eq $dir) {
                       push @deps, $prod.$extinfo{$type};
-                  } else {
-                      push @actions, "\t@rem No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
                   }
               }
           }
