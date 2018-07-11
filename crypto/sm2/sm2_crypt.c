@@ -95,7 +95,7 @@ int sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     if (field_size == 0 || md_size < 0)
         return 0;
 
-    *ct_size = 10 + 2 * field_size + (size_t)md_size + msg_len;
+    *ct_size = 12 + 2 * field_size + (size_t)md_size + msg_len;
     return 1;
 }
 
