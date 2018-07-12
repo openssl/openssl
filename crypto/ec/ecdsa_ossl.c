@@ -10,9 +10,8 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
-#include <openssl/bn.h>
 #include <openssl/rand.h>
-#include <openssl/ec.h>
+#include "internal/bn_int.h"
 #include "ec_lcl.h"
 
 int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
@@ -202,7 +201,7 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
                                EC_KEY *eckey)
 {
     int ok = 0, i;
-    BIGNUM *kinv = NULL, *s, *m = NULL, *tmp = NULL;
+    BIGNUM *kinv = NULL, *s, *m = NULL;
     const BIGNUM *order, *ckinv;
     BN_CTX *ctx = NULL;
     const EC_GROUP *group;
@@ -235,8 +234,8 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     s = ret->s;
 
-    if ((ctx = BN_CTX_new()) == NULL ||
-        (tmp = BN_new()) == NULL || (m = BN_new()) == NULL) {
+    if ((ctx = BN_CTX_new()) == NULL
+        || (m = BN_new()) == NULL) {
         ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -272,18 +271,32 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
             }
         }
 
-        if (!BN_mod_mul(tmp, priv_key, ret->r, order, ctx)) {
+        /*
+         * With only one multiplicant being in Montgomery domain
+         * multiplication yields real result without post-conversion.
+         * Also note that all operations but last are performed with
+         * zero-padded vectors. Last operation, BN_mod_mul_montgomery
+         * below, returns user-visible value with removed zero padding.
+         */
+        if (!bn_to_mont_fixed_top(s, ret->r, group->mont_data, ctx)
+            || !bn_mul_mont_fixed_top(s, s, priv_key, group->mont_data, ctx)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
-        if (!BN_mod_add_quick(s, tmp, m, order)) {
+        if (!bn_mod_add_fixed_top(s, s, m, order)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
-        if (!BN_mod_mul(s, s, ckinv, order, ctx)) {
+        /*
+         * |s| can still be larger than modulus, because |m| can be. In
+         * such case we count on Montgomery reduction to tie it up.
+         */
+        if (!bn_to_mont_fixed_top(s, s, group->mont_data, ctx)
+            || !BN_mod_mul_montgomery(s, s, ckinv, group->mont_data, ctx)) {
             ECerr(EC_F_OSSL_ECDSA_SIGN_SIG, ERR_R_BN_LIB);
             goto err;
         }
+
         if (BN_is_zero(s)) {
             /*
              * if kinv and r have been supplied by the caller don't to
@@ -307,7 +320,6 @@ ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     }
     BN_CTX_free(ctx);
     BN_clear_free(m);
-    BN_clear_free(tmp);
     BN_clear_free(kinv);
     return ret;
 }
