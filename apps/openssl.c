@@ -316,6 +316,37 @@ static void list_missing_help(void)
     }
 }
 
+static void list_objects(void)
+{
+    int max_nid = OBJ_new_nid(0);
+    int i;
+
+    /* Skip 0, since that's NID_undef */
+    for (i = 1; i < max_nid; i++) {
+        const ASN1_OBJECT *obj = OBJ_nid2obj(i);
+        char oid_buf[128];       /* I dare you to find such a long OID */
+        const char *sn = OBJ_nid2sn(i);
+        const char *ln = OBJ_nid2ln(i);
+
+        /*
+         * If one of the retrieved objects somehow generated an error,
+         * we ignore it.  The check for NID_undef below will detect the
+         * error and simply skip to the next NID.
+         */
+        ERR_clear_error();
+
+        if (OBJ_obj2nid(obj) == NID_undef)
+            continue;
+
+        if (OBJ_obj2txt(oid_buf, sizeof(oid_buf), obj, 1) == 0)
+            BIO_printf(bio_out, "# None-OID object: %s, %s\n", sn, ln);
+        else if (ln == NULL || strcmp(sn, ln) == 0)
+            BIO_printf(bio_out, "%s = %s\n", sn, oid_buf);
+        else
+            BIO_printf(bio_out, "%s = %s, %s\n", sn, ln, oid_buf);
+    }
+}
+
 static void list_options_for_command(const char *command)
 {
     const FUNCTION *fp;
@@ -348,7 +379,8 @@ typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED, OPT_MISSING_HELP
+    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED, OPT_MISSING_HELP,
+    OPT_OBJECTS
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -372,6 +404,8 @@ const OPTIONS list_options[] = {
      "List missing detailed help strings"},
     {"options", OPT_OPTIONS, 's',
      "List options for specified command"},
+    {"objects", OPT_OBJECTS, '-',
+     "List built in objects (OID<->name mappings)"},
     {NULL}
 };
 
@@ -421,6 +455,9 @@ opthelp:
             break;
         case OPT_MISSING_HELP:
             list_missing_help();
+            break;
+        case OPT_OBJECTS:
+            list_objects();
             break;
         case OPT_OPTIONS:
             list_options_for_command(opt_arg());
