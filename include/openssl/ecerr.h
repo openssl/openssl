@@ -183,12 +183,6 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
-#  define EC_F_PKEY_SM2_CTRL                               284
-#  define EC_F_PKEY_SM2_CTRL_STR                           285
-#  define EC_F_PKEY_SM2_INIT                               287
-#  define EC_F_PKEY_SM2_KEYGEN                             288
-#  define EC_F_PKEY_SM2_PARAMGEN                           289
-#  define EC_F_PKEY_SM2_SIGN                               290
 #  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*
