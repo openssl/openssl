@@ -16,7 +16,7 @@ static char *privkey1 = NULL;
 static char *cert2 = NULL;
 static char *privkey2 = NULL;
 
-struct {
+static struct {
     char *cipher;
     int expected_prot;
     int certnum;
