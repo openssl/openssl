@@ -107,7 +107,9 @@
      }
      $OUT .= obj2lib(lib => $lib,
                      objs => [ map { (my $x = $_) =~ s|\.o$||; $x }
-                               @{$unified_info{sources}->{$lib}} ]);
+                               (@{$unified_info{sources}->{$lib}},
+                                $disabled{shared} || $config{target} !~ /^mingw/
+                                ? () : @{$unified_info{shared_sources}->{$lib}}) ]);
      foreach (@{$unified_info{sources}->{$lib}}) {
          doobj($_, $lib, intent => "lib");
      }
