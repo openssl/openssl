@@ -1519,9 +1519,50 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
         return 0;
+
     /* See if public key algorithm allowed */
     if (ssl_cert_is_disabled(lu->sig_idx))
         return 0;
+
+    if (lu->sig == NID_id_GostR3410_2012_256
+            || lu->sig == NID_id_GostR3410_2012_512
+            || lu->sig == NID_id_GostR3410_2001) {
+        /* We never allow GOST sig algs on the server with TLSv1.3 */
+        if (s->server && SSL_IS_TLS13(s))
+            return 0;
+        if (!s->server
+                && s->method->version == TLS_ANY_VERSION
+                && s->s3->tmp.max_ver >= TLS1_3_VERSION) {
+            int i, num;
+            STACK_OF(SSL_CIPHER) *sk;
+
+            /*
+             * We're a client that could negotiate TLSv1.3. We only allow GOST
+             * sig algs if we could negotiate TLSv1.2 or below and we have GOST
+             * ciphersuites enabled.
+             */
+
+            if (s->s3->tmp.min_ver >= TLS1_3_VERSION)
+                return 0;
+
+            sk = SSL_get_ciphers(s);
+            num = sk != NULL ? sk_SSL_CIPHER_num(sk) : 0;
+            for (i = 0; i < num; i++) {
+                const SSL_CIPHER *c;
+
+                c = sk_SSL_CIPHER_value(sk, i);
+                /* Skip disabled ciphers */
+                if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+                    continue;
+
+                if ((c->algorithm_mkey & SSL_kGOST) != 0)
+                    break;
+            }
+            if (i == num)
+                return 0;
+        }
+    }
+
     if (lu->hash == NID_undef)
         return 1;
     /* Security bits: half digest bits */

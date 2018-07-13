@@ -1119,7 +1119,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
 
     if (sess == NULL
-            || !ssl_version_supported(s, sess->ssl_version)
+            || !ssl_version_supported(s, sess->ssl_version, NULL)
             || !SSL_SESSION_is_resumable(sess)) {
         if (s->hello_retry_request == SSL_HRR_NONE
                 && !ssl_get_new_session(s, 0)) {
