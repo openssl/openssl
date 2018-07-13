@@ -195,7 +195,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     cardinality_bits = BN_num_bits(cardinality);
     group_top = bn_get_top(cardinality);
     if ((bn_wexpand(k, group_top + 1) == NULL)
-            || (bn_wexpand(lambda, group_top + 1) == NULL)) {
+        || (bn_wexpand(lambda, group_top + 1) == NULL)) {
         ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_BN_LIB);
         goto err;
     }
