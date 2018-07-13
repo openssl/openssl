@@ -15,6 +15,14 @@
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)
 
+# ifdef OPENSSL_USE_APPLINK
+int CRYPTO_THREAD_register_stop_function(DWORD key, void (*cleanup)(void *));
+void CRYPTO_THREAD_unregister_stop_function(DWORD key);
+# else
+#define CRYPTO_THREAD_register_stop_function(key, cleanup)
+#define CRYPTO_THREAD_unregister_stop_function(key)
+# endif
+
 CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
 {
     CRYPTO_RWLOCK *lock;
@@ -96,6 +104,8 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
     if (*key == TLS_OUT_OF_INDEXES)
         return 0;
 
+    CRYPTO_THREAD_register_stop_function(*key, cleanup);
+
     return 1;
 }
 
@@ -133,6 +143,8 @@ int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)
 
 int CRYPTO_THREAD_cleanup_local(CRYPTO_THREAD_LOCAL *key)
 {
+    CRYPTO_THREAD_unregister_stop_function(*key);
+
     if (TlsFree(*key) == 0)
         return 0;
 
