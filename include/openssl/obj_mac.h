@@ -5113,14 +5113,29 @@
 #define OBJ_uacurve9            OBJ_dstu4145le,2L,9L
 
 #define SN_Microsoft            "Microsoft"
-#define NID_Microsoft           1174
+#define NID_Microsoft           1173
 #define OBJ_Microsoft           OBJ_identified_organization,6L,1L,4L,1L,311L
 
 #define SN_MSRPQC               "MSRPQC"
-#define NID_MSRPQC              1175
+#define NID_MSRPQC              1174
 #define OBJ_MSRPQC              OBJ_Microsoft,89L,2L
 
 #define SN_picnicL1FS           "picnicL1FS"
 #define LN_picnicL1FS           "Picnic L1 FS"
-#define NID_picnicL1FS          1173
+#define NID_picnicL1FS          1175
 #define OBJ_picnicL1FS          OBJ_MSRPQC,1L,1L
+
+#define SN_qTESLA_I             "qteslaI"
+#define LN_qTESLA_I             "qTESLA-I"
+#define NID_qTESLA_I            1179
+#define OBJ_qTESLA_I            OBJ_MSRPQC,2L,1L
+
+#define SN_qTESLA_III_size              "qteslaIIIsize"
+#define LN_qTESLA_III_size              "qTESLA-III-size"
+#define NID_qTESLA_III_size             1180
+#define OBJ_qTESLA_III_size             OBJ_MSRPQC,2L,2L
+
+#define SN_qTESLA_III_speed             "qteslaIIIspeed"
+#define LN_qTESLA_III_speed             "qTESLA-III-speed"
+#define NID_qTESLA_III_speed            1181
+#define OBJ_qTESLA_III_speed            OBJ_MSRPQC,2L,3L

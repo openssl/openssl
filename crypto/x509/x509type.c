@@ -45,6 +45,9 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
     case EVP_PKEY_ED25519:
     /* OQS schemes */
     case EVP_PKEY_PICNICL1FS:
+    case EVP_PKEY_QTESLAI:
+    case EVP_PKEY_QTESLAIIISIZE:
+    case EVP_PKEY_QTESLAIIISPEED:
     /* ADD_MORE_OQS_SIG_HERE */
         ret = EVP_PKT_SIGN;
         break;

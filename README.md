@@ -31,6 +31,9 @@ This project integrates post-quantum key exchange from liboqs in TLS 1.3 in Open
 
 Currently, only Frodo, Sike503, Sike751, Newhope, and NTRU are supported. Others will be added when OQS is updated.
 
+### Authentication mechanisms
+
+Currently, only picnicL1FS, qteslaI, qteslaIIIsize, qteslaIIIspeed are supported. Others will be added when OQS is updated.
 
 Building on Linux and macOS
 ---------------------------
@@ -83,7 +86,7 @@ See the [liboqs Github site](https://github.com/open-quantum-safe/liboqs/) for i
 
 OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
 
-To run a server, we first need to generate a self-signed X.509 certificate, using either a classical or post-quantum algorithm (currently, only "picnicl1fs" is supported). Run the following command, with <SIGALG> = rsa, picnicl1fs):
+To run a server, we first need to generate a self-signed X.509 certificate, using either a classical or post-quantum algorithm. Run the following command, with <SIGALG> = rsa, picnicl1fs, qteslaI, qteslaIIIsize, qteslaIIIspeed):
 
 	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
 	

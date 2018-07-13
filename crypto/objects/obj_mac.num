@@ -1170,6 +1170,12 @@ uacurve9		1169
 ieee		1170
 ieee_siswg		1171
 sm2		1172
-picnicL1FS		1173
-Microsoft		1174
-MSRPQC		1175
+Microsoft		1173
+MSRPQC		1174
+picnicL1FS		1175
+qteslaI		1176
+qteslaIIIsize		1177
+qteslaIIIspeed		1178
+qTESLA_I		1179
+qTESLA_III_size		1180
+qTESLA_III_speed		1181

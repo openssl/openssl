@@ -66,6 +66,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #endif
     /* OQS schemes */
     &picnicL1FS_pkey_meth,
+    &qteslaI_pkey_meth,
+    &qteslaIIIsize_pkey_meth,
+    &qteslaIIIspeed_pkey_meth,
     /* ADD_MORE_OQS_SIG_HERE */
 };
 
