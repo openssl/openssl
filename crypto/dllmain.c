@@ -73,7 +73,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         LeaveCriticalSection(&csThreadStop);
         break;
     case DLL_PROCESS_DETACH:
-        DeleteCriticalSection(&csThreadStop);
+        /* BUG: We cannot call DeleteCriticalSection(&csThreadStop); */
         break;
     }
     return TRUE;
