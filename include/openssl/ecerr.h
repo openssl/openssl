@@ -64,6 +64,8 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY           208
 #  define EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT     159
 #  define EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE              195
+#  define EC_F_EC_GF2M_SIMPLE_LADDER_POST                  285
+#  define EC_F_EC_GF2M_SIMPLE_LADDER_PRE                   288
 #  define EC_F_EC_GF2M_SIMPLE_OCT2POINT                    160
 #  define EC_F_EC_GF2M_SIMPLE_POINT2OCT                    161
 #  define EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES 162
