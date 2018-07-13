@@ -24,34 +24,55 @@
  * detaches
  */
 
+static CRITICAL_SECTION csThreadStop;
+static DWORD stop_key;
+static void (*stop_fun)(void *);
+
+int CRYPTO_THREAD_register_stop_function(DWORD key, void (*cleanup)(void *))
+{
+    if (cleanup == NULL)
+        return 1;
+
+    EnterCriticalSection(&csThreadStop);
+    if (stop_fun != NULL) {
+        /* We handle only one stop function. */
+        LeaveCriticalSection(&csThreadStop);
+        return 0;
+    }
+
+    stop_key = key;
+    stop_fun = cleanup;
+    LeaveCriticalSection(&csThreadStop);
+    return 1;
+}
+
+void CRYPTO_THREAD_unregister_stop_function(DWORD key)
+{
+    EnterCriticalSection(&csThreadStop);
+    if (key == stop_key) {
+        stop_key = 0;
+        stop_fun = NULL;
+    }
+    LeaveCriticalSection(&csThreadStop);
+}
+
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved);
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
     switch (fdwReason) {
     case DLL_PROCESS_ATTACH:
-        OPENSSL_cpuid_setup();
-# if defined(_WIN32_WINNT)
-        {
-            IMAGE_DOS_HEADER *dos_header = (IMAGE_DOS_HEADER *) hinstDLL;
-            IMAGE_NT_HEADERS *nt_headers;
-
-            if (dos_header->e_magic == IMAGE_DOS_SIGNATURE) {
-                nt_headers = (IMAGE_NT_HEADERS *) ((char *)dos_header
-                                                   + dos_header->e_lfanew);
-                if (nt_headers->Signature == IMAGE_NT_SIGNATURE &&
-                    hinstDLL !=
-                    (HINSTANCE) (nt_headers->OptionalHeader.ImageBase))
-                    OPENSSL_NONPIC_relocated = 1;
-            }
-        }
-# endif
+        InitializeCriticalSection(&csThreadStop);
         break;
     case DLL_THREAD_ATTACH:
         break;
     case DLL_THREAD_DETACH:
-        OPENSSL_thread_stop();
+        EnterCriticalSection(&csThreadStop);
+        if (stop_fun != NULL)
+            (*stop_fun)(TlsGetValue(stop_key));
+        LeaveCriticalSection(&csThreadStop);
         break;
     case DLL_PROCESS_DETACH:
+        /* BUG: We cannot call DeleteCriticalSection(&csThreadStop); */
         break;
     }
     return (TRUE);
