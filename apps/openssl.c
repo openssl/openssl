@@ -320,13 +320,15 @@ static void list_objects(void)
 {
     int max_nid = OBJ_new_nid(0);
     int i;
+    char *oid_buf = NULL;
+    int oid_size = 0;
 
     /* Skip 0, since that's NID_undef */
     for (i = 1; i < max_nid; i++) {
         const ASN1_OBJECT *obj = OBJ_nid2obj(i);
-        char oid_buf[128];       /* I dare you to find such a long OID */
         const char *sn = OBJ_nid2sn(i);
         const char *ln = OBJ_nid2ln(i);
+        int n = 0;
 
         /*
          * If one of the retrieved objects somehow generated an error,
@@ -338,13 +340,30 @@ static void list_objects(void)
         if (OBJ_obj2nid(obj) == NID_undef)
             continue;
 
-        if (OBJ_obj2txt(oid_buf, sizeof(oid_buf), obj, 1) == 0)
+        if ((n = OBJ_obj2txt(NULL, 0, obj, 1)) == 0) {
             BIO_printf(bio_out, "# None-OID object: %s, %s\n", sn, ln);
-        else if (ln == NULL || strcmp(sn, ln) == 0)
+            continue;
+        }
+        if (n < 0)
+            break;               /* Error */
+
+        if (n > oid_size) {
+            oid_buf = OPENSSL_realloc(oid_buf, n + 1);
+            if (oid_buf == NULL) {
+                BIO_printf(bio_err, "ERROR: Memory allocation\n");
+                break;           /* Error */
+            }
+            oid_size = n + 1;
+        }
+        if (OBJ_obj2txt(oid_buf, oid_size, obj, 1) < 0)
+            break;               /* Error */
+        if (ln == NULL || strcmp(sn, ln) == 0)
             BIO_printf(bio_out, "%s = %s\n", sn, oid_buf);
         else
             BIO_printf(bio_out, "%s = %s, %s\n", sn, ln, oid_buf);
     }
+
+    OPENSSL_free(oid_buf);
 }
 
 static void list_options_for_command(const char *command)
