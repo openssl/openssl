@@ -9,6 +9,12 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Use the new ec_scalar_mul_ladder scaffold to implement a specialized ladder
+     step for binary curves. The new implementation is based on formulas from
+     differential addition-and-doubling in mixed Lopez-Dahab projective
+     coordinates, modified to independently blind the operands.
+     [Billy Bob Brumley, Sohaib ul Hassan, Nicola Tuveri]
+
   *) Add a scaffold to optionally enhance the Montgomery ladder implementation
      for `ec_scalar_mul_ladder` (formerly `ec_mul_consttime`) allowing
      EC_METHODs to implement their own specialized "ladder step", to take
