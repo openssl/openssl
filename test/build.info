@@ -50,7 +50,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest
+          sysdefaulttest errtest gosttest
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -537,6 +537,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[errtest]=errtest.c
   INCLUDE[errtest]=../include
   DEPEND[errtest]=../libcrypto libtestutil.a
+
+  SOURCE[gosttest]=gosttest.c ssltestlib.c
+  INCLUDE[gosttest]=../include ..
+  DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
 ENDIF
 
 {-
