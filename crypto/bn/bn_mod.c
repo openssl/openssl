@@ -35,7 +35,7 @@ int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 
 /*
  * BN_mod_add variant that may be used if both a and b are non-negative and
- * less than m. The original alogrihm is
+ * less than m. The original algorithm was
  *
  *    if (!BN_uadd(r, a, b))
  *       return 0;
