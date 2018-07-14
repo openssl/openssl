@@ -151,7 +151,6 @@
  * all operations manipulating the bit in question in non-BN_DEBUG build.
  */
 #  define BN_FLG_FIXED_TOP 0x10000
-#  include <assert.h>
 #  ifdef BN_DEBUG_RAND
 #   define bn_pollute(a) \
         do { \
@@ -175,10 +174,10 @@
         do { \
                 const BIGNUM *_bnum2 = (a); \
                 if (_bnum2 != NULL) { \
-                        int top = _bnum2->top; \
-                        assert((top == 0 && !_bnum2->neg) || \
-                               (top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
-                                        || _bnum2->d[top - 1] != 0))); \
+                        int _top = _bnum2->top; \
+                        (void)ossl_assert((_top == 0 && !_bnum2->neg) || \
+                                  (_top && ((_bnum2->flags & BN_FLG_FIXED_TOP) \
+                                            || _bnum2->d[_top - 1] != 0))); \
                         bn_pollute(_bnum2); \
                 } \
         } while(0)
