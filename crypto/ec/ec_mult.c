@@ -121,6 +121,9 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  * `scalar` cannot be NULL and should be in the range [0,n) otherwise all
  * constant time bets are off (where n is the cardinality of the EC group).
  *
+ * This function expects `group->order` and `group->cardinality` to be well
+ * defined and non-zero: it fails with an error code otherwise.
+ *
  * NB: This says nothing about the constant-timeness of the ladder step
  * implementation (i.e., the default implementation is based on EC_POINT_add and
  * EC_POINT_dbl, which of course are not constant time themselves) or the
@@ -148,6 +151,15 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     /* early exit if the input point is the point at infinity */
     if (point != NULL && EC_POINT_is_at_infinity(group, point))
         return EC_POINT_set_to_infinity(group, r);
+
+    if (BN_is_zero(group->order)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_UNKNOWN_ORDER);
+        return 0;
+    }
+    if (BN_is_zero(group->cofactor)) {
+        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_UNKNOWN_COFACTOR);
+        return 0;
+    }
 
     BN_CTX_start(ctx);
 

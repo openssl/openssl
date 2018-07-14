@@ -660,6 +660,9 @@ void X25519_public_from_private(uint8_t out_public_value[32],
  * `scalar` cannot be NULL and should be in the range [0,n) otherwise all
  * constant time bets are off (where n is the cardinality of the EC group).
  *
+ * This function expects `group->order` and `group->cardinality` to be well
+ * defined and non-zero: it fails with an error code otherwise.
+ *
  * NB: This says nothing about the constant-timeness of the ladder step
  * implementation (i.e., the default implementation is based on EC_POINT_add and
  * EC_POINT_dbl, which of course are not constant time themselves) or the

@@ -2159,6 +2159,7 @@ EC_R_SHARED_INFO_ERROR:150:shared info error
 EC_R_SLOT_FULL:108:slot full
 EC_R_UNDEFINED_GENERATOR:113:undefined generator
 EC_R_UNDEFINED_ORDER:128:undefined order
+EC_R_UNKNOWN_COFACTOR:164:unknown cofactor
 EC_R_UNKNOWN_GROUP:129:unknown group
 EC_R_UNKNOWN_ORDER:114:unknown order
 EC_R_UNSUPPORTED_FIELD:131:unsupported field
