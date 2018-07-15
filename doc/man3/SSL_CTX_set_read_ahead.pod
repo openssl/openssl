@@ -44,7 +44,7 @@ B<read_ahead> can impact the behaviour of the SSL_pending() function
 Since SSL_read() can return B<SSL_ERROR_WANT_READ> for non-application data
 records, and SSL_has_pending() can't tell the difference between processed and
 unprocessed data, it's recommended that if read ahead is turned on that
-B<SSL_MODE_AUTO_RETRY> is also turned on using SSL_CTX_set_mode().
+B<SSL_MODE_AUTO_RETRY> is not turned off using SSL_CTX_clear_mode().
 That will prevent getting B<SSL_ERROR_WANT_READ> when there is still a complete
 record availale that hasn't been processed.
 

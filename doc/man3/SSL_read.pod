@@ -57,8 +57,8 @@ of the underlying transport (e.g. TCP), it may be necessary to read several
 packets from the transport layer before the record is complete and the read call
 can succeed.
 
-If B<SSL_MODE_AUTO_RETRY> is not set and a non-application data record has been
-processed, the read function can return and set the error to
+If B<SSL_MODE_AUTO_RETRY> has been switched off and a non-application data
+record has been processed, the read function can return and set the error to
 B<SSL_ERROR_WANT_READ>.
 In this case there might still be unprocessed data available in the B<BIO>.
 If read ahead was set using L<SSL_CTX_set_read_ahead(3)>, there might also still
