@@ -73,6 +73,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     ctx = SSL_CTX_new(SSLv23_method());
 
     client = SSL_new(ctx);
+    OPENSSL_assert(SSL_set_min_proto_version(client, 0) == 1);
     OPENSSL_assert(SSL_set_cipher_list(client, "ALL:eNULL:@SECLEVEL=0") == 1);
     SSL_set_tlsext_host_name(client, "localhost");
     in = BIO_new(BIO_s_mem());
