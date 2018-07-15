@@ -64,8 +64,11 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY           208
 #  define EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT     159
 #  define EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE              195
+#  define EC_F_EC_GF2M_SIMPLE_LADDER_POST                  285
+#  define EC_F_EC_GF2M_SIMPLE_LADDER_PRE                   288
 #  define EC_F_EC_GF2M_SIMPLE_OCT2POINT                    160
 #  define EC_F_EC_GF2M_SIMPLE_POINT2OCT                    161
+#  define EC_F_EC_GF2M_SIMPLE_POINTS_MUL                   289
 #  define EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES 162
 #  define EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES 163
 #  define EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES   164
@@ -133,6 +136,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_PKEY_CHECK                               273
 #  define EC_F_EC_PKEY_PARAM_CHECK                         274
 #  define EC_F_EC_POINTS_MAKE_AFFINE                       136
+#  define EC_F_EC_POINTS_MUL                               290
 #  define EC_F_EC_POINT_ADD                                112
 #  define EC_F_EC_POINT_BN2POINT                           280
 #  define EC_F_EC_POINT_CMP                                113
@@ -156,6 +160,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP    126
 #  define EC_F_EC_POINT_SET_TO_INFINITY                    127
 #  define EC_F_EC_PRE_COMP_NEW                             196
+#  define EC_F_EC_SCALAR_MUL_LADDER                        284
 #  define EC_F_EC_WNAF_MUL                                 187
 #  define EC_F_EC_WNAF_PRECOMPUTE_MULT                     188
 #  define EC_F_I2D_ECPARAMETERS                            190
@@ -183,12 +188,6 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
-#  define EC_F_PKEY_SM2_CTRL                               284
-#  define EC_F_PKEY_SM2_CTRL_STR                           285
-#  define EC_F_PKEY_SM2_INIT                               287
-#  define EC_F_PKEY_SM2_KEYGEN                             288
-#  define EC_F_PKEY_SM2_PARAMGEN                           289
-#  define EC_F_PKEY_SM2_SIGN                               290
 #  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*
@@ -228,6 +227,9 @@ int ERR_load_EC_strings(void);
 #  define EC_R_INVALID_TRINOMIAL_BASIS                     137
 #  define EC_R_KDF_PARAMETER_ERROR                         148
 #  define EC_R_KEYS_NOT_SET                                140
+#  define EC_R_LADDER_POST_FAILURE                         136
+#  define EC_R_LADDER_PRE_FAILURE                          153
+#  define EC_R_LADDER_STEP_FAILURE                         162
 #  define EC_R_MISSING_PARAMETERS                          124
 #  define EC_R_MISSING_PRIVATE_KEY                         125
 #  define EC_R_NEED_NEW_SETUP_VALUES                       157
@@ -242,12 +244,14 @@ int ERR_load_EC_strings(void);
 #  define EC_R_PKPARAMETERS2GROUP_FAILURE                  127
 #  define EC_R_POINT_ARITHMETIC_FAILURE                    155
 #  define EC_R_POINT_AT_INFINITY                           106
+#  define EC_R_POINT_COORDINATES_BLIND_FAILURE             163
 #  define EC_R_POINT_IS_NOT_ON_CURVE                       107
 #  define EC_R_RANDOM_NUMBER_GENERATION_FAILED             158
 #  define EC_R_SHARED_INFO_ERROR                           150
 #  define EC_R_SLOT_FULL                                   108
 #  define EC_R_UNDEFINED_GENERATOR                         113
 #  define EC_R_UNDEFINED_ORDER                             128
+#  define EC_R_UNKNOWN_COFACTOR                            164
 #  define EC_R_UNKNOWN_GROUP                               129
 #  define EC_R_UNKNOWN_ORDER                               114
 #  define EC_R_UNSUPPORTED_FIELD                           131

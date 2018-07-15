@@ -919,11 +919,38 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                   size_t num, const EC_POINT *points[],
                   const BIGNUM *scalars[], BN_CTX *ctx)
 {
-    if (group->meth->mul == 0)
-        /* use default */
-        return ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+    int ret = 0;
+    size_t i = 0;
+    BN_CTX *new_ctx = NULL;
 
-    return group->meth->mul(group, r, scalar, num, points, scalars, ctx);
+    if ((scalar == NULL) && (num == 0)) {
+        return EC_POINT_set_to_infinity(group, r);
+    }
+
+    if (!ec_point_is_compat(r, group)) {
+        ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
+    for (i = 0; i < num; i++) {
+        if (!ec_point_is_compat(points[i], group)) {
+            ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+            return 0;
+        }
+    }
+
+    if (ctx == NULL && (ctx = new_ctx = BN_CTX_secure_new()) == NULL) {
+        ECerr(EC_F_EC_POINTS_MUL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (group->meth->mul != NULL)
+        ret = group->meth->mul(group, r, scalar, num, points, scalars, ctx);
+    else
+        /* use default */
+        ret = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
+
+    BN_CTX_free(new_ctx);
+    return ret;
 }
 
 int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,

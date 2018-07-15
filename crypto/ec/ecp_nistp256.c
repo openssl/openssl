@@ -1821,7 +1821,12 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
         ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
-        ecdh_simple_compute_key
+        ecdh_simple_compute_key,
+        0, /* field_inverse_mod_ord */
+        0, /* blind_coordinates */
+        0, /* ladder_pre */
+        0, /* ladder_step */
+        0  /* ladder_post */
     };
 
     return &ret;
@@ -2013,7 +2018,6 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
     int ret = 0;
     int j;
     int mixed = 0;
-    BN_CTX *new_ctx = NULL;
     BIGNUM *x, *y, *z, *tmp_scalar;
     felem_bytearray g_secret;
     felem_bytearray *secrets = NULL;
@@ -2031,9 +2035,6 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
     const EC_POINT *p = NULL;
     const BIGNUM *p_scalar = NULL;
 
-    if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-            return 0;
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
@@ -2202,7 +2203,6 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-    BN_CTX_free(new_ctx);
     OPENSSL_free(secrets);
     OPENSSL_free(pre_comp);
     OPENSSL_free(tmp_smallfelems);

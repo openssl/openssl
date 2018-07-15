@@ -521,8 +521,11 @@ EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY:208:ec_GF2m_montgomery_point_multiply
 EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT:159:\
 	ec_GF2m_simple_group_check_discriminant
 EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE:195:ec_GF2m_simple_group_set_curve
+EC_F_EC_GF2M_SIMPLE_LADDER_POST:285:ec_GF2m_simple_ladder_post
+EC_F_EC_GF2M_SIMPLE_LADDER_PRE:288:ec_GF2m_simple_ladder_pre
 EC_F_EC_GF2M_SIMPLE_OCT2POINT:160:ec_GF2m_simple_oct2point
 EC_F_EC_GF2M_SIMPLE_POINT2OCT:161:ec_GF2m_simple_point2oct
+EC_F_EC_GF2M_SIMPLE_POINTS_MUL:289:ec_GF2m_simple_points_mul
 EC_F_EC_GF2M_SIMPLE_POINT_GET_AFFINE_COORDINATES:162:\
 	ec_GF2m_simple_point_get_affine_coordinates
 EC_F_EC_GF2M_SIMPLE_POINT_SET_AFFINE_COORDINATES:163:\
@@ -601,6 +604,7 @@ EC_F_EC_KEY_SIMPLE_PRIV2OCT:260:ec_key_simple_priv2oct
 EC_F_EC_PKEY_CHECK:273:ec_pkey_check
 EC_F_EC_PKEY_PARAM_CHECK:274:ec_pkey_param_check
 EC_F_EC_POINTS_MAKE_AFFINE:136:EC_POINTs_make_affine
+EC_F_EC_POINTS_MUL:290:EC_POINTs_mul
 EC_F_EC_POINT_ADD:112:EC_POINT_add
 EC_F_EC_POINT_BN2POINT:280:EC_POINT_bn2point
 EC_F_EC_POINT_CMP:113:EC_POINT_cmp
@@ -630,6 +634,7 @@ EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP:126:\
 	EC_POINT_set_Jprojective_coordinates_GFp
 EC_F_EC_POINT_SET_TO_INFINITY:127:EC_POINT_set_to_infinity
 EC_F_EC_PRE_COMP_NEW:196:ec_pre_comp_new
+EC_F_EC_SCALAR_MUL_LADDER:284:ec_scalar_mul_ladder
 EC_F_EC_WNAF_MUL:187:ec_wNAF_mul
 EC_F_EC_WNAF_PRECOMPUTE_MULT:188:ec_wNAF_precompute_mult
 EC_F_I2D_ECPARAMETERS:190:i2d_ECParameters
@@ -2130,6 +2135,9 @@ EC_R_INVALID_PRIVATE_KEY:123:invalid private key
 EC_R_INVALID_TRINOMIAL_BASIS:137:invalid trinomial basis
 EC_R_KDF_PARAMETER_ERROR:148:kdf parameter error
 EC_R_KEYS_NOT_SET:140:keys not set
+EC_R_LADDER_POST_FAILURE:136:ladder post failure
+EC_R_LADDER_PRE_FAILURE:153:ladder pre failure
+EC_R_LADDER_STEP_FAILURE:162:ladder step failure
 EC_R_MISSING_PARAMETERS:124:missing parameters
 EC_R_MISSING_PRIVATE_KEY:125:missing private key
 EC_R_NEED_NEW_SETUP_VALUES:157:need new setup values
@@ -2144,12 +2152,14 @@ EC_R_PEER_KEY_ERROR:149:peer key error
 EC_R_PKPARAMETERS2GROUP_FAILURE:127:pkparameters2group failure
 EC_R_POINT_ARITHMETIC_FAILURE:155:point arithmetic failure
 EC_R_POINT_AT_INFINITY:106:point at infinity
+EC_R_POINT_COORDINATES_BLIND_FAILURE:163:point coordinates blind failure
 EC_R_POINT_IS_NOT_ON_CURVE:107:point is not on curve
 EC_R_RANDOM_NUMBER_GENERATION_FAILED:158:random number generation failed
 EC_R_SHARED_INFO_ERROR:150:shared info error
 EC_R_SLOT_FULL:108:slot full
 EC_R_UNDEFINED_GENERATOR:113:undefined generator
 EC_R_UNDEFINED_ORDER:128:undefined order
+EC_R_UNKNOWN_COFACTOR:164:unknown cofactor
 EC_R_UNKNOWN_GROUP:129:unknown group
 EC_R_UNKNOWN_ORDER:114:unknown order
 EC_R_UNSUPPORTED_FIELD:131:unsupported field
