@@ -257,7 +257,7 @@ CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
 
 LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $target{lib_cppflags} || (),
-                          $target{shared_cppflag} || (),
+                          $disabled{shared} ? () : $target{shared_cppflags} || (),
                           (map { '-D'.$_ }
                                @{$config{lib_defines}},
                                @{$config{shared_defines}}),

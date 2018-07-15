@@ -15,7 +15,7 @@
 
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && defined(OPENSSL_SYS_WINDOWS)
 
-# ifdef OPENSSL_USE_APPLINK
+# ifdef _WINDLL
 int CRYPTO_THREAD_register_stop_function(DWORD key, void (*cleanup)(void *));
 void CRYPTO_THREAD_unregister_stop_function(DWORD key);
 # else

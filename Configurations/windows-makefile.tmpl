@@ -231,7 +231,7 @@ LIB_ASFLAGS={- join(' ', $target{lib_asflags} || (),
                          '$(CNF_ASFLAGS)', '$(ASFLAGS)') -}
 LIB_CPPFLAGS={- our $lib_cppflags =
                 join(' ', $target{lib_cppflags} || (),
-                          $target{shared_cppflag} || (),
+                          $disabled{shared} ? () : $target{shared_cppflags} || (),
                           (map { '-D'.quotify1($_) }
                                @{$target{lib_defines}},
                                @{$target{shared_defines}},
