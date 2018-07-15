@@ -161,7 +161,8 @@ LD={- $target{ld} || "link" -}
 LDFLAGS={- $target{lflags} -}
 LDOUTFLAG={- $target{loutflag} || "/out:" -}$(OSSL_EMPTY)
 EX_LIBS={- $target{ex_libs} -}
-LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag}) || "" -}
+LIB_CFLAGS={- join(" ", $target{lib_cflags}, $target{shared_cflag},
+                        $disabled{shared} ? "" : $target{shared_cppflags}) || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag} || "" -}
 DSO_CFLAGS={- join(" ", $target{dso_cflags}, $target{shared_cflag}) || "" -}
 DSO_LDFLAGS={- join(" ", $target{dso_lflags}, $target{shared_ldflag}) || "" -}
