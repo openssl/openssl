@@ -179,7 +179,7 @@ CFLAGS_Q={- $cflags2 =~ s|([\\"])|\\$1|g; $cflags2 -} {- $config{cflags} -}
 LDFLAGS= {- $target{lflags} -}
 PLIB_LDFLAGS= {- $target{plib_lflags} -}
 EX_LIBS= {- $target{ex_libs} -} {- $config{ex_libs} -}
-LIB_CFLAGS={- $target{shared_cflag} || "" -}
+LIB_CFLAGS={- join(" ", $target{shared_cflag}, $disabled{shared} ? "" : $target{shared_cppflags}) || "" -}
 LIB_LDFLAGS={- $target{shared_ldflag}." ".$config{shared_ldflag} -}
 DSO_CFLAGS={- $target{shared_cflag} || "" -}
 DSO_LDFLAGS=$(LIB_LDFLAGS)
