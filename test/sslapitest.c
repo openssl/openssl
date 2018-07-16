@@ -1233,11 +1233,92 @@ static int post_handshake_verify(SSL *sssl, SSL *cssl)
     return 1;
 }
 
+static int setup_ticket_text(int stateful, int idx, SSL_CTX **sctx,
+                             SSL_CTX **cctx)
+{
+    int sess_id_ctx = 1;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION, sctx,
+                                       cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_num_tickets(*sctx, idx))
+            || !TEST_true(SSL_CTX_set_session_id_context(*sctx,
+                                                         (void *)&sess_id_ctx,
+                                                         sizeof(sess_id_ctx))))
+        return 0;
+
+    if (stateful)
+        SSL_CTX_set_options(*sctx, SSL_OP_NO_TICKET);
+
+    SSL_CTX_set_session_cache_mode(*cctx, SSL_SESS_CACHE_CLIENT
+                                          | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    SSL_CTX_sess_set_new_cb(*cctx, new_cachesession_cb);
+
+    return 1;
+}
+
+static int check_resumption(int idx, SSL_CTX *sctx, SSL_CTX *cctx, int succ)
+{
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int i;
+
+    /* Test that we can resume with all the tickets we got given */
+    for (i = 0; i < idx * 2; i++) {
+        new_called = 0;
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                              &clientssl, NULL, NULL))
+                || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
+            goto end;
+
+        SSL_force_post_handshake_auth(clientssl);
+
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                    SSL_ERROR_NONE)))
+            goto end;
+
+        /*
+         * Following a successful resumption we only get 1 ticket. After a
+         * failed one we should get idx tickets.
+         */
+        if (succ) {
+            if (!TEST_true(SSL_session_reused(clientssl))
+                    || !TEST_int_eq(new_called, 1))
+                goto end;
+        } else {
+            if (!TEST_false(SSL_session_reused(clientssl))
+                    || !TEST_int_eq(new_called, idx))
+                goto end;
+        }
+
+        new_called = 0;
+        /* After a post-handshake authentication we should get 1 new ticket */
+        if (succ
+                && (!post_handshake_verify(serverssl, clientssl)
+                    || !TEST_int_eq(new_called, 1)))
+            goto end;
+
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+        SSL_SESSION_free(sesscache[i]);
+        sesscache[i] = NULL;
+    }
+
+    return 1;
+
+ end:
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    return 0;
+}
+
 static int test_tickets(int stateful, int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    int testresult = 0, sess_id_ctx = 1, i;
+    int testresult = 0;
     size_t j;
 
     /* idx is the test number, but also the number of tickets we want */
@@ -1245,21 +1326,49 @@ static int test_tickets(int stateful, int idx)
     new_called = 0;
     do_cache = 1;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       TLS1_VERSION, TLS_MAX_VERSION, &sctx,
-                                       &cctx, cert, privkey))
-            || !TEST_true(SSL_CTX_set_num_tickets(sctx, idx))
-            || !TEST_true(SSL_CTX_set_session_id_context(sctx,
-                                                         (void *)&sess_id_ctx,
-                                                         sizeof(sess_id_ctx))))
+    if (!setup_ticket_text(stateful, idx, &sctx, &cctx))
         goto end;
 
-    if (stateful)
-        SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL)))
+        goto end;
 
-    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT
-                                         | SSL_SESS_CACHE_NO_INTERNAL_STORE);
-    SSL_CTX_sess_set_new_cb(cctx, new_cachesession_cb);
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+               /* Check we got the number of tickets we were expecting */
+            || !TEST_int_eq(idx, new_called))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    clientssl = serverssl = NULL;
+    sctx = cctx = NULL;
+
+    /*
+     * Now we try to resume with the tickets we previously created. The
+     * resumption attempt is expected to fail (because we're now using a new
+     * SSL_CTX). We should see idx number of tickets issued again.
+     */
+
+    /* Stop caching sessions - just count them */
+    do_cache = 0;
+
+    if (!setup_ticket_text(stateful, idx, &sctx, &cctx))
+        goto end;
+
+    if (!check_resumption(idx, sctx, cctx, 0))
+        goto end;
+
+    /* Start again with caching sessions */
+    new_called = 0;
+    do_cache = 1;
+
+    if (!setup_ticket_text(stateful, idx, &sctx, &cctx))
+        goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL)))
@@ -1287,37 +1396,12 @@ static int test_tickets(int stateful, int idx)
     /* Stop caching sessions - just count them */
     do_cache = 0;
 
-    /* Test that we can resume with all the tickets we got given */
-    for (i = 0; i < idx * 2; i++) {
-        new_called = 0;
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                              &clientssl, NULL, NULL))
-                || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
-            goto end;
-
-        SSL_force_post_handshake_auth(clientssl);
-
-        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                    SSL_ERROR_NONE))
-                || !TEST_true(SSL_session_reused(clientssl))
-                   /* Following a resumption we only get 1 ticket */
-                || !TEST_int_eq(new_called, 1))
-            goto end;
-
-        new_called = 0;
-        /* After a post-handshake authentication we should get 1 new ticket */
-        if (!post_handshake_verify(serverssl, clientssl)
-                || !TEST_int_eq(new_called, 1))
-            goto end;
-
-        SSL_shutdown(clientssl);
-        SSL_shutdown(serverssl);
-        SSL_free(serverssl);
-        SSL_free(clientssl);
-        serverssl = clientssl = NULL;
-        SSL_SESSION_free(sesscache[i]);
-        sesscache[i] = NULL;
-    }
+    /*
+     * Check we can resume with all the tickets we created. This time around the
+     * resumptions should all be successful.
+     */
+    if (!check_resumption(idx, sctx, cctx, 1))
+        goto end;
 
     testresult = 1;
 
