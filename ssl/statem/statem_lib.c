@@ -1493,7 +1493,12 @@ static int is_tls13_capable(const SSL *s)
 {
     int i;
 
-    if (s->psk_server_callback != NULL || s->psk_find_session_cb != NULL)
+#ifndef OPENSSL_NO_PSK
+    if (s->psk_server_callback != NULL)
+        return 1;
+#endif
+
+    if (s->psk_find_session_cb != NULL)
         return 1;
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {
