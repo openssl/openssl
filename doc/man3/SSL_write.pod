@@ -34,10 +34,7 @@ L<SSL_set_connect_state(3)> or SSL_set_accept_state()
 before the first call to a write function.
 
 If the underlying BIO is B<blocking>, the write functions will only return, once
-the write operation has been finished or an error occurred, except when a
-renegotiation take place, in which case a SSL_ERROR_WANT_READ may occur.
-This behaviour can be controlled with the SSL_MODE_AUTO_RETRY flag of the
-L<SSL_CTX_set_mode(3)> call.
+the write operation has been finished or an error occurred.
 
 If the underlying BIO is B<non-blocking> the write functions will also return
 when the underlying BIO could not satisfy the needs of the function to continue
@@ -65,9 +62,13 @@ write is performed with the size of a message block, which is 16kB.
 When a write function call has to be repeated because L<SSL_get_error(3)>
 returned B<SSL_ERROR_WANT_READ> or B<SSL_ERROR_WANT_WRITE>, it must be repeated
 with the same arguments.
+The data that was passed might have been partially processed.
+When B<SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER> was set using L<SSL_CTX_set_mode(3)>
+the pointer can be different, but the data and length should still be the same.
 
-When calling the write functions with num=0 bytes to be sent the behaviour is
-undefined.
+You should not call SSL_write() with num=0, it will return an error.
+SSL_write_ex() can be called with num=0, but will not send application data to
+the peer.
 
 =head1 RETURN VALUES
 
@@ -102,6 +103,10 @@ retryable.
 You should instead call SSL_get_error() to find out if it's retryable.
 
 =back
+
+=head1 HISTORY
+
+SSL_write_ex() was added in OpenSSL 1.1.1.
 
 =head1 SEE ALSO
 
