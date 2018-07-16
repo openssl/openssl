@@ -111,7 +111,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_nodelete()\n");
 #endif
-#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
+#if defined(OPENSSL_NO_STATIC_ENGINE) && \
+    !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
 # ifdef DSO_WIN32
     {
         HMODULE handle = NULL;
@@ -676,7 +677,8 @@ int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 
-#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
+#if defined(OPENSSL_NO_STATIC_ENGINE) && \
+    !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
     {
         union {
             void *sym;
