@@ -1014,6 +1014,8 @@ static SSL_TICKET_STATUS tls_get_stateful_ticket(SSL *s, PACKET *tick,
 {
     SSL_SESSION *tmpsess = NULL;
 
+    s->ext.ticket_expected = 1;
+
     switch (PACKET_remaining(tick)) {
         case 0:
             return SSL_TICKET_EMPTY;
@@ -1031,7 +1033,6 @@ static SSL_TICKET_STATUS tls_get_stateful_ticket(SSL *s, PACKET *tick,
     if (tmpsess == NULL)
         return SSL_TICKET_NO_DECRYPT;
 
-    s->ext.ticket_expected = 1;
     *sess = tmpsess;
     return SSL_TICKET_SUCCESS;
 }
