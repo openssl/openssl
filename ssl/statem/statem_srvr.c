@@ -3648,20 +3648,11 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
      */
 
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
-        int m = s->session_ctx->session_cache_mode;
-
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
                      ERR_R_MALLOC_FAILURE);
             goto err;
-        }
-
-        if (m & SSL_SESS_CACHE_SERVER) {
-            /*
-             * Remove the old session from the cache. We carry on if this fails
-             */
-            SSL_CTX_remove_session(s->session_ctx, s->session);
         }
 
         SSL_SESSION_free(s->session);
