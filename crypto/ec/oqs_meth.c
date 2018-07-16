@@ -405,7 +405,13 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     /* Sanity check: make sure it is an OQS scheme with absent parameters */
     X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
     nid = OBJ_obj2nid(obj);
-    if ((nid != NID_picnicL1FS /*&& nid != NID_... */) || ptype != V_ASN1_UNDEF) {
+    if (
+	(nid != NID_picnicL1FS &&
+	 nid != NID_qTESLA_I &&
+	 nid != NID_qTESLA_III_size &&
+	 nid != NID_qTESLA_III_speed
+	 /* ADD_MORE_OQS_SIG_HERE */
+	 ) || ptype != V_ASN1_UNDEF) {
         OQSerr(0, ERR_R_FATAL);
         return 0;
     }
@@ -416,28 +422,26 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return 2;
 }
 
-/* OQS note: ecx_meth.c has one such method for each scheme. Use macro for
-   the various OQS schemes? (TODO) */
-static int oqs_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                         X509_ALGOR *alg1, X509_ALGOR *alg2,
-                         ASN1_BIT_STRING *str)
-{
-    /* Set algorithm identifier */
-    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_picnicL1FS), V_ASN1_UNDEF, NULL);
-    if (alg2 != NULL)
-        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_picnicL1FS), V_ASN1_UNDEF, NULL);
-    /* Algorithm identifier set: carry on as normal */
-    return 3;
+#define DEFINE_OQS_ITEM_SIGN(ALG, NID_ALG) \
+static int oqs_item_sign_##ALG(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,\
+                         X509_ALGOR *alg1, X509_ALGOR *alg2,                   \
+                         ASN1_BIT_STRING *str)                                 \
+{                                                                              \
+    /* Set algorithm identifier */                                             \
+    X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ALG), V_ASN1_UNDEF, NULL);           \
+    if (alg2 != NULL)                                                          \
+        X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ALG), V_ASN1_UNDEF, NULL);       \
+    /* Algorithm identifier set: carry on as normal */                         \
+    return 3;                                                                  \
 }
 
-/* OQS note: ecx_meth.c has one such method for each scheme. Use macro for
-   the various OQS schemes? (TODO) */
-static int oqs_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                            const ASN1_STRING *sig)
-{
-    X509_SIG_INFO_set(siginf, NID_undef, NID_picnicL1FS, get_oqs_security_bits(NID_picnicL1FS),
-                      X509_SIG_INFO_TLS);
-    return 1;
+#define DEFINE_OQS_SIGN_INFO_SET(ALG, NID_ALG) \
+static int oqs_sig_info_set_##ALG(X509_SIG_INFO *siginf, const X509_ALGOR *alg,  \
+                            const ASN1_STRING *sig)                              \
+{                                                                                \
+    X509_SIG_INFO_set(siginf, NID_undef, NID_ALG, get_oqs_security_bits(NID_ALG),\
+                      X509_SIG_INFO_TLS);                                        \
+    return 1;                                                                    \
 }
 
 #define DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME) \
@@ -463,8 +467,8 @@ const EVP_PKEY_ASN1_METHOD ALG##_asn1_meth = { \
     oqs_free,                                  \
     0, 0, 0,                                   \
     oqs_item_verify,                           \
-    oqs_item_sign,                             \
-    oqs_sig_info_set,                          \
+    oqs_item_sign_##ALG,                       \
+    oqs_sig_info_set_##ALG,                    \
     0, 0, 0, 0, 0,                             \
 };
 
@@ -566,8 +570,10 @@ const EVP_PKEY_METHOD ALG##_pkey_meth = {           \
 };
 
 #define DEFINE_OQS_EVP_METHODS(ALG, NID_ALG, SHORT_NAME, LONG_NAME)   \
-  DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)                            \
-  DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
+DEFINE_OQS_ITEM_SIGN(ALG, NID_ALG)                                    \
+DEFINE_OQS_SIGN_INFO_SET(ALG, NID_ALG)                                \
+DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)                              \
+DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
 
 DEFINE_OQS_EVP_METHODS(picnicL1FS, NID_picnicL1FS, "picnicL1FS", "OpenSSL Picnic L1 FS algorithm")
 DEFINE_OQS_EVP_METHODS(qteslaI, NID_qTESLA_I, "qteslaI", "OpenSSL qTESLA-I algorithm")
