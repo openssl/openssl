@@ -78,7 +78,6 @@ DEFINE_LHASH_OF(MEM);
 void OPENSSL_cpuid_setup(void);
 extern unsigned int OPENSSL_ia32cap_P[];
 void OPENSSL_showfatal(const char *fmta, ...);
-extern int OPENSSL_NONPIC_relocated;
 void crypto_cleanup_all_ex_data_int(void);
 int openssl_init_fork_handlers(void);
 
