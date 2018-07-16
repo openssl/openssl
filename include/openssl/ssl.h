@@ -145,7 +145,8 @@ extern "C" {
 # define SSL_TXT_TLSV1           "TLSv1"
 # define SSL_TXT_TLSV1_1         "TLSv1.1"
 # define SSL_TXT_TLSV1_2         "TLSv1.2"
-
+# define SSL_TXT_TLSV1_3         "TLSv1.3"
+  
 # define SSL_TXT_ALL             "ALL"
 
 /*-
