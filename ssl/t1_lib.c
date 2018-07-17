@@ -955,7 +955,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     const uint16_t *sent_sigs;
     const EVP_MD *md = NULL;
     char sigalgstr[2];
-    size_t sent_sigslen, i;
+    size_t sent_sigslen, i, cidx;
     int pkeyid = EVP_PKEY_id(pkey);
     const SIGALG_LOOKUP *lu;
 
@@ -986,6 +986,14 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                  SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
+    /* Check the sigalg is consistent with the key OID */
+    if (!ssl_cert_lookup_by_nid(EVP_PKEY_id(pkey), &cidx)
+            || lu->sig_idx != (int)cidx) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
+        return 0;
+    }
+
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
 

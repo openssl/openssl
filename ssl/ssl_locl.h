@@ -2288,6 +2288,7 @@ __owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 
+__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
                                                       size_t *pidx);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
