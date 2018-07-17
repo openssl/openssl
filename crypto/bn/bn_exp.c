@@ -356,11 +356,6 @@ int BN_mod_exp_mont(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         aa = val[0];
     } else
         aa = a;
-    if (BN_is_zero(aa)) {
-        BN_zero(rr);
-        ret = 1;
-        goto err;
-    }
     if (!bn_to_mont_fixed_top(val[0], aa, mont, ctx))
         goto err;               /* 1 */
 
