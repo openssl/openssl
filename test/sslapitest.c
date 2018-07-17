@@ -1233,7 +1233,7 @@ static int post_handshake_verify(SSL *sssl, SSL *cssl)
     return 1;
 }
 
-static int setup_ticket_text(int stateful, int idx, SSL_CTX **sctx,
+static int setup_ticket_test(int stateful, int idx, SSL_CTX **sctx,
                              SSL_CTX **cctx)
 {
     int sess_id_ctx = 1;
@@ -1326,7 +1326,7 @@ static int test_tickets(int stateful, int idx)
     new_called = 0;
     do_cache = 1;
 
-    if (!setup_ticket_text(stateful, idx, &sctx, &cctx))
+    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
@@ -1357,7 +1357,7 @@ static int test_tickets(int stateful, int idx)
     /* Stop caching sessions - just count them */
     do_cache = 0;
 
-    if (!setup_ticket_text(stateful, idx, &sctx, &cctx))
+    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
         goto end;
 
     if (!check_resumption(idx, sctx, cctx, 0))
@@ -1366,8 +1366,11 @@ static int test_tickets(int stateful, int idx)
     /* Start again with caching sessions */
     new_called = 0;
     do_cache = 1;
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    sctx = cctx = NULL;
 
-    if (!setup_ticket_text(stateful, idx, &sctx, &cctx))
+    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
