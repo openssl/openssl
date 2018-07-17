@@ -16,11 +16,12 @@ use OpenSSL::Test::Utils;
 
 setup("test_dsa");
 
-plan tests => 5;
+plan tests => 6;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 ok(run(test(["dsatest"])), "running dsatest");
+ok(run(test(["dsa_no_digest_size_test"])), "running dsa_no_digest_size_test");
 
  SKIP: {
      skip "Skipping dsa conversion test", 3
