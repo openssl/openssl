@@ -11,8 +11,12 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_gost");
 
+# The GOST ciphers are dynamically loaded via the GOST engine, so we must be
+# able to support that. The engine also uses DSA and CMS symbols, so we skip
+# this test on no-dsa or no-cms.
 plan skip_all => "GOST support is disabled in this OpenSSL build"
-    if disabled("gost");
+    if disabled("gost") || disabled("engine") || disabled("dynamic-engine")
+       || disabled("dsa") || disabled("cms");
 
 plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this OpenSSL build"
     if disabled("tls1_3") || disabled("tls1_2");
