@@ -13,7 +13,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
-# X25519 lower-level primitives for x86_86.
+# X25519 lower-level primitives for x86_64.
 #
 # February 2018.
 #
