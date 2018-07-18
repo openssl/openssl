@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7746] = {
+static const unsigned char so[7772] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1074,9 +1074,12 @@ static const unsigned char so[7746] = {
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x02,  /* [ 7718] OBJ_id_tc26_gost_3410_2012_256_paramSetB */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x03,  /* [ 7727] OBJ_id_tc26_gost_3410_2012_256_paramSetC */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
+    0x2A,0x86,0x24,0x02,0x01,0x01,0x01,0x02,       /* [ 7745] OBJ_ua_pki_cp */
+    0x2A,0x86,0x24,0x02,0x01,0x01,0x01,0x02,0x01,  /* [ 7753] OBJ_ua_pki_cp_scwl */
+    0x2A,0x86,0x24,0x02,0x01,0x01,0x01,0x02,0x02,  /* [ 7762] OBJ_ua_pki_cp_sec */
 };
 
-#define NUM_NID 1193
+#define NUM_NID 1196
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2271,9 +2274,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"magma-cbc", "magma-cbc", NID_magma_cbc},
     {"magma-cfb", "magma-cfb", NID_magma_cfb},
     {"magma-mac", "magma-mac", NID_magma_mac},
+    {"ua-pki-cp", "ua-pki certification policies", NID_ua_pki_cp, 8, &so[7745]},
+    {"ua-pki-cp-scwl", "ua-pki-cp a sign of compliance with the law", NID_ua_pki_cp_scwl, 9, &so[7753]},
+    {"ua-pki-cp-sec", "ua-pki-cp a sign of an enhanced certificate", NID_ua_pki_cp_sec, 9, &so[7762]},
 };
 
-#define NUM_SN 1184
+#define NUM_SN 1187
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3421,6 +3427,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      682,    /* "tpBasis" */
      375,    /* "trustRoot" */
     1151,    /* "ua-pki" */
+    1193,    /* "ua-pki-cp" */
+    1194,    /* "ua-pki-cp-scwl" */
+    1195,    /* "ua-pki-cp-sec" */
     1160,    /* "uacurve0" */
     1161,    /* "uacurve1" */
     1162,    /* "uacurve2" */
@@ -3461,7 +3470,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1184
+#define NUM_LN 1187
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4617,6 +4626,9 @@ static const unsigned int ln_objs[NUM_LN] = {
     1021,    /* "tls1-prf" */
      682,    /* "tpBasis" */
     1151,    /* "ua-pki" */
+    1193,    /* "ua-pki certification policies" */
+    1195,    /* "ua-pki-cp a sign of an enhanced certificate" */
+    1194,    /* "ua-pki-cp a sign of compliance with the law" */
      436,    /* "ucl" */
        0,    /* "undefined" */
      102,    /* "uniqueIdentifier" */
@@ -4649,7 +4661,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1069
+#define NUM_OBJ 1072
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5147,6 +5159,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1147,    /* OBJ_id_tc26_gost_3410_2012_256_constants 1 2 643 7 1 2 1 1 */
      996,    /* OBJ_id_tc26_gost_3410_2012_512_constants 1 2 643 7 1 2 1 2 */
     1002,    /* OBJ_id_tc26_gost_28147_constants 1 2 643 7 1 2 5 1 */
+    1193,    /* OBJ_ua_pki_cp                    1 2 804 2 1 1 1 2 */
      186,    /* OBJ_pkcs1                        1 2 840 113549 1 1 */
       27,    /* OBJ_pkcs3                        1 2 840 113549 1 3 */
      187,    /* OBJ_pkcs5                        1 2 840 113549 1 5 */
@@ -5364,6 +5377,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      999,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetB 1 2 643 7 1 2 1 2 2 */
     1149,    /* OBJ_id_tc26_gost_3410_2012_512_paramSetC 1 2 643 7 1 2 1 2 3 */
     1003,    /* OBJ_id_tc26_gost_28147_param_Z   1 2 643 7 1 2 5 1 1 */
+    1194,    /* OBJ_ua_pki_cp_scwl               1 2 804 2 1 1 1 2 1 */
+    1195,    /* OBJ_ua_pki_cp_sec                1 2 804 2 1 1 1 2 2 */
      108,    /* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
      112,    /* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
      782,    /* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */

@@ -5188,3 +5188,18 @@
 #define LN_uacurve9             "DSTU curve 9"
 #define NID_uacurve9            1169
 #define OBJ_uacurve9            OBJ_dstu4145le,2L,9L
+
+#define SN_ua_pki_cp            "ua-pki-cp"
+#define LN_ua_pki_cp            "ua-pki certification policies"
+#define NID_ua_pki_cp           1193
+#define OBJ_ua_pki_cp           OBJ_ua_pki,2L
+
+#define SN_ua_pki_cp_scwl               "ua-pki-cp-scwl"
+#define LN_ua_pki_cp_scwl               "ua-pki-cp a sign of compliance with the law"
+#define NID_ua_pki_cp_scwl              1194
+#define OBJ_ua_pki_cp_scwl              OBJ_ua_pki_cp,1L
+
+#define SN_ua_pki_cp_sec                "ua-pki-cp-sec"
+#define LN_ua_pki_cp_sec                "ua-pki-cp a sign of an enhanced certificate"u
+#define NID_ua_pki_cp_sec               1195
+#define OBJ_ua_pki_cp_sec               OBJ_ua_pki_cp,2L

@@ -1190,3 +1190,6 @@ magma_ofb		1189
 magma_cbc		1190
 magma_cfb		1191
 magma_mac		1192
+ua_pki_cp		1193
+ua_pki_cp_scwl		1194
+ua_pki_cp_sec		1195
