@@ -1104,28 +1104,12 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
                                                const P256_POINT_AFFINE *in,
                                                BN_CTX *ctx)
 {
-    BIGNUM *x, *y;
-    BN_ULONG d_x[P256_LIMBS], d_y[P256_LIMBS];
     int ret = 0;
 
-    x = BN_new();
-    if (x == NULL)
-        return 0;
-    y = BN_new();
-    if (y == NULL) {
-        BN_free(x);
-        return 0;
-    }
-    memcpy(d_x, in->X, sizeof(d_x));
-    bn_set_static_words(x, d_x, P256_LIMBS);
-
-    memcpy(d_y, in->Y, sizeof(d_y));
-    bn_set_static_words(y, d_y, P256_LIMBS);
-
-    ret = EC_POINT_set_affine_coordinates_GFp(group, out, x, y, ctx);
-
-    BN_free(x);
-    BN_free(y);
+    if ((ret = bn_set_words(out->X, in->X, P256_LIMBS))
+        && (ret = bn_set_words(out->Y, in->Y, P256_LIMBS))
+        && (ret = bn_set_words(out->Z, ONE, P256_LIMBS)))
+        out->Z_is_one = 1;
 
     return ret;
 }
@@ -1181,9 +1165,9 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
             if (pre_comp_generator == NULL)
                 goto err;
 
+            ecp_nistz256_gather_w7(&p.a, pre_comp->precomp[0], 1);
             if (!ecp_nistz256_set_from_affine(pre_comp_generator,
-                                              group, pre_comp->precomp[0],
-                                              ctx)) {
+                                              group, &p.a, ctx)) {
                 EC_POINT_free(pre_comp_generator);
                 goto err;
             }
