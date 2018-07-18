@@ -4559,7 +4559,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
     } else {
         ret = RAND_bytes(result, len);
     }
-#ifndef OPENSSL_NO_TLS13DOWNGRADE
+
     if (ret > 0) {
         if (!ossl_assert(sizeof(tls11downgrade) < len)
                 || !ossl_assert(sizeof(tls12downgrade) < len))
@@ -4571,7 +4571,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
             memcpy(result + len - sizeof(tls11downgrade), tls11downgrade,
                    sizeof(tls11downgrade));
     }
-#endif
+
     return ret;
 }
 
