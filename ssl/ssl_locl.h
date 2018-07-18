@@ -1068,8 +1068,6 @@ struct ssl_st {
      * DTLS1_VERSION)
      */
     int version;
-    /* TODO(TLS1.3): Remove this before release */
-    int version_draft;
     /* SSLv3 */
     const SSL_METHOD *method;
     /*

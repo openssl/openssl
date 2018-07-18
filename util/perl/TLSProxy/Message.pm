@@ -92,9 +92,7 @@ use constant {
     EXT_FORCE_LAST => 0xffff
 };
 
-# SignatureScheme of TLS 1.3, from
-# https://tools.ietf.org/html/draft-ietf-tls-tls13-20#appendix-B.3.1.3
-# TODO(TLS1.3) update link to IANA registry after publication
+# SignatureScheme of TLS 1.3 from RFC8446
 # We have to manually grab the SHA224 equivalents from the old registry
 use constant {
     SIG_ALG_RSA_PKCS1_SHA256 => 0x0401,

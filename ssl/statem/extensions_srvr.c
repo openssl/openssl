@@ -892,8 +892,7 @@ int tls_parse_ctos_cookie(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
     if (!WPACKET_put_bytes_u16(&hrrpkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(&hrrpkt)
-               /* TODO(TLS1.3): Fix this before release */
-            || !WPACKET_put_bytes_u16(&hrrpkt, s->version_draft)
+            || !WPACKET_put_bytes_u16(&hrrpkt, s->version)
             || !WPACKET_close(&hrrpkt)) {
         WPACKET_cleanup(&hrrpkt);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_COOKIE,
@@ -1646,8 +1645,7 @@ EXT_RETURN tls_construct_stoc_supported_versions(SSL *s, WPACKET *pkt,
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_versions)
             || !WPACKET_start_sub_packet_u16(pkt)
-                /* TODO(TLS1.3): Update to remove the TLSv1.3 draft indicator */
-            || !WPACKET_put_bytes_u16(pkt, s->version_draft)
+            || !WPACKET_put_bytes_u16(pkt, s->version)
             || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_SUPPORTED_VERSIONS,
