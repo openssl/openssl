@@ -530,23 +530,8 @@ EXT_RETURN tls_construct_ctos_supported_versions(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    /*
-     * TODO(TLS1.3): There is some discussion on the TLS list as to whether
-     * we should include versions <TLS1.2. For the moment we do. To be
-     * reviewed later.
-     */
     for (currv = max_version; currv >= min_version; currv--) {
-        /* TODO(TLS1.3): Remove this first if clause prior to release!! */
-        if (currv == TLS1_3_VERSION) {
-            if (!WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT)
-                    || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT_27)
-                    || !WPACKET_put_bytes_u16(pkt, TLS1_3_VERSION_DRAFT_26)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                         SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
-                         ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-        } else if (!WPACKET_put_bytes_u16(pkt, currv)) {
+        if (!WPACKET_put_bytes_u16(pkt, currv)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_VERSIONS,
                      ERR_R_INTERNAL_ERROR);
@@ -1789,12 +1774,6 @@ int tls_parse_stoc_supported_versions(SSL *s, PACKET *pkt, unsigned int context,
                  SSL_R_LENGTH_MISMATCH);
         return 0;
     }
-
-    /* TODO(TLS1.3): Remove this before release */
-    if (version == TLS1_3_VERSION_DRAFT
-            || version == TLS1_3_VERSION_DRAFT_27
-            || version == TLS1_3_VERSION_DRAFT_26)
-        version = TLS1_3_VERSION;
 
     /*
      * The only protocol version we support which is valid in this extension in
