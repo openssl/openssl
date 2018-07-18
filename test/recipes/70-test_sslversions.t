@@ -159,6 +159,7 @@ sub modify_supported_versions_filter
             } elsif ($testtype == WITH_TLS1_4) {
                     $ext = pack "C5",
                         0x04, # Length
+                        0x03, 0x05, #TLSv1.4
                         0x03, 0x04; #TLSv1.3
             }
             if ($testtype == REVERSE_ORDER_VERSIONS
