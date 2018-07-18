@@ -1179,7 +1179,7 @@ for ($i=0;$i<7;$i++) {
 	&mov	("esi",&wparam(1));
 	&mov	("ebp",&wparam(2));
 
-	&lea	("edi",&DWP(-1,"edi","ebp"));
+	&lea	("edi",&DWP(0,"edi","ebp"));
 	&mov	("ebp",64/4);
 &set_label("scatter_w7_loop");
 	&mov	("eax",&DWP(0,"esi"));

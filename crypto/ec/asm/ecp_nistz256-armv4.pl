@@ -894,13 +894,13 @@ ecp_nistz256_scatter_w7:
 .Loop_scatter_w7:
 	ldr	$mask,[$inp],#4
 	subs	$index,$index,#1
-	strb	$mask,[$out,#64*0-1]
+	strb	$mask,[$out,#64*0]
 	mov	$mask,$mask,lsr#8
-	strb	$mask,[$out,#64*1-1]
+	strb	$mask,[$out,#64*1]
 	mov	$mask,$mask,lsr#8
-	strb	$mask,[$out,#64*2-1]
+	strb	$mask,[$out,#64*2]
 	mov	$mask,$mask,lsr#8
-	strb	$mask,[$out,#64*3-1]
+	strb	$mask,[$out,#64*3]
 	add	$out,$out,#64*4
 	bne	.Loop_scatter_w7
 
