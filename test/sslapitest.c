@@ -2419,7 +2419,8 @@ static int test_early_data_replay(int idx)
  * handle a connection from a client where the early data should be skipped.
  * testtype: 0 == No HRR
  * testtype: 1 == HRR
- * testtype: 2 == recv_max_early_data set to 0
+ * testtype: 2 == HRR, invalid early_data sent after HRR
+ * testtype: 3 == recv_max_early_data set to 0
  */
 static int early_data_skip_helper(int testtype, int idx)
 {
@@ -2434,7 +2435,7 @@ static int early_data_skip_helper(int testtype, int idx)
                                         &serverssl, &sess, idx)))
         goto end;
 
-    if (testtype == 1) {
+    if (testtype == 1 || testtype == 2) {
         /* Force an HRR to occur */
         if (!TEST_true(SSL_set1_groups_list(serverssl, "P-256")))
             goto end;
@@ -2454,7 +2455,7 @@ static int early_data_skip_helper(int testtype, int idx)
             goto end;
     }
 
-    if (testtype == 2
+    if (testtype == 3
             && !TEST_true(SSL_set_recv_max_early_data(serverssl, 0)))
         goto end;
 
@@ -2473,7 +2474,12 @@ static int early_data_skip_helper(int testtype, int idx)
                             SSL_EARLY_DATA_REJECTED))
         goto end;
 
-    if (testtype == 1) {
+    switch (testtype) {
+    case 0:
+        /* Nothing to do */
+        break;
+
+    case 1:
         /*
          * Finish off the handshake. We perform the same writes and reads as
          * further down but we expect them to fail due to the incomplete
@@ -2483,10 +2489,40 @@ static int early_data_skip_helper(int testtype, int idx)
                 || !TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf),
                                &readbytes)))
             goto end;
-    } else if (testtype == 2) {
+        break;
+
+    case 2:
+        {
+            BIO *wbio = SSL_get_wbio(clientssl);
+            /* A record that will appear as bad early_data */
+            const unsigned char bad_early_data[] = {
+                0x17, 0x03, 0x03, 0x00, 0x01, 0x00
+            };
+
+            /*
+             * We force the client to attempt a write. This will fail because
+             * we're still in the handshake. It will cause the second
+             * ClientHello to be sent.
+             */
+            if (!TEST_false(SSL_write_ex(clientssl, MSG2, strlen(MSG2),
+                                         &written)))
+                goto end;
+
+            /*
+             * Inject some early_data after the second ClientHello. This should
+             * cause the server to fail
+             */
+            if (!TEST_true(BIO_write_ex(wbio, bad_early_data,
+                                        sizeof(bad_early_data), &written)))
+                goto end;
+        }
+        /* fallthrough */
+
+    case 3:
         /*
-         * This client has sent more early_data than we are willing to skip so
-         * the connection should abort.
+         * This client has sent more early_data than we are willing to skip
+         * (case 3) or sent invalid early_data (case 2) so the connection should
+         * abort.
          */
         if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
                 || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL))
@@ -2494,6 +2530,10 @@ static int early_data_skip_helper(int testtype, int idx)
 
         /* Connection has failed - nothing more to do */
         testresult = 1;
+        goto end;
+
+    default:
+        TEST_error("Invalid test type");
         goto end;
     }
 
@@ -2542,12 +2582,22 @@ static int test_early_data_skip_hrr(int idx)
 }
 
 /*
+ * Test that a server attempting to read early data can handle a connection
+ * from a client where an HRR occurs and correctly fails if early_data is sent
+ * after the HRR
+ */
+static int test_early_data_skip_hrr_fail(int idx)
+{
+    return early_data_skip_helper(2, idx);
+}
+
+/*
  * Test that a server attempting to read early data will abort if it tries to
  * skip over too much.
  */
 static int test_early_data_skip_abort(int idx)
 {
-    return early_data_skip_helper(2, idx);
+    return early_data_skip_helper(3, idx);
 }
 
 /*
@@ -5402,6 +5452,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_replay, 2);
     ADD_ALL_TESTS(test_early_data_skip, 3);
     ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
+    ADD_ALL_TESTS(test_early_data_skip_hrr_fail, 3);
     ADD_ALL_TESTS(test_early_data_skip_abort, 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
