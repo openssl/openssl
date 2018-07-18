@@ -53,7 +53,7 @@ BN_ULONG *bn_get_words(const BIGNUM *a);
  * Set the internal data words in a to point to words which contains size
  * elements. The BN_FLG_STATIC_DATA flag is set
  */
-void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
+void bn_set_static_words(BIGNUM *a, const BN_ULONG *words, int size);
 
 /*
  * Copy words into the BIGNUM |a|, reallocating space as necessary.
@@ -64,7 +64,7 @@ void bn_set_static_words(BIGNUM *a, BN_ULONG *words, int size);
  * |num_words| is int because bn_expand2 takes an int. This is an internal
  * function so we simply trust callers not to pass negative values.
  */
-int bn_set_words(BIGNUM *a, BN_ULONG *words, int num_words);
+int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words);
 
 size_t bn_sizeof_BIGNUM(void);
 
