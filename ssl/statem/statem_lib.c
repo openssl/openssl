@@ -1914,7 +1914,6 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
         if (s->version != vent->version)
             continue;
 
-#ifndef OPENSSL_NO_TLS13DOWNGRADE
         /* Check for downgrades */
         if (s->version == TLS1_2_VERSION && highver > s->version) {
             if (memcmp(tls12downgrade,
@@ -1941,7 +1940,6 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
                 return 0;
             }
         }
-#endif
 
         s->method = method;
         return 1;
