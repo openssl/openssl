@@ -64,6 +64,9 @@
 # define EVP_PKEY_ED448 NID_ED448
 /* OQS schemes */
 # define EVP_PKEY_PICNICL1FS NID_picnicL1FS
+# define EVP_PKEY_QTESLAI NID_qTESLA_I
+# define EVP_PKEY_QTESLAIIISIZE NID_qTESLA_III_size
+# define EVP_PKEY_QTESLAIIISPEED NID_qTESLA_III_speed
 /* ADD_MORE_OQS_SIG_HERE */
 
 #ifdef  __cplusplus

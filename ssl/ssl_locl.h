@@ -204,6 +204,10 @@
 /* OQS schemes */
 /* Picnic */
 # define SSL_aPICNICL1FS         0x00000100U
+/* qTESLA */
+# define SSL_aQTESLAI            0x00000200U
+# define SSL_aQTESLAIIISIZE      0x00000400U
+# define SSL_aQTESLAIIISPEED     0x00000800U
 /* ADD_MORE_OQS_SIG_HERE */
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
@@ -389,8 +393,11 @@
 # define SSL_PKEY_ED448          8
 /* OQS schemes */
 # define SSL_PKEY_PICNICL1FS     9
+# define SSL_PKEY_QTESLAI        10
+# define SSL_PKEY_QTESLAIIISIZE  11
+# define SSL_PKEY_QTESLAIIISPEED 12
 /* ADD_MORE_OQS_SIG_HERE */
-# define SSL_PKEY_NUM            10
+# define SSL_PKEY_NUM            13
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
@@ -2075,6 +2082,9 @@ typedef enum downgrade_en {
 
 /* OQS schemes */
 #define TLSEXT_SIGALG_picnicL1FS                                0xfe00 /* private use code point */
+#define TLSEXT_SIGALG_qteslaI                                   0xfe01 /* private use code point */
+#define TLSEXT_SIGALG_qteslaIIIsize                             0xfe02 /* private use code point */
+#define TLSEXT_SIGALG_qteslaIIIspeed                            0xfe03 /* private use code point */
 /* ADD_MORE_OQS_SIG_HERE */
 
 /* Known PSK key exchange modes */

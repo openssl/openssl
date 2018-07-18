@@ -104,6 +104,9 @@ extern const EVP_PKEY_METHOD poly1305_pkey_meth;
 extern const EVP_PKEY_METHOD siphash_pkey_meth;
 /* OQS schemes */
 extern const EVP_PKEY_METHOD picnicL1FS_pkey_meth;
+extern const EVP_PKEY_METHOD qteslaI_pkey_meth;
+extern const EVP_PKEY_METHOD qteslaIIIsize_pkey_meth;
+extern const EVP_PKEY_METHOD qteslaIIIspeed_pkey_meth;
 /* ADD_MORE_OQS_SIG_HERE */
 
 struct evp_md_st {

@@ -83,6 +83,9 @@ extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
 /* OQS schemes */
 extern const EVP_PKEY_ASN1_METHOD picnicL1FS_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslaI_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslaIIIsize_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD qteslaIIIspeed_asn1_meth;
 /* ADD_MORE_OQS_SIG_HERE */
 
 /*

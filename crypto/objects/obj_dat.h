@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7653] = {
+static const unsigned char so[7686] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1060,12 +1060,15 @@ static const unsigned char so[7653] = {
     0x2B,0x6F,                                     /* [ 7610] OBJ_ieee */
     0x2B,0x6F,0x02,0x8C,0x53,                      /* [ 7612] OBJ_ieee_siswg */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x82,0x2D,       /* [ 7617] OBJ_sm2 */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7625] OBJ_picnicL1FS */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,            /* [ 7636] OBJ_Microsoft */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,  /* [ 7643] OBJ_MSRPQC */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,            /* [ 7625] OBJ_Microsoft */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,  /* [ 7632] OBJ_MSRPQC */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7641] OBJ_picnicL1FS */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7652] OBJ_qTESLA_I */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7663] OBJ_qTESLA_III_size */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7674] OBJ_qTESLA_III_speed */
 };
 
-#define NUM_NID 1176
+#define NUM_NID 1182
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2240,12 +2243,18 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"ieee", "ieee", NID_ieee, 2, &so[7610]},
     {"ieee-siswg", "IEEE Security in Storage Working Group", NID_ieee_siswg, 5, &so[7612]},
     {"SM2", "sm2", NID_sm2, 8, &so[7617]},
-    {"picnicL1FS", "Picnic L1 FS", NID_picnicL1FS, 11, &so[7625]},
-    {"Microsoft", "Microsoft", NID_Microsoft, 7, &so[7636]},
-    {"MSRPQC", "MSRPQC", NID_MSRPQC, 9, &so[7643]},
+    {"Microsoft", "Microsoft", NID_Microsoft, 7, &so[7625]},
+    {"MSRPQC", "MSRPQC", NID_MSRPQC, 9, &so[7632]},
+    {"picnicL1FS", "Picnic L1 FS", NID_picnicL1FS, 11, &so[7641]},
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    { NULL, NULL, NID_undef },
+    {"qteslaI", "qTESLA-I", NID_qTESLA_I, 11, &so[7652]},
+    {"qteslaIIIsize", "qTESLA-III-size", NID_qTESLA_III_size, 11, &so[7663]},
+    {"qteslaIIIspeed", "qTESLA-III-speed", NID_qTESLA_III_speed, 11, &so[7674]},
 };
 
-#define NUM_SN 1167
+#define NUM_SN 1170
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2428,9 +2437,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      114,    /* "MD5-SHA1" */
       95,    /* "MDC2" */
      911,    /* "MGF1" */
-    1175,    /* "MSRPQC" */
+    1174,    /* "MSRPQC" */
      388,    /* "Mail" */
-    1174,    /* "Microsoft" */
+    1173,    /* "Microsoft" */
      393,    /* "NULL" */
      404,    /* "NULL" */
       57,    /* "Netscape" */
@@ -3106,7 +3115,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      487,    /* "personalTitle" */
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
-    1173,    /* "picnicL1FS" */
+    1175,    /* "picnicL1FS" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
      438,    /* "pilotAttributeType" */
@@ -3156,6 +3165,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      510,    /* "pseudonym" */
      435,    /* "pss" */
      286,    /* "qcStatements" */
+    1179,    /* "qteslaI" */
+    1180,    /* "qteslaIIIsize" */
+    1181,    /* "qteslaIIIspeed" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
      870,    /* "registeredAddress" */
@@ -3416,7 +3428,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1167
+#define NUM_LN 1170
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3515,10 +3527,10 @@ static const unsigned int ln_objs[NUM_LN] = {
      647,    /* "International Organizations" */
      142,    /* "Invalidity Date" */
      504,    /* "MIME MHS" */
-    1175,    /* "MSRPQC" */
+    1174,    /* "MSRPQC" */
      388,    /* "Mail" */
      383,    /* "Management" */
-    1174,    /* "Microsoft" */
+    1173,    /* "Microsoft" */
      417,    /* "Microsoft CSP Name" */
      135,    /* "Microsoft Commercial Code Signing" */
      138,    /* "Microsoft Encrypted File System" */
@@ -3558,7 +3570,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1032,    /* "PKINIT Client Auth" */
      127,    /* "PKIX" */
      858,    /* "Permanent Identifier" */
-    1173,    /* "Picnic L1 FS" */
+    1175,    /* "Picnic L1 FS" */
      164,    /* "Policy Qualifier CPS" */
      165,    /* "Policy Qualifier User Notice" */
      385,    /* "Private" */
@@ -4306,6 +4318,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      886,    /* "protocolInformation" */
      510,    /* "pseudonym" */
      435,    /* "pss" */
+    1179,    /* "qTESLA-I" */
+    1180,    /* "qTESLA-III-size" */
+    1181,    /* "qTESLA-III-speed" */
      286,    /* "qcStatements" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
@@ -4587,7 +4602,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1058
+#define NUM_OBJ 1061
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5004,7 +5019,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      791,    /* OBJ_ecdsa_with_Recommended       1 2 840 10045 4 2 */
      792,    /* OBJ_ecdsa_with_Specified         1 2 840 10045 4 3 */
      920,    /* OBJ_dhpublicnumber               1 2 840 10046 2 1 */
-    1174,    /* OBJ_Microsoft                    1 3 6 1 4 1 311 */
+    1173,    /* OBJ_Microsoft                    1 3 6 1 4 1 311 */
     1032,    /* OBJ_pkInitClientAuth             1 3 6 1 5 2 3 4 */
     1033,    /* OBJ_pkInitKDC                    1 3 6 1 5 2 3 5 */
      258,    /* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
@@ -5344,7 +5359,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      683,    /* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
      417,    /* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
      856,    /* OBJ_LocalKeySet                  1 3 6 1 4 1 311 17 2 */
-    1175,    /* OBJ_MSRPQC                       1 3 6 1 4 1 311 89 2 */
+    1174,    /* OBJ_MSRPQC                       1 3 6 1 4 1 311 89 2 */
      390,    /* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
       91,    /* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
      973,    /* OBJ_id_scrypt                    1 3 6 1 4 1 11591 4 11 */
@@ -5633,7 +5648,10 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      955,    /* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
      956,    /* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
      957,    /* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
-    1173,    /* OBJ_picnicL1FS                   1 3 6 1 4 1 311 89 2 1 1 */
+    1175,    /* OBJ_picnicL1FS                   1 3 6 1 4 1 311 89 2 1 1 */
+    1179,    /* OBJ_qTESLA_I                     1 3 6 1 4 1 311 89 2 2 1 */
+    1180,    /* OBJ_qTESLA_III_size              1 3 6 1 4 1 311 89 2 2 2 */
+    1181,    /* OBJ_qTESLA_III_speed             1 3 6 1 4 1 311 89 2 2 3 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
     1159,    /* OBJ_dstu4145be                   1 2 804 2 1 1 1 1 3 1 1 1 1 */

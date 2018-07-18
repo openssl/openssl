@@ -1654,3 +1654,6 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
 identified-organization 6 1 4 1 311 : Microsoft
 Microsoft 89 2                      : MSRPQC
 MSRPQC 1 1                          : picnicL1FS : Picnic L1 FS
+MSRPQC 2 1                          : qteslaI : qTESLA-I
+MSRPQC 2 2                          : qteslaIIIsize : qTESLA-III-size
+MSRPQC 2 3                          : qteslaIIIspeed : qTESLA-III-speed

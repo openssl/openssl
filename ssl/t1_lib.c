@@ -694,6 +694,9 @@ static const uint16_t tls12_sigalgs[] = {
 #endif
     /* OQS schemes*/
     TLSEXT_SIGALG_picnicL1FS,
+    TLSEXT_SIGALG_qteslaI,
+    TLSEXT_SIGALG_qteslaIIIsize,
+    TLSEXT_SIGALG_qteslaIIIspeed,
     /* ADD_MORE_OQS_SIG_HERE */
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
@@ -821,6 +824,15 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     /* OQS schemes */
     {"picnicL1FS", TLSEXT_SIGALG_picnicL1FS,
      NID_undef, -1, EVP_PKEY_PICNICL1FS, SSL_PKEY_PICNICL1FS,
+     NID_undef, NID_undef},
+    {"qteslaI", TLSEXT_SIGALG_qteslaI,
+     NID_undef, -1, EVP_PKEY_QTESLAI, SSL_PKEY_QTESLAI,
+     NID_undef, NID_undef},
+    {"qteslaIIIsize", TLSEXT_SIGALG_qteslaIIIsize,
+     NID_undef, -1, EVP_PKEY_QTESLAIIISIZE, SSL_PKEY_QTESLAIIISIZE,
+     NID_undef, NID_undef},
+    {"qteslaIIIspeed", TLSEXT_SIGALG_qteslaIIIspeed,
+     NID_undef, -1, EVP_PKEY_QTESLAIIISPEED, SSL_PKEY_QTESLAIIISPEED,
      NID_undef, NID_undef},
     /* ADD_MORE_OQS_SIG_HERE */
 };
@@ -2293,6 +2305,9 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED448);
     /* OQS schemes */
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAI);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISIZE);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
     /* ADD_MORE_OQS_SIG_HERE */
 }
 

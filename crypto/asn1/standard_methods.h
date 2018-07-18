@@ -56,6 +56,9 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #endif
     /* OQS schemes */
     &picnicL1FS_asn1_meth,
+    &qteslaI_asn1_meth,
+    &qteslaIIIsize_asn1_meth,
+    &qteslaIIIspeed_asn1_meth,
     /* ADD_MORE_OQS_SIG_HERE */
 };
 
