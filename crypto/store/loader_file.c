@@ -35,6 +35,10 @@
 # define stat    _stat
 #endif
 
+#ifndef S_ISDIR
+# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
+#endif
+
 /*-
  *  Password prompting
  *  ------------------
@@ -839,7 +843,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
         return NULL;
     }
 
-    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+    if (S_ISDIR(st.st_mode)) {
         /*
          * Try to copy everything, even if we know that some of them must be
          * NULL for the moment.  This prevents errors in the future, when more

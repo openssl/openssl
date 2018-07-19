@@ -43,7 +43,7 @@
  * If unistd.h defines _POSIX_VERSION, we conclude that we are on a POSIX
  * system and have sigaction and termios.
  */
-#  if defined(_POSIX_VERSION)
+#  if defined(_POSIX_VERSION) && _POSIX_VERSION>=199309L
 
 #   define SIGACTION
 #   if !defined(TERMIOS) && !defined(TERMIO) && !defined(SGTTY)
