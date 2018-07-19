@@ -111,7 +111,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     for (;;) {
         if (!BN_priv_rand_range(k, order)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_INTERNAL_ERROR);
-                goto done;
+            goto done;
         }
 
         if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
