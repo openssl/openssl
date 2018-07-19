@@ -9,6 +9,15 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Use the new ec_scalar_mul_ladder scaffold to implement a specialized ladder
+     step for prime curves. The new implementation is based on formulae from
+     differential addition-and-doubling in homogeneous projective coordinates
+     from Izu-Takagi "A fast parallel elliptic curve multiplication resistant
+     against side channel attacks" and Brier-Joye "Weierstrass Elliptic Curves
+     and Side-Channel Attacks" Eq. (8) for y-coordinate recovery, modified
+     to work in projective coordinates.
+     [Billy Bob Brumley, Nicola Tuveri]
+
   *) Change generating and checking of primes so that the error rate of not
      being prime depends on the intended use based on the size of the input.
      For larger primes this will result in more rounds of Miller-Rabin.
@@ -30,7 +39,7 @@
      [Andy Polyakov]
 
   *) Use the new ec_scalar_mul_ladder scaffold to implement a specialized ladder
-     step for binary curves. The new implementation is based on formulas from
+     step for binary curves. The new implementation is based on formulae from
      differential addition-and-doubling in mixed Lopez-Dahab projective
      coordinates, modified to independently blind the operands.
      [Billy Bob Brumley, Sohaib ul Hassan, Nicola Tuveri]
