@@ -1753,6 +1753,18 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
             return SSL_R_LENGTH_MISMATCH;
         }
 
+        /*
+         * The TLSv1.3 spec says the client MUST set this to TLS1_2_VERSION.
+         * The spec only requires servers to check that it isn't SSLv3:
+         * "Any endpoint receiving a Hello message with
+         * ClientHello.legacy_version or ServerHello.legacy_version set to
+         * 0x0300 MUST abort the handshake with a "protocol_version" alert."
+         * We are slightly stricter and require that it isn't SSLv3 or lower.
+         * We tolerate TLSv1 and TLSv1.1.
+         */
+        if (client_version <= SSL3_VERSION)
+            return SSL_R_BAD_LEGACY_VERSION;
+
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
             /* TODO(TLS1.3): Remove this before release */
             if (candidate_vers == TLS1_3_VERSION_DRAFT

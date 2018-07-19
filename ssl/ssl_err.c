@@ -757,6 +757,7 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_HRR_VERSION), "bad hrr version"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_KEY_SHARE), "bad key share"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_KEY_UPDATE), "bad key update"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_LEGACY_VERSION), "bad legacy version"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_LENGTH), "bad length"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_PACKET), "bad packet"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_BAD_PACKET_LENGTH), "bad packet length"},

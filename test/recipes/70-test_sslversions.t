@@ -18,7 +18,8 @@ use constant {
     NO_EXTENSION => 3,
     EMPTY_EXTENSION => 4,
     TLS1_1_AND_1_0_ONLY => 5,
-    WITH_TLS1_4 => 6
+    WITH_TLS1_4 => 6,
+    BAD_LEGACY_VERSION => 7
 };
 
 my $testtype;
@@ -55,7 +56,7 @@ my $proxy = TLSProxy::Proxy->new(
 $testtype = EMPTY_EXTENSION;
 $proxy->filter(\&modify_supported_versions_filter);
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 7;
+plan tests => 8;
 ok(TLSProxy::Message->fail(), "Empty supported versions");
 
 #Test 2: supported_versions extension with no recognised versions should not
@@ -111,6 +112,12 @@ ok(TLSProxy::Message->success()
    && TLSProxy::Proxy->is_tls13(),
    "TLS1.4 in supported versions extension");
 
+#Test 8: Set the legacy version to SSLv3 with supported versions. Should fail
+$proxy->clear();
+$testtype = BAD_LEGACY_VERSION;
+$proxy->start();
+ok(TLSProxy::Message->fail(), "Legacy version is SSLv3 with supported versions");
+
 sub modify_supported_versions_filter
 {
     my $proxy = shift;
@@ -165,14 +172,15 @@ sub modify_supported_versions_filter
             } elsif ($testtype == EMPTY_EXTENSION) {
                 $message->set_extension(
                     TLSProxy::Message::EXT_SUPPORTED_VERSIONS, "");
-            } else {
+            } elsif ($testtype == NO_EXTENSION) {
                 $message->delete_extension(
                     TLSProxy::Message::EXT_SUPPORTED_VERSIONS);
+            } else {
+                # BAD_LEGACY_VERSION
+                $message->client_version(TLSProxy::Record::VERS_SSL_3_0);
             }
 
             $message->repack();
         }
     }
 }
-
-
