@@ -681,7 +681,7 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
-static inline int ec_point_ladder_pre(const EC_GROUP *group,
+static ossl_inline int ec_point_ladder_pre(const EC_GROUP *group,
                                       EC_POINT *r, EC_POINT *s,
                                       EC_POINT *p, BN_CTX *ctx)
 {
@@ -695,7 +695,7 @@ static inline int ec_point_ladder_pre(const EC_GROUP *group,
     return 1;
 }
 
-static inline int ec_point_ladder_step(const EC_GROUP *group,
+static ossl_inline int ec_point_ladder_step(const EC_GROUP *group,
                                        EC_POINT *r, EC_POINT *s,
                                        EC_POINT *p, BN_CTX *ctx)
 {
@@ -710,7 +710,7 @@ static inline int ec_point_ladder_step(const EC_GROUP *group,
 
 }
 
-static inline int ec_point_ladder_post(const EC_GROUP *group,
+static ossl_inline int ec_point_ladder_post(const EC_GROUP *group,
                                        EC_POINT *r, EC_POINT *s,
                                        EC_POINT *p, BN_CTX *ctx)
 {
