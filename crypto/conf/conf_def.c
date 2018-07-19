@@ -27,6 +27,10 @@
 # endif
 #endif
 
+#ifndef S_ISDIR
+# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
+#endif
+
 /*
  * The maximum length we can grow a value to after variable expansion. 64k
  * should be more than enough for all reasonable uses.
@@ -656,7 +660,7 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
         return NULL;
     }
 
-    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+    if (S_ISDIR(st.st_mode)) {
         if (*dirctx != NULL) {
             CONFerr(CONF_F_PROCESS_INCLUDE,
                     CONF_R_RECURSIVE_DIRECTORY_INCLUDE);
