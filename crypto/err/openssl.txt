@@ -2581,6 +2581,7 @@ SSL_R_BAD_HELLO_REQUEST:105:bad hello request
 SSL_R_BAD_HRR_VERSION:263:bad hrr version
 SSL_R_BAD_KEY_SHARE:108:bad key share
 SSL_R_BAD_KEY_UPDATE:122:bad key update
+SSL_R_BAD_LEGACY_VERSION:292:bad legacy version
 SSL_R_BAD_LENGTH:271:bad length
 SSL_R_BAD_PACKET:240:bad packet
 SSL_R_BAD_PACKET_LENGTH:115:bad packet length

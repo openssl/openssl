@@ -471,6 +471,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_HRR_VERSION                            263
 # define SSL_R_BAD_KEY_SHARE                              108
 # define SSL_R_BAD_KEY_UPDATE                             122
+# define SSL_R_BAD_LEGACY_VERSION                         292
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET                                 240
 # define SSL_R_BAD_PACKET_LENGTH                          115
