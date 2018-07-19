@@ -301,7 +301,6 @@ struct ec_point_st {
                                  * special case */
 };
 
-
 static ossl_inline int ec_point_is_compat(const EC_POINT *point,
                                           const EC_GROUP *group)
 {
@@ -313,7 +312,6 @@ static ossl_inline int ec_point_is_compat(const EC_POINT *point,
 
     return 1;
 }
-
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
 NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
@@ -394,7 +392,16 @@ int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                             BN_CTX *);
 int ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
-                                   BN_CTX *ctx);
+                                    BN_CTX *ctx);
+int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
+                             EC_POINT *r, EC_POINT *s,
+                             EC_POINT *p, BN_CTX *ctx);
+int ec_GFp_simple_ladder_step(const EC_GROUP *group,
+                              EC_POINT *r, EC_POINT *s,
+                              EC_POINT *p, BN_CTX *ctx);
+int ec_GFp_simple_ladder_post(const EC_GROUP *group,
+                              EC_POINT *r, EC_POINT *s,
+                              EC_POINT *p, BN_CTX *ctx);
 
 /* method functions in ecp_mont.c */
 int ec_GFp_mont_group_init(EC_GROUP *);
