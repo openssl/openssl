@@ -159,7 +159,7 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual) (OPENSSL_STRING *),
         return 0;
     }
     /* FIXME: we lose type checking at this point */
-    if ((idx = (LHASH_OF(OPENSSL_STRING) *)OPENSSL_LH_new(hash, cmp)) == NULL) {
+    if ((idx = (LHASH_OF(OPENSSL_STRING) *)OPENSSL_LH_new_ex(hash, cmp, 0L)) == NULL) {
         db->error = DB_ERROR_MALLOC;
         return 0;
     }

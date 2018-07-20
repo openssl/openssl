@@ -613,7 +613,8 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     X509 *x = NULL;
     X509_NAME *xn = NULL;
     STACK_OF(X509_NAME) *ret = NULL;
-    LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
+    LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new_ex(xname_hash,
+                                                         xname_cmp, 0L);
 
     if ((name_hash == NULL) || (in == NULL)) {
         SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);

@@ -2925,7 +2925,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if ((ret->cert = ssl_cert_new()) == NULL)
         goto err;
 
-    ret->sessions = lh_SSL_SESSION_new(ssl_session_hash, ssl_session_cmp);
+    ret->sessions = lh_SSL_SESSION_new_ex(ssl_session_hash, ssl_session_cmp, 0L);
     if (ret->sessions == NULL)
         goto err;
     ret->cert_store = X509_STORE_new();
