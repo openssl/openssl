@@ -485,6 +485,8 @@ static int test_EVP_SM2(void)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY *params = NULL;
     EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY_CTX *sign_ctx = NULL;
+    EVP_PKEY_CTX *verify_ctx = NULL;
     EVP_PKEY_CTX *kctx = NULL;
     size_t sig_len = 0;
     unsigned char *sig = NULL;
@@ -530,6 +532,12 @@ static int test_EVP_SM2(void)
     if (!TEST_ptr(md_ctx_verify = EVP_MD_CTX_new()))
         goto done;
 
+    if (!TEST_true(EVP_DigestSignInit(md_ctx, &sign_ctx, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_true(EVP_PKEY_CTX_set_sm2_uid(sign_ctx, "nobody@example.com") > 0))
+        goto done;
+
     if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
@@ -550,6 +558,12 @@ static int test_EVP_SM2(void)
         goto done;
 
     /* Ensure that the signature round-trips. */
+
+    if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, &verify_ctx, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_true(EVP_PKEY_CTX_set_sm2_uid(verify_ctx, "nobody@example.com") > 0))
+        goto done;
 
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
@@ -585,13 +599,13 @@ static int test_EVP_SM2(void)
 
     ret = 1;
 done:
+    EVP_PKEY_free(params);
+    EVP_MD_CTX_free(md_ctx);
+    EVP_MD_CTX_free(md_ctx_verify);
     EVP_PKEY_CTX_free(pctx);
     EVP_PKEY_CTX_free(kctx);
     EVP_PKEY_CTX_free(cctx);
     EVP_PKEY_free(pkey);
-    EVP_PKEY_free(params);
-    EVP_MD_CTX_free(md_ctx);
-    EVP_MD_CTX_free(md_ctx_verify);
     OPENSSL_free(sig);
     return ret;
 }

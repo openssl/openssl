@@ -25,10 +25,16 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey,
                           int ver)
 {
-    if (ctx->pctx == NULL)
-        ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
-    if (ctx->pctx == NULL)
-        return 0;
+    if (ctx->pctx == NULL) {
+        if(pctx && *pctx) {
+           ctx->pctx = *pctx;
+        }
+        else {
+           ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
+           if (ctx->pctx == NULL)
+              return 0;
+        }
+    }
 
     if (!(ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM)) {
 
@@ -81,12 +87,22 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
+    if(pctx)
+       *pctx = NULL;
     return do_sigver_init(ctx, pctx, type, e, pkey, 0);
+}
+
+int EVP_DigestSignInitCtx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx,
+                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
+{
+    return do_sigver_init(ctx, &pctx, type, e, pkey, 0);
 }
 
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
+    if(pctx)
+        *pctx = NULL;
     return do_sigver_init(ctx, pctx, type, e, pkey, 1);
 }
 
