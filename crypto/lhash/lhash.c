@@ -42,6 +42,16 @@ static int expand(OPENSSL_LHASH *lh);
 static void contract(OPENSSL_LHASH *lh);
 static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned long *rhash);
 
+static void set_error(OPENSSL_LHASH *lh)
+{
+    CRYPTO_atomic_write(&lh->err.value, 1, lh->err.lock);
+}
+
+static void clear_error(OPENSSL_LHASH *lh)
+{
+    CRYPTO_atomic_write(&lh->err.value, 0, lh->err.lock);
+}
+
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
     return OPENSSL_LH_new_ex(h, c, 0L);
@@ -60,7 +70,8 @@ OPENSSL_LHASH *OPENSSL_LH_new_ex(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c,
          */
         return NULL;
     }
-    if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL)
+    if ((ret->b = OPENSSL_zalloc(sizeof(*ret->b) * MIN_NODES)) == NULL
+            || (ret->err.lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
     ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
     ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
@@ -73,6 +84,7 @@ OPENSSL_LHASH *OPENSSL_LH_new_ex(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c,
     return ret;
 
 err:
+    CRYPTO_THREAD_lock_free(ret->err.lock);
     OPENSSL_free(ret->b);
     OPENSSL_free(ret);
     return NULL;
@@ -94,6 +106,7 @@ void OPENSSL_LH_free(OPENSSL_LHASH *lh)
             n = nn;
         }
     }
+    CRYPTO_THREAD_lock_free(lh->err.lock);
     OPENSSL_free(lh->b);
     OPENSSL_free(lh);
 }
@@ -104,15 +117,15 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
     OPENSSL_LH_NODE *nn, **rn;
     void *ret;
 
-    lh->error = 0;
+    clear_error(lh);
     if ((lh->up_load <= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)) && !expand(lh))
-        return NULL;        /* 'lh->error++' already done in 'expand' */
+        return NULL;        /* set_error() already done in 'expand' */
 
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
         if ((nn = OPENSSL_malloc(sizeof(*nn))) == NULL) {
-            lh->error++;
+            set_error(lh);
             return NULL;
         }
         nn->data = data;
@@ -138,7 +151,7 @@ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
     OPENSSL_LH_NODE *nn, **rn;
     void *ret;
 
-    lh->error = 0;
+    clear_error(lh);
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
@@ -166,7 +179,7 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     OPENSSL_LH_NODE **rn;
     void *ret;
 
-    lh->error = 0;
+    clear_error(lh);
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
@@ -230,7 +243,7 @@ static int expand(OPENSSL_LHASH *lh)
         j = nni * 2;
         n = OPENSSL_realloc(lh->b, sizeof(OPENSSL_LH_NODE *) * j);
         if (n == NULL) {
-            lh->error++;
+            set_error(lh);
             return 0;
         }
         lh->b = n;
@@ -276,7 +289,7 @@ static void contract(OPENSSL_LHASH *lh)
                             (unsigned int)(sizeof(OPENSSL_LH_NODE *) * lh->pmax));
         if (n == NULL) {
             /* fputs("realloc error in lhash",stderr); */
-            lh->error++;
+            set_error(lh);
             return;
         }
         if (lh->flags & OPENSSL_LH_FLAGS_STATS)
@@ -381,5 +394,8 @@ void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load)
 
 int OPENSSL_LH_error(OPENSSL_LHASH *lh)
 {
-    return lh->error;
+    int e = 0;
+
+    CRYPTO_atomic_read(&lh->err.value, &e, lh->err.lock);
+    return e;
 }

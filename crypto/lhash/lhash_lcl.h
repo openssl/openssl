@@ -42,6 +42,9 @@ struct lhash_st {
     unsigned long up_load;      /* load times 256 */
     unsigned long down_load;    /* load times 256 */
     unsigned long flags;
-    int error;
+    struct {
+        int value;
+        CRYPTO_RWLOCK *lock;
+    } err;
     struct lhash_stats_st stats;
 };
