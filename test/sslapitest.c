@@ -1814,8 +1814,6 @@ static const char *srvid;
 
 static int use_session_cb_cnt = 0;
 static int find_session_cb_cnt = 0;
-static int psk_client_cb_cnt = 0;
-static int psk_server_cb_cnt = 0;
 
 static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
                           size_t *idlen, SSL_SESSION **sess)
@@ -1848,36 +1846,6 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
     return 1;
 }
 
-#ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
-                                  unsigned int max_id_len,
-                                  unsigned char *psk,
-                                  unsigned int max_psk_len)
-{
-    unsigned int psklen = 0;
-
-    psk_client_cb_cnt++;
-
-    if (strlen(pskid) + 1 > max_id_len)
-        return 0;
-
-    /* We should only ever be called a maximum of twice per connection */
-    if (psk_client_cb_cnt > 2)
-        return 0;
-
-    if (clientpsk == NULL)
-        return 0;
-
-    /* We'll reuse the PSK we set up for TLSv1.3 */
-    if (SSL_SESSION_get_master_key(clientpsk, NULL, 0) > max_psk_len)
-        return 0;
-    psklen = SSL_SESSION_get_master_key(clientpsk, psk, max_psk_len);
-    strncpy(id, pskid, max_id_len);
-
-    return psklen;
-}
-#endif /* OPENSSL_NO_PSK */
-
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
 {
@@ -1903,35 +1871,6 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
     return 1;
 }
-
-#ifndef OPENSSL_NO_PSK
-static unsigned int psk_server_cb(SSL *ssl, const char *identity,
-                                  unsigned char *psk, unsigned int max_psk_len)
-{
-    unsigned int psklen = 0;
-
-    psk_server_cb_cnt++;
-
-    /* We should only ever be called a maximum of twice per connection */
-    if (find_session_cb_cnt > 2)
-        return 0;
-
-    if (serverpsk == NULL)
-        return 0;
-
-    /* Identity should match that set by the client */
-    if (strcmp(srvid, identity) != 0) {
-        return 0;
-    }
-
-    /* We'll reuse the PSK we set up for TLSv1.3 */
-    if (SSL_SESSION_get_master_key(serverpsk, NULL, 0) > max_psk_len)
-        return 0;
-    psklen = SSL_SESSION_get_master_key(serverpsk, psk, max_psk_len);
-
-    return psklen;
-}
-#endif /* OPENSSL_NO_PSK */
 
 #define MSG1    "Hello"
 #define MSG2    "World."
@@ -3212,14 +3151,8 @@ static int test_ciphersuite_change(void)
     return testresult;
 }
 
-/*
- * Test TLSv1.3 PSKs
- * Test 0 = Test new style callbacks
- * Test 1 = Test both new and old style callbacks
- * Test 2 = Test old style callbacks
- * Test 3 = Test old style callbacks with no certificate
- */
-static int test_tls13_psk(int idx)
+/* Test TLSv1.3 PSKs */
+static int test_tls13_psk(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
@@ -3234,78 +3167,40 @@ static int test_tls13_psk(int idx)
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
                                        TLS1_VERSION, TLS_MAX_VERSION,
-                                       &sctx, &cctx, idx == 3 ? NULL : cert,
-                                       idx == 3 ? NULL : privkey)))
+                                       &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (idx != 3) {
-        /*
-         * We use a ciphersuite with SHA256 to ease testing old style PSK
-         * callbacks which will always default to SHA256. This should not be
-         * necessary if we have no cert/priv key. In that case the server should
-         * prefer SHA256 automatically.
-         */
-        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
-                                                "TLS_AES_128_GCM_SHA256")))
-            goto end;
-    }
+    /* Make sure we negotiate a ciphersuite that is consistent with the PSK */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
+                                            "TLS_AES_128_GCM_SHA256")))
+        goto end;
 
-    /*
-     * Test 0: New style callbacks only
-     * Test 1: New and old style callbacks (only the new ones should be used)
-     * Test 2: Old style callbacks only
-     */
-    if (idx == 0 || idx == 1) {
-        SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
-        SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
-    }
-#ifndef OPENSSL_NO_PSK
-    if (idx >= 1) {
-        SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
-        SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
-    }
-#endif
+    SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+    SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
+
     srvid = pskid;
     use_session_cb_cnt = 0;
     find_session_cb_cnt = 0;
-    psk_client_cb_cnt = 0;
-    psk_server_cb_cnt = 0;
 
-    if (idx != 3) {
-        /*
-         * Check we can create a connection if callback decides not to send a
-         * PSK
-         */
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                                 NULL, NULL))
-                || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                    SSL_ERROR_NONE))
-                || !TEST_false(SSL_session_reused(clientssl))
-                || !TEST_false(SSL_session_reused(serverssl)))
-            goto end;
+    /*
+     * Check we can create a connection if callback decides not to send a
+     * PSK
+     */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_false(SSL_session_reused(clientssl))
+            || !TEST_false(SSL_session_reused(serverssl)))
+        goto end;
 
-        if (idx == 0 || idx == 1) {
-            if (!TEST_true(use_session_cb_cnt == 1)
-                    || !TEST_true(find_session_cb_cnt == 0)
-                       /*
-                        * If no old style callback then below should be 0
-                        * otherwise 1
-                        */
-                    || !TEST_true(psk_client_cb_cnt == idx)
-                    || !TEST_true(psk_server_cb_cnt == 0))
-                goto end;
-        } else {
-            if (!TEST_true(use_session_cb_cnt == 0)
-                    || !TEST_true(find_session_cb_cnt == 0)
-                    || !TEST_true(psk_client_cb_cnt == 1)
-                    || !TEST_true(psk_server_cb_cnt == 0))
-                goto end;
-        }
+    if (!TEST_true(use_session_cb_cnt == 1)
+            || !TEST_true(find_session_cb_cnt == 0))
+        goto end;
 
-        shutdown_ssl_connection(serverssl, clientssl);
-        serverssl = clientssl = NULL;
-        use_session_cb_cnt = psk_client_cb_cnt = 0;
-    }
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+    use_session_cb_cnt = 0;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
@@ -3331,24 +3226,13 @@ static int test_tls13_psk(int idx)
             || !TEST_true(SSL_session_reused(serverssl)))
         goto end;
 
-    if (idx == 0 || idx == 1) {
-        if (!TEST_true(use_session_cb_cnt == 1)
-                || !TEST_true(find_session_cb_cnt == 1)
-                || !TEST_true(psk_client_cb_cnt == 0)
-                || !TEST_true(psk_server_cb_cnt == 0))
-            goto end;
-    } else {
-        if (!TEST_true(use_session_cb_cnt == 0)
-                || !TEST_true(find_session_cb_cnt == 0)
-                || !TEST_true(psk_client_cb_cnt == 1)
-                || !TEST_true(psk_server_cb_cnt == 1))
-            goto end;
-    }
+    if (!TEST_true(use_session_cb_cnt == 1)
+            || !TEST_true(find_session_cb_cnt == 1))
+        goto end;
 
     shutdown_ssl_connection(serverssl, clientssl);
     serverssl = clientssl = NULL;
     use_session_cb_cnt = find_session_cb_cnt = 0;
-    psk_client_cb_cnt = psk_server_cb_cnt = 0;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
@@ -3367,60 +3251,35 @@ static int test_tls13_psk(int idx)
             || !TEST_true(SSL_session_reused(serverssl)))
         goto end;
 
-    if (idx == 0 || idx == 1) {
-        if (!TEST_true(use_session_cb_cnt == 2)
-                || !TEST_true(find_session_cb_cnt == 2)
-                || !TEST_true(psk_client_cb_cnt == 0)
-                || !TEST_true(psk_server_cb_cnt == 0))
-            goto end;
-    } else {
-        if (!TEST_true(use_session_cb_cnt == 0)
-                || !TEST_true(find_session_cb_cnt == 0)
-                || !TEST_true(psk_client_cb_cnt == 2)
-                || !TEST_true(psk_server_cb_cnt == 2))
-            goto end;
-    }
+    if (!TEST_true(use_session_cb_cnt == 2)
+            || !TEST_true(find_session_cb_cnt == 2))
+        goto end;
 
     shutdown_ssl_connection(serverssl, clientssl);
     serverssl = clientssl = NULL;
     use_session_cb_cnt = find_session_cb_cnt = 0;
-    psk_client_cb_cnt = psk_server_cb_cnt = 0;
 
-    if (idx != 3) {
-        /*
-         * Check that if the server rejects the PSK we can still connect, but with
-         * a full handshake
-         */
-        srvid = "Dummy Identity";
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-                                                 NULL, NULL))
-                || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                    SSL_ERROR_NONE))
-                || !TEST_false(SSL_session_reused(clientssl))
-                || !TEST_false(SSL_session_reused(serverssl)))
-            goto end;
+    /*
+     * Check that if the server rejects the PSK we can still connect, but with
+     * a full handshake
+     */
+    srvid = "Dummy Identity";
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_false(SSL_session_reused(clientssl))
+            || !TEST_false(SSL_session_reused(serverssl)))
+        goto end;
 
-        if (idx == 0 || idx == 1) {
-            if (!TEST_true(use_session_cb_cnt == 1)
-                    || !TEST_true(find_session_cb_cnt == 1)
-                    || !TEST_true(psk_client_cb_cnt == 0)
-                       /*
-                        * If no old style callback then below should be 0
-                        * otherwise 1
-                        */
-                    || !TEST_true(psk_server_cb_cnt == idx))
-                goto end;
-        } else {
-            if (!TEST_true(use_session_cb_cnt == 0)
-                    || !TEST_true(find_session_cb_cnt == 0)
-                    || !TEST_true(psk_client_cb_cnt == 1)
-                    || !TEST_true(psk_server_cb_cnt == 1))
-                goto end;
-        }
 
-        shutdown_ssl_connection(serverssl, clientssl);
-        serverssl = clientssl = NULL;
-    }
+    if (!TEST_true(use_session_cb_cnt == 1)
+            || !TEST_true(find_session_cb_cnt == 1))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+
     testresult = 1;
 
  end:
@@ -5464,11 +5323,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_set_ciphersuite, 10);
     ADD_TEST(test_ciphersuite_change);
-#ifdef OPENSSL_NO_PSK
-    ADD_ALL_TESTS(test_tls13_psk, 1);
-#else
-    ADD_ALL_TESTS(test_tls13_psk, 4);
-#endif  /* OPENSSL_NO_PSK */
+    ADD_TEST(test_tls13_psk);
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
