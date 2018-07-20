@@ -30,11 +30,25 @@
 
 static int stopped = 0;
 
+/*
+ * Since per-thread-specific-data destructors are not universally
+ * available, i.e. not on Windows, only below CRYPTO_THREAD_LOCAL key
+ * is assumed to have destructor associated. And then an effort is made
+ * to call this single destructor on non-pthread platform[s].
+ *
+ * Initial value is "impossible". It is used as guard value to shortcut
+ * destructor for threads terminating before libcrypto is initialized or
+ * after it's de-initialized. Access to the key doesn't have to be
+ * serialized for the said threads, because they didn't use libcrypto
+ * and it doesn't matter if they pick "impossible" or derefernce real
+ * key value and pull NULL past initialization in the first thread that
+ * intends to use libcrypto.
+ */
+static CRYPTO_THREAD_LOCAL destructor_key = (CRYPTO_THREAD_LOCAL)-1;
+
 static void ossl_init_thread_stop(struct thread_local_inits_st *locals);
 
-static CRYPTO_THREAD_LOCAL threadstopkey;
-
-static void ossl_init_thread_stop_wrap(void *local)
+static void ossl_init_thread_destructor(void *local)
 {
     ossl_init_thread_stop((struct thread_local_inits_st *)local);
 }
@@ -42,17 +56,17 @@ static void ossl_init_thread_stop_wrap(void *local)
 static struct thread_local_inits_st *ossl_init_get_thread_local(int alloc)
 {
     struct thread_local_inits_st *local =
-        CRYPTO_THREAD_get_local(&threadstopkey);
+        CRYPTO_THREAD_get_local(&destructor_key);
 
-    if (local == NULL && alloc) {
-        local = OPENSSL_zalloc(sizeof(*local));
-        if (local != NULL && !CRYPTO_THREAD_set_local(&threadstopkey, local)) {
+    if (alloc) {
+        if (local == NULL
+            && (local = OPENSSL_zalloc(sizeof(*local))) != NULL
+            && !CRYPTO_THREAD_set_local(&destructor_key, local)) {
             OPENSSL_free(local);
             return NULL;
         }
-    }
-    if (!alloc) {
-        CRYPTO_THREAD_set_local(&threadstopkey, NULL);
+    } else {
+        CRYPTO_THREAD_set_local(&destructor_key, NULL);
     }
 
     return local;
@@ -71,17 +85,15 @@ static CRYPTO_ONCE base = CRYPTO_ONCE_STATIC_INIT;
 static int base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
+    CRYPTO_THREAD_LOCAL key;
+
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     ossl_malloc_setup_failures();
 #endif
-    /*
-     * We use a dummy thread local key here. We use the destructor to detect
-     * when the thread is going to stop (where that feature is available)
-     */
-    if (!CRYPTO_THREAD_init_local(&threadstopkey, ossl_init_thread_stop_wrap))
+    if (!CRYPTO_THREAD_init_local(&key, ossl_init_thread_destructor))
         return 0;
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
@@ -91,6 +103,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #endif
     OPENSSL_cpuid_setup();
 
+    destructor_key = key;
     base_inited = 1;
     return 1;
 
@@ -101,7 +114,7 @@ err:
     CRYPTO_THREAD_lock_free(init_lock);
     init_lock = NULL;
 
-    CRYPTO_THREAD_cleanup_local(&threadstopkey);
+    CRYPTO_THREAD_cleanup_local(&key);
     return 0;
 }
 
@@ -396,8 +409,8 @@ static void ossl_init_thread_stop(struct thread_local_inits_st *locals)
 
 void OPENSSL_thread_stop(void)
 {
-    ossl_init_thread_stop(
-        (struct thread_local_inits_st *)ossl_init_get_thread_local(0));
+    if (destructor_key != (CRYPTO_THREAD_LOCAL)-1)
+        ossl_init_thread_stop(ossl_init_get_thread_local(0));
 }
 
 int ossl_init_thread_start(uint64_t opts)
@@ -442,6 +455,7 @@ int ossl_init_thread_start(uint64_t opts)
 void OPENSSL_cleanup(void)
 {
     OPENSSL_INIT_STOP *currhandler, *lasthandler;
+    CRYPTO_THREAD_LOCAL key;
 
     /* If we've not been inited then no need to deinit */
     if (!base_inited)
@@ -501,7 +515,9 @@ void OPENSSL_cleanup(void)
         err_free_strings_int();
     }
 
-    CRYPTO_THREAD_cleanup_local(&threadstopkey);
+    key = destructor_key;
+    destructor_key = (CRYPTO_THREAD_LOCAL)-1;
+    CRYPTO_THREAD_cleanup_local(&key);
 
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: OPENSSL_cleanup: "
