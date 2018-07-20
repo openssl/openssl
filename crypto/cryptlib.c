@@ -161,7 +161,6 @@ void OPENSSL_cpuid_setup(void)
 unsigned int OPENSSL_ia32cap_P[4];
 # endif
 #endif
-int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
 void OPENSSL_cpuid_setup(void)
 {
