@@ -19,29 +19,90 @@
 extern unsigned int OPENSSL_ia32cap_P[4];
 
 # if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
-#include <stdio.h>
+
+/*
+ * Purpose of these minimalistic and character-type-agnostic subroutines
+ * is to break dependency on MSCVRT (on Windows) and locale. This makes
+ * OPENSSL_cpuid_setup safe to use as "constructor". "Character-type-
+ * agnostic" means that they work with either wide or 8-bit characters,
+ * exploiting the fact that first 127 characters can be simply casted
+ * between the sets, while the rest would be simply rejected by ossl_is*
+ * subroutines.
+ */
+#  ifdef _WIN32
+typedef WCHAR ossl_char;
+static ossl_char *ossl_getenv(const char *name)
+{
+    static WCHAR value[48];
+    DWORD len = GetEnvironmentVariableW(L"OPENSSL_ia32cap", value, 48);
+
+    return (len > 0 && len <= 48) ? value : NULL;
+}
+#  else
+typedef char ossl_char;
+#   define ossl_getenv getenv
+#  endif
+
+#  include "internal/ctype.h"
+
+static int todigit(ossl_char c)
+{
+    if (ossl_isdigit(c))
+        return c - '0';
+    else if (ossl_isxdigit(ossl_tolower(c)))
+        return c - 'a' + 10;
+
+    return 16;
+}
+
+static uint64_t ossl_strtouint64(const ossl_char *str)
+{
+    uint64_t ret = 0;
+    unsigned int digit, base = 10;
+
+    if (*str == '0') {
+        base = 8, str++;
+        if (ossl_tolower(*str) == 'x')
+            base = 16, str++;
+    }
+
+    while((digit = todigit(*str++)) < base)
+        ret = ret * base + digit;
+
+    return ret;
+}
+
+static ossl_char *ossl_strchr(const ossl_char *str, char srch)
+{   ossl_char c;
+
+    while((c = *str)) {
+        if (c == srch)
+	    return (ossl_char *)str;
+        str++;
+    }
+
+    return NULL;
+}
+
 #  define OPENSSL_CPUID_SETUP
 typedef uint64_t IA32CAP;
+
 void OPENSSL_cpuid_setup(void)
 {
     static int trigger = 0;
     IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
     IA32CAP vec;
-    char *env;
+    const ossl_char *env;
 
     if (trigger)
         return;
 
     trigger = 1;
-    if ((env = getenv("OPENSSL_ia32cap"))) {
+    if ((env = ossl_getenv("OPENSSL_ia32cap")) != NULL) {
         int off = (env[0] == '~') ? 1 : 0;
-#  if defined(_WIN32)
-        if (!sscanf(env + off, "%I64i", &vec))
-            vec = strtoul(env + off, NULL, 0);
-#  else
-        if (!sscanf(env + off, "%lli", (long long *)&vec))
-            vec = strtoul(env + off, NULL, 0);
-#  endif
+
+        vec = ossl_strtouint64(env + off);
+
         if (off) {
             IA32CAP mask = vec;
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P) & ~mask;
@@ -60,17 +121,12 @@ void OPENSSL_cpuid_setup(void)
             vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
         }
 
-        if ((env = strchr(env, ':'))) {
+        if ((env = ossl_strchr(env, ':')) != NULL) {
             IA32CAP vecx;
+
             env++;
             off = (env[0] == '~') ? 1 : 0;
-#  if defined(_WIN32)
-            if (!sscanf(env + off, "%I64i", &vecx))
-                vecx = strtoul(env + off, NULL, 0);
-#  else
-            if (!sscanf(env + off, "%lli", (long long *)&vecx))
-                vecx = strtoul(env + off, NULL, 0);
-#  endif
+            vecx = ossl_strtouint64(env + off);
             if (off) {
                 OPENSSL_ia32cap_P[2] &= ~(unsigned int)vecx;
                 OPENSSL_ia32cap_P[3] &= ~(unsigned int)(vecx >> 32);
