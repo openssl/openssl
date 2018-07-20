@@ -14,29 +14,34 @@ struct lhash_node_st {
     unsigned long hash;
 };
 
+struct lhash_stats_st {
+    unsigned long expands;
+    unsigned long expand_reallocs;
+    unsigned long contracts;
+    unsigned long contract_reallocs;
+    unsigned long hash_calls;
+    unsigned long comp_calls;
+    unsigned long insert;
+    unsigned long replace;
+    unsigned long delete;
+    unsigned long no_delete;
+    unsigned long retrieve;
+    unsigned long retrieve_miss;
+    unsigned long hash_comps;
+};
+
 struct lhash_st {
     OPENSSL_LH_NODE **b;
     OPENSSL_LH_COMPFUNC comp;
     OPENSSL_LH_HASHFUNC hash;
     unsigned int num_nodes;
     unsigned int num_alloc_nodes;
+    unsigned long num_items;
     unsigned int p;
     unsigned int pmax;
     unsigned long up_load;      /* load times 256 */
     unsigned long down_load;    /* load times 256 */
-    unsigned long num_items;
-    unsigned long num_expands;
-    unsigned long num_expand_reallocs;
-    unsigned long num_contracts;
-    unsigned long num_contract_reallocs;
-    unsigned long num_hash_calls;
-    unsigned long num_comp_calls;
-    unsigned long num_insert;
-    unsigned long num_replace;
-    unsigned long num_delete;
-    unsigned long num_no_delete;
-    unsigned long num_retrieve;
-    unsigned long num_retrieve_miss;
-    unsigned long num_hash_comps;
+    unsigned long flags;
     int error;
+    struct lhash_stats_st stats;
 };

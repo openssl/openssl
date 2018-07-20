@@ -44,6 +44,12 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh, const void *data, unsigned lon
 
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
 {
+    return OPENSSL_LH_new_ex(h, c, 0L);
+}
+
+OPENSSL_LHASH *OPENSSL_LH_new_ex(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c,
+                                 unsigned long flags)
+{
     OPENSSL_LHASH *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
@@ -58,6 +64,7 @@ OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c)
         goto err;
     ret->comp = ((c == NULL) ? (OPENSSL_LH_COMPFUNC)strcmp : c);
     ret->hash = ((h == NULL) ? (OPENSSL_LH_HASHFUNC)OPENSSL_LH_strhash : h);
+    ret->flags = flags;
     ret->num_nodes = MIN_NODES / 2;
     ret->num_alloc_nodes = MIN_NODES;
     ret->pmax = MIN_NODES / 2;
@@ -113,12 +120,14 @@ void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data)
         nn->hash = hash;
         *rn = nn;
         ret = NULL;
-        lh->num_insert++;
         lh->num_items++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.insert++;
     } else {                    /* replace same key */
         ret = (*rn)->data;
         (*rn)->data = data;
-        lh->num_replace++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.replace++;
     }
     return ret;
 }
@@ -133,17 +142,17 @@ void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data)
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        lh->num_no_delete++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.no_delete++;
         return NULL;
-    } else {
-        nn = *rn;
-        *rn = nn->next;
-        ret = nn->data;
-        OPENSSL_free(nn);
-        lh->num_delete++;
     }
-
+    nn = *rn;
+    *rn = nn->next;
+    ret = nn->data;
+    OPENSSL_free(nn);
     lh->num_items--;
+    if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+        lh->stats.delete++;
     if ((lh->num_nodes > MIN_NODES) &&
         (lh->down_load >= (lh->num_items * LH_LOAD_MULT / lh->num_nodes)))
         contract(lh);
@@ -161,12 +170,13 @@ void *OPENSSL_LH_retrieve(OPENSSL_LHASH *lh, const void *data)
     rn = getrn(lh, data, &hash);
 
     if (*rn == NULL) {
-        lh->num_retrieve_miss++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.retrieve_miss++;
         return NULL;
-    } else {
-        ret = (*rn)->data;
-        lh->num_retrieve++;
     }
+    ret = (*rn)->data;
+    if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+        lh->stats.retrieve++;
     return ret;
 }
 
@@ -227,14 +237,16 @@ static int expand(OPENSSL_LHASH *lh)
         memset(n + nni, 0, sizeof(*n) * (j - nni));
         lh->pmax = nni;
         lh->num_alloc_nodes = j;
-        lh->num_expand_reallocs++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.expand_reallocs++;
         lh->p = 0;
     } else {
         lh->p++;
     }
 
     lh->num_nodes++;
-    lh->num_expands++;
+    if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+        lh->stats.expands++;
     n1 = &(lh->b[p]);
     n2 = &(lh->b[p + pmax]);
     *n2 = NULL;
@@ -267,7 +279,8 @@ static void contract(OPENSSL_LHASH *lh)
             lh->error++;
             return;
         }
-        lh->num_contract_reallocs++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.contract_reallocs++;
         lh->num_alloc_nodes /= 2;
         lh->pmax /= 2;
         lh->p = lh->pmax - 1;
@@ -276,7 +289,8 @@ static void contract(OPENSSL_LHASH *lh)
         lh->p--;
 
     lh->num_nodes--;
-    lh->num_contracts++;
+    if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+        lh->stats.contracts++;
 
     n1 = lh->b[(int)lh->p];
     if (n1 == NULL)
@@ -296,7 +310,8 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     OPENSSL_LH_COMPFUNC cf;
 
     hash = (*(lh->hash)) (data);
-    lh->num_hash_calls++;
+    if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+        lh->stats.hash_calls++;
     *rhash = hash;
 
     nn = hash % lh->pmax;
@@ -306,12 +321,14 @@ static OPENSSL_LH_NODE **getrn(OPENSSL_LHASH *lh,
     cf = lh->comp;
     ret = &(lh->b[(int)nn]);
     for (n1 = *ret; n1 != NULL; n1 = n1->next) {
-        lh->num_hash_comps++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.hash_comps++;
         if (n1->hash != hash) {
             ret = &(n1->next);
             continue;
         }
-        lh->num_comp_calls++;
+        if (lh->flags & OPENSSL_LH_FLAGS_STATS)
+            lh->stats.comp_calls++;
         if (cf(n1->data, data) == 0)
             break;
         ret = &(n1->next);

@@ -61,22 +61,22 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-    BIO_printf(out, "num_items             = %lu\n", lh->num_items);
-    BIO_printf(out, "num_nodes             = %u\n",  lh->num_nodes);
-    BIO_printf(out, "num_alloc_nodes       = %u\n",  lh->num_alloc_nodes);
-    BIO_printf(out, "num_expands           = %lu\n", lh->num_expands);
-    BIO_printf(out, "num_expand_reallocs   = %lu\n", lh->num_expand_reallocs);
-    BIO_printf(out, "num_contracts         = %lu\n", lh->num_contracts);
-    BIO_printf(out, "num_contract_reallocs = %lu\n", lh->num_contract_reallocs);
-    BIO_printf(out, "num_hash_calls        = %lu\n", lh->num_hash_calls);
-    BIO_printf(out, "num_comp_calls        = %lu\n", lh->num_comp_calls);
-    BIO_printf(out, "num_insert            = %lu\n", lh->num_insert);
-    BIO_printf(out, "num_replace           = %lu\n", lh->num_replace);
-    BIO_printf(out, "num_delete            = %lu\n", lh->num_delete);
-    BIO_printf(out, "num_no_delete         = %lu\n", lh->num_no_delete);
-    BIO_printf(out, "num_retrieve          = %lu\n", lh->num_retrieve);
-    BIO_printf(out, "num_retrieve_miss     = %lu\n", lh->num_retrieve_miss);
-    BIO_printf(out, "num_hash_comps        = %lu\n", lh->num_hash_comps);
+    BIO_printf(out, "items             = %lu\n", lh->num_items);
+    BIO_printf(out, "nodes             = %u\n",  lh->num_nodes);
+    BIO_printf(out, "alloc_nodes       = %u\n",  lh->num_alloc_nodes);
+    BIO_printf(out, "expands           = %lu\n", lh->stats.expands);
+    BIO_printf(out, "expand_reallocs   = %lu\n", lh->stats.expand_reallocs);
+    BIO_printf(out, "contracts         = %lu\n", lh->stats.contracts);
+    BIO_printf(out, "contract_reallocs = %lu\n", lh->stats.contract_reallocs);
+    BIO_printf(out, "hash_calls        = %lu\n", lh->stats.hash_calls);
+    BIO_printf(out, "comp_calls        = %lu\n", lh->stats.comp_calls);
+    BIO_printf(out, "insert            = %lu\n", lh->stats.insert);
+    BIO_printf(out, "replace           = %lu\n", lh->stats.replace);
+    BIO_printf(out, "delete            = %lu\n", lh->stats.delete);
+    BIO_printf(out, "no_delete         = %lu\n", lh->stats.no_delete);
+    BIO_printf(out, "retrieve          = %lu\n", lh->stats.retrieve);
+    BIO_printf(out, "retrieve_miss     = %lu\n", lh->stats.retrieve_miss);
+    BIO_printf(out, "hash_comps        = %lu\n", lh->stats.hash_comps);
 }
 
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
