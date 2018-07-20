@@ -205,10 +205,14 @@ int OPENSSL_isservice(void)
 
     if (_OPENSSL_isservice.p == NULL) {
         HANDLE mod = GetModuleHandle(NULL);
+        FARPROC f;
+
         if (mod != NULL)
-            _OPENSSL_isservice.f = GetProcAddress(mod, "_OPENSSL_isservice");
-        if (_OPENSSL_isservice.p == NULL)
+            f = GetProcAddress(mod, "_OPENSSL_isservice");
+        if (f == NULL)
             _OPENSSL_isservice.p = (void *)-1;
+        else
+            _OPENSSL_isservice.f = f;
     }
 
     if (_OPENSSL_isservice.p != (void *)-1)
