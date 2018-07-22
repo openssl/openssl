@@ -30,9 +30,9 @@ extern unsigned int OPENSSL_ia32cap_P[4];
  * subroutines.
  */
 #  ifdef _WIN32
-typedef WCHAR ossl_char;
+typedef WCHAR variant_char;
 
-static ossl_char *ossl_getenv(const char *name)
+static variant_char *ossl_getenv(const char *name)
 {
     /*
      * Since we pull only one environment variable, it's simpler to
@@ -45,13 +45,13 @@ static ossl_char *ossl_getenv(const char *name)
     return (len > 0 && len < 48) ? value : NULL;
 }
 #  else
-typedef char ossl_char;
+typedef char variant_char;
 #   define ossl_getenv getenv
 #  endif
 
 #  include "internal/ctype.h"
 
-static int todigit(ossl_char c)
+static int todigit(variant_char c)
 {
     if (ossl_isdigit(c))
         return c - '0';
@@ -62,7 +62,7 @@ static int todigit(ossl_char c)
     return 16;
 }
 
-static uint64_t ossl_strtouint64(const ossl_char *str)
+static uint64_t ossl_strtouint64(const variant_char *str)
 {
     uint64_t ret = 0;
     unsigned int digit, base = 10;
@@ -79,12 +79,12 @@ static uint64_t ossl_strtouint64(const ossl_char *str)
     return ret;
 }
 
-static ossl_char *ossl_strchr(const ossl_char *str, char srch)
-{   ossl_char c;
+static variant_char *ossl_strchr(const variant_char *str, char srch)
+{   variant_char c;
 
     while((c = *str)) {
         if (c == srch)
-	    return (ossl_char *)str;
+	    return (variant_char *)str;
         str++;
     }
 
@@ -99,7 +99,7 @@ void OPENSSL_cpuid_setup(void)
     static int trigger = 0;
     IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
     IA32CAP vec;
-    const ossl_char *env;
+    const variant_char *env;
 
     if (trigger)
         return;
