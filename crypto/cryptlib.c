@@ -32,12 +32,13 @@ extern unsigned int OPENSSL_ia32cap_P[4];
 #  ifdef _WIN32
 typedef WCHAR ossl_char;
 
-/*
- * Since we pull only one environment variable, it's simpler to
- * to just ignore |name| and use eqivalent wide-char L-literal.
- */
 static ossl_char *ossl_getenv(const char *name)
 {
+    /*
+     * Since we pull only one environment variable, it's simpler to
+     * to just ignore |name| and use equivalent wide-char L-literal.
+     * As well as to ignore excessively long values...
+     */
     static WCHAR value[48];
     DWORD len = GetEnvironmentVariableW(L"OPENSSL_ia32cap", value, 48);
 
