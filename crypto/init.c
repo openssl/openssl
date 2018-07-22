@@ -32,15 +32,17 @@ static int stopped = 0;
 
 /*
  * Since per-thread-specific-data destructors are not universally
- * available, i.e. not on *cough*-dows, only below CRYPTO_THREAD_LOCAL
- * key is assumed to have destructor associated. And then an effort is
- * made to call this single destructor on non-pthread platform[s].
+ * available, i.e. not on Windows, only below CRYPTO_THREAD_LOCAL key
+ * is assumed to have destructor associated. And then an effort is made
+ * to call this single destructor on non-pthread platform[s].
+ *
  * Initial value is "impossible". It is used as guard value to shortcut
- * destructor for threads terminating before libcrypto is initialized.
- * Access to the key doesn't have to be serialized for the said threads,
- * because they didn't use libcrypto and it doesn't matter if they pick
- * "impossible" or real NULL value past initialization in the first
- * thread that intend to use libcrypto.
+ * destructor for threads terminating before libcrypto is initialized or
+ * after it's de-initialized. Access to the key doesn't have to be
+ * serialized for the said threads, because they didn't use libcrypto
+ * and it doesn't matter if they pick "impossible" or derefernce real
+ * key value and pull NULL past initialization in the first thread that
+ * intends to use libcrypto.
  */
 static CRYPTO_THREAD_LOCAL destructor_key = (CRYPTO_THREAD_LOCAL)-1;
 
