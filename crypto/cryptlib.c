@@ -55,8 +55,8 @@ static int todigit(ossl_char c)
 {
     if (ossl_isdigit(c))
         return c - '0';
-    else if (ossl_isxdigit(ossl_tolower(c)))
-        return c - 'a' + 10;
+    else if (ossl_isxdigit(c))
+        return ossl_tolower(c) - 'a' + 10;
 
     /* return largest base value to make caller terminate the loop */
     return 16;
