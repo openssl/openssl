@@ -888,21 +888,21 @@ while (@argvcopy)
 		else
 			{ $config{options} .= " ".$_; }
 		}
+	}
 
-        if (defined($config{api}) && !exists $apitable->{$config{api}}) {
-		die "***** Unsupported api compatibility level: $config{api}\n",
-        }
+if (defined($config{api}) && !exists $apitable->{$config{api}}) {
+	die "***** Unsupported api compatibility level: $config{api}\n",
+}
 
-	if (keys %deprecated_options)
-		{
-		warn "***** Deprecated options: ",
-			join(", ", keys %deprecated_options), "\n";
-		}
-	if (keys %unsupported_options)
-		{
-		die "***** Unsupported options: ",
-			join(", ", keys %unsupported_options), "\n";
-		}
+if (keys %deprecated_options)
+	{
+	warn "***** Deprecated options: ",
+		join(", ", keys %deprecated_options), "\n";
+	}
+if (keys %unsupported_options)
+	{
+	die "***** Unsupported options: ",
+		join(", ", keys %unsupported_options), "\n";
 	}
 
 # If any %useradd entry has been set, we must check that the "make
