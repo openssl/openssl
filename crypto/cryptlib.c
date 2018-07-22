@@ -22,7 +22,7 @@ extern unsigned int OPENSSL_ia32cap_P[4];
 
 /*
  * Purpose of these minimalistic and character-type-agnostic subroutines
- * is to break dependency on MSCVRT (on Windows) and locale. This makes
+ * is to break dependency on MSVCRT (on Windows) and locale. This makes
  * OPENSSL_cpuid_setup safe to use as "constructor". "Character-type-
  * agnostic" means that they work with either wide or 8-bit characters,
  * exploiting the fact that first 127 characters can be simply casted
