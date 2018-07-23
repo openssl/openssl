@@ -159,8 +159,6 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     EC_GROUP *group;
 
     switch (type) {
-    case EVP_PKEY_CTRL_DIGESTINIT:
-       return 1;
     case EVP_PKEY_CTRL_DIGESTSETUP:
 
        if (dctx->uid != NULL) {
@@ -169,12 +167,10 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
            const EVP_MD* md = EVP_MD_CTX_md(md_ctx);
            const int md_len = EVP_MD_size(md);
            int rc = 1;
-           uint8_t *za = NULL;
+           uint8_t za[EVP_MAX_MD_SIZE];
 
-           za = OPENSSL_malloc(md_len);
            sm2_compute_userid_digest(za, md, dctx->uid, ec);
            rc = EVP_DigestUpdate(md_ctx, za, md_len);
-           OPENSSL_free(za);
            return rc;
        }
 
@@ -199,7 +195,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_SM2_SET_UID:
         dctx->uid = OPENSSL_strdup(p2);
-        return 1;
+        return (dctx->uid != NULL);
 
     case EVP_PKEY_CTRL_SM2_GET_UID:
         *(char**)p2 = OPENSSL_strdup(dctx->uid);

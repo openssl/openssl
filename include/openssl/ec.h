@@ -1346,6 +1346,10 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
                                 EVP_PKEY_CTRL_SM2_SET_UID, 0, (void*)(uid))
 
+# define EVP_PKEY_CTX_get_sm2_uid(ctx, uid) \
+        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
+                                EVP_PKEY_CTRL_SM2_GET_UID, 0, (void*)(uid))
+
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_EC_PARAM_ENC                      (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_EC_ECDH_COFACTOR                  (EVP_PKEY_ALG_CTRL + 3)
