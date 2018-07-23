@@ -21,7 +21,6 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
  LHASH *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
  LHASH *lh_TYPE_new_ex(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare,
           unsigned long flags);
- LHASH *lh_TYPE_new_ex();
  void lh_TYPE_free(LHASH_OF(TYPE) *table);
 
  TYPE *lh_TYPE_insert(LHASH_OF(TYPE) *table, TYPE *data);
@@ -241,6 +240,8 @@ L<OPENSSL_LH_stats(3)>
 
 In OpenSSL 1.0.0, the lhash interface was revamped for better
 type checking.
+
+The lh_TYPE_new_ex() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
