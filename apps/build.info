@@ -1,5 +1,4 @@
-{- our $tsget_name = $config{target} =~ /^(VC|vms)-/ ? "tsget.pl" : "tsget";
-   our @apps_openssl_src =
+{- our @apps_openssl_src =
        qw(openssl.c
           asn1pars.c ca.c ciphers.c cms.c crl.c crl2p7.c dgst.c dhparam.c
           dsa.c dsaparam.c ec.c ecparam.c enc.c engine.c errstr.c gendsa.c
@@ -33,7 +32,7 @@ ENDIF
   GENERATE[progs.h]=progs.pl $(APPS_OPENSSL)
   DEPEND[progs.h]=../configdata.pm
 
-  SCRIPTS=CA.pl {- $tsget_name -}
+  SCRIPTS=CA.pl tsget.pl
   SOURCE[CA.pl]=CA.pl.in
-  SOURCE[{- $tsget_name -}]=tsget.in
+  SOURCE[tsget.pl]=tsget.in
 ENDIF
