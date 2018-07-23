@@ -267,6 +267,19 @@ Nagle's algorithm. If an application opts to disable Nagle's algorithm
 consideration should be given to turning it back on again after the handshake is
 complete if appropriate.
 
+In rare circumstances, it may be possible for a client to have a session that
+reports a max early data value greater than 0, but where the server does not
+support this. For example, this can occur if a server has had its configuration
+changed to accept a lower max early data value such as by calling
+SSL_CTX_set_recv_max_early_data(). Another example is if a server used to
+support TLSv1.3 but was later downgraded to TLSv1.2. Sending early data to such
+a server will cause the connection to abort. Clients that encounter an aborted
+connection while sending early data may want to retry the connection without
+sending early data as this does not happen automatically. A client will have to
+establish a new transport layer connection to the server and attempt the SSL/TLS
+connection again but without sending early data. Note that it is inadvisable to
+retry with a lower maximum protocol version.
+
 =head1 REPLAY PROTECTION
 
 When early data is in use the TLS protocol provides no security guarantees that
