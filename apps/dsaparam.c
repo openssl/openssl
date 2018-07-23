@@ -226,7 +226,7 @@ int dsaparam_main(int argc, char **argv)
 
         data = app_malloc(len + 20, "BN space");
 
-        BIO_printf(bio_out, "DSA *get_dsa%d()\n{\n", bits_p);
+        BIO_printf(bio_out, "static DSA *get_dsa%d(void)\n{\n", bits_p);
         print_bignum_var(bio_out, p, "dsap", bits_p, data);
         print_bignum_var(bio_out, q, "dsaq", bits_p, data);
         print_bignum_var(bio_out, g, "dsag", bits_p, data);
