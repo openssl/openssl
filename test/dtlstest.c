@@ -49,9 +49,8 @@ static int test_dtls_unprocessed(int testidx)
 
     printf("Starting Test %d\n", testidx);
 
-    if (!create_ssl_ctx_pair(DTLS_server_method(), DTLS_client_method(),
-                             DTLS1_VERSION, DTLS_MAX_VERSION, &sctx, &cctx,
-                             cert, privkey)) {
+    if (!create_ssl_ctx_pair(DTLS_server_method(), DTLS_client_method(), &sctx,
+                             &cctx, cert, privkey)) {
         printf("Unable to create SSL_CTX pair\n");
         return 0;
     }

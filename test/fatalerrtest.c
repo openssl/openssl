@@ -28,8 +28,7 @@ static int test_fatalerr(void)
         0x17, 0x03, 0x03, 0x00, 0x05, 'D', 'u', 'm', 'm', 'y'
     };
 
-    if (!create_ssl_ctx_pair(SSLv23_method(), SSLv23_method(),
-                             SSL3_VERSION, TLS_MAX_VERSION, &sctx, &cctx,
+    if (!create_ssl_ctx_pair(SSLv23_method(), SSLv23_method(), &sctx, &cctx,
                              cert, privkey)) {
         printf("Failed to create SSL_CTX pair\n");
         goto err;

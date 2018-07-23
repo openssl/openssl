@@ -249,21 +249,15 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 #ifndef OPENSSL_NO_DTLS
     if (test_ctx->method == SSL_TEST_METHOD_DTLS) {
         server_ctx = SSL_CTX_new(DTLS_server_method());
-        TEST_check(SSL_CTX_set_max_proto_version(server_ctx, DTLS_MAX_VERSION));
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
             server2_ctx = SSL_CTX_new(DTLS_server_method());
             TEST_check(server2_ctx != NULL);
         }
         client_ctx = SSL_CTX_new(DTLS_client_method());
-        TEST_check(SSL_CTX_set_max_proto_version(client_ctx, DTLS_MAX_VERSION));
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(DTLS_server_method());
-            TEST_check(SSL_CTX_set_max_proto_version(resume_server_ctx,
-                                                     DTLS_MAX_VERSION));
             resume_client_ctx = SSL_CTX_new(DTLS_client_method());
-            TEST_check(SSL_CTX_set_max_proto_version(resume_client_ctx,
-                                                     DTLS_MAX_VERSION));
             TEST_check(resume_server_ctx != NULL);
             TEST_check(resume_client_ctx != NULL);
         }
@@ -271,7 +265,6 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
 #endif
     if (test_ctx->method == SSL_TEST_METHOD_TLS) {
         server_ctx = SSL_CTX_new(TLS_server_method());
-        TEST_check(SSL_CTX_set_max_proto_version(server_ctx, TLS_MAX_VERSION));
         /* SNI on resumption isn't supported/tested yet. */
         if (test_ctx->extra.server.servername_callback !=
             SSL_TEST_SERVERNAME_CB_NONE) {
@@ -279,15 +272,10 @@ static int execute_test(SSL_TEST_FIXTURE fixture)
             TEST_check(server2_ctx != NULL);
         }
         client_ctx = SSL_CTX_new(TLS_client_method());
-        TEST_check(SSL_CTX_set_max_proto_version(client_ctx, TLS_MAX_VERSION));
 
         if (test_ctx->handshake_mode == SSL_TEST_HANDSHAKE_RESUME) {
             resume_server_ctx = SSL_CTX_new(TLS_server_method());
-            TEST_check(SSL_CTX_set_max_proto_version(resume_server_ctx,
-                                                     TLS_MAX_VERSION));
             resume_client_ctx = SSL_CTX_new(TLS_client_method());
-            TEST_check(SSL_CTX_set_max_proto_version(resume_client_ctx,
-                                                     TLS_MAX_VERSION));
             TEST_check(resume_server_ctx != NULL);
             TEST_check(resume_client_ctx != NULL);
         }

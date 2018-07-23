@@ -524,7 +524,6 @@ static int mempacket_test_puts(BIO *bio, const char *str)
 }
 
 int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
-                        int min_proto_version, int max_proto_version,
                         SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
                         char *privkeyfile)
 {
@@ -537,30 +536,6 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     if (serverctx == NULL || (cctx != NULL && clientctx == NULL)) {
         printf("Failed to create SSL_CTX\n");
         goto err;
-    }
-
-    if (min_proto_version > 0
-        && !SSL_CTX_set_min_proto_version(serverctx, min_proto_version)) {
-        printf("Unable to set server min protocol versions\n");
-        goto err;
-    }
-    if (max_proto_version > 0
-        && !SSL_CTX_set_max_proto_version(serverctx, max_proto_version)) {
-        printf("Unable to set server max protocol versions\n");
-        goto err;
-    }
-
-    if (clientctx != NULL) {
-        if (min_proto_version > 0
-            && !SSL_CTX_set_max_proto_version(clientctx, max_proto_version)) {
-            printf("Unable to set client max protocol versions\n");
-            goto err;
-        }
-        if (max_proto_version > 0
-            && !SSL_CTX_set_min_proto_version(clientctx, min_proto_version)) {
-            printf("Unable to set client min protocol versions\n");
-            goto err;
-        }
     }
 
     if (SSL_CTX_use_certificate_file(serverctx, certfile,
