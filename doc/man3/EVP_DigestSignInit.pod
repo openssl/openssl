@@ -29,6 +29,13 @@ EVP_PKEY_CTX of the signing operation will be written to B<*pctx>: this can
 be used to set alternative signing options. The digest B<type> may be NULL if
 the signing algorithm supports it.
 
+In some rare cases (including SM2 signatures) it is necessary to reinitialize
+the digest computation after setting some parameters on the B<pctx>. This
+is done by calling EVP_DigestSignInit() twice. The first time, B<pctx>
+should be non NULL. Then any necesssary options can be set on B<pctx>
+using for instance EVP_PKEY_CTX_ctrl_str(). Afterwards, EVP_SignVerifyInit()
+is called again, using the same verification context B<ctx>.
+
 Only EVP_PKEY types that support signing can be used with these functions. This
 includes MAC algorithms where the MAC generation is considered as a form of
 "signing." Built-in EVP_PKEY types supported by these functions are CMAC,
