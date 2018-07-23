@@ -9,6 +9,12 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) The 'tsget' script is renamed to 'tsget.pl', to avoid confusion when
+     moving between systems, and to avoid confusion when a Windows build is
+     done with mingw vs with MSVC.  For POSIX installs, there's still a
+     symlink or copy named 'tsget' to avoid that confusion as well.
+     [Richard Levitte]
+
   *) Revert blinding in ECDSA sign and instead make problematic addition
      length-invariant. Switch even to fixed-length Montgomery multiplication.
      [Andy Polyakov]
