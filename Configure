@@ -21,6 +21,9 @@ use OpenSSL::Glob;
 
 # see INSTALL for instructions.
 
+my $orig_death_handler = $SIG{__DIE__};
+$SIG{__DIE__} = \&death_handler;
+
 my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
@@ -2679,6 +2682,8 @@ my %builders = (
 
 $builders{$builder}->($builder_platform, @builder_opts);
 
+$SIG{__DIE__} = $orig_death_handler;
+
 print <<"EOF" if ($disabled{threads} eq "unavailable");
 
 The library could not be configured for supporting multi-threaded
@@ -2713,6 +2718,19 @@ exit(0);
 #
 # Helpers and utility functions
 #
+
+# Death handler, to print a helpful message in case of failure #######
+#
+sub death_handler {
+    my $build_file = $target{build_file} // "build file";
+    print STDERR <<"_____";
+
+Failure!  $build_file wasn't produced
+Please read INSTALL and associated NOTES files, look over your available
+compiler tool chain or change your configuration.
+
+_____
+}
 
 # Configuration file reading #########################################
 
