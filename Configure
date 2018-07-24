@@ -2725,7 +2725,7 @@ sub death_handler {
     my $build_file = $target{build_file} // "build file";
     print STDERR <<"_____";
 
-Failure!  $build_file wasn't produced
+Failure!  $build_file wasn't produced.
 Please read INSTALL and associated NOTES files, look over your available
 compiler tool chain or change your configuration.
 
