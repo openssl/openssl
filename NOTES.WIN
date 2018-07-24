@@ -47,10 +47,11 @@
    the other hand oldest one is known not to work. Everything between
    falls into best-effort category.
 
- - Netwide Assembler, a.k.a. NASM, available from http://www.nasm.us,
-   is required if you intend to utilize assembler modules. Note that NASM
-   is the only supported assembler. The Microsoft provided assembler is NOT
-   supported.
+ - Netwide Assembler, a.k.a. NASM, available from https://www.nasm.us,
+   is required. Note that NASM is the only supported assembler. Even
+   though Microsoft provided assembler is NOT supported, contemporary
+   64-bit version is exercised through continuous integration of
+   VC-WIN64A-masm target.
 
 
  Installation directories

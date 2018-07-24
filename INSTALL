@@ -257,7 +257,8 @@
 
   no-asm
                    Do not use assembler code. On some platforms a small amount
-                   of assembler code may still be used.
+                   of assembler code may still be used. This should be viewed
+                   rather as debugging/trouble-shooting option than production.
 
   no-async
                    Do not build support for async operations.
