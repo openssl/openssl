@@ -182,13 +182,6 @@ lh_TYPE_free(), lh_TYPE_doall() and lh_TYPE_doall_arg() return no values.
 
 =head1 NOTE
 
-The various LHASH macros and callback types exist to make it possible
-to write type-checked code without resorting to function-prototype
-casting - an evil that makes application code much harder to
-audit/verify and also opens the window of opportunity for stack
-corruption and other hard-to-find bugs.  It also, apparently, violates
-ANSI-C.
-
 The LHASH code is not thread safe. All updating operations must be
 performed under a write lock. All retrieve operations should be performed
 under a read lock, I<unless> accurate usage statistics are desired.
