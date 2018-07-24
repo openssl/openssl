@@ -2726,8 +2726,8 @@ sub death_handler {
     print STDERR <<"_____";
 
 Failure!  $build_file wasn't produced.
-Please read INSTALL and associated NOTES files, look over your available
-compiler tool chain or change your configuration.
+Please read INSTALL and associated NOTES files.  You may also have to look over
+your available compiler tool chain or change your configuration.
 
 _____
 }
