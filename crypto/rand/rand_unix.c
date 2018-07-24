@@ -577,7 +577,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
-     * ensure that the nonce is unique whith high probability for
+     * ensure that the nonce is unique with high probability for
      * different process instances.
      */
     data.pid = getpid();
