@@ -2722,6 +2722,7 @@ exit(0);
 # Death handler, to print a helpful message in case of failure #######
 #
 sub death_handler {
+    die @_ if $^S;
     my $build_file = $target{build_file} // "build file";
     print STDERR <<"_____";
 
