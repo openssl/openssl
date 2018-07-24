@@ -177,19 +177,10 @@ lh_TYPE_free(), lh_TYPE_doall() and lh_TYPE_doall_arg() return no values.
 
 =head1 NOTE
 
-The various LHASH macros and callback types exist to make it possible
-to write type-checked code without resorting to function-prototype
-casting - an evil that makes application code much harder to
-audit/verify and also opens the window of opportunity for stack
-corruption and other hard-to-find bugs.  It also, apparently, violates
-ANSI-C.
-
-The LHASH code is not thread safe. All updating operations must be
-performed under a write lock. All retrieve operations should be performed
-under a read lock, I<unless> accurate usage statistics are desired.
-In which case, a write lock should be used for retrieve operations
-as well.  For output of the usage statistics, using the functions from
-L<OPENSSL_LH_stats(3)>, a read lock suffices.
+The LHASH code is not thread safe; all operations in a multi-threaded
+program should be done under a write lock. If lh_TYPE_error() is called, then
+the lock should be held across both the original operation (e.g.,
+lh_TYPE_insert()) and the call to fetch the error status.
 
 The LHASH code regards table entries as constant data.  As such, it
 internally represents lh_insert()'d items with a "const void *"
