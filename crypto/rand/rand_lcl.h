@@ -54,7 +54,7 @@ typedef enum drbg_status_e {
 } DRBG_STATUS;
 
 
-/* intantiate */
+/* instantiate */
 typedef int (*RAND_DRBG_instantiate_fn)(RAND_DRBG *ctx,
                                         const unsigned char *ent,
                                         size_t entlen,
@@ -68,7 +68,7 @@ typedef int (*RAND_DRBG_reseed_fn)(RAND_DRBG *ctx,
                                    size_t entlen,
                                    const unsigned char *adin,
                                    size_t adinlen);
-/* generat output */
+/* generate output */
 typedef int (*RAND_DRBG_generate_fn)(RAND_DRBG *ctx,
                                      unsigned char *out,
                                      size_t outlen,
@@ -89,6 +89,26 @@ typedef struct rand_drbg_method_st {
     RAND_DRBG_uninstantiate_fn uninstantiate;
 } RAND_DRBG_METHOD;
 
+/* 888 bits from SP800-90Ar1 10.1 table 2 */
+#define HASH_PRNG_MAX_SEEDLEN    (888/8)
+
+typedef struct rand_drbg_hash_st {
+    const EVP_MD *md;
+    EVP_MD_CTX *ctx;
+    size_t blocklen;
+    unsigned char V[HASH_PRNG_MAX_SEEDLEN];
+    unsigned char C[HASH_PRNG_MAX_SEEDLEN];
+    /* Temporary value storage: should always exceed max digest length */
+    unsigned char vtmp[HASH_PRNG_MAX_SEEDLEN];
+} RAND_DRBG_HASH;
+
+typedef struct rand_drbg_hmac_st {
+    const EVP_MD *md;
+    HMAC_CTX *ctx;
+    size_t blocklen;
+    unsigned char K[EVP_MAX_MD_SIZE];
+    unsigned char V[EVP_MAX_MD_SIZE];
+} RAND_DRBG_HMAC;
 
 /*
  * The state of a DRBG AES-CTR.
@@ -139,7 +159,7 @@ struct rand_drbg_st {
     int type; /* the nid of the underlying algorithm */
     /*
      * Stores the value of the rand_fork_count global as of when we last
-     * reseeded.  The DRG reseeds automatically whenever drbg->fork_count !=
+     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_count !=
      * rand_fork_count.  Used to provide fork-safety and reseed this DRBG in
      * the child process.
      */
@@ -159,7 +179,10 @@ struct rand_drbg_st {
     /*
      * The following parameters are setup by the per-type "init" function.
      *
-     * Currently the only type is CTR_DRBG, its init function is drbg_ctr_init().
+     * The supported types and their init functions are:
+     *    (1) CTR_DRBG:  drbg_ctr_init().
+     *    (2) HMAC_DRBG: drbg_hmac_init().
+     *    (3) HASH_DRBG: drbg_hash_init().
      *
      * The parameters are closely related to the ones described in
      * section '10.2.1 CTR_DRBG' of [NIST SP 800-90Ar1], with one
@@ -179,8 +202,12 @@ struct rand_drbg_st {
     size_t min_noncelen, max_noncelen;
     size_t max_perslen, max_adinlen;
 
-    /* Counts the number of generate requests since the last reseed. */
-    unsigned int generate_counter;
+    /*
+     * Counts the number of generate requests since the last reseed
+     * (Starts at 1). This value is the reseed_counter as defined in
+     * NIST SP 800-90Ar1
+     */
+    unsigned int reseed_gen_counter;
     /*
      * Maximum number of generate requests until a reseed is required.
      * This value is ignored if it is zero.
@@ -203,7 +230,7 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    unsigned int reseed_counter;
+    unsigned int reseed_prop_counter;
 
     size_t seedlen;
     DRBG_STATUS state;
@@ -211,9 +238,11 @@ struct rand_drbg_st {
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
 
-    /* Implementation specific data (currently only one implementation) */
+    /* Implementation specific data */
     union {
         RAND_DRBG_CTR ctr;
+        RAND_DRBG_HASH hash;
+        RAND_DRBG_HMAC hmac;
     } data;
 
     /* Implementation specific methods */
@@ -252,7 +281,9 @@ int rand_drbg_unlock(RAND_DRBG *drbg);
 int rand_drbg_enable_locking(RAND_DRBG *drbg);
 
 
-/* initializes the AES-CTR DRBG implementation */
+/* initializes the DRBG implementation */
 int drbg_ctr_init(RAND_DRBG *drbg);
+int drbg_hash_init(RAND_DRBG *drbg);
+int drbg_hmac_init(RAND_DRBG *drbg);
 
 #endif

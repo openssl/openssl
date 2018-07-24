@@ -13,12 +13,11 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/thread_once.h"
 #include "rand_lcl.h"
+
 /*
  * Implementation of NIST SP 800-90A CTR DRBG.
  */
-
 static void inc_128(RAND_DRBG_CTR *ctr)
 {
     int i;

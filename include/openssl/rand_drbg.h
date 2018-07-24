@@ -22,7 +22,18 @@
 
 /* In CTR mode, disable derivation function ctr_df */
 # define RAND_DRBG_FLAG_CTR_NO_DF            0x1
+/*
+ * This flag is only used when a digest NID is specified (i.e: not a CTR cipher)
+ * Selects DRBG_HMAC if this is set otherwise use DRBG_HASH.
+ */
+# define RAND_DRBG_FLAG_HMAC                 0x2
 
+/* Used by RAND_DRBG_set_defaults() to set the master DRBG type and flags. */
+# define RAND_DRBG_FLAG_MASTER               0x4
+/* Used by RAND_DRBG_set_defaults() to set the public DRBG type and flags. */
+# define RAND_DRBG_FLAG_PUBLIC               0x8
+/* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
+# define RAND_DRBG_FLAG_PRIVATE              0x10
 
 # if OPENSSL_API_COMPAT < 0x10200000L
 /* This #define was replaced by an internal constant and should not be used. */
@@ -33,18 +44,23 @@
  * Default security strength (in the sense of [NIST SP 800-90Ar1])
  *
  * NIST SP 800-90Ar1 supports the strength of the DRBG being smaller than that
- * of the cipher by collecting less entropy. The current DRBG implemantion does
- * not take RAND_DRBG_STRENGTH into account and sets the strength of the DRBG
- * to that of the cipher.
+ * of the cipher by collecting less entropy. The current DRBG implementation
+ * does not take RAND_DRBG_STRENGTH into account and sets the strength of the
+ * DRBG to that of the cipher.
  *
  * RAND_DRBG_STRENGTH is currently only used for the legacy RAND
  * implementation.
  *
  * Currently supported ciphers are: NID_aes_128_ctr, NID_aes_192_ctr and
- * NID_aes_256_ctr
+ * NID_aes_256_ctr.
+ * The digest types for DRBG_hash or DRBG_hmac are: NID_sha1, NID_sha224,
+ * NID_sha256, NID_sha384, NID_sha512, NID_sha512_224, NID_sha512_256,
+ * NID_sha3_224, NID_sha3_256, NID_sha3_384 and NID_sha3_512.
  */
 # define RAND_DRBG_STRENGTH             256
+/* Default drbg type */
 # define RAND_DRBG_TYPE                 NID_aes_256_ctr
+/* Default drbg flags */
 # define RAND_DRBG_FLAGS                0
 
 

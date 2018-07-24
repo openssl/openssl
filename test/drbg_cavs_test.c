@@ -71,8 +71,10 @@ static int single_kat_no_reseed(const struct drbg_kat *td)
     int failures = 0;
     TEST_CTX t;
 
-    if (td->df != USE_DF)
+    if ((td->flags & USE_DF) == 0)
         flags |= RAND_DRBG_FLAG_CTR_NO_DF;
+    if ((td->flags & USE_HMAC) != 0)
+        flags |= RAND_DRBG_FLAG_HMAC;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, flags, NULL)))
         return 0;
@@ -133,8 +135,10 @@ static int single_kat_pr_false(const struct drbg_kat *td)
     int failures = 0;
     TEST_CTX t;
 
-    if (td->df != USE_DF)
+    if ((td->flags & USE_DF) == 0)
         flags |= RAND_DRBG_FLAG_CTR_NO_DF;
+    if ((td->flags & USE_HMAC) != 0)
+        flags |= RAND_DRBG_FLAG_HMAC;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, flags, NULL)))
         return 0;
@@ -200,8 +204,10 @@ static int single_kat_pr_true(const struct drbg_kat *td)
     int failures = 0;
     TEST_CTX t;
 
-    if (td->df != USE_DF)
+    if ((td->flags & USE_DF) == 0)
         flags |= RAND_DRBG_FLAG_CTR_NO_DF;
+    if ((td->flags & USE_HMAC) != 0)
+        flags |= RAND_DRBG_FLAG_HMAC;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, flags, NULL)))
         return 0;
@@ -252,9 +258,9 @@ err:
     return failures == 0;
 }
 
-static int test_cavs_kats(int i)
+static int test_cavs_kats(const struct drbg_kat *test[], int i)
 {
-    const struct drbg_kat *td = drbg_test[i];
+    const struct drbg_kat *td = test[i];
     int rv = 0;
 
     switch (td->type) {
@@ -278,10 +284,28 @@ err:
     return rv;
 }
 
+static int test_cavs_ctr(int i)
+{
+    return test_cavs_kats(drbg_ctr_test, i);
+}
+
+static int test_cavs_hmac(int i)
+{
+    return test_cavs_kats(drbg_hmac_test, i);
+}
+
+static int test_cavs_hash(int i)
+{
+    return test_cavs_kats(drbg_hash_test, i);
+}
+
 int setup_tests(void)
 {
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
 
-    ADD_ALL_TESTS(test_cavs_kats, drbg_test_nelem);
+    ADD_ALL_TESTS(test_cavs_ctr,  drbg_ctr_nelem);
+    ADD_ALL_TESTS(test_cavs_hmac, drbg_hmac_nelem);
+    ADD_ALL_TESTS(test_cavs_hash, drbg_hash_nelem);
+
     return 1;
 }
