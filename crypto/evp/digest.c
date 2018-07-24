@@ -151,9 +151,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         r = EVP_PKEY_CTX_ctrl(ctx->pctx, -1, EVP_PKEY_OP_TYPE_SIG,
                               EVP_PKEY_CTRL_DIGESTSETUP, 0, ctx);
 
-        if (r == -2) {
+        if (r == -2)
             ERR_pop_to_mark();
-        }
+
         ERR_clear_last_mark();
         if (r <= 0 && (r != -2))
             return 0;
