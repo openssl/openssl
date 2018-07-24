@@ -18,16 +18,17 @@ setup("test_verify");
 
 sub verify {
     my ($cert, $purpose, $trusted, $untrusted, @opts) = @_;
-    my @args = qw(openssl verify -auth_level 1 -purpose);
+    my @args = qw(openssl verify -auth_level 1);
     my @path = qw(test certs);
-    push(@args, "$purpose", @opts);
+    push(@args, @opts);
+    if ($purpose ne '') { push(@args, "-purpose", $purpose) }
     for (@$trusted) { push(@args, "-trusted", srctop_file(@path, "$_.pem")) }
     for (@$untrusted) { push(@args, "-untrusted", srctop_file(@path, "$_.pem")) }
     push(@args, srctop_file(@path, "$cert.pem"));
     run(app([@args]));
 }
 
-plan tests => 134;
+plan tests => 135;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -369,5 +370,13 @@ SKIP: {
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
        "ED25519 signature");
+
+}
+
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 1
+        if disabled("sm2");
+
+    ok(verify("sm2_ee", "", ["sm2_root"], []), "SM2 signature");
 
 }

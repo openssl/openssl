@@ -1190,3 +1190,4 @@ magma_ofb		1189
 magma_cbc		1190
 magma_cfb		1191
 magma_mac		1192
+sm2_with_SM3		1193

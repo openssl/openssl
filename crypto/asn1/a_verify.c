@@ -21,6 +21,10 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
+#ifndef OPENSSL_NO_SM2
+   #include "internal/sm2.h"
+#endif
+
 #ifndef NO_ASN1_OLD
 
 int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
@@ -85,6 +89,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
                      ASN1_BIT_STRING *signature, void *asn, EVP_PKEY *pkey)
 {
     EVP_MD_CTX *ctx = NULL;
+    EVP_PKEY_CTX *verify_ctx = NULL;
     unsigned char *buf_in = NULL;
     int ret = -1, inl = 0;
 
@@ -139,6 +144,32 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
         if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
             ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
             goto err;
+        }
+
+        if (pknid == NID_sm2) {
+#if defined(OPENSSL_NO_SM2)
+            ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+            ret = 0;
+            goto err;
+#else
+            if (EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2) != 1) {
+                ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+                ret = 0;
+                goto err;
+            }
+
+            if (!EVP_DigestVerifyInit(ctx, &verify_ctx, type, NULL, pkey)) {
+                ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+                ret = 0;
+                goto err;
+            }
+
+            if (!EVP_PKEY_CTX_set1_sm2_uid(verify_ctx, SM2_DEFAULT_USERID)) {
+                ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_EVP_LIB);
+                ret = 0;
+                goto err;
+            }
+#endif
         }
 
         if (!EVP_DigestVerifyInit(ctx, NULL, type, NULL, pkey)) {

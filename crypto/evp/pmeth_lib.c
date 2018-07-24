@@ -385,7 +385,10 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
     ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 
     if (ret == -2)
+       {
+       printf("Command %d not supported\n", cmd);
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+       }
 
     return ret;
 

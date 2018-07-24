@@ -113,7 +113,6 @@ static int pkey_sm2_verify(EVP_PKEY_CTX *ctx,
                            const unsigned char *tbs, size_t tbslen)
 {
     EC_KEY *ec = ctx->pkey->pkey.ec;
-
     return sm2_verify(tbs, tbslen, sig, siglen, ec);
 }
 
@@ -206,6 +205,9 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_GET_MD:
         *(const EVP_MD **)p2 = dctx->md;
+        return 1;
+
+    case EVP_PKEY_CTRL_DIGESTINIT:
         return 1;
 
     default:

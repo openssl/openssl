@@ -122,6 +122,10 @@
 #define NID_sm_scheme           1142
 #define OBJ_sm_scheme           OBJ_oscca,1L
 
+#define SN_sm2_with_SM3         "sm2-with-SM3"
+#define NID_sm2_with_SM3                1193
+#define OBJ_sm2_with_SM3                OBJ_sm_scheme,501L
+
 #define SN_dsa          "DSA"
 #define LN_dsa          "dsaEncryption"
 #define NID_dsa         116

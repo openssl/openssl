@@ -40,6 +40,8 @@ member-body 156         : ISO-CN        : ISO CN Member Body
 ISO-CN 10197            : oscca
 oscca 1                 : sm-scheme
 
+sm-scheme 501           : sm2-with-SM3
+
 !Cname dsa
 X9cm 1			: DSA			: dsaEncryption
 X9cm 3			: DSA-SHA1		: dsaWithSHA1
