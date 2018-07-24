@@ -178,9 +178,9 @@ lh_TYPE_free(), lh_TYPE_doall() and lh_TYPE_doall_arg() return no values.
 =head1 NOTE
 
 The LHASH code is not thread safe; all operations in a multi-threaded
-program should be done under a lock. If lh_TYPE_error() is called, then
+program should be done under a write lock. If lh_TYPE_error() is called, then
 the lock should be held across both the original operation (e.g.,
-lh_TYPE_insert()) and the call to fetch teh error status.
+lh_TYPE_insert()) and the call to fetch the error status.
 
 The LHASH code regards table entries as constant data.  As such, it
 internally represents lh_insert()'d items with a "const void *"
