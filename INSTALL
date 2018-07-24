@@ -256,9 +256,10 @@
                    no-shared option.
 
   no-asm
-                   Do not use assembler code. On some platforms a small amount
-                   of assembler code may still be used. This should be viewed
-                   rather as debugging/trouble-shooting option than production.
+                   Do not use assembler code. This should be viewed as
+                   debugging/trouble-shooting option rather than production.
+                   On some platforms a small amount of assembler code may
+                   still be used even with this options.
 
   no-async
                    Do not build support for async operations.
