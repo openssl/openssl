@@ -1339,8 +1339,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     ret = 1;
 
 err:
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     OPENSSL_free(new_points);
     OPENSSL_free(new_scalars);
     return ret;
