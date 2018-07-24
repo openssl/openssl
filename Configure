@@ -2731,6 +2731,7 @@ Please read INSTALL and associated NOTES files.  You may also have to look over
 your available compiler tool chain or change your configuration.
 
 _____
+    $orig_death_handler->(@_) if defined $orig_death_handler;
 }
 
 # Configuration file reading #########################################
