@@ -528,7 +528,7 @@ static int test_EVP_SM2_verify(void)
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, &verify_ctx, EVP_sm3(), NULL, pkey)))
         goto done;
 
-    if (!TEST_true(EVP_PKEY_CTX_set_sm2_uid(verify_ctx, user_id) > 0))
+    if (!TEST_true(EVP_PKEY_CTX_set1_sm2_uid(verify_ctx, user_id) > 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
@@ -611,16 +611,14 @@ static int test_EVP_SM2(void)
            goto done;
 
         if (use_uid) {
-            if (!TEST_true(EVP_PKEY_CTX_set_sm2_uid(sign_ctx, "nobody@example.com") > 0))
+            if (!TEST_true(EVP_PKEY_CTX_set1_sm2_uid(sign_ctx, "nobody@example.com") > 0))
                 goto done;
 
-            if (!TEST_true(EVP_PKEY_CTX_get_sm2_uid(sign_ctx, &uid_output) > 0))
+            if (!TEST_true(EVP_PKEY_CTX_get1_sm2_uid(sign_ctx, &uid_output) > 0))
                 goto done;
 
             if (!TEST_true(strcmp(uid_output, "nobody@example.com") == 0))
                 goto done;
-
-            OPENSSL_free(uid_output);
 
             if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
                 goto done;
@@ -648,16 +646,14 @@ static int test_EVP_SM2(void)
             goto done;
 
         if (use_uid) {
-            if (!TEST_true(EVP_PKEY_CTX_set_sm2_uid(verify_ctx, "nobody@example.com") > 0))
+            if (!TEST_true(EVP_PKEY_CTX_set1_sm2_uid(verify_ctx, "nobody@example.com") > 0))
                 goto done;
 
-            if (!TEST_true(EVP_PKEY_CTX_get_sm2_uid(sign_ctx, &uid_output) > 0))
+            if (!TEST_true(EVP_PKEY_CTX_get1_sm2_uid(sign_ctx, &uid_output) > 0))
                 goto done;
 
             if (!TEST_true(strcmp(uid_output, "nobody@example.com") == 0))
                 goto done;
-
-            OPENSSL_free(uid_output);
 
             if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
                 goto done;
@@ -668,6 +664,9 @@ static int test_EVP_SM2(void)
 
         if (!TEST_true(EVP_DigestVerifyFinal(md_ctx_verify, sig, sig_len)))
             goto done;
+
+        OPENSSL_free(sig);
+        sig = NULL;
     }
 
     /* now check encryption/decryption */

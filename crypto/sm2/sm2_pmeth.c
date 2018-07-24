@@ -166,12 +166,11 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
            EVP_MD_CTX *md_ctx = (EVP_MD_CTX*)p2;
            const EVP_MD* md = EVP_MD_CTX_md(md_ctx);
            const int md_len = EVP_MD_size(md);
-           int rc = 1;
            uint8_t za[EVP_MAX_MD_SIZE];
 
-           sm2_compute_userid_digest(za, md, dctx->uid, ec);
-           rc = EVP_DigestUpdate(md_ctx, za, md_len);
-           return rc;
+           if (sm2_compute_userid_digest(za, md, dctx->uid, ec) != 1)
+               return 0;
+           return EVP_DigestUpdate(md_ctx, za, md_len);
        }
 
        return 1;
@@ -198,7 +197,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return (dctx->uid != NULL);
 
     case EVP_PKEY_CTRL_SM2_GET_UID:
-        *(char**)p2 = OPENSSL_strdup(dctx->uid);
+        *(char**)p2 = dctx->uid;
         return 1;
 
     case EVP_PKEY_CTRL_MD:
@@ -239,7 +238,7 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
             return -2;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
     } else if (strcmp(type, "sm2_uid") == 0) {
-        return EVP_PKEY_CTX_set_sm2_uid(ctx, value);
+        return EVP_PKEY_CTX_set1_sm2_uid(ctx, value);
     }
 
     return -2;
