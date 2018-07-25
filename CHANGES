@@ -9,6 +9,16 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Change generating and checking of primes so that the error rate of not
+     being prime depends on the intended use based on the size of the input.
+     For larger primes this will result in more rounds of Miller-Rabin.
+     The maximal error rate for primes with more than 1080 bits is lowered
+     to 2^-128.
+     [Kurt Roeckx]
+
+  *) Increase the number of Miller-Rabin rounds for DSA key generating to 64.
+     [Kurt Roeckx]
+
   *) The 'tsget' script is renamed to 'tsget.pl', to avoid confusion when
      moving between systems, and to avoid confusion when a Windows build is
      done with mingw vs with MSVC.  For POSIX installs, there's still a
