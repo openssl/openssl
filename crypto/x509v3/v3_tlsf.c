@@ -121,13 +121,12 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             }
         }
 
-        ai = ASN1_INTEGER_new();
-        if (ai == NULL) {
+        if ((ai = ASN1_INTEGER_new()) == NULL
+                || !ASN1_INTEGER_set(ai, tlsextid)
+                || sk_ASN1_INTEGER_push(tlsf, ai) <= 0) {
             X509V3err(X509V3_F_V2I_TLS_FEATURE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        ASN1_INTEGER_set(ai, tlsextid);
-        sk_ASN1_INTEGER_push(tlsf, ai);
     }
     return tlsf;
 
