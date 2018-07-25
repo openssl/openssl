@@ -1188,16 +1188,15 @@ void print_bignum_var(BIO *out, const BIGNUM *in, const char *var,
 {
     BIO_printf(out, "    static unsigned char %s_%d[] = {", var, len);
     if (BN_is_zero(in)) {
-        BIO_printf(out, "\n\t0x00");
+        BIO_printf(out, "\n        0x00");
     } else {
         int i, l;
 
         l = BN_bn2bin(in, buffer);
         for (i = 0; i < l; i++) {
-            if ((i % 10) == 0)
-                BIO_printf(out, "\n\t");
+            BIO_printf(out, (i % 10) == 0 ? "\n        " : " ");
             if (i < l - 1)
-                BIO_printf(out, "0x%02X, ", buffer[i]);
+                BIO_printf(out, "0x%02X,", buffer[i]);
             else
                 BIO_printf(out, "0x%02X", buffer[i]);
         }
