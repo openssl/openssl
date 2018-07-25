@@ -53,7 +53,7 @@ $code.=<<___;
 .text
 
 .globl	x25519_fe64_mul
-.type	x25519_fe64_mul,%function
+.type	x25519_fe64_mul,\@function
 .align	5
 x25519_fe64_mul:
 	stdu	$sp,-$FRAME($sp)
@@ -168,7 +168,7 @@ $code.=<<___;
 .size	x25519_fe64_mul,.-x25519_fe64_mul
 
 .globl	x25519_fe64_sqr
-.type	x25519_fe64_sqr,%function
+.type	x25519_fe64_sqr,\@function
 .align	5
 x25519_fe64_sqr:
 	stdu	$sp,-$FRAME($sp)
@@ -510,7 +510,7 @@ $code.=<<___;
 .text
 
 .globl	x25519_fe51_mul
-.type	x25519_fe51_mul,%function
+.type	x25519_fe51_mul,\@function
 .align	5
 x25519_fe51_mul:
 	stdu	$sp,-$FRAME($sp)
@@ -678,7 +678,7 @@ ___
 my ($a0,$a1,$a2,$a3,$a4,$t0,$t1) = ($a0,$a1,$a2,$a3,$a4,$t0,$t1);
 $code.=<<___;
 .globl	x25519_fe51_sqr
-.type	x25519_fe51_sqr,%function
+.type	x25519_fe51_sqr,\@function
 .align	5
 x25519_fe51_sqr:
 	stdu	$sp,-$FRAME($sp)
