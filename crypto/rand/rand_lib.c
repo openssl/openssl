@@ -174,7 +174,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
                                    prediction_resistance,
-                                   (unsigned char *)drbg, sizeof(*drbg)) != 0)
+                                   NULL, 0) != 0)
                 bytes = bytes_needed;
             rand_drbg_unlock(drbg->parent);
 
