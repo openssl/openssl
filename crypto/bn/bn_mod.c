@@ -197,6 +197,7 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         ((volatile BN_ULONG *)tp)[i] = 0;
     }
     r->top = mtop;
+    r->neg = 0;
 
     if (tp != storage)
         OPENSSL_free(tp);
