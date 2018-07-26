@@ -333,6 +333,7 @@ int dhparam_main(int argc, char **argv)
             BIO_printf(out,
                         "    if (!DH_set_length(dh, %ld)) {\n"
                         "        DH_free(dh);\n"
+                        "        return NULL;\n"
                         "    }\n", DH_get_length(dh));
         BIO_printf(out, "    return dh;\n}\n");
         OPENSSL_free(data);
