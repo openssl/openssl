@@ -9,6 +9,10 @@
 
  Changes between 1.1.0h and 1.1.0i [xx XXX xxxx]
 
+  *) Revert blinding in ECDSA sign and instead make problematic addition
+     length-invariant. Switch even to fixed-length Montgomery multiplication.
+     [Andy Polyakov]
+
   *) Change generating and checking of primes so that the error rate of not
      being prime depends on the intended use based on the size of the input.
      For larger primes this will result in more rounds of Miller-Rabin.
