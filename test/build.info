@@ -50,7 +50,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest gosttest
+          sysdefaulttest errtest gosttest jacobi
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -541,6 +541,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[gosttest]=gosttest.c ssltestlib.c
   INCLUDE[gosttest]=../include ..
   DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
+
+  SOURCE[jacobi]=jacobi.c
+  INCLUDE[jacobi]=../include
+  DEPEND[jacobi]=../libcrypto libtestutil.a
 ENDIF
 
 {-
