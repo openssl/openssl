@@ -6,7 +6,7 @@ LHASH, DECLARE_LHASH_OF,
 OPENSSL_LH_COMPFUNC, OPENSSL_LH_HASHFUNC, OPENSSL_LH_DOALL_FUNC,
 LHASH_DOALL_ARG_FN_TYPE,
 IMPLEMENT_LHASH_HASH_FN, IMPLEMENT_LHASH_COMP_FN,
-lh_TYPE_new, lh_TYPE_free,
+lh_TYPE_new, lh_TYPE_new_ex, lh_TYPE_free,
 lh_TYPE_insert, lh_TYPE_delete, lh_TYPE_retrieve,
 lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
@@ -18,7 +18,9 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
  DECLARE_LHASH_OF(TYPE);
 
- LHASH *lh_TYPE_new();
+ LHASH *lh_TYPE_new(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare);
+ LHASH *lh_TYPE_new_ex(OPENSSL_LH_HASHFUNC hash, OPENSSL_LH_COMPFUNC compare,
+          unsigned long flags);
  void lh_TYPE_free(LHASH_OF(TYPE) *table);
 
  TYPE *lh_TYPE_insert(LHASH_OF(TYPE) *table, TYPE *data);
@@ -27,7 +29,7 @@ lh_TYPE_doall, lh_TYPE_doall_arg, lh_TYPE_error - dynamic hash table
 
  void lh_TYPE_doall(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNC func);
  void lh_TYPE_doall_arg(LHASH_OF(TYPE) *table, OPENSSL_LH_DOALL_FUNCARG func,
-          TYPE, TYPE *arg);
+          TYPE *arg);
 
  int lh_TYPE_error(LHASH_OF(TYPE) *table);
 
@@ -52,6 +54,9 @@ normally truncated to a power of 2, so make sure that your hash
 function returns well mixed low order bits.  The B<compare> callback
 takes two arguments (pointers to two hash table entries), and returns
 0 if their keys are equal, non-zero otherwise.
+
+lh_TYPE_new_ex() is similar except that it contains an additional B<flags>
+parameter.  Use B<OPENSSL_LH_FLAGS_STATS> to maintain statistics.
 
 If your hash table
 will contain items of some particular type and the B<hash> and
@@ -177,19 +182,14 @@ lh_TYPE_free(), lh_TYPE_doall() and lh_TYPE_doall_arg() return no values.
 
 =head1 NOTE
 
-The various LHASH macros and callback types exist to make it possible
-to write type-checked code without resorting to function-prototype
-casting - an evil that makes application code much harder to
-audit/verify and also opens the window of opportunity for stack
-corruption and other hard-to-find bugs.  It also, apparently, violates
-ANSI-C.
-
 The LHASH code is not thread safe. All updating operations must be
 performed under a write lock. All retrieve operations should be performed
 under a read lock, I<unless> accurate usage statistics are desired.
 In which case, a write lock should be used for retrieve operations
 as well.  For output of the usage statistics, using the functions from
 L<OPENSSL_LH_stats(3)>, a read lock suffices.
+An alternative is to explictly use lh_TYPE_new_ex() with no
+flags, which will not maintain any statistics and therefore avoid data-races.
 
 The LHASH code regards table entries as constant data.  As such, it
 internally represents lh_insert()'d items with a "const void *"
@@ -233,6 +233,8 @@ L<OPENSSL_LH_stats(3)>
 
 In OpenSSL 1.0.0, the lhash interface was revamped for better
 type checking.
+
+The lh_TYPE_new_ex() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

@@ -183,8 +183,8 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
     CRYPTO_THREAD_write_lock(registry_lock);
 
     if (loader_register == NULL) {
-        loader_register = lh_OSSL_STORE_LOADER_new(store_loader_hash,
-                                                   store_loader_cmp);
+        loader_register = lh_OSSL_STORE_LOADER_new_ex(store_loader_hash,
+                                                      store_loader_cmp, 0L);
     }
 
     if (loader_register != NULL

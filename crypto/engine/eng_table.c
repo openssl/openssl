@@ -69,7 +69,7 @@ static int int_table_check(ENGINE_TABLE **t, int create)
         return 1;
     if (!create)
         return 0;
-    if ((lh = lh_ENGINE_PILE_new(engine_pile_hash, engine_pile_cmp)) == NULL)
+    if ((lh = lh_ENGINE_PILE_new_ex(engine_pile_hash, engine_pile_cmp, 0L)) == NULL)
         return 0;
     *t = (ENGINE_TABLE *)lh;
     return 1;

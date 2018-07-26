@@ -71,6 +71,8 @@ typedef struct lhash_st OPENSSL_LHASH;
 
 int OPENSSL_LH_error(OPENSSL_LHASH *lh);
 OPENSSL_LHASH *OPENSSL_LH_new(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c);
+OPENSSL_LHASH *OPENSSL_LH_new_ex(OPENSSL_LH_HASHFUNC h, OPENSSL_LH_COMPFUNC c,
+                                 unsigned long flags);
 void OPENSSL_LH_free(OPENSSL_LHASH *lh);
 void *OPENSSL_LH_insert(OPENSSL_LHASH *lh, void *data);
 void *OPENSSL_LH_delete(OPENSSL_LHASH *lh, const void *data);
@@ -91,11 +93,16 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
+/* Flags for new_ex */
+#define OPENSSL_LH_FLAGS_NONE  0L
+#define OPENSSL_LH_FLAGS_STATS 1L
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 #  define _LHASH OPENSSL_LHASH
 #  define LHASH_NODE OPENSSL_LH_NODE
 #  define lh_error OPENSSL_LH_error
 #  define lh_new OPENSSL_LH_new
+#  define lh_new_ex OPENSSL_LH_new_ex
 #  define lh_free OPENSSL_LH_free
 #  define lh_insert OPENSSL_LH_insert
 #  define lh_delete OPENSSL_LH_delete
@@ -125,7 +132,18 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
                         int (*cfn)(const type *, const type *)) \
     { \
         return (LHASH_OF(type) *) \
-            OPENSSL_LH_new((OPENSSL_LH_HASHFUNC)hfn, (OPENSSL_LH_COMPFUNC)cfn); \
+            OPENSSL_LH_new_ex((OPENSSL_LH_HASHFUNC)hfn, \
+                              (OPENSSL_LH_COMPFUNC)cfn, \
+                              OPENSSL_LH_FLAGS_STATS); \
+    } \
+    static ossl_inline LHASH_OF(type) * \
+        lh_##type##_new_ex(unsigned long (*hfn)(const type *), \
+                           int (*cfn)(const type *, const type *), \
+                           unsigned long flags) \
+    { \
+        return (LHASH_OF(type) *) \
+            OPENSSL_LH_new_ex((OPENSSL_LH_HASHFUNC)hfn, \
+                              (OPENSSL_LH_COMPFUNC)cfn, flags); \
     } \
     static ossl_inline void lh_##type##_free(LHASH_OF(type) *lh) \
     { \

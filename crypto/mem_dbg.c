@@ -335,7 +335,7 @@ void CRYPTO_mem_debug_malloc(void *addr, size_t num, int before_p,
                 return;
             }
             if (mh == NULL) {
-                if ((mh = lh_MEM_new(mem_hash, mem_cmp)) == NULL) {
+                if ((mh = lh_MEM_new_ex(mem_hash, mem_cmp, 0L)) == NULL) {
                     OPENSSL_free(addr);
                     OPENSSL_free(m);
                     addr = NULL;

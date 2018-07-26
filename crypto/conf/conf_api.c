@@ -128,7 +128,7 @@ int _CONF_new_data(CONF *conf)
         return 0;
     }
     if (conf->data == NULL) {
-        conf->data = lh_CONF_VALUE_new(conf_value_hash, conf_value_cmp);
+        conf->data = lh_CONF_VALUE_new_ex(conf_value_hash, conf_value_cmp, 0L);
         if (conf->data == NULL)
             return 0;
     }
