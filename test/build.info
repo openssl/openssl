@@ -10,7 +10,7 @@ IF[{- !$disabled{tests} -}]
           destest sha1test sha256t sha512t \
           mdc2test rmdtest \
           randtest dhtest enginetest casttest \
-          bftest ssltest_old dsatest exptest rsa_test \
+          bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest heartbeat_test p5_crpt2_test bad_dtls_test \
           constant_time_test verify_extra_test clienthellotest \
@@ -143,6 +143,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[dsatest]=dsatest.c
   INCLUDE[dsatest]=../include
   DEPEND[dsatest]=../libcrypto
+
+  SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
+  INCLUDE[dsa_no_digest_size_test]=../include
+  DEPEND[dsa_no_digest_size_test]=../libcrypto
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include
