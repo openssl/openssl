@@ -2618,8 +2618,11 @@ const char *SSL_get_servername(const SSL *s, const int type)
      * peer send" and "what was actually negotiated"; we should have
      * a clear distinction amongst those three.
      */
-    if (SSL_in_init(s))
+    if (SSL_in_init(s)) {
+        if (s->hit)
+            return s->session->ext.hostname;
         return s->ext.hostname;
+    }
     return (s->session != NULL && s->ext.hostname == NULL) ?
         s->session->ext.hostname : s->ext.hostname;
 }
