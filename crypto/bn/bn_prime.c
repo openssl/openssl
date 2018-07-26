@@ -467,3 +467,80 @@ static int probable_prime_dh_safe(BIGNUM *p, int bits, const BIGNUM *padd,
     bn_check_top(p);
     return ret;
 }
+
+/*
+ * This impelements the "ordinary" algorithm (based on Euclid’s GCD algorithm)
+ *
+ * This is very similar to the algorithm in FIPS 186-4, appendix C.5,
+ * except that this version doesn't work recursivly, and supports negative
+ * vaues in |a|.
+ * doi: https://dx.doi.org/10.6028/NIST.FIPS.186-4
+ *
+ */
+int BN_jacobi_symbol(const BIGNUM *a, const BIGNUM *b, BN_CTX *in_ctx)
+{
+    BIGNUM *A, *B;
+    BIGNUM *temp;
+    BN_CTX *ctx;
+    int ret = 1;
+
+    if (BN_is_zero(b) || BN_is_negative(b) || !BN_is_odd(b))
+        return -2;
+
+    if (in_ctx == NULL) {
+        ctx = BN_CTX_new();
+        if (ctx == NULL)
+            return -2;
+    } else {
+        ctx = in_ctx;
+    }
+
+    BN_CTX_start(ctx);
+
+    A = BN_CTX_get(ctx);
+    B = BN_CTX_get(ctx);
+    if (B == NULL) {
+        ret = -2;
+        goto done;
+    }
+
+    if ((BN_copy(A, a) == NULL) || (BN_copy(B, b) == NULL)) {
+        ret = -2;
+        goto done;
+    }
+
+    if (BN_is_negative(A)) {
+        BN_set_negative(A, 0);
+        if ((B->d[0] & 3) == 3)
+            ret = 0-ret;
+    }
+
+    while (!BN_is_zero(A)) {
+        while (!BN_is_odd(A)) {
+            if (!BN_rshift1(A, A)) {
+                ret = -2;
+                goto done;
+            }
+            if ((B->d[0] & 7) == 3 || (B->d[0] & 7) == 5)
+                ret = 0-ret;
+        }
+        temp = A;
+        A = B;
+        B = temp;
+        /* A and B are both positive odd numbers. Check that both mod 4 == 3 */
+        if ((A->d[0] & B->d[0] & 2) != 0)
+            ret = 0-ret;
+        if (!BN_mod(A, A, B, ctx)) {
+            ret = -2;
+            goto done;
+        }
+    }
+    if (!BN_is_one(B))
+        ret = 0;
+
+done:
+    BN_CTX_end(ctx);
+    if (in_ctx == NULL)
+        BN_CTX_free(ctx);
+    return ret;
+}
