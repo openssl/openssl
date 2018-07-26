@@ -102,8 +102,8 @@ probabilistic primality test with B<nchecks> iterations. If
 B<nchecks == BN_prime_checks>, a number of iterations is used that
 yields a false positive rate of at most 2^-64 for random input.
 The error rate depends on the size of the prime and goes down for bigger primes.
-The rate is 2^-80 starting at 308 bits, 2^-112 at 852 bit, 2^-128 at 1080 bits,
-2^-192 at 3747 bit and 2^-256 at 6394 bit.
+The rate is 2^-80 starting at 308 bits, 2^-112 at 852 bits, 2^-128 at 1080 bits,
+2^-192 at 3747 bits and 2^-256 at 6394 bits.
 
 When the source of the prime is not random or not trusted, the number
 of checks needs to be much higher to reach the same level of assurance:
