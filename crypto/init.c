@@ -87,9 +87,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_base: Setting up stop handlers\n");
 #endif
-#ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    ossl_malloc_setup_failures();
-#endif
     if (!CRYPTO_THREAD_init_local(&key, ossl_init_thread_destructor))
         return 0;
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
