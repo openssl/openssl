@@ -72,6 +72,11 @@ B<BN_GENCB_call(cb, 1, j)> is called as described below.
 
 When a prime has been found, B<BN_GENCB_call(cb, 2, i)> is called.
 
+=item *
+
+The callers of BN_generate_prime_ex() may call B<BN_GENCB_call(cb, i, j)> with
+other values as described in their respective man pages; see L</SEE ALSO>.
+
 =back
 
 The prime may have to fulfill additional requirements for use in
@@ -187,7 +192,8 @@ Instead applications should create a BN_GENCB structure using BN_GENCB_new:
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)>, L<RAND_bytes(3)>
+L<DH_generate_parameters(3)>, L<DSA_generate_parameters(3)>,
+L<RSA_generate_key(3)>, L<ERR_get_error(3)>, L<RAND_bytes(3)>
 
 =head1 HISTORY
 
