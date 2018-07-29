@@ -1,0 +1,39 @@
+=pod
+
+=head1 NAME
+
+BN_is_perfect_square - Check that a BIGNUM is a perfect square
+
+=head1 SYNOPSIS
+
+ #include <openssl/bn.h>
+
+ int BN_is_perfect_square(const BIGNUM *C, BN_CTX *ctx);
+
+=head1 DESCRIPTION
+
+BN_is_perfect_square() checks that B<C> is a perfect square.
+The parameter B<C> should be a positive number.
+
+The parameter B<ctx> should be previously allocated using L<BN_CTX_new(3)>
+or B<NULL>.
+
+=head1 RETURN VALUES
+
+If it's a perfect square it returns 1, if it's not it return 0.
+On error it returns -2.
+
+=head1 HISTORY
+
+BN_is_perfect_square() was added in 1.1.x.
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

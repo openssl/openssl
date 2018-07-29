@@ -533,6 +533,8 @@ BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 
 int BN_jacobi_symbol(const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
+int BN_is_perfect_square(const BIGNUM *C, BN_CTX *ctx);
+int BN_strong_lucas_prime(const BIGNUM *p, BN_CTX *ctx);
 
 # ifdef  __cplusplus
 }

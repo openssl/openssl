@@ -50,7 +50,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest gosttest jacobi
+          sysdefaulttest errtest gosttest jacobi lucas_primes perfect_square
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -549,6 +549,14 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[jacobi]=jacobi.c
   INCLUDE[jacobi]=../include
   DEPEND[jacobi]=../libcrypto libtestutil.a
+
+  SOURCE[lucas_primes]=lucas_primes.c
+  INCLUDE[lucas_primes]=../include
+  DEPEND[lucas_primes]=../libcrypto libtestutil.a
+
+  SOURCE[perfect_square]=perfect_square.c
+  INCLUDE[perfect_square]=../include
+  DEPEND[perfect_square]=../libcrypto libtestutil.a
 ENDIF
 
 {-

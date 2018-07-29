@@ -4575,3 +4575,5 @@ EC_POINT_get_affine_coordinates         4526	1_1_1	EXIST::FUNCTION:EC
 EC_GROUP_set_curve                      4527	1_1_1	EXIST::FUNCTION:EC
 EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC
 BN_jacobi_symbol                        4529	1_1_1	EXIST::FUNCTION:
+BN_strong_lucas_prime                   4530	1_1_1	EXIST::FUNCTION:
+BN_is_perfect_square                    4531	1_1_1	EXIST::FUNCTION:
