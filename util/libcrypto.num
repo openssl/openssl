@@ -4569,3 +4569,4 @@ EVP_PKEY_asn1_set_get_priv_key          4520	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_pub_key           4521	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_set_alias_type                 4522	1_1_1	EXIST::FUNCTION:
 RAND_keep_random_devices_open           4523	1_1_1	EXIST::FUNCTION:
+BN_jacobi_symbol                        4524	1_1_1	EXIST::FUNCTION:
