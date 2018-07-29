@@ -912,7 +912,7 @@ static int init_server_name(SSL *s, unsigned int context)
 
 static int final_server_name(SSL *s, unsigned int context, int sent)
 {
-    int ret = SSL_TLSEXT_ERR_NOACK, discard;
+    int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     int was_ticket = (SSL_get_options(s) & SSL_OP_NO_TICKET) == 0;
 
@@ -960,10 +960,8 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * exceed sess_accept (zero) for the new context.
      */
     if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx) {
-        CRYPTO_atomic_add(&s->ctx->stats.sess_accept, 1, &discard,
-                          s->ctx->lock);
-        CRYPTO_atomic_add(&s->session_ctx->stats.sess_accept, -1, &discard,
-                          s->session_ctx->lock);
+        tsan_counter(&s->ctx->stats.sess_accept);
+        tsan_counter(&s->session_ctx->stats.sess_accept);
     }
 
     /*

@@ -33,6 +33,7 @@
 # include "packet_locl.h"
 # include "internal/dane.h"
 # include "internal/refcount.h"
+# include "internal/tsan_assist.h"
 
 # ifdef OPENSSL_BUILD_SHLIBSSL
 #  undef OPENSSL_EXTERN
@@ -779,21 +780,23 @@ struct ssl_ctx_st {
                                     const unsigned char *data, int len,
                                     int *copy);
     struct {
-        int sess_connect;       /* SSL new conn - started */
-        int sess_connect_renegotiate; /* SSL reneg - requested */
-        int sess_connect_good;  /* SSL new conne/reneg - finished */
-        int sess_accept;        /* SSL new accept - started */
-        int sess_accept_renegotiate; /* SSL reneg - requested */
-        int sess_accept_good;   /* SSL accept/reneg - finished */
-        int sess_miss;          /* session lookup misses */
-        int sess_timeout;       /* reuse attempt on timeouted session */
-        int sess_cache_full;    /* session removed due to full cache */
-        int sess_hit;           /* session reuse actually done */
-        int sess_cb_hit;        /* session-id that was not in the cache was
-                                 * passed back via the callback.  This
-                                 * indicates that the application is supplying
-                                 * session-id's from other processes - spooky
-                                 * :-) */
+        TSAN_QUALIFIER int sess_connect;       /* SSL new conn - started */
+        TSAN_QUALIFIER int sess_connect_renegotiate; /* SSL reneg - requested */
+        TSAN_QUALIFIER int sess_connect_good;  /* SSL new conne/reneg - finished */
+        TSAN_QUALIFIER int sess_accept;        /* SSL new accept - started */
+        TSAN_QUALIFIER int sess_accept_renegotiate; /* SSL reneg - requested */
+        TSAN_QUALIFIER int sess_accept_good;   /* SSL accept/reneg - finished */
+        TSAN_QUALIFIER int sess_miss;          /* session lookup misses */
+        TSAN_QUALIFIER int sess_timeout;       /* reuse attempt on timeouted session */
+        TSAN_QUALIFIER int sess_cache_full;    /* session removed due to full cache */
+        TSAN_QUALIFIER int sess_hit;           /* session reuse actually done */
+        TSAN_QUALIFIER int sess_cb_hit;        /* session-id that was not in
+                                                * the cache was passed back via
+                                                * the callback. This indicates
+                                                * that the application is
+                                                * supplying session-id's from
+                                                * other processes - spooky
+                                                * :-) */
     } stats;
 
     CRYPTO_REF_COUNT references;
