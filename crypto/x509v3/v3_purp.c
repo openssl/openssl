@@ -13,6 +13,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include "internal/x509_int.h"
+#include "internal/tsan_assist.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
@@ -352,6 +353,10 @@ static void x509v3_cache_extensions(X509 *x)
     X509_EXTENSION *ex;
     int i;
 
+    /* fast lock-free check, see end of the function for details. */
+    if (tsan_load((TSAN_QUALIFIER int *)&x->ex_cached))
+        return;
+
     CRYPTO_THREAD_write_lock(x->lock);
     if (x->ex_flags & EXFLAG_SET) {
         CRYPTO_THREAD_unlock(x->lock);
@@ -493,6 +498,12 @@ static void x509v3_cache_extensions(X509 *x)
     x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
     CRYPTO_THREAD_unlock(x->lock);
+    /*
+     * It has to be placed after memory barrier, which is implied by unlock.
+     * Worst thing that can happen is that another thread proceeds to lock
+     * and checks x->ex_flags & EXFLAGS_SET. See beginning of the function.
+     */
+    tsan_store((TSAN_QUALIFIER int *)&x->ex_cached, 1);
 }
 
 /*-
