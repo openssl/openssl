@@ -248,16 +248,9 @@ int dsaparam_main(int argc, char **argv)
 
 static int dsa_cb(int p, int n, BN_GENCB *cb)
 {
-    char c = '*';
+    static const char symbols[] = ".+*\n";
+    char c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
 
-    if (p == 0)
-        c = '.';
-    if (p == 1)
-        c = '+';
-    if (p == 2)
-        c = '*';
-    if (p == 3)
-        c = '\n';
     BIO_write(BN_GENCB_get_arg(cb), &c, 1);
     (void)BIO_flush(BN_GENCB_get_arg(cb));
     return 1;
