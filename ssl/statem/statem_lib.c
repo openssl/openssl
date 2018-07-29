@@ -132,23 +132,18 @@ int tls_setup_handshake(SSL *s)
         }
         if (SSL_IS_FIRST_HANDSHAKE(s)) {
             /* N.B. s->session_ctx == s->ctx here */
-            CRYPTO_atomic_add(&s->session_ctx->stats.sess_accept, 1, &i,
-                              s->session_ctx->lock);
+            tsan_counter(&s->session_ctx->stats.sess_accept);
         } else {
             /* N.B. s->ctx may not equal s->session_ctx */
-            CRYPTO_atomic_add(&s->ctx->stats.sess_accept_renegotiate, 1, &i,
-                              s->ctx->lock);
+            tsan_counter(&s->ctx->stats.sess_accept_renegotiate);
 
             s->s3->tmp.cert_request = 0;
         }
     } else {
-        int discard;
         if (SSL_IS_FIRST_HANDSHAKE(s))
-            CRYPTO_atomic_add(&s->session_ctx->stats.sess_connect, 1, &discard,
-                              s->session_ctx->lock);
+            tsan_counter(&s->session_ctx->stats.sess_connect);
         else
-            CRYPTO_atomic_add(&s->session_ctx->stats.sess_connect_renegotiate,
-                              1, &discard, s->session_ctx->lock);
+            tsan_counter(&s->session_ctx->stats.sess_connect_renegotiate);
 
         /* mark client_random uninitialized */
         memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
@@ -1009,7 +1004,6 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
  */
 WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
 {
-    int discard;
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
 
     if (clearbufs) {
@@ -1055,8 +1049,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
                 ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
 
             /* N.B. s->ctx may not equal s->session_ctx */
-            CRYPTO_atomic_add(&s->ctx->stats.sess_accept_good, 1, &discard,
-                              s->ctx->lock);
+            tsan_counter(&s->ctx->stats.sess_accept_good);
             s->handshake_func = ossl_statem_accept;
 
             if (SSL_IS_DTLS(s) && !s->hit) {
@@ -1084,12 +1077,10 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
             }
             if (s->hit)
-                CRYPTO_atomic_add(&s->session_ctx->stats.sess_hit, 1, &discard,
-                                  s->session_ctx->lock);
+                tsan_counter(&s->session_ctx->stats.sess_hit);
 
             s->handshake_func = ossl_statem_connect;
-            CRYPTO_atomic_add(&s->session_ctx->stats.sess_connect_good, 1,
-                              &discard, s->session_ctx->lock);
+            tsan_counter(&s->session_ctx->stats.sess_connect_good);
 
             if (SSL_IS_DTLS(s) && s->hit) {
                 /*
