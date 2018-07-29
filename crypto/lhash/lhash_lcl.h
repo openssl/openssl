@@ -8,6 +8,8 @@
  */
 #include <openssl/crypto.h>
 
+#include "internal/tsan_assist.h"
+
 struct lhash_node_st {
     void *data;
     struct lhash_node_st *next;
@@ -29,14 +31,14 @@ struct lhash_st {
     unsigned long num_expand_reallocs;
     unsigned long num_contracts;
     unsigned long num_contract_reallocs;
-    unsigned long num_hash_calls;
-    unsigned long num_comp_calls;
+    TSAN_QUALIFIER unsigned long num_hash_calls;
+    TSAN_QUALIFIER unsigned long num_comp_calls;
     unsigned long num_insert;
     unsigned long num_replace;
     unsigned long num_delete;
     unsigned long num_no_delete;
-    unsigned long num_retrieve;
-    unsigned long num_retrieve_miss;
-    unsigned long num_hash_comps;
+    TSAN_QUALIFIER unsigned long num_retrieve;
+    TSAN_QUALIFIER unsigned long num_retrieve_miss;
+    TSAN_QUALIFIER unsigned long num_hash_comps;
     int error;
 };
