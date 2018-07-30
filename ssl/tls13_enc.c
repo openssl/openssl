@@ -701,7 +701,8 @@ int tls13_update_key(SSL *s, int sending)
 
 int tls13_alert_code(int code)
 {
-    if (code == SSL_AD_MISSING_EXTENSION)
+    /* There are 2 additional alerts in TLSv1.3 compared to TLSv1.2 */
+    if (code == SSL_AD_MISSING_EXTENSION || code == SSL_AD_CERTIFICATE_REQUIRED)
         return code;
 
     return tls1_alert_code(code);

@@ -695,6 +695,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_SSL_SESSION_ID_TOO_LONG                    408
 # define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
 # define SSL_R_STILL_IN_INIT                              121
+# define SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED          1116
+# define SSL_R_TLSV13_ALERT_MISSING_EXTENSION             1109
 # define SSL_R_TLSV1_ALERT_ACCESS_DENIED                  1049
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021
