@@ -126,11 +126,13 @@ may be NULL, to the corresponding coordinates of B<p>.
 
 The functions EC_POINT_set_affine_coordinates_GFp() and
 EC_POINT_set_affine_coordinates_GF2m() are synonyms for
-EC_POINT_set_affine_coordinates().
+EC_POINT_set_affine_coordinates(). They are defined for backwards compatibility
+only and should not be used.
 
 The functions EC_POINT_get_affine_coordinates_GFp() and
 EC_POINT_get_affine_coordinates_GF2m() are synonyms for
-EC_POINT_get_affine_coordinates().
+EC_POINT_get_affine_coordinates(). They are defined for backwards compatibility
+only and should not be used.
 
 As well as the affine co-ordinates, a point can alternatively be described in
 terms of its Jacobian projective co-ordinates (for Fp curves only). Jacobian
@@ -153,7 +155,8 @@ possible values for y should be used.
 
 The functions EC_POINT_set_compressed_coordinates_GFp() and
 EC_POINT_set_compressed_coordinates_GF2m() are synonyms for
-EC_POINT_set_compressed_coordinates().
+EC_POINT_set_compressed_coordinates(). They are defined for backwards
+compatibility only and should not be used.
 
 In addition B<EC_POINT> can be converted to and from various external
 representations. The octet form is the binary encoding of the B<ECPoint>
