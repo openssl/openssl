@@ -223,9 +223,36 @@ unsigned char *EC_GROUP_get0_seed(const EC_GROUP *x);
 size_t EC_GROUP_get_seed_len(const EC_GROUP *);
 size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 
-/** Sets the parameter of a ec over GFp defined by y^2 = x^3 + a*x + b
+/** Sets the parameters of a ec curve defined by y^2 = x^3 + a*x + b (for GFp)
+ *  or y^2 + x*y = x^3 + a*x^2 + b (for GF2m)
  *  \param  group  EC_GROUP object
- *  \param  p      BIGNUM with the prime number
+ *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
+ *                 defining the underlying field (GF2m)
+ *  \param  a      BIGNUM with parameter a of the equation
+ *  \param  b      BIGNUM with parameter b of the equation
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+int EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
+                       const BIGNUM *b, BN_CTX *ctx);
+
+/** Gets the parameters of the ec curve defined by y^2 = x^3 + a*x + b (for GFp)
+ *  or y^2 + x*y = x^3 + a*x^2 + b (for GF2m)
+ *  \param  group  EC_GROUP object
+ *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
+ *                 defining the underlying field (GF2m)
+ *  \param  a      BIGNUM for parameter a of the equation
+ *  \param  b      BIGNUM for parameter b of the equation
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
+                       BN_CTX *ctx);
+
+/** Sets the parameters of an ec curve. Synonym for EC_GROUP_set_curve
+ *  \param  group  EC_GROUP object
+ *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
+ *                 defining the underlying field (GF2m)
  *  \param  a      BIGNUM with parameter a of the equation
  *  \param  b      BIGNUM with parameter b of the equation
  *  \param  ctx    BN_CTX object (optional)
@@ -234,9 +261,10 @@ size_t EC_GROUP_set_seed(EC_GROUP *, const unsigned char *, size_t len);
 int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
                            const BIGNUM *b, BN_CTX *ctx);
 
-/** Gets the parameter of the ec over GFp defined by y^2 = x^3 + a*x + b
+/** Gets the parameters of an ec curve. Synonym for EC_GROUP_get_curve
  *  \param  group  EC_GROUP object
- *  \param  p      BIGNUM for the prime number
+ *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
+ *                 defining the underlying field (GF2m)
  *  \param  a      BIGNUM for parameter a of the equation
  *  \param  b      BIGNUM for parameter b of the equation
  *  \param  ctx    BN_CTX object (optional)
@@ -246,9 +274,10 @@ int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
                            BIGNUM *b, BN_CTX *ctx);
 
 # ifndef OPENSSL_NO_EC2M
-/** Sets the parameter of a ec over GF2m defined by y^2 + x*y = x^3 + a*x^2 + b
+/** Sets the parameter of an ec curve. Synonym for EC_GROUP_set_curve
  *  \param  group  EC_GROUP object
- *  \param  p      BIGNUM with the polynomial defining the underlying field
+ *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
+ *                 defining the underlying field (GF2m)
  *  \param  a      BIGNUM with parameter a of the equation
  *  \param  b      BIGNUM with parameter b of the equation
  *  \param  ctx    BN_CTX object (optional)
@@ -257,9 +286,10 @@ int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
 int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
                             const BIGNUM *b, BN_CTX *ctx);
 
-/** Gets the parameter of the ec over GF2m defined by y^2 + x*y = x^3 + a*x^2 + b
+/** Gets the parameters of an ec curve. Synonym for EC_GROUP_get_curve
  *  \param  group  EC_GROUP object
- *  \param  p      BIGNUM for the polynomial defining the underlying field
+ *  \param  p      BIGNUM with the prime number (GFp) or the polynomial
+ *                 defining the underlying field (GF2m)
  *  \param  a      BIGNUM for parameter a of the equation
  *  \param  b      BIGNUM for parameter b of the equation
  *  \param  ctx    BN_CTX object (optional)
@@ -459,7 +489,31 @@ int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
                                              BIGNUM *y, BIGNUM *z,
                                              BN_CTX *ctx);
 
-/** Sets the affine coordinates of a EC_POINT over GFp
+/** Sets the affine coordinates of an EC_POINT
+ *  \param  group  underlying EC_GROUP object
+ *  \param  p      EC_POINT object
+ *  \param  x      BIGNUM with the x-coordinate
+ *  \param  y      BIGNUM with the y-coordinate
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *p,
+                                    const BIGNUM *x, const BIGNUM *y,
+                                    BN_CTX *ctx);
+
+/** Gets the affine coordinates of an EC_POINT.
+ *  \param  group  underlying EC_GROUP object
+ *  \param  p      EC_POINT object
+ *  \param  x      BIGNUM for the x-coordinate
+ *  \param  y      BIGNUM for the y-coordinate
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
+                                    BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+
+/** Sets the affine coordinates of an EC_POINT. A synonym of
+ *  EC_POINT_set_affine_coordinates
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
  *  \param  x      BIGNUM with the x-coordinate
@@ -471,7 +525,8 @@ int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
                                         const BIGNUM *x, const BIGNUM *y,
                                         BN_CTX *ctx);
 
-/** Gets the affine coordinates of a EC_POINT over GFp
+/** Gets the affine coordinates of an EC_POINT. A synonym of
+ *  EC_POINT_get_affine_coordinates
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
  *  \param  x      BIGNUM for the x-coordinate
@@ -483,7 +538,20 @@ int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
                                         const EC_POINT *p, BIGNUM *x,
                                         BIGNUM *y, BN_CTX *ctx);
 
-/** Sets the x9.62 compressed coordinates of a EC_POINT over GFp
+/** Sets the x9.62 compressed coordinates of a EC_POINT
+ *  \param  group  underlying EC_GROUP object
+ *  \param  p      EC_POINT object
+ *  \param  x      BIGNUM with x-coordinate
+ *  \param  y_bit  integer with the y-Bit (either 0 or 1)
+ *  \param  ctx    BN_CTX object (optional)
+ *  \return 1 on success and 0 if an error occurred
+ */
+int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p,
+                                        const BIGNUM *x, int y_bit,
+                                        BN_CTX *ctx);
+
+/** Sets the x9.62 compressed coordinates of a EC_POINT. A synonym of
+ *  EC_POINT_set_compressed_coordinates
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
  *  \param  x      BIGNUM with x-coordinate
@@ -495,7 +563,8 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
                                             EC_POINT *p, const BIGNUM *x,
                                             int y_bit, BN_CTX *ctx);
 # ifndef OPENSSL_NO_EC2M
-/** Sets the affine coordinates of a EC_POINT over GF2m
+/** Sets the affine coordinates of an EC_POINT. A synonym of
+ *  EC_POINT_set_affine_coordinates
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
  *  \param  x      BIGNUM with the x-coordinate
@@ -507,7 +576,8 @@ int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *p,
                                          const BIGNUM *x, const BIGNUM *y,
                                          BN_CTX *ctx);
 
-/** Gets the affine coordinates of a EC_POINT over GF2m
+/** Gets the affine coordinates of an EC_POINT. A synonym of
+ *  EC_POINT_get_affine_coordinates
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
  *  \param  x      BIGNUM for the x-coordinate
@@ -519,7 +589,8 @@ int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
                                          const EC_POINT *p, BIGNUM *x,
                                          BIGNUM *y, BN_CTX *ctx);
 
-/** Sets the x9.62 compressed coordinates of a EC_POINT over GF2m
+/** Sets the x9.62 compressed coordinates of a EC_POINT. A synonym of
+ *  EC_POINT_set_compressed_coordinates
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
  *  \param  x      BIGNUM with x-coordinate

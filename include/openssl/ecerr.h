@@ -103,6 +103,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_GROUP_CHECK                              170
 #  define EC_F_EC_GROUP_CHECK_DISCRIMINANT                 171
 #  define EC_F_EC_GROUP_COPY                               106
+#  define EC_F_EC_GROUP_GET_CURVE                          291
 #  define EC_F_EC_GROUP_GET_CURVE_GF2M                     172
 #  define EC_F_EC_GROUP_GET_CURVE_GFP                      130
 #  define EC_F_EC_GROUP_GET_DEGREE                         173
@@ -115,6 +116,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_GROUP_NEW_FROM_DATA                      175
 #  define EC_F_EC_GROUP_NEW_FROM_ECPARAMETERS              263
 #  define EC_F_EC_GROUP_NEW_FROM_ECPKPARAMETERS            264
+#  define EC_F_EC_GROUP_SET_CURVE                          292
 #  define EC_F_EC_GROUP_SET_CURVE_GF2M                     176
 #  define EC_F_EC_GROUP_SET_CURVE_GFP                      109
 #  define EC_F_EC_GROUP_SET_GENERATOR                      111
@@ -142,6 +144,7 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_POINT_CMP                                113
 #  define EC_F_EC_POINT_COPY                               114
 #  define EC_F_EC_POINT_DBL                                115
+#  define EC_F_EC_POINT_GET_AFFINE_COORDINATES             293
 #  define EC_F_EC_POINT_GET_AFFINE_COORDINATES_GF2M        183
 #  define EC_F_EC_POINT_GET_AFFINE_COORDINATES_GFP         116
 #  define EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP    117
@@ -153,8 +156,10 @@ int ERR_load_EC_strings(void);
 #  define EC_F_EC_POINT_OCT2POINT                          122
 #  define EC_F_EC_POINT_POINT2BUF                          281
 #  define EC_F_EC_POINT_POINT2OCT                          123
+#  define EC_F_EC_POINT_SET_AFFINE_COORDINATES             294
 #  define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GF2M        185
 #  define EC_F_EC_POINT_SET_AFFINE_COORDINATES_GFP         124
+#  define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES         295
 #  define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M    186
 #  define EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP     125
 #  define EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP    126

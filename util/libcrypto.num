@@ -4569,3 +4569,8 @@ EVP_PKEY_asn1_set_get_priv_key          4520	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_pub_key           4521	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_set_alias_type                 4522	1_1_1	EXIST::FUNCTION:
 RAND_keep_random_devices_open           4523	1_1_1	EXIST::FUNCTION:
+EC_POINT_set_compressed_coordinates     4524	1_1_1	EXIST::FUNCTION:EC
+EC_POINT_set_affine_coordinates         4525	1_1_1	EXIST::FUNCTION:EC
+EC_POINT_get_affine_coordinates         4526	1_1_1	EXIST::FUNCTION:EC
+EC_GROUP_set_curve                      4527	1_1_1	EXIST::FUNCTION:EC
+EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC
