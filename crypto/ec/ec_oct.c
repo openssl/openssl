@@ -49,6 +49,7 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
                                                          y_bit, ctx);
 }
 
+#if OPENSSL_API_COMPAT < 0x10200000L
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
                                             EC_POINT *point, const BIGNUM *x,
                                             int y_bit, BN_CTX *ctx)
@@ -56,13 +57,14 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
     return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
 
-#ifndef OPENSSL_NO_EC2M
+# ifndef OPENSSL_NO_EC2M
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
                                              EC_POINT *point, const BIGNUM *x,
                                              int y_bit, BN_CTX *ctx)
 {
     return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
+# endif
 #endif
 
 size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,

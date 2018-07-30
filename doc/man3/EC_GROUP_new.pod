@@ -84,9 +84,11 @@ the polynomial is a trinomial or a pentanomial.
 
 EC_group_get_curve() obtains the previously set curve parameters.
 
-EC_GROUP_set_curve_GFp() and EC_GROUP_set_curve_GF2m are synonyms for EC_GROUP_set_curve().
+EC_GROUP_set_curve_GFp() and EC_GROUP_set_curve_GF2m() are synonyms for EC_GROUP_set_curve(). They are defined for
+backwards compatibility only and should not be used.
 
-EC_GROUP_get_curve_GFp() and EC_GROUP_get_curve_GF2m are synonyms for EC_GROUP_get_curve().
+EC_GROUP_get_curve_GFp() and EC_GROUP_get_curve_GF2m() are synonyms for EC_GROUP_get_curve(). They are defined for
+backwards compatibility only and should not be used.
 
 The functions EC_GROUP_new_curve_GFp and EC_GROUP_new_curve_GF2m are shortcuts for calling EC_GROUP_new and then the
 EC_GROUP_set_curve function. An appropriate default implementation method will be used.
