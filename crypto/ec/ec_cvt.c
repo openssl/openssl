@@ -51,7 +51,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
     if (ret == NULL)
         return NULL;
 
-    if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx)) {
+    if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
         EC_GROUP_clear_free(ret);
         return NULL;
     }
@@ -72,7 +72,7 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
     if (ret == NULL)
         return NULL;
 
-    if (!EC_GROUP_set_curve_GF2m(ret, p, a, b, ctx)) {
+    if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
         EC_GROUP_clear_free(ret);
         return NULL;
     }

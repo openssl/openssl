@@ -104,23 +104,12 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in,
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
             goto err;
         }
-        if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
-            NID_X9_62_prime_field) {
-            if (!EC_POINT_get_affine_coordinates_GFp(group, tmp_point, X,
-                                                     NULL, ctx)) {
-                ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
-                goto err;
-            }
+
+        if (!EC_POINT_get_affine_coordinates(group, tmp_point, X, NULL, ctx)) {
+            ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
+            goto err;
         }
-#ifndef OPENSSL_NO_EC2M
-        else {                  /* NID_X9_62_characteristic_two_field */
-            if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp_point, X,
-                                                      NULL, ctx)) {
-                ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
-                goto err;
-            }
-        }
-#endif
+
         if (!BN_nnmod(r, X, order, ctx)) {
             ECerr(EC_F_ECDSA_SIGN_SETUP, ERR_R_BN_LIB);
             goto err;
@@ -408,22 +397,12 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_EC_LIB);
         goto err;
     }
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
-        NID_X9_62_prime_field) {
-        if (!EC_POINT_get_affine_coordinates_GFp(group, point, X, NULL, ctx)) {
-            ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_EC_LIB);
-            goto err;
-        }
-    }
-#ifndef OPENSSL_NO_EC2M
-    else {                      /* NID_X9_62_characteristic_two_field */
 
-        if (!EC_POINT_get_affine_coordinates_GF2m(group, point, X, NULL, ctx)) {
-            ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_EC_LIB);
-            goto err;
-        }
+    if (!EC_POINT_get_affine_coordinates(group, point, X, NULL, ctx)) {
+        ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_EC_LIB);
+        goto err;
     }
-#endif
+
     if (!BN_nnmod(u1, X, order, ctx)) {
         ECerr(EC_F_OSSL_ECDSA_VERIFY_SIG, ERR_R_BN_LIB);
         goto err;

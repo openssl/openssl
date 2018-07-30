@@ -107,8 +107,8 @@ static EC_GROUP *create_EC_group(const char *p_hex, const char *a_hex,
 
     if (!TEST_true(BN_hex2bn(&g_x, x_hex))
             || !TEST_true(BN_hex2bn(&g_y, y_hex))
-            || !TEST_true(EC_POINT_set_affine_coordinates_GFp(group, generator,
-                                                              g_x, g_y, NULL)))
+            || !TEST_true(EC_POINT_set_affine_coordinates(group, generator, g_x,
+                                                          g_y, NULL)))
         goto done;
 
     if (!TEST_true(BN_hex2bn(&order, order_hex))

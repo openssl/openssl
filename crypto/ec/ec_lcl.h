@@ -50,8 +50,7 @@ struct ec_method_st {
     void (*group_finish) (EC_GROUP *);
     void (*group_clear_finish) (EC_GROUP *);
     int (*group_copy) (EC_GROUP *, const EC_GROUP *);
-    /* used by EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, */
-    /* EC_GROUP_set_curve_GF2m, and EC_GROUP_get_curve_GF2m: */
+    /* used by EC_GROUP_set_curve, EC_GROUP_get_curve: */
     int (*group_set_curve) (EC_GROUP *, const BIGNUM *p, const BIGNUM *a,
                             const BIGNUM *b, BN_CTX *);
     int (*group_get_curve) (const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b,
@@ -73,9 +72,9 @@ struct ec_method_st {
      * used by EC_POINT_set_to_infinity,
      * EC_POINT_set_Jprojective_coordinates_GFp,
      * EC_POINT_get_Jprojective_coordinates_GFp,
-     * EC_POINT_set_affine_coordinates_GFp,     ..._GF2m,
-     * EC_POINT_get_affine_coordinates_GFp,     ..._GF2m,
-     * EC_POINT_set_compressed_coordinates_GFp, ..._GF2m:
+     * EC_POINT_set_affine_coordinates,
+     * EC_POINT_get_affine_coordinates,
+     * EC_POINT_set_compressed_coordinates:
      */
     int (*point_set_to_infinity) (const EC_GROUP *, EC_POINT *);
     int (*point_set_Jprojective_coordinates_GFp) (const EC_GROUP *,

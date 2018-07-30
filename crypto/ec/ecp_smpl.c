@@ -1181,9 +1181,9 @@ int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
     if (y == NULL)
         goto err;
 
-    if (!EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx))
+    if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
         goto err;
-    if (!EC_POINT_set_affine_coordinates_GFp(group, point, x, y, ctx))
+    if (!EC_POINT_set_affine_coordinates(group, point, x, y, ctx))
         goto err;
     if (!point->Z_is_one) {
         ECerr(EC_F_EC_GFP_SIMPLE_MAKE_AFFINE, ERR_R_INTERNAL_ERROR);
