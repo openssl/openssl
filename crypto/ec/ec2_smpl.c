@@ -390,7 +390,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
         if (!BN_copy(y0, a->Y))
             goto err;
     } else {
-        if (!EC_POINT_get_affine_coordinates_GF2m(group, a, x0, y0, ctx))
+        if (!EC_POINT_get_affine_coordinates(group, a, x0, y0, ctx))
             goto err;
     }
     if (b->Z_is_one) {
@@ -399,7 +399,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
         if (!BN_copy(y1, b->Y))
             goto err;
     } else {
-        if (!EC_POINT_get_affine_coordinates_GF2m(group, b, x1, y1, ctx))
+        if (!EC_POINT_get_affine_coordinates(group, b, x1, y1, ctx))
             goto err;
     }
 
@@ -447,7 +447,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     if (!BN_GF2m_add(y2, y2, y1))
         goto err;
 
-    if (!EC_POINT_set_affine_coordinates_GF2m(group, r, x2, y2, ctx))
+    if (!EC_POINT_set_affine_coordinates(group, r, x2, y2, ctx))
         goto err;
 
     ret = 1;
@@ -590,9 +590,9 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
     if (bY == NULL)
         goto err;
 
-    if (!EC_POINT_get_affine_coordinates_GF2m(group, a, aX, aY, ctx))
+    if (!EC_POINT_get_affine_coordinates(group, a, aX, aY, ctx))
         goto err;
-    if (!EC_POINT_get_affine_coordinates_GF2m(group, b, bX, bY, ctx))
+    if (!EC_POINT_get_affine_coordinates(group, b, bX, bY, ctx))
         goto err;
     ret = ((BN_cmp(aX, bX) == 0) && BN_cmp(aY, bY) == 0) ? 0 : 1;
 
@@ -625,7 +625,7 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
     if (y == NULL)
         goto err;
 
-    if (!EC_POINT_get_affine_coordinates_GF2m(group, point, x, y, ctx))
+    if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
         goto err;
     if (!BN_copy(point->X, x))
         goto err;

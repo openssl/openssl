@@ -1608,7 +1608,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         goto err;
     BN_bin2bn(nistp224_curve_params[3], sizeof(felem_bytearray), x);
     BN_bin2bn(nistp224_curve_params[4], sizeof(felem_bytearray), y);
-    if (!EC_POINT_set_affine_coordinates_GFp(group, generator, x, y, ctx))
+    if (!EC_POINT_set_affine_coordinates(group, generator, x, y, ctx))
         goto err;
     if ((pre = nistp224_pre_comp_new()) == NULL)
         goto err;
