@@ -473,6 +473,8 @@ By default B<s_client> will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be offered to
 and accepted from the server.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
