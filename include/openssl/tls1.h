@@ -70,7 +70,6 @@ extern "C" {
 # define TLS1_AD_USER_CANCELLED          90
 # define TLS1_AD_NO_RENEGOTIATION        100
 /* TLSv1.3 alerts */
-# define TLS13_AD_END_OF_EARLY_DATA      1
 # define TLS13_AD_MISSING_EXTENSION      109 /* fatal */
 # define TLS13_AD_CERTIFICATE_REQUIRED   116 /* fatal */
 /* codes 110-114 are from RFC3546 */

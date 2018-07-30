@@ -61,7 +61,7 @@ our @tests = (
         },
         test => {
             "ExpectedResult" => "ServerFail",
-            "ExpectedServerAlert" => "HandshakeFailure",
+            "ExpectedServerAlert" => "CertificateRequired",
         },
     },
     {
