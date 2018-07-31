@@ -83,21 +83,10 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
         goto err;
     }
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) ==
-        NID_X9_62_prime_field) {
-        if (!EC_POINT_get_affine_coordinates_GFp(group, tmp, x, NULL, ctx)) {
-            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
-            goto err;
-        }
+    if (!EC_POINT_get_affine_coordinates(group, tmp, x, NULL, ctx)) {
+        ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
+        goto err;
     }
-#ifndef OPENSSL_NO_EC2M
-    else {
-        if (!EC_POINT_get_affine_coordinates_GF2m(group, tmp, x, NULL, ctx)) {
-            ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, EC_R_POINT_ARITHMETIC_FAILURE);
-            goto err;
-        }
-    }
-#endif
 
     buflen = (EC_GROUP_get_degree(group) + 7) / 8;
     len = BN_num_bytes(x);

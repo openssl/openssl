@@ -266,7 +266,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
             goto err;
         }
         /* the parameters are specified by the prime number p */
-        if (!EC_GROUP_get_curve_GFp(group, tmp, NULL, NULL, NULL)) {
+        if (!EC_GROUP_get_curve(group, tmp, NULL, NULL, NULL)) {
             ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_EC_LIB);
             goto err;
         }
@@ -365,7 +365,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
 
 static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 {
-    int ok = 0, nid;
+    int ok = 0;
     BIGNUM *tmp_1 = NULL, *tmp_2 = NULL;
     unsigned char *a_buf = NULL, *b_buf = NULL;
     size_t len;
@@ -378,24 +378,12 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
         goto err;
     }
 
-    nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
-
     /* get a and b */
-    if (nid == NID_X9_62_prime_field) {
-        if (!EC_GROUP_get_curve_GFp(group, NULL, tmp_1, tmp_2, NULL)) {
-            ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
-            goto err;
-        }
+    if (!EC_GROUP_get_curve(group, NULL, tmp_1, tmp_2, NULL)) {
+        ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
+        goto err;
     }
-#ifndef OPENSSL_NO_EC2M
-    else {                      /* nid == NID_X9_62_characteristic_two_field */
 
-        if (!EC_GROUP_get_curve_GF2m(group, NULL, tmp_1, tmp_2, NULL)) {
-            ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_EC_LIB);
-            goto err;
-        }
-    }
-#endif
     /*
      * Per SEC 1, the curve coefficients must be padded up to size. See C.2's
      * definition of Curve, C.1's definition of FieldElement, and 2.3.5's
