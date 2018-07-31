@@ -31,6 +31,8 @@ long conf_get_number(const CONF *conf, const char *section,
 int conf_new_data(CONF *conf);
 void conf_free_data(CONF *conf);
 
+void conf_add_ssl_module(void);
+
 #ifdef  __cplusplus
 }
 #endif

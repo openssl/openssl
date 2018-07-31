@@ -184,7 +184,6 @@ static void value_free_stack_doall(CONF_VALUE *a)
     OPENSSL_free(a);
 }
 
-/* Up until OpenSSL 0.9.5a, this was new_section */
 CONF_VALUE *conf_new_section(CONF *conf, const char *section)
 {
     STACK_OF(CONF_VALUE) *sk = NULL;
