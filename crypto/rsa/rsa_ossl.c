@@ -339,7 +339,8 @@ static int rsa_ossl_private_encrypt(int flen, const unsigned char *from,
             goto err;
 
     if (padding == RSA_X931_PADDING) {
-        BN_sub(f, rsa->n, ret);
+        if (!BN_sub(f, rsa->n, ret))
+            goto err;
         if (BN_cmp(ret, f) > 0)
             res = f;
         else
