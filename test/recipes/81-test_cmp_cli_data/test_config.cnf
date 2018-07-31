@@ -29,7 +29,7 @@ pbm_secret = pass:SecretCmp
 ignore_keyusage = 0
 unprotectederrors = 1 # EJBCA sends error messages and negative responses without protection
 column = 0
-sleep = 0
+sleep = 1
 
 [Insta]
 server_cn = pki.certificate.fi

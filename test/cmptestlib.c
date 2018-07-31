@@ -1,12 +1,18 @@
 /*
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright Nokia 2007-2018
+ * Copyright Siemens AG 2015-2018
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
  * Copyright OpenSSL 2007-2018
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2018
  *
  * Contents licensed under the terms of the OpenSSL license
  * See https://www.openssl.org/source/license.html for details
- *
- * SPDX-License-Identifier: OpenSSL
  *
  * CMP tests by Martin Peylo, Tobias Pankert, and David von Oheimb.
  */
