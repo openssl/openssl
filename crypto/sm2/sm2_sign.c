@@ -17,6 +17,7 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <string.h>
+#include "sm2_lcl.h"
 
 static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
                                     const EC_KEY *key,
@@ -115,8 +116,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         }
 
         if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
-                || !EC_POINT_get_affine_coordinates_GFp(group, kG, x1, NULL,
-                                                        ctx)
+                || !sm2_get_affine_coordinates(group, kG, x1, NULL, ctx)
                 || !BN_mod_add(r, e, x1, order, ctx)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_INTERNAL_ERROR);
             goto done;
@@ -224,7 +224,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     }
 
     if (!EC_POINT_mul(group, pt, s, EC_KEY_get0_public_key(key), t, ctx)
-            || !EC_POINT_get_affine_coordinates_GFp(group, pt, x1, NULL, ctx)) {
+            || !sm2_get_affine_coordinates(group, pt, x1, NULL, ctx)) {
         SM2err(SM2_F_SM2_SIG_VERIFY, ERR_R_EC_LIB);
         goto done;
     }
