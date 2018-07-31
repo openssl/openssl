@@ -272,7 +272,8 @@ c448_error_t c448_ed448_verify(
                                        context_len)
                 || !EVP_DigestUpdate(hashctx, signature, EDDSA_448_PUBLIC_BYTES)
                 || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
-                || !EVP_DigestUpdate(hashctx, message, message_len)
+                || (message_len > 0
+                    && !EVP_DigestUpdate(hashctx, message, message_len))
                 || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge))) {
             EVP_MD_CTX_free(hashctx);
             return C448_FAILURE;
