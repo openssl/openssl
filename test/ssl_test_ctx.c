@@ -126,6 +126,7 @@ static const test_enum ssl_alerts[] = {
     {"UnrecognizedName", SSL_AD_UNRECOGNIZED_NAME},
     {"BadCertificate", SSL_AD_BAD_CERTIFICATE},
     {"NoApplicationProtocol", SSL_AD_NO_APPLICATION_PROTOCOL},
+    {"CertificateRequired", SSL_AD_CERTIFICATE_REQUIRED},
 };
 
 __owur static int parse_alert(int *alert, const char *value)
