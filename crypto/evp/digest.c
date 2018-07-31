@@ -153,8 +153,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
         if (r == -2)
             ERR_pop_to_mark();
+        else
+            ERR_clear_last_mark();
 
-        ERR_clear_last_mark();
         if (r <= 0 && (r != -2))
             return 0;
     }
