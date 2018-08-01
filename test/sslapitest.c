@@ -1846,6 +1846,35 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
     return 1;
 }
 
+#ifndef OPENSSL_NO_PSK
+static int psk_client_cb_cnt = 0;
+static int psk_server_cb_cnt = 0;
+
+static unsigned char tls12psk[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+};
+
+static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
+                                  unsigned int max_id_len,
+                                  unsigned char *psk,
+                                  unsigned int max_psk_len)
+{
+    if (strlen(pskid) + 1 > max_id_len)
+        return 0;
+
+    /* We should only ever be called once per connection */
+    if (++psk_client_cb_cnt != 1)
+        return 0;
+
+    if (sizeof(tls12psk) > max_psk_len)
+        return 0;
+    memcpy(psk, tls12psk, sizeof(tls12psk));
+    strncpy(id, pskid, max_id_len);
+
+    return sizeof(tls12psk);
+}
+#endif /* OPENSSL_NO_PSK */
+
 static int find_session_cb(SSL *ssl, const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
 {
@@ -1871,6 +1900,26 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_PSK
+static unsigned int psk_server_cb(SSL *ssl, const char *identity,
+                                  unsigned char *psk, unsigned int max_psk_len)
+{
+    /* We should only ever be called once per connection */
+    if (++psk_server_cb_cnt != 1)
+        return 0;
+
+    /* Identity should match that set by the client */
+    if (strcmp(srvid, identity) != 0)
+        return 0;
+
+    if (sizeof(tls12psk) > max_psk_len)
+        return 0;
+    memcpy(psk, tls12psk, sizeof(tls12psk));
+
+    return sizeof(tls12psk);
+}
+#endif /* OPENSSL_NO_PSK */
 
 #define MSG1    "Hello"
 #define MSG2    "World."
@@ -3151,11 +3200,8 @@ static int test_ciphersuite_change(void)
     return testresult;
 }
 
-/* Test TLSv1.3 PSKs */
-static int test_tls13_psk(void)
+static int create_tls13_client_psk(SSL *clientssl)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
     const SSL_CIPHER *cipher = NULL;
     const unsigned char key[] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
@@ -3163,6 +3209,99 @@ static int test_tls13_psk(void)
         0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23,
         0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f
     };
+
+    /* Create the PSK */
+    cipher = SSL_CIPHER_find(clientssl, TLS13_AES_128_GCM_SHA256_BYTES);
+    clientpsk = SSL_SESSION_new();
+    if (!TEST_ptr(clientpsk)
+            || !TEST_ptr(cipher)
+            || !TEST_true(SSL_SESSION_set1_master_key(clientpsk, key,
+                                                      sizeof(key)))
+            || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
+            || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk,
+                                                           TLS1_3_VERSION))
+            || !TEST_true(SSL_SESSION_up_ref(clientpsk))) {
+        SSL_SESSION_free(clientpsk);
+        clientpsk = NULL;
+        return 0;
+    }
+
+    return 1;
+}
+
+#if !defined(OPENSSL_NO_PSK) && !defined(OPENSSL_NO_TLS1_2)
+/*
+ * Test TLSv1.2 PSKs
+ *
+ * Test 0: Both sides just configure TLSv1.2 PSKs
+ * Test 1: Client sets both TLSv1.2 and TLSv1.3 PSK, server sets TLSv1.2 PSK
+ * Test 2: Server sets both TLSv1.2 and TLSv1.3 psk, client sets TLSv1.2 PSK
+ */
+static int test_tls12_psk(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &sctx, &cctx, NULL, NULL)))
+        goto end;
+
+    srvid = pskid;
+    psk_client_cb_cnt = 0;
+    psk_server_cb_cnt = 0;
+    use_session_cb_cnt = 0;
+    find_session_cb_cnt = 0;
+
+    SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
+    SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
+
+    if (idx == 1)
+        SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+    else if (idx == 2)
+        SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || (idx == 1 && !create_tls13_client_psk(clientssl))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+            || !TEST_int_eq(psk_client_cb_cnt, 1)
+            || !TEST_int_eq(psk_server_cb_cnt, 1)
+            || !TEST_int_eq(use_session_cb_cnt, idx == 1 ? 1 : 0)
+            || !TEST_int_eq(find_session_cb_cnt, 0)
+               /*
+                * Even though we may support TLSv1.3, since we've only
+                * configured a TLSv1.2 PSK, that is the protocol version we
+                * should end up with.
+                */
+            || !TEST_int_eq(SSL_version(clientssl), TLS1_2_VERSION))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_SESSION_free(clientpsk);
+    clientpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif /* !defined(OPENSSL_NO_PSK) && !defined(OPENSSL_NO_TLS1_2) */
+
+/*
+ * Test TLSv1.3 PSKs
+ *
+ * Test 0: No TLSv1.2 PSK callbacks present
+ * Test 1: TLSv1.2 PSK callbacks present
+ */
+static int test_tls13_psk(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
@@ -3177,6 +3316,15 @@ static int test_tls13_psk(void)
 
     SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
     SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
+
+#ifndef OPENSSL_NO_PSK
+    if (idx == 1) {
+        SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
+        SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
+        psk_client_cb_cnt = 0;
+        psk_server_cb_cnt = 0;
+    }
+#endif
 
     srvid = pskid;
     use_session_cb_cnt = 0;
@@ -3206,24 +3354,15 @@ static int test_tls13_psk(void)
                                              NULL, NULL)))
         goto end;
 
-    /* Create the PSK */
-    cipher = SSL_CIPHER_find(clientssl, TLS13_AES_128_GCM_SHA256_BYTES);
-    clientpsk = SSL_SESSION_new();
-    if (!TEST_ptr(clientpsk)
-            || !TEST_ptr(cipher)
-            || !TEST_true(SSL_SESSION_set1_master_key(clientpsk, key,
-                                                      sizeof(key)))
-            || !TEST_true(SSL_SESSION_set_cipher(clientpsk, cipher))
-            || !TEST_true(SSL_SESSION_set_protocol_version(clientpsk,
-                                                           TLS1_3_VERSION))
-            || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+    if (!create_tls13_client_psk(clientssl))
         goto end;
     serverpsk = clientpsk;
 
     /* Check we can create a connection and the PSK is used */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
             || !TEST_true(SSL_session_reused(clientssl))
-            || !TEST_true(SSL_session_reused(serverssl)))
+            || !TEST_true(SSL_session_reused(serverssl))
+            || !TEST_int_eq(SSL_version(clientssl), TLS1_3_VERSION))
         goto end;
 
     if (!TEST_true(use_session_cb_cnt == 1)
@@ -5323,12 +5462,15 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_set_ciphersuite, 10);
     ADD_TEST(test_ciphersuite_change);
-    ADD_TEST(test_tls13_psk);
+    ADD_ALL_TESTS(test_tls13_psk, 2);
     ADD_ALL_TESTS(test_custom_exts, 5);
     ADD_TEST(test_stateless);
     ADD_TEST(test_pha_key_update);
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
+#endif
+#if !defined(OPENSSL_NO_PSK) && !defined(OPENSSL_NO_TLS1_2)
+    ADD_ALL_TESTS(test_tls12_psk, 3);
 #endif
     ADD_ALL_TESTS(test_serverinfo, 8);
     ADD_ALL_TESTS(test_export_key_mat, 4);
