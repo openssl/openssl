@@ -1848,6 +1848,16 @@ const char *SSL_CIPHER_get_version(const SSL_CIPHER *c)
     return ssl_protocol_to_string(c->min_tls);
 }
 
+int SSL_CIPHER_get_min_tls(const SSL_CIPHER *c)
+{
+    return c->min_tls;
+}
+
+int SSL_CIPHER_get_max_tls(const SSL_CIPHER *c)
+{
+    return c->max_tls;
+}
+
 /* return the actual cipher being used */
 const char *SSL_CIPHER_get_name(const SSL_CIPHER *c)
 {

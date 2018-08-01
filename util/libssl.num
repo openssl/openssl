@@ -496,3 +496,5 @@ SSL_set_recv_max_early_data             496	1_1_1	EXIST::FUNCTION:
 SSL_get_recv_max_early_data             497	1_1_1	EXIST::FUNCTION:
 SSL_CTX_get_recv_max_early_data         498	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_recv_max_early_data         499	1_1_1	EXIST::FUNCTION:
+SSL_CIPHER_get_max_tls                  500	1_1_1	EXIST::FUNCTION:
+SSL_CIPHER_get_min_tls                  501	1_1_1	EXIST::FUNCTION:
