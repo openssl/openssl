@@ -66,6 +66,9 @@ static int sha3_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
     size_t bsz = ctx->block_size;
     size_t num, rem;
 
+    if (len == 0)
+        return 1;
+
     if ((num = ctx->num) != 0) {      /* process intermediate buffer? */
         rem = bsz - num;
 
