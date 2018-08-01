@@ -17,8 +17,8 @@ EVP_PKEY_CTX_set_dh_paramgen_generator,
 EVP_PKEY_CTX_set_dh_pad,
 EVP_PKEY_CTX_set_dh_nid,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
-EVP_PKEY_CTX_set_ec_param_enc
-EVP_PKEY_CTX_set1_sm2_uid
+EVP_PKEY_CTX_set_ec_param_enc,
+EVP_PKEY_CTX_set1_sm2_uid,
 EVP_PKEY_CTX_get0_sm2_uid - algorithm specific control operations
 
 =head1 SYNOPSIS
@@ -56,6 +56,7 @@ EVP_PKEY_CTX_get0_sm2_uid - algorithm specific control operations
  int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
  int EVP_PKEY_CTX_set1_sm2_uid(EVP_PKEY_CTX *ctx, const char *uid);
  int EVP_PKEY_CTX_get0_sm2_uid(EVP_PKEY_CTX *ctx, char **uid);
+
 =head1 DESCRIPTION
 
 The function EVP_PKEY_CTX_ctrl() sends a control operation to the context
@@ -191,6 +192,8 @@ L<EVP_PKEY_keygen(3)>
 =head1 HISTORY
 
 These functions were first added to OpenSSL 1.0.0.
+
+The SM2 related functions were first added in OpenSSL 1.1.1
 
 =head1 COPYRIGHT
 
