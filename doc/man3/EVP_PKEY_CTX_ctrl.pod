@@ -17,7 +17,9 @@ EVP_PKEY_CTX_set_dh_paramgen_generator,
 EVP_PKEY_CTX_set_dh_pad,
 EVP_PKEY_CTX_set_dh_nid,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
-EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
+EVP_PKEY_CTX_set_ec_param_enc
+EVP_PKEY_CTX_set1_sm2_uid
+EVP_PKEY_CTX_get0_sm2_uid - algorithm specific control operations
 
 =head1 SYNOPSIS
 
