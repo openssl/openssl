@@ -93,7 +93,7 @@ static int execute_cmp_pkiheader_init_test(CMP_LIB_TEST_FIXTURE *fixture)
     if (!TEST_int_eq(fixture->expected,
                      OSSL_CMP_HDR_init(fixture->cmp_ctx, header)))
         goto err;
-    if (fixture->expected) {
+    if (fixture->expected != 0) {
         if (!TEST_long_eq(OSSL_CMP_HDR_get_pvno(header), OSSL_CMP_VERSION) ||
             !TEST_true(0 == ASN1_OCTET_STRING_cmp(
                        OSSL_CMP_HDR_get0_senderNonce(header),
@@ -220,7 +220,7 @@ static int execute_cmp_asn1_octet_string_set_test(CMP_LIB_TEST_FIXTURE *
                      OSSL_CMP_ASN1_OCTET_STRING_set1(&fixture->tgt_string,
                                                      fixture->src_string)))
         return 0;
-    if (fixture->expected)
+    if (fixture->expected != 0)
         return TEST_int_eq(0, ASN1_OCTET_STRING_cmp(fixture->tgt_string,
                                                     fixture->src_string));
     return 1;
@@ -266,8 +266,7 @@ static int execute_cmp_pkimessage_add_extracerts_test(CMP_LIB_TEST_FIXTURE
 static int test_cmp_pkimessage_add_extracerts(void)
 {
     SETUP_TEST_FIXTURE(CMP_LIB_TEST_FIXTURE, set_up);
-    if (!TEST_ptr(fixture->msg =
-                  OSSL_CMP_MSG_dup(ir_protected))) {
+    if (!TEST_ptr(fixture->msg = OSSL_CMP_MSG_dup(ir_protected))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -284,7 +283,8 @@ static int execute_cmp_pkistatusinfo_test(CMP_LIB_TEST_FIXTURE *fixture)
     ASN1_UTF8STRING *statusString = NULL;
     int res = 0, i;
 
-    if (!TEST_ptr(si = OSSL_CMP_statusInfo_new(fixture->pkistatus,
+    if (!TEST_ptr(si =
+                  OSSL_CMP_statusInfo_new(fixture->pkistatus,
                                           fixture->pkifailure, fixture->text)))
         goto end;
     if (!TEST_long_eq(fixture->pkistatus,

@@ -59,7 +59,7 @@ void CMP_add_error_txt(const char *separator, const char *txt)
     int flags;
 
     unsigned long err = ERR_peek_last_error();
-    if (!err) {
+    if (err == 0) {
         ERR_PUT_error(ERR_LIB_CMP, 0, err, "", 0);
     }
 
@@ -73,18 +73,19 @@ void CMP_add_error_txt(const char *separator, const char *txt)
             data = "";
         len = (int)strlen(data);
         curr = next = txt;
-        while (*next && len + strlen(separator) + (next - txt) < MAX_DATA_LEN) {
+        while (*next != '\0' &&
+               len + strlen(separator) + (next - txt) < MAX_DATA_LEN) {
             curr = next;
-            if (*separator) {
+            if (*separator != '\0') {
                 next = strstr(curr, separator);
-                if (next)
+                if (next != NULL)
                     next += strlen(separator);
                 else
                     next = curr + strlen(curr);
             } else
                 next = curr + 1;
         }
-        if (*next) { /* split error msg in case error data would get too long */
+        if (*next != '\0') { /* split error msg if error data gets too long */
             if (curr != txt) {
                 tmp = OPENSSL_strndup(txt, curr - txt);
                 ERR_add_error_data(3, data, separator, tmp);
@@ -96,37 +97,37 @@ void CMP_add_error_txt(const char *separator, const char *txt)
             ERR_add_error_data(3, data, separator, txt);
             txt = next;
         }
-    } while (*txt);
+    } while (*txt != '\0');
 }
 
 /* returns the header of the given CMP message or NULL on error */
 OSSL_CMP_HDR *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 {
-    return msg ? msg->header : NULL;
+    return msg != NULL ? msg->header : NULL;
 }
 
 /* returns the pvno (as long int) of the given PKIHeader or NULL on error */
 long OSSL_CMP_HDR_get_pvno(const OSSL_CMP_HDR *hdr)
 {
-    return hdr ? ASN1_INTEGER_get(hdr->pvno) : 0;
+    return hdr != NULL ? ASN1_INTEGER_get(hdr->pvno) : 0;
 }
 
 /* returns the transactionID of the given PKIHeader or NULL on error */
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const OSSL_CMP_HDR *hdr)
 {
-    return hdr ? hdr->transactionID : NULL;
+    return hdr != NULL ? hdr->transactionID : NULL;
 }
 
 /* returns the senderNonce of the given PKIHeader or NULL on error */
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_senderNonce(const OSSL_CMP_HDR *hdr)
 {
-    return hdr ? hdr->senderNonce : NULL;
+    return hdr != NULL ? hdr->senderNonce : NULL;
 }
 
 /* returns the recipNonce of the given PKIHeader or NULL on error */
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_recipNonce(const OSSL_CMP_HDR *hdr)
 {
-    return hdr ? hdr->recipNonce : NULL;
+    return hdr != NULL ? hdr->recipNonce : NULL;
 }
 
 /*
@@ -174,8 +175,7 @@ static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
         goto err;
     }
 
-    if (*tgt)
-        GENERAL_NAME_free(*tgt);
+    GENERAL_NAME_free(*tgt);
     *tgt = gen;
 
     return 1;
@@ -227,7 +227,7 @@ int OSSL_CMP_ASN1_OCTET_STRING_set1(ASN1_OCTET_STRING **tgt,
         return 1;
     ASN1_OCTET_STRING_free(*tgt);
 
-    if (src) {
+    if (src != NULL) {
         if (!(*tgt = ASN1_OCTET_STRING_dup((ASN1_OCTET_STRING *)src))) {
             CMPerr(CMP_F_OSSL_CMP_ASN1_OCTET_STRING_SET1, CMP_R_OUT_OF_MEMORY);
             goto err;
@@ -441,7 +441,8 @@ int OSSL_CMP_HDR_init(OSSL_CMP_CTX *ctx, OSSL_CMP_HDR *hdr)
      * if neither client cert nor subject name given, sender name is not known
      * to the client and in that case set to NULL-DN
      */
-    sender = ctx->clCert? X509_get_subject_name(ctx->clCert) : ctx->subjectName;
+    sender = ctx->clCert != NULL ?
+        X509_get_subject_name(ctx->clCert) : ctx->subjectName;
     if (sender == NULL && ctx->referenceValue == NULL) {
         CMPerr(CMP_F_OSSL_CMP_HDR_INIT, CMP_R_NO_SENDER_NO_REFERENCE);
         goto err;
@@ -450,20 +451,20 @@ int OSSL_CMP_HDR_init(OSSL_CMP_CTX *ctx, OSSL_CMP_HDR *hdr)
         goto err;
 
     /* determine recipient entry in PKIHeader */
-    if (ctx->srvCert) {
+    if (ctx->srvCert != NULL) {
         rcp = X509_get_subject_name(ctx->srvCert);
         /* set also as expected_sender of responses unless set explicitly */
         if (ctx->expected_sender == NULL && rcp != NULL &&
             !OSSL_CMP_CTX_set1_expected_sender(ctx, rcp))
         goto err;
     }
-    else if (ctx->recipient)
+    else if (ctx->recipient != NULL)
         rcp = ctx->recipient;
-    else if (ctx->issuer)
+    else if (ctx->issuer != NULL)
         rcp = ctx->issuer;
-    else if (ctx->oldClCert)
+    else if (ctx->oldClCert != NULL)
         rcp = X509_get_issuer_name(ctx->oldClCert);
-    else if (ctx->clCert)
+    else if (ctx->clCert != NULL)
         rcp = X509_get_issuer_name(ctx->clCert);
     if (!OSSL_CMP_HDR_set1_recipient(hdr, rcp))
         goto err;
@@ -472,7 +473,7 @@ int OSSL_CMP_HDR_init(OSSL_CMP_CTX *ctx, OSSL_CMP_HDR *hdr)
     if (!OSSL_CMP_HDR_set_messageTime(hdr))
         goto err;
 
-    if (ctx->recipNonce)
+    if (ctx->recipNonce != NULL)
         if (!OSSL_CMP_ASN1_OCTET_STRING_set1(&hdr->recipNonce, ctx->recipNonce))
             goto err;
 
@@ -485,7 +486,7 @@ int OSSL_CMP_HDR_init(OSSL_CMP_CTX *ctx, OSSL_CMP_HDR *hdr)
      * 128 bits of (pseudo-) random data for the start of a transaction to
      * reduce the probability of having the transactionID in use at the server.
      */
-    if (!ctx->transactionID &&
+    if (ctx->transactionID == NULL &&
         !set1_aostr_else_random(&ctx->transactionID,NULL,
                                 OSSL_CMP_TRANSACTIONID_LENGTH))
         goto err;
@@ -518,7 +519,7 @@ int OSSL_CMP_HDR_init(OSSL_CMP_CTX *ctx, OSSL_CMP_HDR *hdr)
        -- this may be used to indicate context-specific instructions
        -- (this field is intended for human consumption)
      */
-    if (ctx->freeText)
+    if (ctx->freeText != NULL)
         if (!OSSL_CMP_HDR_push1_freeText(hdr, ctx->freeText))
             goto err;
 #endif
@@ -676,10 +677,8 @@ static X509_ALGOR *CMP_create_pbmac_algor(OSSL_CMP_CTX *ctx)
     OSSL_CRMF_PBMPARAMETER_free(pbm);
     return alg;
  err:
-    if (alg)
-        X509_ALGOR_free(alg);
-    if (pbm)
-        OSSL_CRMF_PBMPARAMETER_free(pbm);
+    X509_ALGOR_free(alg);
+    OSSL_CRMF_PBMPARAMETER_free(pbm);
     return NULL;
 }
 
@@ -700,10 +699,10 @@ int OSSL_CMP_MSG_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         return 1;
 
     /* use PasswordBasedMac according to 5.1.3.1 if secretValue is given */
-    if (ctx->secretValue) {
+    if (ctx->secretValue != NULL) {
         if ((msg->header->protectionAlg = CMP_create_pbmac_algor(ctx)) == NULL)
             goto err;
-        if (ctx->referenceValue &&
+        if (ctx->referenceValue != NULL &&
             !OSSL_CMP_HDR_set1_senderKID(msg->header, ctx->referenceValue))
             goto err;
 
@@ -723,7 +722,7 @@ int OSSL_CMP_MSG_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
          * use MSG_SIG_ALG according to 5.1.3.3 if client Certificate and
          * private key is given
          */
-        if (ctx->clCert && ctx->pkey) {
+        if (ctx->clCert != NULL && ctx->pkey != NULL) {
             const ASN1_OCTET_STRING *subjKeyIDStr = NULL;
             int algNID = 0;
             ASN1_OBJECT *alg = NULL;
@@ -752,7 +751,7 @@ int OSSL_CMP_MSG_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
              * to section 5.1.1
              */
             subjKeyIDStr = X509_get0_subject_key_id(ctx->clCert);
-            if (subjKeyIDStr &&
+            if (subjKeyIDStr != NULL &&
                 !OSSL_CMP_HDR_set1_senderKID(msg->header, subjKeyIDStr))
                 goto err;
 
@@ -792,15 +791,13 @@ int OSSL_CMP_MSG_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 {
     int res = 0;
 
-    if (ctx == NULL)
-        goto err;
-    if (msg == NULL)
+    if (ctx == NULL || msg == NULL)
         goto err;
     if (msg->extraCerts == NULL && !(msg->extraCerts = sk_X509_new_null()))
         goto err;
 
     res = 1;
-    if (ctx->clCert) {
+    if (ctx->clCert != NULL) {
         /* Make sure that our own cert gets sent, in the first position */
         res = sk_X509_push(msg->extraCerts, ctx->clCert)
             && X509_up_ref(ctx->clCert);
@@ -808,7 +805,7 @@ int OSSL_CMP_MSG_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         /*
          * if we have untrusted store, try to add intermediate certs
          */
-        if (res && ctx->untrusted_certs) {
+        if (res != 0 && ctx->untrusted_certs != NULL) {
             STACK_OF(X509) *chain =
                 OSSL_CMP_build_cert_chain(ctx->untrusted_certs, ctx->clCert);
             res = OSSL_CMP_sk_X509_add1_certs(msg->extraCerts, chain,
@@ -844,9 +841,7 @@ int CMP_CERTSTATUS_set_certHash(OSSL_CMP_CERTSTATUS *certStatus,
     int md_NID;
     const EVP_MD *md = NULL;
 
-    if (certStatus == NULL)
-        goto err;
-    if (cert == NULL)
+    if (certStatus == NULL || cert == NULL)
         goto err;
 
     /*
@@ -893,8 +888,7 @@ int OSSL_CMP_MSG_set_implicitConfirm(OSSL_CMP_MSG *msg)
         goto err;
     return 1;
  err:
-    if (itav)
-        OSSL_CMP_ITAV_free(itav);
+    OSSL_CMP_ITAV_free(itav);
     return 0;
 }
 
@@ -1042,7 +1036,7 @@ int CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
             goto err;
         created = 1;
     }
-    if (itav) {
+    if (itav != NULL) {
         if (!sk_OSSL_CMP_ITAV_push(*itav_sk_p, (OSSL_CMP_ITAV *)itav))
             goto err;
     }
@@ -1088,7 +1082,7 @@ OSSL_CMP_PKISI *OSSL_CMP_statusInfo_new(int status, unsigned long failInfo,
     if (!ASN1_INTEGER_set(si->status, status))
         goto err;
 
-    if (text) {
+    if (text != NULL) {
         if ((utf8_text = ASN1_UTF8STRING_new()) == NULL ||
             !ASN1_STRING_set(utf8_text, text, (int)strlen(text)))
             goto err;
@@ -1102,7 +1096,7 @@ OSSL_CMP_PKISI *OSSL_CMP_statusInfo_new(int status, unsigned long failInfo,
     }
 
     for (failure = 0; failure <= OSSL_CMP_PKIFAILUREINFO_MAX; failure++) {
-        if (failInfo & (1 << failure)) {
+        if ((failInfo & (1 << failure)) != 0) {
             if (si->failInfo == NULL &&
                 (si->failInfo = ASN1_BIT_STRING_new()) == NULL)
                 goto err;
@@ -1279,7 +1273,7 @@ OSSL_CMP_PKISI *CMP_REVREPCONTENT_PKIStatusInfo_get(OSSL_CMP_REVREPCONTENT *rrep
     if (rrep == NULL)
         return NULL;
 
-    if ((status = sk_OSSL_CMP_PKISI_value(rrep->status, rsid))) {
+    if ((status = sk_OSSL_CMP_PKISI_value(rrep->status, rsid)) != NULL) {
         return status;
     }
 
@@ -1646,7 +1640,7 @@ STACK_OF(X509) *OSSL_CMP_X509_STORE_get1_certs(const X509_STORE *store)
     objs = X509_STORE_get0_objects((X509_STORE *)store);
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
-        if (cert) {
+        if (cert != NULL) {
             if (!sk_X509_push(sk, cert)) {
                 sk_X509_pop_free(sk, X509_free);
                 return NULL;
@@ -1690,7 +1684,7 @@ int OSSL_CMP_MSG_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     }
 
     /* validate message protection */
-    if (msg->header->protectionAlg) {
+    if (msg->header->protectionAlg != 0) {
         if (!OSSL_CMP_validate_msg(ctx, msg)) {
             /* validation failed */
              CMPerr(CMP_F_OSSL_CMP_MSG_CHECK_RECEIVED,

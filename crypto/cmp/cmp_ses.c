@@ -74,10 +74,10 @@ static void message_add_error_data(OSSL_CMP_MSG *msg)
 
     switch (bt) {
     case OSSL_CMP_PKIBODY_ERROR:
-        if ((buf = OPENSSL_malloc(OSSL_CMP_PKISI_BUFLEN))) {
+        if ((buf = OPENSSL_malloc(OSSL_CMP_PKISI_BUFLEN)) != NULL) {
             if (OSSL_CMP_PKISI_snprint(msg->body->value.error->
                                        pKIStatusInfo,
-                                       buf, OSSL_CMP_PKISI_BUFLEN))
+                                       buf, OSSL_CMP_PKISI_BUFLEN) != 0)
                 ERR_add_error_data(1, buf);
             OPENSSL_free(buf);
         }
@@ -140,7 +140,7 @@ static int unprotected_exception(const OSSL_CMP_CTX *ctx, int expected_type,
              * TODO: handle multiple CertResponses in CertRepMsg, in case
              *       multiple requests have been sent -->  GitHub issue#67
              */
-            if (!crep) {
+            if (crep == NULL) {
                 /* a specific error could be misleading here */
                 return 0;
             }
@@ -195,7 +195,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
         err = CMP_R_ERROR_SENDING_REQUEST;
     ctx->msgtimeout = msgtimeout; /* restore original value */
 
-    if (err) {
+    if (err != 0) {
         CMPerr(CMP_F_SEND_RECEIVE_CHECK, err);
         if (err == CMP_R_FAILED_TO_RECEIVE_PKIMESSAGE ||
             err == CMP_R_READ_TIMEOUT ||
@@ -254,7 +254,7 @@ static int pollForResponse(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **out)
     OSSL_CMP_info(ctx,
                   "received 'waiting' PKIStatus, starting to poll for response");
     for (;;) {
-        if (!(preq = OSSL_CMP_pollReq_new(ctx, rid)))
+        if ((preq = OSSL_CMP_pollReq_new(ctx, rid)) == NULL)
             goto err;
 
         if (!send_receive_check(ctx, preq, "pollReq", CMP_F_POLLFORRESPONSE,
@@ -275,7 +275,7 @@ static int pollForResponse(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **out)
                        CMP_R_MULTIPLE_RESPONSES_NOT_SUPPORTED);
                 goto err;
             }
-            if (!(pollRep = CMP_POLLREPCONTENT_pollRep_get0(prc, rid)))
+            if ((pollRep = CMP_POLLREPCONTENT_pollRep_get0(prc, rid)) == NULL)
                 goto err;
             checkAfter = ASN1_INTEGER_get(pollRep->checkAfter);
             if (checkAfter < 0) {
@@ -311,7 +311,7 @@ static int pollForResponse(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **out)
             break;
         }
     }
-    if (!prep)
+    if (prep == NULL)
         goto err;
 
     OSSL_CMP_MSG_free(preq);
@@ -405,10 +405,9 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
     if (!OSSL_CMP_CTX_set_failInfoCode(ctx, si->failInfo))
         return 0;
 
-    if (ctx->lastStatusString) {
-        sk_ASN1_UTF8STRING_pop_free(ctx->lastStatusString,ASN1_UTF8STRING_free);
-        ctx->lastStatusString = NULL;
-    }
+    sk_ASN1_UTF8STRING_pop_free(ctx->lastStatusString,ASN1_UTF8STRING_free);
+    ctx->lastStatusString = NULL;
+
     if ((ctx->lastStatusString = sk_ASN1_UTF8STRING_new_null()) == NULL)
         return 0;
     ss = si->statusString;
@@ -554,11 +553,11 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
      * if the CMP server returned certificates in the caPubs field, copy them
      * to the context so that they can be retrieved if necessary
      */
-    if (crepmsg->caPubs)
+    if (crepmsg->caPubs != NULL)
         OSSL_CMP_CTX_set1_caPubs(ctx, crepmsg->caPubs);
 
     /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
-    if ((extracerts = (*resp)->extraCerts)) {
+    if ((extracerts = (*resp)->extraCerts) != NULL) {
         if (!OSSL_CMP_CTX_set1_extraCertsIn(ctx, extracerts) ||
         /*
          * merge them also into the untrusted certs, such that the peer does
@@ -570,7 +569,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
     }
 
     if (!(X509_check_private_key(ctx->newClCert,
-                                 ctx->newPkey ? ctx->newPkey : ctx->pkey))) {
+                                 ctx->newPkey != NULL ? ctx->newPkey
+                                                      : ctx->pkey))) {
         failure = OSSL_CMP_PKIFAILUREINFO_incorrectData;
         txt = "public key in new certificate does not match our private key";
 #if 0 /* better leave this for any ctx->certConf_cb to decide */
@@ -611,7 +611,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
         put_cert_verify_err(func);
         CMPerr(func, CMP_R_CERTIFICATE_NOT_ACCEPTED);
         ERR_add_error_data(1, "rejecting newly enrolled cert");
-        if (txt)
+        if (txt != NULL)
             CMP_add_error_txt("; ", txt);
         return 0;
     }
@@ -745,9 +745,9 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
  err:
 
     /* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
-    if (!result) {
+    if (result == 0) {
         char *tempbuf;
-        if ((tempbuf = OPENSSL_malloc(OSSL_CMP_PKISI_BUFLEN))) {
+        if ((tempbuf = OPENSSL_malloc(OSSL_CMP_PKISI_BUFLEN)) != NULL) {
             if (OSSL_CMP_PKISI_snprint(si, tempbuf,
                                        OSSL_CMP_PKISI_BUFLEN))
                 ERR_add_error_data(1, tempbuf);
@@ -814,10 +814,8 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
     genp->body->value.genp = NULL;
 
  err:
-    if (genm)
-        OSSL_CMP_MSG_free(genm);
-    if (genp)
-        OSSL_CMP_MSG_free(genp);
+    OSSL_CMP_MSG_free(genm);
+    OSSL_CMP_MSG_free(genp);
 
     /* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
     /* TODO: verify that !recv_itavs is necessarily an error */

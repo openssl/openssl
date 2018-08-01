@@ -200,7 +200,7 @@ void OSSL_CMP_CTX_delete(OSSL_CMP_CTX *ctx)
         return;
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->newPkey);
-    if (ctx->secretValue)
+    if (ctx->secretValue != NULL)
         OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
 
     OPENSSL_free(ctx->serverName);
@@ -227,8 +227,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_create(void)
     return ctx;
  err:
     CMPerr(CMP_F_OSSL_CMP_CTX_CREATE, CMP_R_OUT_OF_MEMORY);
-    if (ctx)
-        OSSL_CMP_CTX_free(ctx);
+    OSSL_CMP_CTX_free(ctx);
     return NULL;
 }
 
@@ -332,7 +331,7 @@ int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SECRETVALUE, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (ctx->secretValue)
+    if (ctx->secretValue != NULL)
         OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
     return OSSL_CMP_ASN1_OCTET_STRING_set1_bytes(&ctx->secretValue, sec, len);
 }
@@ -368,7 +367,7 @@ int OSSL_CMP_CTX_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
         goto err;
 
     /* if there are already inbound extraCerts on the stack delete them */
-    if (ctx->extraCertsIn) {
+    if (ctx->extraCertsIn != NULL) {
         sk_X509_pop_free(ctx->extraCertsIn, X509_free);
         ctx->extraCertsIn = NULL;
     }
@@ -513,10 +512,8 @@ int OSSL_CMP_CTX_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
     if ((ctx == NULL) || (caPubs == NULL))
         goto err;
 
-    if (ctx->caPubs) {
-        sk_X509_pop_free(ctx->caPubs, X509_free);
-        ctx->caPubs = NULL;
-    }
+    sk_X509_pop_free(ctx->caPubs, X509_free);
+    ctx->caPubs = NULL;
 
     if ((ctx->caPubs = X509_chain_up_ref(caPubs)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_CAPUBS, CMP_R_OUT_OF_MEMORY);
@@ -541,10 +538,9 @@ int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, const X509 *cert)
     if (ctx == NULL)
         goto err;
 
-    if (ctx->srvCert) {
-        X509_free(ctx->srvCert);
-        ctx->srvCert = NULL;
-    }
+    X509_free(ctx->srvCert);
+    ctx->srvCert = NULL;
+
     if (cert == NULL)
         return 1; /* srvCert has been cleared */
 
@@ -564,15 +560,11 @@ int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, const X509 *cert)
  */
 int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name)
 {
-    if (ctx == NULL)
-        goto err;
-    if (name == NULL)
+    if (ctx == NULL || name == NULL)
         goto err;
 
-    if (ctx->recipient) {
-        X509_NAME_free(ctx->recipient);
-        ctx->recipient = NULL;
-    }
+    X509_NAME_free(ctx->recipient);
+    ctx->recipient = NULL;
 
     if ((ctx->recipient = X509_NAME_dup((X509_NAME *)name)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_RECIPIENT, CMP_R_OUT_OF_MEMORY);
@@ -593,10 +585,8 @@ int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx, const X509_NAME *name)
     if (ctx == NULL)
         goto err;
 
-    if (ctx->expected_sender) {
-        X509_NAME_free(ctx->expected_sender);
-        ctx->expected_sender = NULL;
-    }
+    X509_NAME_free(ctx->expected_sender);
+    ctx->expected_sender = NULL;
 
     if (name == NULL)
         return 1;
@@ -617,16 +607,11 @@ int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx, const X509_NAME *name)
  */
 int OSSL_CMP_CTX_set1_issuer(OSSL_CMP_CTX *ctx, const X509_NAME *name)
 {
-    if (ctx == NULL)
-        goto err;
-    if (name == NULL)
+    if (ctx == NULL || name == NULL)
         goto err;
 
-    if (ctx->issuer)
-        {
-            X509_NAME_free(ctx->issuer);
-            ctx->issuer = NULL;
-        }
+    X509_NAME_free(ctx->issuer);
+    ctx->issuer = NULL;
 
     if ((ctx->issuer = X509_NAME_dup( (X509_NAME*)name)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_ISSUER, CMP_R_OUT_OF_MEMORY);
@@ -645,15 +630,11 @@ err:
  */
 int OSSL_CMP_CTX_set1_subjectName(OSSL_CMP_CTX *ctx, const X509_NAME *name)
 {
-    if (ctx == NULL)
-        goto err;
-    if (name == NULL)
+    if (ctx == NULL || name == NULL)
         goto err;
 
-    if (ctx->subjectName) {
-        X509_NAME_free(ctx->subjectName);
-        ctx->subjectName = NULL;
-    }
+    X509_NAME_free(ctx->subjectName);
+    ctx->subjectName = NULL;
 
     if ((ctx->subjectName = X509_NAME_dup((X509_NAME *)name)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SUBJECTNAME, CMP_R_OUT_OF_MEMORY);
@@ -751,15 +732,11 @@ int OSSL_CMP_CTX_subjectAltName_push1(OSSL_CMP_CTX *ctx,
  */
 int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, const X509 *cert)
 {
-    if (ctx == NULL)
-        goto err;
-    if (cert == NULL)
+    if (ctx == NULL || cert == NULL)
         goto err;
 
-    if (ctx->clCert) {
-        X509_free(ctx->clCert);
-        ctx->clCert = NULL;
-    }
+    X509_free(ctx->clCert);
+    ctx->clCert = NULL;
 
     if ((ctx->clCert = X509_dup((X509 *)cert)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_CLCERT, CMP_R_OUT_OF_MEMORY);
@@ -780,15 +757,11 @@ int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, const X509 *cert)
  */
 int OSSL_CMP_CTX_set1_oldClCert(OSSL_CMP_CTX *ctx, const X509 *cert)
 {
-    if (ctx == NULL)
-        goto err;
-    if (cert == NULL)
+    if (ctx == NULL || cert == NULL)
         goto err;
 
-    if (ctx->oldClCert) {
-        X509_free(ctx->oldClCert);
-        ctx->oldClCert = NULL;
-    }
+    X509_free(ctx->oldClCert);
+    ctx->oldClCert = NULL;
 
     if ((ctx->oldClCert = X509_dup((X509 *)cert)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_OLDCLCERT, CMP_R_OUT_OF_MEMORY);
@@ -806,15 +779,11 @@ int OSSL_CMP_CTX_set1_oldClCert(OSSL_CMP_CTX *ctx, const X509 *cert)
  */
 int OSSL_CMP_CTX_set1_p10CSR(OSSL_CMP_CTX *ctx, const X509_REQ *csr)
 {
-    if (ctx == NULL)
-        goto err;
-    if (csr == NULL)
+    if (ctx == NULL || csr == NULL)
         goto err;
 
-    if (ctx->p10CSR) {
-        X509_REQ_free(ctx->p10CSR);
-        ctx->p10CSR = NULL;
-    }
+    X509_REQ_free(ctx->p10CSR);
+    ctx->p10CSR = NULL;
 
     if ((ctx->p10CSR = X509_REQ_dup((X509_REQ *)csr)) == NULL) {
         CMPerr(CMP_F_OSSL_CMP_CTX_SET1_P10CSR, CMP_R_OUT_OF_MEMORY);
@@ -833,15 +802,12 @@ int OSSL_CMP_CTX_set1_p10CSR(OSSL_CMP_CTX *ctx, const X509_REQ *csr)
  */
 int OSSL_CMP_CTX_set1_newClCert(OSSL_CMP_CTX *ctx, const X509 *cert)
 {
-    if (ctx == NULL)
-        goto err;
-    if (cert == NULL)
+    if (ctx == NULL || cert == NULL)
         goto err;
 
-    if (ctx->newClCert) {
-        X509_free(ctx->newClCert);
-        ctx->newClCert = NULL;
-    }
+    X509_free(ctx->newClCert);
+    ctx->newClCert = NULL;
+
     if (!X509_up_ref((X509 *)cert))
         goto err;
     ctx->newClCert = (X509 *)cert;
@@ -869,9 +835,7 @@ X509 *OSSL_CMP_CTX_get0_newClCert(OSSL_CMP_CTX *ctx)
  */
 int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
 {
-    if (ctx == NULL)
-        goto err;
-    if (pkey == NULL)
+    if (ctx == NULL || pkey == NULL)
         goto err;
 
     if (!EVP_PKEY_up_ref((EVP_PKEY *)pkey))
@@ -893,15 +857,11 @@ int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
  */
 int OSSL_CMP_CTX_set0_pkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
 {
-    if (ctx == NULL)
-        goto err;
-    if (pkey == NULL)
+    if (ctx == NULL || pkey == NULL)
         goto err;
 
-    if (ctx->pkey) {
-        EVP_PKEY_free(ctx->pkey);
-        ctx->pkey = NULL;
-    }
+    EVP_PKEY_free(ctx->pkey);
+    ctx->pkey = NULL;
 
     ctx->pkey = (EVP_PKEY *)pkey;
     return 1;
@@ -917,9 +877,7 @@ int OSSL_CMP_CTX_set0_pkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
  */
 int OSSL_CMP_CTX_set1_newPkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
 {
-    if (ctx == NULL)
-        goto err;
-    if (pkey == NULL)
+    if (ctx == NULL || pkey == NULL)
         goto err;
 
     if (!EVP_PKEY_up_ref((EVP_PKEY *)pkey))
@@ -941,15 +899,11 @@ int OSSL_CMP_CTX_set1_newPkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
  */
 int OSSL_CMP_CTX_set0_newPkey(OSSL_CMP_CTX *ctx, const EVP_PKEY *pkey)
 {
-    if (ctx == NULL)
-        goto err;
-    if (pkey == NULL)
+    if (ctx == NULL || pkey == NULL)
         goto err;
 
-    if (ctx->newPkey) {
-        EVP_PKEY_free(ctx->newPkey);
-        ctx->newPkey = NULL;
-    }
+    EVP_PKEY_free(ctx->newPkey);
+    ctx->newPkey = NULL;
 
     ctx->newPkey = (EVP_PKEY *)pkey;
     return 1;
@@ -999,9 +953,7 @@ ASN1_OCTET_STRING *OSSL_CMP_CTX_get0_transactionID(OSSL_CMP_CTX *ctx)
 int OSSL_CMP_CTX_set1_recipNonce(OSSL_CMP_CTX *ctx,
                                  const ASN1_OCTET_STRING *nonce)
 {
-    if (ctx == NULL)
-        goto err;
-    if (nonce == NULL)
+    if (ctx == NULL || nonce == NULL)
         goto err;
 
     return OSSL_CMP_ASN1_OCTET_STRING_set1(&ctx->recipNonce, nonce);
@@ -1052,15 +1004,11 @@ ASN1_OCTET_STRING *OSSL_CMP_CTX_get0_last_senderNonce(OSSL_CMP_CTX *ctx)
  */
 int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name)
 {
-    if (ctx == NULL)
-        goto err;
-    if (name == NULL)
+    if (ctx == NULL || name == NULL)
         goto err;
 
-    if (ctx->proxyName) {
-        OPENSSL_free(ctx->proxyName);
-        ctx->proxyName = NULL;
-    }
+    OPENSSL_free(ctx->proxyName);
+    ctx->proxyName = NULL;
 
     ctx->proxyName = BUF_strdup(name);
     if (ctx->proxyName == NULL) {
@@ -1080,15 +1028,11 @@ int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name)
  */
 int OSSL_CMP_CTX_set1_serverName(OSSL_CMP_CTX *ctx, const char *name)
 {
-    if (ctx == NULL)
-        goto err;
-    if (name == NULL)
+    if (ctx == NULL || name == NULL)
         goto err;
 
-    if (ctx->serverName) {
-        OPENSSL_free(ctx->serverName);
-        ctx->serverName = NULL;
-    }
+    OPENSSL_free(ctx->serverName);
+    ctx->serverName = NULL;
 
     ctx->serverName = BUF_strdup(name);
     if (!ctx->serverName) {
@@ -1126,6 +1070,7 @@ int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_http_cb_t cb)
 {
     if (ctx == NULL)
         goto err;
+
     ctx->http_cb = cb;
     return 1;
  err:
@@ -1140,6 +1085,7 @@ int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg)
 {
     if (ctx == NULL)
         goto err;
+
     ctx->http_cb_arg = arg;
     return 1;
  err:
@@ -1154,6 +1100,7 @@ void *OSSL_CMP_CTX_get_http_cb_arg(OSSL_CMP_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;
+
     return ctx->http_cb_arg;
 }
 
@@ -1165,6 +1112,7 @@ int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_transfer_cb_t cb)
 {
     if (ctx == NULL)
         goto err;
+
     ctx->transfer_cb = cb;
     return 1;
  err:
@@ -1179,6 +1127,7 @@ int OSSL_CMP_CTX_set_transfer_cb_arg(OSSL_CMP_CTX *ctx, void *arg)
 {
     if (ctx == NULL)
         goto err;
+
     ctx->transfer_cb_arg = arg;
     return 1;
  err:
@@ -1193,6 +1142,7 @@ void *OSSL_CMP_CTX_get_transfer_cb_arg(OSSL_CMP_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;
+
     return ctx->transfer_cb_arg;
 }
 
@@ -1223,11 +1173,9 @@ int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path)
         return 0;
     }
 
-    if (ctx->serverPath) {
-        /* clear the old value */
-        OPENSSL_free(ctx->serverPath);
-        ctx->serverPath = NULL;
-    }
+    /* clear the old value */
+    OPENSSL_free(ctx->serverPath);
+    ctx->serverPath = NULL;
 
     if (path == NULL) {
         /* clear the serverPath */
@@ -1257,10 +1205,8 @@ int OSSL_CMP_CTX_set_failInfoCode(OSSL_CMP_CTX *ctx,
 {
     int i;
 
-    if (ctx == NULL)
+    if (ctx == NULL || failInfo == NULL)
         return 0;
-    if (failInfo == NULL)
-        return 1;
 
     ctx->failInfoCode = 0;
     for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)
@@ -1413,9 +1359,9 @@ static int CMP_log_fd(const char *file, int lineno,
     default: break;
     }
 
-    if (lvl)
+    if (lvl != NULL)
         len += fprintf(fd, "%c%s", sep, lvl);
-    len += fprintf(fd, ": %s%s", msg, msg_nl ? "" : "\n");
+    len += fprintf(fd, ": %s%s", msg, msg_nl != 0 ? "" : "\n");
 
     return fflush(fd) != EOF && len >= 0;
 }
@@ -1438,8 +1384,8 @@ int OSSL_CMP_printf(const OSSL_CMP_CTX *ctx, const char *file, int lineno,
     va_list arg_ptr;
     char buf[1024];
     int res;
-    OSSL_cmp_log_cb_t log_fn = ctx == NULL ||
-                               !ctx->log_cb ? OSSL_CMP_puts : ctx->log_cb;
+    OSSL_cmp_log_cb_t log_fn =
+        ctx == NULL || ctx->log_cb == NULL ? OSSL_CMP_puts : ctx->log_cb;
 
     va_start(arg_ptr, fmt);
     BIO_vsnprintf(buf, sizeof(buf), fmt, arg_ptr);
@@ -1474,15 +1420,15 @@ int CMP_log_printf(const char *file, int line,
  */
 int CMP_CTX_error_cb(const char *str, size_t len, void *u) {
     OSSL_CMP_CTX *ctx = (OSSL_CMP_CTX *)u;
-    OSSL_cmp_log_cb_t log_fn = ctx == NULL ||
-                               !ctx->log_cb ? OSSL_CMP_puts : ctx->log_cb;
-    while (*str && *str != ':') /* skip pid */
+    OSSL_cmp_log_cb_t log_fn =
+        ctx == NULL || ctx->log_cb == NULL ? OSSL_CMP_puts : ctx->log_cb;
+    while (*str != '\0' && *str != ':') /* skip pid */
         str++;
-    if (*str) /* skip ':' */
+    if (*str != '\0') /* skip ':' */
         str++;
-    while (*str && *str != ':') /* skip 'error' */
+    while (*str != '\0' && *str != ':') /* skip 'error' */
         str++;
-    if (*str) /* skip ':' */
+    if (*str != '\0') /* skip ':' */
         str++;
     return (*log_fn)(NULL, 0, LOG_ERROR, str);
 }

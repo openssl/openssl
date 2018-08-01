@@ -55,7 +55,7 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
         goto err;                                                         \
     return 1;                                                             \
  err:                                                                     \
-    if (atav) OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(atav);                 \
+    OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(atav);                 \
     return 0;                                                             \
 }
 
@@ -70,12 +70,12 @@ static int OSSL_CRMF_MSG_push0_regCtrl(OSSL_CRMF_MSG *crm,
 {
     int new = 0;
 
-    if (!crm || !crm->certReq || !ctrl)
+    if (crm == NULL || crm->certReq == NULL || ctrl == NULL)
         goto err;
 
-    if (!(crm->certReq->controls)) {
-        if (!(crm->certReq->controls =
-              sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null()))
+    if (crm->certReq->controls == NULL) {
+        if ((crm->certReq->controls =
+             sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null()) == NULL)
             goto err;
         new = 1;
     }
@@ -86,7 +86,7 @@ static int OSSL_CRMF_MSG_push0_regCtrl(OSSL_CRMF_MSG *crm,
  err:
     CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL, CRMF_R_ERROR);
 
-    if (new) {
+    if (new != 0) {
         sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(crm->certReq->controls);
         crm->certReq->controls = NULL;
     }
@@ -174,7 +174,7 @@ static int OSSL_CRMF_MSG_push0_regInfo(OSSL_CRMF_MSG *crm,
  err:
     CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO, CRMF_R_ERROR);
 
-    if (new) {
+    if (new != 0) {
         sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(crm->regInfo);
         crm->regInfo = NULL;
     }
@@ -223,9 +223,9 @@ int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to)
     if (tmpl == NULL)
         goto err;
 
-    if (from && ((from_asn = ASN1_TIME_set(NULL, from)) == NULL))
+    if (from != 0 && ((from_asn = ASN1_TIME_set(NULL, from)) == NULL))
         goto err;
-    if (to && ((to_asn = ASN1_TIME_set(NULL, to)) == NULL))
+    if (to != 0 && ((to_asn = ASN1_TIME_set(NULL, to)) == NULL))
         goto err;
     if ((vld = OSSL_CRMF_OPTIONALVALIDITY_new()) == NULL)
         goto err;
@@ -238,10 +238,8 @@ int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to)
     return 1;
  err:
     CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_VALIDITY, CRMF_R_ERROR);
-    if (from_asn)
-        ASN1_TIME_free(from_asn);
-    if (to_asn)
-        ASN1_TIME_free(to_asn);
+    ASN1_TIME_free(from_asn);
+    ASN1_TIME_free(to_asn);
     return 0;
 }
 
@@ -306,7 +304,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
  err:
     CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION, CRMF_R_ERROR);
 
-    if (new) {
+    if (new != 0) {
         sk_X509_EXTENSION_free(tmpl->extensions);
         tmpl->extensions = NULL;
     }
@@ -354,7 +352,7 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
         goto err;
     }
     if (!(OBJ_find_sigid_algs(alg_nid, &md_nid, NULL) &&
-                (alg = EVP_get_digestbynid(md_nid)))) {
+          (alg = EVP_get_digestbynid(md_nid)) != NULL)) {
         CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
@@ -380,14 +378,11 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
     return ps;
  err:
     CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW, CRMF_R_ERROR);
-    if (ps)
-        OSSL_CRMF_POPOSIGNINGKEY_free(ps);
-    if (crder)
-        OPENSSL_free(crder);
+    OSSL_CRMF_POPOSIGNINGKEY_free(ps);
+    OPENSSL_free(crder);
     if (ctx)
         EVP_MD_CTX_destroy(ctx);
-    if (sig)
-        OPENSSL_free(sig);
+    OPENSSL_free(sig);
     return NULL;
 }
 
@@ -439,8 +434,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
         goto err;
     }
 
-    if (crm->popo)
-        OSSL_CRMF_POPO_free(crm->popo);
+    OSSL_CRMF_POPO_free(crm->popo);
     crm->popo = pp;
 
     return 1;
@@ -543,13 +537,13 @@ This MUST be exactly the same value as is contained in the certificate template.
 /* retrieves the serialNumber of the given cert template or NULL on error */
 ASN1_INTEGER *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
-    return tmpl ? tmpl->serialNumber : NULL;
+    return tmpl != NULL ? tmpl->serialNumber : NULL;
 }
 
 /* retrieves the issuer name of the given cert template or NULL on error */
 X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl)
 {
-    return tmpl ? tmpl->issuer : NULL;
+    return tmpl != NULL ? tmpl->issuer : NULL;
 }
 
 /* fill in certificate template.
@@ -565,11 +559,13 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         CRMFerr(CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if ((pubkey && !X509_PUBKEY_set(&tmpl->publicKey, (EVP_PKEY *)pubkey)) ||
-        (subject && !X509_NAME_set(&tmpl->subject, (X509_NAME *)subject)) ||
-        (issuer && !X509_NAME_set(&tmpl->issuer, (X509_NAME *)issuer)))
+    if ((pubkey != NULL &&
+         !X509_PUBKEY_set(&tmpl->publicKey, (EVP_PKEY *)pubkey)) ||
+        (subject != NULL &&
+         !X509_NAME_set(&tmpl->subject, (X509_NAME *)subject)) ||
+        (issuer != NULL && !X509_NAME_set(&tmpl->issuer, (X509_NAME *)issuer)))
         return 0;
-    if (serial) {
+    if (serial != NULL) {
         ASN1_INTEGER_free(tmpl->serialNumber);
         if ((tmpl->serialNumber = ASN1_INTEGER_dup(serial)) == NULL)
         return 0;
@@ -603,11 +599,12 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_encCert_get1(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
         goto err;
     if (ecert->symmAlg == NULL)
         goto err;
-    if (!(symmAlg = OBJ_obj2nid(ecert->symmAlg->algorithm)))
+    if ((symmAlg = OBJ_obj2nid(ecert->symmAlg->algorithm)) == 0)
         goto err;
 
     /* first the symmetric key needs to be decrypted */
-    if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) && EVP_PKEY_decrypt_init(pkctx)){
+    if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) != NULL &&
+        EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
         size_t eksize = 0;
 

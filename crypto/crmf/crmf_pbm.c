@@ -100,10 +100,8 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     OPENSSL_free(salt);
     return pbm;
  err:
-    if (salt)
-        OPENSSL_free(salt);
-    if (pbm)
-        OSSL_CRMF_PBMPARAMETER_free(pbm);
+    OPENSSL_free(salt);
+    OSSL_CRMF_PBMPARAMETER_free(pbm);
     CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, error);
     return NULL;
 }
@@ -140,8 +138,7 @@ int OSSL_CRMF_passwordBasedMac_new(const OSSL_CRMF_PBMPARAMETER *pbm,
         error = CRMF_R_NULL_ARGUMENT;
         goto err;
     }
-    if (*mac)
-        OPENSSL_free(*mac);
+    OPENSSL_free(*mac);
     if ((*mac = OPENSSL_malloc(EVP_MAX_MD_SIZE)) == NULL) {
         error = CRMF_R_MALLOC_FAILURE;
         goto err;
@@ -212,12 +209,12 @@ int OSSL_CRMF_passwordBasedMac_new(const OSSL_CRMF_PBMPARAMETER *pbm,
 
     return 1;
  err:
-    if (mac && *mac) {
+    if (mac != NULL && *mac != NULL) {
         OPENSSL_free(*mac);
         *mac = NULL;
     }
     CRMFerr(CRMF_F_OSSL_CRMF_PASSWORDBASEDMAC_NEW, error);
-    if (pbm && pbm->mac) {
+    if (pbm != NULL && pbm->mac != NULL) {
         char buf[128];
         if (OBJ_obj2txt(buf, sizeof(buf), pbm->mac->algorithm, 0))
             ERR_add_error_data(1, buf);

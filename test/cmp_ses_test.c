@@ -110,7 +110,7 @@ static int execute_cmp_exec_genm_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 static int execute_cmp_exec_certrequest_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     X509 *res = NULL;
-    if (fixture->expected) {
+    if (fixture->expected != 0) {
         if (TEST_ptr(res = fixture->exec_cert_ses_cb(fixture->cmp_ctx)) &&
             (res == cert || TEST_int_eq(X509_cmp(res, cert), 0))) {
             if (fixture->ca_pubs != NULL) {

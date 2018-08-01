@@ -223,7 +223,7 @@ static void add_conn_error_hint(const OSSL_CMP_CTX *ctx, unsigned long errdetail
     CMP_add_error_data(buf);
     if (errdetail == 0) {
         snprintf(buf, 200, "server has disconnected%s",
-                 ctx->http_cb_arg ? " violating the protocol" :
+                 ctx->http_cb_arg != NULL ? " violating the protocol" :
                                ", likely because it requires the use of TLS");
         CMP_add_error_data(buf);
     } else {
@@ -280,7 +280,7 @@ static BIO *CMP_new_http_bio(const OSSL_CMP_CTX *ctx)
 
     host = ctx->proxyName;
     port = ctx->proxyPort;
-    if (host == NULL || !port) {
+    if (host == NULL || port == 0) {
         host = ctx->serverName;
         port = ctx->serverPort;
     }
@@ -309,9 +309,9 @@ static OCSP_REQ_CTX *CMP_sendreq_new(BIO *io, const char *path,
     if (!OCSP_REQ_CTX_http(rctx, "POST", path))
         goto err;
 
-    if (req && !OCSP_REQ_CTX_i2d_hdr(rctx, req_hdr,
-                                     ASN1_ITEM_rptr(OSSL_CMP_MSG),
-                                     (ASN1_VALUE *)req))
+    if (req != NULL && !OCSP_REQ_CTX_i2d_hdr(rctx, req_hdr,
+                                             ASN1_ITEM_rptr(OSSL_CMP_MSG),
+                                             (ASN1_VALUE *)req))
         goto err;
 
     return rctx;
@@ -375,7 +375,7 @@ int OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if ((hbio = CMP_new_http_bio(ctx)) == NULL)
         goto err;
-    if (ctx->http_cb) {
+    if (ctx->http_cb != NULL) {
         if ((bio = (*ctx->http_cb)(ctx, hbio, 1)) == NULL)
             goto err;
         hbio = bio;
@@ -402,7 +402,7 @@ int OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      * Section 5.1.2 of RFC 1945 states that the absoluteURI form is only
      * allowed when using a proxy
      */
-    if (ctx->proxyName && ctx->proxyPort)
+    if (ctx->proxyName != NULL && ctx->proxyPort != 0)
         pos = BIO_snprintf(path, pathlen-1, "http://%s:%d",
                            ctx->serverName, ctx->serverPort);
 
@@ -429,7 +429,7 @@ int OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     /* for any cert verify error at TLS level: */
     put_cert_verify_err(CMP_F_OSSL_CMP_MSG_HTTP_PERFORM);
 
-    if (err) {
+    if (err != 0) {
         if (ERR_GET_LIB(ERR_peek_error()) == ERR_LIB_SSL)
             err = CMP_R_TLS_ERROR;
         CMPerr(CMP_F_OSSL_CMP_MSG_HTTP_PERFORM, err);
@@ -483,21 +483,20 @@ int OSSL_CMP_load_cert_crl_http_timeout(const char *url, int req_timeout,
         goto err;
 
     rv = bio_http(bio, rctx,
-                  pcert ? (http_fn)X509_http_nbio : (http_fn)X509_CRL_http_nbio,
-                  pcert ? (ASN1_VALUE **)pcert : (ASN1_VALUE **)pcrl, max_time);
+         pcert != NULL ? (http_fn)X509_http_nbio : (http_fn)X509_CRL_http_nbio,
+         pcert != NULL ? (ASN1_VALUE **)pcert : (ASN1_VALUE **)pcrl, max_time);
 
  err:
     OPENSSL_free(host);
     OPENSSL_free(path);
     OPENSSL_free(port);
-    if (bio)
-        BIO_free_all(bio);
+    BIO_free_all(bio);
     OCSP_REQ_CTX_free(rctx);
     if (rv != 1) {
         BIO_printf(bio_err, "%s loading %s from '%s'\n",
                    rv == 0 ? "timeout" : rv == -1 ?
                            "parse Error" : "transfer error",
-                   pcert ? "certificate" : "CRL", url);
+                   pcert != NULL ? "certificate" : "CRL", url);
         ERR_print_errors(bio_err);
     }
     return rv;

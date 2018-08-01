@@ -85,7 +85,7 @@ EVP_PKEY *gen_rsa(void)
  */
 int valid_asn1_encoding(const OSSL_CMP_MSG *msg)
 {
-    return msg ? i2d_OSSL_CMP_MSG((OSSL_CMP_MSG *)msg, NULL) > 0 : 0;
+    return msg != NULL ? i2d_OSSL_CMP_MSG((OSSL_CMP_MSG *)msg, NULL) > 0 : 0;
 }
 
 /*
@@ -109,7 +109,7 @@ int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2)
         a = sk_X509_value(sk1, i);
         b = sk_X509_value(sk2, i);
         if (a != b)
-            if ((res = X509_cmp(a, b)))
+            if ((res = X509_cmp(a, b)) != 0)
                 return res;
     }
     return 0;
