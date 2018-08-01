@@ -76,9 +76,7 @@ static ENGINE *try_load_engine(const char *engine)
     }
     return e;
 }
-#endif
 
-#ifndef OPENSSL_NO_ENGINE
 static UI_METHOD *ui_method = NULL;
 #endif
 
