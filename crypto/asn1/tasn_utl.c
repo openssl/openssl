@@ -76,7 +76,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         }
         return 1;
     }
-    if (CRYPTO_atomic_add(lck, op, &ret, *lock) < 0)
+    if (!CRYPTO_atomic_add(lck, op, &ret, *lock))
         return -1;  /* failed */
 #ifdef REF_PRINT
     fprintf(stderr, "%p:%4d:%s\n", it, *lck, it->sname);
