@@ -90,7 +90,7 @@ void CMP_add_error_txt(const char *separator, const char *txt)
             if (curr != txt) {
                 tmp = OPENSSL_strndup(txt, curr - txt);
                 ERR_add_error_data(3, data, separator, tmp);
-                free(tmp);
+                OPENSSL_free(tmp);
             }
             ERR_PUT_error(ERR_LIB_CMP, 0/* func */, err, file, line);
             txt = curr;
