@@ -1205,8 +1205,10 @@ int OSSL_CMP_CTX_set_failInfoCode(OSSL_CMP_CTX *ctx,
 {
     int i;
 
-    if (ctx == NULL || failInfo == NULL)
+    if (ctx == NULL)
         return 0;
+    if (failInfo == NULL)
+        return 1;
 
     ctx->failInfoCode = 0;
     for (i = 0; i <= OSSL_CMP_PKIFAILUREINFO_MAX; i++)

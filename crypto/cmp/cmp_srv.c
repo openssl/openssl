@@ -86,7 +86,7 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     if (srv_ctx == NULL)
         return 0;
-    srv_ctx->grantImplicitConfirm = value ? 1 : 0;
+    srv_ctx->grantImplicitConfirm = value != 0 ? 1 : 0;
     return 1;
 }
 
@@ -95,7 +95,7 @@ int OSSL_CMP_SRV_CTX_set_accept_unprotected(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     if (srv_ctx == NULL)
         return 0;
-    srv_ctx->acceptUnprotectedRequests = value ? 1 : 0;
+    srv_ctx->acceptUnprotectedRequests = value != 0 ? 1 : 0;
     return 1;
 }
 
@@ -104,7 +104,7 @@ int OSSL_CMP_SRV_CTX_set_send_unprotected_errors(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     if (srv_ctx == NULL)
         return 0;
-    srv_ctx->sendUnprotectedErrors = value ? 1 : 0;
+    srv_ctx->sendUnprotectedErrors = value != 0 ? 1 : 0;
     return 1;
 }
 
@@ -154,7 +154,7 @@ int OSSL_CMP_SRV_CTX_set_send_error(OSSL_CMP_SRV_CTX *srv_ctx, int error)
 {
     if (srv_ctx == NULL)
         return 0;
-    srv_ctx->sendError = error ? 1 : 0;
+    srv_ctx->sendError = error != 0 ? 1 : 0;
     return 1;
 }
 
@@ -179,7 +179,7 @@ int OSSL_CMP_SRV_CTX_set_accept_raverified(OSSL_CMP_SRV_CTX *srv_ctx,
 {
     if (srv_ctx == NULL)
         return 0;
-    srv_ctx->acceptRAVerified = raverified ? 1 : 0;
+    srv_ctx->acceptRAVerified = raverified != 0 ? 1 : 0;
     return 1;
 }
 
@@ -369,7 +369,7 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
         status->certHash = tmp;
         if (res == -1)
             return NULL;
-        if (!res) {
+        if (res == 0) {
             CMPerr(CMP_F_PROCESS_CERTCONF, CMP_R_WRONG_CERT_HASH);
             return NULL;
         }
@@ -415,7 +415,7 @@ static OSSL_CMP_MSG *process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
                                      const OSSL_CMP_MSG *req)
 {
     OSSL_CMP_MSG *msg = NULL;
-    if (!srv_ctx || !srv_ctx->certReq) {
+    if (srv_ctx == NULL || srv_ctx->certReq == NULL) {
         CMPerr(CMP_F_PROCESS_POLLREQ, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
@@ -587,10 +587,13 @@ int OSSL_CMP_mock_server_perform(OSSL_CMP_CTX *cmp_ctx, const OSSL_CMP_MSG *req,
                                      /* TODO make failure bits more specific */
                                      1 << OSSL_CMP_PKIFAILUREINFO_badRequest,
                                      NULL))) {
+            OSSL_CMP_PKIFREETEXT *details =
+                CMP_PKIFREETEXT_push_str(NULL,
+                                         (flags & ERR_TXT_STRING) != 0
+                                         ? data : NULL);
             srv_rsp = OSSL_CMP_error_new(cmp_ctx, si,
-                                         err != 0 ? ERR_GET_REASON(err): -1,
-                                         CMP_PKIFREETEXT_push_str(NULL,
-                                            flags&ERR_TXT_STRING ? data : NULL),
+                                         err != 0 ? ERR_GET_REASON(err) : -1,
+                                         details,
                                          srv_ctx->sendUnprotectedErrors);
             OSSL_CMP_PKISI_free(si);
         } else {
