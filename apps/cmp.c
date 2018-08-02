@@ -1958,14 +1958,41 @@ static int read_write_req_resp(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     return ret;
 }
 
-static BIO *tls_http_cb(OSSL_CMP_CTX *ctx, BIO *hbio, int connect)
+const char *tls_error_hint(unsigned long err)
+{
+    switch(ERR_GET_REASON(err)) {
+/*  case 0x1408F10B: */ /* xSL_F_SSL3_GET_RECORD */
+    case SSL_R_WRONG_VERSION_NUMBER:
+/*  case 0x140770FC: */ /* xSL_F_SSL23_GET_SERVER_HELLO */
+    case SSL_R_UNKNOWN_PROTOCOL:
+         return "The server does not support (a recent version of) TLS";
+/*  case 0x1407E086: */ /* xSL_F_SSL3_GET_SERVER_HELLO */
+/*  case 0x1409F086: */ /* xSL_F_SSL3_WRITE_PENDING */
+/*  case 0x14090086: */ /* xSL_F_SSL3_GET_SERVER_CERTIFICATE */
+/*  case 0x1416F086: */ /* xSL_F_TLS_PROCESS_SERVER_CERTIFICATE */
+    case SSL_R_CERTIFICATE_VERIFY_FAILED:
+        return "Cannot authenticate server via its TLS certificate, likely due to mismatch with our trusted TLS certs or missing revocation status";
+/*  case 0x14094418: */ /* xSL_F_SSL3_READ_BYTES */
+    case SSL_AD_REASON_OFFSET+TLS1_AD_UNKNOWN_CA:
+        return "Server did not accept our TLS certificate, likely due to mismatch with server's trust anchor or missing revocation status";
+    case SSL_AD_REASON_OFFSET+SSL3_AD_HANDSHAKE_FAILURE:
+        return "Server requires our TLS certificate but did not receive one";
+    default: /* no error or no hint available for error */
+        return NULL;
+    }
+}
+
+static BIO *tls_http_cb(OSSL_CMP_CTX *ctx, BIO *hbio, unsigned long detail)
 {
     SSL_CTX *ssl_ctx = OSSL_CMP_CTX_get_http_cb_arg(ctx);
     BIO *sbio = NULL;
-    if (connect) {
+    if (detail == 1) { /* connecting */
         sbio = BIO_new_ssl(OSSL_CMP_CTX_get_http_cb_arg(ctx), 1/* client */);
         hbio = sbio != NULL ? BIO_push(sbio, hbio): NULL;
-    } else {
+    } else { /* disconnecting */
+        const char *hint = tls_error_hint(detail);
+        if (hint != NULL)
+            OSSL_CMP_add_error_data(hint);
         /* as a workaround for OpenSSL double free, do not pop the sbio, but
            rely on BIO_free_all() done by OSSL_CMP_MSG_http_perform() */
     }

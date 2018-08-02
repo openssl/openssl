@@ -249,7 +249,8 @@ typedef int (*OSSL_cmp_log_cb_t) (const char *file, int lineno,
                                   OSSL_CMP_severity level, const char *msg);
 typedef int (*OSSL_cmp_certConf_cb_t) (OSSL_CMP_CTX *ctx, const X509 *cert,
                                        int failure, const char **txt);
-typedef BIO *(*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio, int connect);
+typedef BIO *(*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio,
+                                    unsigned long detail);
 typedef int (*OSSL_cmp_transfer_cb_t) (OSSL_CMP_CTX *ctx,
                                        const OSSL_CMP_MSG *req,
                                        OSSL_CMP_MSG **res);
@@ -317,6 +318,10 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_create(OSSL_CMP_CTX *ctx, int bodytype);
 OSSL_CMP_MSG *OSSL_CMP_MSG_load(const char *file);
 
 /* cmp_lib.c */
+/* TODO DvO push this function upstream to crypto/err (PR #add_error_txt) */
+void OSSL_CMP_add_error_txt(const char *separator, const char *txt);
+#  define OSSL_CMP_add_error_data(txt) OSSL_CMP_add_error_txt(":", txt)
+#  define OSSL_CMP_add_error_line(txt) OSSL_CMP_add_error_txt("\n", txt)
 /* TODO: move those elsewhere? used in test/cmp_lib_test.c */
 #  define OSSL_CMP_TRANSACTIONID_LENGTH 16
 #  define OSSL_CMP_SENDERNONCE_LENGTH 16

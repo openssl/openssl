@@ -203,7 +203,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
             CMPerr(func, not_received);
         else {
             CMPerr(func, CMP_R_ERROR_SENDING_REQUEST);
-            CMP_add_error_data(type_string);
+            OSSL_CMP_add_error_data(type_string);
         }
         *rep = NULL;
         return 0;
@@ -534,8 +534,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
             goto retry; /* got rp/cp/kup which might still indicate 'waiting' */
         } else {
             CMPerr(func, not_received);
-            ERR_add_error_data(1,
-                             "received 'waiting' pkistatus but polling failed");
+            ERR_add_error_data(1, "received 'waiting' pkistatus but polling failed");
             *resp = NULL;
             return 0;
         }
@@ -545,7 +544,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
         return 0;
     if ((ctx->newClCert = get_cert_status(ctx, (*resp)->body->type,
                                           crep)) == NULL) {
-        CMP_add_error_data("cannot extract certificate from response");
+        OSSL_CMP_add_error_data("cannot extract certificate from response");
         return 0;
     }
 
@@ -612,7 +611,7 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
         CMPerr(func, CMP_R_CERTIFICATE_NOT_ACCEPTED);
         ERR_add_error_data(1, "rejecting newly enrolled cert");
         if (txt != NULL)
-            CMP_add_error_txt("; ", txt);
+            OSSL_CMP_add_error_txt("; ", txt);
         return 0;
     }
     return ret;

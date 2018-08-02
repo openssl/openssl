@@ -45,14 +45,14 @@
 #include "cmp_int.h"
 
 
-/* TODO DvO push this functions upstream to crypto/err (PR #add_error_txt) */
+/* TODO DvO push this function upstream to crypto/err (PR #add_error_txt) */
 /*
  * Appends text to the extra error data field of the last error message in
  * OpenSSL's error queue, after adding the given separator string. Note that,
  * in contrast, ERR_add_error_data() simply overwrites the previous contents
  * of the error data.
  */
-void CMP_add_error_txt(const char *separator, const char *txt)
+void OSSL_CMP_add_error_txt(const char *separator, const char *txt)
 {
     const char *file;
     int line;

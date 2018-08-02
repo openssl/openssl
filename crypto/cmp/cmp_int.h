@@ -696,10 +696,6 @@ DECLARE_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
 X509_EXTENSIONS *CMP_exts_dup(X509_EXTENSIONS *extin);
 
 /* from cmp_lib.c */
-void CMP_add_error_txt(const char *separator, const char *txt);
-# define CMP_add_error_data(txt) CMP_add_error_txt(":", txt)
-# define CMP_add_error_line(txt) CMP_add_error_txt("\n", txt)
-
 OSSL_CMP_PKIFREETEXT *CMP_PKIFREETEXT_push_str(OSSL_CMP_PKIFREETEXT *ft,
                                                const char *text);
 

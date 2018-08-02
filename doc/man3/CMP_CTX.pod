@@ -435,12 +435,18 @@ to a structure containing arguments, previously set by
 OSSL_CMP_CTX_set_transfer_cb_arg().
 
 OSSL_CMP_CTX_set_http_cb() sets the optional http connect/disconnect callback
-function, which may modify the HTTP BIO given in the B<hbio> argument
+function, which has the prototype
+
+typedef BIO *(*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio,
+                                    unsigned long detail);
+
+It may modify the HTTP BIO given in the B<hbio> argument
 used by OSSL_CMP_MSG_http_perform().
-On connect, the B<connect> argument is 1, and on disconnect it is 0.
+On connect the B<detail> argument is 1.
+On disconnect it is 0 if no error occurred or else the last error code.
 For instance, on connect a TLS BIO may be prepended to implement HTTPS,
-and on disconnect any cleanup may be done.
-The callback function may return NULL to indicate an error.
+and on disconnect some error diagnostics and/or cleanup may be done.
+The callback function should return NULL to indicate failure.
 It may make use of a custom defined argument stored in the ctx
 by means of OSSL_CMP_CTX_set_http_cb_arg(),
 which may be retrieved again through OSSL_CMP_CTX_get_http_cb_arg().
