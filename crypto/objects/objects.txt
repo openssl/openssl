@@ -385,6 +385,11 @@ sm-scheme 301           : SM2                   : sm2
 sm-scheme 401           : SM3                   : sm3
 sm-scheme 504           : RSA-SM3		: sm3WithRSAEncryption
 
+# ZUC stream cipher
+sm-scheme 201           : ZUC                   : zuc
+sm-scheme 801           : ZUC-128-EEA3          : zuc-128-eea3
+sm-scheme 802           : ZUC-128-EIA3          : zuc-128-eia3
+
 # From RFC4231
 rsadsi 2 8		:			: hmacWithSHA224
 rsadsi 2 9		:			: hmacWithSHA256

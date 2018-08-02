@@ -1179,6 +1179,21 @@
 #define NID_sm3WithRSAEncryption                1144
 #define OBJ_sm3WithRSAEncryption                OBJ_sm_scheme,504L
 
+#define SN_zuc          "ZUC"
+#define LN_zuc          "zuc"
+#define NID_zuc         1195
+#define OBJ_zuc         OBJ_sm_scheme,201L
+
+#define SN_zuc_128_eea3         "ZUC-128-EEA3"
+#define LN_zuc_128_eea3         "zuc-128-eea3"
+#define NID_zuc_128_eea3                1196
+#define OBJ_zuc_128_eea3                OBJ_sm_scheme,801L
+
+#define SN_zuc_128_eia3         "ZUC-128-EIA3"
+#define LN_zuc_128_eia3         "zuc-128-eia3"
+#define NID_zuc_128_eia3                1197
+#define OBJ_zuc_128_eia3                OBJ_sm_scheme,802L
+
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
 #define OBJ_hmacWithSHA224              OBJ_rsadsi,2L,8L
