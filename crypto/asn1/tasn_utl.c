@@ -57,10 +57,8 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 {
     const ASN1_AUX *aux;
-    CRYPTO_REF_COUNT *lck;
+    int *lck, ret;
     CRYPTO_RWLOCK **lock;
-    int ret = -1;
-
     if ((it->itype != ASN1_ITYPE_SEQUENCE)
         && (it->itype != ASN1_ITYPE_NDEF_SEQUENCE))
         return 0;
@@ -69,34 +67,25 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         return 0;
     lck = offset2ptr(*pval, aux->ref_offset);
     lock = offset2ptr(*pval, aux->ref_lock);
-
-    switch (op) {
-    case 0:
-        *lck = ret = 1;
+    if (op == 0) {
+        *lck = 1;
         *lock = CRYPTO_THREAD_lock_new();
         if (*lock == NULL) {
             ASN1err(ASN1_F_ASN1_DO_LOCK, ERR_R_MALLOC_FAILURE);
             return -1;
         }
-        break;
-    case 1:
-        if (!CRYPTO_UP_REF(lck, &ret, *lock))
-            return -1;
-        break;
-    case -1:
-        if (!CRYPTO_DOWN_REF(lck, &ret, *lock))
-            return -1;  /* failed */
-#ifdef REF_PRINT
-        fprintf(stderr, "%p:%4d:%s\n", it, ret, it->sname);
-#endif
-        REF_ASSERT_ISNT(ret < 0);
-        if (ret == 0) {
-            CRYPTO_THREAD_lock_free(*lock);
-            *lock = NULL;
-        }
-        break;
+        return 1;
     }
-
+    if (CRYPTO_atomic_add(lck, op, &ret, *lock) < 0)
+        return -1;  /* failed */
+#ifdef REF_PRINT
+    fprintf(stderr, "%p:%4d:%s\n", it, *lck, it->sname);
+#endif
+    REF_ASSERT_ISNT(ret < 0);
+    if (ret == 0) {
+        CRYPTO_THREAD_lock_free(*lock);
+        *lock = NULL;
+    }
     return ret;
 }
 
