@@ -68,7 +68,7 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     }
 
     if (sctx->uid != NULL
-        && (dctx->uid = OPENSSL_strdup(sctx->uid) == NULL)) {
+        && ((dctx->uid = OPENSSL_strdup(sctx->uid)) == NULL)) {
          pkey_sm2_cleanup(dst);
          return 0;
     }
