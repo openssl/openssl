@@ -63,7 +63,7 @@
 # define TSAN_QUALIFIER volatile
 # define tsan_load(ptr) (*(ptr))
 # define tsan_store(ptr, val) (*(ptr) = (val))
-# pramga intrinsic(_InterlockedExchangeAdd)
+# pragma intrinsic(_InterlockedExchangeAdd)
 # ifdef _WIN64
 #  pragma intrinsic(_InterlockedExchangeAdd64)
 #  define tsan_counter(ptr) (sizeof(*ptr) == 8 ? _InterlockedExchangeAdd64((ptr), 1) \
