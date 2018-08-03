@@ -1343,11 +1343,11 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(p))
 
 # define EVP_PKEY_CTX_set1_sm2_uid(ctx, uid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
                                 EVP_PKEY_CTRL_SM2_SET_UID, 0, (void*)(uid))
 
 # define EVP_PKEY_CTX_get0_sm2_uid(ctx, uid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
                                 EVP_PKEY_CTRL_SM2_GET_UID, 0, (void*)(uid))
 
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)

@@ -67,8 +67,8 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
         }
     }
 
-    dctx->uid = OPENSSL_strdup(sctx->uid);
-    if (sctx->uid != NULL && dctx->uid == NULL) {
+    if (sctx->uid != NULL
+        && (dctx->uid = OPENSSL_strdup(sctx->uid) == NULL)) {
          pkey_sm2_cleanup(dst);
          return 0;
     }
@@ -163,8 +163,8 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
        if (dctx->uid != NULL) {
            EC_KEY *ec = ctx->pkey->pkey.ec;
-           EVP_MD_CTX *md_ctx = (EVP_MD_CTX*)p2;
-           const EVP_MD* md = EVP_MD_CTX_md(md_ctx);
+           EVP_MD_CTX *md_ctx = (EVP_MD_CTX *)p2;
+           const EVP_MD *md = EVP_MD_CTX_md(md_ctx);
            const int md_len = EVP_MD_size(md);
            uint8_t za[EVP_MAX_MD_SIZE];
 
@@ -193,11 +193,13 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_SM2_SET_UID:
+        if (dctx->uid != NULL)
+            OPENSSL_free(dctx->uid);
         dctx->uid = OPENSSL_strdup(p2);
         return (dctx->uid != NULL);
 
     case EVP_PKEY_CTRL_SM2_GET_UID:
-        *(char**)p2 = dctx->uid;
+        *(char **)p2 = dctx->uid;
         return 1;
 
     case EVP_PKEY_CTRL_MD:

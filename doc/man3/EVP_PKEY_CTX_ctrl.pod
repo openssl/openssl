@@ -165,10 +165,10 @@ B<OPENSSL_EC_NAMED_CURVE> value was only added to OpenSSL 1.1.0; previous
 versions should use 0 instead.
 
 The EVP_PKEY_CTX_set1_sm2_uid() sets the user identifier string, which is used
-for the SM2 signature scheme. The uid string is assumed to be NULL terminated,
+for the SM2 signature scheme. The uid string is assumed to be NUL terminated,
 and is copied. If set, the SM2 UID string can be retrieved with
-EVP_PKEY_CTX_get0_sm2_uid() which sets the output parameter to either NULL (if
-the UID has not been set) or to the address of a NULL terminated string which
+EVP_PKEY_CTX_get0_sm2_uid() which sets the output parameter to either NUL (if
+the UID has not been set) or to the address of a NUL terminated string which
 contains the UID. Ownership of this memory pointed to by the reuslt of
 EVP_PKEY_CTX_get0_sm2_uid() is retained by the library.
 
