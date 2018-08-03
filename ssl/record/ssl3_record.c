@@ -1249,18 +1249,18 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         p = md;
         s2n(rec->length, p);
         if (EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-            || EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad) <= 0
-            || EVP_DigestUpdate(md_ctx, seq, 8) <= 0
-            || EVP_DigestUpdate(md_ctx, &rec_char, 1) <= 0
-            || EVP_DigestUpdate(md_ctx, md, 2) <= 0
-            || EVP_DigestUpdate(md_ctx, rec->input, rec->length) <= 0
-            || EVP_DigestFinal_ex(md_ctx, md, NULL) <= 0
+            || !EVP_DigestUpdate(md_ctx, mac_sec, md_size)
+            || !EVP_DigestUpdate(md_ctx, ssl3_pad_1, npad)
+            || !EVP_DigestUpdate(md_ctx, seq, 8)
+            || !EVP_DigestUpdate(md_ctx, &rec_char, 1)
+            || !EVP_DigestUpdate(md_ctx, md, 2)
+            || !EVP_DigestUpdate(md_ctx, rec->input, rec->length)
+            || !EVP_DigestFinal_ex(md_ctx, md, NULL)
             || EVP_MD_CTX_copy_ex(md_ctx, hash) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_sec, md_size) <= 0
-            || EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad) <= 0
-            || EVP_DigestUpdate(md_ctx, md, md_size) <= 0
-            || EVP_DigestFinal_ex(md_ctx, md, &md_size_u) <= 0) {
+            || !EVP_DigestUpdate(md_ctx, mac_sec, md_size)
+            || !EVP_DigestUpdate(md_ctx, ssl3_pad_2, npad)
+            || !EVP_DigestUpdate(md_ctx, md, md_size)
+            || !EVP_DigestFinal_ex(md_ctx, md, &md_size_u)) {
             EVP_MD_CTX_free(md_ctx);
             return 0;
         }
@@ -1346,9 +1346,9 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         }
     } else {
         /* TODO(size_t): Convert these calls */
-        if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
-            || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
-            || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
+        if (!EVP_DigestSignUpdate(mac_ctx, header, sizeof(header))
+            || !EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length)
+            || !EVP_DigestSignFinal(mac_ctx, md, &md_size)) {
             EVP_MD_CTX_free(hmac);
             return 0;
         }

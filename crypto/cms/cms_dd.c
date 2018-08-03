@@ -70,7 +70,7 @@ int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
     if (!cms_DigestAlgorithm_find_ctx(mctx, chain, dd->digestAlgorithm))
         goto err;
 
-    if (EVP_DigestFinal_ex(mctx, md, &mdlen) <= 0)
+    if (!EVP_DigestFinal_ex(mctx, md, &mdlen))
         goto err;
 
     if (verify) {

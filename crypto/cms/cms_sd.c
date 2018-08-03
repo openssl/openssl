@@ -349,9 +349,9 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <=
-                   0)
+        } else if (!EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk)) {
             goto err;
+        }
     }
 
     if (!sd->signerInfos)
@@ -654,7 +654,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         pctx = si->pctx;
     else {
         EVP_MD_CTX_reset(mctx);
-        if (EVP_DigestSignInit(mctx, &pctx, md, NULL, si->pkey) <= 0)
+        if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, si->pkey))
             goto err;
         si->pctx = pctx;
     }
@@ -669,15 +669,15 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
                          ASN1_ITEM_rptr(CMS_Attributes_Sign));
     if (!abuf)
         goto err;
-    if (EVP_DigestSignUpdate(mctx, abuf, alen) <= 0)
+    if (!EVP_DigestSignUpdate(mctx, abuf, alen))
         goto err;
-    if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
+    if (!EVP_DigestSignFinal(mctx, NULL, &siglen))
         goto err;
     OPENSSL_free(abuf);
     abuf = OPENSSL_malloc(siglen);
     if (abuf == NULL)
         goto err;
-    if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
+    if (!EVP_DigestSignFinal(mctx, abuf, &siglen))
         goto err;
 
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
@@ -802,7 +802,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
     if (!cms_DigestAlgorithm_find_ctx(mctx, chain, si->digestAlgorithm))
         goto err;
 
-    if (EVP_DigestFinal_ex(mctx, mval, &mlen) <= 0) {
+    if (!EVP_DigestFinal_ex(mctx, mval, &mlen)) {
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
                CMS_R_UNABLE_TO_FINALIZE_CONTEXT);
         goto err;

@@ -831,7 +831,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
         goto err;
     }
 
-    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, si->pkey) <= 0)
+    if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, si->pkey))
         goto err;
 
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
@@ -844,16 +844,16 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
                          ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
     if (!abuf)
         goto err;
-    if (EVP_DigestSignUpdate(mctx, abuf, alen) <= 0)
+    if (!EVP_DigestSignUpdate(mctx, abuf, alen))
         goto err;
     OPENSSL_free(abuf);
     abuf = NULL;
-    if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
+    if (!EVP_DigestSignFinal(mctx, NULL, &siglen))
         goto err;
     abuf = OPENSSL_malloc(siglen);
     if (abuf == NULL)
         goto err;
-    if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
+    if (!EVP_DigestSignFinal(mctx, abuf, &siglen))
         goto err;
 
     if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,

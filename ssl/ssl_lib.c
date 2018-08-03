@@ -4404,7 +4404,7 @@ EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash, const EVP_MD *md)
 {
     ssl_clear_hash_ctx(hash);
     *hash = EVP_MD_CTX_new();
-    if (*hash == NULL || (md && EVP_DigestInit_ex(*hash, md, NULL) <= 0)) {
+    if (*hash == NULL || (md && !EVP_DigestInit_ex(*hash, md, NULL))) {
         EVP_MD_CTX_free(*hash);
         *hash = NULL;
         return NULL;
@@ -4439,7 +4439,7 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
         goto err;
 
     if (!EVP_MD_CTX_copy_ex(ctx, hdgst)
-        || EVP_DigestFinal_ex(ctx, out, NULL) <= 0) {
+        || !EVP_DigestFinal_ex(ctx, out, NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_HANDSHAKE_HASH,
                  ERR_R_INTERNAL_ERROR);
         goto err;

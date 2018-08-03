@@ -272,7 +272,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0) {
+    if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_EVP_LIB);
         goto err;
@@ -288,11 +288,11 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
-        if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
+        if (!EVP_DigestSignUpdate(mctx, hdata, hdatalen)
             || !EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                 (int)s->session->master_key_length,
                                 s->session->master_key)
-            || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+            || !EVP_DigestSignFinal(mctx, sig, &siglen)) {
 
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                      ERR_R_EVP_LIB);

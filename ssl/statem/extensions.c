@@ -1498,8 +1498,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
      */
     mctx = EVP_MD_CTX_new();
     if (mctx == NULL
-            || EVP_DigestInit_ex(mctx, md, NULL) <= 0
-            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+            || !EVP_DigestInit_ex(mctx, md, NULL)
+            || !EVP_DigestFinal_ex(mctx, hash, NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1518,7 +1518,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         goto err;
     }
 
-    if (EVP_DigestInit_ex(mctx, md, NULL) <= 0) {
+    if (!EVP_DigestInit_ex(mctx, md, NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1560,15 +1560,15 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
             hdatalen -= PACKET_remaining(&hashprefix);
         }
 
-        if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
+        if (!EVP_DigestUpdate(mctx, hdata, hdatalen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
     }
 
-    if (EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
-            || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
+    if (!EVP_DigestUpdate(mctx, msgstart, binderoffset)
+            || !EVP_DigestFinal_ex(mctx, hash, NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -1586,9 +1586,9 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         binderout = tmpbinder;
 
     bindersize = hashsize;
-    if (EVP_DigestSignInit(mctx, NULL, md, NULL, mackey) <= 0
-            || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
-            || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
+    if (!EVP_DigestSignInit(mctx, NULL, md, NULL, mackey)
+            || !EVP_DigestSignUpdate(mctx, hash, hashsize)
+            || !EVP_DigestSignFinal(mctx, binderout, &bindersize)
             || bindersize != hashsize) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);

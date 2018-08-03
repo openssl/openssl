@@ -226,7 +226,7 @@ static int md_gets(BIO *bp, char *buf, int size)
     if (size < ctx->digest->md_size)
         return 0;
 
-    if (EVP_DigestFinal_ex(ctx, (unsigned char *)buf, &ret) <= 0)
+    if (!EVP_DigestFinal_ex(ctx, (unsigned char *)buf, &ret))
         return -1;
 
     return (int)ret;

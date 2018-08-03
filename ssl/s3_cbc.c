@@ -454,23 +454,23 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         goto err;
-    if (EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */ ) <= 0)
+    if (!EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */ ))
         goto err;
     if (is_sslv3) {
         /* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */
         memset(hmac_pad, 0x5c, sslv3_pad_length);
 
-        if (EVP_DigestUpdate(md_ctx, mac_secret, mac_secret_length) <= 0
-            || EVP_DigestUpdate(md_ctx, hmac_pad, sslv3_pad_length) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
+        if (!EVP_DigestUpdate(md_ctx, mac_secret, mac_secret_length)
+            || !EVP_DigestUpdate(md_ctx, hmac_pad, sslv3_pad_length)
+            || !EVP_DigestUpdate(md_ctx, mac_out, md_size))
             goto err;
     } else {
         /* Complete the HMAC in the standard manner. */
         for (i = 0; i < md_block_size; i++)
             hmac_pad[i] ^= 0x6a;
 
-        if (EVP_DigestUpdate(md_ctx, hmac_pad, md_block_size) <= 0
-            || EVP_DigestUpdate(md_ctx, mac_out, md_size) <= 0)
+        if (!EVP_DigestUpdate(md_ctx, hmac_pad, md_block_size)
+            || !EVP_DigestUpdate(md_ctx, mac_out, md_size))
             goto err;
     }
     /* TODO(size_t): Convert me */

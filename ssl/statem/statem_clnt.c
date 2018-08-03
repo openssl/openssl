@@ -3202,12 +3202,12 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
      */
     ukm_hash = EVP_MD_CTX_new();
     if (ukm_hash == NULL
-        || EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid)) <= 0
-        || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
-                            SSL3_RANDOM_SIZE) <= 0
-        || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
-                            SSL3_RANDOM_SIZE) <= 0
-        || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
+        || !EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid))
+        || !EVP_DigestUpdate(ukm_hash, s->s3->client_random,
+                            SSL3_RANDOM_SIZE)
+        || !EVP_DigestUpdate(ukm_hash, s->s3->server_random,
+                            SSL3_RANDOM_SIZE)
+        || !EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                  ERR_R_INTERNAL_ERROR);
         goto err;
