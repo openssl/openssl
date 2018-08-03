@@ -212,7 +212,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
         || !EVP_DigestUpdate(ctx, zeroes, sizeof(zeroes))
         || !EVP_DigestUpdate(ctx, mHash, hLen))
         goto err;
-    if (sLen && !EVP_DigestUpdate(ctx, salt, sLen))
+    if (!EVP_DigestUpdate(ctx, salt, sLen))
         goto err;
     if (!EVP_DigestFinal_ex(ctx, H, NULL))
         goto err;

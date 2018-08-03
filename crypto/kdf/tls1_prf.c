@@ -201,7 +201,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
         goto err;
     if (!EVP_MD_CTX_copy_ex(ctx, ctx_init))
         goto err;
-    if (seed != NULL && !EVP_DigestSignUpdate(ctx, seed, seed_len))
+    if (!EVP_DigestSignUpdate(ctx, seed, seed_len))
         goto err;
     if (!EVP_DigestSignFinal(ctx, A1, &A1_len))
         goto err;
@@ -214,7 +214,7 @@ static int tls1_prf_P_hash(const EVP_MD *md,
             goto err;
         if (olen > (size_t)chunk && !EVP_MD_CTX_copy_ex(ctx_tmp, ctx))
             goto err;
-        if (seed && !EVP_DigestSignUpdate(ctx, seed, seed_len))
+        if (!EVP_DigestSignUpdate(ctx, seed, seed_len))
             goto err;
 
         if (olen > (size_t)chunk) {

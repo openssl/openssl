@@ -453,7 +453,7 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
         return 0;
     }
 
-    if ((sender != NULL && EVP_DigestUpdate(ctx, sender, len) <= 0)
+    if (EVP_DigestUpdate(ctx, sender, len) <= 0
         || EVP_MD_CTX_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
                            (int)s->session->master_key_length,
                            s->session->master_key) <= 0

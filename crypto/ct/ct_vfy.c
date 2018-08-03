@@ -87,7 +87,7 @@ static int sct_ctx_update(EVP_MD_CTX *ctx, const SCT_CTX *sctx, const SCT *sct)
     if (!EVP_DigestUpdate(ctx, tmpbuf, 2))
         return 0;
 
-    if (sct->ext_len && !EVP_DigestUpdate(ctx, sct->ext, sct->ext_len))
+    if (!EVP_DigestUpdate(ctx, sct->ext, sct->ext_len))
         return 0;
 
     return 1;
