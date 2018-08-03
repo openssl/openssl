@@ -2647,10 +2647,16 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         PACKET extpkt;
 
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
-                || PACKET_remaining(pkt) != 0
-                || !tls_collect_extensions(s, &extpkt,
-                                           SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
-                                           &exts, NULL, 1)
+                || PACKET_remaining(pkt) != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
+                     SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+
+        if (!tls_collect_extensions(s, &extpkt,
+                                    SSL_EXT_TLS1_3_NEW_SESSION_TICKET, &exts,
+                                    NULL, 1)
                 || !tls_parse_all_extensions(s,
                                              SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                                              exts, NULL, 0, 1)) {
