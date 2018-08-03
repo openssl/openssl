@@ -58,6 +58,20 @@
 #  define tsan_counter(ptr) __atomic_fetch_add((ptr), 1, __ATOMIC_RELAXED)
 # endif
 
+#elif defined(_MSC_VER) && _MSC_VER>=1200
+
+# define TSAN_QUALIFIER volatile
+# define tsan_load(ptr) (*(ptr))
+# define tsan_store(ptr, val) (*(ptr) = (val))
+# pramga intrinsic(_InterlockedExchangeAdd)
+# ifdef _WIN64
+#  pragma intrinsic(_InterlockedExchangeAdd64)
+#  define tsan_counter(ptr) (sizeof(*ptr) == 8 ? _InterlockedExchangeAdd64((ptr), 1) \
+                                               : _InterlockedExchangeAdd((ptr), 1))
+# else
+#  define tsan_counter(ptr) _InterlockedExchangeAdd((ptr), 1)
+# endif
+
 #endif
 
 #ifndef TSAN_QUALIFIER
