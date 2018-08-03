@@ -219,7 +219,10 @@ disabled with this flag.
 
 =item EVP_DigestInit_ex(),
 EVP_DigestUpdate(),
-EVP_DigestFinal_ex()
+EVP_DigestFinal_ex(),
+EVP_DigestFinalXOF(),
+EVP_DigestInit(),
+EVP_DigestFinal()
 
 Returns 1 for
 success and 0 for failure.
