@@ -64,8 +64,6 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
     if (!ext_list)
         return NULL;
     idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);
-    if (idx == -1)
-        return NULL;
     return sk_X509V3_EXT_METHOD_value(ext_list, idx);
 }
 
