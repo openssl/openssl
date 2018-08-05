@@ -385,7 +385,7 @@ static int def_crl_lookup(X509_CRL *crl,
     X509_REVOKED rtmp, *rev;
     int idx, num;
 
-    if ((num = sk_X509_REVOKED_num(crl->crl.revoked)) < 0)
+    if (crl->crl.revoked == NULL)
         return 0;
 
     /*
@@ -402,7 +402,7 @@ static int def_crl_lookup(X509_CRL *crl,
     if (idx < 0)
         return 0;
     /* Need to look for matching name */
-    for (; idx < num; idx++) {
+    for (num = sk_X509_REVOKED_num(crl->crl.revoked); idx < num; idx++) {
         rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
         if (ASN1_INTEGER_cmp(&rev->serialNumber, serial))
             return 0;

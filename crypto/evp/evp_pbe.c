@@ -217,7 +217,7 @@ int EVP_PBE_find(int type, int pbe_nid,
     pbelu.pbe_type = type;
     pbelu.pbe_nid = pbe_nid;
 
-    if (pbe_algs) {
+    if (pbe_algs != NULL) {
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
         pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }

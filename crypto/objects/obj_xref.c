@@ -46,7 +46,7 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
     const nid_triple *rv = NULL;
     tmp.sign_id = signid;
 
-    if (sig_app) {
+    if (sig_app != NULL) {
         int idx = sk_nid_triple_find(sig_app, &tmp);
         rv = sk_nid_triple_value(sig_app, idx);
     }
