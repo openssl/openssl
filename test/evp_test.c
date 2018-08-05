@@ -2329,6 +2329,8 @@ static int check_test_error(EVP_TEST *t)
  */
 static int run_test(EVP_TEST *t)
 {
+    int r;
+
     if (t->meth == NULL)
         return 1;
     t->s.numtests++;
@@ -2336,10 +2338,16 @@ static int run_test(EVP_TEST *t)
         t->s.numskip++;
     } else {
         /* run the test */
-        if (t->err == NULL && t->meth->run_test(t) != 1) {
-            TEST_info("%s:%d %s error",
-                      t->s.test_file, t->s.start, t->meth->name);
-            return 0;
+        if (t->err == NULL) {
+            if (t->expected_err != NULL)
+                test_suppress_error_diagnostics(1);
+            r = t->meth->run_test(t);
+            test_suppress_error_diagnostics(0);
+            if (r != 1) {
+                TEST_info("%s:%d %s error",
+                          t->s.test_file, t->s.start, t->meth->name);
+                return 0;
+            }
         }
         if (!check_test_error(t)) {
             TEST_openssl_errors();

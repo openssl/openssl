@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,8 @@
 int subtest_level(void);
 int openssl_error_cb(const char *str, size_t len, void *u);
 const BIO_METHOD *BIO_f_tap(void);
+
+int test_suppressed_error_diagnostics(void);
 
 void test_fail_message_prefix(const char *prefix, const char *file,
                               int line, const char *type,
