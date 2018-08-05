@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -310,26 +310,30 @@ int X509_STORE_CTX_get_by_subject(X509_STORE_CTX *vs, X509_LOOKUP_TYPE type,
     return 1;
 }
 
-int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
+static int x509_store_add(X509_STORE *ctx, void *x, int crl)
 {
     X509_OBJECT *obj;
-    int ret = 1, added = 1;
+    int ret = 0, added = 0;
 
     if (x == NULL)
         return 0;
     obj = X509_OBJECT_new();
     if (obj == NULL)
         return 0;
-    obj->type = X509_LU_X509;
-    obj->data.x509 = x;
+
+    if (crl) {
+        obj->type = X509_LU_CRL;
+        obj->data.crl = (X509_CRL *)x;
+    } else {
+        obj->type = X509_LU_X509;
+        obj->data.x509 = (X509 *)x;
+    }
     X509_OBJECT_up_ref_count(obj);
 
     CRYPTO_THREAD_write_lock(ctx->lock);
 
     if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-        X509err(X509_F_X509_STORE_ADD_CERT,
-                X509_R_CERT_ALREADY_IN_HASH_TABLE);
-        ret = 0;
+        ret = 1;
     } else {
         added = sk_X509_OBJECT_push(ctx->objs, obj);
         ret = added != 0;
@@ -337,46 +341,28 @@ int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
 
     CRYPTO_THREAD_unlock(ctx->lock);
 
-    if (!ret)                   /* obj not pushed */
+    if (added == 0)             /* obj not pushed */
         X509_OBJECT_free(obj);
-    if (!added)                 /* on push failure */
-        X509err(X509_F_X509_STORE_ADD_CERT, ERR_R_MALLOC_FAILURE);
 
     return ret;
 }
 
+int X509_STORE_add_cert(X509_STORE *ctx, X509 *x)
+{
+   if (!x509_store_add(ctx, x, 0)) {
+        X509err(X509_F_X509_STORE_ADD_CERT, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    return 1;
+}
+
 int X509_STORE_add_crl(X509_STORE *ctx, X509_CRL *x)
 {
-    X509_OBJECT *obj;
-    int ret = 1, added = 1;
-
-    if (x == NULL)
-        return 0;
-    obj = X509_OBJECT_new();
-    if (obj == NULL)
-        return 0;
-    obj->type = X509_LU_CRL;
-    obj->data.crl = x;
-    X509_OBJECT_up_ref_count(obj);
-
-    CRYPTO_THREAD_write_lock(ctx->lock);
-
-    if (X509_OBJECT_retrieve_match(ctx->objs, obj)) {
-        X509err(X509_F_X509_STORE_ADD_CRL, X509_R_CERT_ALREADY_IN_HASH_TABLE);
-        ret = 0;
-    } else {
-        added = sk_X509_OBJECT_push(ctx->objs, obj);
-        ret = added != 0;
-    }
-
-    CRYPTO_THREAD_unlock(ctx->lock);
-
-    if (!ret)                   /* obj not pushed */
-        X509_OBJECT_free(obj);
-    if (!added)                 /* on push failure */
+    if (!x509_store_add(ctx, x, 1)) {
         X509err(X509_F_X509_STORE_ADD_CRL, ERR_R_MALLOC_FAILURE);
-
-    return ret;
+        return 0;
+    }
+    return 1;
 }
 
 int X509_OBJECT_up_ref_count(X509_OBJECT *a)
