@@ -442,7 +442,7 @@ static int tree_add_auth_node(STACK_OF(X509_POLICY_NODE) **pnodes,
     if (*pnodes == NULL &&
         (*pnodes = policy_node_cmp_new()) == NULL)
         return 0;
-    if (sk_X509_POLICY_NODE_find(*pnodes, pcy) != -1)
+    if (sk_X509_POLICY_NODE_find(*pnodes, pcy) >= 0)
         return 1;
     return sk_X509_POLICY_NODE_push(*pnodes, pcy) != 0;
 }

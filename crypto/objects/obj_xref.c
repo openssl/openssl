@@ -48,8 +48,7 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 
     if (sig_app) {
         int idx = sk_nid_triple_find(sig_app, &tmp);
-        if (idx >= 0)
-            rv = sk_nid_triple_value(sig_app, idx);
+        rv = sk_nid_triple_value(sig_app, idx);
     }
 #ifndef OBJ_XREF_TEST2
     if (rv == NULL) {

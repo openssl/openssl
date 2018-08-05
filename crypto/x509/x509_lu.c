@@ -619,17 +619,18 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
                                         X509_OBJECT *x)
 {
-    int idx, i;
+    int idx, i, num;
     X509_OBJECT *obj;
+
     idx = sk_X509_OBJECT_find(h, x);
-    if (idx == -1)
+    if (idx < 0)
         return NULL;
     if ((x->type != X509_LU_X509) && (x->type != X509_LU_CRL))
         return sk_X509_OBJECT_value(h, idx);
-    for (i = idx; i < sk_X509_OBJECT_num(h); i++) {
+    for (i = idx, num = sk_X509_OBJECT_num(h); i < num; i++) {
         obj = sk_X509_OBJECT_value(h, i);
-        if (x509_object_cmp
-            ((const X509_OBJECT **)&obj, (const X509_OBJECT **)&x))
+        if (x509_object_cmp((const X509_OBJECT **)&obj,
+                            (const X509_OBJECT **)&x))
             return NULL;
         if (x->type == X509_LU_X509) {
             if (!X509_cmp(obj->data.x509, x->data.x509))
