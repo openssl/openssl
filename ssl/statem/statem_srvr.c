@@ -2377,13 +2377,12 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     }
 
     if (!tls_construct_extensions(s, pkt,
-                                         s->hello_retry_request
-                                            == SSL_HRR_PENDING
-                                            ? SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
-                                            : (SSL_IS_TLS13(s)
-                                                ? SSL_EXT_TLS1_3_SERVER_HELLO
-                                                : SSL_EXT_TLS1_2_SERVER_HELLO),
-                                         NULL, 0)) {
+                                  s->hello_retry_request == SSL_HRR_PENDING
+                                      ? SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+                                      : (SSL_IS_TLS13(s)
+                                          ? SSL_EXT_TLS1_3_SERVER_HELLO
+                                          : SSL_EXT_TLS1_2_SERVER_HELLO),
+                                  NULL, 0)) {
         /* SSLfatal() already called */
         return 0;
     }
