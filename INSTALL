@@ -145,8 +145,8 @@
                    put together one-size-fits-all instructions. You might
                    have to pass more flags or set up environment variables
                    to actually make it work. Android and iOS cases are
-                   discussed in corresponding Configurations/10-main.cf
-                   sections. But there are cases when this option alone is
+                   discussed in corresponding Configurations/15-*.conf
+                   files. But there are cases when this option alone is
                    sufficient. For example to build the mingw64 target on
                    Linux "--cross-compile-prefix=x86_64-w64-mingw32-"
                    works. Naturally provided that mingw packages are
@@ -157,10 +157,13 @@
                    "--cross-compile-prefix=mipsel-linux-gnu-" suffices
                    in such case. Needless to mention that you have to
                    invoke ./Configure, not ./config, and pass your target
-                   name explicitly.
+                   name explicitly. Even keep in mind that --openssldir
+                   refers to target's file system, not one you are running
+                   Configure on.
 
   --debug
-                   Build OpenSSL with debugging symbols.
+                   Build OpenSSL with debugging symbols and optimizations
+                   off.
 
   --libdir=DIR
                    The name of the directory under the top of the installation
