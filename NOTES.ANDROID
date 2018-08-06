@@ -47,7 +47,7 @@
  in mind that if you miss it, Configure will try to use gcc... Also,
  PATH would need even further adjustment to cover unprefixed, yet
  target-specific, ar and ranlib. (Or not, if you use binutils-multiarch
- on your Linux).
+ on your Linux.)
 
  Running tests (on Linux)
  ------------------------

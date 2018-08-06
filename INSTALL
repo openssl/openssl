@@ -157,13 +157,12 @@
                    "--cross-compile-prefix=mipsel-linux-gnu-" suffices
                    in such case. Needless to mention that you have to
                    invoke ./Configure, not ./config, and pass your target
-                   name explicitly. Even keep in mind that --openssldir
-                   refers to target's file system, not one you are running
-                   Configure on.
+                   name explicitly. Also, note that --openssldir refers
+                   to target's file system, not one you are building on.
 
   --debug
-                   Build OpenSSL with debugging symbols and optimizations
-                   off.
+                   Build OpenSSL with debugging symbols and zero optimization
+                   level.
 
   --libdir=DIR
                    The name of the directory under the top of the installation
