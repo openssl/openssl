@@ -263,9 +263,15 @@ extern "C" {
 # define SSL3_CT_FORTEZZA_DMS                    20
 /*
  * SSL3_CT_NUMBER is used to size arrays and it must be large enough to
- * contain all of the cert types defined either for SSLv3 and TLSv1.
+ * contain all of the cert types defined for *either* SSLv3 and TLSv1.
  */
-# define SSL3_CT_NUMBER                  9
+# define SSL3_CT_NUMBER                  10
+
+# if defined(TLS_CT_NUMBER)
+#  if TLS_CT_NUMBER != SSL3_CT_NUMBER
+#    error "SSL/TLS CT_NUMBER values do not match"
+#  endif
+# endif
 
 /* No longer used as of OpenSSL 1.1.1 */
 # define SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS       0x0001
