@@ -516,13 +516,13 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
 
-    {EVP_PKEY_DSA2, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "DSA-with-SHA"},
+    {EVP_PKEY_DSA2, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsa_2"},
 
-    {EVP_PKEY_DSA1, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "DSA-2"},
+    {EVP_PKEY_DSA1, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsa"},
 
-    {EVP_PKEY_DSA4, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "DSA-with-SHA1.2"},
+    {EVP_PKEY_DSA4, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsaWithSHA1_2"},
 
-    {EVP_PKEY_DSA3, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "DSA-with-SHA1"},
+    {EVP_PKEY_DSA3, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsaWithSHA1"},
 
     {
         EVP_PKEY_DSA, EVP_PKEY_DSA, 0, "DSA", "OpenSSL DSA method",
