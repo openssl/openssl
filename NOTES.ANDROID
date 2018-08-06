@@ -47,7 +47,7 @@
  in mind that if you miss it, Configure will try to use gcc... Also,
  PATH would need even further adjustment to cover unprefixed, yet
  target-specific, ar and ranlib. It's possible that you don't need to
- bother, if binutils-multiarch are installed on your Linux system.
+ bother, if binutils-multiarch is installed on your Linux system.
 
  Running tests (on Linux)
  ------------------------
