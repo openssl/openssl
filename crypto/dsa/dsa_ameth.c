@@ -516,9 +516,9 @@ static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5] = {
 
-    {EVP_PKEY_DSA2, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsa_2"},
+    {EVP_PKEY_DSA2, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsaWithSHA"},
 
-    {EVP_PKEY_DSA1, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsa"},
+    {EVP_PKEY_DSA1, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsa_2"},
 
     {EVP_PKEY_DSA4, EVP_PKEY_DSA, ASN1_PKEY_ALIAS, "dsaWithSHA1_2"},
 
