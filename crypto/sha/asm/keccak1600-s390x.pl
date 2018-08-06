@@ -335,7 +335,6 @@ ___
 }
 {
 $code.=<<___;
-.globl	KeccakF1600
 .type	KeccakF1600,\@function
 .align	32
 KeccakF1600:

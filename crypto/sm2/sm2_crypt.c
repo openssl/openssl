@@ -48,7 +48,8 @@ static size_t ec_field_size(const EC_GROUP *group)
     if (p == NULL || a == NULL || b == NULL)
        goto done;
 
-    EC_GROUP_get_curve_GFp(group, p, a, b, NULL);
+    if (!EC_GROUP_get_curve(group, p, a, b, NULL))
+        goto done;
     field_size = (BN_num_bits(p) + 7) / 8;
 
  done:
@@ -94,7 +95,7 @@ int sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
     if (field_size == 0 || md_size < 0)
         return 0;
 
-    *ct_size = 10 + 2 * field_size + (size_t)md_size + msg_len;
+    *ct_size = 12 + 2 * field_size + (size_t)md_size + msg_len;
     return 1;
 }
 
@@ -121,19 +122,20 @@ int sm2_encrypt(const EC_KEY *key,
     uint8_t *msg_mask = NULL;
     uint8_t *x2y2 = NULL;
     uint8_t *C3 = NULL;
-    const size_t field_size = ec_field_size(group);
-    const size_t C3_size = EVP_MD_size(digest);
+    size_t field_size;
+    const int C3_size = EVP_MD_size(digest);
 
     /* NULL these before any "goto done" */
     ctext_struct.C2 = NULL;
     ctext_struct.C3 = NULL;
 
-    if (hash == NULL
-            || group == NULL
-            || order == NULL
-            || P == NULL
-            || field_size == 0
-            || C3_size == 0) {
+    if (hash == NULL || C3_size <= 0) {
+        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    field_size = ec_field_size(group);
+    if (field_size == 0) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
@@ -174,9 +176,9 @@ int sm2_encrypt(const EC_KEY *key,
     }
 
     if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
-            || !EC_POINT_get_affine_coordinates_GFp(group, kG, x1, y1, ctx)
+            || !EC_POINT_get_affine_coordinates(group, kG, x1, y1, ctx)
             || !EC_POINT_mul(group, kP, NULL, P, k, ctx)
-            || !EC_POINT_get_affine_coordinates_GFp(group, kP, x2, y2, ctx)) {
+            || !EC_POINT_get_affine_coordinates(group, kP, x2, y2, ctx)) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EC_LIB);
         goto done;
     }
@@ -273,7 +275,7 @@ int sm2_decrypt(const EC_KEY *key,
     int msg_len = 0;
     EVP_MD_CTX *hash = NULL;
 
-    if (field_size == 0 || hash_size == 0)
+    if (field_size == 0 || hash_size <= 0)
        goto done;
 
     memset(ptext_buf, 0xFF, *ptext_len);
@@ -324,11 +326,11 @@ int sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    if (!EC_POINT_set_affine_coordinates_GFp(group, C1, sm2_ctext->C1x,
-                                            sm2_ctext->C1y, ctx)
+    if (!EC_POINT_set_affine_coordinates(group, C1, sm2_ctext->C1x,
+                                         sm2_ctext->C1y, ctx)
             || !EC_POINT_mul(group, C1, NULL, C1, EC_KEY_get0_private_key(key),
                              ctx)
-            || !EC_POINT_get_affine_coordinates_GFp(group, C1, x2, y2, ctx)) {
+            || !EC_POINT_get_affine_coordinates(group, C1, x2, y2, ctx)) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_EC_LIB);
         goto done;
     }

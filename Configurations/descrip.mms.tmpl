@@ -180,7 +180,7 @@ CFLAGS={- join('', @{$config{CFLAGS}}) -}
 LDFLAGS={- join('', @{$config{LFLAGS}}) -}
 EX_LIBS={- join('', map { ",$_" } @{$config{LDLIBS}}) -}
 
-PERL={- $config{perl} -}
+PERL={- $config{PERL} -}
 
 AS={- $config{AS} -}
 ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}

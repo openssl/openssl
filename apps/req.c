@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <ctype.h>
 #include "apps.h"
 #include "progs.h"
 #include <openssl/bio.h>
@@ -23,6 +24,7 @@
 #include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#include <openssl/lhash.h>
 #ifndef OPENSSL_NO_RSA
 # include <openssl/rsa.h>
 #endif
@@ -147,6 +149,66 @@ const OPTIONS req_options[] = {
     {NULL}
 };
 
+
+/*
+ * An LHASH of strings, where each string is an extension name.
+ */
+static unsigned long ext_name_hash(const OPENSSL_STRING *a)
+{
+    return OPENSSL_LH_strhash((const char *)a);
+}
+
+static int ext_name_cmp(const OPENSSL_STRING *a, const OPENSSL_STRING *b)
+{
+    return strcmp((const char *)a, (const char *)b);
+}
+
+static void exts_cleanup(OPENSSL_STRING *x)
+{
+    OPENSSL_free((char *)x);
+}
+
+/*
+ * Is the |kv| key already duplicated?  This is remarkably tricky to get
+ * right.  Return 0 if unique, -1 on runtime error; 1 if found or a syntax
+ * error.
+ */
+static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
+{
+    char *p;
+    size_t off;
+
+    /* Check syntax. */
+    /* Skip leading whitespace, make a copy. */
+    while (*kv && isspace(*kv))
+        if (*++kv == '\0')
+            return 1;
+    if ((p = strchr(kv, '=')) == NULL)
+        return 1;
+    off = p - kv;
+    if ((kv = OPENSSL_strdup(kv)) == NULL)
+        return -1;
+
+    /* Skip trailing space before the equal sign. */
+    for (p = kv + off; p > kv; --p)
+        if (!isspace(p[-1]))
+            break;
+    if (p == kv) {
+        OPENSSL_free(kv);
+        return 1;
+    }
+    *p = '\0';
+
+    /* Finally have a clean "key"; see if it's there [by attempt to add it]. */
+    if ((p = (char *)lh_OPENSSL_STRING_insert(addexts, (OPENSSL_STRING*)kv))
+        != NULL || lh_OPENSSL_STRING_error(addexts)) {
+        OPENSSL_free(p != NULL ? p : kv);
+        return -1;
+    }
+
+    return 0;
+}
+
 int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
@@ -155,6 +217,7 @@ int req_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
+    LHASH_OF(OPENSSL_STRING) *addexts = NULL;
     X509 *x509ss = NULL;
     X509_REQ *req = NULL;
     const EVP_CIPHER *cipher = NULL;
@@ -324,11 +387,17 @@ int req_main(int argc, char **argv)
             multirdn = 1;
             break;
         case OPT_ADDEXT:
-            if (addext_bio == NULL) {
+            p = opt_arg();
+            if (addexts == NULL) {
+                addexts = lh_OPENSSL_STRING_new(ext_name_hash, ext_name_cmp);
                 addext_bio = BIO_new(BIO_s_mem());
+                if (addexts == NULL || addext_bio == NULL)
+                    goto end;
             }
-            if (addext_bio == NULL
-                || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
+            i = duplicated(addexts, p);
+            if (i == 1)
+                goto opthelp;
+            if (i < 0 || BIO_printf(addext_bio, "%s\n", opt_arg()) < 0)
                 goto end;
             break;
         case OPT_EXTENSIONS:
@@ -878,6 +947,7 @@ int req_main(int argc, char **argv)
         ERR_print_errors(bio_err);
     }
     NCONF_free(req_conf);
+    NCONF_free(addext_conf);
     BIO_free(addext_bio);
     BIO_free(in);
     BIO_free_all(out);
@@ -885,6 +955,8 @@ int req_main(int argc, char **argv)
     EVP_PKEY_CTX_free(genctx);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(sigopts);
+    lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
+    lh_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_free(gen_eng);
 #endif

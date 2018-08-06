@@ -490,3 +490,9 @@ SSL_set_num_tickets                     490	1_1_1	EXIST::FUNCTION:
 SSL_CTX_get_num_tickets                 491	1_1_1	EXIST::FUNCTION:
 SSL_get_num_tickets                     492	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set_num_tickets                 493	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_allow_early_data_cb         494	1_1_1	EXIST::FUNCTION:
+SSL_set_allow_early_data_cb             495	1_1_1	EXIST::FUNCTION:
+SSL_set_recv_max_early_data             496	1_1_1	EXIST::FUNCTION:
+SSL_get_recv_max_early_data             497	1_1_1	EXIST::FUNCTION:
+SSL_CTX_get_recv_max_early_data         498	1_1_1	EXIST::FUNCTION:
+SSL_CTX_set_recv_max_early_data         499	1_1_1	EXIST::FUNCTION:

@@ -11,6 +11,7 @@
 
 #include "internal/sm2.h"
 #include "internal/sm2err.h"
+#include "internal/ec_int.h" /* ec_group_do_inverse_ord() */
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -24,16 +25,17 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
 {
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
     const int md_size = EVP_MD_size(digest);
-    uint8_t *za = OPENSSL_zalloc(md_size);
+    uint8_t *za = NULL;
     BIGNUM *e = NULL;
-
-    if (hash == NULL || za == NULL) {
-        SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
-        goto done;
-    }
 
     if (md_size < 0) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, SM2_R_INVALID_DIGEST);
+        goto done;
+    }
+
+    za = OPENSSL_zalloc(md_size);
+    if (hash == NULL || za == NULL) {
+        SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
@@ -109,11 +111,11 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     for (;;) {
         if (!BN_priv_rand_range(k, order)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_INTERNAL_ERROR);
-                goto done;
+            goto done;
         }
 
         if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
-                || !EC_POINT_get_affine_coordinates_GFp(group, kG, x1, NULL,
+                || !EC_POINT_get_affine_coordinates(group, kG, x1, NULL,
                                                         ctx)
                 || !BN_mod_add(r, e, x1, order, ctx)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_INTERNAL_ERROR);
@@ -133,7 +135,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
             continue;
 
         if (!BN_add(s, dA, BN_value_one())
-                || !BN_mod_inverse(s, s, order, ctx)
+                || !ec_group_do_inverse_ord(group, s, s, ctx)
                 || !BN_mod_mul(tmp, dA, r, order, ctx)
                 || !BN_sub(tmp, k, tmp)
                 || !BN_mod_mul(s, s, tmp, order, ctx)) {
@@ -222,7 +224,7 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     }
 
     if (!EC_POINT_mul(group, pt, s, EC_KEY_get0_public_key(key), t, ctx)
-            || !EC_POINT_get_affine_coordinates_GFp(group, pt, x1, NULL, ctx)) {
+            || !EC_POINT_get_affine_coordinates(group, pt, x1, NULL, ctx)) {
         SM2err(SM2_F_SM2_SIG_VERIFY, ERR_R_EC_LIB);
         goto done;
     }

@@ -63,7 +63,10 @@ const EC_METHOD *EC_GFp_mont_method(void)
         0, /* keyfinish */
         ecdh_simple_compute_key,
         0, /* field_inverse_mod_ord */
-        ec_GFp_simple_blind_coordinates
+        ec_GFp_simple_blind_coordinates,
+        ec_GFp_simple_ladder_pre,
+        ec_GFp_simple_ladder_step,
+        ec_GFp_simple_ladder_post
     };
 
     return &ret;

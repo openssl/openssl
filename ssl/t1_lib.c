@@ -955,7 +955,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     const uint16_t *sent_sigs;
     const EVP_MD *md = NULL;
     char sigalgstr[2];
-    size_t sent_sigslen, i;
+    size_t sent_sigslen, i, cidx;
     int pkeyid = EVP_PKEY_id(pkey);
     const SIGALG_LOOKUP *lu;
 
@@ -986,6 +986,14 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                  SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
+    /* Check the sigalg is consistent with the key OID */
+    if (!ssl_cert_lookup_by_nid(EVP_PKEY_id(pkey), &cidx)
+            || lu->sig_idx != (int)cidx) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
+        return 0;
+    }
+
 #ifndef OPENSSL_NO_EC
     if (pkeyid == EVP_PKEY_EC) {
 
@@ -1519,9 +1527,50 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
         return 0;
+
     /* See if public key algorithm allowed */
     if (ssl_cert_is_disabled(lu->sig_idx))
         return 0;
+
+    if (lu->sig == NID_id_GostR3410_2012_256
+            || lu->sig == NID_id_GostR3410_2012_512
+            || lu->sig == NID_id_GostR3410_2001) {
+        /* We never allow GOST sig algs on the server with TLSv1.3 */
+        if (s->server && SSL_IS_TLS13(s))
+            return 0;
+        if (!s->server
+                && s->method->version == TLS_ANY_VERSION
+                && s->s3->tmp.max_ver >= TLS1_3_VERSION) {
+            int i, num;
+            STACK_OF(SSL_CIPHER) *sk;
+
+            /*
+             * We're a client that could negotiate TLSv1.3. We only allow GOST
+             * sig algs if we could negotiate TLSv1.2 or below and we have GOST
+             * ciphersuites enabled.
+             */
+
+            if (s->s3->tmp.min_ver >= TLS1_3_VERSION)
+                return 0;
+
+            sk = SSL_get_ciphers(s);
+            num = sk != NULL ? sk_SSL_CIPHER_num(sk) : 0;
+            for (i = 0; i < num; i++) {
+                const SSL_CIPHER *c;
+
+                c = sk_SSL_CIPHER_value(sk, i);
+                /* Skip disabled ciphers */
+                if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+                    continue;
+
+                if ((c->algorithm_mkey & SSL_kGOST) != 0)
+                    break;
+            }
+            if (i == num)
+                return 0;
+        }
+    }
+
     if (lu->hash == NID_undef)
         return 1;
     /* Security bits: half digest bits */
@@ -2309,13 +2358,16 @@ DH *ssl_get_auto_dh(SSL *s)
         if (dhp == NULL)
             return NULL;
         g = BN_new();
-        if (g != NULL)
-            BN_set_word(g, 2);
+        if (g == NULL || !BN_set_word(g, 2)) {
+            DH_free(dhp);
+            BN_free(g);
+            return NULL;
+        }
         if (dh_secbits >= 192)
             p = BN_get_rfc3526_prime_8192(NULL);
         else
             p = BN_get_rfc3526_prime_3072(NULL);
-        if (p == NULL || g == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
+        if (p == NULL || !DH_set0_pqg(dhp, p, NULL, g)) {
             DH_free(dhp);
             BN_free(p);
             BN_free(g);

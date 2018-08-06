@@ -1190,4 +1190,6 @@ magma_ofb		1189
 magma_cbc		1190
 magma_cfb		1191
 magma_mac		1192
-id_on_SmtpUTF8Mailbox		1193
+hmacWithSHA512_224		1193
+hmacWithSHA512_256		1194
+id_on_SmtpUTF8Mailbox		1195

@@ -48,7 +48,9 @@ RAND_DRBG_cleanup_nonce_fn              datatype
 RAND_DRBG_get_entropy_fn                datatype
 RAND_DRBG_get_nonce_fn                  datatype
 RAND_poll_cb                            datatype
+SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
+SSL_allow_early_data_cb_fn              datatype
 SSL_client_hello_cb_fn                  datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype

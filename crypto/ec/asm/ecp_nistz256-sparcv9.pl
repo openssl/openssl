@@ -1531,13 +1531,13 @@ ecp_nistz256_scatter_w7:
 	ld	[$inp],%l0
 	add	$inp,4,$inp
 	subcc	$index,1,$index
-	stb	%l0,[$out+64*0-1]
+	stb	%l0,[$out+64*0]
 	srl	%l0,8,%l1
-	stb	%l1,[$out+64*1-1]
+	stb	%l1,[$out+64*1]
 	srl	%l0,16,%l2
-	stb	%l2,[$out+64*2-1]
+	stb	%l2,[$out+64*2]
 	srl	%l0,24,%l3
-	stb	%l3,[$out+64*3-1]
+	stb	%l3,[$out+64*3]
 	bne	.Loop_scatter_w7
 	add	$out,64*4,$out
 

@@ -92,20 +92,20 @@ GENERATED={- # common0.tmpl provides @generated
              join(" ", map { (my $x = $_) =~ s|\.[sS]$|.asm|; $x }
                        @generated) -}
 
-INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_ENGINES={- join(" ", map { dso($_) } @{$unified_info{install}->{engines}}) -}
-INSTALL_ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; dso($_) } @{$unified_info{install}->{engines}}) -}
-INSTALL_PROGRAMS={- join(" ", map { $_.$exeext } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
-INSTALL_PROGRAMPDBS={- join(" ", map { $_.".pdb" } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
+INSTALL_LIBS={- join(" ", map { quotify1(lib($_)) } @{$unified_info{install}->{libraries}}) -}
+INSTALL_SHLIBS={- join(" ", map { quotify_l(shlib($_)) } @{$unified_info{install}->{libraries}}) -}
+INSTALL_SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; quotify_l(shlib($_)) } @{$unified_info{install}->{libraries}}) -}
+INSTALL_ENGINES={- join(" ", map { quotify1(dso($_)) } @{$unified_info{install}->{engines}}) -}
+INSTALL_ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; quotify1(dso($_)) } @{$unified_info{install}->{engines}}) -}
+INSTALL_PROGRAMS={- join(" ", map { quotify1($_.$exeext) } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
+INSTALL_PROGRAMPDBS={- join(" ", map { quotify1($_.".pdb") } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
 {- output_off() if $disabled{apps}; "" -}
-BIN_SCRIPTS=$(BLDDIR)\tools\c_rehash.pl
-MISC_SCRIPTS=$(BLDDIR)\apps\CA.pl $(BLDDIR)\apps\tsget.pl
+BIN_SCRIPTS="$(BLDDIR)\tools\c_rehash.pl"
+MISC_SCRIPTS="$(BLDDIR)\apps\CA.pl" "$(BLDDIR)\apps\tsget.pl"
 {- output_on() if $disabled{apps}; "" -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+                "\"".catfile("apps","openssl")."\"" -}
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -173,7 +173,7 @@ LD={- $config{LD} -}
 LDFLAGS={- join(' ', @{$config{LDFLAGS}}) -}
 EX_LIBS={- join(' ', @{$config{LDLIBS}}) -}
 
-PERL={- $config{perl} -}
+PERL={- $config{PERL} -}
 
 AR={- $config{AR} -}
 ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
@@ -185,6 +185,8 @@ AS={- $config{AS} -}
 ASFLAGS={- join(' ', @{$config{ASFLAGS}}) -}
 
 RC={- $config{RC} -}
+
+ECHO="$(PERL)" "$(SRCDIR)\util\echo.pl"
 
 ##### Special command flags ##########################################
 
@@ -319,15 +321,15 @@ build_apps build_tests: build_programs
 # Convenience target to prebuild all generated files, not just the mandatory
 # ones
 build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
-	@rem {- output_off() if $disabled{makedepend}; "" -}
-	@echo "Warning: consider configuring with no-makedepend, because if"
-	@echo "         target system doesn't have $(PERL),"
-	@echo "         then make will fail..."
-	@rem {- output_on() if $disabled{makedepend}; "" -}
+	@{- output_off() if $disabled{makedepend}; "" -}
+	@$(ECHO) "Warning: consider configuring with no-makedepend, because if"
+	@$(ECHO) "         target system doesn't have $(PERL),"
+	@$(ECHO) "         then make will fail..."
+	@{- output_on() if $disabled{makedepend}; "" -}
 
 test: tests
 {- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep
-	@rem {- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "" -}
 	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
@@ -336,17 +338,17 @@ test: tests
 	set OPENSSL_ENGINES=$(MAKEDIR)\engines
 	set OPENSSL_DEBUG_MEMORY=on
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
-	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
-	@echo "Tests are not supported with your chosen Configure options"
-	@rem {- output_on() if !$disabled{tests}; "" -}
+	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@$(ECHO) "Tests are not supported with your chosen Configure options"
+	@{- output_on() if !$disabled{tests}; "" -}
 
 list-tests:
-	@rem {- output_off() if $disabled{tests}; "" -}
+	@{- output_off() if $disabled{tests}; "" -}
 	@set SRCTOP=$(SRCDIR)
 	@"$(PERL)" "$(SRCDIR)\test\run_tests.pl" list
-	@rem {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
-	@echo "Tests are not supported with your chosen Configure options"
-	@rem {- output_on() if !$disabled{tests}; "" -}
+	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+	@$(ECHO) "Tests are not supported with your chosen Configure options"
+	@{- output_on() if !$disabled{tests}; "" -}
 
 install: install_sw install_ssldirs install_docs
 
@@ -373,9 +375,9 @@ distclean: clean
 	-del /Q /F makefile
 
 depend:
-	@ rem {- output_off() if $disabled{makedepend}; "" -}
+	@ {- output_off() if $disabled{makedepend}; "" -}
 	@ "$(PERL)" "$(SRCDIR)\util\add-depends.pl" "VC"
-	@ rem {- output_on() if $disabled{makedepend}; "" -}
+	@ {- output_on() if $disabled{makedepend}; "" -}
 
 # Install helper targets #############################################
 
@@ -405,17 +407,17 @@ install_ssldirs:
                                         "$(OPENSSLDIR)\ct_log_list.cnf"
 
 install_dev:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing development files
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing development files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
-	@rem {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
+	@{- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
 				       "$(INSTALLTOP)\include\openssl"
-	@rem {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
+	@{- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$config{defines}}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "-exclude_re=/__DECC_" \
 				       "$(SRCDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
-	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(BLDDIR)\include\openssl\*.h \
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
@@ -425,8 +427,8 @@ install_dev:
 uninstall_dev:
 
 install_engines:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing engines
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing engines"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
@@ -436,8 +438,8 @@ install_engines:
 uninstall_engines:
 
 install_runtime:
-	@if "$(INSTALLTOP)"=="" ( echo INSTALLTOP should not be empty & exit 1 )
-	@echo *** Installing runtime files
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing runtime files"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_SHLIBS) "$(INSTALLTOP)\bin"
@@ -462,13 +464,13 @@ uninstall_html_docs:
 # Building targets ###################################################
 
 configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
-	@echo "Detected changed: $?"
+	@$(ECHO) "Detected changed: $?"
 	"$(PERL)" configdata.pm -r
-	@echo "**************************************************"
-	@echo "***                                            ***"
-	@echo "***   Please run the same make command again   ***"
-	@echo "***                                            ***"
-	@echo "**************************************************"
+	@$(ECHO) "**************************************************"
+	@$(ECHO) "***                                            ***"
+	@$(ECHO) "***   Please run the same make command again   ***"
+	@$(ECHO) "***                                            ***"
+	@$(ECHO) "**************************************************"
 	@exit 1
 
 reconfigure reconf:
@@ -740,8 +742,6 @@ EOF
               foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
                   if (dirname($prod) eq $dir) {
                       push @deps, $prod.$extinfo{$type};
-                  } else {
-                      push @actions, "\t@rem No support to produce $type ".join(", ", @{$unified_info{dirinfo}->{$dir}->{products}->{$type}});
                   }
               }
           }

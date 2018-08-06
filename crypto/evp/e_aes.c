@@ -144,6 +144,22 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
                      const unsigned char iv[16]);
 #endif
 
+/* increment counter (64-bit int) by 1 */
+static void ctr64_inc(unsigned char *counter)
+{
+    int n = 8;
+    unsigned char c;
+
+    do {
+        --n;
+        c = counter[n];
+        ++c;
+        counter[n] = c;
+        if (c)
+            return;
+    } while (n);
+}
+
 #if defined(OPENSSL_CPUID_OBJ) && (defined(__powerpc__) || defined(__ppc__) || defined(_ARCH_PPC))
 # include "ppc_arch.h"
 # ifdef VPAES_ASM
@@ -1654,7 +1670,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
          * Invocation field will be at least 8 bytes in size and so no need
          * to check wrap around or increment more than last 8 bytes.
          */
-        (*(unsigned long long *)(gctx->iv + gctx->ivlen - 8))++;
+        ctr64_inc(gctx->iv + gctx->ivlen - 8);
         gctx->iv_set = 1;
         return 1;
 
@@ -2291,7 +2307,7 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         memcpy(buf, ptr, arg);
         cctx->aes.ccm.tls_aad_len = arg;
 
-        len = *(uint16_t *)(buf + arg - 2);
+        len = buf[arg - 2] << 8 | buf[arg - 1];
         if (len < EVP_CCM_TLS_EXPLICIT_IV_LEN)
             return 0;
 
@@ -2307,7 +2323,9 @@ static int s390x_aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             len -= cctx->aes.ccm.m;
         }
 
-        *(uint16_t *)(buf + arg - 2) = len;
+        buf[arg - 2] = len >> 8;
+        buf[arg - 1] = len & 0xff;
+
         /* Extra padding: tag appended to record. */
         return cctx->aes.ccm.m;
 
@@ -2789,22 +2807,6 @@ static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
     if (gctx->iv != EVP_CIPHER_CTX_iv_noconst(c))
         OPENSSL_free(gctx->iv);
     return 1;
-}
-
-/* increment counter (64-bit int) by 1 */
-static void ctr64_inc(unsigned char *counter)
-{
-    int n = 8;
-    unsigned char c;
-
-    do {
-        --n;
-        c = counter[n];
-        ++c;
-        counter[n] = c;
-        if (c)
-            return;
-    } while (n);
 }
 
 static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)

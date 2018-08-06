@@ -28,6 +28,8 @@ PKCS7_ISSUER_AND_SERIAL_digest
  int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                       unsigned char *md, unsigned int *len);
 
+ #include <openssl/pkcs7.h>
+
  int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
                                     const EVP_MD *type, unsigned char *md,
                                     unsigned int *len);

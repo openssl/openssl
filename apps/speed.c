@@ -903,14 +903,18 @@ static int EVP_Update_loop(void *args)
     if (decrypt) {
         for (count = 0; COND(nb_iter); count++) {
             rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            if (rc != 1)
+            if (rc != 1) {
+                /* reset iv in case of counter overflow */
                 EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+            }
         }
     } else {
         for (count = 0; COND(nb_iter); count++) {
             rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            if (rc != 1)
+            if (rc != 1) {
+                /* reset iv in case of counter overflow */
                 EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1);
+            }
         }
     }
     if (decrypt)
@@ -937,20 +941,24 @@ static int EVP_Update_loop_ccm(void *args)
 #endif
     if (decrypt) {
         for (count = 0; COND(nb_iter); count++) {
-            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
             EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, sizeof(tag), tag);
-            EVP_DecryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            /* reset iv */
+            EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            /* counter is reset on every update */
             EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            EVP_DecryptFinal_ex(ctx, buf, &outl);
         }
     } else {
         for (count = 0; COND(nb_iter); count++) {
-            EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, iv);
+            /* restore iv length field */
             EVP_EncryptUpdate(ctx, NULL, &outl, NULL, lengths[testnum]);
+            /* counter is reset on every update */
             EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
-            EVP_EncryptFinal_ex(ctx, buf, &outl);
         }
     }
+    if (decrypt)
+        EVP_DecryptFinal_ex(ctx, buf, &outl);
+    else
+        EVP_EncryptFinal_ex(ctx, buf, &outl);
     return count;
 }
 
@@ -2557,7 +2565,8 @@ int speed_main(int argc, char **argv)
     }
 
     for (i = 0; i < loopargs_len; i++)
-        RAND_bytes(loopargs[i].buf, 36);
+        if (RAND_bytes(loopargs[i].buf, 36) <= 0)
+            goto end;
 
 #ifndef OPENSSL_NO_RSA
     for (testnum = 0; testnum < RSA_NUM; testnum++) {
@@ -2653,7 +2662,8 @@ int speed_main(int argc, char **argv)
 #endif                          /* OPENSSL_NO_RSA */
 
     for (i = 0; i < loopargs_len; i++)
-        RAND_bytes(loopargs[i].buf, 36);
+        if (RAND_bytes(loopargs[i].buf, 36) <= 0)
+            goto end;
 
 #ifndef OPENSSL_NO_DSA
     for (testnum = 0; testnum < DSA_NUM; testnum++) {

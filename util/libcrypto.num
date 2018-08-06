@@ -261,7 +261,7 @@ ASN1_NULL_free                          262	1_1_0	EXIST::FUNCTION:
 EC_KEY_copy                             263	1_1_0	EXIST::FUNCTION:EC
 EVP_des_ede3                            264	1_1_0	EXIST::FUNCTION:DES
 PKCS7_add1_attrib_digest                265	1_1_0	EXIST::FUNCTION:
-EC_POINT_get_affine_coordinates_GFp     266	1_1_0	EXIST::FUNCTION:EC
+EC_POINT_get_affine_coordinates_GFp     266	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC
 EVP_seed_ecb                            267	1_1_0	EXIST::FUNCTION:SEED
 BIO_dgram_sctp_wait_for_dry             268	1_1_0	EXIST::FUNCTION:DGRAM,SCTP
 ASN1_OCTET_STRING_NDEF_it               269	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -544,7 +544,7 @@ CONF_get_number                         544	1_1_0	EXIST::FUNCTION:
 X509_EXTENSION_get_object               545	1_1_0	EXIST::FUNCTION:
 X509_EXTENSIONS_it                      546	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_EXTENSIONS_it                      546	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-EC_POINT_set_compressed_coordinates_GF2m 547	1_1_0	EXIST::FUNCTION:EC,EC2M
+EC_POINT_set_compressed_coordinates_GF2m 547	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC,EC2M
 RSA_sign_ASN1_OCTET_STRING              548	1_1_0	EXIST::FUNCTION:RSA
 d2i_X509_CRL_fp                         549	1_1_0	EXIST::FUNCTION:STDIO
 i2d_RSA_PUBKEY                          550	1_1_0	EXIST::FUNCTION:RSA
@@ -638,7 +638,7 @@ X509_REVOKED_it                         638	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:
 X509_REVOKED_it                         638	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 CRYPTO_THREAD_write_lock                639	1_1_0	EXIST::FUNCTION:
 X509V3_NAME_from_section                640	1_1_0	EXIST::FUNCTION:
-EC_POINT_set_compressed_coordinates_GFp 641	1_1_0	EXIST::FUNCTION:EC
+EC_POINT_set_compressed_coordinates_GFp 641	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC
 OCSP_SINGLERESP_get0_id                 642	1_1_0	EXIST::FUNCTION:OCSP
 UI_add_info_string                      643	1_1_0	EXIST::FUNCTION:
 OBJ_NAME_remove                         644	1_1_0	EXIST::FUNCTION:
@@ -1874,7 +1874,7 @@ i2b_PrivateKey_bio                      1858	1_1_0	EXIST::FUNCTION:DSA
 ASN1_STRING_length_set                  1859	1_1_0	EXIST::FUNCTION:
 PEM_write_PKCS8                         1860	1_1_0	EXIST::FUNCTION:STDIO
 PKCS7_digest_from_attributes            1861	1_1_0	EXIST::FUNCTION:
-EC_GROUP_set_curve_GFp                  1862	1_1_0	EXIST::FUNCTION:EC
+EC_GROUP_set_curve_GFp                  1862	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC
 X509_PURPOSE_get0                       1863	1_1_0	EXIST::FUNCTION:
 EVP_PKEY_set1_DSA                       1864	1_1_0	EXIST::FUNCTION:DSA
 X509_NAME_it                            1865	1_1_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -1982,7 +1982,7 @@ X509_CRL_it                             1966	1_1_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 d2i_X509_ALGOR                          1967	1_1_0	EXIST::FUNCTION:
 PKCS12_PBE_keyivgen                     1968	1_1_0	EXIST::FUNCTION:
 BIO_test_flags                          1969	1_1_0	EXIST::FUNCTION:
-EC_POINT_get_affine_coordinates_GF2m    1970	1_1_0	EXIST::FUNCTION:EC,EC2M
+EC_POINT_get_affine_coordinates_GF2m    1970	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC,EC2M
 EVP_ENCODE_CTX_num                      1971	1_1_0	EXIST::FUNCTION:
 Camellia_cfb1_encrypt                   1972	1_1_0	EXIST::FUNCTION:CAMELLIA
 NCONF_load_fp                           1973	1_1_0	EXIST::FUNCTION:STDIO
@@ -2183,7 +2183,7 @@ i2d_ASN1_T61STRING                      2156	1_1_0	EXIST::FUNCTION:
 X509_add1_trust_object                  2157	1_1_0	EXIST::FUNCTION:
 PEM_write_X509                          2158	1_1_0	EXIST::FUNCTION:STDIO
 BN_CTX_free                             2159	1_1_0	EXIST::FUNCTION:
-EC_GROUP_get_curve_GF2m                 2160	1_1_0	EXIST::FUNCTION:EC,EC2M
+EC_GROUP_get_curve_GF2m                 2160	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC,EC2M
 EVP_MD_flags                            2161	1_1_0	EXIST::FUNCTION:
 OPENSSL_sk_set                          2162	1_1_0	EXIST::FUNCTION:
 OCSP_request_sign                       2163	1_1_0	EXIST::FUNCTION:OCSP
@@ -2263,7 +2263,7 @@ ENGINE_set_name                         2235	1_1_0	EXIST::FUNCTION:ENGINE
 TS_TST_INFO_get_policy_id               2236	1_1_0	EXIST::FUNCTION:TS
 PKCS7_SIGNER_INFO_set                   2237	1_1_0	EXIST::FUNCTION:
 PEM_write_bio_PKCS8_PRIV_KEY_INFO       2238	1_1_0	EXIST::FUNCTION:
-EC_GROUP_set_curve_GF2m                 2239	1_1_0	EXIST::FUNCTION:EC,EC2M
+EC_GROUP_set_curve_GF2m                 2239	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC,EC2M
 ENGINE_load_builtin_engines             2240	1_1_0	EXIST::FUNCTION:ENGINE
 SRP_VBASE_init                          2241	1_1_0	EXIST::FUNCTION:SRP
 SHA224_Final                            2242	1_1_0	EXIST::FUNCTION:
@@ -2983,7 +2983,7 @@ EVP_aes_192_cbc                         2936	1_1_0	EXIST::FUNCTION:
 PKCS8_pkey_set0                         2937	1_1_0	EXIST::FUNCTION:
 X509_get1_email                         2938	1_1_0	EXIST::FUNCTION:
 EC_POINT_point2oct                      2939	1_1_0	EXIST::FUNCTION:EC
-EC_GROUP_get_curve_GFp                  2940	1_1_0	EXIST::FUNCTION:EC
+EC_GROUP_get_curve_GFp                  2940	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC
 ASYNC_block_pause                       2941	1_1_0	EXIST::FUNCTION:
 OCSP_SINGLERESP_get_ext                 2942	1_1_0	EXIST::FUNCTION:OCSP
 CRYPTO_strdup                           2943	1_1_0	EXIST::FUNCTION:
@@ -3234,7 +3234,7 @@ X509_NAME_oneline                       3186	1_1_0	EXIST::FUNCTION:
 X509V3_set_nconf                        3187	1_1_0	EXIST::FUNCTION:
 RSAPrivateKey_dup                       3188	1_1_0	EXIST::FUNCTION:RSA
 BN_mod_add                              3189	1_1_0	EXIST::FUNCTION:
-EC_POINT_set_affine_coordinates_GFp     3190	1_1_0	EXIST::FUNCTION:EC
+EC_POINT_set_affine_coordinates_GFp     3190	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC
 X509_get_default_cert_file              3191	1_1_0	EXIST::FUNCTION:
 UI_method_set_flusher                   3192	1_1_0	EXIST::FUNCTION:
 RSA_new_method                          3193	1_1_0	EXIST::FUNCTION:RSA
@@ -3572,7 +3572,7 @@ PROXY_CERT_INFO_EXTENSION_new           3523	1_1_0	EXIST::FUNCTION:
 EVP_bf_cbc                              3524	1_1_0	EXIST::FUNCTION:BF
 DSA_do_verify                           3525	1_1_0	EXIST::FUNCTION:DSA
 EC_GROUP_get_seed_len                   3526	1_1_0	EXIST::FUNCTION:EC
-EC_POINT_set_affine_coordinates_GF2m    3527	1_1_0	EXIST::FUNCTION:EC,EC2M
+EC_POINT_set_affine_coordinates_GF2m    3527	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC,EC2M
 TS_REQ_set_policy_id                    3528	1_1_0	EXIST::FUNCTION:TS
 BIO_callback_ctrl                       3529	1_1_0	EXIST::FUNCTION:
 v2i_GENERAL_NAME                        3530	1_1_0	EXIST::FUNCTION:
@@ -4568,3 +4568,9 @@ EVP_PKEY_get_raw_private_key            4519	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_priv_key          4520	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_get_pub_key           4521	1_1_1	EXIST::FUNCTION:
 EVP_PKEY_set_alias_type                 4522	1_1_1	EXIST::FUNCTION:
+RAND_keep_random_devices_open           4523	1_1_1	EXIST::FUNCTION:
+EC_POINT_set_compressed_coordinates     4524	1_1_1	EXIST::FUNCTION:EC
+EC_POINT_set_affine_coordinates         4525	1_1_1	EXIST::FUNCTION:EC
+EC_POINT_get_affine_coordinates         4526	1_1_1	EXIST::FUNCTION:EC
+EC_GROUP_set_curve                      4527	1_1_1	EXIST::FUNCTION:EC
+EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC

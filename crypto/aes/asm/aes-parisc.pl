@@ -1012,6 +1012,11 @@ L\$AES_Td
 	.STRINGZ "AES for PA-RISC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
+if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+	=~ /GNU assembler/) {
+    $gnuas = 1;
+}
+
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 
@@ -1022,8 +1027,12 @@ foreach (split("\n",$code)) {
 		$SIZE_T==4 ? sprintf("extru%s,%d,8,",$1,31-$2)
 		:            sprintf("extrd,u%s,%d,8,",$1,63-$2)/e;
 
+	s/(\.LEVEL\s+2\.0)W/$1w/	if ($gnuas && $SIZE_T==8);
+	s/\.SPACE\s+\$TEXT\$/.text/	if ($gnuas && $SIZE_T==8);
+	s/\.SUBSPA.*//			if ($gnuas && $SIZE_T==8);
 	s/,\*/,/			if ($SIZE_T==4);
 	s/\bbv\b(.*\(%r2\))/bve$1/	if ($SIZE_T==8);
+
 	print $_,"\n";
 }
 close STDOUT;

@@ -180,6 +180,8 @@ B<openssl> B<s_server>
 [B<-keylogfile outfile>]
 [B<-max_early_data int>]
 [B<-early_data>]
+[B<-anti_replay>]
+[B<-no_anti_replay>]
 
 =head1 DESCRIPTION
 
@@ -530,6 +532,8 @@ By default B<s_server> will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be accepted
 from the client.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
 
 =item B<-bugs>
 
@@ -709,6 +713,15 @@ greater than or equal to 0.
 
 Accept early data where possible.
 
+=item B<-anti_replay>, B<-no_anti_replay>
+
+Switches replay protection on or off, respectively. Replay protection is on by
+default unless overridden by a configuration file. When it is on, OpenSSL will
+automatically detect if a session ticket has been used more than once, TLSv1.3
+has been negotiated, and early data is enabled on the server. A full handshake
+is forced if a session ticket is used a second or subsequent time. Any early
+data that was sent will be rejected.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -798,7 +811,8 @@ unknown cipher suites a client says it supports.
 =head1 SEE ALSO
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_send_fragment(3)>,
+L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)> 
 
 =head1 HISTORY

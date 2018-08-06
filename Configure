@@ -21,6 +21,9 @@ use OpenSSL::Glob;
 
 # see INSTALL for instructions.
 
+my $orig_death_handler = $SIG{__DIE__};
+$SIG{__DIE__} = \&death_handler;
+
 my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
@@ -553,6 +556,7 @@ my %user = (
     LDLIBS      => [],  # -l
     MT          => undef,
     MTFLAGS     => [],
+    PERL        => env('PERL') || ($^O ne "VMS" ? $^X : "perl"),
     RANLIB      => env('RANLIB'),
     RC          => env('RC') || env('WINDRES'),
     RCFLAGS     => [],
@@ -887,21 +891,21 @@ while (@argvcopy)
 		else
 			{ $config{options} .= " ".$_; }
 		}
+	}
 
-        if (defined($config{api}) && !exists $apitable->{$config{api}}) {
-		die "***** Unsupported api compatibility level: $config{api}\n",
-        }
+if (defined($config{api}) && !exists $apitable->{$config{api}}) {
+	die "***** Unsupported api compatibility level: $config{api}\n",
+}
 
-	if (keys %deprecated_options)
-		{
-		warn "***** Deprecated options: ",
-			join(", ", keys %deprecated_options), "\n";
-		}
-	if (keys %unsupported_options)
-		{
-		die "***** Unsupported options: ",
-			join(", ", keys %unsupported_options), "\n";
-		}
+if (keys %deprecated_options)
+	{
+	warn "***** Deprecated options: ",
+		join(", ", keys %deprecated_options), "\n";
+	}
+if (keys %unsupported_options)
+	{
+	die "***** Unsupported options: ",
+		join(", ", keys %unsupported_options), "\n";
 	}
 
 # If any %useradd entry has been set, we must check that the "make
@@ -1117,10 +1121,8 @@ $target{dso_extension}//=$target{shared_extension_simple};
 ($target{shared_import_extension}=$target{shared_extension_simple}.".a")
     if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
-# Allow overriding the names of some tools.  USE WITH CARE
-# Note: only Unix cares about HASHBANGPERL...  that explains
-# the default string.
-$config{perl} =    ($^O ne "VMS" ? $^X : "perl");
+# Fill %config with values from %user, and in case those are undefined or
+# empty, use values from %target (acting as a default).
 foreach (keys %user) {
     my $ref_type = ref $user{$_};
 
@@ -2459,7 +2461,7 @@ _____
     if ($dump || $cmdline) {
         print "\nCommand line (with current working directory = $here):\n\n";
         print '    ',join(' ',
-                          $config{perl},
+                          $config{PERL},
                           catfile($config{sourcedir}, 'Configure'),
                           @{$config{perlargv}}), "\n";
         print "\nPerl information:\n\n";
@@ -2680,6 +2682,8 @@ my %builders = (
 
 $builders{$builder}->($builder_platform, @builder_opts);
 
+$SIG{__DIE__} = $orig_death_handler;
+
 print <<"EOF" if ($disabled{threads} eq "unavailable");
 
 The library could not be configured for supporting multi-threaded
@@ -2714,6 +2718,24 @@ exit(0);
 #
 # Helpers and utility functions
 #
+
+# Death handler, to print a helpful message in case of failure #######
+#
+sub death_handler {
+    die @_ if $^S;              # To prevent the added message in eval blocks
+    my $build_file = $target{build_file} // "build file";
+    my @message = ( <<"_____", @_ );
+
+Failure!  $build_file wasn't produced.
+Please read INSTALL and associated NOTES files.  You may also have to look over
+your available compiler tool chain or change your configuration.
+
+_____
+
+    # Dying is terminal, so it's ok to reset the signal handler here.
+    $SIG{__DIE__} = $orig_death_handler;
+    die @message;
+}
 
 # Configuration file reading #########################################
 
@@ -3065,7 +3087,7 @@ sub run_dofile
     foreach (@templates) {
         die "Can't open $_, $!" unless -f $_;
     }
-    my $perlcmd = (quotify("maybeshell", $config{perl}))[0];
+    my $perlcmd = (quotify("maybeshell", $config{PERL}))[0];
     my $cmd = "$perlcmd \"-I.\" \"-Mconfigdata\" \"$dofile\" -o\"Configure\" \"".join("\" \"",@templates)."\" > \"$out.new\"";
     #print STDERR "DEBUG[run_dofile]: \$cmd = $cmd\n";
     system($cmd);

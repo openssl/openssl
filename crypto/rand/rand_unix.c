@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#define _GNU_SOURCE
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE
+#endif
 #include "e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -30,6 +32,8 @@
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 # include <sys/types.h>
+# include <sys/stat.h>
+# include <fcntl.h>
 # include <unistd.h>
 # include <sys/time.h>
 
@@ -154,6 +158,14 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     return rand_pool_entropy_available(pool);
 }
 
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
+}
+
 # else
 
 #  if defined(OPENSSL_RAND_SEED_EGD) && \
@@ -240,7 +252,7 @@ int syscall_random(void *buf, size_t buflen)
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
      */
-#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__)
+#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *bufer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL)
@@ -273,6 +285,134 @@ int syscall_random(void *buf, size_t buflen)
 
     return -1;
 }
+
+#if  !defined(OPENSSL_RAND_SEED_NONE) && defined(OPENSSL_RAND_SEED_DEVRANDOM)
+static const char *random_device_paths[] = { DEVRANDOM };
+static struct random_device {
+    int fd;
+    dev_t dev;
+    ino_t ino;
+    mode_t mode;
+    dev_t rdev;
+} random_devices[OSSL_NELEM(random_device_paths)];
+static int keep_random_devices_open = 1;
+
+/*
+ * Verify that the file descriptor associated with the random source is
+ * still valid. The rationale for doing this is the fact that it is not
+ * uncommon for daemons to close all open file handles when daemonizing.
+ * So the handle might have been closed or even reused for opening
+ * another file.
+ */
+static int check_random_device(struct random_device * rd)
+{
+    struct stat st;
+
+    return rd->fd != -1
+           && fstat(rd->fd, &st) != -1
+           && rd->dev == st.st_dev
+           && rd->ino == st.st_ino
+           && ((rd->mode ^ st.st_mode) & ~(S_IRWXU | S_IRWXG | S_IRWXO)) == 0
+           && rd->rdev == st.st_rdev;
+}
+
+/*
+ * Open a random device if required and return its file descriptor or -1 on error
+ */
+static int get_random_device(size_t n)
+{
+    struct stat st;
+    struct random_device * rd = &random_devices[n];
+
+    /* reuse existing file descriptor if it is (still) valid */
+    if (check_random_device(rd))
+        return rd->fd;
+
+    /* open the random device ... */
+    if ((rd->fd = open(random_device_paths[n], O_RDONLY)) == -1)
+        return rd->fd;
+
+    /* ... and cache its relevant stat(2) data */
+    if (fstat(rd->fd, &st) != -1) {
+        rd->dev = st.st_dev;
+        rd->ino = st.st_ino;
+        rd->mode = st.st_mode;
+        rd->rdev = st.st_rdev;
+    } else {
+        close(rd->fd);
+        rd->fd = -1;
+    }
+
+    return rd->fd;
+}
+
+/*
+ * Close a random device making sure it is a random device
+ */
+static void close_random_device(size_t n)
+{
+    struct random_device * rd = &random_devices[n];
+
+    if (check_random_device(rd))
+        close(rd->fd);
+    rd->fd = -1;
+}
+
+static void open_random_devices(void)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(random_devices); i++)
+        (void)get_random_device(i);
+}
+
+int rand_pool_init(void)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(random_devices); i++)
+        random_devices[i].fd = -1;
+    open_random_devices();
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(random_devices); i++)
+        close_random_device(i);
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
+    if (keep)
+        open_random_devices();
+    else
+        rand_pool_cleanup();
+    keep_random_devices_open = keep;
+}
+
+#  else     /* defined(OPENSSL_RAND_SEED_NONE)
+             * || !defined(OPENSSL_RAND_SEED_DEVRANDOM)
+             */
+
+int rand_pool_init(void)
+{
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
+}
+
+#  endif    /* !defined(OPENSSL_RAND_SEED_NONE)
+             * && defined(OPENSSL_RAND_SEED_DEVRANDOM)
+             */
 
 /*
  * Try the various seeding methods in turn, exit when successful.
@@ -324,30 +464,33 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
 #   ifdef OPENSSL_RAND_SEED_DEVRANDOM
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    if (bytes_needed > 0) {
-        static const char *paths[] = { DEVRANDOM, NULL };
-        FILE *fp;
-        int i;
+    {
+        size_t i;
 
-        for (i = 0; paths[i] != NULL; i++) {
-            if ((fp = fopen(paths[i], "rb")) == NULL)
+        for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths); i++) {
+            const int fd = get_random_device(i);
+
+            if (fd == -1)
                 continue;
-            setbuf(fp, NULL);
             buffer = rand_pool_add_begin(pool, bytes_needed);
             if (buffer != NULL) {
-                size_t bytes = 0;
-                if (fread(buffer, 1, bytes_needed, fp) == bytes_needed)
-                    bytes = bytes_needed;
+                const ssize_t n = read(fd, buffer, bytes_needed);
 
-                rand_pool_add_end(pool, bytes, 8 * bytes);
-                entropy_available = rand_pool_entropy_available(pool);
+                if (n <= 0) {
+                    close_random_device(i);
+                    continue;
+                }
+
+                rand_pool_add_end(pool, n, 8 * n);
             }
-            fclose(fp);
-            if (entropy_available > 0)
-                return entropy_available;
+            if (!keep_random_devices_open)
+                close_random_device(i);
 
             bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
         }
+        entropy_available = rand_pool_entropy_available(pool);
+        if (entropy_available > 0)
+            return entropy_available;
     }
 #   endif
 
@@ -431,7 +574,6 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
-
 
 
 /*

@@ -391,6 +391,10 @@ rsadsi 2 9		:			: hmacWithSHA256
 rsadsi 2 10		:			: hmacWithSHA384
 rsadsi 2 11		:			: hmacWithSHA512
 
+# From RFC8018
+rsadsi 2 12             :                       : hmacWithSHA512-224
+rsadsi 2 13             :                       : hmacWithSHA512-256
+
 rsadsi 3 2		: RC2-CBC		: rc2-cbc
 			: RC2-ECB		: rc2-ecb
 !Cname rc2-cfb64

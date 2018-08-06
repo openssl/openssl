@@ -24,12 +24,12 @@
  Every Unix system has its own set of default locations for shared
  libraries, such as /lib, /usr/lib or possibly /usr/local/lib.  If
  libraries are installed in non-default locations, dynamically linked
- binaries will not find them and therefore fail to run unless they get a
- bit of help from a defined runtime shared library search path.
+ binaries will not find them and therefore fail to run, unless they get
+ a bit of help from a defined runtime shared library search path.
 
  For OpenSSL's application (the 'openssl' command), our configuration
  scripts do NOT generally set the runtime shared library search path for
- you.  It's therefore advisable to set it explicitly when configuring
+ you.  It's therefore advisable to set it explicitly when configuring,
  unless the libraries are to be installed in directories that you know
  to be in the default list.
 
@@ -42,14 +42,15 @@
  Possible options to set the runtime shared library search path include
  the following:
 
-    -Wl,-rpath,/whatever/path
-    -R /whatever/path
-    -rpath /whatever/path
+    -Wl,-rpath,/whatever/path	# Linux, *BSD, etc.
+    -R /whatever/path		# Solaris
+    -Wl,-R,/whatever/path	# AIX (-bsvr4 is passed internally)
+    -Wl,+b,/whatever/path	# HP-UX
+    -rpath /whatever/path	# Tru64, IRIX
 
  OpenSSL's configuration scripts recognise all these options and pass
- them to the Makefile that they build.  (In fact, it recognises anything
- starting with '-Wl,' as a linker option, so for example, HP-UX'
- '-Wl,+b,/whatever/path' would be used correctly)
+ them to the Makefile that they build. (In fact, all arguments starting
+ with '-Wl,' are recognised as linker options.)
 
  Please do not use verbatim directories in your runtime shared library
  search path!  Some OpenSSL config targets add an extra directory level
@@ -89,3 +90,28 @@
 
     $ ./config --prefix=/usr/local/ssl --openssldir=/usr/local/ssl \
         '-Wl,--enable-new-dtags,-rpath,$(LIBRPATH)'
+
+ It might be worth noting that some/most ELF systems implement support
+ for runtime search path relative to the directory containing current
+ executable, by interpreting $ORIGIN along with some other internal
+ variables. Consult your system documentation.
+
+ Linking your application
+ ------------------------
+
+ Third-party applications dynamically linked with OpenSSL (or any other)
+ shared library face exactly the same problem with non-default locations.
+ The OpenSSL config options mentioned above might or might not have bearing
+ on linking of the target application. "Might" means that under some
+ circumstances it would be sufficient to link with OpenSSL shared library
+ "naturally", i.e. with -L/whatever/path -lssl -lcrypto. But there are
+ also cases when you'd have to explicitly specify runtime search path
+ when linking your application. Consult your system documentation and use
+ above section as inspiration...
+
+ Shared OpenSSL builds also install static libraries. Linking with the
+ latter is likely to require special care, because linkers usually look
+ for shared libraries first and tend to remain "blind" to static OpenSSL
+ libraries. Referring to system documentation would suffice, if not for
+ a corner case. On AIX static libraries (in shared build) are named
+ differently, add _a suffix to link with them, e.g. -lcrypto_a.

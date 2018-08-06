@@ -1032,8 +1032,17 @@ struct ssl_ctx_st {
      */
     SSL_CTX_keylog_cb_func keylog_callback;
 
-    /* The maximum number of bytes that can be sent as early data */
+    /*
+     * The maximum number of bytes advertised in session tickets that can be
+     * sent as early data.
+     */
     uint32_t max_early_data;
+
+    /*
+     * The maximum number of bytes of early data that a server will tolerate
+     * (which should be at least as much as max_early_data).
+     */
+    uint32_t recv_max_early_data;
 
     /* TLS1.3 padding callback */
     size_t (*record_padding_cb)(SSL *s, int type, size_t len, void *arg);
@@ -1047,6 +1056,10 @@ struct ssl_ctx_st {
 
     /* The number of TLS1.3 tickets to automatically send */
     size_t num_tickets;
+
+    /* Callback to determine if early_data is acceptable or not */
+    SSL_allow_early_data_cb_fn allow_early_data_cb;
+    void *allow_early_data_cb_data;
 };
 
 struct ssl_st {
@@ -1205,6 +1218,7 @@ struct ssl_st {
 # endif
     SSL_psk_find_session_cb_func psk_find_session_cb;
     SSL_psk_use_session_cb_func psk_use_session_cb;
+
     SSL_CTX *ctx;
     /* Verified chain of peer */
     STACK_OF(X509) *verified_chain;
@@ -1401,8 +1415,17 @@ struct ssl_st {
     ASYNC_WAIT_CTX *waitctx;
     size_t asyncrw;
 
-    /* The maximum number of plaintext bytes that can be sent as early data */
+    /*
+     * The maximum number of bytes advertised in session tickets that can be
+     * sent as early data.
+     */
     uint32_t max_early_data;
+    /*
+     * The maximum number of bytes of early data that a server will tolerate
+     * (which should be at least as much as max_early_data).
+     */
+    uint32_t recv_max_early_data;
+
     /*
      * The number of bytes of early data received so far. If we accepted early
      * data then this is a count of the plaintext bytes. If we rejected it then
@@ -1424,6 +1447,10 @@ struct ssl_st {
     size_t sent_tickets;
     /* The next nonce value to use when we send a ticket on this connection */
     uint64_t next_ticket_nonce;
+
+    /* Callback to determine if early_data is acceptable or not */
+    SSL_allow_early_data_cb_fn allow_early_data_cb;
+    void *allow_early_data_cb_data;
 };
 
 /*
@@ -2212,6 +2239,8 @@ void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 __owur int ssl_generate_session_id(SSL *s, SSL_SESSION *ss);
 __owur int ssl_get_new_session(SSL *s, int session);
+__owur SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
+                                         size_t sess_id_len);
 __owur int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(SSL_SESSION *src, int ticket);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
@@ -2259,6 +2288,7 @@ __owur int ssl_security(const SSL *s, int op, int bits, int nid, void *other);
 __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
                             void *other);
 
+__owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
                                                       size_t *pidx);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx);
@@ -2339,7 +2369,8 @@ __owur int ssl3_handshake_write(SSL *s);
 
 __owur int ssl_allow_compression(SSL *s);
 
-__owur int ssl_version_supported(const SSL *s, int version);
+__owur int ssl_version_supported(const SSL *s, int version,
+                                 const SSL_METHOD **meth);
 
 __owur int ssl_set_client_hello_version(SSL *s);
 __owur int ssl_check_version_downgrade(SSL *s);

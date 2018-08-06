@@ -12,6 +12,7 @@
 #include <openssl/rand.h>
 #include <openssl/engine.h>
 #include "internal/refcount.h"
+#include "internal/cryptlib.h"
 #include "ssl_locl.h"
 #include "statem/statem_locl.h"
 
@@ -420,15 +421,6 @@ int ssl_get_new_session(SSL *s, int session)
             return 0;
         }
 
-        if (s->ext.hostname) {
-            ss->ext.hostname = OPENSSL_strdup(s->ext.hostname);
-            if (ss->ext.hostname == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_GET_NEW_SESSION,
-                         ERR_R_INTERNAL_ERROR);
-                SSL_SESSION_free(ss);
-                return 0;
-            }
-        }
     } else {
         ss->session_id_length = 0;
     }
@@ -450,6 +442,73 @@ int ssl_get_new_session(SSL *s, int session)
         ss->flags |= SSL_SESS_FLAG_EXTMS;
 
     return 1;
+}
+
+SSL_SESSION *lookup_sess_in_cache(SSL *s, const unsigned char *sess_id,
+                                  size_t sess_id_len)
+{
+    SSL_SESSION *ret = NULL;
+    int discard;
+
+    if ((s->session_ctx->session_cache_mode
+         & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP) == 0) {
+        SSL_SESSION data;
+
+        data.ssl_version = s->version;
+        if (!ossl_assert(sess_id_len <= SSL_MAX_SSL_SESSION_ID_LENGTH))
+            return NULL;
+
+        memcpy(data.session_id, sess_id, sess_id_len);
+        data.session_id_length = sess_id_len;
+
+        CRYPTO_THREAD_read_lock(s->session_ctx->lock);
+        ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
+        if (ret != NULL) {
+            /* don't allow other threads to steal it: */
+            SSL_SESSION_up_ref(ret);
+        }
+        CRYPTO_THREAD_unlock(s->session_ctx->lock);
+        if (ret == NULL)
+            CRYPTO_atomic_add(&s->session_ctx->stats.sess_miss, 1, &discard,
+                              s->session_ctx->lock);
+    }
+
+    if (ret == NULL && s->session_ctx->get_session_cb != NULL) {
+        int copy = 1;
+
+        ret = s->session_ctx->get_session_cb(s, sess_id, sess_id_len, &copy);
+
+        if (ret != NULL) {
+            CRYPTO_atomic_add(&s->session_ctx->stats.sess_cb_hit, 1, &discard,
+                              s->session_ctx->lock);
+
+            /*
+             * Increment reference count now if the session callback asks us
+             * to do so (note that if the session structures returned by the
+             * callback are shared between threads, it must handle the
+             * reference count itself [i.e. copy == 0], or things won't be
+             * thread-safe).
+             */
+            if (copy)
+                SSL_SESSION_up_ref(ret);
+
+            /*
+             * Add the externally cached session to the internal cache as
+             * well if and only if we are supposed to.
+             */
+            if ((s->session_ctx->session_cache_mode &
+                 SSL_SESS_CACHE_NO_INTERNAL_STORE) == 0) {
+                /*
+                 * Either return value of SSL_CTX_add_session should not
+                 * interrupt the session resumption process. The return
+                 * value is intentionally ignored.
+                 */
+                (void)SSL_CTX_add_session(s->session_ctx, ret);
+            }
+        }
+    }
+
+    return ret;
 }
 
 /*-
@@ -504,74 +563,16 @@ int ssl_get_prev_session(SSL *s, CLIENTHELLO_MSG *hello)
             goto err;
         case SSL_TICKET_NONE:
         case SSL_TICKET_EMPTY:
-            if (hello->session_id_len > 0)
+            if (hello->session_id_len > 0) {
                 try_session_cache = 1;
+                ret = lookup_sess_in_cache(s, hello->session_id,
+                                           hello->session_id_len);
+            }
             break;
         case SSL_TICKET_NO_DECRYPT:
         case SSL_TICKET_SUCCESS:
         case SSL_TICKET_SUCCESS_RENEW:
             break;
-        }
-    }
-
-    if (try_session_cache &&
-        ret == NULL &&
-        !(s->session_ctx->session_cache_mode &
-          SSL_SESS_CACHE_NO_INTERNAL_LOOKUP)) {
-        SSL_SESSION data;
-
-        data.ssl_version = s->version;
-        memcpy(data.session_id, hello->session_id, hello->session_id_len);
-        data.session_id_length = hello->session_id_len;
-
-        CRYPTO_THREAD_read_lock(s->session_ctx->lock);
-        ret = lh_SSL_SESSION_retrieve(s->session_ctx->sessions, &data);
-        if (ret != NULL) {
-            /* don't allow other threads to steal it: */
-            SSL_SESSION_up_ref(ret);
-        }
-        CRYPTO_THREAD_unlock(s->session_ctx->lock);
-        if (ret == NULL)
-            CRYPTO_atomic_add(&s->session_ctx->stats.sess_miss, 1, &discard,
-                              s->session_ctx->lock);
-    }
-
-    if (try_session_cache &&
-        ret == NULL && s->session_ctx->get_session_cb != NULL) {
-        int copy = 1;
-
-        ret = s->session_ctx->get_session_cb(s, hello->session_id,
-                                             hello->session_id_len,
-                                             &copy);
-
-        if (ret != NULL) {
-            CRYPTO_atomic_add(&s->session_ctx->stats.sess_cb_hit, 1, &discard,
-                              s->session_ctx->lock);
-
-            /*
-             * Increment reference count now if the session callback asks us
-             * to do so (note that if the session structures returned by the
-             * callback are shared between threads, it must handle the
-             * reference count itself [i.e. copy == 0], or things won't be
-             * thread-safe).
-             */
-            if (copy)
-                SSL_SESSION_up_ref(ret);
-
-            /*
-             * Add the externally cached session to the internal cache as
-             * well if and only if we are supposed to.
-             */
-            if (!
-                (s->session_ctx->session_cache_mode &
-                 SSL_SESS_CACHE_NO_INTERNAL_STORE)) {
-                /*
-                 * Either return value of SSL_CTX_add_session should not
-                 * interrupt the session resumption process. The return
-                 * value is intentionally ignored.
-                 */
-                SSL_CTX_add_session(s->session_ctx, ret);
-            }
         }
     }
 

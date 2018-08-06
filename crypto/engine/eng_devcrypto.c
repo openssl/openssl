@@ -361,20 +361,20 @@ static const struct digest_data_st {
 #endif
     { NID_sha1, 20, CRYPTO_SHA1 },
 #ifndef OPENSSL_NO_RMD160
-# if !defined(CHECK_BSD_STYLE_MACROS) && defined(CRYPTO_RIPEMD160)
+# if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_RIPEMD160)
     { NID_ripemd160, 20, CRYPTO_RIPEMD160 },
 # endif
 #endif
-#if !defined(CHECK_BSD_STYLE_MACROS) && defined(CRYPTO_SHA2_224)
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_224)
     { NID_sha224, 224 / 8, CRYPTO_SHA2_224 },
 #endif
-#if !defined(CHECK_BSD_STYLE_MACROS) && defined(CRYPTO_SHA2_256)
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_256)
     { NID_sha256, 256 / 8, CRYPTO_SHA2_256 },
 #endif
-#if !defined(CHECK_BSD_STYLE_MACROS) && defined(CRYPTO_SHA2_384)
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_384)
     { NID_sha384, 384 / 8, CRYPTO_SHA2_384 },
 #endif
-#if !defined(CHECK_BSD_STYLE_MACROS) && defined(CRYPTO_SHA2_512)
+#if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_512)
     { NID_sha512, 512 / 8, CRYPTO_SHA2_512 },
 #endif
 };

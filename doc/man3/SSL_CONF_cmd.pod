@@ -211,6 +211,18 @@ that there will be no forward secrecy for the resumed session.
 enables strict mode protocol handling. Equivalent to setting
 B<SSL_CERT_FLAG_TLS_STRICT>.
 
+=item B<-anti_replay>, B<-no_anti_replay>
+
+Switches replay protection, on or off respectively. With replay protection on,
+OpenSSL will automatically detect if a session ticket has been used more than
+once, TLSv1.3 has been negotiated, and early data is enabled on the server. A
+full handshake is forced if a session ticket is used a second or subsequent
+time. Anti-Replay is on by default unless overridden by a configuration file and
+is only used by servers. Anti-replay measures are required for compliance with
+the TLSv1.3 specification. Some applications may be able to mitigate the replay
+risks in other ways and in such cases the built-in OpenSSL functionality is not
+required. Switching off anti-replay is equivalent to B<SSL_OP_NO_ANTI_REPLAY>.
+
 =back
 
 =head1 SUPPORTED CONFIGURATION FILE COMMANDS
@@ -440,6 +452,15 @@ in TLSv1.3. This has the effect of making TLSv1.3 look more like TLSv1.2 so that
 middleboxes that do not understand TLSv1.3 will not drop the connection. This
 option is set by default. A future version of OpenSSL may not set this by
 default. Equivalent to B<SSL_OP_ENABLE_MIDDLEBOX_COMPAT>.
+
+B<AntiReplay>: If set then OpenSSL will automatically detect if a session ticket
+has been used more than once, TLSv1.3 has been negotiated, and early data is
+enabled on the server. A full handshake is forced if a session ticket is used a
+second or subsequent time. This option is set by default and is only used by
+servers. Anti-replay measures are required to comply with the TLSv1.3
+specification. Some applications may be able to mitigate the replay risks in
+other ways and in such cases the built-in OpenSSL functionality is not required.
+Disabling anti-replay is equivalent to setting B<SSL_OP_NO_ANTI_REPLAY>.
 
 =item B<VerifyMode>
 

@@ -534,6 +534,11 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     /* This only fuzzes the initial flow from the client so far. */
     ctx = SSL_CTX_new(SSLv23_method());
 
+    ret = SSL_CTX_set_min_proto_version(ctx, 0);
+    OPENSSL_assert(ret == 1);
+    ret = SSL_CTX_set_cipher_list(ctx, "ALL:eNULL:@SECLEVEL=0");
+    OPENSSL_assert(ret == 1);
+
     /* RSA */
     bufp = kRSAPrivateKeyDER;
     privkey = d2i_RSAPrivateKey(NULL, &bufp, sizeof(kRSAPrivateKeyDER));
@@ -602,8 +607,6 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     /* TODO: Set up support for SRP and PSK */
 
     server = SSL_new(ctx);
-    ret = SSL_set_cipher_list(server, "ALL:eNULL:@SECLEVEL=0");
-    OPENSSL_assert(ret == 1);
     in = BIO_new(BIO_s_mem());
     out = BIO_new(BIO_s_mem());
     SSL_set_bio(server, in, out);

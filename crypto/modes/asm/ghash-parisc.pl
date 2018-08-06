@@ -724,6 +724,11 @@ sub assemble {
     ref($opcode) eq 'CODE' ? &$opcode($mod,$args) : "\t$mnemonic$mod\t$args";
 }
 
+if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+	=~ /GNU assembler/) {
+    $gnuas = 1;
+}
+
 foreach (split("\n",$code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 	if ($SIZE_T==4) {
@@ -731,7 +736,12 @@ foreach (split("\n",$code)) {
 		s/cmpb,\*/comb,/;
 		s/,\*/,/;
 	}
-	s/\bbv\b/bve/	if ($SIZE_T==8);
+
+	s/(\.LEVEL\s+2\.0)W/$1w/	if ($gnuas && $SIZE_T==8);
+	s/\.SPACE\s+\$TEXT\$/.text/	if ($gnuas && $SIZE_T==8);
+	s/\.SUBSPA.*//			if ($gnuas && $SIZE_T==8);
+	s/\bbv\b/bve/			if ($SIZE_T==8);
+
 	print $_,"\n";
 }
 

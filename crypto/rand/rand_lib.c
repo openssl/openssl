@@ -174,7 +174,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             if (RAND_DRBG_generate(drbg->parent,
                                    buffer, bytes_needed,
                                    prediction_resistance,
-                                   (unsigned char *)drbg, sizeof(*drbg)) != 0)
+                                   NULL, 0) != 0)
                 bytes = bytes_needed;
             rand_drbg_unlock(drbg->parent);
 
@@ -324,8 +324,13 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     if (rand_nonce_lock == NULL)
         goto err2;
 
+    if (!rand_pool_init())
+        goto err3;
+
     return 1;
 
+err3:
+    rand_pool_cleanup();
 err2:
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
@@ -343,6 +348,7 @@ void rand_cleanup_int(void)
 
     if (meth != NULL && meth->cleanup != NULL)
         meth->cleanup();
+    rand_pool_cleanup();
     RAND_set_rand_method(NULL);
 #ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
@@ -352,6 +358,15 @@ void rand_cleanup_int(void)
     rand_meth_lock = NULL;
     CRYPTO_THREAD_lock_free(rand_nonce_lock);
     rand_nonce_lock = NULL;
+}
+
+/*
+ * RAND_close_seed_files() ensures that any seed file decriptors are
+ * closed after use.
+ */
+void RAND_keep_random_devices_open(int keep)
+{
+    rand_pool_keep_random_devices_open(keep);
 }
 
 /*

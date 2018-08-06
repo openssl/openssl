@@ -33,7 +33,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           rc2test rc4test rc5test \
           destest mdc2test \
           dhtest enginetest casttest \
-          bftest ssltest_old dsatest exptest rsa_test \
+          bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test \
           conf_include_test \
@@ -50,7 +50,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest
+          sysdefaulttest errtest gosttest
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include
@@ -151,6 +151,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[dsatest]=dsatest.c
   INCLUDE[dsatest]=../include
   DEPEND[dsatest]=../libcrypto libtestutil.a
+
+  SOURCE[dsa_no_digest_size_test]=dsa_no_digest_size_test.c
+  INCLUDE[dsa_no_digest_size_test]=../include
+  DEPEND[dsa_no_digest_size_test]=../libcrypto libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include
@@ -537,6 +541,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[errtest]=errtest.c
   INCLUDE[errtest]=../include
   DEPEND[errtest]=../libcrypto libtestutil.a
+
+  SOURCE[gosttest]=gosttest.c ssltestlib.c
+  INCLUDE[gosttest]=../include ..
+  DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
 ENDIF
 
 {-

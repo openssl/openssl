@@ -1068,12 +1068,21 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
                 dtls1_start_timer(s);
             }
         } else {
-            /*
-             * In TLSv1.3 we update the cache as part of processing the
-             * NewSessionTicket
-             */
-            if (!SSL_IS_TLS13(s))
+            if (SSL_IS_TLS13(s)) {
+                /*
+                 * We encourage applications to only use TLSv1.3 tickets once,
+                 * so we remove this one from the cache.
+                 */
+                if ((s->session_ctx->session_cache_mode
+                     & SSL_SESS_CACHE_CLIENT) != 0)
+                    SSL_CTX_remove_session(s->session_ctx, s->session);
+            } else {
+                /*
+                 * In TLSv1.3 we update the cache as part of processing the
+                 * NewSessionTicket
+                 */
                 ssl_update_cache(s, SSL_SESS_CACHE_CLIENT);
+            }
             if (s->hit)
                 CRYPTO_atomic_add(&s->session_ctx->stats.sess_hit, 1, &discard,
                                   s->session_ctx->lock);
@@ -1477,6 +1486,40 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 }
 
 /*
+ * Only called by servers. Returns 1 if the server has a TLSv1.3 capable
+ * certificate type, or has PSK configured. Otherwise returns 0.
+ */
+static int is_tls13_capable(const SSL *s)
+{
+    int i;
+
+#ifndef OPENSSL_NO_PSK
+    if (s->psk_server_callback != NULL)
+        return 1;
+#endif
+
+    if (s->psk_find_session_cb != NULL)
+        return 1;
+
+    for (i = 0; i < SSL_PKEY_NUM; i++) {
+        /* Skip over certs disallowed for TLSv1.3 */
+        switch (i) {
+        case SSL_PKEY_DSA_SIGN:
+        case SSL_PKEY_GOST01:
+        case SSL_PKEY_GOST12_256:
+        case SSL_PKEY_GOST12_512:
+            continue;
+        default:
+            break;
+        }
+        if (ssl_has_cert(s, i))
+            return 1;
+    }
+
+    return 0;
+}
+
+/*
  * ssl_version_supported - Check that the specified `version` is supported by
  * `SSL *` instance
  *
@@ -1485,7 +1528,7 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
  *
  * Returns 1 when supported, otherwise 0
  */
-int ssl_version_supported(const SSL *s, int version)
+int ssl_version_supported(const SSL *s, int version, const SSL_METHOD **meth)
 {
     const version_info *vent;
     const version_info *table;
@@ -1505,9 +1548,14 @@ int ssl_version_supported(const SSL *s, int version)
     for (vent = table;
          vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
          ++vent) {
-        if (vent->cmeth != NULL &&
-            version_cmp(s, version, vent->version) == 0 &&
-            ssl_method_error(s, vent->cmeth()) == 0) {
+        if (vent->cmeth != NULL
+                && version_cmp(s, version, vent->version) == 0
+                && ssl_method_error(s, vent->cmeth()) == 0
+                && (!s->server
+                    || version != TLS1_3_VERSION
+                    || is_tls13_capable(s))) {
+            if (meth != NULL)
+                *meth = vent->cmeth();
             return 1;
         }
     }
@@ -1616,11 +1664,11 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
 {
     if (vers == TLS1_2_VERSION
-            && ssl_version_supported(s, TLS1_3_VERSION)) {
+            && ssl_version_supported(s, TLS1_3_VERSION, NULL)) {
         *dgrd = DOWNGRADE_TO_1_2;
     } else if (!SSL_IS_DTLS(s) && vers < TLS1_2_VERSION
-            && (ssl_version_supported(s, TLS1_2_VERSION)
-                || ssl_version_supported(s, TLS1_3_VERSION))) {
+            && (ssl_version_supported(s, TLS1_2_VERSION, NULL)
+                || ssl_version_supported(s, TLS1_3_VERSION, NULL))) {
         *dgrd = DOWNGRADE_TO_1_1;
     } else {
         *dgrd = DOWNGRADE_NONE;
@@ -1705,6 +1753,18 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
             return SSL_R_LENGTH_MISMATCH;
         }
 
+        /*
+         * The TLSv1.3 spec says the client MUST set this to TLS1_2_VERSION.
+         * The spec only requires servers to check that it isn't SSLv3:
+         * "Any endpoint receiving a Hello message with
+         * ClientHello.legacy_version or ServerHello.legacy_version set to
+         * 0x0300 MUST abort the handshake with a "protocol_version" alert."
+         * We are slightly stricter and require that it isn't SSLv3 or lower.
+         * We tolerate TLSv1 and TLSv1.1.
+         */
+        if (client_version <= SSL3_VERSION)
+            return SSL_R_BAD_LEGACY_VERSION;
+
         while (PACKET_get_net_2(&versionslist, &candidate_vers)) {
             /* TODO(TLS1.3): Remove this before release */
             if (candidate_vers == TLS1_3_VERSION_DRAFT
@@ -1726,19 +1786,8 @@ int ssl_choose_server_version(SSL *s, CLIENTHELLO_MSG *hello, DOWNGRADE *dgrd)
              */
             if (version_cmp(s, candidate_vers, best_vers) <= 0)
                 continue;
-            for (vent = table;
-                 vent->version != 0 && vent->version != (int)candidate_vers;
-                 ++vent)
-                continue;
-            if (vent->version != 0 && vent->smeth != NULL) {
-                const SSL_METHOD *method;
-
-                method = vent->smeth();
-                if (ssl_method_error(s, method) == 0) {
-                    best_vers = candidate_vers;
-                    best_method = method;
-                }
-            }
+            if (ssl_version_supported(s, candidate_vers, &best_method))
+                best_vers = candidate_vers;
         }
         if (PACKET_remaining(&versionslist) != 0) {
             /* Trailing data? */

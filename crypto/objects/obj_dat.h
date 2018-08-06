@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7754] = {
+static const unsigned char so[7770] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1074,10 +1074,12 @@ static const unsigned char so[7754] = {
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x02,  /* [ 7718] OBJ_id_tc26_gost_3410_2012_256_paramSetB */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x03,  /* [ 7727] OBJ_id_tc26_gost_3410_2012_256_paramSetC */
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x09,       /* [ 7745] OBJ_id_on_SmtpUTF8Mailbox */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7745] OBJ_hmacWithSHA512_224 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7753] OBJ_hmacWithSHA512_256 */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x09,       /* [ 7761] OBJ_id_on_SmtpUTF8Mailbox */
 };
 
-#define NUM_NID 1194
+#define NUM_NID 1196
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2272,10 +2274,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"magma-cbc", "magma-cbc", NID_magma_cbc},
     {"magma-cfb", "magma-cfb", NID_magma_cfb},
     {"magma-mac", "magma-mac", NID_magma_mac},
-    {"id-on-SmtpUTF8Mailbox", "Smtp UTF8 Mailbox", NID_id_on_SmtpUTF8Mailbox, 8, &so[7745]},
+    {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7745]},
+    {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
+    {"id-on-SmtpUTF8Mailbox", "Smtp UTF8 Mailbox", NID_id_on_SmtpUTF8Mailbox, 8, &so[7761]},
 };
 
-#define NUM_SN 1185
+#define NUM_SN 1187
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2759,6 +2763,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      799,    /* "hmacWithSHA256" */
      800,    /* "hmacWithSHA384" */
      801,    /* "hmacWithSHA512" */
+    1193,    /* "hmacWithSHA512-224" */
+    1194,    /* "hmacWithSHA512-256" */
      432,    /* "holdInstructionCallIssuer" */
      430,    /* "holdInstructionCode" */
      431,    /* "holdInstructionNone" */
@@ -2915,7 +2921,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      279,    /* "id-mod-qualified-cert-93" */
      281,    /* "id-mod-timestamp-protocol" */
      264,    /* "id-on" */
-    1193,    /* "id-on-SmtpUTF8Mailbox" */
+    1195,    /* "id-on-SmtpUTF8Mailbox" */
      858,    /* "id-on-permanentIdentifier" */
      347,    /* "id-on-personalData" */
      265,    /* "id-pda" */
@@ -3464,7 +3470,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1185
+#define NUM_LN 1187
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3634,7 +3640,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1033,    /* "Signing KDC Response" */
     1008,    /* "Signing Tool of Issuer" */
     1007,    /* "Signing Tool of Subject" */
-    1193,    /* "Smtp UTF8 Mailbox" */
+    1195,    /* "Smtp UTF8 Mailbox" */
      143,    /* "Strong Extranet ID" */
      398,    /* "Subject Information Access" */
     1020,    /* "TLS Feature" */
@@ -3985,6 +3991,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      799,    /* "hmacWithSHA256" */
      800,    /* "hmacWithSHA384" */
      801,    /* "hmacWithSHA512" */
+    1193,    /* "hmacWithSHA512-224" */
+    1194,    /* "hmacWithSHA512-256" */
      486,    /* "homePostalAddress" */
      473,    /* "homeTelephoneNumber" */
      466,    /* "host" */
@@ -4653,7 +4661,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1070
+#define NUM_OBJ 1072
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5165,6 +5173,8 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      799,    /* OBJ_hmacWithSHA256               1 2 840 113549 2 9 */
      800,    /* OBJ_hmacWithSHA384               1 2 840 113549 2 10 */
      801,    /* OBJ_hmacWithSHA512               1 2 840 113549 2 11 */
+    1193,    /* OBJ_hmacWithSHA512_224           1 2 840 113549 2 12 */
+    1194,    /* OBJ_hmacWithSHA512_256           1 2 840 113549 2 13 */
       37,    /* OBJ_rc2_cbc                      1 2 840 113549 3 2 */
        5,    /* OBJ_rc4                          1 2 840 113549 3 4 */
       44,    /* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
@@ -5299,7 +5309,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      346,    /* OBJ_id_cmc_confirmCertAcceptance 1 3 6 1 5 5 7 7 24 */
      347,    /* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
      858,    /* OBJ_id_on_permanentIdentifier    1 3 6 1 5 5 7 8 3 */
-    1193,    /* OBJ_id_on_SmtpUTF8Mailbox        1 3 6 1 5 5 7 8 9 */
+    1195,    /* OBJ_id_on_SmtpUTF8Mailbox        1 3 6 1 5 5 7 8 9 */
      348,    /* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
      349,    /* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */
      351,    /* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 3 */

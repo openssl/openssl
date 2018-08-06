@@ -1195,6 +1195,14 @@
 #define NID_hmacWithSHA512              801
 #define OBJ_hmacWithSHA512              OBJ_rsadsi,2L,11L
 
+#define LN_hmacWithSHA512_224           "hmacWithSHA512-224"
+#define NID_hmacWithSHA512_224          1193
+#define OBJ_hmacWithSHA512_224          OBJ_rsadsi,2L,12L
+
+#define LN_hmacWithSHA512_256           "hmacWithSHA512-256"
+#define NID_hmacWithSHA512_256          1194
+#define OBJ_hmacWithSHA512_256          OBJ_rsadsi,2L,13L
+
 #define SN_rc2_cbc              "RC2-CBC"
 #define LN_rc2_cbc              "rc2-cbc"
 #define NID_rc2_cbc             37

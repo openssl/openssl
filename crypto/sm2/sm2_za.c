@@ -59,8 +59,6 @@ int sm2_compute_userid_digest(uint8_t *out,
         goto done;
     }
 
-    memset(out, 0, EVP_MD_size(digest));
-
     if (!EVP_DigestInit(hash, digest)) {
         SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EVP_LIB);
         goto done;
@@ -89,7 +87,7 @@ int sm2_compute_userid_digest(uint8_t *out,
         goto done;
     }
 
-    if (!EC_GROUP_get_curve_GFp(group, p, a, b, ctx)) {
+    if (!EC_GROUP_get_curve(group, p, a, b, ctx)) {
         SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EC_LIB);
         goto done;
     }
@@ -105,16 +103,16 @@ int sm2_compute_userid_digest(uint8_t *out,
             || !EVP_DigestUpdate(hash, buf, p_bytes)
             || BN_bn2binpad(b, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
-            || !EC_POINT_get_affine_coordinates_GFp(group,
+            || !EC_POINT_get_affine_coordinates(group,
                                                 EC_GROUP_get0_generator(group),
                                                 xG, yG, ctx)
             || BN_bn2binpad(xG, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
             || BN_bn2binpad(yG, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
-            || !EC_POINT_get_affine_coordinates_GFp(group,
-                                                    EC_KEY_get0_public_key(key),
-                                                    xA, yA, ctx)
+            || !EC_POINT_get_affine_coordinates(group,
+                                                EC_KEY_get0_public_key(key),
+                                                xA, yA, ctx)
             || BN_bn2binpad(xA, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
             || BN_bn2binpad(yA, buf, p_bytes) < 0

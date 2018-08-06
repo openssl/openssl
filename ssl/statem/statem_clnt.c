@@ -1119,7 +1119,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
 
     if (sess == NULL
-            || !ssl_version_supported(s, sess->ssl_version)
+            || !ssl_version_supported(s, sess->ssl_version, NULL)
             || !SSL_SESSION_is_resumable(sess)) {
         if (s->hello_retry_request == SSL_HRR_NONE
                 && !ssl_get_new_session(s, 0)) {
@@ -2591,6 +2591,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      */
     if (SSL_IS_TLS13(s) || s->session->session_id_length > 0) {
         SSL_SESSION *new_sess;
+
         /*
          * We reused an existing session, so we need to replace it with a new
          * one
@@ -2600,6 +2601,16 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
                      SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
                      ERR_R_MALLOC_FAILURE);
             goto err;
+        }
+
+        if ((s->session_ctx->session_cache_mode & SSL_SESS_CACHE_CLIENT) != 0
+                && !SSL_IS_TLS13(s)) {
+            /*
+             * In TLSv1.2 and below the arrival of a new tickets signals that
+             * any old ticket we were using is now out of date, so we remove the
+             * old session from the cache. We carry on if this fails
+             */
+            SSL_CTX_remove_session(s->session_ctx, s->session);
         }
 
         SSL_SESSION_free(s->session);
@@ -2636,10 +2647,16 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         PACKET extpkt;
 
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
-                || PACKET_remaining(pkt) != 0
-                || !tls_collect_extensions(s, &extpkt,
-                                           SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
-                                           &exts, NULL, 1)
+                || PACKET_remaining(pkt) != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
+                     SSL_R_LENGTH_MISMATCH);
+            goto err;
+        }
+
+        if (!tls_collect_extensions(s, &extpkt,
+                                    SSL_EXT_TLS1_3_NEW_SESSION_TICKET, &exts,
+                                    NULL, 1)
                 || !tls_parse_all_extensions(s,
                                              SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                                              exts, NULL, 0, 1)) {
@@ -2671,6 +2688,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
         goto err;
     }
     s->session->session_id_length = sess_len;
+    s->session->not_resumable = 0;
 
     /* This is a standalone message in TLSv1.3, so there is no more to read */
     if (SSL_IS_TLS13(s)) {

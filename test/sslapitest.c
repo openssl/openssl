@@ -944,11 +944,12 @@ static int execute_test_session(int maxprot, int use_int_cache,
     if (maxprot == TLS1_3_VERSION) {
         /*
          * In TLSv1.3 we should have created a new session even though we have
-         * resumed.
+         * resumed. Since we attempted a resume we should also have removed the
+         * old ticket from the cache so that we try to only use tickets once.
          */
         if (use_ext_cache
                 && (!TEST_int_eq(new_called, 1)
-                    || !TEST_int_eq(remove_called, 0)))
+                    || !TEST_int_eq(remove_called, 1)))
             goto end;
     } else {
         /*
@@ -1062,7 +1063,8 @@ static int execute_test_session(int maxprot, int use_int_cache,
     sess2 = NULL;
 
     SSL_CTX_set_max_proto_version(sctx, maxprot);
-    SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
+    if (maxprot == TLS1_2_VERSION)
+        SSL_CTX_set_options(sctx, SSL_OP_NO_TICKET);
     new_called = remove_called = get_called = 0;
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
                                       NULL, NULL))
@@ -1231,11 +1233,92 @@ static int post_handshake_verify(SSL *sssl, SSL *cssl)
     return 1;
 }
 
-static int test_tickets(int idx)
+static int setup_ticket_test(int stateful, int idx, SSL_CTX **sctx,
+                             SSL_CTX **cctx)
+{
+    int sess_id_ctx = 1;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION, sctx,
+                                       cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_num_tickets(*sctx, idx))
+            || !TEST_true(SSL_CTX_set_session_id_context(*sctx,
+                                                         (void *)&sess_id_ctx,
+                                                         sizeof(sess_id_ctx))))
+        return 0;
+
+    if (stateful)
+        SSL_CTX_set_options(*sctx, SSL_OP_NO_TICKET);
+
+    SSL_CTX_set_session_cache_mode(*cctx, SSL_SESS_CACHE_CLIENT
+                                          | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    SSL_CTX_sess_set_new_cb(*cctx, new_cachesession_cb);
+
+    return 1;
+}
+
+static int check_resumption(int idx, SSL_CTX *sctx, SSL_CTX *cctx, int succ)
+{
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int i;
+
+    /* Test that we can resume with all the tickets we got given */
+    for (i = 0; i < idx * 2; i++) {
+        new_called = 0;
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                              &clientssl, NULL, NULL))
+                || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
+            goto end;
+
+        SSL_force_post_handshake_auth(clientssl);
+
+        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                    SSL_ERROR_NONE)))
+            goto end;
+
+        /*
+         * Following a successful resumption we only get 1 ticket. After a
+         * failed one we should get idx tickets.
+         */
+        if (succ) {
+            if (!TEST_true(SSL_session_reused(clientssl))
+                    || !TEST_int_eq(new_called, 1))
+                goto end;
+        } else {
+            if (!TEST_false(SSL_session_reused(clientssl))
+                    || !TEST_int_eq(new_called, idx))
+                goto end;
+        }
+
+        new_called = 0;
+        /* After a post-handshake authentication we should get 1 new ticket */
+        if (succ
+                && (!post_handshake_verify(serverssl, clientssl)
+                    || !TEST_int_eq(new_called, 1)))
+            goto end;
+
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+        SSL_SESSION_free(sesscache[i]);
+        sesscache[i] = NULL;
+    }
+
+    return 1;
+
+ end:
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    return 0;
+}
+
+static int test_tickets(int stateful, int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    int testresult = 0, i;
+    int testresult = 0;
     size_t j;
 
     /* idx is the test number, but also the number of tickets we want */
@@ -1243,15 +1326,52 @@ static int test_tickets(int idx)
     new_called = 0;
     do_cache = 1;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       TLS1_VERSION, TLS_MAX_VERSION, &sctx,
-                                       &cctx, cert, privkey))
-            || !TEST_true(SSL_CTX_set_num_tickets(sctx, idx)))
+    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
         goto end;
 
-    SSL_CTX_set_session_cache_mode(cctx, SSL_SESS_CACHE_CLIENT
-                                         | SSL_SESS_CACHE_NO_INTERNAL_STORE);
-    SSL_CTX_sess_set_new_cb(cctx, new_cachesession_cb);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                          &clientssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE))
+               /* Check we got the number of tickets we were expecting */
+            || !TEST_int_eq(idx, new_called))
+        goto end;
+
+    SSL_shutdown(clientssl);
+    SSL_shutdown(serverssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    clientssl = serverssl = NULL;
+    sctx = cctx = NULL;
+
+    /*
+     * Now we try to resume with the tickets we previously created. The
+     * resumption attempt is expected to fail (because we're now using a new
+     * SSL_CTX). We should see idx number of tickets issued again.
+     */
+
+    /* Stop caching sessions - just count them */
+    do_cache = 0;
+
+    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
+        goto end;
+
+    if (!check_resumption(idx, sctx, cctx, 0))
+        goto end;
+
+    /* Start again with caching sessions */
+    new_called = 0;
+    do_cache = 1;
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    sctx = cctx = NULL;
+
+    if (!setup_ticket_test(stateful, idx, &sctx, &cctx))
+        goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                           &clientssl, NULL, NULL)))
@@ -1279,37 +1399,12 @@ static int test_tickets(int idx)
     /* Stop caching sessions - just count them */
     do_cache = 0;
 
-    /* Test that we can resume with all the tickets we got given */
-    for (i = 0; i < idx * 2; i++) {
-        new_called = 0;
-        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                              &clientssl, NULL, NULL))
-                || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
-            goto end;
-
-        SSL_force_post_handshake_auth(clientssl);
-
-        if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                    SSL_ERROR_NONE))
-                || !TEST_true(SSL_session_reused(clientssl))
-                   /* Following a resumption we only get 1 ticket */
-                || !TEST_int_eq(new_called, 1))
-            goto end;
-
-        new_called = 0;
-        /* After a post-handshake authentication we should get 1 new ticket */
-        if (!post_handshake_verify(serverssl, clientssl)
-                || !TEST_int_eq(new_called, 1))
-            goto end;
-
-        SSL_shutdown(clientssl);
-        SSL_shutdown(serverssl);
-        SSL_free(serverssl);
-        SSL_free(clientssl);
-        serverssl = clientssl = NULL;
-        SSL_SESSION_free(sesscache[i]);
-        sesscache[i] = NULL;
-    }
+    /*
+     * Check we can resume with all the tickets we created. This time around the
+     * resumptions should all be successful.
+     */
+    if (!check_resumption(idx, sctx, cctx, 1))
+        goto end;
 
     testresult = 1;
 
@@ -1324,6 +1419,16 @@ static int test_tickets(int idx)
     SSL_CTX_free(cctx);
 
     return testresult;
+}
+
+static int test_stateless_tickets(int idx)
+{
+    return test_tickets(0, idx);
+}
+
+static int test_stateful_tickets(int idx)
+{
+    return test_tickets(1, idx);
 }
 #endif
 
@@ -1846,11 +1951,14 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
                                 SSL **serverssl, SSL_SESSION **sess, int idx)
 {
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       TLS1_VERSION, TLS_MAX_VERSION,
-                                       sctx, cctx, cert, privkey))
-        || !TEST_true(SSL_CTX_set_max_early_data(*sctx,
-                                                 SSL3_RT_MAX_PLAIN_LENGTH)))
+    if (*sctx == NULL
+            && !TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                              TLS_client_method(),
+                                              TLS1_VERSION, TLS_MAX_VERSION,
+                                              sctx, cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(SSL_CTX_set_max_early_data(*sctx, SSL3_RT_MAX_PLAIN_LENGTH)))
         return 0;
 
     if (idx == 1) {
@@ -2155,12 +2263,65 @@ static int test_early_data_read_write(int idx)
     return testresult;
 }
 
-static int test_early_data_replay(int idx)
+static int allow_ed_cb_called = 0;
+
+static int allow_early_data_cb(SSL *s, void *arg)
+{
+    int *usecb = (int *)arg;
+
+    allow_ed_cb_called++;
+
+    if (*usecb == 1)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * idx == 0: Standard early_data setup
+ * idx == 1: early_data setup using read_ahead
+ * usecb == 0: Don't use a custom early data callback
+ * usecb == 1: Use a custom early data callback and reject the early data
+ * usecb == 2: Use a custom early data callback and accept the early data
+ * confopt == 0: Configure anti-replay directly
+ * confopt == 1: Configure anti-replay using SSL_CONF
+ */
+static int test_early_data_replay_int(int idx, int usecb, int confopt)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
+    size_t readbytes, written;
+    unsigned char buf[20];
+
+    allow_ed_cb_called = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION, &sctx,
+                                       &cctx, cert, privkey)))
+        return 0;
+
+    if (usecb > 0) {
+        if (confopt == 0) {
+            SSL_CTX_set_options(sctx, SSL_OP_NO_ANTI_REPLAY);
+        } else {
+            SSL_CONF_CTX *confctx = SSL_CONF_CTX_new();
+
+            if (!TEST_ptr(confctx))
+                goto end;
+            SSL_CONF_CTX_set_flags(confctx, SSL_CONF_FLAG_FILE
+                                            | SSL_CONF_FLAG_SERVER);
+            SSL_CONF_CTX_set_ssl_ctx(confctx, sctx);
+            if (!TEST_int_eq(SSL_CONF_cmd(confctx, "Options", "-AntiReplay"),
+                             2)) {
+                SSL_CONF_CTX_free(confctx);
+                goto end;
+            }
+            SSL_CONF_CTX_free(confctx);
+        }
+        SSL_CTX_set_allow_early_data_cb(sctx, allow_early_data_cb, &usecb);
+    }
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
                                         &serverssl, &sess, idx)))
@@ -2182,14 +2343,49 @@ static int test_early_data_replay(int idx)
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
                                       &clientssl, NULL, NULL))
-            || !TEST_true(SSL_set_session(clientssl, sess))
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                          SSL_ERROR_NONE))
-               /*
-                * This time we should not have resumed the session because we
-                * already used it once.
-                */
-            || !TEST_false(SSL_session_reused(clientssl)))
+            || !TEST_true(SSL_set_session(clientssl, sess)))
+        goto end;
+
+    /* Write and read some early data */
+    if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+                                        &written))
+            || !TEST_size_t_eq(written, strlen(MSG1)))
+        goto end;
+
+    if (usecb <= 1) {
+        if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                             &readbytes),
+                         SSL_READ_EARLY_DATA_FINISH)
+                   /*
+                    * The ticket was reused, so the we should have rejected the
+                    * early data
+                    */
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                                SSL_EARLY_DATA_REJECTED))
+            goto end;
+    } else {
+        /* In this case the callback decides to accept the early data */
+        if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                             &readbytes),
+                         SSL_READ_EARLY_DATA_SUCCESS)
+                || !TEST_mem_eq(MSG1, strlen(MSG1), buf, readbytes)
+                   /*
+                    * Server will have sent its flight so client can now send
+                    * end of early data and complete its half of the handshake
+                    */
+                || !TEST_int_gt(SSL_connect(clientssl), 0)
+                || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                             &readbytes),
+                                SSL_READ_EARLY_DATA_FINISH)
+                || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+                                SSL_EARLY_DATA_ACCEPTED))
+            goto end;
+    }
+
+    /* Complete the connection */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+            || !TEST_int_eq(SSL_session_reused(clientssl), (usecb > 0) ? 1 : 0)
+            || !TEST_int_eq(allow_ed_cb_called, usecb > 0 ? 1 : 0))
         goto end;
 
     testresult = 1;
@@ -2206,11 +2402,27 @@ static int test_early_data_replay(int idx)
     return testresult;
 }
 
+static int test_early_data_replay(int idx)
+{
+    int ret = 1, usecb, confopt;
+
+    for (usecb = 0; usecb < 3; usecb++) {
+        for (confopt = 0; confopt < 2; confopt++)
+            ret &= test_early_data_replay_int(idx, usecb, confopt);
+    }
+
+    return ret;
+}
+
 /*
  * Helper function to test that a server attempting to read early data can
  * handle a connection from a client where the early data should be skipped.
+ * testtype: 0 == No HRR
+ * testtype: 1 == HRR
+ * testtype: 2 == HRR, invalid early_data sent after HRR
+ * testtype: 3 == recv_max_early_data set to 0
  */
-static int early_data_skip_helper(int hrr, int idx)
+static int early_data_skip_helper(int testtype, int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -2223,7 +2435,7 @@ static int early_data_skip_helper(int hrr, int idx)
                                         &serverssl, &sess, idx)))
         goto end;
 
-    if (hrr) {
+    if (testtype == 1 || testtype == 2) {
         /* Force an HRR to occur */
         if (!TEST_true(SSL_set1_groups_list(serverssl, "P-256")))
             goto end;
@@ -2243,13 +2455,17 @@ static int early_data_skip_helper(int hrr, int idx)
             goto end;
     }
 
+    if (testtype == 3
+            && !TEST_true(SSL_set_recv_max_early_data(serverssl, 0)))
+        goto end;
+
     /* Write some early data */
     if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
                                         &written))
             || !TEST_size_t_eq(written, strlen(MSG1)))
         goto end;
 
-    /* Server should reject the early data and skip over it */
+    /* Server should reject the early data */
     if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
                                          &readbytes),
                      SSL_READ_EARLY_DATA_FINISH)
@@ -2258,7 +2474,12 @@ static int early_data_skip_helper(int hrr, int idx)
                             SSL_EARLY_DATA_REJECTED))
         goto end;
 
-    if (hrr) {
+    switch (testtype) {
+    case 0:
+        /* Nothing to do */
+        break;
+
+    case 1:
         /*
          * Finish off the handshake. We perform the same writes and reads as
          * further down but we expect them to fail due to the incomplete
@@ -2268,9 +2489,58 @@ static int early_data_skip_helper(int hrr, int idx)
                 || !TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf),
                                &readbytes)))
             goto end;
+        break;
+
+    case 2:
+        {
+            BIO *wbio = SSL_get_wbio(clientssl);
+            /* A record that will appear as bad early_data */
+            const unsigned char bad_early_data[] = {
+                0x17, 0x03, 0x03, 0x00, 0x01, 0x00
+            };
+
+            /*
+             * We force the client to attempt a write. This will fail because
+             * we're still in the handshake. It will cause the second
+             * ClientHello to be sent.
+             */
+            if (!TEST_false(SSL_write_ex(clientssl, MSG2, strlen(MSG2),
+                                         &written)))
+                goto end;
+
+            /*
+             * Inject some early_data after the second ClientHello. This should
+             * cause the server to fail
+             */
+            if (!TEST_true(BIO_write_ex(wbio, bad_early_data,
+                                        sizeof(bad_early_data), &written)))
+                goto end;
+        }
+        /* fallthrough */
+
+    case 3:
+        /*
+         * This client has sent more early_data than we are willing to skip
+         * (case 3) or sent invalid early_data (case 2) so the connection should
+         * abort.
+         */
+        if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+                || !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL))
+            goto end;
+
+        /* Connection has failed - nothing more to do */
+        testresult = 1;
+        goto end;
+
+    default:
+        TEST_error("Invalid test type");
+        goto end;
     }
 
-    /* Should be able to send normal data despite rejection of early data */
+    /*
+     * Should be able to send normal data despite rejection of early data. The
+     * early_data should be skipped.
+     */
     if (!TEST_true(SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written))
             || !TEST_size_t_eq(written, strlen(MSG2))
             || !TEST_int_eq(SSL_get_early_data_status(clientssl),
@@ -2309,6 +2579,25 @@ static int test_early_data_skip(int idx)
 static int test_early_data_skip_hrr(int idx)
 {
     return early_data_skip_helper(1, idx);
+}
+
+/*
+ * Test that a server attempting to read early data can handle a connection
+ * from a client where an HRR occurs and correctly fails if early_data is sent
+ * after the HRR
+ */
+static int test_early_data_skip_hrr_fail(int idx)
+{
+    return early_data_skip_helper(2, idx);
+}
+
+/*
+ * Test that a server attempting to read early data will abort if it tries to
+ * skip over too much.
+ */
+static int test_early_data_skip_abort(int idx)
+{
+    return early_data_skip_helper(3, idx);
 }
 
 /*
@@ -4971,6 +5260,135 @@ static int test_ticket_callbacks(int tst)
     return testresult;
 }
 
+/*
+ * Test bi-directional shutdown.
+ * Test 0: TLSv1.2
+ * Test 1: TLSv1.2, server continues to read/write after client shutdown
+ * Test 2: TLSv1.3, no pending NewSessionTicket messages
+ * Test 3: TLSv1.3, pending NewSessionTicket messages
+ * Test 4: TLSv1.3, server continues to read/write after client shutdown, client
+ *                  reads it
+ * Test 5: TLSv1.3, server continues to read/write after client shutdown, client
+ *                  doesn't read it
+ */
+static int test_shutdown(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char msg[] = "A test message";
+    char buf[80];
+    size_t written, readbytes;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (tst <= 1)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    if (tst >= 2)
+        return 1;
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       (tst <= 1) ? TLS1_2_VERSION
+                                                  : TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    if (tst == 3) {
+        if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+                                                  SSL_ERROR_NONE)))
+            goto end;
+    } else if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE))) {
+        goto end;
+    }
+
+    if (!TEST_int_eq(SSL_shutdown(clientssl), 0))
+        goto end;
+
+    if (tst >= 4) {
+        /*
+         * Reading on the server after the client has sent close_notify should
+         * fail and provide SSL_ERROR_ZERO_RETURN
+         */
+        if (!TEST_false(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+                || !TEST_int_eq(SSL_get_error(serverssl, 0),
+                                SSL_ERROR_ZERO_RETURN)
+                || !TEST_int_eq(SSL_get_shutdown(serverssl),
+                                SSL_RECEIVED_SHUTDOWN)
+                   /*
+                    * Even though we're shutdown on receive we should still be
+                    * able to write.
+                    */
+                || !TEST_true(SSL_write(serverssl, msg, sizeof(msg)))
+                || !TEST_int_eq(SSL_shutdown(serverssl), 1))
+            goto end;
+        if (tst == 4) {
+                   /* Should still be able to read data from server */
+            if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf),
+                                          &readbytes))
+                    || !TEST_size_t_eq(readbytes, sizeof(msg))
+                    || !TEST_int_eq(memcmp(msg, buf, readbytes), 0))
+                goto end;
+        }
+    }
+
+    /* Writing on the client after sending close_notify shouldn't be possible */
+    if (!TEST_false(SSL_write_ex(clientssl, msg, sizeof(msg), &written)))
+        goto end;
+
+    if (tst < 4) {
+        /*
+         * For these tests the client has sent close_notify but it has not yet
+         * been received by the server. The server has not sent close_notify
+         * yet.
+         */
+        if (!TEST_int_eq(SSL_shutdown(serverssl), 0)
+                   /*
+                    * Writing on the server after sending close_notify shouldn't
+                    * be possible.
+                    */
+                || !TEST_false(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
+                || !TEST_int_eq(SSL_shutdown(clientssl), 1)
+                || !TEST_int_eq(SSL_shutdown(serverssl), 1))
+            goto end;
+    } else if (tst == 4) {
+        /*
+         * In this test the client has sent close_notify and it has been
+         * received by the server which has responded with a close_notify. The
+         * client needs to read the close_notify sent by the server.
+         */
+        if (!TEST_int_eq(SSL_shutdown(clientssl), 1))
+            goto end;
+    } else {
+        /*
+         * tst == 5
+         *
+         * The client has sent close_notify and is expecting a close_notify
+         * back, but instead there is application data first. The shutdown
+         * should fail with a fatal error.
+         */
+        if (!TEST_int_eq(SSL_shutdown(clientssl), -1)
+                || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_SSL))
+            goto end;
+    }
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -5007,7 +5425,8 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
 #ifndef OPENSSL_NO_TLS1_3
-    ADD_ALL_TESTS(test_tickets, 3);
+    ADD_ALL_TESTS(test_stateful_tickets, 3);
+    ADD_ALL_TESTS(test_stateless_tickets, 3);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
@@ -5033,6 +5452,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_replay, 2);
     ADD_ALL_TESTS(test_early_data_skip, 3);
     ADD_ALL_TESTS(test_early_data_skip_hrr, 3);
+    ADD_ALL_TESTS(test_early_data_skip_hrr_fail, 3);
+    ADD_ALL_TESTS(test_early_data_skip_abort, 3);
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);
@@ -5068,6 +5489,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 12);
+    ADD_ALL_TESTS(test_shutdown, 6);
     return 1;
 }
 

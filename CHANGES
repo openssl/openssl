@@ -9,6 +9,55 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) Use the new ec_scalar_mul_ladder scaffold to implement a specialized ladder
+     step for prime curves. The new implementation is based on formulae from
+     differential addition-and-doubling in homogeneous projective coordinates
+     from Izu-Takagi "A fast parallel elliptic curve multiplication resistant
+     against side channel attacks" and Brier-Joye "Weierstrass Elliptic Curves
+     and Side-Channel Attacks" Eq. (8) for y-coordinate recovery, modified
+     to work in projective coordinates.
+     [Billy Bob Brumley, Nicola Tuveri]
+
+  *) Change generating and checking of primes so that the error rate of not
+     being prime depends on the intended use based on the size of the input.
+     For larger primes this will result in more rounds of Miller-Rabin.
+     The maximal error rate for primes with more than 1080 bits is lowered
+     to 2^-128.
+     [Kurt Roeckx, Annie Yousar]
+
+  *) Increase the number of Miller-Rabin rounds for DSA key generating to 64.
+     [Kurt Roeckx]
+
+  *) The 'tsget' script is renamed to 'tsget.pl', to avoid confusion when
+     moving between systems, and to avoid confusion when a Windows build is
+     done with mingw vs with MSVC.  For POSIX installs, there's still a
+     symlink or copy named 'tsget' to avoid that confusion as well.
+     [Richard Levitte]
+
+  *) Revert blinding in ECDSA sign and instead make problematic addition
+     length-invariant. Switch even to fixed-length Montgomery multiplication.
+     [Andy Polyakov]
+
+  *) Use the new ec_scalar_mul_ladder scaffold to implement a specialized ladder
+     step for binary curves. The new implementation is based on formulae from
+     differential addition-and-doubling in mixed Lopez-Dahab projective
+     coordinates, modified to independently blind the operands.
+     [Billy Bob Brumley, Sohaib ul Hassan, Nicola Tuveri]
+
+  *) Add a scaffold to optionally enhance the Montgomery ladder implementation
+     for `ec_scalar_mul_ladder` (formerly `ec_mul_consttime`) allowing
+     EC_METHODs to implement their own specialized "ladder step", to take
+     advantage of more favorable coordinate systems or more efficient
+     differential addition-and-doubling algorithms.
+     [Billy Bob Brumley, Sohaib ul Hassan, Nicola Tuveri]
+
+  *) Modified the random device based seed sources to keep the relevant
+     file descriptors open rather than reopening them on each access.
+     This allows such sources to operate in a chroot() jail without
+     the associated device nodes being available. This behaviour can be
+     controlled using RAND_keep_random_devices_open().
+     [Paul Dale]
+
   *) Numerous side-channel attack mitigations have been applied. This may have
      performance impacts for some algorithms for the benefit of improved
      security. Specific changes are noted in this change log by their respective
@@ -189,12 +238,12 @@
 
      Some of its new features are:
       o Support for multiple DRBG instances with seed chaining.
-      o Add a public DRBG instance for the default RAND method.
-      o Add a dedicated DRBG instance for generating long term private keys.
-      o Make the DRBG instances fork-safe.
+      o The default RAND method makes use of a DRBG.
+      o There is a public and private DRBG instance.
+      o The DRBG instances are fork-safe.
       o Keep all global DRBG instances on the secure heap if it is enabled.
-      o Add a DRBG instance to every SSL instance for lock free operation
-        and to increase unpredictability.
+      o The public and private DRBG instance are per thread for lock free
+        operation
      [Paul Dale, Benjamin Kaduk, Kurt Roeckx, Rich Salz, Matthias St. Pierre]
 
   *) Changed Configure so it only says what it does and doesn't dump
