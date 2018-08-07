@@ -217,10 +217,9 @@ int EVP_PBE_find(int type, int pbe_nid,
     pbelu.pbe_type = type;
     pbelu.pbe_nid = pbe_nid;
 
-    if (pbe_algs) {
+    if (pbe_algs != NULL) {
         i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
-        if (i != -1)
-            pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
+        pbetmp = sk_EVP_PBE_CTL_value(pbe_algs, i);
     }
     if (pbetmp == NULL) {
         pbetmp = OBJ_bsearch_pbe2(&pbelu, builtin_pbe, OSSL_NELEM(builtin_pbe));

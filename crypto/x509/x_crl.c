@@ -383,8 +383,11 @@ static int def_crl_lookup(X509_CRL *crl,
                           X509_NAME *issuer)
 {
     X509_REVOKED rtmp, *rev;
-    int idx;
-    rtmp.serialNumber = *serial;
+    int idx, num;
+
+    if (crl->crl.revoked == NULL)
+        return 0;
+
     /*
      * Sort revoked into serial number order if not already sorted. Do this
      * under a lock to avoid race condition.
@@ -394,11 +397,12 @@ static int def_crl_lookup(X509_CRL *crl,
         sk_X509_REVOKED_sort(crl->crl.revoked);
         CRYPTO_THREAD_unlock(crl->lock);
     }
+    rtmp.serialNumber = *serial;
     idx = sk_X509_REVOKED_find(crl->crl.revoked, &rtmp);
     if (idx < 0)
         return 0;
     /* Need to look for matching name */
-    for (; idx < sk_X509_REVOKED_num(crl->crl.revoked); idx++) {
+    for (num = sk_X509_REVOKED_num(crl->crl.revoked); idx < num; idx++) {
         rev = sk_X509_REVOKED_value(crl->crl.revoked, idx);
         if (ASN1_INTEGER_cmp(&rev->serialNumber, serial))
             return 0;

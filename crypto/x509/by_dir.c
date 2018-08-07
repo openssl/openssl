@@ -329,10 +329,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
          */
         CRYPTO_THREAD_write_lock(ctx->lock);
         j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
-        if (j != -1)
-            tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
-        else
-            tmp = NULL;
+        tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
         CRYPTO_THREAD_unlock(ctx->lock);
 
         /* If a CRL, update the last file suffix added for this */
@@ -343,11 +340,10 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
              * Look for entry again in case another thread added an entry
              * first.
              */
-            if (!hent) {
+            if (hent == NULL) {
                 htmp.hash = h;
                 idx = sk_BY_DIR_HASH_find(ent->hashes, &htmp);
-                if (idx >= 0)
-                    hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
+                hent = sk_BY_DIR_HASH_value(ent->hashes, idx);
             }
             if (hent == NULL) {
                 hent = OPENSSL_malloc(sizeof(*hent));
