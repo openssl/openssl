@@ -628,7 +628,8 @@ L<EVP_rc2(3)>,
 L<EVP_rc4(3)>,
 L<EVP_rc5(3)>,
 L<EVP_seed(3)>,
-L<EVP_sm4(3)>
+L<EVP_sm4(3)>,
+L<EVP_eea3(3)>
 
 =head1 HISTORY
 
