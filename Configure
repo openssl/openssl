@@ -1040,8 +1040,6 @@ if ($d) {
 $config{target} = $target;
 my %target = resolve_config($target);
 
-&usage if !%target || $target{template};
-
 foreach (keys %target_attr_translate) {
     $target{$target_attr_translate{$_}} = $target{$_}
         if $target{$_};
