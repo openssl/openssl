@@ -85,10 +85,8 @@ static int test_standard_methods(void)
          *
          * Anything else is an error and may lead to a corrupt ASN1 method table
          */
-        if (!TEST_true((*tmp)->pem_str == NULL &&
-                       ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) != 0)
-            && !TEST_true((*tmp)->pem_str != NULL &&
-                          ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) == 0)) {
+        if (!TEST_true(((*tmp)->pem_str == NULL && ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) != 0)
+                       || ((*tmp)->pem_str != NULL && ((*tmp)->pkey_flags & ASN1_PKEY_ALIAS) == 0))) {
             TEST_note("asn1 standard methods: Index %zu, pkey ID %d, Name=%s",
                       i, (*tmp)->pkey_id, OBJ_nid2sn((*tmp)->pkey_id));
             ok = 0;
