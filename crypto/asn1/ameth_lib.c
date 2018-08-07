@@ -313,7 +313,8 @@ EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags,
      *
      * Anything else is an error and may lead to a corrupt ASN1 method table
      */
-    if ((pem_str == NULL) != ((flags & ASN1_PKEY_ALIAS) != 0))
+    if (!((pem_str == NULL && (flags & ASN1_PKEY_ALIAS) != 0)
+          || (pem_str != NULL && (flags & ASN1_PKEY_ALIAS) == 0)))
         goto err;
 
     if (pem_str) {
