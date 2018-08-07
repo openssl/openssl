@@ -614,6 +614,41 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 }
 
 /* ignore negative */
+static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+    int n;
+    size_t i, inc, lasti, j;
+    BN_ULONG l;
+
+    n = BN_num_bytes(a);
+    if (tolen == -1)
+        tolen = n;
+    else if (tolen < n)
+        return -1;
+
+    if (n == 0) {
+        OPENSSL_cleanse(to, tolen);
+        return tolen;
+    }
+
+    lasti = n - 1;
+    for (i = 0, inc = 1, j = tolen; j > 0;) {
+        l = a->d[i / BN_BYTES];
+        to[--j] = (unsigned char)(l >> (8 * (i % BN_BYTES)) & (0 - inc));
+        inc = (i - lasti) >> (8 * sizeof(i) - 1);
+        i += inc; /* stay on top limb */
+    }
+
+    return tolen;
+}
+
+int bn_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+    if (tolen < 0)
+        return -1;
+    return bn2binpad(a, to, tolen);
+}
+
 int BN_bn2bin(const BIGNUM *a, unsigned char *to)
 {
     int n, i;
