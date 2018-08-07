@@ -127,8 +127,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
             "ERR_load_SSL_strings()\n");
 # endif
     ERR_load_SSL_strings();
-#endif
     ssl_strings_inited = 1;
+#endif
     return 1;
 }
 
