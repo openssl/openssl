@@ -52,7 +52,10 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
         seq = RECORD_LAYER_get_read_sequence(&s->rlayer);
     }
 
-    if (ctx == NULL) {
+    if (ctx == NULL
+            || (rec->type == SSL3_RT_ALERT
+                && s->statem.enc_write_state
+                   == ENC_WRITE_STATE_WRITE_PLAIN_ALERTS)) {
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
         return 1;
