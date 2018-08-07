@@ -752,6 +752,12 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
 
     /* This is a real handshake so make sure we clean it up at the end */
     if (s->server) {
+        /*
+        * To get this far we must have read encrypted data from the client. We
+        * no longer tolerate unencrypted alerts. This value is ignored if less
+        * than TLSv1.3
+        */
+        s->statem.enc_read_state = ENC_READ_STATE_VALID;
         if (s->post_handshake_auth != SSL_PHA_REQUESTED)
             s->statem.cleanuphand = 1;
         if (SSL_IS_TLS13(s) && !tls13_save_handshake_digest_for_pha(s)) {

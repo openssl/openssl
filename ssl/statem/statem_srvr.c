@@ -848,12 +848,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                 return WORK_MORE_A;
             break;
         }
-        /*
-         * TODO(TLS1.3): This actually causes a problem. We don't yet know
-         * whether the next record we are going to receive is an unencrypted
-         * alert, or an encrypted handshake message. We're going to need
-         * something clever in the record layer for this.
-         */
+
         if (SSL_IS_TLS13(s)) {
             if (!s->method->ssl3_enc->setup_key_block(s)
                 || !s->method->ssl3_enc->change_cipher_state(s,
@@ -868,6 +863,12 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                 /* SSLfatal() already called */
                 return WORK_ERROR;
             }
+            /*
+             * We don't yet know whether the next record we are going to receive
+             * is an unencrypted alert, an encrypted alert, or an encrypted
+             * handshake message. We temporarily tolerate unencrypted alerts.
+             */
+            s->statem.enc_read_state = ENC_READ_STATE_ALLOW_PLAIN_ALERTS;
             break;
         }
 
@@ -3518,6 +3519,13 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
     PACKET spkt, context;
     size_t chainidx;
     SSL_SESSION *new_sess = NULL;
+
+    /*
+     * To get this far we must have read encrypted data from the client. We no
+     * longer tolerate unencrypted alerts. This value is ignored if less than
+     * TLSv1.3
+     */
+    s->statem.enc_read_state = ENC_READ_STATE_VALID;
 
     if ((sk = sk_X509_new_null()) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,
