@@ -911,10 +911,11 @@ if ($d) {
 	$target = $t;
     }
 }
+
+&usage if !$table{$target} || $table{$target}->{template};
+
 $config{target} = $target;
 my %target = resolve_config($target);
-
-&usage if (!%target || $target{template});
 
 my %conf_files = map { $_ => 1 } (@{$target{_conf_fname_int}});
 $config{conf_files} = [ sort keys %conf_files ];
