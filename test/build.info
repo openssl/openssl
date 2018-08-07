@@ -452,6 +452,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     IF[{- !$disabled{ec} -}]
       PROGRAMS_NO_INST=curve448_internal_test
     ENDIF
+    IF[{- !$disabled{zuc} -}]
+      PROGRAMS_NO_INST=zuc_internal_test
+    ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
     INCLUDE[poly1305_internal_test]=.. ../include ../crypto/include
@@ -504,6 +507,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     SOURCE[rdrand_sanitytest]=rdrand_sanitytest.c
     INCLUDE[rdrand_sanitytest]=../include
     DEPEND[rdrand_sanitytest]=../libcrypto.a libtestutil.a
+
+    SOURCE[zuc_internal_test]=zuc_internal_test.c
+    INCLUDE[zuc_internal_test]=.. ../include ../crypto/include
+    DEPEND[zuc_internal_test]=../libcrypto.a libtestutil.a
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]
