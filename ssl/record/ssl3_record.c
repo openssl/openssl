@@ -342,7 +342,10 @@ int ssl3_get_record(SSL *s)
                 if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
                     if (thisrr->type != SSL3_RT_APPLICATION_DATA
                             && (thisrr->type != SSL3_RT_CHANGE_CIPHER_SPEC
-                                || !SSL_IS_FIRST_HANDSHAKE(s))) {
+                                || !SSL_IS_FIRST_HANDSHAKE(s))
+                            && (thisrr->type != SSL3_RT_ALERT
+                                || s->statem.enc_read_state
+                                   != ENC_READ_STATE_ALLOW_PLAIN_ALERTS)) {
                         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
                                  SSL_F_SSL3_GET_RECORD, SSL_R_BAD_RECORD_TYPE);
                         return -1;
@@ -692,7 +695,9 @@ int ssl3_get_record(SSL *s)
             }
         }
 
-        if (SSL_IS_TLS13(s) && s->enc_read_ctx != NULL) {
+        if (SSL_IS_TLS13(s)
+                && s->enc_read_ctx != NULL
+                && thisrr->type != SSL3_RT_ALERT) {
             size_t end;
 
             if (thisrr->length == 0
