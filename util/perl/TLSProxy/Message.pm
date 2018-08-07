@@ -9,6 +9,8 @@ use strict;
 
 package TLSProxy::Message;
 
+use TLSProxy::Alert;
+
 use constant TLS_MESSAGE_HEADER_LENGTH => 4;
 
 #Message types
@@ -140,6 +142,7 @@ my @message_rec_list = ();
 my @message_frag_lens = ();
 my $ciphersuite = 0;
 my $successondata = 0;
+my $alert;
 
 sub clear
 {
@@ -152,6 +155,7 @@ sub clear
     $successondata = 0;
     @message_rec_list = ();
     @message_frag_lens = ();
+    $alert = undef;
 }
 
 #Class method to extract messages from a record
@@ -281,6 +285,11 @@ sub get_messages
         if ($alertlev == AL_LEVEL_FATAL || $alertdesc == AL_DESC_CLOSE_NOTIFY) {
             $end = 1;
         }
+        $alert = TLSProxy::Alert->new(
+            $server,
+            $record->encrypted,
+            $alertlev,
+            $alertdesc);
     }
 
     return @messages;
@@ -388,6 +397,12 @@ sub fail
     my $class = shift;
     return !$success && $end;
 }
+
+sub alert
+{
+    return $alert;
+}
+
 sub new
 {
     my $class = shift;

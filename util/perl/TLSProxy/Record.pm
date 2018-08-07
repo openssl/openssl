@@ -97,7 +97,9 @@ sub get_records
             $data       # decrypt_data
         );
 
-        if ($content_type != RT_CCS) {
+        if ($content_type != RT_CCS
+                && (!TLSProxy::Proxy->is_tls13()
+                    || $content_type != RT_ALERT)) {
             if (($server && $server_encrypting)
                      || (!$server && $client_encrypting)) {
                 if (!TLSProxy::Proxy->is_tls13() && $etm) {
