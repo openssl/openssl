@@ -9,6 +9,11 @@
 
  Changes between 1.0.2o and 1.0.2p [xx XXX xxxx]
 
+  *) Make EVP_PKEY_asn1_new() a bit stricter about its input.  A NULL pem_str
+     parameter is no longer accepted, as it leads to a corrupt table.  NULL
+     pem_str is reserved for alias entries only.
+     [Richard Levitte]
+
   *) Revert blinding in ECDSA sign and instead make problematic addition
      length-invariant. Switch even to fixed-length Montgomery multiplication.
      [Andy Polyakov]
