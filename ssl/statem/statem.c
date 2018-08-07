@@ -123,7 +123,8 @@ void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
     s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
     ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
-    if (al != SSL_AD_NO_ALERT && !s->statem.invalid_enc_write_ctx)
+    if (al != SSL_AD_NO_ALERT
+            && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
 }
 
