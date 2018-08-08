@@ -880,8 +880,7 @@ err:
  * Read in PEM-formatted data from the given BIO.
  *
  * By nature of the PEM format, all content must be printable ASCII (except
- * for line endings).  Other characters, or lines that are longer than 80
- * characters, are malformed input and will be rejected.
+ * for line endings).  Other characters are malformed input and will be rejected.
  */
 int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
                     unsigned char **data, long *len_out, unsigned int flags)
