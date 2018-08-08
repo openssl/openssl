@@ -41,6 +41,7 @@ use constant {
 use constant {
     AL_DESC_CLOSE_NOTIFY => 0,
     AL_DESC_UNEXPECTED_MESSAGE => 10,
+    AL_DESC_ILLEGAL_PARAMETER => 47,
     AL_DESC_NO_RENEGOTIATION => 100
 };
 
@@ -125,6 +126,7 @@ use constant {
 };
 
 use constant {
+    CIPHER_RSA_WITH_AES_128_CBC_SHA => 0x002f,
     CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
     CIPHER_ADH_AES_128_SHA => 0x0034,
     CIPHER_TLS13_AES_128_GCM_SHA256 => 0x1301,
