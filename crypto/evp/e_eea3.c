@@ -101,7 +101,7 @@ static int eea3_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     EVP_EEA3_KEY *ek = data(ctx);
     ZUC_KEY *zk = &ek->zk;
-    int i, remain;
+    unsigned int i, remain;
     int num = EVP_CIPHER_CTX_num(ctx);
 
     remain = zk->keystream_len - num;
