@@ -71,7 +71,7 @@ static uint32_t D[16] = {
 };
 
 /*
- * This is a method to calculate a + b mod (2 ^ 32 -1),
+ * This is a method to calculate a + b mod (2 ^ 31 -1),
  * described in ZUC specification.
  */
 static ossl_inline uint32_t modular_add(uint32_t a, uint32_t b)

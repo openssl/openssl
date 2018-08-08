@@ -77,7 +77,7 @@ static int eea3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     zk->iv[0] = (count >> 24) & 0xFF;
     zk->iv[1] = (count >> 16) & 0xFF;
     zk->iv[2] = (count >> 8) & 0xFF;
-    zk->iv[3] = count;
+    zk->iv[3] = count & 0xFF;
 
     zk->iv[4] = ((bearer << 3) | ((direction & 1) << 2)) & 0xFC;
     zk->iv[5] = zk->iv[6] = zk->iv[7] = 0;
