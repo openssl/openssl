@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_eea3,
+EVP_eea3
 - EVP 128-EEA3 stream cipher
 
 =head1 SYNOPSIS
