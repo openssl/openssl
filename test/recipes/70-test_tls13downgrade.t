@@ -41,14 +41,15 @@ my $proxy = TLSProxy::Proxy->new(
 
 use constant {
     DOWNGRADE_TO_TLS_1_2 => 0,
-    DOWNGRADE_TO_TLS_1_1 => 1
+    DOWNGRADE_TO_TLS_1_1 => 1,
+    FALLBACK_FROM_TLS_1_3 => 2,
 };
 
 #Test 1: Downgrade from TLSv1.3 to TLSv1.2
 $proxy->filter(\&downgrade_filter);
 my $testtype = DOWNGRADE_TO_TLS_1_2;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 3;
+plan tests => 4;
 ok(TLSProxy::Message->fail(), "Downgrade TLSv1.3 to TLSv1.2");
 
 #Test 2: Downgrade from TLSv1.3 to TLSv1.1
@@ -64,6 +65,18 @@ $proxy->serverflags("-no_tls1_3");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Downgrade TLSv1.2 to TLSv1.1");
 
+#Test 4: Client falls back from TLSv1.3 (server does not support the fallback
+#        SCSV)
+$proxy->clear();
+$testtype = FALLBACK_FROM_TLS_1_3;
+$proxy->clientflags("-fallback_scsv -no_tls1_3");
+$proxy->start();
+my $alert = TLSProxy::Message->alert();
+ok(TLSProxy::Message->fail()
+   && !$alert->server()
+   && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
+   "Fallback from TLSv1.3");
+
 sub downgrade_filter
 {
     my $proxy = shift;
@@ -76,17 +89,24 @@ sub downgrade_filter
     my $message = ${$proxy->message_list}[0];
 
     my $ext;
-    if ($testtype == DOWNGRADE_TO_TLS_1_2) {
-        $ext = pack "C3",
-            0x02, # Length
-            0x03, 0x03; #TLSv1.2
+    if ($testtype == FALLBACK_FROM_TLS_1_3) {
+        #The default ciphersuite we use for TLSv1.2 without any SCSV
+        my @ciphersuites = (TLSProxy::Message::CIPHER_RSA_WITH_AES_128_CBC_SHA);
+        $message->ciphersuite_len(2 * scalar @ciphersuites);
+        $message->ciphersuites(\@ciphersuites);
     } else {
-        $ext = pack "C3",
-            0x02, # Length
-            0x03, 0x02; #TLSv1.1
-    }
+        if ($testtype == DOWNGRADE_TO_TLS_1_2) {
+            $ext = pack "C3",
+                0x02, # Length
+                0x03, 0x03; #TLSv1.2
+        } else {
+            $ext = pack "C3",
+                0x02, # Length
+                0x03, 0x02; #TLSv1.1
+        }
 
-    $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_VERSIONS, $ext);
+        $message->set_extension(TLSProxy::Message::EXT_SUPPORTED_VERSIONS, $ext);
+    }
 
     $message->repack();
 }
