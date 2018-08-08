@@ -52,7 +52,13 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
         seq = RECORD_LAYER_get_read_sequence(&s->rlayer);
     }
 
-    if (ctx == NULL) {
+    /*
+     * If we're sending an alert and ctx != NULL then we must be forcing
+     * plaintext alerts. If we're reading and ctx != NULL then we allow
+     * plaintext alerts at certain points in the handshake. If we've got this
+     * far then we have already validated that a plaintext alert is ok here.
+     */
+    if (ctx == NULL || rec->type == SSL3_RT_ALERT) {
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
         return 1;
