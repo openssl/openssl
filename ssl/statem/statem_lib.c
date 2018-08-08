@@ -1914,6 +1914,9 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
         if (highver != 0 && s->version != vent->version)
             continue;
 
+        if (highver == 0 && (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) != 0)
+            highver = vent->version;
+
         method = vent->cmeth();
         err = ssl_method_error(s, method);
         if (err != 0) {
