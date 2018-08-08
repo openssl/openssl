@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,9 +37,7 @@ static ossl_inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
 
 static ossl_inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
 {
-    *ret = atomic_fetch_sub_explicit(val, 1, memory_order_release) - 1;
-    if (*ret == 0)
-        atomic_thread_fence(memory_order_acquire);
+    *ret = atomic_fetch_sub_explicit(val, 1, memory_order_relaxed) - 1;
     return 1;
 }
 
@@ -57,9 +55,7 @@ static ossl_inline int CRYPTO_UP_REF(int *val, int *ret, void *lock)
 
 static ossl_inline int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 {
-    *ret = __atomic_fetch_sub(val, 1, __ATOMIC_RELEASE) - 1;
-    if (*ret == 0)
-        __atomic_thread_fence(__ATOMIC_ACQUIRE);
+    *ret = __atomic_fetch_sub(val, 1, __ATOMIC_RELAXED) - 1;
     return 1;
 }
 
