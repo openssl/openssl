@@ -29,6 +29,7 @@ B<openssl> B<genrsa>
 [B<-writerand file>]
 [B<-engine id>]
 [B<-primes num>]
+[B<-verbose>]
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -90,6 +91,10 @@ Specify the number of primes to use while generating the RSA key. The B<num>
 parameter must be a positive integer that is greater than 1 and less than 16.
 If B<num> is greater than 2, then the generated key is called a 'multi-prime'
 RSA key, which is defined in RFC 8017.
+
+=item B<-verbose>
+
+Print extra details about the operations being performed.
 
 =item B<numbits>
 
