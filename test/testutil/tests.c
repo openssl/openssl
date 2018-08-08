@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -77,6 +77,8 @@ static void test_fail_message_va(const char *prefix, const char *file,
                                  const char *left, const char *right,
                                  const char *op, const char *fmt, va_list ap)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {
         test_vprintf_stderr(fmt, ap);

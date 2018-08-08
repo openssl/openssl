@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -403,6 +403,13 @@ void test_output_string(const char *name, const char *m, size_t l);
 void test_output_bignum(const char *name, const BIGNUM *bn);
 void test_output_memory(const char *name, const unsigned char *m, size_t l);
 
+/*
+ * Enable / disable the supression of diagnostic output.
+ * This hides INFO messages and above (not NOTE one) and produces a
+ * note indicating that messages have been supressed if any are produced.
+ * Supression is turned off before every test and subtest.
+ */
+void test_suppress_error_diagnostics(int suppress);
 
 /*
  * Utilities to parse a test file.

@@ -20,6 +20,27 @@
 #define MAX_STRING_WIDTH    (80)
 #define BN_OUTPUT_SIZE      (8)
 
+/* Some state to permit supression of diagnostic messages */
+static int suppress_messages = 0;
+static int suppress_notification = 0;
+
+/* Enabled/disable supression of diagnostic messages */
+void test_suppress_error_diagnostics(int suppress)
+{
+    suppress_messages = suppress ? 1 : 0;
+    suppress_notification = 0;
+}
+
+/* Check if diagnostic messages are suppressed and warn if so */
+int test_suppressed_error_diagnostics(void)
+{
+    if (suppress_messages && !suppress_notification) {
+        test_printf_stderr("Diagnostic messages suppressed\n");
+        suppress_notification = 1;
+    }
+    return suppress_messages;
+}
+
 /* Output a diff header */
 static void test_diff_header(const char *left, const char *right)
 {
@@ -128,6 +149,8 @@ void test_fail_string_message(const char *prefix, const char *file,
                               const char *op, const char *m1, size_t l1,
                               const char *m2, size_t l2)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_string_common(prefix, file, line, type, left, right, op,
                             m1, l1, m2, l2);
     test_printf_stderr("\n");
@@ -135,6 +158,8 @@ void test_fail_string_message(const char *prefix, const char *file,
 
 void test_output_string(const char *name, const char *m, size_t l)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_string_common("string", NULL, 0, NULL, NULL, NULL, name,
                             m, l, m, l);
 }
@@ -366,6 +391,8 @@ void test_fail_bignum_message(const char *prefix, const char *file,
                               const char *op,
                               const BIGNUM *bn1, const BIGNUM *bn2)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn1, bn2);
     test_printf_stderr("\n");
 }
@@ -375,12 +402,16 @@ void test_fail_bignum_mono_message(const char *prefix, const char *file,
                                    const char *left, const char *right,
                                    const char *op, const BIGNUM *bn)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn, bn);
     test_printf_stderr("\n");
 }
 
 void test_output_bignum(const char *name, const BIGNUM *bn)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     if (bn == NULL || BN_is_zero(bn)) {
         test_printf_stderr("bignum: '%s' = %s\n", name,
                            test_bignum_zero_null(bn));
@@ -408,6 +439,8 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
  */
 static void test_memory_null_empty(const unsigned char *m, char c)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     if (m == NULL)
         test_printf_stderr("% 4s %c%s\n", "", c, "NULL");
     else
@@ -517,6 +550,8 @@ void test_fail_memory_message(const char *prefix, const char *file,
                               const unsigned char *m1, size_t l1,
                               const unsigned char *m2, size_t l2)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_memory_common(prefix, file, line, type, left, right, op,
                             m1, l1, m2, l2);
     test_printf_stderr("\n");
@@ -524,6 +559,8 @@ void test_fail_memory_message(const char *prefix, const char *file,
 
 void test_output_memory(const char *name, const unsigned char *m, size_t l)
 {
+    if (test_suppressed_error_diagnostics())
+        return;
     test_fail_memory_common("memory", NULL, 0, NULL, NULL, NULL, name,
                             m, l, m, l);
 }

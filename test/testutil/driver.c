@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -202,6 +202,7 @@ int run_tests(const char *test_prog_name)
             int ret = 0;
 
             set_test_title(all_tests[i].test_case_name);
+            test_suppress_error_diagnostics(0);
             ret = all_tests[i].test_fn();
 
             verdict = 1;
@@ -236,6 +237,7 @@ int run_tests(const char *test_prog_name)
 
                 j = (j + jstep) % all_tests[i].num;
                 set_test_title(NULL);
+                test_suppress_error_diagnostics(0);
                 ret = all_tests[i].param_test_fn(j);
 
                 if (!ret)
