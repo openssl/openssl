@@ -2370,15 +2370,19 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
 
     if (!WPACKET_sub_memcpy_u8(pkt, session_id, sl)
             || !s->method->put_cipher_by_char(s->s3->tmp.new_cipher, pkt, &len)
-            || !WPACKET_put_bytes_u8(pkt, compm)
-            || !tls_construct_extensions(s, pkt,
-                                         s->hello_retry_request
-                                            == SSL_HRR_PENDING
-                                            ? SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
-                                            : (SSL_IS_TLS13(s)
-                                                ? SSL_EXT_TLS1_3_SERVER_HELLO
-                                                : SSL_EXT_TLS1_2_SERVER_HELLO),
-                                         NULL, 0)) {
+            || !WPACKET_put_bytes_u8(pkt, compm)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_SERVER_HELLO,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (!tls_construct_extensions(s, pkt,
+                                  s->hello_retry_request == SSL_HRR_PENDING
+                                      ? SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
+                                      : (SSL_IS_TLS13(s)
+                                          ? SSL_EXT_TLS1_3_SERVER_HELLO
+                                          : SSL_EXT_TLS1_2_SERVER_HELLO),
+                                  NULL, 0)) {
         /* SSLfatal() already called */
         return 0;
     }
