@@ -18,13 +18,16 @@
 # include <openssl/engine.h>
 #endif
 
+static int verbose = 0;
+
 static int init_keygen_file(EVP_PKEY_CTX **pctx, const char *file, ENGINE *e);
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_ENGINE, OPT_OUTFORM, OPT_OUT, OPT_PASS, OPT_PARAMFILE,
-    OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER
+    OPT_ALGORITHM, OPT_PKEYOPT, OPT_GENPARAM, OPT_TEXT, OPT_CIPHER,
+    OPT_VERBOSE
 } OPTION_CHOICE;
 
 const OPTIONS genpkey_options[] = {
@@ -42,6 +45,7 @@ const OPTIONS genpkey_options[] = {
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     /* This is deliberately last. */
     {OPT_HELP_STR, 1, 1,
      "Order of options may be important!  See the documentation.\n"},
@@ -127,6 +131,10 @@ int genpkey_main(int argc, char **argv)
                 BIO_printf(bio_err, "%s: cipher mode not supported\n", prog);
                 goto end;
             }
+            break;
+        case OPT_VERBOSE:
+            verbose = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -306,8 +314,11 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
 {
     char c = '*';
     BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
-    int p;
-    p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+    int p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+
+    if (!verbose)
+        return 1;
+
     if (p == 0)
         c = '.';
     if (p == 1)
@@ -316,6 +327,7 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx)
         c = '*';
     if (p == 3)
         c = '\n';
+
     BIO_write(b, &c, 1);
     (void)BIO_flush(b);
     return 1;

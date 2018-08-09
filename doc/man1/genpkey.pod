@@ -19,6 +19,7 @@ B<openssl> B<genpkey>
 [B<-pkeyopt opt:value>]
 [B<-genparam>]
 [B<-text>]
+[B<-verbose>]
 
 =head1 DESCRIPTION
 
@@ -102,6 +103,10 @@ are mutually exclusive.
 
 Print an (unencrypted) text representation of private and public keys and
 parameters along with the PEM or DER structure.
+
+=item B<-verbose>
+
+Print extra details about the operations being performed.
 
 =back
 
