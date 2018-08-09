@@ -105,10 +105,6 @@ static void zuc_lfsr_init_mode(ZUC_KEY *zk, uint32_t u)
     /* s16... */
     s16 = modular_add(v, u);
 
-    /* if s16 == 0, set it to 2 ^ 31 - 1 */
-    if (s16 == 0)
-        s16 = (1U << 31) - 1;
-
     zk->s0 = zk->s1;
     zk->s1 = zk->s2;
     zk->s2 = zk->s3;
@@ -143,10 +139,6 @@ static void zuc_lfsr_work_mode(ZUC_KEY *zk)
     s16 = modular_add(s16, tmp);
     tmp = mulp2(zk->s15, 15);
     s16 = modular_add(s16, tmp);
-
-    /* if s16 == 0, set it to 2 ^ 31 - 1 */
-    if (s16 == 0)
-        s16 = (1U << 31) - 1;
 
     zk->s0 = zk->s1;
     zk->s1 = zk->s2;
