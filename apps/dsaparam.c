@@ -25,12 +25,15 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/x509.h>
 # include <openssl/pem.h>
 
+static int verbose = 0;
+
 static int dsa_cb(int p, int n, BN_GENCB *cb);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
-    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_R_ENUM
+    OPT_NOOUT, OPT_GENKEY, OPT_ENGINE, OPT_VERBOSE,
+    OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
@@ -47,6 +50,7 @@ const OPTIONS dsaparam_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+    {"verbose", OPT_VERBOSE, '-', "Verbose output"},
     {NULL}
 };
 
@@ -107,6 +111,9 @@ int dsaparam_main(int argc, char **argv)
         case OPT_NOOUT:
             noout = 1;
             break;
+        case OPT_VERBOSE:
+            verbose = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -145,9 +152,11 @@ int dsaparam_main(int argc, char **argv)
             BIO_printf(bio_err, "Error allocating DSA object\n");
             goto end;
         }
-        BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
-                   num);
-        BIO_printf(bio_err, "This could take some time\n");
+        if (verbose) {
+            BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
+                       num);
+            BIO_printf(bio_err, "This could take some time\n");
+        }
         if (!DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL, cb)) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
@@ -250,6 +259,9 @@ static int dsa_cb(int p, int n, BN_GENCB *cb)
 {
     static const char symbols[] = ".+*\n";
     char c = (p >= 0 && (size_t)p < sizeof(symbols) - 1) ? symbols[p] : '?';
+
+    if (!verbose)
+        return 1;
 
     BIO_write(BN_GENCB_get_arg(cb), &c, 1);
     (void)BIO_flush(BN_GENCB_get_arg(cb));

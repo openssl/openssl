@@ -25,6 +25,7 @@ B<openssl> B<gendsa>
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
+[B<-verbose>]
 [B<paramfile>]
 
 =head1 DESCRIPTION
@@ -70,6 +71,10 @@ Specifying an engine (by its unique B<id> string) will cause B<gendsa>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-verbose>
+
+Print extra details about the operations being performed.
 
 =item B<paramfile>
 
