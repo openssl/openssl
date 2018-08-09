@@ -209,7 +209,7 @@ the configuration file.
 
 Some public key algorithms may override this choice. For instance, DSA
 signatures always use SHA1, GOST R 34.10 signatures always use
-GOST R 34.11-94 (B<-md_gost94>).
+GOST R 34.11-94 (B<-md_gost94>), Ed25519 and Ed448 never use any digest.
 
 =item B<-config filename>
 
@@ -394,10 +394,10 @@ option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
 
-This option specifies the digest algorithm to use.
-Any digest supported by the OpenSSL B<dgst> command can be used.
-If not present then MD5 is used.
-This option can be overridden on the command line.
+This option specifies the digest algorithm to use. Any digest supported by the
+OpenSSL B<dgst> command can be used. This option can be overridden on the
+command line. Certain signing algorithms (i.e. Ed25519 and Ed448) will ignore
+any digest that has been set.
 
 =item B<string_mask>
 
