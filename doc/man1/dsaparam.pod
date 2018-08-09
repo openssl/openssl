@@ -20,6 +20,7 @@ B<openssl dsaparam>
 [B<-writerand file>]
 [B<-genkey>]
 [B<-engine id>]
+[B<-verbose>]
 [B<numbits>]
 
 =head1 DESCRIPTION
@@ -89,18 +90,22 @@ all others.
 Writes random data to the specified I<file> upon exit.
 This can be used with a subsequent B<-rand> flag.
 
-=item B<numbits>
-
-This option specifies that a parameter set should be generated of size
-B<numbits>. It must be the last option. If this option is included then
-the input file (if any) is ignored.
-
 =item B<-engine id>
 
 Specifying an engine (by its unique B<id> string) will cause B<dsaparam>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-verbose>
+
+Print extra details about the operations being performed.
+
+=item B<numbits>
+
+This option specifies that a parameter set should be generated of size
+B<numbits>. It must be the last option. If this option is included then
+the input file (if any) is ignored.
 
 =back
 
