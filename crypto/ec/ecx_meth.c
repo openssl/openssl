@@ -331,8 +331,18 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         }
         return 0;
 
+    default:
+        return -2;
+
+    }
+}
+
+static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+{
+    switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-        *(int *)arg2 = NID_sha256;
+        /* We currently only support Pure EdDSA which takes no digest */
+        *(int *)arg2 = NID_undef;
         return 2;
 
     default:
@@ -579,7 +589,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     0, 0,
 
     ecx_free,
-    0,
+    ecd_ctrl,
     NULL,
     NULL,
     ecd_item_verify,
@@ -621,7 +631,7 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     0, 0,
 
     ecx_free,
-    0,
+    ecd_ctrl,
     NULL,
     NULL,
     ecd_item_verify,
