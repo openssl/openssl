@@ -8,8 +8,8 @@ OSSL_CRMF_MSG_set_certReqId,
 OSSL_CRMF_CERTTEMPLATE_fill,
 OSSL_CRMF_MSG_set0_extensions,
 OSSL_CRMF_MSG_push0_extension,
-OSSL_CRMF_MSG_create_popo, - functions populating the CRMF CERTREQMSG structures
-OSSL_CRMF_MSGS_verify_popo
+OSSL_CRMF_MSG_create_popo,
+OSSL_CRMF_MSGS_verify_popo - functions populating CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
 

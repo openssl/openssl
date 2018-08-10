@@ -40,10 +40,9 @@ static const ERR_STRING_DATA CRMF_str_functs[] = {
      "OSSL_CRMF_MSG_set_validity"},
     {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_MSG_SET_VERSION2, 0),
      "OSSL_CRMF_MSG_set_version2"},
-    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_PASSWORDBASEDMAC_NEW, 0),
-     "OSSL_CRMF_passwordBasedMac_new"},
     {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_PBMP_NEW, 0),
      "OSSL_CRMF_pbmp_new"},
+    {ERR_PACK(ERR_LIB_CRMF, CRMF_F_OSSL_CRMF_PBM_NEW, 0), "OSSL_CRMF_pbm_new"},
     {0, NULL}
 };
 

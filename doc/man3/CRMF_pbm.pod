@@ -3,47 +3,49 @@
 =head1 NAME
 
   OSSL_CRMF_pbmp_new,
-  OSSL_CRMF_passwordBasedMac_new
+  OSSL_CRMF_pbm_new - functions for calculating Password-based MAC
 
 =head1 SYNOPSIS
 
   #include <openssl/crmf.h>
 
-  int OSSL_CRMF_passwordBasedMac_new(const OSSL_CRMF_PBMPARAMETER *pbm,
-                                     const unsigned char *msg, size_t msgLen,
-                                     const unsigned char *secret,
-                                     size_t secretLen,
-                                     unsigned char **mac, unsigned int *macLen);
+  int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
+                        const unsigned char *msg, size_t msglen,
+                        const unsigned char *sec, size_t seclen,
+                        unsigned char **mac, unsigned int *maclen);
 
-  OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
+  OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t saltlen, int owfnid,
                                              long itercnt, int macnid);
 
 =head1 DESCRIPTION
 
-OSSL_CRMF_passwordBasedMac_new() generates a PBM based on the given
-OSSL_CRMF_PBMPARAMETER.
-Expects pointers to the message and the secret to use, and their respective
-lengths.  Writes the pointers to the newly allocated MAC and its length into the
-respective given parameters.  In the OSSL_CRMF_PBMPARAMETER structure, the NIDs
-for the OWF (one-way function) and for the MAC (message authentication code) may
-be any known to OpenSSL, including NID_hmac_sha1 as mandated by RFC 4210.
-Iteration count in the given OSSL_CRMF_PBMPARAMETER must be at least 100 as
-stipulated by RFC 4211, and can be at most 100000 to avoid DoS through
-manipulated or otherwise malformed input.
+OSSL_CRMF_pbm_new() generates a PBM (Password-based MAC) based on given
+PBM parameters B<pbmp>, message B<msg>, secret B<sec>, along with the respective
+octet lengths B<msglen>, B<seclen>.  Will write pointers to the newly allocated
+MAC into the given B<mac> and the respective octet lenght into the int B<maclen>
+points to. The target of B<mac> will be freed if not NULL.
 
-OSSL_CRMF_pbmp_new() initializes and returns a new OSSL_CRMF_PBMPARAMETER
-structure. Returns
-NULL on error.  It generates a random salt with length as given in the slen
-parameter.  It copies the algorithms for OWF and MAC as given by their NIDs.
-It copies the iterationCount as given, and enforces it to be at least 100.
+Iteration count must be at least 100, as stipulated by RFC 4211, and can
+be at most 100000 to avoid DoS through manipulated or otherwise malformed
+input.
+
+OSSL_CRMF_pbmp_new() initializes and returns a new PBMParameter
+structure with new a random salt of given octet length B<saltlen>, OWF (one-way
+function) NID B<owfnid>, iteration count B<itercnt>, and MAC NID B<macnid>.
+
+Iteration count is enforced to be at least 100, as stipulated by RFC 4211.
 
 =head1 NOTES
 
-CRMF is defined in RFC 4211.
+The OWF (one-way function) and for the MAC (message authentication code) may be
+any with a NID defined in the header file B<objects.h>, which also should
+include NID_hmac_sha1 which is specified by RFC 4210.
+
+RFC 4210 recommends that the salt SHOULD be at least 8 octets (64 bits) long.
 
 =head1 RETURN VALUES
 
-OSSL_CRMF_passwordBasedMac_new() Returns 1 on success, 0 on error.
+OSSL_CRMF_pbm_new() returns 1 on success, 0 on error.
 
 OSSL_CRMF_pbmp_new() returns a new and initialized OSSL_CRMF_PBMPARAMETER
 structure, or NULL on error.
@@ -54,16 +56,16 @@ OSSL_CRMF_PBMPARAMETER *pbm = NULL;
 unsiged char *msg = "Hello";
 unsiged char *sec = "SeCrEt";
 unsiged char *mac = NULL;
-unsiged int macLen;
+unsiged int maclen;
 
 if ((pbm = OSSL_CRMF_pbmp_new(16, NID_sha256, 500, NID_hmac_sha1) == NULL))
     goto err;
-if (!OSSL_CRMF_passwordBasedMac_new(pbm, msg, 5, sec, 6, &mac, &macLen))
+if (!OSSL_CRMF_pbm_new(pbm, msg, 5, sec, 6, &mac, &maclen))
     goto err;
 
 =head1 SEE ALSO
 
-L<RFC 4211>
+L<RFC 4211> section 4.4
 
 =head1 COPYRIGHT
 

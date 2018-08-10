@@ -34,6 +34,7 @@ int ERR_load_CRMF_strings(void);
 # define CRMF_F_OSSL_CRMF_MSG_SET_VERSION2                112
 # define CRMF_F_OSSL_CRMF_PASSWORDBASEDMAC_NEW            113
 # define CRMF_F_OSSL_CRMF_PBMP_NEW                        114
+# define CRMF_F_OSSL_CRMF_PBM_NEW                         115
 
 /*
  * CRMF reason codes.

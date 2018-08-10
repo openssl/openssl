@@ -2,7 +2,7 @@
 
 =head1 NAME
 OSSL_CRMF_MSG_set1_regInfo_utf8Pairs,
-OSSL_CRMF_MSG_set1_regInfo_certReq
+OSSL_CRMF_MSG_set1_regInfo_certReq - functions setting CRMF Registration Info
 
 =head1 SYNOPSIS
 

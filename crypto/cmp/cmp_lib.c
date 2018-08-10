@@ -590,10 +590,9 @@ ASN1_BIT_STRING *CMP_calc_protection(const OSSL_CMP_MSG *msg,
             pbm_str_uc = (unsigned char *)pbm_str->data;
             pbm = d2i_OSSL_CRMF_PBMPARAMETER(NULL, &pbm_str_uc, pbm_str->length);
 
-            if (!(OSSL_CRMF_passwordBasedMac_new(pbm, prot_part_der,
-                                                 prot_part_der_len,
-                                                 secret->data, secret->length,
-                                                 &mac, &mac_len)))
+            if (!(OSSL_CRMF_pbm_new(pbm, prot_part_der, prot_part_der_len,
+                                    secret->data, secret->length,
+                                    &mac, &mac_len)))
                 goto err;
         } else {
             CMPerr(CMP_F_CMP_CALC_PROTECTION, CMP_R_WRONG_ALGORITHM_OID);
