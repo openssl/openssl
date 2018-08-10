@@ -1,6 +1,7 @@
 =pod
 
 =head1 NAME
+
 OSSL_CRMF_MSG_set1_regInfo_utf8Pairs,
 OSSL_CRMF_MSG_set1_regInfo_certReq - functions setting CRMF Registration Info
 
@@ -16,10 +17,10 @@ OSSL_CRMF_MSG_set1_regInfo_certReq - functions setting CRMF Registration Info
 =head1 DESCRIPTION
 
 OSSL_CRMF_MSG_set1_regInfo_utf8Pairs() adds the cutf8Pairs regInfo to the given
-B<msg> using the given B<utf8pairs> as value. See RFC4211 section 7.1.
+B<msg> using the given B<utf8pairs> as value. See RFC 4211 section 7.1.
 
 OSSL_CRMF_MSG_set1_regInfo_certReq() adds the certReq regInfo to the given
-B<msg> using the given B<cr> as value. See RFC4211 section 7.2.
+B<msg> using the given B<cr> as value. See RFC 4211 section 7.2.
 
 =head1 RETURN VALUES
 
@@ -27,7 +28,7 @@ All return 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
-L<RFC 4211>
+RFC 4211
 
 =head1 COPYRIGHT
 

@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-  OSSL_CRMF_pbm_new,
-  OSSL_CRMF_pbmp_new - functions for calculating Password-Based MAC (PBM)
+OSSL_CRMF_pbm_new,
+OSSL_CRMF_pbmp_new
+- functions for producing Password-Based MAC (PBM)
 
 =head1 SYNOPSIS
 
@@ -65,7 +66,7 @@ structure, or NULL on error.
 
 =head1 SEE ALSO
 
-L<RFC 4211> section 4.4
+RFC 4211 section 4.4
 
 =head1 COPYRIGHT
 

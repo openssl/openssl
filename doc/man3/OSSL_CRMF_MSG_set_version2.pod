@@ -9,7 +9,8 @@ OSSL_CRMF_CERTTEMPLATE_fill,
 OSSL_CRMF_MSG_set0_extensions,
 OSSL_CRMF_MSG_push0_extension,
 OSSL_CRMF_MSG_create_popo,
-OSSL_CRMF_MSGS_verify_popo - functions populating CRMF CertReqMsg structures
+OSSL_CRMF_MSGS_verify_popo
+- functions populating and verifying CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
 
@@ -32,12 +33,6 @@ OSSL_CRMF_MSGS_verify_popo - functions populating CRMF CertReqMsg structures
 
  int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
                                    const X509_EXTENSION *ext);
-
- #define OSSL_CRMF_POPO_NONE       -1
- #define OSSL_CRMF_POPO_RAVERIFIED  0
- #define OSSL_CRMF_POPO_SIGNATURE   1
- #define OSSL_CRMF_POPO_KEYENC      2
- #define OSSL_CRMF_POPO_KEYAGREE    3
 
  int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
                                int dgst, int ppmtd);
@@ -97,7 +92,7 @@ All functions returns 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
-B<RFC 4211>
+RFC 4211
 
 =head1 COPYRIGHT
 

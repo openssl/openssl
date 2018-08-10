@@ -1,6 +1,7 @@
 =pod
 
 =head1 NAME
+
 OSSL_CRMF_MSG_set1_regCtrl_regToken,
 OSSL_CRMF_MSG_set1_regCtrl_authenticator,
 OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo,
@@ -33,24 +34,24 @@ OSSL_CRMF_CERTID_gen - functions setting CRMF Registration Controls
 =head1 DESCRIPTION
 
 OSSL_CRMF_MSG_set1_regCtrl_regToken() sets the regToken control in the given
-B<msg> using the given B<tok> as value. See RFC4211, section 6.1.
+B<msg> using the given B<tok> as value. See RFC 4211, section 6.1.
 
 OSSL_CRMF_MSG_set1_regCtrl_authenticator() sets the authenticator control in
-the given B<msg> using the given B<auth> as value. See RFC4211, section 6.2.
+the given B<msg> using the given B<auth> as value. See RFC 4211, section 6.2.
 
 OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo() sets the pkiPulicationInfo
-control in the given B<msg> using the given B<tok> as value. See RFC4211,
+control in the given B<msg> using the given B<tok> as value. See RFC 4211,
 section 6.3.
 
 OSSL_CRMF_MSG_set1_regCtrl_pkiArchiveOptions() sets the pkiArchiveOptions
-control in the given B<msg> using the given B<tok> as value. See RFC4211,
+control in the given B<msg> using the given B<tok> as value. See RFC 4211,
 section 6.4.
 
 OSSL_CRMF_MSG_set1_regCtrl_protocolEncrKey() sets the protocolEncrKey control
-in the given B<msg> using the given B<tok> as value. See RFC4211, section 6.6.
+in the given B<msg> using the given B<tok> as value. See RFC 4211, section 6.6.
 
 OSSL_CRMF_MSG_set1_regCtrl_oldCertID() sets the oldCertID control in the given
-B<msg> using the given B<tok> as value. See RFC4211, section 6.5.
+B<msg> using the given B<tok> as value. See RFC 4211, section 6.5.
 
 OSSL_CRMF_CERTID_gen produces an OSSL_CRMF_CERTID_gen structure from the given
 B<issuer> name and B<serial> number.
@@ -61,7 +62,7 @@ All return 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
-L<RFC 4211>
+RFC 4211
 
 =head1 COPYRIGHT
 
