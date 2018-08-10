@@ -1958,7 +1958,7 @@ static int read_write_req_resp(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     return ret;
 }
 
-const char *tls_error_hint(unsigned long err)
+static const char *tls_error_hint(unsigned long err)
 {
     switch(ERR_GET_REASON(err)) {
 /*  case 0x1408F10B: */ /* xSL_F_SSL3_GET_RECORD */
