@@ -41,13 +41,12 @@ int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 
     ASN1_put_object(&p, 0, a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
     memcpy(p, a->data, a->length);
-    p += a->length;
 
     /*
      * If a new buffer was allocated, just return it back.
      * If not, return the incremented buffer pointer.
      */
-    *pp = allocated != NULL ? allocated : p;
+    *pp = allocated != NULL ? allocated : p + a->length;
     return objsize;
 }
 
