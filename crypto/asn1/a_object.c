@@ -30,6 +30,10 @@ int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
     if (pp == NULL || objsize == -1)
         return objsize;
 
+    if (*pp == NULL
+        && (*pp = OPENSSL_malloc(objsize)) == NULL)
+            return 0;
+
     p = *pp;
     ASN1_put_object(&p, 0, a->length, V_ASN1_OBJECT, V_ASN1_UNIVERSAL);
     memcpy(p, a->data, a->length);
