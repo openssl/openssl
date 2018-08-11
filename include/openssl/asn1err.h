@@ -101,6 +101,7 @@ int ERR_load_ASN1_strings(void);
 # define ASN1_F_DO_TCREATE                                222
 # define ASN1_F_I2A_ASN1_OBJECT                           126
 # define ASN1_F_I2D_ASN1_BIO_STREAM                       211
+# define ASN1_F_I2D_ASN1_OBJECT                           143
 # define ASN1_F_I2D_DSA_PUBKEY                            161
 # define ASN1_F_I2D_EC_PUBKEY                             181
 # define ASN1_F_I2D_PRIVATEKEY                            163
