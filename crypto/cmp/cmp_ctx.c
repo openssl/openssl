@@ -1419,17 +1419,61 @@ int CMP_log_printf(const char *file, int line,
  * ERR_print_errors_cb() to the ctx->log_cb() function set by the user
  * returns 1 on success, 0 on error
  */
-int CMP_CTX_error_cb(const char *str, size_t len, void *u) {
+int CMP_CTX_error_cb(const char *str, size_t len, void *u)
+{
+    char *start, *s, *txt, *txt_end, *file, *file_end;
+    int line;
     OSSL_CMP_CTX *ctx = (OSSL_CMP_CTX *)u;
     OSSL_cmp_log_cb_t log_fn =
         ctx == NULL || ctx->log_cb == NULL ? OSSL_CMP_puts : ctx->log_cb;
-    while (*str != '\0' && *str != ':') /* skip pid */
-        str++;
-    if (*str != '\0') /* skip ':' */
-        str++;
-    while (*str != '\0' && *str != ':') /* skip 'error' */
-        str++;
-    if (*str != '\0') /* skip ':' */
-        str++;
-    return (*log_fn)(NULL, 0, LOG_ERROR, str);
+    int res;
+
+    start = s = OPENSSL_strdup(str); /* we will modify the string */
+    if (s == NULL)
+        return (*log_fn)(NULL, 0, LOG_ERROR, str);
+
+    while (*s != '\0' && *s != ':') /* skip pid */
+        s++;
+    if (*s != '\0') /* skip ':' */
+        s++;
+    while (*s != '\0' && *s != ':') /* skip 'error' */
+        s++;
+    if (*s != '\0') /* skip ':' */
+        s++;
+    while (*s != '\0' && *s != ':') /* skip error code */
+        s++;
+    if (*s != '\0') /* skip ':' */
+        s++;
+    while (*s != '\0' && *s != ':') /* skip library name */
+        s++;
+    if (*s != '\0') /* skip ':' */
+        s++;
+    txt = s;
+    while (*s != '\0' && *s != ':') /* function name */
+        s++;
+    if (*s != '\0') /* skip ':' */
+        s++;
+    while (*s != '\0' && *s != ':') /* reason sing */
+        s++;
+    if (*s != '\0') /* skip ':' */
+        s++;
+    txt_end = s;
+    while (*s != '\0' && *s != ':') /* source file */
+        s++;
+    if (*s != '\0') /* skip ':', inserting '\0' */
+        *(s++) = '\0';
+    file = OPENSSL_strdup(txt_end);
+    file_end = s;
+    while (*s != '\0' && *s != ':') /* source line */
+        s++;
+    if (*s != '\0') /* skip ':', inserting '\0' */
+        *(s++) = '\0';
+    if (sscanf(file_end, "%d", &line) != 1)
+        line = 0;
+    while ((*(txt_end++) = *(s++)) != '\0') /* move any data string */
+        ;
+    res = (*log_fn)(file, line, LOG_ERROR, txt);
+    OPENSSL_free(file);
+    OPENSSL_free(start);
+    return res;
 }
