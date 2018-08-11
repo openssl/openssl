@@ -31,8 +31,10 @@ int i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
         return objsize;
 
     if (*pp == NULL) {
-        if ((p = allocated = OPENSSL_malloc(objsize)) == NULL)
+        if ((p = allocated = OPENSSL_malloc(objsize)) == NULL) {
+            ASN1err(ASN1_F_I2D_ASN1_OBJECT, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
     } else {
         p = *pp;
     }
