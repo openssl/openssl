@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static const ERR_STRING_DATA CMP_str_functs[] = {
+    {ERR_PACK(ERR_LIB_CMP, CMP_F_ADD_EXTENSION, 0), "add_extension"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_CMP_CALC_PROTECTION, 0),
      "CMP_calc_protection"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_CMP_CERTREPMESSAGE_CERTRESPONSE_GET0, 0),
@@ -173,6 +174,8 @@ static const ERR_STRING_DATA CMP_str_functs[] = {
     {ERR_PACK(ERR_LIB_CMP, CMP_F_OSSL_CMP_RR_NEW, 0), "OSSL_CMP_rr_new"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_OSSL_CMP_SRV_CTX_CREATE, 0),
      "OSSL_CMP_SRV_CTX_create"},
+    {ERR_PACK(ERR_LIB_CMP, CMP_F_OSSL_CMP_STATUSINFO_NEW, 0),
+     "OSSL_CMP_statusInfo_new"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_OSSL_CMP_VALIDATE_CERT_PATH, 0),
      "OSSL_CMP_validate_cert_path"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_OSSL_CMP_VALIDATE_MSG, 0),
@@ -184,6 +187,7 @@ static const ERR_STRING_DATA CMP_str_functs[] = {
     {ERR_PACK(ERR_LIB_CMP, CMP_F_PROCESS_POLLREQ, 0), "process_pollReq"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_PROCESS_REQUEST, 0), "process_request"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_PROCESS_RR, 0), "process_rr"},
+    {ERR_PACK(ERR_LIB_CMP, CMP_F_SAVE_STATUSINFO, 0), "save_statusInfo"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_SEND_RECEIVE_CHECK, 0), "send_receive_check"},
     {ERR_PACK(ERR_LIB_CMP, CMP_F_SET1_AOSTR_ELSE_RANDOM, 0),
      "set1_aostr_else_random"},

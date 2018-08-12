@@ -23,6 +23,7 @@ int ERR_load_CMP_strings(void);
 /*
  * CMP function codes.
  */
+#  define CMP_F_ADD_EXTENSION                              197
 #  define CMP_F_CMP_CALC_PROTECTION                        100
 #  define CMP_F_CMP_CERTREPMESSAGE_CERTRESPONSE_GET0       101
 #  define CMP_F_CMP_CERTRESPONSE_GET_CERTIFICATE           102
@@ -108,6 +109,7 @@ int ERR_load_CMP_strings(void);
 #  define CMP_F_OSSL_CMP_RP_NEW                            182
 #  define CMP_F_OSSL_CMP_RR_NEW                            183
 #  define CMP_F_OSSL_CMP_SRV_CTX_CREATE                    184
+#  define CMP_F_OSSL_CMP_STATUSINFO_NEW                    198
 #  define CMP_F_OSSL_CMP_VALIDATE_CERT_PATH                185
 #  define CMP_F_OSSL_CMP_VALIDATE_MSG                      186
 #  define CMP_F_POLLFORRESPONSE                            187
@@ -117,6 +119,7 @@ int ERR_load_CMP_strings(void);
 #  define CMP_F_PROCESS_POLLREQ                            191
 #  define CMP_F_PROCESS_REQUEST                            192
 #  define CMP_F_PROCESS_RR                                 193
+#  define CMP_F_SAVE_STATUSINFO                            199
 #  define CMP_F_SEND_RECEIVE_CHECK                         194
 #  define CMP_F_SET1_AOSTR_ELSE_RANDOM                     195
 #  define CMP_F_SET1_GENERAL_NAME                          196

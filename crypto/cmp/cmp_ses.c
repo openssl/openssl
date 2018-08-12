@@ -396,8 +396,10 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
     int i;
     OSSL_CMP_PKIFREETEXT *ss;
 
-    if (si == NULL)
+    if (ctx == NULL || si == NULL) {
+        CMPerr(CMP_F_SAVE_STATUSINFO, CMP_R_INVALID_ARGS);
         return 0;
+    }
 
     if ((ctx->lastPKIStatus = OSSL_CMP_PKISI_PKIStatus_get(si) < 0))
         return 0;
@@ -409,15 +411,19 @@ static int save_statusInfo(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si)
     ctx->lastStatusString = NULL;
 
     if ((ctx->lastStatusString = sk_ASN1_UTF8STRING_new_null()) == NULL)
-        return 0;
+        goto oom;
     ss = si->statusString;
     for (i = 0; i < sk_ASN1_UTF8STRING_num(ss); i++) {
         ASN1_UTF8STRING *str = sk_ASN1_UTF8STRING_value(ss, i);
         if (!sk_ASN1_UTF8STRING_push(ctx->lastStatusString,
                                      ASN1_STRING_dup(str)))
-            return 0;
+            goto oom;
     }
     return 1;
+
+ oom:
+    CMPerr(CMP_F_SAVE_STATUSINFO, ERR_R_MALLOC_FAILURE);
+    return 0;
 }
 
 /*
@@ -430,8 +436,10 @@ static X509 *get_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 {
     char *tempbuf;
     X509 *crt = NULL;
-    if (ctx == NULL || crep == NULL)
+    if (ctx == NULL || crep == NULL) {
+        CMPerr(CMP_F_GET_CERT_STATUS, CMP_R_INVALID_ARGS);
         return NULL;
+    }
 
     switch (OSSL_CMP_PKISI_PKIStatus_get(crep->status)) {
     case OSSL_CMP_PKISTATUS_waiting:
@@ -521,14 +529,13 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
      * TODO handle multiple CertResponses in CertRepMsg (in case multiple
      * requests have been sent) -->  GitHub issue#67
      */
-    crep = CMP_CERTREPMESSAGE_certResponse_get0(crepmsg, rid);
-    if (crep == NULL)
+    if ((crep = CMP_CERTREPMESSAGE_certResponse_get0(crepmsg, rid)) == NULL)
         return 0;
     if (rid == -1)/* for OSSL_CMP_PKIBODY_P10CR learn CertReqId from response */
         rid = ASN1_INTEGER_get(crep->certReqId);
 
     if (OSSL_CMP_PKISI_PKIStatus_get(crep->status) ==
-        OSSL_CMP_PKISTATUS_waiting){
+        OSSL_CMP_PKISTATUS_waiting) {
         OSSL_CMP_MSG_free(*resp);
         if (pollForResponse(ctx, rid, resp)) {
             goto retry; /* got rp/cp/kup which might still indicate 'waiting' */
@@ -552,8 +559,9 @@ static int cert_response(OSSL_CMP_CTX *ctx, long rid, OSSL_CMP_MSG **resp,
      * if the CMP server returned certificates in the caPubs field, copy them
      * to the context so that they can be retrieved if necessary
      */
-    if (crepmsg->caPubs != NULL)
-        OSSL_CMP_CTX_set1_caPubs(ctx, crepmsg->caPubs);
+    if (crepmsg->caPubs != NULL
+        && !OSSL_CMP_CTX_set1_caPubs(ctx, crepmsg->caPubs))
+        return 0;
 
     /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
     if ((extracerts = (*resp)->extraCerts) != NULL) {
@@ -689,8 +697,10 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     OSSL_CMP_PKISI *si = NULL;
     int result = 0;
 
-    if (ctx == NULL)
+    if (ctx == NULL) {
+        CMPerr(CMP_F_OSSL_CMP_EXEC_RR_SES, CMP_R_INVALID_ARGS);
         return 0;
+    }
 
     ctx->lastPKIStatus = -1;
 
@@ -816,8 +826,8 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
     OSSL_CMP_MSG_free(genm);
     OSSL_CMP_MSG_free(genp);
 
+    /* recv_itavs == NULL indicates an error */
     /* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
-    /* TODO: verify that !recv_itavs is necessarily an error */
     if (rcvd_itavs == NULL)
         ERR_print_errors_cb(CMP_CTX_error_cb, (void *)ctx);
     return rcvd_itavs;

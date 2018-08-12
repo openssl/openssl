@@ -25,6 +25,8 @@ int ERR_load_CRMF_strings(void);
 # define CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_ENCCERT_GET1     103
 # define CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO                104
 # define CRMF_F_OSSL_CRMF_MSG_CREATE_POPO                 105
+# define CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID               115
+# define CRMF_F_OSSL_CRMF_MSG_GET_TMPL                    116
 # define CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION             106
 # define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL               107
 # define CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO               108

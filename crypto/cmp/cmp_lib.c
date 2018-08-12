@@ -1107,6 +1107,7 @@ OSSL_CMP_PKISI *OSSL_CMP_statusInfo_new(int status, unsigned long failInfo,
     return si;
 
  err:
+    CMPerr(CMP_F_OSSL_CMP_STATUSINFO_NEW, ERR_R_MALLOC_FAILURE);
     OSSL_CMP_PKISI_free(si);
     ASN1_UTF8STRING_free(utf8_text);
     return NULL;

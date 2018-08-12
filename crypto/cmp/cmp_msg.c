@@ -24,28 +24,38 @@
 #include "cmp_int.h"
 
 /*
+ * Add an extension (or NULL on OOM) to the given extension stack, consuming it.
+ *
+ * returns 1 on success, 0 on error
+ */
+static int add_extension(X509_EXTENSIONS **exts, X509_EXTENSION *ext)
+{
+    int ret = 0;
+
+    if (exts == NULL) {
+        CMPerr(CMP_F_ADD_EXTENSION, CMP_R_NULL_ARGUMENT);
+        goto end;
+    }
+    if (ext == NULL || /* malloc did not work for ext in caller */
+        !X509v3_add_ext(exts, ext, 0)) {
+        CMPerr(CMP_F_ADD_EXTENSION, ERR_R_MALLOC_FAILURE);
+        goto end;
+    }
+    ret = 1;
+
+ end:
+    X509_EXTENSION_free(ext);
+    return ret;
+}
+
+/*
  * Takes a stack of GENERAL_NAMEs and adds them to the given extension stack.
  * this is used to setting subject alternate names to a certTemplate
  *
  * returns 1 on success, 0 on error
  */
-static int add_subjectaltnames_extension(X509_EXTENSIONS **exts,
-                                         STACK_OF(GENERAL_NAME) *sans,
-                                         int critical)
-{
-    X509_EXTENSION *ext = NULL;
-    int ret = 0;
-
-    if (exts == NULL || sans == NULL)
-        goto err;
-
-    if ((ext = X509V3_EXT_i2d(NID_subject_alt_name, critical, sans)) != NULL &&
-        X509v3_add_ext(exts, ext, 0))
-        ret = 1;
- err:
-    X509_EXTENSION_free(ext);
-    return ret;
-}
+#define ADD_SANs(exts, sans, critical) \
+    add_extension(exts, X509V3_EXT_i2d(NID_subject_alt_name, critical, sans))
 
 /*
  * Takes a CERTIFICATEPOLICIES structure and adds it to the given extension
@@ -53,23 +63,8 @@ static int add_subjectaltnames_extension(X509_EXTENSIONS **exts,
  *
  * returns 1 on success, 0 on error
  */
-static int add_policy_extensions(X509_EXTENSIONS **exts,
-                                 CERTIFICATEPOLICIES *policies,
-                                 int critical)
-{
-    X509_EXTENSION *ext = NULL;
-    int ret = 0;
-
-    if (exts == NULL || policies == NULL)
-        goto err;
-
-    if ((ext = X509V3_EXT_i2d(NID_certificate_policies, critical, policies))
-        != NULL && X509v3_add_ext(exts, ext, 0))
-        ret = 1;
- err:
-    X509_EXTENSION_free(ext);
-    return ret;
-}
+#define ADD_POLICIES(exts, policies, critical) add_extension(exts, \
+               X509V3_EXT_i2d(NID_certificate_policies, critical, policies))
 
 /*
  * Adds a CRL revocation reason code to an extension stack (which may be NULL)
@@ -81,13 +76,10 @@ static int add_crl_reason_extension(X509_EXTENSIONS **exts, int reason_code)
     X509_EXTENSION *ext = NULL;
     int ret = 0;
 
-    if (exts != NULL &&
-        (val = ASN1_ENUMERATED_new()) &&
-        ASN1_ENUMERATED_set(val, reason_code) &&
-        (ext = X509V3_EXT_i2d(NID_crl_reason, 0, val)) &&
-        X509v3_add_ext(exts, ext, 0))
-        ret = 1;
-    X509_EXTENSION_free(ext);
+    if (((val = ASN1_ENUMERATED_new()) != NULL) &&
+        ASN1_ENUMERATED_set(val, reason_code))
+        ext = X509V3_EXT_i2d(NID_crl_reason, 0, val);
+    ret = add_extension(exts, ext);
     ASN1_ENUMERATED_free(val);
     return ret;
 }
@@ -241,8 +233,14 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
     /* RFC5280: subjectAltName MUST be critical if subject is null */
     X509_EXTENSIONS *exts = NULL;
 
-    if ((crm = OSSL_CRMF_MSG_new()) == NULL ||
-        !OSSL_CRMF_MSG_set_certReqId(crm, rid) ||
+    if (rkey == NULL ||
+        (bodytype == OSSL_CMP_PKIBODY_KUR && refcert == NULL)) {
+        CMPerr(CMP_F_CRM_NEW, CMP_R_INVALID_ARGS);
+        goto err;
+    }
+    if ((crm = OSSL_CRMF_MSG_new()) == NULL)
+        goto oom;
+    if (!OSSL_CRMF_MSG_set_certReqId(crm, rid) ||
 
     /* fill certTemplate, corresponding to PKCS#10 CertificationRequestInfo */
 #if 0
@@ -250,9 +248,8 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
 #endif
             /* rkey cannot be NULL so far - but it can be when
              * centralized key creation is supported --> GitHub issue#68 */
-        !rkey || !OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_MSG_get_tmpl(crm),
-                                              rkey, subject,
-                                              ctx->issuer, NULL/* serial */))
+        !OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_MSG_get_tmpl(crm), rkey,
+                                     subject, ctx->issuer, NULL/* serial */))
         goto err;
     if (ctx->days != 0) {
         time_t notBefore, notAfter;
@@ -267,13 +264,14 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
         default_sans = X509V3_get_d2i(X509_get0_extensions(refcert),
                                       NID_subject_alt_name, NULL, NULL);
     /* exts are copied from ctx to allow reuse */
-    if ((exts = CMP_exts_dup(ctx->reqExtensions)) == NULL ||
-        (sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0 &&
-         !add_subjectaltnames_extension(&exts, ctx->subjectAltNames, crit)) ||
+    if ((exts = CMP_exts_dup(ctx->reqExtensions)) == NULL)
+        goto oom;
+    if ((sk_GENERAL_NAME_num(ctx->subjectAltNames) > 0 &&
+         !ADD_SANs(&exts, ctx->subjectAltNames, crit)) ||
         (!HAS_SAN(ctx) && default_sans != NULL &&
-         !add_subjectaltnames_extension(&exts, default_sans, crit)) ||
-        (ctx->policies != NULL && !add_policy_extensions(&exts, ctx->policies,
-                                                   ctx->setPoliciesCritical)) ||
+         !ADD_SANs(&exts, default_sans, crit)) ||
+        (ctx->policies != NULL &&
+         !ADD_POLICIES(&exts, ctx->policies, ctx->setPoliciesCritical)) ||
         !OSSL_CRMF_MSG_set0_extensions(crm, exts))
         goto err;
     sk_GENERAL_NAME_pop_free(default_sans, GENERAL_NAME_free);
@@ -282,15 +280,12 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
 
     /* for KUR, set OldCertId according to D.6 */
     if (bodytype == OSSL_CMP_PKIBODY_KUR) {
-        OSSL_CRMF_CERTID *cid;
+        OSSL_CRMF_CERTID *cid =
+            OSSL_CRMF_CERTID_gen(X509_get_issuer_name(refcert),
+                                 X509_get_serialNumber(refcert));
         int ret;
 
-        if (refcert == NULL) {
-            CMPerr(CMP_F_CRM_NEW, CMP_R_INVALID_ARGS);
-            goto err;
-        }
-        if ((cid = OSSL_CRMF_CERTID_gen(X509_get_issuer_name(refcert),
-                                        X509_get_serialNumber(refcert))) ==NULL)
+        if (cid == NULL)
             goto err;
         ret = OSSL_CRMF_MSG_set1_regCtrl_oldCertID(crm, cid);
         OSSL_CRMF_CERTID_free(cid);
@@ -300,6 +295,8 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype,
 
     return crm;
 
+ oom:
+    CMPerr(CMP_F_CRM_NEW, ERR_R_MALLOC_FAILURE);
  err:
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
     sk_GENERAL_NAME_pop_free(default_sans, GENERAL_NAME_free);
