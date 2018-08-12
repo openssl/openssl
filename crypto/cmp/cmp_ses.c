@@ -688,14 +688,14 @@ static X509 *do_certreq_seq(OSSL_CMP_CTX *ctx, const char *type_string, int fn,
  * revocation was rejected, and do not expect "waiting" or "keyUpdateWarning"
  * (which are handled as error).
  *
- * returns 1 on success, 0 on error
+ * returns the revoked cert on success, NULL on error
  */
-int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
+X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_MSG *rr = NULL;
     OSSL_CMP_MSG *rp = NULL;
     OSSL_CMP_PKISI *si = NULL;
-    int result = 0;
+    X509 *result = NULL;
 
     if (ctx == NULL) {
         CMPerr(CMP_F_OSSL_CMP_EXEC_RR_SES, CMP_R_INVALID_ARGS);
@@ -721,11 +721,11 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     switch (OSSL_CMP_PKISI_PKIStatus_get(si)) {
     case OSSL_CMP_PKISTATUS_accepted:
         OSSL_CMP_info(ctx, "revocation accepted (PKIStatus=accepted)");
-        result = 1;
+        result = ctx->oldClCert;
         break;
     case OSSL_CMP_PKISTATUS_grantedWithMods:
         OSSL_CMP_info(ctx, "revocation accepted (PKIStatus=grantedWithMods)");
-        result = 1;
+        result = ctx->oldClCert;
         break;
     case OSSL_CMP_PKISTATUS_rejection:
         /* interpretation as warning or error depends on CA */
@@ -734,13 +734,13 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         goto err;
     case OSSL_CMP_PKISTATUS_revocationWarning:
         OSSL_CMP_info(ctx, "revocation accepted (PKIStatus=revocationWarning)");
-        result = 1;
+        result = ctx->oldClCert;
         break;
     case OSSL_CMP_PKISTATUS_revocationNotification:
         /* interpretation as warning or error depends on CA */
         OSSL_CMP_info(ctx,
                       "revocation accepted (PKIStatus=revocationNotification)");
-        result = 1;
+        result = ctx->oldClCert;
         break;
     case OSSL_CMP_PKISTATUS_waiting:
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
@@ -752,9 +752,8 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
     }
 
  err:
-
     /* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
-    if (result == 0) {
+    if (result == NULL) {
         char *tempbuf;
         if ((tempbuf = OPENSSL_malloc(OSSL_CMP_PKISI_BUFLEN)) != NULL) {
             if (OSSL_CMP_PKISI_snprint(si, tempbuf,

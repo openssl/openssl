@@ -3,11 +3,11 @@
 =head1 NAME
 
 OSSL_CMP_exec_IR_ses,
-OSSL_CMP_exec_KUR_ses,
 OSSL_CMP_exec_CR_ses,
 OSSL_CMP_exec_P10CR_ses,
-OSSL_CMP_exec_GENM_ses,
-OSSL_CMP_exec_RR_ses
+OSSL_CMP_exec_KUR_ses,
+OSSL_CMP_exec_RR_ses,
+OSSL_CMP_exec_GENM_ses
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -15,11 +15,11 @@ OSSL_CMP_exec_RR_ses
  #include <openssl/cmp.h>
 
  X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx);
- X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx);
+ X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx);
+ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
  STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx;
- int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -29,10 +29,6 @@ message sequences using with OpenSSL. The default conveying protocol is HTTP.
 OSSL_CMP_exec_IR_ses() does the transaction which obtains an initial certificate
 from the CA. A populated OSSL_CMP_CTX structure has to be given as argument.
 
-OSSL_CMP_exec_KUR_ses() does the transaction which obtains an updated
-certificate from the CA. A populated OSSL_CMP_CTX structure has to be given
-as argument.
-
 OSSL_CMP_exec_CR_ses() requests an additional certificate
 from the CA. A populated OSSL_CMP_CTX structure has to be given as argument.
 
@@ -40,11 +36,15 @@ OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx) requests in PKCS#10 CSR form
 a certificate from the CA. A populated OSSL_CMP_CTX structure has to be given
 as argument.
 
+OSSL_CMP_exec_KUR_ses() does the transaction which obtains an updated
+certificate from the CA. A populated OSSL_CMP_CTX structure has to be given
+as argument.
+
+OSSL_CMP_exec_RR_ses() requests the revocation of a certificate at the CA.
+
 OSSL_CMP_exec_GENM_ses() sends a general message with any ITAVs specified in the
 B<ctx>->genm_itavs, and returns the list of B<ITAV>s received in the GenRep.
 This can be used, for instance, to poll for the CRL or CA Key Updates.
-
-OSSL_CMP_exec_RR_ses() requests the revocation of a certificate at the CA.
 
 =head1 NOTES
 
@@ -53,8 +53,14 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 =head1 RETURN VALUES
 
 OSSL_CMP_exec_IR_ses(), OSSL_CMP_exec_CR_ses(),
-OSSL_CMP_doPKCS10CertificationRequestSeq(), and OSSL_CMP_exec_KUR_ses()
-return a pointer the newly obtained X509 certificate on success, NULL on error.
+OSSL_CMP_exec_P10CR_ses(), and OSSL_CMP_exec_KUR_ses() return a
+pointer to the newly obtained X509 certificate on success, NULL on error.
+
+OSSL_CMP_exec_RR_ses() returns the
+pointer to the revoked certificate on success, NULL on error.
+
+OSSL_CMP_exec_GENM_ses() returns a
+pointer to the received B<ITAV> sequence on success, NULL on error.
 
 =head1 EXAMPLE
 

@@ -419,7 +419,7 @@ X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx);
 X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx);
 X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx);
 X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx);
-int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
+X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
 STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
 /* exported just for testing: */
 int OSSL_CMP_exchange_certConf(OSSL_CMP_CTX *ctx, int failure, const char *txt);

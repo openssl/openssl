@@ -94,7 +94,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
 static int execute_cmp_exec_rr_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 {
     return TEST_int_eq(fixture->expected,
-                       OSSL_CMP_exec_RR_ses(fixture->cmp_ctx));
+                       OSSL_CMP_exec_RR_ses(fixture->cmp_ctx) != NULL);
 }
 
 static int execute_cmp_exec_genm_ses_test(CMP_SES_TEST_FIXTURE *fixture)

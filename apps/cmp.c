@@ -4070,7 +4070,7 @@ int cmp_main(int argc, char **argv)
             goto err;
         break;
     case CMP_RR:
-        if (!OSSL_CMP_exec_RR_ses(cmp_ctx))
+        if (OSSL_CMP_exec_RR_ses(cmp_ctx) == NULL)
             goto err;
         break;
     case CMP_GENM:
