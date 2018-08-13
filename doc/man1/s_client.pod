@@ -134,7 +134,7 @@ B<openssl> B<s_client>
 [B<-ctlogfile>]
 [B<-keylogfile file>]
 [B<-early_data file>]
-[B<-force_pha>]
+[B<-enable_pha>]
 [B<target>]
 
 =head1 DESCRIPTION
@@ -700,10 +700,10 @@ Reads the contents of the specified file and attempts to send it as early data
 to the server. This will only work with resumed sessions that support early
 data and when the server accepts the early data.
 
-=item B<-force_pha>
+=item B<-enable_pha>
 
-For TLSv1.3 only, always send the Post-Handshake Authentication extension,
-whether or not a certificate has been provided via B<-cert>.
+For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
+happen whether or not a certificate has been provided via B<-cert>.
 
 =item B<[target]>
 

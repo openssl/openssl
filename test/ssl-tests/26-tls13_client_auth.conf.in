@@ -176,6 +176,9 @@ our @tests = (
             "MaxProtocol" => "TLSv1.3",
             "Certificate" => test_pem("ee-client-chain.pem"),
             "PrivateKey" => test_pem("ee-key.pem"),
+            extra => {
+                "EnablePHA" => "Yes",
+            },
         },
         test => {
             "ExpectedResult" => "Success",
@@ -201,6 +204,9 @@ our @tests = (
             "MaxProtocol" => "TLSv1.3",
             "Certificate" => test_pem("ee-client-chain.pem"),
             "PrivateKey" => test_pem("ee-key.pem"),
+            extra => {
+                "EnablePHA" => "Yes",
+            },
         },
         test => {
             "ExpectedResult" => "Success",
@@ -223,6 +229,9 @@ our @tests = (
             "MaxProtocol" => "TLSv1.3",
             "Certificate" => test_pem("ee-client-chain.pem"),
             "PrivateKey" => test_pem("ee-key.pem"),
+            extra => {
+                "EnablePHA" => "Yes",
+            },
         },
         test => {
             "ExpectedResult" => "ServerFail",
@@ -240,9 +249,9 @@ our @tests = (
         client => {
             "MinProtocol" => "TLSv1.3",
             "MaxProtocol" => "TLSv1.3",
-	    extra => {
-		"ForcePHA" => "Yes",
-	    },
+            extra => {
+                "EnablePHA" => "Yes",
+            },
         },
         test => {
             "ExpectedResult" => "Success",
@@ -255,9 +264,9 @@ our @tests = (
             "MinProtocol" => "TLSv1.3",
             "MaxProtocol" => "TLSv1.3",
             "VerifyMode" => "RequestPostHandshake",
-	    extra => {
-		"ForcePHA" => "Yes",
-	    },
+            extra => {
+                "ForcePHA" => "Yes",
+            },
         },
         client => {
             "MinProtocol" => "TLSv1.3",
@@ -274,16 +283,16 @@ our @tests = (
             "MinProtocol" => "TLSv1.3",
             "MaxProtocol" => "TLSv1.3",
             "VerifyMode" => "RequestPostHandshake",
-	    extra => {
-		"ForcePHA" => "Yes",
-	    },
+            extra => {
+                "ForcePHA" => "Yes",
+            },
         },
         client => {
             "MinProtocol" => "TLSv1.3",
             "MaxProtocol" => "TLSv1.3",
-	    extra => {
-		"ForcePHA" => "Yes",
-	    },
+            extra => {
+                "EnablePHA" => "Yes",
+            },
         },
         test => {
             "ExpectedResult" => "Success",

@@ -1393,7 +1393,7 @@ struct ssl_st {
     int key_update;
     /* Post-handshake authentication state */
     SSL_PHA_STATE post_handshake_auth;
-    int pha_forced;
+    int pha_enabled;
     uint8_t* pha_context;
     size_t pha_context_len;
     int certreqs_sent;

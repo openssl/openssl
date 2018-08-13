@@ -5455,9 +5455,9 @@ int SSL_stateless(SSL *s)
     return -1;
 }
 
-void SSL_force_post_handshake_auth(SSL *ssl)
+void SSL_set_post_handshake_auth(SSL *ssl, int val)
 {
-    ssl->pha_forced = 1;
+    ssl->pha_enabled = val;
 }
 
 int SSL_verify_client_post_handshake(SSL *ssl)
