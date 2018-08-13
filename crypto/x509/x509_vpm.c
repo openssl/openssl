@@ -387,6 +387,25 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
     return int_x509_param_set_hosts(param, ADD_HOST, name, namelen);
 }
 
+int X509_VERIFY_PARAM_get1_hosts(X509_VERIFY_PARAM *param,
+                                 STACK_OF(OPENSSL_STRING)** dest)
+{
+    STACK_OF(OPENSSL_STRING) *tmp;
+
+    if (!param->hosts) {
+        *dest = NULL;
+        return 1;
+    }
+
+    tmp = sk_OPENSSL_STRING_deep_copy(param->hosts, str_copy, str_free);
+    if (tmp == NULL)
+        return 0;
+
+    *dest = tmp;
+
+    return 1;
+}
+
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                      unsigned int flags)
 {

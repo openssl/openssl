@@ -4576,3 +4576,4 @@ EC_GROUP_set_curve                      4527	1_1_1	EXIST::FUNCTION:EC
 EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC
 X509_VERIFY_PARAM_get_ip                4529	1_1_1	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get_email             4530	1_1_1	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get1_hosts            4531	1_1_1	EXIST::FUNCTION:

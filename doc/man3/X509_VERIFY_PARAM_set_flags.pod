@@ -11,6 +11,7 @@ X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time,
 X509_VERIFY_PARAM_get_time,
 X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
+X509_VERIFY_PARAM_get1_hosts,
 X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
 X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_get_email
@@ -54,6 +55,8 @@ X509_VERIFY_PARAM_get_ip, X509_VERIFY_PARAM_set1_ip_asc
                                  const char *name, size_t namelen);
  int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
                                  const char *name, size_t namelen);
+ int X509_VERIFY_PARAM_get1_hosts(X509_VERIFY_PARAM *param,
+                                  STACK_OF(OPENSSL_STRING)** dest);
  void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                       unsigned int flags);
  unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
@@ -171,6 +174,10 @@ are retained, no change is made if B<name> is NULL or empty.  When
 multiple names are configured, the peer is considered verified when
 any name matches.
 
+X509_VERIFY_PARAM_get1_hosts() gets a copy of the list of hosts previously
+set with X509_VERIFY_PARAM_set1_host() and X509_VERIFY_PARAM_add1_host().
+If no hosts have been set then B<dest> will be set to B<NULL>.
+
 X509_VERIFY_PARAM_get0_peername() returns the DNS hostname or subject
 CommonName from the peer certificate that matched one of the reference
 identifiers.  When wildcard matching is not disabled, or when a
@@ -214,9 +221,9 @@ X509_VERIFY_PARAM_set_inh_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
 X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
-X509_VERIFY_PARAM_set1_email(), X509_VERIFY_PARAM_set1_ip() and
-X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
-failure.
+X509_VERIFY_PARAM_get1_hosts(), X509_VERIFY_PARAM_set1_email(),
+X509_VERIFY_PARAM_set1_ip() and X509_VERIFY_PARAM_set1_ip_asc()
+return 1 for success and 0 for failure.
 
 X509_VERIFY_PARAM_get_flags() returns the current verification flags.
 

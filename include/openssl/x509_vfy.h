@@ -552,6 +552,8 @@ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
                                 const char *name, size_t namelen);
 int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
                                 const char *name, size_t namelen);
+int X509_VERIFY_PARAM_get1_hosts(X509_VERIFY_PARAM *param,
+                                 STACK_OF(OPENSSL_STRING)** dest);
 void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                      unsigned int flags);
 unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
