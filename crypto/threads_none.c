@@ -128,18 +128,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
-{
-    *ret = *val;
-    return 1;
-}
-
-int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock)
-{
-    *val = n;
-    return 1;
-}
-
 int openssl_init_fork_handlers(void)
 {
     return 0;
