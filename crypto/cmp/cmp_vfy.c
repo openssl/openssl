@@ -86,7 +86,7 @@ static int CMP_verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     }
 
     if ((ctx = EVP_MD_CTX_create()) == NULL) {
-        CMPerr(CMP_F_CMP_VERIFY_SIGNATURE, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_CMP_VERIFY_SIGNATURE, ERR_R_MALLOC_FAILURE);
         goto end;
     }
     ret = EVP_VerifyInit_ex(ctx, digest, NULL) &&
@@ -170,7 +170,7 @@ int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
     if ((csc = X509_STORE_CTX_new()) == NULL ||
         !X509_STORE_CTX_init(csc, (X509_STORE *)trusted_store, (X509 *)cert,
                              (STACK_OF(X509) *)ctx->untrusted_certs)) {
-        CMPerr(CMP_F_OSSL_CMP_VALIDATE_CERT_PATH, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_VALIDATE_CERT_PATH, ERR_R_MALLOC_FAILURE);
         goto end;
     }
 

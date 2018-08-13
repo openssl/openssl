@@ -285,7 +285,7 @@ static OSSL_CMP_MSG *CMP_process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     return msg;
 
  oom:
-    CMPerr(CMP_F_CMP_PROCESS_CERT_REQUEST, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_CMP_PROCESS_CERT_REQUEST, ERR_R_MALLOC_FAILURE);
     OSSL_CMP_PKISI_free(si);
     return NULL;
 }
@@ -323,7 +323,7 @@ static OSSL_CMP_MSG *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
     }
 
     if ((certId = OSSL_CRMF_CERTID_gen(issuer, serial)) == NULL) {
-        CMPerr(CMP_F_PROCESS_RR, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_PROCESS_RR, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -394,7 +394,7 @@ static OSSL_CMP_MSG *process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
     return msg;
 
  oom:
-    CMPerr(CMP_F_PROCESS_CERTCONF, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_PROCESS_CERTCONF, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -449,7 +449,7 @@ static OSSL_CMP_MSG *process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
     tmp = srv_ctx->ctx->genm_itavs;
     srv_ctx->ctx->genm_itavs = req->body->value.genm;
     if ((msg = OSSL_CMP_genp_new(srv_ctx->ctx)) == NULL)
-        CMPerr(CMP_F_PROCESS_GENM, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_PROCESS_GENM, ERR_R_MALLOC_FAILURE);
     /* restore genm_itavs */
     srv_ctx->ctx->genm_itavs = tmp;
     return msg;
@@ -497,7 +497,7 @@ static int process_request(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *req,
         return 0;
     }
     if (!X509_NAME_set(&ctx->recipient, req->header->sender->d.directoryName)) {
-        CMPerr(CMP_F_PROCESS_REQUEST, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_PROCESS_REQUEST, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -647,7 +647,7 @@ OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_create(void)
     ctx->process_genm_cb = process_genm;
     return ctx;
  oom:
-    CMPerr(CMP_F_OSSL_CMP_SRV_CTX_CREATE, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_SRV_CTX_CREATE, ERR_R_MALLOC_FAILURE);
     OSSL_CMP_SRV_CTX_free(ctx);
     return NULL;
 }

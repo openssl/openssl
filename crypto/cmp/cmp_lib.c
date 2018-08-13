@@ -143,7 +143,7 @@ int OSSL_CMP_HDR_set_version(OSSL_CMP_HDR *hdr, int version)
     }
 
     if (!ASN1_INTEGER_set(hdr->pvno, version)) {
-        CMPerr(CMP_F_OSSL_CMP_HDR_SET_VERSION, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_HDR_SET_VERSION, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -172,7 +172,7 @@ static int set1_general_name(GENERAL_NAME **tgt, const X509_NAME *src)
             goto oom;
     } else if (!(X509_NAME_set(&gen->d.directoryName, (X509_NAME *)src))) {
     oom:
-        CMPerr(CMP_F_SET1_GENERAL_NAME, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_SET1_GENERAL_NAME, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -230,7 +230,7 @@ int OSSL_CMP_ASN1_OCTET_STRING_set1(ASN1_OCTET_STRING **tgt,
 
     if (src != NULL) {
         if (!(*tgt = ASN1_OCTET_STRING_dup((ASN1_OCTET_STRING *)src))) {
-            CMPerr(CMP_F_OSSL_CMP_ASN1_OCTET_STRING_SET1, CMP_R_OUT_OF_MEMORY);
+            CMPerr(CMP_F_OSSL_CMP_ASN1_OCTET_STRING_SET1, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     } else
@@ -261,7 +261,7 @@ int OSSL_CMP_ASN1_OCTET_STRING_set1_bytes(ASN1_OCTET_STRING **tgt,
         if (!(new = ASN1_OCTET_STRING_new()) ||
             !(ASN1_OCTET_STRING_set(new, bytes, (int)len))) {
             CMPerr(CMP_F_OSSL_CMP_ASN1_OCTET_STRING_SET1_BYTES,
-                   CMP_R_OUT_OF_MEMORY);
+                   ERR_R_MALLOC_FAILURE);
             goto err;
         }
 
@@ -281,7 +281,7 @@ static int set1_aostr_else_random(ASN1_OCTET_STRING **tgt,
 
     if (src == NULL) { /* generate a random value if src == NULL */
         if ((bytes = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
-            CMPerr(CMP_F_SET1_AOSTR_ELSE_RANDOM, CMP_R_OUT_OF_MEMORY);
+            CMPerr(CMP_F_SET1_AOSTR_ELSE_RANDOM, ERR_R_MALLOC_FAILURE);
             goto err;
         }
         if (RAND_bytes(bytes, len) <= 0) {
@@ -341,7 +341,7 @@ int OSSL_CMP_HDR_set_messageTime(OSSL_CMP_HDR *hdr)
     return 1;
 
  err:
-    CMPerr(CMP_F_OSSL_CMP_HDR_SET_MESSAGETIME, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_HDR_SET_MESSAGETIME, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -367,7 +367,7 @@ int OSSL_CMP_HDR_push0_freeText(OSSL_CMP_HDR *hdr, ASN1_UTF8STRING *text)
     return 1;
 
  err:
-    CMPerr(CMP_F_OSSL_CMP_HDR_PUSH0_FREETEXT, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_HDR_PUSH0_FREETEXT, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
@@ -412,7 +412,7 @@ OSSL_CMP_PKIFREETEXT *CMP_PKIFREETEXT_push_str(OSSL_CMP_PKIFREETEXT *ft,
     return ft;
 
  oom:
-    CMPerr(CMP_F_CMP_PKIFREETEXT_PUSH_STR, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_CMP_PKIFREETEXT_PUSH_STR, ERR_R_MALLOC_FAILURE);
     sk_ASN1_UTF8STRING_pop_free(ft, ASN1_UTF8STRING_free);
     ASN1_UTF8STRING_free(utf8string);
     return NULL;

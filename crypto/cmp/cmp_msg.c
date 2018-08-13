@@ -184,7 +184,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_create(OSSL_CMP_CTX *ctx, int bodytype)
         goto err;
     }
 oom:
-    CMPerr(CMP_F_OSSL_CMP_MSG_CREATE, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_MSG_CREATE, ERR_R_MALLOC_FAILURE);
 err:
     OSSL_CMP_MSG_free(msg);
     return NULL;
@@ -436,7 +436,7 @@ OSSL_CMP_MSG *OSSL_CMP_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     return msg;
 
  oom:
-    CMPerr(CMP_F_OSSL_CMP_CERTREP_NEW, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_CERTREP_NEW, ERR_R_MALLOC_FAILURE);
  err:
     CMPerr(CMP_F_OSSL_CMP_CERTREP_NEW, CMP_R_ERROR_CREATING_CERTREP);
     OSSL_CMP_CERTRESPONSE_free(resp);
@@ -599,7 +599,7 @@ OSSL_CMP_MSG *OSSL_CMP_rp_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
     return msg;
 
  oom:
-    CMPerr(CMP_F_OSSL_CMP_RP_NEW, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_RP_NEW, ERR_R_MALLOC_FAILURE);
  err:
     CMPerr(CMP_F_OSSL_CMP_RP_NEW, CMP_R_ERROR_CREATING_RP);
     OSSL_CRMF_CERTID_free(certId);

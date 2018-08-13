@@ -329,7 +329,7 @@ int OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     char *path = NULL;
     size_t pos = 0, pathlen = 0;
     BIO *bio, *hbio = NULL;
-    int err = CMP_R_OUT_OF_MEMORY;
+    int err = ERR_R_MALLOC_FAILURE;
     time_t max_time;
 
     if (ctx == NULL || req == NULL || res == NULL ||
@@ -404,7 +404,7 @@ int OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     }
 
     if (ctx->http_cb && (*ctx->http_cb)(ctx, hbio, ERR_peek_error()) == NULL)
-        err = CMP_R_OUT_OF_MEMORY;
+        err = ERR_R_MALLOC_FAILURE;
     BIO_free_all(hbio); /* also frees any (e.g., SSL/TLS) BIOs linked with hbio
        and, like BIO_reset(hbio), calls SSL_shutdown() to notify/alert peer */
 

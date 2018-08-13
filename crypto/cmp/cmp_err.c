@@ -294,7 +294,6 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_NO_VALID_SERVER_CERT_FOUND),
     "no valid server cert found"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_NULL_ARGUMENT), "null argument"},
-    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_OUT_OF_MEMORY), "out of memory"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_PKIBODY_ERROR), "pkibody error"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_PKICONF_NOT_RECEIVED),
     "pkiconf not received"},

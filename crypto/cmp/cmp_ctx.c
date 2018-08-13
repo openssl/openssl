@@ -225,7 +225,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_create(void)
 
     return ctx;
  err:
-    CMPerr(CMP_F_OSSL_CMP_CTX_CREATE, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_CTX_CREATE, ERR_R_MALLOC_FAILURE);
     OSSL_CMP_CTX_free(ctx);
     return NULL;
 }
@@ -372,7 +372,7 @@ int OSSL_CMP_CTX_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
     }
 
     if ((ctx->extraCertsIn = X509_chain_up_ref(extraCertsIn)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_EXTRACERTSIN, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_EXTRACERTSIN, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -394,7 +394,7 @@ int OSSL_CMP_CTX_extraCertsOut_push1(OSSL_CMP_CTX *ctx, const X509 *val)
     if ((ctx->extraCertsOut == NULL &&
          (ctx->extraCertsOut = sk_X509_new_null()) == NULL) ||
          (!sk_X509_push(ctx->extraCertsOut, X509_dup((X509 *)val)))) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_EXTRACERTSOUT_PUSH1, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_EXTRACERTSOUT_PUSH1, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -422,7 +422,7 @@ int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
     }
 
     if ((ctx->extraCertsOut = X509_chain_up_ref(extraCertsOut)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_EXTRACERTSOUT, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_EXTRACERTSOUT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -515,7 +515,7 @@ int OSSL_CMP_CTX_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
     ctx->caPubs = NULL;
 
     if ((ctx->caPubs = X509_chain_up_ref(caPubs)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_CAPUBS, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_CAPUBS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -544,7 +544,7 @@ int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, const X509 *cert)
         return 1; /* srvCert has been cleared */
 
     if ((ctx->srvCert = X509_dup((X509 *)cert)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SRVCERT, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SRVCERT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -566,7 +566,7 @@ int OSSL_CMP_CTX_set1_recipient(OSSL_CMP_CTX *ctx, const X509_NAME *name)
     ctx->recipient = NULL;
 
     if ((ctx->recipient = X509_NAME_dup((X509_NAME *)name)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_RECIPIENT, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_RECIPIENT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -591,7 +591,7 @@ int OSSL_CMP_CTX_set1_expected_sender(OSSL_CMP_CTX *ctx, const X509_NAME *name)
         return 1;
 
     if ((ctx->expected_sender = X509_NAME_dup((X509_NAME *)name)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_EXPECTED_SENDER, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_EXPECTED_SENDER, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -613,7 +613,7 @@ int OSSL_CMP_CTX_set1_issuer(OSSL_CMP_CTX *ctx, const X509_NAME *name)
     ctx->issuer = NULL;
 
     if ((ctx->issuer = X509_NAME_dup( (X509_NAME*)name)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_ISSUER, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_ISSUER, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -636,7 +636,7 @@ int OSSL_CMP_CTX_set1_subjectName(OSSL_CMP_CTX *ctx, const X509_NAME *name)
     ctx->subjectName = NULL;
 
     if ((ctx->subjectName = X509_NAME_dup((X509_NAME *)name)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SUBJECTNAME, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SUBJECTNAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -715,7 +715,7 @@ int OSSL_CMP_CTX_subjectAltName_push1(OSSL_CMP_CTX *ctx,
          (ctx->subjectAltNames = sk_GENERAL_NAME_new_null()) == NULL) ||
          !sk_GENERAL_NAME_push(ctx->subjectAltNames,
          GENERAL_NAME_dup((GENERAL_NAME *)name))) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SUBJECTALTNAME_PUSH1, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SUBJECTALTNAME_PUSH1, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     return 1;
@@ -738,7 +738,7 @@ int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, const X509 *cert)
     ctx->clCert = NULL;
 
     if ((ctx->clCert = X509_dup((X509 *)cert)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_CLCERT, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_CLCERT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -763,7 +763,7 @@ int OSSL_CMP_CTX_set1_oldClCert(OSSL_CMP_CTX *ctx, const X509 *cert)
     ctx->oldClCert = NULL;
 
     if ((ctx->oldClCert = X509_dup((X509 *)cert)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_OLDCLCERT, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_OLDCLCERT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -785,7 +785,7 @@ int OSSL_CMP_CTX_set1_p10CSR(OSSL_CMP_CTX *ctx, const X509_REQ *csr)
     ctx->p10CSR = NULL;
 
     if ((ctx->p10CSR = X509_REQ_dup((X509_REQ *)csr)) == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_P10CSR, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_P10CSR, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -1011,7 +1011,7 @@ int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name)
 
     ctx->proxyName = BUF_strdup(name);
     if (ctx->proxyName == NULL) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_PROXYNAME, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_PROXYNAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -1035,7 +1035,7 @@ int OSSL_CMP_CTX_set1_serverName(OSSL_CMP_CTX *ctx, const char *name)
 
     ctx->serverName = BUF_strdup(name);
     if (!ctx->serverName) {
-        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SERVERNAME, CMP_R_OUT_OF_MEMORY);
+        CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SERVERNAME, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -1190,7 +1190,7 @@ int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path)
 
     return 1;
  oom:
-    CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SERVERPATH, CMP_R_OUT_OF_MEMORY);
+    CMPerr(CMP_F_OSSL_CMP_CTX_SET1_SERVERPATH, ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
