@@ -66,7 +66,6 @@ static const ERR_STRING_DATA CRMF_str_reasons[] = {
     "failure obtaining random"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_ITERATIONCOUNT_BELOW_100),
     "iterationcount below 100"},
-    {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_MALLOC_FAILURE), "malloc failure"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_NULL_ARGUMENT), "null argument"},
     {ERR_PACK(ERR_LIB_CRMF, 0, CRMF_R_SETTING_MAC_ALGOR_FAILURE),
     "setting mac alrgor failure"},
