@@ -15,7 +15,7 @@ X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
 X509_VERIFY_PARAM_get0_peername,
 X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip,
-X509_VERIFY_PARAM_set1_ip_asc
+X509_VERIFY_PARAM_get_ip, X509_VERIFY_PARAM_set1_ip_asc
 - X509 verification parameters
 
 =head1 SYNOPSIS
@@ -62,6 +62,8 @@ X509_VERIFY_PARAM_set1_ip_asc
                                   const char *email, size_t emaillen);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
+ size_t X509_VERIFY_PARAM_get_ip(X509_VERIFY_PARAM *param, unsigned char *dest,
+                                 size_t destlen);
  int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
 
 =head1 DESCRIPTION
@@ -189,6 +191,11 @@ B<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
 address is specified, certificate verification automatically invokes
 L<X509_check_ip(3)>.
 
+X509_VERIFY_PARAM_get_ip() fills the user provided buffer B<dest> of length
+B<destlen> with the set IP address (if any). If the destination buffer is not
+large enough, then no data is written. The B<ip> will be written in binary
+format, in network byte-order.
+
 X509_VERIFY_PARAM_set1_ip_asc() sets the expected IP address to
 B<ipasc>.  The B<ipasc> argument is a NUL-terminal ASCII string:
 dotted decimal quad for IPv4 and colon-separated hexadecimal for
@@ -218,6 +225,10 @@ X509_VERIFY_PARAM_get_depth() returns the current verification depth.
 
 X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
 level.
+
+X509_VERIFY_PARAM_get_ip() returns the number of bytes written to the buffer,
+or if B<destlen> was not large enough, the buffer size required. If no IP is
+set then returns 0.
 
 =head1 VERIFICATION FLAGS
 

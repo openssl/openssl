@@ -561,6 +561,8 @@ int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                               const unsigned char *ip, size_t iplen);
+size_t X509_VERIFY_PARAM_get_ip(X509_VERIFY_PARAM *param, unsigned char *dest,
+                                size_t destlen);
 int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param,
                                   const char *ipasc);
 

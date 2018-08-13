@@ -437,6 +437,15 @@ int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                (char *)ip, iplen);
 }
 
+size_t X509_VERIFY_PARAM_get_ip(X509_VERIFY_PARAM *param, unsigned char *dest,
+                                size_t destlen)
+{
+    if (param->iplen > destlen)
+        return param->iplen;
+    memcpy(dest, &param->ip, param->iplen);
+    return param->iplen;
+}
+
 int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)
 {
     unsigned char ipout[16];
