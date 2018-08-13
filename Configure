@@ -1034,10 +1034,11 @@ if ($d) {
 	$target = $t;
     }
 }
+
+&usage if !$table{$target} || $table{$target}->{template};
+
 $config{target} = $target;
 my %target = resolve_config($target);
-
-&usage if (!%target || $target{template});
 
 foreach (keys %target_attr_translate) {
     $target{$target_attr_translate{$_}} = $target{$_}

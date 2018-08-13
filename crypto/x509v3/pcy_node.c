@@ -36,9 +36,6 @@ X509_POLICY_NODE *tree_find_sk(STACK_OF(X509_POLICY_NODE) *nodes,
     l.data = &n;
 
     idx = sk_X509_POLICY_NODE_find(nodes, &l);
-    if (idx == -1)
-        return NULL;
-
     return sk_X509_POLICY_NODE_value(nodes, idx);
 
 }

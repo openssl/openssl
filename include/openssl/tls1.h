@@ -1149,7 +1149,13 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
  */
-# define TLS_CT_NUMBER                   9
+# define TLS_CT_NUMBER                   10
+
+# if defined(SSL3_CT_NUMBER)
+#  if TLS_CT_NUMBER != SSL3_CT_NUMBER
+#    error "SSL/TLS CT_NUMBER values do not match"
+#  endif
+# endif
 
 # define TLS1_FINISH_MAC_LENGTH          12
 

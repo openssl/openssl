@@ -9,6 +9,16 @@
 
  Changes between 1.1.0h and 1.1.1 [xx XXX xxxx]
 
+  *) s390x assembly pack: add (improved) hardware-support for the following
+     cryptographic primitives: sha3, shake, aes-gcm, aes-ccm, aes-ctr, aes-ofb,
+     aes-cfb/cfb8, aes-ecb.
+     [Patrick Steuer]
+
+  *) Make EVP_PKEY_asn1_new() a bit stricter about its input.  A NULL pem_str
+     parameter is no longer accepted, as it leads to a corrupt table.  NULL
+     pem_str is reserved for alias entries only.
+     [Richard Levitte]
+
   *) Use the new ec_scalar_mul_ladder scaffold to implement a specialized ladder
      step for prime curves. The new implementation is based on formulae from
      differential addition-and-doubling in homogeneous projective coordinates

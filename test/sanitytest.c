@@ -84,6 +84,11 @@ static int test_sanity_range(void)
     return 1;
 }
 
+static int test_sanity_memcmp(void)
+{
+    return CRYPTO_memcmp("ab","cd",2);
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sanity_null_zero);
@@ -92,6 +97,7 @@ int setup_tests(void)
     ADD_TEST(test_sanity_sign);
     ADD_TEST(test_sanity_unsigned_conversion);
     ADD_TEST(test_sanity_range);
+    ADD_TEST(test_sanity_memcmp);
     return 1;
 }
 
