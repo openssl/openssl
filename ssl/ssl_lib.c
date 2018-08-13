@@ -702,6 +702,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->max_early_data = ctx->max_early_data;
     s->recv_max_early_data = ctx->recv_max_early_data;
     s->num_tickets = ctx->num_tickets;
+    s->pha_enabled = ctx->pha_enabled;
 
     /* Shallow copy of the ciphersuites stack */
     s->tls13_ciphersuites = sk_SSL_CIPHER_dup(ctx->tls13_ciphersuites);
@@ -5453,6 +5454,11 @@ int SSL_stateless(SSL *s)
         return 0;
 
     return -1;
+}
+
+void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val)
+{
+    ctx->pha_enabled = val;
 }
 
 void SSL_set_post_handshake_auth(SSL *ssl, int val)
