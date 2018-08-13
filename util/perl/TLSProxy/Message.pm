@@ -92,7 +92,8 @@ use constant {
     EXT_FORCE_LAST => 0xffff
 };
 
-# SignatureScheme of TLS 1.3 from RFC8446
+# SignatureScheme of TLS 1.3 from:
+# https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-signaturescheme
 # We have to manually grab the SHA224 equivalents from the old registry
 use constant {
     SIG_ALG_RSA_PKCS1_SHA256 => 0x0401,
