@@ -1270,7 +1270,7 @@ static int check_resumption(int idx, SSL_CTX *sctx, SSL_CTX *cctx, int succ)
                 || !TEST_true(SSL_set_session(clientssl, sesscache[i])))
             goto end;
 
-        SSL_force_post_handshake_auth(clientssl);
+        SSL_set_post_handshake_auth(clientssl, 1);
 
         if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                                     SSL_ERROR_NONE)))
@@ -1377,7 +1377,7 @@ static int test_tickets(int stateful, int idx)
                                           &clientssl, NULL, NULL)))
         goto end;
 
-    SSL_force_post_handshake_auth(clientssl);
+    SSL_set_post_handshake_auth(clientssl, 1);
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                                 SSL_ERROR_NONE))
@@ -4336,7 +4336,7 @@ static int test_pha_key_update(void)
                                       NULL, NULL)))
         goto end;
 
-    SSL_force_post_handshake_auth(clientssl);
+    SSL_set_post_handshake_auth(clientssl, 1);
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))

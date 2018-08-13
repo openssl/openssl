@@ -726,8 +726,8 @@ static void configure_handshake_ssl(SSL *server, SSL *client,
     if (extra->client.servername != SSL_TEST_SERVERNAME_NONE)
         SSL_set_tlsext_host_name(client,
                                  ssl_servername_name(extra->client.servername));
-    if (extra->client.force_pha)
-        SSL_force_post_handshake_auth(client);
+    if (extra->client.enable_pha)
+        SSL_set_post_handshake_auth(client, 1);
 }
 
 /* The status for each connection phase. */

@@ -595,7 +595,7 @@ typedef enum OPTION_choice {
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
-    OPT_FORCE_PHA,
+    OPT_ENABLE_PHA,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -786,7 +786,7 @@ const OPTIONS s_client_options[] = {
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
-    {"force_pha", OPT_FORCE_PHA, '-', "Force-enable post-handshake-authentication"},
+    {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
     {NULL, OPT_EOF, 0x00, NULL}
 };
 
@@ -975,7 +975,7 @@ int s_client_main(int argc, char **argv)
     int isdtls = 0;
 #endif
     char *psksessf = NULL;
-    int force_pha = 0;
+    int enable_pha = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1492,8 +1492,8 @@ int s_client_main(int argc, char **argv)
         case OPT_EARLY_DATA:
             early_data_file = opt_arg();
             break;
-        case OPT_FORCE_PHA:
-            force_pha = 1;
+        case OPT_ENABLE_PHA:
+            enable_pha = 1;
             break;
         }
     }
@@ -1944,8 +1944,8 @@ int s_client_main(int argc, char **argv)
     if (con == NULL)
         goto end;
 
-    if (force_pha)
-        SSL_force_post_handshake_auth(con);
+    if (enable_pha)
+        SSL_set_post_handshake_auth(con, 1);
 
     if (sess_in != NULL) {
         SSL_SESSION *sess;
