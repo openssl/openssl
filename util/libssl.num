@@ -432,12 +432,12 @@ SSL_write_early_data                    432	1_1_1	EXIST::FUNCTION:
 SSL_read_early_data                     433	1_1_1	EXIST::FUNCTION:
 SSL_get_early_data_status               434	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_get_max_early_data          435	1_1_1	EXIST::FUNCTION:
-SSL_add1_CA_list                        436	1_1_1	EXIST::FUNCTION:
+SSL_add1_CA                             436	1_1_1	EXIST::FUNCTION:
 SSL_set0_CA_list                        437	1_1_1	EXIST::FUNCTION:
 SSL_CTX_set0_CA_list                    438	1_1_1	EXIST::FUNCTION:
 SSL_get0_CA_list                        439	1_1_1	EXIST::FUNCTION:
 SSL_get0_peer_CA_list                   440	1_1_1	EXIST::FUNCTION:
-SSL_CTX_add1_CA_list                    441	1_1_1	EXIST::FUNCTION:
+SSL_CTX_add1_CA                         441	1_1_1	EXIST::FUNCTION:
 SSL_CTX_get0_CA_list                    442	1_1_1	EXIST::FUNCTION:
 SSL_CTX_add_custom_ext                  443	1_1_1	EXIST::FUNCTION:
 SSL_SESSION_is_resumable                444	1_1_1	EXIST::FUNCTION:
