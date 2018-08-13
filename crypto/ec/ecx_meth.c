@@ -313,7 +313,7 @@ static int ecx_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
     return ecx_key_print(bp, pkey, indent, ctx, KEY_OP_PUBLIC);
 }
 
-static int ecx_xctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
 
@@ -337,7 +337,7 @@ static int ecx_xctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     }
 }
 
-static int ecx_edctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
@@ -430,7 +430,7 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
     0, 0,
 
     ecx_free,
-    ecx_xctrl,
+    ecx_ctrl,
     NULL,
     NULL,
 
@@ -473,7 +473,7 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     0, 0,
 
     ecx_free,
-    ecx_xctrl,
+    ecx_ctrl,
     NULL,
     NULL,
 
@@ -589,7 +589,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     0, 0,
 
     ecx_free,
-    ecx_edctrl,
+    ecd_ctrl,
     NULL,
     NULL,
     ecd_item_verify,
@@ -631,7 +631,7 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     0, 0,
 
     ecx_free,
-    ecx_edctrl,
+    ecd_ctrl,
     NULL,
     NULL,
     ecd_item_verify,
