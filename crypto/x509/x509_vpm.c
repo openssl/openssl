@@ -428,6 +428,15 @@ int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                email, emaillen);
 }
 
+size_t X509_VERIFY_PARAM_get_email(X509_VERIFY_PARAM *param, unsigned char *dest,
+                                   size_t destlen)
+{
+    if (param->emaillen > destlen)
+        return param->emaillen;
+    memcpy(dest, &param->email, param->emaillen);
+    return param->emaillen;
+}
+
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                               const unsigned char *ip, size_t iplen)
 {

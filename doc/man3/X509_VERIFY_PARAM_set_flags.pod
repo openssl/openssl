@@ -13,7 +13,7 @@ X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
-X509_VERIFY_PARAM_get0_peername,
+X509_VERIFY_PARAM_get0_peername, X509_VERIFY_PARAM_get_email
 X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip,
 X509_VERIFY_PARAM_get_ip, X509_VERIFY_PARAM_set1_ip_asc
 - X509 verification parameters
@@ -60,6 +60,8 @@ X509_VERIFY_PARAM_get_ip, X509_VERIFY_PARAM_set1_ip_asc
  char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                   const char *email, size_t emaillen);
+ size_t X509_VERIFY_PARAM_get_email(X509_VERIFY_PARAM *param,
+                                    unsigned char *dest, size_t destlen);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
  size_t X509_VERIFY_PARAM_get_ip(X509_VERIFY_PARAM *param, unsigned char *dest,
@@ -185,6 +187,10 @@ B<emaillen> must be set to the length of B<email>.  When an email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
 
+X509_VERIFY_PARAM_get_email() fills the user provided buffer B<dest> of length
+B<destlen> with the set email address (if any). If the destination buffer is
+not large enough, then no data is written.
+
 X509_VERIFY_PARAM_set1_ip() sets the expected IP address to B<ip>.
 The B<ip> argument is in binary format, in network byte-order and
 B<iplen> must be set to 4 for IPv4 and 16 for IPv6.  When an IP
@@ -226,9 +232,9 @@ X509_VERIFY_PARAM_get_depth() returns the current verification depth.
 X509_VERIFY_PARAM_get_auth_level() returns the current authentication security
 level.
 
-X509_VERIFY_PARAM_get_ip() returns the number of bytes written to the buffer,
-or if B<destlen> was not large enough, the buffer size required. If no IP is
-set then returns 0.
+X509_VERIFY_PARAM_get_email() and X509_VERIFY_PARAM_get_ip() return the number
+of bytes written to the buffer, or if B<destlen> was not large enough, the
+buffer size required. If the field is not set then they return 0.
 
 =head1 VERIFICATION FLAGS
 

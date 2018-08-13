@@ -559,6 +559,8 @@ char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *);
 void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *, X509_VERIFY_PARAM *);
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen);
+size_t X509_VERIFY_PARAM_get_email(X509_VERIFY_PARAM *param,
+                                   unsigned char *dest, size_t destlen);
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                               const unsigned char *ip, size_t iplen);
 size_t X509_VERIFY_PARAM_get_ip(X509_VERIFY_PARAM *param, unsigned char *dest,
