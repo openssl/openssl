@@ -2250,8 +2250,8 @@ CRMF_R_FAILURE_OBTAINING_RANDOM:108:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:109:iterationcount below 100
 CRMF_R_MALLOC_FAILURE:110:malloc failure
 CRMF_R_NULL_ARGUMENT:111:null argument
-CRMF_R_SETTING_MAC_ALRGOR_FAILURE:112:setting mac alrgor failure
-CRMF_R_SETTING_OWF_ALRGOR_FAILURE:113:setting owf alrgor failure
+CRMF_R_SETTING_MAC_ALGOR_FAILURE:112:setting mac algor failure
+CRMF_R_SETTING_OWF_ALGOR_FAILURE:113:setting owf algor failure
 CRMF_R_UNSUPPORTED_ALGORITHM:114:unsupported algorithm
 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY:115:unsupported alg for popsigningkey
 CRMF_R_UNSUPPORTED_CIPHER:116:unsupported cipher

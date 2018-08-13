@@ -50,8 +50,8 @@ int ERR_load_CRMF_strings(void);
 # define CRMF_R_ITERATIONCOUNT_BELOW_100                  109
 # define CRMF_R_MALLOC_FAILURE                            110
 # define CRMF_R_NULL_ARGUMENT                             111
-# define CRMF_R_SETTING_MAC_ALRGOR_FAILURE                112
-# define CRMF_R_SETTING_OWF_ALRGOR_FAILURE                113
+# define CRMF_R_SETTING_MAC_ALGOR_FAILURE                 112
+# define CRMF_R_SETTING_OWF_ALGOR_FAILURE                 113
 # define CRMF_R_UNSUPPORTED_ALGORITHM                     114
 # define CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY         115
 # define CRMF_R_UNSUPPORTED_CIPHER                        116

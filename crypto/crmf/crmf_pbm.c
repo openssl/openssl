@@ -64,7 +64,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
      * support SHA-1.
      */
     if (!X509_ALGOR_set0(pbm->owf, OBJ_nid2obj(owfnid), V_ASN1_UNDEF, NULL)) {
-        error = CRMF_R_SETTING_OWF_ALRGOR_FAILURE;
+        error = CRMF_R_SETTING_OWF_ALGOR_FAILURE;
         goto err;
     }
 
@@ -93,7 +93,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
      * DES-MAC [PKCS11].
      */
     if (!X509_ALGOR_set0(pbm->mac, OBJ_nid2obj(macnid), V_ASN1_UNDEF, NULL)) {
-        error = CRMF_R_SETTING_MAC_ALRGOR_FAILURE;
+        error = CRMF_R_SETTING_MAC_ALGOR_FAILURE;
         goto err;
     }
 
