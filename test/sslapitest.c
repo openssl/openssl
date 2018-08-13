@@ -4331,12 +4331,11 @@ static int test_pha_key_update(void)
         || !TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_3_VERSION)))
         goto end;
 
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL)))
         goto end;
-
-    SSL_set_post_handshake_auth(clientssl, 1);
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
                                          SSL_ERROR_NONE)))

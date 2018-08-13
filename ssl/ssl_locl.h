@@ -1063,6 +1063,9 @@ struct ssl_ctx_st {
     /* Callback to determine if early_data is acceptable or not */
     SSL_allow_early_data_cb_fn allow_early_data_cb;
     void *allow_early_data_cb_data;
+
+    /* Do we advertise Post-handshake auth support? */
+    int pha_enabled;
 };
 
 struct ssl_st {
