@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.0.2p and 1.0.2q [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.2o and 1.0.2p [14 Aug 2018]
 
   *) Client DoS due to large DH parameter
