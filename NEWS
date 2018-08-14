@@ -22,6 +22,11 @@
       o Add support for SipHash
       o Grand redesign of the OpenSSL random generator
 
+  Major changes between OpenSSL 1.1.0h and OpenSSL 1.1.0i [under development]
+
+      o Client DoS due to large DH parameter (CVE-2018-0732)
+      o Cache timing vulnerability in RSA Key Generation (CVE-2018-0737)
+
   Major changes between OpenSSL 1.1.0g and OpenSSL 1.1.0h [under development]
 
       o Constructed ASN.1 types with a recursive definition could exceed the
