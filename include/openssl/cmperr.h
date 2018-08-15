@@ -183,7 +183,6 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_NO_SUITABLE_SERVER_CERT                    156
 #  define CMP_R_NO_VALID_SERVER_CERT_FOUND                 157
 #  define CMP_R_NULL_ARGUMENT                              158
-#  define CMP_R_OUT_OF_MEMORY                              159
 #  define CMP_R_PKIBODY_ERROR                              160
 #  define CMP_R_PKICONF_NOT_RECEIVED                       161
 #  define CMP_R_PKISTATUSINFO_NOT_FOUND                    162

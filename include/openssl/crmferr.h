@@ -32,9 +32,8 @@ int ERR_load_CRMF_strings(void);
 # define CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID               110
 # define CRMF_F_OSSL_CRMF_MSG_SET_VALIDITY                111
 # define CRMF_F_OSSL_CRMF_MSG_SET_VERSION2                112
-# define CRMF_F_OSSL_CRMF_PASSWORDBASEDMAC_NEW            113
+# define CRMF_F_OSSL_CRMF_PBM_NEW                         113
 # define CRMF_F_OSSL_CRMF_PBMP_NEW                        114
-# define CRMF_F_OSSL_CRMF_PBM_NEW                         115
 
 /*
  * CRMF reason codes.
@@ -49,7 +48,6 @@ int ERR_load_CRMF_strings(void);
 # define CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY            107
 # define CRMF_R_FAILURE_OBTAINING_RANDOM                  108
 # define CRMF_R_ITERATIONCOUNT_BELOW_100                  109
-# define CRMF_R_MALLOC_FAILURE                            110
 # define CRMF_R_NULL_ARGUMENT                             111
 # define CRMF_R_SETTING_MAC_ALGOR_FAILURE                 112
 # define CRMF_R_SETTING_OWF_ALGOR_FAILURE                 113

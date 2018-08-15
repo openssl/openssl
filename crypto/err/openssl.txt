@@ -2093,7 +2093,6 @@ CMP_R_NO_SENDER_NO_REFERENCE:155:no sender no reference
 CMP_R_NO_SUITABLE_SERVER_CERT:156:no suitable server cert
 CMP_R_NO_VALID_SERVER_CERT_FOUND:157:no valid server cert found
 CMP_R_NULL_ARGUMENT:158:null argument
-CMP_R_OUT_OF_MEMORY:159:out of memory
 CMP_R_PKIBODY_ERROR:160:pkibody error
 CMP_R_PKICONF_NOT_RECEIVED:161:pkiconf not received
 CMP_R_PKISTATUSINFO_NOT_FOUND:162:pkistatusinfo not found
@@ -2248,7 +2247,6 @@ CRMF_R_ERROR_DECRYPTING_KEY:106:error decrypting key
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:107:error decrypting symmetric key
 CRMF_R_FAILURE_OBTAINING_RANDOM:108:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:109:iterationcount below 100
-CRMF_R_MALLOC_FAILURE:110:malloc failure
 CRMF_R_NULL_ARGUMENT:111:null argument
 CRMF_R_SETTING_MAC_ALGOR_FAILURE:112:setting mac algor failure
 CRMF_R_SETTING_OWF_ALGOR_FAILURE:113:setting owf algor failure

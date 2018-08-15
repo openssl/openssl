@@ -1935,7 +1935,7 @@ static int read_write_req_resp(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
 
     if (ret != 0 || (*res) == NULL)
         goto err;
-    ret = CMP_R_OUT_OF_MEMORY;
+    ret = ERR_R_MALLOC_FAILURE;
     hdr = OSSL_CMP_MSG_get0_header(*res);
     if ((opt_reqin != NULL || opt_rspin != NULL) &&
         /* need to satisfy nonce and transactionID checks */

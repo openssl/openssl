@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-  OSSL_CRMF_pbmp_new,
-  OSSL_CRMF_pbm_new - functions for calculating Password-based MAC
+  OSSL_CRMF_pbm_new,
+  OSSL_CRMF_pbmp_new - functions for calculating Password-Based MAC (PBM)
 
 =head1 SYNOPSIS
 
@@ -19,29 +19,29 @@
 
 =head1 DESCRIPTION
 
-OSSL_CRMF_pbm_new() generates a PBM (Password-based MAC) based on given
-PBM parameters B<pbmp>, message B<msg>, secret B<sec>, along with the respective
-octet lengths B<msglen>, B<seclen>.  Will write pointers to the newly allocated
-MAC into the given B<mac> and the respective octet lenght into the int B<maclen>
-points to. The target of B<mac> will be freed if not NULL.
+OSSL_CRMF_pbm_new() generates a PBM (Password-Based MAC) based on given PBM
+parameters B<pbmp>, message B<msg>, and secret B<sec>, along with the respective
+lengths B<msglen> and B<seclen>. Will write the adddress of the newly allocated
+MAC via the B<mac> reference parameter and the length via the B<maclen> reference
+parameter. Any previous pointer referred to by B<mac> will be freed if not NULL.
 
-Iteration count must be at least 100, as stipulated by RFC 4211, and can
-be at most 100000 to avoid DoS through manipulated or otherwise malformed
-input.
+The iteration count must be at least 100, as stipulated by RFC 4211, and is
+limited to at most 100000 to avoid DoS through manipulated or otherwise
+malformed input.
 
 OSSL_CRMF_pbmp_new() initializes and returns a new PBMParameter
-structure with new a random salt of given octet length B<saltlen>, OWF (one-way
+structure with new a random salt of given length B<saltlen>, OWF (one-way
 function) NID B<owfnid>, iteration count B<itercnt>, and MAC NID B<macnid>.
 
-Iteration count is enforced to be at least 100, as stipulated by RFC 4211.
+The iteration count is enforced to be at least 100, as stipulated by RFC 4211.
 
 =head1 NOTES
 
 The OWF (one-way function) and for the MAC (message authentication code) may be
-any with a NID defined in the header file B<objects.h>, which also should
-include NID_hmac_sha1 which is specified by RFC 4210.
+any with an NID defined in B<openssl/objects.h>,
+which also should include NID_hmac_sha1 which is specified by RFC 4210.
 
-RFC 4210 recommends that the salt SHOULD be at least 8 octets (64 bits) long.
+RFC 4210 recommends that the salt SHOULD be at least 8 bytes (64 bits) long.
 
 =head1 RETURN VALUES
 
@@ -52,16 +52,16 @@ structure, or NULL on error.
 
 =head1 EXAMPLE
 
-OSSL_CRMF_PBMPARAMETER *pbm = NULL;
-unsiged char *msg = "Hello";
-unsiged char *sec = "SeCrEt";
-unsiged char *mac = NULL;
-unsiged int maclen;
+ OSSL_CRMF_PBMPARAMETER *pbm = NULL;
+ unsiged char *msg = "Hello";
+ unsiged char *sec = "SeCrEt";
+ unsiged char *mac = NULL;
+ unsiged int maclen;
 
-if ((pbm = OSSL_CRMF_pbmp_new(16, NID_sha256, 500, NID_hmac_sha1) == NULL))
-    goto err;
-if (!OSSL_CRMF_pbm_new(pbm, msg, 5, sec, 6, &mac, &maclen))
-    goto err;
+ if ((pbm = OSSL_CRMF_pbmp_new(16, NID_sha256, 500, NID_hmac_sha1) == NULL))
+     goto err;
+ if (!OSSL_CRMF_pbm_new(pbm, msg, 5, sec, 6, &mac, &maclen))
+     goto err;
 
 =head1 SEE ALSO
 
