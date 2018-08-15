@@ -239,6 +239,46 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
     return 0;
 }
 
+/*
+ * Filter the TLSv1.3 ciphersuites so that we only use those based on the given
+ * hash in order that our PSK will work.
+ */
+static int filterciphersuites(SSL_CTX *ctx, const EVP_MD *hash)
+{
+    int i, ret;
+    STACK_OF(SSL_CIPHER) *ciphers = SSL_CTX_get_ciphers(ctx);
+    char buf[BUFSIZ];
+    char *bufptr = buf;
+
+    if (ciphers == NULL)
+        return 0;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(ciphers, i);
+        size_t len;
+
+        if (SSL_CIPHER_get_min_tls(cipher) != TLS1_3_VERSION)
+            continue;
+        if (SSL_CIPHER_get_handshake_digest(cipher) != hash)
+            continue;
+
+        len = strlen(SSL_CIPHER_get_name(cipher));
+        /* Allow one byte for ':' and one for NUL terminator */
+        if (BUFSIZ - (size_t)(bufptr - buf) < len + 2)
+            return 0;
+
+        if (buf != bufptr)
+            *(bufptr++) = ':';
+        strcpy(bufptr, SSL_CIPHER_get_name(cipher));
+        bufptr += len;
+    }
+    *bufptr = '\0';
+
+    ret = SSL_CTX_set_ciphersuites(ctx, buf);
+
+    return ret;
+}
+
 /* This is a context that we pass to callbacks */
 typedef struct tlsextctx_st {
     BIO *biodebug;
@@ -976,6 +1016,7 @@ int s_client_main(int argc, char **argv)
 #endif
     char *psksessf = NULL;
     int force_pha = 0;
+    int ciphersuitescfg = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1138,6 +1179,8 @@ int s_client_main(int argc, char **argv)
                 BIO_printf(bio_err, "%s: Memory allocation failure\n", prog);
                 goto end;
             }
+            if (o == OPT_S_CIPHERSUITES)
+                ciphersuitescfg = 1;
             break;
         case OPT_V_CASES:
             if (!opt_verify(o, vpm))
@@ -1809,8 +1852,22 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     }
-    if (psk_key != NULL || psksess != NULL)
+    if (psk_key != NULL || psksess != NULL) {
+        const EVP_MD *hash = (psksess == NULL)
+                             ? EVP_sha256()
+                             : SSL_CIPHER_get_handshake_digest(SSL_SESSION_get0_cipher(psksess));
+        /*
+         * We're going to offer a TLSv1.3 PSK. Unless we've been explicitly
+         * configured with a list of TLSv1.3 ciphersuites we remove any that
+         * aren't compatible with the PSK.
+         */
+        if (!ciphersuitescfg && !filterciphersuites(ctx, hash)) {
+            BIO_printf(bio_err, "Can't set ciphersuites for PSK use\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
         SSL_CTX_set_psk_use_session_callback(ctx, psk_use_session_cb);
+    }
 
 #ifndef OPENSSL_NO_SRTP
     if (srtp_profiles != NULL) {

@@ -459,12 +459,21 @@ The default value is "Client_identity" (without the quotes).
 Use the PSK key B<key> when using a PSK cipher suite. The key is
 given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
-This option must be provided in order to use a PSK cipher.
+This option must be provided in order to use a PSK cipher. Using this option
+will restrict the TLSv1.3 ciphersuites that are offered to those that support
+SHA256, unless TLSv1.3 ciphersuites are explicitly configured using the
+B<-ciphersuites> option or B<-psk_session> is used.
 
 =item B<-psk_session file>
 
 Use the pem encoded SSL_SESSION data stored in B<file> as the basis of a PSK.
-Note that this will only work if TLSv1.3 is negotiated.
+Note that this will only work if TLSv1.3 is negotiated. Using this option will
+restrict the TLSv1.3 ciphersuites that are offered to those that are compatible
+with the PSK, unless TLSv1.3 ciphersuites are explicitly configured using the
+B<-ciphersuites> option.
+
+If B<-psk> is also used then that option will set the TLSv1.2 and below
+PSK, and this option will set the TLSv1.3 PSK.
 
 =item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 

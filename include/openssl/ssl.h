@@ -1492,6 +1492,8 @@ __owur const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 __owur const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s);
 __owur int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits);
 __owur const char *SSL_CIPHER_get_version(const SSL_CIPHER *c);
+__owur int SSL_CIPHER_get_min_tls(const SSL_CIPHER *c);
+__owur int SSL_CIPHER_get_max_tls(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_get_name(const SSL_CIPHER *c);
 __owur const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 __owur const char *OPENSSL_cipher_name(const char *rfc_name);

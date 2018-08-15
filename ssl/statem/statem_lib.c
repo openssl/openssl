@@ -1486,19 +1486,23 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 
 /*
  * Only called by servers. Returns 1 if the server has a TLSv1.3 capable
- * certificate type, or has PSK configured. Otherwise returns 0.
+ * certificate type and not TLSv1.2 PSK, or has TLSv1.3 PSK configured.
+ * Otherwise returns 0.
  */
 static int is_tls13_capable(const SSL *s)
 {
     int i;
 
-#ifndef OPENSSL_NO_PSK
-    if (s->psk_server_callback != NULL)
-        return 1;
-#endif
-
+    /* We have a TLSv1.3 PSK, so we are TLSv1.3 capable */
     if (s->psk_find_session_cb != NULL)
         return 1;
+
+    /*
+     * We don't have TLSv1.3 PSK, but we do have TLSv1.2 PSK. We mustn't select
+     * TLSv1.3.
+     */
+    if (s->psk_server_callback != NULL)
+        return 0;
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {
         /* Skip over certs disallowed for TLSv1.3 */
@@ -2027,6 +2031,16 @@ int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
          * "version capability" vector.
          */
         if (vent->cmeth == NULL) {
+            hole = 1;
+            continue;
+        }
+        if (s->psk_client_callback != NULL
+                && vent->version == TLS1_3_VERSION
+                && s->psk_use_session_cb == NULL) {
+            /*
+             * We are configured for TLSv1.2 PSKs and not TLSv1.3 PSKs, so we
+             * don't offer TLSv1.3.
+             */
             hole = 1;
             continue;
         }
