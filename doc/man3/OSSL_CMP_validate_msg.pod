@@ -2,10 +2,11 @@
 
 =head1 NAME
 
- OSSL_CMP_expired,
- OSSL_CMP_validate_msg,
- OSSL_CMP_validate_cert_path,
- OSSL_CMP_print_cert_verify_cb
+OSSL_CMP_expired,
+OSSL_CMP_validate_msg,
+OSSL_CMP_validate_cert_path,
+OSSL_CMP_print_cert_verify_cb
+- functions for verifying CMP message protection
 
 =head1 SYNOPSIS
 
@@ -76,11 +77,9 @@ OSSL_CMP_validate_msg() returns 1 on success, 0 on error or validation failed.
 OSSL_CMP_validate_cert_path() returns 1 on successful validation and 0
 otherwise.
 
-=head1 EXAMPLE
-
 =head1 SEE ALSO
 
-L<CMP_CTX(3), L<CMP_ses(3)>
+L<OSSL_CMP_CTX_create(3)>, L<OSSL_CMP_exec_IR_ses(3)>
 
 =head1 COPYRIGHT
 

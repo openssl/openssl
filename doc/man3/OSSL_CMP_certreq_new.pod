@@ -2,17 +2,18 @@
 
 =head1 NAME
 
- OSSL_CMP_certreq_new,
- OSSL_CMP_certrep_new,
- OSSL_CMP_rr_new,
- OSSL_CMP_rp_new,
- OSSL_CMP_certConf_new,
- OSSL_CMP_pkiconf_new,
- OSSL_CMP_pollReq_new,
- OSSL_CMP_pollRep_new,
- OSSL_CMP_genm_new,
- OSSL_CMP_genp_new,
- OSSL_CMP_error_new
+OSSL_CMP_certreq_new,
+OSSL_CMP_certrep_new,
+OSSL_CMP_rr_new,
+OSSL_CMP_rp_new,
+OSSL_CMP_certConf_new,
+OSSL_CMP_pkiconf_new,
+OSSL_CMP_pollReq_new,
+OSSL_CMP_pollRep_new,
+OSSL_CMP_genm_new,
+OSSL_CMP_genp_new,
+OSSL_CMP_error_new
+- functions for generating CMP messages
 
 =head1 SYNOPSIS
 
@@ -82,8 +83,6 @@ which can be either of IR/CR/KUR/P10CR, depending on the given B<bodytype>.
 The OpenSSL error reason code defined in err.h to use on error is given as
 B<err_code>.
 
-=over 4
-
 Available CMP certificate request PKIMessage B<bodytype>s are:
 
 =over 4
@@ -98,12 +97,8 @@ Available CMP certificate request PKIMessage B<bodytype>s are:
 
 =back
 
-=back
-
 OSSL_CMP_certrep_new() creates a PKIMessage for certificate response, which can
 be either of IP/CP/KUP, depending on the given B<bodytype>.
-
-=over 4
 
 Available CMP certificate response PKIMessage B<bodytype>s are:
 
@@ -117,13 +112,7 @@ Available CMP certificate response PKIMessage B<bodytype>s are:
 
 =back
 
-=back
-
-=over 4
-
 The list of all CMP PKIMessage B<bodytype>s is:
-
-=over 4
 
  #define OSSL_CMP_PKIBODY_IR        0
  #define OSSL_CMP_PKIBODY_IP        1
@@ -150,10 +139,6 @@ The list of all CMP PKIMessage B<bodytype>s is:
  #define OSSL_CMP_PKIBODY_CERTCONF 24
  #define OSSL_CMP_PKIBODY_POLLREQ  25
  #define OSSL_CMP_PKIBODY_POLLREP  26
-
-=back
-
-=back
 
 OSSL_CMP_rr_new() creates a Revocation Request message from the
 information set via OSSL_CMP_CTX_set1_oldClCert().
@@ -183,12 +168,9 @@ CMP is specified in RFC 4210 (and CRMF in RFC 4211).
 All of the functions return a new OSSL_CMP_MSG structure containing
 the generated message on success, or NULL on error.
 
-=head1 EXAMPLE
-
 =head1 SEE ALSO
 
-L<CMP_CTX(3)>,
-L<ERR_load_strings(3)>
+L<OSSL_CMP_CTX_create(3)>, L<ERR_load_strings(3)>
 
 =head1 COPYRIGHT
 

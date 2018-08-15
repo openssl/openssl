@@ -2,68 +2,68 @@
 
 =head1 NAME
 
- OSSL_CMP_CTX_create,
- OSSL_CMP_CTX_init,
- OSSL_CMP_CTX_delete,
- OSSL_CMP_CTX_set1_referenceValue,
- OSSL_CMP_CTX_set1_secretValue,
- OSSL_CMP_CTX_set1_caCert,
- OSSL_CMP_CTX_set1_srvCert,
- OSSL_CMP_CTX_set1_clCert,
- OSSL_CMP_CTX_set1_oldClCert,
- OSSL_CMP_CTX_set1_p10CSR,
- OSSL_CMP_CTX_set1_subjectName,
- OSSL_CMP_CTX_set1_issuer,
- OSSL_CMP_CTX_set1_newClCert,
- OSSL_CMP_CTX_get0_newClCert,
- OSSL_CMP_CTX_set0_pkey,
- OSSL_CMP_CTX_set0_newPkey,
- OSSL_CMP_CTX_set1_pkey,
- OSSL_CMP_CTX_set1_newPkey,
- OSSL_CMP_CTX_set1_transactionID,
- OSSL_CMP_CTX_set1_recipNonce,
- OSSL_CMP_CTX_set1_last_senderNonce,
- OSSL_CMP_CTX_set_option,
- OSSL_CMP_CTX_caPubs_get1,
- OSSL_CMP_CTX_set1_caPubs,
- OSSL_CMP_CTX_policyOID_push1,
- OSSL_CMP_CTX_set1_extraCertsOut,
- OSSL_CMP_CTX_extraCertsOut_push1,
- OSSL_CMP_CTX_extraCertsIn_get1,
- OSSL_CMP_CTX_set1_extraCertsIn,
- OSSL_CMP_CTX_set0_trustedStore,
- OSSL_CMP_CTX_get0_trustedStore,
- OSSL_CMP_CTX_set1_untrusted_certs,
- OSSL_CMP_CTX_get0_untrusted_certs,
- OSSL_CMP_CTX_set_log_cb,
- OSSL_CMP_puts,
- OSSL_CMP_printf,
-
- OSSL_CMP_CTX_status_get,
- OSSL_CMP_CTX_statusString_get,
- OSSL_CMP_CTX_failInfoCode_get,
- OSSL_CMP_CTX_set_failInfoCode,
- OSSL_CMP_CTX_set_popoMethod,
- OSSL_CMP_CTX_set1_proxyName,
- OSSL_CMP_CTX_set_proxyPort,
- OSSL_CMP_CTX_set_transfer_cb,
- OSSL_CMP_CTX_set_transfer_cb_arg,
- OSSL_CMP_CTX_get_transfer_cb_arg,
- OSSL_CMP_CTX_set_http_cb,
- OSSL_CMP_CTX_set_http_cb_arg,
- OSSL_CMP_CTX_get_http_cb_arg,
- OSSL_CMP_CTX_set1_recipient,
- OSSL_CMP_CTX_set1_expected_sender,
- OSSL_CMP_CTX_set1_serverName,
- OSSL_CMP_CTX_set1_serverPath,
- OSSL_CMP_CTX_set_serverPort,
- OSSL_CMP_CTX_set0_reqExtensions,
- OSSL_CMP_CTX_set1_reqExtensions,
- OSSL_CMP_CTX_reqExtensions_have_SAN,
- OSSL_CMP_CTX_set_certConf_cb,
- OSSL_CMP_CTX_set_certConf_cb_arg,
- OSSL_CMP_CTX_get_certConf_cb_arg,
- OSSL_CMP_CTX_subjectAltName_push1
+OSSL_CMP_CTX_create,
+OSSL_CMP_CTX_init,
+OSSL_CMP_CTX_delete,
+OSSL_CMP_CTX_set1_referenceValue,
+OSSL_CMP_CTX_set1_secretValue,
+OSSL_CMP_CTX_set1_srvCert,
+OSSL_CMP_CTX_set1_clCert,
+OSSL_CMP_CTX_set1_oldClCert,
+OSSL_CMP_CTX_set1_p10CSR,
+OSSL_CMP_CTX_set1_subjectName,
+OSSL_CMP_CTX_set1_issuer,
+OSSL_CMP_CTX_set1_newClCert,
+OSSL_CMP_CTX_get0_newClCert,
+OSSL_CMP_CTX_set0_pkey,
+OSSL_CMP_CTX_set0_newPkey,
+OSSL_CMP_CTX_set1_pkey,
+OSSL_CMP_CTX_set1_newPkey,
+OSSL_CMP_CTX_set1_transactionID,
+OSSL_CMP_CTX_set1_recipNonce,
+OSSL_CMP_CTX_set1_last_senderNonce,
+OSSL_CMP_CTX_set_option,
+OSSL_CMP_CTX_caPubs_get1,
+OSSL_CMP_CTX_set1_caPubs,
+OSSL_CMP_CTX_policyOID_push1,
+OSSL_CMP_CTX_geninfo_itav_push0,
+OSSL_CMP_CTX_genm_itav_push0,
+OSSL_CMP_CTX_set1_extraCertsOut,
+OSSL_CMP_CTX_extraCertsOut_push1,
+OSSL_CMP_CTX_extraCertsIn_get1,
+OSSL_CMP_CTX_set1_extraCertsIn,
+OSSL_CMP_CTX_set0_trustedStore,
+OSSL_CMP_CTX_get0_trustedStore,
+OSSL_CMP_CTX_set1_untrusted_certs,
+OSSL_CMP_CTX_get0_untrusted_certs,
+OSSL_CMP_CTX_set_log_cb,
+OSSL_CMP_puts,
+OSSL_CMP_printf,
+OSSL_CMP_CTX_status_get,
+OSSL_CMP_CTX_statusString_get,
+OSSL_CMP_CTX_failInfoCode_get,
+OSSL_CMP_CTX_set_failInfoCode,
+OSSL_CMP_CTX_set1_proxyName,
+OSSL_CMP_CTX_set_proxyPort,
+OSSL_CMP_CTX_set_transfer_cb,
+OSSL_CMP_CTX_set_transfer_cb_arg,
+OSSL_CMP_CTX_get_transfer_cb_arg,
+OSSL_CMP_CTX_set_http_cb,
+OSSL_CMP_CTX_set_http_cb_arg,
+OSSL_CMP_CTX_get_http_cb_arg,
+OSSL_CMP_CTX_set1_recipient,
+OSSL_CMP_CTX_set1_expected_sender,
+OSSL_CMP_CTX_set1_serverName,
+OSSL_CMP_CTX_set1_serverPath,
+OSSL_CMP_CTX_set_serverPort,
+OSSL_CMP_CTX_set0_reqExtensions,
+OSSL_CMP_CTX_set1_reqExtensions,
+OSSL_CMP_CTX_reqExtensions_have_SAN,
+OSSL_CMP_CTX_set_certConf_cb,
+OSSL_CMP_CTX_set_certConf_cb_arg,
+OSSL_CMP_CTX_get_certConf_cb_arg,
+OSSL_CMP_CTX_subjectAltName_push1
+- functions for managing the CMP client context datastructure
 
 =head1 SYNOPSIS
 
@@ -77,7 +77,6 @@
                                       const unsigned char *ref, size_t len);
  int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
                                    const size_t len);
- int OSSL_CMP_CTX_set1_caCert(OSSL_CMP_CTX *ctx, const X509 *cert);
  int OSSL_CMP_CTX_set1_srvCert(OSSL_CMP_CTX *ctx, const X509 *cert);
  int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, const X509 *cert);
  int OSSL_CMP_CTX_set1_oldClCert(OSSL_CMP_CTX *ctx, const X509 *cert);
@@ -120,8 +119,6 @@
 
  typedef enum {LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERROR,
                LOG_WARN, LOG_NOTE, LOG_INFO, LOG_DEBUG} severity;
- typedef void (*OSSL_cmp_log_cb_t)(const char *file, int lineno, severity level,
-                                   const char *msg);
  int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_log_cb_t cb);
 
  int OSSL_CMP_puts(const char *file, int lineno, severity level,
@@ -137,16 +134,11 @@
  unsigned long OSSL_CMP_CTX_failInfoCode_get(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set_failInfoCode(OSSL_CMP_CTX *ctx,
                                    OSSL_CMP_PKIFAILUREINFO *failInfo);
- int OSSL_CMP_CTX_set_popoMethod(OSSL_CMP_CTX *ctx, int method);
  int OSSL_CMP_CTX_set1_proxyName(OSSL_CMP_CTX *ctx, const char *name);
  int OSSL_CMP_CTX_set_proxyPort(OSSL_CMP_CTX *ctx, int port);
- typedef int (*OSSL_cmp_transfer_cb_t)(const OSSL_CMP_CTX *ctx,
-                                       const OSSL_CMP_MSG *req,
-                                       OSSL_CMP_MSG **res);
  int OSSL_CMP_CTX_set_transfer_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_transfer_cb_t cb);
  int OSSL_CMP_CTX_set_transfer_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_transfer_cb_arg(OSSL_CMP_CTX *ctx);
- typedef BIO *(*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio, int connect);
  int OSSL_CMP_CTX_set_http_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_http_cb_t cb);
  int OSSL_CMP_CTX_set_http_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_http_cb_arg(OSSL_CMP_CTX *ctx);
@@ -158,8 +150,6 @@
  int OSSL_CMP_CTX_set1_reqExtensions(OSSL_CMP_CTX *ctx, X509_EXTENSIONS *exts);
  int OSSL_CMP_CTX_reqExtensions_have_SAN(OSSL_CMP_CTX *ctx);
 
- typedef int (*OSSL_cmp_certConf_cb_t) (OSSL_CMP_CTX *ctx, const X509 *cert,
-                                        int failure, const char **txt);
  int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_cmp_certConf_cb_t cb);
  int OSSL_CMP_CTX_set_certConf_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_certConf_cb_arg(OSSL_CMP_CTX *ctx);
@@ -185,9 +175,6 @@ B<ctx> or clears it if the B<ref> argument is NULL.
 
 OSSL_CMP_CTX_set1_secretValue() sets the B<sec> with the length B<len> in the
 given B<ctx> or clears it if the B<sec> argument is NULL.
-
-OSSL_CMP_CTX_set1_caCert() sets the given CA Certificate in the given
-OSSL_CMP_CTX structure.
 
 OSSL_CMP_CTX_set1_srvCert() sets the server certificate to be directly trusted
 for verifying response messages. Additionally using
@@ -378,7 +365,12 @@ OSSL_CMP_CTX_get0_untrusted_certs(OSSL_CMP_CTX *ctx) returns a pointer to the
 list of untrusted certs.
 
 OSSL_CMP_CTX_set_log_cb() sets the log callback for error/warn/info/debug
-messages.  It obtains the current source file path name and line number
+messages. This callback function has the type
+
+ typedef void (*OSSL_cmp_log_cb_t)(const char *file, int lineno, severity level,
+                                   const char *msg);
+
+and obtains the current source file path name and line number
 (or NULL and 0 if not avaialble),
 the severity level as used also for syslog,
 and the message string.
@@ -416,7 +408,13 @@ for connecting to the CA server.
 OSSL_CMP_CTX_set_proxyPort() sets the port of the HTTP proxy.
 Port defaults to 8080 if not set explicitly.
 
-OSSL_CMP_CTX_set_transfer_cb() sets the message transfer callback function.
+OSSL_CMP_CTX_set_transfer_cb() sets the message transfer callback function,
+which has the type
+
+ typedef int (*OSSL_cmp_transfer_cb_t)(const OSSL_CMP_CTX *ctx,
+                                       const OSSL_CMP_MSG *req,
+                                       OSSL_CMP_MSG **res);
+
 Default is OSSL_CMP_MSG_http_perform().
 The callback should send the CMP request it obtains via the B<req> parameter
 and on success place the response in the B<*res> output parameter.
@@ -437,7 +435,7 @@ OSSL_CMP_CTX_set_transfer_cb_arg().
 OSSL_CMP_CTX_set_http_cb() sets the optional http connect/disconnect callback
 function, which has the prototype
 
-typedef BIO *(*OSSL_cmp_http_cb_t) (OSSL_CMP_CTX *ctx, BIO *hbio,
+ typedef BIO *(*OSSL_cmp_http_cb_t)(OSSL_CMP_CTX *ctx, BIO *hbio,
                                     unsigned long detail);
 
 It may modify the HTTP BIO given in the B<hbio> argument
@@ -493,8 +491,12 @@ a Subject Alternative Name extension, in all other cases (including errors) 0.
 
 OSSL_CMP_CTX_set_certConf_cb() sets the callback used for evaluating the newly
 enrolled certificate before the library sends, depending on its result,
-a positive or negative certConf messge to the server. The callback should
-inspect the certificate it obtains via the B<cert> parameter and may
+a positive or negative certConf messge to the server. The callback has type
+
+ typedef int (*OSSL_cmp_certConf_cb_t) (OSSL_CMP_CTX *ctx, const X509 *cert,
+                                        int failure, const char **txt);
+
+and should inspect the certificate it obtains via the B<cert> parameter and may
 overrule the pre-decision given in the B<failure> and B<*txt> parameters.
 If it accepts the certificate it must return -1, indicating success. Else it
 must return a bit number <= OSSL_CMP_PKIFAILUREINFO_MAX indicating failure and
@@ -643,7 +645,7 @@ example, the id-it-signKeyPairTypes OID and prints info on the genp contents.
 
 =head1 SEE ALSO
 
-L<CMP_ses(3)>
+L<OSSL_CMP_exec_IR_ses(3)>
 
 =head1 COPYRIGHT
 

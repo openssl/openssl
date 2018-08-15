@@ -8,7 +8,8 @@ OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo,
 OSSL_CRMF_MSG_set1_regCtrl_pkiArchiveOptions,
 OSSL_CRMF_MSG_set1_regCtrl_protocolEncrKey,
 OSSL_CRMF_MSG_set1_regCtrl_oldCertID,
-OSSL_CRMF_CERTID_gen - functions setting CRMF Registration Controls
+OSSL_CRMF_CERTID_gen
+- functions setting CRMF Registration Controls
 
 =head1 SYNOPSIS
 

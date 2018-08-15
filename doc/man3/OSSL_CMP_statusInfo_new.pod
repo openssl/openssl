@@ -8,6 +8,7 @@ OSSL_CMP_PKISI_PKIFailureInfo_get,
 OSSL_CMP_PKISI_PKIFailureInfo_check,
 OSSL_CMP_PKISI_failInfo_get0,
 OSSL_CMP_PKISI_statusString_get0
+- functions for managing PKI status information
 
 =head1 SYNOPSIS
 
@@ -46,9 +47,11 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 
 =head1 RETURN VALUES
 
-=head1 EXAMPLE
+See the individual functions above.
 
 =head1 SEE ALSO
+
+L<OSSL_CMP_CTX_create(3)>, L<OSSL_CMP_certreq_new(3)>
 
 =head1 COPYRIGHT
 

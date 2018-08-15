@@ -2,24 +2,23 @@
 
 =head1 NAME
 
-  OSSL_CMP_ITAV_set,
-  OSSL_CMP_ITAV_get0_type,
-  OSSL_CMP_ITAV_get0_value,
-  OSSL_CMP_ITAV_stack_item_push0 - OSSL_CMP_ITAV utility functions
+OSSL_CMP_ITAV_set,
+OSSL_CMP_ITAV_get0_type,
+OSSL_CMP_ITAV_get0_value,
+OSSL_CMP_ITAV_stack_item_push0
+- OSSL_CMP_ITAV utility functions
 
 =head1 SYNOPSIS
 
   #include <openssl/cmp.h>
   void OSSL_CMP_ITAV_set(OSSL_CMP_ITAV *itav,
-                                const ASN1_OBJECT *type,
-                                const ASN1_TYPE *value);
+                         const ASN1_OBJECT *type,
+                         const ASN1_TYPE *value);
   ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(OSSL_CMP_ITAV *itav);
   ASN1_TYPE *OSSL_CMP_ITAV_get0_value(OSSL_CMP_ITAV *itav);
 
-  #include "cmp_int.h"
-  int OSSL_CMP_ITAV_stack_item_push0(
-                                STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
-                                const OSSL_CMP_ITAV *itav);
+  int OSSL_CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
+                                     const OSSL_CMP_ITAV *itav);
 
 =head1 DESCRIPTION
 
@@ -33,9 +32,8 @@ B<itav>.
 OSSL_CMP_ITAV_get0_value() returns a direct pointer to the infoValue in
 the B<itav> as generic ASN1_TYPE*.
 
-OSSL_CMP_ITAV_stack_item_push0() is an internal function that pushes
-B<itav> to the stack pointed to by B<*itav_sk_p>. It creates a new stack if
-B<*itav_sk_p> points to NULL.
+OSSL_CMP_ITAV_stack_item_push0() pushes B<itav> to the stack pointed to
+by B<*itav_sk_p>. It creates a new stack if B<*itav_sk_p> points to NULL.
 
 =head1 NOTES
 
@@ -69,15 +67,9 @@ included in the requests' PKIHeader's genInfo field.
     OSSL_CMP_CTX *ctx = OSSL_CMP_CTX_new();
     OSSL_CMP_CTX_geninfo_itav_push0(ctx, itav);
 
-=head1 TODO
-
-Evaluate whether OSSL_CMP_ITAV_stack_item_push0() should be listed in
-this documentation - as it is an internal function.
-
 =head1 SEE ALSO
 
-L<CMP_CTX(3)>,
-L<ASN1_TYPE_set(3)>
+L<OSSL_CMP_CTX_create(3)>, L<ASN1_TYPE_set(3)>
 
 =head1 COPYRIGHT
 

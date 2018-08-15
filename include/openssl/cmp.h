@@ -458,6 +458,8 @@ void OSSL_CMP_ITAV_set(OSSL_CMP_ITAV *itav,
                        const ASN1_TYPE *value);
 ASN1_OBJECT *OSSL_CMP_ITAV_get0_type(OSSL_CMP_ITAV *itav);
 ASN1_TYPE *OSSL_CMP_ITAV_get0_value(OSSL_CMP_ITAV *itav);
+int OSSL_CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
+                                   const OSSL_CMP_ITAV *itav);
 void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 void OSSL_CMP_PKISI_free(OSSL_CMP_PKISI *si);

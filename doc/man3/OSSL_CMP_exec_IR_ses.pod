@@ -2,12 +2,13 @@
 
 =head1 NAME
 
- OSSL_CMP_exec_IR_ses,
- OSSL_CMP_exec_KUR_ses,
- OSSL_CMP_exec_CR_ses,
- OSSL_CMP_doPKCS10CertificationRequestSeq,
- OSSL_CMP_exec_GENM_ses,
- OSSL_CMP_doRevocationRequestSeq
+OSSL_CMP_exec_IR_ses,
+OSSL_CMP_exec_KUR_ses,
+OSSL_CMP_exec_CR_ses,
+OSSL_CMP_exec_P10CR_ses,
+OSSL_CMP_exec_GENM_ses,
+OSSL_CMP_exec_RR_ses
+- functions implementing CMP client transactions
 
 =head1 SYNOPSIS
 
@@ -16,9 +17,9 @@
  X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx);
- X509 *OSSL_CMP_doPKCS10CertificationRequestSeq(OSSL_CMP_CTX *ctx);
+ X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx);
  STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx;
- int OSSL_CMP_doRevocationRequestSeq(OSSL_CMP_CTX *ctx);
+ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -62,7 +63,7 @@ functions.
 
 =head1 SEE ALSO
 
-L<CMP_CTX(3), L<CMP_http(3)>
+L<OSSL_CMP_CTX_create(3)>, L<OSSL_CMP_MSG_http_perform(3)>
 
 =head1 COPYRIGHT
 

@@ -250,9 +250,6 @@ struct OSSL_cmp_itav_st {
 OSSL_CMP_ITAV *OSSL_CMP_ITAV_dup(OSSL_CMP_ITAV *itav);
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_ITAV)
 
-int OSSL_CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **itav_sk_p,
-                                   const OSSL_CMP_ITAV *itav);
-
 
 typedef struct OSSL_cmp_certorenccert_st {
     int type;
@@ -696,21 +693,62 @@ DECLARE_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
 X509_EXTENSIONS *CMP_exts_dup(X509_EXTENSIONS *extin);
 
 /* from cmp_lib.c */
+/*
+OSSL_CMP_PKIFREETEXT_push_str() pushes the given text string (unless it is NULL)
+to the given PKIFREETEXT ft or to a newly allocated freeText if ft is NULL.
+It returns the new/updated freeText. On error it frees ft and returns NULL.
+*/
 OSSL_CMP_PKIFREETEXT *CMP_PKIFREETEXT_push_str(OSSL_CMP_PKIFREETEXT *ft,
                                                const char *text);
 
+/*
+OSSL_CMP_REVREPCONTENT_PKIStatusInfo_get() returns the status field of the
+RevRepContent with the given request/sequence id inside a revocation response
+(matching the sequence id as sent in the RevReqContent), or NULL on error.
+*/
 OSSL_CMP_PKISI *CMP_REVREPCONTENT_PKIStatusInfo_get(OSSL_CMP_REVREPCONTENT *rrep,
                                                     long reqId);
-int CMP_CERTSTATUS_set_certHash(OSSL_CMP_CERTSTATUS *certStatus, const X509 *cert);
+/*
+OSSL_CMP_CERTSTATUS_set_certHash() calculates a hash of the certificate,
+using the same hash algorithm as is used to create and verify the
+certificate signature, and places the hash into the certHash field of a
+OSSL_CMP_CERTSTATUS structure. This is used in the certConf message, for
+example, to confirm that the certificate was received successfully.
+*/
+int CMP_CERTSTATUS_set_certHash(OSSL_CMP_CERTSTATUS *certStatus,
+                                const X509 *cert);
 int CMP_ITAV_stack_item_push0(STACK_OF(OSSL_CMP_ITAV) **
                               itav_sk_p, const OSSL_CMP_ITAV *itav);
 
+/*
+OSSL_CMP_CERTRESPONSE_get_certificate() attempts to retrieve the returned
+certificate from the given certResponse B<crep>.
+Takes the newKey in case of indirect POP from B<ctx>.
+Returns a pointer to a copy of the found certificate, or NULL if not found.
+*/
 X509 *CMP_CERTRESPONSE_get_certificate(OSSL_CMP_CTX *ctx,
                                        OSSL_CMP_CERTRESPONSE *crep);
+/*
+OSSL_CMP_POLLREPCONTENT_pollRep_get0() returns a pointer to the PollRep
+with the given certReqId (or the first one in case -1) inside a PollRepContent.
+If no suitable PollRep is available or if there is an error, it returns NULL.
+*/
 OSSL_CMP_POLLREP *CMP_POLLREPCONTENT_pollRep_get0(OSSL_CMP_POLLREPCONTENT *prc,
                                                   long rid);
+/*
+OSSL_CMP_CERTREPMESSAGE_certResponse_get0() returns a pointer to the
+CertResponse
+with the given certReqId (or the first one in case -1 inside a CertRepMessage.
+If no suitable CertResponse is available or there is an error, it returns NULL.
+*/
 OSSL_CMP_CERTRESPONSE *CMP_CERTREPMESSAGE_certResponse_get0(
                                     OSSL_CMP_CERTREPMESSAGE *crepmsg, long rid);
+/*
+OSSL_CMP_calc_protection()
+calculates the protection for given PKImessage utilizing the given credentials
+and the algorithm parameters set inside the message header's protectionAlg.
+Does PBMAC in case B<secret> is non-NULL and signature using B<pkey> otherwise.
+*/
 ASN1_BIT_STRING *CMP_calc_protection(const OSSL_CMP_MSG *msg,
                                      const ASN1_OCTET_STRING *secret,
                                      const EVP_PKEY *pkey);

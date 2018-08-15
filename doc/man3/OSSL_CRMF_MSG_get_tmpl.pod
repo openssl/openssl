@@ -6,7 +6,8 @@ OSSL_CRMF_MSG_get_tmpl,
 OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
 OSSL_CRMF_CERTTEMPLATE_get0_issuer,
 OSSL_CRMF_ENCRYPTEDVALUE_encCert_get1,
-OSSL_CRMF_MSG_get_certReqId - functions reading from CRMF CertReqMsg structures
+OSSL_CRMF_MSG_get_certReqId
+- functions reading from CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
 

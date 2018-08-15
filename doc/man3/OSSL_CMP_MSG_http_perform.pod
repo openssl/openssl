@@ -2,15 +2,16 @@
 
 =head1 NAME
 
- OSSL_CMP_MSG_http_perform
+OSSL_CMP_MSG_http_perform
+- implementation of HTTP transfer for CMP messages
 
 =head1 SYNOPSIS
 
  #include <openssl/cmp.h>
 
  int OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
-                                 const OSSL_CMP_MSG *req,
-                                 OSSL_CMP_MSG **res);
+                               const OSSL_CMP_MSG *req,
+                               OSSL_CMP_MSG **res);
 
 =head1 DESCRIPTION
 
@@ -29,11 +30,9 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 OSSL_CMP_MSG_http_perform() returns 0 on success or else an error reason code.
 It uses ctx->http_cb if set and respects ctx->msgTimeOut.
 
-=head1 EXAMPLE
-
 =head1 SEE ALSO
 
-L<CMP_CTX(3)>, L<CMP_ses(3)>
+L<OSSL_CMP_CTX_create(3)>, L<OSSL_CMP_exec_IR_ses(3)>
 
 =head1 COPYRIGHT
 

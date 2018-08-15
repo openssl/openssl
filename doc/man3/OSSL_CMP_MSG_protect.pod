@@ -2,87 +2,55 @@
 
 =head1 NAME
 
-  OSSL_CMP_add_error_txt,
-  OSSL_CMP_add_error_data,
-  OSSL_CMP_add_error_line,
-  OSSL_CMP_REVREPCONTENT_PKIStatus_get,
-  OSSL_CMP_POLLREPCONTENT_pollRep_get0,
-  OSSL_CMP_CERTREPMESSAGE_certResponse_get0,
-  OSSL_CMP_CERTSTATUS_set_certHash,
-  OSSL_CMP_PKISI_PKIFailureInfo_get,
-  OSSL_CMP_PKISI_PKIFailureInfo_check,
-  OSSL_CMP_HDR_generalInfo_item_push0,
-  OSSL_CMP_MSG_generalInfo_items_push1,
-  OSSL_CMP_HDR_new_senderNonce,
-  OSSL_CMP_HDR_push0_freeText,
-  OSSL_CMP_HDR_push1_freeText,
-  OSSL_CMP_PKIFREETEXT_push_str,
-  OSSL_CMP_MSG_get0_header,
-  OSSL_CMP_HDR_get0_transactionID,
-  OSSL_CMP_HDR_get0_senderNonce,
-  OSSL_CMP_HDR_get0_recipNonce,
-  OSSL_CMP_HDR_init,
-  OSSL_CMP_HDR_set1_recipient,
-  OSSL_CMP_HDR_set1_sender,
-  OSSL_CMP_HDR_set1_senderKID,
-  OSSL_CMP_HDR_set1_transactionID,
-  OSSL_CMP_HDR_set_messageTime,
-  OSSL_CMP_HDR_set_version,
-  OSSL_CMP_MSG_check_implicitConfirm,
-  OSSL_CMP_MSG_genm_item_push0,
-  OSSL_CMP_MSG_get_bodytype,
-  OSSL_CMP_MSG_get_transactionID,
-  OSSL_CMP_PKISI_snprint,
-  OSSL_CMP_MSG_set_bodytype,
-  OSSL_CMP_MSG_set_implicitConfirm,
-  OSSL_CMP_calc_protection,
-  OSSL_CMP_MSG_protect,
-  OSSL_CMP_MSG_add_extraCerts,
-  OSSL_CMP_ITAV_new,
-  OSSL_CMP_statusInfo_new,
-  OSSL_CMP_PKISI_PKIStatus_get,
-  OSSL_CMP_get_protectionAlg_pbmac,
-  OSSL_CMP_CERTRESPONSE_get_certificate,
-  OSSL_CMP_build_cert_chain,
-  OSSL_CMP_MSG_check_received,
-  OSSL_CMP_ASN1_OCTET_STRING_set1,
-  OSSL_CMP_ASN1_OCTET_STRING_set1_bytes,
-  OSSL_CMP_sk_X509_add1_cert,
-  OSSL_CMP_sk_X509_add1_certs,
-  OSSL_CMP_X509_STORE_add1_certs,
-  OSSL_CMP_X509_STORE_get1_certs
+OSSL_CMP_add_error_txt,
+OSSL_CMP_PKISI_PKIFailureInfo_get,
+OSSL_CMP_PKISI_PKIFailureInfo_check,
+OSSL_CMP_HDR_generalInfo_item_push0,
+OSSL_CMP_MSG_generalInfo_items_push1,
+OSSL_CMP_HDR_push0_freeText,
+OSSL_CMP_HDR_push1_freeText,
+OSSL_CMP_MSG_get0_header,
+OSSL_CMP_HDR_get0_transactionID,
+OSSL_CMP_HDR_get0_senderNonce,
+OSSL_CMP_HDR_get0_recipNonce,
+OSSL_CMP_HDR_init,
+OSSL_CMP_HDR_set1_recipient,
+OSSL_CMP_HDR_set1_sender,
+OSSL_CMP_HDR_set1_senderKID,
+OSSL_CMP_HDR_set_messageTime,
+OSSL_CMP_HDR_set_version,
+OSSL_CMP_MSG_check_implicitConfirm,
+OSSL_CMP_MSG_genm_item_push0,
+OSSL_CMP_MSG_genm_items_push1,
+OSSL_CMP_MSG_get_bodytype,
+OSSL_CMP_PKISI_snprint,
+OSSL_CMP_MSG_set_bodytype,
+OSSL_CMP_MSG_set_implicitConfirm,
+OSSL_CMP_MSG_protect,
+OSSL_CMP_MSG_add_extraCerts,
+OSSL_CMP_build_cert_chain,
+OSSL_CMP_MSG_check_received,
+OSSL_CMP_ASN1_OCTET_STRING_set1,
+OSSL_CMP_ASN1_OCTET_STRING_set1_bytes,
+OSSL_CMP_sk_X509_add1_cert,
+OSSL_CMP_sk_X509_add1_certs,
+OSSL_CMP_X509_STORE_add1_certs,
+OSSL_CMP_X509_STORE_get1_certs
+- functions manipulating CMP messages
 
 =head1 SYNOPSIS
 
   #include <openssl/cmp.h>
 
   void OSSL_CMP_add_error_txt(const char *separator, const char *txt);
-  void OSSL_CMP_add_error_data(const char *txt);
-  void OSSL_CMP_add_error_line(const char *txt);
-  OSSL_CMP_PKISI
-      *OSSL_CMP_REVREPCONTENT_PKIStatusInfo_get(OSSL_CMP_REVREPCONTENT *rrep,
-                                                long rsid);
-  OSSL_CMP_POLLREP
-      *OSSL_CMP_POLLREPCONTENT_pollRep_get0(OSSL_CMP_POLLREPCONTENT *prc,
-                                            long rid);
-  OSSL_CMP_CERTRESPONSE
-      *OSSL_CMP_CERTREPMESSAGE_certResponse_get0(OSSL_CMP_CERTREPMESSAGE
-                                                 *certRep, long certReqId);
-  int OSSL_CMP_CERTSTATUS_set_certHash(OSSL_CMP_CERTSTATUS *certStatus,
-                                       const X509 *cert);
-  char *OSSL_CMP_ERRORMSGCONTENT_PKIStatus_get_string(OSSL_CMP_ERRORMSGCONTENT
-                                                      *error);
   long OSSL_CMP_PKISI_PKIFailureInfo_get( OSSL_CMP_PKISI *si);
   int OSSL_CMP_PKISI_PKIFailureInfo_check( OSSL_CMP_PKISI *si, int codeBit);
   int OSSL_CMP_HDR_generalInfo_item_push0(OSSL_CMP_HDR *hdr,
                                           const OSSL_CMP_ITAV *itav);
   int OSSL_CMP_MSG_generalInfo_items_push1(OSSL_CMP_MSG *msg,
                                            STACK_OF(OSSL_CMP_ITAV) *itavs);
-  int OSSL_CMP_HDR_new_senderNonce(OSSL_CMP_HDR *hdr);
   int OSSL_CMP_HDR_push0_freeText( OSSL_CMP_HDR *hdr, ASN1_UTF8STRING *text);
   int OSSL_CMP_HDR_push1_freeText( OSSL_CMP_HDR *hdr, ASN1_UTF8STRING *text);
-  OSSL_CMP_PKIFREETEXT *OSSL_CMP_PKIFREETEXT_push_str(OSSL_CMP_PKIFREETEXT *ft,
-                                                      const char *text);
   OSSL_CMP_HDR *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg);
   ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const OSSL_CMP_HDR *hdr);
   ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_senderNonce(const OSSL_CMP_HDR *hdr);
@@ -92,8 +60,6 @@
   int OSSL_CMP_HDR_set1_sender(OSSL_CMP_HDR *hdr, const X509_NAME *nm);
   int OSSL_CMP_HDR_set1_senderKID(OSSL_CMP_HDR *hdr,
                                   const ASN1_OCTET_STRING *senderKID);
-  int OSSL_CMP_HDR_set1_transactionID(OSSL_CMP_HDR *hdr,
-                                      const ASN1_OCTET_STRING *transactionID);
   int OSSL_CMP_HDR_set_messageTime(OSSL_CMP_HDR *hdr);
   int OSSL_CMP_HDR_set_version(OSSL_CMP_HDR *hdr, int version);
   int OSSL_CMP_MSG_check_implicitConfirm(OSSL_CMP_MSG *msg);
@@ -102,23 +68,11 @@
   int OSSL_CMP_MSG_genm_items_push1(OSSL_CMP_MSG *msg,
                                     STACK_OF(OSSL_CMP_ITAV) *itavs);
   int OSSL_CMP_MSG_get_bodytype(const OSSL_CMP_MSG *msg);
-  ASN1_OCTET_STRING *OSSL_CMP_MSG_get_transactionID(const OSSL_CMP_MSG *msg);
   char *OSSL_CMP_PKISI_snprint(OSSL_CMP_PKISI *si, char *buf, int bufsize);
   int OSSL_CMP_MSG_set_bodytype( OSSL_CMP_MSG *msg, int type);
   int OSSL_CMP_MSG_set_implicitConfirm(OSSL_CMP_MSG *msg);
-  ASN1_BIT_STRING *OSSL_CMP_calc_protection(const OSSL_CMP_MSG *msg,
-                                       const ASN1_OCTET_STRING *secret,
-                                       const EVP_PKEY *pkey);
   int OSSL_CMP_MSG_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
   int OSSL_CMP_MSG_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
-  OSSL_CMP_ITAV *OSSL_CMP_ITAV_new(const ASN1_OBJECT *type,
-                                   const ASN1_TYPE *value);
-  OSSL_CMP_PKISI *OSSL_CMP_statusInfo_new(int status, unsigned long failInfo,
-                                        const char *text);
-  long OSSL_CMP_PKISI_PKIStatus_get( OSSL_CMP_PKISI *statusInfo);
-  X509_ALGOR *OSSL_CMP_get_protectionAlg_pbmac();
-  X509 *OSSL_CMP_CERTRESPONSE_get_certificate(OSSL_CMP_CTX *ctx,
-                                              OSSL_CMP_CERTRESPONSE *crep);
   STACK_OF(X509) *OSSL_CMP_build_cert_chain(X509_STORE *store,
                                             const X509 *cert);
   int OSSL_CMP_MSG_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *prev,
@@ -129,8 +83,8 @@
                                  const ASN1_OCTET_STRING *src);
   int OSSL_CMP_ASN1_OCTET_STRING_set1_bytes(ASN1_OCTET_STRING **tgt,
                                        const unsigned char *bytes, size_t len);
-  int OSSL_CMP_sk_X509_add1_cert (STACK_OF(X509) *sk, X509 *cert,
-                                  int not_duplicate);
+  int OSSL_CMP_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
+                                 int not_duplicate);
   int OSSL_CMP_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
                              int no_self_signed, int no_duplicates);
   int OSSL_CMP_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
@@ -144,30 +98,11 @@ error message in openssl's error queue, after adding the given separator string.
 Note that, in contrast, ERR_add_error_data() simply overwrites the previous
 contents of the error data.
 
-OSSL_CMP_add_error_data() is implemented as a macro calling
+OSSL_CMP_add_error_data() is a macro calling
 OSSL_CMP_add_error_txt() with the separator being ":".
 
-OSSL_CMP_add_error_line() is implemented as a macro calling
+OSSL_CMP_add_error_line() is a macro calling
 OSSL_CMP_add_error_txt() with the separator being "\n".
-
-OSSL_CMP_REVREPCONTENT_PKIStatusInfo_get() returns the status field of the
-RevRepContent with the given request/sequence id inside a revocation response
-(matching the sequence id as sent in the RevReqContent), or NULL on error.
-
-OSSL_CMP_POLLREPCONTENT_pollRep_get0() returns a pointer to the PollRep
-with the given certReqId (or the first one in case -1) inside a PollRepContent.
-If no suitable PollRep is available or if there is an error, it returns NULL.
-
-OSSL_CMP_CERTREPMESSAGE_certResponse_get0() returns a pointer to the
-CertResponse
-with the given certReqId (or the first one in case -1 inside a CertRepMessage.
-If no suitable CertResponse is available or there is an error, it returns NULL.
-
-OSSL_CMP_CERTSTATUS_set_certHash() calculates a hash of the certificate,
-using the same hash algorithm as is used to create and verify the
-certificate signature, and places the hash into the certHash field of a
-OSSL_CMP_CERTSTATUS structure. This is used in the certConf message, for
-example, to confirm that the certificate was received successfully.
 
 OSSL_CMP_PKISI_PKIFailureInfo_get() returns the PKIFailureInfo bits
 of a given PKIStatusInfo, encoded as long integer, or -1 on error.
@@ -175,12 +110,7 @@ of a given PKIStatusInfo, encoded as long integer, or -1 on error.
 OSSL_CMP_PKISI_PKIFailureInfo_check() checks whether a given bit is set
 within the PKIFailureInfo of a given PKIStatusInfo. Returns -1 on error.
 
-
-=over 4
-
 Available CMP PKIFailureInfo bit numbers are:
-
-=over 4
 
  #define OSSL_CMP_PKIFAILUREINFO_badAlg               0
  #define OSSL_CMP_PKIFAILUREINFO_badMessageCheck      1
@@ -211,10 +141,6 @@ Available CMP PKIFailureInfo bit numbers are:
  #define OSSL_CMP_PKIFAILUREINFO_duplicateCertReq    26
  #define OSSL_CMP_PKIFAILUREINFO_MAX                 26
 
-=back
-
-=back
-
 OSSL_CMP_HDR_generalInfo_item_push0() adds the given InfoTypeAndValue
 item to the hdr->generalInfo stack. Consumes the B<itav> pointer.
 
@@ -222,19 +148,11 @@ OSSL_CMP_MSG_generalInfo_items_push1() adds a copy of the B<itavs> stack to
 the generalInfo field of PKIheader of the B<msg>. Does not consume the B<itavs>
 pointer.
 
-OSSL_CMP_HDR_new_senderNonce() generates a random value for the
-hdr->senderNonce field, which is used to protect the PKIMessage against
-replay attacks.
-
 OSSL_CMP_HDR_push0_freeText() pushes an ASN1_UTF8STRING to
 hdr->freeText and consumes the given pointer.
 
 OSSL_CMP_HDR_push1_freeText() pushes an ASN1_UTF8STRING to
 hdr->freeText and does not consume the pointer.
-
-OSSL_CMP_PKIFREETEXT_push_str() pushes the given text string (unless it is NULL)
-to the given PKIFREETEXT ft or to a newly allocated freeText if ft is NULL.
-It returns the new/updated freeText. On error it frees ft and returns NULL.
 
 OSSL_CMP_MSG_get0_header returns the header of the given CMP message.
 
@@ -258,10 +176,6 @@ OSSL_CMP_HDR_set1_senderKID() Sets hdr->senderKID to the given
 string. In IR this is the reference number issued by the CA. In KUR
 this is set to the public key ID from the previously enrolled certificate.
 
-OSSL_CMP_HDR_set1_transactionID() copies the given transactionID to
-hdr->transactionID. If the transactionID parameter is NULL, a new random
-value is generated for it.
-
 OSSL_CMP_HDR_set_messageTime() sets the messageTime to the current system time.
 
 OSSL_CMP_HDR_set_version() sets hdr->pvno to the given integer.
@@ -278,9 +192,6 @@ of the PKIMessage B<msg> of GenMsg type. Does not consume the B<itavs> pointer.
 OSSL_CMP_MSG_get_bodytype() returns the body type of the given
 PKIMessage.
 
-OSSL_CMP_MSG_get_transactionID() returns the transactionID of the given
-PKIMessage.
-
 ASN1_OCTET_STRING *OSSL_CMP_MSG_get_transactionID(const OSSL_CMP_MSG *msg)
 
 OSSL_CMP_PKISI_snprint() places human-readable error string
@@ -292,33 +203,12 @@ the PKIMessage body field.
 OSSL_CMP_MSG_set_implicitConfirm() sets implicitConfirm in the
 generalInfo field of the header.
 
-OSSL_CMP_calc_protection()
-calculates the protection for given PKImessage utilizing the given credentials
-and the algorithm parameters set inside the message header's protectionAlg.
-Does PBMAC in case B<secret> is non-NULL and signature using B<pkey> otherwise.
-
 OSSL_CMP_MSG_protect() protects the given message deciding on the algorithm
 depending on the available context information:  If there is a secretValue it
 selects PBMAC. If not and there is a clCert it selects Signature.  Generates and
 sets the protection to the given message.
 
 OSSL_CMP_MSG_add_extraCerts() fills the extraCerts field in the message.
-
-OSSL_CMP_ITAV_new() creates a new OSSL_CMP_ITAV structure and fills it in.
-
-OSSL_CMP_statusInfo_new() creates a new PKIStatusInfo structure and fills it in.
-
-OSSL_CMP_PKISI_PKIStatus_get() returns the status value of the given
-PKIStatusInfo.
-
-OSSL_CMP_get_protectionAlg_pbmac() initializes an X509_ALGOR structure for
-Password Based MAC. Creates a OSSL_CRMF_PBMPARAMETER structure for the
-parameters.
-
-OSSL_CMP_CERTRESPONSE_get_certificate() attempts to retrieve the returned
-certificate from the given certResponse B<crep>.
-Takes the newKey in case of indirect POP from B<ctx>.
-Returns a pointer to a copy of the found certificate, or NULL if not found.
 
 OSSL_CMP_build_cert_chain() builds up the certificate chain of cert as high up
 as possible using the given X509_STORE containing all possible intermediate
@@ -365,11 +255,12 @@ might change every release!
 
 =head1 RETURN VALUES
 
-=head1 EXAMPLE
+See the individual functions above.
 
 =head1 SEE ALSO
 
-L<CMP_CTX(3)>, L<CMP_ses(3)>, L<CMP_msg(3)>, L<CMP_http(3)>
+L<OSSL_CMP_CTX_create(3)>, L<OSSL_CMP_exec_IRses(3)>,
+L<OSSL_CMP_certreq_new(3)>, L<OSSL_CMP_MSG_http_perform(3)>
 
 =head1 COPYRIGHT
 
