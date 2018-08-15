@@ -35,9 +35,21 @@ static ossl_inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
     return 1;
 }
 
+/*
+ * Changes to shared structure other than reference counter have to be
+ * serialized. And any kind of serialization implies a release fence. This
+ * means that by the time reference counter is decremented all other
+ * changes are visible on all processors. Hence decrement itself can be
+ * relaxed. In case it hits zero, object will be destructed. Since it's
+ * last use of the object, destructor programmer might reason that access
+ * to mutable members doesn't have to be serialized anymore, which would
+ * otherwise imply an acquire fence. Hence conditional acquire fence...
+ */
 static ossl_inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
 {
     *ret = atomic_fetch_sub_explicit(val, 1, memory_order_relaxed) - 1;
+    if (*ret == 0)
+        atomic_thread_fence(memory_order_acquire);
     return 1;
 }
 
@@ -56,6 +68,8 @@ static ossl_inline int CRYPTO_UP_REF(int *val, int *ret, void *lock)
 static ossl_inline int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 {
     *ret = __atomic_fetch_sub(val, 1, __ATOMIC_RELAXED) - 1;
+    if (*ret == 0)
+        __atomic_thread_fence(__ATOMIC_ACQUIRE);
     return 1;
 }
 
