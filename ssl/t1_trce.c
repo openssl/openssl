@@ -65,10 +65,6 @@ static const ssl_trace_tbl ssl_version_tbl[] = {
     {TLS1_1_VERSION, "TLS 1.1"},
     {TLS1_2_VERSION, "TLS 1.2"},
     {TLS1_3_VERSION, "TLS 1.3"},
-    /* TODO(TLS1.3): Remove these lines before release */
-    {TLS1_3_VERSION_DRAFT_26, TLS1_3_VERSION_DRAFT_TXT_26},
-    {TLS1_3_VERSION_DRAFT_27, TLS1_3_VERSION_DRAFT_TXT_27},
-    {TLS1_3_VERSION_DRAFT, TLS1_3_VERSION_DRAFT_TXT},
     {DTLS1_VERSION, "DTLS 1.0"},
     {DTLS1_2_VERSION, "DTLS 1.2"},
     {DTLS1_BAD_VER, "DTLS 1.0 (bad)"}
@@ -642,18 +638,8 @@ static int ssl_print_version(BIO *bio, int indent, const char *name,
     if (*pmsglen < 2)
         return 0;
     vers = ((*pmsg)[0] << 8) | (*pmsg)[1];
-    if (version != NULL) {
-        /* TODO(TLS1.3): Remove the draft conditional here before release */
-        switch(vers) {
-        case TLS1_3_VERSION_DRAFT_26:
-        case TLS1_3_VERSION_DRAFT_27:
-        case TLS1_3_VERSION_DRAFT:
-            *version = TLS1_3_VERSION;
-            break;
-        default:
-            *version = vers;
-        }
-    }
+    if (version != NULL)
+        *version = vers;
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "%s=0x%x (%s)\n",
                name, vers, ssl_trace_str(vers, ssl_version_tbl));

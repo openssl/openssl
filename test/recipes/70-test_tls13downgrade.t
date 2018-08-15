@@ -26,10 +26,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLS1.3 and TLS1.2 enabled"
     if disabled("tls1_3") || disabled("tls1_2");
 
-# TODO(TLS1.3): Enable this when TLSv1.3 comes out of draft
-plan skip_all => "$test_name not run in pre TLSv1.3 RFC implementation"
-    if disabled("tls13downgrade");
-
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 
 my $proxy = TLSProxy::Proxy->new(
