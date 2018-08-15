@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                  const EVP_MD *md, ENGINE *impl)
 {
     int i, j, reset = 0;
-    unsigned char pad[HMAC_MAX_MD_CBLOCK];
+    unsigned char pad[HMAC_MAX_MD_CBLOCK_SIZE];
 
     /* If we are changing MD then we must have a key */
     if (md != NULL && md != ctx->md && (key == NULL || len < 0))
@@ -53,20 +53,20 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
             memcpy(ctx->key, key, len);
             ctx->key_length = len;
         }
-        if (ctx->key_length != HMAC_MAX_MD_CBLOCK)
+        if (ctx->key_length != HMAC_MAX_MD_CBLOCK_SIZE)
             memset(&ctx->key[ctx->key_length], 0,
-                   HMAC_MAX_MD_CBLOCK - ctx->key_length);
+                   HMAC_MAX_MD_CBLOCK_SIZE - ctx->key_length);
     }
 
     if (reset) {
-        for (i = 0; i < HMAC_MAX_MD_CBLOCK; i++)
+        for (i = 0; i < HMAC_MAX_MD_CBLOCK_SIZE; i++)
             pad[i] = 0x36 ^ ctx->key[i];
         if (!EVP_DigestInit_ex(ctx->i_ctx, md, impl))
             goto err;
         if (!EVP_DigestUpdate(ctx->i_ctx, pad, EVP_MD_block_size(md)))
             goto err;
 
-        for (i = 0; i < HMAC_MAX_MD_CBLOCK; i++)
+        for (i = 0; i < HMAC_MAX_MD_CBLOCK_SIZE; i++)
             pad[i] = 0x5c ^ ctx->key[i];
         if (!EVP_DigestInit_ex(ctx->o_ctx, md, impl))
             goto err;
@@ -195,7 +195,7 @@ int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
         goto err;
     if (!EVP_MD_CTX_copy_ex(dctx->md_ctx, sctx->md_ctx))
         goto err;
-    memcpy(dctx->key, sctx->key, HMAC_MAX_MD_CBLOCK);
+    memcpy(dctx->key, sctx->key, HMAC_MAX_MD_CBLOCK_SIZE);
     dctx->key_length = sctx->key_length;
     dctx->md = sctx->md;
     return 1;
