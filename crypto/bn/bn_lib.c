@@ -617,26 +617,40 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 static int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
 {
     int n;
-    size_t i, inc, lasti, j;
+    size_t i, lasti, j, atop, mask;
     BN_ULONG l;
 
+    /*
+     * In case |a| is fixed-top, BN_num_bytes can return bogus length,
+     * but it's assumed that fixed-top inputs ought to be "nominated"
+     * even for padded output, so it works out...
+     */
     n = BN_num_bytes(a);
-    if (tolen == -1)
+    if (tolen == -1) {
         tolen = n;
-    else if (tolen < n)
-        return -1;
+    } else if (tolen < n) {     /* uncommon/unlike case */
+        BIGNUM temp = *a;
 
-    if (n == 0) {
+        bn_correct_top(&temp);
+        n = BN_num_bytes(&temp);
+        if (tolen < n)
+            return -1;
+    }
+
+    /* Swipe through whole available data and don't give away padded zero. */
+    atop = a->dmax * BN_BYTES;
+    if (atop == 0) {
         OPENSSL_cleanse(to, tolen);
         return tolen;
     }
 
-    lasti = n - 1;
-    for (i = 0, inc = 1, j = tolen; j > 0;) {
+    lasti = atop - 1;
+    atop = a->top * BN_BYTES;
+    for (i = 0, j = 0, to += tolen; j < (size_t)tolen; j++) {
         l = a->d[i / BN_BYTES];
-        to[--j] = (unsigned char)(l >> (8 * (i % BN_BYTES)) & (0 - inc));
-        inc = (i - lasti) >> (8 * sizeof(i) - 1);
-        i += inc; /* stay on top limb */
+        mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
+        *--to = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
+        i += (i - lasti) >> (8 * sizeof(i) - 1); /* stay on last limb */
     }
 
     return tolen;
