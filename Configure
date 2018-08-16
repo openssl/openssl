@@ -1012,9 +1012,13 @@ if (scalar(@seed_sources) == 0) {
     print "Using os-specific seed configuration\n";
     push @seed_sources, 'os';
 }
-die "Cannot seed with none and anything else"
-    if scalar(grep { $_ eq 'none' } @seed_sources) > 0
-        && scalar(@seed_sources) > 1;
+if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
+    die "Cannot seed with none and anything else" if scalar(@seed_sources) > 1;
+    warn <<_____ if scalar(@seed_sources) == 1;
+You have selected NO seed source.  Some functions (such as creating keys)
+will not work.
+_____
+}
 push @{$config{openssl_other_defines}},
      map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
 	@seed_sources;
