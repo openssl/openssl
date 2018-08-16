@@ -234,6 +234,9 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
                     STACK_OF(X509) *certs, unsigned long flags)
 {
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
+    if (!ctx)
+        return 0;
+    
     EVP_PKEY_CTX *pkctx = NULL;
     int i;
 
