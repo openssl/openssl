@@ -458,17 +458,25 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     unsigned char *buffer;
 
 #   ifdef OPENSSL_RAND_SEED_GETRANDOM
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
-    if (buffer != NULL) {
-        size_t bytes = 0;
+    {
+        ssize_t bytes;
+        /* Maximum allowed number of consecutive unsuccessful attempts */
+        int attempts = 3;
 
-        if (syscall_random(buffer, bytes_needed) == (int)bytes_needed)
-            bytes = bytes_needed;
-
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        while (bytes_needed != 0 && attempts-- > 0) {
+            buffer = rand_pool_add_begin(pool, bytes_needed);
+            bytes = syscall_random(buffer, bytes_needed);
+            if (bytes > 0) {
+                rand_pool_add_end(pool, bytes, 8 * bytes);
+                bytes_needed -= bytes;
+                attempts = 3; /* reset counter after successful attempt */
+            } else if (bytes < 0 && errno != EINTR) {
+                break;
+            }
+        }
     }
+    entropy_available = rand_pool_entropy_available(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
