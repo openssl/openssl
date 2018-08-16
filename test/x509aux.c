@@ -161,14 +161,13 @@ static int test_certs(int num)
     return 0;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile...\n")
+
 int setup_tests(void)
 {
     size_t n = test_get_argument_count();
-
-    if (n == 0) {
-        TEST_error("usage: %s certfile...", test_get_program_name());
+    if (n == 0)
         return 0;
-    }
 
     ADD_ALL_TESTS(test_certs, (int)n);
     return 1;

@@ -78,6 +78,8 @@ static int test_tls13(int idx)
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile1 privkeyfile1 certfile2 privkeyfile2\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert1 = test_get_argument(0))

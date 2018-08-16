@@ -481,6 +481,8 @@ static int test_tls13ccs(int tst)
     return ret;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))

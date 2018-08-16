@@ -2261,6 +2261,17 @@ static int run_file_tests(int i)
     return c == 0;
 }
 
+const OPTIONS *test_get_options(void)
+{
+    enum { OPT_TEST_ENUM };
+    static const OPTIONS test_options[] = {
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("[file...]\n"),
+        { OPT_HELP_STR, 1, '-',
+          "file\tFile to run tests on. Normal tests are not run\n" },
+        { NULL }
+    };
+    return test_options;
+}
 
 int setup_tests(void)
 {

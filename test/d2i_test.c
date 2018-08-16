@@ -106,6 +106,8 @@ static int test_bad_asn1(void)
     return ret;
 }
 
+OPT_TEST_DECLARE_USAGE("item_name expected_error test_file.der\n")
+
 /*
  * Usage: d2i_test <name> <type> <file>, e.g.
  * d2i_test generalname bad_generalname.der
@@ -127,10 +129,8 @@ int setup_tests(void)
 
     if (!TEST_ptr(test_type_name = test_get_argument(0))
             || !TEST_ptr(expected_error_string = test_get_argument(1))
-            || !TEST_ptr(test_file = test_get_argument(2))) {
-        TEST_note("Usage: d2i_test item_name expected_error file.der");
+            || !TEST_ptr(test_file = test_get_argument(2)))
         return 0;
-    }
 
     item_type = ASN1_ITEM_lookup(test_type_name);
 
