@@ -606,7 +606,7 @@ static int ssl23_client_hello(SSL *s)
             s->msg_callback(1, SSL2_VERSION, 0, s->init_buf->data + 2,
                             ret - 2, s, s->msg_callback_arg);
         else {
-            s->msg_callback(1, version, SSL3_RT_HEADER, s->init_buf->data, 5,
+            s->msg_callback(1, 0, SSL3_RT_HEADER, s->init_buf->data, 5,
                             s, s->msg_callback_arg);
             s->msg_callback(1, version, SSL3_RT_HANDSHAKE,
                             s->init_buf->data + 5, ret - 5, s,
@@ -792,7 +792,7 @@ static int ssl23_get_server_hello(SSL *s)
             }
 
             if (s->msg_callback) {
-                s->msg_callback(0, s->version, SSL3_RT_HEADER, p, 5, s,
+                s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s,
                                 s->msg_callback_arg);
                 s->msg_callback(0, s->version, SSL3_RT_ALERT, p + 5, 2, s,
                                 s->msg_callback_arg);
