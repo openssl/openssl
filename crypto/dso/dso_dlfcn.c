@@ -336,7 +336,7 @@ static int dladdr(void *ptr, Dl_info *dl)
     unsigned int found = 0;
     struct ld_info *ldinfos, *next_ldi, *this_ldi;
 
-    if ((ldinfos = (struct ld_info *)OPENSSL_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
+    if ((ldinfos = OPENSSL_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
         errno = ENOMEM;
         dl->dli_fname = NULL;
         return 0;
@@ -365,9 +365,9 @@ static int dladdr(void *ptr, Dl_info *dl)
                             this_ldi->ldinfo_datasize)))) {
             char *buffer, *member;
             size_t buffer_sz, member_len;
+
             buffer_sz = strlen(this_ldi->ldinfo_filename) + 1;
-            member = (char *)((uintptr_t)this_ldi->ldinfo_filename +
-                              buffer_sz);
+            member = this_ldi->ldinfo_filename + buffer_sz;
             if ((member_len = strlen(member)) > 0)
                 buffer_sz += 1 + member_len + 1;
             found = 1;
