@@ -764,8 +764,6 @@ int CMP_log_printf(const char *file, int line, OSSL_CMP_severity level,
                    const char *fmt,...);
 #endif
 
-int CMP_CTX_error_cb(const char *str, size_t len, void *u);
-
 /* from cmp_vfy.c */
 void put_cert_verify_err(int func);
 

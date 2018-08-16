@@ -762,7 +762,7 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, const X509 *cert, int failure,
                          const char **text)
 {
     X509_STORE *out_trusted = OSSL_CMP_CTX_get_certConf_cb_arg(ctx);
-    text++; /* make (artificial) use of 'text' to prevent compiler warning */
+    (void)text; /* make (artificial) use of var to prevent compiler warning */
 
     if (failure >= 0) /* accept any error flagged by CMP core library */
         return failure;

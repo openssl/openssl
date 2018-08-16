@@ -665,10 +665,6 @@ static X509 *do_certreq_seq(OSSL_CMP_CTX *ctx, const char *type_string, int fn,
  err:
     OSSL_CMP_MSG_free(req);
     OSSL_CMP_MSG_free(rep);
-
-    /* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
-    if (result == NULL)
-        ERR_print_errors_cb(CMP_CTX_error_cb, (void *)ctx);
     return result;
 }
 
@@ -761,7 +757,6 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
                 ERR_add_error_data(1, tempbuf);
             OPENSSL_free(tempbuf);
         }
-        ERR_print_errors_cb(CMP_CTX_error_cb, (void *)ctx);
     }
     OSSL_CMP_MSG_free(rr);
     OSSL_CMP_MSG_free(rp);
@@ -825,9 +820,5 @@ STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx)
     OSSL_CMP_MSG_free(genm);
     OSSL_CMP_MSG_free(genp);
 
-    /* recv_itavs == NULL indicates an error */
-    /* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
-    if (rcvd_itavs == NULL)
-        ERR_print_errors_cb(CMP_CTX_error_cb, (void *)ctx);
-    return rcvd_itavs;
+    return rcvd_itavs; /* recv_itavs == NULL indicates an error */
 }

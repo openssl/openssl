@@ -39,6 +39,7 @@ OSSL_CMP_CTX_get0_untrusted_certs,
 OSSL_CMP_CTX_set_log_cb,
 OSSL_CMP_puts,
 OSSL_CMP_printf,
+OSSL_CMP_print_errors_cb,
 OSSL_CMP_CTX_status_get,
 OSSL_CMP_CTX_statusString_get,
 OSSL_CMP_CTX_failInfoCode_get,
@@ -126,6 +127,8 @@ OSSL_CMP_CTX_subjectAltName_push1
 
  int OSSL_CMP_printf(const OSSL_CMP_CTX *ctx, const char *file, int lineno,
                      severity level, const char *fmt, ...);
+
+ void OSSL_CMP_print_errors_cb(OSSL_CMP_CTX *ctx);
 
  int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, const int opt, const int val);
 
@@ -382,10 +385,12 @@ source file path name and line number if available or else by "CMP". It is also
 proceded by a severity indication such as "ERROR", "WARNING", "INFO", or
 "DEBUG".
 
-OSSL_CMP_printf() is used for outputting error/warn/info/debug messages. They
+OSSL_CMP_printf() is used for producing error/warn/info/debug messages. They
 can be given using a format string with variable number of arguments as with
-printf. The resulting string is handed over to the log callback.
-By default or if the callback is set NULL the function OSSL_CMP_puts() is used.
+printf. The resulting string is appended to the error queue.
+
+OSSL_CMP_print_errors_cb() outputs any CMP and other OpenSSL errors in the error
+queue using the log callback function if proviced, else using OSSL_CMP_puts().
 
 OSSL_CMP_CTX_status_get() returns the PKIstatus from the last
 CertRepMessage or Revocation Response, -1 on error.

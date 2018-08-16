@@ -4803,3 +4803,4 @@ OSSL_CMP_CTX_subjectAltName_push1       4746	1_1_1	EXIST::FUNCTION:CMP
 OSSL_CRMF_MSG_set_version2              4747	1_1_1	EXIST::FUNCTION:
 OSSL_CMP_add_error_txt                  4748	1_1_1	EXIST::FUNCTION:CMP
 OSSL_CMP_ITAV_stack_item_push0          4749	1_1_1	EXIST::FUNCTION:CMP
+OSSL_CMP_print_errors_cb                4750	1_1_1	EXIST::FUNCTION:CMP

@@ -240,6 +240,7 @@ int OSSL_CMP_printf(const OSSL_CMP_CTX *ctx, const char *file, int lineno,
 #define OSSL_CMP_debug(ctx, msg) OSSL_CMP_printf(ctx, OSSL_CMP_FL_DEBUG, msg)
 int  OSSL_CMP_log_init(void);
 void OSSL_CMP_log_close(void);
+void OSSL_CMP_print_errors_cb(OSSL_CMP_CTX *ctx);
 
 /*
  * context DECLARATIONS

@@ -1419,7 +1419,7 @@ int CMP_log_printf(const char *file, int line,
  * ERR_print_errors_cb() to the ctx->log_cb() function set by the user
  * returns 1 on success, 0 on error
  */
-int CMP_CTX_error_cb(const char *str, size_t len, void *u)
+static int CMP_CTX_error_cb(const char *str, size_t len, void *u)
 {
     char *start, *s, *txt, *txt_end, *file, *file_end;
     int line;
@@ -1476,4 +1476,10 @@ int CMP_CTX_error_cb(const char *str, size_t len, void *u)
     OPENSSL_free(file);
     OPENSSL_free(start);
     return res;
+}
+
+/* print out OpenSSL and CMP errors via the log callback or OSSL_CMP_puts */
+void OSSL_CMP_print_errors_cb(OSSL_CMP_CTX *ctx)
+{
+    ERR_print_errors_cb(CMP_CTX_error_cb, (void *)ctx);
 }
