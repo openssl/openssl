@@ -6030,6 +6030,9 @@ static int test_ca_names(int tst)
     return testresult;
 }
 
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))

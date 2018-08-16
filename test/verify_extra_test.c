@@ -175,14 +175,14 @@ static int test_store_ctx(void)
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("roots.pem untrusted.pem bad.pem\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(roots_f = test_get_argument(0))
             || !TEST_ptr(untrusted_f = test_get_argument(1))
-            || !TEST_ptr(bad_f = test_get_argument(2))) {
-        TEST_error("usage: verify_extra_test roots.pem untrusted.pem bad.pem\n");
+            || !TEST_ptr(bad_f = test_get_argument(2)))
         return 0;
-    }
 
     ADD_TEST(test_alt_chains_cert_forgery);
     ADD_TEST(test_store_ctx);

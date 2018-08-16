@@ -244,15 +244,15 @@ static int test_ssl_corrupt(int testidx)
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
     int n;
 
     if (!TEST_ptr(cert = test_get_argument(0))
-            || !TEST_ptr(privkey = test_get_argument(1))) {
-        TEST_note("Usage error: require cert and private key files");
+            || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
-    }
 
     n = setup_cipher_list();
     if (n > 0)

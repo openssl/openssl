@@ -240,6 +240,8 @@ end:
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("sessionfile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(sessionfile = test_get_argument(0)))

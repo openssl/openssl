@@ -328,6 +328,8 @@ static int test_dtls_duplicate_records(void)
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))

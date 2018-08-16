@@ -2901,14 +2901,14 @@ static int run_file_tests(int i)
     return c == 0;
 }
 
+OPT_TEST_DECLARE_USAGE("file...\n")
+
 int setup_tests(void)
 {
     size_t n = test_get_argument_count();
 
-    if (n == 0) {
-        TEST_error("Usage: %s file...", test_get_program_name());
+    if (n == 0)
         return 0;
-    }
 
     ADD_ALL_TESTS(run_file_tests, n);
     return 1;

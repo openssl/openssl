@@ -393,6 +393,8 @@ static int test_asyncio(int test)
     return testresult;
 }
 
+OPT_TEST_DECLARE_USAGE("certname privkey\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
