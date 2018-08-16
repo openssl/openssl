@@ -493,22 +493,27 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         size_t i;
 
         for (i = 0; bytes_needed > 0 && i < OSSL_NELEM(random_device_paths); i++) {
+            ssize_t bytes = 0;
+            /* Maximum allowed number of consecutive unsuccessful attempts */
+            int attempts = 3;
             const int fd = get_random_device(i);
 
             if (fd == -1)
                 continue;
-            buffer = rand_pool_add_begin(pool, bytes_needed);
-            if (buffer != NULL) {
-                const ssize_t n = read(fd, buffer, bytes_needed);
 
-                if (n <= 0) {
-                    close_random_device(i);
-                    continue;
+            while (bytes_needed != 0 && attempts-- > 0) {
+                buffer = rand_pool_add_begin(pool, bytes_needed);
+                bytes = read(fd, buffer, bytes_needed);
+
+                if (bytes > 0) {
+                    rand_pool_add_end(pool, bytes, 8 * bytes);
+                    bytes_needed -= bytes;
+                    attempts = 3; /* reset counter after successfull attempt */
+                } else if (bytes < 0 && errno != EINTR) {
+                    break;
                 }
-
-                rand_pool_add_end(pool, n, 8 * n);
             }
-            if (!keep_random_devices_open)
+            if (bytes < 0 || !keep_random_devices_open)
                 close_random_device(i);
 
             bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
