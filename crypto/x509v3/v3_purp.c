@@ -500,13 +500,15 @@ static void x509v3_cache_extensions(X509 *x)
     }
     x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
-    CRYPTO_THREAD_unlock(x->lock);
+#ifdef tsan_st_rel
+    tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
     /*
-     * It has to be placed after memory barrier, which is implied by unlock.
-     * Worst thing that can happen is that another thread proceeds to lock
-     * and checks x->ex_flags & EXFLAGS_SET. See beginning of the function.
+     * Above store triggers fast lock-free check in the beginning of the
+     * function. But one has to ensure that the structure is "stable", i.e.
+     * all stores are visible on all processors. Hence the release fence.
      */
-    tsan_store((TSAN_QUALIFIER int *)&x->ex_cached, 1);
+#endif
+    CRYPTO_THREAD_unlock(x->lock);
 }
 
 /*-
