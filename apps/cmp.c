@@ -41,7 +41,7 @@ static char *opt_section = CMP_SECTION;
 
 #undef PROG
 #define PROG cmp_main
-char *prog = "cmp";
+static char *prog = "cmp";
 
 #include <openssl/crypto.h>
 #include <openssl/cmp.h>
@@ -221,7 +221,7 @@ static int opt_ocsp_timeout = 10;
 # define X509_V_FLAG_OCSP_STAPLING  0x20000 /* Use OCSP stapling (for TLS) */
 # define X509_V_FLAG_OCSP_CHECK     0x40000 /* Check certificate with OCSP */
 # define X509_V_FLAG_OCSP_CHECK_ALL 0x80000 /* Check whole chain with OCSP */
-X509_STORE_CTX_check_revocation_fn check_revocation = NULL;
+static X509_STORE_CTX_check_revocation_fn check_revocation = NULL;
 static int opt_ocsp_status = 0;
 #endif
 
