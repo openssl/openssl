@@ -175,44 +175,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
-{
-# if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE)
-    if (__atomic_is_lock_free(sizeof(*val), val)) {
-        __atomic_load(val, ret, __ATOMIC_ACQUIRE);
-        return 1;
-    }
-# endif
-    if (!CRYPTO_THREAD_read_lock(lock))
-        return 0;
-
-    *ret  = *val;
-
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-}
-
-int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock)
-{
-# if defined(__GNUC__) && defined(__ATOMIC_RELEASE)
-    if (__atomic_is_lock_free(sizeof(*val), val)) {
-        __atomic_store(val, &n, __ATOMIC_RELEASE);
-        return 1;
-    }
-# endif
-    if (!CRYPTO_THREAD_write_lock(lock))
-        return 0;
-
-    *val = n;
-
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-
-    return 1;
-}
-
 # ifdef OPENSSL_SYS_UNIX
 static pthread_once_t fork_once_control = PTHREAD_ONCE_INIT;
 
