@@ -31,12 +31,18 @@ int OPENSSL_issetugid(void)
 # include OPENSSL_UNISTD
 # include <sys/types.h>
 
+# if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#  if __GLIBC_PREREQ(2, 16)
+#   include <sys/auxv.h>
+#  endif
+# endif
+
 int OPENSSL_issetugid(void)
 {
-    if (getuid() != geteuid())
-        return 1;
-    if (getgid() != getegid())
-        return 1;
-    return 0;
+# ifdef AT_SECURE
+    return getauxval(AT_SECURE) != 0;
+# else
+    return getuid() != geteuid() || getgid() != getegid();
+# endif
 }
 #endif
