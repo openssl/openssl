@@ -1441,7 +1441,7 @@ if (!$disabled{makedepend}) {
     }
 }
 
-if (!$disabled{asm}) {
+if (!$disabled{asm} && !$predefined{__MACH__} && $^O ne 'VMS') {
     # probe for -Wa,--noexecstack option...
     if ($predefined{__clang__}) {
         # clang has builtin assembler, which doesn't recognize --help,
@@ -1449,7 +1449,7 @@ if (!$disabled{asm}) {
         # supported platforms even when it's meaningless. In other words
         # probe would fail, but probed option always accepted...
         push @{$config{cflags}}, "-Wa,--noexecstack", "-Qunused-arguments";
-    } elsif ($^O ne 'VMS') {
+    } else {
         my $cc = $config{CROSS_COMPILE}.$config{CC};
         open(PIPE, "$cc -Wa,--help -c -o null.$$.o -x assembler /dev/null 2>&1 |");
         while(<PIPE>) {
