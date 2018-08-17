@@ -354,9 +354,11 @@ static void x509v3_cache_extensions(X509 *x)
     X509_EXTENSION *ex;
     int i;
 
+#ifdef tsan_ld_acq
     /* fast lock-free check, see end of the function for details. */
-    if (tsan_load((TSAN_QUALIFIER int *)&x->ex_cached))
+    if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
         return;
+#endif
 
     CRYPTO_THREAD_write_lock(x->lock);
     if (x->ex_flags & EXFLAG_SET) {
