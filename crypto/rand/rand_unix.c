@@ -77,8 +77,6 @@ static uint64_t get_timer_bits(void);
 # endif
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
 
-int syscall_random(void *buf, size_t buflen);
-
 #if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
         !defined(OPENSSL_RAND_SEED_NONE)
 # error "UEFI and VXWorks only support seeding NONE"
@@ -87,6 +85,8 @@ int syscall_random(void *buf, size_t buflen);
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
     || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VXWORKS) \
     || defined(OPENSSL_SYS_UEFI))
+
+static ssize_t syscall_random(void *buf, size_t buflen);
 
 # if defined(OPENSSL_SYS_VOS)
 
@@ -192,13 +192,18 @@ void rand_pool_keep_random_devices_open(int keep)
 #  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
 /*
  * sysctl_random(): Use sysctl() to read a random number from the kernel
- * Returns the size on success, 0 on failure.
+ * Returns the number of bytes returned in buf on success, -1 on failure.
  */
-static size_t sysctl_random(char *buf, size_t buflen)
+static ssize_t sysctl_random(char *buf, size_t buflen)
 {
     int mib[2];
     size_t done = 0;
     size_t len;
+
+    /*
+     * Note: sign conversion between size_t and ssize_t is safe even
+     * without a range check, see comment in syscall_random()
+     */
 
     /*
      * On FreeBSD old implementations returned longs, newer versions support
@@ -206,8 +211,10 @@ static size_t sysctl_random(char *buf, size_t buflen)
      * when the sysctl returns long and we want to request something not a
      * multiple of longs, which should never be the case.
      */
-    if (!ossl_assert(buflen % sizeof(long) == 0))
-        return 0;
+    if (!ossl_assert(buflen % sizeof(long) == 0)) {
+        errno = EINVAL;
+        return -1;
+    }
 
     /*
      * On NetBSD before 4.0 KERN_ARND was an alias for KERN_URND, and only
@@ -217,7 +224,8 @@ static size_t sysctl_random(char *buf, size_t buflen)
      * Just return an error on older NetBSD versions.
      */
 #if   defined(__NetBSD__) && __NetBSD_Version__ < 400000000
-    return 0;
+    errno = ENOSYS;
+    return -1;
 #endif
 
     mib[0] = CTL_KERN;
@@ -226,7 +234,7 @@ static size_t sysctl_random(char *buf, size_t buflen)
     do {
         len = buflen;
         if (sysctl(mib, 2, buf, &len, NULL, 0) == -1)
-            return done;
+            return done > 0 ? done : -1;
         done += len;
         buf += len;
         buflen -= len;
@@ -238,10 +246,20 @@ static size_t sysctl_random(char *buf, size_t buflen)
 
 /*
  * syscall_random(): Try to get random data using a system call
- * returns the number of bytes returned in buf, or <= 0 on error.
+ * returns the number of bytes returned in buf, or < 0 on error.
  */
-int syscall_random(void *buf, size_t buflen)
+static ssize_t syscall_random(void *buf, size_t buflen)
 {
+    /*
+     * Note: 'buflen' equals the size of the buffer which is used by the
+     * get_entropy() callback of the RAND_DRBG. It is roughly bounded by
+     *
+     *   2 * DRBG_MINMAX_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^13
+     *
+     * which is way below the OSSL_SSIZE_MAX limit. Therefore sign conversion
+     * between size_t and ssize_t is safe even without a range check.
+     */
+
     /*
      * Do runtime detection to find getentropy().
      *
@@ -253,10 +271,10 @@ int syscall_random(void *buf, size_t buflen)
      * - FreeBSD since 12.0 (1200061)
      */
 #  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
-    extern int getentropy(void *bufer, size_t length) __attribute__((weak));
+    extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL)
-        return getentropy(buf, buflen) == 0 ? buflen : 0;
+        return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
 #  else
     union {
         void *p;
@@ -271,19 +289,18 @@ int syscall_random(void *buf, size_t buflen)
     p_getentropy.p = DSO_global_lookup("getentropy");
     ERR_pop_to_mark();
     if (p_getentropy.p != NULL)
-        return p_getentropy.f(buf, buflen) == 0 ? buflen : 0;
+        return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
 #  endif
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(SYS_getrandom)
-    return (int)syscall(SYS_getrandom, buf, buflen, 0);
-#  endif
-
-#  if (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
-    return (int)sysctl_random(buf, buflen);
-#  endif
-
+    return syscall(SYS_getrandom, buf, buflen, 0);
+#  elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
+    return sysctl_random(buf, buflen);
+#  else
+    errno = ENOSYS;
     return -1;
+#  endif
 }
 
 #if  !defined(OPENSSL_RAND_SEED_NONE) && defined(OPENSSL_RAND_SEED_DEVRANDOM)
