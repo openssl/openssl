@@ -1483,10 +1483,10 @@ int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
 }
 
 /*-
- * Differential addition-and-doubling using  Eq. (8) and (10) from Izu-Takagi
+ * Differential addition-and-doubling using  Eq. (9) and (10) from Izu-Takagi
  * "A fast parallel elliptic curve multiplication resistant against side channel
  * attacks", as described at
- * https://hyperelliptic.org/EFD/g1p/auto-shortw-xz.html#ladder-ladd-2002-it-3
+ * https://hyperelliptic.org/EFD/g1p/auto-shortw-xz.html#ladder-ladd-2002-it-4
  */
 int ec_GFp_simple_ladder_step(const EC_GROUP *group,
                               EC_POINT *r, EC_POINT *s,
@@ -1511,39 +1511,42 @@ int ec_GFp_simple_ladder_step(const EC_GROUP *group,
         || !group->meth->field_mul(group, t2, r->X, s->Z, ctx)
         || !group->meth->field_mul(group, t3, r->Z, s->X, ctx)
         || !group->meth->field_mul(group, t4, group->a, t1, ctx)
-        || !BN_mod_sub_quick(t4, t0, t4, group->field)
-        || !BN_mod_add_quick(t5, t3, t2, group->field)
-        || !group->meth->field_sqr(group, t4, t4, ctx)
-        || !group->meth->field_mul(group, t5, t1, t5, ctx)
-        || !BN_mod_lshift_quick(t0, group->b, 2, group->field)
-        || !group->meth->field_mul(group, t5, t0, t5, ctx)
-        || !BN_mod_sub_quick(t5, t4, t5, group->field)
+        || !BN_mod_add_quick(t0, t0, t4, group->field)
+        || !BN_mod_add_quick(t4, t3, t2, group->field)
+        || !group->meth->field_mul(group, t0, t4, t0, ctx)
+        || !group->meth->field_sqr(group, t1, t1, ctx)
+        || !BN_mod_lshift_quick(t7, group->b, 2, group->field)
+        || !group->meth->field_mul(group, t1, t7, t1, ctx)
+        || !BN_mod_lshift1_quick(t0, t0, group->field)
+        || !BN_mod_add_quick(t0, t1, t0, group->field)
+        || !BN_mod_sub_quick(t1, t2, t3, group->field)
+        || !group->meth->field_sqr(group, t1, t1, ctx)
+        || !group->meth->field_mul(group, t3, t1, p->X, ctx)
+        || !group->meth->field_mul(group, t0, p->Z, t0, ctx)
         /* s->X coord output */
-        || !group->meth->field_mul(group, s->X, t5, p->Z, ctx)
-        || !BN_mod_sub_quick(t3, t2, t3, group->field)
-        || !group->meth->field_sqr(group, t3, t3, ctx)
+        || !BN_mod_sub_quick(s->X, t0, t3, group->field)
         /* s->Z coord output */
-        || !group->meth->field_mul(group, s->Z, t3, p->X, ctx)
-        || !group->meth->field_sqr(group, t2, r->X, ctx)
-        || !group->meth->field_sqr(group, t4, r->Z, ctx)
-        || !group->meth->field_mul(group, t1, t4, group->a, ctx)
-        || !BN_mod_add_quick(t6, r->X, r->Z, group->field)
+        || !group->meth->field_mul(group, s->Z, p->Z, t1, ctx)
+        || !group->meth->field_sqr(group, t3, r->X, ctx)
+        || !group->meth->field_sqr(group, t2, r->Z, ctx)
+        || !group->meth->field_mul(group, t4, t2, group->a, ctx)
+        || !BN_mod_add_quick(t5, r->X, r->Z, group->field)
+        || !group->meth->field_sqr(group, t5, t5, ctx)
+        || !BN_mod_sub_quick(t5, t5, t3, group->field)
+        || !BN_mod_sub_quick(t5, t5, t2, group->field)
+        || !BN_mod_sub_quick(t6, t3, t4, group->field)
         || !group->meth->field_sqr(group, t6, t6, ctx)
-        || !BN_mod_sub_quick(t6, t6, t2, group->field)
-        || !BN_mod_sub_quick(t6, t6, t4, group->field)
-        || !BN_mod_sub_quick(t7, t2, t1, group->field)
-        || !group->meth->field_sqr(group, t7, t7, ctx)
-        || !group->meth->field_mul(group, t5, t4, t6, ctx)
-        || !group->meth->field_mul(group, t5, t0, t5, ctx)
+        || !group->meth->field_mul(group, t0, t2, t5, ctx)
+        || !group->meth->field_mul(group, t0, t7, t0, ctx)
         /* r->X coord output */
-        || !BN_mod_sub_quick(r->X, t7, t5, group->field)
-        || !BN_mod_add_quick(t2, t2, t1, group->field)
-        || !group->meth->field_sqr(group, t5, t4, ctx)
-        || !group->meth->field_mul(group, t5, t5, t0, ctx)
-        || !group->meth->field_mul(group, t6, t6, t2, ctx)
-        || !BN_mod_lshift1_quick(t6, t6, group->field)
+        || !BN_mod_sub_quick(r->X, t6, t0, group->field)
+        || !BN_mod_add_quick(t6, t3, t4, group->field)
+        || !group->meth->field_sqr(group, t3, t2, ctx)
+        || !group->meth->field_mul(group, t7, t3, t7, ctx)
+        || !group->meth->field_mul(group, t5, t5, t6, ctx)
+        || !BN_mod_lshift1_quick(t5, t5, group->field)
         /* r->Z coord output */
-        || !BN_mod_add_quick(r->Z, t5, t6, group->field))
+        || !BN_mod_add_quick(r->Z, t7, t5, group->field))
         goto err;
 
     ret = 1;
