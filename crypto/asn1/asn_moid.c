@@ -64,7 +64,7 @@ static int do_create(const char *value, const char *name)
     char *lntmp = NULL;
 
     p = strrchr(value, ',');
-    if (p != NULL) {
+    if (p == NULL) {
         ln = name;
         ostr = value;
     } else {
