@@ -414,7 +414,7 @@ clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-$(RM) `find . -name .git -prune -o -name '*{- $depext -}' -print`
-	-$(RM) `find . -name .git -prine -o -name '*{- $objext -}' -print`
+	-$(RM) `find . -name .git -prune -o -name '*{- $objext -}' -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
