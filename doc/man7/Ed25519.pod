@@ -15,16 +15,16 @@ draft-ietf-curdle-pkix-04.
 
 No additional parameters can be set during key generation one-shot signing or
 verification. In particular, because PureEdDSA is used, when signing or
-verifying a digest must B<NOT> be specified.
+verifying, a digest must B<NOT> be specified.
 
 =head1 NOTES
 
 The PureEdDSA algorithm does not support the streaming mechanism
 of other signature algorithms using, for example, EVP_DigestUpdate().
 The message to sign or verify must be passed using the one-shot
-EVP_DigestSign() asn EVP_DigestVerify() functions.
+EVP_DigestSign() and EVP_DigestVerify() functions.
 
-When calling EVP_DigestSignInit() or EVP_DigestSignUpdate() the
+When calling EVP_DigestSignInit() or EVP_DigestVerifyInit(), the
 digest parameter B<MUST> be set to B<NULL>.
 
 Applications wishing to sign certificates (or other structures such as
