@@ -54,6 +54,7 @@ Follow the instructions there to download and build that branch of liboqs and in
 
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
     cd liboqs
+    git checkout 068c48ae3718b86926a2d032dea337892d836891
     autoreconf -i
     ./configure --prefix=<path-to-openssl-dir>/oqs
     make
