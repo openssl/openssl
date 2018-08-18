@@ -589,14 +589,15 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
     return r;
 }
 
-static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
+static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *II, RSA *rsa, BN_CTX *ctx)
 {
-    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2];
+    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2],*I=NULL;
     int ret = 0, i, ex_primes = 0;
     RSA_PRIME_INFO *pinfo;
 
     BN_CTX_start(ctx);
 
+    I = BN_dup(II);
     r1 = BN_CTX_get(ctx);
     r2 = BN_CTX_get(ctx);
     m1 = BN_CTX_get(ctx);
@@ -879,22 +880,20 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         if (!BN_is_zero(vrfy)) {
             /*
              * 'I' and 'vrfy' aren't congruent mod n. Don't leak
-             * miscalculated CRT output, just do a raw (slower) mod_exp and
-             * return that instead.
+             * miscalculated CRT output to prevent Bellcore attack.
+             * Do NOT compute a raw (slower) mod_exp, clear sensitive variables
+             * and return an error to prevent Sébastien CARRE, Adrien FACON, 
+             * Sylvain GUILLEY and Matthieu DESJARDINS fault attack on message.
              */
-
-            BIGNUM *d = BN_new();
-            if (d == NULL)
-                goto err;
-            BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-
-            if (!rsa->meth->bn_mod_exp(r0, I, d, rsa->n, ctx,
-                                       rsa->_method_mod_n)) {
-                BN_free(d);
-                goto err;
-            }
-            /* We MUST free d before any further use of rsa->d */
-            BN_free(d);
+          
+            /* Prevent prime factor leak due to message fault attack. */
+            BN_clear(I);
+          
+            /* Clear sensitive faulted variables. */
+            BN_clear(r0);
+            BN_clear(vrfy);
+          
+            goto err;
         }
     }
     ret = 1;
