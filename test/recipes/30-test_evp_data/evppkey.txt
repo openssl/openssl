@@ -17287,7 +17287,7 @@ PeerKey=BOB_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result = DERIVE_ERROR
 
-Title = Test keypair mistmatches
+Title = Test keypair mismatches
 
 PrivPubKeyPair = Alice-25519:Bob-25519-PUBLIC
 Result = KEYPAIR_MISMATCH
