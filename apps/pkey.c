@@ -192,12 +192,12 @@ int pkey_main(int argc, char **argv)
                 assert(private);
                 if (traditional) {
                     if (!PEM_write_bio_PrivateKey_traditional(out, pkey, cipher,
-                                                         NULL, 0, NULL,
-                                                         passout))
+                                                              NULL, 0, NULL,
+                                                              passout))
                         goto end;
                 } else {
                     if (!PEM_write_bio_PrivateKey(out, pkey, cipher,
-                                             NULL, 0, NULL, passout))
+                                                  NULL, 0, NULL, passout))
                         goto end;
                 }
             }
