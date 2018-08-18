@@ -413,13 +413,13 @@ libclean:
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-$(RM) `find . -name '*{- $depext -}' -a \! -path "./.git/*"`
-	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
+	-$(RM) `find . -name .git -prune -o -name '*{- $depext -}' -print`
+	-$(RM) `find . -name .git -prune -o -name '*{- $objext -}' -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
-	-$(RM) `find . -type l -a \! -path "./.git/*"`
+	-$(RM) `find . -name .git -prune -o -type l -print`
 	$(RM) $(TARFILE)
 
 distclean: clean
