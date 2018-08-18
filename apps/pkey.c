@@ -212,10 +212,12 @@ int pkey_main(int argc, char **argv)
 
     if (text) {
         if (pubtext) {
-            EVP_PKEY_print_public(out, pkey, 0, NULL);
+            if (EVP_PKEY_print_public(out, pkey, 0, NULL) <= 0)
+                goto end;
         } else {
             assert(private);
-            EVP_PKEY_print_private(out, pkey, 0, NULL);
+            if (EVP_PKEY_print_private(out, pkey, 0, NULL) <= 0)
+                goto end;
         }
     }
 
