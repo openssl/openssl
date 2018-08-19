@@ -474,9 +474,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             } else if (bytes < 0 && errno != EINTR) {
                 break;
             }
-            entropy_available = rand_pool_entropy_available(pool);
         }
     }
+    entropy_available = rand_pool_entropy_available(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
