@@ -470,7 +470,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             if (bytes > 0) {
                 rand_pool_add_end(pool, bytes, 8 * bytes);
                 bytes_needed -= bytes;
-                attempts = 3; /* reset counter after successfull attempt */
+                attempts = 3; /* reset counter after successful attempt */
             } else if (bytes < 0 && errno != EINTR) {
                 break;
             }
