@@ -1005,6 +1005,7 @@ int ssl_get_client_min_max_version(const SSL *s, int *min_version,
     const SSL_METHOD *method;
     const version_info *table;
     const version_info *vent;
+    int found;
 
     switch (s->method->version) {
     default:
@@ -1015,10 +1016,7 @@ int ssl_get_client_min_max_version(const SSL *s, int *min_version,
          * versions they don't want.  If not, then easy to fix, just return
          * ssl_method_error(s, s->method)
          */
-#define CHECK_REQUESTED_VERSION_IS_NOT_DISABLED
-#ifdef CHECK_REQUESTED_VERSION_IS_NOT_DISABLED
-    {
-        int found = 0;
+        found = 0;
         for (vent = SSL_IS_DTLS(s) ? dtls_version_table : tls_version_table; vent->version != 0; ++vent) {
             // Note, When disabled, the value version may be in the table still, but cmeth and smeth will be NULL pointers.
             if ((s->version == vent->version) && (vent->cmeth != NULL) && (vent->smeth != NULL)) {
@@ -1029,8 +1027,6 @@ int ssl_get_client_min_max_version(const SSL *s, int *min_version,
         if (!found) {
             return SSL_R_NO_PROTOCOLS_AVAILABLE;
         }
-    }
-#endif //CHECK_REQUESTED_VERSION_IS_NOT_DISABLED
         *min_version = *max_version = s->version;
         return 0;
     case TLS_ANY_VERSION:
