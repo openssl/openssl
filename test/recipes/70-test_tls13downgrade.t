@@ -45,7 +45,7 @@ use constant {
 $proxy->filter(\&downgrade_filter);
 my $testtype = DOWNGRADE_TO_TLS_1_2;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 4;
+plan tests => 5;
 ok(TLSProxy::Message->fail(), "Downgrade TLSv1.3 to TLSv1.2");
 
 #Test 2: Downgrade from TLSv1.3 to TLSv1.1
@@ -72,6 +72,16 @@ ok(TLSProxy::Message->fail()
    && !$alert->server()
    && $alert->description() == TLSProxy::Message::AL_DESC_ILLEGAL_PARAMETER,
    "Fallback from TLSv1.3");
+
+SKIP: {
+    skip "TLSv1.1 disabled", 1 if disabled("tls1_1");
+    #Test 5: A protocol "hole" should not be detected as a downgrade
+    $proxy->clear();
+    $proxy->filter(undef);
+    $proxy->clientflags("-no_tls1_2");
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "TLSv1.2 protocol hole");
+}
 
 sub downgrade_filter
 {
