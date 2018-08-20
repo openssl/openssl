@@ -137,11 +137,17 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
 {
+#ifdef IMPLEMENTED
+    if (!secure_mem_initialized)
+        return CRYPTO_zalloc(num, file, line);
+    return CRYPTO_secure_malloc(num, file, line);
+#else
     void *ret = CRYPTO_secure_malloc(num, file, line);
 
     if (ret != NULL)
         memset(ret, 0, num);
     return ret;
+#endif
 }
 
 void CRYPTO_secure_free(void *ptr, const char *file, int line)
@@ -588,6 +594,9 @@ static void *sh_malloc(size_t size)
 
     OPENSSL_assert(WITHIN_ARENA(chunk));
 
+    /* zero the free list header as a precaution against information leakage */
+    memset(chunk, 0, sizeof(SH_LIST));
+
     return chunk;
 }
 
@@ -620,6 +629,8 @@ static void sh_free(void *ptr)
 
         list--;
 
+        /* Zero the higher addressed block's free list pointers */
+        memset(ptr > buddy ? ptr : buddy, 0, sizeof(SH_LIST));
         if (ptr > buddy)
             ptr = buddy;
 
