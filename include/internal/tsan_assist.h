@@ -8,8 +8,9 @@
  */
  
 /*
- * Goal here is to facilitate writing "thread-opportunistic" code that
- * withstands Thread Sanitizer's scrutiny. "Thread-opportunistic" is when
+ * Contemporary compilers implement lock-free atomic memory access
+ * primitives that facilitate writing "thread-opportunistic" or even real
+ * multi-threading low-overhead code. "Thread-opportunistic" is when
  * exact result is not required, e.g. some statistics, or execution flow
  * doesn't have to be unambiguous. Simplest example is lazy "constant"
  * initialization when one can synchronize on variable itself, e.g.
@@ -28,12 +29,22 @@
  * bother. Having Thread Sanitizer accept "thread-opportunistic" code
  * allows to move on trouble-shooting real bugs.
  *
- * We utilize the fact that compilers that implement Thread Sanitizer
- * implement even atomic operations. Then it's assumed that
- * ATOMIC_{LONG|INT}_LOCK_FREE are assigned same value as
+ * Resolving Thread Sanitizer nits was the initial purpose for this module,
+ * but it was later extended with more nuanced primitives that are useful
+ * even in "non-opportunistic" scenarios. Most notably verifying if a shared
+ * structure is fully initialized and bypassing the initialization lock.
+ * It's suggested to view macros defined in this module as "annotations" for
+ * thread-safe lock-free code, "Thread-Safe ANnotations"...
+ *
+ * It's assumed that ATOMIC_{LONG|INT}_LOCK_FREE are assigned same value as
  * ATOMIC_POINTER_LOCK_FREE. And check for >= 2 ensures that correspodning
  * code is inlined. It should be noted that statistics counters become
  * accurate in such case.
+ *
+ * Special note about TSAN_QUALiFIER. It might be undesired to use it in
+ * a shared header. Because whether operation on specific variable or member
+ * is atomic or not might be irrelevant in other modules. In such case one
+ * can use TSAN_QUALIFIER in cast specifically when it has to count.
  */
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
