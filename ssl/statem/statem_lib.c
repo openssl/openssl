@@ -1665,9 +1665,16 @@ static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
     if (vers == TLS1_2_VERSION
             && ssl_version_supported(s, TLS1_3_VERSION, NULL)) {
         *dgrd = DOWNGRADE_TO_1_2;
-    } else if (!SSL_IS_DTLS(s) && vers < TLS1_2_VERSION
-            && (ssl_version_supported(s, TLS1_2_VERSION, NULL)
-                || ssl_version_supported(s, TLS1_3_VERSION, NULL))) {
+    } else if (!SSL_IS_DTLS(s)
+            && vers < TLS1_2_VERSION
+               /*
+                * We need to ensure that a server that disables TLSv1.2
+                * (creating a hole between TLSv1.3 and TLSv1.1) can still
+                * complete handshakes with clients that support TLSv1.2 and
+                * below. Therefore we do not enable the sentinel if TLSv1.3 is
+                * enabled and TLSv1.2 is not.
+                */
+            && ssl_version_supported(s, TLS1_2_VERSION, NULL)) {
         *dgrd = DOWNGRADE_TO_1_1;
     } else {
         *dgrd = DOWNGRADE_NONE;
