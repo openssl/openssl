@@ -70,6 +70,10 @@ static int eea3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
      * iv is set to 5 bytes (40 bits).
      */
 
+    /* IV is a 'must' */
+    if (iv == NULL)
+        return 0;
+
     count = (iv[0] << 24) | (iv[1] << 16) | (iv[2] << 8) | iv[3];
     bearer = (iv[4] & 0xF8) >> 3;
     direction = (iv[4] & 0x4) >> 2;
