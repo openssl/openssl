@@ -214,7 +214,7 @@ SKIP: {
 
 #Test 6: A client auth handshake
 $proxy->clear();
-$proxy->clientflags("-cert ".srctop_file("apps", "server.pem"));
+$proxy->clientflags("-enable_pha -cert ".srctop_file("apps", "server.pem"));
 $proxy->serverflags("-Verify 5");
 $proxy->start();
 checkhandshake($proxy, checkhandshake::CLIENT_AUTH_HANDSHAKE,

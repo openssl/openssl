@@ -1898,7 +1898,8 @@ int SSL_renegotiate_abbreviated(SSL *s);
 __owur int SSL_renegotiate_pending(SSL *s);
 int SSL_shutdown(SSL *s);
 __owur int SSL_verify_client_post_handshake(SSL *s);
-void SSL_force_post_handshake_auth(SSL *s);
+void SSL_CTX_set_post_handshake_auth(SSL_CTX *ctx, int val);
+void SSL_set_post_handshake_auth(SSL *s, int val);
 
 __owur const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx);
 __owur const SSL_METHOD *SSL_get_ssl_method(SSL *s);

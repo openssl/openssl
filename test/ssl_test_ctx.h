@@ -108,8 +108,8 @@ typedef struct {
     char *reneg_ciphers;
     char *srp_user;
     char *srp_password;
-    /* Forced PHA */
-    int force_pha;
+    /* PHA enabled */
+    int enable_pha;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
