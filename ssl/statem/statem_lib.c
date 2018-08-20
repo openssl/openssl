@@ -105,7 +105,7 @@ int tls_setup_handshake(SSL *s)
          * enabled. For clients we do this check during construction of the
          * ClientHello.
          */
-        if (ssl_get_min_max_version(s, &ver_min, &ver_max) != 0) {
+        if (ssl_get_min_max_version(s, &ver_min, &ver_max, NULL) != 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_SETUP_HANDSHAKE,
                      ERR_R_INTERNAL_ERROR);
             return 0;
@@ -1835,8 +1835,7 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
 {
     const version_info *vent;
     const version_info *table;
-    int highver = 0;
-    int origv;
+    int ret, ver_min, ver_max, real_max, origv;
 
     origv = s->version;
     s->version = version;
@@ -1883,65 +1882,62 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
         break;
     }
 
+    ret = ssl_get_min_max_version(s, &ver_min, &ver_max, &real_max);
+    if (ret != 0) {
+        s->version = origv;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, ret);
+        return 0;
+    }
+    if (SSL_IS_DTLS(s) ? DTLS_VERSION_LT(s->version, ver_min)
+                       : s->version < ver_min) {
+        s->version = origv;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
+        return 0;
+    } else if (SSL_IS_DTLS(s) ? DTLS_VERSION_GT(s->version, ver_max)
+                              : s->version > ver_max) {
+        s->version = origv;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
+        return 0;
+    }
+
+    if ((s->mode & SSL_MODE_SEND_FALLBACK_SCSV) == 0)
+        real_max = ver_max;
+
+    /* Check for downgrades */
+    if (s->version == TLS1_2_VERSION && real_max > s->version) {
+        if (memcmp(tls12downgrade,
+                   s->s3->server_random + SSL3_RANDOM_SIZE
+                                        - sizeof(tls12downgrade),
+                   sizeof(tls12downgrade)) == 0) {
+            s->version = origv;
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                     SSL_R_INAPPROPRIATE_FALLBACK);
+            return 0;
+        }
+    } else if (!SSL_IS_DTLS(s)
+               && s->version < TLS1_2_VERSION
+               && real_max > s->version) {
+        if (memcmp(tls11downgrade,
+                   s->s3->server_random + SSL3_RANDOM_SIZE
+                                        - sizeof(tls11downgrade),
+                   sizeof(tls11downgrade)) == 0) {
+            s->version = origv;
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+                     SSL_F_SSL_CHOOSE_CLIENT_VERSION,
+                     SSL_R_INAPPROPRIATE_FALLBACK);
+            return 0;
+        }
+    }
+
     for (vent = table; vent->version != 0; ++vent) {
-        const SSL_METHOD *method;
-        int err;
-
-        if (vent->cmeth == NULL)
+        if (vent->cmeth == NULL || s->version != vent->version)
             continue;
 
-        if (highver != 0 && s->version != vent->version)
-            continue;
-
-        if (highver == 0 && (s->mode & SSL_MODE_SEND_FALLBACK_SCSV) != 0)
-            highver = vent->version;
-
-        method = vent->cmeth();
-        err = ssl_method_error(s, method);
-        if (err != 0) {
-            if (s->version == vent->version) {
-                s->version = origv;
-                SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
-                         SSL_F_SSL_CHOOSE_CLIENT_VERSION, err);
-                return 0;
-            }
-
-            continue;
-        }
-        if (highver == 0)
-            highver = vent->version;
-
-        if (s->version != vent->version)
-            continue;
-
-        /* Check for downgrades */
-        if (s->version == TLS1_2_VERSION && highver > s->version) {
-            if (memcmp(tls12downgrade,
-                       s->s3->server_random + SSL3_RANDOM_SIZE
-                                            - sizeof(tls12downgrade),
-                       sizeof(tls12downgrade)) == 0) {
-                s->version = origv;
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                         SSL_F_SSL_CHOOSE_CLIENT_VERSION,
-                         SSL_R_INAPPROPRIATE_FALLBACK);
-                return 0;
-            }
-        } else if (!SSL_IS_DTLS(s)
-                   && s->version < TLS1_2_VERSION
-                   && highver > s->version) {
-            if (memcmp(tls11downgrade,
-                       s->s3->server_random + SSL3_RANDOM_SIZE
-                                            - sizeof(tls11downgrade),
-                       sizeof(tls11downgrade)) == 0) {
-                s->version = origv;
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                         SSL_F_SSL_CHOOSE_CLIENT_VERSION,
-                         SSL_R_INAPPROPRIATE_FALLBACK);
-                return 0;
-            }
-        }
-
-        s->method = method;
+        s->method = vent->cmeth();
         return 1;
     }
 
@@ -1956,6 +1952,9 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
  * @s: The SSL connection
  * @min_version: The minimum supported version
  * @max_version: The maximum supported version
+ * @real_max:    The highest version below the lowest compile time version hole
+ *               where that hole lies above at least one run-time enabled
+ *               protocol.
  *
  * Work out what version we should be using for the initial ClientHello if the
  * version is initially (D)TLS_ANY_VERSION.  We apply any explicit SSL_OP_NO_xxx
@@ -1970,9 +1969,10 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
  * Returns 0 on success or an SSL error reason number on failure.  On failure
  * min_version and max_version will also be set to 0.
  */
-int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
+int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version,
+                            int *real_max)
 {
-    int version;
+    int version, tmp_real_max;
     int hole;
     const SSL_METHOD *single = NULL;
     const SSL_METHOD *method;
@@ -1989,6 +1989,12 @@ int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
          * ssl_method_error(s, s->method)
          */
         *min_version = *max_version = s->version;
+        /*
+         * Providing a real_max only makes sense where we're using a version
+         * flexible method.
+         */
+        if (!ossl_assert(real_max == NULL))
+            return ERR_R_INTERNAL_ERROR;
         return 0;
     case TLS_ANY_VERSION:
         table = tls_version_table;
@@ -2021,6 +2027,9 @@ int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
      */
     *min_version = version = 0;
     hole = 1;
+    if (real_max != NULL)
+        *real_max = 0;
+    tmp_real_max = 0;
     for (vent = table; vent->version != 0; ++vent) {
         /*
          * A table entry with a NULL client method is still a hole in the
@@ -2028,15 +2037,22 @@ int ssl_get_min_max_version(const SSL *s, int *min_version, int *max_version)
          */
         if (vent->cmeth == NULL) {
             hole = 1;
+            tmp_real_max = 0;
             continue;
         }
         method = vent->cmeth();
+
+        if (hole == 1 && tmp_real_max == 0)
+            tmp_real_max = vent->version;
+
         if (ssl_method_error(s, method) != 0) {
             hole = 1;
         } else if (!hole) {
             single = NULL;
             *min_version = method->version;
         } else {
+            if (real_max != NULL && tmp_real_max != 0)
+                *real_max = tmp_real_max;
             version = (single = method)->version;
             *min_version = version;
             hole = 0;
@@ -2071,7 +2087,7 @@ int ssl_set_client_hello_version(SSL *s)
     if (!SSL_IS_FIRST_HANDSHAKE(s))
         return 0;
 
-    ret = ssl_get_min_max_version(s, &ver_min, &ver_max);
+    ret = ssl_get_min_max_version(s, &ver_min, &ver_max, NULL);
 
     if (ret != 0)
         return ret;
