@@ -963,5 +963,10 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = {
     {
      EVP_PKEY_RSA2,
      EVP_PKEY_RSA,
-     ASN1_PKEY_ALIAS}
+     ASN1_PKEY_ALIAS},
+    {
+     NID_rsaesOaep,
+     EVP_PKEY_RSA,
+     ASN1_PKEY_ALIAS
+    }
 };
