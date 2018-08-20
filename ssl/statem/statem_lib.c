@@ -1665,9 +1665,9 @@ static void check_for_downgrade(SSL *s, int vers, DOWNGRADE *dgrd)
     if (vers == TLS1_2_VERSION
             && ssl_version_supported(s, TLS1_3_VERSION, NULL)) {
         *dgrd = DOWNGRADE_TO_1_2;
-    } else if (!SSL_IS_DTLS(s) && vers < TLS1_2_VERSION
-            && (ssl_version_supported(s, TLS1_2_VERSION, NULL)
-                || ssl_version_supported(s, TLS1_3_VERSION, NULL))) {
+    } else if (!SSL_IS_DTLS(s)
+            && vers < TLS1_2_VERSION
+            && ssl_version_supported(s, TLS1_2_VERSION, NULL)) {
         *dgrd = DOWNGRADE_TO_1_1;
     } else {
         *dgrd = DOWNGRADE_NONE;
