@@ -31,6 +31,8 @@ int rand_fork_count;
 static CRYPTO_RWLOCK *rand_nonce_lock;
 static int rand_nonce_count;
 
+static int rand_cleaning_up = 0;
+
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
  * IMPORTANT NOTE:  It is not currently possible to use this code
@@ -324,7 +326,7 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     if (rand_nonce_lock == NULL)
         goto err2;
 
-    if (!rand_pool_init())
+    if (!rand_cleaning_up && !rand_pool_init())
         goto err3;
 
     return 1;
@@ -346,10 +348,12 @@ void rand_cleanup_int(void)
 {
     const RAND_METHOD *meth = default_RAND_meth;
 
+    rand_cleaning_up = 1;
+
     if (meth != NULL && meth->cleanup != NULL)
         meth->cleanup();
-    rand_pool_cleanup();
     RAND_set_rand_method(NULL);
+    rand_pool_cleanup();
 #ifndef OPENSSL_NO_ENGINE
     CRYPTO_THREAD_lock_free(rand_engine_lock);
     rand_engine_lock = NULL;
