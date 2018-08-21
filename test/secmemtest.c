@@ -129,8 +129,52 @@ static int test_sec_mem(void)
 #endif
 }
 
+static int test_sec_mem_clear(void)
+{
+#if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
+    const int size = 64;
+    unsigned char *p = NULL;
+    int i, res = 0;
+
+    if (!TEST_true(CRYPTO_secure_malloc_init(4096, 32))
+            || !TEST_ptr(p = OPENSSL_secure_malloc(size)))
+        goto err;
+
+    for (i = 0; i < size; i++)
+        if (!TEST_uchar_eq(p[i], 0))
+            goto err;
+
+    for (i = 0; i < size; i++)
+        p[i] = (unsigned char)(i + ' ' + 1);
+
+    OPENSSL_secure_free(p);
+
+    /*
+     * A deliberate use after free here to verify that the memory has been
+     * cleared properly.  Since secure free doesn't return the memory to
+     * libc's memory pool, it technically isn't freed.  However, the header
+     * bytes have to be skipped and these consist of two pointers in the
+     * current implementation.
+     */
+    for (i = sizeof(void *) * 2; i < size; i++)
+        if (!TEST_uchar_eq(p[i], 0))
+            return 0;
+
+    res = 1;
+    p = NULL;
+
+err:
+    OPENSSL_secure_free(p);
+    CRYPTO_secure_malloc_done();
+    return res;
+#else
+    return 1;
+#endif
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sec_mem);
+    ADD_TEST(test_sec_mem_clear);
     return 1;
 }
