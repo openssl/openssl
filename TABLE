@@ -444,7 +444,7 @@ $multilib     =
 
 *** MPE/iX-gcc
 $cc           = gcc
-$cflags       = -D_ENDIAN -DBN_DIV2W -O3 -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB
+$cflags       = -DBN_DIV2W -O3 -D_POSIX_SOURCE -D_SOCKET_SOURCE -I/SYSLOG/PUB
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = MPE

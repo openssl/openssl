@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -337,7 +337,7 @@ static void sc_usage(void)
     BIO_printf(bio_err,
                " -prexit       - print session information even on connection failure\n");
     BIO_printf(bio_err,
-               " -showcerts    - show all certificates in the chain\n");
+               " -showcerts    - Show all certificates sent by the server\n");
     BIO_printf(bio_err, " -debug        - extra output\n");
 #ifdef WATT32
     BIO_printf(bio_err, " -wdebug       - WATT-32 tcp debugging\n");
