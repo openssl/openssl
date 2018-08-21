@@ -143,7 +143,7 @@ A callback is invoked through a call to B<BN_GENCB_call>. This will check
 the type of the callback and will invoke B<callback(a, b, gencb)> for new
 style callbacks or B<callback(a, b, cb_arg)> for old style.
 
-It is possible to obtained the argument associated with a BN_GENCB structure
+It is possible to obtain the argument associated with a BN_GENCB structure
 (set via a call to BN_GENCB_set or BN_GENCB_set_old) using BN_GENCB_get_arg.
 
 BN_generate_prime() (deprecated) works in the same way as

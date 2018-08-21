@@ -54,7 +54,7 @@ BIO_CLOSE, BIO_NOCLOSE (the close flag) BIO_FP_TEXT (sets the underlying
 stream to text mode, default is binary: this only has any effect under
 Win32).
 
-BIO_set_fp() set the fp of a file BIO to B<fp>. B<flags> has the same
+BIO_set_fp() sets the fp of a file BIO to B<fp>. B<flags> has the same
 meaning as in BIO_new_fp(), it is a macro.
 
 BIO_get_fp() retrieves the fp of a file BIO, it is a macro.
