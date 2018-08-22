@@ -41,7 +41,7 @@
  * code is inlined. It should be noted that statistics counters become
  * accurate in such case.
  *
- * Special note about TSAN_QUALiFIER. It might be undesired to use it in
+ * Special note about TSAN_QUALIFIER. It might be undesired to use it in
  * a shared header. Because whether operation on specific variable or member
  * is atomic or not might be irrelevant in other modules. In such case one
  * can use TSAN_QUALIFIER in cast specifically when it has to count.
