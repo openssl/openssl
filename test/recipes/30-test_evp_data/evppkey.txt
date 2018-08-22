@@ -16046,6 +16046,8 @@ Derive=ALICE_cf_sect283k1
 PeerKey=BOB_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result = DERIVE_ERROR
+Function=EC_POINT_get_affine_coordinates_GF2m
+Reason=point at infinity
 
 
 # Test mismatches
