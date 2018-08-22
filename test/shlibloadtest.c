@@ -48,7 +48,12 @@ typedef void *SHLIB_SYM;
 
 static int shlib_load(const char *filename, SHLIB *lib)
 {
-    *lib = dlopen(filename, RTLD_GLOBAL | RTLD_LAZY);
+    int dl_flags = (RTLD_GLOBAL|RTLD_LAZY);
+#ifdef _AIX
+    if (filename[strlen(filename) - 1] == ')')
+        dl_flags |= RTLD_MEMBER;
+#endif
+    *lib = dlopen(filename, dl_flags);
     return *lib == NULL ? 0 : 1;
 }
 

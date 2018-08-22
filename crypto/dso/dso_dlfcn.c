@@ -108,6 +108,10 @@ static int dlfcn_load(DSO *dso)
     if (dso->flags & DSO_FLAG_GLOBAL_SYMBOLS)
         flags |= RTLD_GLOBAL;
 # endif
+# ifdef _AIX
+    if (filename[strlen(filename) - 1] == ')')
+        flags |= RTLD_MEMBER;
+# endif
     ptr = dlopen(filename, flags);
     if (ptr == NULL) {
         DSOerr(DSO_F_DLFCN_LOAD, DSO_R_LOAD_FAILED);
@@ -332,7 +336,7 @@ static int dladdr(void *ptr, Dl_info *dl)
     unsigned int found = 0;
     struct ld_info *ldinfos, *next_ldi, *this_ldi;
 
-    if ((ldinfos = (struct ld_info *)OPENSSL_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
+    if ((ldinfos = OPENSSL_malloc(DLFCN_LDINFO_SIZE)) == NULL) {
         errno = ENOMEM;
         dl->dli_fname = NULL;
         return 0;
@@ -359,18 +363,33 @@ static int dladdr(void *ptr, Dl_info *dl)
             || ((addr >= (uintptr_t)this_ldi->ldinfo_dataorg)
                 && (addr < ((uintptr_t)this_ldi->ldinfo_dataorg +
                             this_ldi->ldinfo_datasize)))) {
+            char *buffer, *member;
+            size_t buffer_sz, member_len;
+
+            buffer_sz = strlen(this_ldi->ldinfo_filename) + 1;
+            member = this_ldi->ldinfo_filename + buffer_sz;
+            if ((member_len = strlen(member)) > 0)
+                buffer_sz += 1 + member_len + 1;
             found = 1;
-            /*
-             * Ignoring the possibility of a member name and just returning
-             * the path name. See docs: sys/ldr.h, loadquery() and
-             * dlopen()/RTLD_MEMBER.
-             */
-            if ((dl->dli_fname =
-                 OPENSSL_strdup(this_ldi->ldinfo_filename)) == NULL)
+            if ((buffer = OPENSSL_malloc(buffer_sz)) != NULL) {
+                OPENSSL_strlcpy(buffer, this_ldi->ldinfo_filename, buffer_sz);
+                if (member_len > 0) {
+                    /*
+                     * Need to respect a possible member name and not just
+                     * returning the path name in this case. See docs:
+                     * sys/ldr.h, loadquery() and dlopen()/RTLD_MEMBER.
+                     */
+                    OPENSSL_strlcat(buffer, "(", buffer_sz);
+                    OPENSSL_strlcat(buffer, member, buffer_sz);
+                    OPENSSL_strlcat(buffer, ")", buffer_sz);
+                }
+                dl->dli_fname = buffer;
+            } else {
                 errno = ENOMEM;
+            }
         } else {
-            next_ldi =
-                (struct ld_info *)((uintptr_t)this_ldi + this_ldi->ldinfo_next);
+            next_ldi = (struct ld_info *)((uintptr_t)this_ldi +
+                                          this_ldi->ldinfo_next);
         }
     } while (this_ldi->ldinfo_next && !found);
     OPENSSL_free((void *)ldinfos);
