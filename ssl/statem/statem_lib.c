@@ -1893,13 +1893,13 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
                        : s->version < ver_min) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
-                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, SSL_R_VERSION_TOO_LOW);
+                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
         return 0;
     } else if (SSL_IS_DTLS(s) ? DTLS_VERSION_GT(s->version, ver_max)
                               : s->version > ver_max) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
-                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, SSL_R_VERSION_TOO_HIGH);
+                 SSL_F_SSL_CHOOSE_CLIENT_VERSION, SSL_R_UNSUPPORTED_PROTOCOL);
         return 0;
     }
 
@@ -1952,8 +1952,8 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
  * @s: The SSL connection
  * @min_version: The minimum supported version
  * @max_version: The maximum supported version
- * @real_version: The maximum version the library is capable of regardless of
- *                what is enabled for this connection
+ * @real_max:    The highest version below the lowest compile time version hole
+ *               that lies above at least one run-time enabled protocol.
  *
  * Work out what version we should be using for the initial ClientHello if the
  * version is initially (D)TLS_ANY_VERSION.  We apply any explicit SSL_OP_NO_xxx
