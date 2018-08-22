@@ -757,6 +757,10 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
         ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
+    if (EC_POINT_is_at_infinity(group, point)) {
+        ECerr(EC_F_EC_POINT_GET_AFFINE_COORDINATES, EC_R_POINT_AT_INFINITY);
+        return 0;
+    }
     return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 }
 
