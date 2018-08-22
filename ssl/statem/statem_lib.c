@@ -1960,7 +1960,8 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
  * @min_version: The minimum supported version
  * @max_version: The maximum supported version
  * @real_max:    The highest version below the lowest compile time version hole
- *               that lies above at least one run-time enabled protocol.
+ *               where that hole lies above at least one run-time enabled
+ *               protocol.
  *
  * Work out what version we should be using for the initial ClientHello if the
  * version is initially (D)TLS_ANY_VERSION.  We apply any explicit SSL_OP_NO_xxx
