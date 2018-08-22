@@ -326,9 +326,8 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     if (rand_nonce_lock == NULL)
         goto err2;
 
-    if (!rand_cleaning_up)
-        if (!rand_pool_init())
-            goto err3;
+    if (!rand_cleaning_up && !rand_pool_init())
+        goto err3;
 
     return 1;
 
