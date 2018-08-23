@@ -144,7 +144,9 @@ static int MD5_loop(void *args);
 static int HMAC_loop(void *args);
 #endif
 static int SHA1_loop(void *args);
+static int SHA224_loop(void *args);
 static int SHA256_loop(void *args);
+static int SHA384_loop(void *args);
 static int SHA512_loop(void *args);
 #ifndef OPENSSL_NO_WHIRLPOOL
 static int WHIRLPOOL_loop(void *args);
@@ -365,6 +367,8 @@ const OPTIONS speed_options[] = {
 #define D_IGE_256_AES   28
 #define D_GHASH         29
 #define D_RAND          30
+#define D_SHA224        31
+#define D_SHA384        32
 /* name of algorithms to test */
 static const char *names[] = {
     "md2", "mdc2", "md4", "md5", "hmac(md5)", "sha1", "rmd160", "rc4",
@@ -374,7 +378,7 @@ static const char *names[] = {
     "camellia-128 cbc", "camellia-192 cbc", "camellia-256 cbc",
     "evp", "sha256", "sha512", "whirlpool",
     "aes-128 ige", "aes-192 ige", "aes-256 ige", "ghash",
-    "rand"
+    "rand", "sha224", "sha384"
 };
 #define ALGOR_NUM       OSSL_NELEM(names)
 
@@ -394,7 +398,9 @@ static const OPT_PAIR doit_choices[] = {
     {"hmac", D_HMAC},
 #endif
     {"sha1", D_SHA1},
+    {"sha224", D_SHA224},
     {"sha256", D_SHA256},
+    {"sha384", D_SHA384},
     {"sha512", D_SHA512},
 #ifndef OPENSSL_NO_WHIRLPOOL
     {"whirlpool", D_WHIRLPOOL},
@@ -702,6 +708,17 @@ static int SHA1_loop(void *args)
     return count;
 }
 
+static int SHA224_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    unsigned char sha224[SHA224_DIGEST_LENGTH];
+    int count;
+    for (count = 0; COND(c[D_SHA224][testnum]); count++)
+        SHA224(buf, lengths[testnum], sha224);
+    return count;
+}
+
 static int SHA256_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
@@ -710,6 +727,17 @@ static int SHA256_loop(void *args)
     int count;
     for (count = 0; COND(c[D_SHA256][testnum]); count++)
         SHA256(buf, lengths[testnum], sha256);
+    return count;
+}
+
+static int SHA384_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    unsigned char sha384[SHA384_DIGEST_LENGTH];
+    int count;
+    for (count = 0; COND(c[D_SHA384][testnum]); count++)
+        SHA384(buf, lengths[testnum], sha384);
     return count;
 }
 
@@ -1586,7 +1614,8 @@ int speed_main(int argc, char **argv)
         }
 #endif
         if (strcmp(*argv, "sha") == 0) {
-            doit[D_SHA1] = doit[D_SHA256] = doit[D_SHA512] = 1;
+            doit[D_SHA1] = doit[D_SHA224] = doit[D_SHA256] = doit[D_SHA384]
+                         = doit[D_SHA512] = 1;
             continue;
         }
 #ifndef OPENSSL_NO_RSA
@@ -1850,7 +1879,9 @@ int speed_main(int argc, char **argv)
     c[D_CBC_128_CML][0] = count;
     c[D_CBC_192_CML][0] = count;
     c[D_CBC_256_CML][0] = count;
+    c[D_SHA224][0] = count;
     c[D_SHA256][0] = count;
+    c[D_SHA384][0] = count;
     c[D_SHA512][0] = count;
     c[D_WHIRLPOOL][0] = count;
     c[D_IGE_128_AES][0] = count;
@@ -1872,7 +1903,9 @@ int speed_main(int argc, char **argv)
         c[D_HMAC][i] = c[D_HMAC][0] * 4 * l0 / l1;
         c[D_SHA1][i] = c[D_SHA1][0] * 4 * l0 / l1;
         c[D_RMD160][i] = c[D_RMD160][0] * 4 * l0 / l1;
+        c[D_SHA224][i] = c[D_SHA224][0] * 4 * l0 / l1;
         c[D_SHA256][i] = c[D_SHA256][0] * 4 * l0 / l1;
+        c[D_SHA384][i] = c[D_SHA384][0] * 4 * l0 / l1;
         c[D_SHA512][i] = c[D_SHA512][0] * 4 * l0 / l1;
         c[D_WHIRLPOOL][i] = c[D_WHIRLPOOL][0] * 4 * l0 / l1;
         c[D_GHASH][i] = c[D_GHASH][0] * 4 * l0 / l1;
@@ -2133,6 +2166,16 @@ int speed_main(int argc, char **argv)
             print_result(D_SHA1, testnum, count, d);
         }
     }
+    if (doit[D_SHA224]) {
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_SHA224], c[D_SHA224][testnum],
+                          lengths[testnum], seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, SHA224_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_SHA224, testnum, count, d);
+        }
+    }
     if (doit[D_SHA256]) {
         for (testnum = 0; testnum < size_num; testnum++) {
             print_message(names[D_SHA256], c[D_SHA256][testnum],
@@ -2141,6 +2184,16 @@ int speed_main(int argc, char **argv)
             count = run_benchmark(async_jobs, SHA256_loop, loopargs);
             d = Time_F(STOP);
             print_result(D_SHA256, testnum, count, d);
+        }
+    }
+    if (doit[D_SHA384]) {
+        for (testnum = 0; testnum < size_num; testnum++) {
+            print_message(names[D_SHA384], c[D_SHA384][testnum],
+                          lengths[testnum], seconds.sym);
+            Time_F(START);
+            count = run_benchmark(async_jobs, SHA384_loop, loopargs);
+            d = Time_F(STOP);
+            print_result(D_SHA384, testnum, count, d);
         }
     }
     if (doit[D_SHA512]) {
