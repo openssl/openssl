@@ -14,6 +14,7 @@
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#include <openssl/bn.h>
 
 #include "internal/x509_int.h"
 #include "ext_dat.h"
@@ -435,6 +436,27 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
     return X509_V_OK;
 }
 
+/*
+ * Return nonzero if the GeneralSubtree has valid 'minimum' field
+ * (must be absent or 0) and valid 'maximum' field (must be absent).
+ */
+static int nc_minmax_valid(GENERAL_SUBTREE *sub) {
+    BIGNUM *bn = NULL;
+    int ok = 1;
+
+    if (sub->maximum)
+        ok = 0;
+
+    if (sub->minimum) {
+        bn = ASN1_INTEGER_to_BN(sub->minimum, NULL);
+        if (bn == NULL || !BN_is_zero(bn))
+            ok = 0;
+        BN_free(bn);
+    }
+
+    return ok;
+}
+
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
 {
     GENERAL_SUBTREE *sub;
@@ -449,7 +471,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
         sub = sk_GENERAL_SUBTREE_value(nc->permittedSubtrees, i);
         if (gen->type != sub->base->type)
             continue;
-        if (sub->minimum || sub->maximum)
+        if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
         /* If we already have a match don't bother trying any more */
         if (match == 2)
@@ -472,7 +494,7 @@ static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc)
         sub = sk_GENERAL_SUBTREE_value(nc->excludedSubtrees, i);
         if (gen->type != sub->base->type)
             continue;
-        if (sub->minimum || sub->maximum)
+        if (!nc_minmax_valid(sub))
             return X509_V_ERR_SUBTREE_MINMAX;
 
         r = nc_match_single(gen, sub->base);
