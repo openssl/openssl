@@ -137,7 +137,7 @@ static int ctlog_new_from_conf(CTLOG **ct_log, const CONF *conf, const char *sec
 
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
 {
-    const char *fpath = getenv(CTLOG_FILE_EVP);
+    const char *fpath = ossl_safe_getenv(CTLOG_FILE_EVP);
 
     if (fpath == NULL)
       fpath = CTLOG_FILE;
