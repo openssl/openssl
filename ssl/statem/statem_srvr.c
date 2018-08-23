@@ -940,15 +940,16 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 
     case TLS_ST_SW_SESSION_TICKET:
         if (SSL_IS_TLS13(s) && statem_flush(s) != 1) {
-#ifdef EPIPE
+#if defined(EPIPE) && defined(ECONNRESET)
             if (SSL_get_error(s, 0) == SSL_ERROR_SYSCALL
-                    && get_last_sys_error() == EPIPE) {
+                    && (get_last_sys_error() == EPIPE
+                        || get_last_sys_error() == ECONNRESET)) {
                 /*
-                 * We ignore EPIPE in TLSv1.3 when sending a NewSessionTicket
-                 * and behave as if we were successful. This is so that we are
-                 * still able to read data sent to us by a client that closes
-                 * soon after the end of the handshake without waiting to read
-                 * our post-handshake NewSessionTickets.
+                 * We ignore EPIPE/ECONNRESET in TLSv1.3 when sending a
+                 * NewSessionTicket and behave as if we were successful. This is
+                 * so that we are still able to read data sent to us by a client
+                 * that closes soon after the end of the handshake without
+                 * waiting to read our post-handshake NewSessionTickets.
                  */
                 s->rwstate = SSL_NOTHING;
                 break;
