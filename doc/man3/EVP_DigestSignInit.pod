@@ -31,7 +31,7 @@ the signing algorithm supports it.
 
 Only EVP_PKEY types that support signing can be used with these functions. This
 includes MAC algorithms where the MAC generation is considered as a form of
-"signing." Built-in EVP_PKEY types supported by these functions are CMAC,
+"signing". Built-in EVP_PKEY types supported by these functions are CMAC,
 Poly1305, DSA, ECDSA, HMAC, RSA, SipHash, Ed25519 and Ed448.
 
 Not all digests can be used for all key types. The following combinations apply.
@@ -80,10 +80,10 @@ signature context B<ctx>. This function can be called several times on the
 same B<ctx> to include additional data. This function is currently implemented
 using a macro.
 
-EVP_DigestSignFinal() signs the data in B<ctx> places the signature in B<sig>.
+EVP_DigestSignFinal() signs the data in B<ctx> and places the signature in B<sig>.
 If B<sig> is B<NULL> then the maximum size of the output buffer is written to
 the B<siglen> parameter. If B<sig> is not B<NULL> then before the call the
-B<siglen> parameter should contain the length of the B<sig> buffer, if the
+B<siglen> parameter should contain the length of the B<sig> buffer. If the
 call is successful the signature is written to B<sig> and the amount of data
 written to B<siglen>.
 
@@ -95,7 +95,7 @@ EVP_DigestSignFinal().
 
 EVP_DigestSignInit(), EVP_DigestSignUpdate(), EVP_DigestSignaFinal() and
 EVP_DigestSign() return 1 for success and 0 or a negative value for failure. In
-particular a return value of -2 indicates the operation is not supported by the
+particular, a return value of -2 indicates the operation is not supported by the
 public key algorithm.
 
 The error codes can be obtained from L<ERR_get_error(3)>.
@@ -123,7 +123,7 @@ The call to EVP_DigestSignFinal() internally finalizes a copy of the digest
 context. This means that calls to EVP_DigestSignUpdate() and
 EVP_DigestSignFinal() can be called later to digest and sign additional data.
 
-Since only a copy of the digest context is ever finalized the context must
+Since only a copy of the digest context is ever finalized, the context must
 be cleaned up after use by calling EVP_MD_CTX_free() or a memory leak
 will occur.
 
