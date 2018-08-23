@@ -123,7 +123,7 @@ int BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
  *
  * -2*m < r = a - b < m
  *
- * Thus is takes up to two conditional additions to make |r| positive.
+ * Thus it takes up to two conditional additions to make |r| positive.
  */
 int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
                          const BIGNUM *m)
