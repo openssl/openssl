@@ -686,6 +686,41 @@ int ssl3_client_hello(SSL *s)
     SSL_COMP *comp;
 #endif
 
+#ifdef OPENSSL_NO_TLS1_2
+    if (s->version == TLS1_2_VERSION || s->client_version == TLS1_2_VERSION) {
+        SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+        goto err;
+    }
+#endif
+
+#ifdef OPENSSL_NO_TLS1_1
+    if (s->version == TLS1_1_VERSION || s->client_version == TLS1_1_VERSION) {
+        SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+        goto err;
+    }
+#endif
+
+#ifdef OPENSSL_NO_TLS1
+    if (s->version == TLS1_VERSION || s->client_version == TLS1_VERSION) {
+        SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+        goto err;
+    }
+#endif
+
+#ifdef OPENSSL_NO_SSL3
+    if (s->version == SSL3_VERSION || s->client_version == SSL3_VERSION) {
+        SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+        goto err;
+    }
+#endif
+
+#ifdef OPENSSL_NO_SSL2
+    if (s->version == SSL2_VERSION || s->client_version == SSL2_VERSION) {
+        SSLerr(SSL_F_SSL3_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL);
+        goto err;
+    }
+#endif
+
     buf = (unsigned char *)s->init_buf->data;
     if (s->state == SSL3_ST_CW_CLNT_HELLO_A) {
         SSL_SESSION *sess = s->session;
