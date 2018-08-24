@@ -1018,7 +1018,7 @@ int ssl_get_client_min_max_version(const SSL *s, int *min_version,
          */
         found = 0;
         for (vent = SSL_IS_DTLS(s) ? dtls_version_table : tls_version_table; vent->version != 0; ++vent) {
-            // Note, When disabled, the value version may be in the table still, but cmeth and smeth will be NULL pointers.
+            /* Note: When disabled, the version may still be in the table, but cmeth and smeth will be NULL pointers. */
             if ((s->version == vent->version) && (vent->cmeth != NULL) && (vent->smeth != NULL)) {
                 found = 1;
                 break;
