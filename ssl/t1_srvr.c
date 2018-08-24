@@ -67,12 +67,18 @@
 static const SSL_METHOD *tls1_get_server_method(int ver);
 static const SSL_METHOD *tls1_get_server_method(int ver)
 {
+#ifndef OPENSSL_NO_TLS1_2
     if (ver == TLS1_2_VERSION)
         return TLSv1_2_server_method();
+#endif
+#ifndef OPENSSL_NO_TLS1_1
     if (ver == TLS1_1_VERSION)
         return TLSv1_1_server_method();
+#endif
+#ifndef OPENSSL_NO_TLS1
     if (ver == TLS1_VERSION)
         return TLSv1_server_method();
+#endif
     return NULL;
 }
 

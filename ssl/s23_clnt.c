@@ -129,14 +129,19 @@ static const SSL_METHOD *ssl23_get_client_method(int ver)
     if (ver == SSL3_VERSION)
         return (SSLv3_client_method());
 #endif
+#ifndef OPENSSL_NO_TLS1
     if (ver == TLS1_VERSION)
         return (TLSv1_client_method());
-    else if (ver == TLS1_1_VERSION)
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+    if (ver == TLS1_1_VERSION)
         return (TLSv1_1_client_method());
-    else if (ver == TLS1_2_VERSION)
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    if (ver == TLS1_2_VERSION)
         return (TLSv1_2_client_method());
-    else
-        return (NULL);
+#endif
+    return (NULL);
 }
 
 IMPLEMENT_ssl23_meth_func(SSLv23_client_method,
@@ -326,7 +331,16 @@ static int ssl23_client_hello(SSL *s)
      * TLS1>=1, it would be insufficient to pass SSL_NO_TLSv1, the
      * answer is SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2.
      */
-    mask = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1
+    mask = 0
+#if !defined(OPENSSL_NO_TLS1_2)
+        | SSL_OP_NO_TLSv1_2
+#endif
+#if !defined(OPENSSL_NO_TLS1_1)
+        | SSL_OP_NO_TLSv1_1
+#endif
+#if !defined(OPENSSL_NO_TLS1)
+        | SSL_OP_NO_TLSv1
+#endif
 #if !defined(OPENSSL_NO_SSL3)
         | SSL_OP_NO_SSLv3
 #endif
@@ -334,25 +348,28 @@ static int ssl23_client_hello(SSL *s)
         | (ssl2_compat ? SSL_OP_NO_SSLv2 : 0)
 #endif
         ;
-#if !defined(OPENSSL_NO_TLS1_2_CLIENT)
-    version = TLS1_2_VERSION;
-
-    if ((options & SSL_OP_NO_TLSv1_2) && (options & mask) != mask)
-        version = TLS1_1_VERSION;
-#else
-    version = TLS1_1_VERSION;
+#if !defined(OPENSSL_NO_TLS1_2)
+    if ((options & mask) != mask)
+        version = TLS1_2_VERSION;
+    mask &= ~SSL_OP_NO_TLSv1_2;
 #endif
+#if !defined(OPENSSL_NO_TLS1_1)
+    if (((options & SSL_OP_NO_TLSv1_2) || (version == 0)) && (options & mask) != mask)
+        version = TLS1_1_VERSION;
     mask &= ~SSL_OP_NO_TLSv1_1;
-    if ((options & SSL_OP_NO_TLSv1_1) && (options & mask) != mask)
+#endif
+#if !defined(OPENSSL_NO_TLS1)
+    if (((options & SSL_OP_NO_TLSv1_1) || (version == 0)) && (options & mask) != mask)
         version = TLS1_VERSION;
     mask &= ~SSL_OP_NO_TLSv1;
+#endif
 #if !defined(OPENSSL_NO_SSL3)
-    if ((options & SSL_OP_NO_TLSv1) && (options & mask) != mask)
+    if (((options & SSL_OP_NO_TLSv1) || (version == 0)) && (options & mask) != mask)
         version = SSL3_VERSION;
     mask &= ~SSL_OP_NO_SSLv3;
 #endif
 #if !defined(OPENSSL_NO_SSL2)
-    if ((options & SSL_OP_NO_SSLv3) && (options & mask) != mask)
+    if (((options & SSL_OP_NO_SSLv3) || (version == 0)) && (options & mask) != mask)
         version = SSL2_VERSION;
 #endif
 
@@ -723,18 +740,27 @@ static int ssl23_get_server_hello(SSL *s)
             s->method = SSLv3_client_method();
         } else
 #endif
+#ifndef OPENSSL_NO_TLS1
         if ((p[2] == TLS1_VERSION_MINOR) && !(s->options & SSL_OP_NO_TLSv1)) {
             s->version = TLS1_VERSION;
             s->method = TLSv1_client_method();
-        } else if ((p[2] == TLS1_1_VERSION_MINOR) &&
+        } else
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+        if ((p[2] == TLS1_1_VERSION_MINOR) &&
                    !(s->options & SSL_OP_NO_TLSv1_1)) {
             s->version = TLS1_1_VERSION;
             s->method = TLSv1_1_client_method();
-        } else if ((p[2] == TLS1_2_VERSION_MINOR) &&
+        } else
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+        if ((p[2] == TLS1_2_VERSION_MINOR) &&
                    !(s->options & SSL_OP_NO_TLSv1_2)) {
             s->version = TLS1_2_VERSION;
             s->method = TLSv1_2_client_method();
-        } else {
+        } else
+#endif
+        {
             /*
              * Unrecognised version, we'll send a protocol version alert using
              * our preferred version.
@@ -745,18 +771,24 @@ static int ssl23_get_server_hello(SSL *s)
                  * Shouldn't happen
                  * Fall through
                  */
+#ifndef OPENSSL_NO_TLS1_2
             case TLS1_2_VERSION:
                 s->version = TLS1_2_VERSION;
                 s->method = TLSv1_2_client_method();
                 break;
+#endif
+#ifndef OPENSSL_NO_TLS1_1
             case TLS1_1_VERSION:
                 s->version = TLS1_1_VERSION;
                 s->method = TLSv1_1_client_method();
                 break;
+#endif
+#ifndef OPENSSL_NO_TLS1
             case TLS1_VERSION:
                 s->version = TLS1_VERSION;
                 s->method = TLSv1_client_method();
                 break;
+#endif
 #ifndef OPENSSL_NO_SSL3
             case SSL3_VERSION:
                 s->version = SSL3_VERSION;
