@@ -37,7 +37,7 @@
  * thread-safe lock-free code, "Thread-Safe ANnotations"...
  *
  * It's assumed that ATOMIC_{LONG|INT}_LOCK_FREE are assigned same value as
- * ATOMIC_POINTER_LOCK_FREE. And check for >= 2 ensures that correspodning
+ * ATOMIC_POINTER_LOCK_FREE. And check for >= 2 ensures that corresponding
  * code is inlined. It should be noted that statistics counters become
  * accurate in such case.
  *
