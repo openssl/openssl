@@ -740,18 +740,27 @@ static int ssl23_get_server_hello(SSL *s)
             s->method = SSLv3_client_method();
         } else
 #endif
+#ifndef OPENSSL_NO_TLS1
         if ((p[2] == TLS1_VERSION_MINOR) && !(s->options & SSL_OP_NO_TLSv1)) {
             s->version = TLS1_VERSION;
             s->method = TLSv1_client_method();
-        } else if ((p[2] == TLS1_1_VERSION_MINOR) &&
+        } else
+#endif
+#ifndef OPENSSL_NO_TLS1_1
+        if ((p[2] == TLS1_1_VERSION_MINOR) &&
                    !(s->options & SSL_OP_NO_TLSv1_1)) {
             s->version = TLS1_1_VERSION;
             s->method = TLSv1_1_client_method();
-        } else if ((p[2] == TLS1_2_VERSION_MINOR) &&
+        } else
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+        if ((p[2] == TLS1_2_VERSION_MINOR) &&
                    !(s->options & SSL_OP_NO_TLSv1_2)) {
             s->version = TLS1_2_VERSION;
             s->method = TLSv1_2_client_method();
-        } else {
+        } else
+#endif
+        {
             /*
              * Unrecognised version, we'll send a protocol version alert using
              * our preferred version.
