@@ -131,7 +131,7 @@
 # define tsan_counter(ptr) ((*(ptr))++)
 /*
  * Lack of tsan_ld_acq and tsan_ld_rel means that compiler support is not
- * sofisticated enough to support them. Code that relies on them should be
+ * sophisticated enough to support them. Code that relies on them should be
  * protected with #ifdef tsan_ld_acq with locked fallback.
  */
 
