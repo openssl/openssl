@@ -5265,8 +5265,8 @@ static int test_ticket_callbacks(int tst)
  * Test 1: TLSv1.2, server continues to read/write after client shutdown
  * Test 2: TLSv1.3, no pending NewSessionTicket messages
  * Test 3: TLSv1.3, pending NewSessionTicket messages
- * Test 4: TLSv1.3, server continues to read/write after client shutdown, client
- *                  reads it
+ * Test 4: TLSv1.3, server continues to read/write after client shutdown, server
+ *                  sends key update, client reads it
  * Test 5: TLSv1.3, server continues to read/write after client shutdown, client
  *                  doesn't read it
  */
@@ -5278,6 +5278,7 @@ static int test_shutdown(int tst)
     char msg[] = "A test message";
     char buf[80];
     size_t written, readbytes;
+    SSL_SESSION *sess;
 
 #ifdef OPENSSL_NO_TLS1_2
     if (tst <= 1)
@@ -5300,10 +5301,14 @@ static int test_shutdown(int tst)
 
     if (tst == 3) {
         if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-                                                  SSL_ERROR_NONE)))
+                                                  SSL_ERROR_NONE))
+                || !TEST_ptr_ne(sess = SSL_get_session(clientssl), NULL)
+                || !TEST_false(SSL_SESSION_is_resumable(sess)))
             goto end;
     } else if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                              SSL_ERROR_NONE))) {
+                                              SSL_ERROR_NONE))
+            || !TEST_ptr_ne(sess = SSL_get_session(clientssl), NULL)
+            || !TEST_true(SSL_SESSION_is_resumable(sess))) {
         goto end;
     }
 
@@ -5324,13 +5329,22 @@ static int test_shutdown(int tst)
                     * Even though we're shutdown on receive we should still be
                     * able to write.
                     */
-                || !TEST_true(SSL_write(serverssl, msg, sizeof(msg)))
-                || !TEST_int_eq(SSL_shutdown(serverssl), 1))
+                || !TEST_true(SSL_write(serverssl, msg, sizeof(msg))))
+            goto end;
+        if (tst == 4 &&
+                (!TEST_true(SSL_key_update(serverssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+                || !TEST_true(SSL_write(serverssl, msg, sizeof(msg)))))
+            goto end;
+        if (!TEST_int_eq(SSL_shutdown(serverssl), 1))
             goto end;
         if (tst == 4) {
-                   /* Should still be able to read data from server */
+            /* Should still be able to read data from server */
             if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf),
-                                          &readbytes))
+                                       &readbytes))
+                    || !TEST_size_t_eq(readbytes, sizeof(msg))
+                    || !TEST_int_eq(memcmp(msg, buf, readbytes), 0)
+                    || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf),
+                                              &readbytes))
                     || !TEST_size_t_eq(readbytes, sizeof(msg))
                     || !TEST_int_eq(memcmp(msg, buf, readbytes), 0))
                 goto end;
@@ -5354,6 +5368,8 @@ static int test_shutdown(int tst)
                     */
                 || !TEST_false(SSL_write_ex(serverssl, msg, sizeof(msg), &written))
                 || !TEST_int_eq(SSL_shutdown(clientssl), 1)
+                || !TEST_ptr_ne(sess = SSL_get_session(clientssl), NULL)
+                || !TEST_true(SSL_SESSION_is_resumable(sess))
                 || !TEST_int_eq(SSL_shutdown(serverssl), 1))
             goto end;
     } else if (tst == 4) {
@@ -5362,7 +5378,9 @@ static int test_shutdown(int tst)
          * received by the server which has responded with a close_notify. The
          * client needs to read the close_notify sent by the server.
          */
-        if (!TEST_int_eq(SSL_shutdown(clientssl), 1))
+        if (!TEST_int_eq(SSL_shutdown(clientssl), 1)
+                || !TEST_ptr_ne(sess = SSL_get_session(clientssl), NULL)
+                || !TEST_true(SSL_SESSION_is_resumable(sess)))
             goto end;
     } else {
         /*
