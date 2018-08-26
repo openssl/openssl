@@ -74,7 +74,7 @@
 # endif
 
 #elif defined(_MSC_VER) && _MSC_VER>=1200 \
-      && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X86) || \
+      && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || \
           defined(_M_ARM64) || (defined(_M_ARM) && _M_ARM >= 7))
 /*
  * There is subtle dependency on /volatile:<iso|ms> command-line option.
