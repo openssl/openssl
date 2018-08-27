@@ -4622,6 +4622,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                     s->session->master_key,pskpms, pskpmslen,
                     &s->session->master_key_length)) {
             /* SSLfatal() already called */
+            OPENSSL_clear_free(pskpms, pskpmslen);
             goto err;
         }
         OPENSSL_clear_free(pskpms, pskpmslen);

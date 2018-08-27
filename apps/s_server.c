@@ -2968,8 +2968,10 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
     if (context != NULL
         && !SSL_set_session_id_context(con, context,
-                                       strlen((char *)context)))
+                                       strlen((char *)context))) {
+        SSL_free(con);
         goto err;
+    }
 
     sbio = BIO_new_socket(s, BIO_NOCLOSE);
     if (s_nbio_test) {
@@ -3338,6 +3340,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
         && !SSL_set_session_id_context(con, context,
                                        strlen((char *)context))) {
         ERR_print_errors(bio_err);
+        SSL_free(con);
         goto err;
     }
 
