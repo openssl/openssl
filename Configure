@@ -356,6 +356,7 @@ my @disablables = (
     "ecdh",
     "ecdsa",
     "ec_nistp_64_gcc_128",
+    "ecp_nistz256_asm",
     "egd",
     "engine",
     "err",
@@ -1405,9 +1406,7 @@ unless ($disabled{asm}) {
     if ($target{modes_asm_src} =~ /ghash-/) {
 	push @{$config{lib_defines}}, "GHASH_ASM";
     }
-    if ($target{ec_asm_src} =~ /ecp_nistz256/) {
-	push @{$config{lib_defines}}, "ECP_NISTZ256_ASM";
-    }
+    push @{$config{lib_defines}}, "ECP_NISTZ256_ASM" if (!$disabled{ecp_nistz256_asm} && $target{ec_asm_src} =~ /ecp_nistz256/);
     if ($target{ec_asm_src} =~ /x25519/) {
 	push @{$config{lib_defines}}, "X25519_ASM";
     }
