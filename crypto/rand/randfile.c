@@ -262,9 +262,7 @@ const char *RAND_file_name(char *buf, size_t size)
         }
     }
 #else
-    if (OPENSSL_issetugid() != 0) {
-        use_randfile = 0;
-    } else if ((s = ossl_safe_getenv("RANDFILE")) == NULL || *s == '\0') {
+    if ((s = ossl_safe_getenv("RANDFILE")) == NULL || *s == '\0') {
         use_randfile = 0;
         s = ossl_safe_getenv("HOME");
     }
