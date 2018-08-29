@@ -1440,7 +1440,7 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 #endif
 
-	if (ctx->mres)
+	if (ctx->mres || ctx->ares)
 		GCM_MUL(ctx,Xi);
 
 	if (is_endian.little) {
