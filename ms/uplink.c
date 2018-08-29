@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,8 @@
 #include <tchar.h>
 #include <stdio.h>
 #include "uplink.h"
+#include <psapi.h>
+
 void OPENSSL_showfatal(const char *, ...);
 
 static TCHAR msg[128];
@@ -31,13 +33,68 @@ static void unimplemented(void)
     ExitProcess(1);
 }
 
+void** (*search_applink(HMODULE *applink_module))()
+{
+	void **(*applink_pointer) ();
+	HANDLE module_handle;
+
+	DWORD process_id;
+	HMODULE module_list[16384];
+	HANDLE process_handle;
+	DWORD callback_needed;
+	unsigned int module_index;
+
+	// search within main module
+	if ((module_handle = *applink_module) == NULL) {
+		if ((module_handle = GetModuleHandle(NULL)) == NULL) {
+			*applink_module = (HMODULE)-1;
+			return NULL;
+		}
+		*applink_module = module_handle;
+	}
+
+	applink_pointer = (void **(*)())GetProcAddress(module_handle, "OPENSSL_Applink");
+
+	if (applink_pointer == NULL)
+	{
+		// search within all modules
+		process_id = GetCurrentProcessId();
+
+		// get a handle to the process
+		process_handle = OpenProcess(PROCESS_QUERY_INFORMATION |
+			PROCESS_VM_READ,
+			FALSE, process_id);
+		if (NULL == process_handle)
+			return NULL;
+
+		// get a list of all the modules in this process
+		if (EnumProcessModules(process_handle, module_list, sizeof(module_list), &callback_needed))
+		{
+			for (module_index = 0; module_index < (callback_needed / sizeof(HMODULE)); module_index++)
+			{
+				// print the module name and handle value
+				module_handle = module_list[module_index];
+				applink_pointer = (void **(*)())GetProcAddress(module_handle, "OPENSSL_Applink");
+
+				if (applink_pointer != NULL)
+				{
+					*applink_module = module_handle;
+					break;
+				}
+			}
+		}
+		// release the handle to the process
+		CloseHandle(process_handle);
+	}
+	return *applink_pointer;
+}
+
 void OPENSSL_Uplink(volatile void **table, int index)
 {
     static HMODULE volatile apphandle = NULL;
     static void **volatile applinktable = NULL;
     int len;
     void (*func) (void) = unimplemented;
-    HANDLE h;
     void **p;
 
     /*
@@ -59,21 +116,11 @@ void OPENSSL_Uplink(volatile void **table, int index)
                          _T("OPENSSL_Uplink(%p,%02X): "), table, index);
         _tcscpy(msg + len, _T("unimplemented function"));
 
-        if ((h = apphandle) == NULL) {
-            if ((h = GetModuleHandle(NULL)) == NULL) {
-                apphandle = (HMODULE) - 1;
-                _tcscpy(msg + len, _T("no host application"));
-                break;
-            }
-            apphandle = h;
-        }
-        if ((h = apphandle) == (HMODULE) - 1) /* revalidate */
-            break;
-
         if (applinktable == NULL) {
             void **(*applink) ();
 
-            applink = (void **(*)())GetProcAddress(h, "OPENSSL_Applink");
+			applink = search_applink(&apphandle);
+
             if (applink == NULL) {
                 apphandle = (HMODULE) - 1;
                 _tcscpy(msg + len, _T("no OPENSSL_Applink"));
