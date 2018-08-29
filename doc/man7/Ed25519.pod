@@ -49,6 +49,10 @@ Ed25519 or Ed448 public keys can be set directly using
 L<EVP_PKEY_new_raw_public_key(3)> or loaded from a SubjectPublicKeyInfo
 structure in a PEM file using L<PEM_read_bio_PUBKEY(3)> (or similar function).
 
+Ed25519 and Ed448 can be tested within L<speed(1)> application since version 1.1.1.
+In details, B<ed25519>, B<ed448> and B<eddsa> are valid algorithm names. If B<eddsa>
+is specified to L<speed(1)> application, then both Ed25519 and Ed448 are benchmarked.
+
 =head1 EXAMPLE
 
 This example generates an B<ED25519> private key and writes it to standard
