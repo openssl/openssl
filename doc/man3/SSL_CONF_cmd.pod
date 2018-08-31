@@ -33,25 +33,36 @@ prefix for command line commands is B<-> and that is reflected below.
 
 =item B<-sigalgs>
 
-This sets the supported signature algorithms for TLS v1.2. For clients this
+This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
+For clients this
 value is used directly for the supported signature algorithms extension. For
 servers it is used to determine which signature algorithms to support.
 
 The B<value> argument should be a colon separated list of signature algorithms
-in order of decreasing preference of the form B<algorithm+hash>. B<algorithm>
+in order of decreasing preference of the form B<algorithm+hash> or
+B<signature_scheme>. B<algorithm>
 is one of B<RSA>, B<DSA> or B<ECDSA> and B<hash> is a supported algorithm
 OID short name such as B<SHA1>, B<SHA224>, B<SHA256>, B<SHA384> of B<SHA512>.
 Note: algorithm and hash names are case sensitive.
+B<signature_scheme> is one of the signature schemes defined in TLSv1.3,
+specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
+or B<rsa_pss_pss_sha256>.
 
 If this option is not set then all signature algorithms supported by the
 OpenSSL library are permissible.
 
+Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
+using B<RSA> as the B<algorithm> or by using one of the B<rsa_pkcs1_*>
+identifiers) are ignored in TLSv1.3 and will not be negotiated.
+
 =item B<-client_sigalgs>
 
 This sets the supported signature algorithms associated with client
-authentication for TLS v1.2. For servers the value is used in the supported
-signature algorithms field of a certificate request. For clients it is
-used to determine which signature algorithm to with the client certificate.
+authentication for TLSv1.2 and TLSv1.3.
+For servers the value is used in the
+B<signature_algorithms> field of a B<CertificateRequest> message.
+For clients it is
+used to determine which signature algorithm to use with the client certificate.
 If a server does not request a certificate this option has no effect.
 
 The syntax of B<value> is identical to B<-sigalgs>. If not set then
@@ -61,21 +72,20 @@ the value set for B<-sigalgs> will be used instead.
 
 This sets the supported groups. For clients, the groups are
 sent using the supported groups extension. For servers, it is used
-to determine which group to use. This setting affects groups used for both
-signatures and key exchange, if applicable. It also affects the preferred
-key_share sent by a client in a TLSv1.3 compatible connection.
+to determine which group to use. This setting affects groups used for
+signatures (in TLSv1.2 and earlier) and key exchange. The first group listed
+will also be used for the B<key_share> sent by a client in a TLSv1.3
+B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
 applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
 names are case sensitive. The list should be in order of preference with the
-most preferred group first. The first listed group will be the one used for a
-key_share by a TLSv1.3 client.
+most preferred group first.
 
 =item B<-curves>
 
 This is a synonym for the "-groups" command.
-
 
 =item B<-named_curve>
 
@@ -99,6 +109,7 @@ associated with B<cctx>.
 Sets the available ciphersuites for TLSv1.3 to value. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
+See L<ciphers(1)> for more information.
 
 
 =item B<-cert>
@@ -124,7 +135,7 @@ operations are permitted.
 
 =item B<-record_padding>
 
-Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
+Attempts to pad TLSv1.3 records so that they are a multiple of B<value> in
 length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
 B<value> must be >1 or <=16384.
 
@@ -137,9 +148,9 @@ B<SSL_OP_NO_RENEGOTIATION>.
 
 Sets the minimum and maximum supported protocol.
 Currently supported protocol values are B<SSLv3>, B<TLSv1>,
-B<TLSv1.1>, B<TLSv1.2> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS,
+B<TLSv1.1>, B<TLSv1.2>, B<TLSv1.3> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS,
 and B<None> for no limit.
-If the either bound is not specified then only the other bound applies,
+If either bound is not specified then only the other bound applies,
 if specified.
 To restrict the supported protocol versions use these commands rather
 than the deprecated alternative commands below.
@@ -249,6 +260,7 @@ structure is associated with B<cctx>.
 Sets the available ciphersuites for TLSv1.3 to B<value>. This is a simple colon
 (":") separated list of TLSv1.3 ciphersuite names in order of preference. This
 list will be combined any configured TLSv1.2 and below ciphersuites.
+See L<ciphers(1)> for more information.
 
 =item B<Certificate>
 
@@ -292,7 +304,7 @@ operations are permitted.
 
 =item B<RecordPadding>
 
-Attempts to pad TLS 1.3 records so that they are a multiple of B<value> in
+Attempts to pad TLSv1.3 records so that they are a multiple of B<value> in
 length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
 B<value> must be >1 or <=16384.
 
@@ -303,43 +315,55 @@ B<SSL_OP_NO_RENEGOTIATION>.
 
 =item B<SignatureAlgorithms>
 
-This sets the supported signature algorithms for TLS v1.2. For clients this
+This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
+For clients this
 value is used directly for the supported signature algorithms extension. For
 servers it is used to determine which signature algorithms to support.
 
 The B<value> argument should be a colon separated list of signature algorithms
-in order of decreasing preference of the form B<algorithm+hash>. B<algorithm>
+in order of decreasing preference of the form B<algorithm+hash> or
+B<signature_scheme>. B<algorithm>
 is one of B<RSA>, B<DSA> or B<ECDSA> and B<hash> is a supported algorithm
 OID short name such as B<SHA1>, B<SHA224>, B<SHA256>, B<SHA384> of B<SHA512>.
 Note: algorithm and hash names are case sensitive.
+B<signature_scheme> is one of the signature schemes defined in TLSv1.3,
+specified using the IETF name, e.g., B<ecdsa_secp256r1_sha256>, B<ed25519>,
+or B<rsa_pss_pss_sha256>.
 
 If this option is not set then all signature algorithms supported by the
 OpenSSL library are permissible.
 
+Note: algorithms which specify a PKCS#1 v1.5 signature scheme (either by
+using B<RSA> as the B<algorithm> or by using one of the B<rsa_pkcs1_*>
+identifiers) are ignored in TLSv1.3 and will not be negotiated.
+
 =item B<ClientSignatureAlgorithms>
 
 This sets the supported signature algorithms associated with client
-authentication for TLS v1.2. For servers the value is used in the supported
-signature algorithms field of a certificate request. For clients it is
-used to determine which signature algorithm to with the client certificate.
+authentication for TLSv1.2 and TLSv1.3.
+For servers the value is used in the
+B<signature_algorithms> field of a B<CertificateRequest> message.
+For clients it is
+used to determine which signature algorithm to use with the client certificate.
+If a server does not request a certificate this option has no effect.
 
 The syntax of B<value> is identical to B<SignatureAlgorithms>. If not set then
 the value set for B<SignatureAlgorithms> will be used instead.
 
 =item B<Groups>
 
-This sets the supported groups. For clients, the groups are
+This sets the supported groups. For clients, th,e groups are
 sent using the supported groups extension. For servers, it is used
-to determine which group to use. This setting affects groups used for both
-signatures and key exchange, if applicable. It also affects the preferred
-key_share sent by a client in a TLSv1.3 compatible connection.
+to determine which group to use. This setting affects groups used for
+signatures (in TLSv1.2 and earlier) and key exchange. The first group listed
+will also be used for the B<key_share> sent by a client in a TLSv1.3
+B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
 applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
 names are case sensitive. The list should be in order of preference with the
-most preferred group first. The first listed group will be the one used for a
-key_share by a TLSv1.3 client.
+most preferred group first.
 
 =item B<Curves>
 
@@ -350,7 +374,7 @@ This is a synonym for the "Groups" command.
 This sets the minimum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The value B<None> will disable the limit.
 
 =item B<MaxProtocol>
@@ -358,7 +382,7 @@ The value B<None> will disable the limit.
 This sets the maximum supported SSL, TLS or DTLS version.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The value B<None> will disable the limit.
 
 =item B<Protocol>
@@ -377,7 +401,7 @@ Only enabling some protocol versions does not disable the other protocol
 versions.
 
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<DTLSv1> and B<DTLSv1.2>.
+B<TLSv1.2>, B<TLSv1.3>, B<DTLSv1> and B<DTLSv1.2>.
 The special value B<ALL> refers to all supported versions.
 
 This can't enable protocols that are disabled using B<MinProtocol>

@@ -128,10 +128,12 @@ See L<SSL_CTX_new(3)> for details.
 =item const SSL_METHOD *B<TLS_client_method>(void);
 
 Constructor for the I<version-flexible> SSL_METHOD structure for clients.
+Must be used to support the TLSv1.3 protocol.
 
 =item const SSL_METHOD *B<TLS_server_method>(void);
 
 Constructor for the I<version-flexible> SSL_METHOD structure for servers.
+Must be used to support the TLSv1.3 protocol.
 
 =item const SSL_METHOD *B<TLSv1_2_method>(void);
 

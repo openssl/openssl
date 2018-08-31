@@ -92,7 +92,7 @@ B<method> can be of the following types:
 These are the general-purpose I<version-flexible> SSL/TLS methods.
 The actual protocol version used will be negotiated to the highest version
 mutually supported by the client and the server.
-The supported protocols are SSLv3, TLSv1, TLSv1.1 and TLSv1.2.
+The supported protocols are SSLv3, TLSv1, TLSv1.1, TLSv1.2 and TLSv1.3.
 Applications should use these methods, and avoid the version-specific
 methods described below.
 
@@ -153,11 +153,12 @@ L<SSL_set_min_proto_version(3)>, L<SSL_CTX_set_max_proto_version(3)> and
 L<SSL_set_max_proto_version(3)> functions.
 Using these functions it is possible to choose e.g. TLS_server_method()
 and be able to negotiate with all possible clients, but to only
-allow newer protocols like TLS 1.0, TLS 1.1 or TLS 1.2.
+allow newer protocols like TLS 1.0, TLS 1.1, TLS 1.2 or TLS 1.3.
 
 The list of protocols available can also be limited using the
 B<SSL_OP_NO_SSLv3>, B<SSL_OP_NO_TLSv1>, B<SSL_OP_NO_TLSv1_1>,
-B<SSL_OP_NO_TLSv1_3> and B<SSL_OP_NO_TLSv1_2> options of the
+B<SSL_OP_NO_TLSv1_3>, B<SSL_OP_NO_TLSv1_2> and B<SSL_OP_NO_TLSv1_3>
+options of the
 L<SSL_CTX_set_options(3)> or L<SSL_set_options(3)> functions, but this approach
 is not recommended. Clients should avoid creating "holes" in the set of
 protocols they support. When disabling a protocol, make sure that you also
