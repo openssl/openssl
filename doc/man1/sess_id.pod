@@ -99,7 +99,7 @@ Theses are described below in more detail.
 
 =item B<Protocol>
 
-This is the protocol in use TLSv1.2, TLSv1.1, TLSv1 or SSLv3.
+This is the protocol in use TLSv1.3, TLSv1.2, TLSv1.1, TLSv1 or SSLv3.
 
 =item B<Cipher>
 
