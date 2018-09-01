@@ -4263,3 +4263,5 @@ X509_OBJECT_set1_X509                   4514	1_1_0i	EXIST::FUNCTION:
 X509_LOOKUP_meth_get_get_by_issuer_serial 4515	1_1_0i	EXIST::FUNCTION:
 X509_LOOKUP_meth_set_init               4516	1_1_0i	EXIST::FUNCTION:
 X509_OBJECT_set1_X509_CRL               4517	1_1_0i	EXIST::FUNCTION:
+OCSP_resp_get0_tbs_sigalg               4529	1_1_0j	EXIST::FUNCTION:OCSP
+OCSP_resp_get0_respdata                 4530	1_1_0j	EXIST::FUNCTION:OCSP
