@@ -885,28 +885,35 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
 
     BIO_indent(bio, indent, 80);
     if (msglen == 0) {
-        BIO_puts(bio, "No Extensions\n");
+        BIO_puts(bio, "No extensions\n");
         return 1;
     }
     if (msglen < 2)
         return 0;
     extslen = (msg[0] << 8) | msg[1];
-    if (extslen != msglen - 2)
-        return 0;
+    msglen -= 2;
     msg += 2;
-    msglen = extslen;
-    BIO_printf(bio, "extensions, length = %d\n", (int)msglen);
-    while (msglen > 0) {
+    if (extslen == 0) {
+        BIO_puts(bio, "No extensions\n");
+        *msgin = msg;
+        *msginlen = msglen;
+        return 1;
+    }
+    if (extslen > msglen)
+        return 0;
+    BIO_printf(bio, "extensions, length = %d\n", (int)extslen);
+    msglen -= extslen;
+    while (extslen > 0) {
         int extype;
         size_t extlen;
-        if (msglen < 4)
+        if (extslen < 4)
             return 0;
         extype = (msg[0] << 8) | msg[1];
         extlen = (msg[2] << 8) | msg[3];
-        if (msglen < extlen + 4) {
+        if (extslen < extlen + 4) {
             BIO_printf(bio, "extensions, extype = %d, extlen = %d\n", extype,
                        (int)extlen);
-            BIO_dump_indent(bio, (const char *)msg, msglen, indent + 2);
+            BIO_dump_indent(bio, (const char *)msg, extslen, indent + 2);
             return 0;
         }
         msg += 4;
@@ -914,7 +921,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
                                  extlen))
             return 0;
         msg += extlen;
-        msglen -= extlen + 4;
+        extslen -= extlen + 4;
     }
 
     *msgin = msg;
