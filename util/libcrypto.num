@@ -4572,3 +4572,5 @@ EC_POINT_set_affine_coordinates         4525	1_1_1	EXIST::FUNCTION:EC
 EC_POINT_get_affine_coordinates         4526	1_1_1	EXIST::FUNCTION:EC
 EC_GROUP_set_curve                      4527	1_1_1	EXIST::FUNCTION:EC
 EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC
+OCSP_resp_get0_tbs_sigalg               4529	1_1_1	EXIST::FUNCTION:OCSP
+OCSP_resp_get0_respdata                 4530	1_1_1	EXIST::FUNCTION:OCSP

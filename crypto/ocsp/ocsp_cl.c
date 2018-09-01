@@ -167,6 +167,16 @@ const ASN1_OCTET_STRING *OCSP_resp_get0_signature(const OCSP_BASICRESP *bs)
     return bs->signature;
 }
 
+const X509_ALGOR *OCSP_resp_get0_tbs_sigalg(const OCSP_BASICRESP *bs)
+{
+    return &bs->signatureAlgorithm;
+}
+
+const OCSP_RESPDATA *OCSP_resp_get0_respdata(const OCSP_BASICRESP *bs)
+{
+    return &bs->tbsResponseData;
+}
+
 /*
  * Return number of OCSP_SINGLERESP responses present in a basic response.
  */
