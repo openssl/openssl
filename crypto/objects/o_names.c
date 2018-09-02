@@ -17,6 +17,7 @@
 #include <openssl/safestack.h>
 #include <openssl/e_os2.h>
 #include "internal/thread_once.h"
+#include "internal/lhash.h"
 #include "obj_lcl.h"
 
 /*
@@ -33,10 +34,10 @@
 #if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
 static int obj_strcmp(const char *a, const char *b)
 {
-    return strcmp(a, b);
+    return strcasecmp(a, b);
 }
 #else
-#define obj_strcmp strcmp
+#define obj_strcmp strcasecmp
 #endif
 
 /*
@@ -111,7 +112,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             ret = 0;
             goto out;
         }
-        name_funcs->hash_func = OPENSSL_LH_strhash;
+        name_funcs->hash_func = openssl_lh_strcasehash;
         name_funcs->cmp_func = obj_strcmp;
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
@@ -149,7 +150,7 @@ static int obj_name_cmp(const OBJ_NAME *a, const OBJ_NAME *b)
             ret = sk_NAME_FUNCS_value(name_funcs_stack,
                                       a->type)->cmp_func(a->name, b->name);
         } else
-            ret = strcmp(a->name, b->name);
+            ret = strcasecmp(a->name, b->name);
     }
     return ret;
 }
@@ -164,7 +165,7 @@ static unsigned long obj_name_hash(const OBJ_NAME *a)
             sk_NAME_FUNCS_value(name_funcs_stack,
                                 a->type)->hash_func(a->name);
     } else {
-        ret = OPENSSL_LH_strhash(a->name);
+        ret = openssl_lh_strcasehash(a->name);
     }
     ret ^= a->type;
     return ret;
@@ -214,8 +215,6 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     if (!OBJ_NAME_init())
         return 0;
 
-    CRYPTO_THREAD_write_lock(obj_lock);
-
     alias = type & OBJ_NAME_ALIAS;
     type &= ~OBJ_NAME_ALIAS;
 
@@ -229,6 +228,8 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     onp->alias = alias;
     onp->type = type;
     onp->data = data;
+
+    CRYPTO_THREAD_write_lock(obj_lock);
 
     ret = lh_OBJ_NAME_insert(names_lh, onp);
     if (ret != NULL) {
