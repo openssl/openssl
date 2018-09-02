@@ -223,8 +223,10 @@ int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
     for (i = 0; i < 1000; i++) {
         if (!BN_rand(Xq, nbits, 1, 0))
             goto err;
+
         /* Check that |Xp - Xq| > 2^(nbits - 100) */
-        BN_sub(t, Xp, Xq);
+        if (!BN_sub(t, Xp, Xq))
+            goto err;
         if (BN_num_bits(t) > (nbits - 100))
             break;
     }
