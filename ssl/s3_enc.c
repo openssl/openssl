@@ -442,15 +442,16 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
     if (!EVP_MD_CTX_copy_ex(ctx, s->s3->handshake_dgst)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
                  ERR_R_INTERNAL_ERROR);
-        return 0;
+        ret = 0;
+        goto err;
     }
 
     ret = EVP_MD_CTX_size(ctx);
     if (ret < 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_FINAL_FINISH_MAC,
                  ERR_R_INTERNAL_ERROR);
-        EVP_MD_CTX_reset(ctx);
-        return 0;
+        ret = 0;
+        goto err;
     }
 
     if ((sender != NULL && EVP_DigestUpdate(ctx, sender, len) <= 0)
@@ -463,6 +464,7 @@ size_t ssl3_final_finish_mac(SSL *s, const char *sender, size_t len,
         ret = 0;
     }
 
+ err:
     EVP_MD_CTX_free(ctx);
 
     return ret;
