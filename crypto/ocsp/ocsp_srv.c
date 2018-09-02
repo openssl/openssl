@@ -237,6 +237,9 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
     EVP_PKEY_CTX *pkctx = NULL;
     int i;
 
+    if (ctx == NULL)
+        return 0;
+
     if (!EVP_DigestSignInit(ctx, &pkctx, dgst, NULL, key)) {
         EVP_MD_CTX_free(ctx);
         return 0;
