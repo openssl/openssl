@@ -358,13 +358,11 @@ unsigned long openssl_lh_strcasehash(const char *c)
     unsigned long v;
     int r;
 
-    if ((c == NULL) || (*c == '\0'))
+    if (c == NULL || *c == '\0')
         return ret;
 
-    n = 0x100;
-    while (*c) {
+    for (n = 0x100; *c != '\0'; n += 0x100) {
         v = n | ossl_tolower(*c);
-        n += 0x100;
         r = (int)((v >> 2) ^ v) & 0x0f;
         ret = (ret << r) | (ret >> (32 - r));
         ret &= 0xFFFFFFFFL;
