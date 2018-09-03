@@ -89,7 +89,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
 
     ret->meth = EC_KEY_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
-    if (engine != NULL) {
+    if ((engine != NULL) && (ENGINE_get_EC(engine) != NULL)) {
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD, ERR_R_ENGINE_LIB);
             goto err;

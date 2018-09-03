@@ -66,14 +66,15 @@ DSA *DSA_new_method(ENGINE *engine)
     ret->meth = DSA_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
-    if (engine) {
+    if (engine && ENGINE_get_DSA(engine)) {
         if (!ENGINE_init(engine)) {
             DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
-    } else
+    } else {
         ret->engine = ENGINE_get_default_DSA();
+    }
     if (ret->engine) {
         ret->meth = ENGINE_get_DSA(ret->engine);
         if (ret->meth == NULL) {

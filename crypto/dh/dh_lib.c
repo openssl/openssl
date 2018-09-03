@@ -59,14 +59,15 @@ DH *DH_new_method(ENGINE *engine)
     ret->meth = DH_get_default_method();
 #ifndef OPENSSL_NO_ENGINE
     ret->flags = ret->meth->flags;  /* early default init */
-    if (engine) {
+    if (engine && ENGINE_get_DH(engine)) {
         if (!ENGINE_init(engine)) {
             DHerr(DH_F_DH_NEW_METHOD, ERR_R_ENGINE_LIB);
             goto err;
         }
         ret->engine = engine;
-    } else
+    } else {
         ret->engine = ENGINE_get_default_DH();
+    }
     if (ret->engine) {
         ret->meth = ENGINE_get_DH(ret->engine);
         if (ret->meth == NULL) {
