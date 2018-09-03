@@ -545,16 +545,20 @@ static int add_ca_name(STACK_OF(X509_NAME) **sk, const X509 *x)
     return 1;
 }
 
-int SSL_add1_CA_list(SSL *ssl, const X509 *x)
+int SSL_add1_to_CA_list(SSL *ssl, const X509 *x)
 {
     return add_ca_name(&ssl->ca_names, x);
 }
 
-int SSL_CTX_add1_CA_list(SSL_CTX *ctx, const X509 *x)
+int SSL_CTX_add1_to_CA_list(SSL_CTX *ctx, const X509 *x)
 {
     return add_ca_name(&ctx->ca_names, x);
 }
 
+/*
+ * The following two are older names are to be replaced with
+ * SSL(_CTX)_add1_to_CA_list
+ */
 int SSL_add_client_CA(SSL *ssl, X509 *x)
 {
     return add_ca_name(&ssl->ca_names, x);
