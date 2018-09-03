@@ -369,7 +369,6 @@ option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 This option specifies the digest algorithm to use.
 Any digest supported by the OpenSSL B<dgst> command can be used.
-If not present then MD5 is used.
 This option can be overridden on the command line.
 
 =item B<string_mask>
