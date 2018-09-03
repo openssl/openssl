@@ -19,25 +19,26 @@
 #include "internal/thread_once.h"
 #include "internal/lhash.h"
 #include "obj_lcl.h"
+#include "e_os.h"
 
 /*
  * We define this wrapper for two reasons. Firstly, later versions of
  * DEC C add linkage information to certain functions, which makes it
  * tricky to use them as values to regular function pointers.
- * Secondly, in the EDK2 build environment, the strcmp function is
- * actually an external function (AsciiStrCmp) with the Microsoft ABI,
- * so we can't transparently assign function pointers to it.
+ * Secondly, in the EDK2 build environment, the strcasecmp function is
+ * actually an external function with the Microsoft ABI, so we can't
+ * transparently assign function pointers to it.
  * Arguably the latter is a stupidity of the UEFI environment, but
  * since the wrapper solves the DEC C issue too, let's just use the
  * same solution.
  */
 #if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
-static int obj_strcmp(const char *a, const char *b)
+static int obj_strcasecmp(const char *a, const char *b)
 {
     return strcasecmp(a, b);
 }
 #else
-#define obj_strcmp strcasecmp
+#define obj_strcasecmp strcasecmp
 #endif
 
 /*
@@ -113,7 +114,7 @@ int OBJ_NAME_new_index(unsigned long (*hash_func) (const char *),
             goto out;
         }
         name_funcs->hash_func = openssl_lh_strcasehash;
-        name_funcs->cmp_func = obj_strcmp;
+        name_funcs->cmp_func = obj_strcasecmp;
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_DISABLE);
 
         push = sk_NAME_FUNCS_push(name_funcs_stack, name_funcs);
