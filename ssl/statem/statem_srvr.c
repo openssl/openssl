@@ -764,6 +764,22 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
     return WORK_FINISHED_CONTINUE;
 }
 
+static ossl_inline int conn_is_closed(void)
+{
+    switch (get_last_sys_error()) {
+#if defined(EPIPE)
+    case EPIPE:
+        return 1;
+#endif
+#if defined(ECONNRESET)
+    case ECONNRESET:
+        return 1;
+#endif
+    default:
+        return 0;
+    }
+}
+
 /*
  * Perform any work that needs to be done after sending a message from the
  * server to the client.
@@ -939,13 +955,12 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_SESSION_TICKET:
+        clear_sys_error();
         if (SSL_IS_TLS13(s) && statem_flush(s) != 1) {
-#if defined(EPIPE) && defined(ECONNRESET)
             if (SSL_get_error(s, 0) == SSL_ERROR_SYSCALL
-                    && (get_last_sys_error() == EPIPE
-                        || get_last_sys_error() == ECONNRESET)) {
+                    && conn_is_closed()) {
                 /*
-                 * We ignore EPIPE/ECONNRESET in TLSv1.3 when sending a
+                 * We ignore connection closed errors in TLSv1.3 when sending a
                  * NewSessionTicket and behave as if we were successful. This is
                  * so that we are still able to read data sent to us by a client
                  * that closes soon after the end of the handshake without
@@ -954,7 +969,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                 s->rwstate = SSL_NOTHING;
                 break;
             }
-#endif
+
             return WORK_MORE_A;
         }
         break;
