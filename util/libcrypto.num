@@ -4575,3 +4575,5 @@ EC_GROUP_get_curve                      4528	1_1_1	EXIST::FUNCTION:EC
 OCSP_resp_get0_tbs_sigalg               4529	1_1_0j	EXIST::FUNCTION:OCSP
 OCSP_resp_get0_respdata                 4530	1_1_0j	EXIST::FUNCTION:OCSP
 EVP_MD_CTX_set_pkey_ctx                 4531	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_set_digest_custom         4532	1_1_1	EXIST::FUNCTION:
+EVP_PKEY_meth_get_digest_custom         4533	1_1_1	EXIST::FUNCTION:

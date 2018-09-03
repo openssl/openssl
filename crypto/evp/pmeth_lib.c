@@ -653,6 +653,13 @@ void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
     pmeth->param_check = check;
 }
 
+void EVP_PKEY_meth_set_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (*digest_custom) (EVP_PKEY_CTX *ctx,
+                                                           EVP_MD_CTX *mctx))
+{
+    pmeth->digest_custom = digest_custom;
+}
+
 void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
                             int (**pinit) (EVP_PKEY_CTX *ctx))
 {
@@ -839,4 +846,12 @@ void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
 {
     if (*pcheck)
         *pcheck = pmeth->param_check;
+}
+
+void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
+                                                             EVP_MD_CTX *mctx))
+{
+    if (*pdigest_custom)
+        *pdigest_custom = pmeth->digest_custom;
 }

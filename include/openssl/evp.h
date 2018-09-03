@@ -1325,6 +1325,8 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
  * Method handles all operations: don't assume any digest related defaults.
  */
 # define EVP_PKEY_FLAG_SIGCTX_CUSTOM     4
+/* Do a customized hashing process */
+# define EVP_PKEY_FLAG_DIGEST_CUSTOM     8
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
 EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags);
@@ -1523,6 +1525,10 @@ void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
 void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
                                    int (*check) (EVP_PKEY *pkey));
 
+void EVP_PKEY_meth_set_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (*digest_custom) (EVP_PKEY_CTX *ctx,
+                                                           EVP_MD_CTX *mctx));
+
 void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
                             int (**pinit) (EVP_PKEY_CTX *ctx));
 
@@ -1624,6 +1630,9 @@ void EVP_PKEY_meth_get_public_check(const EVP_PKEY_METHOD *pmeth,
 void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
                                    int (**pcheck) (EVP_PKEY *pkey));
 
+void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
+                                                             EVP_MD_CTX *mctx));
 void EVP_add_alg_module(void);
 
 
