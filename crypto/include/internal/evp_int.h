@@ -79,6 +79,8 @@ struct evp_pkey_method_st {
     int (*check) (EVP_PKEY *pkey);
     int (*public_check) (EVP_PKEY *pkey);
     int (*param_check) (EVP_PKEY *pkey);
+
+    int (*digest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 } /* EVP_PKEY_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
