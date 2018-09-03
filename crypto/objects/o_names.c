@@ -28,9 +28,6 @@
  * Secondly, in the EDK2 build environment, the strcasecmp function is
  * actually an external function with the Microsoft ABI, so we can't
  * transparently assign function pointers to it.
- * Arguably the latter is a stupidity of the UEFI environment, but
- * since the wrapper solves the DEC C issue too, let's just use the
- * same solution.
  */
 #if defined(OPENSSL_SYS_VMS_DECC) || defined(OPENSSL_SYS_UEFI)
 static int obj_strcasecmp(const char *a, const char *b)
