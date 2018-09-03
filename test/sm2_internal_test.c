@@ -294,7 +294,8 @@ static int test_sm2_sign(const EC_GROUP *group,
         goto done;
 
     start_fake_rand(k_hex);
-    sig = sm2_do_sign(key, EVP_sm3(), userid, (const uint8_t *)message, msg_len);
+    sig = sm2_do_sign(key, EVP_sm3(), (const uint8_t *)userid, strlen(userid),
+                      (const uint8_t *)message, msg_len);
     if (!TEST_ptr(sig)
             || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
         restore_rand();
@@ -310,8 +311,8 @@ static int test_sm2_sign(const EC_GROUP *group,
             || !TEST_BN_eq(s, sig_s))
         goto done;
 
-    ok = sm2_do_verify(key, EVP_sm3(), sig, userid, (const uint8_t *)message,
-                       msg_len);
+    ok = sm2_do_verify(key, EVP_sm3(), sig, (const uint8_t *)userid,
+                       strlen(userid), (const uint8_t *)message, msg_len);
 
     /* We goto done whether this passes or fails */
     TEST_true(ok);

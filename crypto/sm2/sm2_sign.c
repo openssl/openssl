@@ -18,10 +18,11 @@
 #include <openssl/bn.h>
 #include <string.h>
 
-static int sm2_compute_userid_digest(uint8_t *out,
-                                     const EVP_MD *digest,
-                                     const char *user_id,
-                                     const EC_KEY *key)
+int sm2_compute_userid_digest(uint8_t *out,
+                              const EVP_MD *digest,
+                              const uint8_t *id,
+                              const size_t id_len,
+                              const EC_KEY *key)
 {
     int rc = 0;
     const EC_GROUP *group = EC_KEY_get0_group(key);
@@ -36,7 +37,6 @@ static int sm2_compute_userid_digest(uint8_t *out,
     BIGNUM *yA = NULL;
     int p_bytes = 0;
     uint8_t *buf = NULL;
-    size_t uid_len = 0;
     uint16_t entla = 0;
     uint8_t e_byte = 0;
 
@@ -67,14 +67,13 @@ static int sm2_compute_userid_digest(uint8_t *out,
 
     /* Z = SM3(ENTLA || IDA || a || b || xG || yG || xA || yA) */
 
-    uid_len = strlen(user_id);
-    if (uid_len >= (UINT16_MAX / 8)) {
+    if (id_len >= (UINT16_MAX / 8)) {
         /* too large */
         SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, SM2_R_USER_ID_TOO_LARGE);
         goto done;
     }
 
-    entla = (uint16_t)(8 * uid_len);
+    entla = (uint16_t)(8 * id_len);
 
     e_byte = entla >> 8;
     if (!EVP_DigestUpdate(hash, &e_byte, 1)) {
@@ -83,7 +82,7 @@ static int sm2_compute_userid_digest(uint8_t *out,
     }
     e_byte = entla & 0xFF;
     if (!EVP_DigestUpdate(hash, &e_byte, 1)
-            || !EVP_DigestUpdate(hash, user_id, uid_len)) {
+            || !EVP_DigestUpdate(hash, id, id_len)) {
         SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EVP_LIB);
         goto done;
     }
@@ -134,7 +133,8 @@ static int sm2_compute_userid_digest(uint8_t *out,
 
 static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
                                     const EC_KEY *key,
-                                    const char *user_id,
+                                    const uint8_t *id,
+                                    const size_t id_len,
                                     const uint8_t *msg, size_t msg_len)
 {
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
@@ -153,7 +153,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    if (!sm2_compute_userid_digest(za, digest, user_id, key)) {
+    if (!sm2_compute_userid_digest(za, digest, id, id_len, key)) {
         /* SM2err already called */
         goto done;
     }
@@ -358,12 +358,14 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
 
 ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
                        const EVP_MD *digest,
-                       const char *user_id, const uint8_t *msg, size_t msg_len)
+                       const uint8_t *id,
+                       const size_t id_len,
+                       const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     ECDSA_SIG *sig = NULL;
 
-    e = sm2_compute_msg_hash(digest, key, user_id, msg, msg_len);
+    e = sm2_compute_msg_hash(digest, key, id, id_len, msg, msg_len);
     if (e == NULL) {
         /* SM2err already called */
         goto done;
@@ -379,12 +381,14 @@ ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
 int sm2_do_verify(const EC_KEY *key,
                   const EVP_MD *digest,
                   const ECDSA_SIG *sig,
-                  const char *user_id, const uint8_t *msg, size_t msg_len)
+                  const uint8_t *id,
+                  const size_t id_len,
+                  const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     int ret = 0;
 
-    e = sm2_compute_msg_hash(digest, key, user_id, msg, msg_len);
+    e = sm2_compute_msg_hash(digest, key, id, id_len, msg, msg_len);
     if (e == NULL) {
         /* SM2err already called */
         goto done;
