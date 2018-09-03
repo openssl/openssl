@@ -36,6 +36,13 @@ my $server_pss_only = {
     "PrivateKey" => test_pem("server-pss-key.pem"),
 };
 
+my $server_rsa_all = {
+    "PSS.Certificate" => test_pem("server-pss-cert.pem"),
+    "PSS.PrivateKey" => test_pem("server-pss-key.pem"),
+    "Certificate" => test_pem("servercert.pem"),
+    "PrivateKey" => test_pem("serverkey.pem"),
+};
+
 our @tests = (
     {
         name => "ECDSA CipherString Selection",
@@ -355,6 +362,29 @@ our @tests = (
         server => $server_pss_only,
         client => {
             "SignatureAlgorithms" => "RSA+SHA256",
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
+    {
+        name => "RSA key exchange with all RSA certificate types",
+        server => $server_rsa_all,
+        client => {
+            "CipherString" => "kRSA",
+            "MaxProtocol" => "TLSv1.2",
+        },
+        test   => {
+            "ExpectedServerCertType" =>, "RSA",
+            "ExpectedResult" => "Success"
+        },
+    },
+    {
+        name => "RSA key exchange with only RSA-PSS certificate",
+        server => $server_pss_only,
+        client => {
+            "CipherString" => "kRSA",
+            "MaxProtocol" => "TLSv1.2",
         },
         test   => {
             "ExpectedResult" => "ServerFail"
