@@ -22,6 +22,8 @@ typedef struct {
     EC_GROUP *gen_group;
     /* message digest */
     const EVP_MD *md;
+    uint8_t *id;
+    size_t id_len;
 } SM2_PKEY_CTX;
 
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
@@ -209,6 +211,29 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
     return -2;
 }
 
+static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
+{
+    uint8_t z[EVP_MAX_MD_SIZE];
+    SM2_PKEY_CTX *sctx = ctx->data;
+    EC_KEY *ec = ctx->pkey->pkey.ec;
+    const EVP_MD *md = EVP_MD_CTX_md(mctx);
+
+    if (sctx->id == NULL) {
+        /* XXX:
+         * currently we reject all null-ID for SM2, but this needs
+         * more considerations and discussion since the specifications
+         * on SM2 are not clear on null-ID
+         */
+        return 0;
+    }
+
+    /* get hashed prefix of tbs message */
+    if (!sm2_compute_userid_digest(z, md, sctx->id, sctx->id_len, ec))
+        return 0;
+
+    return EVP_DigestUpdate(mctx, z, EVP_MD_size(md));
+}
+
 const EVP_PKEY_METHOD sm2_pkey_meth = {
     EVP_PKEY_SM2,
     0,
@@ -241,5 +266,11 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
     0,
     0,
     pkey_sm2_ctrl,
-    pkey_sm2_ctrl_str
+    pkey_sm2_ctrl_str,
+
+    0, 0,
+
+    0, 0, 0,
+
+    pkey_sm2_digest_custom
 };
