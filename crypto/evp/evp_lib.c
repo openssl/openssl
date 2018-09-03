@@ -460,6 +460,13 @@ EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
     return ctx->pctx;
 }
 
+void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
+{
+    ctx->pctx = pctx;
+    /* make sure pctx is not freed when destroying EVP_MD_CTX */
+    EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NEGLECT_PCTX);
+}
+
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {
     return ctx->md_data;

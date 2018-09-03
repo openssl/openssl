@@ -181,6 +181,9 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
  */
 # define EVP_MD_CTX_FLAG_FINALISE        0x0200
 
+/* Don't free up ctx->pctx in EVP_MD_CTX_reset */
+# define EVP_MD_CTX_FLAG_NEGLECT_PCTX    0x0400
+
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
 EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
@@ -453,6 +456,7 @@ void EVP_MD_CTX_set_update_fn(EVP_MD_CTX *ctx,
 # define EVP_MD_CTX_block_size(e)        EVP_MD_block_size(EVP_MD_CTX_md(e))
 # define EVP_MD_CTX_type(e)              EVP_MD_type(EVP_MD_CTX_md(e))
 EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx);
+void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx);
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
