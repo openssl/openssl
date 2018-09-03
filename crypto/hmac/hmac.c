@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
                  const EVP_MD *md, ENGINE *impl)
 {
+    int rv = 0;
     int i, j, reset = 0;
     unsigned char pad[HMAC_MAX_MD_CBLOCK];
 
@@ -38,15 +39,13 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         reset = 1;
         j = EVP_MD_block_size(md);
         if (!ossl_assert(j <= (int)sizeof(ctx->key)))
-            goto err;
+            return 0;
         if (j < len) {
-            if (!EVP_DigestInit_ex(ctx->md_ctx, md, impl))
-                goto err;
-            if (!EVP_DigestUpdate(ctx->md_ctx, key, len))
-                goto err;
-            if (!EVP_DigestFinal_ex(ctx->md_ctx, ctx->key,
-                                    &ctx->key_length))
-                goto err;
+            if (!EVP_DigestInit_ex(ctx->md_ctx, md, impl)
+                    || !EVP_DigestUpdate(ctx->md_ctx, key, len)
+                    || !EVP_DigestFinal_ex(ctx->md_ctx, ctx->key,
+                                           &ctx->key_length))
+                return 0;
         } else {
             if (len < 0 || len > (int)sizeof(ctx->key))
                 return 0;
@@ -61,23 +60,23 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     if (reset) {
         for (i = 0; i < HMAC_MAX_MD_CBLOCK; i++)
             pad[i] = 0x36 ^ ctx->key[i];
-        if (!EVP_DigestInit_ex(ctx->i_ctx, md, impl))
-            goto err;
-        if (!EVP_DigestUpdate(ctx->i_ctx, pad, EVP_MD_block_size(md)))
+        if (!EVP_DigestInit_ex(ctx->i_ctx, md, impl)
+                || !EVP_DigestUpdate(ctx->i_ctx, pad, EVP_MD_block_size(md)))
             goto err;
 
         for (i = 0; i < HMAC_MAX_MD_CBLOCK; i++)
             pad[i] = 0x5c ^ ctx->key[i];
-        if (!EVP_DigestInit_ex(ctx->o_ctx, md, impl))
-            goto err;
-        if (!EVP_DigestUpdate(ctx->o_ctx, pad, EVP_MD_block_size(md)))
+        if (!EVP_DigestInit_ex(ctx->o_ctx, md, impl)
+                || !EVP_DigestUpdate(ctx->o_ctx, pad, EVP_MD_block_size(md)))
             goto err;
     }
     if (!EVP_MD_CTX_copy_ex(ctx->md_ctx, ctx->i_ctx))
         goto err;
-    return 1;
+    rv = 1;
  err:
-    return 0;
+    if (reset)
+        OPENSSL_cleanse(pad, sizeof(pad));
+    return rv;
 }
 
 #if OPENSSL_API_COMPAT < 0x10100000L
