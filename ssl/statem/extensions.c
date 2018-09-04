@@ -947,7 +947,6 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
              * was not used to negotiate an SNI value for this session.
              * TODO(OpenSSL1.2) cleanup stale value.
              */
-            ;
         } else if (ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
