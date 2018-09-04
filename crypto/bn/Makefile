@@ -47,7 +47,8 @@ top:
 all:	lib
 
 bn_prime.h: bn_prime.pl
-	$(PERL) bn_prime.pl >bn_prime.h
+	$(PERL) bn_prime.pl >bn_prime.h.new
+	cmp -s bn_prime.h bn_prime.h.new && rm -f bn_prime.h.new || mv bn_prime.h.new bn_prime.h
 
 divtest: divtest.c ../../libcrypto.a
 	cc -I../../include divtest.c -o divtest ../../libcrypto.a
