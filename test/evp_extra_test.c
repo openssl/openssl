@@ -361,11 +361,10 @@ static int test_EVP_Enveloped(void)
     int ret = 0;
     EVP_CIPHER_CTX *ctx = NULL;
     EVP_PKEY *keypair = NULL;
-    unsigned char *kek = NULL ;
-    int kek_len;
+    unsigned char *kek = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     static const unsigned char msg[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
-    int len, ciphertext_len, plaintext_len;
+    int len, kek_len, ciphertext_len, plaintext_len;
     unsigned char ciphertext[32], plaintext[16];
     const EVP_CIPHER *type = EVP_aes_256_cbc();
 
