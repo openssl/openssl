@@ -1554,30 +1554,44 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         return -1;
     }
 
-    /*
-     * If we've sent a close_notify but not yet received one back then ditch
-     * anything we read.
-     */
     if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0) {
-        /*
-         * In TLSv1.3 this could get problematic if we receive a KeyUpdate
-         * message after we sent a close_notify because we're about to ditch it,
-         * so we won't be able to read a close_notify sent afterwards! We don't
-         * support that.
-         */
-        SSL3_RECORD_set_length(rr, 0);
-        SSL3_RECORD_set_read(rr);
-
         if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
             BIO *rbio;
+            /*
+             * We need to check the message type of the received data. We're not
+             * "in init" otherwise we won't have got here - so this is a new
+             * handshake message. However it's theoretically possible for us to
+             * have received part of the message header before us sending
+             * close_notify, and for us to be receiving the remainder of it now.
+             */
+            unsigned char mt = s->rlayer.handshake_fragment_len > 0
+                               ? s->rlayer.handshake_fragment[0]
+                               : *SSL3_RECORD_get_data(rr);
 
-            if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
-                goto start;
+            /*
+             * We ignore any handshake messages sent to us unless they are
+             * TLSv1.3 NewSessionTicket or KeyUpdate, in which case we want to
+             * process them. For all other handshake messages we can't do
+             * anything reasonable with them because we are unable to write any
+             * response due to having already sent close_notify.
+             */
+            if (!SSL_IS_TLS13(s)
+                       /* Shouldn't ever be 0 but lets be safe */
+                    || SSL3_RECORD_get_length(rr) == 0
+                    || (mt != SSL3_MT_NEWSESSION_TICKET
+                        && mt != SSL3_MT_KEY_UPDATE)) {
+                SSL3_RECORD_set_length(rr, 0);
+                SSL3_RECORD_set_read(rr);
 
-            s->rwstate = SSL_READING;
-            rbio = SSL_get_rbio(s);
-            BIO_clear_retry_flags(rbio);
-            BIO_set_retry_read(rbio);
+                if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
+                    goto start;
+
+                s->rwstate = SSL_READING;
+                rbio = SSL_get_rbio(s);
+                BIO_clear_retry_flags(rbio);
+                BIO_set_retry_read(rbio);
+                return -1;
+            }
         } else {
             /*
              * The peer is continuing to send application data, but we have
@@ -1586,10 +1600,12 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
              * above.
              * No alert sent because we already sent close_notify
              */
+            SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
             SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
                      SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
+            return -1;
         }
-        return -1;
     }
 
     /*

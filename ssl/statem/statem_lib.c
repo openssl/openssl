@@ -638,9 +638,12 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL *s, PACKET *pkt)
     /*
      * If we get a request for us to update our sending keys too then, we need
      * to additionally send a KeyUpdate message. However that message should
-     * not also request an update (otherwise we get into an infinite loop).
+     * not also request an update (otherwise we get into an infinite loop). We
+     * ignore a request for us to update our sending keys too if we already
+     * sent close_notify.
      */
-    if (updatetype == SSL_KEY_UPDATE_REQUESTED)
+    if (updatetype == SSL_KEY_UPDATE_REQUESTED
+            && (s->shutdown & SSL_SENT_SHUTDOWN) == 0)
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
 
     if (!tls13_update_key(s, 0)) {
