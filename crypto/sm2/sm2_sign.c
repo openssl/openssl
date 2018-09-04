@@ -18,11 +18,11 @@
 #include <openssl/bn.h>
 #include <string.h>
 
-int sm2_compute_userid_digest(uint8_t *out,
-                              const EVP_MD *digest,
-                              const uint8_t *id,
-                              const size_t id_len,
-                              const EC_KEY *key)
+int sm2_compute_z_digest(uint8_t *out,
+                         const EVP_MD *digest,
+                         const uint8_t *id,
+                         const size_t id_len,
+                         const EC_KEY *key)
 {
     int rc = 0;
     const EC_GROUP *group = EC_KEY_get0_group(key);
@@ -37,13 +37,13 @@ int sm2_compute_userid_digest(uint8_t *out,
     BIGNUM *yA = NULL;
     int p_bytes = 0;
     uint8_t *buf = NULL;
-    uint16_t entla = 0;
+    uint16_t entl = 0;
     uint8_t e_byte = 0;
 
     hash = EVP_MD_CTX_new();
     ctx = BN_CTX_new();
     if (hash == NULL || ctx == NULL) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_MALLOC_FAILURE);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
@@ -56,46 +56,50 @@ int sm2_compute_userid_digest(uint8_t *out,
     yA = BN_CTX_get(ctx);
 
     if (yA == NULL) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_MALLOC_FAILURE);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
     if (!EVP_DigestInit(hash, digest)) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EVP_LIB);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
         goto done;
     }
 
-    /* Z = SM3(ENTLA || IDA || a || b || xG || yG || xA || yA) */
+    /* Z = h(ENTL || ID || a || b || xG || yG || xA || yA) */
 
     if (id_len >= (UINT16_MAX / 8)) {
         /* too large */
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, SM2_R_USER_ID_TOO_LARGE);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, SM2_R_ID_TOO_LARGE);
         goto done;
     }
 
-    entla = (uint16_t)(8 * id_len);
+    entl = (uint16_t)(8 * id_len);
 
-    e_byte = entla >> 8;
+    e_byte = entl >> 8;
     if (!EVP_DigestUpdate(hash, &e_byte, 1)) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EVP_LIB);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
         goto done;
     }
-    e_byte = entla & 0xFF;
-    if (!EVP_DigestUpdate(hash, &e_byte, 1)
-            || !EVP_DigestUpdate(hash, id, id_len)) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EVP_LIB);
+    e_byte = entl & 0xFF;
+    if (!EVP_DigestUpdate(hash, &e_byte, 1)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
+        goto done;
+    }
+
+    if (id_len > 0 && !EVP_DigestUpdate(hash, id, id_len)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
         goto done;
     }
 
     if (!EC_GROUP_get_curve(group, p, a, b, ctx)) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_EC_LIB);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EC_LIB);
         goto done;
     }
 
     p_bytes = BN_num_bytes(p);
     buf = OPENSSL_zalloc(p_bytes);
     if (buf == NULL) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_MALLOC_FAILURE);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
@@ -118,7 +122,7 @@ int sm2_compute_userid_digest(uint8_t *out,
             || BN_bn2binpad(yA, buf, p_bytes) < 0
             || !EVP_DigestUpdate(hash, buf, p_bytes)
             || !EVP_DigestFinal(hash, out, NULL)) {
-        SM2err(SM2_F_SM2_COMPUTE_USERID_DIGEST, ERR_R_INTERNAL_ERROR);
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_INTERNAL_ERROR);
         goto done;
     }
 
@@ -139,7 +143,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
 {
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
     const int md_size = EVP_MD_size(digest);
-    uint8_t *za = NULL;
+    uint8_t *z = NULL;
     BIGNUM *e = NULL;
 
     if (md_size < 0) {
@@ -147,32 +151,32 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    za = OPENSSL_zalloc(md_size);
-    if (hash == NULL || za == NULL) {
+    z = OPENSSL_zalloc(md_size);
+    if (hash == NULL || z == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
-    if (!sm2_compute_userid_digest(za, digest, id, id_len, key)) {
+    if (!sm2_compute_z_digest(z, digest, id, id_len, key)) {
         /* SM2err already called */
         goto done;
     }
 
     if (!EVP_DigestInit(hash, digest)
-            || !EVP_DigestUpdate(hash, za, md_size)
+            || !EVP_DigestUpdate(hash, z, md_size)
             || !EVP_DigestUpdate(hash, msg, msg_len)
-               /* reuse za buffer to hold H(ZA || M) */
-            || !EVP_DigestFinal(hash, za, NULL)) {
+               /* reuse z buffer to hold H(Z || M) */
+            || !EVP_DigestFinal(hash, z, NULL)) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_EVP_LIB);
         goto done;
     }
 
-    e = BN_bin2bn(za, md_size, NULL);
+    e = BN_bin2bn(z, md_size, NULL);
     if (e == NULL)
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_INTERNAL_ERROR);
 
  done:
-    OPENSSL_free(za);
+    OPENSSL_free(z);
     EVP_MD_CTX_free(hash);
     return e;
 }

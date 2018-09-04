@@ -180,9 +180,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
  * if the following flag is set.
  */
 # define EVP_MD_CTX_FLAG_FINALISE        0x0200
-
-/* Don't free up ctx->pctx in EVP_MD_CTX_reset */
-# define EVP_MD_CTX_FLAG_NEGLECT_PCTX    0x0400
+/* NOTE: 0x0400 is reserved for internal usage in evp_int.h */
 
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
 EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
@@ -1325,8 +1323,6 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
  * Method handles all operations: don't assume any digest related defaults.
  */
 # define EVP_PKEY_FLAG_SIGCTX_CUSTOM     4
-/* Do a customized hashing process */
-# define EVP_PKEY_FLAG_DIGEST_CUSTOM     8
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
 EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags);

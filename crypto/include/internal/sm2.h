@@ -20,15 +20,14 @@
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
 
-int sm2_compute_userid_digest(uint8_t *out,
-                              const EVP_MD *digest,
-                              const uint8_t *id,
-                              const size_t id_len,
-                              const EC_KEY *key);
+int sm2_compute_z_digest(uint8_t *out,
+                         const EVP_MD *digest,
+                         const uint8_t *id,
+                         const size_t id_len,
+                         const EC_KEY *key);
 
 /*
- * SM2 signature operation. Computes ZA (user id digest) and then signs
- * H(ZA || msg) using SM2
+ * SM2 signature operation. Computes Z and then signs H(Z || msg) using SM2
  */
 ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
                        const EVP_MD *digest,
