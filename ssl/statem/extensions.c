@@ -939,9 +939,15 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      */
     if (s->server) {
         if (!sent) {
-            /* Nothing from the client this handshake; cleanup stale value */
-            OPENSSL_free(s->ext.hostname);
-            s->ext.hostname = NULL;
+            /*
+             * Nothing used from the client this handshake; from the
+             * perspective of TLS any value here is stale/unused.  However,
+             * we have a de facto stable ABI guarantee to preserve this value
+             * for subsequent retrieval with SSL_get_servername() even if it
+             * was not used to negotiate an SNI value for this session.
+             * TODO(OpenSSL1.2) cleanup stale value.
+             */
+            ;
         } else if (ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
