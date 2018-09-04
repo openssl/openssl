@@ -213,7 +213,7 @@ int OBJ_NAME_add(const char *name, int type, const char *data)
     if (!OBJ_NAME_init())
         return 0;    
 
-   alias = type & OBJ_NAME_ALIAS;
+    alias = type & OBJ_NAME_ALIAS;
     type &= ~OBJ_NAME_ALIAS;
 
     onp = OPENSSL_malloc(sizeof(*onp));

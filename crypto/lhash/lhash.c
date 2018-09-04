@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
-#include <openssl/err.h>
 #include <ctype.h>
 #include "internal/lhash.h"
 #include "lhash_lcl.h"
