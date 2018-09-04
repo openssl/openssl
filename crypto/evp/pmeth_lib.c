@@ -365,12 +365,17 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                       int cmd, int p1, void *p2)
 {
     int ret;
+
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
     if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
         return -1;
+
+    /* Skip the operation checks since this is called in a very early stage */
+    if (ctx->pmeth->digest_custom != NULL)
+        goto doit;
 
     if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_NO_OPERATION_SET);
@@ -382,13 +387,13 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return -1;
     }
 
+ doit:
     ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 
     if (ret == -2)
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
 
     return ret;
-
 }
 
 int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,

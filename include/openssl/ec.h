@@ -1429,6 +1429,19 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
                                 EVP_PKEY_OP_DERIVE, \
                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(p))
 
+/* SM2 will skip the operation check so no need to pass operation here */
+# define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
+        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
+                                EVP_PKEY_CTRL_SET1_ID, (int)id_len, (void*)(id))
+
+# define EVP_PKEY_CTX_get1_id(ctx, id) \
+        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
+                                EVP_PKEY_CTRL_GET1_ID, 0, (void*)(id))
+
+# define EVP_PKEY_CTX_get1_id_len(ctx, id_len) \
+        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
+                                EVP_PKEY_CTRL_GET1_ID_LEN, 0, (void*)(id_len))
+
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_EC_PARAM_ENC                      (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_EC_ECDH_COFACTOR                  (EVP_PKEY_ALG_CTRL + 3)
@@ -1439,6 +1452,9 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN                 (EVP_PKEY_ALG_CTRL + 8)
 # define EVP_PKEY_CTRL_EC_KDF_UKM                        (EVP_PKEY_ALG_CTRL + 9)
 # define EVP_PKEY_CTRL_GET_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 10)
+# define EVP_PKEY_CTRL_SET1_ID                           (EVP_PKEY_ALG_CTRL + 11)
+# define EVP_PKEY_CTRL_GET1_ID                           (EVP_PKEY_ALG_CTRL + 12)
+# define EVP_PKEY_CTRL_GET1_ID_LEN                       (EVP_PKEY_ALG_CTRL + 13)
 /* KDF types */
 # define EVP_PKEY_ECDH_KDF_NONE                          1
 # define EVP_PKEY_ECDH_KDF_X9_62                         2

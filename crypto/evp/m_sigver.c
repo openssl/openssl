@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -75,14 +75,13 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         return 1;
     if (!EVP_DigestInit_ex(ctx, type, e))
         return 0;
-    if (ctx->pctx->pmeth->flags & EVP_PKEY_FLAG_DIGEST_CUSTOM) {
-        /*
-         * This indicates the current algorithm requires
-         * special treatment before hashing the tbs-message.
-         */
-        if (ctx->pctx->pmeth->digest_custom)
-            return ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx);
-    }
+    /*
+     * This indicates the current algorithm requires
+     * special treatment before hashing the tbs-message.
+     */
+    if (ctx->pctx->pmeth->digest_custom)
+        return ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx);
+
     return 1;
 }
 
@@ -184,9 +183,9 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
     else
         vctx = 0;
     if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
-        if (vctx) {
+        if (vctx)
             r = ctx->pctx->pmeth->verifyctx(ctx->pctx, sig, siglen, ctx);
-        } else
+        else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
         EVP_MD_CTX *tmp_ctx = EVP_MD_CTX_new();
@@ -196,10 +195,10 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             EVP_MD_CTX_free(tmp_ctx);
             return -1;
         }
-        if (vctx) {
+        if (vctx)
             r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
                                                 sig, siglen, tmp_ctx);
-        } else
+        else
             r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
         EVP_MD_CTX_free(tmp_ctx);
     }

@@ -16,6 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/pem.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/evp_int.h"
@@ -486,6 +487,7 @@ static int test_EVP_SM2(void)
     EVP_PKEY *params = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY_CTX *kctx = NULL;
+    EVP_PKEY_CTX *sctx = NULL;
     size_t sig_len = 0;
     unsigned char *sig = NULL;
     EVP_MD_CTX *md_ctx = NULL;
@@ -497,6 +499,8 @@ static int test_EVP_SM2(void)
 
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
+
+    uint8_t sm2_id[] = {1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r'};
 
     pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
     if (!TEST_ptr(pctx))
@@ -528,6 +532,15 @@ static int test_EVP_SM2(void)
         goto done;
 
     if (!TEST_ptr(md_ctx_verify = EVP_MD_CTX_new()))
+        goto done;
+
+    if (!TEST_ptr(sctx = EVP_PKEY_CTX_new(pkey, NULL)))
+        goto done;
+
+    EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx);
+    EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx);
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
@@ -587,6 +600,7 @@ static int test_EVP_SM2(void)
 done:
     EVP_PKEY_CTX_free(pctx);
     EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_CTX_free(sctx);
     EVP_PKEY_CTX_free(cctx);
     EVP_PKEY_free(pkey);
     EVP_PKEY_free(params);
