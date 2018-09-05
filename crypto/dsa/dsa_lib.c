@@ -111,7 +111,7 @@ void DSA_free(DSA *r)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    if (r->meth->finish)
+    if ((r->meth != NULL) && (r->meth->finish != NULL))
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(r->engine);
