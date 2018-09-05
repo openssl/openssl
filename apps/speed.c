@@ -1529,7 +1529,7 @@ int speed_main(int argc, char **argv)
     } test_ed_curves[] = {
         /* EdDSA */
         {"Ed25519", NID_ED25519, 253, 64},
-        {"Ed448", NID_ED448, 448, 114}
+        {"Ed448", NID_ED448, 456, 114}
     };
     int ecdsa_doit[ECDSA_NUM] = { 0 };
     int ecdh_doit[EC_NUM] = { 0 };
@@ -3081,14 +3081,18 @@ int speed_main(int argc, char **argv)
                 || !EVP_PKEY_keygen_init(ed_pctx)
                 || !EVP_PKEY_keygen(ed_pctx, &ed_pkey)) {
                 st = 0;
+                EVP_PKEY_CTX_free(ed_pctx);
                 break;
             }
+            EVP_PKEY_CTX_free(ed_pctx);
 
             if (!EVP_DigestSignInit(loopargs[i].eddsa_ctx[testnum], NULL, NULL,
                                     NULL, ed_pkey)) {
                 st = 0;
+                EVP_PKEY_free(ed_pkey);
                 break;
             }
+            EVP_PKEY_free(ed_pkey);
         }
         if (st == 0) {
             BIO_printf(bio_err, "EdDSA failure.\n");
@@ -3159,9 +3163,6 @@ int speed_main(int argc, char **argv)
                 for (testnum++; testnum < EdDSA_NUM; testnum++)
                     eddsa_doit[testnum] = 0;
             }
-
-            EVP_PKEY_CTX_free(ed_pctx);
-            EVP_PKEY_free(ed_pkey);
         }
     }
 
@@ -3339,6 +3340,8 @@ int speed_main(int argc, char **argv)
             EC_KEY_free(loopargs[i].ecdsa[k]);
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
+        for (k = 0; k < EdDSA_NUM; k++)
+            EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
         OPENSSL_free(loopargs[i].secret_a);
         OPENSSL_free(loopargs[i].secret_b);
 #endif
