@@ -680,10 +680,11 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
              */
             || !bn_mod_sub_fixed_top(r1, r1, m1, rsa->p)
 
-            /* r0 = r0 * iqmp mod p */
+            /* r1 = r1 * iqmp mod p */
             || !bn_to_mont_fixed_top(r1, r1, rsa->_method_mod_p, ctx)
             || !bn_mul_mont_fixed_top(r1, r1, rsa->iqmp, rsa->_method_mod_p,
                                       ctx)
+            /* r0 = r1 * q + m1 */
             || !bn_mul_fixed_top(r0, r1, rsa->q, ctx)
             || !bn_mod_add_fixed_top(r0, r0, m1, rsa->n))
             goto err;
