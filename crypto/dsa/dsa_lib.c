@@ -90,12 +90,14 @@ DSA *DSA_new_method(ENGINE *engine)
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DSAerr(DSA_F_DSA_NEW_METHOD, ERR_R_INIT_FAIL);
-err:
-        DSA_free(ret);
-        ret = NULL;
+        goto err;
     }
 
     return ret;
+
+ err:
+    DSA_free(ret);
+    return NULL;
 }
 
 void DSA_free(DSA *r)
