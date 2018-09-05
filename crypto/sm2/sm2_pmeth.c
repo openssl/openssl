@@ -163,6 +163,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     SM2_PKEY_CTX *smctx = ctx->data;
     EC_GROUP *group;
+    uint8_t *tmp_id;
 
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
@@ -192,14 +193,16 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_SET1_ID:
-        OPENSSL_free(smctx->id);
         if (p1 > 0) {
-            smctx->id = OPENSSL_malloc(p1);
-            if (smctx->id == NULL)
+            tmp_id = OPENSSL_malloc(p1);
+            if (tmp_id == NULL)
                 return 0;
-            memcpy(smctx->id, p2, p1);
+            memcpy(tmp_id, p2, p1);
+            OPENSSL_free(smctx->id);
+            smctx->id = tmp_id;
         } else {
             /* set null-ID */
+            OPENSSL_free(smctx->id);
             smctx->id = NULL;
         }
         smctx->id_len = (size_t)p1;
@@ -260,6 +263,7 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
          * NULL is allowed. We only allow it if set explicitly for maximum
          * flexibility.
          */
+        SM2err(SM2_F_PKEY_SM2_DIGEST_CUSTOM, SM2_R_ID_NOT_SET);
         return 0;
     }
 

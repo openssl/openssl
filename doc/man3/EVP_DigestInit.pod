@@ -11,7 +11,8 @@ EVP_MD_block_size, EVP_MD_CTX_md, EVP_MD_CTX_size,
 EVP_MD_CTX_block_size, EVP_MD_CTX_type, EVP_MD_CTX_md_data,
 EVP_md_null,
 EVP_get_digestbyname, EVP_get_digestbynid,
-EVP_get_digestbyobj - EVP digest routines
+EVP_get_digestbyobj,
+EVP_MD_CTX_set_pkey_ctx - EVP digest routines
 
 =head1 SYNOPSIS
 
@@ -53,6 +54,8 @@ EVP_get_digestbyobj - EVP digest routines
  const EVP_MD *EVP_get_digestbyname(const char *name);
  const EVP_MD *EVP_get_digestbynid(int type);
  const EVP_MD *EVP_get_digestbyobj(const ASN1_OBJECT *o);
+
+ void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx);
 
 =head1 DESCRIPTION
 
@@ -179,6 +182,13 @@ EVP_get_digestbyobj()
 Returns an B<EVP_MD> structure when passed a digest name, a digest B<NID> or an
 B<ASN1_OBJECT> structure respectively.
 
+=item EVP_MD_CTX_set_pkey_ctx()
+
+Assigns an B<EVP_PKEY_CTX> to B<EVP_MD_CTX>. This is usually used to provide
+a customzied B<EVP_PKEY_CTX> to L<EVP_DigestSignInit(3)> or
+L<EVP_DigestVerifyInit(3)>. The B<EVP_PKEY_CTX> passed to this function should
+be freed by the caller.
+
 =back
 
 =head1 FLAGS
@@ -255,6 +265,10 @@ EVP_get_digestbynid(),
 EVP_get_digestbyobj()
 
 Returns either an B<EVP_MD> structure or NULL if an error occurs.
+
+=item EVP_MD_CTX_set_pkey_ctx()
+
+This function has no return value.
 
 =back
 
@@ -359,6 +373,8 @@ The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
 later, so now EVP_sha1() can be used with RSA and DSA.
 
 EVP_dss1() was removed in OpenSSL 1.1.0.
+
+EVP_MD_CTX_set_pkey_ctx() is added in 1.1.1.
 
 =head1 COPYRIGHT
 
