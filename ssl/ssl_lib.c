@@ -2606,7 +2606,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
      * out if there is not a SNI value available.
      */
     if (SSL_in_init(s) && s->hit)
-	return s->session->ext.hostname;
+        return s->session->ext.hostname;
     return s->ext.hostname;
 }
 
