@@ -2601,11 +2601,11 @@ const char *SSL_get_servername(const SSL *s, const int type)
 
     /*
      * SNI is not negotiated in pre-TLS-1.3 resumption flows, so fake up an
-     * SNI value to return if we are resuming.  N.B. that we still call the
-     * relevant callbacks for such resumption flows, and callbacks might error
-     * out if there is not a SNI value available.
+     * SNI value to return if we are resuming/resumed.  N.B. that we still
+     * call the relevant callbacks for such resumption flows, and callbacks
+     * might error out if there is not a SNI value available.
      */
-    if (SSL_in_init(s) && s->hit)
+    if (s->hit)
         return s->session->ext.hostname;
     return s->ext.hostname;
 }
