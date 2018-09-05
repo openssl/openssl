@@ -106,7 +106,7 @@ void DH_free(DH *r)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    if ((r->meth != NULL) && (r->meth->finish != NULL))
+    if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(r->engine);
