@@ -11,7 +11,7 @@ B<openssl> B<x509>
 [B<-help>]
 [B<-inform DER|PEM>]
 [B<-outform DER|PEM>]
-[B<-keyform DER|PEM>]
+[B<-keyform DER|PEM|ENGINE>]
 [B<-CAform DER|PEM>]
 [B<-CAkeyform DER|PEM>]
 [B<-in filename>]
@@ -378,9 +378,9 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|ENGINE>
 
-Specifies the format (DER or PEM) of the private key file used in the
+Specifies the format (DER, PEM or ENGINE) of the private key file used in the
 B<-signkey> option.
 
 =item B<-days arg>
