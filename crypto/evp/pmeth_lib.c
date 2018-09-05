@@ -859,6 +859,6 @@ void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
                                      int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
                                                              EVP_MD_CTX *mctx))
 {
-    if (*pdigest_custom)
+    if (pdigest_custom != NULL)
         *pdigest_custom = pmeth->digest_custom;
 }
