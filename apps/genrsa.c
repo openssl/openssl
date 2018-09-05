@@ -145,7 +145,7 @@ opthelp:
 
     BIO_printf(bio_err, "Generating RSA private key, %d bit long modulus (%d primes)\n",
                num, primes);
-    rsa = eng ? RSA_new_method(eng) : RSA_new();
+    rsa = eng && ENGINE_get_RSA(eng) != NULL ? RSA_new_method(eng) : RSA_new();
     if (rsa == NULL)
         goto end;
 
