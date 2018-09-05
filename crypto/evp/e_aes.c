@@ -3410,10 +3410,30 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t len)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX,ctx);
-    if (!xctx->xts.key1 || !xctx->xts.key2)
+
+    if (xctx->xts.key1 == NULL
+            || xctx->xts.key2 == NULL
+            || out == NULL
+            || in == NULL
+            || len < AES_BLOCK_SIZE)
         return 0;
-    if (!out || !in || len < AES_BLOCK_SIZE)
+
+    /*
+     * Verify that the two keys are different.
+     *
+     * This addresses the vulnerability described in Rogaway's September 2004
+     * paper (http://web.cs.ucdavis.edu/~rogaway/papers/offsets.pdf):
+     *      "Efficient Instantiations of Tweakable Blockciphers and Refinements
+     *       to Modes OCB and PMAC".
+     *
+     * FIPS 140-2 IG A.9 XTS-AES Key Generation Requirements states that:
+     *      "The check for Key_1 != Key_2 shall be done at any place BEFORE
+     *       using the keys in the XTS-AES algorithm to process data with them."
+    */
+    if (CRYPTO_memcmp(xctx->xts.key1, xctx->xts.key2,
+                      EVP_CIPHER_CTX_key_length(ctx) / 2) == 0)
         return 0;
+
     if (xctx->stream)
         (*xctx->stream) (in, out, len,
                          xctx->xts.key1, xctx->xts.key2,
