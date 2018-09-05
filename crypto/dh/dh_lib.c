@@ -82,12 +82,14 @@ DH *DH_new_method(ENGINE *engine)
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
-err:
-        DH_free(ret);
-        ret = NULL;
+        goto err;
     }
 
     return ret;
+
+ err:
+    DH_free(ret);
+    return NULL;
 }
 
 void DH_free(DH *r)

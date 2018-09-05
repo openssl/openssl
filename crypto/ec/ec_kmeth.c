@@ -119,7 +119,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine)
     }
     return ret;
 
-err:
+ err:
     EC_KEY_free(ret);
     return NULL;
 }
