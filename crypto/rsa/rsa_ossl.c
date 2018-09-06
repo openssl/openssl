@@ -19,7 +19,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
 static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
                                    unsigned char *to, RSA *rsa, int padding);
-static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *iconst, RSA *rsa,
                            BN_CTX *ctx);
 static int rsa_ossl_init(RSA *rsa);
 static int rsa_ossl_finish(RSA *rsa);
@@ -589,14 +589,26 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
     return r;
 }
 
-static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
+static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *Iconst, RSA *rsa, BN_CTX *ctx)
 {
+    /*
+     * If used directly, `Iconst` can be modified by a low level fault attack
+     * injection during operations in this function.It should be cleared in
+     * this case. However, the const flag prevents us to do so. For this
+     * reason, we work with a copy `I` of `Iconst`.
+     * By this way, `I` can be faulted instead of `Iconst` and `I` can be
+     * cleared.
+     * `I` is then a sensitive variable that is cleared at the end of this
+     * function.
+     * */
+    BIGNUM *I;
     BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2];
     int ret = 0, i, ex_primes = 0, smooth = 0;
     RSA_PRIME_INFO *pinfo;
 
     BN_CTX_start(ctx);
-
+    
+    I = BN_dup(Iconst);
     r1 = BN_CTX_get(ctx);
     r2 = BN_CTX_get(ctx);
     m1 = BN_CTX_get(ctx);
@@ -900,38 +912,26 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
          * verify will *always* be less than 'n' so we don't check for
          * absolute equality, just congruency.
          */
-        if (!BN_sub(vrfy, vrfy, I))
+        if (!BN_mod(I,I,rsa->n,ctx))
             goto err;
-        if (BN_is_zero(vrfy)) {
+        if (!BN_cmp(vrfy,I)) // same big number
+        {
             bn_correct_top(r0);
             ret = 1;
             goto err;   /* not actually error */
         }
-        if (!BN_mod(vrfy, vrfy, rsa->n, ctx))
-            goto err;
-        if (BN_is_negative(vrfy))
-            if (!BN_add(vrfy, vrfy, rsa->n))
-                goto err;
-        if (!BN_is_zero(vrfy)) {
-            /*
-             * 'I' and 'vrfy' aren't congruent mod n. Don't leak
-             * miscalculated CRT output, just do a raw (slower) mod_exp and
-             * return that instead.
-             */
-
-            BIGNUM *d = BN_new();
-            if (d == NULL)
-                goto err;
-            BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
-
-            if (!rsa->meth->bn_mod_exp(r0, I, d, rsa->n, ctx,
-                                       rsa->_method_mod_n)) {
-                BN_free(d);
-                goto err;
-            }
-            /* We MUST free d before any further use of rsa->d */
-            BN_free(d);
-        }
+        /*
+         * A fault is detected. We clear sensitive signature and return
+         * an an error without trying to correct the fault by computing
+         * the signature with raw exponentiation (without CRT).
+         * 
+         * Note that clearing `r0` can leak the size of prime factors
+         * of the RSA modulus. However, this size is supposed to be
+         * known.
+         * */
+      
+        BN_clear_free(r0);
+        goto err;
     }
     /*
      * It's unfortunate that we have to bn_correct_top(r0). What hopefully
@@ -944,6 +944,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     bn_correct_top(r0);
     ret = 1;
  err:
+    BN_clear_free(I);
     BN_CTX_end(ctx);
     return ret;
 }
