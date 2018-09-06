@@ -77,6 +77,15 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     char *cp;
     int neg = 0;
 
+    /*
+     * Strictly speaking, zero length is malformed.  However, long_c2i
+     * (x_long.c) encodes 0 as a zero length INTEGER (wrongly, of course),
+     * so for the sake of backward compatibility, we still decode zero
+     * length INTEGERs as the number zero.
+     */
+    if (len == 0)
+        goto long_compat;
+
     if (*pval == NULL && !uint64_new(pval, it))
         return 0;
 
@@ -95,6 +104,8 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (neg)
         /* c2i_uint64_int() returns positive values */
         utmp = 0 - utmp;
+
+ long_compat:
     memcpy(cp, &utmp, sizeof(utmp));
     return 1;
 }
@@ -168,6 +179,15 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     char *cp;
     int neg = 0;
 
+    /*
+     * Strictly speaking, zero length is malformed.  However, long_c2i
+     * (x_long.c) encodes 0 as a zero length INTEGER (wrongly, of course),
+     * so for the sake of backward compatibility, we still decode zero
+     * length INTEGERs as the number zero.
+     */
+    if (len == 0)
+        goto long_compat;
+
     if (*pval == NULL && !uint64_new(pval, it))
         return 0;
 
@@ -191,6 +211,8 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
             return 0;
         }
     }
+
+ long_compat:
     utmp2 = (uint32_t)utmp;
     memcpy(cp, &utmp2, sizeof(utmp2));
     return 1;
