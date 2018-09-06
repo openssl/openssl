@@ -22,6 +22,8 @@ typedef struct {
     EC_GROUP *gen_group;
     /* message digest */
     const EVP_MD *md;
+    /* personalization string */
+    char *uid;
 } SM2_PKEY_CTX;
 
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
@@ -43,6 +45,7 @@ static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
 
     if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
+        OPENSSL_free(dctx->uid);
         OPENSSL_free(dctx);
         ctx->data = NULL;
     }
@@ -63,6 +66,13 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
             return 0;
         }
     }
+
+    if (sctx->uid != NULL
+        && ((dctx->uid = OPENSSL_strdup(sctx->uid)) == NULL)) {
+         pkey_sm2_cleanup(dst);
+         return 0;
+    }
+
     dctx->md = sctx->md;
 
     return 1;
@@ -149,6 +159,21 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     EC_GROUP *group;
 
     switch (type) {
+    case EVP_PKEY_CTRL_DIGESTSETUP:
+
+       if (dctx->uid != NULL) {
+           EC_KEY *ec = ctx->pkey->pkey.ec;
+           EVP_MD_CTX *md_ctx = (EVP_MD_CTX *)p2;
+           const EVP_MD *md = EVP_MD_CTX_md(md_ctx);
+           const int md_len = EVP_MD_size(md);
+           uint8_t za[EVP_MAX_MD_SIZE];
+
+           if (sm2_compute_userid_digest(za, md, dctx->uid, ec) != 1)
+               return 0;
+           return EVP_DigestUpdate(md_ctx, za, md_len);
+       }
+
+       return 1;
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
         group = EC_GROUP_new_by_curve_name(p1);
         if (group == NULL) {
@@ -165,6 +190,16 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return 0;
         }
         EC_GROUP_set_asn1_flag(dctx->gen_group, p1);
+        return 1;
+
+    case EVP_PKEY_CTRL_SM2_SET_UID:
+        if (dctx->uid != NULL)
+            OPENSSL_free(dctx->uid);
+        dctx->uid = OPENSSL_strdup(p2);
+        return (dctx->uid != NULL);
+
+    case EVP_PKEY_CTRL_SM2_GET_UID:
+        *(char **)p2 = dctx->uid;
         return 1;
 
     case EVP_PKEY_CTRL_MD:
@@ -204,6 +239,8 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
         else
             return -2;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
+    } else if (strcmp(type, "sm2_uid") == 0) {
+        return EVP_PKEY_CTX_set1_sm2_uid(ctx, value);
     }
 
     return -2;

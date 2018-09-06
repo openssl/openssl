@@ -1314,6 +1314,8 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 
 # define EVP_PKEY_CTRL_SET_DIGEST_SIZE   14
 
+# define EVP_PKEY_CTRL_DIGESTSETUP       15
+
 # define EVP_PKEY_ALG_CTRL               0x1000
 
 # define EVP_PKEY_FLAG_AUTOARGLEN        2

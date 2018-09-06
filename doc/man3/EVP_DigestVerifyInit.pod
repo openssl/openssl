@@ -30,6 +30,13 @@ value in B<*pctx> is overwritten. The EVP_PKEY_CTX value returned must not be
 freed directly by the application (it will be freed automatically when the
 EVP_MD_CTX is freed).
 
+In some rare cases (including SM2 signatures) it is necessary to reinitialize
+the digest computation after setting some parameters on the B<pctx>. This
+is done by calling EVP_DigestVerifyInit() twice. The first time, B<pctx>
+should be non NULL. Then any necesssary options can be set on B<pctx>
+using for instance EVP_PKEY_CTX_ctrl_str(). Afterwards, EVP_DigestVerifyInit()
+is called again, using the same verification context B<ctx>.
+
 EVP_DigestVerifyUpdate() hashes B<cnt> bytes of data at B<d> into the
 verification context B<ctx>. This function can be called several times on the
 same B<ctx> to include additional data. This function is currently implemented
@@ -88,7 +95,8 @@ L<EVP_DigestSignInit(3)>,
 L<EVP_DigestInit(3)>,
 L<evp(7)>, L<HMAC(3)>, L<MD2(3)>,
 L<MD5(3)>, L<MDC2(3)>, L<RIPEMD160(3)>,
-L<SHA1(3)>, L<dgst(1)>
+L<SHA1(3)>, L<dgst(1)>,
+L<EVP_PKEY_CTX_ctrl_str(3)>
 
 =head1 HISTORY
 

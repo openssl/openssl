@@ -413,3 +413,5 @@ SSLv23_method                           define
 SSLv23_server_method                    define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
+EVP_PKEY_CTX_set1_sm2_uid               define
+EVP_PKEY_CTX_get0_sm2_uid               define

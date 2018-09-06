@@ -1429,6 +1429,14 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
                                 EVP_PKEY_OP_DERIVE, \
                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(p))
 
+# define EVP_PKEY_CTX_set1_sm2_uid(ctx, uid) \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
+                                EVP_PKEY_CTRL_SM2_SET_UID, 0, (void*)(uid))
+
+# define EVP_PKEY_CTX_get0_sm2_uid(ctx, uid) \
+         EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_SM2, EVP_PKEY_OP_TYPE_SIG, \
+                                EVP_PKEY_CTRL_SM2_GET_UID, 0, (void*)(uid))
+
 # define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID             (EVP_PKEY_ALG_CTRL + 1)
 # define EVP_PKEY_CTRL_EC_PARAM_ENC                      (EVP_PKEY_ALG_CTRL + 2)
 # define EVP_PKEY_CTRL_EC_ECDH_COFACTOR                  (EVP_PKEY_ALG_CTRL + 3)
@@ -1439,6 +1447,8 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN                 (EVP_PKEY_ALG_CTRL + 8)
 # define EVP_PKEY_CTRL_EC_KDF_UKM                        (EVP_PKEY_ALG_CTRL + 9)
 # define EVP_PKEY_CTRL_GET_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 10)
+# define EVP_PKEY_CTRL_SM2_SET_UID                       (EVP_PKEY_ALG_CTRL + 11)
+# define EVP_PKEY_CTRL_SM2_GET_UID                       (EVP_PKEY_ALG_CTRL + 12)
 /* KDF types */
 # define EVP_PKEY_ECDH_KDF_NONE                          1
 # define EVP_PKEY_ECDH_KDF_X9_62                         2

@@ -17,7 +17,9 @@ EVP_PKEY_CTX_set_dh_paramgen_generator,
 EVP_PKEY_CTX_set_dh_pad,
 EVP_PKEY_CTX_set_dh_nid,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
-EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
+EVP_PKEY_CTX_set_ec_param_enc,
+EVP_PKEY_CTX_set1_sm2_uid,
+EVP_PKEY_CTX_get0_sm2_uid - algorithm specific control operations
 
 =head1 SYNOPSIS
 
@@ -52,6 +54,8 @@ EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
  #include <openssl/ec.h>
  int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
  int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
+ int EVP_PKEY_CTX_set1_sm2_uid(EVP_PKEY_CTX *ctx, const char *uid);
+ int EVP_PKEY_CTX_get0_sm2_uid(EVP_PKEY_CTX *ctx, char **uid);
 
 =head1 DESCRIPTION
 
@@ -160,6 +164,14 @@ For maximum compatibility the named curve form should be used. Note: the
 B<OPENSSL_EC_NAMED_CURVE> value was only added to OpenSSL 1.1.0; previous
 versions should use 0 instead.
 
+The EVP_PKEY_CTX_set1_sm2_uid() sets the user identifier string, which is used
+for the SM2 signature scheme. The uid string is assumed to be NUL terminated,
+and is copied. If set, the SM2 UID string can be retrieved with
+EVP_PKEY_CTX_get0_sm2_uid() which sets the output parameter to either NUL (if
+the UID has not been set) or to the address of a NUL terminated string which
+contains the UID. Ownership of this memory pointed to by the reuslt of
+EVP_PKEY_CTX_get0_sm2_uid() is retained by the library.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_CTX_ctrl() and its macros return a positive value for success and 0
@@ -180,6 +192,8 @@ L<EVP_PKEY_keygen(3)>
 =head1 HISTORY
 
 These functions were first added to OpenSSL 1.0.0.
+
+The SM2 related functions were first added in OpenSSL 1.1.1
 
 =head1 COPYRIGHT
 
