@@ -423,11 +423,19 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
             st->hand_state = TLS_ST_CW_CERT;
             return WRITE_TRAN_CONTINUE;
         }
-        /* Shouldn't happen - same as default case */
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_OSSL_STATEM_CLIENT13_WRITE_TRANSITION,
-                 ERR_R_INTERNAL_ERROR);
-        return WRITE_TRAN_ERROR;
+        /*
+         * We should only get here if we received a CertificateRequest after
+         * we already sent close_notify
+         */
+        if (!ossl_assert((s->shutdown & SSL_SENT_SHUTDOWN) != 0)) {
+            /* Shouldn't happen - same as default case */
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                     SSL_F_OSSL_STATEM_CLIENT13_WRITE_TRANSITION,
+                     ERR_R_INTERNAL_ERROR);
+            return WRITE_TRAN_ERROR;
+        }
+        st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_FINISHED:
         if (s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY
@@ -2445,6 +2453,15 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     if (SSL_IS_TLS13(s)) {
         PACKET reqctx, extensions;
         RAW_EXTENSION *rawexts = NULL;
+
+        if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0) {
+            /*
+             * We already sent close_notify. This can only happen in TLSv1.3
+             * post-handshake messages. We can't reasonably respond to this, so
+             * we just ignore it
+             */
+            return MSG_PROCESS_FINISHED_READING;
+        }
 
         /* Free and zero certificate types: it is not present in TLS 1.3 */
         OPENSSL_free(s->s3->tmp.ctype);

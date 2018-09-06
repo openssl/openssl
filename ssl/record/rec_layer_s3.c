@@ -1557,29 +1557,15 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0) {
         if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
             BIO *rbio;
-            /*
-             * We need to check the message type of the received data. We're not
-             * "in init" otherwise we won't have got here - so this is a new
-             * handshake message. However it's theoretically possible for us to
-             * have received part of the message header before us sending
-             * close_notify, and for us to be receiving the remainder of it now.
-             */
-            unsigned char mt = s->rlayer.handshake_fragment_len > 0
-                               ? s->rlayer.handshake_fragment[0]
-                               : *SSL3_RECORD_get_data(rr);
 
             /*
              * We ignore any handshake messages sent to us unless they are
-             * TLSv1.3 NewSessionTicket or KeyUpdate, in which case we want to
-             * process them. For all other handshake messages we can't do
-             * anything reasonable with them because we are unable to write any
-             * response due to having already sent close_notify.
+             * TLSv1.3 in which case we want to process them. For all other
+             * handshake messages we can't do anything reasonable with them
+             * because we are unable to write any response due to having already
+             * sent close_notify.
              */
-            if (!SSL_IS_TLS13(s)
-                       /* Shouldn't ever be 0 but lets be safe */
-                    || SSL3_RECORD_get_length(rr) == 0
-                    || (mt != SSL3_MT_NEWSESSION_TICKET
-                        && mt != SSL3_MT_KEY_UPDATE)) {
+            if (!SSL_IS_TLS13(s)) {
                 SSL3_RECORD_set_length(rr, 0);
                 SSL3_RECORD_set_read(rr);
 
