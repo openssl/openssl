@@ -1554,41 +1554,19 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         return -1;
     }
 
-    /*
-     * If we've sent a close_notify but not yet received one back then ditch
-     * anything we read.
-     */
-    if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0) {
+    if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0 &&
+        SSL3_RECORD_get_type(rr) != SSL3_RT_HANDSHAKE) {
         /*
-         * In TLSv1.3 this could get problematic if we receive a KeyUpdate
-         * message after we sent a close_notify because we're about to ditch it,
-         * so we won't be able to read a close_notify sent afterwards! We don't
-         * support that.
+         * The peer is continuing to send application data, but we have
+         * already sent close_notify. If this was expected we should have
+         * been called via SSL_read() and this would have been handled
+         * above.
+         * No alert sent because we already sent close_notify
          */
         SSL3_RECORD_set_length(rr, 0);
         SSL3_RECORD_set_read(rr);
-
-        if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
-            BIO *rbio;
-
-            if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
-                goto start;
-
-            s->rwstate = SSL_READING;
-            rbio = SSL_get_rbio(s);
-            BIO_clear_retry_flags(rbio);
-            BIO_set_retry_read(rbio);
-        } else {
-            /*
-             * The peer is continuing to send application data, but we have
-             * already sent close_notify. If this was expected we should have
-             * been called via SSL_read() and this would have been handled
-             * above.
-             * No alert sent because we already sent close_notify
-             */
-            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
-                     SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
-        }
+        SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
+                 SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
         return -1;
     }
 
