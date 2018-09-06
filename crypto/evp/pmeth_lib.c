@@ -106,6 +106,8 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     const EVP_PKEY_METHOD *pmeth;
 
     if (id == -1) {
+        if (pkey == NULL)
+            return 0;
         id = pkey->type;
     }
 #ifndef OPENSSL_NO_ENGINE
@@ -151,7 +153,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
     ret->pkey = pkey;
-    if (pkey)
+    if (pkey != NULL)
         EVP_PKEY_up_ref(pkey);
 
     if (pmeth->init) {
