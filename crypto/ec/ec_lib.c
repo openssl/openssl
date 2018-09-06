@@ -318,6 +318,14 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     } else
         BN_zero(&group->cofactor);
 
+    /*-
+     * In FIPS mode ec_precompute_mont_data() always fails: in this case we
+     * skip to the end to clear the group->mont_data pointer and return success,
+     * as there is nothing left to do.
+     */
+    if (FIPS_mode())
+        goto end;
+
     /*
      * Some groups have an order with
      * factors of two, which makes the Montgomery setup fail.
@@ -328,6 +336,7 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     }
 
     BN_MONT_CTX_free(group->mont_data);
+ end:
     group->mont_data = NULL;
     return 1;
 }
