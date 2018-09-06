@@ -1489,7 +1489,8 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 
 /*
  * Only called by servers. Returns 1 if the server has a TLSv1.3 capable
- * certificate type, or has PSK configured. Otherwise returns 0.
+ * certificate type, or has PSK or a certificate callback configured. Otherwise
+ * returns 0.
  */
 static int is_tls13_capable(const SSL *s)
 {
@@ -1500,7 +1501,7 @@ static int is_tls13_capable(const SSL *s)
         return 1;
 #endif
 
-    if (s->psk_find_session_cb != NULL)
+    if (s->psk_find_session_cb != NULL || s->cert->cert_cb != NULL)
         return 1;
 
     for (i = 0; i < SSL_PKEY_NUM; i++) {
