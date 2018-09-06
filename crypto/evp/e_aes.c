@@ -44,6 +44,7 @@ typedef struct {
     int taglen;
     int iv_gen;                 /* It is OK to generate IVs */
     int tls_aad_len;            /* TLS AAD length */
+    uint64_t tls_enc_records;   /* Number of TLS records encrypted */
     ctr128_f ctr;
 } EVP_AES_GCM_CTX;
 
@@ -1069,6 +1070,7 @@ typedef struct {
     int kreslen;
 
     int tls_aad_len;
+    uint64_t tls_enc_records;   /* Number of TLS records encrypted */
 } S390X_AES_GCM_CTX;
 
 typedef struct {
@@ -1692,6 +1694,7 @@ static int s390x_aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         buf = EVP_CIPHER_CTX_buf_noconst(c);
         memcpy(buf, ptr, arg);
         gctx->tls_aad_len = arg;
+        gctx->tls_enc_records = 0;
 
         len = buf[arg - 2] << 8 | buf[arg - 1];
         /* Correct length for explicit iv. */
@@ -1790,6 +1793,15 @@ static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (out != in || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN))
         return -1;
+
+    /*
+     * Check for too many keys as per FIPS 140-2 IG A.5 "Key/IV Pair Uniqueness
+     * Requirements from SP 800-38D".  The requirements is for one party to the
+     * communication to fail after 2^64 - 1 keys.  We do this on the encrypting
+     * side only.
+     */
+    if (ctx->encrypt && ++gctx->tls_enc_records == 0)
+        goto err;
 
     if (EVP_CIPHER_CTX_ctrl(ctx, enc ? EVP_CTRL_GCM_IV_GEN
                                      : EVP_CTRL_GCM_SET_IV_INV,
@@ -2901,6 +2913,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             return 0;
         memcpy(c->buf, ptr, arg);
         gctx->tls_aad_len = arg;
+        gctx->tls_enc_records = 0;
         {
             unsigned int len = c->buf[arg - 2] << 8 | c->buf[arg - 1];
             /* Correct length for explicit IV */
@@ -3035,6 +3048,16 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (out != in
         || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN))
         return -1;
+    
+    /*
+     * Check for too many keys as per FIPS 140-2 IG A.5 "Key/IV Pair Uniqueness
+     * Requirements from SP 800-38D".  The requirements is for one party to the
+     * communication to fail after 2^64 - 1 keys.  We do this on the encrypting
+     * side only.
+     */
+    if (ctx->encrypt && ++gctx->tls_enc_records == 0)
+        goto err;
+
     /*
      * Set IV from start of buffer or generate IV and write to start of
      * buffer.
