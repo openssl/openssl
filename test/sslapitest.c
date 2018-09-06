@@ -5343,7 +5343,9 @@ static int test_ticket_callbacks(int tst)
  * Test 3: TLSv1.3, pending NewSessionTicket messages
  * Test 4: TLSv1.3, server continues to read/write after client shutdown, server
  *                  sends key update, client reads it
- * Test 5: TLSv1.3, server continues to read/write after client shutdown, client
+ * Test 5: TLSv1.3, server continues to read/write after client shutdown, server
+ *                  sends CertificateRequest, client reads and ignores it
+ * Test 6: TLSv1.3, server continues to read/write after client shutdown, client
  *                  doesn't read it
  */
 static int test_shutdown(int tst)
@@ -5370,8 +5372,13 @@ static int test_shutdown(int tst)
                                        TLS1_VERSION,
                                        (tst <= 1) ? TLS1_2_VERSION
                                                   : TLS1_3_VERSION,
-                                       &sctx, &cctx, cert, privkey))
-            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (tst == 5)
+        SSL_CTX_set_post_handshake_auth(cctx, 1);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                              NULL, NULL)))
         goto end;
 
@@ -5407,13 +5414,21 @@ static int test_shutdown(int tst)
                     */
                 || !TEST_true(SSL_write(serverssl, msg, sizeof(msg))))
             goto end;
-        if (tst == 4 &&
-                (!TEST_true(SSL_key_update(serverssl, SSL_KEY_UPDATE_REQUESTED))
-                || !TEST_true(SSL_write(serverssl, msg, sizeof(msg)))))
+        if (tst == 4
+                && !TEST_true(SSL_key_update(serverssl,
+                                             SSL_KEY_UPDATE_REQUESTED)))
+            goto end;
+        if (tst == 5) {
+            SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
+            if (!TEST_true(SSL_verify_client_post_handshake(serverssl)))
+                goto end;
+        }
+        if ((tst == 4 || tst == 5)
+                && !TEST_true(SSL_write(serverssl, msg, sizeof(msg))))
             goto end;
         if (!TEST_int_eq(SSL_shutdown(serverssl), 1))
             goto end;
-        if (tst == 4) {
+        if (tst == 4 || tst == 5) {
             /* Should still be able to read data from server */
             if (!TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf),
                                        &readbytes))
@@ -5448,7 +5463,7 @@ static int test_shutdown(int tst)
                 || !TEST_true(SSL_SESSION_is_resumable(sess))
                 || !TEST_int_eq(SSL_shutdown(serverssl), 1))
             goto end;
-    } else if (tst == 4) {
+    } else if (tst == 4 || tst == 5) {
         /*
          * In this test the client has sent close_notify and it has been
          * received by the server which has responded with a close_notify. The
@@ -5460,7 +5475,7 @@ static int test_shutdown(int tst)
             goto end;
     } else {
         /*
-         * tst == 5
+         * tst == 6
          *
          * The client has sent close_notify and is expecting a close_notify
          * back, but instead there is application data first. The shutdown
@@ -5583,7 +5598,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_pending, 2);
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 12);
-    ADD_ALL_TESTS(test_shutdown, 6);
+    ADD_ALL_TESTS(test_shutdown, 7);
     return 1;
 }
 
