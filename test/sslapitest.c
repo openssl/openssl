@@ -5408,7 +5408,7 @@ static int test_shutdown(int tst)
                 || !TEST_true(SSL_write(serverssl, msg, sizeof(msg))))
             goto end;
         if (tst == 4 &&
-                (!TEST_true(SSL_key_update(serverssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+                (!TEST_true(SSL_key_update(serverssl, SSL_KEY_UPDATE_REQUESTED))
                 || !TEST_true(SSL_write(serverssl, msg, sizeof(msg)))))
             goto end;
         if (!TEST_int_eq(SSL_shutdown(serverssl), 1))
