@@ -72,6 +72,7 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
     if (sctx->id != NULL) {
         dctx->id = OPENSSL_malloc(sctx->id_len);
         if (dctx->id == NULL) {
+            SM2err(SM2_F_PKEY_SM2_COPY, ERR_R_MALLOC_FAILURE);
             pkey_sm2_cleanup(dst);
             return 0;
         }
@@ -195,8 +196,10 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_SET1_ID:
         if (p1 > 0) {
             tmp_id = OPENSSL_malloc(p1);
-            if (tmp_id == NULL)
+            if (tmp_id == NULL) {
+                SM2err(SM2_F_PKEY_SM2_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
+            }
             memcpy(tmp_id, p2, p1);
             OPENSSL_free(smctx->id);
             smctx->id = tmp_id;

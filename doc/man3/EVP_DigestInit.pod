@@ -187,7 +187,7 @@ B<ASN1_OBJECT> structure respectively.
 Assigns an B<EVP_PKEY_CTX> to B<EVP_MD_CTX>. This is usually used to provide
 a customzied B<EVP_PKEY_CTX> to L<EVP_DigestSignInit(3)> or
 L<EVP_DigestVerifyInit(3)>. The B<pctx> passed to this function should be freed
-by the caller. A null B<pctx> pointer is also allowed to clear the B<EVP_PKEY_CTX>
+by the caller. A NULL B<pctx> pointer is also allowed to clear the B<EVP_PKEY_CTX>
 assigned to B<ctx>. In such case, freeing the cleared B<EVP_PKEY_CTX> or not
 depends on how the B<EVP_PKEY_CTX> is created.
 

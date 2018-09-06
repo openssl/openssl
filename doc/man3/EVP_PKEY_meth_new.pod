@@ -348,8 +348,8 @@ The digest_custom() method is used to generate customized digest content before
 the real message is passed to functions like L<EVP_DigestSignUpdate(3)> or
 L<EVP_DigestVerifyInit(3)>. This is usually required by some public key
 signature algorithms like SM2 which requires a hashed prefix to the message to
-be signed. The digest_custom() will be called by L<EVP_DigestSignInit(3)> and
-L<EVP_DigestVerifyInit(3)>.
+be signed. The digest_custom() function will be called by L<EVP_DigestSignInit(3)>
+and L<EVP_DigestVerifyInit(3)>.
 
 =head2 Functions
 
