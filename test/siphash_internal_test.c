@@ -196,7 +196,8 @@ static int test_siphash(int idx)
     for (i = 0; i < inlen; i++)
         in[i] = (unsigned char)i;
 
-    if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
+    if (!TEST_true(SipHash_set_hash_size(&siphash, expectedlen))
+        || !TEST_true(SipHash_Init(&siphash, key, 0, 0)))
         return 0;
     SipHash_Update(&siphash, in, inlen);
     if (!TEST_true(SipHash_Final(&siphash, out, expectedlen))
@@ -204,7 +205,8 @@ static int test_siphash(int idx)
         return 0;
 
     if (inlen > 16) {
-        if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
+        if (!TEST_true(SipHash_set_hash_size(&siphash, expectedlen))
+            || !TEST_true(SipHash_Init(&siphash, key, 0, 0)))
             return 0;
         SipHash_Update(&siphash, in, 1);
         SipHash_Update(&siphash, in+1, inlen-1);
@@ -220,7 +222,8 @@ static int test_siphash(int idx)
     if (inlen > 32) {
         size_t half = inlen / 2;
 
-        if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
+        if (!TEST_true(SipHash_set_hash_size(&siphash, expectedlen))
+            || !TEST_true(SipHash_Init(&siphash, key, 0, 0)))
             return 0;
         SipHash_Update(&siphash, in, half);
         SipHash_Update(&siphash, in+half, inlen-half);
@@ -233,7 +236,8 @@ static int test_siphash(int idx)
         }
 
         for (half = 16; half < inlen; half += 16) {
-            if (!TEST_true(SipHash_Init(&siphash, key, expectedlen, 0, 0)))
+            if (!TEST_true(SipHash_set_hash_size(&siphash, expectedlen))
+                || !TEST_true(SipHash_Init(&siphash, key, 0, 0)))
                 return 0;
             SipHash_Update(&siphash, in, half);
             SipHash_Update(&siphash, in+half, inlen-half);
@@ -258,19 +262,22 @@ static int test_siphash_basic(void)
     unsigned char output[SIPHASH_MAX_DIGEST_SIZE];
 
     /* Use invalid hash size */
-    return TEST_int_eq(SipHash_Init(&siphash, key, 4, 0, 0), 0)
+    return TEST_int_eq(SipHash_set_hash_size(&siphash, 4), 0)
            /* Use hash size = 8 */
-           && TEST_true(SipHash_Init(&siphash, key, 8, 0, 0))
+           && TEST_true(SipHash_set_hash_size(&siphash, 8))
+           && TEST_true(SipHash_Init(&siphash, key, 0, 0))
            && TEST_true(SipHash_Final(&siphash, output, 8))
            && TEST_int_eq(SipHash_Final(&siphash, output, 16), 0)
 
            /* Use hash size = 16 */
-           && TEST_true(SipHash_Init(&siphash, key, 16, 0, 0))
+           && TEST_true(SipHash_set_hash_size(&siphash, 16))
+           && TEST_true(SipHash_Init(&siphash, key, 0, 0))
            && TEST_int_eq(SipHash_Final(&siphash, output, 8), 0)
            && TEST_true(SipHash_Final(&siphash, output, 16))
 
            /* Use hash size = 0 (default = 16) */
-           && TEST_true(SipHash_Init(&siphash, key, 0, 0, 0))
+           && TEST_true(SipHash_set_hash_size(&siphash, 0))
+           && TEST_true(SipHash_Init(&siphash, key, 0, 0))
            && TEST_int_eq(SipHash_Final(&siphash, output, 8), 0)
            && TEST_true(SipHash_Final(&siphash, output, 16));
 }
