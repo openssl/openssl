@@ -23,6 +23,7 @@ int ERR_load_SM2_strings(void);
 /*
  * SM2 function codes.
  */
+#  define SM2_F_PKEY_SM2_COPY                              115
 #  define SM2_F_PKEY_SM2_CTRL                              109
 #  define SM2_F_PKEY_SM2_CTRL_STR                          110
 #  define SM2_F_PKEY_SM2_DIGEST_CUSTOM                     114

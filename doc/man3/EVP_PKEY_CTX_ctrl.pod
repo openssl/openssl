@@ -167,15 +167,15 @@ B<OPENSSL_EC_NAMED_CURVE> value was only added to OpenSSL 1.1.0; previous
 versions should use 0 instead.
 
 The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and EVP_PKEY_CTX_get1_id_len()
-are used to manipulate special identifier field for specific signature algorithm
-such as SM2. The EVP_PKEY_set1_id() sets an ID pointed by B<id> with the length
-B<id_len> to the library. The library maintains the memory management stuffs so
-the caller can safely free the original memory pointed by B<id>. The
-EVP_PKEY_CTX_get1_id_len() returns the length of the ID set via a previous call
-to EVP_PKEY_set1_id(). The length is usually used to allocate adequate memory for
-further calls to EVP_PKEY_CTX_get1_id(). The EVP_PKEY_CTX_get1_id() returns the
-previously set ID value to caller into B<id>, caller should allocate adequate
-memory space to B<id> before calling EVP_PKEY_CTX_get1_id().
+macros are used to manipulate the special identifier field for specific signature
+algorithms such as SM2. The EVP_PKEY_CTX_set1_id() sets an ID pointed by B<id> with
+the length B<id_len> to the library. The library takes a copy of the id so that
+the caller can safely free the original memory pointed to by B<id>. The
+EVP_PKEY_CTX_get1_id_len() macro returns the length of the ID set via a previous
+call to EVP_PKEY_CTX_set1_id(). The length is usually used to allocate adequate
+memory for further calls to EVP_PKEY_CTX_get1_id(). The EVP_PKEY_CTX_get1_id()
+macro returns the previously set ID value to caller in B<id>. The caller should
+allocate adequate memory space for the B<id> before calling EVP_PKEY_CTX_get1_id().
 
 =head1 RETURN VALUES
 
@@ -197,7 +197,7 @@ L<EVP_PKEY_keygen(3)>
 =head1 HISTORY
 
 EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and EVP_PKEY_CTX_get1_id_len()
-were added in 1.1.1, other functions were first added to OpenSSL 1.0.0.
+macros were added in 1.1.1, other functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
