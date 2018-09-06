@@ -95,16 +95,13 @@ static int siphash_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     SIPHASH_PKEY_CTX *pctx = EVP_PKEY_CTX_get_data(ctx);
     const unsigned char* key;
     size_t len;
-    int hash_size;
 
     key = EVP_PKEY_get0_siphash(EVP_PKEY_CTX_get0_pkey(ctx), &len);
     if (key == NULL || len != SIPHASH_KEY_SIZE)
         return 0;
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
     EVP_MD_CTX_set_update_fn(mctx, int_update);
-    /* use default rounds (2,4) */
-    hash_size = SipHash_hash_size(&pctx->ctx);
-    return SipHash_Init(&pctx->ctx, key, hash_size, 0, 0);
+    return SipHash_Init(&pctx->ctx, key, 0, 0);
 }
 static int siphash_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
                             EVP_MD_CTX *mctx)
@@ -122,7 +119,6 @@ static int pkey_siphash_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     SIPHASH_PKEY_CTX *pctx = EVP_PKEY_CTX_get_data(ctx);
     const unsigned char *key;
     size_t len;
-    int hash_size;
 
     switch (type) {
 
@@ -131,12 +127,7 @@ static int pkey_siphash_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         break;
 
     case EVP_PKEY_CTRL_SET_DIGEST_SIZE:
-        if (p1 != SIPHASH_MIN_DIGEST_SIZE &&
-            p1 != SIPHASH_MAX_DIGEST_SIZE) {
-            return 0;
-        }
-        /* use default rounds (2,4) */
-        return SipHash_Init(&pctx->ctx, ASN1_STRING_get0_data(&pctx->ktmp), p1, 0, 0);
+        return SipHash_set_hash_size(&pctx->ctx, p1);
 
     case EVP_PKEY_CTRL_SET_MAC_KEY:
     case EVP_PKEY_CTRL_DIGESTINIT:
@@ -152,8 +143,8 @@ static int pkey_siphash_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             !ASN1_OCTET_STRING_set(&pctx->ktmp, key, len))
             return 0;
         /* use default rounds (2,4) */
-        hash_size = SipHash_hash_size(&pctx->ctx);
-        return SipHash_Init(&pctx->ctx, ASN1_STRING_get0_data(&pctx->ktmp), hash_size, 0, 0);
+        return SipHash_Init(&pctx->ctx, ASN1_STRING_get0_data(&pctx->ktmp),
+                            0, 0);
 
     default:
         return -2;
