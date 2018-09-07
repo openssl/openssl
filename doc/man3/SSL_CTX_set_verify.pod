@@ -186,7 +186,7 @@ Its return value is identical to B<preverify_ok>, so that any verification
 failure will lead to a termination of the TLS/SSL handshake with an
 alert message, if SSL_VERIFY_PEER is set.
 
-After calling SSL_force_post_handshake_auth(), the client will need to add a
+After calling SSL_set_post_handshake_auth(), the client will need to add a
 certificate or certificate callback to its configuration before it can
 successfully authenticate. This must be called before SSL_connect().
 
