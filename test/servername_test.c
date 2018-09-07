@@ -22,10 +22,14 @@
 
 #include "testutil.h"
 #include "internal/nelem.h"
+#include "ssltestlib.h"
 
 #define CLIENT_VERSION_LEN      2
 
 static const char *host = "dummy-host";
+
+static char *cert = NULL;
+static char *privkey = NULL;
 
 static int get_sni_from_client_hello(BIO *bio, char **sni)
 {
@@ -176,45 +180,38 @@ end:
 
 static int server_setup_sni(void)
 {
-    SSL_CTX *ctx;
-    SSL *con = NULL;
-    BIO *rbio;
-    BIO *wbio;
-    int ret = 0;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
 
-    /* use TLS_server_method to choose 'server-side' */
-    ctx = SSL_CTX_new(TLS_server_method());
-    if (!TEST_ptr(ctx))
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
         goto end;
-
-    con = SSL_new(ctx);
-    if (!TEST_ptr(con))
-        goto end;
-
-    rbio = BIO_new(BIO_s_mem());
-    wbio = BIO_new(BIO_s_mem());
-    if (!TEST_ptr(rbio)|| !TEST_ptr(wbio)) {
-        BIO_free(rbio);
-        BIO_free(wbio);
-        goto end;
-    }
-
-    SSL_set_bio(con, rbio, wbio);
 
     /* set SNI at server side */
-    SSL_set_tlsext_host_name(con, host);
+    SSL_set_tlsext_host_name(serverssl, host);
 
-    if (!TEST_int_le(SSL_accept(con), 0))
-        /* This shouldn't succeed because we have nothing to listen on */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
         goto end;
-    if (!TEST_ptr_null(SSL_get_servername(con, TLSEXT_NAMETYPE_host_name)))
-        /* SNI should be cleared by SSL_accpet */
+
+    if (!TEST_ptr_null(SSL_get_servername(serverssl,
+                                          TLSEXT_NAMETYPE_host_name))) {
+        /* SNI should have been cleared during handshake */
         goto end;
-    ret = 1;
+    }
+    
+    testresult = 1;
 end:
-    SSL_free(con);
-    SSL_CTX_free(ctx);
-    return ret;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
 }
 
 typedef int (*sni_test_fn)(void);
@@ -236,6 +233,10 @@ static int test_servername(int test)
 
 int setup_tests(void)
 {
+    if (!TEST_ptr(cert = test_get_argument(0))
+            || !TEST_ptr(privkey = test_get_argument(1)))
+        return 0;
+
     ADD_ALL_TESTS(test_servername, OSSL_NELEM(sni_test_fns));
     return 1;
 }

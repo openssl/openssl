@@ -139,10 +139,6 @@ int tls_setup_handshake(SSL *s)
 
             s->s3->tmp.cert_request = 0;
         }
-
-        /* clear SNI settings at server-side */
-        OPENSSL_free(s->ext.hostname);
-        s->ext.hostname = NULL;
     } else {
         if (SSL_IS_FIRST_HANDSHAKE(s))
             tsan_counter(&s->session_ctx->stats.sess_connect);
