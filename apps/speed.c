@@ -14,6 +14,7 @@
 #define DSA_SECONDS             10
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
+#define EdDSA_SECONDS   10
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,6 +123,7 @@ typedef struct openssl_speed_sec_st {
     int dsa;
     int ecdsa;
     int ecdh;
+    int eddsa;
 } openssl_speed_sec_t;
 
 static volatile int run = 0;
@@ -182,6 +184,8 @@ static int DSA_verify_loop(void *args);
 #ifndef OPENSSL_NO_EC
 static int ECDSA_sign_loop(void *args);
 static int ECDSA_verify_loop(void *args);
+static int EdDSA_sign_loop(void *args);
+static int EdDSA_verify_loop(void *args);
 #endif
 
 static double Time_F(int s);
@@ -567,6 +571,16 @@ static const OPT_PAIR ecdh_choices[] = {
 # define EC_NUM       OSSL_NELEM(ecdh_choices)
 
 static double ecdh_results[EC_NUM][1];  /* 1 op: derivation */
+
+#define R_EC_Ed25519    0
+#define R_EC_Ed448      1
+static OPT_PAIR eddsa_choices[] = {
+    {"ed25519", R_EC_Ed25519},
+    {"ed448", R_EC_Ed448}
+};
+# define EdDSA_NUM       OSSL_NELEM(eddsa_choices)
+
+static double eddsa_results[EdDSA_NUM][2];    /* 2 ops: sign then verify */
 #endif /* OPENSSL_NO_EC */
 
 #ifndef SIGALRM
@@ -595,6 +609,7 @@ typedef struct loopargs_st {
 #ifndef OPENSSL_NO_EC
     EC_KEY *ecdsa[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
+    EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
     unsigned char *secret_a;
     unsigned char *secret_b;
     size_t outlen[EC_NUM];
@@ -1163,6 +1178,48 @@ static int ECDH_EVP_derive_key_loop(void *args)
     return count;
 }
 
+static long eddsa_c[EdDSA_NUM][2];
+static int EdDSA_sign_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_MD_CTX **edctx = tempargs->eddsa_ctx;
+    unsigned char *eddsasig = tempargs->buf2;
+    unsigned int *eddsasiglen = &tempargs->siglen;
+    int ret, count;
+
+    for (count = 0; COND(eddsa_c[testnum][0]); count++) {
+        ret = EVP_DigestSign(edctx[testnum], eddsasig, (size_t *)eddsasiglen, buf, 20);
+        if (ret == 0) {
+            BIO_printf(bio_err, "EdDSA sign failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+    }
+    return count;
+}
+
+static int EdDSA_verify_loop(void *args)
+{
+    loopargs_t *tempargs = *(loopargs_t **) args;
+    unsigned char *buf = tempargs->buf;
+    EVP_MD_CTX **edctx = tempargs->eddsa_ctx;
+    unsigned char *eddsasig = tempargs->buf2;
+    unsigned int eddsasiglen = tempargs->siglen;
+    int ret, count;
+
+    for (count = 0; COND(eddsa_c[testnum][1]); count++) {
+        ret = EVP_DigestVerify(edctx[testnum], eddsasig, eddsasiglen, buf, 20);
+        if (ret != 1) {
+            BIO_printf(bio_err, "EdDSA verify failure\n");
+            ERR_print_errors(bio_err);
+            count = -1;
+            break;
+        }
+    }
+    return count;
+}
 #endif                          /* OPENSSL_NO_EC */
 
 static int run_benchmark(int async_jobs,
@@ -1343,7 +1400,8 @@ int speed_main(int argc, char **argv)
     long rsa_count = 1;
 #endif
     openssl_speed_sec_t seconds = { SECONDS, RSA_SECONDS, DSA_SECONDS,
-                                    ECDSA_SECONDS, ECDH_SECONDS };
+                                    ECDSA_SECONDS, ECDH_SECONDS,
+                                    EdDSA_SECONDS };
 
     /* What follows are the buffers and key material. */
 #ifndef OPENSSL_NO_RC5
@@ -1463,9 +1521,21 @@ int speed_main(int argc, char **argv)
         {"X25519", NID_X25519, 253},
         {"X448", NID_X448, 448}
     };
+    static const struct {
+        const char *name;
+        unsigned int nid;
+        unsigned int bits;
+        unsigned int siglen;
+    } test_ed_curves[] = {
+        /* EdDSA */
+        {"Ed25519", NID_ED25519, 253, 64},
+        {"Ed448", NID_ED448, 456, 114}
+    };
     int ecdsa_doit[ECDSA_NUM] = { 0 };
     int ecdh_doit[EC_NUM] = { 0 };
+    int eddsa_doit[EdDSA_NUM] = { 0 };
     OPENSSL_assert(OSSL_NELEM(test_curves) >= EC_NUM);
+    OPENSSL_assert(OSSL_NELEM(test_ed_curves) >= EdDSA_NUM);
 #endif                          /* ndef OPENSSL_NO_EC */
 
     prog = opt_init(argc, argv, speed_options);
@@ -1558,7 +1628,7 @@ int speed_main(int argc, char **argv)
             break;
         case OPT_SECONDS:
             seconds.sym = seconds.rsa = seconds.dsa = seconds.ecdsa
-                        = seconds.ecdh = atoi(opt_arg());
+                        = seconds.ecdh = seconds.eddsa = atoi(opt_arg());
             break;
         case OPT_BYTES:
             lengths_single = atoi(opt_arg());
@@ -1640,6 +1710,15 @@ int speed_main(int argc, char **argv)
         }
         if (found(*argv, ecdh_choices, &i)) {
             ecdh_doit[i] = 2;
+            continue;
+        }
+        if (strcmp(*argv, "eddsa") == 0) {
+            for (loop = 0; loop < OSSL_NELEM(eddsa_doit); loop++)
+                eddsa_doit[loop] = 1;
+            continue;
+        }
+        if (found(*argv, eddsa_choices, &i)) {
+            eddsa_doit[i] = 2;
             continue;
         }
 #endif
@@ -1742,6 +1821,8 @@ int speed_main(int argc, char **argv)
             ecdsa_doit[loop] = 1;
         for (loop = 0; loop < OSSL_NELEM(ecdh_doit); loop++)
             ecdh_doit[loop] = 1;
+        for (loop = 0; loop < OSSL_NELEM(eddsa_doit); loop++)
+            eddsa_doit[loop] = 1;
 #endif
     }
     for (i = 0; i < ALGOR_NUM; i++)
@@ -2037,6 +2118,9 @@ int speed_main(int argc, char **argv)
     /* default iteration count for the last two EC Curves */
     ecdh_c[R_EC_X25519][0] = count / 1800;
     ecdh_c[R_EC_X448][0] = count / 7200;
+
+    eddsa_c[R_EC_Ed25519][0] = count / 1800;
+    eddsa_c[R_EC_Ed448][0] = count / 7200;
 #  endif
 
 # else
@@ -2977,6 +3061,111 @@ int speed_main(int argc, char **argv)
                 ecdh_doit[testnum] = 0;
         }
     }
+
+    for (testnum = 0; testnum < EdDSA_NUM; testnum++) {
+        int st = 1;
+        EVP_PKEY *ed_pkey = NULL;
+        EVP_PKEY_CTX *ed_pctx = NULL;
+
+        if (!eddsa_doit[testnum])
+            continue;           /* Ignore Curve */
+        for (i = 0; i < loopargs_len; i++) {
+            loopargs[i].eddsa_ctx[testnum] = EVP_MD_CTX_new();
+            if (loopargs[i].eddsa_ctx[testnum] == NULL) {
+                st = 0;
+                break;
+            }
+
+            if ((ed_pctx = EVP_PKEY_CTX_new_id(test_ed_curves[testnum].nid, NULL))
+                    == NULL
+                || !EVP_PKEY_keygen_init(ed_pctx)
+                || !EVP_PKEY_keygen(ed_pctx, &ed_pkey)) {
+                st = 0;
+                EVP_PKEY_CTX_free(ed_pctx);
+                break;
+            }
+            EVP_PKEY_CTX_free(ed_pctx);
+
+            if (!EVP_DigestSignInit(loopargs[i].eddsa_ctx[testnum], NULL, NULL,
+                                    NULL, ed_pkey)) {
+                st = 0;
+                EVP_PKEY_free(ed_pkey);
+                break;
+            }
+            EVP_PKEY_free(ed_pkey);
+        }
+        if (st == 0) {
+            BIO_printf(bio_err, "EdDSA failure.\n");
+            ERR_print_errors(bio_err);
+            rsa_count = 1;
+        } else {
+            for (i = 0; i < loopargs_len; i++) {
+                /* Perform EdDSA signature test */
+                loopargs[i].siglen = test_ed_curves[testnum].siglen;
+                st = EVP_DigestSign(loopargs[i].eddsa_ctx[testnum],
+                                    loopargs[i].buf2, (size_t *)&loopargs[i].siglen,
+                                    loopargs[i].buf, 20);
+                if (st == 0)
+                    break;
+            }
+            if (st == 0) {
+                BIO_printf(bio_err,
+                           "EdDSA sign failure.  No EdDSA sign will be done.\n");
+                ERR_print_errors(bio_err);
+                rsa_count = 1;
+            } else {
+                pkey_print_message("sign", test_ed_curves[testnum].name,
+                                   eddsa_c[testnum][0],
+                                   test_ed_curves[testnum].bits, seconds.eddsa);
+                Time_F(START);
+                count = run_benchmark(async_jobs, EdDSA_sign_loop, loopargs);
+                d = Time_F(STOP);
+
+                BIO_printf(bio_err,
+                           mr ? "+R8:%ld:%u:%s:%.2f\n" :
+                           "%ld %u bits %s signs in %.2fs \n",
+                           count, test_ed_curves[testnum].bits,
+                           test_ed_curves[testnum].name, d);
+                eddsa_results[testnum][0] = (double)count / d;
+                rsa_count = count;
+            }
+
+            /* Perform EdDSA verification test */
+            for (i = 0; i < loopargs_len; i++) {
+                st = EVP_DigestVerify(loopargs[i].eddsa_ctx[testnum],
+                                      loopargs[i].buf2, loopargs[i].siglen,
+                                      loopargs[i].buf, 20);
+                if (st != 1)
+                    break;
+            }
+            if (st != 1) {
+                BIO_printf(bio_err,
+                           "EdDSA verify failure.  No EdDSA verify will be done.\n");
+                ERR_print_errors(bio_err);
+                eddsa_doit[testnum] = 0;
+            } else {
+                pkey_print_message("verify", test_ed_curves[testnum].name,
+                                   eddsa_c[testnum][1],
+                                   test_ed_curves[testnum].bits, seconds.eddsa);
+                Time_F(START);
+                count = run_benchmark(async_jobs, EdDSA_verify_loop, loopargs);
+                d = Time_F(STOP);
+                BIO_printf(bio_err,
+                           mr ? "+R9:%ld:%u:%s:%.2f\n"
+                           : "%ld %u bits %s verify in %.2fs\n",
+                           count, test_ed_curves[testnum].bits,
+                           test_ed_curves[testnum].name, d);
+                eddsa_results[testnum][1] = (double)count / d;
+            }
+
+            if (rsa_count <= 1) {
+                /* if longer than 10s, don't do any more */
+                for (testnum++; testnum < EdDSA_NUM; testnum++)
+                    eddsa_doit[testnum] = 0;
+            }
+        }
+    }
+
 #endif                          /* OPENSSL_NO_EC */
 #ifndef NO_FORK
  show_res:
@@ -3108,6 +3297,26 @@ int speed_main(int argc, char **argv)
                    test_curves[k].bits, test_curves[k].name,
                    1.0 / ecdh_results[k][0], ecdh_results[k][0]);
     }
+
+    testnum = 1;
+    for (k = 0; k < OSSL_NELEM(eddsa_doit); k++) {
+        if (!eddsa_doit[k])
+            continue;
+        if (testnum && !mr) {
+            printf("%30ssign    verify    sign/s verify/s\n", " ");
+            testnum = 0;
+        }
+
+        if (mr)
+            printf("+F6:%u:%u:%s:%f:%f\n",
+                   k, test_ed_curves[k].bits, test_ed_curves[k].name,
+                   eddsa_results[k][0], eddsa_results[k][1]);
+        else
+            printf("%4u bits EdDSA (%s) %8.4fs %8.4fs %8.1f %8.1f\n",
+                   test_ed_curves[k].bits, test_ed_curves[k].name,
+                   1.0 / eddsa_results[k][0], 1.0 / eddsa_results[k][1],
+                   eddsa_results[k][0], eddsa_results[k][1]);
+    }
 #endif
 
     ret = 0;
@@ -3131,6 +3340,8 @@ int speed_main(int argc, char **argv)
             EC_KEY_free(loopargs[i].ecdsa[k]);
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
+        for (k = 0; k < EdDSA_NUM; k++)
+            EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
         OPENSSL_free(loopargs[i].secret_a);
         OPENSSL_free(loopargs[i].secret_b);
 #endif
@@ -3338,6 +3549,19 @@ static int do_multi(int multi, int size_num)
 
                 d = atof(sstrsep(&p, sep));
                 ecdh_results[k][0] += d;
+            } else if (strncmp(buf, "+F6:", 4) == 0) {
+                int k;
+                double d;
+
+                p = buf + 4;
+                k = atoi(sstrsep(&p, sep));
+                sstrsep(&p, sep);
+
+                d = atof(sstrsep(&p, sep));
+                eddsa_results[k][0] += d;
+
+                d = atof(sstrsep(&p, sep));
+                eddsa_results[k][1] += d;
             }
 # endif
 
