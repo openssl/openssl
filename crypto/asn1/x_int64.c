@@ -77,6 +77,11 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     char *cp;
     int neg = 0;
 
+    if (*pval == NULL && !uint64_new(pval, it))
+        return 0;
+
+    cp = (char *)*pval;
+
     /*
      * Strictly speaking, zero length is malformed.  However, long_c2i
      * (x_long.c) encodes 0 as a zero length INTEGER (wrongly, of course),
@@ -86,10 +91,6 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (len == 0)
         goto long_compat;
 
-    if (*pval == NULL && !uint64_new(pval, it))
-        return 0;
-
-    cp = (char *)*pval;
     if (!c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
@@ -179,6 +180,11 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     char *cp;
     int neg = 0;
 
+    if (*pval == NULL && !uint64_new(pval, it))
+        return 0;
+
+    cp = (char *)*pval;
+
     /*
      * Strictly speaking, zero length is malformed.  However, long_c2i
      * (x_long.c) encodes 0 as a zero length INTEGER (wrongly, of course),
@@ -188,10 +194,6 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     if (len == 0)
         goto long_compat;
 
-    if (*pval == NULL && !uint64_new(pval, it))
-        return 0;
-
-    cp = (char *)*pval;
     if (!c2i_uint64_int(&utmp, &neg, &cont, len))
         return 0;
     if ((it->size & INTxx_FLAG_SIGNED) == 0 && neg) {
