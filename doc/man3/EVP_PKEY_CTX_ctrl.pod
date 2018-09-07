@@ -17,7 +17,9 @@ EVP_PKEY_CTX_set_dh_paramgen_generator,
 EVP_PKEY_CTX_set_dh_pad,
 EVP_PKEY_CTX_set_dh_nid,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
-EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
+EVP_PKEY_CTX_set_ec_param_enc,
+EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
+- algorithm specific control operations
 
 =head1 SYNOPSIS
 
@@ -52,6 +54,10 @@ EVP_PKEY_CTX_set_ec_param_enc - algorithm specific control operations
  #include <openssl/ec.h>
  int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
  int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
+
+ int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, void *id, size_t id_len);
+ int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id);
+ int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 =head1 DESCRIPTION
 
@@ -160,6 +166,17 @@ For maximum compatibility the named curve form should be used. Note: the
 B<OPENSSL_EC_NAMED_CURVE> value was only added to OpenSSL 1.1.0; previous
 versions should use 0 instead.
 
+The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and EVP_PKEY_CTX_get1_id_len()
+macros are used to manipulate the special identifier field for specific signature
+algorithms such as SM2. The EVP_PKEY_CTX_set1_id() sets an ID pointed by B<id> with
+the length B<id_len> to the library. The library takes a copy of the id so that
+the caller can safely free the original memory pointed to by B<id>. The
+EVP_PKEY_CTX_get1_id_len() macro returns the length of the ID set via a previous
+call to EVP_PKEY_CTX_set1_id(). The length is usually used to allocate adequate
+memory for further calls to EVP_PKEY_CTX_get1_id(). The EVP_PKEY_CTX_get1_id()
+macro returns the previously set ID value to caller in B<id>. The caller should
+allocate adequate memory space for the B<id> before calling EVP_PKEY_CTX_get1_id().
+
 =head1 RETURN VALUES
 
 EVP_PKEY_CTX_ctrl() and its macros return a positive value for success and 0
@@ -179,7 +196,8 @@ L<EVP_PKEY_keygen(3)>
 
 =head1 HISTORY
 
-These functions were first added to OpenSSL 1.0.0.
+EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and EVP_PKEY_CTX_get1_id_len()
+macros were added in 1.1.1, other functions were first added to OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 

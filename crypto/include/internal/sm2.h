@@ -20,22 +20,27 @@
 /* The default user id as specified in GM/T 0009-2012 */
 #  define SM2_DEFAULT_USERID "1234567812345678"
 
-int sm2_compute_userid_digest(uint8_t *out,
-                              const EVP_MD *digest,
-                              const char *user_id, const EC_KEY *key);
+int sm2_compute_z_digest(uint8_t *out,
+                         const EVP_MD *digest,
+                         const uint8_t *id,
+                         const size_t id_len,
+                         const EC_KEY *key);
 
 /*
- * SM2 signature operation. Computes ZA (user id digest) and then signs
- * H(ZA || msg) using SM2
+ * SM2 signature operation. Computes Z and then signs H(Z || msg) using SM2
  */
 ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
                        const EVP_MD *digest,
-                       const char *user_id, const uint8_t *msg, size_t msg_len);
+                       const uint8_t *id,
+                       const size_t id_len,
+                       const uint8_t *msg, size_t msg_len);
 
 int sm2_do_verify(const EC_KEY *key,
                   const EVP_MD *digest,
                   const ECDSA_SIG *signature,
-                  const char *user_id, const uint8_t *msg, size_t msg_len);
+                  const uint8_t *id,
+                  const size_t id_len,
+                  const uint8_t *msg, size_t msg_len);
 
 /*
  * SM2 signature generation.
@@ -48,7 +53,6 @@ int sm2_sign(const unsigned char *dgst, int dgstlen,
  */
 int sm2_verify(const unsigned char *dgst, int dgstlen,
                const unsigned char *sig, int siglen, EC_KEY *eckey);
-
 
 /*
  * SM2 encryption

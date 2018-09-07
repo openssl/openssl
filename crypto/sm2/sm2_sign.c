@@ -18,14 +18,132 @@
 #include <openssl/bn.h>
 #include <string.h>
 
+int sm2_compute_z_digest(uint8_t *out,
+                         const EVP_MD *digest,
+                         const uint8_t *id,
+                         const size_t id_len,
+                         const EC_KEY *key)
+{
+    int rc = 0;
+    const EC_GROUP *group = EC_KEY_get0_group(key);
+    BN_CTX *ctx = NULL;
+    EVP_MD_CTX *hash = NULL;
+    BIGNUM *p = NULL;
+    BIGNUM *a = NULL;
+    BIGNUM *b = NULL;
+    BIGNUM *xG = NULL;
+    BIGNUM *yG = NULL;
+    BIGNUM *xA = NULL;
+    BIGNUM *yA = NULL;
+    int p_bytes = 0;
+    uint8_t *buf = NULL;
+    uint16_t entl = 0;
+    uint8_t e_byte = 0;
+
+    hash = EVP_MD_CTX_new();
+    ctx = BN_CTX_new();
+    if (hash == NULL || ctx == NULL) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
+        goto done;
+    }
+
+    p = BN_CTX_get(ctx);
+    a = BN_CTX_get(ctx);
+    b = BN_CTX_get(ctx);
+    xG = BN_CTX_get(ctx);
+    yG = BN_CTX_get(ctx);
+    xA = BN_CTX_get(ctx);
+    yA = BN_CTX_get(ctx);
+
+    if (yA == NULL) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
+        goto done;
+    }
+
+    if (!EVP_DigestInit(hash, digest)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
+        goto done;
+    }
+
+    /* Z = h(ENTL || ID || a || b || xG || yG || xA || yA) */
+
+    if (id_len >= (UINT16_MAX / 8)) {
+        /* too large */
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, SM2_R_ID_TOO_LARGE);
+        goto done;
+    }
+
+    entl = (uint16_t)(8 * id_len);
+
+    e_byte = entl >> 8;
+    if (!EVP_DigestUpdate(hash, &e_byte, 1)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
+        goto done;
+    }
+    e_byte = entl & 0xFF;
+    if (!EVP_DigestUpdate(hash, &e_byte, 1)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
+        goto done;
+    }
+
+    if (id_len > 0 && !EVP_DigestUpdate(hash, id, id_len)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EVP_LIB);
+        goto done;
+    }
+
+    if (!EC_GROUP_get_curve(group, p, a, b, ctx)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_EC_LIB);
+        goto done;
+    }
+
+    p_bytes = BN_num_bytes(p);
+    buf = OPENSSL_zalloc(p_bytes);
+    if (buf == NULL) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
+        goto done;
+    }
+
+    if (BN_bn2binpad(a, buf, p_bytes) < 0
+            || !EVP_DigestUpdate(hash, buf, p_bytes)
+            || BN_bn2binpad(b, buf, p_bytes) < 0
+            || !EVP_DigestUpdate(hash, buf, p_bytes)
+            || !EC_POINT_get_affine_coordinates(group,
+                                                EC_GROUP_get0_generator(group),
+                                                xG, yG, ctx)
+            || BN_bn2binpad(xG, buf, p_bytes) < 0
+            || !EVP_DigestUpdate(hash, buf, p_bytes)
+            || BN_bn2binpad(yG, buf, p_bytes) < 0
+            || !EVP_DigestUpdate(hash, buf, p_bytes)
+            || !EC_POINT_get_affine_coordinates(group,
+                                                EC_KEY_get0_public_key(key),
+                                                xA, yA, ctx)
+            || BN_bn2binpad(xA, buf, p_bytes) < 0
+            || !EVP_DigestUpdate(hash, buf, p_bytes)
+            || BN_bn2binpad(yA, buf, p_bytes) < 0
+            || !EVP_DigestUpdate(hash, buf, p_bytes)
+            || !EVP_DigestFinal(hash, out, NULL)) {
+        SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    rc = 1;
+
+ done:
+    OPENSSL_free(buf);
+    BN_CTX_free(ctx);
+    EVP_MD_CTX_free(hash);
+    return rc;
+}
+
 static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
                                     const EC_KEY *key,
-                                    const char *user_id,
+                                    const uint8_t *id,
+                                    const size_t id_len,
                                     const uint8_t *msg, size_t msg_len)
 {
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
     const int md_size = EVP_MD_size(digest);
-    uint8_t *za = NULL;
+    uint8_t *z = NULL;
     BIGNUM *e = NULL;
 
     if (md_size < 0) {
@@ -33,32 +151,32 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    za = OPENSSL_zalloc(md_size);
-    if (hash == NULL || za == NULL) {
+    z = OPENSSL_zalloc(md_size);
+    if (hash == NULL || z == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
         goto done;
     }
 
-    if (!sm2_compute_userid_digest(za, digest, user_id, key)) {
+    if (!sm2_compute_z_digest(z, digest, id, id_len, key)) {
         /* SM2err already called */
         goto done;
     }
 
     if (!EVP_DigestInit(hash, digest)
-            || !EVP_DigestUpdate(hash, za, md_size)
+            || !EVP_DigestUpdate(hash, z, md_size)
             || !EVP_DigestUpdate(hash, msg, msg_len)
-               /* reuse za buffer to hold H(ZA || M) */
-            || !EVP_DigestFinal(hash, za, NULL)) {
+               /* reuse z buffer to hold H(Z || M) */
+            || !EVP_DigestFinal(hash, z, NULL)) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_EVP_LIB);
         goto done;
     }
 
-    e = BN_bin2bn(za, md_size, NULL);
+    e = BN_bin2bn(z, md_size, NULL);
     if (e == NULL)
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_INTERNAL_ERROR);
 
  done:
-    OPENSSL_free(za);
+    OPENSSL_free(z);
     EVP_MD_CTX_free(hash);
     return e;
 }
@@ -84,7 +202,6 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         SM2err(SM2_F_SM2_SIG_GEN, ERR_R_MALLOC_FAILURE);
         goto done;
     }
-
 
     BN_CTX_start(ctx);
     k = BN_CTX_get(ctx);
@@ -116,7 +233,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 
         if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
                 || !EC_POINT_get_affine_coordinates(group, kG, x1, NULL,
-                                                        ctx)
+                                                    ctx)
                 || !BN_mod_add(r, e, x1, order, ctx)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_INTERNAL_ERROR);
             goto done;
@@ -245,12 +362,14 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
 
 ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
                        const EVP_MD *digest,
-                       const char *user_id, const uint8_t *msg, size_t msg_len)
+                       const uint8_t *id,
+                       const size_t id_len,
+                       const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     ECDSA_SIG *sig = NULL;
 
-    e = sm2_compute_msg_hash(digest, key, user_id, msg, msg_len);
+    e = sm2_compute_msg_hash(digest, key, id, id_len, msg, msg_len);
     if (e == NULL) {
         /* SM2err already called */
         goto done;
@@ -266,12 +385,14 @@ ECDSA_SIG *sm2_do_sign(const EC_KEY *key,
 int sm2_do_verify(const EC_KEY *key,
                   const EVP_MD *digest,
                   const ECDSA_SIG *sig,
-                  const char *user_id, const uint8_t *msg, size_t msg_len)
+                  const uint8_t *id,
+                  const size_t id_len,
+                  const uint8_t *msg, size_t msg_len)
 {
     BIGNUM *e = NULL;
     int ret = 0;
 
-    e = sm2_compute_msg_hash(digest, key, user_id, msg, msg_len);
+    e = sm2_compute_msg_hash(digest, key, id, id_len, msg, msg_len);
     if (e == NULL) {
         /* SM2err already called */
         goto done;

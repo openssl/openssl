@@ -22,28 +22,34 @@ typedef struct {
     EC_GROUP *gen_group;
     /* message digest */
     const EVP_MD *md;
+    /* Distinguishing Identifier, ISO/IEC 15946-3 */
+    uint8_t *id;
+    size_t id_len;
+    /* id_set indicates if the 'id' field is set (1) or not (0) */
+    int id_set;
 } SM2_PKEY_CTX;
 
 static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
 {
-    SM2_PKEY_CTX *dctx;
+    SM2_PKEY_CTX *smctx;
 
-    if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
+    if ((smctx = OPENSSL_zalloc(sizeof(*smctx))) == NULL) {
         SM2err(SM2_F_PKEY_SM2_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    ctx->data = dctx;
+    ctx->data = smctx;
     return 1;
 }
 
 static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
 {
-    SM2_PKEY_CTX *dctx = ctx->data;
+    SM2_PKEY_CTX *smctx = ctx->data;
 
-    if (dctx != NULL) {
-        EC_GROUP_free(dctx->gen_group);
-        OPENSSL_free(dctx);
+    if (smctx != NULL) {
+        EC_GROUP_free(smctx->gen_group);
+        OPENSSL_free(smctx->id);
+        OPENSSL_free(smctx);
         ctx->data = NULL;
     }
 }
@@ -63,6 +69,17 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
             return 0;
         }
     }
+    if (sctx->id != NULL) {
+        dctx->id = OPENSSL_malloc(sctx->id_len);
+        if (dctx->id == NULL) {
+            SM2err(SM2_F_PKEY_SM2_COPY, ERR_R_MALLOC_FAILURE);
+            pkey_sm2_cleanup(dst);
+            return 0;
+        }
+        memcpy(dctx->id, sctx->id, sctx->id_len);
+    }
+    dctx->id_len = sctx->id_len;
+    dctx->id_set = sctx->id_set;
     dctx->md = sctx->md;
 
     return 1;
@@ -145,8 +162,9 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
 
 static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    SM2_PKEY_CTX *dctx = ctx->data;
+    SM2_PKEY_CTX *smctx = ctx->data;
     EC_GROUP *group;
+    uint8_t *tmp_id;
 
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
@@ -155,29 +173,55 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             SM2err(SM2_F_PKEY_SM2_CTRL, SM2_R_INVALID_CURVE);
             return 0;
         }
-        EC_GROUP_free(dctx->gen_group);
-        dctx->gen_group = group;
+        EC_GROUP_free(smctx->gen_group);
+        smctx->gen_group = group;
         return 1;
 
     case EVP_PKEY_CTRL_EC_PARAM_ENC:
-        if (dctx->gen_group == NULL) {
+        if (smctx->gen_group == NULL) {
             SM2err(SM2_F_PKEY_SM2_CTRL, SM2_R_NO_PARAMETERS_SET);
             return 0;
         }
-        EC_GROUP_set_asn1_flag(dctx->gen_group, p1);
+        EC_GROUP_set_asn1_flag(smctx->gen_group, p1);
         return 1;
 
     case EVP_PKEY_CTRL_MD:
-        dctx->md = p2;
+        smctx->md = p2;
         return 1;
 
     case EVP_PKEY_CTRL_GET_MD:
-        *(const EVP_MD **)p2 = dctx->md;
+        *(const EVP_MD **)p2 = smctx->md;
+        return 1;
+
+    case EVP_PKEY_CTRL_SET1_ID:
+        if (p1 > 0) {
+            tmp_id = OPENSSL_malloc(p1);
+            if (tmp_id == NULL) {
+                SM2err(SM2_F_PKEY_SM2_CTRL, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+            memcpy(tmp_id, p2, p1);
+            OPENSSL_free(smctx->id);
+            smctx->id = tmp_id;
+        } else {
+            /* set null-ID */
+            OPENSSL_free(smctx->id);
+            smctx->id = NULL;
+        }
+        smctx->id_len = (size_t)p1;
+        smctx->id_set = 1;
+        return 1;
+
+    case EVP_PKEY_CTRL_GET1_ID:
+        memcpy(p2, smctx->id, smctx->id_len);
+        return 1;
+
+    case EVP_PKEY_CTRL_GET1_ID_LEN:
+        *(size_t *)p2 = smctx->id_len;
         return 1;
 
     default:
         return -2;
-
     }
 }
 
@@ -207,6 +251,30 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
     }
 
     return -2;
+}
+
+static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
+{
+    uint8_t z[EVP_MAX_MD_SIZE];
+    SM2_PKEY_CTX *smctx = ctx->data;
+    EC_KEY *ec = ctx->pkey->pkey.ec;
+    const EVP_MD *md = EVP_MD_CTX_md(mctx);
+
+    if (!smctx->id_set) {
+        /*
+         * An ID value must be set. The specifications are not clear whether a
+         * NULL is allowed. We only allow it if set explicitly for maximum
+         * flexibility.
+         */
+        SM2err(SM2_F_PKEY_SM2_DIGEST_CUSTOM, SM2_R_ID_NOT_SET);
+        return 0;
+    }
+
+    /* get hashed prefix 'z' of tbs message */
+    if (!sm2_compute_z_digest(z, md, smctx->id, smctx->id_len, ec))
+        return 0;
+
+    return EVP_DigestUpdate(mctx, z, EVP_MD_size(md));
 }
 
 const EVP_PKEY_METHOD sm2_pkey_meth = {
@@ -241,5 +309,11 @@ const EVP_PKEY_METHOD sm2_pkey_meth = {
     0,
     0,
     pkey_sm2_ctrl,
-    pkey_sm2_ctrl_str
+    pkey_sm2_ctrl_str,
+
+    0, 0,
+
+    0, 0, 0,
+
+    pkey_sm2_digest_custom
 };
