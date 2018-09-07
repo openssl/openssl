@@ -364,7 +364,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   INCLUDE[ciphername_test]=../include
   DEPEND[ciphername_test]=../libcrypto ../libssl libtestutil.a
 
-  SOURCE[servername_test]=servername_test.c
+  SOURCE[servername_test]=servername_test.c ssltestlib.c
   INCLUDE[servername_test]=../include
   DEPEND[servername_test]=../libcrypto ../libssl libtestutil.a
 
