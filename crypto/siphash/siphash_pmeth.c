@@ -167,6 +167,12 @@ static int pkey_siphash_ctrl_str(EVP_PKEY_CTX *ctx,
 {
     if (value == NULL)
         return 0;
+    if (strcmp(type, "digestsize") == 0) {
+        size_t hash_size = atoi(value);
+
+        return pkey_siphash_ctrl(ctx, EVP_PKEY_CTRL_SET_DIGEST_SIZE, hash_size,
+                                 NULL);
+    }
     if (strcmp(type, "key") == 0)
         return EVP_PKEY_CTX_str2ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, value);
     if (strcmp(type, "hexkey") == 0)
