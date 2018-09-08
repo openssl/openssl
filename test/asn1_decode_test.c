@@ -28,6 +28,34 @@ unsigned char t_invalid_zero[] = {
     0x02, 0x00                   /* INTEGER tag + length */
 };
 
+#if OPENSSL_API_COMPAT < 0x10200000L
+/* LONG case ************************************************************* */
+
+typedef struct {
+    long test_long;
+} ASN1_LONG_DATA;
+
+ASN1_SEQUENCE(ASN1_LONG_DATA) = {
+    ASN1_EMBED(ASN1_LONG_DATA, test_long, LONG),
+} static_ASN1_SEQUENCE_END(ASN1_LONG_DATA)
+
+IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(ASN1_LONG_DATA)
+IMPLEMENT_STATIC_ASN1_ALLOC_FUNCTIONS(ASN1_LONG_DATA)
+
+static int test_long(void)
+{
+    const unsigned char *p = t_invalid_zero;
+    ASN1_LONG_DATA *dectst =
+        d2i_ASN1_LONG_DATA(NULL, &p, sizeof(t_invalid_zero));
+
+    if (dectst == NULL)
+        return 0;                /* Fail */
+
+    ASN1_LONG_DATA_free(dectst);
+    return 1;
+}
+#endif
+
 /* INT32 case ************************************************************* */
 
 typedef struct {
@@ -134,6 +162,9 @@ static int test_uint64(void)
 
 int setup_tests(void)
 {
+#if OPENSSL_API_COMPAT < 0x10200000L
+    ADD_TEST(test_long);
+#endif
     ADD_TEST(test_int32);
     ADD_TEST(test_uint32);
     ADD_TEST(test_int64);
