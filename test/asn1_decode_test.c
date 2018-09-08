@@ -23,7 +23,7 @@
 #endif
 
 /* Badly coded ASN.1 INTEGER zero wrapped in a sequence */
-unsigned char t_invalid_zero[] = {
+static unsigned char t_invalid_zero[] = {
     0x30, 0x02,                  /* SEQUENCE tag + length */
     0x02, 0x00                   /* INTEGER tag + length */
 };
