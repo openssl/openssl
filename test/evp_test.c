@@ -73,6 +73,8 @@ static KEY_LIST *public_keys;
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
+static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
+                          const char *value);
 
 /*
  * Compare two memory regions for equality, returning zero if they differ.
@@ -843,6 +845,8 @@ typedef struct mac_data_st {
     /* Expected output */
     unsigned char *output;
     size_t output_len;
+    /* Collection of controls */
+    STACK_OF(OPENSSL_STRING) *controls;
 } MAC_DATA;
 
 static int mac_test_init(EVP_TEST *t, const char *alg)
@@ -878,14 +882,22 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
 
     mdat = OPENSSL_zalloc(sizeof(*mdat));
     mdat->type = type;
+    mdat->controls = sk_OPENSSL_STRING_new_null();
     t->data = mdat;
     return 1;
+}
+
+/* Because OPENSSL_free is a macro, it can't be passed as a function pointer */
+static void openssl_free(char *m)
+{
+    OPENSSL_free(m);
 }
 
 static void mac_test_cleanup(EVP_TEST *t)
 {
     MAC_DATA *mdat = t->data;
 
+    sk_OPENSSL_STRING_pop_free(mdat->controls, openssl_free);
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
     OPENSSL_free(mdat->input);
@@ -909,6 +921,9 @@ static int mac_test_parse(EVP_TEST *t,
         return parse_bin(value, &mdata->input, &mdata->input_len);
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &mdata->output, &mdata->output_len);
+    if (strcmp(keyword, "Ctrl") == 0)
+        return sk_OPENSSL_STRING_push(mdata->controls,
+                                      OPENSSL_strdup(value)) != 0;
     return 0;
 }
 
@@ -921,6 +936,7 @@ static int mac_test_run(EVP_TEST *t)
     const EVP_MD *md = NULL;
     unsigned char *got = NULL;
     size_t got_len;
+    int i;
 
 #ifdef OPENSSL_NO_DES
     if (expected->alg != NULL && strstr(expected->alg, "DES") != NULL) {
@@ -955,7 +971,12 @@ static int mac_test_run(EVP_TEST *t)
         t->err = "DIGESTSIGNINIT_ERROR";
         goto err;
     }
-
+    for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++)
+        if (!pkey_test_ctrl(t, pctx,
+                            sk_OPENSSL_STRING_value(expected->controls, i))) {
+            t->err = "EVPPKEYCTXCTRL_ERROR";
+            goto err;
+        }
     if (!EVP_DigestSignUpdate(mctx, expected->input, expected->input_len)) {
         t->err = "DIGESTSIGNUPDATE_ERROR";
         goto err;
