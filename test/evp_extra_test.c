@@ -855,27 +855,32 @@ static int test_EVP_PKEY_check(int i)
 
     p = input;
 
-    if (type == 0 &&
-            (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
-             || !TEST_ptr_eq(p, input + input_len)
-             || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id)))
-        goto done;
-
+    switch (type) {
+    case 0:
+        if (!TEST_ptr(pkey = d2i_AutoPrivateKey(NULL, &p, input_len))
+            || !TEST_ptr_eq(p, input + input_len)
+            || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
+            goto done;
+        break;
 #ifndef OPENSSL_NO_EC
-    if (type == 1 &&
-            (!TEST_ptr(pubkey = BIO_new_mem_buf(input, input_len))
-             || !TEST_ptr(eckey = d2i_EC_PUBKEY_bio(pubkey, NULL))
-             || !TEST_ptr(pkey = EVP_PKEY_new())
-             || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey))))
-        goto done;
-
-    if (type == 2 &&
-            (!TEST_ptr(eckey = d2i_ECParameters(NULL, &p, input_len))
-             || !TEST_ptr_eq(p, input + input_len)
-             || !TEST_ptr(pkey = EVP_PKEY_new())
-             || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey))))
-        goto done;
+    case 1:
+        if (!TEST_ptr(pubkey = BIO_new_mem_buf(input, input_len))
+            || !TEST_ptr(eckey = d2i_EC_PUBKEY_bio(pubkey, NULL))
+            || !TEST_ptr(pkey = EVP_PKEY_new())
+            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey)))
+            goto done;
+        break;
+    case 2:
+        if (!TEST_ptr(eckey = d2i_ECParameters(NULL, &p, input_len))
+            || !TEST_ptr_eq(p, input + input_len)
+            || !TEST_ptr(pkey = EVP_PKEY_new())
+            || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey)))
+            goto done;
+        break;
 #endif
+    default:
+        return 0;
+    }
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
