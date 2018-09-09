@@ -108,7 +108,7 @@ static int dh_test(void)
         || !TEST_ptr_eq(DH_get0_priv_key(dh), priv_key2))
         goto err3;
 
-    /* check whether the public key was calculated correclty */
+    /* check whether the public key was calculated correctly */
     TEST_uint_eq(BN_get_word(pub_key2), 3331L);
 
     /*
@@ -208,6 +208,7 @@ static int dh_test(void)
     BN_free(cpriv_key);
     BN_GENCB_free(_cb);
     DH_free(dh);
+
     return ret;
 }
 
