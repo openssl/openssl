@@ -300,6 +300,7 @@ static void destroy_ciphers(void)
     EVP_CIPHER_meth_free(_hidden_aes_128_cbc);
     EVP_CIPHER_meth_free(_hidden_aes_128_gcm);
     _hidden_aes_128_cbc = NULL;
+    _hidden_aes_128_gcm = NULL;
 }
 
 static int bind_ossltest(ENGINE *e)
