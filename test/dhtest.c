@@ -28,9 +28,9 @@ static int dh_test(void)
 {
     DH *dh = NULL;
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
-    const BIGNUM *p2, *q2, *g2;
+    const BIGNUM *p1, *p2, *q1, *q2, *g1, *g2;
     BIGNUM *priv_key = NULL;
-    const BIGNUM *pub_key2, *priv_key2;
+    const BIGNUM *priv_key1, *pub_key2, *priv_key2;
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
     DH *b = NULL;
@@ -62,11 +62,15 @@ static int dh_test(void)
         || !TEST_true(DH_set0_pqg(dh, p, q, g)))
         goto err;
 
+    p1=p, p=NULL;
+    q1=q, q=NULL;
+    g1=g, g=NULL;
+
     /* test the combined getter for p, q, and g */
     DH_get0_pqg(dh, &p2, &q2, &g2);
-    if (!TEST_ptr_eq(p2, p)
-        || !TEST_ptr_eq(q2, q)
-        || !TEST_ptr_eq(g2, g))
+    if (!TEST_ptr_eq(p2, p1)
+        || !TEST_ptr_eq(q2, q1)
+        || !TEST_ptr_eq(g2, g1))
         goto err;
 
     /* test the simple getters for p, q, and g */
@@ -79,11 +83,12 @@ static int dh_test(void)
     if (!TEST_true(BN_set_word(priv_key, 1234L))
         || !TEST_true(DH_set0_key(dh, NULL, priv_key)))
         goto err;
+    priv_key1 = priv_key, priv_key = NULL;
 
     /* test the combined getter for pub_key and priv_key */
     DH_get0_key(dh, &pub_key2, &priv_key2);
     if (!TEST_ptr_eq(pub_key2, NULL)
-        || !TEST_ptr_eq(priv_key2, priv_key))
+        || !TEST_ptr_eq(priv_key2, priv_key1))
         goto err;
 
     /* test the simple getters for pub_key and priv_key */
@@ -100,7 +105,7 @@ static int dh_test(void)
     /* test it with the combined getter for pub_key and priv_key */
     DH_get0_key(dh, &pub_key2, &priv_key2);
     if (!TEST_ptr(pub_key2)
-        || !TEST_ptr_eq(priv_key2, priv_key))
+        || !TEST_ptr_eq(priv_key2, priv_key1))
         goto err;
 
     /* test it the simple getters for pub_key and priv_key */
