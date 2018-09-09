@@ -26,10 +26,10 @@ static int cb(int p, int n, BN_GENCB *arg);
 
 static int dh_test(void)
 {
-    DH *dh;
-    BIGNUM *p, *q, *g;
+    DH *dh = NULL;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
     const BIGNUM *p2, *q2, *g2;
-    BIGNUM *priv_key;
+    BIGNUM *priv_key = NULL;
     const BIGNUM *pub_key2, *priv_key2;
     BN_GENCB *_cb = NULL;
     DH *a = NULL;
@@ -198,7 +198,10 @@ static int dh_test(void)
     BN_free(cpriv_key);
     BN_GENCB_free(_cb);
     DH_free(dh);
-
+    BN_free(p);
+    BN_free(q);
+    BN_free(g);
+    BN_free(priv_key);
     return ret;
 }
 
