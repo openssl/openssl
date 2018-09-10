@@ -8,19 +8,36 @@
   Major changes between OpenSSL 1.1.0i and OpenSSL 1.1.1 [in pre-release]
 
       o Support for TLSv1.3 added
+      o Complete rewrite of the OpenSSL random number generator to introduce the
+        following capabilities
+          o The default RAND method now utilizes an AES-CTR DRBG according to
+            NIST standard SP 800-90Ar1.
+          o Support for multiple DRBG instances with seed chaining.
+          o There is a public and private DRBG instance.
+          o The DRBG instances are fork-safe.
+          o Keep all global DRBG instances on the secure heap if it is enabled.
+          o The public and private DRBG instance are per thread for lock free
+            operation
+      o Support for various new cryptographic algorithms including:
+          o SHA3
+          o SHA512/224 and SHA512/256
+          o EdDSA (including Ed25519 and Ed448)
+          o X448 (adding to the existing X25519 support in 1.1.0)
+          o Multi-prime RSA
+          o SM2
+          o SM3
+          o SM4
+          o SipHash
+          o ARIA (including TLS support)
+      o Significant Side-Channel attack security improvements
+      o Add 'Maximum Fragment Length' TLS extension negotiation and support
+      o A new STORE module, which implements a uniform and URI based reader of
+        stores that can contain keys, certificates, CRLs and numerous other
+        objects.
       o Move the display of configuration data to configdata.pm.
       o Allow GNU style "make variables" to be used with Configure.
-      o Add a STORE module (OSSL_STORE)
       o Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
-      o Add multi-prime RSA (RFC 8017) support
-      o Add SM3 implemented according to GB/T 32905-2016
-      o Add SM4 implemented according to GB/T 32907-2016.
-      o Add 'Maximum Fragment Length' TLS extension negotiation and support
-      o Add ARIA support
-      o Add SHA3
       o Rewrite of devcrypto engine
-      o Add support for SipHash
-      o Grand redesign of the OpenSSL random generator
 
   Major changes between OpenSSL 1.1.0h and OpenSSL 1.1.0i [under development]
 
