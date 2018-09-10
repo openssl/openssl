@@ -9,6 +9,12 @@
 
  Changes between 1.1.0i and 1.1.1 [xx XXX xxxx]
 
+  *) Add a new ClientHello callback. Provides a callback interface that gives
+     the application the ability to adjust the nascent SSL object at the
+     earliest stage of ClientHello processing, immediately after extensions have
+     been collected but before they have been processed.
+     [Benjamin Kaduk]
+
   *) Add SM2 base algorithm support.
      [Jack Lloyd]
 
