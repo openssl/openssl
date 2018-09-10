@@ -600,6 +600,7 @@ typedef struct loopargs_st {
     unsigned char *buf2_malloc;
     unsigned char *key;
     unsigned int siglen;
+    size_t sigsize;
 #ifndef OPENSSL_NO_RSA
     RSA *rsa_key[RSA_NUM];
 #endif
@@ -1185,11 +1186,11 @@ static int EdDSA_sign_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EVP_MD_CTX **edctx = tempargs->eddsa_ctx;
     unsigned char *eddsasig = tempargs->buf2;
-    unsigned int *eddsasiglen = &tempargs->siglen;
+    size_t *eddsasigsize = &tempargs->sigsize;
     int ret, count;
 
     for (count = 0; COND(eddsa_c[testnum][0]); count++) {
-        ret = EVP_DigestSign(edctx[testnum], eddsasig, (size_t *)eddsasiglen, buf, 20);
+        ret = EVP_DigestSign(edctx[testnum], eddsasig, eddsasigsize, buf, 20);
         if (ret == 0) {
             BIO_printf(bio_err, "EdDSA sign failure\n");
             ERR_print_errors(bio_err);
@@ -1206,11 +1207,11 @@ static int EdDSA_verify_loop(void *args)
     unsigned char *buf = tempargs->buf;
     EVP_MD_CTX **edctx = tempargs->eddsa_ctx;
     unsigned char *eddsasig = tempargs->buf2;
-    unsigned int eddsasiglen = tempargs->siglen;
+    size_t eddsasigsize = tempargs->sigsize;
     int ret, count;
 
     for (count = 0; COND(eddsa_c[testnum][1]); count++) {
-        ret = EVP_DigestVerify(edctx[testnum], eddsasig, eddsasiglen, buf, 20);
+        ret = EVP_DigestVerify(edctx[testnum], eddsasig, eddsasigsize, buf, 20);
         if (ret != 1) {
             BIO_printf(bio_err, "EdDSA verify failure\n");
             ERR_print_errors(bio_err);
@@ -1525,7 +1526,7 @@ int speed_main(int argc, char **argv)
         const char *name;
         unsigned int nid;
         unsigned int bits;
-        unsigned int siglen;
+        size_t sigsize;
     } test_ed_curves[] = {
         /* EdDSA */
         {"Ed25519", NID_ED25519, 253, 64},
@@ -3101,9 +3102,9 @@ int speed_main(int argc, char **argv)
         } else {
             for (i = 0; i < loopargs_len; i++) {
                 /* Perform EdDSA signature test */
-                loopargs[i].siglen = test_ed_curves[testnum].siglen;
+                loopargs[i].sigsize = test_ed_curves[testnum].sigsize;
                 st = EVP_DigestSign(loopargs[i].eddsa_ctx[testnum],
-                                    loopargs[i].buf2, (size_t *)&loopargs[i].siglen,
+                                    loopargs[i].buf2, &loopargs[i].sigsize,
                                     loopargs[i].buf, 20);
                 if (st == 0)
                     break;
@@ -3133,7 +3134,7 @@ int speed_main(int argc, char **argv)
             /* Perform EdDSA verification test */
             for (i = 0; i < loopargs_len; i++) {
                 st = EVP_DigestVerify(loopargs[i].eddsa_ctx[testnum],
-                                      loopargs[i].buf2, loopargs[i].siglen,
+                                      loopargs[i].buf2, loopargs[i].sigsize,
                                       loopargs[i].buf, 20);
                 if (st != 1)
                     break;
