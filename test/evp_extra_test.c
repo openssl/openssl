@@ -875,7 +875,7 @@ static int test_EVP_PKEY_check(int i)
             || !TEST_ptr_eq(p, input + input_len)
             || !TEST_ptr(pkey = EVP_PKEY_new())
             || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey, eckey)))
-        goto done;
+            goto done;
         break;
 #endif
     default:
