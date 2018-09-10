@@ -2189,25 +2189,25 @@ EOF
         }
     }
 
-    # Trickle down includes placed on libraries, engines and programs to
-    # their sources (i.e. object files)
-    foreach my $dest (keys %{$unified_info{engines}},
-                      keys %{$unified_info{libraries}},
-                      keys %{$unified_info{programs}}) {
-        foreach my $k (("source", "build")) {
-            next unless defined($unified_info{includes}->{$dest}->{$k});
-            my @incs = reverse @{$unified_info{includes}->{$dest}->{$k}};
-            foreach my $obj (grep /\.o$/,
-                             (keys %{$unified_info{sources}->{$dest}},
-                              keys %{$unified_info{shared_sources}->{$dest}})) {
-                foreach my $inc (@incs) {
-                    unshift @{$unified_info{includes}->{$obj}->{$k}}, $inc
-                        unless grep { $_ eq $inc } @{$unified_info{includes}->{$obj}->{$k}};
-                }
-            }
-        }
-        delete $unified_info{includes}->{$dest};
-    }
+#    # Trickle down includes placed on libraries, engines and programs to
+#    # their sources (i.e. object files)
+#    foreach my $dest (keys %{$unified_info{engines}},
+#                      keys %{$unified_info{libraries}},
+#                      keys %{$unified_info{programs}}) {
+#        foreach my $k (("source", "build")) {
+#            next unless defined($unified_info{includes}->{$dest}->{$k});
+#            my @incs = reverse @{$unified_info{includes}->{$dest}->{$k}};
+#            foreach my $obj (grep /\.o$/,
+#                             (keys %{$unified_info{sources}->{$dest}},
+#                              keys %{$unified_info{shared_sources}->{$dest}})) {
+#                foreach my $inc (@incs) {
+#                    unshift @{$unified_info{includes}->{$obj}->{$k}}, $inc
+#                        unless grep { $_ eq $inc } @{$unified_info{includes}->{$obj}->{$k}};
+#                }
+#            }
+#        }
+#        delete $unified_info{includes}->{$dest};
+#    }
 
     ### Make unified_info a bit more efficient
     # One level structures
@@ -2233,9 +2233,11 @@ EOF
                 push @{$unified_info{includes}->{$dest}}, $inc
                     unless grep { $_ eq $inc } @{$unified_info{includes}->{$dest}};
             }
-        } else {
+        } elsif (defined($unified_info{includes}->{$dest}->{source})) {
             $unified_info{includes}->{$dest} =
                 [ @{$unified_info{includes}->{$dest}->{source}} ];
+        } else {
+            delete $unified_info{includes}->{$dest};
         }
     }
 }
