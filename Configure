@@ -2218,12 +2218,12 @@ EOF
     # valuable for libraries since they come in two forms.
     {
         # Take copies so we don't get interference from added stuff
-        my %unified_copy = (
-            sources =>        { %{$unified_info{sources}} },
-            shared_sources => { %{$unified_info{shared_sources}} },
-           );
-        delete $unified_info{sources};
-        delete $unified_info{shared_sources};
+        my %unified_copy = ();
+        foreach (('sources', 'shared_sources')) {
+            $unified_copy{$_} = { %{$unified_info{$_}} }
+                if defined($unified_info{$_});
+            delete $unified_info{$_};
+        }
         foreach my $prodtype (('programs', 'libraries', 'engines', 'scripts')) {
             # $intent serves multi purposes:
             # - give a prefix for the new object files names
