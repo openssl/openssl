@@ -35,6 +35,13 @@
     PATH=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin:$PATH
     ./Configure android-arm -D__ANDROID_API__=14
 
+ Newer versions of Android Studio put the NDK in $HOME/Android/Sdk/ndk-bundle.
+ ./Configure is now searching there for the NDK so you don't have to
+ specify ANDROID_NDK. E.g. try this:
+
+    PATH=$HOME/Android/Sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64/bin:$PATH
+    ./Configure android-arm -D__ANDROID_API__=14
+
  Caveat lector! Earlier OpenSSL versions relied on additional CROSS_SYSROOT
  variable set to $ANDROID_NDK/platforms/android-<api>/arch-<arch> to
  appoint headers-n-libraries' location. It's still recognized in order
