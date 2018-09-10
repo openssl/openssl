@@ -9,7 +9,7 @@
 
       o Support for TLSv1.3 added (see https://wiki.openssl.org/index.php/TLS1.3
         for further important information). The TLSv1.3 implementation includes:
-          o Full support for RFC8446 (TLSv1.3) on by default
+          o Fully compliant implementation of RFC8446 (TLSv1.3) on by default
           o Early data (0-RTT)
           o Post-handshake authentication and key update
           o Middlebox Compatibility Mode
@@ -33,7 +33,7 @@
       o Support for various new cryptographic algorithms including:
           o SHA3
           o SHA512/224 and SHA512/256
-          o EdDSA (both Ed25519 and Ed448) and including X509 and TLS support
+          o EdDSA (both Ed25519 and Ed448) including X509 and TLS support
           o X448 (adding to the existing X25519 support in 1.1.0)
           o Multi-prime RSA
           o SM2
@@ -42,10 +42,8 @@
           o SipHash
           o ARIA (including TLS support)
       o Significant Side-Channel attack security improvements
-      o Add a new ClientHello callback. Provides a callback interface that gives
-        the application the ability to adjust the nascent SSL object at the
-        earliest stage of ClientHello processing, immediately after extensions
-        have been collected but before they have been processed.
+      o Add a new ClientHello callback to provide the ability to adjust the SSL
+        object at an early stage.
       o Add 'Maximum Fragment Length' TLS extension negotiation and support
       o A new STORE module, which implements a uniform and URI based reader of
         stores that can contain keys, certificates, CRLs and numerous other
