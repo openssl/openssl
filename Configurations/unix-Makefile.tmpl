@@ -984,6 +984,7 @@ EOF
           }
 
           my $cppflags = {
+              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
@@ -1023,6 +1024,7 @@ EOF
           $cmd = '$(CXX)';
           $cmdcompile = ' -c';
           $cmdflags = {
+              shlib => '$(LIB_CXXFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CXXFLAGS) $(LIB_CPPFLAGS)',
               dso => '$(DSO_CXXFLAGS) $(DSO_CPPFLAGS)',
               bin => '$(BIN_CXXFLAGS) $(BIN_CPPFLAGS)'
@@ -1031,6 +1033,7 @@ EOF
           $cmd = '$(CC)';
           $cmdcompile = ' -c';
           $cmdflags = {
+              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'

@@ -531,6 +531,7 @@ EOF
 
           my $cppflags = $incs;
           $cppflags .= {
+              shlib => ' $(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => ' $(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               dso => ' $(DSO_CFLAGS) $(DSO_CPPFLAGS)',
               bin => ' $(BIN_CFLAGS) $(BIN_CPPFLAGS)'
@@ -568,14 +569,17 @@ EOF
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
-     my $cflags = { lib => ' $(LIB_CFLAGS)',
+     my $cflags = { shlib => ' $(LIB_CFLAGS)',
+		    lib => ' $(LIB_CFLAGS)',
 		    dso => ' $(DSO_CFLAGS)',
 		    bin => ' $(BIN_CFLAGS)' } -> {$args{intent}};
      $cflags .= $incs;
-     $cflags .= { lib => ' $(LIB_CPPFLAGS)',
+     $cflags .= { shlib => ' $(LIB_CPPFLAGS)',
+		  lib => ' $(LIB_CPPFLAGS)',
 		  dso => ' $(DSO_CPPFLAGS)',
 		  bin => ' $(BIN_CPPFLAGS)' } -> {$args{intent}};
-     my $asflags = { lib => ' $(LIB_ASFLAGS)',
+     my $asflags = { shlib => ' $(LIB_ASFLAGS)',
+		     lib => ' $(LIB_ASFLAGS)',
 		     dso => ' $(DSO_ASFLAGS)',
 		     bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
      my $makedepprog = $config{makedepprog};
