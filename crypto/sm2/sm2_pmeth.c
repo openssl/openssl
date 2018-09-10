@@ -259,6 +259,7 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     SM2_PKEY_CTX *smctx = ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     const EVP_MD *md = EVP_MD_CTX_md(mctx);
+    int mdlen = EVP_MD_size(md);
 
     if (!smctx->id_set) {
         /*
@@ -270,11 +271,16 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
         return 0;
     }
 
+    if (mdlen < 0) {
+        SM2err(SM2_F_PKEY_SM2_DIGEST_CUSTOM, SM2_R_INVALID_DIGEST);
+        return 0;
+    }
+
     /* get hashed prefix 'z' of tbs message */
     if (!sm2_compute_z_digest(z, md, smctx->id, smctx->id_len, ec))
         return 0;
 
-    return EVP_DigestUpdate(mctx, z, EVP_MD_size(md));
+    return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
 }
 
 const EVP_PKEY_METHOD sm2_pkey_meth = {
