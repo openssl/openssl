@@ -2189,26 +2189,6 @@ EOF
         }
     }
 
-#    # Trickle down includes placed on libraries, engines and programs to
-#    # their sources (i.e. object files)
-#    foreach my $dest (keys %{$unified_info{engines}},
-#                      keys %{$unified_info{libraries}},
-#                      keys %{$unified_info{programs}}) {
-#        foreach my $k (("source", "build")) {
-#            next unless defined($unified_info{includes}->{$dest}->{$k});
-#            my @incs = reverse @{$unified_info{includes}->{$dest}->{$k}};
-#            foreach my $obj (grep /\.o$/,
-#                             (keys %{$unified_info{sources}->{$dest}},
-#                              keys %{$unified_info{shared_sources}->{$dest}})) {
-#                foreach my $inc (@incs) {
-#                    unshift @{$unified_info{includes}->{$obj}->{$k}}, $inc
-#                        unless grep { $_ eq $inc } @{$unified_info{includes}->{$obj}->{$k}};
-#                }
-#            }
-#        }
-#        delete $unified_info{includes}->{$dest};
-#    }
-
     # Go through all object files and change their names to something that
     # reflects what they will be built for.  Note that for some source files,
     # this leads to duplicate object files because they are used multiple times.
