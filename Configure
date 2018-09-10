@@ -2216,6 +2216,14 @@ EOF
     #    {productname}-{midfix}-{origobjname}.[o|res]
     # the {midfix} is a keyword indicating the type of product, which is mostly
     # valuable for libraries since they come in two forms.
+    #
+    # This also reorganises the {sources} and {shared_sources} so that the
+    # former only contains ALL object files that are supposed to end up in
+    # static libraries and programs, while the latter contains ALL object files
+    # that are supposed to end up in shared libraries and DSOs.
+    # The main reason for having two different source structures is to allow
+    # the same name to be used for the static and the shared variants of a
+    # library.
     {
         # Take copies so we don't get interference from added stuff
         my %unified_copy = ();
