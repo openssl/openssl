@@ -943,11 +943,14 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
     if (!CryptDecrypt(capi_key->key, 0, TRUE, flags, tmpbuf, &flen)) {
         CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_DECRYPT_ERROR);
         capi_addlasterror();
+        OPENSSL_cleanse(tmpbuf, flen);
         OPENSSL_free(tmpbuf);
         return -1;
-    } else
+    } else {
         memcpy(to, tmpbuf, flen);
+    }
 
+    OPENSSL_cleanse(tmpbuf, flen);
     OPENSSL_free(tmpbuf);
 
     return flen;
