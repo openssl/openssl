@@ -125,8 +125,7 @@
      unless ($disabled{shared} || $lib =~ /\.a$/) {
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
-                              objs => [ @{$unified_info{shared_sources}->{$lib}},
-                                        @{$unified_info{sources}->{$lib}} ],
+                              objs => $unified_info{shared_sources}->{$lib},
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               installed => is_installed($lib));
          foreach ((@{$unified_info{shared_sources}->{$lib}},
@@ -155,12 +154,10 @@
      my $lib = shift;
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
-                     objs => [ @{$unified_info{sources}->{$lib}},
-                               @{$unified_info{shared_sources}->{$lib}} ],
+                     objs => $unified_info{shared_sources}->{$lib},
                      deps => [ resolvedepends($lib) ],
                      installed => is_installed($lib));
-     foreach ((@{$unified_info{sources}->{$lib}},
-               @{$unified_info{shared_sources}->{$lib}})) {
+     foreach (@{$unified_info{shared_sources}->{$lib}}) {
          doobj($_, $lib, intent => "dso", installed => is_installed($lib));
      }
      $cache{$lib} = 1;
