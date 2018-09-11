@@ -9,7 +9,12 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
-  *)
+  *) AES-XTS mode now enforces that its two keys are different to mitigate
+     the attacked described in "Efficient Instantiations of Tweakable
+     Blockciphers and Refinements to Modes OCB and PMAC" by Phillip Rogaway.
+     Details of this attack can be obtained from:
+     http://web.cs.ucdavis.edu/%7Erogaway/papers/offsets.pdf
+     [Paul Dale]
 
  Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
@@ -23,13 +28,6 @@
 
   *) Add SM2 base algorithm support.
      [Jack Lloyd]
-
-  *) AES-XTS mode now enforces that its two keys are different to mitigate
-     the attacked described in "Efficient Instantiations of Tweakable
-     Blockciphers and Refinements to Modes OCB and PMAC" by Phillip Rogaway.
-     Details of this attack can be obtained from:
-     http://web.cs.ucdavis.edu/%7Erogaway/papers/offsets.pdf
-     [Paul Dale]
 
   *) s390x assembly pack: add (improved) hardware-support for the following
      cryptographic primitives: sha3, shake, aes-gcm, aes-ccm, aes-ctr, aes-ofb,
