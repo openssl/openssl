@@ -21,6 +21,7 @@ int ERR_load_EVP_strings(void);
  */
 # define EVP_F_AESNI_INIT_KEY                             165
 # define EVP_F_AES_GCM_CTRL                               196
+# define EVP_F_AES_GCM_TLS_CIPHER                         207
 # define EVP_F_AES_INIT_KEY                               133
 # define EVP_F_AES_OCB_CIPHER                             169
 # define EVP_F_AES_T4_INIT_KEY                            178
@@ -115,6 +116,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_RC2_MAGIC_TO_METH                          109
 # define EVP_F_RC5_CTRL                                   125
 # define EVP_F_S390X_AES_GCM_CTRL                         201
+# define EVP_F_S390X_AES_GCM_TLS_CIPHER                   208
 # define EVP_F_UPDATE                                     173
 
 /*
@@ -174,6 +176,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_PRIVATE_KEY_DECODE_ERROR                   145
 # define EVP_R_PRIVATE_KEY_ENCODE_ERROR                   146
 # define EVP_R_PUBLIC_KEY_NOT_RSA                         106
+# define EVP_R_TOO_MANY_RECORDS                           183
 # define EVP_R_UNKNOWN_CIPHER                             160
 # define EVP_R_UNKNOWN_DIGEST                             161
 # define EVP_R_UNKNOWN_OPTION                             169

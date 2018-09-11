@@ -711,6 +711,7 @@ ENGINE_F_INT_ENGINE_MODULE_INIT:187:int_engine_module_init
 ENGINE_F_OSSL_HMAC_INIT:200:ossl_hmac_init
 EVP_F_AESNI_INIT_KEY:165:aesni_init_key
 EVP_F_AES_GCM_CTRL:196:aes_gcm_ctrl
+EVP_F_AES_GCM_TLS_CIPHER:207:aes_gcm_tls_cipher
 EVP_F_AES_INIT_KEY:133:aes_init_key
 EVP_F_AES_OCB_CIPHER:169:aes_ocb_cipher
 EVP_F_AES_T4_INIT_KEY:178:aes_t4_init_key
@@ -805,6 +806,7 @@ EVP_F_PKEY_SET_TYPE:158:pkey_set_type
 EVP_F_RC2_MAGIC_TO_METH:109:rc2_magic_to_meth
 EVP_F_RC5_CTRL:125:rc5_ctrl
 EVP_F_S390X_AES_GCM_CTRL:201:s390x_aes_gcm_ctrl
+EVP_F_S390X_AES_GCM_TLS_CIPHER:208:s390x_aes_gcm_tls_cipher
 EVP_F_UPDATE:173:update
 KDF_F_PKEY_HKDF_CTRL_STR:103:pkey_hkdf_ctrl_str
 KDF_F_PKEY_HKDF_DERIVE:102:pkey_hkdf_derive
@@ -2262,6 +2264,7 @@ EVP_R_PKEY_APPLICATION_ASN1_METHOD_ALREADY_REGISTERED:179:\
 EVP_R_PRIVATE_KEY_DECODE_ERROR:145:private key decode error
 EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
+EVP_R_TOO_MANY_RECORDS:183:too many records
 EVP_R_UNKNOWN_CIPHER:160:unknown cipher
 EVP_R_UNKNOWN_DIGEST:161:unknown digest
 EVP_R_UNKNOWN_OPTION:169:unknown option

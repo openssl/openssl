@@ -1800,8 +1800,10 @@ static int s390x_aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * communication to fail after 2^64 - 1 keys.  We do this on the encrypting
      * side only.
      */
-    if (ctx->encrypt && ++gctx->tls_enc_records == 0)
+    if (ctx->encrypt && ++gctx->tls_enc_records == 0) {
+        EVPerr(EVP_F_S390X_AES_GCM_TLS_CIPHER, EVP_R_TOO_MANY_RECORDS);
         goto err;
+    }
 
     if (EVP_CIPHER_CTX_ctrl(ctx, enc ? EVP_CTRL_GCM_IV_GEN
                                      : EVP_CTRL_GCM_SET_IV_INV,
@@ -3055,8 +3057,10 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
      * communication to fail after 2^64 - 1 keys.  We do this on the encrypting
      * side only.
      */
-    if (ctx->encrypt && ++gctx->tls_enc_records == 0)
+    if (ctx->encrypt && ++gctx->tls_enc_records == 0) {
+        EVPerr(EVP_F_AES_GCM_TLS_CIPHER, EVP_R_TOO_MANY_RECORDS);
         goto err;
+    }
 
     /*
      * Set IV from start of buffer or generate IV and write to start of
