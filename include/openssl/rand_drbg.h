@@ -13,14 +13,21 @@
 # include <time.h>
 # include <openssl/ossl_typ.h>
 
+/*
+ * RAND_DRBG  flags
+ *
+ * Note: if new flags are added, the constant `rand_drbg_used_flags`
+ *       in drbg_lib.c needs to be updated accordingly.
+ */
 
 /* In CTR mode, disable derivation function ctr_df */
 # define RAND_DRBG_FLAG_CTR_NO_DF            0x1
 
-/* A logical OR of all used flag bits (currently there is only one) */
-# define RAND_DRBG_USED_FLAGS  ( \
-    RAND_DRBG_FLAG_CTR_NO_DF \
-                                 )
+
+# if OPENSSL_API_COMPAT < 0x10200000L
+/* This #define was replaced by an internal constant and should not be used. */
+#  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
+# endif
 
 /*
  * Default security strength (in the sense of [NIST SP 800-90Ar1])

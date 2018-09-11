@@ -82,6 +82,10 @@ static unsigned int slave_reseed_interval  = SLAVE_RESEED_INTERVAL;
 static time_t master_reseed_time_interval = MASTER_RESEED_TIME_INTERVAL;
 static time_t slave_reseed_time_interval  = SLAVE_RESEED_TIME_INTERVAL;
 
+/* A logical OR of all used DRBG flag bits (currently there is only one) */
+static const unsigned int rand_drbg_used_flags =
+    RAND_DRBG_FLAG_CTR_NO_DF;
+
 static RAND_DRBG *drbg_setup(RAND_DRBG *parent);
 
 static RAND_DRBG *rand_drbg_new(int secure,
@@ -147,7 +151,7 @@ int RAND_DRBG_set_defaults(int type, unsigned int flags)
         break;
     }
 
-    if ((flags & ~RAND_DRBG_USED_FLAGS) != 0) {
+    if ((flags & ~rand_drbg_used_flags) != 0) {
         RANDerr(RAND_F_RAND_DRBG_SET_DEFAULTS, RAND_R_UNSUPPORTED_DRBG_FLAGS);
         return 0;
     }
