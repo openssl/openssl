@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.0i and 1.1.1 [xx XXX xxxx]
+ Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
   *) Add a new ClientHello callback. Provides a callback interface that gives
      the application the ability to adjust the nascent SSL object at the
