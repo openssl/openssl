@@ -133,7 +133,9 @@ int BIO_connect(int sock, const BIO_ADDR *addr, int options)
  */
 int BIO_bind(int sock, const BIO_ADDR *addr, int options)
 {
+# ifndef OPENSSL_SYS_WINDOWS
     int on = 1;
+# endif
 
     if (sock == -1) {
         BIOerr(BIO_F_BIO_BIND, BIO_R_INVALID_SOCKET);

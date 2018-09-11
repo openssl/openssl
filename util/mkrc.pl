@@ -70,7 +70,7 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             // Required:
-            VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
+            VALUE "CompanyName", "The OpenSSL Project, https://www.openssl.org/\\0"
             VALUE "FileDescription", "$description\\0"
             VALUE "FileVersion", "$version\\0"
             VALUE "InternalName", "$filename\\0"
