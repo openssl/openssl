@@ -777,11 +777,13 @@ EOF
           }
 
           my $cppflags = {
+              shlib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               lib => '$(LIB_CFLAGS) $(LIB_CPPFLAGS)',
               dso => '$(DSO_CFLAGS) $(DSO_CPPFLAGS)',
               bin => '$(BIN_CFLAGS) $(BIN_CPPFLAGS)'
           } -> {$args{intent}};
-          my @incs_cmds = includes({ lib => '$(LIB_INCLUDES)',
+          my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
+                                     lib => '$(LIB_INCLUDES)',
                                      dso => '$(DSO_INCLUDES)',
                                      bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
                                    '$(CNF_INCLUDES)',
@@ -844,7 +846,8 @@ EOF
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
 
       if ($srcs[0] =~ /\.asm$/) {
-          my $asflags = { lib => ' $(LIB_ASFLAGS)',
+          my $asflags = { shlib => ' $(LIB_ASFLAGS)',
+		          lib => ' $(LIB_ASFLAGS)',
 		          dso => ' $(DSO_ASFLAGS)',
 		          bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
           return <<"EOF";
@@ -858,19 +861,23 @@ EOF
 
       my $cflags;
       if ($args{installed}) {
-          $cflags = { lib => '$(LIB_CFLAGS)',
+          $cflags = { shlib => '$(LIB_CFLAGS)',
+                      lib => '$(LIB_CFLAGS)',
                       dso => '$(DSO_CFLAGS)',
                       bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       } else {
-          $cflags = { lib => '$(NO_INST_LIB_CFLAGS)',
+          $cflags = { shlib => '$(NO_INST_LIB_CFLAGS)',
+                      lib => '$(NO_INST_LIB_CFLAGS)',
                       dso => '$(NO_INST_DSO_CFLAGS)',
                       bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
       }
-      $cflags .= { lib => '$(LIB_CPPFLAGS)',
+      $cflags .= { shlib => '$(LIB_CPPFLAGS)',
+		   lib => '$(LIB_CPPFLAGS)',
 		   dso => '$(DSO_CPPFLAGS)',
 		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
 
-      my @incs_cmds = includes({ lib => '$(LIB_INCLUDES)',
+      my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
+                                 lib => '$(LIB_INCLUDES)',
                                  dso => '$(DSO_INCLUDES)',
                                  bin => '$(BIN_INCLUDES)' } -> {$args{intent}},
                                '$(INCLUDES)',

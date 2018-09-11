@@ -82,7 +82,8 @@
                              generator_incs => $unified_info{includes}->{$script},
                              generator_deps => $unified_info{depends}->{$script},
                              deps => $unified_info{depends}->{$src},
-                             incs => $unified_info{includes}->{$obj},
+                             incs => [ @{$unified_info{includes}->{$obj}},
+                                       @{$unified_info{includes}->{$bin}} ],
                              %opts);
          foreach (@{$unified_info{depends}->{$src}}) {
              dogenerate($_, $obj, $bin, %opts);
@@ -103,7 +104,8 @@
                          product => $bin,
                          srcs => $unified_info{sources}->{$obj},
                          deps => $unified_info{depends}->{$obj},
-                         incs => $unified_info{includes}->{$obj},
+                         incs => [ @{$unified_info{includes}->{$obj}},
+                                   @{$unified_info{includes}->{$bin}} ],
                          %opts);
          foreach ((@{$unified_info{sources}->{$obj}},
                    @{$unified_info{depends}->{$obj}})) {
@@ -123,8 +125,7 @@
      unless ($disabled{shared} || $lib =~ /\.a$/) {
          $OUT .= libobj2shlib(shlib => $unified_info{sharednames}->{$lib},
                               lib => $lib,
-                              objs => [ @{$unified_info{shared_sources}->{$lib}},
-                                        @{$unified_info{sources}->{$lib}} ],
+                              objs => $unified_info{shared_sources}->{$lib},
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               installed => is_installed($lib));
          foreach ((@{$unified_info{shared_sources}->{$lib}},
@@ -132,7 +133,7 @@
              # If this is somehow a compiled object, take care of it that way
              # Otherwise, it might simply be generated
              if (defined $unified_info{sources}->{$_}) {
-                 doobj($_, $lib, intent => "lib", installed => is_installed($lib));
+                 doobj($_, $lib, intent => "shlib", installed => is_installed($lib));
              } else {
                  dogenerate($_, undef, undef, intent => "lib");
              }
@@ -153,12 +154,10 @@
      my $lib = shift;
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
-                     objs => [ @{$unified_info{sources}->{$lib}},
-                               @{$unified_info{shared_sources}->{$lib}} ],
+                     objs => $unified_info{shared_sources}->{$lib},
                      deps => [ resolvedepends($lib) ],
                      installed => is_installed($lib));
-     foreach ((@{$unified_info{sources}->{$lib}},
-               @{$unified_info{shared_sources}->{$lib}})) {
+     foreach (@{$unified_info{shared_sources}->{$lib}}) {
          doobj($_, $lib, intent => "dso", installed => is_installed($lib));
      }
      $cache{$lib} = 1;

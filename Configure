@@ -2029,15 +2029,15 @@ EOF
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
-                    $unified_info{sources}->{$ddest}->{$o} = 1;
-                    $unified_info{sources}->{$o}->{$s} = 1;
+                    $unified_info{sources}->{$ddest}->{$o} = -1;
+                    $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
                     my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
                     my $o = cleanfile($buildd, $o, $blddir);
-                    $unified_info{sources}->{$ddest}->{$o} = 1;
-                    $unified_info{sources}->{$o}->{$s} = 1;
+                    $unified_info{sources}->{$ddest}->{$o} = -1;
+                    $unified_info{sources}->{$o}->{$s} = -1;
                 } else {
                     $unified_info{sources}->{$ddest}->{$s} = 1;
                 }
@@ -2065,15 +2065,15 @@ EOF
                     $o =~ s/\.[csS]$/.o/; # C and assembler
                     $o =~ s/\.(cc|cpp)$/_cc.o/; # C++
                     $o = cleanfile($buildd, $o, $blddir);
-                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
-                    $unified_info{sources}->{$o}->{$s} = 1;
+                    $unified_info{shared_sources}->{$ddest}->{$o} = -1;
+                    $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.rc$/) {
                     # We also recognise resource files
                     my $o = $_;
                     $o =~ s/\.rc$/.res/; # Resource configuration
                     my $o = cleanfile($buildd, $o, $blddir);
-                    $unified_info{shared_sources}->{$ddest}->{$o} = 1;
-                    $unified_info{sources}->{$o}->{$s} = 1;
+                    $unified_info{shared_sources}->{$ddest}->{$o} = -1;
+                    $unified_info{sources}->{$o}->{$s} = -1;
                 } elsif ($s =~ /\.(def|map|opt)$/) {
                     # We also recognise .def / .map / .opt files
                     # We know they are generated files
@@ -2189,25 +2189,100 @@ EOF
         }
     }
 
-    # Trickle down includes placed on libraries, engines and programs to
-    # their sources (i.e. object files)
-    foreach my $dest (keys %{$unified_info{engines}},
-                      keys %{$unified_info{libraries}},
-                      keys %{$unified_info{programs}}) {
-        foreach my $k (("source", "build")) {
-            next unless defined($unified_info{includes}->{$dest}->{$k});
-            my @incs = reverse @{$unified_info{includes}->{$dest}->{$k}};
-            foreach my $obj (grep /\.o$/,
-                             (keys %{$unified_info{sources}->{$dest}},
-                              keys %{$unified_info{shared_sources}->{$dest}})) {
-                foreach my $inc (@incs) {
-                    unshift @{$unified_info{includes}->{$obj}->{$k}}, $inc
-                        unless grep { $_ eq $inc } @{$unified_info{includes}->{$obj}->{$k}};
+    # Go through all object files and change their names to something that
+    # reflects what they will be built for.  Note that for some source files,
+    # this leads to duplicate object files because they are used multiple times.
+    # the goal is to rename all object files according to this scheme:
+    #    {productname}-{midfix}-{origobjname}.[o|res]
+    # the {midfix} is a keyword indicating the type of product, which is mostly
+    # valuable for libraries since they come in two forms.
+    #
+    # This also reorganises the {sources} and {shared_sources} so that the
+    # former only contains ALL object files that are supposed to end up in
+    # static libraries and programs, while the latter contains ALL object files
+    # that are supposed to end up in shared libraries and DSOs.
+    # The main reason for having two different source structures is to allow
+    # the same name to be used for the static and the shared variants of a
+    # library.
+    {
+        # Take copies so we don't get interference from added stuff
+        my %unified_copy = ();
+        foreach (('sources', 'shared_sources')) {
+            $unified_copy{$_} = { %{$unified_info{$_}} }
+                if defined($unified_info{$_});
+            delete $unified_info{$_};
+        }
+        foreach my $prodtype (('programs', 'libraries', 'engines', 'scripts')) {
+            # $intent serves multi purposes:
+            # - give a prefix for the new object files names
+            # - in the case of libraries, rearrange the object files so static
+            #   libraries use the 'sources' structure exclusively, while shared
+            #   libraries use the 'shared_sources' structure exclusively.
+            my $intent = {
+                programs  => { bin    => { src => [ 'sources' ],
+                                           dst => 'sources' } },
+                libraries => { lib    => { src => [ 'sources' ],
+                                           dst => 'sources' },
+                               shlib  => { prodselect =>
+                                               sub { grep !/\.a$/, @_ },
+                                           src => [ 'sources',
+                                                    'shared_sources' ],
+                                           dst => 'shared_sources' } },
+                engines   => { dso    => { src => [ 'sources',
+                                                    'shared_sources' ],
+                                           dst => 'shared_sources' } },
+                scripts   => { script => { src => [ 'sources' ],
+                                           dst => 'sources' } }
+               } -> {$prodtype};
+            foreach my $kind (keys %$intent) {
+                my @src = @{$intent->{$kind}->{src}};
+                my $dst = $intent->{$kind}->{dst};
+                my $prodselect = $intent->{$kind}->{prodselect} // sub { @_ };
+                foreach my $prod ($prodselect->(keys %{$unified_info{$prodtype}})) {
+                    # %prod_sources has all applicable objects as keys, and
+                    # their corresponding sources as values
+                    my %prod_sources =
+                        map { $_ => [ keys %{$unified_copy{sources}->{$_}} ] }
+                        map { keys %{$unified_copy{$_}->{$prod}} }
+                        @src;
+                    foreach (keys %prod_sources) {
+                        # Only affect object or resource files, the others
+                        # simply get a new value (+1 instead of -1)
+                        if ($_ =~ /\.(o|res)$/) {
+                            (my $prodname = $prod) =~ s|\.a$||;
+                            my $newobj =
+                                catfile(dirname($_),
+                                        basename($prodname)
+                                            . '-' . $kind
+                                            . '-' . basename($_));
+                            $unified_info{$dst}->{$prod}->{$newobj} = 1;
+                            foreach my $src (@{$prod_sources{$_}}) {
+                                $unified_info{sources}->{$newobj}->{$src} = 1;
+                            }
+                            # Adjust dependencies
+                            foreach my $deps (keys %{$unified_info{depends}->{$_}}) {
+                                $unified_info{depends}->{$_}->{$deps} = -1;
+                                $unified_info{depends}->{$newobj}->{$deps} = 1;
+                            }
+                            # Adjust includes
+                            foreach my $k (('source', 'build')) {
+                                next unless
+                                    defined($unified_info{includes}->{$_}->{$k});
+                                my @incs = @{$unified_info{includes}->{$_}->{$k}};
+                                $unified_info{includes}->{$newobj}->{$k} = [ @incs ];
+                            }
+                        } else {
+                            $unified_info{$dst}->{$prod}->{$_} = 1;
+                        }
+                    }
                 }
             }
         }
-        delete $unified_info{includes}->{$dest};
     }
+    # At this point, we have a number of sources with the value -1.  They
+    # aren't part of the local build and are probably meant for a different
+    # platform, and can therefore be cleaned away.  That happens when making
+    # %unified_info more efficient below.
 
     ### Make unified_info a bit more efficient
     # One level structures
@@ -2217,8 +2292,15 @@ EOF
     # Two level structures
     foreach my $l1 (("install", "sources", "shared_sources", "ldadd", "depends")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
-            $unified_info{$l1}->{$l2} =
-                [ sort keys %{$unified_info{$l1}->{$l2}} ];
+            my @items =
+                sort
+                grep { $unified_info{$l1}->{$l2}->{$_} > 0 }
+                keys %{$unified_info{$l1}->{$l2}};
+            if (@items) {
+                $unified_info{$l1}->{$l2} = [ @items ];
+            } else {
+                delete $unified_info{$l1}->{$l2};
+            }
         }
     }
     # Includes
@@ -2233,9 +2315,11 @@ EOF
                 push @{$unified_info{includes}->{$dest}}, $inc
                     unless grep { $_ eq $inc } @{$unified_info{includes}->{$dest}};
             }
-        } else {
+        } elsif (defined($unified_info{includes}->{$dest}->{source})) {
             $unified_info{includes}->{$dest} =
                 [ @{$unified_info{includes}->{$dest}->{source}} ];
+        } else {
+            delete $unified_info{includes}->{$dest};
         }
     }
 }
