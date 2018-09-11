@@ -11,6 +11,11 @@
 
   *)
 
+  *) Rename the object files, i.e. give them other names than in previous
+     versions.  Their names now include the name of the final product, as
+     well as its type mnemonic (bin, lib, shlib).
+     [Richard Levitte]
+
  Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
   *) Add a new ClientHello callback. Provides a callback interface that gives
