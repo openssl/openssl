@@ -318,17 +318,19 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     } else
         BN_zero(&group->cofactor);
 
-    /*
-     * Some groups have an order with
-     * factors of two, which makes the Montgomery setup fail.
-     * |group->mont_data| will be NULL in this case.
-     */
-    if (BN_is_odd(&group->order)) {
-        return ec_precompute_mont_data(group);
-    }
+    if (EC_GROUP_VERSION(group)) {
+        /*
+         * Some groups have an order with
+         * factors of two, which makes the Montgomery setup fail.
+         * |group->mont_data| will be NULL in this case.
+         */
+        if (BN_is_odd(&group->order)) {
+            return ec_precompute_mont_data(group);
+        }
 
-    BN_MONT_CTX_free(group->mont_data);
-    group->mont_data = NULL;
+        BN_MONT_CTX_free(group->mont_data);
+        group->mont_data = NULL;
+    }
     return 1;
 }
 
