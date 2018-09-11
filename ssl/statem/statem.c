@@ -118,11 +118,12 @@ void ossl_statem_set_renegotiate(SSL *s)
 void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
                        int line)
 {
+    ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
     /* We shouldn't call SSLfatal() twice. Once is enough */
-    assert(s->statem.state != MSG_FLOW_ERROR);
+    if (s->statem.in_init && s->statem.state == MSG_FLOW_ERROR)
+      return;
     s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
-    ERR_put_error(ERR_LIB_SSL, func, reason, file, line);
     if (al != SSL_AD_NO_ALERT
             && s->statem.enc_write_state != ENC_WRITE_STATE_INVALID)
         ssl3_send_alert(s, SSL3_AL_FATAL, al);
