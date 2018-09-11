@@ -11,6 +11,10 @@
 
   *)
 
+  *) Added new option for 'openssl list', '-objects', which will display the
+     list of built in objects, i.e. OIDs with names.
+     [Richard Levitte]
+
  Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
   *) Add a new ClientHello callback. Provides a callback interface that gives
