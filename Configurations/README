@@ -636,8 +636,9 @@ They are all expected to return a string with the lines they produce.
                                 incs => [ "INCL/PATH", ... ]
                                 intent => one of "lib", "dso", "bin" );
 
-                  'obj' has the intended object file *without*
-                  extension, src2obj() is expected to add that.
+                  'obj' has the intended object file with '.o'
+                  extension, src2obj() is expected to change it to
+                  something more suitable for the platform.
                   'srcs' has the list of source files to build the
                   object file, with the first item being the source
                   file that directly corresponds to the object file.
@@ -657,33 +658,36 @@ They are all expected to return a string with the lines they produce.
 
                   'lib' has the intended library file name *without*
                   extension, obj2lib is expected to add that.  'objs'
-                  has the list of object files (also *without*
-                  extension) to build this library.
+                  has the list of object files to build this library.
 
-    libobj2shlib - function that produces build file lines to build a
+    libobj2shlib - backward compatibility function that's used the
+                  same way as obj2shlib (described next), and was
+                  expected to build the shared library from the
+                  corresponding static library when that was suitable.
+                  NOTE: building a shared library from a static
+                  library is now DEPRECATED, as they no longer share
+                  object files.  Attempting to do this will fail.
+
+    obj2shlib   - function that produces build file lines to build a
                   shareable object library file ("libfoo.so" in Unix
-                  terms) from the corresponding static library file
-                  or object files.
+                  terms) from the corresponding object files.
 
                   called like this:
 
-                        libobj2shlib(shlib => "PATH/TO/shlibfile",
-                                     lib => "PATH/TO/libfile",
-                                     objs => [ "PATH/TO/objectfile", ... ],
-                                     deps => [ "PATH/TO/otherlibfile", ... ]);
+                        obj2shlib(shlib => "PATH/TO/shlibfile",
+                                  lib => "PATH/TO/libfile",
+                                  objs => [ "PATH/TO/objectfile", ... ],
+                                  deps => [ "PATH/TO/otherlibfile", ... ]);
 
-                  'lib' has the intended library file name *without*
-                  extension, libobj2shlib is expected to add that.
+                  'lib' has the base (static) library ffile name
+                  *without* extension.  This is useful in case
+                  supporting files are needed (such as import
+                  libraries on Windows).
                   'shlib' has the corresponding shared library name
                   *without* extension.  'deps' has the list of other
                   libraries (also *without* extension) this library
                   needs to be linked with.  'objs' has the list of
-                  object files (also *without* extension) to build
-                  this library.
-
-                  This function has a choice; it can use the
-                  corresponding static library as input to make the
-                  shared library, or the list of object files.
+                  object files to build this library.
 
     obj2dso     - function that produces build file lines to build a
                   dynamic shared object file from object files.
@@ -695,12 +699,9 @@ They are all expected to return a string with the lines they produce.
                                 deps => [ "PATH/TO/otherlibfile",
                                 ... ]);
 
-                  This is almost the same as libobj2shlib, but the
+                  This is almost the same as obj2shlib, but the
                   intent is to build a shareable library that can be
-                  loaded in runtime (a "plugin"...).  The differences
-                  are subtle, one of the most visible ones is that the
-                  resulting shareable library is produced from object
-                  files only.
+                  loaded in runtime (a "plugin"...).
 
     obj2bin     - function that produces build file lines to build an
                   executable file from object files.
@@ -713,11 +714,10 @@ They are all expected to return a string with the lines they produce.
 
                   'bin' has the intended executable file name
                   *without* extension, obj2bin is expected to add
-                  that.  'objs' has the list of object files (also
-                  *without* extension) to build this library.  'deps'
-                  has the list of library files (also *without*
-                  extension) that the programs needs to be linked
-                  with.
+                  that.  'objs' has the list of object files to build
+                  this library.  'deps' has the list of library files
+                  (also *without* extension) that the programs needs
+                  to be linked with.
 
     in2script   - function that produces build file lines to build a
                   script file from some input.
