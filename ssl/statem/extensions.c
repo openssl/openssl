@@ -1533,7 +1533,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         void *hdata;
 
         hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
-        if (hdatalen <= 0) {
+        if (hdatalen == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                      SSL_R_BAD_HANDSHAKE_LENGTH);
             goto err;
