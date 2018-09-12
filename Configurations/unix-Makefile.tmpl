@@ -1085,7 +1085,7 @@ EOF
   # On Unix, we build shlibs from static libs, so we're ignoring the
   # object file array.  We *know* this routine is only called when we've
   # configure 'shared'.
-  sub libobj2shlib {
+  sub obj2shlib {
       my %args = @_;
       my $lib = $args{lib};
       my $shlib = $args{shlib};
