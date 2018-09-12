@@ -22,22 +22,23 @@ Whether the operation succeeds or not, the SSL_SENT_SHUTDOWN flag is set and
 a currently open session is considered closed and good and will be kept in the
 session cache for further reuse.
 
-The shutdown procedure consists of 2 steps: sending of the "close notify"
+The shutdown procedure consists of two steps: sending of the "close notify"
 shutdown alert, and reception of the peer's "close notify" shutdown alert.
-The order of those 2 steps depends on the application.
+The order of those two steps depends on the application.
 
 It is acceptable for an application to only send its shutdown alert and
 then close the underlying connection without waiting for the peer's response.
 This way resources can be saved, as the process can already terminate or
 serve another connection.
-This should only be done in case you're sure that the other side will not
+This should only be done in case you are sure that the other side will not
 send more data, otherwise you risk a truncation attack.
 
-When a client only writes, then calls SSL_shutdown() and closes the underlying
-connection, it might not be able to resume the session because it did not
-process the session ticket of the server.
-In such cases it's recommend to do a complete shutdown procedure (bidirectional
-"close notify" alerts).
+When a client only writes and never reads from the connection, and the server
+has sent a session ticket to establish a session, the client might not be able
+to resume the session because it did not received and process the session ticket
+from the server.
+In case you want to be able to resume the session, it's recommend to do a complete
+shutdown procedure (bidirectional "close notify" alerts).
 
 When the underlying connection shall be used for more communications, the
 complete shutdown procedure must be performed, so that the peers stay
@@ -53,13 +54,13 @@ When the application is the first party to send the "close notify"
 alert, SSL_shutdown() will only send the alert and then set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
 be kept in the cache).
-SSL_shutdown() will then return with 0.
+SSL_shutdown() will then return 0.
 
-SSL_shutdown() can return -1, in which case the SSL_shutdown() should be called
+SSL_shutdown() can return -1, in which case SSL_shutdown() should be called
 again.
 
 If a unidirectional shutdown is enough (the underlying connection shall be
-closed anyway), this first succesful call to SSL_shutdown() is sufficient.
+closed anyway), this first successful call to SSL_shutdown() is sufficient.
 
 In order to complete the bidirectional shutdown handshake, the peer needs
 to send back a "close notify" alert.
@@ -68,7 +69,7 @@ it.
 
 The peer is still allowed to send data after receiving the "close notify"
 event.
-After it's done sending data, it will send the "close notify" alert.
+When it's done sending data, it will send the "close notify" alert.
 SSL_read() should be called until all data is received.
 SSL_read() will indicate the end of the peer data by returning <= 0
 and SSL_get_error() returning SSL_ERROR_ZERO_RETURN.
@@ -82,9 +83,9 @@ SSL_read() will return <= 0 in that case, and SSL_get_error() will return
 SSL_ERROR_ZERO_RETURN.
 SSL_shutdown() will send the "close notify" alert, set the SSL_SENT_SHUTDOWN
 flag.
-SSL_shutdown() will then return with 1.
+SSL_shutdown() will then return 1.
 
-SSL_shutdown() can return -1, in which case the SSL_shutdown() should be called
+SSL_shutdown() can return -1, in which case SSL_shutdown() should be called
 again.
 
 Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
