@@ -30,8 +30,8 @@ It is acceptable for an application to only send its shutdown alert and
 then close the underlying connection without waiting for the peer's response.
 This way resources can be saved, as the process can already terminate or
 serve another connection.
-This should only be done in case you are sure that the other side will not
-send more data, otherwise you risk a truncation attack.
+This should only be done when it is known that the other side will not send more
+data, otherwise there is a risk of a truncation attack.
 
 When a client only writes and never reads from the connection, and the server
 has sent a session ticket to establish a session, the client might not be able
