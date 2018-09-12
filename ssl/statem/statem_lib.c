@@ -203,9 +203,10 @@ static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
         *hdatalen = TLS13_TBS_PREAMBLE_SIZE + hashlen;
     } else {
         size_t retlen;
+        long retlen_l;
 
-        retlen = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
-        if (retlen == 0) {
+        retlen = retlen_l = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
+        if (retlen <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_GET_CERT_VERIFY_TBS_DATA,
                      ERR_R_INTERNAL_ERROR);
             return 0;
