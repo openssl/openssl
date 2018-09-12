@@ -902,7 +902,7 @@ $obj.OBJ : $deps
         - PURGE $obj.OBJ
 EOF
   }
-  sub libobj2shlib {
+  sub obj2shlib {
       my %args = @_;
       my $lib = $args{lib};
       my $shlib = $args{shlib};
@@ -914,7 +914,7 @@ EOF
       my @defs = grep { $_ =~ /\.opt$/ } @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
-      my $deps = join(", -\n\t\t", @defs, @deps);
+      my $deps = join(", -\n\t\t", @objs, @defs, @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $translatesyms_pl = abs2rel(rel2abs(catfile($config{sourcedir},
                                                      "VMS", "translatesyms.pl")),
@@ -934,7 +934,7 @@ EOF
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
       return <<"EOF"
-$shlib.EXE : $lib.OLB $deps
+$shlib.EXE : $deps
         \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $defs[0] > $defs[0]-translated
         OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
         $write_opt1
