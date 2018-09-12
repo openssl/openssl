@@ -84,9 +84,7 @@ static time_t slave_reseed_time_interval  = SLAVE_RESEED_TIME_INTERVAL;
 
 /* A logical OR of all used DRBG flag bits (currently there is only one) */
 static const unsigned int rand_drbg_used_flags =
-    RAND_DRBG_FLAG_CTR_NO_DF |
-    /* add new entries before this line */
-    0;
+    RAND_DRBG_FLAG_CTR_NO_DF;
 
 static RAND_DRBG *drbg_setup(RAND_DRBG *parent);
 
