@@ -25,7 +25,7 @@ More information on OQS can be found on our website: [https://openquantumsafe.or
 Contents
 --------
 
-This project integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1, and appear only on the [master branch](https://github.com/open-quantum-safe/openssl/tree/OQS-master). For TLS 1.2, see the [OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OpenSSL_1_0_2-stable) and [OQS-OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable).
+This project integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1, and appears only on the [OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable). For TLS 1.2, see the [OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OpenSSL_1_0_2-stable) and [OQS-OpenSSL\_1\_0\_2-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable).
 
 ### Key exchange mechanisms
 
