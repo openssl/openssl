@@ -837,21 +837,21 @@ void EVP_PKEY_meth_get_ctrl(const EVP_PKEY_METHOD *pmeth,
 void EVP_PKEY_meth_get_check(const EVP_PKEY_METHOD *pmeth,
                              int (**pcheck) (EVP_PKEY *pkey))
 {
-    if (*pcheck)
+    if (pcheck != NULL)
         *pcheck = pmeth->check;
 }
 
 void EVP_PKEY_meth_get_public_check(const EVP_PKEY_METHOD *pmeth,
                                     int (**pcheck) (EVP_PKEY *pkey))
 {
-    if (*pcheck)
+    if (pcheck != NULL)
         *pcheck = pmeth->public_check;
 }
 
 void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
                                    int (**pcheck) (EVP_PKEY *pkey))
 {
-    if (*pcheck)
+    if (pcheck != NULL)
         *pcheck = pmeth->param_check;
 }
 
