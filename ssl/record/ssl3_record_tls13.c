@@ -84,7 +84,7 @@ int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
          * To get here we must have selected a ciphersuite - otherwise ctx would
          * be NULL
          */
-        if (!ossl_assert(s->s3->tmp.new_cipher != NULL)) {
+        if (ossl_is_null(s->s3->tmp.new_cipher)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_ENC,
                      ERR_R_INTERNAL_ERROR);
             return -1;

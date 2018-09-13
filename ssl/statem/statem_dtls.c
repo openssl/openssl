@@ -624,7 +624,7 @@ dtls1_reassemble_fragment(SSL *s, const struct hm_header_st *msg_hdr)
          * would have returned it and control would never have reached this
          * branch.
          */
-        if (!ossl_assert(item != NULL))
+        if (ossl_is_null(item))
             goto err;
     }
 
@@ -722,7 +722,7 @@ dtls1_process_out_of_seq_message(SSL *s, const struct hm_header_st *msg_hdr)
          * have been processed with |dtls1_reassemble_fragment|, above, or
          * the record will have been discarded.
          */
-        if (!ossl_assert(item != NULL))
+        if (ossl_is_null(item))
             goto err;
     }
 

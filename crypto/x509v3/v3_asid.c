@@ -234,7 +234,7 @@ int X509v3_asid_add_id_or_range(ASIdentifiers *asid,
 static int extract_min_max(ASIdOrRange *aor,
                            ASN1_INTEGER **min, ASN1_INTEGER **max)
 {
-    if (!ossl_assert(aor != NULL))
+    if (ossl_is_null(aor))
         return 0;
     switch (aor->type) {
     case ASIdOrRange_id:
@@ -777,7 +777,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
      */
     for (i++; i < sk_X509_num(chain); i++) {
         x = sk_X509_value(chain, i);
-        if (!ossl_assert(x != NULL)) {
+        if (ossl_is_null(x)) {
             if (ctx != NULL)
                 ctx->error = X509_V_ERR_UNSPECIFIED;
             return 0;
@@ -827,7 +827,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     /*
      * Trust anchor can't inherit.
      */
-    if (!ossl_assert(x != NULL)) {
+    if (ossl_assert(x)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;

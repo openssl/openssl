@@ -824,7 +824,7 @@ doapr_outch(char **sbuffer,
                 return 0;
             }
             if (*currlen > 0) {
-                if (!ossl_assert(*sbuffer != NULL))
+                if (ossl_is_null(*sbuffer))
                     return 0;
                 memcpy(*buffer, *sbuffer, *currlen);
             }

@@ -134,7 +134,7 @@ int WPACKET_init_static_len(WPACKET *pkt, unsigned char *buf, size_t len,
 int WPACKET_init_len(WPACKET *pkt, BUF_MEM *buf, size_t lenbytes)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(buf != NULL))
+    if (ossl_is_null(buf))
         return 0;
 
     pkt->staticbuf = NULL;
@@ -152,7 +152,7 @@ int WPACKET_init(WPACKET *pkt, BUF_MEM *buf)
 int WPACKET_set_flags(WPACKET *pkt, unsigned int flags)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL))
+    if (ossl_is_null(pkt->subs))
         return 0;
 
     pkt->subs->flags = flags;
@@ -226,7 +226,7 @@ int WPACKET_fill_lengths(WPACKET *pkt)
 {
     WPACKET_SUB *sub;
 
-    if (!ossl_assert(pkt->subs != NULL))
+    if (ossl_is_null(pkt->subs))
         return 0;
 
     for (sub = pkt->subs; sub != NULL; sub = sub->parent) {
@@ -275,7 +275,7 @@ int WPACKET_start_sub_packet_len__(WPACKET *pkt, size_t lenbytes)
     unsigned char *lenchars;
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL))
+    if (ossl_is_null(pkt->subs))
         return 0;
 
     if ((sub = OPENSSL_zalloc(sizeof(*sub))) == NULL) {
@@ -325,7 +325,7 @@ int WPACKET_set_max_size(WPACKET *pkt, size_t maxsize)
     size_t lenbytes;
 
     /* Internal API, so should not fail */
-    if (!ossl_assert(pkt->subs != NULL))
+    if (ossl_is_null(pkt->subs))
         return 0;
 
     /* Find the WPACKET_SUB for the top level */
@@ -388,7 +388,7 @@ int WPACKET_sub_memcpy__(WPACKET *pkt, const void *src, size_t len,
 int WPACKET_get_total_written(WPACKET *pkt, size_t *written)
 {
     /* Internal API, so should not fail */
-    if (!ossl_assert(written != NULL))
+    if (ossl_is_null(written))
         return 0;
 
     *written = pkt->written;

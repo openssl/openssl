@@ -383,9 +383,9 @@ int ssl_load_ciphers(void)
         }
     }
     /* Make sure we can access MD5 and SHA1 */
-    if (!ossl_assert(ssl_digest_methods[SSL_MD_MD5_IDX] != NULL))
+    if (ossl_is_null(ssl_digest_methods[SSL_MD_MD5_IDX]))
         return 0;
-    if (!ossl_assert(ssl_digest_methods[SSL_MD_SHA1_IDX] != NULL))
+    if (ossl_is_null(ssl_digest_methods[SSL_MD_SHA1_IDX]))
         return 0;
 
     disabled_mkey_mask = 0;

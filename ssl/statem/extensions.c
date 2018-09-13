@@ -432,7 +432,7 @@ int tls_validate_all_contexts(SSL *s, unsigned int thisctx, RAW_EXTENSION *exts)
 
             meth = custom_ext_find(&s->cert->custext, role, thisext->type,
                                    &offset);
-            if (!ossl_assert(meth != NULL))
+            if (ossl_is_null(meth))
                 return 0;
             context = meth->context;
         }
@@ -920,7 +920,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     int was_ticket = (SSL_get_options(s) & SSL_OP_NO_TICKET) == 0;
 
-    if (!ossl_assert(s->ctx != NULL) || !ossl_assert(s->session_ctx != NULL)) {
+    if (ossl_is_null(s->ctx) || ossl_is_null(s->session_ctx)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_FINAL_SERVER_NAME,
                  ERR_R_INTERNAL_ERROR);
         return 0;
