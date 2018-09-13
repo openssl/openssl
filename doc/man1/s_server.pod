@@ -157,6 +157,7 @@ B<openssl> B<s_server>
 [B<-psk_identity val>]
 [B<-psk_hint val>]
 [B<-psk val>]
+[B<-psk_session file>]
 [B<-srpvfile infile>]
 [B<-srpuserseed val>]
 [B<-ssl3>]
@@ -179,6 +180,8 @@ B<openssl> B<s_server>
 [B<-keylogfile outfile>]
 [B<-max_early_data int>]
 [B<-early_data>]
+[B<-anti_replay>]
+[B<-no_anti_replay>]
 
 =head1 DESCRIPTION
 
@@ -245,6 +248,17 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename "server.pem" will be used.
 
+=item B<-cert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+client/server certificate chain related to the certificate specified via the
+B<-cert> option.
+
+=item B<-build_chain>
+
+Specify whether the application should build the certificate chain to be
+provided to the client.
+
 =item B<-nameopt val>
 
 Option which determines how the subject or issuer names are displayed. The
@@ -294,9 +308,32 @@ and some a DSS (DSA) key. By using RSA and DSS certificates and keys
 a server can support clients which only support RSA or DSS cipher suites
 by using an appropriate certificate.
 
+=item B<-dcert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+server certificate chain when a certificate specified via the B<-dcert> option
+is in use.
+
 =item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>, B<-dpass val>
 
 Additional certificate and private key format and passphrase respectively.
+
+=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain. These behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by
+the server.
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the client for the extra certificates provided via B<-xkey infile>,
+B<-xcert infile>, B<-xchain> options.
+
+=item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
+
+Extra certificate and private key format respectively.
 
 =item B<-nbio_test>
 
@@ -332,8 +369,18 @@ a certificate is requested.
 =item B<-CApath dir>
 
 The directory to use for client certificate verification. This directory
-must be in "hash format", see B<verify> for more information. These are
+must be in "hash format", see L<verify(1)> for more information. These are
 also used when building the server certificate chain.
+
+=item B<-chainCApath dir>
+
+The directory to use for building the chain provided to the client. This
+directory must be in "hash format", see L<verify(1)> for more information.
+
+=item B<-chainCAfile file>
+
+A file containing trusted certificates to use when attempting to build the
+server certificate chain.
 
 =item B<-no-CAfile>
 
@@ -485,6 +532,8 @@ By default B<s_server> will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be accepted
 from the client.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
 
 =item B<-bugs>
 
@@ -597,6 +646,11 @@ given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 This option must be provided in order to use a PSK cipher.
 
+=item B<-psk_session file>
+
+Use the pem encoded SSL_SESSION data stored in B<file> as the basis of a PSK.
+Note that this will only work if TLSv1.3 is negotiated.
+
 =item B<-listen>
 
 This option can only be used in conjunction with one of the DTLS options above.
@@ -659,6 +713,15 @@ greater than or equal to 0.
 
 Accept early data where possible.
 
+=item B<-anti_replay>, B<-no_anti_replay>
+
+Switches replay protection on or off, respectively. Replay protection is on by
+default unless overridden by a configuration file. When it is on, OpenSSL will
+automatically detect if a session ticket has been used more than once, TLSv1.3
+has been negotiated, and early data is enabled on the server. A full handshake
+is forced if a session ticket is used a second or subsequent time. Any early
+data that was sent will be rejected.
+
 =back
 
 =head1 CONNECTED COMMANDS
@@ -667,8 +730,9 @@ If a connection request is established with an SSL client and neither the
 B<-www> nor the B<-WWW> option has been used then normally any data received
 from the client is displayed and any key presses will be sent to the client.
 
-Certain single letter commands are also recognized which perform special
-operations: these are listed below.
+Certain commands are also recognized which perform special operations. These
+commands are a letter which must appear at the start of a line. They are listed
+below.
 
 =over 4
 
@@ -682,11 +746,12 @@ End the current SSL connection and exit.
 
 =item B<r>
 
-Renegotiate the SSL session.
+Renegotiate the SSL session (TLSv1.2 and below only).
 
 =item B<R>
 
-Renegotiate the SSL session and request a client certificate.
+Renegotiate the SSL session and request a client certificate (TLSv1.2 and below
+only).
 
 =item B<P>
 
@@ -696,6 +761,22 @@ cause the client to disconnect due to a protocol violation.
 =item B<S>
 
 Print out some session cache status information.
+
+=item B<B>
+
+Send a heartbeat message to the client (DTLS only)
+
+=item B<k>
+
+Send a key update message to the client (TLSv1.3 only)
+
+=item B<K>
+
+Send a key update message to the client and request one back (TLSv1.3 only)
+
+=item B<c>
+
+Send a certificate request to the client (TLSv1.3 only)
 
 =back
 
@@ -730,7 +811,8 @@ unknown cipher suites a client says it supports.
 =head1 SEE ALSO
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_client(1)>, L<ciphers(1)>
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_send_fragment(3)>,
+L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)> 
 
 =head1 HISTORY

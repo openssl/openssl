@@ -74,7 +74,7 @@ static void calculate_columns(DISPLAY_COLUMNS *dc)
     dc->columns = (80 - 1) / dc->width;
 }
 
-static int apps_startup()
+static int apps_startup(void)
 {
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
@@ -90,13 +90,13 @@ static int apps_startup()
     return 1;
 }
 
-static void apps_shutdown()
+static void apps_shutdown(void)
 {
     destroy_ui_method();
     destroy_prefix_method();
 }
 
-static char *make_config_name()
+static char *make_config_name(void)
 {
     const char *t;
     size_t len;

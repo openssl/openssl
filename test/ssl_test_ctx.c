@@ -126,6 +126,7 @@ static const test_enum ssl_alerts[] = {
     {"UnrecognizedName", SSL_AD_UNRECOGNIZED_NAME},
     {"BadCertificate", SSL_AD_BAD_CERTIFICATE},
     {"NoApplicationProtocol", SSL_AD_NO_APPLICATION_PROTOCOL},
+    {"CertificateRequired", SSL_AD_CERTIFICATE_REQUIRED},
 };
 
 __owur static int parse_alert(int *alert, const char *value)
@@ -628,9 +629,9 @@ __owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
 
 IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_cipher)
 
-/* Client and Server ForcePHA */
+/* Client and Server PHA */
 
-IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, force_pha)
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, enable_pha)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, force_pha)
 
 /* Known test options and their corresponding parse methods. */
@@ -688,7 +689,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "SRPUser", &parse_client_srp_user },
     { "SRPPassword", &parse_client_srp_password },
     { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
-    { "ForcePHA", &parse_client_force_pha },
+    { "EnablePHA", &parse_client_enable_pha },
 };
 
 /* Nested server options. */
@@ -709,7 +710,7 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
 };
 
-SSL_TEST_CTX *SSL_TEST_CTX_new()
+SSL_TEST_CTX *SSL_TEST_CTX_new(void)
 {
     SSL_TEST_CTX *ret;
 

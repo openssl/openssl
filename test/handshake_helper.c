@@ -22,7 +22,7 @@
 #include "handshake_helper.h"
 #include "testutil.h"
 
-HANDSHAKE_RESULT *HANDSHAKE_RESULT_new()
+HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
     HANDSHAKE_RESULT *ret;
 
@@ -469,12 +469,24 @@ static int generate_session_ticket_cb(SSL *s, void *arg)
     return SSL_SESSION_set1_ticket_appdata(ss, app_data, strlen(app_data));
 }
 
-static SSL_TICKET_RETURN decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
-                                                   const unsigned char *keyname,
-                                                   size_t keyname_len,
-                                                   SSL_TICKET_RETURN retv, void *arg)
+static int decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
+                                     const unsigned char *keyname,
+                                     size_t keyname_len,
+                                     SSL_TICKET_STATUS status,
+                                     void *arg)
 {
-    return retv;
+    switch (status) {
+    case SSL_TICKET_EMPTY:
+    case SSL_TICKET_NO_DECRYPT:
+        return SSL_TICKET_RETURN_IGNORE_RENEW;
+    case SSL_TICKET_SUCCESS:
+        return SSL_TICKET_RETURN_USE;
+    case SSL_TICKET_SUCCESS_RENEW:
+        return SSL_TICKET_RETURN_USE_RENEW;
+    default:
+        break;
+    }
+    return SSL_TICKET_RETURN_ABORT;
 }
 
 /*
@@ -714,8 +726,8 @@ static void configure_handshake_ssl(SSL *server, SSL *client,
     if (extra->client.servername != SSL_TEST_SERVERNAME_NONE)
         SSL_set_tlsext_host_name(client,
                                  ssl_servername_name(extra->client.servername));
-    if (extra->client.force_pha)
-        SSL_force_post_handshake_auth(client);
+    if (extra->client.enable_pha)
+        SSL_set_post_handshake_auth(client, 1);
 }
 
 /* The status for each connection phase. */
@@ -1384,14 +1396,15 @@ static int create_sctp_socks(int *ssock, int *csock)
 static HANDSHAKE_RESULT *do_handshake_internal(
     SSL_CTX *server_ctx, SSL_CTX *server2_ctx, SSL_CTX *client_ctx,
     const SSL_TEST_CTX *test_ctx, const SSL_TEST_EXTRA_CONF *extra,
-    SSL_SESSION *session_in, SSL_SESSION **session_out)
+    SSL_SESSION *session_in, SSL_SESSION *serv_sess_in,
+    SSL_SESSION **session_out, SSL_SESSION **serv_sess_out)
 {
     PEER server, client;
     BIO *client_to_server = NULL, *server_to_client = NULL;
     HANDSHAKE_EX_DATA server_ex_data, client_ex_data;
     CTX_DATA client_ctx_data, server_ctx_data, server2_ctx_data;
     HANDSHAKE_RESULT *ret = HANDSHAKE_RESULT_new();
-    int client_turn = 1, client_turn_count = 0;
+    int client_turn = 1, client_turn_count = 0, client_wait_count = 0;
     connect_phase_t phase = HANDSHAKE;
     handshake_status_t status = HANDSHAKE_RETRY;
     const unsigned char* tick = NULL;
@@ -1440,10 +1453,14 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     configure_handshake_ssl(server.ssl, client.ssl, extra);
     if (session_in != NULL) {
+        SSL_SESSION_get_id(serv_sess_in, &sess_id_len);
         /* In case we're testing resumption without tickets. */
-        if (!TEST_true(SSL_CTX_add_session(server_ctx, session_in))
+        if ((sess_id_len > 0
+                    && !TEST_true(SSL_CTX_add_session(server_ctx,
+                                                      serv_sess_in)))
                 || !TEST_true(SSL_set_session(client.ssl, session_in)))
             goto err;
+        sess_id_len = 0;
     }
 
     ret->result = SSL_TEST_INTERNAL_ERROR;
@@ -1574,9 +1591,19 @@ static HANDSHAKE_RESULT *do_handshake_internal(
                     ret->result = SSL_TEST_INTERNAL_ERROR;
                     goto err;
                 }
-
-                /* Continue. */
-                client_turn ^= 1;
+                if (client_turn && server.status == PEER_SUCCESS) {
+                    /*
+                     * The server may finish before the client because the
+                     * client spends some turns processing NewSessionTickets.
+                     */
+                    if (client_wait_count++ >= 2) {
+                        ret->result = SSL_TEST_INTERNAL_ERROR;
+                        goto err;
+                    }
+                } else {
+                    /* Continue. */
+                    client_turn ^= 1;
+                }
             }
             break;
         }
@@ -1635,6 +1662,16 @@ static HANDSHAKE_RESULT *do_handshake_internal(
 
     if (session_out != NULL)
         *session_out = SSL_get1_session(client.ssl);
+    if (serv_sess_out != NULL) {
+        SSL_SESSION *tmp = SSL_get_session(server.ssl);
+
+        /*
+         * We create a fresh copy that is not in the server session ctx linked
+         * list.
+         */
+        if (tmp != NULL)
+            *serv_sess_out = SSL_SESSION_dup(tmp);
+    }
 
     if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
         ret->tmp_key_type = pkey_type(tmp_key);
@@ -1677,11 +1714,11 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
                                const SSL_TEST_CTX *test_ctx)
 {
     HANDSHAKE_RESULT *result;
-    SSL_SESSION *session = NULL;
+    SSL_SESSION *session = NULL, *serv_sess = NULL;
 
     result = do_handshake_internal(server_ctx, server2_ctx, client_ctx,
                                    test_ctx, &test_ctx->extra,
-                                   NULL, &session);
+                                   NULL, NULL, &session, &serv_sess);
     if (result == NULL
             || test_ctx->handshake_mode != SSL_TEST_HANDSHAKE_RESUME
             || result->result == SSL_TEST_INTERNAL_ERROR)
@@ -1696,8 +1733,9 @@ HANDSHAKE_RESULT *do_handshake(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     /* We don't support SNI on second handshake yet, so server2_ctx is NULL. */
     result = do_handshake_internal(resume_server_ctx, NULL, resume_client_ctx,
                                    test_ctx, &test_ctx->resume_extra,
-                                   session, NULL);
+                                   session, serv_sess, NULL, NULL);
  end:
     SSL_SESSION_free(session);
+    SSL_SESSION_free(serv_sess);
     return result;
 }

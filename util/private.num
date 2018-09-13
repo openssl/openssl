@@ -48,7 +48,9 @@ RAND_DRBG_cleanup_nonce_fn              datatype
 RAND_DRBG_get_entropy_fn                datatype
 RAND_DRBG_get_nonce_fn                  datatype
 RAND_poll_cb                            datatype
+SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
+SSL_allow_early_data_cb_fn              datatype
 SSL_client_hello_cb_fn                  datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
@@ -73,6 +75,11 @@ X509_STORE_CTX_lookup_crls_fn           datatype
 X509_STORE_CTX_verify_cb                datatype
 X509_STORE_CTX_verify_fn                datatype
 X509_STORE_set_verify_cb_func           datatype
+X509_LOOKUP_get_by_alias_fn             datatype
+X509_LOOKUP_get_by_subject_fn           datatype
+X509_LOOKUP_get_by_fingerprint_fn       datatype
+X509_LOOKUP_ctrl_fn                     datatype
+X509_LOOKUP_get_by_issuer_serial_fn     datatype
 bio_info_cb                             datatype
 BIO_info_cb                             datatype
 custom_ext_add_cb                       datatype
@@ -406,3 +413,6 @@ SSLv23_method                           define
 SSLv23_server_method                    define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
+EVP_PKEY_CTX_set1_id                    define
+EVP_PKEY_CTX_get1_id                    define
+EVP_PKEY_CTX_get1_id_len                define

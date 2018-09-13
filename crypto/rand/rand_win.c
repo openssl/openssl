@@ -169,4 +169,17 @@ void RAND_screen(void)
 }
 # endif
 
+int rand_pool_init(void)
+{
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
+}
+
 #endif

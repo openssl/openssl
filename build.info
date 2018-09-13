@@ -33,6 +33,14 @@ IF[{- defined $target{shared_defflag} -}]
 
     SHARED_SOURCE[libcrypto]=libcrypto.def
     SHARED_SOURCE[libssl]=libssl.def
+  ELSIF[{- $config{target} =~ /^aix/ -}]
+    GENERATE[libcrypto.map]=util/mkdef.pl crypto aix
+    DEPEND[libcrypto.map]=util/libcrypto.num
+    GENERATE[libssl.map]=util/mkdef.pl ssl aix
+    DEPEND[libssl.map]=util/libssl.num
+
+    SHARED_SOURCE[libcrypto]=libcrypto.map
+    SHARED_SOURCE[libssl]=libssl.map
   ELSE
     GENERATE[libcrypto.map]=util/mkdef.pl crypto linux
     DEPEND[libcrypto.map]=util/libcrypto.num

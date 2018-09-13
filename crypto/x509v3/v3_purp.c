@@ -13,6 +13,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include "internal/x509_int.h"
+#include "internal/tsan_assist.h"
 
 static void x509v3_cache_extensions(X509 *x);
 
@@ -133,13 +134,14 @@ int X509_PURPOSE_get_by_id(int purpose)
 {
     X509_PURPOSE tmp;
     int idx;
+
     if ((purpose >= X509_PURPOSE_MIN) && (purpose <= X509_PURPOSE_MAX))
         return purpose - X509_PURPOSE_MIN;
-    tmp.purpose = purpose;
-    if (!xptable)
+    if (xptable == NULL)
         return -1;
+    tmp.purpose = purpose;
     idx = sk_X509_PURPOSE_find(xptable, &tmp);
-    if (idx == -1)
+    if (idx < 0)
         return -1;
     return idx + X509_PURPOSE_COUNT;
 }
@@ -350,11 +352,13 @@ static void x509v3_cache_extensions(X509 *x)
     ASN1_BIT_STRING *ns;
     EXTENDED_KEY_USAGE *extusage;
     X509_EXTENSION *ex;
-
     int i;
 
-    if (x->ex_flags & EXFLAG_SET)
+#ifdef tsan_ld_acq
+    /* fast lock-free check, see end of the function for details. */
+    if (tsan_ld_acq((TSAN_QUALIFIER int *)&x->ex_cached))
         return;
+#endif
 
     CRYPTO_THREAD_write_lock(x->lock);
     if (x->ex_flags & EXFLAG_SET) {
@@ -496,6 +500,14 @@ static void x509v3_cache_extensions(X509 *x)
     }
     x509_init_sig_info(x);
     x->ex_flags |= EXFLAG_SET;
+#ifdef tsan_st_rel
+    tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
+    /*
+     * Above store triggers fast lock-free check in the beginning of the
+     * function. But one has to ensure that the structure is "stable", i.e.
+     * all stores are visible on all processors. Hence the release fence.
+     */
+#endif
     CRYPTO_THREAD_unlock(x->lock);
 }
 

@@ -19,6 +19,7 @@ use lib bldtop_dir('.');
 use configdata;
 
 plan skip_all => "Test only supported in a shared build" if disabled("shared");
+plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 
 plan tests => 4;
 

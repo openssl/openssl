@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_set0_CA_list, SSL_CTX_set0_CA_list, SSL_get0_CA_list,
-SSL_CTX_get0_CA_list, SSL_add1_CA_list, SSL_CTX_add1_CA_list,
+SSL_CTX_get0_CA_list, SSL_add1_to_CA_list, SSL_CTX_add1_to_CA_list,
 SSL_get0_peer_CA_list - get or set CA list
 
 =head1 SYNOPSIS
@@ -14,8 +14,8 @@ SSL_get0_peer_CA_list - get or set CA list
  void SSL_set0_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list);
  const STACK_OF(X509_NAME) *SSL_CTX_get0_CA_list(const SSL_CTX *ctx);
  const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s);
- int SSL_CTX_add1_CA_list(SSL_CTX *ctx, const X509 *x);
- int SSL_add1_CA_list(SSL *ssl, const X509 *x);
+ int SSL_CTX_add1_to_CA_list(SSL_CTX *ctx, const X509 *x);
+ int SSL_add1_to_CA_list(SSL *ssl, const X509 *x);
 
  const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s);
 
@@ -35,10 +35,10 @@ B<ctx>.
 SSL_CTX_get0_CA_list() retrieves any previously set list of CAs set for
 B<s> or if none are set the list from the parent B<SSL_CTX> is retrieved.
 
-SSL_CTX_add1_CA_list() appends the CA subject name extracted from B<x> to the
+SSL_CTX_add1_to_CA_list() appends the CA subject name extracted from B<x> to the
 list of CAs sent to peer for B<ctx>.
 
-SSL_add1_CA_list() appends the CA subject name extracted from B<x> to the
+SSL_add1_to_CA_list() appends the CA subject name extracted from B<x> to the
 list of CAs sent to the peer for B<s>, overriding the setting in the parent
 B<SSL_CTX>.
 
@@ -66,7 +66,7 @@ SSL_CTX_set0_CA_list() and SSL_set0_CA_list() do not return a value.
 SSL_CTX_get0_CA_list() and SSL_get0_CA_list() return a stack of CA names
 or B<NULL> is no CA names are set.
 
-SSL_CTX_add1_CA_list() and SSL_add1_CA_list() return 1 for success and 0
+SSL_CTX_add1_to_CA_list() and SSL_add1_to_CA_list() return 1 for success and 0
 for failure.
 
 SSL_get0_peer_CA_list() returns a stack of CA names sent by the peer or
@@ -82,7 +82,7 @@ L<SSL_CTX_load_verify_locations(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

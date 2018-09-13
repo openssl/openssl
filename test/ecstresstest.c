@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL licenses, (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,16 +45,15 @@ static BIGNUM *walk_curve(const EC_GROUP *group, EC_POINT *point, int64_t num)
     int64_t i;
 
     if (!TEST_ptr(scalar = BN_new())
-            || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, point,
-                                                              scalar,
-                                                              NULL, NULL)))
+            || !TEST_true(EC_POINT_get_affine_coordinates(group, point, scalar,
+                                                          NULL, NULL)))
         goto err;
 
     for (i = 0; i < num; i++) {
         if (!TEST_true(EC_POINT_mul(group, point, NULL, point, scalar, NULL))
-                || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, point,
-                                                                  scalar,
-                                                                  NULL, NULL)))
+                || !TEST_true(EC_POINT_get_affine_coordinates(group, point,
+                                                              scalar,
+                                                              NULL, NULL)))
             goto err;
     }
     return scalar;

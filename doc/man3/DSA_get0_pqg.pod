@@ -2,8 +2,11 @@
 
 =head1 NAME
 
-DSA_get0_pqg, DSA_set0_pqg, DSA_get0_key, DSA_set0_key, DSA_clear_flags,
-DSA_test_flags, DSA_set_flags, DSA_get0_engine - Routines for getting and
+DSA_get0_pqg, DSA_set0_pqg, DSA_get0_key, DSA_set0_key,
+DSA_get0_p, DSA_get0_q, DSA_get0_g,
+DSA_get0_pub_key, DSA_get0_priv_key,
+DSA_clear_flags, DSA_test_flags, DSA_set_flags,
+DSA_get0_engine - Routines for getting and
 setting data in a DSA object
 
 =head1 SYNOPSIS
@@ -16,6 +19,11 @@ setting data in a DSA object
  void DSA_get0_key(const DSA *d,
                    const BIGNUM **pub_key, const BIGNUM **priv_key);
  int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key);
+ const BIGNUM *DSA_get0_p(const DSA *d);
+ const BIGNUM *DSA_get0_q(const DSA *d);
+ const BIGNUM *DSA_get0_g(const DSA *d);
+ const BIGNUM *DSA_get0_pub_key(const DSA *d);
+ const BIGNUM *DSA_get0_priv_key(const DSA *d);
  void DSA_clear_flags(DSA *d, int flags);
  int DSA_test_flags(const DSA *d, int flags);
  void DSA_set_flags(DSA *d, int flags);
@@ -52,6 +60,10 @@ which means the corresponding DSA field is left untouched. As for DSA_set0_pqg()
 this function transfers the memory management of the key values to the DSA
 object, and therefore they should not be freed directly after this function has
 been called.
+
+Any of the values B<p>, B<q>, B<g>, B<priv_key>, and B<pub_key> can also be
+retrieved separately by the corresponding function DSA_get0_p(), DSA_get0_q(),
+DSA_get0_g(), DSA_get0_priv_key(), and DSA_get0_pub_key(), respectively.
 
 DSA_set_flags() sets the flags in the B<flags> parameter on the DSA object.
 Multiple flags can be passed in one go (bitwise ORed together). Any flags that
@@ -92,7 +104,7 @@ The functions described here were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

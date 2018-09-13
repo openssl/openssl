@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL licenses, (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
 #include "fuzzer.h"
 
 #ifndef OPENSSL_NO_FUZZ_LIBFUZZER
+
+int LLVMFuzzerInitialize(int *argc, char ***argv);
+int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len);
 
 int LLVMFuzzerInitialize(int *argc, char ***argv)
 {

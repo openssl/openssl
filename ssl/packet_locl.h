@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,10 +17,6 @@
 # include <openssl/e_os2.h>
 
 # include "internal/numbers.h"
-
-# ifdef __cplusplus
-extern "C" {
-# endif
 
 typedef struct {
     /* Pointer to where we are currently reading from */
@@ -874,9 +870,5 @@ unsigned char *WPACKET_get_curr(WPACKET *pkt);
 
 /* Release resources in a WPACKET if a failure has occurred. */
 void WPACKET_cleanup(WPACKET *pkt);
-
-# ifdef __cplusplus
-}
-# endif
 
 #endif                          /* HEADER_PACKET_LOCL_H */

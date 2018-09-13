@@ -61,6 +61,6 @@ test_script:
     - ps: >-
         if ($env:EXTENDED_TESTS) {
             mkdir ..\_install
-            cmd /c "nmake install install_docs DESTDIR=..\_install 2>&1"
+            cmd /c "nmake install DESTDIR=..\_install 2>&1"
         }
     - cd ..

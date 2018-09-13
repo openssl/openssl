@@ -282,7 +282,7 @@ int pkeyutl_main(int argc, char **argv)
         buf_inlen = bio_to_mem(&buf_in, keysize * 10, in);
         if (buf_inlen < 0) {
             BIO_printf(bio_err, "Error reading input Data\n");
-            exit(1);
+            goto end;
         }
         if (rev) {
             size_t i;
@@ -294,6 +294,16 @@ int pkeyutl_main(int argc, char **argv)
                 buf_in[l - 1 - i] = ctmp;
             }
         }
+    }
+
+    /* Sanity check the input */
+    if (buf_inlen > EVP_MAX_MD_SIZE
+            && (pkey_op == EVP_PKEY_OP_SIGN
+                || pkey_op == EVP_PKEY_OP_VERIFY
+                || pkey_op == EVP_PKEY_OP_VERIFYRECOVER)) {
+        BIO_printf(bio_err,
+                   "Error: The input data looks too long to be a hash\n");
+        goto end;
     }
 
     if (pkey_op == EVP_PKEY_OP_VERIFY) {

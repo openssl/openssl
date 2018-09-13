@@ -126,6 +126,7 @@ my $W32=0;
 my $NT=0;
 my $UNIX=0;
 my $linux=0;
+my $aix=0;
 # Set this to make typesafe STACK definitions appear in DEF
 my $safe_stack_def = 0;
 
@@ -171,12 +172,15 @@ foreach (@ARGV, split(/ /, $config{options}))
 	if($_ eq "NT") {
 		$W32 = 1;
 		$NT = 1;
-	}
-	if ($_ eq "linux") {
+	} elsif ($_ eq "linux") {
 		$linux=1;
 		$UNIX=1;
+	} elsif ($_ eq "aix") {
+		$aix=1;
+		$UNIX=1;
+	} elsif ($_ eq "VMS") {
+		$VMS=1;
 	}
-	$VMS=1 if $_ eq "VMS";
 	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
@@ -204,11 +208,11 @@ if (!$libname) {
 }
 
 # If no platform is given, assume WIN32
-if ($W32 + $VMS + $linux == 0) {
+if ($W32 + $VMS + $linux + $aix == 0) {
 	$W32 = 1;
 }
 die "Please, only one platform at a time"
-    if ($W32 + $VMS + $linux > 1);
+    if ($W32 + $VMS + $linux + $aix > 1);
 
 if (!$do_ssl && !$do_crypto)
 	{
@@ -1237,6 +1241,8 @@ EOF
 							$prevsymversion = $symversion;
 						}
 						print OUT "        $s2;\n";
+					} elsif ($aix) {
+						print OUT "$s2\n";
                                         } elsif ($VMS) {
                                             while(++$prevnum < $n) {
                                                 my $symline=" ,SPARE -\n  ,SPARE -\n";
@@ -1288,7 +1294,7 @@ EOF
 	} elsif ($VMS) {
             print OUT ")\n";
             (my $libvmaj, my $libvmin, my $libvedit) =
-                $currversion =~ /^(\d+)_(\d+)_(\d+)$/;
+                $currversion =~ /^(\d+)_(\d+)_(\d+)[a-z]{0,2}$/;
             # The reason to multiply the edit number with 100 is to make space
             # for the possibility that we want to encode the patch letters
             print OUT "GSMATCH=LEQUAL,",($libvmaj * 100 + $libvmin),",",($libvedit * 100),"\n";

@@ -308,7 +308,7 @@ static int do_dir(const char *dirname, enum Hash h)
     size_t i;
     const char *pathsep;
     const char *filename;
-    char *buf, *copy;
+    char *buf, *copy = NULL;
     STACK_OF(OPENSSL_STRING) *files = NULL;
 
     if (app_access(dirname, W_OK) < 0) {
@@ -325,13 +325,16 @@ static int do_dir(const char *dirname, enum Hash h)
 
     if ((files = sk_OPENSSL_STRING_new_null()) == NULL) {
         BIO_printf(bio_err, "Skipping %s, out of memory\n", dirname);
-        exit(1);
+        errs = 1;
+        goto err;
     }
     while ((filename = OPENSSL_DIR_read(&d, dirname)) != NULL) {
-        if ((copy = strdup(filename)) == NULL
+        if ((copy = OPENSSL_strdup(filename)) == NULL
                 || sk_OPENSSL_STRING_push(files, copy) == 0) {
+            OPENSSL_free(copy);
             BIO_puts(bio_err, "out of memory\n");
-            exit(1);
+            errs = 1;
+            goto err;
         }
     }
     OPENSSL_DIR_end(&d);
@@ -349,7 +352,6 @@ static int do_dir(const char *dirname, enum Hash h)
             continue;
         errs += do_file(filename, buf, h);
     }
-    sk_OPENSSL_STRING_pop_free(files, str_free);
 
     for (i = 0; i < OSSL_NELEM(hash_table); i++) {
         for (bp = hash_table[i]; bp; bp = nextbp) {
@@ -417,6 +419,8 @@ static int do_dir(const char *dirname, enum Hash h)
         hash_table[i] = NULL;
     }
 
+ err:
+    sk_OPENSSL_STRING_pop_free(files, str_free);
     OPENSSL_free(buf);
     return errs;
 }

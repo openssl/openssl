@@ -7,6 +7,7 @@ language: c
 cache: ccache
 git:
     submodules: false
+    quiet: true
 
 before_install:
     - if [ -n "$COVERALLS" ]; then
@@ -15,12 +16,6 @@ before_install:
     - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
           git submodule update --init --recursive;
       fi;
-
-addons:
-    apt:
-        packages:
-            - ccache
-            - golang-1.6
 
 os:
     - linux
@@ -33,10 +28,14 @@ compiler:
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
     - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
-    - CONFIG_OPTS="no-asm no-makedepend --strict-warnings" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
+    - CONFIG_OPTS="no-asm no-makedepend --strict-warnings -std=c89 -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
 
 matrix:
     include:
+        - os: linux-ppc64le
+          sudo: false
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
           addons:
               apt:
@@ -48,8 +47,8 @@ matrix:
           compiler: gcc-5
           env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
-          compiler: clang-3.9
-          env: CONFIG_OPTS="--strict-warnings no-deprecated" BUILDONLY="yes"
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
         - os: linux
           addons:
               apt:
@@ -58,12 +57,19 @@ matrix:
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
           env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+        # Uncomment if there is reason to believe that PPC-specific problem
+        # can be diagnosed with this possibly >30 mins sanitizer build...
+        #- os: linux-ppc64le
+        #  sudo: false
+        #  compiler: gcc
+        #  env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-ubsan no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES"
         - os: linux
           addons:
               apt:
                   packages:
                       - gcc-5
                       - g++-5
+                      - golang-1.6
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
@@ -74,19 +80,20 @@ matrix:
                   packages:
                       - gcc-5
                       - g++-5
+                      - golang-1.6
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
           env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
         - os: linux
-          compiler: clang-3.9
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan"
+          compiler: clang
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
-          compiler: clang-3.9
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg -fno-sanitize=alignment no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          compiler: clang
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
-          compiler: clang-3.9
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+          compiler: clang
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           addons:
               apt:
@@ -96,7 +103,7 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          env: UBUNTU_GCC_HACK="yes" EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:
@@ -134,6 +141,10 @@ before_script:
       else
           srcdir=.;
           top=.;
+      fi
+    - if [ -n "$UBUNTU_GCC_HACK" ]; then
+          $CC -dumpspecs | sed "s/--push-state//g; s/--pop-state/--as-needed/g" > gcc-specs.txt;
+          CC="$CC -specs=gcc-specs.txt";
       fi
     - if [ "$CC" = i686-w64-mingw32-gcc ]; then
           export CROSS_COMPILE=${CC%%gcc}; unset CC;
@@ -176,8 +187,8 @@ script:
           echo -e '+\057 MAKE UPDATE OK';
       else
           echo -e '+\057 MAKE UPDATE FAILED'; false;
-      fi;
-      git diff --exit-code
+      fi
+    - git diff --exit-code
     - if [ -n "$CHECKDOCS" ]; then
           if $make doc-nits; then
               echo -e '+\057\057 MAKE DOC-NITS OK';
@@ -223,7 +234,7 @@ script:
       fi
     - if [ -n "$DESTDIR" ]; then
           mkdir "$top/$DESTDIR";
-          if $make install install_docs DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
+          if $make install DESTDIR="$top/$DESTDIR" >~/install.log 2>&1 ; then
               echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL OK';
           else
               echo -e '+\057\057\057\057\057\057\057 MAKE INSTALL FAILED';

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -493,6 +493,9 @@ $code.=<<___;
 	mulx	$npj,$mul1,$acc1
 	add	$tpj,$car1,$car1
 	ld	[$np+$j],$npj			! np[j]
+	srlx	$car1,32,$tmp0
+	and	$car1,$mask,$car1
+	add	$tmp0,$sbit,$sbit
 	add	$acc0,$car1,$car1
 	ld	[$tp+8],$tpj			! tp[j]
 	add	$acc1,$car1,$car1

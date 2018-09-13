@@ -201,6 +201,7 @@ static int psk_use_session_cb(SSL *s, const EVP_MD *md,
         cipher = SSL_CIPHER_find(s, tls13_aes128gcmsha256_id);
         if (cipher == NULL) {
             BIO_printf(bio_err, "Error finding suitable ciphersuite\n");
+            OPENSSL_free(key);
             return 0;
         }
 
@@ -594,7 +595,7 @@ typedef enum OPTION_choice {
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
-    OPT_FORCE_PHA,
+    OPT_ENABLE_PHA,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
@@ -785,7 +786,7 @@ const OPTIONS s_client_options[] = {
 #endif
     {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
-    {"force_pha", OPT_FORCE_PHA, '-', "Force-enable post-handshake-authentication"},
+    {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
     {NULL, OPT_EOF, 0x00, NULL}
 };
 
@@ -843,15 +844,29 @@ static void freeandcopy(char **dest, const char *source)
         *dest = OPENSSL_strdup(source);
 }
 
-static int new_session_cb(SSL *S, SSL_SESSION *sess)
+static int new_session_cb(SSL *s, SSL_SESSION *sess)
 {
-    BIO *stmp = BIO_new_file(sess_out, "w");
 
-    if (stmp == NULL) {
-        BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
-    } else {
-        PEM_write_bio_SSL_SESSION(stmp, sess);
-        BIO_free(stmp);
+    if (sess_out != NULL) {
+        BIO *stmp = BIO_new_file(sess_out, "w");
+
+        if (stmp == NULL) {
+            BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+        } else {
+            PEM_write_bio_SSL_SESSION(stmp, sess);
+            BIO_free(stmp);
+        }
+    }
+
+    /*
+     * Session data gets dumped on connection for TLSv1.2 and below, and on
+     * arrival of the NewSessionTicket for TLSv1.3.
+     */
+    if (SSL_version(s) == TLS1_3_VERSION) {
+        BIO_printf(bio_c_out,
+                   "---\nPost-Handshake New Session Ticket arrived:\n");
+        SSL_SESSION_print(bio_c_out, sess);
+        BIO_printf(bio_c_out, "---\n");
     }
 
     /*
@@ -935,7 +950,9 @@ int s_client_main(int argc, char **argv)
     int srp_lateuser = 0;
     SRP_ARG srp_arg = { NULL, NULL, 0, 0, 0, 1024 };
 #endif
+#ifndef OPENSSL_NO_SRTP
     char *srtp_profiles = NULL;
+#endif
 #ifndef OPENSSL_NO_CT
     char *ctlog_file = NULL;
     int ct_validation = 0;
@@ -958,7 +975,7 @@ int s_client_main(int argc, char **argv)
     int isdtls = 0;
 #endif
     char *psksessf = NULL;
-    int force_pha = 0;
+    int enable_pha = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1422,7 +1439,9 @@ int s_client_main(int argc, char **argv)
             noservername = 1;
             break;
         case OPT_USE_SRTP:
+#ifndef OPENSSL_NO_SRTP
             srtp_profiles = opt_arg();
+#endif
             break;
         case OPT_KEYMATEXPORT:
             keymatexportlabel = opt_arg();
@@ -1473,8 +1492,8 @@ int s_client_main(int argc, char **argv)
         case OPT_EARLY_DATA:
             early_data_file = opt_arg();
             break;
-        case OPT_FORCE_PHA:
-            force_pha = 1;
+        case OPT_ENABLE_PHA:
+            enable_pha = 1;
             break;
         }
     }
@@ -1670,6 +1689,8 @@ int s_client_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+
+    SSL_CTX_clear_mode(ctx, SSL_MODE_AUTO_RETRY);
 
     if (sdebug)
         ssl_ctx_security_debug(ctx, sdebug);
@@ -1912,11 +1933,9 @@ int s_client_main(int argc, char **argv)
      * come at any time. Therefore we use a callback to write out the session
      * when we know about it. This approach works for < TLSv1.3 as well.
      */
-    if (sess_out != NULL) {
-        SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
-                                            | SSL_SESS_CACHE_NO_INTERNAL_STORE);
-        SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
-    }
+    SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_CLIENT
+                                        | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    SSL_CTX_sess_set_new_cb(ctx, new_session_cb);
 
     if (set_keylog_file(ctx, keylog_file))
         goto end;
@@ -1925,8 +1944,8 @@ int s_client_main(int argc, char **argv)
     if (con == NULL)
         goto end;
 
-    if (force_pha)
-        SSL_force_post_handshake_auth(con);
+    if (enable_pha)
+        SSL_set_post_handshake_auth(con, 1);
 
     if (sess_in != NULL) {
         SSL_SESSION *sess;
@@ -2703,8 +2722,7 @@ int s_client_main(int argc, char **argv)
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
 
-        if ((SSL_version(con) == DTLS1_VERSION) &&
-            DTLSv1_get_timeout(con, &timeout))
+        if (SSL_is_dtls(con) && DTLSv1_get_timeout(con, &timeout))
             timeoutp = &timeout;
         else
             timeoutp = NULL;
@@ -2815,10 +2833,8 @@ int s_client_main(int argc, char **argv)
             }
         }
 
-        if ((SSL_version(con) == DTLS1_VERSION)
-            && DTLSv1_handle_timeout(con) > 0) {
+        if (SSL_is_dtls(con) && DTLSv1_handle_timeout(con) > 0)
             BIO_printf(bio_err, "TIMEOUT occurred\n");
-        }
 
         if (!ssl_pending && FD_ISSET(SSL_get_fd(con), &writefds)) {
             k = SSL_write(con, &(cbuf[cbuf_off]), (unsigned int)cbuf_len);
@@ -3121,7 +3137,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
-    int i;
+    int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
+    long verify_result;
 #ifndef OPENSSL_NO_COMP
     const COMP_METHOD *comp, *expansion;
 #endif
@@ -3278,7 +3295,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     }
 #endif
 
-    if (SSL_version(s) == TLS1_3_VERSION) {
+    if (istls13) {
         switch (SSL_get_early_data_status(s)) {
         case SSL_EARLY_DATA_NOT_SENT:
             BIO_printf(bio, "Early data was not sent\n");
@@ -3293,9 +3310,20 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             break;
 
         }
+
+        /*
+         * We also print the verify results when we dump session information,
+         * but in TLSv1.3 we may not get that right away (or at all) depending
+         * on when we get a NewSessionTicket. Therefore we print it now as well.
+         */
+        verify_result = SSL_get_verify_result(s);
+        BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,
+                   X509_verify_cert_error_string(verify_result));
+    } else {
+        /* In TLSv1.3 we do this on arrival of a NewSessionTicket */
+        SSL_SESSION_print(bio, SSL_get_session(s));
     }
 
-    SSL_SESSION_print(bio, SSL_get_session(s));
     if (SSL_get_session(s) != NULL && keymatexportlabel != NULL) {
         BIO_printf(bio, "Keying material exporter:\n");
         BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);

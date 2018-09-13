@@ -43,9 +43,9 @@ L<SSL_CTX_set_session_cache_mode(3)>).
 (SSL/TLS server only.)
 
 SSL_CTX_sess_get_new_cb(), SSL_CTX_sess_get_remove_cb(), and
-SSL_CTX_sess_get_get_cb() allow to retrieve the function pointers of the
-provided callback functions. If a callback function has not been set,
-the NULL pointer is returned.
+SSL_CTX_sess_get_get_cb() retrieve the function pointers set by the
+corresponding set callback functions. If a callback function has not been
+set, the NULL pointer is returned.
 
 =head1 NOTES
 

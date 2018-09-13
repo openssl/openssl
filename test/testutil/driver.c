@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,7 @@
  */
 typedef struct test_info {
     const char *test_case_name;
-    int (*test_fn) ();
+    int (*test_fn) (void);
     int (*param_test_fn)(int idx);
     int num;
 
@@ -74,7 +74,7 @@ int subtest_level(void)
 }
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-static int should_report_leaks()
+static int should_report_leaks(void)
 {
     /*
      * When compiled with enable-crypto-mdebug, OPENSSL_DEBUG_MEMORY=0

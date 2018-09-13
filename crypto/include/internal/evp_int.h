@@ -10,6 +10,12 @@
 #include <openssl/evp.h>
 #include "internal/refcount.h"
 
+/*
+ * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
+ * values in evp.h
+ */
+#define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
+
 struct evp_pkey_ctx_st {
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
@@ -79,6 +85,8 @@ struct evp_pkey_method_st {
     int (*check) (EVP_PKEY *pkey);
     int (*public_check) (EVP_PKEY *pkey);
     int (*param_check) (EVP_PKEY *pkey);
+
+    int (*digest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 } /* EVP_PKEY_METHOD */ ;
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
@@ -90,6 +98,7 @@ extern const EVP_PKEY_METHOD dh_pkey_meth;
 extern const EVP_PKEY_METHOD dhx_pkey_meth;
 extern const EVP_PKEY_METHOD dsa_pkey_meth;
 extern const EVP_PKEY_METHOD ec_pkey_meth;
+extern const EVP_PKEY_METHOD sm2_pkey_meth;
 extern const EVP_PKEY_METHOD ecx25519_pkey_meth;
 extern const EVP_PKEY_METHOD ecx448_pkey_meth;
 extern const EVP_PKEY_METHOD ed25519_pkey_meth;

@@ -128,6 +128,9 @@ struct gcm128_context {
     unsigned int mres, ares;
     block128_f block;
     void *key;
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
+    unsigned char Xn[48];
+#endif
 };
 
 struct xts128_context {
@@ -175,12 +178,13 @@ struct ocb128_context {
     OCB_BLOCK l_dollar;
     OCB_BLOCK *l;
     /* Must be reset for each session */
-    u64 blocks_hashed;
-    u64 blocks_processed;
-    OCB_BLOCK tag;
-    OCB_BLOCK offset_aad;
-    OCB_BLOCK sum;
-    OCB_BLOCK offset;
-    OCB_BLOCK checksum;
+    struct {
+        u64 blocks_hashed;
+        u64 blocks_processed;
+        OCB_BLOCK offset_aad;
+        OCB_BLOCK sum;
+        OCB_BLOCK offset;
+        OCB_BLOCK checksum;
+    } sess;
 };
 #endif                          /* OPENSSL_NO_OCB */

@@ -277,13 +277,13 @@ static size_t prepare_item_list(const struct item_st *items_input,
 
     for (; items_input_num-- > 0; items_input++, items++) {
 
+        items->ile3$w_code = items_input->code;
         /* Special treatment of JPI$_FINALEXC */
         if (items->ile3$w_code == JPI$_FINALEXC)
             items->ile3$w_length = 4;
         else
             items->ile3$w_length = items_input->length;
 
-        items->ile3$w_code = items_input->code;
         items->ile3$ps_bufaddr = databuffer;
         items->ile3$ps_retlen_addr = 0;
 
@@ -505,6 +505,19 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     sys$gettim_prec(&data.time);
 
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
+}
+
+int rand_pool_init(void)
+{
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
 }
 
 #endif

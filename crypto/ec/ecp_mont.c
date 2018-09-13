@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -61,7 +61,12 @@ const EC_METHOD *EC_GFp_mont_method(void)
         ec_key_simple_generate_public_key,
         0, /* keycopy */
         0, /* keyfinish */
-        ecdh_simple_compute_key
+        ecdh_simple_compute_key,
+        0, /* field_inverse_mod_ord */
+        ec_GFp_simple_blind_coordinates,
+        ec_GFp_simple_ladder_pre,
+        ec_GFp_simple_ladder_step,
+        ec_GFp_simple_ladder_post
     };
 
     return &ret;

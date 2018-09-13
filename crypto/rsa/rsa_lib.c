@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -97,7 +97,7 @@ RSA *RSA_new_method(ENGINE *engine)
 
     return ret;
 
-err:
+ err:
     RSA_free(ret);
     return NULL;
 }
@@ -115,7 +115,7 @@ void RSA_free(RSA *r)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    if (r->meth->finish)
+    if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(r->engine);
@@ -400,6 +400,46 @@ int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
     }
 
     return 1;
+}
+
+const BIGNUM *RSA_get0_n(const RSA *r)
+{
+    return r->n;
+}
+
+const BIGNUM *RSA_get0_e(const RSA *r)
+{
+    return r->e;
+}
+
+const BIGNUM *RSA_get0_d(const RSA *r)
+{
+    return r->d;
+}
+
+const BIGNUM *RSA_get0_p(const RSA *r)
+{
+    return r->p;
+}
+
+const BIGNUM *RSA_get0_q(const RSA *r)
+{
+    return r->q;
+}
+
+const BIGNUM *RSA_get0_dmp1(const RSA *r)
+{
+    return r->dmp1;
+}
+
+const BIGNUM *RSA_get0_dmq1(const RSA *r)
+{
+    return r->dmq1;
+}
+
+const BIGNUM *RSA_get0_iqmp(const RSA *r)
+{
+    return r->iqmp;
 }
 
 void RSA_clear_flags(RSA *r, int flags)

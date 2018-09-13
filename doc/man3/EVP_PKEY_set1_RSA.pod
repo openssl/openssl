@@ -7,7 +7,7 @@ EVP_PKEY_get1_RSA, EVP_PKEY_get1_DSA, EVP_PKEY_get1_DH, EVP_PKEY_get1_EC_KEY,
 EVP_PKEY_get0_RSA, EVP_PKEY_get0_DSA, EVP_PKEY_get0_DH, EVP_PKEY_get0_EC_KEY,
 EVP_PKEY_assign_RSA, EVP_PKEY_assign_DSA, EVP_PKEY_assign_DH,
 EVP_PKEY_assign_EC_KEY, EVP_PKEY_get0_hmac, EVP_PKEY_type, EVP_PKEY_id,
-EVP_PKEY_base_id, EVP_PKEY_set1_engine - EVP_PKEY assignment functions
+EVP_PKEY_base_id, EVP_PKEY_set_alias_type, EVP_PKEY_set1_engine - EVP_PKEY assignment functions
 
 =head1 SYNOPSIS
 
@@ -37,6 +37,7 @@ EVP_PKEY_base_id, EVP_PKEY_set1_engine - EVP_PKEY assignment functions
  int EVP_PKEY_id(const EVP_PKEY *pkey);
  int EVP_PKEY_base_id(const EVP_PKEY *pkey);
  int EVP_PKEY_type(int type);
+ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
  int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *engine);
 
@@ -78,6 +79,10 @@ must be called after the key algorithm and components are set up.
 If B<engine> does not include an B<EVP_PKEY_METHOD> for B<pkey> an
 error occurs.
 
+EVP_PKEY_set_alias_type() allows modifying a EVP_PKEY to use a
+different set of algorithms than the default. This is currently used
+to support SM2 keys, which use an identical encoding to ECDSA.
+
 =head1 NOTES
 
 In accordance with the OpenSSL naming convention the key obtained
@@ -98,6 +103,13 @@ is no longer possible: the equivalent is EVP_PKEY_base_id(pkey).
 EVP_PKEY_set1_engine() is typically used by an ENGINE returning an HSM
 key as part of its routine to load a private key.
 
+=head1 EXAMPLES
+
+After loading an ECC key, it is possible to convert it to using SM2
+algorithms with EVP_PKEY_set_alias_type:
+
+ EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+
 =head1 RETURN VALUES
 
 EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
@@ -115,13 +127,15 @@ type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
 
 EVP_PKEY_set1_engine() returns 1 for success and 0 for failure.
 
+EVP_PKEY_set_alias_type() returns 1 for success and 0 for error.
+
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

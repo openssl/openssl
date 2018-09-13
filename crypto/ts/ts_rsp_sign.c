@@ -117,7 +117,7 @@ static int def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext,
 
 /* TS_RESP_CTX management functions. */
 
-TS_RESP_CTX *TS_RESP_CTX_new()
+TS_RESP_CTX *TS_RESP_CTX_new(void)
 {
     TS_RESP_CTX *ctx;
 

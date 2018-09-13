@@ -92,7 +92,7 @@ int CRYPTO_secure_malloc_init(size_t size, int minsize)
 #endif /* IMPLEMENTED */
 }
 
-int CRYPTO_secure_malloc_done()
+int CRYPTO_secure_malloc_done(void)
 {
 #ifdef IMPLEMENTED
     if (secure_mem_used == 0) {
@@ -106,7 +106,7 @@ int CRYPTO_secure_malloc_done()
     return 0;
 }
 
-int CRYPTO_secure_malloc_initialized()
+int CRYPTO_secure_malloc_initialized(void)
 {
 #ifdef IMPLEMENTED
     return secure_mem_initialized;
@@ -137,11 +137,12 @@ void *CRYPTO_secure_malloc(size_t num, const char *file, int line)
 
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line)
 {
-    void *ret = CRYPTO_secure_malloc(num, file, line);
-
-    if (ret != NULL)
-        memset(ret, 0, num);
-    return ret;
+#ifdef IMPLEMENTED
+    if (secure_mem_initialized)
+        /* CRYPTO_secure_malloc() zeroes allocations when it is implemented */
+        return CRYPTO_secure_malloc(num, file, line);
+#endif
+    return CRYPTO_zalloc(num, file, line);
 }
 
 void CRYPTO_secure_free(void *ptr, const char *file, int line)
@@ -209,7 +210,7 @@ int CRYPTO_secure_allocated(const void *ptr)
 #endif /* IMPLEMENTED */
 }
 
-size_t CRYPTO_secure_used()
+size_t CRYPTO_secure_used(void)
 {
 #ifdef IMPLEMENTED
     return secure_mem_used;
@@ -500,7 +501,7 @@ static int sh_init(size_t size, int minsize)
     return 0;
 }
 
-static void sh_done()
+static void sh_done(void)
 {
     OPENSSL_free(sh.freelist);
     OPENSSL_free(sh.bittable);
@@ -588,6 +589,9 @@ static void *sh_malloc(size_t size)
 
     OPENSSL_assert(WITHIN_ARENA(chunk));
 
+    /* zero the free list header as a precaution against information leakage */
+    memset(chunk, 0, sizeof(SH_LIST));
+
     return chunk;
 }
 
@@ -620,6 +624,8 @@ static void sh_free(void *ptr)
 
         list--;
 
+        /* Zero the higher addressed block's free list pointers */
+        memset(ptr > buddy ? ptr : buddy, 0, sizeof(SH_LIST));
         if (ptr > buddy)
             ptr = buddy;
 

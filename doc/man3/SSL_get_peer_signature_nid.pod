@@ -20,7 +20,9 @@ by the peer to sign TLS messages. It is implemented as a macro.
 SSL_get_peer_signature_type_nid() sets B<*psigtype_nid> to the signature
 type used by the peer to sign TLS messages. Currently the signature type
 is the NID of the public key type used for signing except for PSS signing
-where it is B<EVP_PKEY_RSA_PSS>.
+where it is B<EVP_PKEY_RSA_PSS>. To differentiate between
+B<rsa_pss_rsae_*> and B<rsa_pss_pss_*> signatures, it's necessary to check
+the type of public key in the peer's certificate.
 
 =head1 RETURN VALUES
 
@@ -35,7 +37,7 @@ L<ssl(7)>, L<SSL_get_peer_certificate(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

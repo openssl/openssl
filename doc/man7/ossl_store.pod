@@ -30,30 +30,15 @@ from which an OpenSSL type can be retrieved.
 Support for a URI scheme is called a STORE "loader", and can be added
 dynamically from the calling application or from a loadable engine.
 
-=head2 The 'file' scheme
+Support for the 'file' scheme is built into C<libcrypto>.
+See L<ossl_store-file(7)> for more information.
 
-Support for the 'file' scheme is already built into C<libcrypto>.
-Since files come in all kinds of formats and content types, the 'file'
-scheme has its own layer of functionality called "file handlers",
-which are used to try to decode diverse types of file contents.
+=head2 UI_METHOD and pass phrases
 
-In case a file is formatted as PEM, each called file handler receives
-the PEM name (everything following any 'C<-----BEGIN >') as well as
-possible PEM headers, together with the decoded PEM body.  Since PEM
-formatted files can contain more than one object, the file handlers
-are called upon for each such object.
-
-If the file isn't determined to be formatted as PEM, the content is
-loaded in raw form in its entirety and passed to the available file
-handlers as is, with no PEM name or headers.
-
-Each file handler is expected to handle PEM and non-PEM content as
-appropriate.  Some may refuse non-PEM content for the sake of
-determinism (for example, there are keys out in the wild that are
-represented as an ASN.1 OCTET STRING.  In raw form, it's not easily
-possible to distinguish those from any other data coming as an ASN.1
-OCTET STRING, so such keys would naturally be accepted as PEM files
-only).
+The B<OSS_STORE> API does nothing to enforce any specific format or
+encoding on the pass phrase that the B<UI_METHOD> provides.  However,
+the pass phrase is expected to be UTF-8 encoded.  The result of any
+other encoding is undefined.
 
 =head1 EXAMPLES
 

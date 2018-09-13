@@ -26,7 +26,10 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_CIPHERSUITE_CB                             622
 # define SSL_F_CONSTRUCT_CA_NAMES                         552
 # define SSL_F_CONSTRUCT_KEY_EXCHANGE_TBS                 553
+# define SSL_F_CONSTRUCT_STATEFUL_TICKET                  636
+# define SSL_F_CONSTRUCT_STATELESS_TICKET                 637
 # define SSL_F_CREATE_SYNTHETIC_MESSAGE_HASH              539
+# define SSL_F_CREATE_TICKET_PREQUEL                      638
 # define SSL_F_CT_MOVE_SCTS                               345
 # define SSL_F_CT_STRICT                                  349
 # define SSL_F_CUSTOM_EXT_ADD                             554
@@ -446,6 +449,7 @@ int ERR_load_SSL_strings(void);
 /*
  * SSL reason codes.
  */
+# define SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY        291
 # define SSL_R_APP_DATA_IN_HANDSHAKE                      100
 # define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
 # define SSL_R_AT_LEAST_TLS_1_0_NEEDED_IN_FIPS_MODE       143
@@ -467,6 +471,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_BAD_HRR_VERSION                            263
 # define SSL_R_BAD_KEY_SHARE                              108
 # define SSL_R_BAD_KEY_UPDATE                             122
+# define SSL_R_BAD_LEGACY_VERSION                         292
 # define SSL_R_BAD_LENGTH                                 271
 # define SSL_R_BAD_PACKET                                 240
 # define SSL_R_BAD_PACKET_LENGTH                          115
@@ -690,6 +695,8 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_SSL_SESSION_ID_TOO_LONG                    408
 # define SSL_R_SSL_SESSION_VERSION_MISMATCH               210
 # define SSL_R_STILL_IN_INIT                              121
+# define SSL_R_TLSV13_ALERT_CERTIFICATE_REQUIRED          1116
+# define SSL_R_TLSV13_ALERT_MISSING_EXTENSION             1109
 # define SSL_R_TLSV1_ALERT_ACCESS_DENIED                  1049
 # define SSL_R_TLSV1_ALERT_DECODE_ERROR                   1050
 # define SSL_R_TLSV1_ALERT_DECRYPTION_FAILED              1021

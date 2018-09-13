@@ -35,7 +35,7 @@ void pitem_free(pitem *item)
     OPENSSL_free(item);
 }
 
-pqueue *pqueue_new()
+pqueue *pqueue_new(void)
 {
     pqueue *pq = OPENSSL_zalloc(sizeof(*pq));
 

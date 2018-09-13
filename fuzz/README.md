@@ -37,7 +37,7 @@ Configure for fuzzing:
 
     $ CC=clang ./config enable-fuzz-libfuzzer \
             --with-fuzzer-include=../../svn-work/Fuzzer \
-            --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer \
+            --with-fuzzer-lib=../../svn-work/Fuzzer/libFuzzer.a \
             -DPEDANTIC enable-asan enable-ubsan no-shared \
             -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
             -fsanitize-coverage=trace-pc-guard,indirect-calls,trace-cmp \

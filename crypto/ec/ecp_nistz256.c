@@ -1104,28 +1104,12 @@ __owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *gr
                                                const P256_POINT_AFFINE *in,
                                                BN_CTX *ctx)
 {
-    BIGNUM *x, *y;
-    BN_ULONG d_x[P256_LIMBS], d_y[P256_LIMBS];
     int ret = 0;
 
-    x = BN_new();
-    if (x == NULL)
-        return 0;
-    y = BN_new();
-    if (y == NULL) {
-        BN_free(x);
-        return 0;
-    }
-    memcpy(d_x, in->X, sizeof(d_x));
-    bn_set_static_words(x, d_x, P256_LIMBS);
-
-    memcpy(d_y, in->Y, sizeof(d_y));
-    bn_set_static_words(y, d_y, P256_LIMBS);
-
-    ret = EC_POINT_set_affine_coordinates_GFp(group, out, x, y, ctx);
-
-    BN_free(x);
-    BN_free(y);
+    if ((ret = bn_set_words(out->X, in->X, P256_LIMBS))
+        && (ret = bn_set_words(out->Y, in->Y, P256_LIMBS))
+        && (ret = bn_set_words(out->Z, ONE, P256_LIMBS)))
+        out->Z_is_one = 1;
 
     return ret;
 }
@@ -1139,12 +1123,10 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
                                           const BIGNUM *scalars[], BN_CTX *ctx)
 {
     int i = 0, ret = 0, no_precomp_for_generator = 0, p_is_infinity = 0;
-    size_t j;
     unsigned char p_str[33] = { 0 };
     const PRECOMP256_ROW *preComputedTable = NULL;
     const NISTZ256_PRE_COMP *pre_comp = NULL;
     const EC_POINT *generator = NULL;
-    BN_CTX *new_ctx = NULL;
     const BIGNUM **new_scalars = NULL;
     const EC_POINT **new_points = NULL;
     unsigned int idx = 0;
@@ -1160,27 +1142,6 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     if ((num + 1) == 0 || (num + 1) > OPENSSL_MALLOC_MAX_NELEMS(void *)) {
         ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, ERR_R_MALLOC_FAILURE);
         return 0;
-    }
-
-    if (group->meth != r->meth) {
-        ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-        return 0;
-    }
-
-    if ((scalar == NULL) && (num == 0))
-        return EC_POINT_set_to_infinity(group, r);
-
-    for (j = 0; j < num; j++) {
-        if (group->meth != points[j]->meth) {
-            ECerr(EC_F_ECP_NISTZ256_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-            return 0;
-        }
-    }
-
-    if (ctx == NULL) {
-        ctx = new_ctx = BN_CTX_new();
-        if (ctx == NULL)
-            goto err;
     }
 
     BN_CTX_start(ctx);
@@ -1204,9 +1165,9 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
             if (pre_comp_generator == NULL)
                 goto err;
 
+            ecp_nistz256_gather_w7(&p.a, pre_comp->precomp[0], 1);
             if (!ecp_nistz256_set_from_affine(pre_comp_generator,
-                                              group, pre_comp->precomp[0],
-                                              ctx)) {
+                                              group, &p.a, ctx)) {
                 EC_POINT_free(pre_comp_generator);
                 goto err;
             }
@@ -1378,9 +1339,7 @@ __owur static int ecp_nistz256_points_mul(const EC_GROUP *group,
     ret = 1;
 
 err:
-    if (ctx)
-        BN_CTX_end(ctx);
-    BN_CTX_free(new_ctx);
+    BN_CTX_end(ctx);
     OPENSSL_free(new_points);
     OPENSSL_free(new_scalars);
     return ret;
@@ -1512,7 +1471,7 @@ void ecp_nistz256_ord_sqr_mont(BN_ULONG res[P256_LIMBS],
                                int rep);
 
 static int ecp_nistz256_inv_mod_ord(const EC_GROUP *group, BIGNUM *r,
-                                    BIGNUM *x, BN_CTX *ctx)
+                                    const BIGNUM *x, BN_CTX *ctx)
 {
     /* RR = 2^512 mod ord(p256) */
     static const BN_ULONG RR[P256_LIMBS]  = {
@@ -1730,7 +1689,11 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
-        ecp_nistz256_inv_mod_ord                    /* can be #define-d NULL */
+        ecp_nistz256_inv_mod_ord,                   /* can be #define-d NULL */
+        0,                                          /* blind_coordinates */
+        0,                                          /* ladder_pre */
+        0,                                          /* ladder_step */
+        0                                           /* ladder_post */
     };
 
     return &ret;

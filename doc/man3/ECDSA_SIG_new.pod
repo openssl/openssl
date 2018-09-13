@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ECDSA_SIG_get0, ECDSA_SIG_set0,
+ECDSA_SIG_get0, ECDSA_SIG_get0_r, ECDSA_SIG_get0_s, ECDSA_SIG_set0,
 ECDSA_SIG_new, ECDSA_SIG_free, i2d_ECDSA_SIG, d2i_ECDSA_SIG, ECDSA_size,
 ECDSA_sign, ECDSA_do_sign, ECDSA_verify, ECDSA_do_verify, ECDSA_sign_setup,
 ECDSA_sign_ex, ECDSA_do_sign_ex - low level elliptic curve digital signature
@@ -15,6 +15,8 @@ algorithm (ECDSA) functions
  ECDSA_SIG *ECDSA_SIG_new(void);
  void ECDSA_SIG_free(ECDSA_SIG *sig);
  void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+ const BIGNUM *ECDSA_SIG_get0_r(const ECDSA_SIG *sig);
+ const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
  int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
  int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
  ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
@@ -53,7 +55,12 @@ OpenSSL 1.1.0 the: the B<r> and B<s> components were initialised.
 ECDSA_SIG_free() frees the B<ECDSA_SIG> structure B<sig>.
 
 ECDSA_SIG_get0() returns internal pointers the B<r> and B<s> values contained
-in B<sig>.
+in B<sig> and stores them in B<*pr> and B<*ps>, respectively.
+The pointer B<pr> or B<ps> can be NULL, in which case the corresponding value
+is not returned.
+
+The values B<r>, B<s> can also be retrieved separately by the corresponding
+function ECDSA_SIG_get0_r() and ECDSA_SIG_get0_s(), respectively.
 
 The B<r> and B<s> values can be set by calling ECDSA_SIG_set0() and passing the
 new values for B<r> and B<s> as parameters to the function. Calling this
@@ -114,7 +121,12 @@ returned as a newly allocated B<ECDSA_SIG> structure (or NULL on error).
 
 =head1 RETURN VALUES
 
+ECDSA_SIG_new() returns NULL if the allocation fails.
+
 ECDSA_SIG_set0() returns 1 on success or 0 on failure.
+
+ECDSA_SIG_get0_r() and ECDSA_SIG_get0_s() return the corresponding value,
+or NULL if it is unset.
 
 ECDSA_size() returns the maximum length signature or 0 on error.
 
@@ -194,7 +206,7 @@ L<EVP_DigestVerifyInit(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1195,6 +1195,14 @@
 #define NID_hmacWithSHA512              801
 #define OBJ_hmacWithSHA512              OBJ_rsadsi,2L,11L
 
+#define LN_hmacWithSHA512_224           "hmacWithSHA512-224"
+#define NID_hmacWithSHA512_224          1193
+#define OBJ_hmacWithSHA512_224          OBJ_rsadsi,2L,12L
+
+#define LN_hmacWithSHA512_256           "hmacWithSHA512-256"
+#define NID_hmacWithSHA512_256          1194
+#define OBJ_hmacWithSHA512_256          OBJ_rsadsi,2L,13L
+
 #define SN_rc2_cbc              "RC2-CBC"
 #define LN_rc2_cbc              "rc2-cbc"
 #define NID_rc2_cbc             37
@@ -4218,6 +4226,30 @@
 #define NID_id_tc26_cipher              990
 #define OBJ_id_tc26_cipher              OBJ_id_tc26_algorithms,5L
 
+#define SN_id_tc26_cipher_gostr3412_2015_magma          "id-tc26-cipher-gostr3412-2015-magma"
+#define NID_id_tc26_cipher_gostr3412_2015_magma         1173
+#define OBJ_id_tc26_cipher_gostr3412_2015_magma         OBJ_id_tc26_cipher,1L
+
+#define SN_id_tc26_cipher_gostr3412_2015_magma_ctracpkm         "id-tc26-cipher-gostr3412-2015-magma-ctracpkm"
+#define NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm                1174
+#define OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm                OBJ_id_tc26_cipher_gostr3412_2015_magma,1L
+
+#define SN_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac            "id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac"
+#define NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac           1175
+#define OBJ_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac           OBJ_id_tc26_cipher_gostr3412_2015_magma,2L
+
+#define SN_id_tc26_cipher_gostr3412_2015_kuznyechik             "id-tc26-cipher-gostr3412-2015-kuznyechik"
+#define NID_id_tc26_cipher_gostr3412_2015_kuznyechik            1176
+#define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik            OBJ_id_tc26_cipher,2L
+
+#define SN_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm            "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm"
+#define NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm           1177
+#define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm           OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,1L
+
+#define SN_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac               "id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac"
+#define NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac              1178
+#define OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac              OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik,2L
+
 #define SN_id_tc26_agreement            "id-tc26-agreement"
 #define NID_id_tc26_agreement           991
 #define OBJ_id_tc26_agreement           OBJ_id_tc26_algorithms,6L
@@ -4229,6 +4261,26 @@
 #define SN_id_tc26_agreement_gost_3410_2012_512         "id-tc26-agreement-gost-3410-2012-512"
 #define NID_id_tc26_agreement_gost_3410_2012_512                993
 #define OBJ_id_tc26_agreement_gost_3410_2012_512                OBJ_id_tc26_agreement,2L
+
+#define SN_id_tc26_wrap         "id-tc26-wrap"
+#define NID_id_tc26_wrap                1179
+#define OBJ_id_tc26_wrap                OBJ_id_tc26_algorithms,7L
+
+#define SN_id_tc26_wrap_gostr3412_2015_magma            "id-tc26-wrap-gostr3412-2015-magma"
+#define NID_id_tc26_wrap_gostr3412_2015_magma           1180
+#define OBJ_id_tc26_wrap_gostr3412_2015_magma           OBJ_id_tc26_wrap,1L
+
+#define SN_id_tc26_wrap_gostr3412_2015_magma_kexp15             "id-tc26-wrap-gostr3412-2015-magma-kexp15"
+#define NID_id_tc26_wrap_gostr3412_2015_magma_kexp15            1181
+#define OBJ_id_tc26_wrap_gostr3412_2015_magma_kexp15            OBJ_id_tc26_wrap_gostr3412_2015_magma,1L
+
+#define SN_id_tc26_wrap_gostr3412_2015_kuznyechik               "id-tc26-wrap-gostr3412-2015-kuznyechik"
+#define NID_id_tc26_wrap_gostr3412_2015_kuznyechik              1182
+#define OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik              OBJ_id_tc26_wrap,2L
+
+#define SN_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15                "id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15"
+#define NID_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               1183
+#define OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik_kexp15               OBJ_id_tc26_wrap_gostr3412_2015_magma,1L
 
 #define SN_id_tc26_constants            "id-tc26-constants"
 #define NID_id_tc26_constants           994
@@ -4246,6 +4298,21 @@
 #define LN_id_tc26_gost_3410_2012_256_paramSetA         "GOST R 34.10-2012 (256 bit) ParamSet A"
 #define NID_id_tc26_gost_3410_2012_256_paramSetA                1148
 #define OBJ_id_tc26_gost_3410_2012_256_paramSetA                OBJ_id_tc26_gost_3410_2012_256_constants,1L
+
+#define SN_id_tc26_gost_3410_2012_256_paramSetB         "id-tc26-gost-3410-2012-256-paramSetB"
+#define LN_id_tc26_gost_3410_2012_256_paramSetB         "GOST R 34.10-2012 (256 bit) ParamSet B"
+#define NID_id_tc26_gost_3410_2012_256_paramSetB                1184
+#define OBJ_id_tc26_gost_3410_2012_256_paramSetB                OBJ_id_tc26_gost_3410_2012_256_constants,2L
+
+#define SN_id_tc26_gost_3410_2012_256_paramSetC         "id-tc26-gost-3410-2012-256-paramSetC"
+#define LN_id_tc26_gost_3410_2012_256_paramSetC         "GOST R 34.10-2012 (256 bit) ParamSet C"
+#define NID_id_tc26_gost_3410_2012_256_paramSetC                1185
+#define OBJ_id_tc26_gost_3410_2012_256_paramSetC                OBJ_id_tc26_gost_3410_2012_256_constants,3L
+
+#define SN_id_tc26_gost_3410_2012_256_paramSetD         "id-tc26-gost-3410-2012-256-paramSetD"
+#define LN_id_tc26_gost_3410_2012_256_paramSetD         "GOST R 34.10-2012 (256 bit) ParamSet D"
+#define NID_id_tc26_gost_3410_2012_256_paramSetD                1186
+#define OBJ_id_tc26_gost_3410_2012_256_paramSetD                OBJ_id_tc26_gost_3410_2012_256_constants,4L
 
 #define SN_id_tc26_gost_3410_2012_512_constants         "id-tc26-gost-3410-2012-512-constants"
 #define NID_id_tc26_gost_3410_2012_512_constants                996
@@ -4330,6 +4397,24 @@
 
 #define SN_grasshopper_mac              "grasshopper-mac"
 #define NID_grasshopper_mac             1017
+
+#define SN_magma_ecb            "magma-ecb"
+#define NID_magma_ecb           1187
+
+#define SN_magma_ctr            "magma-ctr"
+#define NID_magma_ctr           1188
+
+#define SN_magma_ofb            "magma-ofb"
+#define NID_magma_ofb           1189
+
+#define SN_magma_cbc            "magma-cbc"
+#define NID_magma_cbc           1190
+
+#define SN_magma_cfb            "magma-cfb"
+#define NID_magma_cfb           1191
+
+#define SN_magma_mac            "magma-mac"
+#define NID_magma_mac           1192
 
 #define SN_camellia_128_cbc             "CAMELLIA-128-CBC"
 #define LN_camellia_128_cbc             "camellia-128-cbc"
@@ -5113,29 +5198,29 @@
 #define OBJ_uacurve9            OBJ_dstu4145le,2L,9L
 
 #define SN_Microsoft            "Microsoft"
-#define NID_Microsoft           1173
+#define NID_Microsoft           1195
 #define OBJ_Microsoft           OBJ_identified_organization,6L,1L,4L,1L,311L
 
 #define SN_MSRPQC               "MSRPQC"
-#define NID_MSRPQC              1174
+#define NID_MSRPQC              1196
 #define OBJ_MSRPQC              OBJ_Microsoft,89L,2L
 
 #define SN_picnicL1FS           "picnicL1FS"
 #define LN_picnicL1FS           "Picnic L1 FS"
-#define NID_picnicL1FS          1175
+#define NID_picnicL1FS          1197
 #define OBJ_picnicL1FS          OBJ_MSRPQC,1L,1L
 
 #define SN_qTESLA_I             "qteslaI"
 #define LN_qTESLA_I             "qTESLA-I"
-#define NID_qTESLA_I            1179
+#define NID_qTESLA_I            1201
 #define OBJ_qTESLA_I            OBJ_MSRPQC,2L,1L
 
 #define SN_qTESLA_III_size              "qteslaIIIsize"
 #define LN_qTESLA_III_size              "qTESLA-III-size"
-#define NID_qTESLA_III_size             1180
+#define NID_qTESLA_III_size             1202
 #define OBJ_qTESLA_III_size             OBJ_MSRPQC,2L,2L
 
 #define SN_qTESLA_III_speed             "qteslaIIIspeed"
 #define LN_qTESLA_III_speed             "qTESLA-III-speed"
-#define NID_qTESLA_III_speed            1181
+#define NID_qTESLA_III_speed            1203
 #define OBJ_qTESLA_III_speed            OBJ_MSRPQC,2L,3L

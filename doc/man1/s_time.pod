@@ -112,15 +112,18 @@ specified, they are both on by default and executed in sequence.
 
 =item B<-ssl3>
 
-These options disable the use of certain SSL or TLS protocols. By default
+This option disables the use of SSL version 3. By default
 the initial handshake uses a method which should be compatible with all
 servers and permit them to use SSL v3 or TLS as appropriate.
+
 The timing program is not as rich in options to turn protocols on and off as
 the L<s_client(1)> program and may not connect to all servers.
-
 Unfortunately there are a lot of ancient and broken servers in use which
 cannot handle this technique and will fail to connect. Some servers only
 work if TLS is turned off with the B<-ssl3> option.
+
+Note that this option may not be available, depending on how
+OpenSSL was built.
 
 =item B<-bugs>
 
@@ -132,16 +135,16 @@ option enables various workarounds.
 This allows the TLSv1.2 and below cipher list sent by the client to be modified.
 This list will be combined with any TLSv1.3 ciphersuites that have been
 configured. Although the server determines which cipher suite is used it should
-take the first supported cipher in the list sent by the client. See the
-L<ciphers(1)> command for more information.
+take the first supported cipher in the list sent by the client. See
+L<ciphers(1)> for more information.
 
 =item B<-ciphersuites val>
 
 This allows the TLSv1.3 ciphersuites sent by the client to be modified. This
 list will be combined with any TLSv1.2 and below ciphersuites that have been
 configured. Although the server determines which cipher suite is used it should
-take the first supported cipher in the list sent by the client. See the
-B<ciphers> command for more information. The format for this list is a simple
+take the first supported cipher in the list sent by the client. See
+L<ciphers(1)> for more information. The format for this list is a simple
 colon (":") separated list of TLSv1.3 ciphersuite names.
 
 =item B<-time length>

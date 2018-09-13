@@ -326,7 +326,7 @@ int cms_RecipientInfo_pwri_crypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
     if (!EVP_CipherInit_ex(kekctx, kekcipher, NULL, NULL, NULL, en_de))
         goto err;
     EVP_CIPHER_CTX_set_padding(kekctx, 0);
-    if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) < 0) {
+    if (EVP_CIPHER_asn1_to_param(kekctx, kekalg->parameter) <= 0) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
                CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
         goto err;

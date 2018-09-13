@@ -99,7 +99,7 @@ static const SIZED_DATA aes_cts128_vectors[] = {
     CTS128_TEST_VECTOR(64),
 };
 
-static AES_KEY *cts128_encrypt_key_schedule()
+static AES_KEY *cts128_encrypt_key_schedule(void)
 {
     static int init_key = 1;
     static AES_KEY ks;
@@ -111,7 +111,7 @@ static AES_KEY *cts128_encrypt_key_schedule()
     return &ks;
 }
 
-static AES_KEY *cts128_decrypt_key_schedule()
+static AES_KEY *cts128_decrypt_key_schedule(void)
 {
     static int init_key = 1;
     static AES_KEY ks;

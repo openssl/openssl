@@ -26,8 +26,7 @@ During the creation of a TLS or DTLS connection shared keying material is
 established between the two endpoints. The functions
 SSL_export_keying_material() and SSL_export_keying_material_early() enable an
 application to use some of this keying material for its own purposes in
-accordance with RFC5705 (for TLSv1.2 and below) or RFCXXXX (for TLSv1.3).
-TODO(TLS1.3): Update the RFC number when the RFC is published.
+accordance with RFC5705 (for TLSv1.2 and below) or RFC8446 (for TLSv1.3).
 
 SSL_export_keying_material() derives keying material using
 the F<exporter_master_secret> established in the handshake.

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -127,7 +127,7 @@ typedef struct myobj_st {
     int st;
 } MYOBJ;
 
-static MYOBJ *MYOBJ_new()
+static MYOBJ *MYOBJ_new(void)
 {
     static int count = 0;
     MYOBJ *obj = OPENSSL_malloc(sizeof(*obj));

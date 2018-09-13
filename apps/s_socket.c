@@ -146,7 +146,8 @@ int init_client(int *sock, const char *host, const char *port,
         }
 #endif
 
-        if (!BIO_connect(*sock, BIO_ADDRINFO_address(ai), BIO_SOCK_NODELAY)) {
+        if (!BIO_connect(*sock, BIO_ADDRINFO_address(ai),
+                         protocol == IPPROTO_TCP ? BIO_SOCK_NODELAY : 0)) {
             BIO_closesocket(*sock);
             *sock = INVALID_SOCKET;
             continue;
@@ -320,6 +321,10 @@ int do_server(int *accept_sock, const char *host, const char *port,
     if (accept_sock != NULL)
         *accept_sock = asock;
     for (;;) {
+        char sink[64];
+        struct timeval timeout;
+        fd_set readfds;
+
         if (type == SOCK_STREAM) {
             BIO_ADDR_free(ourpeer);
             ourpeer = BIO_ADDR_new();
@@ -350,6 +355,20 @@ int do_server(int *accept_sock, const char *host, const char *port,
              * TCP-RST. This seems to allow the peer to read the alert data.
              */
             shutdown(sock, 1); /* SHUT_WR */
+            /*
+             * We just said we have nothing else to say, but it doesn't mean
+             * that the other side has nothing. It's even recommended to
+             * consume incoming data. [In testing context this ensures that
+             * alerts are passed on...]
+             */
+            timeout.tv_sec = 0;
+            timeout.tv_usec = 500000;  /* some extreme round-trip */
+            do {
+                FD_ZERO(&readfds);
+                openssl_fdset(sock, &readfds);
+            } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
+                     && readsocket(sock, sink, sizeof(sink)) > 0);
+
             BIO_closesocket(sock);
         } else {
             i = (*cb)(asock, type, protocol, context);

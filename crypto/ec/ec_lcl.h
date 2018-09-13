@@ -14,6 +14,7 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include "internal/refcount.h"
+#include "internal/ec_int.h"
 #include "curve448/curve448_lcl.h"
 
 #if defined(__SUNPRO_C)
@@ -49,8 +50,7 @@ struct ec_method_st {
     void (*group_finish) (EC_GROUP *);
     void (*group_clear_finish) (EC_GROUP *);
     int (*group_copy) (EC_GROUP *, const EC_GROUP *);
-    /* used by EC_GROUP_set_curve_GFp, EC_GROUP_get_curve_GFp, */
-    /* EC_GROUP_set_curve_GF2m, and EC_GROUP_get_curve_GF2m: */
+    /* used by EC_GROUP_set_curve, EC_GROUP_get_curve: */
     int (*group_set_curve) (EC_GROUP *, const BIGNUM *p, const BIGNUM *a,
                             const BIGNUM *b, BN_CTX *);
     int (*group_get_curve) (const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b,
@@ -72,9 +72,9 @@ struct ec_method_st {
      * used by EC_POINT_set_to_infinity,
      * EC_POINT_set_Jprojective_coordinates_GFp,
      * EC_POINT_get_Jprojective_coordinates_GFp,
-     * EC_POINT_set_affine_coordinates_GFp,     ..._GF2m,
-     * EC_POINT_get_affine_coordinates_GFp,     ..._GF2m,
-     * EC_POINT_set_compressed_coordinates_GFp, ..._GF2m:
+     * EC_POINT_set_affine_coordinates,
+     * EC_POINT_get_affine_coordinates,
+     * EC_POINT_set_compressed_coordinates:
      */
     int (*point_set_to_infinity) (const EC_GROUP *, EC_POINT *);
     int (*point_set_Jprojective_coordinates_GFp) (const EC_GROUP *,
@@ -120,6 +120,23 @@ struct ec_method_st {
      * EC_POINT_have_precompute_mult (default implementations are used if the
      * 'mul' pointer is 0):
      */
+    /*-
+     * mul() calculates the value
+     *
+     *   r := generator * scalar
+     *        + points[0] * scalars[0]
+     *        + ...
+     *        + points[num-1] * scalars[num-1].
+     *
+     * For a fixed point multiplication (scalar != NULL, num == 0)
+     * or a variable point multiplication (scalar == NULL, num == 1),
+     * mul() must use a constant time algorithm: in both cases callers
+     * should provide an input scalar (either scalar or scalars[0])
+     * in the range [0, ec_group_order); for robustness, implementers
+     * should handle the case when the scalar has not been reduced, but
+     * may treat it as an unusual input, without any constant-timeness
+     * guarantee.
+     */
     int (*mul) (const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                 size_t num, const EC_POINT *points[], const BIGNUM *scalars[],
                 BN_CTX *);
@@ -157,8 +174,18 @@ struct ec_method_st {
     int (*ecdh_compute_key)(unsigned char **pout, size_t *poutlen,
                             const EC_POINT *pub_key, const EC_KEY *ecdh);
     /* Inverse modulo order */
-    int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r, BIGNUM *x,
-                                 BN_CTX *ctx);
+    int (*field_inverse_mod_ord)(const EC_GROUP *, BIGNUM *r,
+                                 const BIGNUM *x, BN_CTX *);
+    int (*blind_coordinates)(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
+    int (*ladder_pre)(const EC_GROUP *group,
+                      EC_POINT *r, EC_POINT *s,
+                      EC_POINT *p, BN_CTX *ctx);
+    int (*ladder_step)(const EC_GROUP *group,
+                       EC_POINT *r, EC_POINT *s,
+                       EC_POINT *p, BN_CTX *ctx);
+    int (*ladder_post)(const EC_GROUP *group,
+                       EC_POINT *r, EC_POINT *s,
+                       EC_POINT *p, BN_CTX *ctx);
 };
 
 /*
@@ -259,6 +286,8 @@ struct ec_key_st {
 
 struct ec_point_st {
     const EC_METHOD *meth;
+    /* NID for the curve if known */
+    int curve_name;
     /*
      * All members except 'meth' are handled by the method functions, even if
      * they appear generic
@@ -270,6 +299,18 @@ struct ec_point_st {
     int Z_is_one;               /* enable optimized point arithmetics for
                                  * special case */
 };
+
+static ossl_inline int ec_point_is_compat(const EC_POINT *point,
+                                          const EC_GROUP *group)
+{
+    if (group->meth != point->meth
+        || (group->curve_name != 0
+            && point->curve_name != 0
+            && group->curve_name != point->curve_name))
+        return 0;
+
+    return 1;
+}
 
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *);
 NISTP256_PRE_COMP *EC_nistp256_pre_comp_dup(NISTP256_PRE_COMP *);
@@ -349,6 +390,17 @@ int ec_GFp_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                             const BIGNUM *b, BN_CTX *);
 int ec_GFp_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                             BN_CTX *);
+int ec_GFp_simple_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
+                                    BN_CTX *ctx);
+int ec_GFp_simple_ladder_pre(const EC_GROUP *group,
+                             EC_POINT *r, EC_POINT *s,
+                             EC_POINT *p, BN_CTX *ctx);
+int ec_GFp_simple_ladder_step(const EC_GROUP *group,
+                              EC_POINT *r, EC_POINT *s,
+                              EC_POINT *p, BN_CTX *ctx);
+int ec_GFp_simple_ladder_post(const EC_GROUP *group,
+                              EC_POINT *r, EC_POINT *s,
+                              EC_POINT *p, BN_CTX *ctx);
 
 /* method functions in ecp_mont.c */
 int ec_GFp_mont_group_init(EC_GROUP *);
@@ -425,14 +477,6 @@ int ec_GF2m_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                              BN_CTX *);
 int ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
                              const BIGNUM *b, BN_CTX *);
-
-/* method functions in ec2_mult.c */
-int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r,
-                       const BIGNUM *scalar, size_t num,
-                       const EC_POINT *points[], const BIGNUM *scalars[],
-                       BN_CTX *);
-int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
-int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
 
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /* method functions in ecp_nistp224.c */
@@ -608,5 +652,76 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
 
-int EC_GROUP_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
-                            BIGNUM *x, BN_CTX *ctx);
+/*-
+ * This functions computes a single point multiplication over the EC group,
+ * using, at a high level, a Montgomery ladder with conditional swaps, with
+ * various timing attack defenses.
+ *
+ * It performs either a fixed point multiplication
+ *          (scalar * generator)
+ * when point is NULL, or a variable point multiplication
+ *          (scalar * point)
+ * when point is not NULL.
+ *
+ * `scalar` cannot be NULL and should be in the range [0,n) otherwise all
+ * constant time bets are off (where n is the cardinality of the EC group).
+ *
+ * This function expects `group->order` and `group->cardinality` to be well
+ * defined and non-zero: it fails with an error code otherwise.
+ *
+ * NB: This says nothing about the constant-timeness of the ladder step
+ * implementation (i.e., the default implementation is based on EC_POINT_add and
+ * EC_POINT_dbl, which of course are not constant time themselves) or the
+ * underlying multiprecision arithmetic.
+ *
+ * The product is stored in `r`.
+ *
+ * This is an internal function: callers are in charge of ensuring that the
+ * input parameters `group`, `r`, `scalar` and `ctx` are not NULL.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
+                         const BIGNUM *scalar, const EC_POINT *point,
+                         BN_CTX *ctx);
+
+int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
+
+static ossl_inline int ec_point_ladder_pre(const EC_GROUP *group,
+                                           EC_POINT *r, EC_POINT *s,
+                                           EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->ladder_pre != NULL)
+        return group->meth->ladder_pre(group, r, s, p, ctx);
+
+    if (!EC_POINT_copy(s, p)
+        || !EC_POINT_dbl(group, r, s, ctx))
+        return 0;
+
+    return 1;
+}
+
+static ossl_inline int ec_point_ladder_step(const EC_GROUP *group,
+                                            EC_POINT *r, EC_POINT *s,
+                                            EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->ladder_step != NULL)
+        return group->meth->ladder_step(group, r, s, p, ctx);
+
+    if (!EC_POINT_add(group, s, r, s, ctx)
+        || !EC_POINT_dbl(group, r, r, ctx))
+        return 0;
+
+    return 1;
+
+}
+
+static ossl_inline int ec_point_ladder_post(const EC_GROUP *group,
+                                            EC_POINT *r, EC_POINT *s,
+                                            EC_POINT *p, BN_CTX *ctx)
+{
+    if (group->meth->ladder_post != NULL)
+        return group->meth->ladder_post(group, r, s, p, ctx);
+
+    return 1;
+}

@@ -299,7 +299,7 @@ int ecparam_main(int argc, char **argv)
             goto end;
         }
 
-        if (!EC_GROUP_get_curve_GFp(group, ec_p, ec_a, ec_b, NULL))
+        if (!EC_GROUP_get_curve(group, ec_p, ec_a, ec_b, NULL))
             goto end;
 
         if ((point = EC_GROUP_get0_generator(group)) == NULL)

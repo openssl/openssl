@@ -13,11 +13,11 @@ EVP_sm4_ctr
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_sm4_cbc(void)
- const EVP_CIPHER *EVP_sm4_ecb(void)
- const EVP_CIPHER *EVP_sm4_cfb(void)
- const EVP_CIPHER *EVP_sm4_ofb(void)
- const EVP_CIPHER *EVP_sm4_ctr(void)
+ const EVP_CIPHER *EVP_sm4_cbc(void);
+ const EVP_CIPHER *EVP_sm4_ecb(void);
+ const EVP_CIPHER *EVP_sm4_cfb(void);
+ const EVP_CIPHER *EVP_sm4_ofb(void);
+ const EVP_CIPHER *EVP_sm4_ctr(void);
 
 =head1 DESCRIPTION
 
@@ -52,7 +52,7 @@ L<EVP_CIPHER_meth_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 Copyright 2017 Ribose Inc. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use

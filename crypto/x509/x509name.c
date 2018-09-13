@@ -26,8 +26,8 @@ int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
     return X509_NAME_get_text_by_OBJ(name, obj, buf, len);
 }
 
-int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf,
-                              int len)
+int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj,
+                              char *buf, int len)
 {
     int i;
     const ASN1_STRING *data;
@@ -36,9 +36,11 @@ int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf
     if (i < 0)
         return -1;
     data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, i));
-    i = (data->length > (len - 1)) ? (len - 1) : data->length;
     if (buf == NULL)
         return data->length;
+    if (len <= 0)
+        return 0;
+    i = (data->length > (len - 1)) ? (len - 1) : data->length;
     memcpy(buf, data->data, i);
     buf[i] = '\0';
     return i;

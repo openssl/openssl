@@ -61,6 +61,8 @@ static const ERR_STRING_DATA X509_str_functs[] = {
      "X509_load_cert_file"},
     {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOAD_CRL_FILE, 0),
      "X509_load_crl_file"},
+    {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOOKUP_METH_NEW, 0),
+     "X509_LOOKUP_meth_new"},
     {ERR_PACK(ERR_LIB_X509, X509_F_X509_LOOKUP_NEW, 0), "X509_LOOKUP_new"},
     {ERR_PACK(ERR_LIB_X509, X509_F_X509_NAME_ADD_ENTRY, 0),
      "X509_NAME_add_entry"},

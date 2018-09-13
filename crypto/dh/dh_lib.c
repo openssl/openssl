@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -83,12 +83,14 @@ DH *DH_new_method(ENGINE *engine)
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DHerr(DH_F_DH_NEW_METHOD, ERR_R_INIT_FAIL);
-err:
-        DH_free(ret);
-        ret = NULL;
+        goto err;
     }
 
     return ret;
+
+ err:
+    DH_free(ret);
+    return NULL;
 }
 
 void DH_free(DH *r)
@@ -104,7 +106,7 @@ void DH_free(DH *r)
         return;
     REF_ASSERT_ISNT(i < 0);
 
-    if (r->meth->finish)
+    if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
     ENGINE_finish(r->engine);
@@ -241,6 +243,31 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
     }
 
     return 1;
+}
+
+const BIGNUM *DH_get0_p(const DH *dh)
+{
+    return dh->p;
+}
+
+const BIGNUM *DH_get0_q(const DH *dh)
+{
+    return dh->q;
+}
+
+const BIGNUM *DH_get0_g(const DH *dh)
+{
+    return dh->g;
+}
+
+const BIGNUM *DH_get0_priv_key(const DH *dh)
+{
+    return dh->priv_key;
+}
+
+const BIGNUM *DH_get0_pub_key(const DH *dh)
+{
+    return dh->pub_key;
 }
 
 void DH_clear_flags(DH *dh, int flags)

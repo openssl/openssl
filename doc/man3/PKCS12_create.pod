@@ -22,7 +22,8 @@ the structure and B<cert> its corresponding certificates. B<ca>, if not B<NULL>
 is an optional set of certificates to also include in the structure.
 
 B<nid_key> and B<nid_cert> are the encryption algorithms that should be used
-for the key and certificate respectively. B<iter> is the encryption algorithm
+for the key and certificate respectively. The modes
+GCM, CCM, XTS, and OCB are unsupported. B<iter> is the encryption algorithm
 iteration count to use and B<mac_iter> is the MAC iteration count to use.
 B<keytype> is the type of key.
 
@@ -60,13 +61,18 @@ should be used.
 
 B<mac_iter> can be set to -1 and the MAC will then be omitted entirely.
 
+PKCS12_create() makes assumptions regarding the encoding of the given pass
+phrase.
+See L<passphrase-encoding(7)> for more information.
+
 =head1 RETURN VALUES
 
 PKCS12_create() returns a valid B<PKCS12> structure or NULL if an error occurred.
 
 =head1 SEE ALSO
 
-L<d2i_PKCS12(3)>
+L<d2i_PKCS12(3)>,
+L<passphrase-encoding(7)>
 
 =head1 COPYRIGHT
 

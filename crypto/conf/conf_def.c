@@ -27,6 +27,10 @@
 # endif
 #endif
 
+#ifndef S_ISDIR
+# define S_ISDIR(a) (((a) & S_IFMT) == S_IFDIR)
+#endif
+
 /*
  * The maximum length we can grow a value to after variable expansion. 64k
  * should be more than enough for all reasonable uses.
@@ -85,12 +89,12 @@ static CONF_METHOD WIN32_method = {
     def_load
 };
 
-CONF_METHOD *NCONF_default()
+CONF_METHOD *NCONF_default(void)
 {
     return &default_method;
 }
 
-CONF_METHOD *NCONF_WIN32()
+CONF_METHOD *NCONF_WIN32(void)
 {
     return &WIN32_method;
 }
@@ -420,12 +424,26 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
     }
     BUF_MEM_free(buff);
     OPENSSL_free(section);
-    sk_BIO_pop_free(biosk, BIO_vfree);
+    /*
+     * No need to pop, since we only get here if the stack is empty.
+     * If this causes a BIO leak, THE ISSUE IS SOMEWHERE ELSE!
+     */
+    sk_BIO_free(biosk);
     return 1;
  err:
     BUF_MEM_free(buff);
     OPENSSL_free(section);
-    sk_BIO_pop_free(biosk, BIO_vfree);
+    /*
+     * Since |in| is the first element of the stack and should NOT be freed
+     * here, we cannot use sk_BIO_pop_free().  Instead, we pop and free one
+     * BIO at a time, making sure that the last one popped isn't.
+     */
+    while (sk_BIO_num(biosk) > 0) {
+        BIO *popped = sk_BIO_pop(biosk);
+        BIO_vfree(in);
+        in = popped;
+    }
+    sk_BIO_free(biosk);
 #ifndef OPENSSL_NO_POSIX_IO
     OPENSSL_free(dirpath);
     if (dirctx != NULL)
@@ -656,7 +674,7 @@ static BIO *process_include(char *include, OPENSSL_DIR_CTX **dirctx,
         return NULL;
     }
 
-    if ((st.st_mode & S_IFDIR) == S_IFDIR) {
+    if (S_ISDIR(st.st_mode)) {
         if (*dirctx != NULL) {
             CONFerr(CONF_F_PROCESS_INCLUDE,
                     CONF_R_RECURSIVE_DIRECTORY_INCLUDE);

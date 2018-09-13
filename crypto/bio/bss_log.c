@@ -200,7 +200,7 @@ static int slg_write(BIO *b, const char *in, int inl)
         BIOerr(BIO_F_SLG_WRITE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    strncpy(buf, in, inl);
+    memcpy(buf, in, inl);
     buf[inl] = '\0';
 
     i = 0;

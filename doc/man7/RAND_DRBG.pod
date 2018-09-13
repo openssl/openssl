@@ -222,7 +222,7 @@ This is in fact done automatically by L<RAND_DRBG_bytes(3)>.
 
 In most cases OpenSSL will automatically choose a suitable seed source
 for automatically seeding and reseeding its <master> DRBG. In some cases
-however, it will be necessary to explicitely specify a seed source during
+however, it will be necessary to explicitly specify a seed source during
 configuration, using the --with-rand-seed option. For more information,
 see the INSTALL instructions. There are also operating systems where no
 seed source is available and automatic reseeding is disabled by default.

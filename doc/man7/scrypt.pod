@@ -33,7 +33,7 @@ may be used by scrypt defaults to 1025 MiB.
 
 A context for scrypt can be obtained by calling:
 
- EVP_PKEY_CTX *pctx = EVP_PKEY_new_id(EVP_PKEY_SCRYPT, NULL);
+ EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SCRYPT, NULL);
 
 The output length of an scrypt key derivation is specified via the
 length parameter to the L<EVP_PKEY_derive(3)> function.

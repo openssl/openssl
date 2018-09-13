@@ -840,14 +840,6 @@ if [ -n "$CONFIG_OPTIONS" ]; then
   options="$options $CONFIG_OPTIONS"
 fi
 
-if expr "$options" : '.*no\-asm' > /dev/null; then :; else
-  if sh -c "$CROSS_COMPILE${CC:-gcc} -Wa,--help -c -o /tmp/null.$$.o -x assembler /dev/null && rm /tmp/null.$$.o" 2>&1 | \
-         grep \\--noexecstack >/dev/null; then
-    __CNF_CFLAGS="$__CNF_CFLAGS -Wa,--noexecstack"
-    __CNF_CXXFLAGS="$__CNF_CXXFLAGS -Wa,--noexecstack"
-  fi
-fi
-
 # gcc < 2.8 does not support -march=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then

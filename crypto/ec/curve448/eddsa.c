@@ -63,8 +63,7 @@ static c448_error_t hash_init_with_dom(EVP_MD_CTX *hashctx, uint8_t prehashed,
     if (!EVP_DigestInit_ex(hashctx, EVP_shake256(), NULL)
             || !EVP_DigestUpdate(hashctx, dom_s, strlen(dom_s))
             || !EVP_DigestUpdate(hashctx, dom, sizeof(dom))
-            || (context_len > 0
-                && !EVP_DigestUpdate(hashctx, context, context_len)))
+            || !EVP_DigestUpdate(hashctx, context, context_len))
         return C448_FAILURE;
 
     return C448_SUCCESS;
@@ -161,8 +160,7 @@ c448_error_t c448_ed448_sign(
                 || !EVP_DigestUpdate(hashctx,
                                      expanded + EDDSA_448_PRIVATE_BYTES,
                                      EDDSA_448_PRIVATE_BYTES)
-                || (message_len > 0
-                    && !EVP_DigestUpdate(hashctx, message, message_len))) {
+                || !EVP_DigestUpdate(hashctx, message, message_len)) {
             OPENSSL_cleanse(expanded, sizeof(expanded));
             goto err;
         }
@@ -202,8 +200,7 @@ c448_error_t c448_ed448_sign(
         if (!hash_init_with_dom(hashctx, prehashed, 0, context, context_len)
                 || !EVP_DigestUpdate(hashctx, nonce_point, sizeof(nonce_point))
                 || !EVP_DigestUpdate(hashctx, pubkey, EDDSA_448_PUBLIC_BYTES)
-                || (message_len > 0
-                    && !EVP_DigestUpdate(hashctx, message, message_len))
+                || !EVP_DigestUpdate(hashctx, message, message_len)
                 || !EVP_DigestFinalXOF(hashctx, challenge, sizeof(challenge)))
             goto err;
 
@@ -253,7 +250,6 @@ c448_error_t c448_ed448_verify(
         curve448_point_decode_like_eddsa_and_mul_by_ratio(pk_point, pubkey);
     curve448_scalar_t challenge_scalar;
     curve448_scalar_t response_scalar;
-    unsigned int c;
 
     if (C448_SUCCESS != error)
         return error;
@@ -290,9 +286,6 @@ c448_error_t c448_ed448_verify(
     curve448_scalar_decode_long(response_scalar,
                                 &signature[EDDSA_448_PUBLIC_BYTES],
                                 EDDSA_448_PRIVATE_BYTES);
-
-    for (c = 1; c < C448_EDDSA_DECODE_RATIO; c <<= 1)
-        curve448_scalar_add(response_scalar, response_scalar, response_scalar);
 
     /* pk_point = -c(x(P)) + (cx + k)G = kG */
     curve448_base_double_scalarmul_non_secret(pk_point,

@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -30,6 +30,7 @@
 # PPC970/G5	14.6/+120%
 # POWER7	10.3/+100%
 # POWER8	11.5/+85%
+# POWER9	9.4/+45%
 #
 # (*)	Corresponds to SHA3-256. Percentage after slash is improvement
 #	over gcc-4.x-generated KECCAK_1X_ALT code. Newer compilers do

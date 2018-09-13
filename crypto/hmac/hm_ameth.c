@@ -72,6 +72,25 @@ static int hmac_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
     return 1;
 }
 
+static int hmac_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
+                             size_t *len)
+{
+    ASN1_OCTET_STRING *os = (ASN1_OCTET_STRING *)pkey->pkey.ptr;
+
+    if (priv == NULL) {
+        *len = ASN1_STRING_length(os);
+        return 1;
+    }
+
+    if (os == NULL || *len < (size_t)ASN1_STRING_length(os))
+        return 0;
+
+    *len = ASN1_STRING_length(os);
+    memcpy(priv, ASN1_STRING_get0_data(os), *len);
+
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
     EVP_PKEY_HMAC,
     EVP_PKEY_HMAC,
@@ -102,5 +121,7 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth = {
     NULL,
 
     hmac_set_priv_key,
+    NULL,
+    hmac_get_priv_key,
     NULL,
 };

@@ -3472,6 +3472,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         break;
 #endif                          /* !OPENSSL_NO_EC */
     case SSL_CTRL_SET_TLSEXT_HOSTNAME:
+        /*
+         * TODO(OpenSSL1.2)
+         * This API is only used for a client to set what SNI it will request
+         * from the server, but we currently allow it to be used on servers
+         * as well, which is a programming error.  Currently we just clear
+         * the field in SSL_do_handshake() for server SSLs, but when we can
+         * make ABI-breaking changes, we may want to make use of this API
+         * an error on server SSLs.
+         */
         if (larg == TLSEXT_NAMETYPE_host_name) {
             size_t len;
 
@@ -4121,8 +4130,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 {
     const SSL_CIPHER *c, *ret = NULL;
     STACK_OF(SSL_CIPHER) *prio, *allow;
-    int i, ii, ok;
+    int i, ii, ok, prefer_sha256 = 0;
     unsigned long alg_k = 0, alg_a = 0, mask_k = 0, mask_a = 0;
+    const EVP_MD *mdsha256 = EVP_sha256();
 #ifndef OPENSSL_NO_CHACHA
     STACK_OF(SSL_CIPHER) *prio_chacha = NULL;
 #endif
@@ -4203,7 +4213,26 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
         allow = srvr;
     }
 
-    if (!SSL_IS_TLS13(s)) {
+    if (SSL_IS_TLS13(s)) {
+#ifndef OPENSSL_NO_PSK
+        int j;
+
+        /*
+         * If we allow "old" style PSK callbacks, and we have no certificate (so
+         * we're not going to succeed without a PSK anyway), and we're in
+         * TLSv1.3 then the default hash for a PSK is SHA-256 (as per the
+         * TLSv1.3 spec). Therefore we should prioritise ciphersuites using
+         * that.
+         */
+        if (s->psk_server_callback != NULL) {
+            for (j = 0; j < SSL_PKEY_NUM && !ssl_has_cert(s, j); j++);
+            if (j == SSL_PKEY_NUM) {
+                /* There are no certificates */
+                prefer_sha256 = 1;
+            }
+        }
+#endif
+    } else {
         tls1_set_cert_validity(s);
         ssl_set_masks(s);
     }
@@ -4275,6 +4304,17 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 continue;
             }
 #endif
+            if (prefer_sha256) {
+                const SSL_CIPHER *tmp = sk_SSL_CIPHER_value(allow, ii);
+
+                if (ssl_md(tmp->algorithm2) == mdsha256) {
+                    ret = tmp;
+                    break;
+                }
+                if (ret == NULL)
+                    ret = tmp;
+                continue;
+            }
             ret = sk_SSL_CIPHER_value(allow, ii);
             break;
         }
@@ -4541,7 +4581,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
     } else {
         ret = RAND_bytes(result, len);
     }
-#ifndef OPENSSL_NO_TLS13DOWNGRADE
+
     if (ret > 0) {
         if (!ossl_assert(sizeof(tls11downgrade) < len)
                 || !ossl_assert(sizeof(tls12downgrade) < len))
@@ -4553,7 +4593,7 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
             memcpy(result + len - sizeof(tls11downgrade), tls11downgrade,
                    sizeof(tls11downgrade));
     }
-#endif
+
     return ret;
 }
 
@@ -4594,6 +4634,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
         if (!s->method->ssl3_enc->generate_master_secret(s,
                     s->session->master_key,pskpms, pskpmslen,
                     &s->session->master_key_length)) {
+            OPENSSL_clear_free(pskpms, pskpmslen);
             /* SSLfatal() already called */
             goto err;
         }

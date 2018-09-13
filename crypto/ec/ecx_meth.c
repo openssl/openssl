@@ -331,8 +331,18 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         }
         return 0;
 
+    default:
+        return -2;
+
+    }
+}
+
+static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+{
+    switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-        *(int *)arg2 = NID_sha256;
+        /* We currently only support Pure EdDSA which takes no digest */
+        *(int *)arg2 = NID_undef;
         return 2;
 
     default:
@@ -352,6 +362,47 @@ static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
 {
     return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, pub, len,
                       KEY_OP_PUBLIC);
+}
+
+static int ecx_get_priv_key(const EVP_PKEY *pkey, unsigned char *priv,
+                            size_t *len)
+{
+    const ECX_KEY *key = pkey->pkey.ecx;
+
+    if (priv == NULL) {
+        *len = KEYLENID(pkey->ameth->pkey_id);
+        return 1;
+    }
+
+    if (key == NULL
+            || key->privkey == NULL
+            || *len < (size_t)KEYLENID(pkey->ameth->pkey_id))
+        return 0;
+
+    *len = KEYLENID(pkey->ameth->pkey_id);
+    memcpy(priv, key->privkey, *len);
+
+    return 1;
+}
+
+static int ecx_get_pub_key(const EVP_PKEY *pkey, unsigned char *pub,
+                           size_t *len)
+{
+    const ECX_KEY *key = pkey->pkey.ecx;
+
+    if (pub == NULL) {
+        *len = KEYLENID(pkey->ameth->pkey_id);
+        return 1;
+    }
+
+    if (key == NULL
+            || *len < (size_t)KEYLENID(pkey->ameth->pkey_id))
+        return 0;
+
+    *len = KEYLENID(pkey->ameth->pkey_id);
+    memcpy(pub, key->pubkey, *len);
+
+    return 1;
 }
 
 const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
@@ -393,6 +444,8 @@ const EVP_PKEY_ASN1_METHOD ecx25519_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
@@ -434,6 +487,8 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 static int ecd_size25519(const EVP_PKEY *pkey)
@@ -534,7 +589,7 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
     0, 0,
 
     ecx_free,
-    0,
+    ecd_ctrl,
     NULL,
     NULL,
     ecd_item_verify,
@@ -547,6 +602,8 @@ const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
@@ -574,7 +631,7 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
     0, 0,
 
     ecx_free,
-    0,
+    ecd_ctrl,
     NULL,
     NULL,
     ecd_item_verify,
@@ -587,6 +644,8 @@ const EVP_PKEY_ASN1_METHOD ed448_asn1_meth = {
 
     ecx_set_priv_key,
     ecx_set_pub_key,
+    ecx_get_priv_key,
+    ecx_get_pub_key,
 };
 
 static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
@@ -675,18 +734,18 @@ const EVP_PKEY_METHOD ecx448_pkey_meth = {
     0
 };
 
-static int pkey_ecd_sign25519(EVP_PKEY_CTX *ctx, unsigned char *sig,
-                              size_t *siglen, const unsigned char *tbs,
-                              size_t tbslen)
+static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
+                                    size_t *siglen, const unsigned char *tbs,
+                                    size_t tbslen)
 {
-    const ECX_KEY *edkey = ctx->pkey->pkey.ecx;
+    const ECX_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ecx;
 
     if (sig == NULL) {
         *siglen = ED25519_SIGSIZE;
         return 1;
     }
     if (*siglen < ED25519_SIGSIZE) {
-        ECerr(EC_F_PKEY_ECD_SIGN25519, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN25519, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -696,26 +755,18 @@ static int pkey_ecd_sign25519(EVP_PKEY_CTX *ctx, unsigned char *sig,
     return 1;
 }
 
-static int pkey_ecd_digestsign25519(EVP_MD_CTX *ctx, unsigned char *sig,
-                                    size_t *siglen, const unsigned char *tbs,
-                                    size_t tbslen)
+static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
+                                  size_t *siglen, const unsigned char *tbs,
+                                  size_t tbslen)
 {
-    return pkey_ecd_sign25519(EVP_MD_CTX_pkey_ctx(ctx), sig, siglen, tbs,
-                              tbslen);
-}
-
-static int pkey_ecd_sign448(EVP_PKEY_CTX *ctx, unsigned char *sig,
-                            size_t *siglen, const unsigned char *tbs,
-                            size_t tbslen)
-{
-    const ECX_KEY *edkey = ctx->pkey->pkey.ecx;
+    const ECX_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ecx;
 
     if (sig == NULL) {
         *siglen = ED448_SIGSIZE;
         return 1;
     }
     if (*siglen < ED448_SIGSIZE) {
-        ECerr(EC_F_PKEY_ECD_SIGN448, EC_R_BUFFER_TOO_SMALL);
+        ECerr(EC_F_PKEY_ECD_DIGESTSIGN448, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
 
@@ -726,18 +777,11 @@ static int pkey_ecd_sign448(EVP_PKEY_CTX *ctx, unsigned char *sig,
     return 1;
 }
 
-static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
-                                  size_t *siglen, const unsigned char *tbs,
-                                  size_t tbslen)
+static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
+                                      size_t siglen, const unsigned char *tbs,
+                                      size_t tbslen)
 {
-    return pkey_ecd_sign448(EVP_MD_CTX_pkey_ctx(ctx), sig, siglen, tbs, tbslen);
-}
-
-static int pkey_ecd_verify25519(EVP_PKEY_CTX *ctx, const unsigned char *sig,
-                                size_t siglen, const unsigned char *tbs,
-                                size_t tbslen)
-{
-    const ECX_KEY *edkey = ctx->pkey->pkey.ecx;
+    const ECX_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ecx;
 
     if (siglen != ED25519_SIGSIZE)
         return 0;
@@ -745,19 +789,11 @@ static int pkey_ecd_verify25519(EVP_PKEY_CTX *ctx, const unsigned char *sig,
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey);
 }
 
-static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
-                                      size_t siglen, const unsigned char *tbs,
-                                      size_t tbslen)
+static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
+                                    size_t siglen, const unsigned char *tbs,
+                                    size_t tbslen)
 {
-    return pkey_ecd_verify25519(EVP_MD_CTX_pkey_ctx(ctx), sig, siglen, tbs,
-                                tbslen);
-}
-
-static int pkey_ecd_verify448(EVP_PKEY_CTX *ctx, const unsigned char *sig,
-                              size_t siglen, const unsigned char *tbs,
-                              size_t tbslen)
-{
-    const ECX_KEY *edkey = ctx->pkey->pkey.ecx;
+    const ECX_KEY *edkey = EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ecx;
 
     if (siglen != ED448_SIGSIZE)
         return 0;
@@ -765,20 +801,12 @@ static int pkey_ecd_verify448(EVP_PKEY_CTX *ctx, const unsigned char *sig,
     return ED448_verify(tbs, tbslen, sig, edkey->pubkey, NULL, 0);
 }
 
-static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
-                                    size_t siglen, const unsigned char *tbs,
-                                    size_t tbslen)
-{
-    return pkey_ecd_verify448(EVP_MD_CTX_pkey_ctx(ctx), sig, siglen, tbs,
-                              tbslen);
-}
-
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
     switch (type) {
     case EVP_PKEY_CTRL_MD:
         /* Only NULL allowed as digest */
-        if (p2 == NULL)
+        if (p2 == NULL || (const EVP_MD *)p2 == EVP_md_null())
             return 1;
         ECerr(EC_F_PKEY_ECD_CTRL, EC_R_INVALID_DIGEST_TYPE);
         return 0;
@@ -793,11 +821,7 @@ const EVP_PKEY_METHOD ed25519_pkey_meth = {
     EVP_PKEY_ED25519, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     0, 0, 0, 0, 0, 0,
     pkey_ecx_keygen,
-    0,
-    pkey_ecd_sign25519,
-    0,
-    pkey_ecd_verify25519,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecd_ctrl,
     0,
     pkey_ecd_digestsign25519,
@@ -808,11 +832,7 @@ const EVP_PKEY_METHOD ed448_pkey_meth = {
     EVP_PKEY_ED448, EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     0, 0, 0, 0, 0, 0,
     pkey_ecx_keygen,
-    0,
-    pkey_ecd_sign448,
-    0,
-    pkey_ecd_verify448,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     pkey_ecd_ctrl,
     0,
     pkey_ecd_digestsign448,

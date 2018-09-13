@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,10 +9,6 @@
 
 #ifndef HEADER_CMS_LCL_H
 # define HEADER_CMS_LCL_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 # include <openssl/x509.h>
 
@@ -438,7 +434,4 @@ DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
 DECLARE_ASN1_ITEM(CMS_SignedData)
 DECLARE_ASN1_ITEM(CMS_CompressedData)
 
-#ifdef  __cplusplus
-}
-#endif
 #endif

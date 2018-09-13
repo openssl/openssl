@@ -32,7 +32,7 @@
  NDK 10d:
 
     ANDROID_NDK=/some/where/android-ndk-10d
-    PATH=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8/prebuild/linux-x86_64/bin:$PATH
+    PATH=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.8/prebuilt/linux-x86_64/bin:$PATH
     ./Configure android-arm -D__ANDROID_API__=14
 
  Caveat lector! Earlier OpenSSL versions relied on additional CROSS_SYSROOT
@@ -46,8 +46,8 @@
  One can engage clang by adjusting PATH to cover NDK's clang. Just keep
  in mind that if you miss it, Configure will try to use gcc... Also,
  PATH would need even further adjustment to cover unprefixed, yet
- target-specific, ar and ranlib (or not, if you use binutils-multiarch
- on your Linux).
+ target-specific, ar and ranlib. It's possible that you don't need to
+ bother, if binutils-multiarch is installed on your Linux system.
 
  Running tests (on Linux)
  ------------------------

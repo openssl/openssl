@@ -42,7 +42,7 @@ struct async_ctrs {
     unsigned int wctr;
 };
 
-static const BIO_METHOD *bio_f_async_filter()
+static const BIO_METHOD *bio_f_async_filter(void)
 {
     if (methods_async == NULL) {
         methods_async = BIO_meth_new(BIO_TYPE_ASYNC_FILTER, "Async filter");
@@ -227,11 +227,9 @@ static int async_write(BIO *bio, const char *in, int inl)
                 /*
                  * We can't fragment anything after the ServerHello (or CCS <=
                  * TLS1.2), otherwise we get a bad record MAC
-                 * TODO(TLS1.3): Change TLS1_3_VERSION_DRAFT to TLS1_3_VERSION
-                 * before release
                  */
                 if (contenttype == SSL3_RT_CHANGE_CIPHER_SPEC
-                        || (negversion == TLS1_3_VERSION_DRAFT
+                        || (negversion == TLS1_3_VERSION
                             && msgtype == SSL3_MT_SERVER_HELLO)) {
                     fragment = 0;
                     break;

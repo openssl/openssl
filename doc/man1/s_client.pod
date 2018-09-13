@@ -23,9 +23,19 @@ B<openssl> B<s_client>
 [B<-certform DER|PEM>]
 [B<-key filename>]
 [B<-keyform DER|PEM>]
+[B<-cert_chain filename>]
+[B<-build_chain>]
+[B<-xkey>]
+[B<-xcert>]
+[B<-xchain>]
+[B<-xchain_build>]
+[B<-xcertform PEM|DER>]
+[B<-xkeyform PEM|DER>]
 [B<-pass arg>]
 [B<-CApath directory>]
 [B<-CAfile filename>]
+[B<-chainCApath directory>]
+[B<-chainCAfile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-requestCAfile filename>]
@@ -60,6 +70,7 @@ B<openssl> B<s_client>
 [B<-verify_hostname hostname>]
 [B<-verify_ip ip>]
 [B<-verify_name name>]
+[B<-build_chain>]
 [B<-x509_strict>]
 [B<-reconnect>]
 [B<-showcerts>]
@@ -71,6 +82,9 @@ B<openssl> B<s_client>
 [B<-crlf>]
 [B<-ign_eof>]
 [B<-no_ign_eof>]
+[B<-psk_identity identity>]
+[B<-psk key>]
+[B<-psk_session file>]
 [B<-quiet>]
 [B<-ssl3>]
 [B<-tls1>]
@@ -120,7 +134,7 @@ B<openssl> B<s_client>
 [B<-ctlogfile>]
 [B<-keylogfile file>]
 [B<-early_data file>]
-[B<-force_pha>]
+[B<-enable_pha>]
 [B<target>]
 
 =head1 DESCRIPTION
@@ -209,6 +223,34 @@ be used.
 
 The private format to use: DER or PEM. PEM is the default.
 
+=item B<-cert_chain>
+
+A file containing trusted certificates to use when attempting to build the
+client/server certificate chain related to the certificate specified via the
+B<-cert> option.
+
+=item B<-build_chain>
+
+Specify whether the application should build the certificate chain to be
+provided to the server.
+
+=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+
+Specify an extra certificate, private key and certificate chain. These behave
+in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
+specified, the callback returning the first valid chain will be in use by the
+client.
+
+=item B<-xchain_build>
+
+Specify whether the application should build the certificate chain to be
+provided to the server for the extra certificates provided via B<-xkey infile>,
+B<-xcert infile>, B<-xchain> options.
+
+=item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
+
+Extra certificate and private key format respectively.
+
 =item B<-pass arg>
 
 the private key password source. For more information about the format of B<arg>
@@ -237,13 +279,23 @@ set multiple options. See the L<x509(1)> manual page for details.
 =item B<-CApath directory>
 
 The directory to use for server certificate verification. This directory
-must be in "hash format", see B<verify> for more information. These are
+must be in "hash format", see L<verify(1)> for more information. These are
 also used when building the client certificate chain.
 
 =item B<-CAfile file>
 
 A file containing trusted certificates to use during server authentication
 and to use when attempting to build the client certificate chain.
+
+=item B<-chainCApath directory>
+
+The directory to use for building the chain provided to the server. This
+directory must be in "hash format", see L<verify(1)> for more information.
+
+=item B<-chainCAfile file>
+
+A file containing trusted certificates to use when attempting to build the
+client certificate chain.
 
 =item B<-no-CAfile>
 
@@ -409,6 +461,11 @@ given as a hexadecimal number without leading 0x, for example -psk
 1a2b3c4d.
 This option must be provided in order to use a PSK cipher.
 
+=item B<-psk_session file>
+
+Use the pem encoded SSL_SESSION data stored in B<file> as the basis of a PSK.
+Note that this will only work if TLSv1.3 is negotiated.
+
 =item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
 
 These options require or disable the use of the specified SSL or TLS protocols.
@@ -416,6 +473,8 @@ By default B<s_client> will negotiate the highest mutually supported protocol
 version.
 When a specific TLS version is required, only that version will be offered to
 and accepted from the server.
+Note that not all protocols and flags may be available, depending on how
+OpenSSL was built.
 
 =item B<-dtls>, B<-dtls1>, B<-dtls1_2>
 
@@ -641,10 +700,10 @@ Reads the contents of the specified file and attempts to send it as early data
 to the server. This will only work with resumed sessions that support early
 data and when the server accepts the early data.
 
-=item B<-force_pha>
+=item B<-enable_pha>
 
-For TLSv1.3 only, always send the Post-Handshake Authentication extension,
-whether or not a certificate has been provided via B<-cert>.
+For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
+happen whether or not a certificate has been provided via B<-cert>.
 
 =item B<[target]>
 
@@ -659,10 +718,35 @@ on port 4433.
 
 If a connection is established with an SSL server then any data received
 from the server is displayed and any key presses will be sent to the
-server. When used interactively (which means neither B<-quiet> nor B<-ign_eof>
-have been given), the session will be renegotiated if the line begins with an
-B<R>, and if the line begins with a B<Q> or if end of file is reached, the
-connection will be closed down.
+server. If end of file is reached then the connection will be closed down. When
+used interactively (which means neither B<-quiet> nor B<-ign_eof> have been
+given), then certain commands are also recognized which perform special
+operations. These commands are a letter which must appear at the start of a
+line. They are listed below.
+
+=over 4
+
+=item B<Q>
+
+End the current SSL connection and exit.
+
+=item B<R>
+
+Renegotiate the SSL session (TLSv1.2 and below only).
+
+=item B<B>
+
+Send a heartbeat message to the server (DTLS only)
+
+=item B<k>
+
+Send a key update message to the server (TLSv1.3 only)
+
+=item B<K>
+
+Send a key update message to the server and request one back (TLSv1.3 only)
+
+=back
 
 =head1 NOTES
 
@@ -722,7 +806,7 @@ information whenever a session is renegotiated.
 =head1 SEE ALSO
 
 L<SSL_CONF_cmd(3)>, L<sess_id(1)>, L<s_server(1)>, L<ciphers(1)>,
-L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>
+L<SSL_CTX_set_max_send_fragment(3)>, L<SSL_CTX_set_split_send_fragment(3)>,
 L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY

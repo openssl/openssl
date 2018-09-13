@@ -20,7 +20,7 @@ $VERSION = "0.8";
                                    perlapp perltest subtest));
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
-                                         data_file
+                                         data_file data_dir
                                          pipe with cmdstr quotify
                                          openssl_versions));
 

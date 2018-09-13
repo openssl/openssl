@@ -40,8 +40,6 @@ my $proxy = TLSProxy::Proxy->new(
 
 #Test 1: Sending a status_request extension in both ClientHello and
 #ServerHello but then omitting the CertificateStatus message is valid
-#TODO(TLS1.3): Temporarily disabling this test in TLS1.3 until we've completed
-#the move the status request extension to the Certificate message.
 $proxy->clientflags("-status -no_tls1_3");
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 1;

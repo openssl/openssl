@@ -93,7 +93,7 @@ X509_ALGOR *PKCS5_pbe2_set_scrypt(const EVP_CIPHER *cipher,
     /* Dummy cipherinit to just setup the IV */
     if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, iv, 0) == 0)
         goto err;
-    if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) < 0) {
+    if (EVP_CIPHER_param_to_asn1(ctx, scheme->parameter) <= 0) {
         ASN1err(ASN1_F_PKCS5_PBE2_SET_SCRYPT,
                 ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
         goto err;

@@ -129,6 +129,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                           unsigned char *outsecret)
 {
     size_t mdlen, prevsecretlen;
+    int mdleni;
     int ret;
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     static const char derived_secret_label[] = "derived";
@@ -140,7 +141,14 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
         return 0;
     }
 
-    mdlen = EVP_MD_size(md);
+    mdleni = EVP_MD_size(md);
+    /* Ensure cast to size_t is safe */
+    if (!ossl_assert(mdleni >= 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    mdlen = (size_t)mdleni;
 
     if (insecret == NULL) {
         insecret = default_zeros;
@@ -247,12 +255,24 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
         goto err;
     }
 
-    if (str == s->method->ssl3_enc->server_finished_label)
+    if (str == s->method->ssl3_enc->server_finished_label) {
         key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
                                            s->server_finished_secret, hashlen);
-    else
+    } else if (SSL_IS_FIRST_HANDSHAKE(s)) {
         key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL,
                                            s->client_finished_secret, hashlen);
+    } else {
+        unsigned char finsecret[EVP_MAX_MD_SIZE];
+
+        if (!tls13_derive_finishedkey(s, ssl_handshake_md(s),
+                                      s->client_app_traffic_secret,
+                                      finsecret, hashlen))
+            goto err;
+
+        key = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, finsecret,
+                                           hashlen);
+        OPENSSL_cleanse(finsecret, sizeof(finsecret));
+    }
 
     if (key == NULL
             || ctx == NULL
@@ -305,7 +325,16 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
 {
     unsigned char key[EVP_MAX_KEY_LENGTH];
     size_t ivlen, keylen, taglen;
-    size_t hashlen = EVP_MD_size(md);
+    int hashleni = EVP_MD_size(md);
+    size_t hashlen;
+
+    /* Ensure cast to size_t is safe */
+    if (!ossl_assert(hashleni >= 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DERIVE_SECRET_KEY_AND_IV,
+                 ERR_R_EVP_LIB);
+        goto err;
+    }
+    hashlen = (size_t)hashleni;
 
     if (!tls13_hkdf_expand(s, md, insecret, label, labellen, hash, hashlen,
                            secret, hashlen)) {
@@ -397,7 +426,7 @@ int tls13_change_cipher_state(SSL *s, int which)
 
         RECORD_LAYER_reset_read_sequence(&s->rlayer);
     } else {
-        s->statem.invalid_enc_write_ctx = 1;
+        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         if (s->enc_write_ctx != NULL) {
             EVP_CIPHER_CTX_reset(s->enc_write_ctx);
         } else {
@@ -574,12 +603,11 @@ int tls13_change_cipher_state(SSL *s, int which)
         if (!tls13_hkdf_expand(s, ssl_handshake_md(s), insecret,
                                resumption_master_secret,
                                sizeof(resumption_master_secret) - 1,
-                               hashval, hashlen, s->session->master_key,
+                               hashval, hashlen, s->resumption_master_secret,
                                hashlen)) {
             /* SSLfatal() already called */
             goto err;
         }
-        s->session->master_key_length = hashlen;
     }
 
     if (!derive_secret_key_and_iv(s, which & SSL3_CC_WRITE, md, cipher,
@@ -621,7 +649,10 @@ int tls13_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-    s->statem.invalid_enc_write_ctx = 0;
+    if (!s->server && label == client_early_traffic)
+        s->statem.enc_write_state = ENC_WRITE_STATE_WRITE_PLAIN_ALERTS;
+    else
+        s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     ret = 1;
  err:
     OPENSSL_cleanse(secret, sizeof(secret));
@@ -644,7 +675,7 @@ int tls13_update_key(SSL *s, int sending)
         insecret = s->client_app_traffic_secret;
 
     if (sending) {
-        s->statem.invalid_enc_write_ctx = 1;
+        s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         iv = s->write_iv;
         ciph_ctx = s->enc_write_ctx;
         RECORD_LAYER_reset_write_sequence(&s->rlayer);
@@ -665,7 +696,7 @@ int tls13_update_key(SSL *s, int sending)
 
     memcpy(insecret, secret, hashlen);
 
-    s->statem.invalid_enc_write_ctx = 0;
+    s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     ret = 1;
  err:
     OPENSSL_cleanse(secret, sizeof(secret));
@@ -674,7 +705,8 @@ int tls13_update_key(SSL *s, int sending)
 
 int tls13_alert_code(int code)
 {
-    if (code == SSL_AD_MISSING_EXTENSION)
+    /* There are 2 additional alerts in TLSv1.3 compared to TLSv1.2 */
+    if (code == SSL_AD_MISSING_EXTENSION || code == SSL_AD_CERTIFICATE_REQUIRED)
         return code;
 
     return tls1_alert_code(code);

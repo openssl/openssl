@@ -15,6 +15,8 @@ use OpenSSL::Test::Utils;
 my $test_name = "test_store";
 setup($test_name);
 
+my $mingw = config('target') =~ m|^mingw|;
+
 my @noexist_files =
     ( "test/blahdiblah.pem",
       "test/blahdibleh.der" );
@@ -104,8 +106,9 @@ indir "store_$$" => sub {
 
             ok(run(app(["openssl", "storeutl", "-noout", $file])));
             ok(run(app(["openssl", "storeutl", "-noout", to_abs_file($file)])));
+        SKIP:
             {
-                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+                skip "file: tests disabled on MingW", 4 if $mingw;
 
                 ok(run(app(["openssl", "storeutl", "-noout",
                             to_abs_file_uri($file)])));
@@ -123,8 +126,9 @@ indir "store_$$" => sub {
             ok(run(app(["openssl", "storeutl",  "-noout", "-passin",
                         "pass:password", to_abs_file($_)])));
 
+        SKIP:
             {
-                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+                skip "file: tests disabled on MingW", 2 if $mingw;
 
                 ok(run(app(["openssl", "storeutl", "-noout", "-passin",
                             "pass:password", to_abs_file_uri($_)])));
@@ -133,14 +137,20 @@ indir "store_$$" => sub {
             }
         }
         foreach (values %generated_file_files) {
-            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+        SKIP:
+            {
+                skip "file: tests disabled on MingW", 1 if $mingw;
 
-            ok(run(app(["openssl", "storeutl",  "-noout", $_])));
+                ok(run(app(["openssl", "storeutl",  "-noout", $_])));
+            }
         }
         foreach (@noexist_file_files) {
-            local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+        SKIP:
+            {
+                skip "file: tests disabled on MingW", 1 if $mingw;
 
-            ok(!run(app(["openssl", "storeutl",  "-noout", $_])));
+                ok(!run(app(["openssl", "storeutl",  "-noout", $_])));
+            }
         }
         {
             my $dir = srctop_dir("test", "certs");
@@ -148,8 +158,9 @@ indir "store_$$" => sub {
             ok(run(app(["openssl", "storeutl",  "-noout", $dir])));
             ok(run(app(["openssl", "storeutl",  "-noout",
                         to_abs_file($dir, 1)])));
+        SKIP:
             {
-                local $ENV{MSYS2_ARG_CONV_EXCL} = "file:";
+                skip "file: tests disabled on MingW", 1 if $mingw;
 
                 ok(run(app(["openssl", "storeutl",  "-noout",
                             to_abs_file_uri($dir, 1)])));

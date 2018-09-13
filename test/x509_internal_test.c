@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -57,7 +57,7 @@ static int test_standard_exts(void)
     return good;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
     return 1;

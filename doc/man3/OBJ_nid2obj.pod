@@ -54,7 +54,7 @@ constants.
 
 OBJ_nid2obj(), OBJ_nid2ln() and OBJ_nid2sn() convert the NID B<n> to
 an ASN1_OBJECT structure, its long name and its short name respectively,
-or B<NULL> is an error occurred.
+or B<NULL> if an error occurred.
 
 OBJ_obj2nid(), OBJ_ln2nid(), OBJ_sn2nid() return the corresponding NID
 for the object B<o>, the long name <ln> or the short name <sn> respectively
@@ -84,7 +84,8 @@ OBJ_dup() returns a copy of B<o>.
 
 OBJ_create() adds a new object to the internal table. B<oid> is the
 numerical form of the object, B<sn> the short name and B<ln> the
-long name. A new NID is returned for the created object.
+long name. A new NID is returned for the created object in case of
+success and NID_undef in case of failure.
 
 OBJ_length() returns the size of the content octets of B<obj>.
 
@@ -180,7 +181,7 @@ and should not be used.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

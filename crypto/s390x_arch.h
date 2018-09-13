@@ -12,6 +12,10 @@
 
 # ifndef __ASSEMBLER__
 
+void s390x_kimd(const unsigned char *in, size_t len, unsigned int fc,
+                void *param);
+void s390x_klmd(const unsigned char *in, size_t inlen, unsigned char *out,
+                size_t outlen, unsigned int fc, void *param);
 void s390x_km(const unsigned char *in, size_t len, unsigned char *out,
               unsigned int fc, void *param);
 void s390x_kmac(const unsigned char *in, size_t len, unsigned int fc,

@@ -810,7 +810,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
     }
 
     if ((context & SSL_EXT_CLIENT_HELLO) != 0) {
-        reason = ssl_get_min_max_version(s, &min_version, &max_version);
+        reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
         if (reason != 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_EXTENSIONS,
                      reason);
@@ -904,15 +904,19 @@ static int final_renegotiate(SSL *s, unsigned int context, int sent)
 
 static int init_server_name(SSL *s, unsigned int context)
 {
-    if (s->server)
+    if (s->server) {
         s->servername_done = 0;
+
+        OPENSSL_free(s->ext.hostname);
+        s->ext.hostname = NULL;
+    }
 
     return 1;
 }
 
 static int final_server_name(SSL *s, unsigned int context, int sent)
 {
-    int ret = SSL_TLSEXT_ERR_NOACK, discard;
+    int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
     int was_ticket = (SSL_get_options(s) & SSL_OP_NO_TICKET) == 0;
 
@@ -929,9 +933,25 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
         ret = s->session_ctx->ext.servername_cb(s, &altmp,
                                        s->session_ctx->ext.servername_arg);
 
-    if (!sent) {
-        OPENSSL_free(s->session->ext.hostname);
-        s->session->ext.hostname = NULL;
+    /*
+     * For servers, propagate the SNI hostname from the temporary
+     * storage in the SSL to the persistent SSL_SESSION, now that we
+     * know we accepted it.
+     * Clients make this copy when parsing the server's response to
+     * the extension, which is when they find out that the negotiation
+     * was successful.
+     */
+    if (s->server) {
+        /* TODO(OpenSSL1.2) revisit !sent case */
+        if (sent && ret == SSL_TLSEXT_ERR_OK && (!s->hit || SSL_IS_TLS13(s))) {
+            /* Only store the hostname in the session if we accepted it. */
+            OPENSSL_free(s->session->ext.hostname);
+            s->session->ext.hostname = OPENSSL_strdup(s->ext.hostname);
+            if (s->session->ext.hostname == NULL && s->ext.hostname != NULL) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_FINAL_SERVER_NAME,
+                         ERR_R_INTERNAL_ERROR);
+            }
+        }
     }
 
     /*
@@ -941,10 +961,8 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * exceed sess_accept (zero) for the new context.
      */
     if (SSL_IS_FIRST_HANDSHAKE(s) && s->ctx != s->session_ctx) {
-        CRYPTO_atomic_add(&s->ctx->stats.sess_accept, 1, &discard,
-                          s->ctx->lock);
-        CRYPTO_atomic_add(&s->session_ctx->stats.sess_accept, -1, &discard,
-                          s->session_ctx->lock);
+        tsan_counter(&s->ctx->stats.sess_accept);
+        tsan_counter(&s->session_ctx->stats.sess_accept);
     }
 
     /*
@@ -984,7 +1002,9 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
         return 0;
 
     case SSL_TLSEXT_ERR_ALERT_WARNING:
-        ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
+        /* TLSv1.3 doesn't have warning alerts so we suppress this */
+        if (!SSL_IS_TLS13(s))
+            ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
         return 1;
 
     case SSL_TLSEXT_ERR_NOACK:
@@ -1421,15 +1441,22 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     EVP_MD_CTX *mctx = NULL;
     unsigned char hash[EVP_MAX_MD_SIZE], binderkey[EVP_MAX_MD_SIZE];
     unsigned char finishedkey[EVP_MAX_MD_SIZE], tmpbinder[EVP_MAX_MD_SIZE];
-    unsigned char tmppsk[EVP_MAX_MD_SIZE];
-    unsigned char *early_secret, *psk;
-    const char resumption_label[] = "res binder";
-    const char external_label[] = "ext binder";
-    const char nonce_label[] = "resumption";
-    const char *label;
-    size_t bindersize, labelsize, psklen, hashsize = EVP_MD_size(md);
+    unsigned char *early_secret;
+    static const unsigned char resumption_label[] = "res binder";
+    static const unsigned char external_label[] = "ext binder";
+    const unsigned char *label;
+    size_t bindersize, labelsize, hashsize;
+    int hashsizei = EVP_MD_size(md);
     int ret = -1;
     int usepskfored = 0;
+
+    /* Ensure cast to size_t is safe */
+    if (!ossl_assert(hashsizei >= 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    hashsize = (size_t)hashsizei;
 
     if (external
             && s->early_data_state == SSL_EARLY_DATA_CONNECTING
@@ -1445,21 +1472,6 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         labelsize = sizeof(resumption_label) - 1;
     }
 
-    if (external) {
-        psk = sess->master_key;
-        psklen = sess->master_key_length;
-    } else {
-        psk = tmppsk;
-        psklen = hashsize;
-        if (!tls13_hkdf_expand(s, md, sess->master_key,
-                               (const unsigned char *)nonce_label,
-                               sizeof(nonce_label) - 1, sess->ext.tick_nonce,
-                               sess->ext.tick_nonce_len, psk, hashsize)) {
-            /* SSLfatal() already called */
-            goto err;
-        }
-    }
-
     /*
      * Generate the early_secret. On the server side we've selected a PSK to
      * resume with (internal or external) so we always do this. On the client
@@ -1472,7 +1484,9 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         early_secret = (unsigned char *)s->early_secret;
     else
         early_secret = (unsigned char *)sess->early_secret;
-    if (!tls13_generate_secret(s, md, NULL, psk, psklen, early_secret)) {
+
+    if (!tls13_generate_secret(s, md, NULL, sess->master_key,
+                               sess->master_key_length, early_secret)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -1491,8 +1505,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
     }
 
     /* Generate the binder key */
-    if (!tls13_hkdf_expand(s, md, early_secret, (unsigned char *)label,
-                           labelsize, hash, hashsize, binderkey, hashsize)) {
+    if (!tls13_hkdf_expand(s, md, early_secret, label, labelsize, hash,
+                           hashsize, binderkey, hashsize)) {
         /* SSLfatal() already called */
         goto err;
     }
@@ -1626,7 +1640,10 @@ static int final_early_data(SSL *s, unsigned int context, int sent)
             || s->session->ext.tick_identity != 0
             || s->early_data_state != SSL_EARLY_DATA_ACCEPTING
             || !s->ext.early_data_ok
-            || s->hello_retry_request != SSL_HRR_NONE) {
+            || s->hello_retry_request != SSL_HRR_NONE
+            || (s->ctx->allow_early_data_cb != NULL
+                && !s->ctx->allow_early_data_cb(s,
+                                         s->ctx->allow_early_data_cb_data))) {
         s->ext.early_data = SSL_EARLY_DATA_REJECTED;
     } else {
         s->ext.early_data = SSL_EARLY_DATA_ACCEPTED;

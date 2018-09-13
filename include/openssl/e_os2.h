@@ -216,6 +216,8 @@ extern "C" {
 #   define OSSL_SSIZE_MAX SSIZE_MAX
 #  elif defined(_POSIX_SSIZE_MAX)
 #   define OSSL_SSIZE_MAX _POSIX_SSIZE_MAX
+#  else
+#   define OSSL_SSIZE_MAX ((ssize_t)(SIZE_MAX>>1))
 #  endif
 # endif
 

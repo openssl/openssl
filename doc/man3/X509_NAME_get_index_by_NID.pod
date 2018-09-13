@@ -49,7 +49,7 @@ of space needed in B<buf> (excluding the final null) is returned.
 =head1 NOTES
 
 X509_NAME_get_text_by_NID() and X509_NAME_get_text_by_OBJ() should be
-considered deprecaated because they
+considered deprecated because they
 have various limitations which make them
 of minimal use in practice. They can only find the first matching
 entry and will copy the contents of the field verbatim: this can
@@ -112,7 +112,7 @@ L<ERR_get_error(3)>, L<d2i_X509_NAME(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

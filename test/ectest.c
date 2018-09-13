@@ -31,6 +31,7 @@ static int group_order_tests(EC_GROUP *group)
 {
     BIGNUM *n1 = NULL, *n2 = NULL, *order = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL, *S = NULL;
+    const EC_POINT *G = NULL;
     BN_CTX *ctx = NULL;
     int i = 0, r = 0;
 
@@ -38,6 +39,7 @@ static int group_order_tests(EC_GROUP *group)
         || !TEST_ptr(n2 = BN_new())
         || !TEST_ptr(order = BN_new())
         || !TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(G = EC_GROUP_get0_generator(group))
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(Q = EC_POINT_new(group))
         || !TEST_ptr(R = EC_POINT_new(group))
@@ -49,7 +51,15 @@ static int group_order_tests(EC_GROUP *group)
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
         || !TEST_true(EC_GROUP_precompute_mult(group, ctx))
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
-        || !TEST_true(EC_POINT_is_at_infinity(group, Q)))
+        || !TEST_true(EC_POINT_is_at_infinity(group, Q))
+        || !TEST_true(EC_POINT_copy(P, G))
+        || !TEST_true(BN_one(n1))
+        || !TEST_true(EC_POINT_mul(group, Q, n1, NULL, NULL, ctx))
+        || !TEST_int_eq(0, EC_POINT_cmp(group, Q, P, ctx))
+        || !TEST_true(BN_sub(n1, order, n1))
+        || !TEST_true(EC_POINT_mul(group, Q, n1, NULL, NULL, ctx))
+        || !TEST_true(EC_POINT_invert(group, Q, ctx))
+        || !TEST_int_eq(0, EC_POINT_cmp(group, Q, P, ctx)))
         goto err;
 
     for (i = 1; i <= 2; i++) {
@@ -62,6 +72,7 @@ static int group_order_tests(EC_GROUP *group)
              * EC_GROUP_precompute_mult has set up precomputation.
              */
             || !TEST_true(EC_POINT_mul(group, P, n1, NULL, NULL, ctx))
+            || (i == 1 && !TEST_int_eq(0, EC_POINT_cmp(group, P, G, ctx)))
             || !TEST_true(BN_one(n1))
             /* n1 = 1 - order */
             || !TEST_true(BN_sub(n1, n1, order))
@@ -158,7 +169,7 @@ static int prime_field_tests(void)
          * that the library gets to choose the EC_METHOD
          */
         || !TEST_ptr(group = EC_GROUP_new(EC_GFp_mont_method()))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_ptr(tmp = EC_GROUP_new(EC_GROUP_method_of(group)))
         || !TEST_true(EC_GROUP_copy(tmp, group)))
         goto err;
@@ -166,7 +177,7 @@ static int prime_field_tests(void)
     group = tmp;
     tmp = NULL;
 
-    if (!TEST_true(EC_GROUP_get_curve_GFp(group, p, a, b, ctx)))
+    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx)))
         goto err;
 
     TEST_info("Curve defined by Weierstrass equation");
@@ -189,13 +200,11 @@ static int prime_field_tests(void)
         || !TEST_ptr(z = BN_new())
         || !TEST_ptr(yplusone = BN_new())
         || !TEST_true(BN_hex2bn(&x, "D"))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GFp(group, Q, x, 1,
-                                                              ctx)))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx)))
         goto err;
 
     if (!TEST_int_gt(EC_POINT_is_on_curve(group, Q, ctx), 0)) {
-        if (!TEST_true(EC_POINT_get_affine_coordinates_GFp(group, Q, x, y,
-                                                           ctx)))
+        if (!TEST_true(EC_POINT_get_affine_coordinates(group, Q, x, y, ctx)))
             goto err;
         TEST_info("Point is not on curve");
         test_output_bignum("x", x);
@@ -212,8 +221,8 @@ static int prime_field_tests(void)
         if (EC_POINT_is_at_infinity(group, P)) {
             TEST_note("     point at infinity");
         } else {
-            if (!TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y,
-                                                               ctx)))
+            if (!TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y,
+                                                           ctx)))
                 goto err;
 
             test_output_bignum("x", x);
@@ -282,7 +291,7 @@ static int prime_field_tests(void)
                                     "FFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFC"))
         || !TEST_true(BN_hex2bn(&b,                         "1C97BEFC"
                                     "54BD7A8B65ACF89F81D4D4ADC565FA45"))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_true(BN_hex2bn(&x,                         "4A96B568"
                                     "8EF573284664698968C38BB913CBFC82"))
         || !TEST_true(BN_hex2bn(&y,                         "23a62855"
@@ -292,14 +301,14 @@ static int prime_field_tests(void)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(group, P, x,
-                                                           yplusone, ctx))
-        || !TEST_true(EC_POINT_set_affine_coordinates_GFp(group, P, x, y, ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
+                                                       ctx))
+        || !TEST_true(EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z,                       "0100000000"
                                     "000000000001F4C8F927AED3CA752257"))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
     TEST_info("SEC2 curve secp160r1 -- Generator");
     test_output_bignum("x", x);
@@ -322,16 +331,15 @@ static int prime_field_tests(void)
                                     "FFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFC"))
         || !TEST_true(BN_hex2bn(&b,                 "64210519E59C80E7"
                                     "0FA7E9AB72243049FEB8DEECC146B9B1"))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_true(BN_hex2bn(&x,                 "188DA80EB03090F6"
                                     "7CBF20EB43A18800F4FF0AFD82FF1012"))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GFp(group, P, x, 1,
-                                                              ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x, 1, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z,                 "FFFFFFFFFFFFFFFF"
                                     "FFFFFFFF99DEF836146BC9B1B4D22831"))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
 
     TEST_info("NIST curve P-192 -- Generator");
@@ -346,8 +354,8 @@ static int prime_field_tests(void)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(group, P, x,
-                                                           yplusone, ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
+                                                       ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 192)
         || !group_order_tests(group)
         || !TEST_ptr(P_192 = EC_GROUP_new(EC_GROUP_method_of(group)))
@@ -362,16 +370,15 @@ static int prime_field_tests(void)
                                     "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFE"))
         || !TEST_true(BN_hex2bn(&b,         "B4050A850C04B3ABF5413256"
                                     "5044B0B7D7BFD8BA270B39432355FFB4"))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_true(BN_hex2bn(&x,         "B70E0CBD6BB4BF7F321390B9"
                                     "4A03C1D356C21122343280D6115C1D21"))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GFp(group, P, x, 0,
-                                                              ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x, 0, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z,         "FFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFF16A2E0B8F03E13DD29455C5C2A3D"))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
 
     TEST_info("NIST curve P-224 -- Generator");
@@ -386,8 +393,8 @@ static int prime_field_tests(void)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(group, P, x,
-                                                           yplusone, ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
+                                                       ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 224)
         || !group_order_tests(group)
         || !TEST_ptr(P_224 = EC_GROUP_new(EC_GROUP_method_of(group)))
@@ -402,17 +409,16 @@ static int prime_field_tests(void)
                                     "00000000FFFFFFFFFFFFFFFFFFFFFFFC"))
         || !TEST_true(BN_hex2bn(&b, "5AC635D8AA3A93E7B3EBBD55769886BC"
                                     "651D06B0CC53B0F63BCE3C3E27D2604B"))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
 
         || !TEST_true(BN_hex2bn(&x, "6B17D1F2E12C4247F8BCE6E563A440F2"
                                     "77037D812DEB33A0F4A13945D898C296"))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GFp(group, P, x, 1,
-                                                              ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x, 1, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z, "FFFFFFFF00000000FFFFFFFFFFFFFFFF"
                                     "BCE6FAADA7179E84F3B9CAC2FC632551"))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
 
     TEST_info("NIST curve P-256 -- Generator");
@@ -427,8 +433,8 @@ static int prime_field_tests(void)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(group, P, x,
-                                                           yplusone, ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
+                                                       ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 256)
         || !group_order_tests(group)
         || !TEST_ptr(P_256 = EC_GROUP_new(EC_GROUP_method_of(group)))
@@ -446,19 +452,18 @@ static int prime_field_tests(void)
         || !TEST_true(BN_hex2bn(&b, "B3312FA7E23EE7E4988E056BE3F82D19"
                                     "181D9C6EFE8141120314088F5013875A"
                                     "C656398D8A2ED19D2A85C8EDD3EC2AEF"))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
 
         || !TEST_true(BN_hex2bn(&x, "AA87CA22BE8B05378EB1C71EF320AD74"
                                     "6E1D3B628BA79B9859F741E082542A38"
                                     "5502F25DBF55296C3A545E3872760AB7"))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GFp(group, P, x, 1,
-                                                              ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x, 1, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
                                     "FFFFFFFFFFFFFFFFC7634D81F4372DDF"
                                     "581A0DB248B0A77AECEC196ACCC52973"))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
 
     TEST_info("NIST curve P-384 -- Generator");
@@ -474,8 +479,8 @@ static int prime_field_tests(void)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(group, P, x,
-                                                           yplusone, ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
+                                                       ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 384)
         || !group_order_tests(group)
         || !TEST_ptr(P_384 = EC_GROUP_new(EC_GROUP_method_of(group)))
@@ -498,14 +503,13 @@ static int prime_field_tests(void)
                                     "A2DA725B99B315F3B8B489918EF109E1"
                                     "56193951EC7E937B1652C0BD3BB1BF07"
                                     "3573DF883D2C34F1EF451FD46B503F00"))
-        || !TEST_true(EC_GROUP_set_curve_GFp(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_true(BN_hex2bn(&x,                               "C6"
                                     "858E06B70404E9CD9E3ECB662395B442"
                                     "9C648139053FB521F828AF606B4D3DBA"
                                     "A14B5E77EFE75928FE1DC127A2FFA8DE"
                                     "3348B3C1856A429BF97E7E31C2E5BD66"))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GFp(group, P, x, 0,
-                                                              ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x, 0, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z,                              "1FF"
                                     "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
@@ -513,7 +517,7 @@ static int prime_field_tests(void)
                                     "51868783BF2F966B7FCC0148F709A5D0"
                                     "3BB5C9B8899C47AEBB6FB71E91386409"))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, BN_value_one()))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GFp(group, P, x, y, ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
 
     TEST_info("NIST curve P-521 -- Generator");
@@ -531,8 +535,8 @@ static int prime_field_tests(void)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(group, P, x,
-                                                           yplusone, ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone,
+                                                       ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 521)
         || !group_order_tests(group)
         || !TEST_ptr(P_521 = EC_GROUP_new(EC_GROUP_method_of(group)))
@@ -541,7 +545,7 @@ static int prime_field_tests(void)
     /* more tests using the last curve */
 
     /* Restore the point that got mangled in the (x, y + 1) test. */
-        || !TEST_true(EC_POINT_set_affine_coordinates_GFp(group, P, x, y, ctx))
+        || !TEST_true(EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
         || !TEST_true(EC_POINT_copy(Q, P))
         || !TEST_false(EC_POINT_is_at_infinity(group, Q))
         || !TEST_true(EC_POINT_dbl(group, P, P, ctx))
@@ -823,7 +827,7 @@ static int char2_curve_test(int n)
         || !TEST_true(BN_hex2bn(&a, test->a))
         || !TEST_true(BN_hex2bn(&b, test->b))
         || !TEST_true(group = EC_GROUP_new(EC_GF2m_simple_method()))
-        || !TEST_true(EC_GROUP_set_curve_GF2m(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(Q = EC_POINT_new(group))
         || !TEST_ptr(R = EC_POINT_new(group))
@@ -838,17 +842,15 @@ static int char2_curve_test(int n)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-    if (!TEST_false(EC_POINT_set_affine_coordinates_GF2m(group, P, x, yplusone,
-                                                         ctx))
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GF2m(group, P, x,
-                                                               test->y_bit,
-                                                               ctx))
+    if (!TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone, ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, P, x,
+                                                          test->y_bit,
+                                                          ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z, test->order))
         || !TEST_true(BN_hex2bn(&cof, test->cof))
         || !TEST_true(EC_GROUP_set_generator(group, P, z, cof))
-        || !TEST_true(EC_POINT_get_affine_coordinates_GF2m(group, P, x, y,
-                                                           ctx)))
+        || !TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y, ctx)))
         goto err;
     TEST_info("%s -- Generator", test->name);
     test_output_bignum("x", x);
@@ -862,9 +864,8 @@ static int char2_curve_test(int n)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-    if (!TEST_false(EC_POINT_set_affine_coordinates_GF2m(group, P, x, yplusone,
-                    ctx))
-        || !TEST_true(EC_POINT_set_affine_coordinates_GF2m(group, P, x, y, ctx))
+    if (!TEST_false(EC_POINT_set_affine_coordinates(group, P, x, yplusone, ctx))
+        || !TEST_true(EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
         || !TEST_int_gt(EC_POINT_is_on_curve(group, P, ctx), 0)
         || !TEST_true(BN_hex2bn(&z, test->order))
         || !TEST_true(BN_hex2bn(&cof, test->cof))
@@ -883,8 +884,7 @@ static int char2_curve_test(int n)
 
     /* more tests using the last curve */
     if (n == OSSL_NELEM(char2_curve_tests) - 1) {
-        if (!TEST_true(EC_POINT_set_affine_coordinates_GF2m(group, P, x, y,
-                                                                ctx))
+        if (!TEST_true(EC_POINT_set_affine_coordinates(group, P, x, y, ctx))
             || !TEST_true(EC_POINT_copy(Q, P))
             || !TEST_false(EC_POINT_is_at_infinity(group, Q))
             || !TEST_true(EC_POINT_dbl(group, P, P, ctx))
@@ -984,7 +984,7 @@ static int char2_field_tests(void)
                                                     * so that the library gets
                                                     * to choose the EC_METHOD */
     if (!TEST_ptr(group)
-        || !TEST_true(EC_GROUP_set_curve_GF2m(group, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !TEST_ptr(tmp = EC_GROUP_new(EC_GROUP_method_of(group)))
         || !TEST_true(EC_GROUP_copy(tmp, group)))
         goto err;
@@ -992,7 +992,7 @@ static int char2_field_tests(void)
     group = tmp;
     tmp = NULL;
 
-    if (!TEST_true(EC_GROUP_get_curve_GF2m(group, p, a, b, ctx)))
+    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx)))
         goto err;
 
     TEST_info("Curve defined by Weierstrass equation");
@@ -1020,19 +1020,17 @@ static int char2_field_tests(void)
         || !TEST_true(BN_hex2bn(&x, "6"))
 /* Change test based on whether binary point compression is enabled or not. */
 #  ifdef OPENSSL_EC_BIN_PT_COMP
-        || !TEST_true(EC_POINT_set_compressed_coordinates_GF2m(group, Q, x, 1,
-                                                               ctx))
+        || !TEST_true(EC_POINT_set_compressed_coordinates(group, Q, x, 1, ctx))
 #  else
         || !TEST_true(BN_hex2bn(&y, "8"))
-        || !TEST_true(EC_POINT_set_affine_coordinates_GF2m(group, Q, x, y, ctx))
+        || !TEST_true(EC_POINT_set_affine_coordinates(group, Q, x, y, ctx))
 #  endif
        )
         goto err;
     if (!TEST_int_gt(EC_POINT_is_on_curve(group, Q, ctx), 0)) {
 /* Change test based on whether binary point compression is enabled or not. */
 #  ifdef OPENSSL_EC_BIN_PT_COMP
-        if (!TEST_true(EC_POINT_get_affine_coordinates_GF2m(group, Q, x, y,
-                                                            ctx)))
+        if (!TEST_true(EC_POINT_get_affine_coordinates(group, Q, x, y, ctx)))
             goto err;
 #  endif
         TEST_info("Point is not on curve");
@@ -1050,8 +1048,8 @@ static int char2_field_tests(void)
         if (EC_POINT_is_at_infinity(group, P))
             TEST_note("     point at infinity");
         else {
-            if (!TEST_true(EC_POINT_get_affine_coordinates_GF2m(group, P, x, y,
-                                                                ctx)))
+            if (!TEST_true(EC_POINT_get_affine_coordinates(group, P, x, y,
+                                                           ctx)))
                 goto err;
 
             test_output_bignum("x", x);
@@ -1167,7 +1165,7 @@ static int internal_curve_test_method(int n)
  * implementations of several NIST curves with characteristic > 3.
  */
 struct nistp_test_params {
-    const EC_METHOD *(*meth) ();
+    const EC_METHOD *(*meth) (void);
     int degree;
     /*
      * Qx, Qy and D are taken from
@@ -1295,7 +1293,7 @@ static int nistp_single_test(int idx)
         || !TEST_int_eq(1, BN_is_prime_ex(p, BN_prime_checks, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a, test->a))
         || !TEST_true(BN_hex2bn(&b, test->b))
-        || !TEST_true(EC_GROUP_set_curve_GFp(NISTP, p, a, b, ctx))
+        || !TEST_true(EC_GROUP_set_curve(NISTP, p, a, b, ctx))
         || !TEST_ptr(G = EC_POINT_new(NISTP))
         || !TEST_ptr(P = EC_POINT_new(NISTP))
         || !TEST_ptr(Q = EC_POINT_new(NISTP))
@@ -1307,13 +1305,13 @@ static int nistp_single_test(int idx)
      * When (x, y) is on the curve, (x, y + 1) is, as it happens, not,
      * and therefore setting the coordinates should fail.
      */
-        || !TEST_false(EC_POINT_set_affine_coordinates_GFp(NISTP, Q_CHECK, x,
-                                                           yplusone, ctx))
-        || !TEST_true(EC_POINT_set_affine_coordinates_GFp(NISTP, Q_CHECK, x, y,
-                                                          ctx))
+        || !TEST_false(EC_POINT_set_affine_coordinates(NISTP, Q_CHECK, x,
+                                                       yplusone, ctx))
+        || !TEST_true(EC_POINT_set_affine_coordinates(NISTP, Q_CHECK, x, y,
+                                                      ctx))
         || !TEST_true(BN_hex2bn(&x, test->Gx))
         || !TEST_true(BN_hex2bn(&y, test->Gy))
-        || !TEST_true(EC_POINT_set_affine_coordinates_GFp(NISTP, G, x, y, ctx))
+        || !TEST_true(EC_POINT_set_affine_coordinates(NISTP, G, x, y, ctx))
         || !TEST_true(BN_hex2bn(&order, test->order))
         || !TEST_true(EC_GROUP_set_generator(NISTP, G, order, BN_value_one()))
         || !TEST_int_eq(EC_GROUP_get_degree(NISTP), test->degree))
@@ -1407,20 +1405,91 @@ err:
 }
 # endif
 
+static const unsigned char p521_named[] = {
+    0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23,
+};
+
+static const unsigned char p521_explicit[] = {
+    0x30, 0x82, 0x01, 0xc3, 0x02, 0x01, 0x01, 0x30, 0x4d, 0x06, 0x07, 0x2a,
+    0x86, 0x48, 0xce, 0x3d, 0x01, 0x01, 0x02, 0x42, 0x01, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0x30, 0x81, 0x9f, 0x04, 0x42, 0x01, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xfc, 0x04, 0x42, 0x00, 0x51, 0x95, 0x3e, 0xb9, 0x61, 0x8e, 0x1c, 0x9a,
+    0x1f, 0x92, 0x9a, 0x21, 0xa0, 0xb6, 0x85, 0x40, 0xee, 0xa2, 0xda, 0x72,
+    0x5b, 0x99, 0xb3, 0x15, 0xf3, 0xb8, 0xb4, 0x89, 0x91, 0x8e, 0xf1, 0x09,
+    0xe1, 0x56, 0x19, 0x39, 0x51, 0xec, 0x7e, 0x93, 0x7b, 0x16, 0x52, 0xc0,
+    0xbd, 0x3b, 0xb1, 0xbf, 0x07, 0x35, 0x73, 0xdf, 0x88, 0x3d, 0x2c, 0x34,
+    0xf1, 0xef, 0x45, 0x1f, 0xd4, 0x6b, 0x50, 0x3f, 0x00, 0x03, 0x15, 0x00,
+    0xd0, 0x9e, 0x88, 0x00, 0x29, 0x1c, 0xb8, 0x53, 0x96, 0xcc, 0x67, 0x17,
+    0x39, 0x32, 0x84, 0xaa, 0xa0, 0xda, 0x64, 0xba, 0x04, 0x81, 0x85, 0x04,
+    0x00, 0xc6, 0x85, 0x8e, 0x06, 0xb7, 0x04, 0x04, 0xe9, 0xcd, 0x9e, 0x3e,
+    0xcb, 0x66, 0x23, 0x95, 0xb4, 0x42, 0x9c, 0x64, 0x81, 0x39, 0x05, 0x3f,
+    0xb5, 0x21, 0xf8, 0x28, 0xaf, 0x60, 0x6b, 0x4d, 0x3d, 0xba, 0xa1, 0x4b,
+    0x5e, 0x77, 0xef, 0xe7, 0x59, 0x28, 0xfe, 0x1d, 0xc1, 0x27, 0xa2, 0xff,
+    0xa8, 0xde, 0x33, 0x48, 0xb3, 0xc1, 0x85, 0x6a, 0x42, 0x9b, 0xf9, 0x7e,
+    0x7e, 0x31, 0xc2, 0xe5, 0xbd, 0x66, 0x01, 0x18, 0x39, 0x29, 0x6a, 0x78,
+    0x9a, 0x3b, 0xc0, 0x04, 0x5c, 0x8a, 0x5f, 0xb4, 0x2c, 0x7d, 0x1b, 0xd9,
+    0x98, 0xf5, 0x44, 0x49, 0x57, 0x9b, 0x44, 0x68, 0x17, 0xaf, 0xbd, 0x17,
+    0x27, 0x3e, 0x66, 0x2c, 0x97, 0xee, 0x72, 0x99, 0x5e, 0xf4, 0x26, 0x40,
+    0xc5, 0x50, 0xb9, 0x01, 0x3f, 0xad, 0x07, 0x61, 0x35, 0x3c, 0x70, 0x86,
+    0xa2, 0x72, 0xc2, 0x40, 0x88, 0xbe, 0x94, 0x76, 0x9f, 0xd1, 0x66, 0x50,
+    0x02, 0x42, 0x01, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+    0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfa,
+    0x51, 0x86, 0x87, 0x83, 0xbf, 0x2f, 0x96, 0x6b, 0x7f, 0xcc, 0x01, 0x48,
+    0xf7, 0x09, 0xa5, 0xd0, 0x3b, 0xb5, 0xc9, 0xb8, 0x89, 0x9c, 0x47, 0xae,
+    0xbb, 0x6f, 0xb7, 0x1e, 0x91, 0x38, 0x64, 0x09, 0x02, 0x01, 0x01,
+};
+
 static int parameter_test(void)
 {
     EC_GROUP *group = NULL, *group2 = NULL;
     ECPARAMETERS *ecparameters = NULL;
-    int r;
+    unsigned char *buf = NULL;
+    int r = 0, len;
 
-    r = TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_secp112r1))
-        && TEST_ptr(ecparameters = EC_GROUP_get_ecparameters(group, NULL))
-        && TEST_ptr(group2 = EC_GROUP_new_from_ecparameters(ecparameters))
-        && TEST_int_eq(EC_GROUP_cmp(group, group2, NULL), 0);
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_secp112r1))
+        || !TEST_ptr(ecparameters = EC_GROUP_get_ecparameters(group, NULL))
+        || !TEST_ptr(group2 = EC_GROUP_new_from_ecparameters(ecparameters))
+        || !TEST_int_eq(EC_GROUP_cmp(group, group2, NULL), 0))
+        goto err;
 
+    EC_GROUP_free(group);
+    group = NULL;
+
+    /* Test the named curve encoding, which should be default. */
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(NID_secp521r1))
+        || !TEST_true((len = i2d_ECPKParameters(group, &buf)) >= 0)
+        || !TEST_mem_eq(buf, len, p521_named, sizeof(p521_named)))
+        goto err;
+
+    OPENSSL_free(buf);
+    buf = NULL;
+
+    /*
+     * Test the explicit encoding. P-521 requires correctly zero-padding the
+     * curve coefficients.
+     */
+    EC_GROUP_set_asn1_flag(group, OPENSSL_EC_EXPLICIT_CURVE);
+    if (!TEST_true((len = i2d_ECPKParameters(group, &buf)) >= 0)
+        || !TEST_mem_eq(buf, len, p521_explicit, sizeof(p521_explicit)))
+        goto err;
+
+    r = 1;
+err:
     EC_GROUP_free(group);
     EC_GROUP_free(group2);
     ECPARAMETERS_free(ecparameters);
+    OPENSSL_free(buf);
     return r;
 }
 #endif

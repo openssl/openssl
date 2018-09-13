@@ -554,7 +554,7 @@ static void reset_hook_ctx(HOOK_CTX *ctx)
 }
 
 /* Resets all drbg hook contexts */
-static void reset_drbg_hook_ctx()
+static void reset_drbg_hook_ctx(void)
 {
     reset_hook_ctx(&master_ctx);
     reset_hook_ctx(&public_ctx);

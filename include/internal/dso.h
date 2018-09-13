@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,10 +12,6 @@
 
 # include <openssl/crypto.h>
 # include "internal/dsoerr.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /* These values are used as commands to DSO_ctrl() */
 # define DSO_CTRL_GET_FLAGS      1
@@ -166,7 +162,4 @@ void *DSO_global_lookup(const char *name);
 
 int ERR_load_DSO_strings(void);
 
-# ifdef  __cplusplus
-}
-# endif
 #endif

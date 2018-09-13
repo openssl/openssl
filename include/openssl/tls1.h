@@ -30,10 +30,6 @@ extern "C" {
 # define TLS1_3_VERSION                  0x0304
 # define TLS_MAX_VERSION                 TLS1_3_VERSION
 
-/* TODO(TLS1.3) REMOVE ME: Version indicator for draft -26 */
-# define TLS1_3_VERSION_DRAFT            0x7f1a
-# define TLS1_3_VERSION_DRAFT_TXT        "TLS 1.3 (draft 26)"
-
 /* Special value for method supporting multiple versions */
 # define TLS_ANY_VERSION                 0x10000
 
@@ -66,7 +62,6 @@ extern "C" {
 # define TLS1_AD_USER_CANCELLED          90
 # define TLS1_AD_NO_RENEGOTIATION        100
 /* TLSv1.3 alerts */
-# define TLS13_AD_END_OF_EARLY_DATA      1
 # define TLS13_AD_MISSING_EXTENSION      109 /* fatal */
 # define TLS13_AD_CERTIFICATE_REQUIRED   116 /* fatal */
 /* codes 110-114 are from RFC3546 */
@@ -1146,7 +1141,13 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
  * when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
  * comment there)
  */
-# define TLS_CT_NUMBER                   9
+# define TLS_CT_NUMBER                   10
+
+# if defined(SSL3_CT_NUMBER)
+#  if TLS_CT_NUMBER != SSL3_CT_NUMBER
+#    error "SSL/TLS CT_NUMBER values do not match"
+#  endif
+# endif
 
 # define TLS1_FINISH_MAC_LENGTH          12
 

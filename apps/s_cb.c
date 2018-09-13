@@ -234,6 +234,15 @@ static const char *get_sigtype(int nid)
      case NID_ED448:
         return "Ed448";
 
+     case NID_id_GostR3410_2001:
+        return "gost2001";
+
+     case NID_id_GostR3410_2012_256:
+        return "gost2012_256";
+
+     case NID_id_GostR3410_2012_512:
+        return "gost2012_512";
+
      /* OQS schemes */
      case NID_picnicL1FS:
         return "Picnic L1 FS";

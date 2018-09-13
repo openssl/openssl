@@ -60,29 +60,20 @@ void ASN1_add_oid_module(void)
 static int do_create(const char *value, const char *name)
 {
     int nid;
-    ASN1_OBJECT *oid;
     const char *ln, *ostr, *p;
-    char *lntmp;
+    char *lntmp = NULL;
+
     p = strrchr(value, ',');
-    if (!p) {
+    if (p == NULL) {
         ln = name;
         ostr = value;
     } else {
-        ln = NULL;
+        ln = value;
         ostr = p + 1;
-        if (!*ostr)
+        if (*ostr == '\0')
             return 0;
         while (ossl_isspace(*ostr))
             ostr++;
-    }
-
-    nid = OBJ_create(ostr, name, ln);
-
-    if (nid == NID_undef)
-        return 0;
-
-    if (p) {
-        ln = value;
         while (ossl_isspace(*ln))
             ln++;
         p--;
@@ -97,10 +88,13 @@ static int do_create(const char *value, const char *name)
             return 0;
         }
         memcpy(lntmp, ln, p - ln);
-        lntmp[p - ln] = 0;
-        oid = OBJ_nid2obj(nid);
-        oid->ln = lntmp;
+        lntmp[p - ln] = '\0';
+        ln = lntmp;
     }
 
-    return 1;
+    nid = OBJ_create(ostr, name, ln);
+
+    OPENSSL_free(lntmp);
+
+    return nid != NID_undef;
 }

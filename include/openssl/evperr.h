@@ -38,9 +38,11 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_DO_SIGVER_INIT                             161
 # define EVP_F_ENC_NEW                                    199
 # define EVP_F_EVP_CIPHERINIT_EX                          123
+# define EVP_F_EVP_CIPHER_ASN1_TO_PARAM                   204
 # define EVP_F_EVP_CIPHER_CTX_COPY                        163
 # define EVP_F_EVP_CIPHER_CTX_CTRL                        124
 # define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH              122
+# define EVP_F_EVP_CIPHER_PARAM_TO_ASN1                   205
 # define EVP_F_EVP_DECRYPTFINAL_EX                        101
 # define EVP_F_EVP_DECRYPTUPDATE                          166
 # define EVP_F_EVP_DIGESTFINALXOF                         174
@@ -79,6 +81,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_GET0_POLY1305                     184
 # define EVP_F_EVP_PKEY_GET0_RSA                          121
 # define EVP_F_EVP_PKEY_GET0_SIPHASH                      172
+# define EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY               202
+# define EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY                203
 # define EVP_F_EVP_PKEY_KEYGEN                            146
 # define EVP_F_EVP_PKEY_KEYGEN_INIT                       147
 # define EVP_F_EVP_PKEY_METH_ADD0                         194
@@ -92,6 +96,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_PKEY_PARAM_CHECK                       189
 # define EVP_F_EVP_PKEY_PUBLIC_CHECK                      190
 # define EVP_F_EVP_PKEY_SET1_ENGINE                       187
+# define EVP_F_EVP_PKEY_SET_ALIAS_TYPE                    206
 # define EVP_F_EVP_PKEY_SIGN                              140
 # define EVP_F_EVP_PKEY_SIGN_INIT                         141
 # define EVP_F_EVP_PKEY_VERIFY                            142
@@ -139,6 +144,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_A_POLY1305_KEY                   164
 # define EVP_R_EXPECTING_A_SIPHASH_KEY                    175
 # define EVP_R_FIPS_MODE_NOT_SUPPORTED                    167
+# define EVP_R_GET_RAW_KEY_FAILED                         182
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INITIALIZATION_ERROR                       134
 # define EVP_R_INPUT_NOT_INITIALIZED                      111

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen
+RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen,
+RAND_keep_random_devices_open
 - add randomness to the PRNG or get its status
 
 =head1 SYNOPSIS
@@ -14,6 +15,8 @@ RAND_add, RAND_poll, RAND_seed, RAND_status, RAND_event, RAND_screen
 
  void RAND_add(const void *buf, int num, double randomness);
  void RAND_seed(const void *buf, int num);
+
+ void RAND_keep_random_devices_open(int keep);
 
 Deprecated:
 
@@ -53,6 +56,15 @@ Applications that intend to save and restore random state in an external file
 should consider using L<RAND_load_file(3)> instead.
 
 RAND_seed() is equivalent to RAND_add() with B<randomness> set to B<num>.
+
+RAND_keep_random_devices_open() is used to control file descriptor
+usage by the random seed sources. Some seed sources maintain open file
+descriptors by default, which allows such sources to operate in a
+chroot(2) jail without the associated device nodes being available. When
+the B<keep> argument is zero, this call disables the retention of file
+descriptors. Conversely, a non-zero argument enables the retention of
+file descriptors. This function is usually called during initialization
+and it takes effect immediately.
 
 RAND_event() and RAND_screen() are equivalent to RAND_poll() and exist
 for compatibility reasons only. See HISTORY section below.

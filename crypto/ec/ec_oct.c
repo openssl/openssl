@@ -15,18 +15,17 @@
 
 #include "ec_lcl.h"
 
-int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
-                                            EC_POINT *point, const BIGNUM *x,
-                                            int y_bit, BN_CTX *ctx)
+int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
+                                        const BIGNUM *x, int y_bit, BN_CTX *ctx)
 {
-    if (group->meth->point_set_compressed_coordinates == 0
+    if (group->meth->point_set_compressed_coordinates == NULL
         && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,
+        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES,
               ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    if (group->meth != point->meth) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,
+    if (!ec_point_is_compat(point, group)) {
+        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES,
               EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
@@ -37,7 +36,7 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
         else
 #ifdef OPENSSL_NO_EC2M
         {
-            ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GFP,
+            ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES,
                   EC_R_GF2M_NOT_SUPPORTED);
             return 0;
         }
@@ -50,33 +49,22 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
                                                          y_bit, ctx);
 }
 
-#ifndef OPENSSL_NO_EC2M
+#if OPENSSL_API_COMPAT < 0x10200000L
+int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
+                                            EC_POINT *point, const BIGNUM *x,
+                                            int y_bit, BN_CTX *ctx)
+{
+    return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
+}
+
+# ifndef OPENSSL_NO_EC2M
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
                                              EC_POINT *point, const BIGNUM *x,
                                              int y_bit, BN_CTX *ctx)
 {
-    if (group->meth->point_set_compressed_coordinates == 0
-        && !(group->meth->flags & EC_FLAGS_DEFAULT_OCT)) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M,
-              ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-        return 0;
-    }
-    if (group->meth != point->meth) {
-        ECerr(EC_F_EC_POINT_SET_COMPRESSED_COORDINATES_GF2M,
-              EC_R_INCOMPATIBLE_OBJECTS);
-        return 0;
-    }
-    if (group->meth->flags & EC_FLAGS_DEFAULT_OCT) {
-        if (group->meth->field_type == NID_X9_62_prime_field)
-            return ec_GFp_simple_set_compressed_coordinates(group, point, x,
-                                                            y_bit, ctx);
-        else
-            return ec_GF2m_simple_set_compressed_coordinates(group, point, x,
-                                                             y_bit, ctx);
-    }
-    return group->meth->point_set_compressed_coordinates(group, point, x,
-                                                         y_bit, ctx);
+    return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
+# endif
 #endif
 
 size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
@@ -88,7 +76,7 @@ size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
         ECerr(EC_F_EC_POINT_POINT2OCT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    if (group->meth != point->meth) {
+    if (!ec_point_is_compat(point, group)) {
         ECerr(EC_F_EC_POINT_POINT2OCT, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
@@ -118,7 +106,7 @@ int EC_POINT_oct2point(const EC_GROUP *group, EC_POINT *point,
         ECerr(EC_F_EC_POINT_OCT2POINT, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    if (group->meth != point->meth) {
+    if (!ec_point_is_compat(point, group)) {
         ECerr(EC_F_EC_POINT_OCT2POINT, EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }

@@ -16,6 +16,10 @@
 
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw)/ }
 
+     # Shared AIX support is special. We put libcrypto[64].so.ver into
+     # libcrypto.a and use libcrypto_a.a as static one.
+     sub sharedaix  { !$disabled{shared} && $config{target} =~ /^aix/ }
+
      our $sover_dirname = $config{shlib_version_number};
      $sover_dirname =~ s|\.|_|g
          if $config{target} =~ /^mingw/;
@@ -117,7 +121,7 @@ INSTALL_ENGINES={- join(" ", map { dso($_) } @{$unified_info{install}->{engines}
 INSTALL_PROGRAMS={- join(" ", map { $_.$exeext } @{$unified_info{install}->{programs}}) -}
 {- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
-MISC_SCRIPTS=$(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget
+MISC_SCRIPTS=$(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget.pl:tsget
 {- output_on() if $disabled{apps}; "" -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
@@ -208,7 +212,7 @@ EX_LIBS= {- join(' ', @{$config{LDLIBS}}) -}
 
 MAKEDEPEND={- $config{makedepprog} -}
 
-PERL={- $config{perl} -}
+PERL={- $config{PERL} -}
 
 AR=$(CROSS_COMPILE){- $config{AR} -}
 ARFLAGS= {- join(' ', @{$config{ARFLAGS}}) -}
@@ -412,13 +416,13 @@ libclean:
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-$(RM) `find . -name '*{- $depext -}' -a \! -path "./.git/*"`
-	-$(RM) `find . -name '*{- $objext -}' -a \! -path "./.git/*"`
+	-$(RM) `find . -name .git -prune -o -name '*{- $depext -}' -print`
+	-$(RM) `find . -name .git -prune -o -name '*{- $objext -}' -print`
 	$(RM) core
 	$(RM) tags TAGS doc-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
-	-$(RM) `find . -type l -a \! -path "./.git/*"`
+	-$(RM) `find . -name .git -prune -o -type l -print`
 	$(RM) $(TARFILE)
 
 distclean: clean
@@ -451,12 +455,25 @@ install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/misc
 	@set -e; for x in dummy $(MISC_SCRIPTS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
-		cp $$x $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
+		x1=`echo "$$x" | cut -f1 -d:`; \
+		x2=`echo "$$x" | cut -f2 -d:`; \
+		fn=`basename $$x1`; \
+		$(ECHO) "install $$x1 -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
+		cp $$x1 $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
 		chmod 755 $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new; \
 		mv -f $(DESTDIR)$(OPENSSLDIR)/misc/$$fn.new \
 		      $(DESTDIR)$(OPENSSLDIR)/misc/$$fn; \
+		if [ "$$x1" != "$$x2" ]; then \
+			ln=`basename "$$x2"`; \
+			: {- output_off() unless windowsdll(); "" -}; \
+			$(ECHO) "copy $(DESTDIR)$(OPENSSLDIR)/misc/$$ln -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
+			cp $(DESTDIR)$(OPENSSLDIR)/misc/$$fn $(DESTDIR)$(OPENSSLDIR)/misc/$$ln; \
+			: {- output_on() unless windowsdll();
+			     output_off() if windowsdll(); "" -}; \
+			$(ECHO) "link $(DESTDIR)$(OPENSSLDIR)/misc/$$ln -> $(DESTDIR)$(OPENSSLDIR)/misc/$$fn"; \
+			ln -sf $$fn $(DESTDIR)$(OPENSSLDIR)/misc/$$ln; \
+			: {- output_on() if windowsdll(); "" -}; \
+		fi; \
 	done
 	@$(ECHO) "install $(SRCDIR)/apps/openssl.cnf -> $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.dist"
 	@cp $(SRCDIR)/apps/openssl.cnf $(DESTDIR)$(OPENSSLDIR)/openssl.cnf.new
@@ -509,7 +526,7 @@ install_dev:
 		s2=`echo "$$s" | cut -f2 -d";"`; \
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
-		: {- output_off() if windowsdll(); "" -}; \
+		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
 		$(ECHO) "install $$s1 -> $(DESTDIR)$(libdir)/$$fn1"; \
 		cp $$s1 $(DESTDIR)$(libdir)/$$fn1.new; \
 		chmod 755 $(DESTDIR)$(libdir)/$$fn1.new; \
@@ -519,13 +536,28 @@ install_dev:
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
 			ln -sf $$fn1 $(DESTDIR)$(libdir)/$$fn2; \
 		fi; \
-		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
+		: {- output_off() unless windowsdll() or sharedaix(); output_on() if windowsdll(); "" -}; \
 		$(ECHO) "install $$s2 -> $(DESTDIR)$(libdir)/$$fn2"; \
 		cp $$s2 $(DESTDIR)$(libdir)/$$fn2.new; \
 		chmod 755 $(DESTDIR)$(libdir)/$$fn2.new; \
 		mv -f $(DESTDIR)$(libdir)/$$fn2.new \
 		      $(DESTDIR)$(libdir)/$$fn2; \
-		: {- output_on() unless windowsdll(); "" -}; \
+		: {- output_off() if windowsdll(); output_on() if sharedaix(); "" -}; \
+		a=$(DESTDIR)$(libdir)/$$fn2; \
+		$(ECHO) "install $$s1 -> $$a"; \
+		if [ -f $$a ]; then ( trap "rm -rf /tmp/ar.$$$$" INT 0; \
+			mkdir /tmp/ar.$$$$; ( cd /tmp/ar.$$$$; \
+			cp -f $$a $$a.new; \
+			for so in `$(AR) t $$a`; do \
+				$(AR) x $$a $$so; \
+				chmod u+w $$so; \
+				strip -X32_64 -e $$so; \
+				$(AR) r $$a.new $$so; \
+			done; \
+		)); fi; \
+		$(AR) r $$a.new $$s1; \
+		mv -f $$a.new $$a; \
+		: {- output_off() if sharedaix(); output_on(); "" -}; \
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)/pkgconfig
@@ -565,11 +597,11 @@ uninstall_dev:
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
 		: {- output_off() if windowsdll(); "" -}; \
-		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn1"; \
-		$(RM) $(DESTDIR)$(libdir)/$$fn1; \
-		if [ "$$fn1" != "$$fn2" ]; then \
-			$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
-			$(RM) $(DESTDIR)$(libdir)/$$fn2; \
+		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
+		$(RM) $(DESTDIR)$(libdir)/$$fn2; \
+		if [ "$$fn1" != "$$fn2" -a -f "$(DESTDIR)$(libdir)/$$fn1" ]; then \
+			$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn1"; \
+			$(RM) $(DESTDIR)$(libdir)/$$fn1; \
 		fi; \
 		: {- output_on() if windowsdll(); "" -}{- output_off() unless windowsdll(); "" -}; \
 		$(ECHO) "$(RM) $(DESTDIR)$(libdir)/$$fn2"; \
@@ -711,9 +743,11 @@ update: generate errors ordinals
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
+.PHONY: doc-nits
 doc-nits:
 	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -p ) >doc-nits
-	if [ -s doc-nits ] ; then cat doc-nits; rm doc-nits ; exit 1; fi
+	@if [ -s doc-nits ] ; then cat doc-nits ; exit 1; \
+	else echo 'doc-nits: no errors.'; rm doc-nits ; fi
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)
@@ -763,11 +797,13 @@ generate_fuzz_oids:
 # Set to -force to force a rebuild
 ERROR_REBUILD=
 errors:
-	( cd $(SRCDIR); $(PERL) util/ck_errf.pl -strict */*.c */*/*.c )
-	( b=`pwd`; cd $(SRCDIR); \
+	( b=`pwd`; set -e; cd $(SRCDIR); \
+          $(PERL) util/ck_errf.pl -strict -internal; \
           $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal )
-	( b=`pwd`; cd $(SRCDIR)/engines; \
+	( b=`pwd`; set -e; cd $(SRCDIR)/engines; \
           for E in *.ec ; do \
+              $(PERL) ../util/ck_errf.pl -strict \
+                -conf $$E `basename $$E .ec`.c; \
               $(PERL) -I$$b ../util/mkerr.pl $(ERROR_REBUILD) -static \
                 -conf $$E `basename $$E .ec`.c ; \
           done )
@@ -1104,6 +1140,11 @@ EOF
 	cp -p $shlib'\$(SHLIB_EXT)' test/
 	cp -p $shlib'\$(SHLIB_EXT)' fuzz/
 EOF
+      } elsif (sharedaix()) {
+          $recipe .= <<"EOF";
+	rm -f $target && \\
+	\$(AR) r $target $target_full
+EOF
       } else {
           $recipe .= <<"EOF";
 	if [ '$target' != '$target_full' ]; then \\
@@ -1167,8 +1208,8 @@ EOF
           push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
       }
       my $linkflags = join("", map { "-L$_ " } @linkdirs);
-      my $linklibs = join("", map { if ($_ =~ /\.a$/) {
-                                        " $_";
+      my $linklibs = join("", map { if ($_ =~ s/\.a$//) {
+                                        " $_$libext";
                                     } else {
                                         my $f = basename($_);
                                         (my $l = $f) =~ s/^lib//;

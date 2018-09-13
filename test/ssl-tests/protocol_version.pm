@@ -210,6 +210,7 @@ sub generate_resumption_tests {
                         },
                         "resume_server" => {
                             "MaxProtocol" => $protocols[$resume_protocol],
+                            "Options" => $ticket,
                         },
                         "test" => {
                             "ExpectedProtocol" => $protocols[$resume_protocol],

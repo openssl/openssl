@@ -916,7 +916,7 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile,
     BIGNUM *serial = NULL;
 
     if (serialfile == NULL) {
-        const char *p = strchr(CAfile, '.');
+        const char *p = strrchr(CAfile, '.');
         size_t len = p != NULL ? (size_t)(p - CAfile) : strlen(CAfile);
 
         buf = app_malloc(len + sizeof(POSTFIX), "serial# buffer");

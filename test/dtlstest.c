@@ -46,7 +46,7 @@ static unsigned int timer_cb(SSL *s, unsigned int timer_us)
     ++timer_cb_count;
 
     if (timer_us == 0)
-        return 1000000;
+        return 50000;
     else
         return 2 * timer_us;
 }
@@ -114,6 +114,132 @@ static int test_dtls_unprocessed(int testidx)
     return testresult;
 }
 
+#define CLI_TO_SRV_EPOCH_0_RECS 3
+#define CLI_TO_SRV_EPOCH_1_RECS 1
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
+# define SRV_TO_CLI_EPOCH_0_RECS 12
+#else
+/*
+ * In this case we have no ServerKeyExchange message, because we don't have
+ * ECDHE or DHE. When it is present it gets fragmented into 3 records in this
+ * test.
+ */
+# define SRV_TO_CLI_EPOCH_0_RECS 9
+#endif
+#define SRV_TO_CLI_EPOCH_1_RECS 1
+#define TOTAL_FULL_HAND_RECORDS \
+            (CLI_TO_SRV_EPOCH_0_RECS + CLI_TO_SRV_EPOCH_1_RECS + \
+             SRV_TO_CLI_EPOCH_0_RECS + SRV_TO_CLI_EPOCH_1_RECS)
+
+#define CLI_TO_SRV_RESUME_EPOCH_0_RECS 3
+#define CLI_TO_SRV_RESUME_EPOCH_1_RECS 1
+#define SRV_TO_CLI_RESUME_EPOCH_0_RECS 2
+#define SRV_TO_CLI_RESUME_EPOCH_1_RECS 1
+#define TOTAL_RESUME_HAND_RECORDS \
+            (CLI_TO_SRV_RESUME_EPOCH_0_RECS + CLI_TO_SRV_RESUME_EPOCH_1_RECS + \
+             SRV_TO_CLI_RESUME_EPOCH_0_RECS + SRV_TO_CLI_RESUME_EPOCH_1_RECS)
+
+#define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
+
+static int test_dtls_drop_records(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio, *mempackbio;
+    int testresult = 0;
+    int epoch = 0;
+    SSL_SESSION *sess = NULL;
+    int cli_to_srv_epoch0, cli_to_srv_epoch1, srv_to_cli_epoch0;
+
+    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, DTLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (idx >= TOTAL_FULL_HAND_RECORDS) {
+        /* We're going to do a resumption handshake. Get a session first. */
+        if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                          NULL, NULL))
+                || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                              SSL_ERROR_NONE))
+                || !TEST_ptr(sess = SSL_get1_session(clientssl)))
+            goto end;
+
+        SSL_shutdown(clientssl);
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+        SSL_free(clientssl);
+        serverssl = clientssl = NULL;
+
+        cli_to_srv_epoch0 = CLI_TO_SRV_RESUME_EPOCH_0_RECS;
+        cli_to_srv_epoch1 = CLI_TO_SRV_RESUME_EPOCH_1_RECS;
+        srv_to_cli_epoch0 = SRV_TO_CLI_RESUME_EPOCH_0_RECS;
+        idx -= TOTAL_FULL_HAND_RECORDS;
+    } else {
+        cli_to_srv_epoch0 = CLI_TO_SRV_EPOCH_0_RECS;
+        cli_to_srv_epoch1 = CLI_TO_SRV_EPOCH_1_RECS;
+        srv_to_cli_epoch0 = SRV_TO_CLI_EPOCH_0_RECS;
+    }
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    /* BIO is freed by create_ssl_connection on error */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, c_to_s_fbio)))
+        goto end;
+
+    if (sess != NULL) {
+        if (!TEST_true(SSL_set_session(clientssl, sess)))
+            goto end;
+    }
+
+    DTLS_set_timer_cb(clientssl, timer_cb);
+    DTLS_set_timer_cb(serverssl, timer_cb);
+
+    /* Work out which record to drop based on the test number */
+    if (idx >= cli_to_srv_epoch0 + cli_to_srv_epoch1) {
+        mempackbio = SSL_get_wbio(serverssl);
+        idx -= cli_to_srv_epoch0 + cli_to_srv_epoch1;
+        if (idx >= srv_to_cli_epoch0) {
+            epoch = 1;
+            idx -= srv_to_cli_epoch0;
+        }
+    } else {
+        mempackbio = SSL_get_wbio(clientssl);
+        if (idx >= cli_to_srv_epoch0) {
+            epoch = 1;
+            idx -= cli_to_srv_epoch0;
+        }
+         mempackbio = BIO_next(mempackbio);
+    }
+    BIO_ctrl(mempackbio, MEMPACKET_CTRL_SET_DROP_EPOCH, epoch, NULL);
+    BIO_ctrl(mempackbio, MEMPACKET_CTRL_SET_DROP_REC, idx, NULL);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (sess != NULL && !TEST_true(SSL_session_reused(clientssl)))
+        goto end;
+
+    /* If the test did what we planned then it should have dropped a record */
+    if (!TEST_int_eq((int)BIO_ctrl(mempackbio, MEMPACKET_CTRL_GET_DROP_REC, 0,
+                                   NULL), -1))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -121,6 +247,8 @@ int setup_tests(void)
         return 0;
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
+    ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
+
     return 1;
 }
 

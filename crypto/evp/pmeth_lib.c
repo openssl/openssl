@@ -64,6 +64,9 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &ed25519_pkey_meth,
     &ed448_pkey_meth,
 #endif
+#ifndef OPENSSL_NO_SM2
+    &sm2_pkey_meth,
+#endif
     /* OQS schemes */
     &picnicL1FS_pkey_meth,
     &qteslaI_pkey_meth,
@@ -107,10 +110,11 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 {
     EVP_PKEY_CTX *ret;
     const EVP_PKEY_METHOD *pmeth;
+
     if (id == -1) {
-        if (!pkey || !pkey->ameth)
-            return NULL;
-        id = pkey->ameth->pkey_id;
+        if (pkey == NULL)
+            return 0;
+        id = pkey->type;
     }
 #ifndef OPENSSL_NO_ENGINE
     if (e == NULL && pkey != NULL)
@@ -155,7 +159,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;
     ret->pkey = pkey;
-    if (pkey)
+    if (pkey != NULL)
         EVP_PKEY_up_ref(pkey);
 
     if (pmeth->init) {
@@ -369,12 +373,17 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                       int cmd, int p1, void *p2)
 {
     int ret;
+
     if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
     if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
         return -1;
+
+    /* Skip the operation checks since this is called in a very early stage */
+    if (ctx->pmeth->digest_custom != NULL)
+        goto doit;
 
     if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_NO_OPERATION_SET);
@@ -386,13 +395,13 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return -1;
     }
 
+ doit:
     ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 
     if (ret == -2)
         EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
 
     return ret;
-
 }
 
 int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
@@ -657,6 +666,13 @@ void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
     pmeth->param_check = check;
 }
 
+void EVP_PKEY_meth_set_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (*digest_custom) (EVP_PKEY_CTX *ctx,
+                                                           EVP_MD_CTX *mctx))
+{
+    pmeth->digest_custom = digest_custom;
+}
+
 void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
                             int (**pinit) (EVP_PKEY_CTX *ctx))
 {
@@ -843,4 +859,12 @@ void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
 {
     if (*pcheck)
         *pcheck = pmeth->param_check;
+}
+
+void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
+                                     int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
+                                                             EVP_MD_CTX *mctx))
+{
+    if (pdigest_custom != NULL)
+        *pdigest_custom = pmeth->digest_custom;
 }

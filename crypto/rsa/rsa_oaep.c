@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,10 +43,12 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                     const unsigned char *param, int plen,
                                     const EVP_MD *md, const EVP_MD *mgf1md)
 {
+    int rv = 0;
     int i, emlen = tlen - 1;
     unsigned char *db, *seed;
-    unsigned char *dbmask, seedmask[EVP_MAX_MD_SIZE];
-    int mdlen;
+    unsigned char *dbmask = NULL;
+    unsigned char seedmask[EVP_MAX_MD_SIZE];
+    int mdlen, dbmask_len = 0;
 
     if (md == NULL)
         md = EVP_sha1();
@@ -72,35 +74,35 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     db = to + mdlen + 1;
 
     if (!EVP_Digest((void *)param, plen, db, NULL, md, NULL))
-        return 0;
+        goto err;
     memset(db + mdlen, 0, emlen - flen - 2 * mdlen - 1);
     db[emlen - flen - mdlen - 1] = 0x01;
     memcpy(db + emlen - flen - mdlen, from, (unsigned int)flen);
     if (RAND_bytes(seed, mdlen) <= 0)
-        return 0;
+        goto err;
 
-    dbmask = OPENSSL_malloc(emlen - mdlen);
+    dbmask_len = emlen - mdlen;
+    dbmask = OPENSSL_malloc(dbmask_len);
     if (dbmask == NULL) {
         RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
 
-    if (PKCS1_MGF1(dbmask, emlen - mdlen, seed, mdlen, mgf1md) < 0)
+    if (PKCS1_MGF1(dbmask, dbmask_len, seed, mdlen, mgf1md) < 0)
         goto err;
-    for (i = 0; i < emlen - mdlen; i++)
+    for (i = 0; i < dbmask_len; i++)
         db[i] ^= dbmask[i];
 
-    if (PKCS1_MGF1(seedmask, mdlen, db, emlen - mdlen, mgf1md) < 0)
+    if (PKCS1_MGF1(seedmask, mdlen, db, dbmask_len, mgf1md) < 0)
         goto err;
     for (i = 0; i < mdlen; i++)
         seed[i] ^= seedmask[i];
-
-    OPENSSL_free(dbmask);
-    return 1;
+    rv = 1;
 
  err:
-    OPENSSL_free(dbmask);
-    return 0;
+    OPENSSL_cleanse(seedmask, sizeof(seedmask));
+    OPENSSL_clear_free(dbmask, dbmask_len);
+    return rv;
 }
 
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,
@@ -150,32 +152,40 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 
     dblen = num - mdlen - 1;
     db = OPENSSL_malloc(dblen);
-    em = OPENSSL_malloc(num);
-    if (db == NULL || em == NULL) {
+    if (db == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
         goto cleanup;
     }
 
-    /*
-     * Always do this zero-padding copy (even when num == flen) to avoid
-     * leaking that information. The copy still leaks some side-channel
-     * information, but it's impossible to have a fixed  memory access
-     * pattern since we can't read out of the bounds of |from|.
-     *
-     * TODO(emilia): Consider porting BN_bn2bin_padded from BoringSSL.
-     */
-    memset(em, 0, num);
-    memcpy(em + num - flen, from, flen);
+    if (flen != num) {
+        em = OPENSSL_zalloc(num);
+        if (em == NULL) {
+            RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
+                   ERR_R_MALLOC_FAILURE);
+            goto cleanup;
+        }
+
+        /*
+         * Caller is encouraged to pass zero-padded message created with
+         * BN_bn2binpad, but if it doesn't, we do this zero-padding copy
+         * to avoid leaking that information. The copy still leaks some
+         * side-channel information, but it's impossible to have a fixed
+         * memory access pattern since we can't read out of the bounds of
+         * |from|.
+         */
+        memcpy(em + num - flen, from, flen);
+        from = em;
+    }
 
     /*
      * The first byte must be zero, however we must not leak if this is
      * true. See James H. Manger, "A Chosen Ciphertext  Attack on RSA
      * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
      */
-    good = constant_time_is_zero(em[0]);
+    good = constant_time_is_zero(from[0]);
 
-    maskedseed = em + 1;
-    maskeddb = em + 1 + mdlen;
+    maskedseed = from + 1;
+    maskeddb = from + 1 + mdlen;
 
     if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
         goto cleanup;
@@ -234,6 +244,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
            RSA_R_OAEP_DECODING_ERROR);
  cleanup:
+    OPENSSL_cleanse(seed, sizeof(seed));
     OPENSSL_clear_free(db, dblen);
     OPENSSL_clear_free(em, num);
     return mlen;
@@ -276,6 +287,7 @@ int PKCS1_MGF1(unsigned char *mask, long len,
     }
     rv = 0;
  err:
+    OPENSSL_cleanse(md, sizeof(md));
     EVP_MD_CTX_free(c);
     return rv;
 }

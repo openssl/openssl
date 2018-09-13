@@ -101,7 +101,26 @@ int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))
 
 void *CRYPTO_THREAD_get_local(CRYPTO_THREAD_LOCAL *key)
 {
-    return TlsGetValue(*key);
+    DWORD last_error;
+    void *ret;
+
+    /*
+     * TlsGetValue clears the last error even on success, so that callers may
+     * distinguish it successfully returning NULL or failing. It is documented
+     * to never fail if the argument is a valid index from TlsAlloc, so we do
+     * not need to handle this.
+     *
+     * However, this error-mangling behavior interferes with the caller's use of
+     * GetLastError. In particular SSL_get_error queries the error queue to
+     * determine whether the caller should look at the OS's errors. To avoid
+     * destroying state, save and restore the Windows error.
+     *
+     * https://msdn.microsoft.com/en-us/library/windows/desktop/ms686812(v=vs.85).aspx
+     */
+    last_error = GetLastError();
+    ret = TlsGetValue(*key);
+    SetLastError(last_error);
+    return ret;
 }
 
 int CRYPTO_THREAD_set_local(CRYPTO_THREAD_LOCAL *key, void *val)
@@ -133,18 +152,6 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b)
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 {
     *ret = InterlockedExchangeAdd(val, amount) + amount;
-    return 1;
-}
-
-int CRYPTO_atomic_read(int *val, int *ret, CRYPTO_RWLOCK *lock)
-{
-    *ret = InterlockedCompareExchange(val, 0, 0);
-    return 1;
-}
-
-int CRYPTO_atomic_write(int *val, int n, CRYPTO_RWLOCK *lock)
-{
-    InterlockedExchange(val, n);
     return 1;
 }
 

@@ -220,6 +220,12 @@ sub start
 
     my $execcmd = $self->execute
         ." s_server -max_protocol TLSv1.3 -no_comp -rev -engine ossltest"
+        #In TLSv1.3 we issue two session tickets. The default session id
+        #callback gets confused because the ossltest engine causes the same
+        #session id to be created twice due to the changed random number
+        #generation. Using "-ext_cache" replaces the default callback with a
+        #different one that doesn't get confused.
+        ." -ext_cache"
         ." -accept $self->{server_addr}:0"
         ." -cert ".$self->cert." -cert2 ".$self->cert
         ." -naccept ".$self->serverconnects;

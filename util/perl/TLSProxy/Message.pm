@@ -9,6 +9,8 @@ use strict;
 
 package TLSProxy::Message;
 
+use TLSProxy::Alert;
+
 use constant TLS_MESSAGE_HEADER_LENGTH => 4;
 
 #Message types
@@ -39,6 +41,7 @@ use constant {
 use constant {
     AL_DESC_CLOSE_NOTIFY => 0,
     AL_DESC_UNEXPECTED_MESSAGE => 10,
+    AL_DESC_ILLEGAL_PARAMETER => 47,
     AL_DESC_NO_RENEGOTIATION => 100
 };
 
@@ -92,9 +95,8 @@ use constant {
     EXT_FORCE_LAST => 0xffff
 };
 
-# SignatureScheme of TLS 1.3, from
-# https://tools.ietf.org/html/draft-ietf-tls-tls13-20#appendix-B.3.1.3
-# TODO(TLS1.3) update link to IANA registry after publication
+# SignatureScheme of TLS 1.3 from:
+# https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-signaturescheme
 # We have to manually grab the SHA224 equivalents from the old registry
 use constant {
     SIG_ALG_RSA_PKCS1_SHA256 => 0x0401,
@@ -103,11 +105,14 @@ use constant {
     SIG_ALG_ECDSA_SECP256R1_SHA256 => 0x0403,
     SIG_ALG_ECDSA_SECP384R1_SHA384 => 0x0503,
     SIG_ALG_ECDSA_SECP521R1_SHA512 => 0x0603,
-    SIG_ALG_RSA_PSS_SHA256 => 0x0804,
-    SIG_ALG_RSA_PSS_SHA384 => 0x0805,
-    SIG_ALG_RSA_PSS_SHA512 => 0x0806,
+    SIG_ALG_RSA_PSS_RSAE_SHA256 => 0x0804,
+    SIG_ALG_RSA_PSS_RSAE_SHA384 => 0x0805,
+    SIG_ALG_RSA_PSS_RSAE_SHA512 => 0x0806,
     SIG_ALG_ED25519 => 0x0807,
     SIG_ALG_ED448 => 0x0808,
+    SIG_ALG_RSA_PSS_PSS_SHA256 => 0x0809,
+    SIG_ALG_RSA_PSS_PSS_SHA384 => 0x080a,
+    SIG_ALG_RSA_PSS_PSS_SHA512 => 0x080b,
     SIG_ALG_RSA_PKCS1_SHA1 => 0x0201,
     SIG_ALG_ECDSA_SHA1 => 0x0203,
     SIG_ALG_DSA_SHA1 => 0x0202,
@@ -120,6 +125,7 @@ use constant {
 };
 
 use constant {
+    CIPHER_RSA_WITH_AES_128_CBC_SHA => 0x002f,
     CIPHER_DHE_RSA_AES_128_SHA => 0x0033,
     CIPHER_ADH_AES_128_SHA => 0x0034,
     CIPHER_TLS13_AES_128_GCM_SHA256 => 0x1301,
@@ -137,6 +143,7 @@ my @message_rec_list = ();
 my @message_frag_lens = ();
 my $ciphersuite = 0;
 my $successondata = 0;
+my $alert;
 
 sub clear
 {
@@ -149,6 +156,7 @@ sub clear
     $successondata = 0;
     @message_rec_list = ();
     @message_frag_lens = ();
+    $alert = undef;
 }
 
 #Class method to extract messages from a record
@@ -278,6 +286,11 @@ sub get_messages
         if ($alertlev == AL_LEVEL_FATAL || $alertdesc == AL_DESC_CLOSE_NOTIFY) {
             $end = 1;
         }
+        $alert = TLSProxy::Alert->new(
+            $server,
+            $record->encrypted,
+            $alertlev,
+            $alertdesc);
     }
 
     return @messages;
@@ -385,6 +398,12 @@ sub fail
     my $class = shift;
     return !$success && $end;
 }
+
+sub alert
+{
+    return $alert;
+}
+
 sub new
 {
     my $class = shift;

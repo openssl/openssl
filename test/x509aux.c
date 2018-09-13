@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL licenses, (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,6 +161,6 @@ int setup_tests(void)
         return 0;
     }
 
-    ADD_ALL_TESTS(test_certs, n);
+    ADD_ALL_TESTS(test_certs, (int)n);
     return 1;
 }

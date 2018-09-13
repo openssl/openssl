@@ -118,6 +118,23 @@ int X509_LOOKUP_by_alias(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ctx->method->get_by_alias(ctx, type, str, len, ret);
 }
 
+int X509_LOOKUP_set_method_data(X509_LOOKUP *ctx, void *data)
+{
+    ctx->method_data = data;
+    return 1;
+}
+
+void *X509_LOOKUP_get_method_data(const X509_LOOKUP *ctx)
+{
+    return ctx->method_data;
+}
+
+X509_STORE *X509_LOOKUP_get_store(const X509_LOOKUP *ctx)
+{
+    return ctx->store_ctx;
+}
+
+
 static int x509_object_cmp(const X509_OBJECT *const *a,
                            const X509_OBJECT *const *b)
 {
@@ -391,7 +408,7 @@ X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a)
     return a->type;
 }
 
-X509_OBJECT *X509_OBJECT_new()
+X509_OBJECT *X509_OBJECT_new(void)
 {
     X509_OBJECT *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -403,8 +420,7 @@ X509_OBJECT *X509_OBJECT_new()
     return ret;
 }
 
-
-void X509_OBJECT_free(X509_OBJECT *a)
+static void x509_object_free_internal(X509_OBJECT *a)
 {
     if (a == NULL)
         return;
@@ -418,6 +434,33 @@ void X509_OBJECT_free(X509_OBJECT *a)
         X509_CRL_free(a->data.crl);
         break;
     }
+}
+
+int X509_OBJECT_set1_X509(X509_OBJECT *a, X509 *obj)
+{
+    if (a == NULL || !X509_up_ref(obj))
+        return 0;
+
+    x509_object_free_internal(a);
+    a->type = X509_LU_X509;
+    a->data.x509 = obj;
+    return 1;
+}
+
+int X509_OBJECT_set1_X509_CRL(X509_OBJECT *a, X509_CRL *obj)
+{
+    if (a == NULL || !X509_CRL_up_ref(obj))
+        return 0;
+
+    x509_object_free_internal(a);
+    a->type = X509_LU_CRL;
+    a->data.crl = obj;
+    return 1;
+}
+
+void X509_OBJECT_free(X509_OBJECT *a)
+{
+    x509_object_free_internal(a);
     OPENSSL_free(a);
 }
 
@@ -576,17 +619,18 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
 X509_OBJECT *X509_OBJECT_retrieve_match(STACK_OF(X509_OBJECT) *h,
                                         X509_OBJECT *x)
 {
-    int idx, i;
+    int idx, i, num;
     X509_OBJECT *obj;
+
     idx = sk_X509_OBJECT_find(h, x);
-    if (idx == -1)
+    if (idx < 0)
         return NULL;
     if ((x->type != X509_LU_X509) && (x->type != X509_LU_CRL))
         return sk_X509_OBJECT_value(h, idx);
-    for (i = idx; i < sk_X509_OBJECT_num(h); i++) {
+    for (i = idx, num = sk_X509_OBJECT_num(h); i < num; i++) {
         obj = sk_X509_OBJECT_value(h, i);
-        if (x509_object_cmp
-            ((const X509_OBJECT **)&obj, (const X509_OBJECT **)&x))
+        if (x509_object_cmp((const X509_OBJECT **)&obj,
+                            (const X509_OBJECT **)&x))
             return NULL;
         if (x->type == X509_LU_X509) {
             if (!X509_cmp(obj->data.x509, x->data.x509))

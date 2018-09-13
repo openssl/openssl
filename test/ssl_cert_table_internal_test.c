@@ -76,7 +76,7 @@ static int test_ssl_cert_table(void)
     return 1;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_ssl_cert_table);
     return 1;

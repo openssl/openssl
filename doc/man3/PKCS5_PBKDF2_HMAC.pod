@@ -52,6 +52,9 @@ Increasing the B<iter> parameter slows down the algorithm which makes it
 harder for an attacker to perform a brute force attack using a large number
 of candidate passwords.
 
+These functions make no assumption regarding the given password.
+It will simply be treated as a byte sequence.
+
 =head1 RETURN VALUES
 
 PKCS5_PBKDF2_HMAC() and PBKCS5_PBKDF2_HMAC_SHA1() return 1 on success or 0 on error.
@@ -59,11 +62,12 @@ PKCS5_PBKDF2_HMAC() and PBKCS5_PBKDF2_HMAC_SHA1() return 1 on success or 0 on er
 =head1 SEE ALSO
 
 L<evp(7)>, L<RAND_bytes(3)>,
-L<EVP_BytesToKey(3)>
+L<EVP_BytesToKey(3)>,
+L<passphrase-encoding(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

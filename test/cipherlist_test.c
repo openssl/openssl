@@ -215,7 +215,7 @@ static int test_default_cipherlist_explicit(void)
     return result;
 }
 
-int setup_tests()
+int setup_tests(void)
 {
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);

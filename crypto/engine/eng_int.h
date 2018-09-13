@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -15,10 +15,6 @@
 # include "internal/engine.h"
 # include "internal/thread_once.h"
 # include "internal/refcount.h"
-
-#ifdef  __cplusplus
-extern "C" {
-#endif
 
 extern CRYPTO_RWLOCK *global_engine_lock;
 
@@ -171,9 +167,5 @@ struct engine_st {
 typedef struct st_engine_pile ENGINE_PILE;
 
 DEFINE_LHASH_OF(ENGINE_PILE);
-
-#ifdef  __cplusplus
-}
-#endif
 
 #endif                          /* HEADER_ENGINE_INT_H */

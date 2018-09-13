@@ -45,6 +45,10 @@ Currently all the functions use BIOs or FILE pointers, there are no functions wh
 work directly on memory: this can be readily worked around by converting the buffers
 to memory BIOs, see L<BIO_s_mem(3)> for details.
 
+These functions make no assumption regarding the pass phrase received from the
+password callback.
+It will simply be treated as a byte sequence.
+
 =head1 RETURN VALUES
 
 d2i_PKCS8PrivateKey_bio() and d2i_PKCS8PrivateKey_fp() return a valid B<EVP_PKEY>
@@ -55,7 +59,8 @@ and i2d_PKCS8PrivateKey_nid_fp() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
-L<PEM_read_PrivateKey(3)>
+L<PEM_read_PrivateKey(3)>,
+L<passphrase-encoding(7)>
 
 =head1 COPYRIGHT
 

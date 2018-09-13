@@ -65,10 +65,6 @@ my %shared_info;
             shared_ldflag     => '-shared -Wl,-Bsymbolic -set_version $(SHLIB_VERSION_NUMBER)',
         };
     },
-    'solaris-shared' => {
-        shared_ldflag     => '-Wl,-Bsymbolic',
-        shared_defflag    => '-Wl,-M,',
-    },
     'svr3-shared' => sub {
         return $shared_info{'gnu-shared'} if detect_gnu_ld();
         return {
@@ -82,21 +78,5 @@ my %shared_info;
             shared_ldflag     => detect_gnu_cc() ? '-shared' : '-G',
             shared_sonameflag => '-h ',
         };
-    },
-    'irix-shared' => sub {
-        return $shared_info{'gnu-shared'} if detect_gnu_ld();
-        return {
-            shared_ldflag     => '-shared -Wl,-Bsymbolic',
-            shared_sonameflag => '-Wl,-soname=',
-        };
-    },
-    'hpux-shared' => {
-        bin_lflags        => '-Wl,+s,+cdp,../:,+cdp,./:',
-        shared_ldflag     => '-Wl,-B,symbolic,+vnocompatwarnings,-z,+s,+cdp,../:,+cdp,./:',
-        shared_sonameflag => '-Wl,+h,',
-    },
-    'aix-shared' => {
-        bin_lflags            => '-Wl,-bsvr4',
-        shared_ldflag         => '-Wl,-bexpall,-bnolibpath,-bM:SRE',
     },
 );

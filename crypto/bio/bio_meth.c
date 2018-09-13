@@ -19,7 +19,7 @@ DEFINE_RUN_ONCE_STATIC(do_bio_type_init)
     return bio_type_lock != NULL;
 }
 
-int BIO_get_new_index()
+int BIO_get_new_index(void)
 {
     static CRYPTO_REF_COUNT bio_count = BIO_TYPE_START;
     int newval;

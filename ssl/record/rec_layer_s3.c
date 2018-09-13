@@ -816,8 +816,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
     /* Clear our SSL3_RECORD structures */
     memset(wr, 0, sizeof(wr));
     for (j = 0; j < numpipes; j++) {
-        unsigned int version = SSL_TREAT_AS_TLS13(s) ? TLS1_2_VERSION
-                                                     : s->version;
+        unsigned int version = (s->version == TLS1_3_VERSION) ? TLS1_2_VERSION
+                                                              : s->version;
         unsigned char *compressdata = NULL;
         size_t maxcomplen;
         unsigned int rectype;
@@ -829,7 +829,10 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * In TLSv1.3, once encrypting, we always use application data for the
          * record type
          */
-        if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL)
+        if (SSL_TREAT_AS_TLS13(s)
+                && s->enc_write_ctx != NULL
+                && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
+                    || type != SSL3_RT_ALERT))
             rectype = SSL3_RT_APPLICATION_DATA;
         else
             rectype = type;
@@ -892,7 +895,10 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
             SSL3_RECORD_reset_input(&wr[j]);
         }
 
-        if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
+        if (SSL_TREAT_AS_TLS13(s)
+                && s->enc_write_ctx != NULL
+                && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
+                    || type != SSL3_RT_ALERT)) {
             size_t rlen, max_send_fragment;
 
             if (!WPACKET_put_bytes_u8(thispkt, type)) {
@@ -981,8 +987,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         SSL3_RECORD_set_length(thiswr, len);
     }
 
-    if (s->early_data_state == SSL_EARLY_DATA_WRITING
-            || s->early_data_state == SSL_EARLY_DATA_WRITE_RETRY) {
+    if (s->statem.enc_write_state == ENC_WRITE_STATE_WRITE_PLAIN_ALERTS) {
         /*
          * We haven't actually negotiated the version yet, but we're trying to
          * send early data - so we need to use the tls13enc function.
@@ -1209,6 +1214,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     SSL3_RECORD *rr;
     SSL3_BUFFER *rbuf;
     void (*cb) (const SSL *ssl, int type2, int val) = NULL;
+    int is_tls13 = SSL_IS_TLS13(s);
 
     rbuf = &s->rlayer.rbuf;
 
@@ -1340,7 +1346,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     if (type == SSL3_RECORD_get_type(rr)
         || (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC
             && type == SSL3_RT_HANDSHAKE && recvd_type != NULL
-            && !SSL_IS_TLS13(s))) {
+            && !is_tls13)) {
         /*
          * SSL3_RT_APPLICATION_DATA or
          * SSL3_RT_HANDSHAKE or
@@ -1456,40 +1462,6 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         return -1;
     }
 
-    /*
-     * In case of record types for which we have 'fragment' storage, fill
-     * that so that we can process the data at a fixed place.
-     */
-    {
-        size_t dest_maxlen = 0;
-        unsigned char *dest = NULL;
-        size_t *dest_len = NULL;
-
-        if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
-            dest_maxlen = sizeof(s->rlayer.handshake_fragment);
-            dest = s->rlayer.handshake_fragment;
-            dest_len = &s->rlayer.handshake_fragment_len;
-        }
-
-        if (dest_maxlen > 0) {
-            n = dest_maxlen - *dest_len; /* available space in 'dest' */
-            if (SSL3_RECORD_get_length(rr) < n)
-                n = SSL3_RECORD_get_length(rr); /* available bytes */
-
-            /* now move 'n' bytes: */
-            memcpy(dest + *dest_len,
-                   SSL3_RECORD_get_data(rr) + SSL3_RECORD_get_off(rr), n);
-            SSL3_RECORD_add_off(rr, n);
-            SSL3_RECORD_sub_length(rr, n);
-            *dest_len += n;
-            if (SSL3_RECORD_get_length(rr) == 0)
-                SSL3_RECORD_set_read(rr);
-
-            if (*dest_len < dest_maxlen)
-                goto start;     /* fragment was too small */
-        }
-    }
-
     /*-
      * s->rlayer.handshake_fragment_len == 4  iff  rr->type == SSL3_RT_HANDSHAKE;
      * (Possibly rr is 'empty' now, i.e. rr->length may be 0.)
@@ -1524,7 +1496,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             cb(s, SSL_CB_READ_ALERT, j);
         }
 
-        if (alert_level == SSL3_AL_WARNING) {
+        if (alert_level == SSL3_AL_WARNING
+                || (is_tls13 && alert_descr == SSL_AD_USER_CANCELLED)) {
             s->s3->warn_alert = alert_descr;
             SSL3_RECORD_set_read(rr);
 
@@ -1534,34 +1507,19 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                          SSL_R_TOO_MANY_WARN_ALERTS);
                 return -1;
             }
+        }
 
-            if (alert_descr == SSL_AD_CLOSE_NOTIFY) {
-                s->shutdown |= SSL_RECEIVED_SHUTDOWN;
-                return 0;
-            }
-            /*
-             * Apart from close_notify the only other warning alert in TLSv1.3
-             * is user_cancelled - which we just ignore.
-             */
-            if (SSL_IS_TLS13(s) && alert_descr != SSL_AD_USER_CANCELLED) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
-                         SSL_R_UNKNOWN_ALERT_TYPE);
-                return -1;
-            }
-            /*
-             * This is a warning but we receive it if we requested
-             * renegotiation and the peer denied it. Terminate with a fatal
-             * alert because if application tried to renegotiate it
-             * presumably had a good reason and expects it to succeed. In
-             * future we might have a renegotiation where we don't care if
-             * the peer refused it where we carry on.
-             */
-            if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
-                SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL3_READ_BYTES,
-                         SSL_R_NO_RENEGOTIATION);
-                return -1;
-            }
-        } else if (alert_level == SSL3_AL_FATAL) {
+        /*
+         * Apart from close_notify the only other warning alert in TLSv1.3
+         * is user_cancelled - which we just ignore.
+         */
+        if (is_tls13 && alert_descr == SSL_AD_USER_CANCELLED) {
+            goto start;
+        } else if (alert_descr == SSL_AD_CLOSE_NOTIFY
+                && (is_tls13 || alert_level == SSL3_AL_WARNING)) {
+            s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+            return 0;
+        } else if (alert_level == SSL3_AL_FATAL || is_tls13) {
             char tmp[16];
 
             s->rwstate = SSL_NOTHING;
@@ -1574,21 +1532,94 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             SSL3_RECORD_set_read(rr);
             SSL_CTX_remove_session(s->session_ctx, s->session);
             return 0;
-        } else {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
-                     SSL_R_UNKNOWN_ALERT_TYPE);
+        } else if (alert_descr == SSL_AD_NO_RENEGOTIATION) {
+            /*
+             * This is a warning but we receive it if we requested
+             * renegotiation and the peer denied it. Terminate with a fatal
+             * alert because if application tried to renegotiate it
+             * presumably had a good reason and expects it to succeed. In
+             * future we might have a renegotiation where we don't care if
+             * the peer refused it where we carry on.
+             */
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_SSL3_READ_BYTES,
+                     SSL_R_NO_RENEGOTIATION);
             return -1;
+        } else if (alert_level == SSL3_AL_WARNING) {
+            /* We ignore any other warning alert in TLSv1.2 and below */
+            goto start;
         }
 
-        goto start;
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SSL3_READ_BYTES,
+                 SSL_R_UNKNOWN_ALERT_TYPE);
+        return -1;
     }
 
-    if (s->shutdown & SSL_SENT_SHUTDOWN) { /* but we have not received a
-                                            * shutdown */
-        s->rwstate = SSL_NOTHING;
-        SSL3_RECORD_set_length(rr, 0);
-        SSL3_RECORD_set_read(rr);
-        return 0;
+    if ((s->shutdown & SSL_SENT_SHUTDOWN) != 0) {
+        if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
+            BIO *rbio;
+
+            /*
+             * We ignore any handshake messages sent to us unless they are
+             * TLSv1.3 in which case we want to process them. For all other
+             * handshake messages we can't do anything reasonable with them
+             * because we are unable to write any response due to having already
+             * sent close_notify.
+             */
+            if (!SSL_IS_TLS13(s)) {
+                SSL3_RECORD_set_length(rr, 0);
+                SSL3_RECORD_set_read(rr);
+
+                if ((s->mode & SSL_MODE_AUTO_RETRY) != 0)
+                    goto start;
+
+                s->rwstate = SSL_READING;
+                rbio = SSL_get_rbio(s);
+                BIO_clear_retry_flags(rbio);
+                BIO_set_retry_read(rbio);
+                return -1;
+            }
+        } else {
+            /*
+             * The peer is continuing to send application data, but we have
+             * already sent close_notify. If this was expected we should have
+             * been called via SSL_read() and this would have been handled
+             * above.
+             * No alert sent because we already sent close_notify
+             */
+            SSL3_RECORD_set_length(rr, 0);
+            SSL3_RECORD_set_read(rr);
+            SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_SSL3_READ_BYTES,
+                     SSL_R_APPLICATION_DATA_AFTER_CLOSE_NOTIFY);
+            return -1;
+        }
+    }
+
+    /*
+     * For handshake data we have 'fragment' storage, so fill that so that we
+     * can process the header at a fixed place. This is done after the
+     * "SHUTDOWN" code above to avoid filling the fragment storage with data
+     * that we're just going to discard.
+     */
+    if (SSL3_RECORD_get_type(rr) == SSL3_RT_HANDSHAKE) {
+        size_t dest_maxlen = sizeof(s->rlayer.handshake_fragment);
+        unsigned char *dest = s->rlayer.handshake_fragment;
+        size_t *dest_len = &s->rlayer.handshake_fragment_len;
+
+        n = dest_maxlen - *dest_len; /* available space in 'dest' */
+        if (SSL3_RECORD_get_length(rr) < n)
+            n = SSL3_RECORD_get_length(rr); /* available bytes */
+
+        /* now move 'n' bytes: */
+        memcpy(dest + *dest_len,
+               SSL3_RECORD_get_data(rr) + SSL3_RECORD_get_off(rr), n);
+        SSL3_RECORD_add_off(rr, n);
+        SSL3_RECORD_sub_length(rr, n);
+        *dest_len += n;
+        if (SSL3_RECORD_get_length(rr) == 0)
+            SSL3_RECORD_set_read(rr);
+
+        if (*dest_len < dest_maxlen)
+            goto start;     /* fragment was too small */
     }
 
     if (SSL3_RECORD_get_type(rr) == SSL3_RT_CHANGE_CIPHER_SPEC) {
