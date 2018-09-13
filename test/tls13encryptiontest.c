@@ -9,19 +9,8 @@
 
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
-
-#ifdef __VMS
-# pragma names save
-# pragma names as_is,shortened
-#endif
-
 #include "../ssl/ssl_locl.h"
 #include "../ssl/record/record_locl.h"
-
-#ifdef __VMS
-# pragma names restore
-#endif
-
 #include "internal/nelem.h"
 #include "testutil.h"
 

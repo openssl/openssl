@@ -23,17 +23,8 @@
  *
  ***/
 
-#ifdef __VMS
-# pragma names save
-# pragma names as_is,shortened
-#endif
-
 #include "../crypto/x509v3/ext_dat.h"
 #include "../crypto/x509v3/standard_exts.h"
-
-#ifdef __VMS
-# pragma names restore
-#endif
 
 static int test_standard_exts(void)
 {
