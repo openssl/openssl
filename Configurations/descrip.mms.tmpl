@@ -1034,7 +1034,9 @@ EOF
                                  "\@ WRITE OPT_FILE \"$x" } @objs).
           "\"";
       my $write_opt2 =
-          join("\n\t", map { my @lines = ();
+          join("\n\t", map { my @lines = (
+                                 "\ WRITE OPT_FILE \"CASE_SENSITIVE=YES\""
+                             );
                              my $x = $_ =~ /\[/ ? $_ : "[]".$_;
                              if ($x =~ m|\.EXE$|) {
                                  push @lines, "\@ WRITE OPT_FILE \"$x/SHARE\"";
