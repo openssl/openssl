@@ -298,8 +298,8 @@ BIN_CPPFLAGS={- join('', "'qual_includes'",
                          $target{bin_cppflags} || (),
                          @{$config{bin_cppflag}},
                          '$(CNF_CPPFLAGS)', '$(CPPFLAGS)') -}
-BIN_CFLAGS={- join('', $target{bin_cflag} || (),
-                       @{$config{bin_cflag}},
+BIN_CFLAGS={- join('', $target{bin_cflags} || (),
+                       @{$config{bin_cflags}},
                        '$(CNF_CFLAGS)', '$(CFLAGS)') -}
 BIN_LDFLAGS={- join('', $target{bin_lflags} || (),
                         @{$config{bin_lflags}} || (),
@@ -312,12 +312,14 @@ NO_INST_LIB_CFLAGS={- join('', $target{no_inst_lib_cflags}
                                @{$config{lib_cflags}},
                                @{$config{shared_cflag}},
                                '$(CNF_CFLAGS)', '$(CFLAGS)') -}
-NO_INST_DSO_CFLAGS={- join('', $target{no_inst_lib_cflags}
-                               // $target{lib_cflags}
+NO_INST_DSO_CFLAGS={- join('', $target{no_inst_dso_cflags}
+                               // $target{dso_cflags}
                                // (),
-                               $target{dso_cflags} || (),
-                               @{$config{lib_cflags}},
+                               $target{no_inst_module_cflags}
+                               // $target{module_cflags}
+                               // (),
                                @{$config{dso_cflags}},
+                               @{$config{module_cflags}},
                                '$(CNF_CFLAGS)', '$(CFLAGS)') -}
 NO_INST_BIN_CFLAGS={- join('', $target{no_inst_bin_cflags}
                                // $target{bin_cflags}
