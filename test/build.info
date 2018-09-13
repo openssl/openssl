@@ -17,10 +17,10 @@ IF[{- !$disabled{tests} -}]
   DEPEND[libtestutil.a]=../libcrypto
 
   # Special hack for descrip.mms to include the MAIN object module
-  # explicitly.  This will only be done if there isn't a MAIN in the
+  # explicitly.  This will only be done if there isn't a 'main' in the
   # program's object modules already.
   BEGINRAW[descrip.mms]
-INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
+INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   ENDRAW[descrip.mms]
 
   PROGRAMS_NO_INST=\
