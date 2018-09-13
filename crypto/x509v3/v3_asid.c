@@ -827,7 +827,7 @@ static int asid_validate_path_internal(X509_STORE_CTX *ctx,
     /*
      * Trust anchor can't inherit.
      */
-    if (ossl_assert(x)) {
+    if (ossl_is_null(x)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
