@@ -412,7 +412,9 @@ The following I<ctrl>s are supported in CCM mode.
 This call is made to set the expected B<CCM> tag value when decrypting or
 the length of the tag (with the C<tag> parameter set to NULL) when encrypting.
 The tag length is often referred to as B<M>. If not set a default value is
-used (12 for AES).
+used (12 for AES). When decrypting, the tag needs to be set before passing
+in data to be decrypted, but as in GCM and OCB mode, it can be set after
+passing additional authenticated data (see L<AEAD Interface>).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_CCM_SET_L, ivlen, NULL)
 
