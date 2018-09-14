@@ -760,7 +760,7 @@ reconfigure reconf :
           my $mkdef = sourcefile('util', 'mkdef.pl');
           return <<"EOF";
 $target : $args{generator}->[0] $deps
-	\$(PERL) $mkdef $args{generator}->[1] "VMS" > $target
+	\$(PERL) $mkdef --ordinals $args{generator}->[0] --name $args{generator}->[1] "--OS" "VMS" > $target
 EOF
       } elsif ($target !~ /\.[sS]$/) {
           my $target = $args{src};
