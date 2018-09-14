@@ -79,7 +79,7 @@ my $aix=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "_WIN32"
+			"EXPORT_VAR_AS_FUNCTION", "_WIN32"
 			);
 my @known_ossl_platforms = ( "UNIX", "VMS", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( # These are algorithms we know are guarded in relevant
@@ -267,6 +267,7 @@ sub do_defs
 			_WINDLL		=> 0,
 			CONST_STRICT	=> 0,
 			TRUE		=> 1,
+			ZLIB		=> 0,
 		);
 		my $symhacking = $file eq $symhacksfile;
 		my @current_platforms = ();
@@ -524,6 +525,8 @@ sub do_defs
 				push @current_algorithms,
 				    grep { /^DEPRECATEDIN_/ && $tag{$_} == 1 }
 				    @known_algorithms;
+				push @current_algorithms, "ZLIB"
+				    if $tag{ZLIB} == 1;
 				$def .=
 				    "#INFO:"
 					.join(',',@current_platforms).":"
@@ -994,12 +997,11 @@ sub is_valid
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && $W32) {
 				return 1;
 			}
-			if ($keyword eq "ZLIB" && $zlib) { return 1; }
 			return 0;
 		} else {
 			# algorithms
 			if ($disabled_algorithms{$keyword}) { return 0;}
-
+			if ($keyword eq "ZLIB" && $zlib) { return 1; }
 			# Nothing recognise as true
 			return 1;
 		}

@@ -176,15 +176,12 @@ sub platform_filter {
 
 sub feature_filter {
     my $item = shift;
-    my %platforms = ( $item->platforms() );
     my @features = ( $item->features() );
 
     # True if no features are defined
-    return 1 if scalar @features == 0 && scalar keys %platforms == 0;
+    return 1 if scalar @features == 0;
 
-    my $verdict =
-        !( ( grep { $disabled_uc{$_} } @features )
-           || ( grep { $_ eq 'ZLIB' && $disabled_uc{$_} } keys %platforms ) );
+    my $verdict = ! grep { $disabled_uc{$_} } @features;
 
     if ($apiv) {
         foreach (@features) {
