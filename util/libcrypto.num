@@ -2529,7 +2529,7 @@ ASN1_STRING_type_new                    2494	1_1_0	EXIST::FUNCTION:
 TS_STATUS_INFO_free                     2495	1_1_0	EXIST::FUNCTION:TS
 BN_mod_mul                              2496	1_1_0	EXIST::FUNCTION:
 CMS_add0_recipient_key                  2497	1_1_0	EXIST::FUNCTION:CMS
-BIO_f_zlib                              2498	1_1_0	EXIST:ZLIB:FUNCTION:COMP
+BIO_f_zlib                              2498	1_1_0	EXIST::FUNCTION:COMP,ZLIB
 AES_cfb128_encrypt                      2499	1_1_0	EXIST::FUNCTION:
 ENGINE_set_EC                           2500	1_1_0	EXIST::FUNCTION:ENGINE
 d2i_ECPKParameters                      2501	1_1_0	EXIST::FUNCTION:EC
