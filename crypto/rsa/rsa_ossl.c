@@ -10,6 +10,7 @@
 #include "internal/cryptlib.h"
 #include "internal/bn_int.h"
 #include "rsa_locl.h"
+#include "internal/constant_time_locl.h"
 
 static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                   unsigned char *to, RSA *rsa, int padding);
@@ -470,8 +471,8 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
-    if (r < 0)
-        RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
+    RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
+    err_clear_last_constant_time(r >= 0);
 
  err:
     if (ctx != NULL)
