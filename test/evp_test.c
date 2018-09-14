@@ -459,7 +459,7 @@ typedef struct cipher_data_st {
     size_t plaintext_len;
     unsigned char *ciphertext;
     size_t ciphertext_len;
-    /* GCM, CCM only */
+    /* GCM, CCM and OCB only */
     unsigned char *aad;
     size_t aad_len;
     unsigned char *tag;
@@ -487,7 +487,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     if (m == EVP_CIPH_GCM_MODE
             || m == EVP_CIPH_OCB_MODE
             || m == EVP_CIPH_CCM_MODE)
-        cdat->aead = EVP_CIPHER_mode(cipher);
+        cdat->aead = m;
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
     else
