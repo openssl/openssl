@@ -189,7 +189,7 @@ In addition to automatic reseeding, the caller can request an immediate
 reseeding of the DRBG with fresh entropy by setting the
 I<prediction resistance> parameter to 1 when calling L<RAND_DRBG_generate(3)>.
 
-The dcoument [NIST SP 800-90C] describes prediction resistance requests
+The document [NIST SP 800-90C] describes prediction resistance requests
 in detail and imposes strict conditions on the entropy sources that are
 approved for providing prediction resistance.
 Since the default DRBG implementation does not have access to such an approved
