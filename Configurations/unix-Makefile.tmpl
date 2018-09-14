@@ -810,8 +810,8 @@ errors:
           done )
 
 ordinals:
-	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl crypto update )
-	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl ssl update )
+	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mknum.pl crypto update )
+	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mknum.pl ssl update )
 
 test_ordinals:
 	( cd test; \
@@ -965,7 +965,7 @@ reconfigure reconf:
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           return <<"EOF";
 $target: $args{generator}->[0] $deps
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl $args{generator}->[1] $mkdef_os > $target
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS $mkdef_os > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
