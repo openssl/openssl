@@ -463,6 +463,7 @@ typedef struct cipher_data_st {
     size_t aad_len[AAD_NUM];
     unsigned char *tag;
     size_t tag_len;
+    int tag_late;
 } CIPHER_DATA;
 
 static int cipher_test_init(EVP_TEST *t, const char *alg)
@@ -535,6 +536,15 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
         }
         if (strcmp(keyword, "Tag") == 0)
             return parse_bin(value, &cdat->tag, &cdat->tag_len);
+        if (strcmp(keyword, "SetTagLate") == 0) {
+            if (strcmp(value, "TRUE") == 0)
+                cdat->tag_late = 1;
+            else if (strcmp(value, "FALSE") == 0)
+                cdat->tag_late = 0;
+            else
+                return 0;
+            return 1;
+        }
     }
 
     if (strcmp(keyword, "Operation") == 0) {
@@ -620,7 +630,7 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
          * If encrypting or OCB just set tag length initially, otherwise
          * set tag length and value.
          */
-        if (enc || expected->aead == EVP_CIPH_OCB_MODE) {
+        if (enc || expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late) {
             t->err = "TAG_LENGTH_SET_ERROR";
             tag = NULL;
         } else {
@@ -641,14 +651,6 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (!EVP_CipherInit_ex(ctx, NULL, NULL, expected->key, expected->iv, -1)) {
         t->err = "KEY_SET_ERROR";
         goto err;
-    }
-
-    if (!enc && expected->aead == EVP_CIPH_OCB_MODE) {
-        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
-                                 expected->tag_len, expected->tag)) {
-            t->err = "TAG_SET_ERROR";
-            goto err;
-        }
     }
 
     if (expected->aead == EVP_CIPH_CCM_MODE) {
@@ -689,6 +691,15 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
             }
         }
     }
+
+    if (!enc && (expected->aead == EVP_CIPH_OCB_MODE || expected->tag_late)) {
+        if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                 expected->tag_len, expected->tag)) {
+            t->err = "TAG_SET_ERROR";
+            goto err;
+        }
+    }
+
     EVP_CIPHER_CTX_set_padding(ctx, 0);
     t->err = "CIPHERUPDATE_ERROR";
     tmplen = 0;
