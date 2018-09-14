@@ -46,6 +46,10 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
         namelen = name ? strlen(name) : 0;
     else if (name && memchr(name, '\0', namelen > 1 ? namelen - 1 : namelen))
         return 0;
+
+    if (name == NULL || namelen == 0)
+        return 1;
+
     if (namelen > 0 && name[namelen - 1] == '\0')
         --namelen;
 
@@ -53,8 +57,6 @@ static int int_x509_param_set_hosts(X509_VERIFY_PARAM *vpm, int mode,
         sk_OPENSSL_STRING_pop_free(vpm->hosts, str_free);
         vpm->hosts = NULL;
     }
-    if (name == NULL || namelen == 0)
-        return 1;
 
     copy = OPENSSL_strndup(name, namelen);
     if (copy == NULL)
