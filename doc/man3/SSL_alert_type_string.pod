@@ -36,7 +36,7 @@ and does not influence the normal data stream (unless its contents results
 in the communication being canceled).
 
 A warning alert is sent, when a non-fatal error condition occurs. The
-"close notify" alert is sent as a warning alert. Other examples for
+close_notify alert is sent as a warning alert. Other examples for
 non-fatal errors are certificate errors ("certificate expired",
 "unsupported certificate"), for which a warning alert may be sent.
 (The sending party may however decide to send a fatal error.) The
@@ -69,7 +69,7 @@ SSL_alert_desc_string_long():
 
 =over 4
 
-=item "CN"/"close notify"
+=item "CN"/close_notify
 
 The connection shall be closed. This is a warning alert.
 
