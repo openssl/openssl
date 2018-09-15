@@ -37,7 +37,7 @@ When a client only writes and never reads from the connection, and the server
 has sent a session ticket to establish a session, the client might not be able
 to resume the session because it did not received and process the session ticket
 from the server.
-In case you want to be able to resume the session, it's recommend to do a complete
+In case you want to be able to resume the session, it is recommend to do a complete
 shutdown procedure (bidirectional "close notify" alerts).
 
 When the underlying connection shall be used for more communications, the
@@ -54,7 +54,7 @@ When the application is the first party to send the "close notify"
 alert, SSL_shutdown() will only send the alert and then set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
 be kept in the cache).
-If succesful, SSL_shutdown() will return 0.
+If successful, SSL_shutdown() will return 0.
 
 If a unidirectional shutdown is enough (the underlying connection shall be
 closed anyway), this first successful call to SSL_shutdown() is sufficient.
@@ -66,7 +66,7 @@ it.
 
 The peer is still allowed to send data after receiving the "close notify"
 event.
-When it's done sending data, it will send the "close notify" alert.
+When it is done sending data, it will send the "close notify" alert.
 SSL_read() should be called until all data is received.
 SSL_read() will indicate the end of the peer data by returning <= 0
 and SSL_get_error() returning SSL_ERROR_ZERO_RETURN.
@@ -80,7 +80,7 @@ SSL_read() will return <= 0 in that case, and SSL_get_error() will return
 SSL_ERROR_ZERO_RETURN.
 SSL_shutdown() will send the "close notify" alert, set the SSL_SENT_SHUTDOWN
 flag.
-If succesful, SSL_shutdown() will return 1.
+If successful, SSL_shutdown() will return 1.
 
 Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
 SSL_get_shutdown() (see also L<SSL_set_shutdown(3)> call.
@@ -102,10 +102,10 @@ nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
 
-After SSL_shutdown() returned 0, it's possible to call SSL_shutdown() again
+After SSL_shutdown() returned 0, it is possible to call SSL_shutdown() again
 to wait for the peer's "close notify" alert.
 SSL_shudown() will return 1 in that case.
-However, it's recommended to wait for it using SSL_read() instead.
+However, it is recommended to wait for it using SSL_read() instead.
 
 SSL_shutdown() can be modified to only set the connection to "shutdown"
 state but not actually send the "close notify" alert messages,
