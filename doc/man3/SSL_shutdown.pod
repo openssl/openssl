@@ -104,7 +104,7 @@ into or retrieved out of the BIO before being able to continue.
 
 After SSL_shutdown() returned 0, it is possible to call SSL_shutdown() again
 to wait for the peer's close_notify alert.
-SSL_shudown() will return 1 in that case.
+SSL_shutdown() will return 1 in that case.
 However, it is recommended to wait for it using SSL_read() instead.
 
 SSL_shutdown() can be modified to only set the connection to "shutdown"
