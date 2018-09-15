@@ -54,10 +54,7 @@ When the application is the first party to send the "close notify"
 alert, SSL_shutdown() will only send the alert and then set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
 be kept in the cache).
-SSL_shutdown() will then return 0.
-
-SSL_shutdown() can return -1, in which case SSL_shutdown() should be called
-again.
+If succesful, SSL_shutdown() will return 0.
 
 If a unidirectional shutdown is enough (the underlying connection shall be
 closed anyway), this first successful call to SSL_shutdown() is sufficient.
@@ -83,10 +80,7 @@ SSL_read() will return <= 0 in that case, and SSL_get_error() will return
 SSL_ERROR_ZERO_RETURN.
 SSL_shutdown() will send the "close notify" alert, set the SSL_SENT_SHUTDOWN
 flag.
-SSL_shutdown() will then return 1.
-
-SSL_shutdown() can return -1, in which case SSL_shutdown() should be called
-again.
+If succesful, SSL_shutdown() will return 1.
 
 Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
 SSL_get_shutdown() (see also L<SSL_set_shutdown(3)> call.
@@ -107,6 +101,11 @@ The action depends on the underlying BIO. When using a non-blocking socket,
 nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
+
+After SSL_shutdown() returned 0, it's possible to call SSL_shutdown() again
+to wait for the peer's "close notify" alert.
+SSL_shudown() will return 1 in that case.
+However, it's recommended to wait for it using SSL_read() instead.
 
 SSL_shutdown() can be modified to only set the connection to "shutdown"
 state but not actually send the "close notify" alert messages,
