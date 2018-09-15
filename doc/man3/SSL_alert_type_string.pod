@@ -69,7 +69,7 @@ SSL_alert_desc_string_long():
 
 =over 4
 
-=item "CN"/close_notify
+=item "CN"/"close notify"
 
 The connection shall be closed. This is a warning alert.
 
