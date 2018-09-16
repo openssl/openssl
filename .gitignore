@@ -59,6 +59,7 @@ Makefile
 /test/v3ext
 /test/versions
 /test/ossl_shim/ossl_shim
+/test/rsa_complex
 
 # Certain files that get created by tests on the fly
 /test/test-runs
