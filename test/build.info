@@ -26,7 +26,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   PROGRAMS_NO_INST=\
           versions \
           aborttest test_test \
-          sanitytest exdatatest bntest \
+          sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
@@ -63,6 +63,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include
   DEPEND[sanitytest]=../libcrypto libtestutil.a
+
+  SOURCE[rsa_complex]=rsa_complex.c
+  INCLUDE[rsa_complex]=../include
 
   SOURCE[test_test]=test_test.c
   INCLUDE[test_test]=../include
