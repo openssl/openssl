@@ -68,12 +68,12 @@ error occurs.
 
 =back
 
-EVP_PKEY_set_hkdf_md() sets the message digest associated with the HKDF.
+EVP_PKEY_CTX_set_hkdf_md() sets the message digest associated with the HKDF.
 
 EVP_PKEY_CTX_set1_hkdf_salt() sets the salt to B<saltlen> bytes of the
 buffer B<salt>. Any existing value is replaced.
 
-EVP_PKEY_CTX_set_hkdf_key() sets the key to B<keylen> bytes of the buffer
+EVP_PKEY_CTX_set1_hkdf_key() sets the key to B<keylen> bytes of the buffer
 B<key>. Any existing value is replaced.
 
 EVP_PKEY_CTX_add1_hkdf_info() sets the info value to B<infolen> bytes of the
