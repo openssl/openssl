@@ -64,7 +64,7 @@ static uint64_t get_timer_bits(void);
  * macro that might be undefined.
  */
 # undef OSSL_POSIX_TIMER_OKAY
-# if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0
+# if defined(_POSIX_TIMERS) && _POSIX_TIMERS > 0 && !defined(__sun)
 #  if defined(__GLIBC__)
 #   if defined(__GLIBC_PREREQ)
 #    if __GLIBC_PREREQ(2, 17)
