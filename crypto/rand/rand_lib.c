@@ -191,11 +191,24 @@ int RAND_status(void)
 static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
                                int entropy, size_t min_len, size_t max_len)
 {
+    static size_t counter = 0;
+
     /* Round up request to multiple of block size */
     min_len = ((min_len + 19) / 20) * 20;
     *pout = OPENSSL_malloc(min_len);
     if (!*pout)
         return 0;
+
+    /*
+     * Since ssleay_rand_bytes() calls RAND_poll() only on first call,
+     * we do it manually on every following call.
+     *
+     * Note: it is threadsafe to increment the counter, since RAND_bytes()
+     * takes the CRYPTO_LOCK_RAND somewhere up the stack.
+     */
+    if (++counter > 1)
+        RAND_poll();
+
     if (ssleay_rand_bytes(*pout, min_len, 0, 0) <= 0) {
         OPENSSL_free(*pout);
         *pout = NULL;
