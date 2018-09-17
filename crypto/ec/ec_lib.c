@@ -70,6 +70,10 @@
 
 const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
 
+/* local function prototypes */
+
+static inline int ec_precompute_mont_data(EC_GROUP *);
+
 /* functions for EC_GROUP objects */
 
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
@@ -1106,17 +1110,22 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
                                  * been performed */
 }
 
-/*
+/*-
  * ec_precompute_mont_data sets |group->mont_data| from |group->order| and
  * returns one on success. On error it returns zero.
+ *
+ * Note: this function must be called only after verifying that
+ * EC_GROUP_VERSION(group) returns true.
+ * The reason for this is that access to the `mont_data` field of an EC_GROUP
+ * struct should always be guarded by an EC_GROUP_VERSION(group) check to avoid
+ * OOB accesses, as the group might come from the FIPS module, which does not
+ * define the `mont_data` field inside the EC_GROUP structure.
  */
+static inline
 int ec_precompute_mont_data(EC_GROUP *group)
 {
     BN_CTX *ctx = BN_CTX_new();
     int ret = 0;
-
-    if (!EC_GROUP_VERSION(group))
-        goto err;
 
     if (group->mont_data) {
         BN_MONT_CTX_free(group->mont_data);
