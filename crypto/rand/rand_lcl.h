@@ -154,5 +154,5 @@
 # endif
 
 int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock);
-
+int ssleay_rand_bytes_from_system(unsigned char *buf, int num);
 #endif

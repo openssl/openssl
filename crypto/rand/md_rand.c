@@ -555,6 +555,18 @@ int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
     return (0);
 }
 
+/*
+ * Returns ssleay_rand_bytes(), enforcing a reseeding from the
+ * system entropy sources using RAND_poll() before generating
+`* the random bytes.
+ */
+
+int ssleay_rand_bytes_from_system(unsigned char *buf, int num)
+{
+    initialized = 0;
+    return ssleay_rand_bytes(buf, num, 0, 0);
+}
+
 static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num)
 {
     return ssleay_rand_bytes(buf, num, 0, 1);

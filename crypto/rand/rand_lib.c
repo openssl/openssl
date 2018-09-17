@@ -185,7 +185,7 @@ int RAND_status(void)
 
 /*
  * Entropy gatherer: use standard OpenSSL PRNG to seed (this will gather
- * entropy internally through RAND_poll().
+ * entropy internally through RAND_poll()).
  */
 
 static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
@@ -196,7 +196,9 @@ static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
     *pout = OPENSSL_malloc(min_len);
     if (!*pout)
         return 0;
-    if (ssleay_rand_bytes(*pout, min_len, 0, 0) <= 0) {
+
+    /* Enforces a reseed of the SSLEAY PRNG before generating random bytes */
+    if (ssleay_rand_bytes_from_system(*pout, min_len) <= 0) {
         OPENSSL_free(*pout);
         *pout = NULL;
         return 0;
