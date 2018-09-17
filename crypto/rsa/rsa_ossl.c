@@ -914,7 +914,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *Iconst, RSA *rsa, BN_CTX *
          */
         if (!BN_mod(I,I,rsa->n,ctx))
             goto err;
-        if (!BN_cmp(vrfy,I)) // same big number
+        if (!BN_cmp(vrfy,I)) /* same big number */
         {
             bn_correct_top(r0);
             ret = 1;
