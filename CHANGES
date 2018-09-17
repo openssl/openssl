@@ -10,8 +10,8 @@
  Changes between 1.0.2p and 1.0.2q [xx XXX xxxx]
 
   *) Resolve a compatibility issue in EC_GROUP handling with the FIPS Object
-     Module, accidentally introduced while reverting blinding in ECDSA sign and
-     hindering the use of ECC in FIPS mode.
+     Module, accidentally introduced while backporting security fixes from the
+     development branch and hindering the use of ECC in FIPS mode.
      [Nicola Tuveri]
 
  Changes between 1.0.2o and 1.0.2p [14 Aug 2018]
