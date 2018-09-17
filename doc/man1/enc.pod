@@ -257,7 +257,7 @@ ones provided by configured engines.
 The B<enc> program does not support authenticated encryption modes
 like CCM and GCM, and will not support such modes in the future.
 The B<enc> interface by necessity must begin streaming output (e.g.,
-to standard output when B<-out> is not used before the authentication
+to standard output when B<-out> is not used) before the authentication
 tag could be validated, leading to the usage of B<enc> in pipelines
 that begin processing untrusted data and are not capable of rolling
 back upon authentication failure.  The AEAD modes currently in common
@@ -387,26 +387,25 @@ Decode the same file
 
  openssl base64 -d -in file.b64 -out file.bin
 
-Encrypt a file using triple DES in CBC mode using a prompted password:
+Encrypt a file using AES-128 using a prompted password
+and PBKDF2 key derivation:
 
- openssl des3 -salt -in file.txt -out file.des3
+ openssl enc -aes128 -pbkdf2 -in file.txt -out file.aes128
 
 Decrypt a file using a supplied password:
 
- openssl des3 -d -salt -in file.des3 -out file.txt -k mypassword
+ openssl enc -aes128 -pbkdf2 -d -in file.aes128 -out file.txt \
+    -pass pass:<password>
 
 Encrypt a file then base64 encode it (so it can be sent via mail for example)
-using Blowfish in CBC mode:
+using AES-256 in CTR mode and PBKDF2 key derivation:
 
- openssl bf -a -salt -in file.txt -out file.bf
+ openssl enc -aes-256-ctr -pbkdf2 -a -in file.txt -out file.aes256
 
-Base64 decode a file then decrypt it:
+Base64 decode a file then decrypt it using a password supplied in a file:
 
- openssl bf -d -salt -a -in file.bf -out file.txt
-
-Decrypt some data using a supplied 40 bit RC4 key:
-
- openssl rc4-40 -in file.rc4 -out file.txt -K 0102030405
+ openssl enc -aes-256-ctr -pbkdf2 -d -a -in file.aes256 -out file.txt \
+    -pass file:<passfile>
 
 =head1 BUGS
 
