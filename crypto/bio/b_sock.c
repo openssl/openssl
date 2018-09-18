@@ -102,7 +102,6 @@ static int wsa_init_done = 0;
 # endif
 
 # define GETHOSTNAME_R_BUF     (2 * 1024)
-# define GETHOSTNAME_R_BUF_MAX (16 * 1024)
 
 /*
  * WSAAPI specifier is required to make indirect calls to run-time
@@ -139,7 +138,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     int locked = 0;
     struct hostent *he;
     struct hostent *result = NULL;
-    struct hostent hostent = {};
+    struct hostent hostent;
 
     i = get_ip(str, ip);
     if (i < 0) {
@@ -163,9 +162,10 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 
     /* if gethostbyname_r is supported, use it. */
 # ifdef HAVE_GETHOSTBYNAME_R
+    memset(&hostent, 0x00, sizeof(hostent));
     he = &hostent;
     err = BIO_gethostbyname_r(str, he, &result);
-    if ((err == 0) || (result == NULL)) {
+    if (err == 0 || result == NULL) {
         BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
         goto err;
     }
@@ -397,38 +397,20 @@ static void ghbn_free(struct hostent *a)
 
 # endif
 
+# ifdef HAVE_GETHOSTBYNAME_R
 int BIO_gethostbyname_r(const char *name, struct hostent *he,
                struct hostent **result)
 {
     char buf[GETHOSTNAME_R_BUF];
     int h_errnop;
     int err;
-    char *tmp_buf = NULL;
 
     *result = NULL;
     err = gethostbyname_r(name, he, buf, sizeof(buf), result,
                  &h_errnop);
-    if (err == ERANGE) {
-        /*
-         * man page for gethostbyname_r does not specify how big the temporary
-         * buffer should be.
-         * We could attempt to pass 16KB and if we still see ERANGE, fail
-         * the call.
-         */
-        tmp_buf = OPENSSL_malloc(GETHOSTNAME_R_BUF_MAX);
-        if (tmp_buf == NULL) {
-            err = ENOMEM;
-            goto err;
-        }
-        err = gethostbyname_r(name, he, tmp_buf, GETHOSTNAME_R_BUF_MAX, result,
-                   &h_errnop);
-    }
-err:
-    /* flip error */
-    err = (err == 0) ? 1 : 0;
-    OPENSSL_free(tmp_buf);
-    return err;
+    return ((err == 0) ? 1 : 0);
 }
+# endif
 
 struct hostent *BIO_gethostbyname(const char *name)
 {
