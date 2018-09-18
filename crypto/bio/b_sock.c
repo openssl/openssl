@@ -138,8 +138,10 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     int locked = 0;
     struct hostent *he;
 # ifdef HAVE_GETHOSTBYNAME_R
+    char buf[GETHOSTNAME_R_BUF];
     struct hostent *result = NULL;
     struct hostent hostent;
+    int h_errnop;
 # endif
 
     i = get_ip(str, ip);
@@ -166,8 +168,8 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 # ifdef HAVE_GETHOSTBYNAME_R
     memset(&hostent, 0x00, sizeof(hostent));
     he = &hostent;
-    err = BIO_gethostbyname_r(str, he, &result);
-    if (err == 0 || result == NULL) {
+    err = gethostbyname_r(str, he, buf, sizeof(buf), &result, &h_errnop);
+    if (err != 0 || result == NULL) {
         BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
         goto err;
     }
@@ -397,21 +399,6 @@ static void ghbn_free(struct hostent *a)
     OPENSSL_free(a);
 }
 
-# endif
-
-# ifdef HAVE_GETHOSTBYNAME_R
-int BIO_gethostbyname_r(const char *name, struct hostent *he,
-               struct hostent **result)
-{
-    char buf[GETHOSTNAME_R_BUF];
-    int h_errnop;
-    int err;
-
-    *result = NULL;
-    err = gethostbyname_r(name, he, buf, sizeof(buf), result,
-                 &h_errnop);
-    return ((err == 0) ? 1 : 0);
-}
 # endif
 
 struct hostent *BIO_gethostbyname(const char *name)

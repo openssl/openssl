@@ -734,8 +734,6 @@ int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
                    int datalen);
 
 struct hostent *BIO_gethostbyname(const char *name);
-int BIO_gethostbyname_r(const char *name, struct hostent *he,
-        struct hostent **result);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);
