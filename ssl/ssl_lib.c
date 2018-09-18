@@ -3956,6 +3956,19 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
         return NULL;
     }
 
+    /* Issue #7244: If the original cert has shared_sigalgs, copy them over
+     * before freeing the original shared_sigalgs in ssl_cert_free
+     */
+    if (ssl->cert->shared_sigalgslen > 0) {
+      int copy_size = ssl->cert->shared_sigalgslen * sizeof(*(ssl->cert->shared_sigalgs));
+      if ((new_cert->shared_sigalgs = OPENSSL_malloc(copy_size)) == NULL) {
+        SSLerr(SSL_F_TLS1_SET_SHARED_SIGALGS, ERR_R_MALLOC_FAILURE);
+        return 0;
+      }
+      memcpy(new_cert->shared_sigalgs, ssl->cert->shared_sigalgs, copy_size);
+      new_cert->shared_sigalgslen = ssl->cert->shared_sigalgslen;
+    }
+
     ssl_cert_free(ssl->cert);
     ssl->cert = new_cert;
 
