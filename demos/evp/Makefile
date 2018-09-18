@@ -7,17 +7,19 @@
 #
 #    LD_LIBRARY_PATH=../.. ./aesccm
 #    LD_LIBRARY_PATH=../.. ./aesgcm
+#    LD_LIBRARY_PATH=../.. ./gmac
 
 CFLAGS = $(OPENSSL_INCS_LOCATION)
 LDFLAGS = $(OPENSSL_LIBS_LOCATION) -lssl -lcrypto
 
-all: aesccm aesgcm
+all: aesccm aesgcm gmac
 
 aesccm: aesccm.o
 aesgcm: aesgcm.o
+gmac: gmac.o
 
-aesccm aesgcm:
+aesccm aesgcm gmac:
 	$(CC) $(CFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
-	$(RM) aesccm aesgcm *.o
+	$(RM) aesccm aesgcm gmac *.o
