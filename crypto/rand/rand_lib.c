@@ -202,9 +202,6 @@ static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
     /*
      * Since ssleay_rand_bytes() calls RAND_poll() only on first call,
      * we do it manually on every following call.
-     *
-     * Note: it is threadsafe to increment the counter, since RAND_bytes()
-     * takes the CRYPTO_LOCK_RAND somewhere up the stack.
      */
     if (++counter > 1)
         RAND_poll();
