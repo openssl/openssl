@@ -137,8 +137,10 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     int err = 1;
     int locked = 0;
     struct hostent *he;
+# ifdef HAVE_GETHOSTBYNAME_R
     struct hostent *result = NULL;
     struct hostent hostent;
+# endif
 
     i = get_ip(str, ip);
     if (i < 0) {
