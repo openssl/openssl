@@ -72,7 +72,7 @@ const char EC_version[] = "EC" OPENSSL_VERSION_PTEXT;
 
 /* local function prototypes */
 
-static inline int ec_precompute_mont_data(EC_GROUP *);
+static int ec_precompute_mont_data(EC_GROUP *group);
 
 /* functions for EC_GROUP objects */
 
@@ -1121,7 +1121,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
  * OOB accesses, as the group might come from the FIPS module, which does not
  * define the `mont_data` field inside the EC_GROUP structure.
  */
-static inline
+static
 int ec_precompute_mont_data(EC_GROUP *group)
 {
     BN_CTX *ctx = BN_CTX_new();
