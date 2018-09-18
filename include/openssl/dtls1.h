@@ -14,10 +14,14 @@
 extern "C" {
 #endif
 
+#include <openssl/opensslconf.h>
+
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
-# define DTLS_MIN_VERSION                DTLS1_VERSION
-# define DTLS_MAX_VERSION                DTLS1_2_VERSION
+# if !OPENSSL_API_3
+#  define DTLS_MIN_VERSION                DTLS1_VERSION
+#  define DTLS_MAX_VERSION                DTLS1_2_VERSION
+# endif
 # define DTLS1_VERSION_MAJOR             0xFE
 
 # define DTLS1_BAD_VER                   0x0100
