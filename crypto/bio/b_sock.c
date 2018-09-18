@@ -171,6 +171,12 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     err = gethostbyname_r(str, he, buf, sizeof(buf), &result, &h_errnop);
     if (err != 0 || result == NULL) {
         BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
+        /*
+         * if there are no entry found, then gethostbyname_r returns 0 with
+         * result set to NULL.
+         * so reset err to no-zero
+         */
+        err = 1;
         goto err;
     }
 # else
