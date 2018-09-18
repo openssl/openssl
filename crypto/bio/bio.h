@@ -734,15 +734,8 @@ int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
                    int datalen);
 
 struct hostent *BIO_gethostbyname(const char *name);
-/*-
- * We might want a thread-safe interface too:
- * struct hostent *BIO_gethostbyname_r(const char *name,
- *     struct hostent *result, void *buffer, size_t buflen);
- * or something similar (caller allocates a struct hostent,
- * pointed to by "result", and additional buffer space for the various
- * substructures; if the buffer does not suffice, NULL is returned
- * and an appropriate error code is set).
- */
+int BIO_gethostbyname_r(const char *name, struct hostent *he,
+        struct hostent **result);
 int BIO_sock_error(int sock);
 int BIO_socket_ioctl(int fd, long type, void *arg);
 int BIO_socket_nbio(int fd, int mode);

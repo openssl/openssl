@@ -83,6 +83,27 @@ NETDB_DEFINE_CONTEXT
 static int wsa_init_done = 0;
 # endif
 
+# if defined(__GLIBC__)
+#  if defined(__GLIBC_PREREQ)
+#   if __GLIBC_PREREQ(2, 19)
+#    if defined(_DEFAULT_SOURCE)
+#     define HAVE_GETHOSTBYNAME_R
+#    endif
+#   else
+#    if defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+#     define HAVE_GETHOSTBYNAME_R
+#    endif
+#   endif
+#  else
+#   if defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
+#    define HAVE_GETHOSTBYNAME_R
+#   endif
+#  endif
+# endif
+
+# define GETHOSTNAME_R_BUF     (2 * 1024)
+# define GETHOSTNAME_R_BUF_MAX (16 * 1024)
+
 /*
  * WSAAPI specifier is required to make indirect calls to run-time
  * linked WinSock 2 functions used in this module, to be specific
@@ -117,6 +138,8 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     int err = 1;
     int locked = 0;
     struct hostent *he;
+    struct hostent *result = NULL;
+    struct hostent hostent = {};
 
     i = get_ip(str, ip);
     if (i < 0) {
@@ -138,6 +161,15 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     if (i > 0)
         return (1);
 
+    /* if gethostbyname_r is supported, use it. */
+# ifdef HAVE_GETHOSTBYNAME_R
+    he = &hostent;
+    err = BIO_gethostbyname_r(str, he, &result);
+    if ((err == 0) || (result == NULL)) {
+        BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
+        goto err;
+    }
+# else
     /* do a gethostbyname */
     CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
     locked = 1;
@@ -146,6 +178,7 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
         BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
         goto err;
     }
+# endif
 
     /* cast to short because of win16 winsock definition */
     if ((short)he->h_addrtype != AF_INET) {
@@ -363,6 +396,39 @@ static void ghbn_free(struct hostent *a)
 }
 
 # endif
+
+int BIO_gethostbyname_r(const char *name, struct hostent *he,
+               struct hostent **result)
+{
+    char buf[GETHOSTNAME_R_BUF];
+    int h_errnop;
+    int err;
+    char *tmp_buf = NULL;
+
+    *result = NULL;
+    err = gethostbyname_r(name, he, buf, sizeof(buf), result,
+                 &h_errnop);
+    if (err == ERANGE) {
+        /*
+         * man page for gethostbyname_r does not specify how big the temporary
+         * buffer should be.
+         * We could attempt to pass 16KB and if we still see ERANGE, fail
+         * the call.
+         */
+        tmp_buf = OPENSSL_malloc(GETHOSTNAME_R_BUF_MAX);
+        if (tmp_buf == NULL) {
+            err = ENOMEM;
+            goto err;
+        }
+        err = gethostbyname_r(name, he, tmp_buf, GETHOSTNAME_R_BUF_MAX, result,
+                   &h_errnop);
+    }
+err:
+    /* flip error */
+    err = (err == 0) ? 1 : 0;
+    OPENSSL_free(tmp_buf);
+    return err;
+}
 
 struct hostent *BIO_gethostbyname(const char *name)
 {
