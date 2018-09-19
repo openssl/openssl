@@ -1079,7 +1079,7 @@ static const unsigned char so[7767] = {
     0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
 };
 
-#define NUM_NID 1203
+#define NUM_NID 1204
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2284,9 +2284,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"AES-256-SIV", "aes-256-siv", NID_aes_256_siv},
     {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac},
     {"BLAKE2SMAC", "blake2smac", NID_blake2smac},
+    {"SSHKDF", "sshkdf", NID_sshkdf},
 };
 
-#define NUM_SN 1194
+#define NUM_SN 1195
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2572,6 +2573,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      167,    /* "SMIME-CAPS" */
      100,    /* "SN" */
     1006,    /* "SNILS" */
+    1203,    /* "SSHKDF" */
       16,    /* "ST" */
      143,    /* "SXNetID" */
     1062,    /* "SipHash" */
@@ -3484,7 +3486,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1194
+#define NUM_LN 1195
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4634,6 +4636,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1139,    /* "sm4-ctr" */
     1133,    /* "sm4-ecb" */
     1135,    /* "sm4-ofb" */
+    1203,    /* "sshkdf" */
       16,    /* "stateOrProvinceName" */
      660,    /* "streetAddress" */
      498,    /* "subtreeMaximumQuality" */

@@ -168,6 +168,7 @@ extern const EVP_KDF_METHOD pbkdf2_kdf_meth;
 extern const EVP_KDF_METHOD scrypt_kdf_meth;
 extern const EVP_KDF_METHOD tls1_prf_kdf_meth;
 extern const EVP_KDF_METHOD hkdf_kdf_meth;
+extern const EVP_KDF_METHOD sshkdf_kdf_meth;
 
 struct evp_md_st {
     int type;

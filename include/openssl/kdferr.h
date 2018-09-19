@@ -32,6 +32,10 @@ int ERR_load_KDF_strings(void);
 # define KDF_F_KDF_SCRYPT_CTRL_UINT64                     122
 # define KDF_F_KDF_SCRYPT_DERIVE                          123
 # define KDF_F_KDF_SCRYPT_NEW                             124
+# define KDF_F_KDF_SSHKDF_CTRL                            130
+# define KDF_F_KDF_SSHKDF_CTRL_STR                        131
+# define KDF_F_KDF_SSHKDF_DERIVE                          132
+# define KDF_F_KDF_SSHKDF_NEW                             133
 # define KDF_F_KDF_TLS1_PRF_CTRL_STR                      125
 # define KDF_F_KDF_TLS1_PRF_DERIVE                        126
 # define KDF_F_KDF_TLS1_PRF_NEW                           127
@@ -62,6 +66,9 @@ int ERR_load_KDF_strings(void);
 # define KDF_R_MISSING_SALT                               111
 # define KDF_R_MISSING_SECRET                             107
 # define KDF_R_MISSING_SEED                               106
+# define KDF_R_MISSING_SESSION_ID                         113
+# define KDF_R_MISSING_TYPE                               114
+# define KDF_R_MISSING_XCGHASH                            115
 # define KDF_R_UNKNOWN_PARAMETER_TYPE                     103
 # define KDF_R_VALUE_ERROR                                108
 # define KDF_R_VALUE_MISSING                              102
