@@ -136,10 +136,9 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     int i;
     int err = 1;
     int locked = 0;
-    struct hostent *he;
+    struct hostent *he = NULL;
 # ifdef HAVE_GETHOSTBYNAME_R
     char buf[GETHOSTNAME_R_BUF];
-    struct hostent *result = NULL;
     struct hostent hostent;
     int h_errnop;
 # endif
@@ -167,28 +166,19 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
     /* if gethostbyname_r is supported, use it. */
 # ifdef HAVE_GETHOSTBYNAME_R
     memset(&hostent, 0x00, sizeof(hostent));
-    he = &hostent;
-    err = gethostbyname_r(str, he, buf, sizeof(buf), &result, &h_errnop);
-    if (err != 0 || result == NULL) {
-        BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
-        /*
-         * if there are no entry found, then gethostbyname_r returns 0 with
-         * result set to NULL.
-         * so reset err to no-zero
-         */
-        err = 1;
-        goto err;
-    }
+    /* gethostbyname_r() sets |he| to NULL on error, we check it further down */
+    gethostbyname_r(str, &hostent, buf, sizeof(buf), &he, &h_errnop);
 # else
     /* do a gethostbyname */
     CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
     locked = 1;
     he = BIO_gethostbyname(str);
+# endif
+
     if (he == NULL) {
         BIOerr(BIO_F_BIO_GET_HOST_IP, BIO_R_BAD_HOSTNAME_LOOKUP);
         goto err;
     }
-# endif
 
     /* cast to short because of win16 winsock definition */
     if ((short)he->h_addrtype != AF_INET) {
