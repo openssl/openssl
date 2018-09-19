@@ -4991,6 +4991,10 @@
 #define LN_hkdf         "hkdf"
 #define NID_hkdf                1036
 
+#define SN_sshkdf               "SSHKDF"
+#define LN_sshkdf               "sshkdf"
+#define NID_sshkdf              1203
+
 #define SN_id_pkinit            "id-pkinit"
 #define NID_id_pkinit           1031
 #define OBJ_id_pkinit           1L,3L,6L,1L,5L,2L,3L
