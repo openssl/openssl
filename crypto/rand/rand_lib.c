@@ -206,6 +206,22 @@ static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
     return min_len;
 }
 
+static size_t drbg_get_nonce(DRBG_CTX *ctx, unsigned char **pout,
+                               int entropy, size_t min_len, size_t max_len)
+{
+    /* Round up request to multiple of block size */
+    min_len = ((min_len + 19) / 20) * 20;
+    *pout = OPENSSL_malloc(min_len);
+    if (!*pout)
+        return 0;
+    if (ssleay_rand_bytes(*pout, min_len, 0, 0) <= 0) {
+        OPENSSL_free(*pout);
+        *pout = NULL;
+        return 0;
+    }
+    return min_len;
+}
+
 static void drbg_free_entropy(DRBG_CTX *ctx, unsigned char *out, size_t olen)
 {
     if (out) {
@@ -283,7 +299,7 @@ int RAND_init_fips(void)
 
     FIPS_drbg_set_callbacks(dctx,
                             drbg_get_entropy, drbg_free_entropy, 20,
-                            drbg_get_entropy, drbg_free_entropy);
+                            drbg_get_nonce, drbg_free_entropy);
     FIPS_drbg_set_rand_callbacks(dctx, drbg_get_adin, 0,
                                  drbg_rand_seed, drbg_rand_add);
     /* Personalisation string: a string followed by date time vector */
