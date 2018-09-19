@@ -1339,6 +1339,7 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
      */
     if (s->shutdown & SSL_RECEIVED_SHUTDOWN) {
         SSL3_RECORD_set_length(rr, 0);
+        SSL3_RECORD_set_read(rr);
         s->rwstate = SSL_NOTHING;
         return 0;
     }
