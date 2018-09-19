@@ -426,7 +426,7 @@ static int open_console(UI *ui)
 #  endif
 #  ifdef EIO
             /*
-             * Linux can return ENXIO.
+             * Linux can return EIO.
              * This should be ok
              */
         if (errno == EIO)
