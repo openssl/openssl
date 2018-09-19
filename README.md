@@ -29,11 +29,11 @@ This project integrates post-quantum key exchange from liboqs in TLS 1.3 in Open
 
 ### Key exchange mechanisms
 
-Currently, only Frodo, Sike503, Sike751, Newhope, and NTRU are supported. Others will be added when OQS is updated.
+Currently, only sike503/751, sidh503/751, frodo(640/976)(aes/cshake), bike(1/2/3)l(1/3/5) are supported. Others will be added as OQS is updated.
 
 ### Authentication mechanisms
 
-Currently, only picnicL1FS, qteslaI, qteslaIIIsize, qteslaIIIspeed are supported. Others will be added when OQS is updated.
+Currently, only picnicL1FS, qteslaI, qteslaIIIsize, qteslaIIIspeed are supported. Others will be added as OQS is updated.
 
 Building on Linux and macOS
 ---------------------------
@@ -54,7 +54,6 @@ Follow the instructions there to download and build that branch of liboqs and in
 
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
     cd liboqs
-    git checkout 67733d68405685c7a75ea4bffb06f1abb0bc3930
     autoreconf -i
     ./configure --prefix=<path-to-openssl-dir>/oqs --enable-shared
     make
@@ -100,7 +99,7 @@ To run a basic TLS server with all OQS ciphersuites enabled:
 
 	apps/openssl s_server -cert <SIGALG>.crt -key <SIGALG>.key -HTTP -tls1_3
 
-In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<KEXALG> = newhope, frodo, sike503, sike751, ntru) or the hybrid ciphersuites ("p256-<KEXALG>", only the NIST p256 curve is supported for now), for example:
+In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (<KEXALG> = sike503/751, sidh503/751, frodo(640/976)(aes/cshake), bike(1/2/3)l(1/3/5)) or the hybrid ciphersuites ("p256-<KEXALG>", only the NIST p256 curve in combination with L1 PQC schemes are supported for now), for example:
 
     apps/openssl s_client -curves <KEXALG> -connect localhost:4433
 

@@ -170,22 +170,36 @@ static const TLS_GROUP_INFO nid_list[] = {
 };
 
     /* OQS groups. The values are arbitraty, since the TLS spec does not specify values
-       for non finite field and elliptic curve "groups".
+       for non finite field and elliptic curve "groups". Security level is classical.
      */
 static const TLS_GROUP_INFO oqs_nid_list[] = {
-    {NID_OQS_Frodo, 144 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Frodo (0x0200) */
-    {NID_OQS_SIKE_503, 126 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 503 (0x0201) */
-    {NID_OQS_SIKE_751, 188 /* classical */, TLS_CURVE_CUSTOM}, /* OQS SIKE 751 (0x0202) */
-    {NID_OQS_Newhope, 229 /* classical */, TLS_CURVE_CUSTOM}, /* OQS Newhope (0x0203) */
-    {NID_OQS_NTRU, 256 /* classical */, TLS_CURVE_CUSTOM}, /* OQS NTRU (0x0205) */
+    {NID_OQS_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* sike503 (0x0200) */
+    {NID_OQS_SIKE_751, 192, TLS_CURVE_CUSTOM}, /* sike751 (0x0201) */
+    {NID_OQS_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* sidh503 (0x0202) */
+    {NID_OQS_SIDH_751, 192, TLS_CURVE_CUSTOM}, /* sidh751 (0x0203) */
+    {NID_OQS_Frodo_640_AES, 128, TLS_CURVE_CUSTOM}, /* frodo640aes (0x0204) */
+    {NID_OQS_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* frodo640cshake (0x0205) */
+    {NID_OQS_Frodo_976_AES, 192, TLS_CURVE_CUSTOM}, /* frodo976aes (0x0206) */
+    {NID_OQS_Frodo_976_cshake, 192, TLS_CURVE_CUSTOM}, /* frodo976cshake (0x0207) */
+    {NID_OQS_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* bike1l1 (0x0208) */
+    {NID_OQS_BIKE1_L3, 192, TLS_CURVE_CUSTOM}, /* bike1l3 (0x0209) */
+    {NID_OQS_BIKE1_L5, 256, TLS_CURVE_CUSTOM}, /* bike1l5 (0x020a) */
+    {NID_OQS_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* bike2l1 (0x020b) */
+    {NID_OQS_BIKE2_L3, 192, TLS_CURVE_CUSTOM}, /* bike2l3 (0x020c) */
+    {NID_OQS_BIKE2_L5, 256, TLS_CURVE_CUSTOM}, /* bike2l5 (0x020d) */
+    {NID_OQS_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* bike3l1 (0x020e) */
+    {NID_OQS_BIKE3_L3, 192, TLS_CURVE_CUSTOM}, /* bike3l3 (0x020f) */
+    {NID_OQS_BIKE3_L5, 256, TLS_CURVE_CUSTOM}, /* bike3l5 (0x0210) */
 };
-    /* Hybrid OQS groups. */
+    /* Hybrid OQS groups. Security level is classical. */
 static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
-    {NID_OQS_p256_Frodo, 128 /* classical, min(p256,frodo) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Frodo hybrid (0x0300) */
-    {NID_OQS_p256_SIKE_503, 126 /* classical, min(p256,sike503) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 503 hybrid (0x0301) */
-    {NID_OQS_p256_SIKE_751, 128 /* classical, min(p256,sike751) */, TLS_CURVE_CUSTOM}, /* p256 + OQS SIKE 751 hybrid (0x0302) */
-    {NID_OQS_p256_Newhope, 128 /* classical, min(p256,newhope) */, TLS_CURVE_CUSTOM}, /* p256 + OQS Newhope hybrid (0x0303) */
-    {NID_OQS_p256_NTRU, 128 /* classical, min(p256,ntru) */, TLS_CURVE_CUSTOM}, /* p256 + OQS NTRU hybrid (0x0304) */
+    {NID_OQS_p256_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sike503 hybrid (0x0300) */
+    {NID_OQS_p256_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sidh503 hybrid (0x0301) */
+    {NID_OQS_p256_Frodo_640_AES, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640aes hybrid (0x0302) */
+    {NID_OQS_p256_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640cshake hybrid (0x0303) */
+    {NID_OQS_p256_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike1l1 hybrid (0x0304) */
+    {NID_OQS_p256_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike2l1 hybrid (0x0305) */
+    {NID_OQS_p256_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike3l1 hybrid (0x0305) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -203,16 +217,30 @@ static const uint16_t eccurves_default[] = {
     24,                      /* secp384r1 (24) */
     /* FIXMEOQS: what should the code points be? TLS1.3 only specify DH and EC groups.
        Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
-    0x0200,                  /* OQS Frodo (0x0200) */
-    0x0201,                  /* OQS Sike503 (0x0201) */
-    0x0202,                  /* OQS Sike751 (0x0202) */
-    0x0203,                  /* OQS Newhope (0x0203) */
-    0x0204,                  /* OQS NTRU (0x0204) */
-    0x0300,                  /* p256 + OQS Frodo hybrid (0x0300) */
-    0x0301,                  /* p256 + OQS Sike503 hybrid (0x0301) */
-    0x0302,                  /* p256 + OQS Sike751 hybrid (0x0302) */
-    0x0303,                  /* p256 + OQS Newhope hybrid (0x0303) */
-    0x0304,                  /* p256 + OQS NTRU hybrid (0x0304) */
+    0x0200, /* OQS sike503 */
+    0x0201, /* OQS sike751 */
+    0x0202, /* OQS sidh503 */
+    0x0203, /* OQS sidh751 */
+    0x0204, /* OQS frodo640aes */
+    0x0205, /* OQS frodo640cshake */
+    0x0206, /* OQS frodo976aes */
+    0x0207, /* OQS frodo976cshake */
+    0x0208, /* OQS bike1l1 */
+    0x0209, /* OQS bike1l3 */
+    0x020a, /* OQS bike1l5 */
+    0x020b, /* OQS bike2l1 */
+    0x020c, /* OQS bike2l3 */
+    0x020d, /* OQS bike2l5 */
+    0x020e, /* OQS bike3l1 */
+    0x020f, /* OQS bike3l3 */
+    0x0210, /* OQS bike3l5 */
+    0x0300, /* p256 - OQS sike503 hybrid */
+    0x0301, /* p256 - OQS sidh503 hybrid */
+    0x0302, /* p256 - OQS frodo640aes hybrid */
+    0x0303, /* p256 - OQS frodo640cshake hybrid */
+    0x0304, /* p256 - OQS bike1l1 hybrid */
+    0x0305, /* p256 - OQS bike2l1 hybrid */
+    0x0306, /* p256 - OQS bike3l1 hybrid */
 };
 
 static const uint16_t suiteb_curves[] = {
@@ -223,10 +251,10 @@ static const uint16_t suiteb_curves[] = {
 const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
     /* check if it is an OQS group */
-    if (IS_OQS_KEX_CURVEID(group_id)) {
+    if (IS_OQS_KEM_CURVEID(group_id)) {
       return &oqs_nid_list[group_id - 0x0200 /* first oqs value */];
     }
-    if (IS_OQS_KEX_HYBRID_CURVEID(group_id)) {
+    if (IS_OQS_KEM_HYBRID_CURVEID(group_id)) {
       return &oqs_hybrid_nid_list[group_id - 0x0300 /* first oqs hybrid value */ ];
     }
 
@@ -241,11 +269,11 @@ static uint16_t tls1_nid2group_id(int nid)
     size_t i;
 
     /* check if it is an OQS group */
-    int oqs_group_id = OQS_KEX_CURVEID(nid);
+    int oqs_group_id = OQS_KEM_CURVEID(nid);
     if (oqs_group_id != 0) {
       return oqs_group_id;
     }
-    oqs_group_id = OQS_KEX_HYBRID_CURVEID(nid);
+    oqs_group_id = OQS_KEM_HYBRID_CURVEID(nid);
     if (oqs_group_id != 0) {
       return oqs_group_id;
     }

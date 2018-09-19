@@ -715,8 +715,8 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         }
 
 	/* check if we are dealing with pqc or hybrid */
-	do_pqc = IS_OQS_KEX_CURVEID(group_id);
-	do_hybrid = IS_OQS_KEX_HYBRID_CURVEID(group_id);
+	do_pqc = IS_OQS_KEM_CURVEID(group_id);
+	do_hybrid = IS_OQS_KEM_HYBRID_CURVEID(group_id);
 
 	/* parse the encoded_pt, which is either a classical, PQC, or hybrid (both) message. */
 	if (do_hybrid) {
@@ -737,7 +737,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 	  s->s3->tmp.oqs_peer_msg_len = oqs_encodedlen;
 	  unsigned char* peer_key = OPENSSL_malloc(s->s3->tmp.oqs_peer_msg_len);
 	  memcpy(peer_key, peer_msg, s->s3->tmp.oqs_peer_msg_len); /* FIXMEOQS: when should I free that? */
-	  s->s3->tmp.oqs_kex_client = peer_key;
+	  s->s3->tmp.oqs_kem_client = peer_key;
 	  /* OQS note: we are not using peer_tmp in the oqs case, but the kex fails if this
 	     value is null, so we instantiate it but we don't assign any value. It will get
 	     cleaned up later.
@@ -753,7 +753,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
 	}
 	if (!do_pqc) {
 	  /* get the curve_id for the classical alg */
-	  int classical_group_id = do_hybrid ? OQS_KEX_CLASSICAL_CURVEID(group_id) : group_id;
+	  int classical_group_id = do_hybrid ? OQS_KEM_CLASSICAL_CURVEID(group_id) : group_id;
 	  if ((s->s3->peer_tmp = ssl_generate_param_group(classical_group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_CTOS_KEY_SHARE,
 		     SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
@@ -1758,7 +1758,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_SENT;
     }
 
-    if (ckey == NULL && s->s3->tmp.oqs_kex_client == NULL) { /* FIXMEOQS: is this ok with oqs kex? */
+    if (ckey == NULL && s->s3->tmp.oqs_kem_client == NULL) { /* FIXMEOQS: is this ok with oqs kem? */
         /* No key_share received from client - must be resuming */
         if (!s->hit || !tls13_generate_handshake_secret(s, NULL, 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -1776,8 +1776,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    do_pqc = IS_OQS_KEX_CURVEID(s->s3->group_id);
-    do_hybrid = IS_OQS_KEX_HYBRID_CURVEID(s->s3->group_id);
+    do_pqc = IS_OQS_KEM_CURVEID(s->s3->group_id);
+    do_hybrid = IS_OQS_KEM_HYBRID_CURVEID(s->s3->group_id);
     if (!do_pqc || do_hybrid) {
       skey = ssl_generate_pkey(ckey);
       if (skey == NULL) {
@@ -1808,47 +1808,32 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 
     if (do_pqc || do_hybrid) {
       /* This is a group handled by OQS */
-      int oqs_nid = OQS_KEX_NID(s->s3->group_id);
-      OQS_RAND* oqs_rand = NULL;
-      OQS_KEX* oqs_kex = NULL;
-      unsigned char* client_msg = s->s3->tmp.oqs_kex_client;
-      int client_msg_len = s->s3->tmp.oqs_peer_msg_len; /* saved when received in tls_parse_ctos_key_share */
+      int oqs_nid = OQS_KEM_NID(s->s3->group_id);
+      OQS_KEM* oqs_kem = NULL;
+      unsigned char* client_msg = s->s3->tmp.oqs_kem_client;
       unsigned char* shared_secret = NULL, *oqs_shared_secret = NULL;
       size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
 
       int has_error = 0;
-      enum OQS_KEX_alg_name oqs_alg_name = OQS_ALG_NAME(oqs_nid);
-      uint8_t oqs_seed[SHA256_DIGEST_LENGTH]; /* FIXMEQOS: is this big enough for all OQS alg? */
-      size_t oqs_seed_len = OQS_SEED_LEN(oqs_nid);
-      char *oqs_named_parameters = OQS_NAMED_PARAMETERS(oqs_nid);
-      if (OQS_NEED_SEED(oqs_nid)) {
-	/* hash the client random to seed the OQS alg (server's wasn't available to client, so it is not used here) */
-	SHA256_CTX sha256_ctx;
-	if (SHA256_Init(&sha256_ctx) != 1) goto oqs_cleanup;
-	if (SHA256_Update(&sha256_ctx, s->s3->client_random, SSL3_RANDOM_SIZE) != 1) goto oqs_cleanup;
-	if (SHA256_Final(oqs_seed, &sha256_ctx) != 1) goto oqs_cleanup;
-      }
-	/* initialize the random generator */
-      if ((oqs_rand = OQS_RAND_new(OQS_RAND_alg_default)) == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                 SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
-	has_error = 1;
-	goto oqs_cleanup;
-      }
+      const char* oqs_alg_name = OQS_ALG_NAME(oqs_nid);
       /* initialize the kex */
-      if ((oqs_kex = OQS_KEX_new(oqs_rand, oqs_alg_name, oqs_seed, oqs_seed_len, oqs_named_parameters)) == NULL) {
+      if ((oqs_kem = OQS_KEM_new(oqs_alg_name)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
 	has_error = 1;
 	goto oqs_cleanup;
       }
       /* compute the servers's shared secret and message (encoded in encoded_point) */
-      if (OQS_KEX_bob(oqs_kex, client_msg, client_msg_len, &oqs_encodedPoint, &oqs_encoded_pt_len, &oqs_shared_secret, &oqs_shared_secret_len) != OQS_SUCCESS) {
+      if ((oqs_encodedPoint = malloc(oqs_kem->length_ciphertext)) == NULL ||
+	  (oqs_shared_secret = malloc(oqs_kem->length_shared_secret)) == NULL ||
+	  OQS_KEM_encaps(oqs_kem, oqs_encodedPoint, oqs_shared_secret, client_msg) != OQS_SUCCESS) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_STOC_KEY_SHARE, ERR_R_INTERNAL_ERROR);
 	has_error = 1;
 	goto oqs_cleanup;
       }
+      oqs_encoded_pt_len = oqs_kem->length_ciphertext;
+      oqs_shared_secret_len = oqs_kem->length_shared_secret;
 
 	/* derive the ssl secret */
 	if (do_hybrid) {
@@ -1860,7 +1845,7 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 	  }
 	  /* we concatenate the classical and oqs shared secret */
 	  shared_secret_len = s->s3->tmp.pmslen + oqs_shared_secret_len;
-	  shared_secret = OPENSSL_malloc(shared_secret_len); /* FIXMEOQS: free me! */
+	  shared_secret = OPENSSL_malloc(shared_secret_len);
 	  memcpy(shared_secret, s->s3->tmp.pms, s->s3->tmp.pmslen);
 	  memcpy(shared_secret + s->s3->tmp.pmslen, oqs_shared_secret, oqs_shared_secret_len);
 	} else {
@@ -1886,9 +1871,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
       }
     oqs_cleanup:
       OQS_MEM_secure_free(shared_secret, shared_secret_len);
-      OQS_RAND_free(oqs_rand);
-      OQS_KEX_free(oqs_kex);
-      OPENSSL_free(s->s3->tmp.oqs_kex_client);
+      OQS_KEM_free(oqs_kem);
+      OPENSSL_free(s->s3->tmp.oqs_kem_client);
       if (has_error) {
 	return EXT_RETURN_FAIL;
       }

@@ -92,9 +92,6 @@ static void oqs_pkey_ctx_free(OQS_KEY* key) {
   }
   if (key->s) {
     privkey_len = key->s->priv_key_len;
-    if (key->s->rand) {
-      OQS_RAND_free(key->s->rand);
-    }
     OQS_SIG_free(key->s);
   }
   if (key->privkey) {
@@ -112,7 +109,6 @@ static void oqs_pkey_ctx_free(OQS_KEY* key) {
  */
 static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
     OQS_KEY *oqs_key = NULL;
-    OQS_RAND *oqs_rand = NULL;
     int oqs_alg_id = get_oqs_alg_id(nid);
     
     oqs_key = OPENSSL_zalloc(sizeof(*oqs_key));
@@ -120,12 +116,7 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       goto err;
     }
-    oqs_rand = OQS_RAND_new(OQS_RAND_alg_default); // TODO: don't hardcode
-    if (oqs_rand == NULL) {
-      OQSerr(0, ERR_R_FATAL);
-      goto err;
-    }
-    oqs_key->s = OQS_SIG_new(oqs_rand, oqs_alg_id);
+    oqs_key->s = OQS_SIG_new(oqs_alg_id);
     if (oqs_key->s == NULL) {
       OQSerr(0, ERR_R_FATAL);
       goto err;
@@ -147,7 +138,7 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
     return 1;
 
  err:
-    oqs_pkey_ctx_free(oqs_key); /* this also frees oqs_rand and the priv/pub keys if allocated */
+    oqs_pkey_ctx_free(oqs_key);
     return 0;
 }
 
