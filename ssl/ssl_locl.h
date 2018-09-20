@@ -505,10 +505,10 @@
 
 
 /* Returns true if the curve ID is for an OQS KEX */
-#define IS_OQS_KEM_CURVEID(id) (id >= 0x0200 || id <= 0x0210)
+#define IS_OQS_KEM_CURVEID(id) (id >= 0x0200 && id <= 0x0210)
 
-/* Returns true if the curve ID is for an OQS KEX */
-#define IS_OQS_KEM_HYBRID_CURVEID(id) (id >= 0x0300 || id <= 0306)
+/* Returns true if the curve ID is for an OQS hybrid KEX */
+#define IS_OQS_KEM_HYBRID_CURVEID(id) (id >= 0x0300 && id <= 0x0306)
 
 /* Returns the OQS alg ID for OQS API */
 #define OQS_ALG_NAME(nid)    (nid == NID_OQS_SIKE_503         ? OQS_KEM_alg_sike_p503 : \
