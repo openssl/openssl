@@ -5572,6 +5572,7 @@ static int test_cert_cb_int(int prot, int tst)
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+    SSL_CTX_free(snictx);
 
     return testresult;
 }
