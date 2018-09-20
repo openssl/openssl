@@ -642,6 +642,7 @@ int SSL_clear(SSL *s)
     return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /** Used to change an SSL_CTXs default SSL method type */
 int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 {
@@ -664,6 +665,7 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
     }
     return 1;
 }
+#endif
 
 SSL *SSL_new(SSL_CTX *ctx)
 {
