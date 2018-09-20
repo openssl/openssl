@@ -69,7 +69,7 @@ static const struct cipher_data_st {
     { NID_aes_192_cbc, 16, 192 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
     { NID_aes_256_cbc, 16, 256 / 8, 16, EVP_CIPH_CBC_MODE, CRYPTO_AES_CBC },
 #ifndef OPENSSL_NO_RC4
-    { NID_rc4, 1, 16, 0, CRYPTO_ARC4 },
+    { NID_rc4, 1, 16, 0, 0, CRYPTO_ARC4 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_AES_CTR)
     { NID_aes_128_ctr, 16, 128 / 8, 16, EVP_CIPH_CTR_MODE, CRYPTO_AES_CTR },
