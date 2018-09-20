@@ -233,7 +233,7 @@ In each table entry, the following keys are significant:
                            apps, as needed by the target.  This code
                            cannot be placed in a library, as the rest
                            of the code isn't expected to link to it
-                           explicitely.
+                           explicitly.
         cpuid_asm_src   => assembler implementation of cpuid code as
                            well as OPENSSL_cleanse().
                            Default to mem_clr.c

@@ -605,7 +605,7 @@ end_of_options:
         /*
          * outdir is a directory spec, but access() for VMS demands a
          * filename.  We could use the DEC C routine to convert the
-         * directory syntax to Unixly, and give that to app_isdir,
+         * directory syntax to Unix, and give that to app_isdir,
          * but for now the fopen will catch the error if it's not a
          * directory
          */
