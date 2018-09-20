@@ -56,6 +56,9 @@
  * [including the GNU Public Licence.]
  */
 
+#define _DEFAULT_SOURCE
+#define _BSD_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -84,24 +87,9 @@ static int wsa_init_done = 0;
 # endif
 
 # if defined(__GLIBC__)
-#  if defined(__GLIBC_PREREQ)
-#   if __GLIBC_PREREQ(2, 19)
-#    if defined(_DEFAULT_SOURCE)
-#     define HAVE_GETHOSTBYNAME_R
-#    endif
-#   else
-#    if defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
-#     define HAVE_GETHOSTBYNAME_R
-#    endif
-#   endif
-#  else
-#   if defined(_BSD_SOURCE) || defined(_SVID_SOURCE)
-#    define HAVE_GETHOSTBYNAME_R
-#   endif
-#  endif
+#  define HAVE_GETHOSTBYNAME_R
+#  define GETHOSTNAME_R_BUF     (2 * 1024)
 # endif
-
-# define GETHOSTNAME_R_BUF     (2 * 1024)
 
 /*
  * WSAAPI specifier is required to make indirect calls to run-time
