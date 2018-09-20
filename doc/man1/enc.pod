@@ -277,6 +277,7 @@ standard data format and performs the needed key/iv/nonce management.
 
  bf-cbc             Blowfish in CBC mode
  bf                 Alias for bf-cbc
+ blowfish           Alias for bf-cbc
  bf-cfb             Blowfish in CFB mode
  bf-ecb             Blowfish in ECB mode
  bf-ofb             Blowfish in OFB mode
@@ -287,6 +288,8 @@ standard data format and performs the needed key/iv/nonce management.
  cast5-cfb          CAST5 in CFB mode
  cast5-ecb          CAST5 in ECB mode
  cast5-ofb          CAST5 in OFB mode
+
+ chacha20           ChaCha20 algorithm
 
  des-cbc            DES in CBC mode
  des                Alias for des-cbc
@@ -334,6 +337,19 @@ standard data format and performs the needed key/iv/nonce management.
  rc5-ecb            RC5 cipher in ECB mode
  rc5-ofb            RC5 cipher in OFB mode
 
+ seed-cbc           SEED cipher in CBC mode
+ seed               Alias for seed-cbc
+ seed-cfb           SEED cipher in CFB mode
+ seed-ecb           SEED cipher in ECB mode
+ seed-ofb           SEED cipher in OFB mode
+
+ sm4-cbc            SM4 cipher in CBC mode
+ sm4                Alias for sm4-cbc
+ sm4-cfb            SM4 cipher in CFB mode
+ sm4-ctr            SM4 cipher in CTR mode
+ sm4-ecb            SM4 cipher in ECB mode
+ sm4-ofb            SM4 cipher in OFB mode
+
  aes-[128|192|256]-cbc  128/192/256 bit AES in CBC mode
  aes[128|192|256]       Alias for aes-[128|192|256]-cbc
  aes-[128|192|256]-cfb  128/192/256 bit AES in 128 bit CFB mode
@@ -342,6 +358,15 @@ standard data format and performs the needed key/iv/nonce management.
  aes-[128|192|256]-ctr  128/192/256 bit AES in CTR mode
  aes-[128|192|256]-ecb  128/192/256 bit AES in ECB mode
  aes-[128|192|256]-ofb  128/192/256 bit AES in OFB mode
+
+ aria-[128|192|256]-cbc  128/192/256 bit ARIA in CBC mode
+ aria[128|192|256]       Alias for aria-[128|192|256]-cbc
+ aria-[128|192|256]-cfb  128/192/256 bit ARIA in 128 bit CFB mode
+ aria-[128|192|256]-cfb1 128/192/256 bit ARIA in 1 bit CFB mode
+ aria-[128|192|256]-cfb8 128/192/256 bit ARIA in 8 bit CFB mode
+ aria-[128|192|256]-ctr  128/192/256 bit ARIA in CTR mode
+ aria-[128|192|256]-ecb  128/192/256 bit ARIA in ECB mode
+ aria-[128|192|256]-ofb  128/192/256 bit ARIA in OFB mode
 
  camellia-[128|192|256]-cbc  128/192/256 bit Camellia in CBC mode
  camellia[128|192|256]       Alias for camellia-[128|192|256]-cbc
