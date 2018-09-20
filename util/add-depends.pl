@@ -63,7 +63,7 @@ my $abs_blddir = rel2abs($blddir);
 # files we depend on in the same directory that only differ by character case,
 # we're fine.
 my %depconv_cache =
-    map { lc catfile($abs_blddir, $_) => $_ }
+    map { catfile($abs_blddir, $_) => $_ }
     keys %{$unified_info{generate}};
 
 my %procedures = (
@@ -139,7 +139,7 @@ my %procedures = (
 
             # VMS C gives us absolute paths, always.  Let's see if we can
             # make them relative instead.
-            $line = lc canonpath($line);
+            $line = canonpath($line);
 
             unless (defined $depconv_cache{$line}) {
                 my $dep = $line;
@@ -184,7 +184,7 @@ my %procedures = (
                 # VC gives us absolute paths for all include files, so to
                 # remove system header dependencies, we need to check that
                 # they don't match $abs_srcdir or $abs_blddir.
-                $tail = lc canonpath($tail);
+                $tail = canonpath($tail);
 
                 unless (defined $depconv_cache{$tail}) {
                     my $dep = $tail;
