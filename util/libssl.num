@@ -239,7 +239,7 @@ DTLSv1_method                           239	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1
 SSL_set0_wbio                           240	3_0_0	EXIST::FUNCTION:
 SSL_read                                241	3_0_0	EXIST::FUNCTION:
 SSL_CTX_get_options                     242	3_0_0	EXIST::FUNCTION:
-SSL_CTX_set_ssl_version                 243	3_0_0	EXIST::FUNCTION:
+SSL_CTX_set_ssl_version                 243	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 SSL_set_SSL_CTX                         244	3_0_0	EXIST::FUNCTION:
 SSL_renegotiate_abbreviated             245	3_0_0	EXIST::FUNCTION:
 SSL_get_verify_mode                     246	3_0_0	EXIST::FUNCTION:
