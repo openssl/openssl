@@ -242,6 +242,7 @@ EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
 OPENSSL_VERSION_NUMBER                  define
 OPENSSL_VERSION_TEXT                    define
+OPENSSL_VERSION_NUMBER_TEXT             define
 OPENSSL_clear_free                      define
 OPENSSL_clear_realloc                   define
 OPENSSL_free                            define

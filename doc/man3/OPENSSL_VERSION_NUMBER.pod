@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT, OpenSSL_version,
+OPENSSL_VERSION_NUMBER, OPENSSL_VERSION_TEXT, OPENSSL_VERSION_NUMBER_TEXT,
+OpenSSL_version,
 OpenSSL_version_num - get OpenSSL version number
 
 =head1 SYNOPSIS
@@ -10,6 +11,7 @@ OpenSSL_version_num - get OpenSSL version number
  #include <openssl/opensslv.h>
  #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
  #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
+ #define OPENSSL_VERSION_NUMBER_TEXT "x.y.z"
 
  #include <openssl/crypto.h>
 
@@ -49,6 +51,10 @@ number was therefore 0x0090581f.
 OPENSSL_VERSION_TEXT is the text variant of the version number and the
 release date.  For example,
 "OpenSSL 1.0.1a 15 Oct 2015".
+
+OPENSSL_VERSION_NUMBER_TEXT is a string representation of the numeric release
+version identifier.  For example,
+"1.0.1a"
 
 OpenSSL_version_num() returns the version number.
 

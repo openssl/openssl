@@ -249,7 +249,7 @@ $config{shlib_version_history} = "unknown";
 
 collect_information(
     collect_from_file(catfile($srcdir,'include/openssl/opensslv.h')),
-    qr/OPENSSL.VERSION.TEXT.*OpenSSL (\S+) / => sub { $config{version} = $1; },
+    qr/^#\s+define\s+OPENSSL.VERSION.NUMBER.TEXT\s+"([^"]+)"/ => sub { $config{version} = $1; },
     qr/OPENSSL.VERSION.NUMBER.*(0x\S+)/	     => sub { $config{version_num}=$1 },
     qr/SHLIB_VERSION_NUMBER *"([^"]+)"/	     => sub { $config{shlib_version_number}=$1 },
     qr/SHLIB_VERSION_HISTORY *"([^"]*)"/     => sub { $config{shlib_version_history}=$1 }
