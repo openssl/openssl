@@ -18,21 +18,36 @@
 #
 # ChaCha20 for ARMv4.
 #
+# September 2018
+#
+# Improve scalar performance per Eric Biggers' suggestion to eliminate
+# separate rotates. This requires b[0..3] and d[0..3] to be maintained
+# pre-rotated, hence odd twists prior inner loop and when accumulating
+# key material. Since amount of instructions is reduced as result, even
+# NEON performance is improved somewhat, most notably by ~9% on low-end
+# Cortex-A5/A7. Full unroll was shown to provide even better scalar
+# performance on Cortex-A5/A7, naturally at the cost of manyfold size
+# increase. We let it be. Oversized code works in benchmarks, but is not
+# necessarily optimal in real life, when it's likely to be out-of-cache
+# upon entry and evict significant part of cache upon completion.
+#
 # Performance in cycles per byte out of large buffer.
 #
 #			IALU/gcc-4.4    1xNEON      3xNEON+1xIALU
 #
-# Cortex-A5		19.3(*)/+95%    21.8        14.1
-# Cortex-A8		10.5(*)/+160%   13.9        6.35
-# Cortex-A9		12.9(**)/+110%  14.3        6.50
-# Cortex-A15		11.0/+40%       16.0        5.00
-# Snapdragon S4		11.5/+125%      13.6        4.90
+# Cortex-A5		14.2(*)/+160%   21.8        12.9(**)
+# Cortex-A8		10.2(*)/+190%   13.9        6.10
+# Cortex-A9		10.8(*)/+150%   14.3        6.50
+# Cortex-A15		11.0/+40%       16.0        4.90
+# Snapdragon S4		13.9(***)/+90%  13.6        4.90
 #
 # (*)	most "favourable" result for aligned data on little-endian
 #	processor, result for misaligned data is 10-15% lower;
-# (**)	this result is a trade-off: it can be improved by 20%,
-#	but then Snapdragon S4 and Cortex-A8 results get
-#	20-25% worse;
+# (**)	pure 4xNEON [with "vertical" layout] was shown to provide ~8%
+#	better performance on Cortex-A5/A7, but not on others;
+# (***)	it's 17% slower than original, trade-off is considered
+#	acceptable, because of improvement on others, specifically
+#	+36% on Cortex-A5/A7 and +20% on Cortex-A9;
 
 $flavour = shift;
 if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
@@ -94,76 +109,62 @@ my @ret;
 	# This is why these two are chosen for offloading to memory,
 	# to make loads count more.
 							push @ret,(
-	"&add	(@x[$a0],@x[$a0],@x[$b0])",
-	"&mov	($xd,$xd,'ror#16')",
-	 "&add	(@x[$a1],@x[$a1],@x[$b1])",
-	 "&mov	($xd_,$xd_,'ror#16')",
-	"&eor	($xd,$xd,@x[$a0],'ror#16')",
-	 "&eor	($xd_,$xd_,@x[$a1],'ror#16')",
+	"&add	(@x[$a0],@x[$a0],@x[$b0],'ror#13')",
+	 "&add	(@x[$a1],@x[$a1],@x[$b1],'ror#13')",
+	"&eor	($xd,@x[$a0],$xd,'ror#24')",
+	 "&eor	($xd_,@x[$a1],$xd_,'ror#24')",
 
-	"&add	($xc,$xc,$xd)",
-	"&mov	(@x[$b0],@x[$b0],'ror#20')",
-	 "&add	($xc_,$xc_,$xd_)",
-	 "&mov	(@x[$b1],@x[$b1],'ror#20')",
-	"&eor	(@x[$b0],@x[$b0],$xc,'ror#20')",
-	 "&eor	(@x[$b1],@x[$b1],$xc_,'ror#20')",
+	"&add	($xc,$xc,$xd,'ror#16')",
+	 "&add	($xc_,$xc_,$xd_,'ror#16')",
+	"&eor	(@x[$b0],$xc, @x[$b0],'ror#13')",
+	 "&eor	(@x[$b1],$xc_,@x[$b1],'ror#13')",
 
-	"&add	(@x[$a0],@x[$a0],@x[$b0])",
-	"&mov	($xd,$xd,'ror#24')",
-	 "&add	(@x[$a1],@x[$a1],@x[$b1])",
-	 "&mov	($xd_,$xd_,'ror#24')",
-	"&eor	($xd,$xd,@x[$a0],'ror#24')",
-	 "&eor	($xd_,$xd_,@x[$a1],'ror#24')",
-
-	"&add	($xc,$xc,$xd)",
-	"&mov	(@x[$b0],@x[$b0],'ror#25')"		);
+	"&add	(@x[$a0],@x[$a0],@x[$b0],'ror#20')",
+	 "&add	(@x[$a1],@x[$a1],@x[$b1],'ror#20')",
+	"&eor	($xd,@x[$a0],$xd,'ror#16')",
+	 "&eor	($xd_,@x[$a1],$xd_,'ror#16')"		);
 							push @ret,(
-	"&str	($xd,'[sp,#4*(16+$d0)]')",
+	"&str	($xd,'[sp,#4*(16+$d0)]')"		) if ($odd);
+							push @ret,(
+	"&add	($xc,$xc,$xd,'ror#24')"			);
+							push @ret,(
 	"&ldr	($xd,'[sp,#4*(16+$d2)]')"		) if ($odd);
 							push @ret,(
-	 "&add	($xc_,$xc_,$xd_)",
-	 "&mov	(@x[$b1],@x[$b1],'ror#25')"		);
+	 "&str	($xd_,'[sp,#4*(16+$d1)]')"		) if (!$odd);
 							push @ret,(
-	 "&str	($xd_,'[sp,#4*(16+$d1)]')",
+	 "&add	($xc_,$xc_,$xd_,'ror#24')"		);
+							push @ret,(
 	 "&ldr	($xd_,'[sp,#4*(16+$d3)]')"		) if (!$odd);
 							push @ret,(
-	"&eor	(@x[$b0],@x[$b0],$xc,'ror#25')",
-	 "&eor	(@x[$b1],@x[$b1],$xc_,'ror#25')"	);
+	"&str	($xc,'[sp,#4*(16+$c0)]')",
+	"&eor	(@x[$b0],@x[$b0],$xc,'ror#12')",
+	 "&str	($xc_,'[sp,#4*(16+$c1)]')",
+	 "&eor	(@x[$b1],@x[$b1],$xc_,'ror#12')"	);
 
 	$xd=@x[$d2]					if (!$odd);
 	$xd_=@x[$d3]					if ($odd);
 							push @ret,(
-	"&str	($xc,'[sp,#4*(16+$c0)]')",
 	"&ldr	($xc,'[sp,#4*(16+$c2)]')",
-	"&add	(@x[$a2],@x[$a2],@x[$b2])",
-	"&mov	($xd,$xd,'ror#16')",
-	 "&str	($xc_,'[sp,#4*(16+$c1)]')",
+	"&add	(@x[$a2],@x[$a2],@x[$b2],'ror#13')",
 	 "&ldr	($xc_,'[sp,#4*(16+$c3)]')",
-	 "&add	(@x[$a3],@x[$a3],@x[$b3])",
-	 "&mov	($xd_,$xd_,'ror#16')",
-	"&eor	($xd,$xd,@x[$a2],'ror#16')",
-	 "&eor	($xd_,$xd_,@x[$a3],'ror#16')",
+	 "&add	(@x[$a3],@x[$a3],@x[$b3],'ror#13')",
+	"&eor	($xd,@x[$a2],$xd,'ror#24')",
+	 "&eor	($xd_,@x[$a3],$xd_,'ror#24')",
 
-	"&add	($xc,$xc,$xd)",
-	"&mov	(@x[$b2],@x[$b2],'ror#20')",
-	 "&add	($xc_,$xc_,$xd_)",
-	 "&mov	(@x[$b3],@x[$b3],'ror#20')",
-	"&eor	(@x[$b2],@x[$b2],$xc,'ror#20')",
-	 "&eor	(@x[$b3],@x[$b3],$xc_,'ror#20')",
+	"&add	($xc,$xc,$xd,'ror#16')",
+	 "&add	($xc_,$xc_,$xd_,'ror#16')",
+	"&eor	(@x[$b2],$xc, @x[$b2],'ror#13')",
+	 "&eor	(@x[$b3],$xc_,@x[$b3],'ror#13')",
 
-	"&add	(@x[$a2],@x[$a2],@x[$b2])",
-	"&mov	($xd,$xd,'ror#24')",
-	 "&add	(@x[$a3],@x[$a3],@x[$b3])",
-	 "&mov	($xd_,$xd_,'ror#24')",
-	"&eor	($xd,$xd,@x[$a2],'ror#24')",
-	 "&eor	($xd_,$xd_,@x[$a3],'ror#24')",
+	"&add	(@x[$a2],@x[$a2],@x[$b2],'ror#20')",
+	 "&add	(@x[$a3],@x[$a3],@x[$b3],'ror#20')",
+	"&eor	($xd,@x[$a2],$xd,'ror#16')",
+	 "&eor	($xd_,@x[$a3],$xd_,'ror#16')",
 
-	"&add	($xc,$xc,$xd)",
-	"&mov	(@x[$b2],@x[$b2],'ror#25')",
-	 "&add	($xc_,$xc_,$xd_)",
-	 "&mov	(@x[$b3],@x[$b3],'ror#25')",
-	"&eor	(@x[$b2],@x[$b2],$xc,'ror#25')",
-	 "&eor	(@x[$b3],@x[$b3],$xc_,'ror#25')"	);
+	"&add	($xc,$xc,$xd,'ror#24')",
+	 "&add	($xc_,$xc_,$xd_,'ror#24')",
+	"&eor	(@x[$b2],@x[$b2],$xc,'ror#12')",
+	 "&eor	(@x[$b3],@x[$b3],$xc_,'ror#12')"	);
 
 	@ret;
 }
@@ -190,6 +191,8 @@ $code.=<<___;
 .long	0x61707865,0x3320646e,0x79622d32,0x6b206574	@ endian-neutral
 .Lone:
 .long	1,0,0,0
+.Lrot8:
+.long	0x02010003,0x06050407
 #if __ARM_MAX_ARCH__>=7
 .LOPENSSL_armcap:
 .word   OPENSSL_armcap_P-.LChaCha20_ctr32
@@ -218,7 +221,7 @@ ChaCha20_ctr32:
 #if __ARM_MAX_ARCH__>=7
 	cmp	r2,#192			@ test len
 	bls	.Lshort
-	ldr	r4,[r14,#-32]
+	ldr	r4,[r14,#-24]
 	ldr	r4,[r14,r4]
 # ifdef	__APPLE__
 	ldr	r4,[r4]
@@ -247,9 +250,17 @@ ChaCha20_ctr32:
 	str	r14,  [sp,#4*(32+0)]	@ save out
 .Loop_outer_enter:
 	ldr	@t[3], [sp,#4*(15)]
+	 mov	@x[4],@x[4],ror#19	@ twist b[0..3]
 	ldr	@x[12],[sp,#4*(12)]	@ modulo-scheduled load
+	 mov	@x[5],@x[5],ror#19
 	ldr	@t[2], [sp,#4*(13)]
+	 mov	@x[6],@x[6],ror#19
 	ldr	@x[14],[sp,#4*(14)]
+	 mov	@x[7],@x[7],ror#19
+	mov	@t[3],@t[3],ror#8	@ twist d[0..3]
+	mov	@x[12],@x[12],ror#8
+	mov	@t[2],@t[2],ror#8
+	mov	@x[14],@x[14],ror#8
 	str	@t[3], [sp,#4*(16+15)]
 	mov	@t[3],#10
 	b	.Loop
@@ -336,15 +347,15 @@ $code.=<<___;
 	str	@x[2],[r14,#-8]
 	str	@x[3],[r14,#-4]
 
-	add	@x[4],@x[4],@t[0]	@ accumulate key material
-	add	@x[5],@x[5],@t[1]
+	add	@x[4],@t[0],@x[4],ror#13 @ accumulate key material
+	add	@x[5],@t[1],@x[5],ror#13
 # ifdef	__thumb2__
 	itt	hs
 # endif
 	ldrhs	@t[0],[r12],#16		@ load input
 	ldrhs	@t[1],[r12,#-12]
-	add	@x[6],@x[6],@t[2]
-	add	@x[7],@x[7],@t[3]
+	add	@x[6],@t[2],@x[6],ror#13
+	add	@x[7],@t[3],@x[7],ror#13
 # ifdef	__thumb2__
 	itt	hs
 # endif
@@ -418,8 +429,8 @@ $code.=<<___;
 	str	@x[2],[r14,#-8]
 	str	@x[3],[r14,#-4]
 
-	add	@x[4],@x[4],@t[0]	@ accumulate key material
-	add	@x[5],@x[5],@t[1]
+	add	@x[4],@t[0],@x[4],ror#24 @ accumulate key material
+	add	@x[5],@t[1],@x[5],ror#24
 # ifdef	__thumb2__
 	itt	hi
 # endif
@@ -430,8 +441,8 @@ $code.=<<___;
 # endif
 	ldrhs	@t[0],[r12],#16		@ load input
 	ldrhs	@t[1],[r12,#-12]
-	add	@x[6],@x[6],@t[2]
-	add	@x[7],@x[7],@t[3]
+	add	@x[6],@t[2],@x[6],ror#24
+	add	@x[7],@t[3],@x[7],ror#24
 # ifdef	__thumb2__
 	itt	hs
 # endif
@@ -481,6 +492,9 @@ $code.=<<___;
 ___
 for ($i=0;$i<16;$i+=4) {
 my $j=$i&0x7;
+my $twist="";
+if ($i==4)     { $twist = ",ror#13"; }
+elsif ($i==12) { $twist = ",ror#24"; }
 
 $code.=<<___	if ($i==4);
 	add	@x[0],sp,#4*(16+8)
@@ -494,7 +508,7 @@ $code.=<<___	if ($i==8);
 	strhi	@t[3],[sp,#4*(16+11)]		@ copy "@x[11]"
 ___
 $code.=<<___;
-	add	@x[$j+0],@x[$j+0],@t[0]		@ accumulate key material
+	add	@x[$j+0],@t[0],@x[$j+0]$twist	@ accumulate key material
 ___
 $code.=<<___	if ($i==12);
 # ifdef	__thumb2__
@@ -504,8 +518,8 @@ $code.=<<___	if ($i==12);
 	strhi	@t[0],[sp,#4*(12)]		@ save next counter value
 ___
 $code.=<<___;
-	add	@x[$j+1],@x[$j+1],@t[1]
-	add	@x[$j+2],@x[$j+2],@t[2]
+	add	@x[$j+1],@t[1],@x[$j+1]$twist
+	add	@x[$j+2],@t[2],@x[$j+2]$twist
 # ifdef	__thumb2__
 	itete	lo
 # endif
@@ -514,7 +528,7 @@ $code.=<<___;
 	eorlo	@t[1],@t[1],@t[1]
 	ldrhsb	@t[1],[r12,#-12]
 
-	add	@x[$j+3],@x[$j+3],@t[3]
+	add	@x[$j+3],@t[3],@x[$j+3]$twist
 # ifdef	__thumb2__
 	itete	lo
 # endif
@@ -629,6 +643,14 @@ ___
 my ($a0,$b0,$c0,$d0,$a1,$b1,$c1,$d1,$a2,$b2,$c2,$d2,$t0,$t1,$t2,$t3) =
     map("q$_",(0..15));
 
+# This can replace vshr-by-24+vsli-by-8. It gives ~3% improvement on
+# Cortex-A5/A7, but hurts Cortex-A9 by 5% and Snapdragon S4 by 14%!
+sub vperm()
+{ my ($dst,$src,$tbl) = @_;
+    $code .= "	vtbl.8	$dst#lo,{$src#lo},$tbl#lo\n";
+    $code .= "	vtbl.8	$dst#hi,{$src#hi},$tbl#lo\n";
+}
+
 sub NEONROUND {
 my $odd = pop;
 my ($a,$b,$c,$d,$t)=@_;
@@ -647,6 +669,7 @@ my ($a,$b,$c,$d,$t)=@_;
 	"&veor		($t,$d,$a)",
 	"&vshr_u32	($d,$t,24)",
 	"&vsli_32	($d,$t,8)",
+	#"&vperm	($d,$t,$t3)",
 
 	"&vadd_i32	($c,$c,$d)",
 	"&veor		($t,$b,$c)",
@@ -682,7 +705,8 @@ ChaCha20_neon:
 	add		r12,sp,#4*8
 	ldmia		r14,{r0-r3}		@ load sigma
 	vld1.32		{$a0},[r14]!		@ load sigma
-	vld1.32		{$t0},[r14]		@ one
+	vld1.32		{$t0},[r14]!		@ one
+	@ vld1.32	{$t3#lo},[r14]		@ rot8
 	vst1.32		{$c0-$d0},[r12]		@ copy 1/2key|counter|nonce
 	vst1.32		{$a0-$b0},[sp]		@ copy sigma|1/2key
 
@@ -695,6 +719,7 @@ ChaCha20_neon:
 	vmov		$a1,$a0
 	vstr		$t2#lo,[sp,#4*(16+4)]
 	vmov		$a2,$a0
+	@ vstr		$t3#lo,[sp,#4*(16+6)]
 	vmov		$b1,$b0
 	vmov		$b2,$b0
 	b		.Loop_neon_enter
@@ -704,6 +729,7 @@ ChaCha20_neon:
 	ldmia		sp,{r0-r9}		@ load key material
 	cmp		@t[3],#64*2		@ if len<=64*2
 	bls		.Lbreak_neon		@ switch to integer-only
+	@ vldr		$t3#lo,[sp,#4*(16+6)]	@ rot8
 	vmov		$a1,$a0
 	str		@t[3],[sp,#4*(32+2)]	@ save len
 	vmov		$a2,$a0
@@ -713,16 +739,24 @@ ChaCha20_neon:
 	vmov		$b2,$b0
 .Loop_neon_enter:
 	ldr		@t[3], [sp,#4*(15)]
+	 mov		@x[4],@x[4],ror#19	@ twist b[0..3]
 	vadd.i32	$d1,$d0,$t0		@ counter+1
 	ldr		@x[12],[sp,#4*(12)]	@ modulo-scheduled load
+	 mov		@x[5],@x[5],ror#19
 	vmov		$c1,$c0
 	ldr		@t[2], [sp,#4*(13)]
+	 mov		@x[6],@x[6],ror#19
 	vmov		$c2,$c0
 	ldr		@x[14],[sp,#4*(14)]
+	 mov		@x[7],@x[7],ror#19
 	vadd.i32	$d2,$d1,$t0		@ counter+2
+	add		@x[12],@x[12],#3	@ counter+3
+	mov		@t[3],@t[3],ror#8	@ twist d[0..3]
+	mov		@x[12],@x[12],ror#8
+	mov		@t[2],@t[2],ror#8
+	mov		@x[14],@x[14],ror#8
 	str		@t[3], [sp,#4*(16+15)]
 	mov		@t[3],#10
-	add		@x[12],@x[12],#3	@ counter+3
 	b		.Loop_neon
 
 .align	4
@@ -855,13 +889,13 @@ $code.=<<___;
 	str		@x[2],[r14,#-8]
 	str		@x[3],[r14,#-4]
 
-	add		@x[4],@x[4],@t[0]	@ accumulate key material
+	add		@x[4],@t[0],@x[4],ror#13 @ accumulate key material
 	ldr		@t[0],[r12],#16		@ load input
-	add		@x[5],@x[5],@t[1]
+	add		@x[5],@t[1],@x[5],ror#13
 	ldr		@t[1],[r12,#-12]
-	add		@x[6],@x[6],@t[2]
+	add		@x[6],@t[2],@x[6],ror#13
 	ldr		@t[2],[r12,#-8]
-	add		@x[7],@x[7],@t[3]
+	add		@x[7],@t[3],@x[7],ror#13
 	ldr		@t[3],[r12,#-4]
 # ifdef	__ARMEB__
 	rev		@x[4],@x[4]
@@ -916,15 +950,15 @@ $code.=<<___;
 	str		@x[2],[r14,#-8]
 	str		@x[3],[r14,#-4]
 
-	add		@x[4],@x[4],@t[0]	@ accumulate key material
+	add		@x[4],@t[0],@x[4],ror#24 @ accumulate key material
 	 add		@t[0],@t[0],#4		@ next counter value
-	add		@x[5],@x[5],@t[1]
+	add		@x[5],@t[1],@x[5],ror#24
 	 str		@t[0],[sp,#4*(12)]	@ save next counter value
 	ldr		@t[0],[r12],#16		@ load input
-	add		@x[6],@x[6],@t[2]
+	add		@x[6],@t[2],@x[6],ror#24
 	 add		@x[4],@x[4],#3		@ counter+3
 	ldr		@t[1],[r12,#-12]
-	add		@x[7],@x[7],@t[3]
+	add		@x[7],@t[3],@x[7],ror#24
 	ldr		@t[2],[r12,#-8]
 	ldr		@t[3],[r12,#-4]
 # ifdef	__ARMEB__
@@ -968,9 +1002,17 @@ $code.=<<___;
 	str		@x[14],[sp,#4*(20+16+11)]	@ copy "@x[11]"
 
 	ldr		@t[3], [sp,#4*(15)]
+	 mov		@x[4],@x[4],ror#19		@ twist b[0..3]
 	ldr		@x[12],[sp,#4*(12)]		@ modulo-scheduled load
+	 mov		@x[5],@x[5],ror#19
 	ldr		@t[2], [sp,#4*(13)]
+	 mov		@x[6],@x[6],ror#19
 	ldr		@x[14],[sp,#4*(14)]
+	 mov		@x[7],@x[7],ror#19
+	mov		@t[3],@t[3],ror#8		@ twist d[0..3]
+	mov		@x[12],@x[12],ror#8
+	mov		@t[2],@t[2],ror#8
+	mov		@x[14],@x[14],ror#8
 	str		@t[3], [sp,#4*(20+16+15)]
 	add		@t[3],sp,#4*(20)
 	vst1.32		{$a0-$b0},[@t[3]]!		@ copy key
@@ -1082,11 +1124,11 @@ $code.=<<___;
 	add		@x[3],@x[3],@t[3]
 	 ldmia		@t[0],{@t[0]-@t[3]}	@ load key material
 
-	add		@x[4],@x[4],@t[0]	@ accumulate key material
+	add		@x[4],@t[0],@x[4],ror#13 @ accumulate key material
 	 add		@t[0],sp,#4*(8)
-	add		@x[5],@x[5],@t[1]
-	add		@x[6],@x[6],@t[2]
-	add		@x[7],@x[7],@t[3]
+	add		@x[5],@t[1],@x[5],ror#13
+	add		@x[6],@t[2],@x[6],ror#13
+	add		@x[7],@t[3],@x[7],ror#13
 	 ldmia		@t[0],{@t[0]-@t[3]}	@ load key material
 # ifdef	__ARMEB__
 	rev		@x[0],@x[0]
@@ -1110,12 +1152,12 @@ $code.=<<___;
 	add		@x[3],@x[3],@t[3]
 	 ldmia		@t[0],{@t[0]-@t[3]}	@ load key material
 
-	add		@x[4],@x[4],@t[0]	@ accumulate key material
+	add		@x[4],@t[0],@x[4],ror#24 @ accumulate key material
 	 add		@t[0],sp,#4*(8)
-	add		@x[5],@x[5],@t[1]
+	add		@x[5],@t[1],@x[5],ror#24
 	 add		@x[4],@x[4],#3		@ counter+3
-	add		@x[6],@x[6],@t[2]
-	add		@x[7],@x[7],@t[3]
+	add		@x[6],@t[2],@x[6],ror#24
+	add		@x[7],@t[3],@x[7],ror#24
 	 ldr		@t[3],[sp,#4*(32+2)]	@ re-load len
 # ifdef	__ARMEB__
 	rev		@x[0],@x[0]
