@@ -13,7 +13,14 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 
-#define TLS13_MAX_LABEL_LEN     246
+/*
+ * RFC 8446, 7.1 Key Schedule, says:
+ * Note: With common hash functions, any label longer than 12 characters
+ * requires an additional iteration of the hash function to compute.
+ * The labels in this specification have all been chosen to fit within
+ * this limit.
+ */
+#define TLS13_MAX_LABEL_LEN     12
 
 /* Always filled with zeros */
 static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
@@ -29,14 +36,15 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                              const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen)
 {
-    const unsigned char label_prefix[] = "tls13 ";
+    static const unsigned char label_prefix[] = "tls13 ";
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     int ret;
     size_t hkdflabellen;
     size_t hashlen;
     /*
-     * 2 bytes for length of whole HkdfLabel + 1 byte for length of combined
-     * prefix and label + bytes for the label itself + bytes for the hash
+     * 2 bytes for length of derived secret + 1 byte for length of combined
+     * prefix and label + bytes for the label itself + 1 byte length of hash
+     * + bytes for the hash itself
      */
     unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t) +
                             + sizeof(label_prefix) + TLS13_MAX_LABEL_LEN
