@@ -170,20 +170,24 @@ my @ret;
 }
 
 $code.=<<___;
-#include "arm_arch.h"
+#ifndef __KERNEL__
+# include "arm_arch.h"
+#else
+# define __ARM_ARCH__ __LINUX_ARM_ARCH__
+# define __ARM_MAX_ARCH__ __LINUX_ARM_ARCH__
+# define ChaCha20_ctr32 chacha20_arm
+# define ChaCha20_neon  chacha20_neon
+#endif
 
 .text
 #if defined(__thumb2__) || defined(__clang__)
 .syntax	unified
+# define ldrhsb	ldrbhs
 #endif
 #if defined(__thumb2__)
 .thumb
 #else
 .code	32
-#endif
-
-#if defined(__thumb2__) || defined(__clang__)
-#define ldrhsb	ldrbhs
 #endif
 
 .align	5
@@ -193,7 +197,7 @@ $code.=<<___;
 .long	1,0,0,0
 .Lrot8:
 .long	0x02010003,0x06050407
-#if __ARM_MAX_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 .LOPENSSL_armcap:
 .word   OPENSSL_armcap_P-.LChaCha20_ctr32
 #else
@@ -218,7 +222,7 @@ ChaCha20_ctr32:
 #endif
 	addeq	sp,sp,#4*3
 	beq	.Lno_data
-#if __ARM_MAX_ARCH__>=7
+#if __ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	cmp	r2,#192			@ test len
 	bls	.Lshort
 	ldr	r4,[r14,#-24]
@@ -635,7 +639,14 @@ $code.=<<___;
 .Ldone:
 	add	sp,sp,#4*(32+3)
 .Lno_data:
+#if __ARM_ARCH__>=5
 	ldmia	sp!,{r4-r11,pc}
+#else
+	ldmia	sp!,{r4-r12,lr}
+	tst	lr,#1
+	moveq	pc,lr			@ be binary compatible with V4, yet
+	.long	0xe12fff1e		@ interoperable with Thumb ISA:-)
+#endif
 .size	ChaCha20_ctr32,.-ChaCha20_ctr32
 ___
 
@@ -687,6 +698,11 @@ $code.=<<___;
 .arch	armv7-a
 .fpu	neon
 
+# ifdef __KERNEL__
+.globl	ChaCha20_neon
+@ For optimal performance it's appropriate for caller to enforce
+@ minimum input length, 193 bytes is suggested.
+# endif
 .type	ChaCha20_neon,%function
 .align	5
 ChaCha20_neon:
@@ -1187,7 +1203,9 @@ $code.=<<___;
 	add		sp,sp,#4*(16+3)
 	ldmia		sp!,{r4-r11,pc}
 .size	ChaCha20_neon,.-ChaCha20_neon
+# ifndef __KERNEL__
 .comm	OPENSSL_armcap_P,4,4
+# endif
 #endif
 ___
 }}}
