@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-# include <stdio.h>
-# include "internal/cryptlib.h"
-# include <openssl/crypto.h>
-# include <openssl/hmac.h>
-# include <openssl/rand.h>
-# include <openssl/pkcs12.h>
-# include "p12_lcl.h"
+#include <stdio.h>
+#include "internal/cryptlib.h"
+#include <openssl/crypto.h>
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+#include <openssl/pkcs12.h>
+#include "p12_lcl.h"
 
 int PKCS12_mac_present(const PKCS12 *p12)
 {
@@ -44,7 +44,7 @@ void PKCS12_get0_mac(const ASN1_OCTET_STRING **pmac,
     }
 }
 
-# define TK26_MAC_KEY_LEN 32
+#define TK26_MAC_KEY_LEN 32
 
 static int pkcs12_gen_gost_mac_key(const char *pass, int passlen,
                                    const unsigned char *salt, int saltlen,
@@ -112,7 +112,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     if ((md_type_nid == NID_id_GostR3411_94
          || md_type_nid == NID_id_GostR3411_2012_256
          || md_type_nid == NID_id_GostR3411_2012_512)
-        && !getenv("LEGACY_GOST_PKCS12")) {
+        && ossl_safe_getenv("LEGACY_GOST_PKCS12") == NULL) {
         md_size = TK26_MAC_KEY_LEN;
         if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
                                      md_size, key, md_type)) {

@@ -478,8 +478,7 @@ char *CONF_get1_default_config_file(void)
     char *file;
     int len;
 
-    file = getenv("OPENSSL_CONF");
-    if (file)
+    if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
         return OPENSSL_strdup(file);
 
     len = strlen(X509_get_default_cert_area());
