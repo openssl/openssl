@@ -62,6 +62,7 @@
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
 
+#include "cryptlib.h"
 #include "eng_int.h"
 
 /*
@@ -369,10 +370,10 @@ ENGINE *ENGINE_by_id(const char *id)
      */
     if (strcmp(id, "dynamic")) {
 # ifdef OPENSSL_SYS_VMS
-        if ((load_dir = getenv("OPENSSL_ENGINES")) == 0)
+        if ((load_dir = ossl_safe_getenv("OPENSSL_ENGINES")) == 0)
             load_dir = "SSLROOT:[ENGINES]";
 # else
-        if ((load_dir = getenv("OPENSSL_ENGINES")) == 0)
+        if ((load_dir = ossl_safe_getenv("OPENSSL_ENGINES")) == 0)
             load_dir = ENGINESDIR;
 # endif
         iterator = ENGINE_by_id("dynamic");
