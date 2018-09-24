@@ -1851,6 +1851,8 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     PACKET encoded_pt;
     unsigned char *classical_encoded_pt = NULL, *oqs_encoded_pt = NULL;
     uint32_t classical_encodedlen, oqs_encodedlen;
+    unsigned char *shared_secret = NULL, *oqs_shared_secret = NULL;
+    size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
     EVP_PKEY *ckey = s->s3->tmp.pkey, *skey = NULL;
     int do_pqc = 0;
     int do_hybrid = 0;
@@ -1967,9 +1969,6 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
       }
     }
     if (do_pqc || do_hybrid) {
-        unsigned char *shared_secret = NULL, *oqs_shared_secret = NULL;
-	size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
-
 	/* make sure ctx and key were initialized in add_key_share */
 	if (s->s3->tmp.oqs_kem == NULL || s->s3->tmp.oqs_kem_client == NULL) {
 	  /* this should never happen */

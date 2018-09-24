@@ -628,7 +628,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     int do_pqc = 0; /* 1 if post-quantum alg, 0 otherwise */
     int do_hybrid = 0; /* 1 if post-quantum hybrid alg, 0 otherwise */
     unsigned char *classical_encoded_pt = NULL, *oqs_encoded_pt = NULL;
-    uint32_t classical_encodedlen, oqs_encodedlen;
+    uint32_t classical_encodedlen = 0, oqs_encodedlen = 0;
     int has_error = 0;
 
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
@@ -1736,6 +1736,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
 #ifndef OPENSSL_NO_TLS1_3
     unsigned char *encodedPoint = NULL, *classical_encodedPoint = NULL, *oqs_encodedPoint = NULL;
     size_t encoded_pt_len = 0, classical_encoded_pt_len = 0, oqs_encoded_pt_len = 0;
+    unsigned char* shared_secret = NULL, *oqs_shared_secret = NULL;
+    size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
     EVP_PKEY *ckey = s->s3->peer_tmp, *skey = NULL;
     int do_pqc = 0; /* 1 if post-quantum alg, 0 otherwise */
     int do_hybrid = 0; /* 1 if post-quantum hybrid alg, 0 otherwise */
@@ -1811,9 +1813,6 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
       int oqs_nid = OQS_KEM_NID(s->s3->group_id);
       OQS_KEM* oqs_kem = NULL;
       unsigned char* client_msg = s->s3->tmp.oqs_kem_client;
-      unsigned char* shared_secret = NULL, *oqs_shared_secret = NULL;
-      size_t shared_secret_len = 0, oqs_shared_secret_len = 0;
-
       int has_error = 0;
       const char* oqs_alg_name = OQS_ALG_NAME(oqs_nid);
       /* initialize the kex */
