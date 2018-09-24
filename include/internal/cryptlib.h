@@ -14,9 +14,10 @@
 # include <string.h>
 
 # ifdef OPENSSL_USE_APPLINK
-#  undef BIO_FLAGS_UPLINK
-#  define BIO_FLAGS_UPLINK 0x8000
+#  define BIO_FLAGS_UPLINK_INTERNAL 0x8000
 #  include "ms/uplink.h"
+# else
+#  define BIO_FLAGS_UPLINK_INTERNAL 0
 # endif
 
 # include <openssl/crypto.h>
