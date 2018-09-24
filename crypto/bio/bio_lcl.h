@@ -1,6 +1,6 @@
 #include <openssl/bio.h>
 
-#if BIO_FLAGS_UPLINK==0
+#if BIO_FLAGS_UPLINK_INTERNAL==0
 /* Shortcut UPLINK calls on most platforms... */
 # define UP_stdin        stdin
 # define UP_stdout       stdout

@@ -189,8 +189,8 @@ BIO *BIO_new_file(const char *filename, const char *mode)
         return (NULL);
     }
 
-    BIO_clear_flags(ret, BIO_FLAGS_UPLINK); /* we did fopen -> we disengage
-                                             * UPLINK */
+    /* we did fopen -> we disengage UPLINK */
+    BIO_clear_flags(ret, BIO_FLAGS_UPLINK_INTERNAL); 
     BIO_set_fp(ret, file, BIO_CLOSE);
     return (ret);
 }
@@ -202,8 +202,8 @@ BIO *BIO_new_fp(FILE *stream, int close_flag)
     if ((ret = BIO_new(BIO_s_file())) == NULL)
         return (NULL);
 
-    BIO_set_flags(ret, BIO_FLAGS_UPLINK); /* redundant, left for
-                                           * documentation puposes */
+    /* redundant, left for documentation puposes */
+    BIO_set_flags(ret, BIO_FLAGS_UPLINK_INTERNAL);
     BIO_set_fp(ret, stream, close_flag);
     return (ret);
 }
@@ -218,7 +218,7 @@ static int MS_CALLBACK file_new(BIO *bi)
     bi->init = 0;
     bi->num = 0;
     bi->ptr = NULL;
-    bi->flags = BIO_FLAGS_UPLINK; /* default to UPLINK */
+    bi->flags = BIO_FLAGS_UPLINK_INTERNAL; /* default to UPLINK */
     return (1);
 }
 
@@ -228,12 +228,12 @@ static int MS_CALLBACK file_free(BIO *a)
         return (0);
     if (a->shutdown) {
         if ((a->init) && (a->ptr != NULL)) {
-            if (a->flags & BIO_FLAGS_UPLINK)
+            if (a->flags & BIO_FLAGS_UPLINK_INTERNAL)
                 UP_fclose(a->ptr);
             else
                 fclose(a->ptr);
             a->ptr = NULL;
-            a->flags = BIO_FLAGS_UPLINK;
+            a->flags = BIO_FLAGS_UPLINK_INTERNAL;
         }
         a->init = 0;
     }
@@ -245,13 +245,13 @@ static int MS_CALLBACK file_read(BIO *b, char *out, int outl)
     int ret = 0;
 
     if (b->init && (out != NULL)) {
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = UP_fread(out, 1, (int)outl, b->ptr);
         else
             ret = fread(out, 1, (int)outl, (FILE *)b->ptr);
         if (ret == 0
-            && (b->flags & BIO_FLAGS_UPLINK) ? UP_ferror((FILE *)b->ptr) :
-                                               ferror((FILE *)b->ptr)) {
+            && (b->flags & BIO_FLAGS_UPLINK_INTERNAL
+                ? UP_ferror((FILE *)b->ptr) : ferror((FILE *)b->ptr))) {
             SYSerr(SYS_F_FREAD, get_last_sys_error());
             BIOerr(BIO_F_FILE_READ, ERR_R_SYS_LIB);
             ret = -1;
@@ -265,7 +265,7 @@ static int MS_CALLBACK file_write(BIO *b, const char *in, int inl)
     int ret = 0;
 
     if (b->init && (in != NULL)) {
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = UP_fwrite(in, (int)inl, 1, b->ptr);
         else
             ret = fwrite(in, (int)inl, 1, (FILE *)b->ptr);
@@ -292,20 +292,20 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
     switch (cmd) {
     case BIO_C_FILE_SEEK:
     case BIO_CTRL_RESET:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = (long)UP_fseek(b->ptr, num, 0);
         else
             ret = (long)fseek(fp, num, 0);
         break;
     case BIO_CTRL_EOF:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = (long)UP_feof(fp);
         else
             ret = (long)feof(fp);
         break;
     case BIO_C_FILE_TELL:
     case BIO_CTRL_INFO:
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = UP_ftell(b->ptr);
         else
             ret = ftell(fp);
@@ -315,22 +315,22 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num & BIO_CLOSE;
         b->ptr = ptr;
         b->init = 1;
-#  if BIO_FLAGS_UPLINK!=0
+#  if BIO_FLAGS_UPLINK_INTERNAL!=0
 #   if defined(__MINGW32__) && defined(__MSVCRT__) && !defined(_IOB_ENTRIES)
 #    define _IOB_ENTRIES 20
 #   endif
         /* Safety net to catch purely internal BIO_set_fp calls */
 #   if defined(_MSC_VER) && _MSC_VER>=1900
         if (ptr == stdin || ptr == stdout || ptr == stderr)
-            BIO_clear_flags(b, BIO_FLAGS_UPLINK);
+            BIO_clear_flags(b, BIO_FLAGS_UPLINK_INTERNAL);
 #   elif defined(_IOB_ENTRIES)
         if ((size_t)ptr >= (size_t)stdin &&
             (size_t)ptr < (size_t)(stdin + _IOB_ENTRIES))
-            BIO_clear_flags(b, BIO_FLAGS_UPLINK);
+            BIO_clear_flags(b, BIO_FLAGS_UPLINK_INTERNAL);
 #   endif
 #  endif
 #  ifdef UP_fsetmod
-        if (b->flags & BIO_FLAGS_UPLINK)
+        if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             UP_fsetmod(b->ptr, (char)((num & BIO_FP_TEXT) ? 't' : 'b'));
         else
 #  endif
@@ -411,8 +411,8 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         b->ptr = fp;
         b->init = 1;
-        BIO_clear_flags(b, BIO_FLAGS_UPLINK); /* we did fopen -> we disengage
-                                               * UPLINK */
+        /* we did fopen -> we disengage UPLINK */
+        BIO_clear_flags(b, BIO_FLAGS_UPLINK_INTERNAL);
         break;
     case BIO_C_GET_FILE_PTR:
         /* the ptr parameter is actually a FILE ** in this case. */
@@ -428,7 +428,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
         b->shutdown = (int)num;
         break;
     case BIO_CTRL_FLUSH:
-        st = b->flags & BIO_FLAGS_UPLINK
+        st = b->flags & BIO_FLAGS_UPLINK_INTERNAL
                 ? UP_fflush(b->ptr) : fflush((FILE *)b->ptr);
         if (st == EOF) {
             SYSerr(SYS_F_FFLUSH, get_last_sys_error());
@@ -457,7 +457,7 @@ static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
     int ret = 0;
 
     buf[0] = '\0';
-    if (bp->flags & BIO_FLAGS_UPLINK) {
+    if (bp->flags & BIO_FLAGS_UPLINK_INTERNAL) {
         if (!UP_fgets(buf, size, bp->ptr))
             goto err;
     } else {
