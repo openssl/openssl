@@ -5586,7 +5586,7 @@ static int test_cert_cb(int tst)
 #ifndef OPENSSL_NO_TLS1_2
     testresult &= test_cert_cb_int(TLS1_2_VERSION, tst);
 #endif
-#ifdef OPENSSL_NO_TLS1_3
+#ifndef OPENSSL_NO_TLS1_3
     testresult &= test_cert_cb_int(TLS1_3_VERSION, tst);
 #endif
 
