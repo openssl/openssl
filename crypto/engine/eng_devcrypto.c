@@ -212,7 +212,7 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
-    if (ioctl(cipher_ctx->cfd, CIOCFSESSION, &cipher_ctx->sess) < 0) {
+    if (ioctl(cipher_ctx->cfd, CIOCFSESSION, &cipher_ctx->sess.ses) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
@@ -255,7 +255,7 @@ static void prepare_cipher_methods()
         sess.cipher = cipher_data[i].devcryptoid;
         sess.keylen = cipher_data[i].keylen;
         if (ioctl(cfd, CIOCGSESSION, &sess) < 0
-            || ioctl(cfd, CIOCFSESSION, &sess) < 0)
+            || ioctl(cfd, CIOCFSESSION, &sess.ses) < 0)
             continue;
 
         if ((known_cipher_methods[i] =
@@ -472,7 +472,7 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
-    if (ioctl(digest_ctx->cfd, CIOCFSESSION, &digest_ctx->sess) < 0) {
+    if (ioctl(digest_ctx->cfd, CIOCFSESSION, &digest_ctx->sess.ses) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
@@ -522,7 +522,7 @@ static void prepare_digest_methods()
          */
         sess.mac = digest_data[i].devcryptoid;
         if (ioctl(cfd, CIOCGSESSION, &sess) < 0
-            || ioctl(cfd, CIOCFSESSION, &sess) < 0)
+            || ioctl(cfd, CIOCFSESSION, &sess.ses) < 0)
             continue;
 
         if ((known_digest_methods[i] = EVP_MD_meth_new(digest_data[i].nid,
