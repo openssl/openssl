@@ -5497,6 +5497,7 @@ static int test_shutdown(int tst)
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
 static int cert_cb_cnt;
 
 static int cert_cb(SSL *s, void *arg)
@@ -5576,6 +5577,7 @@ static int test_cert_cb_int(int prot, int tst)
 
     return testresult;
 }
+#endif
 
 static int test_cert_cb(int tst)
 {
