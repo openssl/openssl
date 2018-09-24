@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2014 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -166,7 +166,10 @@ static ERR_STRING_DATA ASN1_str_functs[] = {
     {ERR_FUNC(ASN1_F_D2I_X509), "D2I_X509"},
     {ERR_FUNC(ASN1_F_D2I_X509_CINF), "D2I_X509_CINF"},
     {ERR_FUNC(ASN1_F_D2I_X509_PKEY), "d2i_X509_PKEY"},
+    {ERR_FUNC(ASN1_F_DO_BUF), "DO_BUF"},
     {ERR_FUNC(ASN1_F_I2D_ASN1_BIO_STREAM), "i2d_ASN1_bio_stream"},
+    {ERR_FUNC(ASN1_F_I2D_ASN1_BOOLEAN), "i2d_ASN1_BOOLEAN"},
+    {ERR_FUNC(ASN1_F_I2D_ASN1_OBJECT), "i2d_ASN1_OBJECT"},
     {ERR_FUNC(ASN1_F_I2D_ASN1_SET), "i2d_ASN1_SET"},
     {ERR_FUNC(ASN1_F_I2D_ASN1_TIME), "I2D_ASN1_TIME"},
     {ERR_FUNC(ASN1_F_I2D_DSA_PUBKEY), "i2d_DSA_PUBKEY"},
@@ -279,6 +282,7 @@ static ERR_STRING_DATA ASN1_str_reasons[] = {
     {ERR_REASON(ASN1_R_MSTRING_NOT_UNIVERSAL), "mstring not universal"},
     {ERR_REASON(ASN1_R_MSTRING_WRONG_TAG), "mstring wrong tag"},
     {ERR_REASON(ASN1_R_NESTED_ASN1_STRING), "nested asn1 string"},
+    {ERR_REASON(ASN1_R_NESTED_TOO_DEEP), "nested too deep"},
     {ERR_REASON(ASN1_R_NON_HEX_CHARACTERS), "non hex characters"},
     {ERR_REASON(ASN1_R_NOT_ASCII_FORMAT), "not ascii format"},
     {ERR_REASON(ASN1_R_NOT_ENOUGH_DATA), "not enough data"},

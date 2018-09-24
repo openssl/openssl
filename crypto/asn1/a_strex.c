@@ -4,7 +4,7 @@
  * 2000.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -130,13 +130,13 @@ static int do_esc_char(unsigned long c, unsigned char flags, char *do_quotes,
     if (c > 0xffffffffL)
         return -1;
     if (c > 0xffff) {
-        BIO_snprintf(tmphex, sizeof tmphex, "\\W%08lX", c);
+        BIO_snprintf(tmphex, sizeof(tmphex), "\\W%08lX", c);
         if (!io_ch(arg, tmphex, 10))
             return -1;
         return 10;
     }
     if (c > 0xff) {
-        BIO_snprintf(tmphex, sizeof tmphex, "\\U%04lX", c);
+        BIO_snprintf(tmphex, sizeof(tmphex), "\\U%04lX", c);
         if (!io_ch(arg, tmphex, 6))
             return -1;
         return 6;
@@ -194,18 +194,38 @@ static int do_buf(unsigned char *buf, int buflen,
                   int type, unsigned char flags, char *quotes, char_io *io_ch,
                   void *arg)
 {
-    int i, outlen, len;
+    int i, outlen, len, charwidth;
     unsigned char orflags, *p, *q;
     unsigned long c;
     p = buf;
     q = buf + buflen;
     outlen = 0;
+    charwidth = type & BUF_TYPE_WIDTH_MASK;
+
+    switch (charwidth) {
+    case 4:
+        if (buflen & 3) {
+            ASN1err(ASN1_F_DO_BUF, ASN1_R_INVALID_UNIVERSALSTRING_LENGTH);
+            return -1;
+        }
+        break;
+    case 2:
+        if (buflen & 1) {
+            ASN1err(ASN1_F_DO_BUF, ASN1_R_INVALID_BMPSTRING_LENGTH);
+            return -1;
+        }
+        break;
+    default:
+        break;
+    }
+
     while (p != q) {
         if (p == buf && flags & ASN1_STRFLGS_ESC_2253)
             orflags = CHARTYPE_FIRST_ESC_2253;
         else
             orflags = 0;
-        switch (type & BUF_TYPE_WIDTH_MASK) {
+
+        switch (charwidth) {
         case 4:
             c = ((unsigned long)*p++) << 24;
             c |= ((unsigned long)*p++) << 16;
@@ -226,6 +246,7 @@ static int do_buf(unsigned char *buf, int buflen,
             i = UTF8_getc(p, buflen, &c);
             if (i < 0)
                 return -1;      /* Invalid UTF8String */
+            buflen -= i;
             p += i;
             break;
         default:
@@ -236,7 +257,7 @@ static int do_buf(unsigned char *buf, int buflen,
         if (type & BUF_TYPE_CONVUTF8) {
             unsigned char utfbuf[6];
             int utflen;
-            utflen = UTF8_putc(utfbuf, sizeof utfbuf, c);
+            utflen = UTF8_putc(utfbuf, sizeof(utfbuf), c);
             for (i = 0; i < utflen; i++) {
                 /*
                  * We don't need to worry about setting orflags correctly
@@ -533,7 +554,7 @@ static int do_name_ex(char_io *io_ch, void *arg, X509_NAME *n,
         if (fn_opt != XN_FLAG_FN_NONE) {
             int objlen, fld_len;
             if ((fn_opt == XN_FLAG_FN_OID) || (fn_nid == NID_undef)) {
-                OBJ_obj2txt(objtmp, sizeof objtmp, fn, 1);
+                OBJ_obj2txt(objtmp, sizeof(objtmp), fn, 1);
                 fld_len = 0;    /* XXX: what should this be? */
                 objbuf = objtmp;
             } else {

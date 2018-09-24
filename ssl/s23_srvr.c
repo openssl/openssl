@@ -195,7 +195,10 @@ int ssl23_accept(SSL *s)
                 s->init_buf = buf;
             }
 
-            ssl3_init_finished_mac(s);
+            if (!ssl3_init_finished_mac(s)) {
+                ret = -1;
+                goto end;
+            }
 
             s->state = SSL23_ST_SR_CLNT_HELLO_A;
             s->ctx->stats.sess_accept++;
@@ -265,8 +268,8 @@ int ssl23_get_client_hello(SSL *s)
         if (!ssl3_setup_buffers(s))
             goto err;
 
-        n = ssl23_read_bytes(s, sizeof buf_space);
-        if (n != sizeof buf_space)
+        n = ssl23_read_bytes(s, sizeof(buf_space));
+        if (n != sizeof(buf_space))
             return (n);         /* n == -1 || n == 0 */
 
         p = s->packet;

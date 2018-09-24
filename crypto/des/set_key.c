@@ -120,7 +120,7 @@ int DES_check_key_parity(const_DES_cblock *key)
 }
 
 /*-
- * Weak and semi week keys as take from
+ * Weak and semi weak keys as taken from
  * %A D.W. Davies
  * %A W.L. Price
  * %T Security for Computer Networks
@@ -377,7 +377,7 @@ void private_DES_set_key_unchecked(const_DES_cblock *key,
     register int i;
 
 #ifdef OPENBSD_DEV_CRYPTO
-    memcpy(schedule->key, key, sizeof schedule->key);
+    memcpy(schedule->key, key, sizeof(schedule->key));
     schedule->session = NULL;
 #endif
     k = &schedule->ks->deslong[0];

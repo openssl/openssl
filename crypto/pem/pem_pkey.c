@@ -113,13 +113,14 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
             klen = cb(psbuf, PEM_BUFSIZE, 0, u);
         else
             klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
-        if (klen <= 0) {
+        if (klen < 0) {
             PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY, PEM_R_BAD_PASSWORD_READ);
             X509_SIG_free(p8);
             goto err;
         }
         p8inf = PKCS8_decrypt(p8, psbuf, klen);
         X509_SIG_free(p8);
+        OPENSSL_cleanse(psbuf, klen);
         if (!p8inf)
             goto p8err;
         ret = EVP_PKCS82PKEY(p8inf);

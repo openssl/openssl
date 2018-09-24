@@ -58,7 +58,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -343,7 +343,7 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->verify_depth = ctx->verify_depth;
 #endif
     s->sid_ctx_length = ctx->sid_ctx_length;
-    OPENSSL_assert(s->sid_ctx_length <= sizeof s->sid_ctx);
+    OPENSSL_assert(s->sid_ctx_length <= sizeof(s->sid_ctx));
     memcpy(&s->sid_ctx, &ctx->sid_ctx, sizeof(s->sid_ctx));
     s->verify_callback = ctx->default_verify_callback;
     s->generate_session_id = ctx->generate_session_id;
@@ -437,7 +437,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 int SSL_CTX_set_session_id_context(SSL_CTX *ctx, const unsigned char *sid_ctx,
                                    unsigned int sid_ctx_len)
 {
-    if (sid_ctx_len > sizeof ctx->sid_ctx) {
+    if (sid_ctx_len > sizeof(ctx->sid_ctx)) {
         SSLerr(SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT,
                SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
         return 0;
@@ -490,7 +490,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      */
     SSL_SESSION r, *p;
 
-    if (id_len > sizeof r.session_id)
+    if (id_len > sizeof(r.session_id))
         return 0;
 
     r.ssl_version = ssl->version;
@@ -1404,28 +1404,37 @@ int SSL_set_cipher_list(SSL *s, const char *str)
 }
 
 /* works well for SSLv2, not so good for SSLv3 */
-char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
+char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
 {
     char *p;
-    STACK_OF(SSL_CIPHER) *sk;
+    STACK_OF(SSL_CIPHER) *clntsk, *srvrsk;
     SSL_CIPHER *c;
     int i;
 
-    if ((s->session == NULL) || (s->session->ciphers == NULL) || (len < 2))
-        return (NULL);
-
-    p = buf;
-    sk = s->session->ciphers;
-
-    if (sk_SSL_CIPHER_num(sk) == 0)
+    if (!s->server
+            || s->session == NULL
+            || s->session->ciphers == NULL
+            || size < 2)
         return NULL;
 
-    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
+    p = buf;
+    clntsk = s->session->ciphers;
+    srvrsk = SSL_get_ciphers(s);
+    if (clntsk == NULL || srvrsk == NULL)
+        return NULL;
+
+    if (sk_SSL_CIPHER_num(clntsk) == 0 || sk_SSL_CIPHER_num(srvrsk) == 0)
+        return NULL;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(clntsk); i++) {
         int n;
 
-        c = sk_SSL_CIPHER_value(sk, i);
+        c = sk_SSL_CIPHER_value(clntsk, i);
+        if (sk_SSL_CIPHER_find(srvrsk, c) < 0)
+            continue;
+
         n = strlen(c->name);
-        if (n + 1 > len) {
+        if (n + 1 > size) {
             if (p != buf)
                 --p;
             *p = '\0';
@@ -1434,7 +1443,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int len)
         strcpy(p, c->name);
         p += n;
         *(p++) = ':';
-        len -= n + 1;
+        size -= n + 1;
     }
     p[-1] = '\0';
     return (buf);
@@ -1825,26 +1834,34 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
 
 int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
                                const char *label, size_t llen,
-                               const unsigned char *p, size_t plen,
+                               const unsigned char *context, size_t contextlen,
                                int use_context)
 {
     if (s->version < TLS1_VERSION && s->version != DTLS1_BAD_VER)
         return -1;
 
     return s->method->ssl3_enc->export_keying_material(s, out, olen, label,
-                                                       llen, p, plen,
-                                                       use_context);
+                                                       llen, context,
+                                                       contextlen, use_context);
 }
 
 static unsigned long ssl_session_hash(const SSL_SESSION *a)
 {
+    const unsigned char *session_id = a->session_id;
     unsigned long l;
+    unsigned char tmp_storage[4];
+
+    if (a->session_id_length < sizeof(tmp_storage)) {
+        memset(tmp_storage, 0, sizeof(tmp_storage));
+        memcpy(tmp_storage, a->session_id, a->session_id_length);
+        session_id = tmp_storage;
+    }
 
     l = (unsigned long)
-        ((unsigned int)a->session_id[0]) |
-        ((unsigned int)a->session_id[1] << 8L) |
-        ((unsigned long)a->session_id[2] << 16L) |
-        ((unsigned long)a->session_id[3] << 24L);
+        ((unsigned long)session_id[0]) |
+        ((unsigned long)session_id[1] << 8L) |
+        ((unsigned long)session_id[2] << 16L) |
+        ((unsigned long)session_id[3] << 24L);
     return (l);
 }
 
@@ -3172,6 +3189,7 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 #endif
     ssl->cert = ssl_cert_dup(ctx->cert);
     if (ocert) {
+        int i;
         /* Preserve any already negotiated parameters */
         if (ssl->server) {
             ssl->cert->peer_sigalgs = ocert->peer_sigalgs;
@@ -3181,11 +3199,17 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
             ssl->cert->ciphers_rawlen = ocert->ciphers_rawlen;
             ocert->ciphers_raw = NULL;
         }
+        for (i = 0; i < SSL_PKEY_NUM; i++) {
+            ssl->cert->pkeys[i].digest = ocert->pkeys[i].digest;
+        }
 #ifndef OPENSSL_NO_TLSEXT
         ssl->cert->alpn_proposed = ocert->alpn_proposed;
         ssl->cert->alpn_proposed_len = ocert->alpn_proposed_len;
         ocert->alpn_proposed = NULL;
         ssl->cert->alpn_sent = ocert->alpn_sent;
+
+        if (!custom_exts_copy_flags(&ssl->cert->srv_ext, &ocert->srv_ext))
+            return NULL;
 #endif
         ssl_cert_free(ocert);
     }

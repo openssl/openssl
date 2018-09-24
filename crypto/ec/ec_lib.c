@@ -3,7 +3,7 @@
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,7 +85,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
         return NULL;
     }
 
-    ret = OPENSSL_malloc(sizeof *ret);
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_GROUP_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -164,7 +164,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
         OPENSSL_free(group->seed);
     }
 
-    OPENSSL_cleanse(group, sizeof *group);
+    OPENSSL_cleanse(group, sizeof(*group));
     OPENSSL_free(group);
 }
 
@@ -319,12 +319,16 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
         BN_zero(&group->cofactor);
 
     /*
-     * We ignore the return value because some groups have an order with
+     * Some groups have an order with
      * factors of two, which makes the Montgomery setup fail.
      * |group->mont_data| will be NULL in this case.
      */
-    ec_precompute_mont_data(group);
+    if (BN_is_odd(&group->order)) {
+        return ec_precompute_mont_data(group);
+    }
 
+    BN_MONT_CTX_free(group->mont_data);
+    group->mont_data = NULL;
     return 1;
 }
 
@@ -575,7 +579,7 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
         /* no explicit entry needed */
         return 1;
 
-    d = OPENSSL_malloc(sizeof *d);
+    d = OPENSSL_malloc(sizeof(*d));
     if (d == NULL)
         return 0;
 
@@ -712,7 +716,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
         return NULL;
     }
 
-    ret = OPENSSL_malloc(sizeof *ret);
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -747,7 +751,7 @@ void EC_POINT_clear_free(EC_POINT *point)
         point->meth->point_clear_finish(point);
     else if (point->meth->point_finish != 0)
         point->meth->point_finish(point);
-    OPENSSL_cleanse(point, sizeof *point);
+    OPENSSL_cleanse(point, sizeof(*point));
     OPENSSL_free(point);
 }
 

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -209,9 +209,9 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
-static int sv_body(char *hostname, int s, int stype, unsigned char *context);
-static int www_body(char *hostname, int s, int stype, unsigned char *context);
-static int rev_body(char *hostname, int s, int stype, unsigned char *context);
+static int sv_body(int s, int stype, unsigned char *context);
+static int www_body(int s, int stype, unsigned char *context);
+static int rev_body(int s, int stype, unsigned char *context);
 static void close_accept_socket(void);
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
@@ -1087,11 +1087,14 @@ int MAIN(int argc, char *argv[])
     char *chCApath = NULL, *chCAfile = NULL;
     char *vfyCApath = NULL, *vfyCAfile = NULL;
     unsigned char *context = NULL;
+#ifndef OPENSSL_NO_DH
     char *dhfile = NULL;
+    int no_dhe = 0;
+#endif
     int badop = 0;
     int ret = 1;
     int build_chain = 0;
-    int no_tmp_rsa = 0, no_dhe = 0, no_ecdhe = 0, nocert = 0;
+    int no_tmp_rsa = 0, no_ecdhe = 0, nocert = 0;
     int state = 0;
     const SSL_METHOD *meth = NULL;
     int socket_type = SOCK_STREAM;
@@ -1239,11 +1242,15 @@ int MAIN(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             s_chain_file = *(++argv);
-        } else if (strcmp(*argv, "-dhparam") == 0) {
+        }
+#ifndef OPENSSL_NO_DH
+        else if (strcmp(*argv, "-dhparam") == 0) {
             if (--argc < 1)
                 goto bad;
             dhfile = *(++argv);
-        } else if (strcmp(*argv, "-dcertform") == 0) {
+        }
+#endif
+        else if (strcmp(*argv, "-dcertform") == 0) {
             if (--argc < 1)
                 goto bad;
             s_dcert_format = str2fmt(*(++argv));
@@ -1390,9 +1397,13 @@ int MAIN(int argc, char *argv[])
             verify_quiet = 1;
         } else if (strcmp(*argv, "-no_tmp_rsa") == 0) {
             no_tmp_rsa = 1;
-        } else if (strcmp(*argv, "-no_dhe") == 0) {
+        }
+#ifndef OPENSSL_NO_DH
+        else if (strcmp(*argv, "-no_dhe") == 0) {
             no_dhe = 1;
-        } else if (strcmp(*argv, "-no_ecdhe") == 0) {
+        }
+#endif
+        else if (strcmp(*argv, "-no_ecdhe") == 0) {
             no_ecdhe = 1;
         } else if (strcmp(*argv, "-no_resume_ephemeral") == 0) {
             no_resume_ephemeral = 1;
@@ -2008,7 +2019,7 @@ int MAIN(int argc, char *argv[])
 
     SSL_CTX_set_verify(ctx, s_server_verify, verify_callback);
     SSL_CTX_set_session_id_context(ctx, (void *)&s_server_session_id_context,
-                                   sizeof s_server_session_id_context);
+                                   sizeof(s_server_session_id_context));
 
     /* Set DTLS cookie generation and verification callbacks */
     SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie_callback);
@@ -2019,7 +2030,7 @@ int MAIN(int argc, char *argv[])
         SSL_CTX_set_verify(ctx2, s_server_verify, verify_callback);
         SSL_CTX_set_session_id_context(ctx2,
                                        (void *)&s_server_session_id_context,
-                                       sizeof s_server_session_id_context);
+                                       sizeof(s_server_session_id_context));
 
         tlsextcbp.biodebug = bio_s_out;
         SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_servername_cb);
@@ -2132,6 +2143,7 @@ int MAIN(int argc, char *argv[])
         BIO_free(bio_s_msg);
         bio_s_msg = NULL;
     }
+    SSL_COMP_free_compression_methods();
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }
@@ -2164,7 +2176,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(char *hostname, int s, int stype, unsigned char *context)
+static int sv_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -2665,14 +2677,14 @@ static int init_ssl_connection(SSL *con)
     if (peer != NULL) {
         BIO_printf(bio_s_out, "Client certificate\n");
         PEM_write_bio_X509(bio_s_out, peer);
-        X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof buf);
+        X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof(buf));
         BIO_printf(bio_s_out, "subject=%s\n", buf);
-        X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
+        X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof(buf));
         BIO_printf(bio_s_out, "issuer=%s\n", buf);
         X509_free(peer);
     }
 
-    if (SSL_get_shared_ciphers(con, buf, sizeof buf) != NULL)
+    if (SSL_get_shared_ciphers(con, buf, sizeof(buf)) != NULL)
         BIO_printf(bio_s_out, "Shared ciphers:%s\n", buf);
     str = SSL_CIPHER_get_name(SSL_get_current_cipher(con));
     ssl_print_sigalgs(bio_s_out, con);
@@ -2779,7 +2791,7 @@ static int load_CA(SSL_CTX *ctx, char *file)
 }
 #endif
 
-static int www_body(char *hostname, int s, int stype, unsigned char *context)
+static int www_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -3016,7 +3028,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
                 PEM_write_bio_X509(io, peer);
             } else
                 BIO_puts(io, "no client certificate available\n");
-            BIO_puts(io, "</BODY></HTML>\r\n\r\n");
+            BIO_puts(io, "</pre></BODY></HTML>\r\n\r\n");
             break;
         } else if ((www == 2 || www == 3)
                    && (strncmp("GET /", buf, 5) == 0)) {
@@ -3182,7 +3194,7 @@ static int www_body(char *hostname, int s, int stype, unsigned char *context)
     return (ret);
 }
 
-static int rev_body(char *hostname, int s, int stype, unsigned char *context)
+static int rev_body(int s, int stype, unsigned char *context)
 {
     char *buf = NULL;
     int i;

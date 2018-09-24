@@ -39,8 +39,8 @@ numbers, the string is prefaced with a leading '-'. The string must be
 freed later using OPENSSL_free().
 
 BN_hex2bn() converts the string B<str> containing a hexadecimal number
-to a B<BIGNUM> and stores it in **B<bn>. If *B<bn> is NULL, a new
-B<BIGNUM> is created. If B<bn> is NULL, it only computes the number's
+to a B<BIGNUM> and stores it in **B<a>. If *B<a> is NULL, a new
+B<BIGNUM> is created. If B<a> is NULL, it only computes the number's
 length in hexadecimal digits. If the string starts with '-', the
 number is negative.
 A "negative zero" is converted to zero.
@@ -70,8 +70,9 @@ BN_bn2bin() returns the length of the big-endian number placed at B<to>.
 BN_bin2bn() returns the B<BIGNUM>, NULL on error.
 
 BN_bn2hex() and BN_bn2dec() return a null-terminated string, or NULL
-on error. BN_hex2bn() and BN_dec2bn() return the number's length in
-hexadecimal or decimal digits, and 0 on error.
+on error. BN_hex2bn() and BN_dec2bn() return the number of characters
+used in parsing, or 0 on error, in which
+case no new B<BIGNUM> will be created.
 
 BN_print_fp() and BN_print() return 1 on success, 0 on write errors.
 

@@ -4,7 +4,7 @@
  * 2000.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -787,7 +787,6 @@ int MAIN(int argc, char **argv)
                    OCSP_response_status_str(i), i);
         if (ignore_err)
             goto redo_accept;
-        ret = 0;
         goto end;
     }
 
@@ -1195,7 +1194,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
     *pcbio = cbio;
 
     for (;;) {
-        len = BIO_gets(cbio, inbuf, sizeof inbuf);
+        len = BIO_gets(cbio, inbuf, sizeof(inbuf));
         if (len <= 0)
             return 1;
         /* Look for "POST" signalling start of query */

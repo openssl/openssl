@@ -171,13 +171,14 @@ EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
         klen = cb(psbuf, PEM_BUFSIZE, 0, u);
     else
         klen = PEM_def_callback(psbuf, PEM_BUFSIZE, 0, u);
-    if (klen <= 0) {
+    if (klen < 0) {
         PEMerr(PEM_F_D2I_PKCS8PRIVATEKEY_BIO, PEM_R_BAD_PASSWORD_READ);
         X509_SIG_free(p8);
         return NULL;
     }
     p8inf = PKCS8_decrypt(p8, psbuf, klen);
     X509_SIG_free(p8);
+    OPENSSL_cleanse(psbuf, klen);
     if (!p8inf)
         return NULL;
     ret = EVP_PKCS82PKEY(p8inf);

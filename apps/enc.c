@@ -81,20 +81,32 @@ int set_hex(char *in, unsigned char *out, int size);
 #define BSIZE   (8*1024)
 #define PROG    enc_main
 
-static void show_ciphers(const OBJ_NAME *name, void *bio_)
+struct doall_enc_ciphers {
+    BIO *bio;
+    int n;
+};
+
+static void show_ciphers(const OBJ_NAME *name, void *arg)
 {
-    BIO *bio = bio_;
-    static int n;
+    struct doall_enc_ciphers *dec = (struct doall_enc_ciphers *)arg;
+    const EVP_CIPHER *cipher;
 
     if (!islower((unsigned char)*name->name))
         return;
 
-    BIO_printf(bio, "-%-25s", name->name);
-    if (++n == 3) {
-        BIO_printf(bio, "\n");
-        n = 0;
+    /* Filter out ciphers that we cannot use */
+    cipher = EVP_get_cipherbyname(name->name);
+    if (cipher == NULL ||
+            (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0 ||
+            EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
+        return;
+
+    BIO_printf(dec->bio, "-%-25s", name->name);
+    if (++dec->n == 3) {
+        BIO_printf(dec->bio, "\n");
+        dec->n = 0;
     } else
-        BIO_printf(bio, " ");
+        BIO_printf(dec->bio, " ");
 }
 
 int MAIN(int, char **);
@@ -102,7 +114,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 {
     static const char magic[] = "Salted__";
-    char mbuf[sizeof magic - 1];
+    char mbuf[sizeof(magic) - 1];
     char *strbuf = NULL;
     unsigned char *buff = NULL, *bufsize = NULL;
     int bsize = BSIZE, verbose = 0;
@@ -130,6 +142,7 @@ int MAIN(int argc, char **argv)
     ENGINE *e = NULL;
     const EVP_MD *dgst = NULL;
     int non_fips_allow = 0;
+    struct doall_enc_ciphers dec;
 
     apps_startup();
 
@@ -141,7 +154,7 @@ int MAIN(int argc, char **argv)
         goto end;
 
     /* first check the program name */
-    program_name(argv[0], pname, sizeof pname);
+    program_name(argv[0], pname, sizeof(pname));
     if (strcmp(pname, "base64") == 0)
         base64 = 1;
 #ifdef ZLIB
@@ -234,7 +247,7 @@ int MAIN(int argc, char **argv)
                 goto bad;
             }
             buf[0] = '\0';
-            if (!fgets(buf, sizeof buf, infile)) {
+            if (!fgets(buf, sizeof(buf), infile)) {
                 BIO_printf(bio_err, "unable to read key from '%s'\n", file);
                 goto bad;
             }
@@ -311,8 +324,10 @@ int MAIN(int argc, char **argv)
 #endif
 
             BIO_printf(bio_err, "Cipher Types\n");
+            dec.n = 0;
+            dec.bio = bio_err;
             OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
-                                   show_ciphers, bio_err);
+                                   show_ciphers, &dec);
             BIO_printf(bio_err, "\n");
 
             goto end;
@@ -417,7 +432,7 @@ int MAIN(int argc, char **argv)
         for (;;) {
             char buf[200];
 
-            BIO_snprintf(buf, sizeof buf, "enter %s %s password:",
+            BIO_snprintf(buf, sizeof(buf), "enter %s %s password:",
                          OBJ_nid2ln(EVP_CIPHER_nid(cipher)),
                          (enc) ? "encryption" : "decryption");
             strbuf[0] = '\0';
@@ -502,31 +517,31 @@ int MAIN(int argc, char **argv)
             else {
                 if (enc) {
                     if (hsalt) {
-                        if (!set_hex(hsalt, salt, sizeof salt)) {
+                        if (!set_hex(hsalt, salt, sizeof(salt))) {
                             BIO_printf(bio_err, "invalid hex salt value\n");
                             goto end;
                         }
-                    } else if (RAND_bytes(salt, sizeof salt) <= 0)
+                    } else if (RAND_bytes(salt, sizeof(salt)) <= 0)
                         goto end;
                     /*
                      * If -P option then don't bother writing
                      */
                     if ((printkey != 2)
                         && (BIO_write(wbio, magic,
-                                      sizeof magic - 1) != sizeof magic - 1
+                                      sizeof(magic) - 1) != sizeof(magic) - 1
                             || BIO_write(wbio,
                                          (char *)salt,
-                                         sizeof salt) != sizeof salt)) {
+                                         sizeof(salt)) != sizeof(salt))) {
                         BIO_printf(bio_err, "error writing output file\n");
                         goto end;
                     }
-                } else if (BIO_read(rbio, mbuf, sizeof mbuf) != sizeof mbuf
+                } else if (BIO_read(rbio, mbuf, sizeof(mbuf)) != sizeof(mbuf)
                            || BIO_read(rbio,
                                        (unsigned char *)salt,
-                                       sizeof salt) != sizeof salt) {
+                                       sizeof(salt)) != sizeof(salt)) {
                     BIO_printf(bio_err, "error reading input file\n");
                     goto end;
-                } else if (memcmp(mbuf, magic, sizeof magic - 1)) {
+                } else if (memcmp(mbuf, magic, sizeof(magic) - 1)) {
                     BIO_printf(bio_err, "bad magic number\n");
                     goto end;
                 }
@@ -549,7 +564,7 @@ int MAIN(int argc, char **argv)
             int siz = EVP_CIPHER_iv_length(cipher);
             if (siz == 0) {
                 BIO_printf(bio_err, "warning: iv not use by this cipher\n");
-            } else if (!set_hex(hiv, iv, sizeof iv)) {
+            } else if (!set_hex(hiv, iv, sizeof(iv))) {
                 BIO_printf(bio_err, "invalid hex iv value\n");
                 goto end;
             }

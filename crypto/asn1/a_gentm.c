@@ -78,7 +78,7 @@ int i2d_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME *a, unsigned char **pp)
     ASN1_STRING tmpstr = *(ASN1_STRING *)a;
 
     len = tmpstr.length;
-    ebcdic2ascii(tmp, tmpstr.data, (len >= sizeof tmp) ? sizeof tmp : len);
+    ebcdic2ascii(tmp, tmpstr.data, (len >= sizeof(tmp)) ? sizeof(tmp) : len);
     tmpstr.data = tmp;
 
     a = (ASN1_GENERALIZEDTIME *)&tmpstr;
@@ -202,7 +202,7 @@ int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
     if (a[o] == 'Z')
         o++;
     else if ((a[o] == '+') || (a[o] == '-')) {
-        int offsign = a[o] == '-' ? -1 : 1, offset = 0;
+        int offsign = a[o] == '-' ? 1 : -1, offset = 0;
         o++;
         if (o + 4 > l)
             goto err;

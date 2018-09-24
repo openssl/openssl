@@ -59,7 +59,7 @@ OPENSSL_ia32_cpuid:
 	mov	%rbx,%r8		# save %rbx
 
 	xor	%eax,%eax
-	mov	%eax,8(%rdi)		# clear 3rd word
+	mov	%eax,8(%rdi)		# clear extended feature flags
 	cpuid
 	mov	%eax,%r11d		# max value for standard query level
 
@@ -127,14 +127,6 @@ OPENSSL_ia32_cpuid:
 	shr	\$14,%r10d
 	and	\$0xfff,%r10d		# number of cores -1 per L1D
 
-	cmp	\$7,%r11d
-	jb	.Lnocacheinfo
-
-	mov	\$7,%eax
-	xor	%ecx,%ecx
-	cpuid
-	mov	%ebx,8(%rdi)
-
 .Lnocacheinfo:
 	mov	\$1,%eax
 	cpuid
@@ -144,8 +136,19 @@ OPENSSL_ia32_cpuid:
 	or	\$0x40000000,%edx	# set reserved bit#30 on Intel CPUs
 	and	\$15,%ah
 	cmp	\$15,%ah		# examine Family ID
-	jne	.Lnotintel
+	jne	.LnotP4
 	or	\$0x00100000,%edx	# set reserved bit#20 to engage RC4_CHAR
+.LnotP4:
+	cmp	\$6,%ah
+	jne	.Lnotintel
+	and	\$0x0fff0ff0,%eax
+	cmp	\$0x00050670,%eax	# Knights Landing
+	je	.Lknights
+	cmp	\$0x00080650,%eax	# Knights Mill (according to sde)
+	jne	.Lnotintel
+.Lknights:
+	and	\$0xfbffffff,%ecx	# clear XSAVE flag to mimic Silvermont
+
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Lgeneric
@@ -164,6 +167,19 @@ OPENSSL_ia32_cpuid:
 	or	%ecx,%r9d		# merge AMD XOP flag
 
 	mov	%edx,%r10d		# %r9d:%r10d is copy of %ecx:%edx
+
+	cmp	\$7,%r11d
+	jb	.Lno_extended_info
+	mov	\$7,%eax
+	xor	%ecx,%ecx
+	cpuid
+	bt	\$26,%r9d		# check XSAVE bit, cleared on Knights
+	jc	.Lnotknights
+	and	\$0xfff7ffff,%ebx	# clear ADCX/ADOX flag
+.Lnotknights:
+	mov	%ebx,8(%rdi)		# save extended feature flags
+.Lno_extended_info:
+
 	bt	\$27,%r9d		# check OSXSAVE bit
 	jnc	.Lclear_avx
 	xor	%ecx,%ecx		# XCR0
@@ -174,7 +190,7 @@ OPENSSL_ia32_cpuid:
 .Lclear_avx:
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
 	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
-	andl	\$0xffffffdf,8(%rdi)	# cleax AVX2, ~(1<<5)
+	andl	\$0xffffffdf,8(%rdi)	# clear AVX2, ~(1<<5)
 .Ldone:
 	shl	\$32,%r9
 	mov	%r10d,%eax

@@ -3,7 +3,7 @@
  * 2006.
  */
 /* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -143,19 +143,19 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 static EC_KEY *eckey_type2param(int ptype, void *pval)
 {
     EC_KEY *eckey = NULL;
+    EC_GROUP *group = NULL;
+
     if (ptype == V_ASN1_SEQUENCE) {
-        ASN1_STRING *pstr = pval;
-        const unsigned char *pm = NULL;
-        int pmlen;
-        pm = pstr->data;
-        pmlen = pstr->length;
-        if (!(eckey = d2i_ECParameters(NULL, &pm, pmlen))) {
+        const ASN1_STRING *pstr = pval;
+        const unsigned char *pm = pstr->data;
+        int pmlen = pstr->length;
+
+        if ((eckey = d2i_ECParameters(NULL, &pm, pmlen)) == NULL) {
             ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_DECODE_ERROR);
             goto ecerr;
         }
     } else if (ptype == V_ASN1_OBJECT) {
-        ASN1_OBJECT *poid = pval;
-        EC_GROUP *group;
+        const ASN1_OBJECT *poid = pval;
 
         /*
          * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
@@ -179,8 +179,8 @@ static EC_KEY *eckey_type2param(int ptype, void *pval)
     return eckey;
 
  ecerr:
-    if (eckey)
-        EC_KEY_free(eckey);
+    EC_KEY_free(eckey);
+    EC_GROUP_free(group);
     return NULL;
 }
 
@@ -342,8 +342,10 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     }
 
     if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
-                         ptype, pval, ep, eplen))
+                         ptype, pval, ep, eplen)) {
+        OPENSSL_free(ep);
         return 0;
+    }
 
     return 1;
 }

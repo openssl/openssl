@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2018 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -337,7 +337,7 @@ static void sc_usage(void)
     BIO_printf(bio_err,
                " -prexit       - print session information even on connection failure\n");
     BIO_printf(bio_err,
-               " -showcerts    - show all certificates in the chain\n");
+               " -showcerts    - Show all certificates sent by the server\n");
     BIO_printf(bio_err, " -debug        - extra output\n");
 #ifdef WATT32
     BIO_printf(bio_err, " -wdebug       - WATT-32 tcp debugging\n");
@@ -630,10 +630,11 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     unsigned char ext_buf[4 + 65536];
 
     /* Reconstruct the type/len fields prior to extension data */
-    ext_buf[0] = ext_type >> 8;
-    ext_buf[1] = ext_type & 0xFF;
-    ext_buf[2] = inlen >> 8;
-    ext_buf[3] = inlen & 0xFF;
+    inlen &= 0xffff; /* for formal memcpy correctness */
+    ext_buf[0] = (unsigned char)(ext_type >> 8);
+    ext_buf[1] = (unsigned char)(ext_type);
+    ext_buf[2] = (unsigned char)(inlen >> 8);
+    ext_buf[3] = (unsigned char)(inlen);
     memcpy(ext_buf + 4, in, inlen);
 
     BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %d",
@@ -1667,6 +1668,8 @@ int MAIN(int argc, char **argv)
             if (strstr(mbuf, "/stream:features>"))
                 goto shut;
             seen = BIO_read(sbio, mbuf, BUFSIZZ);
+            if (seen <= 0)
+                goto shut;
             mbuf[seen] = 0;
         }
         BIO_printf(sbio,
@@ -2132,6 +2135,7 @@ int MAIN(int argc, char **argv)
         BIO_free(bio_c_msg);
         bio_c_msg = NULL;
     }
+    SSL_COMP_free_compression_methods();
     apps_shutdown();
     OPENSSL_EXIT(ret);
 }
@@ -2162,10 +2166,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             BIO_printf(bio, "---\nCertificate chain\n");
             for (i = 0; i < sk_X509_num(sk); i++) {
                 X509_NAME_oneline(X509_get_subject_name(sk_X509_value(sk, i)),
-                                  buf, sizeof buf);
+                                  buf, sizeof(buf));
                 BIO_printf(bio, "%2d s:%s\n", i, buf);
                 X509_NAME_oneline(X509_get_issuer_name(sk_X509_value(sk, i)),
-                                  buf, sizeof buf);
+                                  buf, sizeof(buf));
                 BIO_printf(bio, "   i:%s\n", buf);
                 if (c_showcerts)
                     PEM_write_bio_X509(bio, sk_X509_value(sk, i));
@@ -2180,9 +2184,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
             /* Redundant if we showed the whole chain */
             if (!(c_showcerts && got_a_chain))
                 PEM_write_bio_X509(bio, peer);
-            X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof buf);
+            X509_NAME_oneline(X509_get_subject_name(peer), buf, sizeof(buf));
             BIO_printf(bio, "subject=%s\n", buf);
-            X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof buf);
+            X509_NAME_oneline(X509_get_issuer_name(peer), buf, sizeof(buf));
             BIO_printf(bio, "issuer=%s\n", buf);
         } else
             BIO_printf(bio, "no peer certificate available\n");
@@ -2199,7 +2203,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         } else {
             BIO_printf(bio, "---\nNo client certificate CA names sent\n");
         }
-        p = SSL_get_shared_ciphers(s, buf, sizeof buf);
+        p = SSL_get_shared_ciphers(s, buf, sizeof(buf));
         if (p != NULL) {
             /*
              * This works only for SSL 2.  In later protocol versions, the

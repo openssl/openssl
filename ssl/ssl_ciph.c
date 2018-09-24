@@ -1205,7 +1205,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                    ((ch >= '0') && (ch <= '9')) ||
                    ((ch >= 'a') && (ch <= 'z')) || (ch == '-') || (ch == '.'))
 #else
-            while (isalnum(ch) || (ch == '-') || (ch == '.'))
+            while (isalnum((unsigned char)ch) || (ch == '-') || (ch == '.'))
 #endif
             {
                 ch = *(++l);
@@ -2001,7 +2001,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     if (id < 193 || id > 255) {
         SSLerr(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD,
                SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE);
-        return 0;
+        return 1;
     }
 
     MemCheck_off();
@@ -2013,6 +2013,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
     }
     comp->id = id;
     comp->method = cm;
+    comp->name = cm->name;
     load_builtin_compressions();
     if (ssl_comp_methods && sk_SSL_COMP_find(ssl_comp_methods, comp) >= 0) {
         OPENSSL_free(comp);

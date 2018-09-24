@@ -263,6 +263,7 @@ int ssl3_connect(SSL *s)
 
             if (!ssl3_setup_buffers(s)) {
                 ret = -1;
+                s->state = SSL_ST_ERR;
                 goto end;
             }
 
@@ -275,7 +276,11 @@ int ssl3_connect(SSL *s)
 
             /* don't push the buffering BIO quite yet */
 
-            ssl3_init_finished_mac(s);
+            if (!ssl3_init_finished_mac(s)) {
+                ret = -1;
+                s->state = SSL_ST_ERR;
+                goto end;
+            }
 
             s->state = SSL3_ST_CW_CLNT_HELLO_A;
             s->ctx->stats.sess_connect++;
@@ -979,7 +984,7 @@ int ssl3_get_server_hello(SSL *s)
     /* get the session-id */
     j = *(p++);
 
-    if ((j > sizeof s->session->session_id) || (j > SSL3_SESSION_ID_SIZE)) {
+    if ((j > sizeof(s->session->session_id)) || (j > SSL3_SESSION_ID_SIZE)) {
         al = SSL_AD_ILLEGAL_PARAMETER;
         SSLerr(SSL_F_SSL3_GET_SERVER_HELLO, SSL_R_SSL3_SESSION_ID_TOO_LONG);
         goto f_err;
@@ -1864,6 +1869,7 @@ int ssl3_get_key_exchange(SSL *s)
             goto err;
         }
         if (EC_KEY_set_group(ecdh, ngroup) == 0) {
+            EC_GROUP_free(ngroup);
             SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_EC_LIB);
             goto err;
         }
@@ -2555,16 +2561,16 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             tmp_buf[0] = s->client_version >> 8;
             tmp_buf[1] = s->client_version & 0xff;
-            if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
+            if (RAND_bytes(&(tmp_buf[2]), sizeof(tmp_buf) - 2) <= 0)
                 goto err;
 
-            s->session->master_key_length = sizeof tmp_buf;
+            s->session->master_key_length = sizeof(tmp_buf);
 
             q = p;
             /* Fix buf for TLS and beyond */
             if (s->version > SSL3_VERSION)
                 p += 2;
-            n = RSA_public_encrypt(sizeof tmp_buf,
+            n = RSA_public_encrypt(sizeof(tmp_buf),
                                    tmp_buf, p, rsa, RSA_PKCS1_PADDING);
 # ifdef PKCS1_CHECK
             if (s->options & SSL_OP_PKCS1_CHECK_1)
@@ -2589,8 +2595,8 @@ int ssl3_send_client_key_exchange(SSL *s)
                                                             s->
                                                             session->master_key,
                                                             tmp_buf,
-                                                            sizeof tmp_buf);
-            OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
+                                                            sizeof(tmp_buf));
+            OPENSSL_cleanse(tmp_buf, sizeof(tmp_buf));
         }
 #endif
 #ifndef OPENSSL_NO_KRB5
@@ -2682,7 +2688,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
             tmp_buf[0] = s->client_version >> 8;
             tmp_buf[1] = s->client_version & 0xff;
-            if (RAND_bytes(&(tmp_buf[2]), sizeof tmp_buf - 2) <= 0)
+            if (RAND_bytes(&(tmp_buf[2]), sizeof(tmp_buf) - 2) <= 0)
                 goto err;
 
             /*-
@@ -2693,13 +2699,13 @@ int ssl3_send_client_key_exchange(SSL *s)
              *      EVP_EncryptInit_ex(&ciph_ctx,NULL, key,iv);
              */
 
-            memset(iv, 0, sizeof iv); /* per RFC 1510 */
+            memset(iv, 0, sizeof(iv)); /* per RFC 1510 */
             EVP_EncryptInit_ex(&ciph_ctx, enc, NULL, kssl_ctx->key, iv);
             EVP_EncryptUpdate(&ciph_ctx, epms, &outl, tmp_buf,
-                              sizeof tmp_buf);
+                              sizeof(tmp_buf));
             EVP_EncryptFinal_ex(&ciph_ctx, &(epms[outl]), &padl);
             outl += padl;
-            if (outl > (int)sizeof epms) {
+            if (outl > (int)sizeof(epms)) {
                 SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
                        ERR_R_INTERNAL_ERROR);
                 goto err;
@@ -2717,9 +2723,9 @@ int ssl3_send_client_key_exchange(SSL *s)
                                                             s->
                                                             session->master_key,
                                                             tmp_buf,
-                                                            sizeof tmp_buf);
+                                                            sizeof(tmp_buf));
 
-            OPENSSL_cleanse(tmp_buf, sizeof tmp_buf);
+            OPENSSL_cleanse(tmp_buf, sizeof(tmp_buf));
             OPENSSL_cleanse(epms, outl);
         }
 #endif

@@ -507,10 +507,12 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
          * to identify it and avoid stitch invocation. So that after we
          * establish that current CPU supports AVX, we even see if it's
          * either even XOP-capable Bulldozer-based or GenuineIntel one.
+         * But SHAEXT-capable go ahead...
          */
-        if (OPENSSL_ia32cap_P[1] & (1 << (60 - 32)) && /* AVX? */
-            ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32))) /* XOP? */
-             | (OPENSSL_ia32cap_P[0] & (1<<30))) &&    /* "Intel CPU"? */
+        if (((OPENSSL_ia32cap_P[2] & (1 << 29)) ||         /* SHAEXT? */
+             ((OPENSSL_ia32cap_P[1] & (1 << (60 - 32))) && /* AVX? */
+              ((OPENSSL_ia32cap_P[1] & (1 << (43 - 32)))   /* XOP? */
+               | (OPENSSL_ia32cap_P[0] & (1 << 30))))) &&  /* "Intel CPU"? */
             plen > (sha_off + iv) &&
             (blocks = (plen - (sha_off + iv)) / SHA256_CBLOCK)) {
             SHA256_Update(&key->md, in + iv, sha_off);
@@ -590,12 +592,17 @@ static int aesni_cbc_hmac_sha256_cipher(EVP_CIPHER_CTX *ctx,
             maxpad |= (255 - maxpad) >> (sizeof(maxpad) * 8 - 8);
             maxpad &= 255;
 
-            ret &= constant_time_ge(maxpad, pad);
+            mask = constant_time_ge(maxpad, pad);
+            ret &= mask;
+            /*
+             * If pad is invalid then we will fail the above test but we must
+             * continue anyway because we are in constant time code. However,
+             * we'll use the maxpad value instead of the supplied pad to make
+             * sure we perform well defined pointer arithmetic.
+             */
+            pad = constant_time_select(mask, pad, maxpad);
 
             inp_len = len - (SHA256_DIGEST_LENGTH + pad + 1);
-            mask = (0 - ((inp_len - len) >> (sizeof(inp_len) * 8 - 1)));
-            inp_len &= mask;
-            ret &= (int)mask;
 
             key->aux.tls_aad[plen - 2] = inp_len >> 8;
             key->aux.tls_aad[plen - 1] = inp_len;
@@ -825,15 +832,19 @@ static int aesni_cbc_hmac_sha256_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
     case EVP_CTRL_AEAD_TLS1_AAD:
         {
             unsigned char *p = ptr;
-            unsigned int len = p[arg - 2] << 8 | p[arg - 1];
+            unsigned int len;
 
             if (arg != EVP_AEAD_TLS1_AAD_LEN)
                 return -1;
+
+            len = p[arg - 2] << 8 | p[arg - 1];
 
             if (ctx->encrypt) {
                 key->payload_length = len;
                 if ((key->aux.tls_ver =
                      p[arg - 4] << 8 | p[arg - 3]) >= TLS1_1_VERSION) {
+                    if (len < AES_BLOCK_SIZE)
+                        return 0;
                     len -= AES_BLOCK_SIZE;
                     p[arg - 2] = len >> 8;
                     p[arg - 1] = len;
