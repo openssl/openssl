@@ -69,6 +69,7 @@
 #include <openssl/conf.h>
 #include <openssl/conf_api.h>
 #include "e_os.h"
+#include "cryptlib.h"
 
 static void value_free_hash_doall_arg(CONF_VALUE *a,
                                       LHASH_OF(CONF_VALUE) *conf);
@@ -141,7 +142,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
             if (v != NULL)
                 return (v->value);
             if (strcmp(section, "ENV") == 0) {
-                p = getenv(name);
+                p = ossl_safe_getenv(name);
                 if (p != NULL)
                     return (p);
             }
@@ -154,7 +155,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         else
             return (NULL);
     } else
-        return (getenv(name));
+        return (ossl_safe_getenv(name));
 }
 
 #if 0                           /* There's no way to provide error checking
