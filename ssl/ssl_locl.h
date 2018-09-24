@@ -471,7 +471,11 @@ struct ssl_method_st {
     long (*ssl_ctx_callback_ctrl) (SSL_CTX *s, int cb_id, void (*fp) (void));
 };
 
-# define TLS13_MAX_RESUMPTION_PSK_LENGTH      PSK_MAX_PSK_LEN
+/*
+ * Matches the length of PSK_MAX_PSK_LEN. We keep it the same value for
+ * consistency, even in the event of OPENSSL_NO_PSK being defined.
+ */
+# define TLS13_MAX_RESUMPTION_PSK_LENGTH      256
 
 /*-
  * Lets make this into an ASN.1 type structure as follows
