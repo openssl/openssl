@@ -9,6 +9,7 @@ OpenSSL_version_num - get OpenSSL version number
 
  #include <openssl/opensslv.h>
  #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
+ #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
 
  #include <openssl/crypto.h>
 
