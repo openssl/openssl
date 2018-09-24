@@ -174,12 +174,9 @@ extern "C" {
 # define BIO_FLAGS_IO_SPECIAL    0x04
 # define BIO_FLAGS_RWS (BIO_FLAGS_READ|BIO_FLAGS_WRITE|BIO_FLAGS_IO_SPECIAL)
 # define BIO_FLAGS_SHOULD_RETRY  0x08
-# ifndef BIO_FLAGS_UPLINK
-/*
- * "UPLINK" flag denotes file descriptors provided by application. It
- * defaults to 0, as most platforms don't require UPLINK interface.
- */
-#  define BIO_FLAGS_UPLINK        0
+# if !OPENSSL_API_3
+/* This #define was replaced by an internal constant and should not be used. */
+#  define BIO_FLAGS_UPLINK       0
 # endif
 
 # define BIO_FLAGS_BASE64_NO_NL  0x100
