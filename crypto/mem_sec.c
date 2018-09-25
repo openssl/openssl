@@ -383,6 +383,9 @@ static int sh_init(size_t size, int minsize)
     size_t i;
     size_t pgsize;
     size_t aligned;
+#ifndef MAP_ANON
+    int fd;
+#endif
 
     memset(&sh, 0, sizeof(sh));
 
@@ -443,21 +446,17 @@ static int sh_init(size_t size, int minsize)
     pgsize = PAGE_SIZE;
 #endif
     sh.map_size = pgsize + sh.arena_size + pgsize;
-    if (1) {
 #ifdef MAP_ANON
+    sh.map_result = mmap(NULL, sh.map_size,
+                         PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
+#else
+    sh.map_result = MAP_FAILED;
+    if ((fd = open("/dev/zero", O_RDWR)) >= 0) {
         sh.map_result = mmap(NULL, sh.map_size,
-                             PROT_READ|PROT_WRITE, MAP_ANON|MAP_PRIVATE, -1, 0);
-    } else {
-#endif
-        int fd;
-
-        sh.map_result = MAP_FAILED;
-        if ((fd = open("/dev/zero", O_RDWR)) >= 0) {
-            sh.map_result = mmap(NULL, sh.map_size,
-                                 PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
-            close(fd);
-        }
+                             PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0);
+        close(fd);
     }
+#endif
     if (sh.map_result == MAP_FAILED)
         goto err;
     sh.arena = (char *)(sh.map_result + pgsize);
