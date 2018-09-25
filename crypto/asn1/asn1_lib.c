@@ -281,10 +281,12 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
             new_len = strlen(data);
     }
 
-    if ( new_len > INT_MAX)
+    if (new_len > INT_MAX) {
+        ASN1err(ASN1_F_ASN1_STRING_SET, ASN1_R_LENGTH_OUT_OF_RANGE);
         return 0;
-    else
+    } else {
         len = (int)new_len;
+    }
 
     if ((str->length <= len) || (str->data == NULL)) {
         c = str->data;
