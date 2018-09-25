@@ -40,6 +40,9 @@ The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
+Detailed documentation and use cases for most standard subcommands are available
+(e.g., L<x509(1)> or L<openssl-x509(1)>).
+
 Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.
 The environment variable B<OPENSSL_CONF> can be used to specify
@@ -368,6 +371,12 @@ SM3 Digest
 =back
 
 =head2 Encoding and Cipher Commands
+
+The following aliases provide convenient access to the most used encodings
+and ciphers.
+
+Depending on how OpenSSL was configured and built, not all ciphers listed
+here may be present. See L<enc(1)> for more information and command usage.
 
 =over 4
 
