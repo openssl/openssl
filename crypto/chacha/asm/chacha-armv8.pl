@@ -20,20 +20,22 @@
 #
 # Performance in cycles per byte out of large buffer.
 #
-#			IALU/gcc-4.9    3xNEON+1xIALU	6xNEON+2xIALU
+#			IALU/gcc-4.9    3xNEON+1xIALU	6xNEON+2xIALU(*)
 #
 # Apple A7		5.50/+49%       3.33            1.70
-# Cortex-A53		8.40/+80%       4.72		4.72(*)
-# Cortex-A57		8.06/+43%       4.90            4.43(**)
-# Denver		4.50/+82%       2.63		2.67(*)
-# X-Gene		9.50/+46%       8.82		8.89(*)
-# Mongoose		8.00/+44%	3.64		3.25
-# Kryo			8.17/+50%	4.83		4.65
+# Cortex-A53		8.40/+80%       4.72		4.72(**)
+# Cortex-A57		8.06/+43%       4.90            4.43(***)
+# Denver		4.50/+82%       2.63		2.67(**)
+# X-Gene		9.50/+46%       8.82		8.89(**)
+# Mongoose		8.00/+44%	3.64		3.25(***)
+# Kryo			8.17/+50%	4.83		4.65(***)
 #
-# (*)	it's expected that doubling interleave factor doesn't help
+# (*)	since no non-Apple processor exhibits significantly better
+#	performance, the code path is #ifdef __APPLE__-ed;
+# (**)	it's expected that doubling interleave factor doesn't help
 #	all processors, only those with higher NEON latency and
 #	higher instruction issue rate;
-# (**)	expected improvement was actually higher;
+# (***)	expected improvement was actually higher;
 
 $flavour=shift;
 $output=shift;
@@ -386,8 +388,10 @@ ChaCha20_neon:
 	stp	x23,x24,[sp,#48]
 	stp	x25,x26,[sp,#64]
 	stp	x27,x28,[sp,#80]
+#ifdef	__APPLE__
 	cmp	$len,#512
 	b.hs	.L512_or_more_neon
+#endif
 
 	sub	sp,sp,#64
 
@@ -693,6 +697,7 @@ my ($A0,$B0,$C0,$D0,$A1,$B1,$C1,$D1,$A2,$B2,$C2,$D2,
     $A3,$B3,$C3,$D3,$A4,$B4,$C4,$D4,$A5,$B5,$C5,$D5) = map("v$_.4s",(0..23));
 
 $code.=<<___;
+#ifdef	__APPLE__
 .type	ChaCha20_512_neon,%function
 .align	5
 ChaCha20_512_neon:
@@ -717,7 +722,7 @@ ChaCha20_512_neon:
 	ldp	@d[6],@d[7],[$ctr]		// load counter
 	ld1	{@K[3]},[$ctr]
 	ld1	{$ONE},[@x[0]]
-#ifdef	__ARMEB__
+# ifdef	__ARMEB__
 	rev64	@K[0],@K[0]
 	ror	@d[2],@d[2],#32
 	ror	@d[3],@d[3],#32
@@ -725,7 +730,7 @@ ChaCha20_512_neon:
 	ror	@d[5],@d[5],#32
 	ror	@d[6],@d[6],#32
 	ror	@d[7],@d[7],#32
-#endif
+# endif
 	add	@K[3],@K[3],$ONE		// += 1
 	stp	@K[0],@K[1],[sp,#0]		// off-load key block, invariant part
 	add	@K[3],@K[3],$ONE		// not typo
@@ -859,7 +864,7 @@ $code.=<<___;
 	add	@x[14],@x[14],@x[15],lsl#32
 	ldp	@x[13],@x[15],[$inp,#48]
 	add	$inp,$inp,#64
-#ifdef	__ARMEB__
+# ifdef	__ARMEB__
 	rev	@x[0],@x[0]
 	rev	@x[2],@x[2]
 	rev	@x[4],@x[4]
@@ -868,7 +873,7 @@ $code.=<<___;
 	rev	@x[10],@x[10]
 	rev	@x[12],@x[12]
 	rev	@x[14],@x[14]
-#endif
+# endif
 	eor	@x[0],@x[0],@x[1]
 	eor	@x[2],@x[2],@x[3]
 	eor	@x[4],@x[4],@x[5]
@@ -1000,7 +1005,7 @@ $code.=<<___;
 	add	$inp,$inp,#64
 	 add	$B5,$B5,@K[1]
 
-#ifdef	__ARMEB__
+# ifdef	__ARMEB__
 	rev	@x[0],@x[0]
 	rev	@x[2],@x[2]
 	rev	@x[4],@x[4]
@@ -1009,7 +1014,7 @@ $code.=<<___;
 	rev	@x[10],@x[10]
 	rev	@x[12],@x[12]
 	rev	@x[14],@x[14]
-#endif
+# endif
 	ld1.8	{$T0-$T3},[$inp],#64
 	eor	@x[0],@x[0],@x[1]
 	eor	@x[2],@x[2],@x[3]
@@ -1116,6 +1121,7 @@ $code.=<<___;
 	ldp	x29,x30,[sp],#96
 	ret
 .size	ChaCha20_512_neon,.-ChaCha20_512_neon
+#endif
 ___
 }
 }}}
