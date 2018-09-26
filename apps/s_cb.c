@@ -403,26 +403,40 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 #endif
 
 /* OQS note: is there a better place to put this? we only need it here... */
-#define OQS_CURVE_ID_NAME_STR(id) (id == 0x0200 ? "Frodo recommended" :               \
-				  (id == 0x0201 ? "SIKE 503" :	                  \
-				  (id == 0x0202 ? "SIKE 751" :	                  \
-				  (id == 0x0203 ? "Newhope" :	                  \
-				  (id == 0x0204 ? "NTRU" :		                  \
-				  (id == 0x0300 ? "P256 - Frodo recommended hybrid" : \
-				  (id == 0x0301 ? "P256 - SIKE 503 hybrid" :          \
-				  (id == 0x0302 ? "P256 - SIKE 751 hybrid" :          \
-				  (id == 0x0303 ? "P256 - Newhope hybrid" :           \
-				  (id == 0x0304 ? "P256 - NTRU hybrid" : ""))))))))))
+#define OQS_CURVE_ID_NAME_STR(id) (id == 0x0200 ? "sike503" : \
+				  (id == 0x0201 ? "sike751" :	\
+				  (id == 0x0202 ? "sidh503" : \
+				  (id == 0x0203 ? "sidh751" :	\
+				  (id == 0x0204 ? "frodo640aes" :	\
+				  (id == 0x0205 ? "frodo640cshake" :	\
+				  (id == 0x0206 ? "frodo976aes" :	\
+				  (id == 0x0207 ? "frodo976cshake" :	\
+				  (id == 0x0208 ? "bike1l1" :		\
+				  (id == 0x0209 ? "bike1l3" :		\
+				  (id == 0x020a ? "bike1l5" :		\
+				  (id == 0x020b ? "bike2l1" :		\
+				  (id == 0x020c ? "bike2l3" :		\
+				  (id == 0x020d ? "bike2l5" :		\
+				  (id == 0x020e ? "bike3l1" :		\
+				  (id == 0x020f ? "bike3l3" :		\
+				  (id == 0x0210 ? "bike3l5" :		\
+				  (id == 0x0300 ? "p256 - sike503 hybrid" : \
+				  (id == 0x0301 ? "p256 - sidh503 hybrid" : \
+				  (id == 0x0302 ? "p256 - frodo640aes hybrid" : \
+				  (id == 0x0303 ? "p256 - frodo640cshake hybrid" : \
+				  (id == 0x0304 ? "p256 - bike1l1 hybrid" : \
+				  (id == 0x0305 ? "p256 - bike2l1 hybrid" : \
+				  (id == 0x0306 ? "p256 - bike3l1 hybrid" : 0))))))))))))))))))))))))
 
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
     /* Special case for oqs key. Instead of relying on the peer key (s->s3->peer_tmp),
-       we see if our special field is set (s->s3->tmp.oqs_kex_nid). This way, we won't
+       we see if our special field is set (s->s3->tmp.oqs_kem_nid). This way, we won't
        have to modify the EVP api to set the key type (EVP_PKEY_assign). */
     EVP_PKEY *key;
-    int oqs_kex_curve_id = SSL_get_oqs_kex_curve_id(s);
-    if (oqs_kex_curve_id != 0) {
-      BIO_printf(out, "Server Temp Key: %s\n", OQS_CURVE_ID_NAME_STR(oqs_kex_curve_id));
+    int oqs_kem_curve_id = SSL_get_oqs_kem_curve_id(s);
+    if (oqs_kem_curve_id != 0) {
+      BIO_printf(out, "Server Temp Key: %s\n", OQS_CURVE_ID_NAME_STR(oqs_kem_curve_id));
       return 1;
     }
     /* ------------- end oqs */

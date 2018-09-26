@@ -3377,10 +3377,8 @@ int ssl3_clear(SSL *s)
 #endif
 
     /* Clear OQS artefacts */
-    OQS_RAND_free(s->s3->tmp.oqs_rand);
-    s->s3->tmp.oqs_rand = NULL;
-    OQS_KEX_free(s->s3->tmp.oqs_kex);
-    s->s3->tmp.oqs_kex = NULL;
+    OQS_KEM_free(s->s3->tmp.oqs_kem);
+    s->s3->tmp.oqs_kem = NULL;
     return 1;
 }
 
@@ -3711,12 +3709,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             return (int)sess->ext.ecpointformats_len;
         }
 #endif
-    case SSL_CTRL_GET_OQS_KEX_CURVE_ID:
+    case SSL_CTRL_GET_OQS_KEM_CURVE_ID:
         {
-	  if (s->server || s->session == NULL || s->s3->tmp.oqs_kex_curve_id == 0) {
+	  if (s->server || s->session == NULL || s->s3->tmp.oqs_kem_curve_id == 0) {
 	    return 0;
 	  } else {
-            return s->s3->tmp.oqs_kex_curve_id;
+            return s->s3->tmp.oqs_kem_curve_id;
 	  }
 	}
     default:
