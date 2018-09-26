@@ -319,11 +319,28 @@ extern const char OPT_PARAM_STR[];
 typedef struct options_st {
     const char *name;
     int retval;
-    /*
-     * value type: - no value (also the value zero), n number, p positive
-     * number, u unsigned, l long, s string, < input file, > output file,
-     * f any format, F der/pem format, E der/pem/engine format identifier.
-     * l, n and u include zero; p does not.
+    /*-
+     * value type:
+     *
+     *   '-' no value (also the value zero)
+     *   'n' number (type 'int')
+     *   'p' positive number (type 'int')
+     *   'u' unsigned number (type 'unsigned long')
+     *   'l' number (type 'unsigned long')
+     *   'M' number (type 'intmax_t')
+     *   'U' unsigned number (type 'uintmax_t')
+     *   's' string
+     *   '<' input file
+     *   '>' output file
+     *   '/' directory
+     *   'f' any format                    [OPT_FMT_ANY]
+     *   'F' der/pem format                [OPT_FMT_PEMDER]
+     *   'A' any ASN1, der/pem/b64 format  [OPT_FMT_ASN1]
+     *   'E' der/pem/engine format         [OPT_FMT_PDE]
+     *   'c' pem/der/smime format          [OPT_FMT_PDS]
+     *
+     * The 'l', 'n' and 'u' value types include the values zero,
+     * the 'p' value type does not.
      */
     int valtype;
     const char *helpstr;
