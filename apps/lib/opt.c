@@ -194,7 +194,7 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
         case   0: case '-': case '.':
         case '/': case '<': case '>': case 'E': case 'F':
         case 'M': case 'U': case 'f': case 'l': case 'n': case 'p': case 's':
-        case 'u': case 'c': case ':': case 'N':
+        case 'u': case 'c': case ':': case 'N': case 'A':
             break;
         default:
             OPENSSL_assert(0);
@@ -225,7 +225,9 @@ char *opt_init(int ac, char **av, const OPTIONS *o)
 }
 
 static OPT_PAIR formats[] = {
-    {"PEM/DER", OPT_FMT_PEMDER},
+    {"pem", OPT_FMT_PEM},
+    {"der", OPT_FMT_DER},
+    {"b64", OPT_FMT_B64},
     {"pkcs12", OPT_FMT_PKCS12},
     {"smime", OPT_FMT_SMIME},
     {"engine", OPT_FMT_ENGINE},
@@ -247,16 +249,12 @@ static int opt_format_error(const char *s, unsigned long flags)
 {
     OPT_PAIR *ap;
 
-    if (flags == OPT_FMT_PEMDER) {
-        opt_printf_stderr("%s: Bad format \"%s\"; must be pem or der\n",
-                          prog, s);
-    } else {
-        opt_printf_stderr("%s: Bad format \"%s\"; must be one of:\n",
-                          prog, s);
-        for (ap = formats; ap->name; ap++)
-            if (flags & ap->retval)
-                opt_printf_stderr("   %s\n", ap->name);
-    }
+    opt_printf_stderr("%s: Bad format \"%s\"; must be one of: ", prog, s);
+    for (ap = formats; ap->name; ap++)
+        if (flags & ap->retval)
+            opt_printf_stderr(" %s", ap->name);
+    opt_printf_stderr("\n");
+
     return 0;
 }
 
@@ -267,9 +265,21 @@ int opt_format(const char *s, unsigned long flags, int *result)
     default:
         opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
         return 0;
+    case 'B':
+    case 'b':
+        if (s[1] == '\0'
+            || strcmp(s, "B64") == 0 || strcmp(s, "b64") == 0
+            || strcmp(s, "BASE64") == 0 || strcmp(s, "base64") == 0 ) {
+            if ((flags & OPT_FMT_B64) == 0)
+                return opt_format_error(s, flags);
+            *result = FORMAT_BASE64;
+        } else {
+            return 0;
+        }
+        break;
     case 'D':
     case 'd':
-        if ((flags & OPT_FMT_PEMDER) == 0)
+        if ((flags & OPT_FMT_DER) == 0)
             return opt_format_error(s, flags);
         *result = FORMAT_ASN1;
         break;
@@ -319,7 +329,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
     case 'P':
     case 'p':
         if (s[1] == '\0' || strcmp(s, "PEM") == 0 || strcmp(s, "pem") == 0) {
-            if ((flags & OPT_FMT_PEMDER) == 0)
+            if ((flags & OPT_FMT_PEM) == 0)
                 return opt_format_error(s, flags);
             *result = FORMAT_PEM;
         } else if (strcmp(s, "PVK") == 0 || strcmp(s, "pvk") == 0) {
@@ -976,11 +986,14 @@ int opt_next(void)
         case 'E':
         case 'F':
         case 'f':
+        case 'A':
+        case 'a':
             if (opt_format(arg,
                            o->valtype == 'c' ? OPT_FMT_PDS :
                            o->valtype == 'E' ? OPT_FMT_PDE :
-                           o->valtype == 'F' ? OPT_FMT_PEMDER
-                           : OPT_FMT_ANY, &ival))
+                           o->valtype == 'F' ? OPT_FMT_PEMDER :
+                           o->valtype == 'A' ? OPT_FMT_ASN1 :
+                           OPT_FMT_ANY, &ival))
                 break;
             opt_printf_stderr("%s: Invalid format \"%s\" for option -%s\n",
                               prog, arg, o->name);
