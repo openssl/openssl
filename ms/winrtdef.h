@@ -14,7 +14,7 @@
 #if defined(OPENSSL_WINAPP)
 //Include stdio.h to replace fprintf
 # include <stdio.h>
-# if !defined(NTDDI_VERSION) || (NTDDI_VERSION < NTDDI_WIN10_RS4)
+# if !defined(NTDDI_WIN10_RS4) || (NTDDI_VERSION < NTDDI_WIN10_RS4)
 #  ifdef getenv
 #   undef getenv
 #  endif
