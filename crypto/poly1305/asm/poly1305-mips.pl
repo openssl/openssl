@@ -67,7 +67,31 @@ $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? "0x0003f000" : "0x00030000";
 ($in0,$in1,$tmp0,$tmp1,$tmp2,$tmp3,$tmp4) = ($a4,$a5,$a6,$a7,$at,$t0,$t1);
 
 $code.=<<___;
-#include "mips_arch.h"
+#if (defined(_MIPS_ARCH_MIPS64R3) || defined(_MIPS_ARCH_MIPS64R5) || \
+     defined(_MIPS_ARCH_MIPS64R6)) \
+     && !defined(_MIPS_ARCH_MIPS64R2)
+# define _MIPS_ARCH_MIPS64R2
+#endif
+
+#if (_MIPS_ARCH_MIPS64R6)
+# define dmultu(rs,rt)
+# define mflo(rd,rs,rt)	dmulu	rd,rs,rt
+# define mfhi(rd,rs,rt)	dmuhu	rd,rs,rt
+#else
+# define dmultu(rs,rt)		dmultu	rs,rt
+# define mflo(rd,rs,rt)	mflo	rd
+# define mfhi(rd,rs,rt)	mfhi	rd
+#endif
+
+#ifdef	__KERNEL__
+# define poly1305_init   poly1305_init_mips
+# define poly1305_blocks poly1305_blocks_mips
+# define poly1305_emit   poly1305_emit_mips
+#endif
+
+#if defined(__MIPSEB__) && !defined(MIPSEB)
+# define MIPSEB
+#endif
 
 #ifdef MIPSEB
 # define MSB 0
