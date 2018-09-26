@@ -35,15 +35,19 @@
 #	translator is not almighty;
 
 $flavour=shift;
-$output=shift;
+if ($flavour=~/\w[\w\-]*\.\w+$/) { $output=$flavour; undef $flavour; }
+else { while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {} }
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
-( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
-die "can't locate arm-xlate.pl";
+if ($flavour && $flavour ne "void") {
+    $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+    ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
+    ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
+    die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
-*STDOUT=*OUT;
+    open STDOUT,"| \"$^X\" $xlate $flavour $output";
+} else {
+    open STDOUT,">$output";
+}
 
 my ($ctx,$inp,$len,$padbit) = map("x$_",(0..3));
 my ($mac,$nonce)=($inp,$len);
@@ -51,14 +55,20 @@ my ($mac,$nonce)=($inp,$len);
 my ($h0,$h1,$h2,$r0,$r1,$s1,$t0,$t1,$d0,$d1,$d2) = map("x$_",(4..14));
 
 $code.=<<___;
-#include "arm_arch.h"
+#ifndef	__KERNEL__
+# include "arm_arch.h"
+.extern	OPENSSL_armcap_P
+#endif
 
 .text
 
 // forward "declarations" are required for Apple
-.extern	OPENSSL_armcap_P
 .globl	poly1305_blocks
 .globl	poly1305_emit
+#ifdef	__KERNEL__
+.globl	poly1305_blocks_neon
+.globl	poly1305_emit_neon
+#endif
 
 .globl	poly1305_init
 .type	poly1305_init,%function
@@ -71,18 +81,20 @@ poly1305_init:
 	csel	x0,xzr,x0,eq
 	b.eq	.Lno_key
 
-#ifdef	__ILP32__
+#ifndef	__KERNEL__
+# ifdef	__ILP32__
 	ldrsw	$t1,.LOPENSSL_armcap_P
-#else
+# else
 	ldr	$t1,.LOPENSSL_armcap_P
-#endif
+# endif
 	adr	$t0,.LOPENSSL_armcap_P
+	ldr	w17,[$t0,$t1]
+#endif
 
 	ldp	$r0,$r1,[$inp]		// load key
 	mov	$s1,#0xfffffffc0fffffff
 	movk	$s1,#0x0fff,lsl#48
-	ldr	w17,[$t0,$t1]
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$r0,$r0			// flip bytes
 	rev	$r1,$r1
 #endif
@@ -91,6 +103,7 @@ poly1305_init:
 	and	$r1,$r1,$s1		// &=0ffffffc0ffffffc
 	stp	$r0,$r1,[$ctx,#32]	// save key value
 
+#ifndef	__KERNEL__
 	tst	w17,#ARMV7_NEON
 
 	adr	$d0,poly1305_blocks
@@ -101,13 +114,16 @@ poly1305_init:
 	csel	$d0,$d0,$r0,eq
 	csel	$d1,$d1,$r1,eq
 
-#ifdef	__ILP32__
+# ifdef	__ILP32__
 	stp	w12,w13,[$len]
-#else
+# else
 	stp	$d0,$d1,[$len]
-#endif
+# endif
 
 	mov	x0,#1
+#else
+	mov	x0,#0
+#endif
 .Lno_key:
 	ret
 .size	poly1305_init,.-poly1305_init
@@ -128,7 +144,7 @@ poly1305_blocks:
 .Loop:
 	ldp	$t0,$t1,[$inp],#16	// load input
 	sub	$len,$len,#16
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$t0,$t0
 	rev	$t1,$t1
 #endif
@@ -192,13 +208,13 @@ poly1305_emit:
 	csel	$h0,$h0,$d0,eq
 	csel	$h1,$h1,$d1,eq
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	ror	$t0,$t0,#32		// flip nonce words
 	ror	$t1,$t1,#32
 #endif
 	adds	$h0,$h0,$t0		// accumulate nonce
 	adc	$h1,$h1,$t1
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$h0,$h0			// flip output bytes
 	rev	$h1,$h1
 #endif
@@ -218,9 +234,9 @@ my ($in2,$zeros)=("x16","x17");
 my $is_base2_26 = $zeros;		# borrow
 
 $code.=<<___;
-.type	poly1305_mult,%function
+.type	__poly1305_mult,%function
 .align	5
-poly1305_mult:
+__poly1305_mult:
 	mul	$d0,$h0,$r0		// h0*r0
 	umulh	$d1,$h0,$r0
 
@@ -253,11 +269,11 @@ poly1305_mult:
 	adc	$h2,$h2,xzr
 
 	ret
-.size	poly1305_mult,.-poly1305_mult
+.size	__poly1305_mult,.-__poly1305_mult
 
-.type	poly1305_splat,%function
+.type	__poly1305_splat,%function
 .align	5
-poly1305_splat:
+__poly1305_splat:
 	and	x12,$h0,#0x03ffffff	// base 2^64 -> base 2^26
 	ubfx	x13,$h0,#26,#26
 	extr	x14,$h1,$h0,#52
@@ -280,7 +296,7 @@ poly1305_splat:
 	str	w15,[$ctx,#16*8]	// s4
 
 	ret
-.size	poly1305_splat,.-poly1305_splat
+.size	__poly1305_splat,.-__poly1305_splat
 
 .type	poly1305_blocks_neon,%function
 .align	5
@@ -328,7 +344,7 @@ poly1305_blocks_neon:
 	adcs	$h1,$h1,xzr
 	adc	$h2,$h2,xzr
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$d0,$d0
 	rev	$d1,$d1
 #endif
@@ -336,7 +352,7 @@ poly1305_blocks_neon:
 	adcs	$h1,$h1,$d1
 	adc	$h2,$h2,$padbit
 
-	bl	poly1305_mult
+	bl	__poly1305_mult
 	ldr	x30,[sp,#8]
 
 	cbz	$padbit,.Lstore_base2_64_neon
@@ -374,7 +390,7 @@ poly1305_blocks_neon:
 	ldp	$d0,$d1,[$inp],#16	// load input
 	sub	$len,$len,#16
 	add	$s1,$r1,$r1,lsr#2	// s1 = r1 + (r1 >> 2)
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$d0,$d0
 	rev	$d1,$d1
 #endif
@@ -382,7 +398,7 @@ poly1305_blocks_neon:
 	adcs	$h1,$h1,$d1
 	adc	$h2,$h2,$padbit
 
-	bl	poly1305_mult
+	bl	__poly1305_mult
 
 .Linit_neon:
 	and	x10,$h0,#0x03ffffff	// base 2^64 -> base 2^26
@@ -409,19 +425,19 @@ poly1305_blocks_neon:
 	mov	$h1,$r1
 	mov	$h2,xzr
 	add	$ctx,$ctx,#48+12
-	bl	poly1305_splat
+	bl	__poly1305_splat
 
-	bl	poly1305_mult		// r^2
+	bl	__poly1305_mult		// r^2
 	sub	$ctx,$ctx,#4
-	bl	poly1305_splat
+	bl	__poly1305_splat
 
-	bl	poly1305_mult		// r^3
+	bl	__poly1305_mult		// r^3
 	sub	$ctx,$ctx,#4
-	bl	poly1305_splat
+	bl	__poly1305_splat
 
-	bl	poly1305_mult		// r^4
+	bl	__poly1305_mult		// r^4
 	sub	$ctx,$ctx,#4
-	bl	poly1305_splat
+	bl	__poly1305_splat
 	ldr	x30,[sp,#8]
 
 	add	$in2,$inp,#32
@@ -459,7 +475,7 @@ poly1305_blocks_neon:
 	lsl	$padbit,$padbit,#24
 	add	x15,$ctx,#48
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	x8,x8
 	rev	x12,x12
 	rev	x9,x9
@@ -495,7 +511,7 @@ poly1305_blocks_neon:
 	ld1	{$S2,$R3,$S3,$R4},[x15],#64
 	ld1	{$S4},[x15]
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	x8,x8
 	rev	x12,x12
 	rev	x9,x9
@@ -556,7 +572,7 @@ poly1305_blocks_neon:
 	umull	$ACC1,$IN23_0,${R1}[2]
 	 ldp	x9,x13,[$in2],#48
 	umull	$ACC0,$IN23_0,${R0}[2]
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	 rev	x8,x8
 	 rev	x12,x12
 	 rev	x9,x9
@@ -621,7 +637,7 @@ poly1305_blocks_neon:
 	umlal	$ACC4,$IN01_2,${R2}[0]
 	umlal	$ACC1,$IN01_2,${S4}[0]
 	umlal	$ACC2,$IN01_2,${R0}[0]
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	 rev	x8,x8
 	 rev	x12,x12
 	 rev	x9,x9
@@ -900,13 +916,13 @@ poly1305_emit_neon:
 	csel	$h0,$h0,$d0,eq
 	csel	$h1,$h1,$d1,eq
 
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	ror	$t0,$t0,#32		// flip nonce words
 	ror	$t1,$t1,#32
 #endif
 	adds	$h0,$h0,$t0		// accumulate nonce
 	adc	$h1,$h1,$t1
-#ifdef	__ARMEB__
+#ifdef	__AARCH64EB__
 	rev	$h0,$h0			// flip output bytes
 	rev	$h1,$h1
 #endif

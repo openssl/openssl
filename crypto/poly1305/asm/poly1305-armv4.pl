@@ -46,7 +46,17 @@ if ($flavour && $flavour ne "void") {
 ($ctx,$inp,$len,$padbit)=map("r$_",(0..3));
 
 $code.=<<___;
-#include "arm_arch.h"
+#ifndef	__KERNEL__
+# include "arm_arch.h"
+#else
+# define __ARM_ARCH__ __LINUX_ARM_ARCH__
+# define __ARM_MAX_ARCH__ __LINUX_ARM_ARCH__
+# define poly1305_init   poly1305_init_arm
+# define poly1305_blocks poly1305_blocks_arm
+# define poly1305_emit   poly1305_emit_arm
+.globl	poly1305_emit_neon
+.globl	poly1305_blocks_neon
+#endif
 
 .text
 #if defined(__thumb2__)
@@ -81,7 +91,7 @@ poly1305_init:
 	moveq	r0,#0
 	beq	.Lno_key
 
-#if	__ARM_MAX_ARCH__>=7
+#if	__ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	adr	r11,.Lpoly1305_init
 	ldr	r12,.LOPENSSL_armcap
 #endif
@@ -99,7 +109,7 @@ poly1305_init:
 	ldrb	r7,[$inp,#6]
 	and	r4,r4,r10
 
-#if	__ARM_MAX_ARCH__>=7
+#if	__ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	ldr	r12,[r11,r12]		@ OPENSSL_armcap_P
 # ifdef	__APPLE__
 	ldr	r12,[r12]
@@ -114,7 +124,7 @@ poly1305_init:
 	ldrb	r8,[$inp,#10]
 	and	r5,r5,r3
 
-#if	__ARM_MAX_ARCH__>=7
+#if	__ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	tst	r12,#ARMV7_NEON		@ check for NEON
 # ifdef	__APPLE__
 	adr	r9,poly1305_blocks_neon
@@ -161,7 +171,7 @@ poly1305_init:
 	str	r6,[$ctx,#8]
 	and	r7,r7,r3
 	str	r7,[$ctx,#12]
-#if	__ARM_MAX_ARCH__>=7
+#if	__ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 	stmia	r2,{r11,r12}		@ fill functions table
 	mov	r0,#1
 #else
@@ -457,6 +467,7 @@ $code.=<<___;
 .type	poly1305_init_neon,%function
 .align	5
 poly1305_init_neon:
+.Lpoly1305_init_neon:
 	ldr	r4,[$ctx,#20]		@ load key base 2^32
 	ldr	r5,[$ctx,#24]
 	ldr	r6,[$ctx,#28]
@@ -688,7 +699,7 @@ poly1305_blocks_neon:
 	bne	.Lbase2_26_neon
 
 	stmdb	sp!,{r1-r3,lr}
-	bl	poly1305_init_neon
+	bl	.Lpoly1305_init_neon
 
 	ldr	r4,[$ctx,#0]		@ load hash value base 2^32
 	ldr	r5,[$ctx,#4]
@@ -1228,15 +1239,17 @@ poly1305_emit_neon:
 .align	5
 .Lzeros:
 .long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+# ifndef __KERNEL__
 .LOPENSSL_armcap:
 .word	OPENSSL_armcap_P-.Lpoly1305_init
+# endif
 #endif
 ___
 }	}
 $code.=<<___;
 .asciz	"Poly1305 for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
-#if	__ARM_MAX_ARCH__>=7
+#if	__ARM_MAX_ARCH__>=7 && !defined(__KERNEL__)
 .comm   OPENSSL_armcap_P,4,4
 #endif
 ___
