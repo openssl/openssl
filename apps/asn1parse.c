@@ -32,7 +32,7 @@ const OPTIONS asn1parse_options[] = {
     {"oid", OPT_OID, '<', "file of extra oid definitions"},
 
     OPT_SECTION("I/O"),
-    {"inform", OPT_INFORM, 'F', "input format - one of DER PEM"},
+    {"inform", OPT_INFORM, 'A', "input format - one of DER PEM B64"},
     {"in", OPT_IN, '<', "input file"},
     {"out", OPT_OUT, '>', "output file (output format is always DER)"},
     {"noout", OPT_NOOUT, 0, "do not produce any output"},
@@ -44,7 +44,7 @@ const OPTIONS asn1parse_options[] = {
     {OPT_MORE_STR, 0, 0, "into multiple ASN1 blob wrappings"},
     {"genconf", OPT_GENCONF, 's', "file to generate ASN1 structure from"},
     {"strictpem", OPT_STRICTPEM, 0,
-     "do not attempt base64 decode outside PEM markers"},
+     "equivalent to '-inform pem' (obsolete)"},
     {"item", OPT_ITEM, 's', "item to parse and print"},
     {OPT_MORE_STR, 0, 0, "(-inform  will be ignored)"},
 
@@ -69,7 +69,7 @@ int asn1parse_main(int argc, char **argv)
     unsigned char *str = NULL;
     char *name = NULL, *header = NULL, *prog;
     const unsigned char *ctmpbuf;
-    int indent = 0, noout = 0, dump = 0, strictpem = 0, informat = FORMAT_PEM;
+    int indent = 0, noout = 0, dump = 0, informat = FORMAT_PEM;
     int offset = 0, ret = 1, i, j;
     long num, tmplen;
     unsigned char *tmpbuf;
@@ -96,7 +96,7 @@ int asn1parse_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_ASN1, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -136,7 +136,7 @@ int asn1parse_main(int argc, char **argv)
             genconf = opt_arg();
             break;
         case OPT_STRICTPEM:
-            strictpem = 1;
+            /* accepted for backward compatibility */
             informat = FORMAT_PEM;
             break;
         case OPT_ITEM:
@@ -178,7 +178,7 @@ int asn1parse_main(int argc, char **argv)
 
     if ((buf = BUF_MEM_new()) == NULL)
         goto end;
-    if (strictpem) {
+    if (informat == FORMAT_PEM) {
         if (PEM_read_bio(in, &name, &header, &str, &num) != 1) {
             BIO_printf(bio_err, "Error reading PEM file\n");
             ERR_print_errors(bio_err);
@@ -198,7 +198,7 @@ int asn1parse_main(int argc, char **argv)
             }
         } else {
 
-            if (informat == FORMAT_PEM) {
+            if (informat == FORMAT_BASE64) {
                 BIO *tmp;
 
                 if ((b64 = BIO_new(BIO_f_base64())) == NULL)
