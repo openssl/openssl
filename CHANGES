@@ -7,7 +7,19 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
+ Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
+
+  *) Switch to a new version scheme using three numbers MAJOR.MINOR.PATCH.
+
+     o Major releases (indicated by incrementing the MAJOR release number)
+       may introduce incompatible API/ABI changes.
+     o Minor releases (indicated by incrementing the MINOR release number)
+       may introduce new features but retain API/ABI compatibility.
+     o Patch releases (indicated by incrementing the PATCH number)
+       are intended for bug fixes and other improvements of existing
+       features only (like improving performance or adding documentation)
+       and retain API/ABI compatibility.
+     [Richard Levitte]
 
   *) Remove the 'dist' target and add a tarball building script.  The
      'dist' target has fallen out of use, and it shouldn't be

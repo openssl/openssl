@@ -386,19 +386,9 @@ _____
 _____
 
     if (defined $version) {
-        my ($libvmajor, $libvminor, $libvedit, $libvpatch) =
-            $version =~ /^(\d+)_(\d+)_(\d+)([a-z]{0,2})(?:-.*)?$/;
-        my $libvpatchnum = 0;
-        for (split '', $libvpatch // '') {
-            $libvpatchnum += ord(lc($_)) - 96;
-            # To compensate because the letter 'z' is always followed by
-            # another, i.e. doesn't add any value on its own
-            $libvpatchnum-- if lc($_) eq 'z';
-        }
-        my $match1 = $libvmajor * 100 + $libvminor;
-        my $match2 = $libvedit * 100 + $libvpatchnum;
+        my ($libvmajor, $libvminor) = $version =~ /^(\d+)_(\d+)$/;
         print <<"_____";
-GSMATCH=LEQUAL,$match1,$match2
+GSMATCH=LEQUAL,$libvmajor,$libvminor;
 _____
     }
 }

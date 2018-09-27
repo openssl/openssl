@@ -118,7 +118,8 @@ opthelp:
         version = 1;
 
     if (version) {
-        if (OpenSSL_version_num() == OPENSSL_VERSION_NUMBER)
+        if (strcmp(OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
+                   OPENSSL_FULL_VERSION_STR) == 0)
             printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
         else
             printf("%s (Library: %s)\n",

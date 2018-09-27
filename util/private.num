@@ -282,7 +282,14 @@ EVP_rc5_32_12_16_cfb                    define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
-OPENSSL_VERSION_NUMBER                  define
+OPENSSL_VERSION_MAJOR                   define
+OPENSSL_VERSION_MINOR                   define
+OPENSSL_VERSION_NUMBER                  define deprecated 3.0.0
+OPENSSL_VERSION_PATCH                   define
+OPENSSL_VERSION_PRE_RELEASE             define
+OPENSSL_VERSION_BUILD_METADATA          define
+OPENSSL_VERSION_PRE_RELEASE_STR         define
+OPENSSL_VERSION_BUILD_METADATA_STR      define
 OPENSSL_VERSION_TEXT                    define
 OPENSSL_clear_free                      define
 OPENSSL_clear_realloc                   define

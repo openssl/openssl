@@ -3223,8 +3223,8 @@ int speed_main(int argc, char **argv)
  show_res:
 #endif
     if (!mr) {
-        printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
-        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("version: %s\n", OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
+        printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
 #ifndef OPENSSL_NO_MD2
