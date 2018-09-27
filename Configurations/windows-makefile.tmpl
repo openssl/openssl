@@ -71,11 +71,11 @@ PLATFORM={- $config{target} -}
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
 
-VERSION={- $config{version} -}
+VERSION={- "$config{major}.$config{minor}.$config{patch}$config{prerelease}$config{build_metadata}" -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 
-SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
+SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 
 LIBS={- join(" ", map { ( shlib_import($_), lib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}

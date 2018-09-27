@@ -638,7 +638,7 @@ STRING must conform to the following EBNF description:
   space          = " " | "\t";
   symbol         = ( letter | "_"), { letter | digit | "_" };
   ordinal        = number;
-  version        = number, "_", number, "_", number, letter, [ letter ];
+  version        = number, "_", number, "_", number, [ letter, [ letter ] ];
   exist          = "EXIST" | "NOEXIST";
   platforms      = platform, { ",", platform };
   platform       = ( letter | "_" ) { letter | digit | "_" };
@@ -678,7 +678,7 @@ sub new {
             unless ( scalar @a == 4
                      && $a[0] =~ /^[A-Za-z_][A-Za-z_0-9]*$/
                      && $a[1] =~ /^\d+$/
-                     && $a[2] =~ /^(?:\*|\d+_\d+_\d+(?:[a-z]{0,2}))$/
+                     && $a[2] =~ /^(?:\*|\d+_\d+_\d+[a-z]{0,2})$/
                      && $a[3] =~ /^
                                   (?:NO)?EXIST:
                                   [^:]*:
@@ -841,6 +841,8 @@ OpenSSL::Ordinals::Item objects.
 =cut
 
 sub by_version {
+    # Until we're rid of everything with the old version scheme,
+    # we need to be able to handle older style x.y.zl versions.
     sub _ossl_versionsplit {
         my $textversion = shift;
         return $textversion if $textversion eq '*';
@@ -891,7 +893,7 @@ sub f_version {
 
     $version =~ s|\.|_|g if $version;
     croak "No version specified"
-        unless $version && $version =~ /^\d_\d_\d[a-z]{0,2}$/;
+        unless $version && $version =~ /^\d+_\d+_\d+[a-z]{0,2}$/;
 
     return sub { $_[0]->version() eq $version };
 }

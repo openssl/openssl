@@ -22,19 +22,6 @@
 #ifndef OPENSSL_NO_HW
 # ifndef OPENSSL_NO_HW_PADLOCK
 
-/* Attempt to have a single source for both 0.9.7 and 0.9.8 :-) */
-#  if (OPENSSL_VERSION_NUMBER >= 0x00908000L)
-#   ifndef OPENSSL_NO_DYNAMIC_ENGINE
-#    define DYNAMIC_ENGINE
-#   endif
-#  elif (OPENSSL_VERSION_NUMBER >= 0x00907000L)
-#   ifdef ENGINE_DYNAMIC_SUPPORT
-#    define DYNAMIC_ENGINE
-#   endif
-#  else
-#   error "Only OpenSSL >= 0.9.7 is supported"
-#  endif
-
 /*
  * VIA PadLock AES is available *ONLY* on some x86 CPUs. Not only that it
  * doesn't exist elsewhere, but it even can't be compiled on other platforms!

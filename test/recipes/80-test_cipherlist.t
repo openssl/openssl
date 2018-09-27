@@ -20,7 +20,7 @@ setup("test_cipherlist");
 my ($build_version, $library_version) = openssl_versions();
 plan skip_all =>
     "This test recipe isn't supported when doing regression testing"
-    if $build_version != $library_version;
+    if $build_version ne $library_version;
 
 my $no_anytls = alldisabled(available_protocols("tls"));
 

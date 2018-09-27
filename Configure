@@ -242,28 +242,34 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 # Collect version numbers
-$config{version} = "unknown";
-$config{version_num} = "unknown";
-$config{shlib_version_number} = "unknown";
-$config{shlib_version_history} = "unknown";
+$config{major} = "unknown";
+$config{minor} = "unknown";
+$config{patch} = "unknown";
+$config{prerelease} = "";
+$config{build_metadata} = "";
+$config{shlib_version} = "unknown";
 
 collect_information(
     collect_from_file(catfile($srcdir,'include/openssl/opensslv.h')),
-    qr/OPENSSL.VERSION.TEXT.*OpenSSL (\S+) / => sub { $config{version} = $1; },
-    qr/OPENSSL.VERSION.NUMBER.*(0x\S+)/	     => sub { $config{version_num}=$1 },
-    qr/SHLIB_VERSION_NUMBER *"([^"]+)"/	     => sub { $config{shlib_version_number}=$1 },
-    qr/SHLIB_VERSION_HISTORY *"([^"]*)"/     => sub { $config{shlib_version_history}=$1 }
+    qr/#\s+define\s+OPENSSL_VERSION_MAJOR\s+(\d+)/ =>
+        sub { $config{major} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_MINOR\s+(\d+)/ =>
+        sub { $config{minor} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_PATCH\s+(\d+)/ =>
+        sub { $config{patch} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_PRE_RELEASE\s+"((?:\\.|[^"])*)"/ =>
+        sub { $config{prerelease} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_BUILD_METADATA\s+"((?:\\.|[^"])*)"/ =>
+        sub { $config{build_metadata} = $1; },
+    qr/#\s+define\s+OPENSSL_SHLIB_VERSION\s+([\d\.]+)/ =>
+        sub { $config{shlib_version} = $1; },
     );
-if ($config{shlib_version_history} ne "") { $config{shlib_version_history} .= ":"; }
-
-($config{major}, $config{minor})
-    = ($config{version} =~ /^([0-9]+)\.([0-9\.]+)/);
-($config{shlib_major}, $config{shlib_minor})
-    = ($config{shlib_version_number} =~ /^([0-9]+)\.([0-9\.]+)/);
 die "erroneous version information in opensslv.h: ",
-    "$config{major}, $config{minor}, $config{shlib_major}, $config{shlib_minor}\n"
-    if ($config{major} eq "" || $config{minor} eq ""
-	|| $config{shlib_major} eq "" ||  $config{shlib_minor} eq "");
+    "$config{major}.$config{minor}.$config{patch}, $config{shlib_version}\n"
+    if ($config{major} eq "unknown"
+            || $config{minor} eq "unknown"
+            || $config{patch} eq "unknown"
+            || $config{shlib_version} eq "unknown");
 
 # Collect target configurations
 
@@ -374,6 +380,7 @@ my @disablables = (
     "scrypt",
     "sctp",
     "seed",
+    "newversion-only",
     "shared",
     "siphash",
     "sm2",
@@ -429,6 +436,7 @@ our %disabled = ( # "what"         => "comment"
                   "msan"                => "default",
 		  "rc5"                 => "default",
 		  "sctp"                => "default",
+		  "newversion-only"     => "default",
 		  "ssl-trace"           => "default",
 		  "ssl3"                => "default",
 		  "ssl3-method"         => "default",

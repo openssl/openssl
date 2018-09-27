@@ -46,7 +46,6 @@ sub shlib {
     $lib = $unified_info{sharednames}->{$lib}
         . ($target{shlib_variant} || "")
         . ($target{shared_extension} || ".so");
-    $lib =~ s|\.\$\(SHLIB_VERSION_NUMBER\)
-             |.$config{shlib_version_number}|x;
+    $lib =~ s|\.\$\(SHLIB_VERSION_NUMBER\)|.$config{shlib_version}|;
     return $lib;
 }

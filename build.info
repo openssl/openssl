@@ -3,14 +3,11 @@
 SUBDIRS=crypto ssl apps test util tools fuzz engines
 
 {-
-     use File::Spec::Functions;
-
-     our $sover = $config{shlib_version_number};
-     our $sover_filename = $sover;
-     $sover_filename =~ s|\.|_|g
+     my @sover = split(/\./, $config{shlib_version});
+     our $sover_filename;
+     $sover_filename = join('.', @sover)
          if $config{target} =~ /^mingw/ || $config{target} =~ /^VC-/;
-     $sover_filename =
-         sprintf "%02d%02d", split m|\.|, $config{shlib_version_number}
+     $sover_filename = join('', map { sprintf "%02d", $_ } @sover)
          if $config{target} =~ /^vms/;
      "";
 -}
