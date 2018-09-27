@@ -96,9 +96,13 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
             while (len >= 16) {
                 (*block) (ivec, ecount_buf, key);
                 ctr128_inc_aligned(ivec);
-                for (n = 0; n < 16; n += sizeof(size_t))
-                    *(size_t *)(out + n) =
-                        *(size_t *)(in + n) ^ *(size_t *)(ecount_buf + n);
+                for (n = 0; n < 16; n += sizeof(size_t)) {
+                    size_t a, b;
+                    memcpy(&a, in + n, sizeof(a));
+                    memcpy(&b, ecount_buf + n, sizeof(b));
+                    a ^= b;
+                    memcpy(out + n, &a, sizeof(a));
+                }
                 len -= 16;
                 out += 16;
                 in += 16;

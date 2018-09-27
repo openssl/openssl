@@ -40,9 +40,13 @@ void CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 # endif
             while (len >= 16) {
                 (*block) (ivec, ivec, key);
-                for (; n < 16; n += sizeof(size_t))
-                    *(size_t *)(out + n) =
-                        *(size_t *)(in + n) ^ *(size_t *)(ivec + n);
+                for (; n < 16; n += sizeof(size_t)) {
+                    size_t a, b;
+                    memcpy(&a, in + n, sizeof(a));
+                    memcpy(&b, ivec + n, sizeof(b));
+                    a ^= b;
+                    memcpy(out + n, &a, sizeof(a));
+                }
                 len -= 16;
                 out += 16;
                 in += 16;
