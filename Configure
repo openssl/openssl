@@ -43,8 +43,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
-# --api         One of 0.9.8, 1.0.0 or 1.1.0.  Do not compile support for
-#               interfaces deprecated as of the specified OpenSSL version.
+# --api         One of 0.9.8, 1.0.0, 1.1.0 or 3.0.0 (or 3).  Do not compile
+#               support for interfaces deprecated as of the specified OpenSSL
+#               version.
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
@@ -173,8 +174,9 @@ our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #
 # API compatibility name to version number mapping.
 #
-my $maxapi = "1.1.0";           # API for "no-deprecated" builds
+my $maxapi = "3.0.0";           # API for "no-deprecated" builds
 my $apitable = {
+    "3.0.0" => "0x30000000L",
     "1.1.0" => "0x10100000L",
     "1.0.0" => "0x10000000L",
     "0.9.8" => "0x00908000L",
