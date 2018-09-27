@@ -915,7 +915,7 @@ DECLARE_ASN1_ITEM(ZINT64)
 DECLARE_ASN1_ITEM(UINT64)
 DECLARE_ASN1_ITEM(ZUINT64)
 
-# if OPENSSL_API_COMPAT < 0x10200000L
+# if OPENSSL_API_COMPAT < 0x30000000L
 /*
  * LONG and ZLONG are strongly discouraged for use as stored data, as the
  * underlying C type (long) differs in size depending on the architecture.
