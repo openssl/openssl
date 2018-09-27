@@ -85,6 +85,18 @@ extern "C" {
 # define OPENSSL_API_COMPAT OPENSSL_MIN_API
 #endif
 
+/*
+ * Do not deprecate things to be deprecated in version 4.0 before the
+ * OpenSSL version number matches.
+ */
+#if OPENSSL_VERSION_MAJOR < 4
+# define DEPRECATEDIN_4(f)       f;
+#elif OPENSSL_API_COMPAT < 0x40000000L
+# define DEPRECATEDIN_4(f)       DECLARE_DEPRECATED(f)
+#else
+# define DEPRECATEDIN_4(f)
+#endif
+
 #if OPENSSL_API_COMPAT < 0x30000000L
 # define DEPRECATEDIN_3(f)       DECLARE_DEPRECATED(f)
 #else
