@@ -193,8 +193,8 @@ sub feature_filter {
 
     if ($apiv) {
         foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/;
-            my $symdep = sprintf "%x%02x%02x", $1, $2, $3;
+            next unless /^DEPRECATEDIN_(\d+)(?:_(\d+)_(\d+))?$/;
+            my $symdep = sprintf "%x%02x%02x", $1, ($2 // 0), ($3 // 0);
             $verdict = 0 if $apiv ge $symdep;
         }
     }

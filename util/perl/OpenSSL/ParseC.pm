@@ -72,11 +72,14 @@ my @opensslcpphandlers = (
           if ($op ne '<' && $op ne '>=') {
               die "Error: unacceptable operator $op: $_[0]\n";
           }
-          my ($one, $major, $minor) =
+          my ($major, $minor, $edit) =
               ( ($v >> 28) & 0xf,
                 ($v >> 20) & 0xff,
                 ($v >> 12) & 0xff );
-          my $t = "DEPRECATEDIN_${one}_${major}_${minor}";
+          my $t = "DEPRECATEDIN_" .
+              ($major <= 1
+               ? "${major}_${minor}_${edit}"
+               : "${major}");
           my $cond = $op eq '<' ? 'ifndef' : 'ifdef';
           return (<<"EOF");
 #$cond $t
@@ -284,7 +287,7 @@ EOF
     # We trick the parser by pretending that the declaration is wrapped in a
     # check if the DEPRECATEDIN macro is defined or not.  Callers of parse()
     # will have to decide what to do with it.
-    { regexp   => qr/(DEPRECATEDIN_\d+_\d+_\d+)<<<\((.*)\)>>>/,
+    { regexp   => qr/(DEPRECATEDIN_\d+(?:_\d+_\d+)?)<<<\((.*)\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef $1
 $2;
