@@ -49,7 +49,7 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
                                                          y_bit, ctx);
 }
 
-#if OPENSSL_API_COMPAT < 0x10200000L
+#if OPENSSL_API_COMPAT < 0x30000000L
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
                                             EC_POINT *point, const BIGNUM *x,
                                             int y_bit, BN_CTX *ctx)

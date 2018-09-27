@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
-#if !(OPENSSL_API_COMPAT < 0x10200000L)
+#if !(OPENSSL_API_COMPAT < 0x30000000L)
 NON_EMPTY_TRANSLATION_UNIT
 #else
 

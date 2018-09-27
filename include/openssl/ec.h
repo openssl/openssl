@@ -258,9 +258,9 @@ int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
-                                              const BIGNUM *a, const BIGNUM *b,
-                                              BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
+                                          const BIGNUM *a, const BIGNUM *b,
+                                          BN_CTX *ctx))
 
 /** Gets the parameters of an ec curve. Synonym for EC_GROUP_get_curve
  *  \param  group  EC_GROUP object
@@ -271,9 +271,9 @@ DEPRECATEDIN_1_2_0(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
-                                              BIGNUM *a, BIGNUM *b,
-                                              BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
+                                          BIGNUM *a, BIGNUM *b,
+                                          BN_CTX *ctx))
 
 # ifndef OPENSSL_NO_EC2M
 /** Sets the parameter of an ec curve. Synonym for EC_GROUP_set_curve
@@ -285,9 +285,9 @@ DEPRECATEDIN_1_2_0(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
-                                               const BIGNUM *a, const BIGNUM *b,
-                                               BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
+                                           const BIGNUM *a, const BIGNUM *b,
+                                           BN_CTX *ctx))
 
 /** Gets the parameters of an ec curve. Synonym for EC_GROUP_get_curve
  *  \param  group  EC_GROUP object
@@ -298,9 +298,9 @@ DEPRECATEDIN_1_2_0(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
-                                               BIGNUM *a, BIGNUM *b,
-                                               BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
+                                           BIGNUM *a, BIGNUM *b,
+                                           BN_CTX *ctx))
 # endif
 /** Returns the number of bits needed to represent a field element
  *  \param  group  EC_GROUP object
@@ -525,11 +525,11 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
-                                                           EC_POINT *p,
-                                                           const BIGNUM *x,
-                                                           const BIGNUM *y,
-                                                           BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
+                                                       EC_POINT *p,
+                                                       const BIGNUM *x,
+                                                       const BIGNUM *y,
+                                                       BN_CTX *ctx))
 
 /** Gets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_get_affine_coordinates
@@ -540,11 +540,11 @@ DEPRECATEDIN_1_2_0(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
-                                                           const EC_POINT *p,
-                                                           BIGNUM *x,
-                                                           BIGNUM *y,
-                                                           BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
+                                                       const EC_POINT *p,
+                                                       BIGNUM *x,
+                                                       BIGNUM *y,
+                                                       BN_CTX *ctx))
 
 /** Sets the x9.62 compressed coordinates of a EC_POINT
  *  \param  group  underlying EC_GROUP object
@@ -567,11 +567,11 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
-                                                               EC_POINT *p,
-                                                               const BIGNUM *x,
-                                                               int y_bit,
-                                                               BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
+                                                           EC_POINT *p,
+                                                           const BIGNUM *x,
+                                                           int y_bit,
+                                                           BN_CTX *ctx))
 # ifndef OPENSSL_NO_EC2M
 /** Sets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_set_affine_coordinates
@@ -582,11 +582,11 @@ DEPRECATEDIN_1_2_0(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *g
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
-                                                            EC_POINT *p,
-                                                            const BIGNUM *x,
-                                                            const BIGNUM *y,
-                                                            BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
+                                                        EC_POINT *p,
+                                                        const BIGNUM *x,
+                                                        const BIGNUM *y,
+                                                        BN_CTX *ctx))
 
 /** Gets the affine coordinates of an EC_POINT. A synonym of
  *  EC_POINT_get_affine_coordinates
@@ -597,11 +597,11 @@ DEPRECATEDIN_1_2_0(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *grou
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
-                                                            const EC_POINT *p,
-                                                            BIGNUM *x,
-                                                            BIGNUM *y,
-                                                            BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
+                                                        const EC_POINT *p,
+                                                        BIGNUM *x,
+                                                        BIGNUM *y,
+                                                        BN_CTX *ctx))
 
 /** Sets the x9.62 compressed coordinates of a EC_POINT. A synonym of
  *  EC_POINT_set_compressed_coordinates
@@ -612,11 +612,11 @@ DEPRECATEDIN_1_2_0(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *grou
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_1_2_0(int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
-                                                                EC_POINT *p,
-                                                                const BIGNUM *x,
-                                                                int y_bit,
-                                                                BN_CTX *ctx))
+DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
+                                                            EC_POINT *p,
+                                                            const BIGNUM *x,
+                                                            int y_bit,
+                                                            BN_CTX *ctx))
 # endif
 /** Encodes a EC_POINT object to a octet string
  *  \param  group  underlying EC_GROUP object
@@ -1112,10 +1112,10 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine);
  *  it is actually specified in ANSI X9.63.
  *  This identifier is retained for backwards compatibility
  */
-DEPRECATEDIN_1_2_0(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
-                   const unsigned char *Z, size_t Zlen,
-                   const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md))
+DEPRECATEDIN_3(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+                                  const unsigned char *Z, size_t Zlen,
+                                  const unsigned char *sinfo, size_t sinfolen,
+                                  const EVP_MD *md))
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      const EC_KEY *ecdh,
