@@ -84,7 +84,7 @@ Enables use of HMAC instead of the HASH DRBG.
 
 These 3 flags can be used to set the individual DRBG types created. Multiple
 calls are required to set the types to different values. If none of these 3
-flags are used, then the same type and flags are used for all 3 DRBG's in the
+flags are used, then the same type and flags are used for all 3 DRBGs in the
 B<drbg> chain (<master>, <public> and <private>).
 
 =back
