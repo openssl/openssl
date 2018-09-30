@@ -420,7 +420,7 @@ int test_BN_abs_eq_word(const char *file, int line, const char *bns,
 
 static const char *print_time(const ASN1_TIME *t)
 {
-    return t == NULL ? "<null>" : (char *)ASN1_STRING_get0_data(t);
+    return t == NULL ? "<null>" : (const char *)ASN1_STRING_get0_data(t);
 }
 
 #define DEFINE_TIME_T_COMPARISON(opname, op)                            \
