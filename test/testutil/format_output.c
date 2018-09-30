@@ -31,9 +31,9 @@ static void test_diff_header(const char *left, const char *right)
 static void test_string_null_empty(const char *m, char c)
 {
     if (m == NULL)
-        test_printf_stderr("% 4s %c NULL\n", "", c);
+        test_printf_stderr("%4s %c NULL\n", "", c);
     else
-        test_printf_stderr("% 4u:%c ''\n", 0u, c);
+        test_printf_stderr("%4u:%c ''\n", 0u, c);
 }
 
 static void test_fail_string_common(const char *prefix, const char *file,
@@ -94,18 +94,18 @@ static void test_fail_string_common(const char *prefix, const char *file,
             bdiff[i] = '\0';
         }
         if (n1 == n2 && !diff) {
-            test_printf_stderr("% 4u:  '%s'\n", cnt, n2 > n1 ? b2 : b1);
+            test_printf_stderr("%4u:  '%s'\n", cnt, n2 > n1 ? b2 : b1);
         } else {
             if (cnt == 0 && (m1 == NULL || *m1 == '\0'))
                 test_string_null_empty(m1, '-');
             else if (n1 > 0)
-                test_printf_stderr("% 4u:- '%s'\n", cnt, b1);
+                test_printf_stderr("%4u:- '%s'\n", cnt, b1);
             if (cnt == 0 && (m2 == NULL || *m2 == '\0'))
                test_string_null_empty(m2, '+');
             else if (n2 > 0)
-                test_printf_stderr("% 4u:+ '%s'\n", cnt, b2);
+                test_printf_stderr("%4u:+ '%s'\n", cnt, b2);
             if (diff && i > 0)
-                test_printf_stderr("% 4s    %s\n", "", bdiff);
+                test_printf_stderr("%4s    %s\n", "", bdiff);
         }
         m1 += n1;
         m2 += n2;
@@ -410,7 +410,7 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
 static void test_memory_null_empty(const unsigned char *m, char c)
 {
     if (m == NULL)
-        test_printf_stderr("% 4s %c%s\n", "", c, "NULL");
+        test_printf_stderr("%4s %c%s\n", "", c, "NULL");
     else
         test_printf_stderr("%04x %c%s\n", 0u, c, "empty");
 }
@@ -494,7 +494,7 @@ static void test_fail_memory_common(const char *prefix, const char *file,
             else if (n2 > 0)
                 test_printf_stderr("%04x:+%s\n", cnt, b2);
             if (diff && i > 0)
-                test_printf_stderr("% 4s  %s\n", "", bdiff);
+                test_printf_stderr("%4s  %s\n", "", bdiff);
         }
         m1 += n1;
         m2 += n2;
