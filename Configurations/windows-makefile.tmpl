@@ -6,6 +6,7 @@
  our $objext = $target{obj_extension} || ".obj";
  our $resext = $target{res_extension} || ".res";
  our $depext = $target{dep_extension} || ".d";
+ our $defext = $target{dep_extension} || ".def";
  our $exeext = $target{exe_extension} || ".exe";
  our $libext = $target{lib_extension} || ".lib";
  our $shlibext = $target{shared_extension} || ".dll";
@@ -89,7 +90,10 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(" ", map { (my $x = $_) =~ s|\.[sS]$|.asm|; $x }
+             join(" ", map { my $x = $_;
+                             $x =~ s|\.[sS]$|.asm|;
+                             $x =~ s|\.ld$|$defext|;
+                             $x }
                        @generated) -}
 
 INSTALL_LIBS={- join(" ", map { quotify1(lib($_)) } @{$unified_info{install}->{libraries}}) -}
@@ -496,7 +500,6 @@ reconfigure reconf:
 
   sub generatesrc {
       my %args = @_;
-      (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
       my ($gen0, @gens) = @{$args{generator}};
       my $generator = '"'.$gen0.'"'.join('', map { " $_" } @gens);
       my $generator_incs = join("", map { " -I \"$_\"" } @{$args{generator_incs}});
@@ -504,7 +507,17 @@ reconfigure reconf:
       my $deps = @{$args{deps}} ?
           '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
 
-      if ($target !~ /\.asm$/) {
+      if ($args{src} =~ /\.ld$/) {
+          (my $target = $args{src}) =~ s/\.ld$/$defext/;
+          my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
+                                              "util", "mkdef.pl")),
+                              rel2abs($config{builddir}));
+          return <<"EOF";
+$target: $args{generator}->[0] $deps
+	\$(PERL) $mkdef $args{generator}->[1] 32 > $target
+EOF
+      } elsif ($args{src} !~ /\.[sS]$/) {
+          my $target = $args{src};
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
               my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
@@ -521,6 +534,7 @@ $target: "$args{generator}->[0]" $deps
 EOF
 	  }
       } else {
+          (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = '"$(PERL)"'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.S$/) {
@@ -623,7 +637,9 @@ EOF
      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
                 grep { $_ =~ m/\.(?:o|res)$/ }
                 @{$args{objs}};
-     my @defs = grep { $_ =~ /\.def$/ } @{$args{objs}};
+     my @defs = map { (my $x = $_) =~ s|\.ld$||; "$x$defext" }
+                grep { $_ =~ /\.ld$/ }
+                @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      die "More than one exported symbols list" if scalar @defs > 1;
      my $linklibs = join("", map { "$_\n" } @deps);

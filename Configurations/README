@@ -169,7 +169,14 @@ In each table entry, the following keys are significant:
                            assembler files used when compiling with
                            assembler implementations.
         shared_target   => The shared library building method used.
-                           This is a target found in Makefile.shared.
+                           This serves multiple purposes:
+                           - as index for targets found in shared_info.pl.
+                           - as linker script generation selector.
+                           To serve both purposes, the index for shared_info.pl
+                           should end with '-shared', and this suffix will be
+                           removed for use as a linker script generation
+                           selector.  Note that the latter is only used if
+                           'shared_defflag' is defined.
         build_scheme    => The scheme used to build up a Makefile.
                            In its simplest form, the value is a string
                            with the name of the build scheme.
