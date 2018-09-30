@@ -25,7 +25,7 @@ static void check_arg_usage(void)
 
     for (i = 0; i < n; i++)
         if (!arg_used[i+1])
-            test_printf_stderr("Warning ignored command-line argument %d: %s\n",
+            test_printf_stderr("Warning ignored command-line argument %zu: %s\n",
                                i, args[i+1]);
     if (i < arg_count)
         test_printf_stderr("Warning arguments %zu and later unchecked\n", i);
