@@ -86,7 +86,8 @@ static char *strip_spaces(char *p)
 int test_readstanza(STANZA *s)
 {
     PAIR *pp = s->pairs;
-    char *p, *equals, *key, *value;
+    char *p, *equals, *key;
+    const char *value;
 
     for (s->numpairs = 0; BIO_gets(s->fp, s->buff, sizeof(s->buff)); ) {
         s->curr++;
