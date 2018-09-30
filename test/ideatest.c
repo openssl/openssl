@@ -74,7 +74,7 @@ static int test_idea_cbc(void)
     IDEA_set_encrypt_key(k, &key);
     IDEA_set_decrypt_key(&key, &dkey);
     memcpy(iv, k, sizeof(iv));
-    IDEA_cbc_encrypt((unsigned char *)text, out, text_len, &key, iv, 1);
+    IDEA_cbc_encrypt((const unsigned char *)text, out, text_len, &key, iv, 1);
     memcpy(iv, k, sizeof(iv));
     IDEA_cbc_encrypt(out, out, IDEA_BLOCK, &dkey, iv, 0);
     IDEA_cbc_encrypt(&out[8], &out[8], text_len - 8, &dkey, iv, 0);
