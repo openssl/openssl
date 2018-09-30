@@ -287,7 +287,7 @@ static char *pt(const unsigned char *p, char buf[DATA_BUF_SIZE])
 {
     char *ret;
     int i;
-    static char *f = "0123456789ABCDEF";
+    static const char *f = "0123456789ABCDEF";
 
     ret = &(buf[0]);
     for (i = 0; i < 8; i++) {
