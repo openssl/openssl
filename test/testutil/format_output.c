@@ -206,6 +206,7 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
 {
     int n = bytes * 2, i;
     char *p = out, *q = NULL;
+    const char *r;
 
     if (bn != NULL && !BN_is_zero(bn)) {
         hex_convert_memory(in, bytes, out, BN_OUTPUT_SIZE);
@@ -248,10 +249,10 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
     }
     *p = '\0';
     if (bn == NULL)
-        q = "NULL";
+        r = "NULL";
     else
-        q = BN_is_negative(bn) ? "-0" : "0";
-    strcpy(p - strlen(q), q);
+        r = BN_is_negative(bn) ? "-0" : "0";
+    strcpy(p - strlen(r), r);
     return 0;
 }
 
