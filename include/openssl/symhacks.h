@@ -28,21 +28,6 @@
 #  undef i2d_ECPKPARAMETERS
 #  define i2d_ECPKPARAMETERS                      i2d_UC_ECPKPARAMETERS
 
-/*
- * These functions do not seem to exist! However, I'm paranoid... Original
- * command in x509v3.h: These functions are being redefined in another
- * directory, and clash when the linker is case-insensitive, so let's hide
- * them a little, by giving them an extra 'o' at the beginning of the name...
- */
-#  undef X509v3_cleanup_extensions
-#  define X509v3_cleanup_extensions               oX509v3_cleanup_extensions
-#  undef X509v3_add_extension
-#  define X509v3_add_extension                    oX509v3_add_extension
-#  undef X509v3_add_netscape_extensions
-#  define X509v3_add_netscape_extensions          oX509v3_add_netscape_extensions
-#  undef X509v3_add_standard_extensions
-#  define X509v3_add_standard_extensions          oX509v3_add_standard_extensions
-
 /* This one clashes with CMS_data_create */
 #  undef cms_Data_create
 #  define cms_Data_create                         priv_cms_Data_create
