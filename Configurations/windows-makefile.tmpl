@@ -517,7 +517,7 @@ $target: $args{generator}->[0] $deps
 	\$(PERL) $mkdef $args{generator}->[1] 32 > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
-          (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
+          my $target = $args{src};
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
               my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
@@ -534,7 +534,7 @@ $target: "$args{generator}->[0]" $deps
 EOF
 	  }
       } else {
-          my $target = $args{src};
+          (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = '"$(PERL)"'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.S$/) {
