@@ -132,7 +132,10 @@ DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(", ", map { (my $x = $_) =~ s|\.[sS]$|.asm|; "-\n\t".$x }
+             join(", ", map { my $x = $_;
+                              $x =~ s|\.[sS]$|.asm|;
+                              $x =~ s|\.ld$|.OPT|;
+                              "-\n\t".$x }
                         @generated) -}
 
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
@@ -748,12 +751,19 @@ reconfigure reconf :
 
   sub generatesrc {
       my %args = @_;
-      (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
       my $generator = join(" ", @{$args{generator}});
       my $generator_incs = join("", map { ' "-I'.$_.'"' } @{$args{generator_incs}});
       my $deps = join(", -\n\t\t", @{$args{generator_deps}}, @{$args{deps}});
 
-      if ($target !~ /\.asm$/) {
+      if ($args{src} =~ /\.ld$/) {
+          (my $target = $args{src}) =~ s/\.ld$/.OPT/;
+          my $mkdef = sourcefile('util', 'mkdef.pl');
+          return <<"EOF";
+$target : $args{generator}->[0] $deps
+	\$(PERL) $mkdef $args{generator}->[1] "VMS" > $target
+EOF
+      } elsif ($target !~ /\.[sS]$/) {
+          (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
 	      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
@@ -770,6 +780,7 @@ $target : $args{generator}->[0] $deps
 EOF
 	  }
       } else {
+          my $target = $args{src};
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = '$(PERL)'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.S$/) {
@@ -913,7 +924,9 @@ EOF
       my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
                  grep { $_ =~ m|\.o$| }
                  @{$args{objs}};
-      my @defs = grep { $_ =~ /\.opt$/ } @{$args{objs}};
+      my @defs = map { (my $x = $_) =~ s|\.ld$|.OPT|; $x }
+                 grep { $_ =~ /\.ld$/ }
+                 @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
       my $deps = join(", -\n\t\t", @objs, @defs, @deps);
