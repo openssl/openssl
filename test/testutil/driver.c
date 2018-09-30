@@ -99,7 +99,7 @@ static int gcd(int a, int b)
     return a;
 }
 
-void setup_test_framework()
+void setup_test_framework(void)
 {
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
     char *test_seed = getenv("OPENSSL_TEST_RAND_ORDER");
