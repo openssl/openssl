@@ -53,7 +53,7 @@ my %shared_info;
     'mingw-shared' => sub {
         return {
             %{$shared_info{'cygwin-shared'}},
-            # def_flag made to empty string so  it still generates
+            # def_flag made to empty string so it still generates
             # something
             shared_defflag    => '',
         };

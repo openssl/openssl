@@ -1121,7 +1121,9 @@ $target{exe_extension}="";
 $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
                                   || $config{target} =~ /^(?:Cygwin|mingw)/);
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
-
+$target{def_extension}=".ld";
+$target{def_extension}=".def" if $config{target} =~ /^mingw|VC-/;
+$target{def_extension}=".opt" if $config{target} =~ /^vms/;
 ($target{shared_extension_simple}=$target{shared_extension})
     =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||
     unless defined($target{shared_extension_simple});
@@ -2074,11 +2076,11 @@ EOF
                     my $o = cleanfile($buildd, $o, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$o} = -1;
                     $unified_info{sources}->{$o}->{$s} = -1;
-                } elsif ($s =~ /\.(def|map|opt)$/) {
-                    # We also recognise .def / .map / .opt files
+                } elsif ($s =~ /\.ld$/) {
+                    # We also recognise linker scripts (or corresponding)
                     # We know they are generated files
-                    my $def = cleanfile($buildd, $s, $blddir);
-                    $unified_info{shared_sources}->{$ddest}->{$def} = 1;
+                    my $ld = cleanfile($buildd, $s, $blddir);
+                    $unified_info{shared_sources}->{$ddest}->{$ld} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";
                 }
@@ -2189,7 +2191,7 @@ EOF
         }
     }
 
-    # Go through all object files and change their names to something that
+    # Go through all intermediary files and change their names to something that
     # reflects what they will be built for.  Note that for some source files,
     # this leads to duplicate object files because they are used multiple times.
     # the goal is to rename all object files according to this scheme:
@@ -2246,8 +2248,9 @@ EOF
                         map { keys %{$unified_copy{$_}->{$prod}} }
                         @src;
                     foreach (keys %prod_sources) {
-                        # Only affect object or resource files, the others
-                        # simply get a new value (+1 instead of -1)
+                        # Only affect object files and resource files,
+                        # the others simply get a new value
+                        # (+1 instead of -1)
                         if ($_ =~ /\.(o|res)$/) {
                             (my $prodname = $prod) =~ s|\.a$||;
                             my $newobj =

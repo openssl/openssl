@@ -4,6 +4,7 @@
 ## {- join("\n## ", @autowarntext) -}
 {-
      our $objext = $target{obj_extension} || ".o";
+     our $defext = $target{def_extension} || ".ld";
      our $depext = $target{dep_extension} || ".d";
      our $exeext = $target{exe_extension} || "";
      our $libext = $target{lib_extension} || ".a";
@@ -112,7 +113,10 @@ DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}}) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(" ", @generated ) -}
+             join(" ", map { my $x = $_;
+                             $x =~ s|\.ld$|$defext|;
+                             $x }
+                       @generated ) -}
 
 INSTALL_LIBS={- join(" ", map { lib($_) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{install}->{libraries}}) -}
@@ -408,7 +412,7 @@ libclean:
 		fi; \
 	done
 	$(RM) $(LIBS)
-	$(RM) *.map
+	$(RM) *.{- $defext -}
 
 clean: libclean
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
@@ -956,7 +960,14 @@ reconfigure reconf:
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $deps = join(" ", @{$args{generator_deps}}, @{$args{deps}});
 
-      if ($args{src} !~ /\.[sS]$/) {
+      if ($args{src} =~ /\.ld$/) {
+          (my $target = $args{src}) =~ s/\.ld$/${defext}/;
+          (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
+          return <<"EOF";
+$target: $args{generator}->[0] $deps
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl $args{generator}->[1] $mkdef_os > $target
+EOF
+      } elsif ($args{src} !~ /\.[sS]$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
               my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
                                                    "util", "dofile.pl")),
@@ -1102,9 +1113,11 @@ EOF
                                     (my $l = $f) =~ s/^lib//;
                                     " -l$l" } @{$args{deps}});
       my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
-                 grep { $_ !~ m/\.(?:def|map)$/ }
+                 grep { $_ !~ m/\.ld$/ }
                  @{$args{objs}};
-      my @defs = grep { $_ =~ /\.(?:def|map)$/ } @{$args{objs}};
+      my @defs = map { (my $x = $_) =~ s|\.ld$||; "$x$defext" }
+                 grep { $_ =~ /\.ld$/ }
+                 @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one exported symbol map" if scalar @defs > 1;
       my $objs = join(" ", @objs);
@@ -1169,7 +1182,7 @@ EOF
                                     (my $l = $f) =~ s/^lib//;
                                     " -l$l" } @{$args{deps}});
       my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
-                 grep { $_ !~ m/\.(?:def|map)$/ }
+                 grep { $_ !~ m/\.ld$/ }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $objs = join(" ", @objs);

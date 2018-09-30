@@ -25,50 +25,11 @@ DEPEND[crypto/include/internal/dso_conf.h]=configdata.pm
 GENERATE[crypto/include/internal/dso_conf.h]=crypto/include/internal/dso_conf.h.in
 
 IF[{- defined $target{shared_defflag} -}]
-  IF[{- $config{target} =~ /^mingw/ -}]
-    GENERATE[libcrypto.def]=util/mkdef.pl crypto 32
-    DEPEND[libcrypto.def]=util/libcrypto.num
-    GENERATE[libssl.def]=util/mkdef.pl ssl 32
-    DEPEND[libssl.def]=util/libssl.num
+  SHARED_SOURCE[libcrypto]=libcrypto.ld
+  SHARED_SOURCE[libssl]=libssl.ld
 
-    SHARED_SOURCE[libcrypto]=libcrypto.def
-    SHARED_SOURCE[libssl]=libssl.def
-  ELSIF[{- $config{target} =~ /^aix/ -}]
-    GENERATE[libcrypto.map]=util/mkdef.pl crypto aix
-    DEPEND[libcrypto.map]=util/libcrypto.num
-    GENERATE[libssl.map]=util/mkdef.pl ssl aix
-    DEPEND[libssl.map]=util/libssl.num
-
-    SHARED_SOURCE[libcrypto]=libcrypto.map
-    SHARED_SOURCE[libssl]=libssl.map
-  ELSE
-    GENERATE[libcrypto.map]=util/mkdef.pl crypto linux
-    DEPEND[libcrypto.map]=util/libcrypto.num
-    GENERATE[libssl.map]=util/mkdef.pl ssl linux
-    DEPEND[libssl.map]=util/libssl.num
-
-    SHARED_SOURCE[libcrypto]=libcrypto.map
-    SHARED_SOURCE[libssl]=libssl.map
-  ENDIF
-ENDIF
-# VMS and VC don't have parametrised .def / .symvec generation, so they get
-# special treatment, since we know they do use these files
-IF[{- $config{target} =~ /^VC-/ -}]
-  GENERATE[libcrypto.def]=util/mkdef.pl crypto 32
-  DEPEND[libcrypto.def]=util/libcrypto.num
-  GENERATE[libssl.def]=util/mkdef.pl ssl 32
-  DEPEND[libssl.def]=util/libssl.num
-
-  SHARED_SOURCE[libcrypto]=libcrypto.def
-  SHARED_SOURCE[libssl]=libssl.def
-ELSIF[{- $config{target} =~ /^vms/ -}]
-  GENERATE[libcrypto.opt]=util/mkdef.pl crypto "VMS"
-  DEPEND[libcrypto.opt]=util/libcrypto.num
-  GENERATE[libssl.opt]=util/mkdef.pl ssl "VMS"
-  DEPEND[libssl.opt]=util/libssl.num
-
-  SHARED_SOURCE[libcrypto]=libcrypto.opt
-  SHARED_SOURCE[libssl]=libssl.opt
+  GENERATE[libcrypto.ld]=util/libcrypto.num crypto
+  GENERATE[libssl.ld]=util/libssl.num ssl
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
