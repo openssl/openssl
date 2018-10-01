@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
+  *) Added EVP_PKEY_ECDH_KDF_X9_63 and ecdh_KDF_X9_63() as replacements for
+     the EVP_PKEY_ECDH_KDF_X9_62 KDF type and ECDH_KDF_X9_62(). The old names
+     are retained for backwards compatibility.
+     [Antoine Salon]
+
   *) AES-XTS mode now enforces that its two keys are different to mitigate
      the attacked described in "Efficient Instantiations of Tweakable
      Blockciphers and Refinements to Modes OCB and PMAC" by Phillip Rogaway.
