@@ -4,6 +4,7 @@
 
 EVP_rc2_cbc,
 EVP_rc2_cfb,
+EVP_rc2_cfb64,
 EVP_rc2_ecb,
 EVP_rc2_ofb,
 EVP_rc2_40_cbc,
@@ -16,6 +17,7 @@ EVP_rc2_64_cbc
 
  const EVP_CIPHER *EVP_rc2_cbc(void)
  const EVP_CIPHER *EVP_rc2_cfb(void)
+ const EVP_CIPHER *EVP_rc2_cfb64(void)
  const EVP_CIPHER *EVP_rc2_ecb(void)
  const EVP_CIPHER *EVP_rc2_ofb(void)
  const EVP_CIPHER *EVP_rc2_40_cbc(void)
@@ -29,6 +31,7 @@ The RC2 encryption algorithm for EVP.
 
 =item EVP_rc2_cbc(),
 EVP_rc2_cfb(),
+EVP_rc2_cfb64(),
 EVP_rc2_ecb(),
 EVP_rc2_ofb()
 
