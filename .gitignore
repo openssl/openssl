@@ -82,8 +82,8 @@ Makefile
 /util/shlib_wrap.sh
 /tags
 /TAGS
-/libcrypto.map
-/libssl.map
+*.map
+*.ld
 
 # Windows (legacy)
 /tmp32
