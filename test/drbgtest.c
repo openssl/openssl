@@ -1049,7 +1049,17 @@ static int test_set_defaults(void)
            && TEST_true(RAND_DRBG_uninstantiate(master))
            && TEST_int_eq(master->type, NID_aes_256_ctr)
            && TEST_int_eq(master->flags,
-                          RAND_DRBG_FLAG_MASTER|RAND_DRBG_FLAG_CTR_NO_DF);
+                          RAND_DRBG_FLAG_MASTER|RAND_DRBG_FLAG_CTR_NO_DF)
+
+           /* Reset back to the standard defaults */
+           && TEST_true(RAND_DRBG_set_defaults(RAND_DRBG_TYPE,
+                                               RAND_DRBG_FLAGS
+                                               | RAND_DRBG_FLAG_MASTER
+                                               | RAND_DRBG_FLAG_PUBLIC
+                                               | RAND_DRBG_FLAG_PRIVATE))
+           && TEST_true(RAND_DRBG_uninstantiate(master))
+           && TEST_true(RAND_DRBG_uninstantiate(public))
+           && TEST_true(RAND_DRBG_uninstantiate(private));
 }
 
 int setup_tests(void)
