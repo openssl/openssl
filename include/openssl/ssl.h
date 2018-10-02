@@ -2392,8 +2392,6 @@ int SSL_CTX_set_session_ticket_cb(SSL_CTX *ctx,
 int SSL_SESSION_set1_ticket_appdata(SSL_SESSION *ss, const void *data, size_t len);
 int SSL_SESSION_get0_ticket_appdata(SSL_SESSION *ss, void **data, size_t *len);
 
-extern const char SSL_version_str[];
-
 typedef unsigned int (*DTLS_timer_cb)(SSL *s, unsigned int timer_us);
 
 void DTLS_set_timer_cb(SSL *s, DTLS_timer_cb cb);
