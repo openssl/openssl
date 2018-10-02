@@ -84,6 +84,8 @@ Makefile
 /TAGS
 /libcrypto.map
 /libssl.map
+/libcrypto.ld
+/libssl.ld
 
 # Windows (legacy)
 /tmp32
