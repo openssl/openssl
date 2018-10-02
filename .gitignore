@@ -82,8 +82,8 @@ Makefile
 /util/shlib_wrap.sh
 /tags
 /TAGS
-/*.map
-/*.ld
+*.map
+*.ld
 
 # Windows (legacy)
 /tmp32
