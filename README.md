@@ -111,9 +111,10 @@ Next, you must download and build liboqs using the master branch of liboqs.  The
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
     cd liboqs
     msbuild VisualStudio\liboqs.sln
-    mkdir ../openssl/oqs
-    copy VisualStudio\x64\Release\oqs.lib ../openssl/oqs/lib
-    copy include ../openssl/oqs
+    mkdir ..\openssl\oqs
+    xcopy VisualStudio\x64\Release\oqs.lib ..\openssl\oqs\lib\
+    xcopy /S include ..\openssl\oqs\include\
+    xcopy VisualStudio\winconfig.h ..\openssl\oqs\include\oqs\
 
 ### Step 3: Build fork of OpenSSL
 
