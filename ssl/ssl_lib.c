@@ -23,8 +23,6 @@
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
 
-const char SSL_version_str[] = OPENSSL_VERSION_TEXT;
-
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
 {
     (void)r;
