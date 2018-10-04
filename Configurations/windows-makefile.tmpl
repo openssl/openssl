@@ -512,9 +512,12 @@ reconfigure reconf:
           my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
                                               "util", "mkdef.pl")),
                               rel2abs($config{builddir}));
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_name =
+              $args{generator}->[1] || basename($args{product}, $dsoext);
           return <<"EOF";
-$target: $args{generator}->[0] $deps
-	\$(PERL) $mkdef --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS windows > $target
+$target: $args{generator}->[0] $deps $mkdef
+	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           my $target = $args{src};
@@ -670,20 +673,22 @@ EOF
      my %args = @_;
      my $dso = $args{lib};
      my $dso_n = basename($dso);
-     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+                grep { $_ =~ m/\.(?:o|res)$/ }
+                @{$args{objs}};
+     my @defs = map { (my $x = $_) =~ s|\.ld$|$defext|; $x }
+                grep { $_ =~ /\.ld$/ }
+                @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      my $objs = join("\n", @objs);
      my $linklibs = join("", map { "$_\n" } @deps);
-     my $deps = join(" ", @objs, @deps);
+     my $deps = join(" ", @objs, @defs, @deps);
+     my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF";
 $dso$dsoext: $deps
 	IF EXIST $dso$dsoext.manifest DEL /F /Q $dso$dsoext.manifest
-	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \$(LDOUTFLAG)$dso$dsoext /def:<< @<<
-LIBRARY         $dso_n
-EXPORTS
-    bind_engine		@1
-    v_check		@2
-<<
+	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \\
+		\$(LDOUTFLAG)$dso$dsoext$shared_def @<< || (DEL /Q \$(\@B).* $dso.* && EXIT 1)
 $objs
 $linklibs \$(DSO_EX_LIBS)
 <<

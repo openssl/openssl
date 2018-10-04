@@ -78,6 +78,7 @@
              if ref $unified_info{generate}->{$src} eq "";
          my $script = $unified_info{generate}->{$src}->[0];
          $OUT .= generatesrc(src => $src,
+                             product => $bin,
                              generator => $unified_info{generate}->{$src},
                              generator_incs => $unified_info{includes}->{$script},
                              generator_deps => $unified_info{depends}->{$script},
@@ -159,7 +160,13 @@
                      deps => [ resolvedepends($lib) ],
                      installed => is_installed($lib));
      foreach (@{$unified_info{shared_sources}->{$lib}}) {
-         doobj($_, $lib, intent => "dso", installed => is_installed($lib));
+         # If this is somehow a compiled object, take care of it that way
+         # Otherwise, it might simply be generated
+         if (defined $unified_info{sources}->{$_}) {
+             doobj($_, $lib, intent => "dso", installed => is_installed($lib));
+         } else {
+             dogenerate($_, undef, $lib, intent => "dso");
+         }
      }
      $cache{$lib} = 1;
  }
