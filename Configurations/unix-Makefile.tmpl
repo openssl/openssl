@@ -809,9 +809,47 @@ errors:
                 -conf $$E `basename $$E .ec`.c ; \
           done )
 
+{- use File::Basename;
+
+   our @sslheaders =
+       qw( include/openssl/ssl.h
+           include/openssl/ssl2.h
+           include/openssl/ssl3.h
+           include/openssl/sslerr.h
+           include/openssl/tls1.h
+           include/openssl/dtls1.h
+           include/openssl/srtp.h );
+   our @cryptoheaders =
+       qw( include/internal/dso.h
+           include/internal/o_dir.h
+           include/internal/o_str.h
+           include/internal/err.h
+           include/internal/sslconf.h );
+   our @cryptoskipheaders = ( @sslheaders, 
+       qw( include/openssl/conf_api.h
+           include/openssl/ebcdic.h
+           include/openssl/opensslconf.h
+           include/openssl/symhacks.h ) );
+   foreach my $f ( glob(catfile($config{sourcedir},
+                                'include','openssl','*.h')) ) {
+       my $fn = "include/openssl/" . basename($f);
+       push @cryptoheaders, $fn unless grep { $_ eq $fn } @cryptoskipheaders;
+   }
+   "";
+-}
+CRYPTOHEADERS={- join(" \\\n\t", sort @cryptoheaders) -}
+SSLHEADERS={- join(" \\\n\t", sort @sslheaders) -}
 ordinals:
-	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl crypto update )
-	( b=`pwd`; cd $(SRCDIR); $(PERL) -I$$b util/mkdef.pl ssl update )
+	( cd $(SRCDIR); \
+          $(PERL) util/mknum.pl --version $(VERSION) --no-warnings \
+                  --ordinals util/libcrypto.num \
+                  --symhacks include/openssl/symhacks.h \
+                  $(CRYPTOHEADERS) )
+	( cd $(SRCDIR); \
+          $(PERL) util/mknum.pl --version $(VERSION) --no-warnings \
+                  --ordinals util/libssl.num \
+                  --symhacks include/openssl/symhacks.h \
+                  $(SSLHEADERS))
 
 test_ordinals:
 	( cd test; \
@@ -965,7 +1003,7 @@ reconfigure reconf:
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           return <<"EOF";
 $target: $args{generator}->[0] $deps
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl $args{generator}->[1] $mkdef_os > $target
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS $mkdef_os > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {

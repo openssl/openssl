@@ -514,7 +514,7 @@ reconfigure reconf:
                               rel2abs($config{builddir}));
           return <<"EOF";
 $target: $args{generator}->[0] $deps
-	\$(PERL) $mkdef $args{generator}->[1] 32 > $target
+	\$(PERL) $mkdef --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS windows > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           my $target = $args{src};

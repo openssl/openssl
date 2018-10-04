@@ -1,4 +1,6 @@
 {-
+     use File::Spec::Functions;
+
      our $sover = $config{shlib_version_number};
      our $sover_filename = $sover;
      $sover_filename =~ s|\.|_|g
@@ -28,8 +30,8 @@ IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
   SHARED_SOURCE[libssl]=libssl.ld
 
-  GENERATE[libcrypto.ld]=util/libcrypto.num crypto
-  GENERATE[libssl.ld]=util/libssl.num ssl
+  GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
+  GENERATE[libssl.ld]=util/libssl.num libssl
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
