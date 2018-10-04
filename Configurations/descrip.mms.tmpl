@@ -761,9 +761,12 @@ reconfigure reconf :
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name =
               $args{generator}->[1] || basename($args{product}, '.EXE');
+          my $case_insensitive =
+              $target{$args{intent}.'_cflags'} =~ m|/NAMES=[^/]*AS_IS|i
+              ? '' : ' --case-insensitive';
           return <<"EOF";
 $target : $args{generator}->[0] $deps $mkdef
-	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name "--OS" "VMS" > $target
+	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name "--OS" "VMS"$case_insensitive > $target
 EOF
       } elsif ($target !~ /\.[sS]$/) {
           my $target = $args{src};

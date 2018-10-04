@@ -28,12 +28,17 @@ my $OS = undef;                 # the operating system family
 my $verbose = 0;
 my $ctest = 0;
 
+# For VMS, some modules may have case insensitive names
+my $case_insensitive = 0;
+
 GetOptions('name=s'     => \$name,
            'ordinals=s' => \$ordinals_file,
            'version=s'  => \$version,
            'OS=s'       => \$OS,
            'ctest'      => \$ctest,
-           'verbose'    => \$verbose)
+           'verbose'    => \$verbose,
+           # For VMS
+           'case-insensitive' => \$case_insensitive)
     or die "Error in command line arguments\n";
 
 die "Please supply arguments\n"
@@ -289,38 +294,51 @@ _____
     }
 }
 
+sub collect_VMS_mixedcase {
+    return [ 'SPARE', 'SPARE' ] unless @_;
+
+    my $s = shift;
+    my $s_uc = uc($s);
+    my $type = shift;
+
+    return [ "$s=$type", 'SPARE' ] if $s_uc eq $s;
+    return [ "$s_uc/$s=$type", "$s=$type" ];
+}
+
+sub collect_VMS_uppercase {
+    return [ 'SPARE' ] unless @_;
+
+    my $s = shift;
+    my $s_uc = uc($s);
+    my $type = shift;
+
+    return [ "$s_uc=$type" ];
+}
+
 sub writer_VMS {
     my @slot_collection = ();
-    my $write_vector_slot_pair =
-        sub {
-            my $slot1 = shift;
-            my $slot2 = shift;
-            my $slotpair_text = " $slot1, -\n  $slot2, -\n"
-        };
+    my $collector =
+        $case_insensitive ? \&collect_VMS_uppercase : \&collect_VMS_mixedcase;
 
     my $last_num = 0;
     foreach (@_) {
         while (++$last_num < $_->number()) {
-            push @slot_collection, [ 'SPARE', 'SPARE' ];
+            push @slot_collection, $collector->(); # Just occupy a slot
         }
         my $type = {
             FUNCTION    => 'PROCEDURE',
             VARIABLE    => 'DATA'
            } -> {$_->type()};
-        my $s = $_->name();
-        my $s_uc = uc($s);
-        if ($s_uc eq $s) {
-            push @slot_collection, [ "$s=$type", 'SPARE' ];
-        } else {
-            push @slot_collection, [ "$s_uc/$s=$type", "$s=$type" ];
-        }
+        push @slot_collection, $collector->($_->name(), $type);
     }
 
     print <<"_____" if defined $version;
 IDENTIFICATION=$version
 _____
-    print <<"_____";
+    print <<"_____" unless $case_insensitive;
 CASE_SENSITIVE=YES
+_____
+    print <<"_____";
 SYMBOL_VECTOR=(-
 _____
     # It's uncertain how long aggregated lines the linker can handle,
@@ -330,18 +348,19 @@ _____
     # can have more than one of those...
     my $symvtextcount = 16;     # The length of "SYMBOL_VECTOR=("
     while (@slot_collection) {
-        my $pair = shift @slot_collection;
-        my $pairtextlength =
-            2                   # one space indentation and comma
-            + length($pair->[0])
-            + 1                 # postdent
-            + 3                 # two space indentation and comma
-            + length($pair->[1])
-            + 1                 # postdent
-            ;
+        my $set = shift @slot_collection;
+        my $settextlength = 0;
+        foreach (@$set) {
+            $settextlength +=
+                + 3             # two space indentation and comma
+                + length($_)
+                + 1             # postdent
+                ;
+        }
+        $settextlength--;       # only one space indentation on the first one
         my $firstcomma = ',';
 
-        if ($symvtextcount + $pairtextlength > 1024) {
+        if ($symvtextcount + $settextlength > 1024) {
             print <<"_____";
 )
 SYMBOL_VECTOR=(-
@@ -351,11 +370,15 @@ _____
         if ($symvtextcount == 16) {
             $firstcomma = '';
         }
-        print <<"_____";
- $firstcomma$pair->[0] -
-  ,$pair->[1] -
+
+        my $indent = ' '.$firstcomma;
+        foreach (@$set) {
+            print <<"_____";
+$indent$_ -
 _____
-        $symvtextcount += $pairtextlength;
+            $symvtextcount += length($indent) + length($_) + 1;
+            $indent = '  ,';
+        }
     }
     print <<"_____";
 )
