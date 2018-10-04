@@ -671,7 +671,12 @@ EOF
      my %args = @_;
      my $dso = $args{lib};
      my $dso_n = basename($dso);
-     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
+                grep { $_ =~ m/\.(?:o|res)$/ }
+                @{$args{objs}};
+     my @defs = map { (my $x = $_) =~ s|\.ld$|$defext|; $x }
+                grep { $_ =~ /\.ld$/ }
+                @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      my $objs = join("\n", @objs);
      my $linklibs = join("", map { "$_\n" } @deps);
