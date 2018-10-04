@@ -1,3 +1,11 @@
+#! /usr/bin/env perl
+# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the OpenSSL license (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
 package OpenSSL::ParseC;
 
 use strict;
@@ -5,7 +13,7 @@ use warnings;
 
 use Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = "0.7";
+$VERSION = "0.9";
 @ISA = qw(Exporter);
 @EXPORT = qw(parse);
 
