@@ -13,7 +13,7 @@
 #include <string.h>
 
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
-# include "testutil.h"
+#include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
 
@@ -135,7 +135,8 @@ static int x9_62_test_internal(int nid, const char *r_in, const char *s_in)
     /* Use ECDSA_sign_setup to avoid use of ECDSA nonces */
     if (!TEST_true(ECDSA_sign_setup(key, NULL, &kinv, &rp)))
         goto x962_int_err;
-    if (!TEST_ptr(signature = ECDSA_do_sign_ex(digest, SHA_DIGEST_LENGTH, kinv, rp, key)))
+	if (!TEST_ptr(signature =
+                  ECDSA_do_sign_ex(digest, SHA_DIGEST_LENGTH, kinv, rp, key)))
         goto x962_int_err;
 
     /* compare the created signature with the expected signature */
@@ -149,7 +150,8 @@ static int x9_62_test_internal(int nid, const char *r_in, const char *s_in)
         goto x962_int_err;
 
     /* verify the signature */
-    if (!TEST_int_eq(ECDSA_do_verify(digest, SHA_DIGEST_LENGTH, signature, key), 1))
+    if (!TEST_int_eq(ECDSA_do_verify(digest, SHA_DIGEST_LENGTH,
+		signature, key), 1))
         goto x962_int_err;
 
     ret = 1;
@@ -211,7 +213,8 @@ static int test_builtin(void)
     EC_KEY *eckey = NULL, *wrong_eckey = NULL;
     EC_GROUP *group;
     ECDSA_SIG *ecdsa_sig = NULL, *modified_sig = NULL;
-    unsigned char digest[SHA512_DIGEST_LENGTH], wrong_digest[SHA512_DIGEST_LENGTH];
+    unsigned char digest[SHA512_DIGEST_LENGTH],
+             wrong_digest[SHA512_DIGEST_LENGTH];
     unsigned char *signature = NULL;
     const unsigned char *sig_ptr;
     unsigned char *sig_ptr2;
@@ -248,7 +251,7 @@ static int test_builtin(void)
             goto builtin_err;
         EC_GROUP_free(group);
         degree = EC_GROUP_get_degree(EC_KEY_get0_group(eckey));
-        
+
         TEST_info("testing %s", OBJ_nid2sn(nid));
 
         /* create key */
@@ -270,28 +273,32 @@ static int test_builtin(void)
         /* create signature */
         sig_len = ECDSA_size(eckey);
         if (!TEST_ptr(signature = OPENSSL_malloc(sig_len))
-                || !TEST_true(ECDSA_sign(0, digest, SHA512_DIGEST_LENGTH, signature, &sig_len,
-                                         eckey)))
+			|| !TEST_true(ECDSA_sign(0, digest, SHA512_DIGEST_LENGTH,
+                                      signature, &sig_len, eckey)))
             goto builtin_err;
 
         /* verify signature */
-        if (!TEST_int_eq(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH, signature, sig_len,
-                                      eckey), 1))
+        if (!TEST_int_eq(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
+                                      signature, sig_len, eckey),
+                         1))
             goto builtin_err;
 
         /* verify signature with the wrong key */
-        if (!TEST_int_ne(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH, signature, sig_len,
-                                      wrong_eckey), 1))
+        if (!TEST_int_ne(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
+                                      signature, sig_len, wrong_eckey),
+                         1))
             goto builtin_err;
 
         /* wrong digest */
-        if (!TEST_int_ne(ECDSA_verify(0, wrong_digest, SHA512_DIGEST_LENGTH, signature,
-                                      sig_len, eckey), 1))
+        if (!TEST_int_ne(ECDSA_verify(0, wrong_digest, SHA512_DIGEST_LENGTH,
+                                      signature, sig_len, eckey),
+                         1))
             goto builtin_err;
 
         /* wrong length */
-        if (!TEST_int_ne(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH, signature,
-                                      sig_len - 1, eckey), 1))
+        if (!TEST_int_ne(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
+                                      signature, sig_len - 1, eckey),
+                         1))
             goto builtin_err;
 
         /*
@@ -328,7 +335,7 @@ static int test_builtin(void)
             goto builtin_err;
         if (!TEST_ptr(modified_r = BN_bin2bn(raw_buf, bn_len, NULL))
                 || !TEST_ptr(modified_s = BN_bin2bn(raw_buf + bn_len,
-                                                    bn_len, NULL))
+                                          bn_len, NULL))
                 || !TEST_true(ECDSA_SIG_set0(modified_sig,
                                              modified_r, modified_s))) {
             BN_free(modified_r);
@@ -337,14 +344,15 @@ static int test_builtin(void)
         }
         sig_ptr2 = signature;
         sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
-        if (!TEST_false(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH, signature, sig_len, eckey)))
+        if (!TEST_false(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
+                                     signature, sig_len, eckey)))
             goto builtin_err;
 
         /* Sanity check: undo the modification and verify signature. */
         raw_buf[offset] ^= dirt;
         if (!TEST_ptr(unmodified_r = BN_bin2bn(raw_buf, bn_len, NULL))
                 || !TEST_ptr(unmodified_s = BN_bin2bn(raw_buf + bn_len,
-                                                       bn_len, NULL))
+                                            bn_len, NULL))
                 || !TEST_true(ECDSA_SIG_set0(modified_sig, unmodified_r,
                                              unmodified_s))) {
             BN_free(unmodified_r);
@@ -354,7 +362,8 @@ static int test_builtin(void)
 
         sig_ptr2 = signature;
         sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
-        if (!TEST_true(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH, signature, sig_len, eckey)))
+        if (!TEST_true(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
+                                    signature, sig_len, eckey)))
             goto builtin_err;
 
         /* cleanup */
