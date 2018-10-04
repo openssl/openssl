@@ -23,12 +23,14 @@ use configdata;
 
 my $name = undef;               # internal library/module name
 my $ordinals_file = undef;      # the ordinals file to use
+my $version = undef;            # the version to use for the library
 my $OS = undef;                 # the operating system family
 my $verbose = 0;
 my $ctest = 0;
 
 GetOptions('name=s'     => \$name,
            'ordinals=s' => \$ordinals_file,
+           'version=s'  => \$version,
            'OS=s'       => \$OS,
            'ctest'      => \$ctest,
            'verbose'    => \$verbose)
@@ -231,20 +233,29 @@ sub sorter_linux {
 
 sub writer_linux {
     my $thisversion = '';
-    my $prevversion = '';
+    my $currversion_s = '';
+    my $prevversion_s = '';
+    my $indent = 0;
 
     for (@_) {
         if ($thisversion && $_->version() ne $thisversion) {
+            die "$ordinals_file: It doesn't make sense to have both versioned ",
+                "and unversioned symbols"
+                if $thisversion eq '*';
             print <<"_____";
-}$prevversion;
+}${prevversion_s};
 _____
-            $prevversion = " OPENSSL${SO_VARIANT}_$thisversion";
+            $prevversion_s = " OPENSSL${SO_VARIANT}_$thisversion";
             $thisversion = '';  # Trigger start of next section
         }
         unless ($thisversion) {
+            $indent = 0;
             $thisversion = $_->version();
+            $currversion_s = '';
+            $currversion_s = "OPENSSL${SO_VARIANT}_$thisversion "
+                if $thisversion ne '*';
             print <<"_____";
-OPENSSL${SO_VARIANT}_$thisversion {
+${currversion_s}{
     global:
 _____
         }
@@ -253,7 +264,7 @@ _____
 
     print <<"_____";
     local: *;
-}$prevversion;
+}${prevversion_s};
 _____
 }
 
@@ -305,8 +316,10 @@ sub writer_VMS {
         }
     }
 
+    print <<"_____" if defined $version;
+IDENTIFICATION=$version
+_____
     print <<"_____";
-IDENTIFICATION=$config{version}
 CASE_SENSITIVE=YES
 SYMBOL_VECTOR=(-
 _____
@@ -348,20 +361,22 @@ _____
 )
 _____
 
-    my ($libvmajor, $libvminor, $libvedit, $libvpatch) =
-        $config{version} =~ /^(\d+)_(\d+)_(\d+)([a-z]{0,2})-.*$/;
-    my $libvpatchnum = 0;
-    for (split '', $libvpatch // '') {
-        $libvpatchnum += ord(lc($_)) - 96;
-        # To compensate because the letter 'z' is always followed by another,
-        # i.e. doesn't add any value on its own
-        $libvpatchnum-- if lc($_) eq 'z';
-    }
-    my $match1 = $libvmajor * 100 + $libvminor;
-    my $match2 = $libvedit * 100 + $libvpatchnum;
-    print <<"_____";
+    if (defined $version) {
+        my ($libvmajor, $libvminor, $libvedit, $libvpatch) =
+            $version =~ /^(\d+)_(\d+)_(\d+)([a-z]{0,2})(?:-.*)?$/;
+        my $libvpatchnum = 0;
+        for (split '', $libvpatch // '') {
+            $libvpatchnum += ord(lc($_)) - 96;
+            # To compensate because the letter 'z' is always followed by
+            # another, i.e. doesn't add any value on its own
+            $libvpatchnum-- if lc($_) eq 'z';
+        }
+        my $match1 = $libvmajor * 100 + $libvminor;
+        my $match2 = $libvedit * 100 + $libvpatchnum;
+        print <<"_____";
 GSMATCH=LEQUAL,$match1,$match2
 _____
+    }
 }
 
 sub writer_ctest {
