@@ -329,10 +329,70 @@ err:
     return ret;
 }
 
+static const struct {
+    int bits;
+    unsigned int r;
+} rsa_security_bits_cases[] = {
+    /* NIST SP 800-56B rev 2 (draft) Appendix D Table 5 */
+    { 2048,     112 },
+    { 3072,     128 },
+    { 4096,     152 },
+    { 6144,     176 },
+    { 8192,     200 },
+    /* Older values */
+    { 256,      40  },
+    { 512,      56  },
+    { 1024,     80  },
+    /* Slightly different value to the 256 that NIST lists in their tables */
+    { 15360,    264 },
+    /* Some other values */
+    { 8888,     208 },
+    { 2468,     120 },
+    { 13456,    248 }
+};
+
+static int test_rsa_security_bit(int n)
+{
+    static const unsigned char vals[8] = {
+        0x80, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40
+    };
+    RSA *key = RSA_new();
+    const int bits = rsa_security_bits_cases[n].bits;
+    const int result = rsa_security_bits_cases[n].r;
+    const int bytes = (bits + 7) / 8;
+    int r = 0;
+    unsigned char num[2000];
+
+    if (!TEST_ptr(key) || !TEST_int_le(bytes, (int)sizeof(num)))
+        goto err;
+
+    /*
+     * It is necessary to set the RSA key in order to ask for the strength.
+     * A BN of an appropriate size is created, in general it won't have the
+     * properties necessary for RSA to function.  This is okay here since
+     * the RSA key is never used.
+     */
+    memset(num, vals[bits % 8], bytes);
+
+    /*
+     * The 'e' parameter is set to the same value as 'n'.  This saves having
+     * an extra BN to hold a sensible value for 'e'.  This is safe since the
+     * RSA key is not used.  The 'd' parameter can be NULL safely.
+     */
+    if (TEST_true(RSA_set0_key(key, BN_bin2bn(num, bytes, NULL),
+                               BN_bin2bn(num, bytes, NULL), NULL))
+            && TEST_uint_eq(RSA_security_bits(key), result))
+        r = 1;
+err:
+    RSA_free(key);
+    return r;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
+    ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     return 1;
 }
 #endif
