@@ -512,9 +512,10 @@ reconfigure reconf:
           my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
                                               "util", "mkdef.pl")),
                               rel2abs($config{builddir}));
+          my $mkdef_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           return <<"EOF";
-$target: $args{generator}->[0] $deps
-	\$(PERL) $mkdef --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS windows > $target
+$target: $args{generator}->[0] $deps $mkdef
+	\$(PERL) $mkdef$mkdef_ver --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS windows > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           my $target = $args{src};
@@ -675,15 +676,12 @@ EOF
      my $objs = join("\n", @objs);
      my $linklibs = join("", map { "$_\n" } @deps);
      my $deps = join(" ", @objs, @deps);
+     my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF";
 $dso$dsoext: $deps
 	IF EXIST $dso$dsoext.manifest DEL /F /Q $dso$dsoext.manifest
-	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \$(LDOUTFLAG)$dso$dsoext /def:<< @<<
-LIBRARY         $dso_n
-EXPORTS
-    bind_engine		@1
-    v_check		@2
-<<
+	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \\
+		\$(LDOUTFLAG)$dso$dsoext$shared_def @<< || (DEL /Q \$(\@B).* $dso.* && EXIT 1)
 $objs
 $linklibs \$(DSO_EX_LIBS)
 <<

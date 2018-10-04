@@ -1001,9 +1001,12 @@ reconfigure reconf:
       if ($args{src} =~ /\.ld$/) {
           (my $target = $args{src}) =~ s/\.ld$/${defext}/;
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_name =
+              $args{generator}->[1] || basename($args{product}, $dsoext);
           return <<"EOF";
-$target: $args{generator}->[0] $deps
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS $mkdef_os > $target
+$target: $args{generator}->[0] $deps \$(SRCDIR)/util/mkdef.pl
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --ordinals $args{generator}->[0]  --name $ord_name --OS $mkdef_os > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
@@ -1222,14 +1225,18 @@ EOF
       my @objs = map { (my $x = $_) =~ s|\.o$||; "$x$objext" }
                  grep { $_ !~ m/\.ld$/ }
                  @{$args{objs}};
+      my @defs = map { (my $x = $_) =~ s|\.ld$||; "$x$defext" }
+                 grep { $_ =~ /\.ld$/ }
+                 @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $objs = join(" ", @objs);
-      my $deps = join(" ", @deps);
+      my $deps = join(" ", @objs, @defs, @deps);
       my $target = dso($dso);
+      my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
       return <<"EOF";
-$target: $objs $deps
+$target: $deps
 	\$(CC) \$(DSO_CFLAGS) $linkflags\$(DSO_LDFLAGS) \\
-		-o $target $objs \\
+		-o $target$shared_def $objs \\
                 $linklibs \$(DSO_EX_LIBS)
 EOF
   }
