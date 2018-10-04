@@ -10,12 +10,15 @@
 #include <openssl/crypto.h>
 
 #include "testutil.h"
+#include "../e_os.h"
 
 static int test_sec_mem(void)
 {
-#if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
+#ifdef OPENSSL_SECURE_MEMORY
     int testresult = 0;
     char *p = NULL, *q = NULL, *r = NULL, *s = NULL;
+
+    TEST_info("Secure memory is implemented.");
 
     s = OPENSSL_secure_malloc(20);
     /* s = non-secure 20 */
@@ -124,6 +127,7 @@ static int test_sec_mem(void)
     OPENSSL_secure_free(s);
     return testresult;
 #else
+    TEST_info("Secure memory is *not* implemented.");
     /* Should fail. */
     return TEST_false(CRYPTO_secure_malloc_init(4096, 32));
 #endif
@@ -131,7 +135,7 @@ static int test_sec_mem(void)
 
 static int test_sec_mem_clear(void)
 {
-#if defined(OPENSSL_SYS_LINUX) || defined(OPENSSL_SYS_UNIX)
+#ifdef OPENSSL_SECURE_MEMORY
     const int size = 64;
     unsigned char *p = NULL;
     int i, res = 0;
@@ -162,7 +166,6 @@ static int test_sec_mem_clear(void)
 
     res = 1;
     p = NULL;
-
 err:
     OPENSSL_secure_free(p);
     CRYPTO_secure_malloc_done();
