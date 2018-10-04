@@ -2079,7 +2079,7 @@ EOF
                 } elsif ($s =~ /\.ld$/) {
                     # We also recognise linker scripts (or corresponding)
                     # We know they are generated files
-                    my $ld = cleanfile($buildd, $s, $blddir);
+                    my $ld = cleanfile($buildd, $_, $blddir);
                     $unified_info{shared_sources}->{$ddest}->{$ld} = 1;
                 } else {
                     die "unrecognised source file type for shared library: $s\n";

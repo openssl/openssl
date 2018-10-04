@@ -758,9 +758,15 @@ reconfigure reconf :
       if ($args{src} =~ /\.ld$/) {
           (my $target = $args{src}) =~ s/\.ld$/.OPT/;
           my $mkdef = sourcefile('util', 'mkdef.pl');
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_name =
+              $args{generator}->[1] || basename($args{product}, '.EXE');
+          my $case_insensitive =
+              $target{$args{intent}.'_cflags'} =~ m|/NAMES=[^/]*AS_IS|i
+              ? '' : ' --case-insensitive';
           return <<"EOF";
-$target : $args{generator}->[0] $deps
-	\$(PERL) $mkdef --ordinals $args{generator}->[0] --name $args{generator}->[1] "--OS" "VMS" > $target
+$target : $args{generator}->[0] $deps $mkdef
+	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name "--OS" "VMS"$case_insensitive > $target
 EOF
       } elsif ($target !~ /\.[sS]$/) {
           my $target = $args{src};
@@ -925,7 +931,7 @@ EOF
                  grep { $_ =~ m|\.o$| }
                  @{$args{objs}};
       my @defs = map { (my $x = $_) =~ s|\.ld$|.OPT|; $x }
-                 grep { $_ =~ /\.ld$/ }
+                 grep { $_ =~ m|\.ld$| }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
@@ -971,13 +977,16 @@ EOF
       my $libd = dirname($lib);
       my $libn = basename($lib);
       (my $libn_nolib = $libn) =~ s/^lib//;
-      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
+      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
+                 grep { $_ =~ m|\.o$| }
+                 @{$args{objs}};
+      my @defs = map { (my $x = $_) =~ s|\.ld$|.OPT|; $x }
+                 grep { $_ =~ m|\.ld$| }
+                 @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
-      my $deps = join(", -\n\t\t", @objs, @deps);
+      my $deps = join(", -\n\t\t", @objs, @defs, @deps);
+      die "More than one symbol vector" if scalar @defs > 1;
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
-      my $engine_opt = abs2rel(rel2abs(catfile($config{sourcedir},
-                                               "VMS", "engine.opt")),
-                               rel2abs($config{builddir}));
       # The "[]" hack is because in .OPT files, each line inherits the
       # previous line's file spec as default, so if no directory spec
       # is present in the current line and the previous line has one that
@@ -994,12 +1003,12 @@ EOF
           || "\@ !";
       return <<"EOF"
 $lib.EXE : $deps
-        OPEN/WRITE/SHARE=READ OPT_FILE $lib.OPT
-        TYPE $engine_opt /OUTPUT=OPT_FILE:
+        OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
-        LINK \$(DSO_LDFLAGS)/SHARE=\$\@ $lib.OPT/OPT \$(DSO_EX_LIBS)
+        LINK \$(DSO_LDFLAGS)/SHARE=\$\@ $defs[0]/OPT,-
+		$lib-components.OPT/OPT \$(DSO_EX_LIBS)
         - PURGE $lib.EXE,$lib.OPT,$lib.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"

@@ -15,26 +15,46 @@ IF[{- !$disabled{"engine"} -}]
     SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
     DEPEND[padlock]=../libcrypto
     INCLUDE[padlock]=../include
+    IF[{- defined $target{shared_defflag} -}]
+      SHARED_SOURCE[padlock]=padlock.ld
+      GENERATE[padlock.ld]=../util/engines.num
+    ENDIF
     IF[{- !$disabled{capieng} -}]
       ENGINES=capi
       SOURCE[capi]=e_capi.c
       DEPEND[capi]=../libcrypto
       INCLUDE[capi]=../include
+      IF[{- defined $target{shared_defflag} -}]
+        SHARED_SOURCE[capi]=capi.ld
+        GENERATE[capi.ld]=../util/engines.num
+      ENDIF
     ENDIF
     IF[{- !$disabled{afalgeng} -}]
       ENGINES=afalg
       SOURCE[afalg]=e_afalg.c
       DEPEND[afalg]=../libcrypto
       INCLUDE[afalg]= ../include
+      IF[{- defined $target{shared_defflag} -}]
+        SHARED_SOURCE[afalg]=afalg.ld
+        GENERATE[afalg.ld]=../util/engines.num
+      ENDIF
     ENDIF
 
     ENGINES_NO_INST=ossltest dasync
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include
+    IF[{- defined $target{shared_defflag} -}]
+      SHARED_SOURCE[dasync]=dasync.ld
+      GENERATE[dasync.ld]=../util/engines.num
+    ENDIF
     SOURCE[ossltest]=e_ossltest.c
     DEPEND[ossltest]=../libcrypto
     INCLUDE[ossltest]=../include
+    IF[{- defined $target{shared_defflag} -}]
+      SHARED_SOURCE[ossltest]=ossltest.ld
+      GENERATE[ossltest.ld]=../util/engines.num
+    ENDIF
   ENDIF
 
   GENERATE[e_padlock-x86.s]=asm/e_padlock-x86.pl \
