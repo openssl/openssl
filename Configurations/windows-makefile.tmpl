@@ -680,7 +680,7 @@ EOF
      my @deps = compute_lib_depends(@{$args{deps}});
      my $objs = join("\n", @objs);
      my $linklibs = join("", map { "$_\n" } @deps);
-     my $deps = join(" ", @objs, @deps);
+     my $deps = join(" ", @objs, @defs, @deps);
      my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF";
 $dso$dsoext: $deps
