@@ -512,10 +512,12 @@ reconfigure reconf:
           my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
                                               "util", "mkdef.pl")),
                               rel2abs($config{builddir}));
-          my $mkdef_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
+          my $ord_name =
+              $args{generator}->[1] || basename($args{product}, $dsoext);
           return <<"EOF";
 $target: $args{generator}->[0] $deps $mkdef
-	\$(PERL) $mkdef$mkdef_ver --ordinals $args{generator}->[0] --name $args{generator}->[1] --OS windows > $target
+	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
 EOF
       } elsif ($args{src} !~ /\.[sS]$/) {
           my $target = $args{src};
