@@ -705,8 +705,8 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             if (!ok)
                 goto end;
         }
-        /* Increment path length if not self issued */
-        if (!(x->ex_flags & EXFLAG_SI))
+        /* Increment path length if not a self issued intermediate CA */
+        if (i == 0 || (x->ex_flags & EXFLAG_SI) == 0)
             plen++;
         /*
          * If this certificate is a proxy certificate, the next certificate
