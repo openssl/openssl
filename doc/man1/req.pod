@@ -221,8 +221,10 @@ see L<openssl(1)/COMMAND SUMMARY>.
 
 Sets subject name for new request or supersedes the subject name
 when processing a request.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Empty values are permitted, but the corresponding type will not be included
+in the request.
 
 =item B<-multivalue-rdn>
 
