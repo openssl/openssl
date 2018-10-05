@@ -547,6 +547,9 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_BIKE3_L1), "bike3l1"},
     {OQS_KEM_CURVEID(NID_OQS_BIKE3_L3), "bike3l3"},
     {OQS_KEM_CURVEID(NID_OQS_BIKE3_L5), "bike3l5"},
+    {OQS_KEM_CURVEID(NID_OQS_NEWHOPE_512_CCA), "newhope512cca"},
+    {OQS_KEM_CURVEID(NID_OQS_NEWHOPE_1024_CCA), "newhope1024cca"},
+    /* ADD_MORE_OQS_KEM_HERE */
     {OQS_KEM_CURVEID(NID_OQS_p256_SIKE_503), "p256 - sike503 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_SIDH_503), "p256 - sidh503 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_Frodo_640_AES), "p256 - frodo640aes hybrid"},
@@ -554,6 +557,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE1_L1), "p256 - bike1l1 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE2_L1), "p256 - bike2l1 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE3_L1), "p256 - bike3l1 hybrid"},
+    /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}
 };

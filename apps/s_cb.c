@@ -420,13 +420,19 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 				  (id == 0x020e ? "bike3l1" :		\
 				  (id == 0x020f ? "bike3l3" :		\
 				  (id == 0x0210 ? "bike3l5" :		\
+				  (id == 0x0211 ? "newhope512cca" :     \
+				  (id == 0x0212 ? "newhope1024cca" :    \
+				  /* ADD_MORE_OQS_KEM_HERE */ \
 				  (id == 0x0300 ? "p256 - sike503 hybrid" : \
 				  (id == 0x0301 ? "p256 - sidh503 hybrid" : \
 				  (id == 0x0302 ? "p256 - frodo640aes hybrid" : \
 				  (id == 0x0303 ? "p256 - frodo640cshake hybrid" : \
 				  (id == 0x0304 ? "p256 - bike1l1 hybrid" : \
 				  (id == 0x0305 ? "p256 - bike2l1 hybrid" : \
-				  (id == 0x0306 ? "p256 - bike3l1 hybrid" : 0))))))))))))))))))))))))
+				  (id == 0x0306 ? "p256 - bike3l1 hybrid" : \
+				  (id == 0x0307 ? "p256 - newhope512cca hybrid" : \
+				  /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */ \
+				   0)))))))))))))))))))))))))))
 
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {

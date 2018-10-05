@@ -38,6 +38,11 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_BIKE3_L3;
   } else if (memcmp(value,"bike3l5", len) == 0) {
     nid = NID_OQS_BIKE3_L5;
+  } else if (memcmp(value,"newhope512cca", len) == 0) {
+    nid = NID_OQS_NEWHOPE_512_CCA;
+  } else if (memcmp(value,"newhope1024cca", len) == 0) {
+    nid = NID_OQS_NEWHOPE_1024_CCA;
+  /* ADD_MORE_OQS_KEM_HERE */
   /* hybrid algs */
   } else if (memcmp(value,"p256-sike503", len) == 0) {
     nid = NID_OQS_p256_SIKE_503;
@@ -53,7 +58,9 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_p256_BIKE2_L1;
   } else if (memcmp(value,"p256-bike3l1", len) == 0) {
     nid = NID_OQS_p256_BIKE3_L1;
+  } else if (memcmp(value,"p256-newhope512cca", len) == 0) {
+    nid = NID_OQS_p256_NEWHOPE_512_CCA;
   }
-
+  /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
   return nid;
 }
