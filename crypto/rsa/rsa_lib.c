@@ -125,8 +125,8 @@ void RSA_free(RSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->n);
-    BN_clear_free(r->e);
+    BN_free(r->n);
+    BN_free(r->e);
     BN_clear_free(r->d);
     BN_clear_free(r->p);
     BN_clear_free(r->q);
@@ -188,11 +188,11 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
         return 0;
 
     if (n != NULL) {
-        BN_clear_free(r->n);
+        BN_free(r->n);
         r->n = n;
     }
     if (e != NULL) {
-        BN_clear_free(r->e);
+        BN_free(r->e);
         r->e = e;
     }
     if (d != NULL) {
