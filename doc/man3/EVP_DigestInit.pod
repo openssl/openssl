@@ -310,16 +310,17 @@ This example digests the data "Test Message\n" and "Hello World\n", using the
 digest name passed on the command line.
 
  #include <stdio.h>
+ #include <string.h>
  #include <openssl/evp.h>
 
- main(int argc, char *argv[])
+ int main(int argc, char *argv[])
  {
      EVP_MD_CTX *mdctx;
      const EVP_MD *md;
      char mess1[] = "Test Message\n";
      char mess2[] = "Hello World\n";
      unsigned char md_value[EVP_MAX_MD_SIZE];
-     int md_len, i;
+     unsigned int md_len, i;
 
      if (argv[1] == NULL) {
          printf("Usage: mdtest digestname\n");
