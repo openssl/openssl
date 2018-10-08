@@ -188,6 +188,8 @@ typedef struct record_layer_st {
                                                 ((rl)->d->processed_rcds)
 #define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
                                                 ((rl)->d->unprocessed_rcds)
+#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
+#define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
