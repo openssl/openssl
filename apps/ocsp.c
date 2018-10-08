@@ -864,6 +864,7 @@ static void killall(int ret, pid_t *kidpids)
         if (kidpids[i] != 0)
             (void)kill(kidpids[i], SIGTERM);
     sleep(1);
+    OPENSSL_free(kidpids);
     exit(ret);
 }
 
@@ -977,7 +978,6 @@ static void spawn_loop(void)
     }
 
     /* The loop above can only break on termsig */
-    OPENSSL_free(kidpids);
     syslog(LOG_INFO, "terminating on signal: %d", termsig);
     killall(0, kidpids);
 }
