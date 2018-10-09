@@ -44,6 +44,7 @@ static const ERR_STRING_DATA RAND_str_functs[] = {
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD_BEGIN, 0),
      "rand_pool_add_begin"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ADD_END, 0), "rand_pool_add_end"},
+    {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_ATTACH, 0), "rand_pool_attach"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_BYTES_NEEDED, 0),
      "rand_pool_bytes_needed"},
     {ERR_PACK(ERR_LIB_RAND, RAND_F_RAND_POOL_NEW, 0), "rand_pool_new"},
