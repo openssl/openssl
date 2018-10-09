@@ -108,6 +108,7 @@ my %OS_data = (
                      platforms  => { UNIX                       => 1,
                                      EXPORT_VAR_AS_FUNCTION     => 0 } },
     linux       => 'solaris',   # alias
+    "bsd-gcc"   => 'solaris',   # alias
     aix         => { writer     => \&writer_aix,
                      sort       => sorter_unix(),
                      platforms  => { UNIX                       => 1,
