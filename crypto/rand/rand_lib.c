@@ -146,17 +146,11 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         return 0;
     }
 
-    pool = rand_pool_new(entropy, min_len, max_len);
-    if (pool == NULL)
-        return 0;
-
-    if (drbg->pool) {
-        rand_pool_add(pool,
-                      rand_pool_buffer(drbg->pool),
-                      rand_pool_length(drbg->pool),
-                      rand_pool_entropy(drbg->pool));
-        rand_pool_free(drbg->pool);
-        drbg->pool = NULL;
+    if (drbg->pool != NULL) {
+        pool = drbg->pool;
+        pool->entropy_requested = entropy;
+    } else {
+        pool = rand_pool_new(entropy, min_len, max_len);
     }
 
     if (drbg->parent) {
@@ -217,7 +211,10 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
                                unsigned char *out, size_t outlen)
 {
-    OPENSSL_secure_clear_free(out, outlen);
+    if (drbg->pool == NULL)
+        OPENSSL_secure_clear_free(out, outlen);
+    else
+        drbg->pool = NULL;
 }
 
 
@@ -405,7 +402,7 @@ int RAND_poll(void)
         /* fill random pool and seed the current legacy RNG */
         pool = rand_pool_new(RAND_DRBG_STRENGTH,
                              RAND_DRBG_STRENGTH / 8,
-                             DRBG_MINMAX_FACTOR * (RAND_DRBG_STRENGTH / 8));
+                             RAND_POOL_MAX_LENGTH);
         if (pool == NULL)
             return 0;
 
@@ -430,17 +427,18 @@ err:
  * Allocate memory and initialize a new random pool
  */
 
-RAND_POOL *rand_pool_new(int entropy, size_t min_len, size_t max_len)
+RAND_POOL *rand_pool_new(int entropy_requested, size_t min_len, size_t max_len)
 {
     RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
 
     if (pool == NULL) {
         RANDerr(RAND_F_RAND_POOL_NEW, ERR_R_MALLOC_FAILURE);
-        goto err;
+        return NULL;
     }
 
     pool->min_len = min_len;
-    pool->max_len = max_len;
+    pool->max_len = (max_len > RAND_POOL_MAX_LENGTH) ?
+        RAND_POOL_MAX_LENGTH : max_len;
 
     pool->buffer = OPENSSL_secure_zalloc(pool->max_len);
     if (pool->buffer == NULL) {
@@ -448,13 +446,45 @@ RAND_POOL *rand_pool_new(int entropy, size_t min_len, size_t max_len)
         goto err;
     }
 
-    pool->requested_entropy = entropy;
+    pool->entropy_requested = entropy_requested;
 
     return pool;
 
 err:
     OPENSSL_free(pool);
     return NULL;
+}
+
+/*
+ * Attach new random pool to the given buffer
+ *
+ * This function is intended to be used only for feeding random data
+ * provided by RAND_add() and RAND_seed() into the <master> DRBG.
+ */
+RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
+                            size_t entropy)
+{
+    RAND_POOL *pool = OPENSSL_zalloc(sizeof(*pool));
+
+    if (pool == NULL) {
+        RANDerr(RAND_F_RAND_POOL_ATTACH, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    /*
+     * The const needs to be cast away, but attached buffers will not be
+     * modified (in contrary to allocated buffers which are zeroed and
+     * freed in the end).
+     */
+    pool->buffer = (unsigned char *) buffer;
+    pool->len = len;
+
+    pool->attached = 1;
+
+    pool->min_len = pool->max_len = pool->len;
+    pool->entropy = entropy;
+
+    return pool;
 }
 
 /*
@@ -465,7 +495,14 @@ void rand_pool_free(RAND_POOL *pool)
     if (pool == NULL)
         return;
 
-    OPENSSL_secure_clear_free(pool->buffer, pool->max_len);
+    /*
+     * Although it would be advisable from a cryptographical viewpoint,
+     * we are not allowed to clear attached buffers, since they are passed
+     * to rand_pool_attach() as `const unsigned char*`.
+     * (see corresponding comment in rand_pool_attach()).
+     */
+    if (!pool->attached)
+        OPENSSL_secure_clear_free(pool->buffer, pool->max_len);
     OPENSSL_free(pool);
 }
 
@@ -524,7 +561,7 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
  */
 size_t rand_pool_entropy_available(RAND_POOL *pool)
 {
-    if (pool->entropy < pool->requested_entropy)
+    if (pool->entropy < pool->entropy_requested)
         return 0;
 
     if (pool->len < pool->min_len)
@@ -540,8 +577,8 @@ size_t rand_pool_entropy_available(RAND_POOL *pool)
 
 size_t rand_pool_entropy_needed(RAND_POOL *pool)
 {
-    if (pool->entropy < pool->requested_entropy)
-        return pool->requested_entropy - pool->entropy;
+    if (pool->entropy < pool->entropy_requested)
+        return pool->entropy_requested - pool->entropy;
 
     return 0;
 }

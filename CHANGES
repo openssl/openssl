@@ -25,6 +25,17 @@
      list of built in objects, i.e. OIDs with names.
      [Richard Levitte]
 
+ Changes between 1.1.1 and 1.1.1a [xx XXX xxxx]
+
+  *) Fixed the issue that RAND_add()/RAND_seed() silently discards random input
+     if its length exceeds 4096 bytes. The limit has been raised to a buffer size
+     of two gigabytes and the error handling improved.
+
+     This issue was reported to OpenSSL by Dr. Falko Strenzke. It has been
+     categorized as a normal bug, not a security issue, because the DRBG reseeds
+     automatically and is fully functional even without additional randomness
+     provided by the application.
+
  Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
   *) Add a new ClientHello callback. Provides a callback interface that gives
@@ -13121,4 +13132,3 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) A minor bug in ssl/s3_clnt.c where there would always be 4 0
      bytes sent in the client random.
      [Edward Bishop <ebishop@spyglass.com>]
-
