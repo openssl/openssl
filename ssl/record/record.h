@@ -232,3 +232,5 @@ __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
 int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
+int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq,
+                              size_t off);
