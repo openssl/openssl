@@ -53,6 +53,8 @@ void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen);
  * RAND_POOL functions
  */
 RAND_POOL *rand_pool_new(int entropy_requested, size_t min_len, size_t max_len);
+RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
+                            size_t entropy);
 void rand_pool_free(RAND_POOL *pool);
 
 const unsigned char *rand_pool_buffer(RAND_POOL *pool);

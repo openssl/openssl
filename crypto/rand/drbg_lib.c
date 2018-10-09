@@ -556,8 +556,10 @@ int rand_drbg_restart(RAND_DRBG *drbg,
 
     if (drbg->pool != NULL) {
         RANDerr(RAND_F_RAND_DRBG_RESTART, ERR_R_INTERNAL_ERROR);
+        drbg->state = DRBG_ERROR;
         rand_pool_free(drbg->pool);
         drbg->pool = NULL;
+        return 0;
     }
 
     if (buffer != NULL) {
@@ -565,24 +567,25 @@ int rand_drbg_restart(RAND_DRBG *drbg,
             if (drbg->max_entropylen < len) {
                 RANDerr(RAND_F_RAND_DRBG_RESTART,
                     RAND_R_ENTROPY_INPUT_TOO_LONG);
+                drbg->state = DRBG_ERROR;
                 return 0;
             }
 
             if (entropy > 8 * len) {
                 RANDerr(RAND_F_RAND_DRBG_RESTART, RAND_R_ENTROPY_OUT_OF_RANGE);
+                drbg->state = DRBG_ERROR;
                 return 0;
             }
 
             /* will be picked up by the rand_drbg_get_entropy() callback */
-            drbg->pool = rand_pool_new(entropy, len, len);
+            drbg->pool = rand_pool_attach(buffer, len, entropy);
             if (drbg->pool == NULL)
                 return 0;
-
-            rand_pool_add(drbg->pool, buffer, len, entropy);
         } else {
             if (drbg->max_adinlen < len) {
                 RANDerr(RAND_F_RAND_DRBG_RESTART,
                         RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+                drbg->state = DRBG_ERROR;
                 return 0;
             }
             adin = buffer;
@@ -1040,14 +1043,16 @@ static int drbg_add(const void *buf, int num, double randomness)
     if (num < 0 || randomness < 0.0)
         return 0;
 
-    if (randomness > (double)drbg->max_entropylen) {
+    if (randomness > (double)RAND_DRBG_STRENGTH) {
         /*
          * The purpose of this check is to bound |randomness| by a
          * relatively small value in order to prevent an integer
          * overflow when multiplying by 8 in the rand_drbg_restart()
-         * call below.
+         * call below. Note that randomness is measured in bytes,
+         * not bits, so this value corresponds to eight times the
+         * security strength.
          */
-        return 0;
+        randomness = (double)RAND_DRBG_STRENGTH;
     }
 
     rand_drbg_lock(drbg);

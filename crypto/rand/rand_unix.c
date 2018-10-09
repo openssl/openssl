@@ -264,7 +264,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * Note: 'buflen' equals the size of the buffer which is used by the
      * get_entropy() callback of the RAND_DRBG. It is roughly bounded by
      *
-     *   2 * DRBG_MINMAX_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^13
+     *   2 * RAND_POOL_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^14
      *
      * which is way below the OSSL_SSIZE_MAX limit. Therefore sign conversion
      * between size_t and ssize_t is safe even without a range check.

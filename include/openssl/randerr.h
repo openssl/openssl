@@ -40,6 +40,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_F_RAND_POOL_ADD                             103
 # define RAND_F_RAND_POOL_ADD_BEGIN                       113
 # define RAND_F_RAND_POOL_ADD_END                         114
+# define RAND_F_RAND_POOL_ATTACH                          124
 # define RAND_F_RAND_POOL_BYTES_NEEDED                    115
 # define RAND_F_RAND_POOL_NEW                             116
 # define RAND_F_RAND_WRITE_FILE                           112
@@ -58,6 +59,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED            127
 # define RAND_R_ERROR_INITIALISING_DRBG                   107
 # define RAND_R_ERROR_INSTANTIATING_DRBG                  108
+# define RAND_R_RANDOM_DATA_WAS_IGNORED             137
 # define RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT         109
 # define RAND_R_ERROR_RETRIEVING_ENTROPY                  110
 # define RAND_R_ERROR_RETRIEVING_NONCE                    111
