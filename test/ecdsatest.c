@@ -25,6 +25,7 @@
 # ifndef OPENSSL_NO_ENGINE
 #  include <openssl/engine.h>
 # endif
+# include <openssl/sha.h>
 # include <openssl/err.h>
 # include <openssl/rand.h>
 
