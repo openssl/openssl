@@ -31,6 +31,7 @@ The following key exchange / key encapsulation mechanisms from liboqs are suppor
 - sidh503, sidh751
 - frodo640aes, frodo640cshake, frodo976aes, frodo976cshake
 - bike1l1, bike1l3, bike1l5, bike2l1, bike2l3, bike2l5, bike3l1, bike3l3, bike3l5 (not currently on Windows)
+- newhope512cca, newhope1024cca
 
 ### Authentication mechanisms
 
@@ -137,7 +138,7 @@ OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) whi
 To run a server, we first need to generate a self-signed X.509 certificate, using either a classical or post-quantum algorithm. Run the following command, with `<SIGALG>` = `rsa`, `picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`):
 
 	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
-	
+
 On macOS, you may need to set an environment variable for the dynamic library path:
 
 	DYLD_LIBRARY_PATH=<path-to-openssl>
@@ -147,7 +148,7 @@ To run a basic TLS server with all OQS ciphersuites enabled:
 
 	apps/openssl s_server -cert <SIGALG>.crt -key <SIGALG>.key -HTTP -tls1_3
 
-In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (`<KEXALG>` = `sike503`, `sike751`, `sidh503`, `sidh751`, `frodo640aes`, `frodo640cshake`, `frodo976aes`, `frodo976cshake`, `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5`) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC schemes are supported for now), for example:
+In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (`<KEXALG>` = `sike503`, `sike751`, `sidh503`, `sidh751`, `frodo640aes`, `frodo640cshake`, `frodo976aes`, `frodo976cshake`, `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5`, `newhope512cca`, `newhope1024cca`) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC schemes are supported for now), for example:
 
     apps/openssl s_client -curves <KEXALG> -connect localhost:4433
 
@@ -160,7 +161,7 @@ One goal is to minimize the OQS footprint into the OpenSSL code, to improve read
 
 ### Adding a key exchange algorithm
 
-The TLS 1.3 key exchange integration is done at the TLS layer (start looking in `ssl/statem/extensions_(clnt,srvr).c`). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the asymmetric nature of the KEM API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked.
+The TLS 1.3 key exchange integration is done at the TLS layer (start looking in `ssl/statem/extensions_(clnt,srvr).c`). It would have been nice to integrate in the crypto EVP layer, but it wasn't possible given the asymmetric nature of the KEM API (genkey, encrypt, decrypt) and the lack of role context when the Diffie-Hellman EVP functions are invoked. To add a new algorithm, run `grep -r ADD_MORE_OQS_KEM_HERE` and add new code following the example of other OQS schemes.
 
 ### Adding an authentication mechanism
 

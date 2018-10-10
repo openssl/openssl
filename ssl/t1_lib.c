@@ -190,6 +190,9 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* bike3l1 (0x020e) */
     {NID_OQS_BIKE3_L3, 192, TLS_CURVE_CUSTOM}, /* bike3l3 (0x020f) */
     {NID_OQS_BIKE3_L5, 256, TLS_CURVE_CUSTOM}, /* bike3l5 (0x0210) */
+    {NID_OQS_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* newhope512cca (0x0211) */
+    {NID_OQS_NEWHOPE_1024_CCA, 256, TLS_CURVE_CUSTOM}, /* newhope1024cca (0x0212) */
+    /* ADD_MORE_OQS_KEM_HERE */
 };
     /* Hybrid OQS groups. Security level is classical. */
 static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
@@ -199,7 +202,9 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640cshake hybrid (0x0303) */
     {NID_OQS_p256_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike1l1 hybrid (0x0304) */
     {NID_OQS_p256_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike2l1 hybrid (0x0305) */
-    {NID_OQS_p256_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike3l1 hybrid (0x0305) */
+    {NID_OQS_p256_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike3l1 hybrid (0x0306) */
+    {NID_OQS_p256_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* p256 + newhope512cca hybrid (0x0307) */
+    /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
 
 static const unsigned char ecformats_default[] = {
@@ -234,6 +239,9 @@ static const uint16_t eccurves_default[] = {
     0x020e, /* OQS bike3l1 */
     0x020f, /* OQS bike3l3 */
     0x0210, /* OQS bike3l5 */
+    0x0211, /* OQS newhope512cca */
+    0x0212, /* OQS newhope1024cca */
+    /* ADD_MORE_OQS_KEM_HERE */
     0x0300, /* p256 - OQS sike503 hybrid */
     0x0301, /* p256 - OQS sidh503 hybrid */
     0x0302, /* p256 - OQS frodo640aes hybrid */
@@ -241,6 +249,8 @@ static const uint16_t eccurves_default[] = {
     0x0304, /* p256 - OQS bike1l1 hybrid */
     0x0305, /* p256 - OQS bike2l1 hybrid */
     0x0306, /* p256 - OQS bike3l1 hybrid */
+    0x0307, /* p256 - OQS newhope512cca hybrid */
+    /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
 
 static const uint16_t suiteb_curves[] = {
