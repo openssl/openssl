@@ -112,15 +112,16 @@ Next, you must download and build liboqs using the master branch of liboqs.  The
     cd liboqs
     msbuild VisualStudio\liboqs.sln
     mkdir ..\openssl\oqs
+    mkdir ..\openssl\oqs\lib
+    mkdir ..\openssl\oqs\include
     xcopy VisualStudio\x64\Release\oqs.lib ..\openssl\oqs\lib\
-    xcopy /S include ..\openssl\oqs\include\
-    xcopy VisualStudio\winconfig.h ..\openssl\oqs\include\oqs\
+    xcopy /S VisualStudio\include ..\openssl\oqs\include\
 
 ### Step 3: Build fork of OpenSSL
 
 Now we follow the standard instructions for building OpenSSL, for example
 
-    cd openssl
+    cd ..\openssl
     perl Configure VC-WIN64A
     nmake
 
