@@ -30,14 +30,14 @@ The following key exchange / key encapsulation mechanisms from liboqs are suppor
 - sike503, sike751
 - sidh503, sidh751
 - frodo640aes, frodo640cshake, frodo976aes, frodo976cshake
-- bike1l1, bike1l3, bike1l5, bike2l1, bike2l3, bike2l5, bike3l1, bike3l3, bike3l5
+- bike1l1, bike1l3, bike1l5, bike2l1, bike2l3, bike2l5, bike3l1, bike3l3, bike3l5 (not currently on Windows)
 
 ### Authentication mechanisms
 
 The following signature schemes from liboqs are supported:
 
 - picnicL1FS
-- qteslaI, qteslaIIIsize, qteslaIIIspeed
+- qteslaI, qteslaIIIsize, qteslaIIIspeed (not currently on Windows)
 
 Limitations and security
 ------------------------
@@ -70,7 +70,7 @@ Builds have been tested on macOS 10.13.6 (clang), Ubuntu 14.04.5 (gcc-7).
 
 Clone or download the source from Github:
 
-    git clone --branch master https://github.com/open-quantum-safe/openssl.git
+    git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
 
 ### Step 2: Build liboqs
 
@@ -89,10 +89,42 @@ This will create a directory `oqs` in your newly download OpenSSL directory, wit
 
 Now we follow the standard instructions for building OpenSSL.
 
-	cd <path-to-openssl-dir>
+    cd <path-to-openssl-dir>
     ./config
-	make -j
+    make -j
 		
+Building on Windows
+-------------------
+
+Builds have been tested on Windows 10 (VS2017 build tools). Make sure you can build the unmodified version of OpenSSL by following the instructions in INSTALL and NOTES.WIN.
+
+### Step 1: Download fork of OpenSSL
+
+Clone or download the source from Github:
+
+    git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
+
+### Step 2: Build liboqs
+
+Next, you must download and build liboqs using the master branch of liboqs.  The following instructions will download and build that branch of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
+
+    git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+    cd liboqs
+    msbuild VisualStudio\liboqs.sln
+    mkdir ..\openssl\oqs
+    mkdir ..\openssl\oqs\lib
+    mkdir ..\openssl\oqs\include
+    xcopy VisualStudio\x64\Release\oqs.lib ..\openssl\oqs\lib\
+    xcopy /S VisualStudio\include ..\openssl\oqs\include\
+
+### Step 3: Build fork of OpenSSL
+
+Now we follow the standard instructions for building OpenSSL, for example
+
+    cd ..\openssl
+    perl Configure VC-WIN64A
+    nmake
+
 Running
 -------
 

@@ -212,12 +212,15 @@ CNF_CPPFLAGS={- our $cppfags2 =
                                                          @{$config{includes}}),
                               @{$config{cppflags}}) -}
 CNF_CFLAGS={- join(' ', $target{cflags} || (),
+                        "/I \"oqs\\include\"",
                         @{$config{cflags}}) -}
 CNF_CXXFLAGS={- join(' ', $target{cxxflags} || (),
                           @{$config{cxxflags}}) -}
 CNF_LDFLAGS={- join(' ', $target{lflags} || (),
+                         "/LIBPATH:\"oqs\\lib\"",
                          @{$config{lflags}}) -}
 CNF_EX_LIBS={- join(' ', $target{ex_libs} || (),
+                         "oqs.lib",
                          @{$config{ex_libs}}) -}
 
 # Variables starting with LIB_ are used to build library object files
