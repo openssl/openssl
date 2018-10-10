@@ -450,7 +450,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
     unsigned char *buf, *wbuf;
-    size_t fragoff, fraglen, msglen, reclen, align;
+    size_t fragoff, fraglen, msglen, reclen, align = 0;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
