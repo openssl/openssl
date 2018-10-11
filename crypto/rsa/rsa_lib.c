@@ -125,8 +125,8 @@ void RSA_free(RSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->n);
-    BN_clear_free(r->e);
+    BN_free(r->n);
+    BN_free(r->e);
     BN_clear_free(r->d);
     BN_clear_free(r->p);
     BN_clear_free(r->q);
@@ -196,7 +196,7 @@ int RSA_set0_key(RSA *r, BIGNUM *n, BIGNUM *e, BIGNUM *d)
         r->e = e;
     }
     if (d != NULL) {
-        BN_free(r->d);
+        BN_clear_free(r->d);
         r->d = d;
     }
 
@@ -213,11 +213,11 @@ int RSA_set0_factors(RSA *r, BIGNUM *p, BIGNUM *q)
         return 0;
 
     if (p != NULL) {
-        BN_free(r->p);
+        BN_clear_free(r->p);
         r->p = p;
     }
     if (q != NULL) {
-        BN_free(r->q);
+        BN_clear_free(r->q);
         r->q = q;
     }
 
@@ -235,15 +235,15 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
         return 0;
 
     if (dmp1 != NULL) {
-        BN_free(r->dmp1);
+        BN_clear_free(r->dmp1);
         r->dmp1 = dmp1;
     }
     if (dmq1 != NULL) {
-        BN_free(r->dmq1);
+        BN_clear_free(r->dmq1);
         r->dmq1 = dmq1;
     }
     if (iqmp != NULL) {
-        BN_free(r->iqmp);
+        BN_clear_free(r->iqmp);
         r->iqmp = iqmp;
     }
 
