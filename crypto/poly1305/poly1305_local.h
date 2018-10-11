@@ -24,4 +24,6 @@ struct poly1305_context {
         poly1305_blocks_f blocks;
         poly1305_emit_f emit;
     } func;
+    /* for direct usage of poly1305 */
+    unsigned char key[32];
 };

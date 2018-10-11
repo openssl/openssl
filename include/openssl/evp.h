@@ -348,6 +348,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_SET_PIPELINE_INPUT_BUFS        0x23
 /* Set the input buffer lengths to use for a pipelined operation */
 # define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
+/* Set Poly1305 key for standalone usage of this hash function */
+# define         EVP_CTRL_SET_POLY1305_KEY               0x25
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
@@ -532,9 +534,11 @@ void BIO_set_md(BIO *, const EVP_MD *md);
 
 int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 EVP_MD_CTX *EVP_MD_CTX_new(void);
+EVP_MD_CTX *EVP_MD_CTX_new_ex(const EVP_MD *type, ENGINE *impl);
 int EVP_MD_CTX_reset(EVP_MD_CTX *ctx);
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx);
 # define EVP_MD_CTX_create()     EVP_MD_CTX_new()
+# define EVP_MD_CTX_create_ex()  EVP_MD_CTX_new_ex()
 # define EVP_MD_CTX_init(ctx)    EVP_MD_CTX_reset((ctx))
 # define EVP_MD_CTX_destroy(ctx) EVP_MD_CTX_free((ctx))
 __owur int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in);
@@ -726,6 +730,9 @@ const EVP_MD *EVP_whirlpool(void);
 # endif
 # ifndef OPENSSL_NO_SM3
 const EVP_MD *EVP_sm3(void);
+# endif
+# ifndef OPENSSL_NO_POLY1305
+const EVP_MD *EVP_poly1305(void);
 # endif
 const EVP_CIPHER *EVP_enc_null(void); /* does nothing :-) */
 # ifndef OPENSSL_NO_DES

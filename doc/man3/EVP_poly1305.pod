@@ -1,0 +1,92 @@
+=pod
+
+=head1 NAME
+
+EVP_poly1305
+- Poly1305 for EVP
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ const EVP_MD *EVP_poly1305(void);
+
+=head1 DESCRIPTION
+
+Poly1305 is an one-time authenticator designed by D. J. Bernstein. Poly1305
+takes a 32-byte one-time key and a message and produces a 16-byte tag. This tag
+is used to authenticate the message.
+
+=over 4
+
+=item EVP_poly1305()
+
+The Poly1305 hash function.
+
+=back
+
+
+=head1 RETURN VALUES
+
+This function retursn an B<EVP_MD> structure that contains the implementation
+of the hash function. See L<EVP_MD_meth_new(3)> for details of the B<EVP_MD>
+structure.
+
+=head1 CONFORMING TO
+
+RFC 7539.
+
+=head1 EXAMPLE
+
+This example demonstrates the calling sequence for using Poly1305 hash function
+via EVP interface:
+
+ #include <stdio.h>
+ #include <string.h>
+ #include <openssl/evp.h>
+
+ int main(int argc, char *argv[])
+ {
+     EVP_MD_CTX *mdctx;
+     char raw_meat[] = "Cryptographic Forum Research Group";
+     unsigned char key[32] = "\x85\xd6\xbe\x78\x57\x55\x6d\x33"
+                             "\x7f\x44\x52\xfe\x42\xd5\x06\xa8"
+                             "\x01\x03\x80\x8a\xfb\x0d\xb2\xfd"
+                             "\x4a\xbf\xf6\xaf\x41\x49\xf5\x1b";
+     unsigned char md_value[EVP_MAX_MD_SIZE];
+     unsigned int md_len, i;
+
+     /* configure Poly1305 as the hash function... */
+     mdctx = EVP_MD_CTX_new_ex(EVP_poly1305(), NULL);
+     /* setup poly1305 key */
+     EVP_MD_CTX_ctrl(mdctx, EVP_CTRL_SET_POLY1305_KEY, 32, key);
+     /* init Poly1305... */
+     EVP_DigestInit_ex(mdctx, NULL, NULL);
+     /* calculate the hash... */
+     EVP_DigestUpdate(mdctx, raw_meat, strlen(raw_meat));
+     EVP_DigestFinal_ex(mdctx, md_value, &md_len);
+     EVP_MD_CTX_free(mdctx);
+
+     printf("Digest is: ");
+     for (i = 0; i < md_len; i++)
+         printf("%02x", md_value[i]);
+     printf("\n");
+
+     return 0;
+ }
+
+=head1 SEE ALSO
+
+L<evp(7)>,
+L<EVP_DigestInit(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

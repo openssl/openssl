@@ -51,6 +51,41 @@ EVP_MD_CTX *EVP_MD_CTX_new(void)
     return OPENSSL_zalloc(sizeof(EVP_MD_CTX));
 }
 
+EVP_MD_CTX *EVP_MD_CTX_new_ex(const EVP_MD *type, ENGINE *impl)
+{
+    EVP_MD_CTX *ctx;
+
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        return NULL;
+
+    /*
+     * set this flag to avoid the calling to the true
+     * init callback provided by the specific digest
+     * algorithm
+     */
+    EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NO_INIT);
+    if (!EVP_DigestInit_ex(ctx, type, impl))
+        goto err;
+
+    /* create digest specified context */
+    if (type->ctx_size) {
+        ctx->update = type->update;
+        ctx->md_data = OPENSSL_zalloc(type->ctx_size);
+        if (ctx->md_data == NULL) {
+            EVPerr(EVP_F_EVP_DIGESTINIT_EX, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
+
+    EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_NO_INIT);
+
+    return ctx;
+ err:
+    EVP_MD_CTX_free(ctx);
+    return NULL;
+}
+
 void EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 {
     EVP_MD_CTX_reset(ctx);
