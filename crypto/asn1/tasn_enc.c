@@ -130,7 +130,7 @@ int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
         /* Use indefinite length constructed if requested */
         if (aclass & ASN1_TFLG_NDEF)
             ndef = 2;
-        /* fall through */
+        /* FALLTHROUGH */
 
     case ASN1_ITYPE_SEQUENCE:
         i = asn1_enc_restore(&seqcontlen, out, pval, it);

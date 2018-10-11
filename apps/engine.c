@@ -342,7 +342,7 @@ int engine_main(int argc, char **argv)
             break;
         case OPT_TT:
             test_avail_noise++;
-            /* fall thru */
+            /* FALLTHROUGH */
         case OPT_T:
             test_avail++;
             break;
