@@ -90,6 +90,8 @@ typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
 typedef struct evp_md_st EVP_MD;
 typedef struct evp_md_ctx_st EVP_MD_CTX;
+typedef struct evp_mac_st EVP_MAC;
+typedef struct evp_mac_ctx_st EVP_MAC_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
 
 typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
