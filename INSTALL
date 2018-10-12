@@ -266,6 +266,11 @@
   no-async
                    Do not build support for async operations.
 
+  no-atexit
+                   Do not clean up OpenSSL automatically at process exit. This
+                   means applications will have to manually cleanup OpenSSL
+                   using OPENSSL_cleanup().
+
   no-autoalginit
                    Don't automatically load all supported ciphers and digests.
                    Typically OpenSSL will make available all of its supported

@@ -100,7 +100,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         return 0;
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
-#ifndef OPENSSL_SYS_UEFI
+#if !defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_NO_ATEXIT)
     if (atexit(OPENSSL_cleanup) != 0)
         goto err;
 #endif
@@ -127,7 +127,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_load_crypto_nodelete()\n");
 #endif
-#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
+#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE) \
+    && !defined(OPENSSL_NO_ATEXIT)
 # ifdef DSO_WIN32
     {
         HMODULE handle = NULL;
@@ -695,7 +696,8 @@ int OPENSSL_atexit(void (*handler)(void))
 {
     OPENSSL_INIT_STOP *newhand;
 
-#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE)
+#if !defined(OPENSSL_NO_DSO) && !defined(OPENSSL_USE_NODELETE) \
+    && !defined(OPENSSL_NO_ATEXIT)
     {
         union {
             void *sym;
