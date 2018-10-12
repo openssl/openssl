@@ -88,12 +88,14 @@ static int apps_startup(void)
         return 0;
 
     setup_ui_method();
+    setup_engine_loader();
 
     return 1;
 }
 
 static void apps_shutdown(void)
 {
+    destroy_engine_loader();
     destroy_ui_method();
 }
 

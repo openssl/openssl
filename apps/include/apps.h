@@ -33,6 +33,7 @@
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
+# include "engine_loader.h"
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
