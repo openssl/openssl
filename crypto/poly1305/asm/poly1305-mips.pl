@@ -73,7 +73,7 @@ $code.=<<___;
 # define _MIPS_ARCH_MIPS64R2
 #endif
 
-#if (_MIPS_ARCH_MIPS64R6)
+#if defined(_MIPS_ARCH_MIPS64R6)
 # define dmultu(rs,rt)
 # define mflo(rd,rs,rt)	dmulu	rd,rs,rt
 # define mfhi(rd,rs,rt)	dmuhu	rd,rs,rt
