@@ -983,6 +983,27 @@ void EVP_MD_do_all_sorted(void (*fn)
                            (const EVP_MD *ciph, const char *from,
                             const char *to, void *x), void *arg);
 
+/* MAC stuff */
+
+EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
+void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
+int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
+int EVP_MAC_reset(EVP_MAC_CTX *ctx);
+size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
+int EVP_MAC_init(EVP_MAC_CTX *ctx);
+int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
+int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen);
+int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...);
+int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value);
+int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
+int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
+int EVP_MAC_oneshot(const EVP_MAC *mac, const void *key, size_t keylen,
+                    const unsigned char *data, size_t datalen,
+                    unsigned char *out, size_t *poutlen);
+
+# define EVP_MAC_CTRL_SET_MAC_KEY       1
+
+/* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,
                          const unsigned char *enc_key, int enc_key_len,
                          EVP_PKEY *private_key);
