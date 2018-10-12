@@ -26,8 +26,8 @@ B<openssl> B<req>
 [B<-newkey rsa:bits>]
 [B<-newkey alg:file>]
 [B<-nodes>]
-[B<-key filename>]
-[B<-keyform PEM|DER>]
+[B<-key filename|URI>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-keyout filename>]
 [B<-keygen_engine id>]
 [B<-I<digest>>]
@@ -185,21 +185,22 @@ options supported depends on the public key algorithm used and its
 implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
 for more details.
 
-=item B<-key filename>
+=item B<-privkey filename|URI>, B<-key filename|URI>
 
-This specifies the file to read the private key from. It also
-accepts PKCS#8 format private keys for PEM format files.
+This specifies the private key to be used to sign the CSR.  See
+L<openssl/Key, Certificate and CRL Options>.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|ENGINE>
 
-The format of the private key file specified in the B<-key>
-argument. PEM is the default.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-keyout filename>
 
 This gives the filename to write the newly created private key to.
 If this option is not specified then the filename present in the
-configuration file is used.
+configuration file is used.  This file is made in PEM format.
 
 =item B<-nodes>
 

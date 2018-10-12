@@ -51,7 +51,7 @@ int spkac_main(int argc, char **argv)
 {
     BIO *out = NULL;
     CONF *conf = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     EVP_PKEY *pkey = NULL;
     NETSCAPE_SPKI *spki = NULL;
     char *challenge = NULL, *keyfile = NULL;
@@ -117,14 +117,17 @@ int spkac_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (keyformat == FORMAT_ENGINE)
+        key_e = e;
+
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
     }
 
     if (keyfile != NULL) {
-        pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL,
-                        keyformat, 1, passin, e, "private key");
+        pkey = load_key(strcmp(keyfile, "-") ? keyfile : NULL, 1, passin,
+                        key_e, "private key");
         if (pkey == NULL)
             goto end;
         spki = NETSCAPE_SPKI_new();

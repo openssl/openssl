@@ -190,7 +190,7 @@ int cms_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
     CMS_ContentInfo *cms = NULL, *rcms = NULL;
     CMS_ReceiptRequest *rr = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     EVP_PKEY *key = NULL;
     const EVP_CIPHER *cipher = NULL, *wrap_cipher = NULL;
     const EVP_MD *sign_md = NULL;
@@ -517,8 +517,7 @@ int cms_main(int argc, char **argv)
             if (operation == SMIME_ENCRYPT) {
                 if (encerts == NULL && (encerts = sk_X509_new_null()) == NULL)
                     goto end;
-                cert = load_cert(opt_arg(), FORMAT_PEM,
-                                 "recipient certificate file");
+                cert = load_cert(opt_arg(), "recipient certificate file");
                 if (cert == NULL)
                     goto end;
                 sk_X509_push(encerts, cert);
@@ -588,6 +587,9 @@ int cms_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (keyform == FORMAT_ENGINE)
+        key_e = e;
 
     if ((rr_allorfirst != -1 || rr_from != NULL) && rr_to == NULL) {
         BIO_puts(bio_err, "No Signed Receipts Recipients\n");
@@ -680,8 +682,7 @@ int cms_main(int argc, char **argv)
             if ((encerts = sk_X509_new_null()) == NULL)
                 goto end;
         while (*argv) {
-            if ((cert = load_cert(*argv, FORMAT_PEM,
-                                  "recipient certificate file")) == NULL)
+            if ((cert = load_cert(*argv, "recipient certificate file")) == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
             cert = NULL;
@@ -690,15 +691,14 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
-                        "certificate file")) {
+        if (!load_certs(certfile, &other, NULL, "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (recipfile != NULL && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM,
+        if ((recip = load_cert(recipfile,
                                "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -706,7 +706,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (operation == SMIME_SIGN_RECEIPT) {
-        if ((signer = load_cert(signerfile, FORMAT_PEM,
+        if ((signer = load_cert(signerfile,
                                 "receipt signer certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -724,7 +724,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
+        key = load_key(keyfile, 0, passin, key_e, "signing key file");
         if (key == NULL)
             goto end;
     }
@@ -925,12 +925,12 @@ int cms_main(int argc, char **argv)
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
-            signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
+            signer = load_cert(signerfile, "signer certificate");
             if (signer == NULL) {
                 ret = 2;
                 goto end;
             }
-            key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
+            key = load_key(keyfile, 0, passin, key_e, "signing key file");
             if (key == NULL) {
                 ret = 2;
                 goto end;

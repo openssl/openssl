@@ -77,7 +77,7 @@ const OPTIONS dgst_options[] = {
 int dgst_main(int argc, char **argv)
 {
     BIO *in = NULL, *inp, *bmd = NULL, *out = NULL;
-    ENGINE *e = NULL, *impl = NULL;
+    ENGINE *e = NULL, *key_e = NULL, *impl = NULL;
     EVP_PKEY *sigkey = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
     char *hmac_key = NULL;
@@ -188,6 +188,10 @@ int dgst_main(int argc, char **argv)
     }
     argc = opt_num_rest();
     argv = opt_rest();
+
+    if (keyform == FORMAT_ENGINE)
+        key_e = e;
+
     if (keyfile != NULL && argc > 1) {
         BIO_printf(bio_err, "%s: Can only sign or verify one file.\n", prog);
         goto end;
@@ -239,9 +243,9 @@ int dgst_main(int argc, char **argv)
         int type;
 
         if (want_pub)
-            sigkey = load_pubkey(keyfile, keyform, 0, NULL, e, "key file");
+            sigkey = load_pubkey(keyfile, 0, NULL, key_e, "key file");
         else
-            sigkey = load_key(keyfile, keyform, 0, passin, e, "key file");
+            sigkey = load_key(keyfile, 0, passin, key_e, "key file");
         if (sigkey == NULL) {
             /*
              * load_[pub]key() has already printed an appropriate message

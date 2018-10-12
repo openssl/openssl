@@ -29,7 +29,7 @@ typedef enum OPTION_choice {
 
 const OPTIONS crl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
+    {"inform", OPT_INFORM, 'F', "DEPRECATED AND IGNORED"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
     {"out", OPT_OUT, '>', "output file - default stdout"},
@@ -180,7 +180,7 @@ int crl_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
-    x = load_crl(infile, informat);
+    x = load_crl(infile);
     if (x == NULL)
         goto end;
 
@@ -224,10 +224,10 @@ int crl_main(int argc, char **argv)
             BIO_puts(bio_err, "Missing CRL signing key\n");
             goto end;
         }
-        newcrl = load_crl(crldiff, informat);
+        newcrl = load_crl(crldiff);
         if (!newcrl)
             goto end;
-        pkey = load_key(keyfile, keyformat, 0, NULL, NULL, "CRL signing key");
+        pkey = load_key(keyfile, 0, NULL, NULL, "CRL signing key");
         if (!pkey) {
             X509_CRL_free(newcrl);
             goto end;

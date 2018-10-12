@@ -10,7 +10,7 @@ pkcs8 - PKCS#8 format private key conversion tool
 B<openssl> B<pkcs8>
 [B<-help>]
 [B<-topk8>]
-[B<-inform PEM|DER>]
+[B<-inform PEM|DER|ENGINE>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
 [B<-passin arg>]
@@ -51,15 +51,19 @@ Normally a PKCS#8 private key is expected on input and a private key will be
 written to the output file. With the B<-topk8> option the situation is
 reversed: it reads a private key and writes a PKCS#8 format key.
 
-=item B<-inform DER|PEM>
+=item B<-inform PEM|DER|ENGINE>
 
-This specifies the input format: see L<KEY FORMATS> for more details. The default
-format is PEM.
+When B<-topk8> is given, this option is DEPRECATED AND GENERALLY IGNORED.
+Please see L<openssl(1)/Key, certificate and CRL options>.
+
+When B<-topk8> is not given, this specifies the input format: see
+L</KEY FORMATS> for more details. The default format is PEM. In this
+case, ENGINE is an invalid value.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format: see L<KEY FORMATS> for more details. The default
-format is PEM.
+This specifies the output format: see L</KEY FORMATS> for more details.
+The default format is PEM.
 
 =item B<-traditional>
 
@@ -176,10 +180,10 @@ used then a traditional format private key is written instead.
 If B<-topk8> is not used and B<DER> mode is set the output file will be an
 unencrypted private key in traditional DER format.
 
-If B<-topk8> is used then any supported private key can be used for the input
-file in a format specified by B<-inform>. The output file will be encrypted
-PKCS#8 format using the specified encryption parameters unless B<-nocrypt>
-is included.
+If B<-topk8> is used then any supported private key can be used, see
+L<openssl(1)/Key, certificate and CRL options>.
+The output file will be encrypted PKCS#8 format using the specified encryption
+parameters unless B<-nocrypt> is included.
 
 =head1 NOTES
 

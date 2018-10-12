@@ -356,16 +356,15 @@ int pkcs12_main(int argc, char **argv)
             chain = 0;
 
         if (!(options & NOKEYS)) {
-            key = load_key(keyname ? keyname : infile,
-                           FORMAT_PEM, 1, passin, e, "private key");
+            key = load_key(keyname ? keyname : infile, 1, passin, NULL,
+                           "private key");
             if (key == NULL)
                 goto export_end;
         }
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, FORMAT_PEM, NULL,
-                            "certificates"))
+            if (!load_certs(infile, &certs, NULL, "certificates"))
                 goto export_end;
 
             if (key != NULL) {
@@ -393,7 +392,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any more certificates asked for */
         if (certfile != NULL) {
-            if (!load_certs(certfile, &certs, FORMAT_PEM, NULL,
+            if (!load_certs(certfile, &certs, NULL,
                             "certificates from certfile"))
                 goto export_end;
         }

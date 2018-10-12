@@ -979,25 +979,21 @@ int load_excert(SSL_EXCERT **pexc)
     }
     for (; exc; exc = exc->next) {
         if (exc->certfile == NULL) {
-            BIO_printf(bio_err, "Missing filename\n");
+            BIO_printf(bio_err, "Missing source\n");
             return 0;
         }
-        exc->cert = load_cert(exc->certfile, exc->certform,
-                              "Server Certificate");
+        exc->cert = load_cert(exc->certfile, "Server Certificate");
         if (exc->cert == NULL)
             return 0;
         if (exc->keyfile != NULL) {
-            exc->key = load_key(exc->keyfile, exc->keyform,
-                                0, NULL, NULL, "Server Key");
+            exc->key = load_key(exc->keyfile, 0, NULL, NULL, "Server Key");
         } else {
-            exc->key = load_key(exc->certfile, exc->certform,
-                                0, NULL, NULL, "Server Key");
+            exc->key = load_key(exc->certfile, 0, NULL, NULL, "Server Key");
         }
         if (exc->key == NULL)
             return 0;
         if (exc->chainfile != NULL) {
-            if (!load_certs(exc->chainfile, &exc->chain, FORMAT_PEM, NULL,
-                            "Server Chain"))
+            if (!load_certs(exc->chainfile, &exc->chain, NULL, "Server Chain"))
                 return 0;
         }
     }

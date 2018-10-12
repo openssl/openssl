@@ -18,17 +18,17 @@ B<openssl> B<s_server>
 [B<-context val>]
 [B<-verify int>]
 [B<-Verify int>]
-[B<-cert infile>]
+[B<-cert infile|URI>]
 [B<-nameopt val>]
 [B<-naccept +int>]
 [B<-serverinfo val>]
 [B<-certform PEM|DER>]
 [B<-key infile>]
-[B<-keyform format>]
+[B<-keyform PEM|DER|ENGINE>]
 [B<-pass val>]
-[B<-dcert infile>]
+[B<-dcert infile|URI>]
 [B<-dcertform PEM|DER>]
-[B<-dkey infile>]
+[B<-dkey infile|URI>]
 [B<-dkeyform PEM|DER>]
 [B<-dpass val>]
 [B<-nbio_test>]
@@ -48,8 +48,8 @@ B<openssl> B<s_server>
 [B<-WWW>]
 [B<-servername>]
 [B<-servername_fatal>]
-[B<-cert2 infile>]
-[B<-key2 infile>]
+[B<-cert2 infile|URI>]
+[B<-key2 infile|URI>]
 [B<-tlsextdebug>]
 [B<-HTTP>]
 [B<-id_prefix val>]
@@ -57,10 +57,10 @@ B<openssl> B<s_server>
 [B<-writerand file>]
 [B<-keymatexport val>]
 [B<-keymatexportlen +int>]
-[B<-CRL infile>]
+[B<-CRL infile|URI>]
 [B<-crl_download>]
-[B<-cert_chain infile>]
-[B<-dcert_chain infile>]
+[B<-cert_chain infile|URI>]
+[B<-dcert_chain infile|URI>]
 [B<-chainCApath dir>]
 [B<-verifyCApath dir>]
 [B<-no_cache>]
@@ -69,8 +69,8 @@ B<openssl> B<s_server>
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 [B<-build_chain>]
-[B<-chainCAfile infile>]
-[B<-verifyCAfile infile>]
+[B<-chainCAfile infile|URI>]
+[B<-verifyCAfile infile|URI>]
 [B<-ign_eof>]
 [B<-no_ign_eof>]
 [B<-status>]
@@ -148,9 +148,9 @@ B<openssl> B<s_server>
 [B<-no_alt_chains>]
 [B<-no_check_time>]
 [B<-allow_proxy_certs>]
-[B<-xkey>]
-[B<-xcert>]
-[B<-xchain>]
+[B<-xkey infile|URI>]
+[B<-xcert infile|URI>]
+[B<-xchain infile|URI>]
 [B<-xchain_build>]
 [B<-xcertform PEM|DER>]
 [B<-xkeyform PEM|DER>]
@@ -243,14 +243,14 @@ must supply a certificate or an error occurs.
 If the cipher suite cannot request a client certificate (for example an
 anonymous cipher suite or PSK) this option has no effect.
 
-=item B<-cert infile>
+=item B<-cert infile|URI>
 
 The certificate to use, most servers cipher suites require the use of a
 certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename "server.pem" will be used.
 
-=item B<-cert_chain>
+=item B<-cert_chain infile|URI>
 
 A file containing trusted certificates to use when attempting to build the
 client/server certificate chain related to the certificate specified via the
@@ -283,23 +283,27 @@ ServerHello extension will be returned.
 
 =item B<-certform PEM|DER>
 
-The certificate format to use: DER or PEM. PEM is the default.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
-=item B<-key infile>
+=item B<-key infile|URI>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
 =item B<-keyform format>
 
-The private format to use: DER or PEM. PEM is the default.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-pass val>
 
 The private key password source. For more information about the format of B<val>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-dcert infile>, B<-dkey infile>
+=item B<-dcert infile|URI>, B<-dkey infile|URI>
 
 Specify an additional certificate and private key, these behave in the
 same manner as the B<-cert> and B<-key> options except there is no default
@@ -316,11 +320,17 @@ A file containing trusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>, B<-dpass val>
+=item B<-dcertform PEM|DER>, B<-dkeyform PEM|DER>
 
-Additional certificate and private key format and passphrase respectively.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
-=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+=item B<-dpass val>
+
+Additional private key passphrase.
+
+=item B<-xkey infile|URI>, B<-xcert infile|URI>, B<-xchain infile|URI>
 
 Specify an extra certificate, private key and certificate chain. These behave
 in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
@@ -335,7 +345,9 @@ B<-xcert infile>, B<-xchain> options.
 
 =item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
 
-Extra certificate and private key format respectively.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-nbio_test>
 
@@ -731,7 +743,7 @@ greater than or equal to 0.
 
 =item B<-early_data>
 
-Accept early data where possible. Cannot be used in conjunction with B<-www>,
+-Accept early data where possible. Cannot be used in conjunction with B<-www>,
 B<-WWW>, B<-HTTP> or B<-rev>.
 
 =item B<-anti_replay>, B<-no_anti_replay>

@@ -384,46 +384,6 @@ int add_oid_section(CONF *conf)
     return 1;
 }
 
-static int load_pkcs12(BIO *in, const char *desc,
-                       pem_password_cb *pem_cb, PW_CB_DATA *cb_data,
-                       EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
-{
-    const char *pass;
-    char tpass[PEM_BUFSIZE];
-    int len, ret = 0;
-    PKCS12 *p12;
-    p12 = d2i_PKCS12_bio(in, NULL);
-    if (p12 == NULL) {
-        BIO_printf(bio_err, "Error loading PKCS12 file for %s\n", desc);
-        goto die;
-    }
-    /* See if an empty password will do */
-    if (PKCS12_verify_mac(p12, "", 0) || PKCS12_verify_mac(p12, NULL, 0)) {
-        pass = "";
-    } else {
-        if (!pem_cb)
-            pem_cb = (pem_password_cb *)password_callback;
-        len = pem_cb(tpass, PEM_BUFSIZE, 0, cb_data);
-        if (len < 0) {
-            BIO_printf(bio_err, "Passphrase callback error for %s\n", desc);
-            goto die;
-        }
-        if (len < PEM_BUFSIZE)
-            tpass[len] = 0;
-        if (!PKCS12_verify_mac(p12, tpass, len)) {
-            BIO_printf(bio_err,
-                       "Mac verify error (wrong password?) in PKCS12 file for %s\n",
-                       desc);
-            goto die;
-        }
-        pass = tpass;
-    }
-    ret = PKCS12_parse(p12, pass, pkey, cert, ca);
- die:
-    PKCS12_free(p12);
-    return ret;
-}
-
 #if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
 static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
 {
@@ -472,319 +432,246 @@ static int load_cert_crl_http(const char *url, X509 **pcert, X509_CRL **pcrl)
 }
 #endif
 
-X509 *load_cert(const char *file, int format, const char *cert_descrip)
+int load_objects(const char *uri, int maybe_stdin,
+                 const char *desc, const char *pass,
+                 EVP_PKEY **pkparams, EVP_PKEY **pkey,
+                 X509 **onecert, STACK_OF(X509) **certs,
+                 X509_CRL **onecrl, STACK_OF(X509_CRL) **crls,
+                 int (*ctrl_hook)(OSSL_STORE_CTX *ctx))
+{
+    /*
+     * Internal temporary storage.  The stacks are pushed into directly
+     * This is to ensure that the first object found of each kind is the
+     * one being served, so if a PEM file contains several certificates,
+     * the first one gets returned.
+     */
+    EVP_PKEY *tmp_pkparams = NULL;
+    EVP_PKEY *tmp_pkey = NULL;
+    X509 * tmp_onecert = NULL;
+    X509_CRL *tmp_onecrl = NULL;
+
+    OSSL_STORE_CTX *ctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    PW_CB_DATA cb_data;
+    BIO *in = NULL;
+    int ok = 0;
+
+#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
+    /*
+     * Special: we currently don't have a generic HTTP loader, and we're lazy
+     */
+    if (uri != NULL
+        && (strncmp(uri, "http://", 7) == 0
+            || strncmp(uri, "https://", 8) == 0)) {
+        if (onecert != NULL && onecrl != NULL) {
+            BIO_printf(bio_err,
+                       "Error: fetching both cert and crl over http is unsupported\n");
+            return 0;
+        }
+
+        ok = load_cert_crl_http(uri, onecert, onecrl);
+        return ok;
+    }
+#endif
+
+    cb_data.password = pass;
+
+    if (uri == NULL) {
+        if (!maybe_stdin) {
+            BIO_printf(bio_err, "no %s uri specified\n", desc);
+            goto err;
+        }
+        unbuffer(stdin);
+        in = dup_bio_in(0);      /* Binary work best */
+        ctx = OSSL_STORE_attach(in, "file", get_ui_method(), &cb_data,
+                                NULL, NULL);
+    } else {
+        ctx = OSSL_STORE_open(uri, get_ui_method(), &cb_data, NULL, NULL);
+    }
+
+    if (ctx == NULL)
+        goto err;
+
+    if (ctrl_hook != NULL)
+        ctrl_hook(ctx);
+
+    if (certs != NULL && *certs == NULL
+        && (*certs = sk_X509_new_null()) == NULL)
+        goto err;
+    if (crls != NULL && *crls == NULL
+        && (*crls = sk_X509_CRL_new_null()) == NULL)
+        goto err;
+
+    while ((info = OSSL_STORE_load(ctx)) != NULL) {
+        switch (OSSL_STORE_INFO_get_type(info)) {
+        case OSSL_STORE_INFO_PARAMS:
+            if (pkparams != NULL && tmp_pkparams == NULL)
+                tmp_pkparams = OSSL_STORE_INFO_get1_PARAMS(info);
+            break;
+        case OSSL_STORE_INFO_PKEY:
+            if (pkey != NULL && tmp_pkey == NULL)
+                tmp_pkey = OSSL_STORE_INFO_get1_PKEY(info);
+            break;
+        case OSSL_STORE_INFO_CERT:
+            if (onecert != NULL && tmp_onecert == NULL)
+                tmp_onecert = OSSL_STORE_INFO_get1_CERT(info);
+            if (certs != NULL)
+                sk_X509_push(*certs, OSSL_STORE_INFO_get1_CERT(info));
+            break;
+        case OSSL_STORE_INFO_CRL:
+            if (onecrl != NULL && tmp_onecrl == NULL)
+                tmp_onecrl = OSSL_STORE_INFO_get1_CRL(info);
+            if (crls != NULL)
+                sk_X509_CRL_push(*crls, OSSL_STORE_INFO_get1_CRL(info));
+            break;
+        default:
+            break;               /* Ignore all other types */
+        }
+        OSSL_STORE_INFO_free(info);
+    }
+    if (OSSL_STORE_error(ctx))
+        goto err;
+
+    if (pkparams != NULL) {
+        *pkparams = tmp_pkparams;
+        tmp_pkparams = NULL;
+    }
+    if (pkey != NULL) {
+        *pkey = tmp_pkey;
+        tmp_pkey = NULL;
+    }
+    if (onecert != NULL) {
+        *onecert = tmp_onecert;
+        tmp_onecert = NULL;
+    }
+    if (onecrl != NULL) {
+        *onecrl = tmp_onecrl;
+        tmp_onecrl = NULL;
+    }
+
+    ok = 1;
+ err:
+    if (ctx)
+      OSSL_STORE_close(ctx);
+    EVP_PKEY_free(tmp_pkparams);
+    EVP_PKEY_free(tmp_pkey);
+    X509_free(tmp_onecert);
+    X509_CRL_free(tmp_onecrl);
+    BIO_free(in);
+
+    if (!ok) {
+        BIO_printf(bio_err, "Error loading %s from %s\n", desc, uri);
+        ERR_print_errors(bio_err);
+    }
+    return ok;
+}
+
+X509 *load_cert(const char *file, const char *cert_descrip)
 {
     X509 *x = NULL;
-    BIO *cert;
 
-    if (format == FORMAT_HTTP) {
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
-        load_cert_crl_http(file, &x, NULL);
-#endif
-        return x;
-    }
-
-    if (file == NULL) {
-        unbuffer(stdin);
-        cert = dup_bio_in(format);
-    } else {
-        cert = bio_open_default(file, 'r', format);
-    }
-    if (cert == NULL)
-        goto end;
-
-    if (format == FORMAT_ASN1) {
-        x = d2i_X509_bio(cert, NULL);
-    } else if (format == FORMAT_PEM) {
-        x = PEM_read_bio_X509_AUX(cert, NULL,
-                                  (pem_password_cb *)password_callback, NULL);
-    } else if (format == FORMAT_PKCS12) {
-        if (!load_pkcs12(cert, cert_descrip, NULL, NULL, NULL, &x, NULL))
-            goto end;
-    } else {
-        BIO_printf(bio_err, "bad input format specified for %s\n", cert_descrip);
-        goto end;
-    }
- end:
-    if (x == NULL) {
-        BIO_printf(bio_err, "unable to load certificate\n");
-        ERR_print_errors(bio_err);
-    }
-    BIO_free(cert);
+    load_objects(file, 1, cert_descrip, NULL,
+                 NULL, NULL, &x, NULL, NULL, NULL, NULL);
     return x;
 }
 
-X509_CRL *load_crl(const char *infile, int format)
+X509_CRL *load_crl(const char *infile)
 {
     X509_CRL *x = NULL;
-    BIO *in = NULL;
 
-    if (format == FORMAT_HTTP) {
-#if !defined(OPENSSL_NO_OCSP) && !defined(OPENSSL_NO_SOCK)
-        load_cert_crl_http(infile, NULL, &x);
-#endif
-        return x;
-    }
-
-    in = bio_open_default(infile, 'r', format);
-    if (in == NULL)
-        goto end;
-    if (format == FORMAT_ASN1) {
-        x = d2i_X509_CRL_bio(in, NULL);
-    } else if (format == FORMAT_PEM) {
-        x = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
-    } else {
-        BIO_printf(bio_err, "bad input format specified for input crl\n");
-        goto end;
-    }
-    if (x == NULL) {
-        BIO_printf(bio_err, "unable to load CRL\n");
-        ERR_print_errors(bio_err);
-        goto end;
-    }
-
- end:
-    BIO_free(in);
+    load_objects(infile, 1, "CRL", NULL,
+                 NULL, NULL, NULL, NULL, &x, NULL, NULL);
     return x;
 }
 
-EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
+static int load_engine_privkey_ctrl(OSSL_STORE_CTX *ctx)
+{
+    return OSSL_STORE_ctrl(ctx, APP_STORE_C_LOAD_PRIVKEY);
+}
+
+EVP_PKEY *load_key(const char *file, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip)
 {
-    BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
-    PW_CB_DATA cb_data;
+    char *uri = NULL;
 
-    cb_data.password = pass;
-    cb_data.prompt_info = file;
+    /*
+     * In case this is an engine key, the file is a key id, and we convert
+     * it to an engine: URI.
+     */
+    if (e != NULL) {
+        const char *engineid = ENGINE_get_id(e);
+        size_t uri_sz =
+            7   /* engine: */
+            + strlen(engineid)
+            + 1 /* : */
+            + strlen(file)
+            + 1 /* \0 */
+            ;
 
-    if (file == NULL && (!maybe_stdin || format == FORMAT_ENGINE)) {
-        BIO_printf(bio_err, "no keyfile specified\n");
-        goto end;
+        uri = OPENSSL_malloc(uri_sz);
+        OPENSSL_strlcpy(uri, "engine:", uri_sz);
+        OPENSSL_strlcat(uri, engineid, uri_sz);
+        OPENSSL_strlcat(uri, ":", uri_sz);
+        OPENSSL_strlcat(uri, file, uri_sz);
+        file = uri;
     }
-    if (format == FORMAT_ENGINE) {
-        if (e == NULL) {
-            BIO_printf(bio_err, "no engine specified\n");
-        } else {
-#ifndef OPENSSL_NO_ENGINE
-            if (ENGINE_init(e)) {
-                pkey = ENGINE_load_private_key(e, file,
-                                               (UI_METHOD *)get_ui_method(),
-                                               &cb_data);
-                ENGINE_finish(e);
-            }
-            if (pkey == NULL) {
-                BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
-                ERR_print_errors(bio_err);
-            }
-#else
-            BIO_printf(bio_err, "engines not supported\n");
-#endif
-        }
-        goto end;
-    }
-    if (file == NULL && maybe_stdin) {
-        unbuffer(stdin);
-        key = dup_bio_in(format);
-    } else {
-        key = bio_open_default(file, 'r', format);
-    }
-    if (key == NULL)
-        goto end;
-    if (format == FORMAT_ASN1) {
-        pkey = d2i_PrivateKey_bio(key, NULL);
-    } else if (format == FORMAT_PEM) {
-        pkey = PEM_read_bio_PrivateKey(key, NULL, wrap_password_callback, &cb_data);
-    } else if (format == FORMAT_PKCS12) {
-        if (!load_pkcs12(key, key_descrip, wrap_password_callback, &cb_data,
-                         &pkey, NULL, NULL))
-            goto end;
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
-    } else if (format == FORMAT_MSBLOB) {
-        pkey = b2i_PrivateKey_bio(key);
-    } else if (format == FORMAT_PVK) {
-        pkey = b2i_PVK_bio(key, wrap_password_callback, &cb_data);
-#endif
-    } else {
-        BIO_printf(bio_err, "bad input format specified for key file\n");
-        goto end;
-    }
- end:
-    BIO_free(key);
-    if (pkey == NULL) {
-        BIO_printf(bio_err, "unable to load %s\n", key_descrip);
-        ERR_print_errors(bio_err);
-    }
+
+    load_objects(file, maybe_stdin, key_descrip, pass,
+                 NULL, &pkey, NULL, NULL, NULL, NULL,
+                 load_engine_privkey_ctrl);
+
+    OPENSSL_free(uri);
     return pkey;
 }
 
-EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
+static int load_engine_pubkey_ctrl(OSSL_STORE_CTX *ctx)
+{
+    return OSSL_STORE_ctrl(ctx, APP_STORE_C_LOAD_PUBKEY);
+}
+
+EVP_PKEY *load_pubkey(const char *file, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip)
 {
-    BIO *key = NULL;
     EVP_PKEY *pkey = NULL;
-    PW_CB_DATA cb_data;
+    char *uri = NULL;
 
-    cb_data.password = pass;
-    cb_data.prompt_info = file;
+    /*
+     * In case this is an engine key, the file is a key id, and we convert
+     * it to an engine: URI.
+     */
+    if (e != NULL) {
+        const char *engineid = ENGINE_get_id(e);
+        size_t uri_sz =
+            7   /* engine: */
+            + strlen(engineid)
+            + 1 /* : */
+            + strlen(file)
+            + 1 /* \0 */
+            ;
 
-    if (file == NULL && (!maybe_stdin || format == FORMAT_ENGINE)) {
-        BIO_printf(bio_err, "no keyfile specified\n");
-        goto end;
+        uri = OPENSSL_malloc(uri_sz);
+        OPENSSL_strlcpy(uri, "engine:", uri_sz);
+        OPENSSL_strlcat(uri, engineid, uri_sz);
+        OPENSSL_strlcat(uri, ":", uri_sz);
+        OPENSSL_strlcat(uri, file, uri_sz);
+        file = uri;
     }
-    if (format == FORMAT_ENGINE) {
-        if (e == NULL) {
-            BIO_printf(bio_err, "no engine specified\n");
-        } else {
-#ifndef OPENSSL_NO_ENGINE
-            pkey = ENGINE_load_public_key(e, file, (UI_METHOD *)get_ui_method(),
-                                          &cb_data);
-            if (pkey == NULL) {
-                BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
-                ERR_print_errors(bio_err);
-            }
-#else
-            BIO_printf(bio_err, "engines not supported\n");
-#endif
-        }
-        goto end;
-    }
-    if (file == NULL && maybe_stdin) {
-        unbuffer(stdin);
-        key = dup_bio_in(format);
-    } else {
-        key = bio_open_default(file, 'r', format);
-    }
-    if (key == NULL)
-        goto end;
-    if (format == FORMAT_ASN1) {
-        pkey = d2i_PUBKEY_bio(key, NULL);
-    } else if (format == FORMAT_ASN1RSA) {
-#ifndef OPENSSL_NO_RSA
-        RSA *rsa;
-        rsa = d2i_RSAPublicKey_bio(key, NULL);
-        if (rsa) {
-            pkey = EVP_PKEY_new();
-            if (pkey != NULL)
-                EVP_PKEY_set1_RSA(pkey, rsa);
-            RSA_free(rsa);
-        } else
-#else
-        BIO_printf(bio_err, "RSA keys not supported\n");
-#endif
-            pkey = NULL;
-    } else if (format == FORMAT_PEMRSA) {
-#ifndef OPENSSL_NO_RSA
-        RSA *rsa;
-        rsa = PEM_read_bio_RSAPublicKey(key, NULL,
-                                        (pem_password_cb *)password_callback,
-                                        &cb_data);
-        if (rsa != NULL) {
-            pkey = EVP_PKEY_new();
-            if (pkey != NULL)
-                EVP_PKEY_set1_RSA(pkey, rsa);
-            RSA_free(rsa);
-        } else
-#else
-        BIO_printf(bio_err, "RSA keys not supported\n");
-#endif
-            pkey = NULL;
-    } else if (format == FORMAT_PEM) {
-        pkey = PEM_read_bio_PUBKEY(key, NULL,
-                                   (pem_password_cb *)password_callback,
-                                   &cb_data);
-#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
-    } else if (format == FORMAT_MSBLOB) {
-        pkey = b2i_PublicKey_bio(key);
-#endif
-    }
- end:
-    BIO_free(key);
-    if (pkey == NULL)
-        BIO_printf(bio_err, "unable to load %s\n", key_descrip);
+
+    load_objects(file, maybe_stdin, key_descrip, pass,
+                 NULL, &pkey, NULL, NULL, NULL, NULL,
+                 load_engine_pubkey_ctrl);
+
+    OPENSSL_free(uri);
     return pkey;
 }
 
-static int load_certs_crls(const char *file, int format,
-                           const char *pass, const char *desc,
+static int load_certs_crls(const char *file, const char *pass, const char *desc,
                            STACK_OF(X509) **pcerts,
                            STACK_OF(X509_CRL) **pcrls)
 {
-    int i;
-    BIO *bio;
-    STACK_OF(X509_INFO) *xis = NULL;
-    X509_INFO *xi;
-    PW_CB_DATA cb_data;
-    int rv = 0;
-
-    cb_data.password = pass;
-    cb_data.prompt_info = file;
-
-    if (format != FORMAT_PEM) {
-        BIO_printf(bio_err, "bad input format specified for %s\n", desc);
-        return 0;
-    }
-
-    bio = bio_open_default(file, 'r', FORMAT_PEM);
-    if (bio == NULL)
-        return 0;
-
-    xis = PEM_X509_INFO_read_bio(bio, NULL,
-                                 (pem_password_cb *)password_callback,
-                                 &cb_data);
-
-    BIO_free(bio);
-
-    if (pcerts != NULL && *pcerts == NULL) {
-        *pcerts = sk_X509_new_null();
-        if (*pcerts == NULL)
-            goto end;
-    }
-
-    if (pcrls != NULL && *pcrls == NULL) {
-        *pcrls = sk_X509_CRL_new_null();
-        if (*pcrls == NULL)
-            goto end;
-    }
-
-    for (i = 0; i < sk_X509_INFO_num(xis); i++) {
-        xi = sk_X509_INFO_value(xis, i);
-        if (xi->x509 != NULL && pcerts != NULL) {
-            if (!sk_X509_push(*pcerts, xi->x509))
-                goto end;
-            xi->x509 = NULL;
-        }
-        if (xi->crl != NULL && pcrls != NULL) {
-            if (!sk_X509_CRL_push(*pcrls, xi->crl))
-                goto end;
-            xi->crl = NULL;
-        }
-    }
-
-    if (pcerts != NULL && sk_X509_num(*pcerts) > 0)
-        rv = 1;
-
-    if (pcrls != NULL && sk_X509_CRL_num(*pcrls) > 0)
-        rv = 1;
-
- end:
-
-    sk_X509_INFO_pop_free(xis, X509_INFO_free);
-
-    if (rv == 0) {
-        if (pcerts != NULL) {
-            sk_X509_pop_free(*pcerts, X509_free);
-            *pcerts = NULL;
-        }
-        if (pcrls != NULL) {
-            sk_X509_CRL_pop_free(*pcrls, X509_CRL_free);
-            *pcrls = NULL;
-        }
-        BIO_printf(bio_err, "unable to load %s\n",
-                   pcerts ? "certificates" : "CRLs");
-        ERR_print_errors(bio_err);
-    }
-    return rv;
+    return load_objects(file, 1, desc, pass,
+                        NULL, NULL, NULL, pcerts, NULL, pcrls, NULL);
 }
 
 void* app_malloc(int sz, const char *what)
@@ -803,19 +690,19 @@ void* app_malloc(int sz, const char *what)
 /*
  * Initialize or extend, if *certs != NULL, a certificate stack.
  */
-int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+int load_certs(const char *file, STACK_OF(X509) **certs,
                const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, desc, certs, NULL);
+    return load_certs_crls(file, pass, desc, certs, NULL);
 }
 
 /*
  * Initialize or extend, if *crls != NULL, a certificate stack.
  */
-int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+int load_crls(const char *file, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, desc, NULL, crls);
+    return load_certs_crls(file, pass, desc, NULL, crls);
 }
 
 #define X509V3_EXT_UNKNOWN_MASK         (0xfL << 16)
@@ -1885,9 +1772,12 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
     const char *urlptr = NULL;
     for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
+        X509_CRL *crl = NULL;
         urlptr = get_dp_url(dp);
-        if (urlptr)
-            return load_crl(urlptr, FORMAT_HTTP);
+        if (urlptr != NULL
+            && load_objects(urlptr, 0, "CRL", NULL,
+                            NULL, NULL, NULL, NULL, &crl, NULL, NULL))
+            return crl;
     }
     return NULL;
 }

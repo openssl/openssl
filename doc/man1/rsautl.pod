@@ -11,7 +11,7 @@ B<openssl> B<rsautl>
 [B<-help>]
 [B<-in file>]
 [B<-out file>]
-[B<-inkey file>]
+[B<-inkey file|URI>]
 [B<-keyform PEM|DER|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
@@ -50,21 +50,23 @@ if this option is not specified.
 Specifies the output filename to write to or standard output by
 default.
 
-=item B<-inkey file>
+=item B<-inkey file|URI>
 
-The input key file, by default it should be an RSA private key.
+The input key source, by default it should be an RSA private key.
 
 =item B<-keyform PEM|DER|ENGINE>
 
-The key format PEM, DER or ENGINE.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-pubin>
 
-The input file is an RSA public key.
+The input key is an RSA public key.
 
 =item B<-certin>
 
-The input is a certificate containing an RSA public key.
+The input key is a certificate containing an RSA public key.
 
 =item B<-sign>
 

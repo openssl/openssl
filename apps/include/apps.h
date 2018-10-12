@@ -119,15 +119,21 @@ int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
-X509 *load_cert(const char *file, int format, const char *cert_descrip);
-X509_CRL *load_crl(const char *infile, int format);
-EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
+int load_objects(const char *uri, int maybe_stdin,
+                 const char *desc, const char *pass,
+                 EVP_PKEY **pkparams, EVP_PKEY **pkey,
+                 X509 **onecert, STACK_OF(X509) **certs,
+                 X509_CRL **onecrl, STACK_OF(X509_CRL) **crls,
+                 int (*ctrl_hook)(OSSL_STORE_CTX *ctx));
+X509 *load_cert(const char *file, const char *cert_descrip);
+X509_CRL *load_crl(const char *infile);
+EVP_PKEY *load_key(const char *file, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *key_descrip);
-EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
+EVP_PKEY *load_pubkey(const char *file, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *key_descrip);
-int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+int load_certs(const char *file, STACK_OF(X509) **certs,
                const char *pass, const char *cert_descrip);
-int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+int load_crls(const char *file, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *cert_descrip);
 X509_STORE *setup_verify(const char *CAfile, const char *CApath,
                          int noCAfile, int noCApath);

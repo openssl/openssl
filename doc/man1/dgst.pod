@@ -94,8 +94,9 @@ instead for this.
 
 =item B<-keyform arg>
 
-Specifies the key format to sign digest with. The DER, PEM, P12,
-and ENGINE formats are supported.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-sigopt nm:v>
 

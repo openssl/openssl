@@ -61,7 +61,7 @@ const OPTIONS pkcs8_options[] = {
 int pkcs8_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     EVP_PKEY *pkey = NULL;
     PKCS8_PRIV_KEY_INFO *p8inf = NULL;
     X509_SIG *p8 = NULL;
@@ -93,7 +93,7 @@ int pkcs8_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -184,6 +184,9 @@ int pkcs8_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (informat == FORMAT_ENGINE)
+        key_e = e;
+
     private = 1;
 
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
@@ -202,7 +205,7 @@ int pkcs8_main(int argc, char **argv)
         goto end;
 
     if (topk8) {
-        pkey = load_key(infile, informat, 1, passin, e, "key");
+        pkey = load_key(infile, 1, passin, key_e, "key");
         if (pkey == NULL)
             goto end;
         if ((p8inf = EVP_PKEY2PKCS8(pkey)) == NULL) {

@@ -190,7 +190,7 @@ int x509_main(int argc, char **argv)
     unsigned long certflag = 0;
     int preserve_dates = 0;
     OPTION_CHOICE o;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL, *CAkey_e = NULL;
 #ifndef OPENSSL_NO_MD5
     int subject_hash_old = 0, issuer_hash_old = 0;
 #endif
@@ -224,7 +224,7 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
                 goto opthelp;
             break;
         case OPT_CAFORM:
@@ -480,6 +480,11 @@ int x509_main(int argc, char **argv)
         goto opthelp;
     }
 
+    if (keyformat == FORMAT_ENGINE)
+        key_e = e;
+    if (CAkeyformat == FORMAT_ENGINE)
+        CAkey_e = e;
+
     if (!app_passwd(passinarg, NULL, &passin, NULL)) {
         BIO_printf(bio_err, "Error getting password\n");
         goto end;
@@ -500,7 +505,7 @@ int x509_main(int argc, char **argv)
         goto end;
     }
     if (fkeyfile != NULL) {
-        fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "Forced key");
+        fkey = load_pubkey(fkeyfile, 0, NULL, key_e, "Forced key");
         if (fkey == NULL)
             goto end;
     }
@@ -614,7 +619,7 @@ int x509_main(int argc, char **argv)
         if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
             goto end;
     } else {
-        x = load_cert(infile, informat, "Certificate");
+        x = load_cert(infile, "Certificate");
         if (x == NULL)
             goto end;
         if (fkey != NULL && !X509_set_pubkey(x, fkey))
@@ -624,7 +629,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, "CA Certificate");
+        xca = load_cert(CAfile, "CA Certificate");
         if (xca == NULL)
             goto end;
     }
@@ -830,8 +835,7 @@ int x509_main(int argc, char **argv)
             else if (sign_flag == i && x509req == 0) {
                 BIO_printf(bio_err, "Getting Private key\n");
                 if (Upkey == NULL) {
-                    Upkey = load_key(keyfile, keyformat, 0,
-                                     passin, e, "Private key");
+                    Upkey = load_key(keyfile, 0, passin, key_e, "Private key");
                     if (Upkey == NULL)
                         goto end;
                 }
@@ -842,8 +846,8 @@ int x509_main(int argc, char **argv)
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
                 if (CAkeyfile != NULL) {
-                    CApkey = load_key(CAkeyfile, CAkeyformat,
-                                      0, passin, e, "CA Private Key");
+                    CApkey = load_key(CAkeyfile, 0, passin, CAkey_e,
+                                      "CA Private Key");
                     if (CApkey == NULL)
                         goto end;
                 }
@@ -861,8 +865,7 @@ int x509_main(int argc, char **argv)
                     BIO_printf(bio_err, "no request key file specified\n");
                     goto end;
                 } else {
-                    pk = load_key(keyfile, keyformat, 0,
-                                  passin, e, "request key");
+                    pk = load_key(keyfile, 0, passin, key_e, "request key");
                     if (pk == NULL)
                         goto end;
                 }

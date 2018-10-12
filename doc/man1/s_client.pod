@@ -21,15 +21,15 @@ B<openssl> B<s_client>
 [B<-noservername>]
 [B<-verify depth>]
 [B<-verify_return_error>]
-[B<-cert filename>]
-[B<-certform DER|PEM>]
-[B<-key filename>]
-[B<-keyform DER|PEM>]
-[B<-cert_chain filename>]
+[B<-cert filename|URI>]
+[B<-certform PEM|DER>]
+[B<-key filename|URI>]
+[B<-keyform PEM|DER|ENGINE>]
+[B<-cert_chain filename|URI>]
 [B<-build_chain>]
-[B<-xkey>]
-[B<-xcert>]
-[B<-xchain>]
+[B<-xkey infile|URI>]
+[B<-xcert infile|URI>]
+[B<-xchain infile|URI>]
 [B<-xchain_build>]
 [B<-xcertform PEM|DER>]
 [B<-xkeyform PEM|DER>]
@@ -226,23 +226,27 @@ Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
 <-dane_tlsa_domain> options.
 
-=item B<-cert certname>
+=item B<-cert certname|URI>
 
 The certificate to use, if one is requested by the server. The default is
 not to use a certificate.
 
 =item B<-certform format>
 
-The certificate format to use: DER or PEM. PEM is the default.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
-=item B<-key keyfile>
+=item B<-key keyfile|URI>
 
 The private key to use. If not specified then the certificate file will
 be used.
 
 =item B<-keyform format>
 
-The private format to use: DER or PEM. PEM is the default.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-cert_chain>
 
@@ -255,7 +259,7 @@ B<-cert> option.
 Specify whether the application should build the certificate chain to be
 provided to the server.
 
-=item B<-xkey infile>, B<-xcert infile>, B<-xchain>
+=item B<-xkey infile|URI>, B<-xcert infile|URI>, B<-xchain infile|URI>
 
 Specify an extra certificate, private key and certificate chain. These behave
 in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
@@ -270,7 +274,9 @@ B<-xcert infile>, B<-xchain> options.
 
 =item B<-xcertform PEM|DER>, B<-xkeyform PEM|DER>
 
-Extra certificate and private key format respectively.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-pass arg>
 

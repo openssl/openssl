@@ -29,11 +29,11 @@ B<openssl> B<ca>
 [B<-days arg>]
 [B<-md arg>]
 [B<-policy arg>]
-[B<-keyfile arg>]
-[B<-keyform PEM|DER>]
+[B<-privkey arg> | B<-keyfile arg>]
+[B<-keyform format>]
 [B<-key arg>]
 [B<-passin arg>]
-[B<-cert file>]
+[B<-cert arg>]
 [B<-selfsign>]
 [B<-in file>]
 [B<-out file>]
@@ -126,14 +126,17 @@ written to a filename consisting of the serial number in hex with
 
 The CA certificate file.
 
-=item B<-keyfile filename>
+=item B<-privkey> I<filename>|I<URI>, B<-keyfile filename>
 
 The private key to sign requests with.
 
-=item B<-keyform PEM|DER>
+B<-keyfile> is a backward compatibility alias for B<-privkey>.
 
-The format of the data in the private key file.
-The default is PEM.
+=item B<-keyform arg>
+
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-sigopt nm:v>
 

@@ -9,9 +9,9 @@ crl2pkcs7 - Create a PKCS#7 structure from a CRL and certificates
 
 B<openssl> B<crl2pkcs7>
 [B<-help>]
-[B<-inform PEM|DER>]
+[B<-inform format>]
 [B<-outform PEM|DER>]
-[B<-in filename>]
+[B<-in filename|URI>]
 [B<-out filename>]
 [B<-certfile filename>]
 [B<-nocrl>]
@@ -30,11 +30,11 @@ only" structure.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform arg>
 
-This specifies the CRL input format. B<DER> format is DER encoded CRL
-structure.B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines. The default format is PEM.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-outform DER|PEM>
 
@@ -42,22 +42,22 @@ This specifies the PKCS#7 structure output format. B<DER> format is DER
 encoded PKCS#7 structure.B<PEM> (the default) is a base64 encoded version of
 the DER form with header and footer lines. The default format is PEM.
 
-=item B<-in filename>
+=item B<-in filename|URI>
 
-This specifies the input filename to read a CRL from or standard input if this
-option is not specified.
+This specifies the input filename or URI to get a CRL from.
+If not given, standard input is used.
 
 =item B<-out filename>
 
 Specifies the output filename to write the PKCS#7 structure to or standard
 output by default.
 
-=item B<-certfile filename>
+=item B<-certfile filename|URI>
 
-Specifies a filename containing one or more certificates in B<PEM> format.
-All certificates in the file will be added to the PKCS#7 structure. This
-option can be used more than once to read certificates form multiple
-files.
+Specifies a filename or URI containing one or more certificates.
+All certificates in the file will be added to the PKCS#7 structure.
+This option can be used more than once to read certificates form multiple
+sources.
 
 =item B<-nocrl>
 

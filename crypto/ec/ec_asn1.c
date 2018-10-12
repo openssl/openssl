@@ -438,7 +438,7 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 }
 
 ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
-                                               ECPARAMETERS *params)
+                                        ECPARAMETERS *params)
 {
     size_t len = 0;
     ECPARAMETERS *ret = NULL;

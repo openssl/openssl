@@ -38,8 +38,8 @@ B<openssl> B<verify>
 [B<-suiteB_192>]
 [B<-trusted_first>]
 [B<-no_alt_chains>]
-[B<-untrusted file>]
-[B<-trusted file>]
+[B<-untrusted file|URI>]
+[B<-trusted file|URI>]
 [B<-use_deltas>]
 [B<-verbose>]
 [B<-auth_level level>]
@@ -221,24 +221,23 @@ trust store to see if an alternative chain can be found that is trusted.
 As of OpenSSL 1.1.0, with B<-trusted_first> always on, this option has no
 effect.
 
-=item B<-untrusted file>
+=item B<-untrusted file|URI>
 
-A B<file> of additional untrusted certificates (intermediate issuer CAs) used
-to construct a certificate chain from the subject certificate to a trust-anchor.
-The B<file> should contain one or more certificates in PEM format.
+A B<file> or B<URI> with additional untrusted certificates (intermediate issuer
+CAs) used to construct a certificate chain from the subject certificate to a
+trust-anchor.
 This option can be specified more than once to include untrusted certificates
-from multiple B<files>.
+from multiple sources.
 
-=item B<-trusted file>
+=item B<-trusted file|URI>
 
-A B<file> of trusted certificates, which must be self-signed, unless the
-B<-partial_chain> option is specified.
-The B<file> contains one or more certificates in PEM format.
+A B<file> or B<URI> with trusted certificates, which must be self-signed,
+unless the B<-partial_chain> option is specified.
 With this option, no additional (e.g., default) certificate lists are
 consulted.
-That is, the only trust-anchors are those listed in B<file>.
+That is, the only trust-anchors are those listed in these sources.
 This option can be specified more than once to include trusted certificates
-from multiple B<files>.
+from multiple sources.
 This option implies the B<-no-CAfile> and B<-no-CApath> options.
 This option cannot be used in combination with either of the B<-CAfile> or
 B<-CApath> options.

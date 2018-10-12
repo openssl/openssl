@@ -71,7 +71,7 @@ const OPTIONS ec_options[] = {
 int ec_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     EC_KEY *eckey = NULL;
     const EC_GROUP *group;
     const EVP_CIPHER *enc = NULL;
@@ -162,6 +162,9 @@ int ec_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (informat == FORMAT_ENGINE)
+        key_e = e;
+
     private = param_out || pubin || pubout ? 0 : 1;
     if (text && !pubin)
         private = 1;
@@ -186,9 +189,9 @@ int ec_main(int argc, char **argv)
     } else if (informat == FORMAT_ENGINE) {
         EVP_PKEY *pkey;
         if (pubin)
-            pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
+            pkey = load_pubkey(infile, 1, passin, key_e, "Public Key");
         else
-            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+            pkey = load_key(infile, 1, passin, key_e, "Private Key");
         if (pkey != NULL) {
             eckey = EVP_PKEY_get1_EC_KEY(pkey);
             EVP_PKEY_free(pkey);

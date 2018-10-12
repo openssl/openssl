@@ -9,10 +9,10 @@ crl - CRL utility
 
 B<openssl> B<crl>
 [B<-help>]
-[B<-inform PEM|DER>]
+[B<-inform PEM|DER|ENGINE>]
 [B<-outform PEM|DER>]
 [B<-text>]
-[B<-in filename>]
+[B<-in filename|URI>]
 [B<-out filename>]
 [B<-nameopt option>]
 [B<-noout>]
@@ -35,21 +35,21 @@ The B<crl> command processes CRL files in DER or PEM format.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform PEM|DER>
 
-This specifies the input format. B<DER> format is DER encoded CRL
-structure. B<PEM> (the default) is a base64 encoded version of
-the DER form with header and footer lines.
+DEPRECATED AND IGNORED.  The format of the private key is determined
+automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+This specifies the output format. B<DER> format is DER encoded CRL
+structure. B<PEM> (the default) is a base64 encoded version of
+the DER form with header and footer lines.
 
-=item B<-in filename>
+=item B<-in filename|URI>
 
-This specifies the input filename to read from or standard input if this
-option is not specified.
+This specifies the input CRL.  If not given, stdin will be used.
 
 =item B<-out filename>
 
@@ -120,7 +120,7 @@ Convert a CRL file from PEM to DER:
 
 Output the text form of a DER encoded certificate:
 
- openssl crl -in crl.der -inform DER -text -noout
+ openssl crl -in crl.der -text -noout
 
 =head1 BUGS
 

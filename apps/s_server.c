@@ -975,7 +975,7 @@ const OPTIONS s_server_options[] = {
 
 int s_server_main(int argc, char *argv[])
 {
-    ENGINE *engine = NULL;
+    ENGINE *engine = NULL, *key_engine = NULL;
     EVP_PKEY *s_key = NULL, *s_dkey = NULL;
     SSL_CONF_CTX *cctx = NULL;
     const SSL_METHOD *meth = TLS_server_method();
@@ -1600,6 +1600,11 @@ int s_server_main(int argc, char *argv[])
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (s_key_format == FORMAT_ENGINE)
+        key_engine = engine;
+    if (s_dkey_format == FORMAT_ENGINE)
+        dkey_engine = engine;
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
@@ -1662,36 +1667,34 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
     if (nocert == 0) {
-        s_key = load_key(s_key_file, s_key_format, 0, pass, engine,
+        s_key = load_key(s_key_file, 0, pass, key_engine,
                          "server certificate private key file");
         if (s_key == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
 
-        s_cert = load_cert(s_cert_file, s_cert_format,
-                           "server certificate file");
+        s_cert = load_cert(s_cert_file, "server certificate file");
 
         if (s_cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
         if (s_chain_file != NULL) {
-            if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL,
+            if (!load_certs(s_chain_file, &s_chain, NULL,
                             "server certificate chain"))
                 goto end;
         }
 
         if (tlsextcbp.servername != NULL) {
-            s_key2 = load_key(s_key_file2, s_key_format, 0, pass, engine,
+            s_key2 = load_key(s_key_file2, 0, pass, key_engine,
                               "second server certificate private key file");
             if (s_key2 == NULL) {
                 ERR_print_errors(bio_err);
                 goto end;
             }
 
-            s_cert2 = load_cert(s_cert_file2, s_cert_format,
-                                "second server certificate file");
+            s_cert2 = load_cert(s_cert_file2, "second server certificate file");
 
             if (s_cert2 == NULL) {
                 ERR_print_errors(bio_err);
@@ -1715,7 +1718,7 @@ int s_server_main(int argc, char *argv[])
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, crl_format);
+        crl = load_crl(crl_file);
         if (crl == NULL) {
             BIO_puts(bio_err, "Error loading CRL\n");
             ERR_print_errors(bio_err);
@@ -1735,22 +1738,21 @@ int s_server_main(int argc, char *argv[])
         if (s_dkey_file == NULL)
             s_dkey_file = s_dcert_file;
 
-        s_dkey = load_key(s_dkey_file, s_dkey_format,
-                          0, dpass, engine, "second certificate private key file");
+        s_dkey = load_key(s_dkey_file, 0, dpass, dkey_engine,
+                          "second certificate private key file");
         if (s_dkey == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
 
-        s_dcert = load_cert(s_dcert_file, s_dcert_format,
-                            "second server certificate file");
+        s_dcert = load_cert(s_dcert_file, "second server certificate file");
 
         if (s_dcert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
         }
         if (s_dchain_file != NULL) {
-            if (!load_certs(s_dchain_file, &s_dchain, FORMAT_PEM, NULL,
+            if (!load_certs(s_dchain_file, &s_dchain, NULL,
                             "second server certificate chain"))
                 goto end;
         }

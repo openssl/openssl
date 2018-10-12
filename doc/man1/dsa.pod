@@ -9,7 +9,7 @@ dsa - DSA key processing
 
 B<openssl> B<dsa>
 [B<-help>]
-[B<-inform PEM|DER>]
+[B<-inform PEM|DER|ENGINE>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
 [B<-passin arg>]
@@ -49,22 +49,22 @@ applications should use the more secure PKCS#8 format using the B<pkcs8>
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform PEM|DER|ENGINE>
 
-This specifies the input format. The B<DER> option with a private key uses
-an ASN1 DER encoded form of an ASN.1 SEQUENCE consisting of the values of
-version (currently zero), p, q, g, the public and private key components
-respectively as ASN.1 INTEGERs. When used with a public key it uses a
-SubjectPublicKeyInfo structure: it is an error if the key is not DSA.
-
-The B<PEM> form is the default format: it consists of the B<DER> format base64
-encoded with additional header and footer lines. In the case of a private key
-PKCS#8 format is also accepted.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+This specifies the output format. The B<DER> option with a private key uses
+an ASN1 DER encoded form of an ASN.1 SEQUENCE consisting of the values of
+version (currently zero), p, q, g, the public and private key components
+respectively as ASN.1 INTEGERs. When used with a public key it uses a
+SubjectPublicKeyInfo structure.
+
+The B<PEM> form is the default format: it consists of the B<DER> format base64
+encoded with additional header and footer lines.
 
 =item B<-in filename>
 

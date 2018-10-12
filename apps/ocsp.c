@@ -425,7 +425,7 @@ int ocsp_main(int argc, char **argv)
             path = opt_arg();
             break;
         case OPT_ISSUER:
-            issuer = load_cert(opt_arg(), FORMAT_PEM, "issuer certificate");
+            issuer = load_cert(opt_arg(), "issuer certificate");
             if (issuer == NULL)
                 goto end;
             if (issuers == NULL) {
@@ -436,7 +436,7 @@ int ocsp_main(int argc, char **argv)
             break;
         case OPT_CERT:
             X509_free(cert);
-            cert = load_cert(opt_arg(), FORMAT_PEM, "certificate");
+            cert = load_cert(opt_arg(), "certificate");
             if (cert == NULL)
                 goto end;
             if (cert_id_md == NULL)
@@ -568,21 +568,19 @@ int ocsp_main(int argc, char **argv)
     if (rsignfile != NULL) {
         if (rkeyfile == NULL)
             rkeyfile = rsignfile;
-        rsigner = load_cert(rsignfile, FORMAT_PEM, "responder certificate");
+        rsigner = load_cert(rsignfile, "responder certificate");
         if (rsigner == NULL) {
             BIO_printf(bio_err, "Error loading responder certificate\n");
             goto end;
         }
-        if (!load_certs(rca_filename, &rca_cert, FORMAT_PEM,
-                        NULL, "CA certificate"))
+        if (!load_certs(rca_filename, &rca_cert, NULL, "CA certificate"))
             goto end;
         if (rcertfile != NULL) {
-            if (!load_certs(rcertfile, &rother, FORMAT_PEM, NULL,
+            if (!load_certs(rcertfile, &rother, NULL,
                             "responder other certificates"))
                 goto end;
         }
-        rkey = load_key(rkeyfile, FORMAT_PEM, 0, NULL, NULL,
-                        "responder private key");
+        rkey = load_key(rkeyfile, 0, NULL, NULL, "responder private key");
         if (rkey == NULL)
             goto end;
     }
@@ -658,18 +656,17 @@ redo_accept:
     if (signfile != NULL) {
         if (keyfile == NULL)
             keyfile = signfile;
-        signer = load_cert(signfile, FORMAT_PEM, "signer certificate");
+        signer = load_cert(signfile, "signer certificate");
         if (signer == NULL) {
             BIO_printf(bio_err, "Error loading signer certificate\n");
             goto end;
         }
         if (sign_certfile != NULL) {
-            if (!load_certs(sign_certfile, &sign_other, FORMAT_PEM, NULL,
+            if (!load_certs(sign_certfile, &sign_other, NULL,
                             "signer certificates"))
                 goto end;
         }
-        key = load_key(keyfile, FORMAT_PEM, 0, NULL, NULL,
-                       "signer private key");
+        key = load_key(keyfile, 0, NULL, NULL, "signer private key");
         if (key == NULL)
             goto end;
 
@@ -772,7 +769,7 @@ redo_accept:
     if (vpmtouched)
         X509_STORE_set1_param(store, vpm);
     if (verify_certfile != NULL) {
-        if (!load_certs(verify_certfile, &verify_other, FORMAT_PEM, NULL,
+        if (!load_certs(verify_certfile, &verify_other, NULL,
                         "validator certificate"))
             goto end;
     }

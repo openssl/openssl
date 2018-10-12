@@ -224,7 +224,7 @@ const OPTIONS ca_options[] = {
 int ca_main(int argc, char **argv)
 {
     CONF *conf = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     BIGNUM *crlnumber = NULL, *serial = NULL;
     EVP_PKEY *pkey = NULL;
     BIO *in = NULL, *out = NULL, *Sout = NULL;
@@ -431,6 +431,9 @@ end_of_options:
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (keyformat == FORMAT_ENGINE)
+        key_e = e;
+
     BIO_printf(bio_err, "Using configuration from %s\n", configfile);
 
     if ((conf = app_load_config(configfile)) == NULL)
@@ -520,7 +523,7 @@ end_of_options:
             goto end;
         }
     }
-    pkey = load_key(keyfile, keyformat, 0, key, e, "CA private key");
+    pkey = load_key(keyfile, 0, key, key_e, "CA private key");
     if (key != NULL)
         OPENSSL_cleanse(key, strlen(key));
     if (pkey == NULL)
@@ -534,7 +537,7 @@ end_of_options:
             && (certfile = lookup_conf(conf, section, ENV_CERTIFICATE)) == NULL)
             goto end;
 
-        x509 = load_cert(certfile, FORMAT_PEM, "CA certificate");
+        x509 = load_cert(certfile, "CA certificate");
         if (x509 == NULL)
             goto end;
 
@@ -1208,7 +1211,7 @@ end_of_options:
             goto end;
         } else {
             X509 *revcert;
-            revcert = load_cert(infile, FORMAT_PEM, infile);
+            revcert = load_cert(infile, infile);
             if (revcert == NULL)
                 goto end;
             if (dorevoke == 2)
@@ -1343,7 +1346,7 @@ static int certify_cert(X509 **xret, const char *infile, EVP_PKEY *pkey, X509 *x
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    if ((req = load_cert(infile, FORMAT_PEM, infile)) == NULL)
+    if ((req = load_cert(infile, infile)) == NULL)
         goto end;
     if (verbose)
         X509_print(bio_err, req);

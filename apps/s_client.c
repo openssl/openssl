@@ -940,7 +940,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
     ENGINE *ssl_client_engine = NULL;
 #endif
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS)
     struct timeval tv;
 #endif
@@ -1559,6 +1559,9 @@ int s_client_main(int argc, char **argv)
         goto opthelp;
     }
 
+    if (key_format == FORMAT_ENGINE)
+        key_e = e;
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
         BIO_printf(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
@@ -1663,7 +1666,7 @@ int s_client_main(int argc, char **argv)
         key_file = cert_file;
 
     if (key_file != NULL) {
-        key = load_key(key_file, key_format, 0, pass, e,
+        key = load_key(key_file, 0, pass, key_e,
                        "client certificate private key file");
         if (key == NULL) {
             ERR_print_errors(bio_err);
@@ -1672,7 +1675,7 @@ int s_client_main(int argc, char **argv)
     }
 
     if (cert_file != NULL) {
-        cert = load_cert(cert_file, cert_format, "client certificate file");
+        cert = load_cert(cert_file, "client certificate file");
         if (cert == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1680,14 +1683,13 @@ int s_client_main(int argc, char **argv)
     }
 
     if (chain_file != NULL) {
-        if (!load_certs(chain_file, &chain, FORMAT_PEM, NULL,
-                        "client certificate chain"))
+        if (!load_certs(chain_file, &chain, NULL, "client certificate chain"))
             goto end;
     }
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, crl_format);
+        crl = load_crl(crl_file);
         if (crl == NULL) {
             BIO_puts(bio_err, "Error loading CRL\n");
             ERR_print_errors(bio_err);

@@ -12,7 +12,7 @@ B<openssl> B<pkcs12>
 [B<-export>]
 [B<-chain>]
 [B<-inkey file_or_id>]
-[B<-certfile filename>]
+[B<-certfile filename|URI>]
 [B<-name name>]
 [B<-caname name>]
 [B<-in filename>]

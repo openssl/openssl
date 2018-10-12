@@ -50,7 +50,7 @@ const OPTIONS pkey_options[] = {
 int pkey_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     EVP_PKEY *pkey = NULL;
     const EVP_CIPHER *cipher = NULL;
     char *infile = NULL, *outfile = NULL, *passin = NULL, *passout = NULL;
@@ -128,6 +128,9 @@ int pkey_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (informat == FORMAT_ENGINE)
+        key_e = e;
+
     private = !noout && !pubout ? 1 : 0;
     if (text && !pubtext)
         private = 1;
@@ -142,9 +145,9 @@ int pkey_main(int argc, char **argv)
         goto end;
 
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
+        pkey = load_pubkey(infile, 1, passin, key_e, "Public Key");
     else
-        pkey = load_key(infile, informat, 1, passin, e, "key");
+        pkey = load_key(infile, 1, passin, key_e, "key");
     if (pkey == NULL)
         goto end;
 

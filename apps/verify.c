@@ -131,7 +131,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_UNTRUSTED:
             /* Zero or more times */
-            if (!load_certs(opt_arg(), &untrusted, FORMAT_PEM, NULL,
+            if (!load_certs(opt_arg(), &untrusted, NULL,
                             "untrusted certificates"))
                 goto end;
             break;
@@ -139,14 +139,12 @@ int verify_main(int argc, char **argv)
             /* Zero or more times */
             noCAfile = 1;
             noCApath = 1;
-            if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL,
-                            "trusted certificates"))
+            if (!load_certs(opt_arg(), &trusted, NULL, "trusted certificates"))
                 goto end;
             break;
         case OPT_CRLFILE:
             /* Zero or more times */
-            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL,
-                           "other CRLs"))
+            if (!load_crls(opt_arg(), &crls, NULL, "other CRLs"))
                 goto end;
             break;
         case OPT_CRL_DOWNLOAD:
@@ -240,7 +238,7 @@ static int check(X509_STORE *ctx, const char *file,
     STACK_OF(X509) *chain = NULL;
     int num_untrusted;
 
-    x = load_cert(file, FORMAT_PEM, "certificate file");
+    x = load_cert(file, "certificate file");
     if (x == NULL)
         goto end;
 

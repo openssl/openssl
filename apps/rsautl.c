@@ -69,7 +69,7 @@ const OPTIONS rsautl_options[] = {
 int rsautl_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     EVP_PKEY *pkey = NULL;
     RSA *rsa = NULL;
     X509 *x;
@@ -166,6 +166,9 @@ int rsautl_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (keyformat == FORMAT_ENGINE)
+        key_e = e;
+
     if (need_priv && (key_type != KEY_PRIVKEY)) {
         BIO_printf(bio_err, "A private key is needed for this operation\n");
         goto end;
@@ -178,15 +181,15 @@ int rsautl_main(int argc, char **argv)
 
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyformat, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, 0, passin, key_e, "Private Key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyformat, 0, NULL, e, "Public Key");
+        pkey = load_pubkey(keyfile, 0, NULL, key_e, "Public Key");
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyformat, "Certificate");
+        x = load_cert(keyfile, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

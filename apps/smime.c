@@ -131,7 +131,7 @@ int smime_main(int argc, char **argv)
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_PEM;
     int vpmtouched = 0, rv = 0;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     const char *mime_eol = "\n";
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
@@ -321,6 +321,9 @@ int smime_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
+    if (keyform == FORMAT_ENGINE)
+        key_e = e;
+
     if (!(operation & SMIME_SIGNERS) && (skkeys != NULL || sksigners != NULL)) {
         BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
         goto opthelp;
@@ -397,8 +400,7 @@ int smime_main(int argc, char **argv)
         if (encerts == NULL)
             goto end;
         while (*argv != NULL) {
-            cert = load_cert(*argv, FORMAT_PEM,
-                             "recipient certificate file");
+            cert = load_cert(*argv, "recipient certificate file");
             if (cert == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -408,15 +410,14 @@ int smime_main(int argc, char **argv)
     }
 
     if (certfile != NULL) {
-        if (!load_certs(certfile, &other, FORMAT_PEM, NULL,
-                        "certificate file")) {
+        if (!load_certs(certfile, &other, NULL, "certificate file")) {
             ERR_print_errors(bio_err);
             goto end;
         }
     }
 
     if (recipfile != NULL && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM,
+        if ((recip = load_cert(recipfile,
                                "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -434,7 +435,7 @@ int smime_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
+        key = load_key(keyfile, 0, passin, key_e, "signing key file");
         if (key == NULL)
             goto end;
     }
@@ -515,11 +516,10 @@ int smime_main(int argc, char **argv)
         for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++) {
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
-            signer = load_cert(signerfile, FORMAT_PEM,
-                               "signer certificate");
+            signer = load_cert(signerfile, "signer certificate");
             if (signer == NULL)
                 goto end;
-            key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
+            key = load_key(keyfile, 0, passin, key_e, "signing key file");
             if (key == NULL)
                 goto end;
             if (!PKCS7_sign_add_signer(p7, signer, key, sign_md, flags))

@@ -54,8 +54,9 @@ present.
 
 =item B<-keyform PEM|DER|ENGINE>
 
-Whether the key format is PEM, DER, or an engine-backed key.
-The default is PEM.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-passin password>
 

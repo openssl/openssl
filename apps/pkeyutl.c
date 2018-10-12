@@ -21,12 +21,11 @@
 #define KEY_CERT        3
 
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
-                              const char *keyfile, int keyform, int key_type,
-                              char *passinarg, int pkey_op, ENGINE *e,
+                              const char *keyfile, int key_type,
+                              char *passinarg, int pkey_op, ENGINE *key_e,
                               const int impl, int rawin, EVP_PKEY **ppkey);
 
-static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
-                      ENGINE *e);
+static int setup_peer(EVP_PKEY_CTX *ctx, const char *file, ENGINE *key_e);
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
@@ -90,7 +89,7 @@ const OPTIONS pkeyutl_options[] = {
 int pkeyutl_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL, *peerkey_e = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *pkey = NULL;
     char *infile = NULL, *outfile = NULL, *sigfile = NULL, *passinarg = NULL;
@@ -265,14 +264,20 @@ int pkeyutl_main(int argc, char **argv)
                    "%s: no peer key given (-peerkey parameter).\n", prog);
         goto opthelp;
     }
-    ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e, engine_impl, rawin, &pkey);
+
+    if (peerform == FORMAT_ENGINE)
+        peerkey_e = e;
+    if (keyform == FORMAT_ENGINE)
+        key_e = e;
+
+    ctx = init_ctx(kdfalg, &keysize, inkey, key_type,
+                   passinarg, pkey_op, key_e, engine_impl, rawin, &pkey);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
         goto end;
     }
-    if (peerkey != NULL && !setup_peer(ctx, peerform, peerkey, e)) {
+    if (peerkey != NULL && !setup_peer(ctx, peerkey, peerkey_e)) {
         BIO_printf(bio_err, "%s: Error setting up peer key\n", prog);
         ERR_print_errors(bio_err);
         goto end;
@@ -474,8 +479,8 @@ int pkeyutl_main(int argc, char **argv)
 }
 
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
-                              const char *keyfile, int keyform, int key_type,
-                              char *passinarg, int pkey_op, ENGINE *e,
+                              const char *keyfile, int key_type,
+                              char *passinarg, int pkey_op, ENGINE *key_e,
                               const int engine_impl, int rawin,
                               EVP_PKEY **ppkey)
 {
@@ -485,6 +490,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     char *passin = NULL;
     int rv = -1;
     X509 *x;
+
     if (((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT)
          || (pkey_op == EVP_PKEY_OP_DERIVE))
         && (key_type != KEY_PRIVKEY && kdfalg == NULL)) {
@@ -497,15 +503,15 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     }
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, 0, passin, key_e, "Private Key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "Public Key");
+        pkey = load_pubkey(keyfile, 0, NULL, key_e, "Public Key");
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyform, "Certificate");
+        x = load_cert(keyfile, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
@@ -519,7 +525,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
 #ifndef OPENSSL_NO_ENGINE
     if (engine_impl)
-        impl = e;
+        impl = key_e;
 #endif
 
     if (kdfalg != NULL) {
@@ -609,16 +615,12 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
 
 }
 
-static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
-                      ENGINE *e)
+static int setup_peer(EVP_PKEY_CTX *ctx, const char *file, ENGINE *key_e)
 {
     EVP_PKEY *peer = NULL;
-    ENGINE *engine = NULL;
     int ret;
 
-    if (peerform == FORMAT_ENGINE)
-        engine = e;
-    peer = load_pubkey(file, peerform, 0, NULL, engine, "Peer Key");
+    peer = load_pubkey(file, 0, NULL, key_e, "Peer Key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         ERR_print_errors(bio_err);

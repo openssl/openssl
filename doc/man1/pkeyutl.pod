@@ -14,10 +14,10 @@ B<openssl> B<pkeyutl>
 [B<-digest algorithm>]
 [B<-out file>]
 [B<-sigfile file>]
-[B<-inkey file>]
+[B<-inkey file|URI>]
 [B<-keyform PEM|DER|ENGINE>]
 [B<-passin arg>]
-[B<-peerkey file>]
+[B<-peerkey file|URI>]
 [B<-peerform PEM|DER|ENGINE>]
 [B<-pubin>]
 [B<-certin>]
@@ -83,26 +83,30 @@ default.
 
 Signature file, required for B<verify> operations only
 
-=item B<-inkey file>
+=item B<-inkey file|URI>
 
-The input key file, by default it should be a private key.
+The input key source, by default it should be a private key.
 
 =item B<-keyform PEM|DER|ENGINE>
 
-The key format PEM, DER or ENGINE. Default is PEM.
+DEPRECATED AND GENERALLY IGNORED.  The format of the input key file is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl(1)/Key, Certificate and CRL Options>.
 
 =item B<-passin arg>
 
 The input key password source. For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
-=item B<-peerkey file>
+=item B<-peerkey file|URI>
 
-The peer key file, used by key derivation (agreement) operations.
+The peer key source, used by key derivation (agreement) operations.
 
 =item B<-peerform PEM|DER|ENGINE>
 
-The peer key format PEM, DER or ENGINE. Default is PEM.
+DEPRECATED AND GENERALLY IGNORED.  The format of the peer key file is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl(1)/Key, Certificate and CRL Options>.
 
 =item B<-pubin>
 

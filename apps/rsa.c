@@ -66,7 +66,7 @@ const OPTIONS rsa_options[] = {
 
 int rsa_main(int argc, char **argv)
 {
-    ENGINE *e = NULL;
+    ENGINE *e = NULL, *key_e = NULL;
     BIO *out = NULL;
     RSA *rsa = NULL;
     const EVP_CIPHER *enc = NULL;
@@ -158,6 +158,9 @@ int rsa_main(int argc, char **argv)
 
     private = (text && !pubin) || (!pubout && !noout) ? 1 : 0;
 
+    if (informat == FORMAT_ENGINE)
+        key_e = e;
+
     if (!app_passwd(passinarg, passoutarg, &passin, &passout)) {
         BIO_printf(bio_err, "Error getting passwords\n");
         goto end;
@@ -171,19 +174,12 @@ int rsa_main(int argc, char **argv)
         EVP_PKEY *pkey;
 
         if (pubin) {
-            int tmpformat = -1;
-            if (pubin == 2) {
-                if (informat == FORMAT_PEM)
-                    tmpformat = FORMAT_PEMRSA;
-                else if (informat == FORMAT_ASN1)
-                    tmpformat = FORMAT_ASN1RSA;
-            } else {
-                tmpformat = informat;
-            }
+            /* RSA public key loaded from file only */
+            ENGINE *tmp_key_e = pubin == 2 ? NULL : key_e;
 
-            pkey = load_pubkey(infile, tmpformat, 1, passin, e, "Public Key");
+            pkey = load_pubkey(infile, 1, passin, tmp_key_e, "Public Key");
         } else {
-            pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+            pkey = load_key(infile, 1, passin, key_e, "Private Key");
         }
 
         if (pkey != NULL)

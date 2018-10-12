@@ -213,7 +213,7 @@ int req_main(int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
     BIO *in = NULL, *out = NULL;
-    ENGINE *e = NULL, *gen_eng = NULL;
+    ENGINE *e = NULL, *gen_eng = NULL, *key_e = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *genctx = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL, *sigopts = NULL;
@@ -420,6 +420,9 @@ int req_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (keyform == FORMAT_ENGINE)
+        key_e = e;
+
     if (days && !x509)
         BIO_printf(bio_err, "Ignoring -days; not generating a certificate\n");
     if (x509 && infile == NULL)
@@ -555,7 +558,7 @@ int req_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, 0, passin, key_e, "Private Key");
         if (pkey == NULL) {
             /* load_key() has already printed an appropriate message */
             goto end;

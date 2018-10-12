@@ -117,13 +117,12 @@ Print out a usage message.
 
 specify output filename, default is standard output.
 
-=item B<-issuer filename>
+=item B<-issuer filename|URI>
 
 This specifies the current issuer certificate. This option can be used
-multiple times. The certificate specified in B<filename> must be in
-PEM format. This option B<MUST> come before any B<-cert> options.
+multiple times. This option B<MUST> come before any B<-cert> options.
 
-=item B<-cert filename>
+=item B<-cert filename|URI>
 
 Add the certificate B<filename> to the request. The issuer certificate
 is taken from the previous B<issuer> option, or an error occurs if no

@@ -491,6 +491,35 @@ Provides a terse summary of all options.
 
 =back
 
+=head2 Key, Certificate and CRL Options
+
+Keys, Certificates and CRLs are commonly given as file paths or as
+URIs.  Depending on the URI scheme, this may require using an engine
+as well, see the B<-engine> option for the subcommands where you can
+specify this sort of object.
+
+For input file paths, the format is automatically determined, so old
+format specifications like B<-inform PEM> are generally no longer
+necessary, and are ignored and considered deprecated even though still
+accepted.
+
+Keys that are offered by an engines are an exception, they can still
+be given like this:
+
+ -engine eng -key something -keyform ENGINE
+
+The exact same specification can also be given like this:
+
+ -key engine:eng:something
+
+This is a temporary measure until engines have learned to provide an
+OSSL_STORE loader, see L<OSSL_STORE_LOADER(3)>, and have their keys
+become available through a URI scheme of their own.
+
+Note that for I<input> and I<output> files, where the sub-command is
+meant to be used to manipulate the data of the object, format
+specifications are still required.
+
 =head2 Pass Phrase Options
 
 Several commands accept password arguments, typically using B<-passin>

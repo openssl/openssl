@@ -14,7 +14,7 @@ B<openssl> B<x509>
 [B<-keyform DER|PEM>]
 [B<-CAform DER|PEM>]
 [B<-CAkeyform DER|PEM>]
-[B<-in filename>]
+[B<-in filename|URI>]
 [B<-out filename>]
 [B<-serial>]
 [B<-hash>]
@@ -91,21 +91,26 @@ Print out a usage message.
 
 =item B<-inform DER|PEM>
 
-This specifies the input format normally the command will expect an X509
-certificate but this can change if other options such as B<-req> are
-present. The DER format is the DER encoding of the certificate and PEM
-is the base64 encoding of the DER encoding with header and footer lines
-added. The default format is PEM.
+If B<-req> is given, this specifies the input format of the infile, and has
+the same meaning and default as the B<-outform> option.
+
+If B<-req> is not given, this option is DEPRECATED AND IGNORED.  The format
+of the input file is determined automatically or according to its scheme, see
+L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+This specifies the output format.
+The DER format is the DER encoding of the certificate and PEM is the base64
+encoding of the DER encoding with header and footer lines added. The default
+format is PEM.
 
-=item B<-in filename>
+=item B<-in filename|URI>
 
-This specifies the input filename to read a certificate from or standard input
-if this option is not specified.
+This specifies the input input to read a certificate or a CSR, depending on
+of B<-req> is given or not.  When B<-req> is given, only the filename argument
+is valid.
+If this option is not given, standard input is used.
 
 =item B<-out filename>
 
@@ -353,7 +358,7 @@ can thus behave like a "mini CA".
 
 =over 4
 
-=item B<-signkey filename>
+=item B<-signkey filename|URI>
 
 This option causes the input file to be self signed using the supplied
 private key.
@@ -382,10 +387,11 @@ certificate is being created from another certificate (for example with
 the B<-signkey> or the B<-CA> options). Normally all extensions are
 retained.
 
-=item B<-keyform PEM|DER>
+=item B<-keyform PEM|DER|ENGINE>
 
-Specifies the format (DER or PEM) of the private key file used in the
-B<-signkey> option.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl/Key, Certificate and CRL Options>.
 
 =item B<-days arg>
 
@@ -411,7 +417,7 @@ B<-CAcreateserial> options) is not used.
 
 The serial number can be decimal or hex (if preceded by B<0x>).
 
-=item B<-CA filename>
+=item B<-CA filename|URI>
 
 Specifies the CA certificate to be used for signing. When this option is
 present B<x509> behaves like a "mini CA". The input file is signed by this
@@ -421,7 +427,7 @@ of the CA and it is digitally signed using the CAs private key.
 This option is normally combined with the B<-req> option. Without the
 B<-req> option the input is a certificate which must be self signed.
 
-=item B<-CAkey filename>
+=item B<-CAkey filename|URI>
 
 Sets the CA private key to sign a certificate with. If this option is
 not specified then it is assumed that the CA private key is present in
@@ -468,9 +474,9 @@ Generate a certificate from scratch, not using an input certificate
 or certificate request. So the B<-in> option must not be used in this case.
 Instead, the B<-subj> and <-force_pubkey> options need to be given.
 
-=item B<-force_pubkey filename>
+=item B<-force_pubkey filename|URI>
 
-When a certificate is created set its public key to the key in B<filename>
+When a certificate is created set its public key to the key given as argument
 instead of the key contained in the input or given with the B<-signkey> option.
 
 This option is useful for creating self-issued certificates that are not
@@ -762,7 +768,7 @@ Display the certificate SHA1 fingerprint:
 
 Convert a certificate from PEM to DER format:
 
- openssl x509 -in cert.pem -inform PEM -out cert.der -outform DER
+ openssl x509 -in cert.pem -out cert.der -outform DER
 
 Convert a certificate to a certificate request:
 

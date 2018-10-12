@@ -9,7 +9,7 @@ pkey - public or private key processing tool
 
 B<openssl> B<pkey>
 [B<-help>]
-[B<-inform PEM|DER>]
+[B<-inform PEM|DER|ENGINE>]
 [B<-outform PEM|DER>]
 [B<-in filename>]
 [B<-passin arg>]
@@ -39,14 +39,15 @@ between various forms and their components printed out.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM>
+=item B<-inform PEM|DER|ENGINE>
 
-This specifies the input format DER or PEM. The default format is PEM.
+DEPRECATED AND GENERALLY IGNORED.  The format of the private key is
+determined automatically or according to its scheme, except for the
+ENGINE format, see L<openssl(1)/Key, Certificate and CRL Options>.
 
 =item B<-outform DER|PEM>
 
-This specifies the output format, the options have the same meaning and default
-as the B<-inform> option.
+This specifies the output format DER or PEM. The default format is PEM.
 
 =item B<-in filename>
 
