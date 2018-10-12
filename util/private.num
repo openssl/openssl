@@ -22,6 +22,8 @@ CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
 DTLS_timer_cb                           datatype
+EVP_MAC                                 datatype
+EVP_MAC_CTX                             datatype
 EVP_PKEY_gen_cb                         datatype
 EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
@@ -185,6 +187,7 @@ ERR_free_strings                        define deprecated 1.1.0
 ERR_load_crypto_strings                 define deprecated 1.1.0
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
+EVP_MAC_name                            define
 EVP_MD_CTX_block_size                   define
 EVP_MD_CTX_size                         define
 EVP_MD_CTX_type                         define
@@ -271,6 +274,8 @@ EVP_cast5_cfb                           define
 EVP_cleanup                             define deprecated 1.1.0
 EVP_get_digestbynid                     define
 EVP_get_digestbyobj                     define
+EVP_get_macbynid                        define
+EVP_get_macbyobj                        define
 EVP_idea_cfb                            define
 EVP_rc2_cfb                             define
 EVP_rc5_32_12_16_cfb                    define

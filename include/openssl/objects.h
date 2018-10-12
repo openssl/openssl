@@ -20,7 +20,8 @@
 # define OBJ_NAME_TYPE_CIPHER_METH       0x02
 # define OBJ_NAME_TYPE_PKEY_METH         0x03
 # define OBJ_NAME_TYPE_COMP_METH         0x04
-# define OBJ_NAME_TYPE_NUM               0x05
+# define OBJ_NAME_TYPE_MAC_METH          0x05
+# define OBJ_NAME_TYPE_NUM               0x06
 
 # define OBJ_NAME_ALIAS                  0x8000
 
