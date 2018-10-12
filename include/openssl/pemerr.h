@@ -32,12 +32,12 @@ int ERR_load_PEM_strings(void);
 # define PEM_F_D2I_PKCS8PRIVATEKEY_FP                     121
 # define PEM_F_DO_B2I                                     132
 # define PEM_F_DO_B2I_BIO                                 133
-# define PEM_F_DO_BLOB_HEADER                             134
+# define PEM_F_OSSL_DO_BLOB_HEADER                        134
 # define PEM_F_DO_I2B                                     146
 # define PEM_F_DO_PK8PKEY                                 126
 # define PEM_F_DO_PK8PKEY_FP                              125
 # define PEM_F_DO_PVK_BODY                                135
-# define PEM_F_DO_PVK_HEADER                              136
+# define PEM_F_OSSL_DO_PVK_HEADER                         136
 # define PEM_F_GET_HEADER_AND_DATA                        143
 # define PEM_F_GET_NAME                                   144
 # define PEM_F_I2B_PVK                                    137

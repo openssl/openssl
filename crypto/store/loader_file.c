@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+#include "internal/pem_int.h"
 #include <openssl/pkcs12.h>      /* For the PKCS8 stuff o.O */
 #include <openssl/rsa.h>         /* For d2i_RSAPrivateKey */
 #include <openssl/safestack.h>
@@ -1144,6 +1145,87 @@ static int file_read_pem(BIO *bp, char **pem_name, char **pem_header,
     return 1;
 }
 
+static OSSL_STORE_INFO *file_try_read_msblob(BIO *bp, int *matchcount)
+{
+#ifdef OPENSSL_NO_DSA
+    return NULL;
+#else
+    OSSL_STORE_INFO *result = NULL;
+    int ispub = -1;
+
+    {
+        unsigned int magic = 0, bitlen = 0;
+        int isdss = 0;
+        unsigned char peekbuf[16] = { 0, };
+        const unsigned char *p = peekbuf;
+
+        if (BIO_buffer_peek(bp, peekbuf, sizeof(peekbuf)) <= 0)
+            return 0;
+        if (!ossl_do_blob_header(&p, sizeof(peekbuf), &magic, &bitlen,
+                                 &isdss, &ispub))
+            return 0;
+    }
+
+    (*matchcount)++;
+
+    {
+        EVP_PKEY *tmp = NULL;
+
+        if (ispub)
+            tmp = b2i_PublicKey_bio(bp);
+        else
+            tmp = b2i_PrivateKey_bio(bp);
+
+        if (tmp == NULL
+            || (result = OSSL_STORE_INFO_new_PKEY(tmp)) == NULL) {
+            EVP_PKEY_free(tmp);
+            return 0;
+        }
+    }
+
+    return result;
+#endif
+}
+
+static OSSL_STORE_INFO *file_try_read_PVK(BIO *bp, const UI_METHOD *ui_method,
+                                          void *ui_data, const char *uri,
+                                          int *matchcount)
+{
+#if defined(OPENSSL_NO_DSA) || defined(OPENSSL_NO_RC4)
+    return NULL;
+#else
+    OSSL_STORE_INFO *result = NULL;
+
+    {
+        unsigned int saltlen = 0, keylen = 0;
+        unsigned char peekbuf[24] = { 0, };
+        const unsigned char *p = peekbuf;
+
+        if (BIO_buffer_peek(bp, peekbuf, sizeof(peekbuf)) <= 0)
+            return 0;
+        if (!ossl_do_PVK_header(&p, sizeof(peekbuf), 0, &saltlen, &keylen))
+            return 0;
+    }
+
+    (*matchcount)++;
+
+    {
+        EVP_PKEY *tmp = NULL;
+        struct pem_pass_data pass_data;
+
+        if (!file_fill_pem_pass_data(&pass_data, "PVK pass phrase", uri,
+                                     ui_method, ui_data)
+            || (tmp = b2i_PVK_bio(bp, file_get_pem_pass, &pass_data)) == NULL
+            || (result = OSSL_STORE_INFO_new_PKEY(tmp)) == NULL) {
+            EVP_PKEY_free(tmp);
+            return 0;
+        }
+    }
+
+    return result;
+#endif
+}
+
 static int file_read_asn1(BIO *bp, unsigned char **data, long *len)
 {
     BUF_MEM *mem = NULL;
@@ -1333,6 +1415,13 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
                     goto endloop;
                 }
             } else {
+                if ((result = file_try_read_msblob(ctx->_.file.file,
+                                                   &matchcount)) != NULL
+                    || (result = file_try_read_PVK(ctx->_.file.file,
+                                                   ui_method, ui_data, ctx->uri,
+                                                   &matchcount)) != NULL)
+                    goto endloop;
+
                 if (!file_read_asn1(ctx->_.file.file, &data, &len)) {
                     ctx->errcnt++;
                     goto endloop;
