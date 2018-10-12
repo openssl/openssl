@@ -28,7 +28,6 @@
 #include "internal/ctype.h"
 #include "internal/o_dir.h"
 #include "internal/cryptlib.h"
-#include "internal/store_int.h"
 #include "store_locl.h"
 
 #ifdef _WIN32
@@ -700,6 +699,7 @@ struct ossl_store_loader_ctx_st {
     } type;
     int errcnt;
 #define FILE_FLAG_SECMEM         (1<<0)
+#define FILE_FLAG_ATTACHED       (1<<1)
     unsigned int flags;
     union {
         struct {                 /* Used with is_raw and is_pem */
@@ -750,6 +750,25 @@ static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX *ctx)
         }
     }
     OPENSSL_free(ctx);
+}
+
+static int file_find_type(OSSL_STORE_LOADER_CTX *ctx)
+{
+    BIO *buff = NULL;
+    char peekbuf[4096] = { 0, };
+
+    if ((buff = BIO_new(BIO_f_buffer())) == NULL) {
+        BIO_free_all(buff);
+        return 0;
+    }
+
+    ctx->_.file.file = BIO_push(buff, ctx->_.file.file);
+    if (BIO_buffer_peek(ctx->_.file.file, peekbuf, sizeof(peekbuf) - 1) > 0) {
+        peekbuf[sizeof(peekbuf) - 1] = '\0';
+        if (strstr(peekbuf, "-----BEGIN ") != NULL)
+            ctx->type = is_pem;
+    }
+    return 1;
 }
 
 static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
@@ -868,28 +887,37 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
             }
             ctx->_.dir.end_reached = 1;
         }
-    } else {
-        BIO *buff = NULL;
-        char peekbuf[4096] = { 0, };
-
-        if ((buff = BIO_new(BIO_f_buffer())) == NULL
-            || (ctx->_.file.file = BIO_new_file(path, "rb")) == NULL) {
-            BIO_free_all(buff);
-            goto err;
-        }
-
-        ctx->_.file.file = BIO_push(buff, ctx->_.file.file);
-        if (BIO_buffer_peek(ctx->_.file.file, peekbuf, sizeof(peekbuf) - 1) > 0) {
-            peekbuf[sizeof(peekbuf) - 1] = '\0';
-            if (strstr(peekbuf, "-----BEGIN ") != NULL)
-                ctx->type = is_pem;
-        }
+    } else if ((ctx->_.file.file = BIO_new_file(path, "rb")) == NULL
+               || !file_find_type(ctx)) {
+        BIO_free_all(ctx->_.file.file);
+        goto err;
     }
 
     return ctx;
  err:
     OSSL_STORE_LOADER_CTX_free(ctx);
     return NULL;
+}
+
+static OSSL_STORE_LOADER_CTX *file_attach(const OSSL_STORE_LOADER *loader,
+                                          BIO *bp, const UI_METHOD *ui_method,
+                                          void *ui_data)
+{
+    OSSL_STORE_LOADER_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL) {
+        OSSL_STOREerr(OSSL_STORE_F_FILE_ATTACH, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    ctx->flags |= FILE_FLAG_ATTACHED;
+    ctx->_.file.file = bp;
+    if (!file_find_type(ctx)) {
+        OSSL_STORE_LOADER_CTX_free(ctx);
+        ctx = NULL;
+    }
+
+    return ctx;
 }
 
 static int file_ctrl(OSSL_STORE_LOADER_CTX *ctx, int cmd, va_list args)
@@ -958,23 +986,6 @@ static int file_find(OSSL_STORE_LOADER_CTX *ctx, OSSL_STORE_SEARCH *search)
         OSSL_STOREerr(OSSL_STORE_F_FILE_FIND,
                       OSSL_STORE_R_UNSUPPORTED_SEARCH_TYPE);
     return 0;
-}
-
-/* Internal function to decode an already opened PEM file */
-OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp)
-{
-    OSSL_STORE_LOADER_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-
-    if (ctx == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FILE_ATTACH_PEM_BIO_INT,
-                      ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    ctx->_.file.file = bp;
-    ctx->type = is_pem;
-
-    return ctx;
 }
 
 static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
@@ -1397,17 +1408,13 @@ static int file_eof(OSSL_STORE_LOADER_CTX *ctx)
 
 static int file_close(OSSL_STORE_LOADER_CTX *ctx)
 {
-    if (ctx->type == is_dir) {
-        OPENSSL_DIR_end(&ctx->_.dir.ctx);
-    } else {
-        BIO_free_all(ctx->_.file.file);
+    if ((ctx->flags & FILE_FLAG_ATTACHED) == 0) {
+        if (ctx->type == is_dir) {
+            OPENSSL_DIR_end(&ctx->_.dir.ctx);
+        } else {
+            BIO_free_all(ctx->_.file.file);
+        }
     }
-    OSSL_STORE_LOADER_CTX_free(ctx);
-    return 1;
-}
-
-int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx)
-{
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
 }
@@ -1417,6 +1424,7 @@ static OSSL_STORE_LOADER file_loader =
         "file",
         NULL,
         file_open,
+        file_attach,
         file_ctrl,
         file_expect,
         file_find,

@@ -102,6 +102,7 @@ struct ossl_store_loader_st {
     const char *scheme;
     ENGINE *engine;
     OSSL_STORE_open_fn open;
+    OSSL_STORE_attach_fn attach;
     OSSL_STORE_ctrl_fn ctrl;
     OSSL_STORE_expect_fn expect;
     OSSL_STORE_find_fn find;
@@ -122,11 +123,3 @@ void ossl_store_destroy_loaders_int(void);
 
 int ossl_store_init_once(void);
 int ossl_store_file_loader_init(void);
-
-/*-
- *  'file' scheme stuff
- *  -------------------
- */
-
-OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp);
-int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);

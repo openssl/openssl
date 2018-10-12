@@ -71,6 +71,13 @@ int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
+int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
+                                 OSSL_STORE_attach_fn attach_function)
+{
+    loader->attach = attach_function;
+    return 1;
+}
+
 int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_ctrl_fn ctrl_function)
 {

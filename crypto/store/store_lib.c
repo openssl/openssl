@@ -18,7 +18,6 @@
 #include <openssl/err.h>
 #include <openssl/store.h>
 #include "internal/thread_once.h"
-#include "internal/store_int.h"
 #include "store_locl.h"
 
 struct ossl_store_ctx_st {
@@ -637,45 +636,32 @@ char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
     return NULL;
 }
 
-OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
-                                          void *ui_data)
+OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
+                                  const UI_METHOD *ui_method, void *ui_data,
+                                  OSSL_STORE_post_process_info_fn post_process,
+                                  void *post_process_data)
 {
     OSSL_STORE_CTX *ctx = NULL;
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
 
-    if ((loader = ossl_store_get0_loader_int("file")) == NULL
-        || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp)) == NULL))
-        goto done;
+    if ((loader =
+         ossl_store_get0_loader_int(scheme == NULL ? scheme : "file")) == NULL
+        || (loader_ctx =
+            loader->attach(loader, bp, ui_method, ui_data)) == NULL)
+        return NULL;
+
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO,
-                     ERR_R_MALLOC_FAILURE);
-        goto done;
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH, ERR_R_MALLOC_FAILURE);
+        return NULL;
     }
 
     ctx->loader = loader;
     ctx->loader_ctx = loader_ctx;
-    loader_ctx = NULL;
     ctx->ui_method = ui_method;
     ctx->ui_data = ui_data;
-    ctx->post_process = NULL;
-    ctx->post_process_data = NULL;
+    ctx->post_process = post_process;
+    ctx->post_process_data = post_process_data;
 
- done:
-    if (loader_ctx != NULL)
-        /*
-         * We ignore a returned error because we will return NULL anyway in
-         * this case, so if something goes wrong when closing, that'll simply
-         * just add another entry on the error stack.
-         */
-        (void)loader->close(loader_ctx);
     return ctx;
-}
-
-int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx)
-{
-    int loader_ret = ossl_store_file_detach_pem_bio_int(ctx->loader_ctx);
-
-    OPENSSL_free(ctx);
-    return loader_ret;
 }
