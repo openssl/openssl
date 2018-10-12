@@ -39,8 +39,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
 
-    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u, libctx,
-                                         propq)) == NULL)
+    if ((ctx = OSSL_STORE_attach(bp, "file", libctx, propq, ui_method, u,
+                                 NULL, NULL)) == NULL)
         goto err;
 #ifndef OPENSSL_NO_SECURE_HEAP
     {
@@ -62,7 +62,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
         *x = ret;
 
  err:
-    ossl_store_detach_pem_bio(ctx);
+    OSSL_STORE_close(ctx);
     UI_destroy_method(ui_method);
     OSSL_STORE_INFO_free(info);
     return ret;
@@ -105,7 +105,8 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_STORE_INFO *info = NULL;
 
-    if ((ctx = ossl_store_attach_pem_bio(bp, UI_null(), NULL, NULL, NULL)) == NULL)
+    if ((ctx = OSSL_STORE_attach(bp, "file", NULL, NULL, UI_null(), NULL,
+                                 NULL, NULL)) == NULL)
         goto err;
 
     while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
@@ -120,7 +121,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
         *x = ret;
 
  err:
-    ossl_store_detach_pem_bio(ctx);
+    OSSL_STORE_close(ctx);
     OSSL_STORE_INFO_free(info);
     return ret;
 }
@@ -198,7 +199,8 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
     if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
 
-    if ((ctx = ossl_store_attach_pem_bio(bp, ui_method, u, NULL, NULL)) == NULL)
+    if ((ctx = OSSL_STORE_attach(bp, "file", NULL, NULL, ui_method, u,
+                                 NULL, NULL)) == NULL)
         goto err;
 
     while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
@@ -217,7 +219,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
         *x = ret;
 
  err:
-    ossl_store_detach_pem_bio(ctx);
+    OSSL_STORE_close(ctx);
     UI_destroy_method(ui_method);
     OSSL_STORE_INFO_free(info);
     return ret;
