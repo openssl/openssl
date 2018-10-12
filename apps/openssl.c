@@ -68,6 +68,7 @@ static int apps_startup(void)
         return 0;
 
     (void)setup_ui_method();
+    (void)setup_engine_loader();
 
     /*
      * NOTE: This is an undocumented feature required for testing only.
@@ -89,6 +90,7 @@ static void apps_shutdown(void)
 {
     app_providers_cleanup();
     OSSL_LIB_CTX_free(app_get0_libctx());
+    destroy_engine_loader();
     destroy_ui_method();
 }
 

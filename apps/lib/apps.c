@@ -39,6 +39,8 @@
 #endif
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
+#include <openssl/store.h>
+#include "s_apps.h"
 #include "apps.h"
 
 #ifdef _WIN32
