@@ -16,6 +16,7 @@
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
+# include "internal/tsan_assist.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -230,7 +231,8 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    unsigned int reseed_prop_counter;
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    unsigned int reseed_next_counter;
 
     size_t seedlen;
     DRBG_STATUS state;

@@ -178,6 +178,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                                    prediction_resistance,
                                    NULL, 0) != 0)
                 bytes = bytes_needed;
+            drbg->reseed_next_counter = tsan_load(&drbg->parent->reseed_prop_counter);
             rand_drbg_unlock(drbg->parent);
 
             rand_pool_add_end(pool, bytes, 8 * bytes);
@@ -194,6 +195,13 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             RANDerr(RAND_F_RAND_DRBG_GET_ENTROPY,
                     RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED);
             goto err;
+        }
+
+        drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
+        if (drbg->reseed_next_counter) {
+            drbg->reseed_next_counter++;
+            if(!drbg->reseed_next_counter)
+                drbg->reseed_next_counter = 1;
         }
 
         /* Get entropy by polling system entropy sources. */

@@ -401,12 +401,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     drbg->state = DRBG_READY;
     drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
-    if (drbg->reseed_prop_counter > 0) {
-        if (drbg->parent == NULL)
-            drbg->reseed_prop_counter++;
-        else
-            drbg->reseed_prop_counter = drbg->parent->reseed_prop_counter;
-    }
+    tsan_store(&drbg->reseed_prop_counter, drbg->reseed_next_counter);
 
  end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
@@ -515,12 +510,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
     drbg->state = DRBG_READY;
     drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
-    if (drbg->reseed_prop_counter > 0) {
-        if (drbg->parent == NULL)
-            drbg->reseed_prop_counter++;
-        else
-            drbg->reseed_prop_counter = drbg->parent->reseed_prop_counter;
-    }
+    tsan_store(&drbg->reseed_prop_counter, drbg->reseed_next_counter);
 
  end:
     if (entropy != NULL && drbg->cleanup_entropy != NULL)
@@ -689,7 +679,8 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
             reseed_required = 1;
     }
     if (drbg->reseed_prop_counter > 0 && drbg->parent != NULL) {
-        if (drbg->reseed_prop_counter != drbg->parent->reseed_prop_counter)
+        if (drbg->reseed_prop_counter
+            != tsan_load(&drbg->parent->reseed_prop_counter))
             reseed_required = 1;
     }
 
