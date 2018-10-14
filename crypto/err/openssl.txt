@@ -2456,7 +2456,6 @@ RAND_R_ENTROPY_OUT_OF_RANGE:124:entropy out of range
 RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED:127:error entropy pool was ignored
 RAND_R_ERROR_INITIALISING_DRBG:107:error initialising drbg
 RAND_R_ERROR_INSTANTIATING_DRBG:108:error instantiating drbg
-RAND_R_RANDOM_DATA_WAS_IGNORED:137:random data was ignored
 RAND_R_ERROR_RETRIEVING_ADDITIONAL_INPUT:109:error retrieving additional input
 RAND_R_ERROR_RETRIEVING_ENTROPY:110:error retrieving entropy
 RAND_R_ERROR_RETRIEVING_NONCE:111:error retrieving nonce
