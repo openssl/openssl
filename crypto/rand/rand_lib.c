@@ -178,7 +178,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
                                    prediction_resistance,
                                    NULL, 0) != 0)
                 bytes = bytes_needed;
-            drbg->reseed_next_counter = tsan_load(&drbg->parent->reseed_prop_counter);
+            drbg->reseed_next_counter
+                = tsan_load(&drbg->parent->reseed_prop_counter);
             rand_drbg_unlock(drbg->parent);
 
             rand_pool_add_end(pool, bytes, 8 * bytes);
