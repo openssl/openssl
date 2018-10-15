@@ -26,4 +26,13 @@ our @tests = (
         client => { },
         test   => { "ExpectedResult" => "Success" },
     },
+    {
+        name => "SECLEVEL 3 with ED448 key, TLSv1.2",
+        server => { "CipherString" => "DEFAULT:\@SECLEVEL=3",
+                    "Certificate" => test_pem("server-ed448-cert.pem"),
+                    "PrivateKey" => test_pem("server-ed448-key.pem"),
+                    "MaxProtocol" => "TLSv1.2" },
+        client => { },
+        test   => { "ExpectedResult" => "Success" },
+    },
 );
