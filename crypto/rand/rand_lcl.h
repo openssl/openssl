@@ -48,7 +48,7 @@
  *
  * The max_len value for the buffer provided to the rand_drbg_get_entropy()
  * callback is currently 2^31 bytes (2 gigabytes), if a derivation function
- * is used. Since this is much to large to be allocated, the rand_pool_new()
+ * is used. Since this is much too large to be allocated, the rand_pool_new()
  * function chooses more modest values as default pool length, bounded
  * by RAND_POOL_MIN_LENGTH and RAND_POOL_MAX_LENGTH
  *

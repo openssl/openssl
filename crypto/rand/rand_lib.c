@@ -493,6 +493,12 @@ void rand_pool_free(RAND_POOL *pool)
     if (pool == NULL)
         return;
 
+    /*
+     * Although it would be advisable from a cryptographical viewpoint,
+     * we are not allowed to clear attached buffers, since they are passed
+     * to rand_pool_attach() as `const unsigned char*`.
+     * (see corresponding comment in rand_pool_attach()).
+     */
     if (!pool->attached)
         OPENSSL_secure_clear_free(pool->buffer, pool->max_len);
     OPENSSL_free(pool);
