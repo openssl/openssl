@@ -678,9 +678,11 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
             reseed_required = 1;
     }
-    if (drbg->reseed_prop_counter > 0 && drbg->parent != NULL) {
-        if (drbg->reseed_prop_counter
-            != tsan_load(&drbg->parent->reseed_prop_counter))
+    if (drbg->parent != NULL) {
+        unsigned int reseed_counter = tsan_load(&drbg->reseed_prop_counter);
+        if (reseed_counter > 0
+                && tsan_load(&drbg->parent->reseed_prop_counter)
+                   != reseed_counter)
             reseed_required = 1;
     }
 
@@ -930,7 +932,7 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent, int drbg_type)
         goto err;
 
     /* enable seed propagation */
-    drbg->reseed_prop_counter = 1;
+    tsan_store(&drbg->reseed_prop_counter, 1);
 
     /*
      * Ignore instantiation error to support just-in-time instantiation.
