@@ -1112,10 +1112,10 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine);
  *  it is actually specified in ANSI X9.63.
  *  This identifier is retained for backwards compatibility
  */
-int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+DEPRECATEDIN_1_2_0(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md);
+                   const EVP_MD *md))
 
 int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
                      const EC_KEY *ecdh,
