@@ -289,6 +289,40 @@ static int test_cookie(void)
     return testresult;
 }
 
+static int test_dtls_duplicate_records(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, DTLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    DTLS_set_timer_cb(clientssl, timer_cb);
+    DTLS_set_timer_cb(serverssl, timer_cb);
+
+    BIO_ctrl(SSL_get_wbio(clientssl), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
+    BIO_ctrl(SSL_get_wbio(serverssl), MEMPACKET_CTRL_SET_DUPLICATE_REC, 1, NULL);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
 
 int setup_tests(void)
 {
@@ -299,6 +333,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
     ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
     ADD_TEST(test_cookie);
+    ADD_TEST(test_dtls_duplicate_records);
 
     return 1;
 }

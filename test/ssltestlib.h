@@ -37,9 +37,10 @@ void bio_s_mempacket_test_free(void);
  * Mempacket BIO ctrls. We make them large enough to not clash with standard BIO
  * ctrl codes.
  */
-#define MEMPACKET_CTRL_SET_DROP_EPOCH  (1 << 15)
-#define MEMPACKET_CTRL_SET_DROP_REC    (2 << 15)
-#define MEMPACKET_CTRL_GET_DROP_REC    (3 << 15)
+#define MEMPACKET_CTRL_SET_DROP_EPOCH       (1 << 15)
+#define MEMPACKET_CTRL_SET_DROP_REC         (2 << 15)
+#define MEMPACKET_CTRL_GET_DROP_REC         (3 << 15)
+#define MEMPACKET_CTRL_SET_DUPLICATE_REC    (4 << 15)
 
 int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
                           int type);
