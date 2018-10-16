@@ -2,14 +2,19 @@
 
 =head1 NAME
 
-SSL_CTX_add_extra_chain_cert, SSL_CTX_clear_extra_chain_certs - add or clear
-extra chain certificates
+SSL_CTX_add_extra_chain_cert,
+SSL_CTX_get_extra_chain_certs,
+SSL_CTX_get_extra_chain_certs_only,
+SSL_CTX_clear_extra_chain_certs
+- add, get or clear extra chain certificates
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
  long SSL_CTX_add_extra_chain_cert(SSL_CTX *ctx, X509 *x509);
+ long SSL_CTX_get_extra_chain_certs(SSL_CTX *ctx, STACK_OF(X509) **sk);
+ long SSL_CTX_get_extra_chain_certs_only(SSL_CTX *ctx, STACK_OF(X509) **sk);
  long SSL_CTX_clear_extra_chain_certs(SSL_CTX *ctx);
 
 =head1 DESCRIPTION
@@ -17,6 +22,13 @@ extra chain certificates
 SSL_CTX_add_extra_chain_cert() adds the certificate B<x509> to the extra chain
 certificates associated with B<ctx>. Several certificates can be added one
 after another.
+
+SSL_CTX_get_extra_chain_certs() retrieves the extra chain certificates
+associated with B<ctx>, or the chain associated with the current certificate
+of B<ctx> if the extra chain is empty.
+
+SSL_CTX_get_extra_chain_certs_only() retrieves the extra chain certificates
+associated with B<ctx>.
 
 SSL_CTX_clear_extra_chain_certs() clears all extra chain certificates
 associated with B<ctx>.
@@ -70,7 +82,7 @@ L<SSL_build_cert_chain(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
