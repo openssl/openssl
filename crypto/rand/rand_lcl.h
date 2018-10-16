@@ -37,7 +37,7 @@
  *
  * NIST SP800 90Ar1 allows a maximum of (1 << 35) bits i.e., (1 << 32) bytes.
  *
- * We lower it to 'only' (1 << 31) bytes, which is equivalent to 2 gigabytes.
+ * We lower it to 'only' INT32_MAX bytes, which is equivalent to 2 gigabytes.
  */
 # define DRBG_MAX_LENGTH                         INT32_MAX
 
