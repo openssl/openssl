@@ -5593,6 +5593,99 @@ static int test_cert_cb(int tst)
     return testresult;
 }
 
+static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
+{
+    X509 *xcert, *peer;
+    EVP_PKEY *privpkey;
+    BIO *in = NULL;
+
+    /* Check that SSL_get_peer_certificate() returns something sensible */
+    peer = SSL_get_peer_certificate(ssl);
+    if (!TEST_ptr(peer))
+        return 0;
+    X509_free(peer);
+
+    in = BIO_new_file(cert, "r");
+    if (!TEST_ptr(in))
+        return 0;
+
+    xcert = PEM_read_bio_X509(in, NULL, NULL, NULL);
+    BIO_free(in);
+    if (!TEST_ptr(xcert))
+        return 0;
+
+    in = BIO_new_file(privkey, "r");
+    if (!TEST_ptr(in)) {
+        X509_free(xcert);
+        return 0;
+    }
+
+    privpkey = PEM_read_bio_PrivateKey(in, NULL, NULL, NULL);
+    BIO_free(in);
+    if (!TEST_ptr(privpkey)) {
+        X509_free(xcert);
+        return 0;
+    }
+
+    *x509 = xcert;
+    *pkey = privpkey;
+
+    return 1;
+}
+
+static int verify_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
+{
+    return 1;
+}
+
+static int test_client_cert_cb(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (tst == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    if (tst == 1)
+        return 1;
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       tst == 0 ? TLS1_2_VERSION
+                                                : TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /*
+     * Test that setting a client_cert_cb results in a client certificate being
+     * sent.
+     */
+    SSL_CTX_set_client_cert_cb(cctx, client_cert_cb);
+    SSL_CTX_set_verify(sctx,
+                       SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                       verify_cb);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -5696,6 +5789,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ticket_callbacks, 12);
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_ALL_TESTS(test_cert_cb, 3);
+    ADD_ALL_TESTS(test_client_cert_cb, 2);
     return 1;
 }
 
