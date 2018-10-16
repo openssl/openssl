@@ -45,7 +45,7 @@ def main():
 
     cmd = ([os.path.abspath(os.path.join(THIS_DIR, FUZZER))]  + sys.argv[2:]
            + ["-artifact_prefix=" + corpora[1] + "/"] + corpora)
-    print " ".join(cmd)
+    print(" ".join(cmd))
     subprocess.call(cmd)
 
 if __name__ == "__main__":
