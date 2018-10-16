@@ -3414,7 +3414,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
-                return ret;
+                return 0;
             }
             pkdh = ssl_dh_to_pkey(dh);
             if (pkdh == NULL) {
@@ -3425,11 +3425,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                               EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
-                return ret;
+                return 0;
             }
             EVP_PKEY_free(s->cert->dh_tmp);
             s->cert->dh_tmp = pkdh;
-            ret = 1;
+            return 1;
         }
         break;
     case SSL_CTRL_SET_TMP_DH_CB:

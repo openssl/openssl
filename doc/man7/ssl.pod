@@ -379,6 +379,8 @@ Use the file path to locate trusted CA certificates.
 
 =item long B<SSL_CTX_set_tmp_dh_callback>(SSL_CTX *ctx, DH *(*cb)(void));
 
+=item long B<SSL_CTX_set_tmp_ecdh>(SSL_CTX* ctx, const EC_KEY *ecdh);
+
 =item void B<SSL_CTX_set_verify>(SSL_CTX *ctx, int mode, int (*cb);(void))
 
 =item int B<SSL_CTX_use_PrivateKey>(SSL_CTX *ctx, EVP_PKEY *pkey);
@@ -674,6 +676,12 @@ fresh handle for each connection.
 
 =item void B<SSL_set_timeout>(SSL *ssl, long t);
 
+=item long B<SSL_set_tmp_dh>(SSL *ssl, DH *dh);
+
+=item long B<SSL_set_tmp_dh_callback>(SSL *ssl, DH *(*cb)(void));
+
+=item long B<SSL_set_tmp_ecdh>(SSL *ssl, const EC_KEY *ecdh);
+
 =item void B<SSL_set_verify>(SSL *ssl, int mode, int (*callback);(void))
 
 =item void B<SSL_set_verify_result>(SSL *ssl, long arg);
@@ -781,6 +789,7 @@ L<SSL_CTX_set_session_id_context(3)>,
 L<SSL_CTX_set_ssl_version(3)>,
 L<SSL_CTX_set_timeout(3)>,
 L<SSL_CTX_set_tmp_dh_callback(3)>,
+L<SSL_CTX_set_tmp_ecdh(3)>,
 L<SSL_CTX_set_verify(3)>,
 L<SSL_CTX_use_certificate(3)>,
 L<SSL_alert_type_string(3)>,
