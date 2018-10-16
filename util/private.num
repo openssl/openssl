@@ -324,6 +324,8 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_generate_session_ticket_fn      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get_default_read_ahead          define
+SSL_CTX_get_extra_chain_certs           define
+SSL_CTX_get_extra_chain_certs_only      define
 SSL_CTX_get_max_cert_list               define
 SSL_CTX_get_max_proto_version           define
 SSL_CTX_get_min_proto_version           define
