@@ -29,12 +29,12 @@
 
   *) Fixed the issue that RAND_add()/RAND_seed() silently discards random input
      if its length exceeds 4096 bytes. The limit has been raised to a buffer size
-     of two gigabyte and the error handling was improved.
+     of two gigabytes and the error handling improved.
 
-     This issue was reported to OpenSSL on 2nd October 2018 by Dr. Falko Strenzke.
-     Is has been categorized as a normal bug, not a security issue, because the
-     DRBG reseeds automatically and is fully functional even without additional
-     randomness provided by the application.
+     This issue was reported to OpenSSL by Dr. Falko Strenzke. It has been
+     categorized as a normal bug, not a security issue, because the DRBG reseeds
+     automatically and is fully functional even without additional randomness
+     provided by the application.
 
  Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 

@@ -457,8 +457,10 @@ err:
 
 /*
  * Attach new random pool to the given buffer
+ *
+ * This function is intended to be used only for feeding random data
+ * provided by RAND_add() and RAND_seed() into the <master> DRBG.
  */
-
 RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
                             size_t entropy)
 {
