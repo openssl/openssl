@@ -713,7 +713,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             /* Construct the record and message headers */
             if (!WPACKET_init_static_len(&wpkt,
                                          wbuf,
-                                         SSL3_RT_MAX_PLAIN_LENGTH
+                                         ssl_get_max_send_fragment(s)
                                          + DTLS1_RT_HEADER_LENGTH,
                                          0)
                     || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
@@ -848,6 +848,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     if (BIO_dgram_get_peer(rbio, client) <= 0)
         BIO_ADDR_clear(client);
 
+    /* Buffer the record in the processed_rcds queue */
     if (!dtls_buffer_listen_record(s, reclen, seq, align))
         return -1;
 
