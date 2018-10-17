@@ -400,7 +400,8 @@ int rand_pool_init(void)
 
     for (i = 0; i < OSSL_NELEM(random_devices); i++)
         random_devices[i].fd = -1;
-    open_random_devices();
+    if (keep_random_devices_open)
+        open_random_devices();
     return 1;
 }
 
