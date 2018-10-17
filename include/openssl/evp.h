@@ -1652,6 +1652,14 @@ void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
                                                              EVP_MD_CTX *mctx));
 void EVP_add_alg_module(void);
 
+/*
+ * Convenient helper functions to transfer string based controls.
+ * The callback gets called with the parsed value.
+ */
+int EVP_str2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *value);
+int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *hex);
 
 # ifdef  __cplusplus
 }
