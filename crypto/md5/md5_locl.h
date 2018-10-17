@@ -12,17 +12,6 @@
 #include <openssl/e_os2.h>
 #include <openssl/md5.h>
 
-#ifdef MD5_ASM
-# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
-     defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-#  define md5_block_data_order md5_block_asm_data_order
-# elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-#  define md5_block_data_order md5_block_asm_data_order
-# elif defined(__sparc) || defined(__sparc__)
-#  define md5_block_data_order md5_block_asm_data_order
-# endif
-#endif
-
 void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN

@@ -249,33 +249,15 @@ In each table entry, the following keys are significant:
                            Defaults to bn_asm.c
         ec_asm_src      => Assembler implementation of core EC
                            functions.
-        des_asm_src     => Assembler implementation of core DES
-                           encryption functions.
-                           Defaults to 'des_enc.c fcrypt_b.c'
         aes_asm_src     => Assembler implementation of core AES
                            functions.
                            Defaults to 'aes_core.c aes_cbc.c'
-        bf_asm_src      => Assembler implementation of core BlowFish
-                           functions.
-                           Defaults to 'bf_enc.c'
-        md5_asm_src     => Assembler implementation of core MD5
-                           functions.
         sha1_asm_src    => Assembler implementation of core SHA1,
                            functions, and also possibly SHA256 and
                            SHA512 ones.
-        cast_asm_src    => Assembler implementation of core CAST
-                           functions.
-                           Defaults to 'c_enc.c'
         rc4_asm_src     => Assembler implementation of core RC4
                            functions.
                            Defaults to 'rc4_enc.c rc4_skey.c'
-        rmd160_asm_src  => Assembler implementation of core RMD160
-                           functions.
-        rc5_asm_src     => Assembler implementation of core RC5
-                           functions.
-                           Defaults to 'rc5_enc.c'
-        wp_asm_src      => Assembler implementation of core WHIRLPOOL
-                           functions.
         cmll_asm_src    => Assembler implementation of core CAMELLIA
                            functions.
                            Defaults to 'camellia.c cmll_misc.c cmll_cbc.c'

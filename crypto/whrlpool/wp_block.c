@@ -66,21 +66,6 @@ typedef unsigned long long u64;
 #undef SMALL_REGISTER_BANK
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
 # define SMALL_REGISTER_BANK
-# if defined(WHIRLPOOL_ASM)
-#  ifndef OPENSSL_SMALL_FOOTPRINT
-/*
- * it appears that for elder non-MMX
- * CPUs this is actually faster!
- */
-#   define OPENSSL_SMALL_FOOTPRINT
-#  endif
-#  define GO_FOR_MMX(ctx,inp,num)     do {                    \
-        extern unsigned long OPENSSL_ia32cap_P[];               \
-        void whirlpool_block_mmx(void *,const void *,size_t);   \
-        if (!(OPENSSL_ia32cap_P[0] & (1<<23)))  break;          \
-        whirlpool_block_mmx(ctx->H.c,inp,num);  return;         \
-                                        } while (0)
-# endif
 #endif
 
 #undef ROTATE
