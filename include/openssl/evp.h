@@ -988,6 +988,9 @@ void EVP_MD_do_all_sorted(void (*fn)
 # define EVP_MAC_HMAC   NID_hmac
 const EVP_MAC *EVP_hmac(void);
 
+# define EVP_MAC_CMAC   NID_cmac
+const EVP_MAC *EVP_cmac(void);
+
 EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
 void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
 int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
@@ -1008,6 +1011,7 @@ int EVP_MAC_oneshot(const EVP_MAC *mac, const void *key, size_t keylen,
 # define EVP_MAC_CTRL_SET_FLAGS         0x02 /* unsigned long */
 # define EVP_MAC_CTRL_SET_ENGINE        0x03 /* ENGINE * */
 # define EVP_MAC_CTRL_SET_MD            0x04 /* EVP_MD * */
+# define EVP_MAC_CTRL_SET_CIPHER        0x04 /* EVP_CIPHER * */
 
 /* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,
