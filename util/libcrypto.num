@@ -4592,3 +4592,4 @@ EVP_MAC_hex2ctrl                        4545	1_1_2	EXIST::FUNCTION:
 EVP_MAC_size                            4546	1_1_2	EXIST::FUNCTION:
 EVP_str2ctrl                            4547	1_1_2	EXIST::FUNCTION:
 EVP_hex2ctrl                            4548	1_1_2	EXIST::FUNCTION:
+EVP_hmac                                4549	1_1_2	EXIST::FUNCTION:
