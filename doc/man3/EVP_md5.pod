@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_md5
+EVP_md5,
+EVP_md5_sha1
 - MD5 For EVP
 
 =head1 SYNOPSIS
@@ -10,6 +11,7 @@ EVP_md5
  #include <openssl/evp.h>
 
  const EVP_MD *EVP_md5(void);
+ const EVP_MD *EVP_md5_sha1(void);
 
 =head1 DESCRIPTION
 

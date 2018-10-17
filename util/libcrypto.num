@@ -285,7 +285,7 @@ X509V3_EXT_get_nid                      285	1_1_0	EXIST::FUNCTION:
 BIO_s_log                               286	1_1_0	EXIST::FUNCTION:
 EC_POINT_set_to_infinity                287	1_1_0	EXIST::FUNCTION:EC
 EVP_des_ede_ofb                         288	1_1_0	EXIST::FUNCTION:DES
-ECDH_KDF_X9_62                          289	1_1_0	EXIST::FUNCTION:EC
+ECDH_KDF_X9_62                          289	1_1_0	EXIST::FUNCTION:DEPRECATEDIN_1_2_0,EC
 ASN1_UNIVERSALSTRING_to_string          290	1_1_0	EXIST::FUNCTION:
 CRYPTO_gcm128_setiv                     291	1_1_0	EXIST::FUNCTION:
 ASN1_PCTX_set_oid_flags                 292	1_1_0	EXIST::FUNCTION:

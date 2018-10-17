@@ -5,6 +5,7 @@
 EVP_sm4_cbc,
 EVP_sm4_ecb,
 EVP_sm4_cfb,
+EVP_sm4_cfb128,
 EVP_sm4_ofb,
 EVP_sm4_ctr
 - EVP SM4 cipher
@@ -16,6 +17,7 @@ EVP_sm4_ctr
  const EVP_CIPHER *EVP_sm4_cbc(void);
  const EVP_CIPHER *EVP_sm4_ecb(void);
  const EVP_CIPHER *EVP_sm4_cfb(void);
+ const EVP_CIPHER *EVP_sm4_cfb128(void);
  const EVP_CIPHER *EVP_sm4_ofb(void);
  const EVP_CIPHER *EVP_sm4_ctr(void);
 
@@ -30,6 +32,7 @@ All modes below use a key length of 128 bits and acts on blocks of 128 bits.
 =item EVP_sm4_cbc(),
 EVP_sm4_ecb(),
 EVP_sm4_cfb(),
+EVP_sm4_cfb128(),
 EVP_sm4_ofb(),
 EVP_sm4_ctr()
 

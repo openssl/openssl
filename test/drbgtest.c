@@ -911,7 +911,6 @@ static size_t get_pool_entropy(RAND_DRBG *drbg,
  */
 static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
-    OPENSSL_secure_clear_free(drbg->pool->buffer, drbg->pool->max_len);
     OPENSSL_free(drbg->pool);
     drbg->pool = NULL;
 }

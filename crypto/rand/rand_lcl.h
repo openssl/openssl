@@ -32,18 +32,42 @@
 
 
 
-/* Max size of additional input and personalization string. */
-# define DRBG_MAX_LENGTH                4096
+/*
+ * Maximum input size for the DRBG (entropy, nonce, personalization string)
+ *
+ * NIST SP800 90Ar1 allows a maximum of (1 << 35) bits i.e., (1 << 32) bytes.
+ *
+ * We lower it to 'only' INT32_MAX bytes, which is equivalent to 2 gigabytes.
+ */
+# define DRBG_MAX_LENGTH                         INT32_MAX
+
+
 
 /*
- * The quotient between max_{entropy,nonce}len and min_{entropy,nonce}len
+ * Maximum allocation size for RANDOM_POOL buffers
  *
- * The current factor is large enough that the RAND_POOL can store a
- * random input which has a lousy entropy rate of 0.0625 bits per byte.
- * This input will be sent through the derivation function which 'compresses'
- * the low quality input into a high quality output.
+ * The max_len value for the buffer provided to the rand_drbg_get_entropy()
+ * callback is currently 2^31 bytes (2 gigabytes), if a derivation function
+ * is used. Since this is much too large to be allocated, the rand_pool_new()
+ * function chooses more modest values as default pool length, bounded
+ * by RAND_POOL_MIN_LENGTH and RAND_POOL_MAX_LENGTH
+ *
+ * The choice of the RAND_POOL_FACTOR is large enough such that the
+ * RAND_POOL can store a random input which has a lousy entropy rate of
+ * 8/256 (= 0.03125) bits per byte. This input will be sent through the
+ * derivation function which 'compresses' the low quality input into a
+ * high quality output.
+ *
+ * The factor 1.5 below is the pessimistic estimate for the extra amount
+ * of entropy required when no get_nonce() callback is defined.
  */
-# define DRBG_MINMAX_FACTOR              128
+# define RAND_POOL_FACTOR        256
+# define RAND_POOL_MAX_LENGTH    (RAND_POOL_FACTOR * \
+                                  3 * (RAND_DRBG_STRENGTH / 16))
+/*
+ *                             = (RAND_POOL_FACTOR * \
+ *                                1.5 * (RAND_DRBG_STRENGTH / 8))
+ */
 
 
 /* DRBG status values */
@@ -142,10 +166,12 @@ struct rand_pool_st {
     unsigned char *buffer;  /* points to the beginning of the random pool */
     size_t len; /* current number of random bytes contained in the pool */
 
+    int attached;  /* true pool was attached to existing buffer */
+
     size_t min_len; /* minimum number of random bytes requested */
     size_t max_len; /* maximum number of random bytes (allocated buffer size) */
     size_t entropy; /* current entropy count in bits */
-    size_t requested_entropy; /* requested entropy count in bits */
+    size_t entropy_requested; /* requested entropy count in bits */
 };
 
 /*
@@ -167,7 +193,7 @@ struct rand_drbg_st {
     unsigned short flags; /* various external flags */
 
     /*
-     * The random pool is used by RAND_add()/drbg_add() to attach random
+     * The random_data is used by RAND_add()/drbg_add() to attach random
      * data to the global drbg, such that the rand_drbg_get_entropy() callback
      * can pull it during instantiation and reseeding. This is necessary to
      * reconcile the different philosophies of the RAND and the RAND_DRBG

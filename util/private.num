@@ -3,6 +3,7 @@
 # assembly language, etc.
 #
 OPENSSL_ia32cap                         environment
+OPENSSL_s390xcap                        environment
 OPENSSL_MALLOC_FD                       environment
 OPENSSL_MALLOC_FAILURES                 environment
 OPENSSL_instrument_bus                  assembler
@@ -190,8 +191,27 @@ EVP_MD_CTX_type                         define
 EVP_OpenUpdate                          define
 EVP_PKEY_CTX_add1_hkdf_info             define
 EVP_PKEY_CTX_add1_tls1_prf_seed         define
+EVP_PKEY_CTX_get0_dh_kdf_oid            define
+EVP_PKEY_CTX_get0_dh_kdf_ukm            define
+EVP_PKEY_CTX_get0_ecdh_kdf_ukm          define
+EVP_PKEY_CTX_get0_rsa_oaep_label        define
+EVP_PKEY_CTX_get_dh_kdf_md              define
+EVP_PKEY_CTX_get_dh_kdf_outlen          define
+EVP_PKEY_CTX_get_dh_kdf_type            define
+EVP_PKEY_CTX_get_ecdh_cofactor_mode     define
+EVP_PKEY_CTX_get_ecdh_kdf_md            define
+EVP_PKEY_CTX_get_ecdh_kdf_outlen        define
+EVP_PKEY_CTX_get_ecdh_kdf_type          define
+EVP_PKEY_CTX_get_rsa_mgf1_md            define
+EVP_PKEY_CTX_get_rsa_oaep_md            define
+EVP_PKEY_CTX_get_rsa_padding            define
+EVP_PKEY_CTX_get_rsa_pss_saltlen        define
 EVP_PKEY_CTX_get_signature_md           define
 EVP_PKEY_CTX_hkdf_mode                  define
+EVP_PKEY_CTX_set0_dh_kdf_oid            define
+EVP_PKEY_CTX_set0_dh_kdf_ukm            define
+EVP_PKEY_CTX_set0_ecdh_kdf_ukm          define
+EVP_PKEY_CTX_set0_rsa_oaep_label        define
 EVP_PKEY_CTX_set1_hkdf_key              define
 EVP_PKEY_CTX_set1_hkdf_salt             define
 EVP_PKEY_CTX_set1_pbe_pass              define
@@ -199,14 +219,29 @@ EVP_PKEY_CTX_set1_scrypt_salt           define
 EVP_PKEY_CTX_set1_tls1_prf_secret       define
 EVP_PKEY_CTX_set_dh_paramgen_generator  define
 EVP_PKEY_CTX_set_dh_paramgen_prime_len  define
-EVP_PKEY_CTX_set_dh_pad                 define
+EVP_PKEY_CTX_set_dh_paramgen_subprime_len     define
+EVP_PKEY_CTX_set_dh_paramgen_type       define
+EVP_PKEY_CTX_set_dh_kdf_md              define
+EVP_PKEY_CTX_set_dh_kdf_outlen          define
+EVP_PKEY_CTX_set_dh_kdf_type            define
 EVP_PKEY_CTX_set_dh_nid                 define
+EVP_PKEY_CTX_set_dh_pad                 define
+EVP_PKEY_CTX_set_dh_rfc5114             define
+EVP_PKEY_CTX_set_dhx_rfc5114            define
 EVP_PKEY_CTX_set_dsa_paramgen_bits      define
 EVP_PKEY_CTX_set_ec_param_enc           define
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid  define
+EVP_PKEY_CTX_set_ecdh_cofactor_mode     define
+EVP_PKEY_CTX_set_ecdh_kdf_md            define
+EVP_PKEY_CTX_set_ecdh_kdf_outlen        define
+EVP_PKEY_CTX_set_ecdh_kdf_type          define
 EVP_PKEY_CTX_set_hkdf_md                define
 EVP_PKEY_CTX_set_mac_key                define
+EVP_PKEY_CTX_set_rsa_keygen_bits        define
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      define
+EVP_PKEY_CTX_set_rsa_keygen_primes      define
+EVP_PKEY_CTX_set_rsa_mgf1_md            define
+EVP_PKEY_CTX_set_rsa_oaep_md            define
 EVP_PKEY_CTX_set_rsa_padding            define
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md define
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen define
@@ -221,7 +256,9 @@ EVP_PKEY_CTX_set_tls1_prf_md            define
 EVP_PKEY_assign_DH                      define
 EVP_PKEY_assign_DSA                     define
 EVP_PKEY_assign_EC_KEY                  define
+EVP_PKEY_assign_POLY1305                define
 EVP_PKEY_assign_RSA                     define
+EVP_PKEY_assign_SIPHASH                 define
 EVP_SealUpdate                          define
 EVP_SignInit                            define
 EVP_SignInit_ex                         define
@@ -269,7 +306,6 @@ PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
 RAND_cleanup                            define deprecated 1.1.0
 RAND_DRBG_get_ex_new_index              define
-EVP_PKEY_CTX_set_rsa_keygen_bits        define
 SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define
 SSL_CTX_add1_chain_cert                 define
