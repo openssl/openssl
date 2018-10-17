@@ -3226,7 +3226,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
         }
         if (skey == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_ECDHE,
-                     SSL_R_MISSING_TMP_ECDH_KEY);
+                     SSL_R_MISSING_TMP_DH_KEY);
             goto err;
         }
 
