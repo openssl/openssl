@@ -67,10 +67,10 @@ typedef enum OPTION_choice {
 const OPTIONS x509_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f',
-     "Input format - default PEM (one of DER, NET or PEM)"},
+     "Input format - default PEM (one of DER or PEM)"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'f',
-     "Output format - default PEM (one of DER, NET or PEM)"},
+     "Output format - default PEM (one of DER or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
     {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
