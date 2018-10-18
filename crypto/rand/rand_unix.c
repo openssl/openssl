@@ -386,21 +386,13 @@ static void close_random_device(size_t n)
     rd->fd = -1;
 }
 
-static void open_random_devices(void)
-{
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(random_devices); i++)
-        (void)get_random_device(i);
-}
-
 int rand_pool_init(void)
 {
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(random_devices); i++)
         random_devices[i].fd = -1;
-    open_random_devices();
+
     return 1;
 }
 
@@ -414,10 +406,9 @@ void rand_pool_cleanup(void)
 
 void rand_pool_keep_random_devices_open(int keep)
 {
-    if (keep)
-        open_random_devices();
-    else
+    if (!keep)
         rand_pool_cleanup();
+
     keep_random_devices_open = keep;
 }
 
