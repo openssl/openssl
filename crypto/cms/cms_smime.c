@@ -435,7 +435,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
 
     cms = CMS_ContentInfo_new();
     if (!cms || !CMS_SignedData_init(cms))
-        goto merr;
+        goto err;
 
     if (pkey && !CMS_add1_signer(cms, signcert, pkey, NULL, flags)) {
         CMSerr(CMS_F_CMS_SIGN, CMS_R_ADD_SIGNER_ERROR);
@@ -458,7 +458,8 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
         goto err;
 
  merr:
-    CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
+    if (ERR_peek_error() == 0)
+        CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
 
  err:
     if (cms)
