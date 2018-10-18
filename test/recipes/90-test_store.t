@@ -9,7 +9,8 @@
 use File::Spec::Functions;
 use File::Copy;
 use MIME::Base64;
-use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file data_file);
+use OpenSSL::Test qw(:DEFAULT srctop_file srctop_dir bldtop_file bldtop_dir
+                     data_file);
 use OpenSSL::Test::Utils;
 
 my $test_name = "test_store";
@@ -26,6 +27,9 @@ my @src_files =
       "test/testrsapub.pem",
       "test/testcrl.pem",
       "apps/server.pem" );
+my @src_rsa_files =
+    ( "test/testrsa.pem",
+      "test/testrsapub.pem" );
 my @generated_files =
     (
      ### generated from the source files
@@ -71,17 +75,25 @@ my @noexist_file_files =
     ( "file:blahdiblah.pem",
       "file:test/blahdibleh.der" );
 
+my $test_src_rsa_files =
+    (disabled("engine") || disabled("dynamic-engine")) ? 0 : 1;
+
 my $n = (3 * scalar @noexist_files)
     + (6 * scalar @src_files)
     + (4 * scalar @generated_files)
     + (scalar keys %generated_file_files)
     + (scalar @noexist_file_files)
+    # load with apps 'engine:' loader
+    + ($test_src_rsa_files * 4 * scalar @src_rsa_files)
     + 3
-    + 11;
+    + 11
+    ;
 
 plan tests => $n;
 
 indir "store_$$" => sub {
+    $ENV{OPENSSL_ENGINES} = bldtop_dir("engines");
+
  SKIP:
     {
         skip "failed initialisation", $n unless init();
@@ -152,6 +164,25 @@ indir "store_$$" => sub {
                 ok(!run(app(["openssl", "storeutl",  "-noout", $_])));
             }
         }
+
+	if ($test_src_rsa_files) {
+	    foreach (@src_rsa_files) {
+		my $file = srctop_file($_);
+		my @pubin = $_ =~ m|pub\.pem$| ? ("-pubin") : ();
+
+		ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+			    "-engine", "ossltest", "-inform", "engine",
+			    "-in", "ot:".$file])));
+		ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+			    "-engine", "ossltest", "-inform", "engine",
+			    "-in", "ot:".to_abs_file($file)])));
+		ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+			    "-in", "engine:ossltest:ot:$file"])));
+		ok(run(app(["openssl", "rsa", "-text", "-noout", @pubin,
+			    "-in", "engine:ossltest:ot:".to_abs_file($file)])));
+	    }
+	}
+
         {
             my $dir = srctop_dir("test", "certs");
 
