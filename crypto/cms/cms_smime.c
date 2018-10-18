@@ -441,7 +441,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
 
     cms = CMS_ContentInfo_new();
     if (cms == NULL || !CMS_SignedData_init(cms))
-        goto merr;
+        goto err;
     if (flags & CMS_ASCIICRLF
         && !CMS_set1_eContentType(cms,
                                   OBJ_nid2obj(NID_id_ct_asciiTextWithCRLF)))
@@ -468,7 +468,8 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
         goto err;
 
  merr:
-    CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
+    if (ERR_peek_error() == 0)
+        CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
 
  err:
     CMS_ContentInfo_free(cms);
