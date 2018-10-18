@@ -49,7 +49,7 @@ OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo() pushes the given B<spi>
 to B<si>. Consumes the B<spi> pointer.
 
 OSSL_CRMF_MSG_set0_SinglePubInfo() sets given B<method> and PubLoction B<nm> to
-B<spi>.  PubLocation is optional, and therfore B<nm> may be NULL. Consumes the
+B<spi>.  PubLocation is optional, and therefore B<nm> may be NULL. Consumes the
 B<nm> pointer.
 Available methods are:
  # define OSSL_CRMF_PUB_METHOD_DONTCARE 0
