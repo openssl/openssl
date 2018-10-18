@@ -345,7 +345,6 @@ int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
     static volatile int stirred_pool = 0;
     int i, j, k;
     size_t num_ceil, st_idx, st_num;
-    int ok;
     long md_c[2];
     unsigned char local_md[MD_DIGEST_LENGTH];
     EVP_MD_CTX m;
@@ -400,14 +399,13 @@ int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
 
     if (!initialized) {
         RAND_poll();
-        initialized = 1;
+        initialized = (entropy >= ENTROPY_NEEDED);
     }
 
     if (!stirred_pool)
         do_stir_pool = 1;
 
-    ok = (entropy >= ENTROPY_NEEDED);
-    if (!ok) {
+    if (!initialized) {
         /*
          * If the PRNG state is not yet unpredictable, then seeing the PRNG
          * output may help attackers to determine the new state; thus we have
@@ -446,7 +444,7 @@ int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
             ssleay_rand_add(DUMMY_SEED, MD_DIGEST_LENGTH, 0.0);
             n -= MD_DIGEST_LENGTH;
         }
-        if (ok)
+        if (initialized)
             stirred_pool = 1;
     }
 
@@ -539,7 +537,7 @@ int ssleay_rand_bytes(unsigned char *buf, int num, int pseudo, int lock)
         CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
 
     EVP_MD_CTX_cleanup(&m);
-    if (ok)
+    if (initialized)
         return (1);
     else if (pseudo)
         return 0;
@@ -612,10 +610,10 @@ static int ssleay_rand_status(void)
 
     if (!initialized) {
         RAND_poll();
-        initialized = 1;
+        initialized = (entropy >= ENTROPY_NEEDED);
     }
 
-    ret = entropy >= ENTROPY_NEEDED;
+    ret = initialized;
 
     if (!do_not_lock) {
         /* before unlocking, we must clear 'crypto_lock_rand' */
