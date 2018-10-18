@@ -1519,8 +1519,10 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL *s, PACKET *pkt)
              * So check cookie length...
              */
             if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) {
-                if (clienthello->dtls_cookie_len == 0)
+                if (clienthello->dtls_cookie_len == 0) {
+                    OPENSSL_free(clienthello);
                     return MSG_PROCESS_FINISHED_READING;
+                }
             }
         }
 
