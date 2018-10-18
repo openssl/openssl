@@ -104,7 +104,7 @@ int OSSL_CRMF_MSG_set1_regInfo_certReq(OSSL_CRMF_MSG *msg,
 int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to);
 int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid);
 int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm);
-int OSSL_CRMF_ASN1_get_int(int *pr, const ASN1_INTEGER *a);
+int OSSL_CRMF_ASN1_get_int(int *pr, const ASN1_INTEGER *a); /* TODO move to crypto/asn1/a_int.c, adapting its name */
 int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm, X509_EXTENSIONS *exts);
 
 int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, const X509_EXTENSION *ext);

@@ -81,11 +81,11 @@ challenge-response exchange (challengeResp) not yet supported.
 =back
 
 OSSL_CRMF_MSGS_verify_popo verifies the Proof-of-Possession of the request with
-the given B>rid in the list of B<reqs>. Optionally accepts RAVerfied.
+the given B<rid> in the list of B<reqs>. Optionally accepts RAVerified.
 
 =head1 RETURN VALUES
 
-All functions returns 1 on success, 0 on error.
+All functions return 1 on success, 0 on error.
 
 =head1 SEE ALSO
 
