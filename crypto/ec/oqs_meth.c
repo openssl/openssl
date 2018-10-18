@@ -115,6 +115,8 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
     }
     oqs_key->s = OQS_SIG_new(oqs_alg_name);
     if (oqs_key->s == NULL) {
+      /* TODO: provide a better error message for non-enabled OQS schemes.
+	 Perhaps even check if the alg is available earlier in the stack. (FIXMEOQS) */
       OQSerr(0, ERR_R_FATAL);
       goto err;
     }

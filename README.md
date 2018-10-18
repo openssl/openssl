@@ -25,7 +25,7 @@ This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantu
 
 ### Key exchange mechanisms
 
-The following key exchange / key encapsulation mechanisms from liboqs are supported:
+The following key exchange / key encapsulation mechanisms from liboqs are supported (assuming they have been enabled in liboqs):
 
 - sike503, sike751
 - sidh503, sidh751
