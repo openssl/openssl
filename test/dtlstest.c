@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
@@ -240,6 +241,55 @@ static int test_dtls_drop_records(int idx)
     return testresult;
 }
 
+static const char dummy_cookie[] = "0123456";
+
+static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
+                              unsigned int *cookie_len)
+{
+    memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
+    *cookie_len = sizeof(dummy_cookie);
+    return 1;
+}
+
+static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+                            unsigned int cookie_len)
+{
+    return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));
+}
+
+static int test_cookie(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(DTLS_server_method(),
+                                       DTLS_client_method(),
+                                       DTLS1_VERSION, DTLS_MAX_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    SSL_CTX_set_options(sctx, SSL_OP_COOKIE_EXCHANGE);
+    SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
+    SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -248,6 +298,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
     ADD_ALL_TESTS(test_dtls_drop_records, TOTAL_RECORDS);
+    ADD_TEST(test_cookie);
 
     return 1;
 }
