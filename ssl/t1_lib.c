@@ -946,6 +946,37 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
 }
 
 /*
+ * Called by servers only. Checks that we have a sig alg that supports the
+ * specified EC curve.
+ */
+int tls_check_sigalg_curve(const SSL *s, int curve)
+{
+   const uint16_t *sigs;
+   size_t siglen, i;
+
+    if (s->cert->conf_sigalgs) {
+        sigs = s->cert->conf_sigalgs;
+        siglen = s->cert->conf_sigalgslen;
+    } else {
+        sigs = tls12_sigalgs;
+        siglen = OSSL_NELEM(tls12_sigalgs);
+    }
+
+    for (i = 0; i < siglen; i++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(sigs[i]);
+
+        if (lu == NULL)
+            continue;
+        if (lu->sig == EVP_PKEY_EC
+                && lu->curve != NID_undef
+                && curve == lu->curve)
+            return 1;
+    }
+
+    return 0;
+}
+
+/*
  * Check signature algorithm is consistent with sent supported signature
  * algorithms and if so set relevant digest and signature scheme in
  * s.

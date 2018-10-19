@@ -1494,7 +1494,8 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
  */
 static int is_tls13_capable(const SSL *s)
 {
-    int i;
+    int i, curve;
+    EC_KEY *eckey;
 
 #ifndef OPENSSL_NO_PSK
     if (s->psk_server_callback != NULL)
@@ -1515,7 +1516,20 @@ static int is_tls13_capable(const SSL *s)
         default:
             break;
         }
-        if (ssl_has_cert(s, i))
+        if (!ssl_has_cert(s, i))
+            continue;
+        if (i != SSL_PKEY_ECC)
+            return 1;
+        /*
+         * Prior to TLSv1.3 sig algs allowed any curve to be used. TLSv1.3 is
+         * more restrictive so check that our sig algs are consistent with this
+         * EC cert.
+         */
+        eckey = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
+        if (eckey == NULL)
+            continue;
+        curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+        if (tls_check_sigalg_curve(s, curve))
             return 1;
     }
 
