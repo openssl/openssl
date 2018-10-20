@@ -200,6 +200,10 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     }
 
  err:
+    /* we need to reset drbg->pool in the error case */
+    if (ret == 0 && drbg->pool != NULL)
+        drbg->pool = NULL;
+
     rand_pool_free(pool);
     return ret;
 }
