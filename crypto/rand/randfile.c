@@ -148,6 +148,12 @@ int RAND_load_file(const char *file, long bytes)
 
     OPENSSL_cleanse(buf, sizeof(buf));
     fclose(in);
+    if (!RAND_status()) {
+        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_RESEED_ERROR);
+        ERR_add_error_data(2, "Filename=", file);
+        return -1;
+    }
+
     return ret;
 }
 
