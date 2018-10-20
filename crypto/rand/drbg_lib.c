@@ -374,6 +374,13 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         max_entropylen += drbg->max_noncelen;
     }
 
+    drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
+    if (drbg->reseed_next_counter) {
+        drbg->reseed_next_counter++;
+        if(!drbg->reseed_next_counter)
+            drbg->reseed_next_counter = 1;
+    }
+
     if (drbg->get_entropy != NULL)
         entropylen = drbg->get_entropy(drbg, &entropy, min_entropy,
                                        min_entropylen, max_entropylen, 0);
@@ -493,6 +500,14 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
     }
 
     drbg->state = DRBG_ERROR;
+
+    drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
+    if (drbg->reseed_next_counter) {
+        drbg->reseed_next_counter++;
+        if(!drbg->reseed_next_counter)
+            drbg->reseed_next_counter = 1;
+    }
+
     if (drbg->get_entropy != NULL)
         entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
                                        drbg->min_entropylen,
@@ -754,7 +769,8 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_nonce_fn get_nonce,
                             RAND_DRBG_cleanup_nonce_fn cleanup_nonce)
 {
-    if (drbg->state != DRBG_UNINITIALISED)
+    if (drbg->state != DRBG_UNINITIALISED
+            || drbg->parent != NULL)
         return 0;
     drbg->get_entropy = get_entropy;
     drbg->cleanup_entropy = cleanup_entropy;

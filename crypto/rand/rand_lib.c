@@ -198,13 +198,6 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
             goto err;
         }
 
-        drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
-        if (drbg->reseed_next_counter) {
-            drbg->reseed_next_counter++;
-            if(!drbg->reseed_next_counter)
-                drbg->reseed_next_counter = 1;
-        }
-
         /* Get entropy by polling system entropy sources. */
         entropy_available = rand_pool_acquire_entropy(pool);
     }
