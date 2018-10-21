@@ -10,7 +10,7 @@
   our $osslprefix = 'OSSL$';
   (our $osslprefix_q = $osslprefix) =~ s/\$/\\\$/;
 
-  our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version_number});
+  our $sover_filename = sprintf "%02d%02d", split(/\./, $config{shlib_version_number});
   our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
 
   our $sourcedir = $config{sourcedir};
@@ -41,19 +41,50 @@
       "";
   }
 
+  # VMS has a cultural standard where all libraries are prefixed.
+  # Also, it seems it's usual to have the pointer size the libraries
+  # were built for as part of the name.
+  sub sharedname {
+      my $lib = shift;
+      my $lib_uc = uc $lib;
+      return undef if $disabled{shared} || $lib =~ /\.a$/;
+      return "${osslprefix}${lib_uc}${sover_filename}_SHR$target{pointer_size}";
+  }
+
+  sub staticname {
+      my $lib = shift;
+      $lib =~ s|\.a$||;
+      return "${osslprefix}${lib_uc}$target{pointer_size}";
+  }
+
+  sub shlib {
+      return sharedname(shift) . ".EXE";
+  }
+
+  sub lib {
+      my $lib = shift;
+
+      # Non-installed names remain, except for the mandatory extension
+      unless (grep { $_ eq $lib } @{$unified_info{install}->{libraries}}) {
+          $lib =~ s|\.a$||;
+          return $lib . ".OLB";
+      }
+      return sharedname($lib) . ".OLB";
+  }
+
   # Because we need to make two computations of these data,
   # we store them in arrays for reuse
   our @libs =
-      map { (my $x = $_) =~ s/\.a$//; $x }
+      map { staticname($_) }
       @{$unified_info{libraries}};
   our @shlibs =
-      map { $unified_info{sharednames}->{$_} || () }
+      map { sharedname($_) // () }
       grep(!/\.a$/, @{$unified_info{libraries}});
   our @install_libs =
-      map { (my $x = $_) =~ s/\.a$//; $x }
+      map { staticname($_) }
       @{$unified_info{install}->{libraries}};
   our @install_shlibs =
-      map { $unified_info{sharednames}->{$_} || () }
+      map { sharedname($_) // () }
       grep(!/\.a$/, @{$unified_info{install}->{libraries}});
 
   # This is a horrible hack, but is needed because recursive inclusion of files
@@ -170,7 +201,7 @@ OPENSSLDIR={- catdir($config{openssldir}) or
 # The same, but for C
 OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
 # Where installed engines reside, for C
-ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
+ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_filename.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
@@ -589,9 +620,9 @@ install_runtime : install_shared _install_runtime_ns
 install_engines : check_INSTALLTOP
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
-        - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        - CREATE/DIR ossl_installroot:[ENGINES{- $sover_filename.$target{pointer_size} -}.'arch']
         {- join("\n        ",
-                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_filename$target{pointer_size}.'arch']" }
                 @{$unified_info{install}->{engines}}) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
@@ -700,11 +731,9 @@ reconfigure reconf :
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
       if ($disabled{shared}) {
-          return map { $_ =~ /\.a$/ ? $`.".OLB" : $_.".OLB" } @_;
+          return map { lib($_) } @_;
       }
-      return map { $_ =~ /\.a$/
-                   ? $`.".OLB"
-                   : $unified_info{sharednames}->{$_}.".EXE" } @_;
+      return map { $_ =~ /\.a$/ ? lib($`) : shlib($_) } @_;
   }
 
   # Helper function to deal with inclusion directory specs.
@@ -923,10 +952,7 @@ EOF
   }
   sub obj2shlib {
       my %args = @_;
-      my $lib = $args{lib};
-      my $shlib = $args{shlib};
-      my $libd = dirname($lib);
-      my $libn = basename($lib);
+      my $shlib = sharedname($args{lib});
       my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
                  grep { $_ =~ m|\.o$| }
                  @{$args{objs}};
@@ -957,13 +983,13 @@ EOF
       return <<"EOF"
 $shlib.EXE : $deps
         \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $defs[0] > $defs[0]-translated
-        OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
+        OPEN/WRITE/SHARE=READ OPT_FILE $shlib-components.OPT
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
         LINK \$(LIB_LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
-                $lib-components.OPT/OPT \$(LIB_EX_LIBS)
-        DELETE $defs[0]-translated;*,$lib-components.OPT;*
+                $shlib-components.OPT/OPT \$(LIB_EX_LIBS)
+        DELETE $defs[0]-translated;*,$shlib-components.OPT;*
         PURGE $shlib.EXE,$shlib.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"
@@ -1018,7 +1044,7 @@ EOF
   }
   sub obj2lib {
       my %args = @_;
-      (my $lib = $args{lib}) =~ s/\.a$//;
+      my $lib = staticname($args{lib});
       my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
       my $objs = join(", -\n\t\t", @objs);
       my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib.OLB $_" }

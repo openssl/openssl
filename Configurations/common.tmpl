@@ -125,8 +125,7 @@
      return "" if $cache{$lib};
      unless ($disabled{shared} || $lib =~ /\.a$/) {
          my $obj2shlib = defined &obj2shlib ? \&obj2shlib : \&libobj2shlib;
-         $OUT .= $obj2shlib->(shlib => $unified_info{sharednames}->{$lib},
-                              lib => $lib,
+         $OUT .= $obj2shlib->(lib => $lib,
                               objs => $unified_info{shared_sources}->{$lib},
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               installed => is_installed($lib));

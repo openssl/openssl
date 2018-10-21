@@ -1,15 +1,3 @@
-{-
-     use File::Spec::Functions;
-
-     our $sover = $config{shlib_version_number};
-     our $sover_filename = $sover;
-     $sover_filename =~ s|\.|_|g
-         if $config{target} =~ /^mingw/ || $config{target} =~ /^VC-/;
-     $sover_filename =
-         sprintf "%02d%02d", split m|\.|, $config{shlib_version_number}
-         if $config{target} =~ /^vms/;
-     "";
--}
 LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. crypto/include include
 INCLUDE[libssl]=. include
@@ -40,27 +28,4 @@ IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
   SHARED_SOURCE[libssl]=libssl.rc
-ENDIF
-
-IF[{- $config{target} =~ /^Cygwin/ -}]
- SHARED_NAME[libcrypto]=cygcrypto-{- $sover_filename -}
- SHARED_NAME[libssl]=cygssl-{- $sover_filename -}
-ELSIF[{- $config{target} =~ /^mingw/ -}]
- SHARED_NAME[libcrypto]=libcrypto-{- $sover_filename -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
- SHARED_NAME[libssl]=libssl-{- $sover_filename -}{- $config{target} eq "mingw64" ? "-x64" : "" -}
-ELSIF[{- $config{target} =~ /^VC-/ -}]
- SHARED_NAME[libcrypto]=libcrypto-{- $sover_filename -}{- $target{multilib} -}
- SHARED_NAME[libssl]=libssl-{- $sover_filename -}{- $target{multilib} -}
-ENDIF
-
-# VMS has a cultural standard where all libraries are prefixed.
-# For OpenSSL, the choice is 'ossl$' (this prefix was claimed in a
-# conversation with VSI, Tuesday January 26 2016)
-# Also, it seems it's usual to have the pointer size the libraries
-# were built for as part of the name.
-IF[{- $config{target} =~ /^vms/ -}]
- RENAME[libcrypto]=ossl$libcrypto{- $target{pointer_size} -}
- RENAME[libssl]=ossl$libssl{- $target{pointer_size} -}
- SHARED_NAME[libcrypto]=ossl$libcrypto{- $sover_filename -}_shr{- $target{pointer_size} -}
- SHARED_NAME[libssl]=ossl$libssl{- $sover_filename -}_shr{- $target{pointer_size} -}
 ENDIF

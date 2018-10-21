@@ -13,7 +13,7 @@
  our $shlibextimport = $target{shared_import_extension} || ".lib";
  our $dsoext = $target{dso_extension} || ".dll";
 
- (our $sover_dirname = $config{shlib_version_number}) =~ s|\.|_|g;
+ (our $sover_filename = $config{shlib_version_number}) =~ s|\.|_|g;
 
  my $build_scheme = $target{build_scheme};
  my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
@@ -32,22 +32,44 @@
  $win_installroot = $ENV{$win_installroot};
  $win_commonroot = $ENV{$win_commonroot};
 
- sub shlib {
+ sub importname {
      my $lib = shift;
-     return () if $disabled{shared} || $lib =~ /\.a$/;
-     return () unless defined $unified_info{sharednames}->{$lib};
-     return $unified_info{sharednames}->{$lib} . $shlibext;
+     return undef if $disabled{shared} || $lib =~ /\.a$/;
+     return $lib;
+ }
+
+ sub sharedname {
+     my $lib = shift;
+     return undef if $disabled{shared} || $lib =~ /\.a$/;
+     return "$lib-$sover_filename$target{multilib}";
+ }
+
+ sub staticname {
+     (my $lib = shift) =~ s/\.a$//;
+     return $lib;
+ }
+
+ sub shlib {
+     my $name = sharedname(shift);
+     return () unless defined $name;
+     return $name . $shlibext;
  }
 
  sub lib {
-     (my $lib = shift) =~ s/\.a$//;
-     return $lib . $libext;
+     my $lib = shift;
+
+     # Non-installed names remain, except for the mandatory extension
+     unless (grep { $_ eq $lib } @{$unified_info{install}->{libraries}}) {
+         $lib =~ s|\.a$||;
+         return $lib . $libext;
+     }
+     return staticname($lib) . $libext;
  }
 
  sub shlib_import {
-     my $lib = shift;
-     return () if $disabled{shared} || $lib =~ /\.a$/;
-     return $lib . $shlibextimport;
+     my $name = importname(shift);
+     return () unless defined $name;
+     return $name . $shlibextimport;
  }
 
  sub dso {
@@ -145,7 +167,7 @@ OPENSSLDIR_dir={- canonpath($openssldir_dir) -}
 LIBDIR={- our $libdir = $config{libdir} || "lib";
           file_name_is_absolute($libdir) ? "" : $libdir -}
 ENGINESDIR_dev={- use File::Spec::Functions qw(:DEFAULT splitpath);
-                  our $enginesdir = catdir($prefix,$libdir,"engines-$sover_dirname");
+                  our $enginesdir = catdir($prefix,$libdir,"engines-$sover_filename");
                   our ($enginesdir_dev, $enginesdir_dir, $enginesdir_file) =
                       splitpath($enginesdir, 1);
                   $enginesdir_dev -}

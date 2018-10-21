@@ -21,9 +21,29 @@
      # libcrypto.a and use libcrypto_a.a as static one.
      sub sharedaix  { !$disabled{shared} && $config{target} =~ /^aix/ }
 
-     our $sover_dirname = $config{shlib_version_number};
-     $sover_dirname =~ s|\.|_|g
+     our $sover_filename = $config{shlib_version_number};
+     $sover_filename =~ s|\.|_|g
          if $config{target} =~ /^mingw/;
+
+     sub sharedname {
+         my $lib = shift;
+         return undef if $disabled{shared} || $lib =~ /\.a$/;
+         if ($config{target} =~ /^Cygwin/) {
+             $lib =~ s|^lib|cyg|;
+             $lib .= "-$sover_filename";
+         } elsif ($config{target} =~ /^mingw/) {
+             $lib .= "-$sover_filename";
+             $lib .= "-x64" if $config{target} eq "mingw64";
+         }
+         return $lib;
+     }
+
+     # This is currently a no-op, but will change if we decide to add
+     # something like '_a' or '_static' to the name.
+     sub staticname {
+         (my $lib = shift) =~ s/\.a$//;
+         return $lib;
+     }
 
      # shlib and shlib_simple both take a static library name and figure
      # out what the shlib name should be.
@@ -47,7 +67,7 @@
      sub shlib {
          my $lib = shift;
          return () if $disabled{shared} || $lib =~ /\.a$/;
-         return $unified_info{sharednames}->{$lib}. $shlibvariant. '$(SHLIB_EXT)';
+         return sharedname($lib) . $shlibvariant . '$(SHLIB_EXT)';
      }
      sub shlib_simple {
          my $lib = shift;
@@ -61,8 +81,14 @@
 
      # Easy fixing of static library names
      sub lib {
-         (my $lib = shift) =~ s/\.a$//;
-         return $lib . $libext;
+         my $lib = shift;
+
+         # Non-installed names remain, except for the mandatory extension
+         unless (grep { $_ eq $lib } @{$unified_info{install}->{libraries}}) {
+             $lib =~ s|\.a$||;
+             return $lib . $libext;
+         }
+         return staticname($lib) . $libext;
      }
 
      # dso is a complement to shlib / shlib_simple that returns the
@@ -174,7 +200,7 @@ LIBDIR={- our $libdir = $config{libdir};
 # $(libdir) is chosen to be compatible with the GNU coding standards
 libdir={- file_name_is_absolute($libdir)
           ? $libdir : '$(INSTALLTOP)/$(LIBDIR)' -}
-ENGINESDIR=$(libdir)/engines-{- $sover_dirname -}
+ENGINESDIR=$(libdir)/engines-{- $sover_filename -}
 
 # Convenience variable for those who want to set the rpath in shared
 # libraries and applications
@@ -920,7 +946,7 @@ libcrypto.pc:
 	        echo 'libdir=$(libdir)'; \
 	    fi; \
 	    echo 'includedir=$${prefix}/include'; \
-	    echo 'enginesdir=$${libdir}/engines-{- $sover_dirname -}'; \
+	    echo 'enginesdir=$${libdir}/engines-{- $sover_filename -}'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libcrypto'; \
 	    echo 'Description: OpenSSL cryptography library'; \
@@ -988,7 +1014,7 @@ reconfigure reconf:
       # Depending on shared libraries:
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
-      return map { $_ =~ /\.a$/ ? $`.$libext : shlib_simple($_) } @_;
+      return map { $_ =~ /\.a$/ ? lib($`) : shlib_simple($_) } @_;
   }
 
   sub generatesrc {
@@ -1138,10 +1164,6 @@ EOF
   sub obj2shlib {
       my %args = @_;
       my $lib = $args{lib};
-      my $shlib = $args{shlib};
-      my $libd = dirname($lib);
-      my $libn = basename($lib);
-      (my $libname = $libn) =~ s/^lib//;
       my @linkdirs = ();
       foreach (@{args{deps}}) {
           my $d = dirname($_);
@@ -1234,11 +1256,11 @@ EOF
   }
   sub obj2lib {
       my %args = @_;
-      (my $lib = $args{lib}) =~ s/\.a$//;
+      my $lib = lib($args{lib});
       my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
       my $objs = join(" ", @objs);
       return <<"EOF";
-$lib$libext: $objs
+$lib: $objs
 	\$(AR) \$(ARFLAGS) \$\@ \$\?
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
@@ -1258,8 +1280,8 @@ EOF
           push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
       }
       my $linkflags = join("", map { "-L$_ " } @linkdirs);
-      my $linklibs = join("", map { if ($_ =~ s/\.a$//) {
-                                        " $_$libext";
+      my $linklibs = join("", map { if ($_ =~ m|\.a$|) {
+                                        " ".lib($_);
                                     } else {
                                         my $f = basename($_);
                                         (my $l = $f) =~ s/^lib//;
