@@ -140,6 +140,35 @@
  OpenSSL BIO layer and your compiler run-time. See the OPENSSL_Applink
  manual page for further details.
 
+ A note on linking with OpenSSL .DLLs
+ ------------------------------------
+
+ When building the OpenSSL .DLLs, import libraries are built alongside
+ them.  These import libraries are named differently for different
+ config targets:
+
+ VC-*           libcrypto.lib, libssl.lib
+ Cygwin*        libcrypto.dll.a, libssl.dll.a
+ mingw*         libcrypto.dll.a, libssl.dll.a
+
+ Unfortunately for the VC-* config targets, this means that static
+ libraries can't be produced alongside DLLs, as they would have the
+ same name as the import libraries.  This is a source of confusion, as
+ the unknowing has sometimes confused those import libraries with
+ actual static libraries.  The import library names for the Cygwin*
+ and mingw* config targets are features specific to those environments
+ (or to be precise, for the mingw* config targets, it's really a
+ feature of the MSYS2 environment).
+
+ This allows applications to link with OpenSSL DLLs in a fairly
+ uniform manner:
+
+ Using ld on Cygwin and MSYS2/Mingw: cc / ld ... -lssl -lcrypto
+ Using LINK in Windows command prompt: LINK ... libssl.lib libcrypto.lib
+
+ Remember to copy the OpenSSL DLLs to the location of your application.
+
+
  Cygwin, "hosted" environment
  ============================
 
