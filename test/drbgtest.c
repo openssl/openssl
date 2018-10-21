@@ -677,7 +677,7 @@ static int test_drbg_reseed(int expect_success,
  * setup correctly, in particular whether reseeding  works
  * as designed.
  */
-static int test_rand_reseed(void)
+static int test_rand_drbg_reseed(void)
 {
     RAND_DRBG *master, *public, *private;
     unsigned char rand_add_buf[256];
@@ -884,64 +884,107 @@ static int test_multi_thread(void)
 }
 #endif
 
+#ifdef OPENSSL_RAND_SEED_NONE
 /*
- * This function only returns the entropy already added with RAND_add(),
- * and does not get entropy from the OS.
+ * Calculates the minimum buffer length which needs to be
+ * provided to RAND_seed() in order to successfully
+ * instantiate the DRBG.
  *
- * Returns 0 on failure and the size of the buffer on success.
+ * Copied from rand_drbg_seedlen() in rand_drbg.c
  */
-static size_t get_pool_entropy(RAND_DRBG *drbg,
-                               unsigned char **pout,
-                               int entropy, size_t min_len, size_t max_len,
-                               int prediction_resistance)
+static size_t rand_drbg_seedlen(RAND_DRBG *drbg)
 {
-    if (drbg->pool == NULL)
-        return 0;
+    /*
+     * If no os entropy source is available then RAND_seed(buffer, bufsize)
+     * is expected to succeed if and only if the buffer length satisfies
+     * the following requirements, which follow from the calculations
+     * in RAND_DRBG_instantiate().
+     */
+    size_t min_entropy = drbg->strength;
+    size_t min_entropylen = drbg->min_entropylen;
 
-    if (drbg->pool->entropy < (size_t)entropy || drbg->pool->len < min_len
-        || drbg->pool->len > max_len)
-        return 0;
+    /*
+     * Extra entropy for the random nonce in the absence of a
+     * get_nonce callback, see comment in RAND_DRBG_instantiate().
+     */
+    if (drbg->min_noncelen > 0 && drbg->get_nonce == NULL) {
+        min_entropy += drbg->strength / 2;
+        min_entropylen += drbg->min_noncelen;
+    }
 
-    *pout = drbg->pool->buffer;
-    return drbg->pool->len;
+    /*
+     * Convert entropy requirement from bits to bytes
+     * (dividing by 8 without rounding upwards, because
+     * all entropy requirements are divisible by 8).
+     */
+    min_entropy >>= 3;
+
+    /* Return a value that satisfies both requirements */
+    return min_entropy > min_entropylen ? min_entropy : min_entropylen;
+}
+#endif /*OPENSSL_RAND_SEED_NONE*/
+
+/*
+ * Test that instantiation with RAND_seed() works as expected
+ *
+ * If no os entropy source is available then RAND_seed(buffer, bufsize)
+ * is expected to succeed if and only if the buffer length is at least
+ * rand_drbg_seedlen(master) bytes.
+ *
+ * If an os entropy source is available then RAND_seed(buffer, bufsize)
+ * is expected to succeed always.
+ */
+static int test_rand_seed(void)
+{
+    RAND_DRBG *master = RAND_DRBG_get0_master();
+    unsigned char rand_buf[256];
+    size_t rand_buflen;
+#ifdef OPENSSL_RAND_SEED_NONE
+    size_t required_seed_buflen = rand_drbg_seedlen(master);
+#else
+    size_t required_seed_buflen = 0;
+#endif
+
+    memset(rand_buf, 0xCD, sizeof(rand_buf));
+
+    for ( rand_buflen = 256 ; rand_buflen > 0 ; --rand_buflen ) {
+        RAND_DRBG_uninstantiate(master);
+        RAND_seed(rand_buf, rand_buflen);
+
+        if (!TEST_int_eq(RAND_status(),
+                         (rand_buflen >= required_seed_buflen)))
+            return 0;
+    }
+
+    return 1;
 }
 
 /*
- * Clean up the entropy that get_pool_entropy() returned.
- */
-static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
-{
-    OPENSSL_free(drbg->pool);
-    drbg->pool = NULL;
-}
-
-/*
- * Test that instantiating works when OS entropy is not available and that
- * RAND_add() is enough to reseed it.
+ * Test that adding additional data with RAND_add() works as expected
+ * when the master DRBG is instantiated (and below its reseed limit).
+ *
+ * This should succeed regardless of whether an os entropy source is
+ * available or not.
  */
 static int test_rand_add(void)
 {
-    RAND_DRBG *master = RAND_DRBG_get0_master();
-    RAND_DRBG_get_entropy_fn old_get_entropy = master->get_entropy;
-    RAND_DRBG_cleanup_entropy_fn old_cleanup_entropy = master->cleanup_entropy;
-    int rv = 0;
-    unsigned char rand_add_buf[256];
+    unsigned char rand_buf[256];
+    size_t rand_buflen;
 
-    master->get_entropy = get_pool_entropy;
-    master->cleanup_entropy = cleanup_pool_entropy;
-    master->reseed_prop_counter++;
-    RAND_DRBG_uninstantiate(master);
-    memset(rand_add_buf, 0xCD, sizeof(rand_add_buf));
-    RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
-    if (!TEST_true(RAND_DRBG_instantiate(master, NULL, 0)))
-        goto error;
+    memset(rand_buf, 0xCD, sizeof(rand_buf));
 
-    rv = 1;
+    /* make sure it's instantiated */
+    RAND_seed(rand_buf, sizeof(rand_buf));
+    if (!TEST_true(RAND_status()))
+        return 0;
 
-error:
-    master->get_entropy = old_get_entropy;
-    master->cleanup_entropy = old_cleanup_entropy;
-    return rv;
+    for ( rand_buflen = 256 ; rand_buflen > 0 ; --rand_buflen ) {
+        RAND_add(rand_buf, rand_buflen, 0.0);
+        if (!TEST_true(RAND_status()))
+            return 0;
+    }
+
+    return 1;
 }
 
 static int test_multi_set(void)
@@ -1067,7 +1110,8 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
-    ADD_TEST(test_rand_reseed);
+    ADD_TEST(test_rand_drbg_reseed);
+    ADD_TEST(test_rand_seed);
     ADD_TEST(test_rand_add);
     ADD_TEST(test_multi_set);
     ADD_TEST(test_set_defaults);
