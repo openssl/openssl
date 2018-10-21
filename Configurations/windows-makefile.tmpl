@@ -512,11 +512,6 @@ reconfigure reconf:
      if ($disabled{shared}) {
 	 return map { lib($_) } @_;
      }
-     foreach (@_) {
-         (my $l = $_) =~ s/\.a$//;
-         die "Linking with static variants of shared libraries is not supported in this configuration\n"
-             if $l ne $_ && shlib($l);
-     }
      return map { shlib_import($_) or lib($_) } @_;
  }
 
