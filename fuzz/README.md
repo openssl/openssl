@@ -50,6 +50,7 @@ Configure for fuzzing:
     $ fuzz/helper.py $FUZZER
 
 Where $FUZZER is one of the executables in `fuzz/`.
+Note: the directory path for ../../svn-work/ on `--with-fuzzer-include` and `--with-fuzzer-lib`.  This could cause build issues when running `LDCMD=clang++ make -j`.
 
 If you get a crash, you should find a corresponding input file in
 `fuzz/corpora/$FUZZER-crash/`.
