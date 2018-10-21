@@ -23,12 +23,28 @@ plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 
 plan tests => 4;
 
-my $libcrypto_idx = $unified_info{rename}->{libcrypto} // "libcrypto";
-my $libssl_idx = $unified_info{rename}->{libssl} // "libssl";
-my $libcrypto =
-    $unified_info{sharednames}->{$libcrypto_idx}.$target{shared_extension_simple};
-my $libssl =
-    $unified_info{sharednames}->{$libssl_idx}.$target{shared_extension_simple};
+my $sover_filename = config('shlib_version_number');
+$sover_filename =~ s|\.|_|g
+    if config('target') =~ /^(?:VC-|mingw)/;
+$sover_filename =~ sprintf "%02d%02d", split(/\./, $sover_filename)
+    if config('target') =~ /^vms-/;
+sub sharedname {
+    my $lib = shift;
+    return undef if $disabled{shared} || $lib =~ /\.a$/;
+    if (config('target') =~ m|^VC-|) {
+        $lib .= "-$sover_filename" . $target{multilib};
+    } elsif (config('target') =~ /^Cygwin/) {
+        $lib =~ s|^lib|cyg|;
+        $lib .= "-$sover_filename";
+    } elsif (config('target') =~ /^mingw/) {
+        $lib .= "-$sover_filename";
+        $lib .= "-x64" if config('target') eq "mingw64";
+    }
+    return $lib;
+}
+
+my $libcrypto = sharedname('libcrypto').$target{shared_extension_simple};
+my $libssl = sharedname('libssl').$target{shared_extension_simple};
 
 ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl])),
    "running shlibloadtest -crypto_first");
