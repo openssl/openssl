@@ -1303,6 +1303,10 @@ EOF
                       lib => $libext,
                       bin => $exeext );
 
+      # We already have a 'test' target, and the top directory is just plain
+      # silly
+      return if $dir eq "test" || $dir eq ".";
+
       foreach my $type (("dso", "lib", "bin", "script")) {
           next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
           # For lib object files, we could update the library.  However, it
@@ -1323,7 +1327,7 @@ EOF
       my $deps = join(" ", @deps);
       my $actions = join("\n", "", @actions);
       return <<"EOF";
-$args{dir} $args{dir}/: $deps$actions
+$dir $dir/: $deps$actions
 EOF
   }
   ""    # Important!  This becomes part of the template result.

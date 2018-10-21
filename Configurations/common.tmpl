@@ -210,47 +210,6 @@
  # Start with populating the cache with all the overrides
  %cache = map { $_ => 1 } @{$unified_info{overrides}};
 
- # For convenience collect information regarding directories where
- # files are generated, those generated files and the end product
- # they end up in where applicable.  Then, add build rules for those
- # directories
- if (exists &generatedir) {
-     my %loopinfo = ( "dso" => [ @{$unified_info{engines}} ],
-                      "lib" => [ @{$unified_info{libraries}} ],
-                      "bin" => [ @{$unified_info{programs}} ],
-                      "script" => [ @{$unified_info{scripts}} ] );
-     foreach my $type (keys %loopinfo) {
-         foreach my $product (@{$loopinfo{$type}}) {
-             my %dirs = ();
-             my $pd = dirname($product);
-
-             # We already have a "test" target, and the current directory
-             # is just silly to make a target for
-             $dirs{$pd} = 1 unless $pd eq "test" || $pd eq ".";
-
-             foreach (@{$unified_info{sources}->{$product}}) {
-                 my $d = dirname($_);
-
-                 # We don't want to create targets for source directories
-                 # when building out of source
-                 next if ($config{sourcedir} ne $config{builddir}
-                          && $d =~ m|^\Q$config{sourcedir}\E|);
-                 # We already have a "test" target, and the current directory
-                 # is just silly to make a target for
-                 next if $d eq "test" || $d eq ".";
-
-                 $dirs{$d} = 1;
-                 push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
-                     if $d ne $pd;
-             }
-             foreach (keys %dirs) {
-                 push @{$unified_info{dirinfo}->{$_}->{products}->{$type}},
-                 $product;
-             }
-         }
-     }
- }
-
  # Build mandatory generated headers
  foreach (@{$unified_info{depends}->{""}}) { dogenerate($_); }
 
