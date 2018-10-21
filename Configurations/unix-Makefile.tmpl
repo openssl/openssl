@@ -1079,9 +1079,7 @@ EOF
       }
       return $recipe;
   }
-  # On Unix, we build shlibs from static libs, so we're ignoring the
-  # object file array.  We *know* this routine is only called when we've
-  # configure 'shared'.
+  # We *know* this routine is only called when we've configure 'shared'.
   sub libobj2shlib {
       my %args = @_;
       my $lib = $args{lib};
@@ -1106,26 +1104,20 @@ EOF
       die "More than one exported symbol map" if scalar @defs > 1;
       my $objs = join(" ", @objs);
       my $deps = join(" ", @objs, @defs, @deps);
-      my $target = shlib_simple($lib);
-      my $target_full = shlib($lib);
+      my $simple = shlib_simple($lib);
+      my $full = shlib($lib);
+      my $target = "$simple $full";
       my $shared_soname = "";
-      $shared_soname .= ' '.$target{shared_sonameflag}.basename($target_full)
+      $shared_soname .= ' '.$target{shared_sonameflag}.basename($full)
           if defined $target{shared_sonameflag};
       my $shared_imp = "";
-      $shared_imp .= ' '.$target{shared_impflag}.basename($target)
+      $shared_imp .= ' '.$target{shared_impflag}.basename($simple)
           if defined $target{shared_impflag};
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
       my $recipe = <<"EOF";
-# When building on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
-# that two files get produced, {shlibname}.dll and {libname}.dll.a.
-# With all other Unix platforms, we often build a shared library with the
-# SO version built into the file name and a symlink without the SO version
-# It's not necessary to have both as targets.  The choice falls on the
-# simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
-# {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
 $target: $deps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
-		-o $target_full$shared_def $objs \\
+		-o $full$shared_def $objs \\
                 $linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
@@ -1139,14 +1131,14 @@ EOF
 EOF
       } elsif (sharedaix()) {
           $recipe .= <<"EOF";
-	rm -f $target && \\
-	\$(AR) r $target $target_full
+	rm -f $simple && \\
+	\$(AR) r $simple $full
 EOF
       } else {
           $recipe .= <<"EOF";
-	if [ '$target' != '$target_full' ]; then \\
-		rm -f $target; \\
-		ln -s $target_full $target; \\
+	if [ '$simple' != '$full' ]; then \\
+		rm -f $simple; \\
+		ln -s $full $simple; \\
 	fi
 EOF
       }
