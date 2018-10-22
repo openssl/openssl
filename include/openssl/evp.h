@@ -991,6 +991,9 @@ const EVP_MAC *EVP_hmac(void);
 # define EVP_MAC_CMAC   NID_cmac
 const EVP_MAC *EVP_cmac(void);
 
+# define EVP_MAC_POLY1305 NID_poly1305
+const EVP_MAC *EVP_poly1305(void);
+
 EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
 void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
 int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);

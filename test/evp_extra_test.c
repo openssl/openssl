@@ -918,6 +918,46 @@ static int test_EVP_PKEY_check(int i)
     return ret;
 }
 
+/* The test vector of poly1305 is based on RFC 7539 section 2.5.2 */
+static int test_EVP_poly1305(void)
+{
+    int ret = 0;
+    EVP_MAC_CTX *macctx;
+    char text[] = "Cryptographic Forum Research Group";
+    unsigned char key[32] = "\x85\xd6\xbe\x78\x57\x55\x6d\x33"
+                            "\x7f\x44\x52\xfe\x42\xd5\x06\xa8"
+                            "\x01\x03\x80\x8a\xfb\x0d\xb2\xfd"
+                            "\x4a\xbf\xf6\xaf\x41\x49\xf5\x1b";
+    unsigned char mac_value[16];
+    size_t mac_len;
+    unsigned char expected_mac_val[16] = "\xa8\x06\x1d\xc1\x30\x51\x36\xc6"
+                                         "\xc2\x2b\x8b\xaf\x0c\x01\x27\xa9";
+
+     /* configure Poly1305 as the hash function... */
+    if (!TEST_ptr(macctx = EVP_MAC_CTX_new(EVP_poly1305())))
+        goto done;
+
+    if (!TEST_int_gt(EVP_MAC_ctrl(macctx, EVP_MAC_CTRL_SET_KEY, key, 32), 0))
+        goto done;
+
+     /* init Poly1305... */
+    if (!TEST_true(EVP_MAC_init(macctx))
+            || !TEST_true(EVP_MAC_update(macctx, (const unsigned char *)text,
+                                         strlen(text)))
+            || !TEST_true(EVP_MAC_final(macctx, mac_value, &mac_len)))
+        goto done;
+
+     /* compare MAC against what is expected */
+    if (!TEST_mem_eq(mac_value, mac_len, expected_mac_val, 16))
+        goto done;
+
+     ret = 1;
+
+ done:
+    EVP_MAC_CTX_free(macctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_EVP_DigestSignInit);
@@ -941,5 +981,8 @@ int setup_tests(void)
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+#ifndef OPENSSL_NO_POLY1305
+    ADD_TEST(test_EVP_poly1305);
+#endif
     return 1;
 }

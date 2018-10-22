@@ -168,7 +168,7 @@ static int cmac_ctrl_str(EVP_MAC_IMPL *cctx, const char *type,
     return -2;
 }
 
-const EVP_MAC cmac_meth = {
+static const EVP_MAC cmac_meth = {
     EVP_MAC_CMAC,
     cmac_new,
     cmac_reset,
