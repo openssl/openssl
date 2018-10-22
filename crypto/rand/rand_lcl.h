@@ -309,7 +309,7 @@ extern int rand_fork_count;
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,
                       const unsigned char *buffer, size_t len, size_t entropy);
-
+size_t rand_drbg_seedlen(RAND_DRBG *drbg);
 /* locking api */
 int rand_drbg_lock(RAND_DRBG *drbg);
 int rand_drbg_unlock(RAND_DRBG *drbg);
