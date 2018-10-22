@@ -425,3 +425,36 @@ const EVP_PKEY_METHOD siphash_pkey_meth = {
     pkey_mac_ctrl,
     pkey_mac_ctrl_str
 };
+
+const EVP_PKEY_METHOD poly1305_pkey_meth = {
+    EVP_PKEY_POLY1305,
+    EVP_PKEY_FLAG_SIGCTX_CUSTOM,
+    pkey_mac_init,
+    pkey_mac_copy,
+    pkey_mac_cleanup,
+
+    0, 0,
+
+    0,
+    pkey_mac_keygen,
+
+    0, 0,
+
+    0, 0,
+
+    0, 0,
+
+    pkey_mac_signctx_init,
+    pkey_mac_signctx,
+
+    0, 0,
+
+    0, 0,
+
+    0, 0,
+
+    0, 0,
+
+    pkey_mac_ctrl,
+    pkey_mac_ctrl_str
+};

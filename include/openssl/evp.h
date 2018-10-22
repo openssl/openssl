@@ -991,6 +991,7 @@ void EVP_MD_do_all_sorted(void (*fn)
 # define EVP_MAC_GMAC           NID_gmac
 # define EVP_MAC_HMAC           NID_hmac
 # define EVP_MAC_SIPHASH        NID_siphash
+# define EVP_MAC_POLY1305       NID_poly1305
 
 EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
 EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
