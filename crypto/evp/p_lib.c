@@ -667,6 +667,26 @@ int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
     return evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID, 0, pnid);
 }
 
+int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
+{
+    int rv, default_nid;
+
+    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SUPPORTS_MD_NID, nid, NULL);
+    if (rv == -2) {
+        /*
+         * If there is a mandatory default digest and this isn't it, then
+         * the answer is 'no'.
+         */
+        rv = EVP_PKEY_get_default_digest_nid(pkey, &default_nid);
+        if (rv == 2)
+            return (nid == default_nid);
+        /* zero is an error from EVP_PKEY_get_default_digest_nid() */
+        if (rv == 0)
+            return -1;
+    }
+    return rv;
+}
+
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
                                const unsigned char *pt, size_t ptlen)
 {
