@@ -4597,3 +4597,4 @@ EVP_MAC_do_all                          4550	1_1_2	EXIST::FUNCTION:
 EVP_MAC_do_all_sorted                   4551	1_1_2	EXIST::FUNCTION:
 EVP_str2ctrl                            4552	1_1_2	EXIST::FUNCTION:
 EVP_hex2ctrl                            4553	1_1_2	EXIST::FUNCTION:
+EVP_PKEY_supports_digest_nid            4554	1_1_2	EXIST::FUNCTION:
