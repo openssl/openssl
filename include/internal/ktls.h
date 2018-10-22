@@ -11,6 +11,103 @@
 # ifndef HEADER_INTERNAL_KTLS
 #  define HEADER_INTERNAL_KTLS
 
+#  if defined(__FreeBSD__)
+#   include <sys/types.h>
+#   include <sys/socket.h>
+#   include <sys/ktls.h>
+#   include <netinet/in.h>
+#   include <netinet/tcp.h>
+#   include <crypto/cryptodev.h>
+
+/*
+ * Only used by the tests in sslapitest.c.
+ */
+#   define TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE             8
+
+/*
+ * FreeBSD does not require any additional steps to enable KTLS before
+ * setting keys.
+ */
+static ossl_inline int ktls_enable(int fd)
+{
+    return 1;
+}
+
+/*
+ * The TCP_TXTLS_ENABLE socket option marks the outgoing socket buffer
+ * as using TLS.  If successful, then data sent using this socket will
+ * be encrypted and encapsulated in TLS records using the tls_en.
+ * provided here.
+ */
+static ossl_inline int ktls_start(int fd,
+                                  struct tls_enable *tls_en,
+                                  size_t len, int is_tx)
+{
+    if (is_tx)
+        return setsockopt(fd, IPPROTO_TCP, TCP_TXTLS_ENABLE,
+                          tls_en, sizeof(*tls_en)) ? 0 : 1;
+    else
+        return 0;
+}
+
+/*
+ * Send a TLS record using the tls_en provided in ktls_start and use
+ * record_type instead of the default SSL3_RT_APPLICATION_DATA.
+ * When the socket is non-blocking, then this call either returns EAGAIN or
+ * the entire record is pushed to TCP. It is impossible to send a partial
+ * record using this control message.
+ */
+static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
+                                              const void *data, size_t length)
+{
+    struct msghdr msg = { 0 };
+    int cmsg_len = sizeof(record_type);
+    struct cmsghdr *cmsg;
+    char buf[CMSG_SPACE(cmsg_len)];
+    struct iovec msg_iov;   /* Vector of data to send/receive into */
+
+    msg.msg_control = buf;
+    msg.msg_controllen = sizeof(buf);
+    cmsg = CMSG_FIRSTHDR(&msg);
+    cmsg->cmsg_level = IPPROTO_TCP;
+    cmsg->cmsg_type = TLS_SET_RECORD_TYPE;
+    cmsg->cmsg_len = CMSG_LEN(cmsg_len);
+    *((unsigned char *)CMSG_DATA(cmsg)) = record_type;
+    msg.msg_controllen = cmsg->cmsg_len;
+
+    msg_iov.iov_base = (void *)data;
+    msg_iov.iov_len = length;
+    msg.msg_iov = &msg_iov;
+    msg.msg_iovlen = 1;
+
+    return sendmsg(fd, &msg, 0);
+}
+
+static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+{
+    return -1;
+}
+
+/*
+ * KTLS enables the sendfile system call to send data from a file over
+ * TLS.
+ */
+static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
+                                              size_t size, int flags)
+{
+    off_t sbytes;
+    int ret;
+
+    ret = sendfile(fd, s, off, size, NULL, &sbytes, flags);
+    if (ret == -1) {
+	    if (errno == EAGAIN && sbytes != 0)
+		    return sbytes;
+	    return -1;
+    }
+    return sbytes;
+}
+#  endif                         /* __FreeBSD__ */
+
 #  if defined(OPENSSL_SYS_LINUX)
 #   include <linux/version.h>
 
