@@ -1562,8 +1562,14 @@ unless ($disabled{ktls}) {
         if ($verstr[2] < $minver) {
             disable('too-old-kernel', 'ktls');
         }
+    } elsif ($target =~ m/^BSD/) {
+        my $cc = $config{CROSS_COMPILE}.$config{CC};
+        system("printf '#include <sys/types.h>\n#include <sys/ktls.h>' | $cc -E - >/dev/null 2>&1");
+        if ($? != 0) {
+            disable('too-old-freebsd', 'ktls');
+        }
     } else {
-        disable('not-linux', 'ktls');
+        disable('not-linux-or-freebsd', 'ktls');
     }
 }
 
