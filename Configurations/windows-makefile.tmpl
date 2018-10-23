@@ -594,16 +594,14 @@ $obj$objext: $deps
 	\$(CC) /EP /D__ASSEMBLER__ $cflags $srcs > \$@.asm && \$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
 EOF
      }
-     return <<"EOF"	if (!$disabled{makedepend});
-$obj$depext: $deps
-	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 > $obj$depext
-$obj$objext: $obj$depext
-	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
-EOF
-    return <<"EOF"	if ($disabled{makedepend});
+     my $recipe = <<"EOF";
 $obj$objext: $deps
 	\$(CC) $cflags -c \$(COUTFLAG)\$\@ $srcs
 EOF
+     $recipe .= <<"EOF"	unless $disabled{makedepend};
+	\$(CC) $cflags /Zs /showIncludes $srcs 2>&1 > $obj$depext
+EOF
+     return $recipe;
  }
 
  # We *know* this routine is only called when we've configure 'shared'.
