@@ -17,6 +17,8 @@
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
 
+# include "internal/numbers.h"
+
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
 
