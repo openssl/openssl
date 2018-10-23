@@ -1130,7 +1130,7 @@ $target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
                                   || $config{target} =~ /^(?:Cygwin|mingw)/);
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
 $target{def_extension}=".ld";
-$target{def_extension}=".def" if $config{target} =~ /^mingw|VC-/;
+$target{def_extension}=".def" if $config{target} =~ /^mingw/;
 $target{def_extension}=".opt" if $config{target} =~ /^vms/;
 ($target{shared_extension_simple}=$target{shared_extension})
     =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||
