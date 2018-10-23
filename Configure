@@ -1125,18 +1125,8 @@ foreach my $feature (@{$target{enable}}) {
 
 $target{CXXFLAGS}//=$target{CFLAGS} if $target{CXX};
 $target{cxxflags}//=$target{cflags} if $target{CXX};
-$target{exe_extension}="";
-$target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
-                                  || $config{target} =~ /^(?:Cygwin|mingw)/);
+$target{exe_extension}=".exe" if ($config{target} eq "DJGPP");
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
-$target{def_extension}=".ld";
-$target{def_extension}=".def" if $config{target} =~ /^mingw/;
-($target{shared_extension_simple}=$target{shared_extension})
-    =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||
-    unless defined($target{shared_extension_simple});
-$target{dso_extension}//=$target{shared_extension_simple};
-($target{shared_import_extension}=$target{shared_extension_simple}.".a")
-    if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
 # Fill %config with values from %user, and in case those are undefined or
 # empty, use values from %target (acting as a default).
