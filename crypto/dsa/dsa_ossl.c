@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/bn_int.h"
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 #include "dsa_locl.h"
@@ -180,9 +181,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 {
     BN_CTX *ctx = NULL;
     BIGNUM *k, *kinv = NULL, *r = *rp;
-    BIGNUM *l, *m;
+    BIGNUM *l;
     int ret = 0;
-    int q_bits;
+    int q_bits, q_words;
 
     if (!dsa->p || !dsa->q || !dsa->g) {
         DSAerr(DSA_F_DSA_SIGN_SETUP, DSA_R_MISSING_PARAMETERS);
@@ -191,8 +192,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     k = BN_new();
     l = BN_new();
-    m = BN_new();
-    if (k == NULL || l == NULL || m == NULL)
+    if (k == NULL || l == NULL)
         goto err;
 
     if (ctx_in == NULL) {
@@ -203,9 +203,9 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
 
     /* Preallocate space */
     q_bits = BN_num_bits(dsa->q);
-    if (!BN_set_bit(k, q_bits)
-        || !BN_set_bit(l, q_bits)
-        || !BN_set_bit(m, q_bits))
+    q_words = bn_get_top(dsa->q);
+    if (!bn_wexpand(k, q_words + 2)
+        || !bn_wexpand(l, q_words + 2))
         goto err;
 
     /* Get random k */
@@ -240,13 +240,16 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
      * small timing information leakage.  We then choose the sum that is
      * one bit longer than the modulus.
      *
-     * TODO: revisit the BN_copy aiming for a memory access agnostic
-     * conditional copy.
+     * There are some concerns about the efficacy of doing this.  More
+     * specificly refer to the discussion starting with:
+     *     https://github.com/openssl/openssl/pull/7486#discussion_r228323705
+     * The fix is to rework BN so these gymnastics aren't required.
      */
     if (!BN_add(l, k, dsa->q)
-        || !BN_add(m, l, dsa->q)
-        || !BN_copy(k, BN_num_bits(l) > q_bits ? l : m))
+        || !BN_add(k, l, dsa->q))
         goto err;
+
+    BN_consttime_swap(BN_is_bit_set(l, q_bits), k, l, q_words + 2);
 
     if ((dsa)->meth->bn_mod_exp != NULL) {
             if (!dsa->meth->bn_mod_exp(dsa, r, dsa->g, k, dsa->p, ctx,
@@ -260,7 +263,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
     if (!BN_mod(r, r, dsa->q, ctx))
         goto err;
 
-    /* Compute  part of 's = inv(k) (m + xr) mod q' */
+    /* Compute part of 's = inv(k) (m + xr) mod q' */
     if ((kinv = dsa_mod_inverse_fermat(k, dsa->q, ctx)) == NULL)
         goto err;
 
@@ -275,7 +278,6 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         BN_CTX_free(ctx);
     BN_clear_free(k);
     BN_clear_free(l);
-    BN_clear_free(m);
     return ret;
 }
 
