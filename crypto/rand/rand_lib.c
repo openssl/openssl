@@ -151,6 +151,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         pool->entropy_requested = entropy;
     } else {
         pool = rand_pool_new(entropy, min_len, max_len);
+        if (pool == NULL)
+            return 0;
     }
 
     if (drbg->parent) {
