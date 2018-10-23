@@ -446,23 +446,6 @@ support building static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
 'no-shared'.
 
-One some platforms, shared libraries come with a name that's different
-from their static counterpart.  That's declared as follows:
-
-    SHARED_NAME[libfoo]=cygfoo-{- $config{shlibver} -}
-
-The example is from Cygwin, which has a required naming convention.
-
-Sometimes, it makes sense to rename an output file, for example a
-library:
-
-    RENAME[libfoo]=libbar
-
-That line has "libfoo" renamed to "libbar".  While it makes no
-sense at all to just have a rename like that (why not just use
-"libbar" everywhere?), it does make sense when it can be used
-conditionally.  See a little further below for an example.
-
 In some cases, it's desirable to include some source files in the
 shared form of a library only:
 
@@ -569,15 +552,6 @@ conditions based on something in the passed variables, for example:
     ELSE
       LIBS=libfoo
       SOURCE[libfoo]=...
-    ENDIF
-
-or:
-
-    # VMS has a cultural standard where all libraries are prefixed.
-    # For OpenSSL, the choice is 'ossl_'
-    IF[{- $config{target} =~ /^vms/ -}]
-     RENAME[libcrypto]=ossl_libcrypto
-     RENAME[libssl]=ossl_libssl
     ENDIF
 
 
