@@ -25,6 +25,6 @@
         @macros = ( "DSO_DLFCN" );
     }
     join("\n", map { "# define $_" } @macros); -}
-# define DSO_EXTENSION "{- $target{dso_extension} -}"
+# define DSO_EXTENSION "{- platform->dsoext() -}"
 {- output_on() if $disabled{dso} -}
 #endif
