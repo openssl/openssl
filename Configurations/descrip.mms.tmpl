@@ -5,10 +5,7 @@
   use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
   use File::Basename;
 
-  # Our prefix, claimed when speaking with the VSI folks Tuesday
-  # January 26th 2016
-  our $osslprefix = 'OSSL$';
-  (our $osslprefix_q = $osslprefix) =~ s/\$/\\\$/;
+  (our $osslprefix_q = platform->osslprefix()) =~ s/\$/\\\$/;
 
   our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version});
   our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
@@ -44,27 +41,27 @@
   # Because we need to make two computations of these data,
   # we store them in arrays for reuse
   our @libs =
-      map { (my $x = $_) =~ s/\.a$//; $x }
+      map { platform->staticname($_) }
       @{$unified_info{libraries}};
   our @shlibs =
-      map { $unified_info{sharednames}->{$_} || () }
-      grep(!/\.a$/, @{$unified_info{libraries}});
+      map { platform->sharedname($_) // () }
+      @{$unified_info{libraries}};
   our @install_libs =
-      map { (my $x = $_) =~ s/\.a$//; $x }
+      map { platform->staticname($_) }
       @{$unified_info{install}->{libraries}};
   our @install_shlibs =
-      map { $unified_info{sharednames}->{$_} || () }
-      grep(!/\.a$/, @{$unified_info{install}->{libraries}});
+      map { platform->sharedname($_) // () }
+      @{$unified_info{install}->{libraries}};
 
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.
   my $sd = sourcedir("crypto", "async", "arch");
   foreach (grep /\[\.crypto\.async\.arch\].*\.o$/, keys %{$unified_info{sources}}) {
-      (my $x = $_) =~ s|\.o$|.OBJ|;
-      $unified_info{before}->{$x}
+      my $obj = platform->obj($_);
+      $unified_info{before}->{$obj}
           = qq(arch_include = F\$PARSE("$sd","A.;",,,"SYNTAX_ONLY") - "A.;"
         define arch 'arch_include');
-      $unified_info{after}->{$x}
+      $unified_info{after}->{$obj}
           = qq(deassign arch);
   }
   my $sd1 = sourcedir("ssl","record");
@@ -72,13 +69,13 @@
   my @ssl_locl_users = grep(/^\[\.(?:ssl\.(?:record|statem)|test)\].*\.o$/,
                             keys %{$unified_info{sources}});
   foreach (@ssl_locl_users) {
-      (my $x = $_) =~ s|\.o$|.OBJ|;
-      $unified_info{before}->{$x}
+      my $obj = platform->obj($_);
+      $unified_info{before}->{$obj}
           = qq(record_include = F\$PARSE("$sd1","A.;",,,"SYNTAX_ONLY") - "A.;"
         define record 'record_include'
         statem_include = F\$PARSE("$sd2","A.;",,,"SYNTAX_ONLY") - "A.;"
         define statem 'statem_include');
-      $unified_info{after}->{$x}
+      $unified_info{after}->{$obj}
           = qq(deassign statem
         deassign record);
   }
@@ -110,30 +107,20 @@ MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 SHLIB_TARGET={- $target{shared_target} -}
 
-EXE_EXT=.EXE
-LIB_EXT=.OLB
-SHLIB_EXT=.EXE
-OBJ_EXT=.OBJ
-DEP_EXT=.D
-
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
 ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
-DEPS={- our @deps = map { (my $x = $_) =~ s|\.o$|\$(DEP_EXT)|; $x; }
+DEPS={- our @deps = map { platform->isobj($_) ? platform->dep($_) : $_ }
                     grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                     keys %{$unified_info{sources}};
         join(", ", map { "-\n\t".$_ } @deps); -}
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(", ", map { "-\n\t".$_ } @{$unified_info{depends}->{""}} ) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(", ", map { my $x = $_;
-                              $x =~ s|\.[sS]$|.asm|;
-                              $x =~ s|\.ld$|.OPT|;
-                              "-\n\t".$x }
-                        @generated) -}
+             join(", ", map { platform->convertext($_) } @generated) -}
 
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
@@ -165,9 +152,9 @@ OPENSSLDIR={- catdir($config{openssldir}) or
               $config{prefix} ? catdir($config{prefix},"COMMON")
                               : "SYS\$COMMON:[OPENSSL-COMMON]" -}
 # The same, but for C
-OPENSSLDIR_C={- $osslprefix -}DATAROOT:[000000]
+OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
 # Where installed engines reside, for C
-ENGINESDIR_C={- $osslprefix -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
+ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
@@ -694,12 +681,10 @@ reconfigure reconf :
   # Helper function to figure out dependencies on libraries
   # It takes a list of library names and outputs a list of dependencies
   sub compute_lib_depends {
-      if ($disabled{shared}) {
-          return map { $_ =~ /\.a$/ ? $`.".OLB" : $_.".OLB" } @_;
-      }
-      return map { $_ =~ /\.a$/
-                   ? $`.".OLB"
-                   : $unified_info{sharednames}->{$_}.".EXE" } @_;
+      # Depending on shared libraries:
+      # On Windows POSIX layers, we depend on {libname}.dll.a
+      # On Unix platforms, we depend on {shlibname}.so
+      return map { platform->sharedlib($_) // platform->staticlib($_) } @_;
   }
 
   # Helper function to deal with inclusion directory specs.
@@ -750,8 +735,8 @@ reconfigure reconf :
       my $generator_incs = join("", map { ' "-I'.$_.'"' } @{$args{generator_incs}});
       my $deps = join(", -\n\t\t", @{$args{generator_deps}}, @{$args{deps}});
 
-      if ($args{src} =~ /\.ld$/) {
-          (my $target = $args{src}) =~ s/\.ld$/.OPT/;
+      if (platform->isdef($args{src})) {
+          my $target = platform->def($args{src});
           my $mkdef = sourcefile('util', 'mkdef.pl');
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name =
@@ -763,7 +748,7 @@ reconfigure reconf :
 $target : $args{generator}->[0] $deps $mkdef
 	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name "--OS" "VMS"$case_insensitive > $target
 EOF
-      } elsif ($args{src} !~ /\.[sS]$/) {
+      } elsif (!platform->isasm($args{src})) {
           my $target = $args{src};
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
 	      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
@@ -781,7 +766,7 @@ $target : $args{generator}->[0] $deps
 EOF
 	  }
       } else {
-          (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
+          my $target = platform->asm($args{src});
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = '$(PERL)'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.S$/) {
@@ -844,9 +829,8 @@ EOF
 
   sub src2obj {
       my %args = @_;
-      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
-                     } ( @{$args{srcs}} );
-      (my $obj = $args{obj}) =~ s|\.o$||;
+      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x } ( @{$args{srcs}} );
+      my $obj = platform->obj($args{obj});
       my $deps = join(", -\n\t\t", @srcs, @{$args{deps}});
 
       # Because VMS C isn't very good at combining a /INCLUDE path with
@@ -858,11 +842,25 @@ EOF
       my $forward = dirname($args{srcs}->[0]);
       my $backward = abs2rel(rel2abs("."), rel2abs($forward));
       my $objd = abs2rel(rel2abs(dirname($obj)), rel2abs($forward));
-      my $objn = basename($obj);
+      my $objn = basename($obj, platform->objext());
       my $srcs =
           join(", ", map { abs2rel(rel2abs($_), rel2abs($forward)) } @srcs);
-      my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
-      my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
+      my $before = $unified_info{before}->{$obj} || "\@ !";
+      my $after = $unified_info{after}->{$obj} || "\@ !";
+
+      if ($srcs[0] =~ /\.asm$/) {
+          my $asflags = { shlib => ' $(LIB_ASFLAGS)',
+		          lib => ' $(LIB_ASFLAGS)',
+		          dso => ' $(DSO_ASFLAGS)',
+		          bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
+          return <<"EOF";
+$obj : $deps
+        ${before}
+        SET DEFAULT $forward
+        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
+        SET DEFAULT $backward
+EOF
+      }
 
       my $cflags;
       if ($args{installed}) {
@@ -928,10 +926,10 @@ EOF
       }
 
       my $depbuild = $disabled{makedepend} ? ""
-          : " /MMS=(FILE=${objd}${objn}.D,TARGET=$obj.OBJ)";
+          : " /MMS=(FILE=${objd}${objn}.D,TARGET=$obj)";
 
       return <<"EOF";
-$obj.OBJ : $deps
+$obj : $deps
         ${before}
         SET DEFAULT $forward
         \@ $incs_on
@@ -941,20 +939,18 @@ $obj.OBJ : $deps
         \@ $incs_off
         SET DEFAULT $backward
         ${after}
-        - PURGE $obj.OBJ
+        - PURGE $obj
 EOF
   }
   sub obj2shlib {
       my %args = @_;
-      my $lib = $args{lib};
-      my $shlib = $args{shlib};
-      my $libd = dirname($lib);
-      my $libn = basename($lib);
-      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
-                 grep { $_ =~ m|\.o$| }
+      my $shlibname = platform->sharedname($args{lib});
+      my $shlib = platform->sharedlib($args{lib});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
                  @{$args{objs}};
-      my @defs = map { (my $x = $_) =~ s|\.ld$|.OPT|; $x }
-                 grep { $_ =~ m|\.ld$| }
+      my @defs = map { platform->convertext($_) }
+                 grep { platform->isdef($_) }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
@@ -978,16 +974,16 @@ EOF
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
       return <<"EOF"
-$shlib.EXE : $deps
+$shlib : $deps
         \$(PERL) $translatesyms_pl \$(BLDDIR)CXX\$DEMANGLER_DB. < $defs[0] > $defs[0]-translated
-        OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
+        OPEN/WRITE/SHARE=READ OPT_FILE $shlibname-components.OPT
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
         LINK \$(LIB_LDFLAGS)/SHARE=\$\@ $defs[0]-translated/OPT,-
-                $lib-components.OPT/OPT \$(LIB_EX_LIBS)
-        DELETE $defs[0]-translated;*,$lib-components.OPT;*
-        PURGE $shlib.EXE,$shlib.MAP
+                $shlibname-components.OPT/OPT \$(LIB_EX_LIBS)
+        DELETE $defs[0]-translated;*,$shlibname-components.OPT;*
+        PURGE $shlibname.EXE,$shlibname.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"
         SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
@@ -996,15 +992,13 @@ EOF
   }
   sub obj2dso {
       my %args = @_;
-      my $lib = $args{lib};
-      my $libd = dirname($lib);
-      my $libn = basename($lib);
-      (my $libn_nolib = $libn) =~ s/^lib//;
-      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x }
-                 grep { $_ =~ m|\.o$| }
+      my $dsoname = platform->dsoname($args{lib});
+      my $dso = platform->dso($args{lib});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
                  @{$args{objs}};
-      my @defs = map { (my $x = $_) =~ s|\.ld$|.OPT|; $x }
-                 grep { $_ =~ m|\.ld$| }
+      my @defs = map { platform->convertext($_) }
+                 grep { platform->isdef($_) }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @defs, @deps);
@@ -1025,14 +1019,14 @@ EOF
                              "WRITE OPT_FILE \"$x\"" } @deps)
           || "\@ !";
       return <<"EOF"
-$lib.EXE : $deps
-        OPEN/WRITE/SHARE=READ OPT_FILE $lib-components.OPT
+$dso : $deps
+        OPEN/WRITE/SHARE=READ OPT_FILE $dsoname-components.OPT
         $write_opt1
         $write_opt2
         CLOSE OPT_FILE
         LINK \$(DSO_LDFLAGS)/SHARE=\$\@ $defs[0]/OPT,-
-		$lib-components.OPT/OPT \$(DSO_EX_LIBS)
-        - PURGE $lib.EXE,$lib.OPT,$lib.MAP
+		$dsoname-components.OPT/OPT \$(DSO_EX_LIBS)
+        - PURGE $dsoname.EXE,$dsoname.OPT,$dsoname.MAP
 EOF
         . ($config{target} =~ m|alpha| ? "" : <<"EOF"
         SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@
@@ -1041,24 +1035,26 @@ EOF
   }
   sub obj2lib {
       my %args = @_;
-      (my $lib = $args{lib}) =~ s/\.a$//;
-      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
+      my $lib = platform->staticlib($args{lib});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
+                 @{$args{objs}};
       my $objs = join(", -\n\t\t", @objs);
-      my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib.OLB $_" }
-                                   @objs));
+      my $fill_lib = join("\n\t", (map { "LIBRARY/REPLACE $lib $_" } @objs));
       return <<"EOF";
-$lib.OLB : $objs
-        LIBRARY/CREATE/OBJECT $lib.OLB
+$lib : $objs
+        LIBRARY/CREATE/OBJECT $lib
         $fill_lib
-        - PURGE $lib.OLB
+        - PURGE $lib
 EOF
   }
   sub obj2bin {
       my %args = @_;
-      my $bin = $args{bin};
-      my $bind = dirname($bin);
-      my $binn = basename($bin);
-      my @objs = map { (my $x = $_) =~ s|\.o$|.OBJ|; $x } @{$args{objs}};
+      my $bin = platform->bin($args{bin});
+      my $binname = platform->binname($args{bin});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) }
+                 @{$args{objs}};
       my $objs = join(",", @objs);
       my @deps = compute_lib_depends(@{$args{deps}});
       my $deps = join(", -\n\t\t", @objs, @deps);
@@ -1113,19 +1109,19 @@ EOF
       # isn't necessary.  If there are other warnings, however, we show them
       # and let it break the build.
       return <<"EOF"
-$bin.EXE : $deps
+$bin : $deps
         $analyse_objs
-        @ OPEN/WRITE/SHARE=READ OPT_FILE $bin.OPT
+        @ OPEN/WRITE/SHARE=READ OPT_FILE $binname.OPT
         $write_opt1
         $write_opt2
         @ CLOSE OPT_FILE
-        TYPE $bin.opt ! For debugging
-        - pipe SPAWN/WAIT/NOLOG/OUT=$bin.LINKLOG -
-                    LINK \$(BIN_LDFLAGS)/EXEC=\$\@ $bin.OPT/OPT \$(BIN_EX_LIBS) ; -
+        TYPE $binname.OPT ! For debugging
+        - pipe SPAWN/WAIT/NOLOG/OUT=$binname.LINKLOG -
+                    LINK \$(BIN_LDFLAGS)/EXEC=\$\@ $binname.OPT/OPT \$(BIN_EX_LIBS) ; -
                link_status = \$status ; link_severity = link_status .AND. 7
         @ search_severity = 1
         -@ IF link_severity .EQ. 0 THEN -
-                pipe SEARCH $bin.LINKLOG "%","-"/MATCH=AND | -
+                pipe SEARCH $binname.LINKLOG "%","-"/MATCH=AND | -
                      SPAWN/WAIT/NOLOG/OUT=NLA0: -
                           SEARCH SYS\$INPUT: "-W-MULDEF,"/MATCH=NOR ; -
                      search_severity = \$severity
@@ -1136,10 +1132,10 @@ $bin.EXE : $deps
         @ IF search_severity .EQ. 3 THEN link_severity = 1
         @ ! At this point, if link_severity shows that there was a fault
         @ ! or warning, make sure to restore the linking status.
-        -@ IF .NOT. link_severity THEN TYPE $bin.LINKLOG
-        -@ DELETE $bin.LINKLOG;*
+        -@ IF .NOT. link_severity THEN TYPE $binname.LINKLOG
+        -@ DELETE $binname.LINKLOG;*
         @ IF .NOT. link_severity THEN SPAWN/WAIT/NOLOG EXIT 'link_status'
-        - PURGE $bin.EXE,$bin.OPT
+        - PURGE $bin,$binname.OPT
 EOF
       . ($config{target} =~ m|alpha| ? "" : <<"EOF"
         SET IMAGE/FLAGS=(NOCALL_DEBUG) \$\@

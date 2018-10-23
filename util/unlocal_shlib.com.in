@@ -1,17 +1,14 @@
 ${-
-  use File::Spec::Functions qw(rel2abs);
-
-  my $bldtop = rel2abs($config{builddir});
-  our %names = ( map { $_ => $bldtop.$_.".EXE" }
-                 map { $unified_info{sharednames}->{$_} || () }
-                 @{$unified_info{libraries}} );
+  our %names = ( map { platform->sharedname($_) =>
+                           $bldtop.platform->sharedlib($_) }
+                 @{$unified_info{install}->{libraries}} );
   "" -}
 $       ! Remove the local environment created by local_shlib.com
 $
 $       OPENSSL_NAMES := OPENSSL_NAMES_'F$GETJPI("","PID")'
 $       IF F$TRNLNM("OSSL_FLAG",OPENSSL_NAMES) .EQS. "" THEN EXIT 0
 $
-$       NAMES := {- join(",", keys %names); -}
+$       NAMES := {- join(",", sort keys %names); -}
 $       I = 0
 $       LOOP:
 $           E = F$ELEMENT(I,",",NAMES)
