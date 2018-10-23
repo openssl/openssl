@@ -1727,8 +1727,6 @@ if ($builder eq "unified") {
         my %includes = ();
         my %defines = ();
         my %depends = ();
-        my %renames = ();
-        my %sharednames = ();
         my %generate = ();
 
         # We want to detect configdata.pm in the source tree, so we
@@ -1859,11 +1857,9 @@ if ($builder eq "unified") {
             => sub { push @{$generate{$1}}, $2
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*RENAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$renames{$1}}, tokenize($2)
-                         if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sharednames{$1}}, tokenize($2)
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { warn "RENAME is no longer supported\n" },
+             qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { warn "SHARED_NAME is no longer supported\n" },
             qr/^\s*BEGINRAW\[((?:\\.|[^\\\]])+)\]\s*$/
             => sub {
                 my $lineiterator = shift;
@@ -1897,48 +1893,23 @@ if ($builder eq "unified") {
             );
         die "runaway IF?" if (@skip);
 
-        foreach (keys %renames) {
-            die "$_ renamed to more than one thing: "
-                ,join(" ", @{$renames{$_}}),"\n"
-                if scalar @{$renames{$_}} > 1;
-            my $dest = cleanfile($buildd, $_, $blddir);
-            my $to = cleanfile($buildd, $renames{$_}->[0], $blddir);
-            die "$dest renamed to more than one thing: "
-                ,$unified_info{rename}->{$dest}, $to
-                unless !defined($unified_info{rename}->{$dest})
-                or $unified_info{rename}->{$dest} eq $to;
-            $unified_info{rename}->{$dest} = $to;
-        }
-
         foreach (@programs) {
             my $program = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$program}) {
-                $program = $unified_info{rename}->{$program};
-            }
             $unified_info{programs}->{$program} = 1;
         }
 
         foreach (@programs_install) {
             my $program = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$program}) {
-                $program = $unified_info{rename}->{$program};
-            }
             $unified_info{install}->{programs}->{$program} = 1;
         }
 
         foreach (@libraries) {
             my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
-            }
             $unified_info{libraries}->{$library} = 1;
         }
 
         foreach (@libraries_install) {
             my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
-            }
             $unified_info{install}->{libraries}->{$library} = 1;
         }
 
@@ -1948,33 +1919,21 @@ This is usually a fault in a build.info file.
 EOF
         foreach (@engines) {
             my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
-            }
             $unified_info{engines}->{$library} = 1;
         }
 
         foreach (@engines_install) {
             my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
-            }
             $unified_info{install}->{engines}->{$library} = 1;
         }
 
         foreach (@scripts) {
             my $script = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$script}) {
-                $script = $unified_info{rename}->{$script};
-            }
             $unified_info{scripts}->{$script} = 1;
         }
 
         foreach (@scripts_install) {
             my $script = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$script}) {
-                $script = $unified_info{rename}->{$script};
-            }
             $unified_info{install}->{scripts}->{$script} = 1;
         }
 
@@ -1990,53 +1949,20 @@ EOF
 
         push @{$unified_info{rawlines}}, @rawlines;
 
-        unless ($disabled{shared}) {
-            # Check sharednames.
-            foreach (keys %sharednames) {
-                my $dest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$dest}) {
-                    $dest = $unified_info{rename}->{$dest};
-                }
-                die "shared_name for $dest with multiple values: "
-                    ,join(" ", @{$sharednames{$_}}),"\n"
-                    if scalar @{$sharednames{$_}} > 1;
-                my $to = cleanfile($buildd, $sharednames{$_}->[0], $blddir);
-                die "shared_name found for a library $dest that isn't defined\n"
-                    unless $unified_info{libraries}->{$dest};
-                die "shared_name for $dest with multiple values: "
-                    ,$unified_info{sharednames}->{$dest}, ", ", $to
-                    unless !defined($unified_info{sharednames}->{$dest})
-                    or $unified_info{sharednames}->{$dest} eq $to;
-                $unified_info{sharednames}->{$dest} = $to;
-            }
-
-            # Additionally, we set up sharednames for libraries that don't
-            # have any, as themselves.  Only for libraries that aren't
-            # explicitly static.
-            foreach (grep !/\.a$/, keys %{$unified_info{libraries}}) {
-                if (!defined $unified_info{sharednames}->{$_}) {
-                    $unified_info{sharednames}->{$_} = $_
-                }
-            }
-
-            # Check that we haven't defined any library as both shared and
-            # explicitly static.  That is forbidden.
-            my @doubles = ();
-            foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
-                (my $l = $_) =~ s/\.a$//;
-                push @doubles, $l if defined $unified_info{sharednames}->{$l};
-            }
-            die "these libraries are both explicitly static and shared:\n  ",
-                join(" ", @doubles), "\n"
-                if @doubles;
+        # Check that we haven't defined any library as both shared and
+        # explicitly static.  That is forbidden.
+        my @doubles = ();
+        foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
+            (my $l = $_) =~ s/\.a$//;
+            push @doubles, $l if defined $unified_info{libraries}->{$l};
         }
+        die "these libraries are both explicitly static and shared:\n  ",
+            join(" ", @doubles), "\n"
+            if @doubles;
 
         foreach (keys %sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
             foreach (@{$sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir);
 
@@ -2069,9 +1995,6 @@ EOF
         foreach (keys %shared_sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
             foreach (@{$shared_sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir);
 
@@ -2110,9 +2033,6 @@ EOF
         foreach (keys %generate) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
             die "more than one generator for $dest: "
                     ,join(" ", @{$generate{$_}}),"\n"
                     if scalar @{$generate{$_}} > 1;
@@ -2129,9 +2049,6 @@ EOF
             # a generated file in the build tree.
             if ($ddest ne "" && ($ddest eq $src_configdata || ! -f $ddest)) {
                 $ddest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$ddest}) {
-                    $ddest = $unified_info{rename}->{$ddest};
-                }
             }
             foreach (@{$depends{$dest}}) {
                 my $d = cleanfile($sourced, $_, $blddir);
@@ -2154,11 +2071,7 @@ EOF
                 # should be added back after treatment.
                 $d =~ /(\.a)?$/;
                 my $e = $1 // "";
-                $d = $`;
-                if ($unified_info{rename}->{$d}) {
-                    $d = $unified_info{rename}->{$d};
-                }
-                $d .= $e;
+                $d = $`.$e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
             }
         }
@@ -2171,9 +2084,6 @@ EOF
             # a generated file in the build tree.
             if ($ddest eq $src_configdata || ! -f $ddest) {
                 $ddest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$ddest}) {
-                    $ddest = $unified_info{rename}->{$ddest};
-                }
             }
             foreach (@{$includes{$dest}}) {
                 my $is = cleandir($sourced, $_, $blddir);
