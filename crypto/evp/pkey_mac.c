@@ -359,3 +359,36 @@ const EVP_PKEY_METHOD cmac_pkey_meth = {
     pkey_mac_ctrl,
     pkey_mac_ctrl_str
 };
+
+const EVP_PKEY_METHOD hmac_pkey_meth = {
+    EVP_PKEY_HMAC,
+    0,
+    pkey_mac_init,
+    pkey_mac_copy,
+    pkey_mac_cleanup,
+
+    0, 0,
+
+    0,
+    pkey_mac_keygen,
+
+    0, 0,
+
+    0, 0,
+
+    0, 0,
+
+    pkey_mac_signctx_init,
+    pkey_mac_signctx,
+
+    0, 0,
+
+    0, 0,
+
+    0, 0,
+
+    0, 0,
+
+    pkey_mac_ctrl,
+    pkey_mac_ctrl_str
+};
