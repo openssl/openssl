@@ -16,4 +16,7 @@ void openssl_add_all_macs_int(void)
     EVP_add_mac(&cmac_meth);
 #endif
     EVP_add_mac(&hmac_meth);
+#ifndef OPENSSL_NO_SIPHASH
+    EVP_add_mac(&siphash_meth);
+#endif
 }
