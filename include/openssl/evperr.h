@@ -117,6 +117,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_PKCS5_V2_PBE_KEYIVGEN                      118
 # define EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN                   164
 # define EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN                   180
+# define EVP_F_PKEY_MAC_INIT                              214
 # define EVP_F_PKEY_SET_TYPE                              158
 # define EVP_F_RC2_MAGIC_TO_METH                          109
 # define EVP_F_RC5_CTRL                                   125

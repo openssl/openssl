@@ -1014,6 +1014,13 @@ void EVP_MAC_do_all_sorted(void (*fn)
                            (const EVP_MAC *ciph, const char *from,
                             const char *to, void *x), void *arg);
 
+# define EVP_MAC_CTRL_SET_KEY           0x01 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_FLAGS         0x02 /* unsigned long */
+# define EVP_MAC_CTRL_SET_ENGINE        0x03 /* ENGINE * */
+# define EVP_MAC_CTRL_SET_MD            0x04 /* EVP_MD * */
+# define EVP_MAC_CTRL_SET_CIPHER        0x04 /* EVP_CIPHER * */
+# define EVP_MAC_CTRL_SET_SIZE          0x05 /* size_t */
+
 /* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,
                          const unsigned char *enc_key, int enc_key_len,
