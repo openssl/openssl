@@ -909,7 +909,7 @@ my @tests_tls_1_3_non_fips = (
             #We only configured brainpoolP256r1 on the client side, but TLSv1.3
             #is enabled and this group is not allowed in TLSv1.3. Therefore this
             #should fail
-            "ExpectedResult" => "ClientFail"
+            "ExpectedResult" => "ServerFail"
         },
     },
     {
@@ -924,7 +924,7 @@ my @tests_tls_1_3_non_fips = (
             "MaxProtocol" => "TLSv1.3"
         },
         test   => {
-            "ExpectedResult" => "ServerFail"
+            "ExpectedResult" => "Success"
         },
     },
 );

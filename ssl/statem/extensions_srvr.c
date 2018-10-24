@@ -635,7 +635,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
          * we requested, and must be the only key_share sent.
          */
         if (s->s3.group_id != 0
-                && (group_id != s->s3.group_id
+                && (ssl_group_id_tls13_to_internal(group_id) != s->s3.group_id
                     || PACKET_remaining(&key_share_list) != 0)) {
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_KEY_SHARE);
             return 0;
@@ -653,15 +653,17 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
             continue;
         }
 
+        s->s3.group_id = group_id;
+        /* Cache the selected group ID in the SSL_SESSION */
+        s->session->kex_group = group_id;
+
+        group_id = ssl_group_id_tls13_to_internal(group_id);
+
         if ((s->s3.peer_tmp = ssl_generate_param_group(s, group_id)) == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                    SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
             return 0;
         }
-
-        s->s3.group_id = group_id;
-        /* Cache the selected group ID in the SSL_SESSION */
-        s->session->kex_group = group_id;
 
         if (EVP_PKEY_set1_encoded_public_key(s->s3.peer_tmp,
                 PACKET_data(&encoded_pt),
@@ -1591,7 +1593,8 @@ EXT_RETURN tls_construct_stoc_key_share(SSL *s, WPACKET *pkt,
         }
         if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_key_share)
                 || !WPACKET_start_sub_packet_u16(pkt)
-                || !WPACKET_put_bytes_u16(pkt, s->s3.group_id)
+                || !WPACKET_put_bytes_u16(pkt, ssl_group_id_internal_to_tls13(
+                                          s->s3.group_id))
                 || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
