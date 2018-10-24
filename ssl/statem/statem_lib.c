@@ -502,7 +502,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
      * want to make sure that SSL_get_peer_certificate() will return the actual
      * server certificate from the client_cert_cb callback.
      */
-    if(!s->server && SSL_IS_TLS13(s) && s->s3->tmp.cert_req == 1)
+    if (!s->server && SSL_IS_TLS13(s) && s->s3->tmp.cert_req == 1)
         ret = MSG_PROCESS_CONTINUE_PROCESSING;
     else
         ret = MSG_PROCESS_CONTINUE_READING;
