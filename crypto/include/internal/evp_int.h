@@ -448,6 +448,7 @@ struct evp_pkey_st {
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
+void openssl_add_all_macs_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
 
