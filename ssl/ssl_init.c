@@ -199,7 +199,8 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
                              | OPENSSL_INIT_LOAD_CONFIG
 #endif
                              | OPENSSL_INIT_ADD_ALL_CIPHERS
-                             | OPENSSL_INIT_ADD_ALL_DIGESTS,
+                             | OPENSSL_INIT_ADD_ALL_DIGESTS
+                             | OPENSSL_INIT_ADD_ALL_MACS,
                              settings))
         return 0;
 
