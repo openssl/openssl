@@ -212,12 +212,34 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
         uint16_t ctmp = pgroups[i];
 
         if (tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
-            if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
+#ifndef OPENSSL_NO_TLS1_3
+            int ctmp13 = ssl_group_id_internal_to_tls13(ctmp);
+
+            if (!SSL_IS_DTLS(s) && ctmp13 != ctmp) {
+                int ver_min, ver_max;
+                if (ssl_get_min_max_version(s, &ver_min, &ver_max, NULL)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                              SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                              ERR_R_INTERNAL_ERROR);
                     return EXT_RETURN_FAIL;
                 }
+                if (ver_max >= TLS1_3_VERSION
+                        && !WPACKET_put_bytes_u16(pkt, ctmp13)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                             SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
+                             ERR_R_INTERNAL_ERROR);
+                    return EXT_RETURN_FAIL;
+                }
+                if (ver_min >= TLS1_3_VERSION)
+                    continue;
+            }
+#endif
+            if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
+                         ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
@@ -629,7 +651,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     }
 
     /* Create KeyShareEntry */
-    if (!WPACKET_put_bytes_u16(pkt, curve_id)
+    if (!WPACKET_put_bytes_u16(pkt, ssl_group_id_internal_to_tls13(curve_id))
             || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE,
                  ERR_R_INTERNAL_ERROR);
@@ -1827,6 +1849,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    group_id = ssl_group_id_tls13_to_internal(group_id);
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t i, num_groups;

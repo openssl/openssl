@@ -166,7 +166,7 @@ static const TLS_GROUP_INFO nid_list[] = {
     {NID_secp521r1, 256, TLS_CURVE_PRIME}, /* secp521r1 (25) */
     {NID_brainpoolP256r1, 128, TLS_CURVE_PRIME}, /* brainpoolP256r1 (26) */
     {NID_brainpoolP384r1, 192, TLS_CURVE_PRIME}, /* brainpoolP384r1 (27) */
-    {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpool512r1 (28) */
+    {NID_brainpoolP512r1, 256, TLS_CURVE_PRIME}, /* brainpoolP512r1 (28) */
     {EVP_PKEY_X25519, 128, TLS_CURVE_CUSTOM}, /* X25519 (29) */
     {EVP_PKEY_X448, 224, TLS_CURVE_CUSTOM}, /* X448 (30) */
 };
@@ -179,17 +179,53 @@ static const unsigned char ecformats_default[] = {
 
 /* The default curves */
 static const uint16_t eccurves_default[] = {
-    29,                      /* X25519 (29) */
-    23,                      /* secp256r1 (23) */
-    30,                      /* X448 (30) */
-    25,                      /* secp521r1 (25) */
-    24,                      /* secp384r1 (24) */
+    TLSEXT_GROUPID_X25519,           /* X25519 (29) */
+    TLSEXT_GROUPID_secp256r1,        /* secp256r1 (23) */
+    TLSEXT_GROUPID_X448,             /* X448 (30) */
+    TLSEXT_GROUPID_secp521r1,        /* secp521r1 (25) */
+    TLSEXT_GROUPID_secp384r1,        /* secp384r1 (24) */
 };
 
 static const uint16_t suiteb_curves[] = {
-    TLSEXT_curve_P_256,
-    TLSEXT_curve_P_384
+    TLSEXT_GROUPID_secp256r1,
+    TLSEXT_GROUPID_secp384r1,
 };
+
+uint16_t ssl_group_id_internal_to_tls13(uint16_t curve_id)
+{
+    switch(curve_id) {
+    case TLSEXT_GROUPID_brainpoolP256r1:
+        return TLSEXT_GROUPID_brainpoolP256r1_tls13;
+    case TLSEXT_GROUPID_brainpoolP384r1:
+        return TLSEXT_GROUPID_brainpoolP384r1_tls13;
+    case TLSEXT_GROUPID_brainpoolP512r1:
+        return TLSEXT_GROUPID_brainpoolP512r1_tls13;
+    case TLSEXT_GROUPID_brainpoolP256r1_tls13:
+    case TLSEXT_GROUPID_brainpoolP384r1_tls13:
+    case TLSEXT_GROUPID_brainpoolP512r1_tls13:
+        return 0;
+    default:
+        return curve_id;
+    }
+}
+
+uint16_t ssl_group_id_tls13_to_internal(uint16_t curve_id)
+{
+    switch(curve_id) {
+    case TLSEXT_GROUPID_brainpoolP256r1:
+    case TLSEXT_GROUPID_brainpoolP384r1:
+    case TLSEXT_GROUPID_brainpoolP512r1:
+        return 0;
+    case TLSEXT_GROUPID_brainpoolP256r1_tls13:
+        return TLSEXT_GROUPID_brainpoolP256r1;
+    case TLSEXT_GROUPID_brainpoolP384r1_tls13:
+        return TLSEXT_GROUPID_brainpoolP384r1;
+    case TLSEXT_GROUPID_brainpoolP512r1_tls13:
+        return TLSEXT_GROUPID_brainpoolP512r1;
+    default:
+        return curve_id;
+    }
+}
 
 const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
@@ -298,9 +334,9 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
             unsigned long cid = s->s3->tmp.new_cipher->id;
 
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-                return TLSEXT_curve_P_256;
+                return TLSEXT_GROUPID_secp256r1;
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-                return TLSEXT_curve_P_384;
+                return TLSEXT_GROUPID_secp384r1;
             /* Should never happen */
             return 0;
         }
@@ -321,10 +357,17 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
 
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
+        uint16_t cid = id;
 
-        if (!tls1_in_list(id, supp, num_supp)
-            || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
-                    continue;
+        if (SSL_IS_TLS13(s)) {
+            if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+                cid = ssl_group_id_internal_to_tls13(id);
+            else
+                cid = id = ssl_group_id_tls13_to_internal(id);
+        }
+        if (!tls1_in_list(cid, supp, num_supp)
+                || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
+            continue;
         if (nmatch == k)
             return id;
          k++;
@@ -492,10 +535,10 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
         unsigned long cid = s->s3->tmp.new_cipher->id;
 
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
-            if (group_id != TLSEXT_curve_P_256)
+            if (group_id != TLSEXT_GROUPID_secp256r1)
                 return 0;
         } else if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384) {
-            if (group_id != TLSEXT_curve_P_384)
+            if (group_id != TLSEXT_GROUPID_secp384r1)
                 return 0;
         } else {
             /* Should never happen */
@@ -583,9 +626,9 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
         size_t i;
 
         /* Check to see we have necessary signing algorithm */
-        if (group_id == TLSEXT_curve_P_256)
+        if (group_id == TLSEXT_GROUPID_secp256r1)
             check_md = NID_ecdsa_with_SHA256;
-        else if (group_id == TLSEXT_curve_P_384)
+        else if (group_id == TLSEXT_GROUPID_secp384r1)
             check_md = NID_ecdsa_with_SHA384;
         else
             return 0;           /* Should never happen */
@@ -618,9 +661,9 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
      * curves permitted.
      */
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
-        return tls1_check_group_id(s, TLSEXT_curve_P_256, 1);
+        return tls1_check_group_id(s, TLSEXT_GROUPID_secp256r1, 1);
     if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384)
-        return tls1_check_group_id(s, TLSEXT_curve_P_384, 1);
+        return tls1_check_group_id(s, TLSEXT_GROUPID_secp384r1, 1);
 
     return 0;
 }
@@ -642,6 +685,9 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ecdsa_secp521r1_sha512,
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
+    TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
+    TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
+    TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
 #endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
@@ -706,6 +752,15 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {NULL, TLSEXT_SIGALG_ecdsa_sha1,
      NID_sha1, SSL_MD_SHA1_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
      NID_ecdsa_with_SHA1, NID_undef},
+    {"ecdsa_brainpoolP256r1_sha256", TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256,
+     NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA256, NID_brainpoolP256r1},
+    {"ecdsa_brainpoolP384r1_sha384", TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384,
+     NID_sha384, SSL_MD_SHA384_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA384, NID_brainpoolP384r1},
+    {"ecdsa_brainpoolP512r1_sha512", TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512,
+     NID_sha512, SSL_MD_SHA512_IDX, EVP_PKEY_EC, SSL_PKEY_ECC,
+     NID_ecdsa_with_SHA512, NID_brainpoolP512r1},
 #endif
     {"rsa_pss_rsae_sha256", TLSEXT_SIGALG_rsa_pss_rsae_sha256,
      NID_sha256, SSL_MD_SHA256_IDX, EVP_PKEY_RSA_PSS, SSL_PKEY_RSA,
