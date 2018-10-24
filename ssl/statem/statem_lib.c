@@ -2165,8 +2165,14 @@ int check_in_list(SSL *s, uint16_t group_id, const uint16_t *groups,
     if (groups == NULL || num_groups == 0)
         return 0;
 
+    if (checkallow == 1)
+        group_id = ssl_group_id_tls13_to_internal(group_id);
+
     for (i = 0; i < num_groups; i++) {
         uint16_t group = groups[i];
+
+        if (checkallow == 2)
+            group = ssl_group_id_tls13_to_internal(group);
 
         if (group_id == group
                 && (!checkallow

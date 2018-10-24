@@ -2169,6 +2169,9 @@ typedef enum downgrade_en {
 
 #define TLSEXT_SIGALG_ed25519                                   0x0807
 #define TLSEXT_SIGALG_ed448                                     0x0808
+#define TLSEXT_SIGALG_ecdsa_brainpoolP256r1_sha256              0x081a
+#define TLSEXT_SIGALG_ecdsa_brainpoolP384r1_sha384              0x081b
+#define TLSEXT_SIGALG_ecdsa_brainpoolP512r1_sha512              0x081c
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00
@@ -2642,6 +2645,8 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
+__owur uint16_t ssl_group_id_internal_to_tls13(uint16_t curve_id);
+__owur uint16_t ssl_group_id_tls13_to_internal(uint16_t curve_id);
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);

@@ -224,6 +224,21 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
 
         if (tls_valid_group(s, ctmp, min_version, max_version, 0, &okfortls13)
                 && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
+#ifndef OPENSSL_NO_TLS1_3
+            int ctmp13 = ssl_group_id_internal_to_tls13(ctmp);
+
+            if (ctmp13 != 0 && ctmp13 != ctmp
+                    && max_version == TLS1_3_VERSION) {
+                if (!WPACKET_put_bytes_u16(pkt, ctmp13)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return EXT_RETURN_FAIL;
+                }
+                tls13added++;
+                added++;
+                if (min_version == TLS1_3_VERSION)
+                    continue;
+            }
+#endif
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
@@ -622,7 +637,7 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
     }
 
     /* Create KeyShareEntry */
-    if (!WPACKET_put_bytes_u16(pkt, curve_id)
+    if (!WPACKET_put_bytes_u16(pkt, ssl_group_id_internal_to_tls13(curve_id))
             || !WPACKET_sub_memcpy_u16(pkt, encoded_point, encodedlen)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -675,6 +690,8 @@ EXT_RETURN tls_construct_ctos_key_share(SSL *s, WPACKET *pkt,
         curve_id = s->s3.group_id;
     } else {
         for (i = 0; i < num_groups; i++) {
+            if (ssl_group_id_internal_to_tls13(pgroups[i]) == 0)
+                continue;
 
             if (!tls_group_allowed(s, pgroups[i], SSL_SECOP_CURVE_SUPPORTED))
                 continue;
@@ -1747,6 +1764,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    group_id = ssl_group_id_tls13_to_internal(group_id);
     if ((context & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0) {
         const uint16_t *pgroups = NULL;
         size_t i, num_groups;
