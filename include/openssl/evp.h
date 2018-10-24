@@ -987,8 +987,9 @@ void EVP_MD_do_all_sorted(void (*fn)
 
 /* MAC stuff */
 
-# define EVP_MAC_CMAC   NID_cmac
-# define EVP_MAC_HMAC   NID_hmac
+# define EVP_MAC_CMAC           NID_cmac
+# define EVP_MAC_HMAC           NID_hmac
+# define EVP_MAC_SIPHASH        NID_siphash
 
 EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
 EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
