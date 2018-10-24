@@ -150,6 +150,7 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
      "PKCS5_v2_PBKDF2_keyivgen"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN, 0),
      "PKCS5_v2_scrypt_keyivgen"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_PKEY_MAC_INIT, 0), "pkey_mac_init"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_PKEY_SET_TYPE, 0), "pkey_set_type"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_RC2_MAGIC_TO_METH, 0), "rc2_magic_to_meth"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_RC5_CTRL, 0), "rc5_ctrl"},
