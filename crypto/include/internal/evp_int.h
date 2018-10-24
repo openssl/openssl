@@ -129,6 +129,7 @@ struct evp_mac_st {
 };
 
 extern const EVP_MAC cmac_meth;
+extern const EVP_MAC hmac_meth;
 
 /*
  * This function is internal for now, but can be made external when needed.
