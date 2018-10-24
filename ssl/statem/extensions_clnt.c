@@ -128,6 +128,10 @@ static int use_ecc(SSL *s)
     for (i = 0; i < end; i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
 
+        /* Skip disabled ciphers */
+        if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+            continue;
+
         alg_k = c->algorithm_mkey;
         alg_a = c->algorithm_auth;
         if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
