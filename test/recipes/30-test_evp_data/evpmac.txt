@@ -118,7 +118,7 @@ Key = 000102030405060708090A0B0C0D0E0F
 Input = 0001020304050607
 Output = 3b62a9ba6258f5610f83e264f31497b4
 
-MAC = SipHash
+MAC = SipHash by EVP_PKEY
 Key = 000102030405060708090A0B0C0D0E0F
 Input = 000102030405060708
 Output = 264499060ad9baabc47f8b02bb6d71ed
@@ -158,6 +158,14 @@ MAC = SipHash
 Ctrl = digestsize:13
 Key = 000102030405060708090A0B0C0D0E0F
 Result = MAC_CTRL_ERROR
+
+# SIPHASH - default values: 2,4 rounds, explicit 13-byte mac (invalid size)
+# by EVP_PKEY this time
+
+MAC = SipHash by EVP_PKEY
+Ctrl = digestsize:13
+Key = 000102030405060708090A0B0C0D0E0F
+Result = EVPPKEYCTXCTRL_ERROR
 
 Title = HMAC tests (from RFC2104 and others)
 
