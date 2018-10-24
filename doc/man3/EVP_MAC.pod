@@ -326,7 +326,8 @@ F<./foo>)
 
 =head1 SEE ALSO
 
-L<EVP_MAC_CMAC(7)>
+L<EVP_MAC_CMAC(7)>,
+L<EVP_MAC_HMAC(7)>
 
 =head1 COPYRIGHT
 
