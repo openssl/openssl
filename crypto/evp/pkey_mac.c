@@ -327,15 +327,8 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
     return EVP_MAC_ctrl_str(hctx->ctx, type, value);
 }
 
-/*
- * When this is actually used, the following will be replaced with real
- * EVP_PKEY_METHODs, all exactly the same apart from the type and possibly
- * the flags.
- */
-
-extern const EVP_PKEY_METHOD FAKE_pkey_meth;
-const EVP_PKEY_METHOD FAKE_pkey_meth = {
-    20870442 /* EVP_PKEY_FAKE, a beast times 31337 (you do the math) */,
+const EVP_PKEY_METHOD cmac_pkey_meth = {
+    EVP_PKEY_CMAC,
     EVP_PKEY_FLAG_SIGCTX_CUSTOM,
     pkey_mac_init,
     pkey_mac_copy,
