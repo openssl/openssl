@@ -2799,10 +2799,16 @@ print <<"EOF";
 
 **********************************************************************
 ***                                                                ***
-***   If you want to report a building issue, please include the   ***
-***   output from this command:                                    ***
+***   OpenSSL has been successfully configured                     ***
 ***                                                                ***
-***     perl configdata.pm --dump                                  ***
+***   If you encounter a problem during building, please open an   ***
+***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
+***   and include the output from the following command:           ***
+***                                                                ***
+***       perl configdata.pm --dump                                ***
+***                                                                ***
+***   (If you are new to OpenSSL, you might want to consult the    ***
+***   'Troubleshooting' section in the INSTALL file first.)        ***
 ***                                                                ***
 **********************************************************************
 EOF
