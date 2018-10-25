@@ -2808,7 +2808,7 @@ print <<"EOF";
 ***       perl configdata.pm --dump                                ***
 ***                                                                ***
 ***   (If you are new to OpenSSL, you might want to consult the    ***
-***   'Troubleshooting' section in the INSTALL file first.)        ***
+***   'Troubleshooting' section in the INSTALL file first)         ***
 ***                                                                ***
 **********************************************************************
 EOF
