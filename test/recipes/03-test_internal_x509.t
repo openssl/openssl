@@ -13,7 +13,4 @@ use OpenSSL::Test::Utils;
 
 setup("test_internal_x509");
 
-plan skip_all => "This test is unsupported in a shared library build on Windows"
-    if $^O eq 'MSWin32' && !disabled("shared");
-
 simple_test("test_internal_x509", "x509_internal_test");
