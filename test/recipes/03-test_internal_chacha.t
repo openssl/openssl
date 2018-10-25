@@ -13,7 +13,4 @@ use OpenSSL::Test::Utils;
 
 setup("test_internal_chacha");
 
-plan skip_all => "This test is unsupported in a shared library build on Windows"
-    if $^O eq 'MSWin32' && !disabled("shared");
-
 simple_test("test_internal_chacha", "chacha_internal_test", "chacha");
