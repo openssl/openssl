@@ -2801,7 +2801,7 @@ print <<"EOF";
 ***                                                                ***
 ***   OpenSSL has been successfully configured                     ***
 ***                                                                ***
-***   If you encounter a problem during building, please open an   ***
+***   If you encounter a problem while building, please open an    ***
 ***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
 ***   and include the output from the following command:           ***
 ***                                                                ***
