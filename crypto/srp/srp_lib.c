@@ -44,13 +44,13 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N)
 
 static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g)
 {
-    /* k = SHA1(N | PAD(g)) -- tls-srp draft 8 */
+    /* k = SHA1(N | PAD(g)) -- tls-srp RFC 5054 */
     return srp_Calc_xy(N, g, N);
 }
 
 BIGNUM *SRP_Calc_u(const BIGNUM *A, const BIGNUM *B, const BIGNUM *N)
 {
-    /* k = SHA1(PAD(A) || PAD(B) ) -- tls-srp draft 8 */
+    /* u = SHA1(PAD(A) || PAD(B) ) -- tls-srp RFC 5054 */
     return srp_Calc_xy(A, B, N);
 }
 
@@ -254,13 +254,13 @@ static SRP_gN knowngN[] = {
 
 /*
  * Check if G and N are known parameters. The values have been generated
- * from the ietf-tls-srp draft version 8
+ * from the IETF RFC 5054
  */
 char *SRP_check_known_gN_param(const BIGNUM *g, const BIGNUM *N)
 {
     size_t i;
     if ((g == NULL) || (N == NULL))
-        return 0;
+        return NULL;
 
     for (i = 0; i < KNOWN_GN_NUMBER; i++) {
         if (BN_cmp(knowngN[i].g, g) == 0 && BN_cmp(knowngN[i].N, N) == 0)

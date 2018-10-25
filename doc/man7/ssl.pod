@@ -375,6 +375,20 @@ Use the file path to locate trusted CA certificates.
 
 =item void B<SSL_CTX_set_session_cache_mode>(SSL_CTX *ctx, int mode);
 
+=item int B<SSL_CTX_set_srp_cb_arg>(SSL_CTX *ctx, void *arg);
+
+=item int B<SSL_CTX_set_srp_client_pwd_callback>(SSL_CTX *ctx, char *(*cb)(SSL *ssl, void *arg));
+
+=item int B<SSL_CTX_set_srp_password>(SSL_CTX *ctx, char *password);
+
+=item int B<SSL_CTX_set_srp_strength>(SSL_CTX *ctx, int strength);
+
+=item int B<SSL_CTX_set_srp_username>(SSL_CTX *ctx, char *name);
+
+=item int B<SSL_CTX_set_srp_username_callback>(SSL_CTX *ctx, int (*cb)(SSL *ssl, int *ad, void *arg));
+
+=item int B<SSL_CTX_set_srp_verify_param_callback>(SSL_CTX *ctx, int (*cb)(SSL *ssl, void *arg));
+
 =item int B<SSL_CTX_set_ssl_version>(SSL_CTX *ctx, const SSL_METHOD *meth);
 
 =item void B<SSL_CTX_set_timeout>(SSL_CTX *ctx, long t);
@@ -582,6 +596,14 @@ fresh handle for each connection.
 
 =item int B<SSL_get_shutdown>(const SSL *ssl);
 
+=item BIGNUM *B<SSL_get_srp_g>(SSL *ssl);
+
+=item BIGNUM *B<SSL_get_srp_N>(SSL *ssl);
+
+=item char *B<SSL_get_srp_userinfo>(SSL *ssl);
+
+=item char *B<SSL_get_srp_username>(SSL *ssl);
+
 =item const SSL_METHOD *B<SSL_get_ssl_method>(SSL *ssl);
 
 =item int B<SSL_get_state>(const SSL *ssl);
@@ -673,6 +695,10 @@ fresh handle for each connection.
 =item int B<SSL_set_session>(SSL *ssl, SSL_SESSION *session);
 
 =item void B<SSL_set_shutdown>(SSL *ssl, int mode);
+
+=item int B<SSL_set_srp_server_param>(SSL *ssl, const BIGNUM *N, const BIGNUM *g, BIGNUM *sa, BIGNUM *v, char *info);
+
+=item int B<SSL_set_srp_server_param_pw>(SSL *ssl, const char *user, const char *pass, const char *grp);
 
 =item int B<SSL_set_ssl_method>(SSL *ssl, const SSL_METHOD *meth);
 
@@ -790,6 +816,7 @@ L<SSL_CTX_set_read_ahead(3)>,
 L<SSL_CTX_set_security_level(3)>,
 L<SSL_CTX_set_session_cache_mode(3)>,
 L<SSL_CTX_set_session_id_context(3)>,
+L<SSL_CTX_set_srp_password(3)>,
 L<SSL_CTX_set_ssl_version(3)>,
 L<SSL_CTX_set_timeout(3)>,
 L<SSL_CTX_set_tmp_dh_callback(3)>,
