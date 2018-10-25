@@ -4592,7 +4592,6 @@ EVP_MAC_ctrl_str                        4545	1_1_2	EXIST::FUNCTION:
 EVP_MAC_str2ctrl                        4546	1_1_2	EXIST::FUNCTION:
 EVP_MAC_hex2ctrl                        4547	1_1_2	EXIST::FUNCTION:
 EVP_MAC_nid                             4548	1_1_2	EXIST::FUNCTION:
-EVP_add_mac                             4549	1_1_2	EXIST::FUNCTION:
-EVP_get_macbyname                       4550	1_1_2	EXIST::FUNCTION:
-EVP_MAC_do_all                          4551	1_1_2	EXIST::FUNCTION:
-EVP_MAC_do_all_sorted                   4552	1_1_2	EXIST::FUNCTION:
+EVP_get_macbyname                       4549	1_1_2	EXIST::FUNCTION:
+EVP_MAC_do_all                          4550	1_1_2	EXIST::FUNCTION:
+EVP_MAC_do_all_sorted                   4551	1_1_2	EXIST::FUNCTION:

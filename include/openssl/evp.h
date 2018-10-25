@@ -1006,7 +1006,6 @@ int EVP_MAC_nid(const EVP_MAC *mac);
 # define EVP_get_macbynid(a)    EVP_get_macbyname(OBJ_nid2sn(a))
 # define EVP_get_macbyobj(a)    EVP_get_macbynid(OBJ_obj2nid(a))
 # define EVP_MAC_name(o)        OBJ_nid2sn(EVP_MAC_nid(o))
-int EVP_add_mac(const EVP_MAC *mac);
 const EVP_MAC *EVP_get_macbyname(const char *name);
 void EVP_MAC_do_all(void (*fn)
                     (const EVP_MAC *ciph, const char *from, const char *to,

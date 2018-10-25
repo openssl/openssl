@@ -128,6 +128,15 @@ struct evp_mac_st {
     int (*ctrl_str) (EVP_MAC_IMPL *macctx, const char *type, const char *value);
 };
 
+/*
+ * This function is internal for now, but can be made external when needed.
+ * The documentation would read:
+ *
+ * EVP_add_mac() adds the MAC implementation C<mac> to the internal
+ * object database.
+ */
+int EVP_add_mac(const EVP_MAC *mac);
+
 struct evp_md_st {
     int type;
     int pkey_type;

@@ -5,7 +5,7 @@
 EVP_MAC, EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_new_id, EVP_MAC_CTX_free,
 EVP_MAC_CTX_copy, EVP_MAC_CTX_mac, EVP_MAC_size, EVP_MAC_init, EVP_MAC_update,
 EVP_MAC_final, EVP_MAC_ctrl, EVP_MAC_vctrl, EVP_MAC_ctrl_str,
-EVP_MAC_str2ctrl, EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name, EVP_add_mac,
+EVP_MAC_str2ctrl, EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name,
 EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
 
 =head1 SYNOPSIS
@@ -31,7 +31,6 @@ EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
  int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
  int EVP_MAC_nid(const EVP_MAC *mac);
  const char *EVP_MAC_name(const EVP_MAC *mac);
- int EVP_add_mac(const EVP_MAC *mac);
  const EVP_MAC *EVP_get_macbyname(const char *name);
  const EVP_MAC *EVP_get_macbynid(int nid);
  const EVP_MAC *EVP_get_macbyobj(const ASN1_OBJECT *o);
@@ -129,10 +128,7 @@ EVP_MAC_nid() returns the numeric identity of the given MAC implementation.
 
 EVP_MAC_name() returns the name of the given MAC implementation.
 
-=head2 Registration functions
-
-EVP_add_mac() adds the MAC implementation C<mac> to the internal
-object database.
+=head2 Object database functions
 
 EVP_get_macbyname() fetches a MAC implementation from the object
 database by name.
