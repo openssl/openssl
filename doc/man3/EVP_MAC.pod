@@ -237,25 +237,25 @@ otherwise B<NULL>.
   #include <string.h>
   #include <stdarg.h>
   #include <unistd.h>
-  
+
   #include <openssl/evp.h>
   #include <openssl/err.h>
-  
+
   int ctrl_ign_unsupported(EVP_MAC_CTX *ctx, int cmd, ...)
   {
       va_list args;
       int rv;
-  
+
       va_start(args, cmd);
       rv = EVP_MAC_vctrl(ctx, cmd, args);
       va_end(args);
-  
+
       if (rv == -2)
           rv = 1;       /* Ignore unsupported, pretend it worked fine */
-  
+
       return rv;
   }
-  
+
   int main() {
       const EVP_MAC *mac =
           EVP_get_macbyname(getenv("MY_MAC"));
@@ -265,13 +265,13 @@ otherwise B<NULL>.
           EVP_get_digestbyname(getenv("MY_MAC_DIGEST"));
       const char *key = getenv("MY_KEY");
       EVP_MAC_CTX *ctx = NULL;
-  
+
       unsigned char buf[4096];
       ssize_t read_l;
       size_t final_l;
-  
+
       size_t i;
-  
+
       if (mac == NULL
           || key == NULL
           || (ctx = EVP_MAC_CTX_new(mac)) == NULL
@@ -281,26 +281,26 @@ otherwise B<NULL>.
               && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_MD, digest))
           || EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY, key, strlen(key)) <= 0)
           goto err;
-  
+
       if (!EVP_MAC_init(ctx))
           goto err;
-  
+
       while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) < 0) {
           if (!EVP_MAC_update(ctx, buf, read_l))
               goto err;
       }
-  
+
       if (!EVP_MAC_final(ctx, buf, &final_l))
           goto err;
-  
+
       printf("Result: ");
       for (i = 0; i < final_l; i++)
           printf("%02X", buf[i]);
       printf("\n");
-  
+
       EVP_MAC_CTX_free(ctx);
       exit(0);
-  
+
    err:
       EVP_MAC_CTX_free(ctx);
       fprintf(stderr, "Something went wrong\n");
