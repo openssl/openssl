@@ -23,7 +23,8 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len,
                          DSA_SIG *sig, DSA *dsa);
 static int dsa_init(DSA *dsa);
 static int dsa_finish(DSA *dsa);
-static BIGNUM *dsa_inverse_mod(const BIGNUM *k, const BIGNUM *q, BN_CTX *ctx);
+static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
+                                      BN_CTX *ctx);
 
 static DSA_METHOD openssl_dsa_meth = {
     "OpenSSL DSA method",
@@ -260,7 +261,7 @@ static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in,
         goto err;
 
     /* Compute  part of 's = inv(k) (m + xr) mod q' */
-    if ((kinv = dsa_inverse_mod(k, dsa->q, ctx)) == NULL)
+    if ((kinv = dsa_mod_inverse_fermat(k, dsa->q, ctx)) == NULL)
         goto err;
 
     BN_clear_free(*kinvp);
@@ -402,7 +403,8 @@ static int dsa_finish(DSA *dsa)
  * so a constant time mod-exp shouldn't be required.  A newly allocated BIGNUM
  * is returned which the caller must free.
  */
-static BIGNUM *dsa_inverse_mod(const BIGNUM *k, const BIGNUM *q, BN_CTX *ctx)
+static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
+                                      BN_CTX *ctx)
 {
     BIGNUM *res = NULL;
     BIGNUM *r, *e;
