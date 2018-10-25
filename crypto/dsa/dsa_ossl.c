@@ -400,8 +400,8 @@ static int dsa_finish(DSA *dsa)
  * Compute the inverse of k modulo q.
  * Since q is prime, Fermat's Little Theorem applies, which reduces this to
  * mod-exp operation.  Both the exponent and modulus are public information
- * so a constant time mod-exp shouldn't be required.  A newly allocated BIGNUM
- * is returned which the caller must free.
+ * so a mod-exp that doesn't leak the base is sufficient.  A newly allocated
+ * BIGNUM is returned which the caller must free.
  */
 static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
                                       BN_CTX *ctx)
@@ -416,7 +416,7 @@ static BIGNUM *dsa_mod_inverse_fermat(const BIGNUM *k, const BIGNUM *q,
     if ((e = BN_CTX_get(ctx)) != NULL
             && BN_set_word(r, 2)
             && BN_sub(e, q, r)
-            && BN_mod_exp(r, k, e, q, ctx))
+            && BN_mod_exp_mont(r, k, e, q, ctx, NULL))
         res = r;
     else
         BN_free(r);
