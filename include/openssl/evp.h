@@ -10,6 +10,8 @@
 #ifndef HEADER_ENVELOPE_H
 # define HEADER_ENVELOPE_H
 
+# include <stdarg.h>
+
 # include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/symhacks.h>
@@ -995,6 +997,7 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx);
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
 int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen);
 int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...);
+int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args);
 int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value);
 int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
 int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);

@@ -3,10 +3,10 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_new_id, EVP_MAC_CTX_free,
-EVP_MAC_CTX_copy, EVP_MAC_CTX_mac, EVP_MAC_reset, EVP_MAC_size, EVP_MAC_init,
-EVP_MAC_update, EVP_MAC_final, EVP_MAC_ctrl, EVP_MAC_ctrl_str, EVP_MAC_str2ctrl,
-EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name, EVP_add_mac, EVP_get_macbyname,
-EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
+EVP_MAC_CTX_copy, EVP_MAC_CTX_mac, EVP_MAC_size, EVP_MAC_init, EVP_MAC_update,
+EVP_MAC_final, EVP_MAC_ctrl, EVP_MAC_vctrl, EVP_MAC_ctrl_str,
+EVP_MAC_str2ctrl, EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name, EVP_add_mac,
+EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
 
 =head1 SYNOPSIS
 
@@ -20,12 +20,12 @@ EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
  void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
  int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
  const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
- int EVP_MAC_reset(EVP_MAC_CTX *ctx);
  size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
  int EVP_MAC_init(EVP_MAC_CTX *ctx);
  int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
  int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen);
  int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...);
+ int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args);
  int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value);
  int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
  int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
@@ -107,6 +107,9 @@ exact expected arguments depend on C<cmd>.  EVP_MAC_ctrl() can be
 called both before and after EVP_MAC_init(), but the effect will
 depend on what control is being use.  See </CONTROLS> below for a
 description of standard controls.
+
+EVP_MAC_vctrl() is the variant of EVP_MAC_ctrl() that takes a
+C<va_list> argument instead of variadic arguments.
 
 EVP_MAC_ctrl_str() is an alternative to EVP_MAC_ctrl() to control the
 MAC implementation as E<lt> C<type>, C<value> E<gt> pairs.  The MAC
@@ -226,6 +229,94 @@ the object database, otherwise 0.
 EVP_get_macbyname(), EVP_get_macbynid() and EVP_get_macbyobj() return
 the request MAC implementation, if it exists in the object database,
 otherwise B<NULL>.
+
+=head1 EXAMPLE
+
+  #include <stdlib.h>
+  #include <stdio.h>
+  #include <string.h>
+  #include <stdarg.h>
+  #include <unistd.h>
+  
+  #include <openssl/evp.h>
+  #include <openssl/err.h>
+  
+  int ctrl_ign_unsupported(EVP_MAC_CTX *ctx, int cmd, ...)
+  {
+      va_list args;
+      int rv;
+  
+      va_start(args, cmd);
+      rv = EVP_MAC_vctrl(ctx, cmd, args);
+      va_end(args);
+  
+      if (rv == -2)
+          rv = 1;       /* Ignore unsupported, pretend it worked fine */
+  
+      return rv;
+  }
+  
+  int main() {
+      const EVP_MAC *mac =
+          EVP_get_macbyname(getenv("MY_MAC"));
+      const EVP_CIPHER *cipher =
+          EVP_get_cipherbyname(getenv("MY_MAC_CIPHER"));
+      const EVP_MD *digest =
+          EVP_get_digestbyname(getenv("MY_MAC_DIGEST"));
+      const char *key = getenv("MY_KEY");
+      EVP_MAC_CTX *ctx = NULL;
+  
+      unsigned char buf[4096];
+      ssize_t read_l;
+      size_t final_l;
+  
+      size_t i;
+  
+      if (mac == NULL
+          || key == NULL
+          || (ctx = EVP_MAC_CTX_new(mac)) == NULL
+          || (cipher != NULL
+              && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_CIPHER, cipher))
+          || (digest != NULL
+              && !ctrl_ign_unsupported(ctx, EVP_MAC_CTRL_SET_MD, digest))
+          || EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY, key, strlen(key)) <= 0)
+          goto err;
+  
+      if (!EVP_MAC_init(ctx))
+          goto err;
+  
+      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) < 0) {
+          if (!EVP_MAC_update(ctx, buf, read_l))
+              goto err;
+      }
+  
+      if (!EVP_MAC_final(ctx, buf, &final_l))
+          goto err;
+  
+      printf("Result: ");
+      for (i = 0; i < final_l; i++)
+          printf("%02X", buf[i]);
+      printf("\n");
+  
+      EVP_MAC_CTX_free(ctx);
+      exit(0);
+  
+   err:
+      EVP_MAC_CTX_free(ctx);
+      fprintf(stderr, "Something went wrong\n");
+      ERR_print_errors_fp(stderr);
+      exit (1);
+  }
+
+A run of this program, called with correct environment variables, can
+look like this:
+
+  $ MY_MAC=cmac MY_KEY=secret0123456789 MY_MAC_CIPHER=aes-128-cbc \
+    LD_LIBRARY_PATH=. ./foo < foo.c
+  Result: ECCAAFF041B22A2299EB90A1B53B6D45
+
+(in this example, that program was stored in F<foo.c> and compiled to
+F<./foo>)
 
 =head1 SEE ALSO
 

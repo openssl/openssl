@@ -112,12 +112,23 @@ int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...)
     int ok = -1;
     va_list args;
 
-    if (ctx == NULL || ctx->meth == NULL) {
-        EVPerr(EVP_F_EVP_MAC_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
-    }
-
     va_start(args, cmd);
+    ok = EVP_MAC_vctrl(ctx, cmd, args);
+    va_end(args);
+
+    if (ok == -2)
+        EVPerr(EVP_F_EVP_MAC_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+
+    return ok;
+}
+
+int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args)
+{
+    int ok = 1;
+
+    if (ctx == NULL || ctx->meth == NULL)
+        return -2;
+
     switch (cmd) {
 #if 0
     case ...:
@@ -132,10 +143,7 @@ int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...)
             ok = -2;
         break;
     }
-    va_end(args);
 
-    if (ok == -2)
-        EVPerr(EVP_F_EVP_MAC_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
     return ok;
 }
 
