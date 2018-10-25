@@ -40,6 +40,8 @@
 
  sub lib {
      (my $lib = shift) =~ s/\.a$//;
+     $lib .= '_static'
+         if (defined $unified_info{sharednames}->{$lib});
      return $lib . $libext;
  }
 
@@ -74,7 +76,7 @@ MINOR={- $config{minor} -}
 
 SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
 
-LIBS={- join(" ", map { lib($_) } @{$unified_info{libraries}}) -}
+LIBS={- join(" ", map { ( shlib_import($_), lib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{libraries}}) -}
 ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
@@ -92,7 +94,7 @@ GENERATED={- # common0.tmpl provides @generated
              join(" ", map { (my $x = $_) =~ s|\.[sS]$|.asm|; $x }
                        @generated) -}
 
-INSTALL_LIBS={- join(" ", map { quotify1(lib($_)) } @{$unified_info{install}->{libraries}}) -}
+INSTALL_LIBS={- join(" ", map { quotify1(shlib_import($_) or lib($_)) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBS={- join(" ", map { quotify_l(shlib($_)) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; quotify_l(shlib($_)) } @{$unified_info{install}->{libraries}}) -}
 INSTALL_ENGINES={- join(" ", map { quotify1(dso($_)) } @{$unified_info{install}->{engines}}) -}
@@ -486,11 +488,6 @@ reconfigure reconf:
      if ($disabled{shared}) {
 	 return map { lib($_) } @_;
      }
-     foreach (@_) {
-         (my $l = $_) =~ s/\.a$//;
-         die "Linking with static variants of shared libraries is not supported in this configuration\n"
-             if $l ne $_ && shlib($l);
-     }
      return map { shlib_import($_) or lib($_) } @_;
  }
 
@@ -677,20 +674,13 @@ EOF
  }
  sub obj2lib {
      my %args = @_;
-     my $lib = $args{lib};
-
-     # Because static libs and import libs are both named the same in native
-     # Windows, we can't have both.  We skip the static lib in that case,
-     # as the shared libs are what we use anyway.
-     return "" unless $disabled{"shared"} || $lib =~ /\.a$/;
-
-     $lib =~ s/\.a$//;
+     my $lib = lib($args{lib});
      my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
      my $objs = join("\n", @objs);
      my $deps = join(" ", @objs);
      return <<"EOF";
-$lib$libext: $deps
-	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib$libext @<<
+$lib: $deps
+	\$(AR) \$(ARFLAGS) \$(AROUTFLAG)$lib @<<
 $objs
 <<
 EOF
