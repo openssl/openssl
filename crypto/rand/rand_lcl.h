@@ -16,6 +16,7 @@
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
+# include "internal/tsan_assist.h"
 
 # include "internal/numbers.h"
 
@@ -80,7 +81,7 @@ typedef enum drbg_status_e {
 } DRBG_STATUS;
 
 
-/* intantiate */
+/* instantiate */
 typedef int (*RAND_DRBG_instantiate_fn)(RAND_DRBG *ctx,
                                         const unsigned char *ent,
                                         size_t entlen,
@@ -94,7 +95,7 @@ typedef int (*RAND_DRBG_reseed_fn)(RAND_DRBG *ctx,
                                    size_t entlen,
                                    const unsigned char *adin,
                                    size_t adinlen);
-/* generat output */
+/* generate output */
 typedef int (*RAND_DRBG_generate_fn)(RAND_DRBG *ctx,
                                      unsigned char *out,
                                      size_t outlen,
@@ -167,7 +168,7 @@ struct rand_drbg_st {
     int type; /* the nid of the underlying algorithm */
     /*
      * Stores the value of the rand_fork_count global as of when we last
-     * reseeded.  The DRG reseeds automatically whenever drbg->fork_count !=
+     * reseeded.  The DRBG reseeds automatically whenever drbg->fork_count !=
      * rand_fork_count.  Used to provide fork-safety and reseed this DRBG in
      * the child process.
      */
@@ -207,8 +208,12 @@ struct rand_drbg_st {
     size_t min_noncelen, max_noncelen;
     size_t max_perslen, max_adinlen;
 
-    /* Counts the number of generate requests since the last reseed. */
-    unsigned int generate_counter;
+    /*
+     * Counts the number of generate requests since the last reseed
+     * (Starts at 1). This value is the reseed_counter as defined in
+     * NIST SP 800-90Ar1
+     */
+    unsigned int reseed_gen_counter;
     /*
      * Maximum number of generate requests until a reseed is required.
      * This value is ignored if it is zero.
@@ -231,7 +236,8 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    unsigned int reseed_counter;
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    unsigned int reseed_next_counter;
 
     size_t seedlen;
     DRBG_STATUS state;
