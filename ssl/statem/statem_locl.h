@@ -61,7 +61,8 @@ int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
                                   size_t hashlen, const unsigned char *hrr,
                                   size_t hrrlen);
 int parse_ca_names(SSL *s, PACKET *pkt);
-int construct_ca_names(SSL *s, WPACKET *pkt);
+const STACK_OF(X509_NAME) *get_ca_names(SSL *s);
+int construct_ca_names(SSL *s, const STACK_OF(X509_NAME) *ca_sk, WPACKET *pkt);
 size_t construct_key_exchange_tbs(SSL *s, unsigned char **ptbs,
                                   const void *param, size_t paramlen);
 
