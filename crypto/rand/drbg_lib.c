@@ -357,15 +357,6 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         drbg->cleanup_entropy(drbg, entropy, entropylen);
     if (nonce != NULL && drbg->cleanup_nonce != NULL)
         drbg->cleanup_nonce(drbg, nonce, noncelen);
-    if (drbg->pool != NULL) {
-        if (drbg->state == DRBG_READY) {
-            RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
-                    RAND_R_ERROR_ENTROPY_POOL_WAS_IGNORED);
-            drbg->state = DRBG_ERROR;
-        }
-        rand_pool_free(drbg->pool);
-        drbg->pool = NULL;
-    }
     if (drbg->state == DRBG_READY)
         return 1;
     return 0;
@@ -555,14 +546,8 @@ int rand_drbg_restart(RAND_DRBG *drbg,
         }
     }
 
-    /* check whether a given entropy pool was cleared properly during reseed */
-    if (drbg->pool != NULL) {
-        drbg->state = DRBG_ERROR;
-        RANDerr(RAND_F_RAND_DRBG_RESTART, ERR_R_INTERNAL_ERROR);
-        rand_pool_free(drbg->pool);
-        drbg->pool = NULL;
-        return 0;
-    }
+    rand_pool_free(drbg->pool);
+    drbg->pool = NULL;
 
     return drbg->state == DRBG_READY;
 }

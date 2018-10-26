@@ -204,11 +204,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     }
 
  err:
-    /* we need to reset drbg->pool in the error case */
-    if (ret == 0 && drbg->pool != NULL)
-        drbg->pool = NULL;
-
-    rand_pool_free(pool);
+    if (drbg->pool == NULL)
+        rand_pool_free(pool);
     return ret;
 }
 
@@ -221,8 +218,6 @@ void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
 {
     if (drbg->pool == NULL)
         OPENSSL_secure_clear_free(out, outlen);
-    else
-        drbg->pool = NULL;
 }
 
 
@@ -547,6 +542,8 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
 {
     unsigned char *ret = pool->buffer;
     pool->buffer = NULL;
+    pool->len = 0;
+    pool->entropy = 0;
     return ret;
 }
 
