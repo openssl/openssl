@@ -73,8 +73,6 @@ static KEY_LIST *public_keys;
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
-static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
-                          const char *value);
 
 /*
  * Compare two memory regions for equality, returning zero if they differ.
@@ -953,6 +951,28 @@ static int mac_test_parse(EVP_TEST *t,
     return 0;
 }
 
+static int mac_test_ctrl_pkey(EVP_TEST *t, EVP_PKEY_CTX *pctx,
+                              const char *value)
+{
+    int rv;
+    char *p, *tmpval;
+
+    if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
+        return 0;
+    p = strchr(tmpval, ':');
+    if (p != NULL)
+        *p++ = '\0';
+    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    if (rv == -2)
+        t->err = "PKEY_CTRL_INVALID";
+    else if (rv <= 0)
+        t->err = "PKEY_CTRL_ERROR";
+    else
+        rv = 1;
+    OPENSSL_free(tmpval);
+    return rv > 0;
+}
+
 static int mac_test_run_pkey(EVP_TEST *t)
 {
     MAC_DATA *expected = t->data;
@@ -1004,8 +1024,8 @@ static int mac_test_run_pkey(EVP_TEST *t)
         goto err;
     }
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++)
-        if (!pkey_test_ctrl(t, pctx,
-                            sk_OPENSSL_STRING_value(expected->controls, i))) {
+        if (!mac_test_ctrl(t, pctx,
+                           sk_OPENSSL_STRING_value(expected->controls, i))) {
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
@@ -2766,8 +2786,8 @@ top:
                 return 0;
             }
             if (rv < 0) {
-                TEST_info("Line %d: error processing keyword %s\n",
-                        t->s.curr, pp->key);
+                TEST_info("Line %d: error processing keyword %s = %s\n",
+                          t->s.curr, pp->key, pp->value);
                 return 0;
             }
         }
