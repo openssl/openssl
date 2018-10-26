@@ -34,6 +34,11 @@ the chosen B<ssl>, overriding the setting valid for B<ssl>'s SSL_CTX object.
 
 =head1 NOTES
 
+These functions are similar to L<SSL_CTX_set0_CA_list(3)> and similar functions
+but only have an effect on the server side. These functions are present for
+backwards compatibility. L<SSL_CTX_set0_CA_list(3)> and similar functions should
+be used in preference.
+
 When a TLS/SSL server requests a client certificate (see
 B<SSL_CTX_set_verify(3)>), it sends a list of CAs, for which
 it will accept certificates, to the client.

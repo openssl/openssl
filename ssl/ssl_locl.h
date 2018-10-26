@@ -854,9 +854,11 @@ struct ssl_ctx_st {
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for
-     * earlier versions.
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
      */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1233,8 +1235,14 @@ struct ssl_st {
     long verify_result;
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
-    /* for server side, keep the list of CA_dn we can use */
+    /*
+     * What we put in certificate_authorities extension for TLS 1.3
+     * (ClientHello and CertificateRequest) or just client cert requests for
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
+     */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;

@@ -48,7 +48,10 @@ has sent.
 =head1 NOTES
 
 These functions are generalised versions of the client authentication
-CA list functions such as L<SSL_CTX_set_client_CA_list(3)>.
+CA list functions such as L<SSL_CTX_set_client_CA_list(3)>. If both these
+and L<SSL_CTX_set_client_CA_list(3)> or similar functions are used, then the
+latter functions take priority on the server side (they are ignored on the
+client side).
 
 For TLS versions before 1.3 the list of CA names is only sent from the server
 to client when requesting a client certificate. So any list of CA names set
