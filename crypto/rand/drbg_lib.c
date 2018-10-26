@@ -341,13 +341,13 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     drbg->state = DRBG_READY;
-    drbg->generate_counter = 0;
+    drbg->reseed_gen_counter = 0;
     drbg->reseed_time = time(NULL);
-    if (drbg->reseed_counter > 0) {
+    if (drbg->reseed_prop_counter > 0) {
         if (drbg->parent == NULL)
-            drbg->reseed_counter++;
+            drbg->reseed_prop_counter++;
         else
-            drbg->reseed_counter = drbg->parent->reseed_counter;
+            drbg->reseed_prop_counter = drbg->parent->reseed_prop_counter;
     }
 
  end:
@@ -438,13 +438,13 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
         goto end;
 
     drbg->state = DRBG_READY;
-    drbg->generate_counter = 0;
+    drbg->reseed_gen_counter = 0;
     drbg->reseed_time = time(NULL);
-    if (drbg->reseed_counter > 0) {
+    if (drbg->reseed_prop_counter > 0) {
         if (drbg->parent == NULL)
-            drbg->reseed_counter++;
+            drbg->reseed_prop_counter++;
         else
-            drbg->reseed_counter = drbg->parent->reseed_counter;
+            drbg->reseed_prop_counter = drbg->parent->reseed_prop_counter;
     }
 
  end:
@@ -607,7 +607,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
     }
 
     if (drbg->reseed_interval > 0) {
-        if (drbg->generate_counter >= drbg->reseed_interval)
+        if (drbg->reseed_gen_counter >= drbg->reseed_interval)
             reseed_required = 1;
     }
     if (drbg->reseed_time_interval > 0) {
@@ -616,8 +616,8 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
             reseed_required = 1;
     }
-    if (drbg->reseed_counter > 0 && drbg->parent != NULL) {
-        if (drbg->reseed_counter != drbg->parent->reseed_counter)
+    if (drbg->reseed_prop_counter > 0 && drbg->parent != NULL) {
+        if (drbg->reseed_prop_counter != drbg->parent->reseed_prop_counter)
             reseed_required = 1;
     }
 
@@ -636,7 +636,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
         return 0;
     }
 
-    drbg->generate_counter++;
+    drbg->reseed_gen_counter++;
 
     return 1;
 }
@@ -866,7 +866,7 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
         goto err;
 
     /* enable seed propagation */
-    drbg->reseed_counter = 1;
+    drbg->reseed_prop_counter = 1;
 
     /*
      * Ignore instantiation error to support just-in-time instantiation.
