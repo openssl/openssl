@@ -41,11 +41,11 @@ These types and functions help the application to calculate MACs of
 different types and with different underlying algorithms if there are
 any.
 
-MACs are a bit complex insofar that some of them use other other
-algorithms for actual computation.  HMAC uses a digest, and CMAC uses
-a cipher.  Therefore, there are sometimes two contexts to keep track
-of, one for the MAC algorithm itself and one for the underlying
-computation algorithm if there is one.
+MACs are a bit complex insofar that some of them use other algorithms
+for actual computation.  HMAC uses a digest, and CMAC uses a cipher.
+Therefore, there are sometimes two contexts to keep track of, one for
+the MAC algorithm itself and one for the underlying computation
+algorithm if there is one.
 
 To make things less ambiguous, this manual talks about a "context" or
 "MAC context", which is to denote the MAC level context, and about a
@@ -64,16 +64,18 @@ rely on an underlying computation algorithm.
 
 EVP_MAC_CTX_new() creates a new context for the MAC type C<mac>.
 EVP_MAC_CTX_new_id() creates a new context for the numerical MAC
-identity <nid>.  The created context can then be used with most other
-functions described here.
+identity <nid>.
+The created context can then be used with most other functions
+described here.
 
 EVP_MAC_CTX_free() frees the contents of the context, including an
 underlying context if there is one, as well as the context itself.
 B<NULL> is a valid parameter, for which this function is a no-op.
 
 EVP_MAC_CTX_copy() makes a deep copy of the C<src> context to the
-C<dest> context.  The C<dest> context I<must> have been created before
-calling this function.
+C<dest> context.
+The C<dest> context I<must> have been created before calling this
+function.
 
 EVP_MAC_CTX_mac() returns the B<EVP_MAC> associated with the context
 C<ctx>.
@@ -81,44 +83,49 @@ C<ctx>.
 =head2 Computing functions
 
 EVP_MAC_init() sets up the underlying context with information given
-through diverse controls.  This should be called before calling
-EVP_MAC_update() and EVP_MAC_final().
+through diverse controls.
+This should be called before calling EVP_MAC_update() and
+EVP_MAC_final().
 
-EVP_MAC_reset() resets the computation for the given context.  This
-may not be supported by the MAC implementation.
+EVP_MAC_reset() resets the computation for the given context.
+This may not be supported by the MAC implementation.
 
 EVP_MAC_update() adds C<datalen> bytes from C<data> to the MAC input.
 
 EVP_MAC_final() does the final computation and stores the result in
 the memory pointed at by C<out>, and sets its size in the B<size_t>
-the C<poutlen> points at.  If C<out> is B<NULL>, then no computation
-is made.  To figure out what the output length will be and allocate
-space for it dynamically, simply call with C<out> being B<NULL> and
-C<poutlen> pointing at a valid location, then allocate space and make
-a second call with C<out> pointing at the allocated space.
+the C<poutlen> points at.
+If C<out> is B<NULL>, then no computation is made.
+To figure out what the output length will be and allocate space for it
+dynamically, simply call with C<out> being B<NULL> and C<poutlen>
+pointing at a valid location, then allocate space and make a second
+call with C<out> pointing at the allocated space.
 
 EVP_MAC_ctrl() is used to manipulate or get information on aspects of
 the MAC which may vary depending on the MAC algorithm or its
-implementation.  This includes the MAC key, and for MACs that use
-other algorithms to do their computation, this is also the way to tell
-it which one to use.  This functions takes variable arguments, the
-exact expected arguments depend on C<cmd>.  EVP_MAC_ctrl() can be
-called both before and after EVP_MAC_init(), but the effect will
-depend on what control is being use.  See </CONTROLS> below for a
-description of standard controls.
+implementation.
+This includes the MAC key, and for MACs that use other algorithms to
+do their computation, this is also the way to tell it which one to
+use.
+This functions takes variable arguments, the exact expected arguments
+depend on C<cmd>.
+EVP_MAC_ctrl() can be called both before and after EVP_MAC_init(), but
+the effect will depend on what control is being use.
+See </CONTROLS> below for a description of standard controls.
 
 EVP_MAC_vctrl() is the variant of EVP_MAC_ctrl() that takes a
 C<va_list> argument instead of variadic arguments.
 
 EVP_MAC_ctrl_str() is an alternative to EVP_MAC_ctrl() to control the
-MAC implementation as E<lt> C<type>, C<value> E<gt> pairs.  The MAC
-implementation documentation should specify what control type strings
-are accepted.
+MAC implementation as E<lt> C<type>, C<value> E<gt> pairs.
+The MAC implementation documentation should specify what control type
+strings are accepted.
 
 EVP_MAC_str2ctrl() and EVP_MAC_hex2ctrl() are helper functions to
 control the MAC implementation with raw strings or with strings
-containing hexadecimal numbers.  The latter are decoded into
-bitstrings that are sent on to EVP_MAC_ctrl().
+containing hexadecimal numbers.
+The latter are decoded into bitstrings that are sent on to
+EVP_MAC_ctrl().
 
 =head2 Information functions
 
@@ -160,8 +167,8 @@ B<EVP_MAC_CTRL_SET_MD> and B<EVP_MAC_CTRL_SET_CIPHER> below.
 
 This control expects one arguments: C<unsigned long flags>
 
-These will set the MAC flags to the given numbers.  Some MACs do not
-support this option.
+These will set the MAC flags to the given numbers.
+Some MACs do not support this option.
 
 =item B<EVP_MAC_CTRL_SET_ENGINE>
 
@@ -182,14 +189,15 @@ B<EVP_MAC_CTRL_SET_CIPHER> takes one argument: C<EVP_CIPHER *>
 =item B<EVP_MAC_CTRL_SET_SIZE>
 
 For MAC implementations that support it, set the output size that
-EVP_MAC_final() should produce.  The allowed sizes vary between MAC
-implementations.
+EVP_MAC_final() should produce.
+The allowed sizes vary between MAC implementations.
 
 =back
 
 All these control should be used before the calls to any of
 EVP_MAC_init(), EVP_MAC_update() and EVP_MAC_final() for a full
-computation.  Anything else may give undefined results.
+computation.
+Anything else may give undefined results.
 
 =head1 NOTES
 
@@ -208,11 +216,13 @@ and EVP_MAC_final() return 1 on success, 0 on error.
 
 EVP_MAC_ctrl(), EVP_MAC_ctrl_str(), EVP_MAC_str2ctrl() and
 EVP_MAC_hex2ctrl() return 1 on success and 0 or a negative value on
-error.  In particular, the value -2 indicates that the given control
-type isn't supported by the MAC implementation.
+error.
+In particular, the value -2 indicates that the given control type
+isn't supported by the MAC implementation.
 
 EVP_MAC_size() returns the expected output size, or 0 if it isn't
-set.  If it isn't set, a call to EVP_MAC_init() should get it set.
+set.
+If it isn't set, a call to EVP_MAC_init() should get it set.
 
 EVP_MAC_nid() returns the numeric identity for the given C<mac>.
 

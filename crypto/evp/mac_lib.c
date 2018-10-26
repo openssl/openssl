@@ -29,11 +29,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac)
 {
     EVP_MAC_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_MAC_CTX));
 
-    /* Dummy check that there is a freeing function as well */
-    mac->free(NULL);
-
-    if (ctx == NULL
-        || (ctx->data = mac->new()) == NULL) {
+    if (ctx == NULL || (ctx->data = mac->new()) == NULL) {
         EVPerr(EVP_F_EVP_MAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(ctx);
         ctx = NULL;
@@ -43,17 +39,12 @@ EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac)
     return ctx;
 }
 
-static void evp_mac_ctx_cleanup(EVP_MAC_CTX *ctx)
+void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
 {
     if (ctx != NULL && ctx->data != NULL) {
         ctx->meth->free(ctx->data);
         ctx->data = NULL;
     }
-}
-
-void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
-{
-    evp_mac_ctx_cleanup(ctx);
     OPENSSL_free(ctx);
 }
 
