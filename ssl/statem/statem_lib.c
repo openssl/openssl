@@ -1523,7 +1523,7 @@ static int is_tls13_capable(const SSL *s)
         /*
          * Prior to TLSv1.3 sig algs allowed any curve to be used. TLSv1.3 is
          * more restrictive so check that our sig algs are consistent with this
-         * EC cert.
+         * EC cert. See section 4.2.3 of RFC8446.
          */
         eckey = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
         if (eckey == NULL)
