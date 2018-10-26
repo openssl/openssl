@@ -531,7 +531,7 @@ static int OQS_KEM_NID(int curveID) {
   case 0x0201: rv = NID_OQS_SIKE_751; break;
 #if !defined(OQS_NIST_BRANCH)
   case 0x0202:
-  case 0x0300: rv = NID_OQS_SIDH_503; break;
+  case 0x0301: rv = NID_OQS_SIDH_503; break;
   case 0x0203: rv = NID_OQS_SIDH_751; break;
 #endif
   case 0x0204:

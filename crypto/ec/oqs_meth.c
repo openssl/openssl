@@ -532,7 +532,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
       OQSerr(0, ERR_R_FATAL);
       return 0;
     }
- ADD_MORE_OQS_SIG_HERE
+
     return 1;
 }
 
