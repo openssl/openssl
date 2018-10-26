@@ -17,6 +17,7 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/kdf.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/evp_int.h"
@@ -918,6 +919,50 @@ static int test_EVP_PKEY_check(int i)
     return ret;
 }
 
+static int test_HKDF(void)
+{
+    EVP_PKEY_CTX *pctx;
+    unsigned char out[20];
+    size_t outlen;
+    int i, ret = 0;
+    unsigned char salt[] = "0123456789";
+    unsigned char key[] = "012345678901234567890123456789";
+    unsigned char info[] = "infostring";
+    const unsigned char expected[] = {
+        0xe5, 0x07, 0x70, 0x7f, 0xc6, 0x78, 0xd6, 0x54, 0x32, 0x5f, 0x7e, 0xc5,
+        0x7b, 0x59, 0x3e, 0xd8, 0x03, 0x6b, 0xed, 0xca
+    };
+    size_t expectedlen = sizeof(expected);
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL)))
+        goto done;
+
+    /* We do this twice to test reuse of the EVP_PKEY_CTX */
+    for (i = 0; i < 2; i++) {
+        outlen = sizeof(out);
+        memset(out, 0, outlen);
+
+        if (!TEST_int_gt(EVP_PKEY_derive_init(pctx), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_set_hkdf_md(pctx, EVP_sha256()), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt,
+                                                            sizeof(salt) - 1), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_set1_hkdf_key(pctx, key,
+                                                           sizeof(key) - 1), 0)
+                || !TEST_int_gt(EVP_PKEY_CTX_add1_hkdf_info(pctx, info,
+                                                            sizeof(info) - 1), 0)
+                || !TEST_int_gt(EVP_PKEY_derive(pctx, out, &outlen), 0)
+                || !TEST_mem_eq(out, outlen, expected, expectedlen))
+            goto done;
+    }
+
+    ret = 1;
+
+ done:
+    EVP_PKEY_CTX_free(pctx);
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_EVP_DigestSignInit);
@@ -941,5 +986,6 @@ int setup_tests(void)
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+    ADD_TEST(test_HKDF);
     return 1;
 }
