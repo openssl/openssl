@@ -23,6 +23,8 @@ More information on OQS can be found on our website: [https://openquantumsafe.or
 open-quantum-safe/openssl branch OQS-OpenSSL\_1\_1\_1-stable
 ------------------------------------------------------------
 
+TODO: document support for nist-branch (FIXMEOQS)
+
 This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)) integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1.  
 
 (For TLS 1.2, see the [OQS-OpenSSL\_1\_0\_2-stable](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable) branch.)

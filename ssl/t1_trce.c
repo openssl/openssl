@@ -603,12 +603,14 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, "gost2012_256"},
     {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
-    /* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+    /* OQS sig schemes */
     {TLSEXT_SIGALG_picnicL1FS, "picnicL1FS"},
     {TLSEXT_SIGALG_qteslaI, "qteslaI"},
     {TLSEXT_SIGALG_qteslaIIIsize, "qteslaIIIsize"},
     {TLSEXT_SIGALG_qteslaIIIspeed, "qteslaIIIspeed"},
     /* ADD_MORE_OQS_SIG_HERE */
+#endif
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {

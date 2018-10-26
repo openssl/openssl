@@ -20,6 +20,7 @@
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
+#include <oqs/config.h>
 #include "s_apps.h"
 
 #define COOKIE_SECRET_LENGTH    16
@@ -243,7 +244,8 @@ static const char *get_sigtype(int nid)
      case NID_id_GostR3410_2012_512:
         return "gost2012_512";
 
-     /* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+     /* OQS sig schemes */
      case NID_picnicL1FS:
         return "Picnic L1 FS";
      case NID_qTESLA_I:
@@ -253,7 +255,7 @@ static const char *get_sigtype(int nid)
      case NID_qTESLA_III_speed:
         return "qTESLA-III-speed";
      /* ADD_MORE_OQS_SIG_HERE */
-
+#endif
     default:
         return NULL;
     }
