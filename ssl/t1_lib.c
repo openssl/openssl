@@ -343,6 +343,10 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
      */
     unsigned long dup_list = 0;
 
+    if (ngroups == 0) {
+        SSLerr(SSL_F_TLS1_SET_GROUPS, SSL_R_BAD_LENGTH);
+        return 0;
+    }
     if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
         SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
         return 0;
