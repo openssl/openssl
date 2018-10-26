@@ -19,10 +19,120 @@
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
 
+#ifndef OPENSSL_NO_SM2
+
+# include "internal/asn1_int.h"
+# include "internal/evp_int.h"
+
+static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
+{
+    EVP_MD_CTX *ctx = NULL;
+    unsigned char *buf_in = NULL;
+    int ret = -1, inl = 0;
+    size_t inll = 0;
+    EVP_PKEY_CTX *pctx = NULL;
+    const EVP_MD *type = EVP_get_digestbynid(mdnid);
+
+    if (type == NULL) {
+        X509err(X509_F_X509_VERIFY_SM2,
+                ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
+        goto err;
+    }
+
+    if (pkey == NULL) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+
+    if (x->signature.type == V_ASN1_BIT_STRING && x->signature.flags & 0x7) {
+        X509err(X509_F_X509_VERIFY_SM2, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
+        return -1;
+    }
+
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    /* Check public key OID matches public key type */
+    if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
+        X509err(X509_F_X509_VERIFY_SM2, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
+        goto err;
+    }
+
+    if (!EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        ret = 0;
+        goto err;
+    }
+    pctx = EVP_PKEY_CTX_new(pkey, NULL);
+    if (pctx == NULL) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        ret = 0;
+        goto err;
+    }
+    if (EVP_PKEY_CTX_set1_id(pctx, x->sm2_id.data, x->sm2_id.length) != 1) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        ret = 0;
+        goto err;
+    }
+    EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
+
+    if (!EVP_DigestVerifyInit(ctx, NULL, type, NULL, pkey)) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        ret = 0;
+        goto err;
+    }
+
+    inl = ASN1_item_i2d((ASN1_VALUE *)&x->cert_info, &buf_in,
+                        ASN1_ITEM_rptr(X509_CINF));
+    if (inl <= 0) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+    if (buf_in == NULL) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    inll = inl;
+
+    ret = EVP_DigestVerify(ctx, x->signature.data,
+                           (size_t)x->signature.length, buf_in, inl);
+    if (ret <= 0) {
+        X509err(X509_F_X509_VERIFY_SM2, ERR_R_EVP_LIB);
+        goto err;
+    }
+    ret = 1;
+ err:
+    OPENSSL_clear_free(buf_in, inll);
+    EVP_MD_CTX_free(ctx);
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+#endif
+
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
+#ifndef OPENSSL_NO_SM2
+    int mdnid, pknid;
+#endif
+
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
+
+#ifndef OPENSSL_NO_SM2
+    /* Convert signature OID into digest and public key OIDs */
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
+                             &mdnid, &pknid)) {
+        X509err(X509_F_X509_VERIFY, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
+        return 0;
+    }
+
+    if (pknid == NID_sm2)
+        return x509_verify_sm2(a, r, mdnid, pknid);
+#endif
+
     return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
                              &a->signature, &a->cert_info, r));
 }

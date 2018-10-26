@@ -94,7 +94,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
     int mdnid, pknid;
     size_t inll = 0;
 
-    if (!pkey) {
+    if (pkey == NULL) {
         ASN1err(ASN1_F_ASN1_ITEM_VERIFY, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
@@ -150,7 +150,6 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
             ret = 0;
             goto err;
         }
-
     }
 
     inl = ASN1_item_i2d(asn, &buf_in, it);

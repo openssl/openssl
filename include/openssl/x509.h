@@ -566,6 +566,9 @@ void X509_get0_signature(const ASN1_BIT_STRING **psig,
                          const X509_ALGOR **palg, const X509 *x);
 int X509_get_signature_nid(const X509 *x);
 
+void X509_set_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id);
+ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x);
+
 int X509_trusted(const X509 *x);
 int X509_alias_set1(X509 *x, const unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, const unsigned char *id, int len);

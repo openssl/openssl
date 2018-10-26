@@ -1200,6 +1200,11 @@
 #define NID_sm3WithRSAEncryption                1144
 #define OBJ_sm3WithRSAEncryption                OBJ_sm_scheme,504L
 
+#define SN_SM2_with_SM3         "SM2-SM3"
+#define LN_SM2_with_SM3         "SM2-with-SM3"
+#define NID_SM2_with_SM3                1204
+#define OBJ_SM2_with_SM3                OBJ_sm_scheme,501L
+
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
 #define OBJ_hmacWithSHA224              OBJ_rsadsi,2L,8L
