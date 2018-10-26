@@ -244,3 +244,15 @@ int X509_get_signature_nid(const X509 *x)
 {
     return OBJ_obj2nid(x->sig_alg.algorithm);
 }
+
+#ifndef OPENSSL_NO_SM2
+void X509_set_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id)
+{
+    x->sm2_id = *sm2_id;
+}
+
+ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x)
+{
+    return &x->sm2_id;
+}
+#endif
