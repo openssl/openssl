@@ -283,7 +283,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     RAND_DRBG *drbg = NULL;
     TEST_CTX t;
     unsigned char buff[1024];
-    unsigned int generate_counter_tmp;
+    unsigned int reseed_counter_tmp;
     int ret = 0;
 
     if (!TEST_ptr(drbg = RAND_DRBG_new(0, 0, NULL)))
@@ -302,7 +302,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      * Entropy source tests
      */
 
-    /* Test entropy source failure detecion: i.e. returns no data */
+    /* Test entropy source failure detection: i.e. returns no data */
     t.entropylen = 0;
     if (TEST_int_le(RAND_DRBG_instantiate(drbg, td->pers, td->perslen), 0))
         goto err;
@@ -378,15 +378,15 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Instantiate again with valid data */
     if (!instantiate(drbg, td, &t))
         goto err;
-    generate_counter_tmp = drbg->generate_counter;
-    drbg->generate_counter = drbg->reseed_interval;
+    reseed_counter_tmp = drbg->reseed_gen_counter;
+    drbg->reseed_gen_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
             || !TEST_int_eq(t.entropycnt, 1)
-            || !TEST_int_eq(drbg->generate_counter, generate_counter_tmp + 1)
+            || !TEST_int_eq(drbg->reseed_gen_counter, reseed_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
 
@@ -403,15 +403,15 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Test reseed counter works */
     if (!instantiate(drbg, td, &t))
         goto err;
-    generate_counter_tmp = drbg->generate_counter;
-    drbg->generate_counter = drbg->reseed_interval;
+    reseed_counter_tmp = drbg->reseed_gen_counter;
+    drbg->reseed_gen_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
             || !TEST_int_eq(t.entropycnt, 1)
-            || !TEST_int_eq(drbg->generate_counter, generate_counter_tmp + 1)
+            || !TEST_int_eq(drbg->reseed_gen_counter, reseed_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
 
@@ -591,14 +591,14 @@ static int test_drbg_reseed(int expect_success,
      */
 
     /* Test whether seed propagation is enabled */
-    if (!TEST_int_ne(master->reseed_counter, 0)
-        || !TEST_int_ne(public->reseed_counter, 0)
-        || !TEST_int_ne(private->reseed_counter, 0))
+    if (!TEST_int_ne(master->reseed_prop_counter, 0)
+        || !TEST_int_ne(public->reseed_prop_counter, 0)
+        || !TEST_int_ne(private->reseed_prop_counter, 0))
         return 0;
 
     /* Check whether the master DRBG's reseed counter is the largest one */
-    if (!TEST_int_le(public->reseed_counter, master->reseed_counter)
-        || !TEST_int_le(private->reseed_counter, master->reseed_counter))
+    if (!TEST_int_le(public->reseed_prop_counter, master->reseed_prop_counter)
+        || !TEST_int_le(private->reseed_prop_counter, master->reseed_prop_counter))
         return 0;
 
     /*
@@ -643,8 +643,8 @@ static int test_drbg_reseed(int expect_success,
 
     if (expect_success == 1) {
         /* Test whether all three reseed counters are synchronized */
-        if (!TEST_int_eq(public->reseed_counter, master->reseed_counter)
-            || !TEST_int_eq(private->reseed_counter, master->reseed_counter))
+        if (!TEST_int_eq(public->reseed_prop_counter, master->reseed_prop_counter)
+            || !TEST_int_eq(private->reseed_prop_counter, master->reseed_prop_counter))
             return 0;
 
         /* Test whether reseed time of master DRBG is set correctly */
@@ -723,7 +723,7 @@ static int test_rand_reseed(void)
      * Test whether the public and private DRBG are both reseeded when their
      * reseed counters differ from the master's reseed counter.
      */
-    master->reseed_counter++;
+    master->reseed_prop_counter++;
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 1)))
         goto error;
     reset_drbg_hook_ctx();
@@ -732,8 +732,8 @@ static int test_rand_reseed(void)
      * Test whether the public DRBG is reseeded when its reseed counter differs
      * from the master's reseed counter.
      */
-    master->reseed_counter++;
-    private->reseed_counter++;
+    master->reseed_prop_counter++;
+    private->reseed_prop_counter++;
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 0)))
         goto error;
     reset_drbg_hook_ctx();
@@ -742,8 +742,8 @@ static int test_rand_reseed(void)
      * Test whether the private DRBG is reseeded when its reseed counter differs
      * from the master's reseed counter.
      */
-    master->reseed_counter++;
-    public->reseed_counter++;
+    master->reseed_prop_counter++;
+    public->reseed_prop_counter++;
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 1)))
         goto error;
     reset_drbg_hook_ctx();
@@ -765,7 +765,7 @@ static int test_rand_reseed(void)
      * Test whether none of the DRBGs is reseed if the master fails to reseed
      */
     master_ctx.fail = 1;
-    master->reseed_counter++;
+    master->reseed_prop_counter++;
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
     if (!TEST_true(test_drbg_reseed(0, master, public, private, 0, 0, 0)))
         goto error;
@@ -898,7 +898,14 @@ static size_t get_pool_entropy(RAND_DRBG *drbg,
 }
 
 /*
- * Clean up the entropy that get_pool_entropy() returned.
+ * Test that instantiation with RAND_seed() works as expected
+ *
+ * If no os entropy source is available then RAND_seed(buffer, bufsize)
+ * is expected to succeed if and only if the buffer length is at least
+ * rand_drbg_seedlen(master) bytes.
+ *
+ * If an os entropy source is available then RAND_seed(buffer, bufsize)
+ * is expected to succeed always.
  */
 static void cleanup_pool_entropy(RAND_DRBG *drbg, unsigned char *out, size_t outlen)
 {
@@ -920,7 +927,7 @@ static int test_rand_add(void)
 
     master->get_entropy = get_pool_entropy;
     master->cleanup_entropy = cleanup_pool_entropy;
-    master->reseed_counter++;
+    master->reseed_gen_counter++;
     RAND_DRBG_uninstantiate(master);
     memset(rand_add_buf, 0xCD, sizeof(rand_add_buf));
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
