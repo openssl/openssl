@@ -186,6 +186,11 @@ struct rand_drbg_st {
     struct rand_pool_st *pool;
 
     /*
+     * Auxiliary pool for additional data.
+     */
+    struct rand_pool_st *adin_pool;
+
+    /*
      * The following parameters are setup by the per-type "init" function.
      *
      * Currently the only type is CTR_DRBG, its init function is drbg_ctr_init().
