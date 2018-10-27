@@ -1,12 +1,13 @@
 
+ # OpenSSL
+ 
  OpenSSL 1.0.2p 14 Aug 2018
 
  Copyright (c) 1998-2018 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
 
- DESCRIPTION
- -----------
+ ## Description
 
  The OpenSSL Project is a collaborative effort to develop a robust,
  commercial-grade, fully featured, and Open Source toolkit implementing the
@@ -22,8 +23,7 @@
  get and use it for commercial and non-commercial purposes as long as you
  fulfill the conditions of both licenses.
 
- OVERVIEW
- --------
+ ## Overview
 
  The OpenSSL toolkit includes:
 
@@ -44,10 +44,10 @@
         Handling of S/MIME signed or encrypted mail
         And more...
 
- INSTALLATION
- ------------
+ ## Installation
 
  See the appropriate file:
+
         INSTALL         Linux, Unix, etc.
         INSTALL.DJGPP   DOS platform with DJGPP
         INSTALL.NW      Netware
@@ -57,8 +57,7 @@
         INSTALL.W64     Windows (64bit)
         INSTALL.WCE     Windows CE
 
- SUPPORT
- -------
+ ## Support
 
  See the OpenSSL website www.openssl.org for details on how to obtain
  commercial technical support.
@@ -87,13 +86,11 @@
  Just because something doesn't work the way you expect does not mean it
  is necessarily a bug in OpenSSL.
 
- HOW TO CONTRIBUTE TO OpenSSL
- ----------------------------
+ ## How to contribute to OpenSSL
 
- See CONTRIBUTING
+ See [CONTRIBUTING](./CONTRIBUTING.md)
 
- LEGALITIES
- ----------
+ ## Legalities
 
  A number of nations restrict the use or export of cryptography. If you
  are potentially subject to such restrictions you should seek competent
