@@ -206,6 +206,11 @@ struct rand_drbg_st {
     struct rand_pool_st *pool;
 
     /*
+     * Auxiliary pool for additional data.
+     */
+    struct rand_pool_st *adin_pool;
+
+    /*
      * The following parameters are setup by the per-type "init" function.
      *
      * The supported types and their init functions are:
