@@ -233,7 +233,7 @@ static int known_cipher_nids[OSSL_NELEM(cipher_data)];
 static int known_cipher_nids_amount = -1; /* -1 indicates not yet initialised */
 static EVP_CIPHER *known_cipher_methods[OSSL_NELEM(cipher_data)] = { NULL, };
 
-static void prepare_cipher_methods()
+static void prepare_cipher_methods(void)
 {
     size_t i;
     struct session_op sess;
@@ -308,7 +308,7 @@ static void destroy_cipher_method(int nid)
     known_cipher_methods[i] = NULL;
 }
 
-static void destroy_all_cipher_methods()
+static void destroy_all_cipher_methods(void)
 {
     size_t i;
 
@@ -533,7 +533,7 @@ static int known_digest_nids[OSSL_NELEM(digest_data)];
 static int known_digest_nids_amount = -1; /* -1 indicates not yet initialised */
 static EVP_MD *known_digest_methods[OSSL_NELEM(digest_data)] = { NULL, };
 
-static void prepare_digest_methods()
+static void prepare_digest_methods(void)
 {
     size_t i;
     struct session_op sess;
@@ -600,7 +600,7 @@ static void destroy_digest_method(int nid)
     known_digest_methods[i] = NULL;
 }
 
-static void destroy_all_digest_methods()
+static void destroy_all_digest_methods(void)
 {
     size_t i;
 
