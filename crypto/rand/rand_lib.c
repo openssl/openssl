@@ -279,14 +279,9 @@ void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
  * On success it allocates a buffer at |*pout| and returns the length of
  * the data. The buffer should get freed using OPENSSL_secure_clear_free().
  */
-size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
+size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout)
 {
     size_t ret = 0;
-    RAND_POOL *pool;
-
-    pool = rand_pool_new(0, 0, max_len);
-    if (pool == NULL)
-        return 0;
 
     if (rand_pool_add_additional_data(pool) == 0)
         goto err;
@@ -295,14 +290,12 @@ size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len)
     *pout = rand_pool_detach(pool);
 
  err:
-    rand_pool_free(pool);
-
     return ret;
 }
 
-void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen)
+void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out)
 {
-    OPENSSL_secure_clear_free(out, outlen);
+    rand_pool_reattach(pool, out);
 }
 
 void rand_fork(void)
@@ -536,17 +529,27 @@ size_t rand_pool_length(RAND_POOL *pool)
 /*
  * Detach the |pool| buffer and return it to the caller.
  * It's the responsibility of the caller to free the buffer
- * using OPENSSL_secure_clear_free().
+ * using OPENSSL_secure_clear_free() or to re-attach it
+ * again to the pool using rand_pool_reattach().
  */
 unsigned char *rand_pool_detach(RAND_POOL *pool)
 {
     unsigned char *ret = pool->buffer;
     pool->buffer = NULL;
-    pool->len = 0;
     pool->entropy = 0;
     return ret;
 }
 
+/*
+ * Re-attach the |pool| buffer. It is only allowed to pass
+ * the |buffer| which was previously detached from the same pool.
+ */
+void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
+{
+    pool->buffer = buffer;
+    OPENSSL_cleanse(pool->buffer, pool->len);
+    pool->len = 0;
+}
 
 /*
  * If |entropy_factor| bits contain 1 bit of entropy, how many bytes does one
@@ -643,6 +646,11 @@ int rand_pool_add(RAND_POOL *pool,
         return 0;
     }
 
+    if (pool->buffer == NULL) {
+        RANDerr(RAND_F_RAND_POOL_ADD, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
     if (len > 0) {
         memcpy(pool->buffer + pool->len, buffer, len);
         pool->len += len;
@@ -672,6 +680,11 @@ unsigned char *rand_pool_add_begin(RAND_POOL *pool, size_t len)
     if (len > pool->max_len - pool->len) {
         RANDerr(RAND_F_RAND_POOL_ADD_BEGIN, RAND_R_RANDOM_POOL_OVERFLOW);
         return NULL;
+    }
+
+    if (pool->buffer == NULL) {
+        RANDerr(RAND_F_RAND_POOL_ADD_BEGIN, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
     return pool->buffer + pool->len;
