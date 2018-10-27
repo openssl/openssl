@@ -329,11 +329,12 @@ static int devcrypto_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
 /*
  * We only support digests if the cryptodev implementation supports multiple
- * data updates.  Otherwise, we would be forced to maintain a cache, which is
- * perilous if there's a lot of data coming in (if someone wants to checksum
- * an OpenSSL tarball, for example).
+ * data updates and session copying.  Otherwise, we would be forced to maintain
+ * a cache, which is perilous if there's a lot of data coming in (if someone
+ * wants to checksum an OpenSSL tarball, for example).
  */
-#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+#if defined(CIOCCPHASH) && defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+#define IMPLEMENT_DIGEST
 
 /******************************************************************************
  *
@@ -480,6 +481,36 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
     return 1;
 }
 
+static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
+{
+    struct digest_ctx *digest_from =
+        (struct digest_ctx *)EVP_MD_CTX_md_data(from);
+    struct digest_ctx *digest_to =
+        (struct digest_ctx *)EVP_MD_CTX_md_data(to);
+    struct cphash_op cphash;
+
+    if (digest_from == NULL)
+        return 1;
+
+    if (digest_from->init != 1) {
+        SYSerr(SYS_F_IOCTL, EINVAL);
+        return 0;
+    }
+
+    if (!digest_init(to)) {
+        SYSerr(SYS_F_IOCTL, errno);
+        return 0;
+    }
+
+    cphash.src_ses = digest_from->sess.ses;
+    cphash.dst_ses = digest_to->sess.ses;
+    if (ioctl(cfd, CIOCCPHASH, &cphash) < 0) {
+        SYSerr(SYS_F_IOCTL, errno);
+        return 0;
+    }
+    return 1;
+}
+
 static int digest_cleanup(EVP_MD_CTX *ctx)
 {
     struct digest_ctx *digest_ctx =
@@ -532,6 +563,7 @@ static void prepare_digest_methods()
             || !EVP_MD_meth_set_init(known_digest_methods[i], digest_init)
             || !EVP_MD_meth_set_update(known_digest_methods[i], digest_update)
             || !EVP_MD_meth_set_final(known_digest_methods[i], digest_final)
+            || !EVP_MD_meth_set_copy(known_digest_methods[i], digest_copy)
             || !EVP_MD_meth_set_cleanup(known_digest_methods[i], digest_cleanup)
             || !EVP_MD_meth_set_app_datasize(known_digest_methods[i],
                                              sizeof(struct digest_ctx))) {
@@ -598,7 +630,7 @@ static int devcrypto_digests(ENGINE *e, const EVP_MD **digest,
 static int devcrypto_unload(ENGINE *e)
 {
     destroy_all_cipher_methods();
-#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+#ifdef IMPLEMENT_DIGEST
     destroy_all_digest_methods();
 #endif
     return 1;
@@ -618,7 +650,7 @@ void engine_load_devcrypto_int()
     }
 
     prepare_cipher_methods();
-#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+#ifdef IMPLEMENT_DIGEST
     prepare_digest_methods();
 #endif
 
@@ -664,7 +696,7 @@ void engine_load_devcrypto_int()
 # endif
 #endif
         || !ENGINE_set_ciphers(e, devcrypto_ciphers)
-#if defined(COP_FLAG_UPDATE) && defined(COP_FLAG_FINAL)
+#ifdef IMPLEMENT_DIGEST
         || !ENGINE_set_digests(e, devcrypto_digests)
 #endif
         ) {
