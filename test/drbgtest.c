@@ -884,46 +884,6 @@ static int test_multi_thread(void)
 }
 #endif
 
-#ifdef OPENSSL_RAND_SEED_NONE
-/*
- * Calculates the minimum buffer length which needs to be
- * provided to RAND_seed() in order to successfully
- * instantiate the DRBG.
- *
- * Copied from rand_drbg_seedlen() in rand_drbg.c
- */
-static size_t rand_drbg_seedlen(RAND_DRBG *drbg)
-{
-    /*
-     * If no os entropy source is available then RAND_seed(buffer, bufsize)
-     * is expected to succeed if and only if the buffer length satisfies
-     * the following requirements, which follow from the calculations
-     * in RAND_DRBG_instantiate().
-     */
-    size_t min_entropy = drbg->strength;
-    size_t min_entropylen = drbg->min_entropylen;
-
-    /*
-     * Extra entropy for the random nonce in the absence of a
-     * get_nonce callback, see comment in RAND_DRBG_instantiate().
-     */
-    if (drbg->min_noncelen > 0 && drbg->get_nonce == NULL) {
-        min_entropy += drbg->strength / 2;
-        min_entropylen += drbg->min_noncelen;
-    }
-
-    /*
-     * Convert entropy requirement from bits to bytes
-     * (dividing by 8 without rounding upwards, because
-     * all entropy requirements are divisible by 8).
-     */
-    min_entropy >>= 3;
-
-    /* Return a value that satisfies both requirements */
-    return min_entropy > min_entropylen ? min_entropy : min_entropylen;
-}
-#endif /*OPENSSL_RAND_SEED_NONE*/
-
 /*
  * Test that instantiation with RAND_seed() works as expected
  *
