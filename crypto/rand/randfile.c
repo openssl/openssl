@@ -110,7 +110,7 @@ int RAND_load_file(const char *file, long bytes)
 
     if (bytes < 0) {
         if (S_ISREG(sb.st_mode))
-            bytes = (sb.st_size <= LONG_MAX) ? sb.st_size : LONG_MAX;
+            bytes = sb.st_size;
         else
             bytes = RAND_DRBG_STRENGTH;
     }
