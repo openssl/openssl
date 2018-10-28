@@ -1086,13 +1086,15 @@ static int drbg_add(const void *buf, int num, double randomness)
     int ret = 0;
     RAND_DRBG *drbg = RAND_DRBG_get0_master();
     size_t buflen;
-    size_t seedlen = rand_drbg_seedlen(drbg);
+    size_t seedlen;
 
     if (drbg == NULL)
         return 0;
 
     if (num < 0 || randomness < 0.0)
         return 0;
+
+    seedlen = rand_drbg_seedlen(drbg);
 
     buflen = (size_t)num;
 
