@@ -1013,13 +1013,18 @@ if (scalar(@seed_sources) == 0) {
 if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
     die "Cannot seed with none and anything else" if scalar(@seed_sources) > 1;
     warn <<_____ if scalar(@seed_sources) == 1;
-You have selected the --with-rand-seed=none option, which effectively disables
-automatic reseeding of the OpenSSL random generator. All operations depending
-on the random generator such as creating keys will not work unless the random
-generator is seeded manually by the application.
 
-Please read the 'Note on random number generation' section in the INSTALL
-instructions and the RAND_DRBG(7) manual page for more details.
+============================== WARNING ===============================
+You have selected the --with-rand-seed=none option, which effectively
+disables automatic reseeding of the OpenSSL random generator.
+All operations depending on the random generator such as creating keys
+will not work unless the random generator is seeded manually by the
+application.
+
+Please read the 'Note on random number generation' section in the
+INSTALL instructions and the RAND_DRBG(7) manual page for more details.
+============================== WARNING ===============================
+
 _____
 }
 push @{$config{openssl_other_defines}},
