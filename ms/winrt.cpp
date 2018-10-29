@@ -46,10 +46,13 @@ unsigned entropyRT(BYTE *buffer, unsigned len)
 }
 
 #else
+#pragma warning ( push )
+#pragma warning ( disable : 4467 )
 #include <roapi.h>
 #include <robuffer.h>
 #include <windows.security.cryptography.h>
 #include <winstring.h>
+#pragma warning ( pop )
 
 unsigned entropyRT(BYTE *buffer, unsigned len)
 {
