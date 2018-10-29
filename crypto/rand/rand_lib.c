@@ -542,11 +542,13 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
 }
 
 /*
- * Re-attach the |pool| buffer.
+ * Re-attach the |pool| buffer. It is only allowed to pass
+ * the |buffer| which was previously detached from the same pool.
  */
 void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
 {
     pool->buffer = buffer;
+    OPENSSL_cleanse(pool->buffer, pool->max_len);
 }
 
 /*
