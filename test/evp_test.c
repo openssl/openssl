@@ -1024,8 +1024,9 @@ static int mac_test_run_pkey(EVP_TEST *t)
         goto err;
     }
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++)
-        if (!mac_test_ctrl(t, pctx,
-                           sk_OPENSSL_STRING_value(expected->controls, i))) {
+        if (!mac_test_ctrl_pkey(t, pctx,
+                                sk_OPENSSL_STRING_value(expected->controls,
+                                                        i))) {
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
