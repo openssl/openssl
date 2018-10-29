@@ -12,6 +12,7 @@
 
 # include <time.h>
 # include <openssl/ossl_typ.h>
+# include <openssl/obj_mac.h>
 
 /*
  * RAND_DRBG  flags
