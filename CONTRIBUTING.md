@@ -1,5 +1,4 @@
-HOW TO CONTRIBUTE TO OpenSSL
-----------------------------
+## How to contribute to OpenSSL
 
 (Please visit https://www.openssl.org/community/getting-started.html for
 other ideas about how to contribute.)
