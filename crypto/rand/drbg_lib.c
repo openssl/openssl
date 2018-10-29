@@ -1003,6 +1003,7 @@ static int drbg_add(const void *buf, int num, double randomness)
     if (num < 0 || randomness < 0.0)
         return 0;
 
+    rand_drbg_lock(drbg);
     seedlen = rand_drbg_seedlen(drbg);
 
     buflen = (size_t)num;
@@ -1014,10 +1015,13 @@ static int drbg_add(const void *buf, int num, double randomness)
          * inevitably. So we use a trick to mix the buffer contents into
          * the DRBG state without forcing a reseeding: we generate a
          * dummy random byte, using the buffer content as additional data.
+         * Note: This won't work with RAND_DRBG_FLAG_CTR_NO_DF.
          */
         unsigned char dummy[1];
 
-        return RAND_DRBG_generate(drbg, dummy, sizeof(dummy), 0, buf, buflen);
+        ret = RAND_DRBG_generate(drbg, dummy, sizeof(dummy), 0, buf, buflen);
+        rand_drbg_unlock(drbg);
+        return ret;
 #else
         /*
          * If an os entropy source is avaible then we declare the buffer content
@@ -1041,7 +1045,6 @@ static int drbg_add(const void *buf, int num, double randomness)
         randomness = (double)seedlen;
     }
 
-    rand_drbg_lock(drbg);
     ret = rand_drbg_restart(drbg, buf, buflen, (size_t)(8 * randomness));
     rand_drbg_unlock(drbg);
 
