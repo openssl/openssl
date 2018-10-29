@@ -180,12 +180,17 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
         else
             ret = drbg_hash_init(drbg);
     } else {
+        drbg->type = 0;
+        drbg->flags = 0;
+        drbg->meth = NULL;
         RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_UNSUPPORTED_DRBG_TYPE);
         return 0;
     }
 
-    if (ret == 0)
+    if (ret == 0) {
+        drbg->state = DRBG_ERROR;
         RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_ERROR_INITIALISING_DRBG);
+    }
     return ret;
 }
 
