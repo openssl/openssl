@@ -865,7 +865,8 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
         size_t sz = strlen(alg);
         static const char epilogue[] = " by EVP_PKEY";
 
-        if (strcmp(alg + sz - (sizeof(epilogue) - 1), epilogue) == 0)
+        if (sz >= sizeof(epilogue)
+            && strcmp(alg + sz - (sizeof(epilogue) - 1), epilogue) == 0)
             sz -= sizeof(epilogue) - 1;
 
         if (strncmp(alg, "HMAC", sz) == 0) {
