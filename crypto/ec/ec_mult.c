@@ -178,7 +178,7 @@ static int ec_mul_consttime(const EC_GROUP *group, EC_POINT *r,
     cardinality_bits = BN_num_bits(cardinality);
     group_top = bn_get_top(cardinality);
     if ((bn_wexpand(k, group_top + 2) == NULL)
-        || (bn_wexpand(lambda, group_top + 2) == NULL)) {
+        || (bn_wexpand(lambda, group_top + 2) == NULL))
         goto err;
 
     if (!BN_copy(k, scalar))
