@@ -794,8 +794,14 @@ static void run_multi_thread_test(void)
 
     public = RAND_DRBG_get0_public();
     private = RAND_DRBG_get0_private();
-    RAND_DRBG_set_reseed_time_interval(public, 1);
-    RAND_DRBG_set_reseed_time_interval(private, 1);
+    if (public)
+        RAND_DRBG_set_reseed_time_interval(public, 1);
+    else
+        multi_thread_rand_bytes_succeeded = 0;
+    if (private)
+        RAND_DRBG_set_reseed_time_interval(private, 1);
+    else
+        multi_thread_rand_priv_bytes_succeeded = 0;
 
     do {
         if (RAND_bytes(buf, sizeof(buf)) <= 0)
@@ -927,13 +933,16 @@ static size_t rand_drbg_seedlen(RAND_DRBG *drbg)
  */
 static int test_rand_seed(void)
 {
-    RAND_DRBG *master = RAND_DRBG_get0_master();
+    RAND_DRBG *master = NULL;
     unsigned char rand_buf[256];
     size_t rand_buflen;
-#ifdef OPENSSL_RAND_SEED_NONE
-    size_t required_seed_buflen = rand_drbg_seedlen(master);
-#else
     size_t required_seed_buflen = 0;
+
+    if (!TEST_ptr(master = RAND_DRBG_get0_master()))
+        return 0;
+
+#ifdef OPENSSL_RAND_SEED_NONE
+    required_seed_buflen = rand_drbg_seedlen(master);
 #endif
 
     memset(rand_buf, 0xCD, sizeof(rand_buf));
