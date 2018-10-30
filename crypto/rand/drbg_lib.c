@@ -292,10 +292,7 @@ static RAND_DRBG *rand_drbg_new(int secure,
     return drbg;
 
  err:
-    if (drbg->secure)
-        OPENSSL_secure_free(drbg);
-    else
-        OPENSSL_free(drbg);
+    RAND_DRBG_free(drbg);
 
     return NULL;
 }
