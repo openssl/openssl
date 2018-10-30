@@ -536,7 +536,6 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
 {
     unsigned char *ret = pool->buffer;
     pool->buffer = NULL;
-    pool->len = 0;
     pool->entropy = 0;
     return ret;
 }
@@ -548,7 +547,8 @@ unsigned char *rand_pool_detach(RAND_POOL *pool)
 void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer)
 {
     pool->buffer = buffer;
-    OPENSSL_cleanse(pool->buffer, pool->max_len);
+    OPENSSL_cleanse(pool->buffer, pool->len);
+    pool->len = 0;
 }
 
 /*
