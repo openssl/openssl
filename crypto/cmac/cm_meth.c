@@ -68,26 +68,20 @@ static int cmac_init(EVP_MAC_IMPL *cctx)
     cctx->tmpcipher = NULL;
     cctx->tmpengine = NULL;
 
-    if (!rv)
-        return 0;
-    return 1;
+    return rv;
 }
 
 static int cmac_update(EVP_MAC_IMPL *cctx, const unsigned char *data,
                        size_t datalen)
 {
-    if (!CMAC_Update(cctx->ctx, data, datalen))
-        return 0;
-    return 1;
+    return CMAC_Update(cctx->ctx, data, datalen);
 }
 
 static int cmac_final(EVP_MAC_IMPL *cctx, unsigned char *out)
 {
     size_t hlen;
 
-    if (!CMAC_Final(cctx->ctx, out, &hlen))
-        return 0;
-    return 1;
+    return CMAC_Final(cctx->ctx, out, &hlen);
 }
 
 static int cmac_ctrl(EVP_MAC_IMPL *cctx, int cmd, va_list args)
@@ -103,8 +97,7 @@ static int cmac_ctrl(EVP_MAC_IMPL *cctx, int cmd, va_list args)
             cctx->tmpcipher = NULL;
             cctx->tmpengine = NULL;
 
-            if (!rv)
-                return 0;
+            return rv;
         }
         break;
     case EVP_MAC_CTRL_SET_CIPHER:
@@ -139,13 +132,11 @@ static int cmac_ctrl_str_cb(void *hctx, int cmd, void *buf, size_t buflen)
 static int cmac_ctrl_str(EVP_MAC_IMPL *cctx, const char *type,
                          const char *value)
 {
-    if (!value) {
+    if (!value)
         return 0;
-    }
     if (strcmp(type, "cipher") == 0) {
-        const EVP_CIPHER *c;
+        const EVP_CIPHER *c = EVP_get_cipherbyname(value);
 
-        c = EVP_get_cipherbyname(value);
         if (!c)
             return 0;
         return cmac_ctrl_int(cctx, EVP_MAC_CTRL_SET_CIPHER, c);
