@@ -348,7 +348,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     drbg->state = DRBG_READY;
-    drbg->reseed_gen_counter = 0;
+    drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
     tsan_store(&drbg->reseed_prop_counter, drbg->reseed_next_counter);
 
@@ -439,7 +439,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
         goto end;
 
     drbg->state = DRBG_READY;
-    drbg->reseed_gen_counter = 0;
+    drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
     tsan_store(&drbg->reseed_prop_counter, drbg->reseed_next_counter);
 
