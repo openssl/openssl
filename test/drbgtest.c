@@ -799,12 +799,15 @@ static void run_multi_thread_test(void)
 {
     unsigned char buf[256];
     time_t start = time(NULL);
-    RAND_DRBG *public, *private;
+    RAND_DRBG *public = NULL, *private = NULL;
 
-    public = RAND_DRBG_get0_public();
-    private = RAND_DRBG_get0_private();
-    RAND_DRBG_set_reseed_time_interval(public, 1);
+    if (!TEST_ptr(public = RAND_DRBG_get0_public())
+            || !TEST_ptr(private = RAND_DRBG_get0_private())) {
+        multi_thread_rand_bytes_succeeded = 0;
+        return;
+    }
     RAND_DRBG_set_reseed_time_interval(private, 1);
+    RAND_DRBG_set_reseed_time_interval(public, 1);
 
     do {
         if (RAND_bytes(buf, sizeof(buf)) <= 0)
@@ -936,13 +939,16 @@ static size_t rand_drbg_seedlen(RAND_DRBG *drbg)
  */
 static int test_rand_seed(void)
 {
-    RAND_DRBG *master = RAND_DRBG_get0_master();
+    RAND_DRBG *master = NULL;
     unsigned char rand_buf[256];
     size_t rand_buflen;
-#ifdef OPENSSL_RAND_SEED_NONE
-    size_t required_seed_buflen = rand_drbg_seedlen(master);
-#else
     size_t required_seed_buflen = 0;
+
+    if (!TEST_ptr(master = RAND_DRBG_get0_master()))
+        return 0;
+
+#ifdef OPENSSL_RAND_SEED_NONE
+    required_seed_buflen = rand_drbg_seedlen(master);
 #endif
 
     memset(rand_buf, 0xCD, sizeof(rand_buf));
@@ -1025,14 +1031,13 @@ err:
 
 static int test_set_defaults(void)
 {
-    RAND_DRBG *master, *public, *private;
-
-    master = RAND_DRBG_get0_master();
-    public = RAND_DRBG_get0_public();
-    private = RAND_DRBG_get0_private();
+    RAND_DRBG *master = NULL, *public = NULL, *private = NULL;
 
            /* Check the default type and flags for master, public and private */
-    return TEST_int_eq(master->type, RAND_DRBG_TYPE)
+    return TEST_ptr(master = RAND_DRBG_get0_master())
+           && TEST_ptr(public = RAND_DRBG_get0_public())
+           && TEST_ptr(private = RAND_DRBG_get0_private())
+           && TEST_int_eq(master->type, RAND_DRBG_TYPE)
            && TEST_int_eq(master->flags,
                           RAND_DRBG_FLAGS | RAND_DRBG_FLAG_MASTER)
            && TEST_int_eq(public->type, RAND_DRBG_TYPE)
