@@ -137,7 +137,7 @@ static int cmac_ctrl_str(EVP_MAC_IMPL *cctx, const char *type,
     if (strcmp(type, "cipher") == 0) {
         const EVP_CIPHER *c = EVP_get_cipherbyname(value);
 
-        if (!c)
+        if (c == NULL)
             return 0;
         return cmac_ctrl_int(cctx, EVP_MAC_CTRL_SET_CIPHER, c);
     }
