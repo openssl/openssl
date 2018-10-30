@@ -9,6 +9,15 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
+  *) Ported the HMAC, CMAC and SipHash EVP_PKEY_METHODs to EVP_MAC.
+     [Richard Levitte]
+
+  *) Added EVP_MAC, an EVP layer MAC API, to simplify adding MAC
+     implementations.  This includes a generic EVP_PKEY to EVP_MAC bridge,
+     to facilitate the continued use of MACs through raw private keys in
+     functionality such as EVP_DigestSign* and EVP_DigestVerify*.
+     [Richard Levitte]     
+
   *) Deprecate ECDH_KDF_X9_62() and mark its replacement as internal. Users
      should use the EVP interface instead (EVP_PKEY_CTX_set_ecdh_kdf_type).
      [Antoine Salon]
