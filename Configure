@@ -24,7 +24,7 @@ use OpenSSL::Glob;
 my $orig_death_handler = $SIG{__DIE__};
 $SIG{__DIE__} = \&death_handler;
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--config=FILE] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-egd] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--shlib-version=VERSION] [--config=FILE] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -40,9 +40,11 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #               given with --prefix.
 #               This becomes the value of OPENSSLDIR in Makefile and in C.
 #               (Default: PREFIX/ssl)
-#
-# --cross-compile-prefix Add specified prefix to binutils components.
-#
+# --shlib-version
+#               Specify the version string used as part of the SONAME and/or
+#               filename for shared libraries.
+# --cross-compile-prefix'
+#               Add specified prefix to binutils components.
 # --api         One of 0.9.8, 1.0.0 or 1.1.0.  Do not compile support for
 #               interfaces deprecated as of the specified OpenSSL version.
 #
@@ -255,6 +257,15 @@ collect_information(
     qr/SHLIB_VERSION_HISTORY *"([^"]*)"/     => sub { $config{shlib_version_history}=$1 }
     );
 if ($config{shlib_version_history} ne "") { $config{shlib_version_history} .= ":"; }
+
+# Look for the version number on the command line; this has to be done early
+my @tmpargv = @argvcopy;
+while (@tmpargv) {
+    $_ = shift @tmpargv;
+    if (/^--shlib-version=(.*)$/) {
+	$config{shlib_version_number} = $1;
+    }
+}
 
 ($config{major}, $config{minor})
     = ($config{version} =~ /^([0-9]+)\.([0-9\.]+)/);
@@ -824,6 +835,10 @@ while (@argvcopy)
 		elsif (/^--config=(.*)$/)
 			{
 			read_config $1;
+			}
+		elsif (/^--shlib-version=(.*)$/)
+			{
+			# handled earlier
 			}
 		elsif (/^-l(.*)$/)
 			{

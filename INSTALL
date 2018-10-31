@@ -191,6 +191,14 @@
   --release
                    Build OpenSSL without debugging symbols. This is the default.
 
+  --shlib-version=VERSION
+                   Specify the version string to be used as part of the SONAME
+                   and/or file name for shared libraries.
+                   This value defaults to the value of SHLIB_VERSION_NUMBER in
+                   the include/openssl/opensslv.h file.
+                   At a minimum, VERSION must be in the form of "number.number".
+                   It may contain additional ".number" sequences.
+
   --strict-warnings
                    This is a developer flag that switches on various compiler
                    options recommended for OpenSSL development. It only works
