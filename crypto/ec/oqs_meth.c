@@ -14,10 +14,7 @@
 #include <openssl/x509.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
-#include <oqs/rand.h>
-#include <oqs/common.h>
-#include <oqs/sig.h>
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 
 /* Only supports OQS's master branch signature API for now */
 #if !defined(OQS_NIST_BRANCH)
@@ -111,7 +108,7 @@ static void oqs_pkey_ctx_free(OQS_KEY* key) {
 static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
     OQS_KEY *oqs_key = NULL;
     const char* oqs_alg_name = get_oqs_alg_name(nid);
-    
+
     oqs_key = OPENSSL_zalloc(sizeof(*oqs_key));
     if (oqs_key == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
@@ -177,7 +174,7 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     X509_ALGOR *palg;
     OQS_KEY *oqs_key = NULL;
     int id = pkey->ameth->pkey_id;
-    
+
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey)) {
         return 0;
     }
@@ -190,7 +187,7 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
     if (palg != NULL) {
       int ptype;
-      
+
       /* Algorithm parameters must be absent */
       X509_ALGOR_get0(NULL, &ptype, NULL, palg);
       if (ptype != V_ASN1_UNDEF) {
@@ -203,7 +200,7 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
       OQSerr(0, ERR_R_FATAL);
       return 0;
     }
-    
+
     if (pklen != oqs_key->s->length_public_key) {
       OQSerr(0, ERR_R_FATAL);
       oqs_pkey_ctx_free(oqs_key);
@@ -247,7 +244,7 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
     /* oct contains first the private key, then the public key */
     if (palg != NULL) {
       int ptype;
-      
+
       /* Algorithm parameters must be absent */
       X509_ALGOR_get0(NULL, &ptype, NULL, palg);
       if (ptype != V_ASN1_UNDEF) {
@@ -488,7 +485,7 @@ static int pkey_oqs_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
  err:
     oqs_pkey_ctx_free(oqs_key);
     return 0;
-  
+
 }
 
 static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
@@ -522,7 +519,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
                                  size_t tbslen)
 {
     const OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
-    
+
     if (!oqs_key || !oqs_key->s  || !oqs_key->pubkey || sig == NULL || tbs == NULL) {
       OQSerr(0, ERR_R_FATAL);
       return 0;

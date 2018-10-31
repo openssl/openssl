@@ -20,7 +20,7 @@
 #include "internal/nelem.h"
 #include "ssl_locl.h"
 #include <openssl/ct.h>
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 #include "ssl_oqs_extra.h"
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 
 /*
  * This table MUST be kept in ascending order of the NID each method
