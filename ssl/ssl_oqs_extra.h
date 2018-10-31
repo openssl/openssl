@@ -8,10 +8,12 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_SIKE_503;
   } else if (memcmp(value,"sike751", len) == 0) {
     nid = NID_OQS_SIKE_751;
+#if !defined(OQS_NIST_BRANCH)
   } else if (memcmp(value,"sidh503", len) == 0) {
     nid = NID_OQS_SIDH_503;
   } else if (memcmp(value,"sidh751", len) == 0) {
     nid = NID_OQS_SIDH_751;
+#endif
   } else if (memcmp(value,"frodo640aes", len) == 0) {
     nid = NID_OQS_Frodo_640_AES;
   } else if (memcmp(value,"frodo640cshake", len) == 0) {
@@ -46,8 +48,10 @@ static int OQS_nid_from_string(const char *value) {
   /* hybrid algs */
   } else if (memcmp(value,"p256-sike503", len) == 0) {
     nid = NID_OQS_p256_SIKE_503;
+#if !defined(OQS_NIST_BRANCH)
   } else if (memcmp(value,"p256-sidh503", len) == 0) {
     nid = NID_OQS_p256_SIDH_503;
+#endif
   } else if (memcmp(value,"p256-frodo640aes", len) == 0) {
     nid = NID_OQS_p256_Frodo_640_AES;
   } else if (memcmp(value,"p256-frodo640cshake", len) == 0) {

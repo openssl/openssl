@@ -9,6 +9,8 @@
 
 /* Internal ASN1 structures and functions: not for application use */
 
+#include <oqs/config.h>
+
 /* ASN1 public key method structure */
 
 struct evp_pkey_asn1_method_st {
@@ -84,12 +86,14 @@ extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
-/* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+/* OQS sig schemes */
 extern const EVP_PKEY_ASN1_METHOD picnicL1FS_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslaI_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslaIIIsize_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslaIIIspeed_asn1_meth;
 /* ADD_MORE_OQS_SIG_HERE */
+#endif
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the

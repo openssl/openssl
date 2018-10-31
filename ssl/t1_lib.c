@@ -20,6 +20,7 @@
 #include "internal/nelem.h"
 #include "ssl_locl.h"
 #include <openssl/ct.h>
+#include <oqs/config.h>
 #include "ssl_oqs_extra.h"
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
@@ -175,8 +176,10 @@ static const TLS_GROUP_INFO nid_list[] = {
 static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* sike503 (0x0200) */
     {NID_OQS_SIKE_751, 192, TLS_CURVE_CUSTOM}, /* sike751 (0x0201) */
+#if !defined(OQS_NIST_BRANCH)
     {NID_OQS_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* sidh503 (0x0202) */
     {NID_OQS_SIDH_751, 192, TLS_CURVE_CUSTOM}, /* sidh751 (0x0203) */
+#endif
     {NID_OQS_Frodo_640_AES, 128, TLS_CURVE_CUSTOM}, /* frodo640aes (0x0204) */
     {NID_OQS_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* frodo640cshake (0x0205) */
     {NID_OQS_Frodo_976_AES, 192, TLS_CURVE_CUSTOM}, /* frodo976aes (0x0206) */
@@ -197,7 +200,9 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     /* Hybrid OQS groups. Security level is classical. */
 static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sike503 hybrid (0x0300) */
+#if !defined(OQS_NIST_BRANCH)
     {NID_OQS_p256_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sidh503 hybrid (0x0301) */
+#endif
     {NID_OQS_p256_Frodo_640_AES, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640aes hybrid (0x0302) */
     {NID_OQS_p256_Frodo_640_cshake, 128, TLS_CURVE_CUSTOM}, /* p256 + frodo640cshake hybrid (0x0303) */
     {NID_OQS_p256_BIKE1_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike1l1 hybrid (0x0304) */
@@ -224,8 +229,10 @@ static const uint16_t eccurves_default[] = {
        Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
     0x0200, /* OQS sike503 */
     0x0201, /* OQS sike751 */
+#if !defined(OQS_NIST_BRANCH)
     0x0202, /* OQS sidh503 */
     0x0203, /* OQS sidh751 */
+#endif
     0x0204, /* OQS frodo640aes */
     0x0205, /* OQS frodo640cshake */
     0x0206, /* OQS frodo976aes */
@@ -243,7 +250,9 @@ static const uint16_t eccurves_default[] = {
     0x0212, /* OQS newhope1024cca */
     /* ADD_MORE_OQS_KEM_HERE */
     0x0300, /* p256 - OQS sike503 hybrid */
+#if !defined(OQS_NIST_BRANCH)
     0x0301, /* p256 - OQS sidh503 hybrid */
+#endif
     0x0302, /* p256 - OQS frodo640aes hybrid */
     0x0303, /* p256 - OQS frodo640cshake hybrid */
     0x0304, /* p256 - OQS bike1l1 hybrid */
@@ -730,12 +739,14 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_ed25519,
     TLSEXT_SIGALG_ed448,
 #endif
-    /* OQS schemes*/
+#if !defined(OQS_NIST_BRANCH)
+    /* OQS sig schemes*/
     TLSEXT_SIGALG_picnicL1FS,
     TLSEXT_SIGALG_qteslaI,
     TLSEXT_SIGALG_qteslaIIIsize,
     TLSEXT_SIGALG_qteslaIIIspeed,
     /* ADD_MORE_OQS_SIG_HERE */
+#endif
 
     TLSEXT_SIGALG_rsa_pss_pss_sha256,
     TLSEXT_SIGALG_rsa_pss_pss_sha384,
@@ -864,7 +875,8 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_id_GostR3410_2001, SSL_PKEY_GOST01,
      NID_undef, NID_undef},
 #endif
-    /* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+    /* OQS sig schemes */
     {"picnicL1FS", TLSEXT_SIGALG_picnicL1FS,
      NID_undef, -1, EVP_PKEY_PICNICL1FS, SSL_PKEY_PICNICL1FS,
      NID_undef, NID_undef},
@@ -878,6 +890,7 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_undef, -1, EVP_PKEY_QTESLAIIISPEED, SSL_PKEY_QTESLAIIISPEED,
      NID_undef, NID_undef},
     /* ADD_MORE_OQS_SIG_HERE */
+#endif
 };
 /* Legacy sigalgs for TLS < 1.2 RSA TLS signatures */
 static const SIGALG_LOOKUP legacy_rsa_sigalg = {
@@ -2440,12 +2453,14 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_GOST12_512);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED25519);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ED448);
-    /* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+    /* OQS sig schemes */
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISIZE);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAIIISPEED);
     /* ADD_MORE_OQS_SIG_HERE */
+#endif
 }
 
 /* User level utility function to check a chain is suitable */

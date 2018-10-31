@@ -15,6 +15,7 @@
 # include <openssl/symhacks.h>
 # include <openssl/bio.h>
 # include <openssl/evperr.h>
+# include <oqs/config.h>
 
 # define EVP_MAX_MD_SIZE                 64/* longest known is SHA512 */
 # define EVP_MAX_KEY_LENGTH              64
@@ -62,12 +63,14 @@
 # define EVP_PKEY_ED25519 NID_ED25519
 # define EVP_PKEY_X448 NID_X448
 # define EVP_PKEY_ED448 NID_ED448
-/* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+/* OQS sig schemes */
 # define EVP_PKEY_PICNICL1FS NID_picnicL1FS
 # define EVP_PKEY_QTESLAI NID_qTESLA_I
 # define EVP_PKEY_QTESLAIIISIZE NID_qTESLA_III_size
 # define EVP_PKEY_QTESLAIIISPEED NID_qTESLA_III_speed
 /* ADD_MORE_OQS_SIG_HERE */
+#endif
 
 #ifdef  __cplusplus
 extern "C" {

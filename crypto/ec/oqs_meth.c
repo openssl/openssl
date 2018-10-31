@@ -17,6 +17,10 @@
 #include <oqs/rand.h>
 #include <oqs/common.h>
 #include <oqs/sig.h>
+#include <oqs/config.h>
+
+/* Only supports OQS's master branch signature API for now */
+#if !defined(OQS_NIST_BRANCH)
 
 /*
  * OQS context
@@ -570,3 +574,5 @@ DEFINE_OQS_EVP_METHODS(picnicL1FS, NID_picnicL1FS, "picnicL1FS", "OpenSSL Picnic
 DEFINE_OQS_EVP_METHODS(qteslaI, NID_qTESLA_I, "qteslaI", "OpenSSL qTESLA-I algorithm")
 DEFINE_OQS_EVP_METHODS(qteslaIIIsize, NID_qTESLA_III_size, "qteslaIIIsize", "OpenSSL qTESLA-III-size algorithm")
 DEFINE_OQS_EVP_METHODS(qteslaIIIspeed, NID_qTESLA_III_speed, "qteslaIIIspeed", "OpenSSL qTESLA-III-speed algorithm")
+
+#endif /* OQS_MASTER */
