@@ -454,22 +454,20 @@ $obj$objext: $deps
 	\$(AS) \$(ASFLAGS) \$(ASOUTFLAG)\$\@ $srcs
 EOF
      }
-     return <<"EOF"	if (!$disabled{makedepend});
-$obj$depext: $deps
-	\$(CC) \$(CFLAGS) $ecflags$inc /Zs /showIncludes $srcs 2>&1 | \\
+     my $recipe = <<"EOF";
+$obj$objext: $deps
+	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ $srcs
+EOF
+     $recipe .= <<"EOF"	unless $disabled{makedepend};
+	\$(CC) $incs \$(CFLAGS) $ecflags /Zs /showIncludes $srcs 2>&1 | \\
 	    "\$(PERL)" -n << > $obj$depext
 chomp;
 s/^Note: including file: *//;
 \$\$collect{\$\$_} = 1;
 END { print '$obj$objext: ',join(" ", sort keys \%collect),"\\n" }
 <<
-$obj$objext: $obj$depext
-	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ $srcs
 EOF
-    return <<"EOF"	if ($disabled{makedepend});
-$obj$objext: $deps
-	\$(CC) $incs \$(CFLAGS) $ecflags -c \$(COUTFLAG)\$\@ $srcs
-EOF
+     return $recipe;
  }
 
  # On Unix, we build shlibs from static libs, so we're ignoring the
