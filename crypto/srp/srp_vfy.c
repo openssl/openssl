@@ -184,7 +184,7 @@ void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
     OPENSSL_free(user_pwd);
 }
 
-static SRP_user_pwd *SRP_user_pwd_new(void)
+SRP_user_pwd *SRP_user_pwd_new(void)
 {
     SRP_user_pwd *ret;
     
@@ -201,16 +201,20 @@ static SRP_user_pwd *SRP_user_pwd_new(void)
     return ret;
 }
 
-static void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
-                                const BIGNUM *N)
+void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
+                         const BIGNUM *N)
 {
     vinfo->N = N;
     vinfo->g = g;
 }
 
-static int SRP_user_pwd_set_ids(SRP_user_pwd *vinfo, const char *id,
-                                const char *info)
+int SRP_user_pwd_set1_ids(SRP_user_pwd *vinfo, const char *id,
+                         const char *info)
 {
+    if (vinfo->id != NULL)
+        OPENSSL_free(vinfo->id);
+    if (vinfo->info != NULL)
+        OPENSSL_free(vinfo->info);
     if (id != NULL && NULL == (vinfo->id = OPENSSL_strdup(id)))
         return 0;
     return (info == NULL || NULL != (vinfo->info = OPENSSL_strdup(info)));
@@ -243,8 +247,10 @@ static int SRP_user_pwd_set_sv(SRP_user_pwd *vinfo, const char *s,
     return 0;
 }
 
-static int SRP_user_pwd_set_sv_BN(SRP_user_pwd *vinfo, BIGNUM *s, BIGNUM *v)
+int SRP_user_pwd_set0_sv(SRP_user_pwd *vinfo, BIGNUM *s, BIGNUM *v)
 {
+    BN_free(vinfo->s);
+    BN_clear_free(vinfo->v);
     vinfo->v = v;
     vinfo->s = s;
     return (vinfo->s != NULL && vinfo->v != NULL);
@@ -260,8 +266,8 @@ static SRP_user_pwd *srp_user_pwd_dup(SRP_user_pwd *src)
         return NULL;
 
     SRP_user_pwd_set_gN(ret, src->g, src->N);
-    if (!SRP_user_pwd_set_ids(ret, src->id, src->info)
-        || !SRP_user_pwd_set_sv_BN(ret, BN_dup(src->s), BN_dup(src->v))) {
+    if (!SRP_user_pwd_set1_ids(ret, src->id, src->info)
+        || !SRP_user_pwd_set0_sv(ret, BN_dup(src->s), BN_dup(src->v))) {
             SRP_user_pwd_free(ret);
             return NULL;
     }
@@ -446,7 +452,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
                     goto err;
 
                 SRP_user_pwd_set_gN(user_pwd, lgN->g, lgN->N);
-                if (!SRP_user_pwd_set_ids
+                if (!SRP_user_pwd_set1_ids
                     (user_pwd, pp[DB_srpid], pp[DB_srpinfo]))
                     goto err;
 
@@ -562,7 +568,7 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
 
     SRP_user_pwd_set_gN(user, vb->default_g, vb->default_N);
 
-    if (!SRP_user_pwd_set_ids(user, username, NULL))
+    if (!SRP_user_pwd_set1_ids(user, username, NULL))
         goto err;
 
     if (RAND_priv_bytes(digv, SHA_DIGEST_LENGTH) <= 0)
@@ -576,7 +582,7 @@ SRP_user_pwd *SRP_VBASE_get1_by_user(SRP_VBASE *vb, char *username)
         goto err;
     EVP_MD_CTX_free(ctxt);
     ctxt = NULL;
-    if (SRP_user_pwd_set_sv_BN(user,
+    if (SRP_user_pwd_set0_sv(user,
                                BN_bin2bn(digs, SHA_DIGEST_LENGTH, NULL),
                                BN_bin2bn(digv, SHA_DIGEST_LENGTH, NULL)))
         return user;
