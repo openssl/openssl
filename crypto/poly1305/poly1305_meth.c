@@ -39,11 +39,10 @@ static void poly1305_free(EVP_MAC_IMPL *ctx)
 
 static int poly1305_copy(EVP_MAC_IMPL *dst, EVP_MAC_IMPL *src)
 {
-    if ((dst = poly1305_new()) == NULL
-            || !memcpy(dst->ctx, src->ctx, sizeof(*dst->ctx))) {
-        poly1305_free(dst);
+    if (dst->ctx == NULL)
         return 0;
-    }
+
+    *dst->ctx = *src->ctx;
 
     return 1;
 }
