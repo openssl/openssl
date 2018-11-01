@@ -4,7 +4,6 @@
 
 SRP_VBASE_new,
 SRP_VBASE_free,
-SRP_user_pwd_free,
 SRP_VBASE_init,
 SRP_VBASE_add0_user,
 SRP_VBASE_get1_by_user,
@@ -17,7 +16,6 @@ SRP_VBASE_get_by_user
 
  SRP_VBASE *SRP_VBASE_new(char *seed_key);
  void SRP_VBASE_free(SRP_VBASE *vb);
- void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
 
  int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file);
 
@@ -28,18 +26,16 @@ SRP_VBASE_get_by_user
 =head1 DESCRIPTION
 
 The SRP_VBASE_new() function allocates a structure to store server side SRP
-verifier information. If B<seed_key> is not NULL a copy is stored and used to
-generate dummy parameters for users that are not found by SRP_VBASE_get1_by_user().
-This allows the server to hide the fact that it doesn't have a verifier for a
-particular username, as described in section 2.5.1.3 'Unknown SRP' of RFC 5054.
+verifier information.
+If B<seed_key> is not NULL a copy is stored and used to generate dummy parameters
+for users that are not found by SRP_VBASE_get1_by_user(). This allows the server
+to hide the fact that it doesn't have a verifier for a particular username,
+as described in section 2.5.1.3 'Unknown SRP' of RFC 5054.
 The seed string should contain random NUL terminated binary data (therefore
 the random data should not contain NUL bytes!).
 
 The SRP_VBASE_free() function frees up the B<vb> structure.
 If B<vb> is NULL, nothing is done.
-
-The SRP_user_pwd_free() function frees up the B<user_pwd> structure.
-If B<user_pwd> is NULL, nothing is done.
 
 The SRP_VBASE_init() function parses the information in a verifier file and
 populates the B<vb> structure.
@@ -50,7 +46,8 @@ Note that the base64 encoding used here is non-standard so it is recommended
 to use L<srp(1)> to generate this file.
 
 The SRP_VBASE_add0_user() function adds the B<user_pwd> verifier information
-to the B<vb> structure.
+to the B<vb> structure. See L<SRP_user_pwd_new(3)> to create and populate this
+record.
 The library takes ownership of B<user_pwd>, it should not be freed by the caller.
 
 The SRP_VBASE_get1_by_user() function returns the password info for the user
@@ -81,6 +78,7 @@ SRP_VBASE_add0_user() returns 1 on success and 0 on failure.
 
 L<srp(1)>,
 L<SRP_create_verifier(3)>,
+L<SRP_user_pwd_new(3)>,
 L<SSL_CTX_set_srp_password(3)>
 
 =head1 HISTORY

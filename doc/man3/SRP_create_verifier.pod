@@ -38,7 +38,7 @@ and its use is discouraged.
 It is possible to pass NULL as B<N> and an SRP group id as B<g> instead to
 load the appropriate gN values (see SRP_get_default_gN()).
 If both B<N> and B<g> are NULL the 8192-bit SRP group parameters are used.
-The caller is responsible for freeing the allocated *salt and *verifier char*
+The caller is responsible for freeing the allocated B<*salt> and B<*verifier>
 (use L<OPENSSL_free(3)>).
 
 The SRP_check_known_gN_param() function checks that B<g> and B<N> are valid
@@ -76,28 +76,23 @@ omitted for clarity):
 
  SRP_VBASE *srpData = SRP_VBASE_new(NULL);
 
- SRP_user_pwd *pwd = (SRP_user_pwd*) OPENSSL_malloc(sizeof(SRP_user_pwd));
  SRP_gN *gN = SRP_get_default_gN("8192");
 
  BIGNUM *salt = NULL, *verifier = NULL;
  SRP_create_verifier_BN(username, password, &salt, &verifier, gN->N, gN->g);
 
- // TODO: replace with SRP_user_pwd_new()
- pwd->id = OPENSSL_strdup(username);
- pwd->g = gN->g;
- pwd->N = gN->N;
- pwd->s = salt;
- pwd->v = verifier;
- pwd->info = NULL;
+ SRP_user_pwd *pwd = SRP_user_pwd_new();
+ SRP_user_pwd_set1_ids(pwd, username, NULL);
+ SRP_user_pwd_set0_sv(pwd, salt, verifier);
+ SRP_user_pwd_set_gN(pwd, gN->g, gN->N);
 
  SRP_VBASE_add0_user(srpData, pwd);
 
 =head1 SEE ALSO
 
 L<srp(1)>,
-L<BN_new(3)>,
-L<OPENSSL_malloc(3)>,
-L<SRP_VBASE_new(3)>
+L<SRP_VBASE_new(3)>,
+L<SRP_user_pwd_new(3)>
 
 =head1 HISTORY
 

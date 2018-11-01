@@ -47,7 +47,12 @@ typedef struct SRP_user_pwd_st {
     char *info;
 } SRP_user_pwd;
 
+SRP_user_pwd *SRP_user_pwd_new(void);
 void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
+
+void SRP_user_pwd_set_gN(SRP_user_pwd *user_pwd, const BIGNUM *g, const BIGNUM *N);
+int SRP_user_pwd_set1_ids(SRP_user_pwd *user_pwd, const char *id, const char *info);
+int SRP_user_pwd_set0_sv(SRP_user_pwd *user_pwd, BIGNUM *s, BIGNUM *v);
 
 DEFINE_STACK_OF(SRP_user_pwd)
 
