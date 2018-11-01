@@ -2344,7 +2344,7 @@ EOF
             my %dirs = ();
             my $pd = dirname($product);
 
-            foreach (@{$unified_info{sources}->{$product}},
+            foreach (@{$unified_info{sources}->{$product} // []},
                      @{$unified_info{shared_sources}->{$product} // []}) {
                 my $d = dirname($_);
 
