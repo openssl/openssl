@@ -648,7 +648,7 @@ int BN_clear_bit(BIGNUM *a, int n)
 
 int BN_is_bit_set(const BIGNUM *a, int n)
 {
-    int i, j, k;
+    int i, j;
     BN_ULONG s;
 
     bn_check_top(a);
@@ -658,12 +658,12 @@ int BN_is_bit_set(const BIGNUM *a, int n)
     j = n % BN_BITS2;
 
     if (a->flags & BN_FLG_CONSTTIME) {
-        s = 0;
-        for (k = 0; k < a->dmax; k++) {
-            const int it = constant_time_eq(i, k) & constant_time_lt(i, a->top);
+        int it;
 
-            s = constant_time_select_bn(constant_time_lsb_bn(it), a->d[k], s);
-        }
+        if (i >= a->dmax)
+            return 0;
+        it = constant_time_lt(i, a->top);
+        s = constant_time_select_bn(constant_time_lsb_bn(it), a->d[i], 0);
     } else {
         if (a->top <= i)
             return 0;
