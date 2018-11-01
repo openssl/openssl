@@ -14,7 +14,7 @@ Overview
 
 The **Open Quantum Safe (OQS) project** has the goal of developing and prototyping quantum-resistant cryptography.  
 
-**liboqs** is an open source C library for quantum-safe cryptographic algorithms.  See more about liboqs at [https://github.com/open-quantum-safe/liboqs/](https://github.com/open-quantum-safe/liboqs/), including a list of supported algorithms.
+**liboqs** is an open source C library for quantum-safe cryptographic algorithms.  See more about liboqs at [https://github.com/open-quantum-safe/liboqs/](https://github.com/open-quantum-safe/liboqs/), including a list of supported algorithms. OpenSSL can use either the [master](https://github.com/open-quantum-safe/liboqs/tree/master) or the [nist](https://github.com/open-quantum-safe/liboqs/tree/nist-branch) branch of liboqs; the former is recommended for normal uses of OpenSSL as included mechanisms follow a stricter set of requirements, the latter contains more algorithms and is better suited for experimentation.
 
 **open-quantum-safe/openssl** is an integration of liboqs into OpenSSL.  The goal of this integration is to provide easy prototyping of quantum-resistant cryptography.  The integration should not be considered "production quality".
 
@@ -23,8 +23,6 @@ More information on OQS can be found on our website: [https://openquantumsafe.or
 open-quantum-safe/openssl branch OQS-OpenSSL\_1\_1\_1-stable
 ------------------------------------------------------------
 
-TODO: document support for nist-branch (FIXMEOQS)
-
 This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)) integrates post-quantum key exchange from liboqs in TLS 1.3 in OpenSSL v1.1.1.  
 
 (For TLS 1.2, see the [OQS-OpenSSL\_1\_0\_2-stable](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable) branch.)
@@ -32,17 +30,24 @@ This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantu
 ### Key exchange mechanisms
 
 The following key exchange / key encapsulation mechanisms from liboqs are supported (assuming they have been enabled in liboqs):
-
+- `oqs_kem_default`: this special mechanisms uses the liboqs's default configured scheme. This is useful to test schemes not yet supported by OpenSSL.
 - `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5` (not currently on Windows)
 - `frodo640aes`, `frodo640cshake`, `frodo976aes`, `frodo976cshake`
 - `newhope512cca`, `newhope1024cca`
 - `sidh503`, `sidh751`
 - `sike503`, `sike751`
 
+The following additional mechanisms are supported only when using liboqs's nist-branch (assuming they have been enabled in liboqs):
+- `bigquake1`, `bigquake3`, `bigquake5`
+- `kyber512`, `kyber768`, `kyber1024`
+- `ledakem_C1_N02`, `ledakem_C1_N03`, `ledakem_C1_N04`, `ledakem_C3_N02`, `ledakem_C3_N03`, `ledakem_C3_N04`, `ledakem_C5_N02`, `ledakem_C5_N03`, `ledakem_C5_N04`
+- `lima_2p_1024_cca`, `lima_2p_2048_cca`, `lima_sp_1018_cca`, `lima_sp_1306_cca`, `lima_sp_1822_cca`, `lima_sp_2062_cca`
+- `saber_light_saber`, `saber_saber`, `saber_fire_saber`
+- `titanium_cca_std`, `titanium_cca_hi`, `titanium_cca_med`, `titanium_cca_super`
+
 ### Authentication mechanisms
 
-The following signature schemes from liboqs are supported:
-
+Authentication mechanisms are currently only enabled when using liboqs's master branch (due to the nist-branch's incompatible signature API). The following signature schemes from liboqs are supported (assuming they have been enabled in liboqs):
 - `picnicL1FS`
 - `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed` (not currently on Windows)
 
@@ -97,10 +102,11 @@ Clone or download the source from Github:
 
 ### Step 2: Build liboqs
 
-You must use the [master branch](https://github.com/open-quantum-safe/liboqs/blob/master/README.md) of liboqs with the OQS-OpenSSL\_1\_1\_1-stable branch.
+You can use the either the [master](https://github.com/open-quantum-safe/liboqs/tree/master) or the [nist](https://github.com/open-quantum-safe/liboqs/tree/nist-branch) branch of liboqs with the OQS-OpenSSL\_1\_1\_1-stable branch. Each branch support a different set of KEX/KEM mechanisnms (see above), and authentication is currently only supported with the master branch.
 
-The following instructions will download and build that branch of liboqs, then install it into a subdirectory inside the OpenSSL folder.
+The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
+For the master branch:
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
     cd liboqs
     autoreconf -i
@@ -108,7 +114,11 @@ The following instructions will download and build that branch of liboqs, then i
     make clean
     make -j
     make install
-    cd ..
+
+For the nist branch:
+    git clone --branch nist-branch https://github.com/open-quantum-safe/liboqs.git
+    cd liboqs
+    make install PREFIX=<path-to-openssl-dir>/oqs
     
 On **Ubuntu**, `<path-to-system-openssl-dir>` is probably `/usr`.  On **macOS** with brew, `<path-to-system-openssl-dir>` is probably `/usr/local/opt/openssl`.
 
@@ -141,7 +151,7 @@ Clone or download the source from Github:
 
 ### Step 2: Build liboqs
 
-Next, you must download and build liboqs using the master branch of liboqs.  The following instructions will download and build that branch of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
+Next, you must download and build liboqs using the master branch of liboqs (The nist branch is not currently supported on Windows).  The following instructions will download and build that branch of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
 
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
     cd liboqs
@@ -181,7 +191,7 @@ To run a basic TLS server with all OQS ciphersuites enabled:
 
 	apps/openssl s_server -cert <SIGALG>.crt -key <SIGALG>.key -www -tls1_3
 
-In another terminal window, you can run a TLS client for any or all of the supported ciphersuites (`<KEXALG>` = `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5`, `frodo640aes`, `frodo640cshake`, `frodo976aes`, `frodo976cshake`, `newhope512cca`, `newhope1024cca`, `sidh503`, `sidh751`, `sike503`, `sike751`) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC schemes are supported for now), for example:
+In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEXALG>` = one of the key exchange mechanisms listed above) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC schemes are supported for now):
 
     apps/openssl s_client -curves <KEXALG> -connect localhost:4433
 

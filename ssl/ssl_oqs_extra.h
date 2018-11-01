@@ -4,7 +4,9 @@
 static int OQS_nid_from_string(const char *value) {
   int nid = 0;
   int len = strlen(value);
-  if (memcmp(value,"sike503", len) == 0) {
+  if (memcmp(value,"oqs_kem_default", len) == 0) {
+    nid = NID_OQS_KEM_DEFAULT;
+  } else if (memcmp(value,"sike503", len) == 0) {
     nid = NID_OQS_SIKE_503;
   } else if (memcmp(value,"sike751", len) == 0) {
     nid = NID_OQS_SIKE_751;
@@ -44,8 +46,68 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_NEWHOPE_512_CCA;
   } else if (memcmp(value,"newhope1024cca", len) == 0) {
     nid = NID_OQS_NEWHOPE_1024_CCA;
+#if defined(OQS_NIST_BRANCH)
+  } else if (memcmp(value,"bigquake1", len) == 0) {
+    nid = NID_OQS_bigquake1;
+  } else if (memcmp(value,"bigquake3", len) == 0) {
+    nid = NID_OQS_bigquake3;
+  } else if (memcmp(value,"bigquake5", len) == 0) {
+    nid = NID_OQS_bigquake5;
+  } else if (memcmp(value,"kyber512", len) == 0) {
+    nid = NID_OQS_kyber512;
+  } else if (memcmp(value,"kyber768", len) == 0) {
+    nid = NID_OQS_kyber768;
+  } else if (memcmp(value,"kyber1024", len) == 0) {
+    nid = NID_OQS_kyber1024;
+  } else if (memcmp(value,"ledakem_C1_N02", len) == 0) {
+    nid = NID_OQS_ledakem_C1_N02;
+  } else if (memcmp(value,"ledakem_C1_N03", len) == 0) {
+    nid = NID_OQS_ledakem_C1_N03;
+  } else if (memcmp(value,"ledakem_C1_N04", len) == 0) {
+    nid = NID_OQS_ledakem_C1_N04;
+  } else if (memcmp(value,"ledakem_C3_N02", len) == 0) {
+    nid = NID_OQS_ledakem_C3_N02;
+  } else if (memcmp(value,"ledakem_C3_N03", len) == 0) {
+    nid = NID_OQS_ledakem_C3_N03;
+  } else if (memcmp(value,"ledakem_C3_N04", len) == 0) {
+    nid = NID_OQS_ledakem_C3_N04;
+  } else if (memcmp(value,"ledakem_C5_N02", len) == 0) {
+    nid = NID_OQS_ledakem_C5_N02;
+  } else if (memcmp(value,"ledakem_C5_N03", len) == 0) {
+    nid = NID_OQS_ledakem_C5_N03;
+  } else if (memcmp(value,"ledakem_C5_N04", len) == 0) {
+    nid = NID_OQS_ledakem_C5_N04;
+  } else if (memcmp(value,"lima_2p_1024_cca", len) == 0) {
+    nid = NID_OQS_lima_2p_1024_cca;
+  } else if (memcmp(value,"lima_2p_2048_cca", len) == 0) {
+    nid = NID_OQS_lima_2p_2048_cca;
+  } else if (memcmp(value,"lima_sp_1018_cca", len) == 0) {
+    nid = NID_OQS_lima_sp_1018_cca;
+  } else if (memcmp(value,"lima_sp_1306_cca", len) == 0) {
+    nid = NID_OQS_lima_sp_1306_cca;
+  } else if (memcmp(value,"lima_sp_1822_cca", len) == 0) {
+    nid = NID_OQS_lima_sp_1822_cca;
+  } else if (memcmp(value,"lima_sp_2062_cca", len) == 0) {
+    nid = NID_OQS_lima_sp_2062_cca;
+  } else if (memcmp(value,"saber_light_saber", len) == 0) {
+    nid = NID_OQS_saber_light_saber;
+  } else if (memcmp(value,"saber_saber", len) == 0) {
+    nid = NID_OQS_saber_saber;
+  } else if (memcmp(value,"saber_fire_saber", len) == 0) {
+    nid = NID_OQS_saber_fire_saber;
+  } else if (memcmp(value,"titanium_cca_std", len) == 0) {
+    nid = NID_OQS_titanium_cca_std;
+  } else if (memcmp(value,"titanium_cca_hi", len) == 0) {
+    nid = NID_OQS_titanium_cca_hi;
+  } else if (memcmp(value,"titanium_cca_med", len) == 0) {
+    nid = NID_OQS_titanium_cca_med;
+  } else if (memcmp(value,"titanium_cca_super", len) == 0) {
+    nid = NID_OQS_titanium_cca_super;
+#endif
   /* ADD_MORE_OQS_KEM_HERE */
   /* hybrid algs */
+  } else if (memcmp(value,"p256-oqs_kem_default", len) == 0) {
+    nid = NID_OQS_p256_KEM_DEFAULT;
   } else if (memcmp(value,"p256-sike503", len) == 0) {
     nid = NID_OQS_p256_SIKE_503;
 #if !defined(OQS_NIST_BRANCH)
@@ -64,6 +126,26 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_p256_BIKE3_L1;
   } else if (memcmp(value,"p256-newhope512cca", len) == 0) {
     nid = NID_OQS_p256_NEWHOPE_512_CCA;
+#if defined(OQS_NIST_BRANCH)
+  } else if (memcmp(value,"p256-bigquake1", len) == 0) {
+    nid = NID_OQS_p256_bigquake1;
+  } else if (memcmp(value,"p256-kyber512", len) == 0) {
+    nid = NID_OQS_p256_kyber512;
+  } else if (memcmp(value,"p256-ledakem_C1_N02", len) == 0) {
+    nid = NID_OQS_p256_ledakem_C1_N02;
+  } else if (memcmp(value,"p256-ledakem_C1_N03", len) == 0) {
+    nid = NID_OQS_p256_ledakem_C1_N03;
+  } else if (memcmp(value,"p256-ledakem_C1_N04", len) == 0) {
+    nid = NID_OQS_p256_ledakem_C1_N04;
+  } else if (memcmp(value,"p256-lima_sp_1018_cca", len) == 0) {
+    nid = NID_OQS_p256_lima_sp_1018_cca;
+  } else if (memcmp(value,"p256-saber_light_saber", len) == 0) {
+    nid = NID_OQS_p256_saber_light_saber;
+  } else if (memcmp(value,"p256-titanium_cca_std", len) == 0) {
+    nid = NID_OQS_p256_titanium_cca_std;
+  } else if (memcmp(value,"p256-titanium_cca_med", len) == 0) {
+    nid = NID_OQS_p256_itanium_cca_med;
+#endif
   }
   /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
   return nid;

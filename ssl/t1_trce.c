@@ -530,6 +530,7 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     /* OQS groups, using private code points. The TLS 1.3 spec only reserves
        FF and EC ranges for code points; we'll update our values if/when
        this gets updated for PQC. */
+    {OQS_KEM_CURVEID(NID_OQS_KEM_DEFAULT), "OQS KEM default"},
     {OQS_KEM_CURVEID(NID_OQS_SIKE_503), "sike503"},
     {OQS_KEM_CURVEID(NID_OQS_SIKE_751), "sike503"},
     {OQS_KEM_CURVEID(NID_OQS_SIDH_503), "sidh503"},
@@ -549,7 +550,11 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_BIKE3_L5), "bike3l5"},
     {OQS_KEM_CURVEID(NID_OQS_NEWHOPE_512_CCA), "newhope512cca"},
     {OQS_KEM_CURVEID(NID_OQS_NEWHOPE_1024_CCA), "newhope1024cca"},
+#if defined(OQS_NIST_BRANCH)
++++
+#endif
     /* ADD_MORE_OQS_KEM_HERE */
+    {OQS_KEM_CURVEID(NID_OQS_p256_OQS_KEM_DEFAULT), "p256 - OQS KEM default hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_SIKE_503), "p256 - sike503 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_SIDH_503), "p256 - sidh503 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_Frodo_640_AES), "p256 - frodo640aes hybrid"},
@@ -557,6 +562,17 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE1_L1), "p256 - bike1l1 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE2_L1), "p256 - bike2l1 hybrid"},
     {OQS_KEM_CURVEID(NID_OQS_p256_BIKE3_L1), "p256 - bike3l1 hybrid"},
+#if defined(OQS_NIST_BRANCH)
+    {OQS_KEM_CURVEID(NID_OQS_p256_bigquake1), "p256 - bigquake1"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_kyber512), "p256 - kyber512"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N02), "p256 - ledakem_C1_N02"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N03), "p256 - ledakem_C1_N03"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N04), "p256 - ledakem_C1_N04"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_lima_sp_1018_cca), "p256 - lima_sp_1018_cca"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_saber_light_saber), "p256 - saber_light_saber"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_titanium_cca_std), "p256 - titanium_cca_std"},
+    {OQS_KEM_CURVEID(NID_OQS_p256_titanium_cca_med), "p256 - titanium_cca_med"},
+#endif
     /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}

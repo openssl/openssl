@@ -174,6 +174,7 @@ static const TLS_GROUP_INFO nid_list[] = {
        for non finite field and elliptic curve "groups". Security level is classical.
      */
 static const TLS_GROUP_INFO oqs_nid_list[] = {
+    {NID_OQS_KEM_DEFAULT, 128, TLS_CURVE_CUSTOM}, /* OQS KEM default (0x01FF) */
     {NID_OQS_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* sike503 (0x0200) */
     {NID_OQS_SIKE_751, 192, TLS_CURVE_CUSTOM}, /* sike751 (0x0201) */
 #if !defined(OQS_NIST_BRANCH)
@@ -195,10 +196,41 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_OQS_BIKE3_L5, 256, TLS_CURVE_CUSTOM}, /* bike3l5 (0x0210) */
     {NID_OQS_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* newhope512cca (0x0211) */
     {NID_OQS_NEWHOPE_1024_CCA, 256, TLS_CURVE_CUSTOM}, /* newhope1024cca (0x0212) */
+#if defined(OQS_NIST_BRANCH)
+    {NID_OQS_bigquake1, 128, TLS_CURVE_CUSTOM}, /* bigquake1 (0x0213) */
+    {NID_OQS_bigquake3, 192, TLS_CURVE_CUSTOM}, /* bigquake3 (0x0214) */
+    {NID_OQS_bigquake5, 256, TLS_CURVE_CUSTOM}, /* bigquake5 (0x0215) */
+    {NID_OQS_kyber512, 128, TLS_CURVE_CUSTOM}, /* kyber512 (0x0216) */
+    {NID_OQS_kyber768, 192, TLS_CURVE_CUSTOM}, /* kyber768 (0x0217) */
+    {NID_OQS_kyber1024, 256, TLS_CURVE_CUSTOM}, /* kyber1024 (0x0218) */
+    {NID_OQS_ledakem_C1_N02, 128, TLS_CURVE_CUSTOM}, /* ledakem_C1_N02 (0x0219) */
+    {NID_OQS_ledakem_C1_N03, 128, TLS_CURVE_CUSTOM}, /* ledakem_C1_N03 (0x021a) */
+    {NID_OQS_ledakem_C1_N04, 128, TLS_CURVE_CUSTOM}, /* ledakem_C1_N04 (0x021b) */
+    {NID_OQS_ledakem_C3_N02, 192, TLS_CURVE_CUSTOM}, /* ledakem_C3_N02 (0x021c) */
+    {NID_OQS_ledakem_C3_N03, 192, TLS_CURVE_CUSTOM}, /* ledakem_C3_N03 (0x021d) */
+    {NID_OQS_ledakem_C3_N04, 192, TLS_CURVE_CUSTOM}, /* ledakem_C3_N04 (0x021e) */
+    {NID_OQS_ledakem_C5_N02, 256, TLS_CURVE_CUSTOM}, /* ledakem_C5_N02 (0x021f) */
+    {NID_OQS_ledakem_C5_N03, 256, TLS_CURVE_CUSTOM}, /* ledakem_C5_N03 (0x0220) */
+    {NID_OQS_ledakem_C5_N04, 256, TLS_CURVE_CUSTOM}, /* ledakem_C5_N04 (0x0221) */
+    {NID_OQS_lima_2p_1024_cca, 192, TLS_CURVE_CUSTOM}, /* lima_2p_1024_cca (0x0222) */
+    {NID_OQS_lima_2p_2048_cca, 192, TLS_CURVE_CUSTOM}, /* lima_2p_2048_cca (0x0223) */ /* FIXMEOQS: what is the security level for NIST level 4? */
+    {NID_OQS_lima_sp_1018_cca, 128, TLS_CURVE_CUSTOM}, /* lima_sp_1018_cca (0x0224) */
+    {NID_OQS_lima_sp_1306_cca, 128, TLS_CURVE_CUSTOM}, /* lima_sp_1306_cca (0x0225) */ /* FIXMEOQS: what is the security level for NIST level 2? */
+    {NID_OQS_lima_sp_1822_cca, 192, TLS_CURVE_CUSTOM}, /* lima_sp_1822_cca (0x0226) */
+    {NID_OQS_lima_sp_2062_cca, 192, TLS_CURVE_CUSTOM}, /* lima_sp_2062_cca (0x0227) */ /* FIXMEOQS: what is the security level for NIST level 4? */
+    {NID_OQS_saber_light_saber, 128, TLS_CURVE_CUSTOM}, /* saber_light_saber (0x0228) */
+    {NID_OQS_saber_saber, 192, TLS_CURVE_CUSTOM}, /* saber_saber (0x0229) */
+    {NID_OQS_saber_fire_saber, 256, TLS_CURVE_CUSTOM}, /* saber_fire_saber (0x022a) */
+    {NID_OQS_titanium_cca_std, 128, TLS_CURVE_CUSTOM}, /*titanium_cca_hi titanium_cca_std (0x022b) */
+    {NID_OQS_titanium_cca_hi, 192, TLS_CURVE_CUSTOM}, /* titanium_cca_hi (0x022c) */
+    {NID_OQS_titanium_cca_med, 128, TLS_CURVE_CUSTOM}, /* titanium_cca_med (0x022d) */
+    {NID_OQS_titanium_cca_super, 256, TLS_CURVE_CUSTOM}, /* titanium_cca_super (0x022e) */
+#endif
     /* ADD_MORE_OQS_KEM_HERE */
 };
     /* Hybrid OQS groups. Security level is classical. */
 static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
+    {NID_OQS_p256_KEM_DEFAULT, 128, TLS_CURVE_CUSTOM}, /* p256 + OQS KEM default hybrid (0x02FF) */
     {NID_OQS_p256_SIKE_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sike503 hybrid (0x0300) */
 #if !defined(OQS_NIST_BRANCH)
     {NID_OQS_p256_SIDH_503, 128, TLS_CURVE_CUSTOM}, /* p256 + sidh503 hybrid (0x0301) */
@@ -209,6 +241,17 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_BIKE2_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike2l1 hybrid (0x0305) */
     {NID_OQS_p256_BIKE3_L1, 128, TLS_CURVE_CUSTOM}, /* p256 + bike3l1 hybrid (0x0306) */
     {NID_OQS_p256_NEWHOPE_512_CCA, 128, TLS_CURVE_CUSTOM}, /* p256 + newhope512cca hybrid (0x0307) */
+#if defined(OQS_NIST_BRANCH)
+    {NID_OQS_p256_bigquake1, 128, TLS_CURVE_CUSTOM}, /* p256 + bigquake1 hybrid (0x0308) */
+    {NID_OQS_p256_kyber512, 128, TLS_CURVE_CUSTOM}, /* p256 + kyber512 hybrid (0x0309) */
+    {NID_OQS_p256_ledakem_C1_N02, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N02 hybrid (0x030a) */
+    {NID_OQS_p256_ledakem_C1_N03, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N03 hybrid (0x030b) */
+    {NID_OQS_p256_ledakem_C1_N04, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N04 hybrid (0x030c) */
+    {NID_OQS_p256_lima_sp_1018_cca, 128, TLS_CURVE_CUSTOM}, /* p256 + lima_sp_1018_cca hybrid (0x030d) */
+    {NID_OQS_p256_saber_light_saber, 128, TLS_CURVE_CUSTOM}, /* p256 + saber_light_saber hybrid (0x030e) */
+    {NID_OQS_p256_titanium_cca_std, 128, TLS_CURVE_CUSTOM}, /* p256 + titanium_cca_std hybrid (0x030f) */
+    {NID_OQS_p256_titanium_cca_med, 128, TLS_CURVE_CUSTOM}, /* p256 + titanium_cca_med hybrid (0x0310) */
+#endif
     /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
 
@@ -227,6 +270,7 @@ static const uint16_t eccurves_default[] = {
     24,                      /* secp384r1 (24) */
     /* FIXMEOQS: what should the code points be? TLS1.3 only specify DH and EC groups.
        Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
+    0x01FF, /* OQS default KEM */
     0x0200, /* OQS sike503 */
     0x0201, /* OQS sike751 */
 #if !defined(OQS_NIST_BRANCH)
@@ -248,7 +292,38 @@ static const uint16_t eccurves_default[] = {
     0x0210, /* OQS bike3l5 */
     0x0211, /* OQS newhope512cca */
     0x0212, /* OQS newhope1024cca */
+#if defined(OQS_NIST_BRANCH)
+    0x0213, /* OQS bigquake1 */
+    0x0214, /* OQS bigquake3 */
+    0x0215, /* OQS bigquake5 */
+    0x0216, /* OQS kyber512 */
+    0x0217, /* OQS kyber768 */
+    0x0218, /* OQS kyber1024 */
+    0x0219, /* OQS ledakem_C1_N02 */
+    0x021a, /* OQS ledakem_C1_N03 */
+    0x021b, /* OQS ledakem_C1_N04 */
+    0x021c, /* OQS ledakem_C3_N02 */
+    0x021d, /* OQS ledakem_C3_N03 */
+    0x021e, /* OQS ledakem_C3_N04 */
+    0x021f, /* OQS ledakem_C5_N02 */
+    0x0220, /* OQS ledakem_C5_N03 */
+    0x0221, /* OQS ledakem_C5_N04 */
+    0x0222, /* OQS lima_2p_1024_cca */
+    0x0223, /* OQS lima_2p_2048_cca */
+    0x0224, /* OQS lima_sp_1018_cca */
+    0x0225, /* OQS lima_sp_1306_cca */
+    0x0226, /* OQS lima_sp_1822_cca */
+    0x0227, /* OQS lima_sp_2062_cca */
+    0x0228, /* OQS saber_light_saber */
+    0x0229, /* OQS saber_saber */
+    0x022a, /* OQS saber_fire_saber */
+    0x022b, /* OQS titanium_cca_std */
+    0x022c, /* OQS titanium_cca_hi */
+    0x022d, /* OQS titanium_cca_med */
+    0x022e, /* OQS titanium_cca_super */
+#endif
     /* ADD_MORE_OQS_KEM_HERE */
+    0x02FF, /* p256 - OQS default KEM hybrid */
     0x0300, /* p256 - OQS sike503 hybrid */
 #if !defined(OQS_NIST_BRANCH)
     0x0301, /* p256 - OQS sidh503 hybrid */
@@ -259,6 +334,17 @@ static const uint16_t eccurves_default[] = {
     0x0305, /* p256 - OQS bike2l1 hybrid */
     0x0306, /* p256 - OQS bike3l1 hybrid */
     0x0307, /* p256 - OQS newhope512cca hybrid */
+#if defined(OQS_NIST_BRANCH)
+    0x0308, /* p256 - OQS bigquake1 hybrid */
+    0x0309, /* p256 - OQS kyber512 hybrid */
+    0x030a, /* p256 - OQS ledakem_C1_N02 hybrid */
+    0x030b, /* p256 - OQS ledakem_C1_N03 hybrid */
+    0x030c, /* p256 - OQS ledakem_C1_N04 hybrid */
+    0x030d, /* p256 - OQS lima_sp_1018_cca hybrid */
+    0x030e, /* p256 - OQS saber_light_saber hybrid */
+    0x030f, /* p256 - OQS titanium_cca_std hybrid */
+    0x0310, /* p256 - OQS titanium_cca_med hybrid */
+#endif
     /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
 };
 
@@ -271,10 +357,10 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
 {
     /* check if it is an OQS group */
     if (IS_OQS_KEM_CURVEID(group_id)) {
-      return &oqs_nid_list[group_id - 0x0200 /* first oqs value */];
+      return &oqs_nid_list[group_id - 0x01FF /* first oqs value */];
     }
     if (IS_OQS_KEM_HYBRID_CURVEID(group_id)) {
-      return &oqs_hybrid_nid_list[group_id - 0x0300 /* first oqs hybrid value */ ];
+      return &oqs_hybrid_nid_list[group_id - 0x02FF /* first oqs hybrid value */ ];
     }
 
     /* ECC curves from RFC 4492 and RFC 7027 */
@@ -476,7 +562,7 @@ static int nid_cb(const char *elem, int len, void *arg)
     nid_cb_st *narg = arg;
     size_t i;
     int nid;
-    char etmp[20];
+    char etmp[40]; // OQS note: used to be 20, but some OQS are bigger
     if (elem == NULL)
         return 0;
     if (narg->nidcnt == MAX_CURVELIST)
