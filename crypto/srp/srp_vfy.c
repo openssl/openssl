@@ -514,6 +514,13 @@ static SRP_user_pwd *find_user(SRP_VBASE *vb, char *username)
     return NULL;
 }
 
+int SRP_VBASE_add0_user(SRP_VBASE *vb, SRP_user_pwd *user_pwd)
+{
+    if (sk_SRP_user_pwd_push(vb->users_pwd, user_pwd) <= 0)
+        return 0;
+    return 1;
+}
+
 # if OPENSSL_API_COMPAT < 0x10100000L
 /*
  * DEPRECATED: use SRP_VBASE_get1_by_user instead.

@@ -90,7 +90,7 @@ omitted for clarity):
  pwd->v = verifier;
  pwd->info = NULL;
 
- sk_SRP_user_pwd_push(srpData->users_pwd, pwd);
+ SRP_VBASE_add0_user(srpData, pwd);
 
 =head1 SEE ALSO
 
