@@ -13,6 +13,7 @@
 # include <stdlib.h>
 # include <string.h>
 # include <openssl/e_os2.h>              /* For 'ossl_inline' */
+# include <openssl/bn.h>                 /* For BN_ULONG size */
 
 /*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
@@ -30,10 +31,12 @@
 
 /* Returns the given value with the MSB copied to all the other bits. */
 static ossl_inline unsigned int constant_time_msb(unsigned int a);
-/* Convenience method for uint32_t. */
+/* Convenience methods for uint32_t. */
 static ossl_inline uint32_t constant_time_msb_32(uint32_t a);
-/* Convenience method for uint64_t. */
+static ossl_inline uint32_t constant_time_lsb_32(uint32_t a);
+/* Convenience methods for uint64_t. */
 static ossl_inline uint64_t constant_time_msb_64(uint64_t a);
+static ossl_inline uint64_t constant_time_lsb_64(uint64_t a);
 
 /* Returns 0xff..f if a < b and 0 otherwise. */
 static ossl_inline unsigned int constant_time_lt(unsigned int a,
@@ -95,21 +98,43 @@ static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
 static ossl_inline int constant_time_select_int(unsigned int mask, int a,
                                                 int b);
 
+/*
+ * When we are edaling with big numbers, the limbs in the data array
+ * can be one of two sizes.  These macros provide a nice way to call the
+ * appropriately sized functions directly.
+ */
+# if BN_BYTES == 8
+#  define constant_time_lsb_bn      constant_time_lsb_64
+#  define constant_time_select_bn   constant_time_select_64
+# else
+#  define constant_time_lsb_bn      constant_time_lsb_32
+#  define constant_time_select_bn   constant_time_select_32
+# endif
 
+/* Implementations follow */
 static ossl_inline unsigned int constant_time_msb(unsigned int a)
 {
     return 0 - (a >> (sizeof(a) * 8 - 1));
 }
-
 
 static ossl_inline uint32_t constant_time_msb_32(uint32_t a)
 {
     return 0 - (a >> 31);
 }
 
+static ossl_inline uint32_t constant_time_lsb_32(uint32_t a)
+{
+    return 0 - (a & 1);
+}
+
 static ossl_inline uint64_t constant_time_msb_64(uint64_t a)
 {
     return 0 - (a >> 63);
+}
+
+static ossl_inline uint64_t constant_time_lsb_64(uint64_t a)
+{
+    return 0 - (a & 1);
 }
 
 static ossl_inline size_t constant_time_msb_s(size_t a)

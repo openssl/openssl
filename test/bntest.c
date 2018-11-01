@@ -2175,6 +2175,45 @@ err:
     return ret;
 }
 
+static int test_bit_operations(int n)
+{
+    int i, j, ret = 0;
+    BIGNUM *r = NULL;
+    const int step = 31;
+
+    if (!TEST_ptr(r = BN_new()))
+        goto err;
+    if (n == 1)
+        BN_set_flags(r, BN_FLG_CONSTTIME);
+
+    for (i = 0; i < 200; i++)
+        if (!TEST_true(BN_set_bit(r, i * step))) {
+            TEST_note("setting bit %d of %d\n", i * step,
+                      BN_num_bits(r));
+            goto err;
+        }
+    for (j = 0; j < i * step - 1; j++)
+        if (!TEST_int_eq(BN_is_bit_set(r, j), j % step == 0)) {
+            TEST_note("j = %d, j mod = %d", j, j % step);
+            goto err;
+        }
+    for (i = 0; i < 100; i++)
+        if (!TEST_true(BN_clear_bit(r, step + i * 2 * step))) {
+            TEST_note("clearing bit %d of %d\n", step + i * 2 * step,
+                      BN_num_bits(r));
+            goto err;
+        }
+    for (j = 0; j < i * 2 * step - 1; j++)
+        if (!TEST_int_eq(BN_is_bit_set(r, j), j % (2 * step) == 0)) {
+            TEST_note("j = %d, j mod = %d", j, j % (2 * step));
+            goto err;
+        }
+    ret = 1;
+err:
+    BN_free(r);    
+    return ret;
+}
+
 static int file_test_run(STANZA *s)
 {
     static const FILETEST filetests[] = {
@@ -2236,7 +2275,6 @@ static int run_file_tests(int i)
     return c == 0;
 }
 
-
 int setup_tests(void)
 {
     int n = test_get_argument_count();
@@ -2245,6 +2283,7 @@ int setup_tests(void)
         return 0;
 
     if (n == 0) {
+        ADD_ALL_TESTS(test_bit_operations, 2);
         ADD_TEST(test_sub);
         ADD_TEST(test_div_recip);
         ADD_TEST(test_mod);
