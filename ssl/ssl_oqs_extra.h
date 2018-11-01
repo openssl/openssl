@@ -144,7 +144,7 @@ static int OQS_nid_from_string(const char *value) {
   } else if (memcmp(value,"p256-titanium_cca_std", len) == 0) {
     nid = NID_OQS_p256_titanium_cca_std;
   } else if (memcmp(value,"p256-titanium_cca_med", len) == 0) {
-    nid = NID_OQS_p256_itanium_cca_med;
+    nid = NID_OQS_p256_titanium_cca_med;
 #endif
   }
   /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
