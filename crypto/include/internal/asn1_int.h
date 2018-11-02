@@ -9,7 +9,7 @@
 
 /* Internal ASN1 structures and functions: not for application use */
 
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 
 /* ASN1 public key method structure */
 

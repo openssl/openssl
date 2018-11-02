@@ -13,7 +13,7 @@
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/x509v3.h>
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 #include "internal/numbers.h"

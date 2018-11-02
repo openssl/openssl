@@ -20,7 +20,7 @@
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 #include "s_apps.h"
 
 #define COOKIE_SECRET_LENGTH    16

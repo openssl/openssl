@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <oqs/config.h>
+#include <oqs/oqs.h>
 
 /*
  * Certificate table information. NB: table entries must match SSL_PKEY indices
