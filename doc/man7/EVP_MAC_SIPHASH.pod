@@ -28,7 +28,7 @@ The value string is expected to contain a decimal number.
 
 =item B<EVP_MAC_CTRL_SET_KEY>
 
-EVP_MAC_ctrl_str() takes to type string for this control:
+EVP_MAC_ctrl_str() takes two type strings for this control:
 
 =over 4
 
