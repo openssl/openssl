@@ -437,6 +437,7 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
     int index = -1, type, flags;
     if (drbg->meth == NULL) {
+        drbg->state = DRBG_ERROR;
         RANDerr(RAND_F_RAND_DRBG_UNINSTANTIATE,
                 RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
         return 0;
