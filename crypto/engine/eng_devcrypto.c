@@ -624,12 +624,20 @@ void engine_load_devcrypto_int()
     prepare_digest_methods();
 #endif
 
-    if ((e = ENGINE_new()) == NULL)
+    if ((e = ENGINE_new()) == NULL
+        || !ENGINE_set_destroy_function(e, devcrypto_unload)) {
+        ENGINE_free(e);
+        /*
+         * We know that devcrypto_unload() won't be called when one of the
+         * above two calls have failed, so we close cfd explicitly here to
+         * avoid leaking resources.
+         */
+        close(cfd);
         return;
+    }
 
     if (!ENGINE_set_id(e, "devcrypto")
         || !ENGINE_set_name(e, "/dev/crypto engine")
-        || !ENGINE_set_destroy_function(e, devcrypto_unload)
 
 /*
  * Asymmetric ciphers aren't well supported with /dev/crypto.  Among the BSD
