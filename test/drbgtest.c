@@ -581,6 +581,8 @@ static void reset_drbg_hook_ctx(void)
  *       1:  it is expected that the specified DRBG is reseeded
  *       0:  it is expected that the specified DRBG is not reseeded
  *      -1:  don't check whether the specified DRBG was reseeded or not
+ * |reseed_time|: if nonzero, used instead of time(NULL) to set the
+ *                |before_reseed| time.
  */
 static int test_drbg_reseed(int expect_success,
                             RAND_DRBG *master,
@@ -615,9 +617,11 @@ static int test_drbg_reseed(int expect_success,
      * step 2: generate random output
      */
 
+    if (reseed_time == 0)
+        reseed_time = time(NULL);
+
     /* Generate random output from the public and private DRBG */
-    before_reseed = reseed_time ? reseed_time
-                                : expect_master_reseed == 1 ? time(NULL) : 0;
+    before_reseed = expect_master_reseed == 1 ? reseed_time : 0;
     if (!TEST_int_eq(RAND_bytes(buf, sizeof(buf)), expect_success)
         || !TEST_int_eq(RAND_priv_bytes(buf, sizeof(buf)), expect_success))
         return 0;
@@ -684,7 +688,7 @@ static int test_rand_drbg_reseed(void)
     RAND_DRBG *master, *public, *private;
     unsigned char rand_add_buf[256];
     int rv=0;
-    time_t t;
+    time_t before_reseed;
 
     /* Check whether RAND_OpenSSL() is the default method */
     if (!TEST_ptr_eq(RAND_get_rand_method(), RAND_OpenSSL()))
@@ -765,11 +769,17 @@ static int test_rand_drbg_reseed(void)
     memset(rand_add_buf, 'r', sizeof(rand_add_buf));
 
     /*
-     * Test whether all three DRBGs are reseeded by RAND_add()
+     * Test whether all three DRBGs are reseeded by RAND_add().
+     * The before_reseed time has to be measured here and passed into the
+     * test_drbg_reseed() test, because the master DRBG gets already reseeded
+     * in RAND_add(), whence the check for the condition
+     * before_reseed <= master->reseed_time will fail if the time value happens
+     * to increase between the RAND_add() and the test_drbg_reseed() call.
      */
-    t = time(NULL);
+    before_reseed = time(NULL);
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1, t)))
+    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1,
+                                    before_reseed)))
         goto error;
     reset_drbg_hook_ctx();
 
