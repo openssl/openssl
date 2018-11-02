@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "ssl_locl.h"
 #include <openssl/conf.h>
 #include <openssl/objects.h>
