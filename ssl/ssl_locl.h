@@ -719,6 +719,36 @@ static const char* OQS_ALG_NAME(int nid) {
   case NID_OQS_BIKE3_L5        : return OQS_KEM_alg_bike3_l5;
   case NID_OQS_NEWHOPE_512_CCA : return OQS_KEM_alg_newhope_512_cca_kem;
   case NID_OQS_NEWHOPE_1024_CCA: return OQS_KEM_alg_newhope_1024_cca_kem;
+#if defined(OQS_NIST_BRANCH)
+  case NID_OQS_bigquake1          : return OQS_KEM_alg_BIG_QUAKE_1;
+  case NID_OQS_bigquake3          : return OQS_KEM_alg_BIG_QUAKE_3;
+  case NID_OQS_bigquake5          : return OQS_KEM_alg_BIG_QUAKE_5;
+  case NID_OQS_kyber512           : return OQS_KEM_alg_kyber512;
+  case NID_OQS_kyber768           : return OQS_KEM_alg_kyber768;
+  case NID_OQS_kyber1024          : return OQS_KEM_alg_kyber1024;
+  case NID_OQS_ledakem_C1_N02     : return OQS_KEM_alg_ledakem_C1_N02;
+  case NID_OQS_ledakem_C1_N03     : return OQS_KEM_alg_ledakem_C1_N03;
+  case NID_OQS_ledakem_C1_N04     : return OQS_KEM_alg_ledakem_C1_N04;
+  case NID_OQS_ledakem_C3_N02     : return OQS_KEM_alg_ledakem_C3_N02;
+  case NID_OQS_ledakem_C3_N03     : return OQS_KEM_alg_ledakem_C3_N03;
+  case NID_OQS_ledakem_C3_N04     : return OQS_KEM_alg_ledakem_C3_N04;
+  case NID_OQS_ledakem_C5_N02     : return OQS_KEM_alg_ledakem_C5_N02;
+  case NID_OQS_ledakem_C5_N03     : return OQS_KEM_alg_ledakem_C5_N03;
+  case NID_OQS_ledakem_C5_N04     : return OQS_KEM_alg_ledakem_C5_N04;
+  case NID_OQS_lima_2p_1024_cca   : return OQS_KEM_alg_lima_2p_1024_cca_kem;
+  case NID_OQS_lima_2p_2048_cca   : return OQS_KEM_alg_lima_2p_2048_cca_kem;
+  case NID_OQS_lima_sp_1018_cca   : return OQS_KEM_alg_lima_sp_1018_cca_kem;
+  case NID_OQS_lima_sp_1306_cca   : return OQS_KEM_alg_lima_sp_1306_cca_kem;
+  case NID_OQS_lima_sp_1822_cca   : return OQS_KEM_alg_lima_sp_1822_cca_kem;
+  case NID_OQS_lima_sp_2062_cca   : return OQS_KEM_alg_lima_sp_2062_cca_kem;
+  case NID_OQS_saber_light_saber  : return OQS_KEM_alg_saber_light_saber_kem;
+  case NID_OQS_saber_saber        : return OQS_KEM_alg_saber_saber_kem;
+  case NID_OQS_saber_fire_saber   : return OQS_KEM_alg_saber_fire_saber_kem;
+  case NID_OQS_titanium_cca_std   : return OQS_KEM_alg_titanium_cca_std_kem;
+  case NID_OQS_titanium_cca_hi    : return OQS_KEM_alg_titanium_cca_hi_kem;
+  case NID_OQS_titanium_cca_med   : return OQS_KEM_alg_titanium_cca_med_kem;
+  case NID_OQS_titanium_cca_super : return OQS_KEM_alg_titanium_cca_super_kem;
+#endif
    /* ADD_MORE_OQS_KEM_HERE */
   default: return "";
   }
