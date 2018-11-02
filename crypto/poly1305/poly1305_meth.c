@@ -84,8 +84,10 @@ static int poly1305_ctrl(EVP_MAC_IMPL *ctx, int cmd, va_list args)
         key = va_arg(args, unsigned char *);
         keylen = va_arg(args, size_t);
 
-        if (keylen != POLY1305_KEY_SIZE)
+        if (keylen != POLY1305_KEY_SIZE) {
+            EVPerr(EVP_F_POLY1305_CTRL, EVP_R_INVALID_KEY_LENGTH);
             return 0;
+        }
         Poly1305_Init(poly_ctx, key);
         return 1;
     default:
