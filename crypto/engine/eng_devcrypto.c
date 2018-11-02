@@ -33,7 +33,7 @@
  * such as digest session data copying (see digest_copy()), but is also
  * saner...  why re-open /dev/crypto for every session?
  */
-static int cfd = -1;
+static int cfd;
 
 /******************************************************************************
  *
@@ -603,7 +603,6 @@ static int devcrypto_unload(ENGINE *e)
 #endif
 
     close(cfd);
-    cfd = -1;
 
     return 1;
 }
@@ -625,14 +624,20 @@ void engine_load_devcrypto_int()
     prepare_digest_methods();
 #endif
 
-    if ((e = ENGINE_new()) == NULL) {
+    if ((e = ENGINE_new()) == NULL
+        || !ENGINE_set_destroy_function(e, devcrypto_unload)) {
+        ENGINE_free(e);
+        /*
+         * We know that devcrypto_unload() won't be called when one of the
+         * above two calls have failed, so we close cfd explicitly here to
+         * avoid leaking resources.
+         */
         close(cfd);
         return;
     }
 
     if (!ENGINE_set_id(e, "devcrypto")
         || !ENGINE_set_name(e, "/dev/crypto engine")
-        || !ENGINE_set_destroy_function(e, devcrypto_unload)
 
 /*
  * Asymmetric ciphers aren't well supported with /dev/crypto.  Among the BSD
@@ -674,12 +679,6 @@ void engine_load_devcrypto_int()
 #endif
         ) {
         ENGINE_free(e);
-        /*
-         * If it's something other than -1, devcrypto_unload() wasn't called,
-         * so we must ensure the /dev/crypto channel is closed.
-         */
-        if (cfd != -1)
-            close(cfd);
         return;
     }
 
