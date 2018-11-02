@@ -790,18 +790,15 @@ static void run_multi_thread_test(void)
 {
     unsigned char buf[256];
     time_t start = time(NULL);
-    RAND_DRBG *public, *private;
+    RAND_DRBG *public = NULL, *private = NULL;
 
-    public = RAND_DRBG_get0_public();
-    private = RAND_DRBG_get0_private();
-    if (public)
-        RAND_DRBG_set_reseed_time_interval(public, 1);
-    else
+    if (!TEST_ptr(public = RAND_DRBG_get0_public())
+            || !TEST_ptr(private = RAND_DRBG_get0_private())) {
         multi_thread_rand_bytes_succeeded = 0;
-    if (private)
-        RAND_DRBG_set_reseed_time_interval(private, 1);
-    else
-        multi_thread_rand_priv_bytes_succeeded = 0;
+        return;
+    }
+    RAND_DRBG_set_reseed_time_interval(private, 1);
+    RAND_DRBG_set_reseed_time_interval(public, 1);
 
     do {
         if (RAND_bytes(buf, sizeof(buf)) <= 0)
