@@ -674,20 +674,20 @@ static int OQS_KEM_NID(int curveID) {
     /* some schemes are disabled because their keys/ciphertext are too big for TLS */
     /*
   case 0x0213:
-  case 0x3008: rv = NID_OQS_bigquake1; break;
+  case 0x0308: rv = NID_OQS_bigquake1; break;
   case 0x0214: rv = NID_OQS_bigquake3; break;
   case 0x0215: rv = NID_OQS_bigquake5; break;
     */
   case 0x0216:
-  case 0x3009: rv = NID_OQS_kyber512; break;
+  case 0x0309: rv = NID_OQS_kyber512; break;
   case 0x0217: rv = NID_OQS_kyber768; break;
   case 0x0218: rv = NID_OQS_kyber1024; break;
   case 0x0219:
-  case 0x300a: rv = NID_OQS_ledakem_C1_N02; break;
+  case 0x030a: rv = NID_OQS_ledakem_C1_N02; break;
   case 0x021a:
-  case 0x300b: rv = NID_OQS_ledakem_C1_N03; break;
+  case 0x030b: rv = NID_OQS_ledakem_C1_N03; break;
   case 0x021b:
-  case 0x300c: rv = NID_OQS_ledakem_C1_N04; break;
+  case 0x030c: rv = NID_OQS_ledakem_C1_N04; break;
   case 0x021c: rv = NID_OQS_ledakem_C3_N02; break;
   case 0x021d: rv = NID_OQS_ledakem_C3_N03; break;
   case 0x021e: rv = NID_OQS_ledakem_C3_N04; break;
@@ -699,22 +699,22 @@ static int OQS_KEM_NID(int curveID) {
   case 0x0222: rv = NID_OQS_lima_2p_1024_cca; break;
   case 0x0223: rv = NID_OQS_lima_2p_2048_cca; break;
   case 0x0224:
-  case 0x300d: rv = NID_OQS_lima_sp_1018_cca; break;
+  case 0x030d: rv = NID_OQS_lima_sp_1018_cca; break;
   case 0x0225: rv = NID_OQS_lima_sp_1306_cca; break;
   case 0x0226: rv = NID_OQS_lima_sp_1822_cca; break;
     /*
   case 0x0227: rv = NID_OQS_lima_sp_2062_cca; break;
     */
   case 0x0228:
-  case 0x300e: rv = NID_OQS_saber_light_saber; break;
+  case 0x030e: rv = NID_OQS_saber_light_saber; break;
   case 0x0229: rv = NID_OQS_saber_saber; break;
   case 0x022a: rv = NID_OQS_saber_fire_saber; break;
     /*
   case 0x022b:
-  case 0x300f: rv = NID_OQS_titanium_cca_std; break;
+  case 0x030f: rv = NID_OQS_titanium_cca_std; break;
   case 0x022c: rv = NID_OQS_titanium_cca_hi; break;
   case 0x022d:
-  case 0x3010: rv = NID_OQS_titanium_cca_med; break;
+  case 0x0310: rv = NID_OQS_titanium_cca_med; break;
   case 0x022e: rv = NID_OQS_titanium_cca_super; break;
     */
 #endif
