@@ -606,9 +606,9 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N02), "p256 - ledakem_C1_N02"},
     {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N03), "p256 - ledakem_C1_N03"},
     {OQS_KEM_CURVEID(NID_OQS_p256_ledakem_C1_N04), "p256 - ledakem_C1_N04"},
+    /*
     {OQS_KEM_CURVEID(NID_OQS_p256_lima_sp_1018_cca), "p256 - lima_sp_1018_cca"},
     {OQS_KEM_CURVEID(NID_OQS_p256_saber_light_saber), "p256 - saber_light_saber"},
-    /*
     {OQS_KEM_CURVEID(NID_OQS_p256_titanium_cca_std), "p256 - titanium_cca_std"},
     {OQS_KEM_CURVEID(NID_OQS_p256_titanium_cca_med), "p256 - titanium_cca_med"},
     */

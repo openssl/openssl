@@ -486,9 +486,9 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x030a: return "p256 - ledakem_C1_N02 hybrid";
   case 0x030b: return "p256 - ledakem_C1_N03 hybrid";
   case 0x030c: return "p256 - ledakem_C1_N04 hybrid";
+    /*
   case 0x030d: return "p256 - lima_sp_1018_cca hybrid";
   case 0x030e: return "p256 - saber_light_saber hybrid";
-    /*
   case 0x030f: return "p256 - titanium_cca_std hybrid";
   case 0x0310: return "p256 - titanium_cca_med hybrid";
     */

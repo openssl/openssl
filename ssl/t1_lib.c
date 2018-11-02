@@ -249,8 +249,8 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_OQS_p256_ledakem_C1_N02, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N02 hybrid (0x030a) */
     {NID_OQS_p256_ledakem_C1_N03, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N03 hybrid (0x030b) */
     {NID_OQS_p256_ledakem_C1_N04, 128, TLS_CURVE_CUSTOM}, /* p256 + ledakem_C1_N04 hybrid (0x030c) */
-    {NID_OQS_p256_lima_sp_1018_cca, 128, TLS_CURVE_CUSTOM}, /* p256 + lima_sp_1018_cca hybrid (0x030d) */
-    {NID_OQS_p256_saber_light_saber, 128, TLS_CURVE_CUSTOM}, /* p256 + saber_light_saber hybrid (0x030e) */
+    /* {NID_OQS_p256_lima_sp_1018_cca, 128, TLS_CURVE_CUSTOM}, */ /* p256 + lima_sp_1018_cca hybrid (0x030d) */
+    /* {NID_OQS_p256_saber_light_saber, 128, TLS_CURVE_CUSTOM}, */ /* p256 + saber_light_saber hybrid (0x030e) */
     /* {NID_OQS_p256_titanium_cca_std, 128, TLS_CURVE_CUSTOM}, */ /* p256 + titanium_cca_std hybrid (0x030f) */
     /* {NID_OQS_p256_titanium_cca_med, 128, TLS_CURVE_CUSTOM}, */ /* p256 + titanium_cca_med hybrid (0x0310) */
 #endif
@@ -343,8 +343,8 @@ static const uint16_t eccurves_default[] = {
     0x030a, /* p256 - OQS ledakem_C1_N02 hybrid */
     0x030b, /* p256 - OQS ledakem_C1_N03 hybrid */
     0x030c, /* p256 - OQS ledakem_C1_N04 hybrid */
-    0x030d, /* p256 - OQS lima_sp_1018_cca hybrid */
-    0x030e, /* p256 - OQS saber_light_saber hybrid */
+    /* 0x030d, */ /* p256 - OQS lima_sp_1018_cca hybrid */
+    /* 0x030e, */ /* p256 - OQS saber_light_saber hybrid */
     /* 0x030f, */ /* p256 - OQS titanium_cca_std hybrid */
     /* 0x0310, */ /* p256 - OQS titanium_cca_med hybrid */
 #endif

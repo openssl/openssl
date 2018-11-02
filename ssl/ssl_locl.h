@@ -514,9 +514,9 @@
 #define NID_OQS_p256_ledakem_C1_N02   (NID_HYBRID_START + 11)
 #define NID_OQS_p256_ledakem_C1_N03   (NID_HYBRID_START + 12)
 #define NID_OQS_p256_ledakem_C1_N04   (NID_HYBRID_START + 13)
+/*
 #define NID_OQS_p256_lima_sp_1018_cca (NID_HYBRID_START + 14)
 #define NID_OQS_p256_saber_light_saber (NID_HYBRID_START + 15)
-/*
 #define NID_OQS_p256_titanium_cca_std (NID_HYBRID_START + 16)
 #define NID_OQS_p256_titanium_cca_med (NID_HYBRID_START + 17)
 */
@@ -623,9 +623,9 @@ static int OQS_KEM_HYBRID_CURVEID(int nid) {
   case NID_OQS_p256_ledakem_C1_N02   : rv = 0x030a; break;
   case NID_OQS_p256_ledakem_C1_N03   : rv = 0x030b; break;
   case NID_OQS_p256_ledakem_C1_N04   : rv = 0x030c; break;
+    /*
   case NID_OQS_p256_lima_sp_1018_cca : rv = 0x030d; break;
   case NID_OQS_p256_saber_light_saber : rv = 0x030e; break;
-    /*
   case NID_OQS_p256_titanium_cca_std : rv = 0x030f; break;
   case NID_OQS_p256_titanium_cca_med : rv = 0x0310; break;
     */
@@ -699,14 +699,14 @@ static int OQS_KEM_NID(int curveID) {
   case 0x0222: rv = NID_OQS_lima_2p_1024_cca; break;
   case 0x0223: rv = NID_OQS_lima_2p_2048_cca; break;
   case 0x0224:
-  case 0x030d: rv = NID_OQS_lima_sp_1018_cca; break;
+  /* case 0x030d: */ rv = NID_OQS_lima_sp_1018_cca; break;
   case 0x0225: rv = NID_OQS_lima_sp_1306_cca; break;
   case 0x0226: rv = NID_OQS_lima_sp_1822_cca; break;
     /*
   case 0x0227: rv = NID_OQS_lima_sp_2062_cca; break;
     */
   case 0x0228:
-  case 0x030e: rv = NID_OQS_saber_light_saber; break;
+  /* case 0x030e: */ rv = NID_OQS_saber_light_saber; break;
   case 0x0229: rv = NID_OQS_saber_saber; break;
   case 0x022a: rv = NID_OQS_saber_fire_saber; break;
     /*

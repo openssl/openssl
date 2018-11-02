@@ -148,11 +148,11 @@ static int OQS_nid_from_string(const char *value) {
     nid = NID_OQS_p256_ledakem_C1_N03;
   } else if (memcmp(value,"p256-ledakem_C1_N04", len) == 0) {
     nid = NID_OQS_p256_ledakem_C1_N04;
+    /*
   } else if (memcmp(value,"p256-lima_sp_1018_cca", len) == 0) {
     nid = NID_OQS_p256_lima_sp_1018_cca;
   } else if (memcmp(value,"p256-saber_light_saber", len) == 0) {
     nid = NID_OQS_p256_saber_light_saber;
-    /*
   } else if (memcmp(value,"p256-titanium_cca_std", len) == 0) {
     nid = NID_OQS_p256_titanium_cca_std;
   } else if (memcmp(value,"p256-titanium_cca_med", len) == 0) {
