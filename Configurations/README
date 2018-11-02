@@ -467,6 +467,10 @@ include paths the build of their source files should use:
 
     INCLUDE[foo]=include
 
+It's also possible to specify C macros that should be defined:
+
+    DEFINE[foo]=FOO BAR=1
+
 In some cases, one might want to generate some source files from
 others, that's done as follows:
 
