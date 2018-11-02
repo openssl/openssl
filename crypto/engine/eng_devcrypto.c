@@ -33,7 +33,7 @@
  * such as digest session data copying (see digest_copy()), but is also
  * saner...  why re-open /dev/crypto for every session?
  */
-int cfd;
+static int cfd;
 
 /******************************************************************************
  *
