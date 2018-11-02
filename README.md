@@ -106,22 +106,24 @@ You can use the either the [master](https://github.com/open-quantum-safe/liboqs/
 
 The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
-For the master branch:
+For the **master branch**:
+
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
     cd liboqs
     autoreconf -i
     ./configure --prefix=<path-to-openssl-dir>/oqs --enable-shared=no --enable-openssl --with-openssl-dir=<path-to-system-openssl-dir>
-    make clean
     make -j
     make install
 
-For the nist branch:
-    git clone --branch nist-branch https://github.com/open-quantum-safe/liboqs.git
-    cd liboqs
-    make install PREFIX=<path-to-openssl-dir>/oqs
-    
 On **Ubuntu**, `<path-to-system-openssl-dir>` is probably `/usr`.  On **macOS** with brew, `<path-to-system-openssl-dir>` is probably `/usr/local/opt/openssl`.
 
+For the **nist branch**:
+
+    git clone --branch nist-branch https://github.com/open-quantum-safe/liboqs.git
+    cd liboqs
+    make -j
+    make install-noshared PREFIX=<path-to-openssl-dir>/oqs
+    
 ### Step 3: Build fork of OpenSSL
 
 Now we follow the standard instructions for building OpenSSL.
@@ -137,6 +139,8 @@ For **macOS**:
     cd <path-to-openssl-dir>
     ./Configure no-shared darwin64-x86_64-cc
     make -j
+    
+The OQS fork of OpenSSL can also be built with shared libraries, but we have used `no-shared` in the instructions above to avoid having to get the shared libraries in the right place for the runtime linker.
     
 Building on Windows
 -------------------
