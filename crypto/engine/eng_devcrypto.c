@@ -33,7 +33,7 @@
  * such as digest session data copying (see digest_copy()), but is also
  * saner...  why re-open /dev/crypto for every session?
  */
-static int cfd;
+static int cfd = -1;
 
 /******************************************************************************
  *
@@ -603,6 +603,7 @@ static int devcrypto_unload(ENGINE *e)
 #endif
 
     close(cfd);
+    cfd = -1;
 
     return 1;
 }
@@ -624,8 +625,10 @@ void engine_load_devcrypto_int()
     prepare_digest_methods();
 #endif
 
-    if ((e = ENGINE_new()) == NULL)
+    if ((e = ENGINE_new()) == NULL) {
+        close(cfd);
         return;
+    }
 
     if (!ENGINE_set_id(e, "devcrypto")
         || !ENGINE_set_name(e, "/dev/crypto engine")
@@ -671,6 +674,12 @@ void engine_load_devcrypto_int()
 #endif
         ) {
         ENGINE_free(e);
+        /*
+         * If it's something other than -1, devcrypto_unload() wasn't called,
+         * so we must ensure the /dev/crypto channel is closed.
+         */
+        if (cfd != -1)
+            close(cfd);
         return;
     }
 
