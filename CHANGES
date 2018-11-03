@@ -9,6 +9,11 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
+  *) Instead of having the source directories listed in Configure, add
+     a 'build.info' keyword SUBDIRS to indicate what sub-directories to
+     look into.
+     [Richard Levitte]
+
   *) Add GMAC to EVP_MAC.
      [Paul Dale]
 

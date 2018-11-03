@@ -15,7 +15,7 @@ use Config;
 use FindBin;
 use lib "$FindBin::Bin/util/perl";
 use File::Basename;
-use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs splitdir/;
 use File::Path qw/mkpath/;
 use OpenSSL::Glob;
 
@@ -1677,34 +1677,19 @@ if ($builder eq "unified") {
           cleanfile($srcdir, catfile("Configurations", "common.tmpl"),
                     $blddir) ];
 
-    my @build_infos = ( [ ".", "build.info" ] );
-    foreach (@{$config{dirs}}) {
-        push @build_infos, [ $_, "build.info" ]
-            if (-f catfile($srcdir, $_, "build.info"));
-    }
-    foreach (@{$config{sdirs}}) {
-        push @build_infos, [ catdir("crypto", $_), "build.info" ]
-            if (-f catfile($srcdir, "crypto", $_, "build.info"));
-    }
-    foreach (@{$config{engdirs}}) {
-        push @build_infos, [ catdir("engines", $_), "build.info" ]
-            if (-f catfile($srcdir, "engines", $_, "build.info"));
-    }
-    foreach (@{$config{tdirs}}) {
-        push @build_infos, [ catdir("test", $_), "build.info" ]
-            if (-f catfile($srcdir, "test", $_, "build.info"));
-    }
+    my @build_dirs = ( [ ] );   # current directory
 
     $config{build_infos} = [ ];
 
     my %ordinals = ();
-    foreach (@build_infos) {
-        my $sourced = catdir($srcdir, $_->[0]);
-        my $buildd = catdir($blddir, $_->[0]);
+    while (@build_dirs) {
+        my @curd = @{shift @build_dirs};
+        my $sourced = catdir($srcdir, @curd);
+        my $buildd = catdir($blddir, @curd);
 
         mkpath($buildd);
 
-        my $f = $_->[1];
+        my $f = 'build.info';
         # The basic things we're trying to build
         my @programs = ();
         my @programs_install = ();
@@ -1783,6 +1768,14 @@ if ($builder eq "unified") {
             qr/^\s*ENDIF\s*$/
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
+            qr/^\s*SUBDIRS\s*=\s*(.*)\s*$/
+            => sub {
+                if (!@skip || $skip[$#skip] > 0) {
+                    foreach (tokenize($1)) {
+                        push @build_dirs, [ @curd, splitdir($_, 1) ];
+                    }
+                }
+            },
             qr/^\s*PROGRAMS(_NO_INST)?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
