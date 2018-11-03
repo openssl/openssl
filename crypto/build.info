@@ -1,3 +1,5 @@
+# Note that these directories are filtered in Configure.  Look for %skipdir
+# there for further explanations.
 SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 x509v3 conf \
         txt_db pkcs7 pkcs12 ui kdf store \
         md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 blake2 \

@@ -1,3 +1,5 @@
+# Note that some of these directories are filtered in Configure.  Look for
+# %skipdir there for further explanations.
 SUBDIRS=crypto ssl apps test util tools fuzz engines
 
 {-

@@ -298,21 +298,6 @@ $config{libdir}="";
 my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
-# Top level directories to build
-$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
-# crypto/ subdirectories to build
-$config{sdirs} = [
-    "objects",
-    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash", "sm3",
-    "des", "aes", "rc2", "rc4", "rc5", "idea", "aria", "bf", "cast", "camellia", "seed", "sm4", "chacha", "modes",
-    "bn", "ec", "rsa", "dsa", "dh", "sm2", "dso", "engine",
-    "buffer", "bio", "stack", "lhash", "rand", "err",
-    "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
-    "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store"
-    ];
-# test/ subdirectories to build
-$config{tdirs} = [ "ossl_shim" ];
-
 # Known TLS and DTLS protocols
 my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
 my @dtls = qw(dtls1 dtls1_2);
@@ -1171,6 +1156,19 @@ foreach (keys %user) {
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
+######################################################################
+# Build up information for skipping certain directories depending on disabled
+# features, as well as setting up macros for disabled features.
+
+# This is a tentative database of directories to skip.  Some entries may not
+# correspond to anything real, but that's ok, they will simply be ignored.
+# The actual processing of these entries is done in the build.info lookup
+# loop further down.
+#
+# The key is a Unix formated path in the source tree, the value is an index
+# into %disabled_info, so any existing path gets added to a corresponding
+# 'skipped' entry in there with the list of skipped directories.
+my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
     $config{options} .= " no-$what";
@@ -1179,32 +1177,18 @@ foreach my $what (sort keys %disabled) {
                                 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
-
-        # Fix up C macro end names
-        $WHAT = "RMD160" if $what eq "ripemd";
+        my $skipdir = $what;
 
         # fix-up crypto/directory name(s)
-        $what = "ripemd" if $what eq "rmd160";
-        $what = "whrlpool" if $what eq "whirlpool";
+        $skipdir = "ripemd" if $what eq "rmd160";
+        $skipdir = "whrlpool" if $what eq "whirlpool";
 
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
+        push @{$config{openssl_feature_defines}}, $macro;
 
-        if ((grep { $what eq $_ } @{$config{sdirs}})
-                && $what ne 'async' && $what ne 'err') {
-            @{$config{sdirs}} = grep { $what ne $_} @{$config{sdirs}};
-            $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
-
-            if ($what ne 'engine') {
-                push @{$config{openssl_feature_defines}}, $macro;
-            } else {
-                @{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
-                push @{$disabled_info{engine}->{skipped}}, catdir('engines');
-                push @{$config{openssl_feature_defines}}, $macro;
-            }
-        } else {
-            push @{$config{openssl_feature_defines}}, $macro;
-        }
-
+        $skipdir{engines} = $what if $what eq 'engine';
+        $skipdir{"crypto/$skipdir"} = $what
+            unless $what eq 'async' || $what eq 'err';
     }
 }
 
@@ -1684,6 +1668,12 @@ if ($builder eq "unified") {
         my @curd = @{shift @build_dirs};
         my $sourced = catdir($srcdir, @curd);
         my $buildd = catdir($blddir, @curd);
+
+        my $unixdir = join('/', @curd);
+        if (exists $skipdir{$unixdir}) {
+            my $what = $skipdir{$unixdir};
+            push @{$disabled_info{$what}->{skipped}}, catdir(@curd);
+        }
 
         mkpath($buildd);
 
