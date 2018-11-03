@@ -606,10 +606,8 @@ $config{lflags} = [ env('__CNF_LDFLAGS') || () ];
 $config{ex_libs} = [ env('__CNF_LDLIBS') || () ];
 
 $config{openssl_api_defines}=[];
-$config{openssl_algorithm_defines}=[];
-$config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
-$config{openssl_other_defines}=[];
+$config{openssl_feature_defines}=[];
 $config{options}="";
 $config{build_type} = "release";
 my $target="";
@@ -1027,7 +1025,7 @@ INSTALL instructions and the RAND_DRBG(7) manual page for more details.
 
 _____
 }
-push @{$config{openssl_other_defines}},
+push @{$config{openssl_feature_defines}},
      map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
 	@seed_sources;
 
@@ -1197,14 +1195,14 @@ foreach my $what (sort keys %disabled) {
             $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
 
             if ($what ne 'engine') {
-                push @{$config{openssl_algorithm_defines}}, $macro;
+                push @{$config{openssl_feature_defines}}, $macro;
             } else {
                 @{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
                 push @{$disabled_info{engine}->{skipped}}, catdir('engines');
-                push @{$config{openssl_other_defines}}, $macro;
+                push @{$config{openssl_feature_defines}}, $macro;
             }
         } else {
-            push @{$config{openssl_other_defines}}, $macro;
+            push @{$config{openssl_feature_defines}}, $macro;
         }
 
     }
@@ -1284,7 +1282,7 @@ unless ($disabled{threads}) {
 # If threads still aren't disabled, add a C macro to ensure the source
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
-    push @{$config{openssl_thread_defines}}, "OPENSSL_THREADS";
+    push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
 }
 
 # With "deprecated" disable all deprecated features.
@@ -1303,10 +1301,10 @@ if ($target{shared_target} eq "")
 	}
 
 if ($disabled{"dynamic-engine"}) {
-        push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+        push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
 } else {
-        push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
         $config{dynamic_engines} = 1;
 }
 
@@ -1576,7 +1574,7 @@ unless ($disabled{afalgeng}) {
     }
 }
 
-push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
 
 # Finish up %config by appending things the user gave us on the command line
 # apart from "make variables"

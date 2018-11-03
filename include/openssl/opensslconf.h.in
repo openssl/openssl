@@ -34,22 +34,8 @@ extern "C" {
         (my $macro, my $value) = $_ =~ /^(.*?)=(.*?)$/;
         $OUT .= "#define $macro $value\n";
     }
-    if (@{$config{openssl_algorithm_defines}}) {
-      foreach (@{$config{openssl_algorithm_defines}}) {
-	$OUT .= "#ifndef $_\n";
-	$OUT .= "# define $_\n";
-	$OUT .= "#endif\n";
-      }
-    }
-    if (@{$config{openssl_thread_defines}}) {
-      foreach (@{$config{openssl_thread_defines}}) {
-	$OUT .= "#ifndef $_\n";
-	$OUT .= "# define $_\n";
-	$OUT .= "#endif\n";
-      }
-    }
-    if (@{$config{openssl_other_defines}}) {
-      foreach (@{$config{openssl_other_defines}}) {
+    if (@{$config{openssl_feature_defines}}) {
+      foreach (@{$config{openssl_feature_defines}}) {
 	$OUT .= "#ifndef $_\n";
 	$OUT .= "# define $_\n";
 	$OUT .= "#endif\n";
