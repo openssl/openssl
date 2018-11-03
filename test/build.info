@@ -1,3 +1,4 @@
+SUBDIRS=ossl_shim
 {-
      use File::Spec::Functions;
      sub rebase_files

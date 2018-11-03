@@ -1,3 +1,5 @@
+SUBDIRS=crypto ssl apps test util tools fuzz engines
+
 {-
      use File::Spec::Functions;
 
