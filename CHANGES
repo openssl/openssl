@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
+  *) Add GMAC to EVP_MAC.
+     [Paul Dale]
+
   *) Ported the HMAC, CMAC and SipHash EVP_PKEY_METHODs to EVP_MAC.
      [Richard Levitte]
 
