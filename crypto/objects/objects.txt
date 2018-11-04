@@ -11,6 +11,9 @@ iso 2			: member-body		: ISO Member Body
 
 iso 3			: identified-organization
 
+# GMAC OID
+iso 0 9797 3 4                          : GMAC          : gmac
+ 
 # HMAC OIDs
 identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
 identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1

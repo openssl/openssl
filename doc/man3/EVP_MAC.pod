@@ -163,6 +163,12 @@ For MACs that use an underlying computation algorithm, the algorithm
 I<must> be set first, see B<EVP_MAC_CTRL_SET_ENGINE>,
 B<EVP_MAC_CTRL_SET_MD> and B<EVP_MAC_CTRL_SET_CIPHER> below.
 
+=item B<EVP_MAC_CTRL_SET_IV>
+
+This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+
+Some MAC implementations require an IV, this control sets the IV.
+
 =item B<EVP_MAC_CTRL_SET_FLAGS>
 
 This control expects one arguments: C<unsigned long flags>
@@ -327,6 +333,7 @@ F<./foo>)
 =head1 SEE ALSO
 
 L<EVP_MAC_CMAC(7)>,
+L<EVP_MAC_GMAC(7)>,
 L<EVP_MAC_HMAC(7)>,
 L<EVP_MAC_SIPHASH(7)>
 

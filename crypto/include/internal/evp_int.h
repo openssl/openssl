@@ -129,6 +129,7 @@ struct evp_mac_st {
 };
 
 extern const EVP_MAC cmac_meth;
+extern const EVP_MAC gmac_meth;
 extern const EVP_MAC hmac_meth;
 extern const EVP_MAC siphash_meth;
 
