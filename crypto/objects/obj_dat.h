@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7762] = {
+static const unsigned char so[7767] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1076,9 +1076,10 @@ static const unsigned char so[7762] = {
     0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7745] OBJ_hmacWithSHA512_224 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7753] OBJ_hmacWithSHA512_256 */
+    0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
 };
 
-#define NUM_NID 1195
+#define NUM_NID 1196
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2275,9 +2276,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"magma-mac", "magma-mac", NID_magma_mac},
     {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7745]},
     {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
+    {"GMAC", "gmac", NID_gmac, 5, &so[7761]},
 };
 
-#define NUM_SN 1186
+#define NUM_SN 1187
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2424,6 +2426,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      297,    /* "DVCS" */
     1087,    /* "ED25519" */
     1088,    /* "ED448" */
+    1195,    /* "GMAC" */
       99,    /* "GN" */
     1036,    /* "HKDF" */
      855,    /* "HMAC" */
@@ -3467,7 +3470,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1186
+#define NUM_LN 1187
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3961,6 +3964,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      509,    /* "generationQualifier" */
      601,    /* "generic cryptogram" */
       99,    /* "givenName" */
+    1195,    /* "gmac" */
      976,    /* "gost-mac-12" */
     1009,    /* "gost89-cbc" */
      814,    /* "gost89-cnt" */
@@ -4657,7 +4661,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1071
+#define NUM_OBJ 1072
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4904,6 +4908,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      637,    /* OBJ_set_brand_Diners             2 23 42 8 30 */
      638,    /* OBJ_set_brand_AmericanExpress    2 23 42 8 34 */
      639,    /* OBJ_set_brand_JCB                2 23 42 8 35 */
+    1195,    /* OBJ_gmac                         1 0 9797 3 4 */
     1141,    /* OBJ_oscca                        1 2 156 10197 */
      805,    /* OBJ_cryptopro                    1 2 643 2 2 */
      806,    /* OBJ_cryptocom                    1 2 643 2 9 */

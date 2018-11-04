@@ -44,6 +44,11 @@
 #define NID_identified_organization             676
 #define OBJ_identified_organization             OBJ_iso,3L
 
+#define SN_gmac         "GMAC"
+#define LN_gmac         "gmac"
+#define NID_gmac                1195
+#define OBJ_gmac                OBJ_iso,0L,9797L,3L,4L
+
 #define SN_hmac_md5             "HMAC-MD5"
 #define LN_hmac_md5             "hmac-md5"
 #define NID_hmac_md5            780
