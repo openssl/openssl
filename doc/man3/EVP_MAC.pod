@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_new_id, EVP_MAC_CTX_free,
-EVP_MAC_CTX_copy, EVP_MAC_CTX_mac, EVP_MAC_size, EVP_MAC_init, EVP_MAC_update,
+EVP_MAC_CTX_dup, EVP_MAC_CTX_mac, EVP_MAC_size, EVP_MAC_init, EVP_MAC_update,
 EVP_MAC_final, EVP_MAC_ctrl, EVP_MAC_vctrl, EVP_MAC_ctrl_str,
 EVP_MAC_str2ctrl, EVP_MAC_hex2ctrl, EVP_MAC_nid, EVP_MAC_name,
 EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
@@ -18,7 +18,7 @@ EVP_get_macbyname, EVP_get_macbynid, EVP_get_macbyobj - EVP MAC routines
  EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
  EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
  void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
- int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
+ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src);
  const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
  size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
  int EVP_MAC_init(EVP_MAC_CTX *ctx);
@@ -72,10 +72,8 @@ EVP_MAC_CTX_free() frees the contents of the context, including an
 underlying context if there is one, as well as the context itself.
 B<NULL> is a valid parameter, for which this function is a no-op.
 
-EVP_MAC_CTX_copy() makes a deep copy of the C<src> context to the
-C<dest> context.
-The C<dest> context I<must> have been created before calling this
-function.
+EVP_MAC_CTX_dup() duplicates the C<src> context and returns a newly allocated
+context.
 
 EVP_MAC_CTX_mac() returns the B<EVP_MAC> associated with the context
 C<ctx>.
@@ -231,13 +229,12 @@ implemented as a macro.
 
 =head1 RETURN VALUES
 
-EVP_MAC_CTX_new() and EVP_MAC_CTX_new_id() return a pointer to a newly
-created EVP_MAC_CTX, or NULL if allocation failed.
+EVP_MAC_CTX_new(), EVP_MAC_CTX_new_id() and EVP_MAC_CTX_dup() return a pointer
+to a newly created EVP_MAC_CTX, or NULL if allocation failed.
 
 EVP_MAC_CTX_free() returns nothing at all.
 
-EVP_MAC_CTX_copy(), EVP_MAC_init(), EVP_MAC_update(),
-and EVP_MAC_final() return 1 on success, 0 on error.
+EVP_MAC_init(), EVP_MAC_update(), and EVP_MAC_final() return 1 on success, 0 on error.
 
 EVP_MAC_ctrl(), EVP_MAC_ctrl_str(), EVP_MAC_str2ctrl() and
 EVP_MAC_hex2ctrl() return 1 on success and 0 or a negative value on
@@ -348,6 +345,10 @@ look like this:
 
 (in this example, that program was stored in F<foo.c> and compiled to
 F<./foo>)
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 3.0.0.
 
 =head1 SEE ALSO
 

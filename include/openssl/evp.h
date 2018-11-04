@@ -1014,7 +1014,7 @@ void EVP_MD_do_all_sorted(void (*fn)
 EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
 EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
 void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
-int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, const EVP_MAC_CTX *src);
+EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src);
 const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
 size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
 int EVP_MAC_init(EVP_MAC_CTX *ctx);

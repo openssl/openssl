@@ -237,10 +237,8 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     size_t Ai_len;
     int ret = 0;
 
-    ctx = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
-    ctx_Ai = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
     ctx_init = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
-    if (ctx == NULL || ctx_Ai == NULL || ctx_init == NULL)
+    if (ctx_init == NULL)
         goto err;
     if (EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_FLAGS, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW) != 1)
         goto err;
@@ -254,7 +252,8 @@ static int tls1_prf_P_hash(const EVP_MD *md,
     if (chunk == 0)
         goto err;
     /* A(0) = seed */
-    if (!EVP_MAC_CTX_copy(ctx_Ai, ctx_init))
+    ctx_Ai = EVP_MAC_CTX_dup(ctx_init);
+    if (ctx_Ai == NULL)
         goto err;
     if (seed != NULL && !EVP_MAC_update(ctx_Ai, seed, seed_len))
         goto err;
@@ -263,15 +262,21 @@ static int tls1_prf_P_hash(const EVP_MD *md,
         /* calc: A(i) = HMAC_<hash>(secret, A(i-1)) */
         if (!EVP_MAC_final(ctx_Ai, Ai, &Ai_len))
             goto err;
+        EVP_MAC_CTX_free(ctx_Ai);
+        ctx_Ai = NULL;
 
         /* calc next chunk: HMAC_<hash>(secret, A(i) + seed) */
-        if (!EVP_MAC_CTX_copy(ctx, ctx_init))
+        ctx = EVP_MAC_CTX_dup(ctx_init);
+        if (ctx == NULL)
             goto err;
         if (!EVP_MAC_update(ctx, Ai, Ai_len))
             goto err;
         /* save state for calculating next A(i) value */
-        if (olen > chunk && !EVP_MAC_CTX_copy(ctx_Ai, ctx))
-            goto err;
+        if (olen > chunk) {
+            ctx_Ai = EVP_MAC_CTX_dup(ctx);
+            if (ctx_Ai == NULL)
+                goto err;
+        }
         if (seed != NULL && !EVP_MAC_update(ctx, seed, seed_len))
             goto err;
         if (olen <= chunk) {
@@ -283,6 +288,8 @@ static int tls1_prf_P_hash(const EVP_MD *md,
         }
         if (!EVP_MAC_final(ctx, out, NULL))
             goto err;
+        EVP_MAC_CTX_free(ctx);
+        ctx = NULL;
         out += chunk;
         olen -= chunk;
     }
