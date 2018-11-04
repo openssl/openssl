@@ -4578,7 +4578,7 @@ EVP_PKEY_meth_get_digest_custom         4533	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_new                         4534	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_new_id                      4535	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_free                        4536	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_copy                        4537	3_0_0	EXIST::FUNCTION:
+EVP_MAC_CTX_dup                         4537	3_0_0	EXIST::FUNCTION:
 EVP_MAC_CTX_mac                         4538	3_0_0	EXIST::FUNCTION:
 EVP_MAC_size                            4539	3_0_0	EXIST::FUNCTION:
 EVP_MAC_init                            4540	3_0_0	EXIST::FUNCTION:

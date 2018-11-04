@@ -202,9 +202,8 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
             || derived_key_len == 0)
         return 0;
 
-    ctx = EVP_MAC_CTX_new(kdf_mac);
     ctx_init = EVP_MAC_CTX_new(kdf_mac);
-    if (ctx == NULL || ctx_init == NULL)
+    if (ctx_init == NULL)
         goto end;
     if (hmac_md != NULL &&
             EVP_MAC_ctrl(ctx_init, EVP_MAC_CTRL_SET_MD, hmac_md) <= 0)
@@ -233,7 +232,8 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
         c[2] = (unsigned char)((counter >> 8) & 0xff);
         c[3] = (unsigned char)(counter & 0xff);
 
-        if (!(EVP_MAC_CTX_copy(ctx, ctx_init)
+        ctx = EVP_MAC_CTX_dup(ctx_init);
+        if (!(ctx != NULL
                 && EVP_MAC_update(ctx, c, sizeof(c))
                 && EVP_MAC_update(ctx, z, z_len)
                 && EVP_MAC_update(ctx, info, info_len)))
@@ -251,6 +251,8 @@ static int SSKDF_mac_kdm(const EVP_MAC *kdf_mac, const EVP_MD *hmac_md,
             memcpy(out, mac, len);
             break;
         }
+        EVP_MAC_CTX_free(ctx);
+        ctx = NULL;
     }
     ret = 1;
 end:

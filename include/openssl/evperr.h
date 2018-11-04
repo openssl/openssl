@@ -74,7 +74,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_KDF_CTX_NEW_ID                         226
 # define EVP_F_EVP_MAC_CTRL                               209
 # define EVP_F_EVP_MAC_CTRL_STR                           210
-# define EVP_F_EVP_MAC_CTX_COPY                           211
+# define EVP_F_EVP_MAC_CTX_DUP                            211
 # define EVP_F_EVP_MAC_CTX_NEW                            213
 # define EVP_F_EVP_MAC_INIT                               212
 # define EVP_F_EVP_MD_BLOCK_SIZE                          232
@@ -145,6 +145,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN                   164
 # define EVP_F_PKCS5_V2_SCRYPT_KEYIVGEN                   180
 # define EVP_F_PKEY_KDF_CTRL                              227
+# define EVP_F_PKEY_MAC_COPY                              241
 # define EVP_F_PKEY_MAC_INIT                              214
 # define EVP_F_PKEY_SET_TYPE                              158
 # define EVP_F_POLY1305_CTRL                              216
