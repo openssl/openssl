@@ -30,7 +30,7 @@ static void gmac_free(EVP_MAC_IMPL *gctx)
 static EVP_MAC_IMPL *gmac_new(void)
 {
     EVP_MAC_IMPL *gctx;
-    
+
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) == NULL
         || (gctx->ctx = EVP_CIPHER_CTX_new()) == NULL) {
         gmac_free(gctx);
