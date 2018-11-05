@@ -183,7 +183,7 @@ struct rand_drbg_st {
      * with respect to how randomness is added to the RNG during reseeding
      * (see PR #4328).
      */
-    struct rand_pool_st *pool;
+    struct rand_pool_st *seed_pool;
 
     /*
      * Auxiliary pool for additional data.
