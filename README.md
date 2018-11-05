@@ -14,7 +14,7 @@ Overview
 
 The **Open Quantum Safe (OQS) project** has the goal of developing and prototyping quantum-resistant cryptography.  
 
-**liboqs** is an open source C library for quantum-safe cryptographic algorithms.  See more about liboqs at [https://github.com/open-quantum-safe/liboqs/](https://github.com/open-quantum-safe/liboqs/), including a list of supported algorithms. OpenSSL can use either the [master](https://github.com/open-quantum-safe/liboqs/tree/master) or the [nist](https://github.com/open-quantum-safe/liboqs/tree/nist-branch) branch of liboqs; the former is recommended for normal uses of OpenSSL as included mechanisms follow a stricter set of requirements, the latter contains more algorithms and is better suited for experimentation.
+**liboqs** is an open source C library for quantum-resistant cryptographic algorithms.  See more about liboqs at [https://github.com/open-quantum-safe/liboqs/](https://github.com/open-quantum-safe/liboqs/), including a list of supported algorithms. OpenSSL can use either the [master](https://github.com/open-quantum-safe/liboqs/tree/master) or the [nist](https://github.com/open-quantum-safe/liboqs/tree/nist-branch) branch of liboqs; the former is recommended for normal uses of OpenSSL as included mechanisms follow a stricter set of requirements, the latter contains more algorithms and is better suited for experimentation.
 
 **OQS-OpenSSL\_1\_1\_1-stable** is an integration of liboqs into (a fork of) OpenSSL 1.1.1.  The goal of this integration is to provide easy prototyping of quantum-resistant cryptography in the TLS 1.3 protocol.  The integration should not be considered "production quality".
 
@@ -105,7 +105,7 @@ Clone or download the source from Github:
 
 ### Step 2: Build liboqs
 
-You can use the either the [master](https://github.com/open-quantum-safe/liboqs/tree/master) or the [nist](https://github.com/open-quantum-safe/liboqs/tree/nist-branch) branch of liboqs with the OQS-OpenSSL\_1\_1\_1-stable branch. Each branch support a different set of KEX/KEM mechanisnms (see above), and authentication is currently only supported with the master branch.
+You can use the either the [master](https://github.com/open-quantum-safe/liboqs/tree/master) or the [nist](https://github.com/open-quantum-safe/liboqs/tree/nist-branch) branch of liboqs with the OQS-OpenSSL\_1\_1\_1-stable branch. Each branch support a different set of KEX/KEM mechanisms (see above), and authentication is currently only supported with the master branch.
 
 The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
