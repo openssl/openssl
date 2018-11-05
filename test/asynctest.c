@@ -123,6 +123,43 @@ static int test_ASYNC_init_thread(void)
     return 1;
 }
 
+static int test_callback(void *arg)
+{
+    printf("callback test pass\n");
+    return 1;
+}
+
+static int test_ASYNC_callback_status(void)
+{
+    ASYNC_WAIT_CTX *waitctx = NULL;
+    int set_arg = 100;
+    ASYNC_callback_fn get_callback;
+    void *get_arg;
+    int set_status = 1;
+
+    if (       !ASYNC_init_thread(1, 0)
+            || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
+            || ASYNC_WAIT_CTX_set_callback(waitctx, test_callback, (void*)&set_arg)
+               != 1
+            || ASYNC_WAIT_CTX_get_callback(waitctx, &get_callback, &get_arg)
+               != 1
+            || test_callback != get_callback
+            || get_arg != (void*)&set_arg
+            || (*get_callback)(get_arg) != 1
+            || ASYNC_WAIT_CTX_set_status(waitctx, set_status) != 1
+            || set_status != ASYNC_WAIT_CTX_get_status(waitctx)) {
+        fprintf(stderr, "test_ASYNC_callback_status() failed\n");
+        ASYNC_WAIT_CTX_free(waitctx);
+        ASYNC_cleanup_thread();
+        return 0;
+    }
+
+    ASYNC_WAIT_CTX_free(waitctx);
+    ASYNC_cleanup_thread();
+    return 1;
+
+}
+
 static int test_ASYNC_start_job(void)
 {
     ASYNC_JOB *job = NULL;
@@ -279,6 +316,7 @@ int main(int argc, char **argv)
         CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
         if (       !test_ASYNC_init_thread()
+                || !test_ASYNC_callback_status()
                 || !test_ASYNC_start_job()
                 || !test_ASYNC_get_current_job()
                 || !test_ASYNC_WAIT_CTX_get_all_fds()

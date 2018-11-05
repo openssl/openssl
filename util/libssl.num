@@ -498,3 +498,8 @@ SSL_CTX_get_recv_max_early_data         498	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_recv_max_early_data         499	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_post_handshake_auth         500	3_0_0	EXIST::FUNCTION:
 SSL_get_signature_type_nid              501	3_0_0	EXIST::FUNCTION:
+SSL_CTX_set_async_callback              502	3_0_0	EXIST::FUNCTION:
+SSL_CTX_set_async_callback_arg          503	3_0_0	EXIST::FUNCTION:
+SSL_set_async_callback                  504	3_0_0	EXIST::FUNCTION:
+SSL_set_async_callback_arg              505	3_0_0	EXIST::FUNCTION:
+SSL_get_async_status                    506	3_0_0	EXIST::FUNCTION:

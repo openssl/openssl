@@ -182,6 +182,41 @@ int ASYNC_WAIT_CTX_clear_fd(ASYNC_WAIT_CTX *ctx, const void *key)
     return 0;
 }
 
+int ASYNC_WAIT_CTX_set_callback(ASYNC_WAIT_CTX *ctx,
+                                ASYNC_callback_fn callback,
+                                void *callback_arg)
+{
+      if (ctx == NULL)
+          return 0;
+
+      ctx->callback = callback;
+      ctx->callback_arg = callback_arg;
+      return 1;
+}
+
+int ASYNC_WAIT_CTX_get_callback(ASYNC_WAIT_CTX *ctx,
+                                ASYNC_callback_fn *callback,
+                                void **callback_arg)
+{
+      if (ctx->callback == NULL)
+          return 0;
+
+      *callback = ctx->callback;
+      *callback_arg = ctx->callback_arg;
+      return 1;
+}
+
+int ASYNC_WAIT_CTX_set_status(ASYNC_WAIT_CTX *ctx, int status)
+{
+      ctx->status = status;
+      return 1;
+}
+
+int ASYNC_WAIT_CTX_get_status(ASYNC_WAIT_CTX *ctx)
+{
+      return ctx->status;
+}
+
 void async_wait_ctx_reset_counts(ASYNC_WAIT_CTX *ctx)
 {
     struct fd_lookup_st *curr, *prev = NULL;

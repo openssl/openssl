@@ -293,6 +293,9 @@ typedef int (*SSL_custom_ext_parse_cb_ex)(SSL *s, unsigned int ext_type,
 /* Typedef for verification callback */
 typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
 
+/* Typedef for SSL async callback */
+typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
+
 /*
  * Some values are reserved until OpenSSL 1.2.0 because they were previously
  * included in SSL_OP_ALL in a 1.1.x release.
@@ -1815,6 +1818,12 @@ __owur int SSL_get_all_async_fds(SSL *s, OSSL_ASYNC_FD *fds, size_t *numfds);
 __owur int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd,
                                      size_t *numaddfds, OSSL_ASYNC_FD *delfd,
                                      size_t *numdelfds);
+__owur int SSL_CTX_set_async_callback(SSL_CTX *ctx, SSL_async_callback_fn callback);
+__owur int SSL_CTX_set_async_callback_arg(SSL_CTX *ctx, void *arg);
+__owur int SSL_set_async_callback(SSL *s, SSL_async_callback_fn callback);
+__owur int SSL_set_async_callback_arg(SSL *s, void *arg);
+__owur int SSL_get_async_status(SSL *s, int *status);
+
 # endif
 __owur int SSL_accept(SSL *ssl);
 __owur int SSL_stateless(SSL *s);
