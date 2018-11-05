@@ -619,11 +619,6 @@ void engine_load_devcrypto_int()
         return;
     }
 
-    prepare_cipher_methods();
-#ifdef IMPLEMENT_DIGEST
-    prepare_digest_methods();
-#endif
-
     if ((e = ENGINE_new()) == NULL
         || !ENGINE_set_destroy_function(e, devcrypto_unload)) {
         ENGINE_free(e);
@@ -635,6 +630,11 @@ void engine_load_devcrypto_int()
         close(cfd);
         return;
     }
+
+    prepare_cipher_methods();
+#ifdef IMPLEMENT_DIGEST
+    prepare_digest_methods();
+#endif
 
     if (!ENGINE_set_id(e, "devcrypto")
         || !ENGINE_set_name(e, "/dev/crypto engine")
