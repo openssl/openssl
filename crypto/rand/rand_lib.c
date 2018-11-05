@@ -146,8 +146,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         return 0;
     }
 
-    if (drbg->pool != NULL) {
-        pool = drbg->pool;
+    if (drbg->seed_pool != NULL) {
+        pool = drbg->seed_pool;
         pool->entropy_requested = entropy;
     } else {
         pool = rand_pool_new(entropy, min_len, max_len);
@@ -204,7 +204,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     }
 
  err:
-    if (drbg->pool == NULL)
+    if (drbg->seed_pool == NULL)
         rand_pool_free(pool);
     return ret;
 }
@@ -216,7 +216,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
                                unsigned char *out, size_t outlen)
 {
-    if (drbg->pool == NULL)
+    if (drbg->seed_pool == NULL)
         OPENSSL_secure_clear_free(out, outlen);
 }
 
