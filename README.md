@@ -30,6 +30,7 @@ This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantu
 ### Key exchange mechanisms
 
 The following key exchange / key encapsulation mechanisms from liboqs are supported (assuming they have been enabled in liboqs):
+
 - `oqs_kem_default`: this special mechanisms uses the liboqs's default configured scheme. This is useful to test schemes not yet supported by OpenSSL.
 - `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5` (not currently on Windows)
 - `frodo640aes`, `frodo640cshake`, `frodo976aes`, `frodo976cshake`
@@ -38,6 +39,7 @@ The following key exchange / key encapsulation mechanisms from liboqs are suppor
 - `sike503`, `sike751`
 
 The following additional mechanisms are supported only when using liboqs's nist-branch (assuming they have been enabled in liboqs):
+
 - `kyber512`, `kyber768`, `kyber1024`
 - `ledakem_C1_N02`, `ledakem_C1_N03`, `ledakem_C1_N04`, `ledakem_C3_N02`, `ledakem_C3_N03`, `ledakem_C3_N04`, `ledakem_C5_N02`
 - `lima_2p_1024_cca`, `lima_2p_2048_cca`, `lima_sp_1018_cca` (not for hybrid), `lima_sp_1306_cca`, `lima_sp_1822_cca`
@@ -48,6 +50,7 @@ Note that some mechanisms from the nist-branch have been disabled in OpenSSL bec
 ### Authentication mechanisms
 
 Authentication mechanisms are currently only enabled when using liboqs's master branch (due to the nist-branch's incompatible signature API). The following signature schemes from liboqs are supported (assuming they have been enabled in liboqs):
+
 - `picnicL1FS`
 - `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed` (not currently on Windows)
 
@@ -88,7 +91,7 @@ Builds have been tested on macOS 10.14 (clang), Ubuntu 14.04.5 (gcc-6), and Ubun
 
 For **Ubuntu**, you need to install the following packages:
 
-	sudo apt install autoconf automake libtool gcc libssl-dev unzip xsltproc
+	sudo apt install autoconf automake gcc libtool libssl-dev make unzip xsltproc
 
 For **macOS**, you need to install the following packages using brew (or a package manager of your choice):
 
