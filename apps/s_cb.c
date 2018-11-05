@@ -469,28 +469,28 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
     */
 #endif
   /* ADD_MORE_OQS_KEM_HERE */
-  case 0x02FF: return "p256 - oqs_kem_default hybrid";
-  case 0x0300: return "p256 - sike503 hybrid";
-  case 0x0301: return "p256 - sidh503 hybrid";
-  case 0x0302: return "p256 - frodo640aes hybrid";
-  case 0x0303: return "p256 - frodo640cshake hybrid";
-  case 0x0304: return "p256 - bike1l1 hybrid";
-  case 0x0305: return "p256 - bike2l1 hybrid";
-  case 0x0306: return "p256 - bike3l1 hybrid";
-  case 0x0307: return "p256 - newhope512cca hybrid";
+  case 0x02FF: return "p256-oqs_kem_default hybrid";
+  case 0x0300: return "p256-sike503 hybrid";
+  case 0x0301: return "p256-sidh503 hybrid";
+  case 0x0302: return "p256-frodo640aes hybrid";
+  case 0x0303: return "p256-frodo640cshake hybrid";
+  case 0x0304: return "p256-bike1l1 hybrid";
+  case 0x0305: return "p256-bike2l1 hybrid";
+  case 0x0306: return "p256-bike3l1 hybrid";
+  case 0x0307: return "p256-newhope512cca hybrid";
 #if defined(OQS_NIST_BRANCH)
     /*
-  case 0x0308: return "p256 - bigquake1 hybrid";
+  case 0x0308: return "p256-bigquake1 hybrid";
     */
-  case 0x0309: return "p256 - kyber512 hybrid";
-  case 0x030a: return "p256 - ledakem_C1_N02 hybrid";
-  case 0x030b: return "p256 - ledakem_C1_N03 hybrid";
-  case 0x030c: return "p256 - ledakem_C1_N04 hybrid";
+  case 0x0309: return "p256-kyber512 hybrid";
+  case 0x030a: return "p256-ledakem_C1_N02 hybrid";
+  case 0x030b: return "p256-ledakem_C1_N03 hybrid";
+  case 0x030c: return "p256-ledakem_C1_N04 hybrid";
     /*
-  case 0x030d: return "p256 - lima_sp_1018_cca hybrid";
-  case 0x030e: return "p256 - saber_light_saber hybrid";
-  case 0x030f: return "p256 - titanium_cca_std hybrid";
-  case 0x0310: return "p256 - titanium_cca_med hybrid";
+  case 0x030d: return "p256-lima_sp_1018_cca hybrid";
+  case 0x030e: return "p256-saber_light_saber hybrid";
+  case 0x030f: return "p256-titanium_cca_std hybrid";
+  case 0x0310: return "p256-titanium_cca_med hybrid";
     */
 #endif
   /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
