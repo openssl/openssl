@@ -59,6 +59,9 @@ struct async_wait_ctx_st {
     struct fd_lookup_st *fds;
     size_t numadd;
     size_t numdel;
+    ASYNC_callback_fn callback;
+    void *callback_arg;
+    int status;
 };
 
 DEFINE_STACK_OF(ASYNC_JOB)

@@ -831,6 +831,9 @@ SSL *SSL_new(SSL_CTX *ctx)
     s->psk_find_session_cb = ctx->psk_find_session_cb;
     s->psk_use_session_cb = ctx->psk_use_session_cb;
 
+    s->async_cb = ctx->async_cb;
+    s->async_cb_arg = ctx->async_cb_arg;
+
     s->job = NULL;
 
 #ifndef OPENSSL_NO_CT
@@ -1652,6 +1655,40 @@ int SSL_get_changed_async_fds(SSL *s, OSSL_ASYNC_FD *addfd, size_t *numaddfds,
                                           numdelfds);
 }
 
+int SSL_CTX_set_async_callback(SSL_CTX *ctx, SSL_async_callback_fn callback)
+{
+    ctx->async_cb = callback;
+    return 1;
+}
+
+int SSL_CTX_set_async_callback_arg(SSL_CTX *ctx, void *arg)
+{
+    ctx->async_cb_arg = arg;
+    return 1;
+}
+
+int SSL_set_async_callback(SSL *s, SSL_async_callback_fn callback)
+{
+    s->async_cb = callback;
+    return 1;
+}
+
+int SSL_set_async_callback_arg(SSL *s, void *arg)
+{
+    s->async_cb_arg = arg;
+    return 1;
+}
+
+int SSL_get_async_status(SSL *s, int *status)
+{
+    ASYNC_WAIT_CTX *ctx = s->waitctx;
+
+    if (ctx == NULL)
+        return 0;
+    *status = ASYNC_WAIT_CTX_get_status(ctx);
+    return 1;
+}
+
 int SSL_accept(SSL *s)
 {
     if (s->handshake_func == NULL) {
@@ -1677,6 +1714,13 @@ long SSL_get_default_timeout(const SSL *s)
     return s->method->get_timeout();
 }
 
+static int ssl_async_wait_ctx_cb(void *arg)
+{
+    SSL *s = (SSL *)arg;
+
+    return s->async_cb(s, s->async_cb_arg);
+}
+
 static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
                                int (*func) (void *))
 {
@@ -1684,6 +1728,10 @@ static int ssl_start_async_job(SSL *s, struct ssl_async_args *args,
     if (s->waitctx == NULL) {
         s->waitctx = ASYNC_WAIT_CTX_new();
         if (s->waitctx == NULL)
+            return -1;
+        if (s->async_cb != NULL
+            && !ASYNC_WAIT_CTX_set_callback
+                 (s->waitctx, ssl_async_wait_ctx_cb, s))
             return -1;
     }
     switch (ASYNC_start_job(&s->job, s->waitctx, &ret, func, args,

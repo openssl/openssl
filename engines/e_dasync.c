@@ -403,6 +403,8 @@ static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
 static void dummy_pause_job(void) {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
+    ASYNC_callback_fn callback;
+    void * callback_arg;
     OSSL_ASYNC_FD pipefds[2] = {0, 0};
     OSSL_ASYNC_FD *writefd;
 #if defined(ASYNC_WIN)
@@ -416,6 +418,18 @@ static void dummy_pause_job(void) {
         return;
 
     waitctx = ASYNC_get_wait_ctx(job);
+
+    if (ASYNC_WAIT_CTX_get_callback(waitctx, &callback, &callback_arg) && callback != NULL) {
+        /*
+         * In the Dummy async engine we are cheating. We call the callback that the job
+         * is complete before the call to ASYNC_pause_job(). A real
+         * async engine would only call the callback when the job was actually complete
+         */
+        (*callback)(callback_arg);
+        ASYNC_pause_job();
+        return;
+    }
+
 
     if (ASYNC_WAIT_CTX_get_fd(waitctx, engine_dasync_id, &pipefds[0],
                               (void **)&writefd)) {

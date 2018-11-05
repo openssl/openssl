@@ -4622,3 +4622,7 @@ CRYPTO_siv128_cleanup                   4577	3_0_0	EXIST::FUNCTION:SIV
 CRYPTO_siv128_speed                     4578	3_0_0	EXIST::FUNCTION:SIV
 OPENSSL_INIT_set_config_filename        4579	3_0_0	EXIST::FUNCTION:STDIO
 OPENSSL_INIT_set_config_file_flags      4580	3_0_0	EXIST::FUNCTION:STDIO
+ASYNC_WAIT_CTX_get_callback             4581	3_0_0	EXIST::FUNCTION:
+ASYNC_WAIT_CTX_set_callback             4582	3_0_0	EXIST::FUNCTION:
+ASYNC_WAIT_CTX_set_status               4583	3_0_0	EXIST::FUNCTION:
+ASYNC_WAIT_CTX_get_status               4584	3_0_0	EXIST::FUNCTION:

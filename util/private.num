@@ -90,6 +90,8 @@ custom_ext_free_cb                      datatype
 custom_ext_parse_cb                     datatype
 pem_password_cb                         datatype
 ssl_ct_validation_cb                    datatype
+ASYNC_callback_fn                       datatype
+SSL_async_callback_fn                   datatype
 #
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
@@ -475,3 +477,7 @@ X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define
 EVP_PKEY_CTX_get1_id                    define
 EVP_PKEY_CTX_get1_id_len                define
+ASYNC_STATUS_EAGAIN                     define
+ASYNC_STATUS_OK                         define
+ASYNC_STATUS_ERR                        define
+ASYNC_STATUS_UNSUPPORTED                define
