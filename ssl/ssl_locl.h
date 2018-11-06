@@ -530,9 +530,14 @@
 #define IS_OQS_KEM_NID(nid) (nid >= NID_OQS_START && nid <= NID_OQS_END)
 
 /* Returns the curve ID for an OQS KEM NID */
-// These conditional macro definitions help switch between the master and NIST branches.
-#ifdef OQS_NIST_BRANCH
-# define _OQS_KEM_NIST_BRANCH_CURVEID(nid) \
+// These conditional macro definitions help switch between the master and nist branches.
+#if defined(OQS_NIST_BRANCH)
+#define OQS_KEM_COND_NIST_BRANCH_CURVEID(nid) \
+  /* schemes only in nist-branch */ \
+  /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
+  /* ((nid) == NID_OQS_bigquake1 ? 0x0213 : */ \
+  /* ((nid) == NID_OQS_bigquake3 ? 0x0214 : */ \
+  /* ((nid) == NID_OQS_bigquake5 ? 0x0215 : */ \
   ((nid) == NID_OQS_kyber512 ? 0x0216 : \
   ((nid) == NID_OQS_kyber768 ? 0x0217 : \
   ((nid) == NID_OQS_kyber1024 ? 0x0218 : \
@@ -543,6 +548,8 @@
   ((nid) == NID_OQS_ledakem_C3_N03 ? 0x021d : \
   ((nid) == NID_OQS_ledakem_C3_N04 ? 0x021e : \
   ((nid) == NID_OQS_ledakem_C5_N02 ? 0x021f : \
+  /* ((nid) == NID_OQS_ledakem_C5_N03 ? 0x0220 : */ \
+  /* ((nid) == NID_OQS_ledakem_C5_N04 ? 0x0221 : */ \
   ((nid) == NID_OQS_saber_light_saber ? 0x0228 : \
   ((nid) == NID_OQS_saber_saber ? 0x0229 : \
   ((nid) == NID_OQS_saber_fire_saber ? 0x022a : \
@@ -551,31 +558,18 @@
   ((nid) == NID_OQS_lima_sp_1018_cca ? 0x0224 : \
   ((nid) == NID_OQS_lima_sp_1306_cca ? 0x0225 : \
   ((nid) == NID_OQS_lima_sp_1822_cca ? 0x0226 : \
-    0))))))))))))))))))
-
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  ((nid) == NID_OQS_bigquake1 ? 0x0213 : \
-  ((nid) == NID_OQS_bigquake3 ? 0x0214 : \
-  ((nid) == NID_OQS_bigquake5 ? 0x0215 : \
-    */
-    /*
-  ((nid) == NID_OQS_ledakem_C5_N03 ? 0x0220 : \
-  ((nid) == NID_OQS_ledakem_C5_N04 ? 0x0221 : \
-    */
-    /*
-  case NID_OQS_lima_sp_2062_cca : rv = 0x0227; break;
-    */
-    /*
-  ((nid) == NID_OQS_titanium_cca_std ? 0x022b : \
-  ((nid) == NID_OQS_titanium_cca_hi ? 0x022c : \
-  ((nid) == NID_OQS_titanium_cca_med ? 0x022d : \
-  ((nid) == NID_OQS_titanium_cca_super ? 0x022e : \
-    */
+  /* ((nid) == NID_OQS_lima_sp_2062_cca ? 0x0227 : */ \
+  /* ((nid) == NID_OQS_titanium_cca_std ? 0x022b : */ \
+  /* ((nid) == NID_OQS_titanium_cca_hi ? 0x022c : */ \
+  /* ((nid) == NID_OQS_titanium_cca_med ? 0x022d : */ \
+  /* ((nid) == NID_OQS_titanium_cca_super ? 0x022e : */ \
+   0))))))))))))))))))
 #else
-# define _OQS_KEM_COND_NIST_BRANCH_CURVEID(nid) \
-      ((nid) == NID_OQS_SIDH_503 ? 0x0202 : \
-      ((nid) == NID_OQS_SIDH_751 ? 0x0203 : 0))
+#define OQS_KEM_COND_NIST_BRANCH_CURVEID(nid) \
+  /* schemes only in master branch */ \
+  ((nid) == NID_OQS_SIDH_503 ? 0x0202 :	\
+  ((nid) == NID_OQS_SIDH_751 ? 0x0203 : \
+   0))
 #endif
 
 #define OQS_KEM_CURVEID(nid) \
@@ -597,7 +591,7 @@
   ((nid) == NID_OQS_BIKE3_L5 ? 0x0210 : \
   ((nid) == NID_OQS_NEWHOPE_512_CCA ? 0x0211 : \
   ((nid) == NID_OQS_NEWHOPE_1024_CCA ? 0x0212 : \
-   _OQS_KEM_COND_NIST_BRANCH_CURVEID((nid)) \
+   OQS_KEM_COND_NIST_BRANCH_CURVEID((nid)) \
    ))))))))))))))))))
   /* ADD_MORE_OQS_KEM_HERE */
 
