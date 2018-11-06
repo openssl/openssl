@@ -10,6 +10,9 @@ IF[{- !$disabled{"engine"} -}]
     IF[{- !$disabled{afalgeng} -}]
       SOURCE[../libcrypto]=e_afalg.c
     ENDIF
+    IF[{- !$disabled{"devcryptoeng"} -}]
+      SOURCE[../libcrypto]=e_devcrypto.c
+    ENDIF
   ELSE
     ENGINES=padlock
     SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
@@ -37,6 +40,16 @@ IF[{- !$disabled{"engine"} -}]
       IF[{- defined $target{shared_defflag} -}]
         SHARED_SOURCE[afalg]=afalg.ld
         GENERATE[afalg.ld]=../util/engines.num
+      ENDIF
+    ENDIF
+    IF[{- !$disabled{"devcryptoeng"} -}]
+      ENGINES=devcrypto
+      SOURCE[devcrypto]=e_devcrypto.c
+      DEPEND[devcrypto]=../libcrypto
+      INCLUDE[devcrypto]=../include
+      IF[{- defined $target{shared_defflag} -}]
+        SHARED_SOURCE[devcrypto]=devcrypto.ld
+        GENERATE[devcrypto.ld]=../util/engines.num
       ENDIF
     ENDIF
 
