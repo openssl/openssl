@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
+  *) Add OPENSSL_FORCE_USE_WINCRYPT. On Windows this will force the
+     selection of Wincrypt over BCrypt.
+     [Anton Kudryavtsev]
+
   *) Instead of having the source directories listed in Configure, add
      a 'build.info' keyword SUBDIRS to indicate what sub-directories to
      look into.
