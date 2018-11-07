@@ -323,7 +323,7 @@ depend:
 
 # Install helper targets #############################################
 
-install_sw: all install_dev install_engines install_runtime
+install_sw: install_dev install_engines install_runtime
 
 uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
@@ -461,7 +461,7 @@ uninstall_dev:
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
 
-install_engines:
+install_engines: install_runtime_libs build_engines
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(ENGINESDIR)/
 	@echo "*** Installing engines"
@@ -490,7 +490,7 @@ uninstall_engines:
 
 install_runtime: install_programs
 
-install_runtime_libs:
+install_runtime_libs: build_libs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@ : {- output_off() if windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/$(LIBDIR)
@@ -514,7 +514,7 @@ install_runtime_libs:
 		: {- output_on() if windowsdll(); "" -}; \
 	done
 
-install_programs: install_runtime_libs
+install_programs: install_runtime_libs build_programs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
 	@$(ECHO) "*** Installing runtime programs"
