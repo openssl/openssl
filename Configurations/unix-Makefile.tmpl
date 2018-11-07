@@ -79,10 +79,20 @@ INSTALL_PROGRAMS={-
                   grep { !$unified_info{attributes}->{$_}->{noinst} }
                   @{$unified_info{programs}})
 -}
-{- output_off() if $disabled{apps}; "" -}
-BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
-MISC_SCRIPTS=$(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget.pl:tsget
-{- output_on() if $disabled{apps}; "" -}
+BIN_SCRIPTS={-
+        join(" ", map { my $x = $unified_info{attributes}->{$_}->{linkname};
+                        $x ? "$_:$x" : $_ }
+                  grep { !$unified_info{attributes}->{$_}->{noinst}
+                         && !$unified_info{attributes}->{$_}->{misc} }
+                  @{$unified_info{scripts}})
+-}
+MISC_SCRIPTS={-
+        join(" ", map { my $x = $unified_info{attributes}->{$_}->{linkname};
+                        $x ? "$_:$x" : $_ }
+                  grep { !$unified_info{attributes}->{$_}->{noinst}
+                         && $unified_info{attributes}->{$_}->{misc} }
+                  @{$unified_info{scripts}})
+-}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 catfile("apps","openssl") -}
