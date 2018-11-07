@@ -59,15 +59,44 @@ GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
 GENERATED={- # common0.tmpl provides @generated
              join(" ", map { platform->convertext($_) } @generated) -}
 
-INSTALL_LIBS={- join(" ", map { quotify1(platform->sharedlib_import($_) // platform->staticlib($_)) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBS={- join(" ", map { my $x = platform->sharedlib($_);
-                                  $x ? quotify_l($x) : () } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBPDBS={- join(" ", map { my $x = platform->sharedlibpdb($_);
-                                     $x ? quotify_l($x) : () } @{$unified_info{install}->{libraries}}) -}
-INSTALL_ENGINES={- join(" ", map { quotify1(platform->dso($_)) } @{$unified_info{install}->{engines}}) -}
-INSTALL_ENGINEPDBS={- join(" ", map { quotify1(platform->dsopdb($_)) } @{$unified_info{install}->{engines}}) -}
-INSTALL_PROGRAMS={- join(" ", map { quotify1(platform->bin($_)) } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
-INSTALL_PROGRAMPDBS={- join(" ", map { quotify1(platform->binpdb($_)) } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
+INSTALL_LIBS={-
+        join(" ", map { quotify1(platform->sharedlib_import($_)
+                                 // platform->staticlib($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_SHLIBS={-
+        join(" ", map { my $x = platform->sharedlib($_);
+                        $x ? quotify_l($x) : () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_SHLIBPDBS={-
+        join(" ", map { my $x = platform->sharedlibpdb($_);
+                        $x ? quotify_l($x) : () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_ENGINES={-
+        join(" ", map { quotify1(platform->dso($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{engines}})
+-}
+INSTALL_ENGINEPDBS={-
+        join(" ", map { quotify1(platform->dsopdb($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{engines}})
+-}
+INSTALL_PROGRAMS={-
+        join(" ", map { quotify1(platform->bin($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{programs}})
+-}
+INSTALL_PROGRAMPDBS={-
+        join(" ", map { quotify1(platform->binpdb($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{programs}})
+-}
 {- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS="$(BLDDIR)\tools\c_rehash.pl"
 MISC_SCRIPTS="$(BLDDIR)\apps\CA.pl" "$(BLDDIR)\apps\tsget.pl"
