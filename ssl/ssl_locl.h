@@ -530,274 +530,236 @@
 #define IS_OQS_KEM_NID(nid) (nid >= NID_OQS_START && nid <= NID_OQS_END)
 
 /* Returns the curve ID for an OQS KEM NID */
-static int OQS_KEM_CURVEID(int nid) {
-  int rv;
-  switch (nid) {
-  case NID_OQS_KEM_DEFAULT : rv = 0x01FF; break;
-  case NID_OQS_SIKE_503 : rv = 0x0200; break;
-  case NID_OQS_SIKE_751 : rv = 0x0201; break;
-#if !defined(OQS_NIST_BRANCH)
-  case NID_OQS_SIDH_503 : rv = 0x0202; break;
-  case NID_OQS_SIDH_751 : rv = 0x0203; break;
-#endif
-  case NID_OQS_Frodo_640_AES : rv = 0x0204; break;
-  case NID_OQS_Frodo_640_cshake : rv = 0x0205; break;
-  case NID_OQS_Frodo_976_AES : rv = 0x0206; break;
-  case NID_OQS_Frodo_976_cshake : rv = 0x0207; break;
-  case NID_OQS_BIKE1_L1 : rv = 0x0208; break;
-  case NID_OQS_BIKE1_L3 : rv = 0x0209; break;
-  case NID_OQS_BIKE1_L5 : rv = 0x020a; break;
-  case NID_OQS_BIKE2_L1 : rv = 0x020b; break;
-  case NID_OQS_BIKE2_L3 : rv = 0x020c; break;
-  case NID_OQS_BIKE2_L5 : rv = 0x020d; break;
-  case NID_OQS_BIKE3_L1 : rv = 0x020e; break;
-  case NID_OQS_BIKE3_L3 : rv = 0x020f; break;
-  case NID_OQS_BIKE3_L5 : rv = 0x0210; break;
-  case NID_OQS_NEWHOPE_512_CCA  : rv = 0x0211; break;
-  case NID_OQS_NEWHOPE_1024_CCA : rv = 0x0212; break;
 #if defined(OQS_NIST_BRANCH)
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  case NID_OQS_bigquake1 : rv = 0x0213; break;
-  case NID_OQS_bigquake3 : rv = 0x0214; break;
-  case NID_OQS_bigquake5 : rv = 0x0215; break;
-    */
-  case NID_OQS_kyber512 : rv = 0x0216; break;
-  case NID_OQS_kyber768 : rv = 0x0217; break;
-  case NID_OQS_kyber1024 : rv = 0x0218; break;
-  case NID_OQS_ledakem_C1_N02 : rv = 0x0219; break;
-  case NID_OQS_ledakem_C1_N03 : rv = 0x021a; break;
-  case NID_OQS_ledakem_C1_N04 : rv = 0x021b; break;
-  case NID_OQS_ledakem_C3_N02 : rv = 0x021c; break;
-  case NID_OQS_ledakem_C3_N03 : rv = 0x021d; break;
-  case NID_OQS_ledakem_C3_N04 : rv = 0x021e; break;
-  case NID_OQS_ledakem_C5_N02 : rv = 0x021f; break;
-    /*
-  case NID_OQS_ledakem_C5_N03 : rv = 0x0220; break;
-  case NID_OQS_ledakem_C5_N04 : rv = 0x0221; break;
-    */
-  case NID_OQS_lima_2p_1024_cca : rv = 0x0222; break;
-  case NID_OQS_lima_2p_2048_cca : rv = 0x0223; break;
-  case NID_OQS_lima_sp_1018_cca : rv = 0x0224; break;
-  case NID_OQS_lima_sp_1306_cca : rv = 0x0225; break;
-  case NID_OQS_lima_sp_1822_cca : rv = 0x0226; break;
-    /*
-  case NID_OQS_lima_sp_2062_cca : rv = 0x0227; break;
-    */
-  case NID_OQS_saber_light_saber : rv = 0x0228; break;
-  case NID_OQS_saber_saber : rv = 0x0229; break;
-  case NID_OQS_saber_fire_saber : rv = 0x022a; break;
-    /*
-  case NID_OQS_titanium_cca_std : rv = 0x022b; break;
-  case NID_OQS_titanium_cca_hi : rv = 0x022c; break;
-  case NID_OQS_titanium_cca_med : rv = 0x022d; break;
-  case NID_OQS_titanium_cca_super : rv = 0x022e; break;
-    */
+#define OQS_KEM_CURVEID_NIST_BRANCH(nid) \
+  /* schemes only in nist branch */ \
+  /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
+  /* (nid == NID_OQS_bigquake1 ? 0x0213 : */ \
+  /* (nid == NID_OQS_bigquake3 ? 0x0214 : */ \
+  /* (nid == NID_OQS_bigquake5 ? 0x0215 : */ \
+  (nid == NID_OQS_kyber512 ? 0x0216 : \
+  (nid == NID_OQS_kyber768 ? 0x0217 : \
+  (nid == NID_OQS_kyber1024 ? 0x0218 : \
+  (nid == NID_OQS_ledakem_C1_N02 ? 0x0219 : \
+  (nid == NID_OQS_ledakem_C1_N03 ? 0x021a : \
+  (nid == NID_OQS_ledakem_C1_N04 ? 0x021b : \
+  (nid == NID_OQS_ledakem_C3_N02 ? 0x021c : \
+  (nid == NID_OQS_ledakem_C3_N03 ? 0x021d : \
+  (nid == NID_OQS_ledakem_C3_N04 ? 0x021e : \
+  (nid == NID_OQS_ledakem_C5_N02 ? 0x021f : \
+  /* (nid == NID_OQS_ledakem_C5_N03 ? 0x0220 : */ \
+  /* (nid == NID_OQS_ledakem_C5_N04 ? 0x0221 : */ \
+  (nid == NID_OQS_saber_light_saber ? 0x0228 : \
+  (nid == NID_OQS_saber_saber ? 0x0229 : \
+  (nid == NID_OQS_saber_fire_saber ? 0x022a : \
+  (nid == NID_OQS_lima_2p_1024_cca ? 0x0222 : \
+  (nid == NID_OQS_lima_2p_2048_cca ? 0x0223 : \
+  (nid == NID_OQS_lima_sp_1018_cca ? 0x0224 : \
+  (nid == NID_OQS_lima_sp_1306_cca ? 0x0225 : \
+  (nid == NID_OQS_lima_sp_1822_cca ? 0x0226 : \
+  /* (nid == NID_OQS_lima_sp_2062_cca ? 0x0227 : */ \
+  /* (nid == NID_OQS_titanium_cca_std ? 0x022b : */ \
+  /* (nid == NID_OQS_titanium_cca_hi ? 0x022c : */ \
+  /* (nid == NID_OQS_titanium_cca_med ? 0x022d : */ \
+  /* (nid == NID_OQS_titanium_cca_super ? 0x022e : */ \
+   0))))))))))))))))))
+#else
+#define OQS_KEM_CURVEID_NIST_BRANCH(nid) \
+  /* schemes only in master branch */ \
+  (nid == NID_OQS_SIDH_503 ? 0x0202 :	\
+  (nid == NID_OQS_SIDH_751 ? 0x0203 : \
+   0))
 #endif
+#define OQS_KEM_CURVEID(nid) \
+  (nid == NID_OQS_KEM_DEFAULT ? 0x01FF : \
+  (nid == NID_OQS_SIKE_503 ? 0x0200 : \
+  (nid == NID_OQS_SIKE_751 ? 0x0201 : \
+  (nid == NID_OQS_Frodo_640_AES ? 0x0204 : \
+  (nid == NID_OQS_Frodo_640_cshake ? 0x0205 : \
+  (nid == NID_OQS_Frodo_976_AES ? 0x0206 : \
+  (nid == NID_OQS_Frodo_976_cshake ? 0x0207 : \
+  (nid == NID_OQS_BIKE1_L1 ? 0x0208 : \
+  (nid == NID_OQS_BIKE1_L3 ? 0x0209 : \
+  (nid == NID_OQS_BIKE1_L5 ? 0x020a : \
+  (nid == NID_OQS_BIKE2_L1 ? 0x020b : \
+  (nid == NID_OQS_BIKE2_L3 ? 0x020c : \
+  (nid == NID_OQS_BIKE2_L5 ? 0x020d : \
+  (nid == NID_OQS_BIKE3_L1 ? 0x020e : \
+  (nid == NID_OQS_BIKE3_L3 ? 0x020f : \
+  (nid == NID_OQS_BIKE3_L5 ? 0x0210 : \
+  (nid == NID_OQS_NEWHOPE_512_CCA ? 0x0211 : \
+  (nid == NID_OQS_NEWHOPE_1024_CCA ? 0x0212 : \
+   OQS_KEM_CURVEID_NIST_BRANCH(nid) \
+   ))))))))))))))))))
   /* ADD_MORE_OQS_KEM_HERE */
-  default: rv = 0;
-  }
-  return rv;
-}
 
-static int OQS_KEM_HYBRID_CURVEID(int nid) {
-  int rv;
-  switch (nid) {
-  case NID_OQS_p256_KEM_DEFAULT      : rv = 0x02FF; break;
-  case NID_OQS_p256_SIKE_503         : rv = 0x0300; break;
-#if !defined(OQS_NIST_BRANCH)
-  case NID_OQS_p256_SIDH_503         : rv = 0x0301; break;
-#endif
-  case NID_OQS_p256_Frodo_640_AES    : rv = 0x0302; break;
-  case NID_OQS_p256_Frodo_640_cshake : rv = 0x0303; break;
-  case NID_OQS_p256_BIKE1_L1         : rv = 0x0304; break;
-  case NID_OQS_p256_BIKE2_L1         : rv = 0x0305; break;
-  case NID_OQS_p256_BIKE3_L1         : rv = 0x0306; break;
-  case NID_OQS_p256_NEWHOPE_512_CCA  : rv = 0x0307; break;
+/* Returns the curve ID for an OQS hybrid KEM NID */
 #if defined(OQS_NIST_BRANCH)
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  case NID_OQS_p256_bigquake1        : rv = 0x0308; break;
-    */
-  case NID_OQS_p256_kyber512         : rv = 0x0309; break;
-  case NID_OQS_p256_ledakem_C1_N02   : rv = 0x030a; break;
-  case NID_OQS_p256_ledakem_C1_N03   : rv = 0x030b; break;
-  case NID_OQS_p256_ledakem_C1_N04   : rv = 0x030c; break;
-    /*
-  case NID_OQS_p256_lima_sp_1018_cca : rv = 0x030d; break;
-  case NID_OQS_p256_saber_light_saber : rv = 0x030e; break;
-  case NID_OQS_p256_titanium_cca_std : rv = 0x030f; break;
-  case NID_OQS_p256_titanium_cca_med : rv = 0x0310; break;
-    */
+#define OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
+  /* schemes only in nist branch */ \
+  /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
+  /* (nid == NID_OQS_p256_bigquake1       ? 0x0308 : */	\
+  (nid == NID_OQS_p256_kyber512         ? 0x0309 : \
+  (nid == NID_OQS_p256_ledakem_C1_N02   ? 0x030a : \
+  (nid == NID_OQS_p256_ledakem_C1_N03   ? 0x030b : \
+  (nid == NID_OQS_p256_ledakem_C1_N04   ? 0x030c : \
+  /* (nid == NID_OQS_p256_lima_sp_1018_cca ? 0x030d : */ \
+  /* (nid == NID_OQS_p256_saber_light_saber ? 0x030e :	*/ \
+  /* (nid == NID_OQS_p256_titanium_cca_std ? 0x030f : */ \
+  /* (nid == NID_OQS_p256_titanium_cca_med ? 0x0310 : */ \
+   0))))
+#else
+#define OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
+  /* schemes only in master branch */ \
+  (nid == NID_OQS_p256_SIDH_503 ? 0x0301 : \
+   0)
 #endif
+#define OQS_KEM_HYBRID_CURVEID(nid) \
+  (nid == NID_OQS_p256_KEM_DEFAULT      ? 0x02FF : \
+  (nid == NID_OQS_p256_SIKE_503         ? 0x0300 : \
+  (nid == NID_OQS_p256_Frodo_640_AES    ? 0x0302 : \
+  (nid == NID_OQS_p256_Frodo_640_cshake ? 0x0303 : \
+  (nid == NID_OQS_p256_BIKE1_L1         ? 0x0304 : \
+  (nid == NID_OQS_p256_BIKE2_L1         ? 0x0305 : \
+  (nid == NID_OQS_p256_BIKE3_L1         ? 0x0306 : \
+  (nid == NID_OQS_p256_NEWHOPE_512_CCA  ? 0x0307 : \
+   OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
+   ))))))))
   /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
-  default: rv = 0;
-  }
-  return rv;
-}
 
-static int OQS_KEM_NID(int curveID) {
-  int rv;
-  switch (curveID) {
-  case 0x01FF:
-  case 0x02FF: rv = NID_OQS_KEM_DEFAULT; break;
-  case 0x0200:
-  case 0x0300: rv = NID_OQS_SIKE_503; break;
-  case 0x0201: rv = NID_OQS_SIKE_751; break;
-#if !defined(OQS_NIST_BRANCH)
-  case 0x0202:
-  case 0x0301: rv = NID_OQS_SIDH_503; break;
-  case 0x0203: rv = NID_OQS_SIDH_751; break;
-#endif
-  case 0x0204:
-  case 0x0302: rv = NID_OQS_Frodo_640_AES; break;
-  case 0x0205:
-  case 0x0303: rv = NID_OQS_Frodo_640_cshake; break;
-  case 0x0206: rv = NID_OQS_Frodo_976_AES; break;
-  case 0x0207: rv = NID_OQS_Frodo_976_cshake; break;
-  case 0x0208:
-  case 0x0304: rv = NID_OQS_BIKE1_L1; break;
-  case 0x0209: rv = NID_OQS_BIKE1_L3; break;
-  case 0x020a: rv = NID_OQS_BIKE1_L5; break;
-  case 0x020b:
-  case 0x0305: rv = NID_OQS_BIKE2_L1; break;
-  case 0x020c: rv = NID_OQS_BIKE2_L3; break;
-  case 0x020d: rv = NID_OQS_BIKE2_L5; break;
-  case 0x020e:
-  case 0x0306: rv = NID_OQS_BIKE3_L1; break;
-  case 0x020f: rv = NID_OQS_BIKE3_L3; break;
-  case 0x0210: rv = NID_OQS_BIKE3_L5; break;
-  case 0x0211:
-  case 0x0307: rv = NID_OQS_NEWHOPE_512_CCA; break;
-  case 0x0212: rv = NID_OQS_NEWHOPE_1024_CCA; break;
+  /* Returns the OQS KEM NID for a curve ID */
 #if defined(OQS_NIST_BRANCH)
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  case 0x0213:
-  case 0x0308: rv = NID_OQS_bigquake1; break;
-  case 0x0214: rv = NID_OQS_bigquake3; break;
-  case 0x0215: rv = NID_OQS_bigquake5; break;
-    */
-  case 0x0216:
-  case 0x0309: rv = NID_OQS_kyber512; break;
-  case 0x0217: rv = NID_OQS_kyber768; break;
-  case 0x0218: rv = NID_OQS_kyber1024; break;
-  case 0x0219:
-  case 0x030a: rv = NID_OQS_ledakem_C1_N02; break;
-  case 0x021a:
-  case 0x030b: rv = NID_OQS_ledakem_C1_N03; break;
-  case 0x021b:
-  case 0x030c: rv = NID_OQS_ledakem_C1_N04; break;
-  case 0x021c: rv = NID_OQS_ledakem_C3_N02; break;
-  case 0x021d: rv = NID_OQS_ledakem_C3_N03; break;
-  case 0x021e: rv = NID_OQS_ledakem_C3_N04; break;
-  case 0x021f: rv = NID_OQS_ledakem_C5_N02; break;
-    /*
-  case 0x0220: rv = NID_OQS_ledakem_C5_N03; break;
-  case 0x0221: rv = NID_OQS_ledakem_C5_N04; break;
-    */
-  case 0x0222: rv = NID_OQS_lima_2p_1024_cca; break;
-  case 0x0223: rv = NID_OQS_lima_2p_2048_cca; break;
-  case 0x0224:
-  /* case 0x030d: */ rv = NID_OQS_lima_sp_1018_cca; break;
-  case 0x0225: rv = NID_OQS_lima_sp_1306_cca; break;
-  case 0x0226: rv = NID_OQS_lima_sp_1822_cca; break;
-    /*
-  case 0x0227: rv = NID_OQS_lima_sp_2062_cca; break;
-    */
-  case 0x0228:
-  /* case 0x030e: */ rv = NID_OQS_saber_light_saber; break;
-  case 0x0229: rv = NID_OQS_saber_saber; break;
-  case 0x022a: rv = NID_OQS_saber_fire_saber; break;
-    /*
-  case 0x022b:
-  case 0x030f: rv = NID_OQS_titanium_cca_std; break;
-  case 0x022c: rv = NID_OQS_titanium_cca_hi; break;
-  case 0x022d:
-  case 0x0310: rv = NID_OQS_titanium_cca_med; break;
-  case 0x022e: rv = NID_OQS_titanium_cca_super; break;
-    */
+#define OQS_KEM_NID_NIST_BRANCH(curveID) \
+  /* schemes only in nist branch */ \
+  /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
+  /* (curveID == 0x0213 || curveID == 0x0308 ? NID_OQS_bigquake1 : */ \
+  /* (curveID == 0x0214 ? NID_OQS_bigquake3 : */ \
+  /* (curveID == 0x0215 ? NID_OQS_bigquake5 : */ \
+  (curveID == 0x0216 || curveID == 0x0309 ? NID_OQS_kyber512 : \
+  (curveID == 0x0217 ? NID_OQS_kyber768 : \
+  (curveID == 0x0218 ? NID_OQS_kyber1024 : \
+  (curveID == 0x0219 || curveID == 0x030a ? NID_OQS_ledakem_C1_N02 : \
+  (curveID == 0x021a || curveID == 0x030b ? NID_OQS_ledakem_C1_N03 : \
+  (curveID == 0x021b || curveID == 0x030c ? NID_OQS_ledakem_C1_N04 : \
+  (curveID == 0x021c ? NID_OQS_ledakem_C3_N02 : \
+  (curveID == 0x021d ? NID_OQS_ledakem_C3_N03 : \
+  (curveID == 0x021e ? NID_OQS_ledakem_C3_N04 : \
+  (curveID == 0x021f ? NID_OQS_ledakem_C5_N02 : \
+  /* (curveID == 0x0220 ? NID_OQS_ledakem_C5_N03 : */ \
+  /* (curveID == 0x0221 ? NID_OQS_ledakem_C5_N04 : */ \
+  (curveID == 0x0222 ? NID_OQS_lima_2p_1024_cca : \
+  (curveID == 0x0223 ? NID_OQS_lima_2p_2048_cca : \
+  (curveID == 0x0224 /* || curveID == 0x030d */ ? NID_OQS_lima_sp_1018_cca : \
+  (curveID == 0x0225 ? NID_OQS_lima_sp_1306_cca : \
+  (curveID == 0x0226 ? NID_OQS_lima_sp_1822_cca : \
+  /* (curveID == 0x0227 ? NID_OQS_lima_sp_2062_cca : */		\
+  (curveID == 0x0228 /* || (curveID == 0x030e: */ ? NID_OQS_saber_light_saber : \
+  (curveID == 0x0229 ? NID_OQS_saber_saber : \
+  (curveID == 0x022a ? NID_OQS_saber_fire_saber : \
+   /* (curveID == 0x022b || curveID == 0x030f ? NID_OQS_titanium_cca_std : */ \
+   /* (curveID == 0x022c ? NID_OQS_titanium_cca_hi : */ \
+   /* (curveID == 0x022d || curveID == 0x0310 ? NID_OQS_titanium_cca_med : */ \
+   /* (curveID == 0x022e ? NID_OQS_titanium_cca_super :	*/ \
+   0 ))))))))))))))))))
+#else
+#define OQS_KEM_NID_NIST_BRANCH(curveID) \
+  /* schemes only in master branch */ \
+  (curveID == 0x0202 || curveID == 0x0301 ? NID_OQS_SIDH_503 : \
+  (curveID == 0x0203 ? NID_OQS_SIDH_751 : \
+   0))
 #endif
+#define OQS_KEM_NID(curveID) \
+  (curveID == 0x01FF || curveID == 0x02FF ? NID_OQS_KEM_DEFAULT : \
+  (curveID == 0x0200 || curveID == 0x0300 ? NID_OQS_SIKE_503 : \
+  (curveID == 0x0201 ? NID_OQS_SIKE_751 : \
+  (curveID == 0x0204 || curveID == 0x0302 ? NID_OQS_Frodo_640_AES : \
+  (curveID == 0x0205 || curveID == 0x0303 ? NID_OQS_Frodo_640_cshake : \
+  (curveID == 0x0206 ? NID_OQS_Frodo_976_AES : \
+  (curveID == 0x0207 ? NID_OQS_Frodo_976_cshake : \
+  (curveID == 0x0208 || curveID == 0x0304 ? NID_OQS_BIKE1_L1 : \
+  (curveID == 0x0209 ? NID_OQS_BIKE1_L3 : \
+  (curveID == 0x020a ? NID_OQS_BIKE1_L5 : \
+  (curveID == 0x020b || curveID == 0x0305 ? NID_OQS_BIKE2_L1 : \
+  (curveID == 0x020c ? NID_OQS_BIKE2_L3 : \
+  (curveID == 0x020d ? NID_OQS_BIKE2_L5 : \
+  (curveID == 0x020e || curveID == 0x0306 ? NID_OQS_BIKE3_L1 : \
+  (curveID == 0x020f ? NID_OQS_BIKE3_L3 : \
+  (curveID == 0x0210 ? NID_OQS_BIKE3_L5 : \
+  (curveID == 0x0211 || curveID == 0x0307 ? NID_OQS_NEWHOPE_512_CCA : \
+  (curveID == 0x0212 ? NID_OQS_NEWHOPE_1024_CCA : \
+   OQS_KEM_NID_NIST_BRANCH(curveID) \
+   ))))))))))))))))))
   /* ADD_MORE_OQS_KEM_HERE */
-  default: rv = 0;
-  }
-  return rv;
-}
 
 /* Returns true if the curve ID is for an OQS KEM */
-#define IS_OQS_KEM_CURVEID(id) (id >= 0x01FF && id <= 0x022e) /* ADD_MORE_OQS_KEM_HERE (update)*/
+#define IS_OQS_KEM_CURVEID(id) (id >= 0x01FF && id <= 0x022e) /* ADD_MORE_OQS_KEM_HERE (update value)*/
 
 /* Returns true if the curve ID is for an OQS hybrid KEM */
-#define IS_OQS_KEM_HYBRID_CURVEID(id) (id >= 0x02FF && id <= 0x0310) /* ADD_MORE_OQS_KEM_HERE (L1 schemes, update) */
+#define IS_OQS_KEM_HYBRID_CURVEID(id) (id >= 0x02FF && id <= 0x0310) /* ADD_MORE_OQS_KEM_HERE (L1 schemes, update value) */
 
 /* Returns the OQS alg ID for OQS API */
-static const char* OQS_ALG_NAME(int nid) {
-  switch(nid) {
-  case NID_OQS_KEM_DEFAULT     : return OQS_KEM_alg_default;
-  case NID_OQS_SIKE_503        : return OQS_KEM_alg_sike_p503;
-  case NID_OQS_SIKE_751        : return OQS_KEM_alg_sike_p751;
-#if !defined(OQS_NIST_BRANCH)
-  case NID_OQS_SIDH_503        : return OQS_KEM_alg_sidh_p503;
-  case NID_OQS_SIDH_751        : return OQS_KEM_alg_sidh_p751;
-#endif
-  case NID_OQS_Frodo_640_AES   : return OQS_KEM_alg_frodokem_640_aes;
-  case NID_OQS_Frodo_640_cshake: return OQS_KEM_alg_frodokem_640_cshake;
-  case NID_OQS_Frodo_976_AES   : return OQS_KEM_alg_frodokem_976_aes;
-  case NID_OQS_Frodo_976_cshake: return OQS_KEM_alg_frodokem_976_cshake;
-  case NID_OQS_BIKE1_L1        : return OQS_KEM_alg_bike1_l1;
-  case NID_OQS_BIKE1_L3        : return OQS_KEM_alg_bike1_l3;
-  case NID_OQS_BIKE1_L5        : return OQS_KEM_alg_bike1_l5;
-  case NID_OQS_BIKE2_L1        : return OQS_KEM_alg_bike2_l1;
-  case NID_OQS_BIKE2_L3        : return OQS_KEM_alg_bike2_l3;
-  case NID_OQS_BIKE2_L5        : return OQS_KEM_alg_bike2_l5;
-  case NID_OQS_BIKE3_L1        : return OQS_KEM_alg_bike3_l1;
-  case NID_OQS_BIKE3_L3        : return OQS_KEM_alg_bike3_l3;
-  case NID_OQS_BIKE3_L5        : return OQS_KEM_alg_bike3_l5;
-  case NID_OQS_NEWHOPE_512_CCA : return OQS_KEM_alg_newhope_512_cca_kem;
-  case NID_OQS_NEWHOPE_1024_CCA: return OQS_KEM_alg_newhope_1024_cca_kem;
 #if defined(OQS_NIST_BRANCH)
-    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
-    /*
-  case NID_OQS_bigquake1          : return OQS_KEM_alg_BIG_QUAKE_1;
-  case NID_OQS_bigquake3          : return OQS_KEM_alg_BIG_QUAKE_3;
-  case NID_OQS_bigquake5          : return OQS_KEM_alg_BIG_QUAKE_5;
-    */
-  case NID_OQS_kyber512           : return OQS_KEM_alg_kyber512;
-  case NID_OQS_kyber768           : return OQS_KEM_alg_kyber768;
-  case NID_OQS_kyber1024          : return OQS_KEM_alg_kyber1024;
-  case NID_OQS_ledakem_C1_N02     : return OQS_KEM_alg_ledakem_C1_N02;
-  case NID_OQS_ledakem_C1_N03     : return OQS_KEM_alg_ledakem_C1_N03;
-  case NID_OQS_ledakem_C1_N04     : return OQS_KEM_alg_ledakem_C1_N04;
-  case NID_OQS_ledakem_C3_N02     : return OQS_KEM_alg_ledakem_C3_N02;
-  case NID_OQS_ledakem_C3_N03     : return OQS_KEM_alg_ledakem_C3_N03;
-  case NID_OQS_ledakem_C3_N04     : return OQS_KEM_alg_ledakem_C3_N04;
-  case NID_OQS_ledakem_C5_N02     : return OQS_KEM_alg_ledakem_C5_N02;
-    /*
-  case NID_OQS_ledakem_C5_N03     : return OQS_KEM_alg_ledakem_C5_N03;
-  case NID_OQS_ledakem_C5_N04     : return OQS_KEM_alg_ledakem_C5_N04;
-    */
-  case NID_OQS_lima_2p_1024_cca   : return OQS_KEM_alg_lima_2p_1024_cca_kem;
-  case NID_OQS_lima_2p_2048_cca   : return OQS_KEM_alg_lima_2p_2048_cca_kem;
-  case NID_OQS_lima_sp_1018_cca   : return OQS_KEM_alg_lima_sp_1018_cca_kem;
-  case NID_OQS_lima_sp_1306_cca   : return OQS_KEM_alg_lima_sp_1306_cca_kem;
-  case NID_OQS_lima_sp_1822_cca   : return OQS_KEM_alg_lima_sp_1822_cca_kem;
-    /*
-  case NID_OQS_lima_sp_2062_cca   : return OQS_KEM_alg_lima_sp_2062_cca_kem;
-    */
-  case NID_OQS_saber_light_saber  : return OQS_KEM_alg_saber_light_saber_kem;
-  case NID_OQS_saber_saber        : return OQS_KEM_alg_saber_saber_kem;
-  case NID_OQS_saber_fire_saber   : return OQS_KEM_alg_saber_fire_saber_kem;
-    /*
-  case NID_OQS_titanium_cca_std   : return OQS_KEM_alg_titanium_cca_std_kem;
-  case NID_OQS_titanium_cca_hi    : return OQS_KEM_alg_titanium_cca_hi_kem;
-  case NID_OQS_titanium_cca_med   : return OQS_KEM_alg_titanium_cca_med_kem;
-  case NID_OQS_titanium_cca_super : return OQS_KEM_alg_titanium_cca_super_kem;
-    */
+#define OQS_ALG_NAME_NIST_BRANCH(nid) \
+  /* schemes only in nist branch */ \
+  /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
+  /* (nid == NID_OQS_bigquake1          ? OQS_KEM_alg_BIG_QUAKE_1 */ \
+  /* (nid == NID_OQS_bigquake3          ? OQS_KEM_alg_BIG_QUAKE_3 */ \
+  /* (nid == NID_OQS_bigquake5          ? OQS_KEM_alg_BIG_QUAKE_5 */ \
+  (nid == NID_OQS_kyber512           ? OQS_KEM_alg_kyber512 : \
+  (nid == NID_OQS_kyber768           ? OQS_KEM_alg_kyber768 : \
+  (nid == NID_OQS_kyber1024          ? OQS_KEM_alg_kyber1024 : \
+  (nid == NID_OQS_ledakem_C1_N02     ? OQS_KEM_alg_ledakem_C1_N02 : \
+  (nid == NID_OQS_ledakem_C1_N03     ? OQS_KEM_alg_ledakem_C1_N03 : \
+  (nid == NID_OQS_ledakem_C1_N04     ? OQS_KEM_alg_ledakem_C1_N04 : \
+  (nid == NID_OQS_ledakem_C3_N02     ? OQS_KEM_alg_ledakem_C3_N02 : \
+  (nid == NID_OQS_ledakem_C3_N03     ? OQS_KEM_alg_ledakem_C3_N03 : \
+  (nid == NID_OQS_ledakem_C3_N04     ? OQS_KEM_alg_ledakem_C3_N04 : \
+  (nid == NID_OQS_ledakem_C5_N02     ? OQS_KEM_alg_ledakem_C5_N02 : \
+  /* (nid == NID_OQS_ledakem_C5_N03     ? OQS_KEM_alg_ledakem_C5_N03 : */ \
+  /* (nid == NID_OQS_ledakem_C5_N04     ? OQS_KEM_alg_ledakem_C5_N04 : */ \
+  (nid == NID_OQS_lima_2p_1024_cca   ? OQS_KEM_alg_lima_2p_1024_cca_kem : \
+  (nid == NID_OQS_lima_2p_2048_cca   ? OQS_KEM_alg_lima_2p_2048_cca_kem : \
+  (nid == NID_OQS_lima_sp_1018_cca   ? OQS_KEM_alg_lima_sp_1018_cca_kem : \
+  (nid == NID_OQS_lima_sp_1306_cca   ? OQS_KEM_alg_lima_sp_1306_cca_kem : \
+  (nid == NID_OQS_lima_sp_1822_cca   ? OQS_KEM_alg_lima_sp_1822_cca_kem : \
+  /* (nid == NID_OQS_lima_sp_2062_cca   ? OQS_KEM_alg_lima_sp_2062_cca_kem : */ \
+  (nid == NID_OQS_saber_light_saber  ? OQS_KEM_alg_saber_light_saber_kem : \
+  (nid == NID_OQS_saber_saber        ? OQS_KEM_alg_saber_saber_kem : \
+  (nid == NID_OQS_saber_fire_saber   ? OQS_KEM_alg_saber_fire_saber_kem : \
+  /* (nid == NID_OQS_titanium_cca_std   ? OQS_KEM_alg_titanium_cca_std_kem : */ \
+  /* (nid == NID_OQS_titanium_cca_hi    ? OQS_KEM_alg_titanium_cca_hi_kem : */ \
+  /* (nid == NID_OQS_titanium_cca_med   ? OQS_KEM_alg_titanium_cca_med_kem : */ \
+  /* (nid == NID_OQS_titanium_cca_super ? OQS_KEM_alg_titanium_cca_super_kem : */ \
+   0 ))))))))))))))))))
+#else
+#define OQS_ALG_NAME_NIST_BRANCH(nid) \
+  /* schemes only in master branch */ \
+  (nid == NID_OQS_SIDH_503        ? OQS_KEM_alg_sidh_p503 : \
+  (nid == NID_OQS_SIDH_751        ? OQS_KEM_alg_sidh_p751 : \
+   0 ))
 #endif
+#define OQS_ALG_NAME(nid) \
+  (nid == NID_OQS_KEM_DEFAULT     ? OQS_KEM_alg_default : \
+  (nid == NID_OQS_SIKE_503        ? OQS_KEM_alg_sike_p503 : \
+  (nid == NID_OQS_SIKE_751        ? OQS_KEM_alg_sike_p751 : \
+  (nid == NID_OQS_Frodo_640_AES   ? OQS_KEM_alg_frodokem_640_aes : \
+  (nid == NID_OQS_Frodo_640_cshake? OQS_KEM_alg_frodokem_640_cshake : \
+  (nid == NID_OQS_Frodo_976_AES   ? OQS_KEM_alg_frodokem_976_aes : \
+  (nid == NID_OQS_Frodo_976_cshake? OQS_KEM_alg_frodokem_976_cshake : \
+  (nid == NID_OQS_BIKE1_L1        ? OQS_KEM_alg_bike1_l1 : \
+  (nid == NID_OQS_BIKE1_L3        ? OQS_KEM_alg_bike1_l3 : \
+  (nid == NID_OQS_BIKE1_L5        ? OQS_KEM_alg_bike1_l5 : \
+  (nid == NID_OQS_BIKE2_L1        ? OQS_KEM_alg_bike2_l1 : \
+  (nid == NID_OQS_BIKE2_L3        ? OQS_KEM_alg_bike2_l3 : \
+  (nid == NID_OQS_BIKE2_L5        ? OQS_KEM_alg_bike2_l5 : \
+  (nid == NID_OQS_BIKE3_L1        ? OQS_KEM_alg_bike3_l1 : \
+  (nid == NID_OQS_BIKE3_L3        ? OQS_KEM_alg_bike3_l3 : \
+  (nid == NID_OQS_BIKE3_L5        ? OQS_KEM_alg_bike3_l5 : \
+  (nid == NID_OQS_NEWHOPE_512_CCA ? OQS_KEM_alg_newhope_512_cca_kem : \
+  (nid == NID_OQS_NEWHOPE_1024_CCA? OQS_KEM_alg_newhope_1024_cca_kem : \
+   OQS_ALG_NAME_NIST_BRANCH(nid) \
+   ))))))))))))))))))
    /* ADD_MORE_OQS_KEM_HERE */
-  default: return "";
-  }
-}
 
 /* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */
 #define OQS_KEM_CLASSICAL_CURVEID(curveID) (IS_OQS_KEM_HYBRID_CURVEID(curveID) ? 23 : 0)
