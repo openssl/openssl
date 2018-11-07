@@ -363,7 +363,8 @@ void rand_cleanup_int(void)
  */
 void RAND_keep_random_devices_open(int keep)
 {
-    rand_pool_keep_random_devices_open(keep);
+    if (RUN_ONCE(&rand_init, do_rand_init))
+        rand_pool_keep_random_devices_open(keep);
 }
 
 /*
