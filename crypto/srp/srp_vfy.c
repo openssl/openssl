@@ -209,12 +209,10 @@ void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
 }
 
 int SRP_user_pwd_set1_ids(SRP_user_pwd *vinfo, const char *id,
-                         const char *info)
+                          const char *info)
 {
-    if (vinfo->id != NULL)
-        OPENSSL_free(vinfo->id);
-    if (vinfo->info != NULL)
-        OPENSSL_free(vinfo->info);
+    OPENSSL_free(vinfo->id);
+    OPENSSL_free(vinfo->info);
     if (id != NULL && NULL == (vinfo->id = OPENSSL_strdup(id)))
         return 0;
     return (info == NULL || NULL != (vinfo->info = OPENSSL_strdup(info)));
