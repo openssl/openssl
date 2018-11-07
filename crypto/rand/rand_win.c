@@ -18,9 +18,13 @@
 # endif
 
 # include <windows.h>
-/* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI */
+/* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI
+OPENSSL_FORCE_USE_WINCRYPT: on Windows this will force the selection of Wincrypt over BCrypt
+*/
 # if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0601
-#  define USE_BCRYPTGENRANDOM
+#  if !defined(OPENSSL_FORCE_USE_WINCRYPT)
+#    define USE_BCRYPTGENRANDOM
+#  endif
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
