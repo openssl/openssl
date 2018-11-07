@@ -130,6 +130,7 @@
      unless ($disabled{shared} || $lib =~ /\.a$/) {
          my $obj2shlib = defined &obj2shlib ? \&obj2shlib : \&libobj2shlib;
          $OUT .= $obj2shlib->(lib => $lib,
+                              attrs => $unified_info{attributes}->{$lib},
                               objs => $unified_info{shared_sources}->{$lib},
                               deps => [ reducedepends(resolvedepends($lib)) ],
                               installed => is_installed($lib));
@@ -145,6 +146,7 @@
          }
      }
      $OUT .= obj2lib(lib => $lib,
+                     attrs => $unified_info{attributes}->{$lib},
                      objs => [ @{$unified_info{sources}->{$lib}} ]);
      foreach (@{$unified_info{sources}->{$lib}}) {
          doobj($_, $lib, intent => "lib", installed => is_installed($lib));
@@ -159,6 +161,7 @@
      my $lib = shift;
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
+                     attrs => $unified_info{attributes}->{$lib},
                      objs => $unified_info{shared_sources}->{$lib},
                      deps => [ resolvedepends($lib) ],
                      installed => is_installed($lib));
@@ -181,6 +184,7 @@
      return "" if $cache{$bin};
      my $deps = [ reducedepends(resolvedepends($bin)) ];
      $OUT .= obj2bin(bin => $bin,
+                     attrs => $unified_info{attributes}->{$bin},
                      objs => [ @{$unified_info{sources}->{$bin}} ],
                      deps => $deps,
                      installed => is_installed($bin));
@@ -196,6 +200,7 @@
      my $script = shift;
      return "" if $cache{$script};
      $OUT .= in2script(script => $script,
+                       attrs => $unified_info{attributes}->{$script},
                        sources => $unified_info{sources}->{$script},
                        installed => is_installed($script));
      $cache{$script} = 1;
