@@ -513,7 +513,7 @@ descrip.mms : FORCE
 
 # Install helper targets #############################################
 
-install_sw : all install_dev install_engines install_runtime -
+install_sw : install_dev install_engines install_runtime -
              install_startup install_ivp
 
 uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime -
@@ -556,7 +556,7 @@ install_dev : check_INSTALLTOP install_runtime_libs
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @install_libs) -}
 
-install_engines : check_INSTALLTOP
+install_engines : check_INSTALLTOP install_runtime_libs build_engines
         @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing engines"
         - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
@@ -567,7 +567,7 @@ install_engines : check_INSTALLTOP
 
 install_runtime: install_programs
 
-install_runtime_libs : check_INSTALLTOP
+install_runtime_libs : check_INSTALLTOP build_libs
         @ {- output_off() if $disabled{shared}; "" -} !
         @ WRITE SYS$OUTPUT "*** Installing shareable images"
         @ ! Install shared (runtime) libraries
@@ -577,7 +577,7 @@ install_runtime_libs : check_INSTALLTOP
                 @install_shlibs) -}
         @ {- output_on() if $disabled{shared}; "" -} !
 
-install_programs : check_INSTALLTOP install_runtime_libs
+install_programs : check_INSTALLTOP install_runtime_libs build_programs
         @ {- output_off() if $disabled{apps}; "" -} !
         @ ! Install the main program
         - CREATE/DIR ossl_installroot:[EXE.'arch']
