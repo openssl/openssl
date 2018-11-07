@@ -86,6 +86,57 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 
 #else
 
+# if defined(BN_DIV3W)
+BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
+# elif 0
+/*
+ * This is #if-ed away, because it's a reference for assembly implementations,
+ * where it can and should be made constant-time. But if you want to test it,
+ * just replace 0 with 1.
+ */
+#  if BN_BITS2 == 64 && defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+#   undef BN_ULLONG
+#   define BN_ULLONG __uint128_t
+#   define BN_LLONG
+#  endif
+
+#  ifdef BN_LLONG
+#   define BN_DIV3W
+/*
+ * Interface is somewhat quirky, |m| is pointer to most significant limb,
+ * and less significant limb is referred at |m[-1]|. This means that caller
+ * is responsible for ensuring that |m[-1]| is valid. Second condition that
+ * has to be met is that |d0|'s most significant bit has to be set. Or in
+ * other words divisor has to be "bit-aligned to the left." bn_div_fixed_top
+ * does all this. The subroutine consider fourd limbs, two of which are
+ * "overlapping," hence the name...
+ */
+static BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0)
+{
+    BN_ULLONG R = ((BN_ULLONG)m[0] << BN_BITS2) | m[-1];
+    BN_ULLONG D = ((BN_ULLONG)d0 << BN_BITS2) | d1;
+    BN_ULONG Q = 0, mask;
+    int i;
+
+    for (i = 0; i < BN_BITS2; i++) {
+        Q <<= 1;
+        if (R >= D) {
+            Q |= 1;
+            R -= D;
+        }
+        D >>= 1;
+    }
+
+    mask = 0 - (Q >> (BN_BITS2 - 1));   /* does it overflow? */
+
+    Q <<= 1;
+    Q |= (R >= D);
+
+    return (Q | mask) & BN_MASK2;
+}
+#  endif
+# endif
+
 # if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
     && !defined(PEDANTIC) && !defined(BN_DIV3W)
 #  if defined(__GNUC__) && __GNUC__>=2
@@ -137,7 +188,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
            BN_CTX *ctx)
 {
-    int norm_shift, i, loop;
+    int norm_shift, i, j, loop;
     BIGNUM *tmp, wnum, *snum, *sdiv, *res;
     BN_ULONG *resp, *wnump;
     BN_ULONG d0, d1;
@@ -291,8 +342,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
          * the first part of the loop uses the top two words of snum and sdiv
          * to calculate a BN_ULONG q such that | wnum - sdiv * q | < sdiv
          */
-# if defined(BN_DIV3W) && !defined(OPENSSL_NO_ASM)
-        BN_ULONG bn_div_3_words(BN_ULONG *, BN_ULONG, BN_ULONG);
+# if defined(BN_DIV3W)
         q = bn_div_3_words(wnump, d1, d0);
 # else
         BN_ULONG n0, n1, rem = 0;
@@ -376,20 +426,22 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
          * ingore top values of the bignums just sub the two BN_ULONG arrays
          * with bn_sub_words
          */
-        if (bn_sub_words(wnum.d, wnum.d, tmp->d, div_n + 1)) {
-            /*
-             * Note: As we have considered only the leading two BN_ULONGs in
-             * the calculation of q, sdiv * q might be greater than wnum (but
-             * then (q-1) * sdiv is less or equal than wnum)
-             */
-            q--;
-            if (bn_add_words(wnum.d, wnum.d, sdiv->d, div_n))
-                /*
-                 * we can't have an overflow here (assuming that q != 0, but
-                 * if q == 0 then tmp is zero anyway)
-                 */
-                (*wnump)++;
-        }
+        l0 = bn_sub_words(wnum.d, wnum.d, tmp->d, div_n + 1);
+        q -= l0;
+        /*
+         * Note: As we have considered only the leading two BN_ULONGs in
+         * the calculation of q, sdiv * q might be greater than wnum (but
+         * then (q-1) * sdiv is less or equal than wnum)
+         */
+        for (l0 = 0 - l0, j = 0; j < div_n; j++)
+            tmp->d[j] = sdiv->d[j] & l0;
+        l0 = bn_add_words(wnum.d, wnum.d, tmp->d, div_n);
+        /*
+         * we can't have an overflow here (assuming that q != 0, but
+         * if q == 0 then tmp is zero anyway)
+         */
+        (*wnump) += l0;
+
         /* store part of the result */
         resp--;
         *resp = q;
