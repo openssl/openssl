@@ -3508,39 +3508,50 @@ sub collect_information {
 }
 
 # tokenize($line)
+# tokenize($line,$separator)
 # $line is a line of text to split up into tokens
-# returns a list of tokens
+# $separator [optional] is a regular expression that separates the tokens,
+# the default being spaces.  Do not use quotes of any kind as separators,
+# that will give undefined results.
+# Returns a list of tokens.
 #
-# Tokens are divided by spaces.  If the tokens include spaces, they
-# have to be quoted with single or double quotes.  Double quotes
-# inside a double quoted token must be escaped.  Escaping is done
+# Tokens are divided by separator (spaces by default.  If the tokens include
+# the separators, they have to be quoted with single or double quotes.
+# Double quotes inside a double quoted token must be escaped.  Escaping is done
 # with backslash.
 # Basically, the same quoting rules apply for " and ' as in any
 # Unix shell.
 sub tokenize {
     my $line = my $debug_line = shift;
+    my $separator = shift // qr|\s+|;
     my @result = ();
 
-    while ($line =~ s|^\s+||, $line ne "") {
+    if ($ENV{CONFIGURE_DEBUG_TOKENIZE}) {
+        print STDERR "DEBUG[tokenize]: \$separator = $separator\n";
+    }
+
+    while ($line =~ s|^${separator}||, $line ne "") {
         my $token = "";
-        while ($line ne "" && $line !~ m|^\s|) {
-            if ($line =~ m/^"((?:[^"\\]+|\\.)*)"/) {
-                $token .= $1;
-                $line = $';
-            } elsif ($line =~ m/^'([^']*)'/) {
-                $token .= $1;
-                $line = $';
-            } elsif ($line =~ m/^(\S+)/) {
-                $token .= $1;
-                $line = $';
-            }
+    again:
+        $line =~ m/^(.*?)(${separator}|"|'|$)/;
+        $token .= $1;
+        $line = $2.$';
+
+        if ($line =~ m/^"((?:[^"\\]+|\\.)*)"/) {
+            $token .= $1;
+            $line = $';
+            goto again;
+        } elsif ($line =~ m/^'([^']*)'/) {
+            $token .= $1;
+            $line = $';
+            goto again;
         }
         push @result, $token;
     }
 
     if ($ENV{CONFIGURE_DEBUG_TOKENIZE}) {
-	print STDERR "DEBUG[tokenize]: Parsed '$debug_line' into:\n";
-	print STDERR "DEBUG[tokenize]: ('", join("', '", @result), "')\n";
+        print STDERR "DEBUG[tokenize]: Parsed '$debug_line' into:\n";
+        print STDERR "DEBUG[tokenize]: ('", join("', '", @result), "')\n";
     }
     return @result;
 }
