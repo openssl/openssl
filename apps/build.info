@@ -32,7 +32,10 @@ ENDIF
   GENERATE[progs.h]=progs.pl $(APPS_OPENSSL)
   DEPEND[progs.h]=../configdata.pm
 
-  SCRIPTS=CA.pl tsget.pl
+  SCRIPTS{misc}=CA.pl
   SOURCE[CA.pl]=CA.pl.in
+  # linkname tells build files that a symbolic link or copy of this script
+  # without extension must be installed as well.  Unix or Unix lookalike only.
+  SCRIPTS{misc,linkname=tsget}=tsget.pl
   SOURCE[tsget.pl]=tsget.in
 ENDIF

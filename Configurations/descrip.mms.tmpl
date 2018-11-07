@@ -60,6 +60,14 @@
   our @install_programs =
       grep { !$unified_info{attributes}->{$_}->{noinst} }
       @{$unified_info{programs}};
+  our @install_bin_scripts =
+      grep { !$unified_info{attributes}->{$_}->{noinst}
+             && !$unified_info{attributes}->{$_}->{misc} }
+      @{$unified_info{scripts}};
+  our @install_misc_scripts =
+      grep { !$unified_info{attributes}->{$_}->{noinst}
+             && $unified_info{attributes}->{$_}->{misc} }
+      @{$unified_info{scripts}};
 
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.
@@ -134,10 +142,8 @@ INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
-{- output_off() if $disabled{apps}; "" -}
-BIN_SCRIPTS=[.tools]c_rehash.pl
-MISC_SCRIPTS=[.apps]CA.pl, [.apps]tsget.pl
-{- output_on() if $disabled{apps}; "" -}
+BIN_SCRIPTS={- join(", ", @install_bin_scripts) -}
+MISC_SCRIPTS={- join(", ", @install_misc_scripts) -}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 catfile("apps","openssl") -}
