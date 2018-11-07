@@ -397,6 +397,11 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
         goto err;
     }
 
+    if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
+        if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n, CRYPTO_LOCK_RSA,
+                                    rsa->n, ctx))
+            goto err;
+
     if (!(rsa->flags & RSA_FLAG_NO_BLINDING)) {
         blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
         if (blinding == NULL) {
@@ -430,11 +435,6 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
             BN_with_flags(d, rsa->d, BN_FLG_CONSTTIME);
         } else
             d = rsa->d;
-
-        if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
-            if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n, CRYPTO_LOCK_RSA,
-                                        rsa->n, ctx))
-                goto err;
 
         if (!rsa->meth->bn_mod_exp(ret, f, d, rsa->n, ctx,
                                    rsa->_method_mod_n))
