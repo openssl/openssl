@@ -40,7 +40,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
 
-    ENGINES_NO_INST=ossltest dasync
+    ENGINES{noinst}=ossltest dasync
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include

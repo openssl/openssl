@@ -12,7 +12,7 @@
    our @apps_init_src = split(/\s+/, $target{apps_init_src});
    "" -}
 IF[{- !$disabled{apps} -}]
-  LIBS_NO_INST=libapps.a
+  LIBS{noinst}=libapps.a
   SOURCE[libapps.a]={- join(" ", @apps_lib_src) -}
   INCLUDE[libapps.a]=.. ../include
 

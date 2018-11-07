@@ -52,14 +52,33 @@ GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}}) -}
 GENERATED={- # common0.tmpl provides @generated
              join(" ", map { platform->convertext($_) } @generated ) -}
 
-INSTALL_LIBS={- join(" ", map { platform->staticlib($_) // () } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIB_INFO={- join(" ", map { my $x = platform->sharedlib($_);
-                                      my $y = platform->sharedlib_simple($_);
-                                      $x ? "\"$x;$y\"" : () }
-                                @{$unified_info{install}->{libraries}}) -}
-INSTALL_ENGINES={- join(" ", map { platform->dso($_) } @{$unified_info{install}->{engines}}) -}
-INSTALL_PROGRAMS={- join(" ", map { platform->bin($_) } @{$unified_info{install}->{programs}}) -}
+INSTALL_LIBS={-
+        join(" ", map { platform->staticlib($_) // () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_SHLIBS={-
+        join(" ", map { platform->sharedlib($_) // () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_SHLIB_INFO={-
+        join(" ", map { my $x = platform->sharedlib($_);
+                        my $y = platform->sharedlib_simple($_);
+                        $x ? "\"$x;$y\"" : () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_ENGINES={-
+        join(" ", map { platform->dso($_) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{engines}})
+-}
+INSTALL_PROGRAMS={-
+        join(" ", map { platform->bin($_) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{programs}})
+-}
 {- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS=$(BLDDIR)/tools/c_rehash
 MISC_SCRIPTS=$(BLDDIR)/apps/CA.pl $(BLDDIR)/apps/tsget.pl:tsget

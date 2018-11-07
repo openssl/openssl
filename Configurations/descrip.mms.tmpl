@@ -48,10 +48,18 @@
       @{$unified_info{libraries}};
   our @install_libs =
       map { platform->staticname($_) }
-      @{$unified_info{install}->{libraries}};
+      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      @{$unified_info{libraries}};
   our @install_shlibs =
       map { platform->sharedname($_) // () }
-      @{$unified_info{install}->{libraries}};
+      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      @{$unified_info{libraries}};
+  our @install_engines =
+      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      @{$unified_info{engines}};
+  our @install_programs =
+      grep { !$unified_info{attributes}->{$_}->{noinst} }
+      @{$unified_info{programs}};
 
   # This is a horrible hack, but is needed because recursive inclusion of files
   # in different directories does not work well with HP C.
@@ -124,8 +132,8 @@ GENERATED={- # common0.tmpl provides @generated
 
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
-INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{install}->{engines}}) -}
-INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{install}->{programs}}) -}
+INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
+INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
 {- output_off() if $disabled{apps}; "" -}
 BIN_SCRIPTS=[.tools]c_rehash.pl
 MISC_SCRIPTS=[.apps]CA.pl, [.apps]tsget.pl
@@ -552,7 +560,7 @@ install_engines : check_INSTALLTOP install_runtime_libs build_engines
         - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
-                @{$unified_info{install}->{engines}}) -}
+                @install_engines) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
 install_runtime : install_programs
