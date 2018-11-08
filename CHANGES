@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Build devcrypto engine as a dynamic engine.
+     [Eneas U de Queiroz]
+
   *) Add keyed BLAKE2 to EVP_MAC.
      [Antoine Salon]
 
