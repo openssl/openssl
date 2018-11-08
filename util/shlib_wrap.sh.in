@@ -1,4 +1,21 @@
 #!/bin/sh
+{-
+    use lib '.';
+    use configdata;
+
+    our %libs = undef;
+    unless ($disabled{shared}) {
+        for (('libcrypto', 'libssl')) {
+            $libs{$_} =
+                $unified_info{sharednames}->{$_}
+                . ($target{shlib_variant} || "")
+                . ($target{shared_extension} || ".so");
+            $libs{$_} =~ s|\.\$\(SHLIB_VERSION_NUMBER\)
+                          |.$config{shlib_version_number}|x;
+        }
+    }
+    ""     # Make sure no left over string sneaks its way into the script
+-}
 
 # To test this OpenSSL version's applications against another version's
 # shared libraries, simply set
@@ -25,15 +42,8 @@ fi
 THERE="`echo $0 | sed -e 's|[^/]*$||' 2>/dev/null`.."
 [ -d "${THERE}" ] || exec "$@"	# should never happen...
 
-# Alternative to this is to parse ${THERE}/Makefile...
-LIBCRYPTOSO="${THERE}/libcrypto.so"
-if [ -f "$LIBCRYPTOSO" ]; then
-    while [ -h "$LIBCRYPTOSO" ]; do
-	LIBCRYPTOSO="${THERE}/`ls -l "$LIBCRYPTOSO" | sed -e 's|.*\-> ||'`"
-    done
-    SOSUFFIX=`echo ${LIBCRYPTOSO} | sed -e 's|.*\.so||' 2>/dev/null`
-    LIBSSLSO="${THERE}/libssl.so${SOSUFFIX}"
-fi
+LIBCRYPTOSO="${THERE}/{- $libs{libcrypto} -}"
+LIBSSLSO="${THERE}/{- $libs{libssl} -}"
 
 SYSNAME=`(uname -s) 2>/dev/null`;
 case "$SYSNAME" in
@@ -41,6 +51,7 @@ SunOS|IRIX*)
 	# SunOS and IRIX run-time linkers evaluate alternative
 	# variables depending on target ABI...
 	rld_var=LD_LIBRARY_PATH
+
 	case "`(/usr/bin/file "$LIBCRYPTOSO") 2>/dev/null`" in
 	*ELF\ 64*SPARC*|*ELF\ 64*AMD64*)
 		[ -n "$LD_LIBRARY_PATH_64" ] && rld_var=LD_LIBRARY_PATH_64

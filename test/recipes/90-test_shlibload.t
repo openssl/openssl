@@ -18,6 +18,13 @@ BEGIN {
 use lib bldtop_dir('.');
 use configdata;
 
+# When libssl and libcrypto are compiled on Linux with "-rpath", but not
+# "--enable-new-dtags", the RPATH takes precedence over LD_LIBRARY_PATH,
+# and we end up running with the wrong libraries.  This is resolved by
+# using full paths to the shared objects.
+#
+my $top = bldtop_dir('.');
+
 plan skip_all => "Test only supported in a shared build" if disabled("shared");
 plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 
@@ -25,9 +32,9 @@ plan tests => 4;
 
 my $libcrypto_idx = $unified_info{rename}->{libcrypto} // "libcrypto";
 my $libssl_idx = $unified_info{rename}->{libssl} // "libssl";
-my $libcrypto =
+my $libcrypto = "$top/".
     $unified_info{sharednames}->{$libcrypto_idx}.$target{shared_extension_simple};
-my $libssl =
+my $libssl = "$top/".
     $unified_info{sharednames}->{$libssl_idx}.$target{shared_extension_simple};
 
 ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl])),
