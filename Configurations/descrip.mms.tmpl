@@ -198,9 +198,9 @@ ASOUTFLAG={- $target{asoutflag} -}$(OSSL_EMPTY)
 
 CNF_ASFLAGS={- join('', $target{asflags} || (),
                         @{$config{asflags}}) -}
-CNF_DEFINES={- our $defines2 = join('', map { ",$_" } @{$target{defines}},
-                                                      @{$config{defines}},
-                                                      "'extradefines'") -}
+CNF_DEFINES={- our $defines2 = join('', (map { ",$_" } @{$target{defines}},
+                                                       @{$config{defines}}),
+                                        "'extradefines'") -}
 CNF_INCLUDES={- our $includes2 = join(',', @{$target{includes}},
                                            @{$config{includes}}) -}
 CNF_CPPFLAGS={- our $cppflags2 = join('', $target{cppflags} || (),
