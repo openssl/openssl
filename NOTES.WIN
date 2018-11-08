@@ -53,6 +53,9 @@
    64-bit version is exercised through continuous integration of
    VC-WIN64A-masm target.
 
+ If you want to target non-default, older Windows version, just pass
+ additional -D_WIN32_WINNT=0xNml flag to ./Configure. For example pass
+ -D_WIN32_WINNT=0x501 to target XP.
 
  Installation directories
  ------------------------
