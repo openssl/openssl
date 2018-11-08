@@ -926,8 +926,16 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
      * To summarize it's sufficient to mask and swap
      * BN_FLG_CONSTTIME alone. BN_FLG_STATIC_DATA should
      * be treated as fatal.
+     *
+     * @mattcaswell: BN_FLG_FIXED_TOP indicates that we haven't called
+     * bn_correct_top() on the data, so the d array may be padded with
+     * additional 0 values (i.e. top could be greater than the minimal
+     * value that it could be). So I think we should be swapping it
      */
-    t = ((a->flags ^ b->flags) & BN_FLG_CONSTTIME) & condition;
+
+#define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
+
+    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition;
     a->flags ^= t;
     b->flags ^= t;
 
