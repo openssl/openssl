@@ -158,22 +158,20 @@ Clone or download the source from Github:
 
 ### Step 2: Build liboqs
 
-Next, you must download and build liboqs using the master branch of liboqs (the nist branch is not currently supported on Windows).  The following instructions will download and build that branch of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs master branch README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
+Next, you must download and build liboqs using the master branch of liboqs (the nist branch is not currently supported on Windows).  The following instructions will download (using git, alternatively, [download](https://github.com/open-quantum-safe/liboqs/archive/master.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs master branch README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
 
     git clone --branch master https://github.com/open-quantum-safe/liboqs.git
-    cd liboqs
-    msbuild VisualStudio\liboqs.sln
-    mkdir ..\openssl\oqs
-    mkdir ..\openssl\oqs\lib
-    mkdir ..\openssl\oqs\include
-    xcopy VisualStudio\x64\Release\oqs.lib ..\openssl\oqs\lib\
-    xcopy /S VisualStudio\include ..\openssl\oqs\include\
+    msbuild liboqs\VisualStudio\liboqs.sln /p:Configuration=Release;Platform=x64
+    mkdir openssl\oqs
+    mkdir openssl\oqs\lib
+    mkdir openssl\oqs\include
+    xcopy liboqs\VisualStudio\x64\Release\oqs.lib openssl\oqs\lib\
+    xcopy /S liboqs\VisualStudio\include openssl\oqs\include\
 
 ### Step 3: Build fork of OpenSSL
 
-Now we follow the standard instructions for building OpenSSL, for example
+Now we follow the standard instructions for building OpenSSL, for example:
 
-    cd ..\openssl
     perl Configure VC-WIN64A
     nmake
 
