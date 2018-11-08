@@ -1,7 +1,7 @@
 OQS-OpenSSL\_1\_1\_1-stable
 ==========================
 
-**OpenSSL** is an open-source TLS/SSL and crypto library [https://openssl.org/](https://openssl.org/).  ([View the original README file for OpenSSL](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README).)
+**OpenSSL** ([https://openssl.org/](https://openssl.org/)) is an open-source TLS/SSL and crypto library.  (View the original [README file](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README) for OpenSSL.)
 
 This branch (OQS-OpenSSL\_1\_1\_1-stable) is a fork of OpenSSL 1.1.1 that adds the following:
 
@@ -31,7 +31,7 @@ This branch ([OQS-OpenSSL\_1\_1\_1-stable branch](https://github.com/open-quantu
 
 The following key exchange / key encapsulation mechanisms from liboqs are supported (assuming they have been enabled in liboqs):
 
-- `oqs_kem_default`: this special mechanisms uses the liboqs's default configured scheme. This is useful to test schemes not yet supported by OpenSSL.
+- `oqs_kem_default`: this special mechanisms uses the liboqs's default configured scheme. This is useful to test schemes not yet directly supported by OpenSSL.
 - `bike1l1`, `bike1l3`, `bike1l5`, `bike2l1`, `bike2l3`, `bike2l5`, `bike3l1`, `bike3l3`, `bike3l5` (not currently on Windows)
 - `frodo640aes`, `frodo640cshake`, `frodo976aes`, `frodo976cshake`
 - `newhope512cca`, `newhope1024cca`
@@ -57,7 +57,7 @@ Authentication mechanisms are currently only enabled when using liboqs's master 
 Limitations and security
 ------------------------
 
-liboqs and our integration into OpenSSL are designed for prototyping and evaluating quantum-resistant cryptography.  Security of proposed quantum-resistant algorithms may rapidly change as research advances, and may ultimately be completely insecure against either classical or quantum computers.
+liboqs and this integration into OpenSSL are designed for prototyping and evaluating quantum-resistant cryptography.  Security of proposed quantum-resistant algorithms may rapidly change as research advances, and may ultimately be completely insecure against either classical or quantum computers.
 
 We believe that the NIST Post-Quantum Cryptography standardization project is currently the best avenue to identifying potentially quantum-resistant algorithms.  liboqs does not intend to "pick winners", and we strongly recommend that applications and protocols rely on the outcomes of the NIST standardization project when deploying post-quantum cryptography.
 
@@ -148,7 +148,7 @@ The OQS fork of OpenSSL can also be built with shared libraries, but we have use
 Building on Windows
 -------------------
 
-Builds have been tested on Windows 10 (VS2017 build tools). Make sure you can build the unmodified version of OpenSSL by following the instructions in [INSTALL](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/INSTALL) and [NOTES.WIN](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/NIST.WIN).
+Builds have been tested on Windows 10 (VS2017 build tools). Make sure you can build the unmodified version of OpenSSL by following the instructions in [INSTALL](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/INSTALL) and [NOTES.WIN](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/NOTES.WIN).
 
 ### Step 1: Download fork of OpenSSL
 
@@ -223,7 +223,7 @@ To add a new algorithm <NEWALG> with OID <NEWOID>:
 License
 -------
 
-All modifications in the open-quantum-safe/openssl repository are released under the same terms as OpenSSL, namely as described in the file [LICENSE](https://github.com/open-quantum-safe/openssl/blob/master/LICENSE).  
+All modifications in the open-quantum-safe/openssl repository are released under the same terms as OpenSSL, namely as described in the file [LICENSE](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/LICENSE).
 
 Team
 ----
