@@ -784,6 +784,23 @@ my @tests_tls_1_3 = (
             "ExpectedResult" => "Success"
         },
     },
+    {
+        name => "TLS 1.3 ECDSA with brainpool",
+        server =>  {
+            "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
+            "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
+            "Groups" => "brainpoolP256r1",
+        },
+        client => {
+            "RequestCAFile" => test_pem("root-cert.pem"),
+            "Groups" => "brainpoolP256r1",
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
+        test   => {
+            "ExpectedResult" => "ServerFail"
+        },
+    },
 );
 
 push @tests, @tests_tls_1_3 unless disabled("tls1_3");
