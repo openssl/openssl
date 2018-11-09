@@ -571,7 +571,7 @@ install_engines : check_INSTALLTOP install_runtime_libs build_engines
                 @{$unified_info{install}->{engines}}) -}
         @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
 
-install_runtime: install_programs
+install_runtime : install_programs
 
 install_runtime_libs : check_INSTALLTOP build_libs
         @ {- output_off() if $disabled{shared}; "" -} !
