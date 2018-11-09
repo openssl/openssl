@@ -847,6 +847,8 @@ typedef struct mac_data_st {
     /* Expected output */
     unsigned char *output;
     size_t output_len;
+    unsigned char *custom;
+    size_t custom_len;
     /* Collection of controls */
     STACK_OF(OPENSSL_STRING) *controls;
 } MAC_DATA;
@@ -929,6 +931,7 @@ static void mac_test_cleanup(EVP_TEST *t)
     OPENSSL_free(mdat->alg);
     OPENSSL_free(mdat->key);
     OPENSSL_free(mdat->iv);
+    OPENSSL_free(mdat->custom);
     OPENSSL_free(mdat->input);
     OPENSSL_free(mdat->output);
 }
@@ -942,6 +945,8 @@ static int mac_test_parse(EVP_TEST *t,
         return parse_bin(value, &mdata->key, &mdata->key_len);
     if (strcmp(keyword, "IV") == 0)
         return parse_bin(value, &mdata->iv, &mdata->iv_len);
+    if (strcmp(keyword, "Custom") == 0)
+        return parse_bin(value, &mdata->custom, &mdata->custom_len);
     if (strcmp(keyword, "Algorithm") == 0) {
         mdata->alg = OPENSSL_strdup(value);
         if (!mdata->alg)
@@ -1123,6 +1128,17 @@ static int mac_test_run_mac(EVP_TEST *t)
     } else if (rv <= 0) {
         t->err = "MAC_CTRL_ERROR";
         goto err;
+    }
+    if (expected->custom != NULL) {
+        rv = EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_CUSTOM,
+                          expected->custom, expected->custom_len);
+        if (rv == -2) {
+            t->err = "MAC_CTRL_INVALID";
+            goto err;
+        } else if (rv <= 0) {
+            t->err = "MAC_CTRL_ERROR";
+            goto err;
+        }
     }
 
     if (expected->iv != NULL) {
