@@ -100,7 +100,8 @@ set CA names using the "client CA list" functions and then get them using the
 "generic CA list" functions. Where a mix of the two types of functions has been
 used on the server side then the "client CA list" functions take precedence.
 Typically, on the server side, the "client CA list " functions should be used in
-preference.
+preference. As noted above in most cases it is not necessary to set CA names on
+the client side. 
 
 SSL_CTX_set0_CA_list() sets the list of CAs to be sent to the peer to
 B<name_list>. Ownership of B<name_list> is transferred to B<ctx> and
