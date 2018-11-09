@@ -517,7 +517,7 @@ install_runtime_libs: build_libs
 install_programs: install_runtime_libs build_programs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
-	@$(ECHO) "*** Installing runtime programs"
+	@echo "*** Installing runtime programs"
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
@@ -558,7 +558,7 @@ uninstall_programs:
 	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
 
 uninstall_runtime_libs:
-	@$(ECHO) "*** Uninstalling runtime libraries"
+	@echo "*** Uninstalling runtime libraries"
 	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
