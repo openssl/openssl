@@ -1,5 +1,5 @@
-OQS-OpenSSL_1\_1\_1-stable snapshot 2018-11 release candidate 1
-===============================================================
+OQS-OpenSSL_1\_1\_1-stable snapshot 2018-11-rc3
+===============================================
 
 About
 -----
@@ -20,7 +20,7 @@ This branch of our fork of OpenSSL can be used with the following versions of li
 Release notes
 =============
 
-**This is a release candidate for liboqs master, not a final release.**. 
+**This is a release candidate for liboqs master, not a final release.**.
 This snapshot of the OQS fork of OpenSSL 1.1.1 (OQS-OpenSSL_1\_1\_1-stable) was released on TODO.  Its release page on Github is TODO.
 
 What's New
