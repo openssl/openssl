@@ -6,8 +6,7 @@ OSSL_CRMF_MSG_get0_tmpl,
 OSSL_CRMF_CERTTEMPLATE_get0_serialNumber,
 OSSL_CRMF_CERTTEMPLATE_get0_issuer,
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert,
-OSSL_CRMF_MSG_get_certReqId,
-OSSL_CRMF_ASN1_get_int
+OSSL_CRMF_MSG_get_certReqId
 - functions reading from CRMF CertReqMsg structures
 
 =head1 SYNOPSIS
@@ -23,7 +22,6 @@ OSSL_CRMF_ASN1_get_int
                                              EVP_PKEY *pkey);
 
  int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm);
- int OSSL_CRMF_ASN1_get_int(int *pr, const ASN1_INTEGER *a);
 
 
 =head1 DESCRIPTION
@@ -44,16 +42,11 @@ with the caller, who is responsible for freeing it.
 
 OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of B<crm>.
 
-OSSL_CRMF_ASN1_get_int() converts an ASN1_INTEGER into an int type.
-If successful (i.e., the ASN.1 encoded value is valid and fits in an int)
-it sets B<*pr> to the value of B<a>.
 
 =head1 RETURN VALUES
 
 OSSL_CRMF_MSG_get_certReqId() returns the certificate request ID as a
 non-negative integer or -1 on error.
-
-OSSL_CRMF_ASN1_get_int() returns 1 on success and 0 on error.
 
 All other functions return a pointer with the intended result or NULL on error.
 
