@@ -49,6 +49,14 @@
 #define NID_gmac                1195
 #define OBJ_gmac                OBJ_iso,0L,9797L,3L,4L
 
+#define SN_kmac128              "KMAC128"
+#define LN_kmac128              "kmac128"
+#define NID_kmac128             1196
+
+#define SN_kmac256              "KMAC256"
+#define LN_kmac256              "kmac256"
+#define NID_kmac256             1197
+
 #define SN_hmac_md5             "HMAC-MD5"
 #define LN_hmac_md5             "hmac-md5"
 #define NID_hmac_md5            780

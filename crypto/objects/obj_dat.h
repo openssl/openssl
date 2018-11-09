@@ -1079,7 +1079,7 @@ static const unsigned char so[7767] = {
     0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
 };
 
-#define NUM_NID 1196
+#define NUM_NID 1198
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2277,9 +2277,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7745]},
     {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
     {"GMAC", "gmac", NID_gmac, 5, &so[7761]},
+    {"KMAC128", "kmac128", NID_kmac128},
+    {"KMAC256", "kmac256", NID_kmac256},
 };
 
-#define NUM_SN 1187
+#define NUM_SN 1189
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2445,6 +2447,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      645,    /* "ITU-T" */
      646,    /* "JOINT-ISO-ITU-T" */
      773,    /* "KISA" */
+    1196,    /* "KMAC128" */
+    1197,    /* "KMAC256" */
     1063,    /* "KxANY" */
     1039,    /* "KxDHE" */
     1041,    /* "KxDHE-PSK" */
@@ -3470,7 +3474,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1187
+#define NUM_LN 1189
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4266,6 +4270,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      956,    /* "jurisdictionStateOrProvinceName" */
      150,    /* "keyBag" */
      773,    /* "kisa" */
+    1196,    /* "kmac128" */
+    1197,    /* "kmac256" */
     1063,    /* "kx-any" */
     1039,    /* "kx-dhe" */
     1041,    /* "kx-dhe-psk" */

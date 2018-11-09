@@ -113,6 +113,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_EVP_VERIFYFINAL                            108
 # define EVP_F_GMAC_CTRL                                  215
 # define EVP_F_INT_CTX_NEW                                157
+# define EVP_F_KMAC_CTRL                                  217
+# define EVP_F_KMAC_INIT                                  218
 # define EVP_F_OK_NEW                                     200
 # define EVP_F_PKCS5_PBE_KEYIVGEN                         117
 # define EVP_F_PKCS5_V2_PBE_KEYIVGEN                      118
@@ -159,6 +161,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_ILLEGAL_SCRYPT_PARAMETERS                  171
 # define EVP_R_INITIALIZATION_ERROR                       134
 # define EVP_R_INPUT_NOT_INITIALIZED                      111
+# define EVP_R_INVALID_CUSTOM_LENGTH                      185
 # define EVP_R_INVALID_DIGEST                             152
 # define EVP_R_INVALID_FIPS_MODE                          168
 # define EVP_R_INVALID_KEY                                163

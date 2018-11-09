@@ -131,8 +131,14 @@ struct evp_mac_st {
 extern const EVP_MAC cmac_meth;
 extern const EVP_MAC gmac_meth;
 extern const EVP_MAC hmac_meth;
+extern const EVP_MAC kmac128_meth;
+extern const EVP_MAC kmac256_meth;
 extern const EVP_MAC siphash_meth;
 extern const EVP_MAC poly1305_meth;
+
+/* Internal keccak algorithms used for KMAC */
+const EVP_MD *evp_keccak_kmac128(void);
+const EVP_MD *evp_keccak_kmac256(void);
 
 /*
  * This function is internal for now, but can be made external when needed.
