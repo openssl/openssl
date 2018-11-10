@@ -1122,6 +1122,14 @@ int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
     return 1;
 }
 
+int SSL_get_signature_type_nid(const SSL *s, int *pnid)
+{
+    if (s->s3->tmp.sigalg == NULL)
+        return 0;
+    *pnid = s->s3->tmp.sigalg->sig;
+    return 1;
+}
+
 /*
  * Set a mask of disabled algorithms: an algorithm is disabled if it isn't
  * supported, doesn't appear in supported signature algorithms, isn't supported

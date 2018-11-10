@@ -400,14 +400,17 @@ SSL_get_max_proto_version               define
 SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_signature_nid              define
+SSL_get_peer_tmp_key                    define
 SSL_get_secure_renegotiation_support    define
 SSL_get_server_tmp_key                  define
 SSL_get_shared_curve                    define
 SSL_get_shared_group                    define
+SSL_get_signature_nid                   define
 SSL_get_time                            define
 SSL_get_timeout                         define
 SSL_get_tlsext_status_ocsp_resp         define
 SSL_get_tlsext_status_type              define
+SSL_get_tmp_key                         define
 SSL_in_accept_init                      define
 SSL_in_connect_init                     define
 SSL_library_init                        define

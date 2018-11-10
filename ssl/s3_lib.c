@@ -3681,9 +3681,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         *(int *)parg = s->s3->tmp.peer_sigalg->hash;
         return 1;
 
-    case SSL_CTRL_GET_SERVER_TMP_KEY:
+    case SSL_CTRL_GET_SIGNATURE_NID:
+        if (s->s3->tmp.sigalg == NULL)
+            return 0;
+        *(int *)parg = s->s3->tmp.sigalg->hash;
+        return 1;
+
+    case SSL_CTRL_GET_PEER_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-        if (s->server || s->session == NULL || s->s3->peer_tmp == NULL) {
+        if (s->session == NULL || s->s3->peer_tmp == NULL) {
             return 0;
         } else {
             EVP_PKEY_up_ref(s->s3->peer_tmp);
@@ -3693,6 +3699,20 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #else
         return 0;
 #endif
+
+    case SSL_CTRL_GET_TMP_KEY:
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+        if (s->session == NULL || s->s3->tmp.pkey == NULL) {
+            return 0;
+        } else {
+            EVP_PKEY_up_ref(s->s3->tmp.pkey);
+            *(EVP_PKEY **)parg = s->s3->tmp.pkey;
+            return 1;
+        }
+#else
+        return 0;
+#endif
+
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
