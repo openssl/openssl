@@ -1673,7 +1673,7 @@ static HANDSHAKE_RESULT *do_handshake_internal(
             *serv_sess_out = SSL_SESSION_dup(tmp);
     }
 
-    if (SSL_get_server_tmp_key(client.ssl, &tmp_key)) {
+    if (SSL_get_peer_tmp_key(client.ssl, &tmp_key)) {
         ret->tmp_key_type = pkey_type(tmp_key);
         EVP_PKEY_free(tmp_key);
     }
