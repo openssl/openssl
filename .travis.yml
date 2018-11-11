@@ -35,7 +35,8 @@ matrix:
         - os: linux-ppc64le
           sudo: false
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
+          env:
+              - CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
         - os: linux
           addons:
               apt:
@@ -45,10 +46,14 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
+          env:
+              - CONFIG_OPTS="--strict-warnings"
+              - COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+          env:
+              - CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated"
+              - BUILDONLY="yes"
         - os: linux
           addons:
               apt:
@@ -56,13 +61,17 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+          env:
+              - CONFIG_OPTS="no-stdio"
+              - BUILDONLY="yes"
         # Uncomment if there is reason to believe that PPC-specific problem
         # can be diagnosed with this possibly >30 mins sanitizer build...
         #- os: linux-ppc64le
         #  sudo: false
         #  compiler: gcc
-        #  env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-ubsan no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES"
+        #  env:
+        #      - EXTENDED_TEST="yes"
+        #      - CONFIG_OPTS="no-asm enable-asan enable-ubsan no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES"
         - os: linux
           addons:
               apt:
@@ -73,7 +82,12 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++-5"
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION"
+              - COVERALLS="yes"
+              - BORINGSSL_TESTS="yes"
+              - CXX="g++-5"
         - os: linux
           addons:
               apt:
@@ -84,16 +98,27 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests"
+              - BORINGSSL_TESTS="yes"
+              - CXX="g++-5"
+              - TESTS=95
         - os: linux
           compiler: clang
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           compiler: clang
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="no-asm enable-asan enable-rc5 enable-md2 no-shared -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
         - os: linux
           addons:
               apt:
@@ -103,7 +128,11 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: UBUNTU_GCC_HACK="yes" EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC" OPENSSL_TEST_RAND_ORDER=0
+          env:
+              - UBUNTU_GCC_HACK="yes"
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="--debug no-asm enable-ubsan enable-rc5 enable-md2 -DPEDANTIC"
+              - OPENSSL_TEST_RAND_ORDER=0
         - os: linux
           addons:
               apt:
@@ -111,7 +140,9 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="no-pic"
         - os: linux
           addons:
               apt:
@@ -119,7 +150,9 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
+          env:
+              - EXTENDED_TEST="yes"
+              - CONFIG_OPTS="no-pic"
     exclude:
         - os: linux
           compiler: clang
