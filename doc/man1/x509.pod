@@ -578,7 +578,7 @@ Dump any field whose OID is not recognised by OpenSSL.
 B<sep_multiline>
 
 These options determine the field separators. The first character is
-between Relative Distinguised Names (RDNs) and the second is between 
+between Relative Distinguished Names (RDNs) and the second is between 
 multiple Attribute Value Assertions (AVAs, multiple AVAs are
 very rare and their use is discouraged). The options ending in
 "space" additionally place a space after the separator to make it
