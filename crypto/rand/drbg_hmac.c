@@ -12,6 +12,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
 #include "internal/thread_once.h"
 #include "rand_lcl.h"
 
@@ -34,20 +35,24 @@ static int do_hmac(RAND_DRBG_HMAC *hmac, unsigned char inbyte,
                    const unsigned char *in2, size_t in2len,
                    const unsigned char *in3, size_t in3len)
 {
-    HMAC_CTX *ctx = hmac->ctx;
+    EVP_MAC_CTX *ctx = hmac->ctx;
 
-    return HMAC_Init_ex(ctx, hmac->K, hmac->blocklen, hmac->md, NULL)
+    return (EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY,
+                         hmac->K, hmac->blocklen) > 0)
+           && EVP_MAC_init(ctx)
            /* K = HMAC(K, V || inbyte || [in1] || [in2] || [in3]) */
-           && HMAC_Update(ctx, hmac->V, hmac->blocklen)
-           && HMAC_Update(ctx, &inbyte, 1)
-           && (in1 == NULL || in1len == 0 || HMAC_Update(ctx, in1, in1len))
-           && (in2 == NULL || in2len == 0 || HMAC_Update(ctx, in2, in2len))
-           && (in3 == NULL || in3len == 0 || HMAC_Update(ctx, in3, in3len))
-           && HMAC_Final(ctx, hmac->K, NULL)
+           && EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
+           && EVP_MAC_update(ctx, &inbyte, 1)
+           && (in1 == NULL || in1len == 0 || EVP_MAC_update(ctx, in1, in1len))
+           && (in2 == NULL || in2len == 0 || EVP_MAC_update(ctx, in2, in2len))
+           && (in3 == NULL || in3len == 0 || EVP_MAC_update(ctx, in3, in3len))
+           && EVP_MAC_final(ctx, hmac->K, NULL)
            /* V = HMAC(K, V) */
-           && HMAC_Init_ex(ctx, hmac->K, hmac->blocklen, hmac->md, NULL)
-           && HMAC_Update(ctx, hmac->V, hmac->blocklen)
-           && HMAC_Final(ctx, hmac->V, NULL);
+           && (EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY,
+                            hmac->K, hmac->blocklen) > 0)
+           && EVP_MAC_init(ctx)
+           && EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
+           && EVP_MAC_final(ctx, hmac->V, NULL);
 }
 
 /*
@@ -140,7 +145,7 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
                               const unsigned char *adin, size_t adin_len)
 {
     RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
-    HMAC_CTX *ctx = hmac->ctx;
+    EVP_MAC_CTX *ctx = hmac->ctx;
     const unsigned char *temp = hmac->V;
 
     /* (Step 2) if adin != NULL then (K,V) = HMAC_DRBG_Update(adin, K, V) */
@@ -157,16 +162,18 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
      *             }
      */
     for (;;) {
-        if (!HMAC_Init_ex(ctx, hmac->K, hmac->blocklen, hmac->md, NULL)
-                || !HMAC_Update(ctx, temp, hmac->blocklen))
+        if ((EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_KEY,
+                          hmac->K, hmac->blocklen) <= 0)
+                || !EVP_MAC_init(ctx)
+                || !EVP_MAC_update(ctx, temp, hmac->blocklen))
             return 0;
 
         if (outlen > hmac->blocklen) {
-            if (!HMAC_Final(ctx, out, NULL))
+            if (!EVP_MAC_final(ctx, out, NULL))
                 return 0;
             temp = out;
         } else {
-            if (!HMAC_Final(ctx, hmac->V, NULL))
+            if (!EVP_MAC_final(ctx, hmac->V, NULL))
                 return 0;
             memcpy(out, hmac->V, outlen);
             break;
@@ -183,7 +190,7 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
 
 static int drbg_hmac_uninstantiate(RAND_DRBG *drbg)
 {
-    HMAC_CTX_free(drbg->data.hmac.ctx);
+    EVP_MAC_CTX_free(drbg->data.hmac.ctx);
     OPENSSL_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
     return 1;
 }
@@ -208,13 +215,14 @@ int drbg_hmac_init(RAND_DRBG *drbg)
     drbg->meth = &drbg_hmac_meth;
 
     if (hmac->ctx == NULL) {
-        hmac->ctx = HMAC_CTX_new();
+        hmac->ctx = EVP_MAC_CTX_new_id(EVP_MAC_HMAC);
         if (hmac->ctx == NULL)
+            return 0;
+        if (EVP_MAC_ctrl(hmac->ctx, EVP_MAC_CTRL_SET_MD, md) <= 0)
             return 0;
     }
 
     /* These are taken from SP 800-90 10.1 Table 2 */
-    hmac->md = md;
     hmac->blocklen = EVP_MD_size(md);
     /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
     drbg->strength = 64 * (int)(hmac->blocklen >> 3);

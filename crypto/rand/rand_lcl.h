@@ -130,8 +130,7 @@ typedef struct rand_drbg_hash_st {
 } RAND_DRBG_HASH;
 
 typedef struct rand_drbg_hmac_st {
-    const EVP_MD *md;
-    HMAC_CTX *ctx;
+    EVP_MAC_CTX *ctx;
     size_t blocklen;
     unsigned char K[EVP_MAX_MD_SIZE];
     unsigned char V[EVP_MAX_MD_SIZE];
