@@ -949,6 +949,7 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
     }
 }
 
+#ifndef OPENSSL_NO_EC
 /*
  * Called by servers only. Checks that we have a sig alg that supports the
  * specified EC curve.
@@ -979,6 +980,7 @@ int tls_check_sigalg_curve(const SSL *s, int curve)
 
     return 0;
 }
+#endif
 
 /*
  * Check signature algorithm is consistent with sent supported signature
