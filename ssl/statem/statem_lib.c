@@ -1506,8 +1506,11 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
  */
 static int is_tls13_capable(const SSL *s)
 {
-    int i, curve;
+    int i;
+#ifndef OPENSSL_NO_EC
+    int curve;
     EC_KEY *eckey;
+#endif
 
 #ifndef OPENSSL_NO_PSK
     if (s->psk_server_callback != NULL)
@@ -1530,6 +1533,7 @@ static int is_tls13_capable(const SSL *s)
         }
         if (!ssl_has_cert(s, i))
             continue;
+#ifndef OPENSSL_NO_EC
         if (i != SSL_PKEY_ECC)
             return 1;
         /*
@@ -1543,6 +1547,9 @@ static int is_tls13_capable(const SSL *s)
         curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
         if (tls_check_sigalg_curve(s, curve))
             return 1;
+#else
+        return 1;
+#endif
     }
 
     return 0;
