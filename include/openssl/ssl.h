@@ -1441,11 +1441,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get_max_proto_version(s) \
         SSL_ctrl(s, SSL_CTRL_GET_MAX_PROTO_VERSION, 0, NULL)
 
-/*
- * Backwards compatibility, original 1.1.0 names
- *
- * TODO: backport to 1.1.0, ensuring the new API works in both.
- */
+/* Backwards compatibility, original 1.1.0 names */
 # define SSL_CTRL_GET_SERVER_TMP_KEY \
          SSL_CTRL_GET_PEER_TMP_KEY
 # define SSL_get_server_tmp_key(s, pk) \
