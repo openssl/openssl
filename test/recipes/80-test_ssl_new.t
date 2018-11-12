@@ -69,6 +69,7 @@ my %conf_dependent_tests = (
   "22-compression.conf" => !$is_default_tls,
   "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
   "27-ticket-appdata.conf" => !$is_default_tls,
+  "28-seclevel.conf" => disabled("tls1_2") || $no_ec,
 );
 
 # Add your test here if it should be skipped for some compile-time
