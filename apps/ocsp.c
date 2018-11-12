@@ -36,7 +36,21 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/x509v3.h>
 # include <openssl/rand.h>
 
-# if defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_NO_SOCK) \
+#ifndef HAVE_FORK
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS)
+#  define HAVE_FORK 0
+# else
+#  define HAVE_FORK 1
+# endif
+#endif
+
+#if HAVE_FORK
+# undef NO_FORK
+#else
+# define NO_FORK
+#endif
+
+# if !defined(NO_FORK) && !defined(OPENSSL_NO_SOCK) \
      && !defined(OPENSSL_NO_POSIX_IO)
 #  define OCSP_DAEMON
 #  include <sys/types.h>
