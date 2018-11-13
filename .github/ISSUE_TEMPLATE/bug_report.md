@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Create a report to help us improve
+about: Report a defect in the software
 
 ---
 
@@ -16,7 +16,8 @@ NOTE:
 Build issues:
 
     If this is a build issue, please include the configuration output
-    as well as a log of all errors.
+    as well as a log of all errors.  Don't forget to include the exact
+    commands you typed.
 
     With OpenSSL before 1.1.1, the configuration output comes from the
     configuration command.  With OpenSSL 1.1.1 and on, it's the output
@@ -27,5 +28,20 @@ Other issues:
     If it isn't a build issue, example code or commands to manifest
     the issue is highly appreciated.
 
-Please wrap commands, output and code with ``` as start and end lines.
+Please remember to put ``` lines before and after any commands plus -->
+output and code, like this:
+
+    ```
+    $ echo output output output
+    output output output
+    ```
+
+    ```
+    #include <stdio.h>
+    
+    int main() {
+        int foo = 1;
+        printf("%d\n", foo);
+    }
+    ```
 -->

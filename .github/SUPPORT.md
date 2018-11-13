@@ -6,6 +6,6 @@ tried something, our primary resource is the mailing list
 openssl-users@openssl.org, where you can get help from others in the
 OpenSSL community (which includes the developers as time permits).
 
-openssl-users@openssl.org is a subscribers only list, so you will have
-to subscribe.
+Only subscribers can post to openssl-users@openssl.org (although the
+archives are public).
 For more information, see https://www.openssl.org/community/mailinglists.html

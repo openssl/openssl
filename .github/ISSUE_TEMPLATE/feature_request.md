@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for this project
+about: Propose a feature you would like to see added in the software
 
 ---
 
@@ -13,5 +13,20 @@ NOTE:
     forum.  Please see our
     [User Support resources](https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md)
 
-Please wrap commands, output and code with ``` as start and end lines.
+Please remember to put ``` lines before and after any commands plus -->
+output and code, like this:
+
+    ```
+    $ echo output output output
+    output output output
+    ```
+
+    ```
+    #include <stdio.h>
+    
+    int main() {
+        int foo = 1;
+        printf("%d\n", foo);
+    }
+    ```
 -->
