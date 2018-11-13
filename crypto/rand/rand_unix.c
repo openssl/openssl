@@ -26,9 +26,6 @@
 # include <sys/sysctl.h>
 # include <sys/param.h>
 #endif
-#if defined(__OpenBSD__) || defined(__NetBSD__)
-# include <sys/param.h>
-#endif
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
 # include <sys/types.h>
@@ -224,18 +221,6 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
         errno = EINVAL;
         return -1;
     }
-
-    /*
-     * On NetBSD before 4.0 KERN_ARND was an alias for KERN_URND, and only
-     * filled in an int, leaving the rest uninitialized. Since NetBSD 4.0
-     * it returns a variable number of bytes with the current version supporting
-     * up to 256 bytes.
-     * Just return an error on older NetBSD versions.
-     */
-#if   defined(__NetBSD__) && __NetBSD_Version__ < 400000000
-    errno = ENOSYS;
-    return -1;
-#endif
 
     mib[0] = CTL_KERN;
     mib[1] = KERN_ARND;
