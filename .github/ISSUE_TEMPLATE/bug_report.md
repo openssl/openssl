@@ -13,7 +13,9 @@ NOTE:
     forum.  Please see our
     [User Support resources](https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md)
 
-Build issues:
+PLEASE remember to tell us in what OpenSSL version you found the issue.
+
+For build issues:
 
     If this is a build issue, please include the configuration output
     as well as a log of all errors.  Don't forget to include the exact
@@ -23,12 +25,14 @@ Build issues:
     configuration command.  With OpenSSL 1.1.1 and on, it's the output
     of `perl configdata.pm --dump`
 
-Other issues: 
+For other issues:
 
     If it isn't a build issue, example code or commands to reproduce
     the issue is highly appreciated.
+    Also, please remember to tell us if you worked with your own
+    OpenSSL build or if it is system provided.
 
-Please remember to put ``` lines before and after any commands plus -->
+Please remember to put ``` lines before and after any commands plus
 output and code, like this:
 
     ```
