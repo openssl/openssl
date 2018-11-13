@@ -207,6 +207,22 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return 1;
 }
 
+static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
+{
+    EVP_CIPHER_CTX *to_ctx = (EVP_CIPHER_CTX *)p2;
+    struct cipher_ctx *cipher_ctx;
+
+    if (type == EVP_CTRL_COPY) {
+        /* when copying the context, a new session needs to be initialized */
+        cipher_ctx = (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+        return (cipher_ctx == NULL)
+            || cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
+                           (cipher_ctx->op == COP_ENCRYPT));
+    }
+
+    return -1;
+}
+
 static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
 {
     struct cipher_ctx *cipher_ctx =
@@ -258,10 +274,12 @@ static void prepare_cipher_methods(void)
                                               cipher_data[i].ivlen)
             || !EVP_CIPHER_meth_set_flags(known_cipher_methods[i],
                                           cipher_data[i].flags
+                                          | EVP_CIPH_CUSTOM_COPY
                                           | EVP_CIPH_FLAG_DEFAULT_ASN1)
             || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], cipher_init)
             || !EVP_CIPHER_meth_set_do_cipher(known_cipher_methods[i],
                                               cipher_do_cipher)
+            || !EVP_CIPHER_meth_set_ctrl(known_cipher_methods[i], cipher_ctrl)
             || !EVP_CIPHER_meth_set_cleanup(known_cipher_methods[i],
                                             cipher_cleanup)
             || !EVP_CIPHER_meth_set_impl_ctx_size(known_cipher_methods[i],
