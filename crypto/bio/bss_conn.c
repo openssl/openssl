@@ -54,6 +54,7 @@ void BIO_CONNECT_free(BIO_CONNECT *a);
 #define BIO_CONN_S_CONNECT               4
 #define BIO_CONN_S_OK                    5
 #define BIO_CONN_S_BLOCKED_CONNECT       6
+#define BIO_CONN_S_CONNECT_ERROR         7
 
 static const BIO_METHOD methods_connectp = {
     BIO_TYPE_CONNECT,
@@ -172,7 +173,8 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
                     ERR_raise_data(ERR_LIB_SYS, get_last_socket_error(),
                                    "calling connect(%s, %s)",
                                     c->param_hostname, c->param_service);
-                    BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
+                    c->state = BIO_CONN_S_CONNECT_ERROR;
+                    break;
                 }
                 goto exit_loop;
             } else {
@@ -193,6 +195,11 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             } else
                 c->state = BIO_CONN_S_OK;
             break;
+
+        case BIO_CONN_S_CONNECT_ERROR:
+            BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
+            ret = 0;
+            goto exit_loop;
 
         case BIO_CONN_S_OK:
             ret = 1;
