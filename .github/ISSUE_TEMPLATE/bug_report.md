@@ -25,7 +25,7 @@ Build issues:
 
 Other issues: 
 
-    If it isn't a build issue, example code or commands to manifest
+    If it isn't a build issue, example code or commands to reproduce
     the issue is highly appreciated.
 
 Please remember to put ``` lines before and after any commands plus -->
