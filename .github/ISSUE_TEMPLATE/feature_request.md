@@ -10,8 +10,8 @@ Thank you for your feature request.
 NOTE:
 
     If you're asking about how to use OpenSSL, this isn't the right 
-    forum.  Please see our
-    [User Support resources](https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md)
+    forum.  Please see our User Support resources:
+    https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md
 
 Please remember to put ``` lines before and after any commands plus
 output and code, like this:
