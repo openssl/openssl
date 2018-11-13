@@ -66,7 +66,7 @@ void OPENSSL_cpuid_setup(void) __attribute__ ((constructor));
  * Use a weak reference to getauxval() so we can use it if it is available but
  * don't break the build if it is not.
  */
-# if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__)
+# if defined(__linux__)
 extern unsigned long getauxval(unsigned long type) __attribute__ ((weak));
 # else
 static unsigned long (*getauxval) (unsigned long) = NULL;

@@ -174,7 +174,7 @@ void OPENSSL_madd300_probe(void);
  * feature detection, not *run-time*. In other words if we link with
  * symbol present, it's expected to be present even at run-time.
  */
-#if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__)
+#if defined(__linux__)
 extern unsigned long getauxval(unsigned long type) __attribute__ ((weak));
 #else
 static unsigned long (*getauxval) (unsigned long) = NULL;
