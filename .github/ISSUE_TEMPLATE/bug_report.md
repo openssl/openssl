@@ -13,7 +13,7 @@ NOTE:
     forum.  Please see our
     [User Support resources](https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md)
 
-PLEASE remember to tell us in what OpenSSL version you found the issue.
+Please remember to tell us in what OpenSSL version you found the issue.
 
 For build issues:
 

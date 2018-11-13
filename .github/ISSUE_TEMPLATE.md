@@ -5,6 +5,9 @@ NOTE:
     forum.  Please see our
     [User Support resources](https://github.com/openssl/openssl/blob/master/.github/SUPPORT.md)
 
+If relevant, please remember to tell us in what OpenSSL version you
+found the issue.
+
 Please remember to put ``` lines before and after any commands plus
 output and code, like this:
 
