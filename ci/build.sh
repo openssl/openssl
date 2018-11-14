@@ -31,6 +31,39 @@ case ${BUILD_TARGERT} in
         fi
         MAKE="nmake"
     ;;
+    windows_mingw)
+        pacman -S --noconfirm nasm
+        case ${TOOLCHAIN_VERSION} in
+            630)
+                if [ "${Platform}" = "x64" ]; then
+                    MINGW_PATH=/C/mingw-w64/x86_64-6.3.0-posix-seh-rt_v5-rev1/mingw64
+                else
+                    MINGW_PATH=/C/mingw-w64/i686-6.3.0-posix-dwarf-rt_v5-rev1/mingw32
+                fi
+            ;;
+            530)
+                if [ "${Platform}" = "x86" ]; then
+                    MINGW_PATH=/C/mingw-w64/i686-5.3.0-posix-dwarf-rt_v4-rev0/mingw32
+                else
+                    echo "Don't support ${TOOLCHAIN_VERSION} ${Platform} in appveyor."
+                    cd ${PROJECT_DIR}
+                    exit 0
+                fi
+            ;;
+        esac
+            
+        if [ "${Platform}" = "x64" ]; then
+            export BUILD_CROSS_HOST=x86_64-w64-mingw32
+            TARGET=mingw64
+        else
+            export BUILD_CROSS_HOST=i686-w64-mingw32
+            TARGET=mingw
+        fi
+        export BUILD_CROSS_SYSROOT=${MINGW_PATH}/${BUILD_CROSS_HOST}
+        export PATH=${MINGW_PATH}/bin:$PATH
+    
+        MAKE="make -j`cat /proc/cpuinfo |grep 'cpu cores' |wc -l`"
+    ;;
 esac
 
 echo "PATH:$PATH"
