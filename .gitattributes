@@ -1,3 +1,6 @@
 *.der binary
 /fuzz/corpora/** binary
 *.pfx binary
+/config eol=lf
+/Configure eol=lf
+/Configurations/* eol=lf
