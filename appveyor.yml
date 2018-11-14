@@ -36,3 +36,21 @@ build_script:
   - C:\msys64\usr\bin\bash.exe -e -l -c "bash /c/projects/openssl/ci/build.sh /c/projects/openssl"
 
 test_script:
+
+artifacts:
+  - path: setup
+    name: $(BUILD_VERSION)_$(BUILD_TARGERT)$(TOOLCHAIN_VERSION)_$(platform)_$(CONFIGURATION)
+    type: zip
+
+# whitelist branches to avoid testing feature branches twice (as branch and as pull request)
+branches:
+  only:
+    - master
+
+deploy:
+  provider: GitHub
+  #token: https://github.com/settings/tokens encode token: https://ci.appveyor.com/tools/encrypt
+  auth_token:
+    secure:  #TODO: set your token
+  on:
+    appveyor_repo_tag: true        # deploy on tag push only
