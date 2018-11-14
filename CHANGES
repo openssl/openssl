@@ -55,6 +55,11 @@
      list of built in objects, i.e. OIDs with names.
      [Richard Levitte]
 
+  *) Added support for Linux Kernel TLS data-path. The Linux Kernel data-path
+     improves application performance by removing data copies and providing
+     applications with zero-copy system calls such as sendfile and splice.
+     [Boris Pismenny]
+
  Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
 
   *) Timing vulnerability in DSA signature generation
