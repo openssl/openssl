@@ -29,7 +29,15 @@ environment:
       
   - BUILD_TARGERT: windows_mingw
     TOOLCHAIN_VERSION: 530
-      
+  
+  - BUILD_TARGERT: android_arm
+    TOOLCHAIN_VERSION: 4.9
+    ANDROID_API: 18
+
+  - BUILD_TARGERT: android_x86
+    TOOLCHAIN_VERSION: 4.9
+    ANDROID_API: 28
+    
 install:
   - for /f "delims=" %%i in ('git describe --tags') do (set BUILD_VERSION=%%i)
   - if "%BUILD_VERSION%" == "" for /f "delims=" %%i in ('git rev-parse HEAD') do (set BUILD_VERSION=%%i) 

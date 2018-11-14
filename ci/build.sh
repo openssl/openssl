@@ -64,6 +64,45 @@ case ${BUILD_TARGERT} in
     
         MAKE="make -j`cat /proc/cpuinfo |grep 'cpu cores' |wc -l`"
     ;;
+    android*)
+        if [ "${APPVEYOR_BUILD_WORKER_IMAGE}" = "Visual Studio 2017" ]; then
+            export ANDROID_NDK=/C/ProgramData/Microsoft/AndroidNDK64/android-ndk-r17
+            HOST=windows-x86_64
+        else
+            export ANDROID_NDK=/C/ProgramData/Microsoft/AndroidNDK/android-ndk-r10e
+            HOST=windows
+        fi
+           
+        case ${BUILD_TARGERT} in
+            android_arm)
+                if [ "${Platform}" = "x64" ]; then
+                    export BUILD_CROSS_HOST=aarch64-linux-android
+                    export BUILD_CROSS_SYSROOT=${ANDROID_NDK}/platforms/android-${ANDROID_API}/arch-arm64
+                    TARGET=android-arm64
+                else
+                    export BUILD_CROSS_HOST=arm-linux-androideabi
+                    export BUILD_CROSS_SYSROOT=${ANDROID_NDK}/platforms/android-${ANDROID_API}/arch-arm
+                    TARGET=android-armeabi                    
+                fi
+            ;;
+            android_x86)
+                if [ "${Platform}" = "x64" ]; then
+                    export BUILD_CROSS_HOST=x86_64
+                    export BUILD_CROSS_SYSROOT=${ANDROID_NDK}/platforms/android-${ANDROID_API}/arch-x86_64
+                    TARGET=android-x86_64
+                else
+                    export BUILD_CROSS_HOST=x86
+                    export BUILD_CROSS_SYSROOT=${ANDROID_NDK}/platforms/android-${ANDROID_API}/arch-x86
+                    TARGET=android-x86
+                fi
+            ;;
+        esac
+        ANDROID_TOOLCHAIN_NAME=${BUILD_CROSS_HOST}-${TOOLCHAIN_VERSION}
+        TOOLCHAIN_ROOT=${ANDROID_NDK}/toolchains/${ANDROID_TOOLCHAIN_NAME}/prebuilt/${HOST}
+        export PATH=${TOOLCHAIN_ROOT}/bin:$PATH
+        CONFIG_PARA="-D__ANDROID_API__=${ANDROID_API}"
+        MAKE="make -j`cat /proc/cpuinfo |grep 'cpu cores' |wc -l`"
+    ;;
 esac
 
 echo "PATH:$PATH"
