@@ -438,6 +438,9 @@ static int digest_update(EVP_MD_CTX *ctx, const void *data, size_t count)
     if (count == 0)
         return 1;
 
+    if (digest_ctx == NULL)
+        return 0;
+
     if (digest_op(digest_ctx, data, count, NULL, COP_FLAG_UPDATE) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
@@ -451,6 +454,8 @@ static int digest_final(EVP_MD_CTX *ctx, unsigned char *md)
     struct digest_ctx *digest_ctx =
         (struct digest_ctx *)EVP_MD_CTX_md_data(ctx);
 
+    if (md == NULL || digest_ctx == NULL)
+        return 0;
     if (digest_op(digest_ctx, NULL, 0, md, COP_FLAG_FINAL) < 0) {
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
