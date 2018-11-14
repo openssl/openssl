@@ -3245,6 +3245,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     BIO_printf(bio, "Expansion: %s\n",
                expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
+#ifndef OPENSSL_NO_KTLS
+    if (BIO_get_ktls_send(SSL_get_wbio(s)))
+        BIO_printf(bio_err, "Using Kernel TLS for sending\n");
+#endif
 
 #ifdef SSL_DEBUG
     {

@@ -2909,6 +2909,10 @@ static void print_connection_info(SSL *con)
         }
         OPENSSL_free(exportedkeymat);
     }
+#ifndef OPENSSL_NO_KTLS
+    if (BIO_get_ktls_send(SSL_get_wbio(con)))
+        BIO_printf(bio_err, "Using Kernel TLS for sending\n");
+#endif
 
     (void)BIO_flush(bio_s_out);
 }
