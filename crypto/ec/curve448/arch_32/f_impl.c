@@ -74,9 +74,9 @@ void gf_mulw_unsigned(gf_s * RESTRICT cs, const gf as, uint32_t b)
     for (i = 0; i < 8; i++) {
         accum0 += widemul(b, a[i]);
         accum8 += widemul(b, a[i + 8]);
-        c[i] = accum0 & mask;
+        c[i] = (uint32_t)(accum0 & mask);
         accum0 >>= 28;
-        c[i + 8] = accum8 & mask;
+        c[i + 8] = (uint32_t)(accum8 & mask);
         accum8 >>= 28;
     }
 

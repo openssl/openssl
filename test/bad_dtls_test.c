@@ -284,12 +284,12 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     unsigned char pad;
     unsigned char *enc;
 
-    seq[0] = (seqnr >> 40) & 0xff;
-    seq[1] = (seqnr >> 32) & 0xff;
-    seq[2] = (seqnr >> 24) & 0xff;
-    seq[3] = (seqnr >> 16) & 0xff;
-    seq[4] = (seqnr >> 8) & 0xff;
-    seq[5] = seqnr & 0xff;
+    seq[0] = (unsigned char)((seqnr >> 40) & 0xff);
+    seq[1] = (unsigned char)((seqnr >> 32) & 0xff);
+    seq[2] = (unsigned char)((seqnr >> 24) & 0xff);
+    seq[3] = (unsigned char)((seqnr >> 16) & 0xff);
+    seq[4] = (unsigned char)((seqnr >> 8) & 0xff);
+    seq[5] = (unsigned char)(seqnr & 0xff);
 
     pad = 15 - ((len + SHA_DIGEST_LENGTH) % 16);
     enc = OPENSSL_malloc(len + SHA_DIGEST_LENGTH + 1 + pad);

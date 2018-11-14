@@ -113,7 +113,7 @@ void gf_strong_reduce(gf a)
     scarry = 0;
     for (i = 0; i < NLIMBS; i++) {
         scarry = scarry + a->limb[LIMBPERM(i)] - MODULUS->limb[LIMBPERM(i)];
-        a->limb[LIMBPERM(i)] = scarry & LIMB_MASK(LIMBPERM(i));
+        a->limb[LIMBPERM(i)] = (word_t)(scarry & LIMB_MASK(LIMBPERM(i)));
         scarry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
 
@@ -131,7 +131,7 @@ void gf_strong_reduce(gf a)
         carry =
             carry + a->limb[LIMBPERM(i)] +
             (scarry_0 & MODULUS->limb[LIMBPERM(i)]);
-        a->limb[LIMBPERM(i)] = carry & LIMB_MASK(LIMBPERM(i));
+        a->limb[LIMBPERM(i)] = (word_t)(carry & LIMB_MASK(LIMBPERM(i)));
         carry >>= LIMB_PLACE_VALUE(LIMBPERM(i));
     }
 

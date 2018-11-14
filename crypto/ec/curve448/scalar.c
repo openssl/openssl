@@ -100,7 +100,7 @@ static void sc_montmul(curve448_scalar_t out, const curve448_scalar_t a,
         chain += accum[j];
         chain += hi_carry;
         accum[j - 1] = (c448_word_t)chain;
-        hi_carry = chain >> WBITS;
+        hi_carry = (c448_word_t)(chain >> WBITS);
     }
 
     sc_subx(out, accum, sc_p, sc_p, hi_carry);
