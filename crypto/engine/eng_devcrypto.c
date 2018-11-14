@@ -338,7 +338,8 @@ static int devcrypto_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
 struct digest_ctx {
     struct session_op sess;
-    int init;
+    /* This signals that the init function was called, not that it succeeded. */
+    int init_called;
 };
 
 static const struct digest_data_st {
@@ -403,7 +404,7 @@ static int digest_init(EVP_MD_CTX *ctx)
     const struct digest_data_st *digest_d =
         get_digest_data(EVP_MD_CTX_type(ctx));
 
-    digest_ctx->init = 1;
+    digest_ctx->init_called = 1;
 
     memset(&digest_ctx->sess, 0, sizeof(digest_ctx->sess));
     digest_ctx->sess.mac = digest_d->devcryptoid;
@@ -476,13 +477,8 @@ static int digest_copy(EVP_MD_CTX *to, const EVP_MD_CTX *from)
         (struct digest_ctx *)EVP_MD_CTX_md_data(to);
     struct cphash_op cphash;
 
-    if (digest_from == NULL)
+    if (digest_from == NULL || digest_from->init_called != 1)
         return 1;
-
-    if (digest_from->init != 1) {
-        SYSerr(SYS_F_IOCTL, EINVAL);
-        return 0;
-    }
 
     if (!digest_init(to)) {
         SYSerr(SYS_F_IOCTL, errno);
