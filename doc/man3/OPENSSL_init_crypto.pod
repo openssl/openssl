@@ -33,7 +33,7 @@ As of version 1.1.0 OpenSSL will automatically allocate all resources that it
 needs so no explicit initialisation is required. Similarly it will also
 automatically deinitialise as required.
 
-However, there way be situations when explicit initialisation is desirable or
+However, there may be situations when explicit initialisation is desirable or
 needed, for example when some non-default initialisation is required. The
 function OPENSSL_init_crypto() can be used for this purpose for
 libcrypto (see also L<OPENSSL_init_ssl(3)> for the libssl
@@ -156,6 +156,13 @@ engines. This not a default option.
 
 With this option the library will register its fork handlers.
 See OPENSSL_fork_prepare(3) for details.
+
+=item OPENSSL_INIT_NOATEXIT
+
+By default OpenSSL will attempt to clean itself up when the process exits via an
+"atexit" handler. Using this option suppresses that behaviour. This means that
+the application will have to clean up OpenSSL explicitly using
+OPENSSL_cleanup().
 
 =back
 

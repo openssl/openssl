@@ -100,10 +100,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
         return 0;
     if ((init_lock = CRYPTO_THREAD_lock_new()) == NULL)
         goto err;
-#ifndef OPENSSL_SYS_UEFI
-    if (atexit(OPENSSL_cleanup) != 0)
-        goto err;
-#endif
     OPENSSL_cpuid_setup();
 
     destructor_key.value = key;
@@ -119,6 +115,30 @@ err:
 
     CRYPTO_THREAD_cleanup_local(&key);
     return 0;
+}
+
+static CRYPTO_ONCE register_atexit = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
+{
+# ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_register_atexit()\n");
+# endif
+#ifndef OPENSSL_SYS_UEFI
+    if (atexit(OPENSSL_cleanup) != 0)
+        return 0;
+#endif
+
+    return 1;
+}
+
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_register_atexit,
+                           ossl_init_register_atexit)
+{
+#ifdef OPENSSL_INIT_DEBUG
+    fprintf(stderr, "OPENSSL_INIT: ossl_init_no_register_atexit ok!\n");
+#endif
+    /* Do nothing in this case */
+    return 1;
 }
 
 static CRYPTO_ONCE load_crypto_nodelete = CRYPTO_ONCE_STATIC_INIT;
@@ -620,6 +640,14 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
 
     if (!RUN_ONCE(&base, ossl_init_base))
         return 0;
+
+    if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
+        if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
+                          ossl_init_register_atexit))
+            return 0;
+    } else if (!RUN_ONCE(&register_atexit, ossl_init_register_atexit)) {
+        return 0;
+    }
 
     if (!(opts & OPENSSL_INIT_BASE_ONLY)
             && !RUN_ONCE(&load_crypto_nodelete,
