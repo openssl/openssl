@@ -8,6 +8,7 @@
 
 use OpenSSL::Test qw/:DEFAULT bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
+use File::Temp qw(tempfile);
 
 #Load configdata.pm
 
@@ -20,7 +21,7 @@ use configdata;
 plan skip_all => "Test only supported in a shared build" if disabled("shared");
 plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
 
-plan tests => 4;
+plan tests => 10;
 
 # When libssl and libcrypto are compiled on Linux with "-rpath", but not
 # "--enable-new-dtags", the RPATH takes precedence over LD_LIBRARY_PATH,
@@ -30,14 +31,31 @@ plan tests => 4;
 my $libcrypto = bldtop_file(shlib('libcrypto'));
 my $libssl = bldtop_file(shlib('libssl'));
 
-ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl])),
-   "running shlibloadtest -crypto_first");
-ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl])),
-   "running shlibloadtest -ssl_first");
-ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl])),
-   "running shlibloadtest -just_crypto");
-ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl])),
-   "running shlibloadtest -dso_ref");
+(my $fh, my $filename) = tempfile();
+ok(run(test(["shlibloadtest", "-crypto_first", $libcrypto, $libssl, $filename])),
+   "running shlibloadtest -crypto_first $filename");
+ok(check_atexit($fh));
+unlink $filename;
+($fh, $filename) = tempfile();
+ok(run(test(["shlibloadtest", "-ssl_first", $libcrypto, $libssl, $filename])),
+   "running shlibloadtest -ssl_first $filename");
+ok(check_atexit($fh));
+unlink $filename;
+($fh, $filename) = tempfile();
+ok(run(test(["shlibloadtest", "-just_crypto", $libcrypto, $libssl, $filename])),
+   "running shlibloadtest -just_crypto $filename");
+ok(check_atexit($fh));
+unlink $filename;
+($fh, $filename) = tempfile();
+ok(run(test(["shlibloadtest", "-dso_ref", $libcrypto, $libssl, $filename])),
+   "running shlibloadtest -dso_ref $filename");
+ok(check_atexit($fh));
+unlink $filename;
+($fh, $filename) = tempfile();
+ok(run(test(["shlibloadtest", "-no_atexit", $libcrypto, $libssl, $filename])),
+   "running shlibloadtest -no_atexit $filename");
+ok(!check_atexit($fh));
+unlink $filename;
 
 sub shlib {
     my $lib = shift;
@@ -48,4 +66,13 @@ sub shlib {
         . ($target{shared_extension} || ".so");
     $lib =~ s|\.\$\(SHLIB_VERSION_NUMBER\)|.$config{shlib_version}|;
     return $lib;
+}
+
+sub check_atexit {
+    my $fh = shift;
+    my $data = <$fh>;
+
+    return 1 if (defined $data && $data =~ m/atexit\(\) run/);
+
+    return 0;
 }
