@@ -20,6 +20,7 @@
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
 #endif
+#include <oqs/oqs.h>
 #include "s_apps.h"
 
 #define COOKIE_SECRET_LENGTH    16
@@ -243,7 +244,8 @@ static const char *get_sigtype(int nid)
      case NID_id_GostR3410_2012_512:
         return "gost2012_512";
 
-     /* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+     /* OQS sig schemes */
      case NID_picnicL1FS:
         return "Picnic L1 FS";
      case NID_qTESLA_I:
@@ -266,7 +268,7 @@ static const char *get_sigtype(int nid)
      case NID_p384_qteslaIIIspeed:
         return "ECDSA p384 - qTESLA-III-speed";
      /* ADD_MORE_OQS_SIG_HERE hybrid only */
-
+#endif
     default:
         return NULL;
     }
@@ -416,30 +418,98 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 #endif
 
 /* OQS note: is there a better place to put this? we only need it here... */
-#define OQS_CURVE_ID_NAME_STR(id) (id == 0x0200 ? "sike503" : \
-				  (id == 0x0201 ? "sike751" :	\
-				  (id == 0x0202 ? "sidh503" : \
-				  (id == 0x0203 ? "sidh751" :	\
-				  (id == 0x0204 ? "frodo640aes" :	\
-				  (id == 0x0205 ? "frodo640cshake" :	\
-				  (id == 0x0206 ? "frodo976aes" :	\
-				  (id == 0x0207 ? "frodo976cshake" :	\
-				  (id == 0x0208 ? "bike1l1" :		\
-				  (id == 0x0209 ? "bike1l3" :		\
-				  (id == 0x020a ? "bike1l5" :		\
-				  (id == 0x020b ? "bike2l1" :		\
-				  (id == 0x020c ? "bike2l3" :		\
-				  (id == 0x020d ? "bike2l5" :		\
-				  (id == 0x020e ? "bike3l1" :		\
-				  (id == 0x020f ? "bike3l3" :		\
-				  (id == 0x0210 ? "bike3l5" :		\
-				  (id == 0x0300 ? "p256 - sike503 hybrid" : \
-				  (id == 0x0301 ? "p256 - sidh503 hybrid" : \
-				  (id == 0x0302 ? "p256 - frodo640aes hybrid" : \
-				  (id == 0x0303 ? "p256 - frodo640cshake hybrid" : \
-				  (id == 0x0304 ? "p256 - bike1l1 hybrid" : \
-				  (id == 0x0305 ? "p256 - bike2l1 hybrid" : \
-				  (id == 0x0306 ? "p256 - bike3l1 hybrid" : 0))))))))))))))))))))))))
+static const char* OQS_CURVE_ID_NAME_STR(int id) {
+  switch(id) {
+  case 0x01FF: return "oqs_kem_default";
+  case 0x0200: return "sike503";
+  case 0x0201: return "sike751";
+#if !defined(OQS_NIST_BRANCH)
+  case 0x0202: return "sidh503";
+  case 0x0203: return "sidh751";
+#endif
+  case 0x0204: return "frodo640aes";
+  case 0x0205: return "frodo640cshake";
+  case 0x0206: return "frodo976aes";
+  case 0x0207: return "frodo976cshake";
+  case 0x0208: return "bike1l1";
+  case 0x0209: return "bike1l3";
+  case 0x020a: return "bike1l5";
+  case 0x020b: return "bike2l1";
+  case 0x020c: return "bike2l3";
+  case 0x020d: return "bike2l5";
+  case 0x020e: return "bike3l1";
+  case 0x020f: return "bike3l3";
+  case 0x0210: return "bike3l5";
+  case 0x0211: return "newhope512cca";
+  case 0x0212: return "newhope1024cca";
+#if defined(OQS_NIST_BRANCH)
+    /* some schemes are disabled because their keys/ciphertext are too big for TLS */
+    /*
+  case 0x0213: return "bigquake1";
+  case 0x0214: return "bigquake3";
+  case 0x0215: return "bigquake5";
+    */
+  case 0x0216: return "kyber512";
+  case 0x0217: return "kyber768";
+  case 0x0218: return "kyber1024";
+  case 0x0219: return "ledakem_C1_N02";
+  case 0x021a: return "ledakem_C1_N03";
+  case 0x021b: return "ledakem_C1_N04";
+  case 0x021c: return "ledakem_C3_N02";
+  case 0x021d: return "ledakem_C3_N03";
+  case 0x021e: return "ledakem_C3_N04";
+  case 0x021f: return "ledakem_C5_N02";
+    /*
+  case 0x0220: return "ledakem_C5_N03";
+  case 0x0221: return "ledakem_C5_N04";
+    */
+  case 0x0222: return "lima_2p_1024_cca";
+  case 0x0223: return "lima_2p_2048_cca";
+  case 0x0224: return "lima_sp_1018_cca";
+  case 0x0225: return "lima_sp_1306_cca";
+  case 0x0226: return "lima_sp_1822_cca";
+    /*
+  case 0x0227: return "lima_sp_2062_cca";
+    */
+  case 0x0228: return "saber_light_saber";
+  case 0x0229: return "saber_saber";
+  case 0x022a: return "saber_fire_saber";
+    /*
+  case 0x022b: return "titanium_cca_std";
+  case 0x022c: return "titanium_cca_hi";
+  case 0x022d: return "titanium_cca_med";
+  case 0x022e: return "titanium_cca_super";
+    */
+#endif
+  /* ADD_MORE_OQS_KEM_HERE */
+  case 0x02FF: return "p256-oqs_kem_default hybrid";
+  case 0x0300: return "p256-sike503 hybrid";
+  case 0x0301: return "p256-sidh503 hybrid";
+  case 0x0302: return "p256-frodo640aes hybrid";
+  case 0x0303: return "p256-frodo640cshake hybrid";
+  case 0x0304: return "p256-bike1l1 hybrid";
+  case 0x0305: return "p256-bike2l1 hybrid";
+  case 0x0306: return "p256-bike3l1 hybrid";
+  case 0x0307: return "p256-newhope512cca hybrid";
+#if defined(OQS_NIST_BRANCH)
+    /*
+  case 0x0308: return "p256-bigquake1 hybrid";
+    */
+  case 0x0309: return "p256-kyber512 hybrid";
+  case 0x030a: return "p256-ledakem_C1_N02 hybrid";
+  case 0x030b: return "p256-ledakem_C1_N03 hybrid";
+  case 0x030c: return "p256-ledakem_C1_N04 hybrid";
+    /*
+  case 0x030d: return "p256-lima_sp_1018_cca hybrid";
+  case 0x030e: return "p256-saber_light_saber hybrid";
+  case 0x030f: return "p256-titanium_cca_std hybrid";
+  case 0x0310: return "p256-titanium_cca_med hybrid";
+    */
+#endif
+  /* ADD_MORE_OQS_KEM_HERE (L1 schemes) */
+  default: return "";
+  }
+}
 
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {

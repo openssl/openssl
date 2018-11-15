@@ -613,6 +613,8 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 	const char* oqs_alg_name = OQS_ALG_NAME(oqs_nid);
 	/* initialize the kex */
 	if ((s->s3->tmp.oqs_kem = OQS_KEM_new(oqs_alg_name)) == NULL) {
+	  /* TODO: provide a better error message for non-enabled OQS schemes.
+	     Perhaps even check if the alg is available earlier in the stack. (FIXMEOQS) */
 	  SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE, ERR_R_INTERNAL_ERROR);
 	  has_error = 1;
 	  goto oqs_cleanup;

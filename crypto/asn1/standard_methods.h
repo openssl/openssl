@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <oqs/oqs.h>
+
 /*
  * This table MUST be kept in ascending order of the NID each method
  * represents (corresponding to the pkey_id field) as OBJ_bsearch
@@ -57,6 +59,7 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_SM2
     &sm2_asn1_meth,
 #endif
+#if !defined(OQS_NIST_BRANCH)
     /* OQS sig schemes (list in NID order!) */
     /* ADD_MORE_OQS_SIG_HERE */
     &picnicL1FS_asn1_meth,
@@ -69,4 +72,5 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &qteslaI_asn1_meth,
     &qteslaIIIsize_asn1_meth,
     &qteslaIIIspeed_asn1_meth,
+#endif
 };

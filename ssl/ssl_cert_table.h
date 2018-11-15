@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <oqs/oqs.h>
+
 /*
  * Certificate table information. NB: table entries must match SSL_PKEY indices
  */
@@ -20,7 +22,8 @@ static const SSL_CERT_LOOKUP ssl_cert_info [] = {
     {NID_id_GostR3410_2012_512, SSL_aGOST12}, /* SSL_PKEY_GOST12_512 */
     {EVP_PKEY_ED25519, SSL_aECDSA}, /* SSL_PKEY_ED25519 */
     {EVP_PKEY_ED448, SSL_aECDSA}, /* SSL_PKEY_ED448 */
-    /* OQS schemes */
+#if !defined(OQS_NIST_BRANCH)
+    /* OQS sig schemes */
     {EVP_PKEY_PICNICL1FS, SSL_aPICNICL1FS}, /* SSL_PKEY_PICNICL1FS */
     {EVP_PKEY_QTESLAI, SSL_aQTESLAI}, /* SSL_PKEY_QTESLAI */
     {EVP_PKEY_QTESLAIIISIZE, SSL_aQTESLAIIISIZE}, /* SSL_PKEY_QTESLAIIISIZE */
@@ -34,4 +37,5 @@ static const SSL_CERT_LOOKUP ssl_cert_info [] = {
     {EVP_PKEY_P384_QTESLAIIISIZE, SSL_aP384QTESLAIIISIZE}, /* SSL_PKEY_P384_QTESLAIIISIZE */
     {EVP_PKEY_P384_QTESLAIIISPEED, SSL_aP384QTESLAIIISPEED} /* SSL_PKEY_P384_QTESLAIIISPEED */
     /* ADD_MORE_OQS_SIG_HERE hybrid only */
+#endif
 };
