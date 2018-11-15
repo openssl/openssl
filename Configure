@@ -2179,6 +2179,16 @@ EOF
 
     # Massage the result
 
+    # If the user configured no-shared, we allow no shared sources
+    if ($disabled{shared}) {
+        foreach (keys %{$unified_info{shared_sources}}) {
+            foreach (keys %{$unified_info{shared_sources}->{$_}}) {
+                delete $unified_info{sources}->{$_};
+            }
+        }
+        $unified_info{shared_sources} = {};
+    }
+
     # If we depend on a header file or a perl module, add an inclusion of
     # its directory to allow smoothe inclusion
     foreach my $dest (keys %{$unified_info{depends}}) {
