@@ -166,8 +166,8 @@ $func:
 	addi		r11,r11,32
 	stvx		v30,r10,$sp
 	stvx		v31,r11,$sp
-	li		r11,-4096+255
-	stw		$vrsave,`$FRAME+6*$SIZE_T-4`($sp)	# save vrsave
+	li		r11,-4096+255		# 0xfffff0ff
+	stw		$vrsave,`$FRAME-6*$SIZE_T-4`($sp)	# save vrsave
 	li		$x10,0x10
 	$PUSH		r26,`$FRAME-6*$SIZE_T`($sp)
 	li		$x20,0x20
