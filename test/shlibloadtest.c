@@ -121,6 +121,7 @@ static int test_lib(void)
 
     switch (test_type) {
     case JUST_CRYPTO:
+    case DSO_REFTEST:
         if (!TEST_true(shlib_load(path_crypto, &cryptolib)))
             goto end;
         break;
@@ -132,10 +133,6 @@ static int test_lib(void)
     case SSL_FIRST:
         if (!TEST_true(shlib_load(path_ssl, &ssllib))
                 || !TEST_true(shlib_load(path_crypto, &cryptolib)))
-            goto end;
-        break;
-    case DSO_REFTEST:
-        if (!TEST_true(shlib_load(path_crypto, &cryptolib)))
             goto end;
         break;
     }
@@ -210,6 +207,7 @@ static int test_lib(void)
 
     switch (test_type) {
     case JUST_CRYPTO:
+    case DSO_REFTEST:
         if (!TEST_true(shlib_close(cryptolib)))
             goto end;
         break;
@@ -221,10 +219,6 @@ static int test_lib(void)
     case SSL_FIRST:
         if (!TEST_true(shlib_close(ssllib))
                 || !TEST_true(shlib_close(cryptolib)))
-            goto end;
-        break;
-    case DSO_REFTEST:
-        if (!TEST_true(shlib_close(cryptolib)))
             goto end;
         break;
     }
@@ -247,7 +241,7 @@ int setup_tests(void)
     } else if (strcmp(p, "-just_crypto") == 0) {
         test_type = JUST_CRYPTO;
     } else if (strcmp(p, "-dso_ref") == 0) {
-        test_type = JUST_CRYPTO;
+        test_type = DSO_REFTEST;
     } else {
         TEST_error("Unrecognised argument");
         return 0;
