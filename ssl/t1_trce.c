@@ -605,6 +605,14 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_qteslaIIIsize, "qteslaIIIsize"},
     {TLSEXT_SIGALG_qteslaIIIspeed, "qteslaIIIspeed"},
     /* ADD_MORE_OQS_SIG_HERE */
+    /* OQS hybrid schemes */
+    {TLSEXT_SIGALG_p256_picnicL1FS, "p256_picnicL1FS"},
+    {TLSEXT_SIGALG_rsa3072_picnicL1FS, "rsa3072_picnicL1FS"},
+    {TLSEXT_SIGALG_p256_qteslaI, "p256_qteslaI"},
+    {TLSEXT_SIGALG_rsa3072_qteslaI, "rsa3072_qteslaI"},
+    {TLSEXT_SIGALG_p384_qteslaIIIsize, "p256_qteslaIIIsize"},
+    {TLSEXT_SIGALG_p384_qteslaIIIspeed, "rsa3072_qteslaIIIspeed"},
+    /* ADD_MORE_OQS_SIG_HERE hybrid only */
 };
 
 static const ssl_trace_tbl ssl_ctype_tbl[] = {

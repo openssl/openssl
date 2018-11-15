@@ -117,6 +117,14 @@ extern const EVP_PKEY_METHOD qteslaI_pkey_meth;
 extern const EVP_PKEY_METHOD qteslaIIIsize_pkey_meth;
 extern const EVP_PKEY_METHOD qteslaIIIspeed_pkey_meth;
 /* ADD_MORE_OQS_SIG_HERE */
+/* OQS hybrid schemes */
+extern const EVP_PKEY_METHOD p256_picnicL1FS_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_picnicL1FS_pkey_meth;
+extern const EVP_PKEY_METHOD p256_qteslaI_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_qteslaI_pkey_meth;
+extern const EVP_PKEY_METHOD p384_qteslaIIIsize_pkey_meth;
+extern const EVP_PKEY_METHOD p384_qteslaIIIspeed_pkey_meth;
+/* ADD_MORE_OQS_SIG_HERE hybrid only */
 
 struct evp_md_st {
     int type;

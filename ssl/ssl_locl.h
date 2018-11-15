@@ -203,18 +203,35 @@
 /* GOST R 34.10-2012 signature auth */
 # define SSL_aGOST12             0x00000080U
 /* OQS schemes */
-/* Picnic */
+/* Picnic L1 FS auth */
 # define SSL_aPICNICL1FS         0x00000100U
-/* qTESLA */
+/* qTESLA I auth */
 # define SSL_aQTESLAI            0x00000200U
+/* qTESLA III size auth */
 # define SSL_aQTESLAIIISIZE      0x00000400U
+/* qTESLA III speed auth */
 # define SSL_aQTESLAIIISPEED     0x00000800U
 /* ADD_MORE_OQS_SIG_HERE */
+/* OQS hybrid schemes */
+/* ECDSA P256 - Picnic L1 FS auth */
+# define SSL_aP256PICNICL1FS     0x00001000U
+/* RSA3072 - Picnic L1 FS auth */
+# define SSL_aRSA3072PICNICL1FS  0x00002000U
+/* ECDSA P256 - qTESLA I auth */
+# define SSL_aP256QTESLAI        0x00004000U
+/* RSA3072 - qTESLA I auth */
+# define SSL_aRSA3072QTESLAI     0x00008000U
+/* ECDSA P384 - qTESLA III size auth */
+# define SSL_aP384QTESLAIIISIZE  0x00010000U
+/* ECDSA P384 - qTESLA III speed auth */
+# define SSL_aP384QTESLAIIISPEED 0x00020000U
+/* ADD_MORE_OQS_SIG_HERE hybrid only */
+
 /* Any appropriate signature auth (for TLS 1.3 ciphersuites) */
 # define SSL_aANY                0x00000000U
 /* All bits requiring a certificate */
 #define SSL_aCERT \
-  (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12) /* FIXMEOQS: should I add picnic here? */
+  (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12) /* FIXMEOQS: should I add the OQS schemes here? */
 
 /* Bits for algorithm_enc (symmetric encryption) */
 # define SSL_DES                 0x00000001U
@@ -398,7 +415,16 @@
 # define SSL_PKEY_QTESLAIIISIZE  11
 # define SSL_PKEY_QTESLAIIISPEED 12
 /* ADD_MORE_OQS_SIG_HERE */
-# define SSL_PKEY_NUM            13
+/* OQS hybrid schemes */
+# define SSL_PKEY_P256_PICNICL1FS     13
+# define SSL_PKEY_RSA3072_PICNICL1FS  14
+# define SSL_PKEY_P256_QTESLAI        15
+# define SSL_PKEY_RSA3072_QTESLAI     16
+# define SSL_PKEY_P384_QTESLAIIISIZE  17
+# define SSL_PKEY_P384_QTESLAIIISPEED 18
+/* ADD_MORE_OQS_SIG_HERE */
+
+# define SSL_PKEY_NUM            19
 /*
  * Pseudo-constant. GOST cipher suites can use different certs for 1
  * SSL_CIPHER. So let's see which one we have in fact.
@@ -2177,6 +2203,14 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_qteslaIIIsize                             0xfe02 /* private use code point */
 #define TLSEXT_SIGALG_qteslaIIIspeed                            0xfe03 /* private use code point */
 /* ADD_MORE_OQS_SIG_HERE */
+/* OQS hybrid schemes */
+#define TLSEXT_SIGALG_p256_picnicL1FS                           0xfe04 /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_picnicL1FS                        0xfe05 /* private use code point */
+#define TLSEXT_SIGALG_p256_qteslaI                              0xfe06 /* private use code point */
+#define TLSEXT_SIGALG_rsa3072_qteslaI                           0xfe07 /* private use code point */
+#define TLSEXT_SIGALG_p384_qteslaIIIsize                        0xfe08 /* private use code point */
+#define TLSEXT_SIGALG_p384_qteslaIIIspeed                       0xfe09 /* private use code point */
+/* ADD_MORE_OQS_SIG_HERE hybrid only */
 
 /* Known PSK key exchange modes */
 #define TLSEXT_KEX_MODE_KE                                      0x00

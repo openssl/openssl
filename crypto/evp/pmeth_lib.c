@@ -67,12 +67,18 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_SM2
     &sm2_pkey_meth,
 #endif
-    /* OQS schemes */
+    /* OQS schemes (list in NID order!) */
+    /* ADD_MORE_OQS_SIG_HERE */
     &picnicL1FS_pkey_meth,
+    &p256_picnicL1FS_pkey_meth,
+    &rsa3072_picnicL1FS_pkey_meth,
+    &p256_qteslaI_pkey_meth,
+    &rsa3072_qteslaI_pkey_meth,
+    &p384_qteslaIIIsize_pkey_meth,
+    &p384_qteslaIIIspeed_pkey_meth,
     &qteslaI_pkey_meth,
     &qteslaIIIsize_pkey_meth,
     &qteslaIIIspeed_pkey_meth,
-    /* ADD_MORE_OQS_SIG_HERE */
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
