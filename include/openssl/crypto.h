@@ -377,6 +377,7 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 /* OPENSSL_INIT_ZLIB                         0x00010000L */
 # define OPENSSL_INIT_ATFORK                 0x00020000L
 /* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
+# define OPENSSL_INIT_NO_ATEXIT              0x00080000L
 /* OPENSSL_INIT flag range 0xfff00000 reserved for OPENSSL_init_ssl() */
 /* Max OPENSSL_INIT flag value is 0x80000000 */
 
