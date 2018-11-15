@@ -177,6 +177,13 @@ int ERR_load_EC_strings(void);
 #  define EC_F_NISTP521_PRE_COMP_NEW                       237
 #  define EC_F_O2I_ECPUBLICKEY                             152
 #  define EC_F_OLD_EC_PRIV_DECODE                          222
+#  define EC_F_OQS_ITEM_VERIFY                             297
+#  define EC_F_OQS_KEY_INIT                                296
+#  define EC_F_OQS_PRIV_DECODE                             298
+#  define EC_F_OQS_PRIV_ENCODE                             299
+#  define EC_F_OQS_PUB_DECODE                              300
+#  define EC_F_OQS_PUB_ENCODE                              301
+#  define EC_F_OQS_SIZE                                    302
 #  define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
 #  define EC_F_OSSL_ECDSA_SIGN_SIG                         249
 #  define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
@@ -193,6 +200,10 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
+#  define EC_F_PKEY_OQS_CTRL                               303
+#  define EC_F_PKEY_OQS_DIGESTSIGN                         304
+#  define EC_F_PKEY_OQS_DIGESTVERIFY                       305
+#  define EC_F_PKEY_OQS_KEYGEN                             306
 #  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*

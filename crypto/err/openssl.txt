@@ -652,6 +652,13 @@ EC_F_NISTP256_PRE_COMP_NEW:236:nistp256_pre_comp_new
 EC_F_NISTP521_PRE_COMP_NEW:237:nistp521_pre_comp_new
 EC_F_O2I_ECPUBLICKEY:152:o2i_ECPublicKey
 EC_F_OLD_EC_PRIV_DECODE:222:old_ec_priv_decode
+EC_F_OQS_ITEM_VERIFY:297:oqs_item_verify
+EC_F_OQS_KEY_INIT:296:oqs_key_init
+EC_F_OQS_PRIV_DECODE:298:oqs_priv_decode
+EC_F_OQS_PRIV_ENCODE:299:oqs_priv_encode
+EC_F_OQS_PUB_DECODE:300:oqs_pub_decode
+EC_F_OQS_PUB_ENCODE:301:oqs_pub_encode
+EC_F_OQS_SIZE:302:oqs_size
 EC_F_OSSL_ECDH_COMPUTE_KEY:247:ossl_ecdh_compute_key
 EC_F_OSSL_ECDSA_SIGN_SIG:249:ossl_ecdsa_sign_sig
 EC_F_OSSL_ECDSA_VERIFY_SIG:250:ossl_ecdsa_verify_sig
@@ -668,6 +675,10 @@ EC_F_PKEY_EC_KDF_DERIVE:283:pkey_ec_kdf_derive
 EC_F_PKEY_EC_KEYGEN:199:pkey_ec_keygen
 EC_F_PKEY_EC_PARAMGEN:219:pkey_ec_paramgen
 EC_F_PKEY_EC_SIGN:218:pkey_ec_sign
+EC_F_PKEY_OQS_CTRL:303:pkey_oqs_ctrl
+EC_F_PKEY_OQS_DIGESTSIGN:304:pkey_oqs_digestsign
+EC_F_PKEY_OQS_DIGESTVERIFY:305:pkey_oqs_digestverify
+EC_F_PKEY_OQS_KEYGEN:306:pkey_oqs_keygen
 EC_F_VALIDATE_ECX_DERIVE:278:validate_ecx_derive
 ENGINE_F_DIGEST_UPDATE:198:digest_update
 ENGINE_F_DYNAMIC_CTRL:180:dynamic_ctrl
