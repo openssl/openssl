@@ -389,7 +389,6 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
     PROGRAMS_NO_INST=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c
     INCLUDE[shlibloadtest]=../include ../crypto/include
-    DEPEND[shlibloadtest]=libtestutil.a
   ENDIF
 
   IF[{- $disabled{shared} -}]
