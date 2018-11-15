@@ -8,6 +8,7 @@ This branch (OQS-OpenSSL\_1\_1\_1-stable) is a fork of OpenSSL 1.1.1 that adds t
 - post-quantum key exchange in TLS 1.3
 - hybrid (post-quantum + elliptic curve) key exchange in TLS 1.3
 - post-quantum authentication in TLS 1.3
+- hybrid (post-quantum + elliptic curve) authentication in TLS 1.3
 
 Overview
 --------
@@ -53,6 +54,12 @@ Authentication mechanisms are currently only enabled when using liboqs's master 
 
 - `picnicL1FS`
 - `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed` (not currently on Windows)
+
+The following hybrid schemes are supported, using either the NIST P-256 curve or 3072-bit RSA for L1 schemes, or the NIST P-384 curve for L3 schemes:
+
+- `p256_picnicL1FS`, `rsa3072_picnicL1FS`
+- `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed` (not currently on Windows)
+
 
 Limitations and security
 ------------------------
@@ -184,7 +191,7 @@ See the [liboqs documentation](https://github.com/open-quantum-safe/liboqs/) for
 
 OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
 
-To run a server, we first need to generate a self-signed X.509 certificate, using either a classical or post-quantum algorithm. Run the following command, with `<SIGALG>` = `rsa`, `picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`):
+To run a server, we first need to generate a self-signed X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`), or hybrid ((`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm; run the following command replacing `<SIGALG>` with one supported algorithm:
 
 	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
 
