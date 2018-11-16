@@ -374,6 +374,7 @@ my @disablables = (
     "msan",
     "multiblock",
     "nextprotoneg",
+    "pinshared",
     "ocb",
     "ocsp",
     "pic",
