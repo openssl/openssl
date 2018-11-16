@@ -48,9 +48,10 @@ the given B<msg> copying the given B<auth> as value. See RFC 4211, section 6.2.
 OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo() pushes the given B<spi>
 to B<si>. Consumes the B<spi> pointer.
 
-OSSL_CRMF_MSG_set0_SinglePubInfo() sets given B<method> and PubLoction B<nm> to
-B<spi>.  PubLocation is optional, and therefore B<nm> may be NULL. Consumes the
-B<nm> pointer.
+OSSL_CRMF_MSG_set0_SinglePubInfo() sets in the given SinglePubInfo B<spi>
+the B<method> and publication location, in the form of a GeneralName, B<nm>.
+The publication location is optional, and therefore B<nm> may be NULL.
+The function consumes the B<nm> pointer if present.
 Available methods are:
  # define OSSL_CRMF_PUB_METHOD_DONTCARE 0
  # define OSSL_CRMF_PUB_METHOD_X500     1
@@ -63,7 +64,7 @@ Available actions are:
  # define OSSL_CRMF_PUB_ACTION_DONTPUBLISH   0
  # define OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH 1
 
-OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo() sets the pkiPulicationInfo
+OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo() sets the pkiPublicationInfo
 control in the given B<msg> copying the given B<tok> as value. See RFC 4211,
 section 6.3.
 

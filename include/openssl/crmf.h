@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2018
  * Copyright Siemens AG 2015-2018
@@ -8,7 +8,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  *
- * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
+ * CRMF (RFC 4211) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
 #ifndef OSSL_HEADER_CRMF_H
@@ -16,7 +16,7 @@
 
 # include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_CRMF
+# ifndef OPENSSL_NO_CMP
 #  include <openssl/opensslv.h>
 #  include <openssl/safestack.h>
 #  include <openssl/crmferr.h>
@@ -39,7 +39,7 @@ extern "C" {
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT       0
 #  define OSSL_CRMF_SUBSEQUENTMESSAGE_CHALLENGERESP  1
 
-typedef struct OSSL_crmf_encrypetedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
+typedef struct OSSL_crmf_encryptedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
 typedef struct OSSL_crmf_msg_st OSSL_CRMF_MSG;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
@@ -70,7 +70,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
 int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,
-                      unsigned char **mac, unsigned int *maclen);
+                      unsigned char **mac, size_t *maclen);
 
 /* crmf_lib.c */
 int OSSL_CRMF_MSG_set1_regCtrl_regToken(OSSL_CRMF_MSG *msg,
@@ -115,7 +115,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, const X509_EXTENSION *ext)
 #  define OSSL_CRMF_POPO_SIGNATURE  1
 #  define OSSL_CRMF_POPO_KEYENC     2
 #  define OSSL_CRMF_POPO_KEYAGREE   3
-int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
+int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                               int dgst, int ppmtd);
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified);
@@ -123,7 +123,7 @@ OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm);
 ASN1_INTEGER *OSSL_CRMF_CERTTEMPLATE_get0_serialNumber(OSSL_CRMF_CERTTEMPLATE *t);
 X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl);
 int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
-                                const EVP_PKEY *pubkey,
+                                EVP_PKEY *pubkey,
                                 const X509_NAME *subject,
                                 const X509_NAME *issuer,
                                 const ASN1_INTEGER *serial);
@@ -133,5 +133,5 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 #  ifdef __cplusplus
 }
 #  endif
-# endif /* !defined OPENSSL_NO_CRMF */
+# endif /* !defined OPENSSL_NO_CMP */
 #endif /* !defined OSSL_HEADER_CRMF_H */

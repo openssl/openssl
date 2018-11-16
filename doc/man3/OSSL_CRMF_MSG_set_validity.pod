@@ -17,10 +17,10 @@ OSSL_CRMF_MSGS_verify_popo
 
  int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to);
 
- int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, const int rid);
+ int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid);
 
  int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
-                                 const EVP_PKEY *pubkey,
+                                 EVP_PKEY *pubkey,
                                  const X509_NAME *subject,
                                  const X509_NAME *issuer,
                                  const ASN1_INTEGER *serial);
@@ -31,7 +31,7 @@ OSSL_CRMF_MSGS_verify_popo
  int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
                                    const X509_EXTENSION *ext);
 
- int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
+ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                                int dgst, int ppmtd);
 
  int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
@@ -46,10 +46,12 @@ OSSL_CRMF_MSG_set_certReqId() sets B<rid> as the certReqId of B<crm>.
 
 OSSL_CRMF_CERTTEMPLATE_fill() sets those fields of the certTemplate B<tmpl>
 for which non-NULL values are provided: B<pubkey>, B<subject>, B<issuer>,
-and/or B<serial>. The arguments are not consumed.
+and/or B<serial>.
+On success the reference counter of the B<pubkey> (if given) is incremented,
+while the B<subject>, B<issuer>, and B<serial> structures (if given) are copied.
 
 OSSL_CRMF_MSG_set0_extensions() sets B<exts> as the extensions in the
-certTemplate of B<crm>. Consumes B<exts>.
+certTemplate of B<crm>. Frees any pre-existing ones and consumes B<exts>.
 
 OSSL_CRMF_MSG_push0_extension() pushes the X509 extension B<ext> to the
 extensions in the certTemplate of B<crm>.  Consumes B<ext>.
