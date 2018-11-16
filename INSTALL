@@ -321,6 +321,9 @@
                    is left enabled (the default), then compression will only
                    work if the zlib or zlib-dynamic options are also chosen.
 
+  no-crmf
+                   Don't build support for CRMF features
+
   enable-crypto-mdebug
                    Build support for debugging memory allocated via
                    OPENSSL_malloc() or OPENSSL_zalloc().
