@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=property_string.c property_parse.c property.c \
+                        property_err.c defn_cache.c

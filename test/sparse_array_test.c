@@ -164,7 +164,7 @@ static int test_sparse_array_doall(void)
             TEST_note("failed at iteration %zu", i + 1);
             goto err;
     }
-    
+
     ossl_sa_char_doall_arg(sa, &leaf_check_all, &doall_data);
     if (doall_data.res == 0) {
         TEST_info("while checking all elements");

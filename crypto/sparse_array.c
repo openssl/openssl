@@ -187,7 +187,7 @@ int OPENSSL_SA_set(OPENSSL_SA *sa, size_t posn, void *val)
     if (sa == NULL)
         return 0;
 
-    for (level = 1; level <= SA_BLOCK_MAX_LEVELS; level++)
+    for (level = 1; level < SA_BLOCK_MAX_LEVELS; level++)
         if ((n >>= OPENSSL_SA_BLOCK_BITS) == 0)
             break;
 

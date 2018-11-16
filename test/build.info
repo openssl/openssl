@@ -442,7 +442,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
-                     rdrand_sanitytest
+                     rdrand_sanitytest property_test
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
     ENDIF
@@ -489,6 +489,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[wpackettest]=wpackettest.c
     INCLUDE[wpackettest]=../include ../apps/include
     DEPEND[wpackettest]=../libcrypto ../libssl.a libtestutil.a
+
+    SOURCE[property_test]=property_test.c
+    INCLUDE[property_test]=../include ../apps/include
+    DEPEND[property_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ctype_internal_test]=ctype_internal_test.c
     INCLUDE[ctype_internal_test]=.. ../crypto/include ../include ../apps/include
