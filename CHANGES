@@ -9,6 +9,10 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added property based algorithm implementation selection framework to
+     the core.
+     [Paul Dale]
+
   *) Added SCA hardening for modular field inversion in EC_GROUP through
      a new dedicated field_inv() pointer in EC_METHOD.
      This also addresses a leakage affecting conversions from projective
