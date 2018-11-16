@@ -102,6 +102,8 @@ static int shlib_close(SHLIB lib)
 
 #if defined(DSO_DLFCN) || defined(DSO_WIN32)
 
+static int atexit_handler_done = 0;
+
 static void atexit_handler(void)
 {
     FILE *atexit_file = fopen(path_atexit, "w");
@@ -111,6 +113,7 @@ static void atexit_handler(void)
 
     fprintf(atexit_file, "atexit() run\n");
     fclose(atexit_file);
+    atexit_handler_done++;
 }
 
 static int test_lib(void)
@@ -250,33 +253,34 @@ static int test_lib(void)
 # endif /* DSO_DLFCN */
     }
 
-    switch (test_type) {
-    case JUST_CRYPTO:
-    case DSO_REFTEST:
-    case NO_ATEXIT:
-    case CRYPTO_FIRST:
-        if (!shlib_close(cryptolib)) {
-            fprintf(stderr, "Failed to close libcrypto\n");
-            goto end;
-        }
-        if (test_type != CRYPTO_FIRST)
-            break;
-        /* Fall through */
+    if (!shlib_close(cryptolib)) {
+        fprintf(stderr, "Failed to close libcrypto\n");
+        goto end;
+    }
 
-    case SSL_FIRST:
-        if (test_type == CRYPTO_FIRST && !shlib_close(ssllib)) {
+    if (test_type == CRYPTO_FIRST || test_type == SSL_FIRST) {
+        if (!shlib_close(ssllib)) {
             fprintf(stderr, "Failed to close libssl\n");
             goto end;
         }
-        if (test_type != SSL_FIRST)
-            break;
-
-        if (!shlib_close(cryptolib)) {
-            fprintf(stderr, "Failed to close libcrypto\n");
-            goto end;
-        }
-        break;
     }
+
+# if defined(OPENSSL_NO_PINSHARED) \
+    && defined(__GLIBC__) \
+    && defined(__GLIBC_PREREQ) \
+    && defined(OPENSSL_SYS_LINUX)
+#  if __GLIBC_PREREQ(2, 3)
+    /*
+     * If we didn't pin the so then we are hopefully on a platform that supports
+     * running atexit() on so unload. If not we might crash. We know this is
+     * true on linux since glibc 2.2.3
+     */
+    if (test_type != NO_ATEXIT && atexit_handler_done != 1) {
+        fprintf(stderr, "atexit() handler did not run\n");
+        goto end;
+    }
+#  endif
+# endif
 
     result = 1;
 end:
