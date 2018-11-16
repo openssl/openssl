@@ -118,14 +118,28 @@ err:
 }
 
 static CRYPTO_ONCE register_atexit = CRYPTO_ONCE_STATIC_INIT;
+#if !defined(OPENSSL_SYS_UEFI) && defined(_WIN32)
+static int win32atexit(void)
+{
+    OPENSSL_cleanup();
+    return 0;
+}
+#endif
+
 DEFINE_RUN_ONCE_STATIC(ossl_init_register_atexit)
 {
-# ifdef OPENSSL_INIT_DEBUG
+#ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr, "OPENSSL_INIT: ossl_init_register_atexit()\n");
-# endif
+#endif
 #ifndef OPENSSL_SYS_UEFI
+# ifdef _WIN32
+    /* We use _onexit() in preference because it gets called on DLL unload */
+    if (_onexit(win32atexit) == NULL)
+        return 0;
+# else
     if (atexit(OPENSSL_cleanup) != 0)
         return 0;
+# endif
 #endif
 
     return 1;
