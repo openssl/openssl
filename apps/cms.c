@@ -955,7 +955,7 @@ int cms_main(int argc, char **argv)
                 unsigned char hash[EVP_MAX_MD_SIZE];
                 unsigned int hash_len = sizeof (hash);
                 X509_ALGOR *alg = NULL;
-		int len;
+                int len;
 
                 memset(hash, 0, sizeof (hash));
                 /* Create the SigningCertificateV2 attribute. */
@@ -980,16 +980,16 @@ int cms_main(int argc, char **argv)
                     goto end;
                 /* Add SigningCertificateV2 signed attribute to the signer info. */
                 len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-                if ((pp = OPENSSL_malloc(len)) == NULL) 
+                if ((pp = OPENSSL_malloc(len)) == NULL)
                     goto end;
                 p = pp;
                 i2d_ESS_SIGNING_CERT_V2(sc, &p);
-                if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) 
-		    goto end;
+                if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
+                    goto end;
                 OPENSSL_free(pp);
                 pp = NULL;
-                if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
-                        V_ASN1_SEQUENCE, seq, -1)) goto end;
+                if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2, V_ASN1_SEQUENCE, seq, -1))
+                    goto end;
             }
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx;
