@@ -23,6 +23,7 @@
 # include <openssl/x509v3.h>
 # include <openssl/cms.h>
 # include <openssl/ts.h>
+# include "crypto/ts/ts_lcl.h"
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
@@ -53,17 +54,6 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
 # define SMIME_SIGN_RECEIPT      (15 | SMIME_IP | SMIME_OP)
 # define SMIME_VERIFY_RECEIPT    (16 | SMIME_IP)
 # define CMS_CADES                   0x100000
-
-
-struct ESS_cert_id_v2_st {
-    X509_ALGOR *hash_alg;       /* Default: SHA-256 */
-    ASN1_OCTET_STRING *hash;
-    ESS_ISSUER_SERIAL *issuer_serial;
-};
-struct ESS_signing_cert_v2_st {
-    STACK_OF(ESS_CERT_ID_V2) *cert_ids;
-    STACK_OF(POLICYINFO) *policy_info;
-};
 
 static int verify_err = 0;
 
@@ -958,23 +948,21 @@ int cms_main(int argc, char **argv)
             if (si == NULL)
                 goto end;
             if (flags & CMS_CADES) {
-		ASN1_STRING *seq = NULL;
-		unsigned char *p, *pp = NULL;
-		int len;
-		ESS_SIGNING_CERT_V2 *sc = NULL;
-		ESS_CERT_ID_V2 *cid;
+                ASN1_STRING *seq = NULL;
+                unsigned char *p, *pp = NULL;
+                ESS_SIGNING_CERT_V2 *sc = NULL;
+                ESS_CERT_ID_V2 * cid;
                 unsigned char hash[EVP_MAX_MD_SIZE];
-                unsigned int hash_len = sizeof(hash);
+                unsigned int hash_len = sizeof (hash);
                 X509_ALGOR *alg = NULL;
 
-                memset(hash, 0, sizeof(hash));
-		/* Create the SigningCertificateV2 attribute. */
-		if (!(sc = ESS_SIGNING_CERT_V2_new()))
+                memset(hash, 0, sizeof (hash));
+                /* Create the SigningCertificateV2 attribute. */
+                if (!(sc = ESS_SIGNING_CERT_V2_new()))
                     goto end;
                 /* Adding the signing certificate id. */
-		if (!(cid = ESS_CERT_ID_V2_new()))
+                if (!(cid = ESS_CERT_ID_V2_new()))
                     goto end;
-                
                 alg = X509_ALGOR_new();
                 if (alg == NULL)
                     goto end;
@@ -983,26 +971,26 @@ int cms_main(int argc, char **argv)
                     goto end;
                 cid->hash_alg = alg;
                 alg = NULL;
-  
                 if (!X509_digest(signer, sign_md, hash, &hash_len))
                     goto end;
-
                 if (!ASN1_OCTET_STRING_set(cid->hash, hash, hash_len))
                     goto end;
-                
-		if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
+                if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
                     goto end;
-		/* Add SigningCertificateV2 signed attribute to the signer info. */
-                len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-		if (!(pp = (unsigned char *) OPENSSL_malloc(len))) goto end;
-		p = pp;
-		i2d_ESS_SIGNING_CERT_V2(sc, &p);
-		if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) goto end;
-		OPENSSL_free(pp); pp = NULL;
-		int seqlen = -1;
-		if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
-                                     V_ASN1_SEQUENCE, seq, seqlen)) goto end;
-	    }
+                /* Add SigningCertificateV2 signed attribute to the signer info. */
+                int len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+                if ((pp = OPENSSL_malloc(len)) == NULL) {
+                    goto end;
+                }
+                p = pp;
+                i2d_ESS_SIGNING_CERT_V2(sc, &p);
+                if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len)) goto end;
+                OPENSSL_free(pp);
+                pp = NULL;
+                int seqlen = -1;
+                if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
+                        V_ASN1_SEQUENCE, seq, seqlen)) goto end;
+            }
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx;
                 pctx = CMS_SignerInfo_get0_pkey_ctx(si);
