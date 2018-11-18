@@ -15,6 +15,9 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
+#include <openssl/ts.h>
+#include "../ts/ts_lcl.h"
+
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
@@ -334,4 +337,58 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
  err:
     CMS_ReceiptRequest_free(rr);
     return os;
+}
+
+/* Add a signing certificate's digest to a SignerInfo */
+
+CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
+                                         const EVP_MD *sign_md)
+{
+    ASN1_STRING *seq = NULL;
+    unsigned char *p, *pp = NULL;
+    ESS_SIGNING_CERT_V2 *sc = NULL;
+    ESS_CERT_ID_V2 * cid;
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    unsigned int hash_len = sizeof (hash);
+    X509_ALGOR *alg = NULL;
+    int len;
+
+    memset(hash, 0, sizeof (hash));
+    /* Create the SigningCertificateV2 attribute. */
+    if (!(sc = ESS_SIGNING_CERT_V2_new()))
+        goto err;
+    /* Adding the signing certificate id. */
+    if (!(cid = ESS_CERT_ID_V2_new()))
+        goto err;
+    alg = X509_ALGOR_new();
+    if (alg == NULL)
+        goto err;
+    X509_ALGOR_set_md(alg, sign_md);
+    if (alg->algorithm == NULL)
+        goto err;
+    cid->hash_alg = alg;
+    alg = NULL;
+    if (!X509_digest(signer, sign_md, hash, &hash_len))
+        goto err;
+    if (!ASN1_OCTET_STRING_set(cid->hash, hash, hash_len))
+        goto err;
+    if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
+        goto err;
+    /* Add SigningCertificateV2 signed attribute to the signer info. */
+    len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
+    if ((pp = OPENSSL_malloc(len)) == NULL)
+        goto err;
+    p = pp;
+    i2d_ESS_SIGNING_CERT_V2(sc, &p);
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
+        goto err;
+    OPENSSL_free(pp);
+    pp = NULL;
+    if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
+                                     V_ASN1_SEQUENCE, seq, -1))
+        goto err;
+    return si;
+
+ err:
+    return NULL;
 }
