@@ -22,8 +22,6 @@
 # include <openssl/x509_vfy.h>
 # include <openssl/x509v3.h>
 # include <openssl/cms.h>
-# include <openssl/ts.h>
-# include "crypto/ts/ts_lcl.h"
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
@@ -948,47 +946,8 @@ int cms_main(int argc, char **argv)
             if (si == NULL)
                 goto end;
             if (flags & CMS_CADES) {
-                ASN1_STRING *seq = NULL;
-                unsigned char *p, *pp = NULL;
-                ESS_SIGNING_CERT_V2 *sc = NULL;
-                ESS_CERT_ID_V2 * cid;
-                unsigned char hash[EVP_MAX_MD_SIZE];
-                unsigned int hash_len = sizeof (hash);
-                X509_ALGOR *alg = NULL;
-                int len;
-
-                memset(hash, 0, sizeof (hash));
-                /* Create the SigningCertificateV2 attribute. */
-                if (!(sc = ESS_SIGNING_CERT_V2_new()))
-                    goto end;
-                /* Adding the signing certificate id. */
-                if (!(cid = ESS_CERT_ID_V2_new()))
-                    goto end;
-                alg = X509_ALGOR_new();
-                if (alg == NULL)
-                    goto end;
-                X509_ALGOR_set_md(alg, sign_md);
-                if (alg->algorithm == NULL)
-                    goto end;
-                cid->hash_alg = alg;
-                alg = NULL;
-                if (!X509_digest(signer, sign_md, hash, &hash_len))
-                    goto end;
-                if (!ASN1_OCTET_STRING_set(cid->hash, hash, hash_len))
-                    goto end;
-                if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
-                    goto end;
-                /* Add SigningCertificateV2 signed attribute to the signer info. */
-                len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-                if ((pp = OPENSSL_malloc(len)) == NULL)
-                    goto end;
-                p = pp;
-                i2d_ESS_SIGNING_CERT_V2(sc, &p);
-                if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
-                    goto end;
-                OPENSSL_free(pp);
-                pp = NULL;
-                if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2, V_ASN1_SEQUENCE, seq, -1))
+                si = CMS_add1_signing_cert_v2(si, signer, sign_md);
+                if (si == NULL)
                     goto end;
             }
             if (kparam != NULL) {
