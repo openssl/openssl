@@ -150,6 +150,8 @@ static const ERR_STRING_DATA CMS_str_functs[] = {
     {ERR_PACK(ERR_LIB_CMS, CMS_F_CMS_UNCOMPRESS, 0), "CMS_uncompress"},
     {ERR_PACK(ERR_LIB_CMS, CMS_F_CMS_VERIFY, 0), "CMS_verify"},
     {ERR_PACK(ERR_LIB_CMS, CMS_F_KEK_UNWRAP_KEY, 0), "kek_unwrap_key"},
+    {ERR_PACK(ERR_LIB_CMS, CMS_F_CMS_ADD1_SIGNING_CERT_V2, 0), 
+     "CMS_add1_signing_cert_v2"},
     {0, NULL}
 };
 

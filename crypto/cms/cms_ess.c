@@ -15,9 +15,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include <openssl/ts.h>
-#include "../ts/ts_lcl.h"
-
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
@@ -339,7 +336,10 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
     return os;
 }
 
-/* Add a signing certificate's digest to a SignerInfo */
+/*
+ * Add signer certificate's digest to a SignerInfo
+ * structure
+ */
 
 CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
                                          const EVP_MD *sign_md)
@@ -354,15 +354,16 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
     int len;
 
     memset(hash, 0, sizeof (hash));
-    /* Create the SigningCertificateV2 attribute. */
-    if (!(sc = ESS_SIGNING_CERT_V2_new()))
+
+    /* Create the SigningCertificateV2 attribute 
+     * and adding the signing certificate id.
+     */
+
+    if ((sc = ESS_SIGNING_CERT_V2_new()) == NULL
+        || (cid = ESS_CERT_ID_V2_new()) == NULL
+        || (alg = X509_ALGOR_new()) == NULL)
         goto err;
-    /* Adding the signing certificate id. */
-    if (!(cid = ESS_CERT_ID_V2_new()))
-        goto err;
-    alg = X509_ALGOR_new();
-    if (alg == NULL)
-        goto err;
+
     X509_ALGOR_set_md(alg, sign_md);
     if (alg->algorithm == NULL)
         goto err;
@@ -390,5 +391,6 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
     return si;
 
  err:
+    CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT_V2, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
