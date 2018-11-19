@@ -351,7 +351,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
     /* if hybrid, encode classical public key */
     if (is_hybrid) {
-      unsigned char *classical_pubkey = penc + SIZE_OF_UINT32; // i2d moves target pointer, so we copy into a temp var (leaving space for key len)
+      unsigned char *classical_pubkey = penc + SIZE_OF_UINT32; /* i2d moves target pointer, so we copy into a temp var (leaving space for key len) */
       uint32_t actual_classical_pubkey_len = i2d_PublicKey(oqs_key->classical_pkey, &classical_pubkey);
       if (actual_classical_pubkey_len < 0) {
 	OPENSSL_free(penc);
@@ -459,17 +459,17 @@ static int oqs_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     if (akey == NULL || bkey == NULL)
         return -2;
 
-    // compare hybrid classical key if present
+    /* compare hybrid classical key if present */
     if (akey->classical_pkey != NULL) {
       if (bkey->classical_pkey == NULL) {
-	return 0; // both should be hybrid or not
+	return 0; /* both should be hybrid or not */
       }
       if (!EVP_PKEY_cmp(akey->classical_pkey, bkey->classical_pkey)) {
 	return 0;
       }
     }
 
-    // compare PQC key
+    /* compare PQC key */
     return CRYPTO_memcmp(akey->pubkey, bkey->pubkey, akey->s->length_public_key) == 0;
 }
 
@@ -590,7 +590,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
     /* if hybrid, encode classical private key */
     if (is_hybrid) {
-      unsigned char *classical_privkey = buf + SIZE_OF_UINT32; // i2d moves the target pointer, so we copy into a temp var (leaving space for key len)
+      unsigned char *classical_privkey = buf + SIZE_OF_UINT32; /* i2d moves the target pointer, so we copy into a temp var (leaving space for key len) */
       int actual_classical_privkey_len = i2d_PrivateKey(oqs_key->classical_pkey, &classical_privkey);
       if (actual_classical_privkey_len < 0) {
         OQSerr(0, ERR_R_FATAL);
@@ -658,7 +658,7 @@ static int oqs_bits(const EVP_PKEY *pkey)
 
 static int oqs_security_bits(const EVP_PKEY *pkey)
 {
-    return ((OQS_KEY*) pkey->pkey.ptr)->security_bits; // already accounts for hybrid
+    return ((OQS_KEY*) pkey->pkey.ptr)->security_bits; /* already accounts for hybrid */
 }
 
 static void oqs_free(EVP_PKEY *pkey)
