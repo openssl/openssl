@@ -74,13 +74,13 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &picnicL1FS_pkey_meth,
     &p256_picnicL1FS_pkey_meth,
     &rsa3072_picnicL1FS_pkey_meth,
+    &qteslaI_pkey_meth,
     &p256_qteslaI_pkey_meth,
     &rsa3072_qteslaI_pkey_meth,
-    &p384_qteslaIIIsize_pkey_meth,
-    &p384_qteslaIIIspeed_pkey_meth,
-    &qteslaI_pkey_meth,
     &qteslaIIIsize_pkey_meth,
+    &p384_qteslaIIIsize_pkey_meth,
     &qteslaIIIspeed_pkey_meth,
+    &p384_qteslaIIIspeed_pkey_meth,
 #endif
 };
 

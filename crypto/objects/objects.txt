@@ -1683,10 +1683,10 @@ Microsoft 89 2                      : MSRPQC
 MSRPQC 1 1                          : picnicL1FS : Picnic L1 FS
 MSRPQC 1 2                          : p256-picnicL1FS : p256 Picnic L1 FS hybrid
 MSRPQC 1 3                          : rsa3072-picnicL1FS : rsa3072 Picnic L1 FS hybrid
-MSRPQC 2 1                          : qteslaI : qTESLA-I
-MSRPQC 2 2                          : p256-qteslaI : p256 qTESLA-I hybrid
-MSRPQC 2 3                          : rsa3072-qteslaI : rsa3072 qTESLA-I hybrid
-MSRPQC 2 4                          : qteslaIIIsize : qTESLA-III-size
-MSRPQC 2 5                          : p384-qteslaIIIsize : p384 qTESLA-III-size hybrid
-MSRPQC 2 6                          : qteslaIIIspeed : qTESLA-III-speed
-MSRPQC 2 7                          : p384-qteslaIIIspeed : p384 qTESLA-III-speed hybrid
+MSRPQC 2 1                          : qteslaI : qTESLA I
+MSRPQC 2 2                          : p256-qteslaI : p256 qTESLA I hybrid
+MSRPQC 2 3                          : rsa3072-qteslaI : rsa3072 qTESLA I hybrid
+MSRPQC 2 4                          : qteslaIIIsize : qTESLA III size
+MSRPQC 2 5                          : p384-qteslaIIIsize : p384 qTESLA III size hybrid
+MSRPQC 2 6                          : qteslaIIIspeed : qTESLA III speed
+MSRPQC 2 7                          : p384-qteslaIIIspeed : p384 qTESLA III speed hybrid

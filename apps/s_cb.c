@@ -248,11 +248,11 @@ static const char *get_sigtype(int nid)
      /* OQS sig schemes */
      case NID_picnicL1FS:
         return "Picnic L1 FS";
-     case NID_qTESLA_I:
+     case NID_qteslaI:
         return "qTESLA-I";
-     case NID_qTESLA_III_size:
+     case NID_qteslaIIIsize:
         return "qTESLA-III-size";
-     case NID_qTESLA_III_speed:
+     case NID_qteslaIIIspeed:
         return "qTESLA-III-speed";
      /* ADD_MORE_OQS_SIG_HERE */
      case NID_p256_picnicL1FS:

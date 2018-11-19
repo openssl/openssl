@@ -5220,37 +5220,37 @@
 #define NID_rsa3072_picnicL1FS          1199
 #define OBJ_rsa3072_picnicL1FS          OBJ_MSRPQC,1L,3L
 
-#define SN_qTESLA_I             "qteslaI"
-#define LN_qTESLA_I             "qTESLA-I"
-#define NID_qTESLA_I            1207
-#define OBJ_qTESLA_I            OBJ_MSRPQC,2L,1L
+#define SN_qteslaI              "qteslaI"
+#define LN_qteslaI              "qTESLA I"
+#define NID_qteslaI             1200
+#define OBJ_qteslaI             OBJ_MSRPQC,2L,1L
 
 #define SN_p256_qteslaI         "p256-qteslaI"
-#define LN_p256_qteslaI         "p256 qTESLA-I hybrid"
+#define LN_p256_qteslaI         "p256 qTESLA I hybrid"
 #define NID_p256_qteslaI                1201
 #define OBJ_p256_qteslaI                OBJ_MSRPQC,2L,2L
 
 #define SN_rsa3072_qteslaI              "rsa3072-qteslaI"
-#define LN_rsa3072_qteslaI              "rsa3072 qTESLA-I hybrid"
+#define LN_rsa3072_qteslaI              "rsa3072 qTESLA I hybrid"
 #define NID_rsa3072_qteslaI             1202
 #define OBJ_rsa3072_qteslaI             OBJ_MSRPQC,2L,3L
 
-#define SN_qTESLA_III_size              "qteslaIIIsize"
-#define LN_qTESLA_III_size              "qTESLA-III-size"
-#define NID_qTESLA_III_size             1208
-#define OBJ_qTESLA_III_size             OBJ_MSRPQC,2L,4L
+#define SN_qteslaIIIsize                "qteslaIIIsize"
+#define LN_qteslaIIIsize                "qTESLA III size"
+#define NID_qteslaIIIsize               1203
+#define OBJ_qteslaIIIsize               OBJ_MSRPQC,2L,4L
 
 #define SN_p384_qteslaIIIsize           "p384-qteslaIIIsize"
-#define LN_p384_qteslaIIIsize           "p384 qTESLA-III-size hybrid"
+#define LN_p384_qteslaIIIsize           "p384 qTESLA III size hybrid"
 #define NID_p384_qteslaIIIsize          1204
 #define OBJ_p384_qteslaIIIsize          OBJ_MSRPQC,2L,5L
 
-#define SN_qTESLA_III_speed             "qteslaIIIspeed"
-#define LN_qTESLA_III_speed             "qTESLA-III-speed"
-#define NID_qTESLA_III_speed            1209
-#define OBJ_qTESLA_III_speed            OBJ_MSRPQC,2L,6L
+#define SN_qteslaIIIspeed               "qteslaIIIspeed"
+#define LN_qteslaIIIspeed               "qTESLA III speed"
+#define NID_qteslaIIIspeed              1205
+#define OBJ_qteslaIIIspeed              OBJ_MSRPQC,2L,6L
 
 #define SN_p384_qteslaIIIspeed          "p384-qteslaIIIspeed"
-#define LN_p384_qteslaIIIspeed          "p384 qTESLA-III-speed hybrid"
+#define LN_p384_qteslaIIIspeed          "p384 qTESLA III speed hybrid"
 #define NID_p384_qteslaIIIspeed         1206
 #define OBJ_p384_qteslaIIIspeed         OBJ_MSRPQC,2L,7L

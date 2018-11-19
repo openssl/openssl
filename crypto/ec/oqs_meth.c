@@ -69,14 +69,14 @@ static char* get_oqs_alg_name(int openssl_nid)
     case NID_p256_picnicL1FS:
     case NID_rsa3072_picnicL1FS:
       return OQS_SIG_alg_picnic_L1_FS;
-    case NID_qTESLA_I:
+    case NID_qteslaI:
     case NID_p256_qteslaI: /* FIXMEOQS: here and elsewhere, why lowecase qtesla? */
     case NID_rsa3072_qteslaI:
       return OQS_SIG_alg_qTESLA_I;
-    case NID_qTESLA_III_size:
+    case NID_qteslaIIIsize:
     case NID_p384_qteslaIIIsize:
       return OQS_SIG_alg_qTESLA_III_size;
-    case NID_qTESLA_III_speed:
+    case NID_qteslaIIIspeed:
     case NID_p384_qteslaIIIspeed:
       return OQS_SIG_alg_qTESLA_III_speed;
     /* ADD_MORE_OQS_SIG_HERE */
@@ -131,11 +131,11 @@ static int get_oqs_nid(int hybrid_id)
       return NID_picnicL1FS;
     case NID_rsa3072_qteslaI:
     case NID_p256_qteslaI:
-      return NID_qTESLA_I;
+      return NID_qteslaI;
     case NID_p384_qteslaIIIsize:
-      return NID_qTESLA_III_size;
+      return NID_qteslaIIIsize;
     case NID_p384_qteslaIIIspeed:
-      return NID_qTESLA_III_speed;
+      return NID_qteslaIIIspeed;
     /* ADD_MORE_OQS_SIG_HERE hybrid only */
     default:
       return 0;
@@ -180,11 +180,11 @@ static int get_oqs_security_bits(int openssl_nid)
     {
     case NID_picnicL1FS:
       return 128;
-    case NID_qTESLA_I:
+    case NID_qteslaI:
       return 128;
-    case NID_qTESLA_III_size:
+    case NID_qteslaIIIsize:
       return 192;
-    case NID_qTESLA_III_speed:
+    case NID_qteslaIIIspeed:
       return 192;
     /* hybrid schemes */
     case NID_p256_picnicL1FS:
@@ -760,10 +760,10 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     if (
 	(nid != NID_picnicL1FS &&
 	 nid != NID_p256_picnicL1FS &&
-	 nid != NID_qTESLA_I &&
+	 nid != NID_qteslaI &&
 	 nid != NID_p256_qteslaI &&
-	 nid != NID_qTESLA_III_size &&
-	 nid != NID_qTESLA_III_speed
+	 nid != NID_qteslaIIIsize &&
+	 nid != NID_qteslaIIIspeed
 	 /* ADD_MORE_OQS_SIG_HERE */
 	 ) || ptype != V_ASN1_UNDEF) {
         OQSerr(0, ERR_R_FATAL);
@@ -1071,9 +1071,9 @@ DEFINE_OQS_EVP_PKEY_METHOD(ALG, NID_ALG)                              \
 DEFINE_OQS_EVP_PKEY_ASN1_METHOD(ALG, NID_ALG, SHORT_NAME, LONG_NAME)
 
 DEFINE_OQS_EVP_METHODS(picnicL1FS, NID_picnicL1FS, "picnicL1FS", "OpenSSL Picnic L1 FS algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaI, NID_qTESLA_I, "qteslaI", "OpenSSL qTESLA-I algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaIIIsize, NID_qTESLA_III_size, "qteslaIIIsize", "OpenSSL qTESLA-III-size algorithm")
-DEFINE_OQS_EVP_METHODS(qteslaIIIspeed, NID_qTESLA_III_speed, "qteslaIIIspeed", "OpenSSL qTESLA-III-speed algorithm")
+DEFINE_OQS_EVP_METHODS(qteslaI, NID_qteslaI, "qteslaI", "OpenSSL qTESLA-I algorithm")
+DEFINE_OQS_EVP_METHODS(qteslaIIIsize, NID_qteslaIIIsize, "qteslaIIIsize", "OpenSSL qTESLA-III-size algorithm")
+DEFINE_OQS_EVP_METHODS(qteslaIIIspeed, NID_qteslaIIIspeed, "qteslaIIIspeed", "OpenSSL qTESLA-III-speed algorithm")
 /* ADD_MORE_OQS_SIG_HERE */
 /* hybrid schemes */
 DEFINE_OQS_EVP_METHODS(p256_picnicL1FS, NID_p256_picnicL1FS, "p256_picnicL1FS", "OpenSSL hybrid p256 Picnic L1 FS algorithm")

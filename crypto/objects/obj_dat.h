@@ -1081,16 +1081,16 @@ static const unsigned char so[7888] = {
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7777] OBJ_picnicL1FS */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7788] OBJ_p256_picnicL1FS */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7799] OBJ_rsa3072_picnicL1FS */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7810] OBJ_p256_qteslaI */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7821] OBJ_rsa3072_qteslaI */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7832] OBJ_p384_qteslaIIIsize */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7843] OBJ_p384_qteslaIIIspeed */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7854] OBJ_qTESLA_I */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x04,  /* [ 7865] OBJ_qTESLA_III_size */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7876] OBJ_qTESLA_III_speed */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x01,  /* [ 7810] OBJ_qteslaI */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x02,  /* [ 7821] OBJ_p256_qteslaI */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x03,  /* [ 7832] OBJ_rsa3072_qteslaI */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x04,  /* [ 7843] OBJ_qteslaIIIsize */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x05,  /* [ 7854] OBJ_p384_qteslaIIIsize */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x06,  /* [ 7865] OBJ_qteslaIIIspeed */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x07,  /* [ 7876] OBJ_p384_qteslaIIIspeed */
 };
 
-#define NUM_NID 1210
+#define NUM_NID 1207
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2292,16 +2292,13 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"picnicL1FS", "Picnic L1 FS", NID_picnicL1FS, 11, &so[7777]},
     {"p256-picnicL1FS", "p256 Picnic L1 FS hybrid", NID_p256_picnicL1FS, 11, &so[7788]},
     {"rsa3072-picnicL1FS", "rsa3072 Picnic L1 FS hybrid", NID_rsa3072_picnicL1FS, 11, &so[7799]},
-    { NULL, NULL, NID_undef },
-    {"p256-qteslaI", "p256 qTESLA-I hybrid", NID_p256_qteslaI, 11, &so[7810]},
-    {"rsa3072-qteslaI", "rsa3072 qTESLA-I hybrid", NID_rsa3072_qteslaI, 11, &so[7821]},
-    { NULL, NULL, NID_undef },
-    {"p384-qteslaIIIsize", "p384 qTESLA-III-size hybrid", NID_p384_qteslaIIIsize, 11, &so[7832]},
-    { NULL, NULL, NID_undef },
-    {"p384-qteslaIIIspeed", "p384 qTESLA-III-speed hybrid", NID_p384_qteslaIIIspeed, 11, &so[7843]},
-    {"qteslaI", "qTESLA-I", NID_qTESLA_I, 11, &so[7854]},
-    {"qteslaIIIsize", "qTESLA-III-size", NID_qTESLA_III_size, 11, &so[7865]},
-    {"qteslaIIIspeed", "qTESLA-III-speed", NID_qTESLA_III_speed, 11, &so[7876]},
+    {"qteslaI", "qTESLA I", NID_qteslaI, 11, &so[7810]},
+    {"p256-qteslaI", "p256 qTESLA I hybrid", NID_p256_qteslaI, 11, &so[7821]},
+    {"rsa3072-qteslaI", "rsa3072 qTESLA I hybrid", NID_rsa3072_qteslaI, 11, &so[7832]},
+    {"qteslaIIIsize", "qTESLA III size", NID_qteslaIIIsize, 11, &so[7843]},
+    {"p384-qteslaIIIsize", "p384 qTESLA III size hybrid", NID_p384_qteslaIIIsize, 11, &so[7854]},
+    {"qteslaIIIspeed", "qTESLA III speed", NID_qteslaIIIspeed, 11, &so[7865]},
+    {"p384-qteslaIIIspeed", "p384 qTESLA III speed hybrid", NID_p384_qteslaIIIspeed, 11, &so[7876]},
 };
 
 #define NUM_SN 1198
@@ -3241,9 +3238,9 @@ static const unsigned int sn_objs[NUM_SN] = {
      510,    /* "pseudonym" */
      435,    /* "pss" */
      286,    /* "qcStatements" */
-    1207,    /* "qteslaI" */
-    1208,    /* "qteslaIIIsize" */
-    1209,    /* "qteslaIIIspeed" */
+    1200,    /* "qteslaI" */
+    1203,    /* "qteslaIIIsize" */
+    1205,    /* "qteslaIIIspeed" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
      870,    /* "registeredAddress" */
@@ -4357,9 +4354,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      475,    /* "otherMailbox" */
      876,    /* "owner" */
     1198,    /* "p256 Picnic L1 FS hybrid" */
-    1201,    /* "p256 qTESLA-I hybrid" */
-    1204,    /* "p384 qTESLA-III-size hybrid" */
-    1206,    /* "p384 qTESLA-III-speed hybrid" */
+    1201,    /* "p256 qTESLA I hybrid" */
+    1204,    /* "p384 qTESLA III size hybrid" */
+    1206,    /* "p384 qTESLA III speed hybrid" */
      935,    /* "pSpecified" */
      489,    /* "pagerTelephoneNumber" */
      782,    /* "password based MAC" */
@@ -4422,9 +4419,9 @@ static const unsigned int ln_objs[NUM_LN] = {
      886,    /* "protocolInformation" */
      510,    /* "pseudonym" */
      435,    /* "pss" */
-    1207,    /* "qTESLA-I" */
-    1208,    /* "qTESLA-III-size" */
-    1209,    /* "qTESLA-III-speed" */
+    1200,    /* "qTESLA I" */
+    1203,    /* "qTESLA III size" */
+    1205,    /* "qTESLA III speed" */
      286,    /* "qcStatements" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
@@ -4451,7 +4448,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      463,    /* "roomNumber" */
       19,    /* "rsa" */
     1199,    /* "rsa3072 Picnic L1 FS hybrid" */
-    1202,    /* "rsa3072 qTESLA-I hybrid" */
+    1202,    /* "rsa3072 qTESLA I hybrid" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
@@ -5773,12 +5770,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1197,    /* OBJ_picnicL1FS                   1 3 6 1 4 1 311 89 2 1 1 */
     1198,    /* OBJ_p256_picnicL1FS              1 3 6 1 4 1 311 89 2 1 2 */
     1199,    /* OBJ_rsa3072_picnicL1FS           1 3 6 1 4 1 311 89 2 1 3 */
-    1207,    /* OBJ_qTESLA_I                     1 3 6 1 4 1 311 89 2 2 1 */
+    1200,    /* OBJ_qteslaI                      1 3 6 1 4 1 311 89 2 2 1 */
     1201,    /* OBJ_p256_qteslaI                 1 3 6 1 4 1 311 89 2 2 2 */
     1202,    /* OBJ_rsa3072_qteslaI              1 3 6 1 4 1 311 89 2 2 3 */
-    1208,    /* OBJ_qTESLA_III_size              1 3 6 1 4 1 311 89 2 2 4 */
+    1203,    /* OBJ_qteslaIIIsize                1 3 6 1 4 1 311 89 2 2 4 */
     1204,    /* OBJ_p384_qteslaIIIsize           1 3 6 1 4 1 311 89 2 2 5 */
-    1209,    /* OBJ_qTESLA_III_speed             1 3 6 1 4 1 311 89 2 2 6 */
+    1205,    /* OBJ_qteslaIIIspeed               1 3 6 1 4 1 311 89 2 2 6 */
     1206,    /* OBJ_p384_qteslaIIIspeed          1 3 6 1 4 1 311 89 2 2 7 */
     1056,    /* OBJ_blake2b512                   1 3 6 1 4 1 1722 12 2 1 16 */
     1057,    /* OBJ_blake2s256                   1 3 6 1 4 1 1722 12 2 2 8 */
