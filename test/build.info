@@ -342,7 +342,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
 
   SOURCE[drbgtest]=drbgtest.c
   INCLUDE[drbgtest]=../include
-  DEPEND[drbgtest]=../libcrypto libtestutil.a
+  DEPEND[drbgtest]=../libcrypto.a libtestutil.a
 
   SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data_ctr.c \
                          drbg_cavs_data_hash.c drbg_cavs_data_hmac.c

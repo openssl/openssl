@@ -12,6 +12,10 @@
   *) Add OPENSSL_FORCE_USE_WINCRYPT. On Windows this will force the
      selection of Wincrypt over BCrypt.
      [Anton Kudryavtsev]
+     
+  *) Recreate the OS390-Unix config target.  It no longer relies on a
+     special script like it did for OpenSSL pre-1.1.0.
+     [Richard Levitte]
 
   *) Instead of having the source directories listed in Configure, add
      a 'build.info' keyword SUBDIRS to indicate what sub-directories to

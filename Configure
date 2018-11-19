@@ -2249,6 +2249,9 @@ EOF
                                            dst => 'sources' } }
                } -> {$prodtype};
             foreach my $kind (keys %$intent) {
+                next if ($intent->{$kind}->{dst} eq 'shared_sources'
+                             && $disabled{shared});
+
                 my @src = @{$intent->{$kind}->{src}};
                 my $dst = $intent->{$kind}->{dst};
                 my $prodselect = $intent->{$kind}->{prodselect} // sub { @_ };

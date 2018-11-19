@@ -5669,6 +5669,7 @@ static int test_client_cert_cb(int tst)
     SSL_CTX_set_verify(sctx,
                        SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
                        verify_cb);
+
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
                                       NULL, NULL))
             || !TEST_true(create_ssl_connection(serverssl, clientssl,
@@ -5682,6 +5683,140 @@ static int test_client_cert_cb(int tst)
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
+/*
+ * Test setting certificate authorities on both client and server.
+ *
+ * Test 0: SSL_CTX_set0_CA_list() only
+ * Test 1: Both SSL_CTX_set0_CA_list() and SSL_CTX_set_client_CA_list()
+ * Test 2: Only SSL_CTX_set_client_CA_list()
+ */
+static int test_ca_names_int(int prot, int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    size_t i;
+    X509_NAME *name[] = { NULL, NULL, NULL, NULL };
+    char *strnames[] = { "Jack", "Jill", "John", "Joanne" };
+    STACK_OF(X509_NAME) *sk1 = NULL, *sk2 = NULL;
+    const STACK_OF(X509_NAME) *sktmp = NULL;
+
+    for (i = 0; i < OSSL_NELEM(name); i++) {
+        name[i] = X509_NAME_new();
+        if (!TEST_ptr(name[i])
+                || !TEST_true(X509_NAME_add_entry_by_txt(name[i], "CN",
+                                                         MBSTRING_ASC,
+                                                         (unsigned char *)
+                                                         strnames[i],
+                                                         -1, -1, 0)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       prot,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+
+    if (tst == 0 || tst == 1) {
+        if (!TEST_ptr(sk1 = sk_X509_NAME_new_null())
+                || !TEST_true(sk_X509_NAME_push(sk1, X509_NAME_dup(name[0])))
+                || !TEST_true(sk_X509_NAME_push(sk1, X509_NAME_dup(name[1])))
+                || !TEST_ptr(sk2 = sk_X509_NAME_new_null())
+                || !TEST_true(sk_X509_NAME_push(sk2, X509_NAME_dup(name[0])))
+                || !TEST_true(sk_X509_NAME_push(sk2, X509_NAME_dup(name[1]))))
+            goto end;
+
+        SSL_CTX_set0_CA_list(sctx, sk1);
+        SSL_CTX_set0_CA_list(cctx, sk2);
+        sk1 = sk2 = NULL;
+    }
+    if (tst == 1 || tst == 2) {
+        if (!TEST_ptr(sk1 = sk_X509_NAME_new_null())
+                || !TEST_true(sk_X509_NAME_push(sk1, X509_NAME_dup(name[2])))
+                || !TEST_true(sk_X509_NAME_push(sk1, X509_NAME_dup(name[3])))
+                || !TEST_ptr(sk2 = sk_X509_NAME_new_null())
+                || !TEST_true(sk_X509_NAME_push(sk2, X509_NAME_dup(name[2])))
+                || !TEST_true(sk_X509_NAME_push(sk2, X509_NAME_dup(name[3]))))
+            goto end;
+
+        SSL_CTX_set_client_CA_list(sctx, sk1);
+        SSL_CTX_set_client_CA_list(cctx, sk2);
+        sk1 = sk2 = NULL;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * We only expect certificate authorities to have been sent to the server
+     * if we are using TLSv1.3 and SSL_set0_CA_list() was used
+     */
+    sktmp = SSL_get0_peer_CA_list(serverssl);
+    if (prot == TLS1_3_VERSION
+            && (tst == 0 || tst == 1)) {
+        if (!TEST_ptr(sktmp)
+                || !TEST_int_eq(sk_X509_NAME_num(sktmp), 2)
+                || !TEST_int_eq(X509_NAME_cmp(sk_X509_NAME_value(sktmp, 0),
+                                              name[0]), 0)
+                || !TEST_int_eq(X509_NAME_cmp(sk_X509_NAME_value(sktmp, 1),
+                                              name[1]), 0))
+            goto end;
+    } else if (!TEST_ptr_null(sktmp)) {
+        goto end;
+    }
+
+    /*
+     * In all tests we expect certificate authorities to have been sent to the
+     * client. However, SSL_set_client_CA_list() should override
+     * SSL_set0_CA_list()
+     */
+    sktmp = SSL_get0_peer_CA_list(clientssl);
+    if (!TEST_ptr(sktmp)
+            || !TEST_int_eq(sk_X509_NAME_num(sktmp), 2)
+            || !TEST_int_eq(X509_NAME_cmp(sk_X509_NAME_value(sktmp, 0),
+                                          name[tst == 0 ? 0 : 2]), 0)
+            || !TEST_int_eq(X509_NAME_cmp(sk_X509_NAME_value(sktmp, 1),
+                                          name[tst == 0 ? 1 : 3]), 0))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    for (i = 0; i < OSSL_NELEM(name); i++)
+        X509_NAME_free(name[i]);
+    sk_X509_NAME_pop_free(sk1, X509_NAME_free);
+    sk_X509_NAME_pop_free(sk2, X509_NAME_free);
+
+    return testresult;
+}
+#endif
+
+static int test_ca_names(int tst)
+{
+    int testresult = 1;
+
+#ifndef OPENSSL_NO_TLS1_2
+    testresult &= test_ca_names_int(TLS1_2_VERSION, tst);
+#endif
+#ifndef OPENSSL_NO_TLS1_3
+    testresult &= test_ca_names_int(TLS1_3_VERSION, tst);
+#endif
 
     return testresult;
 }
@@ -5790,6 +5925,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_shutdown, 7);
     ADD_ALL_TESTS(test_cert_cb, 3);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
+    ADD_ALL_TESTS(test_ca_names, 3);
     return 1;
 }
 

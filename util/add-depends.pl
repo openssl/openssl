@@ -36,8 +36,10 @@ my @depfiles =
         scalar @st > 0;         # Determines the grep result
     }
     map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
-    grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
-    keys %{$unified_info{sources}};
+    ( ( grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
+            keys %{$unified_info{sources}} ),
+      ( grep { $unified_info{shared_sources}->{$_}->[0] =~ /\.cc?$/ }
+            keys %{$unified_info{shared_sources}} ) );
 
 exit 0 unless $rebuild;
 

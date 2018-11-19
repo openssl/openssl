@@ -324,6 +324,8 @@ SSL_CTX_disable_ct                      define
 SSL_CTX_generate_session_ticket_fn      define
 SSL_CTX_get0_chain_certs                define
 SSL_CTX_get_default_read_ahead          define
+SSL_CTX_get_extra_chain_certs           define
+SSL_CTX_get_extra_chain_certs_only      define
 SSL_CTX_get_max_cert_list               define
 SSL_CTX_get_max_proto_version           define
 SSL_CTX_get_min_proto_version           define
@@ -363,6 +365,7 @@ SSL_CTX_set1_sigalgs                    define
 SSL_CTX_set1_sigalgs_list               define
 SSL_CTX_set1_verify_cert_store          define
 SSL_CTX_set_current_cert                define
+SSL_CTX_set_ecdh_auto                   define
 SSL_CTX_set_max_cert_list               define
 SSL_CTX_set_max_pipelines               define
 SSL_CTX_set_max_proto_version           define
@@ -380,6 +383,7 @@ SSL_CTX_set_tlsext_status_cb            define
 SSL_CTX_set_tlsext_status_type          define
 SSL_CTX_set_tlsext_ticket_key_cb        define
 SSL_CTX_set_tmp_dh                      define
+SSL_CTX_set_tmp_ecdh                    define
 SSL_add0_chain_cert                     define
 SSL_add1_chain_cert                     define
 SSL_build_cert_chain                    define
@@ -400,14 +404,17 @@ SSL_get_max_proto_version               define
 SSL_get_min_proto_version               define
 SSL_get_mode                            define
 SSL_get_peer_signature_nid              define
+SSL_get_peer_tmp_key                    define
 SSL_get_secure_renegotiation_support    define
 SSL_get_server_tmp_key                  define
 SSL_get_shared_curve                    define
 SSL_get_shared_group                    define
+SSL_get_signature_nid                   define
 SSL_get_time                            define
 SSL_get_timeout                         define
 SSL_get_tlsext_status_ocsp_resp         define
 SSL_get_tlsext_status_type              define
+SSL_get_tmp_key                         define
 SSL_in_accept_init                      define
 SSL_in_connect_init                     define
 SSL_library_init                        define
@@ -428,6 +435,7 @@ SSL_set1_sigalgs                        define
 SSL_set1_sigalgs_list                   define
 SSL_set1_verify_cert_store              define
 SSL_set_current_cert                    define
+SSL_set_ecdh_auto                       define
 SSL_set_max_cert_list                   define
 SSL_set_max_pipelines                   define
 SSL_set_max_proto_version               define
@@ -443,6 +451,7 @@ SSL_set_tlsext_host_name                define
 SSL_set_tlsext_status_ocsp_resp         define
 SSL_set_tlsext_status_type              define
 SSL_set_tmp_dh                          define
+SSL_set_tmp_ecdh                        define
 SSL_want_async                          define
 SSL_want_async_job                      define
 SSL_want_client_hello_cb                define

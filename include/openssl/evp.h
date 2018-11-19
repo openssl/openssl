@@ -717,6 +717,7 @@ const EVP_MD *EVP_sha3_384(void);
 const EVP_MD *EVP_sha3_512(void);
 const EVP_MD *EVP_shake128(void);
 const EVP_MD *EVP_shake256(void);
+
 # ifndef OPENSSL_NO_MDC2
 const EVP_MD *EVP_mdc2(void);
 # endif
@@ -990,6 +991,8 @@ void EVP_MD_do_all_sorted(void (*fn)
 # define EVP_MAC_CMAC           NID_cmac
 # define EVP_MAC_GMAC           NID_gmac
 # define EVP_MAC_HMAC           NID_hmac
+# define EVP_MAC_KMAC128        NID_kmac128
+# define EVP_MAC_KMAC256        NID_kmac256
 # define EVP_MAC_SIPHASH        NID_siphash
 # define EVP_MAC_POLY1305       NID_poly1305
 
@@ -1027,6 +1030,8 @@ void EVP_MAC_do_all_sorted(void (*fn)
 # define EVP_MAC_CTRL_SET_CIPHER        0x05 /* EVP_CIPHER * */
 # define EVP_MAC_CTRL_SET_SIZE          0x06 /* size_t */
 # define EVP_MAC_CTRL_SET_IV            0x07 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_CUSTOM        0x08 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_XOF           0x09 /* int */
 
 /* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,
@@ -1111,6 +1116,7 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx);
 
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
+int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid);
 
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
                                    const unsigned char *pt, size_t ptlen);
@@ -1187,6 +1193,7 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
 
 # define ASN1_PKEY_CTRL_SET1_TLS_ENCPT   0x9
 # define ASN1_PKEY_CTRL_GET1_TLS_ENCPT   0xa
+# define ASN1_PKEY_CTRL_SUPPORTS_MD_NID  0xb
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);

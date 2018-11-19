@@ -2880,7 +2880,7 @@ int tls_construct_certificate_request(SSL *s, WPACKET *pkt)
         }
     }
 
-    if (!construct_ca_names(s, pkt)) {
+    if (!construct_ca_names(s, get_ca_names(s), pkt)) {
         /* SSLfatal() already called */
         return 0;
     }

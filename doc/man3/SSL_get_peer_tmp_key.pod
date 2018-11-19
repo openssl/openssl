@@ -2,26 +2,36 @@
 
 =head1 NAME
 
-SSL_get_server_tmp_key - get information about the server's temporary key used
-during a handshake
+SSL_get_peer_tmp_key, SSL_get_server_tmp_key, SSL_get_tmp_key - get information
+about temporary keys used during a handshake
 
 =head1 SYNOPSIS
 
  #include <openssl/ssl.h>
 
+ long SSL_get_peer_tmp_key(SSL *ssl, EVP_PKEY **key);
  long SSL_get_server_tmp_key(SSL *ssl, EVP_PKEY **key);
+ long SSL_get_tmp_key(SSL *ssl, EVP_PKEY **key);
 
 =head1 DESCRIPTION
 
-SSL_get_server_tmp_key() returns the temporary key provided by the server and
+SSL_get_peer_tmp_key() returns the temporary key provided by the peer and
 used during key exchange. For example, if ECDHE is in use, then this represents
-the server's public ECDHE key. On success a pointer to the key is stored in
+the peer's public ECDHE key. On success a pointer to the key is stored in
 B<*key>. It is the caller's responsibility to free this key after use using
-L<EVP_PKEY_free(3)>. This function may only be called by the client.
+L<EVP_PKEY_free(3)>.
+
+SSL_get_server_tmp_key() is a backwards compatibility alias for
+SSL_get_peer_tmp_key().
+Under that name it worked just on the client side of the connection, its
+behaviour on the server end is release-dependent.
+
+SSL_get_tmp_key() returns the equivalent information for the local
+end of the connection.
 
 =head1 RETURN VALUES
 
-SSL_get_server_tmp_key() returns 1 on success or 0 otherwise.
+All these functions return 1 on success and 0 otherwise.
 
 =head1 NOTES
 

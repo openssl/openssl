@@ -31,7 +31,7 @@ int rand_fork_count;
 static CRYPTO_RWLOCK *rand_nonce_lock;
 static int rand_nonce_count;
 
-static int rand_cleaning_up = 0;
+static int rand_inited = 0;
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
@@ -146,8 +146,8 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
         return 0;
     }
 
-    if (drbg->pool != NULL) {
-        pool = drbg->pool;
+    if (drbg->seed_pool != NULL) {
+        pool = drbg->seed_pool;
         pool->entropy_requested = entropy;
     } else {
         pool = rand_pool_new(entropy, min_len, max_len);
@@ -204,7 +204,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
     }
 
  err:
-    if (drbg->pool == NULL)
+    if (drbg->seed_pool == NULL)
         rand_pool_free(pool);
     return ret;
 }
@@ -216,7 +216,7 @@ size_t rand_drbg_get_entropy(RAND_DRBG *drbg,
 void rand_drbg_cleanup_entropy(RAND_DRBG *drbg,
                                unsigned char *out, size_t outlen)
 {
-    if (drbg->pool == NULL)
+    if (drbg->seed_pool == NULL)
         OPENSSL_secure_clear_free(out, outlen);
 }
 
@@ -319,13 +319,15 @@ DEFINE_RUN_ONCE_STATIC(do_rand_init)
     if (rand_nonce_lock == NULL)
         goto err2;
 
-    if (!rand_cleaning_up && !rand_pool_init())
+    if (!rand_pool_init())
         goto err3;
 
+    rand_inited = 1;
     return 1;
 
 err3:
-    rand_pool_cleanup();
+    CRYPTO_THREAD_lock_free(rand_nonce_lock);
+    rand_nonce_lock = NULL;
 err2:
     CRYPTO_THREAD_lock_free(rand_meth_lock);
     rand_meth_lock = NULL;
@@ -341,7 +343,8 @@ void rand_cleanup_int(void)
 {
     const RAND_METHOD *meth = default_RAND_meth;
 
-    rand_cleaning_up = 1;
+    if (!rand_inited)
+        return;
 
     if (meth != NULL && meth->cleanup != NULL)
         meth->cleanup();
@@ -355,6 +358,7 @@ void rand_cleanup_int(void)
     rand_meth_lock = NULL;
     CRYPTO_THREAD_lock_free(rand_nonce_lock);
     rand_nonce_lock = NULL;
+    rand_inited = 0;
 }
 
 /*
@@ -363,7 +367,8 @@ void rand_cleanup_int(void)
  */
 void RAND_keep_random_devices_open(int keep)
 {
-    rand_pool_keep_random_devices_open(keep);
+    if (RUN_ONCE(&rand_init, do_rand_init))
+        rand_pool_keep_random_devices_open(keep);
 }
 
 /*

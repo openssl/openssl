@@ -203,7 +203,7 @@ struct rand_drbg_st {
      * with respect to how randomness is added to the RNG during reseeding
      * (see PR #4328).
      */
-    struct rand_pool_st *pool;
+    struct rand_pool_st *seed_pool;
 
     /*
      * Auxiliary pool for additional data.
@@ -309,7 +309,7 @@ extern int rand_fork_count;
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,
                       const unsigned char *buffer, size_t len, size_t entropy);
-
+size_t rand_drbg_seedlen(RAND_DRBG *drbg);
 /* locking api */
 int rand_drbg_lock(RAND_DRBG *drbg);
 int rand_drbg_unlock(RAND_DRBG *drbg);

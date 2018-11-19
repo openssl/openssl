@@ -557,11 +557,11 @@ int rand_drbg_restart(RAND_DRBG *drbg,
     const unsigned char *adin = NULL;
     size_t adinlen = 0;
 
-    if (drbg->pool != NULL) {
+    if (drbg->seed_pool != NULL) {
         RANDerr(RAND_F_RAND_DRBG_RESTART, ERR_R_INTERNAL_ERROR);
         drbg->state = DRBG_ERROR;
-        rand_pool_free(drbg->pool);
-        drbg->pool = NULL;
+        rand_pool_free(drbg->seed_pool);
+        drbg->seed_pool = NULL;
         return 0;
     }
 
@@ -581,8 +581,8 @@ int rand_drbg_restart(RAND_DRBG *drbg,
             }
 
             /* will be picked up by the rand_drbg_get_entropy() callback */
-            drbg->pool = rand_pool_attach(buffer, len, entropy);
-            if (drbg->pool == NULL)
+            drbg->seed_pool = rand_pool_attach(buffer, len, entropy);
+            if (drbg->seed_pool == NULL)
                 return 0;
         } else {
             if (drbg->max_adinlen < len) {
@@ -628,8 +628,8 @@ int rand_drbg_restart(RAND_DRBG *drbg,
         }
     }
 
-    rand_pool_free(drbg->pool);
-    drbg->pool = NULL;
+    rand_pool_free(drbg->seed_pool);
+    drbg->seed_pool = NULL;
 
     return drbg->state == DRBG_READY;
 }
@@ -1045,12 +1045,8 @@ static int drbg_bytes(unsigned char *out, int count)
  * Calculates the minimum length of a full entropy buffer
  * which is necessary to seed (i.e. instantiate) the DRBG
  * successfully.
- *
- * NOTE: There is a copy of this function in drbgtest.c.
- *       If you change anything here, you need to update
- *       the copy accordingly.
  */
-static size_t rand_drbg_seedlen(RAND_DRBG *drbg)
+size_t rand_drbg_seedlen(RAND_DRBG *drbg)
 {
     /*
      * If no os entropy source is available then RAND_seed(buffer, bufsize)
