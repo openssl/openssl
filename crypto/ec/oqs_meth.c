@@ -14,9 +14,11 @@
 /* OQS note:
    In addition to post-quantum (PQ) signatures; we also support classical/PQ hybrids. In that case, a classical and a PQ signature
    are generated on the same data, and the resulting signatures are concatenated; the classical and PQ keys are also concatenated
-   when serialized. The hybrid scheme is identified as a new combo scheme with a unique NID. Currently, ECDSA-p256 and RSA3072
-   hybrids are supported with L1 OQS schemes, and ECDSA-p384 hybrids are supported with L3 schemes. The public and private keys are
-   also concatenated when serialized. Encoding of artefacts (keys and signatures) are as follow:
+   when serialized. The signed data is first hashed using SHA256 before being signed by the classical algorithm (which can't support
+   arbitrarily long messages), and is passed directly to the OQS signature API. The hybrid scheme is identified as a new combo
+   scheme with a unique NID. Currently, ECDSA-p256 and RSA3072 hybrids are supported with L1 OQS schemes, and ECDSA-p384 hybrids
+   are supported with L3 schemes. The public and private keys are also concatenated when serialized. Encoding of artefacts (keys
+   and signatures) are as follow:
    - classical_artefact_length: 4 bytes encoding the size of the classical artefact
    - classical_artefact: X bytes encoding the classical artefact of actual length classical_artefact_length; X is the maximum size the artefact
                          can take depending on the scheme. classical_artefact_length <= X, and gap bytes (if any) are 0-filled.
