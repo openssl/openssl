@@ -51,7 +51,6 @@ static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
 # define SMIME_ENCRYPTED_ENCRYPT (14 | SMIME_OP)
 # define SMIME_SIGN_RECEIPT      (15 | SMIME_IP | SMIME_OP)
 # define SMIME_VERIFY_RECEIPT    (16 | SMIME_IP)
-# define CMS_CADES                   0x100000
 
 static int verify_err = 0;
 
