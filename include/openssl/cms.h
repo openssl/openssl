@@ -73,6 +73,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_DEBUG_DECRYPT               0x20000
 # define CMS_KEY_PARAM                   0x40000
 # define CMS_ASCIICRLF                   0x80000
+# define CMS_CADES                       0x100000
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
@@ -285,6 +286,7 @@ void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
                                     int lastpos, int type);
 CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
                                          const EVP_MD *sign_md);
+
 # ifdef HEADER_X509V3_H
 
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr);

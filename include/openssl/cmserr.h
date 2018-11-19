@@ -104,6 +104,7 @@ int ERR_load_CMS_strings(void);
 #  define CMS_F_CMS_STREAM                                 155
 #  define CMS_F_CMS_UNCOMPRESS                             156
 #  define CMS_F_CMS_VERIFY                                 157
+#  define CMS_F_CMS_ADD1_SIGNING_CERT_V2                   158
 #  define CMS_F_KEK_UNWRAP_KEY                             180
 
 /*
