@@ -11,6 +11,18 @@
  *  - fill the empty spaces with 0, wwe don't use the full key/sig space in classical case
  */
 
+/* OQS note:
+   In addition to post-quantum (PQ) signatures; we also support classical/PQ hybrids. In that case, a classical and a PQ signature
+   are generated on the same data, and the resulting signatures are concatenated; the classical and PQ keys are also concatenated
+   when serialized. The hybrid scheme is identified as a new combo scheme with a unique NID. Currently, ECDSA-p256 and RSA3072
+   hybrids are supported with L1 OQS schemes, and ECDSA-p384 hybrids are supported with L3 schemes. The public and private keys are
+   also concatenated when serialized. Encoding of artefacts (keys and signatures) are as follow:
+   - classical_artefact_length: 4 bytes encoding the size of the classical artefact
+   - classical_artefact: X bytes encoding the classical artefact of actual length classical_artefact_length; X is the maximum size the artefact
+                         can take depending on the scheme. classical_artefact_length <= X, and gap bytes (if any) are 0-filled.
+   - oqs_artefact: the post-quantum artefact, of length determined by the OQS signature context.
+*/
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
@@ -343,7 +355,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
       classical_pubkey_len = SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(oqs_key->nid));
       pubkey_len += classical_pubkey_len;
     }
-    penc = OPENSSL_malloc(pubkey_len);
+    penc = OPENSSL_zalloc(pubkey_len);
     if (penc == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       return 0;
@@ -582,7 +594,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
       classical_privkey_len = SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid));
       buflen += classical_privkey_len;
     }
-    buf = OPENSSL_secure_malloc(buflen);
+    buf = OPENSSL_secure_zalloc(buflen);
     if (buf == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       return rv;
@@ -955,6 +967,12 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
 	/* sig is bigger than expected! */
         OQSerr(0, ERR_R_FATAL);
         goto end;
+      } else {
+	/* we might have a few unused bytes between the classical sig and the post-quantum one;
+	   we fill the gap with 0s */
+	for (int i = 0; i < (classical_sig_len - actual_classical_sig_len); i++) {
+	  sig[SIZE_OF_UINT32 + actual_classical_sig_len + i] = 0;
+	}
       }
       ENCODE_UINT32(sig, actual_classical_sig_len);
       /* we use a constant sig len for the classical alg */
@@ -1024,7 +1042,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 	OQSerr(0, ERR_R_FATAL);
 	return 0;
       }
-      index += classical_sig_len;
+      index += classical_sig_len; /* there might be (classical_sig_len - actual_classical_sig_len) 0 bytes between the classical and PQC sig */
       EVP_PKEY_CTX_free(ctx_verify);
     }
 
