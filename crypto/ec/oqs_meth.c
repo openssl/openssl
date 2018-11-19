@@ -70,7 +70,7 @@ static char* get_oqs_alg_name(int openssl_nid)
     case NID_rsa3072_picnicL1FS:
       return OQS_SIG_alg_picnic_L1_FS;
     case NID_qteslaI:
-    case NID_p256_qteslaI: /* FIXMEOQS: here and elsewhere, why lowecase qtesla? */
+    case NID_p256_qteslaI:
     case NID_rsa3072_qteslaI:
       return OQS_SIG_alg_qTESLA_I;
     case NID_qteslaIIIsize:
