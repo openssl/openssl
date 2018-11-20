@@ -7,8 +7,7 @@
  *  - Improve error reporting. Define OQS specific error codes, using util/mkerr.pl?
  *    (or perhaps re-use EC_* values?
  *  - Add tests
- *  - FIXMEOQS: which RSA NID should I use in hybrid sig? NID_rsaencryption is used by "req" when using rsa NID_rsassaPss?
- *  - fill the empty spaces with 0, wwe don't use the full key/sig space in classical case
+ *  - FIXMEOQS: which RSA NID should I use in hybrid sig? NID_rsaencryption is used by "req" when using "rsa"?
  */
 
 /* OQS note:
