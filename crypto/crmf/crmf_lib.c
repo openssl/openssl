@@ -114,7 +114,8 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
         goto err;
     }
 
-    ASN1_INTEGER_set(spi->pubMethod, method);
+    if (!ASN1_INTEGER_set(spi->pubMethod, method))
+        return 0;
     spi->pubLocation = nm;
     return 1;
 
@@ -155,8 +156,7 @@ int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(
         goto err;
     }
 
-    ASN1_INTEGER_set(pi->action, action);
-    return 1;
+    return ASN1_INTEGER_set(pi->action, action);
 
  err:
     CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION, error);
@@ -296,16 +296,12 @@ int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to)
 
 int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid)
 {
-    int res;
-    if (crm == NULL || crm->certReq == NULL) {
+    if (crm == NULL || crm->certReq == NULL || crm->certReq->certReqId == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
-    res = ASN1_INTEGER_set(crm->certReq->certReqId, rid);
-    if (res == 0)
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID, CRMF_R_NULL_ARGUMENT);
-    return res;
+    return ASN1_INTEGER_set(crm->certReq->certReqId, rid);
 }
 
 /* get ASN.1 encoded integer, return -1 on error */
@@ -442,11 +438,10 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
-    X509_ALGOR_set0(ps->algorithmIdentifier, OBJ_nid2obj(alg_nid),
-                    V_ASN1_NULL, NULL);
-
-    ctx = EVP_MD_CTX_create();
-    if (!(EVP_SignInit_ex(ctx, alg, NULL)))
+    if (!X509_ALGOR_set0(ps->algorithmIdentifier, OBJ_nid2obj(alg_nid),
+                         V_ASN1_NULL, NULL)
+        || (ctx = EVP_MD_CTX_create()) == NULL
+        || !(EVP_SignInit_ex(ctx, alg, NULL)))
         goto err;
     if (!(EVP_SignUpdate(ctx, crder, crlen)))
         goto err;
@@ -532,6 +527,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
     return 0;
 }
 
+/* returns 0 for equal, -1 for a < b, 1 for a > b, <= -2 on error */
 static int X509_PUBKEY_cmp(X509_PUBKEY *a, X509_PUBKEY *b)
 {
     X509_ALGOR *algA = NULL, *algB = NULL;
@@ -543,8 +539,12 @@ static int X509_PUBKEY_cmp(X509_PUBKEY *a, X509_PUBKEY *b)
         return -1;
     if (b == NULL)
         return 1;
-    (void)X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a);
-    (void)X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b);
+    if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a)
+        ||
+        !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b))
+        return -2;
+    if (algA == NULL || algB == NULL)
+        return -3;
     if ((res = X509_ALGOR_cmp(algA, algB)) != 0)
         return res;
     return EVP_PKEY_cmp(X509_PUBKEY_get0(a), X509_PUBKEY_get0(b));
@@ -726,17 +726,18 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     }
     if ((iv = OPENSSL_malloc(EVP_CIPHER_iv_length(cipher))) == NULL)
         goto oom;
-    ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-                              EVP_CIPHER_iv_length(cipher));
+    if (!ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
+                                   EVP_CIPHER_iv_length(cipher)))
+        goto end;
 
     /*
      * d2i_X509 changes the given pointer, so use p for decoding the message and
      * keep the original pointer in outbuf so the memory can be freed later
      */
     if ((p = outbuf = OPENSSL_malloc(ecert->encValue->length +
-                                     EVP_CIPHER_block_size(cipher))) == NULL)
+                                     EVP_CIPHER_block_size(cipher))) == NULL
+        || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto oom;
-    evp_ctx = EVP_CIPHER_CTX_new();
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
 
     if (!EVP_DecryptInit(evp_ctx, cipher, ek, iv)
