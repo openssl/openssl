@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.1.0i and OpenSSL 1.1.0j [under development]
 
-      o
+      o Timing vulnerability in DSA signature generation (CVE-2018-0734)
+      o Timing vulnerability in ECDSA signature generation (CVE-2018-0735)
 
   Major changes between OpenSSL 1.1.0h and OpenSSL 1.1.0i [14 Aug 2018]
 
