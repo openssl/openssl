@@ -242,7 +242,7 @@ int setup_tests(void)
     } else if (strcmp(p, "-just_crypto") == 0) {
         test_type = JUST_CRYPTO;
     } else if (strcmp(p, "-dso_ref") == 0) {
-        test_type = JUST_CRYPTO;
+        test_type = DSO_REFTEST;
     } else {
         TEST_error("Unrecognised argument");
         return 0;
