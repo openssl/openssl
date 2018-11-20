@@ -22,6 +22,16 @@
      (CVE-2018-5407)
      [Billy Brumley]
 
+  *) Timing vulnerability in DSA signature generation
+
+     The OpenSSL DSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
+     (CVE-2018-0734)
+     [Paul Dale]
+
   *) Resolve a compatibility issue in EC_GROUP handling with the FIPS Object
      Module, accidentally introduced while backporting security fixes from the
      development branch and hindering the use of ECC in FIPS mode.
