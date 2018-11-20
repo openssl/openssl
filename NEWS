@@ -7,7 +7,8 @@
 
   Major changes between OpenSSL 1.0.2p and OpenSSL 1.0.2q [under development]
 
-      o
+      o Microarchitecture timing vulnerability in ECC scalar multiplication (CVE-2018-5407)
+      o Timing vulnerability in DSA signature generation (CVE-2018-0734)
 
   Major changes between OpenSSL 1.0.2o and OpenSSL 1.0.2p [14 Aug 2018]
 
