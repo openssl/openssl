@@ -30,6 +30,14 @@
     }                                           \
     static int init(void)
 
+#define DEFINE_RUN_ONCE_STATIC_ALT(initalt, init) \
+    static int initalt(void);                     \
+    static void initalt##_ossl_(void)             \
+    {                                             \
+        init##_ossl_ret_ = initalt();             \
+    }                                             \
+    static int initalt(void)
+
 /*
  * RUN_ONCE - use CRYPTO_THREAD_run_once, and check if the init succeeded
  * @once: pointer to static object of type CRYPTO_ONCE
@@ -43,3 +51,6 @@
  */
 #define RUN_ONCE(once, init)                                            \
     (CRYPTO_THREAD_run_once(once, init##_ossl_) ? init##_ossl_ret_ : 0)
+
+#define RUN_ONCE_ALT(once, initalt, init)                               \
+    (CRYPTO_THREAD_run_once(once, initalt##_ossl_) ? init##_ossl_ret_ : 0)
