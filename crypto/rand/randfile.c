@@ -16,6 +16,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
+#include <openssl/rand_drbg.h>
 #include <openssl/buffer.h>
 
 #ifdef OPENSSL_SYS_VMS
@@ -48,7 +49,7 @@
 #   define S_ISREG(m) ((m) & S_IFREG)
 # endif
 
-#define RAND_FILE_SIZE 1024
+#define RAND_BUF_SIZE 1024
 #define RFILE ".rnd"
 
 #ifdef OPENSSL_SYS_VMS
@@ -74,7 +75,16 @@ static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) =
  */
 int RAND_load_file(const char *file, long bytes)
 {
-    unsigned char buf[RAND_FILE_SIZE];
+    /*
+     * The load buffer size exceeds the chunk size by the comfortable amount
+     * of 'RAND_DRBG_STRENGTH' bytes (not bits!). This is done on purpose
+     * to avoid calling RAND_add() with a small final chunk. Instead, such
+     * a small final chunk will be added together with the previous chunk
+     * (unless it's the only one).
+     */
+#define RAND_LOAD_BUF_SIZE (RAND_BUF_SIZE + RAND_DRBG_STRENGTH)
+    unsigned char buf[RAND_LOAD_BUF_SIZE];
+
 #ifndef OPENSSL_NO_POSIX_IO
     struct stat sb;
 #endif
@@ -98,8 +108,12 @@ int RAND_load_file(const char *file, long bytes)
         return -1;
     }
 
-    if (!S_ISREG(sb.st_mode) && bytes < 0)
-        bytes = 256;
+    if (bytes < 0) {
+        if (S_ISREG(sb.st_mode))
+            bytes = sb.st_size;
+        else
+            bytes = RAND_DRBG_STRENGTH;
+    }
 #endif
     /*
      * On VMS, setbuf() will only take 32-bit pointers, and a compilation
@@ -124,9 +138,9 @@ int RAND_load_file(const char *file, long bytes)
 
     for ( ; ; ) {
         if (bytes > 0)
-            n = (bytes < RAND_FILE_SIZE) ? (int)bytes : RAND_FILE_SIZE;
+            n = (bytes <= RAND_LOAD_BUF_SIZE) ? (int)bytes : RAND_BUF_SIZE;
         else
-            n = RAND_FILE_SIZE;
+            n = RAND_LOAD_BUF_SIZE;
         i = fread(buf, 1, n, in);
 #ifdef EINTR
         if (ferror(in) && errno == EINTR){
@@ -148,12 +162,18 @@ int RAND_load_file(const char *file, long bytes)
 
     OPENSSL_cleanse(buf, sizeof(buf));
     fclose(in);
+    if (!RAND_status()) {
+        RANDerr(RAND_F_RAND_LOAD_FILE, RAND_R_RESEED_ERROR);
+        ERR_add_error_data(2, "Filename=", file);
+        return -1;
+    }
+
     return ret;
 }
 
 int RAND_write_file(const char *file)
 {
-    unsigned char buf[RAND_FILE_SIZE];
+    unsigned char buf[RAND_BUF_SIZE];
     int ret = -1;
     FILE *out = NULL;
 #ifndef OPENSSL_NO_POSIX_IO
@@ -222,9 +242,9 @@ int RAND_write_file(const char *file)
     chmod(file, 0600);
 #endif
 
-    ret = fwrite(buf, 1, RAND_FILE_SIZE, out);
+    ret = fwrite(buf, 1, RAND_BUF_SIZE, out);
     fclose(out);
-    OPENSSL_cleanse(buf, RAND_FILE_SIZE);
+    OPENSSL_cleanse(buf, RAND_BUF_SIZE);
     return ret;
 }
 
@@ -262,11 +282,9 @@ const char *RAND_file_name(char *buf, size_t size)
         }
     }
 #else
-    if (OPENSSL_issetugid() != 0) {
+    if ((s = ossl_safe_getenv("RANDFILE")) == NULL || *s == '\0') {
         use_randfile = 0;
-    } else if ((s = getenv("RANDFILE")) == NULL || *s == '\0') {
-        use_randfile = 0;
-        s = getenv("HOME");
+        s = ossl_safe_getenv("HOME");
     }
 #endif
 

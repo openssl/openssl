@@ -6,19 +6,24 @@ EVP_des_cbc,
 EVP_des_cfb,
 EVP_des_cfb1,
 EVP_des_cfb8,
+EVP_des_cfb64,
 EVP_des_ecb,
-EVP_des_ede,
-EVP_des_ede_cfb,
-EVP_des_ede_ofb,
 EVP_des_ofb,
+EVP_des_ede,
+EVP_des_ede_cbc,
+EVP_des_ede_cfb,
+EVP_des_ede_cfb64,
+EVP_des_ede_ecb,
+EVP_des_ede_ofb,
 EVP_des_ede3,
 EVP_des_ede3_cbc,
 EVP_des_ede3_cfb,
 EVP_des_ede3_cfb1,
 EVP_des_ede3_cfb8,
+EVP_des_ede3_cfb64,
+EVP_des_ede3_ecb,
 EVP_des_ede3_ofb,
-EVP_des_ede3_wrap,
-EVP_des_ede_cbc
+EVP_des_ede3_wrap
 - EVP DES cipher
 
 =head1 SYNOPSIS
@@ -43,27 +48,32 @@ EVP_des_ecb(),
 EVP_des_cfb(),
 EVP_des_cfb1(),
 EVP_des_cfb8(),
+EVP_des_cfb64(),
 EVP_des_ofb()
 
-DES in CBC, ECB, CFB with 128-bit shift, CFB with 1-bit shift, CFB with 8-bit
-shift and OFB modes respectively.
+DES in CBC, ECB, CFB with 64-bit shift, CFB with 1-bit shift, CFB with 8-bit
+shift and OFB modes.
 
 =item EVP_des_ede(),
 EVP_des_ede_cbc(),
-EVP_des_ede_ofb(),
-EVP_des_ede_cfb()
+EVP_des_ede_cfb(),
+EVP_des_ede_cfb64(),
+EVP_des_ede_ecb(),
+EVP_des_ede_ofb()
 
-Two key triple DES in ECB, CBC, CFB and OFB modes respectively.
+Two key triple DES in ECB, CBC, CFB with 64-bit shift and OFB modes.
 
 =item EVP_des_ede3(),
 EVP_des_ede3_cbc(),
 EVP_des_ede3_cfb(),
 EVP_des_ede3_cfb1(),
 EVP_des_ede3_cfb8(),
+EVP_des_ede3_cfb64(),
+EVP_des_ede3_ecb(),
 EVP_des_ede3_ofb()
 
-Three-key triple DES in ECB, CBC, CFB with 128-bit shift, CFB with 1-bit shift,
-CFB with 8-bit shift and OFB modes respectively.
+Three-key triple DES in ECB, CBC, CFB with 64-bit shift, CFB with 1-bit shift,
+CFB with 8-bit shift and OFB modes.
 
 =item EVP_des_ede3_wrap()
 
@@ -85,7 +95,7 @@ L<EVP_CIPHER_meth_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

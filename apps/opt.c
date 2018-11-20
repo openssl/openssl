@@ -168,7 +168,6 @@ static OPT_PAIR formats[] = {
     {"smime", OPT_FMT_SMIME},
     {"engine", OPT_FMT_ENGINE},
     {"msblob", OPT_FMT_MSBLOB},
-    {"netscape", OPT_FMT_NETSCAPE},
     {"nss", OPT_FMT_NSS},
     {"text", OPT_FMT_TEXT},
     {"http", OPT_FMT_HTTP},

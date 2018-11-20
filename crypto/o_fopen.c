@@ -25,14 +25,12 @@
 #  endif
 # endif
 
+#include "e_os.h"
 #include "internal/cryptlib.h"
 
 #if !defined(OPENSSL_NO_STDIO)
 
 # include <stdio.h>
-# ifdef _WIN32
-#  include <windows.h>
-# endif
 # ifdef __DJGPP__
 #  include <unistd.h>
 # endif

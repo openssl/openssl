@@ -614,8 +614,8 @@
                                    Windows, and as a comma separated list of
                                    libraries on VMS.
                    RANLIB          The library archive indexer.
-                   RC              The Windows resources manipulator.
-                   RCFLAGS         Flags for the Windows reources manipulator.
+                   RC              The Windows resource compiler.
+                   RCFLAGS         Flags for the Windows resource compiler.
                    RM              The command to remove files and directories.
 
                    These cannot be mixed with compiling / linking flags given
@@ -969,7 +969,7 @@
 
  BUILDFILE
                 Use a different build file name than the platform default
-                ("Makefile" on Unixly platforms, "makefile" on native Windows,
+                ("Makefile" on Unix-like platforms, "makefile" on native Windows,
                 "descrip.mms" on OpenVMS).  This requires that there is a
                 corresponding build file template.  See Configurations/README
                 for further information.
@@ -1171,7 +1171,7 @@
  part of the file name, i.e. for OpenSSL 1.1.x, 1.1 is somehow part of
  the name.
 
- On most POSIXly platforms, shared libraries are named libcrypto.so.1.1
+ On most POSIX platforms, shared libraries are named libcrypto.so.1.1
  and libssl.so.1.1.
 
  on Cygwin, shared libraries are named cygcrypto-1.1.dll and cygssl-1.1.dll
@@ -1202,7 +1202,7 @@
  The seeding method can be configured using the --with-rand-seed option,
  which can be used to specify a comma separated list of seed methods.
  However in most cases OpenSSL will choose a suitable default method,
- so it is not necessary to explicitely provide this option. Note also
+ so it is not necessary to explicitly provide this option. Note also
  that not all methods are available on all platforms.
 
  I) On operating systems which provide a suitable randomness source (in
