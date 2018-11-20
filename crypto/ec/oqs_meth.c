@@ -13,7 +13,8 @@
 /* OQS note:
    In addition to post-quantum (PQ) signatures; we also support classical/PQ hybrids. In that case, a classical and a PQ signature
    are generated on the same data, and the resulting signatures are concatenated; the classical and PQ keys are also concatenated
-   when serialized. The signed data is first hashed using SHA256 before being signed by the classical algorithm (which can't support
+   when serialized. The signed data is first hashed using the SHA-2 hash function matching the security level of the OQS scheme
+   (SHA256 for L1, SHA384 for L2/L3, SHA512 for L4/L5) before being signed by the classical algorithm (which can't support
    arbitrarily long messages), and is passed directly to the OQS signature API. The hybrid scheme is identified as a new combo
    scheme with a unique NID. Currently, ECDSA-p256 and RSA3072 hybrids are supported with L1 OQS schemes, and ECDSA-p384 hybrids
    are supported with L3 schemes. The public and private keys are also concatenated when serialized. Encoding of artefacts (keys
@@ -947,7 +948,8 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
 
     if (is_hybrid) {
       uint32_t actual_classical_sig_len = 0;
-      unsigned char sha256_digest[SHA256_DIGEST_LENGTH];
+      int digest_len;
+      unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
 
       if ((classical_ctx_sign = EVP_PKEY_CTX_new(oqs_key->classical_pkey, NULL)) == NULL ||
 	  EVP_PKEY_sign_init(classical_ctx_sign) <= 0) {
@@ -962,8 +964,24 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
       }
 
       /* classical schemes can't sign arbitrarily large data; we hash it first */
-      SHA256(tbs, tbslen, &sha256_digest);
-      if (EVP_PKEY_sign(classical_ctx_sign, sig + SIZE_OF_UINT32, &actual_classical_sig_len, sha256_digest, SHA256_DIGEST_LENGTH) <= 0) {
+      switch (oqs_key->s->claimed_nist_level) {
+      case 1:
+	digest_len = SHA256_DIGEST_LENGTH;
+	SHA256(tbs, tbslen, (unsigned char*) &digest);
+	break;
+      case 2:
+      case 3:
+	digest_len = SHA384_DIGEST_LENGTH;
+	SHA384(tbs, tbslen, (unsigned char*) &digest);
+	break;
+      case 4:
+      case 5:
+      default:
+	digest_len = SHA512_DIGEST_LENGTH;
+	SHA512(tbs, tbslen, (unsigned char*) &digest);
+	break;
+      }
+      if (EVP_PKEY_sign(classical_ctx_sign, sig + SIZE_OF_UINT32, &actual_classical_sig_len, digest, digest_len) <= 0) {
         OQSerr(0, ERR_R_FATAL);
         goto end;
       }
@@ -1015,7 +1033,8 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (is_hybrid) {
       EVP_PKEY_CTX *ctx_verify = NULL;
       int actual_classical_sig_len = 0;
-      unsigned char sha256_digest[SHA256_DIGEST_LENGTH];
+      int digest_len;
+      unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
 
       if ((ctx_verify = EVP_PKEY_CTX_new(oqs_key->classical_pkey, NULL)) == NULL ||
 	  EVP_PKEY_verify_init(ctx_verify) <= 0) {
@@ -1032,8 +1051,24 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
       }
       DECODE_UINT32(actual_classical_sig_len, sig);
       /* classical schemes can't sign arbitrarily large data; we hash it first */
-      SHA256(tbs, tbslen, &sha256_digest);
-      if (EVP_PKEY_verify(ctx_verify, sig + SIZE_OF_UINT32, actual_classical_sig_len, sha256_digest, SHA256_DIGEST_LENGTH) <= 0) {
+      switch (oqs_key->s->claimed_nist_level) {
+      case 1:
+	digest_len = SHA256_DIGEST_LENGTH;
+	SHA256(tbs, tbslen, (unsigned char*) &digest);
+	break;
+      case 2:
+      case 3:
+	digest_len = SHA384_DIGEST_LENGTH;
+	SHA384(tbs, tbslen, (unsigned char*) &digest);
+	break;
+      case 4:
+      case 5:
+      default:
+	digest_len = SHA512_DIGEST_LENGTH;
+	SHA512(tbs, tbslen, (unsigned char*) &digest);
+	break;
+      }
+      if (EVP_PKEY_verify(ctx_verify, sig + SIZE_OF_UINT32, actual_classical_sig_len, digest, digest_len) <= 0) {
 	OQSerr(0, ERR_R_FATAL);
 	return 0;
       }
