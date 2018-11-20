@@ -180,6 +180,13 @@ ex_data.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 ex_data.o: ex_data.c
 fips_ers.o: ../include/openssl/opensslconf.h fips_ers.c
+getenv.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
+getenv.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+getenv.o: ../include/openssl/err.h ../include/openssl/lhash.h
+getenv.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+getenv.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+getenv.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
+getenv.o: getenv.c
 mem.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
