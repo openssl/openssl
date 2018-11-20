@@ -177,12 +177,6 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_nodelete)
 
 static CRYPTO_ONCE load_crypto_strings = CRYPTO_ONCE_STATIC_INIT;
 static int load_crypto_strings_inited = 0;
-DEFINE_RUN_ONCE_STATIC(ossl_init_no_load_crypto_strings)
-{
-    /* Do nothing in this case */
-    return 1;
-}
-
 DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
 {
     int ret = 1;
@@ -201,6 +195,13 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_crypto_strings)
     return ret;
 }
 
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_load_crypto_strings,
+                           ossl_init_load_crypto_strings)
+{
+    /* Do nothing in this case */
+    return 1;
+}
+
 static CRYPTO_ONCE add_all_ciphers = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_ciphers)
 {
@@ -215,6 +216,13 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_ciphers)
 # endif
     openssl_add_all_ciphers_int();
 #endif
+    return 1;
+}
+
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_ciphers,
+                           ossl_init_add_all_ciphers)
+{
+    /* Do nothing */
     return 1;
 }
 
@@ -235,7 +243,8 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_add_all_digests)
     return 1;
 }
 
-DEFINE_RUN_ONCE_STATIC(ossl_init_no_add_algs)
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_digests,
+                           ossl_init_add_all_digests)
 {
     /* Do nothing */
     return 1;
@@ -255,7 +264,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_config)
     config_inited = 1;
     return 1;
 }
-DEFINE_RUN_ONCE_STATIC(ossl_init_no_config)
+DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_config, ossl_init_config)
 {
 #ifdef OPENSSL_INIT_DEBUG
     fprintf(stderr,
@@ -595,8 +604,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
-            && !RUN_ONCE(&load_crypto_strings,
-                         ossl_init_no_load_crypto_strings))
+            && !RUN_ONCE_ALT(&load_crypto_strings,
+                             ossl_init_no_load_crypto_strings,
+                             ossl_init_load_crypto_strings))
         return 0;
 
     if ((opts & OPENSSL_INIT_LOAD_CRYPTO_STRINGS)
@@ -604,7 +614,8 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_ADD_ALL_CIPHERS)
-            && !RUN_ONCE(&add_all_ciphers, ossl_init_no_add_algs))
+            && !RUN_ONCE_ALT(&add_all_ciphers, ossl_init_no_add_all_ciphers,
+                             ossl_init_add_all_ciphers))
         return 0;
 
     if ((opts & OPENSSL_INIT_ADD_ALL_CIPHERS)
@@ -612,7 +623,8 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_ADD_ALL_DIGESTS)
-            && !RUN_ONCE(&add_all_digests, ossl_init_no_add_algs))
+            && !RUN_ONCE_ALT(&add_all_digests, ossl_init_no_add_all_digests,
+                             ossl_init_add_all_digests))
         return 0;
 
     if ((opts & OPENSSL_INIT_ADD_ALL_DIGESTS)
@@ -624,7 +636,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG)
-            && !RUN_ONCE(&config, ossl_init_no_config))
+            && !RUN_ONCE_ALT(&config, ossl_init_no_config, ossl_init_config))
         return 0;
 
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
