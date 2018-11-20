@@ -19,9 +19,8 @@
    are supported with L3 schemes. The public and private keys are also concatenated when serialized. Encoding of artefacts (keys
    and signatures) are as follow:
    - classical_artefact_length: 4 bytes encoding the size of the classical artefact
-   - classical_artefact: X bytes encoding the classical artefact of actual length classical_artefact_length; X is the maximum size the artefact
-                         can take depending on the scheme. classical_artefact_length <= X, and gap bytes (if any) are 0-filled.
-   - oqs_artefact: the post-quantum artefact, of length determined by the OQS signature context.
+   - classical_artefact: the classical artefact of length classical_artefact_length
+   - oqs_artefact: the post-quantum artefact, of length determined by the OQS signature context
 */
 
 #include <stdio.h>
@@ -343,7 +342,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
     const OQS_KEY *oqs_key = (OQS_KEY*) pkey->pkey.ptr;
     unsigned char *penc;
-    uint32_t pubkey_len, classical_pubkey_len, index = 0;
+    uint32_t pubkey_len = 0, classical_pubkey_len = 0, index = 0;
     if (!oqs_key || !oqs_key->s || !oqs_key->pubkey ) {
       OQSerr(0, ERR_R_FATAL);
       return 0;
@@ -353,10 +352,9 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     /* determine the length of the key */
     pubkey_len = oqs_key->s->length_public_key;
     if (is_hybrid) {
-      classical_pubkey_len = SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(oqs_key->nid));
-      pubkey_len += classical_pubkey_len;
+      pubkey_len += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(oqs_key->nid)));
     }
-    penc = OPENSSL_zalloc(pubkey_len);
+    penc = OPENSSL_malloc(pubkey_len);
     if (penc == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       return 0;
@@ -372,11 +370,15 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 0;
       }
       ENCODE_UINT32(penc, actual_classical_pubkey_len);
+      classical_pubkey_len = SIZE_OF_UINT32 + actual_classical_pubkey_len;
       index += classical_pubkey_len;
     }
 
     /* encode the pqc public key */
     memcpy(penc + index, oqs_key->pubkey, oqs_key->s->length_public_key);
+
+    /* recalculate pub key len using actual classical key len */
+    pubkey_len = classical_pubkey_len + oqs_key->s->length_public_key;
 
     if (!X509_PUBKEY_set0_param(pk, OBJ_nid2obj(pkey->ameth->pkey_id),
                                 V_ASN1_UNDEF, NULL, penc, pubkey_len)) {
@@ -390,7 +392,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
     const unsigned char *p;
-    int pklen, expected_pubkey_len, classical_pubkey_len;
+    int pklen, max_pubkey_len;
     X509_ALGOR *palg;
     OQS_KEY *oqs_key = NULL;
     int id = pkey->ameth->pkey_id;
@@ -402,7 +404,7 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     }
     if (p == NULL) {
       /* pklen is checked below, after we instantiate the oqs_key to
-	 learn the expected len */
+	 learn the max len */
       OQSerr(0, ERR_R_FATAL);
       return 0;
     }
@@ -423,13 +425,12 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
       return 0;
     }
     
-    expected_pubkey_len = oqs_key->s->length_public_key;
+    max_pubkey_len = oqs_key->s->length_public_key;
     if (is_hybrid) {
-      classical_pubkey_len = SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(id));
-      expected_pubkey_len += classical_pubkey_len;
+      max_pubkey_len += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(id)));
     }
 
-    if (pklen != expected_pubkey_len) {
+    if (pklen > max_pubkey_len) {
       OQSerr(0, ERR_R_FATAL);
       goto err;
     }
@@ -452,7 +453,8 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	  goto err;
 	}
       }
-      index += classical_pubkey_len;
+
+      index += (SIZE_OF_UINT32 + actual_classical_pubkey_len);
     }
     /* decode PQC public key */
     memcpy(oqs_key->pubkey, p + index, oqs_key->s->length_public_key);
@@ -489,7 +491,7 @@ static int oqs_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
     const unsigned char *p;
-    int plen, expected_privkey_len, classical_privkey_len;
+    int plen, max_privkey_len;
     ASN1_OCTET_STRING *oct = NULL;
     const X509_ALGOR *palg;
     OQS_KEY *oqs_key = NULL;
@@ -526,13 +528,12 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
       return 0;
     }
 
-    expected_privkey_len = oqs_key->s->length_secret_key + oqs_key->s->length_public_key;
+    max_privkey_len = oqs_key->s->length_secret_key + oqs_key->s->length_public_key;
     if (is_hybrid) {
-      classical_privkey_len = SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid));
-      expected_privkey_len += (classical_privkey_len); 
+      max_privkey_len += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid)));
     }
 
-    if (plen != expected_privkey_len) {
+    if (plen > max_privkey_len) {
       OQSerr(0, ERR_R_FATAL);
       goto err;
     }
@@ -555,7 +556,7 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 	  goto err;
 	}
       }
-      index += classical_privkey_len;
+      index += (SIZE_OF_UINT32 + actual_classical_privkey_len);
     }
     /* decode private key */
     memcpy(oqs_key->privkey, p + index, oqs_key->s->length_secret_key);
@@ -579,7 +580,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     const OQS_KEY *oqs_key = (OQS_KEY*) pkey->pkey.ptr;
     ASN1_OCTET_STRING oct;
     unsigned char *buf = NULL, *penc = NULL;
-    uint32_t classical_privkey_len;
+    uint32_t classical_privkey_len = 0;
     int buflen, penclen, index = 0;
     int rv = 0;
 
@@ -592,10 +593,9 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     /* determine the length of key */
     buflen = oqs_key->s->length_secret_key + oqs_key->s->length_public_key;
     if (is_hybrid) {
-      classical_privkey_len = SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid));
-      buflen += classical_privkey_len;
+      buflen += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid)));
     }
-    buf = OPENSSL_secure_zalloc(buflen);
+    buf = OPENSSL_secure_malloc(buflen);
     if (buf == NULL) {
       OQSerr(0, ERR_R_MALLOC_FAILURE);
       return rv;
@@ -610,6 +610,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         goto end;
       }
       ENCODE_UINT32(buf, actual_classical_privkey_len);
+      classical_privkey_len = SIZE_OF_UINT32 + actual_classical_privkey_len;
       index += classical_privkey_len;
     }
 
@@ -619,6 +620,9 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
     /* encode the pqc public key */
     memcpy(buf + index, oqs_key->pubkey, oqs_key->s->length_public_key);
+
+    /* recalculate pub key len using acutal classical len */
+    buflen = classical_privkey_len + oqs_key->s->length_secret_key + oqs_key->s->length_public_key;
 
     oct.data = buf;
     oct.length = buflen;
@@ -917,7 +921,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     EVP_PKEY_CTX *classical_ctx_sign = NULL;
     int is_hybrid = is_oqs_hybrid_alg(oqs_key->nid);
     int classical_id = 0;
-    int expected_sig_len = oqs_key->s->length_signature;
+    int max_sig_len = oqs_key->s->length_signature;
     int classical_sig_len = 0, oqs_sig_len = 0;
     int index = 0;
     int rv = 0;
@@ -928,22 +932,21 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     }
     if (is_hybrid) {
       classical_id = get_classical_nid(oqs_key->nid);
-      classical_sig_len = SIZE_OF_UINT32 + get_classical_sig_len(classical_id);
-      expected_sig_len += classical_sig_len;
+      max_sig_len += (SIZE_OF_UINT32 + get_classical_sig_len(classical_id));
     }
 
     if (sig == NULL) {
       /* we only return the sig len */
-      *siglen = expected_sig_len;
+      *siglen = max_sig_len;
       return 1;
     }
-    if (*siglen < expected_sig_len) {
+    if (*siglen < max_sig_len) {
         OQSerr(0, ERR_R_FATAL);
         return rv;
     }
 
     if (is_hybrid) {
-      uint32_t actual_classical_sig_len = classical_sig_len;
+      uint32_t actual_classical_sig_len = 0;
       unsigned char sha256_digest[SHA256_DIGEST_LENGTH];
 
       if ((classical_ctx_sign = EVP_PKEY_CTX_new(oqs_key->classical_pkey, NULL)) == NULL ||
@@ -964,19 +967,13 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
         OQSerr(0, ERR_R_FATAL);
         goto end;
       }
-      if (actual_classical_sig_len > classical_sig_len) {
+      if (actual_classical_sig_len > get_classical_sig_len(classical_id)) {
 	/* sig is bigger than expected! */
         OQSerr(0, ERR_R_FATAL);
         goto end;
-      } else {
-	/* we might have a few unused bytes between the classical sig and the post-quantum one;
-	   we fill the gap with 0s */
-	for (int i = 0; i < (classical_sig_len - actual_classical_sig_len); i++) {
-	  sig[SIZE_OF_UINT32 + actual_classical_sig_len + i] = 0;
-	}
       }
       ENCODE_UINT32(sig, actual_classical_sig_len);
-      /* we use a constant sig len for the classical alg */
+      classical_sig_len = SIZE_OF_UINT32 + actual_classical_sig_len;
       index += classical_sig_len;
     }
 
@@ -1002,7 +999,6 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
     const OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
     int is_hybrid = is_oqs_hybrid_alg(oqs_key->nid);
     int classical_id = 0;
-    int expected_sig_len = oqs_key->s->length_signature;
     int classical_sig_len = 0;
     int index = 0;
 
@@ -1014,8 +1010,6 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
     if (is_hybrid) {
       classical_id = get_classical_nid(oqs_key->nid);
-      classical_sig_len = SIZE_OF_UINT32 + get_classical_sig_len(classical_id);
-      expected_sig_len += classical_sig_len;
     }
 
     if (is_hybrid) {
@@ -1043,7 +1037,8 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 	OQSerr(0, ERR_R_FATAL);
 	return 0;
       }
-      index += classical_sig_len; /* there might be (classical_sig_len - actual_classical_sig_len) 0 bytes between the classical and PQC sig */
+      classical_sig_len = SIZE_OF_UINT32 + actual_classical_sig_len;
+      index += classical_sig_len;
       EVP_PKEY_CTX_free(ctx_verify);
     }
 
