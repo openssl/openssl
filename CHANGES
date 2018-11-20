@@ -9,6 +9,26 @@
 
  Changes between 1.1.0i and 1.1.0j [xx XXX xxxx]
 
+  *) Timing vulnerability in DSA signature generation
+
+     The OpenSSL DSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
+     (CVE-2018-0734)
+     [Paul Dale]
+
+  *) Timing vulnerability in ECDSA signature generation
+
+     The OpenSSL ECDSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
+     (CVE-2018-0735)
+     [Paul Dale]
+
   *) Add coordinate blinding for EC_POINT and implement projective
      coordinate blinding for generic prime curves as a countermeasure to
      chosen point SCA attacks.
