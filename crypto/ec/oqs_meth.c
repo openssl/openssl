@@ -1047,7 +1047,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
       EVP_PKEY_CTX_free(ctx_verify);
     }
 
-    if (OQS_SIG_verify(oqs_key->s, tbs, tbslen, sig + index, oqs_key->s->length_signature, oqs_key->pubkey) != OQS_SUCCESS) {
+    if (OQS_SIG_verify(oqs_key->s, tbs, tbslen, sig + index, siglen - classical_sig_len, oqs_key->pubkey) != OQS_SUCCESS) {
       OQSerr(0, ERR_R_FATAL);
       return 0;
     }
