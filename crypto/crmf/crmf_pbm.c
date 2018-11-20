@@ -129,7 +129,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     const EVP_MD *m = NULL;
     EVP_MD_CTX *ctx = NULL;
     unsigned char basekey[EVP_MAX_MD_SIZE];
-    unsigned int bklen;
+    unsigned int bklen = EVP_MAX_MD_SIZE;
     int64_t iterations;
     int error = CRMF_R_CRMFERROR;
 
@@ -200,14 +200,17 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         error = CRMF_R_UNSUPPORTED_ALGORITHM;
         goto err;
     }
-    HMAC(m, basekey, bklen, msg, msglen, *mac, maclen);
+    if (HMAC(m, basekey, bklen, msg, msglen, *mac, maclen) != NULL)
+        error = 0;
 
+ err:
     /* cleanup */
     OPENSSL_cleanse(basekey, bklen);
     EVP_MD_CTX_destroy(ctx);
 
-    return 1;
- err:
+    if (error == 0)
+        return 1;
+
     if (mac != NULL && *mac != NULL) {
         OPENSSL_free(*mac);
         *mac = NULL;
