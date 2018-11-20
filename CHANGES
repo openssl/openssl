@@ -55,7 +55,27 @@
      list of built in objects, i.e. OIDs with names.
      [Richard Levitte]
 
- Changes between 1.1.1 and 1.1.1a [xx XXX xxxx]
+ Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
+
+  *) Timing vulnerability in DSA signature generation
+
+     The OpenSSL DSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
+     (CVE-2018-0734)
+     [Paul Dale]
+
+  *) Timing vulnerability in ECDSA signature generation
+
+     The OpenSSL ECDSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
+     (CVE-2018-0735)
+     [Paul Dale]
 
   *) Fixed the issue that RAND_add()/RAND_seed() silently discards random input
      if its length exceeds 4096 bytes. The limit has been raised to a buffer size
