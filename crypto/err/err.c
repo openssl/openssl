@@ -21,6 +21,7 @@
 #include "internal/thread_once.h"
 #include "internal/ctype.h"
 #include "internal/constant_time_locl.h"
+#include "e_os.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -206,6 +207,7 @@ static void build_SYS_str_reasons(void)
     size_t cnt = 0;
     static int init = 1;
     int i;
+    int saveerrno = get_last_sys_error();
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     if (!init) {
@@ -251,6 +253,8 @@ static void build_SYS_str_reasons(void)
     init = 0;
 
     CRYPTO_THREAD_unlock(err_string_lock);
+    /* openssl_strerror_r could change errno, but we want to preserve it */
+    set_sys_error(saveerrno);
     err_load_strings(SYS_str_reasons);
 }
 #endif
