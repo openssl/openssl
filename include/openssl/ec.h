@@ -1107,6 +1107,11 @@ const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
 int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
 
+/** The old name for ecdh_KDF_X9_63
+ *  The ECDH KDF specification has been mistakingly attributed to ANSI X9.62,
+ *  it is actually specified in ANSI X9.63.
+ *  This identifier is retained for backwards compatibility
+ */
 int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
@@ -1457,7 +1462,13 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 # define EVP_PKEY_CTRL_GET1_ID_LEN                       (EVP_PKEY_ALG_CTRL + 13)
 /* KDF types */
 # define EVP_PKEY_ECDH_KDF_NONE                          1
-# define EVP_PKEY_ECDH_KDF_X9_62                         2
+# define EVP_PKEY_ECDH_KDF_X9_63                         2
+/** The old name for EVP_PKEY_ECDH_KDF_X9_63
+ *  The ECDH KDF specification has been mistakingly attributed to ANSI X9.62,
+ *  it is actually specified in ANSI X9.63.
+ *  This identifier is retained for backwards compatibility
+ */
+# define EVP_PKEY_ECDH_KDF_X9_62   EVP_PKEY_ECDH_KDF_X9_63
 
 
 #  ifdef  __cplusplus

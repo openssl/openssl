@@ -510,7 +510,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
       return 1;
     }
     /* ------------- end oqs */
-    if (!SSL_get_server_tmp_key(s, &key))
+    if (!SSL_get_peer_tmp_key(s, &key))
         return 1;
     int nid_key = EVP_PKEY_id(key);
     BIO_puts(out, "Server Temp Key: ");

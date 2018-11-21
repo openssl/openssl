@@ -836,7 +836,11 @@ struct ssl_method_st {
     long (*ssl_ctx_callback_ctrl) (SSL_CTX *s, int cb_id, void (*fp) (void));
 };
 
-# define TLS13_MAX_RESUMPTION_PSK_LENGTH      64
+/*
+ * Matches the length of PSK_MAX_PSK_LEN. We keep it the same value for
+ * consistency, even in the event of OPENSSL_NO_PSK being defined.
+ */
+# define TLS13_MAX_RESUMPTION_PSK_LENGTH      256
 
 /*-
  * Lets make this into an ASN.1 type structure as follows
@@ -1215,9 +1219,11 @@ struct ssl_ctx_st {
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for
-     * earlier versions.
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
      */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1594,8 +1600,14 @@ struct ssl_st {
     long verify_result;
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
-    /* for server side, keep the list of CA_dn we can use */
+    /*
+     * What we put in certificate_authorities extension for TLS 1.3
+     * (ClientHello and CertificateRequest) or just client cert requests for
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
+     */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;
@@ -2632,7 +2644,6 @@ __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
-__owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const char *str);
 __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                                     STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
                                                     STACK_OF(SSL_CIPHER) **cipher_list,
@@ -2942,6 +2953,9 @@ __owur int tls1_process_sigalgs(SSL *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
+#  ifndef OPENSSL_NO_EC
+__owur int tls_check_sigalg_curve(const SSL *s, int curve);
+#  endif
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int echde);

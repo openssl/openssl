@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -188,6 +188,8 @@ typedef struct record_layer_st {
                                                 ((rl)->d->processed_rcds)
 #define DTLS_RECORD_LAYER_get_unprocessed_rcds(rl) \
                                                 ((rl)->d->unprocessed_rcds)
+#define RECORD_LAYER_get_rbuf(rl)               (&(rl)->rbuf)
+#define RECORD_LAYER_get_wbuf(rl)               ((rl)->wbuf)
 
 void RECORD_LAYER_init(RECORD_LAYER *rl, SSL *s);
 void RECORD_LAYER_clear(RECORD_LAYER *rl);
@@ -230,3 +232,5 @@ __owur int dtls1_write_bytes(SSL *s, int type, const void *buf, size_t len,
 int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
                    size_t len, int create_empty_fragment, size_t *written);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
+int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq,
+                              size_t off);

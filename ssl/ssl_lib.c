@@ -654,6 +654,10 @@ int SSL_CTX_set_ssl_version(SSL_CTX *ctx, const SSL_METHOD *meth)
 
     ctx->method = meth;
 
+    if (!SSL_CTX_set_ciphersuites(ctx, TLS_DEFAULT_CIPHERSUITES)) {
+        SSLerr(SSL_F_SSL_CTX_SET_SSL_VERSION, SSL_R_SSL_LIBRARY_HAS_NO_CIPHERS);
+        return 0;
+    }
     sk = ssl_create_cipher_list(ctx->method,
                                 ctx->tls13_ciphersuites,
                                 &(ctx->cipher_list),
@@ -1192,6 +1196,7 @@ void SSL_free(SSL *s)
     EVP_MD_CTX_free(s->pha_dgst);
 
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->client_ca_names, X509_NAME_free);
 
     sk_X509_pop_free(s->verified_chain, X509_free);
 
@@ -2951,6 +2956,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL)
         goto err;
 
+    if ((ret->client_ca_names = sk_X509_NAME_new_null()) == NULL)
+        goto err;
+
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
         goto err;
 
@@ -3108,6 +3116,7 @@ void SSL_CTX_free(SSL_CTX *a)
     sk_SSL_CIPHER_free(a->tls13_ciphersuites);
     ssl_cert_free(a->cert);
     sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(a->client_ca_names, X509_NAME_free);
     sk_X509_pop_free(a->extra_certs, X509_free);
     a->comp_methods = NULL;
 #ifndef OPENSSL_NO_SRTP
@@ -3655,10 +3664,38 @@ const char *SSL_get_version(const SSL *s)
     return ssl_protocol_to_string(s->version);
 }
 
-SSL *SSL_dup(SSL *s)
+static int dup_ca_names(STACK_OF(X509_NAME) **dst, STACK_OF(X509_NAME) *src)
 {
     STACK_OF(X509_NAME) *sk;
     X509_NAME *xn;
+    int i;
+
+    if (src == NULL) {
+        *dst = NULL;
+        return 1;
+    }
+
+    if ((sk = sk_X509_NAME_new_null()) == NULL)
+        return 0;
+    for (i = 0; i < sk_X509_NAME_num(src); i++) {
+        xn = X509_NAME_dup(sk_X509_NAME_value(src, i));
+        if (xn == NULL) {
+            sk_X509_NAME_pop_free(sk, X509_NAME_free);
+            return 0;
+        }
+        if (sk_X509_NAME_insert(sk, xn, i) == 0) {
+            X509_NAME_free(xn);
+            sk_X509_NAME_pop_free(sk, X509_NAME_free);
+            return 0;
+        }
+    }
+    *dst = sk;
+
+    return 1;
+}
+
+SSL *SSL_dup(SSL *s)
+{
     SSL *ret;
     int i;
 
@@ -3763,18 +3800,10 @@ SSL *SSL_dup(SSL *s)
             goto err;
 
     /* Dup the client_CA list */
-    if (s->ca_names != NULL) {
-        if ((sk = sk_X509_NAME_dup(s->ca_names)) == NULL)
-            goto err;
-        ret->ca_names = sk;
-        for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-            xn = sk_X509_NAME_value(sk, i);
-            if (sk_X509_NAME_set(sk, i, X509_NAME_dup(xn)) == NULL) {
-                X509_NAME_free(xn);
-                goto err;
-            }
-        }
-    }
+    if (!dup_ca_names(&ret->ca_names, s->ca_names)
+            || !dup_ca_names(&ret->client_ca_names, s->client_ca_names))
+        goto err;
+
     return ret;
 
  err:
@@ -5104,7 +5133,8 @@ static int nss_keylog_int(const char *prefix,
     size_t i;
     size_t prefix_len;
 
-    if (ssl->ctx->keylog_callback == NULL) return 1;
+    if (ssl->ctx->keylog_callback == NULL)
+        return 1;
 
     /*
      * Our output buffer will contain the following strings, rendered with
@@ -5115,7 +5145,7 @@ static int nss_keylog_int(const char *prefix,
      * hexadecimal, so we need a buffer that is twice their lengths.
      */
     prefix_len = strlen(prefix);
-    out_len = prefix_len + (2*parameter_1_len) + (2*parameter_2_len) + 3;
+    out_len = prefix_len + (2 * parameter_1_len) + (2 * parameter_2_len) + 3;
     if ((out = cursor = OPENSSL_malloc(out_len)) == NULL) {
         SSLfatal(ssl, SSL_AD_INTERNAL_ERROR, SSL_F_NSS_KEYLOG_INT,
                  ERR_R_MALLOC_FAILURE);
@@ -5139,7 +5169,7 @@ static int nss_keylog_int(const char *prefix,
     *cursor = '\0';
 
     ssl->ctx->keylog_callback(ssl, (const char *)out);
-    OPENSSL_free(out);
+    OPENSSL_clear_free(out, out_len);
     return 1;
 
 }

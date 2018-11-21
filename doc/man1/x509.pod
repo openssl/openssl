@@ -9,8 +9,8 @@ x509 - Certificate display and signing utility
 
 B<openssl> B<x509>
 [B<-help>]
-[B<-inform DER|PEM|NET>]
-[B<-outform DER|PEM|NET>]
+[B<-inform DER|PEM>]
+[B<-outform DER|PEM>]
 [B<-keyform DER|PEM>]
 [B<-CAform DER|PEM>]
 [B<-CAkeyform DER|PEM>]
@@ -86,16 +86,15 @@ various sections.
 
 Print out a usage message.
 
-=item B<-inform DER|PEM|NET>
+=item B<-inform DER|PEM>
 
 This specifies the input format normally the command will expect an X509
 certificate but this can change if other options such as B<-req> are
 present. The DER format is the DER encoding of the certificate and PEM
 is the base64 encoding of the DER encoding with header and footer lines
-added. The NET option is an obscure Netscape server format that is now
-obsolete. The default format is PEM.
+added. The default format is PEM.
 
-=item B<-outform DER|PEM|NET>
+=item B<-outform DER|PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.

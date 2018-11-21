@@ -15,9 +15,6 @@ use OpenSSL::Test::Utils;
 
 setup("test_rdrand_sanity");
 
-plan skip_all => "This test is unsupported in a shared library build on Windows"
-    if $^O eq 'MSWin32' && !disabled("shared");
-
 # We also need static builds to be enabled even on linux
 plan skip_all => "This test is unsupported if static builds are not enabled"
     if disabled("static");

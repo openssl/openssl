@@ -82,8 +82,11 @@ returned.
 =item B<-subject arg>
 
 Search for an object having the subject name B<arg>.
-The arg must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by \ (backslash), no spaces are skipped.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Empty values are permitted but are ignored for the search.  That is,
+a search with an empty value will have the same effect as not specifying
+the type at all.
 
 =item B<-issuer arg>
 

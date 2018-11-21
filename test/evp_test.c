@@ -73,8 +73,6 @@ static KEY_LIST *public_keys;
 static int find_key(EVP_PKEY **ppk, const char *name, KEY_LIST *lst);
 
 static int parse_bin(const char *value, unsigned char **buf, size_t *buflen);
-static int pkey_test_ctrl(EVP_TEST *t, EVP_PKEY_CTX *pctx,
-                          const char *value);
 
 /*
  * Compare two memory regions for equality, returning zero if they differ.
@@ -459,7 +457,7 @@ typedef struct cipher_data_st {
     size_t plaintext_len;
     unsigned char *ciphertext;
     size_t ciphertext_len;
-    /* GCM, CCM only */
+    /* GCM, CCM and OCB only */
     unsigned char *aad;
     size_t aad_len;
     unsigned char *tag;
@@ -487,7 +485,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     if (m == EVP_CIPH_GCM_MODE
             || m == EVP_CIPH_OCB_MODE
             || m == EVP_CIPH_CCM_MODE)
-        cdat->aead = EVP_CIPHER_mode(cipher);
+        cdat->aead = m;
     else if (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
         cdat->aead = -1;
     else
@@ -927,6 +925,28 @@ static int mac_test_parse(EVP_TEST *t,
     return 0;
 }
 
+static int mac_test_ctrl_pkey(EVP_TEST *t, EVP_PKEY_CTX *pctx,
+                              const char *value)
+{
+    int rv;
+    char *p, *tmpval;
+
+    if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
+        return 0;
+    p = strchr(tmpval, ':');
+    if (p != NULL)
+        *p++ = '\0';
+    rv = EVP_PKEY_CTX_ctrl_str(pctx, tmpval, p);
+    if (rv == -2)
+        t->err = "PKEY_CTRL_INVALID";
+    else if (rv <= 0)
+        t->err = "PKEY_CTRL_ERROR";
+    else
+        rv = 1;
+    OPENSSL_free(tmpval);
+    return rv > 0;
+}
+
 static int mac_test_run(EVP_TEST *t)
 {
     MAC_DATA *expected = t->data;
@@ -972,8 +992,9 @@ static int mac_test_run(EVP_TEST *t)
         goto err;
     }
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++)
-        if (!pkey_test_ctrl(t, pctx,
-                            sk_OPENSSL_STRING_value(expected->controls, i))) {
+        if (!mac_test_ctrl_pkey(t, pctx,
+                                sk_OPENSSL_STRING_value(expected->controls,
+                                                        i))) {
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
@@ -2614,8 +2635,8 @@ top:
                 return 0;
             }
             if (rv < 0) {
-                TEST_info("Line %d: error processing keyword %s\n",
-                        t->s.curr, pp->key);
+                TEST_info("Line %d: error processing keyword %s = %s\n",
+                          t->s.curr, pp->key, pp->value);
                 return 0;
             }
         }

@@ -4,6 +4,7 @@
 
 EVP_seed_cbc,
 EVP_seed_cfb,
+EVP_seed_cfb128,
 EVP_seed_ecb,
 EVP_seed_ofb
 - EVP SEED cipher
@@ -14,6 +15,7 @@ EVP_seed_ofb
 
  const EVP_CIPHER *EVP_seed_cbc(void)
  const EVP_CIPHER *EVP_seed_cfb(void)
+ const EVP_CIPHER *EVP_seed_cfb128(void)
  const EVP_CIPHER *EVP_seed_ecb(void)
  const EVP_CIPHER *EVP_seed_ofb(void)
 
@@ -27,6 +29,7 @@ All modes below use a key length of 128 bits and acts on blocks of 128-bits.
 
 =item EVP_seed_cbc(),
 EVP_seed_cfb(),
+EVP_seed_cfb128(),
 EVP_seed_ecb(),
 EVP_seed_ofb()
 
@@ -48,7 +51,7 @@ L<EVP_CIPHER_meth_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

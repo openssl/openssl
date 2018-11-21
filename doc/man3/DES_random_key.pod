@@ -99,7 +99,7 @@ algorithm.
 
 There are two phases to the use of DES encryption.  The first is the
 generation of a I<DES_key_schedule> from a key, the second is the
-actual encryption.  A DES key is of type I<DES_cblock>. This type is
+actual encryption.  A DES key is of type I<DES_cblock>. This type
 consists of 8 bytes with odd parity.  The least significant bit in
 each byte is the parity bit.  The key schedule is an expanded form of
 the key; it is used to speed the encryption process.
@@ -170,42 +170,42 @@ of 24 bytes.  This is much better than CBC DES.
 
 DES_ede3_cbc_encrypt() implements outer triple CBC DES encryption with
 three keys. This means that each DES operation inside the CBC mode is
-an C<C=E(ks3,D(ks2,E(ks1,M)))>.  This mode is used by SSL.
+C<C=E(ks3,D(ks2,E(ks1,M)))>.  This mode is used by SSL.
 
 The DES_ede2_cbc_encrypt() macro implements two-key Triple-DES by
 reusing I<ks1> for the final encryption.  C<C=E(ks1,D(ks2,E(ks1,M)))>.
 This form of Triple-DES is used by the RSAREF library.
 
-DES_pcbc_encrypt() encrypt/decrypts using the propagating cipher block
+DES_pcbc_encrypt() encrypts/decrypts using the propagating cipher block
 chaining mode used by Kerberos v4. Its parameters are the same as
 DES_ncbc_encrypt().
 
-DES_cfb_encrypt() encrypt/decrypts using cipher feedback mode.  This
-method takes an array of characters as input and outputs and array of
+DES_cfb_encrypt() encrypts/decrypts using cipher feedback mode.  This
+method takes an array of characters as input and outputs an array of
 characters.  It does not require any padding to 8 character groups.
 Note: the I<ivec> variable is changed and the new changed value needs to
 be passed to the next call to this function.  Since this function runs
 a complete DES ECB encryption per I<numbits>, this function is only
-suggested for use when sending small numbers of characters.
+suggested for use when sending a small number of characters.
 
 DES_cfb64_encrypt()
-implements CFB mode of DES with 64bit feedback.  Why is this
+implements CFB mode of DES with 64-bit feedback.  Why is this
 useful you ask?  Because this routine will allow you to encrypt an
-arbitrary number of bytes, no 8 byte padding.  Each call to this
+arbitrary number of bytes, without 8 byte padding.  Each call to this
 routine will encrypt the input bytes to output and then update ivec
 and num.  num contains 'how far' we are though ivec.  If this does
-not make much sense, read more about cfb mode of DES :-).
+not make much sense, read more about CFB mode of DES.
 
 DES_ede3_cfb64_encrypt() and DES_ede2_cfb64_encrypt() is the same as
 DES_cfb64_encrypt() except that Triple-DES is used.
 
 DES_ofb_encrypt() encrypts using output feedback mode.  This method
-takes an array of characters as input and outputs and array of
+takes an array of characters as input and outputs an array of
 characters.  It does not require any padding to 8 character groups.
 Note: the I<ivec> variable is changed and the new changed value needs to
 be passed to the next call to this function.  Since this function runs
-a complete DES ECB encryption per numbits, this function is only
-suggested for use when sending small numbers of characters.
+a complete DES ECB encryption per I<numbits>, this function is only
+suggested for use when sending a small number of characters.
 
 DES_ofb64_encrypt() is the same as DES_cfb64_encrypt() using Output
 Feed Back mode.
@@ -232,10 +232,10 @@ The following are DES-based transformations:
 
 DES_fcrypt() is a fast version of the Unix crypt(3) function.  This
 version takes only a small amount of space relative to other fast
-crypt() implementations.  This is different to the normal crypt in
+crypt() implementations.  This is different to the normal crypt() in
 that the third parameter is the buffer that the return value is
 written into.  It needs to be at least 14 bytes long.  This function
-is thread safe, unlike the normal crypt.
+is thread safe, unlike the normal crypt().
 
 DES_crypt() is a faster replacement for the normal system crypt().
 This function calls DES_fcrypt() with a static array passed as the

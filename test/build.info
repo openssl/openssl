@@ -26,7 +26,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   PROGRAMS_NO_INST=\
           versions \
           aborttest test_test \
-          sanitytest exdatatest bntest \
+          sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest ecdsatest gmdifftest pbelutest ideatest \
           md2test \
           hmactest \
@@ -63,6 +63,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include
   DEPEND[sanitytest]=../libcrypto libtestutil.a
+
+  SOURCE[rsa_complex]=rsa_complex.c
+  INCLUDE[rsa_complex]=../include
 
   SOURCE[test_test]=test_test.c
   INCLUDE[test_test]=../include
@@ -338,7 +341,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
 
   SOURCE[drbgtest]=drbgtest.c
   INCLUDE[drbgtest]=../include
-  DEPEND[drbgtest]=../libcrypto libtestutil.a
+  DEPEND[drbgtest]=../libcrypto.a libtestutil.a
 
   SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data.c
   INCLUDE[drbg_cavs_test]=../include . ..
@@ -431,10 +434,8 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   # available through the shared library (at least on Linux, Solaris, Windows
   # and VMS, where the exported symbols are those listed in util/*.num), these
   # programs are forcibly linked with the static libraries, where all symbols
-  # are always available.  This excludes linking these programs natively on
-  # Windows when building shared libraries, since the static libraries share
-  # names with the DLL import libraries.
-  IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
+  # are always available.
+  IF[1]
     PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdrand_sanitytest

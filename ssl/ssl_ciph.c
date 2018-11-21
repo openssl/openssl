@@ -1301,7 +1301,7 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     return 1;
 }
 
-int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const char *str)
+static __owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const char *str)
 {
     STACK_OF(SSL_CIPHER) *newciphers = sk_SSL_CIPHER_new_null();
 

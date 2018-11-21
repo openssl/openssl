@@ -2241,7 +2241,7 @@ static int s390x_aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (!cctx->aes.ccm.len_set) {
         /*-
-         * In case message length was not previously set explicitely via
+         * In case message length was not previously set explicitly via
          * Update(), set it now.
          */
         ivec = EVP_CIPHER_CTX_iv_noconst(ctx);
