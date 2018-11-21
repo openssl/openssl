@@ -221,6 +221,8 @@ static void build_SYS_str_reasons(void)
 
                 str->string = cur;
                 cnt += l;
+                if (cnt > sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool);
                 cur += l;
             }
         }
