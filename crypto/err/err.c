@@ -181,8 +181,9 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
+/* A measurement on Linux 2018-11-21 showed about 3.5kib */
+# define SPACE_SYS_STR_REASONS 4 * 1024
 # define NUM_SYS_STR_REASONS 127
-# define LEN_SYS_STR_REASON 32
 
 static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
@@ -198,7 +199,9 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 static void build_SYS_str_reasons(void)
 {
     /* OPENSSL_malloc cannot be used here, use static storage instead */
-    static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
+    static char strerror_pool[SPACE_SYS_STR_REASONS];
+    char *cur = strerror_pool;
+    size_t cnt = 0;
     static int init = 1;
     int i;
 
@@ -213,9 +216,15 @@ static void build_SYS_str_reasons(void)
 
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
-            char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-            if (openssl_strerror_r(i, *dest, sizeof(*dest)))
-                str->string = *dest;
+            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
+                size_t l = strlen(cur) + 1;
+
+                str->string = cur;
+                cnt += l;
+                if (cnt > sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool);
+                cur += l;
+            }
         }
         if (str->string == NULL)
             str->string = "unknown";
