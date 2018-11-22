@@ -34,22 +34,25 @@ plan tests => scalar @posix_errors
 foreach my $errname (@posix_errors) {
     my $errnum = "Errno::$errname"->();
 
-    next if $errnum > NUM_SYS_STR_REASONS;
+ SKIP: {
+        skip "Error $errname ($errnum) isn't within our range", 1
+            if $errnum > NUM_SYS_STR_REASONS;
 
-    my $perr = eval {
-        # Set $! to the error number...
-        local $! = $errnum;
-        # ... and $! will give you the error string back
-        $!
-    };
+        my $perr = eval {
+            # Set $! to the error number...
+            local $! = $errnum;
+            # ... and $! will give you the error string back
+            $!
+        };
 
-    # We know that the system reasons are in OpenSSL error library 2
-    my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
-                   capture => 1);
-    $oerr[0] =~ s|\R$||;
-    $oerr[0] =~ s|.*system library:||g; # The actual message is last
+        # We know that the system reasons are in OpenSSL error library 2
+        my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
+                       capture => 1);
+        $oerr[0] =~ s|\R$||;
+        $oerr[0] =~ s|.*system library:||g; # The actual message is last
 
-    ok($oerr[0] eq $perr, "($errnum) '$oerr[0]' == '$perr'");
+        ok($oerr[0] eq $perr, "($errnum) '$oerr[0]' == '$perr'");
+    }
 }
 
 my @after = run(app([ qw(openssl errstr 2000080) ]), capture => 1);
