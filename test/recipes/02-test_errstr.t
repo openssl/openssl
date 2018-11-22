@@ -12,15 +12,20 @@ use OpenSSL::Test;
 use Errno qw(:POSIX);
 use POSIX qw(strerror);
 
+# We actually have space for up to 4095 error messages,
+# numerically speaking...  but we're currently only using
+# numbers 1 through 127.
+# This constant should correspond to the same constant
+# defined in crypto/err/err.c, or at least must not be
+# assigned a greater number.
+use constant NUM_SYS_STR_REASONS => 127;
+
 setup('test_errstr');
 
 # These are POSIX error names, which Errno implements as functions
 # (this is documented)
 my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
 
-# We actually have space for up to 4095 error messages,
-# numerically speaking...  but we're currently only using
-# numbers 1 through 127.
 plan tests => scalar @posix_errors
     +1                          # Checking that error 128 gives 'reason(128)'
     +1                          # Checking that error 0 gives the library name
@@ -28,6 +33,9 @@ plan tests => scalar @posix_errors
 
 foreach my $errname (@posix_errors) {
     my $errnum = "Errno::$errname"->();
+
+    next if $errnum > NUM_SYS_STR_REASONS;
+
     my $perr = eval {
         # Set $! to the error number...
         local $! = $errnum;
