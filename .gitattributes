@@ -1,3 +1,8 @@
 *.der binary
 /fuzz/corpora/** binary
 *.pfx binary
+
+# For git archive
+fuzz/corpora/**                         export-ignore
+Configurations/*.norelease.conf         export-ignore
+.*                                      export-ignore
