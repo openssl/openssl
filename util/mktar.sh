@@ -2,17 +2,18 @@
 
 HERE=`dirname $0`
 
-VERSION=`grep 'OPENSSL_VERSION_TEXT  *"OpenSSL' $HERE/../include/openssl/opensslv.h | sed -e 's|.*"OpenSSL ||' -e 's| .*||'`
-BASENAME=openssl
+version=`grep 'OPENSSL_VERSION_TEXT  *"OpenSSL' $HERE/../include/openssl/opensslv.h | sed -e 's|.*"OpenSSL ||' -e 's| .*||'`
+basename=openssl
 
-NAME="$BASENAME-$VERSION"
+NAME="$basename-$version"
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --name=* ) NAME=`echo "$1" | sed -e 's|[^=]*=||'`   ;;
-        --name ) shift; NAME="$1"                           ;;
+        --name=* ) NAME=`echo "$1" | sed -e 's|[^=]*=||'`       ;;
+        --name ) shift; NAME="$1"                               ;;
         --tarfile=* ) TARFILE=`echo "$1" | sed -e 's|[^=]*=||'` ;;
         --tarfile ) shift; TARFILE="$1"                         ;;
+        * ) echo >&2 "Could not parse '$1'"; exit 1             ;;
     esac
     shift
 done
