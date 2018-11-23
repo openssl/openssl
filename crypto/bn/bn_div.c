@@ -109,7 +109,7 @@ BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0);
  * is responsible for ensuring that |m[-1]| is valid. Second condition that
  * has to be met is that |d0|'s most significant bit has to be set. Or in
  * other words divisor has to be "bit-aligned to the left." bn_div_fixed_top
- * does all this. The subroutine consider fourd limbs, two of which are
+ * does all this. The subroutine considers four limbs, two of which are
  * "overlapping," hence the name...
  */
 static BN_ULONG bn_div_3_words(const BN_ULONG *m, BN_ULONG d1, BN_ULONG d0)
