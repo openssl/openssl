@@ -9,7 +9,10 @@
 
  Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
 
-  *)
+  *) Remove the 'dist' target and add a tarball building script.  The
+     'dist' target has fallen out of use, and it shouldn't be
+     necessary to configure just to create a source distribution.
+     [Richard Levitte]
 
  Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
 
