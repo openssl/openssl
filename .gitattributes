@@ -6,3 +6,4 @@
 fuzz/corpora/**                         export-ignore
 Configurations/*.norelease.conf         export-ignore
 .*                                      export-ignore
+util/mktar.sh                           export-ignore
