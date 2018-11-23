@@ -5371,40 +5371,73 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
   return 1;
 }
 
+static const char allzeroes[15];
+
 int ED25519_verify(const uint8_t *message, size_t message_len,
                    const uint8_t signature[64], const uint8_t public_key[32]) {
+  int i;
   ge_p3 A;
-  uint8_t rcopy[32];
-  uint8_t scopy[32];
+  const uint8_t *r, *s;
   SHA512_CTX hash_ctx;
   ge_p2 R;
   uint8_t rcheck[32];
   uint8_t h[SHA512_DIGEST_LENGTH];
+  /* 27742317777372353535851937790883648493 in little endian format */
+  const uint8_t l_low[16] = {
+    0xED, 0xD3, 0xF5, 0x5C, 0x1A, 0x63, 0x12, 0x58, 0xD6, 0x9C, 0xF7, 0xA2,
+    0xDE, 0xF9, 0xDE, 0x14
+  };
 
-  if ((signature[63] & 224) != 0 ||
-      ge_frombytes_vartime(&A, public_key) != 0) {
+  r = signature;
+  s = signature + 32;
+
+  /*
+   * Check 0 <= s < L where L = 2^252 + 27742317777372353535851937790883648493
+   *
+   * If not the signature is publicly invalid. Since it's public we can do the
+   * check in variable time.
+   *
+   * First check the most significant byte
+   */
+  if (s[31] > 0x10)
+    return 0;
+  if (s[31] == 0x10) {
+      /*
+       * Most significant byte indicates a value close to 2^252 so check the
+       * rest
+       */
+      if (memcmp(s + 16, allzeroes, sizeof(allzeroes)) != 0)
+        return 0;
+      for (i = 15; i >= 0; i--) {
+          if (s[i] < l_low[i])
+            break;
+          if (s[i] > l_low[i])
+            return 0;
+      }
+      if (i < 0)
+        return 0;
+  }
+
+  if (ge_frombytes_vartime(&A, public_key) != 0) {
     return 0;
   }
 
   fe_neg(A.X, A.X);
   fe_neg(A.T, A.T);
 
-  memcpy(rcopy, signature, 32);
-  memcpy(scopy, signature + 32, 32);
-
   SHA512_Init(&hash_ctx);
-  SHA512_Update(&hash_ctx, signature, 32);
+  SHA512_Update(&hash_ctx, r, 32);
   SHA512_Update(&hash_ctx, public_key, 32);
   SHA512_Update(&hash_ctx, message, message_len);
   SHA512_Final(h, &hash_ctx);
 
   x25519_sc_reduce(h);
 
-  ge_double_scalarmult_vartime(&R, h, &A, scopy);
+  ge_double_scalarmult_vartime(&R, h, &A, s);
 
   ge_tobytes(rcheck, &R);
 
-  return CRYPTO_memcmp(rcheck, rcopy, sizeof(rcheck)) == 0;
+  return CRYPTO_memcmp(rcheck, r, sizeof(rcheck)) == 0;
 }
 
 void ED25519_public_from_private(uint8_t out_public_key[32],
