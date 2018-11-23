@@ -9,6 +9,7 @@
 use strict;
 no strict 'refs';               # To be able to use strings as function refs
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
 use Errno qw(:POSIX);
 use POSIX qw(strerror);
 
@@ -21,6 +22,14 @@ use POSIX qw(strerror);
 use constant NUM_SYS_STR_REASONS => 127;
 
 setup('test_errstr');
+
+# In a cross compiled situation, there are chances that our
+# application is linked against different C libraries than
+# perl, and may thereby get different error messages for the
+# same error.
+# The safest is not to test under such circumstances.
+plan skip_all => 'This is unsupported for cross compiled configurations'
+    if config('CROSS_COMPILE');
 
 # These are POSIX error names, which Errno implements as functions
 # (this is documented)
