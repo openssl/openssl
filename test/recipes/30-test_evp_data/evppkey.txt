@@ -17601,6 +17601,14 @@ Key = ED25519-1-PUBLIC-Raw
 Input = ""
 Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
 
+#Signature maleability test.
+#Same as the verify operation above but with the order added to s
+OneShotDigestVerify = NULL
+Key = ED25519-1-PUBLIC-Raw
+Input = ""
+Output = e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901554c8c7872aa064e049dbb3013fbf29380d25bf5f0595bbe24655141438e7a101b
+Result = VERIFY_ERROR
+
 Title = ED448 tests from RFC8032
 
 PrivateKey=ED448-1
