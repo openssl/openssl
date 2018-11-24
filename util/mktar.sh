@@ -30,4 +30,7 @@ if [ -z "$TARFILE" ]; then TARFILE="$NAME.tar"; fi
 git archive --worktree-attributes --format=tar --prefix="$NAME/" -v HEAD \
     | gzip -9 > "$TARFILE.gz"
 
-ls -l "$TARFILE.gz"
+# Good old way to ensure we display an absolute path
+td=`dirname $TARFILE`
+tf=`basename $TARFILE`
+ls -l "`cd $td; pwd`/$tf.gz"
