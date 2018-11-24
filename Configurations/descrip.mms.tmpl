@@ -847,7 +847,7 @@ EOF
 
   sub src2obj {
       my %args = @_;
-      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
+      my @srcs = map { (my $x = $_) =~ s/\.[sS]$/.asm/; $x
                      } ( @{$args{srcs}} );
       (my $obj = $args{obj}) =~ s|\.o$||;
       my $deps = join(", -\n\t\t", @srcs, @{$args{deps}});
