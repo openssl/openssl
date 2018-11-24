@@ -19,6 +19,7 @@
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include "internal/thread_once.h"
+#include "internal/ctype.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -217,13 +218,24 @@ static void build_SYS_str_reasons(void)
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
             if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
-                size_t l = strlen(cur) + 1;
+                size_t l = strlen(cur);
 
                 str->string = cur;
                 cnt += l;
                 if (cnt > sizeof(strerror_pool))
                     cnt = sizeof(strerror_pool);
                 cur += l;
+
+                /*
+                 * VMS has an unusual quirk of adding spaces at the end of
+                 * some (most? all?) messages.  Lets trim them off.
+                 */
+                while (ossl_isspace(cur[-1])) {
+                    cur--;
+                    cnt--;
+                }
+                *cur++ = '\0';
+                cnt++;
             }
         }
         if (str->string == NULL)
