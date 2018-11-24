@@ -766,7 +766,7 @@ reconfigure reconf :
 $target : $args{generator}->[0] $deps $mkdef
 	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name "--OS" "VMS"$case_insensitive > $target
 EOF
-      } elsif ($target !~ /\.[sS]$/) {
+      } elsif ($args{src} !~ /\.[sS]$/) {
           my $target = $args{src};
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
 	      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
