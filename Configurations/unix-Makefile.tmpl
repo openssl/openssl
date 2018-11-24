@@ -201,6 +201,7 @@ MAKEDEPEND={- $config{makedepprog} -}
 
 BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
+# Relative to $(SRCDIR)
 TARFILE=        ../$(NAME).tar
 
 # We let the C compiler driver to take care of .s files. This is done in
@@ -666,7 +667,7 @@ tags TAGS: FORCE
 # Release targets (note: only available on Unix) #####################
 
 tar:
-	$(SRCDIR)/util/mktar.sh --name='$(NAME)' --tarfile='$(TARFILE)'
+	(cd $(SRCDIR); ./util/mktar.sh --name='$(NAME)' --tarfile='$(TARFILE)')
 
 # Helper targets #####################################################
 
