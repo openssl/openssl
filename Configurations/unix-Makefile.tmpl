@@ -227,6 +227,7 @@ TARFLAGS= {- $target{TARFLAGS} -}
 
 BASENAME=       openssl
 NAME=           $(BASENAME)-$(VERSION)
+# Relative to $(SRCDIR)
 TARFILE=        ../$(NAME).tar
 
 ##### Project flags ##################################################
@@ -831,7 +832,7 @@ tags TAGS: FORCE
 # Release targets (note: only available on Unix) #####################
 
 tar:
-	$(SRCDIR)/util/mktar.sh --name='$(NAME)' --tarfile='$(TARFILE)'
+	(cd $(SRCDIR); ./util/mktar.sh --name='$(NAME)' --tarfile='$(TARFILE)')
 
 # Helper targets #####################################################
 
