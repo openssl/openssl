@@ -387,15 +387,11 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
     return 0;
 }
 
-/*
- * TODO: also support cases 1+2 defined in RFC4211, section 4.1.
- * returns pointer to created OSSL_CRMF_POPOSIGNINGKEY on success, NULL on error
- */
-static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
-                                                     const EVP_PKEY *pkey,
-                                                     int dgst)
+/* TODO: support cases 1+2 (besides case 3) defined in RFC 4211, section 4.1. */
+static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
+                                    OSSL_CRMF_CERTREQUEST *cr,
+                                    const EVP_PKEY *pkey, int dgst)
 {
-    OSSL_CRMF_POPOSIGNINGKEY *ps = NULL;
     int len;
     size_t crlen, max_sig_size;
     unsigned int siglen;
@@ -405,13 +401,10 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
 
     EVP_MD_CTX *ctx = NULL;
 
-    if (cr == NULL || pkey == NULL) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW, CRMF_R_NULL_ARGUMENT);
+    if (ps == NULL || cr == NULL || pkey == NULL) {
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-
-    if ((ps = OSSL_CRMF_POPOSIGNINGKEY_new()) == NULL)
-        goto err;
 
     /* OpenSSL defaults all bit strings to be encoded as ASN.1 NamedBitList */
     ps->signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
@@ -428,13 +421,13 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
         goto err;
 
     if (!OBJ_find_sigid_by_algs(&alg_nid, dgst, EVP_PKEY_id(pkey))) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW,
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
     if (!(OBJ_find_sigid_algs(alg_nid, &md_nid, NULL)
           && (alg = EVP_get_digestbynid(md_nid)) != NULL)) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW,
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
@@ -455,15 +448,14 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
     OPENSSL_free(crder);
     EVP_MD_CTX_free(ctx);
     OPENSSL_free(sig);
-    return ps;
+    return 1;
  err:
-    CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW, CRMF_R_ERROR);
-    OSSL_CRMF_POPOSIGNINGKEY_free(ps);
+    CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
     OPENSSL_free(crder);
     if (ctx)
         EVP_MD_CTX_free(ctx);
     OPENSSL_free(sig);
-    return NULL;
+    return 0;
 }
 
 
@@ -494,9 +486,15 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
         break;
 
     case OSSL_CRMF_POPO_SIGNATURE:
-        if ((pp->value.signature =
-             CRMF_poposigkey_new(crm->certReq, pkey, dgst)) == NULL)
-            goto err;
+        {
+            OSSL_CRMF_POPOSIGNINGKEY *ps = OSSL_CRMF_POPOSIGNINGKEY_new();
+            if (ps == NULL
+                || !CRMF_poposigningkey_init(ps, crm->certReq, pkey, dgst)) {
+                OSSL_CRMF_POPOSIGNINGKEY_free(ps);
+                goto err;
+            }
+            pp->value.signature = ps;
+        }
         break;
 
     case OSSL_CRMF_POPO_KEYENC:

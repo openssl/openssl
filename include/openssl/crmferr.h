@@ -23,7 +23,7 @@ int ERR_load_CRMF_strings(void);
 /*
  * CRMF function codes.
  */
-#  define CRMF_F_CRMF_POPOSIGKEY_NEW                       100
+#  define CRMF_F_CRMF_POPOSIGNINGKEY_INIT                  100
 #  define CRMF_F_OSSL_CRMF_CERTID_GEN                      101
 #  define CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL               102
 #  define CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT     103
