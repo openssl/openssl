@@ -23,10 +23,6 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
-# ifdef  __cplusplus
-extern "C" {
-# endif
-
 /*
  * EncryptedValue ::= SEQUENCE {
  * intendedAlg   [0] AlgorithmIdentifier  OPTIONAL,
@@ -45,7 +41,7 @@ extern "C" {
  * encValue            BIT STRING }
  *                  -- the encrypted value itself
  */
-struct OSSL_crmf_encrypetedvalue_st {
+struct OSSL_crmf_encryptedvalue_st {
     X509_ALGOR *intendedAlg;      /* 0 */
     X509_ALGOR *symmAlg;          /* 1 */
     ASN1_BIT_STRING *encSymmKey;  /* 2 */
@@ -393,9 +389,4 @@ struct OSSL_crmf_msg_st {
 } /* OSSL_CRMF_MSG */;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
 /* DEFINE_STACK_OF(OSSL_CRMF_MSG) */
-
-
-# ifdef  __cplusplus
-}
-# endif
 #endif

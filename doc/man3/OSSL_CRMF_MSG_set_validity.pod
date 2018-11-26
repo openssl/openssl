@@ -17,7 +17,7 @@ OSSL_CRMF_MSGS_verify_popo
 
  int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to);
 
- int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, const int rid);
+ int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid);
 
  int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                  const EVP_PKEY *pubkey,

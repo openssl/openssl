@@ -50,13 +50,13 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
         goto err;                                                         \
     if ((atav->type = OBJ_nid2obj(NID_id_##ctrlinf##_##atyp)) == NULL)    \
         goto err;                                                         \
-    if ((atav->value.atyp = valt##_dup((valt *)in)) == NULL)            \
+    if ((atav->value.atyp = valt##_dup((valt *)in)) == NULL)              \
         goto err;                                                         \
     if (!OSSL_CRMF_MSG_push0_##ctrlinf(msg, atav))                        \
         goto err;                                                         \
     return 1;                                                             \
  err:                                                                     \
-    OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(atav);                 \
+    OSSL_CRMF_ATTRIBUTETYPEANDVALUE_free(atav);                           \
     return 0;                                                             \
 }
 
@@ -199,8 +199,7 @@ OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
     return NULL;
 }
 
- /*
-  * id-regCtrl-protocolEncrKey Control (section 6.6) */
+ /* id-regCtrl-protocolEncrKey Control (section 6.6) */
  /*
   * For some reason X509_PUBKEY_dup() is not implemented in OpenSSL X509
   * TODO: check whether that should go elsewhere
@@ -325,7 +324,8 @@ static int CRMF_ASN1_get_int(int func, const ASN1_INTEGER *a)
 
 int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm)
 {
-    if (crm == NULL || /* not really needed: */ crm->certReq == NULL) {
+    if (crm == NULL
+        || /* not really needed: */ crm->certReq == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET_CERTREQID, CRMF_R_NULL_ARGUMENT);
         return -1;
     }
@@ -396,7 +396,7 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
                                                      int dgst)
 {
     OSSL_CRMF_POPOSIGNINGKEY *ps = NULL;
-    int l;
+    int len;
     size_t crlen, max_sig_size;
     unsigned int siglen;
     unsigned char *crder = NULL, *sig = NULL;
@@ -417,10 +417,10 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
     ps->signature->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT | 0x07);
     ps->signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 
-    l = i2d_OSSL_CRMF_CERTREQUEST(cr, &crder);
-    if (l < 0 || crder == NULL)
+    len = i2d_OSSL_CRMF_CERTREQUEST(cr, &crder);
+    if (len < 0 || crder == NULL)
         goto err;
-    crlen = (size_t) l;
+    crlen = (size_t)len;
 
     max_sig_size = EVP_PKEY_size((EVP_PKEY *)pkey);
     sig = OPENSSL_malloc(max_sig_size);
@@ -432,15 +432,15 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
-    if (!(OBJ_find_sigid_algs(alg_nid, &md_nid, NULL) &&
-          (alg = EVP_get_digestbynid(md_nid)) != NULL)) {
+    if (!(OBJ_find_sigid_algs(alg_nid, &md_nid, NULL)
+          && (alg = EVP_get_digestbynid(md_nid)) != NULL)) {
         CRMFerr(CRMF_F_CRMF_POPOSIGKEY_NEW,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
     if (!X509_ALGOR_set0(ps->algorithmIdentifier, OBJ_nid2obj(alg_nid),
                          V_ASN1_NULL, NULL)
-        || (ctx = EVP_MD_CTX_create()) == NULL
+        || (ctx = EVP_MD_CTX_new()) == NULL
         || !(EVP_SignInit_ex(ctx, alg, NULL)))
         goto err;
     if (!(EVP_SignUpdate(ctx, crder, crlen)))
@@ -453,7 +453,7 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
 
     /* cleanup */
     OPENSSL_free(crder);
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
     OPENSSL_free(sig);
     return ps;
  err:
@@ -461,7 +461,7 @@ static OSSL_CRMF_POPOSIGNINGKEY *CRMF_poposigkey_new(OSSL_CRMF_CERTREQUEST *cr,
     OSSL_CRMF_POPOSIGNINGKEY_free(ps);
     OPENSSL_free(crder);
     if (ctx)
-        EVP_MD_CTX_destroy(ctx);
+        EVP_MD_CTX_free(ctx);
     OPENSSL_free(sig);
     return NULL;
 }
@@ -472,8 +472,8 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
 {
     OSSL_CRMF_POPO *pp = NULL;
 
-    if (crm == NULL ||
-        (ppmtd == OSSL_CRMF_POPO_SIGNATURE && pkey == NULL)) {
+    if (crm == NULL
+        || (ppmtd == OSSL_CRMF_POPO_SIGNATURE && pkey == NULL)) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_CREATE_POPO, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
@@ -504,7 +504,8 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
             goto oom;
         pp->value.keyEncipherment->type = OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE;
         if ((pp->value.keyEncipherment->value.subsequentMessage =
-             ASN1_INTEGER_new()) == NULL ||
+             ASN1_INTEGER_new()) == NULL
+            ||
             !ASN1_INTEGER_set(pp->value.keyEncipherment->value.subsequentMessage,
                               OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT))
             goto oom;
@@ -558,8 +559,8 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     X509_PUBKEY *pubkey = NULL;
     OSSL_CRMF_POPOSIGNINGKEY *sig = NULL;
 
-    if (reqs == NULL ||
-        (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL) {
+    if (reqs == NULL
+        || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
                 CRMF_R_NULL_ARGUMENT);
         return 0;
@@ -601,15 +602,11 @@ This MUST be exactly the same value as is contained in the certificate template.
             != OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE)
             goto unsupported;
         if (ASN1_INTEGER_get
-            (req->popo->value.keyEncipherment->value.subsequentMessage) !=
-            OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
+            (req->popo->value.keyEncipherment->value.subsequentMessage)
+            != OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
             goto unsupported;
-#if 0 /* TODO enable code when implemented in CMP_certrep_new() */
-        srv_ctx->encryptcert = 1;
-        return 1;
-#else
+        /* TODO when implemented in CMP_certrep_new(): return 1 */
         goto unsupported;
-#endif
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
     unsupported:
@@ -647,12 +644,11 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         CRMFerr(CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if ((pubkey != NULL &&
-         !X509_PUBKEY_set(&tmpl->publicKey, (EVP_PKEY *)pubkey)) ||
-        (subject != NULL &&
-         !X509_NAME_set(&tmpl->subject, (X509_NAME *)subject)) ||
-        (issuer != NULL
-         && !X509_NAME_set(&tmpl->issuer, (X509_NAME *)issuer)))
+    if (pubkey != NULL && !X509_PUBKEY_set(&tmpl->publicKey, (EVP_PKEY *)pubkey))
+        goto oom;
+    if (subject != NULL && !X509_NAME_set(&tmpl->subject, (X509_NAME *)subject))
+        goto oom;
+    if (issuer != NULL && !X509_NAME_set(&tmpl->issuer, (X509_NAME *)issuer))
         goto oom;
     if (serial != NULL) {
         ASN1_INTEGER_free(tmpl->serialNumber);
@@ -688,8 +684,8 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     int n, outlen = 0;
     EVP_PKEY_CTX *pkctx = NULL; /* private key context */
 
-    if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL ||
-        ecert->encValue == NULL || pkey == NULL) {
+    if (ecert == NULL || ecert->symmAlg == NULL || ecert->encSymmKey == NULL
+        || ecert->encValue == NULL || pkey == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
                 CRMF_R_NULL_ARGUMENT);
         return NULL;
@@ -701,8 +697,8 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     }
 
     /* first the symmetric key needs to be decrypted */
-    if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) != NULL &&
-        EVP_PKEY_decrypt_init(pkctx)) {
+    if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) != NULL
+            && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
         size_t eksize = 0;
 
@@ -715,8 +711,9 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
                     CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY);
             goto end;
         }
-    } else
+    } else {
         goto oom;
+    }
 
     /* select symmetric cipher based on algorithm given in message */
     if ((cipher = EVP_get_cipherbynid(symmAlg)) == NULL) {

@@ -133,8 +133,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     int64_t iterations;
     int error = CRMF_R_CRMFERROR;
 
-    if (mac == NULL || pbmp == NULL || pbmp->mac == NULL ||
-            pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
+    if (mac == NULL || pbmp == NULL || pbmp->mac == NULL
+        || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
         error = CRMF_R_NULL_ARGUMENT;
         goto err;
     }
@@ -154,7 +154,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         goto err;
     }
 
-    if ((ctx = EVP_MD_CTX_create()) == NULL) {
+    if ((ctx = EVP_MD_CTX_new()) == NULL) {
         error = ERR_R_MALLOC_FAILURE;
         goto err;
     }
@@ -171,8 +171,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     if (!(EVP_DigestFinal_ex(ctx, basekey, &bklen)))
         goto err;
     if (!ASN1_INTEGER_get_int64(&iterations, pbmp->iterationCount)
-            || iterations < 100 /* min from RFC */
-            || iterations > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
+        || iterations < 100 /* min from RFC */
+        || iterations > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
         error = CRMF_R_BAD_PBM_ITERATIONCOUNT;
         goto err;
     }
@@ -195,8 +195,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
      */
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 
-    if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL) ||
-            ((m = EVP_get_digestbynid(hmac_md_nid)) == NULL)) {
+    if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
+        || ((m = EVP_get_digestbynid(hmac_md_nid)) == NULL)) {
         error = CRMF_R_UNSUPPORTED_ALGORITHM;
         goto err;
     }
@@ -206,7 +206,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
  err:
     /* cleanup */
     OPENSSL_cleanse(basekey, bklen);
-    EVP_MD_CTX_destroy(ctx);
+    EVP_MD_CTX_free(ctx);
 
     if (error == 0)
         return 1;
