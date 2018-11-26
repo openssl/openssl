@@ -23,12 +23,12 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-/*
+/*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)
- * slen SHOULD be > 8    (16 is common)
- * owfnid e.g. NID_sha256
- * itercnt MUST be > 100 (500 is common)
- * macnid e.g. NID_hmac_sha1
+ * |slen| SHOULD be > 8    (16 is common)
+ * |owfnid| e.g., NID_sha256
+ * |itercnt| MUST be > 100 (500 is common)
+ * |macnid| e.g., NID_hmac_sha1
  * returns pointer to OSSL_CRMF_PBMPARAMETER on success, NULL on error
  */
 OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
@@ -87,11 +87,10 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     if (!ASN1_INTEGER_set(pbm->iterationCount, itercnt))
         goto err;
 
-    /*
+    /*-
      * mac identifies the algorithm and associated parameters of the MAC
-     * function to be used.  All implementations MUST support HMAC-SHA1
-     * [HMAC]. All implementations SHOULD support DES-MAC and Triple-
-     * DES-MAC [PKCS11].
+     * function to be used.  All implementations MUST support HMAC-SHA1 [HMAC].
+     * All implementations SHOULD support DES-MAC and Triple-DES-MAC [PKCS11].
      */
     if (!X509_ALGOR_set0(pbm->mac, OBJ_nid2obj(macnid), V_ASN1_UNDEF, NULL)) {
         error = CRMF_R_SETTING_MAC_ALGOR_FAILURE;
@@ -107,18 +106,17 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     return NULL;
 }
 
-/*
+/*-
  * calculates the PBM based on the settings of the given OSSL_CRMF_PBMPARAMETER
- * @pbmp identifies the algorithms, salt to use
- * @msg message to apply the PBM for
- * @msglen length of the message
- * @sec key to use
- * @seclen length of the key
- * @mac pointer to the computed mac, is allocated here, will be freed if not
- *              pointing to NULL
- * @maclen pointer to the length of the mac, will be set
- *
- * returns 1 at success, 0 at error
+ * |pbmp| identifies the algorithms, salt to use
+ * |msg| message to apply the PBM for
+ * |msglen| length of the message
+ * |sec| key to use
+ * |seclen| length of the key
+ * |mac| pointer to the computed mac, is allocated here,
+ *       will be freed if not pointing to NULL
+ * |maclen| pointer to the length of the mac, will be set
+ * returns 1 on success, 0 on error
  */
 int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
@@ -187,11 +185,10 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
             goto err;
     }
 
-    /*
+    /*-
      * mac identifies the algorithm and associated parameters of the MAC
-     * function to be used.  All implementations MUST support HMAC-SHA1
-     * [HMAC].      All implementations SHOULD support DES-MAC and Triple-
-     * DES-MAC [PKCS11].
+     * function to be used.  All implementations MUST support HMAC-SHA1 [HMAC].
+     * All implementations SHOULD support DES-MAC and Triple-DES-MAC [PKCS11].
      */
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 

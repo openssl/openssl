@@ -31,14 +31,14 @@ limited to at most 100000 to avoid DoS through manipulated or otherwise
 malformed input.
 
 OSSL_CRMF_pbmp_new() initializes and returns a new PBMParameter
-structure with new a random salt of given length B<saltlen>, OWF (one-way
+structure with a new random salt of given length B<saltlen>, OWF (one-way
 function) NID B<owfnid>, iteration count B<itercnt>, and MAC NID B<macnid>.
 
 =head1 NOTES
 
-The OWF (one-way function) and for the MAC (message authentication code) may be
-any with a NID defined in B<openssl/objects.h>,
-which also should include NID_hmac_sha1 which is specified by RFC 4210.
+The algorithms for the OWF (one-way function) and for the MAC (message
+authentication code) may be any with a NID defined in B<openssl/objects.h>.
+As specified by RFC 4210, these should include NID_hmac_sha1.
 
 RFC 4210 recommends that the salt SHOULD be at least 8 bytes (64 bits) long.
 

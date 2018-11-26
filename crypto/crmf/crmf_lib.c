@@ -575,10 +575,11 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
         pubkey = req->certReq->certTemplate->publicKey;
         sig = req->popo->value.signature;
         if (sig->poposkInput != NULL) {
-/* According to RFC 4211:
-publicKey contains a copy of the public key from the certificate template.
-This MUST be exactly the same value as is contained in the certificate template.
-*/
+            /*-
+             * According to RFC 4211: publicKey contains a copy of
+             * the public key from the certificate template. This MUST be
+             * exactly the same value as contained in the certificate template.
+             */
             if (pubkey == NULL ||
                 sig->poposkInput->publicKey == NULL ||
                 X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey) ||
@@ -631,8 +632,9 @@ X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl)
     return tmpl != NULL ? tmpl->issuer : NULL;
 }
 
-/* fill in certificate template.
-   Any value argument that is NULL will leave the respective field unchanged.
+/*-
+ * fill in certificate template.
+ * Any value argument that is NULL will leave the respective field unchanged.
  */
 int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
                                 const EVP_PKEY *pubkey,
