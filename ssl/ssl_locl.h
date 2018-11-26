@@ -566,7 +566,7 @@
 #else
 #define OQS_KEM_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in master branch */ \
-  (nid == NID_OQS_SIDH_503 ? 0x0202 :	\
+  (nid == NID_OQS_SIDH_503 ? 0x0202 :   \
   (nid == NID_OQS_SIDH_751 ? 0x0203 : \
    0))
 #endif
@@ -598,13 +598,13 @@
 #define OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in nist branch */ \
   /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
-  /* (nid == NID_OQS_p256_bigquake1       ? 0x0308 : */	\
+  /* (nid == NID_OQS_p256_bigquake1       ? 0x0308 : */ \
   (nid == NID_OQS_p256_kyber512         ? 0x0309 : \
   (nid == NID_OQS_p256_ledakem_C1_N02   ? 0x030a : \
   (nid == NID_OQS_p256_ledakem_C1_N03   ? 0x030b : \
   (nid == NID_OQS_p256_ledakem_C1_N04   ? 0x030c : \
   /* (nid == NID_OQS_p256_lima_sp_1018_cca ? 0x030d : */ \
-  /* (nid == NID_OQS_p256_saber_light_saber ? 0x030e :	*/ \
+  /* (nid == NID_OQS_p256_saber_light_saber ? 0x030e :  */ \
   /* (nid == NID_OQS_p256_titanium_cca_std ? 0x030f : */ \
   /* (nid == NID_OQS_p256_titanium_cca_med ? 0x0310 : */ \
    0))))
@@ -652,14 +652,14 @@
   (curveID == 0x0224 /* || curveID == 0x030d */ ? NID_OQS_lima_sp_1018_cca : \
   (curveID == 0x0225 ? NID_OQS_lima_sp_1306_cca : \
   (curveID == 0x0226 ? NID_OQS_lima_sp_1822_cca : \
-  /* (curveID == 0x0227 ? NID_OQS_lima_sp_2062_cca : */		\
+  /* (curveID == 0x0227 ? NID_OQS_lima_sp_2062_cca : */         \
   (curveID == 0x0228 /* || (curveID == 0x030e: */ ? NID_OQS_saber_light_saber : \
   (curveID == 0x0229 ? NID_OQS_saber_saber : \
   (curveID == 0x022a ? NID_OQS_saber_fire_saber : \
    /* (curveID == 0x022b || curveID == 0x030f ? NID_OQS_titanium_cca_std : */ \
    /* (curveID == 0x022c ? NID_OQS_titanium_cca_hi : */ \
    /* (curveID == 0x022d || curveID == 0x0310 ? NID_OQS_titanium_cca_med : */ \
-   /* (curveID == 0x022e ? NID_OQS_titanium_cca_super :	*/ \
+   /* (curveID == 0x022e ? NID_OQS_titanium_cca_super : */ \
    0 ))))))))))))))))))
 #else
 #define OQS_KEM_NID_NIST_BRANCH(curveID) \
@@ -2001,8 +2001,8 @@ typedef struct ssl3_state_st {
         int min_ver;
         int max_ver;
         /*
-	 * OQS artefacts.
-	 */
+         * OQS artefacts.
+         */
         int oqs_kem_curve_id; /* curve_id of the kex */
         OQS_KEM* oqs_kem; /* KEM context */
         int oqs_peer_msg_len; /* save peer message's len */
