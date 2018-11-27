@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+# include <openssl/x509.h>
+
 typedef struct ESS_issuer_serial ESS_ISSUER_SERIAL;
 typedef struct ESS_cert_id ESS_CERT_ID;
 typedef struct ESS_signing_cert ESS_SIGNING_CERT;
