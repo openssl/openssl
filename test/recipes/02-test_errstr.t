@@ -31,6 +31,9 @@ setup('test_errstr');
 plan skip_all => 'This is unsupported for cross compiled configurations'
     if config('CROSS_COMPILE');
 
+plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
+    if disabled('autoerrinit') || disabled('err');
+
 # These are POSIX error names, which Errno implements as functions
 # (this is documented)
 my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
