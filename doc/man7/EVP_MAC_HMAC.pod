@@ -49,7 +49,7 @@ There are no corresponding string control types.
 
 These work as described in L<EVP_MAC(3)/CONTROLS>.
 
-EVP_MAC_ctrl_str() type string for B<EVP_MAC_CTRL_SET_DIGEST>: "digest"
+EVP_MAC_ctrl_str() type string for B<EVP_MAC_CTRL_SET_MD>: "digest"
 
 The value is expected to be the name of a cipher.
 
