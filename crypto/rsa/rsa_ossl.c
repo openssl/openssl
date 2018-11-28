@@ -591,7 +591,7 @@ static int rsa_ossl_public_decrypt(int flen, const unsigned char *from,
 
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
-    BIGNUM *r1, *m1, *vrfy, *r2, *m[RSA_MAX_PRIME_NUM - 2];
+    BIGNUM *r1, *m1, *vrfy, *r2;
     int ret = 0, i, ex_primes = 0, smooth = 0;
     RSA_PRIME_INFO *pinfo;
 
@@ -653,6 +653,10 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 
     if (smooth) {
         /*
+         * "Smooth CRT-RSA" works with 2 primes of equal bit length, which
+         * is the most common case, and aims for actual constant-time-ness.
+         */
+        /*
          * Conversion from Montgomery domain, a.k.a. Montgomery reduction,
          * accepts values in [0-m*2^w) range. w is m's bit width rounded up
          * to limb width. So that at the very least if |I| is fully reduced,
@@ -663,13 +667,13 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
             !bn_from_mont_fixed_top(m1, I, rsa->_method_mod_q, ctx)
             || !bn_to_mont_fixed_top(m1, m1, rsa->_method_mod_q, ctx)
             /* m1 = m1^dmq1 mod q */
-            || !BN_mod_exp_mont_consttime(m1, m1, rsa->dmq1, rsa->q, ctx,
+            || !bn_mod_exp_mont_fixed_top(m1, m1, rsa->dmq1, rsa->q, ctx,
                                           rsa->_method_mod_q)
             /* r1 = I mod p */
             || !bn_from_mont_fixed_top(r1, I, rsa->_method_mod_p, ctx)
             || !bn_to_mont_fixed_top(r1, r1, rsa->_method_mod_p, ctx)
             /* r1 = r1^dmp1 mod p */
-            || !BN_mod_exp_mont_consttime(r1, r1, rsa->dmp1, rsa->p, ctx,
+            || !bn_mod_exp_mont_fixed_top(r1, r1, rsa->dmp1, rsa->p, ctx,
                                           rsa->_method_mod_p)
             /* r1 = (r1 - m1) mod p */
             /*
@@ -689,201 +693,125 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
             || !bn_mod_add_fixed_top(r0, r0, m1, rsa->n))
             goto err;
 
-        goto tail;
-    }
-
-    /* compute I mod q */
-    {
-        BIGNUM *c = BN_new();
-        if (c == NULL)
-            goto err;
-        BN_with_flags(c, I, BN_FLG_CONSTTIME);
-
-        if (!BN_mod(r1, c, rsa->q, ctx)) {
-            BN_free(c);
-            goto err;
-        }
-
-        {
-            BIGNUM *dmq1 = BN_new();
-            if (dmq1 == NULL) {
-                BN_free(c);
-                goto err;
-            }
-            BN_with_flags(dmq1, rsa->dmq1, BN_FLG_CONSTTIME);
-
-            /* compute r1^dmq1 mod q */
-            if (!rsa->meth->bn_mod_exp(m1, r1, dmq1, rsa->q, ctx,
-                                       rsa->_method_mod_q)) {
-                BN_free(c);
-                BN_free(dmq1);
-                goto err;
-            }
-            /* We MUST free dmq1 before any further use of rsa->dmq1 */
-            BN_free(dmq1);
-        }
-
-        /* compute I mod p */
-        if (!BN_mod(r1, c, rsa->p, ctx)) {
-            BN_free(c);
-            goto err;
-        }
-        /* We MUST free c before any further use of I */
-        BN_free(c);
-    }
-
-    {
-        BIGNUM *dmp1 = BN_new();
-        if (dmp1 == NULL)
-            goto err;
-        BN_with_flags(dmp1, rsa->dmp1, BN_FLG_CONSTTIME);
-
-        /* compute r1^dmp1 mod p */
-        if (!rsa->meth->bn_mod_exp(r0, r1, dmp1, rsa->p, ctx,
-                                   rsa->_method_mod_p)) {
-            BN_free(dmp1);
-            goto err;
-        }
-        /* We MUST free dmp1 before any further use of rsa->dmp1 */
-        BN_free(dmp1);
-    }
-
-    /*
-     * calculate m_i in multi-prime case
-     *
-     * TODO:
-     * 1. squash the following two loops and calculate |m_i| there.
-     * 2. remove cc and reuse |c|.
-     * 3. remove |dmq1| and |dmp1| in previous block and use |di|.
-     *
-     * If these things are done, the code will be more readable.
-     */
-    if (ex_primes > 0) {
-        BIGNUM *di = BN_new(), *cc = BN_new();
-
-        if (cc == NULL || di == NULL) {
-            BN_free(cc);
-            BN_free(di);
-            goto err;
-        }
-
-        for (i = 0; i < ex_primes; i++) {
-            /* prepare m_i */
-            if ((m[i] = BN_CTX_get(ctx)) == NULL) {
-                BN_free(cc);
-                BN_free(di);
-                goto err;
-            }
-
-            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
-
-            /* prepare c and d_i */
-            BN_with_flags(cc, I, BN_FLG_CONSTTIME);
-            BN_with_flags(di, pinfo->d, BN_FLG_CONSTTIME);
-
-            if (!BN_mod(r1, cc, pinfo->r, ctx)) {
-                BN_free(cc);
-                BN_free(di);
-                goto err;
-            }
-            /* compute r1 ^ d_i mod r_i */
-            if (!rsa->meth->bn_mod_exp(m[i], r1, di, pinfo->r, ctx, pinfo->m)) {
-                BN_free(cc);
-                BN_free(di);
-                goto err;
-            }
-        }
-
-        BN_free(cc);
-        BN_free(di);
-    }
-
-    if (!BN_sub(r0, r0, m1))
-        goto err;
-    /*
-     * This will help stop the size of r0 increasing, which does affect the
-     * multiply if it optimised for a power of 2 size
-     */
-    if (BN_is_negative(r0))
-        if (!BN_add(r0, r0, rsa->p))
+    } else if ((rsa->flags & RSA_FLAG_CACHE_PRIVATE)
+               && rsa->meth->bn_mod_exp == BN_mod_exp_mont) {
+        /*
+         * We utilize the fact that BN_mod_exp_mont ends up calling
+         * bn_mod_exp_mont_fixed_top. And that private BN_MONT_CTXs are
+         * pre-calculated, so that we can use Montgomery multiplication,
+         * which is a tad faster than normal multiplication followed by
+         * modulo. Even this code path aims for constant-time-ness
+         * provided that limb-wise primes' asymmetry is not a secret.
+         */
+        /* compute (I mod q) ^ dmq1 mod q */
+        if (!bn_div_fixed_top(NULL, r1, I, rsa->q, ctx)
+            || !bn_mod_exp_mont_fixed_top(m1, r1, rsa->dmq1, rsa->q, ctx,
+                                          rsa->_method_mod_q))
             goto err;
 
-    if (!BN_mul(r1, r0, rsa->iqmp, ctx))
-        goto err;
-
-    {
-        BIGNUM *pr1 = BN_new();
-        if (pr1 == NULL)
+        /* compute (I mod p) ^ dmp1 mod p */
+        if (!bn_div_fixed_top(NULL, r1, I, rsa->p, ctx)
+            || !bn_mod_exp_mont_fixed_top(r0, r1, rsa->dmp1, rsa->p, ctx,
+                                          rsa->_method_mod_p))
             goto err;
-        BN_with_flags(pr1, r1, BN_FLG_CONSTTIME);
 
-        if (!BN_mod(r0, pr1, rsa->p, ctx)) {
-            BN_free(pr1);
-            goto err;
-        }
-        /* We MUST free pr1 before any further use of r1 */
-        BN_free(pr1);
-    }
-
-    /*
-     * If p < q it is occasionally possible for the correction of adding 'p'
-     * if r0 is negative above to leave the result still negative. This can
-     * break the private key operations: the following second correction
-     * should *always* correct this rare occurrence. This will *never* happen
-     * with OpenSSL generated keys because they ensure p > q [steve]
-     */
-    if (BN_is_negative(r0))
-        if (!BN_add(r0, r0, rsa->p))
-            goto err;
-    if (!BN_mul(r1, r0, rsa->q, ctx))
-        goto err;
-    if (!BN_add(r0, r1, m1))
-        goto err;
-
-    /* add m_i to m in multi-prime case */
-    if (ex_primes > 0) {
-        BIGNUM *pr2 = BN_new();
-
-        if (pr2 == NULL)
+        if (/* this modulo reduction covers for uncommon q>p case */
+            /*
+             * On the other hand more common q<p case has potential to
+             * trigger length-dependent condition in bn_div_fixed_top.
+             * Simplest example to consider is 1025- or 2049-bit keys.
+             * But since bn_mod_exp_mont_fixed_top returns zero-padded
+             * value, the condition would be dependent on q's length alone,
+             * which shouldn't be considered secret to start with.
+             */
+            !bn_div_fixed_top(NULL, r1, m1, rsa->p, ctx)
+            /* r1 = (r0 - r1) mod p */
+            || !bn_mod_sub_fixed_top(r1, r0, r1, rsa->p)
+            /* r1 = r1 * iqmp mod p */
+            || !bn_to_mont_fixed_top(r1, r1, rsa->_method_mod_p, ctx)
+            || !bn_mul_mont_fixed_top(r1, r1, rsa->iqmp, rsa->_method_mod_p,
+                                      ctx)
+            /* r0 = r1 * q + m1 */
+            || !bn_mul_fixed_top(r0, r1, rsa->q, ctx))
             goto err;
 
         for (i = 0; i < ex_primes; i++) {
             pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
-            if (!BN_sub(r1, m[i], r0)) {
-                BN_free(pr2);
-                goto err;
-            }
 
-            if (!BN_mul(r2, r1, pinfo->t, ctx)) {
-                BN_free(pr2);
+            if (!bn_mod_add_fixed_top(r0, r0, m1, pinfo->pp))
                 goto err;
-            }
 
-            BN_with_flags(pr2, r2, BN_FLG_CONSTTIME);
+            if (!bn_div_fixed_top(NULL, r1, I, pinfo->r, ctx)
+                || !bn_mod_exp_mont_fixed_top(m1, r1, pinfo->d, pinfo->r,
+                                              ctx, pinfo->m))
+                goto err;
 
-            if (!BN_mod(r1, pr2, pinfo->r, ctx)) {
-                BN_free(pr2);
+            if (!bn_div_fixed_top(NULL, r1, r0, pinfo->r, ctx)
+                || !bn_mod_sub_fixed_top(r1, m1, r1, pinfo->r)
+                || !bn_to_mont_fixed_top(r1, r1, pinfo->m, ctx)
+                || !bn_mul_mont_fixed_top(r1, r1, pinfo->t, pinfo->m, ctx)
+                || !bn_mul_fixed_top(m1, r1, pinfo->pp, ctx))
                 goto err;
-            }
-
-            if (BN_is_negative(r1))
-                if (!BN_add(r1, r1, pinfo->r)) {
-                    BN_free(pr2);
-                    goto err;
-                }
-            if (!BN_mul(r1, r1, pinfo->pp, ctx)) {
-                BN_free(pr2);
-                goto err;
-            }
-            if (!BN_add(r0, r0, r1)) {
-                BN_free(pr2);
-                goto err;
-            }
         }
-        BN_free(pr2);
+
+        if (!bn_mod_add_fixed_top(r0, r0, m1, rsa->n))
+            goto err;
+    } else {
+        /*
+         * This code path is retained for backward compatibility, in
+         * cases when we can't assume that rsa->meth->bn_mod_exp can
+         * handle zero-padded inputs, or that private BN_MONT_CTXs
+         * are pre-calculated.
+         */
+        /* compute (I mod q) ^ dmq1 mod q */
+        if (!BN_mod(r1, I, rsa->q, ctx)
+            || !(BN_set_flags(r1, BN_FLG_CONSTTIME),
+                 rsa->meth->bn_mod_exp(m1, r1, rsa->dmq1, rsa->q, ctx,
+                                       rsa->_method_mod_q)))
+            goto err;
+
+        /* compute (I mod p) ^ dmp1 mod p */
+        if (!BN_mod(r1, I, rsa->p, ctx)
+            || !(BN_set_flags(r1, BN_FLG_CONSTTIME),
+                 rsa->meth->bn_mod_exp(r0, r1, rsa->dmp1, rsa->p, ctx,
+                                       rsa->_method_mod_p)))
+            goto err;
+
+        if (/* this modulo reduction covers for uncommon q>p case */
+            !bn_div_fixed_top(NULL, r1, m1, rsa->p, ctx)
+            /* r1 = (r0 - r1) mod p */
+            || !bn_mod_sub_fixed_top(r1, r0, r1, rsa->p)
+            /* r1 = r1 * iqmp mod p */
+            || !bn_mul_fixed_top(r2, r1, rsa->iqmp, ctx)
+            || !bn_div_fixed_top(NULL, r1, r2, rsa->p, ctx)
+            /* r0 = r1 * q + m1 */
+            || !bn_mul_fixed_top(r0, r1, rsa->q, ctx))
+            goto err;
+
+        for (i = 0; i < ex_primes; i++) {
+            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
+
+            if (!bn_mod_add_fixed_top(r0, r0, m1, pinfo->pp))
+                goto err;
+
+            if (!BN_mod(r1, I, pinfo->r, ctx)
+                || !(BN_set_flags(r1, BN_FLG_CONSTTIME),
+                     rsa->meth->bn_mod_exp(m1, r1, pinfo->d, pinfo->r,
+                                           ctx, pinfo->m)))
+                goto err;
+
+            if (!bn_div_fixed_top(NULL, r1, r0, pinfo->r, ctx)
+                || !bn_mod_sub_fixed_top(r1, m1, r1, pinfo->r)
+                || !bn_mul_fixed_top(r2, r1, pinfo->t, ctx)
+                || !bn_div_fixed_top(NULL, r1, r2, pinfo->r, ctx)
+                || !bn_mul_fixed_top(m1, r1, pinfo->pp, ctx))
+                goto err;
+        }
+
+        if (!bn_mod_add_fixed_top(r0, r0, m1, rsa->n))
+            goto err;
     }
 
- tail:
     if (rsa->e && rsa->n) {
         if (rsa->meth->bn_mod_exp == BN_mod_exp_mont) {
             if (!BN_mod_exp_mont(vrfy, r0, rsa->e, rsa->n, ctx,
