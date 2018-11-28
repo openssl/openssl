@@ -111,7 +111,7 @@ This functions takes variable arguments, the exact expected arguments
 depend on C<cmd>.
 EVP_MAC_ctrl() can be called both before and after EVP_MAC_init(), but
 the effect will depend on what control is being use.
-See </CONTROLS> below for a description of standard controls.
+See L</CONTROLS> below for a description of standard controls.
 
 EVP_MAC_vctrl() is the variant of EVP_MAC_ctrl() that takes a
 C<va_list> argument instead of variadic arguments.
