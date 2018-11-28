@@ -86,5 +86,8 @@ int bn_lshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n);
 int bn_rshift_fixed_top(BIGNUM *r, const BIGNUM *a, int n);
 int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
                      const BIGNUM *d, BN_CTX *ctx);
+int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
+                              const BIGNUM *m, BN_CTX *ctx,
+                              BN_MONT_CTX *in_mont);
 
 #endif

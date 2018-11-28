@@ -589,7 +589,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
  * out by Colin Percival,
  * http://www.daemonology.net/hyperthreading-considered-harmful/)
  */
-int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
+int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                               const BIGNUM *m, BN_CTX *ctx,
                               BN_MONT_CTX *in_mont)
 {
@@ -609,11 +609,6 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     bn_check_top(a);
     bn_check_top(p);
     bn_check_top(m);
-
-    if (!BN_is_odd(m)) {
-        BNerr(BN_F_BN_MOD_EXP_MONT_CONSTTIME, BN_R_CALLED_WITH_EVEN_MODULUS);
-        return 0;
-    }
 
     top = m->top;
 
@@ -1106,11 +1101,11 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         am.d[0] = 1;            /* borrow am */
         for (i = 1; i < top; i++)
             am.d[i] = 0;
-        if (!BN_mod_mul_montgomery(rr, &tmp, &am, mont, ctx))
+        if (!bn_mul_mont_fixed_top(rr, &tmp, &am, mont, ctx))
             goto err;
     } else
 #endif
-    if (!BN_from_montgomery(rr, &tmp, mont, ctx))
+    if (!bn_from_mont_fixed_top(rr, &tmp, mont, ctx))
         goto err;
     ret = 1;
  err:
@@ -1121,6 +1116,24 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
         OPENSSL_free(powerbufFree);
     }
     BN_CTX_end(ctx);
+    return ret;
+}
+
+int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
+                              const BIGNUM *m, BN_CTX *ctx,
+                              BN_MONT_CTX *in_mont)
+{
+    int ret;
+
+    if (!BN_is_odd(m)) {
+        BNerr(BN_F_BN_MOD_EXP_MONT_CONSTTIME, BN_R_CALLED_WITH_EVEN_MODULUS);
+        return 0;
+    }
+
+    ret = bn_mod_exp_mont_fixed_top(rr, a, p, m, ctx, in_mont);
+
+    bn_correct_top(rr);
+
     return ret;
 }
 
