@@ -7,18 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-# include <openssl/x509.h>
-
-typedef struct ESS_issuer_serial ESS_ISSUER_SERIAL;
-typedef struct ESS_cert_id ESS_CERT_ID;
-typedef struct ESS_signing_cert ESS_SIGNING_CERT;
-
-DEFINE_STACK_OF(ESS_CERT_ID)
-
-typedef struct ESS_cert_id_v2_st ESS_CERT_ID_V2;
-typedef struct ESS_signing_cert_v2_st ESS_SIGNING_CERT_V2;
-
-DEFINE_STACK_OF(ESS_CERT_ID_V2)
+# include <openssl/ossl_typ.h>
 
 ESS_ISSUER_SERIAL *ESS_ISSUER_SERIAL_new(void);
 void ESS_ISSUER_SERIAL_free(ESS_ISSUER_SERIAL *a);
