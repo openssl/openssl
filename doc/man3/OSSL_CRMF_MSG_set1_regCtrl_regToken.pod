@@ -64,7 +64,7 @@ Available actions are:
  # define OSSL_CRMF_PUB_ACTION_DONTPUBLISH   0
  # define OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH 1
 
-OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo() sets the pkiPulicationInfo
+OSSL_CRMF_MSG_set1_regCtrl_pkiPublicationInfo() sets the pkiPublicationInfo
 control in the given B<msg> copying the given B<tok> as value. See RFC 4211,
 section 6.3.
 
