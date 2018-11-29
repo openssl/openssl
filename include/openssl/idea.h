@@ -45,7 +45,7 @@ void IDEA_ofb64_encrypt(const unsigned char *in, unsigned char *out,
                         int *num);
 void IDEA_encrypt(unsigned long *in, IDEA_KEY_SCHEDULE *ks);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define idea_options          IDEA_options
 #  define idea_ecb_encrypt      IDEA_ecb_encrypt
 #  define idea_set_encrypt_key  IDEA_set_encrypt_key

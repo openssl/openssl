@@ -16,7 +16,7 @@
 # ifndef OPENSSL_NO_EC
 # include <openssl/asn1.h>
 # include <openssl/symhacks.h>
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/bn.h>
 # endif
 # include <openssl/ecerr.h>

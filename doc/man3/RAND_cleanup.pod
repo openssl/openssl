@@ -8,9 +8,11 @@ RAND_cleanup - erase the PRNG state
 
  #include <openssl/rand.h>
 
- #if OPENSSL_API_COMPAT < 0x10100000L
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void RAND_cleanup(void)
- #endif
 
 =head1 DESCRIPTION
 

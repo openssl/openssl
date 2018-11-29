@@ -15,7 +15,7 @@
 #include "internal/constant_time_locl.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
-#if OPENSSL_API_COMPAT < 0x00908000L
+#if !OPENSSL_API_0_9_8
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128

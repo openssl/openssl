@@ -12,7 +12,7 @@
 
 # include <openssl/opensslconf.h>
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/crypto.h>
 # endif
 # include <openssl/safestack.h>
@@ -21,7 +21,7 @@
 # include <openssl/uierr.h>
 
 /* For compatibility reasons, the macro OPENSSL_NO_UI is currently retained */
-# if OPENSSL_API_COMPAT < 0x30000000L
+# if !OPENSSL_API_3
 #  ifdef OPENSSL_NO_UI_CONSOLE
 #   define OPENSSL_NO_UI
 #  endif

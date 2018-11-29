@@ -35,7 +35,7 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 
 COMP_METHOD *COMP_zlib(void);
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 #define COMP_zlib_cleanup() while(0) continue
 #endif
 

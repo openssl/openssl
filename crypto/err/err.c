@@ -672,13 +672,13 @@ void err_delete_thread_state(void)
     ERR_STATE_free(state);
 }
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
 }
 #endif
 
-#if OPENSSL_API_COMPAT < 0x10000000L
+#if !OPENSSL_API_1_0_0
 void ERR_remove_state(unsigned long pid)
 {
 }

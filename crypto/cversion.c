@@ -11,7 +11,7 @@
 
 #include "buildinf.h"
 
-#if OPENSSL_API_COMPAT < 0x30000000L
+#if !OPENSSL_API_3
 unsigned long OpenSSL_version_num(void)
 {
     return OPENSSL_VERSION_NUMBER;

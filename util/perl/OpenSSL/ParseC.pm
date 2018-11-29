@@ -65,24 +65,11 @@ my @opensslcpphandlers = (
     # These are used to convert certain pre-precessor expressions into
     # others that @cpphandlers have a better chance to understand.
 
-    { regexp   => qr/#if OPENSSL_API_COMPAT(\S+)(0x[0-9a-fA-F]{8})L$/,
+    { regexp   => qr/#if (!?)OPENSSL_API_([0-9_]+)$/,
       massager => sub {
-          my $op = $1;
-          my $v = hex($2);
-          if ($op ne '<' && $op ne '>=') {
-              die "Error: unacceptable operator $op: $_[0]\n";
-          }
-          my ($major, $minor, $edit) =
-              ( ($v >> 28) & 0xf,
-                ($v >> 20) & 0xff,
-                ($v >> 12) & 0xff );
-          my $t = "DEPRECATEDIN_" .
-              ($major <= 1
-               ? "${major}_${minor}_${edit}"
-               : "${major}");
-          my $cond = $op eq '<' ? 'ifndef' : 'ifdef';
+          my $cnd = $1 eq '!' ? 'ndef' : 'def';
           return (<<"EOF");
-#$cond $t
+#if$cnd DEPRECATEDIN_$2
 EOF
       }
    }
