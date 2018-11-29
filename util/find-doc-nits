@@ -115,7 +115,7 @@ sub name_synopsis()
         } elsif ( $line =~ /enum (\S*) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
-        } elsif ( $line =~ /#define ([A-Za-z0-9_]+)/ ) {
+        } elsif ( $line =~ /#(?:define|undef) ([A-Za-z0-9_]+)/ ) {
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
             $sym = $1;
