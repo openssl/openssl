@@ -26,7 +26,20 @@ user defined macros.
 The value is a version number similar to the
 L<OPENSSL_VERSION_NUMBER(3)> macro.  Any symbol that is deprecated in
 versions up to and including the version given in this macro will not
-be declared.  Any version number may be given, but these numbers are
+be declared.
+
+The version number assigned to this macro can take one of two forms:
+
+=over
+
+=item C<0xMNNFF000L>
+
+This is the form supported for all versions up 1.1.x, where C<M>
+represents the major number, C<NN> represents the minor number, and
+C<FF> represents the fix number.  For version 1.1.0, that's
+C<0x10100000L>.
+
+Any version number may be given, but these numbers are
 the current known major deprecation points, making them the most
 meaningful:
 
@@ -37,6 +50,30 @@ meaningful:
 =item C<0x10000000L> (version 1.0.0)
 
 =item C<0x10100000L> (version 1.1.0)
+
+=back
+
+For convenience, higher numbers are accepted as well, as long as
+feasible.  For example, C<0x60000000L> will work as expected.
+However, it is recommended to start using the second form instead:
+
+=item C<m>
+
+This form is a simple number that represents the major version number
+and is supported for version 3.0.0 and up.  For extra convenience,
+these numbers are also available:
+
+=over
+
+=item Z<>0 (C<0x00908000L>, i.e. version 0.9.8)
+
+=item Z<>1 (C<0x10000000L>, i.e. version 1.0.0)
+
+=item Z<>2 (C<0x10100000L>, i.e. version 1.1.0)
+
+=back
+
+For all other numbers C<m>, they are equivalent to version m.0.0.
 
 =back
 

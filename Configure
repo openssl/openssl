@@ -176,10 +176,13 @@ our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #
 my $maxapi = "3.0.0";           # API for "no-deprecated" builds
 my $apitable = {
-    "3.0.0" => "0x30000000L",
-    "1.1.0" => "0x10100000L",
-    "1.0.0" => "0x10000000L",
-    "0.9.8" => "0x00908000L",
+    "3.0.0" => 3,
+    "1.1.1" => 2,
+    "1.1.0" => 2,
+    "1.0.2" => 1,
+    "1.0.1" => 1,
+    "1.0.0" => 1,
+    "0.9.8" => 0,
 };
 
 our %table = ();
@@ -1496,11 +1499,9 @@ $config{cflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
 $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
-if (defined($config{api})) {
-    $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
-    my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    push @{$config{defines}}, $apiflag;
-}
+$config{openssl_api_defines} = [
+    "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
+];
 
 if ($strict_warnings)
 	{

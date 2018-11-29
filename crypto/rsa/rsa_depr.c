@@ -13,7 +13,7 @@
  */
 
 #include <openssl/opensslconf.h>
-#if OPENSSL_API_COMPAT >= 0x00908000L
+#if OPENSSL_API_0_9_8
 NON_EMPTY_TRANSLATION_UNIT
 
 #else

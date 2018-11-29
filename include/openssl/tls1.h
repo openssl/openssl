@@ -335,7 +335,7 @@ __owur int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
 #  define SSL_set_dtlsext_heartbeat_no_requests(ssl, arg) \
         SSL_ctrl(ssl,SSL_CTRL_SET_DTLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
 
-#  if OPENSSL_API_COMPAT < 0x10100000L
+#  if !OPENSSL_API_1_1_0
 #   define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT \
         SSL_CTRL_DTLS_EXT_SEND_HEARTBEAT
 #   define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING \

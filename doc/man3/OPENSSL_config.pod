@@ -8,10 +8,12 @@ OPENSSL_config, OPENSSL_no_config - simple OpenSSL configuration functions
 
  #include <openssl/conf.h>
 
- #if OPENSSL_API_COMPAT < 0x10100000L
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void OPENSSL_config(const char *appname);
  void OPENSSL_no_config(void);
- #endif
 
 =head1 DESCRIPTION
 

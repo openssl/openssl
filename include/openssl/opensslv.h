@@ -123,7 +123,7 @@ const char *OPENSSL_version_build_metadata(void);
  */
 # include <openssl/opensslconf.h>
 
-# if OPENSSL_API_COMPAT < 0x40000000L
+# if !OPENSSL_API_4
 #  ifdef OPENSSL_NO_NEWVERSION_ONLY
 
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PPSL */

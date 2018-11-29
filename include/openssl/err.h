@@ -250,7 +250,7 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str);
 int ERR_unload_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_ERR_strings(void);
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 # define ERR_load_crypto_strings() \
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
 # define ERR_free_strings() while(0) continue

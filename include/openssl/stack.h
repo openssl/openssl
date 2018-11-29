@@ -50,7 +50,7 @@ OPENSSL_STACK *OPENSSL_sk_dup(const OPENSSL_STACK *st);
 void OPENSSL_sk_sort(OPENSSL_STACK *st);
 int OPENSSL_sk_is_sorted(const OPENSSL_STACK *st);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define _STACK OPENSSL_STACK
 #  define sk_num OPENSSL_sk_num
 #  define sk_value OPENSSL_sk_value

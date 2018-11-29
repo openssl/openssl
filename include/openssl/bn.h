@@ -61,7 +61,7 @@ extern "C" {
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
 
-# if OPENSSL_API_COMPAT < 0x00908000L
+# if !OPENSSL_API_0_9_8
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
 #  define BN_FLG_FREE            0x8000 /* used for debugging */
@@ -190,7 +190,7 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
-# if OPENSSL_API_COMPAT >= 0x00908000L
+# if OPENSSL_API_0_9_8
 #  define BN_zero(a)      BN_zero_ex(a)
 # else
 #  define BN_zero(a)      (BN_set_word((a),0))
@@ -519,7 +519,7 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
 #  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
 #  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
