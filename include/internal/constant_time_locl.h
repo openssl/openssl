@@ -178,14 +178,14 @@ static ossl_inline int constant_time_select_int(unsigned int mask, int a,
     return (int)(constant_time_select(mask, (unsigned)(a), (unsigned)(b)));
 }
 
-#ifdef __cplusplus
-}
-#endif
-
 /*
  * Expected usage pattern is to unconditionally set error and then
  * wipe it if there was no actual error. |clear| is 1 or 0.
  */
 void err_clear_last_constant_time(int clear);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif                          /* HEADER_CONSTANT_TIME_LOCL_H */
