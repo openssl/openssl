@@ -115,6 +115,7 @@
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
 #include "bn_int.h"
+#include "constant_time_locl.h"
 
 #ifndef RSA_NULL
 
@@ -587,8 +588,8 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
         RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
-    if (r < 0)
-        RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
+    RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_PADDING_CHECK_FAILED);
+    err_clear_last_constant_time(r >= 0);
 
  err:
     if (ctx != NULL) {
