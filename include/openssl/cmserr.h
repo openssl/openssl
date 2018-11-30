@@ -31,6 +31,8 @@ int ERR_load_CMS_strings(void);
 #  define CMS_F_CMS_ADD1_RECIPIENT_CERT                    101
 #  define CMS_F_CMS_ADD1_SIGNER                            102
 #  define CMS_F_CMS_ADD1_SIGNINGTIME                       103
+#  define CMS_F_CMS_ADD1_SIGNING_CERT                      181
+#  define CMS_F_CMS_ADD1_SIGNING_CERT_V2                   182
 #  define CMS_F_CMS_COMPRESS                               104
 #  define CMS_F_CMS_COMPRESSEDDATA_CREATE                  105
 #  define CMS_F_CMS_COMPRESSEDDATA_INIT_BIO                106
@@ -104,7 +106,6 @@ int ERR_load_CMS_strings(void);
 #  define CMS_F_CMS_STREAM                                 155
 #  define CMS_F_CMS_UNCOMPRESS                             156
 #  define CMS_F_CMS_VERIFY                                 157
-#  define CMS_F_CMS_ADD1_SIGNING_CERT_V2                   158
 #  define CMS_F_KEK_UNWRAP_KEY                             180
 
 /*

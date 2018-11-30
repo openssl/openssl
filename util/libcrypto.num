@@ -4603,4 +4603,5 @@ SRP_user_pwd_new                        4556	1_1_2	EXIST::FUNCTION:SRP
 SRP_user_pwd_set_gN                     4557	1_1_2	EXIST::FUNCTION:SRP
 SRP_user_pwd_set1_ids                   4558	1_1_2	EXIST::FUNCTION:SRP
 SRP_user_pwd_set0_sv                    4559	1_1_2	EXIST::FUNCTION:SRP
-CMS_add1_signing_cert_v2                4560	1_1_2	EXIST::FUNCTION:CMS
+CMS_add1_signing_cert                   4560	1_1_2	EXIST::FUNCTION:CMS
+CMS_add1_signing_cert_v2                4561	1_1_2	EXIST::FUNCTION:CMS

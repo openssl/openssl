@@ -339,7 +339,7 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
 }
 
 /*
- * Add signer certificate's digest to a SignerInfo
+ * Add signer certificate's V2 digest to a SignerInfo
  * structure
  */
 
@@ -394,5 +394,53 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
 
  err:
     CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT_V2, ERR_R_MALLOC_FAILURE);
+    return NULL;
+}
+
+/*
+ * Add signer certificate's digest to a SignerInfo
+ * structure
+ */
+
+CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
+{
+    ASN1_STRING *seq = NULL;
+    unsigned char *p, *pp = NULL;
+    ESS_SIGNING_CERT *sc = NULL;
+    ESS_CERT_ID * cid;
+    unsigned char hash[SHA_DIGEST_LENGTH];
+    int len;
+
+    /* Create the SigningCertificate attribute 
+     * and adding the signing certificate id.
+     */
+
+    if ((sc = ESS_SIGNING_CERT_new()) == NULL
+        || (cid = ESS_CERT_ID_new()) == NULL)
+        goto err;
+
+    if (!X509_digest(signer, EVP_sha1(), hash, NULL))
+        goto err;
+    if (!ASN1_OCTET_STRING_set(cid->hash, hash, SHA_DIGEST_LENGTH))
+        goto err;
+    if (!sk_ESS_CERT_ID_push(sc->cert_ids, cid))
+        goto err;
+    /* Add SigningCertificate signed attribute to the signer info. */
+    len = i2d_ESS_SIGNING_CERT(sc, NULL);
+    if ((pp = OPENSSL_malloc(len)) == NULL)
+        goto err;
+    p = pp;
+    i2d_ESS_SIGNING_CERT(sc, &p);
+    if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
+        goto err;
+    OPENSSL_free(pp);
+    pp = NULL;
+    if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificate,
+                                     V_ASN1_SEQUENCE, seq, -1))
+        goto err;
+    return si;
+
+ err:
+    CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
     return NULL;
 }

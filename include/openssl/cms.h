@@ -284,6 +284,7 @@ int CMS_unsigned_add1_attr_by_txt(CMS_SignerInfo *si,
                                   const void *bytes, int len);
 void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
                                     int lastpos, int type);
+CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer);
 CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
                                          const EVP_MD *sign_md);
 
