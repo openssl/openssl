@@ -15,6 +15,7 @@ B<openssl> B<cms>
 [B<-verify>]
 [B<-cmsout>]
 [B<-resign>]
+[B<-cades>]
 [B<-data_create>]
 [B<-data_out>]
 [B<-digest_create>]
@@ -157,6 +158,10 @@ Takes an input message and writes out a PEM encoded CMS structure.
 =item B<-resign>
 
 Resign a message: take an existing message and one or more new signers.
+
+=item B<-cades>
+
+Adds ESS signing-certificate or ESS signing-certificate-v2 to SignerInfo
 
 =item B<-data_create>
 
@@ -552,6 +557,30 @@ is "decrypted" using a random key which will typically output garbage.
 The B<-debug_decrypt> option can be used to disable the MMA attack protection
 and return an error if no recipient can be found: this option should be used
 with caution. For a fuller description see L<CMS_decrypt(3)>).
+
+=head1 CAdES Basic Electronic Signature (CAdES-BES)
+
+A CAdES Basic Electronic Signature (CAdES-BES) contains:
+
+- The signed user data as defined in CMS (RFC 3852);
+
+- Content-type of the EncapsulatedContentInfo value
+  being signed;
+
+- Message-digest of the eContent OCTET STRING within 
+  encapContentInfo being signed;
+
+- ESS signing-certificate or ESS signing-certificate-v2
+  defined in Enhanced Security Services (ESS), RFC 2634 and
+  RFC 5035.
+  ESS signing-certificate attribute only allows for the use of
+  SHA-1 as a digest algorithm.  ESS signing-certificate-v2
+  attribute allows for the use of any digest algorithm;
+
+- The digital signature value computed on the user
+  data and, when present, on the signed attributes.
+
+B<-cades> adds ESS signing-certificate or ESS signing-certificate-v2
 
 =head1 EXIT CODES
 
