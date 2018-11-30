@@ -3731,12 +3731,12 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #endif
     case SSL_CTRL_GET_OQS_KEM_CURVE_ID:
         {
-	  if (s->server || s->session == NULL || s->s3->tmp.oqs_kem_curve_id == 0) {
-	    return 0;
-	  } else {
+          if (s->server || s->session == NULL || s->s3->tmp.oqs_kem_curve_id == 0) {
+            return 0;
+          } else {
             return s->s3->tmp.oqs_kem_curve_id;
-	  }
-	}
+          }
+        }
     default:
         break;
     }

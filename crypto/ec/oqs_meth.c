@@ -117,7 +117,7 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
     oqs_key->s = OQS_SIG_new(oqs_alg_name);
     if (oqs_key->s == NULL) {
       /* TODO: provide a better error message for non-enabled OQS schemes.
-	 Perhaps even check if the alg is available earlier in the stack. (FIXMEOQS) */
+         Perhaps even check if the alg is available earlier in the stack. (FIXMEOQS) */
       OQSerr(0, ERR_R_FATAL);
       goto err;
     }
@@ -130,8 +130,8 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
     if (keytype == KEY_TYPE_PRIVATE) {
       oqs_key->privkey = OPENSSL_secure_malloc(oqs_key->s->length_secret_key);
       if (oqs_key->privkey == NULL) {
-	OQSerr(0, ERR_R_MALLOC_FAILURE);
-	goto err;
+        OQSerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
       }
     }
     oqs_key->security_bits = get_oqs_security_bits(nid);
@@ -180,7 +180,7 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     }
     if (p == NULL) {
       /* pklen is checked below, after we instantiate the oqs_key to
-	 learn the expected len */
+         learn the expected len */
       OQSerr(0, ERR_R_FATAL);
       return 0;
     }
@@ -191,8 +191,8 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
       /* Algorithm parameters must be absent */
       X509_ALGOR_get0(NULL, &ptype, NULL, palg);
       if (ptype != V_ASN1_UNDEF) {
-	OQSerr(0, ERR_R_FATAL);
-	return 0;
+        OQSerr(0, ERR_R_FATAL);
+        return 0;
       }
     }
 
@@ -248,8 +248,8 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
       /* Algorithm parameters must be absent */
       X509_ALGOR_get0(NULL, &ptype, NULL, palg);
       if (ptype != V_ASN1_UNDEF) {
-	OQSerr(0, ERR_R_FATAL);
-	return 0;
+        OQSerr(0, ERR_R_FATAL);
+        return 0;
       }
     }
 
@@ -398,12 +398,12 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     X509_ALGOR_get0(&obj, &ptype, NULL, sigalg);
     nid = OBJ_obj2nid(obj);
     if (
-	(nid != NID_picnicL1FS &&
-	 nid != NID_qTESLA_I &&
-	 nid != NID_qTESLA_III_size &&
-	 nid != NID_qTESLA_III_speed
-	 /* ADD_MORE_OQS_SIG_HERE */
-	 ) || ptype != V_ASN1_UNDEF) {
+        (nid != NID_picnicL1FS &&
+         nid != NID_qTESLA_I &&
+         nid != NID_qTESLA_III_size &&
+         nid != NID_qTESLA_III_speed
+         /* ADD_MORE_OQS_SIG_HERE */
+         ) || ptype != V_ASN1_UNDEF) {
         OQSerr(0, ERR_R_FATAL);
         return 0;
     }

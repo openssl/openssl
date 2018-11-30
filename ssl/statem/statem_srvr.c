@@ -1134,7 +1134,7 @@ size_t ossl_statem_server_max_message_size(SSL *s)
        * longer PQC signatures. (See https://github.com/openssl/openssl/issues/6433)
        */
       /* return SSL3_RT_MAX_PLAIN_LENGTH; */
-	return 65536;
+        return 65536;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLS_ST_SR_NEXT_PROTO:
