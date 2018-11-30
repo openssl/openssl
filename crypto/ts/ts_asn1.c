@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include "ts_lcl.h"
+#include "internal/ess_int.h"
 
 ASN1_SEQUENCE(TS_MSG_IMPRINT) = {
         ASN1_SIMPLE(TS_MSG_IMPRINT, hash_algo, X509_ALGOR),
