@@ -131,8 +131,11 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         dd = s->enc_read_ctx;
         mac_ctx = ssl_replace_hash(&s->read_hash, NULL);
-        if (mac_ctx == NULL)
+        if (mac_ctx == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
+                     ERR_R_INTERNAL_ERROR);
             goto err;
+        }
 #ifndef OPENSSL_NO_COMP
         COMP_CTX_free(s->expand);
         s->expand = NULL;

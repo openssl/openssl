@@ -394,7 +394,8 @@ int ssl_print_groups(BIO *out, SSL *s, int noshared)
 int ssl_print_tmp_key(BIO *out, SSL *s)
 {
     EVP_PKEY *key;
-    if (!SSL_get_server_tmp_key(s, &key))
+
+    if (!SSL_get_peer_tmp_key(s, &key))
         return 1;
     BIO_puts(out, "Server Temp Key: ");
     switch (EVP_PKEY_id(key)) {

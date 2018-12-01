@@ -717,6 +717,7 @@ const EVP_MD *EVP_sha3_384(void);
 const EVP_MD *EVP_sha3_512(void);
 const EVP_MD *EVP_shake128(void);
 const EVP_MD *EVP_shake256(void);
+
 # ifndef OPENSSL_NO_MDC2
 const EVP_MD *EVP_mdc2(void);
 # endif
@@ -990,6 +991,8 @@ void EVP_MD_do_all_sorted(void (*fn)
 # define EVP_MAC_CMAC           NID_cmac
 # define EVP_MAC_GMAC           NID_gmac
 # define EVP_MAC_HMAC           NID_hmac
+# define EVP_MAC_KMAC128        NID_kmac128
+# define EVP_MAC_KMAC256        NID_kmac256
 # define EVP_MAC_SIPHASH        NID_siphash
 # define EVP_MAC_POLY1305       NID_poly1305
 
@@ -1027,6 +1030,8 @@ void EVP_MAC_do_all_sorted(void (*fn)
 # define EVP_MAC_CTRL_SET_CIPHER        0x05 /* EVP_CIPHER * */
 # define EVP_MAC_CTRL_SET_SIZE          0x06 /* size_t */
 # define EVP_MAC_CTRL_SET_IV            0x07 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_CUSTOM        0x08 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_XOF           0x09 /* int */
 
 /* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,

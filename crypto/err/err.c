@@ -19,6 +19,8 @@
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include "internal/thread_once.h"
+#include "internal/ctype.h"
+#include "internal/constant_time_locl.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -181,8 +183,9 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
+/* A measurement on Linux 2018-11-21 showed about 3.5kib */
+# define SPACE_SYS_STR_REASONS 4 * 1024
 # define NUM_SYS_STR_REASONS 127
-# define LEN_SYS_STR_REASON 32
 
 static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
@@ -198,7 +201,9 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 static void build_SYS_str_reasons(void)
 {
     /* OPENSSL_malloc cannot be used here, use static storage instead */
-    static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
+    static char strerror_pool[SPACE_SYS_STR_REASONS];
+    char *cur = strerror_pool;
+    size_t cnt = 0;
     static int init = 1;
     int i;
 
@@ -213,9 +218,26 @@ static void build_SYS_str_reasons(void)
 
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
-            char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-            if (openssl_strerror_r(i, *dest, sizeof(*dest)))
-                str->string = *dest;
+            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
+                size_t l = strlen(cur);
+
+                str->string = cur;
+                cnt += l;
+                if (cnt > sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool);
+                cur += l;
+
+                /*
+                 * VMS has an unusual quirk of adding spaces at the end of
+                 * some (most? all?) messages.  Lets trim them off.
+                 */
+                while (ossl_isspace(cur[-1])) {
+                    cur--;
+                    cnt--;
+                }
+                *cur++ = '\0';
+                cnt++;
+            }
         }
         if (str->string == NULL)
             str->string = "unknown";
@@ -856,4 +878,24 @@ int ERR_clear_last_mark(void)
         return 0;
     es->err_flags[top] &= ~ERR_FLAG_MARK;
     return 1;
+}
+
+void err_clear_last_constant_time(int clear)
+{
+    ERR_STATE *es;
+    int top;
+
+    es = ERR_get_state();
+    if (es == NULL)
+        return;
+
+    top = es->top;
+
+    es->err_flags[top] &= ~(0 - clear);
+    es->err_buffer[top] &= ~(0UL - clear);
+    es->err_file[top] = (const char *)((uintptr_t)es->err_file[top] &
+                                       ~((uintptr_t)0 - clear));
+    es->err_line[top] |= 0 - clear;
+
+    es->top = (top + ERR_NUM_ERRORS - clear) % ERR_NUM_ERRORS;
 }

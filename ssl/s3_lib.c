@@ -3414,7 +3414,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             EVP_PKEY *pkdh = NULL;
             if (dh == NULL) {
                 SSLerr(SSL_F_SSL3_CTRL, ERR_R_PASSED_NULL_PARAMETER);
-                return ret;
+                return 0;
             }
             pkdh = ssl_dh_to_pkey(dh);
             if (pkdh == NULL) {
@@ -3425,11 +3425,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                               EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTRL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
-                return ret;
+                return 0;
             }
             EVP_PKEY_free(s->cert->dh_tmp);
             s->cert->dh_tmp = pkdh;
-            ret = 1;
+            return 1;
         }
         break;
     case SSL_CTRL_SET_TMP_DH_CB:
@@ -3681,9 +3681,15 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         *(int *)parg = s->s3->tmp.peer_sigalg->hash;
         return 1;
 
-    case SSL_CTRL_GET_SERVER_TMP_KEY:
+    case SSL_CTRL_GET_SIGNATURE_NID:
+        if (s->s3->tmp.sigalg == NULL)
+            return 0;
+        *(int *)parg = s->s3->tmp.sigalg->hash;
+        return 1;
+
+    case SSL_CTRL_GET_PEER_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-        if (s->server || s->session == NULL || s->s3->peer_tmp == NULL) {
+        if (s->session == NULL || s->s3->peer_tmp == NULL) {
             return 0;
         } else {
             EVP_PKEY_up_ref(s->s3->peer_tmp);
@@ -3693,6 +3699,20 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #else
         return 0;
 #endif
+
+    case SSL_CTRL_GET_TMP_KEY:
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+        if (s->session == NULL || s->s3->tmp.pkey == NULL) {
+            return 0;
+        } else {
+            EVP_PKEY_up_ref(s->s3->tmp.pkey);
+            *(EVP_PKEY **)parg = s->s3->tmp.pkey;
+            return 1;
+        }
+#else
+        return 0;
+#endif
+
 #ifndef OPENSSL_NO_EC
     case SSL_CTRL_GET_EC_POINT_FORMATS:
         {
@@ -3761,7 +3781,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                   EVP_PKEY_security_bits(pkdh), 0, pkdh)) {
                 SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_DH_KEY_TOO_SMALL);
                 EVP_PKEY_free(pkdh);
-                return 1;
+                return 0;
             }
             EVP_PKEY_free(ctx->cert->dh_tmp);
             ctx->cert->dh_tmp = pkdh;

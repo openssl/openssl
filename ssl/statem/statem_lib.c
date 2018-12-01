@@ -396,7 +396,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
 
 #ifdef SSL_DEBUG
     if (SSL_USE_SIGALGS(s))
-        fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+        fprintf(stderr, "USING TLSv1.2 HASH %s\n",
+                md == NULL ? "n/a" : EVP_MD_name(md));
 #endif
 
     /* Check for broken implementations of GOST ciphersuites */
@@ -439,7 +440,8 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     }
 
 #ifdef SSL_DEBUG
-    fprintf(stderr, "Using client verify alg %s\n", EVP_MD_name(md));
+    fprintf(stderr, "Using client verify alg %s\n",
+            md == NULL ? "n/a" : EVP_MD_name(md));
 #endif
     if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
@@ -1507,6 +1509,10 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 static int is_tls13_capable(const SSL *s)
 {
     int i;
+#ifndef OPENSSL_NO_EC
+    int curve;
+    EC_KEY *eckey;
+#endif
 
 #ifndef OPENSSL_NO_PSK
     if (s->psk_server_callback != NULL)
@@ -1527,8 +1533,25 @@ static int is_tls13_capable(const SSL *s)
         default:
             break;
         }
-        if (ssl_has_cert(s, i))
+        if (!ssl_has_cert(s, i))
+            continue;
+#ifndef OPENSSL_NO_EC
+        if (i != SSL_PKEY_ECC)
             return 1;
+        /*
+         * Prior to TLSv1.3 sig algs allowed any curve to be used. TLSv1.3 is
+         * more restrictive so check that our sig algs are consistent with this
+         * EC cert. See section 4.2.3 of RFC8446.
+         */
+        eckey = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
+        if (eckey == NULL)
+            continue;
+        curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+        if (tls_check_sigalg_curve(s, curve))
+            return 1;
+#else
+        return 1;
+#endif
     }
 
     return 0;
@@ -2273,10 +2296,24 @@ int parse_ca_names(SSL *s, PACKET *pkt)
     return 0;
 }
 
-int construct_ca_names(SSL *s, WPACKET *pkt)
+const STACK_OF(X509_NAME) *get_ca_names(SSL *s)
 {
-    const STACK_OF(X509_NAME) *ca_sk = SSL_get0_CA_list(s);
+    const STACK_OF(X509_NAME) *ca_sk = NULL;;
 
+    if (s->server) {
+        ca_sk = SSL_get_client_CA_list(s);
+        if (ca_sk != NULL && sk_X509_NAME_num(ca_sk) == 0)
+            ca_sk = NULL;
+    }
+
+    if (ca_sk == NULL)
+        ca_sk = SSL_get0_CA_list(s);
+
+    return ca_sk;
+}
+
+int construct_ca_names(SSL *s, const STACK_OF(X509_NAME) *ca_sk, WPACKET *pkt)
+{
     /* Start sub-packet for client CA list */
     if (!WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_CA_NAMES,

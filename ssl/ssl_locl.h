@@ -854,9 +854,11 @@ struct ssl_ctx_st {
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for
-     * earlier versions.
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
      */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1233,8 +1235,14 @@ struct ssl_st {
     long verify_result;
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
-    /* for server side, keep the list of CA_dn we can use */
+    /*
+     * What we put in certificate_authorities extension for TLS 1.3
+     * (ClientHello and CertificateRequest) or just client cert requests for
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
+     */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;
@@ -2564,6 +2572,9 @@ __owur int tls1_process_sigalgs(SSL *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
+#  ifndef OPENSSL_NO_EC
+__owur int tls_check_sigalg_curve(const SSL *s, int curve);
+#  endif
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int echde);

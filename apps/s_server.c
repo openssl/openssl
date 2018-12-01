@@ -2754,6 +2754,8 @@ static int init_ssl_connection(SSL *con)
                     BIO_ADDR_free(client);
                     return 0;
                 }
+
+                (void)BIO_ctrl_set_connected(wbio, client);
                 BIO_ADDR_free(client);
                 dtlslisten = 0;
             } else {
