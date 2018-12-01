@@ -219,6 +219,14 @@ my @smime_cms_tests = (
 	"-CAfile", catfile($smdir, "smroot.pem") ]
     ],
 
+    [ "signed content DER format, RSA key, CAdES-BES compatible",
+      [ "-sign", "-cades", "-in", $smcont, "-outform", "DER", "-nodetach",
+        "-certfile", catfile($smdir, "smroot.pem"),
+        "-signer", catfile($smdir, "smrsa1.pem"), "-out", "test.cms" ],
+      [ "-verify", "-in", "test.cms", "-inform", "DER",
+        "-CAfile", catfile($smdir, "smroot.pem"), "-out", "smtst.txt" ]
+    ],
+
     [ "enveloped content test streaming S/MIME format, DES, 3 recipients, keyid",
       [ "-encrypt", "-in", $smcont,
 	"-stream", "-out", "test.cms", "-keyid",
