@@ -945,7 +945,7 @@ int cms_main(int argc, char **argv)
             if (si == NULL)
                 goto end;
             if (flags & CMS_CADES) {
-                if (sign_md == EVP_sha1())
+                if (sign_md == EVP_sha1() || sign_md == NULL)
                     si = CMS_add1_signing_cert(si, signer);
                 else
                     si = CMS_add1_signing_cert_v2(si, signer, sign_md);
