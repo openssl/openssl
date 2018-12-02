@@ -11,6 +11,7 @@
 # define HEADER_OPENSSL_TYPES_H
 
 #include <limits.h>
+#include <openssl/opensslconf.h>
 #include <openssl/safestack.h>
 
 #ifdef  __cplusplus

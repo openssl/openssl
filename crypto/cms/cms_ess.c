@@ -386,6 +386,8 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
     if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
         goto err;
     OPENSSL_free(pp);
+    ESS_SIGNING_CERT_V2_free(sc);
+    X509_ALGOR_free(alg);
     pp = NULL;
     if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
                                      V_ASN1_SEQUENCE, seq, -1))
@@ -434,6 +436,7 @@ CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
     if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
         goto err;
     OPENSSL_free(pp);
+    ESS_SIGNING_CERT_free(sc);
     pp = NULL;
     if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificate,
                                      V_ASN1_SEQUENCE, seq, -1))
