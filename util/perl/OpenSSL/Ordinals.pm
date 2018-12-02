@@ -528,7 +528,6 @@ sub set_version {
 
     $version //= '*';
     $version =~ s|-.*||g;
-    $version =~ s|\.|_|g;
     $self->{currversion} = $version;
     foreach ($self->items(filter => sub { $_[0] eq '*' })) {
         $_->{version} = $self->{currversion};
@@ -701,10 +700,13 @@ sub new {
     if ($opts{name} && $opts{version} && defined $opts{exists} && $opts{type}
             && ref($opts{platforms} // {}) eq 'HASH'
             && ref($opts{features} // []) eq 'ARRAY') {
+        my $version = $opts{version};
+        $version =~ s|_|.|g;
+
         $instance = { name      => $opts{name},
                       type      => $opts{type},
                       number    => $opts{number},
-                      version   => $opts{version},
+                      version   => $version,
                       exists    => !!$opts{exists},
                       platforms => { %{$opts{platforms} // {}} },
                       features  => [ sort @{$opts{features} // []} ] };
@@ -784,10 +786,12 @@ sub to_string {
     croak "Too many arguments" if @_;
     my %platforms = $self->platforms();
     my @features = $self->features();
+    my $version = $self->version();
+    $version =~ s|\.|_|g;
     return sprintf "%-39s %d\t%s\t%s:%s:%s:%s",
         $self->name(),
         $self->number(),
-        $self->version(),
+        $version,
         $self->exists() ? 'EXIST' : 'NOEXIST',
         join(',', (map { ($platforms{$_} ? '' : '!') . $_ }
                    sort keys %platforms)),
@@ -847,7 +851,7 @@ sub by_version {
         my $textversion = shift;
         return $textversion if $textversion eq '*';
         my ($major,$minor,$edit,$patch) =
-            $textversion =~ /^(\d+)_(\d+)_(\d+)([a-z]{0,2})$/;
+            $textversion =~ /^(\d+)\.(\d+)\.(\d+)([a-z]{0,2})$/;
         return ($major,$minor,$edit,$patch);
     }
 
@@ -891,9 +895,8 @@ matching B<VERSION>.
 sub f_version {
     my $version = shift;
 
-    $version =~ s|\.|_|g if $version;
     croak "No version specified"
-        unless $version && $version =~ /^\d+_\d+_\d+[a-z]{0,2}$/;
+        unless $version && $version =~ /^\d+\.\d+\.\d+[a-z]{0,2}$/;
 
     return sub { $_[0]->version() eq $version };
 }
