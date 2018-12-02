@@ -29,7 +29,7 @@ use OpenSSL::Util::Pod;
 
 my %options = ();
 GetOptions(\%options,
-           'sourcedir=s',       # Source directory
+           'sourcedir=s@',      # Source directories
            'section=i@',        # Subdirectories to look through,
                                 # with associated section numbers
            'destdir=s',         # Destination directory
@@ -46,7 +46,8 @@ unless ($options{section}) {
     $options{section} = [ 1, 3, 5, 7 ];
 }
 unless ($options{sourcedir}) {
-    $options{sourcedir} = catdir($config{sourcedir}, "doc");
+    $options{sourcedir} = [ catdir($config{sourcedir}, "doc"),
+                            catdir($config{builddir}, "doc") ];
 }
 pod2usage(1) unless ( defined $options{section}
                       && defined $options{sourcedir}
@@ -59,8 +60,9 @@ pod2usage(1) if ( $options{type} eq 'html'
 
 if ($options{debug}) {
     print STDERR "DEBUG: options:\n";
-    print STDERR "DEBUG:   --sourcedir = $options{sourcedir}\n"
-        if defined $options{sourcedir};
+    foreach (sort @{$options{sourcedir}}) {
+        print STDERR "DEBUG:   --sourcedir   = $_\n";
+    }
     print STDERR "DEBUG:   --destdir   = $options{destdir}\n"
         if defined $options{destdir};
     print STDERR "DEBUG:   --type      = $options{type}\n"
@@ -82,10 +84,10 @@ my $symlink_exists = eval { symlink("",""); 1 };
 
 foreach my $section (sort @{$options{section}}) {
     my $subdir = "man$section";
-    my $podsourcedir = catfile($options{sourcedir}, $subdir);
-    my $podglob = catfile($podsourcedir, "*.pod");
+    my @podsourcedirs = map { catfile($_, $subdir); } @{$options{sourcedir}};
+    my @podglobs = map { catfile($_, "*.pod"); } @podsourcedirs;
 
-    foreach my $podfile (glob $podglob) {
+    foreach my $podfile (map { glob $_ } @podglobs) {
         my $podname = basename($podfile, ".pod");
         my $podpath = catfile($podfile);
         my %podinfo = extract_pod_info($podpath,
