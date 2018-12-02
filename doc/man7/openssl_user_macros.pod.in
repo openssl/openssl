@@ -1,0 +1,60 @@
+=pod
+
+=head1 NAME
+
+openssl_user_macros, OPENSSL_API_COMPAT - User defined macros
+
+=head1 DESCRIPTION
+
+User defined macros allow the programmer to control certain aspects of
+what is exposed by the OpenSSL headers.
+
+B<NOTE:> to be effective, a user defined macro I<must be defined
+before including any header file that depends on it>, either in the
+compilation command (C<cc -DMACRO=value>) or by defining the macro in
+source before including any headers.
+
+Other manual pages may refer to this page when declarations depend on
+user defined macros.
+
+=head2 The macros
+
+=over
+
+=item B<OPENSSL_API_COMPAT>
+
+The value is a version number similar to the
+L<OPENSSL_VERSION_NUMBER(3)> macro.  Any symbol that is deprecated in
+versions up to and including the version given in this macro will not
+be declared.  Any version number may be given, but these numbers are
+the current known major deprecation points, making them the most
+meaningful:
+
+=over
+
+=item C<0x00908000L> (version 0.9.8)
+
+=item C<0x10000000L> (version 1.0.0)
+
+=item C<0x10100000L> (version 1.1.0)
+
+=back
+
+If not set, this macro will default to
+C<{- join('', map { my @x = split /=/,$_; $x[1] }
+              grep /^OPENSSL_MIN_API=/, @{$config{openssl_api_defines} // []})
+     || '0x00000000L'
+  -}>.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
