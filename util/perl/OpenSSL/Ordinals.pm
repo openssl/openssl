@@ -12,6 +12,7 @@ use strict;
 use warnings;
 use Carp;
 use Scalar::Util qw(blessed);
+use OpenSSL::Util;
 
 use constant {
     # "magic" filters, see the filters at the end of the file
@@ -90,11 +91,11 @@ sub new {
         name2num        => {},    # Name to number dictionary
         aliases         => {},    # Aliases cache.
         stats           => {},    # Statistics, see 'sub validate'
-        currversion     => $opts{version} // '*', # '*' is for "we don't care"
         debug           => $opts{debug},
     };
     bless $instance, $class;
 
+    $instance->set_version($opts{version});
     $instance->load($opts{from}) if defined($opts{from});
 
     return $instance;
@@ -368,6 +369,18 @@ sub _parse_features {
     return %features;
 }
 
+sub _adjust_version {
+    my $self = shift;
+    my $version = shift;
+    my $baseversion = $self->{baseversion};
+
+    $version = $baseversion
+        if ($baseversion ne '*' && $version ne '*'
+            && cmp_versions($baseversion, $version) > 0);
+
+    return $version;
+}
+
 =item B<$ordinals-E<gt>add NAME, TYPE, LIST>
 
 Adds a new item named NAME with the type TYPE, and a set of C macros in
@@ -410,7 +423,8 @@ sub add {
         OpenSSL::Ordinals::Item->new( name          => $name,
                                       type          => $type,
                                       number        => $number,
-                                      version       => $version,
+                                      version       =>
+                                          $self->_adjust_version($version),
                                       exists        => 1,
                                       platforms     => { %platforms },
                                       features      => [
@@ -497,7 +511,7 @@ sub add_alias {
             name          => $alias,
             type          => $items[0]->type(),
             number        => $items[0]->number(),
-            version       => $items[0]->version(),
+            version       => $self->_adjust_version($items[0]->version()),
             exists        => $items[0]->exists(),
             platforms     => { %platforms },
             features      => [ $items[0]->features() ]
@@ -518,17 +532,61 @@ sub add_alias {
 
 =item B<$ordinals-E<gt>set_version VERSION>
 
+=item B<$ordinals-E<gt>set_version VERSION BASEVERSION>
+
 Sets the default version for new symbol to VERSION.
+
+If given, BASEVERSION sets the base version, i.e. the minimum version
+for all symbols.  If not given, it will be calculated as follows:
+
+=over 4
+
+If the given version is '*', then the base version will also be '*'.
+
+If the given version starts with '0.', the base version will be '0.0.0'.
+
+If the given version starts with '1.0.', the base version will be '1.0.0'.
+
+If the given version starts with '1.1.', the base version will be '1.1.0'.
+
+If the given version has a first number C<N> that's greater than 1, the
+base version will be formed from C<N>: 'N.0.0'.
+
+=back
 
 =cut
 
 sub set_version {
     my $self = shift;
-    my $version = shift;
+    # '*' is for "we don't care"
+    my $version = shift // '*';
+    my $baseversion = shift // '*';
 
-    $version //= '*';
     $version =~ s|-.*||g;
+
+    if ($baseversion eq '*') {
+        $baseversion = $version;
+        if ($baseversion ne '*') {
+            if ($baseversion =~ m|^(\d+)\.|, $1 > 1) {
+                $baseversion = "$1.0.0";
+            } else {
+                $baseversion =~ s|^0\..*$|0.0.0|;
+                $baseversion =~ s|^1\.0\..*$|1.0.0|;
+                $baseversion =~ s|^1\.1\..*$|1.1.0|;
+
+                die 'Invalid version'
+                    if ($baseversion ne '0.0.0'
+                        && $baseversion !~ m|^1\.[01]\.0$|);
+            }
+        }
+    }
+
+    die 'Invalid base version'
+        if ($baseversion ne '*' && $version ne '*'
+            && cmp_versions($baseversion, $version) > 0);
+
     $self->{currversion} = $version;
+    $self->{baseversion} = $baseversion;
     foreach ($self->items(filter => sub { $_[0] eq '*' })) {
         $_->{version} = $self->{currversion};
     }
