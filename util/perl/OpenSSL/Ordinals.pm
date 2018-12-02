@@ -845,33 +845,10 @@ OpenSSL::Ordinals::Item objects.
 =cut
 
 sub by_version {
-    # Until we're rid of everything with the old version scheme,
-    # we need to be able to handle older style x.y.zl versions.
-    sub _ossl_versionsplit {
-        my $textversion = shift;
-        return $textversion if $textversion eq '*';
-        my ($major,$minor,$edit,$patch) =
-            $textversion =~ /^(\d+)\.(\d+)\.(\d+)([a-z]{0,2})$/;
-        return ($major,$minor,$edit,$patch);
-    }
-
     return sub {
-        my @a_split = _ossl_versionsplit($_[0]->version());
-        my @b_split = _ossl_versionsplit($_[1]->version());
-        my $verdict = 0;
-        while (@a_split) {
-            # The last part is a letter sequence (or a '*')
-            if (scalar @a_split == 1) {
-                $verdict = $a_split[0] cmp $b_split[0];
-            } else {
-                $verdict = $a_split[0] <=> $b_split[0];
-            }
-            shift @a_split;
-            shift @b_split;
-            last unless $verdict == 0;
-        }
-        $verdict;
-    };
+        # cmp_versions comes from OpenSSL::Util
+        return cmp_versions($_[0]->version(), $_[1]->version());
+    }
 }
 
 =back
