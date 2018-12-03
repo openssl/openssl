@@ -36,7 +36,7 @@ OBJ_dup, OBJ_txt2obj, OBJ_obj2txt, OBJ_create, OBJ_cleanup
  const unsigned char *OBJ_get0_data(const ASN1_OBJECT *obj);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  void OBJ_cleanup(void)
 

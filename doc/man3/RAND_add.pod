@@ -19,7 +19,7 @@ RAND_keep_random_devices_open
  void RAND_keep_random_devices_open(int keep);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam);
  void RAND_screen(void);

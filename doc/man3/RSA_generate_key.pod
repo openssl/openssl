@@ -13,7 +13,7 @@ RSA_generate_multi_prime_key - generate RSA key pair
  int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes, BIGNUM *e, BN_GENCB *cb);
 
 Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  RSA *RSA_generate_key(int num, unsigned long e,
                        void (*callback)(int, int, void *), void *cb_arg);

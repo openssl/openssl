@@ -10,7 +10,7 @@ add algorithms to internal table
  #include <openssl/evp.h>
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  void OpenSSL_add_all_algorithms(void);
  void OpenSSL_add_all_ciphers(void);

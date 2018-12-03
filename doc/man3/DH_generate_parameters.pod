@@ -22,7 +22,7 @@ parameters
  int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key);
 
 Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  DH *DH_generate_parameters(int prime_len, int generator,
                             void (*callback)(int, int, void *), void *cb_arg);

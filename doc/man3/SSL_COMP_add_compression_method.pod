@@ -16,7 +16,7 @@ SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
  int SSL_COMP_get_id(const SSL_COMP *comp);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  void SSL_COMP_free_compression_methods(void)
 

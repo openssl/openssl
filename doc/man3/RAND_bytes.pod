@@ -12,7 +12,7 @@ RAND_bytes, RAND_priv_bytes, RAND_pseudo_bytes - generate random data
  int RAND_priv_bytes(unsigned char *buf, int num);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
+B<OPENSSL_API_COMPAT> with a version value, see L<openssl_user_macros(7)>:
 
  int RAND_pseudo_bytes(unsigned char *buf, int num);
 
