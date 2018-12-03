@@ -1,0 +1,45 @@
+=pod
+
+=head1 NAME
+
+CMS_add1_signing_cert - add ESS signing-certificate signed
+attribute to a CMS_SignerInfo data structure
+
+=head1 SYNOPSIS
+
+ #include <openssl/cms.h>
+ #include <openssl/ess.h>
+ #include "internal/ess_int.h"
+
+ CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
+
+=head1 DESCRIPTION
+
+CMS_add1_signing_cert_v2() adds a ESS signing-certificate V2 signed
+attribute using certificate B<signer> and SHA1 message digest  
+to CMS_SignerInfo B<si>structure.
+
+=head1 NOTES
+
+This attribute is mandatory to make a CMS compliant with CAdES-BES
+(RFC 5126).
+
+=head1 RETURN VALUES
+
+CMS_add1_signing_cert() returns  an internal pointer to the CMS_SignerInfo
+structure just added for a successful add and NULL if an error occurred.
+
+=head1 SEE ALSO
+
+L<CMS_add1_signing_cert_v2(3)>,
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the OpenSSL license (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
