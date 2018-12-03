@@ -96,6 +96,7 @@ sub name_synopsis()
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
     foreach my $line ( split /\n+/, $syn ) {
+        next unless $line =~ /^\s/;
         my $sym;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;

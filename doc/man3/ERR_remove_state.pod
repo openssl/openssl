@@ -6,15 +6,17 @@ ERR_remove_thread_state, ERR_remove_state - DEPRECATED
 
 =head1 SYNOPSIS
 
-Deprecated:
+Deprecated since OpenSSL 1.0.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x10000000L
  void ERR_remove_state(unsigned long tid);
- #endif
 
- #if OPENSSL_API_COMPAT < 0x10100000L
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void ERR_remove_thread_state(void *tid);
- #endif
 
 =head1 DESCRIPTION
 

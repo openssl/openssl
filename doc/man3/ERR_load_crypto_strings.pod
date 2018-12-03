@@ -7,20 +7,18 @@ load and free error strings
 
 =head1 SYNOPSIS
 
-Deprecated:
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
  #include <openssl/err.h>
 
- #if OPENSSL_API_COMPAT < 0x10100000L
  void ERR_load_crypto_strings(void);
  void ERR_free_strings(void);
- #endif
 
  #include <openssl/ssl.h>
 
- #if OPENSSL_API_COMPAT < 0x10100000L
  void SSL_load_error_strings(void);
- #endif
 
 =head1 DESCRIPTION
 

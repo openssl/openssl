@@ -33,9 +33,10 @@ for primality
 
  void *BN_GENCB_get_arg(BN_GENCB *cb);
 
-Deprecated:
+Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x00908000L
  BIGNUM *BN_generate_prime(BIGNUM *ret, int num, int safe, BIGNUM *add,
                            BIGNUM *rem, void (*callback)(int, int, void *),
                            void *cb_arg);
@@ -46,7 +47,6 @@ Deprecated:
  int BN_is_prime_fasttest(const BIGNUM *a, int checks,
                           void (*callback)(int, int, void *), BN_CTX *ctx,
                           void *cb_arg, int do_trial_division);
- #endif
 
 =head1 DESCRIPTION
 

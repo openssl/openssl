@@ -40,12 +40,12 @@ HMAC_size
 
  size_t HMAC_size(const HMAC_CTX *e);
 
-Deprecated:
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x10100000L
  int HMAC_Init(HMAC_CTX *ctx, const void *key, int key_len,
                const EVP_MD *md);
- #endif
 
 =head1 DESCRIPTION
 
