@@ -251,9 +251,9 @@ static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
 }
 #endif
 
-#if defined(X25519_ASM)                                             \
-    || ( (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16)    \
-         && !defined(__sparc__)                                     \
+#if defined(X25519_ASM) \
+    || ( (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16) \
+         && !defined(__sparc__) \
          && !(defined(__ANDROID__) && !defined(__clang__)) )
 /*
  * Base 2^51 implementation. It's virtually no different from reference
@@ -338,7 +338,7 @@ static void fe51_tobytes(uint8_t *s, const fe51 h)
     h2 += h1 >> 51; h1 &= MASK51;
     h3 += h2 >> 51; h2 &= MASK51;
     h4 += h3 >> 51; h3 &= MASK51;
-    h4 &= MASK51;
+                    h4 &= MASK51;
 
     /* smash */
     s[0] = (uint8_t)(h0 >> 0);
@@ -887,7 +887,7 @@ static void fe_tobytes(uint8_t *s, const fe h) {
     h7 += h6 >> 26; h6 &= kBottom26Bits;
     h8 += h7 >> 25; h7 &= kBottom25Bits;
     h9 += h8 >> 26; h8 &= kBottom26Bits;
-    h9 &= kBottom25Bits;
+                    h9 &= kBottom25Bits;
     /* h10 = carry9 */
 
     /* Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
