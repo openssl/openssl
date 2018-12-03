@@ -154,11 +154,10 @@ ENGINE_unregister_digests
  EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
                                   UI_METHOD *ui_method, void *callback_data);
 
-Deprecated:
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x10100000L
  void ENGINE_cleanup(void)
- #endif
 
 =head1 DESCRIPTION
 

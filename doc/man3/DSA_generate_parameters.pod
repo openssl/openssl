@@ -13,13 +13,12 @@ DSA_generate_parameters_ex, DSA_generate_parameters - generate DSA parameters
                                 int *counter_ret, unsigned long *h_ret,
                                 BN_GENCB *cb);
 
-Deprecated:
+Deprecated since OpenSSL 0.9.8, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x00908000L
  DSA *DSA_generate_parameters(int bits, unsigned char *seed, int seed_len,
                               int *counter_ret, unsigned long *h_ret,
                               void (*callback)(int, int, void *), void *cb_arg);
- #endif
 
 =head1 DESCRIPTION
 

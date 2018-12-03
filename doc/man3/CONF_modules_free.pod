@@ -12,11 +12,10 @@ OpenSSL configuration cleanup functions
  void CONF_modules_finish(void);
  void CONF_modules_unload(int all);
 
-Deprecated:
+Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT>, see L<openssl_user_macros(7)>:
 
- #if OPENSSL_API_COMPAT < 0x10100000L
  void CONF_modules_free(void)
- #endif
 
 =head1 DESCRIPTION
 
