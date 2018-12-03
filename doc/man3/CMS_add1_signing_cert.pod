@@ -8,8 +8,6 @@ attribute to a CMS_SignerInfo data structure
 =head1 SYNOPSIS
 
  #include <openssl/cms.h>
- #include <openssl/ess.h>
- #include "internal/ess_int.h"
 
  CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
 
