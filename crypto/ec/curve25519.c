@@ -4490,7 +4490,8 @@ static const ge_precomp Bi[8] = {
  * and b = b[0]+256*b[1]+...+256^31 b[31].
  * B is the Ed25519 base point (x,4/5) with x positive. */
 static void ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
-                                         const ge_p3 *A, const uint8_t *b) {
+                                         const ge_p3 *A, const uint8_t *b)
+{
     signed char aslide[256];
     signed char bslide[256];
     ge_cached Ai[8]; /* A,3A,5A,7A,9A,11A,13A,15A */
@@ -4911,7 +4912,8 @@ static void x25519_sc_reduce(uint8_t *s)
  *   s[0]+256*s[1]+...+256^31*s[31] = (ab+c) mod l
  *   where l = 2^252 + 27742317777372353535851937790883648493. */
 static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
-                      const uint8_t *c) {
+                      const uint8_t *c)
+{
     int64_t a0 = 2097151 & load_3(a);
     int64_t a1 = 2097151 & (load_4(a + 2) >> 5);
     int64_t a2 = 2097151 & (load_3(a + 5) >> 2);
@@ -5394,7 +5396,8 @@ static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 }
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32]) {
+                 const uint8_t public_key[32], const uint8_t private_key[32])
+{
     uint8_t az[SHA512_DIGEST_LENGTH];
     uint8_t nonce[SHA512_DIGEST_LENGTH];
     ge_p3 R;
@@ -5437,7 +5440,8 @@ int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
 static const char allzeroes[15];
 
 int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32]) {
+                   const uint8_t signature[64], const uint8_t public_key[32])
+{
     int i;
     ge_p3 A;
     const uint8_t *r, *s;
@@ -5504,7 +5508,8 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
 }
 
 void ED25519_public_from_private(uint8_t out_public_key[32],
-                                 const uint8_t private_key[32]) {
+                                 const uint8_t private_key[32])
+{
     uint8_t az[SHA512_DIGEST_LENGTH];
     ge_p3 A;
 
@@ -5521,7 +5526,8 @@ void ED25519_public_from_private(uint8_t out_public_key[32],
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-           const uint8_t peer_public_value[32]) {
+           const uint8_t peer_public_value[32])
+{
     static const uint8_t kZeros[32] = {0};
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
     /* The all-zero output results when the input is a point of small order. */
@@ -5529,7 +5535,8 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 }
 
 void X25519_public_from_private(uint8_t out_public_value[32],
-                                const uint8_t private_key[32]) {
+                                const uint8_t private_key[32])
+{
     uint8_t e[32];
     ge_p3 A;
     fe zplusy, zminusy, zminusy_inv;
