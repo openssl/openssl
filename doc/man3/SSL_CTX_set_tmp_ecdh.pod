@@ -7,13 +7,13 @@ SSL_CTX_set_tmp_ecdh, SSL_set_tmp_ecdh, SSL_CTX_set_ecdh_auto, SSL_set_ecdh_auto
 
 =head1 SYNOPSIS
 
-#include <openssl/ssl.h>
+ #include <openssl/ssl.h>
 
-long SSL_CTX_set_tmp_ecdh(SSL_CTX *ctx, const EC_KEY *ecdh);
-long SSL_set_tmp_ecdh(SSL *ssl, const EC_KEY *ecdh);
+ long SSL_CTX_set_tmp_ecdh(SSL_CTX *ctx, const EC_KEY *ecdh);
+ long SSL_set_tmp_ecdh(SSL *ssl, const EC_KEY *ecdh);
 
-long SSL_CTX_set_ecdh_auto(SSL_CTX *ctx, int state);
-long SSL_set_ecdh_auto(SSL *ssl, int state);
+ long SSL_CTX_set_ecdh_auto(SSL_CTX *ctx, int state);
+ long SSL_set_ecdh_auto(SSL *ssl, int state);
 
 =head1 DESCRIPTION
 
