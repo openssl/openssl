@@ -763,7 +763,8 @@ static const int64_t kBottom26Bits = 0x3ffffffLL;
 static const int64_t kTop39Bits = 0xfffffffffe000000LL;
 static const int64_t kTop38Bits = 0xfffffffffc000000LL;
 
-static uint64_t load_3(const uint8_t *in) {
+static uint64_t load_3(const uint8_t *in)
+{
     uint64_t result;
     result = (uint64_t)in[0];
     result |= ((uint64_t)in[1]) << 8;
@@ -771,7 +772,8 @@ static uint64_t load_3(const uint8_t *in) {
     return result;
 }
 
-static uint64_t load_4(const uint8_t *in) {
+static uint64_t load_4(const uint8_t *in)
+{
     uint64_t result;
     result = (uint64_t)in[0];
     result |= ((uint64_t)in[1]) << 8;
@@ -780,7 +782,8 @@ static uint64_t load_4(const uint8_t *in) {
     return result;
 }
 
-static void fe_frombytes(fe h, const uint8_t *s) {
+static void fe_frombytes(fe h, const uint8_t *s)
+{
     /* Ignores top bit of h. */
     int64_t h0 = load_4(s);
     int64_t h1 = load_3(s + 4) << 6;
@@ -849,7 +852,8 @@ static void fe_frombytes(fe h, const uint8_t *s) {
  *
  *   Have q+2^(-255)x = 2^(-255)(h + 19 2^(-25) h9 + 2^(-1))
  *   so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q. */
-static void fe_tobytes(uint8_t *s, const fe h) {
+static void fe_tobytes(uint8_t *s, const fe h)
+{
     int32_t h0 = h[0];
     int32_t h1 = h[1];
     int32_t h2 = h[2];
@@ -930,15 +934,20 @@ static void fe_tobytes(uint8_t *s, const fe h) {
 }
 
 /* h = f */
-static void fe_copy(fe h, const fe f) {
+static void fe_copy(fe h, const fe f)
+{
     memmove(h, f, sizeof(int32_t) * 10);
 }
 
 /* h = 0 */
-static void fe_0(fe h) { memset(h, 0, sizeof(int32_t) * 10); }
+static void fe_0(fe h)
+{
+    memset(h, 0, sizeof(int32_t) * 10);
+}
 
 /* h = 1 */
-static void fe_1(fe h) {
+static void fe_1(fe h)
+{
     memset(h, 0, sizeof(int32_t) * 10);
     h[0] = 1;
 }
@@ -952,7 +961,8 @@ static void fe_1(fe h) {
  *
  * Postconditions:
  *    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
-static void fe_add(fe h, const fe f, const fe g) {
+static void fe_add(fe h, const fe f, const fe g)
+{
     unsigned i;
     for (i = 0; i < 10; i++) {
         h[i] = f[i] + g[i];
@@ -968,7 +978,8 @@ static void fe_add(fe h, const fe f, const fe g) {
  *
  * Postconditions:
  *    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
-static void fe_sub(fe h, const fe f, const fe g) {
+static void fe_sub(fe h, const fe f, const fe g)
+{
     unsigned i;
     for (i = 0; i < 10; i++) {
         h[i] = f[i] - g[i];
@@ -1002,7 +1013,8 @@ static void fe_sub(fe h, const fe f, const fe g) {
  * Can get away with 11 carries, but then data flow is much deeper.
  *
  * With tighter constraints on inputs can squeeze carries into int32. */
-static void fe_mul(fe h, const fe f, const fe g) {
+static void fe_mul(fe h, const fe f, const fe g)
+{
     int32_t f0 = f[0];
     int32_t f1 = f[1];
     int32_t f2 = f[2];
@@ -1228,7 +1240,8 @@ static void fe_mul(fe h, const fe f, const fe g) {
  *    |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
  *
  * See fe_mul.c for discussion of implementation strategy. */
-static void fe_sq(fe h, const fe f) {
+static void fe_sq(fe h, const fe f)
+{
     int32_t f0 = f[0];
     int32_t f1 = f[1];
     int32_t f2 = f[2];
@@ -1359,7 +1372,8 @@ static void fe_sq(fe h, const fe f) {
     h[9] = (int32_t)h9;
 }
 
-static void fe_invert(fe out, const fe z) {
+static void fe_invert(fe out, const fe z)
+{
     fe t0;
     fe t1;
     fe t2;
@@ -1461,7 +1475,8 @@ static void fe_invert(fe out, const fe z) {
  *
  * Postconditions:
  *    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc. */
-static void fe_neg(fe h, const fe f) {
+static void fe_neg(fe h, const fe f)
+{
     unsigned i;
     for (i = 0; i < 10; i++) {
         h[i] = -f[i];
@@ -1472,7 +1487,8 @@ static void fe_neg(fe h, const fe f) {
  * replace (f,g) with (f,g) if b == 0.
  *
  * Preconditions: b in {0,1}. */
-static void fe_cmov(fe f, const fe g, unsigned b) {
+static void fe_cmov(fe f, const fe g, unsigned b)
+{
     size_t i;
     b = 0-b;
     for (i = 0; i < 10; i++) {
@@ -1487,7 +1503,8 @@ static void fe_cmov(fe f, const fe g, unsigned b) {
  *
  * Preconditions:
  *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
-static int fe_isnonzero(const fe f) {
+static int fe_isnonzero(const fe f)
+{
     uint8_t s[32];
     static const uint8_t zero[32] = {0};
     fe_tobytes(s, f);
@@ -1500,7 +1517,8 @@ static int fe_isnonzero(const fe f) {
  *
  * Preconditions:
  *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
-static int fe_isnegative(const fe f) {
+static int fe_isnegative(const fe f)
+{
     uint8_t s[32];
     fe_tobytes(s, f);
     return s[0] & 1;
@@ -1516,7 +1534,8 @@ static int fe_isnegative(const fe f) {
  *    |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
  *
  * See fe_mul.c for discussion of implementation strategy. */
-static void fe_sq2(fe h, const fe f) {
+static void fe_sq2(fe h, const fe f)
+{
     int32_t f0 = f[0];
     int32_t f1 = f[1];
     int32_t f2 = f[2];
@@ -1658,7 +1677,8 @@ static void fe_sq2(fe h, const fe f) {
     h[9] = (int32_t)h9;
 }
 
-static void fe_pow22523(fe out, const fe z) {
+static void fe_pow22523(fe out, const fe z)
+{
     fe t0;
     fe t1;
     fe t2;
@@ -1760,7 +1780,8 @@ typedef struct {
     fe T2d;
 } ge_cached;
 
-static void ge_tobytes(uint8_t *s, const ge_p2 *h) {
+static void ge_tobytes(uint8_t *s, const ge_p2 *h)
+{
     fe recip;
     fe x;
     fe y;
@@ -1772,7 +1793,8 @@ static void ge_tobytes(uint8_t *s, const ge_p2 *h) {
     s[31] ^= fe_isnegative(x) << 7;
 }
 
-static void ge_p3_tobytes(uint8_t *s, const ge_p3 *h) {
+static void ge_p3_tobytes(uint8_t *s, const ge_p3 *h)
+{
     fe recip;
     fe x;
     fe y;
@@ -1790,7 +1812,8 @@ static const fe d = {-10913610, 13857413, -15372611, 6949391,   114729,
 static const fe sqrtm1 = {-32595792, -7943725,  9377950,  3500415, 12389472,
                           -272473,   -25146209, -2005654, 326686,  11406482};
 
-static int ge_frombytes_vartime(ge_p3 *h, const uint8_t *s) {
+static int ge_frombytes_vartime(ge_p3 *h, const uint8_t *s)
+{
     fe u;
     fe v;
     fe v3;
@@ -1833,27 +1856,31 @@ static int ge_frombytes_vartime(ge_p3 *h, const uint8_t *s) {
     return 0;
 }
 
-static void ge_p2_0(ge_p2 *h) {
+static void ge_p2_0(ge_p2 *h)
+{
     fe_0(h->X);
     fe_1(h->Y);
     fe_1(h->Z);
 }
 
-static void ge_p3_0(ge_p3 *h) {
+static void ge_p3_0(ge_p3 *h)
+{
     fe_0(h->X);
     fe_1(h->Y);
     fe_1(h->Z);
     fe_0(h->T);
 }
 
-static void ge_precomp_0(ge_precomp *h) {
+static void ge_precomp_0(ge_precomp *h)
+{
     fe_1(h->yplusx);
     fe_1(h->yminusx);
     fe_0(h->xy2d);
 }
 
 /* r = p */
-static void ge_p3_to_p2(ge_p2 *r, const ge_p3 *p) {
+static void ge_p3_to_p2(ge_p2 *r, const ge_p3 *p)
+{
     fe_copy(r->X, p->X);
     fe_copy(r->Y, p->Y);
     fe_copy(r->Z, p->Z);
@@ -1863,7 +1890,8 @@ static const fe d2 = {-21827239, -5839606,  -30745221, 13898782, 229458,
                       15978800,  -12551817, -6495438,  29715968, 9444199};
 
 /* r = p */
-static void ge_p3_to_cached(ge_cached *r, const ge_p3 *p) {
+static void ge_p3_to_cached(ge_cached *r, const ge_p3 *p)
+{
     fe_add(r->YplusX, p->Y, p->X);
     fe_sub(r->YminusX, p->Y, p->X);
     fe_copy(r->Z, p->Z);
@@ -1871,14 +1899,16 @@ static void ge_p3_to_cached(ge_cached *r, const ge_p3 *p) {
 }
 
 /* r = p */
-static void ge_p1p1_to_p2(ge_p2 *r, const ge_p1p1 *p) {
+static void ge_p1p1_to_p2(ge_p2 *r, const ge_p1p1 *p)
+{
     fe_mul(r->X, p->X, p->T);
     fe_mul(r->Y, p->Y, p->Z);
     fe_mul(r->Z, p->Z, p->T);
 }
 
 /* r = p */
-static void ge_p1p1_to_p3(ge_p3 *r, const ge_p1p1 *p) {
+static void ge_p1p1_to_p3(ge_p3 *r, const ge_p1p1 *p)
+{
     fe_mul(r->X, p->X, p->T);
     fe_mul(r->Y, p->Y, p->Z);
     fe_mul(r->Z, p->Z, p->T);
@@ -1886,7 +1916,8 @@ static void ge_p1p1_to_p3(ge_p3 *r, const ge_p1p1 *p) {
 }
 
 /* r = 2 * p */
-static void ge_p2_dbl(ge_p1p1 *r, const ge_p2 *p) {
+static void ge_p2_dbl(ge_p1p1 *r, const ge_p2 *p)
+{
     fe t0;
 
     fe_sq(r->X, p->X);
@@ -1901,14 +1932,16 @@ static void ge_p2_dbl(ge_p1p1 *r, const ge_p2 *p) {
 }
 
 /* r = 2 * p */
-static void ge_p3_dbl(ge_p1p1 *r, const ge_p3 *p) {
+static void ge_p3_dbl(ge_p1p1 *r, const ge_p3 *p)
+{
     ge_p2 q;
     ge_p3_to_p2(&q, p);
     ge_p2_dbl(r, &q);
 }
 
 /* r = p + q */
-static void ge_madd(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
+static void ge_madd(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q)
+{
     fe t0;
 
     fe_add(r->X, p->Y, p->X);
@@ -1924,7 +1957,8 @@ static void ge_madd(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
 }
 
 /* r = p - q */
-static void ge_msub(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
+static void ge_msub(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q)
+{
     fe t0;
 
     fe_add(r->X, p->Y, p->X);
@@ -1940,7 +1974,8 @@ static void ge_msub(ge_p1p1 *r, const ge_p3 *p, const ge_precomp *q) {
 }
 
 /* r = p + q */
-static void ge_add(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q) {
+static void ge_add(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q)
+{
     fe t0;
 
     fe_add(r->X, p->Y, p->X);
@@ -1957,7 +1992,8 @@ static void ge_add(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q) {
 }
 
 /* r = p - q */
-static void ge_sub(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q) {
+static void ge_sub(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q)
+{
     fe t0;
 
     fe_add(r->X, p->Y, p->X);
@@ -1973,7 +2009,8 @@ static void ge_sub(ge_p1p1 *r, const ge_p3 *p, const ge_cached *q) {
     fe_add(r->T, t0, r->T);
 }
 
-static uint8_t equal(signed char b, signed char c) {
+static uint8_t equal(signed char b, signed char c)
+{
     uint8_t ub = b;
     uint8_t uc = c;
     uint8_t x = ub ^ uc; /* 0: yes; 1..255: no */
@@ -1983,7 +2020,8 @@ static uint8_t equal(signed char b, signed char c) {
     return y;
 }
 
-static void cmov(ge_precomp *t, const ge_precomp *u, uint8_t b) {
+static void cmov(ge_precomp *t, const ge_precomp *u, uint8_t b)
+{
     fe_cmov(t->yplusx, u->yplusx, b);
     fe_cmov(t->yminusx, u->yminusx, b);
     fe_cmov(t->xy2d, u->xy2d, b);
@@ -4105,13 +4143,15 @@ static const ge_precomp k25519Precomp[32][8] = {
     },
 };
 
-static uint8_t negative(signed char b) {
+static uint8_t negative(signed char b)
+{
     uint32_t x = b;
     x >>= 31; /* 1: yes; 0: no */
     return x;
 }
 
-static void table_select(ge_precomp *t, int pos, signed char b) {
+static void table_select(ge_precomp *t, int pos, signed char b)
+{
     ge_precomp minust;
     uint8_t bnegative = negative(b);
     uint8_t babs = b - ((uint8_t)((-bnegative) & b) << 1);
@@ -4137,7 +4177,8 @@ static void table_select(ge_precomp *t, int pos, signed char b) {
  *
  * Preconditions:
  *   a[31] <= 127 */
-static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a) {
+static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a)
+{
     signed char e[64];
     signed char carry;
     ge_p1p1 r;
@@ -4192,7 +4233,8 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a) {
  * replace (f,g) with (f,g) if b == 0.
  *
  * Preconditions: b in {0,1}. */
-static void fe_cswap(fe f, fe g, unsigned int b) {
+static void fe_cswap(fe f, fe g, unsigned int b)
+{
     size_t i;
     b = 0-b;
     for (i = 0; i < 10; i++) {
@@ -4211,7 +4253,8 @@ static void fe_cswap(fe f, fe g, unsigned int b) {
  *
  * Postconditions:
  *    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc. */
-static void fe_mul121666(fe h, fe f) {
+static void fe_mul121666(fe h, fe f)
+{
     int32_t f0 = f[0];
     int32_t f1 = f[1];
     int32_t f2 = f[2];
@@ -4324,7 +4367,8 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
 }
 #endif
 
-static void slide(signed char *r, const uint8_t *a) {
+static void slide(signed char *r, const uint8_t *a)
+{
     int i;
     int b;
     int k;
@@ -4508,7 +4552,8 @@ static void ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
  *   s[0]+256*s[1]+...+256^31*s[31] = s mod l
  *   where l = 2^252 + 27742317777372353535851937790883648493.
  *   Overwrites s in place. */
-static void x25519_sc_reduce(uint8_t *s) {
+static void x25519_sc_reduce(uint8_t *s)
+{
     int64_t s0 = 2097151 & load_3(s);
     int64_t s1 = 2097151 & (load_4(s + 2) >> 5);
     int64_t s2 = 2097151 & (load_3(s + 5) >> 2);
