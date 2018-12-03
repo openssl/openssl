@@ -766,6 +766,7 @@ static const int64_t kTop38Bits = 0xfffffffffc000000LL;
 static uint64_t load_3(const uint8_t *in)
 {
     uint64_t result;
+
     result = (uint64_t)in[0];
     result |= ((uint64_t)in[1]) << 8;
     result |= ((uint64_t)in[2]) << 16;
@@ -775,6 +776,7 @@ static uint64_t load_3(const uint8_t *in)
 static uint64_t load_4(const uint8_t *in)
 {
     uint64_t result;
+
     result = (uint64_t)in[0];
     result |= ((uint64_t)in[1]) << 8;
     result |= ((uint64_t)in[2]) << 16;
@@ -964,6 +966,7 @@ static void fe_1(fe h)
 static void fe_add(fe h, const fe f, const fe g)
 {
     unsigned i;
+
     for (i = 0; i < 10; i++) {
         h[i] = f[i] + g[i];
     }
@@ -981,6 +984,7 @@ static void fe_add(fe h, const fe f, const fe g)
 static void fe_sub(fe h, const fe f, const fe g)
 {
     unsigned i;
+
     for (i = 0; i < 10; i++) {
         h[i] = f[i] - g[i];
     }
@@ -1478,6 +1482,7 @@ static void fe_invert(fe out, const fe z)
 static void fe_neg(fe h, const fe f)
 {
     unsigned i;
+
     for (i = 0; i < 10; i++) {
         h[i] = -f[i];
     }
@@ -1490,6 +1495,7 @@ static void fe_neg(fe h, const fe f)
 static void fe_cmov(fe f, const fe g, unsigned b)
 {
     size_t i;
+
     b = 0-b;
     for (i = 0; i < 10; i++) {
         int32_t x = f[i] ^ g[i];
@@ -1507,6 +1513,7 @@ static int fe_isnonzero(const fe f)
 {
     uint8_t s[32];
     static const uint8_t zero[32] = {0};
+
     fe_tobytes(s, f);
 
     return CRYPTO_memcmp(s, zero, sizeof(zero)) != 0;
@@ -1520,6 +1527,7 @@ static int fe_isnonzero(const fe f)
 static int fe_isnegative(const fe f)
 {
     uint8_t s[32];
+
     fe_tobytes(s, f);
     return s[0] & 1;
 }
@@ -4152,6 +4160,7 @@ static const ge_precomp k25519Precomp[32][8] = {
 static uint8_t negative(signed char b)
 {
     uint32_t x = b;
+
     x >>= 31; /* 1: yes; 0: no */
     return x;
 }
@@ -4242,6 +4251,7 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a)
 static void fe_cswap(fe f, fe g, unsigned int b)
 {
     size_t i;
+
     b = 0-b;
     for (i = 0; i < 10; i++) {
         int32_t x = f[i] ^ g[i];
