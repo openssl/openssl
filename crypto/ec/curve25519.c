@@ -744,18 +744,19 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
 
 /*
  * Reference base 2^25.5 implementation.
- */
-/*
+ *
  * This code is mostly taken from the ref10 version of Ed25519 in SUPERCOP
  * 20141124 (http://bench.cr.yp.to/supercop.html).
  *
  * The field functions are shared by Ed25519 and X25519 where possible.
  */
 
-/* fe means field element. Here the field is \Z/(2^255-19). An element t,
+/*
+ * fe means field element. Here the field is \Z/(2^255-19). An element t,
  * entries t[0]...t[9], represents the integer t[0]+2^26 t[1]+2^51 t[2]+2^77
  * t[3]+2^102 t[4]+...+2^230 t[9]. Bounds on each t[i] vary depending on
- * context.  */
+ * context.
+ */
 typedef int32_t fe[10];
 
 static const int64_t kBottom25Bits = 0x1ffffffLL;
@@ -832,8 +833,9 @@ static void fe_frombytes(fe h, const uint8_t *s)
     h[9] = (int32_t)h9;
 }
 
-/* Preconditions:
- *  |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+/*
+ * Preconditions:
+ *   |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
  *
  * Write p=2^255-19; q=floor(h/p).
  * Basic claim: q = floor(2^(-255)(h + 19 2^(-25)h9 + 2^(-1))).
@@ -853,7 +855,8 @@ static void fe_frombytes(fe h, const uint8_t *s)
  *   Then 0<x<2^255 so floor(2^(-255)x) = 0 so floor(q+2^(-255)x) = q.
  *
  *   Have q+2^(-255)x = 2^(-255)(h + 19 2^(-25) h9 + 2^(-1))
- *   so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q. */
+ *   so floor(2^(-255)(h + 19 2^(-25) h9 + 2^(-1))) = q.
+ */
 static void fe_tobytes(uint8_t *s, const fe h)
 {
     int32_t h0 = h[0];
@@ -896,11 +899,12 @@ static void fe_tobytes(uint8_t *s, const fe h)
                     h9 &= kBottom25Bits;
     /* h10 = carry9 */
 
-    /* Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
+    /*
+     * Goal: Output h0+...+2^255 h10-2^255 q, which is between 0 and 2^255-20.
      * Have h0+...+2^230 h9 between 0 and 2^255-1;
      * evidently 2^255 h10-2^255 q = 0.
-     * Goal: Output h0+...+2^230 h9.  */
-
+     * Goal: Output h0+...+2^230 h9.
+     */
     s[0] = (uint8_t)(h0 >> 0);
     s[1] = (uint8_t)(h0 >> 8);
     s[2] = (uint8_t)(h0 >> 16);
@@ -954,7 +958,9 @@ static void fe_1(fe h)
     h[0] = 1;
 }
 
-/* h = f + g
+/*
+ * h = f + g
+ *
  * Can overlap h with f or g.
  *
  * Preconditions:
@@ -962,7 +968,8 @@ static void fe_1(fe h)
  *    |g| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
  *
  * Postconditions:
- *    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
+ *    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+ */
 static void fe_add(fe h, const fe f, const fe g)
 {
     unsigned i;
@@ -972,7 +979,9 @@ static void fe_add(fe h, const fe f, const fe g)
     }
 }
 
-/* h = f - g
+/*
+ * h = f - g
+ *
  * Can overlap h with f or g.
  *
  * Preconditions:
@@ -980,7 +989,8 @@ static void fe_add(fe h, const fe f, const fe g)
  *    |g| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
  *
  * Postconditions:
- *    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
+ *    |h| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+ */
 static void fe_sub(fe h, const fe f, const fe g)
 {
     unsigned i;
@@ -990,7 +1000,9 @@ static void fe_sub(fe h, const fe f, const fe g)
     }
 }
 
-/* h = f * g
+/*
+ * h = f * g
+ *
  * Can overlap h with f or g.
  *
  * Preconditions:
@@ -1016,7 +1028,8 @@ static void fe_sub(fe h, const fe f, const fe g)
  * 10 of them are 2-way parallelizable and vectorizable.
  * Can get away with 11 carries, but then data flow is much deeper.
  *
- * With tighter constraints on inputs can squeeze carries into int32. */
+ * With tighter constraints on inputs can squeeze carries into int32.
+ */
 static void fe_mul(fe h, const fe f, const fe g)
 {
     int32_t f0 = f[0];
@@ -1234,7 +1247,9 @@ static void fe_mul(fe h, const fe f, const fe g)
     h[9] = (int32_t)h9;
 }
 
-/* h = f * f
+/*
+ * h = f * f
+ *
  * Can overlap h with f.
  *
  * Preconditions:
@@ -1243,7 +1258,8 @@ static void fe_mul(fe h, const fe f, const fe g)
  * Postconditions:
  *    |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
  *
- * See fe_mul.c for discussion of implementation strategy. */
+ * See fe_mul.c for discussion of implementation strategy.
+ */
 static void fe_sq(fe h, const fe f)
 {
     int32_t f0 = f[0];
@@ -1472,13 +1488,15 @@ static void fe_invert(fe out, const fe z)
     fe_mul(out, t1, t0);
 }
 
-/* h = -f
+/*
+ * h = -f
  *
  * Preconditions:
  *    |f| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
  *
  * Postconditions:
- *    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc. */
+ *    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
+ */
 static void fe_neg(fe h, const fe f)
 {
     unsigned i;
@@ -1488,10 +1506,12 @@ static void fe_neg(fe h, const fe f)
     }
 }
 
-/* Replace (f,g) with (g,g) if b == 1;
+/*
+ * Replace (f,g) with (g,g) if b == 1;
  * replace (f,g) with (f,g) if b == 0.
  *
- * Preconditions: b in {0,1}. */
+ * Preconditions: b in {0,1}.
+ */
 static void fe_cmov(fe f, const fe g, unsigned b)
 {
     size_t i;
@@ -1504,11 +1524,13 @@ static void fe_cmov(fe f, const fe g, unsigned b)
     }
 }
 
-/* return 0 if f == 0
+/*
+ * return 0 if f == 0
  * return 1 if f != 0
  *
  * Preconditions:
- *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
+ *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+ */
 static int fe_isnonzero(const fe f)
 {
     uint8_t s[32];
@@ -1519,11 +1541,13 @@ static int fe_isnonzero(const fe f)
     return CRYPTO_memcmp(s, zero, sizeof(zero)) != 0;
 }
 
-/* return 1 if f is in {1,3,5,...,q-2}
+/*
+ * return 1 if f is in {1,3,5,...,q-2}
  * return 0 if f is in {0,2,4,...,q-1}
  *
  * Preconditions:
- *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc. */
+ *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
+ */
 static int fe_isnegative(const fe f)
 {
     uint8_t s[32];
@@ -1532,7 +1556,9 @@ static int fe_isnegative(const fe f)
     return s[0] & 1;
 }
 
-/* h = 2 * f * f
+/*
+ * h = 2 * f * f
+ *
  * Can overlap h with f.
  *
  * Preconditions:
@@ -1541,7 +1567,8 @@ static int fe_isnegative(const fe f)
  * Postconditions:
  *    |h| bounded by 1.01*2^25,1.01*2^24,1.01*2^25,1.01*2^24,etc.
  *
- * See fe_mul.c for discussion of implementation strategy. */
+ * See fe_mul.c for discussion of implementation strategy.
+ */
 static void fe_sq2(fe h, const fe f)
 {
     int32_t f0 = f[0];
@@ -1743,8 +1770,9 @@ static void fe_pow22523(fe out, const fe z)
     fe_mul(out, t0, z);
 }
 
-/* ge means group element.
-
+/*
+ * ge means group element.
+ *
  * Here the group is the set of pairs (x,y) of field elements (see fe.h)
  * satisfying -x^2 + y^2 = 1 + d x^2y^2
  * where d = -121665/121666.
@@ -1753,8 +1781,8 @@ static void fe_pow22523(fe out, const fe z)
  *   ge_p2 (projective): (X:Y:Z) satisfying x=X/Z, y=Y/Z
  *   ge_p3 (extended): (X:Y:Z:T) satisfying x=X/Z, y=Y/Z, XY=ZT
  *   ge_p1p1 (completed): ((X:Z),(Y:T)) satisfying x=X/Z, y=Y/T
- *   ge_precomp (Duif): (y+x,y-x,2dxy) */
-
+ *   ge_precomp (Duif): (y+x,y-x,2dxy)
+ */
 typedef struct {
     fe X;
     fe Y;
@@ -4186,12 +4214,15 @@ static void table_select(ge_precomp *t, int pos, signed char b)
     cmov(t, &minust, bnegative);
 }
 
-/* h = a * B
+/*
+ * h = a * B
+ *
  * where a = a[0]+256*a[1]+...+256^31 a[31]
  * B is the Ed25519 base point (x,4/5) with x positive.
  *
  * Preconditions:
- *   a[31] <= 127 */
+ *   a[31] <= 127
+ */
 static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a)
 {
     signed char e[64];
@@ -4244,10 +4275,12 @@ static void ge_scalarmult_base(ge_p3 *h, const uint8_t *a)
 }
 
 #if !defined(BASE_2_51_IMPLEMENTED)
-/* Replace (f,g) with (g,f) if b == 1;
+/*
+ * Replace (f,g) with (g,f) if b == 1;
  * replace (f,g) with (f,g) if b == 0.
  *
- * Preconditions: b in {0,1}. */
+ * Preconditions: b in {0,1}.
+ */
 static void fe_cswap(fe f, fe g, unsigned int b)
 {
     size_t i;
@@ -4261,14 +4294,17 @@ static void fe_cswap(fe f, fe g, unsigned int b)
     }
 }
 
-/* h = f * 121666
+/*
+ * h = f * 121666
+ *
  * Can overlap h with f.
  *
  * Preconditions:
  *    |f| bounded by 1.1*2^26,1.1*2^25,1.1*2^26,1.1*2^25,etc.
  *
  * Postconditions:
- *    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc. */
+ *    |h| bounded by 1.1*2^25,1.1*2^24,1.1*2^25,1.1*2^24,etc.
+ */
 static void fe_mul121666(fe h, fe f)
 {
     int32_t f0 = f[0];
@@ -4485,10 +4521,13 @@ static const ge_precomp Bi[8] = {
     },
 };
 
-/* r = a * A + b * B
+/*
+ * r = a * A + b * B
+ *
  * where a = a[0]+256*a[1]+...+256^31 a[31].
  * and b = b[0]+256*b[1]+...+256^31 b[31].
- * B is the Ed25519 base point (x,4/5) with x positive. */
+ * B is the Ed25519 base point (x,4/5) with x positive.
+ */
 static void ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
                                          const ge_p3 *A, const uint8_t *b)
 {
@@ -4559,16 +4598,18 @@ static void ge_double_scalarmult_vartime(ge_p2 *r, const uint8_t *a,
     }
 }
 
-/* The set of scalars is \Z/l
- * where l = 2^252 + 27742317777372353535851937790883648493. */
-
-/* Input:
+/*
+ * The set of scalars is \Z/l
+ * where l = 2^252 + 27742317777372353535851937790883648493.
+ *
+ * Input:
  *   s[0]+256*s[1]+...+256^63*s[63] = s
  *
  * Output:
  *   s[0]+256*s[1]+...+256^31*s[31] = s mod l
  *   where l = 2^252 + 27742317777372353535851937790883648493.
- *   Overwrites s in place. */
+ *   Overwrites s in place.
+*/
 static void x25519_sc_reduce(uint8_t *s)
 {
     int64_t s0 = 2097151 & load_3(s);
@@ -4903,14 +4944,16 @@ static void x25519_sc_reduce(uint8_t *s)
     s[31] = (uint8_t)(s11 >> 17);
 }
 
-/* Input:
+/*
+ * Input:
  *   a[0]+256*a[1]+...+256^31*a[31] = a
  *   b[0]+256*b[1]+...+256^31*b[31] = b
  *   c[0]+256*c[1]+...+256^31*c[31] = c
  *
  * Output:
  *   s[0]+256*s[1]+...+256^31*s[31] = (ab+c) mod l
- *   where l = 2^252 + 27742317777372353535851937790883648493. */
+ *   where l = 2^252 + 27742317777372353535851937790883648493.
+ */
 static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
                       const uint8_t *c)
 {
@@ -5548,8 +5591,11 @@ void X25519_public_from_private(uint8_t out_public_value[32],
 
     ge_scalarmult_base(&A, e);
 
-    /* We only need the u-coordinate of the curve25519 point. The map is
-     * u=(y+1)/(1-y). Since y=Y/Z, this gives u=(Z+Y)/(Z-Y). */
+    /*
+     * We only need the u-coordinate of the curve25519 point.
+     * The map is u=(y+1)/(1-y). Since y=Y/Z, this gives
+     * u=(Z+Y)/(Z-Y).
+     */
     fe_add(zplusy, A.Z, A.Y);
     fe_sub(zminusy, A.Z, A.Y);
     fe_invert(zminusy_inv, zminusy);
