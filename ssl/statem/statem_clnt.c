@@ -2740,7 +2740,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
                                PACKET_data(&nonce),
                                PACKET_remaining(&nonce),
                                s->session->master_key,
-                               hashlen)) {
+                               hashlen, 1)) {
             /* SSLfatal() already called */
             goto err;
         }
