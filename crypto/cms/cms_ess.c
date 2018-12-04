@@ -353,7 +353,7 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned int hash_len = sizeof (hash);
     X509_ALGOR *alg = NULL;
-    int len;
+    int len, r = 0;
 
     memset(hash, 0, sizeof (hash));
 
@@ -385,17 +385,19 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
     if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
         goto err;
-    OPENSSL_free(pp);
-    ESS_SIGNING_CERT_V2_free(sc);
-    X509_ALGOR_free(alg);
     pp = NULL;
     if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificateV2,
                                      V_ASN1_SEQUENCE, seq, -1))
         goto err;
-    ASN1_STRING_free(seq);
-    return si;
+    r = 1;
 
  err:
+    ESS_SIGNING_CERT_V2_free(sc);
+    X509_ALGOR_free(alg);
+    ASN1_STRING_free(seq);
+    OPENSSL_free(pp);
+    if (r)
+        return si;
     CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT_V2, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
@@ -412,7 +414,7 @@ CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
     ESS_SIGNING_CERT *sc = NULL;
     ESS_CERT_ID * cid;
     unsigned char hash[SHA_DIGEST_LENGTH];
-    int len;
+    int len, r = 0;
 
     /* Create the SigningCertificate attribute 
      * and adding the signing certificate id.
@@ -436,16 +438,19 @@ CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
     i2d_ESS_SIGNING_CERT(sc, &p);
     if (!(seq = ASN1_STRING_new()) || !ASN1_STRING_set(seq, pp, len))
         goto err;
-    OPENSSL_free(pp);
-    ESS_SIGNING_CERT_free(sc);
     pp = NULL;
     if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_signingCertificate,
                                      V_ASN1_SEQUENCE, seq, -1))
         goto err;
-    ASN1_STRING_free(seq);
-    return si;
+   
+    r = 1;
 
  err:
+    ESS_SIGNING_CERT_free(sc);
+    ASN1_STRING_free(seq);
+    OPENSSL_free(pp);
+    if (r)
+        return si;
     CMSerr(CMS_F_CMS_ADD1_SIGNING_CERT, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
