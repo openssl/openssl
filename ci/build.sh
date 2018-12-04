@@ -7,6 +7,14 @@ cd $1
 
 PROJECT_DIR=`pwd`
 
+if [ "$appveyor_repo_tag" != "true" ]; then
+    if [ "${Platform}" = "64" -o "${Configuration}" = "static" -o "${Configuration}" = "Static" ]; then
+        echo "Don't test, When 64 bits and static, appveyor_repo_tag = false"
+        cd ${PROJECT_DIR}
+        exit 0
+    fi
+fi
+
 cd ${PROJECT_DIR}
 mkdir build
 cd build
@@ -23,6 +31,12 @@ fi
 
 case ${BUILD_TARGERT} in
     windows_msvc)
+        if [ "$appveyor_repo_tag" != "true" -a $TOOLCHAIN_VERSION -ne 15 ]; then
+            echo "Don't test, When  $TOOLCHAIN_VERSION -ne 15, appveyor_repo_tag = false in msvc"
+            cd ${PROJECT_DIR}
+            exit 0
+        fi
+
         pacman -S --noconfirm nasm
         export PATH=/c/Perl/site/bin:/c/Perl/bin:$PATH
         rm /usr/bin/link
@@ -39,6 +53,12 @@ case ${BUILD_TARGERT} in
         MAKE="nmake"
     ;;
     windows_mingw)
+        if [ "$appveyor_repo_tag" != "true" -a $TOOLCHAIN_VERSION -ne 630 ]; then
+            echo "Don't test, When  $TOOLCHAIN_VERSION -ne 630, appveyor_repo_tag = false in mingw"
+            cd ${PROJECT_DIR}
+            exit 0
+        fi
+
         pacman -S --noconfirm nasm
         case ${TOOLCHAIN_VERSION} in
             630)
@@ -93,6 +113,12 @@ case ${BUILD_TARGERT} in
                 fi
             ;;
             android_x86)
+                if [ "$appveyor_repo_tag" != "true" ]; then
+                    echo "Don't test, When appveyor_repo_tag = false in android_x86"
+                    cd ${PROJECT_DIR}
+                    exit 0
+                fi
+
                 if [ "${Platform}" = "64" ]; then
                     export BUILD_CROSS_HOST=x86_64
                     #export BUILD_CROSS_SYSROOT=${ANDROID_NDK}/platforms/android-${ANDROID_API}/arch-x86_64
