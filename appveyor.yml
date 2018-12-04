@@ -27,6 +27,12 @@ environment:
   - BUILD_TARGERT: windows_msvc
     TOOLCHAIN_VERSION: 9
 
+  - BUILD_TARGERT: windows_mingw
+    TOOLCHAIN_VERSION: 630
+      
+  - BUILD_TARGERT: windows_mingw
+    TOOLCHAIN_VERSION: 530
+
 install:
   - for /f "delims=" %%i in ('git describe --tags') do (set BUILD_VERSION=%%i)
   - if "%BUILD_VERSION%" == "" for /f "delims=" %%i in ('git rev-parse HEAD') do (set BUILD_VERSION=%%i) 
