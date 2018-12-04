@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,7 +7,30 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef HEADER_ESS_H
+# define HEADER_ESS_H
+
+# include <openssl/opensslconf.h>
+
+# ifndef OPENSSL_NO_CMS
+
+# ifdef  __cplusplus
+extern "C" {
+# endif
+
 # include <openssl/ossl_typ.h>
+# include <openssl/safestack.h>
+
+typedef struct ESS_issuer_serial ESS_ISSUER_SERIAL;
+typedef struct ESS_cert_id ESS_CERT_ID;
+typedef struct ESS_signing_cert ESS_SIGNING_CERT;
+
+DEFINE_STACK_OF(ESS_CERT_ID)
+
+typedef struct ESS_signing_cert_v2_st ESS_SIGNING_CERT_V2;
+typedef struct ESS_cert_id_v2_st ESS_CERT_ID_V2;
+
+DEFINE_STACK_OF(ESS_CERT_ID_V2)
 
 ESS_ISSUER_SERIAL *ESS_ISSUER_SERIAL_new(void);
 void ESS_ISSUER_SERIAL_free(ESS_ISSUER_SERIAL *a);
@@ -45,3 +68,10 @@ ESS_SIGNING_CERT_V2 *d2i_ESS_SIGNING_CERT_V2(ESS_SIGNING_CERT_V2 **a,
                                              const unsigned char **pp,
                                              long length);
 ESS_SIGNING_CERT_V2 *ESS_SIGNING_CERT_V2_dup(ESS_SIGNING_CERT_V2 *a);
+
+#  ifdef  __cplusplus
+}
+#  endif
+# endif
+#endif
+

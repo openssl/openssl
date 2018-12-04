@@ -13,9 +13,11 @@ attribute to a CMS_SignerInfo data structure
 
 =head1 DESCRIPTION
 
-CMS_add1_signing_cert_v2() adds a ESS signing-certificate V2 signed
+CMS_add1_signing_cert() adds a ESS signing-certificate signed
 attribute using certificate B<signer> and SHA1 message digest  
 to CMS_SignerInfo B<si>structure.
+ESS signing certificate attribute is defined in the RFC 5035
+that updates Section 5.4 of RFC 2634.
 
 =head1 NOTES
 

@@ -11,8 +11,6 @@
 # define HEADER_OPENSSL_TYPES_H
 
 #include <limits.h>
-#include <openssl/opensslconf.h>
-#include <openssl/safestack.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -178,17 +176,6 @@ typedef struct ct_policy_eval_ctx_st CT_POLICY_EVAL_CTX;
 
 typedef struct ossl_store_info_st OSSL_STORE_INFO;
 typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
-
-typedef struct ESS_issuer_serial ESS_ISSUER_SERIAL;
-typedef struct ESS_cert_id ESS_CERT_ID;
-typedef struct ESS_signing_cert ESS_SIGNING_CERT;
-
-DEFINE_STACK_OF(ESS_CERT_ID)
-
-typedef struct ESS_signing_cert_v2_st ESS_SIGNING_CERT_V2;
-typedef struct ESS_cert_id_v2_st ESS_CERT_ID_V2;
-
-DEFINE_STACK_OF(ESS_CERT_ID_V2)
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
