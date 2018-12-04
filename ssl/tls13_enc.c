@@ -30,7 +30,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                              const unsigned char *data, size_t datalen,
                              unsigned char *out, size_t outlen, int fatal)
 {
-    const unsigned char label_prefix[] = "tls13 ";
+    static const unsigned char label_prefix[] = "tls13 ";
     EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, NULL);
     int ret;
     size_t hkdflabellen;
@@ -40,9 +40,9 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
      * prefix and label + bytes for the label itself + 1 byte length of hash
      * + bytes for the hash itself
      */
-    static unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t) +
-                                   + sizeof(label_prefix) + TLS13_MAX_LABEL_LEN
-                                   + 1 + EVP_MAX_MD_SIZE];
+    unsigned char hkdflabel[sizeof(uint16_t) + sizeof(uint8_t) +
+                            + sizeof(label_prefix) + TLS13_MAX_LABEL_LEN
+                            + 1 + EVP_MAX_MD_SIZE];
     WPACKET pkt;
 
     if (pctx == NULL)
