@@ -12,7 +12,7 @@
 
 # include <openssl/opensslconf.h>
 
-# if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_TS)
+# if !defined(OPENSSL_NO_CMS) || !defined(OPENSSL_NO_TS)
 
 # ifdef  __cplusplus
 extern "C" {
