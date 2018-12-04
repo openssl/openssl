@@ -1506,7 +1506,7 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
 
     /* Generate the binder key */
     if (!tls13_hkdf_expand(s, md, early_secret, label, labelsize, hash,
-                           hashsize, binderkey, hashsize)) {
+                           hashsize, binderkey, hashsize, 1)) {
         /* SSLfatal() already called */
         goto err;
     }

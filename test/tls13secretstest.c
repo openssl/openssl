@@ -226,7 +226,7 @@ static int test_secret(SSL *s, unsigned char *prk,
     }
 
     if (!tls13_hkdf_expand(s, md, prk, label, labellen, hash, hashsize,
-                           gensecret, hashsize)) {
+                           gensecret, hashsize, 1)) {
         TEST_error("Secret generation failed");
         return 0;
     }
