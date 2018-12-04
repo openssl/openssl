@@ -4099,7 +4099,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                                tick_nonce,
                                TICKET_NONCE_SIZE,
                                s->session->master_key,
-                               hashlen)) {
+                               hashlen, 1)) {
             /* SSLfatal() already called */
             goto err;
         }
