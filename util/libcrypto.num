@@ -929,7 +929,7 @@ BIO_vsnprintf                           926	1_1_0	EXIST::FUNCTION:
 X509_STORE_CTX_get0_current_issuer      927	1_1_0	EXIST::FUNCTION:
 CRYPTO_secure_malloc_initialized        928	1_1_0	EXIST::FUNCTION:
 o2i_SCT_LIST                            929	1_1_0	EXIST::FUNCTION:CT
-ASN1_PCTX_get_cert_flags                930	1_1_0	EXIST::FUNCTION:CMS
+ASN1_PCTX_get_cert_flags                930	1_1_0	EXIST::FUNCTION:
 X509at_add1_attr_by_NID                 931	1_1_0	EXIST::FUNCTION:
 DHparams_dup                            932	1_1_0	EXIST::FUNCTION:DH
 X509_get_ext                            933	1_1_0	EXIST::FUNCTION:
@@ -1429,7 +1429,7 @@ X509_NAME_new                           1417	1_1_0	EXIST::FUNCTION:
 ASN1_item_pack                          1418	1_1_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_asc                 1419	1_1_0	EXIST::FUNCTION:
 d2i_GENERAL_NAME                        1420	1_1_0	EXIST::FUNCTION:
-i2d_ESS_CERT_ID                         1421	1_1_0	EXIST::FUNCTION:
+i2d_ESS_CERT_ID                         1421	1_1_0	EXIST::FUNCTION:CMS
 X509_TRUST_get_by_id                    1422	1_1_0	EXIST::FUNCTION:
 d2i_RSA_PUBKEY_fp                       1423	1_1_0	EXIST::FUNCTION:RSA,STDIO
 EVP_PBE_get                             1424	1_1_0	EXIST::FUNCTION:
