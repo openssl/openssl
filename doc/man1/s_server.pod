@@ -98,6 +98,7 @@ B<openssl> B<s_server>
 [B<-no_comp>]
 [B<-comp>]
 [B<-no_ticket>]
+[B<-num_tickets>]
 [B<-serverpref>]
 [B<-legacy_renegotiation>]
 [B<-no_renegotiation>]
@@ -558,7 +559,14 @@ OpenSSL 1.1.0.
 
 =item B<-no_ticket>
 
-Disable RFC4507bis session ticket support.
+Disable RFC4507bis session ticket support. This option has no effect if TLSv1.3
+is negotiated. See B<-num_tickets>.
+
+=item B<-num_tickets>
+
+Control the number of tickets that will be sent to the client after a full
+handshake in TLSv1.3. The default number of tickets is 2. This option does not
+affect the number of tickets sent after a resumption handshake.
 
 =item B<-serverpref>
 
