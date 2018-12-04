@@ -1,66 +1,59 @@
+configuration:
+  - shared
+  - static
+
 platform:
-    - x64
-    - x86
+  - 32
+  - 64
 
 environment:
-    fast_finish: true
-    matrix:
-        - VSVER: 14
+  matrix:
+  - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+    TOOLCHAIN_VERSION: 15
+    BUILD_TARGERT: windows_msvc
 
-configuration:
-    - shared
-    - plain
+  - BUILD_TARGERT: windows_msvc
+    TOOLCHAIN_VERSION: 14
 
-before_build:
-    - ps: >-
-        If ($env:Platform -Match "x86") {
-            $env:VCVARS_PLATFORM="x86"
-            $env:TARGET="VC-WIN32 no-asm"
-        } Else {
-            $env:VCVARS_PLATFORM="amd64"
-            $env:TARGET="VC-WIN64A-masm"
-        }
-    - ps: >-
-        If ($env:Configuration -Match "shared") {
-            $env:SHARED="no-makedepend"
-        } Else {
-            $env:SHARED="no-shared no-makedepend"
-        }
-    - ps: $env:VSCOMNTOOLS=(Get-Content ("env:VS" + "$env:VSVER" + "0COMNTOOLS"))
-    - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
-    - mkdir _build
-    - cd _build
-    - perl ..\Configure %TARGET% %SHARED%
-    - perl configdata.pm --dump
-    - cd ..
-    - ps: >-
-        if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
-            -or (&git log -2 | Select-String "\[extended tests\]") ) {
-            $env:EXTENDED_TESTS="yes"
-        }
+  - BUILD_TARGERT: windows_msvc
+    TOOLCHAIN_VERSION: 12
+  
+  - BUILD_TARGERT: windows_msvc
+    TOOLCHAIN_VERSION: 11
+
+  - BUILD_TARGERT: windows_msvc
+    TOOLCHAIN_VERSION: 10
+  
+  - BUILD_TARGERT: windows_msvc
+    TOOLCHAIN_VERSION: 9
+
+install:
+  - for /f "delims=" %%i in ('git describe --tags') do (set BUILD_VERSION=%%i)
+  - if "%BUILD_VERSION%" == "" for /f "delims=" %%i in ('git rev-parse HEAD') do (set BUILD_VERSION=%%i) 
+  - echo BUILD_VERSION=%BUILD_VERSION%
+  - if "%platform%" == "64" (set varch=amd64) else (set varch=x86)
+  - echo "varch:%varch%"
+  - if "%BUILD_TARGERT%" == "windows_msvc" if %TOOLCHAIN_VERSION% LSS 15 ( call "C:\Program Files (x86)\Microsoft Visual Studio %TOOLCHAIN_VERSION%.0\VC\vcvarsall.bat" %varch% ) else ( call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %varch% )
 
 build_script:
-    - cd _build
-    - ps: >-
-        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            cmd /c "nmake build_all_generated 2>&1"
-            cmd /c "nmake PERL=no-perl 2>&1"
-        }
-    - cd ..
+  - C:\msys64\usr\bin\bash.exe -e -l -c "bash /c/projects/openssl/ci/build.sh /c/projects/openssl"
 
 test_script:
-    - cd _build
-    - ps: >-
-        If ($env:Configuration -Match "shared" -or $env:EXTENDED_TESTS) {
-            if ($env:EXTENDED_TESTS) {
-                cmd /c "nmake test V=1 2>&1"
-            } Else {
-                cmd /c "nmake test V=1 TESTS=-test_fuzz 2>&1"
-            }
-        }
-    - ps: >-
-        if ($env:EXTENDED_TESTS) {
-            mkdir ..\_install
-            cmd /c "nmake install DESTDIR=..\_install 2>&1"
-        }
-    - cd ..
+
+artifacts:
+  - path: setup
+    name: $(BUILD_VERSION)_$(BUILD_TARGERT)$(TOOLCHAIN_VERSION)_$(platform)_$(CONFIGURATION)
+    type: zip
+
+# whitelist branches to avoid testing feature branches twice (as branch and as pull request)
+branches:
+  only:
+    - master
+
+deploy:
+  provider: GitHub
+  #token: https://github.com/settings/tokens encode token: https://ci.appveyor.com/tools/encrypt
+  auth_token:
+    secure:  #TODO: set your token
+  on:
+    appveyor_repo_tag: true        # deploy on tag push only
