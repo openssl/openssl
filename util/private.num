@@ -116,6 +116,7 @@ BIO_get_cipher_ctx                      define
 BIO_get_cipher_status                   define
 BIO_get_close                           define
 BIO_get_ktls_send                       define
+BIO_get_ktls_recv                       define
 BIO_get_conn_address                    define
 BIO_get_conn_hostname                   define
 BIO_get_conn_port                       define
