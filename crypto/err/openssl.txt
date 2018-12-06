@@ -2125,6 +2125,7 @@ DSO_R_UNSUPPORTED:108:functionality not supported
 EC_R_ASN1_ERROR:115:asn1 error
 EC_R_BAD_SIGNATURE:156:bad signature
 EC_R_BIGNUM_OUT_OF_RANGE:144:bignum out of range
+EC_R_BUFFER_LENGTH_WRONG:166:buffer length wrong
 EC_R_BUFFER_TOO_SMALL:100:buffer too small
 EC_R_COORDINATES_OUT_OF_RANGE:146:coordinates out of range
 EC_R_CURVE_DOES_NOT_SUPPORT_ECDH:160:curve does not support ecdh
@@ -2155,7 +2156,11 @@ EC_R_INVALID_PENTANOMIAL_BASIS:132:invalid pentanomial basis
 EC_R_INVALID_PRIVATE_KEY:123:invalid private key
 EC_R_INVALID_TRINOMIAL_BASIS:137:invalid trinomial basis
 EC_R_KDF_PARAMETER_ERROR:148:kdf parameter error
+EC_R_KEYGEN_FAILED:167:keygen failed
 EC_R_KEYS_NOT_SET:140:keys not set
+EC_R_KEY_INIT_FAILED:168:key init failed
+EC_R_KEY_LENGTH_WRONG:169:key length wrong
+EC_R_KEY_NOT_SET:170:key not set
 EC_R_LADDER_POST_FAILURE:136:ladder post failure
 EC_R_LADDER_PRE_FAILURE:153:ladder pre failure
 EC_R_LADDER_STEP_FAILURE:162:ladder step failure
@@ -2166,8 +2171,11 @@ EC_R_NOT_A_NIST_PRIME:135:not a NIST prime
 EC_R_NOT_IMPLEMENTED:126:not implemented
 EC_R_NOT_INITIALIZED:111:not initialized
 EC_R_NO_PARAMETERS_SET:139:no parameters set
+EC_R_NO_PRIVATE_KEY:171:no private key
 EC_R_NO_PRIVATE_VALUE:154:no private value
+EC_R_NO_SUCH_OQS_ALGORITHM:165:no such oqs algorithm
 EC_R_OPERATION_NOT_SUPPORTED:152:operation not supported
+EC_R_PARAMETERS_MUST_BE_ABSENT:172:parameters must be absent
 EC_R_PASSED_NULL_PARAMETER:134:passed null parameter
 EC_R_PEER_KEY_ERROR:149:peer key error
 EC_R_PKPARAMETERS2GROUP_FAILURE:127:pkparameters2group failure
@@ -2176,16 +2184,23 @@ EC_R_POINT_AT_INFINITY:106:point at infinity
 EC_R_POINT_COORDINATES_BLIND_FAILURE:163:point coordinates blind failure
 EC_R_POINT_IS_NOT_ON_CURVE:107:point is not on curve
 EC_R_RANDOM_NUMBER_GENERATION_FAILED:158:random number generation failed
+EC_R_SETTING_PARAMETERS_FAILED:173:setting parameters failed
 EC_R_SHARED_INFO_ERROR:150:shared info error
+EC_R_SIGNING_FAILED:174:signing failed
 EC_R_SLOT_FULL:108:slot full
 EC_R_UNDEFINED_GENERATOR:113:undefined generator
 EC_R_UNDEFINED_ORDER:128:undefined order
 EC_R_UNKNOWN_COFACTOR:164:unknown cofactor
 EC_R_UNKNOWN_GROUP:129:unknown group
+EC_R_UNKNOWN_NID:175:unknown nid
 EC_R_UNKNOWN_ORDER:114:unknown order
 EC_R_UNSUPPORTED_FIELD:131:unsupported field
+EC_R_VERIFICATION_FAILED:176:verification failed
 EC_R_WRONG_CURVE_PARAMETERS:145:wrong curve parameters
+EC_R_WRONG_DIGEST:177:wrong digest
+EC_R_WRONG_LENGTH:178:wrong length
 EC_R_WRONG_ORDER:130:wrong order
+EC_R_WRONG_PARAMETERS:179:wrong parameters
 ENGINE_R_ALREADY_LOADED:100:already loaded
 ENGINE_R_ARGUMENT_IS_NOT_A_NUMBER:133:argument is not a number
 ENGINE_R_CMD_NOT_EXECUTABLE:134:cmd not executable
