@@ -124,20 +124,17 @@ const char *OPENSSL_version_build_metadata(void);
 # include <openssl/opensslconf.h>
 
 # if !OPENSSL_API_4
-#  ifdef OPENSSL_NO_NEWVERSION_ONLY
-
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PPSL */
-#   ifdef OPENSSL_VERSION_PRE_RELEASE
-#    define _OPENSSL_VERSION_PRE_RELEASE 0x0
-#   else
-#    define _OPENSSL_VERSION_PRE_RELEASE 0xf
-#   endif
-#   define OPENSSL_VERSION_NUMBER        \
+#  ifdef OPENSSL_VERSION_PRE_RELEASE
+#   define _OPENSSL_VERSION_PRE_RELEASE 0x0
+#  else
+#   define _OPENSSL_VERSION_PRE_RELEASE 0xf
+#  endif
+#  define OPENSSL_VERSION_NUMBER        \
     (long)( (OPENSSL_VERSION_MAJOR<<28)  \
             |(OPENSSL_VERSION_MINOR<<20) \
             |(OPENSSL_VERSION_PATCH<<4)  \
             |_OPENSSL_VERSION_PRE_RELEASE )
-#  endif
 # endif
 
 # ifdef  __cplusplus
