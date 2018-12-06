@@ -395,8 +395,7 @@
 
   newversion-only
                    Don't build with pre-3.0.0 version scheme macros, i.e.
-                   remove support for the macros OPENSSL_VERSION_NUMBER and
-                   OPENSSL_VERSION_TEXT.
+                   remove support for the macros OPENSSL_VERSION_NUMBER.
 
   no-nextprotoneg
                    Don't build support for the NPN TLS extension.
