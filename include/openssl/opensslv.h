@@ -131,7 +131,7 @@ const char *OPENSSL_version_build_metadata(void);
 #   define _OPENSSL_VERSION_PRE_RELEASE 0xf
 #  endif
 #  define OPENSSL_VERSION_NUMBER        \
-    (long)( (OPENSSL_VERSION_MAJOR<<28)  \
+          ( (OPENSSL_VERSION_MAJOR<<28)  \
             |(OPENSSL_VERSION_MINOR<<20) \
             |(OPENSSL_VERSION_PATCH<<4)  \
             |_OPENSSL_VERSION_PRE_RELEASE )
