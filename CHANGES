@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
 
+  *) Change the license to the Apache License v2.0.
+     [Richard Levitte]
+
   *) Remove the 'dist' target and add a tarball building script.  The
      'dist' target has fallen out of use, and it shouldn't be
      necessary to configure just to create a source distribution.
