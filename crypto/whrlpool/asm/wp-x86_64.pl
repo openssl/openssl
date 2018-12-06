@@ -10,7 +10,7 @@
 # ====================================================================
 # Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# forms are granted according to the License.
 # ====================================================================
 #
 # whirlpool_block for x86_64.
