@@ -10,8 +10,7 @@
 ;; project.
 ;;
 ;; Rights for redistribution and usage in source and binary forms are
-;; granted according to the OpenSSL license. Warranty of any kind is
-;; disclaimed.
+;; granted according to the License. Warranty of any kind is disclaimed.
 ;;====================================================================
 ;; Compiler-generated multiply-n-add SPLOOP runs at 12*n cycles, n
 ;; being the number of 32-bit words, addition - 8*n. Corresponding 4x

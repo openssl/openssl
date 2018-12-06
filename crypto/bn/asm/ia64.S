@@ -16,8 +16,7 @@
 // project.
 //
 // Rights for redistribution and usage in source and binary forms are
-// granted according to the OpenSSL license. Warranty of any kind is
-// disclaimed.
+// granted according to the License. Warranty of any kind is disclaimed.
 // ====================================================================
 //
 // Version 2.x is Itanium2 re-tune. Few words about how Itanium2 is

@@ -18,8 +18,7 @@
  * project.
  *
  * Rights for redistribution and usage in source and binary forms are
- * granted according to the OpenSSL license. Warranty of any kind is
- * disclaimed.
+ * granted according to the License. Warranty of any kind is disclaimed.
  *
  * Q. Version 0.1? It doesn't sound like Andy, he used to assign real
  *    versions, like 1.0...

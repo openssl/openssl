@@ -12,8 +12,7 @@
 # project.
 #
 # Rights for redistribution and usage in source and binary forms are
-# granted according to the OpenSSL license. Warranty of any kind is
-# disclaimed.
+# granted according to the License. Warranty of any kind is disclaimed.
 # ====================================================================
 
 
