@@ -104,7 +104,7 @@ BLDDIR={- $config{builddir} -}
 # to testing.
 VERBOSE=$(V)
 
-VERSION={- "$config{major}.$config{minor}.$config{patch}$config{prerelease}$config{build_metadata}" -}
+VERSION={- "$config{full_version}" -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
