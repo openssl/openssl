@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Change the license to the Apache License v2.0.
+     [Richard Levitte]
+
   *) Change the possible version information given with OPENSSL_API_COMPAT.
      It may be a pre-3.0.0 style numerical version number as it was defined
      in 1.1.0, and it may also simply take the major version number.
