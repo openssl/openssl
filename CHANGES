@@ -9,6 +9,9 @@
 
  Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
 
+  *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
+     [Richard Levitte]
+
   *) Remove the 'dist' target and add a tarball building script.  The
      'dist' target has fallen out of use, and it shouldn't be
      necessary to configure just to create a source distribution.
