@@ -1000,8 +1000,8 @@ if ($target eq "HASH") {
     exit 0;
 }
 
-print "Configuring OpenSSL version '$config{full_version}' ";
-print "for target '$target'\n";
+print "Configuring OpenSSL version $config{full_version} ";
+print "for target $target\n";
 
 if (scalar(@seed_sources) == 0) {
     print "Using os-specific seed configuration\n";
