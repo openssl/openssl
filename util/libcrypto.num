@@ -2801,7 +2801,6 @@ OPENSSL_init                            2761	3_0_0	EXIST::FUNCTION:
 TS_RESP_get_tst_info                    2762	3_0_0	EXIST::FUNCTION:TS
 X509_VERIFY_PARAM_get_depth             2763	3_0_0	EXIST::FUNCTION:
 EVP_SealFinal                           2764	3_0_0	EXIST::FUNCTION:RSA
-BIO_set                                 2765	1_1_0	NOEXIST::FUNCTION:
 CONF_imodule_set_flags                  2766	3_0_0	EXIST::FUNCTION:
 i2d_ASN1_SET_ANY                        2767	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_decrypt                        2768	3_0_0	EXIST::FUNCTION:
@@ -4308,7 +4307,6 @@ ERR_load_OSSL_STORE_strings             4250	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_free                  4251	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get1_PKEY               4252	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_free                    4253	3_0_0	EXIST::FUNCTION:
-OSSL_STORE_open_file                    4254	1_1_1	NOEXIST::FUNCTION:
 OSSL_STORE_LOADER_set_eof               4255	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_new                   4256	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get0_CERT               4257	3_0_0	EXIST::FUNCTION:
