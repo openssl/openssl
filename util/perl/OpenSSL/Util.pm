@@ -28,10 +28,10 @@ OpenSSL::Util - small OpenSSL utilities
   use OpenSSL::Util;
 
   $versiondiff = cmp_versions('1.0.2k', '3.0.1');
-  # $versiondiff should be 1
+  # $versiondiff should be -1
 
   $versiondiff = cmp_versions('1.1.0', '1.0.2a');
-  # $versiondiff should be -1
+  # $versiondiff should be 1
 
   $versiondiff = cmp_versions('1.1.1', '1.1.1');
   # $versiondiff should be 0
@@ -44,8 +44,8 @@ OpenSSL::Util - small OpenSSL utilities
 
 Compares VERSION1 with VERSION2, paying attention to OpenSSL versioning.
 
-Returns 1 if VERSION2 is greater than VERSION1, 0 if they are equal, and
--1 if VERSION1 is greater than VERSION2.
+Returns 1 if VERSION1 is greater than VERSION2, 0 if they are equal, and
+-1 if VERSION1 is lesser than VERSION2.
 
 =back
 
