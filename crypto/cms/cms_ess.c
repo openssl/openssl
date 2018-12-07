@@ -354,6 +354,9 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
     unsigned int hash_len = sizeof (hash);
     X509_ALGOR *alg = NULL;
     int len, r = 0;
+    GENERAL_NAME *name = NULL;
+    ASN1_INTEGER *serial = NULL;
+    X509_NAME *isname = NULL;
 
     memset(hash, 0, sizeof (hash));
 
@@ -375,6 +378,23 @@ CMS_SignerInfo *CMS_add1_signing_cert_v2(CMS_SignerInfo *si, X509 *signer,
         goto err;
     if (!ASN1_OCTET_STRING_set(cid->hash, hash, hash_len))
         goto err;
+
+    isname = X509_NAME_dup(X509_get_issuer_name(signer));
+    serial = ASN1_INTEGER_dup(X509_get_serialNumber(signer));
+
+    if (isname && serial) { 
+        if ((cid->issuer_serial = ESS_ISSUER_SERIAL_new()) == NULL
+            || (name = GENERAL_NAME_new()) == NULL)
+            goto err;
+        name->type = GEN_DIRNAME;
+        name->d.dirn = isname;
+        if (!sk_GENERAL_NAME_push(cid->issuer_serial->issuer, name))
+            goto err;
+        name = NULL;
+        ASN1_INTEGER_free(cid->issuer_serial->serial);
+        cid->issuer_serial->serial = serial;
+    }
+
     if (!sk_ESS_CERT_ID_V2_push(sc->cert_ids, cid))
         goto err;
     /* Add SigningCertificateV2 signed attribute to the signer info. */
@@ -418,6 +438,9 @@ CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
     ESS_CERT_ID * cid;
     unsigned char hash[SHA_DIGEST_LENGTH];
     int len, r = 0;
+    GENERAL_NAME *name = NULL;
+    ASN1_INTEGER *serial = NULL;
+    X509_NAME *isname = NULL;
 
     /* Create the SigningCertificate attribute 
      * and adding the signing certificate id.
@@ -431,6 +454,23 @@ CMS_SignerInfo *CMS_add1_signing_cert(CMS_SignerInfo *si, X509 *signer)
         goto err;
     if (!ASN1_OCTET_STRING_set(cid->hash, hash, SHA_DIGEST_LENGTH))
         goto err;
+
+    isname = X509_NAME_dup(X509_get_issuer_name(signer));
+    serial = ASN1_INTEGER_dup(X509_get_serialNumber(signer));
+
+    if (isname && serial) { 
+        if ((cid->issuer_serial = ESS_ISSUER_SERIAL_new()) == NULL
+            || (name = GENERAL_NAME_new()) == NULL)
+            goto err;
+        name->type = GEN_DIRNAME;
+        name->d.dirn = isname;
+        if (!sk_GENERAL_NAME_push(cid->issuer_serial->issuer, name))
+            goto err;
+        name = NULL;
+        ASN1_INTEGER_free(cid->issuer_serial->serial);
+        cid->issuer_serial->serial = serial;
+    }
+
     if (!sk_ESS_CERT_ID_push(sc->cert_ids, cid))
         goto err;
     /* Add SigningCertificate signed attribute to the signer info. */
