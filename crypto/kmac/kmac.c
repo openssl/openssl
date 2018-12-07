@@ -19,28 +19,28 @@
  * KMAC128(K, X, L, S)
  * {
  *     newX = bytepad(encode_string(K), 168) ||  X || right_encode(L).
- *     T = bytepad(encode_string(“KMAC”) || encode_string(S), 168).
+ *     T = bytepad(encode_string("KMAC") || encode_string(S), 168).
  *     return KECCAK[256](T || newX || 00, L).
  * }
  *
  * KMAC256(K, X, L, S)
  * {
  *     newX = bytepad(encode_string(K), 136) ||  X || right_encode(L).
- *     T = bytepad(encode_string(“KMAC”) || encode_string(S), 136).
+ *     T = bytepad(encode_string("KMAC") || encode_string(S), 136).
  *     return KECCAK[512](T || newX || 00, L).
  * }
  *
  * KMAC128XOF(K, X, L, S)
  * {
  *     newX = bytepad(encode_string(K), 168) ||  X || right_encode(0).
- *     T = bytepad(encode_string(“KMAC”) || encode_string(S), 168).
+ *     T = bytepad(encode_string("KMAC") || encode_string(S), 168).
  *     return KECCAK[256](T || newX || 00, L).
  * }
  *
  * KMAC256XOF(K, X, L, S)
  * {
  *     newX = bytepad(encode_string(K), 136) ||  X || right_encode(0).
- *     T = bytepad(encode_string(“KMAC”) || encode_string(S), 136).
+ *     T = bytepad(encode_string("KMAC") || encode_string(S), 136).
  *     return KECCAK[512](T || newX || 00, L).
  * }
  *
