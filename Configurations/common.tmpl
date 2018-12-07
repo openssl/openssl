@@ -151,10 +151,18 @@
                              generator_incs => $unified_info{includes}->{$script},
                              generator_deps => $unified_info{depends}->{$script},
                              deps => $unified_info{depends}->{$src},
-                             incs => [ @{$unified_info{includes}->{$obj}},
-                                       @{$unified_info{includes}->{$bin}} ],
-                             defs => [ @{$unified_info{defines}->{$obj}},
-                                       @{$unified_info{defines}->{$bin}} ],
+                             incs => [ defined $obj
+                                           ? @{$unified_info{includes}->{$obj}}
+                                           : (),
+                                       defined $bin
+                                           ? @{$unified_info{includes}->{$bin}}
+                                           : () ],
+                             defs => [ defined $obj
+                                           ? @{$unified_info{defines}->{$obj}}
+                                           : (),
+                                       defined $bin
+                                           ? @{$unified_info{defines}->{$bin}}
+                                           : () ],
                              %opts);
          foreach (@{$unified_info{depends}->{$src}}) {
              dogenerate($_, $obj, $bin, %opts);
@@ -444,6 +452,9 @@
          next if $cache{$doc};
          $OUT .= generatesrc(src => $doc,
                              generator => $unified_info{generate}->{$doc});
+         foreach ((@{$unified_info{depends}->{$doc}})) {
+             dogenerate($_, undef, undef, %opts);
+         }
          $cache{$doc} = 1;
      }
  }
@@ -454,6 +465,9 @@
          next if $cache{$doc};
          $OUT .= generatesrc(src => $doc,
                              generator => $unified_info{generate}->{$doc});
+         foreach ((@{$unified_info{depends}->{$doc}})) {
+             dogenerate($_, undef, undef, %opts);
+         }
          $cache{$doc} = 1;
      }
  }

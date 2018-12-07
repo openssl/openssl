@@ -1832,6 +1832,10 @@ if ($builder eq "unified") {
         # don't use it if the build tree is different.
         my $src_configdata = cleanfile($srcdir, "configdata.pm", $blddir);
 
+
+        if ($buildinfo_debug) {
+            print STDERR "DEBUG: Reading ",catfile($sourced, $f),"\n";
+        }
         push @{$config{build_infos}}, catfile(abs2rel($sourced, $blddir), $f);
         my $template =
             Text::Template->new(TYPE => 'FILE',
@@ -2429,7 +2433,11 @@ EOF
     my %loopinfo = ( "lib" => [ @{$unified_info{libraries}} ],
                      "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
-                     "script" => [ @{$unified_info{scripts}} ] );
+                     "script" => [ @{$unified_info{scripts}} ],
+                     "docs" => [ (map { @{$unified_info{htmldocs}->{$_} // []} }
+                                  keys %{$unified_info{htmldocs} // {}}),
+                                 (map { @{$unified_info{mandocs}->{$_} // []} }
+                                  keys %{$unified_info{mandocs} // {}}) ] );
     foreach my $type (keys %loopinfo) {
         foreach my $product (@{$loopinfo{$type}}) {
             my %dirs = ();
