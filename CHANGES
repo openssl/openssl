@@ -9,7 +9,8 @@
 
  Changes between 1.0.2q and 1.0.2r [xx XXX xxxx]
 
-  *)
+  *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
+     [Richard Levitte]
 
  Changes between 1.0.2p and 1.0.2q [20 Nov 2018]
 
