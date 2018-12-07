@@ -348,10 +348,12 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     {
         /*
          * Special unsolicited ServerHello extension only used when
-         * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set
+         * SSL_OP_CRYPTOPRO_TLSEXT_BUG is set. We allow it in a ClientHello but
+         * ignore it.
          */
         TLSEXT_TYPE_cryptopro_bug,
-        SSL_EXT_TLS1_2_SERVER_HELLO | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO
+        | SSL_EXT_TLS1_2_AND_BELOW_ONLY,
         NULL, NULL, NULL, tls_construct_stoc_cryptopro_bug, NULL, NULL
     },
     {
@@ -617,13 +619,18 @@ int tls_collect_extensions(SSL *s, PACKET *packet, unsigned int context,
          * itself handle unsolicited response checks.
          */
         if (idx < OSSL_NELEM(ext_defs)
-                && (context & (SSL_EXT_CLIENT_HELLO
+                && ((context & (SSL_EXT_CLIENT_HELLO
                                | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
                                | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) == 0
                 && type != TLSEXT_TYPE_cookie
                 && type != TLSEXT_TYPE_renegotiate
                 && type != TLSEXT_TYPE_signed_certificate_timestamp
-                && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0) {
+                && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0)
+#ifndef OPENSSL_NO_GOST
+                && !(context & SSL_EXT_TLS1_2_SERVER_HELLO
+                && type == TLSEXT_TYPE_cryptopro_bug)
+#endif
+								) {
             SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
                      SSL_F_TLS_COLLECT_EXTENSIONS, SSL_R_UNSOLICITED_EXTENSION);
             goto err;
