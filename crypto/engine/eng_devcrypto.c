@@ -601,6 +601,30 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
     return 1;
 }
 
+static int devcrypto_test_digest(size_t digest_data_index)
+{
+    struct session_op sess1, sess2;
+    struct cphash_op cphash;
+    int ret=0;
+
+    memset(&sess1, 0, sizeof(sess1));
+    memset(&sess2, 0, sizeof(sess2));
+    sess1.mac = digest_data[digest_data_index].devcryptoid;
+    if (ioctl(cfd, CIOCGSESSION, &sess1) < 0)
+        return 0;
+    /* Make sure the driver is capable of hash state copy */
+    sess2.mac = sess1.mac;
+    if (ioctl(cfd, CIOCGSESSION, &sess2) >= 0) {
+        cphash.src_ses = sess1.ses;
+        cphash.dst_ses = sess2.ses;
+        if (ioctl(cfd, CIOCCPHASH, &cphash) >= 0)
+            ret = 1;
+        ioctl(cfd, CIOCFSESSION, &sess2.ses);
+    }
+    ioctl(cfd, CIOCFSESSION, &sess1.ses);
+    return ret;
+}
+
 /*
  * Keep a table of known nids and associated methods.
  * Note that known_digest_nids[] isn't necessarily indexed the same way as
@@ -613,20 +637,14 @@ static EVP_MD *known_digest_methods[OSSL_NELEM(digest_data)] = { NULL, };
 static void prepare_digest_methods(void)
 {
     size_t i;
-    struct session_op sess;
-
-    memset(&sess, 0, sizeof(sess));
 
     for (i = 0, known_digest_nids_amount = 0; i < OSSL_NELEM(digest_data);
          i++) {
 
         /*
-         * Check that the algo is really availably by trying to open and close
-         * a session.
+         * Check that the algo is usable
          */
-        sess.mac = digest_data[i].devcryptoid;
-        if (ioctl(cfd, CIOCGSESSION, &sess) < 0
-            || ioctl(cfd, CIOCFSESSION, &sess.ses) < 0)
+        if (!devcrypto_test_digest(i))
             continue;
 
         if ((known_digest_methods[i] = EVP_MD_meth_new(digest_data[i].nid,
