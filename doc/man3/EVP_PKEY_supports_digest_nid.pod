@@ -39,7 +39,7 @@ L<EVP_PKEY_verify_recover(3)>,
 
 =head1 HISTORY
 
-This function was first added to OpenSSL 3.0.0.
+The EVP_PKEY_supports_digest_nid() function was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
