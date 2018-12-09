@@ -29,7 +29,7 @@ static int test_fatalerr(void)
     };
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_method(), TLS_method(),
-                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto err;
 

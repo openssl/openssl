@@ -1331,8 +1331,8 @@ int main(int argc, char *argv[])
         min_version = TLS1_2_VERSION;
         max_version = TLS1_2_VERSION;
     } else {
-        min_version = SSL3_VERSION;
-        max_version = TLS_MAX_VERSION;
+        min_version = 0;
+        max_version = 0;
     }
 #endif
 #ifndef OPENSSL_NO_DTLS
@@ -1345,8 +1345,8 @@ int main(int argc, char *argv[])
             min_version = DTLS1_2_VERSION;
             max_version = DTLS1_2_VERSION;
         } else {
-            min_version = DTLS_MIN_VERSION;
-            max_version = DTLS_MAX_VERSION;
+            min_version = 0;
+            max_version = 0;
         }
     }
 #endif
