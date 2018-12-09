@@ -670,12 +670,12 @@ L<SSL_CTX_set_options(3)>
 
 =head1 HISTORY
 
-SSL_CONF_cmd() was first added to OpenSSL 1.0.2
+The SSL_CONF_cmd() function was added in OpenSSL 1.0.2.
 
-B<SSL_OP_NO_SSL2> doesn't have effect since 1.1.0, but the macro is retained
-for backwards compatibility.
+The B<SSL_OP_NO_SSL2> option doesn't have effect since 1.1.0, but the macro
+is retained for backwards compatibility.
 
-B<SSL_CONF_TYPE_NONE> was first added to OpenSSL 1.1.0. In earlier versions of
+The B<SSL_CONF_TYPE_NONE> was added in OpenSSL 1.1.0. In earlier versions of
 OpenSSL passing a command which didn't take an argument would return
 B<SSL_CONF_TYPE_UNKNOWN>.
 
