@@ -478,7 +478,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     }
 
     if (ctx->flags & EVP_CIPH_NO_PADDING)
-        return EVP_EncryptUpdate(ctx, out, outl, in, inl);
+        return evp_EncryptDecryptUpdate(ctx, out, outl, in, inl);
 
     OPENSSL_assert(b <= sizeof(ctx->final));
 
@@ -495,7 +495,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     } else
         fix_len = 0;
 
-    if (!EVP_EncryptUpdate(ctx, out, outl, in, inl))
+    if (!evp_EncryptDecryptUpdate(ctx, out, outl, in, inl))
         return 0;
 
     /*
