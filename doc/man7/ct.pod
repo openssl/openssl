@@ -39,7 +39,7 @@ L<SSL_CTX_set_ct_validation_callback(3)>
 
 =head1 HISTORY
 
-This library was added in OpenSSL 1.1.0.
+The ct library was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
