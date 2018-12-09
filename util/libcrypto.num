@@ -3150,7 +3150,7 @@ CMS_RecipientInfo_get0_pkey_ctx         3215	3_0_0	EXIST::FUNCTION:CMS
 OCSP_REQINFO_free                       3216	3_0_0	EXIST::FUNCTION:OCSP
 AUTHORITY_KEYID_new                     3217	3_0_0	EXIST::FUNCTION:
 i2d_DIST_POINT_NAME                     3218	3_0_0	EXIST::FUNCTION:
-OpenSSL_version_num                     3219	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
+OpenSSL_version_num                     3219	3_0_0	EXIST::FUNCTION:
 OCSP_CERTID_free                        3220	3_0_0	EXIST::FUNCTION:OCSP
 BIO_hex_string                          3221	3_0_0	EXIST::FUNCTION:
 X509_REQ_sign_ctx                       3222	3_0_0	EXIST::FUNCTION:

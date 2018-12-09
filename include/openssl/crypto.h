@@ -158,7 +158,7 @@ int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-DEPRECATEDIN_3(unsigned long OpenSSL_version_num(void))
+unsigned long OpenSSL_version_num(void);
 const char *OpenSSL_version(int type);
 # define OPENSSL_VERSION                0
 # define OPENSSL_CFLAGS                 1
