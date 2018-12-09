@@ -811,7 +811,7 @@ L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
-The B<-no_alt_chains> option was first added to OpenSSL 1.1.0.
+The B<-no_alt_chains> option was added in OpenSSL 1.1.0.
 The B<-name> option was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT

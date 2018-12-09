@@ -821,10 +821,10 @@ L<SSL_CTX_set_max_pipelines(3)>
 
 =head1 HISTORY
 
-The -no_alt_chains option was first added to OpenSSL 1.1.0.
+The -no_alt_chains option was added in OpenSSL 1.1.0.
 
-The -allow-no-dhe-kex and -prioritize_chacha options were first added to
-OpenSSL 1.1.1.
+The
+-allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 

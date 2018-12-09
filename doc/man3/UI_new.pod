@@ -239,8 +239,7 @@ respectively.
 
 =head1 HISTORY
 
-UI_dup_user_data()
-was added in OpenSSL 1.1.1.
+The UI_dup_user_data() function was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
