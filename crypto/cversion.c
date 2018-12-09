@@ -11,12 +11,10 @@
 
 #include "buildinf.h"
 
-#if !OPENSSL_API_3
 unsigned long OpenSSL_version_num(void)
 {
     return OPENSSL_VERSION_NUMBER;
 }
-#endif
 
 unsigned int OPENSSL_version_major(void)
 {
