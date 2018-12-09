@@ -103,7 +103,7 @@ static int test_record_overflow(int idx)
     ERR_clear_error();
 
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
-                                       TLS1_VERSION, TLS_MAX_VERSION,
+                                       TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         goto end;
 

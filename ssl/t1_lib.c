@@ -121,7 +121,7 @@ int tls1_clear(SSL *s)
         return 0;
 
     if (s->method->version == TLS_ANY_VERSION)
-        s->version = TLS_MAX_VERSION;
+        s->version = TLS_MAX_VERSION_INTERNAL;
     else
         s->version = s->method->version;
 

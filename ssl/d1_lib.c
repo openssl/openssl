@@ -192,7 +192,7 @@ int dtls1_clear(SSL *s)
         return 0;
 
     if (s->method->version == DTLS_ANY_VERSION)
-        s->version = DTLS_MAX_VERSION;
+        s->version = DTLS_MAX_VERSION_INTERNAL;
 #ifndef OPENSSL_NO_DTLS1_METHOD
     else if (s->options & SSL_OP_CISCO_ANYCONNECT)
         s->client_version = s->version = DTLS1_BAD_VER;
