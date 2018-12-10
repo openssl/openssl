@@ -13,7 +13,7 @@
  our $shlibextimport = $target{shared_import_extension} || ".lib";
  our $dsoext = $target{dso_extension} || ".dll";
 
- (our $sover_dirname = $config{shlib_version_number}) =~ s|\.|_|g;
+ (our $sover_dirname = $config{shlib_version}) =~ s|\.|_|g;
 
  my $build_scheme = $target{build_scheme};
  my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
