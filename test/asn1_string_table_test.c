@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* Tests for the ANS1_STRING_TABLE_* functions */
+/* Tests for the ASN1_STRING_TABLE_* functions */
 
 #include <stdio.h>
 #include <string.h>

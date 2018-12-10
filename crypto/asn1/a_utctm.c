@@ -16,7 +16,7 @@
 /* This is the primary function used to parse ASN1_UTCTIME */
 int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)
 {
-    /* wrapper around ans1_time_to_tm */
+    /* wrapper around asn1_time_to_tm */
     if (d->type != V_ASN1_UTCTIME)
         return 0;
     return asn1_time_to_tm(tm, d);
