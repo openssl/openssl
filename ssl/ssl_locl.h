@@ -2666,4 +2666,12 @@ void ssl_ctx_system_config(SSL_CTX *ctx);
 #  define ssl3_setup_buffers SSL_test_functions()->p_ssl3_setup_buffers
 
 # endif
+
+# ifdef SSL_DEBUG
+void ssl_debug_data_dump(const char* prefix, unsigned int ival, void *data, size_t len);
+#  define SSL_DEBUG_data_dump(a,b,c,d) ssl_debug_data_dump(a,b,c,d)
+# else
+#  define SSL_DEBUG_data_dump(a,b,c,d)
+# endif
+
 #endif

@@ -280,14 +280,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
         EVP_PKEY_free(mac_key);
     }
-#ifdef SSL_DEBUG
-    printf("which = %04X\nmac key=", which);
-    {
-        size_t z;
-        for (z = 0; z < i; z++)
-            printf("%02X%c", ms[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-#endif
+    SSL_DEBUG_data_dump("which = %04X, nmac key:\n", which, ms, i);
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
@@ -392,21 +385,8 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif                          /* OPENSSL_NO_KTLS */
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 
-#ifdef SSL_DEBUG
-    printf("which = %04X\nkey=", which);
-    {
-        int z;
-        for (z = 0; z < EVP_CIPHER_key_length(c); z++)
-            printf("%02X%c", key[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("\niv=");
-    {
-        size_t z;
-        for (z = 0; z < k; z++)
-            printf("%02X%c", iv[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("\n");
-#endif
+    SSL_DEBUG_data_dump("which = %04X, key:\n", which, key, EVP_CIPHER_key_length(c));
+    SSL_DEBUG_data_dump("iv:\n", 0, iv, k);
 
     OPENSSL_cleanse(tmp1, sizeof(tmp1));
     OPENSSL_cleanse(tmp2, sizeof(tmp1));
@@ -459,41 +439,15 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p;
 
-#ifdef SSL_DEBUG
-    printf("client random\n");
-    {
-        int z;
-        for (z = 0; z < SSL3_RANDOM_SIZE; z++)
-            printf("%02X%c", s->s3->client_random[z],
-                   ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("server random\n");
-    {
-        int z;
-        for (z = 0; z < SSL3_RANDOM_SIZE; z++)
-            printf("%02X%c", s->s3->server_random[z],
-                   ((z + 1) % 16) ? ' ' : '\n');
-    }
-    printf("master key\n");
-    {
-        size_t z;
-        for (z = 0; z < s->session->master_key_length; z++)
-            printf("%02X%c", s->session->master_key[z],
-                   ((z + 1) % 16) ? ' ' : '\n');
-    }
-#endif
+    SSL_DEBUG_data_dump("client random:\n", 0, s->s3->client_random, SSL3_RANDOM_SIZE);
+    SSL_DEBUG_data_dump("server random:\n", 0, s->s3->server_random, SSL3_RANDOM_SIZE);
+    SSL_DEBUG_data_dump("master key:\n", 0, s->session->master_key, s->session->master_key_length);
     if (!tls1_generate_key_block(s, p, num)) {
         /* SSLfatal() already called */
         goto err;
     }
-#ifdef SSL_DEBUG
-    printf("\nkey block\n");
-    {
-        size_t z;
-        for (z = 0; z < num; z++)
-            printf("%02X%c", p[z], ((z + 1) % 16) ? ' ' : '\n');
-    }
-#endif
+
+    SSL_DEBUG_data_dump("key block:\n", 0, p, num);
 
     if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
         && s->method->version <= TLS1_VERSION) {
@@ -561,10 +515,9 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             /* SSLfatal() already called */
             return 0;
         }
-#ifdef SSL_DEBUG
-        fprintf(stderr, "Handshake hashes:\n");
-        BIO_dump_fp(stderr, (char *)hash, hashlen);
-#endif
+
+        SSL_DEBUG_data_dump("Handshake hashes:\n", 0, hash, hashlen);
+
         if (!tls1_PRF(s,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
@@ -590,17 +543,11 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             return 0;
         }
     }
-#ifdef SSL_DEBUG
-    fprintf(stderr, "Premaster Secret:\n");
-    BIO_dump_fp(stderr, (char *)p, len);
-    fprintf(stderr, "Client Random:\n");
-    BIO_dump_fp(stderr, (char *)s->s3->client_random, SSL3_RANDOM_SIZE);
-    fprintf(stderr, "Server Random:\n");
-    BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
-    fprintf(stderr, "Master Secret:\n");
-    BIO_dump_fp(stderr, (char *)s->session->master_key,
-                SSL3_MASTER_SECRET_SIZE);
-#endif
+
+    SSL_DEBUG_data_dump("Premaster Secret:\n", 0, p, len);
+    SSL_DEBUG_data_dump("Client Random:\n", 0, s->s3->client_random, SSL3_RANDOM_SIZE);
+    SSL_DEBUG_data_dump("Server Random:\n", 0, s->s3->server_random, SSL3_RANDOM_SIZE);
+    SSL_DEBUG_data_dump("Master Secret:\n", 0, s->session->master_key, SSL3_MASTER_SECRET_SIZE);
 
     *secret_size = SSL3_MASTER_SECRET_SIZE;
     return 1;
