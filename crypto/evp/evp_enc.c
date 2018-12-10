@@ -376,7 +376,7 @@ static int evp_EncryptDecryptUpdate(EVP_CIPHER_CTX *ctx,
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
                       const unsigned char *in, int inl)
 {
-    /* Prevent accidental use of decryption context when encryption */
+    /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
         EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_INVALID_OPERATION);
         return 0;
@@ -397,7 +397,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     int n, ret;
     unsigned int i, b, bl;
 
-    /* Prevent accidental use of decryption context when encryption */
+    /* Prevent accidental use of decryption context when encrypting */
     if (!ctx->encrypt) {
         EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_INVALID_OPERATION);
         return 0;
@@ -446,7 +446,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int fix_len, cmpl = inl;
     unsigned int b;
 
-    /* Prevent accidental use of encryption context when decryption */
+    /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
         EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_INVALID_OPERATION);
         return 0;
@@ -527,7 +527,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     int i, n;
     unsigned int b;
 
-    /* Prevent accidental use of encryption context when decryption */
+    /* Prevent accidental use of encryption context when decrypting */
     if (ctx->encrypt) {
         EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_INVALID_OPERATION);
         return 0;
