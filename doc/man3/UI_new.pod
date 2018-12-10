@@ -233,7 +233,7 @@ UI_process() returns 0 on success or a negative value on error.
 
 UI_ctrl() returns a mask on success or -1 on error.
 
-UI_get_default_method(), UI_get_method(), UI_Openssl(), UI_null() and
+UI_get_default_method(), UI_get_method(), UI_OpenSSL(), UI_null() and
 UI_set_method() return either a valid B<UI_METHOD> structure or NULL
 respectively.
 
