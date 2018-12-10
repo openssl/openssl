@@ -21,7 +21,7 @@
      # libcrypto.a and use libcrypto_a.a as static one.
      sub sharedaix  { !$disabled{shared} && $config{target} =~ /^aix/ }
 
-     our $sover_dirname = $config{shlib_version_number};
+     our $sover_dirname = $config{shlib_version};
      $sover_dirname =~ s|\.|_|g
          if $config{target} =~ /^mingw/;
 

@@ -12,7 +12,7 @@
             . ($target{shlib_variant} || "")
             . ($target{shared_extension} || ".so");
         $lib =~ s|\.\$\(SHLIB_VERSION_NUMBER\)
-                 |.$config{shlib_version_number}|x;
+                 |.$config{shlib_version}|x;
         return $lib;
     }
     "";     # Make sure no left over string sneaks its way into the script

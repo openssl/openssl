@@ -10,7 +10,7 @@
   our $osslprefix = 'OSSL$';
   (our $osslprefix_q = $osslprefix) =~ s/\$/\\\$/;
 
-  our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version_number});
+  our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version});
   our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
 
   our $sourcedir = $config{sourcedir};
@@ -639,7 +639,7 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "our %config = ("
         WRITE CONFIG "  target => '","{- $config{target} -}","',"
         WRITE CONFIG "  version => '","{- $config{version} -}","',"
-        WRITE CONFIG "  shlib_version_number => '","{- $config{shlib_version_number} -}","',"
+        WRITE CONFIG "  shlib_version => '","{- $config{shlib_version} -}","',"
         WRITE CONFIG "  shlib_major => '","{- $config{shlib_major} -}","',"
         WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
         WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
