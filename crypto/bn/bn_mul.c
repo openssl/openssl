@@ -11,7 +11,26 @@
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
-#if defined(OPENSSL_NO_ASM) || !defined(OPENSSL_BN_ASM_PART_WORDS)
+#undef BN_RECURSION
+/*
+ * BN_RECURSION is forcibly disabled. Performance benefits for below
+ * implementation are significant, e.g. 30% for 32x32-limbs multiplication
+ * on most popular platform, but this is for multiplication itself, not
+ * for complete algorithms, which are customarily dominated rather by
+ * Montgomery multiplication(*). Provided that
+ *
+ * a) overall impact on most critical algorithms is not that significant;
+ * b) BN_RECURSION implementation is not constant-time;
+ * c) making it constant-time would diminish improvement coefficient,
+ *    likely to non-impressive values, <15% was estimated;
+ *
+ * it's reckoned that it's appropriate to just disable it.
+ *
+ * (*)  It's assumed that Montgomery implementation is implemented in
+ *      assembly, which is the case on *all* significant platforms.
+ */
+#ifdef BN_RECURSION
+# if defined(OPENSSL_NO_ASM) || !defined(OPENSSL_BN_ASM_PART_WORDS)
 /*
  * Here follows specialised variants of bn_add_words() and bn_sub_words().
  * They have the property performing operations on arrays of different sizes.
@@ -152,9 +171,8 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r,
     }
     return c;
 }
-#endif
+# endif
 
-#ifdef BN_RECURSION
 /*
  * Karatsuba recursive multiplication algorithm (cf. Knuth, The Art of
  * Computer Programming, Vol. 2)
@@ -492,6 +510,28 @@ void bn_mul_low_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
         bn_add_words(&(r[n]), &(r[n]), &(t[n]), n);
     }
 }
+
+void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
+{
+    bn_mul_words(r, a, n, b[0]);
+
+    for (;;) {
+        if (--n <= 0)
+            return;
+        bn_mul_add_words(&(r[1]), a, n, b[1]);
+        if (--n <= 0)
+            return;
+        bn_mul_add_words(&(r[2]), a, n, b[2]);
+        if (--n <= 0)
+            return;
+        bn_mul_add_words(&(r[3]), a, n, b[3]);
+        if (--n <= 0)
+            return;
+        bn_mul_add_words(&(r[4]), a, n, b[4]);
+        r += 4;
+        b += 4;
+    }
+}
 #endif                          /* BN_RECURSION */
 
 int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
@@ -649,27 +689,5 @@ void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 
     while (--nb) {
         *++rr = bn_mul_add_words(++r, a, na, *++b);
-    }
-}
-
-void bn_mul_low_normal(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n)
-{
-    bn_mul_words(r, a, n, b[0]);
-
-    for (;;) {
-        if (--n <= 0)
-            return;
-        bn_mul_add_words(&(r[1]), a, n, b[1]);
-        if (--n <= 0)
-            return;
-        bn_mul_add_words(&(r[2]), a, n, b[2]);
-        if (--n <= 0)
-            return;
-        bn_mul_add_words(&(r[3]), a, n, b[3]);
-        if (--n <= 0)
-            return;
-        bn_mul_add_words(&(r[4]), a, n, b[4]);
-        r += 4;
-        b += 4;
     }
 }
