@@ -25,7 +25,7 @@ static const unsigned char c[8] = { 0x11, 0xFB, 0xED, 0x2B, 0x01, 0x98, 0x6D, 0x
 
 static unsigned char out[80];
 
-static const char text[] = "Hello to all people out there";
+static const unsigned char text[] = "Hello to all people out there";
 
 static const unsigned char cfb_key[16] = {
     0xe1, 0xf0, 0xc3, 0xd2, 0xa5, 0xb4, 0x87, 0x96,
