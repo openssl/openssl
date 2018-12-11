@@ -426,7 +426,8 @@
                    unloaded before libcrypto then a crash is likely to happen.
                    Applications can suppress running of the atexit() handler at
                    run time by using the OPENSSL_INIT_NO_ATEXIT option to
-                   OPENSSL_init_crypto(). See the man page for further details.
+                   OPENSSL_init_crypto(). See the man page for it for further
+                   details.
 
   no-posix-io
                    Don't use POSIX IO capabilities.
