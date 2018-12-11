@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,6 +16,9 @@
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
+# include "internal/tsan_assist.h"
+
+# include "internal/numbers.h"
 
 /* How many times to read the TSC as a randomness source. */
 # define TSC_READ_COUNT                 4
@@ -200,7 +203,12 @@ struct rand_drbg_st {
      * with respect to how randomness is added to the RNG during reseeding
      * (see PR #4328).
      */
-    struct rand_pool_st *pool;
+    struct rand_pool_st *seed_pool;
+
+    /*
+     * Auxiliary pool for additional data.
+     */
+    struct rand_pool_st *adin_pool;
 
     /*
      * The following parameters are setup by the per-type "init" function.
@@ -256,7 +264,8 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    unsigned int reseed_prop_counter;
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    unsigned int reseed_next_counter;
 
     size_t seedlen;
     DRBG_STATUS state;
@@ -300,7 +309,7 @@ extern int rand_fork_count;
 /* DRBG helpers */
 int rand_drbg_restart(RAND_DRBG *drbg,
                       const unsigned char *buffer, size_t len, size_t entropy);
-
+size_t rand_drbg_seedlen(RAND_DRBG *drbg);
 /* locking api */
 int rand_drbg_lock(RAND_DRBG *drbg);
 int rand_drbg_unlock(RAND_DRBG *drbg);

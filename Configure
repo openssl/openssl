@@ -2,7 +2,7 @@
 # -*- mode: perl; -*-
 # Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -15,7 +15,7 @@ use Config;
 use FindBin;
 use lib "$FindBin::Bin/util/perl";
 use File::Basename;
-use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs/;
+use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs splitdir/;
 use File::Path qw/mkpath/;
 use OpenSSL::Glob;
 
@@ -43,8 +43,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
-# --api         One of 0.9.8, 1.0.0 or 1.1.0.  Do not compile support for
-#               interfaces deprecated as of the specified OpenSSL version.
+# --api         One of 0.9.8, 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, or 3.0.0 / 3.
+#               Do not compile support for interfaces deprecated as of the
+#               specified OpenSSL version.
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
@@ -173,11 +174,15 @@ our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #
 # API compatibility name to version number mapping.
 #
-my $maxapi = "1.1.0";           # API for "no-deprecated" builds
+my $maxapi = "3.0.0";           # API for "no-deprecated" builds
 my $apitable = {
-    "1.1.0" => "0x10100000L",
-    "1.0.0" => "0x10000000L",
-    "0.9.8" => "0x00908000L",
+    "3.0.0" => 3,
+    "1.1.1" => 2,
+    "1.1.0" => 2,
+    "1.0.2" => 1,
+    "1.0.1" => 1,
+    "1.0.0" => 1,
+    "0.9.8" => 0,
 };
 
 our %table = ();
@@ -242,28 +247,37 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 # Collect version numbers
-$config{version} = "unknown";
-$config{version_num} = "unknown";
-$config{shlib_version_number} = "unknown";
-$config{shlib_version_history} = "unknown";
+$config{major} = "unknown";
+$config{minor} = "unknown";
+$config{patch} = "unknown";
+$config{prerelease} = "";
+$config{build_metadata} = "";
+$config{shlib_version} = "unknown";
 
 collect_information(
     collect_from_file(catfile($srcdir,'include/openssl/opensslv.h')),
-    qr/OPENSSL.VERSION.TEXT.*OpenSSL (\S+) / => sub { $config{version} = $1; },
-    qr/OPENSSL.VERSION.NUMBER.*(0x\S+)/	     => sub { $config{version_num}=$1 },
-    qr/SHLIB_VERSION_NUMBER *"([^"]+)"/	     => sub { $config{shlib_version_number}=$1 },
-    qr/SHLIB_VERSION_HISTORY *"([^"]*)"/     => sub { $config{shlib_version_history}=$1 }
+    qr/#\s+define\s+OPENSSL_VERSION_MAJOR\s+(\d+)/ =>
+        sub { $config{major} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_MINOR\s+(\d+)/ =>
+        sub { $config{minor} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_PATCH\s+(\d+)/ =>
+        sub { $config{patch} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_PRE_RELEASE\s+"((?:\\.|[^"])*)"/ =>
+        sub { $config{prerelease} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_BUILD_METADATA\s+"((?:\\.|[^"])*)"/ =>
+        sub { $config{build_metadata} = $1; },
+    qr/#\s+define\s+OPENSSL_SHLIB_VERSION\s+([\d\.]+)/ =>
+        sub { $config{shlib_version} = $1; },
     );
-if ($config{shlib_version_history} ne "") { $config{shlib_version_history} .= ":"; }
-
-($config{major}, $config{minor})
-    = ($config{version} =~ /^([0-9]+)\.([0-9\.]+)/);
-($config{shlib_major}, $config{shlib_minor})
-    = ($config{shlib_version_number} =~ /^([0-9]+)\.([0-9\.]+)/);
 die "erroneous version information in opensslv.h: ",
-    "$config{major}, $config{minor}, $config{shlib_major}, $config{shlib_minor}\n"
-    if ($config{major} eq "" || $config{minor} eq ""
-	|| $config{shlib_major} eq "" ||  $config{shlib_minor} eq "");
+    "$config{major}.$config{minor}.$config{patch}, $config{shlib_version}\n"
+    if ($config{major} eq "unknown"
+            || $config{minor} eq "unknown"
+            || $config{patch} eq "unknown"
+            || $config{shlib_version} eq "unknown");
+
+$config{version} = "$config{major}.$config{minor}.$config{patch}";
+$config{full_version} = "$config{version}$config{prerelease}$config{build_metadata}";
 
 # Collect target configurations
 
@@ -298,21 +312,6 @@ $config{libdir}="";
 my $auto_threads=1;    # enable threads automatically? true by default
 my $default_ranlib;
 
-# Top level directories to build
-$config{dirs} = [ "crypto", "ssl", "engines", "apps", "test", "util", "tools", "fuzz" ];
-# crypto/ subdirectories to build
-$config{sdirs} = [
-    "objects",
-    "md2", "md4", "md5", "sha", "mdc2", "hmac", "ripemd", "whrlpool", "poly1305", "blake2", "siphash", "sm3",
-    "des", "aes", "rc2", "rc4", "rc5", "idea", "aria", "bf", "cast", "camellia", "seed", "sm4", "chacha", "modes",
-    "bn", "ec", "rsa", "dsa", "dh", "sm2", "dso", "engine",
-    "buffer", "bio", "stack", "lhash", "rand", "err",
-    "evp", "asn1", "pem", "x509", "x509v3", "conf", "txt_db", "pkcs7", "pkcs12", "comp", "ocsp", "ui",
-    "cms", "ts", "srp", "cmac", "ct", "async", "kdf", "store"
-    ];
-# test/ subdirectories to build
-$config{tdirs} = [ "ossl_shim" ];
-
 # Known TLS and DTLS protocols
 my @tls = qw(ssl3 tls1 tls1_1 tls1_2 tls1_3);
 my @dtls = qw(dtls1 dtls1_2);
@@ -322,6 +321,7 @@ my @dtls = qw(dtls1 dtls1_2);
 # For developers: keep it sorted alphabetically
 
 my @disablables = (
+    "ktls",
     "afalgeng",
     "aria",
     "asan",
@@ -452,6 +452,7 @@ our %disabled = ( # "what"         => "comment"
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
 		  "zlib-dynamic"        => "default",
+		  "ktls"                => "default",
 		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
@@ -606,10 +607,8 @@ $config{lflags} = [ env('__CNF_LDFLAGS') || () ];
 $config{ex_libs} = [ env('__CNF_LDLIBS') || () ];
 
 $config{openssl_api_defines}=[];
-$config{openssl_algorithm_defines}=[];
-$config{openssl_thread_defines}=[];
 $config{openssl_sys_defines}=[];
-$config{openssl_other_defines}=[];
+$config{openssl_feature_defines}=[];
 $config{options}="";
 $config{build_type} = "release";
 my $target="";
@@ -1003,8 +1002,8 @@ if ($target eq "HASH") {
     exit 0;
 }
 
-print "Configuring OpenSSL version $config{version} ($config{version_num}) ";
-print "for $target\n";
+print "Configuring OpenSSL version $config{full_version} ";
+print "for target $target\n";
 
 if (scalar(@seed_sources) == 0) {
     print "Using os-specific seed configuration\n";
@@ -1013,16 +1012,21 @@ if (scalar(@seed_sources) == 0) {
 if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
     die "Cannot seed with none and anything else" if scalar(@seed_sources) > 1;
     warn <<_____ if scalar(@seed_sources) == 1;
-You have selected the --with-rand-seed=none option, which effectively disables
-automatic reseeding of the OpenSSL random generator. All operations depending
-on the random generator such as creating keys will not work unless the random
-generator is seeded manually by the application.
 
-Please read the 'Note on random number generation' section in the INSTALL
-instructions and the RAND_DRBG(7) manual page for more details.
+============================== WARNING ===============================
+You have selected the --with-rand-seed=none option, which effectively
+disables automatic reseeding of the OpenSSL random generator.
+All operations depending on the random generator such as creating keys
+will not work unless the random generator is seeded manually by the
+application.
+
+Please read the 'Note on random number generation' section in the
+INSTALL instructions and the RAND_DRBG(7) manual page for more details.
+============================== WARNING ===============================
+
 _____
 }
-push @{$config{openssl_other_defines}},
+push @{$config{openssl_feature_defines}},
      map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
 	@seed_sources;
 
@@ -1168,6 +1172,19 @@ foreach (keys %user) {
 # Allow overriding the build file name
 $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 
+######################################################################
+# Build up information for skipping certain directories depending on disabled
+# features, as well as setting up macros for disabled features.
+
+# This is a tentative database of directories to skip.  Some entries may not
+# correspond to anything real, but that's ok, they will simply be ignored.
+# The actual processing of these entries is done in the build.info lookup
+# loop further down.
+#
+# The key is a Unix formated path in the source tree, the value is an index
+# into %disabled_info, so any existing path gets added to a corresponding
+# 'skipped' entry in there with the list of skipped directories.
+my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
     $config{options} .= " no-$what";
@@ -1176,32 +1193,18 @@ foreach my $what (sort keys %disabled) {
                                 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
-
-        # Fix up C macro end names
-        $WHAT = "RMD160" if $what eq "ripemd";
+        my $skipdir = $what;
 
         # fix-up crypto/directory name(s)
-        $what = "ripemd" if $what eq "rmd160";
-        $what = "whrlpool" if $what eq "whirlpool";
+        $skipdir = "ripemd" if $what eq "rmd160";
+        $skipdir = "whrlpool" if $what eq "whirlpool";
 
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
+        push @{$config{openssl_feature_defines}}, $macro;
 
-        if ((grep { $what eq $_ } @{$config{sdirs}})
-                && $what ne 'async' && $what ne 'err') {
-            @{$config{sdirs}} = grep { $what ne $_} @{$config{sdirs}};
-            $disabled_info{$what}->{skipped} = [ catdir('crypto', $what) ];
-
-            if ($what ne 'engine') {
-                push @{$config{openssl_algorithm_defines}}, $macro;
-            } else {
-                @{$config{dirs}} = grep !/^engines$/, @{$config{dirs}};
-                push @{$disabled_info{engine}->{skipped}}, catdir('engines');
-                push @{$config{openssl_other_defines}}, $macro;
-            }
-        } else {
-            push @{$config{openssl_other_defines}}, $macro;
-        }
-
+        $skipdir{engines} = $what if $what eq 'engine';
+        $skipdir{"crypto/$skipdir"} = $what
+            unless $what eq 'async' || $what eq 'err';
     }
 }
 
@@ -1279,7 +1282,7 @@ unless ($disabled{threads}) {
 # If threads still aren't disabled, add a C macro to ensure the source
 # code knows about it.  Any other flag is taken care of by the configs.
 unless($disabled{threads}) {
-    push @{$config{openssl_thread_defines}}, "OPENSSL_THREADS";
+    push @{$config{openssl_feature_defines}}, "OPENSSL_THREADS";
 }
 
 # With "deprecated" disable all deprecated features.
@@ -1298,10 +1301,10 @@ if ($target{shared_target} eq "")
 	}
 
 if ($disabled{"dynamic-engine"}) {
-        push @{$config{openssl_other_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
+        push @{$config{openssl_feature_defines}}, "OPENSSL_NO_DYNAMIC_ENGINE";
         $config{dynamic_engines} = 0;
 } else {
-        push @{$config{openssl_other_defines}}, "OPENSSL_NO_STATIC_ENGINE";
+        push @{$config{openssl_feature_defines}}, "OPENSSL_NO_STATIC_ENGINE";
         $config{dynamic_engines} = 1;
 }
 
@@ -1367,6 +1370,7 @@ unless ($disabled{asm}) {
     push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
     push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
     push @{$config{lib_defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
+    push @{$config{lib_defines}}, "BN_DIV3W" if ($target{bn_asm_src} =~ /-div3w/);
 
     if ($target{sha1_asm_src}) {
 	push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
@@ -1499,11 +1503,9 @@ $config{cflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
 $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
-if (defined($config{api})) {
-    $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
-    my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    push @{$config{defines}}, $apiflag;
-}
+$config{openssl_api_defines} = [
+    "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
+];
 
 if ($strict_warnings)
 	{
@@ -1571,7 +1573,28 @@ unless ($disabled{afalgeng}) {
     }
 }
 
-push @{$config{openssl_other_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+
+unless ($disabled{ktls}) {
+    $config{ktls}="";
+    if ($target =~ m/^linux/) {
+        my $usr = "/usr/$config{cross_compile_prefix}";
+        chop($usr);
+        if ($config{cross_compile_prefix} eq "") {
+            $usr = "/usr";
+        }
+        my $minver = (4 << 16) + (13 << 8) + 0;
+        my @verstr = split(" ",`cat $usr/include/linux/version.h | grep LINUX_VERSION_CODE`);
+
+        if ($verstr[2] < $minver) {
+            $disabled{ktls} = "too-old-kernel";
+        }
+    } else {
+        $disabled{ktls}  = "not-linux";
+    }
+}
+
+push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
 # Finish up %config by appending things the user gave us on the command line
 # apart from "make variables"
@@ -1672,34 +1695,26 @@ if ($builder eq "unified") {
           cleanfile($srcdir, catfile("Configurations", "common.tmpl"),
                     $blddir) ];
 
-    my @build_infos = ( [ ".", "build.info" ] );
-    foreach (@{$config{dirs}}) {
-        push @build_infos, [ $_, "build.info" ]
-            if (-f catfile($srcdir, $_, "build.info"));
-    }
-    foreach (@{$config{sdirs}}) {
-        push @build_infos, [ catdir("crypto", $_), "build.info" ]
-            if (-f catfile($srcdir, "crypto", $_, "build.info"));
-    }
-    foreach (@{$config{engdirs}}) {
-        push @build_infos, [ catdir("engines", $_), "build.info" ]
-            if (-f catfile($srcdir, "engines", $_, "build.info"));
-    }
-    foreach (@{$config{tdirs}}) {
-        push @build_infos, [ catdir("test", $_), "build.info" ]
-            if (-f catfile($srcdir, "test", $_, "build.info"));
-    }
+    my @build_dirs = ( [ ] );   # current directory
 
     $config{build_infos} = [ ];
 
     my %ordinals = ();
-    foreach (@build_infos) {
-        my $sourced = catdir($srcdir, $_->[0]);
-        my $buildd = catdir($blddir, $_->[0]);
+    while (@build_dirs) {
+        my @curd = @{shift @build_dirs};
+        my $sourced = catdir($srcdir, @curd);
+        my $buildd = catdir($blddir, @curd);
+
+        my $unixdir = join('/', @curd);
+        if (exists $skipdir{$unixdir}) {
+            my $what = $skipdir{$unixdir};
+            push @{$disabled_info{$what}->{skipped}}, catdir(@curd);
+            next;
+        }
 
         mkpath($buildd);
 
-        my $f = $_->[1];
+        my $f = 'build.info';
         # The basic things we're trying to build
         my @programs = ();
         my @programs_install = ();
@@ -1717,6 +1732,7 @@ if ($builder eq "unified") {
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
+        my %defines = ();
         my %depends = ();
         my %renames = ();
         my %sharednames = ();
@@ -1777,6 +1793,14 @@ if ($builder eq "unified") {
             qr/^\s*ENDIF\s*$/
             => sub { die "ENDIF out of scope" if ! @skip;
                      pop @skip; },
+            qr/^\s*SUBDIRS\s*=\s*(.*)\s*$/
+            => sub {
+                if (!@skip || $skip[$#skip] > 0) {
+                    foreach (tokenize($1)) {
+                        push @build_dirs, [ @curd, splitdir($_, 1) ];
+                    }
+                }
+            },
             qr/^\s*PROGRAMS(_NO_INST)?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
@@ -1831,6 +1855,9 @@ if ($builder eq "unified") {
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*INCLUDE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$includes{$1}}, tokenize($2)
+                         if !@skip || $skip[$#skip] > 0 },
+            qr/^\s*DEFINE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { push @{$defines{$1}}, tokenize($2)
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*DEPEND\[((?:\\.|[^\\\]])*)\]\s*=\s*(.*)\s*$/
             => sub { push @{$depends{$1}}, tokenize($2)
@@ -2164,6 +2191,27 @@ EOF
                     unless grep { $_ eq $ib } @{$unified_info{includes}->{$ddest}->{build}};
             }
         }
+
+        foreach (keys %defines) {
+            my $dest = $_;
+            my $ddest = cleanfile($sourced, $_, $blddir);
+
+            # If the destination doesn't exist in source, it can only be
+            # a generated file in the build tree.
+            if (! -f $ddest) {
+                $ddest = cleanfile($buildd, $_, $blddir);
+                if ($unified_info{rename}->{$ddest}) {
+                    $ddest = $unified_info{rename}->{$ddest};
+                }
+            }
+            foreach (@{$defines{$dest}}) {
+                m|^([^=]*)(=.*)?$|;
+                die "0 length macro name not permitted\n" if $1 eq "";
+                die "$1 defined more than once\n"
+                    if defined $unified_info{defines}->{$ddest}->{$1};
+                $unified_info{defines}->{$ddest}->{$1} = $2;
+            }
+        }
     }
 
     my $ordinals_text = join(', ', sort keys %ordinals);
@@ -2237,6 +2285,9 @@ EOF
                                            dst => 'sources' } }
                } -> {$prodtype};
             foreach my $kind (keys %$intent) {
+                next if ($intent->{$kind}->{dst} eq 'shared_sources'
+                             && $disabled{shared});
+
                 my @src = @{$intent->{$kind}->{src}};
                 my $dst = $intent->{$kind}->{dst};
                 my $prodselect = $intent->{$kind}->{prodselect} // sub { @_ };
@@ -2306,6 +2357,12 @@ EOF
             }
         }
     }
+    # Defines
+    foreach my $dest (sort keys %{$unified_info{defines}}) {
+        $unified_info{defines}->{$dest}
+            = [ map { $_.$unified_info{defines}->{$dest}->{$_} }
+                sort keys %{$unified_info{defines}->{$dest}} ];
+    }
     # Includes
     foreach my $dest (sort keys %{$unified_info{includes}}) {
         if (defined($unified_info{includes}->{$dest}->{build})) {
@@ -2323,6 +2380,42 @@ EOF
                 [ @{$unified_info{includes}->{$dest}->{source}} ];
         } else {
             delete $unified_info{includes}->{$dest};
+        }
+    }
+
+    # For convenience collect information regarding directories where
+    # files are generated, those generated files and the end product
+    # they end up in where applicable.  Then, add build rules for those
+    # directories
+    my %loopinfo = ( "lib" => [ @{$unified_info{libraries}} ],
+                     "dso" => [ @{$unified_info{engines}} ],
+                     "bin" => [ @{$unified_info{programs}} ],
+                     "script" => [ @{$unified_info{scripts}} ] );
+    foreach my $type (keys %loopinfo) {
+        foreach my $product (@{$loopinfo{$type}}) {
+            my %dirs = ();
+            my $pd = dirname($product);
+
+            foreach (@{$unified_info{sources}->{$product} // []},
+                     @{$unified_info{shared_sources}->{$product} // []}) {
+                my $d = dirname($_);
+
+                # We don't want to create targets for source directories
+                # when building out of source
+                next if ($config{sourcedir} ne $config{builddir}
+                             && $d =~ m|^\Q$config{sourcedir}\E|);
+                # We already have a "test" target, and the current directory
+                # is just silly to make a target for
+                next if $d eq "test" || $d eq ".";
+
+                $dirs{$d} = 1;
+                push @{$unified_info{dirinfo}->{$d}->{deps}}, $_
+                    if $d ne $pd;
+            }
+            foreach (keys %dirs) {
+                push @{$unified_info{dirinfo}->{$_}->{products}->{$type}},
+                    $product;
+            }
         }
     }
 }
@@ -2799,10 +2892,16 @@ print <<"EOF";
 
 **********************************************************************
 ***                                                                ***
-***   If you want to report a building issue, please include the   ***
-***   output from this command:                                    ***
+***   OpenSSL has been successfully configured                     ***
 ***                                                                ***
-***     perl configdata.pm --dump                                  ***
+***   If you encounter a problem while building, please open an    ***
+***   issue on GitHub <https://github.com/openssl/openssl/issues>  ***
+***   and include the output from the following command:           ***
+***                                                                ***
+***       perl configdata.pm --dump                                ***
+***                                                                ***
+***   (If you are new to OpenSSL, you might want to consult the    ***
+***   'Troubleshooting' section in the INSTALL file first)         ***
 ***                                                                ***
 **********************************************************************
 EOF

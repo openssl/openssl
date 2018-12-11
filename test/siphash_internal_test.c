@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -169,7 +169,7 @@ static TESTDATA tests[] = {
 
 static int test_siphash(int idx)
 {
-    SIPHASH siphash;
+    SIPHASH siphash = { 0, };
     TESTDATA test = tests[idx];
     unsigned char key[SIPHASH_KEY_SIZE];
     unsigned char in[64];
@@ -257,7 +257,7 @@ static int test_siphash(int idx)
 
 static int test_siphash_basic(void)
 {
-    SIPHASH siphash;
+    SIPHASH siphash = { 0, };
     unsigned char key[SIPHASH_KEY_SIZE];
     unsigned char output[SIPHASH_MAX_DIGEST_SIZE];
 

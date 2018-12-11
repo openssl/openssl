@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -26,12 +26,16 @@ int ssl3_do_change_cipher_spec(SSL *s)
         }
 
         s->session->cipher = s->s3->tmp.new_cipher;
-        if (!s->method->ssl3_enc->setup_key_block(s))
+        if (!s->method->ssl3_enc->setup_key_block(s)) {
+            /* SSLfatal() already called */
             return 0;
+        }
     }
 
-    if (!s->method->ssl3_enc->change_cipher_state(s, i))
+    if (!s->method->ssl3_enc->change_cipher_state(s, i)) {
+        /* SSLfatal() already called */
         return 0;
+    }
 
     return 1;
 }

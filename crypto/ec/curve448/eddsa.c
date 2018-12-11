@@ -2,7 +2,7 @@
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -246,10 +246,36 @@ c448_error_t c448_ed448_verify(
                     uint8_t context_len)
 {
     curve448_point_t pk_point, r_point;
-    c448_error_t error =
-        curve448_point_decode_like_eddsa_and_mul_by_ratio(pk_point, pubkey);
+    c448_error_t error;
     curve448_scalar_t challenge_scalar;
     curve448_scalar_t response_scalar;
+    /* Order in little endian format */
+    static const uint8_t order[] = {
+        0xF3, 0x44, 0x58, 0xAB, 0x92, 0xC2, 0x78, 0x23, 0x55, 0x8F, 0xC5, 0x8D,
+        0x72, 0xC2, 0x6C, 0x21, 0x90, 0x36, 0xD6, 0xAE, 0x49, 0xDB, 0x4E, 0xC4,
+        0xE9, 0x23, 0xCA, 0x7C, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x3F, 0x00
+    };
+    int i;
+
+    /*
+     * Check that s (second 57 bytes of the sig) is less than the order. Both
+     * s and the order are in little-endian format. This can be done in
+     * variable time, since if this is not the case the signature if publicly
+     * invalid.
+     */
+    for (i = EDDSA_448_PUBLIC_BYTES - 1; i >= 0; i--) {
+        if (signature[i + EDDSA_448_PUBLIC_BYTES] > order[i])
+            return C448_FAILURE;
+        if (signature[i + EDDSA_448_PUBLIC_BYTES] < order[i])
+            break;
+    }
+    if (i < 0)
+        return C448_FAILURE;
+
+    error =
+        curve448_point_decode_like_eddsa_and_mul_by_ratio(pk_point, pubkey);
 
     if (C448_SUCCESS != error)
         return error;

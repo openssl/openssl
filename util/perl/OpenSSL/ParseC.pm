@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -65,21 +65,11 @@ my @opensslcpphandlers = (
     # These are used to convert certain pre-precessor expressions into
     # others that @cpphandlers have a better chance to understand.
 
-    { regexp   => qr/#if OPENSSL_API_COMPAT(\S+)(0x[0-9a-fA-F]{8})L$/,
+    { regexp   => qr/#if (!?)OPENSSL_API_([0-9_]+)$/,
       massager => sub {
-          my $op = $1;
-          my $v = hex($2);
-          if ($op ne '<' && $op ne '>=') {
-              die "Error: unacceptable operator $op: $_[0]\n";
-          }
-          my ($one, $major, $minor) =
-              ( ($v >> 28) & 0xf,
-                ($v >> 20) & 0xff,
-                ($v >> 12) & 0xff );
-          my $t = "DEPRECATEDIN_${one}_${major}_${minor}";
-          my $cond = $op eq '<' ? 'ifndef' : 'ifdef';
+          my $cnd = $1 eq '!' ? 'ndef' : 'def';
           return (<<"EOF");
-#$cond $t
+#if$cnd DEPRECATEDIN_$2
 EOF
       }
    }
@@ -284,7 +274,7 @@ EOF
     # We trick the parser by pretending that the declaration is wrapped in a
     # check if the DEPRECATEDIN macro is defined or not.  Callers of parse()
     # will have to decide what to do with it.
-    { regexp   => qr/(DEPRECATEDIN_\d+_\d+_\d+)<<<\((.*)\)>>>/,
+    { regexp   => qr/(DEPRECATEDIN_\d+(?:_\d+_\d+)?)<<<\((.*)\)>>>/,
       massager => sub { return (<<"EOF");
 #ifndef $1
 $2;

@@ -41,9 +41,10 @@ end products.  There are variants for them with '_NO_INST' as suffix
 (PROGRAM_NO_INST etc) to specify end products that shouldn't get
 installed.
 
-The variables SOURCE, DEPEND and INCLUDE are indexed by a produced
-file, and their values are the source used to produce that particular
-produced file, extra dependencies, and include directories needed.
+The variables SOURCE, DEPEND, INCLUDE and DEFINE are indexed by a
+produced file, and their values are the source used to produce that
+particular produced file, extra dependencies, include directories
+needed, or C macros to be defined.
 
 All their values in all the build.info throughout the source tree are
 collected together and form a set of programs, libraries, engines and

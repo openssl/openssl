@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -175,6 +175,18 @@ static int pkey_hkdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     return -2;
 }
 
+static int pkey_hkdf_derive_init(EVP_PKEY_CTX *ctx)
+{
+    HKDF_PKEY_CTX *kctx = ctx->data;
+
+    OPENSSL_clear_free(kctx->key, kctx->key_len);
+    OPENSSL_clear_free(kctx->salt, kctx->salt_len);
+    OPENSSL_cleanse(kctx->info, kctx->info_len);
+    memset(kctx, 0, sizeof(*kctx));
+
+    return 1;
+}
+
 static int pkey_hkdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                             size_t *keylen)
 {
@@ -236,7 +248,7 @@ const EVP_PKEY_METHOD hkdf_pkey_meth = {
 
     0, 0,
 
-    0,
+    pkey_hkdf_derive_init,
     pkey_hkdf_derive,
     pkey_hkdf_ctrl,
     pkey_hkdf_ctrl_str

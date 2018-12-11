@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -21,7 +21,7 @@ extern "C" {
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/bn.h>
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/dh.h>
 # endif
 # include <openssl/dsaerr.h>
@@ -33,7 +33,7 @@ extern "C" {
 # define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
 
 # define DSA_FLAG_CACHE_MONT_P   0x01
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
  */
@@ -99,7 +99,7 @@ int DSA_size(const DSA *);
 int DSA_bits(const DSA *d);
 int DSA_security_bits(const DSA *d);
         /* next 4 return -1 on error */
-DEPRECATEDIN_1_2_0(int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp))
+DEPRECATEDIN_3(int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp))
 int DSA_sign(int type, const unsigned char *dgst, int dlen,
              unsigned char *sig, unsigned int *siglen, DSA *dsa);
 int DSA_verify(int type, const unsigned char *dgst, int dgst_len,

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -96,6 +96,7 @@ sub name_synopsis()
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
     foreach my $line ( split /\n+/, $syn ) {
+        next unless $line =~ /^\s/;
         my $sym;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
@@ -114,7 +115,7 @@ sub name_synopsis()
         } elsif ( $line =~ /enum (\S*) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
-        } elsif ( $line =~ /#define ([A-Za-z0-9_]+)/ ) {
+        } elsif ( $line =~ /#(?:define|undef) ([A-Za-z0-9_]+)/ ) {
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
             $sym = $1;

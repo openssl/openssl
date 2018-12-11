@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -115,7 +115,7 @@ EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context,
 #ifndef OPENSSL_NO_EC
 static int use_ecc(SSL *s)
 {
-    int i, end;
+    int i, end, ret = 0;
     unsigned long alg_k, alg_a;
     STACK_OF(SSL_CIPHER) *cipher_stack = NULL;
 
@@ -123,7 +123,7 @@ static int use_ecc(SSL *s)
     if (s->version == SSL3_VERSION)
         return 0;
 
-    cipher_stack = SSL_get_ciphers(s);
+    cipher_stack = SSL_get1_supported_ciphers(s);
     end = sk_SSL_CIPHER_num(cipher_stack);
     for (i = 0; i < end; i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
@@ -132,11 +132,14 @@ static int use_ecc(SSL *s)
         alg_a = c->algorithm_auth;
         if ((alg_k & (SSL_kECDHE | SSL_kECDHEPSK))
                 || (alg_a & SSL_aECDSA)
-                || c->min_tls >= TLS1_3_VERSION)
-            return 1;
+                || c->min_tls >= TLS1_3_VERSION) {
+            ret = 1;
+            break;
+        }
     }
 
-    return 0;
+    sk_SSL_CIPHER_free(cipher_stack);
+    return ret;
 }
 
 EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,

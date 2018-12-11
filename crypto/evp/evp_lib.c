@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -525,4 +525,31 @@ void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
 int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
     return (ctx->flags & flags);
+}
+
+int EVP_str2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *value)
+{
+    size_t len;
+
+    len = strlen(value);
+    if (len > INT_MAX)
+        return -1;
+    return cb(ctx, cmd, (void *)value, len);
+}
+
+int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *hex)
+{
+    unsigned char *bin;
+    long binlen;
+    int rv = -1;
+
+    bin = OPENSSL_hexstr2buf(hex, &binlen);
+    if (bin == NULL)
+        return 0;
+    if (binlen <= INT_MAX)
+        rv = cb(ctx, cmd, bin, binlen);
+    OPENSSL_free(bin);
+    return rv;
 }

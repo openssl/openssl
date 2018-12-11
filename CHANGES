@@ -7,7 +7,60 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1 and 1.1.2 [xx XXX xxxx]
+ Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
+
+  *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
+     [Richard Levitte]
+
+  *) Change the license to the Apache License v2.0.
+     [Richard Levitte]
+
+  *) Change the possible version information given with OPENSSL_API_COMPAT.
+     It may be a pre-3.0.0 style numerical version number as it was defined
+     in 1.1.0, and it may also simply take the major version number.
+
+     Because of the version numbering of pre-3.0.0 releases, the values 0,
+     1 and 2 are equivalent to 0x00908000L (0.9.8), 0x10000000L (1.0.0) and
+     0x10100000L (1.1.0), respectively.
+     [Richard Levitte]
+
+  *) Switch to a new version scheme using three numbers MAJOR.MINOR.PATCH.
+
+     o Major releases (indicated by incrementing the MAJOR release number)
+       may introduce incompatible API/ABI changes.
+     o Minor releases (indicated by incrementing the MINOR release number)
+       may introduce new features but retain API/ABI compatibility.
+     o Patch releases (indicated by incrementing the PATCH number)
+       are intended for bug fixes and other improvements of existing
+       features only (like improving performance or adding documentation)
+       and retain API/ABI compatibility.
+     [Richard Levitte]
+
+  *) Remove the 'dist' target and add a tarball building script.  The
+     'dist' target has fallen out of use, and it shouldn't be
+     necessary to configure just to create a source distribution.
+     [Richard Levitte]
+
+  *) Recreate the OS390-Unix config target.  It no longer relies on a
+     special script like it did for OpenSSL pre-1.1.0.
+     [Richard Levitte]
+
+  *) Instead of having the source directories listed in Configure, add
+     a 'build.info' keyword SUBDIRS to indicate what sub-directories to
+     look into.
+     [Richard Levitte]
+
+  *) Add GMAC to EVP_MAC.
+     [Paul Dale]
+
+  *) Ported the HMAC, CMAC and SipHash EVP_PKEY_METHODs to EVP_MAC.
+     [Richard Levitte]
+
+  *) Added EVP_MAC, an EVP layer MAC API, to simplify adding MAC
+     implementations.  This includes a generic EVP_PKEY to EVP_MAC bridge,
+     to facilitate the continued use of MACs through raw private keys in
+     functionality such as EVP_DigestSign* and EVP_DigestVerify*.
+     [Richard Levitte]     
 
   *) Deprecate ECDH_KDF_X9_62() and mark its replacement as internal. Users
      should use the EVP interface instead (EVP_PKEY_CTX_set_ecdh_kdf_type).
@@ -34,7 +87,32 @@
      list of built in objects, i.e. OIDs with names.
      [Richard Levitte]
 
- Changes between 1.1.1 and 1.1.1a [xx XXX xxxx]
+  *) Added support for Linux Kernel TLS data-path. The Linux Kernel data-path
+     improves application performance by removing data copies and providing
+     applications with zero-copy system calls such as sendfile and splice.
+     [Boris Pismenny]
+
+ Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
+
+  *) Timing vulnerability in DSA signature generation
+
+     The OpenSSL DSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
+     (CVE-2018-0734)
+     [Paul Dale]
+
+  *) Timing vulnerability in ECDSA signature generation
+
+     The OpenSSL ECDSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
+     (CVE-2018-0735)
+     [Paul Dale]
 
   *) Fixed the issue that RAND_add()/RAND_seed() silently discards random input
      if its length exceeds 4096 bytes. The limit has been raised to a buffer size
@@ -11418,7 +11496,7 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
      (still largely untested)
      [Bodo Moeller]
 
-  *) New function ANS1_tag2str() to convert an ASN1 tag to a descriptive
+  *) New function ASN1_tag2str() to convert an ASN1 tag to a descriptive
      ASCII string. This was handled independently in various places before.
      [Steve Henson]
 

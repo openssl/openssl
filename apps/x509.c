@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -67,10 +67,10 @@ typedef enum OPTION_choice {
 const OPTIONS x509_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'f',
-     "Input format - default PEM (one of DER, NET or PEM)"},
+     "Input format - default PEM (one of DER or PEM)"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"outform", OPT_OUTFORM, 'f',
-     "Output format - default PEM (one of DER, NET or PEM)"},
+     "Output format - default PEM (one of DER or PEM)"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"keyform", OPT_KEYFORM, 'F', "Private key format - default PEM"},
     {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},

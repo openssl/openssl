@@ -1,3 +1,4 @@
+SUBDIRS=ossl_shim
 {-
      use File::Spec::Functions;
      sub rebase_files
@@ -341,7 +342,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
 
   SOURCE[drbgtest]=drbgtest.c
   INCLUDE[drbgtest]=../include
-  DEPEND[drbgtest]=../libcrypto libtestutil.a
+  DEPEND[drbgtest]=../libcrypto.a libtestutil.a
 
   SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data_ctr.c \
                          drbg_cavs_data_hash.c drbg_cavs_data_hmac.c
@@ -436,10 +437,8 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   # available through the shared library (at least on Linux, Solaris, Windows
   # and VMS, where the exported symbols are those listed in util/*.num), these
   # programs are forcibly linked with the static libraries, where all symbols
-  # are always available.  This excludes linking these programs natively on
-  # Windows when building shared libraries, since the static libraries share
-  # names with the DLL import libraries.
-  IF[{- $disabled{shared} || $target{build_scheme}->[1] ne 'windows' -}]
+  # are always available.
+  IF[1]
     PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdrand_sanitytest

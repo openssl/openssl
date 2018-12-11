@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -319,7 +319,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
 {
 #ifndef OPENSSL_NO_CMAC
     EVP_PKEY *ret = EVP_PKEY_new();
-    CMAC_CTX *cmctx = CMAC_CTX_new();
+    EVP_MAC_CTX *cmctx = EVP_MAC_CTX_new_id(EVP_MAC_CMAC);
 
     if (ret == NULL
             || cmctx == NULL
@@ -328,7 +328,9 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
         goto err;
     }
 
-    if (!CMAC_Init(cmctx, priv, len, cipher, e)) {
+    if (EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_ENGINE, e) <= 0
+        || EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_CIPHER, cipher) <= 0
+        || EVP_MAC_ctrl(cmctx, EVP_MAC_CTRL_SET_KEY, priv, len) <= 0) {
         EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
@@ -338,7 +340,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
 
  err:
     EVP_PKEY_free(ret);
-    CMAC_CTX_free(cmctx);
+    EVP_MAC_CTX_free(cmctx);
     return NULL;
 #else
     EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY,
@@ -663,6 +665,26 @@ static int evp_pkey_asn1_ctrl(EVP_PKEY *pkey, int op, int arg1, void *arg2)
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 {
     return evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID, 0, pnid);
+}
+
+int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
+{
+    int rv, default_nid;
+
+    rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SUPPORTS_MD_NID, nid, NULL);
+    if (rv == -2) {
+        /*
+         * If there is a mandatory default digest and this isn't it, then
+         * the answer is 'no'.
+         */
+        rv = EVP_PKEY_get_default_digest_nid(pkey, &default_nid);
+        if (rv == 2)
+            return (nid == default_nid);
+        /* zero is an error from EVP_PKEY_get_default_digest_nid() */
+        if (rv == 0)
+            return -1;
+    }
+    return rv;
 }
 
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,

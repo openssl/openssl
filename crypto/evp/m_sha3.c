@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -57,6 +57,11 @@ static int sha3_init(EVP_MD_CTX *evp_ctx)
 static int shake_init(EVP_MD_CTX *evp_ctx)
 {
     return init(evp_ctx, '\x1f');
+}
+
+static int kmac_init(EVP_MD_CTX *evp_ctx)
+{
+    return init(evp_ctx, '\x04');
 }
 
 static int sha3_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
@@ -395,6 +400,7 @@ const EVP_MD *EVP_shake##bitlen(void)           \
     };                                          \
     return &shake##bitlen##_md;                 \
 }
+
 #endif
 
 EVP_MD_SHA3(224)
@@ -404,3 +410,27 @@ EVP_MD_SHA3(512)
 
 EVP_MD_SHAKE(128)
 EVP_MD_SHAKE(256)
+
+
+# define EVP_MD_KECCAK_KMAC(bitlen)             \
+const EVP_MD *evp_keccak_kmac##bitlen(void)     \
+{                                               \
+    static const EVP_MD kmac_##bitlen##_md = {  \
+        -1,                                     \
+        0,                                      \
+        2 * bitlen / 8,                         \
+        EVP_MD_FLAG_XOF,                        \
+        kmac_init,                              \
+        sha3_update,                            \
+        sha3_final,                             \
+        NULL,                                   \
+        NULL,                                   \
+        (KECCAK1600_WIDTH - bitlen * 2) / 8,    \
+        sizeof(KECCAK1600_CTX),                 \
+        shake_ctrl                              \
+    };                                          \
+    return &kmac_##bitlen##_md;                 \
+}
+
+EVP_MD_KECCAK_KMAC(128)
+EVP_MD_KECCAK_KMAC(256)

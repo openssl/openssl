@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -1095,6 +1095,7 @@ WORK_STATE ossl_statem_client_post_process_message(SSL *s, WORK_STATE wst)
                  ERR_R_INTERNAL_ERROR);
         return WORK_ERROR;
 
+    case TLS_ST_CR_CERT_VRFY:
     case TLS_ST_CR_CERT_REQ:
         return tls_prepare_client_certificate(s, wst);
     }
@@ -2352,7 +2353,8 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         }
 #ifdef SSL_DEBUG
         if (SSL_USE_SIGALGS(s))
-            fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+            fprintf(stderr, "USING TLSv1.2 HASH %s\n",
+                    md == NULL ? "n/a" : EVP_MD_name(md));
 #endif
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
@@ -2563,6 +2565,17 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     /* we should setup a certificate to return.... */
     s->s3->tmp.cert_req = 1;
 
+    /*
+     * In TLSv1.3 we don't prepare the client certificate yet. We wait until
+     * after the CertificateVerify message has been received. This is because
+     * in TLSv1.3 the CertificateRequest arrives before the Certificate message
+     * but in TLSv1.2 it is the other way around. We want to make sure that
+     * SSL_get_peer_certificate() returns something sensible in
+     * client_cert_cb.
+     */
+    if (SSL_IS_TLS13(s) && s->post_handshake_auth != SSL_PHA_REQUESTED)
+        return MSG_PROCESS_CONTINUE_READING;
+
     return MSG_PROCESS_CONTINUE_PROCESSING;
 }
 
@@ -2727,7 +2740,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
                                PACKET_data(&nonce),
                                PACKET_remaining(&nonce),
                                s->session->master_key,
-                               hashlen)) {
+                               hashlen, 1)) {
             /* SSLfatal() already called */
             goto err;
         }

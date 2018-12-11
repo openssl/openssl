@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,7 +22,9 @@ typedef const SSL_METHOD * (*TLS_method_t)(void);
 typedef SSL_CTX * (*SSL_CTX_new_t)(const SSL_METHOD *meth);
 typedef void (*SSL_CTX_free_t)(SSL_CTX *);
 typedef unsigned long (*ERR_get_error_t)(void);
-typedef unsigned long (*OpenSSL_version_num_t)(void);
+typedef unsigned long (*OPENSSL_version_major_t)(void);
+typedef unsigned long (*OPENSSL_version_minor_t)(void);
+typedef unsigned long (*OPENSSL_version_patch_t)(void);
 typedef DSO * (*DSO_dsobyaddr_t)(void (*addr)(void), int flags);
 typedef int (*DSO_free_t)(DSO *dso);
 
@@ -107,12 +109,14 @@ static int test_lib(void)
     union {
         void (*func)(void);
         SHLIB_SYM sym;
-    } symbols[3];
+    } symbols[4];
     TLS_method_t myTLS_method;
     SSL_CTX_new_t mySSL_CTX_new;
     SSL_CTX_free_t mySSL_CTX_free;
     ERR_get_error_t myERR_get_error;
-    OpenSSL_version_num_t myOpenSSL_version_num;
+    OPENSSL_version_major_t myOPENSSL_version_major;
+    OPENSSL_version_minor_t myOPENSSL_version_minor;
+    OPENSSL_version_patch_t myOPENSSL_version_patch;
     int result = 0;
 
     switch (test_type) {
@@ -150,26 +154,27 @@ static int test_lib(void)
     }
 
     if (!TEST_true(shlib_sym(cryptolib, "ERR_get_error", &symbols[0].sym))
-            || !TEST_true(shlib_sym(cryptolib, "OpenSSL_version_num",
-                                    &symbols[1].sym)))
+           || !TEST_true(shlib_sym(cryptolib, "OPENSSL_version_major",
+                                   &symbols[1].sym))
+           || !TEST_true(shlib_sym(cryptolib, "OPENSSL_version_minor",
+                                   &symbols[2].sym))
+           || !TEST_true(shlib_sym(cryptolib, "OPENSSL_version_patch",
+                                   &symbols[3].sym)))
         goto end;
     myERR_get_error = (ERR_get_error_t)symbols[0].func;
     if (!TEST_int_eq(myERR_get_error(), 0))
         goto end;
 
-    /*
-     * The bits that COMPATIBILITY_MASK lets through MUST be the same in
-     * the library and in the application.
-     * The bits that are masked away MUST be a larger or equal number in
-     * the library compared to the application.
-     */
-# define COMPATIBILITY_MASK 0xfff00000L
-    myOpenSSL_version_num = (OpenSSL_version_num_t)symbols[1].func;
-    if (!TEST_int_eq(myOpenSSL_version_num() & COMPATIBILITY_MASK,
-                     OPENSSL_VERSION_NUMBER & COMPATIBILITY_MASK))
+    /* Make sure the libraries are a compatible version */
+    myOPENSSL_version_major = (OPENSSL_version_major_t)symbols[1].func;
+    myOPENSSL_version_minor = (OPENSSL_version_minor_t)symbols[2].func;
+    myOPENSSL_version_patch = (OPENSSL_version_patch_t)symbols[3].func;
+    if (!TEST_int_eq(myOPENSSL_version_major(), OPENSSL_VERSION_MAJOR))
         goto end;
-    if (!TEST_int_ge(myOpenSSL_version_num() & ~COMPATIBILITY_MASK,
-                     OPENSSL_VERSION_NUMBER & ~COMPATIBILITY_MASK))
+    if (!TEST_int_ge(myOPENSSL_version_minor(), OPENSSL_VERSION_MINOR))
+        goto end;
+    if (myOPENSSL_version_minor() == OPENSSL_VERSION_MINOR
+        && !TEST_int_ge(myOPENSSL_version_patch(), OPENSSL_VERSION_PATCH))
         goto end;
 
     if (test_type == DSO_REFTEST) {

@@ -1,7 +1,7 @@
 /*
  * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -629,7 +629,7 @@ X509_EXTENSION *X509V3_EXT_i2d(int ext_nid, int crit, void *ext_struc);
 int X509V3_add1_i2d(STACK_OF(X509_EXTENSION) **x, int nid, void *value,
                     int crit, unsigned long flags);
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 /* The new declarations are in crypto.h, but the old ones were here. */
 # define hex_to_string OPENSSL_buf2hexstr
 # define string_to_hex OPENSSL_hexstr2buf

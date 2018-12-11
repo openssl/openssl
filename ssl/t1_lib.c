@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -343,6 +343,10 @@ int tls1_set_groups(uint16_t **pext, size_t *pextlen,
      */
     unsigned long dup_list = 0;
 
+    if (ngroups == 0) {
+        SSLerr(SSL_F_TLS1_SET_GROUPS, SSL_R_BAD_LENGTH);
+        return 0;
+    }
     if ((glist = OPENSSL_malloc(ngroups * sizeof(*glist))) == NULL) {
         SSLerr(SSL_F_TLS1_SET_GROUPS, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -945,6 +949,39 @@ size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs)
     }
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Called by servers only. Checks that we have a sig alg that supports the
+ * specified EC curve.
+ */
+int tls_check_sigalg_curve(const SSL *s, int curve)
+{
+   const uint16_t *sigs;
+   size_t siglen, i;
+
+    if (s->cert->conf_sigalgs) {
+        sigs = s->cert->conf_sigalgs;
+        siglen = s->cert->conf_sigalgslen;
+    } else {
+        sigs = tls12_sigalgs;
+        siglen = OSSL_NELEM(tls12_sigalgs);
+    }
+
+    for (i = 0; i < siglen; i++) {
+        const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(sigs[i]);
+
+        if (lu == NULL)
+            continue;
+        if (lu->sig == EVP_PKEY_EC
+                && lu->curve != NID_undef
+                && curve == lu->curve)
+            return 1;
+    }
+
+    return 0;
+}
+#endif
+
 /*
  * Check signature algorithm is consistent with sent supported signature
  * algorithms and if so set relevant digest and signature scheme in
@@ -1084,6 +1121,14 @@ int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
     if (s->s3->tmp.peer_sigalg == NULL)
         return 0;
     *pnid = s->s3->tmp.peer_sigalg->sig;
+    return 1;
+}
+
+int SSL_get_signature_type_nid(const SSL *s, int *pnid)
+{
+    if (s->s3->tmp.sigalg == NULL)
+        return 0;
+    *pnid = s->s3->tmp.sigalg->sig;
     return 1;
 }
 
@@ -2492,7 +2537,7 @@ static int tls12_get_cert_sigalg_idx(const SSL *s, const SIGALG_LOOKUP *lu)
 static int has_usable_cert(SSL *s, const SIGALG_LOOKUP *sig, int idx)
 {
     const SIGALG_LOOKUP *lu;
-    int mdnid, pknid;
+    int mdnid, pknid, supported;
     size_t i;
 
     /* TLS 1.2 callers can override lu->sig_idx, but not TLS 1.3 callers. */
@@ -2505,19 +2550,39 @@ static int has_usable_cert(SSL *s, const SIGALG_LOOKUP *sig, int idx)
             lu = tls1_lookup_sigalg(s->s3->tmp.peer_cert_sigalgs[i]);
             if (lu == NULL
                 || !X509_get_signature_info(s->cert->pkeys[idx].x509, &mdnid,
-                                            &pknid, NULL, NULL))
+                                            &pknid, NULL, NULL)
+                /*
+                 * TODO this does not differentiate between the
+                 * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
+                 * have a chain here that lets us look at the key OID in the
+                 * signing certificate.
+                 */
+                || mdnid != lu->hash
+                || pknid != lu->sig)
                 continue;
-            /*
-             * TODO this does not differentiate between the
-             * rsa_pss_pss_* and rsa_pss_rsae_* schemes since we do not
-             * have a chain here that lets us look at the key OID in the
-             * signing certificate.
-             */
-            if (mdnid == lu->hash && pknid == lu->sig)
-                return 1;
+
+            ERR_set_mark();
+            supported = EVP_PKEY_supports_digest_nid(s->cert->pkeys[idx].privatekey,
+                                                     mdnid);
+            if (supported == 0)
+                continue;
+            else if (supported < 0)
+            {
+                /* If it didn't report a mandatory NID, for whatever reasons,
+                 * just clear the error and allow all hashes to be used. */
+                ERR_pop_to_mark();
+            }
+            return 1;
         }
         return 0;
     }
+    supported = EVP_PKEY_supports_digest_nid(s->cert->pkeys[idx].privatekey,
+                                             sig->hash);
+    if (supported == 0)
+        return 0;
+    else if (supported < 0)
+        ERR_clear_error();
+
     return 1;
 }
 

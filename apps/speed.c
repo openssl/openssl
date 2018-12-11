@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -3223,8 +3223,8 @@ int speed_main(int argc, char **argv)
  show_res:
 #endif
     if (!mr) {
-        printf("%s\n", OpenSSL_version(OPENSSL_VERSION));
-        printf("%s\n", OpenSSL_version(OPENSSL_BUILT_ON));
+        printf("version: %s\n", OpenSSL_version(OPENSSL_FULL_VERSION_STRING));
+        printf("built on: %s\n", OpenSSL_version(OPENSSL_BUILT_ON));
         printf("options:");
         printf("%s ", BN_options());
 #ifndef OPENSSL_NO_MD2

@@ -1,7 +1,7 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -55,6 +55,22 @@ int EVP_add_digest(const EVP_MD *md)
     return r;
 }
 
+int EVP_add_mac(const EVP_MAC *m)
+{
+    int r;
+
+    if (m == NULL)
+        return 0;
+
+    r = OBJ_NAME_add(OBJ_nid2sn(m->type), OBJ_NAME_TYPE_MAC_METH,
+                     (const char *)m);
+    if (r == 0)
+        return 0;
+    r = OBJ_NAME_add(OBJ_nid2ln(m->type), OBJ_NAME_TYPE_MAC_METH,
+                     (const char *)m);
+    return r;
+}
+
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
     const EVP_CIPHER *cp;
@@ -77,8 +93,20 @@ const EVP_MD *EVP_get_digestbyname(const char *name)
     return cp;
 }
 
+const EVP_MAC *EVP_get_macbyname(const char *name)
+{
+    const EVP_MAC *mp;
+
+    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL))
+        return NULL;
+
+    mp = (const EVP_MAC *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MAC_METH);
+    return mp;
+}
+
 void evp_cleanup_int(void)
 {
+    OBJ_NAME_cleanup(OBJ_NAME_TYPE_MAC_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
     /*
@@ -178,3 +206,48 @@ void EVP_MD_do_all_sorted(void (*fn) (const EVP_MD *md,
     dc.arg = arg;
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
 }
+
+struct doall_mac {
+    void *arg;
+    void (*fn) (const EVP_MAC *ciph,
+                const char *from, const char *to, void *arg);
+};
+
+static void do_all_mac_fn(const OBJ_NAME *nm, void *arg)
+{
+    struct doall_mac *dc = arg;
+
+    if (nm->alias)
+        dc->fn(NULL, nm->name, nm->data, dc->arg);
+    else
+        dc->fn((const EVP_MAC *)nm->data, nm->name, NULL, dc->arg);
+}
+
+void EVP_MAC_do_all(void (*fn)
+                    (const EVP_MAC *ciph, const char *from, const char *to,
+                     void *x), void *arg)
+{
+    struct doall_mac dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL);
+
+    dc.fn = fn;
+    dc.arg = arg;
+    OBJ_NAME_do_all(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
+}
+
+void EVP_MAC_do_all_sorted(void (*fn)
+                           (const EVP_MAC *ciph, const char *from,
+                            const char *to, void *x), void *arg)
+{
+    struct doall_mac dc;
+
+    /* Ignore errors */
+    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL);
+
+    dc.fn = fn;
+    dc.arg = arg;
+    OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
+}
+

@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -36,8 +36,10 @@ my @depfiles =
         scalar @st > 0;         # Determines the grep result
     }
     map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
-    grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
-    keys %{$unified_info{sources}};
+    ( ( grep { $unified_info{sources}->{$_}->[0] =~ /\.cc?$/ }
+            keys %{$unified_info{sources}} ),
+      ( grep { $unified_info{shared_sources}->{$_}->[0] =~ /\.cc?$/ }
+            keys %{$unified_info{shared_sources}} ) );
 
 exit 0 unless $rebuild;
 

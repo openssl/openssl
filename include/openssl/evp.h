@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,6 +9,8 @@
 
 #ifndef HEADER_ENVELOPE_H
 # define HEADER_ENVELOPE_H
+
+# include <stdarg.h>
 
 # include <openssl/opensslconf.h>
 # include <openssl/ossl_typ.h>
@@ -348,6 +350,8 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_SET_PIPELINE_INPUT_BUFS        0x23
 /* Set the input buffer lengths to use for a pipelined operation */
 # define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
+/* Get the IV used by the cipher */
+# define         EVP_CTRL_GET_IV                         0x25
 
 /* Padding modes */
 #define EVP_PADDING_PKCS7       1
@@ -484,7 +488,7 @@ void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 void *EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx);
 void *EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data);
 # define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define EVP_CIPHER_CTX_flags(c)       EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(c))
 # endif
 # define EVP_CIPHER_CTX_mode(c)         EVP_CIPHER_mode(EVP_CIPHER_CTX_cipher(c))
@@ -668,7 +672,7 @@ int EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
                     char *out, int *outl);
 int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define EVP_CIPHER_CTX_init(c)      EVP_CIPHER_CTX_reset(c)
 #  define EVP_CIPHER_CTX_cleanup(c)   EVP_CIPHER_CTX_reset(c)
 # endif
@@ -715,6 +719,7 @@ const EVP_MD *EVP_sha3_384(void);
 const EVP_MD *EVP_sha3_512(void);
 const EVP_MD *EVP_shake128(void);
 const EVP_MD *EVP_shake256(void);
+
 # ifndef OPENSSL_NO_MDC2
 const EVP_MD *EVP_mdc2(void);
 # endif
@@ -935,7 +940,7 @@ const EVP_CIPHER *EVP_sm4_ofb(void);
 const EVP_CIPHER *EVP_sm4_ctr(void);
 # endif
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define OPENSSL_add_all_algorithms_conf() \
     OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
                         | OPENSSL_INIT_ADD_ALL_DIGESTS \
@@ -983,6 +988,54 @@ void EVP_MD_do_all_sorted(void (*fn)
                            (const EVP_MD *ciph, const char *from,
                             const char *to, void *x), void *arg);
 
+/* MAC stuff */
+
+# define EVP_MAC_CMAC           NID_cmac
+# define EVP_MAC_GMAC           NID_gmac
+# define EVP_MAC_HMAC           NID_hmac
+# define EVP_MAC_KMAC128        NID_kmac128
+# define EVP_MAC_KMAC256        NID_kmac256
+# define EVP_MAC_SIPHASH        NID_siphash
+# define EVP_MAC_POLY1305       NID_poly1305
+
+EVP_MAC_CTX *EVP_MAC_CTX_new(const EVP_MAC *mac);
+EVP_MAC_CTX *EVP_MAC_CTX_new_id(int nid);
+void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
+int EVP_MAC_CTX_copy(EVP_MAC_CTX *dest, EVP_MAC_CTX *src);
+const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
+size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
+int EVP_MAC_init(EVP_MAC_CTX *ctx);
+int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
+int EVP_MAC_final(EVP_MAC_CTX *ctx, unsigned char *out, size_t *poutlen);
+int EVP_MAC_ctrl(EVP_MAC_CTX *ctx, int cmd, ...);
+int EVP_MAC_vctrl(EVP_MAC_CTX *ctx, int cmd, va_list args);
+int EVP_MAC_ctrl_str(EVP_MAC_CTX *ctx, const char *type, const char *value);
+int EVP_MAC_str2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
+int EVP_MAC_hex2ctrl(EVP_MAC_CTX *ctx, int cmd, const char *value);
+int EVP_MAC_nid(const EVP_MAC *mac);
+
+# define EVP_get_macbynid(a)    EVP_get_macbyname(OBJ_nid2sn(a))
+# define EVP_get_macbyobj(a)    EVP_get_macbynid(OBJ_obj2nid(a))
+# define EVP_MAC_name(o)        OBJ_nid2sn(EVP_MAC_nid(o))
+const EVP_MAC *EVP_get_macbyname(const char *name);
+void EVP_MAC_do_all(void (*fn)
+                    (const EVP_MAC *ciph, const char *from, const char *to,
+                     void *x), void *arg);
+void EVP_MAC_do_all_sorted(void (*fn)
+                           (const EVP_MAC *ciph, const char *from,
+                            const char *to, void *x), void *arg);
+
+# define EVP_MAC_CTRL_SET_KEY           0x01 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_FLAGS         0x02 /* unsigned long */
+# define EVP_MAC_CTRL_SET_ENGINE        0x03 /* ENGINE * */
+# define EVP_MAC_CTRL_SET_MD            0x04 /* EVP_MD * */
+# define EVP_MAC_CTRL_SET_CIPHER        0x05 /* EVP_CIPHER * */
+# define EVP_MAC_CTRL_SET_SIZE          0x06 /* size_t */
+# define EVP_MAC_CTRL_SET_IV            0x07 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_CUSTOM        0x08 /* unsigned char *, size_t */
+# define EVP_MAC_CTRL_SET_XOF           0x09 /* int */
+
+/* PKEY stuff */
 int EVP_PKEY_decrypt_old(unsigned char *dec_key,
                          const unsigned char *enc_key, int enc_key_len,
                          EVP_PKEY *private_key);
@@ -1065,6 +1118,7 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx);
 
 int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
+int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid);
 
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
                                    const unsigned char *pt, size_t ptlen);
@@ -1141,6 +1195,7 @@ int EVP_PBE_get(int *ptype, int *ppbe_nid, size_t num);
 
 # define ASN1_PKEY_CTRL_SET1_TLS_ENCPT   0x9
 # define ASN1_PKEY_CTRL_GET1_TLS_ENCPT   0xa
+# define ASN1_PKEY_CTRL_SUPPORTS_MD_NID  0xb
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
@@ -1631,6 +1686,14 @@ void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
                                                              EVP_MD_CTX *mctx));
 void EVP_add_alg_module(void);
 
+/*
+ * Convenient helper functions to transfer string based controls.
+ * The callback gets called with the parsed value.
+ */
+int EVP_str2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *value);
+int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
+                 void *ctx, int cmd, const char *hex);
 
 # ifdef  __cplusplus
 }

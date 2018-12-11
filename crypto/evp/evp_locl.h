@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -40,6 +40,11 @@ struct evp_cipher_ctx_st {
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
 } /* EVP_CIPHER_CTX */ ;
+
+struct evp_mac_ctx_st {
+    const EVP_MAC *meth;         /* Method structure */
+    void *data;                  /* Individual method data */
+} /* EVP_MAC_CTX */;
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,

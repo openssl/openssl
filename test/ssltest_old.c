@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -779,7 +779,7 @@ static void print_details(SSL *c_ssl, const char *prefix)
         }
         X509_free(cert);
     }
-    if (SSL_get_server_tmp_key(c_ssl, &pkey)) {
+    if (SSL_get_peer_tmp_key(c_ssl, &pkey)) {
         BIO_puts(bio_stdout, ", temp key: ");
         print_key_details(bio_stdout, pkey);
         EVP_PKEY_free(pkey);

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -369,7 +369,7 @@ typedef struct string_int_pair_st {
 # define OPT_FMT_SMIME           (1L <<  3)
 # define OPT_FMT_ENGINE          (1L <<  4)
 # define OPT_FMT_MSBLOB          (1L <<  5)
-# define OPT_FMT_NETSCAPE        (1L <<  6)
+/* (1L <<  6) was OPT_FMT_NETSCAPE, but wasn't used */
 # define OPT_FMT_NSS             (1L <<  7)
 # define OPT_FMT_TEXT            (1L <<  8)
 # define OPT_FMT_HTTP            (1L <<  9)
@@ -378,8 +378,8 @@ typedef struct string_int_pair_st {
 # define OPT_FMT_PDS     (OPT_FMT_PEMDER | OPT_FMT_SMIME)
 # define OPT_FMT_ANY     ( \
         OPT_FMT_PEMDER | OPT_FMT_PKCS12 | OPT_FMT_SMIME | \
-        OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NETSCAPE | \
-        OPT_FMT_NSS | OPT_FMT_TEXT | OPT_FMT_HTTP | OPT_FMT_PVK)
+        OPT_FMT_ENGINE | OPT_FMT_MSBLOB | OPT_FMT_NSS   | \
+        OPT_FMT_TEXT   | OPT_FMT_HTTP   | OPT_FMT_PVK)
 
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);

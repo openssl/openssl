@@ -2,7 +2,7 @@
  * Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -93,13 +93,14 @@ static int write_string(BIO *b, const char *buf, size_t n)
  */
 static int tap_write_ex(BIO *b, const char *buf, size_t size, size_t *in_size)
 {
+    static char empty[] = "";
     BIO *next = BIO_next(b);
     size_t i;
     int j;
 
     for (i = 0; i < size; i++) {
         if (BIO_get_data(b) == NULL) {
-            BIO_set_data(b, "");
+            BIO_set_data(b, empty);
             for (j = 0; j < subtest_level(); j++)
                 if (!write_string(next, " ", 1))
                     goto err;

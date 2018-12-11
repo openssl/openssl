@@ -1,14 +1,14 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
 
 /*
- * Licensed under the OpenSSL licenses, (the "License");
+ * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * https://www.openssl.org/source/license.html
@@ -45,9 +45,9 @@ size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
 void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
                              unsigned char *out, size_t outlen);
 
-size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len);
+size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
 
-void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen);
+void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
 
 /*
  * RAND_POOL functions
@@ -59,6 +59,7 @@ void rand_pool_free(RAND_POOL *pool);
 
 const unsigned char *rand_pool_buffer(RAND_POOL *pool);
 unsigned char *rand_pool_detach(RAND_POOL *pool);
+void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer);
 
 size_t rand_pool_entropy(RAND_POOL *pool);
 size_t rand_pool_length(RAND_POOL *pool);

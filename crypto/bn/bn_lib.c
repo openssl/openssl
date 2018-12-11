@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,7 +15,7 @@
 #include "internal/constant_time_locl.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
-#if OPENSSL_API_COMPAT < 0x00908000L
+#if !OPENSSL_API_0_9_8
 /*-
  * For a 32 bit machine
  * 2 -   4 ==  128
@@ -737,26 +737,25 @@ int bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl)
     return bn_cmp_words(a, b, cl);
 }
 
-/*
+/*-
  * Constant-time conditional swap of a and b.
- * a and b are swapped if condition is not 0.  The code assumes that at most one bit of condition is set.
- * nwords is the number of words to swap.  The code assumes that at least nwords are allocated in both a and b,
- * and that no more than nwords are used by either a or b.
- * a and b cannot be the same number
+ * a and b are swapped if condition is not 0.
+ * nwords is the number of words to swap.
+ * Assumes that at least nwords are allocated in both a and b.
+ * Assumes that no more than nwords are used by either a or b.
  */
 void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 {
     BN_ULONG t;
     int i;
 
+    if (a == b)
+        return;
+
     bn_wcheck_size(a, nwords);
     bn_wcheck_size(b, nwords);
 
-    assert(a != b);
-    assert((condition & (condition - 1)) == 0);
-    assert(sizeof(BN_ULONG) >= sizeof(int));
-
-    condition = ((condition - 1) >> (BN_BITS2 - 1)) - 1;
+    condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
 
     t = (a->top ^ b->top) & condition;
     a->top ^= t;
@@ -767,64 +766,42 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     b->neg ^= t;
 
     /*-
-     * Idea behind BN_FLG_STATIC_DATA is actually to
-     * indicate that data may not be written to.
-     * Intention is actually to treat it as it's
-     * read-only data, and some (if not most) of it does
-     * reside in read-only segment. In other words
-     * observation of BN_FLG_STATIC_DATA in
-     * BN_consttime_swap should be treated as fatal
-     * condition. It would either cause SEGV or
-     * effectively cause data corruption.
-     * BN_FLG_MALLOCED refers to BN structure itself,
-     * and hence must be preserved. Remaining flags are
-     * BN_FLG_CONSTIME and BN_FLG_SECURE. Latter must be
-     * preserved, because it determines how x->d was
-     * allocated and hence how to free it. This leaves
-     * BN_FLG_CONSTTIME that one can do something about.
-     * To summarize it's sufficient to mask and swap
-     * BN_FLG_CONSTTIME alone. BN_FLG_STATIC_DATA should
-     * be treated as fatal.
+     * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
+     * is actually to treat it as it's read-only data, and some (if not most)
+     * of it does reside in read-only segment. In other words observation of
+     * BN_FLG_STATIC_DATA in BN_consttime_swap should be treated as fatal
+     * condition. It would either cause SEGV or effectively cause data
+     * corruption.
+     *
+     * BN_FLG_MALLOCED: refers to BN structure itself, and hence must be
+     * preserved.
+     *
+     * BN_FLG_SECURE: must be preserved, because it determines how x->d was
+     * allocated and hence how to free it.
+     *
+     * BN_FLG_CONSTTIME: sufficient to mask and swap
+     *
+     * BN_FLG_FIXED_TOP: indicates that we haven't called bn_correct_top() on
+     * the data, so the d array may be padded with additional 0 values (i.e.
+     * top could be greater than the minimal value that it could be). We should
+     * be swapping it
      */
-    t = ((a->flags ^ b->flags) & BN_FLG_CONSTTIME) & condition;
+
+#define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
+
+    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition;
     a->flags ^= t;
     b->flags ^= t;
 
-#define BN_CONSTTIME_SWAP(ind) \
-        do { \
-                t = (a->d[ind] ^ b->d[ind]) & condition; \
-                a->d[ind] ^= t; \
-                b->d[ind] ^= t; \
-        } while (0)
-
-    switch (nwords) {
-    default:
-        for (i = 10; i < nwords; i++)
-            BN_CONSTTIME_SWAP(i);
-        /* Fallthrough */
-    case 10:
-        BN_CONSTTIME_SWAP(9);   /* Fallthrough */
-    case 9:
-        BN_CONSTTIME_SWAP(8);   /* Fallthrough */
-    case 8:
-        BN_CONSTTIME_SWAP(7);   /* Fallthrough */
-    case 7:
-        BN_CONSTTIME_SWAP(6);   /* Fallthrough */
-    case 6:
-        BN_CONSTTIME_SWAP(5);   /* Fallthrough */
-    case 5:
-        BN_CONSTTIME_SWAP(4);   /* Fallthrough */
-    case 4:
-        BN_CONSTTIME_SWAP(3);   /* Fallthrough */
-    case 3:
-        BN_CONSTTIME_SWAP(2);   /* Fallthrough */
-    case 2:
-        BN_CONSTTIME_SWAP(1);   /* Fallthrough */
-    case 1:
-        BN_CONSTTIME_SWAP(0);
+    /* conditionally swap the data */
+    for (i = 0; i < nwords; i++) {
+        t = (a->d[i] ^ b->d[i]) & condition;
+        a->d[i] ^= t;
+        b->d[i] ^= t;
     }
-#undef BN_CONSTTIME_SWAP
 }
+
+#undef BN_CONSTTIME_SWAP_FLAGS
 
 /* Bits of security, see SP800-57 */
 

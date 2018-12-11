@@ -400,7 +400,13 @@ $sourcedir and $builddir, which are the locations of the source
 directory for the current build.info file and the corresponding build
 directory, all relative to the top of the build tree.
 
-To begin with, things to be built are declared by setting specific
+'Configure' only knows inherently about the top build.info file.  For
+any other directory that has one, further directories to look into
+must be indicated like this:
+
+    SUBDIRS=something someelse
+
+On to things to be built; they are declared by setting specific
 variables:
 
     PROGRAMS=foo bar
@@ -466,6 +472,10 @@ For any file to be built, it's also possible to tell what extra
 include paths the build of their source files should use:
 
     INCLUDE[foo]=include
+
+It's also possible to specify C macros that should be defined:
+
+    DEFINE[foo]=FOO BAR=1
 
 In some cases, one might want to generate some source files from
 others, that's done as follows:

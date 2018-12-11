@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,6 +22,7 @@
 #include <openssl/ct.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/ktls.h"
 
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t)
 {
@@ -1146,11 +1147,15 @@ void SSL_free(SSL *s)
     dane_final(&s->dane);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
 
+    RECORD_LAYER_release(&s->rlayer);
+
     /* Ignore return value */
     ssl_free_wbio_buffer(s);
 
     BIO_free_all(s->wbio);
+    s->wbio = NULL;
     BIO_free_all(s->rbio);
+    s->rbio = NULL;
 
     BUF_MEM_free(s->init_buf);
 
@@ -1194,13 +1199,12 @@ void SSL_free(SSL *s)
     EVP_MD_CTX_free(s->pha_dgst);
 
     sk_X509_NAME_pop_free(s->ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(s->client_ca_names, X509_NAME_free);
 
     sk_X509_pop_free(s->verified_chain, X509_free);
 
     if (s->method != NULL)
         s->method->ssl_free(s);
-
-    RECORD_LAYER_release(&s->rlayer);
 
     SSL_CTX_free(s->ctx);
 
@@ -1341,6 +1345,15 @@ int SSL_set_fd(SSL *s, int fd)
     }
     BIO_set_fd(bio, fd, BIO_NOCLOSE);
     SSL_set_bio(s, bio, bio);
+#ifndef OPENSSL_NO_KTLS
+    /*
+     * The new socket is created successfully regardless of ktls_enable.
+     * ktls_enable doesn't change any functionality of the socket, except
+     * changing the setsockopt to enable the processing of ktls_start.
+     * Thus, it is not a problem to call it for non-TLS sockets.
+     */
+    ktls_enable(fd);
+#endif /* OPENSSL_NO_KTLS */
     ret = 1;
  err:
     return ret;
@@ -1360,6 +1373,15 @@ int SSL_set_wfd(SSL *s, int fd)
         }
         BIO_set_fd(bio, fd, BIO_NOCLOSE);
         SSL_set0_wbio(s, bio);
+#ifndef OPENSSL_NO_KTLS
+        /*
+         * The new socket is created successfully regardless of ktls_enable.
+         * ktls_enable doesn't change any functionality of the socket, except
+         * changing the setsockopt to enable the processing of ktls_start.
+         * Thus, it is not a problem to call it for non-TLS sockets.
+         */
+        ktls_enable(fd);
+#endif /* OPENSSL_NO_KTLS */
     } else {
         BIO_up_ref(rbio);
         SSL_set0_wbio(s, rbio);
@@ -2185,6 +2207,10 @@ long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_SET_MAX_SEND_FRAGMENT:
         if (larg < 512 || larg > SSL3_RT_MAX_PLAIN_LENGTH)
             return 0;
+#ifndef OPENSSL_NO_KTLS
+        if (s->wbio != NULL && BIO_get_ktls_send(s->wbio))
+            return 0;
+#endif /* OPENSSL_NO_KTLS */
         s->max_send_fragment = larg;
         if (s->max_send_fragment < s->split_send_fragment)
             s->split_send_fragment = s->max_send_fragment;
@@ -2953,6 +2979,9 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
     if ((ret->ca_names = sk_X509_NAME_new_null()) == NULL)
         goto err;
 
+    if ((ret->client_ca_names = sk_X509_NAME_new_null()) == NULL)
+        goto err;
+
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_CTX, ret, &ret->ex_data))
         goto err;
 
@@ -3110,6 +3139,7 @@ void SSL_CTX_free(SSL_CTX *a)
     sk_SSL_CIPHER_free(a->tls13_ciphersuites);
     ssl_cert_free(a->cert);
     sk_X509_NAME_pop_free(a->ca_names, X509_NAME_free);
+    sk_X509_NAME_pop_free(a->client_ca_names, X509_NAME_free);
     sk_X509_pop_free(a->extra_certs, X509_free);
     a->comp_methods = NULL;
 #ifndef OPENSSL_NO_SRTP
@@ -3655,10 +3685,38 @@ const char *SSL_get_version(const SSL *s)
     return ssl_protocol_to_string(s->version);
 }
 
-SSL *SSL_dup(SSL *s)
+static int dup_ca_names(STACK_OF(X509_NAME) **dst, STACK_OF(X509_NAME) *src)
 {
     STACK_OF(X509_NAME) *sk;
     X509_NAME *xn;
+    int i;
+
+    if (src == NULL) {
+        *dst = NULL;
+        return 1;
+    }
+
+    if ((sk = sk_X509_NAME_new_null()) == NULL)
+        return 0;
+    for (i = 0; i < sk_X509_NAME_num(src); i++) {
+        xn = X509_NAME_dup(sk_X509_NAME_value(src, i));
+        if (xn == NULL) {
+            sk_X509_NAME_pop_free(sk, X509_NAME_free);
+            return 0;
+        }
+        if (sk_X509_NAME_insert(sk, xn, i) == 0) {
+            X509_NAME_free(xn);
+            sk_X509_NAME_pop_free(sk, X509_NAME_free);
+            return 0;
+        }
+    }
+    *dst = sk;
+
+    return 1;
+}
+
+SSL *SSL_dup(SSL *s)
+{
     SSL *ret;
     int i;
 
@@ -3763,18 +3821,10 @@ SSL *SSL_dup(SSL *s)
             goto err;
 
     /* Dup the client_CA list */
-    if (s->ca_names != NULL) {
-        if ((sk = sk_X509_NAME_dup(s->ca_names)) == NULL)
-            goto err;
-        ret->ca_names = sk;
-        for (i = 0; i < sk_X509_NAME_num(sk); i++) {
-            xn = sk_X509_NAME_value(sk, i);
-            if (sk_X509_NAME_set(sk, i, X509_NAME_dup(xn)) == NULL) {
-                X509_NAME_free(xn);
-                goto err;
-            }
-        }
-    }
+    if (!dup_ca_names(&ret->ca_names, s->ca_names)
+            || !dup_ca_names(&ret->client_ca_names, s->client_ca_names))
+        goto err;
+
     return ret;
 
  err:
@@ -4441,7 +4491,7 @@ int SSL_is_server(const SSL *s)
     return s->server;
 }
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 void SSL_set_debug(SSL *s, int debug)
 {
     /* Old function was do-nothing anyway... */
@@ -5104,7 +5154,8 @@ static int nss_keylog_int(const char *prefix,
     size_t i;
     size_t prefix_len;
 
-    if (ssl->ctx->keylog_callback == NULL) return 1;
+    if (ssl->ctx->keylog_callback == NULL)
+        return 1;
 
     /*
      * Our output buffer will contain the following strings, rendered with
@@ -5115,7 +5166,7 @@ static int nss_keylog_int(const char *prefix,
      * hexadecimal, so we need a buffer that is twice their lengths.
      */
     prefix_len = strlen(prefix);
-    out_len = prefix_len + (2*parameter_1_len) + (2*parameter_2_len) + 3;
+    out_len = prefix_len + (2 * parameter_1_len) + (2 * parameter_2_len) + 3;
     if ((out = cursor = OPENSSL_malloc(out_len)) == NULL) {
         SSLfatal(ssl, SSL_AD_INTERNAL_ERROR, SSL_F_NSS_KEYLOG_INT,
                  ERR_R_MALLOC_FAILURE);
@@ -5139,7 +5190,7 @@ static int nss_keylog_int(const char *prefix,
     *cursor = '\0';
 
     ssl->ctx->keylog_callback(ssl, (const char *)out);
-    OPENSSL_free(out);
+    OPENSSL_clear_free(out, out_len);
     return 1;
 
 }

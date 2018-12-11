@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -19,6 +19,9 @@
 #include <openssl/bio.h>
 #include <openssl/opensslconf.h>
 #include "internal/thread_once.h"
+#include "internal/ctype.h"
+#include "internal/constant_time_locl.h"
+#include "e_os.h"
 
 static int err_load_strings(const ERR_STRING_DATA *str);
 
@@ -181,8 +184,9 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
+/* A measurement on Linux 2018-11-21 showed about 3.5kib */
+# define SPACE_SYS_STR_REASONS 4 * 1024
 # define NUM_SYS_STR_REASONS 127
-# define LEN_SYS_STR_REASON 32
 
 static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
@@ -198,9 +202,12 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 static void build_SYS_str_reasons(void)
 {
     /* OPENSSL_malloc cannot be used here, use static storage instead */
-    static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
+    static char strerror_pool[SPACE_SYS_STR_REASONS];
+    char *cur = strerror_pool;
+    size_t cnt = 0;
     static int init = 1;
     int i;
+    int saveerrno = get_last_sys_error();
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     if (!init) {
@@ -213,9 +220,26 @@ static void build_SYS_str_reasons(void)
 
         str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
         if (str->string == NULL) {
-            char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-            if (openssl_strerror_r(i, *dest, sizeof(*dest)))
-                str->string = *dest;
+            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
+                size_t l = strlen(cur);
+
+                str->string = cur;
+                cnt += l;
+                if (cnt > sizeof(strerror_pool))
+                    cnt = sizeof(strerror_pool);
+                cur += l;
+
+                /*
+                 * VMS has an unusual quirk of adding spaces at the end of
+                 * some (most? all?) messages.  Lets trim them off.
+                 */
+                while (ossl_isspace(cur[-1])) {
+                    cur--;
+                    cnt--;
+                }
+                *cur++ = '\0';
+                cnt++;
+            }
         }
         if (str->string == NULL)
             str->string = "unknown";
@@ -229,6 +253,8 @@ static void build_SYS_str_reasons(void)
     init = 0;
 
     CRYPTO_THREAD_unlock(err_string_lock);
+    /* openssl_strerror_r could change errno, but we want to preserve it */
+    set_sys_error(saveerrno);
     err_load_strings(SYS_str_reasons);
 }
 #endif
@@ -650,13 +676,13 @@ void err_delete_thread_state(void)
     ERR_STATE_free(state);
 }
 
-#if OPENSSL_API_COMPAT < 0x10100000L
+#if !OPENSSL_API_1_1_0
 void ERR_remove_thread_state(void *dummy)
 {
 }
 #endif
 
-#if OPENSSL_API_COMPAT < 0x10000000L
+#if !OPENSSL_API_1_0_0
 void ERR_remove_state(unsigned long pid)
 {
 }
@@ -856,4 +882,43 @@ int ERR_clear_last_mark(void)
         return 0;
     es->err_flags[top] &= ~ERR_FLAG_MARK;
     return 1;
+}
+
+#ifdef UINTPTR_T
+# undef UINTPTR_T
+#endif
+/*
+ * uintptr_t is the answer, but unfortunately C89, current "least common
+ * denominator" doesn't define it. Most legacy platforms typedef it anyway,
+ * so that attempt to fill the gaps means that one would have to identify
+ * that track these gaps, which would be undesirable. Macro it is...
+ */
+#if defined(__VMS) && __INITIAL_POINTER_SIZE==64
+/*
+ * But we can't use size_t on VMS, because it adheres to sizeof(size_t)==4
+ * even in 64-bit builds, which means that it won't work as mask.
+ */
+# define UINTPTR_T unsigned long long
+#else
+# define UINTPTR_T size_t
+#endif
+
+void err_clear_last_constant_time(int clear)
+{
+    ERR_STATE *es;
+    int top;
+
+    es = ERR_get_state();
+    if (es == NULL)
+        return;
+
+    top = es->top;
+
+    es->err_flags[top] &= ~(0 - clear);
+    es->err_buffer[top] &= ~(0UL - clear);
+    es->err_file[top] = (const char *)((UINTPTR_T)es->err_file[top] &
+                                       ~((UINTPTR_T)0 - clear));
+    es->err_line[top] |= 0 - clear;
+
+    es->top = (top + ERR_NUM_ERRORS - clear) % ERR_NUM_ERRORS;
 }
