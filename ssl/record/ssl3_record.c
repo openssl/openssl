@@ -9,6 +9,7 @@
 
 #include "../ssl_locl.h"
 #include "internal/constant_time_locl.h"
+#include <openssl/trace.h>
 #include <openssl/rand.h>
 #include "record_locl.h"
 #include "internal/cryptlib.h"
@@ -563,15 +564,11 @@ int ssl3_get_record(SSL *s)
                  SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         return -1;
     }
-#ifdef SSL_DEBUG
-    printf("dec %lu\n", (unsigned long)rr[0].length);
-    {
-        size_t z;
-        for (z = 0; z < rr[0].length; z++)
-            printf("%02X%c", rr[0].data[z], ((z + 1) % 16) ? ' ' : '\n');
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
+        OSSL_debug(OSSL_DEBUG_SSL, "dec %lu\n", (unsigned long)rr[0].length);
+        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), rr[0].data, rr[0].length,
+                        4);
     }
-    printf("\n");
-#endif
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
@@ -1361,22 +1358,15 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
 
     EVP_MD_CTX_free(hmac);
 
-#ifdef SSL_DEBUG
-    fprintf(stderr, "seq=");
-    {
-        int z;
-        for (z = 0; z < 8; z++)
-            fprintf(stderr, "%02X ", seq[z]);
-        fprintf(stderr, "\n");
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
+        OSSL_debug(OSSL_DEBUG_SSL, "seq:\n");
+        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), seq, 8, 4);
     }
-    fprintf(stderr, "rec=");
-    {
-        size_t z;
-        for (z = 0; z < rec->length; z++)
-            fprintf(stderr, "%02X ", rec->data[z]);
-        fprintf(stderr, "\n");
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
+        OSSL_debug(OSSL_DEBUG_SSL, "rec:\n");
+        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), rec->data, rec->length,
+                        4);
     }
-#endif
 
     if (!SSL_IS_DTLS(ssl)) {
         for (i = 7; i >= 0; i--) {
@@ -1385,14 +1375,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                 break;
         }
     }
-#ifdef SSL_DEBUG
-    {
-        unsigned int z;
-        for (z = 0; z < md_size; z++)
-            fprintf(stderr, "%02X ", md[z]);
-        fprintf(stderr, "\n");
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
+        OSSL_debug(OSSL_DEBUG_SSL, "md:\n");
+        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), md, md_size, 4);
     }
-#endif
     return 1;
 }
 
@@ -1683,15 +1669,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         return 0;
     }
-#ifdef SSL_DEBUG
-    printf("dec %ld\n", rr->length);
-    {
-        size_t z;
-        for (z = 0; z < rr->length; z++)
-            printf("%02X%c", rr->data[z], ((z + 1) % 16) ? ' ' : '\n');
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
+        OSSL_debug(OSSL_DEBUG_SSL, "dec %ld\n", rr->length);
+        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), rr->data, rr->length, 4);
     }
-    printf("\n");
-#endif
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) && !SSL_READ_ETM(s) &&

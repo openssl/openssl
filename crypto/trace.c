@@ -164,6 +164,8 @@ int OSSL_vtrace(int type, char *fmt, va_list args)
 
 static const struct namenum_st debugnames[] = {
     DEFNAME(DEFAULT),
+    DEFNAME(TLS),
+    DEFNAME(SSL),
 };
 
 int OSSL_debug_get_type(const char *name)

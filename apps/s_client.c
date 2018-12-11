@@ -38,6 +38,7 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/bn.h>
+#include <openssl/trace.h>
 #include <openssl/async.h>
 #ifndef OPENSSL_NO_SRP
 # include <openssl/srp.h>
@@ -1497,6 +1498,7 @@ int s_client_main(int argc, char **argv)
             break;
         }
     }
+
     if (count4or6 >= 2) {
         BIO_printf(bio_err, "%s: Can't use both -4 and -6\n", prog);
         goto opthelp;
@@ -3250,8 +3252,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_printf(bio_err, "Using Kernel TLS for sending\n");
 #endif
 
-#ifdef SSL_DEBUG
-    {
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
         /* Print out local port of connection: useful for debugging */
         int sock;
         union BIO_sock_info_u info;
@@ -3264,7 +3265,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         }
         BIO_ADDR_free(info.addr);
     }
-#endif
 
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
     if (next_proto.status != -1) {

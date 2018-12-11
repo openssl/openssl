@@ -32,7 +32,9 @@ typedef size_t (*OSSL_tracer_fn)(const char *buf, size_t cnt, void *hookdata);
  * a hook for.  The DEFAULT type works as a single fallback.
  */
 # define OSSL_DEBUG_DEFAULT             0 /* The fallback */
-# define OSSL_DEBUG_NUM                 1
+# define OSSL_DEBUG_TLS                 1
+# define OSSL_DEBUG_SSL                 OSSL_DEBUG_TLS
+# define OSSL_DEBUG_NUM                 2
 
 # define OSSL_TRACE_DEFAULT             0 /* The fallback */
 # define OSSL_TRACE_NUM                 1
@@ -62,10 +64,10 @@ BIO *OSSL_trace_bio(int type);
 BIO *OSSL_debug_bio(int type);
 
 # else
-#  define OSSL_trace_is_set(type)               0
-#  define OSSL_debug_is_set(type)               0
-#  define OSSL_trace_bio(type)                  NULL
-#  define OSSL_debug_bio(type)                  NULL
+#  define OSSL_trace_is_set(type)       0
+#  define OSSL_debug_is_set(type)       0
+#  define OSSL_trace_bio(type)          NULL
+#  define OSSL_debug_bio(type)          NULL
 # endif
 
 /*
