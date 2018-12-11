@@ -280,78 +280,78 @@ const UI_METHOD *get_ui_method(void)
     return ui_method;
 }
 
-int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_tmp)
+int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data)
 {
     int res = 0;
-    UI *ui = NULL;
-    PW_CB_DATA *cb_data = (PW_CB_DATA *)cb_tmp;
+    UI *ui;
+    int ok = 0;
+    char *buff = NULL;
+    int ui_flags = 0;
+    const char *prompt_info = NULL;
+    char *prompt;
 
-    ui = UI_new_method(ui_method);
-    if (ui) {
-        int ok = 0;
-        char *buff = NULL;
-        int ui_flags = 0;
-        const char *prompt_info = NULL;
-        char *prompt;
+    if ((ui = UI_new_method(ui_method)) == NULL)
+        return 0;
 
-        if (cb_data != NULL && cb_data->prompt_info != NULL)
-            prompt_info = cb_data->prompt_info;
-        prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
-        if (!prompt) {
-            BIO_printf(bio_err, "Out of memory\n");
-            UI_free(ui);
-            return 0;
-        }
-
-        ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
-        UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
-
-        /* We know that there is no previous user data to return to us */
-        (void)UI_add_user_data(ui, cb_data);
-
-        ok = UI_add_input_string(ui, prompt, ui_flags, buf,
-                                 PW_MIN_LENGTH, bufsiz - 1);
-
-        if (ok >= 0 && verify) {
-            buff = app_malloc(bufsiz, "password buffer");
-            ok = UI_add_verify_string(ui, prompt, ui_flags, buff,
-                                      PW_MIN_LENGTH, bufsiz - 1, buf);
-        }
-        if (ok >= 0)
-            do {
-                ok = UI_process(ui);
-            } while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
-
-        OPENSSL_clear_free(buff, (unsigned int)bufsiz);
-
-        if (ok >= 0)
-            res = strlen(buf);
-        if (ok == -1) {
-            BIO_printf(bio_err, "User interface error\n");
-            ERR_print_errors(bio_err);
-            OPENSSL_cleanse(buf, (unsigned int)bufsiz);
-            res = 0;
-        }
-        if (ok == -2) {
-            BIO_printf(bio_err, "aborted!\n");
-            OPENSSL_cleanse(buf, (unsigned int)bufsiz);
-            res = 0;
-        }
+    if (cb_data != NULL && cb_data->prompt_info != NULL)
+        prompt_info = cb_data->prompt_info;
+    prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
+    if (prompt == NULL) {
+        BIO_printf(bio_err, "Out of memory\n");
         UI_free(ui);
-        OPENSSL_free(prompt);
+        return 0;
     }
+
+    ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
+    UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
+
+    /* We know that there is no previous user data to return to us */
+    (void)UI_add_user_data(ui, cb_data);
+
+    ok = UI_add_input_string(ui, prompt, ui_flags, buf,
+                             PW_MIN_LENGTH, bufsiz - 1);
+
+    if (ok >= 0 && verify) {
+        buff = app_malloc(bufsiz, "password buffer");
+        ok = UI_add_verify_string(ui, prompt, ui_flags, buff,
+                                  PW_MIN_LENGTH, bufsiz - 1, buf);
+    }
+    if (ok >= 0)
+        do {
+            ok = UI_process(ui);
+        } while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
+
+    OPENSSL_clear_free(buff, (unsigned int)bufsiz);
+
+    if (ok >= 0)
+        res = strlen(buf);
+    if (ok == -1) {
+        BIO_printf(bio_err, "User interface error\n");
+        ERR_print_errors(bio_err);
+        OPENSSL_cleanse(buf, (unsigned int)bufsiz);
+        res = 0;
+    }
+    if (ok == -2) {
+        BIO_printf(bio_err, "aborted!\n");
+        OPENSSL_cleanse(buf, (unsigned int)bufsiz);
+        res = 0;
+    }
+    UI_free(ui);
+    OPENSSL_free(prompt);
     return res;
+}
+
+int wrap_password_callback(char *buf, int bufsiz, int verify, void *userdata)
+{
+    return password_callback(buf, bufsiz, verify, (PW_CB_DATA *)userdata);
 }
 
 static char *app_get_pass(const char *arg, int keepbio);
 
 int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
 {
-    int same;
-    if (arg2 == NULL || arg1 == NULL || strcmp(arg1, arg2))
-        same = 0;
-    else
-        same = 1;
+    int same = arg1 != NULL && arg2 != NULL && strcmp(arg1, arg2) == 0;
+
     if (arg1 != NULL) {
         *pass1 = app_get_pass(arg1, same);
         if (*pass1 == NULL)
@@ -371,8 +371,8 @@ int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
 
 static char *app_get_pass(const char *arg, int keepbio)
 {
-    char *tmp, tpass[APP_PASS_LEN];
     static BIO *pwdbio = NULL;
+    char *tmp, tpass[APP_PASS_LEN];
     int i;
 
     if (strncmp(arg, "pass:", 5) == 0)
@@ -380,7 +380,7 @@ static char *app_get_pass(const char *arg, int keepbio)
     if (strncmp(arg, "env:", 4) == 0) {
         tmp = getenv(arg + 4);
         if (tmp == NULL) {
-            BIO_printf(bio_err, "Can't read environment variable %s\n", arg + 4);
+            BIO_printf(bio_err, "No environment variable %s\n", arg + 4);
             return NULL;
         }
         return OPENSSL_strdup(tmp);
@@ -542,7 +542,7 @@ int add_oid_section(CONF *conf)
 }
 
 static int load_pkcs12(BIO *in, const char *desc,
-                       pem_password_cb *pem_cb, void *cb_data,
+                       pem_password_cb *pem_cb, PW_CB_DATA *cb_data,
                        EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
 {
     const char *pass;
@@ -749,20 +749,16 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
     if (format == FORMAT_ASN1) {
         pkey = d2i_PrivateKey_bio(key, NULL);
     } else if (format == FORMAT_PEM) {
-        pkey = PEM_read_bio_PrivateKey(key, NULL,
-                                       (pem_password_cb *)password_callback,
-                                       &cb_data);
+        pkey = PEM_read_bio_PrivateKey(key, NULL, wrap_password_callback, &cb_data);
     } else if (format == FORMAT_PKCS12) {
-        if (!load_pkcs12(key, key_descrip,
-                         (pem_password_cb *)password_callback, &cb_data,
+        if (!load_pkcs12(key, key_descrip, wrap_password_callback, &cb_data,
                          &pkey, NULL, NULL))
             goto end;
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA) && !defined (OPENSSL_NO_RC4)
     } else if (format == FORMAT_MSBLOB) {
         pkey = b2i_PrivateKey_bio(key);
     } else if (format == FORMAT_PVK) {
-        pkey = b2i_PVK_bio(key, (pem_password_cb *)password_callback,
-                           &cb_data);
+        pkey = b2i_PVK_bio(key, wrap_password_callback, &cb_data);
 #endif
     } else {
         BIO_printf(bio_err, "bad input format specified for key file\n");
