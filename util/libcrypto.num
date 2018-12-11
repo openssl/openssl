@@ -4646,3 +4646,12 @@ OPENSSL_CTX_free                        4601	3_0_0	EXIST::FUNCTION:
 OPENSSL_LH_flush                        4602	3_0_0	EXIST::FUNCTION:
 BN_native2bn                            4603	3_0_0	EXIST::FUNCTION:
 BN_bn2nativepad                         4604	3_0_0	EXIST::FUNCTION:
+OSSL_trace_get_category_num             4605	3_0_0	EXIST::FUNCTION:
+OSSL_trace_get_category_name            4606	3_0_0	EXIST::FUNCTION:
+OSSL_trace_set_channel                  4607	3_0_0	EXIST::FUNCTION:
+OSSL_trace_set_prefix                   4608	3_0_0	EXIST::FUNCTION:
+OSSL_trace_set_suffix                   4609	3_0_0	EXIST::FUNCTION:
+OSSL_trace_set_callback                 4610	3_0_0	EXIST::FUNCTION:
+OSSL_trace_enabled                      4611	3_0_0	EXIST::FUNCTION:
+OSSL_trace_begin                        4612	3_0_0	EXIST::FUNCTION:
+OSSL_trace_end                          4613	3_0_0	EXIST::FUNCTION:
