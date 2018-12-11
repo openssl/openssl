@@ -2352,9 +2352,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (SSL_USE_SIGALGS(s))
+        if (SSL_USE_SIGALGS(s)) {
             SSL_DEBUG_data_dump(NULL, 0, "USING TLSv1.2 HASH %s\n",
                                 md == NULL ? "n/a" : EVP_MD_name(md));
+        }
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {

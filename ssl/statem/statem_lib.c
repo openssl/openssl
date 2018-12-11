@@ -394,9 +394,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    if (SSL_USE_SIGALGS(s))
+    if (SSL_USE_SIGALGS(s)) {
         SSL_DEBUG_data_dump(NULL, 0, "USING TLSv1.2 HASH %s\n",
                             md == NULL ? "n/a" : EVP_MD_name(md));
+    }
 
     /* Check for broken implementations of GOST ciphersuites */
     /*

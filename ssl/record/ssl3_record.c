@@ -564,7 +564,7 @@ int ssl3_get_record(SSL *s)
         return -1;
     }
 
-    SSL_DEBUG_data_dump(rr[0].data, rr[0].length, "dec %lu\n", rr[0].length);
+    SSL_DEBUG_data_dump(rr[0].data, rr[0].length, "dec %lu\n", (unsigned long)rr[0].length);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
@@ -1658,7 +1658,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         return 0;
     }
 
-    SSL_DEBUG_data_dump(rr->data, rr->length, "dec %d: \m", rr->length);
+    SSL_DEBUG_data_dump(rr->data, rr->length, "dec %d: \n", rr->length);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) && !SSL_READ_ETM(s) &&
