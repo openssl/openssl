@@ -2351,11 +2351,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
-#ifdef SSL_DEBUG
+
         if (SSL_USE_SIGALGS(s))
-            fprintf(stderr, "USING TLSv1.2 HASH %s\n",
-                    md == NULL ? "n/a" : EVP_MD_name(md));
-#endif
+            SSL_DEBUG_data_dump(NULL, 0, "USING TLSv1.2 HASH %s\n",
+                                md == NULL ? "n/a" : EVP_MD_name(md));
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {

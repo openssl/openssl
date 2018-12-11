@@ -5594,7 +5594,8 @@ void ssl_debug_data_dump(const void *data, size_t len, const char *prefix, ...)
     va_start(ap, prefix);
     /* Coverity and other tools may complain about this, but it's debug! */
     vfprintf(stderr, prefix, ap);
-    BIO_dump_fp(stderr, data, len);
+    if (data != NULL && len != 0)
+        BIO_dump_fp(stderr, data, len);
     va_end(ap);
 #endif
 }
