@@ -157,7 +157,7 @@ engines. This not a default option.
 With this option the library will register its fork handlers.
 See OPENSSL_fork_prepare(3) for details.
 
-=item OPENSSL_INIT_NOATEXIT
+=item OPENSSL_INIT_NO_ATEXIT
 
 By default OpenSSL will attempt to clean itself up when the process exits via an
 "atexit" handler. Using this option suppresses that behaviour. This means that
