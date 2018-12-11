@@ -247,7 +247,7 @@ $crypto.=" include/internal/o_str.h";
 $crypto.=" include/internal/err.h";
 $crypto.=" include/internal/sslconf.h";
 foreach my $f ( glob(catfile($config{sourcedir},'include/openssl/*.h')) ) {
-    my $fn = "include/openssl/" . lc(basename($f));
+    my $fn = "include/openssl/" . basename($f);
     $crypto .= " $fn" if !defined $skipthese{$fn};
 }
 
@@ -935,16 +935,6 @@ sub do_defs
 			print STDERR "DEBUG: \$s = $s; \$p = ",$platform{$s},"; \$a = ",$algorithm{$s},"; \$kind = ",$kind{$s},"\n" if $debug;
 		}
 	}
-
-	# Prune the returned symbols
-
-        delete $syms{"bn_dump1"};
-	$platform{"BIO_s_log"} .= ",!WIN32,!macintosh";
-
-	$platform{"PEM_read_NS_CERT_SEQ"} = "VMS";
-	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
-	$platform{"PEM_read_P8_PRIV_KEY_INFO"} = "VMS";
-	$platform{"PEM_write_P8_PRIV_KEY_INFO"} = "VMS";
 
 	# Info we know about
 

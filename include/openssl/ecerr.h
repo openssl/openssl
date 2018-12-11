@@ -177,6 +177,13 @@ int ERR_load_EC_strings(void);
 #  define EC_F_NISTP521_PRE_COMP_NEW                       237
 #  define EC_F_O2I_ECPUBLICKEY                             152
 #  define EC_F_OLD_EC_PRIV_DECODE                          222
+#  define EC_F_OQS_ITEM_VERIFY                             297
+#  define EC_F_OQS_KEY_INIT                                296
+#  define EC_F_OQS_PRIV_DECODE                             298
+#  define EC_F_OQS_PRIV_ENCODE                             299
+#  define EC_F_OQS_PUB_DECODE                              300
+#  define EC_F_OQS_PUB_ENCODE                              301
+#  define EC_F_OQS_SIZE                                    302
 #  define EC_F_OSSL_ECDH_COMPUTE_KEY                       247
 #  define EC_F_OSSL_ECDSA_SIGN_SIG                         249
 #  define EC_F_OSSL_ECDSA_VERIFY_SIG                       250
@@ -193,6 +200,10 @@ int ERR_load_EC_strings(void);
 #  define EC_F_PKEY_EC_KEYGEN                              199
 #  define EC_F_PKEY_EC_PARAMGEN                            219
 #  define EC_F_PKEY_EC_SIGN                                218
+#  define EC_F_PKEY_OQS_CTRL                               303
+#  define EC_F_PKEY_OQS_DIGESTSIGN                         304
+#  define EC_F_PKEY_OQS_DIGESTVERIFY                       305
+#  define EC_F_PKEY_OQS_KEYGEN                             306
 #  define EC_F_VALIDATE_ECX_DERIVE                         278
 
 /*
@@ -201,6 +212,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_ASN1_ERROR                                  115
 #  define EC_R_BAD_SIGNATURE                               156
 #  define EC_R_BIGNUM_OUT_OF_RANGE                         144
+#  define EC_R_BUFFER_LENGTH_WRONG                         166
 #  define EC_R_BUFFER_TOO_SMALL                            100
 #  define EC_R_COORDINATES_OUT_OF_RANGE                    146
 #  define EC_R_CURVE_DOES_NOT_SUPPORT_ECDH                 160
@@ -231,7 +243,11 @@ int ERR_load_EC_strings(void);
 #  define EC_R_INVALID_PRIVATE_KEY                         123
 #  define EC_R_INVALID_TRINOMIAL_BASIS                     137
 #  define EC_R_KDF_PARAMETER_ERROR                         148
+#  define EC_R_KEYGEN_FAILED                               167
 #  define EC_R_KEYS_NOT_SET                                140
+#  define EC_R_KEY_INIT_FAILED                             168
+#  define EC_R_KEY_LENGTH_WRONG                            169
+#  define EC_R_KEY_NOT_SET                                 170
 #  define EC_R_LADDER_POST_FAILURE                         136
 #  define EC_R_LADDER_PRE_FAILURE                          153
 #  define EC_R_LADDER_STEP_FAILURE                         162
@@ -242,8 +258,11 @@ int ERR_load_EC_strings(void);
 #  define EC_R_NOT_IMPLEMENTED                             126
 #  define EC_R_NOT_INITIALIZED                             111
 #  define EC_R_NO_PARAMETERS_SET                           139
+#  define EC_R_NO_PRIVATE_KEY                              171
 #  define EC_R_NO_PRIVATE_VALUE                            154
+#  define EC_R_NO_SUCH_OQS_ALGORITHM                       165
 #  define EC_R_OPERATION_NOT_SUPPORTED                     152
+#  define EC_R_PARAMETERS_MUST_BE_ABSENT                   172
 #  define EC_R_PASSED_NULL_PARAMETER                       134
 #  define EC_R_PEER_KEY_ERROR                              149
 #  define EC_R_PKPARAMETERS2GROUP_FAILURE                  127
@@ -252,16 +271,23 @@ int ERR_load_EC_strings(void);
 #  define EC_R_POINT_COORDINATES_BLIND_FAILURE             163
 #  define EC_R_POINT_IS_NOT_ON_CURVE                       107
 #  define EC_R_RANDOM_NUMBER_GENERATION_FAILED             158
+#  define EC_R_SETTING_PARAMETERS_FAILED                   173
 #  define EC_R_SHARED_INFO_ERROR                           150
+#  define EC_R_SIGNING_FAILED                              174
 #  define EC_R_SLOT_FULL                                   108
 #  define EC_R_UNDEFINED_GENERATOR                         113
 #  define EC_R_UNDEFINED_ORDER                             128
 #  define EC_R_UNKNOWN_COFACTOR                            164
 #  define EC_R_UNKNOWN_GROUP                               129
+#  define EC_R_UNKNOWN_NID                                 175
 #  define EC_R_UNKNOWN_ORDER                               114
 #  define EC_R_UNSUPPORTED_FIELD                           131
+#  define EC_R_VERIFICATION_FAILED                         176
 #  define EC_R_WRONG_CURVE_PARAMETERS                      145
+#  define EC_R_WRONG_DIGEST                                177
+#  define EC_R_WRONG_LENGTH                                178
 #  define EC_R_WRONG_ORDER                                 130
+#  define EC_R_WRONG_PARAMETERS                            179
 
 # endif
 #endif

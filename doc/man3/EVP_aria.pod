@@ -14,6 +14,9 @@ EVP_aria_256_cfb1,
 EVP_aria_128_cfb8,
 EVP_aria_192_cfb8,
 EVP_aria_256_cfb8,
+EVP_aria_128_cfb128,
+EVP_aria_192_cfb128,
+EVP_aria_256_cfb128,
 EVP_aria_128_ctr,
 EVP_aria_192_ctr,
 EVP_aria_256_ctr,
@@ -60,6 +63,9 @@ EVP_aria_256_cfb1(),
 EVP_aria_128_cfb8(),
 EVP_aria_192_cfb8(),
 EVP_aria_256_cfb8(),
+EVP_aria_128_cfb128(),
+EVP_aria_192_cfb128(),
+EVP_aria_256_cfb128(),
 EVP_aria_128_ctr(),
 EVP_aria_192_ctr(),
 EVP_aria_256_ctr(),
@@ -100,7 +106,7 @@ L<EVP_CIPHER_meth_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

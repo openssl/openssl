@@ -13,27 +13,36 @@ SSL_shutdown - shut down a TLS/SSL connection
 =head1 DESCRIPTION
 
 SSL_shutdown() shuts down an active TLS/SSL connection. It sends the
-"close notify" shutdown alert to the peer.
+close_notify shutdown alert to the peer.
 
 =head1 NOTES
 
-SSL_shutdown() tries to send the "close notify" shutdown alert to the peer.
+SSL_shutdown() tries to send the close_notify shutdown alert to the peer.
 Whether the operation succeeds or not, the SSL_SENT_SHUTDOWN flag is set and
 a currently open session is considered closed and good and will be kept in the
 session cache for further reuse.
 
-The shutdown procedure consists of 2 steps: the sending of the "close notify"
-shutdown alert and the reception of the peer's "close notify" shutdown
-alert. According to the TLS standard, it is acceptable for an application
-to only send its shutdown alert and then close the underlying connection
-without waiting for the peer's response (this way resources can be saved,
-as the process can already terminate or serve another connection).
-When the underlying connection shall be used for more communications, the
-complete shutdown procedure (bidirectional "close notify" alerts) must be
-performed, so that the peers stay synchronized.
+The shutdown procedure consists of two steps: sending of the close_notify
+shutdown alert, and reception of the peer's close_notify shutdown alert.
+The order of those two steps depends on the application.
 
-SSL_shutdown() supports both uni- and bidirectional shutdown by its 2 step
-behaviour.
+It is acceptable for an application to only send its shutdown alert and
+then close the underlying connection without waiting for the peer's response.
+This way resources can be saved, as the process can already terminate or
+serve another connection.
+This should only be done when it is known that the other side will not send more
+data, otherwise there is a risk of a truncation attack.
+
+When a client only writes and never reads from the connection, and the server
+has sent a session ticket to establish a session, the client might not be able
+to resume the session because it did not received and process the session ticket
+from the server.
+In case the application wants to be able to resume the session, it is recommended to
+do a complete shutdown procedure (bidirectional close_notify alerts).
+
+When the underlying connection shall be used for more communications, the
+complete shutdown procedure must be performed, so that the peers stay
+synchronized.
 
 SSL_shutdown() only closes the write direction.
 It is not possible to call SSL_write() after calling SSL_shutdown().
@@ -41,44 +50,42 @@ The read direction is closed by the peer.
 
 =head2 First to close the connection
 
-When the application is the first party to send the "close notify"
+When the application is the first party to send the close_notify
 alert, SSL_shutdown() will only send the alert and then set the
 SSL_SENT_SHUTDOWN flag (so that the session is considered good and will
 be kept in the cache).
-SSL_shutdown() will then return with 0.
+If successful, SSL_shutdown() will return 0.
+
 If a unidirectional shutdown is enough (the underlying connection shall be
-closed anyway), this first call to SSL_shutdown() is sufficient.
+closed anyway), this first successful call to SSL_shutdown() is sufficient.
 
 In order to complete the bidirectional shutdown handshake, the peer needs
-to send back a "close notify" alert.
+to send back a close_notify alert.
 The SSL_RECEIVED_SHUTDOWN flag will be set after receiving and processing
 it.
-SSL_shutdown() will return 1 when it has been received.
 
-The peer is still allowed to send data after receiving the "close notify"
+The peer is still allowed to send data after receiving the close_notify
 event.
-If the peer did send data it needs to be processed by calling SSL_read()
-before calling SSL_shutdown() a second time.
+When it is done sending data, it will send the close_notify alert.
+SSL_read() should be called until all data is received.
 SSL_read() will indicate the end of the peer data by returning <= 0
 and SSL_get_error() returning SSL_ERROR_ZERO_RETURN.
-It is recommended to call SSL_read() between SSL_shutdown() calls.
 
 =head2 Peer closes the connection
 
-If the peer already sent the "close notify" alert B<and> it was
+If the peer already sent the close_notify alert B<and> it was
 already processed implicitly inside another function
 (L<SSL_read(3)>), the SSL_RECEIVED_SHUTDOWN flag is set.
 SSL_read() will return <= 0 in that case, and SSL_get_error() will return
 SSL_ERROR_ZERO_RETURN.
-SSL_shutdown() will send the "close notify" alert, set the SSL_SENT_SHUTDOWN
-flag and will immediately return with 1.
+SSL_shutdown() will send the close_notify alert, set the SSL_SENT_SHUTDOWN
+flag.
+If successful, SSL_shutdown() will return 1.
+
 Whether SSL_RECEIVED_SHUTDOWN is already set can be checked using the
 SSL_get_shutdown() (see also L<SSL_set_shutdown(3)> call.
 
 =head1 NOTES
-
-It is recommended to do a bidirectional shutdown by checking the return value
-of SSL_shutdown() and call it again until it returns 1 or a fatal error.
 
 The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
@@ -95,8 +102,13 @@ nothing is to be done, but select() can be used to check for the required
 condition. When using a buffering BIO, like a BIO pair, data must be written
 into or retrieved out of the BIO before being able to continue.
 
+After SSL_shutdown() returned 0, it is possible to call SSL_shutdown() again
+to wait for the peer's close_notify alert.
+SSL_shutdown() will return 1 in that case.
+However, it is recommended to wait for it using SSL_read() instead.
+
 SSL_shutdown() can be modified to only set the connection to "shutdown"
-state but not actually send the "close notify" alert messages,
+state but not actually send the close_notify alert messages,
 see L<SSL_CTX_set_quiet_shutdown(3)>.
 When "quiet shutdown" is enabled, SSL_shutdown() will always succeed
 and return 1.
@@ -109,16 +121,16 @@ The following return values can occur:
 
 =item Z<>0
 
-The shutdown is not yet finished: the "close notify" was send but the peer
+The shutdown is not yet finished: the close_notify was sent but the peer
 did not send it back yet.
-Call SSL_shutdown() again to do a bidirectional shutdown.
+Call SSL_read() to do a bidirectional shutdown.
 The output of L<SSL_get_error(3)> may be misleading, as an
 erroneous SSL_ERROR_SYSCALL may be flagged even though no error occurred.
 
 =item Z<>1
 
-The shutdown was successfully completed. The "close notify" alert was sent
-and the peer's "close notify" alert was received.
+The shutdown was successfully completed. The close_notify alert was sent
+and the peer's close_notify alert was received.
 
 =item E<lt>0
 

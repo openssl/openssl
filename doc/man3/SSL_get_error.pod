@@ -39,7 +39,7 @@ if and only if B<ret E<gt> 0>.
 =item SSL_ERROR_ZERO_RETURN
 
 The TLS/SSL peer has closed the connection for writing by sending the
-"close notify" alert.
+close_notify alert.
 No more data can be read.
 Note that B<SSL_ERROR_ZERO_RETURN> does not necessarily
 indicate that the underlying transport has been closed.

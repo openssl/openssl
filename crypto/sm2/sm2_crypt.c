@@ -11,6 +11,7 @@
 
 #include "internal/sm2.h"
 #include "internal/sm2err.h"
+#include "internal/ec_int.h" /* ecdh_KDF_X9_63() */
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
@@ -203,7 +204,7 @@ int sm2_encrypt(const EC_KEY *key,
    }
 
     /* X9.63 with no salt happens to match the KDF used in SM2 */
-    if (!ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
+    if (!ecdh_KDF_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
                         digest)) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_EVP_LIB);
         goto done;
@@ -344,7 +345,7 @@ int sm2_decrypt(const EC_KEY *key,
 
     if (BN_bn2binpad(x2, x2y2, field_size) < 0
             || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
-            || !ECDH_KDF_X9_62(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
+            || !ecdh_KDF_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
                                digest)) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_INTERNAL_ERROR);
         goto done;

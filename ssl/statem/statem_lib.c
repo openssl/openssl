@@ -203,9 +203,10 @@ static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
         *hdatalen = TLS13_TBS_PREAMBLE_SIZE + hashlen;
     } else {
         size_t retlen;
+        long retlen_l;
 
-        retlen = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
-        if (retlen <= 0) {
+        retlen = retlen_l = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
+        if (retlen_l <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_GET_CERT_VERIFY_TBS_DATA,
                      ERR_R_INTERNAL_ERROR);
             return 0;
@@ -494,7 +495,18 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         }
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
+    /*
+     * In TLSv1.3 on the client side we make sure we prepare the client
+     * certificate after the CertVerify instead of when we get the
+     * CertificateRequest. This is because in TLSv1.3 the CertificateRequest
+     * comes *before* the Certificate message. In TLSv1.2 it comes after. We
+     * want to make sure that SSL_get_peer_certificate() will return the actual
+     * server certificate from the client_cert_cb callback.
+     */
+    if (!s->server && SSL_IS_TLS13(s) && s->s3->tmp.cert_req == 1)
+        ret = MSG_PROCESS_CONTINUE_PROCESSING;
+    else
+        ret = MSG_PROCESS_CONTINUE_READING;
  err:
     BIO_free(s->s3->handshake_buffer);
     s->s3->handshake_buffer = NULL;
@@ -1495,6 +1507,10 @@ static int ssl_method_error(const SSL *s, const SSL_METHOD *method)
 static int is_tls13_capable(const SSL *s)
 {
     int i;
+#ifndef OPENSSL_NO_EC
+    int curve;
+    EC_KEY *eckey;
+#endif
 
 #ifndef OPENSSL_NO_PSK
     if (s->psk_server_callback != NULL)
@@ -1515,8 +1531,25 @@ static int is_tls13_capable(const SSL *s)
         default:
             break;
         }
-        if (ssl_has_cert(s, i))
+        if (!ssl_has_cert(s, i))
+            continue;
+#ifndef OPENSSL_NO_EC
+        if (i != SSL_PKEY_ECC)
             return 1;
+        /*
+         * Prior to TLSv1.3 sig algs allowed any curve to be used. TLSv1.3 is
+         * more restrictive so check that our sig algs are consistent with this
+         * EC cert. See section 4.2.3 of RFC8446.
+         */
+        eckey = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
+        if (eckey == NULL)
+            continue;
+        curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+        if (tls_check_sigalg_curve(s, curve))
+            return 1;
+#else
+        return 1;
+#endif
     }
 
     return 0;
@@ -2261,10 +2294,24 @@ int parse_ca_names(SSL *s, PACKET *pkt)
     return 0;
 }
 
-int construct_ca_names(SSL *s, WPACKET *pkt)
+const STACK_OF(X509_NAME) *get_ca_names(SSL *s)
 {
-    const STACK_OF(X509_NAME) *ca_sk = SSL_get0_CA_list(s);
+    const STACK_OF(X509_NAME) *ca_sk = NULL;;
 
+    if (s->server) {
+        ca_sk = SSL_get_client_CA_list(s);
+        if (ca_sk != NULL && sk_X509_NAME_num(ca_sk) == 0)
+            ca_sk = NULL;
+    }
+
+    if (ca_sk == NULL)
+        ca_sk = SSL_get0_CA_list(s);
+
+    return ca_sk;
+}
+
+int construct_ca_names(SSL *s, const STACK_OF(X509_NAME) *ca_sk, WPACKET *pkt)
+{
     /* Start sub-packet for client CA list */
     if (!WPACKET_start_sub_packet_u16(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CONSTRUCT_CA_NAMES,

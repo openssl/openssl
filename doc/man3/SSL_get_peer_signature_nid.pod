@@ -2,8 +2,9 @@
 
 =head1 NAME
 
-SSL_get_peer_signature_nid, SSL_get_peer_signature_type_nid - get TLS
-message signing types
+SSL_get_peer_signature_nid, SSL_get_peer_signature_type_nid,
+SSL_get_signature_nid, SSL_get_signature_type_nid - get TLS message signing
+types
 
 =head1 SYNOPSIS
 
@@ -11,6 +12,8 @@ message signing types
 
  int SSL_get_peer_signature_nid(SSL *ssl, int *psig_nid);
  int SSL_get_peer_signature_type_nid(const SSL *ssl, int *psigtype_nid);
+ int SSL_get_signature_nid(SSL *ssl, int *psig_nid);
+ int SSL_get_signature_type_nid(const SSL *ssl, int *psigtype_nid);
 
 =head1 DESCRIPTION
 
@@ -24,12 +27,15 @@ where it is B<EVP_PKEY_RSA_PSS>. To differentiate between
 B<rsa_pss_rsae_*> and B<rsa_pss_pss_*> signatures, it's necessary to check
 the type of public key in the peer's certificate.
 
+SSL_get_signature_nid() and SSL_get_signature_type_nid() return the equivalent
+information for the local end of the connection.
+
 =head1 RETURN VALUES
 
 These functions return 1 for success and 0 for failure. There are several
 possible reasons for failure: the cipher suite has no signature (e.g. it
 uses RSA key exchange or is anonymous), the TLS version is below 1.2 or
-the functions were called before the peer signed a message.
+the functions were called too early, e.g. before the peer signed a message.
 
 =head1 SEE ALSO
 

@@ -209,7 +209,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
     if (!pkey_ec_derive(ctx, ktmp, &ktmplen))
         goto err;
     /* Do KDF stuff */
-    if (!ECDH_KDF_X9_62(key, *keylen, ktmp, ktmplen,
+    if (!ecdh_KDF_X9_63(key, *keylen, ktmp, ktmplen,
                         dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md))
         goto err;
     rv = 1;
@@ -281,7 +281,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_EC_KDF_TYPE:
         if (p1 == -2)
             return dctx->kdf_type;
-        if (p1 != EVP_PKEY_ECDH_KDF_NONE && p1 != EVP_PKEY_ECDH_KDF_X9_62)
+        if (p1 != EVP_PKEY_ECDH_KDF_NONE && p1 != EVP_PKEY_ECDH_KDF_X9_63)
             return -2;
         dctx->kdf_type = p1;
         return 1;

@@ -77,6 +77,17 @@ static uint64_t get_timer_bits(void);
 # endif
 #endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
 
+#if defined(OPENSSL_RAND_SEED_NONE)
+/* none means none. this simplifies the following logic */
+# undef OPENSSL_RAND_SEED_OS
+# undef OPENSSL_RAND_SEED_GETRANDOM
+# undef OPENSSL_RAND_SEED_LIBRANDOM
+# undef OPENSSL_RAND_SEED_DEVRANDOM
+# undef OPENSSL_RAND_SEED_RDTSC
+# undef OPENSSL_RAND_SEED_RDCPU
+# undef OPENSSL_RAND_SEED_EGD
+#endif
+
 #if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
         !defined(OPENSSL_RAND_SEED_NONE)
 # error "UEFI and VXWorks only support seeding NONE"
@@ -85,8 +96,6 @@ static uint64_t get_timer_bits(void);
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
     || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VXWORKS) \
     || defined(OPENSSL_SYS_UEFI))
-
-static ssize_t syscall_random(void *buf, size_t buflen);
 
 # if defined(OPENSSL_SYS_VOS)
 
@@ -244,6 +253,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 }
 #  endif
 
+#  if defined(OPENSSL_RAND_SEED_GETRANDOM)
 /*
  * syscall_random(): Try to get random data using a system call
  * returns the number of bytes returned in buf, or < 0 on error.
@@ -254,7 +264,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * Note: 'buflen' equals the size of the buffer which is used by the
      * get_entropy() callback of the RAND_DRBG. It is roughly bounded by
      *
-     *   2 * DRBG_MINMAX_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^13
+     *   2 * RAND_POOL_FACTOR * (RAND_DRBG_STRENGTH / 8) = 2^14
      *
      * which is way below the OSSL_SSIZE_MAX limit. Therefore sign conversion
      * between size_t and ssize_t is safe even without a range check.
@@ -302,8 +312,9 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     return -1;
 #  endif
 }
+#  endif    /* defined(OPENSSL_RAND_SEED_GETRANDOM) */
 
-#if  !defined(OPENSSL_RAND_SEED_NONE) && defined(OPENSSL_RAND_SEED_DEVRANDOM)
+#  if defined(OPENSSL_RAND_SEED_DEVRANDOM)
 static const char *random_device_paths[] = { DEVRANDOM };
 static struct random_device {
     int fd;
@@ -375,21 +386,13 @@ static void close_random_device(size_t n)
     rd->fd = -1;
 }
 
-static void open_random_devices(void)
-{
-    size_t i;
-
-    for (i = 0; i < OSSL_NELEM(random_devices); i++)
-        (void)get_random_device(i);
-}
-
 int rand_pool_init(void)
 {
     size_t i;
 
     for (i = 0; i < OSSL_NELEM(random_devices); i++)
         random_devices[i].fd = -1;
-    open_random_devices();
+
     return 1;
 }
 
@@ -403,16 +406,13 @@ void rand_pool_cleanup(void)
 
 void rand_pool_keep_random_devices_open(int keep)
 {
-    if (keep)
-        open_random_devices();
-    else
+    if (!keep)
         rand_pool_cleanup();
+
     keep_random_devices_open = keep;
 }
 
-#  else     /* defined(OPENSSL_RAND_SEED_NONE)
-             * || !defined(OPENSSL_RAND_SEED_DEVRANDOM)
-             */
+#  else     /* !defined(OPENSSL_RAND_SEED_DEVRANDOM) */
 
 int rand_pool_init(void)
 {
@@ -427,9 +427,7 @@ void rand_pool_keep_random_devices_open(int keep)
 {
 }
 
-#  endif    /* !defined(OPENSSL_RAND_SEED_NONE)
-             * && defined(OPENSSL_RAND_SEED_DEVRANDOM)
-             */
+#  endif    /* defined(OPENSSL_RAND_SEED_DEVRANDOM) */
 
 /*
  * Try the various seeding methods in turn, exit when successful.
@@ -450,14 +448,14 @@ void rand_pool_keep_random_devices_open(int keep)
  */
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-#  ifdef OPENSSL_RAND_SEED_NONE
+#  if defined(OPENSSL_RAND_SEED_NONE)
     return rand_pool_entropy_available(pool);
 #  else
     size_t bytes_needed;
     size_t entropy_available = 0;
     unsigned char *buffer;
 
-#   ifdef OPENSSL_RAND_SEED_GETRANDOM
+#   if defined(OPENSSL_RAND_SEED_GETRANDOM)
     {
         ssize_t bytes;
         /* Maximum allowed number of consecutive unsuccessful attempts */
@@ -487,7 +485,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
 #   endif
 
-#   ifdef OPENSSL_RAND_SEED_DEVRANDOM
+#   if defined(OPENSSL_RAND_SEED_DEVRANDOM)
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     {
         size_t i;
@@ -524,19 +522,19 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
 #   endif
 
-#   ifdef OPENSSL_RAND_SEED_RDTSC
+#   if defined(OPENSSL_RAND_SEED_RDTSC)
     entropy_available = rand_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
 
-#   ifdef OPENSSL_RAND_SEED_RDCPU
+#   if defined(OPENSSL_RAND_SEED_RDCPU)
     entropy_available = rand_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
 
-#   ifdef OPENSSL_RAND_SEED_EGD
+#   if defined(OPENSSL_RAND_SEED_EGD)
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) {
         static const char *paths[] = { DEVRANDOM_EGD, NULL };
@@ -577,7 +575,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
-     * ensure that the nonce is unique whith high probability for
+     * ensure that the nonce is unique with high probability for
      * different process instances.
      */
     data.pid = getpid();

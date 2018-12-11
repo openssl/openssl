@@ -405,13 +405,14 @@ Inhibit printing of session and certificate information.
 Sends a status message back to the client when it connects. This includes
 information about the ciphers used and various session parameters.
 The output is in HTML format so this option will normally be used with a
-web browser.
+web browser. Cannot be used in conjunction with B<-early_data>.
 
 =item B<-WWW>
 
 Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
-requested the file ./page.html will be loaded.
+requested the file ./page.html will be loaded. Cannot be used in conjunction
+with B<-early_data>.
 
 =item B<-tlsextdebug>
 
@@ -423,7 +424,8 @@ Emulates a simple web server. Pages will be resolved relative to the
 current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded. The files loaded are
 assumed to contain a complete and correct HTTP response (lines that
-are part of the HTTP response line and headers must end with CRLF).
+are part of the HTTP response line and headers must end with CRLF). Cannot be
+used in conjunction with B<-early_data>.
 
 =item B<-id_prefix val>
 
@@ -488,7 +490,8 @@ output.
 =item B<-rev>
 
 Simple test server which just reverses the text received from the client
-and sends it back to the server. Also sets B<-brief>.
+and sends it back to the server. Also sets B<-brief>. Cannot be used in
+conjunction with B<-early_data>.
 
 =item B<-async>
 
@@ -711,7 +714,8 @@ greater than or equal to 0.
 
 =item B<-early_data>
 
-Accept early data where possible.
+Accept early data where possible. Cannot be used in conjunction with B<-www>,
+B<-WWW>, B<-HTTP> or B<-rev>.
 
 =item B<-anti_replay>, B<-no_anti_replay>
 

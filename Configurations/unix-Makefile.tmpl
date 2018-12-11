@@ -440,7 +440,7 @@ depend:
 
 # Install helper targets #############################################
 
-install_sw: all install_dev install_engines install_runtime
+install_sw: install_dev install_engines install_runtime
 
 uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
 
@@ -494,15 +494,15 @@ install_ssldirs:
 		chmod 644 $(DESTDIR)$(OPENSSLDIR)/ct_log_list.cnf; \
 	fi
 
-install_dev:
+install_dev: install_runtime_libs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(ECHO) "*** Installing development files"
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/include/openssl
-	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@$(ECHO) "install $(SRCDIR)/ms/applink.c -> $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
 	@cp $(SRCDIR)/ms/applink.c $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
 	@chmod 644 $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
-	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
 			  $(BLDDIR)/include/openssl/*.h; do \
 		fn=`basename $$i`; \
@@ -527,11 +527,6 @@ install_dev:
 		fn1=`basename $$s1`; \
 		fn2=`basename $$s2`; \
 		: {- output_off(); output_on() unless windowsdll() or sharedaix(); "" -}; \
-		$(ECHO) "install $$s1 -> $(DESTDIR)$(libdir)/$$fn1"; \
-		cp $$s1 $(DESTDIR)$(libdir)/$$fn1.new; \
-		chmod 755 $(DESTDIR)$(libdir)/$$fn1.new; \
-		mv -f $(DESTDIR)$(libdir)/$$fn1.new \
-		      $(DESTDIR)$(libdir)/$$fn1; \
 		if [ "$$fn1" != "$$fn2" ]; then \
 			$(ECHO) "link $(DESTDIR)$(libdir)/$$fn2 -> $(DESTDIR)$(libdir)/$$fn1"; \
 			ln -sf $$fn1 $(DESTDIR)$(libdir)/$$fn2; \
@@ -571,12 +566,12 @@ install_dev:
 	@cp openssl.pc $(DESTDIR)$(libdir)/pkgconfig
 	@chmod 644 $(DESTDIR)$(libdir)/pkgconfig/openssl.pc
 
-uninstall_dev:
+uninstall_dev: uninstall_runtime_libs
 	@$(ECHO) "*** Uninstalling development files"
-	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@ : {- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
 	@$(RM) $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c
-	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } @{$target{defines}}; "" -}
+	@ : {- output_on() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
 			  $(BLDDIR)/include/openssl/*.h; do \
 		fn=`basename $$i`; \
@@ -615,7 +610,7 @@ uninstall_dev:
 	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig
 	-$(RMDIR) $(DESTDIR)$(libdir)
 
-install_engines:
+install_engines: install_runtime_libs build_engines
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(ENGINESDIR)/
 	@$(ECHO) "*** Installing engines"
@@ -642,13 +637,16 @@ uninstall_engines:
 	done
 	-$(RMDIR) $(DESTDIR)$(ENGINESDIR)
 
-install_runtime:
+install_runtime: install_programs
+
+install_runtime_libs: build_libs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
-	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
 	@ : {- output_off() if windowsdll(); "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(libdir)
-	@ : {- output_on() if windowsdll(); "" -}
-	@$(ECHO) "*** Installing runtime files"
+	@ : {- output_on() if windowsdll(); output_off() unless windowsdll(); "" -}
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
+	@ : {- output_on() unless windowsdll(); "" -}
+	@$(ECHO) "*** Installing runtime libraries"
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
@@ -666,6 +664,11 @@ install_runtime:
 		      $(DESTDIR)$(libdir)/$$fn; \
 		: {- output_on() if windowsdll(); "" -}; \
 	done
+
+install_programs: install_runtime_libs build_programs
+	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(INSTALLTOP)/bin
+	@$(ECHO) "*** Installing runtime programs"
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
@@ -685,8 +688,10 @@ install_runtime:
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
 
-uninstall_runtime:
-	@$(ECHO) "*** Uninstalling runtime files"
+uninstall_runtime: uninstall_programs uninstall_runtime_libs
+
+uninstall_programs:
+	@$(ECHO) "*** Uninstalling runtime programs"
 	@set -e; for x in dummy $(INSTALL_PROGRAMS); \
 	do  \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
@@ -701,6 +706,10 @@ uninstall_runtime:
 		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
+	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
+
+uninstall_runtime_libs:
+	@$(ECHO) "*** Uninstalling runtime libraries"
 	@ : {- output_off() unless windowsdll(); "" -}
 	@set -e; for s in dummy $(INSTALL_SHLIBS); do \
 		if [ "$$s" = "dummy" ]; then continue; fi; \
@@ -709,7 +718,6 @@ uninstall_runtime:
 		$(RM) $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 	done
 	@ : {- output_on() unless windowsdll(); "" -}
-	-$(RMDIR) $(DESTDIR)$(INSTALLTOP)/bin
 
 
 install_man_docs:
@@ -1082,9 +1090,7 @@ EOF
       }
       return $recipe;
   }
-  # On Unix, we build shlibs from static libs, so we're ignoring the
-  # object file array.  We *know* this routine is only called when we've
-  # configure 'shared'.
+  # We *know* this routine is only called when we've configure 'shared'.
   sub libobj2shlib {
       my %args = @_;
       my $lib = $args{lib};
@@ -1109,26 +1115,20 @@ EOF
       die "More than one exported symbol map" if scalar @defs > 1;
       my $objs = join(" ", @objs);
       my $deps = join(" ", @objs, @defs, @deps);
-      my $target = shlib_simple($lib);
-      my $target_full = shlib($lib);
+      my $simple = shlib_simple($lib);
+      my $full = shlib($lib);
+      my $target = "$simple $full";
       my $shared_soname = "";
-      $shared_soname .= ' '.$target{shared_sonameflag}.basename($target_full)
+      $shared_soname .= ' '.$target{shared_sonameflag}.basename($full)
           if defined $target{shared_sonameflag};
       my $shared_imp = "";
-      $shared_imp .= ' '.$target{shared_impflag}.basename($target)
+      $shared_imp .= ' '.$target{shared_impflag}.basename($simple)
           if defined $target{shared_impflag};
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
       my $recipe = <<"EOF";
-# When building on a Windows POSIX layer (Cygwin or Mingw), we know for a fact
-# that two files get produced, {shlibname}.dll and {libname}.dll.a.
-# With all other Unix platforms, we often build a shared library with the
-# SO version built into the file name and a symlink without the SO version
-# It's not necessary to have both as targets.  The choice falls on the
-# simplest, {libname}\$(SHLIB_EXT_IMPORT) for Windows POSIX layers and
-# {libname}\$(SHLIB_EXT_SIMPLE) for the Unix platforms.
 $target: $deps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
-		-o $target_full$shared_def $objs \\
+		-o $full$shared_def $objs \\
                 $linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
@@ -1142,14 +1142,14 @@ EOF
 EOF
       } elsif (sharedaix()) {
           $recipe .= <<"EOF";
-	rm -f $target && \\
-	\$(AR) r $target $target_full
+	rm -f $simple && \\
+	\$(AR) r $simple $full
 EOF
       } else {
           $recipe .= <<"EOF";
-	if [ '$target' != '$target_full' ]; then \\
-		rm -f $target; \\
-		ln -s $target_full $target; \\
+	if [ '$simple' != '$full' ]; then \\
+		rm -f $simple; \\
+		ln -s $full $simple; \\
 	fi
 EOF
       }
@@ -1253,6 +1253,10 @@ EOF
                       lib => $libext,
                       bin => $exeext );
 
+      # We already have a 'test' target, and the top directory is just plain
+      # silly
+      return if $dir eq "test" || $dir eq ".";
+
       foreach my $type (("dso", "lib", "bin", "script")) {
           next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
           # For lib object files, we could update the library.  However, it
@@ -1273,7 +1277,7 @@ EOF
       my $deps = join(" ", @deps);
       my $actions = join("\n", "", @actions);
       return <<"EOF";
-$args{dir} $args{dir}/: $deps$actions
+$dir $dir/: $deps$actions
 EOF
   }
   ""    # Important!  This becomes part of the template result.

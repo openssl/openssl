@@ -9,8 +9,8 @@ rsa - RSA key processing tool
 
 B<openssl> B<rsa>
 [B<-help>]
-[B<-inform PEM|NET|DER>]
-[B<-outform PEM|NET|DER>]
+[B<-inform PEM|DER>]
+[B<-outform PEM|DER>]
 [B<-in filename>]
 [B<-passin arg>]
 [B<-out filename>]
@@ -53,16 +53,15 @@ utility.
 
 Print out a usage message.
 
-=item B<-inform DER|NET|PEM>
+=item B<-inform DER|PEM>
 
 This specifies the input format. The B<DER> option uses an ASN1 DER encoded
 form compatible with the PKCS#1 RSAPrivateKey or SubjectPublicKeyInfo format.
 The B<PEM> form is the default format: it consists of the B<DER> format base64
 encoded with additional header and footer lines. On input PKCS#8 format private
-keys are also accepted. The B<NET> form is a format is described in the B<NOTES>
-section.
+keys are also accepted.
 
-=item B<-outform DER|NET|PEM>
+=item B<-outform DER|PEM>
 
 This specifies the output format, the options have the same meaning and default
 as the B<-inform> option.
@@ -158,17 +157,6 @@ The PEM B<RSAPublicKey> format uses the header and footer lines:
  -----BEGIN RSA PUBLIC KEY-----
  -----END RSA PUBLIC KEY-----
 
-The B<NET> form is a format compatible with older Netscape servers
-and Microsoft IIS .key files, this uses unsalted RC4 for its encryption.
-It is not very secure and so should only be used when necessary.
-
-Some newer version of IIS have additional data in the exported .key
-files. To use these with the utility, view the file with a binary editor
-and look for the string "private-key", then trace back to the byte
-sequence 0x30, 0x82 (this is an ASN1 SEQUENCE). Copy all the data
-from this point onwards to another file and use that as the input
-to the B<rsa> utility with the B<-inform NET> option.
-
 =head1 EXAMPLES
 
 To remove the pass phrase on an RSA private key:
@@ -196,9 +184,6 @@ Output the public part of a private key in B<RSAPublicKey> format:
  openssl rsa -in key.pem -RSAPublicKey_out -out pubkey.pem
 
 =head1 BUGS
-
-The command line password arguments don't currently work with
-B<NET> format.
 
 There should be an option that automatically handles .key files,
 without having to manually edit them.

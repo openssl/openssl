@@ -2030,3 +2030,28 @@ int dtls1_get_record(SSL *s)
     return 1;
 
 }
+
+int dtls_buffer_listen_record(SSL *s, size_t len, unsigned char *seq, size_t off)
+{
+    SSL3_RECORD *rr;
+
+    rr = RECORD_LAYER_get_rrec(&s->rlayer);
+    memset(rr, 0, sizeof(SSL3_RECORD));
+
+    rr->length = len;
+    rr->type = SSL3_RT_HANDSHAKE;
+    memcpy(rr->seq_num, seq, sizeof(rr->seq_num));
+    rr->off = off;
+
+    s->rlayer.packet = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
+    s->rlayer.packet_length = DTLS1_RT_HEADER_LENGTH + len;
+    rr->data = s->rlayer.packet + DTLS1_RT_HEADER_LENGTH;
+
+    if (dtls1_buffer_record(s, &(s->rlayer.d->processed_rcds),
+                            SSL3_RECORD_get_seq_num(s->rlayer.rrec)) <= 0) {
+        /* SSLfatal() already called */
+        return 0;
+    }
+
+    return 1;
+}
