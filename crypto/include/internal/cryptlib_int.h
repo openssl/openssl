@@ -32,4 +32,6 @@ int ossl_init_thread_start(uint64_t opts);
 # define OPENSSL_INIT_THREAD_ERR_STATE       0x02
 # define OPENSSL_INIT_THREAD_RAND            0x04
 
+int ossl_trace_init(void);
+void ossl_trace_cleanup(void);
 void ossl_malloc_setup_failures(void);
