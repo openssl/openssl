@@ -390,7 +390,7 @@ _____
         my $libvmajor = $1;
         my $libvminor = $2 * 100 + $3;
         print <<"_____";
-GSMATCH=LEQUAL,$libvmajor,$libvminor;
+GSMATCH=LEQUAL,$libvmajor,$libvminor
 _____
     }
 }
