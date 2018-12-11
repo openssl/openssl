@@ -246,7 +246,7 @@ static int decode_EC_key(oqs_key_type_t keytype, int nid, const unsigned char* e
 
   if (keytype == KEY_TYPE_PRIVATE) {
     if (d2i_ECPrivateKey(&ec_key, &p_encoded_key, key_len) == NULL) {
-      OQSECerrerr(0, ERR_R_FATAL);
+      ECerr(0, ERR_R_FATAL);
       goto end;
     }
   } else {
