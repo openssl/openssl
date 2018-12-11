@@ -564,7 +564,7 @@ int ssl3_get_record(SSL *s)
         return -1;
     }
 
-    SSL_DEBUG_data_dump("dec %u:\n", rr[0].length, rr[0].data, rr[0].length);
+    SSL_DEBUG_data_dump(rr[0].data, rr[0].length, "dec %lu\n", rr[0].length);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
@@ -1354,8 +1354,8 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
 
     EVP_MD_CTX_free(hmac);
 
-    SSL_DEBUG_data_dump("seq:\n", 0, seq, 8);
-    SSL_DEBUG_data_dump("rec:\n", 0, rec->data, rec->length);
+    SSL_DEBUG_data_dump(seq, 8, "seq:\n");
+    SSL_DEBUG_data_dump(rec->data, rec->length, "rec:\n");
 
     if (!SSL_IS_DTLS(ssl)) {
         for (i = 7; i >= 0; i--) {
@@ -1365,7 +1365,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         }
     }
 
-    SSL_DEBUG_data_dump("md:\n", 0, md, md_size);
+    SSL_DEBUG_data_dump(md, md_size, "md:\n");
 
     return 1;
 }
@@ -1658,7 +1658,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         return 0;
     }
 
-    SSL_DEBUG_data_dump("dec %d:\n", rr->length, rr->data, rr->length);
+    SSL_DEBUG_data_dump(rr->data, rr->length, "dec %d: \m", rr->length);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) && !SSL_READ_ETM(s) &&

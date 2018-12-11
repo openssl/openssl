@@ -2667,11 +2667,30 @@ void ssl_ctx_system_config(SSL_CTX *ctx);
 
 # endif
 
-# ifdef SSL_DEBUG
-void ssl_debug_data_dump(const char* prefix, unsigned int ival, void *data, size_t len);
-#  define SSL_DEBUG_data_dump(a,b,c,d) ssl_debug_data_dump(a,b,c,d)
+/*
+ * SSL_DEBUG support
+ */
+# if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
+#  define SSL_DEBUG_data_dump ssl_debug_data_dump
 # else
-#  define SSL_DEBUG_data_dump(a,b,c,d)
+#  ifdef SSL_DEBUG
+#   define SSL_DEBUG_data_dump(...) ssl_debug_data_dump(__VA_ARGS__)
+#  else
+#   define SSL_DEBUG_data_dump(...)
+#  endif
 # endif
+
+# undef PRINTF_FORMAT
+# define PRINTF_FORMAT(a, b)
+# if defined(__GNUC__) && defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+  /*
+   * Because we support the 'z' modifier, which made its appearance in C99,
+   * we can't use __attribute__ with pre C99 dialects.
+   */
+#  undef PRINTF_FORMAT
+#  define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+# endif
+void ssl_debug_data_dump(const void *data, size_t len, const char *prefix, ...) PRINTF_FORMAT(3, 4);
+# undef PRINTF_FORMAT
 
 #endif

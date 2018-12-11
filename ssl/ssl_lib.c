@@ -5583,14 +5583,18 @@ void SSL_set_allow_early_data_cb(SSL *s,
     s->allow_early_data_cb_data = arg;
 }
 
-#ifdef SSL_DEBUG
-/* 
+/*
  * Debug routine, uses the prefix with a possible int argument |ival|
  */
-void ssl_debug_data_dump(const char* prefix, unsigned int ival, void *data, size_t len)
+void ssl_debug_data_dump(const void *data, size_t len, const char *prefix, ...)
 {
+#ifdef SSL_DEBUG
+    va_list ap;
+
+    va_start(ap, prefix);
     /* Coverity and other tools may complain about this, but it's debug! */
-    fprintf(stderr, prefix, ival);
+    vfprintf(stderr, prefix, ap);
     BIO_dump_fp(stderr, data, len);
-}
+    va_end(ap);
 #endif
+}
