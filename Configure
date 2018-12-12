@@ -433,7 +433,6 @@ our %disabled = ( # "what"         => "comment"
 		  "asan"		=> "default",
 		  "crypto-mdebug"       => "default",
 		  "crypto-mdebug-backtrace" => "default",
-		  "devcryptoeng"	=> "default",
 		  "ec_nistp_64_gcc_128" => "default",
 		  "egd"                 => "default",
 		  "external-tests"	=> "default",
@@ -1574,6 +1573,18 @@ unless ($disabled{afalgeng}) {
 }
 
 push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+
+unless ($disabled{devcryptoeng}) {
+    unless (grep { $_ eq 'devcryptoeng' } @{$target{enable}}) {
+	$disabled{devcryptoeng}  = "not-bsd";
+    }
+}
+
+if ($disabled{devcryptoeng}) {
+    my $macro = "OPENSSL_NO_DEVCRYPTOENG";
+    push @{$config{openssl_feature_defines}}, $macro;
+    $disabled_info{devcryptoeng}->{macro} = $macro;
+}
 
 unless ($disabled{ktls}) {
     $config{ktls}="";
