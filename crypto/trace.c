@@ -166,6 +166,8 @@ static const struct namenum_st debugnames[] = {
     DEFNAME(DEFAULT),
     DEFNAME(TLS),
     DEFNAME(SSL),
+    DEFNAME(TLS_CIPHER),
+    DEFNAME(SSL_CIPHER),
 };
 
 int OSSL_debug_get_type(const char *name)

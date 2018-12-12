@@ -23,6 +23,7 @@
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include <openssl/md5.h>
+#include <openssl/trace.h>
 
 #define TICKET_NONCE_SIZE       8
 
@@ -1829,15 +1830,14 @@ static int tls_early_post_process_client_hello(SSL *s)
         j = 0;
         id = s->session->cipher->id;
 
-#ifdef CIPHER_DEBUG
-        fprintf(stderr, "client sent %d ciphers\n", sk_SSL_CIPHER_num(ciphers));
-#endif
+        if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
+            OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "client sent %d ciphers\n",
+                       sk_SSL_CIPHER_num(ciphers));
         for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
             c = sk_SSL_CIPHER_value(ciphers, i);
-#ifdef CIPHER_DEBUG
-            fprintf(stderr, "client [%2d of %2d]:%s\n",
-                    i, sk_SSL_CIPHER_num(ciphers), SSL_CIPHER_get_name(c));
-#endif
+            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
+                OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "client [%2d of %2d]:%s\n", i,
+                           sk_SSL_CIPHER_num(ciphers), SSL_CIPHER_get_name(c));
             if (c->id == id) {
                 j = 1;
                 break;

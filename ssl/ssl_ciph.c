@@ -16,6 +16,7 @@
 #include <openssl/engine.h>
 #include <openssl/crypto.h>
 #include <openssl/conf.h>
+#include <openssl/trace.h>
 #include "internal/nelem.h"
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
@@ -779,12 +780,11 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     const SSL_CIPHER *cp;
     int reverse = 0;
 
-#ifdef CIPHER_DEBUG
-    fprintf(stderr,
-            "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
-            rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
-            algo_strength, strength_bits);
-#endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
+        OSSL_debug(OSSL_DEBUG_SSL_CIPHER,
+                   "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
+                   rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
+                   algo_strength, strength_bits);
 
     if (rule == CIPHER_DEL || rule == CIPHER_BUMP)
         reverse = 1;            /* needed to maintain sorting between currently
@@ -823,13 +823,13 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
             if (strength_bits != cp->strength_bits)
                 continue;
         } else {
-#ifdef CIPHER_DEBUG
-            fprintf(stderr,
-                    "\nName: %s:\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
-                    cp->name, cp->algorithm_mkey, cp->algorithm_auth,
-                    cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
-                    cp->algo_strength);
-#endif
+            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
+                OSSL_debug(OSSL_DEBUG_SSL_CIPHER,
+                           "\nName: %s:"
+                           "\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
+                           cp->name, cp->algorithm_mkey, cp->algorithm_auth,
+                           cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
+                           cp->algo_strength);
             if (cipher_id != 0 && (cipher_id != cp->id))
                 continue;
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
@@ -850,9 +850,8 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 continue;
         }
 
-#ifdef CIPHER_DEBUG
-        fprintf(stderr, "Action = %d\n", rule);
-#endif
+        if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
+            OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "Action = %d\n", rule);
 
         /* add the cipher if it has not been added yet. */
         if (rule == CIPHER_ADD) {
@@ -1614,9 +1613,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                 sk_SSL_CIPHER_free(cipherstack);
                 return NULL;
             }
-#ifdef CIPHER_DEBUG
-            fprintf(stderr, "<%s>\n", curr->cipher->name);
-#endif
+            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
+                OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "<%s>\n", curr->cipher->name);
         }
     }
     OPENSSL_free(co_list);      /* Not needed any longer */
