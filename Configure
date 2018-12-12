@@ -1572,7 +1572,11 @@ unless ($disabled{afalgeng}) {
     }
 }
 
-push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+if ($disabled{afalgeng}) {
+    my $macro = "OPENSSL_NO_AFALGENG";
+    push @{$config{openssl_feature_defines}}, $macro;
+    $disabled_info{afalgeng}->{macro} = $macro;
+}
 
 unless ($disabled{devcryptoeng}) {
     unless (grep { $_ eq 'devcryptoeng' } @{$target{enable}}) {
