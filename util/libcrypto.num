@@ -10,7 +10,7 @@ TS_RESP_CTX_new                         9	3_0_0	EXIST::FUNCTION:TS
 PKCS5_PBE_add                           10	3_0_0	EXIST::FUNCTION:
 i2d_DSAparams                           11	3_0_0	EXIST::FUNCTION:DSA
 X509_NAME_get0_der                      12	3_0_0	EXIST::FUNCTION:
-i2d_ESS_ISSUER_SERIAL                   13	3_0_0	EXIST::FUNCTION:TS
+i2d_ESS_ISSUER_SERIAL                   13	3_0_0	EXIST::FUNCTION:
 X509at_get_attr_by_NID                  14	3_0_0	EXIST::FUNCTION:
 X509_PUBKEY_set0_param                  15	3_0_0	EXIST::FUNCTION:
 PKCS12_it                               16	3_0_0	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
@@ -322,7 +322,7 @@ d2i_OCSP_RESPID                         322	3_0_0	EXIST::FUNCTION:OCSP
 BIO_s_accept                            323	3_0_0	EXIST::FUNCTION:SOCK
 EVP_whirlpool                           324	3_0_0	EXIST::FUNCTION:WHIRLPOOL
 OCSP_ONEREQ_get1_ext_d2i                325	3_0_0	EXIST::FUNCTION:OCSP
-d2i_ESS_SIGNING_CERT                    326	3_0_0	EXIST::FUNCTION:TS
+d2i_ESS_SIGNING_CERT                    326	3_0_0	EXIST::FUNCTION:
 EC_KEY_set_default_method               327	3_0_0	EXIST::FUNCTION:EC
 X509_OBJECT_up_ref_count                328	3_0_0	EXIST::FUNCTION:
 RAND_load_file                          329	3_0_0	EXIST::FUNCTION:
@@ -577,7 +577,7 @@ CMAC_CTX_copy                           577	3_0_0	EXIST::FUNCTION:CMAC
 EVP_camellia_128_cfb128                 579	3_0_0	EXIST::FUNCTION:CAMELLIA
 DH_compute_key_padded                   580	3_0_0	EXIST::FUNCTION:DH
 ERR_load_CONF_strings                   581	3_0_0	EXIST::FUNCTION:
-ESS_ISSUER_SERIAL_dup                   582	3_0_0	EXIST::FUNCTION:TS
+ESS_ISSUER_SERIAL_dup                   582	3_0_0	EXIST::FUNCTION:
 BN_GF2m_mod_exp_arr                     583	3_0_0	EXIST::FUNCTION:EC2M
 ASN1_UTF8STRING_free                    584	3_0_0	EXIST::FUNCTION:
 BN_X931_generate_prime_ex               585	3_0_0	EXIST::FUNCTION:
@@ -653,7 +653,7 @@ PEM_read_bio_CMS                        653	3_0_0	EXIST::FUNCTION:CMS
 PEM_get_EVP_CIPHER_INFO                 654	3_0_0	EXIST::FUNCTION:
 X509V3_EXT_print                        655	3_0_0	EXIST::FUNCTION:
 i2d_OCSP_SINGLERESP                     656	3_0_0	EXIST::FUNCTION:OCSP
-ESS_CERT_ID_free                        657	3_0_0	EXIST::FUNCTION:TS
+ESS_CERT_ID_free                        657	3_0_0	EXIST::FUNCTION:
 PEM_SignInit                            658	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_set_key_length           659	3_0_0	EXIST::FUNCTION:
 X509_delete_ext                         660	3_0_0	EXIST::FUNCTION:
@@ -1429,7 +1429,7 @@ X509_NAME_new                           1417	3_0_0	EXIST::FUNCTION:
 ASN1_item_pack                          1418	3_0_0	EXIST::FUNCTION:
 ASN1_BIT_STRING_set_asc                 1419	3_0_0	EXIST::FUNCTION:
 d2i_GENERAL_NAME                        1420	3_0_0	EXIST::FUNCTION:
-i2d_ESS_CERT_ID                         1421	3_0_0	EXIST::FUNCTION:TS
+i2d_ESS_CERT_ID                         1421	3_0_0	EXIST::FUNCTION:
 X509_TRUST_get_by_id                    1422	3_0_0	EXIST::FUNCTION:
 d2i_RSA_PUBKEY_fp                       1423	3_0_0	EXIST::FUNCTION:RSA,STDIO
 EVP_PBE_get                             1424	3_0_0	EXIST::FUNCTION:
@@ -1711,7 +1711,7 @@ PKCS7_SIGNED_it                         1698	3_0_0	EXIST:!EXPORT_VAR_AS_FUNCTION
 PKCS7_SIGNED_it                         1698	3_0_0	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 b2i_PublicKey                           1699	3_0_0	EXIST::FUNCTION:DSA
 X509_PURPOSE_cleanup                    1700	3_0_0	EXIST::FUNCTION:
-ESS_SIGNING_CERT_dup                    1701	3_0_0	EXIST::FUNCTION:TS
+ESS_SIGNING_CERT_dup                    1701	3_0_0	EXIST::FUNCTION:
 ENGINE_set_default_DSA                  1702	3_0_0	EXIST::FUNCTION:ENGINE
 X509_REVOKED_new                        1703	3_0_0	EXIST::FUNCTION:
 NCONF_WIN32                             1704	3_0_0	EXIST::FUNCTION:
@@ -2115,7 +2115,7 @@ PEM_read                                2093	3_0_0	EXIST::FUNCTION:STDIO
 X509_STORE_set_depth                    2094	3_0_0	EXIST::FUNCTION:
 EC_KEY_METHOD_get_sign                  2095	3_0_0	EXIST::FUNCTION:EC
 EVP_CIPHER_CTX_iv                       2096	3_0_0	EXIST::FUNCTION:
-i2d_ESS_SIGNING_CERT                    2097	3_0_0	EXIST::FUNCTION:TS
+i2d_ESS_SIGNING_CERT                    2097	3_0_0	EXIST::FUNCTION:
 TS_RESP_set_tst_info                    2098	3_0_0	EXIST::FUNCTION:TS
 EVP_PKEY_CTX_set_data                   2099	3_0_0	EXIST::FUNCTION:
 CMS_EnvelopedData_create                2100	3_0_0	EXIST::FUNCTION:CMS
@@ -2326,7 +2326,7 @@ X509at_get_attr_count                   2295	3_0_0	EXIST::FUNCTION:
 PKCS12_init                             2296	3_0_0	EXIST::FUNCTION:
 CRYPTO_free_ex_data                     2297	3_0_0	EXIST::FUNCTION:
 EVP_aes_128_cfb8                        2298	3_0_0	EXIST::FUNCTION:
-ESS_ISSUER_SERIAL_free                  2299	3_0_0	EXIST::FUNCTION:TS
+ESS_ISSUER_SERIAL_free                  2299	3_0_0	EXIST::FUNCTION:
 BN_mod_exp_mont_word                    2300	3_0_0	EXIST::FUNCTION:
 X509V3_EXT_nconf_nid                    2301	3_0_0	EXIST::FUNCTION:
 UTF8_putc                               2302	3_0_0	EXIST::FUNCTION:
@@ -2653,7 +2653,7 @@ IPAddressRange_it                       2618	3_0_0	EXIST:EXPORT_VAR_AS_FUNCTION:
 PEM_read_bio_DSAPrivateKey              2619	3_0_0	EXIST::FUNCTION:DSA
 CMS_get0_type                           2620	3_0_0	EXIST::FUNCTION:CMS
 ASN1_PCTX_free                          2621	3_0_0	EXIST::FUNCTION:
-ESS_SIGNING_CERT_new                    2622	3_0_0	EXIST::FUNCTION:TS
+ESS_SIGNING_CERT_new                    2622	3_0_0	EXIST::FUNCTION:
 X509V3_EXT_conf_nid                     2623	3_0_0	EXIST::FUNCTION:
 EC_KEY_check_key                        2624	3_0_0	EXIST::FUNCTION:EC
 PKCS5_PBKDF2_HMAC                       2625	3_0_0	EXIST::FUNCTION:
@@ -3093,7 +3093,7 @@ EVP_DecryptUpdate                       3046	3_0_0	EXIST::FUNCTION:
 CAST_cbc_encrypt                        3047	3_0_0	EXIST::FUNCTION:CAST
 BN_BLINDING_invert                      3048	3_0_0	EXIST::FUNCTION:
 SHA512_Update                           3049	3_0_0	EXIST::FUNCTION:
-ESS_ISSUER_SERIAL_new                   3050	3_0_0	EXIST::FUNCTION:TS
+ESS_ISSUER_SERIAL_new                   3050	3_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get0_pkcs8               3051	3_0_0	EXIST::FUNCTION:
 X509_get_ext_by_NID                     3052	3_0_0	EXIST::FUNCTION:
 d2i_IPAddressFamily                     3053	3_0_0	EXIST::FUNCTION:RFC3779
@@ -3185,7 +3185,7 @@ BN_to_ASN1_ENUMERATED                   3137	3_0_0	EXIST::FUNCTION:
 i2d_ISSUING_DIST_POINT                  3138	3_0_0	EXIST::FUNCTION:
 TXT_DB_free                             3139	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_set                         3140	3_0_0	EXIST::FUNCTION:
-d2i_ESS_CERT_ID                         3141	3_0_0	EXIST::FUNCTION:TS
+d2i_ESS_CERT_ID                         3141	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_derive                3142	3_0_0	EXIST::FUNCTION:
 OPENSSL_LH_stats                        3143	3_0_0	EXIST::FUNCTION:STDIO
 NCONF_dump_fp                           3144	3_0_0	EXIST::FUNCTION:STDIO
@@ -3280,7 +3280,7 @@ i2d_X509_ALGORS                         3233	3_0_0	EXIST::FUNCTION:
 EVP_camellia_192_cfb1                   3234	3_0_0	EXIST::FUNCTION:CAMELLIA
 TS_RESP_CTX_add_failure_info            3235	3_0_0	EXIST::FUNCTION:TS
 EVP_PBE_alg_add                         3236	3_0_0	EXIST::FUNCTION:
-ESS_CERT_ID_dup                         3237	3_0_0	EXIST::FUNCTION:TS
+ESS_CERT_ID_dup                         3237	3_0_0	EXIST::FUNCTION:
 CMS_SignerInfo_get0_signature           3238	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_verify_recover                 3239	3_0_0	EXIST::FUNCTION:
 i2d_PUBKEY                              3240	3_0_0	EXIST::FUNCTION:
@@ -3404,7 +3404,7 @@ X509_ATTRIBUTE_create_by_OBJ            3356	3_0_0	EXIST::FUNCTION:
 RSA_generate_key_ex                     3357	3_0_0	EXIST::FUNCTION:RSA
 CMS_SignerInfo_get0_algs                3358	3_0_0	EXIST::FUNCTION:CMS
 DIST_POINT_free                         3359	3_0_0	EXIST::FUNCTION:
-ESS_SIGNING_CERT_free                   3360	3_0_0	EXIST::FUNCTION:TS
+ESS_SIGNING_CERT_free                   3360	3_0_0	EXIST::FUNCTION:
 SCT_new_from_base64                     3361	3_0_0	EXIST::FUNCTION:CT
 OpenSSL_version                         3362	3_0_0	EXIST::FUNCTION:
 OCSP_SINGLERESP_get_ext_by_OBJ          3363	3_0_0	EXIST::FUNCTION:OCSP
@@ -3522,7 +3522,7 @@ EVP_PKEY_save_parameters                3475	3_0_0	EXIST::FUNCTION:
 SCT_set_source                          3476	3_0_0	EXIST::FUNCTION:CT
 DES_set_odd_parity                      3477	3_0_0	EXIST::FUNCTION:DES
 CMAC_CTX_free                           3478	3_0_0	EXIST::FUNCTION:CMAC
-d2i_ESS_ISSUER_SERIAL                   3479	3_0_0	EXIST::FUNCTION:TS
+d2i_ESS_ISSUER_SERIAL                   3479	3_0_0	EXIST::FUNCTION:
 HMAC_CTX_set_flags                      3480	3_0_0	EXIST::FUNCTION:
 d2i_PKCS8_bio                           3481	3_0_0	EXIST::FUNCTION:
 OCSP_ONEREQ_get_ext_count               3482	3_0_0	EXIST::FUNCTION:OCSP
@@ -3708,7 +3708,7 @@ ERR_load_DH_strings                     3664	3_0_0	EXIST::FUNCTION:DH
 EVP_MD_block_size                       3665	3_0_0	EXIST::FUNCTION:
 TS_X509_ALGOR_print_bio                 3666	3_0_0	EXIST::FUNCTION:TS
 d2i_PKCS7_ENVELOPE                      3667	3_0_0	EXIST::FUNCTION:
-ESS_CERT_ID_new                         3669	3_0_0	EXIST::FUNCTION:TS
+ESS_CERT_ID_new                         3669	3_0_0	EXIST::FUNCTION:
 EC_POINT_invert                         3670	3_0_0	EXIST::FUNCTION:EC
 CAST_set_key                            3671	3_0_0	EXIST::FUNCTION:CAST
 ENGINE_get_pkey_meth                    3672	3_0_0	EXIST::FUNCTION:ENGINE
@@ -4275,18 +4275,18 @@ X509_CRL_print_ex                       4218	3_0_0	EXIST::FUNCTION:
 X509_SIG_INFO_get                       4219	3_0_0	EXIST::FUNCTION:
 X509_get_signature_info                 4220	3_0_0	EXIST::FUNCTION:
 X509_SIG_INFO_set                       4221	3_0_0	EXIST::FUNCTION:
-ESS_CERT_ID_V2_free                     4222	3_0_0	EXIST::FUNCTION:TS
-ESS_SIGNING_CERT_V2_new                 4223	3_0_0	EXIST::FUNCTION:TS
-d2i_ESS_SIGNING_CERT_V2                 4224	3_0_0	EXIST::FUNCTION:TS
-i2d_ESS_CERT_ID_V2                      4225	3_0_0	EXIST::FUNCTION:TS
-ESS_CERT_ID_V2_dup                      4226	3_0_0	EXIST::FUNCTION:TS
+ESS_CERT_ID_V2_free                     4222	3_0_0	EXIST::FUNCTION:
+ESS_SIGNING_CERT_V2_new                 4223	3_0_0	EXIST::FUNCTION:
+d2i_ESS_SIGNING_CERT_V2                 4224	3_0_0	EXIST::FUNCTION:
+i2d_ESS_CERT_ID_V2                      4225	3_0_0	EXIST::FUNCTION:
+ESS_CERT_ID_V2_dup                      4226	3_0_0	EXIST::FUNCTION:
 TS_RESP_CTX_set_ess_cert_id_digest      4227	3_0_0	EXIST::FUNCTION:TS
-d2i_ESS_CERT_ID_V2                      4228	3_0_0	EXIST::FUNCTION:TS
-i2d_ESS_SIGNING_CERT_V2                 4229	3_0_0	EXIST::FUNCTION:TS
+d2i_ESS_CERT_ID_V2                      4228	3_0_0	EXIST::FUNCTION:
+i2d_ESS_SIGNING_CERT_V2                 4229	3_0_0	EXIST::FUNCTION:
 TS_CONF_set_ess_cert_id_digest          4230	3_0_0	EXIST::FUNCTION:TS
-ESS_SIGNING_CERT_V2_free                4231	3_0_0	EXIST::FUNCTION:TS
-ESS_SIGNING_CERT_V2_dup                 4232	3_0_0	EXIST::FUNCTION:TS
-ESS_CERT_ID_V2_new                      4233	3_0_0	EXIST::FUNCTION:TS
+ESS_SIGNING_CERT_V2_free                4231	3_0_0	EXIST::FUNCTION:
+ESS_SIGNING_CERT_V2_dup                 4232	3_0_0	EXIST::FUNCTION:
+ESS_CERT_ID_V2_new                      4233	3_0_0	EXIST::FUNCTION:
 PEM_read_bio_ex                         4234	3_0_0	EXIST::FUNCTION:
 PEM_bytes_read_bio_secmem               4235	3_0_0	EXIST::FUNCTION:
 EVP_DigestSign                          4236	3_0_0	EXIST::FUNCTION:
@@ -4626,3 +4626,8 @@ ASYNC_WAIT_CTX_get_callback             4581	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_set_callback             4582	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_set_status               4583	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_get_status               4584	3_0_0	EXIST::FUNCTION:
+CMS_add1_signing_cert                   4585	3_0_0	EXIST::FUNCTION:CMS
+CMS_add1_signing_cert_v2                4586	3_0_0	EXIST::FUNCTION:CMS
+ESS_SIGNING_CERT_new_init               4587	3_0_0	EXIST::FUNCTION:
+ESS_SIGNING_CERT_V2_new_init            4588	3_0_0	EXIST::FUNCTION:
+ERR_load_ESS_strings                    4589	3_0_0	EXIST::FUNCTION:

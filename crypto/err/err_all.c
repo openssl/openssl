@@ -38,6 +38,7 @@
 #include <openssl/asyncerr.h>
 #include <openssl/kdferr.h>
 #include <openssl/storeerr.h>
+#include <openssl/esserr.h>
 
 int err_load_crypto_strings_int(void)
 {
@@ -91,6 +92,7 @@ int err_load_crypto_strings_int(void)
 # ifndef OPENSSL_NO_CT
         ERR_load_CT_strings() == 0 ||
 # endif
+        ERR_load_ESS_strings() == 0 ||
         ERR_load_ASYNC_strings() == 0 ||
 #endif
         ERR_load_KDF_strings() == 0 ||
