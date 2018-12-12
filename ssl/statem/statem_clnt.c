@@ -44,8 +44,8 @@ static ossl_inline int cert_req_allowed(SSL *s)
 {
     /* TLS does not like anon-DH with client cert */
     if ((s->version > SSL3_VERSION
-         && (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
-        || (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aSRP | SSL_aPSK)))
+         && (s->s3.tmp.new_cipher->algorithm_auth & SSL_aNULL))
+        || (s->s3.tmp.new_cipher->algorithm_auth & (SSL_aSRP | SSL_aPSK)))
         return 0;
 
     return 1;
@@ -60,7 +60,7 @@ static ossl_inline int cert_req_allowed(SSL *s)
  */
 static int key_exchange_expected(SSL *s)
 {
-    long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    long alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
     /*
      * Can't skip server key exchange if this is an ephemeral
@@ -272,7 +272,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 s->hit = 1;
                 st->hand_state = TLS_ST_CR_CHANGE;
                 return 1;
-            } else if (!(s->s3->tmp.new_cipher->algorithm_auth
+            } else if (!(s->s3.tmp.new_cipher->algorithm_auth
                          & (SSL_aNULL | SSL_aSRP | SSL_aPSK))) {
                 if (mt == SSL3_MT_CERTIFICATE) {
                     st->hand_state = TLS_ST_CR_CERT;
@@ -282,7 +282,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
                 ske_expected = key_exchange_expected(s);
                 /* SKE is optional for some PSK ciphersuites */
                 if (ske_expected
-                    || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)
+                    || ((s->s3.tmp.new_cipher->algorithm_mkey & SSL_PSK)
                         && mt == SSL3_MT_SERVER_KEY_EXCHANGE)) {
                     if (mt == SSL3_MT_SERVER_KEY_EXCHANGE) {
                         st->hand_state = TLS_ST_CR_KEY_EXCH;
@@ -314,7 +314,7 @@ int ossl_statem_client_read_transition(SSL *s, int mt)
     case TLS_ST_CR_CERT_STATUS:
         ske_expected = key_exchange_expected(s);
         /* SKE is optional for some PSK ciphersuites */
-        if (ske_expected || ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK)
+        if (ske_expected || ((s->s3.tmp.new_cipher->algorithm_mkey & SSL_PSK)
                              && mt == SSL3_MT_SERVER_KEY_EXCHANGE)) {
             if (mt == SSL3_MT_SERVER_KEY_EXCHANGE) {
                 st->hand_state = TLS_ST_CR_KEY_EXCH;
@@ -446,7 +446,7 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
                  && s->hello_retry_request == SSL_HRR_NONE)
             st->hand_state = TLS_ST_CW_CHANGE;
         else
-            st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
+            st->hand_state = (s->s3.tmp.cert_req != 0) ? TLS_ST_CW_CERT
                                                         : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
@@ -459,13 +459,13 @@ static WRITE_TRAN ossl_statem_client13_write_transition(SSL *s)
 
     case TLS_ST_CW_END_OF_EARLY_DATA:
     case TLS_ST_CW_CHANGE:
-        st->hand_state = (s->s3->tmp.cert_req != 0) ? TLS_ST_CW_CERT
+        st->hand_state = (s->s3.tmp.cert_req != 0) ? TLS_ST_CW_CERT
                                                     : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CW_CERT:
         /* If a non-empty Certificate we also send CertificateVerify */
-        st->hand_state = (s->s3->tmp.cert_req == 1) ? TLS_ST_CW_CERT_VRFY
+        st->hand_state = (s->s3.tmp.cert_req == 1) ? TLS_ST_CW_CERT_VRFY
                                                     : TLS_ST_CW_FINISHED;
         return WRITE_TRAN_CONTINUE;
 
@@ -574,7 +574,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_CR_SRVR_DONE:
-        if (s->s3->tmp.cert_req)
+        if (s->s3.tmp.cert_req)
             st->hand_state = TLS_ST_CW_CERT;
         else
             st->hand_state = TLS_ST_CW_KEY_EXCH;
@@ -595,12 +595,12 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
          * need to skip the certificate verify message when client's
          * ECDH public key is sent inside the client certificate.
          */
-        if (s->s3->tmp.cert_req == 1) {
+        if (s->s3.tmp.cert_req == 1) {
             st->hand_state = TLS_ST_CW_CERT_VRFY;
         } else {
             st->hand_state = TLS_ST_CW_CHANGE;
         }
-        if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
+        if (s->s3.flags & TLS1_FLAGS_SKIP_CERT_VERIFY) {
             st->hand_state = TLS_ST_CW_CHANGE;
         }
         return WRITE_TRAN_CONTINUE;
@@ -618,7 +618,7 @@ WRITE_TRAN ossl_statem_client_write_transition(SSL *s)
 #if defined(OPENSSL_NO_NEXTPROTONEG)
             st->hand_state = TLS_ST_CW_FINISHED;
 #else
-            if (!SSL_IS_DTLS(s) && s->s3->npn_seen)
+            if (!SSL_IS_DTLS(s) && s->s3.npn_seen)
                 st->hand_state = TLS_ST_CW_NEXT_PROTO;
             else
                 st->hand_state = TLS_ST_CW_FINISHED;
@@ -803,14 +803,14 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
                 return WORK_ERROR;
             break;
         }
-        s->session->cipher = s->s3->tmp.new_cipher;
+        s->session->cipher = s->s3.tmp.new_cipher;
 #ifdef OPENSSL_NO_COMP
         s->session->compress_meth = 0;
 #else
-        if (s->s3->tmp.new_compression == NULL)
+        if (s->s3.tmp.new_compression == NULL)
             s->session->compress_meth = 0;
         else
-            s->session->compress_meth = s->s3->tmp.new_compression->id;
+            s->session->compress_meth = s->s3.tmp.new_compression->id;
 #endif
         if (!s->method->ssl3_enc->setup_key_block(s)) {
             /* SSLfatal() already called */
@@ -1132,7 +1132,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     }
     /* else use the pre-loaded session */
 
-    p = s->s3->client_random;
+    p = s->s3.client_random;
 
     /*
      * for DTLS if client_random is initialized, reuse it, we are
@@ -1141,7 +1141,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
     if (SSL_IS_DTLS(s)) {
         size_t idx;
         i = 1;
-        for (idx = 0; idx < sizeof(s->s3->client_random); idx++) {
+        for (idx = 0; idx < sizeof(s->s3.client_random); idx++) {
             if (p[idx]) {
                 i = 0;
                 break;
@@ -1151,7 +1151,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
         i = (s->hello_retry_request == SSL_HRR_NONE);
     }
 
-    if (i && ssl_fill_hello_random(s, 0, p, sizeof(s->s3->client_random),
+    if (i && ssl_fill_hello_random(s, 0, p, sizeof(s->s3.client_random),
                                    DOWNGRADE_NONE) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
                  ERR_R_INTERNAL_ERROR);
@@ -1192,7 +1192,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
      * supported_versions extension for the real supported versions.
      */
     if (!WPACKET_put_bytes_u16(pkt, s->client_version)
-            || !WPACKET_memcpy(pkt, s->s3->client_random, SSL3_RANDOM_SIZE)) {
+            || !WPACKET_memcpy(pkt, s->s3.client_random, SSL3_RANDOM_SIZE)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -1270,7 +1270,7 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
 #ifndef OPENSSL_NO_COMP
     if (ssl_allow_compression(s)
             && s->ctx->comp_methods
-            && (SSL_IS_DTLS(s) || s->s3->tmp.max_ver < TLS1_3_VERSION)) {
+            && (SSL_IS_DTLS(s) || s->s3.tmp.max_ver < TLS1_3_VERSION)) {
         int compnum = sk_SSL_COMP_num(s->ctx->comp_methods);
         for (i = 0; i < compnum; i++) {
             comp = sk_SSL_COMP_value(s->ctx->comp_methods, i);
@@ -1360,8 +1360,8 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
         return 0;
     }
 
-    if (SSL_IS_TLS13(s) && s->s3->tmp.new_cipher != NULL
-            && s->s3->tmp.new_cipher->id != c->id) {
+    if (SSL_IS_TLS13(s) && s->s3.tmp.new_cipher != NULL
+            && s->s3.tmp.new_cipher->id != c->id) {
         /* ServerHello selected a different ciphersuite to that in the HRR */
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_SET_CLIENT_CIPHERSUITE,
                  SSL_R_WRONG_CIPHER_RETURNED);
@@ -1398,7 +1398,7 @@ static int set_client_ciphersuite(SSL *s, const unsigned char *cipherchars)
             return 0;
         }
     }
-    s->s3->tmp.new_cipher = c;
+    s->s3.tmp.new_cipher = c;
 
     return 1;
 }
@@ -1436,7 +1436,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
             goto err;
         }
     } else {
-        if (!PACKET_copy_bytes(pkt, s->s3->server_random, SSL3_RANDOM_SIZE)) {
+        if (!PACKET_copy_bytes(pkt, s->s3.server_random, SSL3_RANDOM_SIZE)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
                      SSL_R_LENGTH_MISMATCH);
             goto err;
@@ -1648,8 +1648,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
      * Now that we know the version, update the check to see if it's an allowed
      * version.
      */
-    s->s3->tmp.min_ver = s->version;
-    s->s3->tmp.max_ver = s->version;
+    s->s3.tmp.min_ver = s->version;
+    s->s3.tmp.max_ver = s->version;
 
     if (!set_client_ciphersuite(s, cipherchars)) {
         /* SSLfatal() already called */
@@ -1692,7 +1692,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                  SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
         goto err;
     } else {
-        s->s3->tmp.new_compression = comp;
+        s->s3.tmp.new_compression = comp;
     }
 #endif
 
@@ -1778,7 +1778,7 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s,
 
     if (s->ext.tls13_cookie_len == 0
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-        && s->s3->tmp.pkey != NULL
+        && s->s3.tmp.pkey != NULL
 #endif
         ) {
         /*
@@ -1959,7 +1959,7 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
      * type.
      */
     if (!SSL_IS_TLS13(s)) {
-        if ((clu->amask & s->s3->tmp.new_cipher->algorithm_auth) == 0) {
+        if ((clu->amask & s->s3.tmp.new_cipher->algorithm_auth) == 0) {
             x = NULL;
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -2074,7 +2074,7 @@ static int tls_process_ske_srp(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
     }
 
     /* We must check if there is a certificate */
-    if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aRSA | SSL_aDSS))
+    if (s->s3.tmp.new_cipher->algorithm_auth & (SSL_aRSA | SSL_aDSS))
         *pkey = X509_get0_pubkey(s->session->peer);
 
     return 1;
@@ -2164,13 +2164,13 @@ static int tls_process_ske_dhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         goto err;
     }
 
-    s->s3->peer_tmp = peer_tmp;
+    s->s3.peer_tmp = peer_tmp;
 
     /*
      * FIXME: This makes assumptions about which ciphersuites come with
      * public keys. We should have a less ad-hoc way of doing this
      */
-    if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aRSA | SSL_aDSS))
+    if (s->s3.tmp.new_cipher->algorithm_auth & (SSL_aRSA | SSL_aDSS))
         *pkey = X509_get0_pubkey(s->session->peer);
     /* else anonymous DH, so no certificate or pkey. */
 
@@ -2218,7 +2218,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    if ((s->s3->peer_tmp = ssl_generate_param_group(curve_id)) == NULL) {
+    if ((s->s3.peer_tmp = ssl_generate_param_group(curve_id)) == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_ECDHE,
                  SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
         return 0;
@@ -2230,7 +2230,7 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    if (!EVP_PKEY_set1_tls_encodedpoint(s->s3->peer_tmp,
+    if (!EVP_PKEY_set1_tls_encodedpoint(s->s3.peer_tmp,
                                         PACKET_data(&encoded_pt),
                                         PACKET_remaining(&encoded_pt))) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PROCESS_SKE_ECDHE,
@@ -2243,9 +2243,9 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
      * ECParameters in the server key exchange message. We do support RSA
      * and ECDSA.
      */
-    if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aECDSA)
+    if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aECDSA)
         *pkey = X509_get0_pubkey(s->session->peer);
-    else if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aRSA)
+    else if (s->s3.tmp.new_cipher->algorithm_auth & SSL_aRSA)
         *pkey = X509_get0_pubkey(s->session->peer);
     /* else anonymous ECDH, so no certificate or pkey. */
 
@@ -2265,13 +2265,13 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
     EVP_PKEY_CTX *pctx = NULL;
     PACKET save_param_start, signature;
 
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
     save_param_start = *pkt;
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    EVP_PKEY_free(s->s3->peer_tmp);
-    s->s3->peer_tmp = NULL;
+    EVP_PKEY_free(s->s3.peer_tmp);
+    s->s3.peer_tmp = NULL;
 #endif
 
     if (alg_k & SSL_PSK) {
@@ -2343,7 +2343,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (!tls1_lookup_md(s->s3->tmp.peer_sigalg, &md)) {
+        if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
             goto err;
@@ -2415,7 +2415,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
         md_ctx = NULL;
     } else {
         /* aNULL, aSRP or PSK do not need public keys */
-        if (!(s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
+        if (!(s->s3.tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
             && !(alg_k & SSL_PSK)) {
             /* Might be wrong key type, check it */
             if (ssl3_check_cert_and_algorithm(s)) {
@@ -2445,7 +2445,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
 
     /* Clear certificate validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++)
-        s->s3->tmp.valid_flags[i] = 0;
+        s->s3.tmp.valid_flags[i] = 0;
 
     if (SSL_IS_TLS13(s)) {
         PACKET reqctx, extensions;
@@ -2461,9 +2461,9 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
         }
 
         /* Free and zero certificate types: it is not present in TLS 1.3 */
-        OPENSSL_free(s->s3->tmp.ctype);
-        s->s3->tmp.ctype = NULL;
-        s->s3->tmp.ctype_len = 0;
+        OPENSSL_free(s->s3.tmp.ctype);
+        s->s3.tmp.ctype = NULL;
+        s->s3.tmp.ctype_len = 0;
         OPENSSL_free(s->pha_context);
         s->pha_context = NULL;
 
@@ -2508,7 +2508,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
             return MSG_PROCESS_ERROR;
         }
 
-        if (!PACKET_memdup(&ctypes, &s->s3->tmp.ctype, &s->s3->tmp.ctype_len)) {
+        if (!PACKET_memdup(&ctypes, &s->s3.tmp.ctype, &s->s3.tmp.ctype_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_PROCESS_CERTIFICATE_REQUEST,
                      ERR_R_INTERNAL_ERROR);
@@ -2558,7 +2558,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
     }
 
     /* we should setup a certificate to return.... */
-    s->s3->tmp.cert_req = 1;
+    s->s3.tmp.cert_req = 1;
 
     /*
      * In TLSv1.3 we don't prepare the client certificate yet. We wait until
@@ -2861,7 +2861,7 @@ MSG_PROCESS_RETURN tls_process_server_done(SSL *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 #ifndef OPENSSL_NO_SRP
-    if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
+    if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
         if (SRP_Calc_A_param(s) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SERVER_DONE,
                      SSL_R_SRP_A_CALC);
@@ -2932,9 +2932,9 @@ static int tls_construct_cke_psk_preamble(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    OPENSSL_free(s->s3->tmp.psk);
-    s->s3->tmp.psk = tmppsk;
-    s->s3->tmp.psklen = psklen;
+    OPENSSL_free(s->s3.tmp.psk);
+    s->s3.tmp.psk = tmppsk;
+    s->s3.tmp.psklen = psklen;
     tmppsk = NULL;
     OPENSSL_free(s->session->psk_identity);
     s->session->psk_identity = tmpidentity;
@@ -3040,8 +3040,8 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    s->s3->tmp.pms = pms;
-    s->s3->tmp.pmslen = pmslen;
+    s->s3.tmp.pms = pms;
+    s->s3.tmp.pmslen = pmslen;
 
     return 1;
  err:
@@ -3064,7 +3064,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     EVP_PKEY *ckey = NULL, *skey = NULL;
     unsigned char *keybytes = NULL;
 
-    skey = s->s3->peer_tmp;
+    skey = s->s3.peer_tmp;
     if (skey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
@@ -3122,7 +3122,7 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
     EVP_PKEY *ckey = NULL, *skey = NULL;
     int ret = 0;
 
-    skey = s->s3->peer_tmp;
+    skey = s->s3.peer_tmp;
     if (skey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_ECDHE,
                  ERR_R_INTERNAL_ERROR);
@@ -3182,7 +3182,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
     unsigned char *pms = NULL;
     size_t pmslen = 0;
 
-    if ((s->s3->tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
+    if ((s->s3.tmp.new_cipher->algorithm_auth & SSL_aGOST12) != 0)
         dgst_nid = NID_id_GostR3411_2012_256;
 
     /*
@@ -3232,9 +3232,9 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
     ukm_hash = EVP_MD_CTX_new();
     if (ukm_hash == NULL
         || EVP_DigestInit(ukm_hash, EVP_get_digestbynid(dgst_nid)) <= 0
-        || EVP_DigestUpdate(ukm_hash, s->s3->client_random,
+        || EVP_DigestUpdate(ukm_hash, s->s3.client_random,
                             SSL3_RANDOM_SIZE) <= 0
-        || EVP_DigestUpdate(ukm_hash, s->s3->server_random,
+        || EVP_DigestUpdate(ukm_hash, s->s3.server_random,
                             SSL3_RANDOM_SIZE) <= 0
         || EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
@@ -3269,8 +3269,8 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
     }
 
     EVP_PKEY_CTX_free(pkey_ctx);
-    s->s3->tmp.pms = pms;
-    s->s3->tmp.pmslen = pmslen;
+    s->s3.tmp.pms = pms;
+    s->s3.tmp.pmslen = pmslen;
 
     return 1;
  err:
@@ -3319,7 +3319,7 @@ int tls_construct_client_key_exchange(SSL *s, WPACKET *pkt)
 {
     unsigned long alg_k;
 
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
     /*
      * All of the construct functions below call SSLfatal() if necessary so
@@ -3352,11 +3352,11 @@ int tls_construct_client_key_exchange(SSL *s, WPACKET *pkt)
 
     return 1;
  err:
-    OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
-    s->s3->tmp.pms = NULL;
+    OPENSSL_clear_free(s->s3.tmp.pms, s->s3.tmp.pmslen);
+    s->s3.tmp.pms = NULL;
 #ifndef OPENSSL_NO_PSK
-    OPENSSL_clear_free(s->s3->tmp.psk, s->s3->tmp.psklen);
-    s->s3->tmp.psk = NULL;
+    OPENSSL_clear_free(s->s3.tmp.psk, s->s3.tmp.psklen);
+    s->s3.tmp.psk = NULL;
 #endif
     return 0;
 }
@@ -3366,12 +3366,12 @@ int tls_client_key_exchange_post_work(SSL *s)
     unsigned char *pms = NULL;
     size_t pmslen = 0;
 
-    pms = s->s3->tmp.pms;
-    pmslen = s->s3->tmp.pmslen;
+    pms = s->s3.tmp.pms;
+    pmslen = s->s3.tmp.pmslen;
 
 #ifndef OPENSSL_NO_SRP
     /* Check for SRP */
-    if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
+    if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kSRP) {
         if (!srp_generate_client_master_secret(s)) {
             /* SSLfatal() already called */
             goto err;
@@ -3380,7 +3380,7 @@ int tls_client_key_exchange_post_work(SSL *s)
     }
 #endif
 
-    if (pms == NULL && !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
+    if (pms == NULL && !(s->s3.tmp.new_cipher->algorithm_mkey & SSL_kPSK)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -3430,7 +3430,7 @@ int tls_client_key_exchange_post_work(SSL *s)
     return 1;
  err:
     OPENSSL_clear_free(pms, pmslen);
-    s->s3->tmp.pms = NULL;
+    s->s3.tmp.pms = NULL;
     return 0;
 }
 
@@ -3442,7 +3442,7 @@ int tls_client_key_exchange_post_work(SSL *s)
 static int ssl3_check_client_certificate(SSL *s)
 {
     /* If no suitable signature algorithm can't use certificate */
-    if (!tls_choose_sigalg(s, 0) || s->s3->tmp.sigalg == NULL)
+    if (!tls_choose_sigalg(s, 0) || s->s3.tmp.sigalg == NULL)
         return 0;
     /*
      * If strict mode check suitability of chain before using it. This also
@@ -3514,11 +3514,11 @@ WORK_STATE tls_prepare_client_certificate(SSL *s, WORK_STATE wst)
             i = 0;
         if (i == 0) {
             if (s->version == SSL3_VERSION) {
-                s->s3->tmp.cert_req = 0;
+                s->s3.tmp.cert_req = 0;
                 ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_NO_CERTIFICATE);
                 return WORK_FINISHED_CONTINUE;
             } else {
-                s->s3->tmp.cert_req = 2;
+                s->s3.tmp.cert_req = 2;
                 if (!ssl3_digest_cached_records(s, 0)) {
                     /* SSLfatal() already called */
                     return WORK_ERROR;
@@ -3554,7 +3554,7 @@ int tls_construct_client_certificate(SSL *s, WPACKET *pkt)
         }
     }
     if (!ssl3_output_cert_chain(s, pkt,
-                                (s->s3->tmp.cert_req == 2) ? NULL
+                                (s->s3.tmp.cert_req == 2) ? NULL
                                                            : s->cert->key)) {
         /* SSLfatal() already called */
         return 0;
@@ -3582,8 +3582,8 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     size_t idx;
     long alg_k, alg_a;
 
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-    alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
+    alg_a = s->s3.tmp.new_cipher->algorithm_auth;
 
     /* we don't have a certificate */
     if (!(alg_a & SSL_aCERT))
@@ -3618,7 +3618,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
     }
 #endif
 #ifndef OPENSSL_NO_DH
-    if ((alg_k & SSL_kDHE) && (s->s3->peer_tmp == NULL)) {
+    if ((alg_k & SSL_kDHE) && (s->s3.peer_tmp == NULL)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -3782,12 +3782,12 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
         /* Sanity check that the maximum version we offer has ciphers enabled */
         if (!maxverok) {
             if (SSL_IS_DTLS(s)) {
-                if (DTLS_VERSION_GE(c->max_dtls, s->s3->tmp.max_ver)
-                        && DTLS_VERSION_LE(c->min_dtls, s->s3->tmp.max_ver))
+                if (DTLS_VERSION_GE(c->max_dtls, s->s3.tmp.max_ver)
+                        && DTLS_VERSION_LE(c->min_dtls, s->s3.tmp.max_ver))
                     maxverok = 1;
             } else {
-                if (c->max_tls >= s->s3->tmp.max_ver
-                        && c->min_tls <= s->s3->tmp.max_ver)
+                if (c->max_tls >= s->s3.tmp.max_ver
+                        && c->min_tls <= s->s3.tmp.max_ver)
                     maxverok = 1;
             }
         }

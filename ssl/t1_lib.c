@@ -292,7 +292,7 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
              * For Suite B ciphersuite determines curve: we already know
              * these are acceptable due to previous checks.
              */
-            unsigned long cid = s->s3->tmp.new_cipher->id;
+            unsigned long cid = s->s3.tmp.new_cipher->id;
 
             if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256)
                 return TLSEXT_curve_P_256;
@@ -485,8 +485,8 @@ int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_groups)
         return 0;
 
     /* Check for Suite B compliance */
-    if (tls1_suiteb(s) && s->s3->tmp.new_cipher != NULL) {
-        unsigned long cid = s->s3->tmp.new_cipher->id;
+    if (tls1_suiteb(s) && s->s3.tmp.new_cipher != NULL) {
+        unsigned long cid = s->s3.tmp.new_cipher->id;
 
         if (cid == TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256) {
             if (group_id != TLSEXT_curve_P_256)
@@ -861,7 +861,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
             for (i = 0; i < SSL_PKEY_NUM; i++) {
                 const SSL_CERT_LOOKUP *clu = ssl_cert_lookup_by_idx(i);
 
-                if (clu->amask & s->s3->tmp.new_cipher->algorithm_auth) {
+                if (clu->amask & s->s3.tmp.new_cipher->algorithm_auth) {
                     idx = i;
                     break;
                 }
@@ -870,7 +870,7 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
             /*
              * Some GOST ciphersuites allow more than one signature algorithms
              * */
-            if (idx == SSL_PKEY_GOST01 && s->s3->tmp.new_cipher->algorithm_auth != SSL_aGOST01) {
+            if (idx == SSL_PKEY_GOST01 && s->s3.tmp.new_cipher->algorithm_auth != SSL_aGOST01) {
                 int real_idx;
 
                 for (real_idx = SSL_PKEY_GOST12_512; real_idx >= SSL_PKEY_GOST01;
@@ -907,7 +907,7 @@ int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey)
     lu = tls1_get_legacy_sigalg(s, idx);
     if (lu == NULL)
         return 0;
-    s->s3->tmp.peer_sigalg = lu;
+    s->s3.tmp.peer_sigalg = lu;
     return 1;
 }
 
@@ -1112,23 +1112,23 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
         }
     }
     /* Store the sigalg the peer uses */
-    s->s3->tmp.peer_sigalg = lu;
+    s->s3.tmp.peer_sigalg = lu;
     return 1;
 }
 
 int SSL_get_peer_signature_type_nid(const SSL *s, int *pnid)
 {
-    if (s->s3->tmp.peer_sigalg == NULL)
+    if (s->s3.tmp.peer_sigalg == NULL)
         return 0;
-    *pnid = s->s3->tmp.peer_sigalg->sig;
+    *pnid = s->s3.tmp.peer_sigalg->sig;
     return 1;
 }
 
 int SSL_get_signature_type_nid(const SSL *s, int *pnid)
 {
-    if (s->s3->tmp.sigalg == NULL)
+    if (s->s3.tmp.sigalg == NULL)
         return 0;
-    *pnid = s->s3->tmp.sigalg->sig;
+    *pnid = s->s3.tmp.sigalg->sig;
     return 1;
 }
 
@@ -1144,23 +1144,23 @@ int SSL_get_signature_type_nid(const SSL *s, int *pnid)
  */
 int ssl_set_client_disabled(SSL *s)
 {
-    s->s3->tmp.mask_a = 0;
-    s->s3->tmp.mask_k = 0;
-    ssl_set_sig_mask(&s->s3->tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
-    if (ssl_get_min_max_version(s, &s->s3->tmp.min_ver,
-                                &s->s3->tmp.max_ver, NULL) != 0)
+    s->s3.tmp.mask_a = 0;
+    s->s3.tmp.mask_k = 0;
+    ssl_set_sig_mask(&s->s3.tmp.mask_a, s, SSL_SECOP_SIGALG_MASK);
+    if (ssl_get_min_max_version(s, &s->s3.tmp.min_ver,
+                                &s->s3.tmp.max_ver, NULL) != 0)
         return 0;
 #ifndef OPENSSL_NO_PSK
     /* with PSK there must be client callback set */
     if (!s->psk_client_callback) {
-        s->s3->tmp.mask_a |= SSL_aPSK;
-        s->s3->tmp.mask_k |= SSL_PSK;
+        s->s3.tmp.mask_a |= SSL_aPSK;
+        s->s3.tmp.mask_k |= SSL_PSK;
     }
 #endif                          /* OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_SRP
     if (!(s->srp_ctx.srp_Mask & SSL_kSRP)) {
-        s->s3->tmp.mask_a |= SSL_aSRP;
-        s->s3->tmp.mask_k |= SSL_kSRP;
+        s->s3.tmp.mask_a |= SSL_aSRP;
+        s->s3.tmp.mask_k |= SSL_kSRP;
     }
 #endif
     return 1;
@@ -1177,10 +1177,10 @@ int ssl_set_client_disabled(SSL *s)
  */
 int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
 {
-    if (c->algorithm_mkey & s->s3->tmp.mask_k
-        || c->algorithm_auth & s->s3->tmp.mask_a)
+    if (c->algorithm_mkey & s->s3.tmp.mask_k
+        || c->algorithm_auth & s->s3.tmp.mask_a)
         return 1;
-    if (s->s3->tmp.max_ver == 0)
+    if (s->s3.tmp.max_ver == 0)
         return 1;
     if (!SSL_IS_DTLS(s)) {
         int min_tls = c->min_tls;
@@ -1193,11 +1193,11 @@ int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
                 && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
             min_tls = SSL3_VERSION;
 
-        if ((min_tls > s->s3->tmp.max_ver) || (c->max_tls < s->s3->tmp.min_ver))
+        if ((min_tls > s->s3.tmp.max_ver) || (c->max_tls < s->s3.tmp.min_ver))
             return 1;
     }
-    if (SSL_IS_DTLS(s) && (DTLS_VERSION_GT(c->min_dtls, s->s3->tmp.max_ver)
-                           || DTLS_VERSION_LT(c->max_dtls, s->s3->tmp.min_ver)))
+    if (SSL_IS_DTLS(s) && (DTLS_VERSION_GT(c->min_dtls, s->s3.tmp.max_ver)
+                           || DTLS_VERSION_LT(c->max_dtls, s->s3.tmp.min_ver)))
         return 1;
 
     return !ssl_security(s, op, c->strength_bits, 0, (void *)c);
@@ -1220,13 +1220,13 @@ int tls1_set_server_sigalgs(SSL *s)
     s->cert->shared_sigalgslen = 0;
     /* Clear certificate validity flags */
     for (i = 0; i < SSL_PKEY_NUM; i++)
-        s->s3->tmp.valid_flags[i] = 0;
+        s->s3.tmp.valid_flags[i] = 0;
     /*
      * If peer sent no signature algorithms check to see if we support
      * the default algorithm for each certificate type
      */
-    if (s->s3->tmp.peer_cert_sigalgs == NULL
-            && s->s3->tmp.peer_sigalgs == NULL) {
+    if (s->s3.tmp.peer_cert_sigalgs == NULL
+            && s->s3.tmp.peer_sigalgs == NULL) {
         const uint16_t *sent_sigs;
         size_t sent_sigslen = tls12_get_psigalgs(s, 1, &sent_sigs);
 
@@ -1239,7 +1239,7 @@ int tls1_set_server_sigalgs(SSL *s)
             /* Check default matches a type we sent */
             for (j = 0; j < sent_sigslen; j++) {
                 if (lu->sigalg == sent_sigs[j]) {
-                        s->s3->tmp.valid_flags[i] = CERT_PKEY_SIGN;
+                        s->s3.tmp.valid_flags[i] = CERT_PKEY_SIGN;
                         break;
                 }
             }
@@ -1567,7 +1567,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
         return 0;
     /* TODO(OpenSSL1.2) fully axe DSA/etc. in ClientHello per TLS 1.3 spec */
-    if (!s->server && !SSL_IS_DTLS(s) && s->s3->tmp.min_ver >= TLS1_3_VERSION
+    if (!s->server && !SSL_IS_DTLS(s) && s->s3.tmp.min_ver >= TLS1_3_VERSION
         && (lu->sig == EVP_PKEY_DSA || lu->hash_idx == SSL_MD_SHA1_IDX
             || lu->hash_idx == SSL_MD_MD5_IDX
             || lu->hash_idx == SSL_MD_SHA224_IDX))
@@ -1585,7 +1585,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
             return 0;
         if (!s->server
                 && s->method->version == TLS_ANY_VERSION
-                && s->s3->tmp.max_ver >= TLS1_3_VERSION) {
+                && s->s3.tmp.max_ver >= TLS1_3_VERSION) {
             int i, num;
             STACK_OF(SSL_CIPHER) *sk;
 
@@ -1595,7 +1595,7 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
              * ciphersuites enabled.
              */
 
-            if (s->s3->tmp.min_ver >= TLS1_3_VERSION)
+            if (s->s3.tmp.min_ver >= TLS1_3_VERSION)
                 return 0;
 
             sk = SSL_get_ciphers(s);
@@ -1739,13 +1739,13 @@ static int tls1_set_shared_sigalgs(SSL *s)
     if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || is_suiteb) {
         pref = conf;
         preflen = conflen;
-        allow = s->s3->tmp.peer_sigalgs;
-        allowlen = s->s3->tmp.peer_sigalgslen;
+        allow = s->s3.tmp.peer_sigalgs;
+        allowlen = s->s3.tmp.peer_sigalgslen;
     } else {
         allow = conf;
         allowlen = conflen;
-        pref = s->s3->tmp.peer_sigalgs;
-        preflen = s->s3->tmp.peer_sigalgslen;
+        pref = s->s3.tmp.peer_sigalgs;
+        preflen = s->s3.tmp.peer_sigalgslen;
     }
     nmatch = tls12_shared_sigalgs(s, NULL, pref, preflen, allow, allowlen);
     if (nmatch) {
@@ -1805,11 +1805,11 @@ int tls1_save_sigalgs(SSL *s, PACKET *pkt, int cert)
         return 0;
 
     if (cert)
-        return tls1_save_u16(pkt, &s->s3->tmp.peer_cert_sigalgs,
-                             &s->s3->tmp.peer_cert_sigalgslen);
+        return tls1_save_u16(pkt, &s->s3.tmp.peer_cert_sigalgs,
+                             &s->s3.tmp.peer_cert_sigalgslen);
     else
-        return tls1_save_u16(pkt, &s->s3->tmp.peer_sigalgs,
-                             &s->s3->tmp.peer_sigalgslen);
+        return tls1_save_u16(pkt, &s->s3.tmp.peer_sigalgs,
+                             &s->s3.tmp.peer_sigalgslen);
 
 }
 
@@ -1818,7 +1818,7 @@ int tls1_save_sigalgs(SSL *s, PACKET *pkt, int cert)
 int tls1_process_sigalgs(SSL *s)
 {
     size_t i;
-    uint32_t *pvalid = s->s3->tmp.valid_flags;
+    uint32_t *pvalid = s->s3.tmp.valid_flags;
     CERT *c = s->cert;
 
     if (!tls1_set_shared_sigalgs(s))
@@ -1845,8 +1845,8 @@ int SSL_get_sigalgs(SSL *s, int idx,
                     int *psign, int *phash, int *psignhash,
                     unsigned char *rsig, unsigned char *rhash)
 {
-    uint16_t *psig = s->s3->tmp.peer_sigalgs;
-    size_t numsigalgs = s->s3->tmp.peer_sigalgslen;
+    uint16_t *psig = s->s3.tmp.peer_sigalgs;
+    size_t numsigalgs = s->s3.tmp.peer_sigalgslen;
     if (psig == NULL || numsigalgs > INT_MAX)
         return 0;
     if (idx >= 0) {
@@ -2134,7 +2134,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             idx = (int)(cpk - c->pkeys);
         } else
             cpk = c->pkeys + idx;
-        pvalid = s->s3->tmp.valid_flags + idx;
+        pvalid = s->s3.tmp.valid_flags + idx;
         x = cpk->x509;
         pk = cpk->privatekey;
         chain = cpk->chain;
@@ -2151,7 +2151,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
         if (ssl_cert_lookup_by_pkey(pk, &certidx) == NULL)
             return 0;
         idx = certidx;
-        pvalid = s->s3->tmp.valid_flags + idx;
+        pvalid = s->s3.tmp.valid_flags + idx;
 
         if (c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
             check_flags = CERT_PKEY_STRICT_FLAGS;
@@ -2178,8 +2178,8 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (TLS1_get_version(s) >= TLS1_2_VERSION && strict_mode) {
         int default_nid;
         int rsign = 0;
-        if (s->s3->tmp.peer_cert_sigalgs != NULL
-                || s->s3->tmp.peer_sigalgs != NULL) {
+        if (s->s3.tmp.peer_cert_sigalgs != NULL
+                || s->s3.tmp.peer_sigalgs != NULL) {
             default_nid = 0;
         /* If no sigalgs extension use defaults from RFC5246 */
         } else {
@@ -2296,10 +2296,10 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             break;
         }
         if (check_type) {
-            const uint8_t *ctypes = s->s3->tmp.ctype;
+            const uint8_t *ctypes = s->s3.tmp.ctype;
             size_t j;
 
-            for (j = 0; j < s->s3->tmp.ctype_len; j++, ctypes++) {
+            for (j = 0; j < s->s3.tmp.ctype_len; j++, ctypes++) {
                 if (*ctypes == check_type) {
                     rv |= CERT_PKEY_CERT_TYPE;
                     break;
@@ -2311,7 +2311,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
             rv |= CERT_PKEY_CERT_TYPE;
         }
 
-        ca_dn = s->s3->tmp.peer_ca_names;
+        ca_dn = s->s3.tmp.peer_ca_names;
 
         if (!sk_X509_NAME_num(ca_dn))
             rv |= CERT_PKEY_ISSUER_NAME;
@@ -2386,15 +2386,15 @@ DH *ssl_get_auto_dh(SSL *s)
     int dh_secbits = 80;
     if (s->cert->dh_tmp_auto == 2)
         return DH_get_1024_160();
-    if (s->s3->tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aPSK)) {
-        if (s->s3->tmp.new_cipher->strength_bits == 256)
+    if (s->s3.tmp.new_cipher->algorithm_auth & (SSL_aNULL | SSL_aPSK)) {
+        if (s->s3.tmp.new_cipher->strength_bits == 256)
             dh_secbits = 128;
         else
             dh_secbits = 80;
     } else {
-        if (s->s3->tmp.cert == NULL)
+        if (s->s3.tmp.cert == NULL)
             return NULL;
-        dh_secbits = EVP_PKEY_security_bits(s->s3->tmp.cert->privatekey);
+        dh_secbits = EVP_PKEY_security_bits(s->s3.tmp.cert->privatekey);
     }
 
     if (dh_secbits >= 128) {
@@ -2519,12 +2519,12 @@ static int tls12_get_cert_sigalg_idx(const SSL *s, const SIGALG_LOOKUP *lu)
 
     /* If not recognised or not supported by cipher mask it is not suitable */
     if (clu == NULL
-            || (clu->amask & s->s3->tmp.new_cipher->algorithm_auth) == 0
+            || (clu->amask & s->s3.tmp.new_cipher->algorithm_auth) == 0
             || (clu->nid == EVP_PKEY_RSA_PSS
-                && (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kRSA) != 0))
+                && (s->s3.tmp.new_cipher->algorithm_mkey & SSL_kRSA) != 0))
         return -1;
 
-    return s->s3->tmp.valid_flags[sig_idx] & CERT_PKEY_VALID ? sig_idx : -1;
+    return s->s3.tmp.valid_flags[sig_idx] & CERT_PKEY_VALID ? sig_idx : -1;
 }
 
 /*
@@ -2545,9 +2545,9 @@ static int has_usable_cert(SSL *s, const SIGALG_LOOKUP *sig, int idx)
         idx = sig->sig_idx;
     if (!ssl_has_cert(s, idx))
         return 0;
-    if (s->s3->tmp.peer_cert_sigalgs != NULL) {
-        for (i = 0; i < s->s3->tmp.peer_cert_sigalgslen; i++) {
-            lu = tls1_lookup_sigalg(s->s3->tmp.peer_cert_sigalgs[i]);
+    if (s->s3.tmp.peer_cert_sigalgs != NULL) {
+        for (i = 0; i < s->s3.tmp.peer_cert_sigalgslen; i++) {
+            lu = tls1_lookup_sigalg(s->s3.tmp.peer_cert_sigalgs[i]);
             if (lu == NULL
                 || !X509_get_signature_info(s->cert->pkeys[idx].x509, &mdnid,
                                             &pknid, NULL, NULL)
@@ -2602,8 +2602,8 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
     const SIGALG_LOOKUP *lu = NULL;
     int sig_idx = -1;
 
-    s->s3->tmp.cert = NULL;
-    s->s3->tmp.sigalg = NULL;
+    s->s3.tmp.cert = NULL;
+    s->s3.tmp.sigalg = NULL;
 
     if (SSL_IS_TLS13(s)) {
         size_t i;
@@ -2656,14 +2656,14 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
         }
     } else {
         /* If ciphersuite doesn't require a cert nothing to do */
-        if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aCERT))
+        if (!(s->s3.tmp.new_cipher->algorithm_auth & SSL_aCERT))
             return 1;
         if (!s->server && !ssl_has_cert(s, s->cert->key - s->cert->pkeys))
                 return 1;
 
         if (SSL_USE_SIGALGS(s)) {
             size_t i;
-            if (s->s3->tmp.peer_sigalgs != NULL) {
+            if (s->s3.tmp.peer_sigalgs != NULL) {
 #ifndef OPENSSL_NO_EC
                 int curve;
 
@@ -2759,9 +2759,9 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
     }
     if (sig_idx == -1)
         sig_idx = lu->sig_idx;
-    s->s3->tmp.cert = &s->cert->pkeys[sig_idx];
-    s->cert->key = s->s3->tmp.cert;
-    s->s3->tmp.sigalg = lu;
+    s->s3.tmp.cert = &s->cert->pkeys[sig_idx];
+    s->cert->key = s->s3.tmp.cert;
+    s->s3.tmp.sigalg = lu;
     return 1;
 }
 

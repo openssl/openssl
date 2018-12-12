@@ -339,8 +339,8 @@ static int test_tls13_encryption(void)
     if (!TEST_ptr(s->enc_write_ctx))
         goto err;
 
-    s->s3->tmp.new_cipher = SSL_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
-    if (!TEST_ptr(s->s3->tmp.new_cipher)) {
+    s->s3.tmp.new_cipher = SSL_CIPHER_find(s, TLS13_AES_128_GCM_SHA256_BYTES);
+    if (!TEST_ptr(s->s3.tmp.new_cipher)) {
         TEST_info("Failed to find cipher");
         goto err;
     }

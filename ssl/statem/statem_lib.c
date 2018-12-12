@@ -138,7 +138,7 @@ int tls_setup_handshake(SSL *s)
             /* N.B. s->ctx may not equal s->session_ctx */
             tsan_counter(&s->ctx->stats.sess_accept_renegotiate);
 
-            s->s3->tmp.cert_request = 0;
+            s->s3.tmp.cert_request = 0;
         }
     } else {
         if (SSL_IS_FIRST_HANDSHAKE(s))
@@ -147,10 +147,10 @@ int tls_setup_handshake(SSL *s)
             tsan_counter(&s->session_ctx->stats.sess_connect_renegotiate);
 
         /* mark client_random uninitialized */
-        memset(s->s3->client_random, 0, sizeof(s->s3->client_random));
+        memset(s->s3.client_random, 0, sizeof(s->s3.client_random));
         s->hit = 0;
 
-        s->s3->tmp.cert_req = 0;
+        s->s3.tmp.cert_req = 0;
 
         if (SSL_IS_DTLS(s))
             s->statem.use_timer = 1;
@@ -206,7 +206,7 @@ static int get_cert_verify_tbs_data(SSL *s, unsigned char *tls13tbs,
         size_t retlen;
         long retlen_l;
 
-        retlen = retlen_l = BIO_get_mem_data(s->s3->handshake_buffer, hdata);
+        retlen = retlen_l = BIO_get_mem_data(s->s3.handshake_buffer, hdata);
         if (retlen_l <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_GET_CERT_VERIFY_TBS_DATA,
                      ERR_R_INTERNAL_ERROR);
@@ -228,14 +228,14 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     void *hdata;
     unsigned char *sig = NULL;
     unsigned char tls13tbs[TLS13_TBS_PREAMBLE_SIZE + EVP_MAX_MD_SIZE];
-    const SIGALG_LOOKUP *lu = s->s3->tmp.sigalg;
+    const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
 
-    if (lu == NULL || s->s3->tmp.cert == NULL) {
+    if (lu == NULL || s->s3.tmp.cert == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    pkey = s->s3->tmp.cert->privatekey;
+    pkey = s->s3.tmp.cert->privatekey;
 
     if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
@@ -389,7 +389,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             goto err;
     }
 
-    if (!tls1_lookup_md(s->s3->tmp.peer_sigalg, &md)) {
+    if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -503,13 +503,13 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
      * want to make sure that SSL_get_peer_certificate() will return the actual
      * server certificate from the client_cert_cb callback.
      */
-    if (!s->server && SSL_IS_TLS13(s) && s->s3->tmp.cert_req == 1)
+    if (!s->server && SSL_IS_TLS13(s) && s->s3.tmp.cert_req == 1)
         ret = MSG_PROCESS_CONTINUE_PROCESSING;
     else
         ret = MSG_PROCESS_CONTINUE_READING;
  err:
-    BIO_free(s->s3->handshake_buffer);
-    s->s3->handshake_buffer = NULL;
+    BIO_free(s->s3.handshake_buffer);
+    s->s3.handshake_buffer = NULL;
     EVP_MD_CTX_free(mctx);
 #ifndef OPENSSL_NO_GOST
     OPENSSL_free(gost_data);
@@ -533,7 +533,7 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
      */
     if (SSL_IS_TLS13(s)
             && !s->server
-            && s->s3->tmp.cert_req == 0
+            && s->s3.tmp.cert_req == 0
             && (!s->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_CLIENT_WRITE))) {;
         /* SSLfatal() already called */
@@ -550,15 +550,15 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
 
     finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
                                                           sender, slen,
-                                                          s->s3->tmp.finish_md);
+                                                          s->s3.tmp.finish_md);
     if (finish_md_len == 0) {
         /* SSLfatal() already called */
         return 0;
     }
 
-    s->s3->tmp.finish_md_len = finish_md_len;
+    s->s3.tmp.finish_md_len = finish_md_len;
 
-    if (!WPACKET_memcpy(pkt, s->s3->tmp.finish_md, finish_md_len)) {
+    if (!WPACKET_memcpy(pkt, s->s3.tmp.finish_md, finish_md_len)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_FINISHED,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -584,13 +584,13 @@ int tls_construct_finished(SSL *s, WPACKET *pkt)
         return 0;
     }
     if (!s->server) {
-        memcpy(s->s3->previous_client_finished, s->s3->tmp.finish_md,
+        memcpy(s->s3.previous_client_finished, s->s3.tmp.finish_md,
                finish_md_len);
-        s->s3->previous_client_finished_len = finish_md_len;
+        s->s3.previous_client_finished_len = finish_md_len;
     } else {
-        memcpy(s->s3->previous_server_finished, s->s3->tmp.finish_md,
+        memcpy(s->s3.previous_server_finished, s->s3.tmp.finish_md,
                finish_md_len);
-        s->s3->previous_server_finished_len = finish_md_len;
+        s->s3.previous_server_finished_len = finish_md_len;
     }
 
     return 1;
@@ -676,11 +676,11 @@ int ssl3_take_mac(SSL *s)
         slen = s->method->ssl3_enc->client_finished_label_len;
     }
 
-    s->s3->tmp.peer_finish_md_len =
+    s->s3.tmp.peer_finish_md_len =
         s->method->ssl3_enc->final_finish_mac(s, sender, slen,
-                                              s->s3->tmp.peer_finish_md);
+                                              s->s3.tmp.peer_finish_md);
 
-    if (s->s3->tmp.peer_finish_md_len == 0) {
+    if (s->s3.tmp.peer_finish_md_len == 0) {
         /* SSLfatal() already called */
         return 0;
     }
@@ -718,13 +718,13 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL *s, PACKET *pkt)
     }
 
     /* Check we have a cipher to change to */
-    if (s->s3->tmp.new_cipher == NULL) {
+    if (s->s3.tmp.new_cipher == NULL) {
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
                  SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC, SSL_R_CCS_RECEIVED_EARLY);
         return MSG_PROCESS_ERROR;
     }
 
-    s->s3->change_cipher_spec = 1;
+    s->s3.change_cipher_spec = 1;
     if (!ssl3_do_change_cipher_spec(s)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CHANGE_CIPHER_SPEC,
                  ERR_R_INTERNAL_ERROR);
@@ -782,14 +782,14 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
     }
 
     /* If this occurs, we have missed a message */
-    if (!SSL_IS_TLS13(s) && !s->s3->change_cipher_spec) {
+    if (!SSL_IS_TLS13(s) && !s->s3.change_cipher_spec) {
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_TLS_PROCESS_FINISHED,
                  SSL_R_GOT_A_FIN_BEFORE_A_CCS);
         return MSG_PROCESS_ERROR;
     }
-    s->s3->change_cipher_spec = 0;
+    s->s3.change_cipher_spec = 0;
 
-    md_len = s->s3->tmp.peer_finish_md_len;
+    md_len = s->s3.tmp.peer_finish_md_len;
 
     if (md_len != PACKET_remaining(pkt)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_FINISHED,
@@ -797,7 +797,7 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
 
-    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3->tmp.peer_finish_md,
+    if (CRYPTO_memcmp(PACKET_data(pkt), s->s3.tmp.peer_finish_md,
                       md_len) != 0) {
         SSLfatal(s, SSL_AD_DECRYPT_ERROR, SSL_F_TLS_PROCESS_FINISHED,
                  SSL_R_DIGEST_CHECK_FAILED);
@@ -813,13 +813,13 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
         return MSG_PROCESS_ERROR;
     }
     if (s->server) {
-        memcpy(s->s3->previous_client_finished, s->s3->tmp.peer_finish_md,
+        memcpy(s->s3.previous_client_finished, s->s3.tmp.peer_finish_md,
                md_len);
-        s->s3->previous_client_finished_len = md_len;
+        s->s3.previous_client_finished_len = md_len;
     } else {
-        memcpy(s->s3->previous_server_finished, s->s3->tmp.peer_finish_md,
+        memcpy(s->s3.previous_server_finished, s->s3.tmp.peer_finish_md,
                md_len);
-        s->s3->previous_server_finished_len = md_len;
+        s->s3.previous_server_finished_len = md_len;
     }
 
     /*
@@ -1155,7 +1155,7 @@ int tls_get_message_header(SSL *s, int *mt)
                     return 0;
                 }
                 if (s->statem.hand_state == TLS_ST_BEFORE
-                        && (s->s3->flags & TLS1_FLAGS_STATELESS) != 0) {
+                        && (s->s3.flags & TLS1_FLAGS_STATELESS) != 0) {
                     /*
                      * We are stateless and we received a CCS. Probably this is
                      * from a client between the first and second ClientHellos.
@@ -1165,10 +1165,10 @@ int tls_get_message_header(SSL *s, int *mt)
                      */
                     return 0;
                 }
-                s->s3->tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
+                s->s3.tmp.message_type = *mt = SSL3_MT_CHANGE_CIPHER_SPEC;
                 s->init_num = readbytes - 1;
                 s->init_msg = s->init_buf->data;
-                s->s3->tmp.message_size = readbytes;
+                s->s3.tmp.message_size = readbytes;
                 return 1;
             } else if (recvd_type != SSL3_RT_HANDSHAKE) {
                 SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE,
@@ -1202,7 +1202,7 @@ int tls_get_message_header(SSL *s, int *mt)
     /* s->init_num == SSL3_HM_HEADER_LENGTH */
 
     *mt = *p;
-    s->s3->tmp.message_type = *(p++);
+    s->s3.tmp.message_type = *(p++);
 
     if (RECORD_LAYER_is_sslv2_record(&s->rlayer)) {
         /*
@@ -1214,7 +1214,7 @@ int tls_get_message_header(SSL *s, int *mt)
          */
         l = RECORD_LAYER_get_rrec_length(&s->rlayer)
             + SSL3_HM_HEADER_LENGTH;
-        s->s3->tmp.message_size = l;
+        s->s3.tmp.message_size = l;
 
         s->init_msg = s->init_buf->data;
         s->init_num = SSL3_HM_HEADER_LENGTH;
@@ -1226,7 +1226,7 @@ int tls_get_message_header(SSL *s, int *mt)
                      SSL_R_EXCESSIVE_MESSAGE_SIZE);
             return 0;
         }
-        s->s3->tmp.message_size = l;
+        s->s3.tmp.message_size = l;
 
         s->init_msg = s->init_buf->data + SSL3_HM_HEADER_LENGTH;
         s->init_num = 0;
@@ -1241,14 +1241,14 @@ int tls_get_message_body(SSL *s, size_t *len)
     unsigned char *p;
     int i;
 
-    if (s->s3->tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
+    if (s->s3.tmp.message_type == SSL3_MT_CHANGE_CIPHER_SPEC) {
         /* We've already read everything in */
         *len = (unsigned long)s->init_num;
         return 1;
     }
 
     p = s->init_msg;
-    n = s->s3->tmp.message_size - s->init_num;
+    n = s->s3.tmp.message_size - s->init_num;
     while (n > 0) {
         i = s->method->ssl_read_bytes(s, SSL3_RT_HANDSHAKE, NULL,
                                       &p[s->init_num], n, 0, &readbytes);
@@ -1291,9 +1291,9 @@ int tls_get_message_body(SSL *s, size_t *len)
          */
 #define SERVER_HELLO_RANDOM_OFFSET  (SSL3_HM_HEADER_LENGTH + 2)
         /* KeyUpdate and NewSessionTicket do not need to be added */
-        if (!SSL_IS_TLS13(s) || (s->s3->tmp.message_type != SSL3_MT_NEWSESSION_TICKET
-                                 && s->s3->tmp.message_type != SSL3_MT_KEY_UPDATE)) {
-            if (s->s3->tmp.message_type != SSL3_MT_SERVER_HELLO
+        if (!SSL_IS_TLS13(s) || (s->s3.tmp.message_type != SSL3_MT_NEWSESSION_TICKET
+                                 && s->s3.tmp.message_type != SSL3_MT_KEY_UPDATE)) {
+            if (s->s3.tmp.message_type != SSL3_MT_SERVER_HELLO
                     || s->init_num < SERVER_HELLO_RANDOM_OFFSET + SSL3_RANDOM_SIZE
                     || memcmp(hrrrandom,
                               s->init_buf->data + SERVER_HELLO_RANDOM_OFFSET,
@@ -1933,7 +1933,7 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
     /* Check for downgrades */
     if (s->version == TLS1_2_VERSION && real_max > s->version) {
         if (memcmp(tls12downgrade,
-                   s->s3->server_random + SSL3_RANDOM_SIZE
+                   s->s3.server_random + SSL3_RANDOM_SIZE
                                         - sizeof(tls12downgrade),
                    sizeof(tls12downgrade)) == 0) {
             s->version = origv;
@@ -1946,7 +1946,7 @@ int ssl_choose_client_version(SSL *s, int version, RAW_EXTENSION *extensions)
                && s->version < TLS1_2_VERSION
                && real_max > s->version) {
         if (memcmp(tls11downgrade,
-                   s->s3->server_random + SSL3_RANDOM_SIZE
+                   s->s3.server_random + SSL3_RANDOM_SIZE
                                         - sizeof(tls11downgrade),
                    sizeof(tls11downgrade)) == 0) {
             s->version = origv;
@@ -2200,7 +2200,7 @@ int create_synthetic_message_hash(SSL *s, const unsigned char *hashval,
     if (hrr != NULL
             && (!ssl3_finish_mac(s, hrr, hrrlen)
                 || !ssl3_finish_mac(s, (unsigned char *)s->init_buf->data,
-                                    s->s3->tmp.message_size
+                                    s->s3.tmp.message_size
                                     + SSL3_HM_HEADER_LENGTH))) {
         /* SSLfatal() already called */
         return 0;
@@ -2263,8 +2263,8 @@ int parse_ca_names(SSL *s, PACKET *pkt)
         xn = NULL;
     }
 
-    sk_X509_NAME_pop_free(s->s3->tmp.peer_ca_names, X509_NAME_free);
-    s->s3->tmp.peer_ca_names = ca_sk;
+    sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
+    s->s3.tmp.peer_ca_names = ca_sk;
 
     return 1;
 
@@ -2340,8 +2340,8 @@ size_t construct_key_exchange_tbs(SSL *s, unsigned char **ptbs,
                  ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    memcpy(tbs, s->s3->client_random, SSL3_RANDOM_SIZE);
-    memcpy(tbs + SSL3_RANDOM_SIZE, s->s3->server_random, SSL3_RANDOM_SIZE);
+    memcpy(tbs, s->s3.client_random, SSL3_RANDOM_SIZE);
+    memcpy(tbs + SSL3_RANDOM_SIZE, s->s3.server_random, SSL3_RANDOM_SIZE);
 
     memcpy(tbs + SSL3_RANDOM_SIZE * 2, param, paramlen);
 
@@ -2368,7 +2368,7 @@ int tls13_save_handshake_digest_for_pha(SSL *s)
             return 0;
         }
         if (!EVP_MD_CTX_copy_ex(s->pha_dgst,
-                                s->s3->handshake_dgst)) {
+                                s->s3.handshake_dgst)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS13_SAVE_HANDSHAKE_DIGEST_FOR_PHA,
                      ERR_R_INTERNAL_ERROR);
@@ -2390,7 +2390,7 @@ int tls13_restore_handshake_digest_for_pha(SSL *s)
                  ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if (!EVP_MD_CTX_copy_ex(s->s3->handshake_dgst,
+    if (!EVP_MD_CTX_copy_ex(s->s3.handshake_dgst,
                             s->pha_dgst)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS13_RESTORE_HANDSHAKE_DIGEST_FOR_PHA,

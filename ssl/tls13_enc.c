@@ -324,15 +324,15 @@ int tls13_setup_key_block(SSL *s)
     const EVP_CIPHER *c;
     const EVP_MD *hash;
 
-    s->session->cipher = s->s3->tmp.new_cipher;
+    s->session->cipher = s->s3.tmp.new_cipher;
     if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, NULL, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
-    s->s3->tmp.new_sym_enc = c;
-    s->s3->tmp.new_hash = hash;
+    s->s3.tmp.new_sym_enc = c;
+    s->s3.tmp.new_hash = hash;
 
     return 1;
 }
@@ -370,11 +370,11 @@ static int derive_secret_key_and_iv(SSL *s, int sending, const EVP_MD *md,
         uint32_t algenc;
 
         ivlen = EVP_CCM_TLS_IV_LEN;
-        if (s->s3->tmp.new_cipher == NULL) {
+        if (s->s3.tmp.new_cipher == NULL) {
             /* We've not selected a cipher yet - we must be doing early data */
             algenc = s->session->cipher->algorithm_enc;
         } else {
-            algenc = s->s3->tmp.new_cipher->algorithm_enc;
+            algenc = s->s3.tmp.new_cipher->algorithm_enc;
         }
         if (algenc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
@@ -479,7 +479,7 @@ int tls13_change_cipher_state(SSL *s, int which)
             labellen = sizeof(client_early_traffic) - 1;
             log_label = CLIENT_EARLY_LABEL;
 
-            handlen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+            handlen = BIO_get_mem_data(s->s3.handshake_buffer, &hdata);
             if (handlen <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS13_CHANGE_CIPHER_STATE,
@@ -600,7 +600,7 @@ int tls13_change_cipher_state(SSL *s, int which)
 
     if (!(which & SSL3_CC_EARLY)) {
         md = ssl_handshake_md(s);
-        cipher = s->s3->tmp.new_sym_enc;
+        cipher = s->s3.tmp.new_sym_enc;
         if (!ssl3_digest_cached_records(s, 1)
                 || !ssl_handshake_hash(s, hashval, sizeof(hashval), &hashlen)) {
             /* SSLfatal() already called */;
@@ -709,7 +709,7 @@ int tls13_update_key(SSL *s, int sending)
     }
 
     if (!derive_secret_key_and_iv(s, sending, ssl_handshake_md(s),
-                                  s->s3->tmp.new_sym_enc, insecret, NULL,
+                                  s->s3.tmp.new_sym_enc, insecret, NULL,
                                   application_traffic,
                                   sizeof(application_traffic) - 1, secret, iv,
                                   ciph_ctx)) {

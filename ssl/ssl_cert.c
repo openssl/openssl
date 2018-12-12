@@ -516,13 +516,13 @@ void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 
 const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
 {
-    return s->s3 != NULL ? s->s3->tmp.peer_ca_names : NULL;
+    return s->s3.tmp.peer_ca_names;
 }
 
 STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
     if (!s->server)
-        return s->s3 != NULL ?  s->s3->tmp.peer_ca_names : NULL;
+        return s->s3.tmp.peer_ca_names;
     return s->client_ca_names != NULL ?  s->client_ca_names
                                       : s->ctx->client_ca_names;
 }

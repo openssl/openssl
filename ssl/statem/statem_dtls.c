@@ -349,7 +349,7 @@ int dtls_get_message(SSL *s, int *mt, size_t *len)
         return 0;
     }
 
-    *mt = s->s3->tmp.message_type;
+    *mt = s->s3.tmp.message_type;
 
     p = (unsigned char *)s->init_buf->data;
     *len = s->init_num;
@@ -442,9 +442,9 @@ static int dtls1_preprocess_fragment(SSL *s, struct hm_header_st *msg_hdr)
             return 0;
         }
 
-        s->s3->tmp.message_size = msg_len;
+        s->s3.tmp.message_size = msg_len;
         s->d1->r_msg_hdr.msg_len = msg_len;
-        s->s3->tmp.message_type = msg_hdr->type;
+        s->s3.tmp.message_type = msg_hdr->type;
         s->d1->r_msg_hdr.type = msg_hdr->type;
         s->d1->r_msg_hdr.seq = msg_hdr->seq;
     } else if (msg_len != s->d1->r_msg_hdr.msg_len) {
@@ -776,8 +776,8 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
         memcpy(s->init_buf->data, wire, readbytes);
         s->init_num = readbytes - 1;
         s->init_msg = s->init_buf->data + 1;
-        s->s3->tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
-        s->s3->tmp.message_size = readbytes - 1;
+        s->s3.tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
+        s->s3.tmp.message_size = readbytes - 1;
         *len = readbytes - 1;
         return 1;
     }
@@ -902,7 +902,7 @@ static int dtls_get_reassembled_message(SSL *s, int *errtype, size_t *len)
  * for these 2 messages, we need to
  * ssl->enc_read_ctx                    re-init
  * ssl->rlayer.read_sequence            zero
- * ssl->s3->read_mac_secret             re-init
+ * ssl->s3.read_mac_secret             re-init
  * ssl->session->read_sym_enc           assign
  * ssl->session->read_compression       assign
  * ssl->session->read_hash              assign
@@ -955,7 +955,7 @@ WORK_STATE dtls_wait_for_dry(SSL *s)
             return WORK_ERROR;
         }
 
-        s->s3->in_read_app_data = 2;
+        s->s3.in_read_app_data = 2;
         s->rwstate = SSL_READING;
         BIO_clear_retry_flags(SSL_get_rbio(s));
         BIO_set_retry_read(SSL_get_rbio(s));
