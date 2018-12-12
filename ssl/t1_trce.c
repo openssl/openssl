@@ -1030,7 +1030,7 @@ static int ssl_print_server_hello(BIO *bio, int indent,
 
 static int ssl_get_keyex(const char **pname, const SSL *ssl)
 {
-    unsigned long alg_k = ssl->s3->tmp.new_cipher->algorithm_mkey;
+    unsigned long alg_k = ssl->s3.tmp.new_cipher->algorithm_mkey;
 
     if (alg_k & SSL_kRSA) {
         *pname = "rsa";

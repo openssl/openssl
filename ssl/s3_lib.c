@@ -3292,11 +3292,6 @@ int ssl3_handshake_write(SSL *s)
 
 int ssl3_new(SSL *s)
 {
-    SSL3_STATE *s3;
-
-    if ((s3 = OPENSSL_zalloc(sizeof(*s3))) == NULL)
-        goto err;
-    s->s3 = s3;
 
 #ifndef OPENSSL_NO_SRP
     if (!SSL_SRP_CTX_init(s))
@@ -3313,57 +3308,56 @@ int ssl3_new(SSL *s)
 
 void ssl3_free(SSL *s)
 {
-    if (s == NULL || s->s3 == NULL)
+    if (s == NULL)
         return;
 
     ssl3_cleanup_key_block(s);
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    EVP_PKEY_free(s->s3->peer_tmp);
-    s->s3->peer_tmp = NULL;
-    EVP_PKEY_free(s->s3->tmp.pkey);
-    s->s3->tmp.pkey = NULL;
+    EVP_PKEY_free(s->s3.peer_tmp);
+    s->s3.peer_tmp = NULL;
+    EVP_PKEY_free(s->s3.tmp.pkey);
+    s->s3.tmp.pkey = NULL;
 #endif
 
-    OPENSSL_free(s->s3->tmp.ctype);
-    sk_X509_NAME_pop_free(s->s3->tmp.peer_ca_names, X509_NAME_free);
-    OPENSSL_free(s->s3->tmp.ciphers_raw);
-    OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
-    OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    OPENSSL_free(s->s3->tmp.peer_cert_sigalgs);
+    OPENSSL_free(s->s3.tmp.ctype);
+    sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
+    OPENSSL_free(s->s3.tmp.ciphers_raw);
+    OPENSSL_clear_free(s->s3.tmp.pms, s->s3.tmp.pmslen);
+    OPENSSL_free(s->s3.tmp.peer_sigalgs);
+    OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
     ssl3_free_digest_list(s);
-    OPENSSL_free(s->s3->alpn_selected);
-    OPENSSL_free(s->s3->alpn_proposed);
+    OPENSSL_free(s->s3.alpn_selected);
+    OPENSSL_free(s->s3.alpn_proposed);
 
 #ifndef OPENSSL_NO_SRP
     SSL_SRP_CTX_free(s);
 #endif
-    OPENSSL_clear_free(s->s3, sizeof(*s->s3));
-    s->s3 = NULL;
+    memset(&s->s3, 0, sizeof(s->s3));
 }
 
 int ssl3_clear(SSL *s)
 {
     ssl3_cleanup_key_block(s);
-    OPENSSL_free(s->s3->tmp.ctype);
-    sk_X509_NAME_pop_free(s->s3->tmp.peer_ca_names, X509_NAME_free);
-    OPENSSL_free(s->s3->tmp.ciphers_raw);
-    OPENSSL_clear_free(s->s3->tmp.pms, s->s3->tmp.pmslen);
-    OPENSSL_free(s->s3->tmp.peer_sigalgs);
-    OPENSSL_free(s->s3->tmp.peer_cert_sigalgs);
+    OPENSSL_free(s->s3.tmp.ctype);
+    sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
+    OPENSSL_free(s->s3.tmp.ciphers_raw);
+    OPENSSL_clear_free(s->s3.tmp.pms, s->s3.tmp.pmslen);
+    OPENSSL_free(s->s3.tmp.peer_sigalgs);
+    OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    EVP_PKEY_free(s->s3->tmp.pkey);
-    EVP_PKEY_free(s->s3->peer_tmp);
+    EVP_PKEY_free(s->s3.tmp.pkey);
+    EVP_PKEY_free(s->s3.peer_tmp);
 #endif                          /* !OPENSSL_NO_EC */
 
     ssl3_free_digest_list(s);
 
-    OPENSSL_free(s->s3->alpn_selected);
-    OPENSSL_free(s->s3->alpn_proposed);
+    OPENSSL_free(s->s3.alpn_selected);
+    OPENSSL_free(s->s3.alpn_proposed);
 
     /* NULL/zero-out everything in the s3 struct */
-    memset(s->s3, 0, sizeof(*s->s3));
+    memset(&s->s3, 0, sizeof(s->s3));
 
     if (!ssl_free_wbio_buffer(s))
         return 0;
@@ -3396,17 +3390,17 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_CLIENT_CERT_REQUEST:
         break;
     case SSL_CTRL_GET_NUM_RENEGOTIATIONS:
-        ret = s->s3->num_renegotiations;
+        ret = s->s3.num_renegotiations;
         break;
     case SSL_CTRL_CLEAR_NUM_RENEGOTIATIONS:
-        ret = s->s3->num_renegotiations;
-        s->s3->num_renegotiations = 0;
+        ret = s->s3.num_renegotiations;
+        s->s3.num_renegotiations = 0;
         break;
     case SSL_CTRL_GET_TOTAL_RENEGOTIATIONS:
-        ret = s->s3->total_renegotiations;
+        ret = s->s3.total_renegotiations;
         break;
     case SSL_CTRL_GET_FLAGS:
-        ret = (int)(s->s3->flags);
+        ret = (int)(s->s3.flags);
         break;
 #ifndef OPENSSL_NO_DH
     case SSL_CTRL_SET_TMP_DH:
@@ -3571,7 +3565,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             const SSL_CIPHER *cipher;
             if (!s->server)
                 return 0;
-            cipher = s->s3->tmp.new_cipher;
+            cipher = s->s3.tmp.new_cipher;
             if (cipher == NULL)
                 return 0;
             /*
@@ -3580,9 +3574,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
              */
             if (cipher->algorithm_auth & (SSL_aNULL | SSL_aSRP))
                 return 2;
-            if (s->s3->tmp.cert == NULL)
+            if (s->s3.tmp.cert == NULL)
                 return 0;
-            s->cert->key = s->s3->tmp.cert;
+            s->cert->key = s->s3.tmp.cert;
             return 1;
         }
         return ssl_cert_set_current(s->cert, larg);
@@ -3648,11 +3642,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
     case SSL_CTRL_GET_CLIENT_CERT_TYPES:
         {
             const unsigned char **pctype = parg;
-            if (s->server || !s->s3->tmp.cert_req)
+            if (s->server || !s->s3.tmp.cert_req)
                 return 0;
             if (pctype)
-                *pctype = s->s3->tmp.ctype;
-            return s->s3->tmp.ctype_len;
+                *pctype = s->s3.tmp.ctype;
+            return s->s3.tmp.ctype_len;
         }
 
     case SSL_CTRL_SET_CLIENT_CERT_TYPES:
@@ -3670,24 +3664,24 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
         return ssl_cert_set_cert_store(s->cert, parg, 1, larg);
 
     case SSL_CTRL_GET_PEER_SIGNATURE_NID:
-        if (s->s3->tmp.peer_sigalg == NULL)
+        if (s->s3.tmp.peer_sigalg == NULL)
             return 0;
-        *(int *)parg = s->s3->tmp.peer_sigalg->hash;
+        *(int *)parg = s->s3.tmp.peer_sigalg->hash;
         return 1;
 
     case SSL_CTRL_GET_SIGNATURE_NID:
-        if (s->s3->tmp.sigalg == NULL)
+        if (s->s3.tmp.sigalg == NULL)
             return 0;
-        *(int *)parg = s->s3->tmp.sigalg->hash;
+        *(int *)parg = s->s3.tmp.sigalg->hash;
         return 1;
 
     case SSL_CTRL_GET_PEER_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-        if (s->session == NULL || s->s3->peer_tmp == NULL) {
+        if (s->session == NULL || s->s3.peer_tmp == NULL) {
             return 0;
         } else {
-            EVP_PKEY_up_ref(s->s3->peer_tmp);
-            *(EVP_PKEY **)parg = s->s3->peer_tmp;
+            EVP_PKEY_up_ref(s->s3.peer_tmp);
+            *(EVP_PKEY **)parg = s->s3.peer_tmp;
             return 1;
         }
 #else
@@ -3696,11 +3690,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
     case SSL_CTRL_GET_TMP_KEY:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-        if (s->session == NULL || s->s3->tmp.pkey == NULL) {
+        if (s->session == NULL || s->s3.tmp.pkey == NULL) {
             return 0;
         } else {
-            EVP_PKEY_up_ref(s->s3->tmp.pkey);
-            *(EVP_PKEY **)parg = s->s3->tmp.pkey;
+            EVP_PKEY_up_ref(s->s3.tmp.pkey);
+            *(EVP_PKEY **)parg = s->s3.tmp.pkey;
             return 1;
         }
 #else
@@ -4255,8 +4249,8 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
          * key exchange scheme skip tests.
          */
         if (!SSL_IS_TLS13(s)) {
-            mask_k = s->s3->tmp.mask_k;
-            mask_a = s->s3->tmp.mask_a;
+            mask_k = s->s3.tmp.mask_k;
+            mask_a = s->s3.tmp.mask_a;
 #ifndef OPENSSL_NO_SRP
             if (s->srp_ctx.srp_Mask & SSL_kSRP) {
                 mask_k |= SSL_kSRP;
@@ -4298,7 +4292,7 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                 continue;
 #if !defined(OPENSSL_NO_EC)
             if ((alg_k & SSL_kECDHE) && (alg_a & SSL_aECDSA)
-                && s->s3->is_probably_safari) {
+                && s->s3.is_probably_safari) {
                 if (!ret)
                     ret = sk_SSL_CIPHER_value(allow, ii);
                 continue;
@@ -4335,7 +4329,7 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
     /* Get mask of algorithms disabled by signature list */
     ssl_set_sig_mask(&alg_a, s, SSL_SECOP_SIGALG_MASK);
 
-    alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
 
 #ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
@@ -4411,11 +4405,11 @@ int ssl3_shutdown(SSL *s)
         ssl3_send_alert(s, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
         /*
          * our shutdown alert has been sent now, and if it still needs to be
-         * written, s->s3->alert_dispatch will be true
+         * written, s->s3.alert_dispatch will be true
          */
-        if (s->s3->alert_dispatch)
+        if (s->s3.alert_dispatch)
             return -1;        /* return WANT_WRITE */
-    } else if (s->s3->alert_dispatch) {
+    } else if (s->s3.alert_dispatch) {
         /* resend it if not sent */
         ret = s->method->ssl_dispatch_alert(s);
         if (ret == -1) {
@@ -4438,7 +4432,7 @@ int ssl3_shutdown(SSL *s)
     }
 
     if ((s->shutdown == (SSL_SENT_SHUTDOWN | SSL_RECEIVED_SHUTDOWN)) &&
-        !s->s3->alert_dispatch)
+        !s->s3.alert_dispatch)
         return 1;
     else
         return 0;
@@ -4447,7 +4441,7 @@ int ssl3_shutdown(SSL *s)
 int ssl3_write(SSL *s, const void *buf, size_t len, size_t *written)
 {
     clear_sys_error();
-    if (s->s3->renegotiate)
+    if (s->s3.renegotiate)
         ssl3_renegotiate_check(s, 0);
 
     return s->method->ssl_write_bytes(s, SSL3_RT_APPLICATION_DATA, buf, len,
@@ -4460,13 +4454,13 @@ static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
     int ret;
 
     clear_sys_error();
-    if (s->s3->renegotiate)
+    if (s->s3.renegotiate)
         ssl3_renegotiate_check(s, 0);
-    s->s3->in_read_app_data = 1;
+    s->s3.in_read_app_data = 1;
     ret =
         s->method->ssl_read_bytes(s, SSL3_RT_APPLICATION_DATA, NULL, buf, len,
                                   peek, readbytes);
-    if ((ret == -1) && (s->s3->in_read_app_data == 2)) {
+    if ((ret == -1) && (s->s3.in_read_app_data == 2)) {
         /*
          * ssl3_read_bytes decided to call s->handshake_func, which called
          * ssl3_read_bytes to read handshake data. However, ssl3_read_bytes
@@ -4480,7 +4474,7 @@ static int ssl3_read_internal(SSL *s, void *buf, size_t len, int peek,
                                       len, peek, readbytes);
         ossl_statem_set_in_handshake(s, 0);
     } else
-        s->s3->in_read_app_data = 0;
+        s->s3.in_read_app_data = 0;
 
     return ret;
 }
@@ -4500,7 +4494,7 @@ int ssl3_renegotiate(SSL *s)
     if (s->handshake_func == NULL)
         return 1;
 
-    s->s3->renegotiate = 1;
+    s->s3.renegotiate = 1;
     return 1;
 }
 
@@ -4516,7 +4510,7 @@ int ssl3_renegotiate_check(SSL *s, int initok)
 {
     int ret = 0;
 
-    if (s->s3->renegotiate) {
+    if (s->s3.renegotiate) {
         if (!RECORD_LAYER_read_pending(&s->rlayer)
             && !RECORD_LAYER_write_pending(&s->rlayer)
             && (initok || !SSL_in_init(s))) {
@@ -4526,9 +4520,9 @@ int ssl3_renegotiate_check(SSL *s, int initok)
              * state.
              */
             ossl_statem_set_renegotiate(s);
-            s->s3->renegotiate = 0;
-            s->s3->num_renegotiations++;
-            s->s3->total_renegotiations++;
+            s->s3.renegotiate = 0;
+            s->s3.num_renegotiations++;
+            s->s3.total_renegotiations++;
             ret = 1;
         }
     }
@@ -4544,13 +4538,13 @@ int ssl3_renegotiate_check(SSL *s, int initok)
 long ssl_get_algorithm2(SSL *s)
 {
     long alg2;
-    if (s->s3 == NULL || s->s3->tmp.new_cipher == NULL)
+    if (s->s3.tmp.new_cipher == NULL)
         return -1;
-    alg2 = s->s3->tmp.new_cipher->algorithm2;
+    alg2 = s->s3.tmp.new_cipher->algorithm2;
     if (s->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SHA256_PRF) {
         if (alg2 == (SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF))
             return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
-    } else if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_PSK) {
+    } else if (s->s3.tmp.new_cipher->algorithm_mkey & SSL_PSK) {
         if (alg2 == (SSL_HANDSHAKE_MAC_SHA384 | TLS1_PRF_SHA384))
             return SSL_HANDSHAKE_MAC_DEFAULT | TLS1_PRF;
     }
@@ -4600,13 +4594,13 @@ int ssl_fill_hello_random(SSL *s, int server, unsigned char *result, size_t len,
 int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
                                int free_pms)
 {
-    unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+    unsigned long alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
     int ret = 0;
 
     if (alg_k & SSL_PSK) {
 #ifndef OPENSSL_NO_PSK
         unsigned char *pskpms, *t;
-        size_t psklen = s->s3->tmp.psklen;
+        size_t psklen = s->s3.tmp.psklen;
         size_t pskpmslen;
 
         /* create PSK premaster_secret */
@@ -4627,10 +4621,10 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
             memcpy(t, pms, pmslen);
         t += pmslen;
         s2n(psklen, t);
-        memcpy(t, s->s3->tmp.psk, psklen);
+        memcpy(t, s->s3.tmp.psk, psklen);
 
-        OPENSSL_clear_free(s->s3->tmp.psk, psklen);
-        s->s3->tmp.psk = NULL;
+        OPENSSL_clear_free(s->s3.tmp.psk, psklen);
+        s->s3.tmp.psk = NULL;
         if (!s->method->ssl3_enc->generate_master_secret(s,
                     s->session->master_key,pskpms, pskpmslen,
                     &s->session->master_key_length)) {
@@ -4661,7 +4655,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
             OPENSSL_cleanse(pms, pmslen);
     }
     if (s->server == 0)
-        s->s3->tmp.pms = NULL;
+        s->s3.tmp.pms = NULL;
     return ret;
 }
 
@@ -4829,8 +4823,8 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
         }
     } else {
         /* Save premaster secret */
-        s->s3->tmp.pms = pms;
-        s->s3->tmp.pmslen = pmslen;
+        s->s3.tmp.pms = pms;
+        s->s3.tmp.pmslen = pmslen;
         pms = NULL;
         rv = 1;
     }

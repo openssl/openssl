@@ -374,10 +374,10 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     s->rwstate = SSL_NOTHING;
 
     /*-
-     * s->s3->rrec.type         - is the type of record
-     * s->s3->rrec.data,    - data
-     * s->s3->rrec.off,     - offset into 'data' for next read
-     * s->s3->rrec.length,  - number of bytes.
+     * s->s3.rrec.type     - is the type of record
+     * s->s3.rrec.data,    - data
+     * s->s3.rrec.off,     - offset into 'data' for next read
+     * s->s3.rrec.length,  - number of bytes.
      */
     rr = s->rlayer.rrec;
 
@@ -442,8 +442,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
 
     /* we now have a packet which can be read and processed */
 
-    if (s->s3->change_cipher_spec /* set when we receive ChangeCipherSpec,
-                                   * reset by ssl3_get_finished */
+    if (s->s3.change_cipher_spec /* set when we receive ChangeCipherSpec,
+                                  * reset by ssl3_get_finished */
         && (SSL3_RECORD_get_type(rr) != SSL3_RT_HANDSHAKE)) {
         /*
          * We now have application data between CCS and Finished. Most likely
@@ -574,7 +574,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
         }
 
         if (alert_level == SSL3_AL_WARNING) {
-            s->s3->warn_alert = alert_descr;
+            s->s3.warn_alert = alert_descr;
             SSL3_RECORD_set_read(rr);
 
             s->rlayer.alert_count++;
@@ -607,7 +607,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             char tmp[16];
 
             s->rwstate = SSL_NOTHING;
-            s->s3->fatal_alert = alert_descr;
+            s->s3.fatal_alert = alert_descr;
             SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS1_READ_BYTES,
                      SSL_AD_REASON_OFFSET + alert_descr);
             BIO_snprintf(tmp, sizeof tmp, "%d", alert_descr);
@@ -761,10 +761,10 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
          * application data at this point (session renegotiation not yet
          * started), we will indulge it.
          */
-        if (s->s3->in_read_app_data &&
-            (s->s3->total_renegotiations != 0) &&
+        if (s->s3.in_read_app_data &&
+            (s->s3.total_renegotiations != 0) &&
             ossl_statem_app_data_allowed(s)) {
-            s->s3->in_read_app_data = 2;
+            s->s3.in_read_app_data = 2;
             return -1;
         } else {
             SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_F_DTLS1_READ_BYTES,
@@ -818,7 +818,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf,
     }
 
     /* If we have an alert to send, lets send it */
-    if (s->s3->alert_dispatch) {
+    if (s->s3.alert_dispatch) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
             return i;

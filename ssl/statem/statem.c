@@ -319,7 +319,7 @@ static int state_machine(SSL *s, int server)
          * If we are stateless then we already called SSL_clear() - don't do
          * it again and clear the STATELESS flag itself.
          */
-        if ((s->s3->flags & TLS1_FLAGS_STATELESS) == 0 && !SSL_clear(s))
+        if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0 && !SSL_clear(s))
             return -1;
     }
 #ifndef OPENSSL_NO_SCTP
@@ -399,7 +399,7 @@ static int state_machine(SSL *s, int server)
         /*
          * Should have been reset by tls_process_finished, too.
          */
-        s->s3->change_cipher_spec = 0;
+        s->s3.change_cipher_spec = 0;
 
         /*
          * Ok, we now need to push on a buffering BIO ...but not with
@@ -598,7 +598,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             if (!transition(s, mt))
                 return SUB_STATE_ERROR;
 
-            if (s->s3->tmp.message_size > max_message_size(s)) {
+            if (s->s3.tmp.message_size > max_message_size(s)) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_READ_STATE_MACHINE,
                          SSL_R_EXCESSIVE_MESSAGE_SIZE);
                 return SUB_STATE_ERROR;
@@ -606,8 +606,8 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
 
             /* dtls_get_message already did this */
             if (!SSL_IS_DTLS(s)
-                    && s->s3->tmp.message_size > 0
-                    && !grow_init_buf(s, s->s3->tmp.message_size
+                    && s->s3.tmp.message_size > 0
+                    && !grow_init_buf(s, s->s3.tmp.message_size
                                          + SSL3_HM_HEADER_LENGTH)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_READ_STATE_MACHINE,
                          ERR_R_BUF_LIB);
@@ -923,7 +923,7 @@ int ossl_statem_app_data_allowed(SSL *s)
     if (st->state == MSG_FLOW_UNINITED)
         return 0;
 
-    if (!s->s3->in_read_app_data || (s->s3->total_renegotiations == 0))
+    if (!s->s3.in_read_app_data || (s->s3.total_renegotiations == 0))
         return 0;
 
     if (s->server) {
@@ -952,7 +952,7 @@ int ossl_statem_app_data_allowed(SSL *s)
  */
 int ossl_statem_export_allowed(SSL *s)
 {
-    return s->s3->previous_server_finished_len != 0
+    return s->s3.previous_server_finished_len != 0
            && s->statem.hand_state != TLS_ST_SW_FINISHED;
 }
 

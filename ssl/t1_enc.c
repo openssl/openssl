@@ -75,8 +75,8 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
     /* Calls SSLfatal() as required */
     ret = tls1_PRF(s,
                    TLS_MD_KEY_EXPANSION_CONST,
-                   TLS_MD_KEY_EXPANSION_CONST_SIZE, s->s3->server_random,
-                   SSL3_RANDOM_SIZE, s->s3->client_random, SSL3_RANDOM_SIZE,
+                   TLS_MD_KEY_EXPANSION_CONST_SIZE, s->s3.server_random,
+                   SSL3_RANDOM_SIZE, s->s3.client_random, SSL3_RANDOM_SIZE,
                    NULL, 0, NULL, 0, s->session->master_key,
                    s->session->master_key_length, km, num, 1);
 
@@ -140,20 +140,20 @@ int tls1_change_cipher_state(SSL *s, int which)
     int bit;
 #endif
 
-    c = s->s3->tmp.new_sym_enc;
-    m = s->s3->tmp.new_hash;
-    mac_type = s->s3->tmp.new_mac_pkey_type;
+    c = s->s3.tmp.new_sym_enc;
+    m = s->s3.tmp.new_hash;
+    mac_type = s->s3.tmp.new_mac_pkey_type;
 #ifndef OPENSSL_NO_COMP
-    comp = s->s3->tmp.new_compression;
+    comp = s->s3.tmp.new_compression;
 #endif
 
     if (which & SSL3_CC_READ) {
         if (s->ext.use_etm)
-            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+            s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
         else
-            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
+            s->s3.flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_READ;
 
-        if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+        if (s->s3.tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
             s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
         else
             s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
@@ -195,16 +195,16 @@ int tls1_change_cipher_state(SSL *s, int which)
          */
         if (!SSL_IS_DTLS(s))
             RECORD_LAYER_reset_read_sequence(&s->rlayer);
-        mac_secret = &(s->s3->read_mac_secret[0]);
-        mac_secret_size = &(s->s3->read_mac_secret_size);
+        mac_secret = &(s->s3.read_mac_secret[0]);
+        mac_secret_size = &(s->s3.read_mac_secret_size);
     } else {
         s->statem.enc_write_state = ENC_WRITE_STATE_INVALID;
         if (s->ext.use_etm)
-            s->s3->flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
+            s->s3.flags |= TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
         else
-            s->s3->flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
+            s->s3.flags &= ~TLS1_FLAGS_ENCRYPT_THEN_MAC_WRITE;
 
-        if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+        if (s->s3.tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
             s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
         else
             s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
@@ -252,15 +252,15 @@ int tls1_change_cipher_state(SSL *s, int which)
          */
         if (!SSL_IS_DTLS(s))
             RECORD_LAYER_reset_write_sequence(&s->rlayer);
-        mac_secret = &(s->s3->write_mac_secret[0]);
-        mac_secret_size = &(s->s3->write_mac_secret_size);
+        mac_secret = &(s->s3.write_mac_secret[0]);
+        mac_secret_size = &(s->s3.write_mac_secret_size);
     }
 
     if (reuse_dd)
         EVP_CIPHER_CTX_reset(dd);
 
-    p = s->s3->tmp.key_block;
-    i = *mac_secret_size = s->s3->tmp.new_mac_secret_size;
+    p = s->s3.tmp.key_block;
+    i = *mac_secret_size = s->s3.tmp.new_mac_secret_size;
 
     /* TODO(size_t): convert me */
     cl = EVP_CIPHER_key_length(c);
@@ -291,7 +291,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         n += k;
     }
 
-    if (n > s->s3->tmp.key_block_length) {
+    if (n > s->s3.tmp.key_block_length) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -328,7 +328,7 @@ int tls1_change_cipher_state(SSL *s, int which)
         }
     } else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE) {
         int taglen;
-        if (s->s3->tmp.
+        if (s->s3.tmp.
             new_cipher->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8))
             taglen = EVP_CCM8_TLS_TAG_LEN;
         else
@@ -471,7 +471,7 @@ int tls1_setup_key_block(SSL *s)
     size_t num, mac_secret_size = 0;
     int ret = 0;
 
-    if (s->s3->tmp.key_block_length != 0)
+    if (s->s3.tmp.key_block_length != 0)
         return 1;
 
     if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size,
@@ -481,10 +481,10 @@ int tls1_setup_key_block(SSL *s)
         return 0;
     }
 
-    s->s3->tmp.new_sym_enc = c;
-    s->s3->tmp.new_hash = hash;
-    s->s3->tmp.new_mac_pkey_type = mac_type;
-    s->s3->tmp.new_mac_secret_size = mac_secret_size;
+    s->s3.tmp.new_sym_enc = c;
+    s->s3.tmp.new_hash = hash;
+    s->s3.tmp.new_mac_pkey_type = mac_type;
+    s->s3.tmp.new_mac_secret_size = mac_secret_size;
     num = EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
     num *= 2;
 
@@ -496,14 +496,14 @@ int tls1_setup_key_block(SSL *s)
         goto err;
     }
 
-    s->s3->tmp.key_block_length = num;
-    s->s3->tmp.key_block = p;
+    s->s3.tmp.key_block_length = num;
+    s->s3.tmp.key_block = p;
 
     OSSL_TRACE_BEGIN(TLS) {
         BIO_printf(trc_out, "client random\n");
-        BIO_dump_indent(trc_out, s->s3->client_random, SSL3_RANDOM_SIZE, 4);
+        BIO_dump_indent(trc_out, s->s3.client_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "server random\n");
-        BIO_dump_indent(trc_out, s->s3->server_random, SSL3_RANDOM_SIZE, 4);
+        BIO_dump_indent(trc_out, s->s3.server_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "master key\n");
         BIO_dump_indent(trc_out,
                         s->session->master_key,
@@ -526,15 +526,15 @@ int tls1_setup_key_block(SSL *s)
          * enable vulnerability countermeasure for CBC ciphers with known-IV
          * problem (http://www.openssl.org/~bodo/tls-cbc.txt)
          */
-        s->s3->need_empty_fragments = 1;
+        s->s3.need_empty_fragments = 1;
 
         if (s->session->cipher != NULL) {
             if (s->session->cipher->algorithm_enc == SSL_eNULL)
-                s->s3->need_empty_fragments = 0;
+                s->s3.need_empty_fragments = 0;
 
 #ifndef OPENSSL_NO_RC4
             if (s->session->cipher->algorithm_enc == SSL_RC4)
-                s->s3->need_empty_fragments = 0;
+                s->s3.need_empty_fragments = 0;
 #endif
         }
     }
@@ -606,9 +606,9 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         if (!tls1_PRF(s,
                       TLS_MD_MASTER_SECRET_CONST,
                       TLS_MD_MASTER_SECRET_CONST_SIZE,
-                      s->s3->client_random, SSL3_RANDOM_SIZE,
+                      s->s3.client_random, SSL3_RANDOM_SIZE,
                       NULL, 0,
-                      s->s3->server_random, SSL3_RANDOM_SIZE,
+                      s->s3.server_random, SSL3_RANDOM_SIZE,
                       NULL, 0, p, len, out,
                       SSL3_MASTER_SECRET_SIZE, 1)) {
            /* SSLfatal() already called */
@@ -620,9 +620,9 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         BIO_printf(trc_out, "Premaster Secret:\n");
         BIO_dump_indent(trc_out, p, len, 4);
         BIO_printf(trc_out, "Client Random:\n");
-        BIO_dump_indent(trc_out, s->s3->client_random, SSL3_RANDOM_SIZE, 4);
+        BIO_dump_indent(trc_out, s->s3.client_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "Server Random:\n");
-        BIO_dump_indent(trc_out, s->s3->server_random, SSL3_RANDOM_SIZE, 4);
+        BIO_dump_indent(trc_out, s->s3.server_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "Master Secret:\n");
         BIO_dump_indent(trc_out,
                         s->session->master_key,
@@ -658,9 +658,9 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     currentvalpos = 0;
     memcpy(val + currentvalpos, (unsigned char *)label, llen);
     currentvalpos += llen;
-    memcpy(val + currentvalpos, s->s3->client_random, SSL3_RANDOM_SIZE);
+    memcpy(val + currentvalpos, s->s3.client_random, SSL3_RANDOM_SIZE);
     currentvalpos += SSL3_RANDOM_SIZE;
-    memcpy(val + currentvalpos, s->s3->server_random, SSL3_RANDOM_SIZE);
+    memcpy(val + currentvalpos, s->s3.server_random, SSL3_RANDOM_SIZE);
     currentvalpos += SSL3_RANDOM_SIZE;
 
     if (use_context) {
