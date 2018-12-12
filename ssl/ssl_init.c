@@ -12,6 +12,7 @@
 #include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/trace.h>
 #include "ssl_locl.h"
 #include "internal/thread_once.h"
 
@@ -23,10 +24,9 @@ static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
-            "Adding SSL ciphers and digests\n");
-#endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_INIT))
+        OSSL_debug(OSSL_DEBUG_INIT, "OPENSSL_INIT: ossl_init_ssl_base: "
+                   "Adding SSL ciphers and digests\n");
 #ifndef OPENSSL_NO_DES
     EVP_add_cipher(EVP_des_cbc());
     EVP_add_cipher(EVP_des_ede3_cbc());
@@ -88,10 +88,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     EVP_add_digest(EVP_sha384());
     EVP_add_digest(EVP_sha512());
 #ifndef OPENSSL_NO_COMP
-# ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
-            "SSL_COMP_get_compression_methods()\n");
-# endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_INIT))
+        OSSL_debug(OSSL_DEBUG_INIT, "OPENSSL_INIT: ossl_init_ssl_base: "
+                   "SSL_COMP_get_compression_methods()\n");
     /*
      * This will initialise the built-in compression algorithms. The value
      * returned is a STACK_OF(SSL_COMP), but that can be discarded safely
@@ -102,10 +101,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
     if (!ssl_load_ciphers())
         return 0;
 
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_ssl_base: "
-            "SSL_add_ssl_module()\n");
-#endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_INIT))
+        OSSL_debug(OSSL_DEBUG_INIT, "OPENSSL_INIT: ossl_init_ssl_base: "
+                   "SSL_add_ssl_module()\n");
     /*
      * We ignore an error return here. Not much we can do - but not that bad
      * either. We can still safely continue.
@@ -124,10 +122,9 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_load_ssl_strings)
      * pulling in all the error strings during static linking
      */
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
-# ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr, "OPENSSL_INIT: ossl_init_load_ssl_strings: "
-            "ERR_load_SSL_strings()\n");
-# endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_INIT))
+        OSSL_debug(OSSL_DEBUG_INIT, "OPENSSL_INIT: ossl_init_load_ssl_strings: "
+                   "ERR_load_SSL_strings()\n");
     ERR_load_SSL_strings();
     ssl_strings_inited = 1;
 #endif
@@ -149,19 +146,17 @@ static void ssl_library_stop(void)
 
     if (ssl_base_inited) {
 #ifndef OPENSSL_NO_COMP
-# ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                "ssl_comp_free_compression_methods_int()\n");
-# endif
+        if (OSSL_debug_is_set(OSSL_DEBUG_INIT))
+            OSSL_debug(OSSL_DEBUG_INIT, "OPENSSL_INIT: ssl_library_stop: "
+                       "ssl_comp_free_compression_methods_int()\n");
         ssl_comp_free_compression_methods_int();
 #endif
     }
 
     if (ssl_strings_inited) {
-#ifdef OPENSSL_INIT_DEBUG
-        fprintf(stderr, "OPENSSL_INIT: ssl_library_stop: "
-                "err_free_strings_int()\n");
-#endif
+        if (OSSL_debug_is_set(OSSL_DEBUG_INIT))
+            OSSL_debug(OSSL_DEBUG_INIT, "OPENSSL_INIT: ssl_library_stop: "
+                       "err_free_strings_int()\n");
         /*
          * If both crypto and ssl error strings are inited we will end up
          * calling err_free_strings_int() twice - but that's ok. The second

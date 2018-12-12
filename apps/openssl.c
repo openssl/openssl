@@ -118,6 +118,13 @@ static char *make_config_name(void)
     return p;
 }
 
+static size_t internal_init_debug_cb(const char *buf, size_t cnt, void *data)
+{
+    int ret = fwrite(buf, cnt, 1, (FILE *)data);
+
+    return ret < 0 ? 0 : ret;
+}
+
 static size_t internal_debug_cb(const char *buf, size_t cnt, void *data)
 {
     int ret = BIO_write((BIO *)data, buf, cnt);
@@ -165,6 +172,13 @@ static void setup_debug(void)
 
             switch (type) {
             case -1:
+                break;
+            case OSSL_DEBUG_INIT:
+                /*
+                 * Special treatment for OSSL_DEBUG_INIT, because we know
+                 * it generates output after bio_err has been freed
+                 */
+                OSSL_debug_set(type, internal_init_debug_cb, stderr);
                 break;
             default:
                 OSSL_debug_set(type, internal_debug_cb, bio_err);
