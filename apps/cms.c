@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,7 +65,7 @@ struct cms_key_param_st {
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_ENCRYPT,
-    OPT_DECRYPT, OPT_SIGN, OPT_SIGN_RECEIPT, OPT_RESIGN,
+    OPT_DECRYPT, OPT_SIGN, OPT_CADES, OPT_SIGN_RECEIPT, OPT_RESIGN,
     OPT_VERIFY, OPT_VERIFY_RETCODE, OPT_VERIFY_RECEIPT,
     OPT_CMSOUT, OPT_DATA_OUT, OPT_DATA_CREATE, OPT_DIGEST_VERIFY,
     OPT_DIGEST_CREATE, OPT_COMPRESS, OPT_UNCOMPRESS,
@@ -102,6 +102,7 @@ const OPTIONS cms_options[] = {
     {"sign", OPT_SIGN, '-', "Sign message"},
     {"sign_receipt", OPT_SIGN_RECEIPT, '-', "Generate a signed receipt for the message"},
     {"resign", OPT_RESIGN, '-', "Resign a signed message"},
+    {"cades", OPT_CADES, '-', "Include signer certificate digest"},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-'},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<'},
@@ -325,6 +326,9 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_BINARY:
             flags |= CMS_BINARY;
+            break;
+        case OPT_CADES:
+            flags |= CMS_CADES;
             break;
         case OPT_KEYID:
             flags |= CMS_USE_KEYID;
@@ -940,6 +944,27 @@ int cms_main(int argc, char **argv)
             si = CMS_add1_signer(cms, signer, key, sign_md, tflags);
             if (si == NULL)
                 goto end;
+            if (flags & CMS_CADES) {
+                ESS_SIGNING_CERT *sc = NULL;
+                ESS_SIGNING_CERT_V2 *sc2 = NULL;
+                int add_sc;
+
+                if (sign_md == EVP_sha1() || sign_md == NULL) {
+                    if ((sc = ESS_SIGNING_CERT_new_init(signer,
+                                                        NULL, 1)) == NULL)
+                        goto end;
+                    add_sc = CMS_add1_signing_cert(si, sc);
+                    ESS_SIGNING_CERT_free(sc);
+                } else {
+                    if ((sc2 = ESS_SIGNING_CERT_V2_new_init(sign_md, signer,
+                                                            NULL, 1)) == NULL)
+                        goto end;
+                    add_sc = CMS_add1_signing_cert_v2(si, sc2);
+                    ESS_SIGNING_CERT_V2_free(sc2);
+                }
+                if (!add_sc)
+                    goto end;
+            }
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx;
                 pctx = CMS_SignerInfo_get0_pkey_ctx(si);

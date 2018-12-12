@@ -34,6 +34,7 @@ L ASYNC         include/openssl/async.h         crypto/async/async_err.c
 L KDF           include/openssl/kdf.h           crypto/kdf/kdf_err.c
 L SM2           crypto/include/internal/sm2.h   crypto/sm2/sm2_err.c
 L OSSL_STORE    include/openssl/store.h         crypto/store/store_err.c
+L ESS           include/openssl/ess.h           crypto/ess/ess_err.c
 
 # additional header files to be scanned for function names
 L NONE          include/openssl/x509_vfy.h      NONE

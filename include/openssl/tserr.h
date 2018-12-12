@@ -25,12 +25,6 @@ int ERR_load_TS_strings(void);
  */
 #  define TS_F_DEF_SERIAL_CB                               110
 #  define TS_F_DEF_TIME_CB                                 111
-#  define TS_F_ESS_ADD_SIGNING_CERT                        112
-#  define TS_F_ESS_ADD_SIGNING_CERT_V2                     147
-#  define TS_F_ESS_CERT_ID_NEW_INIT                        113
-#  define TS_F_ESS_CERT_ID_V2_NEW_INIT                     156
-#  define TS_F_ESS_SIGNING_CERT_NEW_INIT                   114
-#  define TS_F_ESS_SIGNING_CERT_V2_NEW_INIT                157
 #  define TS_F_INT_TS_RESP_VERIFY_TOKEN                    149
 #  define TS_F_PKCS7_TO_TS_TST_INFO                        148
 #  define TS_F_TS_ACCURACY_SET_MICROS                      115
@@ -92,9 +86,9 @@ int ERR_load_TS_strings(void);
 #  define TS_R_COULD_NOT_SET_ENGINE                        127
 #  define TS_R_COULD_NOT_SET_TIME                          115
 #  define TS_R_DETACHED_CONTENT                            134
-#  define TS_R_ESS_ADD_SIGNING_CERT_ERROR                  116
-#  define TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR               139
-#  define TS_R_ESS_SIGNING_CERTIFICATE_ERROR               101
+#  define TS_R_ESS_SIGNING_CERTIFICATE_ERROR               139
+#  define TS_R_ESS_SIGNING_CERT_ADD_ERROR                  140
+#  define TS_R_ESS_SIGNING_CERT_V2_ADD_ERROR               141
 #  define TS_R_INVALID_NULL_POINTER                        102
 #  define TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE          117
 #  define TS_R_MESSAGE_IMPRINT_MISMATCH                    103
