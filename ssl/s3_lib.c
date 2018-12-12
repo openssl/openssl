@@ -16,6 +16,7 @@
 #include <openssl/md5.h>
 #include <openssl/dh.h>
 #include <openssl/rand.h>
+#include <openssl/trace.h>
 #include "internal/cryptlib.h"
 
 #define TLS13_NUM_CIPHERS       OSSL_NELEM(tls13_ciphers)
@@ -4153,20 +4154,20 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
      * pay with the price of sk_SSL_CIPHER_dup().
      */
 
-#ifdef CIPHER_DEBUG
-    fprintf(stderr, "Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr),
-            (void *)srvr);
-    for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
-        c = sk_SSL_CIPHER_value(srvr, i);
-        fprintf(stderr, "%p:%s\n", (void *)c, c->name);
-    }
-    fprintf(stderr, "Client sent %d from %p:\n", sk_SSL_CIPHER_num(clnt),
-            (void *)clnt);
-    for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
-        c = sk_SSL_CIPHER_value(clnt, i);
-        fprintf(stderr, "%p:%s\n", (void *)c, c->name);
-    }
-#endif
+    OSSL_TRACE_BEGIN(SSL_CIPHER) {
+        BIO_printf(trc_out, "Server has %d from %p:\n",
+                   sk_SSL_CIPHER_num(srvr), (void *)srvr);
+        for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
+            c = sk_SSL_CIPHER_value(srvr, i);
+            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+        }
+        BIO_printf(trc_out, "Client sent %d from %p:\n",
+                   sk_SSL_CIPHER_num(clnt), (void *)clnt);
+        for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
+            c = sk_SSL_CIPHER_value(clnt, i);
+            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
+        }
+    } OSSL_TRACE_END(SSL_CIPHER);
 
     /* SUITE-B takes precedence over server preference and ChaCha priortiy */
     if (tls1_suiteb(s)) {
@@ -4280,10 +4281,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif                          /* OPENSSL_NO_PSK */
 
             ok = (alg_k & mask_k) && (alg_a & mask_a);
-#ifdef CIPHER_DEBUG
-            fprintf(stderr, "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
-                    alg_a, mask_k, mask_a, (void *)c, c->name);
-#endif
+            OSSL_TRACE7(SSL_CIPHER,
+                        "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
+                        ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
 
 #ifndef OPENSSL_NO_EC
             /*
