@@ -417,6 +417,7 @@ my @disablables = (
     "tests",
     "threads",
     "tls",
+    "trace",
     "ts",
     "ubsan",
     "ui-console",

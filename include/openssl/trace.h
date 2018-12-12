@@ -173,18 +173,35 @@ void OSSL_trace_end(int category, BIO *channel);
  * call OSSL_TRACE_CANCEL(category).
  */
 
-# define OSSL_TRACE_BEGIN(category) \
+# ifndef OPENSSL_NO_TRACE
+
+#  define OSSL_TRACE_BEGIN(category) \
     do { \
         BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_##category); \
  \
         if (trc_out != NULL)
 
-# define OSSL_TRACE_END(category) \
+#  define OSSL_TRACE_END(category) \
         OSSL_trace_end(OSSL_TRACE_CATEGORY_##category, trc_out); \
     } while (0)
 
-# define OSSL_TRACE_CANCEL(category) \
+#  define OSSL_TRACE_CANCEL(category) \
         OSSL_trace_end(OSSL_TRACE_CATEGORY_##category, trc_out) \
+
+# else
+
+#  define OSSL_TRACE_BEGIN(category)           \
+    do {                                        \
+        BIO *trc_out = NULL;                    \
+        if (0)
+
+#  define OSSL_TRACE_END(category)             \
+    } while(0)
+
+#  define OSSL_TRACE_CANCEL(category)          \
+    ((void)0)
+
+# endif
 
 /*
  * OSSL_TRACE_ENABLED() - Check whether tracing is enabled for |category|
@@ -195,9 +212,16 @@ void OSSL_trace_end(int category, BIO *channel);
  *         ...
  *     }
  */
+# ifndef OPENSSL_NO_TRACE
 
-# define OSSL_TRACE_ENABLED(category) \
+#  define OSSL_TRACE_ENABLED(category) \
     OSSL_trace_enabled(OSSL_TRACE_CATEGORY_##category)
+
+# else
+
+#  define OSSL_TRACE_ENABLED(category) (0)
+
+# endif
 
 /*
  * OSSL_TRACE*() - OneShot Trace Macros
