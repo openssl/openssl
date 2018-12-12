@@ -45,6 +45,8 @@ int OSSL_debug_get_type(const char *name);
 void OSSL_trace_set(int type, OSSL_tracer_fn fn, void *hookdata);
 void OSSL_debug_set(int type, OSSL_tracer_fn fn, void *hookdata);
 
+# ifndef OPENSSL_NO_TRACE
+
 /*
  * Functions to check that a type / "channel" has a hook registered.
  * These are used within OpenSSL libraries to avoid unnecessary work.
@@ -58,6 +60,13 @@ int OSSL_debug_is_set(int type);
  */
 BIO *OSSL_trace_bio(int type);
 BIO *OSSL_debug_bio(int type);
+
+# else
+#  define OSSL_trace_is_set(type)               0
+#  define OSSL_debug_is_set(type)               0
+#  define OSSL_trace_bio(type)                  NULL
+#  define OSSL_debug_bio(type)                  NULL
+# endif
 
 /*
  * Convenience functions that are shortcuts for

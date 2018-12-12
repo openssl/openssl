@@ -16,6 +16,8 @@
 #include "internal/bio.h"
 #include "internal/nelem.h"
 
+#ifndef OPENSSL_NO_TRACE
+
 /*-
  * INTERNAL BIO IMPLEMENTATION
  *
@@ -64,6 +66,8 @@ static int hookputs(BIO *h, const char *str)
     return EOF;
 }
 
+#endif
+
 /* Helper struct and macro to get name string to number mapping */
 struct namenum_st {
     const char * const name;
@@ -89,12 +93,17 @@ int OSSL_trace_get_type(const char *name)
     return -1;                   /* or should that be 0, i.e. DEFAULT? */
 }
 
+#ifndef OPENSSL_NO_TRACE
+
 /* We store one trace BIO for each trace type */
 static struct bio_hook_st trace_data[OSSL_TRACE_NUM] = { { NULL, NULL }, };
 static BIO *trace_bio[OSSL_TRACE_NUM] = { NULL, };
 
+#endif
+
 void OSSL_trace_set(int type, OSSL_tracer_fn fn, void *hookdata)
 {
+#ifndef OPENSSL_NO_TRACE
     if (trace_data[type].hook != NULL && fn == NULL) {
         BIO_free(trace_bio[type]);
         trace_bio[type] = NULL;
@@ -107,7 +116,10 @@ void OSSL_trace_set(int type, OSSL_tracer_fn fn, void *hookdata)
         && fn != NULL
         && (trace_bio[type] = BIO_new(&hook_method)) != NULL)
         BIO_set_data(trace_bio[type], &trace_data[type]);
+#endif
 }
+
+#ifndef OPENSSL_NO_TRACE
 
 int OSSL_trace_is_set(int type)
 {
@@ -121,14 +133,18 @@ BIO *OSSL_trace_bio(int type)
     return trace_bio[OSSL_TRACE_DEFAULT];
 }
 
+#endif
+
 int OSSL_trace(int type, char *fmt, ...)
 {
+    int ret = 1;
+#ifndef OPENSSL_NO_TRACE
     va_list args;
-    int ret;
 
     va_start(args, fmt);
     ret = OSSL_vtrace(type, fmt, args);
     va_end(args);
+#endif
 
     return ret;
 }
@@ -160,12 +176,17 @@ int OSSL_debug_get_type(const char *name)
     return -1;                   /* or should that be 0, i.e. DEFAULT? */
 }
 
+#ifndef OPENSSL_NO_TRACE
+
 /* We store one trace BIO for each debug type */
 static struct bio_hook_st debug_data[OSSL_DEBUG_NUM] = { { NULL, NULL }, };
 static BIO *debug_bio[OSSL_DEBUG_NUM] = { NULL, };
 
+#endif
+
 void OSSL_debug_set(int type, OSSL_tracer_fn fn, void *hookdata)
 {
+#ifndef OPENSSL_NO_TRACE
     if (debug_data[type].hook != NULL && fn == NULL) {
         BIO_free(debug_bio[type]);
         debug_bio[type] = NULL;
@@ -178,7 +199,10 @@ void OSSL_debug_set(int type, OSSL_tracer_fn fn, void *hookdata)
         && fn != NULL
         && (debug_bio[type] = BIO_new(&hook_method)) != NULL)
         BIO_set_data(debug_bio[type], &debug_data[type]);
+#endif
 }
+
+#ifndef OPENSSL_NO_TRACE
 
 int OSSL_debug_is_set(int type)
 {
@@ -192,14 +216,18 @@ BIO *OSSL_debug_bio(int type)
     return debug_bio[OSSL_DEBUG_DEFAULT];
 }
 
+#endif
+
 int OSSL_debug(int type, char *fmt, ...)
 {
+    int ret = 1;
+#ifndef OPENSSL_NO_TRACE
     va_list args;
-    int ret = 0;
 
     va_start(args, fmt);
     ret = OSSL_vdebug(type, fmt, args);
     va_end(args);
+#endif
 
     return ret;
 }
