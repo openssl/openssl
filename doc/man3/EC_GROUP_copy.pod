@@ -175,7 +175,7 @@ and EC_GROUP_get_degree return the order, cofactor, curve name (NID), ASN1 flag,
 specified curve respectively. If there is no curve name associated with a curve then EC_GROUP_get_curve_name will return 0.
 
 EC_GROUP_get0_order() returns an internal pointer to the group order.
-EC_GROUP_get_order_bits() returns the number of bits in the group order.
+EC_GROUP_order_bits() returns the number of bits in the group order.
 EC_GROUP_get0_cofactor() returns an internal pointer to the group cofactor.
 
 EC_GROUP_get0_seed returns a pointer to the seed that was used to generate the parameter b, or NULL if the seed is not
