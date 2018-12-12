@@ -454,6 +454,12 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     int fix_len;
     unsigned int b;
 
+    /* Prevent accidental use of encryption context when decrypting */
+    if (ctx->encrypt) {
+        EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
     if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER) {
         fix_len = M_do_cipher(ctx, out, in, inl);
         if (fix_len < 0) {
