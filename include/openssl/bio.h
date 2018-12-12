@@ -641,16 +641,16 @@ int BIO_sock_non_fatal_error(int error);
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);
 int BIO_dump_cb(int (*cb) (const void *data, size_t len, void *u),
-                void *u, const char *s, int len);
+                void *u, const void *s, int len);
 int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
-                       void *u, const char *s, int len, int indent);
-int BIO_dump(BIO *b, const char *bytes, int len);
-int BIO_dump_indent(BIO *b, const char *bytes, int len, int indent);
+                       void *u, const void *s, int len, int indent);
+int BIO_dump(BIO *b, const void *bytes, int len);
+int BIO_dump_indent(BIO *b, const void *bytes, int len, int indent);
 # ifndef OPENSSL_NO_STDIO
-int BIO_dump_fp(FILE *fp, const char *s, int len);
-int BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent);
+int BIO_dump_fp(FILE *fp, const void *s, int len);
+int BIO_dump_indent_fp(FILE *fp, const void *s, int len, int indent);
 # endif
-int BIO_hex_string(BIO *out, int indent, int width, unsigned char *data,
+int BIO_hex_string(BIO *out, int indent, int width, const void *data,
                    int datalen);
 
 # ifndef OPENSSL_NO_SOCK
