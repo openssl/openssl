@@ -1112,13 +1112,13 @@ foreach my $feature (@{$target{disable}}) {
     $disabled{$feature} = 'config';
 }
 foreach my $feature (@{$target{enable}}) {
-    if ("default" eq ($disabled{$_} // "")) {
+    if ("default" eq ($disabled{$feature} // "")) {
         if (exists $deprecated_disablables{$feature}) {
             warn "***** config $target enables deprecated feature $feature\n";
         } elsif (!grep { $feature eq $_ } @disablables) {
             die "***** config $target enables unknown feature $feature\n";
         }
-        delete $disabled{$_};
+        delete $disabled{$feature};
     }
 }
 
