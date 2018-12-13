@@ -13,14 +13,8 @@
 # include <openssl/x509.h>
 # include <openssl/evp.h>
 # include <openssl/hmac.h>
+# include <openssl/trace.h>
 # include "evp_locl.h"
-
-/* set this to print out info about the keygen algorithm */
-/* #define OPENSSL_DEBUG_PKCS5V2 */
-
-# ifdef OPENSSL_DEBUG_PKCS5V2
-static void h__dump(const unsigned char *p, int len);
-# endif
 
 /*
  * This is an implementation of PKCS#5 v2.0 password based encryption key
@@ -109,15 +103,21 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     }
     HMAC_CTX_free(hctx);
     HMAC_CTX_free(hctx_tpl);
-# ifdef OPENSSL_DEBUG_PKCS5V2
-    fprintf(stderr, "Password:\n");
-    h__dump(pass, passlen);
-    fprintf(stderr, "Salt:\n");
-    h__dump(salt, saltlen);
-    fprintf(stderr, "Iteration count %d\n", iter);
-    fprintf(stderr, "Key:\n");
-    h__dump(out, keylen);
-# endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_PKCS5V2)) {
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Password:\n");
+        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS5V2),
+                       0, passlen, pass, passlen);
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "\n");
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Salt:\n");
+        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS5V2),
+                       0, saltlen, salt, saltlen);
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "\n");
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Iteration count %d\n", iter);
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Key:\n");
+        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS5V2),
+                       0, keylen, out, keylen);
+        OSSL_debug(OSSL_DEBUG_PKCS5V2, "\n");
+    }
     return 1;
 }
 
@@ -254,12 +254,3 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM_free(kdf);
     return rv;
 }
-
-# ifdef OPENSSL_DEBUG_PKCS5V2
-static void h__dump(const unsigned char *p, int len)
-{
-    for (; len--; p++)
-        fprintf(stderr, "%02X ", *p);
-    fprintf(stderr, "\n");
-}
-# endif
