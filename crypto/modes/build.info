@@ -1,7 +1,7 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c \
-        ccm128.c xts128.c wrap128.c ocb128.c \
+        ccm128.c xts128.c wrap128.c ocb128.c siv128.c \
         {- $target{modes_asm_src} -}
 
 INCLUDE[gcm128.o]=..

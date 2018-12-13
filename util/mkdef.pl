@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -193,8 +193,8 @@ sub feature_filter {
 
     if ($apiv) {
         foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)_(\d+)_(\d+)$/;
-            my $symdep = sprintf "%x%02x%02x", $1, $2, $3;
+            next unless /^DEPRECATEDIN_(\d+)(?:_(\d+)_(\d+))?$/;
+            my $symdep = sprintf "%x%02x%02x", $1, ($2 // 0), ($3 // 0);
             $verdict = 0 if $apiv ge $symdep;
         }
     }
@@ -386,19 +386,11 @@ _____
 _____
 
     if (defined $version) {
-        my ($libvmajor, $libvminor, $libvedit, $libvpatch) =
-            $version =~ /^(\d+)_(\d+)_(\d+)([a-z]{0,2})(?:-.*)?$/;
-        my $libvpatchnum = 0;
-        for (split '', $libvpatch // '') {
-            $libvpatchnum += ord(lc($_)) - 96;
-            # To compensate because the letter 'z' is always followed by
-            # another, i.e. doesn't add any value on its own
-            $libvpatchnum-- if lc($_) eq 'z';
-        }
-        my $match1 = $libvmajor * 100 + $libvminor;
-        my $match2 = $libvedit * 100 + $libvpatchnum;
+        $version =~ /^(\d+)\.(\d+)\.(\d+)/;
+        my $libvmajor = $1;
+        my $libvminor = $2 * 100 + $3;
         print <<"_____";
-GSMATCH=LEQUAL,$match1,$match2
+GSMATCH=LEQUAL,$libvmajor,$libvminor
 _____
     }
 }

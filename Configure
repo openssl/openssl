@@ -2,7 +2,7 @@
 # -*- mode: perl; -*-
 # Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -43,8 +43,9 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 #
 # --cross-compile-prefix Add specified prefix to binutils components.
 #
-# --api         One of 0.9.8, 1.0.0 or 1.1.0.  Do not compile support for
-#               interfaces deprecated as of the specified OpenSSL version.
+# --api         One of 0.9.8, 1.0.0, 1.0.1, 1.0.2, 1.1.0, 1.1.1, or 3.0.0 / 3.
+#               Do not compile support for interfaces deprecated as of the
+#               specified OpenSSL version.
 #
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
@@ -173,11 +174,15 @@ our $BSDthreads="-pthread -D_THREAD_SAFE -D_REENTRANT";
 #
 # API compatibility name to version number mapping.
 #
-my $maxapi = "1.1.0";           # API for "no-deprecated" builds
+my $maxapi = "3.0.0";           # API for "no-deprecated" builds
 my $apitable = {
-    "1.1.0" => "0x10100000L",
-    "1.0.0" => "0x10000000L",
-    "0.9.8" => "0x00908000L",
+    "3.0.0" => 3,
+    "1.1.1" => 2,
+    "1.1.0" => 2,
+    "1.0.2" => 1,
+    "1.0.1" => 1,
+    "1.0.0" => 1,
+    "0.9.8" => 0,
 };
 
 our %table = ();
@@ -242,28 +247,37 @@ if (grep /^reconf(igure)?$/, @argvcopy) {
 $config{perlargv} = [ @argvcopy ];
 
 # Collect version numbers
-$config{version} = "unknown";
-$config{version_num} = "unknown";
-$config{shlib_version_number} = "unknown";
-$config{shlib_version_history} = "unknown";
+$config{major} = "unknown";
+$config{minor} = "unknown";
+$config{patch} = "unknown";
+$config{prerelease} = "";
+$config{build_metadata} = "";
+$config{shlib_version} = "unknown";
 
 collect_information(
     collect_from_file(catfile($srcdir,'include/openssl/opensslv.h')),
-    qr/OPENSSL.VERSION.TEXT.*OpenSSL (\S+) / => sub { $config{version} = $1; },
-    qr/OPENSSL.VERSION.NUMBER.*(0x\S+)/	     => sub { $config{version_num}=$1 },
-    qr/SHLIB_VERSION_NUMBER *"([^"]+)"/	     => sub { $config{shlib_version_number}=$1 },
-    qr/SHLIB_VERSION_HISTORY *"([^"]*)"/     => sub { $config{shlib_version_history}=$1 }
+    qr/#\s+define\s+OPENSSL_VERSION_MAJOR\s+(\d+)/ =>
+        sub { $config{major} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_MINOR\s+(\d+)/ =>
+        sub { $config{minor} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_PATCH\s+(\d+)/ =>
+        sub { $config{patch} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_PRE_RELEASE\s+"((?:\\.|[^"])*)"/ =>
+        sub { $config{prerelease} = $1; },
+    qr/#\s+define\s+OPENSSL_VERSION_BUILD_METADATA\s+"((?:\\.|[^"])*)"/ =>
+        sub { $config{build_metadata} = $1; },
+    qr/#\s+define\s+OPENSSL_SHLIB_VERSION\s+([\d\.]+)/ =>
+        sub { $config{shlib_version} = $1; },
     );
-if ($config{shlib_version_history} ne "") { $config{shlib_version_history} .= ":"; }
-
-($config{major}, $config{minor})
-    = ($config{version} =~ /^([0-9]+)\.([0-9\.]+)/);
-($config{shlib_major}, $config{shlib_minor})
-    = ($config{shlib_version_number} =~ /^([0-9]+)\.([0-9\.]+)/);
 die "erroneous version information in opensslv.h: ",
-    "$config{major}, $config{minor}, $config{shlib_major}, $config{shlib_minor}\n"
-    if ($config{major} eq "" || $config{minor} eq ""
-	|| $config{shlib_major} eq "" ||  $config{shlib_minor} eq "");
+    "$config{major}.$config{minor}.$config{patch}, $config{shlib_version}\n"
+    if ($config{major} eq "unknown"
+            || $config{minor} eq "unknown"
+            || $config{patch} eq "unknown"
+            || $config{shlib_version} eq "unknown");
+
+$config{version} = "$config{major}.$config{minor}.$config{patch}";
+$config{full_version} = "$config{version}$config{prerelease}$config{build_metadata}";
 
 # Collect target configurations
 
@@ -307,6 +321,7 @@ my @dtls = qw(dtls1 dtls1_2);
 # For developers: keep it sorted alphabetically
 
 my @disablables = (
+    "ktls",
     "afalgeng",
     "aria",
     "asan",
@@ -376,6 +391,7 @@ my @disablables = (
     "seed",
     "shared",
     "siphash",
+    "siv",
     "sm2",
     "sm3",
     "sm4",
@@ -437,6 +453,7 @@ our %disabled = ( # "what"         => "comment"
 		  "weak-ssl-ciphers"    => "default",
 		  "zlib"                => "default",
 		  "zlib-dynamic"        => "default",
+		  "ktls"                => "default",
 		);
 
 # Note: => pair form used for aesthetics, not to truly make a hash table
@@ -482,6 +499,8 @@ my @disable_cascades = (
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
+
+    sub { $disabled{cmac}; } => [ "siv" ],
     );
 
 # Avoid protocol support holes.  Also disable all versions below N, if version
@@ -986,8 +1005,8 @@ if ($target eq "HASH") {
     exit 0;
 }
 
-print "Configuring OpenSSL version $config{version} ($config{version_num}) ";
-print "for $target\n";
+print "Configuring OpenSSL version $config{full_version} ";
+print "for target $target\n";
 
 if (scalar(@seed_sources) == 0) {
     print "Using os-specific seed configuration\n";
@@ -1093,13 +1112,13 @@ foreach my $feature (@{$target{disable}}) {
     $disabled{$feature} = 'config';
 }
 foreach my $feature (@{$target{enable}}) {
-    if ("default" eq ($disabled{$_} // "")) {
+    if ("default" eq ($disabled{$feature} // "")) {
         if (exists $deprecated_disablables{$feature}) {
             warn "***** config $target enables deprecated feature $feature\n";
         } elsif (!grep { $feature eq $_ } @disablables) {
             die "***** config $target enables unknown feature $feature\n";
         }
-        delete $disabled{$_};
+        delete $disabled{$feature};
     }
 }
 
@@ -1354,6 +1373,7 @@ unless ($disabled{asm}) {
     push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT" if ($target{bn_asm_src} =~ /-mont/);
     push @{$config{lib_defines}}, "OPENSSL_BN_ASM_MONT5" if ($target{bn_asm_src} =~ /-mont5/);
     push @{$config{lib_defines}}, "OPENSSL_BN_ASM_GF2m" if ($target{bn_asm_src} =~ /-gf2m/);
+    push @{$config{lib_defines}}, "BN_DIV3W" if ($target{bn_asm_src} =~ /-div3w/);
 
     if ($target{sha1_asm_src}) {
 	push @{$config{lib_defines}}, "SHA1_ASM"   if ($target{sha1_asm_src} =~ /sx86/ || $target{sha1_asm_src} =~ /sha1/);
@@ -1486,11 +1506,9 @@ $config{cflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
 $config{cxxflags} = [ map { (my $x = $_) =~ s/([\\\"])/\\$1/g; $x }
                           @{$config{cxxflags}} ] if $config{CXX};
 
-if (defined($config{api})) {
-    $config{openssl_api_defines} = [ "OPENSSL_MIN_API=".$apitable->{$config{api}} ];
-    my $apiflag = sprintf("OPENSSL_API_COMPAT=%s", $apitable->{$config{api}});
-    push @{$config{defines}}, $apiflag;
-}
+$config{openssl_api_defines} = [
+    "OPENSSL_MIN_API=".($apitable->{$config{api} // ""} // -1)
+];
 
 if ($strict_warnings)
 	{
@@ -1559,6 +1577,27 @@ unless ($disabled{afalgeng}) {
 }
 
 push @{$config{openssl_feature_defines}}, "OPENSSL_NO_AFALGENG" if ($disabled{afalgeng});
+
+unless ($disabled{ktls}) {
+    $config{ktls}="";
+    if ($target =~ m/^linux/) {
+        my $usr = "/usr/$config{cross_compile_prefix}";
+        chop($usr);
+        if ($config{cross_compile_prefix} eq "") {
+            $usr = "/usr";
+        }
+        my $minver = (4 << 16) + (13 << 8) + 0;
+        my @verstr = split(" ",`cat $usr/include/linux/version.h | grep LINUX_VERSION_CODE`);
+
+        if ($verstr[2] < $minver) {
+            $disabled{ktls} = "too-old-kernel";
+        }
+    } else {
+        $disabled{ktls}  = "not-linux";
+    }
+}
+
+push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
 # Finish up %config by appending things the user gave us on the command line
 # apart from "make variables"

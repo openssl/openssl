@@ -10,7 +10,7 @@
   our $osslprefix = 'OSSL$';
   (our $osslprefix_q = $osslprefix) =~ s/\$/\\\$/;
 
-  our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version_number});
+  our $sover_dirname = sprintf "%02d%02d", split(/\./, $config{shlib_version});
   our $osslver = sprintf "%02d%02d", split(/\./, $config{version});
 
   our $sourcedir = $config{sourcedir};
@@ -104,13 +104,10 @@ BLDDIR={- $config{builddir} -}
 # to testing.
 VERBOSE=$(V)
 
-VERSION={- $config{version} -}
+VERSION={- "$config{full_version}" -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
-SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
-SHLIB_VERSION_HISTORY={- $config{shlib_version_history} -}
-SHLIB_MAJOR={- $config{shlib_major} -}
-SHLIB_MINOR={- $config{shlib_minor} -}
+SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 SHLIB_TARGET={- $target{shared_target} -}
 
 EXE_EXT=.EXE
@@ -642,7 +639,7 @@ vmsconfig.pm : configdata.pm
         WRITE CONFIG "our %config = ("
         WRITE CONFIG "  target => '","{- $config{target} -}","',"
         WRITE CONFIG "  version => '","{- $config{version} -}","',"
-        WRITE CONFIG "  shlib_version_number => '","{- $config{shlib_version_number} -}","',"
+        WRITE CONFIG "  shlib_version => '","{- $config{shlib_version} -}","',"
         WRITE CONFIG "  shlib_major => '","{- $config{shlib_major} -}","',"
         WRITE CONFIG "  shlib_minor => '","{- $config{shlib_minor} -}","',"
         WRITE CONFIG "  no_shared => '","{- $disabled{shared} -}","',"
@@ -819,7 +816,7 @@ $target : $args{generator}->[0] $deps
         \@ $incs_on
         \@ extradefines = "$defs"
 	PIPE \$(CPP) $cppflags \$\@-S | -
-        \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@-i
+             \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" > \$\@-i
         \@ DELETE/SYMBOL/LOCAL extradefines
         \@ $incs_off
         RENAME \$\@-i \$\@
@@ -847,7 +844,7 @@ EOF
 
   sub src2obj {
       my %args = @_;
-      my @srcs = map { (my $x = $_) =~ s/\.[sS]$/.asm/; $x
+      my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
                      } ( @{$args{srcs}} );
       (my $obj = $args{obj}) =~ s|\.o$||;
       my $deps = join(", -\n\t\t", @srcs, @{$args{deps}});
@@ -867,20 +864,6 @@ EOF
       my $before = $unified_info{before}->{$obj.".OBJ"} || "\@ !";
       my $after = $unified_info{after}->{$obj.".OBJ"} || "\@ !";
 
-      if ($srcs[0] =~ /\.asm$/) {
-          my $asflags = { shlib => ' $(LIB_ASFLAGS)',
-		          lib => ' $(LIB_ASFLAGS)',
-		          dso => ' $(DSO_ASFLAGS)',
-		          bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
-          return <<"EOF";
-$obj.OBJ : $deps
-        ${before}
-        SET DEFAULT $forward
-        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
-        SET DEFAULT $backward
-EOF
-      }
-
       my $cflags;
       if ($args{installed}) {
           $cflags = { shlib => '$(LIB_CFLAGS)',
@@ -898,6 +881,10 @@ EOF
 		   dso => '$(DSO_CPPFLAGS)',
 		   bin => '$(BIN_CPPFLAGS)' } -> {$args{intent}};
       my $defs = join("", map { ",".$_ } @{$args{defs}});
+      my $asflags = { shlib => ' $(LIB_ASFLAGS)',
+		      lib => ' $(LIB_ASFLAGS)',
+		      dso => ' $(DSO_ASFLAGS)',
+		      bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
 
       my @incs_cmds = includes({ shlib => '$(LIB_INCLUDES)',
                                  lib => '$(LIB_INCLUDES)',
@@ -910,6 +897,36 @@ EOF
                                } @{$args{incs}});
       my $incs_on = join("\n\t\@ ", @{$incs_cmds[0]}) || '!';
       my $incs_off = join("\n\t\@ ", @{$incs_cmds[1]}) || '!';
+
+      if ($srcs[0] =~ /\.asm$/) {
+          return <<"EOF";
+$obj.OBJ : $deps
+        ${before}
+        SET DEFAULT $forward
+        \$(AS) $asflags \$(ASOUTFLAG)${objd}${objn}.OBJ $srcs
+        SET DEFAULT $backward
+        ${after}
+        - PURGE $obj.OBJ
+EOF
+      } elsif ($srcs[0] =~ /.S$/) {
+         return <<"EOF";
+$obj.OBJ : $deps
+        ${before}
+        SET DEFAULT $forward
+        \@ $incs_on
+        \@ extradefines = "$defs"
+        PIPE \$(CPP) ${cflags} $srcs | -
+             \$(PERL) -ne "/^#(\\s*line)?\\s*[0-9]+\\s+""/ or print" -
+             > ${objd}${objn}.asm
+        \@ DELETE/SYMBOL/LOCAL extradefines
+        \@ $incs_off
+        SET DEFAULT $backward
+        ${after}
+        \$(AS) $asflags \$(ASOUTFLAG)$obj.OBJ $obj.asm
+        - PURGE $obj.OBJ
+EOF
+      }
+
       my $depbuild = $disabled{makedepend} ? ""
           : " /MMS=(FILE=${objd}${objn}.D,TARGET=$obj.OBJ)";
 

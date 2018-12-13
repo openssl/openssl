@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -21,7 +21,7 @@
 # include <openssl/safestack.h>
 # include <openssl/ec.h>
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
 #  include <openssl/dh.h>
@@ -650,7 +650,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 int X509_up_ref(X509 *x);
 int X509_get_signature_type(const X509 *x);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define X509_get_notBefore X509_getm_notBefore
 #  define X509_get_notAfter X509_getm_notAfter
 #  define X509_set_notBefore X509_set1_notBefore
@@ -716,7 +716,7 @@ int X509_CRL_set1_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 int X509_CRL_up_ref(X509_CRL *crl);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define X509_CRL_set_lastUpdate X509_CRL_set1_lastUpdate
 #  define X509_CRL_set_nextUpdate X509_CRL_set1_nextUpdate
 #endif

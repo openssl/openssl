@@ -76,6 +76,7 @@ Makefile
 !/fuzz/*.*
 
 # Misc auto generated files
+/doc/man7/openssl_user_macros.pod
 /include/openssl/opensslconf.h
 /tools/c_rehash
 /tools/c_rehash.pl

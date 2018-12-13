@@ -13,7 +13,7 @@
  our $shlibextimport = $target{shared_import_extension} || ".lib";
  our $dsoext = $target{dso_extension} || ".dll";
 
- (our $sover_dirname = $config{shlib_version_number}) =~ s|\.|_|g;
+ (our $sover_dirname = $config{shlib_version}) =~ s|\.|_|g;
 
  my $build_scheme = $target{build_scheme};
  my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
@@ -71,11 +71,11 @@ PLATFORM={- $config{target} -}
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
 
-VERSION={- $config{version} -}
+VERSION={- "$config{full_version}" -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 
-SHLIB_VERSION_NUMBER={- $config{shlib_version_number} -}
+SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 
 LIBS={- join(" ", map { ( shlib_import($_), lib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}

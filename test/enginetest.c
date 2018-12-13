@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -44,8 +44,9 @@ static void display_engine_list(void)
 static int test_engines(void)
 {
     ENGINE *block[NUMTOADD];
+    char *eid[NUMTOADD];
+    char *ename[NUMTOADD];
     char buf[256];
-    const char *id, *name;
     ENGINE *ptr;
     int loop;
     int to_return = 0;
@@ -138,12 +139,12 @@ static int test_engines(void)
     TEST_info("About to beef up the engine-type list");
     for (loop = 0; loop < NUMTOADD; loop++) {
         sprintf(buf, "id%d", loop);
-        id = OPENSSL_strdup(buf);
+        eid[loop] = OPENSSL_strdup(buf);
         sprintf(buf, "Fake engine type %d", loop);
-        name = OPENSSL_strdup(buf);
+        ename[loop] = OPENSSL_strdup(buf);
         if (!TEST_ptr(block[loop] = ENGINE_new())
-                || !TEST_true(ENGINE_set_id(block[loop], id))
-                || !TEST_true(ENGINE_set_name(block[loop], name)))
+                || !TEST_true(ENGINE_set_id(block[loop], eid[loop]))
+                || !TEST_true(ENGINE_set_name(block[loop], ename[loop])))
             goto end;
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
@@ -162,8 +163,8 @@ static int test_engines(void)
         ENGINE_free(ptr);
     }
     for (loop = 0; loop < NUMTOADD; loop++) {
-        OPENSSL_free((void *)ENGINE_get_id(block[loop]));
-        OPENSSL_free((void *)ENGINE_get_name(block[loop]));
+        OPENSSL_free(eid[loop]);
+        OPENSSL_free(ename[loop]);
     }
     to_return = 1;
 

@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -91,7 +91,7 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define _LHASH OPENSSL_LHASH
 #  define LHASH_NODE OPENSSL_LH_NODE
 #  define lh_error OPENSSL_LH_error

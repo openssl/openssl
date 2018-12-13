@@ -1,7 +1,7 @@
 /*
  * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
-#if !(OPENSSL_API_COMPAT < 0x10200000L)
+#if OPENSSL_API_3
 NON_EMPTY_TRANSLATION_UNIT
 #else
 

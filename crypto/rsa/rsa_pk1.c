@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -161,7 +161,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     unsigned int good, found_zero_byte, mask;
     int zero_index = 0, msg_index, mlen = -1;
 
-    if (tlen < 0 || flen < 0)
+    if (tlen <= 0 || flen <= 0)
         return -1;
 
     /*

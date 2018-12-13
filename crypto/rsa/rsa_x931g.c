@@ -1,7 +1,7 @@
 /*
  * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -128,6 +128,8 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
 
     /* calculate inverse of q mod p */
     rsa->iqmp = BN_mod_inverse(NULL, rsa->q, rsa->p, ctx2);
+    if (rsa->iqmp == NULL)
+        goto err;
 
     ret = 1;
  err:

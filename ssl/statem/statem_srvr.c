@@ -3,7 +3,7 @@
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -4099,7 +4099,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
                                tick_nonce,
                                TICKET_NONCE_SIZE,
                                s->session->master_key,
-                               hashlen)) {
+                               hashlen, 1)) {
             /* SSLfatal() already called */
             goto err;
         }

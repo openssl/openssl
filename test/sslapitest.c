@@ -1,7 +1,7 @@
 /*
  * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -22,6 +22,7 @@
 #include "testutil.h"
 #include "testutil/output.h"
 #include "internal/nelem.h"
+#include "internal/ktls.h"
 #include "../ssl/ssl_locl.h"
 
 #ifndef OPENSSL_NO_TLS1_3
@@ -655,6 +656,192 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
 
     return testresult;
 }
+
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS)
+
+/* sock must be connected */
+static int ktls_chk_platform(int sock)
+{
+    if (!ktls_enable(sock))
+        return 0;
+    return 1;
+}
+
+static int ping_pong_query(SSL *clientssl, SSL *serverssl, int cfd, int sfd)
+{
+    static char count = 1;
+    unsigned char cbuf[16000] = {0};
+    unsigned char sbuf[16000];
+    size_t err = 0;
+    char crec_wseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char crec_wseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_wseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_wseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_rseq_before[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+    char srec_rseq_after[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
+
+    cbuf[0] = count++;
+    memcpy(crec_wseq_before, &clientssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_wseq_before, &serverssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_rseq_before, &serverssl->rlayer.read_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+
+    if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
+        goto end;
+
+    while ((err = SSL_read(serverssl, &sbuf, sizeof(sbuf))) != sizeof(sbuf)) {
+        if (SSL_get_error(serverssl, err) != SSL_ERROR_WANT_READ) {
+            goto end;
+        }
+    }
+
+    if (!TEST_true(SSL_write(serverssl, sbuf, sizeof(sbuf)) == sizeof(sbuf)))
+        goto end;
+
+    while ((err = SSL_read(clientssl, &cbuf, sizeof(cbuf))) != sizeof(cbuf)) {
+        if (SSL_get_error(clientssl, err) != SSL_ERROR_WANT_READ) {
+            goto end;
+        }
+    }
+
+    memcpy(crec_wseq_after, &clientssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_wseq_after, &serverssl->rlayer.write_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+    memcpy(srec_rseq_after, &serverssl->rlayer.read_sequence,
+            TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+
+    /* verify the payload */
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
+        goto end;
+
+    /* ktls is used then kernel sequences are used instead of OpenSSL sequences */
+    if (clientssl->mode & SSL_MODE_NO_KTLS_TX) {
+        if (!TEST_mem_ne(crec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         crec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(crec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         crec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    }
+
+    if (serverssl->mode & SSL_MODE_NO_KTLS_TX) {
+        if (!TEST_mem_ne(srec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         srec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    } else {
+        if (!TEST_mem_eq(srec_wseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                         srec_wseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+            goto end;
+    }
+
+    if (!TEST_mem_ne(srec_rseq_before, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE,
+                     srec_rseq_after, TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE))
+        goto end;
+
+    return 1;
+end:
+    return 0;
+}
+
+static int execute_test_ktls(int cis_ktls_tx, int sis_ktls_tx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    int cfd, sfd;
+
+    if (!TEST_true(create_test_sockets(&cfd, &sfd)))
+        goto end;
+
+    /* Skip this test if the platform does not support ktls */
+    if (!ktls_chk_platform(cfd))
+        return 1;
+
+    /* Create a session based on SHA-256 */
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_2_VERSION, TLS1_2_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+                                                  "AES128-GCM-SHA256"))
+            || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+                                          &clientssl, sfd, cfd)))
+        goto end;
+
+    if (!cis_ktls_tx) {
+        if (!TEST_true(SSL_set_mode(clientssl, SSL_MODE_NO_KTLS_TX)))
+            goto end;
+    }
+
+    if (!sis_ktls_tx) {
+        if (!TEST_true(SSL_set_mode(serverssl, SSL_MODE_NO_KTLS_TX)))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    if (!cis_ktls_tx) {
+        if (!TEST_false(BIO_get_ktls_send(clientssl->wbio)))
+            goto end;
+    } else {
+        if (!TEST_true(BIO_get_ktls_send(clientssl->wbio)))
+            goto end;
+    }
+
+    if (!sis_ktls_tx) {
+        if (!TEST_false(BIO_get_ktls_send(serverssl->wbio)))
+            goto end;
+    } else {
+        if (!TEST_true(BIO_get_ktls_send(serverssl->wbio)))
+            goto end;
+    }
+
+    if (!TEST_true(ping_pong_query(clientssl, serverssl, cfd, sfd)))
+        goto end;
+
+    testresult = 1;
+end:
+    if (clientssl) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    serverssl = clientssl = NULL;
+    return testresult;
+}
+
+static int test_ktls_client_server(void)
+{
+    return execute_test_ktls(1, 1);
+}
+
+static int test_ktls_no_client_server(void)
+{
+    return execute_test_ktls(0, 1);
+}
+
+static int test_ktls_client_no_server(void)
+{
+    return execute_test_ktls(1, 0);
+}
+
+static int test_ktls_no_client_no_server(void)
+{
+    return execute_test_ktls(0, 0);
+}
+
+#endif
 
 static int test_large_message_tls(void)
 {
@@ -4028,20 +4215,25 @@ static int test_serverinfo(int tst)
  * no test vectors so all we do is test that both sides of the communication
  * produce the same results for different protocol versions.
  */
+#define SMALL_LABEL_LEN 10
+#define LONG_LABEL_LEN  249
 static int test_export_key_mat(int tst)
 {
     int testresult = 0;
     SSL_CTX *cctx = NULL, *sctx = NULL, *sctx2 = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    const char label[] = "test label";
+    const char label[LONG_LABEL_LEN + 1] = "test label";
     const unsigned char context[] = "context";
     const unsigned char *emptycontext = NULL;
     unsigned char ckeymat1[80], ckeymat2[80], ckeymat3[80];
     unsigned char skeymat1[80], skeymat2[80], skeymat3[80];
+    size_t labellen;
     const int protocols[] = {
         TLS1_VERSION,
         TLS1_1_VERSION,
         TLS1_2_VERSION,
+        TLS1_3_VERSION,
+        TLS1_3_VERSION,
         TLS1_3_VERSION
     };
 
@@ -4058,7 +4250,7 @@ static int test_export_key_mat(int tst)
         return 1;
 #endif
 #ifdef OPENSSL_NO_TLS1_3
-    if (tst == 3)
+    if (tst >= 3)
         return 1;
 #endif
     if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
@@ -4076,33 +4268,52 @@ static int test_export_key_mat(int tst)
                                                 SSL_ERROR_NONE)))
         goto end;
 
+    if (tst == 5) {
+        /*
+         * TLSv1.3 imposes a maximum label len of 249 bytes. Check we fail if we
+         * go over that.
+         */
+        if (!TEST_int_le(SSL_export_keying_material(clientssl, ckeymat1,
+                                                    sizeof(ckeymat1), label,
+                                                    LONG_LABEL_LEN + 1, context,
+                                                    sizeof(context) - 1, 1), 0))
+            goto end;
+
+        testresult = 1;
+        goto end;
+    } else if (tst == 4) {
+        labellen = LONG_LABEL_LEN;
+    } else {
+        labellen = SMALL_LABEL_LEN;
+    }
+
     if (!TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat1,
                                                 sizeof(ckeymat1), label,
-                                                sizeof(label) - 1, context,
+                                                labellen, context,
                                                 sizeof(context) - 1, 1), 1)
             || !TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat2,
                                                        sizeof(ckeymat2), label,
-                                                       sizeof(label) - 1,
+                                                       labellen,
                                                        emptycontext,
                                                        0, 1), 1)
             || !TEST_int_eq(SSL_export_keying_material(clientssl, ckeymat3,
                                                        sizeof(ckeymat3), label,
-                                                       sizeof(label) - 1,
+                                                       labellen,
                                                        NULL, 0, 0), 1)
             || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat1,
                                                        sizeof(skeymat1), label,
-                                                       sizeof(label) - 1,
+                                                       labellen,
                                                        context,
                                                        sizeof(context) -1, 1),
                             1)
             || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat2,
                                                        sizeof(skeymat2), label,
-                                                       sizeof(label) - 1,
+                                                       labellen,
                                                        emptycontext,
                                                        0, 1), 1)
             || !TEST_int_eq(SSL_export_keying_material(serverssl, skeymat3,
                                                        sizeof(skeymat3), label,
-                                                       sizeof(label) - 1,
+                                                       labellen,
                                                        NULL, 0, 0), 1)
                /*
                 * Check that both sides created the same key material with the
@@ -4131,10 +4342,10 @@ static int test_export_key_mat(int tst)
      * Check that an empty context and no context produce different results in
      * protocols less than TLSv1.3. In TLSv1.3 they should be the same.
      */
-    if ((tst != 3 && !TEST_mem_ne(ckeymat2, sizeof(ckeymat2), ckeymat3,
+    if ((tst < 3 && !TEST_mem_ne(ckeymat2, sizeof(ckeymat2), ckeymat3,
                                   sizeof(ckeymat3)))
-            || (tst ==3 && !TEST_mem_eq(ckeymat2, sizeof(ckeymat2), ckeymat3,
-                                        sizeof(ckeymat3))))
+            || (tst >= 3 && !TEST_mem_eq(ckeymat2, sizeof(ckeymat2), ckeymat3,
+                                         sizeof(ckeymat3))))
         goto end;
 
     testresult = 1;
@@ -5845,6 +6056,12 @@ int setup_tests(void)
 #endif
     }
 
+#if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS)
+    ADD_TEST(test_ktls_client_server);
+    ADD_TEST(test_ktls_no_client_server);
+    ADD_TEST(test_ktls_client_no_server);
+    ADD_TEST(test_ktls_no_client_no_server);
+#endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
 #ifndef OPENSSL_NO_DTLS
@@ -5909,7 +6126,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
     ADD_ALL_TESTS(test_serverinfo, 8);
-    ADD_ALL_TESTS(test_export_key_mat, 4);
+    ADD_ALL_TESTS(test_export_key_mat, 6);
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
 #endif

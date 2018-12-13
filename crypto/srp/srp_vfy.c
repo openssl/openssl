@@ -2,7 +2,7 @@
  * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -525,7 +525,7 @@ int SRP_VBASE_add0_user(SRP_VBASE *vb, SRP_user_pwd *user_pwd)
     return 1;
 }
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 /*
  * DEPRECATED: use SRP_VBASE_get1_by_user instead.
  * This method ignores the configured seed and fails for an unknown user.

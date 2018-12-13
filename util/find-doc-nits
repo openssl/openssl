@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 # Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
-# Licensed under the OpenSSL license (the "License").  You may not use
+# Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
@@ -35,7 +35,7 @@ Find small errors (nits) in documentation.  Options:
     -l Print bogus links
     -n Print nits in POD pages
     -p Warn if non-public name documented (implies -n)
-    -u List undocumented functions
+    -u Count undocumented functions
     -h Print this help message
     -c List undocumented commands and options
 EOF
@@ -96,6 +96,7 @@ sub name_synopsis()
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
     foreach my $line ( split /\n+/, $syn ) {
+        next unless $line =~ /^\s/;
         my $sym;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
@@ -114,7 +115,7 @@ sub name_synopsis()
         } elsif ( $line =~ /enum (\S*) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
-        } elsif ( $line =~ /#define ([A-Za-z0-9_]+)/ ) {
+        } elsif ( $line =~ /#(?:define|undef) ([A-Za-z0-9_]+)/ ) {
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
             $sym = $1;
@@ -269,6 +270,7 @@ my %docced;
 sub checkmacros()
 {
     my $count = 0;
+    my %seen;
 
     print "# Checking macros (approximate)\n";
     foreach my $f ( glob('include/openssl/*.h') ) {
@@ -280,7 +282,7 @@ sub checkmacros()
         while ( <IN> ) {
             next unless /^#\s*define\s*(\S+)\(/;
             my $macro = $1;
-            next if $docced{$macro};
+            next if $docced{$macro} || defined $seen{$macro};
             next if $macro =~ /i2d_/
                 || $macro =~ /d2i_/
                 || $macro =~ /DEPRECATEDIN/
@@ -288,6 +290,7 @@ sub checkmacros()
                 || $macro =~ /DECLARE_/;
             print "$f:$macro\n" if $opt_d;
             $count++;
+            $seen{$macro} = 1;
         }
         close(IN);
     }
@@ -299,15 +302,17 @@ sub printem()
     my $libname = shift;
     my $numfile = shift;
     my $count = 0;
+    my %seen;
 
     foreach my $func ( &parsenum($numfile) ) {
-        next if $docced{$func};
+        next if $docced{$func} || defined $seen{$func};
 
         # Skip ASN1 utilities
         next if $func =~ /^ASN1_/;
 
         print "$libname:$func\n" if $opt_d;
         $count++;
+        $seen{$func} = 1;
     }
     print "# Found $count missing from $numfile\n\n";
 }

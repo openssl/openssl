@@ -2,7 +2,7 @@
  * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -36,7 +36,7 @@
  */
 # include <openssl/symhacks.h>
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  include <openssl/opensslv.h>
 # endif
 
@@ -44,7 +44,7 @@
 extern "C" {
 #endif
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define SSLeay                  OpenSSL_version_num
 #  define SSLeay_version          OpenSSL_version
 #  define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
@@ -62,7 +62,7 @@ typedef struct {
     int dummy;
 } CRYPTO_dynlock;
 
-# endif /* OPENSSL_API_COMPAT */
+# endif /* OPENSSL_API_1_1_0 */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -157,14 +157,16 @@ int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-unsigned long OpenSSL_version_num(void);
+DEPRECATEDIN_3(unsigned long OpenSSL_version_num(void))
 const char *OpenSSL_version(int type);
-# define OPENSSL_VERSION          0
-# define OPENSSL_CFLAGS           1
-# define OPENSSL_BUILT_ON         2
-# define OPENSSL_PLATFORM         3
-# define OPENSSL_DIR              4
-# define OPENSSL_ENGINES_DIR      5
+# define OPENSSL_VERSION                0
+# define OPENSSL_CFLAGS                 1
+# define OPENSSL_BUILT_ON               2
+# define OPENSSL_PLATFORM               3
+# define OPENSSL_DIR                    4
+# define OPENSSL_ENGINES_DIR            5
+# define OPENSSL_VERSION_STRING         6
+# define OPENSSL_FULL_VERSION_STRING    7
 
 int OPENSSL_issetugid(void);
 
@@ -197,7 +199,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
@@ -244,11 +246,11 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_THREADID_cpy(dest, src)
 #  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-#  if OPENSSL_API_COMPAT < 0x10000000L
+#  if !OPENSSL_API_1_0_0
 #   define CRYPTO_set_id_callback(func)
 #   define CRYPTO_get_id_callback()                     (NULL)
 #   define CRYPTO_thread_id()                           (0UL)
-#  endif /* OPENSSL_API_COMPAT < 0x10000000L */
+#  endif /* OPENSSL_API_1_0_0 */
 
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
@@ -256,7 +258,7 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_create_callback()          (NULL)
 #  define CRYPTO_get_dynlock_lock_callback()            (NULL)
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
-# endif /* OPENSSL_API_COMPAT < 0x10100000L */
+# endif /* OPENSSL_API_1_1_0 */
 
 int CRYPTO_set_mem_functions(
         void *(*m) (size_t, const char *, int),
@@ -325,7 +327,7 @@ int CRYPTO_mem_leaks(BIO *bio);
 
 /* die if we have to */
 ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
-# if OPENSSL_API_COMPAT < 0x10100000L
+# if !OPENSSL_API_1_1_0
 #  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
 # endif
 # define OPENSSL_assert(e) \

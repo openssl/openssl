@@ -1,7 +1,7 @@
 /*
  * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -31,9 +31,9 @@ static void test_diff_header(const char *left, const char *right)
 static void test_string_null_empty(const char *m, char c)
 {
     if (m == NULL)
-        test_printf_stderr("% 4s %c NULL\n", "", c);
+        test_printf_stderr("%4s %c NULL\n", "", c);
     else
-        test_printf_stderr("% 4u:%c ''\n", 0u, c);
+        test_printf_stderr("%4u:%c ''\n", 0u, c);
 }
 
 static void test_fail_string_common(const char *prefix, const char *file,
@@ -94,18 +94,18 @@ static void test_fail_string_common(const char *prefix, const char *file,
             bdiff[i] = '\0';
         }
         if (n1 == n2 && !diff) {
-            test_printf_stderr("% 4u:  '%s'\n", cnt, n2 > n1 ? b2 : b1);
+            test_printf_stderr("%4u:  '%s'\n", cnt, n2 > n1 ? b2 : b1);
         } else {
             if (cnt == 0 && (m1 == NULL || *m1 == '\0'))
                 test_string_null_empty(m1, '-');
             else if (n1 > 0)
-                test_printf_stderr("% 4u:- '%s'\n", cnt, b1);
+                test_printf_stderr("%4u:- '%s'\n", cnt, b1);
             if (cnt == 0 && (m2 == NULL || *m2 == '\0'))
                test_string_null_empty(m2, '+');
             else if (n2 > 0)
-                test_printf_stderr("% 4u:+ '%s'\n", cnt, b2);
+                test_printf_stderr("%4u:+ '%s'\n", cnt, b2);
             if (diff && i > 0)
-                test_printf_stderr("% 4s    %s\n", "", bdiff);
+                test_printf_stderr("%4s    %s\n", "", bdiff);
         }
         m1 += n1;
         m2 += n2;
@@ -206,6 +206,7 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
 {
     int n = bytes * 2, i;
     char *p = out, *q = NULL;
+    const char *r;
 
     if (bn != NULL && !BN_is_zero(bn)) {
         hex_convert_memory(in, bytes, out, BN_OUTPUT_SIZE);
@@ -248,10 +249,10 @@ static int convert_bn_memory(const unsigned char *in, size_t bytes,
     }
     *p = '\0';
     if (bn == NULL)
-        q = "NULL";
+        r = "NULL";
     else
-        q = BN_is_negative(bn) ? "-0" : "0";
-    strcpy(p - strlen(q), q);
+        r = BN_is_negative(bn) ? "-0" : "0";
+    strcpy(p - strlen(r), r);
     return 0;
 }
 
@@ -409,7 +410,7 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
 static void test_memory_null_empty(const unsigned char *m, char c)
 {
     if (m == NULL)
-        test_printf_stderr("% 4s %c%s\n", "", c, "NULL");
+        test_printf_stderr("%4s %c%s\n", "", c, "NULL");
     else
         test_printf_stderr("%04x %c%s\n", 0u, c, "empty");
 }
@@ -493,7 +494,7 @@ static void test_fail_memory_common(const char *prefix, const char *file,
             else if (n2 > 0)
                 test_printf_stderr("%04x:+%s\n", cnt, b2);
             if (diff && i > 0)
-                test_printf_stderr("% 4s  %s\n", "", bdiff);
+                test_printf_stderr("%4s  %s\n", "", bdiff);
         }
         m1 += n1;
         m2 += n2;
