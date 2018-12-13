@@ -123,6 +123,7 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(INIT),
     TRACE_CATEGORY_(TLS),
     TRACE_CATEGORY_(TLS_CIPHER),
+    TRACE_CATEGORY_(ENGINE_CONF),
 };
 
 const char *OSSL_trace_get_category_name(int num)
