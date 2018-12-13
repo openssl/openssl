@@ -173,6 +173,7 @@ static const struct namenum_st debugnames[] = {
     DEFNAME(ENGINE_TABLE),
     DEFNAME(ENGINE_REF_COUNT),
     DEFNAME(PKCS5V2),
+    DEFNAME(PKCS12_KEYGEN),
 };
 
 int OSSL_debug_get_type(const char *name)

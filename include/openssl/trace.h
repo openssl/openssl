@@ -41,7 +41,8 @@ typedef size_t (*OSSL_tracer_fn)(const char *buf, size_t cnt, void *hookdata);
 # define OSSL_DEBUG_ENGINE_TABLE        5
 # define OSSL_DEBUG_ENGINE_REF_COUNT    6
 # define OSSL_DEBUG_PKCS5V2             7
-# define OSSL_DEBUG_NUM                 8
+# define OSSL_DEBUG_PKCS12_KEYGEN       8
+# define OSSL_DEBUG_NUM                 9
 
 # define OSSL_TRACE_DEFAULT             0 /* The fallback */
 # define OSSL_TRACE_NUM                 1
