@@ -11,6 +11,7 @@
 #ifndef HEADER_ENGINE_INT_H
 # define HEADER_ENGINE_INT_H
 
+# include <openssl/trace.h>
 # include "internal/cryptlib.h"
 # include "internal/engine.h"
 # include "internal/thread_once.h"
@@ -59,14 +60,6 @@ void engine_cleanup_add_last(ENGINE_CLEANUP_CB *cb);
 DEFINE_STACK_OF(ENGINE)
 
 /*
- * If this symbol is defined then engine_table_select(), the function that is
- * used by RSA, DSA (etc) code to select registered ENGINEs, cache defaults
- * and functional references (etc), will display debugging summaries to
- * stderr.
- */
-/* #define ENGINE_TABLE_DEBUG */
-
-/*
  * This represents an implementation table. Dependent code should instantiate
  * it as a (ENGINE_TABLE *) pointer value set initially to NULL.
  */
@@ -76,13 +69,10 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
                           int setdefault);
 void engine_table_unregister(ENGINE_TABLE **table, ENGINE *e);
 void engine_table_cleanup(ENGINE_TABLE **table);
-# ifndef ENGINE_TABLE_DEBUG
-ENGINE *engine_table_select(ENGINE_TABLE **table, int nid);
-# else
-ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f,
+ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
                                 int l);
-#  define engine_table_select(t,n) engine_table_select_tmp(t,n,OPENSSL_FILE,OPENSSL_LINE)
-# endif
+# define engine_table_select(t,n)                               \
+    engine_table_select_int(t,n,OPENSSL_FILE,OPENSSL_LINE)
 typedef void (engine_table_doall_cb) (int nid, STACK_OF(ENGINE) *sk,
                                       ENGINE *def, void *arg);
 void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
