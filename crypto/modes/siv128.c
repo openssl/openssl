@@ -10,7 +10,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <openssl/crypto.h>
-#include <openssl/cmac.h>
 #include "modes_lcl.h"
 
 #ifndef OPENSSL_NO_SIV
@@ -94,15 +93,15 @@ __owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *ou
     SIV_BLOCK t;
     size_t out_len = sizeof(out->byte);
 
-    if (!CMAC_CTX_copy(ctx->cmac_ctx, ctx->cmac_ctx_init))
+    if (!EVP_MAC_CTX_copy(ctx->mac_ctx, ctx->mac_ctx_init))
         return 0;
 
     if (len >= SIV_LEN) {
-        if (!CMAC_Update(ctx->cmac_ctx, in, len - SIV_LEN))
+        if (!EVP_MAC_update(ctx->mac_ctx, in, len - SIV_LEN))
             return 0;
         memcpy(&t, in + (len-SIV_LEN), SIV_LEN);
         siv128_xorblock(&t, &ctx->d);
-        if (!CMAC_Update(ctx->cmac_ctx, t.byte, SIV_LEN))
+        if (!EVP_MAC_update(ctx->mac_ctx, t.byte, SIV_LEN))
             return 0;
     } else {
         memset(&t, 0, sizeof(t));
@@ -110,10 +109,10 @@ __owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *ou
         t.byte[len] = 0x80;
         siv128_dbl(&ctx->d);
         siv128_xorblock(&t, &ctx->d);
-        if (!CMAC_Update(ctx->cmac_ctx, t.byte, SIV_LEN))
+        if (!EVP_MAC_update(ctx->mac_ctx, t.byte, SIV_LEN))
             return 0;
     }
-    if (!CMAC_Final(ctx->cmac_ctx, out->byte, &out_len)
+    if (!EVP_MAC_final(ctx->mac_ctx, out->byte, &out_len)
         || out_len != SIV_LEN)
         return 0;
     return 1;
@@ -160,21 +159,22 @@ int CRYPTO_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
 
     memset(&ctx->d, 0, sizeof(ctx->d));
     ctx->cipher_ctx = NULL;
-    ctx->cmac_ctx = NULL;
-    ctx->cmac_ctx_init = NULL;
+    ctx->mac_ctx = NULL;
+    ctx->mac_ctx_init = NULL;
 
     if (key == NULL || cbc == NULL || ctr == NULL
             || (ctx->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL
-            || (ctx->cmac_ctx_init = CMAC_CTX_new()) == NULL
-            || (ctx->cmac_ctx = CMAC_CTX_new()) == NULL
-            || !CMAC_Init(ctx->cmac_ctx_init, key, klen, cbc, NULL)
+            || (ctx->mac_ctx_init = EVP_MAC_CTX_new_id(EVP_MAC_CMAC)) == NULL
+            || (ctx->mac_ctx = EVP_MAC_CTX_new_id(EVP_MAC_CMAC)) == NULL
+            || !EVP_MAC_ctrl(ctx->mac_ctx_init, EVP_MAC_CTRL_SET_CIPHER, cbc)
+            || !EVP_MAC_ctrl(ctx->mac_ctx_init, EVP_MAC_CTRL_SET_KEY, key, klen)
             || !EVP_EncryptInit_ex(ctx->cipher_ctx, ctr, NULL, key + klen, NULL)
-            || !CMAC_CTX_copy(ctx->cmac_ctx, ctx->cmac_ctx_init)
-            || !CMAC_Update(ctx->cmac_ctx, zero, sizeof(zero))
-            || !CMAC_Final(ctx->cmac_ctx, ctx->d.byte, &out_len)) {
+            || !EVP_MAC_CTX_copy(ctx->mac_ctx, ctx->mac_ctx_init)
+            || !EVP_MAC_update(ctx->mac_ctx, zero, sizeof(zero))
+            || !EVP_MAC_final(ctx->mac_ctx, ctx->d.byte, &out_len)) {
         EVP_CIPHER_CTX_free(ctx->cipher_ctx);
-        CMAC_CTX_free(ctx->cmac_ctx_init);
-        CMAC_CTX_free(ctx->cmac_ctx);
+        EVP_MAC_CTX_free(ctx->mac_ctx_init);
+        EVP_MAC_CTX_free(ctx->mac_ctx);
         return 0;
     }
 
@@ -192,9 +192,9 @@ int CRYPTO_siv128_copy_ctx(SIV128_CONTEXT *dest, SIV128_CONTEXT *src)
     memcpy(&dest->d, &src->d, sizeof(src->d));
     if (!EVP_CIPHER_CTX_copy(dest->cipher_ctx, src->cipher_ctx))
         return 0;
-    if (!CMAC_CTX_copy(dest->cmac_ctx_init, src->cmac_ctx_init))
+    if (!EVP_MAC_CTX_copy(dest->mac_ctx_init, src->mac_ctx_init))
         return 0;
-    /* no need to copy cmac_ctx since it's temp storage */
+    /* no need to copy mac_ctx since it's temp storage */
     return 1;
 }
 
@@ -206,18 +206,18 @@ int CRYPTO_siv128_copy_ctx(SIV128_CONTEXT *dest, SIV128_CONTEXT *src)
 int CRYPTO_siv128_aad(SIV128_CONTEXT *ctx, const unsigned char *aad,
                       size_t len)
 {
-    SIV_BLOCK cmac_out;
+    SIV_BLOCK mac_out;
     size_t out_len = SIV_LEN;
 
     siv128_dbl(&ctx->d);
 
-    if (!CMAC_CTX_copy(ctx->cmac_ctx, ctx->cmac_ctx_init)
-        || !CMAC_Update(ctx->cmac_ctx, aad, len)
-        || !CMAC_Final(ctx->cmac_ctx, cmac_out.byte, &out_len)
+    if (!EVP_MAC_CTX_copy(ctx->mac_ctx, ctx->mac_ctx_init)
+        || !EVP_MAC_update(ctx->mac_ctx, aad, len)
+        || !EVP_MAC_final(ctx->mac_ctx, mac_out.byte, &out_len)
         || out_len != SIV_LEN)
         return 0;
 
-    siv128_xorblock(&ctx->d, &cmac_out);
+    siv128_xorblock(&ctx->d, &mac_out);
 
     return 1;
 
@@ -328,10 +328,10 @@ int CRYPTO_siv128_cleanup(SIV128_CONTEXT *ctx)
     if (ctx != NULL) {
         EVP_CIPHER_CTX_free(ctx->cipher_ctx);
         ctx->cipher_ctx = NULL;
-        CMAC_CTX_free(ctx->cmac_ctx_init);
-        ctx->cmac_ctx_init = NULL;
-        CMAC_CTX_free(ctx->cmac_ctx);
-        ctx->cmac_ctx = NULL;
+        EVP_MAC_CTX_free(ctx->mac_ctx_init);
+        ctx->mac_ctx_init = NULL;
+        EVP_MAC_CTX_free(ctx->mac_ctx);
+        ctx->mac_ctx = NULL;
         OPENSSL_cleanse(&ctx->d, sizeof(ctx->d));
         OPENSSL_cleanse(&ctx->tag, sizeof(ctx->tag));
         ctx->final_ret = -1;
