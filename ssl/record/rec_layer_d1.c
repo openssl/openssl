@@ -834,6 +834,7 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             s->shutdown |= SSL_RECEIVED_SHUTDOWN;
             SSL3_RECORD_set_read(rr);
             SSL_CTX_remove_session(s->session_ctx, s->session);
+            ossl_statem_set_error(s);
             return (0);
         } else {
             al = SSL_AD_ILLEGAL_PARAMETER;

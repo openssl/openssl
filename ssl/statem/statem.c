@@ -115,6 +115,7 @@ void ossl_statem_set_renegotiate(SSL *s)
  */
 void ossl_statem_set_error(SSL *s)
 {
+    s->statem.in_init = 1;
     s->statem.state = MSG_FLOW_ERROR;
 }
 
