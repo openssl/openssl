@@ -8,76 +8,67 @@
  */
 
 #include "internal/cryptlib.h"
+#include <openssl/trace.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "pcy_int.h"
 
-/*
- * Enable this to print out the complete policy tree at various point during
- * evaluation.
- */
-
-/*
- * #define OPENSSL_POLICY_DEBUG
- */
-
-#ifdef OPENSSL_POLICY_DEBUG
-
-static void expected_print(BIO *err, X509_POLICY_LEVEL *lev,
-                           X509_POLICY_NODE *node, int indent)
+static void expected_print(X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
+                           int indent)
 {
     if ((lev->flags & X509_V_FLAG_INHIBIT_MAP)
         || !(node->data->flags & POLICY_DATA_FLAG_MAP_MASK))
-        BIO_puts(err, "  Not Mapped\n");
+        BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), "  Not Mapped\n");
     else {
         int i;
+
         STACK_OF(ASN1_OBJECT) *pset = node->data->expected_policy_set;
         ASN1_OBJECT *oid;
-        BIO_puts(err, "  Expected: ");
+        BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), "  Expected: ");
         for (i = 0; i < sk_ASN1_OBJECT_num(pset); i++) {
             oid = sk_ASN1_OBJECT_value(pset, i);
             if (i)
-                BIO_puts(err, ", ");
-            i2a_ASN1_OBJECT(err, oid);
+                BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), ", ");
+            i2a_ASN1_OBJECT(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), oid);
         }
-        BIO_puts(err, "\n");
+        BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), "\n");
     }
 }
 
 static void tree_print(char *str, X509_POLICY_TREE *tree,
                        X509_POLICY_LEVEL *curr)
 {
-    BIO *err = BIO_new_fp(stderr, BIO_NOCLOSE);
     X509_POLICY_LEVEL *plev;
 
-    if (err == NULL)
-        return;
     if (!curr)
         curr = tree->levels + tree->nlevel;
     else
         curr++;
 
-    BIO_printf(err, "Level print after %s\n", str);
-    BIO_printf(err, "Printing Up to Level %ld\n", curr - tree->levels);
+    OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "Level print after %s\n", str);
+    OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "Printing Up to Level %ld\n",
+               curr - tree->levels);
     for (plev = tree->levels; plev != curr; plev++) {
         int i;
 
-        BIO_printf(err, "Level %ld, flags = %x\n",
+        OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "Level %ld, flags = %x\n",
                    (long)(plev - tree->levels), plev->flags);
         for (i = 0; i < sk_X509_POLICY_NODE_num(plev->nodes); i++) {
-            X509_POLICY_NODE *node = sk_X509_POLICY_NODE_value(plev->nodes, i);
+            X509_POLICY_NODE *node =
+                sk_X509_POLICY_NODE_value(plev->nodes, i);
 
-            X509_POLICY_NODE_print(err, node, 2);
-            expected_print(err, plev, node, 2);
-            BIO_printf(err, "  Flags: %x\n", node->data->flags);
+            X509_POLICY_NODE_print(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY),
+                                   node, 2);
+            expected_print(plev, node, 2);
+            OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "  Flags: %x\n",
+                       node->data->flags);
         }
         if (plev->anyPolicy)
-            X509_POLICY_NODE_print(err, plev->anyPolicy, 2);
+            X509_POLICY_NODE_print(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY),
+                                   plev->anyPolicy, 2);
     }
-    BIO_free(err);
 }
-#endif
 
 /*-
  * Return value: <= 0 on error, or positive bit mask:
@@ -588,9 +579,8 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
         if (!(curr->flags & X509_V_FLAG_INHIBIT_ANY)
             && !tree_link_any(curr, cache, tree))
             return X509_PCY_TREE_INTERNAL;
-#ifdef OPENSSL_POLICY_DEBUG
-        tree_print("before tree_prune()", tree, curr);
-#endif
+        if (OSSL_debug_is_set(OSSL_DEBUG_X509V3_POLICY))
+            tree_print("before tree_prune()", tree, curr);
         ret = tree_prune(tree, curr);
         if (ret != X509_PCY_TREE_VALID)
             return ret;
@@ -665,9 +655,8 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
     }
 
     ret = tree_evaluate(tree);
-#ifdef OPENSSL_POLICY_DEBUG
-    tree_print("tree_evaluate()", tree, NULL);
-#endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_X509V3_POLICY))
+        tree_print("tree_evaluate()", tree, NULL);
     if (ret <= 0)
         goto error;
 
