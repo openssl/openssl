@@ -171,6 +171,7 @@ static const struct namenum_st debugnames[] = {
     DEFNAME(SSL_CIPHER),
     DEFNAME(ENGINE_CONF),
     DEFNAME(ENGINE_TABLE),
+    DEFNAME(ENGINE_REF_COUNT),
 };
 
 int OSSL_debug_get_type(const char *name)
