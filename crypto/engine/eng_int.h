@@ -20,27 +20,20 @@
 extern CRYPTO_RWLOCK *global_engine_lock;
 
 /*
- * If we compile with this symbol defined, then both reference counts in the
- * ENGINE structure will be monitored with a line of output on stderr for
- * each change. This prints the engine's pointer address (truncated to
- * unsigned int), "struct" or "funct" to indicate the reference type, the
- * before and after reference count, and the file:line-number pair. The
- * "engine_ref_debug" statements must come *after* the change.
+ * This prints the engine's pointer address (truncated to unsigned int),
+ * "struct" or "funct" to indicate the reference type, the before and after
+ * reference count, and the file:line-number pair. The "engine_ref_debug"
+ * statements must come *after* the change.
  */
-# ifdef ENGINE_REF_COUNT_DEBUG
-
-#  define engine_ref_debug(e, isfunct, diff) \
-        fprintf(stderr, "engine: %08x %s from %d to %d (%s:%d)\n", \
-                (unsigned int)(e), (isfunct ? "funct" : "struct"), \
-                ((isfunct) ? ((e)->funct_ref - (diff)) : ((e)->struct_ref - (diff))), \
-                ((isfunct) ? (e)->funct_ref : (e)->struct_ref), \
-                (OPENSSL_FILE), (OPENSSL_LINE))
-
-# else
-
-#  define engine_ref_debug(e, isfunct, diff)
-
-# endif
+# define engine_ref_debug(e, isfunct, diff)                             \
+    OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
+               "engine: %p %s from %d to %d (%s:%d)\n",               \
+               (void *)(e), (isfunct ? "funct" : "struct"),             \
+               ((isfunct)                                               \
+                ? ((e)->funct_ref - (diff))                             \
+                : ((e)->struct_ref - (diff))),                          \
+               ((isfunct) ? (e)->funct_ref : (e)->struct_ref),          \
+               (OPENSSL_FILE), (OPENSSL_LINE))
 
 /*
  * Any code that will need cleanup operations should use these functions to
