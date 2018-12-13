@@ -14,15 +14,9 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/hmac.h>
+#include <openssl/trace.h>
 #include "internal/evp_int.h"
 #include "evp_locl.h"
-
-/* set this to print out info about the keygen algorithm */
-/* #define OPENSSL_DEBUG_PKCS5V2 */
-
-#ifdef OPENSSL_DEBUG_PKCS5V2
-static void h__dump(const unsigned char *p, int len);
-#endif
 
 int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                       const unsigned char *salt, int saltlen, int iter,
@@ -55,15 +49,21 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 
     EVP_KDF_CTX_free(kctx);
 
-# ifdef OPENSSL_DEBUG_PKCS5V2
-    fprintf(stderr, "Password:\n");
-    h__dump(pass, passlen);
-    fprintf(stderr, "Salt:\n");
-    h__dump(salt, saltlen);
-    fprintf(stderr, "Iteration count %d\n", iter);
-    fprintf(stderr, "Key:\n");
-    h__dump(out, keylen);
-# endif
+    OSSL_TRACE_BEGIN(PKCS5V2) {
+        BIO_printf(trc_out, "Password:\n");
+        BIO_hex_string(trc_out,
+                       0, passlen, pass, passlen);
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Salt:\n");
+        BIO_hex_string(trc_out,
+                       0, saltlen, salt, saltlen);
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Iteration count %d\n", iter);
+        BIO_printf(trc_out, "Key:\n");
+        BIO_hex_string(trc_out,
+                       0, keylen, out, keylen);
+        BIO_printf(trc_out, "\n");
+    } OSSL_TRACE_END(PKCS5V2);
     return rv;
 }
 
@@ -200,12 +200,3 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
     PBKDF2PARAM_free(kdf);
     return rv;
 }
-
-# ifdef OPENSSL_DEBUG_PKCS5V2
-static void h__dump(const unsigned char *p, int len)
-{
-    for (; len--; p++)
-        fprintf(stderr, "%02X ", *p);
-    fprintf(stderr, "\n");
-}
-# endif
