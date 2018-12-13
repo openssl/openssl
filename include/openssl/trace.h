@@ -38,7 +38,8 @@ typedef size_t (*OSSL_tracer_fn)(const char *buf, size_t cnt, void *hookdata);
 # define OSSL_DEBUG_TLS_CIPHER          3
 # define OSSL_DEBUG_SSL_CIPHER          OSSL_DEBUG_TLS_CIPHER
 # define OSSL_DEBUG_ENGINE_CONF         4
-# define OSSL_DEBUG_NUM                 5
+# define OSSL_DEBUG_ENGINE_TABLE        5
+# define OSSL_DEBUG_NUM                 6
 
 # define OSSL_TRACE_DEFAULT             0 /* The fallback */
 # define OSSL_TRACE_NUM                 1
