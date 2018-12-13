@@ -41,8 +41,9 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT    6
 # define OSSL_TRACE_CATEGORY_PKCS5V2             7
 # define OSSL_TRACE_CATEGORY_PKCS12_KEYGEN       8
-# define OSSL_TRACE_CATEGORY_X509V3_POLICY       9
-# define OSSL_TRACE_CATEGORY_NUM                10
+# define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT      9
+# define OSSL_TRACE_CATEGORY_X509V3_POLICY      10
+# define OSSL_TRACE_CATEGORY_NUM                11
 
 /* Returns the trace category number for the given |name| */
 int OSSL_trace_get_category_num(const char *name);
