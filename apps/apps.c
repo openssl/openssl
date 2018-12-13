@@ -296,7 +296,7 @@ int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data)
     if (cb_data != NULL && cb_data->prompt_info != NULL)
         prompt_info = cb_data->prompt_info;
     prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
-    if (!prompt) {
+    if (prompt == NULL) {
         BIO_printf(bio_err, "Out of memory\n");
         UI_free(ui);
         return 0;

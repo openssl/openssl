@@ -437,7 +437,7 @@ typedef struct pw_cb_data {
     const char *prompt_info;
 } PW_CB_DATA;
 
-/* Sadly, we need both wrap and the "real" function; libcrypto uses both. */
+/* We need both wrap and the "real" function because libcrypto uses both. */
 int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data);
 
