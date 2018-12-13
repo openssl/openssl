@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/trace.h>
 #include "internal/cryptlib.h"
 #include "bn_lcl.h"
 
@@ -87,48 +88,53 @@ struct bignum_ctx {
     int flags;
 };
 
-/* Enable this to find BN_CTX bugs */
-#ifdef BN_CTX_DEBUG
+/* Debugging functionality */
 static const char *ctxdbg_cur = NULL;
 static void ctxdbg(BN_CTX *ctx)
 {
     unsigned int bnidx = 0, fpidx = 0;
     BN_POOL_ITEM *item = ctx->pool.head;
     BN_STACK *stack = &ctx->stack;
-    fprintf(stderr, "(%16p): ", ctx);
+    OSSL_debug(OSSL_DEBUG_BN_CTX, "(%16p): ", ctx);
     while (bnidx < ctx->used) {
-        fprintf(stderr, "%03x ", item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
+        OSSL_debug(OSSL_DEBUG_BN_CTX, "%03x ",
+                   item->vals[bnidx++ % BN_CTX_POOL_SIZE].dmax);
         if (!(bnidx % BN_CTX_POOL_SIZE))
             item = item->next;
     }
-    fprintf(stderr, "\n");
+    OSSL_debug(OSSL_DEBUG_BN_CTX, "\n");
     bnidx = 0;
-    fprintf(stderr, "          : ");
+    OSSL_debug(OSSL_DEBUG_BN_CTX, "                  : ");
     while (fpidx < stack->depth) {
         while (bnidx++ < stack->indexes[fpidx])
-            fprintf(stderr, "    ");
-        fprintf(stderr, "^^^ ");
+            OSSL_debug(OSSL_DEBUG_BN_CTX, "    ");
+        OSSL_debug(OSSL_DEBUG_BN_CTX, "^^^ ");
         bnidx++;
         fpidx++;
     }
-    fprintf(stderr, "\n");
+    OSSL_debug(OSSL_DEBUG_BN_CTX, "\n");
 }
 
-# define CTXDBG_ENTRY(str, ctx)  do { \
-                                ctxdbg_cur = (str); \
-                                fprintf(stderr,"Starting %s\n", ctxdbg_cur); \
-                                ctxdbg(ctx); \
-                                } while(0)
-# define CTXDBG_EXIT(ctx)        do { \
-                                fprintf(stderr,"Ending %s\n", ctxdbg_cur); \
-                                ctxdbg(ctx); \
-                                } while(0)
-# define CTXDBG_RET(ctx,ret)
-#else
-# define CTXDBG_ENTRY(str, ctx)
-# define CTXDBG_EXIT(ctx)
-# define CTXDBG_RET(ctx,ret)
-#endif
+/*
+ * These macros rely entirely on OSSL_debug_is_set, including that it
+ * evluates to 0 when OpenSSL is configured with the 'no-trace' option
+ */
+#define CTXDBG_ENTRY(str, ctx)                                          \
+    do {                                                                \
+        if (OSSL_debug_is_set(OSSL_DEBUG_BN_CTX)) {                     \
+            ctxdbg_cur = (str);                                         \
+            OSSL_debug(OSSL_DEBUG_BN_CTX,"Starting %s\n", ctxdbg_cur);  \
+            ctxdbg(ctx);                                                \
+        }                                                               \
+    } while(0)
+#define CTXDBG_EXIT(ctx)                                                \
+    do {                                                                \
+        if (OSSL_debug_is_set(OSSL_DEBUG_BN_CTX)) {                     \
+            OSSL_debug(OSSL_DEBUG_BN_CTX,"Ending %s\n", ctxdbg_cur);    \
+            ctxdbg(ctx);                                                \
+        }                                                               \
+    } while(0)
+#define CTXDBG_RET(ctx,ret)
 
 
 BN_CTX *BN_CTX_new(void)
@@ -158,21 +164,20 @@ void BN_CTX_free(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-#ifdef BN_CTX_DEBUG
-    {
+    if (OSSL_debug_is_set(OSSL_DEBUG_BN_CTX)) {
         BN_POOL_ITEM *pool = ctx->pool.head;
-        fprintf(stderr, "BN_CTX_free, stack-size=%d, pool-bignums=%d\n",
-                ctx->stack.size, ctx->pool.size);
-        fprintf(stderr, "dmaxs: ");
+        OSSL_debug(OSSL_DEBUG_BN_CTX,
+                   "BN_CTX_free, stack-size=%d, pool-bignums=%d\n",
+                   ctx->stack.size, ctx->pool.size);
+        OSSL_debug(OSSL_DEBUG_BN_CTX, "dmaxs: ");
         while (pool) {
             unsigned loop = 0;
             while (loop < BN_CTX_POOL_SIZE)
-                fprintf(stderr, "%02x ", pool->vals[loop++].dmax);
+                OSSL_debug(OSSL_DEBUG_BN_CTX, "%02x ", pool->vals[loop++].dmax);
             pool = pool->next;
         }
-        fprintf(stderr, "\n");
+        OSSL_debug(OSSL_DEBUG_BN_CTX, "\n");
     }
-#endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
     OPENSSL_free(ctx);
