@@ -206,8 +206,8 @@ struct siv128_context {
     SIV_BLOCK d;
     SIV_BLOCK tag;
     EVP_CIPHER_CTX *cipher_ctx;
-    CMAC_CTX *cmac_ctx_init;
-    CMAC_CTX *cmac_ctx;
+    EVP_MAC_CTX *mac_ctx_init;
+    EVP_MAC_CTX *mac_ctx;
     int final_ret;
     int crypto_ok;
 };
