@@ -697,6 +697,7 @@ DEFINE_RUN_ONCE_STATIC(err_do_init)
 ERR_STATE *ERR_get_state(void)
 {
     ERR_STATE *state;
+    int saveerrno = get_last_sys_error();
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return NULL;
@@ -728,6 +729,7 @@ ERR_STATE *ERR_get_state(void)
         OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     }
 
+    set_sys_error(saveerrno);
     return state;
 }
 
@@ -737,6 +739,8 @@ ERR_STATE *ERR_get_state(void)
  */
 int err_shelve_state(void **state)
 {
+    int saveerrno = get_last_sys_error();
+
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
@@ -747,6 +751,7 @@ int err_shelve_state(void **state)
     if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
         return 0;
 
+    set_sys_error(saveerrno);
     return 1;
 }
 
