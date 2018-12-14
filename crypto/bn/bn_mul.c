@@ -528,17 +528,33 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
         BN_zero(r);
         return 1;
     }
+
+    if (al < bl) {
+        /*
+         * if inputs were zero-padded, they were zero-padded to
+         * *public* lengths, hence no leakage can be claimed...
+         */
+        const BIGNUM *p;
+
+        p = a;
+        a = b;
+        al = bl;
+        b = p;
+        bl = p->top;
+    }
+
     top = al + bl;
 
     BN_CTX_start(ctx);
     if ((r == a) || (r == b)) {
         if ((rr = BN_CTX_get(ctx)) == NULL)
             goto err;
-    } else
+    } else {
         rr = r;
+    }
 
 #if defined(BN_MUL_COMBA) || defined(BN_RECURSION)
-    i = al - bl;
+    i = al - bl;    /* non-negative */
 #endif
 #ifdef BN_MUL_COMBA
     if (i == 0) {
@@ -561,42 +577,42 @@ int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     }
 #endif                          /* BN_MUL_COMBA */
 #ifdef BN_RECURSION
-    if ((al >= BN_MULL_SIZE_NORMAL) && (bl >= BN_MULL_SIZE_NORMAL)) {
-        if (i >= -1 && i <= 1) {
-            /*
-             * Find out the power of two lower or equal to the longest of the
-             * two numbers
-             */
-            if (i >= 0) {
-                j = BN_num_bits_word((BN_ULONG)al);
-            }
-            if (i == -1) {
-                j = BN_num_bits_word((BN_ULONG)bl);
-            }
-            j = 1 << (j - 1);
-            assert(j <= al || j <= bl);
-            k = j + j;
-            t = BN_CTX_get(ctx);
-            if (t == NULL)
-                goto err;
-            if (al > j || bl > j) {
-                if (bn_wexpand(t, k * 4) == NULL)
-                    goto err;
-                if (bn_wexpand(rr, k * 4) == NULL)
-                    goto err;
-                bn_mul_part_recursive(rr->d, a->d, b->d,
-                                      j, al - j, bl - j, t->d);
-            } else {            /* al <= j || bl <= j */
+    if (bl >= BN_MULL_SIZE_NORMAL) {
+        j = BN_num_bits_word((BN_ULONG)al);
+        j = 1 << (j - 1);
+        k = j + j;
+        t = BN_CTX_get(ctx);
+        if (t == NULL)
+            goto err;
 
-                if (bn_wexpand(t, k * 2) == NULL)
-                    goto err;
-                if (bn_wexpand(rr, k * 2) == NULL)
-                    goto err;
-                bn_mul_recursive(rr->d, a->d, b->d, j, al - j, bl - j, t->d);
-            }
-            rr->top = top;
-            goto end;
+        if (al == j && i <= 2) {    /* e.g. 32x32, 32x31, 32x30, 64x64, ... */
+            if (bn_wexpand(t, k * 2) == NULL)
+                goto err;
+            if (bn_wexpand(rr, k) == NULL)
+                goto err;
+            bn_mul_recursive(rr->d, a->d, b->d, j, 0, bl - j, t->d);
+        } else {                    /* e.g. 33x32, 33x33, 64x32, 64x33, ...  */
+            BN_ULONG *tail;
+
+            j = BN_num_bits_word((BN_ULONG)bl);
+            j = 1 << (j - 1);
+            k = j + j;
+
+            if (bn_wexpand(t, k * 2) == NULL)
+                goto err;
+            if (bn_wexpand(rr, top) == NULL)
+                goto err;
+
+            bn_mul_recursive(rr->d, a->d, b->d, j, 0, 0, t->d);
+
+            tail = &(rr->d[k]);
+            for (i = j; i < al; i++)
+                *tail++ = bn_mul_add_words(&(rr->d[i]), b->d, j, a->d[i]);
+            for (i = j; i < bl; i++)
+                *tail++ = bn_mul_add_words(&(rr->d[i]), a->d, al, b->d[i]);
         }
+        rr->top = top;
+        goto end;
     }
 #endif                          /* BN_RECURSION */
     if (bn_wexpand(rr, top) == NULL)
@@ -623,41 +639,16 @@ void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb)
 {
     BN_ULONG *rr;
 
-    if (na < nb) {
-        int itmp;
-        BN_ULONG *ltmp;
-
-        itmp = na;
-        na = nb;
-        nb = itmp;
-        ltmp = a;
-        a = b;
-        b = ltmp;
-
-    }
-    rr = &(r[na]);
     if (nb <= 0) {
         (void)bn_mul_words(r, a, na, 0);
         return;
-    } else
-        rr[0] = bn_mul_words(r, a, na, b[0]);
+    }
 
-    for (;;) {
-        if (--nb <= 0)
-            return;
-        rr[1] = bn_mul_add_words(&(r[1]), a, na, b[1]);
-        if (--nb <= 0)
-            return;
-        rr[2] = bn_mul_add_words(&(r[2]), a, na, b[2]);
-        if (--nb <= 0)
-            return;
-        rr[3] = bn_mul_add_words(&(r[3]), a, na, b[3]);
-        if (--nb <= 0)
-            return;
-        rr[4] = bn_mul_add_words(&(r[4]), a, na, b[4]);
-        rr += 4;
-        r += 4;
-        b += 4;
+    rr = &(r[na]);
+    *rr = bn_mul_words(r, a, na, b[0]);
+
+    while (--nb) {
+        *++rr = bn_mul_add_words(++r, a, na, *++b);
     }
 }
 
