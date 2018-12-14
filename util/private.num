@@ -44,6 +44,7 @@ OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
 OSSL_STORE_post_process_info_fn         datatype
+OSSL_tracer_fn                          datatype
 PROFESSION_INFO                         datatype
 PROFESSION_INFOS                        datatype
 RAND_DRBG_cleanup_entropy_fn            datatype

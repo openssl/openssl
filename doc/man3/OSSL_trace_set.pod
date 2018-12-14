@@ -1,0 +1,155 @@
+=pod
+
+=head1 NAME
+
+OSSL_trace_set, OSSL_debug_set, OSSL_tracer_fn
+- Enabling tracing and debugging output
+
+=head1 SYNOPSIS
+
+ #include <openssl/trace.h>
+
+ typedef size_t (*OSSL_tracer_fn)(const char *buf, size_t cnt, void *hookdata);
+
+ void OSSL_trace_set(int type, OSSL_tracer_fn *fn, void *hookdata);
+ void OSSL_debug_set(int type, OSSL_tracer_fn *fn, void *hookdata);
+
+=head1 DESCRIPTION
+
+If available (see L</NOTES> below), the application can request
+internal tracing and debugging output.
+This output comes in form of free text for humans to read.
+
+The tracing or debugging output is divided into types which can be
+enabled individually.
+They are enabled by giving them a tracer function, which is
+responsible for performing the actual output.
+
+=head2 Functions
+
+OSSL_trace_set() is used to enable a trace type by giving it the tracer
+function B<fn> with the associated data B<hookdata>, which will simply
+be passed through to B<fn> whenever it's called.
+
+OSSL_trace_set() is used to enable a debug type by giving it the tracer
+function B<fn> with the associated data B<hookdata>, which will simply
+be passed through to B<fn> whenever it's called.
+
+The tracer function must return a C<size_t>, which must be zero on
+error and otherwise return the number of bytes that were output.
+It receives a text buffer B<buf> with B<cnt> bytes of text, as well as
+the B<hookdata> that was passed to OSSL_trace_set() or
+OSSL_debug_set().
+
+Disabling debugging or tracing on any type is done by calling
+OSSL_trace_set() or OSSL_debug_set() with C<NULL> for B<fn>.
+
+=head2 Trace types
+
+There is C<OSSL_TRACE_DEFAULT>, which works as a fallback and can
+be used to get I<all> tracing output.
+
+=head2 Debug types
+
+The debug types are simple numbers available through macros:
+
+=over 4
+
+=item C<OSSL_DEBUG_SELF> | C<OSSL_DEBUG_DEBUG> | C<OSSL_DEBUG_TRACE>
+
+OpenSSL library trace and debug setting output.
+More precisely, this will generate debugging output any time a new
+tracing or debugging hook is set.
+
+=item C<OSSL_DEBUG_INIT>
+
+OpenSSL library init and cleanup output.
+
+This needs special care, as OpenSSL will do automatic cleanup after
+exit from C<main()>.
+If the tracer function outputs to the standard handles C<stderr> or
+C<stdout>, this isn't an issue.
+However, if the output is sent somewhere else, this "somewhere else"
+needs to be cleaned away very late to ensure that the debugging output
+from OpenSSL's cleanup comes through.
+A suggestion is to make such cleanup part of a function that's
+registered very early with L<atexit(3)>.
+
+=item C<OSSL_DEBUG_TLS> | C<OSSL_DEBUG_SSL>
+
+OpenSSL library general TLS/SSL output.
+
+=item C<OSSL_DEBUG_TLS_CIPHER> | C<OSSL_DEBUG_SSL_CIPHER>
+
+OpenSSL library TLS/SSL cipher output.
+
+=item C<OSSL_DEBUG_ENGINE_CONF>
+
+OpenSSL library ENGINE configuration output.
+
+=item C<OSSL_DEBUG_ENGINE_TABLE>
+
+OpenSSL library ENGINE algorithm table output.
+More precisely, engine_table_select(), the function that is used by
+RSA, DSA (etc) code to select registered ENGINEs, cache defaults and
+functional references (etc), will generate debugging summaries.
+
+=item C<OSSL_DEBUG_ENGINE_REF_COUNT>
+
+OpenSSL library ENGINE reference counting output.
+More precisely, both reference counts in the ENGINE structure will be
+monitored with a line of generated for each change.
+
+=item C<OSSL_DEBUG_PKCS5V2>
+
+OpenSSL library PKCS#5 v2 keygen output.
+
+=item C<OSSL_DEBUG_PKCS12_KEYGEN>
+
+OpenSSL library PKCS#12 key generation output.
+
+=item C<OSSL_DEBUG_PKCS12_DECRYPT>
+
+OpenSSL library PKCS#12 decryption output.
+
+=item C<OSSL_DEBUG_X509V3_POLICY>
+
+OpenSSL library X509 v3 policy processing output.
+More precisely, this generates the complete policy tree at various
+point during evaluation.
+
+=item C<OSSL_DEBUG_BN_CTX>
+
+OpenSSL library BIGNUM context output.
+
+=back
+
+There is also C<OSSL_DEBUG_DEFAULT>, which works as a fallback and can
+be used to get I<all> debugging output.
+
+=head1 NOTES
+
+The functionality documented here may have no effect, depending on how
+the OpenSSL library was built.
+The functions are always available, but may be non-operational.
+If the macro C<OPENSSL_NO_TRACE> is defined in
+C<openssl/opensslconf.h>, these functions are not operational.
+
+=head1 RETURN VALUES
+
+OSSL_trace_set() and OSSL_debug_set() do not return any value.
+
+=head1 HISTORY
+
+Everything described here was added to OpenSSL 3.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
