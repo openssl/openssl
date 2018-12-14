@@ -1161,7 +1161,7 @@ void engine_load_devcrypto_int()
 #ifndef ENGINE_DEVCRYPTO_DEBUG
         if (errno != ENOENT)
 #endif
-        fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
+            fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
         return;
     }
 
