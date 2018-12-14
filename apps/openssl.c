@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/trace.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -117,6 +118,64 @@ static char *make_config_name(void)
     return p;
 }
 
+static size_t internal_debug_cb(const char *buf, size_t cnt, void *data)
+{
+    int ret = BIO_write((BIO *)data, buf, cnt);
+
+    return ret < 0 ? 0 : ret;
+}
+
+static void setup_trace(void)
+{
+    const char *env;
+    char *val;
+
+    env = getenv("OPENSSL_TRACE");
+    val = OPENSSL_strdup(env);
+
+    if (val != NULL) {
+        char *valp = val;
+        char *item;
+
+        for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
+            int type = OSSL_trace_get_type(item);
+
+            if (type >= 0)
+                OSSL_trace_set(type, internal_debug_cb, bio_err);
+        }
+    }
+
+    OPENSSL_free(val);
+}
+
+static void setup_debug(void)
+{
+    const char *env;
+    char *val;
+
+    env = getenv("OPENSSL_DEBUG");
+    val = OPENSSL_strdup(env);
+
+    if (val != NULL) {
+        char *valp = val;
+        char *item;
+
+        for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
+            int type = OSSL_debug_get_type(item);
+
+            switch (type) {
+            case -1:
+                break;
+            default:
+                OSSL_debug_set(type, internal_debug_cb, bio_err);
+                break;
+            }
+        }
+    }
+
+    OPENSSL_free(val);
+}
+
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
@@ -145,6 +204,9 @@ int main(int argc, char *argv[])
      */
     win32_utf8argv(&argc, &argv);
 #endif
+
+    setup_trace();
+    setup_debug();
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
