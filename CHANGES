@@ -9,6 +9,13 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added support for enabling instrumentation through trace and debug output.
+     This is left to application control, by allowing it to register callbacks
+     for a number of tracing and debugging types.  The 'openssl' application
+     has been expanded to enable any of the types available via environment
+     variables defined by the user, and serves as one possible example.
+     [Richard Levitte]
+
   *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
      [Richard Levitte]
 
