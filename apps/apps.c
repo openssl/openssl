@@ -2243,8 +2243,6 @@ BIO *dup_bio_in(int format)
                       BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
 }
 
-static BIO_METHOD *prefix_method = NULL;
-
 BIO *dup_bio_out(int format)
 {
     BIO *b = BIO_new_fp(stdout,
@@ -2256,10 +2254,9 @@ BIO *dup_bio_out(int format)
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
 
-    if (FMT_istext(format) && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
-        if (prefix_method == NULL)
-            prefix_method = apps_bf_prefix();
-        b = BIO_push(BIO_new(prefix_method), b);
+    if (FMT_istext(format)
+        && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
+        b = BIO_push(BIO_new(apps_bf_prefix()), b);
         BIO_ctrl(b, PREFIX_CTRL_SET_PREFIX, 0, prefix);
     }
 
@@ -2277,8 +2274,13 @@ BIO *dup_bio_err(int format)
     return b;
 }
 
+/*
+ * Because the prefix method is created dynamically, we must also be able
+ * to destroy it.
+ */
 void destroy_prefix_method(void)
 {
+    BIO_METHOD *prefix_method = apps_bf_prefix();
     BIO_meth_free(prefix_method);
     prefix_method = NULL;
 }
