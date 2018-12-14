@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/trace.h>
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
 #include <openssl/x509.h>
@@ -93,7 +94,6 @@ static int apps_startup(void)
 static void apps_shutdown(void)
 {
     destroy_ui_method();
-    destroy_prefix_method();
 }
 
 static char *make_config_name(void)
@@ -115,6 +115,89 @@ static char *make_config_name(void)
     strcat(p, OPENSSL_CONF);
 
     return p;
+}
+
+typedef struct tracedata_st {
+    BIO *bio;
+    unsigned int ingroup:1;
+} tracedata;
+
+static size_t internal_trace_cb(const char *buf, size_t cnt,
+                                int category, int cmd, void *vdata)
+{
+    int ret;
+    tracedata *trace_data = vdata;
+    int set_prefix = 0;
+
+    switch (cmd) {
+    case OSSL_TRACE_CTRL_BEGIN:
+        trace_data->ingroup = 1;
+        set_prefix = 1;
+        break;
+    case OSSL_TRACE_CTRL_DURING:
+        if (!trace_data->ingroup)
+            set_prefix = 1;
+        break;
+    case OSSL_TRACE_CTRL_END:
+        trace_data->ingroup = 0;
+        break;
+    }
+
+    if (set_prefix) {
+        union {
+            CRYPTO_THREAD_ID tid;
+            unsigned long ltid;
+        } tid;
+        char buffer[256];
+
+        tid.ltid = 0;
+        tid.tid = CRYPTO_THREAD_get_current_id();
+
+        BIO_snprintf(buffer, sizeof(buffer), "TRACE[%lx]:%s: ", tid.ltid,
+                     OSSL_trace_get_category_name(category));
+        BIO_ctrl(trace_data->bio, PREFIX_CTRL_SET_PREFIX,
+                 strlen(buffer), buffer);
+    }
+    ret = BIO_write(trace_data->bio, buf, cnt);
+
+    return ret < 0 ? 0 : ret;
+}
+
+static void setup_trace(const char *str)
+{
+    char *val;
+
+    val = OPENSSL_strdup(str);
+
+    if (val != NULL) {
+        char *valp = val;
+        char *item;
+
+        for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
+            int category = OSSL_trace_get_category_num(item);
+
+            if (category >= 0) {
+                BIO *channel = BIO_push(BIO_new(apps_bf_prefix()),
+                                        dup_bio_err(FORMAT_TEXT));
+                tracedata *trace_data = OPENSSL_zalloc(sizeof(*trace_data));
+
+                if (trace_data == NULL
+                    || (trace_data->bio = channel) == NULL
+                    || OSSL_trace_set_callback(category, internal_trace_cb,
+                                               trace_data) == 0) {
+                    fprintf(stderr,
+                            "warning: unable to setup trace callback for category '%s'.\n",
+                            item);
+                }
+            } else {
+                fprintf(stderr,
+                        "warning: unknown trace category: '%s'.\n",
+                        item);
+            }
+        }
+    }
+
+    OPENSSL_free(val);
 }
 
 int main(int argc, char *argv[])
@@ -144,6 +227,15 @@ int main(int argc, char *argv[])
      */
     win32_utf8argv(&argc, &argv);
 #endif
+
+    /*
+     * We use the prefix method to get the trace output we want.  Since some
+     * trace outputs happen with OPENSSL_cleanup(), which is run automatically
+     * after exit(), we need to destroy the prefix method as late as possible.
+     */
+    atexit(destroy_prefix_method);
+
+    setup_trace(getenv("OPENSSL_TRACE"));
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
