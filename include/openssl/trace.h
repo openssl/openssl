@@ -32,20 +32,23 @@ typedef size_t (*OSSL_tracer_fn)(const char *buf, size_t cnt, void *hookdata);
  * a hook for.  The DEFAULT type works as a single fallback.
  */
 # define OSSL_DEBUG_DEFAULT             0 /* The fallback */
-# define OSSL_DEBUG_INIT                1
-# define OSSL_DEBUG_TLS                 2
+# define OSSL_DEBUG_SELF                1
+# define OSSL_DEBUG_TRACE               OSSL_DEBUG_SELF
+# define OSSL_DEBUG_DEBUG               OSSL_DEBUG_SELF
+# define OSSL_DEBUG_INIT                2
+# define OSSL_DEBUG_TLS                 3
 # define OSSL_DEBUG_SSL                 OSSL_DEBUG_TLS
-# define OSSL_DEBUG_TLS_CIPHER          3
+# define OSSL_DEBUG_TLS_CIPHER          4
 # define OSSL_DEBUG_SSL_CIPHER          OSSL_DEBUG_TLS_CIPHER
-# define OSSL_DEBUG_ENGINE_CONF         4
-# define OSSL_DEBUG_ENGINE_TABLE        5
-# define OSSL_DEBUG_ENGINE_REF_COUNT    6
-# define OSSL_DEBUG_PKCS5V2             7
-# define OSSL_DEBUG_PKCS12_KEYGEN       8
-# define OSSL_DEBUG_PKCS12_DECRYPT      9
-# define OSSL_DEBUG_X509V3_POLICY      10
-# define OSSL_DEBUG_BN_CTX             11
-# define OSSL_DEBUG_NUM                12
+# define OSSL_DEBUG_ENGINE_CONF         5
+# define OSSL_DEBUG_ENGINE_TABLE        6
+# define OSSL_DEBUG_ENGINE_REF_COUNT    7
+# define OSSL_DEBUG_PKCS5V2             8
+# define OSSL_DEBUG_PKCS12_KEYGEN       9
+# define OSSL_DEBUG_PKCS12_DECRYPT     10
+# define OSSL_DEBUG_X509V3_POLICY      11
+# define OSSL_DEBUG_BN_CTX             12
+# define OSSL_DEBUG_NUM                13
 
 # define OSSL_TRACE_DEFAULT             0 /* The fallback */
 # define OSSL_TRACE_NUM                 1

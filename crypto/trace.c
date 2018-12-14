@@ -117,6 +117,11 @@ void OSSL_trace_set(int type, OSSL_tracer_fn fn, void *hookdata)
         && (trace_bio[type] = BIO_new(&hook_method)) != NULL)
         BIO_set_data(trace_bio[type], &trace_data[type]);
 #endif
+
+    if (OSSL_debug_is_set(OSSL_DEBUG_SELF))
+        OSSL_debug(OSSL_DEBUG_SELF,
+                   "OSSL_TRACE: Set trace %d with hook = %p, hookdata = %p\n",
+                   type, trace_data[type].hook, trace_data[type].hookdata);
 }
 
 #ifndef OPENSSL_NO_TRACE
@@ -164,6 +169,9 @@ int OSSL_vtrace(int type, char *fmt, va_list args)
 
 static const struct namenum_st debugnames[] = {
     DEFNAME(DEFAULT),
+    DEFNAME(SELF),
+    DEFNAME(TRACE),
+    DEFNAME(DEBUG),
     DEFNAME(INIT),
     DEFNAME(TLS),
     DEFNAME(SSL),
@@ -213,6 +221,10 @@ void OSSL_debug_set(int type, OSSL_tracer_fn fn, void *hookdata)
         && (debug_bio[type] = BIO_new(&hook_method)) != NULL)
         BIO_set_data(debug_bio[type], &debug_data[type]);
 #endif
+    if (OSSL_debug_is_set(OSSL_DEBUG_SELF))
+        OSSL_debug(OSSL_DEBUG_SELF,
+                   "OSSL_DEBUG: Set debug %d with hook = %p, hookdata = %p\n",
+                   type, debug_data[type].hook, debug_data[type].hookdata);
 }
 
 #ifndef OPENSSL_NO_TRACE
