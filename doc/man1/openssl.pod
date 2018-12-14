@@ -531,6 +531,74 @@ Read the password from standard input.
 
 =back
 
+=head1 ENVIRONMENT
+
+=over 4
+
+=item B<OPENSSL_TRACE=>I<name,...>
+
+Enable tracing output of OpenSSL library, by name.
+This output will only make sense if you know OpenSSL internals well.
+Also, it might not give you any output at all, depending on how
+OpenSSL was built.
+
+The value is a comma separated list of names, with the following
+available:
+
+=over 4
+
+=item B<TRACE>
+
+The tracing functionality.
+
+=item B<TLS>
+
+General SSL/TLS.
+
+=item B<TLS_CIPHER>
+
+SSL/TLS cipher.
+
+=item B<ENGINE_CONF>
+
+ENGINE configuration.
+
+=item B<ENGINE_TABLE>
+
+The function that is used by RSA, DSA (etc) code to select registered
+ENGINEs, cache defaults and functional references (etc), will generate
+debugging summaries.
+
+=item B<ENGINE_REF_COUNT>
+
+Reference counts in the ENGINE structure will be monitored with a line
+of generated for each change.
+
+=item B<PKCS5V2>
+
+PKCS#5 v2 keygen.
+
+=item B<PKCS12_KEYGEN>
+
+PKCS#12 key generation.
+
+=item B<PKCS12_DECRYPT>
+
+PKCS#12 decryption.
+
+=item B<X509V3_POLICY>
+
+Generates the complete policy tree at various point during X.509 v3
+policy evaluation.
+
+=item B<BN_CTX>
+
+BIGNUM context.
+
+=back
+
+=back
+
 =head1 SEE ALSO
 
 L<asn1parse(1)>, L<ca(1)>, L<ciphers(1)>, L<cms(1)>, L<config(5)>,
