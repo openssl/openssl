@@ -425,7 +425,7 @@ static TS_REQ *create_query(BIO *data_bio, const char *digest, const EVP_MD *md,
     ASN1_OBJECT *policy_obj = NULL;
     ASN1_INTEGER *nonce_asn1 = NULL;
 
-    if (md == NULL && (md = EVP_get_digestbyname("sha1")) == NULL)
+    if (md == NULL && (md = EVP_get_digestbyname("sha256")) == NULL)
         goto err;
     if ((ts_req = TS_REQ_new()) == NULL)
         goto err;
