@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Use SHA256 as the default digest for TS query in the ts app.
+     [Tomas Mraz]
+
   *) Change PBKDF2 to conform to SP800-132 instead of the older PKCS5 RFC2898.
      This checks that the salt length is at least 128 bits, the derived key
      length is at least 112 bits, and that the iteration count is at least 1000.

@@ -518,7 +518,7 @@ included. Default is no. (Optional)
 =item B<ess_cert_id_alg>
 
 This option specifies the hash function to be used to calculate the TSA's
-public key certificate identifier. Default is sha1. (Optional)
+public key certificate identifier. Default is sha256. (Optional)
 
 =back
 
@@ -530,7 +530,7 @@ openssl/apps/openssl.cnf will do.
 
 =head2 Time Stamp Request
 
-To create a time stamp request for design1.txt with SHA-1
+To create a time stamp request for design1.txt with SHA-256
 without nonce and policy and no certificate is required in the response:
 
   openssl ts -query -data design1.txt -no_nonce \
@@ -546,12 +546,12 @@ To print the content of the previous request in human readable format:
 
   openssl ts -query -in design1.tsq -text
 
-To create a time stamp request which includes the MD-5 digest
+To create a time stamp request which includes the SHA-512 digest
 of design2.txt, requests the signer certificate and nonce,
 specifies a policy id (assuming the tsa_policy1 name is defined in the
 OID section of the config file):
 
-  openssl ts -query -data design2.txt -md5 \
+  openssl ts -query -data design2.txt -sha512 \
         -tspolicy tsa_policy1 -cert -out design2.tsq
 
 =head2 Time Stamp Response
