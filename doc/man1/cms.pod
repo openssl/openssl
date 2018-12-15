@@ -731,7 +731,7 @@ Support for RSA-OAEP and RSA-PSS was added in OpenSSL 1.0.2.
 The use of non-RSA keys with B<-encrypt> and B<-decrypt>
 was added in OpenSSL 1.0.2.
 
-The -no_alt_chains options was added in OpenSSL 1.0.2b.
+The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 =head1 COPYRIGHT
 
