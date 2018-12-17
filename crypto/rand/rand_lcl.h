@@ -237,6 +237,16 @@ struct rand_drbg_st {
     size_t max_perslen, max_adinlen;
 
     /*
+     * If the continuous random number testing is benig used, these hold the
+     * relevant state and previous block of seed material.  This is to
+     * support FIPS 140-2 section 4.9.2 Conditional Tests but will be used
+     * if the block size is positive.
+     */
+    int crngt_first_block;          /* The first block is is discarded */
+    size_t crngt_blocksize;         /* The block size of the entropy feed */
+    unsigned char *crngt_data;      /* The last block consumed */
+
+    /*
      * Counts the number of generate requests since the last reseed
      * (Starts at 1). This value is the reseed_counter as defined in
      * NIST SP 800-90Ar1

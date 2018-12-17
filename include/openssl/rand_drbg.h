@@ -107,6 +107,11 @@ RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);
 
 /*
+ * Continuous RNG testing control.
+ */
+int RAND_DRBG_set_crng_test_block_size(RAND_DRBG *drbg, size_t blocksize);
+
+/*
  * EXDATA
  */
 # define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \

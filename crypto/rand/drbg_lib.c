@@ -243,6 +243,7 @@ static RAND_DRBG *rand_drbg_new(int secure,
 {
     RAND_DRBG *drbg = secure ?
         OPENSSL_secure_zalloc(sizeof(*drbg)) : OPENSSL_zalloc(sizeof(*drbg));
+    size_t crngt_blocksize = 0;
 
     if (drbg == NULL) {
         RANDerr(RAND_F_RAND_DRBG_NEW, ERR_R_MALLOC_FAILURE);
@@ -263,6 +264,9 @@ static RAND_DRBG *rand_drbg_new(int secure,
 
         drbg->reseed_interval = master_reseed_interval;
         drbg->reseed_time_interval = master_reseed_time_interval;
+#ifdef FIPS_MODE
+        crngt_blocksize = 128 / 8;
+#endif
     } else {
         drbg->get_entropy = rand_drbg_get_entropy;
         drbg->cleanup_entropy = rand_drbg_cleanup_entropy;
@@ -290,6 +294,8 @@ static RAND_DRBG *rand_drbg_new(int secure,
             goto err;
         }
         rand_drbg_unlock(parent);
+    } else {
+        RAND_DRBG_set_crng_test_block_size(drbg, crngt_blocksize);
     }
 
     return drbg;
@@ -324,10 +330,49 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
     CRYPTO_THREAD_lock_free(drbg->lock);
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DRBG, drbg, &drbg->ex_data);
 
-    if (drbg->secure)
+    if (drbg->secure) {
+        OPENSSL_secure_clear_free(drbg->crngt_data, drbg->crngt_blocksize);
         OPENSSL_secure_clear_free(drbg, sizeof(*drbg));
-    else
+    } else {
+        OPENSSL_clear_free(drbg->crngt_data, drbg->crngt_blocksize);
         OPENSSL_clear_free(drbg, sizeof(*drbg));
+    }
+}
+
+/*
+ * Perform the continuous random number generator (CRNG) test.
+ * Each block of entropy is compared against the previous and the test
+ * fails if any pair is identical.  Any excess bytes are zeroed and not used.
+ * The DRBG's old entropy block is updated so the test can continue on the
+ * next call.  The block size is assumed to be non-zero, i.e. the test is
+ * executing.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int crng_check(RAND_DRBG *drbg, size_t *lenp, unsigned char *entropy)
+{
+    const size_t bs = drbg->crngt_blocksize;
+    const size_t n = *lenp / bs;
+    const size_t len = n * bs;
+    const unsigned char *p = drbg->crngt_data;
+    size_t i;
+
+    for (i = 0; i < n; i++) {
+        if (memcmp(p, entropy, bs) == 0) {
+            drbg->state = DRBG_ERROR;
+            RANDerr(RAND_F_CRNG_CHECK, RAND_R_ERROR_CRNG_TEST_FAIL);
+            return 0;
+        }
+        p = entropy;
+        entropy += bs;
+    }
+    if (p != drbg->crngt_data)
+        memcpy(drbg->crngt_data, p, bs);
+    if (len != *lenp) {
+        memset(entropy, 0, *lenp - len);
+        *lenp = len;
+    }
+    return 1;
 }
 
 /*
@@ -346,6 +391,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     size_t min_entropy = drbg->strength;
     size_t min_entropylen = drbg->min_entropylen;
     size_t max_entropylen = drbg->max_entropylen;
+    const size_t bs = drbg->crngt_blocksize;
 
     if (perslen > drbg->max_perslen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
@@ -380,6 +426,20 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
         max_entropylen += drbg->max_noncelen;
     }
 
+    /*
+     * If we're running with continuious RNG testing and haven't initialised
+     * yet, we need more data.  We add one block and round up to the nearest
+     * block boundary.  The entropy requirements are not altered.
+     */
+    if (bs > 0) {
+        if (drbg->crngt_first_block) {
+            min_entropylen += bs;
+            max_entropylen += bs;
+        }
+        min_entropylen = ((min_entropylen + bs - 1) / bs) * bs;
+        max_entropylen = ((max_entropylen + bs - 1) / bs) * bs;
+    }
+
     drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
     if (drbg->reseed_next_counter) {
         drbg->reseed_next_counter++;
@@ -387,9 +447,30 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
             drbg->reseed_next_counter = 1;
     }
 
-    if (drbg->get_entropy != NULL)
+    if (drbg->get_entropy != NULL) {
         entropylen = drbg->get_entropy(drbg, &entropy, min_entropy,
                                        min_entropylen, max_entropylen, 0);
+        if (bs > 0) {
+            if (drbg->crngt_first_block) {
+                if (entropylen < 2 * bs) {
+                    RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                            RAND_R_ERROR_RETRIEVING_ENTROPY);
+                    goto end;
+                }
+                drbg->crngt_first_block = 0;
+                entropylen -= bs;
+                memcpy(drbg->crngt_data, entropy, bs);
+                memmove(entropy, entropy + bs, entropylen);
+                memset(entropy + entropylen, 0, bs);
+            } else if (entropylen < bs) {
+                RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                        RAND_R_ERROR_RETRIEVING_ENTROPY);
+                goto end;
+            }
+            if (!crng_check(drbg, &entropylen, entropy))
+                goto end;
+        }
+    }
     if (entropylen < min_entropylen
             || entropylen > max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE, RAND_R_ERROR_RETRIEVING_ENTROPY);
@@ -480,6 +561,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
 {
     unsigned char *entropy = NULL;
     size_t entropylen = 0;
+    const size_t bs = drbg->crngt_blocksize;
 
     if (drbg->state == DRBG_ERROR) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_IN_ERROR_STATE);
@@ -506,11 +588,28 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
             drbg->reseed_next_counter = 1;
     }
 
-    if (drbg->get_entropy != NULL)
+    if (drbg->get_entropy != NULL) {
+        size_t min_entropylen = drbg->min_entropylen;
+        size_t max_entropylen = drbg->max_entropylen;
+
+        if (bs > 0) {
+            min_entropylen = ((min_entropylen + bs - 1) / bs) * bs;
+            max_entropylen = ((max_entropylen + bs - 1) / bs) * bs;
+        }
         entropylen = drbg->get_entropy(drbg, &entropy, drbg->strength,
-                                       drbg->min_entropylen,
-                                       drbg->max_entropylen,
+                                       min_entropylen, max_entropylen,
                                        prediction_resistance);
+        if (bs > 0) {
+            if (entropylen < bs) {
+                RANDerr(RAND_F_RAND_DRBG_RESEED,
+                        RAND_R_ERROR_RETRIEVING_ENTROPY);
+                goto end;
+            }
+
+            if (!crng_check(drbg, &entropylen, entropy))
+                goto end;
+        }
+    }
     if (entropylen < drbg->min_entropylen
             || entropylen > drbg->max_entropylen) {
         RANDerr(RAND_F_RAND_DRBG_RESEED, RAND_R_ERROR_RETRIEVING_ENTROPY);
@@ -1105,11 +1204,15 @@ static int drbg_add(const void *buf, int num, double randomness)
          * dummy random byte, using the buffer content as additional data.
          * Note: This won't work with RAND_DRBG_FLAG_CTR_NO_DF.
          */
+# if defined(RAND_DRBG_FLAG_CTR_NO_DF)
+        return 0;
+# else
         unsigned char dummy[1];
 
         ret = RAND_DRBG_generate(drbg, dummy, sizeof(dummy), 0, buf, buflen);
         rand_drbg_unlock(drbg);
         return ret;
+# endif
 #else
         /*
          * If an os entropy source is avaible then we declare the buffer content
@@ -1158,6 +1261,54 @@ static int drbg_status(void)
     ret = drbg->state == DRBG_READY ? 1 : 0;
     rand_drbg_unlock(drbg);
     return ret;
+}
+
+/*
+ * Allows the CRNG test block size to be specified.
+ * This is only valid if the DRBG is in the uninstantiated state and
+ * doesn't have a parent DRBG.
+ */
+int RAND_DRBG_set_crng_test_block_size(RAND_DRBG *drbg, size_t blocksize)
+{
+    if (drbg == NULL)
+        return 0;
+    if (drbg->state != DRBG_UNINITIALISED) {
+        RANDerr(RAND_F_RAND_DRBG_SET_CRNG_TEST_BLOCK_SIZE,
+                drbg->state == DRBG_ERROR ? RAND_R_IN_ERROR_STATE
+                                          : RAND_R_ALREADY_INSTANTIATED);
+        return 0;
+    }
+    if (drbg->parent != NULL) {
+        RANDerr(RAND_F_RAND_DRBG_SET_CRNG_TEST_BLOCK_SIZE,
+                RAND_R_DRBG_HAS_PARENT);
+        return 0;
+    }
+
+    if (blocksize == 0) {
+        const size_t oldbs = drbg->crngt_blocksize;
+
+        if (oldbs > 0) {
+            if (drbg->secure)
+                OPENSSL_secure_clear_free(drbg->crngt_data, oldbs);
+            else
+                OPENSSL_clear_free(drbg->crngt_data, oldbs);
+        }
+        drbg->crngt_data = NULL;
+        drbg->crngt_blocksize = 0;
+        drbg->crngt_first_block = 0;
+    } else {
+        drbg->crngt_data = drbg->secure
+                           ? OPENSSL_secure_zalloc(blocksize)
+                           : OPENSSL_zalloc(blocksize);
+        if (drbg->crngt_data == NULL) {
+            RANDerr(RAND_F_RAND_DRBG_SET_CRNG_TEST_BLOCK_SIZE,
+                    ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        drbg->crngt_blocksize = blocksize;
+        drbg->crngt_first_block = 1;
+    }
+    return 1;
 }
 
 /*
