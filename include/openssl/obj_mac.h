@@ -5206,51 +5206,51 @@
 #define OBJ_MSRPQC              OBJ_Microsoft,89L,2L
 
 #define SN_picnicL1FS           "picnicL1FS"
-#define LN_picnicL1FS           "Picnic L1 FS"
+#define LN_picnicL1FS           "picnicL1FS"
 #define NID_picnicL1FS          1197
 #define OBJ_picnicL1FS          OBJ_MSRPQC,1L,1L
 
-#define SN_p256_picnicL1FS              "p256-picnicL1FS"
-#define LN_p256_picnicL1FS              "p256 Picnic L1 FS hybrid"
+#define SN_p256_picnicL1FS              "p256_picnicL1FS"
+#define LN_p256_picnicL1FS              "p256_picnicL1FS"
 #define NID_p256_picnicL1FS             1198
 #define OBJ_p256_picnicL1FS             OBJ_MSRPQC,1L,2L
 
-#define SN_rsa3072_picnicL1FS           "rsa3072-picnicL1FS"
-#define LN_rsa3072_picnicL1FS           "rsa3072 Picnic L1 FS hybrid"
+#define SN_rsa3072_picnicL1FS           "rsa3072_picnicL1FS"
+#define LN_rsa3072_picnicL1FS           "rsa3072_picnicL1FS"
 #define NID_rsa3072_picnicL1FS          1199
 #define OBJ_rsa3072_picnicL1FS          OBJ_MSRPQC,1L,3L
 
 #define SN_qteslaI              "qteslaI"
-#define LN_qteslaI              "qTESLA I"
+#define LN_qteslaI              "qteslaI"
 #define NID_qteslaI             1200
 #define OBJ_qteslaI             OBJ_MSRPQC,2L,1L
 
-#define SN_p256_qteslaI         "p256-qteslaI"
-#define LN_p256_qteslaI         "p256 qTESLA I hybrid"
+#define SN_p256_qteslaI         "p256_qteslaI"
+#define LN_p256_qteslaI         "p256_qteslaI"
 #define NID_p256_qteslaI                1201
 #define OBJ_p256_qteslaI                OBJ_MSRPQC,2L,2L
 
-#define SN_rsa3072_qteslaI              "rsa3072-qteslaI"
-#define LN_rsa3072_qteslaI              "rsa3072 qTESLA I hybrid"
+#define SN_rsa3072_qteslaI              "rsa3072_qteslaI"
+#define LN_rsa3072_qteslaI              "rsa3072_qteslaI"
 #define NID_rsa3072_qteslaI             1202
 #define OBJ_rsa3072_qteslaI             OBJ_MSRPQC,2L,3L
 
 #define SN_qteslaIIIsize                "qteslaIIIsize"
-#define LN_qteslaIIIsize                "qTESLA III size"
+#define LN_qteslaIIIsize                "qteslaIIIsize"
 #define NID_qteslaIIIsize               1203
 #define OBJ_qteslaIIIsize               OBJ_MSRPQC,2L,4L
 
-#define SN_p384_qteslaIIIsize           "p384-qteslaIIIsize"
-#define LN_p384_qteslaIIIsize           "p384 qTESLA III size hybrid"
+#define SN_p384_qteslaIIIsize           "p384_qteslaIIIsize"
+#define LN_p384_qteslaIIIsize           "p384_qteslaIIIsize"
 #define NID_p384_qteslaIIIsize          1204
 #define OBJ_p384_qteslaIIIsize          OBJ_MSRPQC,2L,5L
 
 #define SN_qteslaIIIspeed               "qteslaIIIspeed"
-#define LN_qteslaIIIspeed               "qTESLA III speed"
+#define LN_qteslaIIIspeed               "qteslaIIIspeed"
 #define NID_qteslaIIIspeed              1205
 #define OBJ_qteslaIIIspeed              OBJ_MSRPQC,2L,6L
 
-#define SN_p384_qteslaIIIspeed          "p384-qteslaIIIspeed"
-#define LN_p384_qteslaIIIspeed          "p384 qTESLA III speed hybrid"
+#define SN_p384_qteslaIIIspeed          "p384_qteslaIIIspeed"
+#define LN_p384_qteslaIIIspeed          "p384_qteslaIIIspeed"
 #define NID_p384_qteslaIIIspeed         1206
 #define OBJ_p384_qteslaIIIspeed         OBJ_MSRPQC,2L,7L

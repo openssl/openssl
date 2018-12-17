@@ -79,6 +79,16 @@ static const nid_triple sigoid_srt[] = {
     {NID_RSA_SHA3_256, NID_sha3_256, NID_rsaEncryption},
     {NID_RSA_SHA3_384, NID_sha3_384, NID_rsaEncryption},
     {NID_RSA_SHA3_512, NID_sha3_512, NID_rsaEncryption},
+    {NID_picnicL1FS, NID_undef, NID_picnicL1FS},
+    {NID_p256_picnicL1FS, NID_undef, NID_p256_picnicL1FS},
+    {NID_rsa3072_picnicL1FS, NID_undef, NID_rsa3072_picnicL1FS},
+    {NID_qteslaI, NID_undef, NID_qteslaI},
+    {NID_p256_qteslaI, NID_undef, NID_p256_qteslaI},
+    {NID_rsa3072_qteslaI, NID_undef, NID_rsa3072_qteslaI},
+    {NID_qteslaIIIsize, NID_undef, NID_qteslaIIIsize},
+    {NID_p384_qteslaIIIsize, NID_undef, NID_p384_qteslaIIIsize},
+    {NID_qteslaIIIspeed, NID_undef, NID_qteslaIIIspeed},
+    {NID_p384_qteslaIIIspeed, NID_undef, NID_p384_qteslaIIIspeed},
 };
 
 static const nid_triple *const sigoid_srt_xref[] = {
