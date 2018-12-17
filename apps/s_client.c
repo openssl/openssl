@@ -2535,12 +2535,16 @@ int s_client_main(int argc, char **argv)
             /* STARTTLS command requires CAPABILITIES... */
             BIO_printf(fbio, "CAPABILITIES\r\n");
             (void)BIO_flush(fbio);
-            /* wait for multi-line CAPABILITIES response */
-            do {
-                mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                if (strstr(mbuf, "STARTTLS"))
-                    foundit = 1;
-            } while (mbuf_len > 1 && mbuf[0] != '.');
+            BIO_gets(fbio, mbuf, BUFSIZZ);
+            /* no point in trying to parse the CAPABILITIES response if there is none */
+            if (strstr(mbuf, "101") != NULL) {
+                /* wait for multi-line CAPABILITIES response */
+                do {
+                    mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
+                    if (strstr(mbuf, "STARTTLS"))
+                        foundit = 1;
+                } while (mbuf_len > 1 && mbuf[0] != '.');
+            }
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
