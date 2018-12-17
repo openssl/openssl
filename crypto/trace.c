@@ -16,6 +16,8 @@
 #include "internal/bio.h"
 #include "internal/nelem.h"
 
+#include "e_os.h"                /* strcasecmp for Windows */
+
 #ifndef OPENSSL_NO_TRACE
 
 /*-
