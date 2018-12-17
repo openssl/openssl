@@ -193,7 +193,7 @@ at initialization is used.
 
 =item EVP_MD_flags()
 
-Returns the B<md> flags. Note that these are different than the B<EVP_MD_CTX>
+Returns the B<md> flags. Note that these are different from the B<EVP_MD_CTX>
 ones. See L<EVP_MD_meth_set_flags(3)> for more information.
 
 =item EVP_MD_pkey_type()
