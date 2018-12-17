@@ -132,13 +132,11 @@ static size_t internal_debug_cb(const char *buf, size_t cnt, void *data)
     return ret < 0 ? 0 : ret;
 }
 
-static void setup_trace(void)
+static void setup_trace(const char *str)
 {
-    const char *env;
     char *val;
 
-    env = getenv("OPENSSL_TRACE");
-    val = OPENSSL_strdup(env);
+    val = OPENSSL_strdup(str);
 
     if (val != NULL) {
         char *valp = val;
@@ -155,13 +153,11 @@ static void setup_trace(void)
     OPENSSL_free(val);
 }
 
-static void setup_debug(void)
+static void setup_debug(const char *str)
 {
-    const char *env;
     char *val;
 
-    env = getenv("OPENSSL_DEBUG");
-    val = OPENSSL_strdup(env);
+    val = OPENSSL_strdup(str);
 
     if (val != NULL) {
         char *valp = val;
@@ -219,8 +215,8 @@ int main(int argc, char *argv[])
     win32_utf8argv(&argc, &argv);
 #endif
 
-    setup_trace();
-    setup_debug();
+    setup_trace(getenv("OPENSSL_TRACE"));
+    setup_debug(getenv("OPENSSL_DEBUG"));
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)
