@@ -18,6 +18,7 @@
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+void KeccakF1600(uint64_t A[5][5]);
 
 #define KECCAK1600_WIDTH 1600
 
@@ -28,6 +29,7 @@ typedef struct {
     size_t num;                 /* used bytes in below buffer */
     unsigned char buf[KECCAK1600_WIDTH / 8 - 32];
     unsigned char pad;
+    unsigned char squeezing;    /* boolean: we have squeezed at least once */
 } KECCAK1600_CTX;
 
 static int init(EVP_MD_CTX *evp_ctx, unsigned char pad)
@@ -42,6 +44,7 @@ static int init(EVP_MD_CTX *evp_ctx, unsigned char pad)
         ctx->block_size = bsz;
         ctx->md_size = evp_ctx->digest->md_size;
         ctx->pad = pad;
+        ctx->squeezing = 0;
 
         return 1;
     }
@@ -133,6 +136,67 @@ static int sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     sha3_final_absorb(evp_ctx);
 
     SHA3_squeeze(ctx->A, md, ctx->md_size, bsz);
+
+    return 1;
+}
+
+static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
+{
+    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+    size_t bsz = ctx->block_size;
+    size_t md_size = ctx->md_size;
+    size_t num = ctx->num;
+
+    /* We may need to invoke KeccakF directly, since SHA3_squeeze does not
+     * invoke it itself at the end of a block.
+     */
+    int need_keccak = 1;
+
+    if (! md_size)
+        return 1;
+
+    if (! ctx->squeezing) {
+        sha3_final_absorb(evp_ctx);
+        ctx->squeezing = 1;
+        num = ctx->num = 0;
+        need_keccak = 0; /* "absorb" runs the round function when done. */
+    }
+
+    if (num) {
+        /* We have some cached data in ctx->buf; we should serve it. */
+        if (md_size <= num) {
+            /* We have enough cached data in buf; we can just copy it out. */
+            memcpy(md, ctx->buf + (bsz-num), md_size);
+            ctx->num -= md_size;
+            return 1;
+        }
+        memcpy(md, ctx->buf + (bsz-num), num);
+        md_size -= num;
+        md += num;
+        ctx->num = 0;
+    }
+
+    if (need_keccak) {
+        KeccakF1600(ctx->A);
+    }
+
+    /* These bytes will be part of a partial block, copied from buf. */
+    size_t remainder = md_size % bsz;
+    /* We can write this many bytes to md directly. */
+    size_t direct_bytes = md_size - remainder;
+
+    if (direct_bytes) {
+        SHA3_squeeze(ctx->A, md, direct_bytes, bsz);
+        if (remainder) {
+            KeccakF1600(ctx->A);
+        }
+    }
+
+    if (remainder) {
+        SHA3_squeeze(ctx->A, ctx->buf, bsz, bsz);
+        memcpy(md+direct_bytes, ctx->buf, remainder);
+        ctx->num = bsz - remainder;
+    }
 
     return 1;
 }
@@ -356,7 +420,7 @@ const EVP_MD *EVP_shake##bitlen(void)                \
         EVP_MD_FLAG_XOF,                             \
         shake_init,                                  \
         sha3_update,                                 \
-        sha3_final,                                  \
+        shake_final,                                 \
         NULL,                                        \
         NULL,                                        \
         (KECCAK1600_WIDTH - bitlen * 2) / 8,         \
@@ -399,7 +463,7 @@ const EVP_MD *EVP_shake##bitlen(void)           \
         EVP_MD_FLAG_XOF,                        \
         shake_init,                             \
         sha3_update,                            \
-        sha3_final,                             \
+        shake_final,                            \
         NULL,                                   \
         NULL,                                   \
         (KECCAK1600_WIDTH - bitlen * 2) / 8,    \
