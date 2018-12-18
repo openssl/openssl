@@ -522,9 +522,14 @@ static void x509v3_cache_extensions(X509 *x)
 
 static int check_ca(const X509 *x)
 {
-    /* keyUsage if present should allow cert signing */
-    if (ku_reject(x, KU_KEY_CERT_SIGN))
-        return 0;
+    if (x->ex_flags & EXFLAG_KUSAGE) {
+        /* keyUsage if present should allow cert signing */
+        if (ku_reject(x, KU_KEY_CERT_SIGN))
+            return 0;
+        /* CA bit in basicConstraints must also be set */
+        if (!(x->ex_flags & EXFLAG_BCONS) || !(x->ex_flags & EXFLAG_CA))
+            return 0;
+    }
     if (x->ex_flags & EXFLAG_BCONS) {
         if (x->ex_flags & EXFLAG_CA)
             return 1;
