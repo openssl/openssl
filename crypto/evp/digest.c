@@ -179,7 +179,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
     return ret;
 }
 
-int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
+int EVP_DigestSqueezeXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 {
     int ret = 0;
 
@@ -193,6 +193,19 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
     } else {
         EVPerr(EVP_F_EVP_DIGESTFINALXOF, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
     }
+
+    return ret;
+}
+
+int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
+{
+    int ret = EVP_DigestSqueezeXOF(ctx, md, size);
+
+    if (ctx->digest->cleanup != NULL) {
+        ctx->digest->cleanup(ctx);
+        EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
+    }
+    OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
 
     return ret;
 }
