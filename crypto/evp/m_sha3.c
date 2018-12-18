@@ -107,7 +107,7 @@ static int sha3_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
     return 1;
 }
 
-static int sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
+static void sha3_final_absorb(EVP_MD_CTX *evp_ctx)
 {
     KECCAK1600_CTX *ctx = evp_ctx->md_data;
     size_t bsz = ctx->block_size;
@@ -123,6 +123,14 @@ static int sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     ctx->buf[bsz - 1] |= 0x80;
 
     (void)SHA3_absorb(ctx->A, ctx->buf, bsz, bsz);
+}
+
+static int sha3_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
+{
+    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+    size_t bsz = ctx->block_size;
+
+    sha3_final_absorb(evp_ctx);
 
     SHA3_squeeze(ctx->A, md, ctx->md_size, bsz);
 
