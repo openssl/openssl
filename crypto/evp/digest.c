@@ -188,11 +188,8 @@ int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         && ctx->digest->md_ctrl(ctx, EVP_MD_CTRL_XOF_LEN, (int)size, NULL)) {
         ret = ctx->digest->final(ctx, md);
 
-        if (ctx->digest->cleanup != NULL) {
-            ctx->digest->cleanup(ctx);
-            EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
-        }
-        OPENSSL_cleanse(ctx->md_data, ctx->digest->ctx_size);
+        /* We don't clean up here, since it's okay to squeeze an XOF more
+         * than once. */
     } else {
         EVPerr(EVP_F_EVP_DIGESTFINALXOF, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
     }

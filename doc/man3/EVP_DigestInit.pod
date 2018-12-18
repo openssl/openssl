@@ -111,7 +111,9 @@ EVP_DigestInit_ex() can be called to initialize a new digest operation.
 Interfaces to extendable-output functions, XOFs, such as SHAKE128 and SHAKE256.
 It retrieves the digest value from B<ctx> and places it in B<len>-sized <B>md.
 After calling this function no additional calls to EVP_DigestUpdate() can be
-made, but EVP_DigestInit_ex() can be called to initialize a new operation.
+made, but further calls to EVP_DigestFinalXOF can be made to squeeze more
+output from the function. Further, EVP_DigestInit_ex() can still be
+called to initialize a new operation.
 
 =item EVP_MD_CTX_copy_ex()
 
