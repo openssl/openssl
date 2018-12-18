@@ -50,9 +50,9 @@ void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
 
 EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
 {
-    EVP_MAC_CTX *dst = EVP_MAC_CTX_new(src->meth);
+    EVP_MAC_CTX *dst;
 
-    if (dst == NULL)
+    if (src->data == NULL)
         return NULL;
 
     dst = OPENSSL_malloc(sizeof(*dst));

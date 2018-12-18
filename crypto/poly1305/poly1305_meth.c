@@ -37,11 +37,17 @@ static void poly1305_free(EVP_MAC_IMPL *ctx)
     }
 }
 
-static int poly1305_copy(EVP_MAC_IMPL *dst, EVP_MAC_IMPL *src)
+static EVP_MAC_IMPL *poly1305_dup(const EVP_MAC_IMPL *src)
 {
+    EVP_MAC_IMPL *dst;
+
+    dst = poly1305_new();
+    if (dst == NULL)
+        return NULL;
+
     *dst->ctx = *src->ctx;
 
-    return 1;
+    return dst;
 }
 
 static size_t poly1305_size(EVP_MAC_IMPL *ctx)
@@ -130,7 +136,7 @@ static int poly1305_ctrl_str(EVP_MAC_IMPL *ctx,
 const EVP_MAC poly1305_meth = {
     EVP_MAC_POLY1305,
     poly1305_new,
-    poly1305_copy,
+    poly1305_dup,
     poly1305_free,
     poly1305_size,
     poly1305_init,

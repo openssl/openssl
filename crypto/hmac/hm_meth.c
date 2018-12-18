@@ -45,14 +45,23 @@ static void hmac_free(EVP_MAC_IMPL *hctx)
     }
 }
 
-static int hmac_copy(EVP_MAC_IMPL *hdst, EVP_MAC_IMPL *hsrc)
+static EVP_MAC_IMPL *hmac_dup(const EVP_MAC_IMPL *hsrc)
 {
-    if (!HMAC_CTX_copy(hdst->ctx, hsrc->ctx))
-        return 0;
+    EVP_MAC_IMPL *hdst;
+
+    hdst = hmac_new();
+    if (hdst == NULL)
+        return NULL;
+
+    if (!HMAC_CTX_copy(hdst->ctx, hsrc->ctx)) {
+        hmac_free(hdst);
+        return NULL;
+    }
 
     hdst->tmpengine = hsrc->tmpengine;
     hdst->tmpmd = hsrc->tmpmd;
-    return 1;
+
+    return hdst;
 }
 
 static size_t hmac_size(EVP_MAC_IMPL *hctx)
@@ -162,7 +171,7 @@ static int hmac_ctrl_str(EVP_MAC_IMPL *hctx, const char *type,
 const EVP_MAC hmac_meth = {
     EVP_MAC_HMAC,
     hmac_new,
-    hmac_copy,
+    hmac_dup,
     hmac_free,
     hmac_size,
     hmac_init,

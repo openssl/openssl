@@ -39,10 +39,16 @@ static void blake2s_mac_free(EVP_MAC_IMPL *macctx)
     }
 }
 
-static int blake2s_mac_copy(EVP_MAC_IMPL *dst, EVP_MAC_IMPL *src)
+static EVP_MAC_IMPL *blake2s_mac_dup(const EVP_MAC_IMPL *src)
 {
+    EVP_MAC_IMPL *dst;
+
+    dst = OPENSSL_malloc(sizeof(*dst));
+    if (dst == NULL)
+        return NULL;
+
     *dst = *src;
-    return 1;
+    return dst;
 }
 
 static int blake2s_mac_init(EVP_MAC_IMPL *macctx)
@@ -177,7 +183,7 @@ static size_t blake2s_mac_size(EVP_MAC_IMPL *macctx)
 const EVP_MAC blake2s_mac_meth = {
     EVP_MAC_BLAKE2S,
     blake2s_mac_new,
-    blake2s_mac_copy,
+    blake2s_mac_dup,
     blake2s_mac_free,
     blake2s_mac_size,
     blake2s_mac_init,

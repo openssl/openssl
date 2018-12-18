@@ -147,8 +147,19 @@ static EVP_MAC_IMPL *kmac256_new(void)
     return kmac_new(evp_keccak_kmac256());
 }
 
-static int kmac_copy(EVP_MAC_IMPL *gdst, EVP_MAC_IMPL *gsrc)
+static EVP_MAC_IMPL *kmac_dup(const EVP_MAC_IMPL *gsrc)
 {
+    EVP_MAC_IMPL *gdst;
+
+    gdst = kmac_new(gsrc->md);
+    if (gdst == NULL)
+        return NULL;
+
+    if (!EVP_MD_CTX_copy(gdst->ctx, gsrc->ctx)) {
+        kmac_free(gdst);
+        return NULL;
+    }
+
     gdst->md = gsrc->md;
     gdst->out_len = gsrc->out_len;
     gdst->key_len = gsrc->key_len;
@@ -157,7 +168,7 @@ static int kmac_copy(EVP_MAC_IMPL *gdst, EVP_MAC_IMPL *gsrc)
     memcpy(gdst->key, gsrc->key, gsrc->key_len);
     memcpy(gdst->custom, gsrc->custom, gdst->custom_len);
 
-    return EVP_MD_CTX_copy(gdst->ctx, gsrc->ctx);
+    return gdst;
 }
 
 /*
@@ -444,7 +455,7 @@ static int kmac_bytepad_encode_key(unsigned char *out, int *out_len,
 const EVP_MAC kmac128_meth = {
     EVP_MAC_KMAC128,
     kmac128_new,
-    kmac_copy,
+    kmac_dup,
     kmac_free,
     kmac_size,
     kmac_init,
@@ -457,7 +468,7 @@ const EVP_MAC kmac128_meth = {
 const EVP_MAC kmac256_meth = {
     EVP_MAC_KMAC256,
     kmac256_new,
-    kmac_copy,
+    kmac_dup,
     kmac_free,
     kmac_size,
     kmac_init,
