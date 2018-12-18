@@ -764,8 +764,9 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * subject name.
  * These are:
  * 1. Check issuer_name(subject) == subject_name(issuer)
- * 2. If akid(subject) exists check it matches issuer
- * 3. If key_usage(issuer) exists check it supports certificate signing
+ * 2. If akid(subject) exists, check that it matches issuer
+ * 3. Check that issuer public key algorithm matches subject signature algorithm
+ * 4. If key_usage(issuer) exists, check that it supports certificate signing
  * returns 0 for OK, positive for reason for mismatch, reasons match
  * codes for X509_verify_cert()
  */
@@ -783,6 +784,24 @@ int X509_check_issued(X509 *issuer, X509 *subject)
         int ret = X509_check_akid(issuer, subject->akid);
         if (ret != X509_V_OK)
             return ret;
+    }
+
+    {
+        /*
+         * Check if the subject signature algorithm matches the issuer's PUBKEY
+         * algorithm
+         */
+        EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
+        X509_ALGOR *s_algor = &subject->cert_info.signature;
+        int s_pknid = NID_undef, s_mdnid = NID_undef;
+
+        if (i_pkey == NULL)
+            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+
+        if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
+                                 &s_mdnid, &s_pknid)
+            || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
+            return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
     }
 
     if (subject->ex_flags & EXFLAG_PROXY) {
