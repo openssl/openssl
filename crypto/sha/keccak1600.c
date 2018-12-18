@@ -14,6 +14,7 @@
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+void KeccakF1600(uint64_t A[5][5]);
 
 #if !defined(KECCAK1600_ASM) || !defined(SELFTEST)
 
@@ -228,7 +229,7 @@ static void Iota(uint64_t A[5][5], size_t i)
     A[0][0] ^= iotas[i];
 }
 
-static void KeccakF1600(uint64_t A[5][5])
+void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -363,7 +364,7 @@ static void Round(uint64_t A[5][5], size_t i)
     A[4][4] = C[4] ^ (~C[0] & C[1]);
 }
 
-static void KeccakF1600(uint64_t A[5][5])
+void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -506,7 +507,7 @@ static void Round(uint64_t A[5][5], size_t i)
     A[0][0] ^= iotas[i];
 }
 
-static void KeccakF1600(uint64_t A[5][5])
+void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
@@ -644,7 +645,7 @@ static void Round(uint64_t R[5][5], uint64_t A[5][5], size_t i)
 #endif
 }
 
-static void KeccakF1600(uint64_t A[5][5])
+void KeccakF1600(uint64_t A[5][5])
 {
     uint64_t T[5][5];
     size_t i;
@@ -964,7 +965,7 @@ static void FourRounds(uint64_t A[5][5], size_t i)
     /* C[4] ^= */ A[4][4] = B[4] ^ (~B[0] & B[1]);
 }
 
-static void KeccakF1600(uint64_t A[5][5])
+void KeccakF1600(uint64_t A[5][5])
 {
     size_t i;
 
