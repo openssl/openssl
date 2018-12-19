@@ -160,6 +160,7 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
         ctx->squeezing = 1;
         num = ctx->num = 0;
         need_keccak = 0; /* "absorb" runs the round function when done. */
+        OPENSSL_cleanse(ctx->buf, sizeof(ctx->buf));
     }
 
     if (num) {
@@ -167,10 +168,12 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
         if (md_size <= num) {
             /* We have enough cached data in buf; we can just copy it out. */
             memcpy(md, ctx->buf + (bsz-num), md_size);
+            OPENSSL_cleanse(ctx->buf+(bsz-num), md_size);
             ctx->num -= md_size;
             return 1;
         }
         memcpy(md, ctx->buf + (bsz-num), num);
+        OPENSSL_cleanse(ctx->buf+(bsz-num), num);
         md_size -= num;
         md += num;
         ctx->num = 0;
@@ -195,6 +198,7 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     if (remainder) {
         SHA3_squeeze(ctx->A, ctx->buf, bsz, bsz);
         memcpy(md+direct_bytes, ctx->buf, remainder);
+        OPENSSL_cleanse(ctx->buf, remainder);
         ctx->num = bsz - remainder;
     }
 
