@@ -766,7 +766,7 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * 1. Check issuer_name(subject) == subject_name(issuer)
  * 2. If akid(subject) exists check it matches issuer
  * 3. Check that signing algorithm matches signature algorithm
- * 3. If key_usage(issuer) exists check it supports certificate signing
+ * 4. If key_usage(issuer) exists check it supports certificate signing
  * returns 0 for OK, positive for reason for mismatch, reasons match
  * codes for X509_verify_cert()
  */
@@ -794,6 +794,9 @@ int X509_check_issued(X509 *issuer, X509 *subject)
         EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
         X509_ALGOR *s_algor = &subject->cert_info.signature;
         int s_pknid = NID_undef, s_mdnid = NID_undef;
+
+        if (i_pkey == NULL)
+            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
 
         if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
                                  &s_mdnid, &s_pknid)

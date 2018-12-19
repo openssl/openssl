@@ -174,6 +174,10 @@ const char *X509_verify_cert_error_string(long n)
         return "OCSP verification failed";
     case X509_V_ERR_OCSP_CERT_UNKNOWN:
         return "OCSP unknown cert";
+    case X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH:
+        return "Subject signature algorithm and issuer public key algorithm mismatch";
+    case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
+        return "Issuer certificate doesn't have a public key";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */
