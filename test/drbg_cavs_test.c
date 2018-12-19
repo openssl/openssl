@@ -80,7 +80,8 @@ static int single_kat_no_reseed(const struct drbg_kat *td)
         return 0;
 
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
-                                           kat_nonce, NULL))) {
+                                           kat_nonce, NULL))
+        || !TEST_true(RAND_DRBG_set_crng_test_block_size(drbg, 0))) {
         failures++;
         goto err;
     }
@@ -141,7 +142,8 @@ static int single_kat_pr_false(const struct drbg_kat *td)
         return 0;
 
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
-                                           kat_nonce, NULL))) {
+                                           kat_nonce, NULL))
+        || !TEST_true(RAND_DRBG_set_crng_test_block_size(drbg, 0))) {
         failures++;
         goto err;
     }
@@ -207,7 +209,8 @@ static int single_kat_pr_true(const struct drbg_kat *td)
         return 0;
 
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
-                                           kat_nonce, NULL))) {
+                                           kat_nonce, NULL))
+        || !TEST_true(RAND_DRBG_set_crng_test_block_size(drbg, 0))) {
         failures++;
         goto err;
     }

@@ -131,6 +131,63 @@ typedef struct test_ctx_st {
     int noncecnt;
 } TEST_CTX;
 
+/*
+ * A list of the FIPS DRGB types.
+ * Because of the way HMAC DRGBs are implemented, both the NID and flags
+ * are required.
+ */
+static const struct s_drgb_types {
+    int nid;
+    int flags;
+} drgb_types[] = {
+    { NID_aes_128_ctr,  0                   },
+    { NID_aes_192_ctr,  0                   },
+    { NID_aes_256_ctr,  0                   },
+    { NID_sha1,         0                   },
+    { NID_sha224,       0                   },
+    { NID_sha256,       0                   },
+    { NID_sha384,       0                   },
+    { NID_sha512,       0                   },
+    { NID_sha512_224,   0                   },
+    { NID_sha512_256,   0                   },
+    { NID_sha3_224,     0                   },
+    { NID_sha3_256,     0                   },
+    { NID_sha3_384,     0                   },
+    { NID_sha3_512,     0                   },
+    { NID_sha1,         RAND_DRBG_FLAG_HMAC },
+    { NID_sha224,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha256,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha384,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha512,       RAND_DRBG_FLAG_HMAC },
+    { NID_sha512_224,   RAND_DRBG_FLAG_HMAC },
+    { NID_sha512_256,   RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_224,     RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_256,     RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_384,     RAND_DRBG_FLAG_HMAC },
+    { NID_sha3_512,     RAND_DRBG_FLAG_HMAC },
+};
+
+/*
+ * Disable CRNG testing if it is enabled.
+ * If the DRBG is ready or in an error state, this means an instantiate cycle
+ * for which the default personalisation string is used.
+ */
+static int disable_crngt(RAND_DRBG *drbg)
+{
+    if (drbg->crngt_blocksize > 0) {
+        static const char pers[] = DRBG_DEFAULT_NONCE;
+        const int instantiate = drbg->state != DRBG_UNINITIALISED;
+
+        if ((instantiate && !RAND_DRBG_uninstantiate(drbg))
+            || !RAND_DRBG_set_crng_test_block_size(drbg, 0)
+            || (instantiate
+                && !RAND_DRBG_instantiate(drbg, (const unsigned char *)pers,
+                                          sizeof(pers) - 1)))
+            return 0;
+    }
+    return 1;
+}
+
 static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
                           int entropy, size_t min_len, size_t max_len,
                           int prediction_resistance)
@@ -177,7 +234,8 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
     if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, td->flags, NULL)))
         return 0;
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
-                                           kat_nonce, NULL))) {
+                                           kat_nonce, NULL))
+        || !TEST_true(disable_crngt(drbg))) {
         failures++;
         goto err;
     }
@@ -295,7 +353,8 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     unsigned int reseed_counter_tmp;
     int ret = 0;
 
-    if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, td->flags, NULL)))
+    if (!TEST_ptr(drbg = RAND_DRBG_new(td->nid, td->flags, NULL))
+        || !TEST_true(disable_crngt(drbg)))
         goto err;
 
     /*
@@ -708,17 +767,19 @@ static int test_rand_drbg_reseed(void)
         || !TEST_ptr_eq(private->parent, master))
         return 0;
 
-    /* uninstantiate the three global DRBGs */
-    RAND_DRBG_uninstantiate(private);
-    RAND_DRBG_uninstantiate(public);
-    RAND_DRBG_uninstantiate(master);
+    /* Disable CRNG testing for the master DRBG */
+    if (!TEST_true(disable_crngt(master)))
+        return 0;
 
+    /* uninstantiate the three global DRBGs */	
+    RAND_DRBG_uninstantiate(private);	
+    RAND_DRBG_uninstantiate(public);	
+    RAND_DRBG_uninstantiate(master);	
 
     /* Install hooks for the following tests */
     hook_drbg(master,  &master_ctx);
     hook_drbg(public,  &public_ctx);
     hook_drbg(private, &private_ctx);
-
 
     /*
      * Test initial seeding of shared DRBGs
@@ -928,7 +989,8 @@ static int test_rand_seed(void)
     size_t rand_buflen;
     size_t required_seed_buflen = 0;
 
-    if (!TEST_ptr(master = RAND_DRBG_get0_master()))
+    if (!TEST_ptr(master = RAND_DRBG_get0_master())
+        || !TEST_true(disable_crngt(master)))
         return 0;
 
 #ifdef OPENSSL_RAND_SEED_NONE
@@ -962,6 +1024,8 @@ static int test_rand_add(void)
     size_t rand_buflen;
 
     memset(rand_buf, 0xCD, sizeof(rand_buf));
+    if (!TEST_true(disable_crngt(RAND_DRBG_get0_master())))
+        return 0;
 
     /* make sure it's instantiated */
     RAND_seed(rand_buf, sizeof(rand_buf));
@@ -983,7 +1047,8 @@ static int test_multi_set(void)
     RAND_DRBG *drbg = NULL;
 
     /* init drbg with default CTR initializer */
-    if (!TEST_ptr(drbg = RAND_DRBG_new(0, 0, NULL)))
+    if (!TEST_ptr(drbg = RAND_DRBG_new(0, 0, NULL))
+        || !TEST_true(disable_crngt(drbg)))
         goto err;
     /* change it to use hmac */
     if (!TEST_true(RAND_DRBG_set(drbg, NID_sha1, RAND_DRBG_FLAG_HMAC)))
@@ -1093,6 +1158,86 @@ static int test_set_defaults(void)
            && TEST_true(RAND_DRBG_uninstantiate(private));
 }
 
+static const struct s_crng {
+    size_t buffersize;
+    const char *seed1;
+    const char *seed2;
+    int instantiate;
+    int reseed;
+} crngt_test[] = {
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 
+        "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 1 },
+    { 4, "ABCDABCDijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", NULL, 0, 0 },
+    { 2, "abcdefghijklmnopqrstuvwxyz_*_*efghijklmnopqrstuvwxyz", NULL, 0, 0 },
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrSTUVSTUV", NULL, 0, 0 },
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0", 
+        "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 1 },
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 
+        "ABCDABCDijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 0 },
+    { 2, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 
+        "abcdefghijklmnopqrstuvwxyz_*_*efghijklmnopqrstuvwxyz", 1, 0 },
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 
+        "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrSTUVSTUV", 1, 0 },
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvWXYZ", 
+        "WXYZefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 0 },
+    { 4, "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvWXYZ0", 
+        "WXYZefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz", 1, 0 },
+};
+
+static int test_crngt(int n)
+{
+    static const unsigned char nonce[32] = { 0, 1, 2, 3, 4 };
+    const struct s_crng *td = crngt_test + n % OSSL_NELEM(crngt_test);
+    const struct s_drgb_types *dt = drgb_types + n / OSSL_NELEM(crngt_test);
+    RAND_DRBG *drbg = NULL;
+    TEST_CTX t;
+    unsigned char buff[100];
+    int res = 0;
+    char *seed = NULL;
+
+    if (!TEST_ptr(drbg = RAND_DRBG_new(dt->nid, dt->flags, NULL)))
+        return 0;
+    if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
+                                           kat_nonce, NULL))
+        || !TEST_true(RAND_DRBG_set_crng_test_block_size(drbg, td->buffersize))
+        || !TEST_ptr(seed = OPENSSL_strdup(td->seed1)))
+        goto err;
+
+    memset(&t, 0, sizeof(t));
+    t.entropy = (unsigned char *)seed;
+    t.entropylen = strlen(seed);
+    t.nonce = nonce;
+    t.noncelen = sizeof(nonce);
+    RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
+
+    if (!TEST_int_eq(RAND_DRBG_instantiate(drbg, NULL, 0), td->instantiate))
+        goto err;
+    if (!td->instantiate)
+        goto fin;
+    if (!TEST_true(RAND_DRBG_generate(drbg, buff, sizeof(buff), 0, NULL, 0)))
+        goto err;
+
+    OPENSSL_free(seed);
+    if (!TEST_ptr(seed = OPENSSL_strdup(td->seed2)))
+        goto err;
+    t.entropy = (unsigned char *)seed;
+    t.entropylen = strlen(seed);
+    if (!TEST_int_eq(RAND_DRBG_reseed(drbg, NULL, 0, 0), td->reseed))
+        goto err;
+    if (!td->reseed)
+        goto fin;
+    if (!TEST_true(RAND_DRBG_generate(drbg, buff, sizeof(buff), 0, NULL, 0)))
+        goto err;
+
+fin:
+    res = 1;
+err:
+    uninstantiate(drbg);
+    RAND_DRBG_free(drbg);
+    OPENSSL_free(seed);
+    return res;
+}
+
 int setup_tests(void)
 {
     app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
@@ -1107,5 +1252,6 @@ int setup_tests(void)
 #if defined(OPENSSL_THREADS)
     ADD_TEST(test_multi_thread);
 #endif
+    ADD_ALL_TESTS(test_crngt, OSSL_NELEM(crngt_test) * OSSL_NELEM(drgb_types));
     return 1;
 }

@@ -45,7 +45,8 @@
 # define DRBG_MAX_LENGTH                         INT32_MAX
 
 
-
+/* The default nonce */
+# define DRBG_DEFAULT_NONCE                      "OpenSSL NIST SP 800-90A DRBG"
 /*
  * Maximum allocation size for RANDOM_POOL buffers
  *
