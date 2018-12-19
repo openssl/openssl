@@ -159,11 +159,11 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     size_t bsz = ctx->block_size;
     size_t md_size = ctx->md_size;
     size_t num = ctx->num;
-
     /* We may need to invoke KeccakF directly, since SHA3_squeeze does not
      * invoke it itself at the end of a block.
      */
     int need_keccak = (ctx->squeezing == 2);
+    size_t remainder, direct_bytes;
 
     if (! ctx->squeezing) {
         sha3_final_absorb(evp_ctx);
@@ -200,9 +200,9 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     }
 
     /* These bytes will be part of a partial block, copied from buf. */
-    size_t remainder = md_size % bsz;
+    remainder = md_size % bsz;
     /* We can write this many bytes to md directly. */
-    size_t direct_bytes = md_size - remainder;
+    direct_bytes = md_size - remainder;
 
     if (direct_bytes) {
         SHA3_squeeze(ctx->A, md, direct_bytes, bsz);
