@@ -18,8 +18,9 @@
 
 unsigned randint(unsigned limit)
 {
+  unsigned u;
+
     assert(limit > 0);
-    unsigned u;
     RAND_bytes((unsigned char *)&u, sizeof(u));
     // this is biased, but we don't need unbiased output here.
     return (unsigned)(u % limit);
@@ -53,16 +54,18 @@ static int xof_squeeze_test(const EVP_MD *xof,
 
     unsigned char buf1[BUFLEN], buf2[BUFLEN];
 
-    // Compute the XOF output in one shot.
+    size_t j;
+
+    /* Compute the XOF output in one shot. */
     if (!TEST_true(EVP_DigestInit(ctx, xof)))
         goto out;
     if (!TEST_true(EVP_DigestFinalXOF(ctx, buf1, total_len)))
         goto out;
 
-    // Now compute the XOF output piece by piece.
+    /* Now compute the XOF output piece by piece. */
     if (!TEST_true(EVP_DigestInit(ctx, xof)))
         goto out;
-    for (size_t j = 0; j < total_len; ) {
+    for (j = 0; j < total_len; ) {
         size_t n = stridefn(total_len - j + 1);
         assert(n+j <= total_len);
         if (!TEST_true(EVP_DigestSqueezeXOF(ctx, buf2+j, n)))
@@ -85,6 +88,7 @@ static int xof_rand_test(const EVP_MD *xof)
     int i;
     const int iterations = 512;
     int result = 1;
+
     for (i = 0; i < iterations; ++i) {
         if (! xof_squeeze_test(xof, randint, randint(BUFLEN)))
             result = 0;
@@ -96,6 +100,7 @@ static int xof_stride_test(const EVP_MD *xof)
 {
     int i;
     int result = 1;
+
     for (i = 1; i < 512; ++i) {
         constint_value = i;
         if (!xof_squeeze_test(xof, constint, BUFLEN))
