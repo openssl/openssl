@@ -191,7 +191,7 @@ int EVP_DigestSqueezeXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
         /* We don't clean up here, since it's okay to squeeze an XOF more
          * than once. */
     } else {
-        EVPerr(EVP_F_EVP_DIGESTFINALXOF, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
+        EVPerr(EVP_F_EVP_DIGESTSQUEEZEXOF, EVP_R_NOT_XOF_OR_INVALID_LENGTH);
     }
 
     return ret;
