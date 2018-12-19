@@ -265,6 +265,7 @@ $code.=<<___;
 	.byte	0,12,0x14,0,0,0,0,0
 .size	KeccakF1600_int,.-KeccakF1600_int
 
+.globl	KeccakF1600
 .type	KeccakF1600,\@function
 .align	5
 KeccakF1600:
