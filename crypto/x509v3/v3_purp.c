@@ -764,9 +764,9 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * subject name.
  * These are:
  * 1. Check issuer_name(subject) == subject_name(issuer)
- * 2. If akid(subject) exists check it matches issuer
- * 3. Check that signing algorithm matches signature algorithm
- * 4. If key_usage(issuer) exists check it supports certificate signing
+ * 2. If akid(subject) exists, check that it matches issuer
+ * 3. Check that issuer public key algorithm matches subject signature algorithm
+ * 4. If key_usage(issuer) exists, check that it supports certificate signing
  * returns 0 for OK, positive for reason for mismatch, reasons match
  * codes for X509_verify_cert()
  */
@@ -788,7 +788,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 
     {
         /*
-         * Check if the subject signature algorithm matches the issue PUBKEY
+         * Check if the subject signature algorithm matches the issuer's PUBKEY
          * algorithm
          */
         EVP_PKEY *i_pkey = X509_get0_pubkey(issuer);
