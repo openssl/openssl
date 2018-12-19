@@ -29,7 +29,11 @@ typedef struct {
     size_t num;                 /* used bytes in below buffer */
     unsigned char buf[KECCAK1600_WIDTH / 8 - 32];
     unsigned char pad;
-    unsigned char squeezing;    /* boolean: we have squeezed at least once */
+    unsigned char squeezing;    /* 0: we have not squeezed.
+                                 * 1: we have squeezed and do not need
+                                 *    to run the keccak permutation
+                                 * 2: we have squeezed and do need to
+                                 *    run the keccak permutation */
 } KECCAK1600_CTX;
 
 static int init(EVP_MD_CTX *evp_ctx, unsigned char pad)
@@ -110,6 +114,15 @@ static int sha3_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
     return 1;
 }
 
+static int shake_update(EVP_MD_CTX *evp_ctx, const void *_inp, size_t len)
+{
+    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+    if (ctx->squeezing)
+        return 0;
+
+    return sha3_update(evp_ctx, _inp, len);
+}
+
 static void sha3_final_absorb(EVP_MD_CTX *evp_ctx)
 {
     KECCAK1600_CTX *ctx = evp_ctx->md_data;
@@ -150,10 +163,7 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
     /* We may need to invoke KeccakF directly, since SHA3_squeeze does not
      * invoke it itself at the end of a block.
      */
-    int need_keccak = 1;
-
-    if (! md_size)
-        return 1;
+    int need_keccak = (ctx->squeezing == 2);
 
     if (! ctx->squeezing) {
         sha3_final_absorb(evp_ctx);
@@ -161,6 +171,10 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
         num = ctx->num = 0;
         need_keccak = 0; /* "absorb" runs the round function when done. */
         OPENSSL_cleanse(ctx->buf, sizeof(ctx->buf));
+    }
+
+    if (!md_size) {
+        return 1;
     }
 
     if (num) {
@@ -178,6 +192,8 @@ static int shake_final(EVP_MD_CTX *evp_ctx, unsigned char *md)
         md += num;
         ctx->num = 0;
     }
+
+    ctx->squeezing = 2;
 
     if (need_keccak) {
         KeccakF1600(ctx->A);
@@ -466,7 +482,7 @@ const EVP_MD *EVP_shake##bitlen(void)           \
         bitlen / 8,                             \
         EVP_MD_FLAG_XOF,                        \
         shake_init,                             \
-        sha3_update,                            \
+        shake_update,                           \
         shake_final,                            \
         NULL,                                   \
         NULL,                                   \
