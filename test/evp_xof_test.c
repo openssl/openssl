@@ -16,19 +16,19 @@
 
 #include "testutil.h"
 
-unsigned randint(unsigned limit)
+static unsigned randint(unsigned limit)
 {
   unsigned u;
 
     assert(limit > 0);
     RAND_bytes((unsigned char *)&u, sizeof(u));
-    // this is biased, but we don't need unbiased output here.
+    /* this is biased, but we don't need unbiased output here. */
     return (unsigned)(u % limit);
 }
 
-unsigned constint_value = 99999;
+static unsigned constint_value = 99999;
 
-unsigned constint(unsigned limit)
+static unsigned constint(unsigned limit)
 {
     if (constint_value >= limit)
         return limit - 1;
