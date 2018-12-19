@@ -3232,6 +3232,9 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
     int level = ctx->param->auth_level;
 
+    /* Do the level check first.  If it succeeds, return.  This permits
+       a certificate chain to be verified even if the algorithm is such
+       that the pkey cannot be extracted. */
     if (level <= 0)
         return 1;
     /* Unsupported or malformed keys are not secure */
