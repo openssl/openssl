@@ -35,7 +35,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
           destest mdc2test \
           dhtest enginetest casttest \
           bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
-          evp_test evp_extra_test igetest v3nametest v3ext \
+          evp_test evp_extra_test evp_xof_test igetest v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test \
           conf_include_test \
           constant_time_test verify_extra_test clienthellotest \
@@ -187,6 +187,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../crypto/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
+
+  SOURCE[evp_xof_test]=evp_xof_test.c
+  INCLUDE[evp_xof_test]=../include ../crypto/include
+  DEPEND[evp_xof_test]=../libcrypto libtestutil.a
 
   SOURCE[igetest]=igetest.c
   INCLUDE[igetest]=../include
