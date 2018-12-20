@@ -234,24 +234,24 @@ static int decode_EC_key(oqs_key_type_t keytype, int nid, const unsigned char* e
      functions. I therefore use lower-level functions for EC algs.
   */
   if ((ecgroup = EC_GROUP_new_by_curve_name(nid)) == NULL) {
-    OQSerr(0, ERR_R_FATAL);
+    ECerr(0, ERR_R_FATAL);
     goto end;
   }
 
   if ((ec_key = EC_KEY_new()) == NULL ||
       !EC_KEY_set_group(ec_key, ecgroup)){
-    OQSerr(0, ERR_R_FATAL);
+    ECerr(0, ERR_R_FATAL);
     goto end;
   }
 
   if (keytype == KEY_TYPE_PRIVATE) {
     if (d2i_ECPrivateKey(&ec_key, &p_encoded_key, key_len) == NULL) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(0, ERR_R_FATAL);
       goto end;
     }
   } else {
     if (o2i_ECPublicKey(&ec_key, &p_encoded_key, key_len) == NULL) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(0, ERR_R_FATAL);
       goto end;
     }
   }
@@ -259,7 +259,7 @@ static int decode_EC_key(oqs_key_type_t keytype, int nid, const unsigned char* e
   if ((oqs_key->classical_pkey = EVP_PKEY_new()) == NULL ||
       !EVP_PKEY_set_type(oqs_key->classical_pkey, NID_X9_62_id_ecPublicKey) ||
       !EVP_PKEY_assign_EC_KEY(oqs_key->classical_pkey, ec_key)) {
-    OQSerr(0, ERR_R_FATAL);
+    ECerr(0, ERR_R_FATAL);
     goto end;
   }
 
@@ -306,28 +306,27 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
 
     oqs_key = OPENSSL_zalloc(sizeof(*oqs_key));
     if (oqs_key == NULL) {
-      OQSerr(0, ERR_R_MALLOC_FAILURE);
+      ECerr(0, ERR_R_MALLOC_FAILURE);
       goto err;
     }
     oqs_key->nid = nid;
     oqs_key->s = OQS_SIG_new(oqs_alg_name);
     if (oqs_key->s == NULL) {
-      /* TODO: provide a better error message for non-enabled OQS schemes.
-	 Perhaps even check if the alg is available earlier in the stack. */
-      OQSerr(0, ERR_R_FATAL);
+      /* TODO: Perhaps even check if the alg is available earlier in the stack. */
+      ECerr(EC_F_OQS_KEY_INIT, EC_R_NO_SUCH_OQS_ALGORITHM);
       goto err;
     }
     oqs_key->pubkey = OPENSSL_malloc(oqs_key->s->length_public_key);
     if (oqs_key->pubkey == NULL) {
-      OQSerr(0, ERR_R_MALLOC_FAILURE);
+      ECerr(0, ERR_R_MALLOC_FAILURE);
       goto err;
     }
     /* Optionally allocate the private key */
     if (keytype == KEY_TYPE_PRIVATE) {
       oqs_key->privkey = OPENSSL_secure_malloc(oqs_key->s->length_secret_key);
       if (oqs_key->privkey == NULL) {
-	OQSerr(0, ERR_R_MALLOC_FAILURE);
-	goto err;
+        ECerr(EC_F_OQS_KEY_INIT, ERR_R_MALLOC_FAILURE);
+        goto err;
       }
     }
     oqs_key->security_bits = get_oqs_security_bits(nid);
@@ -345,7 +344,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     unsigned char *penc;
     uint32_t pubkey_len = 0, max_classical_pubkey_len = 0, classical_pubkey_len = 0, index = 0;
     if (!oqs_key || !oqs_key->s || !oqs_key->pubkey ) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PUB_ENCODE, EC_R_KEY_NOT_SET);
       return 0;
     }
     int is_hybrid = (oqs_key->classical_pkey != NULL);
@@ -358,7 +357,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     }
     penc = OPENSSL_malloc(pubkey_len);
     if (penc == NULL) {
-      OQSerr(0, ERR_R_MALLOC_FAILURE);
+      ECerr(EC_F_OQS_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
       return 0;
     }
 
@@ -369,7 +368,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
       if (actual_classical_pubkey_len < 0 || actual_classical_pubkey_len > max_classical_pubkey_len) {
 	/* something went wrong, or we didn't allocate enough space */
 	OPENSSL_free(penc);
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_OQS_PUB_ENCODE, ERR_R_FATAL);
         return 0;
       }
       ENCODE_UINT32(penc, actual_classical_pubkey_len);
@@ -386,7 +385,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     if (!X509_PUBKEY_set0_param(pk, OBJ_nid2obj(pkey->ameth->pkey_id),
                                 V_ASN1_UNDEF, NULL, penc, pubkey_len)) {
         OPENSSL_free(penc);
-        OQSerr(0, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_OQS_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
@@ -408,7 +407,7 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
     if (p == NULL) {
       /* pklen is checked below, after we instantiate the oqs_key to
 	 learn the max len */
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PUB_DECODE, ERR_R_FATAL);
       return 0;
     }
 
@@ -418,23 +417,23 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
       /* Algorithm parameters must be absent */
       X509_ALGOR_get0(NULL, &ptype, NULL, palg);
       if (ptype != V_ASN1_UNDEF) {
-	OQSerr(0, ERR_R_FATAL);
-	return 0;
+        ECerr(EC_F_OQS_PUB_DECODE, EC_R_PARAMETERS_MUST_BE_ABSENT);
+        return 0;
       }
     }
 
     if (!oqs_key_init(&oqs_key, id, 0)) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PUB_DECODE, EC_R_KEY_INIT_FAILED);
       return 0;
     }
-    
+
     max_pubkey_len = oqs_key->s->length_public_key;
     if (is_hybrid) {
       max_pubkey_len += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(id)));
     }
 
     if (pklen > max_pubkey_len) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PUB_DECODE, EC_R_WRONG_LENGTH);
       goto err;
     }
 
@@ -445,14 +444,14 @@ static int oqs_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
       DECODE_UINT32(actual_classical_pubkey_len, p);
       if (is_EC_nid(classical_id)) {
 	if (!decode_EC_key(KEY_TYPE_PUBLIC, classical_id, p + SIZE_OF_UINT32, actual_classical_pubkey_len, oqs_key)) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_OQS_PUB_DECODE, ERR_R_FATAL);
 	  goto err;
 	}
       } else {
 	const unsigned char* pubkey_temp = p + SIZE_OF_UINT32;
 	oqs_key->classical_pkey = d2i_PublicKey(classical_id, &oqs_key->classical_pkey, &pubkey_temp, actual_classical_pubkey_len);
 	if (oqs_key->classical_pkey == NULL) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_OQS_PUB_DECODE, ERR_R_FATAL);
 	  goto err;
 	}
       }
@@ -521,13 +520,13 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
       /* Algorithm parameters must be absent */
       X509_ALGOR_get0(NULL, &ptype, NULL, palg);
       if (ptype != V_ASN1_UNDEF) {
-	OQSerr(0, ERR_R_FATAL);
-	return 0;
+        ECerr(EC_F_OQS_PRIV_DECODE, ERR_R_FATAL);
+        return 0;
       }
     }
 
     if (!oqs_key_init(&oqs_key, id, 1)) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PRIV_DECODE, EC_R_KEY_INIT_FAILED);
       return 0;
     }
 
@@ -537,7 +536,7 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
     }
 
     if (plen > max_privkey_len) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PRIV_DECODE, EC_R_KEY_LENGTH_WRONG);
       goto err;
     }
 
@@ -548,14 +547,14 @@ static int oqs_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
       DECODE_UINT32(actual_classical_privkey_len, p);
       if (is_EC_nid(classical_id)) {
 	if (!decode_EC_key(KEY_TYPE_PRIVATE, classical_id, p + SIZE_OF_UINT32, actual_classical_privkey_len, oqs_key)) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_OQS_PRIV_DECODE, ERR_R_FATAL);
 	  goto err;
 	}
       } else {
 	const unsigned char* privkey_temp = p + SIZE_OF_UINT32;
 	oqs_key->classical_pkey = d2i_PrivateKey(classical_id, &oqs_key->classical_pkey, &privkey_temp, actual_classical_privkey_len);
 	if (oqs_key->classical_pkey == NULL) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_OQS_PRIV_DECODE, ERR_R_FATAL);
 	  goto err;
 	}
       }
@@ -588,7 +587,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     int rv = 0;
 
     if (!oqs_key || !oqs_key->s || !oqs_key->privkey ) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_OQS_PRIV_ENCODE, ERR_R_FATAL);
       return rv;
     }
     int is_hybrid = (oqs_key->classical_pkey != NULL);
@@ -601,7 +600,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     }
     buf = OPENSSL_secure_malloc(buflen);
     if (buf == NULL) {
-      OQSerr(0, ERR_R_MALLOC_FAILURE);
+      ECerr(EC_F_OQS_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
       return rv;
     }
 
@@ -612,7 +611,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
       if (actual_classical_privkey_len < 0 || actual_classical_privkey_len > max_classical_privkey_len) {
 	/* something went wrong, or we didn't allocate enough space */
 	OPENSSL_free(buf);
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_OQS_PRIV_ENCODE, ERR_R_FATAL);
         goto end;
       }
       ENCODE_UINT32(buf, actual_classical_privkey_len);
@@ -636,7 +635,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
     penclen = i2d_ASN1_OCTET_STRING(&oct, &penc);
     if (penclen < 0) {
-        OQSerr(0, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_OQS_PRIV_ENCODE, ERR_R_FATAL);
         goto end;
     }
 
@@ -644,7 +643,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
                          V_ASN1_UNDEF, NULL, penc, penclen)) {
         OPENSSL_secure_clear_free(buf, buflen);
         OPENSSL_clear_free(penc, penclen);
-        OQSerr(0, ERR_R_MALLOC_FAILURE);
+        ECerr(EC_F_OQS_PRIV_ENCODE, EC_R_SETTING_PARAMETERS_FAILED);
         goto end;
     }
     rv = 1; /* success */
@@ -658,7 +657,7 @@ static int oqs_size(const EVP_PKEY *pkey)
 {
     const OQS_KEY *oqs_key = (OQS_KEY*) pkey->pkey.ptr;
     if (oqs_key == NULL || oqs_key->s == NULL) {
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_OQS_SIZE, EC_R_NOT_INITIALIZED);
         return 0;
     }
     int sig_len = oqs_key->s->length_signature;
@@ -789,7 +788,7 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	 nid != NID_qteslaIIIspeed
 	 /* ADD_MORE_OQS_SIG_HERE */
 	 ) || ptype != V_ASN1_UNDEF) {
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_OQS_ITEM_VERIFY, EC_R_UNKNOWN_NID);
         return 0;
     }
 
@@ -861,7 +860,7 @@ static int pkey_oqs_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     int rv = 0;
 
     if (!oqs_key_init(&oqs_key, id, 1)) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_PKEY_OQS_KEYGEN, ERR_R_FATAL);
       goto end;
     }
 
@@ -873,7 +872,7 @@ static int pkey_oqs_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	   !EVP_PKEY_paramgen_init(param_ctx) ||
 	   !EVP_PKEY_CTX_set_ec_paramgen_curve_nid(param_ctx, classical_id) ||
 	   !EVP_PKEY_paramgen(param_ctx, &param_pkey)) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_PKEY_OQS_KEYGEN, ERR_R_FATAL);
 	  goto end;
 	}
       }
@@ -886,18 +885,18 @@ static int pkey_oqs_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
       }
       if (!keygen_ctx ||
 	  !EVP_PKEY_keygen_init(keygen_ctx)) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_PKEY_OQS_KEYGEN, EC_R_KEY_INIT_FAILED);
 	  goto end;
       };
 
       if ( classical_id == EVP_PKEY_RSA ) {
 	if(!EVP_PKEY_CTX_set_rsa_keygen_bits(keygen_ctx, rsa_size)) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_PKEY_OQS_KEYGEN, ERR_R_FATAL);
 	  goto end;
 	}
       }
       if(!EVP_PKEY_keygen(keygen_ctx, &oqs_key->classical_pkey)) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_PKEY_OQS_KEYGEN, ERR_R_FATAL);
 	  goto end;
       }
       EVP_PKEY_CTX_free(keygen_ctx);
@@ -906,7 +905,7 @@ static int pkey_oqs_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
     /* generate PQC key pair */
     if (OQS_SIG_keypair(oqs_key->s, oqs_key->pubkey, oqs_key->privkey) != OQS_SUCCESS) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_PKEY_OQS_KEYGEN, EC_R_KEYGEN_FAILED);
       goto end;
     }
 
@@ -933,7 +932,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     int rv = 0;
 
     if (!oqs_key || !oqs_key->s || !oqs_key->privkey || (is_hybrid && !oqs_key->classical_pkey)) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_NO_PRIVATE_KEY);
       return rv;
     }
     if (is_hybrid) {
@@ -947,7 +946,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
       return 1;
     }
     if (*siglen < max_sig_len) {
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_BUFFER_LENGTH_WRONG);
         return rv;
     }
 
@@ -958,12 +957,12 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
 
       if ((classical_ctx_sign = EVP_PKEY_CTX_new(oqs_key->classical_pkey, NULL)) == NULL ||
 	  EVP_PKEY_sign_init(classical_ctx_sign) <= 0) {
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_PKEY_OQS_DIGESTSIGN, ERR_R_FATAL);
         goto end;
       }
       if (classical_id == EVP_PKEY_RSA) {
 	if (EVP_PKEY_CTX_set_rsa_padding(classical_ctx_sign, RSA_PKCS1_PADDING) <= 0) {
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_PKEY_OQS_DIGESTSIGN, ERR_R_FATAL);
         goto end;
 	}
       }
@@ -987,12 +986,12 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
 	break;
       }
       if (EVP_PKEY_sign(classical_ctx_sign, sig + SIZE_OF_UINT32, &actual_classical_sig_len, digest, digest_len) <= 0) {
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_SIGNING_FAILED);
         goto end;
       }
       if (actual_classical_sig_len > get_classical_sig_len(classical_id)) {
 	/* sig is bigger than expected! */
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_BUFFER_LENGTH_WRONG);
         goto end;
       }
       ENCODE_UINT32(sig, actual_classical_sig_len);
@@ -1001,7 +1000,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     }
 
     if (OQS_SIG_sign(oqs_key->s, sig + index, &oqs_sig_len, tbs, tbslen, oqs_key->privkey) != OQS_SUCCESS) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_SIGNING_FAILED);
       return 0;
     }
     *siglen = classical_sig_len + oqs_sig_len;
@@ -1027,7 +1026,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
     if (!oqs_key || !oqs_key->s  || !oqs_key->pubkey || (is_hybrid && !oqs_key->classical_pkey) ||
 	sig == NULL || tbs == NULL) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, EC_R_WRONG_PARAMETERS);
       return 0;
     }
 
@@ -1043,13 +1042,13 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
       if ((ctx_verify = EVP_PKEY_CTX_new(oqs_key->classical_pkey, NULL)) == NULL ||
 	  EVP_PKEY_verify_init(ctx_verify) <= 0) {
-	OQSerr(0, ERR_R_FATAL);
+	ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, ERR_R_FATAL);
 	EVP_PKEY_CTX_free(ctx_verify);
 	return 0;
       }
       if (classical_id == EVP_PKEY_RSA) {
 	if (EVP_PKEY_CTX_set_rsa_padding(ctx_verify, RSA_PKCS1_PADDING) <= 0) {
-	  OQSerr(0, ERR_R_FATAL);
+	  ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, ERR_R_FATAL);
 	  EVP_PKEY_CTX_free(ctx_verify);
 	  return 0;
 	}
@@ -1074,7 +1073,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 	break;
       }
       if (EVP_PKEY_verify(ctx_verify, sig + SIZE_OF_UINT32, actual_classical_sig_len, digest, digest_len) <= 0) {
-	OQSerr(0, ERR_R_FATAL);
+	ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, EC_R_VERIFICATION_FAILED);
 	return 0;
       }
       classical_sig_len = SIZE_OF_UINT32 + actual_classical_sig_len;
@@ -1083,7 +1082,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
     }
 
     if (OQS_SIG_verify(oqs_key->s, tbs, tbslen, sig + index, siglen - classical_sig_len, oqs_key->pubkey) != OQS_SUCCESS) {
-      OQSerr(0, ERR_R_FATAL);
+      ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, EC_R_VERIFICATION_FAILED);
       return 0;
     }
 
@@ -1097,7 +1096,7 @@ static int pkey_oqs_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         /* Only NULL allowed as digest */
         if (p2 == NULL)
             return 1;
-        OQSerr(0, ERR_R_FATAL);
+        ECerr(EC_F_PKEY_OQS_CTRL, EC_R_WRONG_DIGEST);
         return 0;
 
     case EVP_PKEY_CTRL_DIGESTINIT:

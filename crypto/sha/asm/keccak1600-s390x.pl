@@ -432,9 +432,9 @@ SHA3_absorb:
 	lrvg	%r0,0($inp)
 	la	$inp,8($inp)
 	xg	%r0,0(%r1)
-	la	%r1,8(%r1)
 	a${g}hi	$len,-8
-	stg	%r0,-8(%r1)
+	stg	%r0,0(%r1)
+	la	%r1,8(%r1)
 	brct	$bsz,.Lblock_absorb
 
 	stm${g}	$inp,$len,$frame+3*$SIZE_T($sp)

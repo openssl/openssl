@@ -30,12 +30,12 @@ No shutdown setting, yet.
 
 =item SSL_SENT_SHUTDOWN
 
-A "close notify" shutdown alert was sent to the peer, the connection is being
+A close_notify shutdown alert was sent to the peer, the connection is being
 considered closed and the session is closed and correct.
 
 =item SSL_RECEIVED_SHUTDOWN
 
-A shutdown alert was received form the peer, either a normal "close notify"
+A shutdown alert was received form the peer, either a normal close_notify
 or a fatal error.
 
 =back
@@ -47,13 +47,13 @@ the ssl session. If the session is still open, when
 L<SSL_clear(3)> or L<SSL_free(3)> is called,
 it is considered bad and removed according to RFC2246.
 The actual condition for a correctly closed session is SSL_SENT_SHUTDOWN
-(according to the TLS RFC, it is acceptable to only send the "close notify"
+(according to the TLS RFC, it is acceptable to only send the close_notify
 alert but to not wait for the peer's answer, when the underlying connection
 is closed).
 SSL_set_shutdown() can be used to set this state without sending a
 close alert to the peer (see L<SSL_shutdown(3)>).
 
-If a "close notify" was received, SSL_RECEIVED_SHUTDOWN will be set,
+If a close_notify was received, SSL_RECEIVED_SHUTDOWN will be set,
 for setting SSL_SENT_SHUTDOWN the application must however still call
 L<SSL_shutdown(3)> or SSL_set_shutdown() itself.
 
@@ -71,7 +71,7 @@ L<SSL_clear(3)>, L<SSL_free(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

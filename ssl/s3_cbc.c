@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -256,12 +256,13 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      * of hash termination (0x80 + 64-bit length) don't fit in the final
      * block, we say that the final two blocks can vary based on the padding.
      * TLSv1 has MACs up to 48 bytes long (SHA-384) and the padding is not
-     * required to be minimal. Therefore we say that the final six blocks can
+     * required to be minimal. Therefore we say that the final |variance_blocks|
+     * blocks can
      * vary based on the padding. Later in the function, if the message is
      * short and there obviously cannot be this many blocks then
      * variance_blocks can be reduced.
      */
-    variance_blocks = is_sslv3 ? 2 : 6;
+    variance_blocks = is_sslv3 ? 2 : ( ((255 + 1 + md_size + md_block_size - 1) / md_block_size) + 1);
     /*
      * From now on we're dealing with the MAC, which conceptually has 13
      * bytes of `header' before the start of the data (TLS) or 71/75 bytes

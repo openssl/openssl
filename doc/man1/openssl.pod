@@ -40,6 +40,9 @@ The B<openssl> program provides a rich variety of commands (I<command> in the
 SYNOPSIS above), each of which often has a wealth of options and arguments
 (I<command_opts> and I<command_args> in the SYNOPSIS).
 
+Detailed documentation and use cases for most standard subcommands are available
+(e.g., L<x509(1)> or L<openssl-x509(1)>).
+
 Many commands use an external configuration file for some or all of their
 arguments and have a B<-config> option to specify that file.
 The environment variable B<OPENSSL_CONF> can be used to specify
@@ -369,7 +372,37 @@ SM3 Digest
 
 =head2 Encoding and Cipher Commands
 
+The following aliases provide convenient access to the most used encodings
+and ciphers.
+
+Depending on how OpenSSL was configured and built, not all ciphers listed
+here may be present. See L<enc(1)> for more information and command usage.
+
 =over 4
+
+=item B<aes128>, B<aes-128-cbc>, B<aes-128-cfb>, B<aes-128-ctr>, B<aes-128-ecb>, B<aes-128-ofb>
+
+AES-128 Cipher
+
+=item B<aes192>, B<aes-192-cbc>, B<aes-192-cfb>, B<aes-192-ctr>, B<aes-192-ecb>, B<aes-192-ofb>
+
+AES-192 Cipher
+
+=item B<aes256>, B<aes-256-cbc>, B<aes-256-cfb>, B<aes-256-ctr>, B<aes-256-ecb>, B<aes-256-ofb>
+
+AES-256 Cipher
+
+=item B<aria128>, B<aria-128-cbc>, B<aria-128-cfb>, B<aria-128-ctr>, B<aria-128-ecb>, B<aria-128-ofb>
+
+Aria-128 Cipher
+
+=item B<aria192>, B<aria-192-cbc>, B<aria-192-cfb>, B<aria-192-ctr>, B<aria-192-ecb>, B<aria-192-ofb>
+
+Aria-192 Cipher
+
+=item B<aria256>, B<aria-256-cbc>, B<aria-256-cfb>, B<aria-256-ctr>, B<aria-256-ecb>, B<aria-256-ofb>
+
+Aria-256 Cipher
 
 =item B<base64>
 
@@ -379,6 +412,18 @@ Base64 Encoding
 
 Blowfish Cipher
 
+=item B<camellia128>, B<camellia-128-cbc>, B<camellia-128-cfb>, B<camellia-128-ctr>, B<camellia-128-ecb>, B<camellia-128-ofb>
+
+Camellia-128 Cipher
+
+=item B<camellia192>, B<camellia-192-cbc>, B<camellia-192-cfb>, B<camellia-192-ctr>, B<camellia-192-ecb>, B<camellia-192-ofb>
+
+Camellia-192 Cipher
+
+=item B<camellia256>, B<camellia-256-cbc>, B<camellia-256-cfb>, B<camellia-256-ctr>, B<camellia-256-ecb>, B<camellia-256-ofb>
+
+Camellia-256 Cipher
+
 =item B<cast>, B<cast-cbc>
 
 CAST Cipher
@@ -386,6 +431,10 @@ CAST Cipher
 =item B<cast5-cbc>, B<cast5-cfb>, B<cast5-ecb>, B<cast5-ofb>
 
 CAST5 Cipher
+
+=item B<chacha20>
+
+Chacha20 Cipher
 
 =item B<des>, B<des-cbc>, B<des-cfb>, B<des-ecb>, B<des-ede>, B<des-ede-cbc>, B<des-ede-cfb>, B<des-ede-ofb>, B<des-ofb>
 
@@ -410,6 +459,14 @@ RC4 Cipher
 =item B<rc5>, B<rc5-cbc>, B<rc5-cfb>, B<rc5-ecb>, B<rc5-ofb>
 
 RC5 Cipher
+
+=item B<seed>, B<seed-cbc>, B<seed-cfb>, B<seed-ecb>, B<seed-ofb>
+
+SEED Cipher
+
+=item B<sm4>, B<sm4-cbc>, B<sm4-cfb>, B<sm4-ctr>, B<sm4-ecb>, B<sm4-ofb>
+
+SM4 Cipher
 
 =back
 

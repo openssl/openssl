@@ -950,6 +950,7 @@ static void spawn_loop(void)
             sleep(30);
             break;
         case 0:             /* child */
+            OPENSSL_free(kidpids);
             signal(SIGINT, SIG_DFL);
             signal(SIGTERM, SIG_DFL);
             if (termsig)
@@ -976,6 +977,7 @@ static void spawn_loop(void)
     }
 
     /* The loop above can only break on termsig */
+    OPENSSL_free(kidpids);
     syslog(LOG_INFO, "terminating on signal: %d", termsig);
     killall(0, kidpids);
 }

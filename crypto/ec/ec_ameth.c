@@ -699,7 +699,7 @@ static int ecdh_cms_set_kdf_param(EVP_PKEY_CTX *pctx, int eckdf_nid)
     if (EVP_PKEY_CTX_set_ecdh_cofactor_mode(pctx, cofactor) <= 0)
         return 0;
 
-    if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, EVP_PKEY_ECDH_KDF_X9_62) <= 0)
+    if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, EVP_PKEY_ECDH_KDF_X9_63) <= 0)
         return 0;
 
     kdf_md = EVP_get_digestbynid(kdfmd_nid);
@@ -864,7 +864,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         ecdh_nid = NID_dh_cofactor_kdf;
 
     if (kdf_type == EVP_PKEY_ECDH_KDF_NONE) {
-        kdf_type = EVP_PKEY_ECDH_KDF_X9_62;
+        kdf_type = EVP_PKEY_ECDH_KDF_X9_63;
         if (EVP_PKEY_CTX_set_ecdh_kdf_type(pctx, kdf_type) <= 0)
             goto err;
     } else

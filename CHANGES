@@ -7,9 +7,45 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1 and 1.1.1a [xx XXX xxxx]
+ Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
 
   *)
+
+ Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
+
+  *) Timing vulnerability in DSA signature generation
+
+     The OpenSSL DSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
+     (CVE-2018-0734)
+     [Paul Dale]
+
+  *) Timing vulnerability in ECDSA signature generation
+
+     The OpenSSL ECDSA signature algorithm has been shown to be vulnerable to a
+     timing side channel attack. An attacker could use variations in the signing
+     algorithm to recover the private key.
+
+     This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
+     (CVE-2018-0735)
+     [Paul Dale]
+
+  *) Added EVP_PKEY_ECDH_KDF_X9_63 and ecdh_KDF_X9_63() as replacements for
+     the EVP_PKEY_ECDH_KDF_X9_62 KDF type and ECDH_KDF_X9_62(). The old names
+     are retained for backwards compatibility.
+     [Antoine Salon]
+
+  *) Fixed the issue that RAND_add()/RAND_seed() silently discards random input
+     if its length exceeds 4096 bytes. The limit has been raised to a buffer size
+     of two gigabytes and the error handling improved.
+
+     This issue was reported to OpenSSL by Dr. Falko Strenzke. It has been
+     categorized as a normal bug, not a security issue, because the DRBG reseeds
+     automatically and is fully functional even without additional randomness
+     provided by the application.
 
  Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
@@ -13107,4 +13143,3 @@ des-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
   *) A minor bug in ssl/s3_clnt.c where there would always be 4 0
      bytes sent in the client random.
      [Edward Bishop <ebishop@spyglass.com>]
-

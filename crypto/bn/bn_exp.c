@@ -1077,7 +1077,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
              * is not only slower but also makes each bit vulnerable to
              * EM (and likely other) side-channel attacks like One&Done
              * (for details see "One&Done: A Single-Decryption EM-Based
-             *  Attack on OpenSSL’s Constant-Time Blinded RSA" by M. Alam,
+             *  Attack on OpenSSL's Constant-Time Blinded RSA" by M. Alam,
              *  H. Khan, M. Dey, N. Sinha, R. Callan, A. Zajic, and
              *  M. Prvulovic, in USENIX Security'18)
              */

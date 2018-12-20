@@ -245,7 +245,7 @@ extern FILE *_imp___iob;
 
      Finally, we add the VMS C facility code 0x35a000, because there are some
      programs, such as Perl, that will reinterpret the code back to something
-     POSIXly.  'man perlvms' explains it further.
+     POSIX.  'man perlvms' explains it further.
 
      NOTE: the perlvms manual wants to turn all codes 2 to 255 into success
      codes (status type = 1).  I couldn't disagree more.  Fortunately, the
@@ -317,8 +317,15 @@ struct servent *getservbyname(const char *name, const char *proto);
 # endif
 /* end vxworks */
 
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-# define CRYPTO_memcmp memcmp
-#endif
+# ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+#  define CRYPTO_memcmp memcmp
+# endif
 
+/* unistd.h defines _POSIX_VERSION */
+# if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
+     && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
+          || defined(__sun) || defined(__hpux) || defined(__sgi)      \
+          || defined(__osf__) )
+#  define OPENSSL_SECURE_MEMORY  /* secure memory is implemented */
+# endif
 #endif

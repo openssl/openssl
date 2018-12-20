@@ -32,6 +32,9 @@ SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
 
 =head1 DESCRIPTION
 
+For all of the functions below that set the supported groups there must be at
+least one group in the list.
+
 SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
 groups in the array B<glist>. The array consist of all NIDs of groups in
 preference order. For a TLS client the groups are used directly in the
@@ -99,7 +102,7 @@ functions were first added to OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

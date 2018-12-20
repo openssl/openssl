@@ -45,18 +45,21 @@ size_t rand_drbg_get_nonce(RAND_DRBG *drbg,
 void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
                              unsigned char *out, size_t outlen);
 
-size_t rand_drbg_get_additional_data(unsigned char **pout, size_t max_len);
+size_t rand_drbg_get_additional_data(RAND_POOL *pool, unsigned char **pout);
 
-void rand_drbg_cleanup_additional_data(unsigned char *out, size_t outlen);
+void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out);
 
 /*
  * RAND_POOL functions
  */
 RAND_POOL *rand_pool_new(int entropy_requested, size_t min_len, size_t max_len);
+RAND_POOL *rand_pool_attach(const unsigned char *buffer, size_t len,
+                            size_t entropy);
 void rand_pool_free(RAND_POOL *pool);
 
 const unsigned char *rand_pool_buffer(RAND_POOL *pool);
 unsigned char *rand_pool_detach(RAND_POOL *pool);
+void rand_pool_reattach(RAND_POOL *pool, unsigned char *buffer);
 
 size_t rand_pool_entropy(RAND_POOL *pool);
 size_t rand_pool_length(RAND_POOL *pool);

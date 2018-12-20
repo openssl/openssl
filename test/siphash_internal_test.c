@@ -169,7 +169,7 @@ static TESTDATA tests[] = {
 
 static int test_siphash(int idx)
 {
-    SIPHASH siphash;
+    SIPHASH siphash = { 0, };
     TESTDATA test = tests[idx];
     unsigned char key[SIPHASH_KEY_SIZE];
     unsigned char in[64];
@@ -257,7 +257,7 @@ static int test_siphash(int idx)
 
 static int test_siphash_basic(void)
 {
-    SIPHASH siphash;
+    SIPHASH siphash = { 0, };
     unsigned char key[SIPHASH_KEY_SIZE];
     unsigned char output[SIPHASH_MAX_DIGEST_SIZE];
 
