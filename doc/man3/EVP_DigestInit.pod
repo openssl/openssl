@@ -100,7 +100,7 @@ Sets, clears and tests B<ctx> flags.  See L</FLAGS> below for more information.
 
 =item EVP_Digest()
 
-A wrapper around the Digest Init, Update and Final functions.
+A wrapper around the Digest Init_ex, Update and Final_ex functions.
 Hashes B<count> bytes of data at B<data> using a digest B<type> from ENGINE
 B<impl>. The digest value is placed in B<md> and its length is written at B<s>
 if the pointer is not NULL.
