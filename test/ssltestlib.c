@@ -25,18 +25,28 @@
 # include <fcntl.h>
 #endif
 
-static ossl_inline void ossl_sleep(unsigned int millis) {
+static ossl_inline void ossl_sleep(unsigned int millis)
+{
+# ifdef OPENSSL_SYS_VXWORKS
+    struct timespec ts;
+    ts.tv_sec = (long int) (millis / 1000);
+    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
+    nanosleep(&ts, NULL);
+# else
     usleep(millis * 1000);
+# endif
 }
 #elif defined(_WIN32)
 # include <windows.h>
 
-static ossl_inline void ossl_sleep(unsigned int millis) {
+static ossl_inline void ossl_sleep(unsigned int millis)
+{
     Sleep(millis);
 }
 #else
 /* Fallback to a busy wait */
-static ossl_inline void ossl_sleep(unsigned int millis) {
+static ossl_inline void ossl_sleep(unsigned int millis)
+{
     struct timeval start, now;
     unsigned int elapsedms;
 

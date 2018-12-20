@@ -2192,7 +2192,7 @@ double app_tminterval(int stop, int usertime)
 
     return ret;
 }
-#elif defined(OPENSSL_SYSTEM_VXWORKS)
+#elif defined(OPENSSL_SYS_VXWORKS)
 # include <time.h>
 
 double app_tminterval(int stop, int usertime)
