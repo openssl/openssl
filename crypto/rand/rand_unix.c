@@ -93,6 +93,27 @@ static uint64_t get_timer_bits(void);
 # error "UEFI and VXWorks only support seeding NONE"
 #endif
 
+#if defined(OPENSSL_SYS_VXWORKS)
+/* empty implementation */
+int rand_pool_init(void)
+{
+    return 1;
+}
+
+void rand_pool_cleanup(void)
+{
+}
+
+void rand_pool_keep_random_devices_open(int keep)
+{
+}
+
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+{
+    return rand_pool_entropy_available(pool);
+}
+#endif
+
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
     || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_VXWORKS) \
     || defined(OPENSSL_SYS_UEFI))
