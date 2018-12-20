@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,6 +49,7 @@ struct blake2s_ctx_st {
     uint32_t f[2];
     uint8_t  buf[BLAKE2S_BLOCKBYTES];
     size_t   buflen;
+    size_t   outlen;
 };
 
 struct blake2b_param_st {
@@ -73,6 +74,7 @@ struct blake2b_ctx_st {
     uint64_t f[2];
     uint8_t  buf[BLAKE2B_BLOCKBYTES];
     size_t   buflen;
+    size_t   outlen;
 };
 
 #define BLAKE2B_DIGEST_LENGTH 64
