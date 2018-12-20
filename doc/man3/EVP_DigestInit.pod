@@ -237,11 +237,6 @@ EVP_MD_CTX_ctrl() can be used to send the following standard controls:
 
 =over 4
 
-=item EVP_MD_CTRL_DIGALGID
-
-Sets up the DigestAlgorithmIdentifier.
-Currently unused.
-
 =item EVP_MD_CTRL_MICALG
 
 Sets the micalg string for S/MIME types.
