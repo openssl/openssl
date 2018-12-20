@@ -159,7 +159,7 @@ static int get_classical_key_len(oqs_key_type_t keytype, int classical_id) {
  switch (classical_id)
     {
     case NID_rsaEncryption:
-      return (keytype == KEY_TYPE_PRIVATE) ? 1768 : 398;
+      return (keytype == KEY_TYPE_PRIVATE) ? 1770 : 398;
     case NID_X9_62_prime256v1:
       return (keytype == KEY_TYPE_PRIVATE) ? 121 : 65;
     case NID_secp384r1:
@@ -343,7 +343,7 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
     const OQS_KEY *oqs_key = (OQS_KEY*) pkey->pkey.ptr;
     unsigned char *penc;
-    uint32_t pubkey_len = 0, classical_pubkey_len = 0, index = 0;
+    uint32_t pubkey_len = 0, max_classical_pubkey_len = 0, classical_pubkey_len = 0, index = 0;
     if (!oqs_key || !oqs_key->s || !oqs_key->pubkey ) {
       OQSerr(0, ERR_R_FATAL);
       return 0;
@@ -353,7 +353,8 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     /* determine the length of the key */
     pubkey_len = oqs_key->s->length_public_key;
     if (is_hybrid) {
-      pubkey_len += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(oqs_key->nid)));
+      max_classical_pubkey_len = get_classical_key_len(KEY_TYPE_PUBLIC, get_classical_nid(oqs_key->nid));
+      pubkey_len += (SIZE_OF_UINT32 + max_classical_pubkey_len);
     }
     penc = OPENSSL_malloc(pubkey_len);
     if (penc == NULL) {
@@ -365,7 +366,8 @@ static int oqs_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     if (is_hybrid) {
       unsigned char *classical_pubkey = penc + SIZE_OF_UINT32; /* i2d moves target pointer, so we copy into a temp var (leaving space for key len) */
       uint32_t actual_classical_pubkey_len = i2d_PublicKey(oqs_key->classical_pkey, &classical_pubkey);
-      if (actual_classical_pubkey_len < 0) {
+      if (actual_classical_pubkey_len < 0 || actual_classical_pubkey_len > max_classical_pubkey_len) {
+	/* something went wrong, or we didn't allocate enough space */
 	OPENSSL_free(penc);
         OQSerr(0, ERR_R_FATAL);
         return 0;
@@ -581,7 +583,7 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     const OQS_KEY *oqs_key = (OQS_KEY*) pkey->pkey.ptr;
     ASN1_OCTET_STRING oct;
     unsigned char *buf = NULL, *penc = NULL;
-    uint32_t classical_privkey_len = 0;
+    uint32_t max_classical_privkey_len = 0, classical_privkey_len = 0;
     int buflen, penclen, index = 0;
     int rv = 0;
 
@@ -594,7 +596,8 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     /* determine the length of key */
     buflen = oqs_key->s->length_secret_key + oqs_key->s->length_public_key;
     if (is_hybrid) {
-      buflen += (SIZE_OF_UINT32 + get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid)));
+      max_classical_privkey_len = get_classical_key_len(KEY_TYPE_PRIVATE, get_classical_nid(oqs_key->nid));
+      buflen += (SIZE_OF_UINT32 + max_classical_privkey_len);
     }
     buf = OPENSSL_secure_malloc(buflen);
     if (buf == NULL) {
@@ -606,7 +609,9 @@ static int oqs_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     if (is_hybrid) {
       unsigned char *classical_privkey = buf + SIZE_OF_UINT32; /* i2d moves the target pointer, so we copy into a temp var (leaving space for key len) */
       int actual_classical_privkey_len = i2d_PrivateKey(oqs_key->classical_pkey, &classical_privkey);
-      if (actual_classical_privkey_len < 0) {
+      if (actual_classical_privkey_len < 0 || actual_classical_privkey_len > max_classical_privkey_len) {
+	/* something went wrong, or we didn't allocate enough space */
+	OPENSSL_free(buf);
         OQSerr(0, ERR_R_FATAL);
         goto end;
       }
