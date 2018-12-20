@@ -87,9 +87,6 @@ through diverse controls.
 This should be called before calling EVP_MAC_update() and
 EVP_MAC_final().
 
-EVP_MAC_reset() resets the computation for the given context.
-This may not be supported by the MAC implementation.
-
 EVP_MAC_update() adds C<datalen> bytes from C<data> to the MAC input.
 
 EVP_MAC_final() does the final computation and stores the result in
@@ -171,17 +168,22 @@ Some MAC implementations require an IV, this control sets the IV.
 
 =item B<EVP_MAC_CTRL_SET_CUSTOM>
 
-This control expects two arguments: C<unsigned char *key>, C<size_t keylen>
+This control expects two arguments: C<unsigned char *custom>, C<size_t customlen>
 
-Some MAC implementations (KMAC) require an Customization String,
+Some MAC implementations (KMAC, BLAKE2) accept a Customization String,
 this control sets the Customization String. The default value is "".
+
+=item B<EVP_MAC_CTRL_SET_SALT>
+
+This control expects two arguments: C<unsigned char *salt>, C<size_t saltlen>
+
+This option is used by BLAKE2 MAC.
 
 =item B<EVP_MAC_CTRL_SET_XOF>
 
 This control expects one argument: C<int xof>
 
 This option is used by KMAC.
-
 
 =item B<EVP_MAC_CTRL_SET_FLAGS>
 
@@ -231,7 +233,7 @@ created EVP_MAC_CTX, or NULL if allocation failed.
 
 EVP_MAC_CTX_free() returns nothing at all.
 
-EVP_MAC_CTX_copy(), EVP_MAC_reset(), EVP_MAC_init(), EVP_MAC_update(),
+EVP_MAC_CTX_copy(), EVP_MAC_init(), EVP_MAC_update(),
 and EVP_MAC_final() return 1 on success, 0 on error.
 
 EVP_MAC_ctrl(), EVP_MAC_ctrl_str(), EVP_MAC_str2ctrl() and
@@ -346,6 +348,7 @@ F<./foo>)
 
 =head1 SEE ALSO
 
+L<EVP_MAC_BLAKE2(7)>,
 L<EVP_MAC_CMAC(7)>,
 L<EVP_MAC_GMAC(7)>,
 L<EVP_MAC_HMAC(7)>,
