@@ -60,12 +60,17 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
     &sm2_asn1_meth,
 #endif
 #if !defined(OQS_NIST_BRANCH)
-    /* OQS sig schemes */
-    &picnicL1FS_asn1_meth,
-    &qteslaI_asn1_meth,
-    &qteslaIIIsize_asn1_meth,
-    &qteslaIIIspeed_asn1_meth,
+    /* OQS sig schemes (list in NID order!) */
     /* ADD_MORE_OQS_SIG_HERE */
+    &picnicL1FS_asn1_meth,
+    &p256_picnicL1FS_asn1_meth,
+    &rsa3072_picnicL1FS_asn1_meth,
+    &qteslaI_asn1_meth,
+    &p256_qteslaI_asn1_meth,
+    &rsa3072_qteslaI_asn1_meth,
+    &qteslaIIIsize_asn1_meth,
+    &p384_qteslaIIIsize_asn1_meth,
+    &qteslaIIIspeed_asn1_meth,
+    &p384_qteslaIIIspeed_asn1_meth,
 #endif
 };
-

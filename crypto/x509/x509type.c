@@ -54,6 +54,13 @@ int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
     case EVP_PKEY_QTESLAIIISIZE:
     case EVP_PKEY_QTESLAIIISPEED:
     /* ADD_MORE_OQS_SIG_HERE */
+    case EVP_PKEY_P256_PICNICL1FS:
+    case EVP_PKEY_RSA3072_PICNICL1FS:
+    case EVP_PKEY_P256_QTESLAI:
+    case EVP_PKEY_RSA3072_QTESLAI:
+    case EVP_PKEY_P384_QTESLAIIISIZE:
+    case EVP_PKEY_P384_QTESLAIIISPEED:
+    /* ADD_MORE_OQS_SIG_HERE hybrid only */
 #endif
         ret = EVP_PKT_SIGN;
         break;

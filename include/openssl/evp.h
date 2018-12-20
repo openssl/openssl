@@ -66,10 +66,17 @@
 #if !defined(OQS_NIST_BRANCH)
 /* OQS sig schemes */
 # define EVP_PKEY_PICNICL1FS NID_picnicL1FS
-# define EVP_PKEY_QTESLAI NID_qTESLA_I
-# define EVP_PKEY_QTESLAIIISIZE NID_qTESLA_III_size
-# define EVP_PKEY_QTESLAIIISPEED NID_qTESLA_III_speed
+# define EVP_PKEY_QTESLAI NID_qteslaI
+# define EVP_PKEY_QTESLAIIISIZE NID_qteslaIIIsize
+# define EVP_PKEY_QTESLAIIISPEED NID_qteslaIIIspeed
 /* ADD_MORE_OQS_SIG_HERE */
+# define EVP_PKEY_P256_PICNICL1FS NID_p256_picnicL1FS
+# define EVP_PKEY_RSA3072_PICNICL1FS NID_rsa3072_picnicL1FS
+# define EVP_PKEY_P256_QTESLAI NID_p256_qteslaI
+# define EVP_PKEY_RSA3072_QTESLAI NID_rsa3072_qteslaI
+# define EVP_PKEY_P384_QTESLAIIISIZE NID_p384_qteslaIIIsize
+# define EVP_PKEY_P384_QTESLAIIISPEED NID_p384_qteslaIIIspeed
+/* ADD_MORE_OQS_SIG_HERE hybrid only*/
 #endif
 
 #ifdef  __cplusplus

@@ -93,6 +93,14 @@ extern const EVP_PKEY_ASN1_METHOD qteslaI_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslaIIIsize_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslaIIIspeed_asn1_meth;
 /* ADD_MORE_OQS_SIG_HERE */
+/* OQS hybrid schemes */
+extern const EVP_PKEY_ASN1_METHOD p256_picnicL1FS_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_picnicL1FS_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_qteslaI_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslaI_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p384_qteslaIIIsize_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p384_qteslaIIIspeed_asn1_meth;
+/* ADD_MORE_OQS_SIG_HERE hybrid only */
 #endif
 
 /*
