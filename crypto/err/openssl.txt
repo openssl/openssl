@@ -732,6 +732,8 @@ EVP_F_ARIA_INIT_KEY:185:aria_init_key
 EVP_F_B64_NEW:198:b64_new
 EVP_F_BLAKE2B_MAC_CTRL:220:blake2b_mac_ctrl
 EVP_F_BLAKE2B_MAC_INIT:221:blake2b_mac_init
+EVP_F_BLAKE2S_MAC_CTRL:222:blake2s_mac_ctrl
+EVP_F_BLAKE2S_MAC_INIT:223:blake2s_mac_init
 EVP_F_CAMELLIA_INIT_KEY:159:camellia_init_key
 EVP_F_CHACHA20_POLY1305_CTRL:182:chacha20_poly1305_ctrl
 EVP_F_CMLL_T4_INIT_KEY:179:cmll_t4_init_key

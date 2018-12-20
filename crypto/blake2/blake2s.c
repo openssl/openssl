@@ -61,9 +61,9 @@ static ossl_inline void blake2s_init0(BLAKE2S_CTX *S)
 /* init xors IV with input parameter block and sets the output length */
 static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
 {
-    const uint8_t *p = (const uint8_t *)(P);
     size_t i;
-    
+    const uint8_t *p = (const uint8_t *)(P);
+
     blake2s_init0(S);
     S->outlen = P->digest_length;
 
@@ -76,11 +76,8 @@ static void blake2s_init_param(BLAKE2S_CTX *S, const BLAKE2S_PARAM *P)
     }
 }
 
-/* Initialize the hashing context.  Always returns 1. */
-int BLAKE2s_Init(BLAKE2S_CTX *c)
+void blake2s_param_init(BLAKE2S_PARAM *P)
 {
-    BLAKE2S_PARAM P[1];
-
     P->digest_length = BLAKE2S_DIGEST_LENGTH;
     P->key_length    = 0;
     P->fanout        = 1;
@@ -91,7 +88,56 @@ int BLAKE2s_Init(BLAKE2S_CTX *c)
     P->inner_length  = 0;
     memset(P->salt,     0, sizeof(P->salt));
     memset(P->personal, 0, sizeof(P->personal));
+}
+
+void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen)
+{
+    P->digest_length = outlen;
+}
+
+void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen)
+{
+    P->key_length = keylen;
+}
+
+void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t len)
+{
+    memcpy(P->personal, personal, len);
+    memset(P->personal + len, 0, BLAKE2S_PERSONALBYTES - len);
+}
+
+void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t len)
+{
+    memcpy(P->salt, salt, len);
+    memset(P->salt + len, 0, BLAKE2S_SALTBYTES - len);}
+
+/*
+ * Initialize the hashing context with the given parameter block.
+ * Always returns 1.
+ */
+int BLAKE2s_Init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P)
+{
     blake2s_init_param(c, P);
+    return 1;
+}
+
+/*
+ * Initialize the hashing context with the given parameter block and key.
+ * Always returns 1.
+ */
+int BLAKE2s_Init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key)
+{
+    blake2s_init_param(c, P);
+
+    /* Pad the key to form first data block */
+    {
+        uint8_t block[BLAKE2S_BLOCKBYTES] = {0};
+
+        memcpy(block, key, P->key_length);
+        BLAKE2s_Update(c, block, BLAKE2S_BLOCKBYTES);
+        OPENSSL_cleanse(block, BLAKE2S_BLOCKBYTES);
+    }
+
     return 1;
 }
 
