@@ -501,17 +501,17 @@ const STACK_OF(X509_NAME) *SSL_get0_CA_list(const SSL *s)
 
 void SSL_CTX_set_client_CA_list(SSL_CTX *ctx, STACK_OF(X509_NAME) *name_list)
 {
-    SSL_CTX_set0_CA_list(ctx, name_list);
+    set0_CA_list(&ctx->client_ca_names, name_list);
 }
 
 STACK_OF(X509_NAME) *SSL_CTX_get_client_CA_list(const SSL_CTX *ctx)
 {
-    return ctx->ca_names;
+    return ctx->client_ca_names;
 }
 
 void SSL_set_client_CA_list(SSL *s, STACK_OF(X509_NAME) *name_list)
 {
-    SSL_set0_CA_list(s, name_list);
+    set0_CA_list(&s->client_ca_names, name_list);
 }
 
 const STACK_OF(X509_NAME) *SSL_get0_peer_CA_list(const SSL *s)
@@ -523,7 +523,8 @@ STACK_OF(X509_NAME) *SSL_get_client_CA_list(const SSL *s)
 {
     if (!s->server)
         return s->s3 != NULL ?  s->s3->tmp.peer_ca_names : NULL;
-    return s->ca_names != NULL ?  s->ca_names : s->ctx->ca_names;
+    return s->client_ca_names != NULL ?  s->client_ca_names
+                                      : s->ctx->client_ca_names;
 }
 
 static int add_ca_name(STACK_OF(X509_NAME) **sk, const X509 *x)
@@ -561,12 +562,12 @@ int SSL_CTX_add1_to_CA_list(SSL_CTX *ctx, const X509 *x)
  */
 int SSL_add_client_CA(SSL *ssl, X509 *x)
 {
-    return add_ca_name(&ssl->ca_names, x);
+    return add_ca_name(&ssl->client_ca_names, x);
 }
 
 int SSL_CTX_add_client_CA(SSL_CTX *ctx, X509 *x)
 {
-    return add_ca_name(&ctx->ca_names, x);
+    return add_ca_name(&ctx->client_ca_names, x);
 }
 
 static int xname_cmp(const X509_NAME *a, const X509_NAME *b)
@@ -951,8 +952,8 @@ static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
             if (level >= 2 && c->algorithm_enc == SSL_RC4)
                 return 0;
             /* Level 3: forward secure ciphersuites only */
-            if (level >= 3 && (c->min_tls != TLS1_3_VERSION ||
-                               !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH))))
+            if (level >= 3 && c->min_tls != TLS1_3_VERSION &&
+                               !(c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)))
                 return 0;
             break;
         }

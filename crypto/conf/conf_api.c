@@ -10,6 +10,7 @@
 /* Part of the code in here was originally in conf.c, which is now removed */
 
 #include "e_os.h"
+#include "internal/cryptlib.h"
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/conf.h>
@@ -82,7 +83,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
             if (v != NULL)
                 return v->value;
             if (strcmp(section, "ENV") == 0) {
-                p = getenv(name);
+                p = ossl_safe_getenv(name);
                 if (p != NULL)
                     return p;
             }
@@ -95,7 +96,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         else
             return NULL;
     } else
-        return getenv(name);
+        return ossl_safe_getenv(name);
 }
 
 static unsigned long conf_value_hash(const CONF_VALUE *v)

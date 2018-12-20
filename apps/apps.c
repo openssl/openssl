@@ -1831,6 +1831,12 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
                       opt_getprog(), typestr);
             continue;
         }
+        if (*valstr == '\0') {
+            BIO_printf(bio_err,
+                       "%s: No value provided for Subject Attribute %s, skipped\n",
+                       opt_getprog(), typestr);
+            continue;
+        }
         if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
                                         valstr, strlen((char *)valstr),
                                         -1, ismulti ? -1 : 0))

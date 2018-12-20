@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -12,8 +12,5 @@ use OpenSSL::Test::Simple;
 use OpenSSL::Test::Utils;
 
 setup("test_internal_chacha");
-
-plan skip_all => "This test is unsupported in a shared library build on Windows"
-    if $^O eq 'MSWin32' && !disabled("shared");
 
 simple_test("test_internal_chacha", "chacha_internal_test", "chacha");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -445,15 +445,14 @@ static void get_current_time(struct timeval *t)
 #ifndef OPENSSL_NO_SOCK
 int DTLSv1_listen(SSL *s, BIO_ADDR *client)
 {
-    int next, n, ret = 0, clearpkt = 0;
+    int next, n, ret = 0;
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
     unsigned char seq[SEQ_NUM_SIZE];
     const unsigned char *data;
-    unsigned char *buf;
-    size_t fragoff, fraglen, msglen;
+    unsigned char *buf, *wbuf;
+    size_t fragoff, fraglen, msglen, reclen, align = 0;
     unsigned int rectype, versmajor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
-    BUF_MEM *bufm;
     BIO_ADDR *tmpclient = NULL;
     PACKET pkt, msgpkt, msgpayload, session, cookiepkt;
 
@@ -477,13 +476,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     }
 
     /*
-     * We only peek at incoming ClientHello's until we're sure we are going to
-     * to respond with a HelloVerifyRequest. If its a ClientHello with a valid
-     * cookie then we leave it in the BIO for accept to handle.
-     */
-    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL);
-
-    /*
      * Note: This check deliberately excludes DTLS1_BAD_VER because that version
      * requires the MAC to be calculated *including* the first ClientHello
      * (without the cookie). Since DTLSv1_listen is stateless that cannot be
@@ -495,35 +487,32 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
         return -1;
     }
 
-    if (s->init_buf == NULL) {
-        if ((bufm = BUF_MEM_new()) == NULL) {
-            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
-            return -1;
-        }
-
-        if (!BUF_MEM_grow(bufm, SSL3_RT_MAX_PLAIN_LENGTH)) {
-            BUF_MEM_free(bufm);
-            SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_MALLOC_FAILURE);
-            return -1;
-        }
-        s->init_buf = bufm;
+    if (!ssl3_setup_buffers(s)) {
+        /* SSLerr already called */
+        return -1;
     }
-    buf = (unsigned char *)s->init_buf->data;
+    buf = RECORD_LAYER_get_rbuf(&s->rlayer)->buf;
+    wbuf = RECORD_LAYER_get_wbuf(&s->rlayer)[0].buf;
+#if defined(SSL3_ALIGN_PAYLOAD)
+# if SSL3_ALIGN_PAYLOAD != 0
+    /*
+     * Using SSL3_RT_HEADER_LENGTH here instead of DTLS1_RT_HEADER_LENGTH for
+     * consistency with ssl3_read_n. In practice it should make no difference
+     * for sensible values of SSL3_ALIGN_PAYLOAD because the difference between
+     * SSL3_RT_HEADER_LENGTH and DTLS1_RT_HEADER_LENGTH is exactly 8
+     */
+    align = (size_t)buf + SSL3_RT_HEADER_LENGTH;
+    align = SSL3_ALIGN_PAYLOAD - 1 - ((align - 1) % SSL3_ALIGN_PAYLOAD);
+# endif
+#endif
+    buf += align;
 
     do {
         /* Get a packet */
 
         clear_sys_error();
-        /*
-         * Technically a ClientHello could be SSL3_RT_MAX_PLAIN_LENGTH
-         * + DTLS1_RT_HEADER_LENGTH bytes long. Normally init_buf does not store
-         * the record header as well, but we do here. We've set up init_buf to
-         * be the standard size for simplicity. In practice we shouldn't ever
-         * receive a ClientHello as long as this. If we do it will get dropped
-         * in the record length check below.
-         */
-        n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
-
+        n = BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH
+                                + DTLS1_RT_HEADER_LENGTH);
         if (n <= 0) {
             if (BIO_should_retry(rbio)) {
                 /* Non-blocking IO */
@@ -531,9 +520,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             }
             return -1;
         }
-
-        /* If we hit any problems we need to clear this packet from the BIO */
-        clearpkt = 1;
 
         if (!PACKET_buf_init(&pkt, buf, n)) {
             SSLerr(SSL_F_DTLSV1_LISTEN, ERR_R_INTERNAL_ERROR);
@@ -587,6 +573,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             SSLerr(SSL_F_DTLSV1_LISTEN, SSL_R_LENGTH_MISMATCH);
             goto end;
         }
+        reclen = PACKET_remaining(&msgpkt);
         /*
          * We allow data remaining at the end of the packet because there could
          * be a second record (but we ignore it)
@@ -706,14 +693,6 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
              * to resend, we just drop it.
              */
 
-            /*
-             * Dump the read packet, we don't need it any more. Ignore return
-             * value
-             */
-            BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
-            BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
-            BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 1, NULL);
-
             /* Generate the cookie */
             if (s->ctx->app_gen_cookie_cb == NULL ||
                 s->ctx->app_gen_cookie_cb(s, cookie, &cookielen) == 0 ||
@@ -732,7 +711,11 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
                                                                : s->version;
 
             /* Construct the record and message headers */
-            if (!WPACKET_init(&wpkt, s->init_buf)
+            if (!WPACKET_init_static_len(&wpkt,
+                                         wbuf,
+                                         ssl_get_max_send_fragment(s)
+                                         + DTLS1_RT_HEADER_LENGTH,
+                                         0)
                     || !WPACKET_put_bytes_u8(&wpkt, SSL3_RT_HANDSHAKE)
                     || !WPACKET_put_bytes_u16(&wpkt, version)
                        /*
@@ -790,8 +773,8 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
              * plus one byte for the message content type. The source is the
              * last 3 bytes of the message header
              */
-            memcpy(&buf[DTLS1_RT_HEADER_LENGTH + 1],
-                   &buf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH - 3],
+            memcpy(&wbuf[DTLS1_RT_HEADER_LENGTH + 1],
+                   &wbuf[DTLS1_RT_HEADER_LENGTH + DTLS1_HM_HEADER_LENGTH - 3],
                    3);
 
             if (s->msg_callback)
@@ -815,7 +798,7 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
             tmpclient = NULL;
 
             /* TODO(size_t): convert this call */
-            if (BIO_write(wbio, buf, wreclen) < (int)wreclen) {
+            if (BIO_write(wbio, wbuf, wreclen) < (int)wreclen) {
                 if (BIO_should_retry(wbio)) {
                     /*
                      * Non-blocking IO...but we're stateless, so we're just
@@ -865,15 +848,13 @@ int DTLSv1_listen(SSL *s, BIO_ADDR *client)
     if (BIO_dgram_get_peer(rbio, client) <= 0)
         BIO_ADDR_clear(client);
 
+    /* Buffer the record in the processed_rcds queue */
+    if (!dtls_buffer_listen_record(s, reclen, seq, align))
+        return -1;
+
     ret = 1;
-    clearpkt = 0;
  end:
     BIO_ADDR_free(tmpclient);
-    BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_PEEK_MODE, 0, NULL);
-    if (clearpkt) {
-        /* Dump this packet. Ignore return value */
-        BIO_read(rbio, buf, SSL3_RT_MAX_PLAIN_LENGTH);
-    }
     return ret;
 }
 #endif

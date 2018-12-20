@@ -591,7 +591,7 @@
 #else
 #define OQS_KEM_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in master branch */ \
-  (nid == NID_OQS_SIDH_503 ? 0x0202 :	\
+  (nid == NID_OQS_SIDH_503 ? 0x0202 :   \
   (nid == NID_OQS_SIDH_751 ? 0x0203 : \
    0))
 #endif
@@ -623,13 +623,13 @@
 #define OQS_KEM_HYBRID_CURVEID_NIST_BRANCH(nid) \
   /* schemes only in nist branch */ \
   /* some schemes are disabled because their keys/ciphertext are too big for TLS */ \
-  /* (nid == NID_OQS_p256_bigquake1       ? 0x0308 : */	\
+  /* (nid == NID_OQS_p256_bigquake1       ? 0x0308 : */ \
   (nid == NID_OQS_p256_kyber512         ? 0x0309 : \
   (nid == NID_OQS_p256_ledakem_C1_N02   ? 0x030a : \
   (nid == NID_OQS_p256_ledakem_C1_N03   ? 0x030b : \
   (nid == NID_OQS_p256_ledakem_C1_N04   ? 0x030c : \
   /* (nid == NID_OQS_p256_lima_sp_1018_cca ? 0x030d : */ \
-  /* (nid == NID_OQS_p256_saber_light_saber ? 0x030e :	*/ \
+  /* (nid == NID_OQS_p256_saber_light_saber ? 0x030e :  */ \
   /* (nid == NID_OQS_p256_titanium_cca_std ? 0x030f : */ \
   /* (nid == NID_OQS_p256_titanium_cca_med ? 0x0310 : */ \
    0))))
@@ -677,14 +677,14 @@
   (curveID == 0x0224 /* || curveID == 0x030d */ ? NID_OQS_lima_sp_1018_cca : \
   (curveID == 0x0225 ? NID_OQS_lima_sp_1306_cca : \
   (curveID == 0x0226 ? NID_OQS_lima_sp_1822_cca : \
-  /* (curveID == 0x0227 ? NID_OQS_lima_sp_2062_cca : */		\
+  /* (curveID == 0x0227 ? NID_OQS_lima_sp_2062_cca : */         \
   (curveID == 0x0228 /* || (curveID == 0x030e: */ ? NID_OQS_saber_light_saber : \
   (curveID == 0x0229 ? NID_OQS_saber_saber : \
   (curveID == 0x022a ? NID_OQS_saber_fire_saber : \
    /* (curveID == 0x022b || curveID == 0x030f ? NID_OQS_titanium_cca_std : */ \
    /* (curveID == 0x022c ? NID_OQS_titanium_cca_hi : */ \
    /* (curveID == 0x022d || curveID == 0x0310 ? NID_OQS_titanium_cca_med : */ \
-   /* (curveID == 0x022e ? NID_OQS_titanium_cca_super :	*/ \
+   /* (curveID == 0x022e ? NID_OQS_titanium_cca_super : */ \
    0 ))))))))))))))))))
 #else
 #define OQS_KEM_NID_NIST_BRANCH(curveID) \
@@ -861,7 +861,11 @@ struct ssl_method_st {
     long (*ssl_ctx_callback_ctrl) (SSL_CTX *s, int cb_id, void (*fp) (void));
 };
 
-# define TLS13_MAX_RESUMPTION_PSK_LENGTH      64
+/*
+ * Matches the length of PSK_MAX_PSK_LEN. We keep it the same value for
+ * consistency, even in the event of OPENSSL_NO_PSK being defined.
+ */
+# define TLS13_MAX_RESUMPTION_PSK_LENGTH      256
 
 /*-
  * Lets make this into an ASN.1 type structure as follows
@@ -1240,9 +1244,11 @@ struct ssl_ctx_st {
     /*
      * What we put in certificate_authorities extension for TLS 1.3
      * (ClientHello and CertificateRequest) or just client cert requests for
-     * earlier versions.
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
      */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
 
     /*
      * Default values to use in SSL structures follow (these are copied by
@@ -1619,8 +1625,14 @@ struct ssl_st {
     long verify_result;
     /* extra application data */
     CRYPTO_EX_DATA ex_data;
-    /* for server side, keep the list of CA_dn we can use */
+    /*
+     * What we put in certificate_authorities extension for TLS 1.3
+     * (ClientHello and CertificateRequest) or just client cert requests for
+     * earlier versions. If client_ca_names is populated then it is only used
+     * for client cert requests, and in preference to ca_names.
+     */
     STACK_OF(X509_NAME) *ca_names;
+    STACK_OF(X509_NAME) *client_ca_names;
     CRYPTO_REF_COUNT references;
     /* protocol behaviour */
     uint32_t options;
@@ -2014,8 +2026,8 @@ typedef struct ssl3_state_st {
         int min_ver;
         int max_ver;
         /*
-	 * OQS artefacts.
-	 */
+         * OQS artefacts.
+         */
         int oqs_kem_curve_id; /* curve_id of the kex */
         OQS_KEM* oqs_kem; /* KEM context */
         int oqs_peer_msg_len; /* save peer message's len */
@@ -2665,7 +2677,6 @@ __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
                                  const SSL_CIPHER *const *bp);
-__owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const char *str);
 __owur STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
                                                     STACK_OF(SSL_CIPHER) *tls13_ciphersuites,
                                                     STACK_OF(SSL_CIPHER) **cipher_list,
@@ -2975,6 +2986,9 @@ __owur int tls1_process_sigalgs(SSL *s);
 __owur int tls1_set_peer_legacy_sigalg(SSL *s, const EVP_PKEY *pkey);
 __owur int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd);
 __owur size_t tls12_get_psigalgs(SSL *s, int sent, const uint16_t **psigs);
+#  ifndef OPENSSL_NO_EC
+__owur int tls_check_sigalg_curve(const SSL *s, int curve);
+#  endif
 __owur int tls12_check_peer_sigalg(SSL *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL *s);
 __owur int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int echde);
