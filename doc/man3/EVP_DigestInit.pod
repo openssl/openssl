@@ -240,7 +240,6 @@ EVP_MD_CTX_ctrl() can be used to send the following standard controls:
 =item EVP_MD_CTRL_MICALG
 
 Sets the micalg string for S/MIME types.
-Currently unused.
 
 =item EVP_MD_CTRL_XOF_LEN
 
