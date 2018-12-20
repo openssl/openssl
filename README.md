@@ -108,7 +108,7 @@ For **macOS**, you need to install the following packages using brew (or a packa
 
 Clone or download the source from Github:
 
-    git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
+	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
 
 ### Step 2: Build liboqs
 
@@ -118,21 +118,21 @@ The following instructions will download and build liboqs, then install it into 
 
 For the **master branch**:
 
-    git clone --branch master https://github.com/open-quantum-safe/liboqs.git
-    cd liboqs
-    autoreconf -i
-    ./configure --prefix=<path-to-openssl-dir>/oqs --enable-shared=no --enable-openssl --with-openssl-dir=<path-to-system-openssl-dir>
-    make -j
-    make install
+	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+	cd liboqs
+	autoreconf -i
+	./configure --prefix=<path-to-openssl-dir>/oqs --enable-shared=no --enable-openssl --with-openssl-dir=<path-to-system-openssl-dir>
+	make -j
+	make install
 
 On **Ubuntu**, `<path-to-system-openssl-dir>` is probably `/usr`.  On **macOS** with brew, `<path-to-system-openssl-dir>` is probably `/usr/local/opt/openssl`.
 
 For the **nist branch**:
 
-    git clone --branch nist-branch https://github.com/open-quantum-safe/liboqs.git
-    cd liboqs
-    make -j
-    make install-noshared PREFIX=<path-to-openssl-dir>/oqs
+	git clone --branch nist-branch https://github.com/open-quantum-safe/liboqs.git
+	cd liboqs
+	make -j
+	make install-noshared PREFIX=<path-to-openssl-dir>/oqs
 
 ### Step 3: Build fork of OpenSSL
 
@@ -140,15 +140,15 @@ Now we follow the standard instructions for building OpenSSL.
 
 For **Ubuntu**:
 
-    cd <path-to-openssl-dir>
-    ./Configure no-shared linux-x86_64 -lm
-    make -j
+	cd <path-to-openssl-dir>
+	./Configure no-shared linux-x86_64 -lm
+	make -j
 
 For **macOS**:
 
-    cd <path-to-openssl-dir>
-    ./Configure no-shared darwin64-x86_64-cc
-    make -j
+	cd <path-to-openssl-dir>
+	./Configure no-shared darwin64-x86_64-cc
+	make -j
 
 The OQS fork of OpenSSL can also be built with shared libraries, but we have used `no-shared` in the instructions above to avoid having to get the shared libraries in the right place for the runtime linker.
 
@@ -161,26 +161,26 @@ Builds have been tested on Windows 10 (VS2017 build tools). Make sure you can bu
 
 Clone or download the source from Github:
 
-    git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
+git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git
 
 ### Step 2: Build liboqs
 
 Next, you must download and build liboqs using the master branch of liboqs (the nist branch is not currently supported on Windows).  The following instructions will download (using git, alternatively, [download](https://github.com/open-quantum-safe/liboqs/archive/master.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs master branch README.md](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
 
-    git clone --branch master https://github.com/open-quantum-safe/liboqs.git
-    msbuild liboqs\VisualStudio\liboqs.sln /p:Configuration=Release;Platform=x64
-    mkdir openssl\oqs
-    mkdir openssl\oqs\lib
-    mkdir openssl\oqs\include
-    xcopy liboqs\VisualStudio\x64\Release\oqs.lib openssl\oqs\lib\
-    xcopy /S liboqs\VisualStudio\include openssl\oqs\include\
+	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+	msbuild liboqs\VisualStudio\liboqs.sln /p:Configuration=Release;Platform=x64
+	mkdir openssl\oqs
+	mkdir openssl\oqs\lib
+	mkdir openssl\oqs\include
+	xcopy liboqs\VisualStudio\x64\Release\oqs.lib openssl\oqs\lib\
+	xcopy /S liboqs\VisualStudio\include openssl\oqs\include\
 
 ### Step 3: Build fork of OpenSSL
 
 Now we follow the standard instructions for building OpenSSL, for example:
 
-    perl Configure VC-WIN64A
-    nmake
+	perl Configure VC-WIN64A
+	nmake
 
 Running
 -------
@@ -191,35 +191,35 @@ See the [liboqs documentation](https://github.com/open-quantum-safe/liboqs/) for
 
 OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
 
-To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`), or hybrid ((`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIGALG>` with one supported algorithm:
+To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`), or hybrid (`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIGALG>` with one supported algorithm:
 
-        apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest CA" -days 365 -config apps/openssl.cnf
+	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest CA" -days 365 -config apps/openssl.cnf
 
 If you want an ECDSA certificate (`<SIGALG>` = `ecdsa`), you instead need to use:
 
-        apps/openssl req -x509 -new -newkey ec:<(apps/openssl ecparam -name secp384r1) -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
+	apps/openssl req -x509 -new -newkey ec:<(apps/openssl ecparam -name secp384r1) -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
 
 The root CA certificate can be used directly to start the server (see below), or can be used to issue a server certificate, using the usual OpenSSL process (note that for simplicity, we use the same algorithm for the server and CA certificates; in practice the CA is likely to use a stronger one):
 
-1. The server generates its key pair
+1. The server generates its key pair:
 
-        apps/openssl genpkey -algorithm <SIGALG> -out <SIGALG>_srv.key
+		apps/openssl genpkey -algorithm <SIGALG> -out <SIGALG>_srv.key
 
-2. The server generates a certificate request and sends it the to CA
+2. The server generates a certificate request and sends it the to CA:
 
-        apps/openssl req -new -newkey <SIGALG> -keyout <SIGALG>_srv.key -out <SIGALG>_srv.csr -nodes -subj "/CN=oqstest server" -days 365 -config apps/openssl.cnf
+		apps/openssl req -new -newkey <SIGALG> -keyout <SIGALG>_srv.key -out <SIGALG>_srv.csr -nodes -subj "/CN=oqstest server" -days 365 -config apps/openssl.cnf
 
-3. The CA generates the signed server certificate
+3. The CA generates the signed server certificate:
 
-        apps/openssl x509 -req -in <SIGALG>_srv.csr -out <SIGALG>_srv.crt -CA <SIGALG>_CA.crt -CAkey <SIGALG>_CA.key -CAcreateserial -days 365
+		apps/openssl x509 -req -in <SIGALG>_srv.csr -out <SIGALG>_srv.crt -CA <SIGALG>_CA.crt -CAkey <SIGALG>_CA.key -CAcreateserial -days 365
 
-To run a basic TLS server with all OQS ciphersuites enabled, run the following command, replacing <SERVER> with either <SIGALG>_CA or <SIGALG>_srv:
+To run a basic TLS server with all OQS ciphersuites enabled, run the following command, replacing `<SERVER>` with either `<SIGALG>_CA` or `<SIGALG>_srv`:
 
-        apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
+	apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
 
 In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEXALG>` = one of the key exchange mechanisms listed above) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC KEM schemes are supported for now):
 
-        apps/openssl s_client -curves <KEXALG> -CAfile <SIGALG>_CA.crt -connect localhost:4433
+	apps/openssl s_client -curves <KEXALG> -CAfile <SIGALG>_CA.crt -connect localhost:4433
 
 Contributing
 ------------
