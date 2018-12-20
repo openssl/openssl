@@ -782,6 +782,10 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  * anyway [above getaddrinfo/gai_strerror is]. We just let
                  * system administrator figure this out...
                  */
+# if defined(OPENSSL_SYS_VXWORKS)
+                /* h_errno doesn't exist on VxWorks */
+                int h_errno = 0;
+# endif
                 SYSerr(SYS_F_GETHOSTBYNAME, 1000 + h_errno);
 #else
                 SYSerr(SYS_F_GETHOSTBYNAME, WSAGetLastError());

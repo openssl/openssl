@@ -53,6 +53,18 @@ NON_EMPTY_TRANSLATION_UNIT
 #  define LOG_ERR       2
 # endif
 
+# if defined(OPENSSL_SYS_VXWORKS)
+/* setpgid() & fork() are not supported */
+int setpgid(pid_t pid, pid_t pgid)
+{
+    return 0;
+}
+
+pid_t fork(void)
+{
+    return (pid_t) -1;
+}
+# endif
 /* Maximum leeway in validity period: default 5 minutes */
 # define MAX_VALIDITY_PERIOD    (5 * 60)
 

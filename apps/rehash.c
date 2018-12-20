@@ -51,6 +51,26 @@
 # endif
 # define MAX_COLLISIONS  256
 
+# if defined(OPENSSL_SYS_VXWORKS)
+/* 
+ *   VxWorks has no symbolic links 
+ */
+
+#  define lstat(path, buf) stat(path, buf)
+
+int symlink(const char *target, const char *linkpath)
+{
+    errno = EACCES;
+    return -1;
+}
+
+ssize_t readlink(const char *pathname, char *buf, size_t bufsiz)
+{
+    errno = EACCES;
+    return -1;
+}
+# endif
+
 typedef struct hentry_st {
     struct hentry_st *next;
     char *filename;
