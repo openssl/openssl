@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -62,12 +62,14 @@ static ossl_inline void blake2b_init0(BLAKE2B_CTX *S)
     }
 }
 
-/* init xors IV with input parameter block */
+/* init xors IV with input parameter block and sets the output length */
 static void blake2b_init_param(BLAKE2B_CTX *S, const BLAKE2B_PARAM *P)
 {
     size_t i;
     const uint8_t *p = (const uint8_t *)(P);
+
     blake2b_init0(S);
+    S->outlen = P->digest_length;
 
     /* The param struct is carefully hand packed, and should be 64 bytes on
      * every platform. */
@@ -252,6 +254,7 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
  */
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
 {
+    uint8_t outbuffer[BLAKE2B_OUTBYTES] = {0};
     int i;
 
     blake2b_set_lastblock(c);
@@ -259,11 +262,12 @@ int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2b_compress(c, c->buf, c->buflen);
 
-    /* Output full hash to message digest */
+    /* Output full hash to temp buffer */
     for (i = 0; i < 8; ++i) {
-        store64(md + sizeof(c->h[i]) * i, c->h[i]);
+        store64(outbuffer + sizeof(c->h[i]) * i, c->h[i]);
     }
 
+    memcpy(md, outbuffer, c->outlen);
     OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
 }
