@@ -1198,3 +1198,5 @@ kmac256		1197
 aes_128_siv		1198
 aes_192_siv		1199
 aes_256_siv		1200
+blake2bmac		1201
+blake2smac		1202

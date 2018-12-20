@@ -1079,7 +1079,7 @@ static const unsigned char so[7767] = {
     0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
 };
 
-#define NUM_NID 1201
+#define NUM_NID 1203
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2282,9 +2282,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"AES-128-SIV", "aes-128-siv", NID_aes_128_siv},
     {"AES-192-SIV", "aes-192-siv", NID_aes_192_siv},
     {"AES-256-SIV", "aes-256-siv", NID_aes_256_siv},
+    {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac},
+    {"BLAKE2SMAC", "blake2smac", NID_blake2smac},
 };
 
-#define NUM_SN 1192
+#define NUM_SN 1194
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2362,6 +2364,8 @@ static const unsigned int sn_objs[NUM_SN] = {
       93,    /* "BF-CFB" */
       92,    /* "BF-ECB" */
       94,    /* "BF-OFB" */
+    1201,    /* "BLAKE2BMAC" */
+    1202,    /* "BLAKE2SMAC" */
     1056,    /* "BLAKE2b512" */
     1057,    /* "BLAKE2s256" */
       14,    /* "C" */
@@ -3480,7 +3484,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1192
+#define NUM_LN 1194
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3782,7 +3786,9 @@ static const unsigned int ln_objs[NUM_LN] = {
       92,    /* "bf-ecb" */
       94,    /* "bf-ofb" */
     1056,    /* "blake2b512" */
+    1201,    /* "blake2bmac" */
     1057,    /* "blake2s256" */
+    1202,    /* "blake2smac" */
      921,    /* "brainpoolP160r1" */
      922,    /* "brainpoolP160t1" */
      923,    /* "brainpoolP192r1" */

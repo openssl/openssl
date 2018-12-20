@@ -993,6 +993,8 @@ void EVP_MD_do_all_sorted(void (*fn)
 
 /* MAC stuff */
 
+# define EVP_MAC_BLAKE2B        NID_blake2bmac
+# define EVP_MAC_BLAKE2S        NID_blake2smac
 # define EVP_MAC_CMAC           NID_cmac
 # define EVP_MAC_GMAC           NID_gmac
 # define EVP_MAC_HMAC           NID_hmac
