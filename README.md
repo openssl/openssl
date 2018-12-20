@@ -191,21 +191,35 @@ See the [liboqs documentation](https://github.com/open-quantum-safe/liboqs/) for
 
 OpenSSL contains a basic TLS server (`s_server`) and TLS client (`s_client`) which can be used to demonstrate and test SSL/TLS connections.
 
-To run a server, we first need to generate a self-signed X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`), or hybrid ((`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm; run the following command replacing `<SIGALG>` with one supported algorithm:
+To run a server, you first need to generate a X.509 certificate, using either a classical (`rsa`), post-quantum (`picnicl1fs`, `qteslaI`, `qteslaIIIsize`, `qteslaIIIspeed`), or hybrid ((`p256_picnicl1fs`, `rsa3072_picnicl1fs`, `p256_qteslaI`, `rsa3072_qteslaI`, `p384_qteslaIIIsize`, `p384_qteslaIIIspeed`) algorithm. The server certificate can either be self-signed or part of a chain. In either case, you need to generate a self-signed root CA certificate using the following command, replacing `<SIGALG>` with one supported algorithm:
 
-	apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
+        apps/openssl req -x509 -new -newkey <SIGALG> -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest CA" -days 365 -config apps/openssl.cnf
 
-If you want an ECDSA certificate (`<SIGALG>` = `ecdsa`), you need to use:
+If you want an ECDSA certificate (`<SIGALG>` = `ecdsa`), you instead need to use:
 
-	apps/openssl req -x509 -new -newkey ec:<(apps/openssl ecparam -name secp384r1) -keyout <SIGALG>.key -out <SIGALG>.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
+        apps/openssl req -x509 -new -newkey ec:<(apps/openssl ecparam -name secp384r1) -keyout <SIGALG>_CA.key -out <SIGALG>_CA.crt -nodes -subj "/CN=oqstest" -days 365 -config apps/openssl.cnf
 
-To run a basic TLS server with all OQS ciphersuites enabled:
+The root CA certificate can be used directly to start the server (see below), or can be used to issue a server certificate, using the usual OpenSSL process (note that for simplicity, we use the same algorithm for the server and CA certificates; in practice the CA is likely to use a stronger one):
 
-	apps/openssl s_server -cert <SIGALG>.crt -key <SIGALG>.key -www -tls1_3
+1. The server generates its key pair
+
+        apps/openssl genpkey -algorithm <SIGALG> -out <SIGALG>_srv.key
+
+2. The server generates a certificate request and sends it the to CA
+
+        apps/openssl req -new -newkey <SIGALG> -keyout <SIGALG>_srv.key -out <SIGALG>_srv.csr -nodes -subj "/CN=oqstest server" -days 365 -config apps/openssl.cnf
+
+3. The CA generates the signed server certificate
+
+        apps/openssl x509 -req -in <SIGALG>_srv.csr -out <SIGALG>_srv.crt -CA <SIGALG>_CA.crt -CAkey <SIGALG>_CA.key -CAcreateserial -days 365
+
+To run a basic TLS server with all OQS ciphersuites enabled, run the following command, replacing <SERVER> with either <SIGALG>_CA or <SIGALG>_srv:
+
+        apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
 
 In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEXALG>` = one of the key exchange mechanisms listed above) or the hybrid ciphersuites (`p256-<KEXALG>`, only the NIST p256 curve in combination with L1 PQC KEM schemes are supported for now):
 
-    apps/openssl s_client -curves <KEXALG> -connect localhost:4433
+        apps/openssl s_client -curves <KEXALG> -CAfile <SIGALG>_CA.crt -connect localhost:4433
 
 Contributing
 ------------
