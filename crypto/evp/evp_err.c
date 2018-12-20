@@ -29,6 +29,8 @@ static const ERR_STRING_DATA EVP_str_functs[] = {
     {ERR_PACK(ERR_LIB_EVP, EVP_F_B64_NEW, 0), "b64_new"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_BLAKE2B_MAC_CTRL, 0), "blake2b_mac_ctrl"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_BLAKE2B_MAC_INIT, 0), "blake2b_mac_init"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_BLAKE2S_MAC_CTRL, 0), "blake2s_mac_ctrl"},
+    {ERR_PACK(ERR_LIB_EVP, EVP_F_BLAKE2S_MAC_INIT, 0), "blake2s_mac_init"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_CAMELLIA_INIT_KEY, 0), "camellia_init_key"},
     {ERR_PACK(ERR_LIB_EVP, EVP_F_CHACHA20_POLY1305_CTRL, 0),
      "chacha20_poly1305_ctrl"},

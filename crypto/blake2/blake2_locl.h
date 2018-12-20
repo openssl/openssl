@@ -99,6 +99,13 @@ void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen);
 void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t length);
 void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t length);
 
-int BLAKE2s_Init(BLAKE2S_CTX *c);
+int BLAKE2s_Init(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P);
+int BLAKE2s_Init_key(BLAKE2S_CTX *c, const BLAKE2S_PARAM *P, const void *key);
 int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c);
+
+void blake2s_param_init(BLAKE2S_PARAM *P);
+void blake2s_param_set_digest_length(BLAKE2S_PARAM *P, uint8_t outlen);
+void blake2s_param_set_key_length(BLAKE2S_PARAM *P, uint8_t keylen);
+void blake2s_param_set_personal(BLAKE2S_PARAM *P, const uint8_t *personal, size_t length);
+void blake2s_param_set_salt(BLAKE2S_PARAM *P, const uint8_t *salt, size_t length);

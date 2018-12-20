@@ -14,6 +14,7 @@ void openssl_add_all_macs_int(void)
 {
 #ifndef OPENSSL_NO_BLAKE2
     EVP_add_mac(&blake2b_mac_meth);
+    EVP_add_mac(&blake2s_mac_meth);
 #endif
 #ifndef OPENSSL_NO_CMAC
     EVP_add_mac(&cmac_meth);
