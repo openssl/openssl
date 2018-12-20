@@ -581,6 +581,11 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
     if (!BN_GENCB_call(cb, 3, 1))
         goto err;
 
+#ifdef FIPS_MODE
+    if (!SELF_TEST_keygen_pairwise_test_dsa(dsa))
+        goto err;
+#endif /* FIPS_MODE */
+
     ok = 1;
  err:
     if (ok == 1) {

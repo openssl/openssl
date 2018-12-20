@@ -258,6 +258,10 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
     priv_key = NULL;
     pub_key = NULL;
 
+#ifdef FIPS_MODE
+    if (!SELF_TEST_keygen_pairwise_test_ecdsa(eckey))
+        goto err;
+#endif /* FIPS */
     ok = 1;
 
 err:

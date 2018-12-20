@@ -386,7 +386,12 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, int primes, BIGNUM *e_value,
         /* We MUST free p before any further use of rsa->p */
         BN_free(p);
     }
-
+/* TODO: This is just a placeholder, this should not be the rsa keygen
+ *       method for FIPS */
+#ifdef FIPS_MODE
+    if (SELF_TEST_keygen_pairwise_test_rsa(rsa))
+        goto err;
+#endif
     ok = 1;
  err:
     if (ok == -1) {

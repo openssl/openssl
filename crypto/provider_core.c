@@ -11,6 +11,7 @@
 #include <openssl/core_numbers.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
+#include <openssl/params.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
@@ -558,7 +559,7 @@ const DSO *ossl_provider_dso(OSSL_PROVIDER *prov)
     return prov->module;
 }
 
-const char *ossl_provider_module_name(OSSL_PROVIDER *prov)
+const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
 {
     return DSO_get_filename(prov->module);
 }
@@ -610,6 +611,10 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
 static const OSSL_ITEM param_types[] = {
     { OSSL_PARAM_UTF8_PTR, "openssl-version" },
     { OSSL_PARAM_UTF8_PTR, "provider-name" },
+    { OSSL_PARAM_UTF8_PTR, "module-filename" },
+    { OSSL_PARAM_OCTET_STRING, "module-checksum" },
+    { OSSL_PARAM_OCTET_STRING, "indicator-checksum" },
+    { OSSL_PARAM_OCTET_STRING, "indicator-data" },
     { 0, NULL }
 };
 
@@ -644,6 +649,11 @@ static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
+    /* Providers have access to some general BIO operations */
+    { OSSL_FUNC_CORE_GET_BIO_NEW_FILE, (void (*)(void))BIO_new_file },
+    { OSSL_FUNC_CORE_GET_BIO_NEW_MEMBUF, (void (*)(void))BIO_new_mem_buf },
+    { OSSL_FUNC_CORE_GET_BIO_READ, (void (*)(void))BIO_read },
+    { OSSL_FUNC_CORE_GET_BIO_FREE, (void (*)(void))BIO_free },
     { 0, NULL }
 };
 static const OSSL_DISPATCH *core_dispatch = core_dispatch_;

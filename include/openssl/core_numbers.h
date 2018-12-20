@@ -57,6 +57,17 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,
 # define OSSL_FUNC_CORE_GET_PARAMS             2
 OSSL_CORE_MAKE_FUNC(int,core_get_params,(const OSSL_PROVIDER *prov,
                                          const OSSL_PARAM params[]))
+# define OSSL_FUNC_CORE_GET_BIO_NEW_FILE       3
+OSSL_CORE_MAKE_FUNC(BIO *,core_get_bio_new_file,(const char *filename,
+                                                 const char *mode))
+# define OSSL_FUNC_CORE_GET_BIO_NEW_MEMBUF     4
+OSSL_CORE_MAKE_FUNC(BIO *,core_get_bio_new_membuf,(const void *buf, int len))
+# define OSSL_FUNC_CORE_GET_BIO_READ           5
+OSSL_CORE_MAKE_FUNC(int,core_get_bio_read,(BIO *bio,
+                                           void *data, size_t data_len,
+                                           size_t *bytes_read))
+# define OSSL_FUNC_CORE_GET_BIO_FREE           6
+OSSL_CORE_MAKE_FUNC(int, core_get_bio_free,(BIO *bio))
 
 /* Functions provided by the provider to the Core, reserved numbers 1024-1535 */
 # define OSSL_FUNC_PROVIDER_TEARDOWN         1024
