@@ -17,6 +17,8 @@ iso 0 9797 3 4                          : GMAC          : gmac
 # There are no OIDs for these yet...
             : KMAC128   : kmac128
             : KMAC256   : kmac256
+            : BLAKE2BMAC	: blake2bmac
+            : BLAKE2SMAC   	: blake2smac
 
 # HMAC OIDs
 identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5

@@ -57,6 +57,14 @@
 #define LN_kmac256              "kmac256"
 #define NID_kmac256             1197
 
+#define SN_blake2bmac           "BLAKE2BMAC"
+#define LN_blake2bmac           "blake2bmac"
+#define NID_blake2bmac          1201
+
+#define SN_blake2smac           "BLAKE2SMAC"
+#define LN_blake2smac           "blake2smac"
+#define NID_blake2smac          1202
+
 #define SN_hmac_md5             "HMAC-MD5"
 #define LN_hmac_md5             "hmac-md5"
 #define NID_hmac_md5            780
