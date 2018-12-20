@@ -2289,16 +2289,16 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
     {"Microsoft", "Microsoft", NID_Microsoft, 7, &so[7761]},
     {"MSRPQC", "MSRPQC", NID_MSRPQC, 9, &so[7768]},
-    {"picnicL1FS", "Picnic L1 FS", NID_picnicL1FS, 11, &so[7777]},
-    {"p256-picnicL1FS", "p256 Picnic L1 FS hybrid", NID_p256_picnicL1FS, 11, &so[7788]},
-    {"rsa3072-picnicL1FS", "rsa3072 Picnic L1 FS hybrid", NID_rsa3072_picnicL1FS, 11, &so[7799]},
-    {"qteslaI", "qTESLA I", NID_qteslaI, 11, &so[7810]},
-    {"p256-qteslaI", "p256 qTESLA I hybrid", NID_p256_qteslaI, 11, &so[7821]},
-    {"rsa3072-qteslaI", "rsa3072 qTESLA I hybrid", NID_rsa3072_qteslaI, 11, &so[7832]},
-    {"qteslaIIIsize", "qTESLA III size", NID_qteslaIIIsize, 11, &so[7843]},
-    {"p384-qteslaIIIsize", "p384 qTESLA III size hybrid", NID_p384_qteslaIIIsize, 11, &so[7854]},
-    {"qteslaIIIspeed", "qTESLA III speed", NID_qteslaIIIspeed, 11, &so[7865]},
-    {"p384-qteslaIIIspeed", "p384 qTESLA III speed hybrid", NID_p384_qteslaIIIspeed, 11, &so[7876]},
+    {"picnicL1FS", "picnicL1FS", NID_picnicL1FS, 11, &so[7777]},
+    {"p256_picnicL1FS", "p256_picnicL1FS", NID_p256_picnicL1FS, 11, &so[7788]},
+    {"rsa3072_picnicL1FS", "rsa3072_picnicL1FS", NID_rsa3072_picnicL1FS, 11, &so[7799]},
+    {"qteslaI", "qteslaI", NID_qteslaI, 11, &so[7810]},
+    {"p256_qteslaI", "p256_qteslaI", NID_p256_qteslaI, 11, &so[7821]},
+    {"rsa3072_qteslaI", "rsa3072_qteslaI", NID_rsa3072_qteslaI, 11, &so[7832]},
+    {"qteslaIIIsize", "qteslaIIIsize", NID_qteslaIIIsize, 11, &so[7843]},
+    {"p384_qteslaIIIsize", "p384_qteslaIIIsize", NID_p384_qteslaIIIsize, 11, &so[7854]},
+    {"qteslaIIIspeed", "qteslaIIIspeed", NID_qteslaIIIspeed, 11, &so[7865]},
+    {"p384_qteslaIIIspeed", "p384_qteslaIIIspeed", NID_p384_qteslaIIIspeed, 11, &so[7876]},
 };
 
 #define NUM_SN 1198
@@ -3177,10 +3177,10 @@ static const unsigned int sn_objs[NUM_SN] = {
     1141,    /* "oscca" */
      475,    /* "otherMailbox" */
      876,    /* "owner" */
-    1198,    /* "p256-picnicL1FS" */
-    1201,    /* "p256-qteslaI" */
-    1204,    /* "p384-qteslaIIIsize" */
-    1206,    /* "p384-qteslaIIIspeed" */
+    1198,    /* "p256_picnicL1FS" */
+    1201,    /* "p256_qteslaI" */
+    1204,    /* "p384_qteslaIIIsize" */
+    1206,    /* "p384_qteslaIIIspeed" */
      489,    /* "pagerTelephoneNumber" */
      374,    /* "path" */
      112,    /* "pbeWithMD5AndCast5CBC" */
@@ -3248,8 +3248,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      877,    /* "roleOccupant" */
      448,    /* "room" */
      463,    /* "roomNumber" */
-    1199,    /* "rsa3072-picnicL1FS" */
-    1202,    /* "rsa3072-qteslaI" */
+    1199,    /* "rsa3072_picnicL1FS" */
+    1202,    /* "rsa3072_qteslaI" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
@@ -3648,7 +3648,6 @@ static const unsigned int ln_objs[NUM_LN] = {
     1032,    /* "PKINIT Client Auth" */
      127,    /* "PKIX" */
      858,    /* "Permanent Identifier" */
-    1197,    /* "Picnic L1 FS" */
      164,    /* "Policy Qualifier CPS" */
      165,    /* "Policy Qualifier User Notice" */
      385,    /* "Private" */
@@ -4353,10 +4352,10 @@ static const unsigned int ln_objs[NUM_LN] = {
     1141,    /* "oscca" */
      475,    /* "otherMailbox" */
      876,    /* "owner" */
-    1198,    /* "p256 Picnic L1 FS hybrid" */
-    1201,    /* "p256 qTESLA I hybrid" */
-    1204,    /* "p384 qTESLA III size hybrid" */
-    1206,    /* "p384 qTESLA III speed hybrid" */
+    1198,    /* "p256_picnicL1FS" */
+    1201,    /* "p256_qteslaI" */
+    1204,    /* "p384_qteslaIIIsize" */
+    1206,    /* "p384_qteslaIIIspeed" */
      935,    /* "pSpecified" */
      489,    /* "pagerTelephoneNumber" */
      782,    /* "password based MAC" */
@@ -4379,6 +4378,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      487,    /* "personalTitle" */
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
+    1197,    /* "picnicL1FS" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
      438,    /* "pilotAttributeType" */
@@ -4419,10 +4419,10 @@ static const unsigned int ln_objs[NUM_LN] = {
      886,    /* "protocolInformation" */
      510,    /* "pseudonym" */
      435,    /* "pss" */
-    1200,    /* "qTESLA I" */
-    1203,    /* "qTESLA III size" */
-    1205,    /* "qTESLA III speed" */
      286,    /* "qcStatements" */
+    1200,    /* "qteslaI" */
+    1203,    /* "qteslaIIIsize" */
+    1205,    /* "qteslaIIIspeed" */
      457,    /* "qualityLabelledData" */
      450,    /* "rFC822localPart" */
       98,    /* "rc2-40-cbc" */
@@ -4447,8 +4447,8 @@ static const unsigned int ln_objs[NUM_LN] = {
      448,    /* "room" */
      463,    /* "roomNumber" */
       19,    /* "rsa" */
-    1199,    /* "rsa3072 Picnic L1 FS hybrid" */
-    1202,    /* "rsa3072 qTESLA I hybrid" */
+    1199,    /* "rsa3072_picnicL1FS" */
+    1202,    /* "rsa3072_qteslaI" */
        6,    /* "rsaEncryption" */
      644,    /* "rsaOAEPEncryptionSET" */
      377,    /* "rsaSignature" */
