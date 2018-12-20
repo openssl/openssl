@@ -6,6 +6,7 @@ RAND_DRBG_new,
 RAND_DRBG_secure_new,
 RAND_DRBG_set,
 RAND_DRBG_set_defaults,
+RAND_DRBG_set_crng_test_block_size,
 RAND_DRBG_instantiate,
 RAND_DRBG_uninstantiate,
 RAND_DRBG_free
@@ -28,6 +29,8 @@ RAND_DRBG_free
                    int type, unsigned int flags);
 
  int RAND_DRBG_set_defaults(int type, unsigned int flags);
+
+ int RAND_DRBG_set_crng_test_block_size(RAND_DRBG *drbg, size_t blocksize);
 
  int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                            const unsigned char *pers, size_t perslen);
@@ -95,6 +98,14 @@ B<drbg> is I<chained> to its B<parent>.
 For more information, see the NOTES section.
 
 
+RAND_DRBG_set_crng_test_block_size()
+sets the number of I<bytes> used for a I<FIPS 140-2 Continuous
+random number generator test (section 4.9.2)> for the B<drbg>.
+Specifying B<blocksize> to be zero, disables this testing, which is the
+default setting.  This call is only valid when the B<drbg> is in the
+uninstantiated state.
+
+
 RAND_DRBG_instantiate()
 seeds the B<drbg> instance using random input from trusted entropy sources.
 Optionally, a personalization string B<pers> of length B<perslen> can be
@@ -112,6 +123,7 @@ RAND_DRBG_new() and RAND_DRBG_secure_new() return a pointer to a DRBG
 instance allocated on the heap, resp. secure heap.
 
 RAND_DRBG_set(),
+RAND_DRBG_set_crng_test_block_size(),
 RAND_DRBG_instantiate(), and
 RAND_DRBG_uninstantiate()
 return 1 on success, and 0 on failure.

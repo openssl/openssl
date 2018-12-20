@@ -349,7 +349,8 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
  *
  * Returns 1 on success, 0 on failure.
  */
-static int crng_check(RAND_DRBG *drbg, size_t *lenp, unsigned char *entropy)
+static int drbg_crng_check(RAND_DRBG *drbg, size_t *lenp,
+                           unsigned char *entropy)
 {
     const size_t bs = drbg->crngt_blocksize;
     const size_t n = *lenp / bs;
@@ -360,7 +361,7 @@ static int crng_check(RAND_DRBG *drbg, size_t *lenp, unsigned char *entropy)
     for (i = 0; i < n; i++) {
         if (memcmp(p, entropy, bs) == 0) {
             drbg->state = DRBG_ERROR;
-            RANDerr(RAND_F_CRNG_CHECK, RAND_R_ERROR_CRNG_TEST_FAIL);
+            RANDerr(RAND_F_DRBG_CRNG_CHECK, RAND_R_ERROR_CRNG_TEST_FAIL);
             return 0;
         }
         p = entropy;
@@ -427,9 +428,9 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     }
 
     /*
-     * If we're running with continuious RNG testing and haven't initialised
-     * yet, we need more data.  We add one block and round up to the nearest
-     * block boundary.  The entropy requirements are not altered.
+     * If we're running with continuous RNG testing and haven't initialised
+     * yet, we will need more data.  We add one block and round up to the
+     * nearest block boundary.  The entropy requirements are not altered.
      */
     if (bs > 0) {
         if (drbg->crngt_first_block) {
@@ -467,7 +468,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                         RAND_R_ERROR_RETRIEVING_ENTROPY);
                 goto end;
             }
-            if (!crng_check(drbg, &entropylen, entropy))
+            if (!drbg_crng_check(drbg, &entropylen, entropy))
                 goto end;
         }
     }
@@ -606,7 +607,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
                 goto end;
             }
 
-            if (!crng_check(drbg, &entropylen, entropy))
+            if (!drbg_crng_check(drbg, &entropylen, entropy))
                 goto end;
         }
     }

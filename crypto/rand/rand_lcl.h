@@ -238,7 +238,7 @@ struct rand_drbg_st {
     size_t max_perslen, max_adinlen;
 
     /*
-     * If the continuous random number testing is benig used, these hold the
+     * If the continuous random number testing is being used, these hold the
      * relevant state and previous block of seed material.  This is to
      * support FIPS 140-2 section 4.9.2 Conditional Tests but will be used
      * if the block size is positive.
