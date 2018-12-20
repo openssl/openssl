@@ -32,6 +32,8 @@ int ERR_load_EVP_strings(void);
 # define EVP_F_ARIA_GCM_INIT_KEY                          176
 # define EVP_F_ARIA_INIT_KEY                              185
 # define EVP_F_B64_NEW                                    198
+# define EVP_F_BLAKE2B_MAC_CTRL                           220
+# define EVP_F_BLAKE2B_MAC_INIT                           221
 # define EVP_F_CAMELLIA_INIT_KEY                          159
 # define EVP_F_CHACHA20_POLY1305_CTRL                     182
 # define EVP_F_CMLL_T4_INIT_KEY                           179
@@ -168,6 +170,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_KEY                                163
 # define EVP_R_INVALID_KEY_LENGTH                         130
 # define EVP_R_INVALID_OPERATION                          148
+# define EVP_R_INVALID_SALT_LENGTH                        186
 # define EVP_R_KEYGEN_FAILURE                             120
 # define EVP_R_KEY_SETUP_FAILED                           180
 # define EVP_R_MEMORY_LIMIT_EXCEEDED                      172
