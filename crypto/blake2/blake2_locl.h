@@ -83,9 +83,21 @@ struct blake2b_ctx_st {
 typedef struct blake2s_ctx_st BLAKE2S_CTX;
 typedef struct blake2b_ctx_st BLAKE2B_CTX;
 
-int BLAKE2b_Init(BLAKE2B_CTX *c);
+int BLAKE2b_Init(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P);
+int BLAKE2b_Init_key(BLAKE2B_CTX *c, const BLAKE2B_PARAM *P, const void *key);
 int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen);
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c);
+
+/*
+ * These setters are internal and do not check the validity of their parameters.
+ * See blake2b_mac_ctrl for validation logic.
+ */
+
+void blake2b_param_init(BLAKE2B_PARAM *P);
+void blake2b_param_set_digest_length(BLAKE2B_PARAM *P, uint8_t outlen);
+void blake2b_param_set_key_length(BLAKE2B_PARAM *P, uint8_t keylen);
+void blake2b_param_set_personal(BLAKE2B_PARAM *P, const uint8_t *personal, size_t length);
+void blake2b_param_set_salt(BLAKE2B_PARAM *P, const uint8_t *salt, size_t length);
 
 int BLAKE2s_Init(BLAKE2S_CTX *c);
 int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen);
