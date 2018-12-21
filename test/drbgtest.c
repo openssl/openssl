@@ -429,7 +429,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      */
 
     /* Test explicit reseed with too large additional input */
-    if (!init(drbg, td, &t)
+    if (!instantiate(drbg, td, &t)
             || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1, 0) > 0)
         goto err;
 
@@ -440,7 +440,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Test explicit reseed with too much entropy */
-    if (!init(drbg, td, &t))
+    if (!instantiate(drbg, td, &t))
         goto err;
     t.entropylen = drbg->max_entropylen + 1;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
@@ -448,7 +448,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Test explicit reseed with too little entropy */
-    if (!init(drbg, td, &t))
+    if (!instantiate(drbg, td, &t))
         goto err;
     t.entropylen = drbg->min_entropylen - 1;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
