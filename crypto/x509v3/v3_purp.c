@@ -463,8 +463,20 @@ static void x509v3_cache_extensions(X509 *x)
     if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
         x->ex_flags |= EXFLAG_SI;
         /* If SKID matches AKID also indicate self signed */
-        if (X509_check_akid(x, x->akid) == X509_V_OK)
-            x->ex_flags |= EXFLAG_SS;
+        if (X509_check_akid(x, x->akid) == X509_V_OK) {
+            X509_PUBKEY *xpkey = X509_get_X509_PUBKEY(x);
+            const X509_ALGOR *sigalg = X509_get0_tbs_sigalg(x);
+            if (xpkey != NULL && sigalg != NULL) {
+               EVP_PKEY *pkey = X509_PUBKEY_get0(xpkey);
+               int pkey_nid;
+               if (pkey != NULL
+                       && OBJ_find_sigid_algs(OBJ_obj2nid(sigalg->algorithm),
+                                              NULL, &pkey_nid)
+                       && EVP_PKEY_type(pkey_nid)
+                           == EVP_PKEY_base_id(pkey))
+                    x->ex_flags |= EXFLAG_SS;
+            }
+        }
     }
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     x->nc = X509_get_ext_d2i(x, NID_name_constraints, &i, NULL);
