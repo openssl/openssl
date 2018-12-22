@@ -35,8 +35,12 @@ fi
 
 #############################################################################
 
-echo test ssl3 is forbidden in FIPS mode
-$ssltest -ssl3 $extra && exit 1
+if ../util/shlib_wrap.sh ../apps/openssl no-ssl3; then
+    echo ssl3 disabled: skipping test
+else
+    echo test ssl3 is forbidden in FIPS mode
+    $ssltest -ssl3 $extra && exit 1
+fi
 
 if ../util/shlib_wrap.sh ../apps/openssl ciphers SSLv2 >/dev/null 2>&1; then
     echo test ssl2 is forbidden in FIPS mode
