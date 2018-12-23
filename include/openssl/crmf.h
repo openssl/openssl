@@ -8,7 +8,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  *
- * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
+ * CRMF (RFC 4211) implementation by M. Peylo, M. Viljanen, and D. von Oheimb.
  */
 
 #ifndef OSSL_HEADER_CRMF_H
