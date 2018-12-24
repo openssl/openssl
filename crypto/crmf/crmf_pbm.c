@@ -112,9 +112,8 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
  * |msglen| length of the message
  * |sec| key to use
  * |seclen| length of the key
- * |mac| pointer to the computed mac, is allocated here,
- *       will be freed if not pointing to NULL
- * |maclen| pointer to the length of the mac, will be set
+ * |mac| pointer to the computed mac, will be set on success
+ * |maclen| if not NULL, will set variable to the length of the mac on success
  * returns 1 on success, 0 on error
  */
 int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
@@ -128,6 +127,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     unsigned char basekey[EVP_MAX_MD_SIZE];
     unsigned int bklen = EVP_MAX_MD_SIZE;
     int64_t iterations;
+    unsigned char *mac_res = 0;
     int ok = 0;
 
     if (mac == NULL || pbmp == NULL || pbmp->mac == NULL
@@ -135,8 +135,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_NULL_ARGUMENT);
         goto err;
     }
-    OPENSSL_free(*mac);
-    if ((*mac = OPENSSL_malloc(EVP_MAX_MD_SIZE)) == NULL) {
+    if ((mac_res = OPENSSL_malloc(EVP_MAX_MD_SIZE)) == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -196,7 +195,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
-    if (HMAC(m, basekey, bklen, msg, msglen, *mac, maclen) != NULL)
+    if (HMAC(m, basekey, bklen, msg, msglen, mac_res, maclen) != NULL)
         ok = 1;
 
  err:
@@ -204,13 +203,13 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     OPENSSL_cleanse(basekey, bklen);
     EVP_MD_CTX_free(ctx);
 
-    if (ok == 0)
+    if (ok == 1) {
+        *mac = mac_res;
         return 1;
-
-    if (mac != NULL && *mac != NULL) {
-        OPENSSL_free(*mac);
-        *mac = NULL;
     }
+
+    OPENSSL_free(mac_res);
+
     if (pbmp != NULL && pbmp->mac != NULL) {
         char buf[128];
         if (OBJ_obj2txt(buf, sizeof(buf), pbmp->mac->algorithm, 0))

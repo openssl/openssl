@@ -22,9 +22,9 @@ OSSL_CRMF_pbmp_new
 
 OSSL_CRMF_pbm_new() generates a PBM (Password-Based MAC) based on given PBM
 parameters B<pbmp>, message B<msg>, and secret B<sec>, along with the respective
-lengths B<msglen> and B<seclen>. Will write the adddress of the newly allocated
-MAC via the B<mac> reference parameter and the length via the B<maclen> reference
-parameter. Any previous pointer referred to by B<mac> will be freed if not NULL.
+lengths B<msglen> and B<seclen>. On success writes the adddress of the newly
+allocated MAC via the B<mac> reference parameter and writes the length via the
+B<maclen> reference parameter unless it its NULL.
 
 The iteration count must be at least 100, as stipulated by RFC 4211, and is
 limited to at most 100000 to avoid DoS through manipulated or otherwise
