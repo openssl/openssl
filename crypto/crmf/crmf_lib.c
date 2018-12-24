@@ -44,6 +44,7 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
                                           const valt *in)                 \
 {                                                                         \
     OSSL_CRMF_ATTRIBUTETYPEANDVALUE *atav = NULL;                         \
+                                                                          \
     if (msg == NULL || in  == NULL)                                       \
         goto err;                                                         \
     if ((atav = OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new()) == NULL)           \
@@ -105,62 +106,53 @@ IMPLEMENT_CRMF_CTRL_FUNC(authenticator, ASN1_UTF8STRING, regCtrl)
 
 int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
                                      int method, GENERAL_NAME *nm) {
-    int error = CRMF_R_NULL_ARGUMENT;
-    if (spi == NULL)
-        goto err;
-    if (method < OSSL_CRMF_PUB_METHOD_DONTCARE ||
-        method > OSSL_CRMF_PUB_METHOD_LDAP) {
-        error = ERR_R_PASSED_INVALID_ARGUMENT;
-        goto err;
+    if (spi == NULL
+        || method < OSSL_CRMF_PUB_METHOD_DONTCARE
+        || method > OSSL_CRMF_PUB_METHOD_LDAP) {
+        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO,
+                ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
     }
 
     if (!ASN1_INTEGER_set(spi->pubMethod, method))
         return 0;
     spi->pubLocation = nm;
     return 1;
-
- err:
-    CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO, error);
-    return 0;
 }
 
 int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
                                  OSSL_CRMF_PKIPUBLICATIONINFO *pi,
                                  OSSL_CRMF_SINGLEPUBINFO *spi) {
-    int error = ERR_R_MALLOC_FAILURE;
     if (pi == NULL || spi == NULL) {
-        error = CRMF_R_NULL_ARGUMENT;
-        goto err;
+        CRMFerr(CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO,
+                CRMF_R_NULL_ARGUMENT);
+        return 0;
     }
     if (pi->pubinfos == NULL)
         if ((pi->pubinfos = sk_OSSL_CRMF_SINGLEPUBINFO_new_null()) == NULL)
-            goto err;
+            goto oom;
 
     if (!(sk_OSSL_CRMF_SINGLEPUBINFO_push(pi->pubinfos, spi)))
-        goto err;
+        goto oom;
     return 1;
 
- err:
-    CRMFerr(CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO, error);
+ oom:
+    CRMFerr(CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO,
+            ERR_R_MALLOC_FAILURE);
     return 0;
 }
 
 int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(
                                  OSSL_CRMF_PKIPUBLICATIONINFO *pi, int action) {
-    int error = CRMF_R_NULL_ARGUMENT;
-    if (pi == NULL)
-        goto err;
-    if (action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH ||
-        action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
-        error = ERR_R_PASSED_INVALID_ARGUMENT;
-        goto err;
+    if (pi == NULL
+        || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
+        || action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
+        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION,
+                ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
     }
 
     return ASN1_INTEGER_set(pi->action, action);
-
- err:
-    CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION, error);
-    return 0;
 }
 
  /* id-regCtrl-pkiPublicationInfo Control (section 6.3) */
@@ -307,6 +299,7 @@ int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid)
 static int CRMF_ASN1_get_int(int func, const ASN1_INTEGER *a)
 {
     int64_t res;
+
     if (!ASN1_INTEGER_get_int64(&res, a)) {
         CRMFerr(func, ASN1_R_INVALID_NUMBER);
         return -1;
@@ -338,6 +331,7 @@ int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
                                   X509_EXTENSIONS *exts)
 {
     OSSL_CRMF_CERTTEMPLATE *tmpl;
+
     if (crm == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS, CRMF_R_NULL_ARGUMENT);
         return 0;
@@ -398,7 +392,6 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
     unsigned char *crder = NULL, *sig = NULL;
     int alg_nid=0, md_nid=0;
     const EVP_MD *alg = NULL;
-
     EVP_MD_CTX *ctx = NULL;
 
     if (ps == NULL || cr == NULL || pkey == NULL) {
