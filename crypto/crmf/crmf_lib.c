@@ -635,7 +635,7 @@ X509_NAME *OSSL_CRMF_CERTTEMPLATE_get0_issuer(OSSL_CRMF_CERTTEMPLATE *tmpl)
  * Any value argument that is NULL will leave the respective field unchanged.
  */
 int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
-                                const EVP_PKEY *pubkey,
+                                EVP_PKEY *pubkey,
                                 const X509_NAME *subject,
                                 const X509_NAME *issuer,
                                 const ASN1_INTEGER *serial)
@@ -644,17 +644,17 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
         CRMFerr(CRMF_F_OSSL_CRMF_CERTTEMPLATE_FILL, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
-    if (pubkey != NULL && !X509_PUBKEY_set(&tmpl->publicKey, (EVP_PKEY *)pubkey))
+    if (subject != NULL && !X509_NAME_set(&tmpl->subject, subject))
         goto oom;
-    if (subject != NULL && !X509_NAME_set(&tmpl->subject, (X509_NAME *)subject))
-        goto oom;
-    if (issuer != NULL && !X509_NAME_set(&tmpl->issuer, (X509_NAME *)issuer))
+    if (issuer != NULL && !X509_NAME_set(&tmpl->issuer, issuer))
         goto oom;
     if (serial != NULL) {
         ASN1_INTEGER_free(tmpl->serialNumber);
         if ((tmpl->serialNumber = ASN1_INTEGER_dup(serial)) == NULL)
             goto oom;
     }
+    if (pubkey != NULL && !X509_PUBKEY_set(&tmpl->publicKey, pubkey))
+        goto oom;
     return 1;
 
  oom:
