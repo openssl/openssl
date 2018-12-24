@@ -53,9 +53,9 @@ structure, or NULL on error.
 
  OSSL_CRMF_PBMPARAMETER *pbm = NULL;
  unsigned char *msg = "Hello";
- unsigend char *sec = "SeCrEt";
- unsigend char *mac = NULL;
- unsigend int maclen;
+ unsigned char *sec = "SeCrEt";
+ unsigned char *mac = NULL;
+ unsigned int maclen;
 
  if ((pbm = OSSL_CRMF_pbmp_new(16, NID_sha256, 500, NID_hmac_sha1) == NULL))
      goto err;
