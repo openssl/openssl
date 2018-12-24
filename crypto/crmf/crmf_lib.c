@@ -214,7 +214,7 @@ static int OSSL_CRMF_MSG_push0_regInfo(OSSL_CRMF_MSG *crm,
         return 0;
     }
 
-    if ((crm->regInfo) == NULL) {
+    if (crm->regInfo == NULL) {
         if ((crm->regInfo =
              sk_OSSL_CRMF_ATTRIBUTETYPEANDVALUE_new_null()) == NULL)
             goto oom;
@@ -362,7 +362,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
         return 0;
     }
 
-    if ((tmpl->extensions) == NULL) {
+    if (tmpl->extensions == NULL) {
         if ((tmpl->extensions = sk_X509_EXTENSION_new_null()) == NULL)
             goto oom;
         new = 1;
@@ -390,7 +390,8 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
     size_t crlen, max_sig_size;
     unsigned int siglen;
     unsigned char *crder = NULL, *sig = NULL;
-    int alg_nid=0, md_nid=0;
+    int alg_nid = 0;
+    int md_nid = 0;
     const EVP_MD *alg = NULL;
     EVP_MD_CTX *ctx = NULL;
 
@@ -445,8 +446,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
  err:
     CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
     OPENSSL_free(crder);
-    if (ctx)
-        EVP_MD_CTX_free(ctx);
+    EVP_MD_CTX_free(ctx);
     OPENSSL_free(sig);
     return 0;
 }
