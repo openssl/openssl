@@ -387,6 +387,14 @@ typedef int (*SSL_verify_cb)(int preverify_ok, X509_STORE_CTX *x509_ctx);
         SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2|SSL_OP_NO_TLSv1_3)
 # define SSL_OP_NO_DTLS_MASK (SSL_OP_NO_DTLSv1|SSL_OP_NO_DTLSv1_2)
 
+/*
+ * When using DTLS/SCTP, include the terminating zero in the label
+ * used for computing the endpoint-pair shared secret. Required for
+ * interoperability with implementations having this bug like older
+ * version of OpenSSL.
+ */
+# define SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG               0x20000000U
+
 /* Disallow all renegotiation */
 # define SSL_OP_NO_RENEGOTIATION                         0x40000000U
 

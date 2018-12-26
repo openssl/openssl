@@ -237,6 +237,15 @@ functionality is not required. Those applications can turn this feature off by
 setting this option. This is a server-side opton only. It is ignored by
 clients.
 
+=item SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG
+
+Older versions of OpenSSL had a bug in the computation of the label length
+used for computing the endpoint-pair shared secret. The bug was that the
+terminating zero was included in the length of the label. Setting this option
+enables this behaviour to allow interoperability with such broken
+implementations. Please note that setting this option breaks interoperability
+with correct implementations. This option only applies to DTLS over SCTP.
+
 =back
 
 The following options no longer have any effect but their identifiers are
