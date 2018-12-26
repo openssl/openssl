@@ -830,6 +830,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
         if (SSL_IS_DTLS(s) && s->hit) {
             unsigned char sctpauthkey[64];
             char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+            size_t labellen;
 
             /*
              * Add new shared key for SCTP-Auth, will be ignored if no
@@ -838,9 +839,14 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
             memcpy(labelbuffer, DTLS1_SCTP_AUTH_LABEL,
                    sizeof(DTLS1_SCTP_AUTH_LABEL));
 
+            /* Don't include the terminating zero. */
+            labellen = sizeof(labelbuffer) - 1;
+            if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
+                labellen += 1;
+
             if (SSL_export_keying_material(s, sctpauthkey,
                                            sizeof(sctpauthkey), labelbuffer,
-                                           sizeof(labelbuffer), NULL, 0,
+                                           labellen, NULL, 0,
                                            0) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_OSSL_STATEM_SERVER_POST_WORK,
@@ -3500,6 +3506,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
         if (SSL_IS_DTLS(s)) {
             unsigned char sctpauthkey[64];
             char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
+            size_t labellen;
             /*
              * Add new shared key for SCTP-Auth, will be ignored if no SCTP
              * used.
@@ -3507,9 +3514,14 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
             memcpy(labelbuffer, DTLS1_SCTP_AUTH_LABEL,
                    sizeof(DTLS1_SCTP_AUTH_LABEL));
 
+            /* Don't include the terminating zero. */
+            labellen = sizeof(labelbuffer) - 1;
+            if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
+                labellen += 1;
+
             if (SSL_export_keying_material(s, sctpauthkey,
                                            sizeof(sctpauthkey), labelbuffer,
-                                           sizeof(labelbuffer), NULL, 0,
+                                           labellen, NULL, 0,
                                            0) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE,

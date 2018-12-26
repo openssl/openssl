@@ -751,7 +751,7 @@ typedef enum OPTION_choice {
     OPT_CERT2, OPT_KEY2, OPT_NEXTPROTONEG, OPT_ALPN,
     OPT_SRTP_PROFILES, OPT_KEYMATEXPORT, OPT_KEYMATEXPORTLEN,
     OPT_KEYLOG_FILE, OPT_MAX_EARLY, OPT_RECV_MAX_EARLY, OPT_EARLY_DATA,
-    OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY,
+    OPT_S_NUM_TICKETS, OPT_ANTI_REPLAY, OPT_NO_ANTI_REPLAY, OPT_SCTP_LABEL_BUG,
     OPT_R_ENUM,
     OPT_S_ENUM,
     OPT_V_ENUM,
@@ -938,6 +938,7 @@ const OPTIONS s_server_options[] = {
 #endif
 #ifndef OPENSSL_NO_SCTP
     {"sctp", OPT_SCTP, '-', "Use SCTP"},
+    {"sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug"},
 #endif
 #ifndef OPENSSL_NO_DH
     {"no_dhe", OPT_NO_DHE, '-', "Disable ephemeral DH"},
@@ -1047,6 +1048,9 @@ int s_server_main(int argc, char *argv[])
     const char *keylog_file = NULL;
     int max_early_data = -1, recv_max_early_data = -1;
     char *psksessf = NULL;
+#ifndef OPENSSL_NO_SCTP
+    int sctp_label_bug = 0;
+#endif
 
     /* Init of few remaining global variables */
     local_argc = argc;
@@ -1490,6 +1494,11 @@ int s_server_main(int argc, char *argv[])
             protocol = IPPROTO_SCTP;
 #endif
             break;
+        case OPT_SCTP_LABEL_BUG:
+#ifndef OPENSSL_NO_SCTP
+            sctp_label_bug = 1;
+#endif
+            break;
         case OPT_TIMEOUT:
 #ifndef OPENSSL_NO_DTLS
             enable_timeouts = 1;
@@ -1792,6 +1801,12 @@ int s_server_main(int argc, char *argv[])
             goto end;
         }
     }
+
+#ifndef OPENSSL_NO_SCTP
+    if (protocol == IPPROTO_SCTP && sctp_label_bug == 1)
+        SSL_CTX_set_mode(ctx, SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG);
+#endif
+
     if (min_version != 0
         && SSL_CTX_set_min_proto_version(ctx, min_version) == 0)
         goto end;

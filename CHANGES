@@ -9,6 +9,13 @@
 
  Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
 
+  *) Fix a bug in the computation of the endpoint-pair shared secret used
+     by DTLS over SCTP. This breaks interoperability with older versions
+     of OpenSSL like OpenSSL 1.1.0 and OpenSSL 1.0.2. There is a runtime
+     switch SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG (off by default) enabling
+     interoperability with such broken implementations. However, enabling
+     this switch breaks interoperability with correct implementations.
+
   *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
      [Richard Levitte]
 
