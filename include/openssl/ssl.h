@@ -500,6 +500,18 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  * Use the kernel TLS transmission data-path.
  */
 # define SSL_MODE_NO_KTLS_TX 0x00000200U
+/*
+ * When using DTLS/SCTP, include the terminating zero in the label
+ * used for computing the endpoint-pair shared secret. Required for
+ * interoperability with implementations having this bug like these
+ * older version of OpenSSL:
+ * - OpenSSL 1.0.0 series
+ * - OpenSSL 1.0.1 series
+ * - OpenSSL 1.0.2 series
+ * - OpenSSL 1.1.0 series
+ * - OpenSSL 1.1.1 and 1.1.1a
+ */
+# define SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG 0x00000400U
 
 /* Cert related flags */
 /*
