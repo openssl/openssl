@@ -100,6 +100,7 @@ B<openssl> B<s_client>
 [B<-dtls1>]
 [B<-dtls1_2>]
 [B<-sctp>]
+[B<-sctp_label_bug>]
 [B<-fallback_scsv>]
 [B<-async>]
 [B<-max_send_frag>]
@@ -487,6 +488,14 @@ respectively.
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
 conjunction with B<-dtls>, B<-dtls1> or B<-dtls1_2>. This option is only
+available where OpenSSL has support for SCTP enabled.
+
+=item B<-sctp_label_bug>
+
+Use the incorrect behaviour of older OpenSSL implementations when computing
+endpoint-pair shared secrets for DTLS/SCTP. This allows to communicate with
+older broken implementations but breaks interoperability with correct
+implementations. Must be used in conjunction with B<-sctp>. This option is only
 available where OpenSSL has support for SCTP enabled.
 
 =item B<-fallback_scsv>
