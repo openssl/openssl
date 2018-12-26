@@ -840,7 +840,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
 
             if (SSL_export_keying_material(s, sctpauthkey,
                                            sizeof(sctpauthkey), labelbuffer,
-                                           sizeof(labelbuffer), NULL, 0,
+                                           strlen(labelbuffer), NULL, 0,
                                            0) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_OSSL_STATEM_SERVER_POST_WORK,
@@ -3509,7 +3509,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
 
             if (SSL_export_keying_material(s, sctpauthkey,
                                            sizeof(sctpauthkey), labelbuffer,
-                                           sizeof(labelbuffer), NULL, 0,
+                                           strlen(labelbuffer), NULL, 0,
                                            0) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_POST_PROCESS_CLIENT_KEY_EXCHANGE,

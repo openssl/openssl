@@ -1725,7 +1725,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         if (SSL_export_keying_material(s, sctpauthkey,
                                        sizeof(sctpauthkey),
                                        labelbuffer,
-                                       sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                                       strlen(labelbuffer), NULL, 0, 0) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SERVER_HELLO,
                      ERR_R_INTERNAL_ERROR);
             goto err;
@@ -3414,7 +3414,7 @@ int tls_client_key_exchange_post_work(SSL *s)
 
         if (SSL_export_keying_material(s, sctpauthkey,
                                        sizeof(sctpauthkey), labelbuffer,
-                                       sizeof(labelbuffer), NULL, 0, 0) <= 0) {
+                                       strlen(labelbuffer), NULL, 0, 0) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CLIENT_KEY_EXCHANGE_POST_WORK,
                      ERR_R_INTERNAL_ERROR);
