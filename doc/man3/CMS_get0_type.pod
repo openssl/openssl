@@ -16,7 +16,7 @@ CMS_get0_type, CMS_set1_eContentType, CMS_get0_eContentType, CMS_get0_content - 
 =head1 DESCRIPTION
 
 CMS_get0_type() returns the content type of a CMS_ContentInfo structure as
-and ASN1_OBJECT pointer. An application can then decide how to process the
+an ASN1_OBJECT pointer. An application can then decide how to process the
 CMS_ContentInfo structure based on this value.
 
 CMS_set1_eContentType() sets the embedded content type of a CMS_ContentInfo
@@ -60,7 +60,7 @@ embedded content as it is normally set by higher level functions.
 
 =head1 RETURN VALUES
 
-CMS_get0_type() and CMS_get0_eContentType() return and ASN1_OBJECT structure.
+CMS_get0_type() and CMS_get0_eContentType() return an ASN1_OBJECT structure.
 
 CMS_set1_eContentType() returns 1 for success or 0 if an error occurred.  The
 error can be obtained from ERR_get_error(3).
