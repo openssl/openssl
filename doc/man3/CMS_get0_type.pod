@@ -15,8 +15,9 @@ CMS_get0_type, CMS_set1_eContentType, CMS_get0_eContentType, CMS_get0_content - 
 
 =head1 DESCRIPTION
 
-CMS_get0_type() returns the content type of a CMS_ContentInfo structure as
-an ASN1_OBJECT pointer. An application can then decide how to process the
+The CMS_get0_type() function returns a pointer to the content type of a CMS_ContentInfo structure as
+an ASN1_OBJECT pointer.  This is typically set when the CMS_ContentInfo structure is created, or when a signed or encrypted artifact is decoded.
+An application can then decide how to process the
 CMS_ContentInfo structure based on this value.
 
 CMS_set1_eContentType() sets the embedded content type of a CMS_ContentInfo
@@ -28,9 +29,13 @@ undefined.
 
 ASN1_OBJECT *CMS_get0_eContentType() returns a pointer to the embedded
 content type.
+It differs from CMS_get0_type in that it points to the actual eContentType element contained in the ASN1 structure that was constructed or received.
+It should return a single encoded OID.
 
 CMS_get0_content() returns a pointer to the B<ASN1_OCTET_STRING> pointer
-containing the embedded content.
+containing the embedded content itself.
+While this function will always return a valid B<ASN1_OCTET_STRING> object, it may point to NULL when it is used on outgoing objects created with B<CMS_PARTIAL>.
+Calling L<CMS_final> will finalize the object and make the pointers valid.
 
 =head1 NOTES
 
