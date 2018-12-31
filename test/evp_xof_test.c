@@ -16,19 +16,19 @@
 
 #include "testutil.h"
 
-static unsigned randint(unsigned limit)
+static size_t randint(size_t limit)
 {
-  unsigned u;
+    size_t u;
 
     assert(limit > 0);
     RAND_bytes((unsigned char *)&u, sizeof(u));
     /* this is biased, but we don't need unbiased output here. */
-    return (unsigned)(u % limit);
+    return (size_t)(u % limit);
 }
 
-static unsigned constint_value = 99999;
+static size_t constint_value = 99999;
 
-static unsigned constint(unsigned limit)
+static size_t constint(size_t limit)
 {
     if (constint_value >= limit)
         return limit - 1;
@@ -46,7 +46,7 @@ static unsigned constint(unsigned limit)
  * consistency.  The correctness tests are done with evp_test.c
  */
 static int xof_squeeze_test(const EVP_MD *xof,
-                            unsigned (*stridefn)(unsigned),
+                            size_t (*stridefn)(size_t),
                             size_t total_len)
 {
     int result = 0;
@@ -66,7 +66,7 @@ static int xof_squeeze_test(const EVP_MD *xof,
     if (!TEST_true(EVP_DigestInit(ctx, xof)))
         goto out;
     for (j = 0; j < total_len; ) {
-        size_t n = stridefn(total_len - j + 1);
+      size_t n = stridefn(total_len - j + 1);
         assert(n+j <= total_len);
         if (!TEST_true(EVP_DigestSqueezeXOF(ctx, buf2+j, n)))
             goto out;
