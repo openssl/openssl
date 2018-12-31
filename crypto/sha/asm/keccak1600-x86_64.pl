@@ -345,7 +345,7 @@ $code.=<<___;
 .size	__KeccakF1600,.-__KeccakF1600
 
 .globl	KeccakF1600
-.type	KeccakF1600,\@abi-omnipotent
+.type	KeccakF1600,\@function,1
 .align	32
 KeccakF1600:
 .cfi_startproc
