@@ -185,6 +185,7 @@ int EVP_DigestSqueezeXOF(EVP_MD_CTX *ctx, unsigned char *md, size_t size)
 
     if (ctx->digest->flags & EVP_MD_FLAG_XOF
         && size <= INT_MAX
+        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED)
         && ctx->digest->md_ctrl(ctx, EVP_MD_CTRL_XOF_LEN, (int)size, NULL)) {
         ret = ctx->digest->final(ctx, md);
 
