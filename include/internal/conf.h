@@ -12,11 +12,18 @@
 
 #include <openssl/conf.h>
 
+#define DEFAULT_CONF_MFLAGS \
+    (CONF_MFLAGS_DEFAULT_SECTION | \
+     CONF_MFLAGS_IGNORE_MISSING_FILE | \
+     CONF_MFLAGS_IGNORE_RETURN_CODES)
+
 struct ossl_init_settings_st {
+    char *filename;
     char *appname;
+    unsigned long flags;
 };
 
-void openssl_config_int(const char *appname);
+int openssl_config_int(const OPENSSL_INIT_SETTINGS *);
 void openssl_no_config_int(void);
 void conf_modules_free_int(void);
 
