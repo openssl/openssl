@@ -142,6 +142,9 @@ int CONF_modules_load_file(const char *filename, const char *appname,
         OPENSSL_free(file);
     NCONF_free(conf);
 
+    if (flags & CONF_MFLAGS_IGNORE_RETURN_CODES)
+        return 1;
+
     return ret;
 }
 
