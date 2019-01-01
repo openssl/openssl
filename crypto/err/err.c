@@ -741,6 +741,18 @@ int err_shelve_state(void **state)
 {
     int saveerrno = get_last_sys_error();
 
+    /*
+     * Note, at present our only caller is OPENSSL_init_crypto(), indirectly
+     * via ossl_init_load_crypto_nodelete(), by which point the requested
+     * "base" initialization has already been performed, so the below call is a
+     * NOOP, that re-enters OPENSSL_init_crypto() only to quickly return.
+     *
+     * If are no other valid callers of this function, the call below can be
+     * removed, avoiding the re-entry into OPENSSL_init_crypto().  If there are
+     * potential uses that are not from inside OPENSSL_init_crypto(), then this
+     * call is needed, but some care is required to make sure that the re-entry
+     * remains a NOOP.
+     */
     if (!OPENSSL_init_crypto(OPENSSL_INIT_BASE_ONLY, NULL))
         return 0;
 
