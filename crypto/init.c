@@ -288,17 +288,12 @@ DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_add_all_digests,
 
 static CRYPTO_ONCE config = CRYPTO_ONCE_STATIC_INIT;
 static int config_inited = 0;
-static const char *appname;
+static const OPENSSL_INIT_SETTINGS *conf_settings = NULL;
 DEFINE_RUN_ONCE_STATIC(ossl_init_config)
 {
-#ifdef OPENSSL_INIT_DEBUG
-    fprintf(stderr,
-            "OPENSSL_INIT: ossl_init_config: openssl_config(%s)\n",
-            appname == NULL ? "NULL" : appname);
-#endif
-    openssl_config_int(appname);
+    int ret = openssl_config_int(conf_settings);
     config_inited = 1;
-    return 1;
+    return ret;
 }
 DEFINE_RUN_ONCE_STATIC_ALT(ossl_init_no_config, ossl_init_config)
 {
@@ -631,9 +626,28 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
+    /*
+     * When the caller specifies OPENSSL_INIT_BASE_ONLY, that should be the
+     * *only* option specified.  With that option we return immediately after
+     * doing the requested limited initialization.  Note that
+     * err_shelve_state() called by us via ossl_init_load_crypto_nodelete()
+     * re-enters OPENSSL_init_crypto() with OPENSSL_INIT_BASE_ONLY, but with
+     * base already initialized this is a harmless NOOP.
+     *
+     * If we remain the only caller of err_shelve_state() the recursion should
+     * perhaps be removed, but if in doubt, it can be left in place.
+     */
     if (!RUN_ONCE(&base, ossl_init_base))
         return 0;
+    if (opts & OPENSSL_INIT_BASE_ONLY)
+        return 1;
 
+    /*
+     * Now we don't always set up exit handlers, the INIT_BASE_ONLY calls
+     * should not have the side-effect of setting up exit handlers, and
+     * therefore, this code block is below the INIT_BASE_ONLY-conditioned early
+     * return above.
+     */
     if ((opts & OPENSSL_INIT_NO_ATEXIT) != 0) {
         if (!RUN_ONCE_ALT(&register_atexit, ossl_init_no_register_atexit,
                           ossl_init_register_atexit))
@@ -642,9 +656,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
         return 0;
     }
 
-    if (!(opts & OPENSSL_INIT_BASE_ONLY)
-            && !RUN_ONCE(&load_crypto_nodelete,
-                         ossl_init_load_crypto_nodelete))
+    if (!RUN_ONCE(&load_crypto_nodelete, ossl_init_load_crypto_nodelete))
         return 0;
 
     if ((opts & OPENSSL_INIT_NO_LOAD_CRYPTO_STRINGS)
@@ -686,8 +698,9 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
     if (opts & OPENSSL_INIT_LOAD_CONFIG) {
         int ret;
         CRYPTO_THREAD_write_lock(init_lock);
-        appname = (settings == NULL) ? NULL : settings->appname;
+        conf_settings = settings;
         ret = RUN_ONCE(&config, ossl_init_config);
+        conf_settings = NULL;
         CRYPTO_THREAD_unlock(init_lock);
         if (!ret)
             return 0;

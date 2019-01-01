@@ -195,13 +195,14 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
         return 0;
     }
 
-    if (!OPENSSL_init_crypto(opts
+    opts |= OPENSSL_INIT_ADD_ALL_CIPHERS
+         |  OPENSSL_INIT_ADD_ALL_DIGESTS;
 #ifndef OPENSSL_NO_AUTOLOAD_CONFIG
-                             | OPENSSL_INIT_LOAD_CONFIG
+    if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG) == 0)
+        opts |= OPENSSL_INIT_LOAD_CONFIG;
 #endif
-                             | OPENSSL_INIT_ADD_ALL_CIPHERS
-                             | OPENSSL_INIT_ADD_ALL_DIGESTS,
-                             settings))
+
+    if (!OPENSSL_init_crypto(opts, settings))
         return 0;
 
     if (!RUN_ONCE(&ssl_base, ossl_init_ssl_base))
