@@ -80,18 +80,15 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     if (ctx == NULL)
         goto err;
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_PKCS12_KEYGEN)) {
-        OSSL_debug(OSSL_DEBUG_PKCS12_KEYGEN, "KEYGEN DEBUG\n");
-        OSSL_debug(OSSL_DEBUG_PKCS12_KEYGEN, "ID %d, ITER %d\n", id, iter);
-        OSSL_debug(OSSL_DEBUG_PKCS12_KEYGEN, "Password (length %d):\n", passlen);
-        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS12_KEYGEN),
-                       0, passlen, pass, passlen);
-        OSSL_debug(OSSL_DEBUG_PKCS12_DECRYPT, "\n");
-        OSSL_debug(OSSL_DEBUG_PKCS12_KEYGEN, "Salt (length %d):\n", saltlen);
-        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS12_KEYGEN),
-                       0, saltlen, salt, saltlen);
-        OSSL_debug(OSSL_DEBUG_PKCS12_DECRYPT, "\n");
-    }
+    OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+        BIO_printf(trc_out, "PKCS12_key_gen_uni(): ID %d, ITER %d\n", id, iter);
+        BIO_printf(trc_out, "Password (length %d):\n", passlen);
+        BIO_hex_string(trc_out, 0, passlen, pass, passlen);
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Salt (length %d):\n", saltlen);
+        BIO_hex_string(trc_out, 0, saltlen, salt, saltlen);
+        BIO_printf(trc_out, "\n");
+    } OSSL_TRACE_END(PKCS12_KEYGEN);
     v = EVP_MD_block_size(md_type);
     u = EVP_MD_size(md_type);
     if (u < 0 || v <= 0)
@@ -129,13 +126,11 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         }
         memcpy(out, Ai, min(n, u));
         if (u >= n) {
-            if (OSSL_debug_is_set(OSSL_DEBUG_PKCS12_KEYGEN)) {
-                OSSL_debug(OSSL_DEBUG_PKCS12_KEYGEN, "Output KEY (length %d)\n",
-                           tmpn);
-                BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS12_KEYGEN),
-                               0, tmpn, tmpout, tmpn);
-                OSSL_debug(OSSL_DEBUG_PKCS12_KEYGEN, "\n");
-            }
+            OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+                BIO_printf(trc_out, "Output KEY (length %d)\n", tmpn);
+                BIO_hex_string(trc_out, 0, tmpn, tmpout, tmpn);
+                BIO_printf(trc_out, "\n");
+            } OSSL_TRACE_END(PKCS12_KEYGEN);
             ret = 1;
             goto end;
         }

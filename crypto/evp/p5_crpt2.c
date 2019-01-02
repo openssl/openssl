@@ -103,21 +103,21 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     }
     HMAC_CTX_free(hctx);
     HMAC_CTX_free(hctx_tpl);
-    if (OSSL_debug_is_set(OSSL_DEBUG_PKCS5V2)) {
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Password:\n");
-        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS5V2),
+    OSSL_TRACE_BEGIN(PKCS5V2) {
+        BIO_printf(trc_out, "Password:\n");
+        BIO_hex_string(trc_out,
                        0, passlen, pass, passlen);
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "\n");
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Salt:\n");
-        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS5V2),
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Salt:\n");
+        BIO_hex_string(trc_out,
                        0, saltlen, salt, saltlen);
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "\n");
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Iteration count %d\n", iter);
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "Key:\n");
-        BIO_hex_string(OSSL_debug_bio(OSSL_DEBUG_PKCS5V2),
+        BIO_printf(trc_out, "\n");
+        BIO_printf(trc_out, "Iteration count %d\n", iter);
+        BIO_printf(trc_out, "Key:\n");
+        BIO_hex_string(trc_out,
                        0, keylen, out, keylen);
-        OSSL_debug(OSSL_DEBUG_PKCS5V2, "\n");
-    }
+        BIO_printf(trc_out, "\n");
+    } OSSL_TRACE_END(PKCS5V2);
     return 1;
 }
 

@@ -118,20 +118,6 @@ static char *make_config_name(void)
     return p;
 }
 
-static size_t internal_init_debug_cb(const char *buf, size_t cnt, void *data)
-{
-    int ret = fwrite(buf, cnt, 1, (FILE *)data);
-
-    return ret < 0 ? 0 : ret;
-}
-
-static size_t internal_debug_cb(const char *buf, size_t cnt, void *data)
-{
-    int ret = BIO_write((BIO *)data, buf, cnt);
-
-    return ret < 0 ? 0 : ret;
-}
-
 static void setup_trace(const char *str)
 {
     char *val;
@@ -143,43 +129,10 @@ static void setup_trace(const char *str)
         char *item;
 
         for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
-            int type = OSSL_trace_get_type(item);
+            int category = OSSL_trace_get_category(item);
 
-            if (type >= 0)
-                OSSL_trace_set(type, internal_debug_cb, bio_err);
-        }
-    }
-
-    OPENSSL_free(val);
-}
-
-static void setup_debug(const char *str)
-{
-    char *val;
-
-    val = OPENSSL_strdup(str);
-
-    if (val != NULL) {
-        char *valp = val;
-        char *item;
-
-        for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
-            int type = OSSL_debug_get_type(item);
-
-            switch (type) {
-            case -1:
-                break;
-            case OSSL_DEBUG_INIT:
-                /*
-                 * Special treatment for OSSL_DEBUG_INIT, because we know
-                 * it generates output after bio_err has been freed
-                 */
-                OSSL_debug_set(type, internal_init_debug_cb, stderr);
-                break;
-            default:
-                OSSL_debug_set(type, internal_debug_cb, bio_err);
-                break;
-            }
+            if (category >= 0)
+                OSSL_trace_set_channel(category, dup_bio_err(FORMAT_TEXT));
         }
     }
 
@@ -216,7 +169,6 @@ int main(int argc, char *argv[])
 #endif
 
     setup_trace(getenv("OPENSSL_TRACE"));
-    setup_debug(getenv("OPENSSL_DEBUG"));
 
     p = getenv("OPENSSL_DEBUG_MEMORY");
     if (p != NULL && strcmp(p, "on") == 0)

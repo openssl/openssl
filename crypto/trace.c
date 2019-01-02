@@ -15,255 +15,237 @@
 #include <openssl/trace.h>
 #include "internal/bio.h"
 #include "internal/nelem.h"
+#include "internal/cryptlib_int.h"
 
 #include "e_os.h"                /* strcasecmp for Windows */
 
 #ifndef OPENSSL_NO_TRACE
 
+static CRYPTO_RWLOCK *trace_lock = NULL;
+
+static const BIO  *current_channel = NULL;
+
+static BIO *ossl_trace_get_channel(int category);
+
 /*-
- * INTERNAL BIO IMPLEMENTATION
+ * INTERNAL TRACE CHANNEL IMPLEMENTATION
  *
- * For our own flexibility, we have an internal BIO whose only job is
- * to call the application provided hooks for trace and debug output.
+ * For our own flexibility, all trace categories are associated with a
+ * BIO sink object, also called the trace channel. Instead of a BIO object,
+ * the application can also provide a callback function, in which case an
+ * internal trace channel is attached, which simply calls the registered
+ * callback function.
  */
-static int hookwrite(BIO *h, const char *buf, size_t num, size_t *written);
-static int hookputs(BIO *h, const char *str);
-static const BIO_METHOD hook_method = {
+static int trace_write(BIO *b, const char *buf,
+                               size_t num, size_t *written);
+static int trace_puts(BIO *b, const char *str);
+static int trace_free(BIO *b);
+
+static const BIO_METHOD trace_method = {
     BIO_TYPE_SOURCE_SINK,
-    "memory buffer",
-    hookwrite,
+    "trace",
+    trace_write,
     NULL,                        /* old write */
     NULL,                        /* read_ex */
     NULL,                        /* read */
-    hookputs,
+    trace_puts,
     NULL,                        /* gets */
     NULL,                        /* ctrl */
     NULL,                        /* create */
-    NULL,                        /* free */
+    trace_free,                  /* free */
     NULL,                        /* callback_ctrl */
 };
 
-/* This structure connects the BIO to the corresponding hook function */
-struct bio_hook_st {
-    OSSL_tracer_fn hook;
-    void *hookdata;
+struct trace_data_st {
+    OSSL_trace_cb callback;
+    void *data;
 };
 
-static int hookwrite(BIO *h, const char *buf, size_t num, size_t *written)
+static int trace_free(BIO *channel)
 {
-    struct bio_hook_st *biodata = (struct bio_hook_st *)BIO_get_data(h);
-    size_t cnt = biodata->hook(buf, num, biodata->hookdata);
+    if (channel == NULL)
+        return 0;
+    OPENSSL_free(BIO_get_data(channel));
+    return 1;
+}
+
+static int trace_write(BIO *channel,
+                       const char *buf, size_t num, size_t *written)
+{
+    struct trace_data_st *ctx = BIO_get_data(channel);
+    size_t cnt = ctx->callback(buf, num, ctx->data);
 
     *written = cnt;
     return cnt != 0;
 }
 
-static int hookputs(BIO *h, const char *str)
+static int trace_puts(BIO *channel, const char *str)
 {
     size_t written;
 
-    if (hookwrite(h, str, strlen(str), &written))
+    if (trace_write(channel, str, strlen(str), &written))
         return (int)written;
 
     return EOF;
 }
 
-#endif
 
 /* Helper struct and macro to get name string to number mapping */
-struct namenum_st {
+struct trace_category_st {
     const char * const name;
     const int num;
 };
-#define DEFNAME(typename)       { #typename, OSSL_DEBUG_##typename }
+#define TRACE_CATEGORY_(name)       { #name, OSSL_TRACE_CATEGORY_##name }
 
 /*-
  * TRACE
  */
 
-static const struct namenum_st tracenames[] = {
-    DEFNAME(DEFAULT),
+static const struct trace_category_st trace_categories[] = {
+    TRACE_CATEGORY_(ANY),
+    TRACE_CATEGORY_(TRACE),
+    TRACE_CATEGORY_(INIT),
+    TRACE_CATEGORY_(TLS),
+    TRACE_CATEGORY_(SSL),
+    TRACE_CATEGORY_(TLS_CIPHER),
+    TRACE_CATEGORY_(SSL_CIPHER),
+    TRACE_CATEGORY_(ENGINE_CONF),
+    TRACE_CATEGORY_(ENGINE_TABLE),
+    TRACE_CATEGORY_(ENGINE_REF_COUNT),
+    TRACE_CATEGORY_(PKCS5V2),
+    TRACE_CATEGORY_(PKCS12_KEYGEN),
+    TRACE_CATEGORY_(PKCS12_DECRYPT),
+    TRACE_CATEGORY_(X509V3_POLICY),
+    TRACE_CATEGORY_(BN_CTX),
 };
 
-int OSSL_trace_get_type(const char *name)
+int OSSL_trace_get_category(const char *name)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(tracenames); i++)
-        if (strcasecmp(name, tracenames[i].name) == 0)
-            return tracenames[i].num;
-    return -1;                   /* or should that be 0, i.e. DEFAULT? */
+    for (i = 0; i < OSSL_NELEM(trace_categories); i++)
+        if (strcasecmp(name, trace_categories[i].name) == 0)
+            return trace_categories[i].num;
+    return -1; /* not found */
 }
 
-#ifndef OPENSSL_NO_TRACE
-
-/* We store one trace BIO for each trace type */
-static struct bio_hook_st trace_data[OSSL_TRACE_NUM] = { { NULL, NULL }, };
-static BIO *trace_bio[OSSL_TRACE_NUM] = { NULL, };
-
-#endif
-
-void OSSL_trace_set(int type, OSSL_tracer_fn fn, void *hookdata)
-{
-#ifndef OPENSSL_NO_TRACE
-    if (trace_data[type].hook != NULL && fn == NULL) {
-        BIO_free(trace_bio[type]);
-        trace_bio[type] = NULL;
-    }
-
-    trace_data[type].hook = fn;
-    trace_data[type].hookdata = hookdata;
-
-    if (trace_bio[type] == NULL
-        && fn != NULL
-        && (trace_bio[type] = BIO_new(&hook_method)) != NULL)
-        BIO_set_data(trace_bio[type], &trace_data[type]);
-#endif
-
-    if (OSSL_debug_is_set(OSSL_DEBUG_SELF))
-        OSSL_debug(OSSL_DEBUG_SELF,
-                   "OSSL_TRACE: Set trace %d with hook = %p, hookdata = %p\n",
-                   type, trace_data[type].hook, trace_data[type].hookdata);
-}
-
-#ifndef OPENSSL_NO_TRACE
-
-int OSSL_trace_is_set(int type)
-{
-    return OSSL_trace_bio(type) != NULL;
-}
-
-BIO *OSSL_trace_bio(int type)
-{
-    if (trace_bio[type] != NULL)
-        return trace_bio[type];
-    return trace_bio[OSSL_TRACE_DEFAULT];
-}
-
-#endif
-
-int OSSL_trace(int type, char *fmt, ...)
-{
-    int ret = 1;
-#ifndef OPENSSL_NO_TRACE
-    va_list args;
-
-    va_start(args, fmt);
-    ret = OSSL_vtrace(type, fmt, args);
-    va_end(args);
-#endif
-
-    return ret;
-}
-
-int OSSL_vtrace(int type, char *fmt, va_list args)
-{
-    BIO *bio = OSSL_trace_bio(type);
-
-    if (bio != NULL)
-        return BIO_vprintf(bio, fmt, args) >= 0;
-    return 1;
-}
-
-/*-
- * DEBUG
- */
-
-static const struct namenum_st debugnames[] = {
-    DEFNAME(DEFAULT),
-    DEFNAME(SELF),
-    DEFNAME(TRACE),
-    DEFNAME(DEBUG),
-    DEFNAME(INIT),
-    DEFNAME(TLS),
-    DEFNAME(SSL),
-    DEFNAME(TLS_CIPHER),
-    DEFNAME(SSL_CIPHER),
-    DEFNAME(ENGINE_CONF),
-    DEFNAME(ENGINE_TABLE),
-    DEFNAME(ENGINE_REF_COUNT),
-    DEFNAME(PKCS5V2),
-    DEFNAME(PKCS12_KEYGEN),
-    DEFNAME(PKCS12_DECRYPT),
-    DEFNAME(X509V3_POLICY),
-    DEFNAME(BN_CTX),
+/* We use one trace channel for each trace category */
+static BIO *trace_channels[OSSL_TRACE_CATEGORY_NUM] = {
+    NULL,
 };
 
-int OSSL_debug_get_type(const char *name)
+int ossl_trace_init(void)
 {
-    size_t i;
+    trace_lock = CRYPTO_THREAD_lock_new();
+    if (trace_lock == NULL)
+        return 0;
 
-    for (i = 0; i < OSSL_NELEM(debugnames); i++)
-        if (strcasecmp(name, debugnames[i].name) == 0)
-            return debugnames[i].num;
-    return -1;                   /* or should that be 0, i.e. DEFAULT? */
-}
-
-#ifndef OPENSSL_NO_TRACE
-
-/* We store one trace BIO for each debug type */
-static struct bio_hook_st debug_data[OSSL_DEBUG_NUM] = { { NULL, NULL }, };
-static BIO *debug_bio[OSSL_DEBUG_NUM] = { NULL, };
-
-#endif
-
-void OSSL_debug_set(int type, OSSL_tracer_fn fn, void *hookdata)
-{
-#ifndef OPENSSL_NO_TRACE
-    if (debug_data[type].hook != NULL && fn == NULL) {
-        BIO_free(debug_bio[type]);
-        debug_bio[type] = NULL;
-    }
-
-    debug_data[type].hook = fn;
-    debug_data[type].hookdata = hookdata;
-
-    if (debug_bio[type] == NULL
-        && fn != NULL
-        && (debug_bio[type] = BIO_new(&hook_method)) != NULL)
-        BIO_set_data(debug_bio[type], &debug_data[type]);
-#endif
-    if (OSSL_debug_is_set(OSSL_DEBUG_SELF))
-        OSSL_debug(OSSL_DEBUG_SELF,
-                   "OSSL_DEBUG: Set debug %d with hook = %p, hookdata = %p\n",
-                   type, debug_data[type].hook, debug_data[type].hookdata);
-}
-
-#ifndef OPENSSL_NO_TRACE
-
-int OSSL_debug_is_set(int type)
-{
-    return OSSL_debug_bio(type) != NULL;
-}
-
-BIO *OSSL_debug_bio(int type)
-{
-    if (debug_bio[type] != NULL)
-        return debug_bio[type];
-    return debug_bio[OSSL_DEBUG_DEFAULT];
-}
-
-#endif
-
-int OSSL_debug(int type, char *fmt, ...)
-{
-    int ret = 1;
-#ifndef OPENSSL_NO_TRACE
-    va_list args;
-
-    va_start(args, fmt);
-    ret = OSSL_vdebug(type, fmt, args);
-    va_end(args);
-#endif
-
-    return ret;
-}
-
-int OSSL_vdebug(int type, char *fmt, va_list args)
-{
-    BIO *bio = OSSL_debug_bio(type);
-
-    if (bio != NULL)
-        return BIO_vprintf(bio, fmt, args) >= 0;
     return 1;
 }
+
+void ossl_trace_cleanup(void)
+{
+    CRYPTO_THREAD_lock_free(trace_lock);
+}
+
+int OSSL_trace_set_channel(int category, BIO *channel)
+{
+    BIO *prev_channel = trace_channels[category];
+
+    if (prev_channel != NULL) {
+        OSSL_TRACE2(TRACE, "Detach channel %p from category '%s'\n",
+                    (void*)prev_channel, trace_categories[category].name);
+        BIO_free(prev_channel);
+        trace_channels[category] = NULL;
+    }
+
+    if (channel == NULL)
+        return 1; /* done */
+
+    trace_channels[category] = channel;
+    OSSL_TRACE2(TRACE, "Attach channel %p to category '%s'\n",
+                (void*)channel, trace_categories[category].name);
+
+    return 1;
+}
+
+int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
+{
+    BIO *channel = trace_channels[category];
+    struct trace_data_st *trace_data = NULL;
+
+    if (channel != NULL) {
+        OSSL_TRACE2(TRACE, "Detach channel %p from category '%s'\n",
+                    (void*)channel, trace_categories[category].name);
+        BIO_free(channel);
+        trace_channels[category] = NULL;
+    }
+
+    if (callback == NULL)
+        return 1; /* done */
+
+    channel = BIO_new(&trace_method);
+    if (channel == NULL)
+        goto err;
+
+    trace_data = OPENSSL_zalloc(sizeof(struct trace_data_st));
+    if (trace_data == NULL)
+        goto err;
+
+    trace_data->callback = callback;
+    trace_data->data = data;
+
+    BIO_set_data(channel, trace_data);
+
+    trace_channels[category] = channel;
+    OSSL_TRACE2(TRACE, "Attach channel %p to category '%s' (with callback)\n",
+                (void*)channel, trace_categories[category].name);
+
+    return 1;
+
+ err:
+    BIO_free(channel);
+    OPENSSL_free(trace_data);
+
+    return 0;
+}
+
+static BIO *ossl_trace_get_channel(int category)
+{
+    if (trace_channels[category] != NULL)
+        return trace_channels[category];
+    return trace_channels[OSSL_TRACE_CATEGORY_ANY];
+}
+
+int OSSL_trace_enabled(int category)
+{
+    return ossl_trace_get_channel(category) != NULL;
+}
+
+BIO *OSSL_trace_begin(int category)
+{
+    BIO *channel = ossl_trace_get_channel(category);
+    if (channel != NULL) {
+        CRYPTO_THREAD_write_lock(trace_lock);
+
+        BIO_printf(channel, "TRC[%lx]:%s: ",
+                   (unsigned long)CRYPTO_THREAD_get_current_id(),
+                   trace_categories[category].name
+                   );
+
+        current_channel = channel;
+    }
+
+    return channel;
+}
+
+void OSSL_trace_end(int category, BIO * channel)
+{
+    if (channel != NULL
+        && ossl_assert(channel == current_channel)) {
+        (void)BIO_flush(channel);
+        current_channel = NULL;
+        CRYPTO_THREAD_unlock(trace_lock);
+    }
+}
+#endif /*ifndef OPENSSL_NO_TRACE*/

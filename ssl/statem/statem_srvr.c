@@ -1830,13 +1830,14 @@ static int tls_early_post_process_client_hello(SSL *s)
         j = 0;
         id = s->session->cipher->id;
 
-        if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-            OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "client sent %d ciphers\n",
+        OSSL_TRACE_BEGIN(SSL_CIPHER) {
+            BIO_printf(trc_out, "client sent %d ciphers\n",
                        sk_SSL_CIPHER_num(ciphers));
+        }
         for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
             c = sk_SSL_CIPHER_value(ciphers, i);
-            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-                OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "client [%2d of %2d]:%s\n", i,
+            if (trc_out != NULL)
+                BIO_printf(trc_out, "client [%2d of %2d]:%s\n", i,
                            sk_SSL_CIPHER_num(ciphers), SSL_CIPHER_get_name(c));
             if (c->id == id) {
                 j = 1;
@@ -1851,8 +1852,10 @@ static int tls_early_post_process_client_hello(SSL *s)
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
                      SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO,
                      SSL_R_REQUIRED_CIPHER_MISSING);
+            OSSL_TRACE_CANCEL(SSL_CIPHER);
             goto err;
         }
+        OSSL_TRACE_END(SSL_CIPHER);
     }
 
     for (loop = 0; loop < clienthello->compressions_len; loop++) {

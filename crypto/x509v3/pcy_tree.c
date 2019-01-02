@@ -14,29 +14,31 @@
 
 #include "pcy_int.h"
 
-static void expected_print(X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
+static void expected_print(BIO *channel,
+                           X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
                            int indent)
 {
     if ((lev->flags & X509_V_FLAG_INHIBIT_MAP)
         || !(node->data->flags & POLICY_DATA_FLAG_MAP_MASK))
-        BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), "  Not Mapped\n");
+        BIO_puts(channel, "  Not Mapped\n");
     else {
         int i;
 
         STACK_OF(ASN1_OBJECT) *pset = node->data->expected_policy_set;
         ASN1_OBJECT *oid;
-        BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), "  Expected: ");
+        BIO_puts(channel, "  Expected: ");
         for (i = 0; i < sk_ASN1_OBJECT_num(pset); i++) {
             oid = sk_ASN1_OBJECT_value(pset, i);
             if (i)
-                BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), ", ");
-            i2a_ASN1_OBJECT(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), oid);
+                BIO_puts(channel, ", ");
+            i2a_ASN1_OBJECT(channel, oid);
         }
-        BIO_puts(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY), "\n");
+        BIO_puts(channel, "\n");
     }
 }
 
-static void tree_print(char *str, X509_POLICY_TREE *tree,
+static void tree_print(BIO *channel,
+                       char *str, X509_POLICY_TREE *tree,
                        X509_POLICY_LEVEL *curr)
 {
     X509_POLICY_LEVEL *plev;
@@ -46,29 +48,31 @@ static void tree_print(char *str, X509_POLICY_TREE *tree,
     else
         curr++;
 
-    OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "Level print after %s\n", str);
-    OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "Printing Up to Level %ld\n",
+    BIO_printf(channel, "Level print after %s\n", str);
+    BIO_printf(channel, "Printing Up to Level %ld\n",
                curr - tree->levels);
     for (plev = tree->levels; plev != curr; plev++) {
         int i;
 
-        OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "Level %ld, flags = %x\n",
+        BIO_printf(channel, "Level %ld, flags = %x\n",
                    (long)(plev - tree->levels), plev->flags);
         for (i = 0; i < sk_X509_POLICY_NODE_num(plev->nodes); i++) {
             X509_POLICY_NODE *node =
                 sk_X509_POLICY_NODE_value(plev->nodes, i);
 
-            X509_POLICY_NODE_print(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY),
-                                   node, 2);
-            expected_print(plev, node, 2);
-            OSSL_debug(OSSL_DEBUG_X509V3_POLICY, "  Flags: %x\n",
-                       node->data->flags);
+            X509_POLICY_NODE_print(channel, node, 2);
+            expected_print(channel, plev, node, 2);
+            BIO_printf(channel, "  Flags: %x\n", node->data->flags);
         }
         if (plev->anyPolicy)
-            X509_POLICY_NODE_print(OSSL_debug_bio(OSSL_DEBUG_X509V3_POLICY),
-                                   plev->anyPolicy, 2);
+            X509_POLICY_NODE_print(channel, plev->anyPolicy, 2);
     }
 }
+
+#define TREE_PRINT(str, tree, curr) \
+    OSSL_TRACE_BEGIN(X509V3_POLICY) { \
+        tree_print(trc_out, "before tree_prune()", tree, curr); \
+    } OSSL_TRACE_END(X509V3_POLICY)
 
 /*-
  * Return value: <= 0 on error, or positive bit mask:
@@ -579,8 +583,7 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
         if (!(curr->flags & X509_V_FLAG_INHIBIT_ANY)
             && !tree_link_any(curr, cache, tree))
             return X509_PCY_TREE_INTERNAL;
-        if (OSSL_debug_is_set(OSSL_DEBUG_X509V3_POLICY))
-            tree_print("before tree_prune()", tree, curr);
+        TREE_PRINT("before tree_prune()", tree, curr);
         ret = tree_prune(tree, curr);
         if (ret != X509_PCY_TREE_VALID)
             return ret;
@@ -655,8 +658,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
     }
 
     ret = tree_evaluate(tree);
-    if (OSSL_debug_is_set(OSSL_DEBUG_X509V3_POLICY))
-        tree_print("tree_evaluate()", tree, NULL);
+    TREE_PRINT("tree_evaluate()", tree, NULL);
     if (ret <= 0)
         goto error;
 

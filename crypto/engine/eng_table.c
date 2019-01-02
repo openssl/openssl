@@ -198,10 +198,9 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     int initres, loop = 0;
 
     if (!(*table)) {
-        if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_TABLE))
-            OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                       "engine_table_dbg: %s:%d, nid=%d, nothing registered!\n",
-                       f, l, nid);
+        OSSL_TRACE3(ENGINE_TABLE,
+                   "%s:%d, nid=%d, nothing registered!\n",
+                   f, l, nid);
         return NULL;
     }
     ERR_set_mark();
@@ -217,10 +216,9 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
     if (!fnd)
         goto end;
     if (fnd->funct && engine_unlocked_init(fnd->funct)) {
-        if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_TABLE))
-            OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                       "engine_table_dbg: %s:%d, nid=%d, using ENGINE '%s' "
-                       "cached\n", f, l, nid, fnd->funct->id);
+        OSSL_TRACE4(ENGINE_TABLE,
+                   "%s:%d, nid=%d, using ENGINE '%s' cached\n",
+                   f, l, nid, fnd->funct->id);
         ret = fnd->funct;
         goto end;
     }
@@ -231,10 +229,10 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
  trynext:
     ret = sk_ENGINE_value(fnd->sk, loop++);
     if (!ret) {
-        if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_TABLE))
-            OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                       "engine_table_dbg: %s:%d, nid=%d, no registered "
-                       "implementations would initialise\n", f, l, nid);
+        OSSL_TRACE3(ENGINE_TABLE,
+                    "%s:%d, nid=%d, "
+                    "no registered implementations would initialise\n",
+                    f, l, nid);
         goto end;
     }
     /* Try to initialise the ENGINE? */
@@ -249,15 +247,13 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
             if (fnd->funct)
                 engine_unlocked_finish(fnd->funct, 0);
             fnd->funct = ret;
-            if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_TABLE))
-                OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                           "engine_table_dbg: %s:%d, nid=%d, "
-                           "setting default to '%s'\n", f, l, nid, ret->id);
+            OSSL_TRACE4(ENGINE_TABLE,
+                        "%s:%d, nid=%d, setting default to '%s'\n",
+                        f, l, nid, ret->id);
         }
-        if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_TABLE))
-            OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                       "engine_table_dbg: %s:%d, nid=%d, using "
-                       "newly initialised '%s'\n", f, l, nid, ret->id);
+        OSSL_TRACE4(ENGINE_TABLE,
+                    "%s:%d, nid=%d, using newly initialised '%s'\n",
+                    f, l, nid, ret->id);
         goto end;
     }
     goto trynext;
@@ -268,16 +264,14 @@ ENGINE *engine_table_select_int(ENGINE_TABLE **table, int nid, const char *f,
      */
     if (fnd)
         fnd->uptodate = 1;
-    if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_TABLE)) {
-        if (ret)
-            OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                       "engine_table_dbg: %s:%d, nid=%d, caching ENGINE '%s'\n",
-                       f, l, nid, ret->id);
-        else
-            OSSL_debug(OSSL_DEBUG_ENGINE_TABLE,
-                       "engine_table_dbg: %s:%d, nid=%d, caching "
-                       "'no matching ENGINE'\n", f, l, nid);
-    }
+    if (ret)
+        OSSL_TRACE4(ENGINE_TABLE,
+                   "%s:%d, nid=%d, caching ENGINE '%s'\n",
+                   f, l, nid, ret->id);
+    else
+        OSSL_TRACE3(ENGINE_TABLE,
+                    "%s:%d, nid=%d, caching 'no matching ENGINE'\n",
+                    f, l, nid);
     CRYPTO_THREAD_unlock(global_engine_lock);
     /*
      * Whatever happened, any failed init()s are not failures in this

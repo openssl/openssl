@@ -4154,20 +4154,20 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
      * pay with the price of sk_SSL_CIPHER_dup().
      */
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER)) {
-        OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "Server has %d from %p:\n",
+    OSSL_TRACE_BEGIN(SSL_CIPHER) {
+        BIO_printf(trc_out, "Server has %d from %p:\n",
                    sk_SSL_CIPHER_num(srvr), (void *)srvr);
         for (i = 0; i < sk_SSL_CIPHER_num(srvr); ++i) {
             c = sk_SSL_CIPHER_value(srvr, i);
-            OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "%p:%s\n", (void *)c, c->name);
+            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
         }
-        OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "Client sent %d from %p:\n",
+        BIO_printf(trc_out, "Client sent %d from %p:\n",
                    sk_SSL_CIPHER_num(clnt), (void *)clnt);
         for (i = 0; i < sk_SSL_CIPHER_num(clnt); ++i) {
             c = sk_SSL_CIPHER_value(clnt, i);
-            OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "%p:%s\n", (void *)c, c->name);
+            BIO_printf(trc_out, "%p:%s\n", (void *)c, c->name);
         }
-    }
+    } OSSL_TRACE_END(SSL_CIPHER);
 
     /* SUITE-B takes precedence over server preference and ChaCha priortiy */
     if (tls1_suiteb(s)) {
@@ -4281,10 +4281,9 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif                          /* OPENSSL_NO_PSK */
 
             ok = (alg_k & mask_k) && (alg_a & mask_a);
-            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-                OSSL_debug(OSSL_DEBUG_SSL_CIPHER,
-                           "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n", ok, alg_k,
-                           alg_a, mask_k, mask_a, (void *)c, c->name);
+            OSSL_TRACE7(SSL_CIPHER,
+                        "%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",
+                        ok, alg_k, alg_a, mask_k, mask_a, (void *)c, c->name);
 
 #ifndef OPENSSL_NO_EC
             /*

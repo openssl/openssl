@@ -282,10 +282,10 @@ int tls1_change_cipher_state(SSL *s, int which)
         EVP_PKEY_free(mac_key);
     }
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "which = %04X, mac key:\n", which);
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), ms, i, 4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "which = %04X, mac key:\n", which);
+        BIO_dump_indent(trc_out, ms, i, 4);
+    } OSSL_TRACE_END(SSL);
 
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
         if (!EVP_CipherInit_ex(dd, c, NULL, key, NULL, (which & SSL3_CC_WRITE))
@@ -390,15 +390,12 @@ int tls1_change_cipher_state(SSL *s, int which)
 #endif                          /* OPENSSL_NO_KTLS */
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "which = %04X, key:\n", which);
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL),
-                        key, EVP_CIPHER_key_length(c), 4);
-    }
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "iv:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), iv, k, 4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "which = %04X, key:\n", which);
+        BIO_dump_indent(trc_out, key, EVP_CIPHER_key_length(c), 4);
+        BIO_printf(trc_out, "iv:\n");
+        BIO_dump_indent(trc_out, iv, k, 4);
+    } OSSL_TRACE_END(SSL);
 
     OPENSSL_cleanse(tmp1, sizeof(tmp1));
     OPENSSL_cleanse(tmp2, sizeof(tmp1));
@@ -451,27 +448,26 @@ int tls1_setup_key_block(SSL *s)
     s->s3->tmp.key_block_length = num;
     s->s3->tmp.key_block = p;
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "client random\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), s->s3->client_random,
-                        SSL3_RANDOM_SIZE, 4);
-        OSSL_debug(OSSL_DEBUG_SSL, "server random\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), s->s3->server_random,
-                        SSL3_RANDOM_SIZE, 4);
-        OSSL_debug(OSSL_DEBUG_SSL, "master key\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), s->session->master_key,
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "client random\n");
+        BIO_dump_indent(trc_out, s->s3->client_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "server random\n");
+        BIO_dump_indent(trc_out, s->s3->server_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "master key\n");
+        BIO_dump_indent(trc_out,
+                        s->session->master_key,
                         s->session->master_key_length, 4);
-    }
+    } OSSL_TRACE_END(SSL);
 
     if (!tls1_generate_key_block(s, p, num)) {
         /* SSLfatal() already called */
         goto err;
     }
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "key block\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), p, num, 4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "key block\n");
+        BIO_dump_indent(trc_out, p, num, 4);
+    } OSSL_TRACE_END(SSL);
 
     if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
         && s->method->version <= TLS1_VERSION) {
@@ -539,10 +535,10 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
             /* SSLfatal() already called */
             return 0;
         }
-        if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-            OSSL_debug(OSSL_DEBUG_SSL, "Handshake hashes:\n");
-            BIO_dump(OSSL_debug_bio(OSSL_DEBUG_SSL), (char *)hash, hashlen);
-        }
+        OSSL_TRACE_BEGIN(SSL) {
+            BIO_printf(trc_out, "Handshake hashes:\n");
+            BIO_dump(trc_out, (char *)hash, hashlen);
+        } OSSL_TRACE_END(SSL);
         if (!tls1_PRF(s,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST,
                       TLS_MD_EXTENDED_MASTER_SECRET_CONST_SIZE,
@@ -569,19 +565,18 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         }
     }
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "Premaster Secret:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), p, len, 4);
-        OSSL_debug(OSSL_DEBUG_SSL, "Client Random:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), s->s3->client_random,
-                        SSL3_RANDOM_SIZE, 4);
-        OSSL_debug(OSSL_DEBUG_SSL, "Server Random:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), s->s3->server_random,
-                        SSL3_RANDOM_SIZE, 4);
-        OSSL_debug(OSSL_DEBUG_SSL, "Master Secret:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), s->session->master_key,
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "Premaster Secret:\n");
+        BIO_dump_indent(trc_out, p, len, 4);
+        BIO_printf(trc_out, "Client Random:\n");
+        BIO_dump_indent(trc_out, s->s3->client_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "Server Random:\n");
+        BIO_dump_indent(trc_out, s->s3->server_random, SSL3_RANDOM_SIZE, 4);
+        BIO_printf(trc_out, "Master Secret:\n");
+        BIO_dump_indent(trc_out,
+                        s->session->master_key,
                         SSL3_MASTER_SECRET_SIZE, 4);
-    }
+    } OSSL_TRACE_END(SSL);
 
     *secret_size = SSL3_MASTER_SECRET_SIZE;
     return 1;

@@ -2352,11 +2352,9 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
                      ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-            if (SSL_USE_SIGALGS(s))
-                OSSL_debug(OSSL_DEBUG_SSL, "USING TLSv1.2 HASH %s\n",
-                           md == NULL ? "n/a" : EVP_MD_name(md));
-        }
+        if (SSL_USE_SIGALGS(s))
+            OSSL_TRACE1(SSL, "USING TLSv1.2 HASH %s\n",
+                        md == NULL ? "n/a" : EVP_MD_name(md));
 
         if (!PACKET_get_length_prefixed_2(pkt, &signature)
             || PACKET_remaining(pkt) != 0) {

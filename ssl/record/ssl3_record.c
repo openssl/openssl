@@ -564,11 +564,10 @@ int ssl3_get_record(SSL *s)
                  SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
         return -1;
     }
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "dec %lu\n", (unsigned long)rr[0].length);
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), rr[0].data, rr[0].length,
-                        4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "dec %lu\n", (unsigned long)rr[0].length);
+        BIO_dump_indent(trc_out, rr[0].data, rr[0].length, 4);
+    } OSSL_TRACE_END(SSL);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) &&
@@ -1358,15 +1357,12 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
 
     EVP_MD_CTX_free(hmac);
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "seq:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), seq, 8, 4);
-    }
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "rec:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), rec->data, rec->length,
-                        4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "seq:\n");
+        BIO_dump_indent(trc_out, seq, 8, 4);
+        BIO_printf(trc_out, "rec:\n");
+        BIO_dump_indent(trc_out, rec->data, rec->length, 4);
+    } OSSL_TRACE_END(SSL);
 
     if (!SSL_IS_DTLS(ssl)) {
         for (i = 7; i >= 0; i--) {
@@ -1375,10 +1371,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                 break;
         }
     }
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "md:\n");
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), md, md_size, 4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "md:\n");
+        BIO_dump_indent(trc_out, md, md_size, 4);
+    } OSSL_TRACE_END(SSL);
     return 1;
 }
 
@@ -1669,10 +1665,10 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         RECORD_LAYER_reset_packet_length(&s->rlayer);
         return 0;
     }
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "dec %ld\n", rr->length);
-        BIO_dump_indent(OSSL_debug_bio(OSSL_DEBUG_SSL), rr->data, rr->length, 4);
-    }
+    OSSL_TRACE_BEGIN(SSL) {
+        BIO_printf(trc_out, "dec %ld\n", rr->length);
+        BIO_dump_indent(trc_out, rr->data, rr->length, 4);
+    } OSSL_TRACE_END(SSL);
 
     /* r->length is now the compressed data plus mac */
     if ((sess != NULL) && !SSL_READ_ETM(s) &&

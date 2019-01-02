@@ -2,130 +2,122 @@
 
 =head1 NAME
 
-OSSL_trace_set, OSSL_debug_set, OSSL_tracer_fn
-- Enabling tracing and debugging output
+OSSL_trace_set_callback, OSSL_trace_cb - Enabling trace output
 
 =head1 SYNOPSIS
 
  #include <openssl/trace.h>
 
- typedef size_t (*OSSL_tracer_fn)(const char *buf, size_t cnt, void *hookdata);
+ typedef size_t (*OSSL_trace_cb)(const char *buf, size_t cnt, void *data);
 
- void OSSL_trace_set(int type, OSSL_tracer_fn *fn, void *hookdata);
- void OSSL_debug_set(int type, OSSL_tracer_fn *fn, void *hookdata);
+void OSSL_trace_set_callback(int category, OSSL_trace_cb fn, void  data);
 
 =head1 DESCRIPTION
 
 If available (see L</NOTES> below), the application can request
-internal tracing and debugging output.
+internal trace output.
 This output comes in form of free text for humans to read.
 
-The tracing or debugging output is divided into types which can be
+The trace output is divided into categories which can be
 enabled individually.
 They are enabled by giving them a tracer function, which is
 responsible for performing the actual output.
 
 =head2 Functions
 
-OSSL_trace_set() is used to enable a trace type by giving it the tracer
-function B<fn> with the associated data B<hookdata>, which will simply
-be passed through to B<fn> whenever it's called.
-
-OSSL_trace_set() is used to enable a debug type by giving it the tracer
-function B<fn> with the associated data B<hookdata>, which will simply
+OSSL_trace_set_callback() is used to enable a trace category by giving it the tracer
+function B<fn> with the associated data B<data>, which will simply
 be passed through to B<fn> whenever it's called.
 
 The tracer function must return a C<size_t>, which must be zero on
 error and otherwise return the number of bytes that were output.
 It receives a text buffer B<buf> with B<cnt> bytes of text, as well as
-the B<hookdata> that was passed to OSSL_trace_set() or
-OSSL_debug_set().
+the B<data> that was passed to OSSL_trace_set_callback().
 
-Disabling debugging or tracing on any type is done by calling
-OSSL_trace_set() or OSSL_debug_set() with C<NULL> for B<fn>.
+Calling OSSL_trace_set_callback() with C<NULL> for B<fn> disables tracing for
+the given B<category>
 
-=head2 Trace types
+=head2 Trace categories
 
-There is C<OSSL_TRACE_DEFAULT>, which works as a fallback and can
-be used to get I<all> tracing output.
-
-=head2 Debug types
-
-The debug types are simple numbers available through macros:
+The trace categories are simple numbers available through macros.
 
 =over 4
 
-=item C<OSSL_DEBUG_SELF> | C<OSSL_DEBUG_DEBUG> | C<OSSL_DEBUG_TRACE>
+=item C<OSSL_TRACE_CATEGORY_SELF> | C<OSSL_TRACE_CATEGORY_TRACE>
 
-OpenSSL library trace and debug setting output.
-More precisely, this will generate debugging output any time a new
-tracing or debugging hook is set.
+Traces the OpenSSL trace API itself.
 
-=item C<OSSL_DEBUG_INIT>
+More precisely, this will generate trace output any time a new
+trace hook is set.
 
-OpenSSL library init and cleanup output.
+=item C<OSSL_TRACE_CATEGORY_INIT>
+
+Traces OpenSSL library initialization and cleanup.
 
 This needs special care, as OpenSSL will do automatic cleanup after
 exit from C<main()>.
 If the tracer function outputs to the standard handles C<stderr> or
 C<stdout>, this isn't an issue.
 However, if the output is sent somewhere else, this "somewhere else"
-needs to be cleaned away very late to ensure that the debugging output
+needs to be cleaned away very late to ensure that the trace output
 from OpenSSL's cleanup comes through.
 A suggestion is to make such cleanup part of a function that's
 registered very early with L<atexit(3)>.
 
-=item C<OSSL_DEBUG_TLS> | C<OSSL_DEBUG_SSL>
+=item C<OSSL_TRACE_CATEGORY_TLS> | C<OSSL_TRACE_CATEGORY_SSL>
 
-OpenSSL library general TLS/SSL output.
+Traces the TLS/SSL protocoll.
 
-=item C<OSSL_DEBUG_TLS_CIPHER> | C<OSSL_DEBUG_SSL_CIPHER>
+=item C<OSSL_TRACE_CATEGORY_TLS_CIPHER> | C<OSSL_TRACE_CATEGORY_SSL_CIPHER>
 
-OpenSSL library TLS/SSL cipher output.
+Traces the ciphers used by the TLS/SSL protocoll.
 
-=item C<OSSL_DEBUG_ENGINE_CONF>
+=item C<OSSL_TRACE_CATEGORY_ENGINE_CONF>
 
-OpenSSL library ENGINE configuration output.
+Traces the ENGINE configuration.
 
-=item C<OSSL_DEBUG_ENGINE_TABLE>
+=item C<OSSL_TRACE_CATEGORY_ENGINE_TABLE>
 
-OpenSSL library ENGINE algorithm table output.
+Traces the ENGINE algorithm table selection.
+
 More precisely, engine_table_select(), the function that is used by
 RSA, DSA (etc) code to select registered ENGINEs, cache defaults and
-functional references (etc), will generate debugging summaries.
+functional references (etc), will generate trace summaries.
 
-=item C<OSSL_DEBUG_ENGINE_REF_COUNT>
+=item C<OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT>
 
-OpenSSL library ENGINE reference counting output.
+Tracds the ENGINE reference counting.
+
 More precisely, both reference counts in the ENGINE structure will be
-monitored with a line of generated for each change.
+monitored with a line of trace output generated for each change.
 
-=item C<OSSL_DEBUG_PKCS5V2>
+=item C<OSSL_TRACE_CATEGORY_PKCS5V2>
 
-OpenSSL library PKCS#5 v2 keygen output.
+Traces PKCS#5 v2 key generation.
 
-=item C<OSSL_DEBUG_PKCS12_KEYGEN>
+=item C<OSSL_TRACE_CATEGORY_PKCS12_KEYGEN>
 
-OpenSSL library PKCS#12 key generation output.
+Traces PKCS#12 key generation.
 
-=item C<OSSL_DEBUG_PKCS12_DECRYPT>
+=item C<OSSL_TRACE_CATEGORY_PKCS12_DECRYPT>
 
-OpenSSL library PKCS#12 decryption output.
+Traces PKCS#12 decryption.
 
-=item C<OSSL_DEBUG_X509V3_POLICY>
+=item C<OSSL_TRACE_CATEGORY_X509V3_POLICY>
 
-OpenSSL library X509 v3 policy processing output.
+Traces X509v3 policy processing.
+
 More precisely, this generates the complete policy tree at various
 point during evaluation.
 
-=item C<OSSL_DEBUG_BN_CTX>
+=item C<OSSL_TRACE_CATEGORY_BN_CTX>
 
-OpenSSL library BIGNUM context output.
+Traces BIGNUM context operations.
 
 =back
 
-There is also C<OSSL_DEBUG_DEFAULT>, which works as a fallback and can
-be used to get I<all> debugging output.
+There is also C<OSSL_TRACE_CATEGORY_DEFAULT>, which works as a fallback and can
+be used to get I<all> trace output.
 
 =head1 NOTES
 
@@ -137,11 +129,11 @@ C<openssl/opensslconf.h>, these functions are not operational.
 
 =head1 RETURN VALUES
 
-OSSL_trace_set() and OSSL_debug_set() do not return any value.
+OSSL_trace_set_callback() does not return any value.
 
 =head1 HISTORY
 
-Everything described here was added to OpenSSL 3.0.0.
+The OSSL_trace_set_callback() function was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 

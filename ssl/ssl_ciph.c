@@ -780,11 +780,12 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
     const SSL_CIPHER *cp;
     int reverse = 0;
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-        OSSL_debug(OSSL_DEBUG_SSL_CIPHER,
+    OSSL_TRACE_BEGIN(SSL_CIPHER){
+        BIO_printf(trc_out,
                    "Applying rule %d with %08x/%08x/%08x/%08x/%08x %08x (%d)\n",
                    rule, alg_mkey, alg_auth, alg_enc, alg_mac, min_tls,
                    algo_strength, strength_bits);
+    }
 
     if (rule == CIPHER_DEL || rule == CIPHER_BUMP)
         reverse = 1;            /* needed to maintain sorting between currently
@@ -823,13 +824,14 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
             if (strength_bits != cp->strength_bits)
                 continue;
         } else {
-            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-                OSSL_debug(OSSL_DEBUG_SSL_CIPHER,
+            if (trc_out != NULL) {
+                BIO_printf(trc_out,
                            "\nName: %s:"
                            "\nAlgo = %08x/%08x/%08x/%08x/%08x Algo_strength = %08x\n",
                            cp->name, cp->algorithm_mkey, cp->algorithm_auth,
                            cp->algorithm_enc, cp->algorithm_mac, cp->min_tls,
                            cp->algo_strength);
+            }
             if (cipher_id != 0 && (cipher_id != cp->id))
                 continue;
             if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
@@ -850,8 +852,8 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
                 continue;
         }
 
-        if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-            OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "Action = %d\n", rule);
+        if (trc_out != NULL)
+            BIO_printf(trc_out, "Action = %d\n", rule);
 
         /* add the cipher if it has not been added yet. */
         if (rule == CIPHER_ADD) {
@@ -901,6 +903,8 @@ static void ssl_cipher_apply_rule(uint32_t cipher_id, uint32_t alg_mkey,
 
     *head_p = head;
     *tail_p = tail;
+
+    OSSL_TRACE_END(SSL_CIPHER);
 }
 
 static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
@@ -1443,6 +1447,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
         return NULL;          /* Failure */
     }
 
+    
     ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
                                disabled_mkey, disabled_auth, disabled_enc,
                                disabled_mac, co_list, &head, &tail);
@@ -1602,6 +1607,9 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
         }
     }
 
+    OSSL_TRACE_BEGIN(SSL_CIPHER) {
+        BIO_printf(trc_out, "cipher selection:\n");
+    }
     /*
      * The cipher selection for the list is done. The ciphers are added
      * to the resulting precedence to the STACK_OF(SSL_CIPHER).
@@ -1611,13 +1619,15 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
             if (!sk_SSL_CIPHER_push(cipherstack, curr->cipher)) {
                 OPENSSL_free(co_list);
                 sk_SSL_CIPHER_free(cipherstack);
+                OSSL_TRACE_CANCEL(SSL_CIPHER);
                 return NULL;
             }
-            if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-                OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "<%s>\n", curr->cipher->name);
+            if (trc_out != NULL)
+                BIO_printf(trc_out, "<%s>\n", curr->cipher->name);
         }
     }
     OPENSSL_free(co_list);      /* Not needed any longer */
+    OSSL_TRACE_END(SSL_CIPHER);
 
     if (!update_cipher_list_by_id(cipher_list_by_id, cipherstack)) {
         sk_SSL_CIPHER_free(cipherstack);

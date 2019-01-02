@@ -3262,9 +3262,8 @@ void ssl_set_masks(SSL *s)
     mask_k = 0;
     mask_a = 0;
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL_CIPHER))
-        OSSL_debug(OSSL_DEBUG_SSL_CIPHER, "dht=%d re=%d rs=%d ds=%d\n",
-                   dh_tmp, rsa_enc, rsa_sign, dsa_sign);
+    OSSL_TRACE4(SSL_CIPHER, "dh_tmp=%d rsa_enc=%d rsa_sign=%d dsa_sign=%d\n",
+               dh_tmp, rsa_enc, rsa_sign, dsa_sign);
 
 #ifndef OPENSSL_NO_GOST
     if (ssl_has_cert(s, SSL_PKEY_GOST12_512)) {
@@ -3293,8 +3292,8 @@ void ssl_set_masks(SSL *s)
      */
 
     if (rsa_enc || rsa_sign || (ssl_has_cert(s, SSL_PKEY_RSA_PSS_SIGN)
-                && pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_EXPLICIT_SIGN
-                && TLS1_get_version(s) == TLS1_2_VERSION))
+                                && pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_EXPLICIT_SIGN
+                                && TLS1_get_version(s) == TLS1_2_VERSION))
         mask_a |= SSL_aRSA;
 
     if (dsa_sign) {
@@ -3319,15 +3318,15 @@ void ssl_set_masks(SSL *s)
     }
     /* Allow Ed25519 for TLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED25519)
-            && pvalid[SSL_PKEY_ED25519] & CERT_PKEY_EXPLICIT_SIGN
-            && TLS1_get_version(s) == TLS1_2_VERSION)
-            mask_a |= SSL_aECDSA;
+        && pvalid[SSL_PKEY_ED25519] & CERT_PKEY_EXPLICIT_SIGN
+        && TLS1_get_version(s) == TLS1_2_VERSION)
+        mask_a |= SSL_aECDSA;
 
     /* Allow Ed448 for TLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED448)
-            && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
-            && TLS1_get_version(s) == TLS1_2_VERSION)
-            mask_a |= SSL_aECDSA;
+        && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
+        && TLS1_get_version(s) == TLS1_2_VERSION)
+        mask_a |= SSL_aECDSA;
 #endif
 
 #ifndef OPENSSL_NO_EC

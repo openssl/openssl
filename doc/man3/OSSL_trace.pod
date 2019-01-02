@@ -2,59 +2,54 @@
 
 =head1 NAME
 
-OSSL_trace_is_set, OSSL_debug_is_set,
-OSSL_trace, OSSL_vtrace, OSSL_debug, OSSL_vdebug,
-OSSL_trace_bio, OSSL_debug_bio
-- Tracing and debugging output developer tools
+OSSL_trace_is_set, OSSL_trace, OSSL_vtrace,
+OSSL_trace_bio,
+- OpenSSL Tracing API
 
 =head1 SYNOPSIS
 
  #include <openssl/trace.h>
 
  int OSSL_trace_is_set(int type);
- int OSSL_debug_is_set(int type);
 
- int OSSL_trace(int type, char *fmt, ...);
+ int BIO_printf(int type, char *fmt, ...);
  int OSSL_vtrace(int type, char *fmt, va_list args);
- int OSSL_debug(int type, char *fmt, ...);
- int OSSL_vdebug(int type, char *fmt, va_list args);
 
  BIO *OSSL_trace_bio(int type);
- BIO *OSSL_debug_bio(int type);
 
 =head1 DESCRIPTION
 
-The functions described here are mainly interesting for those provide
+The functions described here are mainly interesting for those who provide
 OpenSSL functionality, either in OpenSSL itself or in engine modules
 or similar.
 
 If operational (see L</NOTES> below), these functions are used to
-generate free text tracing and debugging output.
+generate free text tracing output.
 
-The tracing or debugging output is divided into types which are
+The tracing output is divided into types which are
 enabled individually by the application.
-The tracing and debugging types are described in detail in
-L<OSSL_trace_set(3)/Trace types> and L<OSSL_trace_set(3)/Debug types>.
-The fallback types C<OSSL_TRACE_DEFAULT> and C<OSSL_DEBUG_DEFAULT>
+The tracing types are described in detail in
+L<OSSL_trace_set_callback(3)/Trace types>.
+The fallback type C<OSSL_TRACE_DEFAULT>
 should I<not> be used with the functions described here.
 
 =head2 Functions
 
-OSSL_trace() and OSSL_debug() are the main convenience functions to
-generate tracing or debugging to a given B<type>.
+BIO_printf() is the main convenience functions to
+generate tracing to a given B<type>.
 These are L<fprintf(3)> style functions, except that the output is
-sent to a trace or debug type rather than a C<FILE *>.
+sent to a trace channel rather than a C<FILE *>.
 
-OSSL_vtrace() and OSSL_vdebug() are similar to OSSL_trace() and
-OSSL_debug(), but instead of an undefined amount of arguments, they
-take B<args>, which is a stdarg argument list.
+OSSL_vtrace() is similar to BIO_printf(),
+but instead of an undefined amount of arguments, it
+takes B<args>, which is a stdarg argument list.
 
-As an alternative, one can use OSSL_trace_bio() or OSSL_debug_bio() to
-get a C<BIO *> that can be used with any suitable L<bio(7)> function
-to generate tracing or debugging output, for example L<BIO_printf(3)>.
+As an alternative, one can use OSSL_trace_bio() to get a
+C<BIO *> that can be used with any suitable L<bio(7)> function
+to generate tracing output, for example L<BIO_printf(3)>.
 
-OSSL_trace_is_set() and OSSL_debug_is_set() are used to determine if
-the application has enabled tracing or debugging output on the given
+OSSL_trace_is_set() is used to determine if
+the application has enabled tracing output on the given
 B<type>.
 See the L</NOTES> below for an discussion on these and their
 usefulness.
@@ -62,40 +57,40 @@ usefulness.
 =head1 NOTES
 
 These functions are always present, but may or may not be operational
-(see L<OSSL_trace_set(3)/NOTES> for details).
-In case they aren't operational, OSSL_trace_is_set(),
-OSSL_debug_is_set(), OSSL_trace_bio() and OSSL_debug_bio() are
+(see L<OSSL_trace_set_callback(3)/NOTES> for details).
+In case they aren't operational, OSSL_trace_is_set() and
+OSSL_trace_bio() are
 implemented as macros that return constant values that evaluate to
-false.
+false resp. NULL.
 
-It is advisable to always check that a trace or debug type has a
-tracer function attached with OSSL_trace_is_set() or
-OSSL_trace_is_set() before generating any output, for example:
+It is advisable to always check that a trace type has a
+tracer function attached with OSSL_trace_is_set()
+before generating any output, for example:
 
-    if (OSSL_debug_is_set(OSSL_DEBUG_SSL)) {
-        OSSL_debug(OSSL_DEBUG_SSL, "FOO %d\n", somevalue);
-        BIO_dump(OSSL_debug_bio(OSSL_DEBUG_SSL), somememory, somememory_l);
+    if (OSSL_trace_is_set(OSSL_TRACE_SSL)) {
+        BIO_printf(OSSL_TRACE_SSL, "FOO %d\n", somevalue);
+        BIO_dump(OSSL_trace_bio(OSSL_TRACE_SSL), somememory, somememory_l);
     }
 
-When this API isn't operational, OSSL_debug_is_set() is a constant
+When this API isn't operational, OSSL_trace_is_set() is a constant
 zero, and the compiler will be able to recognise this example code as
 dead code.
 
 =head1 RETURN VALUES
 
-OSSL_trace_is_set() and OSSL_debug_is_set() return 1 if tracing or
-debugging for the given B<type> is enabled, otherwise 0.
+OSSL_trace_is_set() returns 1 if tracing for the given B<type> is enabled,
+otherwise 0.
 
-OSSL_trace(), OSSL_vtrace(), OSSL_debug() and OSSL_vdebug() return 1
-if tracing / debugging output isn't enabled for the given B<type>,
+BIO_printf() and OSSL_vtrace() return 1 if tracing output isn't enabled
+for the given B<type>,
 otherwise the number of bytes that were output, or 0 on error.
 
-OSSL_trace_bio() and OSSL_debug_bio() return a C<BIO *> if the given
+OSSL_trace_bio() returns a C<BIO *> if the given
 B<type> is enabled, otherwise C<NULL>.
 
 =head1 HISTORY
 
-Everything described here was added to OpenSSL 3.0.0.
+The OpenSSL Tracing API was added ino OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 

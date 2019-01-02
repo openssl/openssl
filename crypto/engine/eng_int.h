@@ -26,15 +26,14 @@ extern CRYPTO_RWLOCK *global_engine_lock;
  * statements must come *after* the change.
  */
 # define engine_ref_debug(e, isfunct, diff)                             \
-    if (OSSL_debug_is_set(OSSL_DEBUG_ENGINE_REF_COUNT))                 \
-        OSSL_debug(OSSL_DEBUG_ENGINE_REF_COUNT,                         \
-                   "engine: %08p %s from %d to %d (%s:%d)\n",           \
-                   (void *)(e), (isfunct ? "funct" : "struct"),         \
-                   ((isfunct)                                           \
-                    ? ((e)->funct_ref - (diff))                         \
-                    : ((e)->struct_ref - (diff))),                      \
-                   ((isfunct) ? (e)->funct_ref : (e)->struct_ref),      \
-                   (OPENSSL_FILE), (OPENSSL_LINE))
+    OSSL_TRACE6(ENGINE_REF_COUNT,                                       \
+               "engine: %p %s from %d to %d (%s:%d)\n",               \
+               (void *)(e), (isfunct ? "funct" : "struct"),             \
+               ((isfunct)                                               \
+                ? ((e)->funct_ref - (diff))                             \
+                : ((e)->struct_ref - (diff))),                          \
+               ((isfunct) ? (e)->funct_ref : (e)->struct_ref),          \
+               (OPENSSL_FILE), (OPENSSL_LINE))
 
 /*
  * Any code that will need cleanup operations should use these functions to
