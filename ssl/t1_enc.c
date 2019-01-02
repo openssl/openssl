@@ -85,10 +85,6 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km, size_t num)
 int tls1_change_cipher_state(SSL *s, int which)
 {
     unsigned char *p, *mac_secret;
-    unsigned char tmp1[EVP_MAX_KEY_LENGTH];
-    unsigned char tmp2[EVP_MAX_KEY_LENGTH];
-    unsigned char iv1[EVP_MAX_IV_LENGTH * 2];
-    unsigned char iv2[EVP_MAX_IV_LENGTH * 2];
     unsigned char *ms, *key, *iv;
     EVP_CIPHER_CTX *dd;
     const EVP_CIPHER *c;
@@ -408,16 +404,8 @@ int tls1_change_cipher_state(SSL *s, int which)
     printf("\n");
 #endif
 
-    OPENSSL_cleanse(tmp1, sizeof(tmp1));
-    OPENSSL_cleanse(tmp2, sizeof(tmp1));
-    OPENSSL_cleanse(iv1, sizeof(iv1));
-    OPENSSL_cleanse(iv2, sizeof(iv2));
     return 1;
  err:
-    OPENSSL_cleanse(tmp1, sizeof(tmp1));
-    OPENSSL_cleanse(tmp2, sizeof(tmp1));
-    OPENSSL_cleanse(iv1, sizeof(iv1));
-    OPENSSL_cleanse(iv2, sizeof(iv2));
     return 0;
 }
 
