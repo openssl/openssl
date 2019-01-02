@@ -150,8 +150,13 @@ void ossl_trace_cleanup(void)
 
 int OSSL_trace_set_channel(int category, BIO *channel)
 {
-    BIO *prev_channel = trace_channels[category];
+    BIO *prev_channel;
 
+    if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM)
+        return 0;
+
+    prev_channel = trace_channels[category];
+    
     if (prev_channel != NULL) {
         OSSL_TRACE2(TRACE, "Detach channel %p from category '%s'\n",
                     (void*)prev_channel, trace_categories[category].name);
@@ -212,6 +217,8 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
 
 static BIO *ossl_trace_get_channel(int category)
 {
+    if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM)
+        return NULL;
     if (trace_channels[category] != NULL)
         return trace_channels[category];
     return trace_channels[OSSL_TRACE_CATEGORY_ANY];

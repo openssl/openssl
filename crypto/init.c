@@ -91,8 +91,10 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_base)
 {
     CRYPTO_THREAD_LOCAL key;
 
+#ifndef OPENSSL_NO_TRACE
     if (ossl_trace_init() == 0)
         return 0;
+#endif
 
     OSSL_TRACE(INIT, "ossl_init_base: setting up stop handlers\n");
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
@@ -517,10 +519,10 @@ void OPENSSL_cleanup(void)
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: CRYPTO_secure_malloc_done()\n");
     CRYPTO_secure_malloc_done();
-
+#ifndef OPENSSL_NO_TRACE
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_trace_cleanup()\n");
     ossl_trace_cleanup();
-
+#endif
     base_inited = 0;
 }
 

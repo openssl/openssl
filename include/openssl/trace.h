@@ -107,7 +107,7 @@ void OSSL_trace_end(int category, BIO *channel);
 
 # else
 #  define OSSL_trace_get_category(name)       (-1)
-#  define OSSL_trace_set_channel(category, channel, data) (channel == NULL)
+#  define OSSL_trace_set_channel(category, channel) (channel == NULL)
 #  define OSSL_trace_set_callback(category, callback, data) (callback == NULL)
 #  define OSSL_trace_get_channel(category)  (NULL)
 #  define OSSL_trace_enabled(category)  (0)

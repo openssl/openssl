@@ -131,8 +131,19 @@ static void setup_trace(const char *str)
         for (valp = val; (item = strtok(valp, ",")) != NULL; valp = NULL) {
             int category = OSSL_trace_get_category(item);
 
-            if (category >= 0)
-                OSSL_trace_set_channel(category, dup_bio_err(FORMAT_TEXT));
+            if (category >= 0) {
+                BIO *channel = dup_bio_err(FORMAT_TEXT);
+                if (channel == NULL
+                    || OSSL_trace_set_channel(category, channel) == 0) {
+                    fprintf(stderr,
+                            "warning: unable to setup trace channel for category '%s'.\n",
+                            item);
+                }
+            } else {
+                fprintf(stderr,
+                        "warning: unknown trace category: '%s'.\n",
+                        item);
+            }
         }
     }
 
