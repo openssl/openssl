@@ -12,6 +12,8 @@ B<openssl> B<s_client>
 [B<-connect host:port>]
 [B<-bind host:port>]
 [B<-proxy host:port>]
+[B<-proxy_user userid>]
+[B<-proxy_pass arg>]
 [B<-unix path>]
 [B<-4>]
 [B<-6>]
@@ -174,6 +176,21 @@ used as the source socket address.
 When used with the B<-connect> flag, the program uses the host and port
 specified with this flag and issues an HTTP CONNECT command to connect
 to the desired server.
+
+=item B<-proxy_user userid>
+
+When used with the B<-proxy> flag, the program will attempt to authenticate
+with the specified proxy using basic (base64) authentication.
+NB: Basic authentication is insecure; the credentials are sent to the proxy
+in easily reversible base64 encoding before any TLS/SSL session is established.
+Therefore these credentials are easily recovered by anyone able to sniff/trace
+the network. Use with caution on untrusted networks.
+
+=item B<-proxy_pass arg>
+
+the proxy password source, used with the B<-proxy_user> flag.
+For more information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS>
+section in L<openssl(1)>.
 
 =item B<-unix path>
 
