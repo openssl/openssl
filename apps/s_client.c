@@ -74,6 +74,7 @@ static void print_stuff(BIO *berr, SSL *con, int full);
 static int ocsp_resp_cb(SSL *s, void *arg);
 #endif
 static int ldap_ExtendedResponse_parse(const char *buf, long rem);
+static char *base64encode (const void *buf, size_t len);
 
 static int saved_errno;
 
@@ -590,7 +591,8 @@ typedef enum OPTION_choice {
     OPT_V_ENUM,
     OPT_X_ENUM,
     OPT_S_ENUM,
-    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_DANE_TLSA_DOMAIN,
+    OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_PROXY_USER, OPT_PROXY_PASS,
+    OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
     OPT_CT, OPT_NOCT, OPT_CTLOG_FILE,
 #endif
@@ -608,6 +610,8 @@ const OPTIONS s_client_options[] = {
     {"bind", OPT_BIND, 's', "bind local address for connection"},
     {"proxy", OPT_PROXY, 's',
      "Connect to via specified proxy to the real server"},
+    {"proxy_user", OPT_PROXY_USER, 's', "UserID for proxy authentication"},
+    {"proxy_pass", OPT_PROXY_PASS, 's', "Proxy authentication password source"},
 #ifdef AF_UNIX
     {"unix", OPT_UNIX, 's', "Connect over the specified Unix-domain socket"},
 #endif
@@ -894,8 +898,10 @@ int s_client_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL;
-    char *cbuf = NULL, *sbuf = NULL;
-    char *mbuf = NULL, *proxystr = NULL, *connectstr = NULL, *bindstr = NULL;
+    char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
+    char *proxystr = NULL, *proxyuser = NULL;
+    char *proxypassarg = NULL, *proxypass = NULL;
+    char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
     char *port = OPENSSL_strdup(PORT);
@@ -1075,6 +1081,12 @@ int s_client_main(int argc, char **argv)
             proxystr = opt_arg();
             starttls_proto = PROTO_CONNECT;
             break;
+        case OPT_PROXY_USER:
+	    proxyuser = opt_arg();
+	    break;
+        case OPT_PROXY_PASS:
+	    proxypassarg = opt_arg();
+	    break;
 #ifdef AF_UNIX
         case OPT_UNIX:
             connect_type = use_unix;
@@ -1619,7 +1631,17 @@ int s_client_main(int argc, char **argv)
 #endif
 
     if (!app_passwd(passarg, NULL, &pass, NULL)) {
-        BIO_printf(bio_err, "Error getting password\n");
+        BIO_printf(bio_err, "Error getting private key password\n");
+        goto end;
+    }
+
+    if (!app_passwd(proxypassarg, NULL, &proxypass, NULL)) {
+        BIO_printf(bio_err, "Error getting proxy password\n");
+        goto end;
+    }
+
+    if (proxypass && !proxyuser) {
+        BIO_printf(bio_err, "Error: Must specify proxy_user with proxy_pass\n");
         goto end;
     }
 
@@ -2322,7 +2344,27 @@ int s_client_main(int argc, char **argv)
             BIO *fbio = BIO_new(BIO_f_buffer());
 
             BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n\r\n", connectstr);
+            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n", connectstr);
+	    /* 
+	     * Workaround for broken proxies which would otherwise close
+	     * the connection when entering tunnel mode (eg Squid 2.6)
+	     */
+	    BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
+
+            /* Support for basic (base64) proxy authentication */
+	    if (proxyuser) {
+		size_t l = strlen(proxyuser);
+		if (proxypass) l += strlen(proxypass); 
+		char *proxyauth = app_malloc(l+2, "Proxy auth string");
+		snprintf(proxyauth, l+2, "%s:%s", proxyuser, proxypass ? proxypass:"");
+		char *proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
+		BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc); 
+		OPENSSL_clear_free(proxyauth, strlen(proxyauth));
+		OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
+	    }
+
+	    /* Terminate the HTTP CONNECT request */
+	    BIO_printf(fbio, "\r\n");
             (void)BIO_flush(fbio);
             /*
              * The first line is the HTTP response.  According to RFC 7230,
@@ -3467,4 +3509,25 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     return ret;
 }
 
+static char *base64encode (const void *buf, size_t len) {
+
+    /* BASE64 encoder - used only for encoding basic proxy authentication credentials
+     * Based on an idea by schulwitz here: 
+     * https://stackoverflow.com/questions/342409/how-do-i-base64-encode-decode-in-c/
+     */
+
+     BIO *b64_bio, *mem_bio;
+     BUF_MEM *mem_bio_mem_ptr;
+     b64_bio = BIO_new(BIO_f_base64());
+     mem_bio = BIO_new(BIO_s_mem());
+     BIO_push(b64_bio, mem_bio);
+     BIO_set_flags(b64_bio, BIO_FLAGS_BASE64_NO_NL);  /* No newlines */ 
+     BIO_write(b64_bio, buf, len);
+     (void)BIO_flush(b64_bio);
+     BIO_get_mem_ptr(mem_bio, &mem_bio_mem_ptr);  /* Get address of mem_bio memory structure */
+     char *base64_encoded = OPENSSL_zalloc ((*mem_bio_mem_ptr).length + 1); /* +1 oversize for terminating NULL */
+     if (base64_encoded) memcpy(base64_encoded, (*mem_bio_mem_ptr).data, (*mem_bio_mem_ptr).length); /* Copy to return buffer */
+     BIO_free_all(b64_bio);  /* Clean up */
+     return base64_encoded;
+}
 #endif                          /* OPENSSL_NO_SOCK */
