@@ -1640,7 +1640,7 @@ int s_client_main(int argc, char **argv)
         goto end;
     }
 
-    if (proxypass && !proxyuser) {
+    if (proxypass != NULL && proxyuser == NULL) {
         BIO_printf(bio_err, "Error: Must specify proxy_user with proxy_pass\n");
         goto end;
     }
@@ -2352,12 +2352,16 @@ int s_client_main(int argc, char **argv)
 	    BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
 
             /* Support for basic (base64) proxy authentication */
-	    if (proxyuser) {
-		size_t l = strlen(proxyuser);
-		if (proxypass) l += strlen(proxypass); 
-		char *proxyauth = app_malloc(l+2, "Proxy auth string");
-		snprintf(proxyauth, l+2, "%s:%s", proxyuser, proxypass ? proxypass:"");
-		char *proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
+	    if (proxyuser != NULL) {
+		size_t l;
+		char *proxyauth, *proxyauthenc;
+	
+		l = strlen(proxyuser);
+		if (proxypass != NULL)
+		    l += strlen(proxypass); 
+		proxyauth = app_malloc(l+2, "Proxy auth string");
+		snprintf(proxyauth, l+2, "%s:%s", proxyuser, (proxypass != NULL) ? proxypass:"");
+		proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
 		BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc); 
 		OPENSSL_clear_free(proxyauth, strlen(proxyauth));
 		OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
@@ -3509,25 +3513,25 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     return ret;
 }
 
-static char *base64encode (const void *buf, size_t len) {
+/*
+ * BASE64 encoder: used only for encoding basic proxy authentication credentials
+ */
+static char *base64encode (const void *buf, size_t len)
+{
+    int i;
+    size_t outl;
+    char  *out;
 
-    /* BASE64 encoder - used only for encoding basic proxy authentication credentials
-     * Based on an idea by schulwitz here: 
-     * https://stackoverflow.com/questions/342409/how-do-i-base64-encode-decode-in-c/
-     */
+    /* Calculate size of encoded data */
+    outl = (len / 3);
+    if (len % 3 > 0) outl++;
+    outl<<=2;
+    out = app_malloc(outl+1, "base64 encode buffer");
 
-     BIO *b64_bio, *mem_bio;
-     BUF_MEM *mem_bio_mem_ptr;
-     b64_bio = BIO_new(BIO_f_base64());
-     mem_bio = BIO_new(BIO_s_mem());
-     BIO_push(b64_bio, mem_bio);
-     BIO_set_flags(b64_bio, BIO_FLAGS_BASE64_NO_NL);  /* No newlines */ 
-     BIO_write(b64_bio, buf, len);
-     (void)BIO_flush(b64_bio);
-     BIO_get_mem_ptr(mem_bio, &mem_bio_mem_ptr);  /* Get address of mem_bio memory structure */
-     char *base64_encoded = OPENSSL_zalloc ((*mem_bio_mem_ptr).length + 1); /* +1 oversize for terminating NULL */
-     if (base64_encoded) memcpy(base64_encoded, (*mem_bio_mem_ptr).data, (*mem_bio_mem_ptr).length); /* Copy to return buffer */
-     BIO_free_all(b64_bio);  /* Clean up */
-     return base64_encoded;
+    i = EVP_EncodeBlock((unsigned char*) out, buf, len);
+    assert(i <= (int) outl);
+    i++;	/* otherwise compiler may complain i is unused */
+    return out;
 }
+
 #endif                          /* OPENSSL_NO_SOCK */
