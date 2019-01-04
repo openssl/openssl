@@ -154,7 +154,7 @@ sub set_message_contents
         $extensions .= pack("n", $key);
         $extensions .= pack("n", length($extdata));
         $extensions .= $extdata;
-        if ($key == TLSProxy::Message::EXT_DUPLICATE_EXTENSION) {
+        if ($key == $self->dupext) {
           $extensions .= pack("n", $key);
           $extensions .= pack("n", length($extdata));
           $extensions .= $extdata;

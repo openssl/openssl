@@ -86,10 +86,7 @@ use constant {
     EXT_SIG_ALGS_CERT => 50,
     EXT_RENEGOTIATE => 65281,
     EXT_NPN => 13172,
-    # This extension is an unofficial extension only ever written by OpenSSL
-    # (i.e. not read), and even then only when enabled. We use it to test
-    # handling of duplicate extensions.
-    EXT_DUPLICATE_EXTENSION => 0xfde8,
+    EXT_CRYPTOPRO_BUG_EXTENSION => 0xfde8,
     EXT_UNKNOWN => 0xfffe,
     #Unknown extension that should appear last
     EXT_FORCE_LAST => 0xffff
@@ -420,7 +417,8 @@ sub new
         records => $records,
         mt => $mt,
         startoffset => $startoffset,
-        message_frag_lens => $message_frag_lens
+        message_frag_lens => $message_frag_lens,
+        dupext => -1
     };
 
     return bless $self, $class;
@@ -574,6 +572,14 @@ sub encoded_length
 {
     my $self = shift;
     return TLS_MESSAGE_HEADER_LENGTH + length($self->data);
+}
+sub dupext
+{
+    my $self = shift;
+    if (@_) {
+        $self->{dupext} = shift;
+    }
+    return $self->{dupext};
 }
 sub successondata
 {
