@@ -31,6 +31,12 @@
      'enable-buildtest-c++'.
      [Richard Levitte]
 
+  *) Add Single Step KDF (EVP_KDF_SS) to EVP_KDF.
+     [Shane Lontis]
+
+  *) Add KMAC to EVP_MAC.
+     [Shane Lontis]
+
   *) Added property based algorithm implementation selection framework to
      the core.
      [Paul Dale]

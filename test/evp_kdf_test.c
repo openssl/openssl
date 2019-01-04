@@ -225,6 +225,170 @@ err:
 }
 #endif
 
+static int test_kdf_ss_hash(void)
+{
+    EVP_KDF_CTX *kctx;
+    const unsigned char z[] = {
+        0x6d,0xbd,0xc2,0x3f,0x04,0x54,0x88,0xe4,0x06,0x27,0x57,0xb0,0x6b,0x9e,
+        0xba,0xe1,0x83,0xfc,0x5a,0x59,0x46,0xd8,0x0d,0xb9,0x3f,0xec,0x6f,0x62,
+        0xec,0x07,0xe3,0x72,0x7f,0x01,0x26,0xae,0xd1,0x2c,0xe4,0xb2,0x62,0xf4,
+        0x7d,0x48,0xd5,0x42,0x87,0xf8,0x1d,0x47,0x4c,0x7c,0x3b,0x18,0x50,0xe9
+    };
+    const unsigned char other[] = {
+        0xa1,0xb2,0xc3,0xd4,0xe5,0x43,0x41,0x56,0x53,0x69,0x64,0x3c,0x83,0x2e,
+        0x98,0x49,0xdc,0xdb,0xa7,0x1e,0x9a,0x31,0x39,0xe6,0x06,0xe0,0x95,0xde,
+        0x3c,0x26,0x4a,0x66,0xe9,0x8a,0x16,0x58,0x54,0xcd,0x07,0x98,0x9b,0x1e,
+        0xe0,0xec,0x3f,0x8d,0xbe
+    };
+    const unsigned char expected[] = {
+        0xa4,0x62,0xde,0x16,0xa8,0x9d,0xe8,0x46,0x6e,0xf5,0x46,0x0b,0x47,0xb8
+    };
+    unsigned char out[14];
+
+    kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS);
+
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha224()) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_MD");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_KEY");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,
+                     sizeof(other)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_OTHER");
+        return 0;
+    }
+    if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+        TEST_error("EVP_KDF_derive");
+        return 0;
+    }
+
+    if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        return 0;
+
+    EVP_KDF_CTX_free(kctx);
+    return 1;
+}
+
+static int test_kdf_ss_hmac(void)
+{
+    EVP_KDF_CTX *kctx;
+    const EVP_MAC *mac;
+
+    const unsigned char z[] = {
+        0xb7,0x4a,0x14,0x9a,0x16,0x15,0x46,0xf8,0xc2,0x0b,0x06,0xac,0x4e,0xd4
+    };
+    const unsigned char other[] = {
+        0x34,0x8a,0x37,0xa2,0x7e,0xf1,0x28,0x2f,0x5f,0x02,0x0d,0xcc
+    };
+    const unsigned char salt[] = {
+        0x36,0x38,0x27,0x1c,0xcd,0x68,0xa2,0x5d,0xc2,0x4e,0xcd,0xdd,0x39,0xef,
+        0x3f,0x89
+    };
+    const unsigned char expected[] = {
+        0x44,0xf6,0x76,0xe8,0x5c,0x1b,0x1a,0x8b,0xbc,0x3d,0x31,0x92,0x18,0x63,
+        0x1c,0xa3
+    };
+    unsigned char out[16];
+
+    kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS);
+    mac = EVP_get_macbyname("HMAC");
+
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, mac) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_MAC");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MD, EVP_sha256()) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_MD");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_KEY");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,
+                     sizeof(other)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_OTHER");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT, salt, sizeof(salt)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_SALT");
+        return 0;
+    }
+    if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+        TEST_error("EVP_KDF_derive");
+        return 0;
+    }
+
+    if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        return 0;
+
+    EVP_KDF_CTX_free(kctx);
+    return 1;
+}
+
+static int test_kdf_ss_kmac(void)
+{
+    EVP_KDF_CTX *kctx;
+    unsigned char out[64];
+    const EVP_MAC *mac;
+
+    const unsigned char z[] = {
+        0xb7,0x4a,0x14,0x9a,0x16,0x15,0x46,0xf8,0xc2,0x0b,0x06,0xac,0x4e,0xd4
+    };
+    const unsigned char other[] = {
+        0x34,0x8a,0x37,0xa2,0x7e,0xf1,0x28,0x2f,0x5f,0x02,0x0d,0xcc
+    };
+    const unsigned char salt[] = {
+        0x36,0x38,0x27,0x1c,0xcd,0x68,0xa2,0x5d,0xc2,0x4e,0xcd,0xdd,0x39,0xef,
+        0x3f,0x89
+    };
+    const unsigned char expected[] = {
+        0xe9,0xc1,0x84,0x53,0xa0,0x62,0xb5,0x3b,0xdb,0xfc,0xbb,0x5a,0x34,0xbd,
+        0xb8,0xe5,0xe7,0x07,0xee,0xbb,0x5d,0xd1,0x34,0x42,0x43,0xd8,0xcf,0xc2,
+        0xc2,0xe6,0x33,0x2f,0x91,0xbd,0xa5,0x86,0xf3,0x7d,0xe4,0x8a,0x65,0xd4,
+        0xc5,0x14,0xfd,0xef,0xaa,0x1e,0x67,0x54,0xf3,0x73,0xd2,0x38,0xe1,0x95,
+        0xae,0x15,0x7e,0x1d,0xe8,0x14,0x98,0x03
+    };
+
+    kctx = EVP_KDF_CTX_new_id(EVP_KDF_SS);
+    mac = EVP_get_macbyname("KMAC128");
+
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC, mac) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_MAC");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_KEY, z, sizeof(z)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_KEY");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SSKDF_INFO, other,
+                     sizeof(other)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_OTHER");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT, salt, sizeof(salt)) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_SALT");
+        return 0;
+    }
+    if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_MAC_SIZE, (size_t)20) <= 0) {
+        TEST_error("EVP_KDF_CTRL_SET_MACSIZE");
+        return 0;
+    }
+    if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+        TEST_error("EVP_KDF_derive");
+        return 0;
+    }
+
+    if (!TEST_mem_eq(out, sizeof(out), expected, sizeof(expected)))
+        return 0;
+
+    EVP_KDF_CTX_free(kctx);
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_kdf_tls1_prf);
@@ -233,5 +397,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_SCRYPT
     ADD_TEST(test_kdf_scrypt);
 #endif
+    ADD_TEST(test_kdf_ss_hash);
+    ADD_TEST(test_kdf_ss_hmac);
+    ADD_TEST(test_kdf_ss_kmac);
     return 1;
 }

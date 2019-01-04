@@ -31,6 +31,7 @@ static const EVP_KDF_METHOD *standard_methods[] = {
     &tls1_prf_kdf_meth,
     &hkdf_kdf_meth,
     &sshkdf_kdf_meth,
+    &ss_kdf_meth
 };
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_KDF_METHOD *, const EVP_KDF_METHOD *,
