@@ -124,11 +124,6 @@ sub extension_contents
     $extension .= pack("n", $key);
     $extension .= pack("n", length($extdata));
     $extension .= $extdata;
-    if ($key == TLSProxy::Message::EXT_DUPLICATE_EXTENSION) {
-        $extension .= pack("n", $key);
-        $extension .= pack("n", length($extdata));
-        $extension .= $extdata;
-    }
     return $extension;
 }
 
@@ -151,6 +146,8 @@ sub set_message_contents
     foreach my $key (keys %{$self->extension_data}) {
         next if ($key == TLSProxy::Message::EXT_PSK);
         $extensions .= $self->extension_contents($key);
+        #Add extension twice if we are duplicating that extension
+        $extensions .= $self->extension_contents($key) if ($key == $self->dupext);
     }
     #PSK extension always goes last...
     if (defined ${$self->extension_data}{TLSProxy::Message::EXT_PSK}) {
