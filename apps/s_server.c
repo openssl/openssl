@@ -1804,7 +1804,7 @@ int s_server_main(int argc, char *argv[])
 
 #ifndef OPENSSL_NO_SCTP
     if (protocol == IPPROTO_SCTP && sctp_label_bug == 1)
-        SSL_CTX_set_options(ctx, SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG);
+        SSL_CTX_set_mode(ctx, SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG);
 #endif
 
     if (min_version != 0

@@ -1724,7 +1724,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
                sizeof(DTLS1_SCTP_AUTH_LABEL));
 
         labellen = strlen(labelbuffer);
-        if (s->options & SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG)
+        if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
             labellen += 1;
 
         if (SSL_export_keying_material(s, sctpauthkey,
@@ -3419,7 +3419,7 @@ int tls_client_key_exchange_post_work(SSL *s)
                sizeof(DTLS1_SCTP_AUTH_LABEL));
 
         labellen = strlen(labelbuffer);
-        if (s->options & SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG)
+        if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
             labellen += 1;
 
         if (SSL_export_keying_material(s, sctpauthkey,

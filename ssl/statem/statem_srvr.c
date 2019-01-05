@@ -840,7 +840,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
                    sizeof(DTLS1_SCTP_AUTH_LABEL));
 
             labellen = strlen(labelbuffer);
-            if (s->options & SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG)
+            if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
                 labellen += 1;
 
             if (SSL_export_keying_material(s, sctpauthkey,
@@ -3514,7 +3514,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
                    sizeof(DTLS1_SCTP_AUTH_LABEL));
 
             labellen = strlen(labelbuffer);
-            if (s->options & SSL_OP_DTLS_SCTP_LABEL_LENGTH_BUG)
+            if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
                 labellen += 1;
 
             if (SSL_export_keying_material(s, sctpauthkey,
