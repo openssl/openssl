@@ -1816,8 +1816,10 @@ static int encode_test_run(EVP_TEST *t)
             goto err;
 
         EVP_EncodeInit(encode_ctx);
-        EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
-                         expected->input, expected->input_len);
+        if (!TEST_true(EVP_EncodeUpdate(encode_ctx, encode_out, &chunk_len,
+                                        expected->input, expected->input_len)))
+            goto err;
+
         output_len = chunk_len;
 
         EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
