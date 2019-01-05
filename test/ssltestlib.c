@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -436,7 +436,7 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
 {
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
     MEMPACKET *thispkt = NULL, *looppkt, *nextpkt, *allpkts[3];
-    int i, duprec = ctx->duprec > 0;
+    int i, duprec;
     const unsigned char *inu = (const unsigned char *)in;
     size_t len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
                  + DTLS1_RT_HEADER_LENGTH;
@@ -449,6 +449,8 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
 
     if ((size_t)inl == len)
         duprec = 0;
+    else
+        duprec = ctx->duprec > 0;
 
     /* We don't support arbitrary injection when duplicating records */
     if (duprec && pktnum != -1)
