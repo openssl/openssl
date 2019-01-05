@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1761,15 +1761,18 @@ static int encode_test_init(EVP_TEST *t, const char *encoding)
     } else if (strcmp(encoding, "invalid") == 0) {
         edata->encoding = BASE64_INVALID_ENCODING;
         if (!TEST_ptr(t->expected_err = OPENSSL_strdup("DECODE_ERROR")))
-            return 0;
+            goto err;
     } else {
         TEST_error("Bad encoding: %s."
                    " Should be one of {canonical, valid, invalid}",
                    encoding);
-        return 0;
+        goto err;
     }
     t->data = edata;
     return 1;
+err:
+    OPENSSL_free(edata);
+    return 0;
 }
 
 static void encode_test_cleanup(EVP_TEST *t)
@@ -1798,7 +1801,7 @@ static int encode_test_run(EVP_TEST *t)
     ENCODE_DATA *expected = t->data;
     unsigned char *encode_out = NULL, *decode_out = NULL;
     int output_len, chunk_len;
-    EVP_ENCODE_CTX *decode_ctx;
+    EVP_ENCODE_CTX *decode_ctx = NULL, *encode_ctx = NULL;
 
     if (!TEST_ptr(decode_ctx = EVP_ENCODE_CTX_new())) {
         t->err = "INTERNAL_ERROR";
@@ -1806,7 +1809,6 @@ static int encode_test_run(EVP_TEST *t)
     }
 
     if (expected->encoding == BASE64_CANONICAL_ENCODING) {
-        EVP_ENCODE_CTX *encode_ctx;
 
         if (!TEST_ptr(encode_ctx = EVP_ENCODE_CTX_new())
                 || !TEST_ptr(encode_out =
@@ -1820,8 +1822,6 @@ static int encode_test_run(EVP_TEST *t)
 
         EVP_EncodeFinal(encode_ctx, encode_out + chunk_len, &chunk_len);
         output_len += chunk_len;
-
-        EVP_ENCODE_CTX_free(encode_ctx);
 
         if (!memory_err_compare(t, "BAD_ENCODING",
                                 expected->output, expected->output_len,
@@ -1860,6 +1860,7 @@ static int encode_test_run(EVP_TEST *t)
     OPENSSL_free(encode_out);
     OPENSSL_free(decode_out);
     EVP_ENCODE_CTX_free(decode_ctx);
+    EVP_ENCODE_CTX_free(encode_ctx);
     return 1;
 }
 
