@@ -1723,7 +1723,8 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL *s, PACKET *pkt)
         memcpy(labelbuffer, DTLS1_SCTP_AUTH_LABEL,
                sizeof(DTLS1_SCTP_AUTH_LABEL));
 
-        labellen = strlen(labelbuffer);
+        /* Don't include the terminating zero. */
+        labellen = sizeof(labelbuffer) - 1;
         if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
             labellen += 1;
 
@@ -3418,7 +3419,8 @@ int tls_client_key_exchange_post_work(SSL *s)
         memcpy(labelbuffer, DTLS1_SCTP_AUTH_LABEL,
                sizeof(DTLS1_SCTP_AUTH_LABEL));
 
-        labellen = strlen(labelbuffer);
+        /* Don't include the terminating zero. */
+        labellen = sizeof(labelbuffer) - 1;
         if (s->mode & SSL_MODE_DTLS_SCTP_LABEL_LENGTH_BUG)
             labellen += 1;
 
