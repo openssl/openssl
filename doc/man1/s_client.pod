@@ -493,7 +493,7 @@ available where OpenSSL has support for SCTP enabled.
 =item B<-sctp_label_bug>
 
 Use the incorrect behaviour of older OpenSSL implementations when computing
-endpoint-pair shared secrets for DTLS/SCTP. This allows to communicate with
+endpoint-pair shared secrets for DTLS/SCTP. This allows communication with
 older broken implementations but breaks interoperability with correct
 implementations. Must be used in conjunction with B<-sctp>. This option is only
 available where OpenSSL has support for SCTP enabled.
