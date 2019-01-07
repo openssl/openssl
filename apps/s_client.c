@@ -1082,11 +1082,11 @@ int s_client_main(int argc, char **argv)
             starttls_proto = PROTO_CONNECT;
             break;
         case OPT_PROXY_USER:
-	    proxyuser = opt_arg();
-	    break;
+            proxyuser = opt_arg();
+            break;
         case OPT_PROXY_PASS:
-	    proxypassarg = opt_arg();
-	    break;
+            proxypassarg = opt_arg();
+            break;
 #ifdef AF_UNIX
         case OPT_UNIX:
             connect_type = use_unix;
@@ -2345,30 +2345,30 @@ int s_client_main(int argc, char **argv)
 
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n", connectstr);
-	    /* 
-	     * Workaround for broken proxies which would otherwise close
-	     * the connection when entering tunnel mode (eg Squid 2.6)
-	     */
-	    BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
+            /* 
+             * Workaround for broken proxies which would otherwise close
+             * the connection when entering tunnel mode (eg Squid 2.6)
+             */
+            BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
 
             /* Support for basic (base64) proxy authentication */
-	    if (proxyuser != NULL) {
-		size_t l;
-		char *proxyauth, *proxyauthenc;
-	
-		l = strlen(proxyuser);
-		if (proxypass != NULL)
-		    l += strlen(proxypass); 
-		proxyauth = app_malloc(l+2, "Proxy auth string");
-		snprintf(proxyauth, l+2, "%s:%s", proxyuser, (proxypass != NULL) ? proxypass:"");
-		proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
-		BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc); 
-		OPENSSL_clear_free(proxyauth, strlen(proxyauth));
-		OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
-	    }
+            if (proxyuser != NULL) {
+                size_t l;
+                char *proxyauth, *proxyauthenc;
 
-	    /* Terminate the HTTP CONNECT request */
-	    BIO_printf(fbio, "\r\n");
+                l = strlen(proxyuser);
+                if (proxypass != NULL)
+                    l += strlen(proxypass);
+                proxyauth = app_malloc(l + 2, "Proxy auth string");
+                snprintf(proxyauth, l+2, "%s:%s", proxyuser, (proxypass != NULL) ? proxypass : "");
+                proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
+                BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc); 
+                OPENSSL_clear_free(proxyauth, strlen(proxyauth));
+                OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
+            }
+
+            /* Terminate the HTTP CONNECT request */
+            BIO_printf(fbio, "\r\n");
             (void)BIO_flush(fbio);
             /*
              * The first line is the HTTP response.  According to RFC 7230,
@@ -3174,6 +3174,8 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);
+    if (proxypass != NULL)
+        OPENSSL_clear_free(proxypass, strlen(proxypass));
     release_engine(e);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
@@ -3524,13 +3526,15 @@ static char *base64encode (const void *buf, size_t len)
 
     /* Calculate size of encoded data */
     outl = (len / 3);
-    if (len % 3 > 0) outl++;
-    outl<<=2;
-    out = app_malloc(outl+1, "base64 encode buffer");
+    if (len % 3 > 0)
+        outl++;
+    outl <<= 2;
+    out = app_malloc(outl + 1, "base64 encode buffer");
 
-    i = EVP_EncodeBlock((unsigned char*) out, buf, len);
-    assert(i <= (int) outl);
-    i++;	/* otherwise compiler may complain i is unused */
+    i = EVP_EncodeBlock((unsigned char *)out, buf, len);
+    assert(i <= (int)outl);
+    if (i < 0)
+        *out = '\0'; 
     return out;
 }
 
