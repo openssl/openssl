@@ -188,7 +188,7 @@ the network. Use with caution.
 
 =item B<-proxy_pass arg>
 
-the proxy password source, used with the B<-proxy_user> flag.
+The proxy password source, used with the B<-proxy_user> flag.
 For more information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS>
 section in L<openssl(1)>.
 
