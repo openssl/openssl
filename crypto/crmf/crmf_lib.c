@@ -716,9 +716,13 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
     }
     if ((iv = OPENSSL_malloc(EVP_CIPHER_iv_length(cipher))) == NULL)
         goto oom;
-    if (!ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
-                                   EVP_CIPHER_iv_length(cipher)))
+    if (ASN1_TYPE_get_octetstring(ecert->symmAlg->parameter, iv,
+                                   EVP_CIPHER_iv_length(cipher))
+        != EVP_CIPHER_iv_length(cipher)) {
+        CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,
+                CRMF_R_MALFORMED_IV);
         goto end;
+    }
 
     /*
      * d2i_X509 changes the given pointer, so use p for decoding the message and

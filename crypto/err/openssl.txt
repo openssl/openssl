@@ -2121,23 +2121,24 @@ CONF_R_UNKNOWN_MODULE_NAME:113:unknown module name
 CONF_R_VARIABLE_EXPANSION_TOO_LONG:116:variable expansion too long
 CONF_R_VARIABLE_HAS_NO_VALUE:104:variable has no value
 CRMF_R_BAD_PBM_ITERATIONCOUNT:100:bad pbm iterationcount
-CRMF_R_CRMFERROR:101:crmferror
-CRMF_R_ERROR:102:error
-CRMF_R_ERROR_DECODING_CERTIFICATE:103:error decoding certificate
-CRMF_R_ERROR_DECRYPTING_CERTIFICATE:104:error decrypting certificate
-CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:105:error decrypting symmetric key
-CRMF_R_FAILURE_OBTAINING_RANDOM:106:failure obtaining random
-CRMF_R_ITERATIONCOUNT_BELOW_100:107:iterationcount below 100
-CRMF_R_NULL_ARGUMENT:108:null argument
-CRMF_R_SETTING_MAC_ALGOR_FAILURE:109:setting mac algor failure
-CRMF_R_SETTING_OWF_ALGOR_FAILURE:110:setting owf algor failure
-CRMF_R_UNSUPPORTED_ALGORITHM:111:unsupported algorithm
-CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY:112:unsupported alg for popsigningkey
-CRMF_R_UNSUPPORTED_CIPHER:113:unsupported cipher
-CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:114:\
+CRMF_R_CRMFERROR:102:crmferror
+CRMF_R_ERROR:103:error
+CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
+CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
+CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
+CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
+CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
+CRMF_R_MALFORMED_IV:101:malformed iv
+CRMF_R_NULL_ARGUMENT:109:null argument
+CRMF_R_SETTING_MAC_ALGOR_FAILURE:110:setting mac algor failure
+CRMF_R_SETTING_OWF_ALGOR_FAILURE:111:setting owf algor failure
+CRMF_R_UNSUPPORTED_ALGORITHM:112:unsupported algorithm
+CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY:113:unsupported alg for popsigningkey
+CRMF_R_UNSUPPORTED_CIPHER:114:unsupported cipher
+CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO:115:\
 	unsupported method for creating popo
-CRMF_R_UNSUPPORTED_POPO_METHOD:115:unsupported popo method
-CRMF_R_UNSUPPORTED_POPO_NOT_ACCEPTED:116:unsupported popo not accepted
+CRMF_R_UNSUPPORTED_POPO_METHOD:116:unsupported popo method
+CRMF_R_UNSUPPORTED_POPO_NOT_ACCEPTED:117:unsupported popo not accepted
 CRYPTO_R_FIPS_MODE_NOT_SUPPORTED:101:fips mode not supported
 CRYPTO_R_ILLEGAL_HEX_DIGIT:102:illegal hex digit
 CRYPTO_R_ODD_NUMBER_OF_DIGITS:103:odd number of digits
