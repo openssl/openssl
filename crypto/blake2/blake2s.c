@@ -295,19 +295,26 @@ int BLAKE2s_Update(BLAKE2S_CTX *c, const void *data, size_t datalen)
 int BLAKE2s_Final(unsigned char *md, BLAKE2S_CTX *c)
 {
     uint8_t outbuffer[BLAKE2S_OUTBYTES] = {0};
+    uint8_t *target = outbuffer;
+    int iter = (c->outlen + 3) / 4;
     int i;
+
+    /* Avoid writing to the temporary buffer if possible */
+    if ((c->outlen % sizeof(c->h[0])) == 0)
+        target = md;
 
     blake2s_set_lastblock(c);
     /* Padding */
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2s_compress(c, c->buf, c->buflen);
 
-    /* Output full hash to temp buffer */
-    for (i = 0; i < 8; ++i) {
-        store32(outbuffer + sizeof(c->h[i]) * i, c->h[i]);
-    }
+    /* Output full hash to buffer */
+    for (i = 0; i < iter; ++i)
+        store32(target + sizeof(c->h[i]) * i, c->h[i]);
 
-    memcpy(md, outbuffer, c->outlen);
+    if (target != md)
+        memcpy(md, target, c->outlen);
+
     OPENSSL_cleanse(c, sizeof(BLAKE2S_CTX));
     return 1;
 }
