@@ -173,7 +173,7 @@ options. See the B<TEXT OPTIONS> section for more information.
 
 =item B<-noout>
 
-This option prevents output of the encoded version of the request.
+This option prevents output of the encoded version of the certificate.
 
 =item B<-pubkey>
 
