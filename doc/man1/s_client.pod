@@ -184,7 +184,7 @@ with the specified proxy using basic (base64) authentication.
 NB: Basic authentication is insecure; the credentials are sent to the proxy
 in easily reversible base64 encoding before any TLS/SSL session is established.
 Therefore these credentials are easily recovered by anyone able to sniff/trace
-the network. Use with caution on untrusted networks.
+the network. Use with caution.
 
 =item B<-proxy_pass arg>
 
