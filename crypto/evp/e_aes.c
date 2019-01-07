@@ -927,6 +927,11 @@ static int aes_t4_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                              const unsigned char *in, size_t len);
 # endif                        /* OPENSSL_NO_OCB */
 
+# ifndef OPENSSL_NO_SIV
+#  define aes_t4_siv_init_key aes_siv_init_key
+#  define aes_t4_siv_cipher aes_siv_cipher
+# endif /* OPENSSL_NO_SIV */
+
 # define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aes_t4_##keylen##_##mode = { \
         nid##_##keylen##_##nmode,blocksize,keylen/8,ivlen, \
