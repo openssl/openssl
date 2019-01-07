@@ -304,19 +304,26 @@ int BLAKE2b_Update(BLAKE2B_CTX *c, const void *data, size_t datalen)
 int BLAKE2b_Final(unsigned char *md, BLAKE2B_CTX *c)
 {
     uint8_t outbuffer[BLAKE2B_OUTBYTES] = {0};
+    uint8_t *target = outbuffer;
+    int iter = (c->outlen + 7) / 8;
     int i;
+
+    /* Avoid writing to the temporary buffer if possible */
+    if ((c->outlen % sizeof(c->h[0])) == 0)
+        target = md;
 
     blake2b_set_lastblock(c);
     /* Padding */
     memset(c->buf + c->buflen, 0, sizeof(c->buf) - c->buflen);
     blake2b_compress(c, c->buf, c->buflen);
 
-    /* Output full hash to temp buffer */
-    for (i = 0; i < 8; ++i) {
-        store64(outbuffer + sizeof(c->h[i]) * i, c->h[i]);
-    }
+    /* Output full hash to buffer */
+    for (i = 0; i < iter; ++i)
+        store64(target + sizeof(c->h[i]) * i, c->h[i]);
 
-    memcpy(md, outbuffer, c->outlen);
+    if (target != md)
+        memcpy(md, target, c->outlen);
+
     OPENSSL_cleanse(c, sizeof(BLAKE2B_CTX));
     return 1;
 }
