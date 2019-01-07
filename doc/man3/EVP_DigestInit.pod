@@ -239,7 +239,9 @@ EVP_MD_CTX_ctrl() can be used to send the following standard controls:
 
 =item EVP_MD_CTRL_MICALG
 
-Sets the micalg string for S/MIME types.
+Gets the digest Message Integrity Check algorithm string. This is used when
+creating S/MIME multipart/signed messages, as specified in RFC 3851.
+The string value is written to B<p2>.
 
 =item EVP_MD_CTRL_XOF_LEN
 
