@@ -494,6 +494,11 @@ EXT_RETURN tls_construct_ctos_sct(SSL *s, WPACKET *pkt, unsigned int context,
 EXT_RETURN tls_construct_ctos_ems(SSL *s, WPACKET *pkt, unsigned int context,
                                   X509 *x, size_t chainidx)
 {
+    /* Don't include this if resuming a session which didn't use it. */
+    if (!s->new_session && s->session
+            && !(s->session->flags & SSL_SESS_FLAG_EXTMS))
+        return EXT_RETURN_NOT_SENT;
+
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_extended_master_secret)
             || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CTOS_EMS,
