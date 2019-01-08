@@ -103,7 +103,8 @@ Sets, clears and tests B<ctx> flags.  See L</FLAGS> below for more information.
 A wrapper around the Digest Init_ex, Update and Final_ex functions.
 Hashes B<count> bytes of data at B<data> using a digest B<type> from ENGINE
 B<impl>. The digest value is placed in B<md> and its length is written at B<s>
-if the pointer is not NULL.
+if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
+If B<impl> is NULL the default implementation of digest B<type> is used.
 
 =item EVP_DigestInit_ex()
 
@@ -183,13 +184,15 @@ EVP_MD_meth_set_app_datasize().
 
 Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>.
 
-=item EVP_MD_CTX_set_update_fn(),
-EVP_MD_CTX_update_fn()
+=item EVP_MD_CTX_set_update_fn()
 
-Sets or gets the update function for B<ctx> that will be called
-by EVP_DigestUpdate.
-If not set, the update function from the B<EVP_MD> type specified
-at initialization is used.
+Sets the update function for B<ctx> to B<update>.
+This is the function that is called by EVP_DigestUpdate. If not set, the
+update function from the B<EVP_MD> type specified at initialization is used.
+
+=item EVP_MD_CTX_update_fn()
+
+Returns the update function for B<ctx>.
 
 =item EVP_MD_flags()
 
@@ -248,7 +251,7 @@ The string value is written to B<p2>.
 This control sets the digest length for extendable output functions to B<p1>.
 Sending this control directly should not be necessary, the use of
 C<EVP_DigestFinalXOF()> is preferred.
-Currently used by SHAKE and KECCAK.
+Currently used by SHAKE.
 
 =back
 

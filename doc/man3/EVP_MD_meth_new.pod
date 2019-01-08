@@ -88,7 +88,8 @@ This digest method can only handle one block of input.
 
 =item EVP_MD_FLAG_XOF
 
-This digest method is an extensible-output function (XOF).
+This digest method is an extensible-output function (XOF) and supports
+the B<EVP_MD_CTRL_XOF_LEN> control.
 
 =item EVP_MD_FLAG_DIGALGID_MASK
 
@@ -113,9 +114,10 @@ B<EVP_MD_FLAG_DIGALGID_ABSENT> as default.  I<Note: if combined with
 EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.>
 Currently unused.
 
-=item EVP_MD_FLAGS_FIPS
+=item EVP_MD_FLAG_FIPS
 
 This digest method is suitable for use in FIPS mode.
+Currently unused.
 
 =back
 
