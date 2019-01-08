@@ -83,9 +83,10 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
         goto err;
     }
 
-    if (!ASN1_INTEGER_set(pbm->iterationCount, itercnt))
+    if (!ASN1_INTEGER_set(pbm->iterationCount, itercnt)) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_CRMFERROR);
         goto err;
+    }
 
     /*-
      * mac identifies the algorithm and associated parameters of the MAC
