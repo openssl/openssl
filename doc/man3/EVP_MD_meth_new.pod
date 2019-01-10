@@ -127,7 +127,7 @@ EVP_DigestInit_ex(), EVP_SignInit, EVP_SignInit_ex(), EVP_VerifyInit()
 and EVP_VerifyInit_ex().
 
 EVP_MD_meth_set_update() sets the digest update function for B<md>.
-The digest update function is called by EVP_Digest(), EVP_DigestUpdate(),
+The digest update function is called by EVP_Digest(), EVP_DigestUpdate() and
 EVP_SignUpdate().
 
 EVP_MD_meth_set_final() sets the digest final function for B<md>.
