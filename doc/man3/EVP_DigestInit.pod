@@ -102,7 +102,7 @@ Sets, clears and tests B<ctx> flags.  See L</FLAGS> below for more information.
 
 A wrapper around the Digest Init_ex, Update and Final_ex functions.
 Hashes B<count> bytes of data at B<data> using a digest B<type> from ENGINE
-B<impl>. The digest value is placed in B<md> and its length is written at B<s>
+B<impl>. The digest value is placed in B<md> and its length is written at B<size>
 if the pointer is not NULL. At most B<EVP_MAX_MD_SIZE> bytes will be written.
 If B<impl> is NULL the default implementation of digest B<type> is used.
 
