@@ -17,16 +17,17 @@ CMS_SignerInfo data structure
 =head1 DESCRIPTION
 
 CMS_add1_signing_cert() adds an ESS Signing Certificate B<sc> (version 1) signed
-attribute to CMS_SignerInfo B<si> structure.
+attribute to the CMS_SignerInfo B<si>.
 CMS_add1_signing_cert_v2() adds an ESS Signing Certificate B<sc2> (version 2) signed
-attribute to CMS_SignerInfo B<si> structure.
-ESS Signing Certificate attributes version 1 and 2 are defined in RFC 5035
+attribute to the CMS_SignerInfo B<si>.
+The ESS Signing Certificate attributes version 1 and 2 are defined in RFC 5035
 which updates Section 5.4 of RFC 2634.
 
 =head1 NOTES
 
 This attribute is mandatory to make a CMS compliant with CAdES-BES
-(RFC 5126).
+(ETSI EN 319 122-1 V1.1.1).
+For a fuller description see L<cms(1)>).
 
 =head1 RETURN VALUES
 
