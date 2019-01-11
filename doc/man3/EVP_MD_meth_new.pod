@@ -91,10 +91,6 @@ This digest method can only handle one block of input.
 This digest method is an extensible-output function (XOF) and supports
 the B<EVP_MD_CTRL_XOF_LEN> control.
 
-=item EVP_MD_FLAG_DIGALGID_MASK
-
-Currently unused.
-
 =item EVP_MD_FLAG_DIGALGID_NULL
 
 When setting up a DigestAlgorithmIdentifier, this flag will have the
