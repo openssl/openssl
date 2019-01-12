@@ -40,7 +40,7 @@ typedef enum OPTION_choice {
     OPT_INFORM, OPT_OUTFORM, OPT_ENGINE, OPT_IN, OPT_OUT,
     OPT_NOOUT, OPT_TEXT, OPT_PARAM_OUT, OPT_PUBIN, OPT_PUBOUT,
     OPT_PASSIN, OPT_PASSOUT, OPT_PARAM_ENC, OPT_CONV_FORM, OPT_CIPHER,
-    OPT_NO_PUBLIC, OPT_CHECK
+    OPT_NO_PUBLIC, OPT_CHECK, OPT_MODULUS
 } OPTION_CHOICE;
 
 const OPTIONS ec_options[] = {
@@ -61,6 +61,7 @@ const OPTIONS ec_options[] = {
     {"param_enc", OPT_PARAM_ENC, 's',
      "Specifies the way the ec parameters are encoded"},
     {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
+    {"modulus", OPT_MODULUS, '-', "Print the EC public value"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
@@ -83,6 +84,7 @@ int ec_main(int argc, char **argv)
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, text = 0, noout = 0;
     int pubin = 0, pubout = 0, param_out = 0, i, ret = 1, private = 0;
     int no_public = 0, check = 0;
+    int modulus = 0;
 
     prog = opt_init(argc, argv, ec_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -156,6 +158,9 @@ int ec_main(int argc, char **argv)
         case OPT_CHECK:
             check = 1;
             break;
+        case OPT_MODULUS:
+            modulus = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -227,6 +232,20 @@ int ec_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
+    }
+    if (modulus && group != NULL) {
+        const EC_POINT *public_key;
+        const BIGNUM *pub_key;
+
+        fprintf(stdout, "Public Key=");
+        public_key = EC_KEY_get0_public_key(eckey);
+        pub_key = EC_POINT_point2bn(group, public_key,
+                                    EC_KEY_get_conv_form(eckey),
+                                    NULL, NULL);
+        if( pub_key != NULL ) {
+            BN_print(out, pub_key);
+        }
+        fprintf(stdout, "\n");
     }
 
     if (check) {

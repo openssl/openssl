@@ -20,6 +20,7 @@ B<openssl> B<ec>
 [B<-idea>]
 [B<-text>]
 [B<-noout>]
+[B<-modulus>]
 [B<-param_out>]
 [B<-pubin>]
 [B<-pubout>]

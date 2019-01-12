@@ -27,6 +27,9 @@
 #ifndef OPENSSL_NO_DSA
 # include <openssl/dsa.h>
 #endif
+#ifndef OPENSSL_NO_EC
+# include <openssl/ec.h>
+#endif
 
 #undef POSTFIX
 #define POSTFIX ".srl"
@@ -720,6 +723,23 @@ int x509_main(int argc, char **argv)
                     const BIGNUM *dsapub = NULL;
                     DSA_get0_key(EVP_PKEY_get0_DSA(pkey), &dsapub, NULL);
                     BN_print(out, dsapub);
+                } else
+#endif
+#ifndef OPENSSL_NO_EC
+                if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
+                    EC_KEY *ec = EVP_PKEY_get1_EC_KEY(pkey);
+                    const EC_GROUP *group = EC_KEY_get0_group(ec);
+
+                    if (group != NULL) {
+                        const EC_POINT *public_key = EC_KEY_get0_public_key(ec);
+                        const BIGNUM *pub_key;
+
+                        pub_key = EC_POINT_point2bn(group, public_key,
+						    EC_KEY_get_conv_form(ec),
+						    NULL, NULL);
+                        if (pub_key != NULL)
+                            BN_print(out, pub_key);
+                    }
                 } else
 #endif
                 {
