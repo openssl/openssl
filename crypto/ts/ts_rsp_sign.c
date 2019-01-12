@@ -673,7 +673,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
             goto err;
 
         if (!ESS_SIGNING_CERT_add(si, sc)) {
-            TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_SIGNING_CERT_ADD_ERROR);
+            TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_ADD_SIGNING_CERT_ERROR);
             goto err;
         }
     } else {
@@ -683,7 +683,7 @@ static int ts_RESP_sign(TS_RESP_CTX *ctx)
             goto err;
 
         if (!ESS_SIGNING_CERT_V2_add(si, sc2)) {
-            TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_SIGNING_CERT_V2_ADD_ERROR);
+            TSerr(TS_F_TS_RESP_SIGN, TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR);
             goto err;
         }
     }

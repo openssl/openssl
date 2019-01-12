@@ -1,4 +1,4 @@
-# Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -2895,9 +2895,9 @@ TS_R_CERTIFICATE_VERIFY_ERROR:100:certificate verify error
 TS_R_COULD_NOT_SET_ENGINE:127:could not set engine
 TS_R_COULD_NOT_SET_TIME:115:could not set time
 TS_R_DETACHED_CONTENT:134:detached content
-TS_R_ESS_SIGNING_CERTIFICATE_ERROR:139:ess signing certificate error
-TS_R_ESS_SIGNING_CERT_ADD_ERROR:140:ess signing cert add error
-TS_R_ESS_SIGNING_CERT_V2_ADD_ERROR:141:ess signing cert v2 add error
+TS_R_ESS_ADD_SIGNING_CERT_ERROR:116:ess add signing cert error
+TS_R_ESS_ADD_SIGNING_CERT_V2_ERROR:139:ess add signing cert v2 error
+TS_R_ESS_SIGNING_CERTIFICATE_ERROR:101:ess signing certificate error
 TS_R_INVALID_NULL_POINTER:102:invalid null pointer
 TS_R_INVALID_SIGNER_CERTIFICATE_PURPOSE:117:invalid signer certificate purpose
 TS_R_MESSAGE_IMPRINT_MISMATCH:103:message imprint mismatch
