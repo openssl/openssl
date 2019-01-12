@@ -83,6 +83,7 @@ Makefile
 /util/shlib_wrap.sh
 /tags
 /TAGS
+/.tags
 *.map
 *.ld
 
