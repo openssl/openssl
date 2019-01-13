@@ -21,6 +21,7 @@ NON_EMPTY_TRANSLATION_UNIT
 # include <openssl/err.h>
 # include <openssl/evp.h>
 # include <openssl/pem.h>
+# include <openssl/bn.h>
 
 static OPT_PAIR conv_forms[] = {
     {"compressed", POINT_CONVERSION_COMPRESSED},
