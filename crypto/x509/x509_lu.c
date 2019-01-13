@@ -237,7 +237,7 @@ int X509_STORE_up_ref(X509_STORE *vfy)
     if (CRYPTO_UP_REF(&vfy->references, &i, vfy->lock) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("X509_STORE", a);
+    REF_PRINT_COUNT("X509_STORE", vfy);
     REF_ASSERT_ISNT(i < 2);
     return ((i > 1) ? 1 : 0);
 }
