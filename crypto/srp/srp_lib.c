@@ -26,6 +26,7 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N)
     unsigned char *tmp = NULL;
     int numN = BN_num_bytes(N);
     BIGNUM *res = NULL;
+
     if (x != N && BN_ucmp(x, N) >= 0)
         return NULL;
     if (y != N && BN_ucmp(y, N) >= 0)
@@ -139,7 +140,8 @@ BIGNUM *SRP_Calc_x(const BIGNUM *s, const char *user, const char *pass)
         || !EVP_DigestFinal_ex(ctxt, dig, NULL)
         || !EVP_DigestInit_ex(ctxt, EVP_sha1(), NULL))
         goto err;
-    BN_bn2bin(s, cs);
+    if (BN_bn2bin(s, cs) < 0)
+        goto err;
     if (!EVP_DigestUpdate(ctxt, cs, BN_num_bytes(s)))
         goto err;
 

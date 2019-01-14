@@ -598,10 +598,14 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
         if ((len = t_fromb64(tmp, sizeof(tmp), N)) <= 0)
             goto err;
         N_bn_alloc = BN_bin2bn(tmp, len, NULL);
+        if (N_bn_alloc == NULL)
+            goto err;
         N_bn = N_bn_alloc;
         if ((len = t_fromb64(tmp, sizeof(tmp) ,g)) <= 0)
             goto err;
         g_bn_alloc = BN_bin2bn(tmp, len, NULL);
+        if (g_bn_alloc == NULL)
+            goto err;
         g_bn = g_bn_alloc;
         defgNid = "*";
     } else {
@@ -623,15 +627,19 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
             goto err;
         s = BN_bin2bn(tmp2, len, NULL);
     }
+    if (s == NULL)
+        goto err;
 
     if (!SRP_create_verifier_BN(user, pass, &s, &v, N_bn, g_bn))
         goto err;
 
-    BN_bn2bin(v, tmp);
+    if (BN_bn2bin(v, tmp) < 0)
+        goto err;
     vfsize = BN_num_bytes(v) * 2;
     if (((vf = OPENSSL_malloc(vfsize)) == NULL))
         goto err;
-    t_tob64(vf, tmp, BN_num_bytes(v));
+    if (!t_tob64(vf, tmp, BN_num_bytes(v)))
+        goto err;
 
     if (*salt == NULL) {
         char *tmp_salt;
@@ -639,7 +647,10 @@ char *SRP_create_verifier(const char *user, const char *pass, char **salt,
         if ((tmp_salt = OPENSSL_malloc(SRP_RANDOM_SALT_LEN * 2)) == NULL) {
             goto err;
         }
-        t_tob64(tmp_salt, tmp2, SRP_RANDOM_SALT_LEN);
+        if (!t_tob64(tmp_salt, tmp2, SRP_RANDOM_SALT_LEN)) {
+            OPENSSL_free(tmp_salt);
+            goto err;
+        }
         *salt = tmp_salt;
     }
 
@@ -686,6 +697,8 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
             goto err;
 
         salttmp = BN_bin2bn(tmp2, SRP_RANDOM_SALT_LEN, NULL);
+        if (salttmp == NULL)
+            goto err;
     } else {
         salttmp = *salt;
     }
