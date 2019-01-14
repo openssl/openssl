@@ -26,13 +26,12 @@ which updates Section 5.4 of RFC 2634.
 =head1 NOTES
 
 This attribute is mandatory to make a CMS compliant with CAdES-BES
-(ETSI EN 319 122-1 V1.1.1).
+(European Standard ETSI EN 319 122-1 V1.1.1).
 For a fuller description see L<cms(1)>).
 
 =head1 RETURN VALUES
 
-CMS_add1_signing_cert() and CMS_add1_signing_cert_v2() return 1 if 
-attribute is added or 0 if an error occurred.
+CMS_add1_signing_cert() and CMS_add1_signing_cert_v2() return 1 if attribute is added or 0 if an error occurred.
 
 =head1 COPYRIGHT
 

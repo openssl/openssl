@@ -161,8 +161,7 @@ Resign a message: take an existing message and one or more new signers.
 
 =item B<-cades>
 
-Add an ESS signing-certificate or ESS signing-certificate-v2 signed-attribute 
-to the SignerInfo
+Add an ESS signing-certificate or ESS signing-certificate-v2 signed-attribute to the SignerInfo.
 
 =item B<-data_create>
 
@@ -561,8 +560,7 @@ with caution. For a fuller description see L<CMS_decrypt(3)>).
 
 =head1 CAdES Basic Electronic Signature (CAdES-BES)
 
-A CAdES Basic Electronic Signature (CAdES-BES), as defined in 
-ETSI EN 319 122-1 V1.1.1, contains:
+A CAdES Basic Electronic Signature (CAdES-BES), as defined in the European Standard ETSI EN 319 122-1 V1.1.1, contains:
 
 =over 4
 
@@ -580,14 +578,13 @@ Message-digest of the eContent OCTET STRING within encapContentInfo being signed
 
 =item *
 
-An ESS signing-certificate or ESS signing-certificate-v2 attribute, as defined in Enhanced Security Services (ESS), RFC 2634 and RFC 5035. 
+An ESS signing-certificate or ESS signing-certificate-v2 attribute, as defined in Enhanced Security Services (ESS), RFC 2634 and RFC 5035.
 An ESS signing-certificate attribute only allows for the use of SHA-1 as a digest algorithm.
-An ESS signing-certificate-v2 attribute allows for the use of any digest algorithm;
+An ESS signing-certificate-v2 attribute allows for the use of any digest algorithm.
 
 =item *
 
-The digital signature value computed on the user data and, when present, on the 
-signed attributes.
+The digital signature value computed on the user data and, when present, on the signed attributes.
 
 =back
 
