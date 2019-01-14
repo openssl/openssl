@@ -323,11 +323,9 @@ int tls13_setup_key_block(SSL *s)
 {
     const EVP_CIPHER *c;
     const EVP_MD *hash;
-    int mac_type = NID_undef;
 
     s->session->cipher = s->s3->tmp.new_cipher;
-    if (!ssl_cipher_get_evp
-        (s->session, &c, &hash, &mac_type, NULL, NULL, 0)) {
+    if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, NULL, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
