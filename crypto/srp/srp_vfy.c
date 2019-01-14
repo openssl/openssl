@@ -691,6 +691,8 @@ int SRP_create_verifier_BN(const char *user, const char *pass, BIGNUM **salt,
     }
 
     x = SRP_Calc_x(salttmp, user, pass);
+    if (x == NULL)
+        goto err;
 
     *verifier = BN_new();
     if (*verifier == NULL)
