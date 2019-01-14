@@ -171,6 +171,8 @@ static int ssl_mac_pkey_id[SSL_MD_NUM_IDX] = {
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,
     /* GOST2012_512 */
     EVP_PKEY_HMAC,
+    /* MD5/SHA1, SHA224, SHA512 */
+    NID_undef, NID_undef, NID_undef
 };
 
 static size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
