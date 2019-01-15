@@ -161,7 +161,9 @@ Resign a message: take an existing message and one or more new signers.
 
 =item B<-cades>
 
-Add an ESS signing-certificate or ESS signing-certificate-v2 signed-attribute to the SignerInfo.
+Add an ESS signing-certificate or ESS signing-certificate-v2 signed-attribute to the SignerInfo, in order to make
+the signature comply with the requirements for a CAdES Basic Electronic Signature (CAdES-BES). See the NOTES
+section for more details.
 
 =item B<-data_create>
 
@@ -585,6 +587,10 @@ An ESS signing-certificate-v2 attribute allows for the use of any digest algorit
 =item *
 
 The digital signature value computed on the user data and, when present, on the signed attributes.
+
+Note that currently the B<-cades> option applies only to the B<-sign> operation and is ignored during
+the B<-verify> operation, i.e. the signing certification is not checked during the verification process.
+This feature might be added in a future version.
 
 =back
 
