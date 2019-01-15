@@ -393,8 +393,8 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 int RSA_set_ex_data(RSA *r, int idx, void *arg);
 void *RSA_get_ex_data(const RSA *r, int idx);
 
-RSA *RSAPublicKey_dup(RSA *rsa);
-RSA *RSAPrivateKey_dup(RSA *rsa);
+DECLARE_ASN1_DUP_FUNCTION_name(RSA, RSAPublicKey)
+DECLARE_ASN1_DUP_FUNCTION_name(RSA, RSAPrivateKey)
 
 /*
  * If this flag is set the RSA method is FIPS compliant and can be used in
@@ -420,7 +420,7 @@ RSA *RSAPrivateKey_dup(RSA *rsa);
 
 RSA_METHOD *RSA_meth_new(const char *name, int flags);
 void RSA_meth_free(RSA_METHOD *meth);
-RSA_METHOD *RSA_meth_dup(const RSA_METHOD *meth);
+DECLARE_ASN1_DUP_FUNCTION_name(RSA_METHOD ,RSA_meth)
 const char *RSA_meth_get0_name(const RSA_METHOD *meth);
 int RSA_meth_set1_name(RSA_METHOD *meth, const char *name);
 int RSA_meth_get_flags(const RSA_METHOD *meth);

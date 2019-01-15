@@ -368,8 +368,11 @@ i2d_X509_VAL,
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
  TYPE *d2i_TYPE_fp(FILE *fp, TYPE **a);
 
+ int i2d_TYPE(const TYPE *a, unsigned char **ppout);
  int i2d_TYPE(TYPE *a, unsigned char **ppout);
+ int i2d_TYPE_fp(FILE *fp, const TYPE *a);
  int i2d_TYPE_fp(FILE *fp, TYPE *a);
+ int i2d_TYPE_bio(BIO *bp, const TYPE *a);
  int i2d_TYPE_bio(BIO *bp, TYPE *a);
 
 =head1 DESCRIPTION

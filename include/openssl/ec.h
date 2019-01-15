@@ -128,7 +128,7 @@ int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
  *  \param  src  source EC_GROUP object
  *  \return newly created EC_GROUP object or NULL in case of an error.
  */
-EC_GROUP *EC_GROUP_dup(const EC_GROUP *src);
+DECLARE_ASN1_DUP_FUNCTION(EC_GROUP)
 
 /** Returns the EC_METHOD of the EC_GROUP object.
  *  \param  group  EC_GROUP object
@@ -852,7 +852,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
  *  \param  src  the source EC_KEY object
  *  \return newly created EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_dup(const EC_KEY *src);
+DECLARE_ASN1_DUP_FUNCTION(EC_KEY)
 
 /** Increases the internal reference count of a EC_KEY object.
  *  \param  key  EC_KEY object

@@ -112,7 +112,7 @@ DECLARE_ASN1_ITEM(DHparams)
 # define i2d_DHxparams_bio(bp,x) \
     ASN1_i2d_bio_of_const(DH, i2d_DHxparams, bp, x)
 
-DH *DHparams_dup(DH *);
+DECLARE_ASN1_DUP_FUNCTION_name(DH, DHparams)
 
 const DH_METHOD *DH_OpenSSL(void);
 
@@ -197,7 +197,7 @@ int DH_set_length(DH *dh, long length);
 
 DH_METHOD *DH_meth_new(const char *name, int flags);
 void DH_meth_free(DH_METHOD *dhm);
-DH_METHOD *DH_meth_dup(const DH_METHOD *dhm);
+DECLARE_ASN1_DUP_FUNCTION_name(DH_METHOD, DH_meth)
 const char *DH_meth_get0_name(const DH_METHOD *dhm);
 int DH_meth_set1_name(DH_METHOD *dhm, const char *name);
 int DH_meth_get_flags(const DH_METHOD *dhm);

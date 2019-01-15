@@ -102,7 +102,7 @@ ASN1_SEQUENCE_cb(DSAPublicKey, dsa_cb) = {
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
 
-DSA *DSAparams_dup(DSA *dsa)
+DSA *DSAparams_dup(const DSA *dsa)
 {
     return ASN1_item_dup(ASN1_ITEM_rptr(DSAparams), dsa);
 }

@@ -200,13 +200,13 @@ EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
     return pktmp;
 }
 
-int i2d_PUBKEY(EVP_PKEY *a, unsigned char **pp)
+int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 {
     X509_PUBKEY *xpk = NULL;
     int ret;
     if (!a)
         return 0;
-    if (!X509_PUBKEY_set(&xpk, a))
+    if (!X509_PUBKEY_set(&xpk, (EVP_PKEY *)a)) /* up_ref() will be undone */
         return -1;
     ret = i2d_X509_PUBKEY(xpk, pp);
     X509_PUBKEY_free(xpk);
@@ -238,7 +238,7 @@ RSA *d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length)
     return key;
 }
 
-int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
+int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
     int ret;
@@ -249,7 +249,7 @@ int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_RSA(pktmp, a);
+    EVP_PKEY_set1_RSA(pktmp, (RSA *)a); /* up_ref() will be undone */
     ret = i2d_PUBKEY(pktmp, pp);
     EVP_PKEY_free(pktmp);
     return ret;
@@ -278,7 +278,7 @@ DSA *d2i_DSA_PUBKEY(DSA **a, const unsigned char **pp, long length)
     return key;
 }
 
-int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
+int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
     int ret;
@@ -289,7 +289,7 @@ int i2d_DSA_PUBKEY(DSA *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_DSA(pktmp, a);
+    EVP_PKEY_set1_DSA(pktmp, (DSA *)a); /* up_ref() will be undone */
     ret = i2d_PUBKEY(pktmp, pp);
     EVP_PKEY_free(pktmp);
     return ret;
@@ -318,7 +318,7 @@ EC_KEY *d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp, long length)
     return key;
 }
 
-int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
+int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
 {
     EVP_PKEY *pktmp;
     int ret;
@@ -328,7 +328,7 @@ int i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_EC_KEY(pktmp, a);
+    EVP_PKEY_set1_EC_KEY(pktmp, (EC_KEY *)a); /* up_ref() will be undone */
     ret = i2d_PUBKEY(pktmp, pp);
     EVP_PKEY_free(pktmp);
     return ret;

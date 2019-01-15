@@ -289,7 +289,7 @@ int CMS_RecipientInfo_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pkey)
 
 /* Encrypt content key in key transport recipient info */
 
-static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
+static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
                                           CMS_RecipientInfo *ri)
 {
     CMS_KeyTransRecipientInfo *ktri;
@@ -610,7 +610,7 @@ int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri,
 
 /* Encrypt content key in KEK recipient info */
 
-static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
+static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
                                            CMS_RecipientInfo *ri)
 {
     CMS_EncryptedContentInfo *ec;
@@ -755,7 +755,7 @@ int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
     }
 }
 
-int CMS_RecipientInfo_encrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
+int CMS_RecipientInfo_encrypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri)
 {
     switch (ri->type) {
     case CMS_RECIPINFO_TRANS:
@@ -840,7 +840,7 @@ static void cms_env_set_version(CMS_EnvelopedData *env)
     env->version = 0;
 }
 
-BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
+BIO *cms_EnvelopedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_EncryptedContentInfo *ec;
     STACK_OF(CMS_RecipientInfo) *rinfos;

@@ -46,7 +46,7 @@ static void uint64_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
     **(uint64_t **)pval = 0;
 }
 
-static int uint64_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
                     const ASN1_ITEM *it)
 {
     uint64_t utmp;
@@ -111,7 +111,7 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return 1;
 }
 
-static int uint64_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
@@ -141,7 +141,7 @@ static void uint32_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
     **(uint32_t **)pval = 0;
 }
 
-static int uint32_i2c(ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
                     const ASN1_ITEM *it)
 {
     uint32_t utmp;
@@ -220,7 +220,7 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return 1;
 }
 
-static int uint32_print(BIO *out, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int uint32_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
                         int indent, const ASN1_PCTX *pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)

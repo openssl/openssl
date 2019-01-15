@@ -28,7 +28,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const ASN1_ITEM *it,
                             int tag, int aclass, char opt, ASN1_TLC *ctx);
 
-static int x509_name_ex_i2d(ASN1_VALUE **val, unsigned char **out,
+static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
                             const ASN1_ITEM *it, int tag, int aclass);
 static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it);
 static void x509_name_ex_free(ASN1_VALUE **val, const ASN1_ITEM *it);
@@ -39,7 +39,7 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in);
 static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) * intname,
                           unsigned char **in);
 
-static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
+static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
                               int indent,
                               const char *fname, const ASN1_PCTX *pctx);
 
@@ -207,7 +207,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     return 0;
 }
 
-static int x509_name_ex_i2d(ASN1_VALUE **val, unsigned char **out,
+static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
                             const ASN1_ITEM *it, int tag, int aclass)
 {
     int ret;
@@ -232,7 +232,7 @@ static int x509_name_encode(X509_NAME *a)
 {
     union {
         STACK_OF(STACK_OF_X509_NAME_ENTRY) *s;
-        ASN1_VALUE *a;
+        const ASN1_VALUE *a;
     } intname = {
         NULL
     };
@@ -277,7 +277,7 @@ static int x509_name_encode(X509_NAME *a)
     return -1;
 }
 
-static int x509_name_ex_print(BIO *out, ASN1_VALUE **pval,
+static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
                               int indent,
                               const char *fname, const ASN1_PCTX *pctx)
 {
@@ -464,7 +464,7 @@ static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
                           unsigned char **in)
 {
     int i, len, ltmp;
-    ASN1_VALUE *v;
+    const ASN1_VALUE *v;
     STACK_OF(ASN1_VALUE) *intname = (STACK_OF(ASN1_VALUE) *)_intname;
 
     len = 0;
@@ -479,14 +479,15 @@ static int i2d_name_canon(STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
     return len;
 }
 
-int X509_NAME_set(X509_NAME **xn, X509_NAME *name)
+int X509_NAME_set(X509_NAME **xn, const X509_NAME *name)
 {
+    X509_NAME *name_copy;
     if (*xn == name)
         return *xn != NULL;
-    if ((name = X509_NAME_dup(name)) == NULL)
+    if ((name_copy = X509_NAME_dup(name)) == NULL)
         return 0;
     X509_NAME_free(*xn);
-    *xn = name;
+    *xn = name_copy;
     return 1;
 }
 

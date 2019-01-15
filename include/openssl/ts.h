@@ -64,7 +64,7 @@ void TS_REQ_free(TS_REQ *a);
 int i2d_TS_REQ(const TS_REQ *a, unsigned char **pp);
 TS_REQ *d2i_TS_REQ(TS_REQ **a, const unsigned char **pp, long length);
 
-TS_REQ *TS_REQ_dup(TS_REQ *a);
+DECLARE_ASN1_DUP_FUNCTION(TS_REQ)
 
 #ifndef OPENSSL_NO_STDIO
 TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a);
@@ -79,7 +79,7 @@ int i2d_TS_MSG_IMPRINT(const TS_MSG_IMPRINT *a, unsigned char **pp);
 TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT(TS_MSG_IMPRINT **a,
                                    const unsigned char **pp, long length);
 
-TS_MSG_IMPRINT *TS_MSG_IMPRINT_dup(TS_MSG_IMPRINT *a);
+DECLARE_ASN1_DUP_FUNCTION(TS_MSG_IMPRINT)
 
 #ifndef OPENSSL_NO_STDIO
 TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a);
@@ -93,7 +93,7 @@ void TS_RESP_free(TS_RESP *a);
 int i2d_TS_RESP(const TS_RESP *a, unsigned char **pp);
 TS_RESP *d2i_TS_RESP(TS_RESP **a, const unsigned char **pp, long length);
 TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token);
-TS_RESP *TS_RESP_dup(TS_RESP *a);
+DECLARE_ASN1_DUP_FUNCTION(TS_RESP)
 
 #ifndef OPENSSL_NO_STDIO
 TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a);
@@ -107,14 +107,14 @@ void TS_STATUS_INFO_free(TS_STATUS_INFO *a);
 int i2d_TS_STATUS_INFO(const TS_STATUS_INFO *a, unsigned char **pp);
 TS_STATUS_INFO *d2i_TS_STATUS_INFO(TS_STATUS_INFO **a,
                                    const unsigned char **pp, long length);
-TS_STATUS_INFO *TS_STATUS_INFO_dup(TS_STATUS_INFO *a);
+DECLARE_ASN1_DUP_FUNCTION(TS_STATUS_INFO)
 
 TS_TST_INFO *TS_TST_INFO_new(void);
 void TS_TST_INFO_free(TS_TST_INFO *a);
 int i2d_TS_TST_INFO(const TS_TST_INFO *a, unsigned char **pp);
 TS_TST_INFO *d2i_TS_TST_INFO(TS_TST_INFO **a, const unsigned char **pp,
                              long length);
-TS_TST_INFO *TS_TST_INFO_dup(TS_TST_INFO *a);
+DECLARE_ASN1_DUP_FUNCTION(TS_TST_INFO)
 
 #ifndef OPENSSL_NO_STDIO
 TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a);
@@ -128,7 +128,7 @@ void TS_ACCURACY_free(TS_ACCURACY *a);
 int i2d_TS_ACCURACY(const TS_ACCURACY *a, unsigned char **pp);
 TS_ACCURACY *d2i_TS_ACCURACY(TS_ACCURACY **a, const unsigned char **pp,
                              long length);
-TS_ACCURACY *TS_ACCURACY_dup(TS_ACCURACY *a);
+DECLARE_ASN1_DUP_FUNCTION(TS_ACCURACY)
 
 int TS_REQ_set_version(TS_REQ *a, long version);
 long TS_REQ_get_version(const TS_REQ *a);

@@ -210,7 +210,7 @@ int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7);
 int i2d_PKCS7_fp(FILE *fp, PKCS7 *p7);
 # endif
-PKCS7 *PKCS7_dup(PKCS7 *p7);
+DECLARE_ASN1_DUP_FUNCTION(PKCS7)
 PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7);
 int i2d_PKCS7_bio(BIO *bp, PKCS7 *p7);
 int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);

@@ -17,6 +17,7 @@
 extern "C" {
 # endif
 # include <openssl/e_os2.h>
+# include <openssl/asn1.h>
 # include <openssl/bio.h>
 # include <openssl/crypto.h>
 # include <openssl/ossl_typ.h>
@@ -71,7 +72,7 @@ typedef struct DSA_SIG_st DSA_SIG;
 # define d2i_DSAparams_bio(bp,x) ASN1_d2i_bio_of(DSA,DSA_new,d2i_DSAparams,bp,x)
 # define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
 
-DSA *DSAparams_dup(DSA *x);
+DECLARE_ASN1_DUP_FUNCTION_name(DSA, DSAparams)
 DSA_SIG *DSA_SIG_new(void);
 void DSA_SIG_free(DSA_SIG *a);
 int i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);

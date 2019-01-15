@@ -661,21 +661,21 @@ typedef int ASN1_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                         const ASN1_ITEM *it, int tag, int aclass, char opt,
                         ASN1_TLC *ctx);
 
-typedef int ASN1_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
+typedef int ASN1_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                         const ASN1_ITEM *it, int tag, int aclass);
 typedef int ASN1_ex_new_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 typedef void ASN1_ex_free_func(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
-typedef int ASN1_ex_print_func(BIO *out, ASN1_VALUE **pval,
+typedef int ASN1_ex_print_func(BIO *out, const ASN1_VALUE **pval,
                                int indent, const char *fname,
                                const ASN1_PCTX *pctx);
 
-typedef int ASN1_primitive_i2c(ASN1_VALUE **pval, unsigned char *cont,
+typedef int ASN1_primitive_i2c(const ASN1_VALUE **pval, unsigned char *cont,
                                int *putype, const ASN1_ITEM *it);
 typedef int ASN1_primitive_c2i(ASN1_VALUE **pval, const unsigned char *cont,
                                int len, int utype, char *free_cont,
                                const ASN1_ITEM *it);
-typedef int ASN1_primitive_print(BIO *out, ASN1_VALUE **pval,
+typedef int ASN1_primitive_print(BIO *out, const ASN1_VALUE **pval,
                                  const ASN1_ITEM *it, int indent,
                                  const ASN1_PCTX *pctx);
 
@@ -875,7 +875,7 @@ typedef struct ASN1_STREAM_ARG_st {
         }
 
 # define IMPLEMENT_ASN1_DUP_FUNCTION(stname) \
-        stname * stname##_dup(stname *x) \
+        stname * stname##_dup(const stname *x) \
         { \
         return ASN1_item_dup(ASN1_ITEM_rptr(stname), x); \
         }
@@ -884,7 +884,7 @@ typedef struct ASN1_STREAM_ARG_st {
         IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, stname, stname)
 
 # define IMPLEMENT_ASN1_PRINT_FUNCTION_fname(stname, itname, fname) \
-        int fname##_print_ctx(BIO *out, stname *x, int indent, \
+        int fname##_print_ctx(BIO *out, const stname *x, int indent, \
                                                 const ASN1_PCTX *pctx) \
         { \
                 return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
@@ -936,7 +936,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
                      const ASN1_ITEM *it, int tag, int aclass, char opt,
                      ASN1_TLC *ctx);
 
-int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out,
+int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                      const ASN1_ITEM *it, int tag, int aclass);
 
 #ifdef  __cplusplus

@@ -32,6 +32,12 @@ int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it)
     return *sel;
 }
 
+int asn1_get_choice_selector_const(const ASN1_VALUE **pval, const ASN1_ITEM *it)
+{
+    int *sel = offset2ptr(*pval, it->utype);
+    return *sel;
+}
+
 /*
  * Given an ASN1_ITEM CHOICE type set the selector value, return old value.
  */
@@ -112,6 +118,18 @@ static ASN1_ENCODING *asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
     return offset2ptr(*pval, aux->enc_offset);
 }
 
+static const ASN1_ENCODING *asn1_get_const_enc_ptr(const ASN1_VALUE **pval,
+                                                   const ASN1_ITEM *it)
+{
+    const ASN1_AUX *aux;
+    if (!pval || !*pval)
+        return NULL;
+    aux = it->funcs;
+    if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
+        return NULL;
+    return offset2ptr(*pval, aux->enc_offset);
+}
+
 void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     ASN1_ENCODING *enc;
@@ -155,11 +173,11 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
     return 1;
 }
 
-int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
+int asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
                      const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
+    const ASN1_ENCODING *enc;
+    enc = asn1_get_const_enc_ptr(pval, it);
     if (!enc || enc->modified)
         return 0;
     if (out) {
@@ -183,18 +201,26 @@ ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
     return pvaltmp;
 }
 
+/* Given an ASN1_TEMPLATE get a const pointer to a field */
+const ASN1_VALUE **asn1_get_const_field_ptr(const ASN1_VALUE **pval,
+                                            const ASN1_TEMPLATE *tt)
+{
+    return offset2ptr(*pval, tt->offset);
+}
+
 /*
  * Handle ANY DEFINED BY template, find the selector, look up the relevant
  * ASN1_TEMPLATE in the table and return it.
  */
 
-const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
+const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE **pval,
+                                 const ASN1_TEMPLATE *tt,
                                  int nullerr)
 {
     const ASN1_ADB *adb;
     const ASN1_ADB_TABLE *atbl;
     long selector;
-    ASN1_VALUE **sfld;
+    const ASN1_VALUE **sfld;
     int i;
     if (!(tt->flags & ASN1_TFLG_ADB_MASK))
         return tt;

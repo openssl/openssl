@@ -48,7 +48,7 @@ void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-int EVP_MAC_CTX_copy(EVP_MAC_CTX *dst, EVP_MAC_CTX *src)
+int EVP_MAC_CTX_copy(EVP_MAC_CTX *dst, const EVP_MAC_CTX *src)
 {
     EVP_MAC_IMPL *macdata;
 

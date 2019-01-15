@@ -259,7 +259,7 @@ X509_dup,
 
  extern const ASN1_ITEM TYPE_it;
  TYPE *TYPE_new(void);
- TYPE *TYPE_dup(TYPE *a);
+ TYPE *TYPE_dup(const TYPE *a);
  void TYPE_free(TYPE *a);
  int TYPE_print_ctx(BIO *out, TYPE *a, int indent, const ASN1_PCTX *pctx);
 
@@ -285,7 +285,7 @@ to generate the function bodies.
 TYPE_new() allocates an empty object of the indicated type.
 The object returned must be released by calling TYPE_free().
 
-TYPE_dup() copies an existing object.
+TYPE_dup() copies an existing object, leaving it untouched.
 
 TYPE_free() releases the object and all pointers and sub-objects
 within it.
