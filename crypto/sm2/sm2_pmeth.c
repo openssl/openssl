@@ -54,7 +54,7 @@ static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
     }
 }
 
-static int pkey_sm2_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+static int pkey_sm2_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 {
     SM2_PKEY_CTX *dctx, *sctx;
 

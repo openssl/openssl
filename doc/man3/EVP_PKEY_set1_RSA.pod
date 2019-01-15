@@ -28,10 +28,10 @@ EVP_PKEY_set1_engine, EVP_PKEY_get0_engine - EVP_PKEY assignment functions
  const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len);
  const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len);
  const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len);
- RSA *EVP_PKEY_get0_RSA(EVP_PKEY *pkey);
- DSA *EVP_PKEY_get0_DSA(EVP_PKEY *pkey);
- DH *EVP_PKEY_get0_DH(EVP_PKEY *pkey);
- EC_KEY *EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey);
+ RSA *EVP_PKEY_get0_RSA(const EVP_PKEY *pkey);
+ DSA *EVP_PKEY_get0_DSA(const EVP_PKEY *pkey);
+ DH *EVP_PKEY_get0_DH(const EVP_PKEY *pkey);
+ EC_KEY *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
 
  int EVP_PKEY_assign_RSA(EVP_PKEY *pkey, RSA *key);
  int EVP_PKEY_assign_DSA(EVP_PKEY *pkey, DSA *key);

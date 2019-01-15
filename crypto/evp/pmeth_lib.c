@@ -250,7 +250,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
     return int_ctx_new(NULL, e, id);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
+EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;
     if (!pctx->pmeth || !pctx->pmeth->copy)
@@ -472,7 +472,7 @@ void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data)
     ctx->data = data;
 }
 
-void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx)
+void *EVP_PKEY_CTX_get_data(const EVP_PKEY_CTX *ctx)
 {
     return ctx->data;
 }
@@ -505,7 +505,7 @@ void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
                             int (*copy) (EVP_PKEY_CTX *dst,
-                                         EVP_PKEY_CTX *src))
+                                         const EVP_PKEY_CTX *src))
 {
     pmeth->copy = copy;
 }
@@ -675,7 +675,7 @@ void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_get_copy(const EVP_PKEY_METHOD *pmeth,
                             int (**pcopy) (EVP_PKEY_CTX *dst,
-                                           EVP_PKEY_CTX *src))
+                                           const EVP_PKEY_CTX *src))
 {
     *pcopy = pmeth->copy;
 }

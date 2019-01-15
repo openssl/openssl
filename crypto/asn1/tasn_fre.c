@@ -103,7 +103,7 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
             ASN1_VALUE **pseqval;
 
             tt--;
-            seqtt = asn1_do_adb(pval, tt, 0);
+            seqtt = asn1_do_adb(*pval, tt, 0);
             if (!seqtt)
                 continue;
             pseqval = asn1_get_field_ptr(pval, seqtt);

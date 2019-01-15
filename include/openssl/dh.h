@@ -98,7 +98,7 @@ DECLARE_ASN1_ITEM(DHparams)
 # define d2i_DHparams_bio(bp,x) \
     ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, bp, x)
 # define i2d_DHparams_bio(bp,x) \
-    ASN1_i2d_bio_of_const(DH,i2d_DHparams,bp,x)
+    ASN1_i2d_bio_of(DH,i2d_DHparams,bp,x)
 
 # define d2i_DHxparams_fp(fp,x) \
     (DH *)ASN1_d2i_fp((char *(*)())DH_new, \
@@ -110,9 +110,9 @@ DECLARE_ASN1_ITEM(DHparams)
 # define d2i_DHxparams_bio(bp,x) \
     ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, bp, x)
 # define i2d_DHxparams_bio(bp,x) \
-    ASN1_i2d_bio_of_const(DH, i2d_DHxparams, bp, x)
+    ASN1_i2d_bio_of(DH, i2d_DHxparams, bp, x)
 
-DH *DHparams_dup(DH *);
+DECLARE_ASN1_DUP_FUNCTION_name(DH, DHparams)
 
 const DH_METHOD *DH_OpenSSL(void);
 
@@ -151,10 +151,8 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *codes);
 int DH_generate_key(DH *dh);
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh);
-DH *d2i_DHparams(DH **a, const unsigned char **pp, long length);
-int i2d_DHparams(const DH *a, unsigned char **pp);
-DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length);
-int i2d_DHxparams(const DH *a, unsigned char **pp);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHparams)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHxparams)
 # ifndef OPENSSL_NO_STDIO
 int DHparams_print_fp(FILE *fp, const DH *x);
 # endif

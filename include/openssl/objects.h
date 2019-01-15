@@ -55,7 +55,7 @@ void OBJ_NAME_do_all_sorted(int type,
                             void (*fn) (const OBJ_NAME *, void *arg),
                             void *arg);
 
-ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o);
+DECLARE_ASN1_DUP_FUNCTION_name(ASN1_OBJECT, OBJ)
 ASN1_OBJECT *OBJ_nid2obj(int n);
 const char *OBJ_nid2ln(int n);
 const char *OBJ_nid2sn(int n);

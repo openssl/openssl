@@ -9,6 +9,9 @@
 
 /* Internal ASN1 structures and functions: not for application use */
 
+typedef const ASN1_VALUE const_ASN1_VALUE;
+SKM_DEFINE_STACK_OF(const_ASN1_VALUE, const ASN1_VALUE, ASN1_VALUE)
+
 int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *d);
 int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d);
 int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d);
@@ -46,19 +49,22 @@ DEFINE_STACK_OF(MIME_HEADER)
 void asn1_string_embed_free(ASN1_STRING *a, int embed);
 
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
+int asn1_get_choice_selector_const(const ASN1_VALUE **pval, const ASN1_ITEM *it);
 int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
                              const ASN1_ITEM *it);
 
 ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
+const ASN1_VALUE **asn1_get_const_field_ptr(const ASN1_VALUE **pval,
+                                            const ASN1_TEMPLATE *tt);
 
-const ASN1_TEMPLATE *asn1_do_adb(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
+const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val, const ASN1_TEMPLATE *tt,
                                  int nullerr);
 
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it);
 
 void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
-int asn1_enc_restore(int *len, unsigned char **out, ASN1_VALUE **pval,
+int asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
                      const ASN1_ITEM *it);
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
                   const ASN1_ITEM *it);

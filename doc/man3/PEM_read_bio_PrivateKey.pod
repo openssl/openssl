@@ -36,7 +36,7 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                                    pem_password_cb *cb, void *u);
  EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
- int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+ int PEM_write_bio_PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                               unsigned char *kstr, int klen,
                               pem_password_cb *cb, void *u);
  int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
@@ -46,17 +46,16 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                           unsigned char *kstr, int klen,
                           pem_password_cb *cb, void *u);
-
  int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
  int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                char *kstr, int klen,
                                pem_password_cb *cb, void *u);
- int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, EVP_PKEY *x, int nid,
+ int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
                                        char *kstr, int klen,
                                        pem_password_cb *cb, void *u);
- int PEM_write_PKCS8PrivateKey_nid(FILE *fp, EVP_PKEY *x, int nid,
+ int PEM_write_PKCS8PrivateKey_nid(FILE *fp, const EVP_PKEY *x, int nid,
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
 

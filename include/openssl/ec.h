@@ -123,7 +123,7 @@ void EC_GROUP_clear_free(EC_GROUP *group);
  */
 int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
 
-/** Creates a new EC_GROUP object and copies the copies the content
+/** Creates a new EC_GROUP object and copies the content
  *  form src to the newly created EC_KEY object
  *  \param  src  source EC_GROUP object
  *  \return newly created EC_GROUP object or NULL in case of an error.
@@ -794,7 +794,7 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
 # define d2i_ECPKParameters_bio(bp,x) ASN1_d2i_bio_of(EC_GROUP,NULL,d2i_ECPKParameters,bp,x)
-# define i2d_ECPKParameters_bio(bp,x) ASN1_i2d_bio_of_const(EC_GROUP,i2d_ECPKParameters,bp,x)
+# define i2d_ECPKParameters_bio(bp,x) ASN1_i2d_bio_of(EC_GROUP,i2d_ECPKParameters,bp,x)
 # define d2i_ECPKParameters_fp(fp,x) (EC_GROUP *)ASN1_d2i_fp(NULL, \
                 (char *(*)())d2i_ECPKParameters,(fp),(unsigned char **)(x))
 # define i2d_ECPKParameters_fp(fp,x) ASN1_i2d_fp(i2d_ECPKParameters,(fp), \
@@ -1022,7 +1022,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred.
  */
-int i2d_ECPrivateKey(EC_KEY *key, unsigned char **out);
+int i2d_ECPrivateKey(const EC_KEY *key, unsigned char **out);
 
 /********************************************************************/
 /*        de- and encoding functions for EC parameters              */
@@ -1043,7 +1043,7 @@ EC_KEY *d2i_ECParameters(EC_KEY **key, const unsigned char **in, long len);
  *               of bytes needed).
  *  \return 1 on success and 0 if an error occurred.
  */
-int i2d_ECParameters(EC_KEY *key, unsigned char **out);
+int i2d_ECParameters(const EC_KEY *key, unsigned char **out);
 
 /********************************************************************/
 /*         de- and encoding functions for EC public key             */
@@ -1134,22 +1134,21 @@ ECDSA_SIG *ECDSA_SIG_new(void);
  */
 void ECDSA_SIG_free(ECDSA_SIG *sig);
 
-/** DER encode content of ECDSA_SIG object (note: this function modifies *pp
+/** i2d_ECDSA_SIG encodes content of ECDSA_SIG (note: this function modifies *pp
  *  (*pp += length of the DER encoded signature)).
  *  \param  sig  pointer to the ECDSA_SIG object
  *  \param  pp   pointer to a unsigned char pointer for the output or NULL
  *  \return the length of the DER encoded ECDSA_SIG object or 0
  */
-int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(ECDSA_SIG, ECDSA_SIG)
 
-/** Decodes a DER encoded ECDSA signature (note: this function changes *pp
+/** d2i_ECDSA_SIG decodes an ECDSA signature (note: this function modifies *pp
  *  (*pp += len)).
  *  \param  sig  pointer to ECDSA_SIG pointer (may be NULL)
  *  \param  pp   memory buffer with the DER encoded signature
  *  \param  len  length of the buffer
  *  \return pointer to the decoded ECDSA_SIG structure (or NULL)
  */
-ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
 
 /** Accessor for r and s fields of ECDSA_SIG
  *  \param  sig  pointer to ECDSA_SIG structure

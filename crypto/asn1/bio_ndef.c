@@ -49,6 +49,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg);
 static int ndef_suffix_free(BIO *b, unsigned char **pbuf, int *plen,
                             void *parg);
 
+/* unfortunately cannot constify this due to CMS_stream() and PKCS7_stream() */
 BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 {
     NDEF_SUPPORT *ndef_aux = NULL;
