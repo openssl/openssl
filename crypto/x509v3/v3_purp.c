@@ -773,6 +773,8 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
 
 int X509_check_issued(X509 *issuer, X509 *subject)
 {
+    int ret;
+
     if (X509_NAME_cmp(X509_get_subject_name(issuer),
                       X509_get_issuer_name(subject)))
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
@@ -781,10 +783,15 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     x509v3_cache_extensions(subject);
 
     if (subject->akid) {
-        int ret = X509_check_akid(issuer, subject->akid);
+        ret = X509_check_akid(issuer, subject->akid);
         if (ret != X509_V_OK)
             return ret;
     }
+
+    CRYPTO_THREAD_read_lock(subject->lock); /* Prevent data races here */
+    CRYPTO_THREAD_read_lock(issuer->lock);
+ 
+    ret = X509_V_OK;
 
     {
         /*
@@ -796,20 +803,25 @@ int X509_check_issued(X509 *issuer, X509 *subject)
         int s_pknid = NID_undef, s_mdnid = NID_undef;
 
         if (i_pkey == NULL)
-            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
-
-        if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
-                                 &s_mdnid, &s_pknid)
-            || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
-            return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
+            ret = X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+        else
+            if (!OBJ_find_sigid_algs(OBJ_obj2nid(s_algor->algorithm),
+                                     &s_mdnid, &s_pknid)
+                || EVP_PKEY_type(s_pknid) != EVP_PKEY_base_id(i_pkey))
+                ret = X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
     }
 
-    if (subject->ex_flags & EXFLAG_PROXY) {
-        if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
-            return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
-    } else if (ku_reject(issuer, KU_KEY_CERT_SIGN))
-        return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
-    return X509_V_OK;
+    if (ret == X509_OK) {
+        if (subject->ex_flags & EXFLAG_PROXY) {
+            if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
+                ret = X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
+        } else if (ku_reject(issuer, KU_KEY_CERT_SIGN))
+            ret = X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
+    }
+
+    CRYPTO_THREAD_unlock(subject->lock);
+    CRYPTO_THREAD_unlock(issuer->lock);
+    return ret;
 }
 
 int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)

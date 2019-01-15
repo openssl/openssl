@@ -1036,7 +1036,9 @@ static int drbg_bytes(unsigned char *out, int count)
     if (drbg == NULL)
         return 0;
 
+    rand_drbg_lock(drbg->parent);
     ret = RAND_DRBG_bytes(drbg, out, count);
+    rand_drbg_unlock(drbg->parent);
 
     return ret;
 }

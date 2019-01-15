@@ -1201,7 +1201,10 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if ((ext = x->rfc3779_addr) == NULL)
+        CRYPTO_THREAD_read_lock(x->lock);
+        ext = x->rfc3779_addr;
+        CRYPTO_THREAD_unlock(x->lock);
+        if (ext == NULL)
             goto done;
     }
     if (!X509v3_addr_is_canonical(ext))
