@@ -204,7 +204,7 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
     return cms_EncryptedContent_init(ec, ciph, key, keylen);
 }
 
-BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms)
+BIO *cms_EncryptedData_init_bio(const CMS_ContentInfo *cms)
 {
     CMS_EncryptedData *enc = cms->d.encryptedData;
     if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)

@@ -44,7 +44,7 @@ struct evp_pkey_method_st {
     int pkey_id;
     int flags;
     int (*init) (EVP_PKEY_CTX *ctx);
-    int (*copy) (EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src);
+    int (*copy) (EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src);
     void (*cleanup) (EVP_PKEY_CTX *ctx);
     int (*paramgen_init) (EVP_PKEY_CTX *ctx);
     int (*paramgen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);

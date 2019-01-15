@@ -418,7 +418,7 @@ static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
     return 1;
 }
 
-DH *DHparams_dup(DH *dh)
+DH *DHparams_dup(const DH *dh)
 {
     DH *ret;
     ret = DH_new();

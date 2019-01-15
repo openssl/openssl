@@ -219,13 +219,13 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     return asctmp;
 }
 
-int i2d_PKCS12_bio(BIO *bp, PKCS12 *p12)
+int i2d_PKCS12_bio(BIO *bp, const PKCS12 *p12)
 {
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS12), bp, p12);
 }
 
 #ifndef OPENSSL_NO_STDIO
-int i2d_PKCS12_fp(FILE *fp, PKCS12 *p12)
+int i2d_PKCS12_fp(FILE *fp, const PKCS12 *p12)
 {
     return ASN1_item_i2d_fp(ASN1_ITEM_rptr(PKCS12), fp, p12);
 }
