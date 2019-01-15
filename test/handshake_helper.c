@@ -9,10 +9,6 @@
 
 #include <string.h>
 
-#if !defined(OPENSSL_NO_SCTP) && !defined(OPENSSL_NO_SOCK)
-#include <netinet/sctp.h>
-#endif
-
 #include <openssl/bio.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/ssl.h>
@@ -25,6 +21,10 @@
 #include "internal/nelem.h"
 #include "handshake_helper.h"
 #include "testutil.h"
+
+#if !defined(OPENSSL_NO_SCTP) && !defined(OPENSSL_NO_SOCK)
+#include <netinet/sctp.h>
+#endif
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
