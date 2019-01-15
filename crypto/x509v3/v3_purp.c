@@ -811,7 +811,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
                 ret = X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
     }
 
-    if (ret == X509_OK) {
+    if (ret == X509_V_OK) {
         if (subject->ex_flags & EXFLAG_PROXY) {
             if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
                 ret = X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
