@@ -926,9 +926,10 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     EVP_PKEY_CTX *classical_ctx_sign = NULL;
     int is_hybrid = is_oqs_hybrid_alg(oqs_key->nid);
     int classical_id = 0;
-    int max_sig_len = oqs_key->s->length_signature;
-    int classical_sig_len = 0, oqs_sig_len = 0;
-    int index = 0;
+    size_t max_sig_len = oqs_key->s->length_signature;
+    size_t classical_sig_len = 0, oqs_sig_len = 0;
+    size_t actual_classical_sig_len = 0;
+    size_t index = 0;
     int rv = 0;
 
     if (!oqs_key || !oqs_key->s || !oqs_key->privkey || (is_hybrid && !oqs_key->classical_pkey)) {
@@ -937,7 +938,8 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     }
     if (is_hybrid) {
       classical_id = get_classical_nid(oqs_key->nid);
-      max_sig_len += (SIZE_OF_UINT32 + get_classical_sig_len(classical_id));
+      actual_classical_sig_len = get_classical_sig_len(classical_id);
+      max_sig_len += (SIZE_OF_UINT32 + actual_classical_sig_len);
     }
 
     if (sig == NULL) {
@@ -951,7 +953,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     }
 
     if (is_hybrid) {
-      uint32_t actual_classical_sig_len = 0;
+
       int digest_len;
       unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
 
@@ -1021,8 +1023,8 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
     const OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
     int is_hybrid = is_oqs_hybrid_alg(oqs_key->nid);
     int classical_id = 0;
-    int classical_sig_len = 0;
-    int index = 0;
+    size_t classical_sig_len = 0;
+    size_t index = 0;
 
     if (!oqs_key || !oqs_key->s  || !oqs_key->pubkey || (is_hybrid && !oqs_key->classical_pkey) ||
 	sig == NULL || tbs == NULL) {
@@ -1036,7 +1038,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
     if (is_hybrid) {
       EVP_PKEY_CTX *ctx_verify = NULL;
-      int actual_classical_sig_len = 0;
+      size_t actual_classical_sig_len = 0;
       int digest_len;
       unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
 
