@@ -235,7 +235,7 @@ static int check(X509_STORE *ctx, const char *file,
     if (crls != NULL)
         X509_STORE_CTX_set0_crls(csc, crls);
     i = X509_verify_cert(csc);
-    if (i > 0) {
+    if (i > 0 && X509_STORE_CTX_get_error(csc) == X509_V_OK) {
         printf("%s: OK\n", (file == NULL) ? "stdin" : file);
         ret = 1;
         if (show_chain) {
@@ -290,6 +290,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);
             /* fall thru */
+        case X509_V_ERR_CERT_HAS_EXPIRED:
 
             /*
              * since we are just checking the certificates, it is ok if they
@@ -297,8 +298,10 @@ static int cb(int ok, X509_STORE_CTX *ctx)
              */
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
             /* Continue after extension errors too */
+        case X509_V_ERR_INVALID_CA:
         case X509_V_ERR_INVALID_NON_CA:
         case X509_V_ERR_PATH_LENGTH_EXCEEDED:
+        case X509_V_ERR_INVALID_PURPOSE:
         case X509_V_ERR_CRL_HAS_EXPIRED:
         case X509_V_ERR_CRL_NOT_YET_VALID:
         case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
