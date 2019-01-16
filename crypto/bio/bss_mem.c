@@ -20,7 +20,7 @@ static long mem_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int mem_new(BIO *h);
 static int secmem_new(BIO *h);
 static int mem_free(BIO *data);
-static int mem_buf_free(BIO *data, int free_all);
+static int mem_buf_free(BIO *data);
 static int mem_buf_sync(BIO *h);
 
 static const BIO_METHOD mem_method = {
@@ -140,10 +140,16 @@ static int secmem_new(BIO *bi)
 
 static int mem_free(BIO *a)
 {
-    return mem_buf_free(a, 1);
+    BIO_BUF_MEM *bb = (BIO_BUF_MEM *)a->ptr;
+
+    if (!mem_buf_free(a))
+        return 0;
+    OPENSSL_free(bb->readp);
+    OPENSSL_free(bb);
+    return 1;
 }
 
-static int mem_buf_free(BIO *a, int free_all)
+static int mem_buf_free(BIO *a)
 {
     if (a == NULL)
         return 0;
@@ -155,11 +161,6 @@ static int mem_buf_free(BIO *a, int free_all)
         if (a->flags & BIO_FLAGS_MEM_RDONLY)
             b->data = NULL;
         BUF_MEM_free(b);
-        if (free_all) {
-            OPENSSL_free(bb->readp);
-            OPENSSL_free(bb);
-        }
-        a->ptr = NULL;
     }
     return 1;
 }
@@ -266,11 +267,10 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_C_SET_BUF_MEM:
-        mem_buf_free(b, 0);
+        mem_buf_free(b);
         b->shutdown = (int)num;
         bbm->buf = ptr;
         *bbm->readp = *bbm->buf;
-        b->ptr = bbm;
         break;
     case BIO_C_GET_BUF_MEM_PTR:
         if (ptr != NULL) {
