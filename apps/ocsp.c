@@ -54,14 +54,16 @@ NON_EMPTY_TRANSLATION_UNIT
 # endif
 
 # if defined(OPENSSL_SYS_VXWORKS)
-/* setpgid() & fork() are not supported */
+/* not supported */
 int setpgid(pid_t pid, pid_t pgid)
 {
+    errno = ENOSYS;
     return 0;
 }
-
+/* not supported */
 pid_t fork(void)
 {
+    errno = ENOSYS;
     return (pid_t) -1;
 }
 # endif

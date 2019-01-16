@@ -53,20 +53,20 @@
 
 # if defined(OPENSSL_SYS_VXWORKS)
 /* 
- *   VxWorks has no symbolic links 
+ * VxWorks has no symbolic links 
  */
 
 #  define lstat(path, buf) stat(path, buf)
 
 int symlink(const char *target, const char *linkpath)
 {
-    errno = EACCES;
+    errno = ENOSYS;
     return -1;
 }
 
 ssize_t readlink(const char *pathname, char *buf, size_t bufsiz)
 {
-    errno = EACCES;
+    errno = ENOSYS;
     return -1;
 }
 # endif

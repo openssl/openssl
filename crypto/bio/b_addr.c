@@ -784,9 +784,10 @@ int BIO_lookup_ex(const char *host, const char *service, int lookup_type,
                  */
 # if defined(OPENSSL_SYS_VXWORKS)
                 /* h_errno doesn't exist on VxWorks */
-                int h_errno = 0;
-# endif
+                SYSerr(SYS_F_GETHOSTBYNAME, 1000 );
+# else                
                 SYSerr(SYS_F_GETHOSTBYNAME, 1000 + h_errno);
+# endif
 #else
                 SYSerr(SYS_F_GETHOSTBYNAME, WSAGetLastError());
 #endif
