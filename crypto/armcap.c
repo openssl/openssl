@@ -135,30 +135,27 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P = 0;
 
 # ifdef OSSL_IMPLEMENT_GETAUXVAL
-    {
-        if (getauxval(HWCAP) & HWCAP_NEON) {
-            unsigned long hwcap = getauxval(HWCAP_CE);
+    if (getauxval(HWCAP) & HWCAP_NEON) {
+        unsigned long hwcap = getauxval(HWCAP_CE);
 
-            OPENSSL_armcap_P |= ARMV7_NEON;
+        OPENSSL_armcap_P |= ARMV7_NEON;
 
-            if (hwcap & HWCAP_CE_AES)
-                OPENSSL_armcap_P |= ARMV8_AES;
+        if (hwcap & HWCAP_CE_AES)
+            OPENSSL_armcap_P |= ARMV8_AES;
 
-            if (hwcap & HWCAP_CE_PMULL)
-                OPENSSL_armcap_P |= ARMV8_PMULL;
+        if (hwcap & HWCAP_CE_PMULL)
+            OPENSSL_armcap_P |= ARMV8_PMULL;
 
-            if (hwcap & HWCAP_CE_SHA1)
-                OPENSSL_armcap_P |= ARMV8_SHA1;
+        if (hwcap & HWCAP_CE_SHA1)
+            OPENSSL_armcap_P |= ARMV8_SHA1;
 
-            if (hwcap & HWCAP_CE_SHA256)
-                OPENSSL_armcap_P |= ARMV8_SHA256;
+        if (hwcap & HWCAP_CE_SHA256)
+            OPENSSL_armcap_P |= ARMV8_SHA256;
 
 #  ifdef __aarch64__
-            if (hwcap & HWCAP_CE_SHA512)
-                OPENSSL_armcap_P |= ARMV8_SHA512;
+        if (hwcap & HWCAP_CE_SHA512)
+            OPENSSL_armcap_P |= ARMV8_SHA512;
 #  endif
-        }
-        return;
     }
 # endif
 
@@ -176,6 +173,8 @@ void OPENSSL_cpuid_setup(void)
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
     sigaction(SIGILL, &ill_act, &ill_oact);
 
+    /* If we used getauxval, we already have all the values */
+# ifndef OSSL_IMPLEMENT_GETAUXVAL
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_neon_probe();
         OPENSSL_armcap_P |= ARMV7_NEON;
@@ -194,13 +193,16 @@ void OPENSSL_cpuid_setup(void)
             _armv8_sha256_probe();
             OPENSSL_armcap_P |= ARMV8_SHA256;
         }
-# if defined(__aarch64__) && !defined(__APPLE__)
+#  if defined(__aarch64__) && !defined(__APPLE__)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_sha512_probe();
             OPENSSL_armcap_P |= ARMV8_SHA512;
         }
-# endif
+#  endif
     }
+# endif
+
+    /* Things that getauxval didn't tell us */
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_tick();
         OPENSSL_armcap_P |= ARMV7_TICK;
