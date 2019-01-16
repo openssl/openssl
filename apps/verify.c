@@ -281,31 +281,22 @@ static int cb(int ok, X509_STORE_CTX *ctx)
                             0, get_nameopt());
             BIO_printf(bio_err, "\n");
         }
-
-        /*
-         * See if there are some errors that we want to ignore
-         * (We make into warnings, still, so the user can see)
-         */
-        switch (cert_error) {
-        case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-            /*
-             * since we are just checking the certificates, it is ok if
-             * they are self signed.
-             */
-            ok = 1;
-        }
-        BIO_printf(bio_err, "%s%s %d at %d depth lookup: %s\n",
-                   X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path] " : "",
-                   ok ? "warning" : "error",
-                   cert_error,
-                   X509_STORE_CTX_get_error_depth(ctx),
-                   X509_verify_cert_error_string(cert_error));
-
-        /* Print out extra stuff if applicable */
+        BIO_printf(bio_err, "%serror %d at %d depth lookup: %s\n",
+               X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path] " : "",
+               cert_error,
+               X509_STORE_CTX_get_error_depth(ctx),
+               X509_verify_cert_error_string(cert_error));
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);
             break;
+
+            /*
+             * since we are just checking the certificates, it is ok if they
+             * are self signed. But we should still warn the user.
+             */
+        case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+            ok = 1;
         }
 
         return ok;
