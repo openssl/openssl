@@ -52,8 +52,8 @@
 # define MAX_COLLISIONS  256
 
 # if defined(OPENSSL_SYS_VXWORKS)
-/* 
- * VxWorks has no symbolic links 
+/*
+ * VxWorks has no symbolic links
  */
 
 #  define lstat(path, buf) stat(path, buf)
