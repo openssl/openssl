@@ -289,13 +289,19 @@ static int cb(int ok, X509_STORE_CTX *ctx)
         switch (cert_error) {
         case X509_V_ERR_NO_EXPLICIT_POLICY:
             policies_print(ctx);
-            break;
+            /* fall thru */
 
             /*
              * since we are just checking the certificates, it is ok if they
              * are self signed. But we should still warn the user.
              */
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+            /* Continue after extension errors too */
+        case X509_V_ERR_INVALID_NON_CA:
+        case X509_V_ERR_PATH_LENGTH_EXCEEDED:
+        case X509_V_ERR_CRL_HAS_EXPIRED:
+        case X509_V_ERR_CRL_NOT_YET_VALID:
+        case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
             ok = 1;
         }
 
