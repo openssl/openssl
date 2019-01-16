@@ -132,21 +132,7 @@ void OPENSSL_cpuid_setup(void)
      */
 # endif
 
-    sigfillset(&all_masked);
-    sigdelset(&all_masked, SIGILL);
-    sigdelset(&all_masked, SIGTRAP);
-    sigdelset(&all_masked, SIGFPE);
-    sigdelset(&all_masked, SIGBUS);
-    sigdelset(&all_masked, SIGSEGV);
-
     OPENSSL_armcap_P = 0;
-
-    memset(&ill_act, 0, sizeof(ill_act));
-    ill_act.sa_handler = ill_handler;
-    ill_act.sa_mask = all_masked;
-
-    sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
-    sigaction(SIGILL, &ill_act, &ill_oact);
 
 # ifdef OSSL_IMPLEMENT_GETAUXVAL
     {
@@ -172,8 +158,24 @@ void OPENSSL_cpuid_setup(void)
                 OPENSSL_armcap_P |= ARMV8_SHA512;
 #  endif
         }
+        return;
     }
-# else
+# endif
+
+    sigfillset(&all_masked);
+    sigdelset(&all_masked, SIGILL);
+    sigdelset(&all_masked, SIGTRAP);
+    sigdelset(&all_masked, SIGFPE);
+    sigdelset(&all_masked, SIGBUS);
+    sigdelset(&all_masked, SIGSEGV);
+
+    memset(&ill_act, 0, sizeof(ill_act));
+    ill_act.sa_handler = ill_handler;
+    ill_act.sa_mask = all_masked;
+
+    sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
+    sigaction(SIGILL, &ill_act, &ill_oact);
+
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_neon_probe();
         OPENSSL_armcap_P |= ARMV7_NEON;
@@ -192,14 +194,13 @@ void OPENSSL_cpuid_setup(void)
             _armv8_sha256_probe();
             OPENSSL_armcap_P |= ARMV8_SHA256;
         }
-#  if defined(__aarch64__) && !defined(__APPLE__)
+# if defined(__aarch64__) && !defined(__APPLE__)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_sha512_probe();
             OPENSSL_armcap_P |= ARMV8_SHA512;
         }
-#  endif
-    }
 # endif
+    }
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_tick();
         OPENSSL_armcap_P |= ARMV7_TICK;
