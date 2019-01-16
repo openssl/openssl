@@ -168,17 +168,15 @@ void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 
-/*
- * Use a weak reference to getauxval() so we can use it if it is available
- * but don't break the build if it is not. Note that this is *link-time*
- * feature detection, not *run-time*. In other words if we link with
- * symbol present, it's expected to be present even at run-time.
- */
-#if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__)
-extern unsigned long getauxval(unsigned long type) __attribute__ ((weak));
-#else
+# if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+#  if __GLIBC_PREREQ(2, 16)
+#   include <sys/auxv.h>
+#   define OSSL_IMPLEMENT_GETAUXVAL
+#  endif
+# endif
+# ifndef OSSL_IMPLEMENT_GETAUXVAL
 static unsigned long (*getauxval) (unsigned long) = NULL;
-#endif
+# endif
 
 /* I wish <sys/auxv.h> was universally available */
 #define HWCAP                   16      /* AT_HWCAP */
