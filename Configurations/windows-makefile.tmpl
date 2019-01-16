@@ -3,7 +3,7 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
- (our $sover_dirname = $config{shlib_version}) =~ s|\.|_|g;
+ our $sover_dirname = platform->shlib_version_as_filename();
 
  my $build_scheme = $target{build_scheme};
  my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
