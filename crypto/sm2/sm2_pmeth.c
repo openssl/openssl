@@ -248,6 +248,9 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
         else
             return -2;
         return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
+    } else if (strcmp(type, "sm2_id") == 0) {
+        return pkey_sm2_ctrl(ctx, EVP_PKEY_CTRL_SET1_ID,
+                             (int)strlen(value), (void *)value);
     }
 
     return -2;
