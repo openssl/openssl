@@ -10,6 +10,8 @@ pkeyutl - public key algorithm utility
 B<openssl> B<pkeyutl>
 [B<-help>]
 [B<-in file>]
+[B<-rawin>]
+[B<-digest algorithm>]
 [B<-out file>]
 [B<-sigfile file>]
 [B<-inkey file>]
@@ -54,6 +56,23 @@ Print out a usage message.
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
+
+=item B<-rawin>
+
+This indicates that the input data is raw data, which is not hashed by any
+message digest algorithm. The user can specify a digest algorithm by using
+the B<-digest> option. This option can only be used with B<-sign> and
+B<-verify>.
+
+=item B<-digest algorithm>
+
+This specifies the digest algorithm which is used to hash the input data before
+signing or verifying it with the input key. This option could be omitted if the
+signature algorithm does not require one (for instance, EdDSA). If this option
+is omitted but the signature algorithm requires one, a default value will be
+used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
+default digest algorithm. For SM2, it will be SM3. If this option is present,
+then the B<-rawin> option must be also specified to B<pkeyutl>.
 
 =item B<-out filename>
 
@@ -300,6 +319,22 @@ this digest is assumed by default.
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
 
+=head1 SM2
+
+The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
+the sign and verify operations, SM2 requires an ID string to be passed in. The
+following B<pkeyopt> value is supported:
+
+=over 4
+
+=item B<sm2_id:string>
+
+This sets the ID string used in SM2 sign or verify operations. While verifying
+an SM2 signature, the ID string must be the same one used when signing the data.
+Otherwise the verification will fail.
+
+=back
+
 =head1 EXAMPLES
 
 Sign some data using a private key:
@@ -337,6 +372,16 @@ Derive using the same algorithm, but read key from environment variable MYPASS:
 
  openssl pkeyutl -kdf scrypt -kdflen 16 -pkeyopt_passin pass:env:MYPASS \
     -pkeyopt hexsalt:aabbcc -pkeyopt N:16384 -pkeyopt r:8 -pkeyopt p:1
+
+Sign some data using an L<SM2(7)> private key and a specific ID:
+
+ openssl pkeyutl -sign -in file -inkey sm2.key -out sig -rawin -digest sm3 \
+    -pkeyopt sm2_id:someid
+
+Verify some data using an L<SM2(7)> certificate and a specific ID:
+
+ openssl pkeyutl -verify -certin -in file -inkey sm2.cert -sigfile sig \
+    -rawin -digest sm3 -pkeyopt sm2_id:someid
 
 =head1 SEE ALSO
 
