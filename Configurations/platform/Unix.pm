@@ -19,7 +19,7 @@ sub dsoext              { $target{dso_extension} || '.so' }
 sub shlibext            { (my $x = $target{shared_extension}
                                || '.so.$(SHLIB_VERSION_NUMBER)')
                               =~ s|\.\$\(SHLIB_VERSION_NUMBER\)
-                                  |.$config{shlib_version_number}|x;
+                                  |.$config{shlib_version}|x;
                           $x; }
 sub libext              { $target{lib_extension} || '.a' }
 sub defext              { $target{def_extension} || '.ld' }
