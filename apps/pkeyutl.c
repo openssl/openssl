@@ -22,14 +22,15 @@
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-                              const int impl);
+                              const int impl, int *pkey_type, EVP_PKEY **ppkey);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    const unsigned char *in, size_t inlen);
+                    const unsigned char *in, size_t inlen, int pkey_type,
+                    EVP_PKEY *pkey);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -82,6 +83,7 @@ int pkeyutl_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
     char *infile = NULL, *outfile = NULL, *sigfile = NULL, *passinarg = NULL;
     char hexdump = 0, asn1parse = 0, rev = 0, *prog;
     unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
@@ -97,6 +99,7 @@ int pkeyutl_main(int argc, char **argv)
     int kdflen = 0;
     STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
+    int pkey_type = 0;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -225,7 +228,7 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e, engine_impl);
+                   passinarg, pkey_op, e, engine_impl, &pkey_type, &pkey);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -350,15 +353,34 @@ int pkeyutl_main(int argc, char **argv)
     if (buf_inlen > EVP_MAX_MD_SIZE
             && (pkey_op == EVP_PKEY_OP_SIGN
                 || pkey_op == EVP_PKEY_OP_VERIFY
-                || pkey_op == EVP_PKEY_OP_VERIFYRECOVER)) {
+                || pkey_op == EVP_PKEY_OP_VERIFYRECOVER)
+            && pkey_type != EVP_PKEY_SM2) {
         BIO_printf(bio_err,
                    "Error: The input data looks too long to be a hash\n");
         goto end;
     }
 
     if (pkey_op == EVP_PKEY_OP_VERIFY) {
-        rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
-                             buf_in, (size_t)buf_inlen);
+        if (pkey_type == EVP_PKEY_SM2) {
+            /* This is a way to handle SM2, only use digest combined APIs */
+            EVP_MD_CTX *mctx = NULL;
+
+            if ((mctx = EVP_MD_CTX_new()) == NULL) {
+                BIO_printf(bio_err, "Error: out of memory\n");
+                goto end;
+            }
+            EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
+            if (EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey) != 1) {
+                EVP_MD_CTX_free(mctx);
+                goto end;
+            }
+            rv = EVP_DigestVerify(mctx, sig, (size_t)siglen,
+                                  buf_in, (size_t)buf_inlen);
+            EVP_MD_CTX_free(mctx);
+        } else {
+            rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
+                                 buf_in, (size_t)buf_inlen);
+        }
         if (rv == 1) {
             BIO_puts(out, "Signature Verified Successfully\n");
             ret = 0;
@@ -372,13 +394,13 @@ int pkeyutl_main(int argc, char **argv)
         rv = 1;
     } else {
         rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
-                      buf_in, (size_t)buf_inlen);
+                      buf_in, (size_t)buf_inlen, pkey_type, pkey);
     }
     if (rv > 0 && buf_outlen != 0) {
         buf_out = app_malloc(buf_outlen, "buffer output");
         rv = do_keyop(ctx, pkey_op,
                       buf_out, (size_t *)&buf_outlen,
-                      buf_in, (size_t)buf_inlen);
+                      buf_in, (size_t)buf_inlen, pkey_type, pkey);
     }
     if (rv <= 0) {
         if (pkey_op != EVP_PKEY_OP_DERIVE) {
@@ -416,7 +438,8 @@ int pkeyutl_main(int argc, char **argv)
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-                              const int engine_impl)
+                              const int engine_impl, int *pkey_type,
+                              EVP_PKEY **ppkey)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -474,10 +497,28 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         }
         ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
+        EC_KEY *eckey = NULL;
+        const EC_GROUP *group = NULL;
+        int nid;
+
         if (pkey == NULL)
             goto end;
+        /* SM2 needs a special treatment */
+        if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
+            if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL
+                    || (group = EC_KEY_get0_group(eckey)) == NULL
+                    || (nid = EC_GROUP_get_curve_name(group)) == 0)
+                goto end;
+            if (nid == NID_sm2) {
+                EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
+                if (pkey_type != NULL)
+                    *pkey_type = EVP_PKEY_SM2;
+            }
+        }
         *pkeysize = EVP_PKEY_size(pkey);
         ctx = EVP_PKEY_CTX_new(pkey, impl);
+        if (ppkey != NULL)
+            *ppkey = pkey;
         EVP_PKEY_free(pkey);
     }
 
@@ -547,7 +588,8 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
 static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
                     unsigned char *out, size_t *poutlen,
-                    const unsigned char *in, size_t inlen)
+                    const unsigned char *in, size_t inlen, int pkey_type,
+                    EVP_PKEY *pkey)
 {
     int rv = 0;
     switch (pkey_op) {
@@ -556,7 +598,22 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
         break;
 
     case EVP_PKEY_OP_SIGN:
-        rv = EVP_PKEY_sign(ctx, out, poutlen, in, inlen);
+        if (pkey_type == EVP_PKEY_SM2) {
+            /* This is a way to handle SM2, only use digest combined APIs */
+            EVP_MD_CTX *mctx = NULL;
+
+            if ((mctx = EVP_MD_CTX_new()) == NULL)
+                return rv;
+            EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
+            if (EVP_DigestSignInit(mctx, NULL, EVP_sm3(), NULL, pkey) != 1) {
+                EVP_MD_CTX_free(mctx);
+                return rv;
+            }
+            rv = EVP_DigestSign(mctx, out, poutlen, in, inlen);
+            EVP_MD_CTX_free(mctx);
+        } else {
+            rv = EVP_PKEY_sign(ctx, out, poutlen, in, inlen);
+        }
         break;
 
     case EVP_PKEY_OP_ENCRYPT:

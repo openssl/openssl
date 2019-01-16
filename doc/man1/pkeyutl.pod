@@ -300,6 +300,22 @@ this digest is assumed by default.
 The X25519 and X448 algorithms support key derivation only. Currently there are
 no additional options.
 
+=head1 SM2
+
+The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
+the sign and verify operations, SM2 requires an ID string to be passed in. The
+following B<pkeyopt> value is supported:
+
+=over 4
+
+=item B<sm2_id:string>
+
+This sets the ID string used in SM2 sign or verify operations. While verifying
+an SM2 signature, the ID string must be the same one when signing the data.
+Otherwise the verification will fail.
+
+=back
+
 =head1 EXAMPLES
 
 Sign some data using a private key:
@@ -337,6 +353,10 @@ Derive using the same algorithm, but read key from environment variable MYPASS:
 
  openssl pkeyutl -kdf scrypt -kdflen 16 -pkeyopt_passin pass:env:MYPASS \
     -pkeyopt hexsalt:aabbcc -pkeyopt N:16384 -pkeyopt r:8 -pkeyopt p:1
+
+Sign some data using an SM2 privated and a specific ID:
+
+ openssl pkeyutl -sign -in file -inkey sm2.key -out sig -pkeyopt sm2_id:someid
 
 =head1 SEE ALSO
 
