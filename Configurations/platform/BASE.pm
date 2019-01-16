@@ -27,6 +27,10 @@ sub dsoname     { return $_[1] } # Name of dynamic shared object (DSO)
 sub sharedname  { return __isshared($_[1]) ? $_[1] : undef } # Name of shared lib
 sub staticname  { return __base($_[1], '.a') } # Name of static lib
 
+# Convenience function to convert the shlib version to an acceptable part
+# of a file or directory name.
+sub shlib_version_as_filename { return $_[1] }
+
 # Convenience functions to convert the possible extension of an input file name
 sub bin         { return $_[0]->binname($_[1]) . $_[0]->binext() }
 sub dso         { return $_[0]->dsoname($_[1]) . $_[0]->dsoext() }
