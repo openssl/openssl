@@ -69,9 +69,6 @@ void OPENSSL_cpuid_setup(void) __attribute__ ((constructor));
 #   define OSSL_IMPLEMENT_GETAUXVAL
 #  endif
 # endif
-# ifndef OSSL_IMPLEMENT_GETAUXVAL
-static unsigned long (*getauxval) (unsigned long) = NULL;
-# endif
 
 /*
  * ARM puts the feature bits for Crypto Extensions in AT_HWCAP2, whereas
@@ -151,7 +148,8 @@ void OPENSSL_cpuid_setup(void)
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
     sigaction(SIGILL, &ill_act, &ill_oact);
 
-    if (getauxval != NULL) {
+# ifdef OSSL_IMPLEMENT_GETAUXVAL
+    {
         if (getauxval(HWCAP) & HWCAP_NEON) {
             unsigned long hwcap = getauxval(HWCAP_CE);
 
@@ -169,12 +167,14 @@ void OPENSSL_cpuid_setup(void)
             if (hwcap & HWCAP_CE_SHA256)
                 OPENSSL_armcap_P |= ARMV8_SHA256;
 
-# ifdef __aarch64__
+#  ifdef __aarch64__
             if (hwcap & HWCAP_CE_SHA512)
                 OPENSSL_armcap_P |= ARMV8_SHA512;
-# endif
+#  endif
         }
-    } else if (sigsetjmp(ill_jmp, 1) == 0) {
+    }
+# else
+    if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_neon_probe();
         OPENSSL_armcap_P |= ARMV7_NEON;
         if (sigsetjmp(ill_jmp, 1) == 0) {
@@ -192,13 +192,14 @@ void OPENSSL_cpuid_setup(void)
             _armv8_sha256_probe();
             OPENSSL_armcap_P |= ARMV8_SHA256;
         }
-# if defined(__aarch64__) && !defined(__APPLE__)
+#  if defined(__aarch64__) && !defined(__APPLE__)
         if (sigsetjmp(ill_jmp, 1) == 0) {
             _armv8_sha512_probe();
             OPENSSL_armcap_P |= ARMV8_SHA512;
         }
-# endif
+#  endif
     }
+# endif
     if (sigsetjmp(ill_jmp, 1) == 0) {
         _armv7_tick();
         OPENSSL_armcap_P |= ARMV7_TICK;

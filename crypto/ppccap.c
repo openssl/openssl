@@ -168,15 +168,12 @@ void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 
-# if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
-#  if __GLIBC_PREREQ(2, 16)
-#   include <sys/auxv.h>
-#   define OSSL_IMPLEMENT_GETAUXVAL
-#  endif
+#if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
+# if __GLIBC_PREREQ(2, 16)
+#  include <sys/auxv.h>
+#  define OSSL_IMPLEMENT_GETAUXVAL
 # endif
-# ifndef OSSL_IMPLEMENT_GETAUXVAL
-static unsigned long (*getauxval) (unsigned long) = NULL;
-# endif
+#endif
 
 /* I wish <sys/auxv.h> was universally available */
 #define HWCAP                   16      /* AT_HWCAP */
@@ -275,7 +272,8 @@ void OPENSSL_cpuid_setup(void)
     }
 #endif
 
-    if (getauxval != NULL) {
+#ifdef OSSL_IMPLEMENT_GETAUXVAL
+    {
         unsigned long hwcap = getauxval(HWCAP);
 
         if (hwcap & HWCAP_FPU) {
@@ -305,6 +303,7 @@ void OPENSSL_cpuid_setup(void)
 
         return;
     }
+#endif
 
     sigfillset(&all_masked);
     sigdelset(&all_masked, SIGILL);
