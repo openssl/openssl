@@ -92,5 +92,7 @@ void *openssl_fopen(const char *filename, const char *mode);
 # endif
 
 uint32_t OPENSSL_rdtsc(void);
+size_t OPENSSL_instrument_bus(unsigned int *, size_t);
+size_t OPENSSL_instrument_bus2(unsigned int *, size_t, size_t);
 
 #endif
