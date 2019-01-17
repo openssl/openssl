@@ -168,6 +168,45 @@ void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 
+long OPENSSL_rdtsc_mftb(void);
+long OPENSSL_rdtsc_mfspr268(void);
+
+uint32_t OPENSSL_rdtsc(void)
+{
+    if (OPENSSL_ppccap_P & PPC_MFTB)
+        return OPENSSL_rdtsc_mftb();
+    else if (OPENSSL_ppccap_P & PPC_MFSPR268)
+        return OPENSSL_rdtsc_mfspr268();
+    else
+        return 0;
+}
+
+size_t OPENSSL_instrument_bus_mftb(unsigned int *, size_t);
+size_t OPENSSL_instrument_bus_mfspr268(unsigned int *, size_t);
+
+size_t OPENSSL_instrument_bus(unsigned int *out, size_t cnt)
+{
+    if (OPENSSL_ppccap_P & PPC_MFTB)
+        return OPENSSL_instrument_bus_mftb(out, cnt);
+    else if (OPENSSL_ppccap_P & PPC_MFSPR268)
+        return OPENSSL_instrument_bus_mfspr268(out, cnt);
+    else
+        return 0;
+}
+
+size_t OPENSSL_instrument_bus2_mftb(unsigned int *, size_t, size_t);
+size_t OPENSSL_instrument_bus2_mfspr268(unsigned int *, size_t, size_t);
+
+size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
+{
+    if (OPENSSL_ppccap_P & PPC_MFTB)
+        return OPENSSL_instrument_bus2_mftb(out, cnt, max);
+    else if (OPENSSL_ppccap_P & PPC_MFSPR268)
+        return OPENSSL_instrument_bus2_mfspr268(out, cnt, max);
+    else
+        return 0;
+}
+
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 # if __GLIBC_PREREQ(2, 16)
 #  include <sys/auxv.h>
@@ -300,8 +339,6 @@ void OPENSSL_cpuid_setup(void)
         if (hwcap & HWCAP_ARCH_3_00) {
             OPENSSL_ppccap_P |= PPC_MADD300;
         }
-
-        return;
     }
 #endif
 
@@ -322,15 +359,16 @@ void OPENSSL_cpuid_setup(void)
     sigprocmask(SIG_SETMASK, &ill_act.sa_mask, &oset);
     sigaction(SIGILL, &ill_act, &ill_oact);
 
+#ifndef OSSL_IMPLEMENT_GETAUXVAL
     if (sigsetjmp(ill_jmp,1) == 0) {
         OPENSSL_fpu_probe();
         OPENSSL_ppccap_P |= PPC_FPU;
 
         if (sizeof(size_t) == 4) {
-#ifdef __linux
+# ifdef __linux
             struct utsname uts;
             if (uname(&uts) == 0 && strcmp(uts.machine, "ppc64") == 0)
-#endif
+# endif
                 if (sigsetjmp(ill_jmp, 1) == 0) {
                     OPENSSL_ppc64_probe();
                     OPENSSL_ppccap_P |= PPC_FPU64;
@@ -354,6 +392,15 @@ void OPENSSL_cpuid_setup(void)
     if (sigsetjmp(ill_jmp, 1) == 0) {
         OPENSSL_madd300_probe();
         OPENSSL_ppccap_P |= PPC_MADD300;
+    }
+#endif
+
+    if (sigsetjmp(ill_jmp, 1) == 0) {
+        OPENSSL_rdtsc_mftb();
+        OPENSSL_ppccap_P |= PPC_MFTB;
+    } else if (sigsetjmp(ill_jmp, 1) == 0) {
+        OPENSSL_rdtsc_mfspr268();
+        OPENSSL_ppccap_P |= PPC_MFSPR268;
     }
 
     sigaction(SIGILL, &ill_oact, NULL);
