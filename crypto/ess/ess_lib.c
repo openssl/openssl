@@ -158,23 +158,23 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
     if (!ASN1_OCTET_STRING_set(cid->hash, hash, hash_len))
         goto err;
 
-    if (issuer_needed) {
-        if ((cid->issuer_serial = ESS_ISSUER_SERIAL_new()) == NULL)
-            goto err;
-        if ((name = GENERAL_NAME_new()) == NULL)
-            goto err;
-        name->type = GEN_DIRNAME;
-        if ((name->d.dirn = X509_NAME_dup(X509_get_issuer_name(cert))) == NULL)
-            goto err;
-        if (!sk_GENERAL_NAME_push(cid->issuer_serial->issuer, name))
-            goto err;
-        name = NULL;            /* Ownership is lost. */
-        ASN1_INTEGER_free(cid->issuer_serial->serial);
-        cid->issuer_serial->serial =
-                ASN1_INTEGER_dup(X509_get_serialNumber(cert));
-        if (cid->issuer_serial->serial == NULL)
-            goto err;
-    }
+    if (!issuer_needed)
+        return cid;
+
+    if ((cid->issuer_serial = ESS_ISSUER_SERIAL_new()) == NULL)
+        goto err;
+    if ((name = GENERAL_NAME_new()) == NULL)
+        goto err;
+    name->type = GEN_DIRNAME;
+    if ((name->d.dirn = X509_NAME_dup(X509_get_issuer_name(cert))) == NULL)
+        goto err;
+    if (!sk_GENERAL_NAME_push(cid->issuer_serial->issuer, name))
+        goto err;
+    name = NULL;            /* Ownership is lost. */
+    ASN1_INTEGER_free(cid->issuer_serial->serial);
+    cid->issuer_serial->serial = ASN1_INTEGER_dup(X509_get_serialNumber(cert));
+    if (cid->issuer_serial->serial == NULL)
+        goto err;
 
     return cid;
  err:
