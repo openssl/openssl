@@ -41,7 +41,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
-          bio_callback_test \
+          bio_callback_test bio_memleak_test \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
           asn1_encode_test asn1_string_table_test \
@@ -291,6 +291,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=MAIN
   SOURCE[bio_callback_test]=bio_callback_test.c
   INCLUDE[bio_callback_test]=../include
   DEPEND[bio_callback_test]=../libcrypto libtestutil.a
+
+  SOURCE[bio_memleak_test]=bio_memleak_test.c
+  INCLUDE[bio_memleak_test]=../include
+  DEPEND[bio_memleak_test]=../libcrypto libtestutil.a
 
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include
