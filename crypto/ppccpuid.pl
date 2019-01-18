@@ -348,12 +348,12 @@ Loop4:
 	add	$tick,$tick,$diff
 	stwcx.	$tick,0,$out
 	stwx	$tick,0,$out
-	sub	$diff,$tick,$lasttick
 
 	addic.	$max,$max,-1
 	beq	Ldone4
 
 	mfspr	$tick,268
+	sub	$diff,$tick,$lasttick
 	mr	$lasttick,$tick
 	cmplw	7,$diff,$lastdiff
 	mr	$lastdiff,$diff
