@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -165,6 +165,40 @@ DEFINE_SPECIAL_STACK_OF_CONST(OPENSSL_CSTRING, char)
  */
 typedef void *OPENSSL_BLOCK;
 DEFINE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
+
+/*
+ * If called without higher optimization the Oracle Developer Studio compiler
+ * generates code for the defined (inline) functions above. This would later
+ * lead to the linker complaining about missing symbols when this header
+ * file is included but the resulting object is not linked against the
+ * Crypto library (openssl#6912).
+ */
+#ifdef __SUNPRO_C
+# pragma weak OPENSSL_sk_num
+# pragma weak OPENSSL_sk_value
+# pragma weak OPENSSL_sk_new
+# pragma weak OPENSSL_sk_new_null
+# pragma weak OPENSSL_sk_new_reserve
+# pragma weak OPENSSL_sk_reserve
+# pragma weak OPENSSL_sk_free
+# pragma weak OPENSSL_sk_zero
+# pragma weak OPENSSL_sk_delete
+# pragma weak OPENSSL_sk_delete_ptr
+# pragma weak OPENSSL_sk_push
+# pragma weak OPENSSL_sk_unshift
+# pragma weak OPENSSL_sk_pop
+# pragma weak OPENSSL_sk_shift
+# pragma weak OPENSSL_sk_pop_free
+# pragma weak OPENSSL_sk_insert
+# pragma weak OPENSSL_sk_set
+# pragma weak OPENSSL_sk_find
+# pragma weak OPENSSL_sk_find_ex
+# pragma weak OPENSSL_sk_sort
+# pragma weak OPENSSL_sk_is_sorted
+# pragma weak OPENSSL_sk_dup
+# pragma weak OPENSSL_sk_deep_copy
+# pragma weak OPENSSL_sk_set_cmp_func
+#endif /* __SUNPRO_C */
 
 # ifdef  __cplusplus
 }
