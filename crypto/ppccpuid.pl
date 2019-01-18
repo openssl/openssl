@@ -364,7 +364,7 @@ Loop4:
 
 	sub.	$cnt,$cnt,$tick		# conditional --$cnt
 	add	$out,$out,$tick		# conditional ++$out
-	bne	Loop2
+	bne	Loop4
 
 Ldone4:
 	srwi	$cnt,$cnt,2
