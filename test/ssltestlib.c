@@ -835,8 +835,12 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 /*
  * Create an SSL connection, but does not ready any post-handshake
  * NewSessionTicket messages.
+ * If |read| is set and we're using DTLS then we will attempt to SSL_read on
+ * the connection once we've completed one half of it, to ensure any retransmits
+ * get triggered.
  */
-int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
+int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
+                               int read)
 {
     int retc = -1, rets = -1, err, abortctr = 0;
     int clienterr = 0, servererr = 0;
@@ -874,11 +878,24 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
             return 0;
         if (clienterr && servererr)
             return 0;
-        if (isdtls) {
-            if (rets > 0 && retc <= 0)
-                DTLSv1_handle_timeout(serverssl);
-            if (retc > 0 && rets <= 0)
-                DTLSv1_handle_timeout(clientssl);
+        if (isdtls && read) {
+            unsigned char buf[20];
+
+            /* Trigger any retransmits that may be appropriate */
+            if (rets > 0 && retc <= 0) {
+                if (SSL_read(serverssl, buf, sizeof(buf)) > 0) {
+                    /* We don't expect this to succeed! */
+                    TEST_info("Unexpected SSL_read() success!");
+                    return 0;
+                }
+            }
+            if (retc > 0 && rets <= 0) {
+                if (SSL_read(clientssl, buf, sizeof(buf)) > 0) {
+                    /* We don't expect this to succeed! */
+                    TEST_info("Unexpected SSL_read() success!");
+                    return 0;
+                }
+            }
         }
         if (++abortctr == MAXLOOPS) {
             TEST_info("No progress made");
@@ -907,7 +924,7 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
     unsigned char buf;
     size_t readbytes;
 
-    if (!create_bare_ssl_connection(serverssl, clientssl, want))
+    if (!create_bare_ssl_connection(serverssl, clientssl, want, 1))
         return 0;
 
     /*
