@@ -168,8 +168,8 @@ void OPENSSL_altivec_probe(void);
 void OPENSSL_crypto207_probe(void);
 void OPENSSL_madd300_probe(void);
 
-uint32_t OPENSSL_rdtsc_mftb(void);
-uint32_t OPENSSL_rdtsc_mfspr268(void);
+long OPENSSL_rdtsc_mftb(void);
+long OPENSSL_rdtsc_mfspr268(void);
 
 uint32_t OPENSSL_rdtsc(void)
 {
