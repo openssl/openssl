@@ -136,6 +136,26 @@ struct ossl_param_st {
 # define OSSL_PARAM_OCTET_STRING_PTR                    \
     (OSSL_PARAM_OCTET_STRING|OSSL_PARAM_POINTER_FLAG)
 
+/*-
+ * Provider entry point
+ * --------------------
+ *
+ * This function is expected to be present in any dynamically loadable
+ * provider module.  By definition, if this function doesn't exist in a
+ * module, that module is not an OpenSSL provider module.
+ */
+/*-
+ * |provider|   pointer to opaque type OSSL_PROVIDER.  This can be used
+ *              together with some functions passed via |in| to query data.
+ * |in|         is the array of functions that the Core passes to the provider.
+ * |out|        will be the array of base functions that the provider passes
+ *              back to the Core.
+ */
+typedef int (ossl_provider_init_fn)(const OSSL_PROVIDER *provider,
+                                    const OSSL_DISPATCH *in,
+                                    const OSSL_DISPATCH **out);
+extern ossl_provider_init_fn OSSL_provider_init;
+
 # ifdef __cplusplus
 }
 # endif
