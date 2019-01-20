@@ -32,6 +32,7 @@ GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
+OSSL_PARAM                              datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype

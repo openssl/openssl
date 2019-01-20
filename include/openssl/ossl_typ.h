@@ -181,6 +181,11 @@ typedef struct ossl_store_search_st OSSL_STORE_SEARCH;
 
 typedef struct openssl_ctx_st OPENSSL_CTX;
 
+typedef struct ossl_dispatch_st OSSL_DISPATCH;
+typedef struct ossl_item_st OSSL_ITEM;
+typedef struct ossl_algorithm_st OSSL_ALGORITHM;
+typedef struct ossl_param_st OSSL_PARAM;
+
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L && \
     defined(INTMAX_MAX) && defined(UINTMAX_MAX)
 typedef intmax_t ossl_intmax_t;
