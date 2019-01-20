@@ -1,0 +1,418 @@
+/*
+ * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include <openssl/core.h>
+#include <openssl/core_numbers.h>
+#include <openssl/opensslv.h>
+#include "internal/cryptlib.h"
+#include "internal/thread_once.h"
+#include "internal/provider.h"
+#include "internal/refcount.h"
+
+/*-
+ * Provider Object structure
+ * =========================
+ */
+
+struct provider_store_st;        /* Forward declaration */
+
+struct ossl_provider_st {
+    /* Flag bits */
+    unsigned int flag_initialized:1;
+
+    /* OpenSSL library side data */
+    CRYPTO_REF_COUNT refcnt;
+#ifndef HAVE_ATOMICS
+    CRYPTO_RWLOCK refcnt_lock;   /* For the ref counter */
+#endif
+    char *name;
+    DSO *module;
+    OSSL_provider_init_fn *init_function;
+
+    /* Provider side functions */
+    OSSL_provider_teardown_fn *teardown;
+    OSSL_provider_get_param_types_fn *get_param_types;
+    OSSL_provider_get_params_fn *get_params;
+};
+DEFINE_STACK_OF(OSSL_PROVIDER)
+
+static int ossl_provider_cmp(const OSSL_PROVIDER * const *a,
+                             const OSSL_PROVIDER * const *b)
+{
+    return strcmp((*a)->name, (*b)->name);
+}
+
+/*-
+ * Provider Object store
+ * =====================
+ *
+ * The Provider Object store is a library context object, and therefore needs
+ * an index.
+ */
+
+struct provider_store_st {
+    STACK_OF(OSSL_PROVIDER) *providers;
+    CRYPTO_RWLOCK *lock;
+};
+static int provider_store_index = -1;
+
+static void provider_store_free(void *vstore)
+{
+    struct provider_store_st *store = vstore;
+
+    if (store == NULL)
+        return;
+    sk_OSSL_PROVIDER_pop_free(store->providers, ossl_provider_free);
+    CRYPTO_THREAD_lock_free(store->lock);
+    OPENSSL_free(store);
+}
+
+static void *provider_store_new(void)
+{
+    struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
+
+    if (store == NULL
+        || (store->providers = sk_OSSL_PROVIDER_new(ossl_provider_cmp)) == NULL
+        || (store->lock = CRYPTO_THREAD_lock_new()) == NULL) {
+        provider_store_free(store);
+        store = NULL;
+    }
+    return store;
+}
+
+static const OPENSSL_CTX_METHOD provider_store_method = {
+    provider_store_new,
+    provider_store_free,
+};
+
+static CRYPTO_ONCE provider_store_init_flag = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(do_provider_store_init)
+{
+    return OPENSSL_init_crypto(0, NULL)
+        && (provider_store_index =
+            openssl_ctx_new_index(&provider_store_method)) != -1;
+}
+
+
+static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
+{
+    struct provider_store_st *store = NULL;
+
+    if (!RUN_ONCE(&provider_store_init_flag, do_provider_store_init))
+        return NULL;
+
+    store = openssl_ctx_get_data(libctx, provider_store_index);
+    if (store == NULL)
+        CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
+    return store;
+}
+
+/*-
+ * Provider Object methods
+ * =======================
+ */
+
+int ossl_provider_upref(OSSL_PROVIDER *prov)
+{
+    int ref = 0;
+
+#ifndef HAVE_ATOMICS
+    CRYPTO_UP_REF(&prov->refcnt, &ref, prov->refcnt_lock);
+#else
+    CRYPTO_UP_REF(&prov->refcnt, &ref, NULL);
+#endif
+    return ref;
+}
+
+/* Finder, constructor and destructor */
+OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
+{
+    struct provider_store_st *store = NULL;
+    OSSL_PROVIDER *prov = NULL;
+
+    if ((store = get_provider_store(libctx)) != NULL) {
+        OSSL_PROVIDER tmpl = { 0, };
+        int i;
+
+        tmpl.name = (char *)name;
+        CRYPTO_THREAD_write_lock(store->lock);
+        if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) == -1
+            || (prov = sk_OSSL_PROVIDER_value(store->providers, i)) == NULL
+            || !ossl_provider_upref(prov))
+            prov = NULL;
+        CRYPTO_THREAD_unlock(store->lock);
+    }
+
+    return prov;
+}
+
+OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
+                                 OSSL_provider_init_fn *init_function)
+{
+    struct provider_store_st *store = NULL;
+    OSSL_PROVIDER *prov = NULL;
+
+    if ((store = get_provider_store(libctx)) == NULL)
+        return NULL;
+
+    if ((prov = ossl_provider_find(libctx, name)) != NULL) { /* refcount +1 */
+        ossl_provider_free(prov); /* refcount -1 */
+        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW,
+                  CRYPTO_R_PROVIDER_ALREADY_EXISTS);
+        ERR_add_error_data(2, "name=", name);
+        return NULL;
+    }
+
+    if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
+        || !ossl_provider_upref(prov) /* +1 One reference to be returned */
+        || (prov->name = OPENSSL_strdup(name)) == NULL) {
+        ossl_provider_free(prov);
+        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+
+    prov->init_function = init_function;
+
+    CRYPTO_THREAD_write_lock(store->lock);
+    if (!ossl_provider_upref(prov)) { /* +1 One reference for the store */
+        ossl_provider_free(prov); /* -1 Reference that was to be returned */
+        prov = NULL;
+    } else if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
+        ossl_provider_free(prov); /* -1 Store reference */
+        ossl_provider_free(prov); /* -1 Reference that was to be returned */
+        prov = NULL;
+    }
+    CRYPTO_THREAD_unlock(store->lock);
+
+    if (prov == NULL)
+        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_NEW, ERR_R_MALLOC_FAILURE);
+
+    /*
+     * At this point, the provider is only partially "loaded".  To be
+     * fully "loaded", ossl_provider_activate() must also be called.
+     */
+
+    return prov;
+}
+
+void ossl_provider_free(OSSL_PROVIDER *prov)
+{
+    if (prov != NULL) {
+        int ref = 0;
+
+#ifndef HAVE_ATOMICS
+        CRYPTO_DOWN_REF(&prov->refcnt, &ref, provider_lock);
+#else
+        CRYPTO_DOWN_REF(&prov->refcnt, &ref, NULL);
+#endif
+
+        /*
+         * When the refcount drops down to one, there is only one reference,
+         * the store.
+         * When that happens, the provider is inactivated.
+         */
+        if (ref == 1 && prov->flag_initialized) {
+            if (prov->teardown != NULL)
+                prov->teardown();
+            prov->flag_initialized = 0;
+        }
+
+        /*
+         * When the refcount drops to zero, it has been taken out of
+         * the store.  All we have to do here is clean it out.
+         */
+        if (ref == 0) {
+            DSO_free(prov->module);
+            OPENSSL_free(prov->name);
+            OPENSSL_free(prov);
+        }
+    }
+}
+
+/*
+ * Provider activation.
+ *
+ * What "activation" means depends on the provider form; for built in
+ * providers (in the library or the application alike), the provider
+ * can already be considered to be loaded, all that's needed is to
+ * initialize it.  However, for dynamically loadable provider modules,
+ * we must first load that module.
+ *
+ * Built in modules are distinguished from dynamically loaded modules
+ * with an already assigned init function.
+ */
+static const OSSL_DISPATCH *core_dispatch; /* Define further down */
+
+int ossl_provider_activate(OSSL_PROVIDER *prov)
+{
+    const OSSL_DISPATCH *provider_dispatch = NULL;
+
+    if (prov->flag_initialized)
+        return 1;
+
+    /*
+     * If the init function isn't set, it indicates that this provider is
+     * a loadable module.
+     */
+    if (prov->init_function == NULL) {
+        if (prov->module == NULL) {
+            char *platform_module_name = NULL;
+            char *module_path = NULL;
+            const char *load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+
+            if ((prov->module = DSO_new()) == NULL) {
+                /* DSO_new() generates an error already */
+                return 0;
+            }
+
+            if (load_dir == NULL)
+                load_dir = MODULESDIR;
+
+            DSO_ctrl(prov->module, DSO_CTRL_SET_FLAGS,
+                     DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
+            if ((platform_module_name =
+                 DSO_convert_filename(prov->module, prov->name)) == NULL
+                || (module_path =
+                    DSO_merge(prov->module, platform_module_name,
+                              load_dir)) == NULL
+                || DSO_load(prov->module, module_path, NULL,
+                            DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == NULL) {
+                DSO_free(prov->module);
+                prov->module = NULL;
+            }
+
+            OPENSSL_free(platform_module_name);
+            OPENSSL_free(module_path);
+        }
+
+        if (prov->module != NULL)
+            prov->init_function = (OSSL_provider_init_fn *)
+                DSO_bind_func(prov->module, "OSSL_provider_init");
+    }
+
+    if (prov->init_function == NULL
+        || !prov->init_function(prov, core_dispatch, &provider_dispatch)) {
+        CRYPTOerr(CRYPTO_F_OSSL_PROVIDER_ACTIVATE, ERR_R_INIT_FAIL);
+        ERR_add_error_data(2, "name=", prov->name);
+        DSO_free(prov->module);
+        prov->module = NULL;
+        return 0;
+    }
+
+    for (; provider_dispatch->function_id != 0; provider_dispatch++) {
+        switch (provider_dispatch->function_id) {
+        case OSSL_FUNC_PROVIDER_TEARDOWN:
+            prov->teardown =
+                OSSL_get_provider_teardown(provider_dispatch);
+            break;
+        case OSSL_FUNC_PROVIDER_GET_PARAM_TYPES:
+            prov->get_param_types =
+                OSSL_get_provider_get_param_types(provider_dispatch);
+            break;
+        case OSSL_FUNC_PROVIDER_GET_PARAMS:
+            prov->get_params =
+                OSSL_get_provider_get_params(provider_dispatch);
+            break;
+        }
+    }
+
+    /* With this flag set, this provider has become fully "loaded". */
+    prov->flag_initialized = 1;
+
+    return 1;
+}
+
+/* Getters of Provider Object data */
+const char *ossl_provider_name(OSSL_PROVIDER *prov)
+{
+    return prov->name;
+}
+
+const DSO *ossl_provider_dso(OSSL_PROVIDER *prov)
+{
+    return prov->module;
+}
+
+const char *ossl_provider_module_name(OSSL_PROVIDER *prov)
+{
+    return DSO_get_filename(prov->module);
+}
+
+const char *ossl_provider_module_path(OSSL_PROVIDER *prov)
+{
+    /* FIXME: Ensure it's a full path */
+    return DSO_get_filename(prov->module);
+}
+
+/* Wrappers around calls to the provider */
+void ossl_provider_teardown(const OSSL_PROVIDER *prov)
+{
+    if (prov->teardown != NULL)
+        prov->teardown();
+}
+
+const OSSL_ITEM *ossl_provider_get_param_types(const OSSL_PROVIDER *prov)
+{
+    return prov->get_param_types == NULL ? NULL : prov->get_param_types(prov);
+}
+
+int ossl_provider_get_params(const OSSL_PROVIDER *prov,
+                             const OSSL_PARAM params[])
+{
+    return prov->get_params == NULL ? 0 : prov->get_params(prov, params);
+}
+
+/*-
+ * Core functions for the provider
+ * ===============================
+ *
+ * This is the set of functions that the core makes available to the provider
+ */
+
+/*
+ * This returns a list of Provider Object parameters with their types, for
+ * discovery.  We do not expect that many providers will use this, but one
+ * never knows.
+ */
+static const OSSL_ITEM param_types[] = {
+    { OSSL_PARAM_UTF8_STRING_PTR, "openssl-version" },
+    { OSSL_PARAM_UTF8_STRING_PTR, "provider-name" },
+    { 0, NULL }
+};
+
+static const OSSL_ITEM *core_get_param_types(const OSSL_PROVIDER *prov)
+{
+    return param_types;
+}
+
+static int core_get_params(const OSSL_PROVIDER *prov, const OSSL_PARAM params[])
+{
+    int i;
+
+    for (i = 0; params[i].key != NULL; i++) {
+        if (strcmp(params[i].key, "openssl-version") == 0) {
+            *(void **)params[i].buffer = OPENSSL_VERSION_STR;
+            if (params[i].return_size)
+                *params[i].return_size = sizeof(OPENSSL_VERSION_STR);
+        } else if (strcmp(params[i].key, "provider-name") == 0) {
+            *(void **)params[i].buffer = prov->name;
+            if (params[i].return_size)
+                *params[i].return_size = strlen(prov->name) + 1;
+        }
+    }
+
+    return 1;
+}
+
+static const OSSL_DISPATCH core_dispatch_[] = {
+    { OSSL_FUNC_CORE_GET_PARAM_TYPES, (void (*)(void))core_get_param_types },
+    { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
+    { 0, NULL }
+};
+static const OSSL_DISPATCH *core_dispatch = core_dispatch_;

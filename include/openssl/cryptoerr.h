@@ -34,6 +34,7 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_CRYPTO_SET_EX_DATA                      102
 # define CRYPTO_F_FIPS_MODE_SET                           109
 # define CRYPTO_F_GET_AND_LOCK                            113
+# define CRYPTO_F_GET_PROVIDER_STORE                      133
 # define CRYPTO_F_OPENSSL_ATEXIT                          114
 # define CRYPTO_F_OPENSSL_BUF2HEXSTR                      117
 # define CRYPTO_F_OPENSSL_FOPEN                           119
@@ -42,6 +43,8 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_LH_NEW                          126
 # define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
 # define CRYPTO_F_OPENSSL_SK_DUP                          128
+# define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  130
+# define CRYPTO_F_OSSL_PROVIDER_NEW                       131
 # define CRYPTO_F_PKEY_HMAC_INIT                          123
 # define CRYPTO_F_PKEY_POLY1305_INIT                      124
 # define CRYPTO_F_PKEY_SIPHASH_INIT                       125
@@ -53,5 +56,6 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
 # define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
+# define CRYPTO_R_PROVIDER_ALREADY_EXISTS                 104
 
 #endif

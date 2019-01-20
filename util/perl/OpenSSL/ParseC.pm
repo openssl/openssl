@@ -578,6 +578,15 @@ my @chandlers = (
     { regexp   => qr/extern "C" (.*;)/,
       massager => sub { return ($1); },
     },
+    # any other extern is just ignored
+    { regexp   => qr/^\s*                       # Any spaces before
+                     extern                     # The keyword we look for
+                     \b                         # word to non-word boundary
+                     .*                         # Anything after
+                     ;
+                    /x,
+      massager => sub { return (); },
+    },
     # union, struct and enum definitions
     # Because this one might appear a little everywhere within type
     # definitions, we take it out and replace it with just
