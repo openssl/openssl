@@ -152,19 +152,19 @@ extern "C" {
         ASN1_SEQUENCE_cb(tname, cb)
 
 # define ASN1_SEQUENCE_cb(tname, cb) \
-        static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
+        static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, NULL, 0}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_BROKEN_SEQUENCE(tname) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, 0, 0}; \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, NULL, NULL, 0}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_SEQUENCE_ref(tname, cb) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, 0}; \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, NULL, 0}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_SEQUENCE_enc(tname, enc, cb) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_ENCODING, 0, 0, cb, offsetof(tname, enc)}; \
+        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_ENCODING, 0, 0, cb, NULL, offsetof(tname, enc)}; \
         ASN1_SEQUENCE(tname)
 
 # define ASN1_NDEF_SEQUENCE_END(tname) \
@@ -261,7 +261,7 @@ extern "C" {
         static const ASN1_TEMPLATE tname##_ch_tt[]
 
 # define ASN1_CHOICE_cb(tname, cb) \
-        static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
+        static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, NULL, 0}; \
         ASN1_CHOICE(tname)
 
 # define ASN1_CHOICE_END(stname) ASN1_CHOICE_END_name(stname, stname)
@@ -715,6 +715,8 @@ typedef struct ASN1_PRIMITIVE_FUNCS_st {
 
 typedef int ASN1_aux_cb(int operation, ASN1_VALUE **in, const ASN1_ITEM *it,
                         void *exarg);
+typedef int ASN1_aux_const_cb(int operation, const ASN1_VALUE **in, const ASN1_ITEM *it,
+                        void *exarg);
 
 typedef struct ASN1_AUX_st {
     void *app_data;
@@ -722,6 +724,7 @@ typedef struct ASN1_AUX_st {
     int ref_offset;             /* Offset of reference value */
     int ref_lock;               /* Lock type to use */
     ASN1_aux_cb *asn1_cb;
+    ASN1_aux_const_cb *asn1_const_cb;
     int enc_offset;             /* Offset of ASN1_ENCODING structure */
 } ASN1_AUX;
 

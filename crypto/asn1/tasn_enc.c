@@ -87,13 +87,13 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     int i, seqcontlen, seqlen, ndef = 1;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux = it->funcs;
-    ASN1_aux_cb *asn1_cb = 0;
+    ASN1_aux_const_cb *asn1_cb = 0;
 
     if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
         return 0;
 
     if (aux && aux->asn1_cb)
-        asn1_cb = aux->asn1_cb;
+        asn1_cb = aux->asn1_const_cb;
 
     switch (it->itype) {
 
@@ -107,8 +107,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         return asn1_i2d_ex_primitive(pval, out, it, -1, aclass);
 
     case ASN1_ITYPE_CHOICE:
-        /* ASN1_OP_I2D_PRE appears unused */
-        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, (ASN1_VALUE **)pval, it, NULL))
+        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it, NULL))
             return 0;
         i = asn1_get_choice_selector_const(pval, it);
         if ((i >= 0) && (i < it->tcount)) {
@@ -119,8 +118,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             return asn1_template_ex_i2d(pchval, out, chtt, -1, aclass);
         }
         /* Fixme: error condition if selector out of range */
-        /* ASN1_OP_I2D_POST appears unused */
-        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_POST, (ASN1_VALUE **)pval, it, NULL))
+        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_POST, pval, it, NULL))
             return 0;
         break;
 
@@ -152,8 +150,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             aclass = (aclass & ~ASN1_TFLG_TAG_CLASS)
                 | V_ASN1_UNIVERSAL;
         }
-        /* ASN1_OP_I2D_PRE appears unused */
-        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, (ASN1_VALUE **)pval, it, NULL))
+        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_PRE, pval, it, NULL))
             return 0;
         /* First work out sequence content length */
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
@@ -187,8 +184,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         }
         if (ndef == 2)
             ASN1_put_eoc(out);
-        /* ASN1_OP_I2D_POST appears unused */
-        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_POST, (ASN1_VALUE **)pval, it, NULL))
+        if (asn1_cb && !asn1_cb(ASN1_OP_I2D_POST, pval, it, NULL))
             return 0;
         return seqlen;
 
