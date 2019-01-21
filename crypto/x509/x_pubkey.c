@@ -203,12 +203,19 @@ EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
 int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 {
     X509_PUBKEY *xpk = NULL;
-    int ret;
-    if (!a)
+    int ret = -1;
+
+    if (a == NULL)
         return 0;
-    if (!X509_PUBKEY_set(&xpk, (EVP_PKEY *)a)) /* up_ref() will be undone */
+    if ((xpk = X509_PUBKEY_new()) == NULL)
         return -1;
+    if (a->ameth != NULL && a->ameth->pub_encode != NULL
+        && !a->ameth->pub_encode(xpk, a))
+        goto error;
+    xpk->pkey = (EVP_PKEY *)a;
     ret = i2d_X509_PUBKEY(xpk, pp);
+    xpk->pkey = NULL;
+ error:
     X509_PUBKEY_free(xpk);
     return ret;
 }
@@ -249,8 +256,9 @@ int i2d_RSA_PUBKEY(const RSA *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_RSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_RSA(pktmp, (RSA *)a); /* up_ref() will be undone */
+    (void)EVP_PKEY_assign_RSA(pktmp, (RSA *)a);
     ret = i2d_PUBKEY(pktmp, pp);
+    pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
 }
@@ -289,8 +297,9 @@ int i2d_DSA_PUBKEY(const DSA *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_DSA_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_DSA(pktmp, (DSA *)a); /* up_ref() will be undone */
+    (void)EVP_PKEY_assign_DSA(pktmp, (DSA *)a);
     ret = i2d_PUBKEY(pktmp, pp);
+    pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
 }
@@ -328,8 +337,9 @@ int i2d_EC_PUBKEY(const EC_KEY *a, unsigned char **pp)
         ASN1err(ASN1_F_I2D_EC_PUBKEY, ERR_R_MALLOC_FAILURE);
         return -1;
     }
-    EVP_PKEY_set1_EC_KEY(pktmp, (EC_KEY *)a); /* up_ref() will be undone */
+    (void)EVP_PKEY_assign_EC_KEY(pktmp, (EC_KEY *)a);
     ret = i2d_PUBKEY(pktmp, pp);
+    pktmp->pkey.ptr = NULL;
     EVP_PKEY_free(pktmp);
     return ret;
 }
