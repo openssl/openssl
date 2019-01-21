@@ -29,8 +29,8 @@ static ossl_inline void ossl_sleep(unsigned int millis)
 {
 # ifdef OPENSSL_SYS_VXWORKS
     struct timespec ts;
-    ts.tv_sec = (long int) (millis / 1000000);
-    ts.tv_nsec = (long int) (millis % 1000000) * 1000ul;
+    ts.tv_sec = (long int) (millis / 1000);
+    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
     nanosleep(&ts, NULL);
 # else
     usleep(millis * 1000);
