@@ -57,6 +57,7 @@ ASN1_SEQUENCE_cb(X509_PUBKEY, pubkey_cb) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
 
+/* TODO should better be called X509_PUBKEY_set1 */
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 {
     X509_PUBKEY *pk = NULL;
@@ -67,7 +68,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     if ((pk = X509_PUBKEY_new()) == NULL)
         goto error;
 
-    if (pkey->ameth) {
+    if (pkey != NULL && pkey->ameth) {
         if (pkey->ameth->pub_encode) {
             if (!pkey->ameth->pub_encode(pk, pkey)) {
                 X509err(X509_F_X509_PUBKEY_SET,
@@ -86,8 +87,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
     X509_PUBKEY_free(*x);
     *x = pk;
     pk->pkey = pkey;
-    EVP_PKEY_up_ref(pkey);
-    return 1;
+    return EVP_PKEY_up_ref(pkey);
 
  error:
     X509_PUBKEY_free(pk);
