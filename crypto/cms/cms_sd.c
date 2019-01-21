@@ -332,6 +332,27 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 !CMS_SignerInfo_sign(si))
                 goto err;
         }
+        if (flags & CMS_CADES) {
+            ESS_SIGNING_CERT *sc = NULL;
+            ESS_SIGNING_CERT_V2 *sc2 = NULL;
+            int add_sc;
+
+            if (md == EVP_sha1() || md == NULL) {
+                if ((sc = ESS_SIGNING_CERT_new_init(signer,
+                                                    NULL, 1)) == NULL)
+                    goto err;
+                add_sc = CMS_add1_signing_cert(si, sc);
+                ESS_SIGNING_CERT_free(sc);
+            } else {
+                if ((sc2 = ESS_SIGNING_CERT_V2_new_init(md, signer,
+                                                        NULL, 1)) == NULL)
+                    goto err;
+                add_sc = CMS_add1_signing_cert_v2(si, sc2);
+                ESS_SIGNING_CERT_V2_free(sc2);
+            }
+            if (!add_sc)
+                goto err;
+        }
     }
 
     if (!(flags & CMS_NOCERTS)) {

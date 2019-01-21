@@ -944,27 +944,6 @@ int cms_main(int argc, char **argv)
             si = CMS_add1_signer(cms, signer, key, sign_md, tflags);
             if (si == NULL)
                 goto end;
-            if (flags & CMS_CADES) {
-                ESS_SIGNING_CERT *sc = NULL;
-                ESS_SIGNING_CERT_V2 *sc2 = NULL;
-                int add_sc;
-
-                if (sign_md == EVP_sha1() || sign_md == NULL) {
-                    if ((sc = ESS_SIGNING_CERT_new_init(signer,
-                                                        NULL, 1)) == NULL)
-                        goto end;
-                    add_sc = CMS_add1_signing_cert(si, sc);
-                    ESS_SIGNING_CERT_free(sc);
-                } else {
-                    if ((sc2 = ESS_SIGNING_CERT_V2_new_init(sign_md, signer,
-                                                            NULL, 1)) == NULL)
-                        goto end;
-                    add_sc = CMS_add1_signing_cert_v2(si, sc2);
-                    ESS_SIGNING_CERT_V2_free(sc2);
-                }
-                if (!add_sc)
-                    goto end;
-            }
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx;
                 pctx = CMS_SignerInfo_get0_pkey_ctx(si);
