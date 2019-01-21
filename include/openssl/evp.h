@@ -410,31 +410,30 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 
 # ifndef OPENSSL_NO_RSA
 #  define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
-                                        (char *)(rsa))
+                                        (rsa))
 # endif
 
 # ifndef OPENSSL_NO_DSA
 #  define EVP_PKEY_assign_DSA(pkey,dsa) EVP_PKEY_assign((pkey),EVP_PKEY_DSA,\
-                                        (char *)(dsa))
+                                        (dsa))
 # endif
 
 # ifndef OPENSSL_NO_DH
-#  define EVP_PKEY_assign_DH(pkey,dh) EVP_PKEY_assign((pkey),EVP_PKEY_DH,\
-                                        (char *)(dh))
+#  define EVP_PKEY_assign_DH(pkey,dh) EVP_PKEY_assign((pkey),EVP_PKEY_DH,(dh))
 # endif
 
 # ifndef OPENSSL_NO_EC
 #  define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
-                                        (char *)(eckey))
+                                        (eckey))
 # endif
 # ifndef OPENSSL_NO_SIPHASH
-#  define EVP_PKEY_assign_SIPHASH(pkey,shkey) EVP_PKEY_assign((pkey),EVP_PKEY_SIPHASH,\
-                                        (char *)(shkey))
+#  define EVP_PKEY_assign_SIPHASH(pkey,shkey) EVP_PKEY_assign((pkey),\
+                                        EVP_PKEY_SIPHASH,(shkey))
 # endif
 
 # ifndef OPENSSL_NO_POLY1305
-#  define EVP_PKEY_assign_POLY1305(pkey,polykey) EVP_PKEY_assign((pkey),EVP_PKEY_POLY1305,\
-                                        (char *)(polykey))
+#  define EVP_PKEY_assign_POLY1305(pkey,polykey) EVP_PKEY_assign((pkey),\
+                                        EVP_PKEY_POLY1305,(polykey))
 # endif
 
 /* Add some extra combinations */
