@@ -531,9 +531,9 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   DEPEND[asn1_time_test]=../libcrypto libtestutil.a
 
   # We disable this test completely in a shared build because it deliberately
-  # redefines some internal libssl symbols. This doesn't work in a non-shared
-  # build
-  IF[{- !$disabled{shared} -}]
+  # redefines some internal libssl symbols. That's not possible to do in a
+  # shared build
+  IF[{- $disabled{shared} -}]
     PROGRAMS_NO_INST=tls13secretstest
     SOURCE[tls13secretstest]=tls13secretstest.c
     SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../ssl/packet.c
