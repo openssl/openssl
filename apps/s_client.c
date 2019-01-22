@@ -2360,9 +2360,11 @@ int s_client_main(int argc, char **argv)
                 if (proxypass != NULL)
                     l += strlen(proxypass);
                 proxyauth = app_malloc(l + 2, "Proxy auth string");
-                snprintf(proxyauth, l + 2, "%s:%s", proxyuser, (proxypass != NULL) ? proxypass : "");
+                BIO_snprintf(proxyauth, l + 2, "%s:%s", proxyuser,
+                             (proxypass != NULL) ? proxypass : "");
                 proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
-                BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n", proxyauthenc); 
+                BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n",
+                           proxyauthenc);
                 OPENSSL_clear_free(proxyauth, strlen(proxyauth));
                 OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
             }
