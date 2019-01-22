@@ -52,18 +52,6 @@
      map { $replace{$_} // $_; } @newlist;
  }
 
- # is_installed checks if a given file will be installed (i.e. they are
- # not defined _NO_INST in build.info)
- sub is_installed {
-     my $product = shift;
-     if (grep { $product eq $_ }
-         map { (@{$unified_info{install}->{$_}}) }
-         keys %{$unified_info{install}}) {
-         return 1;
-     }
-     return 0;
- }
-
  # dogenerate is responsible for producing all the recipes that build
  # generated source files.  It recurses in case a dependency is also a
  # generated source file.
@@ -132,14 +120,14 @@
          $OUT .= $obj2shlib->(lib => $lib,
                               attrs => $unified_info{attributes}->{$lib},
                               objs => $unified_info{shared_sources}->{$lib},
-                              deps => [ reducedepends(resolvedepends($lib)) ],
-                              installed => is_installed($lib));
+                              deps => [ reducedepends(resolvedepends($lib)) ]);
          foreach ((@{$unified_info{shared_sources}->{$lib}},
                    @{$unified_info{sources}->{$lib}})) {
              # If this is somehow a compiled object, take care of it that way
              # Otherwise, it might simply be generated
              if (defined $unified_info{sources}->{$_}) {
-                 doobj($_, $lib, intent => "shlib", installed => is_installed($lib));
+                 doobj($_, $lib, intent => "shlib",
+                       attrs => $unified_info{attributes}->{$lib});
              } else {
                  dogenerate($_, undef, undef, intent => "lib");
              }
@@ -149,7 +137,8 @@
                      attrs => $unified_info{attributes}->{$lib},
                      objs => [ @{$unified_info{sources}->{$lib}} ]);
      foreach (@{$unified_info{sources}->{$lib}}) {
-         doobj($_, $lib, intent => "lib", installed => is_installed($lib));
+         doobj($_, $lib, intent => "lib",
+               attrs => $unified_info{attributes}->{$lib});
      }
      $cache{$lib} = 1;
  }
@@ -163,13 +152,13 @@
      $OUT .= obj2dso(lib => $lib,
                      attrs => $unified_info{attributes}->{$lib},
                      objs => $unified_info{shared_sources}->{$lib},
-                     deps => [ resolvedepends($lib) ],
-                     installed => is_installed($lib));
+                     deps => [ resolvedepends($lib) ]);
      foreach (@{$unified_info{shared_sources}->{$lib}}) {
          # If this is somehow a compiled object, take care of it that way
          # Otherwise, it might simply be generated
          if (defined $unified_info{sources}->{$_}) {
-             doobj($_, $lib, intent => "dso", installed => is_installed($lib));
+             doobj($_, $lib, intent => "dso",
+                   attrs => $unified_info{attributes}->{$lib});
          } else {
              dogenerate($_, undef, $lib, intent => "dso");
          }
@@ -186,10 +175,10 @@
      $OUT .= obj2bin(bin => $bin,
                      attrs => $unified_info{attributes}->{$bin},
                      objs => [ @{$unified_info{sources}->{$bin}} ],
-                     deps => $deps,
-                     installed => is_installed($bin));
+                     deps => $deps);
      foreach (@{$unified_info{sources}->{$bin}}) {
-         doobj($_, $bin, intent => "bin", installed => is_installed($bin));
+         doobj($_, $bin, intent => "bin",
+               attrs => $unified_info{attributes}->{$bin});
      }
      $cache{$bin} = 1;
  }
@@ -201,8 +190,7 @@
      return "" if $cache{$script};
      $OUT .= in2script(script => $script,
                        attrs => $unified_info{attributes}->{$script},
-                       sources => $unified_info{sources}->{$script},
-                       installed => is_installed($script));
+                       sources => $unified_info{sources}->{$script});
      $cache{$script} = 1;
  }
 

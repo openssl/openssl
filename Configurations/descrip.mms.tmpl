@@ -877,16 +877,16 @@ EOF
       }
 
       my $cflags;
-      if ($args{installed}) {
-          $cflags = { shlib => '$(LIB_CFLAGS)',
-                      lib => '$(LIB_CFLAGS)',
-                      dso => '$(DSO_CFLAGS)',
-                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
-      } else {
+      if ($args{attrs}->{noinst}) {
           $cflags = { shlib => '$(NO_INST_LIB_CFLAGS)',
                       lib => '$(NO_INST_LIB_CFLAGS)',
                       dso => '$(NO_INST_DSO_CFLAGS)',
                       bin => '$(NO_INST_BIN_CFLAGS)' } -> {$args{intent}};
+      } else {
+          $cflags = { shlib => '$(LIB_CFLAGS)',
+                      lib => '$(LIB_CFLAGS)',
+                      dso => '$(DSO_CFLAGS)',
+                      bin => '$(BIN_CFLAGS)' } -> {$args{intent}};
       }
       $cflags .= { shlib => '$(LIB_CPPFLAGS)',
 		   lib => '$(LIB_CPPFLAGS)',
