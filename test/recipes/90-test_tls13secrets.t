@@ -13,7 +13,7 @@ my $test_name = "tls13secrets";
 setup($test_name);
 
 plan skip_all => "$test_name is not supported in this build"
-    if disabled("tls1_3") || disabled("shared");
+    if disabled("tls1_3") || !disabled("shared");
 
 plan tests => 1;
 
