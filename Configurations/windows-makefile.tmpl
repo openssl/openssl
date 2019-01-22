@@ -576,6 +576,7 @@ $res: $deps
 EOF
      }
      my $obj = platform->obj($args{obj});
+     my $dep = platform->dep($args{obj});
      if ($srcs[0] =~ /\.asm$/) {
          return <<"EOF";
 $obj: $deps
