@@ -485,7 +485,7 @@ static int sh_init(size_t size, int minsize)
     if (mlock(sh.arena, sh.arena_size) < 0)
         ret = 2;
 #endif
-#ifdef MADV_DONTDUMP
+#if defined(MADV_DONTDUMP) && !defined(OPENSSL_NO_MADVISE)
     if (madvise(sh.arena, sh.arena_size, MADV_DONTDUMP) < 0)
         ret = 2;
 #endif
