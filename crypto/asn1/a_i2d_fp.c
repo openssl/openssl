@@ -31,7 +31,7 @@ int ASN1_i2d_fp(i2d_of_void *i2d, FILE *out, const void *x)
 }
 # endif
 
-int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const unsigned char *x)
+int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x)
 {
     char *b;
     unsigned char *p;

@@ -748,7 +748,7 @@ void *ASN1_d2i_bio(void *(*xnew) (void), d2i_of_void *d2i, BIO *in, void **x);
                           CHECKED_PPTR_OF(type, x)))
 
 void *ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x);
-int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const unsigned char *x);
+int ASN1_i2d_bio(i2d_of_void *i2d, BIO *out, const void *x);
 
 #  define ASN1_i2d_bio_of(type,i2d,out,x) \
     (ASN1_i2d_bio(CHECKED_I2D_OF(type, i2d), \
