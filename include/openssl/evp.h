@@ -76,7 +76,7 @@ extern "C" {
 
 # ifndef EVP_MD
 EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
-DECLARE_ASN1_DUP_FUNCTION_name(EVP_MD, EVP_MD_meth)
+EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
 void EVP_MD_meth_free(EVP_MD *md);
 
 int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
@@ -185,7 +185,7 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 /* NOTE: 0x0400 is reserved for internal usage in evp_int.h */
 
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
-DECLARE_ASN1_DUP_FUNCTION_name(EVP_CIPHER, EVP_CIPHER_meth)
+EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
 
 int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
@@ -1394,7 +1394,7 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx);
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
-DECLARE_ASN1_DUP_FUNCTION(EVP_PKEY_CTX)
+EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *ctx);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,

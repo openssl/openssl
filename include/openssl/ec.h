@@ -852,7 +852,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dst, const EC_KEY *src);
  *  \param  src  the source EC_KEY object
  *  \return newly created EC_KEY object or NULL if an error occurred.
  */
-DECLARE_ASN1_DUP_FUNCTION(EC_KEY)
+EC_KEY *EC_KEY_dup(const EC_KEY *src);
 
 /** Increases the internal reference count of a EC_KEY object.
  *  \param  key  EC_KEY object
