@@ -273,6 +273,8 @@ my $mtvrwz	= sub {
     my ($f, $vrt, $ra) = @_;
     "	.long	".sprintf "0x%X",(31<<26)|($vrt<<21)|($ra<<16)|(243<<1)|1;
 };
+my $lvwzx_u	= sub { vsxmem_op(@_, 12); };	# lxsiwzx
+my $stvwx_u	= sub { vsxmem_op(@_, 140); };	# stxsiwx
 
 # PowerISA 3.0 stuff
 my $maddhdu	= sub { vfour(@_,49); };
