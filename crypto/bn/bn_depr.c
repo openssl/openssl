@@ -40,7 +40,7 @@ BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
         goto err;
 
     /* we have a prime :-) */
-    return ret;
+    return rnd;
  err:
     BN_free(rnd);
     return NULL;
