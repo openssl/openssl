@@ -254,7 +254,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 # define DECLARE_ASN1_DUP_FUNCTION_name(type, name) \
         type *name##_dup(const type *a);
 
-# define DECLARE_ASN1_PRINT_FUNCTION(stname)                    \
+# define DECLARE_ASN1_PRINT_FUNCTION(stname) \
         DECLARE_ASN1_PRINT_FUNCTION_fname(stname, stname)
 
 # define DECLARE_ASN1_PRINT_FUNCTION_fname(stname, fname) \
