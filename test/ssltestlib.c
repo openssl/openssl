@@ -383,9 +383,6 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     if (outl > thispkt->len)
         outl = thispkt->len;
 
-    if (thispkt->type == INJECT_PACKET_IGNORE_REC_SEQ)
-        printf("Ignore rec seq found\n");
-
     if (thispkt->type != INJECT_PACKET_IGNORE_REC_SEQ
             && (ctx->injected || ctx->droprec >= 0)) {
         /*
@@ -393,7 +390,7 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
          * the order received. Since we are actually a reliable transport
          * we know that there won't be any re-ordering. We overwrite to deal
          * with any packets that have been injected
-    -     */
+         */
         for (rem = thispkt->len, rec = thispkt->data; rem > 0; rem -= len) {
             if (rem < DTLS1_RT_HEADER_LENGTH)
                 return -1;
