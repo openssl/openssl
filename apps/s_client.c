@@ -1126,6 +1126,7 @@ int s_client_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_VERIFY_RET_ERROR:
+            verify = SSL_VERIFY_PEER;
             verify_args.return_error = 1;
             break;
         case OPT_VERIFY_QUIET:
