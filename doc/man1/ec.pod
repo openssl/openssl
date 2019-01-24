@@ -101,10 +101,6 @@ Prints out the public, private key components and parameters.
 
 This option prevents output of the encoded version of the key.
 
-=item B<-modulus>
-
-This option prints out the value of the public key component of the key.
-
 =item B<-pubin>
 
 By default, a private key is read from the input file. With this option a
