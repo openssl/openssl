@@ -123,12 +123,12 @@ void EC_GROUP_clear_free(EC_GROUP *group);
  */
 int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
 
-/** Creates a new EC_GROUP object and copies the copies the content
+/** Creates a new EC_GROUP object and copies the content
  *  form src to the newly created EC_KEY object
  *  \param  src  source EC_GROUP object
  *  \return newly created EC_GROUP object or NULL in case of an error.
  */
-EC_GROUP *EC_GROUP_dup(const EC_GROUP *a);
+EC_GROUP *EC_GROUP_dup(const EC_GROUP *src);
 
 /** Returns the EC_METHOD of the EC_GROUP object.
  *  \param  group  EC_GROUP object
