@@ -30,7 +30,7 @@ IF[{- !$disabled{tests} -}]
           dhtest enginetest casttest \
           bftest ssltest_old dsatest dsa_no_digest_size_test exptest rsa_test \
           evp_test evp_extra_test igetest v3nametest v3ext \
-          crltest danetest bad_dtls_test lhash_test \
+          crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test \
           constant_time_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
@@ -487,6 +487,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[ctype_internal_test]=ctype_internal_test.c
     INCLUDE[ctype_internal_test]=.. ../crypto/include ../include
     DEPEND[ctype_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[sparse_array_test]=sparse_array_test.c
+    INCLUDE[sparse_array_test]=../crypto/include ../include
+    DEPEND[sparse_array_test]=../libcrypto.a libtestutil.a
 
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../crypto/include
