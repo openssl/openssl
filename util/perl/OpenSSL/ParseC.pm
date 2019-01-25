@@ -257,7 +257,7 @@ my @opensslchandlers = (
 
     #####
     # Global variable stuff
-    { regexp   => qr/OPENSSL_DECLARE_GLOBAL<<<\((.*),(.*)\)>>>;/,
+    { regexp   => qr/OPENSSL_DECLARE_GLOBAL<<<\((.*),\s*(.*)\)>>>;/,
       massager => sub { return (<<"EOF");
 #ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
 OPENSSL_EXPORT $1 _shadow_$2;
@@ -331,7 +331,7 @@ EOF
 #          return ("$before$stack_of$after");
 #      }
 #    },
-    { regexp   => qr/SKM_DEFINE_STACK_OF<<<\((.*),(.*),(.*)\)>>>/,
+    { regexp   => qr/SKM_DEFINE_STACK_OF<<<\((.*),\s*(.*),\s*(.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 STACK_OF($1);
@@ -370,13 +370,13 @@ static ossl_inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
 EOF
       }
     },
-    { regexp   => qr/DEFINE_SPECIAL_STACK_OF<<<\((.*),(.*)\)>>>/,
+    { regexp   => qr/DEFINE_SPECIAL_STACK_OF<<<\((.*),\s*(.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,$2,$2)"); },
     },
     { regexp   => qr/DEFINE_STACK_OF<<<\((.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,$1,$1)"); },
     },
-    { regexp   => qr/DEFINE_SPECIAL_STACK_OF_CONST<<<\((.*),(.*)\)>>>/,
+    { regexp   => qr/DEFINE_SPECIAL_STACK_OF_CONST<<<\((.*),\s*(.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,const $2,$2)"); },
     },
     { regexp   => qr/DEFINE_STACK_OF_CONST<<<\((.*)\)>>>/,
@@ -388,7 +388,7 @@ EOF
     { regexp   => qr/DECLARE_STACK_OF<<<\((.*)\)>>>/,
       massager => sub { return ("STACK_OF($1);"); }
     },
-    { regexp   => qr/DECLARE_SPECIAL_STACK_OF<<<\((.*?),(.*?)\)>>>/,
+    { regexp   => qr/DECLARE_SPECIAL_STACK_OF<<<\((.*?),\s*(.*?)\)>>>/,
       massager => sub { return ("STACK_OF($1);"); }
      },
 
@@ -421,7 +421,15 @@ const ASN1_ITEM *$1_it(void);
 EOF
       },
     },
-    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS<<<\((.*),(.*),(.*)\)>>>/,
+    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS_only<<<\((.*),\s*(.*)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+int d2i_$2(void);
+int i2d_$2(void);
+EOF
+      },
+    },
+    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS<<<\((.*),\s*(.*),\s*(.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 int d2i_$3(void);
@@ -430,12 +438,20 @@ DECLARE_ASN1_ITEM($2)
 EOF
       },
     },
-    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS_const<<<\((.*),(.*)\)>>>/,
+    { regexp   => qr/DECLARE_ASN1_ENCODE_FUNCTIONS_name<<<\((.*),\s*(.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 int d2i_$2(void);
 int i2d_$2(void);
 DECLARE_ASN1_ITEM($2)
+EOF
+      },
+    },
+    { regexp   => qr/DECLARE_ASN1_ALLOC_FUNCTIONS_name<<<\((.*),\s*(.*)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+int $2_free(void);
+int $2_new(void);
 EOF
       },
     },
@@ -447,7 +463,7 @@ int $1_new(void);
 EOF
       },
     },
-    { regexp   => qr/DECLARE_ASN1_FUNCTIONS_name<<<\((.*),(.*)\)>>>/,
+    { regexp   => qr/DECLARE_ASN1_FUNCTIONS_name<<<\((.*),\s*(.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 int d2i_$2(void);
@@ -458,17 +474,7 @@ DECLARE_ASN1_ITEM($2)
 EOF
       },
     },
-    { regexp   => qr/DECLARE_ASN1_FUNCTIONS_fname<<<\((.*),(.*),(.*)\)>>>/,
-      massager => sub { return (<<"EOF");
-int d2i_$3(void);
-int i2d_$3(void);
-int $3_free(void);
-int $3_new(void);
-DECLARE_ASN1_ITEM($2)
-EOF
-      }
-    },
-    { regexp   => qr/DECLARE_ASN1_FUNCTIONS(?:_const)?<<<\((.*)\)>>>/,
+    { regexp   => qr/DECLARE_ASN1_FUNCTIONS<<<\((.*)\)>>>/,
       massager => sub { return (<<"EOF");
 int d2i_$1(void);
 int i2d_$1(void);
@@ -492,7 +498,7 @@ int $1_print_ctx(void);
 EOF
       }
     },
-    { regexp   => qr/DECLARE_ASN1_PRINT_FUNCTION_name<<<\((.*),(.*)\)>>>/,
+    { regexp   => qr/DECLARE_ASN1_PRINT_FUNCTION_name<<<\((.*),\s*(.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 int $2_print_ctx(void);
@@ -509,7 +515,7 @@ int $1_dup(void);
 EOF
       }
     },
-    { regexp   => qr/DECLARE_ASN1_DUP_FUNCTION_name<<<\((.*),(.*)\)>>>/,
+    { regexp   => qr/DECLARE_ASN1_DUP_FUNCTION_name<<<\((.*),\s*(.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
 int $2_dup(void);
