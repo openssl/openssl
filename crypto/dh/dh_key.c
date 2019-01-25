@@ -228,3 +228,66 @@ static int dh_finish(DH *dh)
     BN_MONT_CTX_free(dh->method_mont_p);
     return 1;
 }
+
+int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
+{
+    int err_reason = DH_R_BN_ERROR;
+    BIGNUM *pubkey = NULL;
+    const BIGNUM *p;
+    size_t p_size;
+
+    if ((pubkey = BN_bin2bn(buf, len, NULL)) == NULL)
+        goto err;
+    DH_get0_pqg(dh, &p, NULL, NULL);
+    if (p == NULL || (p_size = BN_num_bytes(p)) == 0) {
+        err_reason = DH_R_NO_PARAMETERS_SET;
+        goto err;
+    }
+    /*
+     * As per Section 4.2.8.1 of RFC 8446 fail if DHE's
+     * public key is of size not equal to size of p
+     */
+    if (BN_is_zero(pubkey) || p_size != len) {
+        err_reason = DH_R_INVALID_PUBKEY;
+        goto err;
+    }
+    if (DH_set0_key(dh, pubkey, NULL) != 1)
+        goto err;
+    return 1;
+err:
+    DHerr(DH_F_DH_BUF2KEY, err_reason);
+    BN_free(pubkey);
+    return 0;
+}
+
+size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
+{
+    const BIGNUM *pubkey;
+    unsigned char *pbuf;
+    const BIGNUM *p;
+    int p_size;
+
+    DH_get0_pqg(dh, &p, NULL, NULL);
+    DH_get0_key(dh, &pubkey, NULL);
+    if (p == NULL || pubkey == NULL
+            || (p_size = BN_num_bytes(p)) == 0
+            || BN_num_bytes(pubkey) == 0) {
+        DHerr(DH_F_DH_KEY2BUF, DH_R_INVALID_PUBKEY);
+        return 0;
+    }
+    if ((pbuf = OPENSSL_malloc(p_size)) == NULL) {
+        DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    /*
+     * As per Section 4.2.8.1 of RFC 8446 left pad public
+     * key with zeros to the size of p
+     */
+    if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
+        OPENSSL_free(pbuf);
+        DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
+        return 0;
+    }
+    *pbuf_out = pbuf;
+    return p_size;
+}

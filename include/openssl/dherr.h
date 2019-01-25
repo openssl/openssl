@@ -29,6 +29,7 @@ int ERR_load_DH_strings(void);
  */
 #  define DH_F_COMPUTE_KEY                                 102
 #  define DH_F_DHPARAMS_PRINT_FP                           101
+#  define DH_F_DH_BUF2KEY                                  126
 #  define DH_F_DH_BUILTIN_GENPARAMS                        106
 #  define DH_F_DH_CHECK_EX                                 121
 #  define DH_F_DH_CHECK_PARAMS_EX                          122
@@ -36,6 +37,7 @@ int ERR_load_DH_strings(void);
 #  define DH_F_DH_CMS_DECRYPT                              114
 #  define DH_F_DH_CMS_SET_PEERKEY                          115
 #  define DH_F_DH_CMS_SET_SHARED_INFO                      116
+#  define DH_F_DH_KEY2BUF                                  127
 #  define DH_F_DH_METH_DUP                                 117
 #  define DH_F_DH_METH_NEW                                 118
 #  define DH_F_DH_METH_SET1_NAME                           119

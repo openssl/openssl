@@ -174,36 +174,45 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
 {
     const uint16_t *pgroups = NULL;
     size_t num_groups = 0, i;
+    int min_version, max_version, reason;
 
     if (!use_ecc(s))
         return EXT_RETURN_NOT_SENT;
 
+    reason = ssl_get_min_max_version(s, &min_version, &max_version, NULL);
+    if (reason != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS, reason);
+        return EXT_RETURN_FAIL;
+    }
+
     /*
      * Add TLS extension supported_groups to the ClientHello message
      */
-    /* TODO(TLS1.3): Add support for DHE groups */
     tls1_get_supported_groups(s, &pgroups, &num_groups);
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_supported_groups)
                /* Sub-packet for supported_groups extension */
             || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_start_sub_packet_u16(pkt)) {
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_set_flags(pkt, WPACKET_FLAGS_NON_ZERO_LENGTH)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                  SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
                  ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
-    /* Copy curve ID if supported */
+    /* Copy group ID if supported */
     for (i = 0; i < num_groups; i++) {
         uint16_t ctmp = pgroups[i];
 
-        if (tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
+        if (tls_valid_group(s, ctmp, max_version)
+                && tls_curve_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                             SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
-                             ERR_R_INTERNAL_ERROR);
-                    return EXT_RETURN_FAIL;
-                }
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                         SSL_F_TLS_CONSTRUCT_CTOS_SUPPORTED_GROUPS,
+                         ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
         }
     }
     if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {

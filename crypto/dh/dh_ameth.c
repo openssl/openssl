@@ -490,6 +490,18 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri);
 static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
+    case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
+        return dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
+    case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
+        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2);
+    default:
+        return -2;
+    }
+}
+
+static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+{
+    switch (op) {
 #ifndef OPENSSL_NO_CMS
 
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
@@ -558,7 +570,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
     0,
 
     int_dh_free,
-    0,
+    dh_pkey_ctrl,
 
     0, 0, 0, 0, 0,
 
@@ -597,7 +609,7 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
     0,
 
     int_dh_free,
-    dh_pkey_ctrl,
+    dhx_pkey_ctrl,
 
     0, 0, 0, 0, 0,
 

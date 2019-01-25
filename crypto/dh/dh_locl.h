@@ -55,3 +55,6 @@ struct dh_method {
     int (*generate_params) (DH *dh, int prime_len, int generator,
                             BN_GENCB *cb);
 };
+
+int dh_buf2key(DH *key, const unsigned char *buf, size_t len);
+size_t dh_key2buf(const DH *dh, unsigned char **pbuf);
