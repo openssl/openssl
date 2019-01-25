@@ -1670,7 +1670,7 @@ int SSL_SESSION_print(BIO *fp, const SSL_SESSION *ses);
 int SSL_SESSION_print_keylog(BIO *bp, const SSL_SESSION *x);
 int SSL_SESSION_up_ref(SSL_SESSION *ses);
 void SSL_SESSION_free(SSL_SESSION *ses);
-__owur int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp);
+__owur int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp);
 __owur int SSL_set_session(SSL *to, SSL_SESSION *session);
 int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *session);
 int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *session);
