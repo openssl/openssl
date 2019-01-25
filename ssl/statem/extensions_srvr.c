@@ -1421,7 +1421,8 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
     for (i = 0; i < numgroups; i++) {
         uint16_t group = groups[i];
 
-        if (tls_curve_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
+        if (tls_valid_group(s, group, SSL_version(s))
+                && tls_curve_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
             if (first) {
                 /*
                  * Check if the client is already using our preferred group. If

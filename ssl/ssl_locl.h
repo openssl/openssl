@@ -1507,14 +1507,19 @@ typedef struct sigalg_lookup_st {
 typedef struct tls_group_info_st {
     int nid;                    /* Curve NID */
     int secbits;                /* Bits of security (from SP800-57) */
-    uint16_t flags;             /* Flags: currently just group type */
+    uint32_t flags;             /* For group type and applicable TLS versions */
+    uint16_t group_id;          /* Group ID */
 } TLS_GROUP_INFO;
 
 /* flags values */
-# define TLS_CURVE_TYPE          0x3 /* Mask for group type */
-# define TLS_CURVE_PRIME         0x0
-# define TLS_CURVE_CHAR2         0x1
-# define TLS_CURVE_CUSTOM        0x2
+# define TLS_GROUP_TYPE             0x0000000FU /* Mask for group type */
+# define TLS_GROUP_CURVE_PRIME      0x00000001U
+# define TLS_GROUP_CURVE_CHAR2      0x00000002U
+# define TLS_GROUP_CURVE_CUSTOM     0x00000004U
+# define TLS_GROUP_FFDHE            0x00000008U
+# define TLS_GROUP_ONLY_FOR_TLS1_3  0x00000010U
+
+# define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
 typedef struct cert_pkey_st CERT_PKEY;
 
@@ -2530,6 +2535,7 @@ void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
                          size_t *num_formats);
 __owur int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
+__owur int tls_valid_group(SSL *s, uint16_t group_id, int version);
 __owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
 #  endif                        /* OPENSSL_NO_EC */
 
