@@ -38,6 +38,35 @@ plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
 # (this is documented)
 my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
 
+if ($^O eq 'MSWin32') {
+    # On Windows, these errors have been observed to not always be loaded by
+    # apps/openssl, while they are in perl, which causes a difference that we
+    # consider a false alarm.  So we skip checking these errors.
+    my @error_skiplist = (
+        ENETDOWN,
+        ENETUNREACH,
+        ENETRESET,
+        ECONNABORTED,
+        EISCONN,
+        ENOTCONN,
+        ESHUTDOWN,
+        ETOOMANYREFS,
+        ETIMEDOUT,
+        EHOSTDOWN,
+        EHOSTUNREACH,
+        EALREADY,
+        EINPROGRESS,
+        ESTALE,
+        EUCLEAN,
+        ENOTNAM,
+        ENAVAIL,
+        ENOMEDIUM,
+        ENOKEY,
+       );
+    @posix_errors =
+        map { my $x = $_; ! grep { $x = $_ } @error_skiplist } @posix_errors;
+}
+
 plan tests => scalar @posix_errors
     +1                          # Checking that error 128 gives 'reason(128)'
     +1                          # Checking that error 0 gives the library name
