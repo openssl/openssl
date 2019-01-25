@@ -524,8 +524,6 @@ int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
 ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
-ASN1_OBJECT *ASN1_OBJECT_new(void);
-void ASN1_OBJECT_free(ASN1_OBJECT *a);
 DECLARE_ASN1_FUNCTIONS(ASN1_OBJECT)
 DEFINE_STACK_OF(ASN1_OBJECT)
 
