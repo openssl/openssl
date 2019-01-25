@@ -28,7 +28,7 @@ struct v3_ext_ctx;
 typedef void *(*X509V3_EXT_NEW)(void);
 typedef void (*X509V3_EXT_FREE) (void *);
 typedef void *(*X509V3_EXT_D2I)(void *, const unsigned char **, long);
-typedef int (*X509V3_EXT_I2D) (void *, unsigned char **);
+typedef int (*X509V3_EXT_I2D) (const void *, unsigned char **);
 typedef STACK_OF(CONF_VALUE) *
     (*X509V3_EXT_I2V) (const struct v3_ext_method *method, void *ext,
                        STACK_OF(CONF_VALUE) *extlist);

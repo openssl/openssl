@@ -64,6 +64,7 @@ static void mime_hdr_free(MIME_HEADER *hdr);
 
 /* Output an ASN1 structure in BER format streaming if necessary */
 
+/* unfortunately cannot constify this due to CMS_stream() and PKCS7_stream() */
 int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
                         const ASN1_ITEM *it)
 {

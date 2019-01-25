@@ -112,7 +112,7 @@ X509 *d2i_X509_fp(FILE *fp, X509 **x509)
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509), fp, x509);
 }
 
-int i2d_X509_fp(FILE *fp, X509 *x509)
+int i2d_X509_fp(FILE *fp, const X509 *x509)
 {
     return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509), fp, x509);
 }
@@ -123,7 +123,7 @@ X509 *d2i_X509_bio(BIO *bp, X509 **x509)
     return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509), bp, x509);
 }
 
-int i2d_X509_bio(BIO *bp, X509 *x509)
+int i2d_X509_bio(BIO *bp, const X509 *x509)
 {
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509), bp, x509);
 }
@@ -134,7 +134,7 @@ X509_CRL *d2i_X509_CRL_fp(FILE *fp, X509_CRL **crl)
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_CRL), fp, crl);
 }
 
-int i2d_X509_CRL_fp(FILE *fp, X509_CRL *crl)
+int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl)
 {
     return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_CRL), fp, crl);
 }
@@ -145,7 +145,7 @@ X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl)
     return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
 }
 
-int i2d_X509_CRL_bio(BIO *bp, X509_CRL *crl)
+int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl)
 {
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
 }
@@ -156,7 +156,7 @@ PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
 }
 
-int i2d_PKCS7_fp(FILE *fp, PKCS7 *p7)
+int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7)
 {
     return ASN1_item_i2d_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
 }
@@ -167,7 +167,7 @@ PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
     return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
 }
 
-int i2d_PKCS7_bio(BIO *bp, PKCS7 *p7)
+int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7)
 {
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
 }
@@ -178,7 +178,7 @@ X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **req)
     return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_REQ), fp, req);
 }
 
-int i2d_X509_REQ_fp(FILE *fp, X509_REQ *req)
+int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req)
 {
     return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_REQ), fp, req);
 }
@@ -189,7 +189,7 @@ X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
     return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
 
-int i2d_X509_REQ_bio(BIO *bp, X509_REQ *req)
+int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)
 {
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
@@ -415,7 +415,7 @@ X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
     return ASN1_d2i_fp_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, fp, p8);
 }
 
-int i2d_PKCS8_fp(FILE *fp, X509_SIG *p8)
+int i2d_PKCS8_fp(FILE *fp, const X509_SIG *p8)
 {
     return ASN1_i2d_fp_of(X509_SIG, i2d_X509_SIG, fp, p8);
 }
@@ -426,7 +426,7 @@ X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
     return ASN1_d2i_bio_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, bp, p8);
 }
 
-int i2d_PKCS8_bio(BIO *bp, X509_SIG *p8)
+int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8)
 {
     return ASN1_i2d_bio_of(X509_SIG, i2d_X509_SIG, bp, p8);
 }
@@ -439,13 +439,13 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
                           d2i_PKCS8_PRIV_KEY_INFO, fp, p8inf);
 }
 
-int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, PKCS8_PRIV_KEY_INFO *p8inf)
+int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, const PKCS8_PRIV_KEY_INFO *p8inf)
 {
     return ASN1_i2d_fp_of(PKCS8_PRIV_KEY_INFO, i2d_PKCS8_PRIV_KEY_INFO, fp,
                           p8inf);
 }
 
-int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, EVP_PKEY *key)
+int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key)
 {
     PKCS8_PRIV_KEY_INFO *p8inf;
     int ret;
@@ -486,13 +486,13 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
                            d2i_PKCS8_PRIV_KEY_INFO, bp, p8inf);
 }
 
-int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, PKCS8_PRIV_KEY_INFO *p8inf)
+int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, const PKCS8_PRIV_KEY_INFO *p8inf)
 {
     return ASN1_i2d_bio_of(PKCS8_PRIV_KEY_INFO, i2d_PKCS8_PRIV_KEY_INFO, bp,
                            p8inf);
 }
 
-int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, EVP_PKEY *key)
+int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key)
 {
     PKCS8_PRIV_KEY_INFO *p8inf;
     int ret;

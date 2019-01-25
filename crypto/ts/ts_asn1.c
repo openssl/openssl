@@ -25,7 +25,7 @@ TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT **a)
                            d2i_TS_MSG_IMPRINT, bp, a);
 }
 
-int i2d_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT *a)
+int i2d_TS_MSG_IMPRINT_bio(BIO *bp, const TS_MSG_IMPRINT *a)
 {
     return ASN1_i2d_bio_of(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, bp, a);
 }
@@ -36,7 +36,7 @@ TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a)
                           d2i_TS_MSG_IMPRINT, fp, a);
 }
 
-int i2d_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT *a)
+int i2d_TS_MSG_IMPRINT_fp(FILE *fp, const TS_MSG_IMPRINT *a)
 {
     return ASN1_i2d_fp_of(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, fp, a);
 }
@@ -58,7 +58,7 @@ TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
     return ASN1_d2i_bio_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, bp, a);
 }
 
-int i2d_TS_REQ_bio(BIO *bp, TS_REQ *a)
+int i2d_TS_REQ_bio(BIO *bp, const TS_REQ *a)
 {
     return ASN1_i2d_bio_of(TS_REQ, i2d_TS_REQ, bp, a);
 }
@@ -68,7 +68,7 @@ TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
     return ASN1_d2i_fp_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, fp, a);
 }
 
-int i2d_TS_REQ_fp(FILE *fp, TS_REQ *a)
+int i2d_TS_REQ_fp(FILE *fp, const TS_REQ *a)
 {
     return ASN1_i2d_fp_of(TS_REQ, i2d_TS_REQ, fp, a);
 }
@@ -104,7 +104,7 @@ TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
                            a);
 }
 
-int i2d_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO *a)
+int i2d_TS_TST_INFO_bio(BIO *bp, const TS_TST_INFO *a)
 {
     return ASN1_i2d_bio_of(TS_TST_INFO, i2d_TS_TST_INFO, bp, a);
 }
@@ -115,7 +115,7 @@ TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
                           a);
 }
 
-int i2d_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO *a)
+int i2d_TS_TST_INFO_fp(FILE *fp, const TS_TST_INFO *a)
 {
     return ASN1_i2d_fp_of(TS_TST_INFO, i2d_TS_TST_INFO, fp, a);
 }
@@ -185,7 +185,7 @@ TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
     return ASN1_d2i_bio_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, bp, a);
 }
 
-int i2d_TS_RESP_bio(BIO *bp, TS_RESP *a)
+int i2d_TS_RESP_bio(BIO *bp, const TS_RESP *a)
 {
     return ASN1_i2d_bio_of(TS_RESP, i2d_TS_RESP, bp, a);
 }
@@ -195,7 +195,7 @@ TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
     return ASN1_d2i_fp_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, fp, a);
 }
 
-int i2d_TS_RESP_fp(FILE *fp, TS_RESP *a)
+int i2d_TS_RESP_fp(FILE *fp, const TS_RESP *a)
 {
     return ASN1_i2d_fp_of(TS_RESP, i2d_TS_RESP, fp, a);
 }
