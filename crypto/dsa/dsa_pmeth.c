@@ -178,9 +178,7 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
     }
     if (strcmp(type, "dsa_paramgen_q_bits") == 0) {
         int qbits = atoi(value);
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits,
-                                 NULL);
+        return EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, qbits);
     }
     if (strcmp(type, "dsa_paramgen_md") == 0) {
         const EVP_MD *md = EVP_get_digestbyname(value);
@@ -189,9 +187,7 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
             DSAerr(DSA_F_PKEY_DSA_CTRL_STR, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0,
-                                 (void *)md);
+        return EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, md);
     }
     return -2;
 }
