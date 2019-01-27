@@ -43,26 +43,26 @@ if ($^O eq 'MSWin32') {
     # apps/openssl, while they are in perl, which causes a difference that we
     # consider a false alarm.  So we skip checking these errors.
     my @error_skiplist = (
-        ENETDOWN,
-        ENETUNREACH,
-        ENETRESET,
-        ECONNABORTED,
-        EISCONN,
-        ENOTCONN,
-        ESHUTDOWN,
-        ETOOMANYREFS,
-        ETIMEDOUT,
-        EHOSTDOWN,
-        EHOSTUNREACH,
-        EALREADY,
-        EINPROGRESS,
-        ESTALE,
-        EUCLEAN,
-        ENOTNAM,
-        ENAVAIL,
-        ENOMEDIUM,
-        ENOKEY,
-       );
+        Errno::ENETDOWN,
+        Errno::ENETUNREACH,
+        Errno::ENETRESET,
+        Errno::ECONNABORTED,
+        Errno::EISCONN,
+        Errno::ENOTCONN,
+        Errno::ESHUTDOWN,
+        Errno::ETOOMANYREFS,
+        Errno::ETIMEDOUT,
+        Errno::EHOSTDOWN,
+        Errno::EHOSTUNREACH,
+        Errno::EALREADY,
+        Errno::EINPROGRESS,
+        Errno::ESTALE,
+        Errno::EUCLEAN,
+        Errno::ENOTNAM,
+        Errno::ENAVAIL,
+        Errno::ENOMEDIUM,
+        Errno::ENOKEY,
+    );
     @posix_errors =
         map { my $x = $_; ! grep { $x = $_ } @error_skiplist } @posix_errors;
 }
