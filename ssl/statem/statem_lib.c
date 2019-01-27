@@ -1030,6 +1030,7 @@ unsigned long ssl3_output_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
 WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
 {
     void (*cb) (const SSL *ssl, int type, int val) = NULL;
+    int cleanuphand = s->statem.cleanuphand;
 
     if (clearbufs) {
         if (!SSL_IS_DTLS(s)) {
@@ -1056,7 +1057,7 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
      * Only set if there was a Finished message and this isn't after a TLSv1.3
      * post handshake exchange
      */
-    if (s->statem.cleanuphand) {
+    if (cleanuphand) {
         /* skipped if we just sent a HelloRequest */
         s->renegotiate = 0;
         s->new_session = 0;
@@ -1116,8 +1117,12 @@ WORK_STATE tls_finish_handshake(SSL *s, WORK_STATE wst, int clearbufs, int stop)
     /* The callback may expect us to not be in init at handshake done */
     ossl_statem_set_in_init(s, 0);
 
-    if (cb != NULL)
-        cb(s, SSL_CB_HANDSHAKE_DONE, 1);
+    if (cb != NULL) {
+        if (cleanuphand
+                || !SSL_IS_TLS13(s)
+                || SSL_IS_FIRST_HANDSHAKE(s))
+            cb(s, SSL_CB_HANDSHAKE_DONE, 1);
+    }
 
     if (!stop) {
         /* If we've got more work to do we go back into init */

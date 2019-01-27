@@ -119,6 +119,19 @@
      applications with zero-copy system calls such as sendfile and splice.
      [Boris Pismenny]
 
+ Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
+
+  *) Change the info callback signals for the start and end of a post-handshake
+     message exchange in TLSv1.3. In 1.1.1/1.1.1a we used SSL_CB_HANDSHAKE_START
+     and SSL_CB_HANDSHAKE_DONE. Experience has shown that many applications get
+     confused by this and assume that a TLSv1.2 renegotiation has started. This
+     can break KeyUpdate handling. Instead we no longer signal the start and end
+     of a post handshake message exchange (although the messages themselves are
+     still signalled). This could break some applications that were expecting
+     the old signals. However without this KeyUpdate is not usable for many
+     applications.
+     [Matt Caswell]
+
  Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
 
   *) Timing vulnerability in DSA signature generation
