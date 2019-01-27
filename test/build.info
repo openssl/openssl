@@ -9,7 +9,7 @@ SUBDIRS=ossl_shim
      ""
 -}
 IF[{- !$disabled{tests} -}]
-  LIBS_NO_INST=libtestutil.a
+  LIBS{noinst}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
           testutil/format_output.c testutil/tap_bio.c \
@@ -24,7 +24,7 @@ IF[{- !$disabled{tests} -}]
 INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   ENDRAW[descrip.mms]
 
-  PROGRAMS_NO_INST=\
+  PROGRAMS{noinst}=\
           versions \
           aborttest test_test \
           sanitytest rsa_complex exdatatest bntest \
@@ -42,7 +42,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
           packettest asynctest secmemtest srptest memleaktest stack_test \
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
-          bio_callback_test \
+          bio_callback_test bio_memleak_test \
           bioprinttest sslapitest dtlstest sslcorrupttest bio_enc_test \
           pkey_meth_test pkey_meth_kdf_test uitest cipherbytes_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
@@ -300,6 +300,10 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   INCLUDE[bio_callback_test]=../include
   DEPEND[bio_callback_test]=../libcrypto libtestutil.a
 
+  SOURCE[bio_memleak_test]=bio_memleak_test.c
+  INCLUDE[bio_memleak_test]=../include
+  DEPEND[bio_memleak_test]=../libcrypto libtestutil.a
+
   SOURCE[bioprinttest]=bioprinttest.c
   INCLUDE[bioprinttest]=../include
   DEPEND[bioprinttest]=../libcrypto libtestutil.a
@@ -375,27 +379,27 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   DEPEND[servername_test]=../libcrypto ../libssl libtestutil.a
 
   IF[{- !$disabled{cms} -}]
-    PROGRAMS_NO_INST=cmsapitest
+    PROGRAMS{noinst}=cmsapitest
     SOURCE[cmsapitest]=cmsapitest.c
     INCLUDE[cmsapitest]=../include
     DEPEND[cmsapitest]=../libcrypto libtestutil.a
   ENDIF
 
   IF[{- !$disabled{psk} -}]
-    PROGRAMS_NO_INST=dtls_mtu_test
+    PROGRAMS{noinst}=dtls_mtu_test
     SOURCE[dtls_mtu_test]=dtls_mtu_test.c ssltestlib.c
     INCLUDE[dtls_mtu_test]=.. ../include
     DEPEND[dtls_mtu_test]=../libcrypto ../libssl libtestutil.a
   ENDIF
 
   IF[{- !$disabled{shared} -}]
-    PROGRAMS_NO_INST=shlibloadtest
+    PROGRAMS{noinst}=shlibloadtest
     SOURCE[shlibloadtest]=shlibloadtest.c
     INCLUDE[shlibloadtest]=../include ../crypto/include
   ENDIF
 
   IF[{- $disabled{shared} -}]
-    PROGRAMS_NO_INST=cipher_overhead_test
+    PROGRAMS{noinst}=cipher_overhead_test
     SOURCE[cipher_overhead_test]=cipher_overhead_test.c
     INCLUDE[cipher_overhead_test]=.. ../include
     DEPEND[cipher_overhead_test]=../libcrypto ../libssl libtestutil.a
@@ -438,26 +442,26 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   # programs are forcibly linked with the static libraries, where all symbols
   # are always available.
   IF[1]
-    PROGRAMS_NO_INST=asn1_internal_test modes_internal_test x509_internal_test \
+    PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
                      rdrand_sanitytest
     IF[{- !$disabled{poly1305} -}]
-      PROGRAMS_NO_INST=poly1305_internal_test
+      PROGRAMS{noinst}=poly1305_internal_test
     ENDIF
     IF[{- !$disabled{chacha} -}]
-      PROGRAMS_NO_INST=chacha_internal_test
+      PROGRAMS{noinst}=chacha_internal_test
     ENDIF
     IF[{- !$disabled{siphash} -}]
-      PROGRAMS_NO_INST=siphash_internal_test
+      PROGRAMS{noinst}=siphash_internal_test
     ENDIF
     IF[{- !$disabled{sm2} -}]
-      PROGRAMS_NO_INST=sm2_internal_test
+      PROGRAMS{noinst}=sm2_internal_test
     ENDIF
     IF[{- !$disabled{sm4} -}]
-      PROGRAMS_NO_INST=sm4_internal_test
+      PROGRAMS{noinst}=sm4_internal_test
     ENDIF
     IF[{- !$disabled{ec} -}]
-      PROGRAMS_NO_INST=curve448_internal_test
+      PROGRAMS{noinst}=curve448_internal_test
     ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
@@ -514,14 +518,14 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]
-    PROGRAMS_NO_INST=mdc2_internal_test
+    PROGRAMS{noinst}=mdc2_internal_test
   ENDIF
 
   SOURCE[mdc2_internal_test]=mdc2_internal_test.c
   INCLUDE[mdc2_internal_test]=.. ../include
   DEPEND[mdc2_internal_test]=../libcrypto libtestutil.a
 
-  PROGRAMS_NO_INST=asn1_time_test
+  PROGRAMS{noinst}=asn1_time_test
   SOURCE[asn1_time_test]=asn1_time_test.c
   INCLUDE[asn1_time_test]=../include
   DEPEND[asn1_time_test]=../libcrypto libtestutil.a
@@ -530,7 +534,7 @@ INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
   # redefines some internal libssl symbols. This doesn't work in a non-shared
   # build
   IF[{- !$disabled{shared} -}]
-    PROGRAMS_NO_INST=tls13secretstest
+    PROGRAMS{noinst}=tls13secretstest
     SOURCE[tls13secretstest]=tls13secretstest.c
     SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../ssl/packet.c
     INCLUDE[tls13secretstest]=.. ../include
@@ -574,7 +578,7 @@ ENDIF
        next if grep { lc("$name.h") =~ m/$_/i } @nogo_headers_re;
        $OUT .= <<"_____";
 
-  PROGRAMS_NO_INST=buildtest_$name
+  PROGRAMS{noinst}=buildtest_$name
   GENERATE[buildtest_$name.c]=generate_buildtest.pl $name
   SOURCE[buildtest_$name]=buildtest_$name.c
   INCLUDE[buildtest_$name]=../include

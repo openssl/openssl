@@ -1125,19 +1125,8 @@ foreach my $feature (@{$target{enable}}) {
 
 $target{CXXFLAGS}//=$target{CFLAGS} if $target{CXX};
 $target{cxxflags}//=$target{cflags} if $target{CXX};
-$target{exe_extension}="";
-$target{exe_extension}=".exe" if ($config{target} eq "DJGPP"
-                                  || $config{target} =~ /^(?:Cygwin|mingw)/);
+$target{exe_extension}=".exe" if ($config{target} eq "DJGPP");
 $target{exe_extension}=".pm"  if ($config{target} =~ /vos/);
-$target{def_extension}=".ld";
-$target{def_extension}=".def" if $config{target} =~ /^mingw|VC-/;
-$target{def_extension}=".opt" if $config{target} =~ /^vms/;
-($target{shared_extension_simple}=$target{shared_extension})
-    =~ s|\.\$\(SHLIB_VERSION_NUMBER\)||
-    unless defined($target{shared_extension_simple});
-$target{dso_extension}//=$target{shared_extension_simple};
-($target{shared_import_extension}=$target{shared_extension_simple}.".a")
-    if ($config{target} =~ /^(?:Cygwin|mingw)/);
 
 # Fill %config with values from %user, and in case those are undefined or
 # empty, use values from %target (acting as a default).
@@ -1721,25 +1710,20 @@ if ($builder eq "unified") {
         my $f = 'build.info';
         # The basic things we're trying to build
         my @programs = ();
-        my @programs_install = ();
         my @libraries = ();
-        my @libraries_install = ();
         my @engines = ();
-        my @engines_install = ();
         my @scripts = ();
-        my @scripts_install = ();
         my @extra = ();
         my @overrides = ();
         my @intermediates = ();
         my @rawlines = ();
 
+        my %attributes = ();
         my %sources = ();
         my %shared_sources = ();
         my %includes = ();
         my %defines = ();
         my %depends = ();
-        my %renames = ();
-        my %sharednames = ();
         my %generate = ();
 
         # We want to detect configdata.pm in the source tree, so we
@@ -1805,40 +1789,84 @@ if ($builder eq "unified") {
                     }
                 }
             },
-            qr/^\s*PROGRAMS(_NO_INST)?\s*=\s*(.*)\s*$/
+            qr/^\s*PROGRAMS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my $install = $1;
-                    my @x = tokenize($2);
-                    push @programs, @x;
-                    push @programs_install, @x unless $install;
+                    my @a = tokenize($1, qr|\s*,\s*|);
+                    my @p = tokenize($2);
+                    push @programs, @p;
+                    foreach my $a (@a) {
+                        my $ak = $a;
+                        my $av = 1;
+                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
+                            $ak = $1;
+                            $av = $2;
+                        }
+                        foreach my $p (@p) {
+                            $attributes{$p}->{$ak} = $av;
+                        }
+                    }
+                    push @programs, @p;
                 }
             },
-            qr/^\s*LIBS(_NO_INST)?\s*=\s*(.*)\s*$/
+            qr/^\s*LIBS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my $install = $1;
-                    my @x = tokenize($2);
-                    push @libraries, @x;
-                    push @libraries_install, @x unless $install;
+                    my @a = tokenize($1, qr|\s*,\s*|);
+                    my @l = tokenize($2);
+                    push @libraries, @l;
+                    foreach my $a (@a) {
+                        my $ak = $a;
+                        my $av = 1;
+                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
+                            $ak = $1;
+                            $av = $2;
+                        }
+                        foreach my $l (@l) {
+                            $attributes{$l}->{$ak} = $av;
+                        }
+                    }
+                    push @libraries, @l;
                 }
             },
-            qr/^\s*ENGINES(_NO_INST)?\s*=\s*(.*)\s*$/
+            qr/^\s*ENGINES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my $install = $1;
-                    my @x = tokenize($2);
-                    push @engines, @x;
-                    push @engines_install, @x unless $install;
+                    my @a = tokenize($1, qr|\s*,\s*|);
+                    my @e = tokenize($2);
+                    push @engines, @e;
+                    foreach my $a (@a) {
+                        my $ak = $a;
+                        my $av = 1;
+                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
+                            $ak = $1;
+                            $av = $2;
+                        }
+                        foreach my $e (@e) {
+                            $attributes{$e}->{$ak} = $av;
+                        }
+                    }
+                    push @engines, @e;
                 }
             },
-            qr/^\s*SCRIPTS(_NO_INST)?\s*=\s*(.*)\s*$/
+            qr/^\s*SCRIPTS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
-                    my $install = $1;
-                    my @x = tokenize($2);
-                    push @scripts, @x;
-                    push @scripts_install, @x unless $install;
+                    my @a = tokenize($1, qr|\s*,\s*|);
+                    my @s = tokenize($2);
+                    push @scripts, @s;
+                    foreach my $a (@a) {
+                        my $ak = $a;
+                        my $av = 1;
+                        if ($a =~ m|^(.*?)\s*=\s*(.*?)$|) {
+                            $ak = $1;
+                            $av = $2;
+                        }
+                        foreach my $s (@s) {
+                            $attributes{$s}->{$ak} = $av;
+                        }
+                    }
+                    push @scripts, @s;
                 }
             },
             qr/^\s*EXTRA\s*=\s*(.*)\s*$/
@@ -1870,11 +1898,9 @@ if ($builder eq "unified") {
             => sub { push @{$generate{$1}}, $2
                          if !@skip || $skip[$#skip] > 0 },
             qr/^\s*RENAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$renames{$1}}, tokenize($2)
-                         if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { push @{$sharednames{$1}}, tokenize($2)
-                         if !@skip || $skip[$#skip] > 0 },
+            => sub { warn "RENAME is no longer supported\n" },
+             qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
+            => sub { warn "SHARED_NAME is no longer supported\n" },
             qr/^\s*BEGINRAW\[((?:\\.|[^\\\]])+)\]\s*$/
             => sub {
                 my $lineiterator = shift;
@@ -1908,146 +1934,51 @@ if ($builder eq "unified") {
             );
         die "runaway IF?" if (@skip);
 
-        foreach (keys %renames) {
-            die "$_ renamed to more than one thing: "
-                ,join(" ", @{$renames{$_}}),"\n"
-                if scalar @{$renames{$_}} > 1;
-            my $dest = cleanfile($buildd, $_, $blddir);
-            my $to = cleanfile($buildd, $renames{$_}->[0], $blddir);
-            die "$dest renamed to more than one thing: "
-                ,$unified_info{rename}->{$dest}, $to
-                unless !defined($unified_info{rename}->{$dest})
-                or $unified_info{rename}->{$dest} eq $to;
-            $unified_info{rename}->{$dest} = $to;
-        }
-
-        foreach (@programs) {
-            my $program = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$program}) {
-                $program = $unified_info{rename}->{$program};
-            }
-            $unified_info{programs}->{$program} = 1;
-        }
-
-        foreach (@programs_install) {
-            my $program = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$program}) {
-                $program = $unified_info{rename}->{$program};
-            }
-            $unified_info{install}->{programs}->{$program} = 1;
-        }
-
-        foreach (@libraries) {
-            my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
-            }
-            $unified_info{libraries}->{$library} = 1;
-        }
-
-        foreach (@libraries_install) {
-            my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
-            }
-            $unified_info{install}->{libraries}->{$library} = 1;
-        }
-
         die <<"EOF" if scalar @engines and !$config{dynamic_engines};
 ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
-        foreach (@engines) {
-            my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
+
+        foreach (keys %attributes) {
+            my $dest = $_;
+            my $ddest = cleanfile($buildd, $_, $blddir);
+            foreach (keys %{$attributes{$dest} // {}}) {
+                $unified_info{attributes}->{$ddest}->{$_} =
+                    $attributes{$dest}->{$_};
             }
-            $unified_info{engines}->{$library} = 1;
         }
 
-        foreach (@engines_install) {
-            my $library = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$library}) {
-                $library = $unified_info{rename}->{$library};
+        {
+            my %infos = ( programs  => [ @programs  ],
+                          libraries => [ @libraries ],
+                          engines   => [ @engines   ],
+                          scripts   => [ @scripts   ],
+                          extra     => [ @extra     ],
+                          overrides => [ @overrides ] );
+            foreach my $k (keys %infos) {
+                foreach (@{$infos{$k}}) {
+                    my $item = cleanfile($buildd, $_, $blddir);
+                    $unified_info{$k}->{$item} = 1;
+                }
             }
-            $unified_info{install}->{engines}->{$library} = 1;
-        }
-
-        foreach (@scripts) {
-            my $script = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$script}) {
-                $script = $unified_info{rename}->{$script};
-            }
-            $unified_info{scripts}->{$script} = 1;
-        }
-
-        foreach (@scripts_install) {
-            my $script = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$script}) {
-                $script = $unified_info{rename}->{$script};
-            }
-            $unified_info{install}->{scripts}->{$script} = 1;
-        }
-
-        foreach (@extra) {
-            my $extra = cleanfile($buildd, $_, $blddir);
-            $unified_info{extra}->{$extra} = 1;
-        }
-
-        foreach (@overrides) {
-            my $override = cleanfile($buildd, $_, $blddir);
-            $unified_info{overrides}->{$override} = 1;
         }
 
         push @{$unified_info{rawlines}}, @rawlines;
 
-        unless ($disabled{shared}) {
-            # Check sharednames.
-            foreach (keys %sharednames) {
-                my $dest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$dest}) {
-                    $dest = $unified_info{rename}->{$dest};
-                }
-                die "shared_name for $dest with multiple values: "
-                    ,join(" ", @{$sharednames{$_}}),"\n"
-                    if scalar @{$sharednames{$_}} > 1;
-                my $to = cleanfile($buildd, $sharednames{$_}->[0], $blddir);
-                die "shared_name found for a library $dest that isn't defined\n"
-                    unless $unified_info{libraries}->{$dest};
-                die "shared_name for $dest with multiple values: "
-                    ,$unified_info{sharednames}->{$dest}, ", ", $to
-                    unless !defined($unified_info{sharednames}->{$dest})
-                    or $unified_info{sharednames}->{$dest} eq $to;
-                $unified_info{sharednames}->{$dest} = $to;
-            }
-
-            # Additionally, we set up sharednames for libraries that don't
-            # have any, as themselves.  Only for libraries that aren't
-            # explicitly static.
-            foreach (grep !/\.a$/, keys %{$unified_info{libraries}}) {
-                if (!defined $unified_info{sharednames}->{$_}) {
-                    $unified_info{sharednames}->{$_} = $_
-                }
-            }
-
-            # Check that we haven't defined any library as both shared and
-            # explicitly static.  That is forbidden.
-            my @doubles = ();
-            foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
-                (my $l = $_) =~ s/\.a$//;
-                push @doubles, $l if defined $unified_info{sharednames}->{$l};
-            }
-            die "these libraries are both explicitly static and shared:\n  ",
-                join(" ", @doubles), "\n"
-                if @doubles;
+        # Check that we haven't defined any library as both shared and
+        # explicitly static.  That is forbidden.
+        my @doubles = ();
+        foreach (grep /\.a$/, keys %{$unified_info{libraries}}) {
+            (my $l = $_) =~ s/\.a$//;
+            push @doubles, $l if defined $unified_info{libraries}->{$l};
         }
+        die "these libraries are both explicitly static and shared:\n  ",
+            join(" ", @doubles), "\n"
+            if @doubles;
 
         foreach (keys %sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
             foreach (@{$sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir);
 
@@ -2080,9 +2011,6 @@ EOF
         foreach (keys %shared_sources) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
             foreach (@{$shared_sources{$dest}}) {
                 my $s = cleanfile($sourced, $_, $blddir);
 
@@ -2121,9 +2049,6 @@ EOF
         foreach (keys %generate) {
             my $dest = $_;
             my $ddest = cleanfile($buildd, $_, $blddir);
-            if ($unified_info{rename}->{$ddest}) {
-                $ddest = $unified_info{rename}->{$ddest};
-            }
             die "more than one generator for $dest: "
                     ,join(" ", @{$generate{$_}}),"\n"
                     if scalar @{$generate{$_}} > 1;
@@ -2140,9 +2065,6 @@ EOF
             # a generated file in the build tree.
             if ($ddest ne "" && ($ddest eq $src_configdata || ! -f $ddest)) {
                 $ddest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$ddest}) {
-                    $ddest = $unified_info{rename}->{$ddest};
-                }
             }
             foreach (@{$depends{$dest}}) {
                 my $d = cleanfile($sourced, $_, $blddir);
@@ -2165,11 +2087,7 @@ EOF
                 # should be added back after treatment.
                 $d =~ /(\.a)?$/;
                 my $e = $1 // "";
-                $d = $`;
-                if ($unified_info{rename}->{$d}) {
-                    $d = $unified_info{rename}->{$d};
-                }
-                $d .= $e;
+                $d = $`.$e;
                 $unified_info{depends}->{$ddest}->{$d} = 1;
             }
         }
@@ -2182,9 +2100,6 @@ EOF
             # a generated file in the build tree.
             if ($ddest eq $src_configdata || ! -f $ddest) {
                 $ddest = cleanfile($buildd, $_, $blddir);
-                if ($unified_info{rename}->{$ddest}) {
-                    $ddest = $unified_info{rename}->{$ddest};
-                }
             }
             foreach (@{$includes{$dest}}) {
                 my $is = cleandir($sourced, $_, $blddir);
@@ -2348,7 +2263,7 @@ EOF
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
-    foreach my $l1 (("install", "sources", "shared_sources", "ldadd", "depends")) {
+    foreach my $l1 (("sources", "shared_sources", "ldadd", "depends")) {
         foreach my $l2 (sort keys %{$unified_info{$l1}}) {
             my @items =
                 sort
@@ -3609,39 +3524,50 @@ sub collect_information {
 }
 
 # tokenize($line)
+# tokenize($line,$separator)
 # $line is a line of text to split up into tokens
-# returns a list of tokens
+# $separator [optional] is a regular expression that separates the tokens,
+# the default being spaces.  Do not use quotes of any kind as separators,
+# that will give undefined results.
+# Returns a list of tokens.
 #
-# Tokens are divided by spaces.  If the tokens include spaces, they
-# have to be quoted with single or double quotes.  Double quotes
-# inside a double quoted token must be escaped.  Escaping is done
+# Tokens are divided by separator (spaces by default).  If the tokens include
+# the separators, they have to be quoted with single or double quotes.
+# Double quotes inside a double quoted token must be escaped.  Escaping is done
 # with backslash.
 # Basically, the same quoting rules apply for " and ' as in any
 # Unix shell.
 sub tokenize {
     my $line = my $debug_line = shift;
+    my $separator = shift // qr|\s+|;
     my @result = ();
 
-    while ($line =~ s|^\s+||, $line ne "") {
+    if ($ENV{CONFIGURE_DEBUG_TOKENIZE}) {
+        print STDERR "DEBUG[tokenize]: \$separator = $separator\n";
+    }
+
+    while ($line =~ s|^${separator}||, $line ne "") {
         my $token = "";
-        while ($line ne "" && $line !~ m|^\s|) {
-            if ($line =~ m/^"((?:[^"\\]+|\\.)*)"/) {
-                $token .= $1;
-                $line = $';
-            } elsif ($line =~ m/^'([^']*)'/) {
-                $token .= $1;
-                $line = $';
-            } elsif ($line =~ m/^(\S+)/) {
-                $token .= $1;
-                $line = $';
-            }
+    again:
+        $line =~ m/^(.*?)(${separator}|"|'|$)/;
+        $token .= $1;
+        $line = $2.$';
+
+        if ($line =~ m/^"((?:[^"\\]+|\\.)*)"/) {
+            $token .= $1;
+            $line = $';
+            goto again;
+        } elsif ($line =~ m/^'([^']*)'/) {
+            $token .= $1;
+            $line = $';
+            goto again;
         }
         push @result, $token;
     }
 
     if ($ENV{CONFIGURE_DEBUG_TOKENIZE}) {
-	print STDERR "DEBUG[tokenize]: Parsed '$debug_line' into:\n";
-	print STDERR "DEBUG[tokenize]: ('", join("', '", @result), "')\n";
+        print STDERR "DEBUG[tokenize]: Parsed '$debug_line' into:\n";
+        print STDERR "DEBUG[tokenize]: ('", join("', '", @result), "')\n";
     }
     return @result;
 }

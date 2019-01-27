@@ -21,6 +21,10 @@ use OpenSSL::Ordinals;
 use lib '.';
 use configdata;
 
+use File::Spec::Functions;
+use lib catdir($config{sourcedir}, 'Configurations');
+use platform;
+
 my $name = undef;               # internal library/module name
 my $ordinals_file = undef;      # the ordinals file to use
 my $version = undef;            # the version to use for the library
@@ -100,7 +104,7 @@ my $apiv = undef;
 $apiv = sprintf "%x%02x%02x", split(/\./, $config{api})
     if $config{api};
 
-my $libname = $unified_info{sharednames}->{$name} // $name;
+my $libname = platform->sharedname($name);
 
 my %OS_data = (
     solaris     => { writer     => \&writer_linux,

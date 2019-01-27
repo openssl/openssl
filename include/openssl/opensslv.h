@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -126,9 +126,9 @@ const char *OPENSSL_version_build_metadata(void);
 # if !OPENSSL_API_4
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PPSL */
 #  ifdef OPENSSL_VERSION_PRE_RELEASE
-#   define _OPENSSL_VERSION_PRE_RELEASE 0x0
+#   define _OPENSSL_VERSION_PRE_RELEASE 0x0L
 #  else
-#   define _OPENSSL_VERSION_PRE_RELEASE 0xf
+#   define _OPENSSL_VERSION_PRE_RELEASE 0xfL
 #  endif
 #  define OPENSSL_VERSION_NUMBER        \
           ( (OPENSSL_VERSION_MAJOR<<28)  \

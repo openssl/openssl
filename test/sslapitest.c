@@ -5593,7 +5593,7 @@ static int test_shutdown(int tst)
 
     if (tst == 3) {
         if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
-                                                  SSL_ERROR_NONE))
+                                                  SSL_ERROR_NONE, 1))
                 || !TEST_ptr_ne(sess = SSL_get_session(clientssl), NULL)
                 || !TEST_false(SSL_SESSION_is_resumable(sess)))
             goto end;

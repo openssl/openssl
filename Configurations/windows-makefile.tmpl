@@ -3,17 +3,7 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
- our $objext = $target{obj_extension} || ".obj";
- our $resext = $target{res_extension} || ".res";
- our $depext = $target{dep_extension} || ".d";
- our $defext = $target{dep_extension} || ".def";
- our $exeext = $target{exe_extension} || ".exe";
- our $libext = $target{lib_extension} || ".lib";
- our $shlibext = $target{shared_extension} || ".dll";
- our $shlibextimport = $target{shared_import_extension} || ".lib";
- our $dsoext = $target{dso_extension} || ".dll";
-
- (our $sover_dirname = $config{shlib_version}) =~ s|\.|_|g;
+ our $sover_dirname = platform->shlib_version_as_filename();
 
  my $build_scheme = $target{build_scheme};
  my $install_flavour = $build_scheme->[$#$build_scheme]; # last element
@@ -32,31 +22,6 @@
  $win_installroot = $ENV{$win_installroot};
  $win_commonroot = $ENV{$win_commonroot};
 
- sub shlib {
-     my $lib = shift;
-     return () if $disabled{shared} || $lib =~ /\.a$/;
-     return () unless defined $unified_info{sharednames}->{$lib};
-     return $unified_info{sharednames}->{$lib} . $shlibext;
- }
-
- sub lib {
-     (my $lib = shift) =~ s/\.a$//;
-     $lib .= '_static'
-         if (defined $unified_info{sharednames}->{$lib});
-     return $lib . $libext;
- }
-
- sub shlib_import {
-     my $lib = shift;
-     return () if $disabled{shared} || $lib =~ /\.a$/;
-     return $lib . $shlibextimport;
- }
-
- sub dso {
-     my $dso = shift;
-
-     return $dso . $dsoext;
- }
  # This makes sure things get built in the order they need
  # to. You're welcome.
  sub dependmagic {
@@ -77,38 +42,73 @@ MINOR={- $config{minor} -}
 
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 
-LIBS={- join(" ", map { ( shlib_import($_), lib($_) ) } @{$unified_info{libraries}}) -}
-SHLIBS={- join(" ", map { shlib($_) } @{$unified_info{libraries}}) -}
-SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; shlib($_) } @{$unified_info{libraries}}) -}
-ENGINES={- join(" ", map { dso($_) } @{$unified_info{engines}}) -}
-ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; dso($_) } @{$unified_info{engines}}) -}
-PROGRAMS={- our @PROGRAMS = map { $_.$exeext } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
+LIBS={- join(" ", map { ( platform->sharedlib_import($_), platform->staticlib($_) ) } @{$unified_info{libraries}}) -}
+SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
+SHLIBPDBS={- join(" ", map { platform->sharedlibpdb($_) // () } @{$unified_info{libraries}}) -}
+ENGINES={- join(" ", map { platform->dso($_) } @{$unified_info{engines}}) -}
+ENGINEPDBS={- join(" ", map { platform->dsopdb($_) } @{$unified_info{engines}}) -}
+PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
-DEPS={- join(" ", map { (my $x = $_) =~ s|\.o$|$depext|; $x; }
+DEPS={- join(" ", map { platform->isobj($_) ? platform->dep($_) : () }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
 GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(" ", map { my $x = $_;
-                             $x =~ s|\.[sS]$|.asm|;
-                             $x =~ s|\.ld$|$defext|;
-                             $x }
-                       @generated) -}
+             join(" ", map { platform->convertext($_) } @generated) -}
 
-INSTALL_LIBS={- join(" ", map { quotify1(shlib_import($_) or lib($_)) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBS={- join(" ", map { quotify_l(shlib($_)) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_SHLIBPDBS={- join(" ", map { local $shlibext = ".pdb"; quotify_l(shlib($_)) } @{$unified_info{install}->{libraries}}) -}
-INSTALL_ENGINES={- join(" ", map { quotify1(dso($_)) } @{$unified_info{install}->{engines}}) -}
-INSTALL_ENGINEPDBS={- join(" ", map { local $dsoext = ".pdb"; quotify1(dso($_)) } @{$unified_info{install}->{engines}}) -}
-INSTALL_PROGRAMS={- join(" ", map { quotify1($_.$exeext) } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
-INSTALL_PROGRAMPDBS={- join(" ", map { quotify1($_.".pdb") } grep { !m|^test\\| } @{$unified_info{install}->{programs}}) -}
-{- output_off() if $disabled{apps}; "" -}
-BIN_SCRIPTS="$(BLDDIR)\tools\c_rehash.pl"
-MISC_SCRIPTS="$(BLDDIR)\apps\CA.pl" "$(BLDDIR)\apps\tsget.pl"
-{- output_on() if $disabled{apps}; "" -}
+INSTALL_LIBS={-
+        join(" ", map { quotify1(platform->sharedlib_import($_)
+                                 // platform->staticlib($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_SHLIBS={-
+        join(" ", map { my $x = platform->sharedlib($_);
+                        $x ? quotify_l($x) : () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_SHLIBPDBS={-
+        join(" ", map { my $x = platform->sharedlibpdb($_);
+                        $x ? quotify_l($x) : () }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{libraries}})
+-}
+INSTALL_ENGINES={-
+        join(" ", map { quotify1(platform->dso($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{engines}})
+-}
+INSTALL_ENGINEPDBS={-
+        join(" ", map { quotify1(platform->dsopdb($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{engines}})
+-}
+INSTALL_PROGRAMS={-
+        join(" ", map { quotify1(platform->bin($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{programs}})
+-}
+INSTALL_PROGRAMPDBS={-
+        join(" ", map { quotify1(platform->binpdb($_)) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst} }
+                  @{$unified_info{programs}})
+-}
+BIN_SCRIPTS={-
+        join(" ", map { quotify1($_) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst}
+                         && !$unified_info{attributes}->{$_}->{misc} }
+                  @{$unified_info{scripts}})
+-}
+MISC_SCRIPTS={-
+        join(" ", map { quotify1($_) }
+                  grep { !$unified_info{attributes}->{$_}->{noinst}
+                         && $unified_info{attributes}->{$_}->{misc} }
+                  @{$unified_info{scripts}})
+-}
 
 APPS_OPENSSL={- use File::Spec::Functions;
                 "\"".catfile("apps","openssl")."\"" -}
@@ -317,7 +317,7 @@ PROCESSOR= {- $config{processor} -}
 {- dependmagic('build_programs'); -}: build_programs_nodep
 
 build_generated: $(GENERATED_MANDATORY)
-build_libs_nodep: $(LIBS) {- join(" ",map { shlib_import($_) } @{$unified_info{libraries}}) -}
+build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
 build_engines_nodep: $(ENGINES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
@@ -497,9 +497,9 @@ reconfigure reconf:
  # It takes a list of library names and outputs a list of dependencies
  sub compute_lib_depends {
      if ($disabled{shared}) {
-	 return map { lib($_) } @_;
+	 return map { platform->staticlib($_) } @_;
      }
-     return map { shlib_import($_) or lib($_) } @_;
+     return map { platform->sharedlib_import($_) // platform->staticlib($_) } @_;
  }
 
   sub generatesrc {
@@ -512,19 +512,19 @@ reconfigure reconf:
       my $deps = @{$args{deps}} ?
           '"'.join('" "', @{$args{generator_deps}}, @{$args{deps}}).'"' : '';
 
-      if ($args{src} =~ /\.ld$/) {
-          (my $target = $args{src}) =~ s/\.ld$/$defext/;
+      if (platform->isdef($args{src})) {
+          my $target = platform->def($args{src});
           my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
                                               "util", "mkdef.pl")),
                               rel2abs($config{builddir}));
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION)' : '';
           my $ord_name =
-              $args{generator}->[1] || basename($args{product}, $dsoext);
+              $args{generator}->[1] || platform->dsoname($args{product});
           return <<"EOF";
 $target: $args{generator}->[0] $deps $mkdef
 	\$(PERL) $mkdef$ord_ver --ordinals $args{generator}->[0] --name $ord_name --OS windows > $target
 EOF
-      } elsif ($args{src} !~ /\.[sS]$/) {
+      } elsif (!platform->isasm($args{src})) {
           my $target = $args{src};
           if ($args{generator}->[0] =~ m|^.*\.in$|) {
               my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
@@ -542,7 +542,7 @@ $target: "$args{generator}->[0]" $deps
 EOF
 	  }
       } else {
-          (my $target = $args{src}) =~ s/\.[sS]$/.asm/;
+          my $target = platform->asm($args{src});
           if ($args{generator}->[0] =~ /\.pl$/) {
               $generator = '"$(PERL)"'.$generator_incs.' '.$generator;
           } elsif ($args{generator}->[0] =~ /\.S$/) {
@@ -586,8 +586,7 @@ EOF
 
  sub src2obj {
      my %args = @_;
-     my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x
-                    } ( @{$args{srcs}} );
+     my @srcs = map { (my $x = $_) =~ s/\.s$/.asm/; $x } ( @{$args{srcs}} );
      my $srcs = '"'.join('" "',  @srcs).'"';
      my $deps = '"'.join('" "', @srcs, @{$args{deps}}).'"';
      my $incs = join("", map { ' /I "'.$_.'"' } @{$args{incs}});
@@ -607,29 +606,31 @@ EOF
 		     bin => ' $(BIN_ASFLAGS)' } -> {$args{intent}};
      my $makedepprog = $config{makedepprog};
      if ($srcs[0] =~ /\.rc$/) {
+         my $res = platform->res($args{obj});
          return <<"EOF";
-$args{obj}: $deps
+$res: $deps
 	\$(RC) \$(RCOUTFLAG)\$\@ $srcs
 EOF
      }
-     (my $obj = $args{obj}) =~ s|\.o$||;
+     my $obj = platform->obj($args{obj});
+     my $dep = platform->dep($args{obj});
      if ($srcs[0] =~ /\.asm$/) {
          return <<"EOF";
-$obj$objext: $deps
+$obj: $deps
 	\$(AS) $asflags \$(ASOUTFLAG)\$\@ $srcs
 EOF
      } elsif ($srcs[0] =~ /.S$/) {
          return <<"EOF";
-$obj$objext: $deps
+$obj: $deps
 	\$(CC) /EP /D__ASSEMBLER__ $cflags $defs $srcs > \$@.asm && \$(AS) $asflags \$(ASOUTFLAG)\$\@ \$@.asm
 EOF
      }
      my $recipe = <<"EOF";
-$obj$objext: $deps
+$obj: $deps
 	\$(CC) $cflags $defs -c \$(COUTFLAG)\$\@ $srcs
 EOF
      $recipe .= <<"EOF"	unless $disabled{makedepend};
-	\$(CC) $cflags $defs /Zs /showIncludes $srcs 2>&1 > $obj$depext
+	\$(CC) $cflags $defs /Zs /showIncludes $srcs 2>&1 > $dep
 EOF
      return $recipe;
  }
@@ -640,19 +641,19 @@ EOF
  sub obj2shlib {
      my %args = @_;
      my $lib = $args{lib};
-     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
-                grep { $_ =~ m/\.(?:o|res)$/ }
+     my @objs = map { platform->convertext($_) }
+                grep { platform->isobj($_) || platform->isres($_) }
                 @{$args{objs}};
-     my @defs = map { (my $x = $_) =~ s|\.ld$||; "$x$defext" }
-                grep { $_ =~ /\.ld$/ }
+     my @defs = map { platform->def($_) }
+                grep { platform->isdef($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      die "More than one exported symbols list" if scalar @defs > 1;
      my $linklibs = join("", map { "$_\n" } @deps);
      my $objs = join("\n", @objs);
      my $deps = join(" ", @objs, @defs, @deps);
-     my $import = shlib_import($lib);
-     my $dll =  shlib($lib);
+     my $import = platform->sharedlib_import($lib);
+     my $dll =  platform->sharedlib($lib);
      my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF"
 # The import library may look like a static library, but it is not.
@@ -679,13 +680,13 @@ EOF
  }
  sub obj2dso {
      my %args = @_;
-     my $dso = $args{lib};
-     my $dso_n = basename($dso);
-     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x }
-                grep { $_ =~ m/\.(?:o|res)$/ }
+     my $dso = platform->dso($args{lib});
+     my $dso_n = platform->dsoname($args{lib});
+     my @objs = map { platform->convertext($_) }
+                grep { platform->isobj($_) || platform->isres($_) }
                 @{$args{objs}};
-     my @defs = map { (my $x = $_) =~ s|\.ld$|$defext|; $x }
-                grep { $_ =~ /\.ld$/ }
+     my @defs = map { platform->def($_) }
+                grep { platform->isdef($_) }
                 @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      my $objs = join("\n", @objs);
@@ -693,21 +694,21 @@ EOF
      my $deps = join(" ", @objs, @defs, @deps);
      my $shared_def = join("", map { " /def:$_" } @defs);
      return <<"EOF";
-$dso$dsoext: $deps
-	IF EXIST $dso$dsoext.manifest DEL /F /Q $dso$dsoext.manifest
+$dso: $deps
+	IF EXIST $dso.manifest DEL /F /Q $dso.manifest
 	\$(LD) \$(LDFLAGS) \$(DSO_LDFLAGS) \\
-		\$(LDOUTFLAG)$dso$dsoext$shared_def @<< || (DEL /Q \$(\@B).* $dso.* && EXIT 1)
+		\$(LDOUTFLAG)$dso$shared_def @<< || (DEL /Q \$(\@B).* $dso_n.* && EXIT 1)
 $objs
 $linklibs \$(DSO_EX_LIBS)
 <<
-	IF EXIST $dso$dsoext.manifest \\
-	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dso$dsoext.manifest \$(MTOUTFLAG)$dso$dsoext
+	IF EXIST $dso.manifest \\
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$dso.manifest \$(MTOUTFLAG)$dso
 EOF
  }
  sub obj2lib {
      my %args = @_;
-     my $lib = lib($args{lib});
-     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my $lib = platform->staticlib($args{lib});
+     my @objs = map { platform->obj($_) } @{$args{objs}};
      my $objs = join("\n", @objs);
      my $deps = join(" ", @objs);
      return <<"EOF";
@@ -719,22 +720,24 @@ EOF
  }
  sub obj2bin {
      my %args = @_;
-     my $bin = $args{bin};
-     my @objs = map { (my $x = $_) =~ s|\.o$|$objext|; $x } @{$args{objs}};
+     my $bin = platform->bin($args{bin});
+     my @objs = map { platform->convertext($_) }
+                grep { platform->isobj($_) || platform->isres($_) }
+                @{$args{objs}};
      my @deps = compute_lib_depends(@{$args{deps}});
      my $objs = join("\n", @objs);
      my $linklibs = join("", map { "$_\n" } @deps);
      my $deps = join(" ", @objs, @deps);
      return <<"EOF";
-$bin$exeext: $deps
-	IF EXIST $bin$exeext.manifest DEL /F /Q $bin$exeext.manifest
-	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin$exeext @<<
+$bin: $deps
+	IF EXIST $bin.manifest DEL /F /Q $bin.manifest
+	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) \$(LDOUTFLAG)$bin @<<
 $objs
 setargv.obj
 $linklibs\$(BIN_EX_LIBS)
 <<
-	IF EXIST $bin$exeext.manifest \\
-	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin$exeext.manifest \$(MTOUTFLAG)$bin$exeext
+	IF EXIST $bin.manifest \\
+	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin.manifest \$(MTOUTFLAG)$bin
 EOF
   }
   sub in2script {
@@ -753,11 +756,11 @@ EOF
   sub generatedir {
       my %args = @_;
       my $dir = $args{dir};
-      my @deps = map { s|\.o$|$objext|; $_ } @{$args{deps}};
+      my @deps = map { platform->convertext($_) } @{$args{deps}};
       my @actions = ();
-      my %extinfo = ( dso => $dsoext,
-                      lib => $libext,
-                      bin => $exeext );
+      my %extinfo = ( dso => platform->dsoext(),
+                      lib => platform->libext(),
+                      bin => platform->binext() );
 
       # We already have a 'test' target, and the top directory is just plain
       # silly

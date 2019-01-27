@@ -1557,7 +1557,7 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
 #else
     BIO_snprintf(buf, sizeof(buf), "%s-attr", dbfile);
 #endif
-    dbattr_conf = app_load_config(buf);
+    dbattr_conf = app_load_config_quiet(buf);
 
     retdb = app_malloc(sizeof(*retdb), "new DB");
     retdb->db = tmpdb;
@@ -2192,7 +2192,7 @@ double app_tminterval(int stop, int usertime)
 
     return ret;
 }
-#elif defined(OPENSSL_SYSTEM_VXWORKS)
+#elif defined(OPENSSL_SYS_VXWORKS)
 # include <time.h>
 
 double app_tminterval(int stop, int usertime)

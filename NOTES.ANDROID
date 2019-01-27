@@ -54,7 +54,7 @@
  Another option is to create so called "standalone toolchain" tailored
  for single specific platform including Android API level, and assign its
  location to ANDROID_NDK. In such case you have to pass matching target
- name to Configure and shouldn't use -D__ANDROID_API__=N. PATH adjusment
+ name to Configure and shouldn't use -D__ANDROID_API__=N. PATH adjustment
  becomes simpler, $ANDROID_NDK/bin:$PATH suffices.
 
  Running tests (on Linux)

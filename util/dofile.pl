@@ -176,10 +176,20 @@ my $text =
 # Load the full template (combination of files) into Text::Template
 # and fill it up with our data.  Output goes directly to STDOUT
 
+my $prepend = qq{
+use File::Spec::Functions;
+use lib catdir('$config{sourcedir}', 'util', 'perl');
+};
+$prepend .= qq{
+use lib catdir('$config{sourcedir}', 'Configurations');
+use lib '$config{builddir}';
+use platform;
+} if defined $target{perl_platform};
+
 my $template =
     OpenSSL::Template->new(TYPE => 'STRING',
                            SOURCE => $text,
-                           PREPEND => qq{use lib "$FindBin::Bin/perl";});
+                           PREPEND => $prepend);
 
 sub output_reset_on {
     $template->output_reset_on();
