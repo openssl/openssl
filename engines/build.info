@@ -39,6 +39,17 @@ IF[{- !$disabled{"engine"} -}]
         GENERATE[afalg.ld]=../util/engines.num
       ENDIF
     ENDIF
+    ENGINES=pkcs11
+    SOURCE[pkcs11]=e_pkcs11.c e_pkcs11_back.c e_pkcs11_parse.c e_pkcs11_err.c \
+                   p11_pkey.c p11_key.c p11_front.c p11_slot.c p11_rsa.c p11_ec.c \
+                   p11_ckr.c p11_misc.c p11_atfork.c p11_attr.c p11_cert.c p11_load.c \
+                   p11_err.c libpkcs11.c 
+    DEPEND[pkcs11]=../libcrypto
+    INCLUDE[pkcs11]= ../include
+    IF[{- defined $target{shared_defflag} -}]
+      SHARED_SOURCE[pkcs11]=pkcs11.ld
+      GENERATE[pkcs11.ld]=../util/engines.num
+    ENDIF
 
     ENGINES{noinst}=ossltest dasync
     SOURCE[dasync]=e_dasync.c
