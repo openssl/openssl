@@ -1363,13 +1363,22 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
     } while (num_recs == 0);
     rr = &rr[curr_rec];
 
-    /*
-     * Reset the count of consecutive warning alerts if we've got a non-empty
-     * record that isn't an alert.
-     */
-    if (SSL3_RECORD_get_type(rr) != SSL3_RT_ALERT
-            && SSL3_RECORD_get_length(rr) != 0)
-        s->rlayer.alert_count = 0;
+    if (SSL3_RECORD_get_length(rr) != 0) {
+        /*
+         * Reset the count of consecutive warning alerts if we've got a
+         * non-empty record that isn't an alert.
+         */
+        if (SSL3_RECORD_get_type(rr) != SSL3_RT_ALERT)
+            s->rlayer.alert_count = 0;
+
+        /*
+         * Reset the count of consecutive KeyUpdate messages if we've got
+         * application data
+         */
+        if (SSL3_RECORD_get_type(rr) == SSL3_RT_APPLICATION_DATA
+                && SSL_IS_TLS13(s))
+            s->key_update_count = 0;
+    }
 
     /* we now have a packet which can be read and processed */
 

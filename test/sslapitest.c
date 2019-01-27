@@ -4435,6 +4435,68 @@ static int test_export_key_mat_early(int idx)
 
     return testresult;
 }
+
+#define MAX_KEY_UPDATE_MESSAGES 32
+/*
+ * Test KeyUpdate.
+ * Test 0: Check too many KeyUpdates fail
+ * Test 1: Check that many KeyUpdates but with application data records in
+ *         between is ok
+ */
+static int test_key_update(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0, i, ret;
+    char buf[20];
+    static char *mess = "A test message";
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_3_VERSION,
+                                       0,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL))
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                                                SSL_ERROR_NONE)))
+        goto end;
+
+    for (i = 0; i < MAX_KEY_UPDATE_MESSAGES; i++) {
+        if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+                || !TEST_true(SSL_do_handshake(clientssl))
+                || !TEST_int_le(SSL_read(serverssl, buf, sizeof(buf)), 0))
+            goto end;
+    }
+
+    if (tst == 1) {
+        if (!TEST_int_eq(SSL_write(clientssl, mess, strlen(mess)), strlen(mess))
+                || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)),
+                                         strlen(mess)))
+            goto end;
+    }
+
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+            || !TEST_true(SSL_do_handshake(clientssl)))
+        goto end;
+
+    ret = SSL_read(serverssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0))
+        goto end;
+    ret = SSL_get_error(serverssl, ret);
+    if (!TEST_int_eq(ret, tst == 0 ? SSL_ERROR_SSL : SSL_ERROR_WANT_READ))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
 #endif /* OPENSSL_NO_TLS1_3 */
 
 static int test_ssl_clear(int idx)
@@ -6128,6 +6190,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_export_key_mat, 6);
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
+    ADD_ALL_TESTS(test_key_update, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 2);
     ADD_ALL_TESTS(test_max_fragment_len_ext, OSSL_NELEM(max_fragment_len_test));
