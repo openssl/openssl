@@ -342,8 +342,10 @@ static int state_machine(SSL *s, int server)
         }
 
         s->server = server;
-        if (cb != NULL)
-            cb(s, SSL_CB_HANDSHAKE_START, 1);
+        if (cb != NULL) {
+            if (SSL_IS_FIRST_HANDSHAKE(s) || !SSL_IS_TLS13(s))
+                cb(s, SSL_CB_HANDSHAKE_START, 1);
+        }
 
         /*
          * Fatal errors in this block don't send an alert because we have

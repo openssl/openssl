@@ -4040,7 +4040,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         uint64_t nonce;
         static const unsigned char nonce_label[] = "resumption";
         const EVP_MD *md = ssl_handshake_md(s);
-        void (*cb) (const SSL *ssl, int type, int val) = NULL;
         int hashleni = EVP_MD_size(md);
 
         /* Ensure cast to size_t is safe */
@@ -4052,24 +4051,6 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         }
         hashlen = (size_t)hashleni;
 
-        if (s->info_callback != NULL)
-            cb = s->info_callback;
-        else if (s->ctx->info_callback != NULL)
-            cb = s->ctx->info_callback;
-
-        if (cb != NULL) {
-            /*
-             * We don't start and stop the handshake in between each ticket when
-             * sending more than one - but it should appear that way to the info
-             * callback.
-             */
-            if (s->sent_tickets != 0) {
-                ossl_statem_set_in_init(s, 0);
-                cb(s, SSL_CB_HANDSHAKE_DONE, 1);
-                ossl_statem_set_in_init(s, 1);
-            }
-            cb(s, SSL_CB_HANDSHAKE_START, 1);
-        }
         /*
          * If we already sent one NewSessionTicket, or we resumed then
          * s->session may already be in a cache and so we must not modify it.
