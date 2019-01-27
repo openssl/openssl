@@ -42,29 +42,37 @@ if ($^O eq 'MSWin32') {
     # On Windows, these errors have been observed to not always be loaded by
     # apps/openssl, while they are in perl, which causes a difference that we
     # consider a false alarm.  So we skip checking these errors.
-    my @error_skiplist = (
-        Errno::ENETDOWN,
-        Errno::ENETUNREACH,
-        Errno::ENETRESET,
-        Errno::ECONNABORTED,
-        Errno::EISCONN,
-        Errno::ENOTCONN,
-        Errno::ESHUTDOWN,
-        Errno::ETOOMANYREFS,
-        Errno::ETIMEDOUT,
-        Errno::EHOSTDOWN,
-        Errno::EHOSTUNREACH,
-        Errno::EALREADY,
-        Errno::EINPROGRESS,
-        Errno::ESTALE,
-        Errno::EUCLEAN,
-        Errno::ENOTNAM,
-        Errno::ENAVAIL,
-        Errno::ENOMEDIUM,
-        Errno::ENOKEY,
+    # Because we can't know exactly what symbols exist in a perticular perl
+    # version, we resort to discovering them directly in the Errno package
+    # symbol table.
+    my @error_skiplist = qw(
+        ENETDOWN
+        ENETUNREACH
+        ENETRESET
+        ECONNABORTED
+        EISCONN
+        ENOTCONN
+        ESHUTDOWN
+        ETOOMANYREFS
+        ETIMEDOUT
+        EHOSTDOWN
+        EHOSTUNREACH
+        EALREADY
+        EINPROGRESS
+        ESTALE
+        EUCLEAN
+        ENOTNAM
+        ENAVAIL
+        ENOMEDIUM
+        ENOKEY
     );
     @posix_errors =
-        map { my $x = $_; ! grep { $x = $_ } @error_skiplist } @posix_errors;
+        grep {
+            my $x = $_;
+            ! grep {
+                exists $Errno::{$_} && $x == $Errno::{$_}
+            } @error_skiplist
+        } @posix_errors;
 }
 
 plan tests => scalar @posix_errors
