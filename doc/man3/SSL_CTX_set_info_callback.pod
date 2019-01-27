@@ -92,17 +92,13 @@ Callback has been called due to an alert being sent or received.
 
 =item SSL_CB_HANDSHAKE_START
 
-Callback has been called because a new handshake is started. In TLSv1.3 this is
-also used for the start of post-handshake message exchanges such as for the
-exchange of session tickets, or for key updates. It also occurs when resuming a
-handshake following a pause to handle early data.
+Callback has been called because a new handshake is started. It also occurs when
+resuming a handshake following a pause to handle early data.
 
-=item SSL_CB_HANDSHAKE_DONE           0x20
+=item SSL_CB_HANDSHAKE_DONE
 
-Callback has been called because a handshake is finished. In TLSv1.3 this is
-also used at the end of an exchange of post-handshake messages such as for
-session tickets or key updates. It also occurs if the handshake is paused to
-allow the exchange of early data.
+Callback has been called because a handshake is finished.  It also occurs if the
+handshake is paused to allow the exchange of early data.
 
 =back
 
