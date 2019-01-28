@@ -380,7 +380,8 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         /* Asking for SHA1; always computed in CRL d2i. */
         if (len != NULL)
             *len = sizeof(data->sha1_hash);
-        memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
+        if (md != data->sha1_hash)
+            memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
         return 1;
     }
     return (ASN1_item_digest
