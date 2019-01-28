@@ -790,20 +790,31 @@ int ERR_get_next_error_library(void)
     return ret;
 }
 
-void ERR_set_error_data(char *data, int flags)
+static int err_set_error_data_int(char *data, int flags)
 {
     ERR_STATE *es;
     int i;
 
     es = ERR_get_state();
     if (es == NULL)
-        return;
+        return 0;
 
     i = es->top;
 
     err_clear_data(es, i);
     es->err_data[i] = data;
     es->err_data_flags[i] = flags;
+
+    return 1;
+}
+
+void ERR_set_error_data(char *data, int flags)
+{
+    /*
+     * This function is void so we cannot propagate the error return. Since it
+     * is also in the public API we can't change the return type.
+     */
+    err_set_error_data_int(data, flags);
 }
 
 void ERR_add_error_data(int num, ...)
@@ -843,7 +854,8 @@ void ERR_add_error_vdata(int num, va_list args)
         }
         OPENSSL_strlcat(str, a, (size_t)s + 1);
     }
-    ERR_set_error_data(str, ERR_TXT_MALLOCED | ERR_TXT_STRING);
+    if (!err_set_error_data_int(str, ERR_TXT_MALLOCED | ERR_TXT_STRING))
+        OPENSSL_free(str);
 }
 
 int ERR_set_mark(void)
