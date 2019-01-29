@@ -47,6 +47,7 @@ int ERR_load_CRMF_strings(void);
  * CRMF reason codes.
  */
 #  define CRMF_R_BAD_PBM_ITERATIONCOUNT                    100
+#  define CRMF_R_MALFORMED_IV                              101
 #  define CRMF_R_CRMFERROR                                 102
 #  define CRMF_R_ERROR                                     103
 #  define CRMF_R_ERROR_DECODING_CERTIFICATE                104
@@ -54,7 +55,6 @@ int ERR_load_CRMF_strings(void);
 #  define CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY            106
 #  define CRMF_R_FAILURE_OBTAINING_RANDOM                  107
 #  define CRMF_R_ITERATIONCOUNT_BELOW_100                  108
-#  define CRMF_R_MALFORMED_IV                              101
 #  define CRMF_R_NULL_ARGUMENT                             109
 #  define CRMF_R_SETTING_MAC_ALGOR_FAILURE                 110
 #  define CRMF_R_SETTING_OWF_ALGOR_FAILURE                 111

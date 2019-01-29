@@ -2121,6 +2121,7 @@ CONF_R_UNKNOWN_MODULE_NAME:113:unknown module name
 CONF_R_VARIABLE_EXPANSION_TOO_LONG:116:variable expansion too long
 CONF_R_VARIABLE_HAS_NO_VALUE:104:variable has no value
 CRMF_R_BAD_PBM_ITERATIONCOUNT:100:bad pbm iterationcount
+CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_CRMFERROR:102:crmferror
 CRMF_R_ERROR:103:error
 CRMF_R_ERROR_DECODING_CERTIFICATE:104:error decoding certificate
@@ -2128,7 +2129,6 @@ CRMF_R_ERROR_DECRYPTING_CERTIFICATE:105:error decrypting certificate
 CRMF_R_ERROR_DECRYPTING_SYMMETRIC_KEY:106:error decrypting symmetric key
 CRMF_R_FAILURE_OBTAINING_RANDOM:107:failure obtaining random
 CRMF_R_ITERATIONCOUNT_BELOW_100:108:iterationcount below 100
-CRMF_R_MALFORMED_IV:101:malformed iv
 CRMF_R_NULL_ARGUMENT:109:null argument
 CRMF_R_SETTING_MAC_ALGOR_FAILURE:110:setting mac algor failure
 CRMF_R_SETTING_OWF_ALGOR_FAILURE:111:setting owf algor failure
