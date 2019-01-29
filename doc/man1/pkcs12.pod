@@ -154,7 +154,8 @@ Don't attempt to verify the integrity MAC before reading the file.
 
 Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
-PKCS#12 files unreadable.
+PKCS#12 files unreadable. Cannot be used in combination with the options
+-password, -passin (if importing) or -passout (if exporting).
 
 =back
 
