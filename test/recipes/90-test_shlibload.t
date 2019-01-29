@@ -21,6 +21,7 @@ use platform;
 
 plan skip_all => "Test only supported in a shared build" if disabled("shared");
 plan skip_all => "Test is disabled on AIX" if config('target') =~ m|^aix|;
+plan skip_all => "Test only supported in a dso build" if disabled("dso");
 
 plan tests => 10;
 
