@@ -325,13 +325,6 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             if (!i)
                 goto merr;
         }
-        if (flags & CMS_REUSE_DIGEST) {
-            if (!cms_copy_messageDigest(cms, si))
-                goto err;
-            if (!(flags & (CMS_PARTIAL | CMS_KEY_PARAM)) &&
-                !CMS_SignerInfo_sign(si))
-                goto err;
-        }
         if (flags & CMS_CADES) {
             ESS_SIGNING_CERT *sc = NULL;
             ESS_SIGNING_CERT_V2 *sc2 = NULL;
@@ -353,6 +346,13 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
             if (!add_sc)
                 goto err;
         }
+        if (flags & CMS_REUSE_DIGEST) {
+            if (!cms_copy_messageDigest(cms, si))
+                goto err;
+            if (!(flags & (CMS_PARTIAL | CMS_KEY_PARAM)) &&
+                !CMS_SignerInfo_sign(si))
+                goto err;
+        }
     }
 
     if (!(flags & CMS_NOCERTS)) {
@@ -370,8 +370,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <=
-                   0)
+        } else if (EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, pk) <= 0)
             goto err;
     }
 
