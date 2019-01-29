@@ -319,7 +319,7 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
 
-        if (!tls1_in_list(id, supp, num_supp)
+        if ((num_supp && !tls1_in_list(id, supp, num_supp))
             || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
         if (nmatch == k)
