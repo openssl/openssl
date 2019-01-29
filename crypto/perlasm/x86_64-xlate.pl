@@ -649,7 +649,13 @@ my %globals;
 	    # why it starts with -8. Recall that CFA is top of caller's
 	    # stack...
 	    /startproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp", -8); last; };
-	    /endproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp",  0); last; };
+	    /endproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp",  0);
+				# .cfi_remember_state directives that are not
+				# matched with .cfi_restore_state are
+				# unnecessary.
+				die "unpaired .cfi_remember_state" if (@cfa_stack);
+				last;
+			      };
 	    /def_cfa_register/
 			&& do {	$cfa_reg = $$line; last; };
 	    /def_cfa_offset/
