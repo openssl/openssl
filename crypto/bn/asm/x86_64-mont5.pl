@@ -2910,6 +2910,7 @@ bn_powerx5:
 .align	32
 bn_sqrx8x_internal:
 __bn_sqrx8x_internal:
+.cfi_startproc
 	##################################################################
 	# Squaring part:
 	#
@@ -3542,6 +3543,7 @@ __bn_sqrx8x_reduction:
 	cmp	8+8(%rsp),%r8		# end of t[]?
 	jb	.Lsqrx8x_reduction_loop
 	ret
+.cfi_endproc
 .size	bn_sqrx8x_internal,.-bn_sqrx8x_internal
 ___
 }

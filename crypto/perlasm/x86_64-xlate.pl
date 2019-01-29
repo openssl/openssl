@@ -541,6 +541,7 @@ my %globals;
 	);
 
     my ($cfa_reg, $cfa_rsp);
+    my @cfa_stack;
 
     # [us]leb128 format is variable-length integer representation base
     # 2^128, with most significant bit of each byte being 0 denoting
@@ -686,6 +687,14 @@ my %globals;
 				$self->{value} = ".cfi_escape\t" .
 					join(",", map(sprintf("0x%02x", $_),
 						      cfa_expression($$line)));
+				last;
+			      };
+	    /remember_state/
+			&& do {	push @cfa_stack, [$cfa_reg, $cfa_rsp];
+				last;
+			      };
+	    /restore_state/
+			&& do {	($cfa_reg, $cfa_rsp) = @{pop @cfa_stack};
 				last;
 			      };
 	    }

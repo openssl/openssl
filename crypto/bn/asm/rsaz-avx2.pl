@@ -1492,6 +1492,7 @@ $code.=<<___;
 .type	rsaz_1024_red2norm_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_red2norm_avx2:
+.cfi_startproc
 	sub	\$-128,$inp	# size optimization
 	xor	%rax,%rax
 ___
@@ -1525,12 +1526,14 @@ ___
 }
 $code.=<<___;
 	ret
+.cfi_endproc
 .size	rsaz_1024_red2norm_avx2,.-rsaz_1024_red2norm_avx2
 
 .globl	rsaz_1024_norm2red_avx2
 .type	rsaz_1024_norm2red_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_norm2red_avx2:
+.cfi_startproc
 	sub	\$-128,$out	# size optimization
 	mov	($inp),@T[0]
 	mov	\$0x1fffffff,%eax
@@ -1562,6 +1565,7 @@ $code.=<<___;
 	mov	@T[0],`8*($j+2)-128`($out)
 	mov	@T[0],`8*($j+3)-128`($out)
 	ret
+.cfi_endproc
 .size	rsaz_1024_norm2red_avx2,.-rsaz_1024_norm2red_avx2
 ___
 }
@@ -1573,6 +1577,7 @@ $code.=<<___;
 .type	rsaz_1024_scatter5_avx2,\@abi-omnipotent
 .align	32
 rsaz_1024_scatter5_avx2:
+.cfi_startproc
 	vzeroupper
 	vmovdqu	.Lscatter_permd(%rip),%ymm5
 	shl	\$4,$power
@@ -1592,6 +1597,7 @@ rsaz_1024_scatter5_avx2:
 
 	vzeroupper
 	ret
+.cfi_endproc
 .size	rsaz_1024_scatter5_avx2,.-rsaz_1024_scatter5_avx2
 
 .globl	rsaz_1024_gather5_avx2
