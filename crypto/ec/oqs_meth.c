@@ -782,6 +782,7 @@ static int oqs_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     if (
 	(nid != NID_picnicL1FS &&
 	 nid != NID_p256_picnicL1FS &&
+	 nid != NID_rsa3072_picnicL1FS &&
 	 nid != NID_qteslaI &&
 	 nid != NID_p256_qteslaI &&
 	 nid != NID_qteslaIIIsize &&
