@@ -40,7 +40,7 @@ SHLIB_INFO={- join(" ", map { my $x = platform->sharedlib($_);
                               my $y = platform->sharedlib_simple($_);
                               $x ? "\"$x;$y\"" : () }
                         @{$unified_info{libraries}}) -}
-ENGINES={- join(" ", map { platform->dso($_) } @{$unified_info{engines}}) -}
+MODULES={- join(" ", map { platform->dso($_) } @{$unified_info{modules}}) -}
 PROGRAMS={- join(" ", map { platform->bin($_) } @{$unified_info{programs}}) -}
 SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
@@ -71,8 +71,9 @@ INSTALL_SHLIB_INFO={-
 -}
 INSTALL_ENGINES={-
         join(" ", map { platform->dso($_) }
-                  grep { !$unified_info{attributes}->{$_}->{noinst} }
-                  @{$unified_info{engines}})
+                  grep { !$unified_info{attributes}->{$_}->{noinst}
+                         && $unified_info{attributes}->{$_}->{engine} }
+                  @{$unified_info{modules}})
 -}
 INSTALL_PROGRAMS={-
         join(" ", map { platform->bin($_) }
@@ -312,14 +313,14 @@ LANG=C
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -}: build_libs_nodep build_engines_nodep build_programs_nodep link-utils
+{- dependmagic('all'); -}: build_libs_nodep build_modules_nodep build_programs_nodep link-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
-{- dependmagic('build_engines'); -}: build_engines_nodep
+{- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: libcrypto.pc libssl.pc openssl.pc
-build_engines_nodep: $(ENGINES)
+build_modules_nodep: $(MODULES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
 
 # Kept around for backward compatibility
@@ -335,7 +336,7 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED)
 	@ : {- output_on() if $disabled{makedepend}; "" -}
 
 test: tests
-{- dependmagic('tests'); -}: build_programs_nodep build_engines_nodep link-utils
+{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( cd test; \
 	  mkdir -p test-runs; \
@@ -382,7 +383,7 @@ libclean:
 	$(RM) *{- platform->defext() -}
 
 clean: libclean
-	$(RM) $(PROGRAMS) $(TESTPROGS) $(ENGINES) $(SCRIPTS)
+	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	-$(RM) `find . -name .git -prune -o -name '*{- platform->depext() -}' -print`
 	-$(RM) `find . -name .git -prune -o -name '*{- platform->objext() -}' -print`
@@ -578,10 +579,10 @@ uninstall_dev: uninstall_runtime_libs
 	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig
 	-$(RMDIR) $(DESTDIR)$(libdir)
 
-install_engines: install_runtime_libs build_engines
+install_engines: install_runtime_libs build_modules
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(ENGINESDIR)/
-	@$(ECHO) "*** Installing engines"
+	@$(ECHO) "*** Installing ENGINE modules"
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
@@ -593,7 +594,7 @@ install_engines: install_runtime_libs build_engines
 	done
 
 uninstall_engines:
-	@$(ECHO) "*** Uninstalling engines"
+	@$(ECHO) "*** Uninstalling ENGINE modules"
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \

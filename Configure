@@ -1711,7 +1711,7 @@ if ($builder eq "unified") {
         # The basic things we're trying to build
         my @programs = ();
         my @libraries = ();
-        my @engines = ();
+        my @modules = ();
         my @scripts = ();
 
         my %attributes = ();
@@ -1823,12 +1823,12 @@ if ($builder eq "unified") {
                     }
                 }
             },
-            qr/^\s*ENGINES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
+            qr/^\s*MODULES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     my @a = tokenize($1, qr|\s*,\s*|);
-                    my @e = tokenize($2);
-                    push @engines, @e;
+                    my @m = tokenize($2);
+                    push @modules, @m;
                     foreach my $a (@a) {
                         my $ak = $a;
                         my $av = 1;
@@ -1836,8 +1836,8 @@ if ($builder eq "unified") {
                             $ak = $1;
                             $av = $2;
                         }
-                        foreach my $e (@e) {
-                            $attributes{$e}->{$ak} = $av;
+                        foreach my $m (@m) {
+                            $attributes{$m}->{$ak} = $av;
                         }
                     }
                 }
@@ -1899,10 +1899,13 @@ if ($builder eq "unified") {
             );
         die "runaway IF?" if (@skip);
 
-        die <<"EOF" if scalar @engines and !$config{dynamic_engines};
+        if (grep { defined $attributes{$_}->{engine} } keys %attributes
+                and !$config{dynamic_engines}) {
+            die <<"EOF"
 ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
+        }
 
         foreach (keys %attributes) {
             my $dest = $_;
@@ -1916,7 +1919,7 @@ EOF
         {
             my %infos = ( programs  => [ @programs  ],
                           libraries => [ @libraries ],
-                          engines   => [ @engines   ],
+                          modules   => [ @modules   ],
                           scripts   => [ @scripts   ] );
             foreach my $k (keys %infos) {
                 foreach (@{$infos{$k}}) {
@@ -2142,7 +2145,7 @@ EOF
                 if defined($unified_info{$_});
             delete $unified_info{$_};
         }
-        foreach my $prodtype (('programs', 'libraries', 'engines', 'scripts')) {
+        foreach my $prodtype (('programs', 'libraries', 'modules', 'scripts')) {
             # $intent serves multi purposes:
             # - give a prefix for the new object files names
             # - in the case of libraries, rearrange the object files so static
@@ -2158,7 +2161,7 @@ EOF
                                            src => [ 'sources',
                                                     'shared_sources' ],
                                            dst => 'shared_sources' } },
-                engines   => { dso    => { src => [ 'sources',
+                modules   => { dso    => { src => [ 'sources',
                                                     'shared_sources' ],
                                            dst => 'shared_sources' } },
                 scripts   => { script => { src => [ 'sources' ],
@@ -2220,7 +2223,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "engines", "scripts")) {
+    foreach (("programs", "libraries", "modules", "scripts")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
@@ -2268,7 +2271,7 @@ EOF
     # they end up in where applicable.  Then, add build rules for those
     # directories
     my %loopinfo = ( "lib" => [ @{$unified_info{libraries}} ],
-                     "dso" => [ @{$unified_info{engines}} ],
+                     "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
                      "script" => [ @{$unified_info{scripts}} ] );
     foreach my $type (keys %loopinfo) {
