@@ -1713,7 +1713,6 @@ if ($builder eq "unified") {
         my @libraries = ();
         my @engines = ();
         my @scripts = ();
-        my @intermediates = ();
 
         my %attributes = ();
         my %sources = ();
@@ -1803,7 +1802,6 @@ if ($builder eq "unified") {
                             $attributes{$p}->{$ak} = $av;
                         }
                     }
-                    push @programs, @p;
                 }
             },
             qr/^\s*LIBS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
@@ -1823,7 +1821,6 @@ if ($builder eq "unified") {
                             $attributes{$l}->{$ak} = $av;
                         }
                     }
-                    push @libraries, @l;
                 }
             },
             qr/^\s*ENGINES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
@@ -1843,7 +1840,6 @@ if ($builder eq "unified") {
                             $attributes{$e}->{$ak} = $av;
                         }
                     }
-                    push @engines, @e;
                 }
             },
             qr/^\s*SCRIPTS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
@@ -1863,7 +1859,6 @@ if ($builder eq "unified") {
                             $attributes{$s}->{$ak} = $av;
                         }
                     }
-                    push @scripts, @s;
                 }
             },
 
