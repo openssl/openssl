@@ -9,20 +9,13 @@ SUBDIRS=ossl_shim
      ""
 -}
 IF[{- !$disabled{tests} -}]
-  LIBS{noinst}=libtestutil.a
+  LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
           testutil/format_output.c testutil/tap_bio.c \
           testutil/test_cleanup.c testutil/main.c testutil/init.c
   INCLUDE[libtestutil.a]=../include
   DEPEND[libtestutil.a]=../libcrypto
-
-  # Special hack for descrip.mms to include the MAIN object module
-  # explicitly.  This will only be done if there isn't a 'main' in the
-  # program's object modules already.
-  BEGINRAW[descrip.mms]
-INCLUDE_MAIN___test_libtestutil_OLB = /INCLUDE=main
-  ENDRAW[descrip.mms]
 
   PROGRAMS{noinst}=\
           versions \
