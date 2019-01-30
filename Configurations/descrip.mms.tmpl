@@ -55,8 +55,9 @@
       grep { !$unified_info{attributes}->{$_}->{noinst} }
       @{$unified_info{libraries}};
   our @install_engines =
-      grep { !$unified_info{attributes}->{$_}->{noinst} }
-      @{$unified_info{engines}};
+      grep { !$unified_info{attributes}->{$_}->{noinst}
+             && $unified_info{attributes}->{$_}->{engine} }
+      @{$unified_info{modules}};
   our @install_programs =
       grep { !$unified_info{attributes}->{$_}->{noinst} }
       @{$unified_info{programs}};
@@ -122,7 +123,7 @@ SHLIB_TARGET={- $target{shared_target} -}
 
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
-ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{engines}}) -}
+MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{modules}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
 {- output_off() if $disabled{makedepend}; "" -}
@@ -164,7 +165,7 @@ OPENSSLDIR={- catdir($config{openssldir}) or
                               : "SYS\$COMMON:[OPENSSL-COMMON]" -}
 # The same, but for C
 OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
-# Where installed engines reside, for C
+# Where installed ENGINE modules reside, for C
 ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
@@ -400,14 +401,14 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-{- dependmagic('all'); -} : build_libs_nodep, build_engines_nodep, build_programs_nodep
+{- dependmagic('all'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep
 {- dependmagic('build_libs'); -} : build_libs_nodep
-{- dependmagic('build_engines'); -} : build_engines_nodep
+{- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
 
 build_generated : $(GENERATED_MANDATORY)
 build_libs_nodep : $(LIBS), $(SHLIBS)
-build_engines_nodep : $(ENGINES)
+build_modules_nodep : $(MODULES)
 build_programs_nodep : $(PROGRAMS), $(SCRIPTS)
 
 # Kept around for backward compatibility
@@ -423,7 +424,7 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED)
 	@ ! {- output_on() if $disabled{makedepend}; "" -}
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_engines_nodep
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
         @ ! {- output_off() if $disabled{tests}; "" -}
         SET DEFAULT [.test]{- move("test") -}
         CREATE/DIR [.test-runs]
@@ -483,14 +484,14 @@ check_install :
 uninstall : uninstall_docs uninstall_sw
 
 # Because VMS wants the generation number (or *) to delete files, we can't
-# use $(LIBS), $(PROGRAMS), $(GENERATED) and $(ENGINES)directly.
+# use $(LIBS), $(PROGRAMS), $(GENERATED) and $(MODULES) directly.
 libclean :
         {- join("\n\t", map { "- DELETE $_.OLB;*" } @libs) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.MAP;*" } @shlibs) || "@ !" -}
 
 clean : libclean
         {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{programs}}) || "@ !" -}
-        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{engines}}) || "@ !" -}
+        {- join("\n\t", map { "- DELETE $_.EXE;*,$_.OPT;*" } @{$unified_info{modules}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{scripts}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @{$unified_info{depends}->{""}}) || "@ !" -}
         {- join("\n\t", map { "- DELETE $_;*" } @generated) || "@ !" -}
@@ -557,14 +558,14 @@ install_dev : check_INSTALLTOP install_runtime_libs
                 map { "COPY/PROT=W:R $_.OLB ossl_installroot:[LIB.'arch']" }
                 @install_libs) -}
 
-install_engines : check_INSTALLTOP install_runtime_libs build_engines
-        @ {- output_off() unless scalar @{$unified_info{engines}}; "" -} !
-        @ WRITE SYS$OUTPUT "*** Installing engines"
+install_engines : check_INSTALLTOP install_runtime_libs build_modules
+        @ {- output_off() unless scalar @install_engines; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing ENGINE modules"
         - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
                 @install_engines) -}
-        @ {- output_on() unless scalar @{$unified_info{engines}}; "" -} !
+        @ {- output_on() unless scalar @install_engines; "" -} !
 
 install_runtime : install_programs
 

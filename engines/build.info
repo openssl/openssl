@@ -11,7 +11,7 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[../libcrypto]=e_afalg.c
     ENDIF
   ELSE
-    ENGINES=padlock
+    MODULES{engine}=padlock
     SOURCE[padlock]=e_padlock.c {- $target{padlock_asm_src} -}
     DEPEND[padlock]=../libcrypto
     INCLUDE[padlock]=../include
@@ -20,7 +20,7 @@ IF[{- !$disabled{"engine"} -}]
       GENERATE[padlock.ld]=../util/engines.num
     ENDIF
     IF[{- !$disabled{capieng} -}]
-      ENGINES=capi
+      MODULES{engine}=capi
       SOURCE[capi]=e_capi.c
       DEPEND[capi]=../libcrypto
       INCLUDE[capi]=../include
@@ -30,7 +30,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
     IF[{- !$disabled{afalgeng} -}]
-      ENGINES=afalg
+      MODULES{engine}=afalg
       SOURCE[afalg]=e_afalg.c
       DEPEND[afalg]=../libcrypto
       INCLUDE[afalg]= ../include
@@ -40,7 +40,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
 
-    ENGINES{noinst}=ossltest dasync
+    MODULES{noinst,engine}=ossltest dasync
     SOURCE[dasync]=e_dasync.c
     DEPEND[dasync]=../libcrypto
     INCLUDE[dasync]=../include

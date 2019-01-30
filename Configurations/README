@@ -159,7 +159,7 @@ In each table entry, the following keys are significant:
                            below [2].
         dso_scheme      => The type of dynamic shared objects to build
                            for.  This mostly comes into play with
-                           engines, but can be used for other purposes
+                           modules, but can be used for other purposes
                            as well.  Valid values are "DLFCN"
                            (dlopen() et al), "DLFCN_NO_H" (for systems
                            that use dlopen() et al but do not have
@@ -350,7 +350,7 @@ In each table entry, the following keys are significant:
 
     - shared libraries; that would be libcrypto and libssl.
     - shared objects (sometimes called dynamic libraries);  that would
-      be the engines.
+      be the modules.
     - applications; those are apps/openssl and all the test apps.
 
     Very roughly speaking, linking is done like this (words in braces
@@ -411,10 +411,10 @@ variables:
 
     PROGRAMS=foo bar
     LIBS=libsomething
-    ENGINES=libeng
+    MODULES=libeng
     SCRIPTS=myhack
 
-Note that the files mentioned for PROGRAMS, LIBS and ENGINES *must* be
+Note that the files mentioned for PROGRAMS, LIBS and MODULES *must* be
 without extensions.  The build file templates will figure them out.
 
 For each thing to be built, it is then possible to say what sources

@@ -143,10 +143,10 @@
      $cache{$lib} = 1;
  }
 
- # doengine is responsible for building engines.  It will call
+ # domodule is responsible for building modules.  It will call
  # obj2dso, and also makes sure all object files for the library
  # are built.
- sub doengine {
+ sub domodule {
      my $lib = shift;
      return "" if $cache{$lib};
      $OUT .= obj2dso(lib => $lib,
@@ -209,10 +209,10 @@
  # Build mandatory generated headers
  foreach (@{$unified_info{depends}->{""}}) { dogenerate($_); }
 
- # Build all known libraries, engines, programs and scripts.
+ # Build all known libraries, modules, programs and scripts.
  # Everything else will be handled as a consequence.
  foreach (@{$unified_info{libraries}}) { dolib($_);    }
- foreach (@{$unified_info{engines}})   { doengine($_); }
+ foreach (@{$unified_info{modules}})   { domodule($_); }
  foreach (@{$unified_info{programs}})  { dobin($_);    }
  foreach (@{$unified_info{scripts}})   { doscript($_); }
 

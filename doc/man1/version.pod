@@ -60,7 +60,7 @@ OPENSSLDIR setting.
 
 =item B<-e>
 
-ENGINESDIR setting.
+ENGINESDIR settings.
 
 =back
 
