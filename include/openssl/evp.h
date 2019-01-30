@@ -945,14 +945,9 @@ const EVP_CIPHER *EVP_sm4_ctr(void);
                         | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
 
 #  ifdef OPENSSL_LOAD_CONF
-#   define OpenSSL_add_all_algorithms() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
-                        | OPENSSL_INIT_ADD_ALL_DIGESTS \
-                        | OPENSSL_INIT_LOAD_CONFIG, NULL)
+#   define OpenSSL_add_all_algorithms() OPENSSL_add_all_algorithms_conf()
 #  else
-#   define OpenSSL_add_all_algorithms() \
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
-                        | OPENSSL_INIT_ADD_ALL_DIGESTS, NULL)
+#   define OpenSSL_add_all_algorithms() OPENSSL_add_all_algorithms_noconf()
 #  endif
 
 #  define OpenSSL_add_all_ciphers() \
