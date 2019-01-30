@@ -413,7 +413,6 @@ variables:
     LIBS=libsomething
     ENGINES=libeng
     SCRIPTS=myhack
-    EXTRA=file1 file2
 
 Note that the files mentioned for PROGRAMS, LIBS and ENGINES *must* be
 without extensions.  The build file templates will figure them out.
