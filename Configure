@@ -2220,7 +2220,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "modules", "scripts")) {
+    foreach (("programs", "libraries", "engines", "scripts")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
