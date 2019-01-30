@@ -16,9 +16,17 @@ declare_dh_bn(1024_160)
 declare_dh_bn(2048_224)
 declare_dh_bn(2048_256)
 
+extern const BIGNUM _bignum_modp_1536_p;
+extern const BIGNUM _bignum_modp_2048_p;
+extern const BIGNUM _bignum_modp_3072_p;
+extern const BIGNUM _bignum_modp_4096_p;
+extern const BIGNUM _bignum_modp_6144_p;
+extern const BIGNUM _bignum_modp_8192_p;
+
 extern const BIGNUM _bignum_ffdhe2048_p;
 extern const BIGNUM _bignum_ffdhe3072_p;
 extern const BIGNUM _bignum_ffdhe4096_p;
 extern const BIGNUM _bignum_ffdhe6144_p;
 extern const BIGNUM _bignum_ffdhe8192_p;
+
 extern const BIGNUM _bignum_const_2;

@@ -14,6 +14,7 @@ B<openssl dhparam>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-dsaparam>]
+[B<-ffcparam>]
 [B<-check>]
 [B<-noout>]
 [B<-text>]
@@ -23,7 +24,7 @@ B<openssl dhparam>
 [B<-rand file...>]
 [B<-writerand file>]
 [B<-engine id>]
-[I<numbits>]
+[B<numbits> [B<qbits> [B<gindex>]]]
 
 =head1 DESCRIPTION
 
@@ -72,6 +73,18 @@ exchange more efficient.  Beware that with such DSA-style DH
 parameters, a fresh DH key should be created for each use to
 avoid small-subgroup attacks that may be possible otherwise.
 
+In FIPS mode this is equivalent to B<-ffcparam>.
+
+=item B<-ffcparam>
+
+If this option is used, Finite Field Cryptography (FFC) parameters are
+generated. These conform to the FIPS 186-4 standard and can be validated.
+DH parameter generation with the B<-ffcparam> option is much faster,
+and the recommended exponent length is shorter, which makes DH key
+exchange more efficient.
+Beware that a fresh DH key should be created for each use to
+avoid small-subgroup attacks that may be possible otherwise.
+
 =item B<-check>
 
 Performs numerous checks to see if the supplied parameters are valid and
@@ -83,6 +96,8 @@ The generator to use, either 2 or 5. If present then the
 input file is ignored and parameters are generated instead. If not
 present but B<numbits> is present, parameters are generated with the
 default generator 2.
+In FIPS mode an approved safe prime group that matches the size of B<numbits>
+is used.
 
 =item B<-rand file...>
 
@@ -104,6 +119,22 @@ I<numbits>. It must be the last option. If this option is present then
 the input file is ignored and parameters are generated instead. If
 this option is not present but a generator (B<-2> or B<-5>) is
 present, parameters are generated with a default length of 2048 bits.
+
+=item B<qbits>
+
+This option is only used when the B<-ffcparam> is used.
+This option specifies that the FFC parameter Q (subgroup order) should be
+generated with a size of B<qbits>.
+It must be the next option after <numbits>.
+The default value is dependent on the size of B<numbits>.
+
+=item B<gindex>
+
+This option is only used when the B<-ffcparam> is used.
+This option specifies that the FFC parameter G (generator) should be generated
+using B<gindex> as an input.
+It must be the next option after B<qbits>.
+If this option is included then this value must also be used for validation of G.
 
 =item B<-noout>
 

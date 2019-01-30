@@ -280,7 +280,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
     else
         pub_key = NULL;
 
-    if (x->p == NULL || (ptype == 2 && priv_key == NULL)
+    if (DH_get0_p(x) == NULL || (ptype == 2 && priv_key == NULL)
             || (ptype > 0 && pub_key == NULL)) {
         reason = ERR_R_PASSED_NULL_PARAMETER;
         goto err;
@@ -294,7 +294,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
         ktype = "DH Parameters";
 
     BIO_indent(bp, indent, 128);
-    if (BIO_printf(bp, "%s: (%d bit)\n", ktype, BN_num_bits(x->p)) <= 0)
+    if (BIO_printf(bp, "%s: (%d bit)\n", ktype, DH_bits(x)) <= 0)
         goto err;
     indent += 4;
 
@@ -303,33 +303,9 @@ static int do_dh_print(BIO *bp, const DH *x, int indent, int ptype)
     if (!ASN1_bn_print(bp, "public-key:", pub_key, NULL, indent))
         goto err;
 
-    if (!ASN1_bn_print(bp, "prime:", x->p, NULL, indent))
+    if (!FFC_PARAMS_print(bp, &x->params, indent))
         goto err;
-    if (!ASN1_bn_print(bp, "generator:", x->g, NULL, indent))
-        goto err;
-    if (x->q && !ASN1_bn_print(bp, "subgroup order:", x->q, NULL, indent))
-        goto err;
-    if (x->j && !ASN1_bn_print(bp, "subgroup factor:", x->j, NULL, indent))
-        goto err;
-    if (x->seed) {
-        int i;
-        BIO_indent(bp, indent, 128);
-        BIO_puts(bp, "seed:");
-        for (i = 0; i < x->seedlen; i++) {
-            if ((i % 15) == 0) {
-                if (BIO_puts(bp, "\n") <= 0
-                    || !BIO_indent(bp, indent + 4, 128))
-                    goto err;
-            }
-            if (BIO_printf(bp, "%02x%s", x->seed[i],
-                           ((i + 1) == x->seedlen) ? "" : ":") <= 0)
-                goto err;
-        }
-        if (BIO_write(bp, "\n", 1) <= 0)
-            return 0;
-    }
-    if (x->counter && !ASN1_bn_print(bp, "counter:", x->counter, NULL, indent))
-        goto err;
+
     if (x->length != 0) {
         BIO_indent(bp, indent, 128);
         if (BIO_printf(bp, "recommended-private-length: %d bits\n",
@@ -351,7 +327,7 @@ static int int_dh_size(const EVP_PKEY *pkey)
 
 static int dh_bits(const EVP_PKEY *pkey)
 {
-    return BN_num_bits(pkey->pkey.dh->p);
+    return DH_bits(pkey->pkey.dh);
 }
 
 static int dh_security_bits(const EVP_PKEY *pkey)
@@ -361,59 +337,17 @@ static int dh_security_bits(const EVP_PKEY *pkey)
 
 static int dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    if (BN_cmp(a->pkey.dh->p, b->pkey.dh->p) ||
-        BN_cmp(a->pkey.dh->g, b->pkey.dh->g))
-        return 0;
-    else if (a->ameth == &dhx_asn1_meth) {
-        if (BN_cmp(a->pkey.dh->q, b->pkey.dh->q))
-            return 0;
-    }
-    return 1;
-}
-
-static int int_dh_bn_cpy(BIGNUM **dst, const BIGNUM *src)
-{
-    BIGNUM *a;
-
-    /*
-     * If source is read only just copy the pointer, so
-     * we don't have to reallocate it.
-     */
-    if (src == NULL)
-        a = NULL;
-    else if (BN_get_flags(src, BN_FLG_STATIC_DATA)
-                && !BN_get_flags(src, BN_FLG_MALLOCED))
-        a = (BIGNUM *)src;
-    else if ((a = BN_dup(src)) == NULL)
-        return 0;
-    BN_clear_free(*dst);
-    *dst = a;
-    return 1;
+    return FFC_PARAMS_cmp(&a->pkey.dh->params, &b->pkey.dh->params);
 }
 
 static int int_dh_param_copy(DH *to, const DH *from, int is_x942)
 {
     if (is_x942 == -1)
-        is_x942 = ! !from->q;
-    if (!int_dh_bn_cpy(&to->p, from->p))
+        is_x942 = (DH_get0_q(from) != NULL);
+
+    if (!FFC_PARAMS_copy(&to->params, &from->params))
         return 0;
-    if (!int_dh_bn_cpy(&to->g, from->g))
-        return 0;
-    if (is_x942) {
-        if (!int_dh_bn_cpy(&to->q, from->q))
-            return 0;
-        if (!int_dh_bn_cpy(&to->j, from->j))
-            return 0;
-        OPENSSL_free(to->seed);
-        to->seed = NULL;
-        to->seedlen = 0;
-        if (from->seed) {
-            to->seed = OPENSSL_memdup(from->seed, from->seedlen);
-            if (!to->seed)
-                return 0;
-            to->seedlen = from->seedlen;
-        }
-    } else
+    if (!is_x942)
         to->length = from->length;
     return 1;
 }
@@ -444,7 +378,9 @@ static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 static int dh_missing_parameters(const EVP_PKEY *a)
 {
-    if (a->pkey.dh == NULL || a->pkey.dh->p == NULL || a->pkey.dh->g == NULL)
+    if (a->pkey.dh == NULL
+            || DH_get0_p(a->pkey.dh) == NULL
+            || DH_get0_g(a->pkey.dh) == NULL)
         return 1;
     return 0;
 }

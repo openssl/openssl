@@ -20,7 +20,7 @@ B<openssl dsaparam>
 [B<-writerand file>]
 [B<-genkey>]
 [B<-engine id>]
-[B<numbits>]
+[B<numbits> [B<qbits> [B<gindex>]]]
 
 =head1 DESCRIPTION
 
@@ -91,9 +91,24 @@ This can be used with a subsequent B<-rand> flag.
 
 =item B<numbits>
 
-This option specifies that a parameter set should be generated of size
-B<numbits>. It must be the last option. If this option is included then
-the input file (if any) is ignored.
+This option specifies that the parameter P (prime) should be generated with a
+size of B<numbits>.
+It must be the last option.
+If this option is included then the input file (if any) is ignored.
+
+=item B<qbits>
+
+This option specifies that the parameter Q (subgroup order) should be generated
+with a size of B<qbits>.
+It must be the next option after <numbits>.
+The default value is dependent on the size of B<numbits>.
+
+=item B<gindex>
+
+This option specifies that the parameter G (generator) should be generated using
+B<gindex> as an input.
+It must be the next option after B<qbits>.
+If this option is included then this value must also be used for validation of G.
 
 =item B<-engine id>
 
@@ -113,6 +128,12 @@ PEM format DSA parameters use the header and footer lines:
 
 DSA parameter generation is a slow process and as a result the same set of
 DSA parameters is often used to generate several distinct keys.
+
+If validation of the generated parameters for P, Q & G is required then the
+generated seed and counter and the option B<gindex> are required to be saved
+externally, since DSA ASN1 data does not store these values.
+The generated parameters are output via the B<-text> or B<-C> options.
+
 
 =head1 SEE ALSO
 

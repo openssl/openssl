@@ -37,12 +37,18 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_CHECK, OPT_TEXT, OPT_NOOUT,
-    OPT_DSAPARAM, OPT_C, OPT_2, OPT_5,
+    OPT_DSAPARAM, OPT_FFCPARAM, OPT_C, OPT_2, OPT_5,
     OPT_R_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS dhparam_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits]\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits [qbits [gindex]]]]\n"},
+    {OPT_HELP_STR, 1, '-', "The following options are used for ffc parameter "
+                           "generation\n"},
+    {OPT_HELP_STR, 1, '-', " numbits\tBit size of prime P\n"},
+    {OPT_HELP_STR, 1, '-', " qbits\t\tBit size of subgroup order Q\n"},
+    {OPT_HELP_STR, 1, '-', " gindex\t\tIndex used for canonical generation "
+                           "of g\n"},
     {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file"},
@@ -60,6 +66,9 @@ const OPTIONS dhparam_options[] = {
     {"dsaparam", OPT_DSAPARAM, '-',
      "Read or generate DSA parameters, convert to DH"},
 # endif
+     {"ffcparam", OPT_FFCPARAM, '-',
+      "Read or generate FFC DH parameters"},
+
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
@@ -73,8 +82,9 @@ int dhparam_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
 #ifndef OPENSSL_NO_DSA
-    int dsaparam = 0;
+    int dsaparam = 0, numbits = 0;
 #endif
+    int ffcparam = 0, qbits = -1, gindex = -1;
     int i, text = 0, C = 0, ret = 1, num = 0, g = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
     OPTION_CHOICE o;
@@ -119,6 +129,9 @@ int dhparam_main(int argc, char **argv)
             dsaparam = 1;
 #endif
             break;
+        case OPT_FFCPARAM:
+            ffcparam = 1;
+            break;
         case OPT_C:
             C = 1;
             break;
@@ -140,12 +153,34 @@ int dhparam_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (argv[0] != NULL && (!opt_int(argv[0], &num) || num <= 0))
+    if (argc > 0) {
+        if (!opt_int(argv[0], &num) || num < 0)
+            goto end;
+        /* generate a key */
+        numbits = num;
+
+        if (argc > 1) {
+            if (!opt_int(argv[1], &num) || num < 0)
+                goto end;
+            /* The size of q */
+            qbits = num;
+        }
+        if (argc == 3) {
+            if (!opt_int(argv[2], &num) || num < 0)
+                goto end;
+            /* generate a ffc key with a canonical g */
+            gindex = num;
+        }
+    }
+
+    if (g && !numbits)
+        numbits = DEFBITS;
+
+    if (ffcparam && g) {
+        BIO_printf(bio_err,
+                   "generator may not be chosen for DH FFC  parameters\n");
         goto end;
-
-    if (g && !num)
-        num = DEFBITS;
-
+    }
 # ifndef OPENSSL_NO_DSA
     if (dsaparam && g) {
         BIO_printf(bio_err,
@@ -159,10 +194,10 @@ int dhparam_main(int argc, char **argv)
         goto end;
 
     /* DH parameters */
-    if (num && !g)
+    if (numbits && !g)
         g = 2;
 
-    if (num) {
+    if (numbits) {
 
         BN_GENCB *cb;
         cb = BN_GENCB_new();
@@ -173,15 +208,30 @@ int dhparam_main(int argc, char **argv)
 
         BN_GENCB_set(cb, dh_cb, bio_err);
 
+        if (ffcparam) {
+            BIO_printf(bio_err,
+                       "Generating DH FFC parameters, %d bit long prime\n",
+                       numbits);
+            dh = DH_new();
+            if (dh == NULL
+                    || !DH_generate_ffc_parameters(dh, numbits, qbits, gindex,
+                                                   cb)) {
+                DH_free(dh);
+                BN_GENCB_free(cb);
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        } else
 # ifndef OPENSSL_NO_DSA
         if (dsaparam) {
             DSA *dsa = DSA_new();
 
             BIO_printf(bio_err,
-                       "Generating DSA parameters, %d bit long prime\n", num);
+                       "Generating DSA parameters, %d bit long prime\n",
+                       numbits);
             if (dsa == NULL
-                || !DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL,
-                                               cb)) {
+                || !DSA_generate_parameters_ex(dsa, numbits, NULL, 0, NULL,
+                                               NULL, cb)) {
                 DSA_free(dsa);
                 BN_GENCB_free(cb);
                 ERR_print_errors(bio_err);
@@ -200,11 +250,12 @@ int dhparam_main(int argc, char **argv)
         {
             dh = DH_new();
             BIO_printf(bio_err,
-                       "Generating DH parameters, %d bit long safe prime, generator %d\n",
-                       num, g);
+                       "Generating DH parameters, %d bit long safe prime, "
+                       "generator %d\n", numbits, g);
             BIO_printf(bio_err, "This is going to take a long time\n");
-            if (dh == NULL || !DH_generate_parameters_ex(dh, num, g, cb)) {
+            if (dh == NULL || !DH_generate_parameters_ex(dh, numbits, g, cb)) {
                 BN_GENCB_free(cb);
+                BIO_printf(bio_err, "ERROR: DH Parameter generation failed\n");
                 ERR_print_errors(bio_err);
                 goto end;
             }
@@ -217,6 +268,18 @@ int dhparam_main(int argc, char **argv)
         if (in == NULL)
             goto end;
 
+        if (ffcparam) {
+            if (informat == FORMAT_ASN1)
+                dh = d2i_DHxparams_bio(in, NULL);
+            else                /* informat == FORMAT_PEM */
+                dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
+
+            if (dh == NULL) {
+                BIO_printf(bio_err, "unable to load DH FFC parameters\n");
+                ERR_print_errors(bio_err);
+                goto end;
+            }
+        } else
 # ifndef OPENSSL_NO_DSA
         if (dsaparam) {
             DSA *dsa;
@@ -265,12 +328,11 @@ int dhparam_main(int argc, char **argv)
         /* dh != NULL */
     }
 
-    if (text) {
-        DHparams_print(out, dh);
-    }
+    if (text)
+        DHparams_print(bio_out, dh);
 
     if (check) {
-        if (!DH_check(dh, &i)) {
+        if (!DH_check_params(dh, &i)) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -291,7 +353,7 @@ int dhparam_main(int argc, char **argv)
             BIO_printf(bio_err, "WARNING: the g value is not a generator\n");
         if (i == 0)
             BIO_printf(bio_err, "DH parameters appear to be ok.\n");
-        if (num != 0 && i != 0) {
+        if (numbits != 0 && i != 0) {
             /*
              * We have generated parameters but DH_check() indicates they are
              * invalid! This should never happen!
@@ -301,46 +363,78 @@ int dhparam_main(int argc, char **argv)
         }
     }
     if (C) {
+        const BIGNUM *pbn, *gbn, *qbn;
         unsigned char *data;
-        int len, bits;
-        const BIGNUM *pbn, *gbn;
+        unsigned char *seed = NULL;
+        size_t seedlen;
+        int len, bits, counter;
 
         len = DH_size(dh);
         bits = DH_bits(dh);
-        DH_get0_pqg(dh, &pbn, NULL, &gbn);
+        DH_get0_pqg(dh, &pbn, &qbn, &gbn);
+        DH_get0_validate_params(dh, &seed, &seedlen, &counter, &gindex);
         data = app_malloc(len, "print a BN");
 
-        BIO_printf(out, "static DH *get_dh%d(void)\n{\n", bits);
-        print_bignum_var(out, pbn, "dhp", bits, data);
-        print_bignum_var(out, gbn, "dhg", bits, data);
-        BIO_printf(out, "    DH *dh = DH_new();\n"
-                        "    BIGNUM *p, *g;\n"
-                        "\n"
+        BIO_printf(bio_out, "static DH *get_dh%d(void)\n{\n", bits);
+        print_bignum_var(bio_out, pbn, "dhp", bits, data);
+        if (qbn != NULL)
+            print_bignum_var(bio_out, qbn, "dhq", bits, data);
+        print_bignum_var(bio_out, gbn, "dhg", bits, data);
+        if (seed != NULL) {
+            BIGNUM *s = BN_bin2bn(seed, seedlen, NULL);
+
+            print_bignum_var(bio_out, s, "seed", (int)seedlen * 8, data);
+            BIO_printf(bio_out, "    size_t seedlen = %d;\n", (int)seedlen);
+            BIO_printf(bio_out, "    int counter = %d;\n", counter);
+            BIO_printf(bio_out, "    int gindex = %d;\n", gindex);
+            BN_clear_free(s);
+        }
+        BIO_printf(bio_out, "    BIGNUM *p, %s*g;\n", qbn != NULL ? "*q, " : "");
+        BIO_printf(bio_out, "    DH *dh = DH_new();\n");
+        BIO_printf(bio_out, "\n"
                         "    if (dh == NULL)\n"
                         "        return NULL;\n");
-        BIO_printf(out, "    p = BN_bin2bn(dhp_%d, sizeof(dhp_%d), NULL);\n",
+        BIO_printf(bio_out, "    p = BN_bin2bn(dhp_%d, sizeof(dhp_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    g = BN_bin2bn(dhg_%d, sizeof(dhg_%d), NULL);\n",
+        if (qbn != NULL)
+            BIO_printf(bio_out, "    q = BN_bin2bn(dhq_%d, sizeof(dhq_%d), "
+                                "NULL);\n", bits, bits);
+        BIO_printf(bio_out, "    g = BN_bin2bn(dhg_%d, sizeof(dhg_%d), NULL);\n",
                    bits, bits);
-        BIO_printf(out, "    if (p == NULL || g == NULL\n"
-                        "            || !DH_set0_pqg(dh, p, NULL, g)) {\n"
-                        "        DH_free(dh);\n"
-                        "        BN_free(p);\n"
-                        "        BN_free(g);\n"
-                        "        return NULL;\n"
-                        "    }\n");
+
+        BIO_printf(bio_out, "    if (p == NULL %s|| g == NULL\n"
+                        "            || !DH_set0_pqg(dh, p, %s, g))\n"
+                        "        goto end;\n",
+                        qbn != NULL ? "|| q == NULL" : "",
+                        qbn != NULL ? "q" : "NULL");
+
+        if (seed != NULL) {
+            BIO_printf(bio_out,
+                       "    if (!DH_set0_validate_params(dh, seed_%d, seedlen, "
+                                                         "counter, gindex))\n"
+                       "        goto end;\n", (int)seedlen * 8);
+        }
         if (DH_get_length(dh) > 0)
-            BIO_printf(out,
+            BIO_printf(bio_out,
                         "    if (!DH_set_length(dh, %ld)) {\n"
                         "        DH_free(dh);\n"
                         "        return NULL;\n"
                         "    }\n", DH_get_length(dh));
-        BIO_printf(out, "    return dh;\n}\n");
+        BIO_printf(bio_out, "    return dh;\n"
+                        "end:\n"
+                        "    DH_free(dh)\n"
+                        "    BN_free(p);\n"
+                        "%s"
+                        "    BN_free(g);\n"
+                        "    return NULL;\n"
+                        "}\n\n",
+                        qbn != NULL ? "    BN_free(q);\n" : "");
         OPENSSL_free(data);
     }
 
     if (!noout) {
         const BIGNUM *q;
+
         DH_get0_pqg(dh, NULL, &q, NULL);
         if (outformat == FORMAT_ASN1) {
             if (q != NULL)

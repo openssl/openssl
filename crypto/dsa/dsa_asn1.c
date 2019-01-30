@@ -13,6 +13,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/rand.h>
+#include "internal/ffc.h"
 
 ASN1_SEQUENCE(DSA_SIG) = {
         ASN1_SIMPLE(DSA_SIG, r, CBIGNUM),
@@ -76,9 +77,9 @@ static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
         ASN1_EMBED(DSA, version, INT32),
-        ASN1_SIMPLE(DSA, p, BIGNUM),
-        ASN1_SIMPLE(DSA, q, BIGNUM),
-        ASN1_SIMPLE(DSA, g, BIGNUM),
+        ASN1_SIMPLE(DSA, params.p, BIGNUM),
+        ASN1_SIMPLE(DSA, params.q, BIGNUM),
+        ASN1_SIMPLE(DSA, params.g, BIGNUM),
         ASN1_SIMPLE(DSA, pub_key, BIGNUM),
         ASN1_SIMPLE(DSA, priv_key, CBIGNUM)
 } static_ASN1_SEQUENCE_END_cb(DSA, DSAPrivateKey)
@@ -86,18 +87,18 @@ ASN1_SEQUENCE_cb(DSAPrivateKey, dsa_cb) = {
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPrivateKey, DSAPrivateKey)
 
 ASN1_SEQUENCE_cb(DSAparams, dsa_cb) = {
-        ASN1_SIMPLE(DSA, p, BIGNUM),
-        ASN1_SIMPLE(DSA, q, BIGNUM),
-        ASN1_SIMPLE(DSA, g, BIGNUM),
+        ASN1_SIMPLE(DSA, params.p, BIGNUM),
+        ASN1_SIMPLE(DSA, params.q, BIGNUM),
+        ASN1_SIMPLE(DSA, params.g, BIGNUM),
 } static_ASN1_SEQUENCE_END_cb(DSA, DSAparams)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAparams, DSAparams)
 
 ASN1_SEQUENCE_cb(DSAPublicKey, dsa_cb) = {
         ASN1_SIMPLE(DSA, pub_key, BIGNUM),
-        ASN1_SIMPLE(DSA, p, BIGNUM),
-        ASN1_SIMPLE(DSA, q, BIGNUM),
-        ASN1_SIMPLE(DSA, g, BIGNUM)
+        ASN1_SIMPLE(DSA, params.p, BIGNUM),
+        ASN1_SIMPLE(DSA, params.q, BIGNUM),
+        ASN1_SIMPLE(DSA, params.g, BIGNUM)
 } static_ASN1_SEQUENCE_END_cb(DSA, DSAPublicKey)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)

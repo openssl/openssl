@@ -8,6 +8,8 @@
  */
 
 #include <openssl/dsa.h>
+
+#include "internal/ffc.h"
 #include "internal/refcount.h"
 
 struct dsa_st {
@@ -17,9 +19,7 @@ struct dsa_st {
      */
     int pad;
     int32_t version;
-    BIGNUM *p;
-    BIGNUM *q;                  /* == 20 */
-    BIGNUM *g;
+    FFC_PARAMS params;
     BIGNUM *pub_key;            /* y public key */
     BIGNUM *priv_key;           /* x private key */
     int flags;
@@ -69,9 +69,3 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
                          size_t seed_len, unsigned char *seed_out,
                          int *counter_ret, unsigned long *h_ret,
                          BN_GENCB *cb);
-
-int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
-                          const EVP_MD *evpmd, const unsigned char *seed_in,
-                          size_t seed_len, int idx, unsigned char *seed_out,
-                          int *counter_ret, unsigned long *h_ret,
-                          BN_GENCB *cb);

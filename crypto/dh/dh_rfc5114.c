@@ -12,6 +12,7 @@
 #include "dh_locl.h"
 #include <openssl/bn.h>
 #include "internal/bn_dh.h"
+#include "internal/ffc.h"
 
 /*
  * Macro to make a DH structure from BIGNUM data. NB: although just copying
@@ -26,10 +27,10 @@ DH *DH_get_##x(void) \
 \
     if (dh == NULL) \
         return NULL; \
-    dh->p = BN_dup(&_bignum_dh##x##_p); \
-    dh->g = BN_dup(&_bignum_dh##x##_g); \
-    dh->q = BN_dup(&_bignum_dh##x##_q); \
-    if (dh->p == NULL || dh->q == NULL || dh->g == NULL) {\
+    dh->params.p = BN_dup(&_bignum_dh##x##_p); \
+    dh->params.g = BN_dup(&_bignum_dh##x##_g); \
+    dh->params.q = BN_dup(&_bignum_dh##x##_q); \
+    if (dh->params.p == NULL || dh->params.q == NULL || dh->params.g == NULL) {\
         DH_free(dh); \
         return NULL; \
     } \

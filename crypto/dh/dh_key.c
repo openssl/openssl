@@ -36,7 +36,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     rv = dh->meth->compute_key(key, pub_key, dh);
     if (rv <= 0)
         return rv;
-    pad = BN_num_bytes(dh->p) - rv;
+    pad = BN_num_bytes(dh->params.p) - rv;
     if (pad > 0) {
         memmove(key + pad, key, rv);
         memset(key, 0, pad);
@@ -77,12 +77,11 @@ static int generate_key(DH *dh)
 {
     int ok = 0;
     int generate_new_key = 0;
-    unsigned l;
     BN_CTX *ctx = NULL;
     BN_MONT_CTX *mont = NULL;
     BIGNUM *pub_key = NULL, *priv_key = NULL;
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_GENERATE_KEY, DH_R_MODULUS_TOO_LARGE);
         return 0;
     }
@@ -108,23 +107,50 @@ static int generate_key(DH *dh)
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->p, ctx);
+                                      dh->lock, dh->params.p, ctx);
         if (!mont)
             goto err;
     }
-
     if (generate_new_key) {
-        if (dh->q) {
-            do {
-                if (!BN_priv_rand_range(priv_key, dh->q))
+        /* Is it an approved safe prime ?*/
+        if (DH_get_nid(dh) != NID_undef) {
+            /*
+             * The safe prime group code sets N = 2*s
+             * (where s = max security strength supported).
+             * N = dh->length (N = maximum bit length of private key)
+             */
+            if (dh->length == 0
+                    || dh->params.q == NULL
+                    || dh->length > BN_num_bits(dh->params.q))
+                goto err;
+            if (!FFC_generate_priv_key(&dh->params, dh->length, dh->length/2,
+                                       priv_key))
+                goto err;
+        } else {
+#ifdef FIPS_MODE
+            if (dh->params.q == NULL)
+                goto err;
+#else
+            if (dh->params.q == NULL) {
+                /* secret exponent length */
+                unsigned l = dh->length ? dh->length :
+                                          BN_num_bits(dh->params.p) - 1;
+                if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE,
+                                  BN_RAND_BOTTOM_ANY))
+                    goto err;
+            } else
+#endif
+            {
+                /*
+                 * For FFC FIPS 186-4 keygen
+                 * security strength s = 112,
+                 * Max Private key size N = len(q)
+                 */
+                if (!FFC_generate_priv_key(&dh->params,
+                                           BN_num_bits(dh->params.q), 112,
+                                           priv_key))
                     goto err;
             }
-            while (BN_is_zero(priv_key) || BN_is_one(priv_key));
-        } else {
-            /* secret exponent length */
-            l = dh->length ? dh->length : BN_num_bits(dh->p) - 1;
-            if (!BN_priv_rand(priv_key, l, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY))
-                goto err;
         }
     }
 
@@ -135,8 +161,10 @@ static int generate_key(DH *dh)
             goto err;
         BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 
-        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->g, prk, dh->p, ctx, mont)) {
-            BN_free(prk);
+        /* pub_key = g^priv_key mod p */
+        if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
+                                  ctx, mont)) {
+            BN_clear_free(prk);
             goto err;
         }
         /* We MUST free prk before any further use of priv_key */
@@ -166,7 +194,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     int ret = -1;
     int check_result;
 
-    if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS) {
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_MAX_MODULUS_BITS) {
         DHerr(DH_F_COMPUTE_KEY, DH_R_MODULUS_TOO_LARGE);
         goto err;
     }
@@ -186,7 +214,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
     if (dh->flags & DH_FLAG_CACHE_MONT_P) {
         mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-                                      dh->lock, dh->p, ctx);
+                                      dh->lock, dh->params.p, ctx);
         BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
         if (!mont)
             goto err;
@@ -197,8 +225,8 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         goto err;
     }
 
-    if (!dh->
-        meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->p, ctx, mont)) {
+    if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key, dh->params.p,
+                              ctx, mont)) {
         DHerr(DH_F_COMPUTE_KEY, ERR_R_BN_LIB);
         goto err;
     }
@@ -222,6 +250,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
+    FFC_PARAMS_init(&dh->params);
     return 1;
 }
 

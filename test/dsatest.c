@@ -78,10 +78,14 @@ static int dsa_test(void)
         goto end;
 
     BN_GENCB_set(cb, dsa_cb, NULL);
+
+    /* This old test used FIPS 186-2 DSA Param gen */
     if (!TEST_ptr(dsa = DSA_new())
-        || !TEST_true(DSA_generate_parameters_ex(dsa, 512, seed, 20,
-                                                &counter, &h, cb)))
+        || !TEST_true(DSA_set0_validate_params(dsa, seed, sizeof(seed), -1, -1))
+        || !TEST_true(DSA_generate_ffc_parameters(dsa, 1, 512, 160, -1, cb)))
         goto end;
+
+    DSA_get0_validate_params(dsa, NULL, NULL, &counter, NULL, &h);
 
     if (!TEST_int_eq(counter, 105))
         goto end;

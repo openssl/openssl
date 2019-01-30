@@ -17,6 +17,8 @@
 #include "internal/asn1_int.h"
 #include "internal/evp_int.h"
 
+static int dsa_missing_parameters(const EVP_PKEY *pkey);
+
 static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
     const unsigned char *p, *pm;
@@ -85,7 +87,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     ASN1_OBJECT *aobj;
 
     dsa = pkey->pkey.dsa;
-    if (pkey->save_parameters && dsa->p && dsa->q && dsa->g) {
+    if (pkey->save_parameters && !dsa_missing_parameters(pkey)) {
         str = ASN1_STRING_new();
         if (str == NULL) {
             DSAerr(DSA_F_DSA_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
@@ -180,7 +182,8 @@ static int dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
     }
 
     BN_set_flags(dsa->priv_key, BN_FLG_CONSTTIME);
-    if (!BN_mod_exp(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx)) {
+    if (!BN_mod_exp(dsa->pub_key, DSA_get0_g(dsa), dsa->priv_key,
+                    DSA_get0_p(dsa), ctx)) {
         DSAerr(DSA_F_DSA_PRIV_DECODE, DSA_R_BN_ERROR);
         goto dsaerr;
     }
@@ -229,7 +232,7 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     /* Get private key into integer */
     prkey = BN_to_ASN1_INTEGER(pkey->pkey.dsa->priv_key, NULL);
 
-    if (!prkey) {
+    if (prkey == NULL) {
         DSAerr(DSA_F_DSA_PRIV_ENCODE, DSA_R_BN_ERROR);
         goto err;
     }
@@ -269,48 +272,27 @@ static int dsa_security_bits(const EVP_PKEY *pkey)
 
 static int dsa_missing_parameters(const EVP_PKEY *pkey)
 {
-    DSA *dsa;
-    dsa = pkey->pkey.dsa;
-    if (dsa == NULL || dsa->p == NULL || dsa->q == NULL || dsa->g == NULL)
+    DSA *dsa = pkey->pkey.dsa;
+
+    if (dsa == NULL || DSA_get0_p(dsa) == NULL || DSA_get0_q(dsa) == NULL
+            || DSA_get0_g(dsa) == NULL)
         return 1;
     return 0;
 }
 
 static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 {
-    BIGNUM *a;
-
     if (to->pkey.dsa == NULL) {
         to->pkey.dsa = DSA_new();
         if (to->pkey.dsa == NULL)
             return 0;
     }
-
-    if ((a = BN_dup(from->pkey.dsa->p)) == NULL)
-        return 0;
-    BN_free(to->pkey.dsa->p);
-    to->pkey.dsa->p = a;
-
-    if ((a = BN_dup(from->pkey.dsa->q)) == NULL)
-        return 0;
-    BN_free(to->pkey.dsa->q);
-    to->pkey.dsa->q = a;
-
-    if ((a = BN_dup(from->pkey.dsa->g)) == NULL)
-        return 0;
-    BN_free(to->pkey.dsa->g);
-    to->pkey.dsa->g = a;
-    return 1;
+    return FFC_PARAMS_copy(&to->pkey.dsa->params, &from->pkey.dsa->params);
 }
 
 static int dsa_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    if (BN_cmp(a->pkey.dsa->p, b->pkey.dsa->p) ||
-        BN_cmp(a->pkey.dsa->q, b->pkey.dsa->q) ||
-        BN_cmp(a->pkey.dsa->g, b->pkey.dsa->g))
-        return 0;
-    else
-        return 1;
+    return FFC_PARAMS_cmp(&a->pkey.dsa->params, &b->pkey.dsa->params);
 }
 
 static int dsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -349,11 +331,15 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
     else
         ktype = "DSA-Parameters";
 
-    if (priv_key) {
+    if (priv_key != NULL) {
         if (!BIO_indent(bp, off, 128))
             goto err;
-        if (BIO_printf(bp, "%s: (%d bit)\n", ktype, BN_num_bits(x->p))
-            <= 0)
+        if (BIO_printf(bp, "%s: (%d bit)\n", ktype, DSA_bits(x)) <= 0)
+            goto err;
+    } else {
+        if (!BIO_indent(bp, off, 128))
+            goto err;
+        if (BIO_printf(bp, "%s\n", ktype) <= 0)
             goto err;
     }
 
@@ -361,11 +347,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
         goto err;
     if (!ASN1_bn_print(bp, "pub: ", pub_key, NULL, off))
         goto err;
-    if (!ASN1_bn_print(bp, "P:   ", x->p, NULL, off))
-        goto err;
-    if (!ASN1_bn_print(bp, "Q:   ", x->q, NULL, off))
-        goto err;
-    if (!ASN1_bn_print(bp, "G:   ", x->g, NULL, off))
+    if (!FFC_PARAMS_print(bp, &x->params, off))
         goto err;
     ret = 1;
  err:
@@ -432,7 +414,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     DSA_SIG *dsa_sig;
     const unsigned char *p;
 
-    if (!sig) {
+    if (sig == NULL) {
         if (BIO_puts(bp, "\n") <= 0)
             return 0;
         else
@@ -440,7 +422,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
     }
     p = sig->data;
     dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
-    if (dsa_sig) {
+    if (dsa_sig != NULL) {
         int rv = 0;
         const BIGNUM *r, *s;
 

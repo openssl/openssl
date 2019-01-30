@@ -141,6 +141,8 @@ DEPRECATEDIN_0_9_8(DH *DH_generate_parameters(int prime_len, int generator,
 /* New version */
 int DH_generate_parameters_ex(DH *dh, int prime_len, int generator,
                               BN_GENCB *cb);
+int DH_generate_ffc_parameters(DH *dh, int pbits, int qbits, int gindex,
+                               BN_GENCB *cb);
 
 int DH_check_params_ex(const DH *dh);
 int DH_check_ex(const DH *dh);
@@ -148,6 +150,8 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key);
 int DH_check_params(const DH *dh, int *ret);
 int DH_check(const DH *dh, int *codes);
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *codes);
+int DH_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *codes);
+int DH_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *codes);
 int DH_generate_key(DH *dh);
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh);
@@ -188,6 +192,10 @@ const BIGNUM *DH_get0_q(const DH *dh);
 const BIGNUM *DH_get0_g(const DH *dh);
 const BIGNUM *DH_get0_priv_key(const DH *dh);
 const BIGNUM *DH_get0_pub_key(const DH *dh);
+int DH_set0_validate_params(DH *dh, unsigned char *seed,
+                            size_t seedlen, int counter, int gindex);
+void DH_get0_validate_params(const DH *dh, unsigned char **seed,
+                             size_t *seedlen, int *counter, int *gindex);
 void DH_clear_flags(DH *dh, int flags);
 int DH_test_flags(const DH *dh, int flags);
 void DH_set_flags(DH *dh, int flags);

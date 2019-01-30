@@ -8,6 +8,8 @@
  */
 
 #include <openssl/dh.h>
+
+#include "internal/ffc.h"
 #include "internal/refcount.h"
 
 struct dh_st {
@@ -17,19 +19,12 @@ struct dh_st {
      */
     int pad;
     int version;
-    BIGNUM *p;
-    BIGNUM *g;
-    int32_t length;             /* optional */
+    FFC_PARAMS params;
+    int32_t length;             /* optional value of N (if there is no q) */
     BIGNUM *pub_key;            /* g^x % p */
     BIGNUM *priv_key;           /* x */
     int flags;
     BN_MONT_CTX *method_mont_p;
-    /* Place holders if we want to do X9.42 DH */
-    BIGNUM *q;
-    BIGNUM *j;
-    unsigned char *seed;
-    int seedlen;
-    BIGNUM *counter;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     const DH_METHOD *meth;

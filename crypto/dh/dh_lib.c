@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,9 +10,12 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "internal/ffc.h"
 #include <openssl/bn.h>
 #include "dh_locl.h"
 #include <openssl/engine.h>
+
+FFC_PARAMS *dh_get0_params(DH *dh);
 
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
@@ -116,12 +119,7 @@ void DH_free(DH *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->p);
-    BN_clear_free(r->g);
-    BN_clear_free(r->q);
-    BN_clear_free(r->j);
-    OPENSSL_free(r->seed);
-    BN_clear_free(r->counter);
+    FFC_PARAMS_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r);
@@ -151,64 +149,40 @@ void *DH_get_ex_data(DH *d, int idx)
 
 int DH_bits(const DH *dh)
 {
-    return BN_num_bits(dh->p);
+    return BN_num_bits(DH_get0_p(dh));
 }
 
 int DH_size(const DH *dh)
 {
-    return BN_num_bytes(dh->p);
+    return BN_num_bytes(DH_get0_p(dh));
 }
 
 int DH_security_bits(const DH *dh)
 {
     int N;
-    if (dh->q)
-        N = BN_num_bits(dh->q);
+    const BIGNUM *q = DH_get0_q(dh);
+
+    if (q != NULL)
+        N = BN_num_bits(q);
     else if (dh->length)
         N = dh->length;
     else
         N = -1;
-    return BN_security_bits(BN_num_bits(dh->p), N);
+    return BN_security_bits(DH_bits(dh), N);
 }
 
 
 void DH_get0_pqg(const DH *dh,
                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
-    if (p != NULL)
-        *p = dh->p;
-    if (q != NULL)
-        *q = dh->q;
-    if (g != NULL)
-        *g = dh->g;
+    FFC_PARAMS_get0_pqg(&dh->params, p, q, g);
 }
 
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-    /* If the fields p and g in d are NULL, the corresponding input
-     * parameters MUST be non-NULL.  q may remain NULL.
-     */
-    if ((dh->p == NULL && p == NULL)
-        || (dh->g == NULL && g == NULL))
-        return 0;
-
-    if (p != NULL) {
-        BN_free(dh->p);
-        dh->p = p;
-    }
-    if (q != NULL) {
-        BN_free(dh->q);
-        dh->q = q;
-    }
-    if (g != NULL) {
-        BN_free(dh->g);
-        dh->g = g;
-    }
-
-    if (q != NULL) {
+    if (q != NULL)
         dh->length = BN_num_bits(q);
-    }
-
+    FFC_PARAMS_set0_pqg(&dh->params, p, q, g);
     return 1;
 }
 
@@ -247,17 +221,17 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 
 const BIGNUM *DH_get0_p(const DH *dh)
 {
-    return dh->p;
+    return FFC_PARAMS_get0_p(&dh->params);
 }
 
 const BIGNUM *DH_get0_q(const DH *dh)
 {
-    return dh->q;
+    return FFC_PARAMS_get0_q(&dh->params);
 }
 
 const BIGNUM *DH_get0_g(const DH *dh)
 {
-    return dh->g;
+    return FFC_PARAMS_get0_g(&dh->params);
 }
 
 const BIGNUM *DH_get0_priv_key(const DH *dh)
@@ -268,6 +242,21 @@ const BIGNUM *DH_get0_priv_key(const DH *dh)
 const BIGNUM *DH_get0_pub_key(const DH *dh)
 {
     return dh->pub_key;
+}
+
+void DH_get0_validate_params(const DH *dh, unsigned char **seed,
+                             size_t *seedlen, int *counter, int *gindex)
+{
+    if (gindex != NULL)
+        *gindex = FFC_PARAMS_get0_gindex(&dh->params);
+    FFC_PARAMS_get_validate_params(&dh->params, seed, seedlen, counter);
+}
+
+int DH_set0_validate_params(DH *dh, unsigned char *seed,
+                            size_t seedlen, int counter, int gindex)
+{
+    FFC_PARAMS_set0_gindex(&dh->params, gindex);
+    return FFC_PARAMS_set_validate_params(&dh->params, seed, seedlen, counter);
 }
 
 void DH_clear_flags(DH *dh, int flags)
@@ -288,4 +277,9 @@ void DH_set_flags(DH *dh, int flags)
 ENGINE *DH_get0_engine(DH *dh)
 {
     return dh->engine;
+}
+
+FFC_PARAMS *dh_get0_params(DH *dh)
+{
+    return &dh->params;
 }

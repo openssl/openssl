@@ -37,10 +37,9 @@ static int dsa_builtin_keygen(DSA *dsa)
     } else
         priv_key = dsa->priv_key;
 
-    do
-        if (!BN_priv_rand_range(priv_key, dsa->q))
-            goto err;
-    while (BN_is_zero(priv_key)) ;
+    if (!FFC_generate_priv_key(&dsa->params, BN_num_bits(dsa->params.q), 112,
+                               priv_key))
+        goto err;
 
     if (dsa->pub_key == NULL) {
         if ((pub_key = BN_new()) == NULL)
@@ -55,7 +54,8 @@ static int dsa_builtin_keygen(DSA *dsa)
             goto err;
         BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 
-        if (!BN_mod_exp(pub_key, dsa->g, prk, dsa->p, ctx)) {
+        /* pub_key = g^priv_key mod p */
+        if (!BN_mod_exp(pub_key, dsa->params.g, prk, dsa->params.p, ctx)) {
             BN_free(prk);
             goto err;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -123,9 +123,7 @@ void DSA_free(DSA *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    BN_clear_free(r->p);
-    BN_clear_free(r->q);
-    BN_clear_free(r->g);
+    FFC_PARAMS_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r);
@@ -152,7 +150,7 @@ int DSA_size(const DSA *r)
                                  * the first byte, as long as the second
                                  * parameter is NULL. */
 
-    i = BN_num_bits(r->q);
+    i = BN_num_bits(DSA_get0_q(r));
     bs.length = (i + 7) / 8;
     bs.data = buf;
     bs.type = V_ASN1_INTEGER;
@@ -177,39 +175,37 @@ void *DSA_get_ex_data(DSA *d, int idx)
 
 int DSA_security_bits(const DSA *d)
 {
-    if (d->p && d->q)
-        return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
+    const BIGNUM *p = DSA_get0_p(d);
+    const BIGNUM *q = DSA_get0_q(d);
+
+    if (p != NULL  && q != NULL)
+        return BN_security_bits(BN_num_bits(p), BN_num_bits(q));
     return -1;
 }
 
 #ifndef OPENSSL_NO_DH
+extern FFC_PARAMS *dh_get0_params(DH *dh);
+
+/* This is really a FFC copy */
 DH *DSA_dup_DH(const DSA *r)
 {
     /*
-     * DSA has p, q, g, optional pub_key, optional priv_key. DH has p,
-     * optional length, g, optional pub_key, optional priv_key, optional q.
+     * DSA has p, q, g, optional pub_key, optional priv_key.
+     * DH has p, optional length, g, optional pub_key,
+     * optional priv_key, optional q.
      */
 
     DH *ret = NULL;
-    BIGNUM *p = NULL, *q = NULL, *g = NULL, *pub_key = NULL, *priv_key = NULL;
+    BIGNUM *pub_key = NULL, *priv_key = NULL;
 
     if (r == NULL)
         goto err;
     ret = DH_new();
     if (ret == NULL)
         goto err;
-    if (r->p != NULL || r->g != NULL || r->q != NULL) {
-        if (r->p == NULL || r->g == NULL || r->q == NULL) {
-            /* Shouldn't happen */
-            goto err;
-        }
-        p = BN_dup(r->p);
-        g = BN_dup(r->g);
-        q = BN_dup(r->q);
-        if (p == NULL || g == NULL || q == NULL || !DH_set0_pqg(ret, p, q, g))
-            goto err;
-        p = g = q = NULL;
-    }
+
+    if (!FFC_PARAMS_copy(dh_get0_params(ret), &r->params))
+        goto err;
 
     if (r->pub_key != NULL) {
         pub_key = BN_dup(r->pub_key);
@@ -230,9 +226,6 @@ DH *DSA_dup_DH(const DSA *r)
     return ret;
 
  err:
-    BN_free(p);
-    BN_free(g);
-    BN_free(q);
     BN_free(pub_key);
     BN_free(priv_key);
     DH_free(ret);
@@ -240,40 +233,18 @@ DH *DSA_dup_DH(const DSA *r)
 }
 #endif
 
+
 void DSA_get0_pqg(const DSA *d,
                   const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
-    if (p != NULL)
-        *p = d->p;
-    if (q != NULL)
-        *q = d->q;
-    if (g != NULL)
-        *g = d->g;
+    FFC_PARAMS_get0_pqg(&d->params, p, q, g);
 }
 
 int DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-    /* If the fields p, q and g in d are NULL, the corresponding input
-     * parameters MUST be non-NULL.
-     */
-    if ((d->p == NULL && p == NULL)
-        || (d->q == NULL && q == NULL)
-        || (d->g == NULL && g == NULL))
+    if (DSA_get0_q(d) == NULL && q == NULL)
         return 0;
-
-    if (p != NULL) {
-        BN_free(d->p);
-        d->p = p;
-    }
-    if (q != NULL) {
-        BN_free(d->q);
-        d->q = q;
-    }
-    if (g != NULL) {
-        BN_free(d->g);
-        d->g = g;
-    }
-
+    FFC_PARAMS_set0_pqg(&d->params, p, q, g);
     return 1;
 }
 
@@ -307,19 +278,37 @@ int DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
     return 1;
 }
 
+void DSA_get0_validate_params(const DSA *dsa, unsigned char **seed,
+                              size_t *seedlen, int *counter, int *gindex,
+                              unsigned long *hret)
+{
+    if (gindex != NULL)
+        *gindex = FFC_PARAMS_get0_gindex(&dsa->params);
+    if (hret != NULL)
+        *hret = FFC_PARAMS_get0_h(&dsa->params);
+    FFC_PARAMS_get_validate_params(&dsa->params, seed, seedlen, counter);
+}
+
+int DSA_set0_validate_params(DSA *dsa, const unsigned char *seed,
+                             size_t seedlen, int counter, int gindex)
+{
+    FFC_PARAMS_set0_gindex(&dsa->params, gindex);
+    return FFC_PARAMS_set_validate_params(&dsa->params, seed, seedlen, counter);
+}
+
 const BIGNUM *DSA_get0_p(const DSA *d)
 {
-    return d->p;
+    return FFC_PARAMS_get0_p(&d->params);
 }
 
 const BIGNUM *DSA_get0_q(const DSA *d)
 {
-    return d->q;
+    return FFC_PARAMS_get0_q(&d->params);
 }
 
 const BIGNUM *DSA_get0_g(const DSA *d)
 {
-    return d->g;
+    return FFC_PARAMS_get0_g(&d->params);
 }
 
 const BIGNUM *DSA_get0_pub_key(const DSA *d)
@@ -354,5 +343,5 @@ ENGINE *DSA_get0_engine(DSA *d)
 
 int DSA_bits(const DSA *dsa)
 {
-    return BN_num_bits(dsa->p);
+    return BN_num_bits(DSA_get0_p(dsa));
 }

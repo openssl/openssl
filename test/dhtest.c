@@ -17,6 +17,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/obj_mac.h>
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_DH
@@ -609,6 +610,35 @@ static int rfc5114_test(void)
     TEST_error("Test failed RFC5114 set %d\n", i + 1);
     return 0;
 }
+
+static int safe_prime_groups[] = {
+    NID_ffdhe2048,
+    NID_ffdhe3072,
+    NID_ffdhe4096,
+    NID_ffdhe6144,
+    NID_ffdhe8192
+};
+
+static int dh_test_ffdhe(int index)
+{
+    int ok = 0;
+    DH *dh = NULL;
+    const BIGNUM *p, *q, *g;
+
+    if (!TEST_ptr(dh = DH_new_by_nid(safe_prime_groups[index])))
+        goto err;
+    DH_get0_pqg(dh, &p, &q, &g);
+    if (!TEST_ptr(p) || !TEST_ptr(q) || !TEST_ptr(g))
+        goto err;
+
+    if (!TEST_int_eq(DH_get_nid(dh), safe_prime_groups[index]))
+        goto err;
+    ok = 1;
+err:
+    DH_free(dh);
+    return ok;
+}
+
 #endif
 
 
@@ -619,6 +649,7 @@ int setup_tests(void)
 #else
     ADD_TEST(dh_test);
     ADD_TEST(rfc5114_test);
+    ADD_ALL_TESTS(dh_test_ffdhe, OSSL_NELEM(safe_prime_groups));
 #endif
     return 1;
 }

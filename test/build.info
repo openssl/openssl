@@ -442,7 +442,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
-                     rdrand_sanitytest property_test
+                     rdrand_sanitytest property_test ffc_test
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
     ENDIF
@@ -525,6 +525,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[rdrand_sanitytest]=rdrand_sanitytest.c
     INCLUDE[rdrand_sanitytest]=../include ../apps/include
     DEPEND[rdrand_sanitytest]=../libcrypto.a libtestutil.a
+
+    SOURCE[ffc_test]=ffctest.c
+    INCLUDE[ffc_test]=.. ../include ../apps/include ../crypto/include
+    DEPEND[ffc_test]=../libcrypto.a libtestutil.a
+
   ENDIF
 
   IF[{- !$disabled{mdc2} -}]

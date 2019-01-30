@@ -129,6 +129,9 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                int *counter_ret, unsigned long *h_ret,
                                BN_GENCB *cb);
 
+int DSA_generate_ffc_parameters(DSA *dsa, int type, int bits, int qbits,
+                                int gindex, BN_GENCB *cb);
+
 int DSA_generate_key(DSA *a);
 int i2d_DSAPublicKey(const DSA *a, unsigned char **pp);
 int i2d_DSAPrivateKey(const DSA *a, unsigned char **pp);
@@ -184,6 +187,13 @@ const BIGNUM *DSA_get0_q(const DSA *d);
 const BIGNUM *DSA_get0_g(const DSA *d);
 const BIGNUM *DSA_get0_pub_key(const DSA *d);
 const BIGNUM *DSA_get0_priv_key(const DSA *d);
+
+int DSA_set0_validate_params(DSA *dsa, const unsigned char *seed,
+                             size_t seedlen, int counter, int gindex);
+void DSA_get0_validate_params(const DSA *dsa, unsigned char **seed,
+                              size_t *seedlen, int *counter, int *gindex,
+                              unsigned long *hret);
+
 void DSA_clear_flags(DSA *d, int flags);
 int DSA_test_flags(const DSA *d, int flags);
 void DSA_set_flags(DSA *d, int flags);

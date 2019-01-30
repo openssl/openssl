@@ -11,12 +11,12 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include "dh_locl.h"
+#include "internal/ffc.h"
 
-/*-
- * Check that p and g are suitable enough
- *
- * p is odd
- * 1 < g < p - 1
+/*
+ * Check that p and g are suitable enough i.e.
+ *   p is odd
+ *   1 < g < p - 1
  */
 int DH_check_params_ex(const DH *dh)
 {
@@ -32,6 +32,26 @@ int DH_check_params_ex(const DH *dh)
     return errflags == 0;
 }
 
+#ifdef FIPS_MODE
+int DH_check_params(const DH *dh, int *ret)
+{
+    *ret = 0;
+    /*
+     * SP800-56A R3 Section 5.5.2 Assurances of Domain Parameter Validity
+     * (1a) The domain params correspond to any approved safe prime group
+     */
+    int nid = DH_get_nid(dh);
+    if (nid != NID_undef)
+        return 1;
+    /*
+     * OR
+     * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
+     * validity tests.
+     */
+    return FFC_PARAMS_FIPS186_4_validate(&dh->params, FFC_PARAM_TYPE_DH, NULL,
+                                         FFC_PARAMS_VALIDATE_ALL, ret, NULL);
+}
+#else
 int DH_check_params(const DH *dh, int *ret)
 {
     int ok = 0;
@@ -47,13 +67,15 @@ int DH_check_params(const DH *dh, int *ret)
     if (tmp == NULL)
         goto err;
 
-    if (!BN_is_odd(dh->p))
+    if (!BN_is_odd(dh->params.p))
         *ret |= DH_CHECK_P_NOT_PRIME;
-    if (BN_is_negative(dh->g) || BN_is_zero(dh->g) || BN_is_one(dh->g))
+    if (BN_is_negative(dh->params.g)
+            || BN_is_zero(dh->params.g)
+            || BN_is_one(dh->params.g))
         *ret |= DH_NOT_SUITABLE_GENERATOR;
-    if (BN_copy(tmp, dh->p) == NULL || !BN_sub_word(tmp, 1))
+    if (BN_copy(tmp, dh->params.p) == NULL || !BN_sub_word(tmp, 1))
         goto err;
-    if (BN_cmp(dh->g, tmp) >= 0)
+    if (BN_cmp(dh->params.g, tmp) >= 0)
         *ret |= DH_NOT_SUITABLE_GENERATOR;
 
     ok = 1;
@@ -64,6 +86,7 @@ int DH_check_params(const DH *dh, int *ret)
     }
     return ok;
 }
+#endif /* FIPS_MODE */
 
 /*-
  * Check that p is a safe prime and
@@ -100,12 +123,19 @@ int DH_check_ex(const DH *dh)
 
 int DH_check(const DH *dh, int *ret)
 {
+#ifdef FIPS_MODE
+    return DH_check_params(dh, ret);
+#else
     int ok = 0, r;
     BN_CTX *ctx = NULL;
     BN_ULONG l;
     BIGNUM *t1 = NULL, *t2 = NULL;
+    int nid = DH_get_nid(dh);
 
     *ret = 0;
+    if (nid != NID_undef)
+        return 1;
+
     ctx = BN_CTX_new();
     if (ctx == NULL)
         goto err;
@@ -115,39 +145,39 @@ int DH_check(const DH *dh, int *ret)
     if (t2 == NULL)
         goto err;
 
-    if (dh->q) {
-        if (BN_cmp(dh->g, BN_value_one()) <= 0)
+    if (dh->params.q != NULL) {
+        if (BN_cmp(dh->params.g, BN_value_one()) <= 0)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
-        else if (BN_cmp(dh->g, dh->p) >= 0)
+        else if (BN_cmp(dh->params.g, dh->params.p) >= 0)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
         else {
             /* Check g^q == 1 mod p */
-            if (!BN_mod_exp(t1, dh->g, dh->q, dh->p, ctx))
+            if (!BN_mod_exp(t1, dh->params.g, dh->params.q, dh->params.p, ctx))
                 goto err;
             if (!BN_is_one(t1))
                 *ret |= DH_NOT_SUITABLE_GENERATOR;
         }
-        r = BN_is_prime_ex(dh->q, BN_prime_checks, ctx, NULL);
+        r = BN_is_prime_ex(dh->params.q, BN_prime_checks, ctx, NULL);
         if (r < 0)
             goto err;
         if (!r)
             *ret |= DH_CHECK_Q_NOT_PRIME;
         /* Check p == 1 mod q  i.e. q divides p - 1 */
-        if (!BN_div(t1, t2, dh->p, dh->q, ctx))
+        if (!BN_div(t1, t2, dh->params.p, dh->params.q, ctx))
             goto err;
         if (!BN_is_one(t2))
             *ret |= DH_CHECK_INVALID_Q_VALUE;
-        if (dh->j && BN_cmp(dh->j, t1))
+        if (dh->params.j && BN_cmp(dh->params.j, t1))
             *ret |= DH_CHECK_INVALID_J_VALUE;
 
-    } else if (BN_is_word(dh->g, DH_GENERATOR_2)) {
-        l = BN_mod_word(dh->p, 24);
+    } else if (BN_is_word(dh->params.g, DH_GENERATOR_2)) {
+        l = BN_mod_word(dh->params.p, 24);
         if (l == (BN_ULONG)-1)
             goto err;
         if (l != 11)
             *ret |= DH_NOT_SUITABLE_GENERATOR;
-    } else if (BN_is_word(dh->g, DH_GENERATOR_5)) {
-        l = BN_mod_word(dh->p, 10);
+    } else if (BN_is_word(dh->params.g, DH_GENERATOR_5)) {
+        l = BN_mod_word(dh->params.p, 10);
         if (l == (BN_ULONG)-1)
             goto err;
         if ((l != 3) && (l != 7))
@@ -155,13 +185,13 @@ int DH_check(const DH *dh, int *ret)
     } else
         *ret |= DH_UNABLE_TO_CHECK_GENERATOR;
 
-    r = BN_is_prime_ex(dh->p, BN_prime_checks, ctx, NULL);
+    r = BN_is_prime_ex(dh->params.p, BN_prime_checks, ctx, NULL);
     if (r < 0)
         goto err;
     if (!r)
         *ret |= DH_CHECK_P_NOT_PRIME;
-    else if (!dh->q) {
-        if (!BN_rshift1(t1, dh->p))
+    else if (dh->params.q == NULL) {
+        if (!BN_rshift1(t1, dh->params.p))
             goto err;
         r = BN_is_prime_ex(t1, BN_prime_checks, ctx, NULL);
         if (r < 0)
@@ -176,6 +206,7 @@ int DH_check(const DH *dh, int *ret)
         BN_CTX_free(ctx);
     }
     return ok;
+#endif /* FIPS_MODE */
 }
 
 int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
@@ -194,40 +225,49 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
     return errflags == 0;
 }
 
+/*
+ * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Full public key validation.
+ */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
+    return FFC_validate_pub_key(&dh->params, pub_key, ret);
+}
+
+/*
+ * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Partial public key validation.
+ * To only be used with ephemeral FFC public keys generated using the approved
+ * safe-prime groups.
+ */
+int DH_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
+{
+    return FFC_validate_pub_key_partial(&dh->params, pub_key, ret);
+}
+
+int DH_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
+{
     int ok = 0;
-    BIGNUM *tmp = NULL;
-    BN_CTX *ctx = NULL;
+    BIGNUM *two_powN = NULL, *upper;
 
     *ret = 0;
-    ctx = BN_CTX_new();
-    if (ctx == NULL)
+    two_powN = BN_new();
+    if (two_powN == NULL)
+        return 0;
+    if (dh->params.q == NULL)
         goto err;
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    if (tmp == NULL || !BN_set_word(tmp, 1))
-        goto err;
-    if (BN_cmp(pub_key, tmp) <= 0)
-        *ret |= DH_CHECK_PUBKEY_TOO_SMALL;
-    if (BN_copy(tmp, dh->p) == NULL || !BN_sub_word(tmp, 1))
-        goto err;
-    if (BN_cmp(pub_key, tmp) >= 0)
-        *ret |= DH_CHECK_PUBKEY_TOO_LARGE;
+    upper = dh->params.q;
 
-    if (dh->q != NULL) {
-        /* Check pub_key^q == 1 mod p */
-        if (!BN_mod_exp(tmp, pub_key, dh->q, dh->p, ctx))
+    /* Is it from an approved Safe prime group ?*/
+    if (DH_get_nid(dh) != NID_undef) {
+        if (!BN_lshift(two_powN, BN_value_one(), dh->length))
             goto err;
-        if (!BN_is_one(tmp))
-            *ret |= DH_CHECK_PUBKEY_INVALID;
+        if (BN_cmp(two_powN, dh->params.q) < 0)
+            upper = two_powN;
     }
+    if (FFC_validate_priv_key(upper, priv_key, ret))
+        goto err;
 
     ok = 1;
- err:
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+err:
+    BN_free(two_powN);
     return ok;
 }

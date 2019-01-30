@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -34,6 +34,12 @@ typedef enum OPTION_choice {
 } OPTION_CHOICE;
 
 const OPTIONS dsaparam_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [flags] [numbits [qbits [gindex]]]\n"},
+    {OPT_HELP_STR, 1, '-', "The following options are used for parameter generation\n"},
+    {OPT_HELP_STR, 1, '-', " numbits\tBit size of prime P\n"},
+    {OPT_HELP_STR, 1, '-', " qbits\t\tBit size of subgroup order Q\n"},
+    {OPT_HELP_STR, 1, '-', " gindex\t\tIndex used for canonical generation of g\n"},
+    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
     {"help", OPT_HELP, '-', "Display this summary"},
     {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"in", OPT_IN, '<', "Input file"},
@@ -59,8 +65,11 @@ int dsaparam_main(int argc, char **argv)
     int numbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, i, text = 0, private = 0;
+    int qbits = -1, gindex = -1, counter = 0;
+    size_t seedlen = 0;
     char *infile = NULL, *outfile = NULL, *prog;
     OPTION_CHOICE o;
+    unsigned char *seed = NULL;
 
     prog = opt_init(argc, argv, dsaparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -112,11 +121,24 @@ int dsaparam_main(int argc, char **argv)
     argc = opt_num_rest();
     argv = opt_rest();
 
-    if (argc == 1) {
+    if (argc > 0) {
         if (!opt_int(argv[0], &num) || num < 0)
             goto end;
         /* generate a key */
         numbits = num;
+
+        if (argc > 1) {
+            if (!opt_int(argv[1], &num) || num < 0)
+                goto end;
+            /* The size of q */
+            qbits = num;
+        }
+        if (argc == 3) {
+            if (!opt_int(argv[2], &num) || num < 0)
+                goto end;
+            /* generate a ffc key with a canonical g */
+            gindex = num;
+        }
     }
     private = genkey ? 1 : 0;
 
@@ -146,13 +168,14 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
         BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
-                   num);
+                   numbits);
         BIO_printf(bio_err, "This could take some time\n");
-        if (!DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL, cb)) {
+        if (!DSA_generate_ffc_parameters(dsa, 2, numbits, qbits, gindex, cb)) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
+        DSA_get0_validate_params(dsa, &seed, &seedlen, &counter, &gindex, NULL);
     } else if (informat == FORMAT_ASN1) {
         dsa = d2i_DSAparams_bio(in, NULL);
     } else {
@@ -164,43 +187,60 @@ int dsaparam_main(int argc, char **argv)
         goto end;
     }
 
-    if (text) {
-        DSAparams_print(out, dsa);
-    }
+    if (text)
+        DSAparams_print(bio_out, dsa);
 
     if (C) {
         const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+        BIGNUM *s = NULL;
         unsigned char *data;
-        int len, bits_p;
+        int len, bits_p, bits_q;
 
         DSA_get0_pqg(dsa, &p, &q, &g);
         len = BN_num_bytes(p);
         bits_p = BN_num_bits(p);
+        bits_q = BN_num_bits(q);
 
         data = app_malloc(len + 20, "BN space");
 
-        BIO_printf(bio_out, "static DSA *get_dsa%d(void)\n{\n", bits_p);
+        BIO_printf(bio_out, "static DSA *get_dsa%d_%d(void)\n{\n", bits_p,
+                   bits_q);
         print_bignum_var(bio_out, p, "dsap", bits_p, data);
-        print_bignum_var(bio_out, q, "dsaq", bits_p, data);
+        print_bignum_var(bio_out, q, "dsaq", bits_q, data);
         print_bignum_var(bio_out, g, "dsag", bits_p, data);
-        BIO_printf(bio_out, "    DSA *dsa = DSA_new();\n"
-                            "    BIGNUM *p, *q, *g;\n"
-                            "\n");
+        if (seed != NULL) {
+            s = BN_bin2bn(seed, seedlen, NULL);
+            print_bignum_var(bio_out, s, "seed", (int)seedlen * 8, data);
+            BIO_printf(bio_out, "    size_t seedlen = %d;\n", (int)seedlen);
+            BIO_printf(bio_out, "    int counter = %d;\n", counter);
+            BIO_printf(bio_out, "    int gindex = %d;\n", gindex);
+        }
+        BIO_printf(bio_out, "    BIGNUM *p, *q, *g;\n"
+                            "    DSA *dsa = DSA_new();\n\n");
         BIO_printf(bio_out, "    if (dsa == NULL)\n"
                             "        return NULL;\n");
-        BIO_printf(bio_out, "    if (!DSA_set0_pqg(dsa, p = BN_bin2bn(dsap_%d, sizeof(dsap_%d), NULL),\n",
+        BIO_printf(bio_out, "    if (!DSA_set0_pqg(dsa, p = "
+                            "BN_bin2bn(dsap_%d, sizeof(dsap_%d), NULL),\n",
                    bits_p, bits_p);
-        BIO_printf(bio_out, "                           q = BN_bin2bn(dsaq_%d, sizeof(dsaq_%d), NULL),\n",
+        BIO_printf(bio_out, "                           q = BN_bin2bn(dsaq_%d, "
+                            "sizeof(dsaq_%d), NULL),\n",
+                   bits_q, bits_q);
+        BIO_printf(bio_out, "                           g = BN_bin2bn(dsag_%d, "
+                            "sizeof(dsag_%d), NULL)))\n",
                    bits_p, bits_p);
-        BIO_printf(bio_out, "                           g = BN_bin2bn(dsag_%d, sizeof(dsag_%d), NULL))) {\n",
-                   bits_p, bits_p);
-        BIO_printf(bio_out, "        DSA_free(dsa);\n"
-                            "        BN_free(p);\n"
-                            "        BN_free(q);\n"
-                            "        BN_free(g);\n"
-                            "        return NULL;\n"
-                            "    }\n"
-                            "    return dsa;\n}\n");
+        BIO_printf(bio_out, "        goto end;\n");
+        if (seed != NULL)
+            BIO_printf(bio_out, "    if (!DSA_set0_validate_params(dsa, seed"
+                                ", seedlen, counter, gindex))\n"
+                                "        goto end;\n");
+        BIO_printf(bio_out, "    return dsa;\n");
+        BIO_printf(bio_out, "end:\n");
+        BIO_printf(bio_out, "    DSA_free(dsa);\n"
+                            "    BN_free(p);\n"
+                            "    BN_free(q);\n"
+                            "    BN_free(g);\n"
+                            "    return NULL;\n}\n\n");
+        BN_clear_free(s);
         OPENSSL_free(data);
     }
 
@@ -218,6 +258,16 @@ int dsaparam_main(int argc, char **argv)
             goto end;
         }
     }
+    if (!text && !C) {
+        BIO_printf(bio_out, "\n\n*******************************************************************\n");
+        BIO_printf(bio_out, "For validation of p, q & g: the following parameters are required\n");
+        BIO_printf(bio_out, "to be saved externally as they are not saved as part of the ASN1 data\n");
+        print_array(bio_out, "seed", seedlen, seed);
+        BIO_printf(bio_out, "counter = %d\n", counter);
+        if (gindex != -1)
+            BIO_printf(bio_out, "gindex = %d\n\n", gindex);
+    }
+
     if (genkey) {
         DSA *dsakey;
 
