@@ -217,8 +217,4 @@
  foreach (@{$unified_info{scripts}})   { doscript($_); }
 
  foreach (sort keys %{$unified_info{dirinfo}})  { dodir($_); }
-
- # Finally, should there be any applicable BEGINRAW/ENDRAW sections,
- # they are added here.
- $OUT .= $_."\n" foreach @{$unified_info{rawlines}};
 -}
