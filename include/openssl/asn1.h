@@ -859,6 +859,18 @@ int SMIME_text(BIO *in, BIO *out);
 const ASN1_ITEM *ASN1_ITEM_lookup(const char *name);
 const ASN1_ITEM *ASN1_ITEM_get(size_t i);
 
+/* Legacy compatibility */
+# define DECLARE_ASN1_FUNCTIONS_fname(type, itname, name) \
+         DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
+         DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
+# define DECLARE_ASN1_FUNCTIONS_const(type) DECLARE_ASN1_FUNCTIONS(type)
+# define DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
+         DECLARE_ASN1_ENCODE_FUNCTIONS(type, name)
+# define I2D_OF_const(type) I2D_OF(type)
+# define ASN1_dup_of_const(type,i2d,d2i,x) ASN1_dup_of(type,i2d,d2i,x)
+# define ASN1_i2d_fp_of_const(type,i2d,out,x) ASN1_i2d_fp_of(type,i2d,out,x)
+# define ASN1_i2d_bio_of_const(type,i2d,out,x) ASN1_i2d_bio_of(type,i2d,out,x)
+
 # ifdef  __cplusplus
 }
 # endif

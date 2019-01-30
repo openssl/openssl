@@ -921,6 +921,11 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                      const ASN1_ITEM *it, int tag, int aclass);
 
+/* Legacy compatibility */
+# define IMPLEMENT_ASN1_FUNCTIONS_const(name) IMPLEMENT_ASN1_FUNCTIONS(name)
+# define IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(stname, itname, fname) \
+         IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(stname, itname, fname)
+
 #ifdef  __cplusplus
 }
 #endif
