@@ -1713,7 +1713,6 @@ if ($builder eq "unified") {
         my @libraries = ();
         my @engines = ();
         my @scripts = ();
-        my @extra = ();
         my @intermediates = ();
 
         my %attributes = ();
@@ -1867,9 +1866,6 @@ if ($builder eq "unified") {
                     push @scripts, @s;
                 }
             },
-            qr/^\s*EXTRA\s*=\s*(.*)\s*$/
-            => sub { push @extra, tokenize($1)
-                         if !@skip || $skip[$#skip] > 0 },
 
             qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
             => sub { push @{$ordinals{$1}}, tokenize($2)
@@ -1930,8 +1926,7 @@ EOF
             my %infos = ( programs  => [ @programs  ],
                           libraries => [ @libraries ],
                           engines   => [ @engines   ],
-                          scripts   => [ @scripts   ],
-                          extra     => [ @extra     ] );
+                          scripts   => [ @scripts   ] );
             foreach my $k (keys %infos) {
                 foreach (@{$infos{$k}}) {
                     my $item = cleanfile($buildd, $_, $blddir);
@@ -2234,7 +2229,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "modules", "scripts", "extra")) {
+    foreach (("programs", "libraries", "engines", "scripts")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
