@@ -207,7 +207,7 @@ The root CA certificate can be used directly to start the server (see below), or
 
 2. The server generates a certificate request and sends it the to CA:
 
-		apps/openssl req -new -newkey <SIGALG> -keyout <SIGALG>_srv.key -out <SIGALG>_srv.csr -nodes -subj "/CN=oqstest server" -days 365 -config apps/openssl.cnf
+		apps/openssl req -new -newkey <SIGALG> -keyout <SIGALG>_srv.key -out <SIGALG>_srv.csr -nodes -subj "/CN=oqstest server" -config apps/openssl.cnf
 
 3. The CA generates the signed server certificate:
 
