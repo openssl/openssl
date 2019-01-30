@@ -9,6 +9,10 @@
 
  Changes between 1.1.0j and 1.1.0k [xx XXX xxxx]
 
+  *) Fix a use after free bug in d2i_X509_PUBKEY when overwriting a
+     re-used X509_PUBKEY object if the second PUBKEY is malformed.
+     [Bernd Edlinger]
+
   *) Move strictness check from EVP_PKEY_asn1_new() to EVP_PKEY_asn1_add0().
      [Richard Levitte]
 

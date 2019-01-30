@@ -36,6 +36,7 @@ static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         /* Attempt to decode public key and cache in pubkey structure. */
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);
+        pubkey->pkey = NULL;
         /*
          * Opportunistically decode the key but remove any non fatal errors
          * from the queue. Subsequent explicit attempts to decode/use the key
