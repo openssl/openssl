@@ -973,7 +973,7 @@
 
   *  COMPILING existing applications
 
-     From version 1.1.0 and on, OpenSSL hides a number of structures
+     Starting with version 1.1.0, OpenSSL hides a number of structures
      that were previously open.  This includes all internal libssl
      structures and a number of EVP types.  Accessor functions have
      been added to allow controlled access to the structures' data.
