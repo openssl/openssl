@@ -1105,7 +1105,7 @@ EOF
                                  # object modules already.
                                  my $main = $_->{attrs}->{has_main}
                                      ? '/INCLUDE=main' : '';
-                                 push @lines, 
+                                 push @lines,
                                      "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB$main\"",
                                      "\@ IF .NOT. nomain THEN WRITE OPT_FILE \"$x/LIB\""
                              }

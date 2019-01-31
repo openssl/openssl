@@ -2360,7 +2360,7 @@ int s_client_main(int argc, char **argv)
 
             BIO_push(fbio, sbio);
             BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n", connectstr);
-            /* 
+            /*
              * Workaround for broken proxies which would otherwise close
              * the connection when entering tunnel mode (eg Squid 2.6)
              */
@@ -3549,7 +3549,7 @@ static char *base64encode (const void *buf, size_t len)
     i = EVP_EncodeBlock((unsigned char *)out, buf, len);
     assert(i <= (int)outl);
     if (i < 0)
-        *out = '\0'; 
+        *out = '\0';
     return out;
 }
 

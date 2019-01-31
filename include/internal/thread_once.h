@@ -13,7 +13,7 @@
  * DEFINE_RUN_ONCE: Define an initialiser function that should be run exactly
  * once. It takes no arguments and returns and int result (1 for success or
  * 0 for failure). Typical usage might be:
- * 
+ *
  * DEFINE_RUN_ONCE(myinitfunc)
  * {
  *     do_some_initialisation();
@@ -45,7 +45,7 @@
  * exactly once. This function will be declared as static within the file. It
  * takes no arguments and returns and int result (1 for success or 0 for
  * failure). Typical usage might be:
- * 
+ *
  * DEFINE_RUN_ONCE_STATIC(myinitfunc)
  * {
  *     do_some_initialisation();
@@ -74,10 +74,10 @@
  * is used only one of the primary or the alternative initialiser function will
  * ever be called - and that function will be called exactly once. Definitition
  * of an alternative initialiser function MUST occur AFTER the definition of the
- * primiary initialiser function. 
- * 
+ * primiary initialiser function.
+ *
  * Typical usage might be:
- * 
+ *
  * DEFINE_RUN_ONCE_STATIC(myinitfunc)
  * {
  *     do_some_initialisation();
@@ -86,7 +86,7 @@
  *
  *     return 0;
  * }
- * 
+ *
  * DEFINE_RUN_ONCE_STATIC_ALT(myaltinitfunc, myinitfunc)
  * {
  *     do_some_alternative_initialisation();

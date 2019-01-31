@@ -16,7 +16,7 @@ sub new
         $encrypted,
         $level,
         $description) = @_;
-    
+
     my $self = {
         server => $server,
         encrypted => $encrypted,
