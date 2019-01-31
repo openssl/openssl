@@ -26,7 +26,7 @@
  you need to set ANDROID_NDK_HOME environment to point at NDK directory
  as /some/where/android-ndk-<ver>. Both variables are significant at both
  configuration and compilation times. NDK customarily supports multiple
- Android API levels, e.g. android-14, android-21, etc. By default latest 
+ Android API levels, e.g. android-14, android-21, etc. By default latest
  one available is chosen. If you need to target older platform, pass
  additional -D__ANDROID_API__=N to Configure. N is numeric value of the
  target platform version. For example, to compile for ICS on ARM with

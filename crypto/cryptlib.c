@@ -352,9 +352,9 @@ void OPENSSL_showfatal(const char *fmta, ...)
 
     /*
     * TODO: (For non GUI and no std error cases)
-    * Add event logging feature here. 
+    * Add event logging feature here.
     */
-    
+
 #   if !defined(NDEBUG)
         /*
         * We are in a situation where we tried to report a critical
@@ -393,7 +393,7 @@ void OPENSSL_showfatal(const char *fmta, ...)
 #  endif
 # else
     MessageBox(NULL, buf, _T("OpenSSL: FATAL"), MB_OK | MB_ICONERROR);
-# endif     
+# endif
 }
 #else
 void OPENSSL_showfatal(const char *fmta, ...)

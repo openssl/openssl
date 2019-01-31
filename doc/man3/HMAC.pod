@@ -91,7 +91,7 @@ because reuse of an existing key with a different digest is not supported.
 
 HMAC_Init() initializes a B<HMAC_CTX> structure to use the hash
 function B<evp_md> and the key B<key> which is B<key_len> bytes
-long. 
+long.
 
 HMAC_Update() can be called repeatedly with chunks of the message to
 be authenticated (B<len> bytes at B<data>).

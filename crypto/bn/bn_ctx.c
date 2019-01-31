@@ -256,7 +256,7 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
         unsigned int newsize =
             st->size ? (st->size * 3 / 2) : BN_CTX_START_FRAMES;
         unsigned int *newitems;
-        
+
         if ((newitems = OPENSSL_malloc(sizeof(*newitems) * newsize)) == NULL) {
             BNerr(BN_F_BN_STACK_PUSH, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -310,7 +310,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
     /* Full; allocate a new pool item and link it in. */
     if (p->used == p->size) {
         BN_POOL_ITEM *item;
-        
+
         if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
             BNerr(BN_F_BN_POOL_GET, ERR_R_MALLOC_FAILURE);
             return NULL;
