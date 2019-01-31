@@ -3081,7 +3081,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (out != in
         || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN))
         return -1;
-    
+
     /*
      * Check for too many keys as per FIPS 140-2 IG A.5 "Key/IV Pair Uniqueness
      * Requirements from SP 800-38D".  The requirements is for one party to the

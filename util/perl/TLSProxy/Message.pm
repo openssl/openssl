@@ -238,7 +238,7 @@ sub get_messages
                 $startoffset = $recoffset;
                 $recoffset += 4;
                 $payload = "";
-                
+
                 if ($recoffset <= $record->decrypt_len) {
                     #Some payload data is present in this record
                     if ($record->decrypt_len - $recoffset >= $messlen) {
@@ -410,7 +410,7 @@ sub new
         $records,
         $startoffset,
         $message_frag_lens) = @_;
-    
+
     my $self = {
         server => $server,
         data => $data,

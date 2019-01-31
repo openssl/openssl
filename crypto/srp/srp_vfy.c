@@ -187,7 +187,7 @@ void SRP_user_pwd_free(SRP_user_pwd *user_pwd)
 SRP_user_pwd *SRP_user_pwd_new(void)
 {
     SRP_user_pwd *ret;
-    
+
     if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
         /* SRPerr(SRP_F_SRP_USER_PWD_NEW, ERR_R_MALLOC_FAILURE); */ /*ckerr_ignore*/
         return NULL;

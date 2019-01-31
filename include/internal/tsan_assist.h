@@ -6,7 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
- 
+
 /*
  * Contemporary compilers implement lock-free atomic memory access
  * primitives that facilitate writing "thread-opportunistic" or even real

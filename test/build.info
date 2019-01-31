@@ -343,7 +343,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[drbg_cavs_test]=drbg_cavs_test.c drbg_cavs_data_ctr.c \
                          drbg_cavs_data_hash.c drbg_cavs_data_hmac.c
-  
+
   INCLUDE[drbg_cavs_test]=../include . ..
   DEPEND[drbg_cavs_test]=../libcrypto libtestutil.a
 

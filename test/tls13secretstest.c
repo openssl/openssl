@@ -18,7 +18,7 @@
 
 /*
  * Based on the test vectors availble in:
- * https://tools.ietf.org/html/draft-ietf-tls-tls13-vectors-06 
+ * https://tools.ietf.org/html/draft-ietf-tls-tls13-vectors-06
  */
 
 static unsigned char hs_start_hash[] = {

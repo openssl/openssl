@@ -118,7 +118,7 @@ In each table entry, the following keys are significant:
                            '<unistd.h>'.  This is very rarely needed.
 
         shared_extension => File name extension used for shared
-                            libraries. 
+                            libraries.
         obj_extension   => File name extension used for object files.
                            On unix, this defaults to ".o" (NOTE: this
                            is here for future use, it's not
