@@ -203,7 +203,7 @@ static int server_setup_sni(void)
         /* SNI should have been cleared during handshake */
         goto end;
     }
-    
+
     testresult = 1;
 end:
     SSL_free(serverssl);

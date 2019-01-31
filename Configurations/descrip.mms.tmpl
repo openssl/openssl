@@ -1046,7 +1046,7 @@ EOF
                                  push @lines, "\@ WRITE OPT_FILE \"$x/SHARE\"";
                              } elsif ($x =~ m|\.OLB$|) {
                                  (my $l = $x) =~ s/\W/_/g;
-                                 push @lines, 
+                                 push @lines,
                                      "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB\$(INCLUDE_MAIN_$l)\"",
                                      "\@ IF .NOT. nomain THEN WRITE OPT_FILE \"$x/LIB\""
                              }

@@ -475,7 +475,7 @@ the B<-selfsign> command line option.
 
 Note that it is valid in some circumstances for certificates to be created
 without any subject. In the case where there are multiple certificates without
-subjects this does not count as a duplicate. 
+subjects this does not count as a duplicate.
 
 =item B<serial>
 

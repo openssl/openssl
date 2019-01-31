@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 
     ret = pulldown_test_framework(ret);
     test_close_streams();
-    return ret;    
+    return ret;
 }
 
 const char *test_get_program_name(void)
