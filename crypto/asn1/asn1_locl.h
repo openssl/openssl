@@ -57,7 +57,7 @@ ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 const ASN1_VALUE **asn1_get_const_field_ptr(const ASN1_VALUE **pval,
                                             const ASN1_TEMPLATE *tt);
 
-const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE **pval, const ASN1_TEMPLATE *tt,
+const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val, const ASN1_TEMPLATE *tt,
                                  int nullerr);
 
 int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it);

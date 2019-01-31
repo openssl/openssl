@@ -233,7 +233,7 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
         /* Print each field entry */
         for (i = 0, tt = it->templates; i < it->tcount; i++, tt++) {
             const ASN1_TEMPLATE *seqtt;
-            seqtt = asn1_do_adb(fld, tt, 1);
+            seqtt = asn1_do_adb(*fld, tt, 1);
             if (!seqtt)
                 return 0;
             tmpfld = asn1_get_const_field_ptr(fld, seqtt);

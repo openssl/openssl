@@ -213,7 +213,7 @@ const ASN1_VALUE **asn1_get_const_field_ptr(const ASN1_VALUE **pval,
  * ASN1_TEMPLATE in the table and return it.
  */
 
-const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE **pval,
+const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
                                  const ASN1_TEMPLATE *tt,
                                  int nullerr)
 {
@@ -229,7 +229,7 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE **pval,
     adb = ASN1_ADB_ptr(tt->item);
 
     /* Get the selector field */
-    sfld = offset2ptr(*pval, adb->offset);
+    sfld = offset2ptr(val, adb->offset);
 
     /* Check if NULL */
     if (*sfld == NULL) {

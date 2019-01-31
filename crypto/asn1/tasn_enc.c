@@ -157,7 +157,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
             int tmplen;
-            seqtt = asn1_do_adb(pval, tt, 1);
+            seqtt = asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
             pseqval = asn1_get_const_field_ptr(pval, seqtt);
@@ -175,7 +175,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
-            seqtt = asn1_do_adb(pval, tt, 1);
+            seqtt = asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
             pseqval = asn1_get_const_field_ptr(pval, seqtt);
