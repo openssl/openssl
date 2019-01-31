@@ -299,6 +299,9 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
     kari->version = 3;
 
     rek = M_ASN1_new_of(CMS_RecipientEncryptedKey);
+    if (rek == NULL)
+        return 0;
+
     if (!sk_CMS_RecipientEncryptedKey_push(kari->recipientEncryptedKeys, rek)) {
         M_ASN1_free_of(rek, CMS_RecipientEncryptedKey);
         return 0;
