@@ -281,7 +281,7 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
 {
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i;
-    int k;
+    int k, check_supp = 1;
 
     /* Can't do anything on client side */
     if (s->server == 0)
@@ -308,9 +308,12 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
      * If server preference set, our groups are the preference order
      * otherwise peer decides.
      */
-    if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE) {
+    if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE
+	|| s->mode & SSL_MODE_ALLOW_NO_CURVES) {
         tls1_get_supported_groups(s, &pref, &num_pref);
         tls1_get_peer_groups(s, &supp, &num_supp);
+	check_supp = SSL_IS_TLS13(s) || num_supp
+	    || !(s->mode & SSL_MODE_ALLOW_NO_CURVES);
     } else {
         tls1_get_peer_groups(s, &pref, &num_pref);
         tls1_get_supported_groups(s, &supp, &num_supp);
@@ -319,7 +322,7 @@ uint16_t tls1_shared_group(SSL *s, int nmatch)
     for (k = 0, i = 0; i < num_pref; i++) {
         uint16_t id = pref[i];
 
-        if ((num_supp && !tls1_in_list(id, supp, num_supp))
+        if ((check_supp && !tls1_in_list(id, supp, num_supp))
             || !tls_curve_allowed(s, id, SSL_SECOP_CURVE_SHARED))
                     continue;
         if (nmatch == k)

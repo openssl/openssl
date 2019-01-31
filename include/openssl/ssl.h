@@ -501,6 +501,13 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  */
 # define SSL_MODE_NO_KTLS_TX 0x00000200U
 
+/*
+ * For TLS 1.2 and below allow the supported_curves extension to be absent in
+ * the ClientHello message for ECC cipher suites. The first curve from the
+ * server's curve list is used instead. 
+ */
+# define SSL_MODE_ALLOW_NO_CURVES 0x00000400U
+
 /* Cert related flags */
 /*
  * Many implementations ignore some aspects of the TLS standards such as
