@@ -14,9 +14,6 @@ SOURCE[../libcrypto]=\
         threads_pthread.c threads_win.c threads_none.c getenv.c \
         o_init.c o_fips.c mem_sec.c init.c {- $target{cpuid_asm_src} -} \
         {- $target{uplink_aux_src} -}
-EXTRA=  ../ms/uplink-x86.pl ../ms/uplink.c ../ms/applink.c \
-        x86cpuid.pl x86_64cpuid.pl ia64cpuid.S \
-        ppccpuid.pl pariscid.pl alphacpuid.pl arm64cpuid.pl armv4cpuid.pl
 
 DEPEND[cversion.o]=buildinf.h
 GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(LIB_CFLAGS) $(CPPFLAGS_Q)" "$(PLATFORM)"

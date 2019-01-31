@@ -22,9 +22,4 @@ GENERATE[ghashv8-armx.S]=asm/ghashv8-armx.pl $(PERLASM_SCHEME)
 INCLUDE[ghashv8-armx.o]=..
 GENERATE[ghash-s390x.S]=asm/ghash-s390x.pl $(PERLASM_SCHEME)
 INCLUDE[ghash-s390x.o]=..
-
-BEGINRAW[Makefile]
-# GNU make "catch all"
-{- $builddir -}/ghash-%.S:	{- $sourcedir -}/asm/ghash-%.pl
-	CC="$(CC)" $(PERL) $< $(PERLASM_SCHEME) $@
-ENDRAW[Makefile]
+GENERATE[ghash-c64xplus.S]=asm/ghash-c64xplus.pl $(PERLASM_SCHEME)

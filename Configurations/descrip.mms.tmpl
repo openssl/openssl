@@ -698,7 +698,10 @@ reconfigure reconf :
       # Depending on shared libraries:
       # On Windows POSIX layers, we depend on {libname}.dll.a
       # On Unix platforms, we depend on {shlibname}.so
-      return map { platform->sharedlib($_) // platform->staticlib($_) } @_;
+      return map {
+          { lib   => platform->sharedlib($_) // platform->staticlib($_),
+            attrs => $unified_info{attributes}->{$_} }
+      } @_;
   }
 
   # Helper function to deal with inclusion directory specs.
@@ -968,7 +971,7 @@ EOF
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
       die "More than one symbol vector" if scalar @defs > 1;
-      my $deps = join(", -\n\t\t", @objs, @defs, @deps);
+      my $deps = join(", -\n\t\t", @objs, @defs, map { $_->{lib} } @deps);
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       my $translatesyms_pl = abs2rel(rel2abs(catfile($config{sourcedir},
                                                      "VMS", "translatesyms.pl")),
@@ -982,7 +985,8 @@ EOF
                                  "WRITE OPT_FILE \"$x" } @objs).
           "\"";
       my $write_opt2 =
-          join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+          join("\n\t", map { my $x = $_->{lib} =~ /\[/
+                                 ? $_->{lib} : "[]".$_->{lib};
                              $x =~ s|(\.EXE)|$1/SHARE|;
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
@@ -1015,7 +1019,7 @@ EOF
                  grep { platform->isdef($_) }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
-      my $deps = join(", -\n\t\t", @objs, @defs, @deps);
+      my $deps = join(", -\n\t\t", @objs, @defs, map { $_->{lib} } @deps);
       die "More than one symbol vector" if scalar @defs > 1;
       my $shlib_target = $disabled{shared} ? "" : $target{shared_target};
       # The "[]" hack is because in .OPT files, each line inherits the
@@ -1027,7 +1031,8 @@ EOF
                                  "WRITE OPT_FILE \"$x" } @objs).
           "\"";
       my $write_opt2 =
-          join("\n\t", map { my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+          join("\n\t", map { my $x = $_->{lib} =~ /\[/
+                                 ? $_->{lib} : "[]".$_->{lib};
                              $x =~ s|(\.EXE)|$1/SHARE|;
                              $x =~ s|(\.OLB)|$1/LIB|;
                              "WRITE OPT_FILE \"$x\"" } @deps)
@@ -1071,9 +1076,9 @@ EOF
                  @{$args{objs}};
       my $objs = join(",", @objs);
       my @deps = compute_lib_depends(@{$args{deps}});
-      my $deps = join(", -\n\t\t", @objs, @deps);
+      my $deps = join(", -\n\t\t", @objs, map { $_->{lib} } @deps);
 
-      my $olb_count = scalar grep(m|\.OLB$|, @deps);
+      my $olb_count = scalar grep(m|\.OLB$|, map { $_->{lib} } @deps);
       my $analyse_objs = "@ !";
       if ($olb_count > 0) {
           my $analyse_quals =
@@ -1089,16 +1094,24 @@ EOF
                                  "\@ WRITE OPT_FILE \"$x" } @objs).
           "\"";
       my $write_opt2 =
-          join("\n\t", map { my @lines = (
-                                 "\ WRITE OPT_FILE \"CASE_SENSITIVE=YES\""
-                             );
-                             my $x = $_ =~ /\[/ ? $_ : "[]".$_;
+          join("\n\t", "WRITE OPT_FILE \"CASE_SENSITIVE=YES\"",
+                       map { my @lines = ();
+                             use Data::Dumper;
+                             print STDERR "DEBUG: ",Dumper($_);
+                             my $x = $_->{lib} =~ /\[/
+                                 ? $_->{lib} : "[]".$_->{lib};
+                             print STDERR "DEBUG: ",Dumper($x);
                              if ($x =~ m|\.EXE$|) {
                                  push @lines, "\@ WRITE OPT_FILE \"$x/SHARE\"";
                              } elsif ($x =~ m|\.OLB$|) {
-                                 (my $l = $x) =~ s/\W/_/g;
+                                 # Special hack to include the MAIN object
+                                 # module explicitly.  This will only be done
+                                 # if there isn't a 'main' in the program's
+                                 # object modules already.
+                                 my $main = $_->{attrs}->{has_main}
+                                     ? '/INCLUDE=main' : '';
                                  push @lines, 
-                                     "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB\$(INCLUDE_MAIN_$l)\"",
+                                     "\@ IF nomain THEN WRITE OPT_FILE \"$x/LIB$main\"",
                                      "\@ IF .NOT. nomain THEN WRITE OPT_FILE \"$x/LIB\""
                              }
                              @lines

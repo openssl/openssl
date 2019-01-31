@@ -112,9 +112,6 @@ Two things are worth an extra note:
 'DEPEND[cversion.o]' mentions an object file.  DEPEND indexes is the
 only location where it's valid to mention them
 
-Lines in 'BEGINRAW'..'ENDRAW' sections must always mention files as
-seen from the top directory, no exception.
-
     # ssl/build.info
     LIBS=../libssl
     SOURCE[../libssl]=tls.c
@@ -234,11 +231,6 @@ indexes:
   programs  => a list of programs.  These are directly inferred from
                the PROGRAMS variable in build.info files.
 
-  rawlines  => a list of build-file lines.  These are a direct copy of
-               the BEGINRAW..ENDRAW lines in build.info files.  Note:
-               only the BEGINRAW..ENDRAW section for the current
-               platform are copied, the rest are ignored.
-
   scripts   => a list of scripts.  There are directly inferred from
                the SCRIPTS variable in build.info files.
 
@@ -351,9 +343,6 @@ section above would be digested into a %unified_info table:
         "programs" =>
             [
                 "apps/openssl",
-            ],
-        "rawlines" =>
-            [
             ],
         "sources" =>
             {

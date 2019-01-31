@@ -1713,10 +1713,6 @@ if ($builder eq "unified") {
         my @libraries = ();
         my @engines = ();
         my @scripts = ();
-        my @extra = ();
-        my @overrides = ();
-        my @intermediates = ();
-        my @rawlines = ();
 
         my %attributes = ();
         my %sources = ();
@@ -1806,7 +1802,6 @@ if ($builder eq "unified") {
                             $attributes{$p}->{$ak} = $av;
                         }
                     }
-                    push @programs, @p;
                 }
             },
             qr/^\s*LIBS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
@@ -1826,7 +1821,6 @@ if ($builder eq "unified") {
                             $attributes{$l}->{$ak} = $av;
                         }
                     }
-                    push @libraries, @l;
                 }
             },
             qr/^\s*ENGINES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
@@ -1846,7 +1840,6 @@ if ($builder eq "unified") {
                             $attributes{$e}->{$ak} = $av;
                         }
                     }
-                    push @engines, @e;
                 }
             },
             qr/^\s*SCRIPTS(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
@@ -1866,15 +1859,8 @@ if ($builder eq "unified") {
                             $attributes{$s}->{$ak} = $av;
                         }
                     }
-                    push @scripts, @s;
                 }
             },
-            qr/^\s*EXTRA\s*=\s*(.*)\s*$/
-            => sub { push @extra, tokenize($1)
-                         if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*OVERRIDES\s*=\s*(.*)\s*$/
-            => sub { push @overrides, tokenize($1)
-                         if !@skip || $skip[$#skip] > 0 },
 
             qr/^\s*ORDINALS\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/,
             => sub { push @{$ordinals{$1}}, tokenize($2)
@@ -1897,27 +1883,6 @@ if ($builder eq "unified") {
             qr/^\s*GENERATE\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
             => sub { push @{$generate{$1}}, $2
                          if !@skip || $skip[$#skip] > 0 },
-            qr/^\s*RENAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { warn "RENAME is no longer supported\n" },
-             qr/^\s*SHARED_NAME\[((?:\\.|[^\\\]])+)\]\s*=\s*(.*)\s*$/
-            => sub { warn "SHARED_NAME is no longer supported\n" },
-            qr/^\s*BEGINRAW\[((?:\\.|[^\\\]])+)\]\s*$/
-            => sub {
-                my $lineiterator = shift;
-                my $target_kind = $1;
-                while (defined $lineiterator->()) {
-                    s|\R$||;
-                    if (/^\s*ENDRAW\[((?:\\.|[^\\\]])+)\]\s*$/) {
-                        die "ENDRAW doesn't match BEGINRAW"
-                            if $1 ne $target_kind;
-                        last;
-                    }
-                    next if @skip && $skip[$#skip] <= 0;
-                    push @rawlines,  $_
-                        if ($target_kind eq $target{build_file}
-                            || $target_kind eq $target{build_file}."(".$builder_platform.")");
-                }
-            },
             qr/^\s*(?:#.*)?$/ => sub { },
             "OTHERWISE" => sub { die "Something wrong with this line:\n$_\nat $sourced/$f" },
             "BEFORE" => sub {
@@ -1952,9 +1917,7 @@ EOF
             my %infos = ( programs  => [ @programs  ],
                           libraries => [ @libraries ],
                           engines   => [ @engines   ],
-                          scripts   => [ @scripts   ],
-                          extra     => [ @extra     ],
-                          overrides => [ @overrides ] );
+                          scripts   => [ @scripts   ] );
             foreach my $k (keys %infos) {
                 foreach (@{$infos{$k}}) {
                     my $item = cleanfile($buildd, $_, $blddir);
@@ -1962,8 +1925,6 @@ EOF
                 }
             }
         }
-
-        push @{$unified_info{rawlines}}, @rawlines;
 
         # Check that we haven't defined any library as both shared and
         # explicitly static.  That is forbidden.
@@ -2259,7 +2220,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "engines", "scripts", "extra", "overrides")) {
+    foreach (("programs", "libraries", "engines", "scripts")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
