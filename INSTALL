@@ -973,10 +973,10 @@
 
   *  COMPILING existing applications
 
-     OpenSSL 1.1.0 hides a number of structures that were previously
-     open.  This includes all internal libssl structures and a number
-     of EVP types.  Accessor functions have been added to allow
-     controlled access to the structures' data.
+     From version 1.1.0 and on, OpenSSL hides a number of structures
+     that were previously open.  This includes all internal libssl
+     structures and a number of EVP types.  Accessor functions have
+     been added to allow controlled access to the structures' data.
 
      This means that some software needs to be rewritten to adapt to
      the new ways of doing things.  This often amounts to allocating
@@ -1079,7 +1079,7 @@
 
  depend
                 Rebuild the dependencies in the Makefiles. This is a legacy
-                option that no longer needs to be used in OpenSSL 1.1.0.
+                option that no longer needs to be used since OpenSSL 1.1.0.
 
  install
                 Install all OpenSSL components.
