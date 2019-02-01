@@ -352,6 +352,10 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 char *include = NULL;
                 BIO *next;
 
+                if (*p == '=') {
+                    p++;
+                    p = eat_ws(conf, p);
+                }
                 trim_ws(conf, p);
                 if (!str_copy(conf, psection, &include, p))
                     goto err;
