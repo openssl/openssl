@@ -2174,7 +2174,7 @@ int SSL_key_update(SSL *s, int updatetype)
     return 1;
 }
 
-int SSL_get_key_update_type(SSL *s)
+int SSL_get_key_update_type(const SSL *s)
 {
     return s->key_update;
 }
@@ -2215,7 +2215,7 @@ int SSL_renegotiate_abbreviated(SSL *s)
     return s->method->ssl_renegotiate(s);
 }
 
-int SSL_renegotiate_pending(SSL *s)
+int SSL_renegotiate_pending(const SSL *s)
 {
     /*
      * becomes true when negotiation is requested; false again once a
@@ -3499,12 +3499,12 @@ void ssl_update_cache(SSL *s, int mode)
     }
 }
 
-const SSL_METHOD *SSL_CTX_get_ssl_method(SSL_CTX *ctx)
+const SSL_METHOD *SSL_CTX_get_ssl_method(const SSL_CTX *ctx)
 {
     return ctx->method;
 }
 
-const SSL_METHOD *SSL_get_ssl_method(SSL *s)
+const SSL_METHOD *SSL_get_ssl_method(const SSL *s)
 {
     return s->method;
 }
@@ -3942,7 +3942,7 @@ const SSL_CIPHER *SSL_get_pending_cipher(const SSL *s)
     return s->s3->tmp.new_cipher;
 }
 
-const COMP_METHOD *SSL_get_current_compression(SSL *s)
+const COMP_METHOD *SSL_get_current_compression(const SSL *s)
 {
 #ifndef OPENSSL_NO_COMP
     return s->compress ? COMP_CTX_get_method(s->compress) : NULL;
@@ -3951,7 +3951,7 @@ const COMP_METHOD *SSL_get_current_compression(SSL *s)
 #endif
 }
 
-const COMP_METHOD *SSL_get_current_expansion(SSL *s)
+const COMP_METHOD *SSL_get_current_expansion(const SSL *s)
 {
 #ifndef OPENSSL_NO_COMP
     return s->expand ? COMP_CTX_get_method(s->expand) : NULL;
@@ -4399,7 +4399,7 @@ void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg)
     ctx->record_padding_arg = arg;
 }
 
-void *SSL_CTX_get_record_padding_callback_arg(SSL_CTX *ctx)
+void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx)
 {
     return ctx->record_padding_arg;
 }
@@ -4428,7 +4428,7 @@ void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg)
     ssl->record_padding_arg = arg;
 }
 
-void *SSL_get_record_padding_callback_arg(SSL *ssl)
+void *SSL_get_record_padding_callback_arg(const SSL *ssl)
 {
     return ssl->record_padding_arg;
 }
@@ -4452,7 +4452,7 @@ int SSL_set_num_tickets(SSL *s, size_t num_tickets)
     return 1;
 }
 
-size_t SSL_get_num_tickets(SSL *s)
+size_t SSL_get_num_tickets(const SSL *s)
 {
     return s->num_tickets;
 }
@@ -4464,7 +4464,7 @@ int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets)
     return 1;
 }
 
-size_t SSL_CTX_get_num_tickets(SSL_CTX *ctx)
+size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx)
 {
     return ctx->num_tickets;
 }
