@@ -14,11 +14,11 @@ SSL_renegotiate_pending
  #include <openssl/ssl.h>
 
  int SSL_key_update(SSL *s, int updatetype);
- int SSL_get_key_update_type(SSL *s);
+ int SSL_get_key_update_type(const SSL *s);
 
  int SSL_renegotiate(SSL *s);
  int SSL_renegotiate_abbreviated(SSL *s);
- int SSL_renegotiate_pending(SSL *s);
+ int SSL_renegotiate_pending(const SSL *s);
 
 =head1 DESCRIPTION
 
