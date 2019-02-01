@@ -19,10 +19,10 @@ SSL_set_block_padding - install callback to specify TLS 1.3 record padding
  void SSL_set_record_padding_callback(SSL *ssl, size_t (*cb)(SSL *s, int type, size_t len, void *arg));
 
  void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg);
- void *SSL_CTX_get_record_padding_callback_arg(SSL_CTX *ctx);
+ void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx);
 
  void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg);
- void *SSL_get_record_padding_callback_arg(SSL *ssl);
+ void *SSL_get_record_padding_callback_arg(const SSL *ssl);
 
  int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size);
  int SSL_set_block_padding(SSL *ssl, size_t block_size);
