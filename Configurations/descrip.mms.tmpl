@@ -102,9 +102,6 @@
 
       return "$target : build_generated\n\t\pipe \$(MMS) \$(MMSQUALIFIERS) depend && \$(MMS) \$(MMSQUALIFIERS) _$target\n_$target";
   }
-  #use Data::Dumper;
-  #print STDERR "DEBUG: before:\n", Dumper($unified_info{before});
-  #print STDERR "DEBUG: after:\n", Dumper($unified_info{after});
   "";
 -}
 PLATFORM={- $config{target} -}
@@ -1097,10 +1094,8 @@ EOF
           join("\n\t", "WRITE OPT_FILE \"CASE_SENSITIVE=YES\"",
                        map { my @lines = ();
                              use Data::Dumper;
-                             print STDERR "DEBUG: ",Dumper($_);
                              my $x = $_->{lib} =~ /\[/
                                  ? $_->{lib} : "[]".$_->{lib};
-                             print STDERR "DEBUG: ",Dumper($x);
                              if ($x =~ m|\.EXE$|) {
                                  push @lines, "\@ WRITE OPT_FILE \"$x/SHARE\"";
                              } elsif ($x =~ m|\.OLB$|) {
