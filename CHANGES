@@ -9,6 +9,12 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added SCA hardening for modular field inversion in EC_GROUP through
+     a new dedicated field_inv() pointer in EC_METHOD.
+     This also addresses a leakage affecting conversions from projective
+     to affine coordinates.
+     [Billy Bob Brumley, Nicola Tuveri]
+
   *) Added EVP_KDF, an EVP layer KDF API, to simplify adding KDF and PRF
      implementations.  This includes an EVP_PKEY to EVP_KDF bridge for
      those algorithms that were already supported through the EVP_PKEY API
