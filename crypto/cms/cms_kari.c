@@ -282,7 +282,7 @@ static int cms_kari_create_ephemeral_key(CMS_KeyAgreeRecipientInfo *kari,
     return rv;
 }
 
-/* Initialise a ktri based on passed certificate and key */
+/* Initialise a kari based on passed certificate and key */
 
 int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
                                 EVP_PKEY *pk, unsigned int flags)
