@@ -9,6 +9,12 @@
 
  Changes between 1.1.0j and 1.1.0k [xx XXX xxxx]
 
+  *) Added SCA hardening for modular field inversion in EC_GROUP through
+     a new dedicated field_inv() pointer in EC_METHOD.
+     This also addresses a leakage affecting conversions from projective
+     to affine coordinates.
+     [Billy Bob Brumley, Nicola Tuveri]
+
   *) Fix a use after free bug in d2i_X509_PUBKEY when overwriting a
      re-used X509_PUBKEY object if the second PUBKEY is malformed.
      [Bernd Edlinger]

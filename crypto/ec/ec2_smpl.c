@@ -29,67 +29,6 @@
 
 #ifndef OPENSSL_NO_EC2M
 
-const EC_METHOD *EC_GF2m_simple_method(void)
-{
-    static const EC_METHOD ret = {
-        EC_FLAGS_DEFAULT_OCT,
-        NID_X9_62_characteristic_two_field,
-        ec_GF2m_simple_group_init,
-        ec_GF2m_simple_group_finish,
-        ec_GF2m_simple_group_clear_finish,
-        ec_GF2m_simple_group_copy,
-        ec_GF2m_simple_group_set_curve,
-        ec_GF2m_simple_group_get_curve,
-        ec_GF2m_simple_group_get_degree,
-        ec_group_simple_order_bits,
-        ec_GF2m_simple_group_check_discriminant,
-        ec_GF2m_simple_point_init,
-        ec_GF2m_simple_point_finish,
-        ec_GF2m_simple_point_clear_finish,
-        ec_GF2m_simple_point_copy,
-        ec_GF2m_simple_point_set_to_infinity,
-        0 /* set_Jprojective_coordinates_GFp */ ,
-        0 /* get_Jprojective_coordinates_GFp */ ,
-        ec_GF2m_simple_point_set_affine_coordinates,
-        ec_GF2m_simple_point_get_affine_coordinates,
-        0, 0, 0,
-        ec_GF2m_simple_add,
-        ec_GF2m_simple_dbl,
-        ec_GF2m_simple_invert,
-        ec_GF2m_simple_is_at_infinity,
-        ec_GF2m_simple_is_on_curve,
-        ec_GF2m_simple_cmp,
-        ec_GF2m_simple_make_affine,
-        ec_GF2m_simple_points_make_affine,
-
-        /*
-         * the following three method functions are defined in ec2_mult.c
-         */
-        ec_GF2m_simple_mul,
-        ec_GF2m_precompute_mult,
-        ec_GF2m_have_precompute_mult,
-
-        ec_GF2m_simple_field_mul,
-        ec_GF2m_simple_field_sqr,
-        ec_GF2m_simple_field_div,
-        0 /* field_encode */ ,
-        0 /* field_decode */ ,
-        0,                      /* field_set_to_one */
-        ec_key_simple_priv2oct,
-        ec_key_simple_oct2priv,
-        0, /* set private */
-        ec_key_simple_generate_key,
-        ec_key_simple_check_key,
-        ec_key_simple_generate_public_key,
-        0, /* keycopy */
-        0, /* keyfinish */
-        ecdh_simple_compute_key,
-        0  /* blind_coordinates */
-    };
-
-    return &ret;
-}
-
 /*
  * Initialize a GF(2^m)-based EC_GROUP structure. Note that all other members
  * are handled by EC_GROUP_new.
@@ -755,6 +694,83 @@ int ec_GF2m_simple_field_div(const EC_GROUP *group, BIGNUM *r,
                              const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
     return BN_GF2m_mod_div(r, a, b, group->field, ctx);
+}
+
+/*-
+ * Computes the multiplicative inverse of a in GF(2^m), storing the result in r.
+ * If a is zero (or equivalent), you'll get a EC_R_CANNOT_INVERT error.
+ * SCA hardening is with blinding: BN_GF2m_mod_inv does that.
+ */
+static int ec_GF2m_simple_field_inv(const EC_GROUP *group, BIGNUM *r,
+                                    const BIGNUM *a, BN_CTX *ctx)
+{
+    int ret;
+
+    if (!(ret = BN_GF2m_mod_inv(r, a, group->field, ctx)))
+        ECerr(EC_F_EC_GF2M_SIMPLE_FIELD_INV, EC_R_CANNOT_INVERT);
+    return ret;
+}
+
+const EC_METHOD *EC_GF2m_simple_method(void)
+{
+    static const EC_METHOD ret = {
+        EC_FLAGS_DEFAULT_OCT,
+        NID_X9_62_characteristic_two_field,
+        ec_GF2m_simple_group_init,
+        ec_GF2m_simple_group_finish,
+        ec_GF2m_simple_group_clear_finish,
+        ec_GF2m_simple_group_copy,
+        ec_GF2m_simple_group_set_curve,
+        ec_GF2m_simple_group_get_curve,
+        ec_GF2m_simple_group_get_degree,
+        ec_group_simple_order_bits,
+        ec_GF2m_simple_group_check_discriminant,
+        ec_GF2m_simple_point_init,
+        ec_GF2m_simple_point_finish,
+        ec_GF2m_simple_point_clear_finish,
+        ec_GF2m_simple_point_copy,
+        ec_GF2m_simple_point_set_to_infinity,
+        0 /* set_Jprojective_coordinates_GFp */ ,
+        0 /* get_Jprojective_coordinates_GFp */ ,
+        ec_GF2m_simple_point_set_affine_coordinates,
+        ec_GF2m_simple_point_get_affine_coordinates,
+        0, 0, 0,
+        ec_GF2m_simple_add,
+        ec_GF2m_simple_dbl,
+        ec_GF2m_simple_invert,
+        ec_GF2m_simple_is_at_infinity,
+        ec_GF2m_simple_is_on_curve,
+        ec_GF2m_simple_cmp,
+        ec_GF2m_simple_make_affine,
+        ec_GF2m_simple_points_make_affine,
+
+        /*
+         * the following three method functions are defined in ec2_mult.c
+         */
+        ec_GF2m_simple_mul,
+        ec_GF2m_precompute_mult,
+        ec_GF2m_have_precompute_mult,
+
+        ec_GF2m_simple_field_mul,
+        ec_GF2m_simple_field_sqr,
+        ec_GF2m_simple_field_div,
+        ec_GF2m_simple_field_inv,
+        0 /* field_encode */ ,
+        0 /* field_decode */ ,
+        0,                      /* field_set_to_one */
+        ec_key_simple_priv2oct,
+        ec_key_simple_oct2priv,
+        0, /* set private */
+        ec_key_simple_generate_key,
+        ec_key_simple_check_key,
+        ec_key_simple_generate_public_key,
+        0, /* keycopy */
+        0, /* keyfinish */
+        ecdh_simple_compute_key,
+        0  /* blind_coordinates */
+    };
+
+    return &ret;
 }
 
 #endif
