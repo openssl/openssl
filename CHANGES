@@ -9,6 +9,12 @@
 
  Changes between 1.1.1a and 1.1.1b [xx XXX xxxx]
 
+  *) Added SCA hardening for modular field inversion in EC_GROUP through
+     a new dedicated field_inv() pointer in EC_METHOD.
+     This also addresses a leakage affecting conversions from projective
+     to affine coordinates.
+     [Billy Bob Brumley, Nicola Tuveri]
+
   *) Change the info callback signals for the start and end of a post-handshake
      message exchange in TLSv1.3. In 1.1.1/1.1.1a we used SSL_CB_HANDSHAKE_START
      and SSL_CB_HANDSHAKE_DONE. Experience has shown that many applications get
