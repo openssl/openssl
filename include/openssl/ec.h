@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -1399,6 +1399,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_EC_ASN1_GROUP2CURVE                         153
 # define EC_F_EC_ASN1_GROUP2FIELDID                       154
 # define EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY           208
+# define EC_F_EC_GF2M_SIMPLE_FIELD_INV                    296
 # define EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT     159
 # define EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE              195
 # define EC_F_EC_GF2M_SIMPLE_OCT2POINT                    160
@@ -1408,6 +1409,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_EC_GF2M_SIMPLE_SET_COMPRESSED_COORDINATES   164
 # define EC_F_EC_GFP_MONT_FIELD_DECODE                    133
 # define EC_F_EC_GFP_MONT_FIELD_ENCODE                    134
+# define EC_F_EC_GFP_MONT_FIELD_INV                       297
 # define EC_F_EC_GFP_MONT_FIELD_MUL                       131
 # define EC_F_EC_GFP_MONT_FIELD_SET_TO_ONE                209
 # define EC_F_EC_GFP_MONT_FIELD_SQR                       132
@@ -1425,6 +1427,7 @@ int ERR_load_EC_strings(void);
 # define EC_F_EC_GFP_NIST_FIELD_SQR                       201
 # define EC_F_EC_GFP_NIST_GROUP_SET_CURVE                 202
 # define EC_F_EC_GFP_SIMPLE_BLIND_COORDINATES             287
+# define EC_F_EC_GFP_SIMPLE_FIELD_INV                     298
 # define EC_F_EC_GFP_SIMPLE_GROUP_CHECK_DISCRIMINANT      165
 # define EC_F_EC_GFP_SIMPLE_GROUP_SET_CURVE               166
 # define EC_F_EC_GFP_SIMPLE_MAKE_AFFINE                   102
@@ -1514,6 +1517,7 @@ int ERR_load_EC_strings(void);
 # define EC_R_BAD_SIGNATURE                               156
 # define EC_R_BIGNUM_OUT_OF_RANGE                         144
 # define EC_R_BUFFER_TOO_SMALL                            100
+# define EC_R_CANNOT_INVERT                               165
 # define EC_R_COORDINATES_OUT_OF_RANGE                    146
 # define EC_R_CURVE_DOES_NOT_SUPPORT_ECDH                 160
 # define EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING              159
