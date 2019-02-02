@@ -28,8 +28,8 @@ sub sharedname  { return __isshared($_[1]) ? $_[1] : undef } # Name of shared li
 sub staticname  { return __base($_[1], '.a') } # Name of static lib
 
 # Convenience function to convert the shlib version to an acceptable part
-# of a file or directory name.
-sub shlib_version_as_filename { return $_[1] }
+# of a file or directory name.  By default, we consider it acceptable as is.
+sub shlib_version_as_filename { return $config{shlib_version} }
 
 # Convenience functions to convert the possible extension of an input file name
 sub bin         { return $_[0]->binname($_[1]) . $_[0]->binext() }
