@@ -52,7 +52,7 @@ B<openssl> B<x509>
 [B<-CAkey filename>]
 [B<-CAcreateserial>]
 [B<-CAserial filename>]
-[B<-force_pubkey key>]
+[B<-force_pubkey filename>]
 [B<-text>]
 [B<-ext extensions>]
 [B<-certopt option>]
@@ -458,14 +458,14 @@ specified then the extensions should either be contained in the unnamed
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
-=item B<-force_pubkey key>
+=item B<-force_pubkey filename>
 
-When a certificate is created set its public key to B<key> instead of the
-key in the certificate or certificate request. This option is useful for
-creating certificates where the algorithm can't normally sign requests, for
-example DH.
+When a certificate is created set its public key to the key in B<filename>
+(instead of the key in the input certificate or certificate request).
+This option is useful for creating self-issued certificates that are not
+self-signed, for instance when the key cannot be used for signing, such as DH.
 
-The format or B<key> can be specified using the B<-keyform> option.
+The format of the key file can be specified using the B<-keyform> option.
 
 =back
 
