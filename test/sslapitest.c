@@ -6068,6 +6068,73 @@ static int test_ca_names(int tst)
     return testresult;
 }
 
+static int test_ssl_dup(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL *clientssl2 = NULL, *serverssl2 = NULL;
+    BIO *rbios = NULL, *rbioc = NULL;
+    int testresult = 0;
+
+#ifdef OPENSSL_NO_TLS1_2
+    if (tst == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_TLS1_3
+    if (tst == 1)
+        return 1;
+#endif
+
+    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       tst == 0 ? TLS1_2_VERSION
+                                                : TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    clientssl2 = SSL_dup(clientssl);
+    serverssl2 = SSL_dup(serverssl);
+    if (!TEST_ptr(clientssl2)
+            || !TEST_ptr(serverssl2)
+            || !TEST_true(clientssl != clientssl2)
+            || !TEST_true(serverssl != serverssl2))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* BIOs should be empty */
+    rbios = SSL_get_rbio(serverssl);
+    rbioc = SSL_get_rbio(clientssl);
+    if (!TEST_ptr(rbios)
+            || !TEST_ptr(rbioc)
+            || !TEST_int_eq(BIO_get_mem_data(rbios, NULL), 0)
+            || !TEST_int_eq(BIO_get_mem_data(rbioc, NULL), 0))
+        goto end;
+
+    /* BIOs should be empty so we can just reuse them */
+    if (!TEST_true(create_ssl_connection(serverssl2, clientssl2, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(serverssl2);
+    SSL_free(clientssl2);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+    
+}
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
@@ -6184,6 +6251,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_cert_cb, 3);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
+    ADD_ALL_TESTS(test_ssl_dup, 2);
+
     return 1;
 }
 
