@@ -44,7 +44,7 @@ BEGIN
         $s->close();
     };
     if ($@ eq "") {
-        $IP_factory = sub { IO::Socket::INET6->new(@_); };
+        $IP_factory = sub { IO::Socket::INET6->new(Domain => AF_INET6, @_); };
         $have_IPv6 = 1;
     } else {
         eval {
