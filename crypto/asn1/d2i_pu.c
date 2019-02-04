@@ -32,7 +32,7 @@ EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
     } else
         ret = *a;
 
-    if (!EVP_PKEY_set_type(ret, type)) {
+    if (type != EVP_PKEY_id(ret) && !EVP_PKEY_set_type(ret, type)) {
         ASN1err(ASN1_F_D2I_PUBLICKEY, ERR_R_EVP_LIB);
         goto err;
     }
