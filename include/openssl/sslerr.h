@@ -234,6 +234,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_F_SSL_SET_WFD                                196
 # define SSL_F_SSL_SHUTDOWN                               224
 # define SSL_F_SSL_SRP_CTX_INIT                           313
+# define SSL_F_SSL_SRP_CTX_INIT_INT                       639
 # define SSL_F_SSL_START_ASYNC_JOB                        389
 # define SSL_F_SSL_UNDEFINED_FUNCTION                     197
 # define SSL_F_SSL_UNDEFINED_VOID_FUNCTION                244

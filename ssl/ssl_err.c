@@ -342,6 +342,8 @@ static const ERR_STRING_DATA SSL_str_functs[] = {
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_SET_WFD, 0), "SSL_set_wfd"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_SHUTDOWN, 0), "SSL_shutdown"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_SRP_CTX_INIT, 0), "SSL_SRP_CTX_init"},
+    {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_SRP_CTX_INIT_INT, 0),
+     "ssl_srp_ctx_init_int"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_START_ASYNC_JOB, 0),
      "ssl_start_async_job"},
     {ERR_PACK(ERR_LIB_SSL, SSL_F_SSL_UNDEFINED_FUNCTION, 0),

@@ -1463,7 +1463,6 @@ struct ssl_st {
     size_t block_padding;
 
     CRYPTO_RWLOCK *lock;
-    RAND_DRBG *drbg;
 
     /* The number of TLS1.3 tickets to automatically send */
     size_t num_tickets;
@@ -2670,6 +2669,11 @@ void ssl_comp_free_compression_methods_int(void);
 
 /* ssl_mcnf.c */
 void ssl_ctx_system_config(SSL_CTX *ctx);
+
+#  ifndef OPENSSL_NO_SRP
+/* tls_srp.c */
+int ssl_srp_ctx_init_int(SSL *s, SRP_CTX *srp_ctx);
+#  endif
 
 # else /* OPENSSL_UNIT_TEST */
 

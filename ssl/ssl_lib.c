@@ -3798,89 +3798,83 @@ SSL *SSL_dup(SSL *s)
         return s;
     }
 
-    /*
-     * Otherwise, copy configuration state, and session if set.
-     */
-    if ((ret = SSL_new(SSL_get_SSL_CTX(s))) == NULL)
+    ret = OPENSSL_malloc(sizeof(SSL));
+    if (ret == NULL)
         return NULL;
 
-    if (s->session != NULL) {
-        /*
-         * Arranges to share the same session via up_ref.  This "copies"
-         * session-id, SSL_METHOD, sid_ctx, and 'cert'
-         */
-        if (!SSL_copy_session_id(ret, s))
-            goto err;
-    } else {
-        /*
-         * No session has been established yet, so we have to expect that
-         * s->cert or ret->cert will be changed later -- they should not both
-         * point to the same object, and thus we can't use
-         * SSL_copy_session_id.
-         */
-        if (!SSL_set_ssl_method(ret, s->method))
-            goto err;
+    /* Duplicate all state from s to ret */
+    *ret = *s;
 
-        if (s->cert != NULL) {
-            ssl_cert_free(ret->cert);
-            ret->cert = ssl_cert_dup(s->cert);
-            if (ret->cert == NULL)
-                goto err;
-        }
+    /* Fix up some values */
+    ret->references = 1;
+    ret->rlayer.s = ret;
 
-        if (!SSL_set_session_id_context(ret, s->sid_ctx,
-                                        (int)s->sid_ctx_length))
+    /*
+     * Ensure any malloc'd fields are NULL so we can safely call SSL_free().
+     * Fields that get malloc'd after the handshake has started can be ignored
+     * because we shouldn't get that far in that case.
+     */
+    ret->rbio = ret->wbio = NULL;
+    ret->s3 = NULL;
+    ret->d1 = NULL;
+    ret->param = NULL;
+    /* we use ssl_dane_dup() for this structure */
+    memset(&ret->dane, 0, sizeof(SSL_DANE));
+    ret->cipher_list = NULL;
+    ret->cipher_list_by_id = NULL;
+    ret->tls13_ciphersuites = NULL;
+    ret->cert = NULL;
+    ret->session = NULL;
+    ret->psksession = NULL;
+    /* We use CRYPTO_dup_ex_data() for this structure */
+    memset(&ret->ex_data, 0, sizeof(CRYPTO_EX_DATA));
+    ret->ctx = NULL;
+    ret->ca_names = ret->client_ca_names = NULL;
+# ifndef OPENSSL_NO_EC
+    ret->ext.ecpointformats = NULL;
+# endif                         /* OPENSSL_NO_EC */
+    ret->ext.supportedgroups = NULL;
+    ret->ext.alpn = NULL;
+    ret->session_ctx = NULL;
+    ret->srtp_profiles = NULL;
+# ifndef OPENSSL_NO_SRP
+    /* We use ssl_srp_ctx_init_int() for this structure */
+    memset(&ret->srp_ctx, 0, sizeof(SRP_CTX));
+# endif
+    s->rlayer.d = NULL;
+    ret->lock = NULL;
+
+    if (!SSL_CTX_up_ref(s->ctx))
+        goto err;
+    ret->ctx = s->ctx;
+
+    /* setup rbio, and wbio */
+    if (s->rbio != NULL && !BIO_up_ref(s->rbio))
+        goto err;
+    ret->rbio = s->rbio;
+    if (s->wbio != NULL && !BIO_up_ref(s->wbio))
+        goto err;
+    ret->wbio = s->wbio;
+
+    ret->s3 = OPENSSL_malloc(sizeof(*ret->s3));
+    if (ret->s3 == NULL)
+        goto err;
+    *ret->s3 = *s->s3;
+
+    if (s->d1 != NULL) {
+        ret->d1 = OPENSSL_malloc(sizeof(*ret->d1));
+        if (ret->d1 == NULL)
             goto err;
+        *ret->d1 = *s->d1;
     }
+
+    ret->param = X509_VERIFY_PARAM_new();
+    if (ret->param == NULL)
+        goto err;
+    X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
     if (!ssl_dane_dup(ret, s))
         goto err;
-    ret->version = s->version;
-    ret->options = s->options;
-    ret->mode = s->mode;
-    SSL_set_max_cert_list(ret, SSL_get_max_cert_list(s));
-    SSL_set_read_ahead(ret, SSL_get_read_ahead(s));
-    ret->msg_callback = s->msg_callback;
-    ret->msg_callback_arg = s->msg_callback_arg;
-    SSL_set_verify(ret, SSL_get_verify_mode(s), SSL_get_verify_callback(s));
-    SSL_set_verify_depth(ret, SSL_get_verify_depth(s));
-    ret->generate_session_id = s->generate_session_id;
-
-    SSL_set_info_callback(ret, SSL_get_info_callback(s));
-
-    /* copy app data, a little dangerous perhaps */
-    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
-        goto err;
-
-    /* setup rbio, and wbio */
-    if (s->rbio != NULL) {
-        if (!BIO_dup_state(s->rbio, (char *)&ret->rbio))
-            goto err;
-    }
-    if (s->wbio != NULL) {
-        if (s->wbio != s->rbio) {
-            if (!BIO_dup_state(s->wbio, (char *)&ret->wbio))
-                goto err;
-        } else {
-            BIO_up_ref(ret->rbio);
-            ret->wbio = ret->rbio;
-        }
-    }
-
-    ret->server = s->server;
-    if (s->handshake_func) {
-        if (s->server)
-            SSL_set_accept_state(ret);
-        else
-            SSL_set_connect_state(ret);
-    }
-    ret->shutdown = s->shutdown;
-    ret->hit = s->hit;
-
-    ret->default_passwd_callback = s->default_passwd_callback;
-    ret->default_passwd_callback_userdata = s->default_passwd_callback_userdata;
-
-    X509_VERIFY_PARAM_inherit(ret->param, s->param);
 
     /* dup the cipher_list and cipher_list_by_id stacks */
     if (s->cipher_list != NULL) {
@@ -3891,10 +3885,75 @@ SSL *SSL_dup(SSL *s)
         if ((ret->cipher_list_by_id = sk_SSL_CIPHER_dup(s->cipher_list_by_id))
             == NULL)
             goto err;
+    if (s->tls13_ciphersuites != NULL) {
+        if ((ret->tls13_ciphersuites = sk_SSL_CIPHER_dup(s->tls13_ciphersuites))
+                == NULL)
+            goto err;
+    }
 
-    /* Dup the client_CA list */
+    if (s->cert != NULL) {
+        ret->cert = ssl_cert_dup(s->cert);
+        if (ret->cert == NULL)
+            goto err;
+    }
+
+    if (s->session != NULL) {
+        if (!SSL_SESSION_up_ref(s->session))
+            goto err;
+        ret->session = s->session;
+    }
+
+    if (s->psksession != NULL) {
+        if (!SSL_SESSION_up_ref(s->psksession))
+            goto err;
+        ret->psksession = s->psksession;
+    }
+
+    if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
+        goto err;
+
     if (!dup_ca_names(&ret->ca_names, s->ca_names)
             || !dup_ca_names(&ret->client_ca_names, s->client_ca_names))
+        goto err;
+
+    if (s->ext.supportedgroups != NULL) {
+        ret->ext.supportedgroups =
+            OPENSSL_memdup(s->ext.supportedgroups,
+                       s->ext.supportedgroups_len
+                       * sizeof(*s->ext.supportedgroups));
+        if (ret->ext.supportedgroups == NULL)
+            goto err;
+    }
+
+    if (s->ext.alpn != NULL) {
+        ret->ext.alpn = OPENSSL_malloc(s->ext.alpn_len);
+        if (ret->ext.alpn == NULL)
+            goto err;
+        memcpy(ret->ext.alpn, s->ext.alpn, s->ext.alpn_len);
+    }
+
+    if (!SSL_CTX_up_ref(s->session_ctx))
+        goto err;
+    ret->session_ctx = s->session_ctx;
+
+    if (s->srtp_profiles != NULL) {
+        ret->srtp_profiles = sk_SRTP_PROTECTION_PROFILE_dup(s->srtp_profiles);
+        if (ret->srtp_profiles == NULL)
+            goto err;
+    }
+
+# ifndef OPENSSL_NO_SRP
+    if (!ssl_srp_ctx_init_int(ret, &s->srp_ctx))
+        goto err;
+# endif
+
+    if (s->rlayer.d != NULL) {
+        if (!DTLS_RECORD_LAYER_new(&ret->rlayer))
+            goto err;
+    }
+
+    ret->lock = CRYPTO_THREAD_lock_new();
+    if (ret->lock == NULL)
         goto err;
 
     return ret;
