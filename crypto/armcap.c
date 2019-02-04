@@ -28,6 +28,77 @@ uint32_t OPENSSL_rdtsc(void)
 {
     return 0;
 }
+#elif defined(_WIN32)
+# include <windows.h>
+# include "internal/ctype.h"
+
+static int todigit(WCHAR c)
+{
+    if (ossl_isdigit(c))
+        return c - '0';
+    else if (ossl_isxdigit(c))
+        return ossl_tolower(c) - 'a' + 10;
+
+    /* return largest base value to make caller terminate the loop */
+    return 16;
+}
+
+static unsigned int strtouint(const WCHAR *str)
+{
+    unsigned int digit, base = 10, ret = 0;
+
+    if (*str == '0') {
+        base = 8, str++;
+        if (ossl_tolower(*str) == 'x')
+            base = 16, str++;
+    }
+
+    while((digit = todigit(*str++)) < base)
+        ret = ret * base + digit;
+
+    return ret;
+}
+
+void OPENSSL_cpuid_setup(void)
+{
+    const char *e;
+    WCHAR value[8];
+    DWORD len;
+    static int trigger = 0;
+
+    if (trigger)
+        return;
+    trigger = 1;
+
+    len = GetEnvironmentVariableW(L"OPENSSL_armcap", value, 8);
+    if (len > 0 && len < 8) {
+        OPENSSL_armcap_P = strtouint(value);
+        return;
+    }
+
+    OPENSSL_armcap_P = ARMV7_TICK;
+# ifdef PF_ARM_NEON_INSTRUCTIONS_AVAILABLE
+    if (IsProcessorFeaturePresent(PF_ARM_NEON_INSTRUCTIONS_AVAILABLE)) {
+        OPENSSL_armcap_P |= ARMV7_NEON;
+#  ifdef PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE
+        if (IsProcessorFeaturePresent(PF_ARM_V8_CRYPTO_INSTRUCTIONS_AVAILABLE)) {
+            OPENSSL_armcap_P |= ARMV8_AES | ARMV8_PMULL |
+                                ARMV8_SHA1 | ARMV8_SHA256;
+        }
+#  endif
+    }
+# endif
+}
+
+size_t _armv7_tick(void);
+
+uint32_t OPENSSL_rdtsc(void)
+{
+    if (OPENSSL_armcap_P & ARMV7_TICK)
+        return (uint32_t)_armv7_tick();
+    else
+        return 0;
+}
 #else
 static sigset_t all_masked;
 
@@ -49,12 +120,12 @@ void _armv8_pmull_probe(void);
 # ifdef __aarch64__
 void _armv8_sha512_probe(void);
 # endif
-uint32_t _armv7_tick(void);
+size_t _armv7_tick(void);
 
 uint32_t OPENSSL_rdtsc(void)
 {
     if (OPENSSL_armcap_P & ARMV7_TICK)
-        return _armv7_tick();
+        return (uint32_t)_armv7_tick();
     else
         return 0;
 }
