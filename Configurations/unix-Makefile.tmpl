@@ -1194,7 +1194,7 @@ EOF
           push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
       }
       my $linkflags = join("", map { "-L$_ " } @linkdirs);
-      my $linklibs = join("", map { if ($_ =~ s/\.a$//) {
+      my $linklibs = join("", map { if ($_ =~ m/\.a$/) {
                                         " ".platform->staticlib($_);
                                     } else {
                                         my $f = basename($_);
