@@ -396,9 +396,9 @@ install_docs: install_html_docs
 uninstall_docs: uninstall_html_docs
 
 install_ssldirs:
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\certs"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\private"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\misc"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(OPENSSLDIR)\certs"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(OPENSSLDIR)\private"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(OPENSSLDIR)\misc"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\apps\openssl.cnf" \
                                         "$(OPENSSLDIR)\openssl.cnf.dist"
 	@IF NOT EXIST "$(OPENSSLDIR)\openssl.cnf" \
@@ -415,7 +415,7 @@ install_ssldirs:
 install_dev: install_runtime_libs
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing development files"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\openssl"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(INSTALLTOP)\include\openssl"
 	@{- output_off() unless grep { $_ eq "OPENSSL_USE_APPLINK" } (@{$target{defines}}, @{$config{defines}}); "" -}
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\ms\applink.c" \
 				       "$(INSTALLTOP)\include\openssl"
@@ -425,7 +425,7 @@ install_dev: install_runtime_libs
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@if "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" ossl_static.pdb "$(libdir)"
@@ -435,7 +435,7 @@ uninstall_dev:
 install_engines: install_runtime_libs build_engines
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing engines"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
 	@if not "$(ENGINES)"=="" \
@@ -448,7 +448,7 @@ install_runtime: install_programs
 install_runtime_libs: build_libs
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing runtime libraries"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_SHLIBS) "$(INSTALLTOP)\bin"
 	@if not "$(SHLIBS)"=="" \
@@ -458,7 +458,7 @@ install_runtime_libs: build_libs
 install_programs: install_runtime_libs build_programs
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
 	@$(ECHO) "*** Installing runtime programs"
-	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\bin"
+	@"$(SRCDIR)\util\mkdir-p.bat" "$(INSTALLTOP)\bin"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMS) \
                                         "$(INSTALLTOP)\bin"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_PROGRAMPDBS) \
