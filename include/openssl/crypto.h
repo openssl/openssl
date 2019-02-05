@@ -109,13 +109,8 @@ DEFINE_STACK_OF(void)
 # define CRYPTO_EX_INDEX_DRBG            15
 # define CRYPTO_EX_INDEX__COUNT          16
 
-/*
- * This is the default callbacks, but we can have others as well: this is
- * needed in Win32 where the application malloc and the library malloc may
- * not be the same.
- */
-#define OPENSSL_malloc_init() \
-    CRYPTO_set_mem_functions(CRYPTO_malloc, CRYPTO_realloc, CRYPTO_free)
+/* No longer needed, so this is a no-op */
+#define OPENSSL_malloc_init() while(0) continue
 
 int CRYPTO_mem_ctrl(int mode);
 
