@@ -167,6 +167,8 @@ OPENSSLDIR={- catdir($config{openssldir}) or
 OPENSSLDIR_C={- platform->osslprefix() -}DATAROOT:[000000]
 # Where installed ENGINE modules reside, for C
 ENGINESDIR_C={- platform->osslprefix() -}ENGINES{- $sover_dirname.$target{pointer_size} -}:
+# Where modules reside, for C
+MODULESDIR_C={- platform->osslprefix() -}MODULES{- $sover_dirname.$target{pointer_size} -}:
 
 ##### User defined commands and flags ################################
 
@@ -226,7 +228,8 @@ LIB_DEFINES={- our $lib_defines =
                                        @{$config{shared_defines}}));
                join('', $lib_defines,
                         (map { ",$_" } 'OPENSSLDIR="""$(OPENSSLDIR_C)"""',
-                                       'ENGINESDIR="""$(ENGINESDIR_C)"""'),
+                                       'ENGINESDIR="""$(ENGINESDIR_C)"""',
+                                       'MODULESDIR="""$(MODULESDIR_C)"""'),
                         '$(CNF_DEFINES)', '$(DEFINES)') -}
 LIB_INCLUDES={- our $lib_includes =
                 join(',', @{$target{lib_includes}},
