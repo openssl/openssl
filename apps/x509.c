@@ -537,16 +537,16 @@ int x509_main(int argc, char **argv)
         }
         i = X509_REQ_verify(req, pkey);
         if (i < 0) {
-            BIO_printf(bio_err, "Signature verification error\n");
+            BIO_printf(bio_err, "Request self-signature verification error\n");
             ERR_print_errors(bio_err);
             goto end;
         }
         if (i == 0) {
             BIO_printf(bio_err,
-                       "Signature did not match the certificate request\n");
+                       "Request self-signature did not match the certificate request\n");
             goto end;
         } else {
-            BIO_printf(bio_err, "Signature ok\n");
+            BIO_printf(bio_err, "Request self-signature ok\n");
         }
 
         print_name(bio_err, "subject=", X509_REQ_get_subject_name(req),
