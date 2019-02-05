@@ -925,6 +925,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
 {
     const OQS_KEY *oqs_key = (OQS_KEY*) EVP_MD_CTX_pkey_ctx(ctx)->pkey->pkey.ptr;
     EVP_PKEY_CTX *classical_ctx_sign = NULL;
+
     int is_hybrid = is_oqs_hybrid_alg(oqs_key->nid);
     int classical_id = 0;
     size_t max_sig_len = oqs_key->s->length_signature;
@@ -954,7 +955,7 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
     }
 
     if (is_hybrid) {
-
+      EVP_MD* classical_md = NULL;
       int digest_len;
       unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
 
@@ -973,20 +974,27 @@ static int pkey_oqs_digestsign(EVP_MD_CTX *ctx, unsigned char *sig,
       /* classical schemes can't sign arbitrarily large data; we hash it first */
       switch (oqs_key->s->claimed_nist_level) {
       case 1:
+	classical_md = EVP_sha256();
 	digest_len = SHA256_DIGEST_LENGTH;
 	SHA256(tbs, tbslen, (unsigned char*) &digest);
 	break;
       case 2:
       case 3:
+	classical_md = EVP_sha384();
 	digest_len = SHA384_DIGEST_LENGTH;
 	SHA384(tbs, tbslen, (unsigned char*) &digest);
 	break;
       case 4:
       case 5:
       default:
+	classical_md = EVP_sha512();
 	digest_len = SHA512_DIGEST_LENGTH;
 	SHA512(tbs, tbslen, (unsigned char*) &digest);
 	break;
+      }
+      if (EVP_PKEY_CTX_set_signature_md(classical_ctx_sign, classical_md) <= 0) {
+	ECerr(EC_F_PKEY_OQS_DIGESTSIGN, ERR_R_FATAL);
+	goto end;
       }
       if (EVP_PKEY_sign(classical_ctx_sign, sig + SIZE_OF_UINT32, &actual_classical_sig_len, digest, digest_len) <= 0) {
         ECerr(EC_F_PKEY_OQS_DIGESTSIGN, EC_R_SIGNING_FAILED);
@@ -1039,6 +1047,7 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
 
     if (is_hybrid) {
       EVP_PKEY_CTX *ctx_verify = NULL;
+      EVP_MD* classical_md = NULL;
       size_t actual_classical_sig_len = 0;
       int digest_len;
       unsigned char digest[SHA512_DIGEST_LENGTH]; /* init with max length */
@@ -1060,20 +1069,27 @@ static int pkey_oqs_digestverify(EVP_MD_CTX *ctx, const unsigned char *sig,
       /* classical schemes can't sign arbitrarily large data; we hash it first */
       switch (oqs_key->s->claimed_nist_level) {
       case 1:
+	classical_md = EVP_sha256();
 	digest_len = SHA256_DIGEST_LENGTH;
 	SHA256(tbs, tbslen, (unsigned char*) &digest);
 	break;
       case 2:
       case 3:
+	classical_md = EVP_sha384();
 	digest_len = SHA384_DIGEST_LENGTH;
 	SHA384(tbs, tbslen, (unsigned char*) &digest);
 	break;
       case 4:
       case 5:
       default:
+	classical_md = EVP_sha512();
 	digest_len = SHA512_DIGEST_LENGTH;
 	SHA512(tbs, tbslen, (unsigned char*) &digest);
 	break;
+      }
+      if (EVP_PKEY_CTX_set_signature_md(ctx_verify, classical_md) <= 0) {
+	ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, ERR_R_FATAL);
+	return 0;
       }
       if (EVP_PKEY_verify(ctx_verify, sig + SIZE_OF_UINT32, actual_classical_sig_len, digest, digest_len) <= 0) {
 	ECerr(EC_F_PKEY_OQS_DIGESTVERIFY, EC_R_VERIFICATION_FAILED);
