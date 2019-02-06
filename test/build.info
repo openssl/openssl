@@ -46,7 +46,8 @@ IF[{- !$disabled{tests} -}]
           recordlentest drbgtest drbg_cavs_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
-          sysdefaulttest errtest gosttest
+          sysdefaulttest errtest gosttest \
+          context_internal_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include
@@ -557,6 +558,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[gosttest]=gosttest.c ssltestlib.c
   INCLUDE[gosttest]=../include ../apps/include ..
   DEPEND[gosttest]=../libcrypto ../libssl libtestutil.a
+
+  PROGRAMS{noinst}=context_internal_test
+  SOURCE[context_internal_test]=context_internal_test.c
+  INCLUDE[context_internal_test]=.. ../include ../apps/include
+  DEPEND[context_internal_test]=../libcrypto.a libtestutil.a
 ENDIF
 
 {-
