@@ -830,6 +830,11 @@ typedef HANDLE thread_t;
 static DWORD WINAPI thread_run(LPVOID arg)
 {
     run_multi_thread_test();
+    /*
+     * Because we're linking with a static library, we must stop each
+     * thread explicitly, or so says OPENSSL_thread_stop(3)
+     */
+    OPENSSL_thread_stop();
     return 0;
 }
 
@@ -851,6 +856,11 @@ typedef pthread_t thread_t;
 static void *thread_run(void *arg)
 {
     run_multi_thread_test();
+    /*
+     * Because we're linking with a static library, we must stop each
+     * thread explicitly, or so says OPENSSL_thread_stop(3)
+     */
+    OPENSSL_thread_stop();
     return NULL;
 }
 
