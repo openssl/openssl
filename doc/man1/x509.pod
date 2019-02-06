@@ -140,8 +140,9 @@ for all available algorithms.
 
 =item B<-preserve_dates>
 
-When signing a certificate, preserve the "notBefore" and "notAfter" dates instead
-of adjusting them to current time and duration. Cannot be used with the B<-days> option.
+When signing a certificate, preserve the "notBefore" and "notAfter" dates
+instead of adjusting them to current time and duration.
+Cannot be used with the B<-days> option.
 
 =back
 
@@ -354,17 +355,12 @@ can thus behave like a "mini CA".
 This option causes the input file to be self signed using the supplied
 private key.
 
-If the input file is a certificate it sets the issuer name to the
-subject name (i.e.  makes it self signed) changes the public key to the
-supplied value and changes the start and end dates. The start date is
-set to the current time and the end date is set to a value determined
-by the B<-days> option. Any certificate extensions are retained unless
-the B<-clrext> option is supplied; this includes, for example, any existing
-key identifier extensions.
-
-If the input is a certificate request then a self signed certificate
-is created using the supplied private key using the subject name in
-the request.
+It sets the issuer name to the subject name (i.e., makes it self-issued)
+and changes the public key to the supplied value (unless overridden by
+B<-force_pubkey>). It sets the validity start date to the current time
+and the end date to a value determined by the B<-days> option.
+It retains any certificate extensions unless the B<-clrext> option is supplied;
+this includes, for example, any existing key identifier extensions.
 
 =item B<-passin arg>
 
@@ -461,7 +457,7 @@ extension section format.
 =item B<-force_pubkey filename>
 
 When a certificate is created set its public key to the key in B<filename>
-(instead of the key in the input certificate or certificate request).
+instead of the key contained in the input or given with the B<-signkey> option.
 This option is useful for creating self-issued certificates that are not
 self-signed, for instance when the key cannot be used for signing, such as DH.
 

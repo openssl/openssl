@@ -33,7 +33,7 @@
 #define DEF_DAYS        30
 
 static int callb(int ok, X509_STORE_CTX *ctx);
-static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates);
 static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *digest,
@@ -797,7 +797,8 @@ int x509_main(int argc, char **argv)
                         goto end;
                 }
 
-                if (!sign(x, Upkey, days, clrext, digest, extconf, extsect, preserve_dates))
+                if (!sign(x, Upkey, fkey, days, clrext, digest, extconf,
+                          extsect, preserve_dates))
                     goto end;
             } else if (CA_flag == i) {
                 BIO_printf(bio_err, "Getting CA Private Key\n");
@@ -1052,8 +1053,8 @@ static int callb(int ok, X509_STORE_CTX *ctx)
     }
 }
 
-/* self issue */
-static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
+/* self-issue; self-sign unless a forced public key (fkey) is given */
+static int sign(X509 *x, EVP_PKEY *pkey, EVP_PKEY *fkey, int days, int clrext,
                 const EVP_MD *digest, CONF *conf, const char *section,
                 int preserve_dates)
 {
@@ -1061,6 +1062,8 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext,
     if (!X509_set_issuer_name(x, X509_get_subject_name(x)))
         goto err;
     if (!preserve_dates && !set_cert_times(x, NULL, NULL, days))
+        goto err;
+    if (fkey == NULL && !X509_set_pubkey(x, pkey))
         goto err;
     if (clrext) {
         while (X509_get_ext_count(x) > 0)
