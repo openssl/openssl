@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -75,6 +75,7 @@ static int ocsp_resp_cb(SSL *s, void *arg);
 #endif
 static int ldap_ExtendedResponse_parse(const char *buf, long rem);
 static char *base64encode (const void *buf, size_t len);
+static int is_dNS_name(const char *host);
 
 static int saved_errno;
 
@@ -2012,9 +2013,11 @@ int s_client_main(int argc, char **argv)
         SSL_set_mode(con, SSL_MODE_SEND_FALLBACK_SCSV);
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
-        if (servername == NULL)
-            servername = (host == NULL) ? "localhost" : host;
-        if (!SSL_set_tlsext_host_name(con, servername)) {
+        if (servername == NULL) {
+            if(host == NULL || is_dNS_name(host)) 
+                servername = (host == NULL) ? "localhost" : host;
+        }
+        if (servername != NULL && !SSL_set_tlsext_host_name(con, servername)) {
             BIO_printf(bio_err, "Unable to set TLS servername extension.\n");
             ERR_print_errors(bio_err);
             goto end;
@@ -3553,4 +3556,72 @@ static char *base64encode (const void *buf, size_t len)
     return out;
 }
 
+/*
+ * Host dNS Name verifier: used for checking that the hostname is in dNS format 
+ * before setting it as SNI
+ */
+static int is_dNS_name(const char *host)
+{
+    const int MAX_LABEL_LENGTH = 63;
+
+    int i;
+    int isdnsname = 0;
+    int length = strlen(host);
+    int label_length = 0;
+    int all_numeric = 1;
+
+    /*
+     * XXX: Deviation from strict DNS name syntax, also check names with '_'
+     * Check DNS name syntax, any '-' or '.' must be internal,
+     * and on either side of each '.' we can't have a '-' or '.'.
+     *
+     * If the name has just one label, we don't consider it a DNS name.  This
+     * means that "CN=sometld" cannot be precluded by DNS name constraints, but
+     * that is not a problem.
+     */
+    for (i = 0; i < length && label_length < MAX_LABEL_LENGTH; ++i) {
+        char c = host[i];
+
+        if ((c >= 'a' && c <= 'z')
+            || (c >= 'A' && c <= 'Z')
+            || c == '_') {
+            label_length += 1;
+            all_numeric = 0;
+            continue;
+        }
+
+        if (c >= '0' && c <= '9') {
+            label_length += 1;
+            continue;
+        }
+
+        /* Dot and hyphen cannot be first or last. */
+        if (i > 0 && i < length - 1) {
+            if (c == '-') {
+                label_length += 1;
+                continue;
+            }
+            /*
+             * Next to a dot the preceding and following characters must not be
+             * another dot or a hyphen.  Otherwise, record that the name is
+             * plausible, since it has two or more labels.
+             */
+            if (c == '.'
+                && host[i + 1] != '.'
+                && host[i - 1] != '-'
+                && host[i + 1] != '-') {
+                label_length = 0;
+                isdnsname = 1;
+                continue;
+            }
+        }
+        isdnsname = 0;
+        break;
+    }
+
+    /* dNS name must not be all numeric and labels must be shorter than 64 characters. */
+    isdnsname &= !all_numeric && !(label_length == MAX_LABEL_LENGTH);
+
+    return isdnsname;
+}
 #endif                          /* OPENSSL_NO_SOCK */
