@@ -9,6 +9,9 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Add keyed BLAKE2 to EVP_MAC.
+     [Antoine Salon]
+
   *) Fix a bug in the computation of the endpoint-pair shared secret used
      by DTLS over SCTP. This breaks interoperability with older versions
      of OpenSSL like OpenSSL 1.1.0 and OpenSSL 1.0.2. There is a runtime
