@@ -263,114 +263,71 @@ void BN_MONT_CTX_free(BN_MONT_CTX *mont)
 int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 {
     int i, ret = 0;
-    BIGNUM *Ri, *R;
+    BIGNUM *Ri;
 
-    if (BN_is_zero(mod))
+    if (mod->top == 0 || (mod->d[0] & 1) == 0)
         return 0;
 
     BN_CTX_start(ctx);
     if ((Ri = BN_CTX_get(ctx)) == NULL)
         goto err;
-    R = &(mont->RR);            /* grab RR as a temp */
+
     if (!BN_copy(&(mont->N), mod))
         goto err;               /* Set N */
-    if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
-        BN_set_flags(&(mont->N), BN_FLG_CONSTTIME);
+    mont->N.flags |= mod->flags & BN_FLG_CONSTTIME;
     mont->N.neg = 0;
 
 #ifdef MONT_WORD
     {
-        BIGNUM tmod;
-        BN_ULONG buf[2];
-
-        bn_init(&tmod);
-        tmod.d = buf;
-        tmod.dmax = 2;
-        tmod.neg = 0;
-
-        if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
-            BN_set_flags(&tmod, BN_FLG_CONSTTIME);
-
-        mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
-
-# if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
         /*
-         * Only certain BN_BITS2<=32 platforms actually make use of n0[1],
+         * "Algorithm 2" from "On calculating multiplicative inverses
+         * modulo 2^m" by O. Arazi and H. Qi.
+         */
+# if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2==32)
+        /*
+         * Only certain BN_BITS2==32 platforms actually make use of n0[1],
          * and we could use the #else case (with a shorter R value) for the
          * others.  However, currently only the assembler files do know which
          * is which.
          */
+        uint64_t d0 = mod->d[0] | ((uint64_t)mod->d[1] << 32);
+        uint64_t bi = 1;
+        uint64_t y = d0, x = bi, mask;
 
-        BN_zero(R);
-        if (!(BN_set_bit(R, 2 * BN_BITS2)))
-            goto err;
-
-        tmod.top = 0;
-        if ((buf[0] = mod->d[0]))
-            tmod.top = 1;
-        if ((buf[1] = mod->top > 1 ? mod->d[1] : 0))
-            tmod.top = 2;
-
-        if (BN_is_one(&tmod))
-            BN_zero(Ri);
-        else if ((BN_mod_inverse(Ri, R, &tmod, ctx)) == NULL)
-            goto err;
-        if (!BN_lshift(Ri, Ri, 2 * BN_BITS2))
-            goto err;           /* R*Ri */
-        if (!BN_is_zero(Ri)) {
-            if (!BN_sub_word(Ri, 1))
-                goto err;
-        } else {                /* if N mod word size == 1 */
-
-            if (bn_expand(Ri, (int)sizeof(BN_ULONG) * 2) == NULL)
-                goto err;
-            /* Ri-- (mod double word size) */
-            Ri->neg = 0;
-            Ri->d[0] = BN_MASK2;
-            Ri->d[1] = BN_MASK2;
-            Ri->top = 2;
+        for (i = 0; i < 63; i++) {
+            y >>= 1;
+            bi <<= 1;
+            mask = 0 - (y & 1);
+            y += d0 & mask;
+            x |= bi & mask;
         }
-        if (!BN_div(Ri, NULL, Ri, &tmod, ctx))
-            goto err;
-        /*
-         * Ni = (R*Ri-1)/N, keep only couple of least significant words:
-         */
-        mont->n0[0] = (Ri->top > 0) ? Ri->d[0] : 0;
-        mont->n0[1] = (Ri->top > 1) ? Ri->d[1] : 0;
+        x = 0 - x;
+
+        mont->n0[0] = (BN_ULONG)(x & BN_MASK2);
+        mont->n0[1] = (BN_ULONG)((x >> 32) & BN_MASK2);
 # else
-        BN_zero(R);
-        if (!(BN_set_bit(R, BN_BITS2)))
-            goto err;           /* R */
+        BN_ULONG d0 = mod->d[0];
+        BN_ULONG bi = 1;
+        BN_ULONG y = d0, x = bi, mask;
 
-        buf[0] = mod->d[0];     /* tmod = N mod word size */
-        buf[1] = 0;
-        tmod.top = buf[0] != 0 ? 1 : 0;
-        /* Ri = R^-1 mod N */
-        if (BN_is_one(&tmod))
-            BN_zero(Ri);
-        else if ((BN_mod_inverse(Ri, R, &tmod, ctx)) == NULL)
-            goto err;
-        if (!BN_lshift(Ri, Ri, BN_BITS2))
-            goto err;           /* R*Ri */
-        if (!BN_is_zero(Ri)) {
-            if (!BN_sub_word(Ri, 1))
-                goto err;
-        } else {                /* if N mod word size == 1 */
-
-            if (!BN_set_word(Ri, BN_MASK2))
-                goto err;       /* Ri-- (mod word size) */
+        for (i = 0; i < BN_BITS2 - 1; i++) {
+            y >>= 1;
+            bi <<= 1;
+            mask = 0 - (y & 1);
+            y += d0 & mask;
+            x |= bi & mask;
         }
-        if (!BN_div(Ri, NULL, Ri, &tmod, ctx))
-            goto err;
-        /*
-         * Ni = (R*Ri-1)/N, keep only least significant word:
-         */
-        mont->n0[0] = (Ri->top > 0) ? Ri->d[0] : 0;
+        x = 0 - x;
+
+        mont->n0[0] = x & BN_MASK2;
         mont->n0[1] = 0;
 # endif
+        mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
     }
 #else                           /* !MONT_WORD */
     {                           /* bignum version */
+        BIGNUM *R = &(mont->RR);
+
         mont->ri = BN_num_bits(&mont->N);
         BN_zero(R);
         if (!BN_set_bit(R, mont->ri))
@@ -391,16 +348,11 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 #endif
 
     /* setup RR for conversions */
-    BN_zero(&(mont->RR));
-    if (!BN_set_bit(&(mont->RR), mont->ri * 2))
+    BN_zero(Ri);
+    if (!BN_set_bit(Ri, mont->ri * 2))
         goto err;
-    if (!BN_mod(&(mont->RR), &(mont->RR), &(mont->N), ctx))
+    if (!bn_div_fixed_top(NULL, &(mont->RR), Ri, &(mont->N), ctx))
         goto err;
-
-    for (i = mont->RR.top, ret = mont->N.top; i < ret; i++)
-        mont->RR.d[i] = 0;
-    mont->RR.top = ret;
-    mont->RR.flags |= BN_FLG_FIXED_TOP;
 
     ret = 1;
  err:
