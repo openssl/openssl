@@ -212,6 +212,12 @@ void EC_GROUP_set_curve_name(EC_GROUP *group, int nid);
  */
 int EC_GROUP_get_curve_name(const EC_GROUP *group);
 
+/** Gets the field of an EC_GROUP
+ *  \param  group  EC_GROUP object
+ *  \return the group field
+ */
+const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group);
+
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag);
 int EC_GROUP_get_asn1_flag(const EC_GROUP *group);
 

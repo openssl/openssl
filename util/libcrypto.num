@@ -4639,3 +4639,4 @@ EVP_KDF_vctrl                           4594	3_0_0	EXIST::FUNCTION:
 EVP_KDF_ctrl_str                        4595	3_0_0	EXIST::FUNCTION:
 EVP_KDF_size                            4596	3_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          4597	3_0_0	EXIST::FUNCTION:
+EC_GROUP_get0_field                     4598	3_0_0	EXIST::FUNCTION:EC

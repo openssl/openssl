@@ -11,7 +11,7 @@ EC_GROUP_get_point_conversion_form, EC_GROUP_get0_seed,
 EC_GROUP_get_seed_len, EC_GROUP_set_seed, EC_GROUP_get_degree,
 EC_GROUP_check, EC_GROUP_check_discriminant, EC_GROUP_cmp,
 EC_GROUP_get_basis_type, EC_GROUP_get_trinomial_basis,
-EC_GROUP_get_pentanomial_basis
+EC_GROUP_get_pentanomial_basis, EC_GROUP_get0_field
 - Functions for manipulating EC_GROUP objects
 
 =head1 SYNOPSIS
@@ -32,6 +32,7 @@ EC_GROUP_get_pentanomial_basis
  int EC_GROUP_order_bits(const EC_GROUP *group);
  int EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx);
  const BIGNUM *EC_GROUP_get0_cofactor(const EC_GROUP *group);
+ const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group);
 
  void EC_GROUP_set_curve_name(EC_GROUP *group, int nid);
  int EC_GROUP_get_curve_name(const EC_GROUP *group);
@@ -177,6 +178,8 @@ specified curve respectively. If there is no curve name associated with a curve 
 EC_GROUP_get0_order() returns an internal pointer to the group order.
 EC_GROUP_order_bits() returns the number of bits in the group order.
 EC_GROUP_get0_cofactor() returns an internal pointer to the group cofactor.
+EC_GROUP_get0_field() returns an internal pointer to the group field. For curves over GF(p), this is the modulus; for curves
+over GF(2^m), this is the irreducible polynomial defining the field.
 
 EC_GROUP_get0_seed returns a pointer to the seed that was used to generate the parameter b, or NULL if the seed is not
 specified. EC_GROUP_get_seed_len returns the length of the seed or 0 if the seed is not specified.

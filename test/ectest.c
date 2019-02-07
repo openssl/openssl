@@ -1159,6 +1159,43 @@ static int internal_curve_test_method(int n)
     return r;
 }
 
+static int group_field_test(void)
+{
+    int r = 1;
+    BIGNUM *secp521r1_field = NULL;
+    BIGNUM *sect163r2_field = NULL;
+    EC_GROUP *secp521r1_group = NULL;
+    EC_GROUP *sect163r2_group = NULL;
+
+    BN_hex2bn(&secp521r1_field,
+                "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+                "FFFF");
+
+
+    BN_hex2bn(&sect163r2_field,
+                "08000000000000000000000000000000"
+                "00000000C9");
+
+    secp521r1_group = EC_GROUP_new_by_curve_name(NID_secp521r1);
+    if (BN_cmp(secp521r1_field, EC_GROUP_get0_field(secp521r1_group)))
+      r = 0;
+
+    # ifndef OPENSSL_NO_EC2M
+    sect163r2_group = EC_GROUP_new_by_curve_name(NID_sect163r2);
+    if (BN_cmp(sect163r2_field, EC_GROUP_get0_field(sect163r2_group)))
+      r = 0;
+    # endif
+
+    EC_GROUP_free(secp521r1_group);
+    EC_GROUP_free(sect163r2_group);
+    BN_free(secp521r1_field);
+    BN_free(sect163r2_field);
+    return r;
+}
+
 # ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /*
  * nistp_test_params contains magic numbers for testing our optimized
@@ -1513,6 +1550,7 @@ int setup_tests(void)
 # endif
     ADD_ALL_TESTS(internal_curve_test, crv_len);
     ADD_ALL_TESTS(internal_curve_test_method, crv_len);
+    ADD_TEST(group_field_test);
 #endif
     return 1;
 }
