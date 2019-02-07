@@ -364,6 +364,11 @@ int EC_GROUP_get_curve_name(const EC_GROUP *group)
     return group->curve_name;
 }
 
+const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group)
+{
+    return group->field;
+}
+
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 {
     group->asn1_flag = flag;
