@@ -250,7 +250,7 @@ sub vgmg {
 }
 
 sub vl {
-	confess(err("ARGNUM")) if ($#_!=1);
+	confess(err("ARGNUM")) if ($#_<1||$#_>2);
 	VRX(0xe706,@_);
 }
 
@@ -345,7 +345,7 @@ sub vllezg {
 }
 
 sub vlm {
-	confess(err("ARGNUM")) if ($#_!=2);
+	confess(err("ARGNUM")) if ($#_<2||$#_>3);
 	VRSa(0xe736,@_);
 }
 
@@ -548,7 +548,7 @@ sub vsegf {
 }
 
 sub vst {
-	confess(err("ARGNUM")) if ($#_!=1);
+	confess(err("ARGNUM")) if ($#_<1||$#_>2);
 	VRX(0xe70e,@_);
 }
 
@@ -570,7 +570,7 @@ sub vsteg {
 }
 
 sub vstm {
-	confess(err("ARGNUM")) if ($#_!=2);
+	confess(err("ARGNUM")) if ($#_<2||$#_>3);
 	VRSa(0xe73e,@_);
 }
 
