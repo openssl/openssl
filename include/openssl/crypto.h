@@ -187,6 +187,10 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 
 void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
+/* Allocate a single item in the CRYPTO_EX_DATA variable */
+int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
+                         int idx);
+
 /*
  * Get/set data in a CRYPTO_EX_DATA variable corresponding to a particular
  * index (relative to the class type involved)
