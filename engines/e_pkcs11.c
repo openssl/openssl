@@ -1,5 +1,7 @@
 #include <openssl/engine.h>
 #include <string.h>
+#include <openssl/err.h>
+#include "e_pkcs11_err.c"
 
 #define CK_PTR *
 
@@ -32,25 +34,31 @@
 
 #include "pkcs11.h"
 
-#ifdef _WIN32
-#pragma pack(pop, cryptoki)
-#endif
-
-void assert(CK_RV rv, const char *message);
-void finalize();
-void end_session(CK_SESSION_HANDLE session);
-void login(CK_SESSION_HANDLE session, CK_BYTE *pin);
-void logout(CK_SESSION_HANDLE session);
-CK_SLOT_ID get_slot();
-CK_RV initialize(char *library_path);
-CK_SESSION_HANDLE start_session(CK_SLOT_ID slotId);
-CK_OBJECT_HANDLE get_private_key(CK_SESSION_HANDLE session,
+static void pkcs11_finalize();
+static void pkcs11_end_session(CK_SESSION_HANDLE session);
+static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin);
+static int pkcs11_logout(CK_SESSION_HANDLE session);
+static CK_SLOT_ID pkcs11_get_slot();
+static CK_RV pkcs11_initialize(char *library_path);
+static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
+static CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
                                  CK_BYTE *id, size_t id_len);
-CK_RV load_functions(char *library_path);
-CK_FUNCTION_LIST *funcs;
+static CK_RV pkcs11_load_functions(char *library_path);
 
-static const char *engine_id = "pkcs11";
-static const char *engine_name = "A minimal PKCS#11 engine only for sign";
+int pkcs11_rsa_enc(int flen, const unsigned char *from,
+                          unsigned char *to, RSA *rsa, int padding);
+static RSA_METHOD *pkcs11_rsa();
+
+static CK_SLOT_ID pkcs11_get_slot();
+static int pkcs11_parse_attribute(const char *attr, int attrlen, unsigned char **field);
+static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
+                                         UI_METHOD * ui_method,
+                                         void *callback_data);
+static int pkcs11_bind(ENGINE *e, const char *id);
+static void PKCS11_trace(char *format, ...);
+static int pkcs11_destroy(ENGINE *e);
+
+CK_FUNCTION_LIST *pkcs11_funcs;
 
 typedef struct st_pkcs11 {
     CK_BYTE *id;
@@ -60,30 +68,45 @@ typedef struct st_pkcs11 {
 } PKCS11;
 
 static PKCS11 pkcs11st;
+static const char *engine_id = "pkcs11";
+static const char *engine_name = "A minimal PKCS#11 engine only for sign";
 
 int pkcs11_rsa_enc(int flen, const unsigned char *from,
-                          unsigned char *to, RSA *rsa, int padding) {
+                          unsigned char *to, RSA *rsa, int padding)
+{
     CK_RV rv;
-    CK_ULONG signatureLen = 128;
-    CK_BYTE *signature = malloc(signatureLen);
     CK_MECHANISM sign_mechanism;
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     sign_mechanism.pParameter = 0;
     sign_mechanism.ulParameterLen = 0;
+    CK_ULONG signatureLen = sizeof(to);
 
-    rv = funcs->C_SignInit(pkcs11st.session, &sign_mechanism, pkcs11st.key);
-    assert(rv, "sign init");
-    rv = funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, to,
-                       &signatureLen);
-    assert(rv, "sign final");
+    rv = pkcs11_funcs->C_SignInit(pkcs11st.session, &sign_mechanism, pkcs11st.key);
 
-    logout(pkcs11st.session);
-    end_session(pkcs11st.session);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_SignInit failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_INIT_FAILED);
+        goto err;
+    }
+    rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, to,
+                              &signatureLen);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_Sign failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
+        goto err;
+    }
 
+    pkcs11_logout(pkcs11st.session);
+    pkcs11_end_session(pkcs11st.session);
+    pkcs11_finalize();
     return 1;
+
+ err:
+    return 0;
 }
 
-RSA_METHOD *pkcs11_rsa() {
+RSA_METHOD *pkcs11_rsa()
+{
     static RSA_METHOD *pkcs11_rsa = NULL;
     pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0);
     RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_enc);
@@ -95,7 +118,8 @@ RSA_METHOD *pkcs11_rsa() {
  * @param library_path
  * @return
  */
-CK_RV load_functions(char *library_path) {
+CK_RV pkcs11_load_functions(char *library_path)
+{
     CK_RV rv;
 
 #ifdef WIN32
@@ -107,9 +131,8 @@ CK_RV load_functions(char *library_path) {
 #endif
 
     if (d == NULL) {
-#ifdef DEBUG
-        fprintf(stderr,"%s not found in LD_LIBRARY_PATH\n", library_path);
-#endif
+        PKCS11_trace("%s not found in LD_LIBRARY_PATH\n", library_path);
+        PKCS11err(PKCS11_F_PKCS11_LOAD_FUNCTIONS, PKCS11_R_LIBRARY_PATH_NOT_FOUND);
         return CKR_GENERAL_ERROR;
     }
 
@@ -121,22 +144,14 @@ CK_RV load_functions(char *library_path) {
 #endif
 
     if (pFunc == NULL) {
-#ifdef DEBUG
-        fprintf(stderr,"C_GetFunctionList() not found in module %s\n",
-                library_path);
-#endif
+        PKCS11_trace("C_GetFunctionList() not found in module %s\n", library_path);
+        PKCS11err(PKCS11_F_PKCS11_LOAD_FUNCTIONS, PKCS11_R_GETFUNCTIONLIST_NOT_FOUND);
         return CKR_FUNCTION_NOT_SUPPORTED;
     }
 
-    rv = pFunc(&funcs);
-    if (rv != CKR_OK) {
-#ifdef DEBUG
-        fprintf(stderr,"C_GetFunctionList() did not initialize correctly\n");
-#endif
-        return rv;
-    }
+    rv = pFunc(&pkcs11_funcs);
 
-    return CKR_OK;
+    return rv;
 }
 
 /**
@@ -145,100 +160,120 @@ CK_RV load_functions(char *library_path) {
  * @param library_path
  * @return
  */
-CK_RV initialize(char *library_path) {
+CK_RV pkcs11_initialize(char *library_path)
+{
     CK_RV rv;
 
     if (!library_path) {
         return CKR_ARGUMENTS_BAD;
     }
 
-    rv = load_functions(library_path);
+    rv = pkcs11_load_functions(library_path);
     if (rv != CKR_OK) {
-#ifdef DEBUG
-        fprintf(stderr,"Getting PKCS11 function list failed!\n");
-#endif
+        PKCS11_trace("Getting PKCS11 function list failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_INITIALIZE, PKCS11_R_GETTING_FUNCTION_LIST_FAILED);
         return rv;
     }
 
     CK_C_INITIALIZE_ARGS args;
     memset(&args, 0, sizeof(args));
     args.flags = CKF_OS_LOCKING_OK;
-    rv = funcs->C_Initialize(&args);
+    rv = pkcs11_funcs->C_Initialize(&args);
     if (rv != CKR_OK) {
-#ifdef DEBUG
-        fprintf(stderr, "Failed to initialize\n");
-#endif
+        PKCS11_trace("C_Initialize failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_INITIALIZE, PKCS11_R_INITIALIZE_FAILED);
         return rv;
     }
 
     return CKR_OK;
 }
 
-void finalize() {
-    funcs->C_Finalize(NULL);
+static void pkcs11_finalize()
+{
+    pkcs11_funcs->C_Finalize(NULL);
 }
 
-CK_SLOT_ID get_slot() {
+static CK_SLOT_ID pkcs11_get_slot()
+{
     CK_RV rv;
     CK_SLOT_ID slotId;
     CK_ULONG slotCount = 10;
-    CK_SLOT_ID *slotIds = malloc(sizeof(CK_SLOT_ID) * slotCount);
-    rv = funcs->C_GetSlotList(CK_TRUE, slotIds, &slotCount);
-    assert(rv, "get slot list");
+    CK_SLOT_ID *slotIds = OPENSSL_malloc(sizeof(CK_SLOT_ID) * slotCount);
+    rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, slotIds, &slotCount);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetSlotList failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_GET_SLOTLIST_FAILED);
+        goto err;
+    }
 
     if (slotCount < 1) {
-#ifdef DEBUG
-        fprintf(stderr, "Error; could not find any slots\n");
-#endif
-        exit(1);
+        PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_SLOT_NOT_FOUND);
+        goto err;
     }
 
     slotId = slotIds[0];
-    free(slotIds);
+    OPENSSL_free(slotIds);
     return slotId;
+
+ err:
+    free(slotIds);
+    return 0;
 }
 
-void assert(CK_RV rv, const char *message) {
-    if (rv != CKR_OK) {
-#ifdef DEBUG
-        fprintf(stderr, "Error at %s: %u\n",
-        message, (unsigned int)rv);
-#endif
-        exit(EXIT_FAILURE);
-    }
-}
-
-CK_SESSION_HANDLE start_session(CK_SLOT_ID slotId) {
+static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
+{
     CK_RV rv;
     CK_SESSION_HANDLE session;
-    rv = funcs->C_OpenSession(slotId, CKF_SERIAL_SESSION, NULL, NULL, &session);
-    assert(rv, "open session");
+    rv = pkcs11_funcs->C_OpenSession(slotId, CKF_SERIAL_SESSION, NULL, NULL, &session);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_OpenSession failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_START_SESSION, PKCS11_R_OPEN_SESSION_ERROR);
+        goto err;
+    }
     return session;
+
+ err:
+    return 0;
 }
 
-void login(CK_SESSION_HANDLE session, CK_BYTE *pin) {
+static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin)
+{
     CK_RV rv;
     if (pin) {
-        rv = funcs->C_Login(session, CKU_USER, pin, strlen((char *)pin));
-        assert(rv, "log in");
+        rv = pkcs11_funcs->C_Login(session, CKU_USER, pin, strlen((char *)pin));
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_Login failed, error: %#02x\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
+            goto err;
+        }
+    return 1;
     }
+ err:
+    return 0;
 }
 
-void logout(CK_SESSION_HANDLE session) {
+static int pkcs11_logout(CK_SESSION_HANDLE session)
+{
     CK_RV rv;
-    rv = funcs->C_Logout(session);
+    rv = pkcs11_funcs->C_Logout(session);
     if (rv != CKR_USER_NOT_LOGGED_IN) {
-        assert(rv, "log out");
+        PKCS11_trace("C_Logout failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_LOGOUT, PKCS11_R_LOGOUT_FAILED);
+        goto err;
     }
+    return 1;
+
+ err:
+    return 0;  
 }
 
-void end_session(CK_SESSION_HANDLE session) {
-    CK_RV rv;
-    rv = funcs->C_CloseSession(session);
-    assert(rv, "close session");
+static void pkcs11_end_session(CK_SESSION_HANDLE session)
+{
+    pkcs11_funcs->C_CloseSession(session);
 }
 
-CK_OBJECT_HANDLE get_private_key(CK_SESSION_HANDLE session,
+CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
                                  CK_BYTE *id, size_t id_len) {
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
@@ -250,13 +285,30 @@ CK_OBJECT_HANDLE get_private_key(CK_SESSION_HANDLE session,
     };
     unsigned long count;
     CK_OBJECT_HANDLE objhandle;
-    rv = funcs->C_FindObjectsInit(session, tmpl,
+    rv = pkcs11_funcs->C_FindObjectsInit(session, tmpl,
                                   sizeof (tmpl) / sizeof (CK_ATTRIBUTE) );
-    rv = funcs->C_FindObjects(session, &objhandle, 1, &count);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsInit failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY, PKCS11_R_FIND_OBJECT_INIT_FAILED);
+        goto err;
+    }
+
+    rv = pkcs11_funcs->C_FindObjects(session, &objhandle, 1, &count);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjects failed, error: %#02x\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY, PKCS11_R_FIND_OBJECT_FAILED);
+        goto err;
+    }
     return objhandle;
+
+ err:
+    return -1;
 }
 
-static int hex_to_bin(const char *in, unsigned char *out, size_t *outlen) {
+static int pkcs11_hex_to_bin(const char *in, unsigned char *out, size_t *outlen)
+{
     size_t left, count = 0;
 
     if (in == NULL || *in == '\0') {
@@ -294,7 +346,8 @@ static int hex_to_bin(const char *in, unsigned char *out, size_t *outlen) {
     return 1;
 }
 
-static int parse_attribute(const char *attr, int attrlen, unsigned char **field) {
+static int pkcs11_parse_attribute(const char *attr, int attrlen, unsigned char **field)
+{
     size_t max, outlen = 0;
     unsigned char *out;
     int ret = 1;
@@ -313,7 +366,7 @@ static int parse_attribute(const char *attr, int attrlen, unsigned char **field)
                 tmp[0] = attr[1];
                 tmp[1] = attr[2];
                 tmp[2] = 0;
-                ret = hex_to_bin(tmp, &out[outlen++], &l);
+                ret = pkcs11_hex_to_bin(tmp, &out[outlen++], &l);
                 attrlen -= 3;
                 attr += 3;
             }
@@ -333,9 +386,9 @@ static int parse_attribute(const char *attr, int attrlen, unsigned char **field)
 }
 
 
-static EVP_PKEY *engine_load_private_key(ENGINE * e, const char *path,
-                                         UI_METHOD * ui_method,
-                                         void *callback_data)
+static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
+                                                UI_METHOD * ui_method,
+                                                void *callback_data)
 {
     CK_ULONG kt, class;
     CK_ATTRIBUTE key_type[] = {
@@ -346,7 +399,8 @@ static EVP_PKEY *engine_load_private_key(ENGINE * e, const char *path,
     CK_RV rv;
     const char *end, *parse;
     int ret = 1;
-    unsigned char *id, *pin, *module_path;
+    unsigned char *id, *pin;
+    char *module_path;
 
     end = path + 6;
     while (ret && end[0] && end[1]) {
@@ -355,26 +409,30 @@ static EVP_PKEY *engine_load_private_key(ENGINE * e, const char *path,
         if (end == NULL) end = parse + strlen(parse);
         if (!strncmp(parse, "id=", 3)) {
 	    parse += 3;
-            ret = parse_attribute(parse, end - parse, (void *)&id);
+            ret = pkcs11_parse_attribute(parse, end - parse, (void *)&id);
         } else if (!strncmp(parse, "pin-value=", 10)) {
             parse += 10;
-	    ret = parse_attribute(parse, end - parse, (void *)&pin);
+	    ret = pkcs11_parse_attribute(parse, end - parse, (void *)&pin);
         } else if (!strncmp(parse, "module-path=", 12)) {
             parse += 12;
-	    ret = parse_attribute(parse, end - parse, (void *)&module_path);
+	    ret = pkcs11_parse_attribute(parse, end - parse, (void *)&module_path);
         }
     }
     pkcs11st.id = id;
     pkcs11st.pin = pin;
 
-    rv = initialize(module_path);
-    assert(rv, "module path");
-    pkcs11st.session = start_session(get_slot());
-    login(pkcs11st.session, pkcs11st.pin);
-    pkcs11st.key = get_private_key(pkcs11st.session, pkcs11st.id,
-                                   strlen(pkcs11st.id));
+    rv = pkcs11_initialize(module_path);
 
-    rv = funcs->C_GetAttributeValue(pkcs11st.session,
+    if (rv != CKR_OK) {
+        goto err;
+    }
+
+    pkcs11st.session = pkcs11_start_session(pkcs11_get_slot());
+    pkcs11_login(pkcs11st.session, pkcs11st.pin);
+    pkcs11st.key = pkcs11_get_private_key(pkcs11st.session, pkcs11st.id,
+                                          strlen((char *)pkcs11st.id));
+
+    rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
                                     pkcs11st.key, key_type, 2);
 
     if(rv != CKR_OK || class != CKO_PRIVATE_KEY) {
@@ -388,15 +446,15 @@ static EVP_PKEY *engine_load_private_key(ENGINE * e, const char *path,
         };
         RSA *rsa = RSA_new();
 
-        if(((rv = funcs->C_GetAttributeValue(pkcs11st.session, pkcs11st.key,
+        if(((rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session, pkcs11st.key,
              rsa_attributes, 2)) == CKR_OK) &&
              (rsa_attributes[0].ulValueLen > 0) &&
              (rsa_attributes[1].ulValueLen > 0) &&
-             ((rsa_attributes[0].pValue = malloc(rsa_attributes[0].ulValueLen))
+             ((rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen))
              != NULL) &&
-             ((rsa_attributes[1].pValue = malloc(rsa_attributes[1].ulValueLen))
+             ((rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen))
              != NULL) &&
-             ((rv = funcs->C_GetAttributeValue(pkcs11st.session, pkcs11st.key,
+             ((rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session, pkcs11st.key,
              rsa_attributes, 2)) == CKR_OK) && (rsa != NULL)) {
 
             RSA_set0_key(rsa,
@@ -410,45 +468,60 @@ static EVP_PKEY *engine_load_private_key(ENGINE * e, const char *path,
             }
         }
 
-        free(rsa_attributes[0].pValue);
-        free(rsa_attributes[1].pValue);
+        OPENSSL_free(rsa_attributes[0].pValue);
+        OPENSSL_free(rsa_attributes[1].pValue);
     }
     return k;
+
+ err:
+    return 0;
 }
 
-static int bindpkcs11(ENGINE *e, const char *id)
+static int pkcs11_bind(ENGINE *e, const char *id)
 {
   int ret = 0;
 
-  if (!ENGINE_set_id(e, engine_id)) {
-#ifdef DEBUG
-    fprintf(stderr, "ENGINE_set_id failed\n");
-#endif
-    goto end;
-  }
-  if (!ENGINE_set_name(e, engine_name)) {
-#ifdef DEBUG
-    fprintf(stderr,"ENGINE_set_name failed\n");
-#endif
-    goto end;
-  }
-  if (!ENGINE_set_RSA(e, pkcs11_rsa())) {
-#ifdef DEBUG
-    fprintf(stderr,"ENGINE_set_RSA failed\n");
-#endif
-    goto end;
-  }
-  if (!ENGINE_set_load_privkey_function(e, engine_load_private_key)) {
-#ifdef DEBUG
-    fprintf(stderr,"ENGINE_set_load_privkey_function failed\n");
-#endif
-    goto end;
-  }
+  if (!ENGINE_set_id(e, engine_id)
+      || !ENGINE_set_name(e, engine_name)
+      || !ENGINE_set_RSA(e, pkcs11_rsa())
+      || !ENGINE_set_load_privkey_function(e, pkcs11_engine_load_private_key)
+      || !ENGINE_set_destroy_function(e, pkcs11_destroy(e)))
+      goto end;
+  
+  ERR_load_PKCS11_strings();
 
   ret = 1;
  end:
   return ret;
 }
 
-IMPLEMENT_DYNAMIC_BIND_FN(bindpkcs11)
+static void PKCS11_trace(char *format, ...)
+{
+
+    BIO *out;
+    va_list args;
+
+    out = BIO_new_fp(stderr, BIO_NOCLOSE);
+    if (out == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_TRACE, PKCS11_R_FILE_OPEN_ERROR);
+        return;
+    }
+
+    va_start(args, format);
+
+    BIO_vprintf(out, format, args);
+    va_end(args);
+    BIO_free(out);
+}
+
+static int pkcs11_destroy(ENGINE *e)
+{
+    RSA_meth_free(pkcs11_rsa);
+    pkcs11_rsa = NULL;
+    ERR_unload_PKCS11_strings();
+    return 1;
+}
+
+
+IMPLEMENT_DYNAMIC_BIND_FN(pkcs11_bind)
 IMPLEMENT_DYNAMIC_CHECK_FN()

@@ -1,0 +1,34 @@
+# Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Function codes
+PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY:100:pkcs11_engine_load_private_key
+PKCS11_F_PKCS11_GET_PRIVATE_KEY:101:pkcs11_get_private_key
+PKCS11_F_PKCS11_GET_SLOT:102:pkcs11_get_slot
+PKCS11_F_PKCS11_INITIALIZE:107:pkcs11_initialize
+PKCS11_F_PKCS11_LOAD_FUNCTIONS:108:pkcs11_load_functions
+PKCS11_F_PKCS11_LOGIN:103:pkcs11_login
+PKCS11_F_PKCS11_LOGOUT:104:pkcs11_logout
+PKCS11_F_PKCS11_RSA_ENC:105:pkcs11_rsa_enc
+PKCS11_F_PKCS11_START_SESSION:106:pkcs11_start_session
+PKCS11_F_PKCS11_TRACE:109:PKCS11_trace
+
+#Reason codes
+PKCS11_R_FILE_OPEN_ERROR:102:file open error
+PKCS11_R_FIND_OBJECT_FAILED:103:find object failed
+PKCS11_R_FIND_OBJECT_INIT_FAILED:104:find object init failed
+PKCS11_R_GETFUNCTIONLIST_NOT_FOUND:105:getfunctionlist not found
+PKCS11_R_GETTING_FUNCTION_LIST_FAILED:106:getting function list failed
+PKCS11_R_GET_SLOTLIST_FAILED:107:get slotlist failed
+PKCS11_R_INITIALIZE_FAILED:108:initialize failed
+PKCS11_R_LIBRARY_PATH_NOT_FOUND:109:library path not found
+PKCS11_R_LOGIN_FAILED:110:login failed
+PKCS11_R_LOGOUT_FAILED:111:logout failed
+PKCS11_R_OPEN_SESSION_ERROR:112:open session error
+PKCS11_R_SIGN_FAILED:100:sign failed
+PKCS11_R_SIGN_INIT_FAILED:101:sign init failed
+PKCS11_R_SLOT_NOT_FOUND:113:slot not found
