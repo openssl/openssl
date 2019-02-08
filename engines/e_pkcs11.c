@@ -485,7 +485,7 @@ static int pkcs11_bind(ENGINE *e, const char *id)
       || !ENGINE_set_name(e, engine_name)
       || !ENGINE_set_RSA(e, pkcs11_rsa())
       || !ENGINE_set_load_privkey_function(e, pkcs11_engine_load_private_key)
-      || !ENGINE_set_destroy_function(e, pkcs11_destroy(e)))
+      || !ENGINE_set_destroy_function(e, pkcs11_destroy))
       goto end;
   
   ERR_load_PKCS11_strings();
@@ -516,8 +516,8 @@ static void PKCS11_trace(char *format, ...)
 
 static int pkcs11_destroy(ENGINE *e)
 {
-    RSA_meth_free(pkcs11_rsa);
-    pkcs11_rsa = NULL;
+    /* TODO: RSA_meth_free ecc. */
+
     ERR_unload_PKCS11_strings();
     return 1;
 }
