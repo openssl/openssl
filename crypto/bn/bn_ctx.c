@@ -299,6 +299,8 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     }
     /* OK, make sure the returned bignum is "zero" */
     BN_zero(ret);
+    /* clear BN_FLG_CONSTTIME if leaked from previous frames */
+    ret->flags &= (~BN_FLG_CONSTTIME);
     ctx->used++;
     CTXDBG_RET(ctx, ret);
     return ret;
