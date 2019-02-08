@@ -2796,6 +2796,8 @@ SSL_R_MISSING_SRP_PARAM:358:can't find SRP server param
 SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION:209:missing supported groups extension
 SSL_R_MISSING_TMP_DH_KEY:171:missing tmp dh key
 SSL_R_MISSING_TMP_ECDH_KEY:311:missing tmp ecdh key
+SSL_R_MIXED_HANDSHAKE_AND_NON_HANDSHAKE_DATA:293:\
+	mixed handshake and non handshake data
 SSL_R_NOT_ON_RECORD_BOUNDARY:182:not on record boundary
 SSL_R_NOT_REPLACING_CERTIFICATE:289:not replacing certificate
 SSL_R_NOT_SERVER:284:not server
