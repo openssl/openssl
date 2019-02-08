@@ -52,7 +52,9 @@ B<openssl> B<x509>
 [B<-CAkey filename>]
 [B<-CAcreateserial>]
 [B<-CAserial filename>]
+[B<-new>]
 [B<-force_pubkey filename>]
+[B<-subj arg>]
 [B<-text>]
 [B<-ext extensions>]
 [B<-certopt option>]
@@ -454,14 +456,36 @@ specified then the extensions should either be contained in the unnamed
 L<x509v3_config(5)> manual page for details of the
 extension section format.
 
+=item B<-new>
+
+Generate a certificate from scratch, not using an input certificate
+or certificate request (which would normally be given as B<-in filename>).
+
 =item B<-force_pubkey filename>
 
 When a certificate is created set its public key to the key in B<filename>
 instead of the key contained in the input or given with the B<-signkey> option.
+
 This option is useful for creating self-issued certificates that are not
 self-signed, for instance when the key cannot be used for signing, such as DH.
+It can also be used in conjunction with b<-new> and B<-subj> to directly
+generate a certificate containing any desired public key.
 
 The format of the key file can be specified using the B<-keyform> option.
+
+=item B<-subj arg>
+
+When a certificate is created set its subject name to the given value.
+The arg must be formatted as I</type0=value0/type1=value1/type2=...>.
+Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Empty values are permitted, but the corresponding type will not be included
+in the request.
+
+Unless the B<-CA> option is given the issuer is set to the same value.
+
+This option can be used in conjunction with the B<-force_pubkey> option
+to create a certificate even without providing an input certificate
+or certificate request.
 
 =back
 
