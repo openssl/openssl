@@ -292,7 +292,7 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 
     a->neg = b->neg;
     a->top = b->top;
-    a->flags |= b->flags & BN_FLG_FIXED_TOP;
+    a->flags |= b->flags & (BN_FLG_FIXED_TOP | BN_FLG_CONSTTIME);
     bn_check_top(a);
     return a;
 }
