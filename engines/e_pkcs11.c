@@ -1,18 +1,17 @@
 #include <openssl/engine.h>
 #include <string.h>
 #include <openssl/err.h>
+#include <internal/dso.h>
 #include "e_pkcs11_err.c"
 
 #define CK_PTR *
 
 #ifdef _WIN32
 #pragma pack(push, cryptoki, 1)
-#include <windows.h>
 #define CK_DECLARE_FUNCTION(returnType, name) \
    returnType __declspec(dllimport) name
 #else
 #define DEBUG
-#include <dlfcn.h>
 #define CK_DECLARE_FUNCTION(returnType, name) \
    returnType name
 #endif
@@ -123,28 +122,19 @@ RSA_METHOD *pkcs11_rsa()
 CK_RV pkcs11_load_functions(char *library_path)
 {
     CK_RV rv;
+    static DSO *pkcs11_dso = NULL;
 
-#ifdef WIN32
-    HMODULE d = LoadLibraryA(library_path);
-#else
     CK_RV(*pFunc)();
-    void *d;
-    d = dlopen(library_path, RTLD_NOW | RTLD_GLOBAL);
-#endif
+    pkcs11_dso = DSO_load(NULL, library_path, NULL, 0);
 
-    if (d == NULL) {
+    if (pkcs11_dso == NULL) {
         PKCS11_trace("%s not found in LD_LIBRARY_PATH\n", library_path);
         PKCS11err(PKCS11_F_PKCS11_LOAD_FUNCTIONS,
                   PKCS11_R_LIBRARY_PATH_NOT_FOUND);
         return CKR_GENERAL_ERROR;
     }
 
-#ifdef WIN32
-    CK_C_GetFunctionList pFunc = (CK_C_GetFunctionList)
-                           GetProcAddress(d, "C_GetFunctionList");
-#else
-    pFunc = (CK_RV (*)()) dlsym(d, "C_GetFunctionList");
-#endif
+    pFunc = (CK_RV (*)()) DSO_bind_func(pkcs11_dso, "C_GetFunctionList");
 
     if (pFunc == NULL) {
         PKCS11_trace("C_GetFunctionList() not found in module %s\n",
