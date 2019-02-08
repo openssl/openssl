@@ -92,7 +92,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
         return 0;
 
-    if (aux && aux->asn1_cb)
+    if (aux && aux->asn1_const_cb)
         asn1_cb = aux->asn1_const_cb;
 
     switch (it->itype) {
