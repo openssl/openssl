@@ -348,7 +348,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 psection = section;
             }
             p = eat_ws(conf, end);
-            if (strncmp(pname, ".include", 8) == 0 && p != pname + 8) {
+            if (strncmp(pname, ".include", 8) == 0
+                && (p != pname + 8 || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
 
