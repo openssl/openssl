@@ -301,7 +301,8 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * - Linux since 3.17 with glibc 2.25
      * - FreeBSD since 12.0 (1200061)
      */
-#  if defined(__GNUC__) && __GNUC__>=2 && defined(__ELF__) && !defined(__hpux)
+#  if defined(__GNUC__) && __GNUC__>=2 && __GNUC_MINOR>=25 && \
+   defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL)
