@@ -489,6 +489,9 @@ int x509_main(int argc, char **argv)
         BIO_printf(bio_err,
                    "need to specify a CAkey if using the CA command\n");
         goto end;
+    } else if (!(CA_flag) && (CAkeyfile != NULL)) {
+        BIO_printf(bio_err,
+                   "ignoring -CAkey option since no -CA option is given\n");
     }
 
     if (extfile != NULL) {
@@ -516,7 +519,7 @@ int x509_main(int argc, char **argv)
         EVP_PKEY *pkey;
         BIO *in;
 
-        if (!sign_flag && !CA_flag) {
+        if (!sign_flag && CAkeyfile == NULL) {
             BIO_printf(bio_err, "We need a private key to sign with\n");
             goto end;
         }
