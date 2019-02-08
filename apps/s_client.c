@@ -3575,9 +3575,7 @@ static int is_dNS_name(const char *host)
      * Check DNS name syntax, any '-' or '.' must be internal,
      * and on either side of each '.' we can't have a '-' or '.'.
      *
-     * If the name has just one label, we don't consider it a DNS name.  This
-     * means that "CN=sometld" cannot be precluded by DNS name constraints, but
-     * that is not a problem.
+     * If the name has just one label, we don't consider it a DNS name.
      */
     for (i = 0; i < length && label_length < MAX_LABEL_LENGTH; ++i) {
         char c = host[i];
