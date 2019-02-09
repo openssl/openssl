@@ -43,14 +43,14 @@ static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
 static CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
                                                CK_BYTE *id, size_t id_len);
 static CK_RV pkcs11_load_functions(char *library_path);
+int pkcs11_parse_uri(const char *path, char *token, char **value);
+char pkcs11_hex_int(char nib1, char nib2);
 
 int pkcs11_rsa_enc(int flen, const unsigned char *from,
                    unsigned char *to, RSA *rsa, int padding);
 static RSA_METHOD *pkcs11_rsa();
 
 static CK_SLOT_ID pkcs11_get_slot();
-static int pkcs11_parse_attribute(const char *attr, int attrlen,
-                                  unsigned char **field);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
@@ -308,85 +308,36 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
     return -1;
 }
 
-static int pkcs11_hex_to_bin(const char *in, unsigned char *out, size_t *outlen)
+char pkcs11_hex_int(char nib1, char nib2)
 {
-    size_t left, count = 0;
-
-    if (in == NULL || *in == '\0') {
-        *outlen = 0;
-        return 1;
-    }
-
-    left = *outlen;
-
-    while (*in != '\0') {
-        int byte = 0, nybbles = 2;
-
-        while (nybbles-- && *in && *in != ':') {
-            char c;
-            byte <<= 4;
-            c = *in++;
-            if ('0' <= c && c <= '9') c -= '0';
-            else if ('a' <= c && c <= 'f') c = c - 'a' + 10;
-            else if ('A' <= c && c <= 'F') c = c - 'A' + 10;
-            else {
-                *outlen = 0;
-                return 0;
-            }
-            byte |= c;
-        }
-        if (*in == ':') in++;
-        if (left == 0) {
-            *outlen = 0;
-            return 0;
-        }
-        out[count++] = (unsigned char)byte;
-        left--;
-    }
-    *outlen = count;
-    return 1;
-}
-
-static int pkcs11_parse_attribute(const char *attr, int attrlen,
-                                  unsigned char **field)
-{
-    size_t max, outlen = 0;
-    unsigned char *out;
-    int ret = 1;
-    out = OPENSSL_malloc(attrlen + 1);
-    if (out == NULL) return 0;
-    max = attrlen + 1;
-
-    while (ret && attrlen && outlen < max) {
-        if (*attr == '%') {
-            if (attrlen < 3) {
-                ret = 0;
-            } else {
-                char tmp[3];
-                size_t l = 1;
-
-                tmp[0] = attr[1];
-                tmp[1] = attr[2];
-                tmp[2] = 0;
-                ret = pkcs11_hex_to_bin(tmp, &out[outlen++], &l);
-                attrlen -= 3;
-                attr += 3;
-            }
-        } else {
-            out[outlen++] = *(attr++);
-            attrlen--;
-        }
-    }
-    if (attrlen && outlen == max) ret = 0;
-    if (ret) {
-        out[outlen] = 0;
-        *field = out;
-    } else {
-        OPENSSL_free(out);
-    }
+    int ret = (nib1-(nib1 <= 57 ? 48 : (nib1 < 97 ? 55 : 87)))*16;
+    ret += (nib2-(nib2 <= 57 ? 48 : (nib2 < 97 ? 55 : 87)));
     return ret;
 }
 
+int pkcs11_parse_uri(const char *path, char *token, char **value)
+{
+    char *tmp, *end, *hex2bin;
+    int j = 0;
+    if ((tmp = strstr(path, token)) == NULL)
+        return 0;
+    tmp += strlen(token);
+    *value = malloc(strlen(tmp) + 1);
+    end = strpbrk(tmp, ";");
+    strncpy(*value, tmp, end == NULL ? strlen(tmp) : end - tmp);
+    hex2bin = malloc(strlen(*value) + 1);
+    for (int i = 0; i < strlen(*value); i++) {
+        if (*(*value+i) == '%' && i < (strlen(*value)-2)) {
+            *(hex2bin+j) = pkcs11_hex_int(*(*value+i+1), *(*value+i+2));
+            i += 2;
+        } else {
+            *(hex2bin+j) = *(*value+i);
+        }
+        j++;
+    }
+    *value = hex2bin;
+    return 1;
+}
 
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
@@ -399,30 +350,26 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     };
     EVP_PKEY *k = NULL;
     CK_RV rv;
-    const char *end, *parse;
-    int ret = 1;
-    unsigned char *id, *pin;
+    char *id, *pin;
     char *module_path;
 
-    end = path + 6;
-    while (ret && end[0] && end[1]) {
-        parse = end + 1;
-        end = strpbrk(parse, ";?&");
-        if (end == NULL) end = parse + strlen(parse);
-        if (!strncmp(parse, "id=", 3)) {
-	    parse += 3;
-            ret = pkcs11_parse_attribute(parse, end - parse, (void *)&id);
-        } else if (!strncmp(parse, "pin-value=", 10)) {
-            parse += 10;
-	    ret = pkcs11_parse_attribute(parse, end - parse, (void *)&pin);
-        } else if (!strncmp(parse, "module-path=", 12)) {
-            parse += 12;
-	    ret = pkcs11_parse_attribute(parse, end - parse,
-                                         (void *)&module_path);
-        }
+    if (!strncmp(path, "pkcs11:", 7)) {
+        path += 7;
+
+	if (!pkcs11_parse_uri(path,"id=", &id))
+           goto err;
+	if (!pkcs11_parse_uri(path,"pin-value=", &pin))
+           goto err;
+	if (!pkcs11_parse_uri(path,"module-path=", &module_path))
+           goto err;
+
+    } else {
+        PKCS11_trace("String pkcs11: not found\n");
+        goto err;
     }
-    pkcs11st.id = id;
-    pkcs11st.pin = pin;
+
+    pkcs11st.id = (CK_BYTE *) id;
+    pkcs11st.pin = (CK_BYTE *) pin;
 
     rv = pkcs11_initialize(module_path);
 
