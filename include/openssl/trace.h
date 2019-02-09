@@ -33,18 +33,19 @@ extern "C" {
  * The ANY category is used as a fallback category.
  */
 # define OSSL_TRACE_CATEGORY_ANY                 0 /* The fallback */
-# define OSSL_TRACE_CATEGORY_INIT                1
-# define OSSL_TRACE_CATEGORY_TLS                 2
-# define OSSL_TRACE_CATEGORY_TLS_CIPHER          3
-# define OSSL_TRACE_CATEGORY_ENGINE_CONF         4
-# define OSSL_TRACE_CATEGORY_ENGINE_TABLE        5
-# define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT    6
-# define OSSL_TRACE_CATEGORY_PKCS5V2             7
-# define OSSL_TRACE_CATEGORY_PKCS12_KEYGEN       8
-# define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT      9
-# define OSSL_TRACE_CATEGORY_X509V3_POLICY      10
-# define OSSL_TRACE_CATEGORY_BN_CTX             11
-# define OSSL_TRACE_CATEGORY_NUM                12
+# define OSSL_TRACE_CATEGORY_TRACE               1
+# define OSSL_TRACE_CATEGORY_INIT                2
+# define OSSL_TRACE_CATEGORY_TLS                 3
+# define OSSL_TRACE_CATEGORY_TLS_CIPHER          4
+# define OSSL_TRACE_CATEGORY_ENGINE_CONF         5
+# define OSSL_TRACE_CATEGORY_ENGINE_TABLE        6
+# define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT    7
+# define OSSL_TRACE_CATEGORY_PKCS5V2             8
+# define OSSL_TRACE_CATEGORY_PKCS12_KEYGEN       9
+# define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT     10
+# define OSSL_TRACE_CATEGORY_X509V3_POLICY      11
+# define OSSL_TRACE_CATEGORY_BN_CTX             12
+# define OSSL_TRACE_CATEGORY_NUM                13
 
 /* Returns the trace category number for the given |name| */
 int OSSL_trace_get_category_num(const char *name);
