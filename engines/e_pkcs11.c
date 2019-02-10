@@ -79,20 +79,29 @@ int pkcs11_rsa_enc(int flen, const unsigned char *from,
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     sign_mechanism.pParameter = 0;
     sign_mechanism.ulParameterLen = 0;
-    CK_ULONG signatureLen = sizeof(to);
+    CK_ULONG signatureLen = 0;
 
     rv = pkcs11_funcs->C_SignInit(pkcs11st.session,
                                   &sign_mechanism, pkcs11st.key);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_SignInit failed, error: %#02x\n", rv);
+        PKCS11_trace("C_SignInit failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_INIT_FAILED);
         goto err;
     }
+
+    // Get length of signature
+    rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, NULL,
+                              &signatureLen);
+    if (rv != CKR_OK) {
+        PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
+        goto err;
+    }
+
+    // Sign
     rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, to,
                               &signatureLen);
     if (rv != CKR_OK) {
-        PKCS11_trace("C_Sign failed, error: %#02x\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
         goto err;
     }
@@ -128,7 +137,6 @@ CK_RV pkcs11_load_functions(char *library_path)
     pkcs11_dso = DSO_load(NULL, library_path, NULL, 0);
 
     if (pkcs11_dso == NULL) {
-        PKCS11_trace("%s not found in LD_LIBRARY_PATH\n", library_path);
         PKCS11err(PKCS11_F_PKCS11_LOAD_FUNCTIONS,
                   PKCS11_R_LIBRARY_PATH_NOT_FOUND);
         return CKR_GENERAL_ERROR;
@@ -165,7 +173,7 @@ CK_RV pkcs11_initialize(char *library_path)
 
     rv = pkcs11_load_functions(library_path);
     if (rv != CKR_OK) {
-        PKCS11_trace("Getting PKCS11 function list failed, error: %#02x\n", rv);
+        PKCS11_trace("Getting PKCS11 function list failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_INITIALIZE,
                   PKCS11_R_GETTING_FUNCTION_LIST_FAILED);
         return rv;
@@ -176,7 +184,7 @@ CK_RV pkcs11_initialize(char *library_path)
     args.flags = CKF_OS_LOCKING_OK;
     rv = pkcs11_funcs->C_Initialize(&args);
     if (rv != CKR_OK) {
-        PKCS11_trace("C_Initialize failed, error: %#02x\n", rv);
+        PKCS11_trace("C_Initialize failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_INITIALIZE, PKCS11_R_INITIALIZE_FAILED);
         return rv;
     }
@@ -198,7 +206,7 @@ static CK_SLOT_ID pkcs11_get_slot()
     rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, slotIds, &slotCount);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_GetSlotList failed, error: %#02x\n", rv);
+        PKCS11_trace("C_GetSlotList failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_GET_SLOTLIST_FAILED);
         goto err;
     }
@@ -224,7 +232,7 @@ static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
     rv = pkcs11_funcs->C_OpenSession(slotId, CKF_SERIAL_SESSION, NULL,
                                      NULL, &session);
     if (rv != CKR_OK) {
-        PKCS11_trace("C_OpenSession failed, error: %#02x\n", rv);
+        PKCS11_trace("C_OpenSession failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_START_SESSION,
                   PKCS11_R_OPEN_SESSION_ERROR);
         goto err;
@@ -242,7 +250,7 @@ static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin)
         rv = pkcs11_funcs->C_Login(session, CKU_USER, pin,
                                    strlen((char *)pin));
         if (rv != CKR_OK) {
-            PKCS11_trace("C_Login failed, error: %#02x\n", rv);
+            PKCS11_trace("C_Login failed, error: %#04X\n", rv);
             PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
             goto err;
         }
@@ -256,8 +264,8 @@ static int pkcs11_logout(CK_SESSION_HANDLE session)
 {
     CK_RV rv;
     rv = pkcs11_funcs->C_Logout(session);
-    if (rv != CKR_USER_NOT_LOGGED_IN) {
-        PKCS11_trace("C_Logout failed, error: %#02x\n", rv);
+    if (rv != CKR_USER_NOT_LOGGED_IN && rv != CKR_OK) {
+        PKCS11_trace("C_Logout failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_LOGOUT, PKCS11_R_LOGOUT_FAILED);
         goto err;
     }
@@ -288,7 +296,7 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
                                   sizeof (tmpl) / sizeof (CK_ATTRIBUTE) );
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_FindObjectsInit failed, error: %#02x\n", rv);
+        PKCS11_trace("C_FindObjectsInit failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_INIT_FAILED);
         goto err;
@@ -297,7 +305,7 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
     rv = pkcs11_funcs->C_FindObjects(session, &objhandle, 1, &count);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_FindObjects failed, error: %#02x\n", rv);
+        PKCS11_trace("C_FindObjects failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_FAILED);
         goto err;
@@ -324,7 +332,7 @@ int pkcs11_parse_uri(const char *path, char *token, char **value)
     tmp += strlen(token);
     *value = malloc(strlen(tmp) + 1);
     end = strpbrk(tmp, ";");
-    strncpy(*value, tmp, end == NULL ? strlen(tmp) : end - tmp);
+    snprintf(*value, end == NULL ? strlen(tmp) + 1 : end - tmp + 1, "%s", tmp);
     hex2bin = malloc(strlen(*value) + 1);
     for (int i = 0; i < strlen(*value); i++) {
         if (*(*value+i) == '%' && i < (strlen(*value)-2)) {
@@ -335,6 +343,7 @@ int pkcs11_parse_uri(const char *path, char *token, char **value)
         }
         j++;
     }
+    *(hex2bin+j) = '\0';
     *value = hex2bin;
     return 1;
 }
@@ -356,11 +365,11 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     if (!strncmp(path, "pkcs11:", 7)) {
         path += 7;
 
+	if (!pkcs11_parse_uri(path,"module-path=", &module_path))
+           goto err;
 	if (!pkcs11_parse_uri(path,"id=", &id))
            goto err;
 	if (!pkcs11_parse_uri(path,"pin-value=", &pin))
-           goto err;
-	if (!pkcs11_parse_uri(path,"module-path=", &module_path))
            goto err;
 
     } else {
@@ -458,7 +467,6 @@ static void PKCS11_trace(char *format, ...)
     }
 
     va_start(args, format);
-
     BIO_vprintf(out, format, args);
     va_end(args);
     BIO_free(out);
