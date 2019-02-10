@@ -35,7 +35,7 @@
 
 static void pkcs11_finalize();
 static void pkcs11_end_session(CK_SESSION_HANDLE session);
-static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin);
+static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE userType);
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 static CK_SLOT_ID pkcs11_get_slot();
 static CK_RV pkcs11_initialize(char *library_path);
@@ -90,10 +90,14 @@ int pkcs11_rsa_enc(int flen, const unsigned char *from,
         goto err;
     }
 
+    pkcs11_login(pkcs11st.session, pkcs11st.pin, CKU_CONTEXT_SPECIFIC);
+
     // Get length of signature
     rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, NULL,
                               &signatureLen);
+
     if (rv != CKR_OK) {
+        PKCS11_trace("C_Sign failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
         goto err;
     }
@@ -102,6 +106,7 @@ int pkcs11_rsa_enc(int flen, const unsigned char *from,
     rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, to,
                               &signatureLen);
     if (rv != CKR_OK) {
+        PKCS11_trace("C_Sign failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
         goto err;
     }
@@ -243,11 +248,11 @@ static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
     return 0;
 }
 
-static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin)
+static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE userType)
 {
     CK_RV rv;
     if (pin) {
-        rv = pkcs11_funcs->C_Login(session, CKU_USER, pin,
+        rv = pkcs11_funcs->C_Login(session, userType, pin,
                                    strlen((char *)pin));
         if (rv != CKR_OK) {
             PKCS11_trace("C_Login failed, error: %#04X\n", rv);
@@ -387,7 +392,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     }
 
     pkcs11st.session = pkcs11_start_session(pkcs11_get_slot());
-    pkcs11_login(pkcs11st.session, pkcs11st.pin);
+    pkcs11_login(pkcs11st.session, pkcs11st.pin, CKU_USER);
     pkcs11st.key = pkcs11_get_private_key(pkcs11st.session, pkcs11st.id,
                                           strlen((char *)pkcs11st.id));
 
