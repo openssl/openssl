@@ -489,8 +489,12 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
+    if (newcert && infile != NULL) {
+        BIO_printf(bio_err, "ignoring -in option since -newcert is set\n");
+        infile = NULL;
+    }
     if (newcert && fkeyfile == NULL) {
-        BIO_printf(bio_err, "We need a public key, use -force_pubkey or -in\n");
+        BIO_printf(bio_err, "We need a public key, use -force_pubkey\n");
         goto end;
     }
     if (fkeyfile != NULL) {
@@ -500,7 +504,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (newcert && subj == NULL) {
-        BIO_printf(bio_err, "We need a subject, use -subj or -in\n");
+        BIO_printf(bio_err, "We need a subject, use -subj\n");
         goto end;
     }
     if (subj != NULL && (fsubj = parse_name(subj, chtype, multirdn)) == NULL)
@@ -579,7 +583,8 @@ int x509_main(int argc, char **argv)
         X509_NAME *n;
 
         if (!sign_flag && CAkeyfile == NULL) {
-            BIO_printf(bio_err, "We need a private key to sign with\n");
+            BIO_printf(bio_err,
+                       "We need a private key to sign with, use -signkey or -CAkey or -CA <file> with private key\n");
             goto end;
         }
         if ((x = X509_new()) == NULL)
