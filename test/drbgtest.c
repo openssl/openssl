@@ -429,7 +429,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
      */
 
     /* Test explicit reseed with too large additional input */
-    if (!init(drbg, td, &t)
+    if (!instantiate(drbg, td, &t)
             || RAND_DRBG_reseed(drbg, td->adin, drbg->max_adinlen + 1, 0) > 0)
         goto err;
 
@@ -440,7 +440,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Test explicit reseed with too much entropy */
-    if (!init(drbg, td, &t))
+    if (!instantiate(drbg, td, &t))
         goto err;
     t.entropylen = drbg->max_entropylen + 1;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
@@ -448,7 +448,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
         goto err;
 
     /* Test explicit reseed with too little entropy */
-    if (!init(drbg, td, &t))
+    if (!instantiate(drbg, td, &t))
         goto err;
     t.entropylen = drbg->min_entropylen - 1;
     if (!TEST_int_le(RAND_DRBG_reseed(drbg, td->adin, td->adinlen, 0), 0)
@@ -839,6 +839,11 @@ typedef HANDLE thread_t;
 static DWORD WINAPI thread_run(LPVOID arg)
 {
     run_multi_thread_test();
+    /*
+     * Because we're linking with a static library, we must stop each
+     * thread explicitly, or so says OPENSSL_thread_stop(3)
+     */
+    OPENSSL_thread_stop();
     return 0;
 }
 
@@ -860,6 +865,11 @@ typedef pthread_t thread_t;
 static void *thread_run(void *arg)
 {
     run_multi_thread_test();
+    /*
+     * Because we're linking with a static library, we must stop each
+     * thread explicitly, or so says OPENSSL_thread_stop(3)
+     */
+    OPENSSL_thread_stop();
     return NULL;
 }
 
