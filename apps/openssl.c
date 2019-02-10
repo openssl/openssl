@@ -163,10 +163,27 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
     return ret < 0 ? 0 : ret;
 }
 
+DEFINE_STACK_OF(tracedata)
+static STACK_OF(tracedata) *trace_data_stack;
+
+static void tracedata_free(tracedata *data)
+{
+    BIO_free_all(data->bio);
+    OPENSSL_free(data);
+}
+
+static STACK_OF(tracedata) *trace_data_stack;
+
+static void cleanup_trace(void)
+{
+    sk_tracedata_pop_free(trace_data_stack, tracedata_free);
+}
+
 static void setup_trace(const char *str)
 {
     char *val;
 
+    trace_data_stack = sk_tracedata_new_null();
     val = OPENSSL_strdup(str);
 
     if (val != NULL) {
@@ -184,7 +201,10 @@ static void setup_trace(const char *str)
                 if (trace_data == NULL
                     || (trace_data->bio = channel) == NULL
                     || OSSL_trace_set_callback(category, internal_trace_cb,
-                                               trace_data) == 0) {
+                                               trace_data) == 0
+                    || sk_tracedata_push(trace_data_stack, trace_data) == 0) {
+                    OSSL_trace_set_callback(category, NULL, NULL);
+                    BIO_free_all(channel);
                     fprintf(stderr,
                             "warning: unable to setup trace callback for category '%s'.\n",
                             item);
@@ -198,6 +218,7 @@ static void setup_trace(const char *str)
     }
 
     OPENSSL_free(val);
+    atexit(cleanup_trace);
 }
 
 int main(int argc, char *argv[])
