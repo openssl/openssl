@@ -1228,14 +1228,14 @@ static int bn2crparam(const BIGNUM *a, struct crparam *crp)
     crp->crp_p = (caddr_t) b;
     crp->crp_nbits = bits;
 
-    BN_bn2bin(a, b);
+    BN_bn2lebinpad(a, b, bytes);
     return (0);
 }
 
 /* Convert a /dev/crypto parameter to a BIGNUM */
 static int crparam2bn(struct crparam *crp, BIGNUM *a)
 {
-    u_int8_t *pd;
+    u_int8_t *b;
     int i, bytes;
 
     bytes = (crp->crp_nbits + 7) / 8;
@@ -1243,15 +1243,9 @@ static int crparam2bn(struct crparam *crp, BIGNUM *a)
     if (bytes == 0)
         return (-1);
 
-    if ((pd = OPENSSL_malloc(bytes)) == NULL)
-        return (-1);
+    b = (u_int8_t *)crp->crp_p;
 
-    for (i = 0; i < bytes; i++)
-        pd[i] = crp->crp_p[bytes - i - 1];
-
-    BN_bin2bn(pd, bytes, a);
-    free(pd);
-
+    BN_lebin2bn(b, bytes, a);
     return (0);
 }
 
