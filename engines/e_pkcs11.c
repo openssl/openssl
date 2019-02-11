@@ -35,7 +35,8 @@
 
 static void pkcs11_finalize(void);
 static void pkcs11_end_session(CK_SESSION_HANDLE session);
-static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE userType);
+static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin,
+                        CK_USER_TYPE userType);
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 static CK_SLOT_ID pkcs11_get_slot(void);
 static CK_RV pkcs11_initialize(char *library_path);
@@ -208,9 +209,11 @@ static CK_SLOT_ID pkcs11_get_slot()
 {
     CK_RV rv;
     CK_SLOT_ID slotId;
-    CK_ULONG slotCount = 10;
-    CK_SLOT_ID *slotIds = OPENSSL_malloc(sizeof(CK_SLOT_ID) * slotCount);
-    rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, slotIds, &slotCount);
+    CK_ULONG slotCount;
+    CK_SLOT_ID_PTR slotList;
+    int i;
+
+    rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, 0, &slotCount);
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetSlotList failed, error: %#04X\n", rv);
@@ -223,14 +226,36 @@ static CK_SLOT_ID pkcs11_get_slot()
         goto err;
     }
 
-    /* TODO: make mechanism to provide other slotid */
+    slotList = OPENSSL_malloc(sizeof(CK_SLOT_ID) * slotCount);
 
-    slotId = slotIds[0];
-    OPENSSL_free(slotIds);
+    if (slotList == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_MEMORY_ALLOCATION_FAILED);
+        OPENSSL_free(slotList);
+        goto err;
+    }
+
+    rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, slotList, &slotCount);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetSlotList failed, error: %#04X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_GET_SLOTLIST_FAILED);
+        goto err;
+    }
+
+    slotId = slotList[0];
+
+    for (i = 0; i < slotCount; i++) {
+        slotId = slotList[i];
+        if (pkcs11st.slotid == slotList[i]) {
+            slotId = slotList[i];
+            break;
+        }
+    }
+
+    OPENSSL_free(slotList);
     return slotId;
 
  err:
-    free(slotIds);
     return 0;
 }
 
@@ -252,8 +277,10 @@ static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
     return 0;
 }
 
-static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE userType)
+static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin,
+                        CK_USER_TYPE userType)
 {
+    /* Binary pins not supported */
     CK_RV rv;
 
     if (pin) {
@@ -347,11 +374,12 @@ int pkcs11_parse_uri(const char *path, char *token, char **value)
     if ((tmp = strstr(path, token)) == NULL)
         return 0;
     tmp += strlen(token);
-    *value = malloc(strlen(tmp) + 1);
+    *value = OPENSSL_malloc(strlen(tmp) + 1);
     end = strpbrk(tmp, ";");
-    
-    snprintf(*value, end == NULL ? strlen(tmp) + 1 : (size_t) (end - tmp + 1), "%s", tmp);
-    hex2bin = malloc(strlen(*value) + 1);
+
+    snprintf(*value, end == NULL ? strlen(tmp) + 1 :
+             (size_t) (end - tmp + 1), "%s", tmp);
+    hex2bin = OPENSSL_malloc(strlen(*value) + 1);
     for (i = 0; i < strlen(*value); i++) {
         if (*(*value+i) == '%' && i < (strlen(*value)-2)) {
             *(hex2bin+j) = pkcs11_hex_int(*(*value+i+1), *(*value+i+2));
@@ -391,7 +419,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 	if (!pkcs11_parse_uri(path,"id=", &id))
            goto err;
 	if (!pkcs11_parse_uri(path,"slot-id=", &slotid))
-           slotid[0] = '1';
+           slotid[0] = '0';
 	if (!pkcs11_parse_uri(path,"pin-value=", &pin))
            goto err;
 
@@ -420,7 +448,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
     if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 
+        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
@@ -432,7 +460,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         };
         RSA *rsa = RSA_new();
 
-        rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session, 
+        rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
                                                pkcs11st.key, rsa_attributes, 2);
 
         if (rv != CKR_OK) {
@@ -442,29 +470,29 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
             goto err;
         }
 
-        if  (rsa_attributes[0].ulValueLen == 0 || 
-             rsa_attributes[1].ulValueLen == 0) goto err;     
+        if  (rsa_attributes[0].ulValueLen == 0 ||
+             rsa_attributes[1].ulValueLen == 0) goto err;
 
         rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen);
         rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
 
-        if (rsa_attributes[0].pValue == NULL || 
-            rsa_attributes[1].pValue == NULL) { 
+        if (rsa_attributes[0].pValue == NULL ||
+            rsa_attributes[1].pValue == NULL) {
             OPENSSL_free(rsa_attributes[0].pValue);
             OPENSSL_free(rsa_attributes[1].pValue);
             goto err;
         }
 
-        rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session, 
+        rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
                                                pkcs11st.key, rsa_attributes, 2);
 
         if (rv != CKR_OK) {
             PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
-            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 
+            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                       PKCS11_R_GETATTRIBUTEVALUE_FAILED);
             goto err;
         }
-       
+
         RSA_set0_key(rsa,
                      BN_bin2bn(rsa_attributes[0].pValue,
                                rsa_attributes[0].ulValueLen, NULL),
@@ -494,7 +522,7 @@ static int pkcs11_bind(ENGINE *e, const char *id)
       || !ENGINE_set_load_privkey_function(e, pkcs11_engine_load_private_key)
       || !ENGINE_set_destroy_function(e, pkcs11_destroy))
       goto end;
-  
+
   ERR_load_PKCS11_strings();
 
   ret = 1;
