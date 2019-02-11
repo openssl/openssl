@@ -1383,9 +1383,33 @@ int main(int argc, char *argv[])
 
     if (cipher != NULL) {
         if (strcmp(cipher, "") == 0) {
-            if (!SSL_CTX_set_cipher_list(c_ctx, cipher)
-                    && !SSL_CTX_set_cipher_list(s_ctx, cipher)
-                    && !SSL_CTX_set_cipher_list(s_ctx2, cipher)) {
+            if (!SSL_CTX_set_cipher_list(c_ctx, cipher)) {
+                if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_NO_CIPHER_MATCH) {
+                    ERR_clear_error();
+                } else {
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
+            } else {
+                /* Should have failed when clearing all TLSv1.2 ciphers. */
+                fprintf(stderr, "CLEARING ALL TLSv1.2 CIPHERS SHOULD FAIL\n");
+                goto end;
+            }
+
+            if (!SSL_CTX_set_cipher_list(s_ctx, cipher)) {
+                if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_NO_CIPHER_MATCH) {
+                    ERR_clear_error();
+                } else {
+                    ERR_print_errors(bio_err);
+                    goto end;
+                }
+            } else {
+                /* Should have failed when clearing all TLSv1.2 ciphers. */
+                fprintf(stderr, "CLEARING ALL TLSv1.2 CIPHERS SHOULD FAIL\n");
+                goto end;
+            }
+
+            if (!SSL_CTX_set_cipher_list(s_ctx2, cipher)) {
                 if (ERR_GET_REASON(ERR_peek_error()) == SSL_R_NO_CIPHER_MATCH) {
                     ERR_clear_error();
                 } else {
