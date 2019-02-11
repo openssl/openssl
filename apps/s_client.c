@@ -3562,16 +3562,16 @@ static char *base64encode (const void *buf, size_t len)
  */
 static int is_dNS_name(const char *host)
 {
-    const int MAX_LABEL_LENGTH = 63;
+    const size_t MAX_LABEL_LENGTH = 63;
 
-    int i;
+    size_t i;
     int isdnsname = 0;
-    int length = strlen(host);
-    int label_length = 0;
+    size_t length = strlen(host);
+    size_t label_length = 0;
     int all_numeric = 1;
 
     /*
-     * XXX: Deviation from strict DNS name syntax, also check names with '_'
+     * Deviation from strict DNS name syntax, also check names with '_'
      * Check DNS name syntax, any '-' or '.' must be internal,
      * and on either side of each '.' we can't have a '-' or '.'.
      *
