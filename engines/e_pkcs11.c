@@ -33,11 +33,11 @@
 
 #include "pkcs11.h"
 
-static void pkcs11_finalize();
+static void pkcs11_finalize(void);
 static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE userType);
 static int pkcs11_logout(CK_SESSION_HANDLE session);
-static CK_SLOT_ID pkcs11_get_slot();
+static CK_SLOT_ID pkcs11_get_slot(void);
 static CK_RV pkcs11_initialize(char *library_path);
 static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
 static CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
@@ -48,15 +48,16 @@ char pkcs11_hex_int(char nib1, char nib2);
 
 int pkcs11_rsa_enc(int flen, const unsigned char *from,
                    unsigned char *to, RSA *rsa, int padding);
-static RSA_METHOD *pkcs11_rsa();
-
-static CK_SLOT_ID pkcs11_get_slot();
+static RSA_METHOD *pkcs11_rsa(void);
+static CK_SLOT_ID pkcs11_get_slot(void);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
 static int pkcs11_bind(ENGINE *e, const char *id);
 static void PKCS11_trace(char *format, ...);
 static int pkcs11_destroy(ENGINE *e);
+
+typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
 
 CK_FUNCTION_LIST *pkcs11_funcs;
 
@@ -80,11 +81,11 @@ int pkcs11_rsa_enc(int flen, const unsigned char *from,
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     sign_mechanism.pParameter = 0;
     sign_mechanism.ulParameterLen = 0;
-    CK_ULONG signatureLen = 0;
+    CK_ULONG signatureLen;
 
+    signatureLen = 0;
     rv = pkcs11_funcs->C_SignInit(pkcs11st.session,
                                   &sign_mechanism, pkcs11st.key);
-
     if (rv != CKR_OK) {
         PKCS11_trace("C_SignInit failed, error: %#04X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_INIT_FAILED);
@@ -138,7 +139,7 @@ CK_RV pkcs11_load_functions(char *library_path)
 {
     CK_RV rv;
     static DSO *pkcs11_dso = NULL;
-    CK_RV(*pFunc)();
+    pkcs11_pFunc *pFunc;
 
     pkcs11_dso = DSO_load(NULL, library_path, NULL, 0);
 
@@ -148,7 +149,7 @@ CK_RV pkcs11_load_functions(char *library_path)
         return CKR_GENERAL_ERROR;
     }
 
-    pFunc = (CK_RV (*)()) DSO_bind_func(pkcs11_dso, "C_GetFunctionList");
+    pFunc = (pkcs11_pFunc *)DSO_bind_func(pkcs11_dso, "C_GetFunctionList");
 
     if (pFunc == NULL) {
         PKCS11_trace("C_GetFunctionList() not found in module %s\n",
@@ -172,6 +173,7 @@ CK_RV pkcs11_load_functions(char *library_path)
 CK_RV pkcs11_initialize(char *library_path)
 {
     CK_RV rv;
+    CK_C_INITIALIZE_ARGS args;
 
     if (!library_path) {
         return CKR_ARGUMENTS_BAD;
@@ -185,7 +187,6 @@ CK_RV pkcs11_initialize(char *library_path)
         return rv;
     }
 
-    CK_C_INITIALIZE_ARGS args;
     memset(&args, 0, sizeof(args));
     args.flags = CKF_OS_LOCKING_OK;
     rv = pkcs11_funcs->C_Initialize(&args);
@@ -198,7 +199,7 @@ CK_RV pkcs11_initialize(char *library_path)
     return CKR_OK;
 }
 
-static void pkcs11_finalize()
+static void pkcs11_finalize(void)
 {
     pkcs11_funcs->C_Finalize(NULL);
 }
@@ -295,9 +296,13 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
     CK_KEY_TYPE key_type = CKK_RSA;
+    size_t len_kc, len_kt;
+
+    len_kc = sizeof(key_class);
+    len_kt = sizeof(key_type);
     CK_ATTRIBUTE tmpl[] = {
-        { CKA_CLASS, &key_class, sizeof(key_class) },
-        { CKA_KEY_TYPE, &key_type, sizeof(key_type) },
+        { CKA_CLASS, &key_class, len_kc },
+        { CKA_KEY_TYPE, &key_type, len_kt },
         { CKA_ID, id, id_len }
     };
     unsigned long count;
@@ -337,14 +342,15 @@ char pkcs11_hex_int(char nib1, char nib2)
 int pkcs11_parse_uri(const char *path, char *token, char **value)
 {
     char *tmp, *end, *hex2bin;
-    int i, j = 0;
+    size_t i, j = 0;
 
     if ((tmp = strstr(path, token)) == NULL)
         return 0;
     tmp += strlen(token);
     *value = malloc(strlen(tmp) + 1);
     end = strpbrk(tmp, ";");
-    snprintf(*value, end == NULL ? strlen(tmp) + 1 : end - tmp + 1, "%s", tmp);
+    
+    snprintf(*value, end == NULL ? strlen(tmp) + 1 : (size_t) (end - tmp + 1), "%s", tmp);
     hex2bin = malloc(strlen(*value) + 1);
     for (i = 0; i < strlen(*value); i++) {
         if (*(*value+i) == '%' && i < (strlen(*value)-2)) {
@@ -365,9 +371,13 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 void *callback_data)
 {
     CK_ULONG kt, class;
+    size_t len_kt, len_class;
+
+    len_kt = sizeof(kt);
+    len_class = sizeof(class);
     CK_ATTRIBUTE key_type[] = {
-        { CKA_CLASS,    &class, sizeof(class) },
-        { CKA_KEY_TYPE, &kt,    sizeof(kt)    }
+        { CKA_CLASS,    &class, len_class },
+        { CKA_KEY_TYPE, &kt,    len_kt }
     };
     EVP_PKEY *k = NULL;
     CK_RV rv;
