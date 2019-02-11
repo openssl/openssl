@@ -34,6 +34,7 @@
 # define PKCS11_R_FILE_OPEN_ERROR                         102
 # define PKCS11_R_FIND_OBJECT_FAILED                      103
 # define PKCS11_R_FIND_OBJECT_INIT_FAILED                 104
+# define PKCS11_R_GETATTRIBUTEVALUE_FAILED                114
 # define PKCS11_R_GETFUNCTIONLIST_NOT_FOUND               105
 # define PKCS11_R_GETTING_FUNCTION_LIST_FAILED            106
 # define PKCS11_R_GET_SLOTLIST_FAILED                     107

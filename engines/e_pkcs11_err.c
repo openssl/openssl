@@ -33,6 +33,8 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FAILED), "find object failed"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_INIT_FAILED),
     "find object init failed"},
+    {ERR_PACK(0, 0, PKCS11_R_GETATTRIBUTEVALUE_FAILED),
+    "getattributevalue failed"},
     {ERR_PACK(0, 0, PKCS11_R_GETFUNCTIONLIST_NOT_FOUND),
     "getfunctionlist not found"},
     {ERR_PACK(0, 0, PKCS11_R_GETTING_FUNCTION_LIST_FAILED),

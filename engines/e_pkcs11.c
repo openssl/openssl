@@ -63,6 +63,7 @@ CK_FUNCTION_LIST *pkcs11_funcs;
 typedef struct st_pkcs11 {
     CK_BYTE *id;
     CK_BYTE *pin;
+    CK_SLOT_ID slotid;
     CK_SESSION_HANDLE session;
     CK_OBJECT_HANDLE key;
 } PKCS11;
@@ -92,7 +93,7 @@ int pkcs11_rsa_enc(int flen, const unsigned char *from,
 
     pkcs11_login(pkcs11st.session, pkcs11st.pin, CKU_CONTEXT_SPECIFIC);
 
-    // Get length of signature
+    /* Get length of signature */
     rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, NULL,
                               &signatureLen);
 
@@ -102,7 +103,7 @@ int pkcs11_rsa_enc(int flen, const unsigned char *from,
         goto err;
     }
 
-    // Sign
+    /* Sign */
     rv = pkcs11_funcs->C_Sign(pkcs11st.session, (CK_BYTE *) from, flen, to,
                               &signatureLen);
     if (rv != CKR_OK) {
@@ -137,8 +138,8 @@ CK_RV pkcs11_load_functions(char *library_path)
 {
     CK_RV rv;
     static DSO *pkcs11_dso = NULL;
-
     CK_RV(*pFunc)();
+
     pkcs11_dso = DSO_load(NULL, library_path, NULL, 0);
 
     if (pkcs11_dso == NULL) {
@@ -216,10 +217,12 @@ static CK_SLOT_ID pkcs11_get_slot()
         goto err;
     }
 
-    if (slotCount < 1) {
+    if (slotCount == 0) {
         PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_SLOT_NOT_FOUND);
         goto err;
     }
+
+    /* TODO: make mechanism to provide other slotid */
 
     slotId = slotIds[0];
     OPENSSL_free(slotIds);
@@ -251,6 +254,7 @@ static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
 static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE userType)
 {
     CK_RV rv;
+
     if (pin) {
         rv = pkcs11_funcs->C_Login(session, userType, pin,
                                    strlen((char *)pin));
@@ -268,6 +272,7 @@ static int pkcs11_login(CK_SESSION_HANDLE session, CK_BYTE *pin, CK_USER_TYPE us
 static int pkcs11_logout(CK_SESSION_HANDLE session)
 {
     CK_RV rv;
+
     rv = pkcs11_funcs->C_Logout(session);
     if (rv != CKR_USER_NOT_LOGGED_IN && rv != CKR_OK) {
         PKCS11_trace("C_Logout failed, error: %#04X\n", rv);
@@ -297,6 +302,7 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(CK_SESSION_HANDLE session,
     };
     unsigned long count;
     CK_OBJECT_HANDLE objhandle;
+
     rv = pkcs11_funcs->C_FindObjectsInit(session, tmpl,
                                   sizeof (tmpl) / sizeof (CK_ATTRIBUTE) );
 
@@ -331,7 +337,8 @@ char pkcs11_hex_int(char nib1, char nib2)
 int pkcs11_parse_uri(const char *path, char *token, char **value)
 {
     char *tmp, *end, *hex2bin;
-    int j = 0;
+    int i, j = 0;
+
     if ((tmp = strstr(path, token)) == NULL)
         return 0;
     tmp += strlen(token);
@@ -339,7 +346,7 @@ int pkcs11_parse_uri(const char *path, char *token, char **value)
     end = strpbrk(tmp, ";");
     snprintf(*value, end == NULL ? strlen(tmp) + 1 : end - tmp + 1, "%s", tmp);
     hex2bin = malloc(strlen(*value) + 1);
-    for (int i = 0; i < strlen(*value); i++) {
+    for (i = 0; i < strlen(*value); i++) {
         if (*(*value+i) == '%' && i < (strlen(*value)-2)) {
             *(hex2bin+j) = pkcs11_hex_int(*(*value+i+1), *(*value+i+2));
             i += 2;
@@ -364,16 +371,17 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     };
     EVP_PKEY *k = NULL;
     CK_RV rv;
-    char *id, *pin;
-    char *module_path;
+    char *id, *pin, *module_path, *slotid;
 
-    if (!strncmp(path, "pkcs11:", 7)) {
+    if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
 
 	if (!pkcs11_parse_uri(path,"module-path=", &module_path))
            goto err;
 	if (!pkcs11_parse_uri(path,"id=", &id))
            goto err;
+	if (!pkcs11_parse_uri(path,"slot-id=", &slotid))
+           slotid[0] = '1';
 	if (!pkcs11_parse_uri(path,"pin-value=", &pin))
            goto err;
 
@@ -384,6 +392,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
     pkcs11st.id = (CK_BYTE *) id;
     pkcs11st.pin = (CK_BYTE *) pin;
+    pkcs11st.slotid = (CK_SLOT_ID) atoi(slotid);
 
     rv = pkcs11_initialize(module_path);
 
@@ -399,8 +408,11 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
                                     pkcs11st.key, key_type, 2);
 
-    if(rv != CKR_OK || class != CKO_PRIVATE_KEY) {
-        return k;
+    if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
     }
 
     if(kt == CKK_RSA) {
@@ -410,26 +422,47 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         };
         RSA *rsa = RSA_new();
 
-        if(((rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
-             pkcs11st.key, rsa_attributes, 2)) == CKR_OK) &&
-             (rsa_attributes[0].ulValueLen > 0) &&
-             (rsa_attributes[1].ulValueLen > 0) &&
-             ((rsa_attributes[0].pValue = OPENSSL_malloc(
-             rsa_attributes[0].ulValueLen)) != NULL) &&
-             ((rsa_attributes[1].pValue = OPENSSL_malloc(
-             rsa_attributes[1].ulValueLen)) != NULL) &&
-             ((rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
-             pkcs11st.key, rsa_attributes, 2)) == CKR_OK) && (rsa != NULL)) {
+        rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session, 
+                                               pkcs11st.key, rsa_attributes, 2);
 
-            RSA_set0_key(rsa,
-                         BN_bin2bn(rsa_attributes[0].pValue,
-                                   rsa_attributes[0].ulValueLen, NULL),
-                         BN_bin2bn(rsa_attributes[1].pValue,
-                                   rsa_attributes[1].ulValueLen, NULL),
-                         NULL);
-            if((k = EVP_PKEY_new()) != NULL) {
-                EVP_PKEY_set1_RSA(k, rsa);
-            }
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 
+                      PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+            goto err;
+        }
+
+        if  (rsa_attributes[0].ulValueLen == 0 || 
+             rsa_attributes[1].ulValueLen == 0) goto err;     
+
+        rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen);
+        rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
+
+        if (rsa_attributes[0].pValue == NULL || 
+            rsa_attributes[1].pValue == NULL) { 
+            OPENSSL_free(rsa_attributes[0].pValue);
+            OPENSSL_free(rsa_attributes[1].pValue);
+            goto err;
+        }
+
+        rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session, 
+                                               pkcs11st.key, rsa_attributes, 2);
+
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 
+                      PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+            goto err;
+        }
+       
+        RSA_set0_key(rsa,
+                     BN_bin2bn(rsa_attributes[0].pValue,
+                               rsa_attributes[0].ulValueLen, NULL),
+                     BN_bin2bn(rsa_attributes[1].pValue,
+                               rsa_attributes[1].ulValueLen, NULL),
+                     NULL);
+        if((k = EVP_PKEY_new()) != NULL) {
+            EVP_PKEY_set1_RSA(k, rsa);
         }
 
         OPENSSL_free(rsa_attributes[0].pValue);
