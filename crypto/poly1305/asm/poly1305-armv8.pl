@@ -291,6 +291,7 @@ poly1305_blocks_neon:
 	cbz	$is_base2_26,poly1305_blocks
 
 .Lblocks_neon:
+	.inst	0xd503233f		// paciasp
 	stp	x29,x30,[sp,#-80]!
 	add	x29,sp,#0
 
@@ -859,6 +860,7 @@ poly1305_blocks_neon:
 	st1	{$ACC4}[0],[$ctx]
 
 .Lno_data_neon:
+	.inst	0xd50323bf		// autiasp
 	ldr	x29,[sp],#80
 	ret
 .size	poly1305_blocks_neon,.-poly1305_blocks_neon
