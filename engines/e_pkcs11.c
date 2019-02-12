@@ -230,7 +230,6 @@ static CK_SLOT_ID pkcs11_get_slot()
 
     if (slotList == NULL) {
         PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_MEMORY_ALLOCATION_FAILED);
-        OPENSSL_free(slotList);
         goto err;
     }
 
@@ -256,7 +255,7 @@ static CK_SLOT_ID pkcs11_get_slot()
     return slotId;
 
  err:
-    return 0;
+    return -1;
 }
 
 static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
@@ -394,6 +393,40 @@ int pkcs11_parse_uri(const char *path, char *token, char **value)
     return 1;
 }
 
+static int pkcs11_get_console_pin(char **pin)
+{
+    int i, ret = 0;
+
+#ifndef OPENSSL_NO_UI_CONSOLE
+
+    char *strbuf = NULL;
+
+    strbuf = OPENSSL_malloc(512);
+    for (;;) {
+        char prompt[200];
+        BIO_snprintf(prompt, sizeof(prompt), "Enter PIN: ");
+        strbuf[0] = '\0';
+        i = EVP_read_pw_string((char *)strbuf, 512, prompt, 1);
+        if (i == 0) {
+            if (strbuf[0] == '\0') {
+                goto err;
+            }
+            *pin = strbuf;
+            return 1;
+        }
+        if (i < 0) {
+            PKCS11_trace("bad password read\n");
+            goto err;
+        }
+    }
+
+ err:
+    OPENSSL_free(strbuf);
+#endif
+
+    return ret;
+}
+
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data)
@@ -409,6 +442,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     };
     EVP_PKEY *k = NULL;
     CK_RV rv;
+    CK_SLOT_ID slot;
     char *id, *pin, *module_path, *slotid;
 
     if (strncmp(path, "pkcs11:", 7) == 0) {
@@ -418,9 +452,12 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
            goto err;
 	if (!pkcs11_parse_uri(path,"id=", &id))
            goto err;
-	if (!pkcs11_parse_uri(path,"slot-id=", &slotid))
+	if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
+           slotid = OPENSSL_malloc(2);
            slotid[0] = '0';
-	if (!pkcs11_parse_uri(path,"pin-value=", &pin))
+        }
+	if (!pkcs11_parse_uri(path,"pin-value=", &pin) &&
+            !pkcs11_get_console_pin(&pin) )
            goto err;
 
     } else {
@@ -434,17 +471,19 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
     rv = pkcs11_initialize(module_path);
 
-    if (rv != CKR_OK) {
-        goto err;
-    }
+    if (rv != CKR_OK) goto err;
 
-    pkcs11st.session = pkcs11_start_session(pkcs11_get_slot());
+    slot = pkcs11_get_slot();
+    if (slot < 0) goto err;
+
+    pkcs11st.session = pkcs11_start_session(slot);
+
     pkcs11_login(pkcs11st.session, pkcs11st.pin, CKU_USER);
     pkcs11st.key = pkcs11_get_private_key(pkcs11st.session, pkcs11st.id,
                                           strlen((char *)pkcs11st.id));
 
     rv = pkcs11_funcs->C_GetAttributeValue(pkcs11st.session,
-                                    pkcs11st.key, key_type, 2);
+                                           pkcs11st.key, key_type, 2);
 
     if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
