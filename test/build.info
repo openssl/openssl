@@ -459,7 +459,7 @@ IF[{- !$disabled{tests} -}]
       PROGRAMS{noinst}=sm4_internal_test
     ENDIF
     IF[{- !$disabled{ec} -}]
-      PROGRAMS{noinst}=curve448_internal_test
+      PROGRAMS{noinst}=ec_internal_test curve448_internal_test
     ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
@@ -509,6 +509,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[sm4_internal_test]=sm4_internal_test.c
     INCLUDE[sm4_internal_test]=.. ../include ../apps/include ../crypto/include
     DEPEND[sm4_internal_test]=../libcrypto.a libtestutil.a
+
+    SOURCE[ec_internal_test]=ec_internal_test.c
+    INCLUDE[ec_internal_test]=../include ../crypto/ec ../apps/include ../crypto/include
+    DEPEND[ec_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[curve448_internal_test]=curve448_internal_test.c
     INCLUDE[curve448_internal_test]=.. ../include ../apps/include ../crypto/ec/curve448
