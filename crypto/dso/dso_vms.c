@@ -19,7 +19,7 @@
 # include <stsdef.h>
 # include <descrip.h>
 # include <starlet.h>
-# include "../vms_rms.h"
+# include "internal/vms_rms.h"
 
 /* Some compiler options may mask the declaration of "_malloc32". */
 # if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE
