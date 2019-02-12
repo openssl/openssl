@@ -226,7 +226,8 @@ int pkeyutl_main(int argc, char **argv)
 
     if (md != NULL && rawin == 0) {
         BIO_printf(bio_err,
-                   "%s: -digest parameter is not allowed if input is not raw\n");
+                   "%s: -digest parameter is not allowed if input is not raw\n",
+                   prog);
         goto opthelp;
     }
 
