@@ -15,12 +15,12 @@
 IF[{- !$disabled{apps} -}]
   LIBS{noinst}=libapps.a
   SOURCE[libapps.a]={- join(" ", @apps_lib_src) -}
-  INCLUDE[libapps.a]=.. ../include
+  INCLUDE[libapps.a]=.. ../include include
 
   PROGRAMS=openssl
   SOURCE[openssl]={- join(" ", @apps_init_src) -}
   SOURCE[openssl]={- join(" ", @apps_openssl_src) -}
-  INCLUDE[openssl]=.. ../include
+  INCLUDE[openssl]=.. ../include include
   DEPEND[openssl]=libapps.a ../libssl
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
