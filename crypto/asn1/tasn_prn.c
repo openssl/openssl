@@ -140,16 +140,16 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_VALUE **tmpfld;
     const ASN1_AUX *aux = it->funcs;
-    ASN1_aux_const_cb *asn1_cb;
+    ASN1_aux_const_cb *asn1_cb = NULL;
     ASN1_PRINT_ARG parg;
     int i;
-    if (aux && aux->asn1_const_cb) {
+    if (aux != NULL) {
         parg.out = out;
         parg.indent = indent;
         parg.pctx = pctx;
-        asn1_cb = aux->asn1_const_cb;
-    } else
-        asn1_cb = 0;
+        asn1_cb = ((aux->flags & ASN1_AFLG_CONST_CB) != 0) ? aux->asn1_const_cb
+            : (ASN1_aux_const_cb *)aux->asn1_cb; /* backward compatibility */
+    }
 
    if (((it->itype != ASN1_ITYPE_PRIMITIVE)
        || (it->utype != V_ASN1_BOOLEAN)) && *fld == NULL) {

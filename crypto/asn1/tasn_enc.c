@@ -87,13 +87,15 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     int i, seqcontlen, seqlen, ndef = 1;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux = it->funcs;
-    ASN1_aux_const_cb *asn1_cb = 0;
+    ASN1_aux_const_cb *asn1_cb = NULL;
 
     if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
         return 0;
 
-    if (aux && aux->asn1_const_cb)
-        asn1_cb = aux->asn1_const_cb;
+    if (aux != NULL) {
+        asn1_cb = ((aux->flags & ASN1_AFLG_CONST_CB) != 0) ? aux->asn1_const_cb
+            : (ASN1_aux_const_cb *)aux->asn1_cb; /* backward compatibility */
+    }
 
     switch (it->itype) {
 

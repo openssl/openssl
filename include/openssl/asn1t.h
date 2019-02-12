@@ -155,6 +155,16 @@ extern "C" {
         static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0, NULL}; \
         ASN1_SEQUENCE(tname)
 
+# define ASN1_SEQUENCE_const_cb(tname, const_cb) \
+        static const ASN1_AUX tname##_aux = \
+            {NULL, ASN1_AFLG_CONST_CB, 0, 0, NULL, 0, const_cb}; \
+        ASN1_SEQUENCE(tname)
+
+# define ASN1_SEQUENCE_cb_const_cb(tname, cb, const_cb) \
+        static const ASN1_AUX tname##_aux = \
+            {NULL, ASN1_AFLG_CONST_CB, 0, 0, cb, 0, const_cb}; \
+        ASN1_SEQUENCE(tname)
+
 # define ASN1_BROKEN_SEQUENCE(tname) \
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, NULL, 0, NULL}; \
         ASN1_SEQUENCE(tname)
@@ -711,12 +721,16 @@ typedef struct ASN1_PRIMITIVE_FUNCS_st {
  * error has occurred and the main operation should be abandoned. If major
  * changes in the default behaviour are required then an external type is
  * more appropriate.
+ * For the operations ASN1_OP_I2D_PRE, ASN1_OP_I2D_POST, ASN1_OP_PRINT_PRE, and
+ * ASN1_OP_PRINT_POST, meanwhile a variant of the callback with const parameter
+ * 'in' is provided to make clear statically that its input is not modified. If
+ * and only if this variant is in use the flag ASN1_AFLG_CONST_CB must be set.
  */
 
 typedef int ASN1_aux_cb(int operation, ASN1_VALUE **in, const ASN1_ITEM *it,
                         void *exarg);
-typedef int ASN1_aux_const_cb(int operation, const ASN1_VALUE **in, const ASN1_ITEM *it,
-                        void *exarg);
+typedef int ASN1_aux_const_cb(int operation, const ASN1_VALUE **in,
+                              const ASN1_ITEM *it, void *exarg);
 
 typedef struct ASN1_AUX_st {
     void *app_data;
@@ -725,7 +739,7 @@ typedef struct ASN1_AUX_st {
     int ref_lock;               /* Lock type to use */
     ASN1_aux_cb *asn1_cb;
     int enc_offset;             /* Offset of ASN1_ENCODING structure */
-    ASN1_aux_const_cb *asn1_const_cb;
+    ASN1_aux_const_cb *asn1_const_cb; /* for ASN1_OP_I2D_ and ASN1_OP_PRINT_ */
 } ASN1_AUX;
 
 /* For print related callbacks exarg points to this structure */
@@ -753,6 +767,8 @@ typedef struct ASN1_STREAM_ARG_st {
 # define ASN1_AFLG_ENCODING      2
 /* The Sequence length is invalid */
 # define ASN1_AFLG_BROKEN        4
+/* Use the new asn1_const_cb */
+# define ASN1_AFLG_CONST_CB      8
 
 /* operation values for asn1_cb */
 
