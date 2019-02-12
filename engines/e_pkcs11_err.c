@@ -14,10 +14,13 @@
 #ifndef OPENSSL_NO_ERR
 
 static ERR_STRING_DATA PKCS11_str_functs[] = {
+    {ERR_PACK(0, PKCS11_F_PKCS11_CTRL, 0), "pkcs11_ctrl"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_CTX_NEW, 0), "pkcs11_ctx_new"},
     {ERR_PACK(0, PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 0),
      "pkcs11_engine_load_private_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_PRIVATE_KEY, 0), "pkcs11_get_private_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_SLOT, 0), "pkcs11_get_slot"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_INIT, 0), "pkcs11_init"},
     {ERR_PACK(0, PKCS11_F_PKCS11_INITIALIZE, 0), "pkcs11_initialize"},
     {ERR_PACK(0, PKCS11_F_PKCS11_LOAD_FUNCTIONS, 0), "pkcs11_load_functions"},
     {ERR_PACK(0, PKCS11_F_PKCS11_LOGIN, 0), "pkcs11_login"},
@@ -29,6 +32,7 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
 };
 
 static ERR_STRING_DATA PKCS11_str_reasons[] = {
+    {ERR_PACK(0, 0, PKCS11_R_ENGINE_NOT_INITIALIZED), "engine not initialized"},
     {ERR_PACK(0, 0, PKCS11_R_FILE_OPEN_ERROR), "file open error"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FAILED), "find object failed"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_INIT_FAILED),

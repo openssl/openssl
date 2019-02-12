@@ -17,9 +17,12 @@
 /*
  * PKCS11 function codes.
  */
+# define PKCS11_F_PKCS11_CTRL                             110
+# define PKCS11_F_PKCS11_CTX_NEW                          111
 # define PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY          100
 # define PKCS11_F_PKCS11_GET_PRIVATE_KEY                  101
 # define PKCS11_F_PKCS11_GET_SLOT                         102
+# define PKCS11_F_PKCS11_INIT                             112
 # define PKCS11_F_PKCS11_INITIALIZE                       107
 # define PKCS11_F_PKCS11_LOAD_FUNCTIONS                   108
 # define PKCS11_F_PKCS11_LOGIN                            103
@@ -31,6 +34,7 @@
 /*
  * PKCS11 reason codes.
  */
+# define PKCS11_R_ENGINE_NOT_INITIALIZED                  117
 # define PKCS11_R_FILE_OPEN_ERROR                         102
 # define PKCS11_R_FIND_OBJECT_FAILED                      103
 # define PKCS11_R_FIND_OBJECT_INIT_FAILED                 104

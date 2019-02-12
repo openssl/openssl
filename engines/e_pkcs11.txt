@@ -6,9 +6,12 @@
 # https://www.openssl.org/source/license.html
 
 # Function codes
+PKCS11_F_PKCS11_CTRL:110:pkcs11_ctrl
+PKCS11_F_PKCS11_CTX_NEW:111:pkcs11_ctx_new
 PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY:100:pkcs11_engine_load_private_key
 PKCS11_F_PKCS11_GET_PRIVATE_KEY:101:pkcs11_get_private_key
 PKCS11_F_PKCS11_GET_SLOT:102:pkcs11_get_slot
+PKCS11_F_PKCS11_INIT:112:pkcs11_init
 PKCS11_F_PKCS11_INITIALIZE:107:pkcs11_initialize
 PKCS11_F_PKCS11_LOAD_FUNCTIONS:108:pkcs11_load_functions
 PKCS11_F_PKCS11_LOGIN:103:pkcs11_login
@@ -18,6 +21,7 @@ PKCS11_F_PKCS11_START_SESSION:106:pkcs11_start_session
 PKCS11_F_PKCS11_TRACE:109:PKCS11_trace
 
 #Reason codes
+PKCS11_R_ENGINE_NOT_INITIALIZED:117:engine not initialized
 PKCS11_R_FILE_OPEN_ERROR:102:file open error
 PKCS11_R_FIND_OBJECT_FAILED:103:find object failed
 PKCS11_R_FIND_OBJECT_INIT_FAILED:104:find object init failed
