@@ -14,7 +14,7 @@ L DSA           include/openssl/dsa.h           crypto/dsa/dsa_err.c
 L X509          include/openssl/x509.h          crypto/x509/x509_err.c
 L ASN1          include/openssl/asn1.h          crypto/asn1/asn1_err.c
 L CONF          include/openssl/conf.h          crypto/conf/conf_err.c
-L CRYPTO        include/openssl/crypto.h        crypto/cpt_err.c
+L CRYPTO        include/openssl/crypto.h        crypto/util/cpt_err.c
 L EC            include/openssl/ec.h            crypto/ec/ec_err.c
 L SSL           include/openssl/ssl.h           ssl/ssl_err.c
 L BIO           include/openssl/bio.h           crypto/bio/bio_err.c
