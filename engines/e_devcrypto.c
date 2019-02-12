@@ -41,8 +41,8 @@ static int cfd = -1;
 #define DEVCRYPTO_USE_SOFTWARE        1 /* allow software drivers */
 #define DEVCRYPTO_REJECT_SOFTWARE     2 /* only disallow confirmed software drivers */
 
-#define DEVCRYPTO_DEFAULT_USE_SOFDTRIVERS DEVCRYPTO_REJECT_SOFTWARE
-static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFDTRIVERS;
+#define DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS DEVCRYPTO_REJECT_SOFTWARE
+static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS;
 
 /*
  * cipher/digest status & acceleration definitions
@@ -186,8 +186,13 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     const struct cipher_data_st *cipher_d =
         get_cipher_data(EVP_CIPHER_CTX_nid(ctx));
+    int sess = cipher_ctx->sess.ses;
 
-    memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
+    /* close a previous open session */
+    if (cipher_ctx->sess.ses != 0 &&
+        ioctl(cfd, CIOCFSESSION, &cipher_ctx->sess.ses) <0)
+        SYSerr(SYS_F_IOCTL, errno);
+
     cipher_ctx->sess.cipher = cipher_d->devcryptoid;
     cipher_ctx->sess.keylen = cipher_d->keylen;
     cipher_ctx->sess.key = (void *)key;
@@ -329,10 +334,17 @@ static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
     EVP_CIPHER_CTX *to_ctx = (EVP_CIPHER_CTX *)p2;
     struct cipher_ctx *cipher_ctx;
 
-    if (type == EVP_CTRL_COPY) {
-        /* when copying the context, a new session needs to be initialized */
+    if (type == EVP_CTRL_COPY || type == EVP_CTRL_INIT) {
         cipher_ctx = (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
-        return (cipher_ctx == NULL)
+
+	if (cipher_ctx == NULL) /* OK for copy, error for init */
+	    return (type == EVP_CTRL_COPY);
+
+	/* both COPY & INIT need a clean context */
+        memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
+
+        /* when copying the context, a new session needs to be open as well */
+        return (type == EVP_CTRL_INIT)
             || cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
                            (cipher_ctx->op == COP_ENCRYPT));
     }
@@ -349,6 +361,7 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
+    memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
 
     return 1;
 }
@@ -418,6 +431,7 @@ static void prepare_cipher_methods(void)
             || !EVP_CIPHER_meth_set_flags(known_cipher_methods[i],
                                           cipher_data[i].flags
                                           | EVP_CIPH_CUSTOM_COPY
+                                          | EVP_CIPH_CTRL_INIT
                                           | EVP_CIPH_FLAG_DEFAULT_ASN1)
             || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], cipher_init)
             || !EVP_CIPHER_meth_set_do_cipher(known_cipher_methods[i],
