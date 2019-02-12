@@ -404,6 +404,15 @@ int ssl3_write_bytes(SSL *s, int type, const void *buf_, size_t len,
         }
         tot += tmpwrit;               /* this might be last fragment */
     }
+
+    if (type == SSL3_RT_APPLICATION_DATA) {
+        /*
+         * If we write application data then we reset the count of consecutive
+         * key updates we may receive.
+         */
+        s->key_update_count = 0;
+    }
+
 #if !defined(OPENSSL_NO_MULTIBLOCK) && EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK
     /*
      * Depending on platform multi-block can deliver several *times*
