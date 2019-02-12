@@ -25,7 +25,7 @@ Makefile
 /apps/md4.c
 
 # Auto generated headers
-/crypto/buildinf.h
+/crypto/util/buildinf.h
 /apps/progs.h
 /crypto/include/internal/*_conf.h
 /openssl/include/opensslconf.h
