@@ -43,7 +43,7 @@ IF[{- !$disabled{"engine"} -}]
       ENDIF
     ENDIF
     IF[{- !$disabled{"devcryptoeng"} -}]
-      MODULES=devcrypto
+      MODULES{engine}=devcrypto
       SOURCE[devcrypto]=e_devcrypto.c
       DEPEND[devcrypto]=../libcrypto
       INCLUDE[devcrypto]=../include
