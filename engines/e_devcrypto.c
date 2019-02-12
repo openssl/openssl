@@ -70,6 +70,15 @@ struct driver_info_st {
 void engine_load_devcrypto_int(void);
 #endif
 
+static int clean_devcrypto_session(struct session_op *sess) {
+    if (ioctl(cfd, CIOCFSESSION, &sess->ses) < 0) {
+        SYSerr(SYS_F_IOCTL, errno);
+        return 0;
+    }
+    memset(sess, 0, sizeof(struct session_op));
+    return 1;
+}
+
 /******************************************************************************
  *
  * Ciphers
@@ -186,12 +195,11 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     const struct cipher_data_st *cipher_d =
         get_cipher_data(EVP_CIPHER_CTX_nid(ctx));
-    int sess = cipher_ctx->sess.ses;
 
-    /* close a previous open session */
+    /* cleanup a previous session */
     if (cipher_ctx->sess.ses != 0 &&
-        ioctl(cfd, CIOCFSESSION, &cipher_ctx->sess.ses) <0)
-        SYSerr(SYS_F_IOCTL, errno);
+        clean_devcrypto_session(&cipher_ctx->sess) == 0)
+        return 0;
 
     cipher_ctx->sess.cipher = cipher_d->devcryptoid;
     cipher_ctx->sess.keylen = cipher_d->keylen;
@@ -331,22 +339,29 @@ static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
 {
+    struct cipher_ctx *cipher_ctx =
+        (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     EVP_CIPHER_CTX *to_ctx = (EVP_CIPHER_CTX *)p2;
-    struct cipher_ctx *cipher_ctx;
+    struct cipher_ctx *to_cipher_ctx;
 
-    if (type == EVP_CTRL_COPY || type == EVP_CTRL_INIT) {
-        cipher_ctx = (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
+    switch (type) {
 
-	if (cipher_ctx == NULL) /* OK for copy, error for init */
-	    return (type == EVP_CTRL_COPY);
-
-	/* both COPY & INIT need a clean context */
-        memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
-
-        /* when copying the context, a new session needs to be open as well */
-        return (type == EVP_CTRL_INIT)
-            || cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
+    case EVP_CTRL_COPY:
+        if (cipher_ctx == NULL)
+            return 1;
+        /* when copying the context, a new session needs to be initialized */
+        to_cipher_ctx =
+            (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(to_ctx);
+        memset(&to_cipher_ctx->sess, 0, sizeof(to_cipher_ctx->sess));
+        return cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
                            (cipher_ctx->op == COP_ENCRYPT));
+
+    case EVP_CTRL_INIT:
+        memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
+        return 1;
+
+    default:
+        break;
     }
 
     return -1;
@@ -357,13 +372,7 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
-    if (ioctl(cfd, CIOCFSESSION, &cipher_ctx->sess.ses) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
-        return 0;
-    }
-    memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
-
-    return 1;
+    return clean_devcrypto_session(&cipher_ctx->sess);
 }
 
 /*
@@ -788,11 +797,8 @@ static int digest_cleanup(EVP_MD_CTX *ctx)
 
     if (digest_ctx == NULL)
         return 1;
-    if (ioctl(cfd, CIOCFSESSION, &digest_ctx->sess.ses) < 0) {
-        SYSerr(SYS_F_IOCTL, errno);
-        return 0;
-    }
-    return 1;
+
+    return clean_devcrypto_session(&digest_ctx->sess);
 }
 
 /*
