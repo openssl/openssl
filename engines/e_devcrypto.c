@@ -1048,7 +1048,7 @@ static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
         OPENSSL_MSTR(DEVCRYPTO_USE_SOFTWARE) "=allow all drivers, "
         OPENSSL_MSTR(DEVCRYPTO_REJECT_SOFTWARE)
         "=use if acceleration can't be determined) [default="
-        OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFDTRIVERS) "]",
+        OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS) "]",
     ENGINE_CMD_FLAG_NUMERIC},
 #endif
 
