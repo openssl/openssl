@@ -44,7 +44,7 @@
 /*
  * From the number of bits, work out:
  *    the number of pointers in a tree node;
- *    a bit mask to quickly extra an index and
+ *    a bit mask to quickly extract an index and
  *    the maximum depth of the tree structure.
   */
 #define SA_BLOCK_MAX            (1 << OPENSSL_SA_BLOCK_BITS)
