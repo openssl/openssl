@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-push(@INC, "${dir}perlasm", "perlasm");
+push(@INC, "${dir}../perlasm", "perlasm");
 require "x86asm.pl";
 
 $output = pop;

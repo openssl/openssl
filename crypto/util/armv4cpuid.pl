@@ -12,7 +12,7 @@ $output  = shift;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
-( $xlate="${dir}perlasm/arm-xlate.pl" and -f $xlate) or
+( $xlate="${dir}../perlasm/arm-xlate.pl" and -f $xlate) or
 die "can't locate arm-xlate.pl";
 
 open OUT,"| \"$^X\" $xlate $flavour $output";
