@@ -158,7 +158,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     rv = pkcs11_funcs->C_SignInit(ctx->session, &sign_mechanism, ctx->key);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_SignInit failed, error: %#04X\n", rv);
+        PKCS11_trace("C_SignInit failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_INIT_FAILED);
         goto err;
     }
@@ -170,7 +170,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
                               &signatureLen);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_Sign failed, error: %#04X\n", rv);
+        PKCS11_trace("C_Sign failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
         goto err;
     }
@@ -179,7 +179,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) from, flen, to,
                               &signatureLen);
     if (rv != CKR_OK) {
-        PKCS11_trace("C_Sign failed, error: %#04X\n", rv);
+        PKCS11_trace("C_Sign failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
         goto err;
     }
@@ -252,7 +252,7 @@ static CK_RV pkcs11_initialize(const char *library_path)
 
     rv = pkcs11_load_functions(library_path);
     if (rv != CKR_OK) {
-        PKCS11_trace("Getting PKCS11 function list failed, error: %#04X\n", rv);
+        PKCS11_trace("Getting PKCS11 function list failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_INITIALIZE,
                   PKCS11_R_GETTING_FUNCTION_LIST_FAILED);
         return rv;
@@ -262,7 +262,7 @@ static CK_RV pkcs11_initialize(const char *library_path)
     args.flags = CKF_OS_LOCKING_OK;
     rv = pkcs11_funcs->C_Initialize(&args);
     if (rv != CKR_OK) {
-        PKCS11_trace("C_Initialize failed, error: %#04X\n", rv);
+        PKCS11_trace("C_Initialize failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_INITIALIZE, PKCS11_R_INITIALIZE_FAILED);
         return rv;
     }
@@ -278,15 +278,15 @@ static void pkcs11_finalize(void)
 static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx)
 {
     CK_RV rv;
-    CK_SLOT_ID slotId;
     CK_ULONG slotCount;
+    CK_SLOT_ID slotId;
     CK_SLOT_ID_PTR slotList;
     int i;
 
     rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, NULL, &slotCount);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_GetSlotList failed, error: %#04X\n", rv);
+        PKCS11_trace("C_GetSlotList failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_GET_SLOTLIST_FAILED);
         goto err;
     }
@@ -305,19 +305,15 @@ static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx)
     rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, slotList, &slotCount);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_GetSlotList failed, error: %#04X\n", rv);
+        PKCS11_trace("C_GetSlotList failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_SLOT, PKCS11_R_GET_SLOTLIST_FAILED);
+        OPENSSL_free(slotList);
         goto err;
     }
 
-    slotId = slotList[0];
-
-    for (i = 0; i < slotCount; i++) {
-        slotId = slotList[i];
-        if (ctx->slotid == slotList[i]) {
-            slotId = slotList[i];
-            break;
-        }
+    slotId = slotList[0]; /* Default value if slot not set*/
+    for (i = 1; i < slotCount; i++) {
+        if (ctx->slotid == slotList[i]) slotId = slotList[i];
     }
 
     OPENSSL_free(slotList);
@@ -334,7 +330,7 @@ static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
     rv = pkcs11_funcs->C_OpenSession(slotId, CKF_SERIAL_SESSION, NULL,
                                      NULL, &session);
     if (rv != CKR_OK) {
-        PKCS11_trace("C_OpenSession failed, error: %#04X\n", rv);
+        PKCS11_trace("C_OpenSession failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_START_SESSION,
                   PKCS11_R_OPEN_SESSION_ERROR);
         goto err;
@@ -350,11 +346,11 @@ static int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType)
     /* Binary pins not supported */
     CK_RV rv;
 
-    if (ctx->pin) {
+    if (ctx->pin != NULL) {
         rv = pkcs11_funcs->C_Login(ctx->session, userType, ctx->pin,
                                    strlen((char *)ctx->pin));
         if (rv != CKR_OK) {
-            PKCS11_trace("C_Login failed, error: %#04X\n", rv);
+            PKCS11_trace("C_Login failed, error: %#08X\n", rv);
             PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
             goto err;
         }
@@ -370,7 +366,7 @@ static int pkcs11_logout(CK_SESSION_HANDLE session)
 
     rv = pkcs11_funcs->C_Logout(session);
     if (rv != CKR_USER_NOT_LOGGED_IN && rv != CKR_OK) {
-        PKCS11_trace("C_Logout failed, error: %#04X\n", rv);
+        PKCS11_trace("C_Logout failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_LOGOUT, PKCS11_R_LOGOUT_FAILED);
         goto err;
     }
@@ -407,7 +403,7 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
                                          sizeof(tmpl) / sizeof(CK_ATTRIBUTE) );
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_FindObjectsInit failed, error: %#04X\n", rv);
+        PKCS11_trace("C_FindObjectsInit failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_INIT_FAILED);
         goto err;
@@ -416,7 +412,7 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
     rv = pkcs11_funcs->C_FindObjects(ctx->session, &objhandle, 1, &count);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_FindObjects failed, error: %#04X\n", rv);
+        PKCS11_trace("C_FindObjects failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_FAILED);
         goto err;
@@ -568,7 +564,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key, key_type, 2);
 
     if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
-        PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
@@ -585,8 +581,8 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                rsa_attributes, 2);
 
         if (rv != CKR_OK) {
-            PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
-            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 
+            PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                       PKCS11_R_GETATTRIBUTEVALUE_FAILED);
             goto err;
         }
@@ -608,7 +604,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                rsa_attributes, 2);
 
         if (rv != CKR_OK) {
-            PKCS11_trace("C_GetAttributeValue failed, error: %#04X\n", rv);
+            PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
             PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                       PKCS11_R_GETATTRIBUTEVALUE_FAILED);
             goto err;
