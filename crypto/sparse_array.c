@@ -9,6 +9,7 @@
  */
 
 #include <openssl/crypto.h>
+#include <openssl/bn.h>
 #include "internal/sparse_array.h"
 
 /*
