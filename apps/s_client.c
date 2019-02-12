@@ -3563,7 +3563,6 @@ static char *base64encode (const void *buf, size_t len)
 static int is_dNS_name(const char *host)
 {
     const size_t MAX_LABEL_LENGTH = 63;
-
     size_t i;
     int isdnsname = 0;
     size_t length = strlen(host);
