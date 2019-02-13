@@ -95,9 +95,104 @@ err:
     return res;
 }
 
+struct index_cases_st {
+    size_t n;
+    char *v;
+    int del;
+};
+
+struct doall_st {
+    SPARSE_ARRAY_OF(char) *sa;
+    size_t num_cases;
+    const struct index_cases_st *cases;
+    int res;
+    int all;
+};
+
+static void leaf_check_all(size_t n, char *value, void *arg)
+{
+    struct doall_st *doall_data = (struct doall_st *)arg;
+    const struct index_cases_st *cases = doall_data->cases;
+    size_t i;
+
+    doall_data->res = 0;
+    for (i = 0; i < doall_data->num_cases; i++)
+        if ((doall_data->all || !cases[i].del)
+            && n == cases[i].n && strcmp(value, cases[i].v) == 0) {
+            doall_data->res = 1;
+            return;
+        }
+    TEST_error("Index %zu with value %s not found", n, value);
+}
+
+static void leaf_delete(size_t n, char *value, void *arg)
+{
+    struct doall_st *doall_data = (struct doall_st *)arg;
+    const struct index_cases_st *cases = doall_data->cases;
+    size_t i;
+
+    doall_data->res = 0;
+    for (i = 0; i < doall_data->num_cases; i++)
+        if (n == cases[i].n && strcmp(value, cases[i].v) == 0) {
+            doall_data->res = 1;
+            ossl_sa_char_set(doall_data->sa, n, NULL);
+            return;
+        }
+    TEST_error("Index %zu with value %s not found", n, value);
+}
+
+static int test_sparse_array_doall(void)
+{
+    static const struct index_cases_st cases[] = {
+        { 22, "A", 1 }, { 1021, "b", 0 }, { 3, "c", 0 }, { INT_MAX, "d", 1 },
+        { (size_t)-1, "H", 0 }, { (size_t)-2, "i", 1 }, { 666666666, "s", 1 },
+        { 1234567890, "t", 0 },
+    };
+    struct doall_st doall_data;
+    size_t i;
+    SPARSE_ARRAY_OF(char) *sa = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(sa = ossl_sa_char_new()))
+        goto err;
+    doall_data.num_cases = OSSL_NELEM(cases);
+    doall_data.cases = cases;
+    doall_data.all = 1;
+    doall_data.sa = NULL;
+    for (i = 0; i <  OSSL_NELEM(cases); i++)
+        if (!TEST_true(ossl_sa_char_set(sa, cases[i].n, cases[i].v))) {
+            TEST_note("failed at iteration %zu", i + 1);
+            goto err;
+    }
+    
+    ossl_sa_char_doall_arg(sa, &leaf_check_all, &doall_data);
+    if (doall_data.res == 0) {
+        TEST_info("while checking all elements");
+        goto err;
+    }
+    doall_data.all = 0;
+    doall_data.sa = sa;
+    ossl_sa_char_doall_arg(sa, &leaf_delete, &doall_data);
+    if (doall_data.res == 0) {
+        TEST_info("while deleting selected elements");
+        goto err;
+    }
+    ossl_sa_char_doall_arg(sa, &leaf_check_all, &doall_data);
+    if (doall_data.res == 0) {
+        TEST_info("while checking for deleted elements");
+        goto err;
+    }
+    res = 1;
+
+err:
+    ossl_sa_char_free(sa);
+    return res;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sparse_array);
     ADD_TEST(test_sparse_array_num);
+    ADD_TEST(test_sparse_array_doall);
     return 1;
 }
