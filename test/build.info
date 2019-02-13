@@ -332,7 +332,7 @@ IF[{- !$disabled{tests} -}]
   DEPEND[pkey_meth_kdf_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_kdf_test]=evp_kdf_test.c
-  INCLUDE[evp_kdf_test]=../include
+  INCLUDE[evp_kdf_test]=../include ../apps/include
   DEPEND[evp_kdf_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_time_test]=x509_time_test.c
