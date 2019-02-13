@@ -1419,7 +1419,7 @@ unless ($disabled{asm}) {
 	push @{$config{lib_defines}}, "X25519_ASM";
     }
     if ($target{padlock_asm_src} ne $table{DEFAULTS}->{padlock_asm_src}) {
-	push @{$config{lib_defines}}, "PADLOCK_ASM";
+	push @{$config{dso_defines}}, "PADLOCK_ASM";
     }
     if ($target{poly1305_asm_src} ne "") {
 	push @{$config{lib_defines}}, "POLY1305_ASM";
