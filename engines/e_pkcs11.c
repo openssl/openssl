@@ -320,7 +320,7 @@ static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx)
     return slotId;
 
  err:
-    return -1;
+    return 0;
 }
 
 static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
@@ -552,9 +552,9 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     if (rv != CKR_OK) goto err;
 
     slot = pkcs11_get_slot(ctx);
-    if (slot < 0) goto err;
 
-    ctx->session = pkcs11_start_session(slot);
+    if (!(ctx->session = pkcs11_start_session(slot)))
+        goto err;
 
     if (!pkcs11_login(ctx, CKU_USER)) goto err;
 
