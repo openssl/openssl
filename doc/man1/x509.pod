@@ -13,7 +13,7 @@ B<openssl> B<x509>
 [B<-outform DER|PEM>]
 [B<-keyform DER|PEM|ENGINE>]
 [B<-CAform DER|PEM>]
-[B<-CAkeyform DER|PEM>]
+[B<-CAkeyform DER|PEM|ENGINE>]
 [B<-in filename>]
 [B<-out filename>]
 [B<-serial>]
