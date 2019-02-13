@@ -91,11 +91,9 @@ SSL_SESSION *SSL_SESSION_new(void)
     }
     return ss;
  err:
-    if (ss) {
-        CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
-        sk_X509_free(ss->peer_chain);
-        CRYPTO_THREAD_lock_free(ss->lock);
-    }
+    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
+    sk_X509_free(ss->peer_chain);
+    CRYPTO_THREAD_lock_free(ss->lock);
     OPENSSL_free(ss);
     return NULL;
 }
