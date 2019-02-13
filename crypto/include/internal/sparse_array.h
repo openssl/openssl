@@ -37,16 +37,17 @@ extern "C" {
         return OPENSSL_SA_num((OPENSSL_SA *)sa); \
     } \
     static ossl_inline void ossl_sa_##type##_doall(const SPARSE_ARRAY_OF(type) *sa, \
-                                                   void (*leaf)(type *)) \
+                                                   void (*leaf)(size_t, type *)) \
     { \
-        OPENSSL_SA_doall((OPENSSL_SA *)sa, (void (*)(void *))leaf); \
+        OPENSSL_SA_doall((OPENSSL_SA *)sa, (void (*)(size_t, void *))leaf); \
     } \
     static ossl_inline void ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) *sa, \
-                                                       void (*leaf)(type *, \
+                                                       void (*leaf)(size_t, \
+                                                                    type *, \
 						                    void *),\
                                                        void *arg) \
     { \
-        OPENSSL_SA_doall_arg((OPENSSL_SA *)sa, (void (*)(void *, void *))leaf, \
+        OPENSSL_SA_doall_arg((OPENSSL_SA *)sa, (void (*)(size_t, void *, void *))leaf, \
                              arg); \
     } \
     static ossl_inline type *ossl_sa_##type##_get(const SPARSE_ARRAY_OF(type) *sa, \
@@ -66,9 +67,9 @@ OPENSSL_SA *OPENSSL_SA_new(void);
 void OPENSSL_SA_free(OPENSSL_SA *sa);
 void OPENSSL_SA_free_leaves(OPENSSL_SA *sa);
 size_t OPENSSL_SA_num(const OPENSSL_SA *sa);
-void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(void *));
-void OPENSSL_SA_doall_arg(const OPENSSL_SA *sa, void (*leaf)(void *, void *),
-                          void *);
+void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(size_t, void *));
+void OPENSSL_SA_doall_arg(const OPENSSL_SA *sa,
+                          void (*leaf)(size_t, void *, void *), void *);
 void *OPENSSL_SA_get(const OPENSSL_SA *sa, size_t n);
 int OPENSSL_SA_set(OPENSSL_SA *sa, size_t n, void *val);
 

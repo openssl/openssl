@@ -20,8 +20,9 @@ ossl_sa_TYPE_doall_arg, ossl_sa_TYPE_get, ossl_sa_TYPE_set
  void ossl_sa_TYPE_free(const SPARSE_ARRAY_OF(TYPE) *sa);
  void ossl_sa_TYPE_free_leaves(const SPARSE_ARRAY_OF(TYPE) *sa);
  int ossl_sa_TYPE_num(const SPARSE_ARRAY_OF(TYPE) *sa);
- void ossl_sa_TYPE_doall(const OPENSSL_SA *sa, void (*leaf)(void *));
- void ossl_sa_TYPE_doall_arg(const OPENSSL_SA *sa, void (*leaf)(void *), void *arg);
+ void ossl_sa_TYPE_doall(const OPENSSL_SA *sa, void (*leaf)(size_t, void *));
+ void ossl_sa_TYPE_doall_arg(const OPENSSL_SA *sa,
+                             void (*leaf)(size_t, void *, void *), void *arg);
  TYPE *ossl_sa_TYPE_get(const SPARSE_ARRAY_OF(TYPE) *sa, size_t idx);
  int ossl_sa_TYPE_set(SPARSE_ARRAY_OF(TYPE) *sa, size_t idx, TYPE *value);
 
@@ -53,12 +54,17 @@ elements of B<sa>. After this call B<sa> is no longer valid.
 ossl_sa_TYPE_free_leaves() frees up the B<sa> structure and all of its
 elements.  After this call B<sa> is no longer valid.
 
-ossl_sa_TYPE_doall() calls the function B<leaf> for each element in B<sa> in
-ascending index order.
+ossl_sa_TYPE_doall() calls the function B<leaf> for each element in B<sa>
+in ascending index order. The index position, within the sparse array,
+of each item is passed as the first argument to the leaf function and a
+pointer to the associated value is is passed as the second argument.
 
-ossl_sa_TYPE_doall_arg() calls the function B<leaf> for each element in B<sa>
-in ascending index order. The argument B<arg> is passed to each call of
-B<leaf>.
+ossl_sa_TYPE_doall_arg() calls the function B<leaf> for each element in
+B<sa> in ascending index order. The index position, within the sparse
+array, of each item is passed as the first argument to the leaf function,
+a pointer to the associated value is passed as the second argument and
+the third argument is the user supplied B<arg>.
+
 
 =head1 NOTES
 

@@ -68,10 +68,11 @@ OPENSSL_SA *OPENSSL_SA_new(void)
 }
 
 static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
-                     void (*leaf)(void *, void *), void *arg)
+                     void (*leaf)(size_t, void *, void *), void *arg)
 {
     int i[SA_BLOCK_MAX_LEVELS];
     void *nodes[SA_BLOCK_MAX_LEVELS];
+    size_t idx = 0;
     int l = 0;
 
     i[0] = 0;
@@ -84,14 +85,17 @@ static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
             if (p != NULL && node != NULL)
                 (*node)(p);
             l--;
+            idx >>= OPENSSL_SA_BLOCK_BITS;
         } else {
             i[l] = n + 1;
             if (p != NULL && p[n] != NULL) {
+                idx = (idx & ~SA_BLOCK_MASK) | n;
                 if (l < sa->levels - 1) {
                     i[++l] = 0;
                     nodes[l] = p[n];
+                    idx <<= OPENSSL_SA_BLOCK_BITS;
                 } else if (leaf != NULL) {
-                    (*leaf)(p[n], arg);
+                    (*leaf)(idx, p[n], arg);
                 }
             }
         }
@@ -103,7 +107,7 @@ static void sa_free_node(void **p)
     OPENSSL_free(p);
 }
 
-static void sa_free_leaf(void *p, void *arg)
+static void sa_free_leaf(size_t n, void *p, void *arg)
 {
     OPENSSL_free(p);
 }
@@ -122,15 +126,15 @@ void OPENSSL_SA_free_leaves(OPENSSL_SA *sa)
 
 /* Wrap this in a structure to avoid compiler warnings */
 struct trampoline_st {
-    void (*func)(void *);
+    void (*func)(size_t, void *);
 };
 
-static void trampoline(void *l, void *arg)
+static void trampoline(size_t n, void *l, void *arg)
 {
-    ((const struct trampoline_st *)arg)->func(l);
+    ((const struct trampoline_st *)arg)->func(n, l);
 }
 
-void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(void *))
+void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(size_t, void *))
 {
     struct trampoline_st tramp;
 
@@ -139,8 +143,8 @@ void OPENSSL_SA_doall(const OPENSSL_SA *sa, void (*leaf)(void *))
         sa_doall(sa, NULL, &trampoline, &tramp);
 }
 
-void OPENSSL_SA_doall_arg(const OPENSSL_SA *sa, void (*leaf)(void *, void *),
-                          void *arg)
+void OPENSSL_SA_doall_arg(const OPENSSL_SA *sa,
+                          void (*leaf)(size_t, void *, void *), void *arg)
 {
     if (sa != NULL)
         sa_doall(sa, NULL, leaf, arg);
