@@ -37,7 +37,7 @@
 # else
 #  define OPENSSL_SA_BLOCK_BITS           12
 # endif
-#elif OPENSSL_SA_BLOCK_BITS < 2 || OPENSSL_SA_BLOCK_BITS > BN_BITS2
+#elif OPENSSL_SA_BLOCK_BITS < 2 || OPENSSL_SA_BLOCK_BITS > (BN_BITS2 - 1)
 # error OPENSSL_SA_BLOCK_BITS is out of range
 #endif
 
