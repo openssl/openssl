@@ -622,7 +622,7 @@ install_runtime_libs: build_libs
 		: {- output_off() unless windowsdll(); "" -}; \
 		$(ECHO) "install $$s -> $(DESTDIR)$(INSTALLTOP)/bin/$$fn"; \
 		cp $$s $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
-		chmod 644 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
+		chmod 755 $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new; \
 		mv -f $(DESTDIR)$(INSTALLTOP)/bin/$$fn.new \
 		      $(DESTDIR)$(INSTALLTOP)/bin/$$fn; \
 		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
