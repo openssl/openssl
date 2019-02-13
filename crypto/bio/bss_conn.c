@@ -197,13 +197,7 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
             break;
 
         case BIO_CONN_S_CONNECT_ERROR:
-            /*
-             * For repeat offenders, ensure that we don't fill up the error
-             * stack more than necessary.
-             */
-            if (ERR_peek_error() != ERR_PACK(ERR_LIB_BIO, BIO_F_CONN_STATE,
-                                             BIO_R_CONNECT_ERROR))
-                BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
+            BIOerr(BIO_F_CONN_STATE, BIO_R_CONNECT_ERROR);
             ret = 0;
             goto exit_loop;
 
