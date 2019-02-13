@@ -70,6 +70,7 @@ my %conf_dependent_tests = (
   "25-cipher.conf" => disabled("poly1305") || disabled("chacha"),
   "27-ticket-appdata.conf" => !$is_default_tls,
   "28-seclevel.conf" => disabled("tls1_2") || $no_ec,
+  "30-extended-master-secret.conf" => disabled("tls1_2"),
 );
 
 # Add your test here if it should be skipped for some compile-time
