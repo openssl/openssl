@@ -460,16 +460,13 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
         return 0;
     }
 
+    if (ppmtd == OSSL_CRMF_POPO_NONE)
+        goto end;
     if ((pp = OSSL_CRMF_POPO_new()) == NULL)
         goto oom;
     pp->type = ppmtd;
 
     switch (ppmtd) {
-    case OSSL_CRMF_POPO_NONE:
-        OSSL_CRMF_POPO_free(pp);
-        OSSL_CRMF_POPO_free(crm->popo);
-        crm->popo = NULL;
-        return 1;
     case OSSL_CRMF_POPO_RAVERIFIED:
         if ((pp->value.raVerified = ASN1_NULL_new()) == NULL)
             goto oom;
@@ -505,6 +502,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
         goto err;
     }
 
+ end:
     OSSL_CRMF_POPO_free(crm->popo);
     crm->popo = pp;
 
