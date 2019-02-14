@@ -115,7 +115,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, const X509_EXTENSION *ext)
 #  define OSSL_CRMF_POPO_SIGNATURE  1
 #  define OSSL_CRMF_POPO_KEYENC     2
 #  define OSSL_CRMF_POPO_KEYAGREE   3
-int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
+int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                               int dgst, int ppmtd);
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified);

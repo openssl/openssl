@@ -31,7 +31,7 @@ OSSL_CRMF_MSGS_verify_popo
  int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
                                    const X509_EXTENSION *ext);
 
- int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
+ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                                int dgst, int ppmtd);
 
  int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,

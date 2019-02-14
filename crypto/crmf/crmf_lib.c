@@ -383,7 +383,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
 /* TODO: support cases 1+2 (besides case 3) defined in RFC 4211, section 4.1. */
 static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                     OSSL_CRMF_CERTREQUEST *cr,
-                                    const EVP_PKEY *pkey, int dgst)
+                                    EVP_PKEY *pkey, int dgst)
 {
     int len;
     size_t crlen, max_sig_size;
@@ -408,7 +408,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
         goto err;
     crlen = (size_t)len;
 
-    max_sig_size = EVP_PKEY_size((EVP_PKEY *)pkey);
+    max_sig_size = EVP_PKEY_size(pkey);
     sig = OPENSSL_malloc(max_sig_size);
     if (sig == NULL)
         goto err;
@@ -431,7 +431,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
         goto err;
     if (!(EVP_SignUpdate(ctx, crder, crlen)))
         goto err;
-    if (!(EVP_SignFinal(ctx, sig, &siglen, (EVP_PKEY *)pkey)))
+    if (!(EVP_SignFinal(ctx, sig, &siglen, pkey)))
         goto err;
 
     if (!(ASN1_BIT_STRING_set(ps->signature, sig, siglen)))
@@ -451,7 +451,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
 }
 
 
-int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, const EVP_PKEY *pkey,
+int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
                               int dgst, int ppmtd)
 {
     OSSL_CRMF_POPO *pp = NULL;
