@@ -105,7 +105,8 @@ IMPLEMENT_CRMF_CTRL_FUNC(regToken, ASN1_STRING, regCtrl)
 IMPLEMENT_CRMF_CTRL_FUNC(authenticator, ASN1_UTF8STRING, regCtrl)
 
 int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
-                                     int method, GENERAL_NAME *nm) {
+                                     int method, GENERAL_NAME *nm)
+{
     if (spi == NULL
         || method < OSSL_CRMF_PUB_METHOD_DONTCARE
         || method > OSSL_CRMF_PUB_METHOD_LDAP) {
@@ -122,7 +123,8 @@ int OSSL_CRMF_MSG_set0_SinglePubInfo(OSSL_CRMF_SINGLEPUBINFO *spi,
 
 int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
                                  OSSL_CRMF_PKIPUBLICATIONINFO *pi,
-                                 OSSL_CRMF_SINGLEPUBINFO *spi) {
+                                 OSSL_CRMF_SINGLEPUBINFO *spi)
+{
     if (pi == NULL || spi == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_PKIPUBLICATIONINFO_PUSH0_SINGLEPUBINFO,
                 CRMF_R_NULL_ARGUMENT);
@@ -143,7 +145,8 @@ int OSSL_CRMF_MSG_PKIPublicationInfo_push0_SinglePubInfo(
 }
 
 int OSSL_CRMF_MSG_set_PKIPublicationInfo_action(
-                                 OSSL_CRMF_PKIPUBLICATIONINFO *pi, int action) {
+                                 OSSL_CRMF_PKIPUBLICATIONINFO *pi, int action)
+{
     if (pi == NULL
         || action < OSSL_CRMF_PUB_ACTION_DONTPUBLISH
         || action > OSSL_CRMF_PUB_ACTION_PLEASEPUBLISH) {
@@ -241,7 +244,8 @@ IMPLEMENT_CRMF_CTRL_FUNC(certReq, OSSL_CRMF_CERTREQUEST, regInfo)
 
 
 /* retrieves the certificate template of crm */
-OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm) {
+OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm)
+{
     if (crm == NULL || crm->certReq == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_GET0_TMPL, CRMF_R_NULL_ARGUMENT);
         return NULL;
@@ -571,21 +575,21 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
              * the public key from the certificate template. This MUST be
              * exactly the same value as contained in the certificate template.
              */
-            if (pubkey == NULL ||
-                sig->poposkInput->publicKey == NULL ||
-                X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey) ||
-                ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT),
-                                 sig->algorithmIdentifier, sig->signature,
-                                 sig->poposkInput,
-                                 X509_PUBKEY_get0(pubkey)) < 1)
+            if (pubkey == NULL
+                || sig->poposkInput->publicKey == NULL
+                || X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey)
+                || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_POPOSIGNINGKEYINPUT),
+                                    sig->algorithmIdentifier, sig->signature,
+                                    sig->poposkInput,
+                                    X509_PUBKEY_get0(pubkey)) < 1)
                 break;
         } else {
-            if (pubkey == NULL ||
-                req->certReq->certTemplate->subject == NULL ||
-                ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                                 sig->algorithmIdentifier, sig->signature,
-                                 req->certReq,
-                                 X509_PUBKEY_get0(pubkey)) < 1)
+            if (pubkey == NULL
+                || req->certReq->certTemplate->subject == NULL
+                || ASN1_item_verify(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                                    sig->algorithmIdentifier, sig->signature,
+                                    req->certReq,
+                                    X509_PUBKEY_get0(pubkey)) < 1)
                 break;
         }
         return 1;
@@ -691,7 +695,7 @@ X509 *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(OSSL_CRMF_ENCRYPTEDVALUE *ecert,
 
     /* first the symmetric key needs to be decrypted */
     if ((pkctx = EVP_PKEY_CTX_new(pkey, NULL)) != NULL
-            && EVP_PKEY_decrypt_init(pkctx)) {
+        && EVP_PKEY_decrypt_init(pkctx)) {
         ASN1_BIT_STRING *encKey = ecert->encSymmKey;
         size_t eksize = 0;
 
