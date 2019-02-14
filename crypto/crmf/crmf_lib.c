@@ -387,7 +387,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
 {
     int len;
     size_t crlen, max_sig_size;
-    unsigned int siglen;
+    size_t siglen;
     unsigned char *crder = NULL, *sig = NULL;
     int alg_nid = 0;
     int md_nid = 0;
@@ -418,8 +418,8 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
     }
-    if (!(OBJ_find_sigid_algs(alg_nid, &md_nid, NULL)
-          && (alg = EVP_get_digestbynid(md_nid)) != NULL)) {
+    if (!OBJ_find_sigid_algs(alg_nid, &md_nid, NULL)
+        || (alg = EVP_get_digestbynid(md_nid)) == NULL) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
         goto err;
@@ -427,14 +427,10 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
     if (!X509_ALGOR_set0(ps->algorithmIdentifier, OBJ_nid2obj(alg_nid),
                          V_ASN1_NULL, NULL)
         || (ctx = EVP_MD_CTX_new()) == NULL
-        || !(EVP_SignInit_ex(ctx, alg, NULL)))
-        goto err;
-    if (!(EVP_SignUpdate(ctx, crder, crlen)))
-        goto err;
-    if (!(EVP_SignFinal(ctx, sig, &siglen, pkey)))
-        goto err;
-
-    if (!(ASN1_BIT_STRING_set(ps->signature, sig, siglen)))
+        || EVP_DigestSignInit(ctx, NULL, alg, NULL, pkey) <= 0
+        || EVP_DigestUpdate(ctx, crder, crlen) <= 0
+        || EVP_DigestSignFinal(ctx, sig, &siglen) <= 0
+        || !ASN1_BIT_STRING_set(ps->signature, sig, siglen))
         goto err;
 
     /* cleanup */
