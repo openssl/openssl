@@ -51,7 +51,7 @@ On success the reference counter of the B<pubkey> (if given) is incremented,
 while the B<subject>, B<issuer>, and B<serial> structures (if given) are copied.
 
 OSSL_CRMF_MSG_set0_extensions() sets B<exts> as the extensions in the
-certTemplate of B<crm>. Consumes B<exts>.
+certTemplate of B<crm>. Frees any pre-existing ones and consumes B<exts>.
 
 OSSL_CRMF_MSG_push0_extension() pushes the X509 extension B<ext> to the
 extensions in the certTemplate of B<crm>.  Consumes B<ext>.

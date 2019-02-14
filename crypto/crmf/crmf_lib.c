@@ -339,11 +339,12 @@ int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
         return 0;
     }
 
-    if (sk_X509_EXTENSION_num(exts) <= 0) {
+    if (sk_X509_EXTENSION_num(exts) == 0) {
         sk_X509_EXTENSION_free(exts);
         exts = NULL; /* do not include empty extensions list */
     }
 
+    sk_X509_EXTENSION_pop_free(tmpl->extensions, X509_EXTENSION_free);
     tmpl->extensions = exts;
     return 1;
 }
