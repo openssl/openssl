@@ -259,15 +259,13 @@ int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to)
     OSSL_CRMF_OPTIONALVALIDITY *vld = NULL;
     ASN1_TIME *from_asn = NULL;
     ASN1_TIME *to_asn = NULL;
-    OSSL_CRMF_CERTTEMPLATE *tmpl;
+    OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
-    if (crm == NULL) {
+    if (tmpl == NULL) { /* also crm == NULL implies this */
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_VALIDITY, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
-    if ((tmpl = OSSL_CRMF_MSG_get0_tmpl(crm)) == NULL)
-        goto oom;
     if (from != 0 && ((from_asn = ASN1_TIME_set(NULL, from)) == NULL))
         goto oom;
     if (to != 0 && ((to_asn = ASN1_TIME_set(NULL, to)) == NULL))
@@ -334,14 +332,10 @@ int OSSL_CRMF_MSG_get_certReqId(OSSL_CRMF_MSG *crm)
 int OSSL_CRMF_MSG_set0_extensions(OSSL_CRMF_MSG *crm,
                                   X509_EXTENSIONS *exts)
 {
-    OSSL_CRMF_CERTTEMPLATE *tmpl;
+    OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
-    if (crm == NULL) {
+    if (tmpl == NULL) { /* also crm == NULL implies this */
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS, CRMF_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if ((tmpl = OSSL_CRMF_MSG_get0_tmpl(crm)) == NULL) {
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
@@ -361,7 +355,7 @@ int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm,
     int new = 0;
     OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
-    if (tmpl == NULL || ext == NULL) {
+    if (tmpl == NULL || ext == NULL) { /* also crm == NULL implies this */
         CRMFerr(CRMF_F_OSSL_CRMF_MSG_PUSH0_EXTENSION, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
