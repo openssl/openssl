@@ -10,6 +10,8 @@
 #ifndef HEADER_KDF_H
 # define HEADER_KDF_H
 
+# include <stdarg.h>
+# include <stddef.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/kdferr.h>
 # ifdef __cplusplus
