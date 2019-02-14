@@ -272,7 +272,7 @@ static int test_builtin(void)
             goto builtin_err;
 
         /* create signature */
-        sig_len = ECDSA_size(eckey);
+        sig_len = ECDSA_size(eckey)+2;
         if (!TEST_ptr(signature = OPENSSL_malloc(sig_len))
                 || !TEST_true(ECDSA_sign(0, digest, SHA512_DIGEST_LENGTH,
                                          signature, &sig_len, eckey)))
