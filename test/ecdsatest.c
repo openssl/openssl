@@ -344,6 +344,8 @@ static int test_builtin(void)
             goto builtin_err;
         }
         sig_ptr2 = signature;
+        if (!TEST_int_le(i2d_ECDSA_SIG(modified_sig, NULL), ECDSA_size(eckey)+2))
+            goto builtin_err;
         sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
         if (!TEST_false(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
                                      signature, sig_len, eckey)))
@@ -362,6 +364,8 @@ static int test_builtin(void)
         }
 
         sig_ptr2 = signature;
+        if (!TEST_int_le(i2d_ECDSA_SIG(modified_sig, NULL), ECDSA_size(eckey)+2))
+            goto builtin_err;
         sig_len = i2d_ECDSA_SIG(modified_sig, &sig_ptr2);
         if (!TEST_true(ECDSA_verify(0, digest, SHA512_DIGEST_LENGTH,
                                     signature, sig_len, eckey)))
