@@ -542,7 +542,8 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     OSSL_CRMF_POPOSIGNINGKEY *sig = NULL;
 
     if (reqs == NULL
-        || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL) {
+        || (req = sk_OSSL_CRMF_MSG_value(reqs, rid)) == NULL
+        || req->popo == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
                 CRMF_R_NULL_ARGUMENT);
         return 0;
@@ -581,18 +582,17 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
         }
         return 1;
     case OSSL_CRMF_POPO_KEYENC:
+#ifdef OSSL_CMP_CERTREP_NEW_IMPLEMENTS_POPO_KEYENC /* TODO */
         if (req->popo->value.keyEncipherment->type
-            != OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE)
-            goto unsupported;
-        if (ASN1_INTEGER_get
-            (req->popo->value.keyEncipherment->value.subsequentMessage)
-            != OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT)
-            goto unsupported;
-        /* TODO when implemented in CMP_certrep_new(): return 1 */
-        goto unsupported;
+            == OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE)
+            && ASN1_INTEGER_get(req->popo->value.keyEncipherment->
+                                value.subsequentMessage)
+                == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT) {
+        return 1;
+    }
+#endif
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
-    unsupported:
         CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
                 CRMF_R_UNSUPPORTED_POPO_METHOD);
         return 0;
