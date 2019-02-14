@@ -76,7 +76,8 @@ and a destructor to a new index.
      foo_free
  };
 
- static int foo_init(void) {
+ static int foo_init(void)
+ {
      foo_index = openssl_ctx_new_index(foo_method);
 
      return foo_index != -1;
