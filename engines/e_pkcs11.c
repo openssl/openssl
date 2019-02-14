@@ -561,7 +561,8 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     ctx->key = pkcs11_get_private_key(ctx);
     if (ctx->key < 0) goto err;
 
-    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key, key_type, 2);
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
+                                           key_type, 2);
 
     if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
@@ -622,6 +623,9 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
         OPENSSL_free(rsa_attributes[0].pValue);
         OPENSSL_free(rsa_attributes[1].pValue);
+    } else {
+        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
+                  PKCS11_R_RSA_NOT_FOUND);
     }
     return k;
 

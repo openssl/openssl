@@ -49,6 +49,7 @@
 # define PKCS11_R_LOGOUT_FAILED                           111
 # define PKCS11_R_MEMORY_ALLOCATION_FAILED                115
 # define PKCS11_R_OPEN_SESSION_ERROR                      112
+# define PKCS11_R_RSA_NOT_FOUND                           118
 # define PKCS11_R_SIGN_FAILED                             100
 # define PKCS11_R_SIGN_INIT_FAILED                        101
 # define PKCS11_R_SLOT_NOT_FOUND                          113

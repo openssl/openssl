@@ -52,6 +52,7 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_MEMORY_ALLOCATION_FAILED),
     "memory allocation failed"},
     {ERR_PACK(0, 0, PKCS11_R_OPEN_SESSION_ERROR), "open session error"},
+    {ERR_PACK(0, 0, PKCS11_R_RSA_NOT_FOUND), "rsa not found"},
     {ERR_PACK(0, 0, PKCS11_R_SIGN_FAILED), "sign failed"},
     {ERR_PACK(0, 0, PKCS11_R_SIGN_INIT_FAILED), "sign init failed"},
     {ERR_PACK(0, 0, PKCS11_R_SLOT_NOT_FOUND), "slot not found"},
