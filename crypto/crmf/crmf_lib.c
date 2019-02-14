@@ -393,6 +393,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
     int md_nid = 0;
     const EVP_MD *alg = NULL;
     EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
 
     if (ps == NULL || cr == NULL || pkey == NULL) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_NULL_ARGUMENT);
@@ -404,14 +405,18 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
     ps->signature->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 
     len = i2d_OSSL_CRMF_CERTREQUEST(cr, &crder);
-    if (len < 0 || crder == NULL)
+    if (len < 0 || crder == NULL) {
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
         goto err;
+    }
     crlen = (size_t)len;
 
     max_sig_size = EVP_PKEY_size(pkey);
     sig = OPENSSL_malloc(max_sig_size);
-    if (sig == NULL)
+    if (sig == NULL) {
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, ERR_R_MALLOC_FAILURE);
         goto err;
+    }
 
     if (!OBJ_find_sigid_by_algs(&alg_nid, dgst, EVP_PKEY_id(pkey))) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
@@ -430,20 +435,17 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
         || EVP_DigestSignInit(ctx, NULL, alg, NULL, pkey) <= 0
         || EVP_DigestUpdate(ctx, crder, crlen) <= 0
         || EVP_DigestSignFinal(ctx, sig, &siglen) <= 0
-        || !ASN1_BIT_STRING_set(ps->signature, sig, siglen))
+        || !ASN1_BIT_STRING_set(ps->signature, sig, siglen)) {
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
         goto err;
+    }
+    ret = 1;
 
-    /* cleanup */
-    OPENSSL_free(crder);
-    EVP_MD_CTX_free(ctx);
-    OPENSSL_free(sig);
-    return 1;
  err:
-    CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
     OPENSSL_free(crder);
     EVP_MD_CTX_free(ctx);
     OPENSSL_free(sig);
-    return 0;
+    return ret;
 }
 
 
