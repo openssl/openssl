@@ -145,6 +145,8 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
+#       -Wunused-function -- no, it forces header use of safestack et al
+#                            DEFINE macros
 my $clang_devteam_warn = ""
         . " -Wswitch-default"
         . " -Wno-parentheses-equality"
@@ -154,6 +156,7 @@ my $clang_devteam_warn = ""
         . " -Wincompatible-pointer-types-discards-qualifiers"
         . " -Wmissing-variable-declarations"
         . " -Wno-unknown-warning-option"
+        . " -Wno-unused-function"
         ;
 
 # This adds backtrace information to the memory leak info.  Is only used
@@ -487,7 +490,7 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
-    "engine"            => [ "afalgeng", "devcryptoeng" ],
+    "engine"            => [ "afalgeng", "devcryptoeng", "pkcs11eng" ],
 
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
@@ -1712,7 +1715,7 @@ if ($builder eq "unified") {
         # The basic things we're trying to build
         my @programs = ();
         my @libraries = ();
-        my @engines = ();
+        my @modules = ();
         my @scripts = ();
 
         my %attributes = ();
@@ -1824,12 +1827,12 @@ if ($builder eq "unified") {
                     }
                 }
             },
-            qr/^\s*ENGINES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
+            qr/^\s*MODULES(?:{([\w=]+(?:\s*,\s*[\w=]+)*)})?\s*=\s*(.*)\s*$/
             => sub {
                 if (!@skip || $skip[$#skip] > 0) {
                     my @a = tokenize($1, qr|\s*,\s*|);
-                    my @e = tokenize($2);
-                    push @engines, @e;
+                    my @m = tokenize($2);
+                    push @modules, @m;
                     foreach my $a (@a) {
                         my $ak = $a;
                         my $av = 1;
@@ -1837,8 +1840,8 @@ if ($builder eq "unified") {
                             $ak = $1;
                             $av = $2;
                         }
-                        foreach my $e (@e) {
-                            $attributes{$e}->{$ak} = $av;
+                        foreach my $m (@m) {
+                            $attributes{$m}->{$ak} = $av;
                         }
                     }
                 }
@@ -1900,10 +1903,13 @@ if ($builder eq "unified") {
             );
         die "runaway IF?" if (@skip);
 
-        die <<"EOF" if scalar @engines and !$config{dynamic_engines};
+        if (grep { defined $attributes{$_}->{engine} } keys %attributes
+                and !$config{dynamic_engines}) {
+            die <<"EOF"
 ENGINES can only be used if configured with 'dynamic-engine'.
 This is usually a fault in a build.info file.
 EOF
+        }
 
         foreach (keys %attributes) {
             my $dest = $_;
@@ -1917,7 +1923,7 @@ EOF
         {
             my %infos = ( programs  => [ @programs  ],
                           libraries => [ @libraries ],
-                          engines   => [ @engines   ],
+                          modules   => [ @modules   ],
                           scripts   => [ @scripts   ] );
             foreach my $k (keys %infos) {
                 foreach (@{$infos{$k}}) {
@@ -2143,7 +2149,7 @@ EOF
                 if defined($unified_info{$_});
             delete $unified_info{$_};
         }
-        foreach my $prodtype (('programs', 'libraries', 'engines', 'scripts')) {
+        foreach my $prodtype (('programs', 'libraries', 'modules', 'scripts')) {
             # $intent serves multi purposes:
             # - give a prefix for the new object files names
             # - in the case of libraries, rearrange the object files so static
@@ -2159,7 +2165,7 @@ EOF
                                            src => [ 'sources',
                                                     'shared_sources' ],
                                            dst => 'shared_sources' } },
-                engines   => { dso    => { src => [ 'sources',
+                modules   => { dso    => { src => [ 'sources',
                                                     'shared_sources' ],
                                            dst => 'shared_sources' } },
                 scripts   => { script => { src => [ 'sources' ],
@@ -2221,7 +2227,7 @@ EOF
 
     ### Make unified_info a bit more efficient
     # One level structures
-    foreach (("programs", "libraries", "engines", "scripts")) {
+    foreach (("programs", "libraries", "modules", "scripts")) {
         $unified_info{$_} = [ sort keys %{$unified_info{$_}} ];
     }
     # Two level structures
@@ -2269,7 +2275,7 @@ EOF
     # they end up in where applicable.  Then, add build rules for those
     # directories
     my %loopinfo = ( "lib" => [ @{$unified_info{libraries}} ],
-                     "dso" => [ @{$unified_info{engines}} ],
+                     "dso" => [ @{$unified_info{modules}} ],
                      "bin" => [ @{$unified_info{programs}} ],
                      "script" => [ @{$unified_info{scripts}} ] );
     foreach my $type (keys %loopinfo) {
