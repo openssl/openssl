@@ -26,6 +26,9 @@ CRYPTO_get_ex_data, CRYPTO_free_ex_data, CRYPTO_new_ex_data
 
  int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 
+ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
+                          int idx);
+
  int CRYPTO_set_ex_data(CRYPTO_EX_DATA *r, int idx, void *arg);
 
  void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *r, int idx);
@@ -114,7 +117,8 @@ new_func() is called for every defined index. There is no requirement
 that the entire parent, or containing, structure has been set up.
 The new_func() is typically used only to allocate memory to store the
 exdata, and perhaps an "initialized" flag within that memory.
-The exdata value should be set by calling CRYPTO_set_ex_data().
+The exdata value may be allocated later on with CRYPTO_alloc_ex_data(),
+or may be set by calling CRYPTO_set_ex_data().
 
 When a structure is free'd (such as SSL_CTX_free()) then the
 free_func() is called for every defined index.  Again, the state of the
@@ -147,13 +151,17 @@ will fail.
 
 CRYPTO_get_ex_new_index() returns a new index or -1 on failure.
 
-CRYPTO_free_ex_index() and
-CRYPTO_set_ex_data() return 1 on success or 0 on failure.
+CRYPTO_free_ex_index(), CRYPTO_alloc_ex_data() and CRYPTO_set_ex_data()
+return 1 on success or 0 on failure. 
 
 CRYPTO_get_ex_data() returns the application data or NULL on failure;
 note that NULL may be a valid value.
 
 dup_func() should return 0 for failure and 1 for success.
+
+=head1 HISTORY
+
+CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
