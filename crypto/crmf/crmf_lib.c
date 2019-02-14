@@ -514,7 +514,7 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
     return 0;
 }
 
-/* returns 0 for equal, -1 for a < b, 1 for a > b, <= -2 on error */
+/* returns 0 for equal, -1 for a < b or error on a, 1 for a > b or error on b */
 static int X509_PUBKEY_cmp(X509_PUBKEY *a, X509_PUBKEY *b)
 {
     X509_ALGOR *algA = NULL, *algB = NULL;
@@ -522,16 +522,12 @@ static int X509_PUBKEY_cmp(X509_PUBKEY *a, X509_PUBKEY *b)
 
     if (a == b)
         return 0;
-    if (a == NULL)
+    if (a == NULL
+        || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a) || algA == NULL)
         return -1;
-    if (b == NULL)
+    if (b == NULL
+        || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b) || algB == NULL)
         return 1;
-    if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a)
-        ||
-        !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b))
-        return -2;
-    if (algA == NULL || algB == NULL)
-        return -3;
     if ((res = X509_ALGOR_cmp(algA, algB)) != 0)
         return res;
     return EVP_PKEY_cmp(X509_PUBKEY_get0(a), X509_PUBKEY_get0(b));
