@@ -237,6 +237,10 @@ static int test_exdata(void)
     if (!TEST_ptr(CRYPTO_get_ex_data(&t1->ex_data, saved_idx2)))
         return 0;
 
+    /*
+     * saved_idx3 differs from other indexes by being created after the exdata
+     * was initialized.
+     */
     saved_idx3 = CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_APP,
                                          saved_argl, saved_argp,
                                          exnew2, exdup2, exfree2);
