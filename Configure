@@ -378,6 +378,7 @@ my @disablables = (
     "ocb",
     "ocsp",
     "pic",
+    "pkcs11eng",
     "poly1305",
     "posix-io",
     "psk",
