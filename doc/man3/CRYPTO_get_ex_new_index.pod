@@ -3,8 +3,9 @@
 =head1 NAME
 
 CRYPTO_EX_new, CRYPTO_EX_free, CRYPTO_EX_dup,
-CRYPTO_free_ex_index, CRYPTO_get_ex_new_index, CRYPTO_set_ex_data,
-CRYPTO_get_ex_data, CRYPTO_free_ex_data, CRYPTO_new_ex_data
+CRYPTO_free_ex_index, CRYPTO_get_ex_new_index,
+CRYPTO_alloc_ex_data, CRYPTO_set_ex_data, CRYPTO_get_ex_data,
+CRYPTO_free_ex_data, CRYPTO_new_ex_data
 - functions supporting application-specific data
 
 =head1 SYNOPSIS
