@@ -561,7 +561,7 @@ IF[{- !$disabled{tests} -}]
 
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c
-  INCLUDE[context_internal_test]=../include ../apps/include
+  INCLUDE[context_internal_test]=.. ../include ../apps/include
   DEPEND[context_internal_test]=../libcrypto.a libtestutil.a
 ENDIF
 
