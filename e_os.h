@@ -27,7 +27,7 @@
  * set this to a comma-separated list of 'random' device files to try out. By
  * default, we will try to read at least one of these files
  */
-#  define DEVRANDOM "/dev/urandom", "/dev/random","/dev/hwrng", "/dev/srandom"
+#  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
 #  define DEVRANDOM_WAIT "/dev/random"
 # endif
 # if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
@@ -36,7 +36,7 @@
  * sockets will be tried in the order listed in case accessing the device
  * files listed in DEVRANDOM did not return enough randomness.
  */
-#  define DEVRANDOM_EGD "/var/run/egd-pool","/dev/egd-pool","/etc/egd-pool","/etc/entropy"
+#  define DEVRANDOM_EGD "/var/run/egd-pool", "/dev/egd-pool", "/etc/egd-pool", "/etc/entropy"
 # endif
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
