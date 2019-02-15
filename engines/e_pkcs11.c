@@ -36,6 +36,18 @@
 #define PKCS11_CMD_MODULE_PATH            ENGINE_CMD_BASE
 #define PKCS11_CMD_PIN                    (ENGINE_CMD_BASE + 1)
 
+static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
+    {PKCS11_CMD_MODULE_PATH,
+     "module_path",
+     "Module path",
+     ENGINE_CMD_FLAG_STRING},
+    {PKCS11_CMD_PIN,
+     "pin",
+     "PIN",
+     ENGINE_CMD_FLAG_STRING},
+    {0, NULL, NULL, 0}
+};
+
 static void pkcs11_finalize(void);
 static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static int pkcs11_logout(CK_SESSION_HANDLE session);
@@ -47,6 +59,8 @@ static char pkcs11_hex_int(char nib1, char nib2);
 static int pkcs11_rsa_enc(int flen, const unsigned char *from,
                    unsigned char *to, RSA *rsa, int padding);
 static RSA_METHOD *pkcs11_rsa(void);
+
+static int pkcs11_init(ENGINE *e);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
@@ -88,13 +102,14 @@ static int pkcs11_init(ENGINE *e)
         pkcs11_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
         if (pkcs11_idx < 0)
             goto memerr;
+
+        ctx = pkcs11_ctx_new();
+        if (ctx == NULL)
+            goto memerr;
+
+        ENGINE_set_ex_data(e, pkcs11_idx, ctx);
     }
 
-    ctx = pkcs11_ctx_new();
-    if (ctx == NULL)
-        goto memerr;
-
-    ENGINE_set_ex_data(e, pkcs11_idx, ctx);
     return 1;
 
  memerr:
@@ -110,12 +125,15 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     PKCS11_CTX *ctx;
 
     if (pkcs11_idx == -1) {
+        pkcs11_init(e);
+    }
+
+    if (pkcs11_idx == -1) {
         PKCS11err(PKCS11_F_PKCS11_CTRL, PKCS11_R_ENGINE_NOT_INITIALIZED);
         return 0;
     }
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-
-    /* TODO: Read config file */
+    ctx->pin = NULL;
 
     switch (cmd) {
     case PKCS11_CMD_MODULE_PATH:
@@ -140,6 +158,10 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         }
         break;
     }
+
+    if (ret)
+        ENGINE_set_ex_data(e, pkcs11_idx, ctx);
+
     return ret;
 }
 
@@ -151,6 +173,11 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     ENGINE *e;
     CK_ULONG signatureLen = 0;
     CK_MECHANISM sign_mechanism = { 0 };
+    CK_BBOOL bTrue = CK_TRUE;
+    size_t lenAttr = sizeof(bTrue);
+    CK_ATTRIBUTE keyAttribute[] = {
+            { CKA_ALWAYS_AUTHENTICATE, &bTrue, lenAttr }
+    };
 
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     e = ENGINE_by_id("pkcs11");
@@ -163,14 +190,23 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
         goto err;
     }
 
-    if (!pkcs11_login(ctx, CKU_CONTEXT_SPECIFIC)) goto err;
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
+                                           keyAttribute, 1);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
+    }
+
+    if (bTrue && !pkcs11_login(ctx, CKU_CONTEXT_SPECIFIC)) goto err;
 
     /* Get length of signature */
     rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) from, flen, NULL,
                               &signatureLen);
 
     if (rv != CKR_OK) {
-        PKCS11_trace("C_Sign failed, error: %#08X\n", rv);
+        PKCS11_trace("C_Sign (get length) failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
         goto err;
     }
@@ -507,10 +543,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 void *callback_data)
 {
     CK_ULONG kt, class;
-    size_t len_kt, len_class;
-
-    len_kt = sizeof(kt);
-    len_class = sizeof(class);
+    size_t len_kt = sizeof(kt), len_class = sizeof(class);
     CK_ATTRIBUTE key_type[] = {
         { CKA_CLASS,    &class, len_class },
         { CKA_KEY_TYPE, &kt,    len_kt }
@@ -519,34 +552,36 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     CK_RV rv;
     CK_SLOT_ID slot;
     PKCS11_CTX *ctx;
+    char *id, *module_path, *slotid;
+    char *pin = NULL;
 
-    char *id, *pin, *module_path, *slotid;
-
+    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+    slotid = OPENSSL_malloc(2);
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
-
 	if (!pkcs11_parse_uri(path,"module-path=", &module_path))
            goto err;
 	if (!pkcs11_parse_uri(path,"id=", &id))
            goto err;
 	if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
-           slotid = OPENSSL_malloc(2);
            slotid[0] = '0';
         }
-	if (!pkcs11_parse_uri(path,"pin-value=", &pin) &&
-            !pkcs11_get_console_pin(&pin) )
+	pkcs11_parse_uri(path,"pin-value=", &pin);
+        } else if (path == NULL) {
+           PKCS11_trace("inkey is null\n");
            goto err;
-
-    } else {
-        PKCS11_trace("String pkcs11: not found\n");
-        goto err;
-    }
-    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+        } else {
+            if (ctx->module_path == NULL) {
+                PKCS11_trace("Module path is null\n");
+                goto err;
+            }
+            module_path = ctx->module_path;
+            id = OPENSSL_strdup(path);
+            slotid[0] = '0';
+        }
 
     ctx->id = (CK_BYTE *) id;
-    ctx->pin = (CK_BYTE *) pin;
     ctx->slotid = (CK_SLOT_ID) atoi(slotid);
-
     rv = pkcs11_initialize(module_path);
 
     if (rv != CKR_OK) goto err;
@@ -556,7 +591,18 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     if (!(ctx->session = pkcs11_start_session(slot)))
         goto err;
 
-    if (!pkcs11_login(ctx, CKU_USER)) goto err;
+    if (ctx->pin == NULL && pin == NULL) {
+        pkcs11_get_console_pin(&pin);
+
+        if (pin == NULL) {
+            PKCS11_trace("PIN is invalid\n");
+            goto err;
+        } else {
+            ctx->pin = (CK_BYTE *) pin;
+        }
+    } else if (ctx->pin == NULL) {
+        ctx->pin = (CK_BYTE *) pin;
+    }
 
     ctx->key = pkcs11_get_private_key(ctx);
     if (ctx->key < 0) goto err;
