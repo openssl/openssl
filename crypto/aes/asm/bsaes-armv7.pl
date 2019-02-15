@@ -728,7 +728,6 @@ $code.=<<___;
 .arch	armv7-a
 .fpu	neon
 
-.text
 .syntax	unified 	@ ARMv7-capable assembler is expected to handle this
 #if defined(__thumb2__) && !defined(__APPLE__)
 .thumb
@@ -736,6 +735,8 @@ $code.=<<___;
 .code   32
 # undef __thumb2__
 #endif
+
+.text
 
 .type	_bsaes_decrypt8,%function
 .align	4
@@ -1125,9 +1126,9 @@ bsaes_cbc_encrypt:
 #ifndef	__thumb__
 	blo	AES_cbc_encrypt
 #else
-	bhs	1f
+	bhs	.Lcbc_do_bsaes
 	b	AES_cbc_encrypt
-1:
+.Lcbc_do_bsaes:
 #endif
 #endif
 
