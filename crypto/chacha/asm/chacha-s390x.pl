@@ -225,7 +225,7 @@ LABEL	("ChaCha20_ctr32");
 	larl	("%r1","OPENSSL_s390xcap_P");
 
 	lghi	("%r0",64);
-&{$z?	\&cgr:\&cr}	($len,"%r0");
+&{$z?	\&clgr:\&clr}	($len,"%r0");
 	jle	("_s390x_chacha_novx");
 
 	lg	("%r0","S390X_STFLE+16(%r1)");
