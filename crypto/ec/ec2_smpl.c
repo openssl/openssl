@@ -898,6 +898,7 @@ static int ec_GF2m_simple_field_inv(const EC_GROUP *group, BIGNUM *r,
                                     const BIGNUM *a, BN_CTX *ctx)
 {
     int ret;
+
     if (!(ret = BN_GF2m_mod_inv(r, a, group->field, ctx)))
         ECerr(EC_F_EC_GF2M_SIMPLE_FIELD_INV, EC_R_CANNOT_INVERT);
     return ret;
