@@ -593,7 +593,7 @@ static int dasync_cipher_ctrl_helper(EVP_CIPHER_CTX *ctx, int type, int arg,
 
         case EVP_CTRL_AEAD_SET_MAC_KEY:
         {
-            EVP_CIPHER *cipher = EVP_aes_128_cbc_hmac_sha1();
+            const EVP_CIPHER *cipher = EVP_aes_128_cbc_hmac_sha1();
             if (!aeadcapable || cipher == NULL)
                 return -1;
             EVP_CIPHER_CTX_set_cipher_data(ctx, pipe_ctx->inner_cipher_data);
