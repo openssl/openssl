@@ -28,6 +28,13 @@ my $fpu = sub {
     if ($flavour =~ /linux/)	{ ".fpu\t".join(',',@_); }
     else			{ ""; }
 };
+my $rodata = sub {
+    SWITCH: for ($flavour) {
+	/linux/		&& return ".section\t.rodata";
+	/ios/		&& return ".section\t__TEXT,__const";
+	last;
+    }
+};
 my $hidden = sub {
     if ($flavour =~ /ios/)	{ ".private_extern\t".join(',',@_); }
     else			{ ".hidden\t".join(',',@_); }

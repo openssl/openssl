@@ -53,18 +53,27 @@ open OUT,"| \"$^X\" $xlate $flavour $output";
 
 $prefix="aes_v8";
 
+$_byte = ($flavour =~ /win/ ? "DCB" : ".byte");
+
 $code=<<___;
 #include "arm_arch.h"
 
 #if __ARM_MAX_ARCH__>=7
-.text
 ___
-$code.=".arch	armv8-a+crypto\n"			if ($flavour =~ /64/);
+$code.=".arch	armv8-a+crypto\n.text\n"		if ($flavour =~ /64/);
 $code.=<<___						if ($flavour !~ /64/);
 .arch	armv7-a	// don't confuse not-so-latest binutils with argv8 :-)
 .fpu	neon
+#ifdef	__thumb2__
+.syntax	unified
+.thumb
+# define INST(a,b,c,d)	$_byte	c,d|0xc,a,b
+#else
 .code	32
-#undef	__thumb2__
+# define INST(a,b,c,d)	$_byte	a,b,c,d
+#endif
+
+.text
 ___
 
 # Assembler mnemonics are an eclectic mix of 32- and 64-bit syntax,
@@ -955,7 +964,7 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	    # since ARMv7 instructions are always encoded little-endian.
 	    # correct solution is to use .inst directive, but older
 	    # assemblers don't implement it:-(
-	    sprintf ".byte\t0x%02x,0x%02x,0x%02x,0x%02x\t@ %s %s",
+	    sprintf "INST(0x%02x,0x%02x,0x%02x,0x%02x)\t@ %s %s",
 			$word&0xff,($word>>8)&0xff,
 			($word>>16)&0xff,($word>>24)&0xff,
 			$mnemonic,$arg;
@@ -996,13 +1005,16 @@ if ($flavour =~ /64/) {			######## 64-bit code
 	s/\],#[0-9]+/]!/o;
 
 	s/[v]?(aes\w+)\s+([qv].*)/unaes($1,$2)/geo	or
-	s/cclr\s+([^,]+),\s*([a-z]+)/mov$2	$1,#0/o	or
+	s/cclr\s+([^,]+),\s*([a-z]+)/mov.$2	$1,#0/o	or
 	s/vtbl\.8\s+(.*)/unvtbl($1)/geo			or
 	s/vdup\.32\s+(.*)/unvdup32($1)/geo		or
 	s/vmov\.32\s+(.*)/unvmov32($1)/geo		or
 	s/^(\s+)b\./$1b/o				or
-	s/^(\s+)mov\./$1mov/o				or
 	s/^(\s+)ret/$1bx\tlr/o;
+
+	if (s/^(\s+)mov\.([a-z]+)/$1mov$2/) {
+	    print "	it	$2\n";
+	}
 
 	print $_,"\n";
     }
