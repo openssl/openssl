@@ -8,6 +8,8 @@ OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free - OpenSSL library context
 
  #include <openssl/crypto.h>
 
+ typedef struct openssl_ctx_st OPENSSL_CTX;
+
  OPENSSL_CTX *OPENSSL_CTX_new(void);
  void OPENSSL_CTX_free(OPENSSL_CTX *ctx);
 
