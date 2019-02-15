@@ -1654,7 +1654,7 @@ ecp_nistz256_scatter_w5:
 
 	ldp	x4,x5,[$inp]		// X
 	ldp	x6,x7,[$inp,#16]
-	str	w4,[$out,#64*0-4]
+	stur	w4,[$out,#64*0-4]
 	lsr	x4,x4,#32
 	str	w5,[$out,#64*1-4]
 	lsr	x5,x5,#32
@@ -1670,7 +1670,7 @@ ecp_nistz256_scatter_w5:
 
 	ldp	x4,x5,[$inp,#32]	// Y
 	ldp	x6,x7,[$inp,#48]
-	str	w4,[$out,#64*0-4]
+	stur	w4,[$out,#64*0-4]
 	lsr	x4,x4,#32
 	str	w5,[$out,#64*1-4]
 	lsr	x5,x5,#32
@@ -1686,7 +1686,7 @@ ecp_nistz256_scatter_w5:
 
 	ldp	x4,x5,[$inp,#64]	// Z
 	ldp	x6,x7,[$inp,#80]
-	str	w4,[$out,#64*0-4]
+	stur	w4,[$out,#64*0-4]
 	lsr	x4,x4,#32
 	str	w5,[$out,#64*1-4]
 	lsr	x5,x5,#32
