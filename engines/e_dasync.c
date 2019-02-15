@@ -592,13 +592,16 @@ static int dasync_cipher_ctrl_helper(EVP_CIPHER_CTX *ctx, int type, int arg,
             break;
 
         case EVP_CTRL_AEAD_SET_MAC_KEY:
-            if (!aeadcapable)
+        {
+            EVP_CIPHER *cipher = EVP_aes_128_cbc_hmac_sha1();
+            if (!aeadcapable || cipher == NULL)
                 return -1;
             EVP_CIPHER_CTX_set_cipher_data(ctx, pipe_ctx->inner_cipher_data);
-            ret = EVP_CIPHER_meth_get_ctrl(EVP_aes_128_cbc_hmac_sha1())
+            ret = EVP_CIPHER_meth_get_ctrl(cipher)
                                           (ctx, type, arg, ptr);
             EVP_CIPHER_CTX_set_cipher_data(ctx, pipe_ctx);
             return ret;
+        }
 
         case EVP_CTRL_AEAD_TLS1_AAD:
         {
@@ -647,6 +650,8 @@ static int dasync_cipher_init_key_helper(EVP_CIPHER_CTX *ctx,
     struct dasync_pipeline_ctx *pipe_ctx =
         (struct dasync_pipeline_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
+    if (cipher == NULL)
+        return -1;
     if (pipe_ctx->inner_cipher_data == NULL
             && EVP_CIPHER_impl_ctx_size(cipher) != 0) {
         pipe_ctx->inner_cipher_data = OPENSSL_zalloc(
@@ -677,6 +682,8 @@ static int dasync_cipher_helper(EVP_CIPHER_CTX *ctx, unsigned char *out,
     struct dasync_pipeline_ctx *pipe_ctx =
         (struct dasync_pipeline_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
+    if (cipher == NULL)
+        return -1;
     pipes = pipe_ctx->numpipes;
     EVP_CIPHER_CTX_set_cipher_data(ctx, pipe_ctx->inner_cipher_data);
     if (pipes == 0) {
@@ -717,6 +724,8 @@ static int dasync_cipher_cleanup_helper(EVP_CIPHER_CTX *ctx,
     struct dasync_pipeline_ctx *pipe_ctx =
         (struct dasync_pipeline_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
 
+    if (cipher == NULL)
+        return -1;
     OPENSSL_clear_free(pipe_ctx->inner_cipher_data,
                        EVP_CIPHER_impl_ctx_size(cipher));
 
