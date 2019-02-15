@@ -43,10 +43,12 @@ static int group_field_tests(const EC_GROUP *group, BN_CTX *ctx)
         || !TEST_true(group->meth->field_mul(group, c, a, b, ctx))
         || (group->meth->field_decode &&
             !TEST_true(group->meth->field_decode(group, c, c, ctx)))
-        || !TEST_true(BN_is_one(c))
-        /* 1/0 = error */
-        || !TEST_true(BN_zero(a))
-        || !TEST_false(group->meth->field_inv(group, b, a, ctx))
+        || !TEST_true(BN_is_one(c)))
+        goto err;
+
+    /* 1/0 = error */
+    BN_zero(a);
+    if (!TEST_false(group->meth->field_inv(group, b, a, ctx))
         || !TEST_true(ERR_GET_LIB(ERR_peek_last_error()) == ERR_LIB_EC)
         || !TEST_true(ERR_GET_REASON(ERR_peek_last_error()) ==
                       EC_R_CANNOT_INVERT)
