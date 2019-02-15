@@ -103,6 +103,12 @@ my $asciz = sub {
     {	"";	}
 };
 
+my $adrp = sub {
+    my ($args,$comment) = split(m|\s*//|,shift);
+    "\tadrp\t$args\@PAGE";
+} if ($flavour =~ /ios64/);
+
+
 sub range {
   my ($r,$sfx,$start,$end) = @_;
 
@@ -131,6 +137,10 @@ sub expand_line {
     }
 
     $line =~ s/\b(\w+)/$GLOBALS{$1} or $1/ge;
+
+    if ($flavour =~ /ios64/) {
+	$line =~ s/#:lo12:(\w+)/$1\@PAGEOFF/;
+    }
 
     return $line;
 }
