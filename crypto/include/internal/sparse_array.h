@@ -43,10 +43,10 @@ extern "C" {
     { \
         OPENSSL_SA_doall((OPENSSL_SA *)sa, (void (*)(size_t, void *))leaf); \
     } \
-    static ossl_unused ossl_inline void \
-    ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) *sa, \
-                               void (*leaf)(size_t, type *, void *), \
-                               void *arg) \
+    static ossl_unused ossl_inline \
+    void ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) *sa, \
+                                    void (*leaf)(size_t, type *, void *), \
+                                    void *arg) \
     { \
         OPENSSL_SA_doall_arg((OPENSSL_SA *)sa, (void (*)(size_t, void *, void *))leaf, \
                              arg); \
