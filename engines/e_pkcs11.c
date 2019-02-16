@@ -1,6 +1,9 @@
-#include <openssl/engine.h>
 #include <string.h>
+#include <openssl/engine.h>
 #include <openssl/err.h>
+#include <openssl/crypto.h>
+#include <openssl/rsa.h>
+#include <openssl/bn.h>
 #include <internal/dso.h>
 #include "e_pkcs11_err.c"
 
