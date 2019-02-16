@@ -435,9 +435,9 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
     tmpl[1].type = CKA_KEY_TYPE;
     tmpl[1].pValue = &key_type;
     tmpl[1].ulValueLen = len_kt;
-    tmpl[0].type = CKA_ID;
-    tmpl[0].pValue = ctx->id;
-    tmpl[0].ulValueLen = id_len;
+    tmpl[2].type = CKA_ID;
+    tmpl[2].pValue = ctx->id;
+    tmpl[2].ulValueLen = id_len;
 
     rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl,
                                          sizeof(tmpl) / sizeof(CK_ATTRIBUTE) );
@@ -588,6 +588,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         }
 
     ctx->id = (CK_BYTE *) id;
+
     ctx->slotid = (CK_SLOT_ID) atoi(slotid);
     rv = pkcs11_initialize(module_path);
 
@@ -611,12 +612,11 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         ctx->pin = (CK_BYTE *) pin;
     }
 
+    if (!pkcs11_login(ctx, CKU_USER)) goto err;
     ctx->key = pkcs11_get_private_key(ctx);
     if (!ctx->key) goto err;
-
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
                                            key_type, 2);
-
     if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
