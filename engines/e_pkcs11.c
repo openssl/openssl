@@ -4,6 +4,7 @@
 #include <openssl/crypto.h>
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
+#include <openssl/bio.h>
 #include <internal/dso.h>
 #include "e_pkcs11_err.c"
 
@@ -485,7 +486,7 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
 
     end = strpbrk(tmp, ";");
 
-    snprintf(*value, end == NULL ? strlen(tmp) + 1 :
+    BIO_snprintf(*value, end == NULL ? strlen(tmp) + 1 :
              (size_t) (end - tmp + 1), "%s", tmp);
     hex2bin = OPENSSL_malloc(strlen(*value) + 1);
 
