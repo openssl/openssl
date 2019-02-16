@@ -194,7 +194,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
                                            keyAttribute, 1);
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
+        PKCS11err(PKCS11_F_PKCS11_RSA_ENC,
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
