@@ -38,11 +38,11 @@
 
 static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
     {PKCS11_CMD_MODULE_PATH,
-     "module_path",
+     "MODULE_PATH",
      "Module path",
      ENGINE_CMD_FLAG_STRING},
     {PKCS11_CMD_PIN,
-     "pin",
+     "PIN",
      "PIN",
      ENGINE_CMD_FLAG_STRING},
     {0, NULL, NULL, 0}
@@ -175,10 +175,11 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     CK_MECHANISM sign_mechanism = { 0 };
     CK_BBOOL bTrue = CK_TRUE;
     size_t lenAttr = sizeof(bTrue);
-    CK_ATTRIBUTE keyAttribute[] = {
-            { CKA_ALWAYS_AUTHENTICATE, &bTrue, lenAttr }
-    };
+    CK_ATTRIBUTE keyAttribute[1];
 
+    keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
+    keyAttribute[0].pValue = &bTrue;
+    keyAttribute[0].ulValueLen = lenAttr;
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     e = ENGINE_by_id("pkcs11");
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -317,7 +318,7 @@ static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx)
     CK_ULONG slotCount;
     CK_SLOT_ID slotId;
     CK_SLOT_ID_PTR slotList;
-    int i;
+    unsigned int i;
 
     rv = pkcs11_funcs->C_GetSlotList(CK_TRUE, NULL, &slotCount);
 
@@ -423,17 +424,20 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
     CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
     CK_KEY_TYPE key_type = CKK_RSA;
     CK_OBJECT_HANDLE objhandle;
-    size_t len_kc, len_kt, id_len;
+    size_t len_kc = sizeof(key_class), len_kt = sizeof(key_type), id_len;
     unsigned long count;
+    CK_ATTRIBUTE tmpl[3];
 
     id_len = strlen((char *)ctx->id);
-    len_kc = sizeof(key_class);
-    len_kt = sizeof(key_type);
-    CK_ATTRIBUTE tmpl[] = {
-        { CKA_CLASS, &key_class, len_kc },
-        { CKA_KEY_TYPE, &key_type, len_kt },
-        { CKA_ID, ctx->id, id_len }
-    };
+    tmpl[0].type = CKA_CLASS;
+    tmpl[0].pValue = &key_class;
+    tmpl[0].ulValueLen = len_kc;
+    tmpl[1].type = CKA_KEY_TYPE;
+    tmpl[1].pValue = &key_type;
+    tmpl[1].ulValueLen = len_kt;
+    tmpl[0].type = CKA_ID;
+    tmpl[0].pValue = ctx->id;
+    tmpl[0].ulValueLen = id_len;
 
     rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl,
                                          sizeof(tmpl) / sizeof(CK_ATTRIBUTE) );
@@ -456,7 +460,7 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
     return objhandle;
 
  err:
-    return -1;
+    return 0;
 }
 
 static char pkcs11_hex_int(char nib1, char nib2)
@@ -544,10 +548,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 {
     CK_ULONG kt, class;
     size_t len_kt = sizeof(kt), len_class = sizeof(class);
-    CK_ATTRIBUTE key_type[] = {
-        { CKA_CLASS,    &class, len_class },
-        { CKA_KEY_TYPE, &kt,    len_kt }
-    };
+    CK_ATTRIBUTE key_type[2];
     EVP_PKEY *k = NULL;
     CK_RV rv;
     CK_SLOT_ID slot;
@@ -555,6 +556,12 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     char *id, *module_path, *slotid;
     char *pin = NULL;
 
+    key_type[0].type = CKA_CLASS;
+    key_type[0].pValue = &class;
+    key_type[0].ulValueLen = len_class;
+    key_type[1].type = CKA_KEY_TYPE;
+    key_type[1].pValue = &kt;
+    key_type[1].ulValueLen = len_kt;
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
     slotid = OPENSSL_malloc(2);
     if (strncmp(path, "pkcs11:", 7) == 0) {
@@ -605,7 +612,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     }
 
     ctx->key = pkcs11_get_private_key(ctx);
-    if (ctx->key < 0) goto err;
+    if (!ctx->key) goto err;
 
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
                                            key_type, 2);
@@ -691,13 +698,15 @@ static int pkcs11_bind(ENGINE *e, const char *id)
       || !ENGINE_set_destroy_function(e, pkcs11_destroy)
       || !ENGINE_set_init_function(e, pkcs11_init)
       || !ENGINE_set_finish_function(e, pkcs11_finish)
+      || !ENGINE_set_cmd_defns(e, pkcs11_cmd_defns)
       || !ENGINE_set_ctrl_function(e, pkcs11_ctrl))
       goto end;
 
   ERR_load_PKCS11_strings();
 
-  ret = 1;
+  return 1;
  end:
+  PKCS11_trace("ENGINE_set failed\n");
   return ret;
 }
 
