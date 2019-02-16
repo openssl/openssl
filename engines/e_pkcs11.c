@@ -48,39 +48,6 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
     {0, NULL, NULL, 0}
 };
 
-static void pkcs11_finalize(void);
-static void pkcs11_end_session(CK_SESSION_HANDLE session);
-static int pkcs11_logout(CK_SESSION_HANDLE session);
-static CK_RV pkcs11_initialize(const char *library_path);
-static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
-static CK_RV pkcs11_load_functions(const char *library_path);
-static int pkcs11_parse_uri(const char *path, char *token, char **value);
-static char pkcs11_hex_int(char nib1, char nib2);
-static int pkcs11_rsa_enc(int flen, const unsigned char *from,
-                   unsigned char *to, RSA *rsa, int padding);
-static RSA_METHOD *pkcs11_rsa(void);
-
-static int pkcs11_init(ENGINE *e);
-static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
-                                                UI_METHOD * ui_method,
-                                                void *callback_data);
-static int pkcs11_bind(ENGINE *e, const char *id);
-static void PKCS11_trace(char *format, ...);
-static int pkcs11_destroy(ENGINE *e);
-
-typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
-
-CK_FUNCTION_LIST *pkcs11_funcs;
-
-typedef struct PKCS11_CTX_st PKCS11_CTX;
-
-static void pkcs11_ctx_free(PKCS11_CTX *ctx);
-static int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType);
-static CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx);
-static int pkcs11_finish(ENGINE *e);
-static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx);
-static PKCS11_CTX *pkcs11_ctx_new(void);
-
 struct PKCS11_CTX_st {
     CK_BYTE *id;
     CK_BYTE *pin;
@@ -90,9 +57,40 @@ struct PKCS11_CTX_st {
     char *module_path;
 };
 
+typedef struct PKCS11_CTX_st PKCS11_CTX;
+static CK_RV pkcs11_initialize(const char *library_path);
+static void pkcs11_finalize(void);
+static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
+static void pkcs11_end_session(CK_SESSION_HANDLE session);
+static int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType);
+static int pkcs11_logout(CK_SESSION_HANDLE session);
+static CK_RV pkcs11_load_functions(const char *library_path);
+static int pkcs11_parse_uri(const char *path, char *token, char **value);
+static char pkcs11_hex_int(char nib1, char nib2);
+static int pkcs11_rsa_enc(int flen, const unsigned char *from,
+                          unsigned char *to, RSA *rsa, int padding);
+static RSA_METHOD *pkcs11_rsa(void);
+static PKCS11_CTX *pkcs11_ctx_new(void);
+static void pkcs11_ctx_free(PKCS11_CTX *ctx);
+static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx);
+static CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx);
+static CK_FUNCTION_LIST *pkcs11_funcs;
+static void PKCS11_trace(char *format, ...);
+
+/* Engine stuff */
+static int pkcs11_init(ENGINE *e);
+static int pkcs11_bind(ENGINE *e, const char *id);
+static int pkcs11_destroy(ENGINE *e);
+static int pkcs11_finish(ENGINE *e);
+static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
+                                                UI_METHOD * ui_method,
+                                                void *callback_data);
+
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
 static int pkcs11_idx = -1;
+
+typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
 
 static int pkcs11_init(ENGINE *e)
 {
