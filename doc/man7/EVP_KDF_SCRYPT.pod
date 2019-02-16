@@ -2,11 +2,14 @@
 
 =head1 NAME
 
-scrypt - EVP_PKEY scrypt KDF support
+EVP_KDF_SCRYPT - The scrypt EVP_KDF implementation
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_SCRYPT algorithm implements the scrypt password based key
+Support for computing the B<scrypt> password-based KDF through the B<EVP_KDF>
+API.
+
+The EVP_KDF_SCRYPT algorithm implements the scrypt password-based key
 derivation function, as described in RFC 7914.  It is memory-hard in the sense
 that it deliberately requires a significant amount of RAM for efficient
 computation. The intention of this is to render brute forcing of passwords on
@@ -26,49 +29,82 @@ computation time of less than 5 seconds on a 2.5 GHz Intel Core 2 Duo are N =
 2^20 = 1048576, r = 8, p = 1. Consequently, the required amount of memory for
 this computation is roughly 1 GiB. On a more recent CPU (Intel i7-5930K at 3.5
 GHz), this computation takes about 3 seconds. When N, r or p are not specified,
-they default to 1048576, 8, and 1, respectively. The default amount of RAM that
+they default to 1048576, 8, and 1, respectively. The maximum amount of RAM that
 may be used by scrypt defaults to 1025 MiB.
+
+=head2 Numeric identity
+
+B<EVP_KDF_SCRYPT> is the numeric identity for this implementation; it
+can be used with the EVP_KDF_CTX_new_id() function.
+
+=head2 Supported controls
+
+The supported controls are:
+
+=over 4
+
+=item B<EVP_KDF_CTRL_SET_PASS>
+
+=item B<EVP_KDF_CTRL_SET_SALT>
+
+These controls work as described in L<EVP_KDF_CTX(3)/CONTROLS>.
+
+=item B<EVP_KDF_CTRL_SET_SCRYPT_N>
+
+=item B<EVP_KDF_CTRL_SET_SCRYPT_R>
+
+=item B<EVP_KDF_CTRL_SET_SCRYPT_P>
+
+B<EVP_KDF_CTRL_SET_SCRYPT_N> expects one argument: C<uint64_t N>
+
+B<EVP_KDF_CTRL_SET_SCRYPT_R> expects one argument: C<uint32_t r>
+
+B<EVP_KDF_CTRL_SET_SCRYPT_P> expects one argument: C<uint32_t p>
+
+These controls configure the scrypt work factors N, r and p.
+
+EVP_KDF_ctrl_str() type strings: "N", "r" and "p", respectively.
+
+The corresponding value strings are expected to be decimal numbers.
+
+=back
 
 =head1 NOTES
 
 A context for scrypt can be obtained by calling:
 
- EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SCRYPT, NULL);
+ EVP_KDF_CTX *kctx = EVP_KDF_CTX_new_id(EVP_KDF_SCRYPT);
 
 The output length of an scrypt key derivation is specified via the
-length parameter to the L<EVP_PKEY_derive(3)> function.
+B<keylen> parameter to the L<EVP_KDF_derive(3)> function.
 
 =head1 EXAMPLE
 
-This example derives a 64-byte long test vector using scrypt using the password
+This example derives a 64-byte long test vector using scrypt with the password
 "password", salt "NaCl" and N = 1024, r = 8, p = 16.
 
- EVP_PKEY_CTX *pctx;
+ EVP_KDF_CTX *kctx;
  unsigned char out[64];
 
- size_t outlen = sizeof(out);
- pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SCRYPT, NULL);
+ kctx = EVP_KDF_CTX_new_id(EVP_KDF_SCRYPT);
 
- if (EVP_PKEY_derive_init(pctx) <= 0) {
-     error("EVP_PKEY_derive_init");
+ if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_PASS, "password", (size_t)8) <= 0) {
+     error("EVP_KDF_CTRL_SET_PASS");
  }
- if (EVP_PKEY_CTX_set1_pbe_pass(pctx, "password", 8) <= 0) {
-     error("EVP_PKEY_CTX_set1_pbe_pass");
+ if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SALT, "NaCl", (size_t)4) <= 0) {
+     error("EVP_KDF_CTRL_SET_SALT");
  }
- if (EVP_PKEY_CTX_set1_scrypt_salt(pctx, "NaCl", 4) <= 0) {
-     error("EVP_PKEY_CTX_set1_scrypt_salt");
+ if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_N, (uint64_t)1024) <= 0) {
+     error("EVP_KDF_CTRL_SET_SCRYPT_N");
  }
- if (EVP_PKEY_CTX_set_scrypt_N(pctx, 1024) <= 0) {
-     error("EVP_PKEY_CTX_set_scrypt_N");
+ if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_R, (uint32_t)8) <= 0) {
+     error("EVP_KDF_CTRL_SET_SCRYPT_R");
  }
- if (EVP_PKEY_CTX_set_scrypt_r(pctx, 8) <= 0) {
-     error("EVP_PKEY_CTX_set_scrypt_r");
+ if (EVP_KDF_ctrl(kctx, EVP_KDF_CTRL_SET_SCRYPT_P, (uint32_t)16) <= 0) {
+     error("EVP_KDF_CTRL_SET_SCRYPT_P");
  }
- if (EVP_PKEY_CTX_set_scrypt_p(pctx, 16) <= 0) {
-     error("EVP_PKEY_CTX_set_scrypt_p");
- }
- if (EVP_PKEY_derive(pctx, out, &outlen) <= 0) {
-     error("EVP_PKEY_derive");
+ if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
+     error("EVP_KDF_derive");
  }
 
  {
@@ -86,7 +122,7 @@ This example derives a 64-byte long test vector using scrypt using the password
      assert(!memcmp(out, expected, sizeof(out)));
  }
 
- EVP_PKEY_CTX_free(pctx);
+ EVP_KDF_CTX_free(kctx);
 
 =head1 CONFORMING TO
 
@@ -94,14 +130,12 @@ RFC 7914
 
 =head1 SEE ALSO
 
-L<EVP_PKEY_CTX_set1_scrypt_salt(3)>,
-L<EVP_PKEY_CTX_set_scrypt_N(3)>,
-L<EVP_PKEY_CTX_set_scrypt_r(3)>,
-L<EVP_PKEY_CTX_set_scrypt_p(3)>,
-L<EVP_PKEY_CTX_set_scrypt_maxmem_bytes(3)>,
-L<EVP_PKEY_CTX_new(3)>,
-L<EVP_PKEY_CTX_ctrl_str(3)>,
-L<EVP_PKEY_derive(3)>
+L<EVP_KDF_CTX>,
+L<EVP_KDF_CTX_new_id(3)>,
+L<EVP_KDF_CTX_free(3)>,
+L<EVP_KDF_ctrl(3)>,
+L<EVP_KDF_derive(3)>,
+L<EVP_KDF_CTX(3)/CONTROLS>
 
 =head1 COPYRIGHT
 

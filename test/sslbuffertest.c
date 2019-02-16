@@ -157,6 +157,8 @@ int global_init(void)
     return 1;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
     char *cert, *pkey;

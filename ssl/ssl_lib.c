@@ -2579,6 +2579,26 @@ STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx)
     return NULL;
 }
 
+/*
+ * Distinguish between ciphers controlled by set_ciphersuite() and
+ * set_cipher_list() when counting.
+ */
+static int cipher_list_tls12_num(STACK_OF(SSL_CIPHER) *sk)
+{
+    int i, num = 0;
+    const SSL_CIPHER *c;
+
+    if (sk == NULL)
+        return 0;
+    for (i = 0; i < sk_SSL_CIPHER_num(sk); ++i) {
+        c = sk_SSL_CIPHER_value(sk, i);
+        if (c->min_tls >= TLS1_3_VERSION)
+            continue;
+        num++;
+    }
+    return num;
+}
+
 /** specify the ciphers to be used by default by the SSL_CTX */
 int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 {
@@ -2596,7 +2616,7 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
      */
     if (sk == NULL)
         return 0;
-    else if (sk_SSL_CIPHER_num(sk) == 0) {
+    else if (cipher_list_tls12_num(sk) == 0) {
         SSLerr(SSL_F_SSL_CTX_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }
@@ -2614,7 +2634,7 @@ int SSL_set_cipher_list(SSL *s, const char *str)
     /* see comment in SSL_CTX_set_cipher_list */
     if (sk == NULL)
         return 0;
-    else if (sk_SSL_CIPHER_num(sk) == 0) {
+    else if (cipher_list_tls12_num(sk) == 0) {
         SSLerr(SSL_F_SSL_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
         return 0;
     }

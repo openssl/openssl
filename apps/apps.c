@@ -54,9 +54,6 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
-static UI_METHOD *ui_method = NULL;
-static const UI_METHOD *ui_fallback_method = NULL;
-
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
@@ -173,178 +170,11 @@ int dump_cert_text(BIO *out, X509 *x)
     return 0;
 }
 
-static int ui_open(UI *ui)
-{
-    int (*opener)(UI *ui) = UI_method_get_opener(ui_fallback_method);
-
-    if (opener)
-        return opener(ui);
-    return 1;
-}
-
-static int ui_read(UI *ui, UI_STRING *uis)
-{
-    int (*reader)(UI *ui, UI_STRING *uis) = NULL;
-
-    if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD
-        && UI_get0_user_data(ui)) {
-        switch (UI_get_string_type(uis)) {
-        case UIT_PROMPT:
-        case UIT_VERIFY:
-            {
-                const char *password =
-                    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-                if (password && password[0] != '\0') {
-                    UI_set_result(ui, uis, password);
-                    return 1;
-                }
-            }
-            break;
-        case UIT_NONE:
-        case UIT_BOOLEAN:
-        case UIT_INFO:
-        case UIT_ERROR:
-            break;
-        }
-    }
-
-    reader = UI_method_get_reader(ui_fallback_method);
-    if (reader)
-        return reader(ui, uis);
-    return 1;
-}
-
-static int ui_write(UI *ui, UI_STRING *uis)
-{
-    int (*writer)(UI *ui, UI_STRING *uis) = NULL;
-
-    if (UI_get_input_flags(uis) & UI_INPUT_FLAG_DEFAULT_PWD
-        && UI_get0_user_data(ui)) {
-        switch (UI_get_string_type(uis)) {
-        case UIT_PROMPT:
-        case UIT_VERIFY:
-            {
-                const char *password =
-                    ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-                if (password && password[0] != '\0')
-                    return 1;
-            }
-            break;
-        case UIT_NONE:
-        case UIT_BOOLEAN:
-        case UIT_INFO:
-        case UIT_ERROR:
-            break;
-        }
-    }
-
-    writer = UI_method_get_writer(ui_fallback_method);
-    if (writer)
-        return writer(ui, uis);
-    return 1;
-}
-
-static int ui_close(UI *ui)
-{
-    int (*closer)(UI *ui) = UI_method_get_closer(ui_fallback_method);
-
-    if (closer)
-        return closer(ui);
-    return 1;
-}
-
-int setup_ui_method(void)
-{
-    ui_fallback_method = UI_null();
-#ifndef OPENSSL_NO_UI_CONSOLE
-    ui_fallback_method = UI_OpenSSL();
-#endif
-    ui_method = UI_create_method("OpenSSL application user interface");
-    UI_method_set_opener(ui_method, ui_open);
-    UI_method_set_reader(ui_method, ui_read);
-    UI_method_set_writer(ui_method, ui_write);
-    UI_method_set_closer(ui_method, ui_close);
-    return 0;
-}
-
-void destroy_ui_method(void)
-{
-    if (ui_method) {
-        UI_destroy_method(ui_method);
-        ui_method = NULL;
-    }
-}
-
-const UI_METHOD *get_ui_method(void)
-{
-    return ui_method;
-}
-
-int password_callback(char *buf, int bufsiz, int verify, PW_CB_DATA *cb_data)
-{
-    int res = 0;
-    UI *ui;
-    int ok = 0;
-    char *buff = NULL;
-    int ui_flags = 0;
-    const char *prompt_info = NULL;
-    char *prompt;
-
-    if ((ui = UI_new_method(ui_method)) == NULL)
-        return 0;
-
-    if (cb_data != NULL && cb_data->prompt_info != NULL)
-        prompt_info = cb_data->prompt_info;
-    prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
-    if (prompt == NULL) {
-        BIO_printf(bio_err, "Out of memory\n");
-        UI_free(ui);
-        return 0;
-    }
-
-    ui_flags |= UI_INPUT_FLAG_DEFAULT_PWD;
-    UI_ctrl(ui, UI_CTRL_PRINT_ERRORS, 1, 0, 0);
-
-    /* We know that there is no previous user data to return to us */
-    (void)UI_add_user_data(ui, cb_data);
-
-    ok = UI_add_input_string(ui, prompt, ui_flags, buf,
-                             PW_MIN_LENGTH, bufsiz - 1);
-
-    if (ok >= 0 && verify) {
-        buff = app_malloc(bufsiz, "password buffer");
-        ok = UI_add_verify_string(ui, prompt, ui_flags, buff,
-                                  PW_MIN_LENGTH, bufsiz - 1, buf);
-    }
-    if (ok >= 0)
-        do {
-            ok = UI_process(ui);
-        } while (ok < 0 && UI_ctrl(ui, UI_CTRL_IS_REDOABLE, 0, 0, 0));
-
-    OPENSSL_clear_free(buff, (unsigned int)bufsiz);
-
-    if (ok >= 0)
-        res = strlen(buf);
-    if (ok == -1) {
-        BIO_printf(bio_err, "User interface error\n");
-        ERR_print_errors(bio_err);
-        OPENSSL_cleanse(buf, (unsigned int)bufsiz);
-        res = 0;
-    }
-    if (ok == -2) {
-        BIO_printf(bio_err, "aborted!\n");
-        OPENSSL_cleanse(buf, (unsigned int)bufsiz);
-        res = 0;
-    }
-    UI_free(ui);
-    OPENSSL_free(prompt);
-    return res;
-}
-
 int wrap_password_callback(char *buf, int bufsiz, int verify, void *userdata)
 {
     return password_callback(buf, bufsiz, verify, (PW_CB_DATA *)userdata);
 }
+
 
 static char *app_get_pass(const char *arg, int keepbio);
 
@@ -725,7 +555,9 @@ EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
         } else {
 #ifndef OPENSSL_NO_ENGINE
             if (ENGINE_init(e)) {
-                pkey = ENGINE_load_private_key(e, file, ui_method, &cb_data);
+                pkey = ENGINE_load_private_key(e, file,
+                                               (UI_METHOD *)get_ui_method(),
+                                               &cb_data);
                 ENGINE_finish(e);
             }
             if (pkey == NULL) {
@@ -792,7 +624,8 @@ EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
             BIO_printf(bio_err, "no engine specified\n");
         } else {
 #ifndef OPENSSL_NO_ENGINE
-            pkey = ENGINE_load_public_key(e, file, ui_method, &cb_data);
+            pkey = ENGINE_load_public_key(e, file, (UI_METHOD *)get_ui_method(),
+                                          &cb_data);
             if (pkey == NULL) {
                 BIO_printf(bio_err, "cannot load %s from engine\n", key_descrip);
                 ERR_print_errors(bio_err);
@@ -1295,7 +1128,8 @@ ENGINE *setup_engine(const char *engine, int debug)
         if (debug) {
             ENGINE_ctrl(e, ENGINE_CTRL_SET_LOGSTREAM, 0, bio_err, 0);
         }
-        ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, ui_method, 0, 1);
+        ENGINE_ctrl_cmd(e, "SET_USER_INTERFACE", 0, (void *)get_ui_method(),
+                        0, 1);
         if (!ENGINE_set_default(e, ENGINE_METHOD_ALL)) {
             BIO_printf(bio_err, "can't use that engine\n");
             ERR_print_errors(bio_err);
@@ -2321,56 +2155,10 @@ int app_access(const char* name, int flag)
 #endif
 }
 
-/* app_isdir section */
-#ifdef _WIN32
 int app_isdir(const char *name)
 {
-    DWORD attr;
-# if defined(UNICODE) || defined(_UNICODE)
-    size_t i, len_0 = strlen(name) + 1;
-    WCHAR tempname[MAX_PATH];
-
-    if (len_0 > MAX_PATH)
-        return -1;
-
-#  if !defined(_WIN32_WCE) || _WIN32_WCE>=101
-    if (!MultiByteToWideChar(CP_ACP, 0, name, len_0, tempname, MAX_PATH))
-#  endif
-        for (i = 0; i < len_0; i++)
-            tempname[i] = (WCHAR)name[i];
-
-    attr = GetFileAttributes(tempname);
-# else
-    attr = GetFileAttributes(name);
-# endif
-    if (attr == INVALID_FILE_ATTRIBUTES)
-        return -1;
-    return ((attr & FILE_ATTRIBUTE_DIRECTORY) != 0);
+    return opt_isdir(name);
 }
-#else
-# include <sys/stat.h>
-# ifndef S_ISDIR
-#  if defined(_S_IFMT) && defined(_S_IFDIR)
-#   define S_ISDIR(a)   (((a) & _S_IFMT) == _S_IFDIR)
-#  else
-#   define S_ISDIR(a)   (((a) & S_IFMT) == S_IFDIR)
-#  endif
-# endif
-
-int app_isdir(const char *name)
-{
-# if defined(S_ISDIR)
-    struct stat st;
-
-    if (stat(name, &st) == 0)
-        return S_ISDIR(st.st_mode);
-    else
-        return -1;
-# else
-    return -1;
-# endif
-}
-#endif
 
 /* raw_read|write section */
 #if defined(__VMS)
@@ -2443,21 +2231,16 @@ int raw_write_stdout(const void *buf, int siz)
 #endif
 
 /*
- * Centralized handling if input and output files with format specification
+ * Centralized handling of input and output files with format specification
  * The format is meant to show what the input and output is supposed to be,
  * and is therefore a show of intent more than anything else.  However, it
- * does impact behavior on some platform, such as differentiating between
+ * does impact behavior on some platforms, such as differentiating between
  * text and binary input/output on non-Unix platforms
  */
-static int istext(int format)
-{
-    return (format & B_FORMAT_TEXT) == B_FORMAT_TEXT;
-}
-
 BIO *dup_bio_in(int format)
 {
     return BIO_new_fp(stdin,
-                      BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+                      BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
 }
 
 static BIO_METHOD *prefix_method = NULL;
@@ -2465,15 +2248,15 @@ static BIO_METHOD *prefix_method = NULL;
 BIO *dup_bio_out(int format)
 {
     BIO *b = BIO_new_fp(stdout,
-                        BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+                        BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
     void *prefix = NULL;
 
 #ifdef OPENSSL_SYS_VMS
-    if (istext(format))
+    if (FMT_istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
 
-    if (istext(format) && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
+    if (FMT_istext(format) && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
         if (prefix_method == NULL)
             prefix_method = apps_bf_prefix();
         b = BIO_push(BIO_new(prefix_method), b);
@@ -2486,9 +2269,9 @@ BIO *dup_bio_out(int format)
 BIO *dup_bio_err(int format)
 {
     BIO *b = BIO_new_fp(stderr,
-                        BIO_NOCLOSE | (istext(format) ? BIO_FP_TEXT : 0));
+                        BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
 #ifdef OPENSSL_SYS_VMS
-    if (istext(format))
+    if (FMT_istext(format))
         b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
 #endif
     return b;
@@ -2525,11 +2308,11 @@ static const char *modestr(char mode, int format)
 
     switch (mode) {
     case 'a':
-        return istext(format) ? "a" : "ab";
+        return FMT_istext(format) ? "a" : "ab";
     case 'r':
-        return istext(format) ? "r" : "rb";
+        return FMT_istext(format) ? "r" : "rb";
     case 'w':
-        return istext(format) ? "w" : "wb";
+        return FMT_istext(format) ? "w" : "wb";
     }
     /* The assert above should make sure we never reach this point */
     return NULL;
@@ -2567,7 +2350,7 @@ BIO *bio_open_owner(const char *filename, int format, int private)
 #ifdef O_TRUNC
     mode |= O_TRUNC;
 #endif
-    textmode = istext(format);
+    textmode = FMT_istext(format);
     if (!textmode) {
 #ifdef O_BINARY
         mode |= O_BINARY;
@@ -2745,4 +2528,15 @@ void make_uppercase(char *string)
 
     for (i = 0; string[i] != '\0'; i++)
         string[i] = toupper((unsigned char)string[i]);
+}
+
+int opt_printf_stderr(const char *fmt, ...)
+{
+    va_list ap;
+    int ret;
+
+    va_start(ap, fmt);
+    ret = BIO_vprintf(bio_err, fmt, ap);
+    va_end(ap);
+    return ret;
 }

@@ -99,8 +99,9 @@ static int test_client_hello(int currtest)
          * ClientHello is already going to be quite long. To avoid getting one
          * that is too long for this test we use a restricted ciphersuite list
          */
-        if (!TEST_true(SSL_CTX_set_cipher_list(ctx, "")))
+        if (!TEST_false(SSL_CTX_set_cipher_list(ctx, "")))
             goto end;
+        ERR_clear_error();
          /* Fall through */
     case TEST_ADD_PADDING:
     case TEST_PADDING_NOT_NEEDED:
@@ -239,6 +240,8 @@ end:
 
     return testresult;
 }
+
+OPT_TEST_DECLARE_USAGE("sessionfile\n")
 
 int setup_tests(void)
 {

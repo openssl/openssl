@@ -500,6 +500,8 @@ err:
     return ret;
 }
 
+OPT_TEST_DECLARE_USAGE("conf_file\n")
+
 int setup_tests(void)
 {
     long num_tests;

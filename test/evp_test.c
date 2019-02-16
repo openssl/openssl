@@ -1892,13 +1892,14 @@ static const EVP_TEST_METHOD encode_test_method = {
     encode_test_run,
 };
 
+
 /**
 ***  KDF TESTS
 **/
 
 typedef struct kdf_data_st {
     /* Context for this operation */
-    EVP_PKEY_CTX *ctx;
+    EVP_KDF_CTX *ctx;
     /* Expected output */
     unsigned char *output;
     size_t output_len;
@@ -1911,6 +1912,137 @@ typedef struct kdf_data_st {
 static int kdf_test_init(EVP_TEST *t, const char *name)
 {
     KDF_DATA *kdata;
+    int kdf_nid = OBJ_sn2nid(name);
+
+#ifdef OPENSSL_NO_SCRYPT
+    if (strcmp(name, "scrypt") == 0) {
+        t->skip = 1;
+        return 1;
+    }
+#endif
+
+    if (kdf_nid == NID_undef)
+        kdf_nid = OBJ_ln2nid(name);
+
+    if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
+        return 0;
+    kdata->ctx = EVP_KDF_CTX_new_id(kdf_nid);
+    if (kdata->ctx == NULL) {
+        OPENSSL_free(kdata);
+        return 0;
+    }
+    t->data = kdata;
+    return 1;
+}
+
+static void kdf_test_cleanup(EVP_TEST *t)
+{
+    KDF_DATA *kdata = t->data;
+    OPENSSL_free(kdata->output);
+    EVP_KDF_CTX_free(kdata->ctx);
+}
+
+static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
+                         const char *value)
+{
+    int rv;
+    char *p, *tmpval;
+
+    if (!TEST_ptr(tmpval = OPENSSL_strdup(value)))
+        return 0;
+    p = strchr(tmpval, ':');
+    if (p != NULL)
+        *p++ = '\0';
+    rv = EVP_KDF_ctrl_str(kctx, tmpval, p);
+    if (rv == -2) {
+        t->err = "KDF_CTRL_INVALID";
+        rv = 1;
+    } else if (p != NULL && rv <= 0) {
+        /* If p has an OID and lookup fails assume disabled algorithm */
+        int nid = OBJ_sn2nid(p);
+
+        if (nid == NID_undef)
+             nid = OBJ_ln2nid(p);
+        if (nid != NID_undef
+                && EVP_get_digestbynid(nid) == NULL
+                && EVP_get_cipherbynid(nid) == NULL) {
+            t->skip = 1;
+            rv = 1;
+        } else {
+            t->err = "KDF_CTRL_ERROR";
+            rv = 1;
+        }
+    }
+    OPENSSL_free(tmpval);
+    return rv > 0;
+}
+
+static int kdf_test_parse(EVP_TEST *t,
+                          const char *keyword, const char *value)
+{
+    KDF_DATA *kdata = t->data;
+
+    if (strcmp(keyword, "Output") == 0)
+        return parse_bin(value, &kdata->output, &kdata->output_len);
+    if (strncmp(keyword, "Ctrl", 4) == 0)
+        return kdf_test_ctrl(t, kdata->ctx, value);
+    return 0;
+}
+
+static int kdf_test_run(EVP_TEST *t)
+{
+    KDF_DATA *expected = t->data;
+    unsigned char *got = NULL;
+    size_t got_len = expected->output_len;
+
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len))) {
+        t->err = "INTERNAL_ERROR";
+        goto err;
+    }
+    if (EVP_KDF_derive(expected->ctx, got, got_len) <= 0) {
+        t->err = "KDF_DERIVE_ERROR";
+        goto err;
+    }
+    if (!memory_err_compare(t, "KDF_MISMATCH",
+                            expected->output, expected->output_len,
+                            got, got_len))
+        goto err;
+
+    t->err = NULL;
+
+ err:
+    OPENSSL_free(got);
+    return 1;
+}
+
+static const EVP_TEST_METHOD kdf_test_method = {
+    "KDF",
+    kdf_test_init,
+    kdf_test_cleanup,
+    kdf_test_parse,
+    kdf_test_run
+};
+
+
+/**
+***  PKEY KDF TESTS
+**/
+
+typedef struct pkey_kdf_data_st {
+    /* Context for this operation */
+    EVP_PKEY_CTX *ctx;
+    /* Expected output */
+    unsigned char *output;
+    size_t output_len;
+} PKEY_KDF_DATA;
+
+/*
+ * Perform public key operation setup: lookup key, allocated ctx and call
+ * the appropriate initialisation function
+ */
+static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
+{
+    PKEY_KDF_DATA *kdata;
     int kdf_nid = OBJ_sn2nid(name);
 
 #ifdef OPENSSL_NO_SCRYPT
@@ -1939,17 +2071,17 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     return 1;
 }
 
-static void kdf_test_cleanup(EVP_TEST *t)
+static void pkey_kdf_test_cleanup(EVP_TEST *t)
 {
-    KDF_DATA *kdata = t->data;
+    PKEY_KDF_DATA *kdata = t->data;
     OPENSSL_free(kdata->output);
     EVP_PKEY_CTX_free(kdata->ctx);
 }
 
-static int kdf_test_parse(EVP_TEST *t,
-                          const char *keyword, const char *value)
+static int pkey_kdf_test_parse(EVP_TEST *t,
+                               const char *keyword, const char *value)
 {
-    KDF_DATA *kdata = t->data;
+    PKEY_KDF_DATA *kdata = t->data;
 
     if (strcmp(keyword, "Output") == 0)
         return parse_bin(value, &kdata->output, &kdata->output_len);
@@ -1958,9 +2090,9 @@ static int kdf_test_parse(EVP_TEST *t,
     return 0;
 }
 
-static int kdf_test_run(EVP_TEST *t)
+static int pkey_kdf_test_run(EVP_TEST *t)
 {
-    KDF_DATA *expected = t->data;
+    PKEY_KDF_DATA *expected = t->data;
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
 
@@ -1972,11 +2104,10 @@ static int kdf_test_run(EVP_TEST *t)
         t->err = "KDF_DERIVE_ERROR";
         goto err;
     }
-    if (!memory_err_compare(t, "KDF_MISMATCH",
-                            expected->output, expected->output_len,
-                            got, got_len))
+    if (!TEST_mem_eq(expected->output, expected->output_len, got, got_len)) {
+        t->err = "KDF_MISMATCH";
         goto err;
-
+    }
     t->err = NULL;
 
  err:
@@ -1984,12 +2115,12 @@ static int kdf_test_run(EVP_TEST *t)
     return 1;
 }
 
-static const EVP_TEST_METHOD kdf_test_method = {
-    "KDF",
-    kdf_test_init,
-    kdf_test_cleanup,
-    kdf_test_parse,
-    kdf_test_run
+static const EVP_TEST_METHOD pkey_kdf_test_method = {
+    "PKEYKDF",
+    pkey_kdf_test_init,
+    pkey_kdf_test_cleanup,
+    pkey_kdf_test_parse,
+    pkey_kdf_test_run
 };
 
 
@@ -2497,6 +2628,7 @@ static const EVP_TEST_METHOD *evp_test_list[] = {
     &digestverify_test_method,
     &encode_test_method,
     &kdf_test_method,
+    &pkey_kdf_test_method,
     &keypair_test_method,
     &keygen_test_method,
     &mac_test_method,
@@ -2901,14 +3033,14 @@ static int run_file_tests(int i)
     return c == 0;
 }
 
+OPT_TEST_DECLARE_USAGE("file...\n")
+
 int setup_tests(void)
 {
     size_t n = test_get_argument_count();
 
-    if (n == 0) {
-        TEST_error("Usage: %s file...", test_get_program_name());
+    if (n == 0)
         return 0;
-    }
 
     ADD_ALL_TESTS(run_file_tests, n);
     return 1;

@@ -4631,3 +4631,11 @@ CMS_add1_signing_cert_v2                4586	3_0_0	EXIST::FUNCTION:CMS
 ESS_SIGNING_CERT_new_init               4587	3_0_0	EXIST::FUNCTION:
 ESS_SIGNING_CERT_V2_new_init            4588	3_0_0	EXIST::FUNCTION:
 ERR_load_ESS_strings                    4589	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_new_id                      4590	3_0_0	EXIST::FUNCTION:
+EVP_KDF_CTX_free                        4591	3_0_0	EXIST::FUNCTION:
+EVP_KDF_reset                           4592	3_0_0	EXIST::FUNCTION:
+EVP_KDF_ctrl                            4593	3_0_0	EXIST::FUNCTION:
+EVP_KDF_vctrl                           4594	3_0_0	EXIST::FUNCTION:
+EVP_KDF_ctrl_str                        4595	3_0_0	EXIST::FUNCTION:
+EVP_KDF_size                            4596	3_0_0	EXIST::FUNCTION:
+EVP_KDF_derive                          4597	3_0_0	EXIST::FUNCTION:

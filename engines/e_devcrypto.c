@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "e_os.h"
+#include "../e_os.h"
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,26 +23,26 @@
 #include <openssl/objects.h>
 #include <crypto/cryptodev.h>
 
-#include "internal/engine.h"
-
 /* #define ENGINE_DEVCRYPTO_DEBUG */
 
 #ifdef CRYPTO_ALGORITHM_MIN
 # define CHECK_BSD_STYLE_MACROS
 #endif
 
+#define engine_devcrypto_id "devcrypto"
+
 /*
  * ONE global file descriptor for all sessions.  This allows operations
  * such as digest session data copying (see digest_copy()), but is also
  * saner...  why re-open /dev/crypto for every session?
  */
-static int cfd;
+static int cfd = -1;
 #define DEVCRYPTO_REQUIRE_ACCELERATED 0 /* require confirmation of acceleration */
 #define DEVCRYPTO_USE_SOFTWARE        1 /* allow software drivers */
 #define DEVCRYPTO_REJECT_SOFTWARE     2 /* only disallow confirmed software drivers */
 
-#define DEVCRYPTO_DEFAULT_USE_SOFDTRIVERS DEVCRYPTO_REJECT_SOFTWARE
-static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFDTRIVERS;
+#define DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS DEVCRYPTO_REJECT_SOFTWARE
+static int use_softdrivers = DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS;
 
 /*
  * cipher/digest status & acceleration definitions
@@ -65,6 +65,10 @@ struct driver_info_st {
 
     char *driver_name;
 };
+
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
+void engine_load_devcrypto_int(void);
+#endif
 
 /******************************************************************************
  *
@@ -182,8 +186,13 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
     const struct cipher_data_st *cipher_d =
         get_cipher_data(EVP_CIPHER_CTX_nid(ctx));
+    int sess = cipher_ctx->sess.ses;
 
-    memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
+    /* close a previous open session */
+    if (cipher_ctx->sess.ses != 0 &&
+        ioctl(cfd, CIOCFSESSION, &cipher_ctx->sess.ses) <0)
+        SYSerr(SYS_F_IOCTL, errno);
+
     cipher_ctx->sess.cipher = cipher_d->devcryptoid;
     cipher_ctx->sess.keylen = cipher_d->keylen;
     cipher_ctx->sess.key = (void *)key;
@@ -325,10 +334,17 @@ static int cipher_ctrl(EVP_CIPHER_CTX *ctx, int type, int p1, void* p2)
     EVP_CIPHER_CTX *to_ctx = (EVP_CIPHER_CTX *)p2;
     struct cipher_ctx *cipher_ctx;
 
-    if (type == EVP_CTRL_COPY) {
-        /* when copying the context, a new session needs to be initialized */
+    if (type == EVP_CTRL_COPY || type == EVP_CTRL_INIT) {
         cipher_ctx = (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
-        return (cipher_ctx == NULL)
+
+	if (cipher_ctx == NULL) /* OK for copy, error for init */
+	    return (type == EVP_CTRL_COPY);
+
+	/* both COPY & INIT need a clean context */
+        memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
+
+        /* when copying the context, a new session needs to be open as well */
+        return (type == EVP_CTRL_INIT)
             || cipher_init(to_ctx, cipher_ctx->sess.key, EVP_CIPHER_CTX_iv(ctx),
                            (cipher_ctx->op == COP_ENCRYPT));
     }
@@ -345,6 +361,7 @@ static int cipher_cleanup(EVP_CIPHER_CTX *ctx)
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
+    memset(&cipher_ctx->sess, 0, sizeof(cipher_ctx->sess));
 
     return 1;
 }
@@ -414,6 +431,7 @@ static void prepare_cipher_methods(void)
             || !EVP_CIPHER_meth_set_flags(known_cipher_methods[i],
                                           cipher_data[i].flags
                                           | EVP_CIPH_CUSTOM_COPY
+                                          | EVP_CIPH_CTRL_INIT
                                           | EVP_CIPH_FLAG_DEFAULT_ASN1)
             || !EVP_CIPHER_meth_set_init(known_cipher_methods[i], cipher_init)
             || !EVP_CIPHER_meth_set_do_cipher(known_cipher_methods[i],
@@ -1030,7 +1048,7 @@ static const ENGINE_CMD_DEFN devcrypto_cmds[] = {
         OPENSSL_MSTR(DEVCRYPTO_USE_SOFTWARE) "=allow all drivers, "
         OPENSSL_MSTR(DEVCRYPTO_REJECT_SOFTWARE)
         "=use if acceleration can't be determined) [default="
-        OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFDTRIVERS) "]",
+        OPENSSL_MSTR(DEVCRYPTO_DEFAULT_USE_SOFTDRIVERS) "]",
     ENGINE_CMD_FLAG_NUMERIC},
 #endif
 
@@ -1138,6 +1156,37 @@ static int devcrypto_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
  *
  *****/
 
+/*
+ * Opens /dev/crypto
+ */
+static int open_devcrypto(void)
+{
+    if (cfd >= 0)
+        return 1;
+
+    if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0) {
+#ifndef ENGINE_DEVCRYPTO_DEBUG
+        if (errno != ENOENT)
+#endif
+            fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
+        return 0;
+    }
+
+    return 1;
+}
+
+static int close_devcrypto(void)
+{
+    if (cfd < 0)
+        return 1;
+    cfd = -1;
+    if (close(cfd) == 0) {
+        fprintf(stderr, "Error closing /dev/crypto: %s\n", strerror(errno));
+        return 0;
+    }
+    return 1;
+}
+
 static int devcrypto_unload(ENGINE *e)
 {
     destroy_all_cipher_methods();
@@ -1145,48 +1194,29 @@ static int devcrypto_unload(ENGINE *e)
     destroy_all_digest_methods();
 #endif
 
-    close(cfd);
+    close_devcrypto();
 
     return 1;
 }
-/*
- * This engine is always built into libcrypto, so it doesn't offer any
- * ability to be dynamically loadable.
- */
-void engine_load_devcrypto_int()
-{
-    ENGINE *e = NULL;
 
-    if ((cfd = open("/dev/crypto", O_RDWR, 0)) < 0) {
-#ifndef ENGINE_DEVCRYPTO_DEBUG
-        if (errno != ENOENT)
-#endif
-            fprintf(stderr, "Could not open /dev/crypto: %s\n", strerror(errno));
-        return;
-    }
+static int bind_devcrypto(ENGINE *e) {
 
-    if ((e = ENGINE_new()) == NULL
-        || !ENGINE_set_destroy_function(e, devcrypto_unload)) {
-        ENGINE_free(e);
-        /*
-         * We know that devcrypto_unload() won't be called when one of the
-         * above two calls have failed, so we close cfd explicitly here to
-         * avoid leaking resources.
-         */
-        close(cfd);
-        return;
-    }
+    if (!ENGINE_set_id(e, engine_devcrypto_id)
+        || !ENGINE_set_name(e, "/dev/crypto engine")
+        || !ENGINE_set_destroy_function(e, devcrypto_unload)
+        || !ENGINE_set_cmd_defns(e, devcrypto_cmds)
+        || !ENGINE_set_ctrl_function(e, devcrypto_ctrl))
+        return 0;
 
     prepare_cipher_methods();
 #ifdef IMPLEMENT_DIGEST
     prepare_digest_methods();
 #endif
 
-    if (!ENGINE_set_id(e, "devcrypto")
-        || !ENGINE_set_name(e, "/dev/crypto engine")
-        || !ENGINE_set_cmd_defns(e, devcrypto_cmds)
-        || !ENGINE_set_ctrl_function(e, devcrypto_ctrl)
-
+    return (ENGINE_set_ciphers(e, devcrypto_ciphers)
+#ifdef IMPLEMENT_DIGEST
+        && ENGINE_set_digests(e, devcrypto_digests)
+#endif
 /*
  * Asymmetric ciphers aren't well supported with /dev/crypto.  Among the BSD
  * implementations, it seems to only exist in FreeBSD, and regarding the
@@ -1209,23 +1239,36 @@ void engine_load_devcrypto_int()
  */
 #if 0
 # ifndef OPENSSL_NO_RSA
-        || !ENGINE_set_RSA(e, devcrypto_rsa)
+        && ENGINE_set_RSA(e, devcrypto_rsa)
 # endif
 # ifndef OPENSSL_NO_DSA
-        || !ENGINE_set_DSA(e, devcrypto_dsa)
+        && ENGINE_set_DSA(e, devcrypto_dsa)
 # endif
 # ifndef OPENSSL_NO_DH
-        || !ENGINE_set_DH(e, devcrypto_dh)
+        && ENGINE_set_DH(e, devcrypto_dh)
 # endif
 # ifndef OPENSSL_NO_EC
-        || !ENGINE_set_EC(e, devcrypto_ec)
+        && ENGINE_set_EC(e, devcrypto_ec)
 # endif
 #endif
-        || !ENGINE_set_ciphers(e, devcrypto_ciphers)
-#ifdef IMPLEMENT_DIGEST
-        || !ENGINE_set_digests(e, devcrypto_digests)
-#endif
-        ) {
+        );
+}
+
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
+/*
+ * In case this engine is built into libcrypto, then it doesn't offer any
+ * ability to be dynamically loadable.
+ */
+void engine_load_devcrypto_int(void)
+{
+    ENGINE *e = NULL;
+
+    if (!open_devcrypto())
+        return;
+
+    if ((e = ENGINE_new()) == NULL
+        || !bind_devcrypto(e)) {
+        close_devcrypto();
         ENGINE_free(e);
         return;
     }
@@ -1234,3 +1277,22 @@ void engine_load_devcrypto_int()
     ENGINE_free(e);          /* Loose our local reference */
     ERR_clear_error();
 }
+
+#else
+
+static int bind_helper(ENGINE *e, const char *id)
+{
+    if ((id && (strcmp(id, engine_devcrypto_id) != 0))
+        || !open_devcrypto())
+        return 0;
+    if (!bind_devcrypto(e)) {
+        close_devcrypto();
+        return 0;
+    }
+    return 1;
+}
+
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
+
+#endif

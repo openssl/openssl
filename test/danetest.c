@@ -409,14 +409,14 @@ end:
     return ret;
 }
 
+OPT_TEST_DECLARE_USAGE("basedomain CAfile tlsafile\n")
+
 int setup_tests(void)
 {
     if (!TEST_ptr(basedomain = test_get_argument(0))
             || !TEST_ptr(CAfile = test_get_argument(1))
-            || !TEST_ptr(tlsafile = test_get_argument(2))) {
-        TEST_error("Usage error: danetest basedomain CAfile tlsafile");
+            || !TEST_ptr(tlsafile = test_get_argument(2)))
         return 0;
-    }
 
     ADD_TEST(run_tlsatest);
     return 1;
