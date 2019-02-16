@@ -513,6 +513,15 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 #ifdef DEVRANDOM_WAIT
         static int wait_done = 0;
 
+        /*
+         * Ideally we would always pull entropy out of /dev/random,
+         * but that would quickly start to block if many prcesses
+         * compete for entropy. On the other hand, /dev/urandom
+         * is not guaranteed to be properly seeded when used too
+         * early after boot. So we use select to wait for /dev/random
+         * to be in readable state but do not read anything out of
+         * /dev/random. This has to be done only once.
+         */
         if (!wait_done && bytes_needed > 0) {
              int f = open(DEVRANDOM_WAIT, O_RDONLY);
 
@@ -524,8 +533,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
                  while (select(f+1, &fds, NULL, NULL, NULL) < 0
                         && errno == EINTR);
                  close(f);
-                 wait_done = 1;
              }
+             wait_done = 1;
         }
 #endif
 
