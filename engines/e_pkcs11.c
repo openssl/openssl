@@ -714,7 +714,7 @@ static int pkcs11_bind(ENGINE *e, const char *id)
 
 static void PKCS11_trace(char *format, ...)
 {
-
+#ifndef OPENSSL_NO_STDIO
     BIO *out;
     va_list args;
 
@@ -728,6 +728,7 @@ static void PKCS11_trace(char *format, ...)
     BIO_vprintf(out, format, args);
     va_end(args);
     BIO_free(out);
+#endif
 }
 
 static PKCS11_CTX *pkcs11_ctx_new(void)
