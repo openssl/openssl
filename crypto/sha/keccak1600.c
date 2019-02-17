@@ -25,7 +25,14 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
 # define KECCAK_2X      /* default to KECCAK_2X variant */
 #endif
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
+    (defined(__x86_64) && !defined(__BMI__)) || defined(_M_X64) || \
+    defined(__mips) || defined(__riscv) || defined(__s390__) || \
+    defined(__EMSCRIPTEN__)
+/*
+ * These don't have "and with complement" instruction, so minimize amount
+ * of "not"-s. Implemented only in the [default] KECCAK_2X variant.
+ */
 # define KECCAK_COMPLEMENTING_TRANSFORM
 #endif
 
