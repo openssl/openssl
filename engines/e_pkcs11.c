@@ -1,3 +1,12 @@
+/*
+ * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
 #include <string.h>
 #include <openssl/engine.h>
 #include <openssl/err.h>
@@ -6,25 +15,21 @@
 #include <openssl/bn.h>
 #include <openssl/bio.h>
 #include <internal/dso.h>
+#include <internal/nelem.h>
 #include "e_pkcs11_err.c"
 
 #define CK_PTR *
 
 #ifdef _WIN32
-#pragma pack(push, cryptoki, 1)
-#define CK_DECLARE_FUNCTION(returnType, name) \
+# pragma pack(push, cryptoki, 1)
+# define CK_DECLARE_FUNCTION(returnType, name) \
    returnType __declspec(dllimport) name
-#else
-#define DEBUG
-#define CK_DECLARE_FUNCTION(returnType, name) \
-   returnType name
-#endif
-
-#ifdef _WIN32
-#define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
+# define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
    returnType __declspec(dllimport) (* name)
 #else
-#define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
+# define CK_DECLARE_FUNCTION(returnType, name) \
+   returnType name
+# define CK_DECLARE_FUNCTION_POINTER(returnType, name) \
    returnType (* name)
 #endif
 
@@ -32,7 +37,7 @@
    returnType (* name)
 
 #ifndef NULL_PTR
-#define NULL_PTR 0
+# define NULL_PTR 0
 #endif
 
 #include "pkcs11.h"
@@ -52,16 +57,15 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
     {0, NULL, NULL, 0}
 };
 
-struct PKCS11_CTX_st {
+typedef struct PKCS11_CTX_st {
     CK_BYTE *id;
     CK_BYTE *pin;
     CK_SLOT_ID slotid;
     CK_SESSION_HANDLE session;
     CK_OBJECT_HANDLE key;
     char *module_path;
-};
+} PKCS11_CTX;
 
-typedef struct PKCS11_CTX_st PKCS11_CTX;
 static CK_RV pkcs11_initialize(const char *library_path);
 static void pkcs11_finalize(void);
 static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
@@ -70,6 +74,8 @@ static int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType);
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 static CK_RV pkcs11_load_functions(const char *library_path);
 static int pkcs11_parse_uri(const char *path, char *token, char **value);
+static int pkcs11_parse(PKCS11_CTX *ctx, const char *path);
+static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx);
 static char pkcs11_hex_int(char nib1, char nib2);
 static int pkcs11_rsa_enc(int flen, const unsigned char *from,
                           unsigned char *to, RSA *rsa, int padding);
@@ -89,11 +95,9 @@ static int pkcs11_finish(ENGINE *e);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data);
-
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
 static int pkcs11_idx = -1;
-
 typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
 
 static int pkcs11_init(ENGINE *e)
@@ -104,14 +108,11 @@ static int pkcs11_init(ENGINE *e)
         pkcs11_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
         if (pkcs11_idx < 0)
             goto memerr;
-
         ctx = pkcs11_ctx_new();
         if (ctx == NULL)
             goto memerr;
-
         ENGINE_set_ex_data(e, pkcs11_idx, ctx);
     }
-
     return 1;
 
  memerr:
@@ -126,16 +127,11 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 
     PKCS11_CTX *ctx;
 
-    if (pkcs11_idx == -1) {
-        pkcs11_init(e);
-    }
-
-    if (pkcs11_idx == -1) {
+    if (pkcs11_idx == -1 && !pkcs11_init(e)) {
         PKCS11err(PKCS11_F_PKCS11_CTRL, PKCS11_R_ENGINE_NOT_INITIALIZED);
         return 0;
     }
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-    ctx->pin = NULL;
 
     switch (cmd) {
     case PKCS11_CMD_MODULE_PATH:
@@ -176,12 +172,11 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     CK_ULONG signatureLen = 0;
     CK_MECHANISM sign_mechanism = { 0 };
     CK_BBOOL bTrue = CK_TRUE;
-    size_t lenAttr = sizeof(bTrue);
     CK_ATTRIBUTE keyAttribute[1];
 
     keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
     keyAttribute[0].pValue = &bTrue;
-    keyAttribute[0].ulValueLen = lenAttr;
+    keyAttribute[0].ulValueLen = sizeof(bTrue);
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     e = ENGINE_by_id("pkcs11");
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -426,23 +421,20 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
     CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
     CK_KEY_TYPE key_type = CKK_RSA;
     CK_OBJECT_HANDLE objhandle;
-    size_t len_kc = sizeof(key_class), len_kt = sizeof(key_type), id_len;
     unsigned long count;
     CK_ATTRIBUTE tmpl[3];
 
-    id_len = strlen((char *)ctx->id);
     tmpl[0].type = CKA_CLASS;
     tmpl[0].pValue = &key_class;
-    tmpl[0].ulValueLen = len_kc;
+    tmpl[0].ulValueLen = sizeof(key_class);
     tmpl[1].type = CKA_KEY_TYPE;
     tmpl[1].pValue = &key_type;
-    tmpl[1].ulValueLen = len_kt;
+    tmpl[1].ulValueLen = sizeof(key_type);
     tmpl[2].type = CKA_ID;
     tmpl[2].pValue = ctx->id;
-    tmpl[2].ulValueLen = id_len;
+    tmpl[2].ulValueLen = strlen((char *)ctx->id);
 
-    rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl,
-                                         sizeof(tmpl) / sizeof(CK_ATTRIBUTE) );
+    rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl, OSSL_NELEM(tmpl) );
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit failed, error: %#08X\n", rv);
@@ -475,18 +467,19 @@ static char pkcs11_hex_int(char nib1, char nib2)
 static int pkcs11_parse_uri(const char *path, char *token, char **value)
 {
     char *tmp, *end, *hex2bin;
-    size_t vlen, i, j = 0;
+    size_t vlen, i, j = 0, tmplen;
 
     if ((tmp = strstr(path, token)) == NULL)
         return 0;
     tmp += strlen(token);
-    *value = OPENSSL_malloc(strlen(tmp) + 1);
+    tmplen = strlen(tmp);
+    *value = OPENSSL_malloc(tmplen + 1);
 
     if (*value == NULL) goto err;
 
     end = strpbrk(tmp, ";");
 
-    BIO_snprintf(*value, end == NULL ? strlen(tmp) + 1 :
+    BIO_snprintf(*value, end == NULL ? tmplen + 1 :
              (size_t) (end - tmp + 1), "%s", tmp);
     hex2bin = OPENSSL_malloc(strlen(*value) + 1);
 
@@ -512,13 +505,20 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
 
 static int pkcs11_get_console_pin(char **pin)
 {
-    int i, ret = 0;
+    int ret = 0;
 
 #ifndef OPENSSL_NO_UI_CONSOLE
 
+    int i;
     char *strbuf = NULL;
 
     strbuf = OPENSSL_malloc(512);
+
+    if (strbuf == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
     for (;;) {
         char prompt[200];
         BIO_snprintf(prompt, sizeof(prompt), "Enter PIN: ");
@@ -544,149 +544,158 @@ static int pkcs11_get_console_pin(char **pin)
     return ret;
 }
 
-static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
-                                                UI_METHOD * ui_method,
-                                                void *callback_data)
+static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
 {
-    CK_ULONG kt, class;
-    size_t len_kt = sizeof(kt), len_class = sizeof(class);
-    CK_ATTRIBUTE key_type[2];
-    EVP_PKEY *k = NULL;
-    CK_RV rv;
-    CK_SLOT_ID slot;
-    PKCS11_CTX *ctx;
-    char *id, *module_path, *slotid;
+    char *id, *module_path = NULL, *slotid;
     char *pin = NULL;
 
-    key_type[0].type = CKA_CLASS;
-    key_type[0].pValue = &class;
-    key_type[0].ulValueLen = len_class;
-    key_type[1].type = CKA_KEY_TYPE;
-    key_type[1].pValue = &kt;
-    key_type[1].ulValueLen = len_kt;
-    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
     slotid = OPENSSL_malloc(2);
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
-	if (!pkcs11_parse_uri(path,"module-path=", &module_path))
+	if (ctx->module_path == NULL &&
+            !pkcs11_parse_uri(path,"module-path=", &module_path))
            goto err;
+        if (ctx->module_path == NULL) ctx->module_path = module_path;
 	if (!pkcs11_parse_uri(path,"id=", &id))
            goto err;
 	if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
            slotid[0] = '0';
         }
-	pkcs11_parse_uri(path,"pin-value=", &pin);
-        } else if (path == NULL) {
-           PKCS11_trace("inkey is null\n");
-           goto err;
-        } else {
-            if (ctx->module_path == NULL) {
-                PKCS11_trace("Module path is null\n");
-                goto err;
-            }
-            module_path = ctx->module_path;
-            id = OPENSSL_strdup(path);
-            slotid[0] = '0';
-        }
-
-    ctx->id = (CK_BYTE *) id;
-
-    ctx->slotid = (CK_SLOT_ID) atoi(slotid);
-    rv = pkcs11_initialize(module_path);
-
-    if (rv != CKR_OK) goto err;
-
-    slot = pkcs11_get_slot(ctx);
-
-    if (!(ctx->session = pkcs11_start_session(slot)))
-        goto err;
-
-    if (ctx->pin == NULL && pin == NULL) {
-        pkcs11_get_console_pin(&pin);
-
-        if (pin == NULL) {
-            PKCS11_trace("PIN is invalid\n");
+        pkcs11_parse_uri(path,"pin-value=", &pin);
+        if (pin != NULL) ctx->pin = (CK_BYTE *) pin;
+    } else if (path == NULL) {
+       PKCS11_trace("inkey is null\n");
+       goto err;
+    } else {
+        if (ctx->module_path == NULL) {
+            PKCS11_trace("Module path is null\n");
             goto err;
-        } else {
-            ctx->pin = (CK_BYTE *) pin;
         }
-    } else if (ctx->pin == NULL) {
-        ctx->pin = (CK_BYTE *) pin;
+        id = OPENSSL_strdup(path);
+        slotid[0] = '0';
     }
 
+    ctx->id = (CK_BYTE *) id;
+    ctx->slotid = (CK_SLOT_ID) atoi(slotid);
+
+    if (ctx->pin == NULL) {
+        if (!pkcs11_get_console_pin(&pin)) goto err;
+        ctx->pin = (CK_BYTE *) pin;
+        if (ctx->pin == NULL) {
+            PKCS11_trace("PIN is invalid\n");
+            goto err;
+        }
+    }
+
+    return 1;
+
+ err:
+    return 0;
+}
+
+static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
+                                                UI_METHOD * ui_method,
+                                                void *callback_data)
+{
+    CK_ULONG kt, key_class;
+    CK_ATTRIBUTE key_type[2];
+    CK_RV rv;
+    CK_SLOT_ID slot;
+    PKCS11_CTX *ctx;
+
+    key_type[0].type = CKA_CLASS;
+    key_type[0].pValue = &key_class;
+    key_type[0].ulValueLen = sizeof(key_class);
+    key_type[1].type = CKA_KEY_TYPE;
+    key_type[1].pValue = &kt;
+    key_type[1].ulValueLen = sizeof(kt);
+    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+
+    if (!pkcs11_parse(ctx, path)) goto err;
+
+    rv = pkcs11_initialize(ctx->module_path);
+    if (rv != CKR_OK) goto err;
+    slot = pkcs11_get_slot(ctx);
+    if (!(ctx->session = pkcs11_start_session(slot)))
+        goto err;
     if (!pkcs11_login(ctx, CKU_USER)) goto err;
     ctx->key = pkcs11_get_private_key(ctx);
     if (!ctx->key) goto err;
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
                                            key_type, 2);
-    if (rv != CKR_OK || class != CKO_PRIVATE_KEY) {
+    if (rv != CKR_OK || key_class != CKO_PRIVATE_KEY) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
 
-    if(kt == CKK_RSA) {
-        CK_ATTRIBUTE rsa_attributes[] = {
-            { CKA_MODULUS, NULL, 0 },
-            { CKA_PUBLIC_EXPONENT, NULL, 0 }
-        };
-        RSA *rsa = RSA_new();
-
-        rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
-                                               rsa_attributes, 2);
-
-        if (rv != CKR_OK) {
-            PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
-            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
-                      PKCS11_R_GETATTRIBUTEVALUE_FAILED);
-            goto err;
-        }
-
-        if  (rsa_attributes[0].ulValueLen == 0 ||
-             rsa_attributes[1].ulValueLen == 0) goto err;
-
-        rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen);
-        rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
-
-        if (rsa_attributes[0].pValue == NULL ||
-            rsa_attributes[1].pValue == NULL) {
-            OPENSSL_free(rsa_attributes[0].pValue);
-            OPENSSL_free(rsa_attributes[1].pValue);
-            goto err;
-        }
-
-        rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
-                                               rsa_attributes, 2);
-
-        if (rv != CKR_OK) {
-            PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
-            PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
-                      PKCS11_R_GETATTRIBUTEVALUE_FAILED);
-            goto err;
-        }
-
-        RSA_set0_key(rsa,
-                     BN_bin2bn(rsa_attributes[0].pValue,
-                               rsa_attributes[0].ulValueLen, NULL),
-                     BN_bin2bn(rsa_attributes[1].pValue,
-                               rsa_attributes[1].ulValueLen, NULL),
-                     NULL);
-        if((k = EVP_PKEY_new()) != NULL) {
-            EVP_PKEY_set1_RSA(k, rsa);
-        }
-
-        OPENSSL_free(rsa_attributes[0].pValue);
-        OPENSSL_free(rsa_attributes[1].pValue);
-    } else {
+    if(kt == CKK_RSA)
+        return pkcs11_load_pkey(ctx);
+    else
         PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
                   PKCS11_R_RSA_NOT_FOUND);
-    }
-    return k;
 
  err:
     PKCS11_trace("pkcs11_engine_load_private_key failed\n");
     return 0;
+}
+
+static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
+{
+    EVP_PKEY *k = NULL;
+    CK_RV rv;
+    CK_ATTRIBUTE rsa_attributes[] = {
+        { CKA_MODULUS, NULL, 0 },
+        { CKA_PUBLIC_EXPONENT, NULL, 0 }
+    };
+
+    RSA *rsa = RSA_new();
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
+                                           rsa_attributes, 2);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY,
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
+    }
+    if  (rsa_attributes[0].ulValueLen == 0 ||
+         rsa_attributes[1].ulValueLen == 0) goto err;
+
+    rsa_attributes[0].pValue = OPENSSL_malloc(rsa_attributes[0].ulValueLen);
+    rsa_attributes[1].pValue = OPENSSL_malloc(rsa_attributes[1].ulValueLen);
+
+    if (rsa_attributes[0].pValue == NULL ||
+        rsa_attributes[1].pValue == NULL) {
+        OPENSSL_free(rsa_attributes[0].pValue);
+        OPENSSL_free(rsa_attributes[1].pValue);
+        goto err;
+    }
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
+                                           rsa_attributes, 2);
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY,
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
+    }
+    RSA_set0_key(rsa,
+                 BN_bin2bn(rsa_attributes[0].pValue,
+                           rsa_attributes[0].ulValueLen, NULL),
+                 BN_bin2bn(rsa_attributes[1].pValue,
+                           rsa_attributes[1].ulValueLen, NULL),
+                 NULL);
+    if((k = EVP_PKEY_new()) != NULL) {
+        EVP_PKEY_set1_RSA(k, rsa);
+    }
+    OPENSSL_free(rsa_attributes[0].pValue);
+    OPENSSL_free(rsa_attributes[1].pValue);
+    return k;
+
+ err:
+    OPENSSL_free(rsa_attributes[0].pValue);
+    OPENSSL_free(rsa_attributes[1].pValue);
+    return NULL;
 }
 
 static int pkcs11_bind(ENGINE *e, const char *id)
@@ -761,9 +770,7 @@ static int pkcs11_destroy(ENGINE *e)
 
 static void pkcs11_ctx_free(PKCS11_CTX *ctx)
 {
-    PKCS11_trace("Calling pkcs11_ctx_free with %lx\n", ctx);
-    if (!ctx)
-        return;
+    PKCS11_trace("Calling pkcs11_ctx_free with %p\n", ctx);
     OPENSSL_free(ctx);
 }
 
