@@ -68,7 +68,6 @@ sub name_synopsis()
     $tmp =~ s/ -.*//g;
     $tmp =~ s/  */ /g;
     print "$id missing comma in NAME\n" if $tmp =~ /[^,] /;
-    $tmp =~ s/,//g;
 
     my $dirname = dirname($filename);
     my $simplename = basename($filename);
@@ -76,7 +75,11 @@ sub name_synopsis()
     my $foundfilename = 0;
     my %foundfilenames = ();
     my %names;
-    foreach my $n ( split ' ', $tmp ) {
+    foreach my $n ( split ',', $tmp ) {
+        $n =~ s/^\s+//;
+        $n =~ s/\s+$//;
+        print "$id the name '$n' contains white-space\n"
+            if $n =~ /\s/;
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
         $foundfilenames{$n} = 1
@@ -247,7 +250,7 @@ sub parsenum()
     return sort @apis;
 }
 
-sub getdocced()
+sub getdocced
 {
     my $dir = shift;
     my %return;
@@ -349,13 +352,16 @@ sub collectnames {
     $tmp =~ tr/\n/ /;
     $tmp =~ s/-.*//g;
 
-    my @names = map { s/\s+//g; $_ } split(/,/, $tmp);
+    my @names = map { s/^\s+//g; s/\s+$//g; $_ } split(/,/, $tmp);
     unless (grep { $simplename eq $_ } @names) {
         print "$id missing $simplename\n";
         push @names, $simplename;
     }
     foreach my $name (@names) {
         next if $name eq "";
+        if ($name =~ /\s/) {
+            print "$id '$name' contains white space\n";
+        }
         my $name_sec = "$name($section)";
         if (! exists $name_collection{$name_sec}) {
             $name_collection{$name_sec} = $filename;
@@ -524,7 +530,8 @@ if ( $opt_c ) {
 }
 
 if ( $opt_l ) {
-    foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
+    foreach (@ARGV ? @ARGV : (glob('doc/*/*.pod'),
+                              glob('doc/internal/*/*.pod'))) {
         collectnames($_);
     }
     checklinks();
@@ -535,10 +542,16 @@ if ( $opt_n ) {
     foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
         &check($_);
     }
+    {
+        local $opt_p = undef;
+        foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
+            &check($_);
+        }
+    }
 }
 
 if ( $opt_u ) {
-    my %temp = &getdocced('doc/man3');
+    my %temp = getdocced('doc/man3');
     foreach ( keys %temp ) {
         $docced{$_} = $temp{$_};
     }
