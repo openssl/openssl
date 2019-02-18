@@ -2,9 +2,10 @@
 
 =head1 NAME
 
-ossl_method_store_new, ossl_method_store_free, ossl_method_store_init,
-ossl_method_store_cleanup, ossl_method_store_add, ossl_method_store_remove,
-ossl_method_store_fetch, ossl_method_store_set_global_properties,
+OSSL_METHOD_STORE, ossl_method_store_new, ossl_method_store_free,
+ossl_method_store_init, ossl_method_store_cleanup,
+ossl_method_store_add, ossl_method_store_remove, ossl_method_store_fetch,
+ossl_method_store_set_global_properties,
 ossl_method_store_cache_get, ossl_method_store_cache_set
 - implementation method store and query
 
