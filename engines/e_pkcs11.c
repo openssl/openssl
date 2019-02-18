@@ -108,9 +108,14 @@ static int pkcs11_init(ENGINE *e)
         pkcs11_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
         if (pkcs11_idx < 0)
             goto memerr;
+    }
+    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+    if (ctx == NULL) {
         ctx = pkcs11_ctx_new();
+
         if (ctx == NULL)
             goto memerr;
+
         ENGINE_set_ex_data(e, pkcs11_idx, ctx);
     }
     return 1;
