@@ -102,6 +102,7 @@ sub name_synopsis()
         next unless $line =~ /^\s/;
         my $sym;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
+        $line =~ s/SPARSE_ARRAY_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
