@@ -380,6 +380,8 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
         return 1;
 
     ip = get_and_lock(class_index);
+    if (ip == NULL)
+        return 0;
     f = sk_EX_CALLBACK_value(ip->meth, idx);
     CRYPTO_THREAD_unlock(ex_data_lock);
 
