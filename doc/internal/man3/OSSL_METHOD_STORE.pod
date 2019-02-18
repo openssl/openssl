@@ -20,60 +20,72 @@ ossl_method_store_cache_get and ossl_method_store_cache_set
  void ossl_method_store_cleanup(void);
  int ossl_method_store_add(OSSL_METHOD_STORE *store,
                            int nid, const char *properties,
-                           void *implementation,
-                           void (*implementation_destruct)(void *));
+                           void *method, void (*method_destruct)(void *));
  int ossl_method_store_remove(OSSL_METHOD_STORE *store,
-                              int nid, const void *implementation);
+                              int nid, const void *method);
  int ossl_method_store_fetch(OSSL_METHOD_STORE *store,
                              int nid, const char *properties,
-                             void **result);
+                             void **method);
  int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
                                             const char *prop_query);
  int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
-                                 const char *prop_query, void **result);
+                                 const char *prop_query, void **method);
  int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
-                                 const char *prop_query, void *result);
+                                 const char *prop_query, void *method);
 
 =head1 DESCRIPTION
 
-OSSL_METHOD_STORE stores implementations of algorithms that can be queried using
-properties and a NID.
+OSSL_METHOD_STORE stores methods that can be queried using properties and a
+numeric identity (nid).
 
-ossl_method_store_init() initialises the implementation method store subsystem.
+Methods are expected to be library internal structures.
+It's left to the caller to define the exact contents.
+
+Numeric identities are expected to be an algorithm identity for the methods.
+It's left to the caller to define exactly what an algorithm is, and to allocate
+these numeric identities accordingly.
+
+The B<OSSL_METHOD_STORE> also holds an internal query cache, which is accessed
+separately (see L</Cache Functions> below).
+
+=head2 Store Functions
+
+ossl_method_store_init() initialises the method store subsystem.
 
 ossl_method_store_cleanup() cleans up and shuts down the implementation method
-store subsystem
+store subsystem.
 
-ossl_method_store_new() create a new empty implementation method store.
+ossl_method_store_new() create a new empty method store.
 
 ossl_method_store_free() frees resources allocated to B<store>.
 
-ossl_method_store_add() adds the B<implementation> to the B<store> as an
-instance of the algorithm indicated by B<nid> and the property definition
-<properties>.
-The optional B<implementation_destruct> function is called when
-B<implementation> is being released from B<store>.
+ossl_method_store_add() adds the B<method> to the B<store> as an instance of an
+algorithm indicated by B<nid> and the property definition B<properties>.
+The optional B<method_destruct> function is called when B<method> is being
+released from B<store>.
 
-ossl_method_store_remove() remove the B<implementation> of algorithm B<nid>
-from the B<store>.
+ossl_method_store_remove() removes the B<method> identified by B<nid> from the
+B<store>.
 
-ossl_method_store_fetch() query B<store> for an implementation of algorithm
-B<nid> that matches the property query B<prop_query>.
-The result, if any, is returned in B<result>.
+ossl_method_store_fetch() queries B<store> for an method identified by B<nid>
+that matches the property query B<prop_query>.
+The result, if any, is returned in B<method>.
 
-ossl_method_store_set_global_properties() sets implementation method B<store>
-wide query properties to B<prop_query>.
+ossl_method_store_set_global_properties() sets method B<store> wide query
+properties to B<prop_query>.
 All subsequent fetches will need to meet both these global query properties
-and the ones passed to the fetch function.
+and the ones passed to the ossl_method_store_free().
+
+=head2 Cache Functions
 
 ossl_method_store_cache_get() queries the cache associated with the B<store>
-for an implementation of algorithm B<nid> that matches the property query
+for an method identified by B<nid> that matches the property query
 B<prop_query>.
-The result, if any, is returned in B<result>.
+The result, if any, is returned in B<method>.
 
-ossl_method_store_cache_set() sets a cache entry for algorithm B<nid> with the
+ossl_method_store_cache_set() sets a cache entry identified by B<nid> with the
 property query B<prop_query> in the B<store>.
-Future cache gets will return the specified <result>.
+Future cache gets will return the specified B<method>.
 
 =head1 RETURN VALUES
 
