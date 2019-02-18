@@ -314,6 +314,15 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[shlibloadtest]=../include
   ENDIF
 
+
+  IF[{- !$disabled{ec} -}]
+    PROGRAMS_NO_INST=ec_internal_test
+
+    SOURCE[ec_internal_test]=ec_internal_test.c testutil.c
+    INCLUDE[ec_internal_test]=.. ../include ../crypto/ec ../crypto/include
+    DEPEND[ec_internal_test]=../libcrypto
+  ENDIF
+
   SOURCE[errtest]=errtest.c testutil.c
   INCLUDE[errtest]=../include
   DEPEND[errtest]=../libcrypto
