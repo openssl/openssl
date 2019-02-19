@@ -2,12 +2,14 @@
 
 =head1 NAME
 
-DEFINE_SPARSE_ARRAY_OF, ossl_sa_TYPE_new, ossl_sa_TYPE_free,
+DEFINE_SPARSE_ARRAY_OF, OPENSSL_SA, ossl_sa_TYPE_new, ossl_sa_TYPE_free,
 ossl_sa_TYPE_free_leaves, ossl_sa_TYPE_num, ossl_sa_TYPE_doall,
 ossl_sa_TYPE_doall_arg, ossl_sa_TYPE_get, ossl_sa_TYPE_set
 - sparse array container
 
 =head1 SYNOPSIS
+
+=for comment generic
 
  #include "internal/sparse_array.h"
 
