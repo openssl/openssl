@@ -140,7 +140,7 @@ sub extract_pod_info {
     $podinfo{lastsecttext} =~ s| - .*$||;
 
     my @names =
-        map { s|\s+||g; $_ }
+        map { s|\s+||g; s|/|-|g; $_ }
         split(m|,|, $podinfo{lastsecttext});
 
     return ( section => $podinfo{section}, names => [ @names ] );
