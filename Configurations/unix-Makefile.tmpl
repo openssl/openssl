@@ -721,7 +721,7 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
 .PHONY: doc-nits
-doc-nits:
+doc-nits: build_generated
 	(cd $(SRCDIR); $(PERL) util/find-doc-nits -n -p ) >doc-nits
 	@if [ -s doc-nits ] ; then cat doc-nits ; exit 1; \
 	else echo 'doc-nits: no errors.'; rm doc-nits ; fi
