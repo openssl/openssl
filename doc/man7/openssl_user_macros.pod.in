@@ -19,7 +19,7 @@ user defined macros.
 
 =head2 The macros
 
-=over
+=over 4
 
 =item B<OPENSSL_API_COMPAT>
 
@@ -30,7 +30,7 @@ be declared.
 
 The version number assigned to this macro can take one of two forms:
 
-=over
+=over 4
 
 =item C<0xMNNFF000L>
 
@@ -43,7 +43,7 @@ Any version number may be given, but these numbers are
 the current known major deprecation points, making them the most
 meaningful:
 
-=over
+=over 4
 
 =item C<0x00908000L> (version 0.9.8)
 
@@ -63,7 +63,7 @@ This form is a simple number that represents the major version number
 and is supported for version 3.0.0 and up.  For extra convenience,
 these numbers are also available:
 
-=over
+=over 4
 
 =item Z<>0 (C<0x00908000L>, i.e. version 0.9.8)
 
