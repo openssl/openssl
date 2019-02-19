@@ -43,6 +43,7 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_LH_NEW                          126
 # define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
 # define CRYPTO_F_OPENSSL_SK_DUP                          128
+# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
 # define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  130
 # define CRYPTO_F_OSSL_PROVIDER_NEW                       131
 # define CRYPTO_F_PKEY_HMAC_INIT                          123
