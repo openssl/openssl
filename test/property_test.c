@@ -45,7 +45,7 @@ static int test_property_string(void)
         && TEST_int_ne(i, j)
         && TEST_int_eq(ossl_property_value("yes", 1), j)
         && TEST_int_eq(ossl_property_value("no", 1), i)
-        && TEST_int_ne(i = ossl_property_value("green", 1), 0)
+        && TEST_int_ne(i = ossl_property_value("illuminati", 1), 0)
         && TEST_int_eq(j = ossl_property_value("fnord", 1), i + 1)
         && TEST_int_eq(ossl_property_value("fnord", 1), j)
         /* Check name and values are distinct */
