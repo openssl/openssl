@@ -13,9 +13,6 @@
 
 #include "testutil.h"
 
-#define TEST_info(...) \
-    fprintf(stdout, __VA_ARGS__)
-
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
 
@@ -143,7 +140,7 @@ static const unsigned char params_b283[] = {
 /* test EC_GFp_simple_method directly */
 static int field_tests_ecp_simple(void)
 {
-    TEST_info("Testing EC_GFp_simple_method()\n");
+    fprintf(stdout, "Testing EC_GFp_simple_method()\n");
     return field_tests(EC_GFp_simple_method(), params_p256,
                        sizeof(params_p256) / 3);
 }
@@ -151,7 +148,7 @@ static int field_tests_ecp_simple(void)
 /* test EC_GFp_mont_method directly */
 static int field_tests_ecp_mont(void)
 {
-    TEST_info("Testing EC_GFp_mont_method()\n");
+    fprintf(stdout, "Testing EC_GFp_mont_method()\n");
     return field_tests(EC_GFp_mont_method(), params_p256,
                        sizeof(params_p256) / 3);
 }
@@ -160,7 +157,7 @@ static int field_tests_ecp_mont(void)
 /* test EC_GF2m_simple_method directly */
 static int field_tests_ec2_simple(void)
 {
-    TEST_info("Testing EC_GF2m_simple_method()\n");
+    fprintf(stdout, "Testing EC_GF2m_simple_method()\n");
     return field_tests(EC_GF2m_simple_method(), params_b283,
                        sizeof(params_b283) / 3);
 }
@@ -174,7 +171,7 @@ static int field_tests_default(int n)
     int nid = curves[n].nid;
     int ret = 0;
 
-    TEST_info("Testing curve %s\n", OBJ_nid2sn(nid));
+    fprintf(stdout, "Testing curve %s\n", OBJ_nid2sn(nid));
 
     TEST_check(NULL != (group = EC_GROUP_new_by_curve_name(nid)));
     TEST_check(NULL != (ctx = BN_CTX_new()));
