@@ -34,7 +34,8 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
                         const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
                         unsigned char *sig, int siglen,
-                        unsigned char *out, size_t *poutlen);
+                        unsigned char *out, size_t *poutlen,
+                        EVP_MD_CTX **md_ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -50,7 +51,7 @@ typedef enum OPTION_choice {
 const OPTIONS pkeyutl_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"rawin", OPT_RAWIN, '-', "Indicate the raw input data"},
+    {"rawin", OPT_RAWIN, '-', "Indicate the input data is in raw form"},
     {"digest", OPT_DIGEST, 's',
      "Specify the digest algorithm when signing the raw input data"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -109,6 +110,7 @@ int pkeyutl_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
     const EVP_MD *md = NULL;
+    EVP_MD_CTX *saved_mctx = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -230,13 +232,13 @@ int pkeyutl_main(int argc, char **argv)
 
     if (md != NULL && !rawin) {
         BIO_printf(bio_err,
-                   "%s: -digest parameter is not allowed if input is not raw\n",
+                   "%s: -digest is not allowed if input is not in raw form\n",
                    prog);
         goto opthelp;
     }
 
     if (rawin && rev) {
-        BIO_printf(bio_err, "%s: -rev is not allowed to use with raw input\n",
+        BIO_printf(bio_err, "%s: -rev cannot be used with raw input\n",
                    prog);
         goto opthelp;
     }
@@ -392,7 +394,8 @@ int pkeyutl_main(int argc, char **argv)
 
     if (pkey_op == EVP_PKEY_OP_VERIFY) {
         if (rawin) {
-            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, sig, siglen, NULL, 0);
+            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, sig, siglen,
+                              NULL, 0, NULL);
         } else {
             rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
                                  buf_in, (size_t)buf_inlen);
@@ -411,7 +414,7 @@ int pkeyutl_main(int argc, char **argv)
     } else {
         if (rawin)
             rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, NULL, 0,
-                              NULL, (size_t *)&buf_outlen);
+                              NULL, (size_t *)&buf_outlen, &saved_mctx);
         else
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                           buf_in, (size_t)buf_inlen);
@@ -419,12 +422,9 @@ int pkeyutl_main(int argc, char **argv)
     if (rv > 0 && buf_outlen != 0) {
         buf_out = app_malloc(buf_outlen, "buffer output");
         if (rawin) {
-            if (BIO_reset(in) != 0) {
-                BIO_printf(bio_err, "Error: BIO reset failed\n");
-                goto end;
-            }
-            rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, NULL, 0,
-                              buf_out, (size_t *)&buf_outlen);
+            /* saved_mctx is freed after being used again */
+            rv = do_raw_keyop(pkey_op, NULL, NULL, NULL, NULL, NULL, 0,
+                              buf_out, (size_t *)&buf_outlen, &saved_mctx);
         } else {
             rv = do_keyop(ctx, pkey_op,
                           buf_out, (size_t *)&buf_outlen,
@@ -646,21 +646,30 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
                         const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
                         unsigned char *sig, int siglen,
-                        unsigned char *out, size_t *poutlen)
+                        unsigned char *out, size_t *poutlen,
+                        EVP_MD_CTX **md_ctx)
 {
     int rv = 0;
     EVP_MD_CTX *mctx = NULL;
     unsigned char tbuf[TBUF_MAXSIZE];
     int tbuf_len = 0;
 
-    if ((mctx = EVP_MD_CTX_new()) == NULL) {
-        BIO_printf(bio_err, "Error: out of memory\n");
-        return rv;
+    if (md_ctx != NULL && *md_ctx != NULL) {
+        mctx = *md_ctx;
+    } else {
+        if ((mctx = EVP_MD_CTX_new()) == NULL) {
+            BIO_printf(bio_err, "Error: out of memory\n");
+            return rv;
+        }
+        EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
     }
-    EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
 
     switch(pkey_op) {
     case EVP_PKEY_OP_VERIFY:
+        if (md_ctx != NULL) {
+            /* verification should never use this parameter */
+            goto end;
+        }
         if (EVP_DigestVerifyInit(mctx, NULL, md, NULL, pkey) != 1)
             goto end;
         for (;;) {
@@ -680,23 +689,29 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
         rv = EVP_DigestVerifyFinal(mctx, sig, (size_t)siglen);
         break;
     case EVP_PKEY_OP_SIGN:
-        if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
-            goto end;
-        for (;;) {
-            tbuf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
-            if (tbuf_len == 0)
-                break;
-            if (tbuf_len < 0) {
-                BIO_printf(bio_err, "Error reading raw input data\n");
+        if (md_ctx == NULL || *md_ctx == NULL) {
+            if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
                 goto end;
-            }
-            rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)tbuf_len);
-            if (rv != 1) {
-                BIO_printf(bio_err, "Error signing raw input data\n");
-                goto end;
+            for (;;) {
+                tbuf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
+                if (tbuf_len == 0)
+                    break;
+                if (tbuf_len < 0) {
+                    BIO_printf(bio_err, "Error reading raw input data\n");
+                    goto end;
+                }
+                rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)tbuf_len);
+                if (rv != 1) {
+                    BIO_printf(bio_err, "Error signing raw input data\n");
+                    goto end;
+                }
             }
         }
         rv = EVP_DigestSignFinal(mctx, out, poutlen);
+        if (rv == 1 && md_ctx != NULL && *md_ctx == NULL) {
+            *md_ctx = mctx;
+            return rv;
+        }
         break;
     }
 
