@@ -163,9 +163,6 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
         break;
     }
 
-    if (ret)
-        ENGINE_set_ex_data(e, pkcs11_idx, ctx);
-
     return ret;
 }
 
@@ -177,12 +174,12 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     ENGINE *e;
     CK_ULONG signatureLen = 0;
     CK_MECHANISM sign_mechanism = { 0 };
-    CK_BBOOL bTrue = CK_TRUE;
+    CK_BBOOL bAwaysAuthentificate = CK_TRUE;
     CK_ATTRIBUTE keyAttribute[1];
 
     keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
-    keyAttribute[0].pValue = &bTrue;
-    keyAttribute[0].ulValueLen = sizeof(bTrue);
+    keyAttribute[0].pValue = &bAwaysAuthentificate;
+    keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     e = ENGINE_by_id("pkcs11");
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -195,7 +192,8 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     }
 
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
-                                           keyAttribute, 1);
+                                           keyAttribute,
+                                           OSSL_NELEM(keyAttribute));
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_RSA_ENC,
@@ -203,7 +201,8 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
         goto err;
     }
 
-    if (bTrue && !pkcs11_login(ctx, CKU_CONTEXT_SPECIFIC)) goto err;
+    if (bAwaysAuthentificate && !pkcs11_login(ctx, CKU_CONTEXT_SPECIFIC))
+        goto err;
 
     /* Get length of signature */
     rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) from, flen, NULL,
@@ -639,7 +638,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     ctx->key = pkcs11_get_private_key(ctx);
     if (!ctx->key) goto err;
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
-                                           key_type, 2);
+                                           key_type, OSSL_NELEM(key_type));
     if (rv != CKR_OK || key_class != CKO_PRIVATE_KEY) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
@@ -669,7 +668,8 @@ static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
 
     RSA *rsa = RSA_new();
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
-                                           rsa_attributes, 2);
+                                           rsa_attributes,
+                                           OSSL_NELEM(rsa_attributes));
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY,
@@ -781,6 +781,7 @@ static int pkcs11_destroy(ENGINE *e)
 {
     /* TODO: RSA_meth_free ecc. */
 
+    PKCS11_trace("Calling pkcs11_destroy with engine: %p\n", e);
     ERR_unload_PKCS11_strings();
     return 1;
 }
