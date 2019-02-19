@@ -83,7 +83,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
 static RSA_METHOD *pkcs11_rsa(void);
 static PKCS11_CTX *pkcs11_ctx_new(void);
 static void pkcs11_ctx_free(PKCS11_CTX *ctx);
-static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx);
+static int pkcs11_get_slot(PKCS11_CTX *ctx);
 static CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx);
 static CK_FUNCTION_LIST *pkcs11_funcs;
 static void PKCS11_trace(char *format, ...);
@@ -177,12 +177,10 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     CK_BBOOL bAwaysAuthentificate = CK_TRUE;
     CK_ATTRIBUTE keyAttribute[1];
 
-    keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
-    keyAttribute[0].pValue = &bAwaysAuthentificate;
-    keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
-    sign_mechanism.mechanism = CKM_RSA_PKCS;
     e = ENGINE_by_id("pkcs11");
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
+
+    sign_mechanism.mechanism = CKM_RSA_PKCS;
     rv = pkcs11_funcs->C_SignInit(ctx->session, &sign_mechanism, ctx->key);
 
     if (rv != CKR_OK) {
@@ -191,6 +189,9 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
         goto err;
     }
 
+    keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
+    keyAttribute[0].pValue = &bAwaysAuthentificate;
+    keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
     rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
                                            keyAttribute,
                                            OSSL_NELEM(keyAttribute));
@@ -314,7 +315,7 @@ static void pkcs11_finalize(void)
     pkcs11_funcs->C_Finalize(NULL);
 }
 
-static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx)
+static int pkcs11_get_slot(PKCS11_CTX *ctx)
 {
     CK_RV rv;
     CK_ULONG slotCount;
@@ -355,8 +356,9 @@ static CK_SLOT_ID pkcs11_get_slot(PKCS11_CTX *ctx)
         if (ctx->slotid == slotList[i]) slotId = slotList[i];
     }
 
+    ctx->slotid = slotId;
     OPENSSL_free(slotList);
-    return slotId;
+    return 1;
 
  err:
     return 0;
@@ -616,7 +618,6 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     CK_ULONG kt, key_class;
     CK_ATTRIBUTE key_type[2];
     CK_RV rv;
-    CK_SLOT_ID slot;
     PKCS11_CTX *ctx;
 
     key_type[0].type = CKA_CLASS;
@@ -631,8 +632,9 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
     rv = pkcs11_initialize(ctx->module_path);
     if (rv != CKR_OK) goto err;
-    slot = pkcs11_get_slot(ctx);
-    if (!(ctx->session = pkcs11_start_session(slot)))
+    if (!pkcs11_get_slot(ctx)) goto err;
+
+    if (!(ctx->session = pkcs11_start_session(ctx->slotid)))
         goto err;
     if (!pkcs11_login(ctx, CKU_USER)) goto err;
     ctx->key = pkcs11_get_private_key(ctx);
