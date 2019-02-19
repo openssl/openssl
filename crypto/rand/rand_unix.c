@@ -30,7 +30,8 @@
 # include <sys/param.h>
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
@@ -88,30 +89,8 @@ static uint64_t get_timer_bits(void);
 # undef OPENSSL_RAND_SEED_EGD
 #endif
 
-#if (defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)) && \
-        !defined(OPENSSL_RAND_SEED_NONE)
-# error "UEFI and VXWorks only support seeding NONE"
-#endif
-
-#if defined(OPENSSL_SYS_VXWORKS)
-/* empty implementation */
-int rand_pool_init(void)
-{
-    return 1;
-}
-
-void rand_pool_cleanup(void)
-{
-}
-
-void rand_pool_keep_random_devices_open(int keep)
-{
-}
-
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
-{
-    return rand_pool_entropy_available(pool);
-}
+#if defined(OPENSSL_SYS_UEFI) && !defined(OPENSSL_RAND_SEED_NONE)
+# error "UEFI only supports seeding NONE"
 #endif
 
 #if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) \
@@ -608,7 +587,8 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 #endif
 
-#if defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__)
+#if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
+     || defined(__DJGPP__)
 int rand_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
