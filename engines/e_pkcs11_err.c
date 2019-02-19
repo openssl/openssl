@@ -37,6 +37,8 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_ENGINE_NOT_INITIALIZED), "engine not initialized"},
     {ERR_PACK(0, 0, PKCS11_R_FILE_OPEN_ERROR), "file open error"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FAILED), "find object failed"},
+    {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FINAL_FAILED),
+    "find object final failed"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_INIT_FAILED),
     "find object init failed"},
     {ERR_PACK(0, 0, PKCS11_R_GETATTRIBUTEVALUE_FAILED),

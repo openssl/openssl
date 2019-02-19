@@ -464,6 +464,16 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
                   PKCS11_R_FIND_OBJECT_FAILED);
         goto err;
     }
+
+    rv = pkcs11_funcs->C_FindObjectsFinal(ctx->session);
+
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_FindObjectsFinal failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
+                  PKCS11_R_FIND_OBJECT_FINAL_FAILED);
+        goto err;
+    }
+
     return objhandle;
 
  err:

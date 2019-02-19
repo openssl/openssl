@@ -39,6 +39,7 @@
 # define PKCS11_R_ENGINE_NOT_INITIALIZED                  117
 # define PKCS11_R_FILE_OPEN_ERROR                         102
 # define PKCS11_R_FIND_OBJECT_FAILED                      103
+# define PKCS11_R_FIND_OBJECT_FINAL_FAILED                119
 # define PKCS11_R_FIND_OBJECT_INIT_FAILED                 104
 # define PKCS11_R_GETATTRIBUTEVALUE_FAILED                114
 # define PKCS11_R_GETFUNCTIONLIST_NOT_FOUND               105
