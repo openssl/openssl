@@ -59,6 +59,7 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
 
 typedef struct PKCS11_CTX_st {
     CK_BYTE *id;
+    CK_BYTE *label;
     CK_BYTE *pin;
     CK_SLOT_ID slotid;
     CK_SESSION_HANDLE session;
@@ -435,9 +436,15 @@ CK_OBJECT_HANDLE pkcs11_get_private_key(PKCS11_CTX *ctx)
     tmpl[1].type = CKA_KEY_TYPE;
     tmpl[1].pValue = &key_type;
     tmpl[1].ulValueLen = sizeof(key_type);
-    tmpl[2].type = CKA_ID;
-    tmpl[2].pValue = ctx->id;
-    tmpl[2].ulValueLen = strlen((char *)ctx->id);
+    if (ctx->id != NULL) {
+        tmpl[2].type = CKA_ID;
+        tmpl[2].pValue = ctx->id;
+        tmpl[2].ulValueLen = strlen((char *)ctx->id);
+    } else {
+        tmpl[2].type = CKA_LABEL;
+        tmpl[2].pValue = ctx->label;
+        tmpl[2].ulValueLen = strlen((char *)ctx->label);
+    }
 
     rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl, OSSL_NELEM(tmpl) );
 
@@ -552,17 +559,20 @@ static int pkcs11_get_console_pin(char **pin)
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
 {
     char *id, *module_path = NULL, *slotid;
-    char *pin = NULL;
+    char *pin = NULL, *label = NULL;
 
     slotid = OPENSSL_malloc(2);
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
 	if (ctx->module_path == NULL &&
             !pkcs11_parse_uri(path,"module-path=", &module_path))
-           goto err;
+            goto err;
         if (ctx->module_path == NULL) ctx->module_path = module_path;
-	if (!pkcs11_parse_uri(path,"id=", &id))
-           goto err;
+	if (!pkcs11_parse_uri(path,"id=", &id) &&
+            !pkcs11_parse_uri(path,"object=", &label)) {
+            PKCS11_trace("ID and OBJECT are null\n");
+            goto err;
+        }
 	if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
            slotid[0] = '0';
         }
@@ -579,8 +589,10 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
         id = OPENSSL_strdup(path);
         slotid[0] = '0';
     }
-
-    ctx->id = (CK_BYTE *) id;
+    if (label != NULL)
+        ctx->label = (CK_BYTE *) label;
+    else
+        ctx->id = (CK_BYTE *) id;
     ctx->slotid = (CK_SLOT_ID) atoi(slotid);
 
     if (ctx->pin == NULL) {
