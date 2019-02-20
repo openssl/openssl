@@ -308,11 +308,6 @@ Attempts to pad TLSv1.3 records so that they are a multiple of B<value> in
 length on send. A B<value> of 0 or 1 turns off padding. Otherwise, the
 B<value> must be >1 or <=16384.
 
-=item B<NoRenegotiation>
-
-Disables all attempts at renegotiation in TLSv1.2 and earlier, same as setting
-B<SSL_OP_NO_RENEGOTIATION>.
-
 =item B<SignatureAlgorithms>
 
 This sets the supported signature algorithms for TLSv1.2 and TLSv1.3.
@@ -455,6 +450,9 @@ Only used by servers.
 
 B<NoResumptionOnRenegotiation>: set
 B<SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION> flag. Only used by servers.
+
+B<NoRenegotiation>: disables all attempts at renegotiation in TLSv1.2 and
+earlier, same as setting B<SSL_OP_NO_RENEGOTIATION>.
 
 B<UnsafeLegacyRenegotiation>: permits the use of unsafe legacy renegotiation.
 Equivalent to B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION>.
