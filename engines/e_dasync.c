@@ -138,7 +138,6 @@ struct dasync_pipeline_ctx {
     unsigned char **inbufs;
     unsigned char **outbufs;
     size_t *lens;
-    int enc;
     unsigned char tlsaad[SSL_MAX_PIPELINES][EVP_AEAD_TLS1_AAD_LEN];
     unsigned int aadctr;
 };
@@ -617,7 +616,7 @@ static int dasync_cipher_ctrl_helper(EVP_CIPHER_CTX *ctx, int type, int arg,
 
             len = p[arg - 2] << 8 | p[arg - 1];
 
-            if (pipe_ctx->enc) {
+            if (EVP_CIPHER_CTX_encrypting(ctx)) {
                 if ((p[arg - 4] << 8 | p[arg - 3]) >= TLS1_1_VERSION) {
                     if (len < AES_BLOCK_SIZE)
                         return 0;
