@@ -314,8 +314,8 @@ int main(int argc, char *argv[])
     (void)BIO_flush(out);
 #endif
 
-    /* print any pre-existing error on the stack */
-    ERR_print_errors_fp(stderr);
+    /* silently flush any pre-existing error on the stack */
+    ERR_clear_error();
 
     message(out, "BN_CTX_get BN_FLG_CONSTTIME");
     if (!test_ctx_consttime_flag())
@@ -324,8 +324,6 @@ int main(int argc, char *argv[])
 
     BN_CTX_free(ctx);
     BIO_free(out);
-
-    ERR_print_errors_fp(stderr);
 
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
     if (CRYPTO_mem_leaks_fp(stderr) <= 0)
