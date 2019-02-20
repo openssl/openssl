@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * This file deliberately uses some deprecated functions in order to test them.
+ * Therefore we ignore warnings about their use.
+ */
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 #include <string.h>
 
 #include <openssl/opensslconf.h>
@@ -6068,6 +6074,9 @@ static int test_ca_names(int tst)
     return testresult;
 }
 
+#if !OPENSSL_API_3
+SSL *SSL_dup(SSL *ssl);
+
 static int test_ssl_dup(int tst)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -6135,6 +6144,7 @@ static int test_ssl_dup(int tst)
     return testresult;
     
 }
+#endif
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile\n")
 
@@ -6251,7 +6261,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_cert_cb, 3);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
+#if !OPENSSL_API_3
     ADD_ALL_TESTS(test_ssl_dup, 2);
+#endif
 
     return 1;
 }

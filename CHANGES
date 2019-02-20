@@ -35,6 +35,12 @@
   *) Build devcrypto engine as a dynamic engine.
      [Eneas U de Queiroz]
 
+  *) SSL_dup has been deprecated. This rarely used function had confusing
+     semantics. Dependent on the state of the SSL object it would sometimes
+     duplicate it and sometimes "up-ref" it. Applications should use
+     SSL_up_ref() instead.
+     [Matt Caswell]
+
   *) Add keyed BLAKE2 to EVP_MAC.
      [Antoine Salon]
 
