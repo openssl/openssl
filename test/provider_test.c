@@ -1,0 +1,68 @@
+/*
+ * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include <stddef.h>
+#include <openssl/provider.h>
+#include "testutil.h"
+
+extern ossl_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
+
+static char buf[256];
+static size_t buf_l = 0;
+static OSSL_PARAM greeting_request[] = {
+    { "greeting", OSSL_PARAM_UTF8_STRING, buf, sizeof(buf), &buf_l },
+    { NULL, 0, NULL, 0, NULL }
+};
+
+static int test_provider(const char *name)
+{
+    OSSL_PROVIDER *prov = NULL;
+    const char *greeting = NULL;
+    char expected_greeting[256];
+
+    snprintf(expected_greeting, sizeof(expected_greeting),
+             "Hello OpenSSL %.20s, greetings from %s!",
+             OPENSSL_VERSION_STR, name);
+
+    return
+        TEST_ptr(prov = OSSL_load_provider(NULL, name))
+        && TEST_true(OSSL_get_provider_params(prov, greeting_request))
+        && TEST_ptr(greeting = greeting_request[0].buffer)
+        && TEST_size_t_gt(greeting_request[0].buffer_size, 0)
+        && TEST_str_eq(greeting, expected_greeting)
+        && TEST_true(OSSL_unload_provider(prov));
+}
+
+static int test_builtin_provider(void)
+{
+    const char *name = "p_test_builtin";
+
+    return
+        TEST_true(OSSL_add_provider(NULL, name, PROVIDER_INIT_FUNCTION_NAME))
+        && test_provider(name);
+}
+
+#ifndef OPENSSL_NO_SHARED
+static int test_loaded_provider(void)
+{
+    const char *name = "p_test";
+
+    return test_provider(name);
+}
+#endif
+
+int setup_tests(void)
+{
+    ADD_TEST(test_builtin_provider);
+#ifndef OPENSSL_NO_SHARED
+    ADD_TEST(test_loaded_provider);
+#endif
+    return 1;
+}
+
