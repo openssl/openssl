@@ -44,6 +44,7 @@ typedef struct {
     int ivlen;                  /* IV length */
     int taglen;
     int iv_gen;                 /* It is OK to generate IVs */
+    int iv_gen_rand;            /* No IV was specified, so generate a rand IV */
     int tls_aad_len;            /* TLS AAD length */
     uint64_t tls_enc_records;   /* Number of TLS records encrypted */
     ctr128_f ctr;
@@ -1396,7 +1397,7 @@ static int s390x_aes_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     (OPENSSL_s390xcap_P.kma[0] &	\
                                      S390X_CAPBIT(S390X_AES_256)))
 
-/* iv + padding length for iv lenghts != 12 */
+/* iv + padding length for iv lengths != 12 */
 # define S390X_gcm_ivpadlen(i)	((((i) + 15) >> 4 << 4) + 16)
 
 /*-
@@ -2890,7 +2891,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         return 1;
 
     case EVP_CTRL_GET_IV:
-        if (gctx->iv_gen != 1)
+        if (gctx->iv_gen != 1 && gctx->iv_gen_rand != 1)
             return 0;
         if (gctx->ivlen != arg)
             return 0;
@@ -3202,10 +3203,35 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return rv;
 }
 
+#ifdef FIPS_MODE
+/*
+ * See SP800-38D (GCM) Section 8 "Uniqueness requirement on IVS and keys"
+ *
+ * See also 8.2.2 RBG-based construction.
+ * Random construction consists of a free field (which can be NULL) and a
+ * random field which will use a DRBG that can return at least 96 bits of
+ * entropy strength. (The DRBG must be seeded by the FIPS module).
+ */
+static int aes_gcm_iv_generate(EVP_AES_GCM_CTX *gctx, int offset)
+{
+    int sz = gctx->ivlen - offset;
+
+    /* Must be at least 96 bits */
+    if (sz <= 0 || gctx->ivlen < 12)
+        return 0;
+
+    /* Use DRBG to generate random iv */
+    if (RAND_bytes(gctx->iv + offset, sz) <= 0)
+        return 0;
+    return 1;
+}
+#endif /* FIPS_MODE */
+
 static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t len)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
+
     /* If not set up, return error */
     if (!gctx->key_set)
         return -1;
@@ -3213,8 +3239,25 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (gctx->tls_aad_len >= 0)
         return aes_gcm_tls_cipher(ctx, out, in, len);
 
+#ifdef FIPS_MODE
+    /*
+     * FIPS requires generation of AES-GCM IV's inside the FIPS module.
+     * The IV can still be set externally (the security policy will state that
+     * this is not FIPS compliant). There are some applications
+     * where setting the IV externally is the only option available.
+     */
+    if (!gctx->iv_set) {
+        if (!ctx->encrypt || !aes_gcm_iv_generate(gctx, 0))
+            return -1;
+        CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
+        gctx->iv_set = 1;
+        gctx->iv_gen_rand = 1;
+    }
+#else
     if (!gctx->iv_set)
         return -1;
+#endif /* FIPS_MODE */
+
     if (in) {
         if (out == NULL) {
             if (CRYPTO_gcm128_aad(&gctx->gcm, in, len))
