@@ -147,7 +147,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             } else 
             {
                 /* give a minimum delay here to allow OS to collect more entropy */
-                taskDelay (1);
+                taskDelay(1);
             }
             retryCount++;
         }
