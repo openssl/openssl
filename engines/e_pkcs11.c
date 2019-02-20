@@ -697,6 +697,7 @@ static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
     EVP_PKEY *k = NULL;
     CK_RV rv;
     CK_ATTRIBUTE rsa_attributes[2];
+    RSA *rsa = NULL;
 
     rsa_attributes[0].type = CKA_MODULUS;
     rsa_attributes[0].pValue = NULL;
@@ -704,8 +705,7 @@ static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
     rsa_attributes[1].type = CKA_PUBLIC_EXPONENT;
     rsa_attributes[1].pValue = NULL;
     rsa_attributes[1].ulValueLen = 0;
-
-    RSA *rsa = RSA_new();
+    rsa = RSA_new();
 
     if (rsa == NULL) {
         PKCS11err(PKCS11_F_PKCS11_LOAD_PKEY, ERR_R_MALLOC_FAILURE);
