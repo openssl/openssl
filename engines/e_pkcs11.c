@@ -80,7 +80,7 @@ static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx);
 static char pkcs11_hex_int(char nib1, char nib2);
 static int pkcs11_rsa_enc(int flen, const unsigned char *from,
                           unsigned char *to, RSA *rsa, int padding);
-static RSA_METHOD *pkcs11_rsa(void);
+static RSA_METHOD *pkcs11_rsa_init(void);
 static PKCS11_CTX *pkcs11_ctx_new(void);
 static void pkcs11_ctx_free(PKCS11_CTX *ctx);
 static int pkcs11_get_slot(PKCS11_CTX *ctx);
@@ -99,6 +99,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
 static int pkcs11_idx = -1;
+static RSA_METHOD *pkcs11_rsa = NULL;
 typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
 
 static int pkcs11_init(ENGINE *e)
@@ -167,7 +168,7 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 }
 
 static int pkcs11_rsa_enc(int flen, const unsigned char *from,
-                   unsigned char *to, RSA *rsa, int padding)
+                          unsigned char *to, RSA *rsa, int padding)
 {
     CK_RV rv;
     PKCS11_CTX *ctx;
@@ -176,6 +177,11 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     CK_MECHANISM sign_mechanism = { 0 };
     CK_BBOOL bAwaysAuthentificate = CK_TRUE;
     CK_ATTRIBUTE keyAttribute[1];
+
+    if (padding != RSA_PKCS1_PADDING) {
+        PKCS11_trace("Padding %d is not RSA_PKCS1_PADDING \n", padding);
+        goto err;
+    }
 
     e = ENGINE_by_id("pkcs11");
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
@@ -233,9 +239,8 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     return 0;
 }
 
-static RSA_METHOD *pkcs11_rsa()
+static RSA_METHOD *pkcs11_rsa_init()
 {
-    static RSA_METHOD *pkcs11_rsa = NULL;
     pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0);
     RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_enc);
     return pkcs11_rsa;
@@ -448,7 +453,7 @@ static int pkcs11_get_private_key(PKCS11_CTX *ctx)
         tmpl[2].ulValueLen = strlen((char *)ctx->label);
     }
 
-    rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl, OSSL_NELEM(tmpl) );
+    rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl, OSSL_NELEM(tmpl));
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit failed, error: %#08X\n", rv);
@@ -583,7 +588,7 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
 
     slotid = OPENSSL_malloc(2);
 
-    if (slotid == NULL) {   
+    if (slotid == NULL) {
         PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -614,7 +619,7 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
         }
         id = OPENSSL_strdup(path);
 
-        if (id == NULL) {   
+        if (id == NULL) {
             PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -766,7 +771,7 @@ static int pkcs11_bind(ENGINE *e, const char *id)
 
   if (!ENGINE_set_id(e, engine_id)
       || !ENGINE_set_name(e, engine_name)
-      || !ENGINE_set_RSA(e, pkcs11_rsa())
+      || !ENGINE_set_RSA(e, pkcs11_rsa_init())
       || !ENGINE_set_load_privkey_function(e, pkcs11_engine_load_private_key)
       || !ENGINE_set_destroy_function(e, pkcs11_destroy)
       || !ENGINE_set_init_function(e, pkcs11_init)
@@ -824,8 +829,8 @@ static int pkcs11_finish(ENGINE *e)
 
 static int pkcs11_destroy(ENGINE *e)
 {
-    /* TODO: RSA_meth_free ecc. */
-
+    RSA_meth_free(pkcs11_rsa);
+    pkcs11_rsa = NULL;
     PKCS11_trace("Calling pkcs11_destroy with engine: %p\n", e);
     ERR_unload_PKCS11_strings();
     return 1;
