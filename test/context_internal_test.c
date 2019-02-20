@@ -67,7 +67,7 @@ static int test_context(OPENSSL_CTX *ctx)
         TEST_true(foo_init())
         && TEST_ptr(data = openssl_ctx_get_data(ctx, foo_index))
         /* OPENSSL_zalloc in foo_new() initialized it to zero */
-        && TEST_int_eq(data->i, 42));
+        && TEST_int_eq(data->i, 42);
 }
 
 static int test_app_context(void)
@@ -76,7 +76,7 @@ static int test_app_context(void)
     int result =
         TEST_true(foo_init())
         && TEST_ptr(ctx = OPENSSL_CTX_new())
-        && test_context(ctx));
+        && test_context(ctx);
 
     OPENSSL_CTX_free(ctx);
     return result;
