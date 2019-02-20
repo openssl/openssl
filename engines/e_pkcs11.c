@@ -69,7 +69,7 @@ typedef struct PKCS11_CTX_st {
 
 static CK_RV pkcs11_initialize(const char *library_path);
 static void pkcs11_finalize(void);
-static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId);
+static int pkcs11_start_session(PKCS11_CTX *ctx);
 static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType);
 static int pkcs11_logout(CK_SESSION_HANDLE session);
@@ -131,7 +131,6 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
 {
     int ret = 1;
     char *tmpstr;
-
     PKCS11_CTX *ctx;
 
     if (pkcs11_idx == -1 && !pkcs11_init(e)) {
@@ -370,22 +369,21 @@ static int pkcs11_get_slot(PKCS11_CTX *ctx)
     return 0;
 }
 
-static CK_SESSION_HANDLE pkcs11_start_session(CK_SLOT_ID slotId)
+static int pkcs11_start_session(PKCS11_CTX *ctx)
 {
     CK_RV rv;
     CK_SESSION_HANDLE session;
-    rv = pkcs11_funcs->C_OpenSession(slotId, CKF_SERIAL_SESSION, NULL,
+
+    rv = pkcs11_funcs->C_OpenSession(ctx->slotid, CKF_SERIAL_SESSION, NULL,
                                      NULL, &session);
     if (rv != CKR_OK) {
         PKCS11_trace("C_OpenSession failed, error: %#08X\n", rv);
         PKCS11err(PKCS11_F_PKCS11_START_SESSION,
                   PKCS11_R_OPEN_SESSION_ERROR);
-        goto err;
+        return 0;
     }
-    return session;
-
- err:
-    return 0;
+    ctx->session = session;
+    return 1;
 }
 
 static int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType)
@@ -543,11 +541,8 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
 static int pkcs11_get_console_pin(char **pin)
 {
 #ifndef OPENSSL_NO_UI_CONSOLE
-
     int i;
-    char *strbuf = NULL;
-
-    strbuf = OPENSSL_malloc(512);
+    char *strbuf = OPENSSL_malloc(512);
 
     if (strbuf == NULL) {
         PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
@@ -581,10 +576,9 @@ static int pkcs11_get_console_pin(char **pin)
 
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
 {
-    char *id, *module_path = NULL, *slotid;
+    char *id, *module_path = NULL;
     char *pin = NULL, *label = NULL;
-
-    slotid = OPENSSL_malloc(2);
+    char *slotid = OPENSSL_malloc(2);
 
     if (slotid == NULL) {
         PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
@@ -671,7 +665,7 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         goto err;
     if (!pkcs11_get_slot(ctx))
         goto err;
-    if (!(ctx->session = pkcs11_start_session(ctx->slotid)))
+    if (!pkcs11_start_session(ctx))
         goto err;
     if (!pkcs11_login(ctx, CKU_USER))
         goto err;
