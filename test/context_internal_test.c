@@ -46,8 +46,10 @@ static const OPENSSL_CTX_METHOD foo_method = {
     foo_free
 };
 
-static int foo_init(void) {
-    foo_index = openssl_ctx_new_index(&foo_method);
+static int foo_init(void)
+{
+    if (foo_index == -1)
+        foo_index = openssl_ctx_new_index(&foo_method);
 
     return foo_index != -1;
 }
@@ -61,15 +63,20 @@ static int test_context(OPENSSL_CTX *ctx)
 {
     FOO *data = NULL;
 
-    return (TEST_ptr(data = openssl_ctx_get_data(ctx, foo_index))
-            /* OPENSSL_zalloc in foo_new() initialized it to zero */
-            && TEST_int_eq(data->i, 42));
+    return
+        TEST_true(foo_init())
+        && TEST_ptr(data = openssl_ctx_get_data(ctx, foo_index))
+        /* OPENSSL_zalloc in foo_new() initialized it to zero */
+        && TEST_int_eq(data->i, 42));
 }
 
 static int test_app_context(void)
 {
     OPENSSL_CTX *ctx = NULL;
-    int result = (TEST_ptr(ctx = OPENSSL_CTX_new()) && test_context(ctx));
+    int result =
+        TEST_true(foo_init())
+        && TEST_ptr(ctx = OPENSSL_CTX_new())
+        && test_context(ctx));
 
     OPENSSL_CTX_free(ctx);
     return result;
@@ -82,7 +89,6 @@ static int test_def_context(void)
 
 int setup_tests(void)
 {
-    ADD_TEST(foo_init);
     ADD_TEST(test_app_context);
     ADD_TEST(test_def_context);
     return 1;
