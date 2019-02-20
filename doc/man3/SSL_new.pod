@@ -8,9 +8,14 @@ SSL_dup, SSL_new, SSL_up_ref - create an SSL structure for a connection
 
  #include <openssl/ssl.h>
 
- SSL *SSL_dup(SSL *s);
  SSL *SSL_new(SSL_CTX *ctx);
  int SSL_up_ref(SSL *s);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ SSL *SSL_dup(SSL *s);
 
 =head1 DESCRIPTION
 
@@ -29,7 +34,8 @@ existing B<SSL> structure.
 SSL_dup() duplicates an existing B<SSL> structure into a new allocated one. All
 settings are inherited from the original B<SSL> structure. Dynamic data (i.e.
 existing connection details) are not copied, the new B<SSL> is set into an
-initial accept (server) or connect (client) state.
+initial accept (server) or connect (client) state. This function is deprecated.
+Applications should use SSL_up_ref() instead.
 
 =head1 RETURN VALUES
 

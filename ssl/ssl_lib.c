@@ -202,8 +202,10 @@ static void dane_final(SSL_DANE *dane)
     dane->pdpth = -1;
 }
 
+#if !OPENSSL_API_3
 /*
- * dane_copy - Copy dane configuration, sans verification state.
+ * dane_copy - Copy dane configuration, sans verification state. Only used by
+ * SSL_dup which is deprecated in OpenSSL 3.0
  */
 static int ssl_dane_dup(SSL *to, SSL *from)
 {
@@ -233,6 +235,7 @@ static int ssl_dane_dup(SSL *to, SSL *from)
     }
     return 1;
 }
+#endif
 
 static int dane_mtype_set(struct dane_ctx_st *dctx,
                           const EVP_MD *md, uint8_t mtype, uint8_t ord)
@@ -3753,6 +3756,7 @@ const char *SSL_get_version(const SSL *s)
     return ssl_protocol_to_string(s->version);
 }
 
+#if !OPENSSL_API_3
 static int dup_ca_names(STACK_OF(X509_NAME) **dst, STACK_OF(X509_NAME) *src)
 {
     STACK_OF(X509_NAME) *sk;
@@ -3899,6 +3903,7 @@ SSL *SSL_dup(SSL *s)
     SSL_free(ret);
     return NULL;
 }
+#endif
 
 void ssl_clear_cipher_ctx(SSL *s)
 {

@@ -196,7 +196,7 @@ SSL_set_verify_result                   196	3_0_0	EXIST::FUNCTION:
 SSL_use_RSAPrivateKey_ASN1              197	3_0_0	EXIST::FUNCTION:RSA
 SSL_CIPHER_get_name                     198	3_0_0	EXIST::FUNCTION:
 OPENSSL_init_ssl                        199	3_0_0	EXIST::FUNCTION:
-SSL_dup                                 200	3_0_0	EXIST::FUNCTION:
+SSL_dup                                 200	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 SSL_CTX_use_serverinfo                  201	3_0_0	EXIST::FUNCTION:
 SSL_CTX_use_serverinfo_file             202	3_0_0	EXIST::FUNCTION:
 SSL_set_options                         203	3_0_0	EXIST::FUNCTION:

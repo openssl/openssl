@@ -369,7 +369,10 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         dbio = (BIO *)ptr;
         dbs = BIO_get_data(dbio);
         SSL_free(dbs->ssl);
-        dbs->ssl = SSL_dup(ssl);
+        if (SSL_up_ref(ssl))
+            dbs->ssl = ssl;
+        else
+            dbs->ssl = NULL;
         dbs->num_renegotiates = bs->num_renegotiates;
         dbs->renegotiate_count = bs->renegotiate_count;
         dbs->byte_count = bs->byte_count;

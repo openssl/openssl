@@ -1978,7 +1978,7 @@ __owur long SSL_get_default_timeout(const SSL *s);
 __owur char *SSL_CIPHER_description(const SSL_CIPHER *, char *buf, int size);
 __owur STACK_OF(X509_NAME) *SSL_dup_CA_list(const STACK_OF(X509_NAME) *sk);
 
-__owur SSL *SSL_dup(SSL *ssl);
+DEPRECATEDIN_3(__owur SSL *SSL_dup(SSL *ssl))
 
 __owur X509 *SSL_get_certificate(const SSL *ssl);
 /*

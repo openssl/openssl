@@ -8,6 +8,12 @@
  release branch.
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
+ 
+  *) SSL_dup has been deprecated. This rarely used function had confusing
+     semantics. Dependent on the state of the SSL object it would sometimes
+     duplicate it and sometimes "up-ref" it. Applications should use
+     SSL_up_ref() instead.
+     [Matt Caswell]
 
   *) Added property based algorithm implementation selection framework to
      the core.
