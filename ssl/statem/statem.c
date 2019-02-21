@@ -600,7 +600,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                 return SUB_STATE_ERROR;
 
             if (s->s3.tmp.message_size > max_message_size(s)) {
-                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_READ_STATE_MACHINE,
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_READ_STATE_MACHINE,
                          SSL_R_EXCESSIVE_MESSAGE_SIZE);
                 return SUB_STATE_ERROR;
             }
