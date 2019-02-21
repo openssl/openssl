@@ -171,7 +171,6 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
 {
     CK_RV rv;
     PKCS11_CTX *ctx;
-    ENGINE *e;
     CK_ULONG signatureLen = 0;
     CK_MECHANISM sign_mechanism = { 0 };
     CK_BBOOL bAwaysAuthentificate = CK_TRUE;
@@ -182,9 +181,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
         goto err;
     }
 
-    e = ENGINE_by_id("pkcs11");
-    ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-
+    ctx = ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     rv = pkcs11_funcs->C_SignInit(ctx->session, &sign_mechanism, ctx->key);
 
@@ -241,7 +238,11 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
 static RSA_METHOD *pkcs11_rsa_init()
 {
     pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0);
-    RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_enc);
+    if ( !RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_enc)) {
+        PKCS11err(PKCS11_F_PKCS11_RSA_INIT, PKCS11_R_RSA_INIT_FAILED);
+        return NULL;
+    }
+
     return pkcs11_rsa;
 }
 

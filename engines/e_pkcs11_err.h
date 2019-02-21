@@ -32,6 +32,7 @@
 # define PKCS11_F_PKCS11_PARSE                            115
 # define PKCS11_F_PKCS11_PARSE_URI                        116
 # define PKCS11_F_PKCS11_RSA_ENC                          105
+# define PKCS11_F_PKCS11_RSA_INIT                         117
 # define PKCS11_F_PKCS11_START_SESSION                    106
 # define PKCS11_F_PKCS11_TRACE                            109
 
@@ -54,6 +55,7 @@
 # define PKCS11_R_LOGOUT_FAILED                           111
 # define PKCS11_R_MEMORY_ALLOCATION_FAILED                115
 # define PKCS11_R_OPEN_SESSION_ERROR                      112
+# define PKCS11_R_RSA_INIT_FAILED                         120
 # define PKCS11_R_RSA_NOT_FOUND                           118
 # define PKCS11_R_SIGN_FAILED                             100
 # define PKCS11_R_SIGN_INIT_FAILED                        101

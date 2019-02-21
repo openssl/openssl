@@ -30,6 +30,7 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
     {ERR_PACK(0, PKCS11_F_PKCS11_PARSE, 0), "pkcs11_parse"},
     {ERR_PACK(0, PKCS11_F_PKCS11_PARSE_URI, 0), "pkcs11_parse_uri"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_ENC, 0), "pkcs11_rsa_enc"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_RSA_INIT, 0), "pkcs11_rsa_init"},
     {ERR_PACK(0, PKCS11_F_PKCS11_START_SESSION, 0), "pkcs11_start_session"},
     {ERR_PACK(0, PKCS11_F_PKCS11_TRACE, 0), "PKCS11_trace"},
     {0, NULL}
@@ -58,6 +59,7 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_MEMORY_ALLOCATION_FAILED),
     "memory allocation failed"},
     {ERR_PACK(0, 0, PKCS11_R_OPEN_SESSION_ERROR), "open session error"},
+    {ERR_PACK(0, 0, PKCS11_R_RSA_INIT_FAILED), "rsa init failed"},
     {ERR_PACK(0, 0, PKCS11_R_RSA_NOT_FOUND), "rsa not found"},
     {ERR_PACK(0, 0, PKCS11_R_SIGN_FAILED), "sign failed"},
     {ERR_PACK(0, 0, PKCS11_R_SIGN_INIT_FAILED), "sign init failed"},
