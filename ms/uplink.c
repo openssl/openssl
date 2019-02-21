@@ -28,7 +28,7 @@ static TCHAR msg[128];
 static void unimplemented(void)
 {
     OPENSSL_showfatal(sizeof(TCHAR) == sizeof(char) ? "%s\n" : "%S\n", msg);
-    ExitProcess(1);
+    TerminateProcess(GetCurrentProcess(), 1);
 }
 
 void OPENSSL_Uplink(volatile void **table, int index)
