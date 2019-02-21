@@ -187,9 +187,11 @@ int ssl3_get_record(SSL *s)
     size_t num_recs = 0, max_recs, j;
     PACKET pkt, sslv2pkt;
     size_t first_rec_len;
+    int is_ktls_left;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     rbuf = RECORD_LAYER_get_rbuf(&s->rlayer);
+    is_ktls_left = (rbuf->left > 0);
     max_recs = s->max_pipelines;
     if (max_recs == 0)
         max_recs = 1;
@@ -208,8 +210,32 @@ int ssl3_get_record(SSL *s)
             rret = ssl3_read_n(s, SSL3_RT_HEADER_LENGTH,
                                SSL3_BUFFER_get_len(rbuf), 0,
                                num_recs == 0 ? 1 : 0, &n);
-            if (rret <= 0)
-                return rret;     /* error or non-blocking */
+            if (rret <= 0) {
+                if (!BIO_get_ktls_recv(s->rbio))
+                    return rret;     /* error or non-blocking */
+#ifndef OPENSSL_NO_KTLS
+                switch (errno) {
+                case EBADMSG:
+                    SSLfatal(s, SSL_AD_BAD_RECORD_MAC,
+                             SSL_F_SSL3_GET_RECORD,
+                             SSL_R_DECRYPTION_FAILED_OR_BAD_RECORD_MAC);
+                    break;
+                case EMSGSIZE:
+                    SSLfatal(s, SSL_AD_RECORD_OVERFLOW,
+                             SSL_F_SSL3_GET_RECORD,
+                             SSL_R_PACKET_LENGTH_TOO_LONG);
+                    break;
+                case EINVAL:
+                    SSLfatal(s, SSL_AD_PROTOCOL_VERSION,
+                             SSL_F_SSL3_GET_RECORD,
+                             SSL_R_WRONG_VERSION_NUMBER);
+                    break;
+                default:
+                    break;
+                }
+                return rret;
+#endif
+            }
             RECORD_LAYER_set_rstate(&s->rlayer, SSL_ST_READ_BODY);
 
             p = RECORD_LAYER_get_packet(&s->rlayer);
@@ -387,7 +413,7 @@ int ssl3_get_record(SSL *s)
                 len -= SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 
-            if (thisrr->length > len) {
+            if (thisrr->length > len && !BIO_get_ktls_recv(s->rbio)) {
                 SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
                          SSL_R_ENCRYPTED_LENGTH_TOO_LONG);
                 return -1;
@@ -405,6 +431,7 @@ int ssl3_get_record(SSL *s)
         } else {
             more = thisrr->length;
         }
+
         if (more > 0) {
             /* now s->packet_length == SSL3_RT_HEADER_LENGTH */
 
@@ -491,6 +518,13 @@ int ssl3_get_record(SSL *s)
 
         return 1;
     }
+
+    /*
+     * KTLS reads full records. If there is any data left,
+     * then it is from before enabling ktls
+     */
+    if (BIO_get_ktls_recv(s->rbio) && !is_ktls_left)
+        goto skip_decryption;
 
     /*
      * If in encrypt-then-mac mode calculate mac from encrypted record. All
@@ -674,6 +708,8 @@ int ssl3_get_record(SSL *s)
         return -1;
     }
 
+ skip_decryption:
+
     for (j = 0; j < num_recs; j++) {
         thisrr = &rr[j];
 
@@ -735,7 +771,7 @@ int ssl3_get_record(SSL *s)
             return -1;
         }
 
-        if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
+        if (thisrr->length > SSL3_RT_MAX_PLAIN_LENGTH && !BIO_get_ktls_recv(s->rbio)) {
             SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
                      SSL_R_DATA_LENGTH_TOO_LONG);
             return -1;
@@ -743,7 +779,8 @@ int ssl3_get_record(SSL *s)
 
         /* If received packet overflows current Max Fragment Length setting */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+                && thisrr->length > GET_MAX_FRAGMENT_LENGTH(s->session)
+                && !BIO_get_ktls_recv(s->rbio)) {
             SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_SSL3_GET_RECORD,
                      SSL_R_DATA_LENGTH_TOO_LONG);
             return -1;
