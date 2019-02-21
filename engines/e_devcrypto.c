@@ -629,29 +629,30 @@ struct digest_ctx {
 
 static const struct digest_data_st {
     int nid;
+    int blocksize;
     int digestlen;
     int devcryptoid;
 } digest_data[] = {
 #ifndef OPENSSL_NO_MD5
-    { NID_md5, 16, CRYPTO_MD5 },
+    { NID_md5, /* MD5_CBLOCK */ 64, 16, CRYPTO_MD5 },
 #endif
-    { NID_sha1, 20, CRYPTO_SHA1 },
+    { NID_sha1, SHA_CBLOCK, 20, CRYPTO_SHA1 },
 #ifndef OPENSSL_NO_RMD160
 # if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_RIPEMD160)
-    { NID_ripemd160, 20, CRYPTO_RIPEMD160 },
+    { NID_ripemd160, /* RIPEMD160_CBLOCK */ 64, 20, CRYPTO_RIPEMD160 },
 # endif
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_224)
-    { NID_sha224, 224 / 8, CRYPTO_SHA2_224 },
+    { NID_sha224, SHA256_CBLOCK, 224 / 8, CRYPTO_SHA2_224 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_256)
-    { NID_sha256, 256 / 8, CRYPTO_SHA2_256 },
+    { NID_sha256, SHA256_CBLOCK, 256 / 8, CRYPTO_SHA2_256 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_384)
-    { NID_sha384, 384 / 8, CRYPTO_SHA2_384 },
+    { NID_sha384, SHA512_CBLOCK, 384 / 8, CRYPTO_SHA2_384 },
 #endif
 #if !defined(CHECK_BSD_STYLE_MACROS) || defined(CRYPTO_SHA2_512)
-    { NID_sha512, 512 / 8, CRYPTO_SHA2_512 },
+    { NID_sha512, SHA512_CBLOCK, 512 / 8, CRYPTO_SHA2_512 },
 #endif
 };
 
@@ -706,7 +707,6 @@ static int digest_init(EVP_MD_CTX *ctx)
         SYSerr(SYS_F_IOCTL, errno);
         return 0;
     }
-
     return 1;
 }
 
@@ -896,6 +896,8 @@ static void prepare_digest_methods(void)
         }
         if ((known_digest_methods[i] = EVP_MD_meth_new(digest_data[i].nid,
                                                        NID_undef)) == NULL
+            || !EVP_MD_meth_set_input_blocksize(known_digest_methods[i],
+                                                digest_data[i].blocksize)
             || !EVP_MD_meth_set_result_size(known_digest_methods[i],
                                             digest_data[i].digestlen)
             || !EVP_MD_meth_set_init(known_digest_methods[i], digest_init)
