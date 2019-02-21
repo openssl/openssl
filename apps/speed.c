@@ -257,7 +257,7 @@ static double Time_F(int s)
         if (thr == NULL) {
             DWORD err = GetLastError();
             BIO_printf(bio_err, "unable to CreateThread (%lu)", err);
-            ExitProcess(err);
+            TerminateProcess(GetCurrentProcess(), err);
         }
         while (!schlock)
             Sleep(0);           /* scheduler spinlock */
