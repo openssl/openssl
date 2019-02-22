@@ -19,6 +19,7 @@
  */
 # define PKCS11_F_PKCS11_CTRL                             110
 # define PKCS11_F_PKCS11_CTX_NEW                          111
+# define PKCS11_F_PKCS11_ENCODE_PKCS1                     119
 # define PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY          100
 # define PKCS11_F_PKCS11_GET_CONSOLE_PIN                  113
 # define PKCS11_F_PKCS11_GET_PRIVATE_KEY                  101
@@ -33,12 +34,14 @@
 # define PKCS11_F_PKCS11_PARSE_URI                        116
 # define PKCS11_F_PKCS11_RSA_ENC                          105
 # define PKCS11_F_PKCS11_RSA_INIT                         117
+# define PKCS11_F_PKCS11_RSA_SIGN                         118
 # define PKCS11_F_PKCS11_START_SESSION                    106
 # define PKCS11_F_PKCS11_TRACE                            109
 
 /*
  * PKCS11 reason codes.
  */
+# define PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY              121
 # define PKCS11_R_ENGINE_NOT_INITIALIZED                  117
 # define PKCS11_R_FILE_OPEN_ERROR                         102
 # define PKCS11_R_FIND_OBJECT_FAILED                      103
@@ -60,5 +63,7 @@
 # define PKCS11_R_SIGN_FAILED                             100
 # define PKCS11_R_SIGN_INIT_FAILED                        101
 # define PKCS11_R_SLOT_NOT_FOUND                          113
+# define PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD 122
+# define PKCS11_R_UNKNOWN_ALGORITHM_TYPE                  123
 
 #endif

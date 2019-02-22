@@ -16,6 +16,7 @@
 static ERR_STRING_DATA PKCS11_str_functs[] = {
     {ERR_PACK(0, PKCS11_F_PKCS11_CTRL, 0), "pkcs11_ctrl"},
     {ERR_PACK(0, PKCS11_F_PKCS11_CTX_NEW, 0), "pkcs11_ctx_new"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_ENCODE_PKCS1, 0), "pkcs11_encode_pkcs1"},
     {ERR_PACK(0, PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY, 0),
      "pkcs11_engine_load_private_key"},
     {ERR_PACK(0, PKCS11_F_PKCS11_GET_CONSOLE_PIN, 0), "pkcs11_get_console_pin"},
@@ -31,12 +32,15 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
     {ERR_PACK(0, PKCS11_F_PKCS11_PARSE_URI, 0), "pkcs11_parse_uri"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_ENC, 0), "pkcs11_rsa_enc"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_INIT, 0), "pkcs11_rsa_init"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_RSA_SIGN, 0), "pkcs11_rsa_sign"},
     {ERR_PACK(0, PKCS11_F_PKCS11_START_SESSION, 0), "pkcs11_start_session"},
     {ERR_PACK(0, PKCS11_F_PKCS11_TRACE, 0), "PKCS11_trace"},
     {0, NULL}
 };
 
 static ERR_STRING_DATA PKCS11_str_reasons[] = {
+    {ERR_PACK(0, 0, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY),
+    "digest too big for rsa key"},
     {ERR_PACK(0, 0, PKCS11_R_ENGINE_NOT_INITIALIZED), "engine not initialized"},
     {ERR_PACK(0, 0, PKCS11_R_FILE_OPEN_ERROR), "file open error"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FAILED), "find object failed"},
@@ -64,6 +68,9 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_SIGN_FAILED), "sign failed"},
     {ERR_PACK(0, 0, PKCS11_R_SIGN_INIT_FAILED), "sign init failed"},
     {ERR_PACK(0, 0, PKCS11_R_SLOT_NOT_FOUND), "slot not found"},
+    {ERR_PACK(0, 0, PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD),
+    "the asn1 object identifier is not known for this md"},
+    {ERR_PACK(0, 0, PKCS11_R_UNKNOWN_ALGORITHM_TYPE), "unknown algorithm type"},
     {0, NULL}
 };
 

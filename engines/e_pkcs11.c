@@ -57,6 +57,11 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
     {0, NULL, NULL, 0}
 };
 
+struct X509_sig_st {
+    X509_ALGOR *algor;
+    ASN1_OCTET_STRING *digest;
+};
+
 typedef struct PKCS11_CTX_st {
     CK_BYTE *id;
     CK_BYTE *label;
@@ -78,8 +83,9 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path);
 static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx);
 static char pkcs11_hex_int(char nib1, char nib2);
-static int pkcs11_rsa_enc(int flen, const unsigned char *from,
-                          unsigned char *to, RSA *rsa, int padding);
+static int pkcs11_rsa_sign(int alg, const unsigned char *md,
+                           unsigned int md_len, unsigned char *sigret,
+                           unsigned int *siglen, const RSA *rsa);
 static RSA_METHOD *pkcs11_rsa_init(void);
 static PKCS11_CTX *pkcs11_ctx_new(void);
 static void pkcs11_ctx_free(PKCS11_CTX *ctx);
@@ -87,6 +93,8 @@ static int pkcs11_get_slot(PKCS11_CTX *ctx);
 static int pkcs11_get_private_key(PKCS11_CTX *ctx);
 static CK_FUNCTION_LIST *pkcs11_funcs;
 static void PKCS11_trace(char *format, ...);
+static int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
+                               const unsigned char *m, unsigned int m_len);
 
 /* Engine stuff */
 static int pkcs11_init(ENGINE *e);
@@ -166,18 +174,64 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     return ret;
 }
 
-static int pkcs11_rsa_enc(int flen, const unsigned char *from,
-                          unsigned char *to, RSA *rsa, int padding)
+static int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
+                               const unsigned char *m, unsigned int m_len)
+{
+    X509_SIG sig;
+    X509_ALGOR algor;
+    ASN1_TYPE parameter;
+    ASN1_OCTET_STRING digest;
+    uint8_t *der = NULL;
+    int len;
+
+    sig.algor = &algor;
+    sig.algor->algorithm = OBJ_nid2obj(type);
+    if (sig.algor->algorithm == NULL) {
+        PKCS11err(PKCS11_F_PKCS11_ENCODE_PKCS1,
+                  PKCS11_R_UNKNOWN_ALGORITHM_TYPE);
+        return 0;
+    }
+    if (OBJ_length(sig.algor->algorithm) == 0) {
+        PKCS11err(PKCS11_F_PKCS11_ENCODE_PKCS1,
+               PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
+        return 0;
+    }
+    parameter.type = V_ASN1_NULL;
+    parameter.value.ptr = NULL;
+    sig.algor->parameter = &parameter;
+
+    sig.digest = &digest;
+    sig.digest->data = (unsigned char *)m;
+    sig.digest->length = m_len;
+
+    len = i2d_X509_SIG(&sig, &der);
+    if (len < 0)
+        return 0;
+
+    *out = der;
+    *out_len = len;
+    return 1;
+}
+
+static int pkcs11_rsa_sign(int alg, const unsigned char *md,
+                           unsigned int md_len, unsigned char *sigret,
+                           unsigned int *siglen, const RSA *rsa)
 {
     CK_RV rv;
     PKCS11_CTX *ctx;
-    CK_ULONG signatureLen = 0;
+    CK_ULONG num;
     CK_MECHANISM sign_mechanism = { 0 };
     CK_BBOOL bAwaysAuthentificate = CK_TRUE;
     CK_ATTRIBUTE keyAttribute[1];
+    unsigned char *tmps = NULL;
+    int encoded_len = 0;
+    const unsigned char *encoded = NULL;
 
-    if (padding != RSA_PKCS1_PADDING) {
-        PKCS11_trace("Padding %d is not RSA_PKCS1_PADDING \n", padding);
+    if (!pkcs11_encode_pkcs1(&tmps, &encoded_len, alg, md, md_len))
+        goto err;
+    encoded = tmps;
+    if (encoded_len > RSA_size(rsa) - RSA_PKCS1_PADDING_SIZE) {
+        PKCS11err(PKCS11_F_PKCS11_RSA_SIGN, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
 
@@ -187,7 +241,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_SignInit failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_INIT_FAILED);
+        PKCS11err(PKCS11_F_PKCS11_RSA_SIGN, PKCS11_R_SIGN_INIT_FAILED);
         goto err;
     }
 
@@ -199,7 +253,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
                                            OSSL_NELEM(keyAttribute));
     if (rv != CKR_OK) {
         PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_RSA_ENC,
+        PKCS11err(PKCS11_F_PKCS11_RSA_SIGN,
                   PKCS11_R_GETATTRIBUTEVALUE_FAILED);
         goto err;
     }
@@ -207,24 +261,16 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
     if (bAwaysAuthentificate && !pkcs11_login(ctx, CKU_CONTEXT_SPECIFIC))
         goto err;
 
-    /* Get length of signature */
-    rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) from, flen, NULL,
-                              &signatureLen);
-
-    if (rv != CKR_OK) {
-        PKCS11_trace("C_Sign (get length) failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
-        goto err;
-    }
-
     /* Sign */
-    rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) from, flen, to,
-                              &signatureLen);
+    num = RSA_size(rsa);
+    rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) encoded, encoded_len,
+                              sigret, &num);
     if (rv != CKR_OK) {
         PKCS11_trace("C_Sign failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_RSA_ENC, PKCS11_R_SIGN_FAILED);
+        PKCS11err(PKCS11_F_PKCS11_RSA_SIGN, PKCS11_R_SIGN_FAILED);
         goto err;
     }
+    *siglen = num;
 
     pkcs11_logout(ctx->session);
     pkcs11_end_session(ctx->session);
@@ -238,7 +284,7 @@ static int pkcs11_rsa_enc(int flen, const unsigned char *from,
 static RSA_METHOD *pkcs11_rsa_init()
 {
     pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0);
-    if ( !RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_enc)) {
+    if (!RSA_meth_set_sign(pkcs11_rsa, pkcs11_rsa_sign)) {
         PKCS11err(PKCS11_F_PKCS11_RSA_INIT, PKCS11_R_RSA_INIT_FAILED);
         return NULL;
     }
