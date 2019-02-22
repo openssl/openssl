@@ -34,8 +34,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
                         const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
                         unsigned char *sig, int siglen,
-                        unsigned char *out, size_t *poutlen,
-                        EVP_MD_CTX **md_ctx);
+                        unsigned char **out, size_t *poutlen);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
@@ -110,7 +109,6 @@ int pkeyutl_main(int argc, char **argv)
     STACK_OF(OPENSSL_STRING) *pkeyopts_passin = NULL;
     int rawin = 0;
     const EVP_MD *md = NULL;
-    EVP_MD_CTX *saved_mctx = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -395,7 +393,7 @@ int pkeyutl_main(int argc, char **argv)
     if (pkey_op == EVP_PKEY_OP_VERIFY) {
         if (rawin) {
             rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, sig, siglen,
-                              NULL, 0, NULL);
+                              NULL, 0);
         } else {
             rv = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
                                  buf_in, (size_t)buf_inlen);
@@ -412,23 +410,19 @@ int pkeyutl_main(int argc, char **argv)
         buf_outlen = kdflen;
         rv = 1;
     } else {
-        if (rawin)
+        if (rawin) {
+            /* rawin allocates the buffer in do_raw_keyop() */
             rv = do_raw_keyop(pkey_op, ctx, md, pkey, in, NULL, 0,
-                              NULL, (size_t *)&buf_outlen, &saved_mctx);
-        else
+                              &buf_out, (size_t *)&buf_outlen);
+        } else {
             rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
                           buf_in, (size_t)buf_inlen);
-    }
-    if (rv > 0 && buf_outlen != 0) {
-        buf_out = app_malloc(buf_outlen, "buffer output");
-        if (rawin) {
-            /* saved_mctx is freed after being used again */
-            rv = do_raw_keyop(pkey_op, NULL, NULL, NULL, NULL, NULL, 0,
-                              buf_out, (size_t *)&buf_outlen, &saved_mctx);
-        } else {
-            rv = do_keyop(ctx, pkey_op,
-                          buf_out, (size_t *)&buf_outlen,
-                          buf_in, (size_t)buf_inlen);
+            if (rv > 0 && buf_outlen != 0) {
+                buf_out = app_malloc(buf_outlen, "buffer output");
+                rv = do_keyop(ctx, pkey_op,
+                              buf_out, (size_t *)&buf_outlen,
+                              buf_in, (size_t)buf_inlen);
+            }
         }
     }
     if (rv <= 0) {
@@ -646,30 +640,21 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
                         const EVP_MD *md, EVP_PKEY *pkey, BIO *in,
                         unsigned char *sig, int siglen,
-                        unsigned char *out, size_t *poutlen,
-                        EVP_MD_CTX **md_ctx)
+                        unsigned char **out, size_t *poutlen)
 {
     int rv = 0;
     EVP_MD_CTX *mctx = NULL;
     unsigned char tbuf[TBUF_MAXSIZE];
     int tbuf_len = 0;
 
-    if (md_ctx != NULL && *md_ctx != NULL) {
-        mctx = *md_ctx;
-    } else {
-        if ((mctx = EVP_MD_CTX_new()) == NULL) {
-            BIO_printf(bio_err, "Error: out of memory\n");
-            return rv;
-        }
-        EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
+    if ((mctx = EVP_MD_CTX_new()) == NULL) {
+        BIO_printf(bio_err, "Error: out of memory\n");
+        return rv;
     }
+    EVP_MD_CTX_set_pkey_ctx(mctx, ctx);
 
     switch(pkey_op) {
     case EVP_PKEY_OP_VERIFY:
-        if (md_ctx != NULL) {
-            /* verification should never use this parameter */
-            goto end;
-        }
         if (EVP_DigestVerifyInit(mctx, NULL, md, NULL, pkey) != 1)
             goto end;
         for (;;) {
@@ -689,28 +674,26 @@ static int do_raw_keyop(int pkey_op, EVP_PKEY_CTX *ctx,
         rv = EVP_DigestVerifyFinal(mctx, sig, (size_t)siglen);
         break;
     case EVP_PKEY_OP_SIGN:
-        if (md_ctx == NULL || *md_ctx == NULL) {
-            if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
+        if (EVP_DigestSignInit(mctx, NULL, md, NULL, pkey) != 1)
+            goto end;
+        for (;;) {
+            tbuf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
+            if (tbuf_len == 0)
+                break;
+            if (tbuf_len < 0) {
+                BIO_printf(bio_err, "Error reading raw input data\n");
                 goto end;
-            for (;;) {
-                tbuf_len = BIO_read(in, tbuf, TBUF_MAXSIZE);
-                if (tbuf_len == 0)
-                    break;
-                if (tbuf_len < 0) {
-                    BIO_printf(bio_err, "Error reading raw input data\n");
-                    goto end;
-                }
-                rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)tbuf_len);
-                if (rv != 1) {
-                    BIO_printf(bio_err, "Error signing raw input data\n");
-                    goto end;
-                }
+            }
+            rv = EVP_DigestSignUpdate(mctx, tbuf, (size_t)tbuf_len);
+            if (rv != 1) {
+                BIO_printf(bio_err, "Error signing raw input data\n");
+                goto end;
             }
         }
-        rv = EVP_DigestSignFinal(mctx, out, poutlen);
-        if (rv == 1 && md_ctx != NULL && *md_ctx == NULL) {
-            *md_ctx = mctx;
-            return rv;
+        rv = EVP_DigestSignFinal(mctx, NULL, poutlen);
+        if (rv == 1 && out != NULL) {
+            *out = app_malloc(*poutlen, "buffer output");
+            rv = EVP_DigestSignFinal(mctx, *out, poutlen);
         }
         break;
     }
