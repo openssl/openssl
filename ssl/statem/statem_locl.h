@@ -29,9 +29,6 @@
 /* Max should actually be 36 but we are generous */
 #define FINISHED_MAX_LENGTH             64
 
-/* The maximum number of incoming KeyUpdate messages we will accept */
-#define MAX_KEY_UPDATE_MESSAGES     32
-
 /* Dummy message type */
 #define SSL3_MT_DUMMY   -1
 
