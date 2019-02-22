@@ -26,8 +26,8 @@ Certificate:
             1.3.6.1.4.1.311.21.1: 
                 ...
             X509v3 Certificate Policies: 
-                Policy: 1.2.643.100.113.1
-                Policy: 1.2.643.100.113.2
+                Policy: Class of Signing Tool KC1
+                Policy: Class of Signing Tool KC2
                 Policy: X509v3 Any Policy
     Signature Algorithm: GOST R 34.11-94 with GOST R 34.10-2001
     Signature Value:
