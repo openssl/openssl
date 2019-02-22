@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7767] = {
+static const unsigned char so[7813] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1077,9 +1077,17 @@ static const unsigned char so[7767] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7745] OBJ_hmacWithSHA512_224 */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7753] OBJ_hmacWithSHA512_256 */
     0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
+    0x2A,0x85,0x03,0x64,0x05,                      /* [ 7766] OBJ_OGRNIP */
+    0x2A,0x85,0x03,0x64,0x71,                      /* [ 7771] OBJ_classSignTool */
+    0x2A,0x85,0x03,0x64,0x71,0x01,                 /* [ 7776] OBJ_classSignToolKC1 */
+    0x2A,0x85,0x03,0x64,0x71,0x02,                 /* [ 7782] OBJ_classSignToolKC2 */
+    0x2A,0x85,0x03,0x64,0x71,0x03,                 /* [ 7788] OBJ_classSignToolKC3 */
+    0x2A,0x85,0x03,0x64,0x71,0x04,                 /* [ 7794] OBJ_classSignToolKB1 */
+    0x2A,0x85,0x03,0x64,0x71,0x05,                 /* [ 7800] OBJ_classSignToolKB2 */
+    0x2A,0x85,0x03,0x64,0x71,0x06,                 /* [ 7806] OBJ_classSignToolKA1 */
 };
 
-#define NUM_NID 1203
+#define NUM_NID 1211
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2284,9 +2292,17 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"AES-256-SIV", "aes-256-siv", NID_aes_256_siv},
     {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac},
     {"BLAKE2SMAC", "blake2smac", NID_blake2smac},
+    {"OGRNIP", "OGRNIP", NID_OGRNIP, 5, &so[7766]},
+    {"classSignTool", "Class of Signing Tool", NID_classSignTool, 5, &so[7771]},
+    {"classSignToolKC1", "Class of Signing Tool KC1", NID_classSignToolKC1, 6, &so[7776]},
+    {"classSignToolKC2", "Class of Signing Tool KC2", NID_classSignToolKC2, 6, &so[7782]},
+    {"classSignToolKC3", "Class of Signing Tool KC3", NID_classSignToolKC3, 6, &so[7788]},
+    {"classSignToolKB1", "Class of Signing Tool KB1", NID_classSignToolKB1, 6, &so[7794]},
+    {"classSignToolKB2", "Class of Signing Tool KB2", NID_classSignToolKB2, 6, &so[7800]},
+    {"classSignToolKA1", "Class of Signing Tool KA1", NID_classSignToolKA1, 6, &so[7806]},
 };
 
-#define NUM_SN 1194
+#define NUM_SN 1202
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2486,6 +2502,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      178,    /* "OCSP" */
      180,    /* "OCSPSigning" */
     1005,    /* "OGRN" */
+    1203,    /* "OGRNIP" */
      379,    /* "ORG" */
       18,    /* "OU" */
      749,    /* "Oakley-EC2N-3" */
@@ -2659,6 +2676,13 @@ static const unsigned int sn_objs[NUM_SN] = {
      883,    /* "certificateRevocationList" */
       54,    /* "challengePassword" */
      407,    /* "characteristic-two-field" */
+    1204,    /* "classSignTool" */
+    1210,    /* "classSignToolKA1" */
+    1208,    /* "classSignToolKB1" */
+    1209,    /* "classSignToolKB2" */
+    1205,    /* "classSignToolKC1" */
+    1206,    /* "classSignToolKC2" */
+    1207,    /* "classSignToolKC3" */
      395,    /* "clearance" */
      130,    /* "clientAuth" */
     1131,    /* "cmcCA" */
@@ -3484,7 +3508,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1194
+#define NUM_LN 1202
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3502,6 +3526,13 @@ static const unsigned int ln_objs[NUM_LN] = {
      952,    /* "CT Precertificate Poison" */
      951,    /* "CT Precertificate SCTs" */
      953,    /* "CT Precertificate Signer" */
+    1204,    /* "Class of Signing Tool" */
+    1210,    /* "Class of Signing Tool KA1" */
+    1208,    /* "Class of Signing Tool KB1" */
+    1209,    /* "Class of Signing Tool KB2" */
+    1205,    /* "Class of Signing Tool KC1" */
+    1206,    /* "Class of Signing Tool KC2" */
+    1207,    /* "Class of Signing Tool KC3" */
      131,    /* "Code Signing" */
     1024,    /* "Ctrl/Provision WAP Termination" */
     1023,    /* "Ctrl/provision WAP Access" */
@@ -3621,6 +3652,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      371,    /* "OCSP Service Locator" */
      180,    /* "OCSP Signing" */
     1005,    /* "OGRN" */
+    1203,    /* "OGRNIP" */
      161,    /* "PBES2" */
       69,    /* "PBKDF2" */
      162,    /* "PBMAC1" */
@@ -4682,7 +4714,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1072
+#define NUM_OBJ 1080
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -4936,8 +4968,10 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      974,    /* OBJ_id_tc26                      1 2 643 7 1 */
     1005,    /* OBJ_OGRN                         1 2 643 100 1 */
     1006,    /* OBJ_SNILS                        1 2 643 100 3 */
+    1203,    /* OBJ_OGRNIP                       1 2 643 100 5 */
     1007,    /* OBJ_subjectSignTool              1 2 643 100 111 */
     1008,    /* OBJ_issuerSignTool               1 2 643 100 112 */
+    1204,    /* OBJ_classSignTool                1 2 643 100 113 */
      184,    /* OBJ_X9_57                        1 2 840 10040 */
      405,    /* OBJ_ansi_X9_62                   1 2 840 10045 */
      389,    /* OBJ_Enterprises                  1 3 6 1 4 1 */
@@ -5026,6 +5060,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      818,    /* OBJ_id_GostR3410_94DH            1 2 643 2 2 99 */
      977,    /* OBJ_id_tc26_algorithms           1 2 643 7 1 1 */
      994,    /* OBJ_id_tc26_constants            1 2 643 7 1 2 */
+    1205,    /* OBJ_classSignToolKC1             1 2 643 100 113 1 */
+    1206,    /* OBJ_classSignToolKC2             1 2 643 100 113 2 */
+    1207,    /* OBJ_classSignToolKC3             1 2 643 100 113 3 */
+    1208,    /* OBJ_classSignToolKB1             1 2 643 100 113 4 */
+    1209,    /* OBJ_classSignToolKB2             1 2 643 100 113 5 */
+    1210,    /* OBJ_classSignToolKA1             1 2 643 100 113 6 */
        1,    /* OBJ_rsadsi                       1 2 840 113549 */
      185,    /* OBJ_X9cm                         1 2 840 10040 4 */
     1031,    /* OBJ_id_pkinit                    1 3 6 1 5 2 3 */

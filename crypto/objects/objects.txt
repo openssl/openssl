@@ -1391,8 +1391,16 @@ id-tc26-gost-28147-constants 1	: id-tc26-gost-28147-param-Z : GOST 28147-89 TC26
 member-body 643 3 131 1 1	: INN	: INN
 member-body 643 100 1		: OGRN	: OGRN
 member-body 643 100 3		: SNILS	: SNILS
+member-body 643 100 5		: OGRNIP	: OGRNIP
 member-body 643 100 111	: subjectSignTool	: Signing Tool of Subject
 member-body 643 100 112	: issuerSignTool	: Signing Tool of Issuer
+member-body 643 100 113  : classSignTool   : Class of Signing Tool
+member-body 643 100 113 1 : classSignToolKC1 : Class of Signing Tool KC1
+member-body 643 100 113 2 : classSignToolKC2 : Class of Signing Tool KC2
+member-body 643 100 113 3 : classSignToolKC3 : Class of Signing Tool KC3
+member-body 643 100 113 4 : classSignToolKB1 : Class of Signing Tool KB1
+member-body 643 100 113 5 : classSignToolKB2 : Class of Signing Tool KB2
+member-body 643 100 113 6 : classSignToolKA1 : Class of Signing Tool KA1
 
 #GOST R34.13-2015 Grasshopper "Kuznechik"
 			: grasshopper-ecb

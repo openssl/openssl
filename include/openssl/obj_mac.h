@@ -4391,6 +4391,11 @@
 #define NID_SNILS               1006
 #define OBJ_SNILS               OBJ_member_body,643L,100L,3L
 
+#define SN_OGRNIP               "OGRNIP"
+#define LN_OGRNIP               "OGRNIP"
+#define NID_OGRNIP              1203
+#define OBJ_OGRNIP              OBJ_member_body,643L,100L,5L
+
 #define SN_subjectSignTool              "subjectSignTool"
 #define LN_subjectSignTool              "Signing Tool of Subject"
 #define NID_subjectSignTool             1007
@@ -4400,6 +4405,41 @@
 #define LN_issuerSignTool               "Signing Tool of Issuer"
 #define NID_issuerSignTool              1008
 #define OBJ_issuerSignTool              OBJ_member_body,643L,100L,112L
+
+#define SN_classSignTool                "classSignTool"
+#define LN_classSignTool                "Class of Signing Tool"
+#define NID_classSignTool               1204
+#define OBJ_classSignTool               OBJ_member_body,643L,100L,113L
+
+#define SN_classSignToolKC1             "classSignToolKC1"
+#define LN_classSignToolKC1             "Class of Signing Tool KC1"
+#define NID_classSignToolKC1            1205
+#define OBJ_classSignToolKC1            OBJ_member_body,643L,100L,113L,1L
+
+#define SN_classSignToolKC2             "classSignToolKC2"
+#define LN_classSignToolKC2             "Class of Signing Tool KC2"
+#define NID_classSignToolKC2            1206
+#define OBJ_classSignToolKC2            OBJ_member_body,643L,100L,113L,2L
+
+#define SN_classSignToolKC3             "classSignToolKC3"
+#define LN_classSignToolKC3             "Class of Signing Tool KC3"
+#define NID_classSignToolKC3            1207
+#define OBJ_classSignToolKC3            OBJ_member_body,643L,100L,113L,3L
+
+#define SN_classSignToolKB1             "classSignToolKB1"
+#define LN_classSignToolKB1             "Class of Signing Tool KB1"
+#define NID_classSignToolKB1            1208
+#define OBJ_classSignToolKB1            OBJ_member_body,643L,100L,113L,4L
+
+#define SN_classSignToolKB2             "classSignToolKB2"
+#define LN_classSignToolKB2             "Class of Signing Tool KB2"
+#define NID_classSignToolKB2            1209
+#define OBJ_classSignToolKB2            OBJ_member_body,643L,100L,113L,5L
+
+#define SN_classSignToolKA1             "classSignToolKA1"
+#define LN_classSignToolKA1             "Class of Signing Tool KA1"
+#define NID_classSignToolKA1            1210
+#define OBJ_classSignToolKA1            OBJ_member_body,643L,100L,113L,6L
 
 #define SN_grasshopper_ecb              "grasshopper-ecb"
 #define NID_grasshopper_ecb             1012

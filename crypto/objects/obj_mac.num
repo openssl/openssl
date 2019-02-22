@@ -1200,3 +1200,11 @@ aes_192_siv		1199
 aes_256_siv		1200
 blake2bmac		1201
 blake2smac		1202
+OGRNIP		1203
+classSignTool		1204
+classSignToolKC1		1205
+classSignToolKC2		1206
+classSignToolKC3		1207
+classSignToolKB1		1208
+classSignToolKB2		1209
+classSignToolKA1		1210
