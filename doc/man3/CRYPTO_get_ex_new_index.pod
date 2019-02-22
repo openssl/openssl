@@ -104,7 +104,7 @@ to avoid likely double-free crashes.
 The function B<CRYPTO_free_ex_data> is used to free all exdata attached
 to a structure. The appropriate type-specific routine must be used.
 The B<class_index> identifies the structure type, the B<obj> is
-be the pointer to the actual structure, and B<r> is a pointer to the
+a pointer to the actual structure, and B<r> is a pointer to the
 structure's exdata field.
 
 =head2 Callback Functions
