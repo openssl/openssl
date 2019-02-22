@@ -213,6 +213,7 @@ DEFINE_COMPARISONS(unsigned char, uchar, "%u")
 DEFINE_COMPARISONS(long, long, "%ld")
 DEFINE_COMPARISONS(unsigned long, ulong, "%lu")
 DEFINE_COMPARISONS(size_t, size_t, "%zu")
+DEFINE_COMPARISONS(double, double, "%g")
 
 DEFINE_COMPARISON(void *, ptr, eq, ==, "%p")
 DEFINE_COMPARISON(void *, ptr, ne, !=, "%p")
