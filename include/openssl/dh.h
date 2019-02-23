@@ -151,8 +151,8 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *codes);
 int DH_generate_key(DH *dh);
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh);
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH,DHparams)
-DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH,DHxparams)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHparams)
+DECLARE_ASN1_ENCODE_FUNCTIONS_only(DH, DHxparams)
 # ifndef OPENSSL_NO_STDIO
 int DHparams_print_fp(FILE *fp, const DH *x);
 # endif

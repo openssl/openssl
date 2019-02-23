@@ -156,6 +156,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
     int i, j, ret;
     STACK_OF(X509_NAME_ENTRY) *entries;
     X509_NAME_ENTRY *entry;
+
     if (len > X509_NAME_MAX)
         len = X509_NAME_MAX;
     q = p;
@@ -212,6 +213,7 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
 {
     int ret;
     X509_NAME *a = (X509_NAME *)*val;
+
     if (a->modified) {
         ret = x509_name_encode(a);
         if (ret < 0)
@@ -241,6 +243,7 @@ static int x509_name_encode(X509_NAME *a)
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry;
     int i, set = -1;
+
     intname.s = sk_STACK_OF_X509_NAME_ENTRY_new_null();
     if (!intname.s)
         goto memerr;
@@ -482,6 +485,7 @@ static int i2d_name_canon(const STACK_OF(STACK_OF_X509_NAME_ENTRY) * _intname,
 int X509_NAME_set(X509_NAME **xn, const X509_NAME *name)
 {
     X509_NAME *name_copy;
+
     if (*xn == name)
         return *xn != NULL;
     if ((name_copy = X509_NAME_dup(name)) == NULL)
