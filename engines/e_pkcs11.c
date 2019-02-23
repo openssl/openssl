@@ -567,7 +567,7 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
     end = strpbrk(tmp, ";");
 
     BIO_snprintf(*value, end == NULL ? tmplen + 1 :
-             (size_t) (end - tmp + 1), "%s", tmp);
+                 (size_t) (end - tmp + 1), "%s", tmp);
     hex2bin = OPENSSL_malloc(strlen(*value) + 1);
 
     if (hex2bin == NULL) {
@@ -577,7 +577,7 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
 
     vlen = strlen(*value);
     for (i = 0; i < vlen; i++) {
-        if (*(*value+i) == '%' && i < (strlen(*value)-2)) {
+        if (*(*value+i) == '%' && i < (vlen-2)) {
             *(hex2bin+j) = pkcs11_hex_int(*(*value+i+1), *(*value+i+2));
             i += 2;
         } else {
