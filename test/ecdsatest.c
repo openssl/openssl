@@ -8,16 +8,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
-#include "testutil.h"
+# include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
+# include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
 
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/ec.h>
-#include <openssl/rand.h>
-#include "ecdsatest.h"
+# include <openssl/evp.h>
+# include <openssl/bn.h>
+# include <openssl/ec.h>
+# include <openssl/rand.h>
+ #include "internal/nelem.h"
+# include "ecdsatest.h"
 
 /* functions to change the RAND_METHOD */
 static int fbytes(unsigned char *buf, int num);
@@ -97,8 +98,8 @@ static int fbytes(unsigned char *buf, int num)
 static int x9_62_tests(int n)
 {
     int nid, md_nid, ret = 0;
-    const char *r_in, *s_in, *tbs = NULL;
-    unsigned char *pbuf, *qbuf, *message = NULL;
+    const char *r_in = NULL, *s_in = NULL, *tbs = NULL;
+    unsigned char *pbuf = NULL, *qbuf = NULL, *message = NULL;
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dgst_len = 0;
     long q_len, msg_len = 0;
@@ -108,7 +109,7 @@ static int x9_62_tests(int n)
     ECDSA_SIG *signature = NULL;
     BIGNUM *r = NULL, *s = NULL;
     BIGNUM *kinv = NULL, *rp = NULL;
-    const BIGNUM *sig_r, *sig_s;
+    const BIGNUM *sig_r = NULL, *sig_s = NULL;
 
     nid = ecdsa_cavs_kats[n].nid;
     md_nid = ecdsa_cavs_kats[n].md_nid;
@@ -200,10 +201,10 @@ static int x9_62_tests(int n)
  */
 static int test_builtin(int n)
 {
-    EC_KEY *eckey_neg, *eckey = NULL;
+    EC_KEY *eckey_neg = NULL, *eckey = NULL;
     unsigned char tbs[128];
     unsigned char *sig = NULL;
-    EVP_PKEY *pkey_neg, *pkey = NULL;
+    EVP_PKEY *pkey_neg = NULL, *pkey = NULL;
     EVP_MD_CTX *mctx = NULL;
     size_t sig_len;
     int nid, ret = 0;
@@ -212,7 +213,7 @@ static int test_builtin(int n)
 
     /* skip built-in curves where ord(G) is not prime */
     if (nid == NID_ipsec4 || nid == NID_ipsec3) {
-        TEST_info("ECDSA unsupported for curve %s", OBJ_nid2sn(nid));
+        TEST_info("skipped: ECDSA unsupported for curve %s", OBJ_nid2sn(nid));
         return 1;
     }
 
@@ -326,7 +327,7 @@ int setup_tests(void)
         || !TEST_true(EC_get_builtin_curves(curves, crv_len)))
         return 0;
     ADD_ALL_TESTS(test_builtin, crv_len);
-    ADD_ALL_TESTS(x9_62_tests, sizeof(ecdsa_cavs_kats)/sizeof(ecdsa_cavs_kat_t));
+    ADD_ALL_TESTS(x9_62_tests, OSSL_NELEM(ecdsa_cavs_kats));
 #endif
     return 1;
 }

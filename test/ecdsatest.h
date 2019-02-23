@@ -12,9 +12,7 @@
 
 /*-
  * NIST CAVP ECDSA KATs:
- * https://csrc.nist.gov/CSRC/media/Projects
- * /Cryptographic-Algorithm-Validation-Program
- * /documents/dss/186-3ecdsatestvectors.zip
+ * https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/dss/186-3ecdsatestvectors.zip
  *
  * sha256sum e0d9bee3f760ca3fabb82bd43dd04c13ee64ca9e0b719c6ea64fd52c9f0dd929
  * 720 KATs from the SigGen.txt file.
