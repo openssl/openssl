@@ -90,7 +90,7 @@ static RSA_METHOD *pkcs11_rsa_init(void);
 static PKCS11_CTX *pkcs11_ctx_new(void);
 static void pkcs11_ctx_free(PKCS11_CTX *ctx);
 static int pkcs11_get_slot(PKCS11_CTX *ctx);
-static int pkcs11_get_private_key(PKCS11_CTX *ctx);
+static int pkcs11_find_private_key(PKCS11_CTX *ctx);
 static CK_FUNCTION_LIST *pkcs11_funcs;
 static void PKCS11_trace(char *format, ...);
 static int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
@@ -473,7 +473,7 @@ static void pkcs11_end_session(CK_SESSION_HANDLE session)
     pkcs11_funcs->C_CloseSession(session);
 }
 
-static int pkcs11_get_private_key(PKCS11_CTX *ctx)
+static int pkcs11_find_private_key(PKCS11_CTX *ctx)
 {
     CK_RV rv;
     CK_OBJECT_CLASS key_class = CKO_PRIVATE_KEY;
@@ -488,6 +488,7 @@ static int pkcs11_get_private_key(PKCS11_CTX *ctx)
     tmpl[1].type = CKA_KEY_TYPE;
     tmpl[1].pValue = &key_type;
     tmpl[1].ulValueLen = sizeof(key_type);
+
     if (ctx->id != NULL) {
         tmpl[2].type = CKA_ID;
         tmpl[2].pValue = ctx->id;
@@ -502,7 +503,7 @@ static int pkcs11_get_private_key(PKCS11_CTX *ctx)
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsInit failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
+        PKCS11err(PKCS11_F_PKCS11_FIND_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_INIT_FAILED);
         goto err;
     }
@@ -511,7 +512,7 @@ static int pkcs11_get_private_key(PKCS11_CTX *ctx)
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjects failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
+        PKCS11err(PKCS11_F_PKCS11_FIND_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_FAILED);
         goto err;
     }
@@ -520,13 +521,20 @@ static int pkcs11_get_private_key(PKCS11_CTX *ctx)
 
     if (rv != CKR_OK) {
         PKCS11_trace("C_FindObjectsFinal failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_GET_PRIVATE_KEY,
+        PKCS11err(PKCS11_F_PKCS11_FIND_PRIVATE_KEY,
                   PKCS11_R_FIND_OBJECT_FINAL_FAILED);
         goto err;
     }
 
-
     ctx->key = objhandle;
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
+                                           tmpl, OSSL_NELEM(tmpl));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_FIND_PRIVATE_KEY,
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
+    }
     return 1;
 
  err:
@@ -578,10 +586,13 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
         j++;
     }
     *(hex2bin+j) = '\0';
+    free(*value);
     *value = hex2bin;
     return 1;
 
  err:
+    free(*value);
+    *value = NULL;
     return 0;
 }
 
@@ -589,7 +600,8 @@ static int pkcs11_get_console_pin(char **pin)
 {
 #ifndef OPENSSL_NO_UI_CONSOLE
     int i;
-    char *strbuf = OPENSSL_malloc(512);
+    const int buflen = 512;
+    char *strbuf = OPENSSL_malloc(buflen);
 
     if (strbuf == NULL) {
         PKCS11err(PKCS11_F_PKCS11_GET_CONSOLE_PIN, ERR_R_MALLOC_FAILURE);
@@ -624,14 +636,9 @@ static int pkcs11_get_console_pin(char **pin)
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
 {
     char *id, *module_path = NULL;
-    char *pin = NULL, *label = NULL;
-    char *slotid = OPENSSL_malloc(2);
+    char *pin = NULL, *label = NULL, *slotid = NULL;
 
-    if (slotid == NULL) {
-        PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
+    ctx->slotid = 0;
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
 	if (ctx->module_path == NULL &&
@@ -644,10 +651,11 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
             goto err;
         }
 	if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
-           slotid[0] = '0';
+           slotid = NULL;
         }
         pkcs11_parse_uri(path,"pin-value=", &pin);
-        if (pin != NULL) ctx->pin = (CK_BYTE *) pin;
+        if (pin != NULL)
+            ctx->pin = (CK_BYTE *) pin;
     } else if (path == NULL) {
        PKCS11_trace("inkey is null\n");
        goto err;
@@ -662,14 +670,15 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
             PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        slotid = NULL;
 
-        slotid[0] = '0';
     }
     if (label != NULL)
         ctx->label = (CK_BYTE *) label;
     else
         ctx->id = (CK_BYTE *) id;
-    ctx->slotid = (CK_SLOT_ID) atoi(slotid);
+    if (slotid != NULL)
+        ctx->slotid = (CK_SLOT_ID) atoi(slotid);
 
     if (ctx->pin == NULL) {
         if (!pkcs11_get_console_pin(&pin))
@@ -691,17 +700,9 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
                                                 UI_METHOD * ui_method,
                                                 void *callback_data)
 {
-    CK_ULONG kt, key_class;
-    CK_ATTRIBUTE key_type[2];
     CK_RV rv;
     PKCS11_CTX *ctx;
 
-    key_type[0].type = CKA_CLASS;
-    key_type[0].pValue = &key_class;
-    key_type[0].ulValueLen = sizeof(key_class);
-    key_type[1].type = CKA_KEY_TYPE;
-    key_type[1].pValue = &kt;
-    key_type[1].ulValueLen = sizeof(kt);
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
 
     if (!pkcs11_parse(ctx, path))
@@ -716,23 +717,10 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
         goto err;
     if (!pkcs11_login(ctx, CKU_USER))
         goto err;
-    if (!pkcs11_get_private_key(ctx))
+    if (!pkcs11_find_private_key(ctx))
         goto err;
 
-    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
-                                           key_type, OSSL_NELEM(key_type));
-    if (rv != CKR_OK || key_class != CKO_PRIVATE_KEY) {
-        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
-        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
-                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
-        goto err;
-    }
-
-    if(kt == CKK_RSA)
-        return pkcs11_load_pkey(ctx);
-    else
-        PKCS11err(PKCS11_F_PKCS11_ENGINE_LOAD_PRIVATE_KEY,
-                  PKCS11_R_RSA_NOT_FOUND);
+    return pkcs11_load_pkey(ctx);
 
  err:
     PKCS11_trace("pkcs11_engine_load_private_key failed\n");
