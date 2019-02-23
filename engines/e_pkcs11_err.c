@@ -14,6 +14,7 @@
 #ifndef OPENSSL_NO_ERR
 
 static ERR_STRING_DATA PKCS11_str_functs[] = {
+    {ERR_PACK(0, PKCS11_F_BIND_PKCS11, 0), "bind_pkcs11"},
     {ERR_PACK(0, PKCS11_F_PKCS11_CTRL, 0), "pkcs11_ctrl"},
     {ERR_PACK(0, PKCS11_F_PKCS11_CTX_NEW, 0), "pkcs11_ctx_new"},
     {ERR_PACK(0, PKCS11_F_PKCS11_ENCODE_PKCS1, 0), "pkcs11_encode_pkcs1"},
@@ -33,6 +34,7 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
     {ERR_PACK(0, PKCS11_F_PKCS11_PARSE_URI, 0), "pkcs11_parse_uri"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_ENC, 0), "pkcs11_rsa_enc"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_INIT, 0), "pkcs11_rsa_init"},
+    {ERR_PACK(0, PKCS11_F_PKCS11_RSA_PRIV_ENC, 0), "pkcs11_rsa_priv_enc"},
     {ERR_PACK(0, PKCS11_F_PKCS11_RSA_SIGN, 0), "pkcs11_rsa_sign"},
     {ERR_PACK(0, PKCS11_F_PKCS11_START_SESSION, 0), "pkcs11_start_session"},
     {ERR_PACK(0, PKCS11_F_PKCS11_TRACE, 0), "PKCS11_trace"},
@@ -42,6 +44,8 @@ static ERR_STRING_DATA PKCS11_str_functs[] = {
 static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY),
     "digest too big for rsa key"},
+    {ERR_PACK(0, 0, PKCS11_R_ENCRYPT_FAILED), "encrypt failed"},
+    {ERR_PACK(0, 0, PKCS11_R_ENCRYPT_INIT_FAILED), "encrypt init failed"},
     {ERR_PACK(0, 0, PKCS11_R_ENGINE_NOT_INITIALIZED), "engine not initialized"},
     {ERR_PACK(0, 0, PKCS11_R_FILE_OPEN_ERROR), "file open error"},
     {ERR_PACK(0, 0, PKCS11_R_FIND_OBJECT_FAILED), "find object failed"},
@@ -64,6 +68,7 @@ static ERR_STRING_DATA PKCS11_str_reasons[] = {
     {ERR_PACK(0, 0, PKCS11_R_MEMORY_ALLOCATION_FAILED),
     "memory allocation failed"},
     {ERR_PACK(0, 0, PKCS11_R_OPEN_SESSION_ERROR), "open session error"},
+    {ERR_PACK(0, 0, PKCS11_R_PADDING_ADD_FAILED), "padding add failed"},
     {ERR_PACK(0, 0, PKCS11_R_RSA_INIT_FAILED), "rsa init failed"},
     {ERR_PACK(0, 0, PKCS11_R_RSA_NOT_FOUND), "rsa not found"},
     {ERR_PACK(0, 0, PKCS11_R_SIGN_FAILED), "sign failed"},

@@ -86,7 +86,8 @@ static char pkcs11_hex_int(char nib1, char nib2);
 static int pkcs11_rsa_sign(int alg, const unsigned char *md,
                            unsigned int md_len, unsigned char *sigret,
                            unsigned int *siglen, const RSA *rsa);
-static RSA_METHOD *pkcs11_rsa_init(void);
+static int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
+                               unsigned char *to, RSA *rsa, int padding);
 static PKCS11_CTX *pkcs11_ctx_new(void);
 static void pkcs11_ctx_free(PKCS11_CTX *ctx);
 static int pkcs11_get_slot(PKCS11_CTX *ctx);
@@ -97,8 +98,8 @@ static int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
                                const unsigned char *m, unsigned int m_len);
 
 /* Engine stuff */
+static int bind_pkcs11(ENGINE *e);
 static int pkcs11_init(ENGINE *e);
-static int pkcs11_bind(ENGINE *e, const char *id);
 static int pkcs11_destroy(ENGINE *e);
 static int pkcs11_finish(ENGINE *e);
 static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
@@ -128,6 +129,7 @@ static int pkcs11_init(ENGINE *e)
 
         ENGINE_set_ex_data(e, pkcs11_idx, ctx);
     }
+
     return 1;
 
  memerr:
@@ -227,10 +229,11 @@ static int pkcs11_rsa_sign(int alg, const unsigned char *md,
     int encoded_len = 0;
     const unsigned char *encoded = NULL;
 
+    num = RSA_size(rsa);
     if (!pkcs11_encode_pkcs1(&tmps, &encoded_len, alg, md, md_len))
         goto err;
     encoded = tmps;
-    if (encoded_len > RSA_size(rsa) - RSA_PKCS1_PADDING_SIZE) {
+    if (encoded_len > num - RSA_PKCS1_PADDING_SIZE) {
         PKCS11err(PKCS11_F_PKCS11_RSA_SIGN, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
@@ -262,7 +265,6 @@ static int pkcs11_rsa_sign(int alg, const unsigned char *md,
         goto err;
 
     /* Sign */
-    num = RSA_size(rsa);
     rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) encoded, encoded_len,
                               sigret, &num);
     if (rv != CKR_OK) {
@@ -281,15 +283,77 @@ static int pkcs11_rsa_sign(int alg, const unsigned char *md,
     return 0;
 }
 
-static RSA_METHOD *pkcs11_rsa_init()
+static int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
+                               unsigned char *to, RSA *rsa, int padding)
 {
-    pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0);
-    if (!RSA_meth_set_sign(pkcs11_rsa, pkcs11_rsa_sign)) {
-        PKCS11err(PKCS11_F_PKCS11_RSA_INIT, PKCS11_R_RSA_INIT_FAILED);
-        return NULL;
+    CK_RV rv;
+    PKCS11_CTX *ctx;
+    CK_ULONG num;
+    CK_MECHANISM enc_mechanism = { 0 };
+    CK_BBOOL bAwaysAuthentificate = CK_TRUE;
+    CK_ATTRIBUTE keyAttribute[1];
+    int useSign = 0;
+
+    num = RSA_size(rsa);
+    ctx = ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
+    enc_mechanism.mechanism = CKM_RSA_PKCS;
+    rv = pkcs11_funcs->C_EncryptInit(ctx->session, &enc_mechanism, ctx->key);
+
+    if (rv == CKR_KEY_FUNCTION_NOT_PERMITTED) {
+        PKCS11_trace("C_EncryptInit failed try SignInit, error: %#08X\n", rv);
+        rv = pkcs11_funcs->C_SignInit(ctx->session, &enc_mechanism, ctx->key);
+
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_SignInit failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_ENC, PKCS11_R_SIGN_INIT_FAILED);
+            goto err;
+        }
+        useSign = 1;
     }
 
-    return pkcs11_rsa;
+    keyAttribute[0].type = CKA_ALWAYS_AUTHENTICATE;
+    keyAttribute[0].pValue = &bAwaysAuthentificate;
+    keyAttribute[0].ulValueLen = sizeof(bAwaysAuthentificate);
+    rv = pkcs11_funcs->C_GetAttributeValue(ctx->session, ctx->key,
+                                           keyAttribute,
+                                           OSSL_NELEM(keyAttribute));
+    if (rv != CKR_OK) {
+        PKCS11_trace("C_GetAttributeValue failed, error: %#08X\n", rv);
+        PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_ENC,
+                  PKCS11_R_GETATTRIBUTEVALUE_FAILED);
+        goto err;
+    }
+
+    if (bAwaysAuthentificate && !pkcs11_login(ctx, CKU_CONTEXT_SPECIFIC))
+        goto err;
+
+    if (!useSign) {
+        /* Encrypt */
+        rv = pkcs11_funcs->C_Encrypt(ctx->session, (CK_BYTE *) from,
+                                     flen, to, &num);
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_Encrypt failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_ENC, PKCS11_R_ENCRYPT_FAILED);
+            goto err;
+        }
+    } else {
+        /* Sign */
+        rv = pkcs11_funcs->C_Sign(ctx->session, (CK_BYTE *) from,
+                                  flen, to, &num);
+        if (rv != CKR_OK) {
+            PKCS11_trace("C_Sign failed, error: %#08X\n", rv);
+            PKCS11err(PKCS11_F_PKCS11_RSA_PRIV_ENC, PKCS11_R_SIGN_FAILED);
+            goto err;
+        }
+    }
+
+    pkcs11_logout(ctx->session);
+    pkcs11_end_session(ctx->session);
+    pkcs11_finalize();
+    return 1;
+
+ err:
+    return 0;
 }
 
 /**
@@ -704,11 +768,11 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
     PKCS11_CTX *ctx;
 
     ctx = ENGINE_get_ex_data(e, pkcs11_idx);
-
     if (!pkcs11_parse(ctx, path))
         goto err;
 
     rv = pkcs11_initialize(ctx->module_path);
+
     if (rv != CKR_OK)
         goto err;
     if (!pkcs11_get_slot(ctx))
@@ -784,9 +848,11 @@ static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
                  BN_bin2bn(rsa_attributes[1].pValue,
                            rsa_attributes[1].ulValueLen, NULL),
                  NULL);
+
     if((k = EVP_PKEY_new()) != NULL) {
         EVP_PKEY_set1_RSA(k, rsa);
     }
+
     OPENSSL_free(rsa_attributes[0].pValue);
     OPENSSL_free(rsa_attributes[1].pValue);
     return k;
@@ -797,11 +863,19 @@ static EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx)
     return NULL;
 }
 
-static int pkcs11_bind(ENGINE *e, const char *id)
+static int bind_pkcs11(ENGINE *e)
 {
+
+    if ((pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0)) == NULL
+         || !RSA_meth_set_sign(pkcs11_rsa, pkcs11_rsa_sign)
+         || !RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_priv_enc)) {
+        PKCS11err(PKCS11_F_BIND_PKCS11, PKCS11_R_RSA_INIT_FAILED);
+        return 0;
+    }
+
     if (!ENGINE_set_id(e, engine_id)
         || !ENGINE_set_name(e, engine_name)
-        || !ENGINE_set_RSA(e, pkcs11_rsa_init())
+        || !ENGINE_set_RSA(e, pkcs11_rsa)
         || !ENGINE_set_load_privkey_function(e, pkcs11_engine_load_private_key)
         || !ENGINE_set_destroy_function(e, pkcs11_destroy)
         || !ENGINE_set_init_function(e, pkcs11_init)
@@ -820,7 +894,8 @@ static int pkcs11_bind(ENGINE *e, const char *id)
 
 static void PKCS11_trace(char *format, ...)
 {
-#ifndef OPENSSL_NO_STDIO
+#ifdef DEBUG
+# ifndef OPENSSL_NO_STDIO
     BIO *out;
     va_list args;
 
@@ -834,6 +909,7 @@ static void PKCS11_trace(char *format, ...)
     BIO_vprintf(out, format, args);
     va_end(args);
     BIO_free(out);
+# endif
 #endif
 }
 
@@ -871,5 +947,38 @@ static void pkcs11_ctx_free(PKCS11_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-IMPLEMENT_DYNAMIC_BIND_FN(pkcs11_bind)
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+static int bind_helper(ENGINE *e, const char *id)
+{
+    if (id && (strcmp(id, engine_id) != 0))
+        return 0;
+    if (!bind_pkcs11(e))
+        return 0;
+    return 1;
+}
+
+IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
 IMPLEMENT_DYNAMIC_CHECK_FN()
+#else
+static ENGINE *engine_pkcs11(void)
+{
+    ENGINE *ret = ENGINE_new();
+    if (ret == NULL)
+        return NULL;
+    if (!bind_pkcs11(ret)) {
+        ENGINE_free(ret);
+        return NULL;
+    }
+
+void engine_load_pkcs11_int(void)
+{
+    /* Copied from eng_[openssl|dyn].c */
+    ENGINE *toadd = engine_pkcs11();
+    if (!toadd)
+        return;
+    ENGINE_add(toadd);
+    ENGINE_free(toadd);
+    ERR_clear_error();
+}
+#endif
+

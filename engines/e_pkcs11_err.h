@@ -17,6 +17,7 @@
 /*
  * PKCS11 function codes.
  */
+# define PKCS11_F_BIND_PKCS11                             121
 # define PKCS11_F_PKCS11_CTRL                             110
 # define PKCS11_F_PKCS11_CTX_NEW                          111
 # define PKCS11_F_PKCS11_ENCODE_PKCS1                     119
@@ -34,6 +35,7 @@
 # define PKCS11_F_PKCS11_PARSE_URI                        116
 # define PKCS11_F_PKCS11_RSA_ENC                          105
 # define PKCS11_F_PKCS11_RSA_INIT                         117
+# define PKCS11_F_PKCS11_RSA_PRIV_ENC                     122
 # define PKCS11_F_PKCS11_RSA_SIGN                         118
 # define PKCS11_F_PKCS11_START_SESSION                    106
 # define PKCS11_F_PKCS11_TRACE                            109
@@ -42,6 +44,8 @@
  * PKCS11 reason codes.
  */
 # define PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY              121
+# define PKCS11_R_ENCRYPT_FAILED                          124
+# define PKCS11_R_ENCRYPT_INIT_FAILED                     125
 # define PKCS11_R_ENGINE_NOT_INITIALIZED                  117
 # define PKCS11_R_FILE_OPEN_ERROR                         102
 # define PKCS11_R_FIND_OBJECT_FAILED                      103
@@ -58,6 +62,7 @@
 # define PKCS11_R_LOGOUT_FAILED                           111
 # define PKCS11_R_MEMORY_ALLOCATION_FAILED                115
 # define PKCS11_R_OPEN_SESSION_ERROR                      112
+# define PKCS11_R_PADDING_ADD_FAILED                      126
 # define PKCS11_R_RSA_INIT_FAILED                         120
 # define PKCS11_R_RSA_NOT_FOUND                           118
 # define PKCS11_R_SIGN_FAILED                             100

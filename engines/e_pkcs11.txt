@@ -6,6 +6,7 @@
 # https://www.openssl.org/source/license.html
 
 # Function codes
+PKCS11_F_BIND_PKCS11:121:bind_pkcs11
 PKCS11_F_PKCS11_CTRL:110:pkcs11_ctrl
 PKCS11_F_PKCS11_CTX_NEW:111:pkcs11_ctx_new
 PKCS11_F_PKCS11_ENCODE_PKCS1:119:pkcs11_encode_pkcs1
@@ -23,12 +24,15 @@ PKCS11_F_PKCS11_PARSE:115:pkcs11_parse
 PKCS11_F_PKCS11_PARSE_URI:116:pkcs11_parse_uri
 PKCS11_F_PKCS11_RSA_ENC:105:pkcs11_rsa_enc
 PKCS11_F_PKCS11_RSA_INIT:117:pkcs11_rsa_init
+PKCS11_F_PKCS11_RSA_PRIV_ENC:122:pkcs11_rsa_priv_enc
 PKCS11_F_PKCS11_RSA_SIGN:118:pkcs11_rsa_sign
 PKCS11_F_PKCS11_START_SESSION:106:pkcs11_start_session
 PKCS11_F_PKCS11_TRACE:109:PKCS11_trace
 
 #Reason codes
 PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY:121:digest too big for rsa key
+PKCS11_R_ENCRYPT_FAILED:124:encrypt failed
+PKCS11_R_ENCRYPT_INIT_FAILED:125:encrypt init failed
 PKCS11_R_ENGINE_NOT_INITIALIZED:117:engine not initialized
 PKCS11_R_FILE_OPEN_ERROR:102:file open error
 PKCS11_R_FIND_OBJECT_FAILED:103:find object failed
@@ -45,6 +49,7 @@ PKCS11_R_LOGIN_FAILED:110:login failed
 PKCS11_R_LOGOUT_FAILED:111:logout failed
 PKCS11_R_MEMORY_ALLOCATION_FAILED:115:memory allocation failed
 PKCS11_R_OPEN_SESSION_ERROR:112:open session error
+PKCS11_R_PADDING_ADD_FAILED:126:padding add failed
 PKCS11_R_RSA_INIT_FAILED:120:rsa init failed
 PKCS11_R_RSA_NOT_FOUND:118:rsa not found
 PKCS11_R_SIGN_FAILED:100:sign failed
