@@ -17,7 +17,7 @@
 # include <openssl/bn.h>
 # include <openssl/ec.h>
 # include <openssl/rand.h>
- #include "internal/nelem.h"
+# include "internal/nelem.h"
 # include "ecdsatest.h"
 
 /* functions to change the RAND_METHOD */
