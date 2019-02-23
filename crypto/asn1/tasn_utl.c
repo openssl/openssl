@@ -29,12 +29,14 @@
 int asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     int *sel = offset2ptr(*pval, it->utype);
+
     return *sel;
 }
 
 int asn1_get_choice_selector_const(const ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     int *sel = offset2ptr(*pval, it->utype);
+
     return *sel;
 }
 
@@ -46,6 +48,7 @@ int asn1_set_choice_selector(ASN1_VALUE **pval, int value,
                              const ASN1_ITEM *it)
 {
     int *sel, ret;
+
     sel = offset2ptr(*pval, it->utype);
     ret = *sel;
     *sel = value;
@@ -72,7 +75,7 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
         && (it->itype != ASN1_ITYPE_NDEF_SEQUENCE))
         return 0;
     aux = it->funcs;
-    if (!aux || !(aux->flags & ASN1_AFLG_REFCOUNT))
+    if (aux == NULL || (aux->flags & ASN1_AFLG_REFCOUNT) == 0)
         return 0;
     lck = offset2ptr(*pval, aux->ref_offset);
     lock = offset2ptr(*pval, aux->ref_lock);
@@ -110,10 +113,11 @@ int asn1_do_lock(ASN1_VALUE **pval, int op, const ASN1_ITEM *it)
 static ASN1_ENCODING *asn1_get_enc_ptr(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     const ASN1_AUX *aux;
-    if (!pval || !*pval)
+
+    if (pval == NULL || *pval == NULL)
         return NULL;
     aux = it->funcs;
-    if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
+    if (aux == NULL || (aux->flags & ASN1_AFLG_ENCODING) == 0)
         return NULL;
     return offset2ptr(*pval, aux->enc_offset);
 }
@@ -122,19 +126,20 @@ static const ASN1_ENCODING *asn1_get_const_enc_ptr(const ASN1_VALUE **pval,
                                                    const ASN1_ITEM *it)
 {
     const ASN1_AUX *aux;
-    if (!pval || !*pval)
+
+    if (pval == NULL || *pval == NULL)
         return NULL;
     aux = it->funcs;
-    if (!aux || !(aux->flags & ASN1_AFLG_ENCODING))
+    if (aux == NULL || (aux->flags & ASN1_AFLG_ENCODING) == 0)
         return NULL;
     return offset2ptr(*pval, aux->enc_offset);
 }
 
 void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (enc) {
+    ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
+
+    if (enc != NULL) {
         enc->enc = NULL;
         enc->len = 0;
         enc->modified = 1;
@@ -143,9 +148,9 @@ void asn1_enc_init(ASN1_VALUE **pval, const ASN1_ITEM *it)
 
 void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (enc) {
+    ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
+
+    if (enc != NULL) {
         OPENSSL_free(enc->enc);
         enc->enc = NULL;
         enc->len = 0;
@@ -156,9 +161,9 @@ void asn1_enc_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
                   const ASN1_ITEM *it)
 {
-    ASN1_ENCODING *enc;
-    enc = asn1_get_enc_ptr(pval, it);
-    if (!enc)
+    ASN1_ENCODING *enc = asn1_get_enc_ptr(pval, it);
+
+    if (enc == NULL)
         return 1;
 
     OPENSSL_free(enc->enc);
@@ -176,15 +181,15 @@ int asn1_enc_save(ASN1_VALUE **pval, const unsigned char *in, int inlen,
 int asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
                      const ASN1_ITEM *it)
 {
-    const ASN1_ENCODING *enc;
-    enc = asn1_get_const_enc_ptr(pval, it);
-    if (!enc || enc->modified)
+    const ASN1_ENCODING *enc = asn1_get_const_enc_ptr(pval, it);
+
+    if (enc == NULL || enc->modified)
         return 0;
     if (out) {
         memcpy(*out, enc->enc, enc->len);
         *out += enc->len;
     }
-    if (len)
+    if (len != NULL)
         *len = enc->len;
     return 1;
 }
@@ -192,8 +197,8 @@ int asn1_enc_restore(int *len, unsigned char **out, const ASN1_VALUE **pval,
 /* Given an ASN1_TEMPLATE get a pointer to a field */
 ASN1_VALUE **asn1_get_field_ptr(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
 {
-    ASN1_VALUE **pvaltmp;
-    pvaltmp = offset2ptr(*pval, tt->offset);
+    ASN1_VALUE **pvaltmp = offset2ptr(*pval, tt->offset);
+
     /*
      * NOTE for BOOLEAN types the field is just a plain int so we can't
      * return int **, so settle for (int *).
@@ -222,7 +227,8 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
     long selector;
     const ASN1_VALUE **sfld;
     int i;
-    if (!(tt->flags & ASN1_TFLG_ADB_MASK))
+
+    if ((tt->flags & ASN1_TFLG_ADB_MASK) == 0)
         return tt;
 
     /* Else ANY DEFINED BY ... get the table */
@@ -233,7 +239,7 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
 
     /* Check if NULL */
     if (*sfld == NULL) {
-        if (!adb->null_tt)
+        if (adb->null_tt == NULL)
             goto err;
         return adb->null_tt;
     }
@@ -242,7 +248,7 @@ const ASN1_TEMPLATE *asn1_do_adb(const ASN1_VALUE *val,
      * Convert type to a long: NB: don't check for NID_undef here because it
      * might be a legitimate value in the table
      */
-    if (tt->flags & ASN1_TFLG_ADB_OID)
+    if ((tt->flags & ASN1_TFLG_ADB_OID) != 0)
         selector = OBJ_obj2nid((ASN1_OBJECT *)*sfld);
     else
         selector = ASN1_INTEGER_get((ASN1_INTEGER *)*sfld);
