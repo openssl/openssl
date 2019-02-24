@@ -537,7 +537,6 @@ static const OPT_PAIR ecdh_choices[] = {
     {"ecdhb409", R_EC_B409},
     {"ecdhb571", R_EC_B571},
     {"ecdhx25519", R_EC_X25519},
-    {NULL}
 };
 # define EC_NUM       OSSL_NELEM(ecdh_choices)
 
