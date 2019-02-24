@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-# include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
-# include "testutil.h"
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
+#include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
 
@@ -25,6 +25,8 @@ static int fbytes(unsigned char *buf, int num);
 
 static RAND_METHOD fake_rand;
 static const RAND_METHOD *old_rand;
+static int use_fake = 0;
+static const char *numbers[2];
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;
 
@@ -50,9 +52,6 @@ static int restore_rand(void)
     return 1;
 }
 
-static int use_fake = 0;
-static const char *numbers[2];
-
 static int fbytes(unsigned char *buf, int num)
 {
     int ret = 0;
@@ -64,19 +63,17 @@ static int fbytes(unsigned char *buf, int num)
 
     use_fake = 0;
 
-    if (fbytes_counter >= 2)
-        return 0;
-    if (!TEST_ptr(tmp = BN_new()))
-        return 0;
-    if (!TEST_true(BN_hex2bn(&tmp, numbers[fbytes_counter]))) {
-        BN_free(tmp);
-        return 0;
-    }
-    fbytes_counter ^= 1;
-    /* tmp might need leading zeros so pad it out */
-    if (TEST_int_le(BN_num_bytes(tmp), num)
-            && TEST_true(BN_bn2binpad(tmp, buf, num)))
-        ret = 1;
+    if (!TEST_ptr(tmp = BN_new())
+        || !TEST_int_lt(fbytes_counter, OSSL_NELEM(numbers))
+        || !TEST_true(BN_hex2bn(&tmp, numbers[fbytes_counter]))
+        /* tmp might need leading zeros so pad it out */
+        || !TEST_int_le(BN_num_bytes(tmp), num)
+        || !TEST_true(BN_bn2binpad(tmp, buf, num)))
+        goto err;
+
+    fbytes_counter = (fbytes_counter + 1) % OSSL_NELEM(numbers);
+    ret = 1;
+ err:
     BN_free(tmp);
     return ret;
 }
@@ -166,9 +163,9 @@ static int x9_62_tests(int n)
     ret = 1;
 
  err:
-   /* restore the RNG source */
-   if (!TEST_true(restore_rand()))
-       ret = 0;
+    /* restore the RNG source */
+    if (!TEST_true(restore_rand()))
+        ret = 0;
 
     OPENSSL_free(message);
     OPENSSL_free(pbuf);
@@ -202,7 +199,7 @@ static int x9_62_tests(int n)
 static int test_builtin(int n)
 {
     EC_KEY *eckey_neg = NULL, *eckey = NULL;
-    unsigned char tbs[128];
+    unsigned char dirt, offset, tbs[128];
     unsigned char *sig = NULL;
     EVP_PKEY *pkey_neg = NULL, *pkey = NULL;
     EVP_MD_CTX *mctx = NULL;
@@ -236,7 +233,7 @@ static int test_builtin(int n)
 
     sig_len = ECDSA_size(eckey);
 
-    if (!TEST_ptr(sig = OPENSSL_malloc(ECDSA_size(eckey)))
+    if (!TEST_ptr(sig = OPENSSL_malloc(sig_len))
         /* create a signature */
         || !TEST_true(EVP_DigestSignInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_true(EVP_DigestSign(mctx, sig, &sig_len, tbs, sizeof(tbs)))
@@ -294,13 +291,15 @@ static int test_builtin(int n)
      *
      * In any case, EVP_PKEY_verify should not return 1 for valid.
      */
-    sig[tbs[0] % sig_len] ^= 1;
+    offset = tbs[0] % sig_len;
+    dirt = tbs[1] ? tbs[1] : 1;
+    sig[offset] ^= dirt;
     if (!TEST_true(EVP_MD_CTX_reset(mctx))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_int_ne(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
         goto err;
     /* un-muck and test it verifies */
-    sig[tbs[0] % sig_len] ^= 1;
+    sig[offset] ^= dirt;
     if (!TEST_true(EVP_MD_CTX_reset(mctx))
         || !TEST_true(EVP_DigestVerifyInit(mctx, NULL, NULL, NULL, pkey))
         || !TEST_int_eq(EVP_DigestVerify(mctx, sig, sig_len, tbs, sizeof(tbs)), 1))
@@ -308,11 +307,11 @@ static int test_builtin(int n)
 
     ret = 1;
  err:
-     EVP_PKEY_free(pkey);
-     EVP_PKEY_free(pkey_neg);
-     EVP_MD_CTX_free(mctx);
-     OPENSSL_free(sig);
-     return ret;
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(pkey_neg);
+    EVP_MD_CTX_free(mctx);
+    OPENSSL_free(sig);
+    return ret;
 }
 #endif
 
