@@ -301,7 +301,7 @@ static OSSL_PROPERTY_LIST *stack_to_property_list(STACK_OF(PROPERTY_DEFINITION)
     int i;
 
     r = OPENSSL_malloc(sizeof(*r)
-                       + (n == 0 ? 0 : n - 1) * sizeof(r->properties[0]));
+                       + (n <= 0 ? 0 : n - 1) * sizeof(r->properties[0]));
     if (r != NULL) {
         sk_PROPERTY_DEFINITION_sort(sk);
 
