@@ -143,11 +143,12 @@ static void alg_cleanup(size_t idx, ALGORITHM *a)
 
 OSSL_METHOD_STORE *ossl_method_store_new(void)
 {
-    OSSL_METHOD_STORE *res = OPENSSL_zalloc(sizeof(*res));
+    OSSL_METHOD_STORE *res;
 
     if (!RUN_ONCE(&method_store_init_flag, do_method_store_init))
         return 0;
 
+    res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         if ((res->algs = ossl_sa_ALGORITHM_new()) == NULL) {
             OPENSSL_free(res);
