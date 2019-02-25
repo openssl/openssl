@@ -906,7 +906,7 @@ int s_client_main(int argc, char **argv)
     char *proxypassarg = NULL, *proxypass = NULL;
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
-    char *chCApath = NULL, *chCAfile = NULL, *host = NULL;
+    char *chCApath = NULL, *chCAfile = NULL, *host = NULL, *chost = NULL;
     char *port = OPENSSL_strdup(PORT);
     char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL, *vfyCApath = NULL, *vfyCAfile = NULL;
@@ -1580,6 +1580,12 @@ int s_client_main(int argc, char **argv)
                        "%s: -proxy argument malformed or ambiguous\n", prog);
             goto end;
         }
+        if(!BIO_parse_hostserv(connectstr, &chost, NULL, BIO_PARSE_PRIO_HOST)) {
+            BIO_printf(bio_err,
+                       "%s: -connect argument or target parameter malformed or ambiguous\n",
+                       prog);
+            goto end;
+        }
     } else {
         int res = 1;
         char *tmp_host = host, *tmp_port = port;
@@ -2015,7 +2021,9 @@ int s_client_main(int argc, char **argv)
 
     if (!noservername && (servername != NULL || dane_tlsa_domain == NULL)) {
         if (servername == NULL) {
-            if(host == NULL || is_dNS_name(host)) 
+            if (chost != NULL && is_dNS_name(chost))
+                servername = chost;
+            else if (host == NULL || is_dNS_name(host))
                 servername = (host == NULL) ? "localhost" : host;
         }
         if (servername != NULL && !SSL_set_tlsext_host_name(con, servername)) {
