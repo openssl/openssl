@@ -138,14 +138,23 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         buffer = rand_pool_add_begin(pool, bytes_needed);
         while ((result != OK) && (retryCount < 10))
         {
-            result = randBytes(buffer, bytes_needed);
-            if (result == OK) 
+            RANDOM_NUM_GEN_STATUS status=randStatus();
+            if ((status == RANDOM_NUM_GEN_ENOUGH_ENTROPY) || (status == RANDOM_NUM_GEN_MAX_ENTROPY) )
             {
-                rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-            } else 
+                result = randBytes(buffer, bytes_needed);
+                if (result == OK) 
+                {
+                    rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
+                } 
+                // no else here: randStatus said ok, if randBytes failed it will result in another loop or no entropy
+            } else
             {
-                /* give a minimum delay here to allow OS to collect more entropy */
-                taskDelay(1);
+                /* 
+                 *   give a minimum delay here to allow OS to collect more entropy 
+                 *    taskDelay duration will depend on the system tick, this is by design
+                 *    as the sw-random lib uses interupts which will at least happen during ticks
+                 */                
+                taskDelay (5);
             }
             retryCount++;
         }
