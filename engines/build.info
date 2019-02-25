@@ -14,7 +14,7 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[../libcrypto]=e_devcrypto.c
     ENDIF
     IF[{- !$disabled{"pkcs11eng"} -}]
-      SOURCE[../libcrypto]=e_pkcs11.c
+      SOURCE[../libcrypto]=e_pkcs11.c e_pkcs11_eng.c
     ENDIF
   ELSE
     MODULES{engine}=padlock
@@ -57,7 +57,7 @@ IF[{- !$disabled{"engine"} -}]
     ENDIF
     IF[{- !$disabled{"pkcs11eng"} -}]
       MODULES{engine}=pkcs11
-      SOURCE[pkcs11]=e_pkcs11.c
+      SOURCE[pkcs11]=e_pkcs11.c e_pkcs11_eng.c
       DEPEND[pkcs11]=../libcrypto
       INCLUDE[pkcs11]= ../include
       IF[{- defined $target{shared_defflag} -}]
