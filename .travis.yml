@@ -155,7 +155,7 @@ before_script:
           top=.;
       fi
     - if [ -n "$MDEBUG" ] && sudo -E apt-get -yq install valgrind; then
-          export EXE_SHELL="valgrind --error-exitcode=1 --leak-check=full";
+          export EXE_SHELL="valgrind --quiet --error-exitcode=1 --leak-check=full";
       fi
     - if [ -n "$UBUNTU_GCC_HACK" ]; then
           $CC -dumpspecs | sed "s/--push-state//g; s/--pop-state/--as-needed/g" > gcc-specs.txt;
