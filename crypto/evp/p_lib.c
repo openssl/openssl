@@ -396,6 +396,11 @@ int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e)
     pkey->pmeth_engine = e;
     return 1;
 }
+
+ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey)
+{
+    return pkey->engine;
+}
 #endif
 int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 {
