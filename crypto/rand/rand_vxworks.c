@@ -128,14 +128,13 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # if defined(RAND_SEED_VXRANDLIB)
 /* vxRandLib based entropy method */
     size_t bytes_needed;
-    size_t entropy_available = 0;
-    unsigned char *buffer;
 
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     if (bytes_needed > 0) 
     {
         int retryCount = 0;
         STATUS result = ERROR;
+        unsigned char *buffer;
         buffer = rand_pool_add_begin(pool, bytes_needed);
         while ((result != OK) && (retryCount < 10))
         {
@@ -143,7 +142,6 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             if (result == OK) 
             {
                 rand_pool_add_end(pool, bytes_needed, 8 * bytes_needed);
-                entropy_available = rand_pool_entropy_available(pool);
             } else 
             {
                 /* give a minimum delay here to allow OS to collect more entropy */
@@ -151,8 +149,6 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
             }
             retryCount++;
         }
-        if (entropy_available > 0)
-            return entropy_available;
     }
     return rand_pool_entropy_available(pool);    
 # else
