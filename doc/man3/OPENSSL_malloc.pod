@@ -174,6 +174,11 @@ of writing to a given BIO, the callback function is called for each
 output string with the string, length, and userdata B<u> as the callback
 parameters.
 
+Before calling any of CRYPTO_mem_leaks(), CRYPTO_mem_leaks_fp(), or
+CRYPTO_mem_leaks_cb(), it is I<strongly> recommended to call
+OPENSSL_cleanup(), to make sure the libraries release any internal
+store and thereby avoid false positives.
+
 If the library is built with the C<crypto-mdebug> option, then one
 function, CRYPTO_get_alloc_counts(), and two additional environment
 variables, B<OPENSSL_MALLOC_FAILURES> and B<OPENSSL_MALLOC_FD>,

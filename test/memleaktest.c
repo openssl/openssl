@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
         lost = NULL;
     }
 
+    OPENSSL_cleanup();           /* Avoid false positives */
     noleak = CRYPTO_mem_leaks_fp(stderr);
     /* If -1 return value something bad happened */
     if (!TEST_int_ne(noleak, -1))

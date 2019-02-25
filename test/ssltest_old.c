@@ -1857,11 +1857,13 @@ int main(int argc, char *argv[])
     SSL_SESSION_free(server_sess);
     SSL_SESSION_free(client_sess);
 
+    BIO_free(bio_err);
+
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
-    if (CRYPTO_mem_leaks(bio_err) <= 0)
+    OPENSSL_cleanup();
+    if (CRYPTO_mem_leaks_fp(stderr) <= 0)
         ret = EXIT_FAILURE;
 #endif
-    BIO_free(bio_err);
     EXIT(ret);
 }
 

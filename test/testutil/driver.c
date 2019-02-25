@@ -245,6 +245,7 @@ int pulldown_test_framework(int ret)
 {
     set_test_title(NULL);
 #ifndef OPENSSL_NO_CRYPTO_MDEBUG
+    OPENSSL_cleanup();
     if (should_report_leaks()
         && CRYPTO_mem_leaks_cb(openssl_error_cb, NULL) <= 0)
         return EXIT_FAILURE;
