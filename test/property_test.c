@@ -304,10 +304,8 @@ static int test_property(void)
     for (i = 0; i < OSSL_NELEM(queries); i++) {
         OSSL_PROPERTY_LIST *pq = NULL;
 
-        if (!TEST_true(ossl_property_read_lock(store))
-            || !TEST_true(ossl_method_store_fetch(store, queries[i].nid,
-                                                  queries[i].prop, &result))
-            || !TEST_true(ossl_property_unlock(store))
+        if (!TEST_true(ossl_method_store_fetch(store, queries[i].nid,
+                                               queries[i].prop, &result))
             || !TEST_str_eq((char *)result, queries[i].expected)) {
             TEST_note("iteration %zd", i + 1);
             ossl_property_free(pq);
