@@ -42,6 +42,12 @@ int ossl_provider_add_module_location(OSSL_PROVIDER *prov, const char *loc);
  */
 int ossl_provider_activate(OSSL_PROVIDER *prov);
 
+/* Iterate over all loaded providers */
+int ossl_provider_forall_loaded(OPENSSL_CTX *,
+                                int (*cb)(OSSL_PROVIDER *provider,
+                                          void *cbdata),
+                                void *cbdata);
+
 /* Getters for other library functions */
 const char *ossl_provider_name(OSSL_PROVIDER *prov);
 const DSO *ossl_provider_dso(OSSL_PROVIDER *prov);
