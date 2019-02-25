@@ -16,7 +16,6 @@
 #include <openssl/bio.h>
 #include <internal/dso.h>
 #include <internal/nelem.h>
-#include "e_pkcs11_err.c"
 
 #define CK_PTR *
 

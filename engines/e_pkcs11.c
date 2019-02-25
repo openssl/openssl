@@ -8,6 +8,7 @@
  */
 
 #include "e_pkcs11.h"
+#include "e_pkcs11_err.h"
 
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
@@ -16,6 +17,8 @@ static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static CK_RV pkcs11_load_functions(const char *library_path);
 static CK_FUNCTION_LIST *pkcs11_funcs;
 int pkcs11_idx = -1;
+extern void ERR_PKCS11_error(int function, int reason, char *file, int line);
+
 
 int pkcs11_rsa_sign(int alg, const unsigned char *md,
                            unsigned int md_len, unsigned char *sigret,

@@ -8,6 +8,7 @@
  */
 
 #include "e_pkcs11.h"
+#include "e_pkcs11_err.c"
 
 static int pkcs11_parse_uri(const char *path, char *token, char **value);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path);
