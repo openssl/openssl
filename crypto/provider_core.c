@@ -328,6 +328,30 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
     return 1;
 }
 
+int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
+                                int (*cb)(OSSL_PROVIDER *provider,
+                                          void *cbdata),
+                                void *cbdata)
+{
+    int ret = 1;
+    int i;
+    struct provider_store_st *store = get_provider_store(ctx);
+
+    if (store != NULL) {
+        CRYPTO_THREAD_read_lock(store->lock);
+        for (i = 0; i < sk_OSSL_PROVIDER_num(store->providers); i++) {
+            OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
+
+            if (prov->flag_initialized
+                && !(ret = cb(prov, cbdata)))
+                break;
+        }
+        CRYPTO_THREAD_unlock(store->lock);
+    }
+
+    return ret;
+}
+
 /* Getters of Provider Object data */
 const char *ossl_provider_name(OSSL_PROVIDER *prov)
 {

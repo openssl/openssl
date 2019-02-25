@@ -4,7 +4,8 @@
 
 ossl_provider_find, ossl_provider_new, ossl_provider_upref,
 ossl_provider_free, ossl_provider_add_module_location,
-ossl_provider_activate, ossl_provider_name, ossl_provider_dso,
+ossl_provider_activate, ossl_provider_forall_loaded,
+ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_teardown, ossl_provider_get_param_types,
 ossl_provider_get_params - internal provider routines
@@ -24,6 +25,12 @@ ossl_provider_get_params - internal provider routines
 
  /* Load and initialize the Provider */
  int ossl_provider_activate(OSSL_PROVIDER *prov);
+
+ /* Iterate over all loaded providers */
+ int ossl_provider_forall_loaded(OPENSSL_CTX *,
+                                 int (*cb)(OSSL_PROVIDER *provider,
+                                           void *cbdata),
+                                 void *cbdata);
 
  /* Getters for other library functions */
  const char *ossl_provider_name(OSSL_PROVIDER *prov);
@@ -101,6 +108,9 @@ will be located and loaded, then the symbol C<OSSL_provider_init> will
 be located in that module, and called.
 
 =back
+
+ossl_provider_forall_loaded() iterates over all the currently
+"activated" providers, and calls C<cb> for each of them.
 
 ossl_provider_name() returns the name that was given with
 ossl_provider_new().
