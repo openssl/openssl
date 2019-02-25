@@ -39,6 +39,7 @@ struct ossl_provider_st {
     OSSL_provider_teardown_fn *teardown;
     OSSL_provider_get_param_types_fn *get_param_types;
     OSSL_provider_get_params_fn *get_params;
+    OSSL_provider_query_operation_fn *query_operation;
 };
 DEFINE_STACK_OF(OSSL_PROVIDER)
 
@@ -319,6 +320,10 @@ int ossl_provider_activate(OSSL_PROVIDER *prov)
             prov->get_params =
                 OSSL_get_provider_get_params(provider_dispatch);
             break;
+        case OSSL_FUNC_PROVIDER_QUERY_OPERATION:
+            prov->query_operation =
+                OSSL_get_provider_query_operation(provider_dispatch);
+            break;
         }
     }
 
@@ -390,6 +395,14 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov,
                              const OSSL_PARAM params[])
 {
     return prov->get_params == NULL ? 0 : prov->get_params(prov, params);
+}
+
+
+const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
+                                                    int operation_id,
+                                                    int *no_cache)
+{
+    return prov->query_operation(prov, operation_id, no_cache);
 }
 
 /*-
