@@ -490,11 +490,12 @@ int x509_main(int argc, char **argv)
     }
 
     if (newcert && infile != NULL) {
-        BIO_printf(bio_err, "ignoring -in option since -newcert is set\n");
+        BIO_printf(bio_err, "ignoring -in option since -new is set\n");
         infile = NULL;
     }
     if (newcert && fkeyfile == NULL) {
-        BIO_printf(bio_err, "We need a public key, use -force_pubkey\n");
+        BIO_printf(bio_err,
+                   "The -new option requires a public key to be set using -force_pubkey\n");
         goto end;
     }
     if (fkeyfile != NULL) {
@@ -504,7 +505,8 @@ int x509_main(int argc, char **argv)
     }
 
     if (newcert && subj == NULL) {
-        BIO_printf(bio_err, "We need a subject, use -subj\n");
+        BIO_printf(bio_err,
+                   "The -new option requires a subject to be set using -subj\n");
         goto end;
     }
     if (subj != NULL && (fsubj = parse_name(subj, chtype, multirdn)) == NULL)

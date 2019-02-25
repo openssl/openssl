@@ -459,7 +459,7 @@ extension section format.
 =item B<-new>
 
 Generate a certificate from scratch, not using an input certificate
-or certificate request (which would normally be given as B<-in filename>).
+or certificate request. So the B<-in> option should not be used in this case.
 
 =item B<-force_pubkey filename>
 
