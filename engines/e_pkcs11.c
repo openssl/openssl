@@ -16,7 +16,6 @@ static void pkcs11_finalize(void);
 static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static CK_RV pkcs11_load_functions(const char *library_path);
 static CK_FUNCTION_LIST *pkcs11_funcs;
-int pkcs11_idx = -1;
 
 /* ugly method for avoid compile warning */
 static void __attribute__((unused)) foo(void);
@@ -28,8 +27,8 @@ static void foo(void)
 }
 
 int pkcs11_rsa_sign(int alg, const unsigned char *md,
-                           unsigned int md_len, unsigned char *sigret,
-                           unsigned int *siglen, const RSA *rsa)
+                    unsigned int md_len, unsigned char *sigret,
+                    unsigned int *siglen, const RSA *rsa)
 {
     CK_RV rv;
     PKCS11_CTX *ctx;
@@ -50,7 +49,7 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
         goto err;
     }
 
-    ctx = ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
+    ctx = pkcs11_get_cms(rsa);
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     rv = pkcs11_funcs->C_SignInit(ctx->session, &sign_mechanism, ctx->key);
 
@@ -97,7 +96,7 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
 }
 
 int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
-                               unsigned char *to, RSA *rsa, int padding)
+                        unsigned char *to, RSA *rsa, int padding)
 {
     CK_RV rv;
     PKCS11_CTX *ctx;
@@ -108,7 +107,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     int useSign = 0;
 
     num = RSA_size(rsa);
-    ctx = ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
+    ctx = pkcs11_get_cms(rsa);
     enc_mechanism.mechanism = CKM_RSA_PKCS;
     CRYPTO_THREAD_write_lock(ctx->lock);
 

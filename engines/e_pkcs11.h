@@ -77,12 +77,13 @@ int pkcs11_start_session(PKCS11_CTX *ctx);
 int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType);
 EVP_PKEY *pkcs11_load_pkey(PKCS11_CTX *ctx);
 int pkcs11_rsa_sign(int alg, const unsigned char *md,
-                           unsigned int md_len, unsigned char *sigret,
-                           unsigned int *siglen, const RSA *rsa);
+                    unsigned int md_len, unsigned char *sigret,
+                    unsigned int *siglen, const RSA *rsa);
 int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
-                               unsigned char *to, RSA *rsa, int padding);
+                        unsigned char *to, RSA *rsa, int padding);
 int pkcs11_get_slot(PKCS11_CTX *ctx);
 int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
 int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
-                               const unsigned char *m, unsigned int m_len);
+                        const unsigned char *m, unsigned int m_len);
+PKCS11_CTX *pkcs11_get_cms(const RSA *rsa);

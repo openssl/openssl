@@ -26,7 +26,7 @@ void engine_load_pkcs11_int(void);
 static RSA_METHOD *pkcs11_rsa = NULL;
 static const char *engine_id = "pkcs11";
 static const char *engine_name = "A minimal PKCS#11 engine only for sign";
-extern int pkcs11_idx;
+static int pkcs11_idx = -1;
 
 static int pkcs11_init(ENGINE *e)
 {
@@ -402,6 +402,12 @@ static void pkcs11_ctx_free(PKCS11_CTX *ctx)
     PKCS11_trace("Calling pkcs11_ctx_free with %p\n", ctx);
     OPENSSL_free(ctx);
 }
+
+PKCS11_CTX *pkcs11_get_cms(const RSA *rsa)
+{
+    return ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
+}
+
 
 #ifndef OPENSSL_NO_DYNAMIC_ENGINE
 static int bind_helper(ENGINE *e, const char *id)
