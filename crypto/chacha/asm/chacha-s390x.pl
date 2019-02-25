@@ -23,10 +23,19 @@
 #
 # August 2018
 #
-# Add vx code path.
+# Add vx code path: 4x"vertical".
 #
 # Copyright IBM Corp. 2018
 # Author: Patrick Steuer <patrick.steuer@de.ibm.com>
+
+#
+# February 2019
+#
+# Add 6x"horizontal" VX implementation. It's ~25% faster than IBM's
+# 4x"vertical" submission [on z13] and >3 faster than scalar code.
+# But to harness overheads revert to transliteration of VSX code path
+# from chacha-ppc module, which is also 4x"vertical", to handle inputs
+# not longer than 256 bytes.
 
 use strict;
 use FindBin qw($Bin);
@@ -50,11 +59,9 @@ while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
 my $sp="%r15";
 my $stdframe=16*$SIZE_T+4*8;
 
+sub ROUND {
 my @x=map("%r$_",(0..7,"x","x","x","x",(10..13)));
 my @t=map("%r$_",(8,9));
-my @v=map("%v$_",(16..31));
-
-sub ROUND {
 my ($a0,$b0,$c0,$d0)=@_;
 my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
 my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
@@ -143,63 +150,92 @@ my ($xc,$xc_)=map("$_",@t);
 	 rll	(@x[$b3],@x[$b3],7);
 }
 
-sub VX_ROUND {
+sub VX_lane_ROUND {
 my ($a0,$b0,$c0,$d0)=@_;
 my ($a1,$b1,$c1,$d1)=map(($_&~3)+(($_+1)&3),($a0,$b0,$c0,$d0));
 my ($a2,$b2,$c2,$d2)=map(($_&~3)+(($_+1)&3),($a1,$b1,$c1,$d1));
 my ($a3,$b3,$c3,$d3)=map(($_&~3)+(($_+1)&3),($a2,$b2,$c2,$d2));
+my @x=map("%v$_",(0..15));
 
-	vaf	(@v[$a0],@v[$a0],@v[$b0]);
-	vaf	(@v[$a1],@v[$a1],@v[$b1]);
-	vaf	(@v[$a2],@v[$a2],@v[$b2]);
-	vaf	(@v[$a3],@v[$a3],@v[$b3]);
-	vx	(@v[$d0],@v[$d0],@v[$a0]);
-	vx	(@v[$d1],@v[$d1],@v[$a1]);
-	vx	(@v[$d2],@v[$d2],@v[$a2]);
-	vx	(@v[$d3],@v[$d3],@v[$a3]);
-	verllf	(@v[$d0],@v[$d0],16);
-	verllf	(@v[$d1],@v[$d1],16);
-	verllf	(@v[$d2],@v[$d2],16);
-	verllf	(@v[$d3],@v[$d3],16);
+	vaf	(@x[$a0],@x[$a0],@x[$b0]);	# Q1
+	vx	(@x[$d0],@x[$d0],@x[$a0]);
+	verllf	(@x[$d0],@x[$d0],16);
+	vaf	(@x[$a1],@x[$a1],@x[$b1]);	# Q2
+	vx	(@x[$d1],@x[$d1],@x[$a1]);
+	verllf	(@x[$d1],@x[$d1],16);
+	vaf	(@x[$a2],@x[$a2],@x[$b2]);	# Q3
+	vx	(@x[$d2],@x[$d2],@x[$a2]);
+	verllf	(@x[$d2],@x[$d2],16);
+	vaf	(@x[$a3],@x[$a3],@x[$b3]);	# Q4
+	vx	(@x[$d3],@x[$d3],@x[$a3]);
+	verllf	(@x[$d3],@x[$d3],16);
 
-	vaf	(@v[$c0],@v[$c0],@v[$d0]);
-	vaf	(@v[$c1],@v[$c1],@v[$d1]);
-	vaf	(@v[$c2],@v[$c2],@v[$d2]);
-	vaf	(@v[$c3],@v[$c3],@v[$d3]);
-	vx	(@v[$b0],@v[$b0],@v[$c0]);
-	vx	(@v[$b1],@v[$b1],@v[$c1]);
-	vx	(@v[$b2],@v[$b2],@v[$c2]);
-	vx	(@v[$b3],@v[$b3],@v[$c3]);
-	verllf	(@v[$b0],@v[$b0],12);
-	verllf	(@v[$b1],@v[$b1],12);
-	verllf	(@v[$b2],@v[$b2],12);
-	verllf	(@v[$b3],@v[$b3],12);
+	vaf	(@x[$c0],@x[$c0],@x[$d0]);
+	vx	(@x[$b0],@x[$b0],@x[$c0]);
+	verllf	(@x[$b0],@x[$b0],12);
+	vaf	(@x[$c1],@x[$c1],@x[$d1]);
+	vx	(@x[$b1],@x[$b1],@x[$c1]);
+	verllf	(@x[$b1],@x[$b1],12);
+	vaf	(@x[$c2],@x[$c2],@x[$d2]);
+	vx	(@x[$b2],@x[$b2],@x[$c2]);
+	verllf	(@x[$b2],@x[$b2],12);
+	vaf	(@x[$c3],@x[$c3],@x[$d3]);
+	vx	(@x[$b3],@x[$b3],@x[$c3]);
+	verllf	(@x[$b3],@x[$b3],12);
 
-	vaf	(@v[$a0],@v[$a0],@v[$b0]);
-	vaf	(@v[$a1],@v[$a1],@v[$b1]);
-	vaf	(@v[$a2],@v[$a2],@v[$b2]);
-	vaf	(@v[$a3],@v[$a3],@v[$b3]);
-	vx	(@v[$d0],@v[$d0],@v[$a0]);
-	vx	(@v[$d1],@v[$d1],@v[$a1]);
-	vx	(@v[$d2],@v[$d2],@v[$a2]);
-	vx	(@v[$d3],@v[$d3],@v[$a3]);
-	verllf	(@v[$d0],@v[$d0],8);
-	verllf	(@v[$d1],@v[$d1],8);
-	verllf	(@v[$d2],@v[$d2],8);
-	verllf	(@v[$d3],@v[$d3],8);
+	vaf	(@x[$a0],@x[$a0],@x[$b0]);
+	vx	(@x[$d0],@x[$d0],@x[$a0]);
+	verllf	(@x[$d0],@x[$d0],8);
+	vaf	(@x[$a1],@x[$a1],@x[$b1]);
+	vx	(@x[$d1],@x[$d1],@x[$a1]);
+	verllf	(@x[$d1],@x[$d1],8);
+	vaf	(@x[$a2],@x[$a2],@x[$b2]);
+	vx	(@x[$d2],@x[$d2],@x[$a2]);
+	verllf	(@x[$d2],@x[$d2],8);
+	vaf	(@x[$a3],@x[$a3],@x[$b3]);
+	vx	(@x[$d3],@x[$d3],@x[$a3]);
+	verllf	(@x[$d3],@x[$d3],8);
 
-	vaf	(@v[$c0],@v[$c0],@v[$d0]);
-	vaf	(@v[$c1],@v[$c1],@v[$d1]);
-	vaf	(@v[$c2],@v[$c2],@v[$d2]);
-	vaf	(@v[$c3],@v[$c3],@v[$d3]);
-	vx	(@v[$b0],@v[$b0],@v[$c0]);
-	vx	(@v[$b1],@v[$b1],@v[$c1]);
-	vx	(@v[$b2],@v[$b2],@v[$c2]);
-	vx	(@v[$b3],@v[$b3],@v[$c3]);
-	verllf	(@v[$b0],@v[$b0],7);
-	verllf	(@v[$b1],@v[$b1],7);
-	verllf	(@v[$b2],@v[$b2],7);
-	verllf	(@v[$b3],@v[$b3],7);
+	vaf	(@x[$c0],@x[$c0],@x[$d0]);
+	vx	(@x[$b0],@x[$b0],@x[$c0]);
+	verllf	(@x[$b0],@x[$b0],7);
+	vaf	(@x[$c1],@x[$c1],@x[$d1]);
+	vx	(@x[$b1],@x[$b1],@x[$c1]);
+	verllf	(@x[$b1],@x[$b1],7);
+	vaf	(@x[$c2],@x[$c2],@x[$d2]);
+	vx	(@x[$b2],@x[$b2],@x[$c2]);
+	verllf	(@x[$b2],@x[$b2],7);
+	vaf	(@x[$c3],@x[$c3],@x[$d3]);
+	vx	(@x[$b3],@x[$b3],@x[$c3]);
+	verllf	(@x[$b3],@x[$b3],7);
+}
+
+sub VX_ROUND {
+my @a=@_[0..5];
+my @b=@_[6..11];
+my @c=@_[12..17];
+my @d=@_[18..23];
+my $odd=@_[24];
+
+	vaf		(@a[$_],@a[$_],@b[$_]) for (0..5);
+	vx		(@d[$_],@d[$_],@a[$_]) for (0..5);
+	verllf		(@d[$_],@d[$_],16) for (0..5);
+
+	vaf		(@c[$_],@c[$_],@d[$_]) for (0..5);
+	vx		(@b[$_],@b[$_],@c[$_]) for (0..5);
+	verllf		(@b[$_],@b[$_],12) for (0..5);
+
+	vaf		(@a[$_],@a[$_],@b[$_]) for (0..5);
+	vx		(@d[$_],@d[$_],@a[$_]) for (0..5);
+	verllf		(@d[$_],@d[$_],8) for (0..5);
+
+	vaf		(@c[$_],@c[$_],@d[$_]) for (0..5);
+	vx		(@b[$_],@b[$_],@c[$_]) for (0..5);
+	verllf		(@b[$_],@b[$_],7) for (0..5);
+
+	vsldb		(@c[$_],@c[$_],@c[$_],8) for (0..5);
+	vsldb		(@b[$_],@b[$_],@b[$_],$odd?12:4) for (0..5);
+	vsldb		(@d[$_],@d[$_],@d[$_],$odd?4:12) for (0..5);
 }
 
 PERLASM_BEGIN($output);
@@ -210,13 +246,11 @@ TEXT	();
 ################
 # void ChaCha20_ctr32(unsigned char *out, const unsigned char *inp, size_t len,
 #                     const unsigned int key[8], const unsigned int counter[4])
-{
 my ($out,$inp,$len,$key,$counter)=map("%r$_",(2..6));
-
-# VX CODE PATH
 {
-my $off=$z*8*16+8;	# offset(initial state)
-my $frame=$stdframe+4*16+$off;
+my $frame=$stdframe+4*20;
+my @x=map("%r$_",(0..7,"x","x","x","x",(10..13)));
+my @t=map("%r$_",(8,9));
 
 GLOBL	("ChaCha20_ctr32");
 TYPE	("ChaCha20_ctr32","\@function");
@@ -225,230 +259,16 @@ LABEL	("ChaCha20_ctr32");
 	larl	("%r1","OPENSSL_s390xcap_P");
 
 	lghi	("%r0",64);
-&{$z?	\&clgr:\&clr}	($len,"%r0");
-	jle	("_s390x_chacha_novx");
-
-	lg	("%r0","S390X_STFLE+16(%r1)");
-	tmhh	("%r0",0x4000);	# check for vector facility
-	jz	("_s390x_chacha_novx");
-
-if (!$z) {
-	llgfr   ($len,$len);
-	std	("%f4","16*$SIZE_T+2*8($sp)");
-	std	("%f6","16*$SIZE_T+3*8($sp)");
-}
-&{$z?	\&stmg:\&stm}	("%r6","%r7","6*$SIZE_T($sp)");
-
-	lghi	("%r1",-$frame);
-	lgr	("%r0",$sp);
-	la	($sp,"0(%r1,$sp)");	# allocate stack frame
-
-	larl	("%r7",".Lsigma");
-&{$z?	\&stg:\&st}	("%r0","0($sp)");	# backchain
-
-	vstm	("%v8","%v15","8($sp)") if ($z);
-
-	vlm	("%v1","%v2","0($key)");	# load key
-	vl	("%v0","0(%r7)");	# load sigma constant
-	vl	("%v3","0($counter)");	# load iv (counter||nonce)
-	l	("%r0","0($counter)");	# load counter
-	vstm	("%v0","%v3","$off($sp)");	# copy initial state to stack
-
-	srlg	("%r1",$len,8);
-	ltgr	("%r1","%r1");
-	jz	(".Lvx_4x_done");
-
-ALIGN	(16);	# process 4 64-byte blocks
-LABEL	(".Lvx_4x");
-	vlrepf	("%v$_",($_*4)."+$off($sp)") for (0..15);	# load initial
-								#  state
-	vl	("%v31","16(%r7)");
-	vaf	("%v12","%v12","%v31");	# increment counter
-
-	vlr	(@v[$_],"%v$_") for (0..15);	# copy initial state
-
-	lhi	("%r6",10);
-	j	(".Loop_vx_4x");
-
-ALIGN	(16);
-LABEL	(".Loop_vx_4x");
-	VX_ROUND( 0, 4, 8,12);	# column round
-	VX_ROUND( 0, 5,10,15);	# diagonal round
-	brct	("%r6",".Loop_vx_4x");
-
-	vaf	(@v[$_],@v[$_],"%v$_") for (0..15);	# state += initial
-							#  state (mod 32)
-	vlm	("%v6","%v7","32(%r7)");	# load vperm operands
-
-for (0..3) {	# blocks 1,2
-	vmrhf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
-	vmrhf	("%v1",@v[$_*4+2],@v[$_*4+3]);
-	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
-	vperm	("%v".($_+12),"%v0","%v1","%v7");
-}
-	vlm	("%v0","%v7","0($inp)");	# load in
-	vx	("%v$_","%v$_","%v".($_+8)) for (0..7);	# out = in ^ ks
-	vstm	("%v0","%v7","0($out)");	# store out
-
-	vlm	("%v6","%v7","32(%r7)");	# restore vperm operands
-
-for (0..3) {	# blocks 2,3
-	vmrlf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
-	vmrlf	("%v1",@v[$_*4+2],@v[$_*4+3]);
-	vperm	("%v".($_+ 8),"%v0","%v1","%v6");
-	vperm	("%v".($_+12),"%v0","%v1","%v7");
-}
-	vlm	("%v0","%v7","128($inp)");	# load in
-	vx	("%v$_","%v$_","%v".($_+8)) for (0..7);	# out = in ^ ks
-	vstm	("%v0","%v7","128($out)");	# store out
-
-	ahi	("%r0",4);
-	st	("%r0","48+$off($sp)");	# update initial state
-
-	la	($inp,"256($inp)");
-	la	($out,"256($out)");
-	brctg	("%r1",".Lvx_4x");
-
-ALIGN	(16);
-LABEL	(".Lvx_4x_done");
-	lghi	("%r1",0xff);
-	ngr	($len,"%r1");
-	jnz	(".Lvx_rem");
-
-ALIGN	(16);
-LABEL	(".Lvx_done");
-	vzero	("%v$_") for (16..31);	# wipe ks and key copy
-	vstm	("%v16","%v17","16+$off($sp)");
-	vlm	("%v8","%v15","8($sp)") if ($z);
-
-	la	($sp,"$frame($sp)");
-&{$z?	\&lmg:\&lm}	("%r6","%r7","6*$SIZE_T($sp)");
-
-if (!$z) {
-	ld	("%f4","16*$SIZE_T+2*8($sp)");
-	ld	("%f6","16*$SIZE_T+3*8($sp)");
-	vzero	("%v$_") for (8..15);
-}
-	br	("%r14");
-ALIGN	(16);
-LABEL	(".Lvx_rem");
-	lhi	("%r0",64);
-
-	sr	($len,"%r0");
-	brc	(2,".Lvx_rem_g64");	# cc==2?
-
-	lghi	("%r1",-$stdframe);
-
-	la	($counter,"48+$off($sp)");	# load updated iv
-	ar	($len,"%r0");	# restore len
-
-	lgr	("%r7",$counter);
-&{$z?	\&stg:\&st}	("%r14","14*$SIZE_T+$frame($sp)");
-	la	($sp,"0(%r1,$sp)");
-
-	bras	("%r14","_s390x_chacha_novx");
-
-	la	($sp,"$stdframe($sp)");
-&{$z?	\&lg:\&l}	("%r14","14*$SIZE_T+$frame($sp)");
-	lgr	($counter,"%r7");
-	j	(".Lvx_done");
-
-ALIGN	(16);
-LABEL	(".Lvx_rem_g64");
-	vlrepf	("%v$_",($_*4)."+$off($sp)") for (0..15);	# load initial
-								#  state
-	vl	("%v31","16(%r7)");
-	vaf	("%v12","%v12","%v31");	# increment counter
-
-	vlr	(@v[$_],"%v$_") for (0..15);	# state = initial state
-
-	lhi	("%r6",10);
-	j	(".Loop_vx_rem");
-
-ALIGN	(16);
-LABEL	(".Loop_vx_rem");
-	VX_ROUND( 0, 4, 8,12);	# column round
-	VX_ROUND( 0, 5,10,15);	# diagonal round
-	brct	("%r6",".Loop_vx_rem");
-
-	vaf	(@v[$_],@v[$_],"%v$_") for (0..15);	# state += initial
-							#  state (mod 32)
-	vlm	("%v6","%v7","32(%r7)");	# load vperm operands
-
-for (0..3) {	# blocks 1,2
-	vmrhf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
-	vmrhf	("%v1",@v[$_*4+2],@v[$_*4+3]);
-	vperm	("%v".($_+8),"%v0","%v1","%v6");
-	vperm	("%v".($_+12),"%v0","%v1","%v7");
-}
-	vlm	("%v0","%v3","0($inp)");	# load in
-	vx	("%v$_","%v$_","%v".($_+8)) for (0..3);	# out = in ^ ks
-	vstm	("%v0","%v3","0($out)");	# store out
-
-	la	($inp,"64($inp)");
-	la	($out,"64($out)");
-
-	sr	($len,"%r0");
-	brc	(4,".Lvx_tail");	# cc==4?
-
-	vlm	("%v0","%v3","0($inp)");	# load in
-	vx	("%v$_","%v$_","%v".($_+12)) for (0..3);	# out = in ^ ks
-	vstm	("%v0","%v3","0($out)");	# store out
-	jz	(".Lvx_done");
-
-for (0..3) {	# blocks 3,4
-	vmrlf	("%v0",@v[$_*4+0],@v[$_*4+1]);	# ks = serialize(state)
-	vmrlf	("%v1",@v[$_*4+2],@v[$_*4+3]);
-	vperm	("%v".($_+12),"%v0","%v1","%v6");
-	vperm	("%v".($_+8),"%v0","%v1","%v7");
-}
-	la	($inp,"64($inp)");
-	la	($out,"64($out)");
-
-	sr	($len,"%r0");
-	brc	(4,".Lvx_tail");	# cc==4?
-
-	vlm	("%v0","%v3","0($inp)");	# load in
-	vx	("%v$_","%v$_","%v".($_+12)) for (0..3);	# out = in ^ ks
-	vstm	("%v0","%v3","0($out)");	# store out
-	jz	(".Lvx_done");
-
-	la	($inp,"64($inp)");
-	la	($out,"64($out)");
-
-	sr	($len,"%r0");
-	vlr	("%v".($_+4),"%v$_") for (8..11);
-	j	(".Lvx_tail");
-
-ALIGN	(16);
-LABEL	(".Lvx_tail");
-	ar	($len,"%r0");	# restore $len
-	ahi	($len,-1);
-
-	lhi	("%r0",16);
-for (0..2) {
-	vll	("%v0",$len,($_*16)."($inp)");
-	vx	("%v0","%v0","%v".($_+12));
-	vstl	("%v0",$len,($_*16)."($out)");
-	sr	($len,"%r0");
-	brc	(4,".Lvx_done");	# cc==4?
-}
-	vll	("%v0",$len,"3*16($inp)");
-	vx	("%v0","%v0","%v15");
-	vstl	("%v0",$len,"3*16($out)");
-	j	(".Lvx_done");
-SIZE	("ChaCha20_ctr32",".-ChaCha20_ctr32");
-}
-
-# NOVX CODE PATH
-{
-my $frame=$stdframe+4*20;
-
-TYPE	("_s390x_chacha_novx","\@function");
-ALIGN	(32);
-LABEL	("_s390x_chacha_novx");
-&{$z?	\&ltgr:\&ltr}	($len,$len);	# $len==0?
+&{$z?	\&ltgr:\&ltr}	($len,$len);		# len==0?
 	bzr	("%r14");
+	lg	("%r1","S390X_STFLE+16(%r1)");
+&{$z?	\&clgr:\&clr}	($len,"%r0");
+	jle	(".Lshort");
+
+	tmhh	("%r1",0x4000);			# check for vx bit
+	jnz	(".LChaCha20_ctr32_vx");
+
+LABEL	(".Lshort");
 &{$z?	\&aghi:\&ahi}	($len,-64);
 &{$z?	\&lghi:\&lhi}	("%r1",-$frame);
 &{$z?	\&stmg:\&stm}	("%r6","%r15","6*$SIZE_T($sp)");
@@ -607,17 +427,629 @@ LABEL	(".Loop_tail");
 	brct	(@t[1],".Loop_tail");
 
 	j	(".Ldone");
-SIZE	("_s390x_chacha_novx",".-_s390x_chacha_novx");
+SIZE	("ChaCha20_ctr32",".-ChaCha20_ctr32");
 }
+
+########################################################################
+# 4x"vertical" layout minimizes amount of instructions, but pipeline
+# runs underutilized [because of vector instructions' high latency].
+# On the other hand minimum amount of data it takes to fully utilize
+# the pipeline is higher, so that effectively, short inputs would be
+# processed slower. Hence this code path targeting <=256 bytes lengths.
+#
+{
+my ($xa0,$xa1,$xa2,$xa3, $xb0,$xb1,$xb2,$xb3,
+    $xc0,$xc1,$xc2,$xc3, $xd0,$xd1,$xd2,$xd3)=map("%v$_",(0..15));
+my @K=map("%v$_",(16..19));
+my $CTR="%v26";
+my ($xt0,$xt1,$xt2,$xt3)=map("%v$_",(27..30));
+my $beperm="%v31";
+my ($x00,$x10,$x20,$x30)=(0,map("r$_",(8..10)));
+my $FRAME=$stdframe+4*16;
+
+ALIGN	(32);
+LABEL	("ChaCha20_ctr32_4x");
+LABEL	(".LChaCha20_ctr32_4x");
+&{$z?	\&stmg:\&stm}	("%r6","%r7","6*$SIZE_T($sp)");
+if (!$z) {
+	std	("%f4","16*$SIZE_T+2*8($sp)");
+	std	("%f6","16*$SIZE_T+3*8($sp)");
+}
+&{$z?	\&lghi:\&lhi}	("%r1",-$FRAME);
+	lgr	("%r0",$sp);
+	la	($sp,"0(%r1,$sp)");
+&{$z?	\&stg:\&st}	("%r0","0($sp)");	# back-chain
+if ($z) {
+	std	("%f8","$stdframe+8*0($sp)");
+	std	("%f9","$stdframe+8*1($sp)");
+	std	("%f10","$stdframe+8*2($sp)");
+	std	("%f11","$stdframe+8*3($sp)");
+	std	("%f12","$stdframe+8*4($sp)");
+	std	("%f13","$stdframe+8*5($sp)");
+	std	("%f14","$stdframe+8*6($sp)");
+	std	("%f15","$stdframe+8*7($sp)");
+}
+	larl	("%r7",".Lsigma");
+	lhi	("%r0",10);
+	lhi	("%r1",0);
+
+	vl	(@K[0],"0(%r7)");		# load sigma
+	vl	(@K[1],"0($key)");		# load key
+	vl	(@K[2],"16($key)");
+	vl	(@K[3],"0($counter)");		# load counter
+
+	vl	($beperm,"0x40(%r7)");
+	vl	($xt1,"0x50(%r7)");
+	vrepf	($CTR,@K[3],0);
+	vlvgf	(@K[3],"%r1",0);		# clear @K[3].word[0]
+	vaf	($CTR,$CTR,$xt1);
+
+#LABEL	(".Loop_outer_4x");
+	vlm	($xa0,$xa3,"0x60(%r7)");	# load [smashed] sigma
+
+	vrepf	($xb0,@K[1],0);			# smash the key
+	vrepf	($xb1,@K[1],1);
+	vrepf	($xb2,@K[1],2);
+	vrepf	($xb3,@K[1],3);
+
+	vrepf	($xc0,@K[2],0);
+	vrepf	($xc1,@K[2],1);
+	vrepf	($xc2,@K[2],2);
+	vrepf	($xc3,@K[2],3);
+
+	vlr	($xd0,$CTR);
+	vrepf	($xd1,@K[3],1);
+	vrepf	($xd2,@K[3],2);
+	vrepf	($xd3,@K[3],3);
+
+LABEL	(".Loop_4x");
+	VX_lane_ROUND(0, 4, 8,12);
+	VX_lane_ROUND(0, 5,10,15);
+	brct	("%r0",".Loop_4x");
+
+	vaf	($xd0,$xd0,$CTR);
+
+	vmrhf	($xt0,$xa0,$xa1);		# transpose data
+	vmrhf	($xt1,$xa2,$xa3);
+	vmrlf	($xt2,$xa0,$xa1);
+	vmrlf	($xt3,$xa2,$xa3);
+	vpdi	($xa0,$xt0,$xt1,0b0000);
+	vpdi	($xa1,$xt0,$xt1,0b0101);
+	vpdi	($xa2,$xt2,$xt3,0b0000);
+	vpdi	($xa3,$xt2,$xt3,0b0101);
+
+	vmrhf	($xt0,$xb0,$xb1);
+	vmrhf	($xt1,$xb2,$xb3);
+	vmrlf	($xt2,$xb0,$xb1);
+	vmrlf	($xt3,$xb2,$xb3);
+	vpdi	($xb0,$xt0,$xt1,0b0000);
+	vpdi	($xb1,$xt0,$xt1,0b0101);
+	vpdi	($xb2,$xt2,$xt3,0b0000);
+	vpdi	($xb3,$xt2,$xt3,0b0101);
+
+	vmrhf	($xt0,$xc0,$xc1);
+	vmrhf	($xt1,$xc2,$xc3);
+	vmrlf	($xt2,$xc0,$xc1);
+	vmrlf	($xt3,$xc2,$xc3);
+	vpdi	($xc0,$xt0,$xt1,0b0000);
+	vpdi	($xc1,$xt0,$xt1,0b0101);
+	vpdi	($xc2,$xt2,$xt3,0b0000);
+	vpdi	($xc3,$xt2,$xt3,0b0101);
+
+	vmrhf	($xt0,$xd0,$xd1);
+	vmrhf	($xt1,$xd2,$xd3);
+	vmrlf	($xt2,$xd0,$xd1);
+	vmrlf	($xt3,$xd2,$xd3);
+	vpdi	($xd0,$xt0,$xt1,0b0000);
+	vpdi	($xd1,$xt0,$xt1,0b0101);
+	vpdi	($xd2,$xt2,$xt3,0b0000);
+	vpdi	($xd3,$xt2,$xt3,0b0101);
+
+	#vrepif	($xt0,4);
+	#vaf	($CTR,$CTR,$xt0);		# next counter value
+
+	vaf	($xa0,$xa0,@K[0]);
+	vaf	($xb0,$xb0,@K[1]);
+	vaf	($xc0,$xc0,@K[2]);
+	vaf	($xd0,$xd0,@K[3]);
+
+	vperm	($xa0,$xa0,$xa0,$beperm);
+	vperm	($xb0,$xb0,$xb0,$beperm);
+	vperm	($xc0,$xc0,$xc0,$beperm);
+	vperm	($xd0,$xd0,$xd0,$beperm);
+
+	#&{$z?	\&clgfi:\&clfi} ($len,0x40);
+	#jl	(".Ltail_4x");
+
+	vlm	($xt0,$xt3,"0($inp)");
+
+	vx	($xt0,$xt0,$xa0);
+	vx	($xt1,$xt1,$xb0);
+	vx	($xt2,$xt2,$xc0);
+	vx	($xt3,$xt3,$xd0);
+
+	vstm	($xt0,$xt3,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	#je	(".Ldone_4x");
+
+	vaf	($xa0,$xa1,@K[0]);
+	vaf	($xb0,$xb1,@K[1]);
+	vaf	($xc0,$xc1,@K[2]);
+	vaf	($xd0,$xd1,@K[3]);
+
+	vperm	($xa0,$xa0,$xa0,$beperm);
+	vperm	($xb0,$xb0,$xb0,$beperm);
+	vperm	($xc0,$xc0,$xc0,$beperm);
+	vperm	($xd0,$xd0,$xd0,$beperm);
+
+&{$z?	\&clgfi:\&clfi} ($len,0x40);
+	jl	(".Ltail_4x");
+
+	vlm	($xt0,$xt3,"0($inp)");
+
+	vx	($xt0,$xt0,$xa0);
+	vx	($xt1,$xt1,$xb0);
+	vx	($xt2,$xt2,$xc0);
+	vx	($xt3,$xt3,$xd0);
+
+	vstm	($xt0,$xt3,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_4x");
+
+	vaf	($xa0,$xa2,@K[0]);
+	vaf	($xb0,$xb2,@K[1]);
+	vaf	($xc0,$xc2,@K[2]);
+	vaf	($xd0,$xd2,@K[3]);
+
+	vperm	($xa0,$xa0,$xa0,$beperm);
+	vperm	($xb0,$xb0,$xb0,$beperm);
+	vperm	($xc0,$xc0,$xc0,$beperm);
+	vperm	($xd0,$xd0,$xd0,$beperm);
+
+&{$z?	\&clgfi:\&clfi} ($len,0x40);
+	jl	(".Ltail_4x");
+
+	vlm	($xt0,$xt3,"0($inp)");
+
+	vx	($xt0,$xt0,$xa0);
+	vx	($xt1,$xt1,$xb0);
+	vx	($xt2,$xt2,$xc0);
+	vx	($xt3,$xt3,$xd0);
+
+	vstm	($xt0,$xt3,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_4x");
+
+	vaf	($xa0,$xa3,@K[0]);
+	vaf	($xb0,$xb3,@K[1]);
+	vaf	($xc0,$xc3,@K[2]);
+	vaf	($xd0,$xd3,@K[3]);
+
+	vperm	($xa0,$xa0,$xa0,$beperm);
+	vperm	($xb0,$xb0,$xb0,$beperm);
+	vperm	($xc0,$xc0,$xc0,$beperm);
+	vperm	($xd0,$xd0,$xd0,$beperm);
+
+&{$z?	\&clgfi:\&clfi} ($len,0x40);
+	jl	(".Ltail_4x");
+
+	vlm	($xt0,$xt3,"0($inp)");
+
+	vx	($xt0,$xt0,$xa0);
+	vx	($xt1,$xt1,$xb0);
+	vx	($xt2,$xt2,$xc0);
+	vx	($xt3,$xt3,$xd0);
+
+	vstm	($xt0,$xt3,"0($out)");
+
+	#la	$inp,0x40($inp));
+	#la	$out,0x40($out));
+	#lhi	%r0,10);
+	#&{$z?	\&aghi:\&ahi}	$len,-0x40);
+	#jne	.Loop_outer_4x);
+
+LABEL	(".Ldone_4x");
+if (!$z) {
+	ld	("%f4","$FRAME+16*$SIZE_T+2*8($sp)");
+	ld	("%f6","$FRAME+16*$SIZE_T+3*8($sp)");
+} else {
+	ld	("%f8","$stdframe+8*0($sp)");
+	ld	("%f9","$stdframe+8*1($sp)");
+	ld	("%f10","$stdframe+8*2($sp)");
+	ld	("%f11","$stdframe+8*3($sp)");
+	ld	("%f12","$stdframe+8*4($sp)");
+	ld	("%f13","$stdframe+8*5($sp)");
+	ld	("%f14","$stdframe+8*6($sp)");
+	ld	("%f15","$stdframe+8*7($sp)");
+}
+&{$z?	\&lmg:\&lm}	("%r6","%r7","$FRAME+6*$SIZE_T($sp)");
+	la	($sp,"$FRAME($sp)");
+	br	("%r14");
+
+ALIGN	(16);
+LABEL	(".Ltail_4x");
+if (!$z) {
+	vlr	($xt0,$xb0);
+	ld	("%f4","$FRAME+16*$SIZE_T+2*8($sp)");
+	ld	("%f6","$FRAME+16*$SIZE_T+3*8($sp)");
+
+	vst	($xa0,"$stdframe+0x00($sp)");
+	vst	($xt0,"$stdframe+0x10($sp)");
+	vst	($xc0,"$stdframe+0x20($sp)");
+	vst	($xd0,"$stdframe+0x30($sp)");
+} else {
+	vlr	($xt0,$xc0);
+	ld	("%f8","$stdframe+8*0($sp)");
+	ld	("%f9","$stdframe+8*1($sp)");
+	ld	("%f10","$stdframe+8*2($sp)");
+	ld	("%f11","$stdframe+8*3($sp)");
+	vlr	($xt1,$xd0);
+	ld	("%f12","$stdframe+8*4($sp)");
+	ld	("%f13","$stdframe+8*5($sp)");
+	ld	("%f14","$stdframe+8*6($sp)");
+	ld	("%f15","$stdframe+8*7($sp)");
+
+	vst	($xa0,"$stdframe+0x00($sp)");
+	vst	($xb0,"$stdframe+0x10($sp)");
+	vst	($xt0,"$stdframe+0x20($sp)");
+	vst	($xt1,"$stdframe+0x30($sp)");
+}
+	lghi	("%r1",0);
+
+LABEL	(".Loop_tail_4x");
+	llgc	("%r5","0(%r1,$inp)");
+	llgc	("%r6","$stdframe(%r1,$sp)");
+	xr	("%r6","%r5");
+	stc	("%r6","0(%r1,$out)");
+	la	("%r1","1(%r1)");
+	brct	($len,".Loop_tail_4x");
+
+&{$z?	\&lmg:\&lm}	("%r6","%r7","$FRAME+6*$SIZE_T($sp)");
+	la	($sp,"$FRAME($sp)");
+	br	("%r14");
+SIZE	("ChaCha20_ctr32_4x",".-ChaCha20_ctr32_4x");
+}
+
+########################################################################
+# 6x"horizontal" layout is optimal fit for the platform in its current
+# shape, more specifically for given vector instructions' latency. Well,
+# computational part of 8x"vertical" would be faster, but it consumes
+# all registers and dealing with that will diminish the return...
+#
+{
+my ($a0,$b0,$c0,$d0, $a1,$b1,$c1,$d1,
+    $a2,$b2,$c2,$d2, $a3,$b3,$c3,$d3,
+    $a4,$b4,$c4,$d4, $a5,$b5,$c5,$d5)=map("%v$_",(0..23));
+my @K=map("%v$_",(27,24..26));
+my ($t0,$t1,$t2,$t3)=map("%v$_",27..30);
+my $beperm="%v31";
+my $FRAME=$stdframe + 4*16;
+
+GLOBL	("ChaCha20_ctr32_vx");
+ALIGN	(32);
+LABEL	("ChaCha20_ctr32_vx");
+LABEL	(".LChaCha20_ctr32_vx");
+&{$z?	\&clgfi:\&clfi}	($len,256);
+	jle	(".LChaCha20_ctr32_4x");
+&{$z?	\&stmg:\&stm}	("%r6","%r7","6*$SIZE_T($sp)");
+if (!$z) {
+	std	("%f4","16*$SIZE_T+2*8($sp)");
+	std	("%f6","16*$SIZE_T+3*8($sp)");
+}
+&{$z?	\&lghi:\&lhi}	("%r1",-$FRAME);
+	lgr	("%r0",$sp);
+	la	($sp,"0(%r1,$sp)");
+&{$z?	\&stg:\&st}	("%r0","0($sp)");	# back-chain
+if ($z) {
+	std	("%f8","$FRAME-8*8($sp)");
+	std	("%f9","$FRAME-8*7($sp)");
+	std	("%f10","$FRAME-8*6($sp)");
+	std	("%f11","$FRAME-8*5($sp)");
+	std	("%f12","$FRAME-8*4($sp)");
+	std	("%f13","$FRAME-8*3($sp)");
+	std	("%f14","$FRAME-8*2($sp)");
+	std	("%f15","$FRAME-8*1($sp)");
+}
+	larl	("%r7",".Lsigma");
+	lhi	("%r0",10);
+
+	vlm	(@K[1],@K[2],"0($key)");	# load key
+	vl	(@K[3],"0($counter)");		# load counter
+
+	vlm	(@K[0],"$beperm","0(%r7)");	# load sigma, increments, ...
+
+LABEL	(".Loop_outer_vx");
+	vlr	($a0,@K[0]);
+	vlr	($b0,@K[1]);
+	vlr	($a1,@K[0]);
+	vlr	($b1,@K[1]);
+	vlr	($a2,@K[0]);
+	vlr	($b2,@K[1]);
+	vlr	($a3,@K[0]);
+	vlr	($b3,@K[1]);
+	vlr	($a4,@K[0]);
+	vlr	($b4,@K[1]);
+	vlr	($a5,@K[0]);
+	vlr	($b5,@K[1]);
+
+	vlr	($d0,@K[3]);
+	vaf	($d1,@K[3],$t1);		# K[3]+1
+	vaf	($d2,@K[3],$t2);		# K[3]+2
+	vaf	($d3,@K[3],$t3);		# K[3]+3
+	vaf	($d4,$d2,$t2);			# K[3]+4
+	vaf	($d5,$d2,$t3);			# K[3]+5
+
+	vlr	($c0,@K[2]);
+	vlr	($c1,@K[2]);
+	vlr	($c2,@K[2]);
+	vlr	($c3,@K[2]);
+	vlr	($c4,@K[2]);
+	vlr	($c5,@K[2]);
+
+	vlr	($t1,$d1);
+	vlr	($t2,$d2);
+	vlr	($t3,$d3);
+
+ALIGN	(4);
+LABEL	(".Loop_vx");
+
+	VX_ROUND($a0,$a1,$a2,$a3,$a4,$a5,
+		 $b0,$b1,$b2,$b3,$b4,$b5,
+		 $c0,$c1,$c2,$c3,$c4,$c5,
+		 $d0,$d1,$d2,$d3,$d4,$d5,
+		 0);
+
+	VX_ROUND($a0,$a1,$a2,$a3,$a4,$a5,
+		 $b0,$b1,$b2,$b3,$b4,$b5,
+		 $c0,$c1,$c2,$c3,$c4,$c5,
+		 $d0,$d1,$d2,$d3,$d4,$d5,
+		 1);
+
+	brct	("%r0",".Loop_vx");
+
+	vaf	($a0,$a0,@K[0]);
+	vaf	($b0,$b0,@K[1]);
+	vaf	($c0,$c0,@K[2]);
+	vaf	($d0,$d0,@K[3]);
+	vaf	($a1,$a1,@K[0]);
+	vaf	($d1,$d1,$t1);			# +K[3]+1
+
+	vperm	($a0,$a0,$a0,$beperm);
+	vperm	($b0,$b0,$b0,$beperm);
+	vperm	($c0,$c0,$c0,$beperm);
+	vperm	($d0,$d0,$d0,$beperm);
+
+&{$z?	\&clgfi:\&clfi}	($len,0x40);
+	jl	(".Ltail_vx");
+
+	vaf	($d2,$d2,$t2);			# +K[3]+2
+	vaf	($d3,$d3,$t3);			# +K[3]+3
+	vlm	($t0,$t3,"0($inp)");
+
+	vx	($a0,$a0,$t0);
+	vx	($b0,$b0,$t1);
+	vx	($c0,$c0,$t2);
+	vx	($d0,$d0,$t3);
+
+	vlm	(@K[0],$t3,"0(%r7)");		# re-load sigma and increments
+
+	vstm	($a0,$d0,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_vx");
+
+	vaf	($b1,$b1,@K[1]);
+	vaf	($c1,$c1,@K[2]);
+
+	vperm	($a0,$a1,$a1,$beperm);
+	vperm	($b0,$b1,$b1,$beperm);
+	vperm	($c0,$c1,$c1,$beperm);
+	vperm	($d0,$d1,$d1,$beperm);
+
+&{$z?	\&clgfi:\&clfi} ($len,0x40);
+	jl	(".Ltail_vx");
+
+	vlm	($a1,$d1,"0($inp)");
+
+	vx	($a0,$a0,$a1);
+	vx	($b0,$b0,$b1);
+	vx	($c0,$c0,$c1);
+	vx	($d0,$d0,$d1);
+
+	vstm	($a0,$d0,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_vx");
+
+	vaf	($a2,$a2,@K[0]);
+	vaf	($b2,$b2,@K[1]);
+	vaf	($c2,$c2,@K[2]);
+
+	vperm	($a0,$a2,$a2,$beperm);
+	vperm	($b0,$b2,$b2,$beperm);
+	vperm	($c0,$c2,$c2,$beperm);
+	vperm	($d0,$d2,$d2,$beperm);
+
+&{$z?	\&clgfi:\&clfi}	($len,0x40);
+	jl	(".Ltail_vx");
+
+	vlm	($a1,$d1,"0($inp)");
+
+	vx	($a0,$a0,$a1);
+	vx	($b0,$b0,$b1);
+	vx	($c0,$c0,$c1);
+	vx	($d0,$d0,$d1);
+
+	vstm	($a0,$d0,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_vx");
+
+	vaf	($a3,$a3,@K[0]);
+	vaf	($b3,$b3,@K[1]);
+	vaf	($c3,$c3,@K[2]);
+	vaf	($d2,@K[3],$t3);		# K[3]+3
+
+	vperm	($a0,$a3,$a3,$beperm);
+	vperm	($b0,$b3,$b3,$beperm);
+	vperm	($c0,$c3,$c3,$beperm);
+	vperm	($d0,$d3,$d3,$beperm);
+
+&{$z?	\&clgfi:\&clfi}	($len,0x40);
+	jl	(".Ltail_vx");
+
+	vaf	($d3,$d2,$t1);			# K[3]+4
+	vlm	($a1,$d1,"0($inp)");
+
+	vx	($a0,$a0,$a1);
+	vx	($b0,$b0,$b1);
+	vx	($c0,$c0,$c1);
+	vx	($d0,$d0,$d1);
+
+	vstm	($a0,$d0,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_vx");
+
+	vaf	($a4,$a4,@K[0]);
+	vaf	($b4,$b4,@K[1]);
+	vaf	($c4,$c4,@K[2]);
+	vaf	($d4,$d4,$d3);			# +K[3]+4
+	vaf	($d3,$d3,$t1);			# K[3]+5
+	vaf	(@K[3],$d2,$t3);		# K[3]+=6
+
+	vperm	($a0,$a4,$a4,$beperm);
+	vperm	($b0,$b4,$b4,$beperm);
+	vperm	($c0,$c4,$c4,$beperm);
+	vperm	($d0,$d4,$d4,$beperm);
+
+&{$z?	\&clgfi:\&clfi}	($len,0x40);
+	jl	(".Ltail_vx");
+
+	vlm	($a1,$d1,"0($inp)");
+
+	vx	($a0,$a0,$a1);
+	vx	($b0,$b0,$b1);
+	vx	($c0,$c0,$c1);
+	vx	($d0,$d0,$d1);
+
+	vstm	($a0,$d0,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	je	(".Ldone_vx");
+
+	vaf	($a5,$a5,@K[0]);
+	vaf	($b5,$b5,@K[1]);
+	vaf	($c5,$c5,@K[2]);
+	vaf	($d5,$d5,$d3);			# +K[3]+5
+
+	vperm	($a0,$a5,$a5,$beperm);
+	vperm	($b0,$b5,$b5,$beperm);
+	vperm	($c0,$c5,$c5,$beperm);
+	vperm	($d0,$d5,$d5,$beperm);
+
+&{$z?	\&clgfi:\&clfi} ($len,0x40);
+	jl	(".Ltail_vx");
+
+	vlm	($a1,$d1,"0($inp)");
+
+	vx	($a0,$a0,$a1);
+	vx	($b0,$b0,$b1);
+	vx	($c0,$c0,$c1);
+	vx	($d0,$d0,$d1);
+
+	vstm	($a0,$d0,"0($out)");
+
+	la	($inp,"0x40($inp)");
+	la	($out,"0x40($out)");
+	lhi	("%r0",10);
+&{$z?	\&aghi:\&ahi}	($len,-0x40);
+	jne	(".Loop_outer_vx");
+
+LABEL	(".Ldone_vx");
+if (!$z) {
+	ld	("%f4","$FRAME+16*$SIZE_T+2*8($sp)");
+	ld	("%f6","$FRAME+16*$SIZE_T+3*8($sp)");
+} else {
+	ld	("%f8","$FRAME-8*8($sp)");
+	ld	("%f9","$FRAME-8*7($sp)");
+	ld	("%f10","$FRAME-8*6($sp)");
+	ld	("%f11","$FRAME-8*5($sp)");
+	ld	("%f12","$FRAME-8*4($sp)");
+	ld	("%f13","$FRAME-8*3($sp)");
+	ld	("%f14","$FRAME-8*2($sp)");
+	ld	("%f15","$FRAME-8*1($sp)");
+}
+&{$z?	\&lmg:\&lm}	("%r6","%r7","$FRAME+6*$SIZE_T($sp)");
+	la	($sp,"$FRAME($sp)");
+	br	("%r14");
+
+ALIGN	(16);
+LABEL	(".Ltail_vx");
+if (!$z) {
+	ld	("%f4","$FRAME+16*$SIZE_T+2*8($sp)");
+	ld	("%f6","$FRAME+16*$SIZE_T+3*8($sp)");
+} else {
+	ld	("%f8","$FRAME-8*8($sp)");
+	ld	("%f9","$FRAME-8*7($sp)");
+	ld	("%f10","$FRAME-8*6($sp)");
+	ld	("%f11","$FRAME-8*5($sp)");
+	ld	("%f12","$FRAME-8*4($sp)");
+	ld	("%f13","$FRAME-8*3($sp)");
+	ld	("%f14","$FRAME-8*2($sp)");
+	ld	("%f15","$FRAME-8*1($sp)");
+}
+	vstm	($a0,$d0,"$stdframe($sp)");
+	lghi	("%r1",0);
+
+LABEL	(".Loop_tail_vx");
+	llgc	("%r5","0(%r1,$inp)");
+	llgc	("%r6","$stdframe(%r1,$sp)");
+	xr	("%r6","%r5");
+	stc	("%r6","0(%r1,$out)");
+	la	("%r1","1(%r1)");
+	brct	($len,".Loop_tail_vx");
+
+&{$z?	\&lmg:\&lm}	("%r6","%r7","$FRAME+6*$SIZE_T($sp)");
+	la	($sp,"$FRAME($sp)");
+	br	("%r14");
+SIZE	("ChaCha20_ctr32_vx",".-ChaCha20_ctr32_vx");
 }
 ################
 
-ALIGN	(64);
+ALIGN	(32);
 LABEL	(".Lsigma");
 LONG	(0x61707865,0x3320646e,0x79622d32,0x6b206574);	# endian-neutral sigma
-LONG	(0x00000000,0x00000001,0x00000002,0x00000003);	# vaf counter increment
-LONG	(0x03020100,0x07060504,0x13121110,0x17161514);	# vperm serialization
-LONG	(0x0b0a0908,0x0f0e0d0c,0x1b1a1918,0x1f1e1d1c);	# vperm serialization
+LONG	(1,0,0,0);
+LONG	(2,0,0,0);
+LONG	(3,0,0,0);
+LONG	(0x03020100,0x07060504,0x0b0a0908,0x0f0e0d0c);	# byte swap
+
+LONG	(0,1,2,3);
+LONG	(0x61707865,0x61707865,0x61707865,0x61707865);	# smashed sigma
+LONG	(0x3320646e,0x3320646e,0x3320646e,0x3320646e);
+LONG	(0x79622d32,0x79622d32,0x79622d32,0x79622d32);
+LONG	(0x6b206574,0x6b206574,0x6b206574,0x6b206574);
+
 ASCIZ	("\"ChaCha20 for s390x, CRYPTOGAMS by <appro\@openssl.org>\"");
 ALIGN	(4);
 
