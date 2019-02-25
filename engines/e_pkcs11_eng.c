@@ -425,7 +425,8 @@ static ENGINE *engine_pkcs11(void)
         ENGINE_free(ret);
         return NULL;
     }
-
+    return ret;
+}
 void engine_load_pkcs11_int(void)
 {
     /* Copied from eng_[openssl|dyn].c */
