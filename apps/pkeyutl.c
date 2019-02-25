@@ -228,9 +228,16 @@ int pkeyutl_main(int argc, char **argv)
     if (argc != 0)
         goto opthelp;
 
+    if (rawin && pkey_op != EVP_PKEY_OP_SIGN && pkey_op != EVP_PKEY_OP_VERIFY) {
+        BIO_printf(bio_err,
+                   "%s: -rawin can only be used with -sign or -verify\n",
+                   prog);
+        goto opthelp;
+    }
+
     if (md != NULL && !rawin) {
         BIO_printf(bio_err,
-                   "%s: -digest is not allowed if input is not in raw form\n",
+                   "%s: -digest can only be used with -rawin\n",
                    prog);
         goto opthelp;
     }

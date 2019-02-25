@@ -61,13 +61,17 @@ if this option is not specified.
 
 This indicates that the input data is raw data, which is not hashed by any
 message digest algorithm. The user can specify a digest algorithm by using
-the B<-digest> option.
+the B<-digest> option. This option can only be used with B<-sign> and
+B<-verify>.
 
 =item B<-digest algorithm>
 
 This specifies the digest algorithm which is used to hash the input data before
-signing it with the input key. This option could be omitted if the signature
-algorithm does not require one (for instance, EdDSA). If this option is present,
+signing or verifying it with the input key. This option could be omitted if the
+signature algorithm does not require one (for instance, EdDSA). If this option
+is omitted but the signature algorithm requires one, a default value will be
+used. For signature algorithms like RSA, DSA and ECDSA, SHA-256 will be the
+default digest algorithm. For SM2, it will be SM3. If this option is present,
 then the B<-rawin> option must be also specified to B<pkeyutl>.
 
 =item B<-out filename>
