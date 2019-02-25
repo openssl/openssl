@@ -154,7 +154,7 @@ before_script:
           srcdir=.;
           top=.;
       fi
-    - if [ -n "$MDEBUG" ] && apt-get -yq install valgrind; then
+    - if [ -n "$MDEBUG" ] && sudo -E apt-get -yq install valgrind; then
           export EXE_SHELL="valgrind --error-exitcode=1 --leak-check=full";
       fi
     - if [ -n "$UBUNTU_GCC_HACK" ]; then
