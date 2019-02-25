@@ -36,7 +36,6 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             int def_nid;
             if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
                 type = EVP_get_digestbynid(def_nid);
-            fprintf(stderr, "must be here: %d\n", def_nid);
         }
 
         if (type == NULL) {
