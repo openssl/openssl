@@ -19,9 +19,9 @@ static CK_FUNCTION_LIST *pkcs11_funcs;
 int pkcs11_idx = -1;
 
 /* ugly method for avoid compile warning */
-static void __attribute__((unused)) foo();
+static void __attribute__((unused)) foo(void);
 
-void foo()
+static void foo(void)
 {
     ERR_load_PKCS11_strings();
     ERR_unload_PKCS11_strings();
@@ -45,7 +45,7 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
     if (!pkcs11_encode_pkcs1(&tmps, &encoded_len, alg, md, md_len))
         goto err;
     encoded = tmps;
-    if (encoded_len > num - RSA_PKCS1_PADDING_SIZE) {
+    if ((unsigned int)encoded_len > (num - RSA_PKCS1_PADDING_SIZE)) {
         PKCS11err(PKCS11_F_PKCS11_RSA_SIGN, PKCS11_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
         goto err;
     }
