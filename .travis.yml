@@ -27,7 +27,7 @@ compiler:
 
 env:
     - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-crypto-mdebug enable-rc5 enable-md2"
+    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2" MDEBUG="yes"
     - CONFIG_OPTS="no-asm no-makedepend --strict-warnings -std=c89 -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes"
 
 matrix:
@@ -153,6 +153,9 @@ before_script:
       else
           srcdir=.;
           top=.;
+      fi
+    - if [ -n "$MDEBUG" ] && apt-get -yq install valgrind; then
+          export EXE_SHELL="valgrind --error-exitcode=1 --leak-check=full";
       fi
     - if [ -n "$UBUNTU_GCC_HACK" ]; then
           $CC -dumpspecs | sed "s/--push-state//g; s/--pop-state/--as-needed/g" > gcc-specs.txt;
