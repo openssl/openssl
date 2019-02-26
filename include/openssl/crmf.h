@@ -70,7 +70,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
 int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,
-                      unsigned char **mac, unsigned int *maclen);
+                      unsigned char **mac, size_t *maclen);
 
 /* crmf_lib.c */
 int OSSL_CRMF_MSG_set1_regCtrl_regToken(OSSL_CRMF_MSG *msg,

@@ -13,7 +13,7 @@ OSSL_CRMF_pbmp_new
   int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                         const unsigned char *msg, size_t msglen,
                         const unsigned char *sec, size_t seclen,
-                        unsigned char **mac, unsigned int *maclen);
+                        unsigned char **mac, size_t *maclen);
 
   OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t saltlen, int owfnid,
                                              int itercnt, int macnid);
@@ -55,7 +55,7 @@ structure, or NULL on error.
  unsigned char *msg = "Hello";
  unsigned char *sec = "SeCrEt";
  unsigned char *mac = NULL;
- unsigned int maclen;
+ size_t maclen;
 
  if ((pbm = OSSL_CRMF_pbmp_new(16, NID_sha256, 500, NID_hmac_sha1) == NULL))
      goto err;
