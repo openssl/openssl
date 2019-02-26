@@ -536,6 +536,24 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
     return tolen;
 }
 
+BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+#ifdef B_ENDIAN
+    return BN_bin2bn(s, len, ret);
+#else
+    return BN_lebin2bn(s, len, ret);
+#endif
+}
+
+int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+#ifdef B_ENDIAN
+    return BN_bn2binpad(s, len, ret);
+#else
+    return BN_bn2lebinpad(s, len, ret);
+#endif
+}
+
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 {
     int i;
