@@ -13,6 +13,7 @@ SOURCE[../libcrypto]=\
         ebcdic.c uid.c o_time.c o_str.c o_dir.c o_fopen.c ctype.c \
         threads_pthread.c threads_win.c threads_none.c getenv.c \
         o_init.c o_fips.c mem_sec.c init.c context.c sparse_array.c \
+        params.c \
         {- $target{cpuid_asm_src} -} {- $target{uplink_aux_src} -}
 
 DEPEND[cversion.o]=buildinf.h

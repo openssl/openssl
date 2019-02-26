@@ -1,0 +1,139 @@
+=pod
+
+=head1 NAME
+
+OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
+- OSSL_PARAM helpers
+
+=head1 SYNOPSIS
+
+=for comment generic
+
+ #include <openssl/params.h>
+
+ int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, const char *key, TYPE *val);
+
+ int OSSL_PARAM_set_TYPE(const OSSL_PARAM *p, const char *key, TYPE val);
+
+ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
+
+ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
+
+=head1 DESCRIPTION
+
+A collection of utility functions that simplify and add type safety to the
+OSSL_PARAM arrays.  The following B<TYPE> names are supported:
+
+=over
+
+=item *
+
+double
+
+=item *
+
+float
+
+=item *
+
+int
+
+=item *
+
+int16 (int16_t)
+
+=item *
+
+int32 (int32_t)
+
+=item *
+
+int64 (int64_t)
+
+=item *
+
+int8 (int8_t)
+
+=item *
+
+long
+
+=item *
+
+size_t
+
+=item *
+
+uint16 (uint16_t)
+
+=item *
+
+uint32 (uint32_t)
+
+=item *
+
+uint64 (uint64_t)
+
+=item *
+
+uint8 (uint8_t)
+
+=item *
+
+uint (unsigned int)
+
+=item *
+
+ulong (unsigned long)
+
+=back
+
+OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter
+array B<p> using the B<key>.
+The value is copied to the address B<val>.
+Type coercion takes place as discussed in NOTES section.
+
+OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the paramter
+array B<p> using the B<key>.
+Type coercion takes place as discussed in NOTES section.
+
+OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter B<key> in the
+array pointed to by B<p>.
+The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
+B<NULL>.
+
+OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the paramater array B<p> at
+the position indicated by B<key>.
+
+=head1 RETURN VALUES
+
+All of these functions return B<1> on success and B<0> on failure.
+
+=head1 NOTES
+
+Automatic type coercion takes places between the various sizes of types using
+the C conversion rules.
+Integral types  will be widened, sign extended and narrowed as required.
+Unsigned and signed integer types will be automatically converted.
+During widening, signed values will be sign extended and unsigned values
+zero extended.
+During narrowing, truncation takes place.
+
+Real values will also be converted between float and double and the standard
+integral types.
+They will not be converted to non-standard integral sizes or BIGNUMs.
+
+=head1 HISTORY
+
+These APIs were introduced in OpenSSL 3.0.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
