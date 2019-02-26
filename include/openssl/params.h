@@ -12,7 +12,6 @@
 # define HEADER_PARAMS_H
 
 # include <openssl/core.h>
-# include <openssl/bn.h>
 
 # ifdef  __cplusplus
 extern "C" {

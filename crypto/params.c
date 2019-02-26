@@ -9,6 +9,7 @@
  */
 
 #include <string.h>
+#include <openssl/bn.h>
 #include <openssl/params.h>
 
 static const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
