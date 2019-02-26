@@ -119,22 +119,27 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # code, so we just tell compiler to be pedantic about everything
 # but 'long long' type.
 
-my $gcc_devteam_warn = "-DDEBUG_UNUSED"
-        . " -DPEDANTIC -pedantic -Wno-long-long"
-        . " -Wall"
-        . " -Wextra"
-        . " -Wno-unused-parameter"
-        . " -Wno-missing-field-initializers"
-        . " -Wswitch"
-        . " -Wsign-compare"
-        . " -Wmissing-prototypes"
-        . " -Wstrict-prototypes"
-        . " -Wshadow"
-        . " -Wformat"
-        . " -Wtype-limits"
-        . " -Wundef"
-        . " -Werror"
-        ;
+my %gcc_devteam_warn = ();
+{
+    my @common = qw( -DDEBUG_UNUSED
+                     -DPEDANTIC -pedantic -Wno-long-long
+                     -Wall
+                     -Wextra
+                     -Wno-unused-parameter
+                     -Wno-missing-field-initializers
+                     -Wswitch
+                     -Wsign-compare
+                     -Wshadow
+                     -Wformat
+                     -Wtype-limits
+                     -Wundef
+                     -Werror );
+    %gcc_devteam_warn = (
+        CFLAGS          => [ @common, qw( -Wmissing-prototypes
+                                          -Wstrict-prototypes ) ],
+        CXXFLAGS        => [ @common ]
+    );
+}
 
 # These are used in addition to $gcc_devteam_warn when the compiler is clang.
 # TODO(openssl-team): fix problems and investigate if (at least) the
@@ -144,16 +149,20 @@ my $gcc_devteam_warn = "-DDEBUG_UNUSED"
 #       -Wlanguage-extension-token -- no, we use asm()
 #       -Wunused-macros -- no, too tricky for BN and _XOPEN_SOURCE etc
 #       -Wextended-offsetof -- no, needed in CMS ASN1 code
-my $clang_devteam_warn = ""
-        . " -Wswitch-default"
-        . " -Wno-parentheses-equality"
-        . " -Wno-language-extension-token"
-        . " -Wno-extended-offsetof"
-        . " -Wconditional-uninitialized"
-        . " -Wincompatible-pointer-types-discards-qualifiers"
-        . " -Wmissing-variable-declarations"
-        . " -Wno-unknown-warning-option"
-        ;
+my %clang_devteam_warn = ();
+{
+    my @common = qw( -Wswitch-default
+                     -Wno-parentheses-equality
+                     -Wno-language-extension-token
+                     -Wno-extended-offsetof
+                     -Wconditional-uninitialized
+                     -Wincompatible-pointer-types-discards-qualifiers
+                     -Wno-unknown-warning-option );
+    %clang_devteam_warn = (
+        CFLAGS          => [ @common, qw( -Wmissing-variable-declarations ) ],
+        CXXFLAGS        => [ @common ]
+    );
+}
 
 # This adds backtrace information to the memory leak info.  Is only used
 # when crypto-mdebug-backtrace is enabled.
@@ -1430,7 +1439,10 @@ unless ($disabled{asm}) {
     }
 }
 
-my %predefined = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
+my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
+my %predefined_CXX = $config{CXX}
+    ? compiler_predefined($config{CROSS_COMPILE}.$config{CXX})
+    : ();
 
 # Check for makedepend capabilities.
 if (!$disabled{makedepend}) {
@@ -1438,8 +1450,8 @@ if (!$disabled{makedepend}) {
         # For VC- and vms- targets, there's nothing more to do here.  The
         # functionality is hard coded in the corresponding build files for
         # cl (Windows) and CC/DECC (VMS).
-    } elsif (($predefined{__GNUC__} // -1) >= 3
-	     && !($predefined{__APPLE_CC__} && !$predefined{__clang__})) {
+    } elsif (($predefined_C{__GNUC__} // -1) >= 3
+	     && !($predefined_C{__APPLE_CC__} && !$predefined_C{__clang__})) {
         # We know that GNU C version 3 and up as well as all clang
         # versions support dependency generation, but Xcode did not
         # handle $cc -M before clang support (but claims __GNUC__ = 3)
@@ -1452,9 +1464,9 @@ if (!$disabled{makedepend}) {
     }
 }
 
-if (!$disabled{asm} && !$predefined{__MACH__} && $^O ne 'VMS') {
+if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS') {
     # probe for -Wa,--noexecstack option...
-    if ($predefined{__clang__}) {
+    if ($predefined_C{__clang__}) {
         # clang has builtin assembler, which doesn't recognize --help,
         # but it apparently recognizes the option in question on all
         # supported platforms even when it's meaningless. In other words
@@ -1514,24 +1526,35 @@ if (defined($config{api})) {
     push @{$config{defines}}, $apiflag;
 }
 
-my @strict_warnings_collection=();
+my %strict_warnings_collection=( CFLAGS => [], CXXFLAGS => []);
 if ($strict_warnings)
 	{
 	my $wopt;
-	my $gccver = $predefined{__GNUC__} // -1;
+	my $gccver = $predefined_C{__GNUC__} // -1;
+	my $gxxver = $predefined_CXX{__GNUC__} // -1;
 
-	die "ERROR --strict-warnings requires gcc[>=4] or gcc-alike"
+	warn "WARNING --strict-warnings requires gcc[>=4] or gcc-alike"
             unless $gccver >= 4;
-	push @strict_warnings_collection, (split /\s+/, $gcc_devteam_warn);
-	push @strict_warnings_collection, (split /\s+/, $clang_devteam_warn)
-		if (defined($predefined{__clang__}));
+	warn "WARNING --strict-warnings requires g++[>=4] or g++-alike"
+            unless $gxxver >= 4;
+	foreach (qw(CFLAGS CXXFLAGS))
+		{
+		push @{$strict_warnings_collection{$_}},
+			@{$gcc_devteam_warn{$_}};
+		}
+	push @{$strict_warnings_collection{CFLAGS}},
+		@{$clang_devteam_warn{CFLAGS}}
+			if (defined($predefined_C{__clang__}));
+	push @{$strict_warnings_collection{CXXFLAGS}},
+		@{$clang_devteam_warn{CXXFLAGS}}
+			if (defined($predefined_CXX{__clang__}));
 	}
-foreach (qw(CFLAGS CXXFLAGS))
+foreach my $idx (qw(CFLAGS CXXFLAGS))
         {
-        $useradd{$_} = [ map { $_ eq '--ossl-strict-warnings'
-                                  ? @strict_warnings_collection
-                                  : ( $_ ) }
-                            @{$useradd{$_}} ];
+        $useradd{$idx} = [ map { $_ eq '--ossl-strict-warnings'
+                                     ? @{$strict_warnings_collection{$idx}}
+                                     : ( $_ ) }
+                               @{$useradd{$idx}} ];
         }
 
 unless ($disabled{"crypto-mdebug-backtrace"})
