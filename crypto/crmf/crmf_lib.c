@@ -51,7 +51,7 @@ int OSSL_CRMF_MSG_set1_##ctrlinf##_##atyp(OSSL_CRMF_MSG *msg,             \
         goto err;                                                         \
     if ((atav->type = OBJ_nid2obj(NID_id_##ctrlinf##_##atyp)) == NULL)    \
         goto err;                                                         \
-    if ((atav->value.atyp = valt##_dup((valt *)in)) == NULL)              \
+    if ((atav->value.atyp = valt##_dup(in)) == NULL)                      \
         goto err;                                                         \
     if (!OSSL_CRMF_MSG_push0_##ctrlinf(msg, atav))                        \
         goto err;                                                         \
@@ -178,7 +178,7 @@ OSSL_CRMF_CERTID *OSSL_CRMF_CERTID_gen(const X509_NAME *issuer,
     if ((cid = OSSL_CRMF_CERTID_new()) == NULL)
         goto oom;
 
-    if (!X509_NAME_set(&cid->issuer->d.directoryName, (X509_NAME *)issuer))
+    if (!X509_NAME_set(&cid->issuer->d.directoryName, issuer))
         goto oom;
     cid->issuer->type = GEN_DIRNAME;
 
@@ -582,15 +582,12 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
         }
         return 1;
     case OSSL_CRMF_POPO_KEYENC:
-#ifdef OSSL_CMP_CERTREP_NEW_IMPLEMENTS_POPO_KEYENC /* TODO */
-        if (req->popo->value.keyEncipherment->type
-            == OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE)
-            && ASN1_INTEGER_get(req->popo->value.keyEncipherment->
-                                value.subsequentMessage)
-                == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT) {
-        return 1;
-    }
-#endif
+        /*
+         * TODO: when OSSL_CMP_certrep_new() supports encrypted certs,
+         * return 1 if the type of req->popo->value.keyEncipherment
+         * is OSSL_CRMF_POPOPRIVKEY_SUBSEQUENTMESSAGE and
+         * its value.subsequentMessage == OSSL_CRMF_SUBSEQUENTMESSAGE_ENCRCERT
+        */
     case OSSL_CRMF_POPO_KEYAGREE:
     default:
         CRMFerr(CRMF_F_OSSL_CRMF_MSGS_VERIFY_POPO,
