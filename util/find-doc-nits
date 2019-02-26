@@ -26,6 +26,7 @@ our($opt_n);
 our($opt_p);
 our($opt_u);
 our($opt_c);
+our($opt_r);
 
 sub help()
 {
@@ -38,6 +39,7 @@ Find small errors (nits) in documentation.  Options:
     -u Count undocumented functions
     -h Print this help message
     -c List undocumented commands and options
+    -r List misorder EXAMPLES sections
 EOF
     exit;
 }
@@ -140,6 +142,26 @@ sub name_synopsis()
         next if $names{$n} == 2;
         print "$id $n missing from SYNOPSIS\n";
     }
+}
+
+# Check if EXAMPLES is located after RETURN VALUES section.
+sub check_example_location()
+{
+    my $filename = shift;
+    my $dirname = basename(dirname($filename));
+
+    my $contents = '';
+    {
+        local $/ = undef;
+        open POD, $filename or die "Couldn't open $filename, $!";
+        $contents = <POD>;
+        close POD;
+    }
+
+    return unless $contents =~ /=head1 RETURN VALUES/ 
+        and $contents =~ /=head1 EXAMPLES/;
+    print "$filename: RETURN VAULES should be placed before EXAMPLES section\n"
+        if $contents =~ /=head1 EXAMPLES.*=head1 RETURN VALUES/ms;
 }
 
 sub check()
@@ -483,14 +505,14 @@ sub checkflags() {
     return $ok;
 }
 
-getopts('cdlnphu');
+getopts('cdlnphur');
 
 &help() if $opt_h;
 $opt_n = 1 if $opt_p;
 $opt_u = 1 if $opt_d;
 
-die "Need one of -[cdlnpu] flags.\n"
-    unless $opt_c or $opt_l or $opt_n or $opt_u;
+die "Need one of -[cdlnpur] flags.\n"
+    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_r;
 
 if ( $opt_c ) {
     my $ok = 1;
@@ -559,6 +581,12 @@ if ( $opt_u ) {
     &printem('crypto', 'util/libcrypto.num');
     &printem('ssl', 'util/libssl.num');
     &checkmacros();
+}
+
+if ( $opt_r ) {
+    foreach (@ARGV ? @ARGV : glob('doc/man3/*.pod')) {
+        &check_example_location($_);
+    }
 }
 
 exit;
