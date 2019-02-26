@@ -121,6 +121,10 @@ For example if a cipher suite uses 256 bit ciphers but only a 128 bit ticket key
 the overall security is only 128 bits because breaking the ticket key will
 enable an attacker to obtain the session keys.
 
+=head1 RETURN VALUES
+
+returns 0 to indicate the callback function was set.
+
 =head1 EXAMPLES
 
 Reference Implementation:
@@ -174,10 +178,6 @@ Reference Implementation:
          return 1;
      }
  }
-
-=head1 RETURN VALUES
-
-returns 0 to indicate the callback function was set.
 
 =head1 SEE ALSO
 
