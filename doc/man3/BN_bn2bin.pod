@@ -3,9 +3,9 @@
 =head1 NAME
 
 BN_bn2binpad,
-BN_bn2bin, BN_bin2bn, BN_bn2lebinpad, BN_lebin2bn, BN_bn2hex, BN_bn2dec,
-BN_hex2bn, BN_dec2bn, BN_print, BN_print_fp, BN_bn2mpi,
-BN_mpi2bn - format conversions
+BN_bn2bin, BN_bin2bn, BN_bn2lebinpad, BN_lebin2bn,
+BN_bn2nativepad, BN_native2bn, BN_bn2hex, BN_bn2dec, BN_hex2bn, BN_dec2bn,
+BN_print, BN_print_fp, BN_bn2mpi, BN_mpi2bn - format conversions
 
 =head1 SYNOPSIS
 
