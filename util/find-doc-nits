@@ -142,6 +142,18 @@ sub name_synopsis()
     }
 }
 
+# Check if EXAMPLES is located after RETURN VALUES section.
+sub check_example_location()
+{
+    my $filename = shift;
+    my $contents = shift;
+
+    return unless $contents =~ /=head1 RETURN VALUES/
+        and $contents =~ /=head1 EXAMPLES/;
+    print "$filename: RETURN VAULES should be placed before EXAMPLES section\n"
+        if $contents =~ /=head1 EXAMPLES.*=head1 RETURN VALUES/ms;
+}
+
 sub check()
 {
     my $filename = shift;
@@ -154,6 +166,8 @@ sub check()
         $contents = <POD>;
         close POD;
     }
+
+    &check_example_location($filename, $contents) if $filename =~ m|man3/|;
 
     my $id = "${filename}:1:";
 
