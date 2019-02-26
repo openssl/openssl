@@ -17,15 +17,6 @@ static void pkcs11_end_session(CK_SESSION_HANDLE session);
 static CK_RV pkcs11_load_functions(const char *library_path);
 static CK_FUNCTION_LIST *pkcs11_funcs;
 
-/* ugly method for avoid compile warning */
-static void __attribute__((unused)) foo(void);
-
-static void foo(void)
-{
-    ERR_load_PKCS11_strings();
-    ERR_unload_PKCS11_strings();
-}
-
 int pkcs11_rsa_sign(int alg, const unsigned char *md,
                     unsigned int md_len, unsigned char *sigret,
                     unsigned int *siglen, const RSA *rsa)
@@ -166,6 +157,11 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     pkcs11_logout(ctx->session);
     pkcs11_end_session(ctx->session);
     pkcs11_finalize();
+
+    /* FIXME useless call */
+    ERR_load_PKCS11_strings();
+    ERR_unload_PKCS11_strings();
+
     return 1;
 
  err:
@@ -321,7 +317,7 @@ int pkcs11_login(PKCS11_CTX *ctx, CK_USER_TYPE userType)
 
     if (ctx->pin != NULL) {
         rv = pkcs11_funcs->C_Login(ctx->session, userType, ctx->pin,
-                                   strlen((char *)ctx->pin));
+                                   (CK_ULONG)strlen((char *)ctx->pin));
         if (rv != CKR_OK) {
             PKCS11_trace("C_Login failed, error: %#08X\n", rv);
             PKCS11err(PKCS11_F_PKCS11_LOGIN, PKCS11_R_LOGIN_FAILED);
@@ -373,11 +369,11 @@ int pkcs11_find_private_key(PKCS11_CTX *ctx)
     if (ctx->id != NULL) {
         tmpl[2].type = CKA_ID;
         tmpl[2].pValue = ctx->id;
-        tmpl[2].ulValueLen = strlen((char *)ctx->id);
+        tmpl[2].ulValueLen = (CK_ULONG)strlen((char *)ctx->id);
     } else {
         tmpl[2].type = CKA_LABEL;
         tmpl[2].pValue = ctx->label;
-        tmpl[2].ulValueLen = strlen((char *)ctx->label);
+        tmpl[2].ulValueLen = (CK_ULONG)strlen((char *)ctx->label);
     }
 
     rv = pkcs11_funcs->C_FindObjectsInit(ctx->session, tmpl, OSSL_NELEM(tmpl));
