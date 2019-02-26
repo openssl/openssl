@@ -548,9 +548,9 @@ BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
 int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
 {
 #ifdef B_ENDIAN
-    return BN_bn2binpad(s, len, ret);
+    return BN_bn2binpad(a, to, tolen);
 #else
-    return BN_bn2lebinpad(s, len, ret);
+    return BN_bn2lebinpad(a, to, tolen);
 #endif
 }
 
