@@ -386,7 +386,7 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
                                     EVP_PKEY *pkey, int dgst)
 {
     int len;
-    size_t crlen, max_sig_size;
+    size_t crlen;
     size_t siglen;
     unsigned char *crder = NULL, *sig = NULL;
     int alg_nid = 0;
@@ -411,13 +411,6 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
     }
     crlen = (size_t)len;
 
-    max_sig_size = EVP_PKEY_size(pkey);
-    sig = OPENSSL_malloc(max_sig_size);
-    if (sig == NULL) {
-        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
     if (!OBJ_find_sigid_by_algs(&alg_nid, dgst, EVP_PKEY_id(pkey))) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT,
                 CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY);
@@ -433,8 +426,16 @@ static int CRMF_poposigningkey_init(OSSL_CRMF_POPOSIGNINGKEY *ps,
                          V_ASN1_NULL, NULL)
         || (ctx = EVP_MD_CTX_new()) == NULL
         || EVP_DigestSignInit(ctx, NULL, alg, NULL, pkey) <= 0
-        || EVP_DigestUpdate(ctx, crder, crlen) <= 0
-        || EVP_DigestSignFinal(ctx, sig, &siglen) <= 0
+        || EVP_DigestSignUpdate(ctx, crder, crlen) <= 0
+        || EVP_DigestSignFinal(ctx, NULL, &siglen) <= 0) {
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
+        goto err;
+    }
+    if ((sig = OPENSSL_malloc(siglen)) == NULL) {
+        CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+    if (EVP_DigestSignFinal(ctx, sig, &siglen) <= 0
         || !ASN1_BIT_STRING_set(ps->signature, sig, siglen)) {
         CRMFerr(CRMF_F_CRMF_POPOSIGNINGKEY_INIT, CRMF_R_ERROR);
         goto err;
