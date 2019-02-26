@@ -41,6 +41,10 @@
 
 #include "pkcs11.h"
 
+#ifdef _WIN32
+# pragma pack(pop, cryptoki)
+#endif
+
 #define PKCS11_CMD_MODULE_PATH            ENGINE_CMD_BASE
 #define PKCS11_CMD_PIN                    (ENGINE_CMD_BASE + 1)
 
