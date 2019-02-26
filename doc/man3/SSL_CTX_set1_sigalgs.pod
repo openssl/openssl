@@ -83,6 +83,10 @@ be used with the B<_list> forms of the API.
 
 The use of MD5 as a digest is strongly discouraged due to security weaknesses.
 
+=head1 RETURN VALUES
+
+All these functions return 1 for success and 0 for failure.
+
 =head1 EXAMPLES
 
 Set supported signature algorithms to SHA256 with ECDSA and SHA256 with RSA
@@ -96,10 +100,6 @@ Set supported signature algorithms to SHA256 with ECDSA and SHA256 with RSA
 using a string:
 
  SSL_CTX_set1_sigalgs_list(ctx, "ECDSA+SHA256:RSA+SHA256");
-
-=head1 RETURN VALUES
-
-All these functions return 1 for success and 0 for failure.
 
 =head1 SEE ALSO
 
