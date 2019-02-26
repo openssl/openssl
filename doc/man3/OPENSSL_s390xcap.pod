@@ -139,6 +139,10 @@ the numbering is continuous across 64-bit mask boundaries.
       # 20    1<<43    KMA-GCM-AES-256
       :
 
+=head1 RETURN VALUES
+
+Not available.
+
 =head1 EXAMPLES
 
 Disables all instruction set extensions which the z196 processor does not implement:
@@ -152,10 +156,6 @@ Disables the vector facility:
 Disables the KM-XTS-AES and and the KIMD-SHAKE function codes:
 
  OPENSSL_s390xcap="km:~0x2800:~0;kimd:~0xc000000:~0"
-
-=head1 RETURN VALUES
-
-Not available.
 
 =head1 SEE ALSO
 
