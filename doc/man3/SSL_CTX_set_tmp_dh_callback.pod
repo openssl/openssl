@@ -81,6 +81,14 @@ are advised to either use SSL_CTX_set_tmp_dh() or alternatively, use
 the callback but ignore B<keylength> and B<is_export> and simply
 supply at least 2048-bit parameters in the callback.
 
+=head1 RETURN VALUES
+
+SSL_CTX_set_tmp_dh_callback() and SSL_set_tmp_dh_callback() do not return
+diagnostic output.
+
+SSL_CTX_set_tmp_dh() and SSL_set_tmp_dh() do return 1 on success and 0
+on failure. Check the error queue to find out the reason of failure.
+
 =head1 EXAMPLES
 
 Setup DH parameters with a key length of 2048 bits. (Error handling
@@ -108,14 +116,6 @@ Code for setting up parameters during server initialization:
  if (SSL_CTX_set_tmp_dh(ctx, dh_2048) != 1)
      /* Error. */
  ...
-
-=head1 RETURN VALUES
-
-SSL_CTX_set_tmp_dh_callback() and SSL_set_tmp_dh_callback() do not return
-diagnostic output.
-
-SSL_CTX_set_tmp_dh() and SSL_set_tmp_dh() do return 1 on success and 0
-on failure. Check the error queue to find out the reason of failure.
 
 =head1 SEE ALSO
 

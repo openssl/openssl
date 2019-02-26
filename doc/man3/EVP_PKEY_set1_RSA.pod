@@ -114,13 +114,6 @@ is no longer possible: the equivalent is EVP_PKEY_base_id(pkey).
 EVP_PKEY_set1_engine() is typically used by an ENGINE returning an HSM
 key as part of its routine to load a private key.
 
-=head1 EXAMPLES
-
-After loading an ECC key, it is possible to convert it to using SM2
-algorithms with EVP_PKEY_set_alias_type:
-
- EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-
 =head1 RETURN VALUES
 
 EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
@@ -140,6 +133,13 @@ type or B<NID_undef> (equivalently B<EVP_PKEY_NONE>) on error.
 EVP_PKEY_set1_engine() returns 1 for success and 0 for failure.
 
 EVP_PKEY_set_alias_type() returns 1 for success and 0 for error.
+
+=head1 EXAMPLES
+
+After loading an ECC key, it is possible to convert it to using SM2
+algorithms with EVP_PKEY_set_alias_type:
+
+ EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
 
 =head1 SEE ALSO
 
