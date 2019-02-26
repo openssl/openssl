@@ -24,8 +24,7 @@ static int test_params(void)
 
     if (!TEST_true(OSSL_PARAM_set_int(params, "a", 22))
         || !TEST_int_eq(i, 22)
-        || !TEST_true(OSSL_PARAM_get_size_t(params, "a", &sz))
-        || !TEST_size_t_eq(sz, 22))
+        || TEST_true(OSSL_PARAM_get_size_t(params, "a", &sz)))
         goto err;
     r = 1;
 err:
