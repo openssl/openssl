@@ -43,8 +43,16 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_LH_NEW                          126
 # define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
 # define CRYPTO_F_OPENSSL_SK_DUP                          128
-# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
+# define CRYPTO_F_OSSL_PARAM_GET_BIGNUM                   134
+# define CRYPTO_F_OSSL_PARAM_GET_DOUBLE                   135
+# define CRYPTO_F_OSSL_PARAM_GET_INT_COMMON               136
+# define CRYPTO_F_OSSL_PARAM_GET_POINTER                  137
+# define CRYPTO_F_OSSL_PARAM_SET_BIGNUM                   138
+# define CRYPTO_F_OSSL_PARAM_SET_DOUBLE                   139
+# define CRYPTO_F_OSSL_PARAM_SET_INT_COMMON               140
+# define CRYPTO_F_OSSL_PARAM_SET_POINTER                  141
 # define CRYPTO_F_OSSL_PROVIDER_ACTIVATE                  130
+# define CRYPTO_F_OSSL_PROVIDER_ADD_BUILTIN               132
 # define CRYPTO_F_OSSL_PROVIDER_NEW                       131
 # define CRYPTO_F_PKEY_HMAC_INIT                          123
 # define CRYPTO_F_PKEY_POLY1305_INIT                      124
@@ -57,6 +65,8 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED                 101
 # define CRYPTO_R_ILLEGAL_HEX_DIGIT                       102
 # define CRYPTO_R_ODD_NUMBER_OF_DIGITS                    103
+# define CRYPTO_R_PARAM_NOT_FOUND                         105
 # define CRYPTO_R_PROVIDER_ALREADY_EXISTS                 104
+# define CRYPTO_R_TYPE_MISMATCH                           106
 
 #endif

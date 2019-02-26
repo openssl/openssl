@@ -108,20 +108,18 @@ The C<data_type> field can be one of the following types:
 
 =over 4
 
-=item C<OSSL_PARAM_INTEGER>
+=item C<OSSL_PARAM_INT>, C<OSSL_PARAM_UINT> C<OSSL_PARAM_INT>, C<OSSL_PARAM_UINT>, C<OSSL_PARAM_INT64>, C<OSSL_PARAM_UINT64>, C<OSSL_PARAM_LONG>, C<OSSL_PARAM_ULONG>, C<OSSL_PARAM_SIZE_T>, C<OSSL_PARAM_DOUBLE>
 
-=item C<OSSL_PARAM_UNSIGNED_INTEGER>
+The parameter is an integer that has the C type of C<int>,
+C<unsigned int>, C<int64_t>, C<uint64_t>, C<long>, C<unsigned long>,
+C<size_t>, or C<double>,
+respectively, and is represented in its native form.
 
-The parameter data is an integer (signed or unsigned) of arbitrary
-length, organized in native form, i.e. most significant byte first on
-Big-Endian systems, and least significant byte first on Little-Endian
-systems.
+=item C<BIGNUM>
 
-=item C<OSSL_PARAM_REAL>
-
-=for comment It's still debated if we need this or not.
-
-The parameter data is a floating point value in native form.
+The parameter is an OpenSSL C<BIGNUM> and is represented using
+BN_lebin2bn() or BN_bin2bn(), depending on whether the platform is
+little-endian or big-endian.
 
 =item C<OSSL_PARAM_UTF8_STRING>
 
@@ -204,12 +202,6 @@ C<return_size> point at.
 
 If the data type for a key that it's associated with is incorrect,
 the called function may return an error.
-
-The called function may also try to convert the data to a suitable
-form (for example, it's plausible to pass a large number as an octet
-string, so even though a given key is defined as an
-C<OSSL_PARAM_UNSIGNED_INTEGER>, is plausible to pass the value as an
-C<OSSL_PARAM_OCTET_STRING>), but this is in no way mandatory.
 
 =item *
 

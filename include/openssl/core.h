@@ -77,64 +77,38 @@ struct ossl_param_st {
     unsigned int data_type;      /* declare what kind of content is in buffer */
     void *buffer;                /* value being passed in or out */
     size_t buffer_size;          /* buffer size */
+    size_t bn_size;              /* Size of converted BIGNUM */
     size_t *return_size;         /* OPTIONAL: address to content size */
 };
 
 /* Currently supported OSSL_PARAM data types */
 /*
- * OSSL_PARAM_INTEGER and OSSL_PARAM_UNSIGNED_INTEGER
- * are arbitrary length and therefore require an arbitrarily sized buffer,
- * since they may be used to pass numbers larger than what is natively
- * available.
- *
- * The number must be buffered in native form, i.e. MSB first on B_ENDIAN
- * systems and LSB first on L_ENDIAN systems.  This means that arbitrary
- * native integers can be stored in the buffer, just make sure that the
- * buffer size is correct and the buffer itself is properly aligned (for
- * example by having the buffer field point at a C integer).
+ * Numbers are stored in native form.  Leaving space for more numbers
+ * later without breaking API/ABI.
  */
-# define OSSL_PARAM_INTEGER              1
-# define OSSL_PARAM_UNSIGNED_INTEGER     2
-/*-
- * OSSL_PARAM_REAL
- * is a C binary floating point values in native form and alignment.
- */
-# define OSSL_PARAM_REAL                 3
-/*-
- * OSSL_PARAM_UTF8_STRING
- * is a printable string.  Is expteced to be printed as it is.
- */
-# define OSSL_PARAM_UTF8_STRING          4
-/*-
- * OSSL_PARAM_OCTET_STRING
- * is a string of bytes with no further specification.  Is expected to be
- * printed as a hexdump.
- */
-# define OSSL_PARAM_OCTET_STRING         5
-
-/*-
- * Pointer flag
- *
- * This flag can be added to any type to signify that the buffer
- * pointer is set to point at a pointer to the data instead of
- * pointing directly at the data.
- *
- * This is more relevant for parameter requests, where the responding
- * function doesn't need to copy the data to the provided buffer, but
- * sets the provided buffer to point at the actual data instead.
- *
- * WARNING!  Using these is FRAGILE, as it assumes that the actual
- * data and its location are constant.
- */
-# define OSSL_PARAM_POINTER_FLAG    0x80000000UL
+# define OSSL_PARAM_INT                 0x01
+# define OSSL_PARAM_UINT                0x02
+# define OSSL_PARAM_INT64               0x03
+# define OSSL_PARAM_UINT64              0x04
+# define OSSL_PARAM_LONG                0x05
+# define OSSL_PARAM_ULONG               0x06
+# define OSSL_PARAM_SIZET               0x07
+# define OSSL_PARAM_DOUBLE              0x08
 
 /*
- * Convenience pointer types for strings.
+ * OSSL_PARAM_BIGNUM is an OpenSSL BIGNUM; stored in native-endian format.
  */
-# define OSSL_PARAM_UTF8_STRING_PTR                     \
-    (OSSL_PARAM_UTF8_STRING|OSSL_PARAM_POINTER_FLAG)
-# define OSSL_PARAM_OCTET_STRING_PTR                    \
-    (OSSL_PARAM_OCTET_STRING|OSSL_PARAM_POINTER_FLAG)
+# define OSSL_PARAM_BIGNUM              0x10
+
+/*
+ * A pointer; interpretation is up to the sender/caller.
+ */
+# define OSSL_PARAM_POINTER             0x11
+
+/*
+ * A printable string.  It is expected that it can be printed as it is.
+ */
+# define OSSL_PARAM_UTF8_STRING         0x11
 
 /*-
  * Provider entry point
