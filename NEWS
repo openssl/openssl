@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.0.2q and OpenSSL 1.0.2r [under development]
 
-      o
+      o 0-byte record padding oracle (CVE-2019-1559)
 
   Major changes between OpenSSL 1.0.2p and OpenSSL 1.0.2q [20 Nov 2018]
 
