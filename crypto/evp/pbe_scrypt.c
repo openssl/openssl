@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include <openssl/kdf.h>
+#include "internal/numbers.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 
