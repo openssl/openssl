@@ -175,6 +175,8 @@ sub check()
         close POD;
     }
 
+    &check_example_location($_) if $filename =~ m|man3/|;
+
     my $id = "${filename}:1:";
 
     &name_synopsis($id, $filename, $contents)
@@ -562,9 +564,6 @@ if ( $opt_n ) {
     &publicize() if $opt_p;
     foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
         &check($_);
-    }
-    foreach (@ARGV ? @ARGV : glob('doc/man3/*.pod')) {
-        &check_example_location($_);
     }
     {
         local $opt_p = undef;
