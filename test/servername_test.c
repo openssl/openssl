@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -203,7 +203,7 @@ static int server_setup_sni(void)
         /* SNI should have been cleared during handshake */
         goto end;
     }
-    
+
     testresult = 1;
 end:
     SSL_free(serverssl);
