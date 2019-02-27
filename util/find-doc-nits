@@ -26,7 +26,6 @@ our($opt_n);
 our($opt_p);
 our($opt_u);
 our($opt_c);
-our($opt_o);
 
 sub help()
 {
@@ -39,7 +38,6 @@ Find small errors (nits) in documentation.  Options:
     -u Count undocumented functions
     -h Print this help message
     -c List undocumented commands and options
-    -o List POD pages with misordered layout
 EOF
     exit;
 }
@@ -505,14 +503,14 @@ sub checkflags() {
     return $ok;
 }
 
-getopts('cdlnphuo');
+getopts('cdlnphu');
 
 &help() if $opt_h;
 $opt_n = 1 if $opt_p;
 $opt_u = 1 if $opt_d;
 
-die "Need one of -[cdlnpuo] flags.\n"
-    unless $opt_c or $opt_l or $opt_n or $opt_u or $opt_o;
+die "Need one of -[cdlnpu] flags.\n"
+    unless $opt_c or $opt_l or $opt_n or $opt_u;
 
 if ( $opt_c ) {
     my $ok = 1;
@@ -565,6 +563,9 @@ if ( $opt_n ) {
     foreach (@ARGV ? @ARGV : glob('doc/*/*.pod')) {
         &check($_);
     }
+    foreach (@ARGV ? @ARGV : glob('doc/man3/*.pod')) {
+        &check_example_location($_);
+    }
     {
         local $opt_p = undef;
         foreach (@ARGV ? @ARGV : glob('doc/internal/*/*.pod')) {
@@ -581,12 +582,6 @@ if ( $opt_u ) {
     &printem('crypto', 'util/libcrypto.num');
     &printem('ssl', 'util/libssl.num');
     &checkmacros();
-}
-
-if ( $opt_o ) {
-    foreach (@ARGV ? @ARGV : glob('doc/man3/*.pod')) {
-        &check_example_location($_);
-    }
 }
 
 exit;
