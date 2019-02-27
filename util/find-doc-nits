@@ -146,15 +146,7 @@ sub name_synopsis()
 sub check_example_location()
 {
     my $filename = shift;
-    my $dirname = basename(dirname($filename));
-
-    my $contents = '';
-    {
-        local $/ = undef;
-        open POD, $filename or die "Couldn't open $filename, $!";
-        $contents = <POD>;
-        close POD;
-    }
+    my $contents = shift;
 
     return unless $contents =~ /=head1 RETURN VALUES/ 
         and $contents =~ /=head1 EXAMPLES/;
@@ -175,7 +167,7 @@ sub check()
         close POD;
     }
 
-    &check_example_location($_) if $filename =~ m|man3/|;
+    &check_example_location($filename, $contents) if $filename =~ m|man3/|;
 
     my $id = "${filename}:1:";
 
