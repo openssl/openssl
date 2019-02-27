@@ -57,20 +57,25 @@ static const struct {
     { 10, { 0x14, 0x02, 0x15, 0x57, 0xd8, 0x4c, 0x0b, 0x73, 0xc7, 0x0e } }
 };
 
-static int test_param_type_extra(const OSSL_PARAM *param, uintmax_t v)
+static int test_param_type_extra(const OSSL_PARAM *param,
+                                 const unsigned char *cmp)
 {
     uint8_t u8;
     int32_t i32;
     int i;
     double d;
     float f;
-    unsigned char buf[MAX_LEN], cmp[sizeof(v)];
-
-    copy_to_le(cmp, &v, sizeof(v));
+    uintmax_t um;
+    int64_t i64;
+    size_t s;
+    unsigned char buf[MAX_LEN];
 
     if (!TEST_true(OSSL_PARAM_get_int(param, "a", &i))
         || !TEST_true(OSSL_PARAM_get_uint8(param, "a", &u8))
         || !TEST_true(OSSL_PARAM_get_int32(param, "a", &i32))
+        || !TEST_true(OSSL_PARAM_get_int64(param, "a", &i64))
+        || !TEST_true(OSSL_PARAM_get_size_t(param, "a", &s))
+        || !TEST_true(OSSL_PARAM_get_uintmax(param, "a", &um))
         || !TEST_true(OSSL_PARAM_get_double(param, "a", &d))
         || !TEST_true(OSSL_PARAM_get_float(param, "a", &f)))
         return 0;
@@ -79,64 +84,96 @@ static int test_param_type_extra(const OSSL_PARAM *param, uintmax_t v)
     if (!TEST_mem_eq(buf, sizeof(i), cmp, sizeof(i)))
         return 0;
     copy_to_le(buf, &u8, sizeof(u8));
-    if (!TEST_mem_eq(&u8, sizeof(u8), cmp, sizeof(u8)))
+    if (!TEST_mem_eq(buf, sizeof(u8), cmp, sizeof(u8)))
         return 0;
     copy_to_le(buf, &i32, sizeof(i32));
-    if (!TEST_mem_eq(&i32, sizeof(i32), cmp, sizeof(i32)))
+    if (!TEST_mem_eq(buf, sizeof(i32), cmp, sizeof(i32)))
+        return 0;
+#ifndef OPENSSL_SYS_WINDOWS
+    copy_to_le(buf, &i64, sizeof(i64));
+    if (!TEST_mem_eq(buf, sizeof(i64), cmp, sizeof(i64)))
+        return 0;
+#endif
+    copy_to_le(buf, &s, sizeof(s));
+    if (!TEST_mem_eq(buf, sizeof(s), cmp, sizeof(s)))
+        return 0;
+    copy_to_le(buf, &um, sizeof(um));
+    if (!TEST_mem_eq(buf, sizeof(um), cmp, sizeof(um)))
         return 0;
 
     /* reals lose accuracy */
-    if (param->buffer_size <= 6 && !TEST_size_t_eq((size_t)d, v))
-        return 0;
-    if (param->buffer_size <= 3 && !TEST_size_t_eq((size_t)f, v))
-        return 0;
-    return 1;
+    if (param->buffer_size <= 6) {
+        i64 = (int64_t)d;
+        copy_to_le(buf, &i64, sizeof(i64));
+        if (!TEST_mem_eq(buf, param->buffer_size, cmp, param->buffer_size))
+            return 0;
+    }
+    if (param->buffer_size <= 3) {
+        i32 = (int32_t)f;
+        copy_to_le(buf, &i32, sizeof(i32));
+        if (!TEST_mem_eq(buf, param->buffer_size, cmp, param->buffer_size))
+            return 0;
+    }
+     return 1;
 }
 
-#define TEST_INT(name, type) \
+#define TEST_INT(name, type, neg) \
     static int test_param_##name(int n) \
     { \
         type in, out; \
         unsigned char buf[MAX_LEN], le[MAX_LEN], cmp[sizeof(type)]; \
         const size_t len = raw_values[n].len > sizeof(type) \
                            ? sizeof(type) : raw_values[n].len; \
-        OSSL_PARAM param = OSSL_PARAM_##name("a", &out); \
+        OSSL_PARAM param = OSSL_PARAM_##name("a", NULL); \
+        size_t i; \
         \
         memset(buf, 0, sizeof(buf)); \
         memset(le, 0, sizeof(le)); \
         copy_be_to_native(buf, raw_values[n].value, len); \
         swap_copy(le, raw_values[n].value, len); \
         memcpy(&in, buf, sizeof(in)); \
+        param.buffer = &out; \
         if (!TEST_true(OSSL_PARAM_set_##name(&param, "a", in))) \
             return 0; \
         copy_to_le(cmp, &out, sizeof(out)); \
         if (!TEST_mem_eq(cmp, sizeof(out), le, sizeof(out))) \
             return 0; \
-        param.buffer = buf; \
         in = 0; \
+        param.buffer = buf; \
         if (!TEST_true(OSSL_PARAM_get_##name(&param, "a", &in))) \
             return 0; \
-        if (!TEST_mem_eq(&in, sizeof(type), &out, sizeof(type))) \
+        copy_to_le(cmp, &in, sizeof(in)); \
+        if (!TEST_mem_eq(cmp, sizeof(in), le, sizeof(in))) \
             return 0; \
-        return test_param_type_extra(&param, (uintmax_t)in); \
+        if (neg) \
+            for (i = sizeof(type); i < MAX_LEN; i++) \
+                le[i] = 0xff; \
+        return test_param_type_extra(&param, le); \
     }
 
-TEST_INT(int, int)
-TEST_INT(long, long int)
-TEST_INT(int8, int8_t)
-TEST_INT(int16, int16_t)
-TEST_INT(int32, int32_t)
-TEST_INT(int64, int64_t)
-TEST_INT(intmax, intmax_t)
+/*
+ * The negative test needs to come from outside the macro to avoid
+ * unsigned comparisons that are always true.
+ */
+TEST_INT(int, int, in < 0)
+TEST_INT(long, long int, in < 0)
+TEST_INT(int8, int8_t, in < 0)
+TEST_INT(int16, int16_t, in < 0)
+TEST_INT(int32, int32_t, in < 0)
+TEST_INT(intmax, intmax_t, in < 0)
 
-TEST_INT(uint, unsigned int)
-TEST_INT(ulong, unsigned long int)
-TEST_INT(uint8, uint8_t)
-TEST_INT(uint16, uint16_t)
-TEST_INT(uint32, uint32_t)
-TEST_INT(uint64, uint64_t)
-TEST_INT(uintmax, uintmax_t)
-TEST_INT(size_t, size_t)
+TEST_INT(uint, unsigned int, 0)
+TEST_INT(ulong, unsigned long int, 0)
+TEST_INT(uint8, uint8_t, 0)
+TEST_INT(uint16, uint16_t, 0)
+TEST_INT(uint32, uint32_t, 0)
+TEST_INT(uintmax, uintmax_t, 0)
+TEST_INT(size_t, size_t, 0)
+
+#ifndef OPENSSL_SYS_WINDOWS
+TEST_INT(int64, int64_t, in < 0)
+TEST_INT(uint64, uint64_t, 0)
+#endif
 
 int setup_tests(void)
 {
@@ -145,15 +182,17 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_int8, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_int16, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_int32, OSSL_NELEM(raw_values));
-    ADD_ALL_TESTS(test_param_int64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_intmax, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_ulong, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint8, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint16, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint32, OSSL_NELEM(raw_values));
-    ADD_ALL_TESTS(test_param_uint64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uintmax, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_size_t, OSSL_NELEM(raw_values));
+#ifndef OPENSSL_SYS_WINDOWS
+    ADD_ALL_TESTS(test_param_int64, OSSL_NELEM(raw_values));
+    ADD_ALL_TESTS(test_param_uint64, OSSL_NELEM(raw_values));
+#endif
     return 1;
 }

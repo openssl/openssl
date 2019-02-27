@@ -11,7 +11,7 @@
 #include <string.h>
 #include <openssl/params.h>
 
-static const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
+static const OSSL_PARAM *param_locate(const OSSL_PARAM *p, const char *key)
 {
     if (p != NULL && key != NULL)
         for (; p->key != NULL; p++)
@@ -20,20 +20,13 @@ static const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
     return NULL;
 }
 
-static int OSSL_PARAM_get_int_common(const OSSL_PARAM *p, const char *key,
+static int get_int_common(const OSSL_PARAM *p, const char *key,
                                      void *val, size_t sz)
 {
     int neg, sign;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
-        return 0;
-
     sign = p->data_type == OSSL_PARAM_INTEGER;
-    if (!sign && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
-        return 0;
-    if (p->buffer_size == sz) {         /* Fast path */
-        memcpy(val, p->buffer, sz);
-    } else if (p->buffer_size < sz) {   /* Widening */
+    if (p->buffer_size < sz) {      /* Widening */
         const size_t eb = sz - p->buffer_size;
 
 #ifdef L_ENDIAN
@@ -45,7 +38,7 @@ static int OSSL_PARAM_get_int_common(const OSSL_PARAM *p, const char *key,
         memset(val, neg ? 0xff : 0, eb);
         memcpy(((unsigned char *)val) + eb, p->buffer, p->buffer_size);
 #endif
-    } else {                            /* Narrowing */
+    } else {                        /* Narrowing */
 #ifdef L_ENDIAN
         memcpy(val, p->buffer, sz);
 #else
@@ -55,20 +48,13 @@ static int OSSL_PARAM_get_int_common(const OSSL_PARAM *p, const char *key,
     return 1;
 }
 
-static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
+static int set_int_common(const OSSL_PARAM *p, const char *key,
                                      const void *val, size_t sz)
 {
     int neg, sign;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
-        return 0;
-
     sign = p->data_type == OSSL_PARAM_INTEGER;
-    if (!sign && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
-        return 0;
-    if (p->buffer_size == sz) {         /* Fast path */
-        memcpy(p->buffer, val, sz);
-    } else if (p->buffer_size > sz) {   /* Widening */
+    if (p->buffer_size > sz) {      /* Widening */
         const size_t eb = p->buffer_size - sz;
 
 #ifdef L_ENDIAN
@@ -80,7 +66,7 @@ static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
         memset(p->buffer, neg ? 0xff : 0, eb);
         memcpy(((unsigned char *)p->buffer) + eb, val, sz);
 #endif
-    } else {                            /* Narrowing */
+    } else {                        /* Narrowing */
 #ifdef L_ENDIAN
         memcpy(p->buffer, val, p->buffer_size);
 #else
@@ -96,11 +82,29 @@ static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
 #define PARAM_INT(name, type) \
     int OSSL_PARAM_get_##name(const OSSL_PARAM *p, const char *key, type *val) \
     { \
-        return OSSL_PARAM_get_int_common(p, key, val, sizeof(*val)); \
+        if ((p = param_locate(p, key)) == NULL \
+            || (p->data_type != OSSL_PARAM_INTEGER \
+                && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)) \
+            return 0; \
+        if (p->buffer_size == sizeof(type)) { \
+            *val = *(type *)p->buffer; \
+            return 1; \
+        } \
+        return get_int_common(p, key, val, sizeof(*val)); \
     } \
     int OSSL_PARAM_set_##name(const OSSL_PARAM *p, const char *key, type val) \
     { \
-        return OSSL_PARAM_set_int_common(p, key, &val, sizeof(val)); \
+        if ((p = param_locate(p, key)) == NULL \
+            || (p->data_type != OSSL_PARAM_INTEGER \
+                && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)) \
+            return 0; \
+        if (p->buffer_size == sizeof(type)) { \
+            *(type *)p->buffer = val; \
+            if (p->return_size != NULL) \
+                *p->return_size = sizeof(type); \
+            return 1; \
+        } \
+        return set_int_common(p, key, &val, sizeof(val)); \
     }
 
 PARAM_INT(int, int)
@@ -124,7 +128,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
     BIGNUM *b;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+    if ((p = param_locate(p, key)) == NULL)
         return 0;
 
     if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
@@ -144,7 +148,7 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     int r;
     const size_t bytes = (size_t)BN_num_bytes(val);
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+    if ((p = param_locate(p, key)) == NULL)
         return 0;
 
     if (p->buffer_size < bytes)
@@ -160,7 +164,7 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     return 0;
 }
 
-static int OSSL_PARAM_get_real_common(const OSSL_PARAM *p, const char *key,
+static int get_real_common(const OSSL_PARAM *p, const char *key,
                                       float *valf, double *vald)
 {
 #define CASE(type) \
@@ -170,7 +174,7 @@ static int OSSL_PARAM_get_real_common(const OSSL_PARAM *p, const char *key,
         else if (valf != NULL) \
             *valf = (float)(*(type *)p->buffer); \
         return 1
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+    if ((p = param_locate(p, key)) == NULL)
         return 0;
 
     if (p->data_type == OSSL_PARAM_REAL) {
@@ -197,7 +201,7 @@ static int OSSL_PARAM_get_real_common(const OSSL_PARAM *p, const char *key,
 #undef CASE
 }
 
-static int OSSL_PARAM_set_real_common(const OSSL_PARAM *p, const char *key,
+static int set_real_common(const OSSL_PARAM *p, const char *key,
                                       const float *valf, const double *vald)
 {
 #define CASE(type) \
@@ -207,7 +211,7 @@ static int OSSL_PARAM_set_real_common(const OSSL_PARAM *p, const char *key,
         else if (valf != NULL) \
             *(type *)p->buffer = (type)*valf; \
         return 1
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+    if ((p = param_locate(p, key)) == NULL)
         return 0;
     if (p->return_size != NULL)
         *p->return_size = p->buffer_size;
@@ -238,21 +242,21 @@ static int OSSL_PARAM_set_real_common(const OSSL_PARAM *p, const char *key,
 
 int OSSL_PARAM_get_float(const OSSL_PARAM *p, const char *key, float *val)
 {
-    return OSSL_PARAM_get_real_common(p, key, val, NULL);
+    return get_real_common(p, key, val, NULL);
 }
 
 int OSSL_PARAM_set_float(const OSSL_PARAM *p, const char *key, float val)
 {
-    return OSSL_PARAM_set_real_common(p, key, &val, NULL);
+    return set_real_common(p, key, &val, NULL);
 }
 
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val)
 {
-    return OSSL_PARAM_get_real_common(p, key, NULL, val);
+    return get_real_common(p, key, NULL, val);
 }
 
 int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
 {
-    return OSSL_PARAM_set_real_common(p, key, NULL, &val);
+    return set_real_common(p, key, NULL, &val);
 }
 

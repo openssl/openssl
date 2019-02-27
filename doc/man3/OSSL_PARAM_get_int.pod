@@ -24,7 +24,7 @@ OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 A collection of utility functions that simplify and add type safety to the
 OSSL_PARAM arrays.  The following B<TYPE> names are supported:
 
-=over
+=over 1
 
 =item *
 

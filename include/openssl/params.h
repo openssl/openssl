@@ -49,13 +49,13 @@ extern "C" {
 # define OSSL_PARAM_int(key, addr) \
     OSSL_PARAM((key), OSSL_PARAM_INTEGER, (addr), sizeof(int), NULL)
 # define OSSL_PARAM_uint(key, addr) \
-    OSSL_PARAM((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sizeof(uint), \
-               NULL)
+    OSSL_PARAM((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
+               sizeof(unsigned int), NULL)
 # define OSSL_PARAM_long(key, addr) \
     OSSL_PARAM((key), OSSL_PARAM_INTEGER, (addr), sizeof(long), NULL)
 # define OSSL_PARAM_ulong(key, addr) \
-    OSSL_PARAM((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sizeof(ulong), \
-               NULL)
+    OSSL_PARAM((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
+               sizeof(unsigned long int), NULL)
 # define OSSL_PARAM_size_t(key, addr) \
     OSSL_PARAM((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sizeof(size_t), \
                NULL)
