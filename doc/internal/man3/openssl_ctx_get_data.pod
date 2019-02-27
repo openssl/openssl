@@ -39,6 +39,14 @@ context is freed.
 openssl_ctx_get_data() is used to retrieve a pointer to the data in
 the library context C<ctx> associated with the given C<index>.
 
+=head1 RETURN VALUES
+
+openssl_ctx_new_index() returns -1 on error, otherwise the allocated
+index number.
+
+openssl_ctx_get_data() returns a pointer on success, or C<NULL> on
+failure.
+
 =head1 EXAMPLES
 
 =head2 Initialization
@@ -87,14 +95,6 @@ To get and use the data stored in the library context, simply do this:
   * foo_index comes from the example above
   */
  FOO *data = openssl_ctx_get_data(ctx, foo_index);
-
-=head1 RETURN VALUES
-
-openssl_ctx_new_index() returns -1 on error, otherwise the allocated
-index number.
-
-openssl_ctx_get_data() returns a pointer on success, or C<NULL> on
-failure.
 
 =head1 SEE ALSO
 
