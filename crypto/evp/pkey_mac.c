@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -202,9 +202,12 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
     EVP_MD_CTX_set_update_fn(mctx, int_update);
 
-    if (set_key)
+    if (set_key) {
         rv = EVP_MAC_ctrl(hctx->ctx, EVP_MAC_CTRL_SET_KEY, key->data,
                           key->length);
+        if (rv > 0)
+            rv  = EVP_MAC_init(hctx->ctx);
+    }
     return rv > 0;
 }
 
@@ -287,9 +290,6 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DIGESTINIT:
         switch (hctx->type) {
         case MAC_TYPE_RAW:
-            /* Ensure that we have attached the implementation */
-            if (!EVP_MAC_init(hctx->ctx))
-                return 0;
             {
                 int rv;
                 ASN1_OCTET_STRING *key =
@@ -303,6 +303,9 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                           key->data, key->length)) < 0)
                     return rv;
             }
+            /* Ensure that we have attached the implementation */
+            if (!EVP_MAC_init(hctx->ctx))
+                return 0;
             break;
         case MAC_TYPE_MAC:
             return -2;       /* The mac types don't support ciphers */

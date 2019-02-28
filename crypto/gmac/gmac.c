@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,14 +14,20 @@
 
 /* typedef EVP_MAC_IMPL */
 struct evp_mac_impl_st {
-    EVP_CIPHER *cipher;      /* Cache GCM cipher */
+    const EVP_CIPHER *cipher; /* Cache GCM cipher */
     EVP_CIPHER_CTX *ctx;    /* Cipher context */
     ENGINE *engine;         /* Engine implementating the algorithm */
+    unsigned char *key;
+    size_t key_len;
+    unsigned char *iv;
+    size_t iv_len;
 };
 
 static void gmac_free(EVP_MAC_IMPL *gctx)
 {
     if (gctx != NULL) {
+        OPENSSL_clear_free(gctx->key, gctx->key_len);
+        OPENSSL_clear_free(gctx->iv, gctx->iv_len);
         EVP_CIPHER_CTX_free(gctx->ctx);
         OPENSSL_free(gctx);
     }
@@ -43,6 +49,14 @@ static int gmac_copy(EVP_MAC_IMPL *gdst, EVP_MAC_IMPL *gsrc)
 {
     gdst->cipher = gsrc->cipher;
     gdst->engine = gsrc->engine;
+    OPENSSL_clear_free(gdst->key, gdst->key_len);
+    gdst->key = OPENSSL_memdup(gsrc->key, gsrc->key_len);
+    gdst->key_len = gsrc->key_len;
+    OPENSSL_clear_free(gdst->iv, gdst->iv_len);
+    gdst->iv = OPENSSL_memdup(gsrc->iv, gsrc->iv_len);
+    gdst->iv_len = gsrc->iv_len;
+    if (gdst->key == NULL || gdst->iv == NULL)
+        return 0;
     return EVP_CIPHER_CTX_copy(gdst->ctx, gsrc->ctx);
 }
 
@@ -53,7 +67,12 @@ static size_t gmac_size(EVP_MAC_IMPL *gctx)
 
 static int gmac_init(EVP_MAC_IMPL *gctx)
 {
-    return 1;
+    if (EVP_CIPHER_CTX_ctrl(gctx->ctx, EVP_CTRL_AEAD_SET_IVLEN, gctx->iv_len,
+                            NULL) <= 0)
+        return 0;
+
+    return EVP_EncryptInit_ex(gctx->ctx, gctx->cipher, gctx->engine, gctx->key,
+                              gctx->iv);
 }
 
 static int gmac_update(EVP_MAC_IMPL *gctx, const unsigned char *data,
@@ -65,6 +84,7 @@ static int gmac_update(EVP_MAC_IMPL *gctx, const unsigned char *data,
     while (datalen > INT_MAX) {
         if (!EVP_EncryptUpdate(ctx, NULL, &outlen, data, INT_MAX))
             return 0;
+
         data += INT_MAX;
         datalen -= INT_MAX;
     }
@@ -86,7 +106,6 @@ static int gmac_ctrl(EVP_MAC_IMPL *gctx, int cmd, va_list args)
 {
     const unsigned char *p;
     size_t len;
-    EVP_CIPHER_CTX *ctx = gctx->ctx;
     const EVP_CIPHER *cipher;
     ENGINE *engine;
 
@@ -99,30 +118,40 @@ static int gmac_ctrl(EVP_MAC_IMPL *gctx, int cmd, va_list args)
             EVPerr(EVP_F_GMAC_CTRL, EVP_R_CIPHER_NOT_GCM_MODE);
             return 0;
         }
-        return EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL);
+        gctx->cipher = cipher;
+        return EVP_EncryptInit_ex(gctx->ctx, gctx->cipher, NULL, NULL, NULL);
 
     case EVP_MAC_CTRL_SET_KEY:
         p = va_arg(args, const unsigned char *);
         len = va_arg(args, size_t);
-        if (len != (size_t)EVP_CIPHER_CTX_key_length(ctx)) {
+        if (gctx->cipher == NULL)
+            return 0;
+        if (len != (size_t)EVP_CIPHER_key_length(gctx->cipher)) {
             EVPerr(EVP_F_GMAC_CTRL, EVP_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        return EVP_EncryptInit_ex(ctx, NULL, NULL, p, NULL);
+        OPENSSL_clear_free(gctx->key, gctx->key_len);
+        gctx->key = OPENSSL_memdup(p, len);
+        gctx->key_len = len;
+        return gctx->key != NULL;
 
     case EVP_MAC_CTRL_SET_IV:
         p = va_arg(args, const unsigned char *);
         len = va_arg(args, size_t);
-        return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, len, NULL)
-               && EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, p);
+        OPENSSL_clear_free(gctx->iv, gctx->iv_len);
+        gctx->iv = OPENSSL_memdup(p, len);
+        gctx->iv_len = len;
+        return gctx->iv != NULL;
 
     case EVP_MAC_CTRL_SET_ENGINE:
         engine = va_arg(args, ENGINE *);
-        return EVP_EncryptInit_ex(ctx, NULL, engine, NULL, NULL);
+        gctx->engine = engine;
+        break;
 
     default:
         return -2;
     }
+    return 1;
 }
 
 static int gmac_ctrl_int(EVP_MAC_IMPL *gctx, int cmd, ...)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,10 +18,11 @@
 
 /* typedef EVP_MAC_IMPL */
 struct evp_mac_impl_st {
-    /* tmpmd and tmpengine are set to NULL after a CMAC_Init call */
-    const EVP_MD *tmpmd;         /* HMAC digest */
-    const ENGINE *tmpengine;     /* HMAC digest engine */
+    const EVP_MD *md;         /* HMAC digest */
+    const ENGINE *engine;     /* HMAC digest engine */
     HMAC_CTX *ctx;               /* HMAC context */
+    unsigned char *key;
+    size_t key_len;
 };
 
 static EVP_MAC_IMPL *hmac_new(void)
@@ -40,6 +41,7 @@ static EVP_MAC_IMPL *hmac_new(void)
 static void hmac_free(EVP_MAC_IMPL *hctx)
 {
     if (hctx != NULL) {
+        OPENSSL_clear_free(hctx->key, hctx->key_len);
         HMAC_CTX_free(hctx->ctx);
         OPENSSL_free(hctx);
     }
@@ -47,12 +49,17 @@ static void hmac_free(EVP_MAC_IMPL *hctx)
 
 static int hmac_copy(EVP_MAC_IMPL *hdst, EVP_MAC_IMPL *hsrc)
 {
-    if (!HMAC_CTX_copy(hdst->ctx, hsrc->ctx))
+    if (HMAC_CTX_get_md(hsrc->ctx) != NULL
+            && !HMAC_CTX_copy(hdst->ctx, hsrc->ctx))
         return 0;
 
-    hdst->tmpengine = hsrc->tmpengine;
-    hdst->tmpmd = hsrc->tmpmd;
-    return 1;
+    hdst->engine = hsrc->engine;
+    hdst->md = hsrc->md;
+
+    OPENSSL_clear_free(hdst->key, hdst->key_len);
+    hdst->key = OPENSSL_memdup(hsrc->key, hsrc->key_len);
+    hdst->key_len = hsrc->key_len;
+    return hdst->key != NULL;
 }
 
 static size_t hmac_size(EVP_MAC_IMPL *hctx)
@@ -62,15 +69,8 @@ static size_t hmac_size(EVP_MAC_IMPL *hctx)
 
 static int hmac_init(EVP_MAC_IMPL *hctx)
 {
-    int rv = 1;
-
-    /* HMAC_Init_ex doesn't tolerate all zero params, so we must be careful */
-    if (hctx->tmpmd != NULL)
-        rv = HMAC_Init_ex(hctx->ctx, NULL, 0, hctx->tmpmd,
-                          (ENGINE * )hctx->tmpengine);
-    hctx->tmpengine = NULL;
-    hctx->tmpmd = NULL;
-    return rv;
+    return HMAC_Init_ex(hctx->ctx, hctx->key, hctx->key_len, hctx->md,
+                       (ENGINE *)hctx->engine);
 }
 
 static int hmac_update(EVP_MAC_IMPL *hctx, const unsigned char *data,
@@ -100,19 +100,19 @@ static int hmac_ctrl(EVP_MAC_IMPL *hctx, int cmd, va_list args)
         {
             const unsigned char *key = va_arg(args, const unsigned char *);
             size_t keylen = va_arg(args, size_t);
-            int rv = HMAC_Init_ex(hctx->ctx, key, keylen, hctx->tmpmd,
-                                  (ENGINE *)hctx->tmpengine);
 
-            hctx->tmpengine = NULL;
-            hctx->tmpmd = NULL;
-            return rv;
+            OPENSSL_clear_free(hctx->key, hctx->key_len);
+            hctx->key = OPENSSL_memdup(key, keylen);
+            hctx->key_len = keylen;
+
+            return hctx->key != NULL;
         }
         break;
     case EVP_MAC_CTRL_SET_MD:
-        hctx->tmpmd = va_arg(args, const EVP_MD *);
+        hctx->md = va_arg(args, const EVP_MD *);
         break;
     case EVP_MAC_CTRL_SET_ENGINE:
-        hctx->tmpengine = va_arg(args, const ENGINE *);
+        hctx->engine = va_arg(args, const ENGINE *);
         break;
     default:
         return -2;

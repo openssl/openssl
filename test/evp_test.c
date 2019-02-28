@@ -1052,10 +1052,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, key)) {
-        t->err = "DIGESTSIGNINIT_ERROR";
-        goto err;
-    }
+
     for (i = 0; i < sk_OPENSSL_STRING_num(expected->controls); i++)
         if (!mac_test_ctrl_pkey(t, pctx,
                                 sk_OPENSSL_STRING_value(expected->controls,
@@ -1063,6 +1060,12 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "EVPPKEYCTXCTRL_ERROR";
             goto err;
         }
+
+    if (!EVP_DigestSignInit(mctx, &pctx, md, NULL, key)) {
+        t->err = "DIGESTSIGNINIT_ERROR";
+        goto err;
+    }
+
     if (!EVP_DigestSignUpdate(mctx, expected->input, expected->input_len)) {
         t->err = "DIGESTSIGNUPDATE_ERROR";
         goto err;

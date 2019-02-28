@@ -1,5 +1,6 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -82,7 +83,6 @@ static const unsigned char kmac_string[] = {
     0x01, 0x20, 0x4B, 0x4D, 0x41, 0x43
 };
 
-
 #define KMAC_FLAG_XOF_MODE          1
 
 /* typedef EVP_MAC_IMPL */
@@ -111,7 +111,6 @@ static int kmac_bytepad_encode_key(unsigned char *out, int *out_len,
                                    int w);
 static int kmac_ctrl_str(EVP_MAC_IMPL *kctx, const char *type,
                          const char *value);
-
 
 static void kmac_free(EVP_MAC_IMPL *kctx)
 {
@@ -157,7 +156,9 @@ static int kmac_copy(EVP_MAC_IMPL *gdst, EVP_MAC_IMPL *gsrc)
     memcpy(gdst->key, gsrc->key, gsrc->key_len);
     memcpy(gdst->custom, gsrc->custom, gdst->custom_len);
 
-    return EVP_MD_CTX_copy(gdst->ctx, gsrc->ctx);
+    if (EVP_MD_CTX_md(gsrc->ctx) != NULL)
+        return EVP_MD_CTX_copy(gdst->ctx, gsrc->ctx);
+    return 1;
 }
 
 /*

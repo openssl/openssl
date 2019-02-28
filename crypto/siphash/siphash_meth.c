@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,8 @@
 
 struct evp_mac_impl_st {
     SIPHASH ctx;
+    unsigned char *key;
+    size_t key_len;
 };
 
 static EVP_MAC_IMPL *siphash_new(void)
@@ -28,13 +30,16 @@ static EVP_MAC_IMPL *siphash_new(void)
 
 static void siphash_free(EVP_MAC_IMPL *sctx)
 {
+    OPENSSL_clear_free(sctx->key, sctx->key_len);
     OPENSSL_free(sctx);
 }
 
 static int siphash_copy(EVP_MAC_IMPL *sdst, EVP_MAC_IMPL *ssrc)
 {
-    *sdst = *ssrc;
-    return 1;
+    sdst->ctx = ssrc->ctx;
+    sdst->key = OPENSSL_memdup(ssrc->key, ssrc->key_len);
+    sdst->key_len = ssrc->key_len;
+    return sdst->key != NULL;
 }
 
 static size_t siphash_size(EVP_MAC_IMPL *sctx)
@@ -44,8 +49,7 @@ static size_t siphash_size(EVP_MAC_IMPL *sctx)
 
 static int siphash_init(EVP_MAC_IMPL *sctx)
 {
-    /* Not much to do here, actual initialization happens through controls */
-    return 1;
+    return SipHash_Init(&sctx->ctx, sctx->key, 0, 0);
 }
 
 static int siphash_update(EVP_MAC_IMPL *sctx, const unsigned char *data,
@@ -79,8 +83,10 @@ static int siphash_ctrl(EVP_MAC_IMPL *sctx, int cmd, va_list args)
 
             if (key == NULL || keylen != SIPHASH_KEY_SIZE)
                 return 0;
-
-            return SipHash_Init(&sctx->ctx, key, 0, 0);
+            OPENSSL_clear_free(sctx->key, sctx->key_len);
+            sctx->key = OPENSSL_memdup(key, keylen);
+            sctx->key_len = keylen;
+            return sctx->key != NULL;
         }
         break;
     default:

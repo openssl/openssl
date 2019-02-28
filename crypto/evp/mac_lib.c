@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -52,7 +52,8 @@ int EVP_MAC_CTX_copy(EVP_MAC_CTX *dst, EVP_MAC_CTX *src)
 {
     EVP_MAC_IMPL *macdata;
 
-    if (src->data != NULL && !dst->meth->copy(dst->data, src->data))
+    if (src->meth != dst->meth
+            || (src->data != NULL && !dst->meth->copy(dst->data, src->data)))
         return 0;
 
     macdata = dst->data;

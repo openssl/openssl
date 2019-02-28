@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,8 @@
 /* typedef EVP_MAC_IMPL */
 struct evp_mac_impl_st {
     POLY1305 *ctx;               /* poly1305 context */
+    unsigned char *key;
+    size_t key_len;
 };
 
 static EVP_MAC_IMPL *poly1305_new(void)
@@ -32,6 +34,7 @@ static EVP_MAC_IMPL *poly1305_new(void)
 static void poly1305_free(EVP_MAC_IMPL *ctx)
 {
     if (ctx != NULL) {
+        OPENSSL_clear_free(ctx->key, ctx->key_len);
         OPENSSL_free(ctx->ctx);
         OPENSSL_free(ctx);
     }
@@ -40,8 +43,10 @@ static void poly1305_free(EVP_MAC_IMPL *ctx)
 static int poly1305_copy(EVP_MAC_IMPL *dst, EVP_MAC_IMPL *src)
 {
     *dst->ctx = *src->ctx;
-
-    return 1;
+    OPENSSL_clear_free(dst->key, dst->key_len);
+    dst->key = OPENSSL_memdup(src->key, src->key_len);
+    dst->key_len = src->key_len;
+    return dst->key != NULL;
 }
 
 static size_t poly1305_size(EVP_MAC_IMPL *ctx)
@@ -52,16 +57,15 @@ static size_t poly1305_size(EVP_MAC_IMPL *ctx)
 static int poly1305_init(EVP_MAC_IMPL *ctx)
 {
     /* initialize the context in MAC_ctrl function */
+    Poly1305_Init(ctx->ctx, ctx->key);
     return 1;
 }
 
 static int poly1305_update(EVP_MAC_IMPL *ctx, const unsigned char *data,
                        size_t datalen)
 {
-    POLY1305 *poly_ctx = ctx->ctx;
-
     /* poly1305 has nothing to return in its update function */
-    Poly1305_Update(poly_ctx, data, datalen);
+    Poly1305_Update(ctx->ctx, data, datalen);
     return 1;
 }
 
@@ -75,7 +79,6 @@ static int poly1305_final(EVP_MAC_IMPL *ctx, unsigned char *out)
 
 static int poly1305_ctrl(EVP_MAC_IMPL *ctx, int cmd, va_list args)
 {
-    POLY1305 *poly_ctx = ctx->ctx;
     unsigned char *key;
     size_t keylen;
 
@@ -88,8 +91,10 @@ static int poly1305_ctrl(EVP_MAC_IMPL *ctx, int cmd, va_list args)
             EVPerr(EVP_F_POLY1305_CTRL, EVP_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        Poly1305_Init(poly_ctx, key);
-        return 1;
+        OPENSSL_clear_free(ctx->key, ctx->key_len);
+        ctx->key = OPENSSL_memdup(key, keylen);
+        ctx->key_len = keylen;
+        return ctx->key != NULL;
     default:
         return -2;
     }
