@@ -9,6 +9,14 @@
 
  Changes between 1.1.1b and 1.1.1c [xx XXX xxxx]
 
+  *) Added build tests for C++.  These are generated files that only do one
+     thing, to include one public OpenSSL head file each.  This tests that
+     the public header files can be usefully included in a C++ application.
+
+     This test isn't enabled by default.  It can be enabled with the option
+     'enable-buildtest-c++'.
+     [Richard Levitte]
+
   *) Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
      This changes the size when using the genpkey app when no size is given. It
      fixes an omission in earlier changes that changed all RSA, DSA and DH

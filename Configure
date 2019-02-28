@@ -332,6 +332,7 @@ my @disablables = (
     "autoload-config",
     "bf",
     "blake2",
+    "buildtest-c++",
     "camellia",
     "capieng",
     "cast",
@@ -432,6 +433,7 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "asan"                => "default",
+                  "buildtest-c++"       => "default",
                   "crypto-mdebug"       => "default",
                   "crypto-mdebug-backtrace" => "default",
                   "devcryptoeng"        => "default",
@@ -1167,7 +1169,7 @@ my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
     $config{options} .= " no-$what";
 
-    if (!grep { $what eq $_ } ( 'threads', 'shared', 'pic',
+    if (!grep { $what eq $_ } ( 'buildtest-c++', 'threads', 'shared', 'pic',
                                 'dynamic-engine', 'makedepend',
                                 'zlib-dynamic', 'zlib', 'sse2' )) {
         (my $WHAT = uc $what) =~ s|-|_|g;
