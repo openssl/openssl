@@ -1,6 +1,6 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
- * 
+ * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
@@ -24,7 +24,7 @@ void OPENSSL_cpuid_setup(void);
 
 extern unsigned int OPENSSL_ia32cap_P[4];
 
-static int sanity_check_bytes(size_t (*rng)(unsigned char *, size_t), 
+static int sanity_check_bytes(size_t (*rng)(unsigned char *, size_t),
     int rounds, int min_failures, int max_retries, int max_zero_words)
 {
     int testresult = 0;
