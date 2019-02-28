@@ -223,14 +223,18 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 #if defined(_MSC_VER) && _MSC_VER>=1400
     return !strerror_s(buf, buflen, errnum);
 #elif defined(_GNU_SOURCE)
-    /* GNU strerror_r may not actually set buf.
-     * It may return a pointer to some (immutable) static string in which case
+    char *err;
+
+    /*
+     * GNU strerror_r may not actually set buf.
+     * It can return a pointer to some (immutable) static string in which case
      * buf is left unused.
      */
-    char *err = strerror_r(errnum, buf, buflen);
+    *buf = '\0';
+    err = strerror_r(errnum, buf, buflen);
     if (err == NULL)
         return 0;
-    if (!*buf) {
+    if (*buf == '\0') {
         strncpy(buf, err, buflen - 1);
         buf[buflen - 1] = '\0';
     }
@@ -245,6 +249,7 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     return !strerror_r(errnum, buf, buflen);
 #else
     char *err;
+
     /* Fall back to non-thread safe strerror()...its all we can do */
     if (buflen < 2)
         return 0;
