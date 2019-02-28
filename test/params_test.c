@@ -14,18 +14,16 @@
 
 static int test_params(void)
 {
-    int8_t i8;
     size_t sz;
-    double dbl;
+    int i;
     const OSSL_PARAM params[] = {
-        OSSL_PARAM_int8("a", &i8),
+        OSSL_PARAM_int("a", &i),
         OSSL_PARAM_size_t("b", &sz),
-        OSSL_PARAM_double("c", &dbl)
     };
     int r = 0;
 
     if (!TEST_true(OSSL_PARAM_set_int(params, "a", 22))
-        || !TEST_int_eq((int)i8, 22)
+        || !TEST_int_eq(i, 22)
         || !TEST_true(OSSL_PARAM_get_size_t(params, "a", &sz))
         || !TEST_size_t_eq(sz, 22))
         goto err;

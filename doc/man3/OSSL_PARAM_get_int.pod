@@ -24,15 +24,7 @@ OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 A collection of utility functions that simplify and add type safety to the
 OSSL_PARAM arrays.  The following B<TYPE> names are supported:
 
-=over
-
-=item *
-
-double
-
-=item *
-
-float
+=over 4
 
 =item *
 
@@ -40,11 +32,7 @@ int
 
 =item *
 
-int16 (int16_t)
-
-=item *
-
-int32 (int32_t)
+uint (unsigned int)
 
 =item *
 
@@ -52,7 +40,7 @@ int64 (int64_t)
 
 =item *
 
-int8 (int8_t)
+uint64 (uint64_t)
 
 =item *
 
@@ -60,31 +48,11 @@ long
 
 =item *
 
-size_t
-
-=item *
-
-uint16 (uint16_t)
-
-=item *
-
-uint32 (uint32_t)
-
-=item *
-
-uint64 (uint64_t)
-
-=item *
-
-uint8 (uint8_t)
-
-=item *
-
-uint (unsigned int)
-
-=item *
-
 ulong (unsigned long)
+
+=item *
+
+size_t
 
 =back
 

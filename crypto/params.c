@@ -113,18 +113,11 @@ static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
     }
 
 PARAM_INT(int, int)
-PARAM_INT(long, long int)
-PARAM_INT(int8, int8_t)
-PARAM_INT(int16, int16_t)
-PARAM_INT(int32, int32_t)
-PARAM_INT(int64, int64_t)
-
 PARAM_INT(uint, unsigned int)
-PARAM_INT(ulong, unsigned long int)
-PARAM_INT(uint8, uint8_t)
-PARAM_INT(uint16, uint16_t)
-PARAM_INT(uint32, uint32_t)
+PARAM_INT(int64, int64_t)
 PARAM_INT(uint64, uint64_t)
+PARAM_INT(long, long int)
+PARAM_INT(ulong, unsigned long int)
 PARAM_INT(size_t, size_t)
 
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
@@ -180,100 +173,3 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     }
     return 0;
 }
-
-static int OSSL_PARAM_get_real_common(const OSSL_PARAM *p, const char *key,
-                                      float *valf, double *vald)
-{
-#define CASE(type) \
-    case sizeof(type): \
-        if (vald != NULL) \
-            *vald = (double)(*(type *)p->buffer); \
-        else if (valf != NULL) \
-            *valf = (float)(*(type *)p->buffer); \
-        return 1
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
-        return 0;
-
-    if (p->data_type == OSSL_PARAM_REAL) {
-        switch (p->buffer_size) {
-        CASE(float);
-        CASE(double);
-        }
-    } else if (p->data_type == OSSL_PARAM_INTEGER) {
-        switch (p->buffer_size) {
-        CASE(int8_t);
-        CASE(int16_t);
-        CASE(int32_t);
-        CASE(int64_t);
-        }
-    } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
-        switch (p->buffer_size) {
-        CASE(uint8_t);
-        CASE(uint16_t);
-        CASE(uint32_t);
-        CASE(uint64_t);
-        }
-    }
-    return 0;
-#undef CASE
-}
-
-static int OSSL_PARAM_set_real_common(const OSSL_PARAM *p, const char *key,
-                                      const float *valf, const double *vald)
-{
-#define CASE(type) \
-    case sizeof(type): \
-        if (vald != NULL) \
-            *(type *)p->buffer = (type)*vald; \
-        else if (valf != NULL) \
-            *(type *)p->buffer = (type)*valf; \
-        return 1
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
-        return 0;
-    if (p->return_size != NULL)
-        *p->return_size = p->buffer_size;
-
-    if (p->data_type == OSSL_PARAM_REAL) {
-        switch (p->buffer_size) {
-        CASE(float);
-        CASE(double);
-        }
-    } else if (p->data_type == OSSL_PARAM_INTEGER) {
-        switch (p->buffer_size) {
-        CASE(int8_t);
-        CASE(int16_t);
-        CASE(int32_t);
-        CASE(int64_t);
-        }
-    } else if (p->data_type == OSSL_PARAM_UNSIGNED_INTEGER) {
-        switch (p->buffer_size) {
-        CASE(uint8_t);
-        CASE(uint16_t);
-        CASE(uint32_t);
-        CASE(uint64_t);
-        }
-    }
-    return 0;    
-#undef CASE
-}
-
-int OSSL_PARAM_get_float(const OSSL_PARAM *p, const char *key, float *val)
-{
-    return OSSL_PARAM_get_real_common(p, key, val, NULL);
-}
-
-int OSSL_PARAM_set_float(const OSSL_PARAM *p, const char *key, float val)
-{
-    return OSSL_PARAM_set_real_common(p, key, &val, NULL);
-}
-
-int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val)
-{
-    return OSSL_PARAM_get_real_common(p, key, NULL, val);
-}
-
-int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
-{
-    return OSSL_PARAM_set_real_common(p, key, NULL, &val);
-}
-

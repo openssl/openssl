@@ -117,12 +117,6 @@ length, organized in native form, i.e. most significant byte first on
 Big-Endian systems, and least significant byte first on Little-Endian
 systems.
 
-=item C<OSSL_PARAM_REAL>
-
-=for comment It's still debated if we need this or not.
-
-The parameter data is a floating point value in native form.
-
 =item C<OSSL_PARAM_UTF8_STRING>
 
 The parameter data is a printable string.

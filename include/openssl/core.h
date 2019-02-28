@@ -96,11 +96,6 @@ struct ossl_param_st {
 # define OSSL_PARAM_INTEGER              1
 # define OSSL_PARAM_UNSIGNED_INTEGER     2
 /*-
- * OSSL_PARAM_REAL
- * is a C binary floating point values in native form and alignment.
- */
-# define OSSL_PARAM_REAL                 3
-/*-
  * OSSL_PARAM_UTF8_STRING
  * is a printable string.  Is expteced to be printed as it is.
  */
