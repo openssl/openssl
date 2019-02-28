@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -55,7 +55,7 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
 
 /*
  * Copy of RSA_padding_check_PKCS1_type_2 with a twist that rejects padding
- * if nul delimiter is preceded by 8 consecutive 0x03 bytes. It also
+ * if nul delimiter is not preceded by 8 consecutive 0x03 bytes. It also
  * preserves error code reporting for backward compatibility.
  */
 int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
@@ -67,7 +67,10 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     unsigned int good, found_zero_byte, mask, threes_in_row;
     int zero_index = 0, msg_index, mlen = -1, err;
 
-    if (flen < 10) {
+    if (tlen <= 0 || flen <= 0)
+        return -1;
+
+    if (flen > num || num < 11) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
         return -1;
     }
@@ -89,10 +92,9 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
         from -= 1 & mask;
         *--em = *from & mask;
     }
-    from = em;
 
-    good = constant_time_is_zero(from[0]);
-    good &= constant_time_eq(from[1], 2);
+    good = constant_time_is_zero(em[0]);
+    good &= constant_time_eq(em[1], 2);
     err = constant_time_select_int(good, 0, RSA_R_BLOCK_TYPE_IS_NOT_02);
     mask = ~good;
 
@@ -100,18 +102,18 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     found_zero_byte = 0;
     threes_in_row = 0;
     for (i = 2; i < num; i++) {
-        unsigned int equals0 = constant_time_is_zero(from[i]);
+        unsigned int equals0 = constant_time_is_zero(em[i]);
 
         zero_index = constant_time_select_int(~found_zero_byte & equals0,
                                               i, zero_index);
         found_zero_byte |= equals0;
 
         threes_in_row += 1 & ~found_zero_byte;
-        threes_in_row &= found_zero_byte | constant_time_eq(from[i], 3);
+        threes_in_row &= found_zero_byte | constant_time_eq(em[i], 3);
     }
 
     /*
-     * PS must be at least 8 bytes long, and it starts two bytes into |from|.
+     * PS must be at least 8 bytes long, and it starts two bytes into |em|.
      * If we never found a 0-byte, then |zero_index| is 0 and the check
      * also fails.
      */
@@ -120,7 +122,7 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
                                    RSA_R_NULL_BEFORE_BLOCK_MISSING);
     mask = ~good;
 
-    good &= constant_time_lt(threes_in_row, 8);
+    good &= constant_time_ge(threes_in_row, 8);
     err = constant_time_select_int(mask | good, err,
                                    RSA_R_SSLV3_ROLLBACK_ATTACK);
     mask = ~good;
@@ -148,15 +150,16 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
-    tlen = constant_time_select_int(constant_time_lt(num, tlen), num, tlen);
+    tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
+                                    num - 11, tlen);
     msg_index = constant_time_select_int(good, msg_index, num - tlen);
     mlen = num - msg_index;
-    for (from += msg_index, mask = good, i = 0; i < tlen; i++) {
-        unsigned int equals = constant_time_eq(i, mlen);
+    for (mask = good, i = 0; i < tlen; i++) {
+        unsigned int equals = constant_time_eq(msg_index, num);
 
-        from -= tlen & equals;  /* if (i == mlen) rewind   */
-        mask &= mask ^ equals;  /* if (i == mlen) mask = 0 */
-        to[i] = constant_time_select_8(mask, from[i], to[i]);
+        msg_index -= tlen & equals;  /* rewind at EOF */
+        mask &= ~equals;  /* mask = 0 at EOF */
+        to[i] = constant_time_select_8(mask, em[msg_index++], to[i]);
     }
 
     OPENSSL_clear_free(em, num);
