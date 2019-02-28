@@ -148,7 +148,8 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
-    tlen = constant_time_select_int(constant_time_lt(num, tlen), num, tlen);
+    tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
+                                    num - 11, tlen);
     msg_index = constant_time_select_int(good, msg_index, num - tlen);
     mlen = num - msg_index;
     for (from += msg_index, mask = good, i = 0; i < tlen; i++) {

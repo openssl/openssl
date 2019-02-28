@@ -244,7 +244,8 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
-    tlen = constant_time_select_int(constant_time_lt(dblen, tlen), dblen, tlen);
+    tlen = constant_time_select_int(constant_time_lt(dblen - mdlen - 1, tlen),
+                                    dblen - mdlen - 1, tlen);
     msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
     mlen = dblen - msg_index;
     for (from = db + msg_index, mask = good, i = 0; i < tlen; i++) {
