@@ -15,6 +15,10 @@ use OpenSSL::Test::Utils;
 
 setup("test_pkeyutl");
 
+plan skip_all => "test_pkeyutl needs EC, SM2 and SM3 enabled"
+    if disabled("ec") || disabled("sm2") || disabled("sm3");
+
+
 plan tests => 2;
 
 sub sign
