@@ -82,30 +82,27 @@ struct ossl_param_st {
 
 /* Currently supported OSSL_PARAM data types */
 /*
- * OSSL_PARAM_INTEGER and OSSL_PARAM_UNSIGNED_INTEGER
- * are arbitrary length and therefore require an arbitrarily sized buffer,
- * since they may be used to pass numbers larger than what is natively
- * available.
- *
- * The number must be buffered in native form, i.e. MSB first on B_ENDIAN
- * systems and LSB first on L_ENDIAN systems.  This means that arbitrary
- * native integers can be stored in the buffer, just make sure that the
- * buffer size is correct and the buffer itself is properly aligned (for
- * example by having the buffer field point at a C integer).
+ * Numbers are stored in native form.
  */
-# define OSSL_PARAM_INTEGER              1
-# define OSSL_PARAM_UNSIGNED_INTEGER     2
+# define OSSL_PARAM_INT                 1
+# define OSSL_PARAM_UINT                2
+# define OSSL_PARAM_INT64               3
+# define OSSL_PARAM_UINT64              4
+# define OSSL_PARAM_LONG                5
+# define OSSL_PARAM_ULONG               6
+# define OSSL_PARAM_SIZET               7
+
 /*-
  * OSSL_PARAM_UTF8_STRING
  * is a printable string.  Is expteced to be printed as it is.
  */
-# define OSSL_PARAM_UTF8_STRING          4
+# define OSSL_PARAM_UTF8_STRING         0x20
 /*-
  * OSSL_PARAM_OCTET_STRING
  * is a string of bytes with no further specification.  Is expected to be
  * printed as a hexdump.
  */
-# define OSSL_PARAM_OCTET_STRING         5
+# define OSSL_PARAM_OCTET_STRING         0x21
 
 /*-
  * Pointer flag

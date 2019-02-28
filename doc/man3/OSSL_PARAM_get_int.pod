@@ -2,7 +2,13 @@
 
 =head1 NAME
 
-OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
+int OSSL_PARAM_get_int, int OSSL_PARAM_set_int,
+int OSSL_PARAM_set_uint, int OSSL_PARAM_get_uint,
+int OSSL_PARAM_get_int64, int OSSL_PARAM_set_int64,
+int OSSL_PARAM_get_uint64, int OSSL_PARAM_set_uint64,
+int OSSL_PARAM_get_long, int OSSL_PARAM_get_ulong,
+int OSSL_PARAM_get_size_t, int OSSL_PARAM_set_size_t,
+OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -22,44 +28,22 @@ OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 =head1 DESCRIPTION
 
 A collection of utility functions that simplify and add type safety to the
-OSSL_PARAM arrays.  The following B<TYPE> names are supported:
+OSSL_PARAM arrays.  In the following text, B<TYPE> stands for one of the
+following C types:
 
-=over 4
-
-=item *
-
-int
-
-=item *
-
-uint (unsigned int)
-
-=item *
-
-int64 (int64_t)
-
-=item *
-
-uint64 (uint64_t)
-
-=item *
-
-long
-
-=item *
-
-ulong (unsigned long)
-
-=item *
-
-size_t
-
-=back
+ int
+ unsigned int
+ int64_t
+ uint64_t
+ long
+ unsigned long
+ size_t
 
 OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter
 array B<p> using the B<key>.
 The value is copied to the address B<val>.
-Type coercion takes place as discussed in NOTES section.
+No type coercion is done; it is an error if the type used for a get does
+not match the type used during a set.
 
 OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the paramter
 array B<p> using the B<key>.
@@ -77,19 +61,6 @@ the position indicated by B<key>.
 
 All of these functions return B<1> on success and B<0> on failure.
 
-=head1 NOTES
-
-Automatic type coercion takes places between the various sizes of types using
-the C conversion rules.
-Integral types  will be widened, sign extended and narrowed as required.
-Unsigned and signed integer types will be automatically converted.
-During widening, signed values will be sign extended and unsigned values
-zero extended.
-During narrowing, truncation takes place.
-
-Real values will also be converted between float and double and the standard
-integral types.
-They will not be converted to non-standard integral sizes or BIGNUMs.
 
 =head1 HISTORY
 

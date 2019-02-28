@@ -119,9 +119,9 @@ the data, and can be one of:
 
 =over 4
 
-=item C<OSSL_PARAM_INTEGER>
+=for comment XXXX FIX ME
 
-=item C<OSSL_PARAM_UNSIGNED_INTEGER>
+=item C<OSSL_PARAM_INTEGER>
 
 The parameter data is an integer (signed or unsigned) of arbitrary
 length, organized in native form, i.e. most significant byte first on

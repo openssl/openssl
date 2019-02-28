@@ -14,69 +14,90 @@
 
 static const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
 {
-    if (p != NULL && key != NULL)
-        for (; p->key != NULL; p++)
-            if (strcmp(key, p->key) == 0)
-                return p;
+    for (; p->key != NULL; p++)
+        if (strcmp(key, p->key) == 0)
+            return p;
     return NULL;
 }
 
-static int OSSL_PARAM_get_int_common(const OSSL_PARAM *p, const char *key,
-                                     void *val, size_t sz)
+
+static size_t OSSL_PARAM_get_width(int type)
 {
-    int sign;
+    switch (type) {
+    case OSSL_PARAM_INT:        return sizeof(int);
+    case OSSL_PARAM_UINT:       return sizeof(unsigned int);
+    case OSSL_PARAM_INT64:      return sizeof(int64_t);
+    case OSSL_PARAM_UINT64:     return sizeof(uint64_t);
+    case OSSL_PARAM_LONG:       return sizeof(long);
+    case OSSL_PARAM_ULONG:      return sizeof(unsigned long);
+    case OSSL_PARAM_SIZET:      return sizeof(size_t);
+    }
+    return -1;
+}
+
+static int OSSL_PARAM_get_int_common(const OSSL_PARAM *p, const char *key,
+                                     void *val, unsigned long type)
+{
+    size_t width;
 
     if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+        /* Not found. */
         return 0;
 
-    sign = p->data_type == OSSL_PARAM_INTEGER;
-    if (!sign && p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
+    /* Type safety. */
+    width = OSSL_PARAM_get_width(type);
+    if (p->data_type != type || p->buffer_size != width)
         return 0;
-    if (p->buffer_size != sz)
-        return 0;
-    memcpy(val, p->buffer, sz);
+
+    memcpy(val, p->buffer, width);
     return 1;
 }
 
 static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
-                                     const void *val, size_t sz)
+                                     const void *val, unsigned long type)
 {
+    size_t width;
+
     if ((p = OSSL_PARAM_locate(p, key)) == NULL)
         return 0;
 
-    if (p->buffer_size != sz)
+    /* Type safety. */
+    width = OSSL_PARAM_get_width(type);
+    if (p->data_type != type || p->buffer_size != width)
         return 0;
-    memcpy(p->buffer, val, sz);
+
+    memcpy(p->buffer, val, width);
     if (p->return_size != NULL)
-        *p->return_size = sz;
+        *p->return_size = width;
     return 1;
 }
 
-#define PARAM_INT(name, type) \
+#define PARAM_INT(name, type, PARAM) \
     int OSSL_PARAM_get_##name(const OSSL_PARAM *p, const char *key, type *val) \
     { \
-        return OSSL_PARAM_get_int_common(p, key, val, sizeof(*val)); \
+        return OSSL_PARAM_get_int_common(p, key, val, PARAM); \
     } \
     int OSSL_PARAM_set_##name(const OSSL_PARAM *p, const char *key, type val) \
     { \
-        return OSSL_PARAM_set_int_common(p, key, &val, sizeof(val)); \
+        return OSSL_PARAM_set_int_common(p, key, &val, PARAM); \
     }
 
-PARAM_INT(int, int)
-PARAM_INT(uint, unsigned int)
-PARAM_INT(int64, int64_t)
-PARAM_INT(uint64, uint64_t)
-PARAM_INT(long, long int)
-PARAM_INT(ulong, unsigned long int)
-PARAM_INT(size_t, size_t)
+PARAM_INT(int, int, OSSL_PARAM_INT)
+PARAM_INT(uint, unsigned int, OSSL_PARAM_UINT)
+PARAM_INT(int64, int64_t, OSSL_PARAM_INT64)
+PARAM_INT(uint64, uint64_t, OSSL_PARAM_UINT64)
+PARAM_INT(long, long int, OSSL_PARAM_LONG)
+PARAM_INT(ulong, unsigned long int, OSSL_PARAM_ULONG)
+PARAM_INT(size_t, size_t, OSSL_PARAM_SIZET)
 
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
     BIGNUM *b;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL
-            || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER
-            || (b = BN_native2bn(p->buffer, (int)p->buffer_size, *val)) == NULL)
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+        return 0;
+
+    if ((b = BN_native2bn(p->buffer, (int)p->buffer_size, *val)) == NULL)
         return 0;
 
     *val = b;
@@ -90,9 +111,10 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     const size_t bytes = (size_t)BN_num_bytes(val);
     int r;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL
-            || p->buffer_size < bytes
-            || p->data_type == OSSL_PARAM_UNSIGNED_INTEGER
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+        return 0;
+
+    if (p->buffer_size < bytes
             || (r = BN_bn2nativepad(val, p->buffer, bytes)) < 0)
         return 0;
 
