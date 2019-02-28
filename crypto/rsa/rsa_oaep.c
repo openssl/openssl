@@ -144,7 +144,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * |num| is the length of the modulus; |flen| is the length of the
      * encoded message. Therefore, for any |from| that was obtained by
      * decrypting a ciphertext, we must have |flen| <= |num|. Similarly,
-     * num < 2 * mdlen + 2 must hold for the modulus irrespective of
+     * |num| >= 2 * |mdlen| + 2 must hold for the modulus irrespective of
      * the ciphertext, see PKCS #1 v2.2, section 7.1.2.
      * This does not leak any side-channel information.
      */
@@ -180,17 +180,16 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
         from -= 1 & mask;
         *--em = *from & mask;
     }
-    from = em;
 
     /*
      * The first byte must be zero, however we must not leak if this is
      * true. See James H. Manger, "A Chosen Ciphertext  Attack on RSA
      * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
      */
-    good = constant_time_is_zero(from[0]);
+    good = constant_time_is_zero(em[0]);
 
-    maskedseed = from + 1;
-    maskeddb = from + 1 + mdlen;
+    maskedseed = em + 1;
+    maskeddb = em + 1 + mdlen;
 
     if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
         goto cleanup;
@@ -231,7 +230,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     mlen = dblen - msg_index;
 
     /*
-     * For good measure, do this check in constant tine as well.
+     * For good measure, do this check in constant time as well.
      */
     good &= constant_time_ge(tlen, mlen);
 
@@ -245,15 +244,16 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
-    tlen = constant_time_select_int(constant_time_lt(dblen, tlen), dblen, tlen);
+    tlen = constant_time_select_int(constant_time_lt(dblen - mdlen - 1, tlen),
+                                    dblen - mdlen - 1, tlen);
     msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
     mlen = dblen - msg_index;
-    for (from = db + msg_index, mask = good, i = 0; i < tlen; i++) {
-        unsigned int equals = constant_time_eq(i, mlen);
+    for (mask = good, i = 0; i < tlen; i++) {
+        unsigned int equals = constant_time_eq(msg_index, dblen);
 
-        from -= dblen & equals; /* if (i == dblen) rewind   */
-        mask &= mask ^ equals;  /* if (i == dblen) mask = 0 */
-        to[i] = constant_time_select_8(mask, from[i], to[i]);
+        msg_index -= tlen & equals;  /* rewind at EOF */
+        mask &= ~equals;  /* mask = 0 at EOF */
+        to[i] = constant_time_select_8(mask, db[msg_index++], to[i]);
     }
 
     /*
