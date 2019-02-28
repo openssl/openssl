@@ -23,7 +23,7 @@ extern "C" {
  *
  * These macros express version number MAJOR.MINOR.PATCH exactly
  */
-# define OPENSSL_VERSION_MAJOR  3
+# define OPENSSL_VERSION_MAJOR  4
 # define OPENSSL_VERSION_MINOR  0
 # define OPENSSL_VERSION_PATCH  0
 
@@ -70,7 +70,7 @@ extern "C" {
  * be related to the API version expressed with the macros above.
  * This is defined in free form.
  */
-# define OPENSSL_SHLIB_VERSION 3
+# define OPENSSL_SHLIB_VERSION 4
 
 /*
  * SECTION 2: USEFUL MACROS AND FUNCTIONS

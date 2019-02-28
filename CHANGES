@@ -7,7 +7,7 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
- Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
+ Changes between 1.1.1 and 4.0.0 [xx XXX xxxx]
 
   *) Added property based algorithm implementation selection framework to
      the core.
@@ -50,10 +50,10 @@
      [Richard Levitte]
 
   *) Change the possible version information given with OPENSSL_API_COMPAT.
-     It may be a pre-3.0.0 style numerical version number as it was defined
+     It may be a pre-4.0.0 style numerical version number as it was defined
      in 1.1.0, and it may also simply take the major version number.
 
-     Because of the version numbering of pre-3.0.0 releases, the values 0,
+     Because of the version numbering of pre-4.0.0 releases, the values 0,
      1 and 2 are equivalent to 0x00908000L (0.9.8), 0x10000000L (1.0.0) and
      0x10100000L (1.1.0), respectively.
      [Richard Levitte]

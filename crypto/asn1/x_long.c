@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 
-#if OPENSSL_API_3
+#if OPENSSL_API_4
 NON_EMPTY_TRANSLATION_UNIT
 #else
 

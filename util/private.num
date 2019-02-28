@@ -292,7 +292,7 @@ EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
 OPENSSL_VERSION_MAJOR                   define
 OPENSSL_VERSION_MINOR                   define
-OPENSSL_VERSION_NUMBER                  define deprecated 3.0.0
+OPENSSL_VERSION_NUMBER                  define deprecated 4.0.0
 OPENSSL_VERSION_PATCH                   define
 OPENSSL_VERSION_PRE_RELEASE             define
 OPENSSL_VERSION_BUILD_METADATA          define

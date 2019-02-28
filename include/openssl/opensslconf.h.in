@@ -75,7 +75,7 @@ extern "C" {
 
 /*
  * We convert the OPENSSL_API_COMPAT value to an API level.  The API level
- * is the major version number for 3.0.0 and on.  For earlier versions, it
+ * is the major version number for 4.0.0 and on.  For earlier versions, it
  * uses this scheme, which is close enough for our purposes:
  *
  *      0.x.y   0       (0.9.8 was the last release in this series)
@@ -100,7 +100,7 @@ extern "C" {
 #  elif (OPENSSL_API_COMPAT & 0xFFF00000L) == 0x10100000L
 #   define OPENSSL_API_LEVEL 2
 #  else
-/ * Major number 3 to 15 */
+/ * Major number 4 to 15 */
 #   define OPENSSL_API_LEVEL ((OPENSSL_API_COMPAT >> 28) & 0xF)
 #  endif
 # endif
@@ -110,22 +110,22 @@ extern "C" {
  * OpenSSL version number matches.
  */
 # if OPENSSL_VERSION_MAJOR < 4
-#  define DEPRECATEDIN_4(f)       f;
-#  define OPENSSL_API_4 0
+#  define DEPRECATEDIN_5(f)       f;
+#  define OPENSSL_API_5 0
 # elif OPENSSL_API_LEVEL < 4
+#  define DEPRECATEDIN_5(f)       DECLARE_DEPRECATED(f)
+#  define OPENSSL_API_5 0
+# else
+#  define DEPRECATEDIN_5(f)
+#  define OPENSSL_API_5 1
+# endif
+
+# if OPENSSL_API_LEVEL < 4
 #  define DEPRECATEDIN_4(f)       DECLARE_DEPRECATED(f)
 #  define OPENSSL_API_4 0
 # else
 #  define DEPRECATEDIN_4(f)
 #  define OPENSSL_API_4 1
-# endif
-
-# if OPENSSL_API_LEVEL < 3
-#  define DEPRECATEDIN_3(f)       DECLARE_DEPRECATED(f)
-#  define OPENSSL_API_3 0
-# else
-#  define DEPRECATEDIN_3(f)
-#  define OPENSSL_API_3 1
 # endif
 
 # if OPENSSL_API_LEVEL < 2

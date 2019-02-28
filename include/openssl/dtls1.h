@@ -18,7 +18,7 @@ extern "C" {
 
 # define DTLS1_VERSION                   0xFEFF
 # define DTLS1_2_VERSION                 0xFEFD
-# if !OPENSSL_API_3
+# if !OPENSSL_API_4
 #  define DTLS_MIN_VERSION                DTLS1_VERSION
 #  define DTLS_MAX_VERSION                DTLS1_2_VERSION
 # endif

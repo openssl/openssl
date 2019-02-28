@@ -14,7 +14,7 @@
 
 # include <openssl/evp.h>
 
-# if !OPENSSL_API_3
+# if !OPENSSL_API_4
 #  define HMAC_MAX_MD_CBLOCK      128    /* Deprecated */
 # endif
 

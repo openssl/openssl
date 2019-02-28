@@ -440,7 +440,7 @@ int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
     return group->meth->group_get_curve(group, p, a, b, ctx);
 }
 
-#if !OPENSSL_API_3
+#if !OPENSSL_API_4
 int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
                            const BIGNUM *b, BN_CTX *ctx)
 {
@@ -731,7 +731,7 @@ int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
     return 1;
 }
 
-#if !OPENSSL_API_3
+#if !OPENSSL_API_4
 int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
                                         EC_POINT *point, const BIGNUM *x,
                                         const BIGNUM *y, BN_CTX *ctx)
@@ -769,7 +769,7 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group,
     return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 }
 
-#if !OPENSSL_API_3
+#if !OPENSSL_API_4
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
                                         const EC_POINT *point, BIGNUM *x,
                                         BIGNUM *y, BN_CTX *ctx)

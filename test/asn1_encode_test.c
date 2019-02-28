@@ -179,7 +179,7 @@ typedef struct {
     ENCDEC_DATA(-1, -1),                        \
     ENCDEC_DATA(0, ASN1_LONG_UNDEF)
 
-#if !OPENSSL_API_3
+#if !OPENSSL_API_4
 /***** LONG ******************************************************************/
 
 typedef struct {
@@ -824,7 +824,7 @@ static int test_intern(const TEST_PACKAGE *package)
     return fail == 0;
 }
 
-#if !OPENSSL_API_3
+#if !OPENSSL_API_4
 static int test_long_32bit(void)
 {
     return test_intern(&long_test_package_32bit);
@@ -858,7 +858,7 @@ static int test_uint64(void)
 
 int setup_tests(void)
 {
-#if !OPENSSL_API_3
+#if !OPENSSL_API_4
     ADD_TEST(test_long_32bit);
     ADD_TEST(test_long_64bit);
 #endif

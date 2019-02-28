@@ -264,7 +264,7 @@ int EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
+DEPRECATEDIN_4(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
                                           const BIGNUM *a, const BIGNUM *b,
                                           BN_CTX *ctx))
 
@@ -277,7 +277,7 @@ DEPRECATEDIN_3(int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
+DEPRECATEDIN_4(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
                                           BIGNUM *a, BIGNUM *b,
                                           BN_CTX *ctx))
 
@@ -291,7 +291,7 @@ DEPRECATEDIN_3(int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
+DEPRECATEDIN_4(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
                                            const BIGNUM *a, const BIGNUM *b,
                                            BN_CTX *ctx))
 
@@ -304,7 +304,7 @@ DEPRECATEDIN_3(int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
+DEPRECATEDIN_4(int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
                                            BIGNUM *a, BIGNUM *b,
                                            BN_CTX *ctx))
 # endif
@@ -531,7 +531,7 @@ int EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
+DEPRECATEDIN_4(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
                                                        EC_POINT *p,
                                                        const BIGNUM *x,
                                                        const BIGNUM *y,
@@ -546,7 +546,7 @@ DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
+DEPRECATEDIN_4(int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
                                                        const EC_POINT *p,
                                                        BIGNUM *x,
                                                        BIGNUM *y,
@@ -573,7 +573,7 @@ int EC_POINT_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *p,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
+DEPRECATEDIN_4(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group,
                                                            EC_POINT *p,
                                                            const BIGNUM *x,
                                                            int y_bit,
@@ -588,7 +588,7 @@ DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
+DEPRECATEDIN_4(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
                                                         EC_POINT *p,
                                                         const BIGNUM *x,
                                                         const BIGNUM *y,
@@ -603,7 +603,7 @@ DEPRECATEDIN_3(int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
+DEPRECATEDIN_4(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
                                                         const EC_POINT *p,
                                                         BIGNUM *x,
                                                         BIGNUM *y,
@@ -618,7 +618,7 @@ DEPRECATEDIN_3(int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-DEPRECATEDIN_3(int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
+DEPRECATEDIN_4(int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group,
                                                             EC_POINT *p,
                                                             const BIGNUM *x,
                                                             int y_bit,
@@ -1118,7 +1118,7 @@ EC_KEY *EC_KEY_new_method(ENGINE *engine);
  *  it is actually specified in ANSI X9.63.
  *  This identifier is retained for backwards compatibility
  */
-DEPRECATEDIN_3(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
+DEPRECATEDIN_4(int ECDH_KDF_X9_62(unsigned char *out, size_t outlen,
                                   const unsigned char *Z, size_t Zlen,
                                   const unsigned char *sinfo, size_t sinfolen,
                                   const EVP_MD *md))

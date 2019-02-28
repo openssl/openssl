@@ -36,7 +36,7 @@
 /* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
 # define RAND_DRBG_FLAG_PRIVATE              0x10
 
-# if !OPENSSL_API_3
+# if !OPENSSL_API_4
 /* This #define was replaced by an internal constant and should not be used. */
 #  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
 # endif

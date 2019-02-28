@@ -28,7 +28,7 @@ extern "C" {
 # define TLS1_1_VERSION                  0x0302
 # define TLS1_2_VERSION                  0x0303
 # define TLS1_3_VERSION                  0x0304
-# if !OPENSSL_API_3
+# if !OPENSSL_API_4
 #  define TLS_MAX_VERSION                TLS1_3_VERSION
 # endif
 
