@@ -722,7 +722,7 @@ end_of_options:
 
     /*****************************************************************/
     if (req || gencrl) {
-        if (spkac_file != NULL) {
+        if (spkac_file != NULL && outfile != NULL) {
             output_der = 1;
             batch = 1;
         }
