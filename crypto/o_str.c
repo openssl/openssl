@@ -223,7 +223,18 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 #if defined(_MSC_VER) && _MSC_VER>=1400
     return !strerror_s(buf, buflen, errnum);
 #elif defined(_GNU_SOURCE)
-    return strerror_r(errnum, buf, buflen) != NULL;
+    /* GNU strerror_r may not actually set buf.
+     * It may return a pointer to some (immutable) static string in which case
+     * buf is left unused.
+     */
+    char *err = strerror_r(errnum, buf, buflen);
+    if (err == NULL)
+        return 0;
+    if (!*buf) {
+        strncpy(buf, err, buflen - 1);
+        buf[buflen - 1] = '\0';
+    }
+    return 1;
 #elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
       (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
     /*
