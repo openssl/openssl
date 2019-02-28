@@ -296,6 +296,19 @@
                    Typically OpenSSL will automatically load a system config
                    file which configures default ssl options.
 
+  enable-buildtest-c++
+                   While testing, generate C++ buildtest files that
+                   simply check that the public OpenSSL header files
+                   are usable standalone with C++.
+
+                   Enabling this option demands extra care.  For any
+                   compiler flag given directly as configuration
+                   option, you must ensure that it's valid for both
+                   the C and the C++ compiler.  If not, the C++ build
+                   test will most likely break.  As an alternative,
+                   you can use the language specific variables, CFLAGS
+                   and CXXFLAGS.                   
+
   no-capieng
                    Don't build the CAPI engine. This option will be forced if
                    on a platform that does not support CAPI.

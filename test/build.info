@@ -602,7 +602,7 @@ ENDIF
   INCLUDE[buildtest_c_$name]=../include
   DEPEND[buildtest_c_$name]=../libssl ../libcrypto
 _____
-       $OUT .= <<"_____" if $config{CXX};
+       $OUT .= <<"_____" if $config{CXX} && !$disabled{"buildtest-c++"};
 
   PROGRAMS{noinst}=buildtest_cc_$name
   SOURCE[buildtest_cc_$name]=buildtest_$name.cc

@@ -9,6 +9,14 @@
 
  Changes between 1.1.1 and 3.0.0 [xx XXX xxxx]
 
+  *) Added build tests for C++.  These are generated files that only do one
+     thing, to include one public OpenSSL head file each.  This tests that
+     the public header files can be usefully included in a C++ application.
+
+     This test isn't enabled by default.  It can be enabled with the option
+     'enable-buildtest-c++'.
+     [Richard Levitte]
+
   *) Added property based algorithm implementation selection framework to
      the core.
      [Paul Dale]
