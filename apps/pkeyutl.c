@@ -526,14 +526,16 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         }
         ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
-        EC_KEY *eckey = NULL;
-        const EC_GROUP *group = NULL;
-        int nid;
-
         if (pkey == NULL)
             goto end;
+
+#ifndef OPENSSL_NO_EC
         /* SM2 needs a special treatment */
         if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
+            EC_KEY *eckey = NULL;
+            const EC_GROUP *group = NULL;
+            int nid;
+
             if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL
                     || (group = EC_KEY_get0_group(eckey)) == NULL
                     || (nid = EC_GROUP_get_curve_name(group)) == 0)
@@ -541,6 +543,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
             if (nid == NID_sm2)
                 EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
         }
+#endif
         *pkeysize = EVP_PKEY_size(pkey);
         ctx = EVP_PKEY_CTX_new(pkey, impl);
         if (ppkey != NULL)

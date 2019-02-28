@@ -37,7 +37,12 @@ sub verify
                       '-digest', 'sm3', '-pkeyopt', 'sm2_id:someid'])));
 }
 
-ok(sign, "Sign a piece of data using SM2");
-ok(verify, "Verify an SM2 signature against a piece of data");
+SKIP: {
+    skip "Skipping tests that require EC, SM2 or SM3", 2
+        if disabled("ec") || disabled("sm2") || disabled("sm3");
+
+    ok(sign, "Sign a piece of data using SM2");
+    ok(verify, "Verify an SM2 signature against a piece of data");
+}
 
 unlink 'signature.sm2';
