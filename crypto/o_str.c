@@ -235,8 +235,7 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     if (err == NULL)
         return 0;
     if (*buf == '\0') {
-        strncpy(buf, err, buflen - 1);
-        buf[buflen - 1] = '\0';
+        OPENSSL_strlcpy(buf, err, buflen);
     }
     return 1;
 #elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
@@ -257,8 +256,7 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
     /* Can this ever happen? */
     if (err == NULL)
         return 0;
-    strncpy(buf, err, buflen - 1);
-    buf[buflen - 1] = '\0';
+    OPENSSL_strlcpy(buf, err, buflen);
     return 1;
 #endif
 }
