@@ -67,7 +67,10 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     unsigned int good, found_zero_byte, mask, threes_in_row;
     int zero_index = 0, msg_index, mlen = -1, err;
 
-    if (flen < 10) {
+    if (tlen <= 0 || flen <= 0)
+        return -1;
+
+    if (flen > num || num < 11) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
         return -1;
     }

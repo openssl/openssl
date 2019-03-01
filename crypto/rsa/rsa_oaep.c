@@ -143,7 +143,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * |num| is the length of the modulus; |flen| is the length of the
      * encoded message. Therefore, for any |from| that was obtained by
      * decrypting a ciphertext, we must have |flen| <= |num|. Similarly,
-     * num < 2 * mdlen + 2 must hold for the modulus irrespective of
+     * |num| >= 2 * |mdlen| + 2 must hold for the modulus irrespective of
      * the ciphertext, see PKCS #1 v2.2, section 7.1.2.
      * This does not leak any side-channel information.
      */
