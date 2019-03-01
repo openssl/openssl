@@ -92,17 +92,22 @@ struct ossl_param_st {
 # define OSSL_PARAM_ULONG               6
 # define OSSL_PARAM_SIZET               7
 
+/*- OSSL_PARAM_BIGNUM
+ * An OpenSSL BIGNUM; stored in native big/little endian format.
+ */
+# define OSSL_PARAM_BIGNUM              0x20
+
 /*-
  * OSSL_PARAM_UTF8_STRING
  * is a printable string.  Is expteced to be printed as it is.
  */
-# define OSSL_PARAM_UTF8_STRING         0x20
+# define OSSL_PARAM_UTF8_STRING         0x21
 /*-
  * OSSL_PARAM_OCTET_STRING
  * is a string of bytes with no further specification.  Is expected to be
  * printed as a hexdump.
  */
-# define OSSL_PARAM_OCTET_STRING         0x21
+# define OSSL_PARAM_OCTET_STRING         0x22
 
 /*-
  * Pointer flag

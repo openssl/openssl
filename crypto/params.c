@@ -97,6 +97,10 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
     if ((p = OSSL_PARAM_locate(p, key)) == NULL)
         return 0;
 
+    /* Type safety. */
+    if (p->data_type != OSSL_PARAM_BIGNUM)
+        return 0;
+
     if ((b = BN_native2bn(p->buffer, (int)p->buffer_size, *val)) == NULL)
         return 0;
 
@@ -112,6 +116,10 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     int r;
 
     if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+        return 0;
+
+    /* Type safety. */
+    if (p->data_type != OSSL_PARAM_BIGNUM)
         return 0;
 
     if (p->buffer_size < bytes
