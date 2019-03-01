@@ -90,6 +90,39 @@ PARAM_INT(long, long int, OSSL_PARAM_LONG)
 PARAM_INT(ulong, unsigned long int, OSSL_PARAM_ULONG)
 PARAM_INT(size_t, size_t, OSSL_PARAM_SIZET)
 
+int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val)
+{
+    double *dp;
+
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+        return 0;
+
+    /* Type safety. */
+    if (p->data_type != OSSL_PARAM_DOUBLE || p->buffer_size != sizeof(double))
+        return 0;
+
+    dp = (double *)p->buffer;
+    *val = *dp;
+    return 1;
+}
+
+int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
+{
+    double *dp;
+
+    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+        return 0;
+
+    /* Type safety. */
+    if (p->data_type != OSSL_PARAM_DOUBLE || p->buffer_size != sizeof(double))
+        return 0;
+    dp = (double *)p->buffer;
+    *dp = val;
+    if (p->return_size != NULL)
+        *p->return_size = sizeof(double);
+    return 1;
+}
+
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
     BIGNUM *b;

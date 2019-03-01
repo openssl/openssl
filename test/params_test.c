@@ -14,16 +14,19 @@
 
 #define IVAL    22
 #define U64VAL  0xDEADBEEF
+#define DOUBLE  3.14159
 
 static int test_params(void)
 {
     size_t sz;
     int i;
     uint64_t u64 = U64VAL, alt64;
+    double d1 = DOUBLE, d2;
     const OSSL_PARAM params[] = {
         OSSL_PARAM_uint64("uv", &u64),
         OSSL_PARAM_int("a", &i),
         OSSL_PARAM_size_t("b", &sz),
+        OSSL_PARAM_double("dvalue", &d1),
         { NULL }
     };
     int r = 0;
@@ -35,7 +38,9 @@ static int test_params(void)
 
     /* Auto-set. */
     if (!TEST_true(OSSL_PARAM_get_uint64(params, "uv", &alt64))
-            || !TEST_true(alt64 == u64))
+            || !TEST_true(alt64 == u64)
+            || (!TEST_true(OSSL_PARAM_get_double(params, "dvalue", &d2)))
+            || !TEST_true(d1 == d2))
         goto err;
 
     /* Type mismatches. */

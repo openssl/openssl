@@ -91,6 +91,7 @@ struct ossl_param_st {
 # define OSSL_PARAM_LONG                5
 # define OSSL_PARAM_ULONG               6
 # define OSSL_PARAM_SIZET               7
+# define OSSL_PARAM_DOUBLE              8
 
 /*- OSSL_PARAM_BIGNUM
  * An OpenSSL BIGNUM; stored in native big/little endian format.

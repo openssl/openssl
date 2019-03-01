@@ -56,6 +56,11 @@ int OSSL_PARAM_set_ulong(const OSSL_PARAM *p, const char *key,
 int OSSL_PARAM_get_size_t(const OSSL_PARAM *p, const char *key, size_t *val);
 int OSSL_PARAM_set_size_t(const OSSL_PARAM *p, const char *key, size_t val);
 
+# define OSSL_PARAM_double(key, addr) \
+    OSSL_PARAM((key), OSSL_PARAM_DOUBLE, (addr), sizeof(double), NULL)
+int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val);
+int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val);
+
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
 int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
 
