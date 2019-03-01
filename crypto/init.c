@@ -389,7 +389,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_engine_devcrypto)
     return 1;
 }
 #  endif
-#  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_PADLOCK)
+#  if !defined(OPENSSL_NO_PADLOCKENG)
 static CRYPTO_ONCE engine_padlock = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(ossl_init_engine_padlock)
 {
@@ -761,7 +761,7 @@ int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings)
             && !RUN_ONCE(&engine_devcrypto, ossl_init_engine_devcrypto))
         return 0;
 #  endif
-#  if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_PADLOCK)
+#  if !defined(OPENSSL_NO_PADLOCKENG)
     if ((opts & OPENSSL_INIT_ENGINE_PADLOCK)
             && !RUN_ONCE(&engine_padlock, ossl_init_engine_padlock))
         return 0;
