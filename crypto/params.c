@@ -14,7 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/cryptoerr.h>
 
-static const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
+const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key)
 {
     for (; p->key != NULL; p++)
         if (strcmp(key, p->key) == 0)
@@ -159,7 +159,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
         return 0;
     }
 
-    if ((b = BN_native2bn(p->buffer, (int)p->buffer_size, *val)) == NULL)
+    if ((b = BN_native2bn(p->buffer, (int)p->bn_size, *val)) == NULL)
         return 0;
     *val = b;
     if (p->return_size != NULL)
@@ -167,12 +167,12 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
     return 1;
 }
 
-int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
+int OSSL_PARAM_set_BN(OSSL_PARAM *p, const char *key, const BIGNUM *val)
 {
     const size_t bytes = (size_t)BN_num_bytes(val);
     int r;
 
-    if ((p = OSSL_PARAM_locate(p, key)) == NULL)
+    if ((p = (OSSL_PARAM *)OSSL_PARAM_locate(p, key)) == NULL)
         return 0;
 
     /* Type safety. */
@@ -184,6 +184,7 @@ int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val)
     if (p->buffer_size < bytes
             || (r = BN_bn2nativepad(val, p->buffer, bytes)) < 0)
         return 0;
+    p->bn_size = r;
     if (p->return_size != NULL)
         *p->return_size = r;
     return 1;

@@ -16,17 +16,23 @@
 #define U64VAL  0xDEADBEEF
 #define DOUBLE  3.14159
 
+#define BNSTRING \
+        "D78AF684E71DB0C39CFF4E64FB9DB567132CB9C50CC98009FEB820B26F2DED9B"
+
 static int test_params(void)
 {
+    char buffer[200];
     size_t sz = 0;
     int i = 0;
     uint64_t u64 = U64VAL, alt64 = 0;
     double d1 = DOUBLE, d2 = 0;
-    const OSSL_PARAM params[] = {
+    BIGNUM *b1 = NULL, *b2 = NULL;
+    OSSL_PARAM params[] = {
         OSSL_PARAM_uint64("u64param", &u64),
         OSSL_PARAM_int("intparam", &i),
-        OSSL_PARAM_size_t("UNUSEDparam", &sz),
+        OSSL_PARAM_size_t("--unused--", &sz),
         OSSL_PARAM_double("doubleparam", &d1),
+        OSSL_PARAM_bignum("bignumparam", buffer, sizeof(buffer)),
         { NULL }
     };
     int r = 0;
@@ -41,7 +47,7 @@ static int test_params(void)
     /* Getting a parameter should return the value that was in the variable. */
     if (!TEST_true(OSSL_PARAM_get_uint64(params, "u64param", &alt64))
             || !TEST_true(alt64 == u64)
-            || (!TEST_true(OSSL_PARAM_get_double(params, "doubleparam", &d2)))
+            || !TEST_true(OSSL_PARAM_get_double(params, "doubleparam", &d2))
             || !TEST_true(d1 == d2))
         goto err;
 
@@ -49,9 +55,26 @@ static int test_params(void)
     if (!TEST_false(OSSL_PARAM_get_uint64(params, "intparam", &alt64))
             || !TEST_false(OSSL_PARAM_get_int(params, "u64param", &i)))
         goto err;
+    ERR_clear_error();
+
+    /* Some BIGNUM tests. */
+    b1 = BN_new();
+    BN_zero(b1);
+    if (!TEST_true(OSSL_PARAM_set_BN(params, "bignumparam", b1))
+            || !TEST_true(OSSL_PARAM_get_BN(params, "bignumparam", &b2))
+            || !TEST_int_eq(BN_cmp(b1, b2), 0))
+        goto err;
+
+    if (!TEST_true(BN_hex2bn(&b1, BNSTRING))
+            || !TEST_true(OSSL_PARAM_set_BN(params, "bignumparam", b1))
+            || !TEST_true(OSSL_PARAM_get_BN(params, "bignumparam", &b2))
+            || !TEST_int_eq(BN_cmp(b1, b2), 0))
+        goto err;
 
     r = 1;
 err:
+    BN_free(b1);
+    BN_free(b2);
     return r;
 }
 

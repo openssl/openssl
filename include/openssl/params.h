@@ -17,8 +17,10 @@
 extern "C" {
 # endif
 
+const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key);
+
 # define OSSL_PARAM_DEF(key, type, addr, sz, rsz)    \
-    { (key), (type), (addr), (sz), (rsz) }
+    { (key), (type), (addr), (sz), 0, (rsz) }
 
 # define OSSL_PARAM_int(key, addr) \
     OSSL_PARAM_DEF((key), OSSL_PARAM_INT, (addr), sizeof(int), NULL)
@@ -61,10 +63,10 @@ int OSSL_PARAM_set_size_t(const OSSL_PARAM *p, const char *key, size_t val);
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val);
 int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val);
 
-# define OSSL_PARAM_bignum(key, addr) \
-    OSSL_PARAM_DEF((key), OSSL_PARAM_BIGNUM, (addr), sizeof(BIGNUM *), NULL)
+# define OSSL_PARAM_bignum(key, buff, buffsize) \
+    OSSL_PARAM_DEF((key), OSSL_PARAM_BIGNUM, (buff), (buffsize), NULL)
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
-int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
+int OSSL_PARAM_set_BN(OSSL_PARAM *p, const char *key, const BIGNUM *val);
 
 # ifdef  __cplusplus
 }

@@ -2,12 +2,13 @@
 
 =head1 NAME
 
-int OSSL_PARAM_get_int, int OSSL_PARAM_set_int,
-int OSSL_PARAM_set_uint, int OSSL_PARAM_get_uint,
-int OSSL_PARAM_get_int64, int OSSL_PARAM_set_int64,
-int OSSL_PARAM_get_uint64, int OSSL_PARAM_set_uint64,
-int OSSL_PARAM_get_long, int OSSL_PARAM_get_ulong,
-int OSSL_PARAM_get_size_t, int OSSL_PARAM_set_size_t,
+OSSL_PARAM_locate,
+OSSL_PARAM_get_int, OSSL_PARAM_set_int,
+OSSL_PARAM_set_uint, OSSL_PARAM_get_uint,
+OSSL_PARAM_get_int64, OSSL_PARAM_set_int64,
+OSSL_PARAM_get_uint64, OSSL_PARAM_set_uint64,
+OSSL_PARAM_get_long, OSSL_PARAM_get_ulong,
+OSSL_PARAM_get_size_t, OSSL_PARAM_set_size_t,
 OSSL_PARAM_get_double, OSSL_PARAM_set_double,
 OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 - OSSL_PARAM helpers
@@ -18,13 +19,15 @@ OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 
  #include <openssl/params.h>
 
+ const OSSL_PARAM *OSSL_PARAM_locate(const OSSL_PARAM *p, const char *key);
+
  int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, const char *key, TYPE *val);
 
  int OSSL_PARAM_set_TYPE(const OSSL_PARAM *p, const char *key, TYPE val);
 
  int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
 
- int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
+ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const char *key, const BIGNUM *val);
 
 =head1 DESCRIPTION
 
@@ -41,20 +44,27 @@ following C types:
  size_t
  double
 
+OSSL_PARAM_locate() finds the parameter in the B<p> list with the name B<key>.
+
 OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter
 array B<p> using the B<key>.
 The value is copied to the address B<val>.
 No type coercion is done; it is an error if the type used for a get does
 not match the type used during a set.
 
-OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the paramter
+OSSL_PARAM_set_TYPE() stores a value B<val> of type B<TYPE> into the parameter
 array B<p> using the B<key>.
 Type coercion takes place as discussed in NOTES section.
+
+OSSL_PARAM_set_BN() stores the BIGNUM B<val> in the specified parameter
+value. It also internally stores the size of the buffer used; this is why
+the function does not take a constant B<p> value.
 
 OSSL_PARAM_get_BN() retrieves a BIGNUM from the parameter B<key> in the
 array pointed to by B<p>.
 The BIGNUM referenced by B<val> is updated and is allocated if B<*val> is
-B<NULL>.
+B<NULL>.  If also internally stores the serialized size of the number; if
+the value of B<val> changes, this function must be called again.
 
 OSSL_PARAM_set_BN() stores the BIGNUM B<val> into the paramater array B<p> at
 the position indicated by B<key>.

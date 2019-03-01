@@ -77,6 +77,7 @@ struct ossl_param_st {
     unsigned int data_type;      /* declare what kind of content is in buffer */
     void *buffer;                /* value being passed in or out */
     size_t buffer_size;          /* buffer size */
+    size_t bn_size;              /* Size of converted BIGNUM */
     size_t *return_size;         /* OPTIONAL: address to content size */
 };
 

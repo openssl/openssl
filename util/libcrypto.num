@@ -4664,3 +4664,4 @@ OSSL_PARAM_get_BN                       4619	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_BN                       4620	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_double                   4621	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_set_double                   4622	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_locate                       4623	3_0_0	EXIST::FUNCTION:
