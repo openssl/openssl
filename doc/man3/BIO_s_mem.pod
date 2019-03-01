@@ -40,9 +40,8 @@ Memory BIOs support BIO_gets() and BIO_puts().
 If the BIO_CLOSE flag is set when a memory BIO is freed then the underlying
 BUF_MEM structure is also freed.
 
-Calling BIO_reset() on a read write memory BIO clears any data in it if the
-flag BIO_FLAGS_NONCLEAR_RST is not set. On a read only BIO or if the flag
-BIO_FLAGS_NONCLEAR_RST is set it restores the BIO to its original state and
+Calling BIO_reset() on a read write memory BIO clears any data in it.
+On a read only BIO  it restores the BIO to its original state and
 the data can be read again.
 
 BIO_eof() is true if no data is in the BIO.
@@ -64,7 +63,8 @@ close flag to B<c>, that is B<c> should be either BIO_CLOSE or BIO_NOCLOSE.
 It is a macro.
 
 BIO_get_mem_ptr() places the underlying BUF_MEM structure in *B<pp>. It is
-a macro.
+a macro. It is not supported on read only BIOis, only read write BIOs support
+this function.
 
 BIO_new_mem_buf() creates a memory BIO using B<len> bytes of data at B<buf>,
 if B<len> is -1 then the B<buf> is assumed to be nul terminated and its

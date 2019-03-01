@@ -170,7 +170,7 @@ static int mem_buf_free(BIO *a)
 }
 
 /*
- * Reallocate memory buffer if read pointer differs
+ * Update memory buffer if read pointer differs
  */
 static int mem_buf_sync(BIO *b)
 {
@@ -246,9 +246,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         bm = bbm->buf;
         if (bm->data != NULL) {
             /* For read only case reset to the start again */
-            if ((b->flags & BIO_FLAGS_MEM_RDONLY) || (b->flags & BIO_FLAGS_NONCLEAR_RST)) {
-                bm->length = bm->max;
-            } else {
+            if (!(b->flags & BIO_FLAGS_MEM_RDONLY)) {
                 memset(bm->data, 0, bm->max);
                 bm->length = 0;
             }
@@ -271,17 +269,23 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_C_SET_BUF_MEM:
-        mem_buf_free(b);
-        b->shutdown = (int)num;
-        bbm->buf = ptr;
-        *bbm->readp = *bbm->buf;
+        if (ptr != NULL) {
+            mem_buf_free(b);
+            b->shutdown = (int)num;
+            bbm->buf = ptr;
+            *bbm->readp = *bbm->buf;
+        } else {
+            ret = 0;
+        }
         break;
     case BIO_C_GET_BUF_MEM_PTR:
-        if (ptr != NULL) {
+        if (ptr != NULL && !(b->flags & BIO_FLAGS_MEM_RDONLY)) {
             mem_buf_sync(b);
             bm = bbm->buf;
             pptr = (char **)ptr;
             *pptr = (char *)bm;
+        } else {
+            ret = 0;
         }
         break;
     case BIO_CTRL_GET_CLOSE:
