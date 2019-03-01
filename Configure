@@ -374,7 +374,6 @@ my @disablables = (
     "fuzz-afl",
     "gost",
     "heartbeats",
-    "hw(-.+)?",
     "idea",
     "makedepend",
     "md2",
@@ -386,6 +385,7 @@ my @disablables = (
     "pinshared",
     "ocb",
     "ocsp",
+    "padlockeng",
     "pic",
     "poly1305",
     "posix-io",
@@ -434,6 +434,8 @@ foreach my $proto ((@tls, @dtls))
 my %deprecated_disablables = (
     "ssl2" => undef,
     "buf-freelists" => undef,
+    "hw" => "hw",               # causes cascade, but no macro
+    "hw-padlock" => "padlockeng",
     "ripemd" => "rmd160",
     "ui" => "ui-console",
     );
@@ -495,7 +497,9 @@ my @disable_cascades = (
     # Without position independent code, there can be no shared libraries or DSOs
     "pic"               => [ "shared" ],
     "shared"            => [ "dynamic-engine" ],
-    "engine"            => [ "afalgeng", "devcryptoeng" ],
+
+    "engine"            => [ grep /eng$/, @disablables ],
+    "hw"                => [ "padlockeng" ],
 
     # no-autoalginit is only useful when building non-shared
     "autoalginit"       => [ "shared", "apps" ],
@@ -674,8 +678,9 @@ while (@argvcopy)
         if (/^(no|disable|enable)-(.+)$/)
                 {
                 my $word = $2;
-                if (!exists $deprecated_disablables{$word}
-                        && !grep { $word =~ /^${_}$/ } @disablables)
+                if ($word !~ m|hw(?:-.+)| # special treatment for hw regexp opt
+                        && !exists $deprecated_disablables{$word}
+                        && !grep { $word eq $_ } @disablables)
                         {
                         $unsupported_options{$_} = 1;
                         next;
@@ -728,6 +733,10 @@ while (@argvcopy)
                                 {
                                 $disabled{$deprecated_disablables{$1}} = "option";
                                 }
+                        }
+                elsif ($1 =~ m|hw(?:-.+)|) # deprecate hw options in regexp form
+                        {
+                        $deprecated_options{$_} = 1;
                         }
                 else
                         {
@@ -1193,6 +1202,10 @@ $config{build_file} = env('BUILDFILE') || $target{build_file} || "Makefile";
 my %skipdir = ();
 my %disabled_info = ();         # For configdata.pm
 foreach my $what (sort keys %disabled) {
+    # There are deprecated disablables that translate to themselves.
+    # They cause disabling cascades, but should otherwise not regiter.
+    next if $deprecated_disablables{$what};
+
     $config{options} .= " no-$what";
 
     if (!grep { $what eq $_ } ( 'dso', 'threads', 'shared', 'pic',
