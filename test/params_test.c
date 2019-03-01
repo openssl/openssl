@@ -18,34 +18,36 @@
 
 static int test_params(void)
 {
-    size_t sz;
-    int i;
-    uint64_t u64 = U64VAL, alt64;
-    double d1 = DOUBLE, d2;
+    size_t sz = 0;
+    int i = 0;
+    uint64_t u64 = U64VAL, alt64 = 0;
+    double d1 = DOUBLE, d2 = 0;
     const OSSL_PARAM params[] = {
-        OSSL_PARAM_uint64("uv", &u64),
-        OSSL_PARAM_int("a", &i),
-        OSSL_PARAM_size_t("b", &sz),
-        OSSL_PARAM_double("dvalue", &d1),
+        OSSL_PARAM_uint64("u64param", &u64),
+        OSSL_PARAM_int("intparam", &i),
+        OSSL_PARAM_size_t("UNUSEDparam", &sz),
+        OSSL_PARAM_double("doubleparam", &d1),
         { NULL }
     };
     int r = 0;
 
-    /* Set and get. */
-    if (!TEST_true(OSSL_PARAM_set_int(params, "a", IVAL))
-            || !TEST_int_eq(i, IVAL))
+    /* Setting a param should change the value in the related variable. */
+    if (!TEST_true(OSSL_PARAM_set_int(params, "intparam", IVAL))
+            || !TEST_int_eq(i, IVAL)
+            || !TEST_true(OSSL_PARAM_set_double(params, "doubleparam", DOUBLE))
+            || !TEST_true(d1 == DOUBLE))
         goto err;
 
-    /* Auto-set. */
-    if (!TEST_true(OSSL_PARAM_get_uint64(params, "uv", &alt64))
+    /* Getting a parameter should return the value that was in the variable. */
+    if (!TEST_true(OSSL_PARAM_get_uint64(params, "u64param", &alt64))
             || !TEST_true(alt64 == u64)
-            || (!TEST_true(OSSL_PARAM_get_double(params, "dvalue", &d2)))
+            || (!TEST_true(OSSL_PARAM_get_double(params, "doubleparam", &d2)))
             || !TEST_true(d1 == d2))
         goto err;
 
     /* Type mismatches. */
-    if (!TEST_false(OSSL_PARAM_get_uint64(params, "a", &alt64))
-            || !TEST_false(OSSL_PARAM_get_int(params, "uv", &i)))
+    if (!TEST_false(OSSL_PARAM_get_uint64(params, "intparam", &alt64))
+            || !TEST_false(OSSL_PARAM_get_int(params, "u64param", &i)))
         goto err;
 
     r = 1;

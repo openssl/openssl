@@ -61,6 +61,8 @@ int OSSL_PARAM_set_size_t(const OSSL_PARAM *p, const char *key, size_t val);
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, const char *key, double *val);
 int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val);
 
+# define OSSL_PARAM_bignum(key, addr) \
+    OSSL_PARAM_DEF((key), OSSL_PARAM_BIGNUM, (addr), sizeof(BIGNUM *), NULL)
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
 int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
 
