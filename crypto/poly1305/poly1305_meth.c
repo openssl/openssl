@@ -44,9 +44,14 @@ static int poly1305_copy(EVP_MAC_IMPL *dst, EVP_MAC_IMPL *src)
 {
     *dst->ctx = *src->ctx;
     OPENSSL_clear_free(dst->key, dst->key_len);
-    dst->key = OPENSSL_memdup(src->key, src->key_len);
-    dst->key_len = src->key_len;
-    return dst->key != NULL;
+    dst->key = NULL;
+    dst->key_len = 0;
+    if (src->key != NULL) {
+        dst->key = OPENSSL_memdup(src->key, src->key_len);
+        dst->key_len = src->key_len;
+        return dst->key != NULL;
+    }
+    return 1;
 }
 
 static size_t poly1305_size(EVP_MAC_IMPL *ctx)

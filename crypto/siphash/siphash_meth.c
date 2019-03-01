@@ -37,9 +37,15 @@ static void siphash_free(EVP_MAC_IMPL *sctx)
 static int siphash_copy(EVP_MAC_IMPL *sdst, EVP_MAC_IMPL *ssrc)
 {
     sdst->ctx = ssrc->ctx;
-    sdst->key = OPENSSL_memdup(ssrc->key, ssrc->key_len);
-    sdst->key_len = ssrc->key_len;
-    return sdst->key != NULL;
+    OPENSSL_clear_free(sdst->key, sdst->key_len);
+    sdst->key = NULL;
+    sdst->key_len  = 0;
+    if (ssrc->key != NULL) {
+        sdst->key = OPENSSL_memdup(ssrc->key, ssrc->key_len);
+        sdst->key_len = ssrc->key_len;
+        return sdst->key != NULL;
+    }
+    return 1;
 }
 
 static size_t siphash_size(EVP_MAC_IMPL *sctx)

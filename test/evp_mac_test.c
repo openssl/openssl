@@ -140,11 +140,10 @@ static const struct TEST_DATA {
         NULL, "SHA224",
     },
     {
-        EVP_MAC_CMAC,
-        cmac_input, sizeof(cmac_input),
-        cmac_key, sizeof(cmac_key),
-        cmac_expected, sizeof(cmac_expected),
-        "AES-128-CBC"
+        EVP_MAC_KMAC128,
+        kmac128_input, sizeof(kmac128_input),
+        kmac128_key, sizeof(kmac128_key),
+        kmac128_expected, sizeof(kmac128_expected)
     },
     {
         EVP_MAC_GMAC,
@@ -155,10 +154,11 @@ static const struct TEST_DATA {
         gmac_iv, sizeof(gmac_iv),
     },
     {
-        EVP_MAC_KMAC128,
-        kmac128_input, sizeof(kmac128_input),
-        kmac128_key, sizeof(kmac128_key),
-        kmac128_expected, sizeof(kmac128_expected)
+        EVP_MAC_CMAC,
+        cmac_input, sizeof(cmac_input),
+        cmac_key, sizeof(cmac_key),
+        cmac_expected, sizeof(cmac_expected),
+        "AES-128-CBC"
     },
     {
         EVP_MAC_SIPHASH,
@@ -186,9 +186,7 @@ static const struct TEST_DATA {
     }
 };
 
-static int do_test_copy_ctx(EVP_MAC_CTX *ctx, int mac_id,
-                            const unsigned char *in, size_t in_len,
-                            const unsigned char *expect, size_t expect_len)
+static int do_test_copy_ctx(EVP_MAC_CTX *ctx, const struct TEST_DATA *t)
 {
     int ret = 0;
     EVP_MAC_CTX *ctx_pre_init = NULL;
@@ -196,6 +194,8 @@ static int do_test_copy_ctx(EVP_MAC_CTX *ctx, int mac_id,
     EVP_MAC_CTX *ctx_post_update = NULL;
     unsigned char out[EVP_MAX_MD_SIZE];
     size_t len = 0;
+    int mac_id = t->mac_id;
+
 
     if (!TEST_ptr(ctx_pre_init = EVP_MAC_CTX_new_id(mac_id))
             || !TEST_ptr(ctx_post_init = EVP_MAC_CTX_new_id(mac_id))
@@ -205,41 +205,41 @@ static int do_test_copy_ctx(EVP_MAC_CTX *ctx, int mac_id,
     if (!TEST_true(EVP_MAC_CTX_copy(ctx_pre_init, ctx))
             || !TEST_true(EVP_MAC_init(ctx))
             || !TEST_true(EVP_MAC_CTX_copy(ctx_post_init, ctx))
-            || !TEST_true(EVP_MAC_update(ctx, in, in_len))
+            || !TEST_true(EVP_MAC_update(ctx, t->in, t->in_len))
             || !TEST_true(EVP_MAC_CTX_copy(ctx_post_update, ctx))
             || !TEST_true(EVP_MAC_final(ctx, out, &len)))
         goto err;
-    if (!TEST_mem_eq(out, len, expect, expect_len))
+    if (!TEST_mem_eq(out, len, t->expect, t->expect_len))
         goto err;
     memset(out, 0, sizeof(out));
 
     if (!TEST_true(EVP_MAC_init(ctx_pre_init))
-            || !TEST_true(EVP_MAC_update(ctx_pre_init, in, in_len))
+            || !TEST_true(EVP_MAC_update(ctx_pre_init, t->in, t->in_len))
             || !TEST_true(EVP_MAC_final(ctx_pre_init, out, &len)))
         goto err;
-    if (!TEST_mem_eq(out, len, expect, expect_len))
+    if (!TEST_mem_eq(out, len, t->expect, t->expect_len))
         goto err;
     memset(out, 0, sizeof(out));
 
-    if (!TEST_true(EVP_MAC_update(ctx_post_init, in, in_len))
+    if (!TEST_true(EVP_MAC_update(ctx_post_init, t->in, t->in_len))
             || !TEST_true(EVP_MAC_final(ctx_post_init, out, &len)))
         goto err;
-    if (!TEST_mem_eq(out, len, expect, expect_len))
+    if (!TEST_mem_eq(out, len, t->expect, t->expect_len))
         goto err;
     memset(out, 0, sizeof(out));
 
     if (!TEST_true(EVP_MAC_final(ctx_post_update, out, &len)))
         goto err;
-    if (!TEST_mem_eq(out, len, expect, expect_len))
+    if (!TEST_mem_eq(out, len, t->expect, t->expect_len))
         goto err;
     memset(out, 0, sizeof(out));
 
     /* Calling Init/Update/Final multiple times should work */
     if (!TEST_true(EVP_MAC_init(ctx))
-            || !TEST_true(EVP_MAC_update(ctx, in, in_len))
+            || !TEST_true(EVP_MAC_update(ctx, t->in, t->in_len))
             || !TEST_true(EVP_MAC_final(ctx, out, &len)))
         goto err;
-    if (!TEST_mem_eq(out, len, expect, expect_len))
+    if (!TEST_mem_eq(out, len, t->expect, t->expect_len))
         goto err;
 
     ret = 1;
@@ -250,17 +250,10 @@ err:
     return ret;
 }
 
-static int test_mac_copy(int id)
+static int do_set_mac_ctrl(EVP_MAC_CTX *ctx, const struct TEST_DATA *t)
 {
-    const struct TEST_DATA *t = &test_data[id];
     int ret = 0;
-    EVP_MAC_CTX *ctx = NULL;
     const EVP_CIPHER *cipher = NULL;
-
-    TEST_note("%s:", OBJ_nid2sn(t->mac_id));
-
-    if (!TEST_ptr(ctx = EVP_MAC_CTX_new_id(t->mac_id)))
-        goto err;
 
     if (t->cipher_name != NULL) {
         /* Used by CMAC and GMAC */
@@ -274,12 +267,8 @@ static int test_mac_copy(int id)
 
     if (t->md_name != NULL) {
         /* Used by HMAC */
-        if (!TEST_true(EVP_MAC_init(ctx) <= 0))
-            goto err;
         if (!TEST_true(EVP_MAC_ctrl(ctx, EVP_MAC_CTRL_SET_MD,
                                     EVP_get_digestbyname(t->md_name)) > 0))
-            goto err;
-        if (!TEST_true(EVP_MAC_init(ctx) <= 0))
             goto err;
     }
 
@@ -293,9 +282,25 @@ static int test_mac_copy(int id)
                                     t->iv_len) > 0))
             goto err;
     }
+    ret = 1;
+err:
+    return ret;
+}
 
-    if (!do_test_copy_ctx(ctx, t->mac_id, t->in, t->in_len, t->expect,
-                          t->expect_len))
+static int test_mac_copy(int id)
+{
+    const struct TEST_DATA *t = &test_data[id];
+    int ret = 0;
+    EVP_MAC_CTX *ctx = NULL;
+
+    TEST_note("%s:", OBJ_nid2sn(t->mac_id));
+
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new_id(t->mac_id)))
+        goto err;
+    if (!do_set_mac_ctrl(ctx, t))
+        goto err;
+
+    if (!do_test_copy_ctx(ctx, t))
         goto err;
 
     ret = 1;
@@ -304,28 +309,87 @@ err:
     return ret;
 }
 
-static int test_invalid_copy(void)
+static int test_mac_copy_to(int id)
 {
+    const struct TEST_DATA *t = &test_data[id];
+    int i;
     int ret = 0;
-    EVP_MAC_CTX *ctx_hmac = NULL, *ctx_kmac = NULL;
+    EVP_MAC_CTX *ctx_other_empty = NULL, *ctx_other = NULL;
+    EVP_MAC_CTX *ctx_t_empty = NULL, *ctx_t_empty2 = NULL;
+    EVP_MAC_CTX *ctx_t = NULL, *ctx_t2 = NULL;
 
-    if (!TEST_ptr(ctx_hmac = EVP_MAC_CTX_new_id(EVP_MAC_CMAC)))
-        goto err;
-    if (!TEST_ptr(ctx_kmac = EVP_MAC_CTX_new_id(EVP_MAC_KMAC128)))
-        goto err;
-    if (!TEST_true(EVP_MAC_CTX_copy(ctx_hmac, ctx_kmac) <= 0))
-        goto err;
+    for (i = 0; i < (int)OSSL_NELEM(test_data); ++i) {
+        const struct TEST_DATA *t_other = &test_data[i];
 
+        TEST_note("Copy %s => %s", OBJ_nid2sn(t_other->mac_id),
+                  OBJ_nid2sn(t->mac_id));
+        if (!TEST_ptr(ctx_other_empty = EVP_MAC_CTX_new_id(t_other->mac_id)))
+            goto err;
+        if (!TEST_ptr(ctx_other = EVP_MAC_CTX_new_id(t_other->mac_id)))
+            goto err;
+        if (!do_set_mac_ctrl(ctx_other, t_other))
+            goto err;
+        if (!TEST_ptr(ctx_t_empty = EVP_MAC_CTX_new_id(t->mac_id)))
+            goto err;
+        if (!TEST_ptr(ctx_t_empty2 = EVP_MAC_CTX_new_id(t->mac_id)))
+            goto err;
+        if (!TEST_ptr(ctx_t = EVP_MAC_CTX_new_id(t->mac_id)))
+            goto err;
+        if (!TEST_ptr(ctx_t2 = EVP_MAC_CTX_new_id(t->mac_id)))
+            goto err;
+        if (!do_set_mac_ctrl(ctx_t, t))
+            goto err;
+        if (!do_set_mac_ctrl(ctx_t2, t))
+            goto err;
+
+        if (!TEST_true(EVP_MAC_CTX_copy(ctx_t_empty2, ctx_other) > 0))
+            goto err;
+        if (!do_test_copy_ctx(ctx_t_empty2, t_other))
+            goto err;
+        if (!TEST_true(EVP_MAC_CTX_copy(ctx_t2, ctx_other) > 0))
+            goto err;
+        if (!do_test_copy_ctx(ctx_t_empty2, t_other))
+            goto err;
+
+        if (!TEST_true(EVP_MAC_CTX_copy(ctx_t, ctx_other_empty) > 0))
+            goto err;
+        if (!do_set_mac_ctrl(ctx_t, t_other))
+            goto err;
+        if (!do_test_copy_ctx(ctx_t, t_other))
+            goto err;
+
+        if (!TEST_true(EVP_MAC_CTX_copy(ctx_t_empty, ctx_other_empty) > 0))
+            goto err;
+        if (!do_set_mac_ctrl(ctx_t_empty, t_other))
+            goto err;
+        if (!do_test_copy_ctx(ctx_t_empty, t_other))
+            goto err;
+
+        EVP_MAC_CTX_free(ctx_other_empty);
+        EVP_MAC_CTX_free(ctx_other);
+        EVP_MAC_CTX_free(ctx_t_empty);
+        EVP_MAC_CTX_free(ctx_t_empty2);
+        EVP_MAC_CTX_free(ctx_t);
+        EVP_MAC_CTX_free(ctx_t2);
+        ctx_other_empty = ctx_other = NULL;
+        ctx_t_empty = ctx_t_empty2 = NULL;
+        ctx_t = ctx_t2 = NULL;
+    }
     ret = 1;
 err:
-    EVP_MAC_CTX_free(ctx_hmac);
-    EVP_MAC_CTX_free(ctx_kmac);
+    EVP_MAC_CTX_free(ctx_other_empty);
+    EVP_MAC_CTX_free(ctx_other);
+    EVP_MAC_CTX_free(ctx_t_empty);
+    EVP_MAC_CTX_free(ctx_t_empty2);
+    EVP_MAC_CTX_free(ctx_t);
+    EVP_MAC_CTX_free(ctx_t2);
+
     return ret;
 }
 
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_mac_copy, OSSL_NELEM(test_data));
-    ADD_TEST(test_invalid_copy);
+    ADD_ALL_TESTS(test_mac_copy_to, OSSL_NELEM(test_data));
     return 1;
 }

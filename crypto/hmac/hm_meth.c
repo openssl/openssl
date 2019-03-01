@@ -55,11 +55,15 @@ static int hmac_copy(EVP_MAC_IMPL *hdst, EVP_MAC_IMPL *hsrc)
 
     hdst->engine = hsrc->engine;
     hdst->md = hsrc->md;
-
     OPENSSL_clear_free(hdst->key, hdst->key_len);
-    hdst->key = OPENSSL_memdup(hsrc->key, hsrc->key_len);
-    hdst->key_len = hsrc->key_len;
-    return hdst->key != NULL;
+    hdst->key = NULL;
+    hdst->key_len = 0;
+    if (hsrc->key != NULL) {
+        hdst->key = OPENSSL_memdup(hsrc->key, hsrc->key_len);
+        hdst->key_len = hsrc->key_len;
+        return hdst->key != NULL;
+    }
+    return 1;
 }
 
 static size_t hmac_size(EVP_MAC_IMPL *hctx)

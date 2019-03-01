@@ -50,14 +50,26 @@ static int gmac_copy(EVP_MAC_IMPL *gdst, EVP_MAC_IMPL *gsrc)
     gdst->cipher = gsrc->cipher;
     gdst->engine = gsrc->engine;
     OPENSSL_clear_free(gdst->key, gdst->key_len);
-    gdst->key = OPENSSL_memdup(gsrc->key, gsrc->key_len);
-    gdst->key_len = gsrc->key_len;
+    gdst->key = NULL;
+    gdst->key_len = 0;
+    if (gsrc->key != NULL) {
+        gdst->key = OPENSSL_memdup(gsrc->key, gsrc->key_len);
+        gdst->key_len = gsrc->key_len;
+        if (gdst->key == NULL)
+            return 0;
+    }
     OPENSSL_clear_free(gdst->iv, gdst->iv_len);
-    gdst->iv = OPENSSL_memdup(gsrc->iv, gsrc->iv_len);
-    gdst->iv_len = gsrc->iv_len;
-    if (gdst->key == NULL || gdst->iv == NULL)
-        return 0;
-    return EVP_CIPHER_CTX_copy(gdst->ctx, gsrc->ctx);
+    gdst->iv = NULL;
+    gdst->iv_len = 0;
+    if (gsrc->iv != NULL) {
+        gdst->iv = OPENSSL_memdup(gsrc->iv, gsrc->iv_len);
+        gdst->iv_len = gsrc->iv_len;
+        if (gdst->iv == NULL)
+            return 0;
+    }
+    if (EVP_CIPHER_CTX_cipher(gsrc->ctx) != NULL)
+        return EVP_CIPHER_CTX_copy(gdst->ctx, gsrc->ctx);
+    return 1;
 }
 
 static size_t gmac_size(EVP_MAC_IMPL *gctx)

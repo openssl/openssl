@@ -50,17 +50,15 @@ void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
 
 int EVP_MAC_CTX_copy(EVP_MAC_CTX *dst, EVP_MAC_CTX *src)
 {
-    EVP_MAC_IMPL *macdata;
-
-    if (src->meth != dst->meth
-            || (src->data != NULL && !dst->meth->copy(dst->data, src->data)))
-        return 0;
-
-    macdata = dst->data;
-    *dst = *src;
-    dst->data = macdata;
-
-    return 1;
+    /* If the mac's are different, remove the old implementation and replace */
+    if (src->meth != dst->meth) {
+        dst->meth->free(dst->data);
+        dst->meth = src->meth;
+        dst->data = src->meth->new();
+        if (dst->data == NULL)
+            return 0;
+    }
+    return src->meth->copy(dst->data, src->data);
 }
 
 const EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)

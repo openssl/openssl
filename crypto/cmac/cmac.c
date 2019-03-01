@@ -87,8 +87,14 @@ void CMAC_CTX_free(CMAC_CTX *ctx)
 int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 {
     int bl;
-    if (in->nlast_block == -1)
-        return 0;
+    if (in->nlast_block == -1) {
+        out->nlast_block = -1;
+        OPENSSL_cleanse(out->tbl, EVP_MAX_BLOCK_LENGTH);
+        OPENSSL_cleanse(out->k1, EVP_MAX_BLOCK_LENGTH);
+        OPENSSL_cleanse(out->k2, EVP_MAX_BLOCK_LENGTH);
+        OPENSSL_cleanse(out->last_block, EVP_MAX_BLOCK_LENGTH);
+        return 1;
+    }
     if (!EVP_CIPHER_CTX_copy(out->cctx, in->cctx))
         return 0;
     bl = EVP_CIPHER_CTX_block_size(in->cctx);
