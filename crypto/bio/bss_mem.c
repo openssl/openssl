@@ -279,7 +279,7 @@ static long mem_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_C_GET_BUF_MEM_PTR:
         if (ptr != NULL) {
             mem_buf_sync(b);
-            bm = bbm->readp;
+            bm = bbm->buf;
             pptr = (char **)ptr;
             *pptr = (char *)bm;
         }
