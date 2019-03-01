@@ -1,7 +1,11 @@
 ${-
+  use File::Spec::Functions qw(rel2abs);
+
+  my $bldtop = rel2abs($config{builddir});
   our %names = ( map { platform->sharedname($_) =>
                            $bldtop.platform->sharedlib($_) }
-                 @{$unified_info{install}->{libraries}} );
+                 grep { !$unified_info{attributes}->{$_}->{noinst} }
+                 @{$unified_info{libraries}} );
   "" -}
 $       ! Remove the local environment created by local_shlib.com
 $
