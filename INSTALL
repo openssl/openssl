@@ -307,7 +307,7 @@
                    the C and the C++ compiler.  If not, the C++ build
                    test will most likely break.  As an alternative,
                    you can use the language specific variables, CFLAGS
-                   and CXXFLAGS.                   
+                   and CXXFLAGS.
 
   no-capieng
                    Don't build the CAPI engine. This option will be forced if
@@ -688,6 +688,11 @@
 
                         CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- \
                         ./config -DCOOKIE
+
+                   If CC is set, it is advisable to also set CXX to ensure
+                   both C and C++ compilers are in the same "family".  This
+                   becomes relevant with 'enable-external-tests' and
+                   'enable-buildtest-c++'.
 
   reconf
   reconfigure
