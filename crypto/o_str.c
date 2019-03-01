@@ -230,13 +230,18 @@ int openssl_strerror_r(int errnum, char *buf, size_t buflen)
      * It can return a pointer to some (immutable) static string in which case
      * buf is left unused.
      */
-    *buf = '\0';
     err = strerror_r(errnum, buf, buflen);
     if (err == NULL)
         return 0;
-    if (*buf == '\0') {
+    /*
+     * If err is statically allocated, err != buf and we need to copy the data.
+     * If err points somewhere inside buf, OPENSSL_strlcpy can handle this,
+     * since src and dest are not annotated with __restrict and the function
+     * reads src byte for byte and writes to dest.
+     * If err == buf we do not have to copy anything.
+     */
+    if (err != buf)
         OPENSSL_strlcpy(buf, err, buflen);
-    }
     return 1;
 #elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
       (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
