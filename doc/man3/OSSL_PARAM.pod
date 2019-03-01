@@ -108,11 +108,12 @@ The C<data_type> field can be one of the following types:
 
 =over 4
 
-=item C<OSSL_PARAM_INT>, C<OSSL_PARAM_UINT> C<OSSL_PARAM_INT>, C<OSSL_PARAM_UINT>, C<OSSL_PARAM_INT64>, C<OSSL_PARAM_UINT64>, C<OSSL_PARAM_LONG>, C<OSSL_PARAM_ULONG>, C<OSSL_PARAM_SIZE_T>
+=item C<OSSL_PARAM_INT>, C<OSSL_PARAM_UINT> C<OSSL_PARAM_INT>, C<OSSL_PARAM_UINT>, C<OSSL_PARAM_INT64>, C<OSSL_PARAM_UINT64>, C<OSSL_PARAM_LONG>, C<OSSL_PARAM_ULONG>, C<OSSL_PARAM_SIZE_T>, C<OSSL_PARAM_DOUBLE>
 
-The parameter is an integer that has the C type of C<int>, C<unsigned
-int>, C<int64_t>, C<uint64_t>, C<long>, C<unsigned long>, or C<size_t>
-respectively and is represented in its native form.
+The parameter is an integer that has the C type of C<int>,
+C<unsigned int>, C<int64_t>, C<uint64_t>, C<long>, C<unsigned long>,
+C<size_t>, or C<double>,
+respectively, and is represented in its native form.
 
 =item C<BIGNUM>
 

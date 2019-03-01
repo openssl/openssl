@@ -8,6 +8,7 @@ int OSSL_PARAM_get_int64, int OSSL_PARAM_set_int64,
 int OSSL_PARAM_get_uint64, int OSSL_PARAM_set_uint64,
 int OSSL_PARAM_get_long, int OSSL_PARAM_get_ulong,
 int OSSL_PARAM_get_size_t, int OSSL_PARAM_set_size_t,
+OSSL_PARAM_get_double, OSSL_PARAM_set_double,
 OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
 - OSSL_PARAM helpers
 
@@ -38,6 +39,7 @@ following C types:
  long
  unsigned long
  size_t
+ double
 
 OSSL_PARAM_get_TYPE() retrieves a value of type B<TYPE> from the parameter
 array B<p> using the B<key>.
