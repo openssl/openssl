@@ -82,16 +82,17 @@ struct ossl_param_st {
 
 /* Currently supported OSSL_PARAM data types */
 /*
- * Numbers are stored in native form.
+ * Numbers are stored in native form.  Leaving space for more numbers
+ * later without breaking API/ABI.
  */
-# define OSSL_PARAM_INT                 1
-# define OSSL_PARAM_UINT                2
-# define OSSL_PARAM_INT64               3
-# define OSSL_PARAM_UINT64              4
-# define OSSL_PARAM_LONG                5
-# define OSSL_PARAM_ULONG               6
-# define OSSL_PARAM_SIZET               7
-# define OSSL_PARAM_DOUBLE              8
+# define OSSL_PARAM_INT                 0x01
+# define OSSL_PARAM_UINT                0x02
+# define OSSL_PARAM_INT64               0x03
+# define OSSL_PARAM_UINT64              0x04
+# define OSSL_PARAM_LONG                0x05
+# define OSSL_PARAM_ULONG               0x06
+# define OSSL_PARAM_SIZET               0x07
+# define OSSL_PARAM_DOUBLE              0x08
 
 /*- OSSL_PARAM_BIGNUM
  * An OpenSSL BIGNUM; stored in native big/little endian format.
