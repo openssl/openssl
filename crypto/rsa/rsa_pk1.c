@@ -240,10 +240,10 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     msg_index = constant_time_select_int(good, msg_index, num - tlen);
     mlen = num - msg_index;
     for (mask = good, i = 0; i < tlen; i++) {
-        unsigned int equals = constant_time_eq(i, mlen);
+        unsigned int equals = constant_time_eq(msg_index, num);
 
-        msg_index -= tlen & equals;  /* if (i == mlen) rewind */
-        mask &= mask ^ equals;  /* if (i == mlen) mask = 0 */
+        msg_index -= (num - 11) & equals;  /* rewind at EOF */
+        mask &= ~equals;  /* mask = 0 at EOF */
         to[i] = constant_time_select_8(mask, em[msg_index++], to[i]);
     }
 

@@ -248,10 +248,10 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
     mlen = dblen - msg_index;
     for (mask = good, i = 0; i < tlen; i++) {
-        unsigned int equals = constant_time_eq(i, mlen);
+        unsigned int equals = constant_time_eq(msg_index, dblen);
 
-        msg_index -= dblen & equals; /* if (i == dblen) rewind */
-        mask &= mask ^ equals;  /* if (i == dblen) mask = 0 */
+        msg_index -= (dblen - mdlen - 1) & equals;  /* rewind at EOF */
+        mask &= ~equals;  /* mask = 0 at EOF */
         to[i] = constant_time_select_8(mask, db[msg_index++], to[i]);
     }
 
