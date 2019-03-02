@@ -13,6 +13,8 @@
 static int pkcs11_parse_uri(const char *path, char *token, char **value);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path);
 static char pkcs11_hex_int(char nib1, char nib2);
+static int pkcs11_ishex(char *hex);
+static char* pkcs11_hex2a(char *hex);
 static PKCS11_CTX *pkcs11_ctx_new(void);
 static void pkcs11_ctx_free(PKCS11_CTX *ctx);
 static int bind_pkcs11(ENGINE *e);
@@ -139,10 +141,51 @@ static char pkcs11_hex_int(char nib1, char nib2)
     return ret;
 }
 
+static char* pkcs11_hex2a(char *hex)
+{
+    int vlen, j = 0, i, ishex;
+    char *hex2a;
+
+    hex2a = OPENSSL_malloc(strlen(hex) + 1);
+
+    if (hex2a == NULL) {
+        return NULL;
+    }
+
+    vlen = strlen(hex);
+    ishex = pkcs11_ishex(hex);
+    for (i = 0; i < vlen; i++) {
+        if ((*(hex+i) == '%' && i < (vlen-2)) || ishex) {
+            *(hex2a+j) = pkcs11_hex_int(*(hex+i+1-ishex), *(hex+i+2-ishex));
+            i += (2-ishex);
+        } else {
+            *(hex2a+j) = *(hex+i);
+        }
+        j++;
+    }
+    *(hex2a+j) = '\0';
+    return hex2a;
+}
+
+static int pkcs11_ishex(char *hex)
+{
+    int i,h = 0;
+    size_t len;
+
+    len = strlen(hex);
+    for (i = 0; i < len; i++) {
+        if ((*(hex) >= '0' && *(hex) <= '9') || (*(hex) >= 'a' && *(hex) <= 'f')
+            || (*(hex) >= 'A' && *(hex) <= 'F')) h++;
+    }
+    if (h == len && !(h % 2))
+        return 1;
+    return 0;
+}
+
 static int pkcs11_parse_uri(const char *path, char *token, char **value)
 {
-    char *tmp, *end, *hex2bin;
-    size_t vlen, i, j = 0, tmplen;
+    char *tmp, *end, *hex2a;
+    size_t tmplen;
 
     if ((tmp = strstr(path, token)) == NULL)
         return 0;
@@ -156,29 +199,12 @@ static int pkcs11_parse_uri(const char *path, char *token, char **value)
     }
 
     end = strpbrk(tmp, ";");
-
     BIO_snprintf(*value, end == NULL ? tmplen + 1 :
                  (size_t) (end - tmp + 1), "%s", tmp);
-    hex2bin = OPENSSL_malloc(strlen(*value) + 1);
 
-    if (hex2bin == NULL) {
-        PKCS11err(PKCS11_F_PKCS11_PARSE_URI, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    vlen = strlen(*value);
-    for (i = 0; i < vlen; i++) {
-        if (*(*value+i) == '%' && i < (vlen-2)) {
-            *(hex2bin+j) = pkcs11_hex_int(*(*value+i+1), *(*value+i+2));
-            i += 2;
-        } else {
-            *(hex2bin+j) = *(*value+i);
-        }
-        j++;
-    }
-    *(hex2bin+j) = '\0';
+    hex2a = pkcs11_hex2a(*value);
     free(*value);
-    *value = hex2bin;
+    *value = hex2a;
     return 1;
 
  err:
@@ -261,6 +287,9 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
             PKCS11err(PKCS11_F_PKCS11_PARSE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        if (pkcs11_ishex(id))
+            id = pkcs11_hex2a(id);
+
         slotid = NULL;
 
     }
@@ -280,7 +309,6 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
             goto err;
         }
     }
-
     return 1;
 
  err:
