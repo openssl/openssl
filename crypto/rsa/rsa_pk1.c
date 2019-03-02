@@ -242,7 +242,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     for (mask = good, i = 0; i < tlen; i++) {
         unsigned int equals = constant_time_eq(msg_index, num);
 
-        msg_index -= (num - 11) & equals;  /* rewind at EOF */
+        msg_index -= tlen & equals;  /* rewind at EOF */
         mask &= ~equals;  /* mask = 0 at EOF */
         to[i] = constant_time_select_8(mask, em[msg_index++], to[i]);
     }
