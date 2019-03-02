@@ -94,6 +94,35 @@ finish:
     return ok;
 }
 
+static int test_bio_reset(void)
+{
+    int ok = 0;
+    BIO *bio;
+    char data[16];
+
+    bio = BIO_new(BIO_s_mem());
+    if (!TEST_ptr(bio))
+        goto finish;
+    BIO_set_flags(bio, BIO_FLAGS_NONCLEAR_RST);
+    if (!TEST_int_eq(BIO_write(bio, "Hello World\n", 12), 12))
+        goto finish;
+    if (!TEST_int_eq(BIO_read(bio, data, 16), 12))
+        goto finish;
+    if (!TEST_mem_eq(data, 12, "Hello World\n", 12))
+        goto finish;
+    if (!TEST_int_gt(BIO_reset(bio), 0))
+        goto finish;
+    if (!TEST_int_eq(BIO_read(bio, data, 16), 12))
+        goto finish;
+    if (!TEST_mem_eq(data, 12, "Hello World\n", 12))
+        goto finish;
+    ok = 1;
+
+finish:
+    BIO_free(bio);
+    return ok;
+}
+
 int global_init(void)
 {
     CRYPTO_set_mem_debug(1);
@@ -106,5 +135,6 @@ int setup_tests(void)
     ADD_TEST(test_bio_memleak);
     ADD_TEST(test_bio_get_mem);
     ADD_TEST(test_bio_new_mem_buf);
+    ADD_TEST(test_bio_reset);
     return 1;
 }
