@@ -137,7 +137,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
 
     mdlen = EVP_MD_size(md);
 
-    if (tlen <= 0 || flen <= 0)
+    if (flen <= 0)
         return -1;
     /*
      * |num| is the length of the modulus; |flen| is the length of the
@@ -147,13 +147,14 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * the ciphertext, see PKCS #1 v2.2, section 7.1.2.
      * This does not leak any side-channel information.
      */
-    if (num < flen || num < 2 * mdlen + 2) {
+    if (num < flen || num < 2 * mdlen + 2 || tlen < num - 2 * mdlen - 2) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
                RSA_R_OAEP_DECODING_ERROR);
         return -1;
     }
 
     dblen = num - mdlen - 1;
+    tlen = dblen - mdlen - 1;
     db = OPENSSL_malloc(dblen);
     if (db == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
@@ -229,11 +230,6 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     mlen = dblen - msg_index;
 
     /*
-     * For good measure, do this check in constant time as well.
-     */
-    good &= constant_time_ge(tlen, mlen);
-
-    /*
      * Even though we can't fake result's length, we can pretend copying
      * |tlen| bytes where |mlen| bytes would be real. Last |tlen| of |dblen|
      * bytes are viewed as circular buffer with start at |tlen|-|mlen'|,
@@ -243,8 +239,6 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
-    tlen = constant_time_select_int(constant_time_lt(dblen - mdlen - 1, tlen),
-                                    dblen - mdlen - 1, tlen);
     msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
     mlen = dblen - msg_index;
     for (mask = good, i = 0; i < tlen; i++) {

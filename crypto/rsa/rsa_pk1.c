@@ -161,7 +161,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     unsigned int good, found_zero_byte, mask;
     int zero_index = 0, msg_index, mlen = -1;
 
-    if (tlen <= 0 || flen <= 0)
+    if (flen <= 0)
         return -1;
 
     /*
@@ -169,12 +169,13 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      * section 7.2.2.
      */
 
-    if (flen > num || num < 11) {
+    if (flen > num || num < 11 || tlen < num - 11) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2,
                RSA_R_PKCS_DECODING_ERROR);
         return -1;
     }
 
+    tlen = num - 11;
     em = OPENSSL_malloc(num);
     if (em == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, ERR_R_MALLOC_FAILURE);
@@ -221,11 +222,6 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     mlen = num - msg_index;
 
     /*
-     * For good measure, do this check in constant time as well.
-     */
-    good &= constant_time_ge(tlen, mlen);
-
-    /*
      * Even though we can't fake result's length, we can pretend copying
      * |tlen| bytes where |mlen| bytes would be real. Last |tlen| of |num|
      * bytes are viewed as circular buffer with start at |tlen|-|mlen'|,
@@ -235,8 +231,6 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
      * should be noted that failure is indistinguishable from normal
      * operation if |tlen| is fixed by protocol.
      */
-    tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
-                                    num - 11, tlen);
     msg_index = constant_time_select_int(good, msg_index, num - tlen);
     mlen = num - msg_index;
     for (mask = good, i = 0; i < tlen; i++) {
