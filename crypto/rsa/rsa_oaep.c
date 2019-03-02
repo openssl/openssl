@@ -229,7 +229,7 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     mlen = dblen - msg_index;
 
     /*
-     * For good measure, do this check in constant tine as well.
+     * For good measure, do this check in constant time as well.
      */
     good &= constant_time_ge(tlen, mlen);
 
