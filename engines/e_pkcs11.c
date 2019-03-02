@@ -31,8 +31,15 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
     int encoded_len = 0;
     const unsigned char *encoded = NULL;
 
+    ctx = pkcs11_get_cms(rsa);
+
+    if (!ctx->session) {
+        return RSA_meth_get_sign(RSA_PKCS1_OpenSSL())
+            (alg, md, md_len, sigret, siglen, rsa);
+    }
+
     num = RSA_size(rsa);
-    if (!pkcs11_encode_pkcs1(&tmps, &encoded_len, alg, md, md_len))
+    if (!RSA_encode_pkcs1(&tmps, &encoded_len, alg, md, md_len))
         goto err;
     encoded = tmps;
     if ((unsigned int)encoded_len > (num - RSA_PKCS1_PADDING_SIZE)) {
@@ -40,7 +47,6 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
         goto err;
     }
 
-    ctx = pkcs11_get_cms(rsa);
     sign_mechanism.mechanism = CKM_RSA_PKCS;
     rv = pkcs11_funcs->C_SignInit(ctx->session, &sign_mechanism, ctx->key);
 
@@ -97,8 +103,15 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     CK_ATTRIBUTE keyAttribute[1];
     int useSign = 0;
 
-    num = RSA_size(rsa);
     ctx = pkcs11_get_cms(rsa);
+
+    if (!ctx->session) {
+        return RSA_meth_get_pub_enc(RSA_PKCS1_OpenSSL())
+            (flen, from, to, rsa, padding);
+    }
+
+    num = RSA_size(rsa);
+
     enc_mechanism.mechanism = CKM_RSA_PKCS;
     CRYPTO_THREAD_write_lock(ctx->lock);
 

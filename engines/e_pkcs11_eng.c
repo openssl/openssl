@@ -95,45 +95,6 @@ static int pkcs11_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
     return ret;
 }
 
-int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
-                               const unsigned char *m, unsigned int m_len)
-{
-    X509_SIG sig;
-    X509_ALGOR algor;
-    ASN1_TYPE parameter;
-    ASN1_OCTET_STRING digest;
-    uint8_t *der = NULL;
-    int len;
-
-    sig.algor = &algor;
-    sig.algor->algorithm = OBJ_nid2obj(type);
-    if (sig.algor->algorithm == NULL) {
-        PKCS11err(PKCS11_F_PKCS11_ENCODE_PKCS1,
-                  PKCS11_R_UNKNOWN_ALGORITHM_TYPE);
-        return 0;
-    }
-    if (OBJ_length(sig.algor->algorithm) == 0) {
-        PKCS11err(PKCS11_F_PKCS11_ENCODE_PKCS1,
-               PKCS11_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);
-        return 0;
-    }
-    parameter.type = V_ASN1_NULL;
-    parameter.value.ptr = NULL;
-    sig.algor->parameter = &parameter;
-
-    sig.digest = &digest;
-    sig.digest->data = (unsigned char *)m;
-    sig.digest->length = m_len;
-
-    len = i2d_X509_SIG(&sig, &der);
-    if (len < 0)
-        return 0;
-
-    *out = der;
-    *out_len = len;
-    return 1;
-}
-
 static char pkcs11_hex_int(char nib1, char nib2)
 {
     int ret = (nib1-(nib1 <= 57 ? 48 : (nib1 < 97 ? 55 : 87)))*16;
@@ -169,8 +130,8 @@ static char* pkcs11_hex2a(char *hex)
 
 static int pkcs11_ishex(char *hex)
 {
-    int i,h = 0;
-    size_t len;
+    int i;
+    size_t len, h = 0;
 
     len = strlen(hex);
     for (i = 0; i < len; i++) {
@@ -229,7 +190,7 @@ static int pkcs11_get_console_pin(char **pin)
         char prompt[200];
         BIO_snprintf(prompt, sizeof(prompt), "Enter PIN: ");
         strbuf[0] = '\0';
-        i = EVP_read_pw_string((char *)strbuf, 512, prompt, 1);
+        i = EVP_read_pw_string((char *)strbuf, buflen, prompt, 1);
         if (i == 0) {
             if (strbuf[0] == '\0') {
                 goto err;

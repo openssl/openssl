@@ -14,6 +14,7 @@
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/bio.h>
+#include <openssl/rsa.h>
 #include <internal/dso.h>
 #include <internal/nelem.h>
 
@@ -60,11 +61,6 @@ static const ENGINE_CMD_DEFN pkcs11_cmd_defns[] = {
     {0, NULL, NULL, 0}
 };
 
-struct X509_sig_st {
-    X509_ALGOR *algor;
-    ASN1_OCTET_STRING *digest;
-};
-
 typedef struct PKCS11_CTX_st {
     CK_BYTE *id;
     CK_BYTE *label;
@@ -88,6 +84,4 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
 int pkcs11_get_slot(PKCS11_CTX *ctx);
 int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
-int pkcs11_encode_pkcs1(unsigned char **out, int *out_len, int type,
-                        const unsigned char *m, unsigned int m_len);
 PKCS11_CTX *pkcs11_get_cms(const RSA *rsa);
