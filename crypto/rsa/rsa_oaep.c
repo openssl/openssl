@@ -179,17 +179,16 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
         from -= 1 & mask;
         *--em = *from & mask;
     }
-    from = em;
 
     /*
      * The first byte must be zero, however we must not leak if this is
      * true. See James H. Manger, "A Chosen Ciphertext  Attack on RSA
      * Optimal Asymmetric Encryption Padding (OAEP) [...]", CRYPTO 2001).
      */
-    good = constant_time_is_zero(from[0]);
+    good = constant_time_is_zero(em[0]);
 
-    maskedseed = from + 1;
-    maskeddb = from + 1 + mdlen;
+    maskedseed = em + 1;
+    maskeddb = em + 1 + mdlen;
 
     if (PKCS1_MGF1(seed, mdlen, maskeddb, dblen, mgf1md))
         goto cleanup;
@@ -248,12 +247,12 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                     dblen - mdlen - 1, tlen);
     msg_index = constant_time_select_int(good, msg_index, dblen - tlen);
     mlen = dblen - msg_index;
-    for (from = db + msg_index, mask = good, i = 0; i < tlen; i++) {
+    for (mask = good, i = 0; i < tlen; i++) {
         unsigned int equals = constant_time_eq(i, mlen);
 
-        from -= dblen & equals; /* if (i == dblen) rewind   */
+        msg_index -= dblen & equals; /* if (i == dblen) rewind */
         mask &= mask ^ equals;  /* if (i == dblen) mask = 0 */
-        to[i] = constant_time_select_8(mask, from[i], to[i]);
+        to[i] = constant_time_select_8(mask, db[msg_index++], to[i]);
     }
 
     /*

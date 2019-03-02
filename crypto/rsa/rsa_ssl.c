@@ -92,10 +92,9 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
         from -= 1 & mask;
         *--em = *from & mask;
     }
-    from = em;
 
-    good = constant_time_is_zero(from[0]);
-    good &= constant_time_eq(from[1], 2);
+    good = constant_time_is_zero(em[0]);
+    good &= constant_time_eq(em[1], 2);
     err = constant_time_select_int(good, 0, RSA_R_BLOCK_TYPE_IS_NOT_02);
     mask = ~good;
 
@@ -103,18 +102,18 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     found_zero_byte = 0;
     threes_in_row = 0;
     for (i = 2; i < num; i++) {
-        unsigned int equals0 = constant_time_is_zero(from[i]);
+        unsigned int equals0 = constant_time_is_zero(em[i]);
 
         zero_index = constant_time_select_int(~found_zero_byte & equals0,
                                               i, zero_index);
         found_zero_byte |= equals0;
 
         threes_in_row += 1 & ~found_zero_byte;
-        threes_in_row &= found_zero_byte | constant_time_eq(from[i], 3);
+        threes_in_row &= found_zero_byte | constant_time_eq(em[i], 3);
     }
 
     /*
-     * PS must be at least 8 bytes long, and it starts two bytes into |from|.
+     * PS must be at least 8 bytes long, and it starts two bytes into |em|.
      * If we never found a 0-byte, then |zero_index| is 0 and the check
      * also fails.
      */
@@ -155,12 +154,12 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
                                     num - 11, tlen);
     msg_index = constant_time_select_int(good, msg_index, num - tlen);
     mlen = num - msg_index;
-    for (from += msg_index, mask = good, i = 0; i < tlen; i++) {
+    for (mask = good, i = 0; i < tlen; i++) {
         unsigned int equals = constant_time_eq(i, mlen);
 
-        from -= tlen & equals;  /* if (i == mlen) rewind   */
+        msg_index -= tlen & equals;  /* if (i == mlen) rewind */
         mask &= mask ^ equals;  /* if (i == mlen) mask = 0 */
-        to[i] = constant_time_select_8(mask, from[i], to[i]);
+        to[i] = constant_time_select_8(mask, em[msg_index++], to[i]);
     }
 
     OPENSSL_clear_free(em, num);
