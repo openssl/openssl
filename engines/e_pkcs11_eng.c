@@ -348,9 +348,21 @@ static EVP_PKEY *pkcs11_engine_load_private_key(ENGINE * e, const char *path,
 
 static int bind_pkcs11(ENGINE *e)
 {
+    const RSA_METHOD *ossl_rsa_meth;
+
+    ossl_rsa_meth = RSA_PKCS1_OpenSSL();
+
     if ((pkcs11_rsa = RSA_meth_new("PKCS#11 RSA method", 0)) == NULL
-         || !RSA_meth_set_sign(pkcs11_rsa, pkcs11_rsa_sign)
-         || !RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_priv_enc)) {
+        || !RSA_meth_set_sign(pkcs11_rsa, pkcs11_rsa_sign)
+        || !RSA_meth_set_pub_enc(pkcs11_rsa,
+                                 RSA_meth_get_pub_enc(ossl_rsa_meth))
+        || !RSA_meth_set_pub_dec(pkcs11_rsa,
+                                 RSA_meth_get_pub_dec(ossl_rsa_meth))
+        || !RSA_meth_set_priv_enc(pkcs11_rsa, pkcs11_rsa_priv_enc)
+        || !RSA_meth_set_mod_exp(pkcs11_rsa,
+                                 RSA_meth_get_mod_exp(ossl_rsa_meth))
+        || !RSA_meth_set_bn_mod_exp(pkcs11_rsa,
+                                    RSA_meth_get_bn_mod_exp(ossl_rsa_meth))) {
         PKCS11err(PKCS11_F_BIND_PKCS11, PKCS11_R_RSA_INIT_FAILED);
         return 0;
     }
