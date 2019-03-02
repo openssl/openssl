@@ -55,6 +55,8 @@ When a padding mode other than RSA_NO_PADDING is in use, then
 RSA_public_encrypt() will include some random bytes into the ciphertext
 and therefore the ciphertext will be different each time, even if the
 plaintext and the public key are exactly identical.
+The returned ciphertext in B<to> will always be zero padded to exactly
+RSA_size(B<rsa>) bytes.
 B<to> and B<from> may overlap.
 
 RSA_private_decrypt() decrypts the B<flen> bytes at B<from> using the
