@@ -121,7 +121,6 @@ int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
-    char **copied_argv = NULL;
     char *p, *pname;
     char buf[1024];
     const char *prompt;
@@ -138,7 +137,7 @@ int main(int argc, char *argv[])
     bio_err = dup_bio_err(FORMAT_TEXT);
 
 #if defined(OPENSSL_SYS_VMS) && defined(__DECC)
-    copied_argv = argv = copy_argv(&argc, argv);
+    argv = copy_argv(&argc, argv);
 #elif defined(_WIN32)
     /*
      * Replace argv[] with UTF-8 encoded strings.
@@ -252,7 +251,6 @@ int main(int argc, char *argv[])
     }
     ret = 1;
  end:
-    OPENSSL_free(copied_argv);
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
