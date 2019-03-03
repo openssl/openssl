@@ -32,6 +32,7 @@
 # include "apps_ui.h"
 # include "opt.h"
 # include "fmt.h"
+# include "platform.h"
 
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
@@ -96,18 +97,6 @@ typedef struct args_st {
     int argc;
     char **argv;
 } ARGS;
-
-/*
- * VMS C only for now, implemented in vms_decc_init.c
- * If other C compilers forget to terminate argv with NULL, this function
- * can be re-used.
- */
-char **copy_argv(int *argc, char *argv[]);
-/*
- * Win32-specific argv initialization that splits OS-supplied UNICODE
- * command line string to array of UTF8-encoded strings.
- */
-void win32_utf8argv(int *argc, char **argv[]);
 
 /* We need both wrap and the "real" function because libcrypto uses both. */
 int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
