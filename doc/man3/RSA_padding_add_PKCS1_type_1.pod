@@ -116,8 +116,8 @@ For RSA_padding_xxx_OAEP(), B<p> points to the encoding parameter
 of length B<pl>. B<p> may be B<NULL> if B<pl> is 0.
 
 For RSA_padding_xxx_OAEP_mgf1(), B<md> points to the md hash,
-if B<md> is B<NULL> that means use md=sha1, and B<mgf1md> points to
-the mgf1 hash, if B<mgf1md> is B<NULL> that means mfg1md=md.
+if B<md> is B<NULL> that means md=sha1, and B<mgf1md> points to
+the mgf1 hash, if B<mgf1md> is B<NULL> that means mgf1md=md.
 
 =head1 RETURN VALUES
 
@@ -136,7 +136,7 @@ possible, the result of RSA_padding_check_PKCS1_type_2() should be
 checked in constant time if it matches the expected length of the
 plaintext and additionally some application specific consistency
 checks on the plaintext need to be performed in constant time.
-If the plaintext is rejected it must be kept secret with of the
+If the plaintext is rejected it must be kept secret which of the
 checks caused the application to reject the message.
 
 =head1 SEE ALSO
