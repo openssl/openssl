@@ -9,7 +9,8 @@
 
 #include <stdlib.h>
 #include <openssl/crypto.h>
-#include "apps.h"                /* for app_malloc() and copy_argv() */
+#include "platform.h"            /* for copy_argv() */
+#include "apps.h"                /* for app_malloc() */
 
 char **newargv = NULL;
 
