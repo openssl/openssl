@@ -113,8 +113,9 @@ RSA_padding_check_PKCS1_OAEP_mgf1().
 
 For RSA_padding_xxx_OAEP(), B<p> points to the encoding parameter
 of length B<pl>. B<p> may be B<NULL> if B<pl> is 0.
-For RSA_paddint_xxx_OAEP_mgf1() if B<md> is B<NULL> means use
-md=sha1, and B<mgf1md> is B<NULL> means mfg1md=md.
+For RSA_padding_xxx_OAEP_mgf1(), B<md> points to the md hash,
+B<md> = B<NULL> means use md=sha1, and B<mgf1md> points to the
+mgf1 hash, B<mgf1md> = B<NULL> means mfg1md=md.
 
 =head1 RETURN VALUES
 
