@@ -109,14 +109,15 @@ B<tlen> must be large enough to hold the maximal possible plaintext
 length for the used padding mode, which is B<rsa_len> - 11 for
 RSA_padding_check_PKCS1_type_2() and RSA_padding_check_SSLv23(),
 B<rsa_len> - 42 for RSA_padding_check_PKCS1_OAEP()
-and B<rsa_len> - 2 * EVP_MD_size(B<md>) - 2 for
-RSA_padding_check_PKCS1_OAEP_mgf1().
+and B<rsa_len> - 2 * EVP_MD_size(B<md>) - 2
+for RSA_padding_check_PKCS1_OAEP_mgf1().
 
 For RSA_padding_xxx_OAEP(), B<p> points to the encoding parameter
 of length B<pl>. B<p> may be B<NULL> if B<pl> is 0.
+
 For RSA_padding_xxx_OAEP_mgf1(), B<md> points to the md hash,
-B<md> = B<NULL> means use md=sha1, and B<mgf1md> points to the
-mgf1 hash, B<mgf1md> = B<NULL> means mfg1md=md.
+if B<md> is B<NULL> that means use md=sha1, and B<mgf1md> points to
+the mgf1 hash, if B<mgf1md> is B<NULL> that means mfg1md=md.
 
 =head1 RETURN VALUES
 
@@ -133,8 +134,8 @@ padding oracle attack. This is an inherent weakness in the PKCS #1
 v1.5 padding design. Prefer PKCS1_OAEP padding. If that is not
 possible, the result of RSA_padding_check_PKCS1_type_2() should be
 checked in constant time if it matches the expected length of the
-plain text and additionally some application specific consistency
-checks on the plain text need to be performed in constant time.
+plaintext and additionally some application specific consistency
+checks on the plaintext need to be performed in constant time.
 If the plaintext is rejected it must be kept secret with of the
 checks caused the application to reject the message.
 
