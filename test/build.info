@@ -47,7 +47,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest rsa_mp_test fatalerrtest tls13ccstest \
           sysdefaulttest errtest gosttest \
-          context_internal_test
+          context_internal_test params_test
 
   SOURCE[versions]=versions.c
   INCLUDE[versions]=../include ../apps/include
@@ -575,6 +575,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[context_internal_test]=context_internal_test.c
   INCLUDE[context_internal_test]=.. ../include ../apps/include
   DEPEND[context_internal_test]=../libcrypto.a libtestutil.a
+
+  PROGRAMS{noinst}=params_test
+  SOURCE[params_test]=params_test.c
+  INCLUDE[params_test]=.. ../include ../apps/include
+  DEPEND[params_test]=../libcrypto.a libtestutil.a
 ENDIF
 
 {-
