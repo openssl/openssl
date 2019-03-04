@@ -25,7 +25,8 @@ static int test_params(void)
     static int i;
     static uint64_t u64 = U64VAL;
     static double d1 = DOUBLE;
-    static char buffer[200];
+    static unsigned char buffer[200];
+    size_t buffer_l;
     uint64_t alt64 = 0;
     double d2 = 0;
     BIGNUM *b1 = NULL, *b2 = NULL;
@@ -34,7 +35,9 @@ static int test_params(void)
         OSSL_PARAM_int("intparam", &i),
         OSSL_PARAM_size_t("--unused--", &sz),
         OSSL_PARAM_double("doubleparam", &d1),
-        OSSL_PARAM_bignum("bignumparam", buffer, sizeof(buffer)),
+        /* OSSL_PARAM_bignum is lacking return_size param */
+        OSSL_PARAM_DEF("bignumparam", OSSL_PARAM_BIGNUM,
+                       buffer, sizeof(buffer), &buffer_l),
         { NULL }
     };
     int r = 0;
@@ -63,14 +66,14 @@ static int test_params(void)
     b1 = BN_new();
     BN_zero(b1);
     if (!TEST_true(OSSL_PARAM_set_bignum(params, "bignumparam", b1))
-            || !TEST_true(OSSL_PARAM_get_bignum(params, "bignumparam", &b2))
-            || !TEST_int_eq(BN_cmp(b1, b2), 0))
+            || !TEST_ptr(b2 = BN_native2bn(buffer, buffer_l, NULL))
+            || !TEST_BN_eq(b1, b2))
         goto err;
 
     if (!TEST_true(BN_hex2bn(&b1, BNSTRING))
             || !TEST_true(OSSL_PARAM_set_bignum(params, "bignumparam", b1))
-            || !TEST_true(OSSL_PARAM_get_bignum(params, "bignumparam", &b2))
-            || !TEST_int_eq(BN_cmp(b1, b2), 0))
+            || !TEST_ptr(b2 = BN_native2bn(buffer, buffer_l, NULL))
+            || !TEST_BN_eq(b1, b2))
         goto err;
 
     r = 1;
