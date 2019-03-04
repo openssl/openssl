@@ -37,6 +37,7 @@ static const OSSL_ITEM p_param_types[] = {
     { OSSL_PARAM_UTF8_STRING, "greeting" },
     { 0, NULL }
 };
+
 static const OSSL_ITEM *p_get_param_types(const OSSL_PROVIDER *_)
 {
     return p_param_types;
