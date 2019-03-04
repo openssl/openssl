@@ -21,11 +21,13 @@
 
 static int test_params(void)
 {
-    char buffer[200];
-    size_t sz = 0;
-    int i = 0;
-    uint64_t u64 = U64VAL, alt64 = 0;
-    double d1 = DOUBLE, d2 = 0;
+    static size_t sz;
+    static int i;
+    static uint64_t u64 = U64VAL;
+    static double d1 = DOUBLE;
+    static char buffer[200];
+    uint64_t alt64 = 0;
+    double d2 = 0;
     BIGNUM *b1 = NULL, *b2 = NULL;
     OSSL_PARAM params[] = {
         OSSL_PARAM_uint64("u64param", &u64),
