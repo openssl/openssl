@@ -32,16 +32,16 @@ The functions described here handle both forms.
 
 =head2 Functions
 
-OSSL_add_provider() is used to add a built in provider in the given
+OSSL_add_provider() is used to add a built in provider to the given
 library context, by associating a provider name with a provider
 initialization function.
 This name can then be used with OSSL_load_provider().
 
 OSSL_load_provider() loads and initializes a provider.
 This may simply initialize a provider that was previously added with
-OSSL_add_provider() and simply run its given initialization function,
-or load a provider module with the given name and run its provider
-entry point, C<OSSL_provider_init>.
+OSSL_add_provider() and run its given initialization function, or load
+a provider module with the given name and run its provider entry
+point, C<OSSL_provider_init>.
 
 OSSL_unload_provider() unloads the given provider.
 

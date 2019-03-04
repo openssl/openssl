@@ -39,8 +39,8 @@ ossl_provider_get_params - internal provider routines
 
 =head1 DESCRIPTION
 
-C<OSSL_PROVIDER> is an type that holds all the necessary information
-to handle a provider, regardless of if it's a built in to the
+C<OSSL_PROVIDER> is a type that holds all the necessary information
+to handle a provider, regardless of if it's built in to the
 application or the OpenSSL libraries, or if it's a loadable provider
 module.
 Instances of this type are commonly refered to as I<provider object>s.
@@ -52,8 +52,8 @@ I<provider object>s are reference counted.
 
 I<provider object>s are initially inactive, i.e. they are only
 recorded in the store, but are not used.
-They get activated with a the first call to ossl_provider_load(), and
-get inactivated when ossl_provider_free() has been called enough
+They are activated with a the first call to ossl_provider_load(), and
+are inactivated when ossl_provider_free() has been called enough
 times.
 
 =head2 Functions
@@ -83,14 +83,14 @@ provider module.
 
 ossl_provider_load() "activates" the provider for the given
 I<provider object>.
-What "activates" actually means depends on what type of
-I<provider object> it is:
+What "activates" means depends on what type of I<provider object> it
+is:
 
 =over 4
 
 =item *
 
-If a initialization function was given with ossl_provider_new(), that
+If an initialization function was given with ossl_provider_new(), that
 function will get called.
 
 =item *
@@ -106,20 +106,20 @@ ossl_provider_name() returns the name that was given with
 ossl_provider_new().
 
 ossl_provider_dso() returns a reference to the module, for providers
-that come in form of loadable modules.
+that come in the form of loadable modules.
 
 ossl_provider_module_name() returns the file name of the module, for
-providers that come in form of loadable modules.
+providers that come in the form of loadable modules.
 
-ossl_provider_module_path() returns the full path of module file, for
-providers that come in form of loadable modules.
+ossl_provider_module_path() returns the full path of the module file,
+for providers that come in the form of loadable modules.
 
 ossl_provider_teardown() calls the provider's C<teardown> function, if
 the provider has one.
 
 ossl_provider_get_param_types() calls the provider's C<get_param_types>
 function, if the provider has one.
-It should returns an array of C<OSSL_ITEM> to describe all the
+It should return an array of C<OSSL_ITEM> to describe all the
 parameters that the provider has for the I<provider object>.
 
 ossl_provider_get_params() calls the provider's parameter request
@@ -135,11 +135,11 @@ Locating a provider module happens as follows:
 
 =item 1.
 
-Look in each directory given with ossl_provider_add_load_location().
+Look in each directory given by ossl_provider_add_load_location().
 
 =item 2.
 
-Look in the directory given with the environment variable
+Look in the directory given by the environment variable
 B<OPENSSL_MODULES>.
 
 =item 3.
@@ -164,7 +164,8 @@ success, or 0 on error.
 
 ossl_provider_name(), ossl_provider_dso(),
 ossl_provider_module_name(), and ossl_provider_module_path() return a
-pointer to their respective data if it's available, otherwise B<NULL>.
+pointer to their respective data if it's available, otherwise B<NULL>
+is returned.
 
 ossl_provider_teardown() doesnt't return any value.
 
