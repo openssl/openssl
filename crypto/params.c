@@ -175,8 +175,8 @@ int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
         }
         break;
     }
-fail:
     SET_RETURN_SIZE(p, 0);
-    return 0;    
+fail:
+    return 0;
 #undef CASE
 }
