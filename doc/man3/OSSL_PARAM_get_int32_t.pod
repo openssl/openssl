@@ -12,19 +12,14 @@ OSSL_PARAM_get_TYPE, OSSL_PARAM_set_TYPE, OSSL_PARAM_get_BN, OSSL_PARAM_set_BN
  #include <openssl/params.h>
 
  OSSL_PARAM_TYPE(key, address)
-
  OSSL_PARAM_SIZED_TYPE(key, address, return_size)
-
  OSSL_PARAM_SIZED_BN(key, address, size, return_size)
-
  OSSL_PARAM_END
 
  int OSSL_PARAM_get_TYPE(const OSSL_PARAM *p, const char *key, TYPE *val);
-
  int OSSL_PARAM_set_TYPE(const OSSL_PARAM *p, const char *key, TYPE val);
 
  int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val);
-
  int OSSL_PARAM_set_BN(const OSSL_PARAM *p, const char *key, const BIGNUM *val);
 
 =head1 DESCRIPTION

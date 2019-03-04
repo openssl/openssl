@@ -53,36 +53,36 @@ extern "C" {
     OSSL_PARAM_DEFN((key), OSSL_PARAM_REAL, (addr), sizeof(double), NULL)
 
 /* Basic parameter types including return sizes */
-# define OSSL_PARAM_SIZED_int(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(int), &(sz))
-# define OSSL_PARAM_SIZED_uint(key, addr, sz) \
+# define OSSL_PARAM_SIZED_int(key, addr, r_sz) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(int), &(r_sz))
+# define OSSL_PARAM_SIZED_uint(key, addr, r_sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
-                    sizeof(unsigned int), &(sz))
-# define OSSL_PARAM_SIZED_long(key, addr, sz) \
+                    sizeof(unsigned int), &(r_sz))
+# define OSSL_PARAM_SIZED_long(key, addr, r_sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(long int), \
-                    &(sz))
-# define OSSL_PARAM_SIZED_ulong(key, addr, sz) \
+                    &(r_sz))
+# define OSSL_PARAM_SIZED_ulong(key, addr, r_sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
-                    sizeof(unsigned long int), &(sz))
-# define OSSL_PARAM_SIZED_int32(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(int32_t), &(sz))
-# define OSSL_PARAM_SIZED_uint32(key, addr, sz) \
+                    sizeof(unsigned long int), &(r_sz))
+# define OSSL_PARAM_SIZED_int32(key, addr, r_sz) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(int32_t), &(r_sz))
+# define OSSL_PARAM_SIZED_uint32(key, addr, r_sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
-                    sizeof(uint32_t), &(sz))
-# define OSSL_PARAM_SIZED_int64(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(int64_t), &(sz))
-# define OSSL_PARAM_SIZED_uint64(key, addr, sz) \
+                    sizeof(uint32_t), &(r_sz))
+# define OSSL_PARAM_SIZED_int64(key, addr, r_sz) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(int64_t), &(r_sz))
+# define OSSL_PARAM_SIZED_uint64(key, addr, r_sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
-                    sizeof(uint64_t), &(sz))
-# define OSSL_PARAM_SIZED_size_t(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sizeof(size_t), \
-               &(sz))
-# define OSSL_PARAM_SIZED_double(key, addr, sz) \
-    OSSL_PARAM_DEFN((key), OSSL_PARAM_REAL, (addr), sizeof(double), &(sz))
+                    sizeof(uint64_t), &(r_sz))
+# define OSSL_PARAM_SIZED_size_t(key, addr, r_sz) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), \
+                    sizeof(size_t), &(r_sz))
+# define OSSL_PARAM_SIZED_double(key, addr, r_sz) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_REAL, (addr), sizeof(double), &(r_sz))
 
 # define OSSL_PARAM_SIZED_BN(key, addr, sz, r_sz) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sz, \
-                    &(sz))
+                    &(r_sz))
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, const char *key, int *val);
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, const char *key,

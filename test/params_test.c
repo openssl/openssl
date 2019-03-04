@@ -183,7 +183,6 @@ static int test_param_bignum(int n)
         goto err;
 
     if (!TEST_true(OSSL_PARAM_set_BN(&param, "bn", b))
-        || !TEST_size_t_eq(bnsize, param.buffer_size)
         || !TEST_mem_eq(bnbuf, len, buf, len)
         || !TEST_true(OSSL_PARAM_get_BN(&param, "bn", &c))
         || !TEST_BN_eq(b, c))
