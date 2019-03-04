@@ -13,7 +13,7 @@
 
 # include <openssl/opensslconf.h>
 
-# if !defined(OPENSSL_NO_CRMF) && !defined(OPENSSL_NO_CMP)
+# ifndef OPENSSL_NO_CMP
 
 #  ifdef  __cplusplus
 extern "C"
