@@ -98,7 +98,9 @@ static void *init_object(void)
 
     return obj;
  fail:
-    cleanup_object(&obj);
+    cleanup_object(obj);
+    obj = NULL;
+
     return NULL;
 }
 
@@ -119,10 +121,12 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
         } else if (strcmp(params->key, "p2") == 0) {
             obj->p2 = *(double *)params->buffer;
         } else if (strcmp(params->key, "p3") == 0) {
+            BN_free(obj->p3);
             if ((obj->p3 = BN_native2bn(params->buffer, params->buffer_size,
                                         NULL)) == NULL)
                 return 0;
         } else if (strcmp(params->key, "p4") == 0) {
+            OPENSSL_free(obj->p4);
             if ((obj->p4 = OPENSSL_strndup(params->buffer,
                                            params->buffer_size)) == NULL)
                 return 0;
@@ -270,9 +274,13 @@ const OSSL_PARAM raw_params[] = {
     { NULL, 0, NULL, 0, NULL }
 };
 
+/*-
+ * TESTING
+ * =======
+ */
+
 /*
- * Finally, test cases to combine parameters with "provider side"
- * functions
+ * Test cases to combine parameters with "provider side" functions
  */
 struct {
     const struct provider_dispatch_st *prov;
@@ -280,11 +288,6 @@ struct {
 } test_cases[] = {
     { &provider_raw, raw_params }
 };
-
-/*-
- * TESTING
- * =======
- */
 
 /* Generic tester of combinations of "providers" and params */
 static int test_case(int i)
