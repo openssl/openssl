@@ -24,6 +24,7 @@
 # include <openssl/opensslv.h>
 # include <openssl/ossl_typ.h>
 # include <openssl/opensslconf.h>
+# include <openssl/symhacks.h>
 # include <openssl/cryptoerr.h>
 
 # ifdef CHARSET_EBCDIC
