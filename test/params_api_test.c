@@ -26,7 +26,7 @@ static int test_params(void)
     static uint64_t u64 = U64VAL;
     static double d1 = DOUBLE;
     static unsigned char buffer[200];
-    size_t buffer_l;
+    static size_t buffer_l;
     uint64_t alt64 = 0;
     double d2 = 0;
     BIGNUM *b1 = NULL, *b2 = NULL;
