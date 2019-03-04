@@ -9,4 +9,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_params", "params_test");
+simple_test("test_params_api", "params_api_test");
