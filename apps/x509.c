@@ -490,8 +490,8 @@ int x509_main(int argc, char **argv)
     }
 
     if (newcert && infile != NULL) {
-        BIO_printf(bio_err, "ignoring -in option since -new is set\n");
-        infile = NULL;
+        BIO_printf(bio_err, "The -in option must not be used since -new is set\n");
+        goto end;
     }
     if (newcert && fkeyfile == NULL) {
         BIO_printf(bio_err,
