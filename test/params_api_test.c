@@ -60,14 +60,14 @@ static int test_params(void)
     /* Some BIGNUM tests. */
     b1 = BN_new();
     BN_zero(b1);
-    if (!TEST_true(OSSL_PARAM_set_BN(params, "bignumparam", b1))
-            || !TEST_true(OSSL_PARAM_get_BN(params, "bignumparam", &b2))
+    if (!TEST_true(OSSL_PARAM_set_bignum(params, "bignumparam", b1))
+            || !TEST_true(OSSL_PARAM_get_bignum(params, "bignumparam", &b2))
             || !TEST_int_eq(BN_cmp(b1, b2), 0))
         goto err;
 
     if (!TEST_true(BN_hex2bn(&b1, BNSTRING))
-            || !TEST_true(OSSL_PARAM_set_BN(params, "bignumparam", b1))
-            || !TEST_true(OSSL_PARAM_get_BN(params, "bignumparam", &b2))
+            || !TEST_true(OSSL_PARAM_set_bignum(params, "bignumparam", b1))
+            || !TEST_true(OSSL_PARAM_get_bignum(params, "bignumparam", &b2))
             || !TEST_int_eq(BN_cmp(b1, b2), 0))
         goto err;
 

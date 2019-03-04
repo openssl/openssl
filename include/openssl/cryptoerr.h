@@ -38,11 +38,11 @@ int ERR_load_CRYPTO_strings(void);
 # define CRYPTO_F_OPENSSL_LH_NEW                          126
 # define CRYPTO_F_OPENSSL_SK_DEEP_COPY                    127
 # define CRYPTO_F_OPENSSL_SK_DUP                          128
-# define CRYPTO_F_OSSL_PARAM_GET_BN                       130
+# define CRYPTO_F_OSSL_PARAM_GET_BIGNUM                   130
 # define CRYPTO_F_OSSL_PARAM_GET_DOUBLE                   131
 # define CRYPTO_F_OSSL_PARAM_GET_INT_COMMON               132
 # define CRYPTO_F_OSSL_PARAM_LOCATE                       133
-# define CRYPTO_F_OSSL_PARAM_SET_BN                       134
+# define CRYPTO_F_OSSL_PARAM_SET_BIGNUM                   134
 # define CRYPTO_F_OSSL_PARAM_SET_DOUBLE                   135
 # define CRYPTO_F_OSSL_PARAM_SET_INT_COMMON               136
 # define CRYPTO_F_PKEY_HMAC_INIT                          123

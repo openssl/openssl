@@ -146,7 +146,7 @@ int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
     return 1;
 }
 
-int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
+int OSSL_PARAM_get_bignum(const OSSL_PARAM *p, const char *key, BIGNUM **val)
 {
     BIGNUM *b;
 
@@ -155,7 +155,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
 
     /* Type safety. */
     if (p->data_type != OSSL_PARAM_BIGNUM) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BN, CRYPTO_R_TYPE_MISMATCH);
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_GET_BIGNUM, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
@@ -165,7 +165,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
     return 1;
 }
 
-int OSSL_PARAM_set_BN(OSSL_PARAM *p, const char *key, const BIGNUM *val)
+int OSSL_PARAM_set_bignum(OSSL_PARAM *p, const char *key, const BIGNUM *val)
 {
     const size_t bytes = (size_t)BN_num_bytes(val);
     int r;
@@ -175,7 +175,7 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const char *key, const BIGNUM *val)
 
     /* Type safety. */
     if (p->data_type != OSSL_PARAM_BIGNUM || p->buffer_size < bytes) {
-        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BN, CRYPTO_R_TYPE_MISMATCH);
+        CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_BIGNUM, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
