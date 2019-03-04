@@ -161,7 +161,8 @@ int x509_main(int argc, char **argv)
     CONF *extconf = NULL;
     EVP_PKEY *Upkey = NULL, *CApkey = NULL, *fkey = NULL;
     int newcert = 0;
-    char *subj = NULL; X509_NAME *fsubj = NULL;
+    char *subj = NULL;
+    X509_NAME *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
     const int multirdn = 0;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
@@ -512,13 +513,13 @@ int x509_main(int argc, char **argv)
     if (subj != NULL && (fsubj = parse_name(subj, chtype, multirdn)) == NULL)
         goto end;
 
-    if ((CAkeyfile == NULL) && (CA_flag) && (CAformat == FORMAT_PEM)) {
+    if (CAkeyfile == NULL && CA_flag && CAformat == FORMAT_PEM) {
         CAkeyfile = CAfile;
-    } else if ((CA_flag) && (CAkeyfile == NULL)) {
+    } else if (CA_flag && CAkeyfile == NULL) {
         BIO_printf(bio_err,
                    "need to specify a CAkey if using the CA command\n");
         goto end;
-    } else if (!(CA_flag) && (CAkeyfile != NULL)) {
+    } else if (!CA_flag && CAkeyfile != NULL) {
         BIO_printf(bio_err,
                    "ignoring -CAkey option since no -CA option is given\n");
     }
@@ -692,7 +693,7 @@ int x509_main(int argc, char **argv)
                 i2a_ASN1_INTEGER(out, ser);
                 ASN1_INTEGER_free(ser);
                 BIO_puts(out, "\n");
-            } else if ((email == i) || (ocsp_uri == i)) {
+            } else if (email == i || ocsp_uri == i) {
                 int j;
                 STACK_OF(OPENSSL_STRING) *emlst;
                 if (email == i)
@@ -826,7 +827,7 @@ int x509_main(int argc, char **argv)
             }
 
             /* should be in the library */
-            else if ((sign_flag == i) && (x509req == 0)) {
+            else if (sign_flag == i && x509req == 0) {
                 BIO_printf(bio_err, "Getting Private key\n");
                 if (Upkey == NULL) {
                     Upkey = load_key(keyfile, keyformat, 0,
