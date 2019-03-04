@@ -15,6 +15,7 @@
 #include <string.h>
 #include <openssl/bn.h>
 #include <openssl/core.h>
+#include <openssl/params.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -184,6 +185,88 @@ static int raw_get_params(void *vobj, const OSSL_PARAM *params)
 }
 
 /*
+ * API provider, which handles the parameters using the API from params.h
+ */
+
+static int api_set_params(void *vobj, const OSSL_PARAM *params)
+{
+    struct object_st *obj = vobj;
+
+    if (!TEST_true(OSSL_PARAM_get_int(params, "p1", &obj->p1))
+        || !TEST_true(OSSL_PARAM_get_double(params, "p2", &obj->p2))
+        || !TEST_true(OSSL_PARAM_get_BN(params, "p3", &obj->p3))
+#ifdef OSSL_PARAM_utf8_string /* OSSL_PARAM_get_utf8_string doesn't exist yet */
+        || !TEST_true(OSSL_PARAM_get_utf8_string(params, "p4", &obj->p4))
+        || !TEST_true(OSSL_PARAM_get_utf8_string(params, "p5", &obj->p5))
+#endif
+        )
+        return 0;
+
+#ifndef OSSL_PARAM_utf8_string /* Alternative */
+# if 0                         /* Except OSSL_PARAM_locate doesn't exist */
+    {
+        const OSSL_PARAM *p = NULL;
+
+        if (!TEST_ptr(p = OSSL_PARAM_locate(params, "p4"))) {
+            OPENSSL_free(obj->p4);
+            if (!TEST_ptr(obj->p4 = OPENSSL_strndup(params->buffer,
+                                                    params->buffer_size)))
+                return 0;
+        }
+
+        if ((p = OSSL_PARAM_locate(params, "p5")) != NULL)
+            obj->p5 = *(const char **)params->buffer;
+    }
+# endif
+#endif
+
+    return 1;
+}
+
+static int api_get_params(void *vobj, const OSSL_PARAM *params)
+{
+    struct object_st *obj = vobj;
+
+    if (!TEST_true(OSSL_PARAM_set_int(params, "p1", obj->p1))
+        || !TEST_true(OSSL_PARAM_set_double(params, "p2", obj->p2))
+        || !TEST_true(OSSL_PARAM_set_BN(params, "p3", obj->p3))
+#ifdef OSSL_PARAM_utf8_string /* OSSL_PARAM_get_utf8_string doesn't exist yet */
+        || !TEST_true(OSSL_PARAM_set_utf8_string(params, "p4", obj->p4))
+        || !TEST_true(OSSL_PARAM_set_utf8_string(params, "p5", obj->p5))
+#endif
+        )
+        return 0;
+
+#ifndef OPENSSL_PARAM_utf8_string /* Alternative */
+# if 0                         /* Except OSSL_PARAM_locate doesn't exist */
+    {
+        const OSSL_PARAM *p = NULL;
+
+        if ((p = OSSL_PARAM_locate(params, "p4")) != NULL) {
+            size_t bytes = strlen(obj->p4) + 1;
+
+            if (params->return_size != NULL)
+                *params->return_size = bytes;
+            if (!TEST_size_t_ge(params->buffer_size, bytes))
+                return 0;
+            strcpy(params->buffer, obj->p4);
+        }
+
+        if ((p = OSSL_PARAM_locate(params, "p5")) != NULL) {
+            size_t bytes = strlen(obj->p5) + 1;
+
+            if (params->return_size != NULL)
+                *params->return_size = bytes;
+            *(const char **)params->buffer = obj->p5;
+        }
+    }
+# endif
+#endif
+
+    return 1;
+}
+
+/*
  * This structure only simulates a provider dispatch, the real deal is
  * a bit more code that's not necessary in these tests.
  */
@@ -195,6 +278,11 @@ struct provider_dispatch_st {
 /* "raw" provider */
 static const struct provider_dispatch_st provider_raw = {
     raw_set_params, raw_get_params
+};
+
+/* "api" provider */
+static const struct provider_dispatch_st provider_api = {
+    api_set_params, api_get_params
 };
 
 /*-
@@ -274,6 +362,18 @@ const OSSL_PARAM raw_params[] = {
     { NULL, 0, NULL, 0, NULL }
 };
 
+/* The same array of OSSL_PARAM, specified with the macros from params.h */
+const OSSL_PARAM api_params[] = {
+    OSSL_PARAM_int("p1", &app_p1),
+    OSSL_PARAM_SIZED_BN("p3", &bignumbin, sizeof(bignumbin), bignumbin_l),
+    OSSL_PARAM_DEFN("p4", OSSL_PARAM_UTF8_STRING, &app_p4, sizeof(app_p4),
+                    &app_p4_l),
+    OSSL_PARAM_DEFN("p5", OSSL_PARAM_UTF8_STRING_PTR, &app_p5, sizeof(app_p5),
+                    &app_p5_l),
+    OSSL_PARAM_DEFN("foo", OSSL_PARAM_OCTET_STRING, &foo, sizeof(foo), &foo_l),
+    OSSL_PARAM_END
+};
+
 /*-
  * TESTING
  * =======
@@ -287,7 +387,13 @@ struct {
     const OSSL_PARAM *params;
     const char *desc;
 } test_cases[] = {
-    { &provider_raw, raw_params, "raw provider vs raw params" }
+    /* Tests within specific methods */
+    { &provider_raw, raw_params, "raw provider vs raw params" },
+    { &provider_api, api_params, "api provider vs api params" },
+
+    /* Mixed methods */
+    { &provider_raw, api_params, "raw provider vs api params" },
+    { &provider_api, raw_params, "api provider vs raw params" },
 };
 
 /* Generic tester of combinations of "providers" and params */
