@@ -90,9 +90,9 @@ static void *init_object(void)
 
     obj->p1 = p1_init;
     obj->p2 = p2_init;
-    if (!BN_hex2bn(&obj->p3, p3_init))
+    if (!TEST_true(BN_hex2bn(&obj->p3, p3_init)))
         goto fail;
-    if ((obj->p4 = OPENSSL_strdup(p4_init)) == NULL)
+    if (!TEST_ptr(obj->p4 = OPENSSL_strdup(p4_init)))
         goto fail;
     obj->p5 = p5_init;
 
@@ -122,13 +122,13 @@ static int raw_set_params(void *vobj, const OSSL_PARAM *params)
             obj->p2 = *(double *)params->buffer;
         } else if (strcmp(params->key, "p3") == 0) {
             BN_free(obj->p3);
-            if ((obj->p3 = BN_native2bn(params->buffer, params->buffer_size,
-                                        NULL)) == NULL)
+            if (!TEST_ptr(obj->p3 = BN_native2bn(params->buffer,
+                                                 params->buffer_size, NULL)))
                 return 0;
         } else if (strcmp(params->key, "p4") == 0) {
             OPENSSL_free(obj->p4);
-            if ((obj->p4 = OPENSSL_strndup(params->buffer,
-                                           params->buffer_size)) == NULL)
+            if (!TEST_ptr(obj->p4 = OPENSSL_strndup(params->buffer,
+                                                    params->buffer_size)))
                 return 0;
         } else if (strcmp(params->key, "p5") == 0) {
             obj->p5 = *(const char **)params->buffer;
@@ -155,7 +155,7 @@ static int raw_get_params(void *vobj, const OSSL_PARAM *params)
 
             if (params->return_size != NULL)
                 *params->return_size = bytes;
-            if (params->buffer_size < bytes)
+            if (!TEST_size_t_ge(params->buffer_size, bytes))
                 return 0;
             BN_bn2nativepad(obj->p3, params->buffer, bytes);
         } else if (strcmp(params->key, "p4") == 0) {
@@ -163,7 +163,7 @@ static int raw_get_params(void *vobj, const OSSL_PARAM *params)
 
             if (params->return_size != NULL)
                 *params->return_size = bytes;
-            if (params->buffer_size < bytes)
+            if (!TEST_size_t_ge(params->buffer_size, bytes))
                 return 0;
             strcpy(params->buffer, obj->p4);
         } else if (strcmp(params->key, "p5") == 0) {
@@ -285,8 +285,9 @@ const OSSL_PARAM raw_params[] = {
 struct {
     const struct provider_dispatch_st *prov;
     const OSSL_PARAM *params;
+    const char *desc;
 } test_cases[] = {
-    { &provider_raw, raw_params }
+    { &provider_raw, raw_params, "raw provider vs raw params" }
 };
 
 /* Generic tester of combinations of "providers" and params */
@@ -297,6 +298,8 @@ static int test_case(int i)
     BIGNUM *verify_p3 = NULL;
     void *obj = NULL;
     int errcnt = 0;
+
+    TEST_info("Case: %s", test_cases[i].desc);
 
     /*
      * Initialize
