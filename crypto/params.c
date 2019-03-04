@@ -70,14 +70,14 @@ static int OSSL_PARAM_set_int_common(const OSSL_PARAM *p, const char *key,
 
     /* Type safety. */
     width = OSSL_PARAM_get_width(type);
+    if (p->return_size != NULL)
+        *p->return_size = width;
     if (p->data_type != type || p->buffer_size != width) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_INT_COMMON, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
 
     memcpy(p->buffer, val, width);
-    if (p->return_size != NULL)
-        *p->return_size = width;
     return 1;
 }
 
@@ -135,14 +135,14 @@ int OSSL_PARAM_set_double(const OSSL_PARAM *p, const char *key, double val)
 
     /* Type safety. */
     width = OSSL_PARAM_get_width(OSSL_PARAM_DOUBLE);
+    if (p->return_size != NULL)
+        *p->return_size = width;
     if (p->data_type != OSSL_PARAM_DOUBLE || p->buffer_size != width) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_SET_DOUBLE, CRYPTO_R_TYPE_MISMATCH);
         return 0;
     }
     dp = (double *)p->buffer;
     *dp = val;
-    if (p->return_size != NULL)
-        *p->return_size = width;
     return 1;
 }
 
@@ -162,8 +162,6 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, const char *key, BIGNUM **val)
     if ((b = BN_native2bn(p->buffer, (int)p->bn_size, *val)) == NULL)
         return 0;
     *val = b;
-    if (p->return_size != NULL)
-        *p->return_size = BN_num_bytes(b);
     return 1;
 }
 
