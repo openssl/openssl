@@ -299,8 +299,10 @@ static int test_case(int i)
      * Initialize
      */
     if (!TEST_ptr(obj = init_object())
-        || !TEST_true(BN_hex2bn(&verify_p3, p3_init)))
-        return 0;
+        || !TEST_true(BN_hex2bn(&verify_p3, p3_init))) {
+        errcnt++;
+        goto fin;
+    }
 
     /*
      * Get parameters a first time, just to see that getting works and
@@ -345,8 +347,10 @@ static int test_case(int i)
     BN_free(verify_p3);
     verify_p3 = NULL;
 
-    if (!TEST_true(BN_hex2bn(&verify_p3, app_p3_init)))
-        return 0;
+    if (!TEST_true(BN_hex2bn(&verify_p3, app_p3_init))) {
+        errcnt++;
+        goto fin;
+    }
 
     if (!TEST_true(prov->get_params(obj, params))
         || !TEST_int_eq(app_p1, app_p1_init)    /* app value */
@@ -358,6 +362,12 @@ static int test_case(int i)
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
         || !TEST_int_eq(foo_l, sizeof(app_foo_init)))
         errcnt++;
+
+ fin:
+    BN_free(verify_p3);
+    verify_p3 = NULL;
+    cleanup_app_variables();
+    cleanup_object(obj);
 
     return errcnt == 0;
 }
