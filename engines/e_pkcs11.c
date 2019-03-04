@@ -9,6 +9,8 @@
 
 #include "e_pkcs11.h"
 #include "e_pkcs11_err.c"
+#include <internal/dso.h>
+#include <internal/nelem.h>
 
 static int pkcs11_logout(CK_SESSION_HANDLE session);
 typedef CK_RV pkcs11_pFunc(CK_FUNCTION_LIST **pkcs11_funcs);
@@ -31,7 +33,7 @@ int pkcs11_rsa_sign(int alg, const unsigned char *md,
     int encoded_len = 0;
     const unsigned char *encoded = NULL;
 
-    ctx = pkcs11_get_cms(rsa);
+    ctx = pkcs11_get_ctx(rsa);
 
     if (!ctx->session) {
         return RSA_meth_get_sign(RSA_PKCS1_OpenSSL())
@@ -103,7 +105,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
     CK_ATTRIBUTE keyAttribute[1];
     int useSign = 0;
 
-    ctx = pkcs11_get_cms(rsa);
+    ctx = pkcs11_get_ctx(rsa);
 
     if (!ctx->session) {
         return RSA_meth_get_pub_enc(RSA_PKCS1_OpenSSL())
@@ -189,7 +191,7 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
 static CK_RV pkcs11_load_functions(const char *library_path)
 {
     CK_RV rv;
-    static DSO *pkcs11_dso = NULL;
+    DSO *pkcs11_dso = NULL;
     pkcs11_pFunc *pFunc;
 
     pkcs11_dso = DSO_load(NULL, library_path, NULL, 0);
@@ -211,8 +213,6 @@ static CK_RV pkcs11_load_functions(const char *library_path)
     }
 
     rv = pFunc(&pkcs11_funcs);
-ERR_load_PKCS11_strings();
-
     return rv;
 }
 
@@ -225,7 +225,7 @@ ERR_load_PKCS11_strings();
 CK_RV pkcs11_initialize(const char *library_path)
 {
     CK_RV rv;
-    CK_C_INITIALIZE_ARGS args;
+    CK_C_INITIALIZE_ARGS args = { 0 };
 
     if (library_path == NULL) {
         return CKR_ARGUMENTS_BAD;
@@ -239,7 +239,6 @@ CK_RV pkcs11_initialize(const char *library_path)
         return rv;
     }
 
-    memset(&args, 0, sizeof(args));
     args.flags = CKF_OS_LOCKING_OK;
     rv = pkcs11_funcs->C_Initialize(&args);
     if (rv != CKR_OK) {

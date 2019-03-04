@@ -219,17 +219,17 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
     ctx->slotid = 0;
     if (strncmp(path, "pkcs11:", 7) == 0) {
         path += 7;
-	if (ctx->module_path == NULL &&
+        if (ctx->module_path == NULL &&
             !pkcs11_parse_uri(path,"module-path=", &module_path))
             goto err;
         if (ctx->module_path == NULL) ctx->module_path = module_path;
-	if (!pkcs11_parse_uri(path,"id=", &id) &&
+        if (!pkcs11_parse_uri(path,"id=", &id) &&
             !pkcs11_parse_uri(path,"object=", &label)) {
             PKCS11_trace("ID and OBJECT are null\n");
             goto err;
         }
-	if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
-           slotid = NULL;
+        if (!pkcs11_parse_uri(path,"slot-id=", &slotid)) {
+            slotid = NULL;
         }
         pkcs11_parse_uri(path,"pin-value=", &pin);
         if (pin != NULL)
@@ -252,12 +252,13 @@ static int pkcs11_parse(PKCS11_CTX *ctx, const char *path)
             id = pkcs11_hex2a(id);
 
         slotid = NULL;
-
     }
+
     if (label != NULL)
         ctx->label = (CK_BYTE *) label;
     else
         ctx->id = (CK_BYTE *) id;
+
     if (slotid != NULL)
         ctx->slotid = (CK_SLOT_ID) atoi(slotid);
 
@@ -399,12 +400,16 @@ static int pkcs11_destroy(ENGINE *e)
 
 static void pkcs11_ctx_free(PKCS11_CTX *ctx)
 {
-    CRYPTO_THREAD_lock_free(ctx->lock);
     PKCS11_trace("Calling pkcs11_ctx_free with %p\n", ctx);
+    CRYPTO_THREAD_lock_free(ctx->lock);
+    free(ctx->id);
+    free(ctx->label);
+    free(ctx->pin);
+    free(ctx->module_path);
     OPENSSL_free(ctx);
 }
 
-PKCS11_CTX *pkcs11_get_cms(const RSA *rsa)
+PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa)
 {
     return ENGINE_get_ex_data(RSA_get0_engine(rsa), pkcs11_idx);
 }

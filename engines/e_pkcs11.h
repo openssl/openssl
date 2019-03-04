@@ -8,15 +8,8 @@
  */
 
 #include <string.h>
-#include <openssl/engine.h>
 #include <openssl/err.h>
-#include <openssl/crypto.h>
-#include <openssl/rsa.h>
-#include <openssl/bn.h>
-#include <openssl/bio.h>
-#include <openssl/rsa.h>
-#include <internal/dso.h>
-#include <internal/nelem.h>
+#include <openssl/engine.h>
 
 #define CK_PTR *
 
@@ -84,4 +77,4 @@ int pkcs11_rsa_priv_enc(int flen, const unsigned char *from,
 int pkcs11_get_slot(PKCS11_CTX *ctx);
 int pkcs11_find_private_key(PKCS11_CTX *ctx);
 void PKCS11_trace(char *format, ...);
-PKCS11_CTX *pkcs11_get_cms(const RSA *rsa);
+PKCS11_CTX *pkcs11_get_ctx(const RSA *rsa);
