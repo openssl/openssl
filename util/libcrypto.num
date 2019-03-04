@@ -4646,3 +4646,11 @@ OPENSSL_CTX_free                        4601	3_0_0	EXIST::FUNCTION:
 OPENSSL_LH_flush                        4602	3_0_0	EXIST::FUNCTION:
 BN_native2bn                            4603	3_0_0	EXIST::FUNCTION:
 BN_bn2nativepad                         4604	3_0_0	EXIST::FUNCTION:
+DH_generate_ffc_parameters              4605	3_0_0	EXIST::FUNCTION:DH
+DH_check_pub_key_partial                4606	3_0_0	EXIST::FUNCTION:DH
+DH_check_priv_key                       4607	3_0_0	EXIST::FUNCTION:DH
+DH_set0_validate_params                 4608	3_0_0	EXIST::FUNCTION:DH
+DH_get0_validate_params                 4609	3_0_0	EXIST::FUNCTION:DH
+DSA_generate_ffc_parameters             4610	3_0_0	EXIST::FUNCTION:DSA
+DSA_set0_validate_params                4611	3_0_0	EXIST::FUNCTION:DSA
+DSA_get0_validate_params                4612	3_0_0	EXIST::FUNCTION:DSA

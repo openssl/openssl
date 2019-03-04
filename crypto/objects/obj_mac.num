@@ -1201,3 +1201,9 @@ aes_256_siv		1200
 blake2bmac		1201
 blake2smac		1202
 sshkdf		1203
+modp_1536		1204
+modp_2048		1205
+modp_3072		1206
+modp_4096		1207
+modp_6144		1208
+modp_8192		1209
