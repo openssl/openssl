@@ -521,6 +521,7 @@ static OPT_PAIR ecdsa_choices[] = {
     {"ecdsap256", R_EC_P256},
     {"ecdsap384", R_EC_P384},
     {"ecdsap521", R_EC_P521},
+#ifndef OPENSSL_NO_EC2M
     {"ecdsak163", R_EC_K163},
     {"ecdsak233", R_EC_K233},
     {"ecdsak283", R_EC_K283},
@@ -531,6 +532,7 @@ static OPT_PAIR ecdsa_choices[] = {
     {"ecdsab283", R_EC_B283},
     {"ecdsab409", R_EC_B409},
     {"ecdsab571", R_EC_B571},
+#endif
     {"ecdsabrp256r1", R_EC_BRP256R1},
     {"ecdsabrp256t1", R_EC_BRP256T1},
     {"ecdsabrp384r1", R_EC_BRP384R1},
@@ -549,6 +551,7 @@ static const OPT_PAIR ecdh_choices[] = {
     {"ecdhp256", R_EC_P256},
     {"ecdhp384", R_EC_P384},
     {"ecdhp521", R_EC_P521},
+#ifndef OPENSSL_NO_EC2M
     {"ecdhk163", R_EC_K163},
     {"ecdhk233", R_EC_K233},
     {"ecdhk283", R_EC_K283},
@@ -559,6 +562,7 @@ static const OPT_PAIR ecdh_choices[] = {
     {"ecdhb283", R_EC_B283},
     {"ecdhb409", R_EC_B409},
     {"ecdhb571", R_EC_B571},
+#endif
     {"ecdhbrp256r1", R_EC_BRP256R1},
     {"ecdhbrp256t1", R_EC_BRP256T1},
     {"ecdhbrp384r1", R_EC_BRP384R1},
@@ -1501,6 +1505,7 @@ int speed_main(int argc, char **argv)
         {"nistp256", NID_X9_62_prime256v1, 256},
         {"nistp384", NID_secp384r1, 384},
         {"nistp521", NID_secp521r1, 521},
+#ifndef OPENSSL_NO_EC2M
         /* Binary Curves */
         {"nistk163", NID_sect163k1, 163},
         {"nistk233", NID_sect233k1, 233},
@@ -1512,6 +1517,7 @@ int speed_main(int argc, char **argv)
         {"nistb283", NID_sect283r1, 283},
         {"nistb409", NID_sect409r1, 409},
         {"nistb571", NID_sect571r1, 571},
+#endif
         {"brainpoolP256r1", NID_brainpoolP256r1, 256},
         {"brainpoolP256t1", NID_brainpoolP256t1, 256},
         {"brainpoolP384r1", NID_brainpoolP384r1, 384},
