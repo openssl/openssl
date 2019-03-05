@@ -34,7 +34,6 @@ extern "C" {
  */
 # define OSSL_TRACE_CATEGORY_ANY                 0 /* The fallback */
 # define OSSL_TRACE_CATEGORY_TLS                 1
-# define OSSL_TRACE_CATEGORY_SSL                 OSSL_TRACE_CATEGORY_TLS
 # define OSSL_TRACE_CATEGORY_NUM                 2
 
 /* Returns the trace category number for the given |name| */
