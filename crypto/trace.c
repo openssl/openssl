@@ -121,7 +121,6 @@ struct trace_category_st {
 static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(ANY),
     TRACE_CATEGORY_(TLS),
-    TRACE_CATEGORY_(SSL),
 };
 
 const char *OSSL_trace_get_category_name(int num)
