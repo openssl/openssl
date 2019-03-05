@@ -144,7 +144,6 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
     }
 
     return prov;
-
 }
 
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
@@ -172,8 +171,7 @@ OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
     prov->init_function = init_function;
 
     CRYPTO_THREAD_write_lock(store->lock);
-    if (store == NULL
-        || !ossl_provider_upref(prov)) { /* +1 One reference for the store */
+    if (!ossl_provider_upref(prov)) { /* +1 One reference for the store */
         ossl_provider_free(prov); /* -1 Reference that was to be returned */
         prov = NULL;
     } else if (sk_OSSL_PROVIDER_push(store->providers, prov) == 0) {
@@ -211,7 +209,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * When that happens, the provider is inactivated.
          */
         if (ref == 1 && prov->flag_initialized) {
-            if (prov->teardown)
+            if (prov->teardown != NULL)
                 prov->teardown();
             prov->flag_initialized = 0;
         }
