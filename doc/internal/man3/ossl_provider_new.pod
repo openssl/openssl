@@ -52,7 +52,7 @@ I<provider object>s are reference counted.
 
 I<provider object>s are initially inactive, i.e. they are only
 recorded in the store, but are not used.
-They are activated with a the first call to ossl_provider_load(), and
+They are activated with the first call to ossl_provider_load(), and
 are inactivated when ossl_provider_free() has been called enough
 times.
 
@@ -152,7 +152,7 @@ B<MODULESDIR>.
 =head1 RETURN VALUES
 
 ossl_provider_find() and ossl_provider_new() return a pointer to a
-I<provider object> (C<OSSL_PROVIDER>) on succes, or B<NULL> on error.
+I<provider object> (C<OSSL_PROVIDER>) on success, or B<NULL> on error.
 
 ossl_provider_upref() returns the value of the reference counter after
 it has been incremented.

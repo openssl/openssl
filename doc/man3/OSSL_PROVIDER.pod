@@ -73,7 +73,7 @@ OSSL_get_provider_params() returns 1 on success, or 0 on error.
 
 =head1 EXAMPLES
 
-This demonstrates how to load the provider module "foo" and asking for
+This demonstrates how to load the provider module "foo" and ask for
 its build number.
 
  OSSL_PROVIDER *prov = NULL;
