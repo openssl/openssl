@@ -3323,7 +3323,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         BIO_printf(bio_err, "Using Kernel TLS for sending\n");
 #endif
 
-    if (OSSL_TRACE_ENABLED(SSL)) {
+    if (OSSL_TRACE_ENABLED(TLS)) {
         /* Print out local port of connection: useful for debugging */
         int sock;
         union BIO_sock_info_u info;
