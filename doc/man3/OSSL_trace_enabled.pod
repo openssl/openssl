@@ -54,48 +54,48 @@ easy and consistent.
 C<OSSL_TRACE_BEGIN(category)> and C<OSSL_TRACE_END(category)> reserve
 the B<BIO> C<trc_out> and are used as follows to wrap a trace section:
 
- OSSL_TRACE_BEGIN(SSL) {
+ OSSL_TRACE_BEGIN(TLS) {
 
      BIO_fprintf(trc_out, ... );
 
- } OSSL_TRACE_END(SSL);
+ } OSSL_TRACE_END(TLS);
 
 This will normally expands to:
 
  do {
-     BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_SSL);
+     BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
      if (trc_out != NULL) {
          ...
          BIO_fprintf(trc_out, ...);
      }
-     OSSL_trace_end(OSSL_TRACE_CATEGORY_SSL, trc_out);
+     OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
  } while (0);
 
 C<OSSL_TRACE_CANCEL(category)> must be used before returning from or
 jumping out of a trace section:
 
- OSSL_TRACE_BEGIN(SSL) {
+ OSSL_TRACE_BEGIN(TLS) {
 
      if (condition) {
-         OSSL_TRACE_CANCEL(SSL);
+         OSSL_TRACE_CANCEL(TLS);
          goto err;
      }
      BIO_fprintf(trc_out, ... );
 
- } OSSL_TRACE_END(SSL);
+ } OSSL_TRACE_END(TLS);
 
 This will normally expand to:
 
  do {
-     BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_SSL);
+     BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
      if (trc_out != NULL) {
          if (condition) {
-             OSSL_trace_end(OSSL_TRACE_CATEGORY_SSL, trc_out);
+             OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
              goto err;
          }
          BIO_fprintf(trc_out, ... );
      }
-     OSSL_trace_end(OSSL_TRACE_CATEGORY_SSL, trc_out);
+     OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
  } while (0);
 
 =head1 NOTES
@@ -103,11 +103,11 @@ This will normally expand to:
 It is advisable to always check that a trace type is enabled with
 OSSL_trace_enabled() before generating any output, for example:
 
-    if (OSSL_trace_enabled(OSSL_TRACE_CATEGORY_SSL)) {
-        BIO *trace = OSSL_trace_begin(OSSL_TRACE_CATEGORY_SSL);
+    if (OSSL_trace_enabled(OSSL_TRACE_CATEGORY_TLS)) {
+        BIO *trace = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
         BIO_printf(trace, "FOO %d\n", somevalue);
         BIO_dump(trace, somememory, somememory_l);
-        OSSL_trace_end(OSSL_TRACE_CATEGORY_SSL, trace);
+        OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trace);
     }
 
 =head2 Tracing disabled
@@ -134,15 +134,15 @@ nothing.
 the convenience macros are defined to produce dead code.
 For example, take this example from L</Convenience Macros> above:
 
- OSSL_TRACE_BEGIN(SSL) {
+ OSSL_TRACE_BEGIN(TLS) {
 
      if (condition) {
-         OSSL_TRACE_CANCEL(SSL);
+         OSSL_TRACE_CANCEL(TLS);
          goto err;
      }
      BIO_fprintf(trc_out, ... );
 
- } OSSL_TRACE_END(SSL);
+ } OSSL_TRACE_END(TLS);
 
 When the tracing API isn't operational, that will expand to:
 

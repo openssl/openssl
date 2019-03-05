@@ -114,11 +114,11 @@ prematurely.
 A suggestion is to make such cleanup part of a function that's
 registered very early with L<atexit(3)>.
 
-=item C<OSSL_TRACE_CATEGORY_TLS> | C<OSSL_TRACE_CATEGORY_SSL>
+=item C<OSSL_TRACE_CATEGORY_TLS>
 
 Traces the TLS/SSL protocoll.
 
-=item C<OSSL_TRACE_CATEGORY_TLS_CIPHER> | C<OSSL_TRACE_CATEGORY_SSL_CIPHER>
+=item C<OSSL_TRACE_CATEGORY_TLS_CIPHER>
 
 Traces the ciphers used by the TLS/SSL protocoll.
 
@@ -169,6 +169,12 @@ Traces BIGNUM context operations.
 There is also C<OSSL_TRACE_CATEGORY_ANY>, which works as a fallback
 and can be used to get I<all> trace output.
 
+=head1 RETURN VALUES
+
+OSSL_trace_set_channel(), OSSL_trace_set_prefix(),
+OSSL_trace_set_suffix(), and OSSL_trace_set_callback() return 1 on
+success, or 0 on failure.
+
 =head1 EXAMPLES
 
 In all examples below, we assume that the trace producing code is
@@ -178,11 +184,11 @@ this:
  const char bar[] = { 0,  1,  2,  3,  4,  5,  6,  7,
                       8,  9, 10, 11, 12, 13, 14, 15 };
 
- OSSL_TRACE_BEGIN(SSL) {
+ OSSL_TRACE_BEGIN(TLS) {
      BIO_puts(trc_out, "foo: ");
      BIO_printf(trc_out, "%d\n", foo);
      BIO_dump(trc_out, bar, sizeof(bar));
- } OSSL_TRACE_END(SSL);
+ } OSSL_TRACE_END(TLS);
 
 =head1 Simple example
 
@@ -192,8 +198,8 @@ An example with just a channel and constant prefix / suffix.
  {
      BIO *err = BIO_new_fp(stderr, BIO_NOCLOSE | BIO_FP_TEXT);
      OSSL_trace_set_channel(OSSL_TRACE_CATEGORY_SSL, err);
-     OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_SSL, "BEGIN TRACE[SSL]");
-     OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_SSL, "END TRACE[SSL]");
+     OSSL_trace_set_prefix(OSSL_TRACE_CATEGORY_SSL, "BEGIN TRACE[TLS]");
+     OSSL_trace_set_suffix(OSSL_TRACE_CATEGORY_SSL, "END TRACE[TLS]");
 
      /* ... work ... */
  }
@@ -201,10 +207,10 @@ An example with just a channel and constant prefix / suffix.
 When the trace producing code above is performed, this will be output
 on standard error:
 
- BEGIN TRACE[SSL]
+ BEGIN TRACE[TLS]
  foo: 42
  0000 - 00 01 02 03 04 05 06 07-08 09 0a 0b 0c 0d 0e 0f   ................
- END TRACE[SSL]
+ END TRACE[TLS]
 
 =head2 Advanced example
 
@@ -263,12 +269,6 @@ everything documented here inoperational.
 When the library is built with tracing disabled, the macro
 C<OPENSSL_NO_TRACE> is defined in C<openssl/opensslconf.h> and all
 functions described here are inoperational, i.e. will do nothing.
-
-=head1 RETURN VALUES
-
-OSSL_trace_set_channel(), OSSL_trace_set_prefix(),
-OSSL_trace_set_suffix(), and OSSL_trace_set_callback() return 1 on
-success, or 0 on failure.
 
 =head1 HISTORY
 

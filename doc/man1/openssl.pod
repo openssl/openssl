@@ -551,11 +551,11 @@ available:
 
 The tracing functionality.
 
-=item B<TLS> | B<SSL>
+=item B<TLS>
 
 General SSL/TLS.
 
-=item B<TLS_CIPHER> | B<SSL_CIPHER>
+=item B<TLS_CIPHER>
 
 SSL/TLS cipher.
 
