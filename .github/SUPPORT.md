@@ -8,4 +8,4 @@ OpenSSL community (which includes the developers as time permits).
 
 Only subscribers can post to openssl-users@openssl.org (although the
 archives are public).
-For more information, see https://www.openssl.org/community/mailinglists.html
+For more information, see https://www.openssl.org/community/mailinglists.htmllavada
