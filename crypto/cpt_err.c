@@ -32,6 +32,8 @@ static const ERR_STRING_DATA CRYPTO_str_functs[] = {
      "CRYPTO_set_ex_data"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_FIPS_MODE_SET, 0), "FIPS_mode_set"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_GET_AND_LOCK, 0), "get_and_lock"},
+    {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_GET_PROVIDER_STORE, 0),
+     "get_provider_store"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_ATEXIT, 0), "OPENSSL_atexit"},
     {ERR_PACK(ERR_LIB_CRYPTO, CRYPTO_F_OPENSSL_BUF2HEXSTR, 0),
      "OPENSSL_buf2hexstr"},

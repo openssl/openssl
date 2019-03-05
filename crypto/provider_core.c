@@ -102,9 +102,15 @@ DEFINE_RUN_ONCE_STATIC(do_provider_store_init)
 
 static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
 {
+    struct provider_store_st *store = NULL;
+
     if (!RUN_ONCE(&provider_store_init_flag, do_provider_store_init))
         return NULL;
-    return openssl_ctx_get_data(libctx, provider_store_index);
+
+    store = openssl_ctx_get_data(libctx, provider_store_index);
+    if (store == NULL)
+        CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
+    return store;
 }
 
 /*-
@@ -129,12 +135,12 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
 {
     struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
-    OSSL_PROVIDER tmpl = { 0, };
 
-    tmpl.name = (char *)name;
     if ((store = get_provider_store(libctx)) != NULL) {
+        OSSL_PROVIDER tmpl = { 0, };
         int i;
 
+        tmpl.name = (char *)name;
         CRYPTO_THREAD_write_lock(store->lock);
         if ((i = sk_OSSL_PROVIDER_find(store->providers, &tmpl)) == -1
             || (prov = sk_OSSL_PROVIDER_value(store->providers, i)) == NULL
@@ -149,8 +155,11 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name)
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
                                  ossl_provider_init_fn *init_function)
 {
-    struct provider_store_st *store = get_provider_store(libctx);
+    struct provider_store_st *store = NULL;
     OSSL_PROVIDER *prov = NULL;
+
+    if ((store = get_provider_store(libctx)) == NULL)
+        return NULL;
 
     if ((prov = ossl_provider_find(libctx, name)) != NULL) { /* refcount +1 */
         ossl_provider_free(prov); /* refcount -1 */
