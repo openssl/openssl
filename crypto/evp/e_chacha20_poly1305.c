@@ -30,6 +30,8 @@ typedef struct {
 
 #define data(ctx)   ((EVP_CHACHA_KEY *)(ctx)->cipher_data)
 
+#define CHACHA20_POLY1305_MAX_IVLEN     12
+
 static int chacha_init_key(EVP_CIPHER_CTX *ctx,
                            const unsigned char user_key[CHACHA_KEY_SIZE],
                            const unsigned char iv[CHACHA_CTR_SIZE], int enc)
@@ -533,7 +535,7 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
         return 1;
 
     case EVP_CTRL_AEAD_SET_IVLEN:
-        if (arg <= 0 || arg > CHACHA_CTR_SIZE)
+        if (arg <= 0 || arg > CHACHA20_POLY1305_MAX_IVLEN)
             return 0;
         actx->nonce_len = arg;
         return 1;
