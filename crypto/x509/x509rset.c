@@ -38,3 +38,15 @@ int X509_REQ_set_pubkey(X509_REQ *x, EVP_PKEY *pkey)
     x->req_info.enc.modified = 1;
     return X509_PUBKEY_set(&x->req_info.pubkey, pkey);
 }
+
+int X509_REQ_up_ref(X509_REQ *x)
+{
+    int i;
+
+    if (CRYPTO_UP_REF(&x->references, &i, x->lock) <= 0)
+        return 0;
+
+    REF_PRINT_COUNT("X509_REQ", x);
+    REF_ASSERT_ISNT(i < 2);
+    return ((i > 1) ? 1 : 0);
+}

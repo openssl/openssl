@@ -4646,3 +4646,4 @@ OPENSSL_CTX_free                        4601	3_0_0	EXIST::FUNCTION:
 OPENSSL_LH_flush                        4602	3_0_0	EXIST::FUNCTION:
 BN_native2bn                            4603	3_0_0	EXIST::FUNCTION:
 BN_bn2nativepad                         4604	3_0_0	EXIST::FUNCTION:
+X509_REQ_up_ref                         4605	3_0_0	EXIST::FUNCTION:
