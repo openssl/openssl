@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -145,24 +145,24 @@ void OSSL_trace_end(int category, BIO *channel);
  * local variable named |trc_out| is defined, which points to the channel
  * associated with the given trace category.
  *
- * Usage: (using 'SSL' as an example category)
+ * Usage: (using 'TLS' as an example category)
  *
- *     OSSL_TRACE_BEGIN(SSL) {
+ *     OSSL_TRACE_BEGIN(TLS) {
  *
  *         BIO_fprintf(trc_out, ... );
  *
- *     } OSSL_TRACE_END(SSL);
+ *     } OSSL_TRACE_END(TLS);
  *
  *
  * This expands to the following code
  *
  *     do {
- *         BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_SSL);
+ *         BIO *trc_out = OSSL_trace_begin(OSSL_TRACE_CATEGORY_TLS);
  *         if (trc_out != NULL) {
  *             ...
  *             BIO_fprintf(trc_out, ...);
  *         }
- *         OSSL_trace_end(OSSL_TRACE_CATEGORY_SSL, trc_out);
+ *         OSSL_trace_end(OSSL_TRACE_CATEGORY_TLS, trc_out);
  *     } while (0);
  *
  * The use of the inner '{...}' group and the trailing ';' is enforced
@@ -191,7 +191,7 @@ void OSSL_trace_end(int category, BIO *channel);
  *
  * Usage:
  *
- *     if (OSSL_TRACE_ENABLED(SSL)) {
+ *     if (OSSL_TRACE_ENABLED(TLS)) {
  *         ...
  *     }
  */
@@ -216,8 +216,8 @@ void OSSL_trace_end(int category, BIO *channel);
  * Usage:
  *
  *    OSSL_TRACE(INIT, "Hello world!\n");
- *    OSSL_TRACE1(SSL, "The answer is %d\n", 42);
- *    OSSL_TRACE2(SSL, "The ultimate question to answer %d is '%s'\n",
+ *    OSSL_TRACE1(TLS, "The answer is %d\n", 42);
+ *    OSSL_TRACE2(TLS, "The ultimate question to answer %d is '%s'\n",
  *                42, "What do you get when you multiply six by nine?");
  */
 
